@@ -138,6 +138,7 @@ namespace MapSectionProviderLib
 					else
 					{
 						Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
+						Debug.Assert(mapSectionResponse.MapSectionZVectors == null, "MapSectionVectors is NULL, but MapSectionZVectors is not NULL.");
 					}
 				}
 				catch (OperationCanceledException)

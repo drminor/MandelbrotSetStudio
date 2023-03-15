@@ -6,7 +6,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSS.Types
 {
-	public class MapSectionZVectors : IPoolable
+	public class MapSectionZVectors //: IPoolable
 	{
 		private static readonly ArrayPool<byte> _arrayPool = ArrayPool<byte>.Shared;
 
@@ -324,17 +324,17 @@ namespace MSS.Types
 			Array.Clear(RowHasEscaped);
 		}
 
-		void IPoolable.CopyTo(object obj)
-		{
-			if (obj != null && obj is MapSectionZVectors destination)
-			{
-				CopyTo(destination);
-			}
-			else
-			{
-				throw new ArgumentException($"CopyTo required an object of type {nameof(MapSectionZVectors)}");
-			}
-		}
+		//void IPoolable.CopyTo(object obj)
+		//{
+		//	if (obj != null && obj is MapSectionZVectors destination)
+		//	{
+		//		CopyTo(destination);
+		//	}
+		//	else
+		//	{
+		//		throw new ArgumentException($"CopyTo required an object of type {nameof(MapSectionZVectors)}");
+		//	}
+		//}
 
 		public void CopyTo(MapSectionZVectors destination)
 		{

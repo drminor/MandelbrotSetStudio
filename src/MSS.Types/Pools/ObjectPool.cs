@@ -58,7 +58,19 @@ namespace MSS.Types
 		{
 			lock(_stateLock)
 			{
-				return (TotalFree == 0) ? NewObject() : _pool.Pop();
+				T result;
+
+				if (TotalFree == 0)
+				{
+					result = NewObject();
+				}
+				else
+				{
+					result = _pool.Pop();
+				}
+
+				result.IncreaseRefCount();
+				return result;
 			}
 		}
 
@@ -75,6 +87,13 @@ namespace MSS.Types
 
 			lock(_stateLock)
 			{
+				obj.DecreaseRefCount();
+
+				if (obj.ReferenceCount > 0)
+				{
+					return false;
+				}
+
 				if (TotalFree < MaxSize)
 				{
 					//Reset(obj);
@@ -111,8 +130,11 @@ namespace MSS.Types
 		public void Clear(bool clearPeak = false)
 		{
 			lock (_stateLock)
-			{ 
-				_pool.Clear();
+			{
+				while(_pool.TryPop(out var obj))
+				{
+					obj?.Dispose();
+				}
 
 				if (clearPeak)
 				{

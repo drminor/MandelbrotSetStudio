@@ -22,6 +22,8 @@ namespace MSS.Types
 
 			Counts = ArrayPool<ushort>.Shared.Rent(ValueCount);
 			EscapeVelocities = ArrayPool<ushort>.Shared.Rent(ValueCount);
+
+			ReferenceCount = 0;
 		}
 
 		#endregion
@@ -187,6 +189,20 @@ namespace MSS.Types
 		#endregion
 
 		#region IPoolable Support
+
+		public int ReferenceCount { get; private set; }
+
+		public int IncreaseRefCount()
+		{
+			ReferenceCount++;
+			return ReferenceCount;
+		}
+
+		public int DecreaseRefCount()
+		{
+			ReferenceCount--;
+			return ReferenceCount;
+		}
 
 		public void ResetObject()
 		{

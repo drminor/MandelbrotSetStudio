@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace MSS.Types.MSet
+﻿namespace MSS.Types.MSet
 {
 	public class MapSectionResponse
 	{
@@ -17,14 +15,14 @@ namespace MSS.Types.MSet
 				  allRowsHaveEscaped: false,
 				  mapSectionVectors: null,
 				  mapSectionZVectors: null,
-				  isCancelled
+				  requestCancelled: isCancelled
 				  )
 		{ }
 
 		public MapSectionResponse(MapSectionRequest mapSectionRequest, 
 			bool requestCompleted,
 			bool allRowsHaveEscaped, 
-			MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool isCancelled = false)
+			MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
 			: this(
 				  mapSectionRequest.MapSectionId, 
 				  mapSectionRequest.OwnerId,
@@ -36,7 +34,7 @@ namespace MSS.Types.MSet
 				  allRowsHaveEscaped, 
 				  mapSectionVectors, 
 				  mapSectionZVectors,
-				  isCancelled
+				  requestCancelled
 				  )
 		{ }
 
@@ -81,5 +79,11 @@ namespace MSS.Types.MSet
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
 
 		public bool RecordOnFile => !string.IsNullOrEmpty(MapSectionId);
+
+		public MapSectionResponse CreateCopySansVectors()
+		{
+			var result = new MapSectionResponse(MapSectionId, OwnerId, JobOwnerType, SubdivisionId, BlockPosition, MapCalcSettings, RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
+			return result;
+		}
 	}
 }

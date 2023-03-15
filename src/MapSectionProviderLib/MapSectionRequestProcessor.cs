@@ -422,17 +422,20 @@ namespace MapSectionProviderLib
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse, int jobId)
 		{
-			var workList = new List<MapSectionWorkRequest>();
+			//var workList = new List<MapSectionWorkRequest>();
 
 			MapSection mapSection;
 
 			if (mapSectionResponse != null)
 			{
+				PersistResponse(mapSectionResponse);
+
 				mapSection = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse, jobId);
-				if (!mapSectionResponse.RequestCancelled)
-				{
-					PersistResponse(mapSectionWorkRequest.Request, mapSectionResponse);
-				}
+				//if (!mapSectionResponse.RequestCancelled)
+				//{
+				//	PersistResponse(mapSectionWorkRequest.Request, mapSectionResponse);
+				//}
+
 			}
 			else
 			{
@@ -444,8 +447,16 @@ namespace MapSectionProviderLib
 
 			try
 			{
+
+				//if (mapSection.MapSectionVectors != null)
+				//{
+				//	Debug.Assert(mapSection.MapSectionVectors.ReferenceCount == 2, "Not two.");
+				//}
+
+				//mapSection.MapSectionVectors?.IncreaseRefCount();
 				mapSectionWorkRequest.Response = mapSection;
-				workList.Add(mapSectionWorkRequest);
+				//workList.Add(mapSectionWorkRequest);
+				_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
 
 				var pendingRequests = GetPendingRequests(mapSectionWorkRequest.Request);
 				//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkRequest.Request}");
@@ -474,35 +485,58 @@ namespace MapSectionProviderLib
 				{
 					if (workItem != mapSectionWorkRequest)
 					{
-						MapSection newMapSectionCopy;
+						//MapSection newMapSectionCopy;
+						//if (mapSectionResponse != null)
+						//{
+						//	newMapSectionCopy = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse, jobId);
+						//	if (newMapSectionCopy.MapSectionVectors != null)
+						//	{
+						//		Debug.WriteLine($"Creating a copy of the MapSectionVectors for {mapSectionWorkRequest.Request.ScreenPosition}.");
+						//		newMapSectionCopy.MapSectionVectors = _mapSectionHelper.Duplicate(newMapSectionCopy.MapSectionVectors);
+						//	}
+						//}
+						//else
+						//{
+						//	newMapSectionCopy = new MapSection(mapSectionWorkRequest.Request, isCancelled: false);
+						//}
+
+						//workItem.Response = newMapSectionCopy;
+						//workList.Add(workItem);
+
+						MapSection mapSectionW;
+
 						if (mapSectionResponse != null)
 						{
-							newMapSectionCopy = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse, jobId);
-							if (newMapSectionCopy.MapSectionVectors != null)
-							{
-								Debug.WriteLine($"Creating a copy of the MapSectionVectors for {mapSectionWorkRequest.Request.ScreenPosition}.");
-								newMapSectionCopy.MapSectionVectors = _mapSectionHelper.Duplicate(newMapSectionCopy.MapSectionVectors);
-							}
+							mapSectionW = BuildMapSection(workItem.Request, mapSectionResponse, jobId);
+							//mapSectionW.MapSectionVectors?.IncreaseRefCount();
 						}
 						else
 						{
-							newMapSectionCopy = new MapSection(mapSectionWorkRequest.Request, isCancelled: false);
+							mapSectionW = new MapSection(mapSectionWorkRequest.Request, isCancelled: false);
 						}
 
-						workItem.Response = newMapSectionCopy;
-						workList.Add(workItem);
+						workItem.Response = mapSectionW;
+						_mapSectionResponseProcessor.AddWork(workItem);
+
+						//workList.Add(workItem);
 					}
 				}
 			}
 			finally
 			{
+				if (mapSectionResponse != null)
+				{
+					_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
+				}
+
 				_requestsLock.ExitUpgradeableReadLock();
 			}
 
-			foreach (var workItem in workList)
-			{
-				_mapSectionResponseProcessor.AddWork(workItem);
-			}
+			//foreach (var workItem in workList)
+			//{
+			//	_mapSectionResponseProcessor.AddWork(workItem);
+			//}
+
 		}
 
 		private MapSection BuildMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, int jobId)
@@ -512,38 +546,45 @@ namespace MapSectionProviderLib
 			if (mapSectionResponse.RequestCancelled)
 			{
 				mapSection = new MapSection(mapSectionRequest, isCancelled: true);
+				//_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
 			}
 			else
 			{
 				mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, jobId);
+				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
 			}
 
 			return mapSection;
 		}
 
-		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		private void PersistResponse(/*MapSectionRequest mapSectionRequest, */MapSectionResponse mapSectionResponse)
 		{
-			if (!mapSectionResponse.RecordOnFile || mapSectionRequest.IncreasingIterations)
-			{
-				if (mapSectionResponse.MapSectionVectors == null)
-				{
-					throw new InvalidOperationException("The MapSectionVectors is null.");
-				}
+			//if (!mapSectionResponse.RecordOnFile || mapSectionRequest.IncreasingIterations)
+			//{
+			//	if (mapSectionResponse.MapSectionVectors == null)
+			//	{
+			//		throw new InvalidOperationException("The MapSectionVectors is null.");
+			//	}
 
-				mapSectionResponse.MapSectionVectors = _mapSectionHelper.Duplicate(mapSectionResponse.MapSectionVectors);
+			//	var msrCopy = mapSectionResponse.CreateCopySansVectors();
+			//	msrCopy.MapSectionVectors = _mapSectionHelper.Duplicate(mapSectionResponse.MapSectionVectors);
+			//	msrCopy.MapSectionZVectors = mapSectionResponse.MapSectionZVectors;
+			//	mapSectionResponse.MapSectionZVectors = null;
 
+			//	if (!msrCopy.RequestCompleted && !msrCopy.RecordOnFile)
+			//	{
+			//		msrCopy.MapCalcSettings.TargetIterations = 0;
+			//	}
 
-				if (!mapSectionResponse.RequestCompleted && !mapSectionResponse.RecordOnFile)
-				{
-					mapSectionResponse.MapCalcSettings.TargetIterations = 0;
-				}
+			//	_mapSectionPersistProcessor.AddWork(msrCopy);
+			//}
+			//else
+			//{
+			//	//Debug.WriteLine("The MapSectionRequestProcessor is handling a response that is already OnFile and it's IncreasingIterations is false.");
+			//}
 
-				_mapSectionPersistProcessor.AddWork(mapSectionResponse);
-			}
-			else
-			{
-				//Debug.WriteLine("The MapSectionRequestProcessor is handling a response that is already OnFile and it's IncreasingIterations is false.");
-			}
+			mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+			_mapSectionPersistProcessor.AddWork(mapSectionResponse);
 		}
 
 		// Returns true, if there is a "Primary" Request already in the queue

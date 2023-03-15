@@ -231,12 +231,13 @@ namespace MSS.Common
 			var mapSection = new MapSection(jobId, mapSectionVectors, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
 				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
-
 			return mapSection;
 		}
 
 		public byte[] GetPixelArray(MapSectionVectors mapSectionVectors, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
+			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
+
 			// Currently EscapeVelocities are not supported.
 			useEscapeVelocities = false;
 
@@ -256,6 +257,8 @@ namespace MSS.Common
 				var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
 				for (; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
 				{
+					var diagSum = 0;
+
 					var resultPtr = resultRowPtr;
 					for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
 					{
@@ -269,6 +272,13 @@ namespace MSS.Common
 
 						resultPtr += BYTES_PER_PIXEL;
 						sourcePtr++;
+
+						diagSum += countVal;
+					}
+
+					if (diagSum < 10)
+					{
+						Debug.WriteLine("Counts are empty.");
 					}
 				}
 			}
@@ -336,6 +346,9 @@ namespace MSS.Common
 		public MapSectionVectors ObtainMapSectionVectors()
 		{
 			var result = _mapSectionVectorsPool.Obtain();
+
+			//Debug.WriteLine($"Just obtained a MSVectors. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");
+
 			return result;
 		}
 
@@ -356,32 +369,38 @@ namespace MSS.Common
 		{
 			if (mapSection.MapSectionVectors != null)
 			{
-				_mapSectionVectorsPool.Free(mapSection.MapSectionVectors);
-				mapSection.MapSectionVectors = null;
+				if (_mapSectionVectorsPool.Free(mapSection.MapSectionVectors))
+				{
+					mapSection.MapSectionVectors = null;
+					//Debug.WriteLine($"Just freed a MapSection. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");
+				}
 			}
 		}
 
-		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
-		{
-			if (mapSectionRequest.MapSectionVectors != null)
-			{
-				_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors);
-				mapSectionRequest.MapSectionVectors = null;
-			}
+		//public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
+		//{
+		//	if (mapSectionRequest.MapSectionVectors != null)
+		//	{
+		//		_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors);
+		//		mapSectionRequest.MapSectionVectors = null;
+		//	}
 
-			if (mapSectionRequest.MapSectionZVectors != null)
-			{
-				_mapSectionZVectorsPool.Free(mapSectionRequest.MapSectionZVectors);
-				mapSectionRequest.MapSectionZVectors = null;
-			}
-		}
+		//	if (mapSectionRequest.MapSectionZVectors != null)
+		//	{
+		//		_mapSectionZVectorsPool.Free(mapSectionRequest.MapSectionZVectors);
+		//		mapSectionRequest.MapSectionZVectors = null;
+		//	}
+		//}
 
 		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
 		{
 			if (mapSectionResponse.MapSectionVectors != null)
 			{
-				_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors);
-				mapSectionResponse.MapSectionVectors = null;
+				if (_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
+				{
+					mapSectionResponse.MapSectionVectors = null;
+					//Debug.WriteLine($"Just freed a MapSectionResponse. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");
+				}
 			}
 
 			if (mapSectionResponse.MapSectionZVectors != null)
@@ -391,11 +410,11 @@ namespace MSS.Common
 			}
 		}
 
-		public MapSectionVectors Duplicate(MapSectionVectors mapSectionVectors)
-		{
-			var result = _mapSectionVectorsPool.DuplicateFrom(mapSectionVectors);
-			return result;
-		}
+		//public MapSectionVectors Duplicate(MapSectionVectors mapSectionVectors)
+		//{
+		//	var result = _mapSectionVectorsPool.DuplicateFrom(mapSectionVectors);
+		//	return result;
+		//}
 
 		#endregion
 	}

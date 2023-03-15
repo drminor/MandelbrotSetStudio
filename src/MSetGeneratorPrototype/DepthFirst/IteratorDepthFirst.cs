@@ -116,15 +116,11 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.Square(_temp, _zRZiSqrs);
 
 				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
-				
-				//if (!_fp31VecMath.TrySub(_zRZiSqrs, _zRSqrs, zis, ref doneFlagsVec)) Debug.WriteLine("TrySub failed.");
 				_fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
-				//if (!_fp31VecMath.TrySub(zis, _zISqrs, _temp, ref doneFlagsVec)) { //Debug.WriteLine("TrySub failed2."); }
 				_fp31VecMath.Sub(zis, _zISqrs, _temp);
 				_fp31VecMath.Add(_temp, cis, zis);
 
 				// z.r = zrsqr - zisqr + c.r
-				//if (!_fp31VecMath.TrySub(_zRSqrs, _zISqrs, _temp, ref doneFlagsVec)) { //Debug.WriteLine("TrySub failed3."); }
 				_fp31VecMath.Sub(_zRSqrs, _zISqrs, _temp);
 				_fp31VecMath.Add(_temp, crs, zrs);
 

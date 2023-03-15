@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.APValues;
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
@@ -76,6 +77,7 @@ namespace MSS.Common
 
 		#region Square
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Square(Vector256<uint>[] source, Vector256<uint>[] result)
 		{
 			// Our multiplication routines don't support 2's compliment,
@@ -225,6 +227,7 @@ namespace MSS.Common
 			return !anyCarryFound;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
 			//CheckReservedBitIsClear(b, "Negating B");
@@ -250,6 +253,7 @@ namespace MSS.Common
 			IncrementAdditionsCount(8);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
 			// i = 0
@@ -274,6 +278,7 @@ namespace MSS.Common
 			return result;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void IsGreaterOrEqThan(Vector256<uint>[] left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
 		{
 			// TODO: Is masking the Sign Bit really necessary.

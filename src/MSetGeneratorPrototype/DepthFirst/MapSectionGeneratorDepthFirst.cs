@@ -677,7 +677,6 @@ namespace MSetGeneratorPrototype
 
 		private bool ShouldSkipThisSection(bool skipPositiveBlocks, bool skipLowDetailBlocks, IteratorCoords coords)
 		{
-
 			//// Skip positive 'blocks'
 
 			//if (skipPositiveBlocks)
@@ -694,6 +693,7 @@ namespace MSetGeneratorPrototype
 			//	return true;
 			//}
 
+			// Only process block at screen position x=1, y = 0
 			if (coords.ScreenPos.X == 1 && coords.ScreenPos.Y == 0)
 			{
 				return false;

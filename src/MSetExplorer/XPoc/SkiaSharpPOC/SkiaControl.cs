@@ -79,8 +79,9 @@ namespace MSetExplorer.XPoc.SkiaSharpPOC
 
 			_bitmap.Lock();
 
-			using (var surface = SKSurface.Create((int)_bitmap.Width, (int)_bitmap.Height,
-				SKColorType.RgbaF32, SKAlphaType.Premul, _bitmap.BackBuffer, _bitmap.BackBufferStride))
+			var imgInfo = new SKImageInfo((int)_bitmap.Width, (int)_bitmap.Height, SKColorType.RgbaF32, SKAlphaType.Premul);
+
+			using (var surface = SKSurface.Create(imgInfo, _bitmap.BackBuffer, _bitmap.BackBufferStride))
 			{
 				if (IsClearCanvas)
 					surface.Canvas.Clear(_canvasClearColor);

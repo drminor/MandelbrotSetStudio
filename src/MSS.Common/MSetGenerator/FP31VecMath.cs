@@ -4,6 +4,7 @@ using MSS.Types;
 using MSS.Types.APValues;
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
@@ -121,6 +122,7 @@ namespace MSS.Common
 
 		#region Multiply and Square
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Square(Vector256<uint>[] a, Vector256<uint>[] result)
 		{
 			// Our multiplication routines don't support 2's compliment,
@@ -155,6 +157,7 @@ namespace MSS.Common
 			//}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void SquareInternal(PairOfVec<uint> source, PairOfVec<ulong> result)
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
@@ -280,6 +283,7 @@ namespace MSS.Common
 			IncrementSplitsCount(LimbCount * 16);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void SumThePartials(PairOfVec<ulong> source, PairOfVec<ulong> result)
 		{
 			// To be used after a multiply operation.
@@ -316,6 +320,7 @@ namespace MSS.Common
 			IncrementSplitsCount(LimbCount * 16);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void ShiftAndTrim(PairOfVec<ulong> source, Vector256<uint>[] resultLimbs)
 		{
 			//ValidateIsSplit(mantissa);
@@ -375,6 +380,7 @@ namespace MSS.Common
 			return !(negateFailed || addFailed);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
 			Negate(right, _negationResult);
@@ -400,6 +406,7 @@ namespace MSS.Common
 			return !anyCarryFound;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
 		{
 			var carry = Vector256<uint>.Zero;
@@ -450,6 +457,7 @@ namespace MSS.Common
 			return !anyCarryFound;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void Negate(Vector256<uint>[] source, Vector256<uint>[] result)
 		{
 			var carry = _ones;
@@ -469,6 +477,7 @@ namespace MSS.Common
 			IncrementSplitsCount(LimbCount * 8);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec<uint> result)
 		{
 			//CheckReservedBitIsClear(source, "ConvertFrom2C");
@@ -521,6 +530,7 @@ namespace MSS.Common
 			IncrementConversionsCount(LimbCount * 16);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int GetSignBits(Vector256<uint>[] source, ref Vector256<int> signBitVecs)
 		{
 			IncrementComparisonsCount(8);
@@ -542,6 +552,7 @@ namespace MSS.Common
 			return result;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void IsGreaterOrEqThan(Vector256<uint>[] left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
 		{
 			// TODO: Is masking the Sign Bit really necessary.

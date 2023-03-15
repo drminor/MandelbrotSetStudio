@@ -106,7 +106,10 @@ namespace MSS.Types
 		{
 			lock (_stateLock)
 			{
-				_pool.Clear();
+				while (_pool.TryPop(out var obj))
+				{
+					obj?.Dispose();
+				}
 
 				if (clearPeak)
 				{
