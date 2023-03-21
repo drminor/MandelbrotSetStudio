@@ -450,7 +450,7 @@ namespace MSS.Common
 				//MathOpCounts.NumberOfSplits++;
 			}
 
-			IncrementNegationsCount(LimbCount * 8);
+			//IncrementNegationsCount(LimbCount * 8);
 			IncrementSplitsCount(LimbCount * 8);
 
 			var anyCarryFound = FP31VecMathHelper.AnyNotZero(carry, doneFlagsVec);
@@ -473,7 +473,7 @@ namespace MSS.Common
 				//MathOpCounts.NumberOfSplits++;
 			}
 
-			IncrementNegationsCount(LimbCount * 8);
+			//IncrementNegationsCount(LimbCount * 8);
 			IncrementSplitsCount(LimbCount * 8);
 		}
 
@@ -499,6 +499,8 @@ namespace MSS.Common
 			}
 			else
 			{
+				IncrementNegationsCount(1);
+
 				// Mixed Positive and Negative values
 				var carry = _ones;
 
@@ -524,7 +526,7 @@ namespace MSS.Common
 
 				FP31VecMathHelper.WarnIfAnyNotZero(carry, _signBitVecs, "Negating for multiplication");
 
-				IncrementNegationsCount(LimbCount * 16);
+				//IncrementNegationsCount(LimbCount * 16);
 			}
 
 			IncrementConversionsCount(LimbCount * 16);

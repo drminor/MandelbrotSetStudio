@@ -49,6 +49,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		#region Public Properties
 
+		private int _limbCount;
+		public int LimbCount
+		{
+			get => _limbCount;
+			set => _limbCount = value;
+		}
+
 		private int _generatedCount;
 		public int GeneratedCount
 		{
@@ -152,6 +159,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			set { }
 		}
 
+		private long _vectorsNegatedForMult;
+		public long VectorsNegatedForMult
+		{
+			get => _vectorsNegatedForMult;
+			set => _vectorsNegatedForMult = value;
+		}
+
 		#endregion
 
 		#region Public Methods
@@ -238,6 +252,8 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize, RMapConstants.BLOCK_SIZE);
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
 
+			LimbCount = mapSectionRequests[0].LimbCount;
+
 			var mapLoader = new MapLoader(MapSectionReady, _mapSectionRequestProcessor);
 			mapLoader.SectionLoaded += MapLoader_SectionLoaded;
 
@@ -311,7 +327,10 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			Multiplications = mops.NumberOfMultiplications;
 			Additions = mops.NumberOfAdditions;
-			Negations = mops.NumberOfNegations;
+
+			VectorsNegatedForMult = mops.NumberOfNegations;
+
+			//Negations = mops.NumberOfNegations;
 			Conversions = mops.NumberOfConversions;
 			Splits = mops.NumberOfSplits;
 			Comparisons = mops.NumberOfComparisons;
@@ -345,6 +364,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		private void HandleRunComplete()
 		{
+			OnPropertyChanged(nameof(LimbCount));
 			OnPropertyChanged(nameof(GeneratedCount));
 			OnPropertyChanged(nameof(OverallElapsed));
 			OnPropertyChanged(nameof(ProcessingElapsed));
@@ -357,6 +377,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			OnPropertyChanged(nameof(Splits));
 			OnPropertyChanged(nameof(Comparisons));
 			OnPropertyChanged(nameof(TotalCountOfAllOps));
+			OnPropertyChanged(nameof(VectorsNegatedForMult));
 
 			OnPropertyChanged(nameof(Calcs));
 			OnPropertyChanged(nameof(UnusedCalcs));

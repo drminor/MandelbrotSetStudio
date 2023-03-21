@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 	ProjectSection(SolutionItems) = preProject
 		Notes\768_Debug_output.txt = Notes\768_Debug_output.txt
 		Notes\AppNavNotes.txt = Notes\AppNavNotes.txt
+		Notes\Avx2_Latenency_ThroughPut.txt = Notes\Avx2_Latenency_ThroughPut.txt
 		Notes\BlockOffsetsForInitialSet.txt = Notes\BlockOffsetsForInitialSet.txt
 		Notes\BuildMapSectionsFrom2x2or4x4set.txt = Notes\BuildMapSectionsFrom2x2or4x4set.txt
 		Notes\ColorMapFromHistogramData.txt = Notes\ColorMapFromHistogramData.txt

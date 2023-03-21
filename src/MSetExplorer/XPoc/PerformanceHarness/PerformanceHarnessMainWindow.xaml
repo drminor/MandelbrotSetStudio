@@ -39,8 +39,12 @@
             <StackPanel Orientation="Horizontal" >
                 <TextBlock Width="145" Margin="3" FontSize="14" Text="Peak ZVectors:" />
                 <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding MaxPeakSectionZVectors}"/>
-            </StackPanel>            
-            
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="LimbCount:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding LimbCount}"/>
+            </StackPanel>
 
             <StackPanel Orientation="Horizontal" >
                 <TextBlock Width="145" Margin="3" FontSize="14" Text="Sections Generated:" />
@@ -87,6 +91,11 @@
                 <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding Comparisons}"/>
             </StackPanel>
 
+            <StackPanel Orientation="Horizontal" >
+                <TextBlock Width="145" Margin="3" FontSize="14" Text="Vecs Negated For Mul:" />
+                <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding VectorsNegatedForMult}"/>
+            </StackPanel>            
+            
             <StackPanel Orientation="Horizontal" >
                 <TextBlock Width="145" Margin="3" FontSize="14" Text="All Operations:" />
                 <TextBox Width="150" Margin="3" VerticalAlignment="Center" Text="{Binding TotalCountOfAllOps}"/>

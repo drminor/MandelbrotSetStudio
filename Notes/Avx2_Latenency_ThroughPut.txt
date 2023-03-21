@@ -63,8 +63,8 @@ Square	35	x LimbCount
 
 Add		4	x LimbCount
 Sub		8	x LimbCount
-IsGt		2
 
+IsGt		2
 UpCnt		13
 
 
@@ -78,7 +78,41 @@ UpCnt				13
 4-Add				 12
 3-Square			105
 3-Sub				 24
-IsGreaterOrEqThan		  2
+
+IsGreaterOrEqThan	  2
 UpCnt				 13
 
+
+
+Limb Count
+
+3		141 x 3, 2, 13	+ 6 x 14	+ 4 x 2		+ 2 x 2		+ 14 x 3 (for all Conv2C-B's)
+4		141 x 4, 2, 13	+ 10 x 14	+ 8 x 2		+ 3 x 2		+ 14 x 4						
+5		141 x 5, 2, 13	+ 15 x 14	+ 13 x 2	+ 4 x 2		+ 14 x 5	
+
+3		423	+84		+8		+4	
+4		564	+140	+16		+6
+5		705	+210	+26		+8
+
+3		519		+ 42 x Vecs Negated For Multiplication
+4		726		+ 56 x
+5		949		+ 70 x 
+
+
+Dense 4L
+67949188 iterations
+17948197 iterations where the multiplicands had to be Negated
+
+
+67949188 x 726 + 17948197 x 56
+
+49,331,110,488
+1,005,099,032
+
+
+50,336,209,520 Clock Cycles		4Ghz = 12.58405238 / 5 cores = 2.516810476 / 3 execution units
+
+Time to Generate = 3.957  7.029 seconds
+
+1.57 times as long as theoretical
 
