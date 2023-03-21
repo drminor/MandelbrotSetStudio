@@ -9,6 +9,11 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
+		private static SizeInt ZeroSingleton = new SizeInt();
+
+		public static SizeInt Zero => ZeroSingleton;
+
+
 		// Square from single value
 		public SizeInt(int extent) : this(extent, extent)
 		{ }
@@ -30,16 +35,13 @@ namespace MSS.Types
 
 		public int NumberOfCells => Width * Height;
 
+		public double AspectRatio => Height == 0 ? 1 : Width / (double)Height;
+
 		private static int ConvertToInt(BigInteger n)
 		{
-			if (n < int.MaxValue && n > int.MinValue)
-			{
-				return (int)n;
-			}
-			else
-			{
-				throw new ArgumentException($"The BigInteger:{n} cannot be converted into an integer.");
-			}
+			return n < int.MaxValue && n > int.MinValue
+				? (int)n
+                :              throw new ArgumentException($"The BigInteger:{n} cannot be converted into an integer.");
 		}
 
 		#region Public Methods
@@ -47,6 +49,11 @@ namespace MSS.Types
 		public SizeInt Inflate(SizeInt amount)
 		{
 			return new SizeInt(Width + amount.Width, Height + amount.Height);
+		}
+
+		public SizeInt Add(VectorInt amount)
+		{
+			return new SizeInt(Width + amount.X, Height + amount.Y);
 		}
 
 		//public SizeInt Deflate(SizeInt amount)
@@ -139,13 +146,12 @@ namespace MSS.Types
 			return result;
 		}
 
+		#endregion
 
-		public override string? ToString()
+		public override string ToString()
 		{
 			return $"w:{Width}, h:{Height}";
 		}
-
-		#endregion
 
 		#region IEquatable and IEqualityComparer Support
 

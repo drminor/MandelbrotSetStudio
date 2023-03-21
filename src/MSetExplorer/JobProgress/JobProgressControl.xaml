@@ -1,0 +1,66 @@
+﻿<UserControl x:Class="MSetExplorer.JobProgressControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MSetExplorer"
+             mc:Ignorable="d" Width="220" Height="235">
+
+    <Grid>
+        <Border x:Name="borderTop" BorderThickness="0.5" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="150"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" BorderThickness="0.5,0.5,0.5,0.5" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+
+                        <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Width="15" Margin="10, 0, 5, 0" FontSize="16" Text="F:" VerticalAlignment="Top"/>
+                            <TextBox Text="{Binding FetchedCount, Mode=OneWay}"  Width="33" Height="22"/>
+
+                            <TextBlock Width="15" Margin="5, 0" FontSize="16" Text="G:" VerticalAlignment="Top"/>
+                            <TextBox Text="{Binding GeneratedCount, Mode=OneWay}"  Width="33" Height="22"/>
+
+                            <TextBlock Width="15" Margin="5, 0" FontSize="16" Text="T:" VerticalAlignment="Top"/>
+                            <TextBox Text="{Binding TotalSections, Mode=OneWay}"  Width="33" Height="22"/>
+                        </StackPanel>
+
+                        <ProgressBar x:Name="prgBarCurrentJob" Height="12" Margin="10,5,10,0"/>
+
+
+                        <StackPanel Orientation="Horizontal" Margin="10,5,10,0">
+                            <!--<TextBlock Text="So Far:" Width="38" Margin="10,0,5,0" VerticalAlignment="Top"/>-->
+                            <TextBox Text="{Binding RunTime, Mode=OneWay}" Margin="0,0,15,0" Width="85"/>
+
+                            <!--<TextBlock Text="Remaining:" Width="63" Margin="5, 0" VerticalAlignment="Top"/>-->
+                            <TextBox Text="{Binding EstimatedTimeRemaining, Mode=OneWay}"  Width="85" />
+
+                        </StackPanel>                        
+                        
+                    </StackPanel>
+                </Border>
+
+                <ListView Grid.Row="1" Name="lvJobProgressEntries" IsSynchronizedWithCurrentItem="True">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Id" Width="40" DisplayMemberBinding="{Binding JobAndReqNum}" />
+                            <GridViewColumn Header="Seconds" Width="65" DisplayMemberBinding="{Binding RequestDurationSeconds, StringFormat={}{0:n3} }" />
+                            <GridViewColumn Header="Generated" Width="62" DisplayMemberBinding="{Binding Generated}">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock HorizontalAlignment="Center" Text="{Binding Generated}"></TextBlock>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+            </Grid>
+        </Border>
+    </Grid>
+
+</UserControl>

@@ -12,7 +12,7 @@ namespace MSetExplorer.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.10.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.3.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -23,12 +23,27 @@ namespace MSetExplorer.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool ShowTopNav {
             get {
                 return ((bool)(this["ShowTopNav"]));
+            }
+            set {
+                this["ShowTopNav"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Explorer")]
+        public string LastWindowName {
+            get {
+                return ((string)(this["LastWindowName"]));
+            }
+            set {
+                this["LastWindowName"] = value;
             }
         }
         
@@ -41,6 +56,30 @@ namespace MSetExplorer.Properties {
             }
             set {
                 this["DefaultOutputFolderPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("l3")]
+        public string LastProjectName {
+            get {
+                return ((string)(this["LastProjectName"]));
+            }
+            set {
+                this["LastProjectName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("l3-Mark45")]
+        public string LastPosterName {
+            get {
+                return ((string)(this["LastPosterName"]));
+            }
+            set {
+                this["LastPosterName"] = value;
             }
         }
     }

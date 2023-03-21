@@ -1,44 +1,75 @@
 ﻿using MongoDB.Bson;
-using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+using System.Numerics;
 
 namespace MSS.Common
 {
-	public static class MapJobHelper
+	public class MapJobHelper
 	{
-		#region Build Job
+		private const int TERMINAL_LIMB_COUNT = 2;
 
-		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
-			TransformType transformType, RectangleInt? newArea, SizeInt blockSize, IProjectAdapter projectAdapter)
+		//private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, 62));
+		private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB));
+
+		private readonly IMapSectionAdapter _mapSectionAdapter;
+
+		public MapJobHelper(IMapSectionAdapter mapSectionAdapter)
 		{
-			if (!parentJobId.HasValue && !(transformType == TransformType.None || transformType == TransformType.CanvasSizeUpdate))
-			{
-				throw new InvalidOperationException($"Attempting to create an new job with no parent and TransformType = {transformType}. Only jobs with TransformType = 'none' be parentless.");
-			}
+			_mapSectionAdapter = mapSectionAdapter;
+			ToleranceFactor = 10; // SamplePointDelta values are calculated to within 10 pixels of the display area.
+		}
 
-			var jobAreaInfo = GetJobAreaInfo(coords, canvasSize, blockSize, projectAdapter);
+		#region Public Properties
 
+		public double ToleranceFactor { get; set; }
+
+		#endregion
+
+		#region Public Methods
+
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+			TransformType transformType, RectangleInt? newArea, SizeInt blockSize)
+		{
+			var mapAreaInfo = GetMapAreaInfo(coords, canvasSize, blockSize);
+			var result = BuildJob(parentJobId, projectId, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
+			return result;
+		}
+
+		public Job BuildHomeJob(SizeInt canvasSize, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+			TransformType transformType, SizeInt blockSize)
+		{
+			ObjectId? parentJobId = null;
+			ObjectId projectId = ObjectId.Empty;
+			RectangleInt? newArea = null;
+
+			var mapAreaInfo = GetMapAreaInfo(coords, canvasSize, blockSize);
+			var result = BuildJob(parentJobId, projectId, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
+			return result;
+		}
+
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+			TransformType transformType, RectangleInt? newArea)
+		{
 			// Determine how much of the canvas control can be covered by the new map.
+			var canvasSize = mapAreaInfo.CanvasSize;
+
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
 
 			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
 			var displaySize = canvasSize;
 
-			var canvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(displaySize, jobAreaInfo.CanvasControlOffset, blockSize);
+			var canvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(displaySize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
 
-			var isPreferredChild = transformType != TransformType.CanvasSizeUpdate;
 			var jobName = GetJobName(transformType);
 
-			var job = new Job(parentJobId, isPreferredChild, projectId, jobName, transformType, newArea, jobAreaInfo, canvasSizeInBlocks, colorBandSetId,  mapCalcSettings);
+			var job = new Job(parentJobId, projectId, jobName, transformType, newArea, mapAreaInfo, canvasSizeInBlocks, colorBandSetId, mapCalcSettings);
 
 			return job;
 		}
 
-		public static JobAreaInfo GetJobAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize, IProjectAdapter projectAdapter)
+		public MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
 			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
@@ -48,40 +79,105 @@ namespace MSS.Common
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var updatedCoords = coords.Clone();
-			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, displaySize);
+			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, displaySize, ToleranceFactor);
 			//Debug.WriteLine($"\nThe new coords are : {coordsWork},\n old = {mSetInfo.Coords}. (While calculating SamplePointDelta.)\n");
 
 			//var samplePointDeltaD = RMapHelper.GetSamplePointDiag(coords, displaySize, out var newDCoords);
 			//RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, mSetInfo.Coords, coordsWork, newDCoords);
 
-			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(samplePointDelta, blockSize, projectAdapter);
-
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, subdivision, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
-			var result = new JobAreaInfo(updatedCoords, canvasSize, subdivision, mapBlockOffset, canvasControlOffset);
+			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(updatedCoords.Right, updatedCoords.Left, out _);
+
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
+
+			// Get a subdivision record from the database.
+			var subdivision = GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+
+			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 
 			return result;
 		}
 
 		// Find an existing subdivision record that the same SamplePointDelta
-		private static Subdivision GetSubdivision(RSize samplePointDelta, SizeInt blockSize, IProjectAdapter projectAdapter)
+		public Subdivision GetSubdivision(RSize samplePointDelta, BigVector mapBlockOffset, out BigVector localMapBlockOffset)
 		{
-			if (!projectAdapter.TryGetSubdivision(samplePointDelta, blockSize, out var result))
+			var estimatedBaseMapPosition = GetBaseMapPosition(mapBlockOffset, out localMapBlockOffset);
+
+			if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, estimatedBaseMapPosition, out var result))
 			{
-				result = new Subdivision(samplePointDelta, blockSize);
-				projectAdapter.InsertSubdivision(result);
+				var subdivision = new Subdivision(samplePointDelta, estimatedBaseMapPosition);
+				result = _mapSectionAdapter.InsertSubdivision(subdivision);
 			}
 
 			return result;
 		}
 
-		public static string GetJobName(TransformType transformType)
+		public BigVector GetBaseMapPosition(BigVector mapBlockOffset, out BigVector localMapBlockOffset)
 		{
-			var result = transformType == TransformType.None ? "Home" : transformType.ToString();
+			var quotient = mapBlockOffset.DivRem(TERMINAL_SUBDIV_SIZE, out localMapBlockOffset);
+
+			var result = quotient.Scale(TERMINAL_SUBDIV_SIZE);
+
+			return result;
+		} 
+
+		public string GetJobName(TransformType transformType)
+		{
+			//var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
+			var result = transformType.ToString();
 			return result;
 		}
+
+		//public BigVector GetLocalMapBlockOffset(BigVector mapBlockOffset, RVector baseMapPosition)
+		//{
+		//	var rMapBlockOffset = new RVector(mapBlockOffset);
+
+		//	var scaledBaseMapPosition = baseMapPosition.Scale(new RSize(TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB));
+
+		//	var result = scaledBaseMapPosition.Diff(rMapBlockOffset);
+
+		//	//return result;
+
+		//	return new BigVector();
+		//}
+
+		//public RVector GetBaseMapPosition(BigVector mapBlockOffset, int precisionInBinaryDigits)
+		//{
+		//	RVector result;
+
+		//	var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, precisionInBinaryDigits);
+
+		//	if (apFixedPointFormat.LimbCount <= TERMINAL_LIMB_COUNT)
+		//	{
+		//		result = new RVector();
+		//	}
+		//	else
+		//	{
+		//		//var baseLength = apFixedPointFormat.LimbCount - 3;
+
+		//		var bitsPerLimb = ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB;
+		//		var currentExponent = apFixedPointFormat.TargetExponent;
+		//		var baseExponent = currentExponent - TERMINAL_LIMB_COUNT * bitsPerLimb;
+
+		//		var x = new RValue(mapBlockOffset.X, 0);
+		//		var fp31ValX = FP31ValHelper.CreateFP31Val(x, apFixedPointFormat);
+		//		var baseX = new FP31Val(fp31ValX.Mantissa.Skip(TERMINAL_LIMB_COUNT).ToArray(), baseExponent, fp31ValX.BitsBeforeBP, fp31ValX.Precision);
+
+		//		var y = new RValue(mapBlockOffset.Y, 0);
+		//		var fp31ValY = FP31ValHelper.CreateFP31Val(y, apFixedPointFormat);
+		//		var baseY = new FP31Val(fp31ValY.Mantissa.Skip(TERMINAL_LIMB_COUNT).ToArray(), baseExponent, fp31ValY.BitsBeforeBP, fp31ValY.Precision);
+
+		//		var baseRValX = FP31ValHelper.CreateRValue(baseX);
+		//		var baseRValY = FP31ValHelper.CreateRValue(baseY);
+
+		//		result = new RVector(baseRValX.Value, baseRValY.Value, fp31ValX.Exponent - 62);
+		//	}
+
+		//	return result;
+		//}
 
 		//[Conditional("DEBUG")]
 		//public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)
@@ -94,58 +190,7 @@ namespace MSS.Common
 		//		//throw new InvalidOperationException("For testing we need the canvas size to be 1024 x 1024.");
 		//	}
 		//}
-
-		public static JobAreaInfo GetJobAreaInfo(Job job)
-		{
-			if (job.CanvasSize.Width == 0)
-			{
-				//throw new ArgumentException("The job's canvas size is zero.");
-				Debug.WriteLine($"WARNING: Job with Id: {job.Id} has a canvas size of zero, using 1024 x 1024.");
-				return GetJobAreaInfo(job, new SizeInt(1024));
-			}
-
-			var	result = new JobAreaInfo(job.Coords, job.CanvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
-
-			return result;
-		}
-
-		public static JobAreaInfo GetJobAreaInfo(Job job, SizeInt canvasSize)
-		{
-			var result = new JobAreaInfo(job.Coords, canvasSize, job.Subdivision, job.MapBlockOffset, job.CanvasControlOffset);
-
-			return result;
-		}
-
-		#endregion
-
-		#region Build Initial MSetInfo
-
-		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)
-		{
-			var colorBands = new List<ColorBand>
-			{
-				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(50, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(70, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
-			};
-
-			var highColorCss = "#000000";
-			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
-
-			var result = new ColorBandSet(colorBands);
-
-			return result;
-		}
-
+		
 		#endregion
 	}
 }

@@ -6,11 +6,6 @@ namespace MSS.Types
 {
 	public struct SizeDbl : IEquatable<SizeDbl>, IEqualityComparer<SizeDbl>
 	{
-		public SizeDbl(double width, double height)
-		{
-			Width = width;
-			Height = height;
-		}
 		// Square from single value
 		public SizeDbl(double extent) : this(extent, extent)
 		{ }
@@ -18,8 +13,19 @@ namespace MSS.Types
 		public SizeDbl(SizeInt size) : this(size.Width, size.Height)
 		{ }
 
+		public SizeDbl(PointDbl point) : this(point.X, point.Y)
+		{ }
+
+		public SizeDbl(double width, double height)
+		{
+			Width = width;
+			Height = height;
+		}
+
 		public double Width { get; set; }
 		public double Height { get; set; }
+
+		public double AspectRatio => Height == 0 ? 1 : Width / Height;
 
 		public SizeDbl Inflate(int amount)
 		{
@@ -31,6 +37,10 @@ namespace MSS.Types
 			return new SizeDbl(Width + amount.Width, Height + amount.Height);
 		}
 
+		public SizeDbl Inflate(VectorDbl amount)
+		{
+			return new SizeDbl(Width + amount.X, Height + amount.Y);
+		}
 
 		public SizeDbl Deflate(int amount)
 		{
@@ -55,6 +65,11 @@ namespace MSS.Types
 		public SizeDbl Translate(PointDbl offset)
 		{
 			return new SizeDbl(Width + offset.X, Height + offset.Y);
+		}
+
+		public SizeDbl Sub(SizeDbl offset)
+		{
+			return new SizeDbl(Width - offset.Width, Height - offset.Height);
 		}
 
 		public SizeDbl Scale(SizeInt factor)
@@ -152,6 +167,15 @@ namespace MSS.Types
 			return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
 		}
 
+		public RectangleDbl PlaceAtCenter(SizeDbl containerSize)
+		{
+			var diff = containerSize.Diff(this);
+			var halfDiff = diff.Scale(0.5);
+			var result = new RectangleDbl(new PointDbl(halfDiff), this);
+
+			return result;
+		}
+
 		//public SizeInt Ceiling()
 		//{
 		//	return new SizeInt((int)Math.Ceiling(Width), (int)Math.Ceiling(Height));
@@ -211,5 +235,11 @@ namespace MSS.Types
 		{
 			return $"w:{Width}, h:{Height}";
 		}
+
+		public string? ToString(string? format)
+		{
+			return $"w:{Width.ToString(format)}, h:{Height.ToString(format)}";
+		}
+
 	}
 }

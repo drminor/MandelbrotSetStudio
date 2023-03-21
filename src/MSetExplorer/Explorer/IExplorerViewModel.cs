@@ -1,20 +1,32 @@
-﻿using MSS.Types.MSet;
+﻿using ImageBuilder;
+using MSS.Common;
+using MSS.Types;
+using System;
 using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	public interface IExplorerViewModel : INotifyPropertyChanged
+	public interface IExplorerViewModel : INotifyPropertyChanged, IDisposable
 	{
-		IMapProjectViewModel MapProjectViewModel { get; }
+		IProjectViewModel ProjectViewModel { get; }
+		IJobTreeViewModel JobTreeViewModel { get; }
+
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		MapCoordsViewModel MapCoordsViewModel { get; }
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
+		ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
 		IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
+		IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType);
 
-		IProjectAdapter ProjectAdapter { get; }
+		CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath, bool useEscapeVelocities);
+
+		CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits);
+
+		JobProgressViewModel CreateAJobProgressViewModel();
+
 	}
 }

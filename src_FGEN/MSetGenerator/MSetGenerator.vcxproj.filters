@@ -21,7 +21,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Test.cpp">
+    <ClCompile Include="MSetGen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="qp.cpp">

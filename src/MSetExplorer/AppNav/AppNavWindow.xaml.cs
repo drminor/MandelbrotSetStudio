@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using MSetExplorer.ScreenHelpers;
+using MSetExplorer.XPoc;
+using System;
+using System.Diagnostics;
 using System.Windows;
 
 namespace MSetExplorer
@@ -9,8 +12,9 @@ namespace MSetExplorer
 	public partial class AppNavWindow : Window
 	{
 		private AppNavViewModel _vm;
-
 		private Window? _lastWindow;
+
+		#region Constructor
 
 		public AppNavWindow()
 		{
@@ -18,7 +22,13 @@ namespace MSetExplorer
 
 			_vm = (AppNavViewModel)DataContext;
 			Loaded += AppNavWindow_Loaded;
+			Closing += AppNavWindow_Closing;
 			InitializeComponent();
+		}
+
+		private void AppNavWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+		{
+			ExitApp();
 		}
 
 		private void AppNavWindow_Loaded(object sender, RoutedEventArgs e)
@@ -31,19 +41,34 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (AppNavViewModel)DataContext;
+				btnFirstButton.Focus();
 
-				if (!Properties.Settings.Default.ShowTopNav)
+				if (Properties.Settings.Default.ShowTopNav)
 				{
-					GoToExplorer();
+					WindowState = WindowState.Normal;
 				}
 				else
 				{
-					WindowState = WindowState.Normal;
+					//var lastWindowName = "Designer";
+					//var initialCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenPoster, new string[] { "Test" });
+
+					//var lastWindowName = "Explorer";
+					//var initialCommand = new AppNavRequestResponse(OnCloseBehavior.Close, RequestResponseCommand.OpenProject, new string[] { "CloserA1" });
+
+					AppNavRequestResponse? initialCommand = null;
+					var lastWindowName = Properties.Settings.Default.LastWindowName;
+
+					var route = GetRoute(lastWindowName);
+					route(initialCommand); 
 				}
 
 				Debug.WriteLine("The AppNav Window is now loaded");
 			}
 		}
+
+		#endregion
+
+		#region Button Handlers
 
 		private void ExploreButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -55,94 +80,208 @@ namespace MSetExplorer
 			GoToDesigner();
 		}
 
-		private void GoToExplorer()
+		private void ShowPerformanceHarnessMainWin_Click(object sender, RoutedEventArgs e)
+		{
+			GoToPerformanceHarnessMainWindow();
+		}
+
+		private void SampleTestButton_Click(object sender, RoutedEventArgs e)
+		{
+			GoToSampleTest();
+		}
+
+		private void ShowSystemColorsButton_Click(object sender, RoutedEventArgs e)
+		{
+			GoToSystemColors();
+		}
+
+		private void ExitAppButton_Click(object sender, RoutedEventArgs e)
+		{
+			Close();
+		}
+
+		private void RemoveMapSectionsButton_Click(object sender, RoutedEventArgs e)
+		{
+			_ = MessageBox.Show("This command is currently coded to perform no action.");
+			//var createdDate = DateTime.Parse("2022-05-29");
+			//var numberOfRecordsProcessed = _vm.DeleteMapSectionsCreatedSince(createdDate);
+
+			//var numberOfRecordsProcessed = _vm.DoSchemaUpdates();
+			//_ = MessageBox.Show($"{numberOfRecordsProcessed} MapSections processed.");
+		}
+
+		#endregion
+
+		private void ExitApp()
+		{
+			if (_lastWindow != null)
+			{
+				Properties.Settings.Default.LastWindowName = _lastWindow.Name;
+				Properties.Settings.Default.Save();
+			}
+
+			Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
+		}
+
+		private void GoToExplorer(AppNavRequestResponse? appNavRequestResponse = null)
 		{
 			Hide();
 
 			var explorerViewModel = _vm.GetExplorerViewModel();
-
-			var explorerWindow = new ExplorerWindow
-			{
-				DataContext = explorerViewModel
-			};
+			var explorerWindow = new ExplorerWindow(explorerViewModel, appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
+			//{
+			//	DataContext = explorerViewModel
+			//};
 
 			_lastWindow = explorerWindow;
+			_lastWindow.Name = "Explorer";
+			_lastWindow.Closed += LastWindow_Closed;
 
 			explorerWindow.Owner = Application.Current.MainWindow;
-			explorerWindow.Closed += ExplorerWindow_Closed;
 			explorerWindow.Show();
 			_ = explorerWindow.Focus();
 		}
 
-		private void ExplorerWindow_Closed(object? sender, System.EventArgs e)
-		{
-			if (_lastWindow != null)
-			{
-				_lastWindow.Closed -= ExplorerWindow_Closed;
-				_lastWindow = null;
-			}
-
-			if (Properties.Settings.Default.ShowTopNav)
-			{
-				Show();
-				WindowState = WindowState.Normal;
-			}
-			else
-			{
-				ExitApp();
-			}
-		}
-
-		private void GoToDesigner()
+		private void GoToDesigner(AppNavRequestResponse? appNavRequestResponse = null)
 		{
 			Hide();
 
 			var posterDesignerViewModel = _vm.GetPosterDesignerViewModel();
-
-			//posterDesignerViewModel.p
-
-			var designerWindow = new PosterDesignerWindow
+			var designerWindow = new PosterDesignerWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
 			{
 				DataContext = posterDesignerViewModel
 			};
 
 			_lastWindow = designerWindow;
+			_lastWindow.Name = "Designer";
+			_lastWindow.Closed += LastWindow_Closed;
 
 			designerWindow.Owner = Application.Current.MainWindow;
-			designerWindow.Closed += DesignerWindow_Closed;
 			designerWindow.Show();
 			_ = designerWindow.Focus();
-
 		}
 
-		private void DesignerWindow_Closed(object? sender, System.EventArgs e)
+		private void GoToPerformanceHarnessMainWindow(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			Hide();
+
+			var performanceHarnessViewModel = _vm.GetPerformanceHarnessMainWinViewModel();
+			var performanceHarnessMainWindow = new PerformanceHarnessMainWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
+			{
+				DataContext = performanceHarnessViewModel
+			};
+
+			_lastWindow = performanceHarnessMainWindow;
+			_lastWindow.Name = "PerformanceHarness";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			performanceHarnessMainWindow.Owner = Application.Current.MainWindow;
+			performanceHarnessMainWindow.Show();
+			_ = performanceHarnessMainWindow.Focus();
+		}
+
+		private void GoToSampleTest(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			Hide();
+
+			var xSamplingEditorViewModel = _vm.GetXSamplingEditorViewModel();
+			var xSamplingEditorWindow = new XSamplingEditorWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
+			{
+				DataContext = xSamplingEditorViewModel
+			};
+
+			_lastWindow = xSamplingEditorWindow;
+			_lastWindow.Name = "xSampling";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			xSamplingEditorWindow.Owner = Application.Current.MainWindow;
+			xSamplingEditorWindow.Show();
+			_ = xSamplingEditorWindow.Focus();
+		}
+
+
+		private void GoToSystemColors(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			Hide();
+
+			var sysColorsWindow = new SysColorsWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest(onCloseBehavior: OnCloseBehavior.ReturnToTopNav));
+
+			_lastWindow = sysColorsWindow;
+			_lastWindow.Name = "SysColors";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			sysColorsWindow.Owner = Application.Current.MainWindow;
+			sysColorsWindow.Show();
+			_ = sysColorsWindow.Focus();
+		}
+
+		#region Nav Window Support
+
+		private Action<AppNavRequestResponse?> GetRoute(string lastWindowName)
+		{
+			switch (lastWindowName)
+			{
+				case "Explorer": return GoToExplorer;
+				case "Designer": return GoToDesigner;
+				case "xSampling": return GoToSampleTest;
+				case "SysColors": return GoToSystemColors;
+				case "PerformanceHarness": return GoToPerformanceHarnessMainWindow;
+				default:
+					return x => WindowState = WindowState.Normal;
+			}
+		}
+
+		private void LastWindow_Closed(object? sender, System.EventArgs e)
 		{
 			if (_lastWindow != null)
 			{
-				_lastWindow.Closed -= DesignerWindow_Closed;
-				_lastWindow = null;
+				_lastWindow.Closed -= LastWindow_Closed;
 			}
 
-			if (Properties.Settings.Default.ShowTopNav)
+			if (_lastWindow is IHaveAppNavRequestResponse navWin)
+			{
+				HandleNavWinClosing(navWin);
+			}
+			else
+			{
+				CloseOrShow(GetOnCloseBehavior(Properties.Settings.Default.ShowTopNav));
+			}
+		}
+
+		private void HandleNavWinClosing(IHaveAppNavRequestResponse navWin)
+		{
+			if (navWin.AppNavRequestResponse.ResponseCommand is RequestResponseCommand responseCommand)
+			{
+				if (responseCommand == RequestResponseCommand.OpenPoster)
+				{
+					var requestCommand = navWin.AppNavRequestResponse.BuildRequestFromResponse();
+					GoToDesigner(requestCommand);
+					return;
+				}
+			}
+
+			CloseOrShow(navWin.AppNavRequestResponse.OnCloseBehavior);
+		}
+
+		private void CloseOrShow(OnCloseBehavior onCloseBehavior)
+		{
+			if (onCloseBehavior == OnCloseBehavior.ReturnToTopNav)
 			{
 				Show();
 				WindowState = WindowState.Normal;
 			}
 			else
 			{
-				ExitApp();
+				Close();
 			}
 		}
 
-		private void LeaveButton_Click(object sender, RoutedEventArgs e)
+		private OnCloseBehavior GetOnCloseBehavior(bool showTopNav)
 		{
-			ExitApp();
+			return showTopNav ? OnCloseBehavior.ReturnToTopNav : OnCloseBehavior.Close;
 		}
 
-		private void ExitApp()
-		{
-			Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
-			Close();
-		}
+		#endregion
+
 	}
 }

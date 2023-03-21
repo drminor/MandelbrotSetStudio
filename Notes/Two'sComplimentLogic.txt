@@ -1,0 +1,195 @@
+
+3-Bit	Std	Two's Compliment
+
+000	 0	 0
+001	 1	 1
+010	 2	 2
+011	 3	 3
+100	 4	−4
+101	 5	−3
+110	 6	−2
+111	 7	−1
+
+
+2-Bit Std Two's Complement
+00	 0	 0	
+01	 1	 1
+10	 2	-2
+11	 3	-1
+
+
+Addition
+
+ 0 +  0 =  0	00
+ 0 +  1 =  1	01
+ 0 + -2 = -2	10
+ 0 + -1 = -1	11
+
+ 1 +  0 =  0	01
+ 1 +  1 =  2	OVF	
+ 1 + -2 = -1	11
+ 1 + -1 =  0	00
+
+-2 +  0 =  0	00
+-2 +  1 = -1	11 
+-2 + -2 = -4	OVF
+-2 + -1 = -3	OVF
+ 
+-1 +  0 = -1	11
+-1 +  1 =  0	00 
+-1 + -2 = -3	OVF
+-1 + -1 = -2	10
+
+
+Subtraction					Same as adding the two's complement
+
+		 0 -  0 =  0	00		 0 +  0 =  0	00			
+		 0 -  1 = -1	11		 0 + -1 = -1	11				
+		 0 - -2 =  2	OVF		 0 + -2 = -2	OVF
+		 0 - -1 =  1	01		 0 +  1 =  1	01
+
+		 1 -  0 =  1	01		 1 + -0 =  1	01
+		 1 -  1 =  0	10		 1 + -1 =  0	10	
+		 1 - -2 =  3	OVF		 1 + -2 =  3	OVF
+		 1 - -1 =  2	OVF		 1 + -1 =  2	OVF
+
+		-2 -  0 = -2	10		-2 +  0 = -2	10
+		-2 -  1 = -3	OVF 	-2 + -1 = -3	OVF 
+		-2 - -2 =  0	00		-2 + -2 =  0	00
+		-2 - -1 =  1	01		-2 +  1 =  1	01
+ 
+		-1 -  0 = -1	01		-1 +  0 = -1	01
+		-1 -  1 = -2	10		-1 + -1 = -2	10
+		-1 - -2 =  1	01		-1 + -2 =  1	01
+		-1 - -1 =  0	00		-1 +  1 =  0	00
+
+
+	000	  0	
+	001	  1
+	110	 -2
+	111	 -1
+ 
+Here are some examples of adding two, two-bit values, sign extended into 3-bit values 
+2-Bit value, sign Extended into 3 bits
+
+	-2 +  1 =  -1
+
+carry	 00
+lh		 110	-2
+rh	+	 001	 1
+	----------
+		 111
+
+result	  11	-1
+
+
+	-1 + -1 =  0
+
+carry	 11
+lh		 111	-1
+rh	+	 001	 1
+	----------
+		 000	
+
+result	  00	 0
+
+
+	-1 + -2		Results in an overflow
+
+carry	 10 
+lh		 111	-1
+rh	+	 110	-2
+	----------
+		 101	The first two bits don't match
+
+result	 OVF
+
+Remember Overflow is deteted when the last two carry bits (reading right, to left, lsb to msb) are different
+So for a successul addition, with no overflow, the extended bit (fake msb) will again match the sign bit.
+Upon final use, however (to convert the value into standard notation or to convert to base 10),
+this fake msb bit must be removed
+
+
+Can we take two 3-bit, two's complement values, extend the sign, place in a single byte
+		and compute the sum of two separate values, in one go
+
+For example, the first of the additions is ok, the second produces an overflow
+
+		-3 + -1 = -4		in the hi 4 bits
+and		 2 +  2 =  4		in the lo 4 bits 
+
+
+carry	11110 010
+lh		 1101 0010	-3, 2
+rh  +	 1111 0010	-1, 2
+	--------------
+		 1100 0100	
+
+result	  100  OVF	(top 2 bits of first pair match, top 2 bits of second pair do not)
+
+
+The answer is no. We would need a total of 9 bits.
+	One additonal bit is required between the two values
+	to prevent the carry from the first pair affecting the second pair.
+
+Take this example
+		 3 + -2 =  1		in the hi 4 bits
+and		-3 + -1 =  4		in the lo 4 bits 
+
+
+carry	11111 111
+lh		 0011 1101	 3, -3
+rh  +	 1110 1111	-2, -1
+	--------------
+		 0010 1100	
+
+result	  010  100	 2, -4
+
+Providing an extra 0 bit in front of the lo 4 bits, 
+produces the correct result, just remember to discard two bits for the lower pair
+
+carry	11100 111
+lh		 0011 01101	 3, -3
+rh  +	 1110 01111	-2, -1
+	--------------
+		 0001 11100	
+
+result	  001   100	 2, -4
+
+So 3 extension bits are required. For 3-bit values we need 9 bits, 3 for each operand and 3 for extension.
+
+If we were given 64 bits, we could compute the sum where the total bits being summed are 64 - 3 = 61
+For example we could sum a 30-bit and a 31-bit pair in one go.
+
+
+Examples of sign extension and how to handle the carried bit
+
+  00 111		(carry)
+  00 0111		(7)
++ 00 0011		(3)
+==========
+  00 1010		(10) => 2 (0010),  carry 8 (1000)
+
+
+ 11 111		`	(carry)
+ 00 0111		(7)
++01 1101		(-3)
+==========
+ 10 0100		(4) => 4 (0100), carry 0
+
+
+ 11 100		(carry)
+ 11 1110		(-2)
++11 1101		(-3)
+==========
+ 01 1011		(-5) => -5 (1011), carry 0
+
+ 11 000		(carry)
+ 11 1101		(-3)
++11 1010		(-6)
+==========
+ 11 0111		(-9) => 7 (111), carry -16 (10000)
+
+
+
+

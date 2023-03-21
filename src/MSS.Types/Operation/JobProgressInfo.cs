@@ -1,0 +1,102 @@
+﻿using System;
+using System.Diagnostics;
+
+namespace MSS.Types
+{
+	public class JobProgressInfo 
+	{
+		private int _fetchedCount;
+		private int _generatedCount;
+
+		public JobProgressInfo(int jobNumber, string label, DateTime dateCreatedUtc, int totalSections)
+		{
+			JobNumber = jobNumber;
+			Label = label;
+			DateCreatedUtc = dateCreatedUtc;
+			TotalSections = totalSections;
+		}
+
+		public int JobNumber { get; init; }
+
+		public string Label { get; init; }
+
+		public DateTime DateCreatedUtc { get; set; }
+
+		public int TotalSections { get; init; }
+
+		public TimeSpan RunTime => DateTime.UtcNow - DateCreatedUtc;
+
+		public TimeSpan EstimatedTimeRemaining
+		{
+			get
+			{
+				TimeSpan result;
+				if (RunTime.TotalSeconds > 5 && PercentComplete > 1)
+				{
+					result = TimeSpan.FromSeconds((RunTime.TotalSeconds * 100 / PercentComplete) - RunTime.TotalSeconds);
+				}
+				else
+				{
+					result = TimeSpan.Zero;
+				}
+
+				return result;
+			}
+		}
+
+		public double PercentComplete { get; set; }
+
+		public int FetchedCount
+		{
+			get => _fetchedCount;
+			set
+			{
+				if (value != _fetchedCount)
+				{
+					_fetchedCount = value;
+					if (TotalSections > 0)
+					{
+						PercentComplete = 100 * (_generatedCount + _fetchedCount) / TotalSections;
+						//Debug.WriteLine($"G: {GeneratedCount}, F: {FetchedCount}, PC: {PercentComplete}, TS: {TotalSections}.");
+					}
+				}
+			}
+		}
+
+		public int GeneratedCount
+		{
+			get => _generatedCount;
+			set
+			{
+				if (value != _generatedCount)
+				{
+					_generatedCount = value;
+
+					if (TotalSections > 0)
+					{
+						PercentComplete = 100 * (_generatedCount + _fetchedCount) / TotalSections;
+					}
+				}
+			}
+		}
+
+		public double PercentageFetched
+		{
+			get
+			{
+				if (_generatedCount == 0)
+				{
+					return 100;
+				}
+				else
+				{
+					var result = 100 * _fetchedCount / (double)_generatedCount;
+					return result;
+				}
+			}
+		}
+
+		public bool IsComplete => (_generatedCount + _fetchedCount) == TotalSections;
+
+	}
+}

@@ -1,9 +1,9 @@
-﻿using MEngineDataContracts;
-using MSS.Common.MSetRepo;
+﻿using MongoDB.Bson;
+using MSS.Common;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,7 +11,9 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionPersistProcessor : IDisposable
 	{
+		//private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
+		private readonly MapSectionHelper _mapSectionHelper;
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
@@ -22,13 +24,11 @@ namespace MapSectionProviderLib
 
 		private readonly object _queueLock = new();
 
-		private StringBuilder _sbForDiag;
-
 		#region Constructor
 
-		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter)
+		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
 		{
-			_sbForDiag = new StringBuilder();
+			_mapSectionHelper = mapSectionHelper;
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
@@ -71,7 +71,8 @@ namespace MapSectionProviderLib
 
 			try
 			{
-				_workQueueProcessor.Wait(120 * 1000);
+				_ =_workQueueProcessor.Wait(120 * 1000);
+				Debug.WriteLine("The MapSectionPersistProcesssor's WorkQueueProcessor Task has completed.");
 			}
 			catch
 			{ }
@@ -83,24 +84,61 @@ namespace MapSectionProviderLib
 
 		private async Task ProcessTheQueueAsync(CancellationToken ct)
 		{
-			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
 					var mapSectionResponse = _workQueue.Take(ct);
 
-					if (mapSectionResponse.Counts != null)
+					var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+
+					if (mapSectionVectors != null)
 					{
-						if (mapSectionResponse.MapSectionId != null)
+						if (mapSectionResponse.RecordOnFile)
 						{
-							_sbForDiag.AppendLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-							_ = await _mapSectionAdapter.UpdateMapSectionZValuesAsync(mapSectionResponse);
+							var mapSectionId = new ObjectId(mapSectionResponse.MapSectionId!);
+							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+
+							_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
+
+							if (mapSectionResponse.MapSectionZVectors != null)
+							{
+								if (mapSectionResponse.AllRowsHaveEscaped)
+								{
+									_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId);
+								}
+								else
+								{
+									_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
+								}
+
+								// TODO: The OwnerId may already be on file for this MapSection -- or not.
+							}
 						}
 						else
 						{
-							_sbForDiag.AppendLine($"Creating new MapSection. bp: {mapSectionResponse.BlockPosition}.");
-							_ = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+							//Debug.WriteLine($"Creating MapSection for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+
+							if (mapSectionId.HasValue)
+							{
+								mapSectionResponse.MapSectionId = mapSectionId.ToString();
+
+								if (mapSectionResponse.MapSectionZVectors != null & !mapSectionResponse.AllRowsHaveEscaped)
+								{
+									_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
+								}
+
+								_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+							}
 						}
+
+						_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
+					}
+					else
+					{
+						Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
+						Debug.Assert(mapSectionResponse.MapSectionZVectors == null, "MapSectionVectors is NULL, but MapSectionZVectors is not NULL.");
 					}
 				}
 				catch (OperationCanceledException)
@@ -110,7 +148,7 @@ namespace MapSectionProviderLib
 				catch (Exception e)
 				{
 					Debug.WriteLine($"The persist queue got an exception: {e}.");
-					Debug.WriteLine($"The recent operations are\r\n {_sbForDiag}");
+					Console.WriteLine($"\n\nWARNING:The persist queue got an exception: {e}.\n\n");
 					//throw;
 				}
 			}
@@ -139,10 +177,10 @@ namespace MapSectionProviderLib
 						_workQueue.Dispose();
 					}
 
-					if (_workQueueProcessor != null)
-					{
-						_workQueueProcessor.Dispose();
-					}
+					//if (_workQueueProcessor != null)
+					//{
+					//	_workQueueProcessor.Dispose();
+					//}
 				}
 
 				disposedValue = true;

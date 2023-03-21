@@ -1,0 +1,165 @@
+﻿<Window x:Class="MSetExplorer.XPoc.XSamplingEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MSetExplorer.XPoc"
+        mc:Ignorable="d"
+        Title="XSamplingEditorWindow" Width="900" Height="720">
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,5,0,0" x:Name="grdCoords1">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- COLUMN 1-->
+
+            <!-- X1 -->
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="20" Margin="5,3,3,3" FontSize="14" Text="X1:" />
+                <TextBox x:Name="txtX1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Left}"/>
+            </StackPanel>
+
+            <!-- Y1 -->
+            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="20" Margin="5,3,3,3" FontSize="14" Text="Y1:" />
+                <TextBox x:Name="txtY1" Width="300" Margin="3" VerticalAlignment="Center" Text="{Binding Bottom}"/>
+            </StackPanel>
+
+            <!-- COLUMN 1-->
+
+            <!-- Width -->
+            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,1">
+                <TextBlock Width="45" Margin="5,3,3,3" FontSize="14" Text="Width:" />
+                <TextBox x:Name="txtWidth" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Width}"/>
+
+                <TextBlock Width="60" Margin="5,3,3,3" FontSize="14" Text="Exponent:" />
+                <TextBox x:Name="txtExponent" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Exponent}"/>
+            </StackPanel>
+
+            <!-- Height -->
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,1,0,10">
+                <TextBlock Width="45" Margin="5,3,3,3" FontSize="14" Text="Height:" />
+                <TextBox x:Name="txtHeight" Width="100" Margin="3" VerticalAlignment="Center" Text="{Binding Height}"/>
+
+                <TextBlock Width="60" Margin="5,3,3,3" FontSize="14" Text="Precision:" />
+                <TextBox x:Name="txtPrecision" Width="40" Margin="3" VerticalAlignment="Center" Text="{Binding Precision}"/>
+            </StackPanel>
+
+        </Grid>
+
+        <Border Grid.Row="1" BorderBrush="Black" BorderThickness="0.75" Margin="5,0">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0">
+                    <TextBlock Grid.Row="0" Margin="0">Canvas Size</TextBlock>
+                    <TextBlock Grid.Row="0" Margin="260,0,0,0">Normalized Canvas Size</TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,5,10">
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidth}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeight}"/>
+
+                    <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidthNrm}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeightNrm}"/>
+
+                </StackPanel>
+
+                <Slider Grid.Row="2" x:Name="sldrCanvasWidth" HorizontalAlignment="Left" Margin="5,0,0,0" Width="890" Height="40" IsSnapToTickEnabled="True"></Slider>
+
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2" HorizontalAlignment="Left" Margin="0,0,0,5">
+            <local:MapAreaInfoControl x:Name="mapAreaInfoCanS"/>
+        </Grid>
+
+        <Grid Grid.Row="3" HorizontalAlignment="Left" Margin="0,0,0,5">
+            <local:MapAreaInfoControl x:Name="mapAreaInfoCanN"/>
+        </Grid>
+        
+        <Border Grid.Row="4" BorderBrush="Black" BorderThickness="0.75" Margin="5,0">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0">
+                    <TextBlock Grid.Row="0" Margin="0">Selection Size</TextBlock>
+                    <TextBlock Grid.Row="0" Margin="260,0,0,0">Normalized Selection Size</TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionWidth}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox  Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeight}"/>
+
+                    <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionWidthNrm}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeightNrm}"/>
+
+                </StackPanel>
+
+                <Slider Grid.Row="2" x:Name="sldrSelectionWidth" HorizontalAlignment="Left" Margin="5,0,0,0" Width="890" Height="40" IsSnapToTickEnabled="True"></Slider>
+
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="5" HorizontalAlignment="Left" Margin="0,0,0,5">
+            <local:MapAreaInfoControl x:Name="mapAreaInfoSelS"/>
+        </Grid>
+
+        <Grid Grid.Row="6" HorizontalAlignment="Left" Margin="0,0,0,5">
+            <local:MapAreaInfoControl x:Name="mapAreaInfoSelN"/>
+        </Grid>
+
+
+        <Border Grid.Row="7" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
+                <Button Name="btnExit" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="ExitButton_Click" IsCancel="True">_Exit App</Button>
+            </StackPanel>
+
+        </Border>
+    </Grid>
+</Window>

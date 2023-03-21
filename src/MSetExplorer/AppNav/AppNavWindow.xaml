@@ -5,14 +5,40 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="AppNavWindow" Height="200" Width="400">
+        Title="AppNavWindow" Height="320" Width="300">
     <Grid>
-        <StackPanel Orientation="Vertical">
-            <Button Width="100" Height="25" Click="ExploreButton_Click" Margin="0,10">Explore</Button>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0">
+            <MenuItem Header="_Main">
+                <MenuItem Header="_Explore" Click="ExploreButton_Click"/>
+                <MenuItem Header="Design _Poster" Click="DesignPosterButton_Click"/>
+                <MenuItem Header="_Exit Program" Click="ExitAppButton_Click" />
+            </MenuItem>
+
+            <MenuItem Header="_Other">
+                <MenuItem Header="_SampleTest" Click="SampleTestButton_Click"/>
+                <MenuItem Header="Show System _Colors" Click="ShowSystemColorsButton_Click"/>
+                <MenuItem Header="Performance Tests" Click="ShowPerformanceHarnessMainWin_Click"/>
+            </MenuItem>
+
+            <!--<MenuItem Header="_Utilities">
+                <MenuItem Header="Remove Recent MapSections" Click="RemoveMapSectionsButton_Click"/>
+            </MenuItem>-->
+        </Menu>
+        
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,20">
+            <Button Width="100" Height="25" TabIndex="0" Click="ExploreButton_Click" Margin="0,10" x:Name="btnFirstButton">Explore</Button>
             
-            <Button Width="100" Height="25" Click="DesignPosterButton_Click" Margin="0,10">Design Poster</Button>
-            
-            <Button Width="100" Height="25" Click="LeaveButton_Click" Margin="0,10" >Leave</Button>
+            <Button Width="100" Height="25" TabIndex="1" Click="DesignPosterButton_Click" Margin="0,10">Design Poster</Button>
+
+            <Button Width="100" Height="25" TabIndex="2" Click="ShowPerformanceHarnessMainWin_Click" Margin="0,10" >Perf Test</Button>
+
+            <Button Width="100" Height="25" TabIndex="2" Click="ExitAppButton_Click" Margin="0,30" >Exit Program</Button>
 
         </StackPanel>
     </Grid>

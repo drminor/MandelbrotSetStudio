@@ -1,18 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="BigIntegerExtensions.cs" />
+    <Compile Remove="APValues\SpanClassExp.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDB.Bson" Version="2.13.2" />
+    <PackageReference Include="MongoDB.Driver" Version="2.13.2" />
     <PackageReference Include="protobuf-net.Grpc" Version="1.0.152" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="APValues\SpanClassExp.cs" />
+  </ItemGroup>
+
 
 </Project>

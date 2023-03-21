@@ -23,7 +23,7 @@
             </Grid.RowDefinitions>
 
             <TextBlock Text="Target Iterations:" Grid.Row="0" Margin="0,5" Height="18" />
-            <TextBox x:Name="txtTargetIterations" Grid.Row="0" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding TargetIterations}"/>
+            <TextBox x:Name="txtTargetIterations" Grid.Row="0" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding TargetIterations, UpdateSourceTrigger=LostFocus}"/>
 
             <TextBlock Text="Requests Per Job:" Grid.Row="1" Margin="0,5" Height="18" />
             <TextBox x:Name="txtRequestsPerJob" Grid.Row="1" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding RequestsPerJob}" />

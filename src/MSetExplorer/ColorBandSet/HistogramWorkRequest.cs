@@ -3,7 +3,7 @@ using System;
 
 namespace MSetExplorer
 {
-	internal class HistogramWorkRequest
+	public class HistogramWorkRequest
 	{
 		public HistogramWorkRequestType RequestType { get; init; }
 		public int[] Cutoffs { get; init; }
@@ -17,7 +17,7 @@ namespace MSetExplorer
 			Histogram = histogram;
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
 
-			if (RequestType != HistogramWorkRequestType.BucketsUpdated && Histogram == null)
+			if (RequestType != HistogramWorkRequestType.Refresh && Histogram == null)
 			{
 				throw new ArgumentException("The Histogram cannot be null, unless the request type is 'Update-Buckets'.");
 			}
@@ -29,11 +29,11 @@ namespace MSetExplorer
 		}
 	}
 
-	internal enum HistogramWorkRequestType
+	public enum HistogramWorkRequestType
 	{
 		Add,
 		Remove,
-		BucketsUpdated
+		Refresh
 	}
 
 }

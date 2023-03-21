@@ -200,7 +200,7 @@ void Generator::FillCountsVec(PointDd pos, SizeInt blockSize, SizeDd sampleSize,
 	}
 
 	if (nullPtIterationOps > 0) {
-		std::cout << "Executed " << nullPtIterationOps << " null pt iterations.";
+		std::cout << "  -+- Executed " << nullPtIterationOps << " null pt iterations.";
 	}
 
 	delete fgenCalc;

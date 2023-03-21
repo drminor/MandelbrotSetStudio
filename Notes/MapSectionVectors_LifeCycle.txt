@@ -1,0 +1,65 @@
+Request Processor
+	Fetch Counts
+		Get MapSectionVectors from pool
+
+	Found 
+		Reader produces a MapSectionRecord /w counts byte array
+		Adapter copies the contents of the MapSectionRecord's byte array
+			into the MapSectionVectors
+			and Creates a MapSectionResponse that takes a reference to the MapSectionVectors
+
+		Response Processor
+			Delivers the MapSectionResponse to the MapLoader
+			MapLoader gets a MapSectionValues from the pool
+				reads the counts byte array
+				into an array of ushorts
+				on the MapSectionValues
+				and Creates a MapSection
+			Releases the MapSectionVectors back to the pool
+		
+			Delivers the MapSection to the Display Control
+		
+			Display Control
+				release the MapSectionValues back to the pool.	
+
+	Not Found
+		Get a MapSectionZVectors from the pool
+		Request is created 
+			that takes a reference to the MapSectionVectors
+			and the MapSectionZVectors
+		
+		Delivers the Request to the MapSectionGenerator 
+
+		MapSectionGenerator			
+			Creates a IterationState that takes a reference to the MapSectionVectors
+				--> Row
+					--> Col
+					<-- Row
+				<-- MapSectionVectors
+
+			Creates a response from the request
+				that takes a reference to the MapSectionVectors
+				and the MapSectionZVectors
+				
+				Removes the references to the MapSectionVectors
+				and the MapSectionZVectors from the Request
+				Disposes the Request.
+
+				Return the response to the Request Processor
+		
+		Request Procesor
+			Makes a copy of the MapSectionVectors
+			Delivers it to the Request Persister
+			
+			Delivers the original to the Response Processor	
+				--> see above for Response Processor
+		
+			Request Persister 
+				Delivers it to the Adapter
+		
+				Adapter creates a MapSectionRecord
+					that takes a reference to the MapSectionVectors		
+				
+				Returns the MapSectionVectors to the pool
+
+

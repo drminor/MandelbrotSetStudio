@@ -111,7 +111,7 @@ namespace ImageBuilderOld
 
 						try
 						{
-							var x = mClient.GenerateMapSectionAsyncR(request).GetAwaiter().GetResult();
+							var x = mClient.GenerateMapSectionAsync(request).GetAwaiter().GetResult();
 
 							Debug.WriteLine($"The reply contains {x.Counts.Length} count values.");
 							Console.WriteLine($"The reply contains {x.Counts.Length} count values.");
@@ -135,12 +135,14 @@ namespace ImageBuilderOld
 				SubdivisionId = "TestId",
 				BlockPosition = new BigVectorDto(new BigInteger[] { 0, 0 }),
 				Position = new RPointDto(new BigInteger[] { 3, 1 }, -2),
+				Precision = RMapConstants.DEFAULT_PRECISION,
 				BlockSize = RMapConstants.BLOCK_SIZE,
-				SamplePointsDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
+				SamplePointDelta = new RSizeDto(new BigInteger[] { 1, 1 }, -8),
 				MapCalcSettings = new MapCalcSettings(targetIterations: 100, requestsPerJob: 100),
 				Counts = null,
 				DoneFlags = null,
-				ZValues = null
+				ZValues = null,
+				ProcessingStartTime = DateTime.UtcNow
 			};
 
 			//var tSize = new RSizeDto(new BigInteger[] { 11, 12 }, 3);

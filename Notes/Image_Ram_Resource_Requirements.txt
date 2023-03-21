@@ -1,0 +1,28 @@
+128 x 128 pixels
+
+output = 4 bytes / pixel 
+
+storage
+count = 2 bytes / pixel
+escV = 2 bytes / pixel
+Done = 1 byte / pixel
+ZValues = 32 bytes / pixel
+
+128 x 128 = 16,384 pixels
+
+65,536 bytes for count + escapeVelocities
+
+19" x 19"
+
+600 x 600 pixels / sq inch.
+
+results in 519,840,000 bytes @ 32 bits / pixel (or count + escVel).
+
+.png file ~50MB (24 bits / pixel) 11392 x 11392 pixels = ~380M logical image size.
+for a compression ratio of 1:7
+
+
+
+
+
+

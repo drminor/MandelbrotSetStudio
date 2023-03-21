@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-
-using MapSecWorkReqType = MapSectionProviderLib.WorkItem<MEngineDataContracts.MapSectionRequest, MEngineDataContracts.MapSectionResponse>;
 
 namespace MapSectionProviderLib
 {
@@ -15,30 +12,30 @@ namespace MapSectionProviderLib
 		private readonly object _cancelledJobsLock = new();
 
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<MapSecWorkReqType> _workQueue;
-
-		private readonly List<int> _cancelledJobIds;
+		private readonly BlockingCollection<MapSectionWorkRequest> _workQueue;
 
 		private Task _workQueueProcessor;
 		private bool disposedValue;
+		private bool _isStopped;
 
 		#region Constructor
 
 		public MapSectionResponseProcessor()
 		{
+			_isStopped = false;
 			_cts = new CancellationTokenSource();
 
-			_workQueue = new BlockingCollection<MapSecWorkReqType>(QUEUE_CAPACITY);
-			_cancelledJobIds = new List<int>();
+			_workQueue = new BlockingCollection<MapSectionWorkRequest>(QUEUE_CAPACITY);
+			//_cancelledJobIds = new List<int>();
 
-			_workQueueProcessor = Task.Run(ProcessTheQueue);
+			_workQueueProcessor = Task.Run(() => { ProcessTheQueue(_cts.Token); });
 		}
 
 		#endregion
 
 		#region Public Methods
 
-		public void AddWork(MapSecWorkReqType mapSectionWorkItem)
+		internal void AddWork(MapSectionWorkRequest mapSectionWorkItem)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
@@ -50,21 +47,15 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		public void CancelJob(int jobId)
-		{
-			lock (_cancelledJobsLock)
-			{
-				if (!_cancelledJobIds.Contains(jobId))
-				{
-					_cancelledJobIds.Add(jobId);
-				}
-			}
-		}
-
 		public void Stop(bool immediately)
 		{
 			lock (_cancelledJobsLock)
 			{
+				if (_isStopped)
+				{
+					return;
+				}
+
 				if (immediately)
 				{
 					_cts.Cancel();
@@ -76,37 +67,45 @@ namespace MapSectionProviderLib
 						_workQueue.CompleteAdding();
 					}
 				}
+
+				_isStopped = true;
 			}
 
+			// Don't block the UI thread, since the task may be waiting for the UI thread to complete its work as it executes the RunWorkAction.
+			_ = Task.Run(WaitForTheQueueProcessorToComplete);
+		}
+
+		private void WaitForTheQueueProcessorToComplete()
+		{
 			try
 			{
-				_workQueueProcessor.Wait(120 * 1000);
+				_ = _workQueueProcessor.Wait(10 * 1000);
+				Debug.WriteLine("The MapSectionReponseProcesssor's WorkQueueProcessor Task has completed.");
 			}
-			catch
-			{ }
+			catch (Exception e) 
+			{
+				Debug.WriteLine($"While Waiting for the processor to complete, the MapSectionResponseProcessor received exception: {e}.");
+			}
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private void ProcessTheQueue()
+		private void ProcessTheQueue(CancellationToken ct)
 		{
-			var ct = _cts.Token;
-
 			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
-					var mapSectionWorkItem = _workQueue.Take(ct);
+					var mapSectionWorkRequest = _workQueue.Take(ct);
 
-					if (!mapSectionWorkItem.Response.RequestCancelled && IsJobCancelled(mapSectionWorkItem.JobId))
+					mapSectionWorkRequest.Request.Completed = true;
+					mapSectionWorkRequest.RunWorkAction();
+					if (!mapSectionWorkRequest.Request.ProcessingEndTime.HasValue)
 					{
-						mapSectionWorkItem.Response.RequestCancelled = true;
+						mapSectionWorkRequest.Request.ProcessingEndTime = DateTime.UtcNow;
 					}
-
-					mapSectionWorkItem.Request.Completed = true;
-					mapSectionWorkItem.RunWorkAction();
 				}
 				catch (OperationCanceledException)
 				{
@@ -118,17 +117,6 @@ namespace MapSectionProviderLib
 					throw;
 				}
 			}
-		}
-
-		private bool IsJobCancelled(int jobId)
-		{
-			bool result;
-			lock (_cancelledJobsLock)
-			{
-				result = _cancelledJobIds.Contains(jobId);
-			}
-
-			return result;
 		}
 
 		#endregion
@@ -154,10 +142,10 @@ namespace MapSectionProviderLib
 						_workQueue.Dispose();
 					}
 
-					if (_workQueueProcessor != null)
-					{
-						_workQueueProcessor.Dispose();
-					}
+					//if (_workQueueProcessor != null)
+					//{
+					//	_workQueueProcessor.Dispose();
+					//}
 				}
 
 				disposedValue = true;

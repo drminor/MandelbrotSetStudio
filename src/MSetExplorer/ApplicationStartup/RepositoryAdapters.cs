@@ -1,28 +1,45 @@
 ﻿using MSetRepo;
-using MSS.Common.MSetRepo;
+using MSS.Common;
 
 namespace MSetExplorer
 {
 	public class RepositoryAdapters
 	{
-		public RepositoryAdapters(string dbConnectionString,  bool useMapSectionRepo)
+		public RepositoryAdapters(string server, int port)
 		{
 			// Project Repository Adapter
-			ProjectAdapter = MSetRepoHelper.GetProjectAdapter(dbConnectionString);
+			ProjectAdapter = MSetRepoHelper.GetProjectAdapter(server, port);
 
+			// MapSection Repository Adapter
+			MapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(server, port);
+
+			// SharedColorBandSet Repository Adapter
+			SharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(server, port);
+		}
+
+		#region Public Properties
+
+		public IProjectAdapter ProjectAdapter { get; init; }
+		public IMapSectionAdapter MapSectionAdapter { get; init; }
+		public SharedColorBandSetAdapter SharedColorBandSetAdapter { get; init; }
+
+		#endregion
+
+		#region Public Methods
+
+		public void CreateCollections()
+		{
 			ProjectAdapter.CreateCollections();
-
-			MapSectionAdapter = useMapSectionRepo ? MSetRepoHelper.GetMapSectionAdapter(dbConnectionString) : null;
-
-			SharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(dbConnectionString);
+			MapSectionAdapter.CreateCollections();
 			SharedColorBandSetAdapter.CreateCollections();
 		}
 
-		public ProjectAdapter ProjectAdapter { get; init; }
+		public void WarmUp()
+		{
+			ProjectAdapter.WarmUp();
+		}
 
-		public IMapSectionAdapter? MapSectionAdapter { get; init; }
-
-		public SharedColorBandSetAdapter SharedColorBandSetAdapter { get; init; }
+		#endregion
 
 	}
 }

@@ -6,7 +6,9 @@ namespace MSS.Types
 {
 	public class RPoint : IBigRatShape, IEquatable<RPoint>, IEqualityComparer<RPoint>
 	{
-		public static RPoint Zero = new RPoint();
+		private static RPoint ZeroSingleton = new RPoint();
+
+		public static RPoint Zero => ZeroSingleton;
 
 		public BigInteger[] Values { get; init; }
 
@@ -82,7 +84,6 @@ namespace MSS.Types
 				: new RPoint(XNumerator + amount.XNumerator, YNumerator + amount.YNumerator, amount.Exponent);
 		}
 
-
 		/// <summary>
 		/// Returns the distance from this point to the given point.
 		/// </summary>
@@ -95,9 +96,11 @@ namespace MSS.Types
 				: new RVector(XNumerator - amount.XNumerator, YNumerator - amount.YNumerator, amount.Exponent);
 		}
 
+		#region ToString / IEqualityComparer / IEquatable Support
+
 		public override string ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this)); 
+			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
 			return result;
 		}
 
@@ -112,8 +115,6 @@ namespace MSS.Types
 				return BigIntegerHelper.GetDisplay(this);
 			}
 		}
-
-		#region IEqualityComparer / IEquatable Support
 
 		public bool Equals(RPoint? a, RPoint? b)
 		{
@@ -158,6 +159,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
 	}
 }

@@ -17,7 +17,7 @@
 
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
 
-            <ListView Margin="10" Name="lvProjects" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedProject}">
+            <ListView Margin="10" Name="lvProjects" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedProject}" TabIndex="1">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Name" Width="250" DisplayMemberBinding="{Binding Name}" />
@@ -36,12 +36,12 @@
 
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                     <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="170" Height="22"/>
+                    <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="170" Height="22" TabIndex="2"/>
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                     <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Description:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtDescription" Text="{Binding SelectedDescription}" Width="500" Height="22"/>
+                    <TextBox x:Name="txtDescription" Text="{Binding SelectedDescription}" Width="500" Height="22" TabIndex="3"/>
                 </StackPanel>
 
             </StackPanel>            
@@ -50,9 +50,9 @@
         <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Save</Button>
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Cancel</Button>
-                <Button Name="btnDelete" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="30,10, 10, 10" Click="DeleteButton_Click">_Delete</Button>
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" TabIndex="4" >Save</Button>
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True" TabIndex="5">_Cancel</Button>
+                <Button Name="btnDelete" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="30,10, 10, 10" Click="DeleteButton_Click" TabIndex="6">_Delete</Button>
             </StackPanel>
 
         </Border>

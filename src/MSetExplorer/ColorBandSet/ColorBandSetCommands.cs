@@ -34,12 +34,20 @@ namespace MSetExplorer
             }
         );
 
+        public static readonly RoutedUICommand Apply = new(
+            text: "Apply", 
+            name: "Apply", 
+            ownerType: typeof(ColorBandSetCommands)
+       );
 
-        public static readonly RoutedUICommand Apply
-            = new("Apply", "Apply", typeof(ColorBandSetCommands));
-
-        public static readonly RoutedUICommand ShowDetails
-            = new("ShowDetails", "ShowDetails", typeof(ColorBandSetCommands));
+        public static readonly RoutedUICommand ShowDetails = new(
+            text: "Show Details",
+            name: "ShowDetails",
+            ownerType: typeof(ColorBandSetCommands),
+            inputGestures: new InputGestureCollection() {
+                new KeyGesture(Key.F3)
+            }
+       );
 
         //public static readonly RoutedUICommand Settings
         //    = new("Settings", "Settings", typeof(ColorBandSetCommands));

@@ -207,7 +207,7 @@ namespace MSS.Common
 		{
 			if (exponentDelta < 0)
 			{
-				var factor = (long)Math.Pow(2, -1 * exponentDelta);
+				var factor = BigInteger.Pow(2, -1 * exponentDelta); // (long)Math.Pow(2, -1 * exponentDelta);
 				for (var i = 0; i < values.Length; i++)
 				{
 					values[i] /= factor;
@@ -215,7 +215,7 @@ namespace MSS.Common
 			}
 			else if (exponentDelta > 0)
 			{
-				var factor = (long)Math.Pow(2, exponentDelta);
+				var factor = BigInteger.Pow(2, exponentDelta); // (long)Math.Pow(2, exponentDelta);
 				for (var i = 0; i < values.Length; i++)
 				{
 					values[i] *= factor;

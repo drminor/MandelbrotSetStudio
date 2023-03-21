@@ -11,53 +11,52 @@ namespace MSS.Types.MSet
 		private static readonly int DEFAULT_THRESHOLD = 4;
 
 		[DataMember(Order = 1)]
-		public int TargetIterations { get; init; }
+		public int TargetIterations { get; set; }
 
 		[DataMember(Order = 2)]
-		public int Threshold { get; init; }
+		public int Threshold { get; set; }
 
 		[DataMember(Order = 3)]
-		public int RequestsPerJob { get; init; }
+		public int RequestsPerJob { get; set; }
 
-		public bool UseEscapeVelocities { get; set; }
+		//public bool UseEscapeVelocities { get; set; }
 
 		#region Constructor
 
-		public MapCalcSettings()
-		{
-			TargetIterations = 0;
-			Threshold = 0;
-			RequestsPerJob = 0;
-			UseEscapeVelocities = true;
-		}
-
-		public MapCalcSettings(int targetIterations, int requestsPerJob) : this(targetIterations, DEFAULT_THRESHOLD, requestsPerJob, useEscapeVelocities: true)
+		public MapCalcSettings() : this(0, 0, 0)
 		{ }
 
-		public MapCalcSettings(int targetIterations, int threshold, int requestsPerJob, bool useEscapeVelocities)
+		public MapCalcSettings(int targetIterations, int requestsPerJob) : this(targetIterations, DEFAULT_THRESHOLD, requestsPerJob)
+		{ }
+
+		public MapCalcSettings(int targetIterations, int threshold, int requestsPerJob)
 		{
 			TargetIterations = targetIterations;
 			Threshold = threshold;
 			RequestsPerJob = requestsPerJob;
-			UseEscapeVelocities = useEscapeVelocities;
 		}
 
 		#endregion
 
+		#region Public Methods
+
 		object ICloneable.Clone()
 		{
-			throw new NotImplementedException();
+			return Clone();
 		}
 
 		public MapCalcSettings Clone()
 		{
-			return new MapCalcSettings(TargetIterations, RequestsPerJob, Threshold, UseEscapeVelocities);
+			var result = new MapCalcSettings(TargetIterations, Threshold, RequestsPerJob);
+			return result;
 		}
 
 		public override string ToString()
 		{
 			return $"TargetIterations: {TargetIterations}, RequestsPerJob: {RequestsPerJob}, Threshold: {Threshold}";
 		}
+
+		#endregion
 
 		#region IEquatable and IEqualityComparer Support
 

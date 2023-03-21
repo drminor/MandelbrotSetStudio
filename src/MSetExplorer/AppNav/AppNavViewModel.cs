@@ -1,38 +1,65 @@
-﻿using ImageBuilder;
+﻿using MapSectionProviderLib;
+using MSetExplorer.XPoc;
+using MSetExplorer.XPoc.PerformanceHarness;
+using MSetRepo;
 using MSS.Common;
+using MSS.Types;
 using System;
 
 namespace MSetExplorer
 {
-	public delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-	public delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	internal delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, bool useEscapeVelocities, DialogType dialogType);
 
-	public class AppNavViewModel
+	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(RRectangle coords, SizeInt canvasSize, bool allowEdits);
+
+	internal class AppNavViewModel
 	{
-		public RepositoryAdapters RepositoryAdapters { get; init; }
-		public IMapLoaderManager MapLoaderManager { get; init; }
-		public PngBuilder PngBuilder { get; init; }
+		private static readonly bool _useSimpleJobTree = true;
 
-		public AppNavViewModel(RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, PngBuilder pngBuilder)
+
+		private readonly IProjectAdapter _projectAdapter;
+		private readonly IMapSectionAdapter _mapSectionAdapter;
+
+		private readonly SharedColorBandSetAdapter _sharedColorBandSetAdapter;
+
+		private readonly MapJobHelper _mapJobHelper;
+		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
+
+		public AppNavViewModel(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor	mapSectionRequestProcessor)
 		{
-			RepositoryAdapters = repositoryAdapters;
-			MapLoaderManager = mapLoaderManager;
-			PngBuilder = pngBuilder;
+			_mapSectionHelper = mapSectionHelper;
+			_projectAdapter = repositoryAdapters.ProjectAdapter;
+			_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
+			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
+			_mapJobHelper = new MapJobHelper(repositoryAdapters.MapSectionAdapter);
+			_mapLoaderManager = mapLoaderManager;
+			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 		}
 
 		public ExplorerViewModel GetExplorerViewModel()
 		{
-			// Map Project ViewModel
-			var mapProjectViewModel = new MapProjectViewModel(RepositoryAdapters.ProjectAdapter, RMapConstants.BLOCK_SIZE);
+			// Project ViewModel
+			var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			var mapSectionHelper = new MapSectionHelper();
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(MapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
-			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
+			var histogram = new HistogramA(0);
+			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
+			var colorBandSetViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections, mapSectionHistogramProcessor);
 
-			var result = new ExplorerViewModel(mapProjectViewModel, mapDisplayViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			// ColorBand Histogram ViewModel
+			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
+
+			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
+			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
+				_mapLoaderManager,
+				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			return result;
 		}
@@ -40,36 +67,137 @@ namespace MSetExplorer
 		public PosterDesignerViewModel GetPosterDesignerViewModel()
 		{
 			// Poster ViewModel
-			var posterViewModel = new PosterViewModel(RepositoryAdapters.ProjectAdapter);
+			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			var mapSectionHelper = new MapSectionHelper();
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(MapLoaderManager, mapSectionHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
 
 			// ColorBand ViewModel
-			var colorBandViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections);
+			var histogram = new HistogramA(0);
+			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
+			var colorBandSetViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections, mapSectionHistogramProcessor);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandViewModel, RepositoryAdapters.ProjectAdapter, PngBuilder, CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel);
+			// ColorBand Histogram ViewModel
+			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
 
+			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
+
+			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
+				_mapJobHelper, _mapLoaderManager,
+				CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel);
+
+			return result;
+		}
+
+		public XSamplingEditorViewModel GetXSamplingEditorViewModel()
+		{
+			var result = new XSamplingEditorViewModel(_mapSectionAdapter);
+			return result;
+		}
+
+		public PerformanceHarnessMainWinViewModel GetPerformanceHarnessMainWinViewModel()
+		{
+			// Project ViewModel
+			//var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
+
+			// Map Display View Model
+			//IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
+
+			// ColorBand ViewModel
+			//var histogram = new HistogramA(0);
+			//var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
+			//var colorBandSetViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections, mapSectionHistogramProcessor);
+
+			// ColorBand Histogram ViewModel
+			//var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
+
+			//var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
+			//var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
+			//	_mapLoaderManager,
+			//	CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
+
+			var result = new PerformanceHarnessMainWinViewModel(_mapSectionRequestProcessor, _mapJobHelper, _mapSectionHelper);
 			return result;
 		}
 
 		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return RepositoryAdapters.ProjectAdapter == null
-				? throw new InvalidOperationException("Cannot create a Project OpenSave ViewModel, the ProjectAdapter is null.")
-				: new ProjectOpenSaveViewModel(RepositoryAdapters.ProjectAdapter, initalName, dialogType);
+			return new ProjectOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, initalName, dialogType);
 		}
 
 		private IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return RepositoryAdapters.SharedColorBandSetAdapter == null
-				? throw new InvalidOperationException("Cannot create a ColorBandSet OpenSave ViewModel, the Shared ColorBandSet Adapter is null.")
-				: new ColorBandSetOpenSaveViewModel(RepositoryAdapters.SharedColorBandSetAdapter, initalName, dialogType);
+			return new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
 
+		private IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
+		{
+			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, _mapSectionAdapter, initalName, useEscapeVelocities, dialogType);
+		}
+
+		private CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
+		{
+			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, _mapJobHelper);
+			return result;
+		}
+
+		private long? DropRecentMapSections(IMapSectionDeleter mapSectionDeleter)
+		{
+			var lastSaved = DateTime.Parse("2022-05-29");
+			var result = mapSectionDeleter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
+			return result;
+
+		}
+
+		#region Utilities
+
+		//// Remove FetchZValuesFromRepo property from MapSections
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = ((MapSectionAdapter)_mapSectionAdapter).RemoveFetchZValuesProp();
+		//	return numUpdated;
+		//}
+
+		//// Update all Job Records to use MapAreaInfo
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = ((ProjectAdapter)_projectAdapter).UpdateAllJobsToUseMapAreaInfoRec1();
+		//	return numUpdated;
+		//}
+
+		//// Remove all (orphaned) Job Records. (I.e., those without a Project.)
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = ((ProjectAdapter)_projectAdapter).UpdateAllJobsToUseMapAreaInfoRec2();
+		//	return numUpdated;
+		//}
+
+		//// Update all Job Records to have a MapCalcSettings
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = ((ProjectAdapter)_projectAdapter).UpdateAllJobsToHaveMapCalcSettings();
+		//	return numUpdated;
+		//}
+
+		//// Update all Job Records to have a MapCalcSettings
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = ((ProjectAdapter)_projectAdapter).RemoveFetchZValuesPropFromAllJobs();
+		//	numUpdated += ((ProjectAdapter)_projectAdapter).RemoveFetchZValuesPropFromAllJobs2();
+		//	return numUpdated;
+		//}
+
+		// Remove the old properties that are now part of the MapAreaInfo record
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = ((ProjectAdapter)_projectAdapter).RemoveOldMapAreaPropsFromAllJobs();
+		//	return numUpdated;
+		//}
+
+
+		#endregion
 
 	}
 }

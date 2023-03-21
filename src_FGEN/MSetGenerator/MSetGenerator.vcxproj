@@ -44,7 +44,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Static</UseOfMfc>
     <UseInteloneMKL>Sequential</UseInteloneMKL>
@@ -206,7 +206,7 @@
     <ClCompile Include="qpParser.cpp" />
     <ClCompile Include="SizeDd.cpp" />
     <ClCompile Include="SizeInt.cpp" />
-    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="MSetGen.cpp" />
     <ClCompile Include="twoProd.cpp" />
     <ClCompile Include="twoSum.cpp" />
     <ClCompile Include="vHelper.cpp" />

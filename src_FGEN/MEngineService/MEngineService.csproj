@@ -1,15 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <StartupObject>MEngineService.Program</StartupObject>
     <Platforms>x64</Platforms>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PlatformTarget>x64</PlatformTarget>
@@ -18,10 +15,16 @@
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.34.0" />
     <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.152" />
+    <PackageReference Include="Serilog" Version="2.11.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\MapSectionGeneratorLib\MapSectionGeneratorLib.csproj" />
+    <ProjectReference Include="..\..\src\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\..\src\MEngineDataContracts\MEngineDataContracts.csproj" />
+    <ProjectReference Include="..\..\src\MSetRepo\MSetRepo.csproj" />
+    <ProjectReference Include="..\..\src\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

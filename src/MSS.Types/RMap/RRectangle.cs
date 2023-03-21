@@ -10,23 +10,20 @@ namespace MSS.Types
 	{
 		public static readonly RRectangle Zero = new RRectangle();
 
-
 		public BigInteger[] Values { get; init; }
 
 		public int Exponent { get; init; }
+
+		public int Precision { get; set; }	// Number of binary digits
 
 		public RRectangle() : this(0, 0, 0, 0, 0)
 		{ }
 
 		public RRectangle(BigInteger[] values, int exponent) : this(values[0], values[1], values[2], values[3], exponent)
-		{
-			Validate();
-		}
+		{ }
 
 		public RRectangle(BigInteger[] xValues, BigInteger[] yValues, int exponent) : this(xValues[0], xValues[1], yValues[0], yValues[1], exponent)
-		{
-			Validate();
-		}
+		{ }
 
 		public RRectangle(RPoint p, RSize s) : this(p.XNumerator, p.XNumerator + s.WidthNumerator, p.YNumerator, p.YNumerator + s.HeightNumerator, p.Exponent)
 		{
@@ -44,16 +41,14 @@ namespace MSS.Types
 			}
 		}
 
+		public RRectangle(RectangleInt rect) : this(rect.X1, rect.X2, rect.Y1, rect.Y2, 0, null)
+		{ }
 
-		public RRectangle(RectangleInt rect) : this(rect.X1, rect.X2, rect.Y1, rect.Y2, 0)
-		{
-			Validate();
-		}
-
-		public RRectangle(BigInteger x1, BigInteger x2, BigInteger y1, BigInteger y2, int exponent)
+		public RRectangle(BigInteger x1, BigInteger x2, BigInteger y1, BigInteger y2, int exponent, int? precision = null)
 		{
 			Values = new BigInteger[] { x1, x2, y1, y2 };
 			Exponent = exponent;
+			Precision = precision ?? BigIntegerHelper.DEFAULT_PRECISION;
 			Validate();
 		}
 
@@ -113,14 +108,6 @@ namespace MSS.Types
 			return Reducer.Reduce(this);
 		}
 
-		public override string ToString()
-		{
-			var reduced = Reducer.Reduce(this);
-
-			var result = $"P1: {reduced.LeftBot.ToString(reduce: false)}, P2: {reduced.RightTop.ToString(reduce: false)}";
-			return result;
-		}
-
 		//public RRectangle Scale(RPoint factor)
 		//{
 		//	return factor.Exponent != Exponent
@@ -146,6 +133,14 @@ namespace MSS.Types
 		//		? throw new InvalidOperationException($"Cannot translate a RRectangle with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
 		//		: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, amount.Exponent);
 		//}
+
+		public override string ToString()
+		{
+			var reduced = Reducer.Reduce(this);
+
+			var result = $"P1: {reduced.LeftBot.ToString(reduce: false)}, P2: {reduced.RightTop.ToString(reduce: false)}";
+			return result;
+		}
 
 		[Conditional("Debug")]
 		private void Validate()

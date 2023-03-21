@@ -5,12 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Explorer Window" Width="1495" Height="1095">
+        Title="Explorer Window" Width="1475" Height="1100">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.EditCoords" CanExecute="EditCoordsCommand_CanExecute" Executed="EditCoordsCommand_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.CreateImage" CanExecute="CreateImageCommand_CanExecute" Executed="CreateImageCommand_Executed" />
 
         <CommandBinding Command="local:CustomCommands.JobGoBack" CanExecute="GoBack_CanExecute" Executed="GoBack_Executed" />
         <CommandBinding Command="local:CustomCommands.JobGoForward" CanExecute="GoForward_CanExecute" Executed="GoForward_Executed" />
@@ -39,6 +41,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -47,17 +50,22 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="25">
+        <!-- Menu -->
+        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="20">
 
             <MenuItem Header="_Project">
                 <MenuItem Header="_New" Click="NewButton_Click"/>
                 <MenuItem Header="_Open" Click="OpenButton_Click"/>
                 <MenuItem Header="_Save" Command="local:CustomCommands.ProjectSave" />
-                <MenuItem Header="Save_As" Command="local:CustomCommands.ProjectSaveAs" />
+                <MenuItem Header="Save _As" Command="local:CustomCommands.ProjectSaveAs" />
+
                 <Separator/>
                 <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.EditCoords"/>
+
                 <Separator/>
                 <MenuItem Header="Create P_oster" Click="CreatePosterButton_Click"/>
+                <MenuItem Header="C_reate Image" Command="local:CustomCommands.CreateImage" />
+
                 <Separator/>
                 <MenuItem Header="_Close And Return" Click="CloseAndReturnButton_Click" />
                 <MenuItem Header="_Exit Program" Click="ExitButton_Click" />
@@ -82,6 +90,7 @@
                 <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
                 <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
                 <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Checked" IsChecked="False"/>
+                <MenuItem Header="Histogram" x:Name="mnuItem_HistogramWindow" IsCheckable="True" Checked="Histogram_Checked" Unchecked="Histogram_Checked" IsChecked="False"/>
             </MenuItem>
 
             <MenuItem Header="_Map">
@@ -103,61 +112,69 @@
             </MenuItem>
 
         </Menu>
+        
+        <!-- Pan Buttons, Back/Forward, Display Size -->
+        <Border Grid.Row="1" Grid.Column="0" BorderThickness="0.75" BorderBrush="Black" x:Name="colLeft" Margin="5">
+            <Grid >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="1" Grid.Column="0" x:Name="colLeft">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+                <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecPanButtons">
+                    <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanLeft">Left</Button>
+                    <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanUp">Up</Button>
+                    <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanRight">Right</Button>
+                    <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
+                </StackPanel>
 
-            <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecPanButtons">
-                <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanLeft">Left</Button>
-                <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanUp">Up</Button>
-                <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanRight">Right</Button>
-                <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
-            </StackPanel>
+                <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecNavButtons">
+                    <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
+                    <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
+                </StackPanel>
 
-            <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecNavButtons">
-                <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
-                <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
-            </StackPanel>
+                <local:JobProgressControl x:Name="jobProgress1" Grid.Row="2" Margin="5" Visibility="Collapsed"/>
 
-            <StackPanel Grid.Row="2" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
-                <Grid Margin="5,0" x:Name="grdTop">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="30" />
-                        <ColumnDefinition Width="40" />
-                        <ColumnDefinition Width="40" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel Grid.Row="3" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
+                    <Grid Margin="5,0" x:Name="grdTop">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="40" />
+                        </Grid.ColumnDefinitions>
 
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <!--<RowDefinition Height="*" />-->
-                    </Grid.RowDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <!--<RowDefinition Height="*" />-->
+                        </Grid.RowDefinitions>
 
-                    <TextBlock Text="W:" Grid.Row="0" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
-                    <TextBox x:Name="txtW" Grid.Row="0" Grid.Column="1"  Grid.RowSpan="2" Margin="3,10" Text="{Binding DispWidth}"/>
-                    <Button Grid.Row="0" Grid.Column="2" Margin="2" Click="W_Up_Button_Click">U</Button>
-                    <Button Grid.Row="1" Grid.Column="2" Margin="2" Click="W_Down_Button_Click">D</Button>
+                        <TextBlock Text="W:" Grid.Row="0" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
+                        <TextBox x:Name="txtW" Grid.Row="0" Grid.Column="1"  Grid.RowSpan="2" Margin="3,10" Text="{Binding DispWidth}"/>
+                        <Button Grid.Row="0" Grid.Column="2" Margin="2" Click="W_Up_Button_Click">U</Button>
+                        <Button Grid.Row="1" Grid.Column="2" Margin="2" Click="W_Down_Button_Click">D</Button>
 
-                    <TextBlock Text="H:" Grid.Row="2" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
-                    <TextBox x:Name="txtH" Grid.Row="2" Grid.RowSpan="2" Grid.Column="1" Margin="3,10" Text="{Binding DispHeight}" />
-                    <Button Grid.Row="2" Grid.Column="2" Margin="2" Click="H_Up_Button_Click">U</Button>
-                    <Button Grid.Row="3" Grid.Column="2" Margin="2" Click="H_Down_Button_Click">D</Button>
+                        <TextBlock Text="H:" Grid.Row="2" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
+                        <TextBox x:Name="txtH" Grid.Row="2" Grid.RowSpan="2" Grid.Column="1" Margin="3,10" Text="{Binding DispHeight}" />
+                        <Button Grid.Row="2" Grid.Column="2" Margin="2" Click="H_Up_Button_Click">U</Button>
+                        <Button Grid.Row="3" Grid.Column="2" Margin="2" Click="H_Down_Button_Click">D</Button>
 
-                </Grid>
-            </StackPanel>
+                    </Grid>
+                </StackPanel>
 
-        </Grid>
+            </Grid>
 
-        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" x:Name="colCenter">
+        </Border>
+
+        <!-- Map Display -->
+        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" x:Name="colCenter" Margin="0,5">
             <local:MapDisplayControl x:Name="mapDisplay1"></local:MapDisplayControl>
         </Border>
 
@@ -186,12 +203,19 @@
 
         </Grid>
 
-        <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Collapsed">
-            <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" >
-                <local:JobTreeControl/>
+        <!-- Job Tree -->
+        <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
+            <Border  Margin="0,5,5,5" >
+                <local:JobTreeControl x:Name="jobTree1"  ></local:JobTreeControl>
             </Border>
             
         </Grid>
+
+        <!-- Histogram -->
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Collapsed">
+            <local:ColorBandSetHistogramControl x:Name="cbsh1"/>
+            
+        </Border>
 
     </Grid>
 </Window>

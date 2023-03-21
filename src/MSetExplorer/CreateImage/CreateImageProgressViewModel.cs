@@ -1,5 +1,5 @@
 ﻿using ImageBuilder;
-using MSS.Types;
+using MSS.Common.MSet;
 using System;
 using System.IO;
 using System.Threading;
@@ -10,14 +10,16 @@ namespace MSetExplorer
 	public class CreateImageProgressViewModel
 	{
 		private readonly PngBuilder _pngBuilder;
+		private bool _useEscapeVelocities;
 		private CancellationTokenSource _cancellationTokenSource;
 		private Task<bool>?_task;
 
 		#region Constructor
 
-		public CreateImageProgressViewModel(PngBuilder pngBuilder)
+		public CreateImageProgressViewModel(PngBuilder pngBuilder, bool useEscapeVelocities)
 		{
 			_pngBuilder = pngBuilder;
+			_useEscapeVelocities = useEscapeVelocities;
 			_cancellationTokenSource = new CancellationTokenSource();
 			_task = null;
 
@@ -33,6 +35,8 @@ namespace MSetExplorer
 		public string? ImageFilePath { get; private set; }
 		public Poster? Poster { get; private set; }
 
+		public long NumberOfCountValSwitches => _pngBuilder.NumberOfCountValSwitches;
+
 		#endregion
 
 		#region Public Methods
@@ -42,7 +46,9 @@ namespace MSetExplorer
 			ImageFilePath = imageFilePath;
 			Poster = poster;
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, poster, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			var curJob = poster.CurrentJob;
+
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, _useEscapeVelocities, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
 			//_task.ContinueWith(t =>
 			//{
@@ -50,6 +56,23 @@ namespace MSetExplorer
 			//}
 			//);
 		}
+
+		public void CreateImage(string imageFilePath, Project project)
+		{
+			ImageFilePath = imageFilePath;
+			//Poster = poster;
+
+			var curJob = project.CurrentJob;
+
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, curJob.MapAreaInfo, project.CurrentColorBandSet, curJob.MapCalcSettings, _useEscapeVelocities, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+
+			//_task.ContinueWith(t =>
+			//{
+
+			//}
+			//);
+		}
+
 
 		public void CancelCreateImage()
 		{
@@ -60,10 +83,9 @@ namespace MSetExplorer
 				_task.Wait();
 			}
 
-			// TODO: Schedule this or yield to allow the file to become free.
 			if (ImageFilePath != null && File.Exists(ImageFilePath))
 			{
-				Thread.Sleep(10000);
+				Thread.Sleep(10 * 1000);
 				File.Delete(ImageFilePath);
 			}
 		}

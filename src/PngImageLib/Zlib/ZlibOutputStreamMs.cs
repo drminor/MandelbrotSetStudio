@@ -8,7 +8,7 @@ using System.IO.Compression;
 // ONLY FOR .NET 4.5
 namespace PngImageLib.Zlib {
 
-#if NET_FIVE_ZERO
+#if NET_FIVE_ZERO || NET6_0
 
     internal class ZlibOutputStreamMs : AZlibOutputStream {
 

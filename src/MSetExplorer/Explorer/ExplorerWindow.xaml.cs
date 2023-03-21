@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSetExplorer.ScreenHelpers;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -7,21 +8,29 @@ using System.Windows.Input;
 using System.Diagnostics.CodeAnalysis;
 using MSS.Types.MSet;
 using MSS.Common;
+using MSS.Common.MSet;
+using System.Linq;
+using System.IO;
 
 namespace MSetExplorer
 {
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
-	public partial class ExplorerWindow : Window
+	public partial class ExplorerWindow : Window, IHaveAppNavRequestResponse
 	{
 		private IExplorerViewModel _vm;
 
+		private CreateImageProgressWindow? _createImageProgressWindow;
+
 		#region Constructor
 
-		public ExplorerWindow()
+		public ExplorerWindow(IExplorerViewModel dataContext, AppNavRequestResponse appNavRequestResponse)
 		{
-			_vm = (IExplorerViewModel)DataContext;
+			//_vm = (IExplorerViewModel)DataContext;
+			DataContext = dataContext;
+			_vm = dataContext;
+			AppNavRequestResponse = appNavRequestResponse;
 
 			Loaded += ExplorerWindow_Loaded;
 			Closing += ExplorerWindow_Closing;
@@ -38,8 +47,10 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (IExplorerViewModel)DataContext;
-				_vm.MapProjectViewModel.PropertyChanged += MapProjectViewModel_PropertyChanged;
+				//_vm = (IExplorerViewModel)DataContext;
+				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
+
+				//jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
@@ -48,6 +59,10 @@ namespace MSetExplorer
 				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 
 				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
+
+				cbsh1.DataContext = _vm.ColorBandSetHistogramViewModel;
+
+				jobTree1.DataContext = _vm.JobTreeViewModel;
 
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
@@ -61,18 +76,25 @@ namespace MSetExplorer
 			//ShowCoordsEditor();
 
 			//SpIdxTest();
+
+			DisplayJobTree(true);
+
+			if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.OpenProject)
+			{
+				OpenProjectFromAppRequest(AppNavRequestResponse.RequestParameters);
+			}
 		}
 
-		private void ExplorerWindow_Closing(object sender, CancelEventArgs e)
+		private void ExplorerWindow_Closing(object? sender, CancelEventArgs e)
 		{
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				_ = MessageBox.Show("Changes Saved");
+				//_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -85,27 +107,27 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		private void ProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoBack))
-			{
-				btnGoBack.IsEnabled = _vm.MapProjectViewModel.CanGoBack;
-				return;
-			}
+			//if (e.PropertyName == nameof(IProjectViewModel.CanGoBack))
+			//{
+			//	btnGoBack.IsEnabled = _vm.ProjectViewModel.CanGoBack;
+			//	return;
+			//}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CanGoForward))
-			{
-				btnGoForward.IsEnabled = _vm.MapProjectViewModel.CanGoForward;
-				return;
-			}
+			//if (e.PropertyName == nameof(IProjectViewModel.CanGoForward))
+			//{
+			//	btnGoForward.IsEnabled = _vm.ProjectViewModel.CanGoForward;
+			//	return;
+			//}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProject))
+			if (e.PropertyName == nameof(IProjectViewModel.CurrentProject))
 			{
-				Title = GetWindowTitle(_vm.MapProjectViewModel.CurrentProject?.Name, _vm.MapProjectViewModel.CurrentColorBandSet.Name);
+				Title = GetWindowTitle(_vm.ProjectViewModel.CurrentProject?.Name, _vm.ProjectViewModel.CurrentColorBandSet.Name);
 				CommandManager.InvalidateRequerySuggested();
 			}
 
-			if (e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectOnFile) || e.PropertyName == nameof(IMapProjectViewModel.CurrentProjectIsDirty))
+			if (e.PropertyName is (nameof(IProjectViewModel.CurrentProjectOnFile)) or (nameof(IProjectViewModel.CurrentProjectIsDirty)) or (nameof(IProjectViewModel.CurrentJob)))
 			{
 				CommandManager.InvalidateRequerySuggested();
 			}
@@ -130,24 +152,24 @@ namespace MSetExplorer
 
 		private void CloseAndReturnButton_Click(object sender, RoutedEventArgs e)
 		{
-			CloseOrExit(returnToTopNav: true);
+			CloseOrExit(OnCloseBehavior.ReturnToTopNav);
 		}
 
 		private void ExitButton_Click(object sender, RoutedEventArgs e)
 		{
-			CloseOrExit(returnToTopNav: false);
+			CloseOrExit(OnCloseBehavior.Close);
 		}
 
-		private void CloseOrExit(bool returnToTopNav)
+		private void CloseOrExit(OnCloseBehavior onCloseBehavior)
 		{
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				_ = MessageBox.Show("Changes Saved");
+				//_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -155,8 +177,8 @@ namespace MSetExplorer
 				return;
 			}
 
-			_vm.MapProjectViewModel.ProjectClose();
-			Properties.Settings.Default["ShowTopNav"] = returnToTopNav;
+			_vm.ProjectViewModel.ProjectClose();
+			AppNavRequestResponse.OnCloseBehavior = onCloseBehavior;
 			Close();
 		}
 
@@ -179,7 +201,23 @@ namespace MSetExplorer
 		{
 			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			Width = showJobTreeControl ? 1905 : 1495;
+			Width = showJobTreeControl ? 1885 : 1475;
+		}
+
+		private void DisplayJobTree(bool show)
+		{
+			mnuItem_JobTreeWindow.IsChecked = show;
+
+			colFarRight.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+			Width = show ? 1885 : 1475;
+		}
+
+		// Show Hide Job Tree
+		private void Histogram_Checked(object sender, RoutedEventArgs e)
+		{
+			var showHistogramControl = mnuItem_HistogramWindow.IsChecked;
+			botRow.Visibility = showHistogramControl ? Visibility.Visible : Visibility.Collapsed;
+			Height = showHistogramControl ? 1340 : 1100;
 		}
 
 		private void ToggleJobTreeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -201,7 +239,7 @@ namespace MSetExplorer
 			colRight.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
 			colLeft.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
 
-			//Width = showJobTreeControl ? 1493 : 1495;
+			//Width = showJobTreeControl ? 2075 : 1665;
 		}
 
 		#endregion
@@ -210,7 +248,7 @@ namespace MSetExplorer
 
 		private void GoBack_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel?.CanGoBack ?? false;
+			e.CanExecute = _vm?.ProjectViewModel?.CanGoBack(skipPanJobs:false) ?? false;
 		}
 
 		private void GoBack_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -221,12 +259,12 @@ namespace MSetExplorer
 			}
 
 			var skipPanJobs = !( Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
-			_ = _vm.MapProjectViewModel.GoBack(skipPanJobs);
+			_ = _vm.ProjectViewModel.GoBack(skipPanJobs);
 		}
 
 		private void GoForward_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel?.CanGoForward ?? false;
+			e.CanExecute = _vm?.ProjectViewModel?.CanGoForward(skipPanJobs:false) ?? false;
 		}
 
 		private void GoForward_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -237,7 +275,7 @@ namespace MSetExplorer
 			}
 
 			var skipPanJobs = !(Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl));
-			_ = _vm.MapProjectViewModel.GoForward(skipPanJobs);
+			_ = _vm.ProjectViewModel.GoForward(skipPanJobs);
 		}
 
 		#endregion
@@ -250,18 +288,17 @@ namespace MSetExplorer
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				_ = MessageBox.Show("Changes Saved");
+				//_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
 				// user cancelled.
 				return;
 			}
-
 
 			LoadNewProject();
 		}
@@ -272,11 +309,11 @@ namespace MSetExplorer
 			var saveResult = ProjectSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				_ = MessageBox.Show("Changes Saved");
+				//_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -284,13 +321,13 @@ namespace MSetExplorer
 				return;
 			}
 
-			var initialName = _vm.MapProjectViewModel.CurrentProjectName;
+			var initialName = _vm.ProjectViewModel.CurrentProjectName;
 			if (ProjectShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _))
 			{
 				if (selectedName != null)
 				{
 					Debug.WriteLine($"Opening project with name: {selectedName}.");
-					_ = _vm.MapProjectViewModel.ProjectOpen(selectedName);
+					_ = _vm.ProjectViewModel.ProjectOpen(selectedName);
 				}
 				else
 				{
@@ -302,23 +339,37 @@ namespace MSetExplorer
 		// Project Save
 		private void SaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProjectOnFile ?? false;
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProjectOnFile ?? false;
 		}
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.MapProjectViewModel.ProjectSave();
+			var shouldContinue = ProjectSaveConfirmOnHighJobCount();
+
+			if (shouldContinue != true)
+			{
+				return;
+			}
+
+			if (!_vm.ProjectViewModel.ProjectSave())
+			{
+				_ = MessageBox.Show("Could not save changes.");
+			}
+			else
+			{
+				//_ = MessageBox.Show("Changes Saved");
+			}
 		}
 
 		// Project Save As
 		private void SaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProject != null;
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
 		}
 
 		private void SaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var curProject = _vm.MapProjectViewModel.CurrentProject;
+			var curProject = _vm.ProjectViewModel.CurrentProject;
 
 			if (curProject == null)
 			{
@@ -353,7 +404,7 @@ namespace MSetExplorer
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+				_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -361,21 +412,119 @@ namespace MSetExplorer
 				return;
 			}
 
-			var curJob = _vm.MapProjectViewModel.CurrentJob;
+			var curJob = _vm.ProjectViewModel.CurrentJob;
 
 			if (curJob.IsEmpty)
 			{
-				_ = MessageBox.Show("Cannot create a poster, there is not current job.");
+				_ = MessageBox.Show("Cannot create a poster, there is no current job.");
 			}
 			else
 			{
-				var posterSize = new SizeInt(11392);
-				_ = _vm.MapProjectViewModel.PosterCreate("Test19", "Main Area - First Poster", posterSize);
+				var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, useEscapeVelocities, out var name, out var description))
+				{
+					var tentativePosterSize = curJob.CanvasSize;
 
-				_vm.MapProjectViewModel.ProjectClose();
-				Properties.Settings.Default["ShowTopNav"] = true;
-				Close();
+					if (_vm.ProjectViewModel.TryCreatePoster(name, description, tentativePosterSize, out var newPoster))
+					{
+						_vm.ProjectViewModel.ProjectClose();
+
+						AppNavRequestResponse.OnCloseBehavior = OnCloseBehavior.ReturnToTopNav;
+						AppNavRequestResponse.ResponseCommand = RequestResponseCommand.OpenPoster;
+						AppNavRequestResponse.ResponseParameters = new string[] { newPoster.Name, "OpenSizeDialog" };
+
+						Close();
+					}
+					else
+					{
+						_ = MessageBox.Show("Could not create the new poster.");
+					}
+
+				}
 			}
+		}
+
+		private void CreateImageCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.ProjectViewModel.CurrentProject != null;
+		}
+
+		private void CreateImageCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (_createImageProgressWindow != null && IsWindowOpen(_createImageProgressWindow))
+			{
+				_createImageProgressWindow.WindowState = WindowState.Normal;
+				return;
+			}
+
+			var curProject = _vm.ProjectViewModel.CurrentProject;
+
+			if (curProject == null)
+			{
+				return;
+			}
+
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
+
+			var imageSize = curProject.CurrentJob.CanvasSize.Scale(4);
+
+			var initialImageFilename = GetImageFilename(curProject.Name, imageSize.Width);
+
+			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
+			{
+				_createImageProgressWindow = StartImageCreation(imageFilePath, curProject, useEscapeVelocities: true);
+
+				_createImageProgressWindow.Show();
+			}
+		}
+
+		private bool IsWindowOpen(Window window)
+		{
+			return window != null && Application.Current.Windows.Cast<Window>().Any(x => x.GetHashCode() == window.GetHashCode());
+		}
+
+		private bool TryGetImagePath(string initalName, [MaybeNullWhen(false)] out string imageFilePath)
+		{
+			var defaultOutputFolderPath = Properties.Settings.Default.DefaultOutputFolderPath;
+			var createImageViewModel = new CreateImageViewModel(defaultOutputFolderPath, initalName);
+			var createImageDialog = new CreateImageDialog()
+			{
+				DataContext = createImageViewModel
+			};
+
+			if (createImageDialog.ShowDialog() == true && createImageViewModel.ImageFileName != null)
+			{
+				imageFilePath = Path.Combine(createImageViewModel.FolderPath, createImageViewModel.ImageFileName);
+				return true;
+			}
+			else
+			{
+				imageFilePath = null;
+				return false;
+			}
+		}
+
+		private CreateImageProgressWindow StartImageCreation(string imageFilePath, Project project, bool useEscapeVelocities)
+		{
+			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(imageFilePath, useEscapeVelocities);
+
+			createImageProgressViewModel.CreateImage(imageFilePath, project);
+
+			var result = new CreateImageProgressWindow()
+			{
+				DataContext = createImageProgressViewModel
+			};
+
+			return result;
+		}
+
+		private string GetImageFilename(string projectName, int imageWidth)
+		{
+			var result = $"{projectName}_{imageWidth}_v4.png";
+			return result;
 		}
 
 		#endregion
@@ -385,7 +534,7 @@ namespace MSetExplorer
 		// Colors Import
 		private void ColorsOpenCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProject != null;
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
 		}
 
 		private void ColorsOpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -395,30 +544,25 @@ namespace MSetExplorer
 				return;
 			}
 
-			var initialName = _vm.MapProjectViewModel.CurrentColorBandSet.Name;
+			var initialName = _vm.ProjectViewModel.CurrentColorBandSet.Name;
 			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
-				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.MapProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
-				_vm.MapProjectViewModel.UpdateColorBandSet(adjustedCbs);
+				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
+				_vm.ProjectViewModel.CurrentColorBandSet = adjustedCbs;
 			}
 			else
 			{
 				Debug.WriteLine($"User declined to import a ColorBandSet.");
-				var projectsColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
-
-				if (_vm.MapDisplayViewModel.ColorBandSet != projectsColorBandSet)
-				{
-					_vm.MapDisplayViewModel.SetColorBandSet(projectsColorBandSet, updateDisplay: true);
-				}
+				_vm.ProjectViewModel.PreviewColorBandSet = null;
 			}
 		}
 
 		// Colors Export
 		private void ColorsSaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProject != null;
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
 		}
 
 		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -428,7 +572,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var curColorBandSet = _vm.MapProjectViewModel.CurrentColorBandSet;
+			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
 
 			_ = ColorsShowSaveWindow(curColorBandSet);
 		}
@@ -499,7 +643,7 @@ namespace MSetExplorer
 
 		private void Pan_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.MapProjectViewModel?.CurrentProject != null;
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
 		}
 
 		private void PanLeft_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -528,7 +672,7 @@ namespace MSetExplorer
 
 		private void ZoomOut_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm.MapProjectViewModel.CurrentProject != null;
+			e.CanExecute = _vm.ProjectViewModel.CurrentProject != null;
 		}
 
 		private void ZoomOut12_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -589,41 +733,38 @@ namespace MSetExplorer
 
 		#region Private Methods - Project
 
+		private void OpenProjectFromAppRequest(string[]? requestParameters)
+		{
+			if (requestParameters == null || requestParameters.Length < 1)
+			{
+				throw new InvalidOperationException("The Project's name must be included in the RequestParameters when the Command = 'OpenProject.'");
+			}
+
+			var projectName = requestParameters[0];
+
+			_ = _vm.ProjectViewModel.ProjectOpen(projectName);
+		}
+
 		private void LoadNewProject()
 		{
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, requestsPerJob: 100);
 
 			LoadNewProject(coords, mapCalcSettings);
 		}
 
 		private void LoadNewProject(RRectangle coords, MapCalcSettings mapCalcSettings)
 		{
-			var colorBandSet = MapJobHelper.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			_vm.MapProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+			_vm.ProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
 		}
 
 		private SaveResult ProjectSaveChanges()
 		{
-			var curProject = _vm.MapProjectViewModel.CurrentProject;
+			var curProject = _vm.ProjectViewModel.CurrentProject;
 
 			if (curProject == null)
 			{
-				return SaveResult.NoChangesToSave;
-			}
-
-			if (!_vm.MapProjectViewModel.CurrentProjectIsDirty)
-			{
-				if (_vm.MapProjectViewModel.IsCurrentJobIdChanged)
-				{
-					if (_vm.MapProjectViewModel.CurrentProjectOnFile)
-					{
-						// Silently record the new CurrentJob selection
-						_vm.MapProjectViewModel.ProjectSave();
-						return SaveResult.CurrentJobAutoSaved;
-					}
-				}
-
 				return SaveResult.NoChangesToSave;
 			}
 
@@ -632,38 +773,107 @@ namespace MSetExplorer
 				return SaveResult.SaveCancelled;
 			}
 
-			var triResult = ProjectUserSaysSaveChanges();
+			SaveResult result;
+
+			if (!_vm.ProjectViewModel.CurrentProjectIsDirty)
+			{
+				result = ProjectSaveCurrentJobId();
+			}
+			else
+			{
+				result = ProjectSaveDirtyJob(curProject);
+			}
+
+			return result;
+		}
+
+		// TODO: See if similar changes to the ProjectSave logic can be applied to the Poster
+		private SaveResult ProjectSaveCurrentJobId()
+		{
+			SaveResult result;
+
+			if (_vm.ProjectViewModel.IsCurrentJobIdChanged)
+			{
+				if (_vm.ProjectViewModel.CurrentProjectOnFile)
+				{
+					Debug.WriteLine($"Saving Project Silently: Not Dirty, but the Currently Selected Job has been updated.");
+
+					// Silently record the new CurrentJob selection
+					result = _vm.ProjectViewModel.ProjectSave() ? SaveResult.CurrentJobAutoSaved : SaveResult.NoChangesToSave;
+				}
+				else
+				{
+					result = SaveResult.NoChangesToSave;
+				}
+			}
+			else
+			{
+				result = SaveResult.NotSavingChanges;
+			}
+
+			return result;
+		}
+
+		private SaveResult ProjectSaveDirtyJob(Project curProject)
+		{
+			SaveResult result;
+
+			var triResult = ProjectSaveUserConfirm();
 
 			if (triResult == true)
 			{
-				if (_vm.MapProjectViewModel.CurrentProjectOnFile)
+				if (_vm.ProjectViewModel.CurrentProjectOnFile)
 				{
 					// The Project is on-file, just save the pending changes.
-					_vm.MapProjectViewModel.ProjectSave();
-					return SaveResult.ChangesSaved;
+					result = _vm.ProjectViewModel.ProjectSave() ? SaveResult.ChangesSaved : SaveResult.NoChangesToSave;
 				}
 				else
 				{
 					// The Project is not on-file, must ask user for the name and optional description.
 					triResult = SaveProjectInteractive(curProject);
-					if (triResult == true)
-					{
-						return SaveResult.ChangesSaved;
-					}
-					else
-					{
-						return SaveResult.SaveCancelled;
-					}
+					result = triResult == true ? SaveResult.ChangesSaved : SaveResult.SaveCancelled;
 				}
-			}
-			else if (triResult == false)
-			{
-				return SaveResult.NotSavingChanges;
 			}
 			else
 			{
-				return SaveResult.SaveCancelled;
+				result = triResult == false ? SaveResult.NotSavingChanges : SaveResult.SaveCancelled;
 			}
+
+			return result;
+		}
+
+		private bool? ProjectSaveUserConfirm()
+		{
+			var numberOfDirtyJobs = _vm.ProjectViewModel.GetGetNumberOfDirtyJobs();
+			var	message = $"The current project has {numberOfDirtyJobs} un-saved jobs. Save Changes?";
+
+			var defaultResult = _vm.ProjectViewModel.CurrentProjectOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;
+			var res = MessageBox.Show(message, "Pending Changes", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
+			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?)null;
+
+			return result;
+		}
+
+		private bool? ProjectSaveConfirmOnHighJobCount()
+		{
+			var numberOfDirtyJobs = _vm.ProjectViewModel.GetGetNumberOfDirtyJobs();
+			if (numberOfDirtyJobs > 3)
+			{
+				var x = MessageBox.Show($"There are {numberOfDirtyJobs} un-saved jobs. Continue to save?", "Number of Un-Saved Jobs is High", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.No);
+				if (x == MessageBoxResult.Yes)
+				{
+					return true;
+				}
+				else if (x == MessageBoxResult.No)
+				{
+					return false;
+				}
+				else if (x == MessageBoxResult.Cancel)
+				{
+					return null;
+				}
+			}
+			return true;
 		}
 
 		private bool? SaveProjectInteractive(Project curProject)
@@ -677,8 +887,17 @@ namespace MSetExplorer
 				if (selectedName != null)
 				{
 					Debug.WriteLine($"Saving project with name: {selectedName}.");
-					// TODO: Handle cases where ProjectSaveAs fails.
-					result = _vm.MapProjectViewModel.ProjectSaveAs(selectedName, description);
+
+					// TODO: Add error handling around ProjectSaveAs.
+					if (!_vm.ProjectViewModel.ProjectSaveAs(selectedName, description, out var errorText))
+					{
+						_ = MessageBox.Show($"Could not save the project using the new name: {selectedName}. The error is {errorText}");
+						result = false;
+					}
+					else
+					{
+						result = true;
+					}
 				}
 				else
 				{
@@ -690,16 +909,6 @@ namespace MSetExplorer
 			{
 				result = null;
 			}
-
-			return result;
-		}
-
-		private bool? ProjectUserSaysSaveChanges()
-		{
-			var defaultResult = _vm.MapProjectViewModel.CurrentProjectOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;
-			var res = MessageBox.Show("The current project has pending changes. Save Changes?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
-
-			var result = res == MessageBoxResult.Yes ? true : res == MessageBoxResult.No ? false : (bool?) null;
 
 			return result;
 		}
@@ -744,25 +953,29 @@ namespace MSetExplorer
 			CoordsEditorViewModel coordsEditorViewModel;
 			MapCalcSettings mapCalcSettings;
 
-			var curJob = _vm.MapProjectViewModel.CurrentJob;
+			var curJob = _vm.ProjectViewModel.CurrentJob;
 			if (!curJob.IsEmpty)
 			{
-				coordsEditorViewModel = new CoordsEditorViewModel(curJob.Coords, _vm.MapProjectViewModel.CanvasSize, allowEdits: true, _vm.ProjectAdapter);
+				coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.Coords, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
 			{
-				var x1 = "-0.477036968733327014028268226139546";
-				var x2 = "-0.477036964892343354414420540166062";
-				var y1 = "0.535575821681765930306959274776606";
-				var y2 = "0.535575824239325800205884281044245";
+				//var x1 = "-0.477036968733327014028268226139546";
+				//var x2 = "-0.477036964892343354414420540166062";
+				//var y1 = "0.535575821681765930306959274776606";
+				//var y2 = "0.535575824239325800205884281044245";
 
-				//var x1 = "-0.4770369687333";
-				//var x2 = "-0.4770369648923";
-				//var y1 = "0.5355758216817";
-				//var y2 = "0.5355758242393";
-				coordsEditorViewModel = new CoordsEditorViewModel(x1, x2, y1, y2, _vm.MapProjectViewModel.CanvasSize, allowEdits: false, _vm.ProjectAdapter);
-				mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+				////var x1 = "-0.4770369687333";
+				////var x2 = "-0.4770369648923";
+				////var y1 = "0.5355758216817";
+				////var y2 = "0.5355758242393";
+
+				//var coords = new RRectangle(x1, x2, y1, y2);
+				//coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(coords, _vm.ProjectViewModel.CanvasSize, allowEdits: false);
+				//mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+
+				return;
 			}
 
 			var coordsEditorWindow = new CoordsEditorWindow()
@@ -781,7 +994,7 @@ namespace MSetExplorer
 					//}
 					//else if (saveResult == SaveResult.NotSavingChanges)
 					//{
-					//	_ = _vm.MapProjectViewModel.DeleteMapSectionsSinceLastSave();
+					//	_ = _vm.ProjectViewModel.DeleteMapSectionsSinceLastSave();
 					//}
 					//else if (saveResult == SaveResult.SaveCancelled)
 					//{
@@ -822,7 +1035,7 @@ namespace MSetExplorer
 			Debug.WriteLine(l1);
 
 
-			var nPoint = new RPoint(l1.XValues[6].Value * 8, l1.YValues[6].Value * 8, sPoint.Exponent - 3); ;
+			var nPoint = new RPoint(l1.XValues[6].Value * 8, l1.YValues[6].Value * 8, sPoint.Exponent - 3);
 			var l2 = new MapSectionSpIdxItem(nPoint);
 			Debug.WriteLine(l2);
 
@@ -830,6 +1043,56 @@ namespace MSetExplorer
 
 			var l3 = new MapSectionSpIdxItem(nPoint);
 			Debug.WriteLine(l3);
+		}
+
+		#endregion
+
+		#region Private Methods - Poster
+
+		private bool SavePosterInteractive(string? initialName, bool useEscapeVelocities, [MaybeNullWhen(false)] out string name, out string? description)
+		{
+			bool result;
+
+			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, useEscapeVelocities, out name, out description))
+			{
+				if (name != null)
+				{
+					result = true;
+				}
+				else
+				{
+					Debug.WriteLine($"No name was provided. Cancelling the Create Poster operation.");
+					result = false;
+				}
+			}
+			else
+			{
+				result = false;
+			}
+
+			return result;
+		}
+
+		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, bool useEscapeVelocities, out string? selectedName, out string? description)
+		{
+			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
+			var posterOpenSaveWindow = new PosterOpenSaveWindow
+			{
+				DataContext = posterOpenSaveVm
+			};
+
+			if (posterOpenSaveWindow.ShowDialog() == true)
+			{
+				selectedName = posterOpenSaveWindow.PosterName;
+				description = posterOpenSaveWindow.PosterDescription;
+				return true;
+			}
+			else
+			{
+				selectedName = null;
+				description = null;
+				return false;
+			}
 		}
 
 		#endregion
@@ -906,7 +1169,8 @@ namespace MSetExplorer
 				var id = vm.SelectedColorBandSetInfo?.Id;
 				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
 				{
-					_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+					//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+					_vm.ProjectViewModel.PreviewColorBandSet = colorBandSet;
 				}
 			}
 		}
@@ -942,8 +1206,8 @@ namespace MSetExplorer
 		{
 			var qualifiedAmount = GetPanAmount(amount, qualifer);
 			var panVector = GetPanVector(direction, qualifiedAmount);
-			var newArea = new RectangleInt(new PointInt(panVector), _vm.MapProjectViewModel.CanvasSize);
-			_vm.MapProjectViewModel.UpdateMapView(TransformType.Pan, newArea);
+			var newArea = new RectangleInt(new PointInt(panVector), _vm.ProjectViewModel.CanvasSize);
+			_vm.ProjectViewModel.UpdateMapView(TransformType.Pan, newArea);
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
@@ -956,7 +1220,7 @@ namespace MSetExplorer
 				_ => baseAmount * 8,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapProjectViewModel.CanvasSize, targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.ProjectViewModel.CanvasSize, targetAmount);
 
 			return result;
 		}
@@ -985,10 +1249,10 @@ namespace MSetExplorer
 		private void ZoomOut(ZoomOutAmountQualifer qualifer, int amount)
 		{
 			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
-			var curArea = new RectangleInt(new PointInt(), _vm.MapProjectViewModel.CanvasSize);
+			var curArea = new RectangleInt(new PointInt(), _vm.ProjectViewModel.CanvasSize);
 			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
-			_vm.MapProjectViewModel.UpdateMapView(TransformType.ZoomOut, newArea);
+			_vm.ProjectViewModel.UpdateMapView(TransformType.ZoomOut, newArea);
 		}
 
 		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)
@@ -1002,7 +1266,7 @@ namespace MSetExplorer
 				_ => baseAmount * 32,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize, targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize.Round(), targetAmount);
 
 			return result;
 		}
@@ -1018,5 +1282,6 @@ namespace MSetExplorer
 			SaveCancelled,
 		}
 
+		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
 	}
 }

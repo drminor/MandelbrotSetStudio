@@ -109,11 +109,14 @@
                                            Stroke="Transparent" RadiusX="5" RadiusY="5" Fill="{TemplateBinding Background}" />
                                 
                                
-                                <ContentPresenter x:Name="ContentHost" Margin="{TemplateBinding Padding}"
+                                <!--<ContentPresenter x:Name="ContentHost" Margin="{TemplateBinding Padding}"
                                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                                
-                                
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />-->
+
+                                <ContentPresenter x:Name="ContentHost" Margin="{TemplateBinding Padding}"
+                                                  HorizontalAlignment="Stretch"
+                                                  VerticalAlignment="Stretch" />
+
                             </Grid>
                         </Grid>
 

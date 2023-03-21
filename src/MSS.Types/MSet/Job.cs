@@ -5,40 +5,36 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types.MSet
 {
-	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>, ICloneable
+	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>, IComparable<Job?>, ICloneable
 	{
 		private static readonly Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly Job Empty = _lazyJob.Value;
 
 		private ObjectId _projectId;
 		private ObjectId? _parentJobId;
+		private bool _isAlternatePathHead;
 		private ObjectId _colorBandSetId;
 
-		private bool _isPreferredChild;
-		private DateTime _lastUpdatedUtc;
 		private DateTime _lastSavedUtc;
 
 		#region Constructor
 
 		public Job()
 		{
-			Coords = new RRectangle();
-			Subdivision = new Subdivision();
-			MapBlockOffset = new BigVector();
-
+			Id = ObjectId.Empty;
+			MapAreaInfo = new MapAreaInfo();
 			ColorBandSetId = ObjectId.Empty;
 			MapCalcSettings = new MapCalcSettings();
 		}
 
 		public Job(
 			ObjectId? parentJobId, 
-			bool isPreferredChild, 
 			ObjectId projectId, 
 			string? label, 
 			TransformType transformType, 
 			RectangleInt? newArea,
 
-			JobAreaInfo jobAreaInfo, 
+			MapAreaInfo mapAreaInfo, 
 
 			SizeInt canvasSizeInBlocks,
 			ObjectId colorBandSetId, 
@@ -47,18 +43,13 @@ namespace MSS.Types.MSet
 
 			: this(
 				  ObjectId.GenerateNewId(), 
-				  parentJobId, 
-				  isPreferredChild, 
+				  parentJobId,
 				  projectId, 
 				  label, 
 				  transformType, 
 				  newArea,
 
-				  jobAreaInfo.Coords,
-				  jobAreaInfo.CanvasSize,
-				  jobAreaInfo.Subdivision, 
-				  jobAreaInfo.MapBlockOffset, 
-				  jobAreaInfo.CanvasControlOffset, 
+				  mapAreaInfo, 
 
 				  canvasSizeInBlocks,
 				  colorBandSetId, 
@@ -72,18 +63,13 @@ namespace MSS.Types.MSet
 		public Job(
 			ObjectId id,
 			ObjectId? parentJobId,
-			bool isPreferredChild,
 			ObjectId projectId,
 			string? label,
 
 			TransformType transformType,
 			RectangleInt? newArea,
 
-			RRectangle coords,
-			SizeInt canvasSize,
-			Subdivision subdivision,
-			BigVector mapBlockOffset,
-			VectorInt canvasControlOffset,
+			MapAreaInfo mapAreaInfo,
 
 			SizeInt canvasSizeInBlocks,
 			ObjectId colorBandSetId,
@@ -91,31 +77,38 @@ namespace MSS.Types.MSet
 			DateTime lastSaved
 			)
 		{
+			if (parentJobId == null && !(TransformType == TransformType.Home || transformType == TransformType.CanvasSizeUpdate))
+			{
+				throw new ArgumentException("The ParentJobId cannot be null for Jobs with a TransformType other than Home and CanvasSizeUpdate.");
+			}
+
 			Id = id;
 			_parentJobId = parentJobId;
-			_isPreferredChild = isPreferredChild;
 			_projectId = projectId;
 			Label = label;
 
 			TransformType = transformType;
 			NewArea = newArea;
 
-			Coords = coords;
-			CanvasSize = canvasSize;
-			Subdivision = subdivision;
-			MapBlockOffset = mapBlockOffset;
-			CanvasControlOffset = canvasControlOffset;
+			MapAreaInfo = mapAreaInfo;
 
 			CanvasSizeInBlocks = canvasSizeInBlocks;
 			_colorBandSetId = colorBandSetId;
 			MapCalcSettings = mapCalcSettings;
 
 			LastSavedUtc = lastSaved;
+
 		}
 
 		#endregion
 
 		#region Public Properties
+
+		public RRectangle Coords => MapAreaInfo.Coords;
+		public SizeInt CanvasSize => MapAreaInfo.CanvasSize;
+		public Subdivision Subdivision => MapAreaInfo.Subdivision;
+		public BigVector MapBlockOffset => MapAreaInfo.MapBlockOffset;
+		public VectorInt CanvasControlOffset => MapAreaInfo.CanvasControlOffset;
 
 		public bool IsEmpty => Coords.WidthNumerator == 0;
 		public DateTime DateCreated => Id.CreationTime;
@@ -139,31 +132,30 @@ namespace MSS.Types.MSet
 		{
 			get => _parentJobId;
 			set
-			{
+			{   // Only used by JobOwnerHelper.CreateCopy
 				_parentJobId = value;
 				LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
 
-		public bool IsPreferredChild
+		// TODO: Rename the IsAlternatePathHead property: IsOnPreferredPath (class: Job.)
+		public bool IsAlternatePathHead
 		{
-			get => _isPreferredChild;
+			get => _isAlternatePathHead;
 			set
 			{
-				_isPreferredChild = value;
-				LastUpdatedUtc = DateTime.UtcNow;
+				_isAlternatePathHead = value;
+				//LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
 
 		public string? Label { get; init; }
-		public TransformType TransformType { get; init; }
+
+		public TransformType TransformType { get; set; } //TODO: Make this set init.
+		
 		public RectangleInt? NewArea { get; init; }
 
-		public RRectangle Coords { get; init; }
-		public SizeInt CanvasSize { get; init; }
-		public Subdivision Subdivision { get; init; }
-		public BigVector MapBlockOffset { get; init; }
-		public VectorInt CanvasControlOffset { get; init; }
+		public MapAreaInfo MapAreaInfo { get; init; }
 
 		public SizeInt CanvasSizeInBlocks { get; init; }
 
@@ -182,36 +174,45 @@ namespace MSS.Types.MSet
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 
+		public IterationUpdateRecord[]? IterationUpdates { get; set; }
+		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
+
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
 			set
 			{
 				_lastSavedUtc = value;
-				LastUpdatedUtc = value;
+				_lastUpdatedUtc = value;
 				OnFile = true;
 			}
 		}
 
+		private DateTime _lastUpdatedUtc;
+
 		public DateTime LastUpdatedUtc
 		{
 			get => _lastUpdatedUtc;
-
-			private set
-			{
-				//var isDirtyBefore = IsDirty;
-				_lastUpdatedUtc = value;
-
-				//if (IsDirty != isDirtyBefore)
-				//{
-				//	OnPropertyChanged(nameof(IsDirty));
-				//}
-			}
+			set => _lastUpdatedUtc = value;
 		}
+
+		public DateTime LastAccessedUtc { get; set; }
 
 		#endregion
 
-		#region ICloneable Support
+		#region ToString and ICloneable Support
+
+		public override string ToString()
+		{
+			if (ParentJobId != null)
+			{
+				return $"{TransformType} {Id} {ParentJobId} {DateCreated}";
+			}
+			else
+			{
+				return $"{TransformType} {Id} {DateCreated}";
+			}
+		}
 
 		object ICloneable.Clone()
 		{
@@ -220,8 +221,8 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize,
-				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
+			var result = new Job(Id, ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
 			{
 				OnFile = OnFile
 			};
@@ -231,20 +232,21 @@ namespace MSS.Types.MSet
 
 		public Job CreateNewCopy()
 		{
-			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, IsPreferredChild, ProjectId, Label, TransformType, NewArea, Coords.Clone(), CanvasSize,
-				Subdivision, MapBlockOffset.Clone(), CanvasControlOffset, CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
+			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
 			{
 				OnFile = false
 			};
 
+			result.IterationUpdates = (IterationUpdateRecord[]?) IterationUpdates?.Clone() ?? null;
+			result.ColorMapUpdates = (ColorMapUpdateRecord[]?) ColorMapUpdates?.Clone() ?? null;
+
 			return result;
 		}
 
-
-
 		#endregion
 
-		#region IEqualityComparer / IEquatable Support
+		#region IEqualityComparer, IEquatable, IComparable Support
 
 		public override bool Equals(object? obj)
 		{
@@ -253,9 +255,7 @@ namespace MSS.Types.MSet
 
 		public bool Equals(Job? other)
 		{
-			return other != null
-				&& Id.Equals(other.Id)
-				&& LastSavedUtc == other.LastSavedUtc;
+			return other != null && Id.Equals(other.Id);
 		}
 
 		public bool Equals(Job? x, Job? y)
@@ -290,6 +290,18 @@ namespace MSS.Types.MSet
 			return !(left == right);
 		}
 
+		public int CompareTo(Job? other)
+		{
+			if (other is null)
+			{
+				return 1;
+			}
+
+			return string.Compare(Id.ToString(), other.Id.ToString(), StringComparison.Ordinal);
+
+		}
+
 		#endregion
 	}
+
 }

@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 
@@ -15,41 +16,30 @@ namespace ProjectRepo.Entities
 		long BlockPosXLo,
 		long BlockPosYHi,
 		long BlockPosYLo,
+
 		MapCalcSettings MapCalcSettings,
-		int[] Counts,
-		bool[] DoneFlags,
-		double[] ZValues
+		bool AllRowsHaveEscaped,
+		byte[] Counts,
+		byte[] EscapeVelocities
 		)
 	{
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
 
-		public DateTime LastSavedUtc { get; set; }
-		public DateTime LastAccessed { get; set; }
-	}
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(128)]
+		public int BlockWidth { get; init; } = 128;
 
-	/// <summary>
-	/// Record used to store the data found in a MapSectionResponse
-	/// </summary>
-	public record MapSectionRecordJustCounts(
-		DateTime DateCreatedUtc,
-		ObjectId SubdivisionId,
-		long BlockPosXHi,
-		long BlockPosXLo,
-		long BlockPosYHi,
-		long BlockPosYLo,
-		MapCalcSettings MapCalcSettings,
-		int[] Counts
-		)
-	{
-		[BsonId]
-		[BsonRepresentation(BsonType.ObjectId)]
-		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(128)]
+		public int BlockHeight { get; init; } = 128;
 
 		public DateTime LastSavedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }
-	}
 
+		[BsonIgnore]
+		public SizeInt BlockSize => new SizeInt(BlockWidth, BlockHeight);
+	}
 
 }

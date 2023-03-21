@@ -1,16 +1,18 @@
 ﻿using Grpc.Net.Client;
 using MEngineDataContracts;
 using MSS.Common;
+using MSS.Types.MSet;
 using ProtoBuf.Grpc.Client;
 using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MEngineClient
 {
 	public class MClient : IMEngineClient
 	{
-		private GrpcChannel _grpcChannel;
+		private GrpcChannel? _grpcChannel;
 
 		public MClient(string endPointAddress)
 		{
@@ -19,6 +21,7 @@ namespace MEngineClient
 		}
 
 		public string EndPointAddress { get; init; }
+		public bool IsLocal => true;
 
 		//public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		//{
@@ -27,20 +30,30 @@ namespace MEngineClient
 		//	return reply;
 		//}
 
-		public async ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest)
+		public async Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest, CancellationToken ct)
 		{
 			var mEngineService = GetMapSectionService();
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
 			var stopWatch = Stopwatch.StartNew();
-			var reply = await mEngineService.GenerateMapSectionAsyncR(mapSectionRequest);
+			var mapSectionResponse = await mEngineService.GenerateMapSectionAsync(mapSectionRequest, ct);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-			return reply;
+			Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
+
+			return mapSectionResponse;
 		}
 
-		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest)
+		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest, CancellationToken ct)
 		{
+			if (ct.IsCancellationRequested)
+			{
+				return new MapSectionServiceResponse(mapSectionRequest)
+				{
+					RequestCancelled = true
+				};
+			}
+
 			var mEngineService = GetMapSectionService();
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
@@ -77,5 +90,17 @@ namespace MEngineClient
 				return _grpcChannel;
 			}
 		}
+
+
+		public Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		{
+			throw new NotImplementedException();
+		}
+
+		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		{
+			throw new NotImplementedException();
+		}
+
 	}
 }

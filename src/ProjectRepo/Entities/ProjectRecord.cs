@@ -4,9 +4,10 @@ using System;
 
 namespace ProjectRepo.Entities
 {
-	public record ProjectRecord(string Name, 
+	public record ProjectRecord(
+		string Name, 
 		string? Description, 
-		ObjectId CurrentJobId, 
+		ObjectId CurrentJobId,
 		DateTime LastSavedUtc
 		)
 	{
@@ -16,6 +17,6 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		public ObjectId CurrentColorBandSetId { get; init; } = ObjectId.Empty;
+		public DateTime LastAccessedUtc { get; set; }
 	}
 }

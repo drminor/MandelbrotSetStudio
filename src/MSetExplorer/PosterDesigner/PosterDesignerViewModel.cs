@@ -1,45 +1,50 @@
-﻿using MSS.Types;
+﻿using ImageBuilder;
+using MSS.Common;
+using MSS.Types;
 using MSS.Types.MSet;
-using System.ComponentModel;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
-using ImageBuilder;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
+	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
-		private readonly PngBuilder _pngBuilder;
-		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
+		private readonly MapJobHelper _mapJobHelper;
+		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
+		private readonly CoordsEditorViewModelCreator _coordsEditorViewModelCreator;
 
-		private int _dispWidth;
-		private int _dispHeight;
+		private SizeDbl _mapDisplaySize;
 
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
-			IProjectAdapter projectAdapter, PngBuilder pngBuilder,	ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator)
+			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
+			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
+			CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
 		{
-			ProjectAdapter = projectAdapter;
-			_pngBuilder = pngBuilder;
+			_mapJobHelper = mapJobHelper;
+			_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
-			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
-
+			JobTreeViewModel = jobTreeViewModel;
 			MapScrollViewModel = mapScrollViewModel;
-			MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
 
+			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
+			MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
 
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 
 			PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
-			DispWidth = MapDisplayViewModel.CanvasSize.Width;
-			DispHeight = MapDisplayViewModel.CanvasSize.Height;
+			MapDisplaySize = MapDisplayViewModel.CanvasSize;
 
-			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
+			_posterOpenSaveViewModelCreator = posterOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
+			_coordsEditorViewModelCreator = coordsEditorViewModelCreator;
 
 			MapCoordsViewModel = new MapCoordsViewModel();
 
@@ -49,6 +54,8 @@ namespace MSetExplorer
 			ColorBandSetViewModel = colorBandViewModel;
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
+
+			ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
 		}
 
 		#endregion
@@ -56,48 +63,42 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public IPosterViewModel PosterViewModel { get; }
+		public IJobTreeViewModel JobTreeViewModel { get; }
+
 		public IMapScrollViewModel MapScrollViewModel { get; }
 		public IMapDisplayViewModel MapDisplayViewModel => MapScrollViewModel.MapDisplayViewModel;
 
 		public MapCoordsViewModel MapCoordsViewModel { get; }
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
+		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
-		public int DispWidth
+		public SizeDbl MapDisplaySize
 		{
-			get => _dispWidth;
+			get => _mapDisplaySize;
 			set
 			{
-				if (value != _dispWidth)
+				if (value != _mapDisplaySize)
 				{
-					_dispWidth = value;
-					OnPropertyChanged();
+					//var prev = _mapDisplaySize;
+					_mapDisplaySize = value;
+					//Debug.WriteLine($"Raising the OnPropertyChanged for the MapDisplaySize. Old = {prev}, new = {value}.");
+					OnPropertyChanged(nameof(IPosterDesignerViewModel.MapDisplaySize));
+				}
+				else
+				{
+					//Debug.WriteLine($"Not raising the OnPropertyChanged for the MapDisplaySize, the value {value} is unchanged.");
 				}
 			}
 		}
-
-		public int DispHeight
-		{
-			get => _dispHeight;
-			set
-			{
-				if (value != _dispHeight)
-				{
-					_dispHeight = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public IProjectAdapter ProjectAdapter { get; init; }
 
 		#endregion
 
 		#region Public Methods
 
-		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
 		{
-			var result = _projectOpenSaveViewModelCreator(initalName, dialogType);
+			var result = _posterOpenSaveViewModelCreator(initalName, useEscapeVelocities, dialogType);
 			return result;
 		}
 
@@ -107,9 +108,29 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath)
+		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath, bool useEscapeVelocities)
 		{
-			var result = new CreateImageProgressViewModel(_pngBuilder);
+			var pngBuilder = new PngBuilder(_mapLoaderManager);
+			var result = new CreateImageProgressViewModel(pngBuilder, useEscapeVelocities);
+			return result;
+		}
+
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
+		{
+			var result = _coordsEditorViewModelCreator(coords, canvasSize, allowEdits);
+			return result;
+		}
+
+		public LazyMapPreviewImageProvider GetPreviewImageProvider (MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, SizeInt previewImagesize, Color fallbackColor)
+		{
+			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+			var result = new LazyMapPreviewImageProvider(bitmapBuilder, _mapJobHelper, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
+			return result;
+		}
+
+		public MapAreaInfo GetUpdatedMapAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
+		{
+			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, screenArea, newMapSize);
 			return result;
 		}
 
@@ -119,48 +140,61 @@ namespace MSetExplorer
 
 		private void PosterViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			if (e.PropertyName == nameof(IPosterViewModel.CurrentJob))
+			{
+				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
+			}
+
+			else if (e.PropertyName == nameof(IPosterViewModel.LogicalDisplaySize))
+			{
+				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
+				MapScrollViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
+				MapScrollViewModel.HorizontalPosition = PosterViewModel.DisplayPosition.X;
+				MapScrollViewModel.InvertedVerticalPosition = PosterViewModel.DisplayPosition.Y;
+			}
+
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
-			if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
+			else if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
 			{
 				var curPoster = PosterViewModel.CurrentPoster;
 
 				if (curPoster != null)
 				{
-					MapScrollViewModel.PosterSize = curPoster.JobAreaInfo.CanvasSize;
+					MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
+					MapScrollViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
+					MapScrollViewModel.HorizontalPosition = PosterViewModel.DisplayPosition.X;
+					MapScrollViewModel.InvertedVerticalPosition = PosterViewModel.DisplayPosition.Y;
 				}
 				else
 				{
-					MapScrollViewModel.PosterSize = null;
+					//MapScrollViewModel.PosterSize = null;
 
 					// Let the MapDisplay know to stop any current MapLoader job.
-					MapDisplayViewModel.CurrentJobAreaAndCalcSettings = null;
+					MapDisplayViewModel.CurrentAreaColorAndCalcSettings = null;
 				}
 			}
 
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Job Area and Calc Settings
-			else if (e.PropertyName == nameof(IPosterViewModel.JobAreaAndCalcSettings))
+			else if (e.PropertyName == nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings))
 			{
-				var jobAreaAndCalcSettings = PosterViewModel.JobAreaAndCalcSettings;
+				var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
 
-				MapCalcSettingsViewModel.MapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
-				MapCoordsViewModel.CurrentJobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-				MapDisplayViewModel.CurrentJobAreaAndCalcSettings = jobAreaAndCalcSettings;
+				MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
+
+				MapCoordsViewModel.JobId = PosterViewModel.CurrentPoster?.CurrentJob.Id.ToString();
+				MapCoordsViewModel.CurrentMapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
+
+				//MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);
+
+				MapDisplayViewModel.CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 			}
 
-			//else if (e.PropertyName == nameof(IPosterViewModel.DisplayZoom))
-			//{
-			//	MapDisplayViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
-			//}
-
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
-			else if (e.PropertyName == nameof(IPosterViewModel.ColorBandSet))
+			else if (e.PropertyName == nameof(IPosterViewModel.CurrentColorBandSet))
 			{
-				ColorBandSetViewModel.ColorBandSet = PosterViewModel.ColorBandSet;
+				ColorBandSetViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 
-				if (PosterViewModel.ColorBandSet != null)
-				{
-					MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: true);
-				}
+				MapDisplayViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 			}
 		}
 
@@ -171,16 +205,16 @@ namespace MSetExplorer
 				MapDisplayViewModel.UseEscapeVelocities = ColorBandSetViewModel.UseEscapeVelocities;
 			}
 
-			if (e.PropertyName == nameof(ColorBandSetViewModel.HighlightSelectedBand))
+			else if (e.PropertyName == nameof(ColorBandSetViewModel.HighlightSelectedBand))
 			{
 				MapDisplayViewModel.HighlightSelectedColorBand = ColorBandSetViewModel.HighlightSelectedBand;
 			}
 
-			if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
+			else if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
 			{
 				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
 				{
-					MapDisplayViewModel.SetColorBandSet(ColorBandSetViewModel.ColorBandSet, updateDisplay: true);
+					MapDisplayViewModel.ColorBandSet = ColorBandSetViewModel.ColorBandSet;
 				}
 			}
 		}
@@ -190,30 +224,32 @@ namespace MSetExplorer
 			// Let the Map Project know about Map Display size changes
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
-				DispWidth = MapDisplayViewModel.CanvasSize.Width;
-				DispHeight = MapDisplayViewModel.CanvasSize.Height;
+				MapDisplaySize = MapDisplayViewModel.CanvasSize;
 				PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
 			}
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
 			{
+				PosterViewModel.DisplayZoom = MapDisplayViewModel.DisplayZoom;
 				PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;
 			}
 		}
 
 		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is (nameof(IMapScrollViewModel.HorizontalPosition)) or (nameof(IMapScrollViewModel.InvertedVerticalPosition)))
+			if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition))
 			{
-				// TODO: Update VectorInt to take a pair of doubles.
-				// OR: Add a Position Property to the IMapScrollViewModel of type VectorInt.
-				PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
+				PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), PosterViewModel.DisplayPosition.Y);
+			}
+
+			else if (e.PropertyName == nameof(IMapScrollViewModel.InvertedVerticalPosition))
+			{
+				PosterViewModel.DisplayPosition = new VectorInt(PosterViewModel.DisplayPosition.X, (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
 			}
 
 			else if (e.PropertyName == nameof(IMapScrollViewModel.DisplayZoom))
 			{
 				PosterViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
-				MapDisplayViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
 			}
 		}
 
@@ -238,13 +274,14 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				Debug.WriteLine($"MainWindow got a CBS preview with Id = {colorBandSet.Id}");
-				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+				PosterViewModel.PreviewColorBandSet = colorBandSet;
 			}
 			else
 			{
 				Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
-				MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
-				PosterViewModel.UpdateColorBandSet(colorBandSet);
+				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
+				PosterViewModel.CurrentColorBandSet = colorBandSet;
 			}
 		}
 

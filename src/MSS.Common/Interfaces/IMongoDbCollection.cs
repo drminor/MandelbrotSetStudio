@@ -1,6 +1,6 @@
 ﻿using MongoDB.Driver;
 
-namespace MSS.Common.MSetRepo
+namespace MSS.Common
 {
 	public interface IMongoDbCollection<T>
 	{

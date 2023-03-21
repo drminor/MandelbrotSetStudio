@@ -1,0 +1,22 @@
+﻿<UserControl x:Class="MSetExplorer.CbshZoomControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MSetExplorer"
+             mc:Ignorable="d" d:Height="240" >
+    <Grid>
+
+        <DockPanel>
+            <!--<Button Click="ButtonSetMinZoom_Click" >Min</Button>-->
+
+            <TextBlock DockPanel.Dock="Top" Margin="5,5,5,0">Zoom</TextBlock>
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="5,10" x:Name="dispSecZoom">
+                <!--<TextBlock x:Name="txtblkZoomValue" Margin="5,95,2,0" >10</TextBlock>-->
+                <ScrollBar x:Name="scrBarZoom" Orientation="Vertical" Minimum="1" Maximum="20" Value="1"/>
+            </StackPanel>
+            <!--<Button Click="ButtonSetMaxZoom_Click">Max</Button>-->
+
+        </DockPanel>
+    </Grid>
+</UserControl>

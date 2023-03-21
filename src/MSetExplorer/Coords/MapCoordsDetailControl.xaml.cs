@@ -28,7 +28,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (MapCoordsDetailViewModel)DataContext;
-				if (!_vm.HaveJobAreaInfo)
+				if (!_vm.HaveMapAreaInfo)
 				{
 					stkPanBlockOffsetX.Visibility = Visibility.Hidden;
 					stkPanBlockOffsetY.Visibility = Visibility.Hidden;

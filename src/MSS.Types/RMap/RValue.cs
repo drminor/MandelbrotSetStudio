@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Numerics;
 
 namespace MSS.Types
@@ -15,32 +14,15 @@ namespace MSS.Types
 		public RValue() : this(0, 0, null)
 		{ }
 
-		public RValue(BigInteger[] values, int exponent) : this(values[0], exponent, null)
-		{ }
-
 		public RValue(BigInteger value, int exponent) : this(value, exponent, null)
 		{ }
 
-		public RValue(BigInteger value, int exponent, int? precision)
+		public RValue(BigInteger value, int exponent, int? precision = null)
 		{
 			Values = new BigInteger[] { value };
 			Exponent = exponent;
-			Precision = precision ?? int.MaxValue; // GetPrecision(value, exponent);
+			Precision = precision ?? BigIntegerHelper.DEFAULT_PRECISION;
 		}
-
-		//private int GetPrecision(BigInteger value, int exponent)
-		//{
-		//	var precision = BigInteger.Abs(value).ToString(CultureInfo.InvariantCulture).Length;
-
-		//	var be = BigInteger.Pow(2, Math.Abs(exponent));
-		//	var ePrecision = BigInteger.Abs(be).ToString(CultureInfo.InvariantCulture).Length;
-
-		//	precision = Math.Max(precision, ePrecision);
-		//	//precision += 5;
-		//	precision += 1;
-
-		//	return precision;
-		//}
 
 		#endregion
 
@@ -64,7 +46,10 @@ namespace MSS.Types
 				throw new InvalidOperationException("Cannot add two RValues if their Exponents do not agree.");
 			}
 
-			return new RValue(Value + rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
+			var result =  new RValue(Value + rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
+			result = BigIntegerHelper.TrimToMatchPrecision(result);
+
+			return result;
 		}
 
 		public RValue Sub(RValue rValue)
@@ -75,6 +60,30 @@ namespace MSS.Types
 			}
 
 			return new RValue(Value - rValue.Value, Exponent, Math.Min(Precision, rValue.Precision));
+		}
+
+		public RValue Mul(RValue rValue)
+		{
+			var result = new RValue(Value * rValue.Value, Exponent + rValue.Exponent, Math.Min(Precision, rValue.Precision));
+			result = BigIntegerHelper.TrimToMatchPrecision(result);
+
+			return result;
+		}
+
+		public RValue Mul(int factor)
+		{
+			var result = new RValue(Value * factor, Exponent, Precision);
+			result = BigIntegerHelper.TrimToMatchPrecision(result);
+
+			return result;
+		}
+
+		public RValue Square()
+		{
+			var result = new RValue(BigInteger.Pow(Value, 2), Exponent * 2, Precision);
+			result = BigIntegerHelper.TrimToMatchPrecision(result);
+
+			return result;
 		}
 
 		public static RValue Min(RValue a, RValue b)
@@ -111,13 +120,17 @@ namespace MSS.Types
 		public RValue Clone()
 		{
 			return Reducer.Reduce(this);
+			//return new RValue(Value, Exponent, Precision);
 		}
 
 		public override string ToString()
 		{
-			var reducedVal = Reducer.Reduce(this);
-			var result = BigIntegerHelper.GetDisplay(reducedVal);
-			
+			//var reducedVal = Reducer.Reduce(this);
+			//var result = BigIntegerHelper.GetDisplay(reducedVal);
+
+			var result = BigIntegerHelper.GetDisplay(this, includeDecimalOutput: false);
+
+
 			return result;
 		}
 

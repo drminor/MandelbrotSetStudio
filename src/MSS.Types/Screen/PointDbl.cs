@@ -6,7 +6,14 @@ namespace MSS.Types
 {
 	public struct PointDbl : IEquatable<PointDbl>, IEqualityComparer<PointDbl>
 	{
+		private static PointDbl ZeroSingleton = new PointDbl();
+
+		public static PointDbl Zero => ZeroSingleton;
+
 		public PointDbl(PointInt pointInt) : this(pointInt.X, pointInt.Y)
+		{ }
+
+		public PointDbl(VectorDbl vectorDbl) : this(vectorDbl.X, vectorDbl.Y)
 		{ }
 
 		public PointDbl(SizeDbl size) : this(size.Width, size.Height)
@@ -26,10 +33,10 @@ namespace MSS.Types
 		//	return new PointDbl(X * factor.X, Y * factor.Y);
 		//}
 
-		//public PointDbl Translate(PointDbl offset)
-		//{
-		//	return new PointDbl(X + offset.X, Y + offset.Y);
-		//}
+		public PointDbl Translate(VectorDbl offset)
+		{
+			return new PointDbl(X + offset.X, Y + offset.Y);
+		}
 
 		//public PointDbl Translate(SizeDbl offset)
 		//{
@@ -41,10 +48,15 @@ namespace MSS.Types
 		//	return new PointDbl(X * factor.Width, Y * factor.Height);
 		//}
 
-		//public PointDbl Scale(double factor)
-		//{
-		//	return new PointDbl(X * factor, Y * factor);
-		//}
+		public PointDbl Scale(double factor)
+		{
+			return new PointDbl(X * factor, Y * factor);
+		}
+
+		public PointDbl Invert()
+		{
+			return Scale(-1);
+		}
 
 		//public PointDbl Translate(SizeInt offset)
 		//{
@@ -54,6 +66,16 @@ namespace MSS.Types
 		public SizeDbl Diff(PointDbl amount)
 		{
 			return new SizeDbl(X - amount.X, Y - amount.Y);
+		}
+
+		public PointDbl Min(PointDbl pointB)
+		{
+			return new PointDbl(Math.Min(X, pointB.X), Math.Min(Y, pointB.Y));
+		}
+
+		public PointDbl Max(PointDbl pointB)
+		{
+			return new PointDbl(Math.Max(X, pointB.X), Math.Max(Y, pointB.Y));
 		}
 
 		public PointInt Round()
@@ -72,6 +94,11 @@ namespace MSS.Types
 			return result;
 		}
 
+		public PointDbl Abs()
+		{
+			return new PointDbl(Math.Abs(X), Math.Abs(Y));
+		}
+
 		#region IEquatable and IEqualityComparer Support
 
 		public override bool Equals(object? obj)
@@ -85,9 +112,9 @@ namespace MSS.Types
 				   Y == other.Y;
 		}
 
-		public bool Equals(PointDbl x, PointDbl y)
+		public bool Equals(PointDbl a, PointDbl b)
 		{
-			return x.Equals(y);
+			return a.Equals(b);
 		}
 
 		public override int GetHashCode()
@@ -116,5 +143,11 @@ namespace MSS.Types
 		{
 			return $"x:{X}, y:{Y}";
 		}
+
+		public string? ToString(string? format)
+		{
+			return $"x:{X.ToString(format)}, y:{Y.ToString(format)}";
+		}
+
 	}
 }

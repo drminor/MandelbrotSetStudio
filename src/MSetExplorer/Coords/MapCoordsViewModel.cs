@@ -10,7 +10,8 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
-		private JobAreaInfo? _currentJobAreaInfo;
+		private string? _jobId;
+		private MapAreaInfo? _currentMapAreaInfo;
 
 		private RRectangle _coords;
 
@@ -18,6 +19,7 @@ namespace MSetExplorer
 		private string _x2;
 		private string _y1;
 		private string _y2;
+		private int _coordsExp;
 
 		private string _width;
 		private string _height;
@@ -31,13 +33,14 @@ namespace MSetExplorer
 		private string _samplePointDelta;
 		private int _samplePointDeltaExp;
 
-		private long _zoom;
+		private string _zoom;
 
 		#region Constructor
 
 		public MapCoordsViewModel()
 		{
-			_currentJobAreaInfo = null;
+			_jobId = null;
+			_currentMapAreaInfo = null;
 
 			_coords = new RRectangle();
 			_x1 = string.Empty;
@@ -57,28 +60,36 @@ namespace MSetExplorer
 			_samplePointDelta = string.Empty;
 			_samplePointDeltaExp = 0;
 
-			_zoom = 0;
+			_zoom = "0";
 		}
-
-		#endregion
-
-		#region Event Handlers
 
 		#endregion
 
 		#region Public Properties
 
-		public JobAreaInfo CurrentJobAreaInfo
+		public string? JobId
 		{
-			get => _currentJobAreaInfo ?? new JobAreaInfo(new RRectangle(), new SizeInt(), new Subdivision(), new BigVector(), new VectorInt());
+			get => _jobId;
 			set
 			{
-				if (value != _currentJobAreaInfo)
+				if (value != _jobId)
 				{
-					_currentJobAreaInfo = value;
-					UpdateCoords(_currentJobAreaInfo);
+					_jobId = value;
 					OnPropertyChanged();
-					//OnPropertyChanged(nameof(JobId));
+				}
+			}
+		}
+
+		public MapAreaInfo CurrentMapAreaInfo
+		{
+			get => _currentMapAreaInfo ?? new MapAreaInfo();
+			set
+			{
+				if (value != _currentMapAreaInfo)
+				{
+					_currentMapAreaInfo = value;
+					UpdateCoords(_currentMapAreaInfo);
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -160,6 +171,19 @@ namespace MSetExplorer
 			}
 		}
 
+		public int CoordsExp
+		{
+			get => _coordsExp;
+			set
+			{
+				if (value != _coordsExp)
+				{
+					_coordsExp = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public string Width
 		{
 			get => _width;
@@ -186,7 +210,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public long Zoom
+		public string Zoom
 		{
 			get => _zoom;
 			set
@@ -278,15 +302,16 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Preview(JobAreaInfo jobAreaInfo)
+		public void Preview(MapAreaInfo mapAreaInfo)
 		{
-			UpdateCoords(jobAreaInfo);
+			UpdateCoords(mapAreaInfo);
 		}
 
 		public string GetStringValues()
 		{
 			var sb = new StringBuilder();
 
+			sb.AppendLine($"Job: {JobId}");
 			sb.AppendLine(X1);
 			sb.AppendLine(X2);
 			sb.AppendLine(Y1);
@@ -299,11 +324,11 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void UpdateCoords(JobAreaInfo? jobAreaInfo)
+		private void UpdateCoords(MapAreaInfo? mapAreaInfo)
 		{
-			if (jobAreaInfo != null)
+			if (mapAreaInfo != null)
 			{
-				Coords = jobAreaInfo.Coords;
+				Coords = mapAreaInfo.Coords;
 				var rValues = _coords.GetRValues();
 
 				var startingX = rValues[0];
@@ -315,6 +340,7 @@ namespace MSetExplorer
 				X2 = RValueHelper.ConvertToString(endingX);
 				Y1 = RValueHelper.ConvertToString(startingY);
 				Y2 = RValueHelper.ConvertToString(endingY);
+				CoordsExp = Coords.Exponent;
 
 				PrecisionX = RValueHelper.GetPrecision(startingX, endingX, out var diffX) + _numDigitsForDisplayExtent;
 				Width = RValueHelper.ConvertToString(diffX, useSciNotationForLengthsGe: 6);
@@ -322,13 +348,13 @@ namespace MSetExplorer
 				PrecisionY = RValueHelper.GetPrecision(startingY, endingY, out var diffY) + _numDigitsForDisplayExtent;
 				Height = RValueHelper.ConvertToString(diffY, useSciNotationForLengthsGe: 6);
 
-				BlockOffsetX = jobAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
-				BlockOffsetY = jobAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
+				BlockOffsetX = mapAreaInfo.MapBlockOffset.X.ToString(CultureInfo.InvariantCulture);
+				BlockOffsetY = mapAreaInfo.MapBlockOffset.Y.ToString(CultureInfo.InvariantCulture);
 
-				SamplePointDelta = jobAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
-				SamplePointDeltaExp = jobAreaInfo.Subdivision.SamplePointDelta.Exponent;
+				SamplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
+				SamplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
 
-				Zoom = RValueHelper.GetResolution(jobAreaInfo.Coords.Width);
+				Zoom = RValueHelper.GetFormattedResolution(mapAreaInfo.Coords.Width);
 			}
 			else
 			{
@@ -337,6 +363,7 @@ namespace MSetExplorer
 				X2 = string.Empty;
 				Y1 = string.Empty;
 				Y2 = string.Empty;
+				CoordsExp = 0;
 
 				PrecisionX = 0;
 				Width = string.Empty;
@@ -350,7 +377,7 @@ namespace MSetExplorer
 				SamplePointDelta = string.Empty;
 				SamplePointDeltaExp = 0;
 
-				_zoom = 0;
+				_zoom = "0";
 			}
 		}
 

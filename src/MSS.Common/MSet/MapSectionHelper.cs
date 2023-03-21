@@ -1,216 +1,331 @@
-﻿using MEngineDataContracts;
-using MSS.Common.DataTransferObjects;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace MSS.Common
 {
 	public class MapSectionHelper
 	{
-		private const int VALUE_FACTOR = 10000;
-		private readonly DtoMapper _dtoMapper = new();
+		#region Private Properties
+
+		private const int PRECSION_PADDING = 4;
+		private const int MIN_LIMB_COUNT = 1;
+
+		private const double VALUE_FACTOR = 10000;
+		private const int BYTES_PER_PIXEL = 4;
+
+		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
+		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
+
+		private SizeInt _blockSize;
+		private readonly int _rowCount;
+		private readonly int _sourceStride;
+		private readonly int _maxRowIndex;
+
+		private readonly int _pixelArraySize;
+		private readonly int _pixelStride;
+
+		private int _currentPrecision;
+		private int _currentLimbCount;
+
+		#endregion
+
+		#region Constructor
+
+		public MapSectionHelper(MapSectionVectorsPool mapSectionVectorsPool, MapSectionZVectorsPool mapSectionZVectorsPool)
+		{
+			_mapSectionVectorsPool = mapSectionVectorsPool;
+			_mapSectionZVectorsPool = mapSectionZVectorsPool;
+
+			_blockSize = mapSectionVectorsPool.BlockSize;
+			_rowCount = _blockSize.Height;
+			_sourceStride = _blockSize.Width;
+			_maxRowIndex = _blockSize.Height - 1;
+
+			_pixelArraySize = _blockSize.NumberOfCells * BYTES_PER_PIXEL;
+			_pixelStride = _sourceStride * BYTES_PER_PIXEL;
+
+			_currentPrecision = -1;
+			_currentLimbCount = 1;
+		}
+
+		#endregion
+
+		#region Public Properties
+
+		public long NumberOfCountValSwitches { get; private set; }
+
+		public int MaxPeakSectionVectors => _mapSectionVectorsPool.MaxPeak;
+		public int MaxPeakSectionZVectors => _mapSectionZVectorsPool.MaxPeak;
+
+		#endregion
 
 		#region Create MapSectionRequests
 
-		public IList<MapSectionRequest> CreateSectionRequests(JobAreaAndCalcSettings jobAreaAndCalcSettings, IList<MapSection>? emptyMapSections)
-		{
-			if (emptyMapSections == null)
-			{
-				return CreateSectionRequests(jobAreaAndCalcSettings);
-			}
-			else
-			{
-				var result = new List<MapSectionRequest>();
-
-				Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
-
-				var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-				var mapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
-
-				foreach (var mapSection in emptyMapSections)
-				{
-					var screenPosition = mapSection.BlockPosition;
-					var mapSectionRequest = CreateRequest(screenPosition, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
-					result.Add(mapSectionRequest);
-				}
-
-				return result;
-			}
-		}
-
-		public IList<MapSectionRequest> CreateSectionRequests(JobAreaAndCalcSettings jobAreaAndCalcSettings)
+		public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
 		{
 			var result = new List<MapSectionRequest>();
 
-			var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-			var mapCalcSettings = jobAreaAndCalcSettings.MapCalcSettings;
+			Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
 
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.Subdivision.BlockSize);
-			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
-
-			foreach (var screenPosition in Points(mapExtentInBlocks))
+			foreach (var mapSection in emptyMapSections)
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, jobAreaInfo.MapBlockOffset, jobAreaInfo.Subdivision, mapCalcSettings);
+				var screenPosition = mapSection.BlockPosition;
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
 				result.Add(mapSectionRequest);
 			}
 
 			return result;
 		}
 
-		public IList<MapSection> CreateEmptyMapSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
+		public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
-			var emptyCountsData = new int[0];
+			var result = new List<MapSectionRequest>();
 
-			var result = new List<MapSection>();
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
+			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
-			var jobAreaInfo = jobAreaAndCalcSettings.JobAreaInfo;
-			var targetIterations = jobAreaAndCalcSettings.MapCalcSettings.TargetIterations;
-
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(jobAreaInfo.CanvasSize, jobAreaInfo.CanvasControlOffset, jobAreaInfo.Subdivision.BlockSize);
-			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
-
-			var subdivisionId = jobAreaInfo.Subdivision.Id.ToString();
+			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
+			var precision = GetBinaryPrecision(mapAreaInfo);
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, jobAreaInfo.MapBlockOffset, out var isInverted);
-				var mapSection = new MapSection(screenPosition, jobAreaInfo.Subdivision.BlockSize, emptyCountsData, targetIterations,
-					subdivisionId, repoPosition, isInverted, BuildHistogram);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
+				result.Add(mapSectionRequest);
+			}
+
+			return result;
+		}
+
+		public IList<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		{
+			var result = new List<MapSection>();
+
+			var targetIterations = mapCalcSettings.TargetIterations;
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
+			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
+
+			var subdivisionId = mapAreaInfo.Subdivision.Id.ToString();
+
+			foreach (var screenPosition in Points(mapExtentInBlocks))
+			{
+				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapAreaInfo.MapBlockOffset, out var isInverted);
+
+				var mapSection = new MapSection(jobId: -1, mapSectionVectors: null, subdivisionId: subdivisionId, repoBlockPosition: repoPosition, isInverted: isInverted,
+					blockPosition: screenPosition, size: mapAreaInfo.Subdivision.BlockSize, targetIterations: targetIterations, histogramBuilder: BuildHistogram);
+
+
 				result.Add(mapSection);
 			}
 
 			return result;
 		}
 
+		private int GetBinaryPrecision(MapAreaInfo mapAreaInfo)
+		{
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(mapAreaInfo.Coords.Right, mapAreaInfo.Coords.Left, out _);
+
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(mapAreaInfo.Subdivision.SamplePointDelta.Exponent));
+
+			return binaryPrecision;
+		}
+
 		#endregion
 
 		#region Create Single MapSectionRequest
-
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, Subdivision subdivision, MapCalcSettings mapCalcSettings)
-		{
-			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
-			var result = CreateRequest(repoPosition, isInverted, subdivision, mapCalcSettings);
-
-			return result;
-		}
 
 		/// <summary>
 		/// Calculate the map position of the section being requested 
 		/// and prepare a MapSectionRequest
 		/// </summary>
+		/// <param name="screenPosition"></param>
+		/// <param name="mapBlockOffset"></param>
+		/// <param name="precision"></param>
+		/// <param name="ownerId"></param>
+		/// <param name="jobOwnerType"></param>
 		/// <param name="subdivision"></param>
-		/// <param name="repoPosition"></param>
-		/// <param name="isInverted"></param>
 		/// <param name="mapCalcSettings"></param>
-		/// <param name="mapPosition"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(BigVector repoPosition, bool isInverted, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
 		{
+			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
+
 			var mapPosition = GetMapPosition(subdivision, repoPosition);
+
+			var limbCount = GetLimbCount(precision);
+
 			var mapSectionRequest = new MapSectionRequest
-			{
-				SubdivisionId = subdivision.Id.ToString(),
-				BlockPosition = _dtoMapper.MapTo(repoPosition),
-				BlockSize = subdivision.BlockSize,
-				Position = _dtoMapper.MapTo(mapPosition),
-				SamplePointsDelta = _dtoMapper.MapTo(subdivision.SamplePointDelta),
-				MapCalcSettings = mapCalcSettings,
-				Counts = null,
-				DoneFlags = null,
-				ZValues = null,
-				IsInverted = isInverted,
-				TimeToCompleteGenRequest = null
-			};
+			(
+				ownerId: ownerId,
+				jobOwnerType: jobOwnerType,
+				subdivisionId: subdivision.Id.ToString(),
+				screenPosition: screenPosition,
+				mapBlockOffset: mapBlockOffset,
+				blockPosition: repoPosition,
+				isInverted: isInverted,
+				mapPosition: mapPosition,
+				precision: precision,
+				limbCount: limbCount,
+				blockSize: subdivision.BlockSize,
+				samplePointDelta: subdivision.SamplePointDelta,
+				mapCalcSettings: mapCalcSettings
+			);
 
 			return mapSectionRequest;
 		}
 
-		private RPoint GetMapPosition(Subdivision subdivision, BigVector blockPosition)
+		private RPoint GetMapPosition(Subdivision subdivision, BigVector localBlockPosition)
 		{
-			//var nrmSubdivisionPosition = RNormalizer.Normalize(subdivision.Position, subdivision.SamplePointDelta, out var nrmSamplePointDelta);
+			var mapBlockPosition = subdivision.BaseMapPosition.Tranlate(localBlockPosition);
 
 			// Multiply the blockPosition by the blockSize
-			var numberOfSamplePointsFromSubOrigin = blockPosition.Scale(subdivision.BlockSize);
+			var numberOfSamplePointsFromSubOrigin = mapBlockPosition.Scale(subdivision.BlockSize);
 
 			// Convert sample points to map coordinates.
-			//var mapDistance = nrmSamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
 			var mapDistance = subdivision.SamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
-
-			// Add the map distance to the sub division origin
-			//var result = nrmSubdivisionPosition.Translate(mapDistance);
 
 			var result = new RPoint(mapDistance);
 
 			return result;
 		}
 
+		private int GetLimbCount(int precision)
+		{
+			if (precision != _currentPrecision)
+			{
+				var adjustedPrecision = precision + PRECSION_PADDING;
+				var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
+
+				var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, MIN_LIMB_COUNT);
+
+				if (_currentLimbCount == adjustedLimbCount)
+				{
+					Debug.WriteLine($"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount remains the same at {adjustedLimbCount}.");
+				}
+				else
+				{
+					Debug.WriteLine($"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount is being updated to {adjustedLimbCount}.");
+				}
+
+				_currentLimbCount = adjustedLimbCount;
+				_currentPrecision = precision;
+			}
+
+			return _currentLimbCount;	
+		}
+
 		#endregion
 
 		#region Create MapSection
 
-		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, BigVector mapBlockOffset)
+		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, int jobId, BigVector mapBlockOffset)
 		{
-			var repoBlockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
+			var repoBlockPosition = mapSectionRequest.BlockPosition;
 			var isInverted = mapSectionRequest.IsInverted;
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			var blockSize = mapSectionRequest.BlockSize;
-			var mapSection = new MapSection(screenPosition, blockSize, mapSectionResponse.Counts, mapSectionResponse.MapCalcSettings.TargetIterations,
-				mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted, BuildHistogram);
+			var mapSection = new MapSection(jobId, mapSectionVectors, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
+				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
 			return mapSection;
 		}
 
-		public byte[] GetPixelArray(int[] counts, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
+		public byte[] GetPixelArray(MapSectionVectors mapSectionVectors, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
-			var numberofCells = blockSize.NumberOfCells;
-			var result = new byte[4 * numberofCells];
+			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
 
-			for (var rowPtr = 0; rowPtr < blockSize.Height; rowPtr++)
+			// Currently EscapeVelocities are not supported.
+			useEscapeVelocities = false;
+
+			Debug.Assert(blockSize == _blockSize, "The block sizes do not match.");
+
+			var result = new byte[_pixelArraySize];
+			var counts = mapSectionVectors.Counts;
+			var previousCountVal = counts[0];
+
+			var sourcePtr = 0;
+			var resultRowPtr = invert ? _maxRowIndex * _pixelStride : 0;
+			var resultRowPtrIncrement = invert ? -1 * _pixelStride : _pixelStride;
+			var sourcePtrUpperBound = _rowCount * _sourceStride;
+
+			if (useEscapeVelocities)
 			{
-				// Calculate the array index for the beginning of this destination and source row.
-				var resultRowPtr = GetResultRowPtr(blockSize.Height - 1, rowPtr, invert);
-
-				var curResultPtr = resultRowPtr * blockSize.Width * 4;
-				var curSourcePtr = rowPtr * blockSize.Width;
-
-				for (var colPtr = 0; colPtr < blockSize.Width; colPtr++)
+				var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
+				for (; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
 				{
-					var countVal = counts[curSourcePtr++];
-					countVal = Math.DivRem(countVal, VALUE_FACTOR, out var ev);
+					var diagSum = 0;
 
-					//var escapeVel = useEscapeVelocities ? Math.Max(1, ev / (double)VALUE_FACTOR) : 0;
-					var escapeVel = useEscapeVelocities ? ev / (double)VALUE_FACTOR : 0;
-
-					if (escapeVel > 1.0)
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
 					{
-						Debug.WriteLine($"The Escape Velocity is greater that 1.0");
+						var countVal = counts[sourcePtr];
+						TrackValueSwitches(countVal, previousCountVal);
+
+						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
+						CheckEscapeVelocity(escapeVelocity);
+
+						colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(result, resultPtr, BYTES_PER_PIXEL));
+
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
+
+						diagSum += countVal;
 					}
 
-					colorMap.PlaceColor(countVal, escapeVel, new Span<byte>(result, curResultPtr, 4));
-					curResultPtr += 4;
+					if (diagSum < 10)
+					{
+						Debug.WriteLine("Counts are empty.");
+					}
+				}
+			}
+			else
+			{
+				for (; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+				{
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
+					{
+						var countVal = counts[sourcePtr];
+						TrackValueSwitches(countVal, previousCountVal);
+
+						colorMap.PlaceColor(countVal, escapeVelocity:0, new Span<byte>(result, resultPtr, BYTES_PER_PIXEL));
+						
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
+					}
 				}
 			}
 
 			return result;
 		}
 
-		private int GetResultRowPtr(int maxRowIndex, int rowPtr, bool invert)
+		[Conditional("DEBUG2")]
+		private void TrackValueSwitches(ushort countVal, ushort previousCountVal)
 		{
-			// The Source's origin is at the bottom, left.
-			// If inverted, the Destination's origin is at the top, left, otherwise bottom, left. 
-			var result = invert ? maxRowIndex - rowPtr : rowPtr;
-			return result;
+			if (countVal != previousCountVal)
+			{
+				NumberOfCountValSwitches++;
+				previousCountVal = countVal;
+			}
 		}
 
-		private IHistogram BuildHistogram(int[] counts)
+		[Conditional("DEBUG2")]
+		private void CheckEscapeVelocity(double escapeVelocity)
 		{
-			return new HistogramALow(counts.Select(x => (int)Math.Round(x / (double)VALUE_FACTOR)));
+			if (escapeVelocity > 1.0)
+			{
+				Debug.WriteLine($"The Escape Velocity is greater than 1.0");
+			}
+		}
+
+		private IHistogram BuildHistogram(ushort[] counts)
+		{
+			//return new HistogramALow(counts.Select(x => (int)Math.Round(x / (double)VALUE_FACTOR)));
+			return new HistogramALow(counts);
 		}
 
 		private IEnumerable<PointInt> Points(SizeInt size)
@@ -223,6 +338,83 @@ namespace MSS.Common
 				}
 			}
 		}
+
+		#endregion
+
+		#region MapSectionVectors
+
+		public MapSectionVectors ObtainMapSectionVectors()
+		{
+			var result = _mapSectionVectorsPool.Obtain();
+
+			//Debug.WriteLine($"Just obtained a MSVectors. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");
+
+			return result;
+		}
+
+		public MapSectionZVectors ObtainMapSectionZVectors(int limbCount)
+		{
+			var adjustedLimbCount = Math.Max(limbCount, MIN_LIMB_COUNT);
+			var result = _mapSectionZVectorsPool.Obtain(adjustedLimbCount);
+			return result;
+		}
+
+		//public MapSectionZVectors ObtainMapSectionZVectorsByPrecision(int precision)
+		//{
+		//	var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: precision);
+		//	return ObtainMapSectionZVectors(apFixedPointFormat.LimbCount);
+		//}
+
+		public void ReturnMapSection(MapSection mapSection)
+		{
+			if (mapSection.MapSectionVectors != null)
+			{
+				if (_mapSectionVectorsPool.Free(mapSection.MapSectionVectors))
+				{
+					mapSection.MapSectionVectors = null;
+					//Debug.WriteLine($"Just freed a MapSection. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");
+				}
+			}
+		}
+
+		//public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
+		//{
+		//	if (mapSectionRequest.MapSectionVectors != null)
+		//	{
+		//		_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors);
+		//		mapSectionRequest.MapSectionVectors = null;
+		//	}
+
+		//	if (mapSectionRequest.MapSectionZVectors != null)
+		//	{
+		//		_mapSectionZVectorsPool.Free(mapSectionRequest.MapSectionZVectors);
+		//		mapSectionRequest.MapSectionZVectors = null;
+		//	}
+		//}
+
+		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
+		{
+			if (mapSectionResponse.MapSectionVectors != null)
+			{
+				if (_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
+				{
+					mapSectionResponse.MapSectionVectors = null;
+					//Debug.WriteLine($"Just freed a MapSectionResponse. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");
+				}
+			}
+
+			if (mapSectionResponse.MapSectionZVectors != null)
+			{
+				_mapSectionZVectorsPool.Free(mapSectionResponse.MapSectionZVectors);
+				mapSectionResponse.MapSectionZVectors = null;
+			}
+		}
+
+		//public MapSectionVectors Duplicate(MapSectionVectors mapSectionVectors)
+		//{
+		//	var result = _mapSectionVectorsPool.DuplicateFrom(mapSectionVectors);
+		//	return result;
+		//}
 
 		#endregion
 	}

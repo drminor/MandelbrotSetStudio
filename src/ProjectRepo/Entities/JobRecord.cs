@@ -1,26 +1,26 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types.MSet;
 using System;
 
 namespace ProjectRepo.Entities
 {
 	public record JobRecord(
 		ObjectId? ParentJobId,
-		bool IsPreferredChild,
+		bool IsAlternatePathHead, // Remove this on next Schema Update
 		ObjectId ProjectId,
 		ObjectId SubDivisionId,
 		string? Label,
-		int TransformType,			// TODO: Change the JobRecord's TransformType (enum) from an int to a string.
+		int TransformType,
 
+		MapAreaInfoRecord MapAreaInfoRecord,
+		string TransformTypeString,
 
 		PointIntRecord NewAreaPosition,
 		SizeIntRecord NewAreaSize,
 
-		MSetInfoRecord MSetInfo,
 		ObjectId ColorBandSetId,
-
-		BigVectorRecord MapBlockOffset,
-		VectorIntRecord CanvasControlOffset,
+		MapCalcSettings MapCalcSettings,
 		SizeIntRecord CanvasSizeInBlocks
 		)
 	{
@@ -30,22 +30,12 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		public bool Onfile => Id != ObjectId.Empty;
-
+		// TODO: Rename LastSaved to LastSavedUtc
 		public DateTime LastSaved { get; set; }
+		public DateTime LastAccessedUtc { get; set; }
 
-		public SizeIntRecord? CanvasSize { get; set; } // TODO: Make sure every JobRecord has a value for CanvasSize
+		public IterationUpdateRecord[]? IterationUpdates { get; set; }
+		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
 	}
-
-	public record JobModel1
-	(
-		DateTime DateCreated,
-		int TransformType,
-		ObjectId SubDivisionId,
-		int MapCoordExponent
-	)
-	{ }
-
-
 
 }

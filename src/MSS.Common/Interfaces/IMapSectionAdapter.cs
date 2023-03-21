@@ -1,28 +1,35 @@
-﻿using MEngineDataContracts;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace MSS.Common.MSetRepo
+
+namespace MSS.Common
 {
-	public interface IMapSectionAdapter
+	public interface IMapSectionAdapter : IMapSectionDuplicator, IMapSectionDeleter
 	{
-		//MapSectionResponse? GetMapSection(string mapSectionId);
-		//Task<MapSectionResponse?> GetMapSectionAsync(string mapSectionId);
+		void CreateCollections();
+		void DropMapSections();
+		void DropMapSectionsAndSubdivisions();
 
-		MapSectionResponse? GetMapSection(string subdivisionId, BigVectorDto blockPosition, bool returnOnlyCounts = false);
-
-		Task<MapSectionResponse?> GetMapSectionAsync(string subdivisionId, BigVectorDto blockPosition);
-
+		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors);
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
+		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);
 
-		Task<long?> UpdateMapSectionZValuesAsync(MapSectionResponse mapSectionResponse);
+		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse);
 
-		long? ClearMapSections(string subdivisionId);
+		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct);
+		Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
+		Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
+		Task<long?> DeleteZValuesAync(ObjectId mapSectionId);
 
-		long? DeleteMapSectionsSince(DateTime lastSaved, bool overrideRecentGuard = false);
 
-		//void AddCreatedDateToAllMapSections();
+		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision);
+		Subdivision InsertSubdivision(Subdivision subdivision);
 	}
+
 }

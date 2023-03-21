@@ -135,6 +135,30 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand JobGoBack = new RoutedUICommand(
+			text: "Go Back",
+			name: "JobGoBack",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.B,
+					ModifierKeys.Alt
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand JobGoForward = new RoutedUICommand(
+			text: "Go Forward",
+			name: "JobGoForward",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.F,
+					ModifierKeys.Alt
+				)
+			}
+		);
+
 		#endregion
 
 		#region Poster
@@ -175,30 +199,11 @@ namespace MSetExplorer
 			}
 		);
 
-		public static readonly RoutedUICommand JobGoBack = new RoutedUICommand(
-			text: "Go Back",
-			name: "JobGoBack",
-			ownerType: typeof(CustomCommands),
-			inputGestures: new InputGestureCollection() {
-				new KeyGesture(
-					Key.B,
-					ModifierKeys.Alt
-				)
-			}
+		public static readonly RoutedUICommand PosterEditSize = new RoutedUICommand(
+			text: "Edit Size",
+			name: "PosterEditSize",
+			ownerType: typeof(CustomCommands)
 		);
-
-		public static readonly RoutedUICommand JobGoForward = new RoutedUICommand(
-			text: "Go Forward",
-			name: "JobGoForward",
-			ownerType: typeof(CustomCommands),
-			inputGestures: new InputGestureCollection() {
-				new KeyGesture(
-					Key.F,
-					ModifierKeys.Alt
-				)
-			}
-		);
-
 
 		#endregion
 
