@@ -217,7 +217,7 @@ namespace MapSectionProviderLib
 					{
 						if (!UseRepo)
 						{
-							await Task.Delay(20);
+							//await Task.Delay(20);
 							var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 						}
@@ -280,7 +280,7 @@ namespace MapSectionProviderLib
 					request.IncreasingIterations = true;
 					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
-					if (SAVE_THE_ZVALUES)
+					if (UseRepo && SAVE_THE_ZVALUES)
 					{
 						var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
 						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(request.LimbCount);
@@ -327,7 +327,7 @@ namespace MapSectionProviderLib
 			request.MapSectionVectors = mapSectionVectors;
 			request.MapSectionVectors.ResetObject();
 
-			if (SAVE_THE_ZVALUES)
+			if (UseRepo && SAVE_THE_ZVALUES)
 			{
 				request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(request.LimbCount);
 				request.MapSectionZVectors.ResetObject();
@@ -421,16 +421,14 @@ namespace MapSectionProviderLib
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse, int jobId)
 		{
-			if (mapSectionResponse != null)
+			IsMapSectionResponseNull(mapSectionWorkRequest, mapSectionResponse);
+
+			_requestsLock.EnterUpgradeableReadLock();
+
+			if (UseRepo)
 			{
 				PersistResponse(mapSectionResponse);
 			}
-			else
-			{
-				Debug.WriteLine("The MapSectionResponse is null in the HandleGeneratedResponse callback for the MapSectionRequestProcessor.");
-			}
-
-			_requestsLock.EnterUpgradeableReadLock();
 
 			try
 			{
@@ -454,11 +452,7 @@ namespace MapSectionProviderLib
 					}
 				}
 
-				// For diagnostics only
-				if (!RequestExists(mapSectionWorkRequest.Request, pendingRequests))
-				{
-					Debug.WriteLine("WARNING: The primary request was not included in the list of pending requests.");
-				}
+				WasPrimaryRequestFound(mapSectionWorkRequest, pendingRequests);
 
 				foreach (var workItem in pendingRequests)
 				{
@@ -504,18 +498,37 @@ namespace MapSectionProviderLib
 			return mapSection;
 		}
 
-		private void PersistResponse(MapSectionResponse mapSectionResponse)
+		private MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors? mapSectionVectors, int jobId)
 		{
-			mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-			_mapSectionPersistProcessor.AddWork(mapSectionResponse);
+			MapSection mapSectionResult;
+
+			if (mapSectionVectors == null)
+			{
+				Debug.WriteLine($"WARNING: Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
+				mapSectionResult = new MapSection(mapSectionRequest, isCancelled: false);
+			}
+			else
+			{
+				var mapBlockOffset = mapSectionRequest.MapBlockOffset;
+				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId, mapBlockOffset);
+			}
+
+			return mapSectionResult;
+		}
+
+		private void PersistResponse(MapSectionResponse? mapSectionResponse)
+		{
+			if (mapSectionResponse != null)
+			{
+				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+				_mapSectionPersistProcessor.AddWork(mapSectionResponse);
+			}
 		}
 
 		// Returns true, if there is a "Primary" Request already in the queue
 		private bool ThereIsAMatchingRequest(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			//var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-			//var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition);
 			var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition);
 
 			return result;
@@ -525,9 +538,6 @@ namespace MapSectionProviderLib
 		private List<MapSectionWorkRequest> GetPendingRequests(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			//var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-
-			//var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition).ToList();
 			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition).ToList();
 
 			return result;
@@ -548,17 +558,6 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private bool RequestExists(MapSectionRequest mapSectionRequest, IEnumerable<MapSectionWorkRequest> workRequests)
-		{
-			var subdivisionId = mapSectionRequest.SubdivisionId;
-			//var blockPosition = _dtoMapper.MapFrom(mapSectionRequest.BlockPosition);
-
-			//var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && _dtoMapper.MapFrom(x.Request.BlockPosition) == blockPosition);
-			var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition);
-
-			return result;
-		}
-
 		private bool IsJobCancelled(int jobId)
 		{
 			bool result;
@@ -570,22 +569,30 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors? mapSectionVectors, int jobId)
+		[Conditional("DEBUG")]
+		private void IsMapSectionResponseNull(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse)
 		{
-			MapSection mapSectionResult;
-
-			if (mapSectionVectors == null)
+			if (mapSectionResponse == null)
 			{
-				Debug.WriteLine($"Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
-				mapSectionResult = new MapSection(mapSectionRequest, isCancelled: false);
+				Debug.WriteLine($"WARNING: The MapSectionResponse is null in the HandleGeneratedResponse callback for the MapSectionRequestProcessor. The request's block position is {mapSectionWorkRequest.Request.BlockPosition}.");
 			}
-			else
-			{
-				var mapBlockOffset = mapSectionRequest.MapBlockOffset;
-				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId, mapBlockOffset);
-			}
+		}
 
-			return mapSectionResult;
+		[Conditional("DEBUG")]
+		private void WasPrimaryRequestFound(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> pendingRequests)
+		{
+			if (!RequestExists(mapSectionWorkRequest.Request, pendingRequests))
+			{
+				Debug.WriteLine("WARNING: The primary request was not included in the list of pending requests.");
+			}
+		}
+
+		private bool RequestExists(MapSectionRequest mapSectionRequest, IEnumerable<MapSectionWorkRequest> workRequests)
+		{
+			var subdivisionId = mapSectionRequest.SubdivisionId;
+			var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition);
+
+			return result;
 		}
 
 		#endregion

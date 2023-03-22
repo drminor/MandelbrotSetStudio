@@ -21,6 +21,11 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		public JobProgressInfo? JobProgressInfo;
 		public List<MapSectionProcessInfo> MapSectionProcessInfos;
 
+		//public List<Tuple<long, string>> Timings;
+
+		//private Stopwatch _stopwatch1;
+
+
 		public MathOpCounts MathOpCounts { get; set; }
 
 		#endregion
@@ -29,6 +34,9 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper)
         {
+			//_stopwatch1 = Stopwatch.StartNew();
+			//_stopwatch1.Stop();
+			
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_mapSectionRequestProcessor.UseRepo = false;
 
@@ -40,6 +48,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			_processingElapsed = string.Empty;
 
 			MapSectionProcessInfos = new List<MapSectionProcessInfo>();
+			//Timings = new List<Tuple<long, string>>();
 			MathOpCounts = new MathOpCounts();
 
 			NotifyPropChangedMaxPeek();
@@ -212,6 +221,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		public void RunDenseLC4()
 		{
 			var blockSize = RMapConstants.BLOCK_SIZE;
+			//var sizeInWholeBlocks = new SizeInt(8);
 			var sizeInWholeBlocks = new SizeInt(8);
 			var canvasSize = sizeInWholeBlocks.Scale(blockSize);
 
@@ -245,20 +255,29 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		{
 			NotifyPropChangedMaxPeek();
 			MapSectionProcessInfos.Clear();
+			//Timings.Clear();
 
 			var ownerId = job.ProjectId.ToString();
 			var jobOwnerType = JobOwnerType.Project;
 
+			var stopwatch = Stopwatch.StartNew();
+			//_stopwatch1.Restart();
+			//AddTiming("Start");
+
 			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize, RMapConstants.BLOCK_SIZE);
+			//AddTiming("GetMapAreaInfo");
+
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
+			//AddTiming("CreateSectionRequest");
 
 			LimbCount = mapSectionRequests[0].LimbCount;
 
 			var mapLoader = new MapLoader(MapSectionReady, _mapSectionRequestProcessor);
+			//AddTiming("Construct MapLoader");
 			mapLoader.SectionLoaded += MapLoader_SectionLoaded;
 
-			var stopWatch = Stopwatch.StartNew();
 			var startTask = mapLoader.Start(mapSectionRequests);
+			//AddTiming("Start MapLoader");
 
 			JobProgressInfo = new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
 
@@ -268,22 +287,39 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 				if (startTask.IsCompleted)
 				{
-					stopWatch.Stop();
+					stopwatch.Stop();
 					break;
 				}
 				//Debug.WriteLine($"Cnt: {i}. RunBaseLine is sleeping for 100ms.");
 			}
 
+			//AddTiming("MapLoader Completed");
+
 			if (JobProgressInfo != null)
 			{
 				Debug.WriteLine($"Fetched: {JobProgressInfo.FetchedCount}, Generated: {JobProgressInfo.GeneratedCount}. MapLoader Overall Time: {mapLoader.ElaspedTime}.");
-				UpdateUi(stopWatch, JobProgressInfo, mapLoader.ElaspedTime);
+
+				//var prevTm = 0L;
+
+				//foreach(var tm in Timings)
+				//{
+				//	Debug.WriteLine($"{tm.Item2}:{tm.Item1}\t{tm.Item1 - prevTm}");
+				//	prevTm = tm.Item1;
+				//}
+
+				UpdateUi(stopwatch, JobProgressInfo, mapLoader.ElaspedTime);
 			}
 			else
 			{
 				Debug.WriteLine("The JobProgressInfo is null.");
 			}
 		}
+
+		//private List<Tuple<long, string>> AddTiming(string desc)
+		//{
+		//	Timings.Add(new Tuple<long, string>(_stopwatch1.ElapsedMilliseconds, desc));
+		//	return Timings;
+		//}
 
 		private void UpdateUi(Stopwatch stopwatch, JobProgressInfo jobProgressInfo, TimeSpan mapLoaderOverall)
 		{
@@ -353,11 +389,12 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 				if (e.FoundInRepo)
 				{
 					JobProgressInfo.FetchedCount++;
-
+					//AddTiming($"Fectched: {JobProgressInfo.FetchedCount}");
 				}
 				else
 				{
 					JobProgressInfo.GeneratedCount++;
+					//AddTiming($"Generated: {JobProgressInfo.GeneratedCount}");
 				}
 			}
 		}
