@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace MSetExplorer.XPoc.SkiaSharpPOC
+namespace WpfDisplayPOC
 {
 	/// <summary>
 	///     Abstract class used to create WPF controls which are drawn using Skia
@@ -71,7 +71,7 @@ namespace MSetExplorer.XPoc.SkiaSharpPOC
 
 			_bitmap.Lock();
 
-			var imgInfo = new SKImageInfo((int)_bitmap.Width, (int)_bitmap.Height, SKColorType.RgbaF32, SKAlphaType.Premul);
+			var imgInfo = new SKImageInfo((int)_bitmap.Width, (int)_bitmap.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
 
 			using (var surface = SKSurface.Create(imgInfo, _bitmap.BackBuffer, _bitmap.BackBufferStride))
 			{
