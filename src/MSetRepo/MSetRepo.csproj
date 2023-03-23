@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ObjectIdSerializer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="ObjectIdSerializer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
     <ProjectReference Include="..\ProjectRepo\ProjectRepo.csproj" />
   </ItemGroup>

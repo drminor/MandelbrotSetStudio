@@ -24,17 +24,16 @@ namespace ProjectRepo
 				.Ascending(x => x.OwnerId)
 				.Ascending(x => x.OwnerType);
 
-			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<JobMapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "OwnerAndType" }));
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<JobMapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = false, Name = "OwnerAndType" }));
 		}
 
 		public void CreateMapSectionIdIndex()
 		{
 			var indexKeysDef = Builders<JobMapSectionRecord>.IndexKeys
-				.Ascending(x => x.OwnerType);
+				.Ascending(x => x.MapSectionId);
 
-			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<JobMapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "MapSectionId" }));
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<JobMapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = false, Name = "MapSectionId" }));
 		}
-
 
 		#endregion
 

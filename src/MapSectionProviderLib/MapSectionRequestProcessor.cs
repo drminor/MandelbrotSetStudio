@@ -270,7 +270,8 @@ namespace MapSectionProviderLib
 					mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
 					// TODO: Send this task to the persist processor, to keep this thread as responsive as possible.
-					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+					// TODO: This is commented out to avoid race conditions between this and the Persist processor, once moved to the persist processor, Inserts will be serialized.
+					//_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
 
 					return mapSectionResponse;
 				}

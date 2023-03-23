@@ -54,8 +54,7 @@ namespace MSetExplorer.XPoc.SkiaSharpPOC
 		///     <see cref="CanvasClear" />
 		/// </summary>
 		[Category("Appearance")]
-		[Description(
-			"Gets or sets a bool to determine if canvas should be cleared before each render with the value of CanvasClear")]
+		[Description("Gets or sets a bool to determine if canvas should be cleared before each render with the value of CanvasClear")]
 		public bool IsClearCanvas
 		{
 			get { return (bool)GetValue(IsClearCanvasProperty); }

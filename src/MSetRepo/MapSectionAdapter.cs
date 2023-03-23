@@ -267,7 +267,7 @@ namespace MSetRepo
 			var ownerIdStr = mapSectionResponse.OwnerId;
 			if (string.IsNullOrEmpty(ownerIdStr))
 			{
-				throw new ArgumentNullException(nameof(mapSectionIdStr), "The OwnerId cannot be null.");
+				throw new ArgumentNullException(nameof(MapSectionResponse.OwnerId), "The OwnerId cannot be null.");
 			}
 
 			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType);
@@ -282,8 +282,16 @@ namespace MSetRepo
 			if (existingRecord == null)
 			{
 				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, ownerId, jobOwnerType);
-				var jobMapSectionId = await _jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
-				return jobMapSectionId;
+				try
+				{
+					var jobMapSectionId = await _jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
+					return jobMapSectionId;
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"Got exception: {e}.");
+					throw;
+				}
 			}
 			else
 			{
