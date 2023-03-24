@@ -16,46 +16,10 @@ namespace WpfDisplayPOC
 
 		protected SkiaControl()
 		{
-			cacheCanvasClearColor();
-			createBitmap();
-			SizeChanged += (o, args) => createBitmap();
+			CacheCanvasClearColor();
+			CreateBitmap();
+			SizeChanged += (o, args) => CreateBitmap();
 		}
-
-
-		/// <summary>
-		///     Color used to clear canvas before each call to <see cref="Draw" /> if <see cref="IsClearCanvas" /> is true
-		/// </summary>
-		[Category("Brush")]
-		[Description("Gets or sets a color used to clear canvas before each render if IsClearCanvas is true")]
-		public SolidColorBrush CanvasClear
-		{
-			get { return (SolidColorBrush)GetValue(CanvasClearProperty); }
-			set { SetValue(CanvasClearProperty, value); }
-		}
-
-		public static readonly DependencyProperty CanvasClearProperty =
-			DependencyProperty.Register("CanvasClear", typeof(SolidColorBrush), typeof(SkiaControl),
-				new PropertyMetadata(new SolidColorBrush(Colors.Transparent), canvasClearPropertyChanged));
-
-		private static void canvasClearPropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs args)
-		{
-			((SkiaControl)o).cacheCanvasClearColor();
-		}
-
-		/// <summary>
-		///     When enabled, canvas will be cleared before each call to <see cref="Draw" /> with the value of
-		///     <see cref="CanvasClear" />
-		/// </summary>
-		[Category("Appearance")]
-		[Description("Gets or sets a bool to determine if canvas should be cleared before each render with the value of CanvasClear")]
-		public bool IsClearCanvas
-		{
-			get { return (bool)GetValue(IsClearCanvasProperty); }
-			set { SetValue(IsClearCanvasProperty, value); }
-		}
-
-		public static readonly DependencyProperty IsClearCanvasProperty =
-			DependencyProperty.Register("IsClearCanvas", typeof(bool), typeof(SkiaControl), new PropertyMetadata(true));
 
 		/// <summary>
 		/// Capture the most recent control render to an image
@@ -95,7 +59,7 @@ namespace WpfDisplayPOC
 		/// <param name="height">Canvas height</param>
 		protected abstract void Draw(SKCanvas canvas, int width, int height);
 
-		private void createBitmap()
+		private void CreateBitmap()
 		{
 			int width = (int)ActualWidth;
 			int height = (int)ActualHeight;
@@ -106,9 +70,48 @@ namespace WpfDisplayPOC
 				_bitmap = null;
 		}
 
-		private void cacheCanvasClearColor()
+		private void CacheCanvasClearColor()
 		{
-			_canvasClearColor = SKColor.Parse( CanvasClear.Color.ToString());
+			_canvasClearColor = SKColor.Parse(CanvasClear.Color.ToString());
 		}
+
+		#region Dependency Properties
+
+		/// <summary>
+		/// Color used to clear canvas before each call to <see cref="Draw" /> if <see cref="IsClearCanvas" /> is true
+		/// </summary>
+		[Category("Brush")]
+		[Description("Gets or sets a color used to clear canvas before each render if IsClearCanvas is true")]
+		public SolidColorBrush CanvasClear
+		{
+			get { return (SolidColorBrush)GetValue(CanvasClearProperty); }
+			set { SetValue(CanvasClearProperty, value); }
+		}
+
+		public static readonly DependencyProperty CanvasClearProperty =
+			DependencyProperty.Register("CanvasClear", typeof(SolidColorBrush), typeof(SkiaControl),
+				new PropertyMetadata(new SolidColorBrush(Colors.Transparent), CanvasClearPropertyChanged));
+
+		private static void CanvasClearPropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs args)
+		{
+			((SkiaControl)o).CacheCanvasClearColor();
+		}
+
+		/// <summary>
+		///     When enabled, canvas will be cleared before each call to <see cref="Draw" /> with the value of
+		///     <see cref="CanvasClear" />
+		/// </summary>
+		[Category("Appearance")]
+		[Description("Gets or sets a bool to determine if canvas should be cleared before each render with the value of CanvasClear")]
+		public bool IsClearCanvas
+		{
+			get { return (bool)GetValue(IsClearCanvasProperty); }
+			set { SetValue(IsClearCanvasProperty, value); }
+		}
+
+		public static readonly DependencyProperty IsClearCanvasProperty =
+			DependencyProperty.Register("IsClearCanvas", typeof(bool), typeof(SkiaControl), new PropertyMetadata(true));
+
+		#endregion
 	}
 }
