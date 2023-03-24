@@ -31,7 +31,7 @@
             <Image x:Name="myImage"/>
         </Canvas>-->
 
-        <local:SimpleSkiaCanvas x:Name="mySkiaCanvas" CanvasClear="DarkMagenta" IsClearCanvas="False" Margin="10 0 10 10">
+        <local:SimpleSkiaCanvas x:Name="mySkiaCanvas" CanvasClear="AntiqueWhite" IsClearCanvas="True" Margin="10 0 10 10">
         </local:SimpleSkiaCanvas>
 
 

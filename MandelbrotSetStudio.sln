@@ -93,7 +93,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSetRowGeneratorClientTest"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VecMathTest", "src\VecMathTest\VecMathTest.csproj", "{5071A2A6-A1DA-418B-AA9A-6826FC72D039}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfDisplayPOC", "src\WpfDisplayPOC\WpfDisplayPOC.csproj", "{AB15DF72-52C4-4924-ACE8-BE892D75A437}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfDisplayPOC", "src\WpfDisplayPOC\WpfDisplayPOC.csproj", "{AB15DF72-52C4-4924-ACE8-BE892D75A437}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -503,8 +503,8 @@ Global
 		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|ARM64.Build.0 = Debug|Any CPU
 		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|Win32.ActiveCfg = Debug|Any CPU
 		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|Win32.Build.0 = Debug|Any CPU
-		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|x64.Build.0 = Debug|Any CPU
+		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|x64.ActiveCfg = Debug|x64
+		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|x64.Build.0 = Debug|x64
 		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Debug|x86.Build.0 = Debug|Any CPU
 		{AB15DF72-52C4-4924-ACE8-BE892D75A437}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
     <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
     <ProjectReference Include="..\PngImageLib\PngImageLib.csproj" />

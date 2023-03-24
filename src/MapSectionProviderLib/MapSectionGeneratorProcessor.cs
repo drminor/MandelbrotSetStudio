@@ -1,5 +1,4 @@
-﻿using MEngineClient;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
@@ -12,12 +11,11 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionGeneratorProcessor : IDisposable
 	{
-
 		#region Private Properties
 
 		private const int QUEUE_CAPACITY = 200;
 
-		private readonly IMEngineClient[] _mEngineClients;
+		//private readonly IMEngineClient[] _mEngineClients;
 
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<MapSectionGenerateRequest> _workQueue;
@@ -35,7 +33,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients, bool useAllCores)
+		public MapSectionGeneratorProcessor(IMEngineClient[] mEngineClients)
 		{
 			_stopped = false;
 
@@ -43,104 +41,18 @@ namespace MapSectionProviderLib
 			_workQueue = new BlockingCollection<MapSectionGenerateRequest>(QUEUE_CAPACITY);
 			_jobs = new Dictionary<int, CancellationTokenSource>();
 
-			if (mEngineClients.Length == 1)
-			{
-				_workQueueProcessors = CreateTheQueueProcessorsN(useAllCores, ref mEngineClients);
-				_mEngineClients = mEngineClients;
-			}
-			else
-			{
-				_mEngineClients = mEngineClients;
-				_workQueueProcessors = CreateTheQueueProcessorsStandard(useAllCores);
-			}
+			_workQueueProcessors = CreateTheQueueProcessors(mEngineClients);
+			//_mEngineClients = mEngineClients;
 		}
 
-		private IList<Task> CreateTheQueueProcessorsStandard(bool useAllCores)
+		private IList<Task> CreateTheQueueProcessors(IMEngineClient[] clients)
 		{
-			int localTaskCnt;
-			int remoteTaskCnt;
-
-			if (useAllCores)
-			{
-				var numberOfLogicalProc = Environment.ProcessorCount;
-				localTaskCnt = numberOfLogicalProc - 1;
-				//localTaskCnt = 2;
-				remoteTaskCnt = localTaskCnt - 1;
-			}
-			else
-			{
-				localTaskCnt = 1;
-				remoteTaskCnt = 0;
-			}
-
-			var workQueueProcessors = new List<Task>();
-			foreach (var client in _mEngineClients)
-			{
-				if (client.IsLocal)
-				{
-					for (var i = 0; i < localTaskCnt; i++)
-					{
-						//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(client/*, _mapSectionPersistProcessor*/, _cts.Token)));
-						workQueueProcessors.Add(Task.Run(() => ProcessTheQueue(client, _cts.Token)));
-					}
-				}
-				else
-				{
-					for (var i = 0; i < remoteTaskCnt; i++)
-					{
-						//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(client/*, _mapSectionPersistProcessor*/, _cts.Token)));
-						workQueueProcessors.Add(Task.Run(() => ProcessTheQueue(client, _cts.Token)));
-					}
-				}
-			}
-
-			return workQueueProcessors;
-		}
-
-		// TODO: Fix the MapSectionGeneratorProcessor's Constructor. We need to provide a IMEngineClient factory instead of an array of IMEngineClient instances.
-
-		private IList<Task> CreateTheQueueProcessorsN(bool useAllCores, ref IMEngineClient[] clients)
-		{
-			int localTaskCnt;
-
-			if (useAllCores)
-			{
-				var numberOfLogicalProc = Environment.ProcessorCount;
-				localTaskCnt = numberOfLogicalProc - 1;
-			}
-			else
-			{
-				localTaskCnt = 1;
-			}
-
 			var workQueueProcessors = new List<Task>();
 
-			var newClients = new IMEngineClient[localTaskCnt];
-
-			for (var i = 0; i < localTaskCnt; i++)
+			foreach(var client in clients)
 			{
-				IMEngineClient nClient;
-
-				if (clients[0] is MClientLocal mClientLocal)
-				{
-					nClient = new MClientLocal(mClientLocal.MSetGenerationStrategy);
-				}
-				else if (clients[0] is MClient mClient)
-				{
-					nClient = new MClient(mClient.EndPointAddress);
-				}
-				else
-				{
-					throw new NotSupportedException("Currently, only the MClient and MClientLocal implementations of IMEngineClient are supported.");
-				}
-
-				//workQueueProcessors.Add(Task.Run(async () => await ProcessTheQueueAsync(nClient/*, _mapSectionPersistProcessor*/, _cts.Token)));
-				workQueueProcessors.Add(Task.Run(() => ProcessTheQueue(nClient, _cts.Token)));
-
-				newClients[i] = nClient;
+				workQueueProcessors.Add(Task.Run(() => ProcessTheQueue(client, _cts.Token)));
 			}
-
-			clients = newClients;
 
 			return workQueueProcessors;
 		}

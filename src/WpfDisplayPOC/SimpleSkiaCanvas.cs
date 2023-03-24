@@ -13,7 +13,7 @@ namespace WpfDisplayPOC
 
 		protected override void Draw(SKCanvas canvas, int width, int height)
 		{
-			canvas.Clear();
+			//canvas.Clear();
 			_field.Advance();
 
 			var starColor = new SKColor(255, 60, 90, 255);
