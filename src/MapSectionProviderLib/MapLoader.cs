@@ -1,6 +1,4 @@
-﻿using MapSectionProviderLib;
-using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -9,9 +7,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MSetExplorer
+namespace MapSectionProviderLib
 {
-	internal class MapLoader
+	public class MapLoader
 	{
 		private readonly Action<MapSection, int, bool> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;

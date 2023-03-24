@@ -1,5 +1,4 @@
-﻿using MapSectionProviderLib;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -9,9 +8,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MSetExplorer
+namespace MapSectionProviderLib
 {
-	internal class MapLoaderManager : IMapLoaderManager
+	public class MapLoaderManager : IMapLoaderManager
 	{
 		private readonly CancellationTokenSource _cts;
 		private readonly MapSectionHelper _mapSectionHelper;

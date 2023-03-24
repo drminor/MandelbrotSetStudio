@@ -16,6 +16,8 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
+		#region Configuration
+
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 
@@ -30,6 +32,10 @@ namespace MSetExplorer
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
 
+		#endregion
+
+		#region Private Properties
+
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -39,6 +45,10 @@ namespace MSetExplorer
 		private IMapLoaderManager? _mapLoaderManager;
 
 		private AppNavWindow? _appNavWindow;
+
+		#endregion
+
+		#region Constructor, Startup and Exit
 
 		public App()
 		{
@@ -98,6 +108,10 @@ namespace MSetExplorer
 
 			//_mEngineServerManager?.Stop();
 		}
+
+		#endregion
+
+		#region Support Methods
 
 		private AppNavWindow GetAppNavWindow(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
@@ -250,6 +264,8 @@ namespace MSetExplorer
 
 			return sb.ToString();
 		}
+
+		#endregion
 
 		/* Old Code to Support calling a remote MEngine 
 

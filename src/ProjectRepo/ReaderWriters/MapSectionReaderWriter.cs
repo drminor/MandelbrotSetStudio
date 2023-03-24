@@ -116,7 +116,7 @@ namespace ProjectRepo
 
 			if (requestCompleted)
 			{
-				updateDefinition.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations);
+				updateDefinition = updateDefinition.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations);
 			}
 
 			var result = await Collection.UpdateOneAsync(filter, updateDefinition);
