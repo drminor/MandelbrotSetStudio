@@ -1,0 +1,27 @@
+﻿using MSS.Types;
+using SkiaSharp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace WpfMapDisplayPOC
+{
+	internal class SkiaHelper
+	{
+		public static SKBitmap ArrayToImage(byte[] pixelArray, SizeInt blockSize)
+		{
+			SKBitmap bitmap = new();
+			GCHandle gcHandle = GCHandle.Alloc(pixelArray, GCHandleType.Pinned);
+			SKImageInfo info = new(blockSize.Width, blockSize.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+
+			IntPtr ptr = gcHandle.AddrOfPinnedObject();
+			int rowBytes = info.RowBytes;
+			bitmap.InstallPixels(info, ptr, rowBytes, delegate { gcHandle.Free(); });
+
+			return bitmap;
+		}
+	}
+}

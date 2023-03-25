@@ -33,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
     <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
   </ItemGroup>
 
