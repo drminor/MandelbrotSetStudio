@@ -335,7 +335,7 @@ namespace MSetExplorer
 					var sectionsToRemove = new List<MapSection>();
 					foreach (var ms in MapSections)
 					{
-						if (ms.JobId == mapLoaderJobNumber.Value)
+						if (ms.JobNumber == mapLoaderJobNumber.Value)
 						{
 							sectionsToRemove.Add(ms);
 						}

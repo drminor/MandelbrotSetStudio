@@ -269,9 +269,7 @@ namespace MapSectionProviderLib
 					mapSectionResponse.OwnerId = request.OwnerId;
 					mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
-					// TODO: Send this task to the persist processor, to keep this thread as responsive as possible.
-					// TODO: This is commented out to avoid race conditions between this and the Persist processor, once moved to the persist processor, Inserts will be serialized.
-					//_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+					PersistJobMapSectionRecord(mapSectionResponse);
 
 					return mapSectionResponse;
 				}
@@ -510,11 +508,21 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				var mapBlockOffset = mapSectionRequest.MapBlockOffset;
-				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId, mapBlockOffset);
+				//var mapBlockOffset = mapSectionRequest.MapBlockOffset;
+				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId/*, mapBlockOffset*/);
 			}
 
 			return mapSectionResult;
+		}
+
+		private void PersistJobMapSectionRecord(MapSectionResponse? mapSectionResponse)
+		{
+			if (mapSectionResponse != null)
+			{
+				var copyWithNoVectors = mapSectionResponse.CreateCopySansVectors();
+				copyWithNoVectors.InsertJobMapSectionRecord = true;
+				_mapSectionPersistProcessor.AddWork(copyWithNoVectors);
+			}
 		}
 
 		private void PersistResponse(MapSectionResponse? mapSectionResponse)

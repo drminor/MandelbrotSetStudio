@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,9 +28,15 @@ namespace MSS.Common
 		Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
 		Task<long?> DeleteZValuesAync(ObjectId mapSectionId);
 
-
 		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision);
 		Subdivision InsertSubdivision(Subdivision subdivision);
+
+		IList<ObjectId> GetMapSectionIds(ObjectId ownerId, JobOwnerType jobOwnerType);
+		MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors);
+
+		MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors);
+
+
 	}
 
 }

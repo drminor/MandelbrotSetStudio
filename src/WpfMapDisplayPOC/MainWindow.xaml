@@ -5,8 +5,30 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfMapDisplayPOC"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="1150" Width="1100">
+   
     <Grid>
 
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Width="1026" Height="1026">
+            <local:MSectionDispControl x:Name="MSectionDispControl1"/>
+        </Grid>
+
+        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnLoad" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="LoadButton_Click" IsDefault="True" TabIndex="4" >_Load</Button>
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True" TabIndex="5">_Close</Button>
+
+            </StackPanel>
+
+        </Border>
+
+
     </Grid>
+    
 </Window>

@@ -16,12 +16,12 @@ namespace MSS.Types
 
 		public MapSection(MapSectionRequest mapSectionRequest, bool isCancelled = false)
 			: this(
-				  jobId: -1,
+				  jobNumber: -1,
 				  mapSectionVectors: null,
 				  subdivisionId: mapSectionRequest.SubdivisionId,
 				  repoBlockPosition: mapSectionRequest.BlockPosition,
 				  isInverted: false,
-				  blockPosition: new PointInt(),
+				  screenPosition: new PointInt(),
 				  size: new SizeInt(),
 				  targetIterations: 0,
 				  histogramBuilder: BuildHstFake
@@ -33,27 +33,27 @@ namespace MSS.Types
 
 		public MapSection()
 			: this(
-				  jobId: -1,
+				  jobNumber: -1,
 				  mapSectionVectors: null, 
 				  subdivisionId: string.Empty, 
 				  repoBlockPosition: new BigVector(), 
 				  isInverted: false, 
-				  blockPosition: new PointInt(), 
+				  screenPosition: new PointInt(), 
 				  size: new SizeInt(), 
 				  targetIterations: 0, 
 				  histogramBuilder: BuildHstFake
 				  )
 		{ }
 
-		public MapSection(int jobId, MapSectionVectors? mapSectionVectors, string subdivisionId,
-			BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
+		public MapSection(int jobNumber, MapSectionVectors? mapSectionVectors, string subdivisionId,
+			BigVector repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
-			JobId = jobId;
+			JobNumber = jobNumber;
 			MapSectionVectors = mapSectionVectors;
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
-			BlockPosition = blockPosition;
+			BlockPosition = screenPosition;
 			Size = size;
 
 			TargetIterations = targetIterations;
@@ -66,7 +66,7 @@ namespace MSS.Types
 
 		public bool RequestCancelled { get; set; }
 
-		public int JobId { get; init; }
+		public int JobNumber { get; init; }
 		public MapSectionVectors? MapSectionVectors { get; set; }
 
 		public bool IsEmpty => MapSectionVectors == null;

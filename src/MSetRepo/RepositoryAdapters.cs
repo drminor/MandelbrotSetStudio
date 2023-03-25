@@ -1,7 +1,6 @@
-﻿using MSetRepo;
-using MSS.Common;
+﻿using MSS.Common;
 
-namespace MSetExplorer
+namespace MSetRepo
 {
 	public class RepositoryAdapters
 	{

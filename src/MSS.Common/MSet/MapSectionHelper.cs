@@ -114,8 +114,8 @@ namespace MSS.Common
 			{
 				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapAreaInfo.MapBlockOffset, out var isInverted);
 
-				var mapSection = new MapSection(jobId: -1, mapSectionVectors: null, subdivisionId: subdivisionId, repoBlockPosition: repoPosition, isInverted: isInverted,
-					blockPosition: screenPosition, size: mapAreaInfo.Subdivision.BlockSize, targetIterations: targetIterations, histogramBuilder: BuildHistogram);
+				var mapSection = new MapSection(jobNumber: -1, mapSectionVectors: null, subdivisionId: subdivisionId, repoBlockPosition: repoPosition, isInverted: isInverted,
+					screenPosition: screenPosition, size: mapAreaInfo.Subdivision.BlockSize, targetIterations: targetIterations, histogramBuilder: BuildHistogram);
 
 
 				result.Add(mapSection);
@@ -221,10 +221,13 @@ namespace MSS.Common
 
 		#region Create MapSection
 
-		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, int jobId, BigVector mapBlockOffset)
+		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, int jobId/*, BigVector mapBlockOffset*/)
 		{
 			var repoBlockPosition = mapSectionRequest.BlockPosition;
 			var isInverted = mapSectionRequest.IsInverted;
+
+			var mapBlockOffset = mapSectionRequest.MapBlockOffset;
+
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
@@ -233,6 +236,19 @@ namespace MSS.Common
 
 			return mapSection;
 		}
+
+		public MapSection CreateMapSection(int jobNumber, BigVector repoBlockPosition, BigVector mapBlockOffset, bool isInverted, string subdivisionId, 
+			SizeInt blockSize, MapSectionVectors mapSectionVectors, int targetIterations)
+		{
+			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
+			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
+
+			var mapSection = new MapSection(jobNumber, mapSectionVectors, subdivisionId, repoBlockPosition, isInverted,
+				screenPosition, blockSize, targetIterations, BuildHistogram);
+
+			return mapSection;
+		}
+
 
 		public byte[] GetPixelArray(MapSectionVectors mapSectionVectors, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{

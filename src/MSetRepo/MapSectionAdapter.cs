@@ -130,7 +130,8 @@ namespace MSetRepo
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"While fetching a MapSectionRecord, got exception: {e}.");
+				Debug.WriteLine($"While fetching a MapSectionRecord from Subdivision and BlockPosition (Async), got exception: {e}.");
+
 				var id = await _mapSectionReaderWriter.GetId(subdivisionId, blockPosition);
 				if (id != null)
 				{
@@ -298,6 +299,68 @@ namespace MSetRepo
 				return existingRecord.Id;
 			}
 		}
+
+		public IList<ObjectId> GetMapSectionIds(ObjectId ownerId, JobOwnerType jobOwnerType)
+		{
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
+			var mapSectionIds = jobMapSectionReaderWriter.GetMapSectionIdsByOwnerId(ownerId, jobOwnerType);
+
+			return mapSectionIds;
+		}
+
+		public MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors)
+		{
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+
+			try
+			{
+				var mapSectionRecord = _mapSectionReaderWriter.Get(mapSectionId);
+				if (mapSectionRecord != null)
+				{
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
+
+					return mapSectionResponse;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"While fetching a MapSectionRecord from a MapSectionId, got exception: {e}.");
+				return null;
+			}
+		}
+
+		public MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors)
+		{
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+
+			try
+			{
+				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
+				if (mapSectionRecord != null)
+				{
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
+
+					return mapSectionResponse;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"While fetching a MapSectionRecord from Subdivision and BlockPosition (synchronous), got exception: {e}.");
+
+				return null;
+			}
+		}
+
+
 
 		public long? DeleteMapSectionsForMany(IEnumerable<ObjectId> ownerIds, JobOwnerType jobOwnerType)
 		{
