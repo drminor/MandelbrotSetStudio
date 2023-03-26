@@ -69,12 +69,16 @@ namespace MSetExplorer
 
 				_canvas.ClipToBounds = _clipImageBlocks;
 
-				_mapDisplayImage = new Image { Source = _vm.ImageSource };
-				_ = _canvas.Children.Add(_mapDisplayImage);
+				//_mapDisplayImage = new Image { Source = _vm.ImageSource };
+				//_ = _canvas.Children.Add(_mapDisplayImage);
 
-				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
-				_mapDisplayImage.SetValue(Canvas.LeftProperty, 0d);
-				_mapDisplayImage.SetValue(Canvas.RightProperty, 0d);
+				//_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
+				//_mapDisplayImage.SetValue(Canvas.LeftProperty, 0d);
+				//_mapDisplayImage.SetValue(Canvas.RightProperty, 0d);
+
+				myImage.SetValue(Panel.ZIndexProperty, 5);
+				myImage.SetValue(Canvas.LeftProperty, 0d);
+				myImage.SetValue(Canvas.RightProperty, 0d);
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -206,7 +210,8 @@ namespace MSetExplorer
 		{
 			if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
 			{
-				Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
+				//Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
+				Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
 				Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
 
 				_offset = value;

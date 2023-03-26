@@ -27,7 +27,7 @@ namespace MSetExplorer
 
 		private readonly DrawingGroup _drawingGroup;
 		private readonly ScaleTransform _scaleTransform;
-		private readonly IScreenSectionCollection _screenSectionCollection;
+		//private readonly IScreenSectionCollection _screenSectionCollection;
 
 		private SizeDbl _canvasSize;
 		private VectorInt _canvasControlOffset;
@@ -48,17 +48,20 @@ namespace MSetExplorer
 		private object _paintLocker;
 
 		private WriteableBitmap _bitmap;
-		private IntPtr bitmapPtr;
-		private int bWidth;
-		private int bHeight;
-		//private SKColor _canvasClearColor;
 
+		//private IntPtr bitmapPtr;
+		//private int bWidth;
+		//private int bHeight;
+
+		//private SKColor _canvasClearColor;
+		private SizeInt _canvasSizeInBlocks;
+		private SizeInt _allocatedBlocks;
 
 		#region Constructor
 
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
-			_bitmap = CreateBitmap();
+			_bitmap = CreateBitmap(new SizeInt(10));
 			_useEscapeVelocities = true;
 			_keepDisplaySquare = true;
 
@@ -73,7 +76,7 @@ namespace MSetExplorer
 			_drawingGroup = new DrawingGroup();
 			_scaleTransform = new ScaleTransform();
 			_drawingGroup.Transform = _scaleTransform;
-			_screenSectionCollection = new ScreenSectionCollection(_drawingGroup, BlockSize, INITIAL_SCREEN_SECTION_ALLOCATION);
+			//_screenSectionCollection = new ScreenSectionCollection(_drawingGroup, BlockSize, INITIAL_SCREEN_SECTION_ALLOCATION);
 			ImageSource = new DrawingImage(_drawingGroup);
 
 			_currentJobAreaAndCalcSettings = null;
@@ -101,26 +104,13 @@ namespace MSetExplorer
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		public event EventHandler<int>? DisplayJobCompleted;
 
-		public VectorInt ScreenCollectionIndex => _screenSectionCollection.SectionIndex;
+		//public VectorInt ScreenCollectionIndex => _screenSectionCollection.SectionIndex;
 
 		public new bool InDesignMode => base.InDesignMode;
 
 		public SizeInt BlockSize { get; }
 
 		public ImageSource ImageSource { get; init; }
-
-		public WriteableBitmap Bitmap
-		{
-			get => _bitmap;
-			set
-			{
-				_bitmap = value;
-				bitmapPtr = _bitmap.BackBuffer;
-				bWidth = (int)_bitmap.Width;
-				bHeight = (int)_bitmap.Height;
-				OnPropertyChanged();
-			}
-		}
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
@@ -242,8 +232,6 @@ namespace MSetExplorer
 					_canvasSize = value;
 					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
 
-					_bitmap = CreateBitmap();
-
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
 				}
 			}
@@ -318,8 +306,57 @@ namespace MSetExplorer
 			// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
 			var sizeInBlocks = RMapHelper.GetMapExtentInBlocks(logicalContainerSize, canvasControlOffset, BlockSize);
 
-			_screenSectionCollection.CanvasSizeInBlocks = sizeInBlocks;
+			//_screenSectionCollection.CanvasSizeInBlocks = sizeInBlocks;
+			CanvasSizeInBlocks = sizeInBlocks;
 		}
+
+
+		// New Items
+
+		public SizeInt CanvasSizeInBlocks
+		{
+			get => _canvasSizeInBlocks;
+			set
+			{
+				if (value.Width < 0 || value.Height < 0)
+				{
+					return;
+				}
+
+				if (_canvasSizeInBlocks != value)
+				{
+					// Calculate new size of bitmap in block-sized units
+					var newAllocatedBlocks = value.Inflate(2);
+					Debug.WriteLine($"Allocating ScreenSections. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
+
+					_allocatedBlocks = newAllocatedBlocks;
+					var newSize = newAllocatedBlocks.Scale(BlockSize);
+
+					// Create a new Writeable bitmap instance
+					_bitmap = CreateBitmap(newSize);
+
+					_canvasSizeInBlocks = value;
+				}
+			}
+		}
+
+		public WriteableBitmap Bitmap
+		{
+			get => _bitmap;
+			set
+			{
+				_bitmap = value;
+
+				//bitmapPtr = _bitmap.BackBuffer;
+				//bWidth = (int)_bitmap.Width;
+				//bHeight = (int)_bitmap.Height;
+
+				OnPropertyChanged();
+			}
+		}
+
+		// End New Items
+
 
 		#endregion
 
@@ -351,7 +388,8 @@ namespace MSetExplorer
 		{
 			lock (_paintLocker)
 			{
-				_screenSectionCollection.HideScreenSections();
+				//_screenSectionCollection.HideScreenSections();
+				// TODO: ssc
 
 				if (mapLoaderJobNumber.HasValue)
 				{
@@ -420,7 +458,6 @@ namespace MSetExplorer
 		//private List<Tuple<MapSection, int>> _mapSectionsPendingUiUpdate = new List<Tuple<MapSection, int>>();
 		//private Stopwatch? _stopwatch;
 
-
 		private void MapSectionReady(MapSection mapSection, int jobNumber, bool isLastSection)
 		{
 			if (mapSection.MapSectionVectors != null && _colorMap != null && _synchronizationContext != null)
@@ -451,7 +488,7 @@ namespace MSetExplorer
 			{
 				_synchronizationContext?.Post(o =>
 				{
-					_screenSectionCollection.Finish();
+					//_screenSectionCollection.Finish();
 					DisplayJobCompleted?.Invoke(this, jobNumber);
 				}
 				, null);
@@ -816,7 +853,8 @@ namespace MSetExplorer
 				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
 				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
 
-				_screenSectionCollection.Draw(mapSection.BlockPosition, pixels, drawOffline);
+				// TODO: ssc
+				//_screenSectionCollection.Draw(mapSection.BlockPosition, pixels, drawOffline);
 			}
 			else
 			{
@@ -832,10 +870,15 @@ namespace MSetExplorer
 			foreach (var mapSection in source)
 			{
 				//Debug.WriteLine($"About to redraw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-				_screenSectionCollection.Redraw(mapSection.BlockPosition);
+
+				// TODO: ssc
+				//_screenSectionCollection.Redraw(mapSection.BlockPosition);
+				
 				//Thread.Sleep(200);
 			}
 		}
+
+		// New Items
 
 		public void PlaceBitmap(byte[] pixelArray, Int32Rect sourceRect, Point dest)
 		{
@@ -850,21 +893,10 @@ namespace MSetExplorer
 			_bitmap.Unlock();
 		}
 
-		private WriteableBitmap CreateBitmap()
+		private WriteableBitmap CreateBitmap(SizeInt size)
 		{
-			WriteableBitmap result;
-
-			int width = (int)_canvasSize.Width;
-			int height = (int)_canvasSize.Height;
-
-			if (height > 0 && width > 0 /*&& Parent != null*/)
-			{
-				result = new WriteableBitmap(width, height, 96, 96, PixelFormats.Pbgra32, null);
-			}
-			else
-			{
-				result = new WriteableBitmap(10, 10, 96, 96, PixelFormats.Pbgra32, null);
-			}
+			//var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
+			var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
 
 			return result;
 		}

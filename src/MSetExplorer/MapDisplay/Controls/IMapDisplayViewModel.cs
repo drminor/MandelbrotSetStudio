@@ -10,7 +10,7 @@ namespace MSetExplorer
 {
 	public interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
 	{
-		ImageSource ImageSource { get; }
+		//ImageSource ImageSource { get; }
 
 		WriteableBitmap Bitmap { get; }
 
@@ -50,6 +50,6 @@ namespace MSetExplorer
 		void RestartLastJob();
 		void ClearDisplay(int? jobNumber);
 
-		VectorInt ScreenCollectionIndex { get; }
+		//VectorInt ScreenCollectionIndex { get; }
 	}
 }
