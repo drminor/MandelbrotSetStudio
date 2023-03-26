@@ -160,10 +160,15 @@ namespace MSS.Common
         /// <param name="destination"></param>
         private void PutColor(byte[] comps, Span<byte> destination)
         {
-            destination[0] = comps[2];
-            destination[1] = comps[1];
-            destination[2] = comps[0];
+            destination[0] = comps[2];  // Blue
+            destination[1] = comps[1];  // Green
+            destination[2] = comps[0];  // Red
             destination[3] = 255;
+
+            //destination[0] = comps[0];  // Red
+            //destination[1] = comps[1];  // Green
+            //destination[2] = comps[2];  // Blue
+            //destination[3] = 255;
         }
 
         #endregion

@@ -1,9 +1,11 @@
-﻿using SkiaSharp;
+﻿using MSS.Types;
+using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 using System.Windows;
-using MSS.Common;
-using MSS.Types;
+using System.Windows.Threading;
 
 namespace WpfMapDisplayPOC
 {
@@ -50,55 +52,32 @@ namespace WpfMapDisplayPOC
 		#endregion
 
 		#region Public Properties
-
+		
+		public string? JobId { get; set; }
 
 		#endregion
 
 		#region Button Handlers
 
-		private void LoadButton_Click(object sender, RoutedEventArgs e)
+		private void LoadButtonUiThread_Click(object sender, RoutedEventArgs e)
 		{
-			var sw = Stopwatch.StartNew();
+			var crevice1_HomeJobId = "641b58493811e2c2a6e1c18c";
+			JobId = crevice1_HomeJobId;
 
-			//int jobNumber = _vm.Load("641b56e43811e2c2a6e1bbff");
-			int jobNumber = _vm.Load("641b58493811e2c2a6e1c18c");
+			MapSectionDispControl1.ClearCanvas();
 
-			var totalSectionsFound = 0;
-			var totalSectionsDrawn = 0;
+			LoadJobUiThread();
+		}
 
-			var clearCanvas = true;
+		private void LoadButtonBgThread_Click(object sender, RoutedEventArgs e)
+		{
+			var crevice1_HomeJobId = "641b58493811e2c2a6e1c18c";
+			JobId = crevice1_HomeJobId;
 
-			foreach (var mapSectionRequest in _vm.MapSectionRequests)
-			{
-				var mapSection = _vm.GetMapSection(mapSectionRequest, jobNumber);
+			MapSectionDispControl1.ClearCanvas();
 
-				if (mapSection != null)
-				{
-					//Debug.WriteLine($"Found MapSection with Screen Position: {mapSection.BlockPosition}.");
-					totalSectionsFound++;
-
-					if (_vm.TryGetPixelArray(mapSection, out var pixelArray))
-					{
-						totalSectionsDrawn++;
-
-						var sKBitmap = SkiaHelper.ArrayToImage(pixelArray, RMapConstants.BLOCK_SIZE);
-						var skPoint = new SKPoint(mapSection.BlockPosition.X, mapSection.BlockPosition.Y);
-						MSectionDispControl1.PlaceBitmap(sKBitmap, skPoint, clearCanvas);
-						clearCanvas = false;
-
-						//break;
-					}
-				}
-				else
-				{
-					Debug.WriteLine($"Cound not find MapSection with Screen Position: {mapSectionRequest.ScreenPosition}.");
-				}
-			}
-
-			sw.Stop();
-			var tMilliseconds = sw.ElapsedMilliseconds;
-
-			Debug.WriteLine($"Drew {totalSectionsDrawn} sections. Found {totalSectionsFound} sections in {tMilliseconds}ms.");
+			var renderThread = new Thread(new ThreadStart(LoadJobBGThread));
+			renderThread.Start();
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -108,5 +87,202 @@ namespace WpfMapDisplayPOC
 		}
 
 		#endregion
+
+		#region Private Methods
+
+		private List<MapSection> GetMapSections(int jobNumber)
+		{
+			if (JobId == null)
+			{
+				throw new InvalidOperationException("The JobId is null.");
+			}
+
+			var result = new List<MapSection>();
+
+			var sw = Stopwatch.StartNew();
+
+			var totalSectionsFound = 0;
+
+			foreach (var mapSectionRequest in _vm.MapSectionRequests)
+			{
+				var mapSection = _vm.GetMapSection(mapSectionRequest, jobNumber);
+
+				if (mapSection != null)
+				{
+					//Debug.WriteLine($"Found MapSection with Screen Position: {mapSection.BlockPosition}.");
+					totalSectionsFound++;
+					result.Add(mapSection);
+				}
+				else
+				{
+					Debug.WriteLine($"Cound not find MapSection with Screen Position: {mapSectionRequest.ScreenPosition}.");
+				}
+			}
+
+			sw.Stop();
+			var fetchTime = sw.ElapsedMilliseconds;
+
+			Debug.WriteLine($"Retrieved {totalSectionsFound} sections in {fetchTime}ms.");
+
+			return result;
+		}
+
+		private void LoadJobBGThread()
+		{
+			if (JobId == null)
+			{
+				throw new InvalidOperationException("The JobId is null.");
+			}
+
+			var sw = Stopwatch.StartNew();
+
+			//int jobNumber = _vm.Load("641b56e43811e2c2a6e1bbff");
+			int jobNumber = _vm.Load(JobId);
+
+			sw.Stop();
+			var loadTime = sw.ElapsedMilliseconds;
+
+			sw.Restart();
+
+			var mapSections = GetMapSections(jobNumber);
+			sw.Stop();
+			
+			var fetchTime = sw.ElapsedMilliseconds;
+
+			sw.Restart();
+			var totalSectionsFound = 0;
+
+			foreach (var mapSection in mapSections)
+			{
+				if (mapSection != null)
+				{
+					//Debug.WriteLine($"Found MapSection with Screen Position: {mapSection.BlockPosition}.");
+					totalSectionsFound++;
+
+					MapSectionReadyBGThread(mapSection, jobNumber, isLastSection: false);
+					//MapSectionReadyGetPixelsOnly(mapSection, jobNumber, isLastSection: false);
+				}
+				else
+				{
+					Debug.WriteLine($"Cound not find MapSection.");
+				}
+			}
+
+			sw.Stop();
+			var renderTime = sw.ElapsedMilliseconds;
+
+			Debug.WriteLine($"BG:: Found {totalSectionsFound} sections in {loadTime}ms. Fetched in {fetchTime}ms. Drew in {renderTime}ms.");
+		}
+
+		private void MapSectionReadyBGThread(MapSection mapSection, int jobNumber, bool isLastSection)
+		{
+			if (_vm.TryGetPixelArray(mapSection, out var pixelArray))
+			{
+				//var sKBitmap = SkiaHelper.ArrayToImage(pixelArray, RMapConstants.BLOCK_SIZE);
+				//var skPoint = new SKPoint(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
+
+				//MapSectionDispControl1.PlaceBitmapBuf(sKBitmap, skPoint);
+
+				Dispatcher.Invoke(new Action(() =>
+				{
+					//MapSectionDispControl1.PlaceBitmap(sKBitmap, skPoint);
+
+					//var rect = new Int32Rect((int)skPoint.X, (int)skPoint.Y, sKBitmap.Width, sKBitmap.Height);
+
+					var size = RMapConstants.BLOCK_SIZE;
+					var loc = new Point(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
+
+					var rect = new Int32Rect(0, 0, size.Width, size.Height);
+					MapSectionDispControl1.PlaceBitmap(pixelArray, rect, loc);
+
+					MapSectionDispControl1.CallForUpdate(rect);
+
+				}), DispatcherPriority.Render);
+			}
+		}
+
+		private void LoadJobUiThread()
+		{
+			if (JobId == null)
+			{
+				throw new InvalidOperationException("The JobId is null.");
+			}
+
+			var sw = Stopwatch.StartNew();
+
+			//int jobNumber = _vm.Load("641b56e43811e2c2a6e1bbff");
+			int jobNumber = _vm.Load(JobId);
+
+			sw.Stop();
+			var loadTime = sw.ElapsedMilliseconds;
+
+			sw.Restart();
+
+			var mapSections = GetMapSections(jobNumber);
+			sw.Stop();
+
+			var fetchTime = sw.ElapsedMilliseconds;
+
+			sw.Restart();
+			var totalSectionsFound = 0;
+
+			foreach (var mapSection in mapSections)
+			{
+				if (mapSection != null)
+				{
+					//Debug.WriteLine($"Found MapSection with Screen Position: {mapSection.BlockPosition}.");
+					totalSectionsFound++;
+
+					//MapSectionReadyGetPixelsOnly(mapSection, jobNumber, isLastSection: false);
+					MapSectionReadyUiThread(mapSection, jobNumber, isLastSection: false);
+				}
+				else
+				{
+					Debug.WriteLine($"Cound not find MapSection.");
+				}
+			}
+
+			sw.Stop();
+			var renderTime = sw.ElapsedMilliseconds;
+
+			Debug.WriteLine($"Ui:: Found {totalSectionsFound} sections in {loadTime}ms. Fetched in {fetchTime}ms. Drew in {renderTime}ms.");
+		}
+
+		private void MapSectionReadyUiThread(MapSection mapSection, int jobNumber, bool isLastSection)
+		{
+			if (_vm.TryGetPixelArray(mapSection, out var pixelArray))
+			{
+				var sKBitmap = SkiaHelper.ArrayToImage(pixelArray, RMapConstants.BLOCK_SIZE);
+				var skPoint = new SKPoint(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
+
+				//MapSectionDispControl1.PlaceBitmap(sKBitmap, skPoint);
+
+				MapSectionDispControl1.PlaceBitmapBuf(sKBitmap, skPoint);
+
+				var rect = new Int32Rect((int)skPoint.X, (int)skPoint.Y, sKBitmap.Width, sKBitmap.Height);
+				MapSectionDispControl1.CallForUpdate(rect);
+
+			}
+		}
+
+		private void MapSectionReadyGetPixelsOnly(MapSection mapSection, int jobNumber, bool isLastSection)
+		{
+			if (_vm.TryGetPixelArray(mapSection, out var pixelArray))
+			{
+				if (pixelArray.Length < 10)
+				{
+					Debug.WriteLine("The pixel array was short.");
+				}
+			}
+			else
+			{
+				Debug.WriteLine($"Could not get the pixels.");
+			}
+		}
+
+
+		#endregion
+
+
 	}
 }

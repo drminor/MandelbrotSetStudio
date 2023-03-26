@@ -10,7 +10,9 @@ namespace ProjectRepo.Entities
 		ObjectId MapSectionId,
 		ObjectId SubdivisionId,
 		ObjectId OwnerId,
-		JobOwnerType OwnerType
+		JobOwnerType OwnerType,
+		bool IsInverted,
+		BigVectorRecord MapBlockOffset
 	)
 	{
 		[BsonId]

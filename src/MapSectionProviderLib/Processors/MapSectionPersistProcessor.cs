@@ -141,6 +141,7 @@ namespace MapSectionProviderLib
 
 						// TODO: Update this class to use a BlockingCollection with some new type instead of using just the 'raw' MapSectionResponse.
 						// Then we can include directives such as 'OnlyInsertJobMapSectionRecord' into the new type.
+						// Also: Need to include the MapBlockOffset and IsInverted properties.
 						if (mapSectionResponse.InsertJobMapSectionRecord)
 						{
 							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);

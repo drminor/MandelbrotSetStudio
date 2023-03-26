@@ -251,7 +251,7 @@ namespace MSetRepo
 
 		#region JobMapSection
 
-		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse)
+		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, BigVector? blockPosition = null, bool isInverted = false)
 		{
 			var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			if (string.IsNullOrEmpty(mapSectionIdStr))
@@ -271,18 +271,22 @@ namespace MSetRepo
 				throw new ArgumentNullException(nameof(MapSectionResponse.OwnerId), "The OwnerId cannot be null.");
 			}
 
-			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType);
+			var hack = blockPosition ?? new BigVector();
+
+			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType, hack, isInverted);
 			return result;
 		}
 
-		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId ownerId, JobOwnerType jobOwnerType)
+		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId ownerId, JobOwnerType jobOwnerType, BigVector blockPosition, bool isInverted)
 		{
 			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
 			var existingRecord = await _jobMapSectionReaderWriter.GetByMapAndOwnerIdAsync(mapSectionId, ownerId, jobOwnerType);
 			if (existingRecord == null)
 			{
-				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, ownerId, jobOwnerType);
+				var blockPositionRec = _mSetRecordMapper.MapTo(blockPosition);
+				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, ownerId, jobOwnerType, isInverted, blockPositionRec);
+
 				try
 				{
 					var jobMapSectionId = await _jobMapSectionReaderWriter.InsertAsync(jobMapSectionRecord);
@@ -447,7 +451,7 @@ namespace MSetRepo
 
 			foreach (var jmsr in jobMapSectionRecords)
 			{
-				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, jmsr.SubdivisionId, newOwnerId, jmsr.OwnerType);
+				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, jmsr.SubdivisionId, newOwnerId, jmsr.OwnerType, jmsr.IsInverted, jmsr.MapBlockOffset);
 				_ = _jobMapSectionReaderWriter.Insert(newJmsr);
 			}
 

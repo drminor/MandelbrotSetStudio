@@ -115,7 +115,7 @@ namespace WpfMapDisplayPOC
 		{
 			if (mapSection.MapSectionVectors != null)
 			{
-				pixelArray = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, RMapConstants.BLOCK_SIZE, _colorMap, !mapSection.IsInverted, useEscapeVelocities: false);
+				pixelArray = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, RMapConstants.BLOCK_SIZE, _colorMap, mapSection.IsInverted, useEscapeVelocities: false);
 				return true;
 			}
 			else
@@ -154,8 +154,8 @@ namespace WpfMapDisplayPOC
 
 		//	var jobNumber = 1;
 		//	var repoBlockPosition = mapSectionResponse.BlockPosition;
-		//	var mapBlockOffset = new BigVector();
-		//	var isInverted = false;
+		//	var mapBlockOffset = new BigVector();	// Used to get the screen position
+		//	var isInverted = false;					// Used to get the screen position
 		//	var subdivisionId = mapSectionResponse.SubdivisionId;
 		//	var blockSize = RMapConstants.BLOCK_SIZE;
 		//	var targetIterations = mapSectionResponse.MapCalcSettings.TargetIterations;

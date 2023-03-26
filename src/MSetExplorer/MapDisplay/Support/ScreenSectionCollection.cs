@@ -552,7 +552,7 @@ namespace MSetExplorer
 					Height = h,
 					Stretch = Stretch.None,
 					Margin = new Thickness(0),
-					Source = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null)
+					Source = new WriteableBitmap(w, h, 96, 96, PixelFormats.Pbgra32, null)
 				};
 
 				return result;

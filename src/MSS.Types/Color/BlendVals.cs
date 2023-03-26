@@ -67,6 +67,11 @@ namespace MSS.Types
 			destination[1] = (byte)g;
 			destination[2] = (byte)r;
 			destination[3] = Opacity;
+
+			//destination[0] = (byte)r;
+			//destination[1] = (byte)g;
+			//destination[2] = (byte)b;
+			//destination[3] = Opacity;
 		}
 
 

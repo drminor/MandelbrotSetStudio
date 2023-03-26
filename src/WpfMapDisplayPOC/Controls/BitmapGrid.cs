@@ -18,7 +18,7 @@ namespace WpfMapDisplayPOC
 
 		public BitmapGrid()
 		{
-			_canvasClearColor = SKColor.Parse(new SolidColorBrush(Colors.Lavender).ToString());
+			_canvasClearColor = SKColor.Parse(new SolidColorBrush(Colors.Transparent).ToString());
 			
 			_bitmap = CreateBitmap();
 
@@ -56,7 +56,7 @@ namespace WpfMapDisplayPOC
 
 			_bitmap.Lock();
 
-			var imgInfo = new SKImageInfo((int)_bitmap.Width, (int)_bitmap.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+			var imgInfo = new SKImageInfo((int)_bitmap.Width, (int)_bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
 
 			using (var surface = SKSurface.Create(imgInfo, _bitmap.BackBuffer, _bitmap.BackBufferStride))
 			{
@@ -67,7 +67,7 @@ namespace WpfMapDisplayPOC
 			_bitmap.Unlock();
 		}
 
-		public void PlaceBitmap(SKBitmap sKBitmap, SKPoint sKPoint, bool clearCanvas)
+		public void PlaceBitmap(SKBitmap sKBitmap, SKPoint sKPoint)
 		{
 			if (_bitmap == null)
 			{
@@ -76,20 +76,16 @@ namespace WpfMapDisplayPOC
 
 			_bitmap.Lock();
 
-			var imgInfo = new SKImageInfo((int)_bitmap.Width, (int)_bitmap.Height, SKColorType.Rgba8888, SKAlphaType.Premul);
+			var imgInfo = new SKImageInfo((int)_bitmap.Width, (int)_bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+			var paint = new SKPaint();
+			paint.BlendMode = SKBlendMode.Multiply;
 
 			using (var surface = SKSurface.Create(imgInfo, _bitmap.BackBuffer, _bitmap.BackBufferStride))
 			{
-				if (clearCanvas)
-				{
-					surface.Canvas.Clear(_canvasClearColor);
-				}
-
-				surface.Canvas.DrawBitmap(sKBitmap, sKPoint);
-
+				surface.Canvas.DrawBitmap(sKBitmap, sKPoint, paint);
 			}
 
-			_bitmap.AddDirtyRect(new Int32Rect(0, 0, (int)_bitmap.Width, (int)_bitmap.Height));
+			_bitmap.AddDirtyRect(new Int32Rect((int)sKPoint.X, (int)sKPoint.Y, sKBitmap.Width, sKBitmap.Height));
 			_bitmap.Unlock();
 		}
 

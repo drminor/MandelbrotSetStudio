@@ -4,8 +4,8 @@ namespace MSS.Types.MSet
 {
 	public class MapSectionRequest
 	{
-		public MapSectionRequest(string ownerId, JobOwnerType jobOwnerType, string subdivisionId, 
-			PointInt screenPosition, BigVector mapBlockOffset, BigVector blockPosition, bool isInverted, RPoint mapPosition,
+		public MapSectionRequest(string ownerId, JobOwnerType jobOwnerType, string subdivisionId,
+			PointInt screenPosition, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
 			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings)
 		{
 			MapSectionId = null;
@@ -15,8 +15,8 @@ namespace MSS.Types.MSet
 			ScreenPosition = screenPosition;
 			MapBlockOffset = mapBlockOffset;
 			BlockPosition = blockPosition;
-			IsInverted = isInverted;
 			MapPosition = mapPosition;
+			IsInverted = isInverted;
 			Precision = precision;
 			LimbCount = limbCount;
 			BlockSize = blockSize;
@@ -29,12 +29,34 @@ namespace MSS.Types.MSet
 		public string OwnerId { get; init; }
 		public JobOwnerType JobOwnerType { get; init; }
 		public string SubdivisionId { get; init; }
+
+		/// <summary>
+		/// X,Y coords on screen in Block-Size units
+		/// </summary>
 		public PointInt ScreenPosition { get; init; }
+		
+		/// <summary>
+		/// X,Y coords for the Job, relative to Subdivision Base in Block-Size units
+		/// </summary>
 		public BigVector MapBlockOffset { get; init; }
+
+		/// <summary>
+		/// X,Y coords for this MapSection, relative to the Subdivision Base in Block-Size units.
+		/// </summary>
 		public BigVector BlockPosition { get; init; }
-		public bool IsInverted { get; init; }
+		
+		/// <summary>
+		/// X,Y coords for this MapSection in absolute map coordinates. Equal to the BlockPosition x BlockSize x SamplePointDelta 
+		/// </summary>
 		public RPoint MapPosition { get; init; }
+
+		/// <summary>
+		/// True, if this MapSection has a negative Y coordiate. 
+		/// </summary>
+		public bool IsInverted { get; init; }
+
 		public SizeInt BlockSize { get; init; }
+		
 		public RSize SamplePointDelta { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
 

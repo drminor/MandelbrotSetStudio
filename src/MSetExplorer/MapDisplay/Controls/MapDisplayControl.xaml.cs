@@ -1,6 +1,8 @@
 ﻿using MSS.Types;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -10,7 +12,7 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for MapDisplay.xaml
 	/// </summary>
-	public partial class MapDisplayControl : UserControl
+	public partial class MapDisplayControl : UserControl, INotifyPropertyChanged
 	{
 		private bool _showBorder;
 		private bool _clipImageBlocks;
@@ -66,8 +68,10 @@ namespace MSetExplorer
 				SizeChanged += MapDisplay_SizeChanged;
 
 				_canvas.ClipToBounds = _clipImageBlocks;
+
 				_mapDisplayImage = new Image { Source = _vm.ImageSource };
 				_ = _canvas.Children.Add(_mapDisplayImage);
+
 				_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
 				_mapDisplayImage.SetValue(Canvas.LeftProperty, 0d);
 				_mapDisplayImage.SetValue(Canvas.RightProperty, 0d);
@@ -146,6 +150,11 @@ namespace MSetExplorer
 			{
 				_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
 			}
+
+			//else if (e.PropertyName == nameof(IMapDisplayViewModel.Bitmap))
+			//{
+			//	PropertyChanged(nameof())
+			//}
 		}
 
 		private void MapDisplay_SizeChanged(object? sender, SizeChangedEventArgs e)
@@ -217,6 +226,17 @@ namespace MSetExplorer
 			//	(double)_mapDisplayImage.GetValue(Canvas.BottomProperty)
 			//	);
 
+		}
+
+		#endregion
+
+		#region INotifyPropertyChanged Support
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		#endregion

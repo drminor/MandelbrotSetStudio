@@ -5,10 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
              mc:Ignorable="d" 
-             d:DesignHeight="1100" d:DesignWidth="1100">
+             d:DesignHeight="1100" d:DesignWidth="1100"
+             x:Name="Mdc">
     <Grid>
         <Border BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Canvas Name="MainCanvas" Width="1024" Height="1024" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent"/>
+            <Canvas Name="MainCanvas" Width="1024" Height="1024" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent">
+                <Image Name="myImage" Source="{Binding Bitmap}"/>
+
+            </Canvas>
         </Border>
     </Grid>
 </UserControl>

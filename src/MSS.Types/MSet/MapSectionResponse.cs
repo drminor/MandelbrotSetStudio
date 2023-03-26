@@ -28,7 +28,7 @@
 				  mapSectionRequest.OwnerId,
 				  mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
-				  mapSectionRequest.BlockPosition,
+				  blockPosition: mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted,
 				  allRowsHaveEscaped, 

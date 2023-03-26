@@ -4,12 +4,15 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
 	public interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
 	{
 		ImageSource ImageSource { get; }
+
+		WriteableBitmap Bitmap { get; }
 
 		bool HandleContainerSizeUpdates { get; set; }
 		SizeDbl ContainerSize { get; set; }

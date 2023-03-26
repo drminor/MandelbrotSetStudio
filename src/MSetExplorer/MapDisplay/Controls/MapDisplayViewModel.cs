@@ -1,14 +1,14 @@
 ﻿using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
@@ -47,10 +47,18 @@ namespace MSetExplorer
 
 		private object _paintLocker;
 
+		private WriteableBitmap _bitmap;
+		private IntPtr bitmapPtr;
+		private int bWidth;
+		private int bHeight;
+		//private SKColor _canvasClearColor;
+
+
 		#region Constructor
 
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
+			_bitmap = CreateBitmap();
 			_useEscapeVelocities = true;
 			_keepDisplaySquare = true;
 
@@ -100,6 +108,19 @@ namespace MSetExplorer
 		public SizeInt BlockSize { get; }
 
 		public ImageSource ImageSource { get; init; }
+
+		public WriteableBitmap Bitmap
+		{
+			get => _bitmap;
+			set
+			{
+				_bitmap = value;
+				bitmapPtr = _bitmap.BackBuffer;
+				bWidth = (int)_bitmap.Width;
+				bHeight = (int)_bitmap.Height;
+				OnPropertyChanged();
+			}
+		}
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
@@ -220,6 +241,8 @@ namespace MSetExplorer
 					Debug.WriteLine($"The MapDisplay Canvas Size is now {value}.");
 					_canvasSize = value;
 					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
+
+					_bitmap = CreateBitmap();
 
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
 				}
@@ -393,119 +416,170 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private int _callCounter;
-		private List<Tuple<MapSection, int>> _mapSectionsPendingUiUpdate = new List<Tuple<MapSection, int>>();
-		private Stopwatch? _stopwatch;
+		//private int _callCounter;
+		//private List<Tuple<MapSection, int>> _mapSectionsPendingUiUpdate = new List<Tuple<MapSection, int>>();
+		//private Stopwatch? _stopwatch;
+
 
 		private void MapSectionReady(MapSection mapSection, int jobNumber, bool isLastSection)
 		{
-			var shouldUpdateUi = IsMapSectionForCurJob(mapSection, jobNumber, isLastSection, _mapSectionsPendingUiUpdate);
-
-			if (shouldUpdateUi)
+			if (mapSection.MapSectionVectors != null && _colorMap != null && _synchronizationContext != null)
 			{
-				//_synchronizationContext?.Send(async (o) => await UpdateUi(mapSectionsPendingUiUpdate), null);
-				_synchronizationContext?.Send(o => UpdateUi(_mapSectionsPendingUiUpdate), null);
+				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, BlockSize, _colorMap, mapSection.IsInverted, useEscapeVelocities: false);
 
-				if (isLastSection)
+				_synchronizationContext.Post(o =>
 				{
-					_synchronizationContext?.Post(o =>
-					{
-						_screenSectionCollection.Finish();
-						DisplayJobCompleted?.Invoke(this, jobNumber);
-					}
-					, null);
-				}
-			}
-		}
+					var size = RMapConstants.BLOCK_SIZE;
+					var loc = new Point(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
 
-		private bool IsMapSectionForCurJob(MapSection mapSection, int jobNumber, bool isLastSection, List<Tuple<MapSection, int>> sectionsPendingUiUpdate)
-		{
-			lock (_paintLocker)
-			{
-				if (jobNumber != _currentMapLoaderJobNumber)
-				{
-					return false;
-				}
+					var rect = new Int32Rect(0, 0, size.Width, size.Height);
 
-				if ( (!mapSection.IsEmpty) && mapSection.MapSectionVectors?.Counts != null)
-				{
-					try
-					{
-						DrawASection(mapSection, _colorMap, _useEscapeVelocities, drawOffline: true);
-						sectionsPendingUiUpdate.Add(new Tuple<MapSection, int>(mapSection, jobNumber));
-					}
-					catch (Exception e)
-					{
-						Debug.WriteLine($"While calling DrawASection, got an exception: {e}.");
-					}
-				}
+					_bitmap.WritePixels(rect, pixels, rect.Width * 4, (int)loc.X, (int)loc.Y);
 
-				bool shouldUpdateUi;
-				if (isLastSection)
-				{
-					//Debug.WriteLine($"Setting should update to true, it is the last section.");
-					shouldUpdateUi = true;
-					if (_stopwatch != null)
-					{
-						_stopwatch.Stop();
-						_stopwatch = null;
-					}
-				}
-				else
-				{
-					if (_stopwatch == null)
-					{
-						_stopwatch = Stopwatch.StartNew();
-					}
+					_bitmap.Lock();
+					_bitmap.AddDirtyRect(rect);
+					_bitmap.Unlock();
 
-					var callCounterExpired = --_callCounter <= 0;
-					var drawDelayDurationExceeded = _stopwatch?.ElapsedMilliseconds > SECTION_DRAW_DELAY;
+					OnPropertyChanged(nameof(Bitmap));
 
-					shouldUpdateUi = callCounterExpired || drawDelayDurationExceeded;
-					if (shouldUpdateUi)
-					{
-						//Debug.WriteLine($"Setting should update to true, callCounterExpired: {callCounterExpired}, drawDelayDurationExceeded: {drawDelayDurationExceeded}.");
 
-						if (_stopwatch != null)
-						{
-							_stopwatch.Restart();
-						}
-						_callCounter = Math.Min(CanvasSize.Round().Width / BlockSize.Width, 8);
-					}
-					else
-					{
-						//Debug.WriteLine($"Setting should update to false.");
+				}, null);
 
-					}
-				}
-
-				return shouldUpdateUi;
-			}
-		}
-
-		private bool UpdateUi(List<Tuple<MapSection, int>> sectionsPendingUiUpdate)
-		{ 
-			foreach (var mapSectionAndJobNumber in sectionsPendingUiUpdate)
-			{
-				var mapSection = mapSectionAndJobNumber.Item1;
-				var jobNumber = mapSectionAndJobNumber.Item2;
-
-				if (jobNumber == _currentMapLoaderJobNumber)
-				{
-					MapSections.Add(mapSection);
-					_screenSectionCollection.Redraw(mapSection.BlockPosition);
-				}
-				else
-				{
-					Debug.WriteLine($"UpdateUi is skipping. The jobNumber = {jobNumber}, our JobNumber = {_currentMapLoaderJobNumber}.");
-					_mapSectionHelper.ReturnMapSection(mapSection);
-				}
 			}
 
-			sectionsPendingUiUpdate.Clear();
+			if (isLastSection)
+			{
+				_synchronizationContext?.Post(o =>
+				{
+					_screenSectionCollection.Finish();
+					DisplayJobCompleted?.Invoke(this, jobNumber);
+				}
+				, null);
+			}
 
-			return true;
+			//Dispatcher.Invoke(new Action(() =>
+			//{
+
+			//	var size = RMapConstants.BLOCK_SIZE;
+			//	var loc = new Point(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
+
+			//	var rect = new Int32Rect(0, 0, size.Width, size.Height);
+			//	PlaceBitmap(pixels, rect, loc);
+
+			//	CallForUpdate(rect);
+
+			//}), DispatcherPriority.Render);
 		}
+
+		//private void MapSectionReadyOld(MapSection mapSection, int jobNumber, bool isLastSection)
+		//{
+		//	var shouldUpdateUi = IsMapSectionForCurJob(mapSection, jobNumber, isLastSection, _mapSectionsPendingUiUpdate);
+
+		//	if (shouldUpdateUi)
+		//	{
+		//		//_synchronizationContext?.Send(async (o) => await UpdateUi(mapSectionsPendingUiUpdate), null);
+		//		_synchronizationContext?.Send(o => UpdateUi(_mapSectionsPendingUiUpdate), null);
+
+		//		if (isLastSection)
+		//		{
+		//			_synchronizationContext?.Post(o =>
+		//			{
+		//				_screenSectionCollection.Finish();
+		//				DisplayJobCompleted?.Invoke(this, jobNumber);
+		//			}
+		//			, null);
+		//		}
+		//	}
+		//}
+
+		//private bool IsMapSectionForCurJob(MapSection mapSection, int jobNumber, bool isLastSection, List<Tuple<MapSection, int>> sectionsPendingUiUpdate)
+		//{
+		//	lock (_paintLocker)
+		//	{
+		//		if (jobNumber != _currentMapLoaderJobNumber)
+		//		{
+		//			return false;
+		//		}
+
+		//		if ( (!mapSection.IsEmpty) && mapSection.MapSectionVectors?.Counts != null)
+		//		{
+		//			try
+		//			{
+		//				DrawASection(mapSection, _colorMap, _useEscapeVelocities, drawOffline: true);
+		//				sectionsPendingUiUpdate.Add(new Tuple<MapSection, int>(mapSection, jobNumber));
+		//			}
+		//			catch (Exception e)
+		//			{
+		//				Debug.WriteLine($"While calling DrawASection, got an exception: {e}.");
+		//			}
+		//		}
+
+		//		bool shouldUpdateUi;
+		//		if (isLastSection)
+		//		{
+		//			//Debug.WriteLine($"Setting should update to true, it is the last section.");
+		//			shouldUpdateUi = true;
+		//			if (_stopwatch != null)
+		//			{
+		//				_stopwatch.Stop();
+		//				_stopwatch = null;
+		//			}
+		//		}
+		//		else
+		//		{
+		//			if (_stopwatch == null)
+		//			{
+		//				_stopwatch = Stopwatch.StartNew();
+		//			}
+
+		//			var callCounterExpired = --_callCounter <= 0;
+		//			var drawDelayDurationExceeded = _stopwatch?.ElapsedMilliseconds > SECTION_DRAW_DELAY;
+
+		//			shouldUpdateUi = callCounterExpired || drawDelayDurationExceeded;
+		//			if (shouldUpdateUi)
+		//			{
+		//				//Debug.WriteLine($"Setting should update to true, callCounterExpired: {callCounterExpired}, drawDelayDurationExceeded: {drawDelayDurationExceeded}.");
+
+		//				if (_stopwatch != null)
+		//				{
+		//					_stopwatch.Restart();
+		//				}
+		//				_callCounter = Math.Min(CanvasSize.Round().Width / BlockSize.Width, 8);
+		//			}
+		//			else
+		//			{
+		//				//Debug.WriteLine($"Setting should update to false.");
+
+		//			}
+		//		}
+
+		//		return shouldUpdateUi;
+		//	}
+		//}
+
+		//private bool UpdateUi(List<Tuple<MapSection, int>> sectionsPendingUiUpdate)
+		//{ 
+		//	foreach (var mapSectionAndJobNumber in sectionsPendingUiUpdate)
+		//	{
+		//		var mapSection = mapSectionAndJobNumber.Item1;
+		//		var jobNumber = mapSectionAndJobNumber.Item2;
+
+		//		if (jobNumber == _currentMapLoaderJobNumber)
+		//		{
+		//			MapSections.Add(mapSection);
+		//			_screenSectionCollection.Redraw(mapSection.BlockPosition);
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"UpdateUi is skipping. The jobNumber = {jobNumber}, our JobNumber = {_currentMapLoaderJobNumber}.");
+		//			_mapSectionHelper.ReturnMapSection(mapSection);
+		//		}
+		//	}
+
+		//	sectionsPendingUiUpdate.Clear();
+
+		//	return true;
+		//}
 
 		#endregion
 
@@ -761,6 +835,38 @@ namespace MSetExplorer
 				_screenSectionCollection.Redraw(mapSection.BlockPosition);
 				//Thread.Sleep(200);
 			}
+		}
+
+		public void PlaceBitmap(byte[] pixelArray, Int32Rect sourceRect, Point dest)
+		{
+			_bitmap.WritePixels(sourceRect, pixelArray, sourceRect.Width * 4, (int)dest.X, (int)dest.Y);
+			OnPropertyChanged(nameof(Bitmap));
+		}
+
+		public void CallForUpdate(Int32Rect rect)
+		{
+			_bitmap.Lock();
+			_bitmap.AddDirtyRect(rect);
+			_bitmap.Unlock();
+		}
+
+		private WriteableBitmap CreateBitmap()
+		{
+			WriteableBitmap result;
+
+			int width = (int)_canvasSize.Width;
+			int height = (int)_canvasSize.Height;
+
+			if (height > 0 && width > 0 /*&& Parent != null*/)
+			{
+				result = new WriteableBitmap(width, height, 96, 96, PixelFormats.Pbgra32, null);
+			}
+			else
+			{
+				result = new WriteableBitmap(10, 10, 96, 96, PixelFormats.Pbgra32, null);
+			}
+
+			return result;
 		}
 
 		#endregion
