@@ -210,7 +210,7 @@ namespace MapSectionProviderLib
 
 					if (IsJobCancelled(mapSectionWorkRequest.JobId))
 					{
-						mapSectionWorkRequest.Response = new MapSection(mapSectionWorkRequest.Request, isCancelled: true);
+						mapSectionWorkRequest.Response = _mapSectionHelper.CreateMapSection(mapSectionWorkRequest.Request, mapSectionWorkRequest.JobId, isCancelled: true);
 						_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
 					}
 					else
@@ -269,7 +269,7 @@ namespace MapSectionProviderLib
 					mapSectionResponse.OwnerId = request.OwnerId;
 					mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
-					PersistJobMapSectionRecord(mapSectionResponse);
+					PersistJobMapSectionRecord(request, mapSectionResponse);
 
 					return mapSectionResponse;
 				}
@@ -426,7 +426,7 @@ namespace MapSectionProviderLib
 
 			if (UseRepo)
 			{
-				PersistResponse(mapSectionResponse);
+				PersistResponse(mapSectionWorkRequest.Request, mapSectionResponse);
 			}
 
 			try
@@ -481,7 +481,7 @@ namespace MapSectionProviderLib
 			{
 				if (mapSectionResponse.RequestCancelled)
 				{
-					mapSection = new MapSection(mapSectionRequest, isCancelled: true);
+					mapSection = _mapSectionHelper.CreateMapSection(mapSectionRequest, jobId, isCancelled: true);
 				}
 				else
 				{
@@ -491,7 +491,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				mapSection = new MapSection(mapSectionRequest, isCancelled: false);
+				mapSection = _mapSectionHelper.CreateMapSection(mapSectionRequest, jobId, isCancelled: false);
 			}
 
 			return mapSection;
@@ -504,7 +504,7 @@ namespace MapSectionProviderLib
 			if (mapSectionVectors == null)
 			{
 				Debug.WriteLine($"WARNING: Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
-				mapSectionResult = new MapSection(mapSectionRequest, isCancelled: false);
+				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, jobId, isCancelled: false);
 			}
 			else
 			{
@@ -515,22 +515,22 @@ namespace MapSectionProviderLib
 			return mapSectionResult;
 		}
 
-		private void PersistJobMapSectionRecord(MapSectionResponse? mapSectionResponse)
+		private void PersistJobMapSectionRecord(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
 		{
 			if (mapSectionResponse != null)
 			{
 				var copyWithNoVectors = mapSectionResponse.CreateCopySansVectors();
 				copyWithNoVectors.InsertJobMapSectionRecord = true;
-				_mapSectionPersistProcessor.AddWork(copyWithNoVectors);
+				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, copyWithNoVectors));
 			}
 		}
 
-		private void PersistResponse(MapSectionResponse? mapSectionResponse)
+		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
 		{
 			if (mapSectionResponse != null)
 			{
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-				_mapSectionPersistProcessor.AddWork(mapSectionResponse);
+				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
 			}
 		}
 

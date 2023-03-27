@@ -251,7 +251,7 @@ namespace MSetRepo
 
 		#region JobMapSection
 
-		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, BigVector? blockPosition = null, bool isInverted = false)
+		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, BigVector blockPosition, bool isInverted)
 		{
 			var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			if (string.IsNullOrEmpty(mapSectionIdStr))
@@ -271,9 +271,7 @@ namespace MSetRepo
 				throw new ArgumentNullException(nameof(MapSectionResponse.OwnerId), "The OwnerId cannot be null.");
 			}
 
-			var hack = blockPosition ?? new BigVector();
-
-			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType, hack, isInverted);
+			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType, blockPosition, isInverted);
 			return result;
 		}
 

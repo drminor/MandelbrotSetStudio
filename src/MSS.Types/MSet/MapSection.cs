@@ -14,46 +14,52 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public MapSection(MapSectionRequest mapSectionRequest, bool isCancelled = false)
+		public MapSection()
 			: this(
 				  jobNumber: -1,
 				  mapSectionVectors: null,
-				  subdivisionId: mapSectionRequest.SubdivisionId,
-				  repoBlockPosition: mapSectionRequest.BlockPosition,
+				  subdivisionId: string.Empty,
+				  repoBlockPosition: new BigVector(),
 				  isInverted: false,
-				  screenPosition: new PointInt(),
+				  blockPosition: new PointInt(),
 				  size: new SizeInt(),
 				  targetIterations: 0,
 				  histogramBuilder: BuildHstFake
 				  )
+		{ }
+
+		//public MapSection(MapSectionRequest mapSectionRequest, bool isCancelled = false)
+		//	: this(
+		//		  jobNumber: -1,
+		//		  mapSectionVectors: null,
+		//		  subdivisionId: mapSectionRequest.SubdivisionId,
+		//		  repoBlockPosition: mapSectionRequest.BlockPosition,
+		//		  isInverted: false,
+		//		  blockPosition: new PointInt(),
+		//		  size: new SizeInt(),
+		//		  targetIterations: 0,
+		//		  histogramBuilder: BuildHstFake
+		//		  )
+		//{
+		//	RequestCancelled = isCancelled;
+		//}
+
+		// Used when the Request was cancelled or for was not able to be completed and the MapSectionsVectors was empty. 
+		public MapSection(int jobNumber, string subdivisionId, BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, bool isCancelled)
+			: this(jobNumber, mapSectionVectors: null, subdivisionId, repoBlockPosition, isInverted, blockPosition, size, targetIterations, BuildHstFake)
 		{
 			RequestCancelled = isCancelled;
 		}
 
-
-		public MapSection()
-			: this(
-				  jobNumber: -1,
-				  mapSectionVectors: null, 
-				  subdivisionId: string.Empty, 
-				  repoBlockPosition: new BigVector(), 
-				  isInverted: false, 
-				  screenPosition: new PointInt(), 
-				  size: new SizeInt(), 
-				  targetIterations: 0, 
-				  histogramBuilder: BuildHstFake
-				  )
-		{ }
-
 		public MapSection(int jobNumber, MapSectionVectors? mapSectionVectors, string subdivisionId,
-			BigVector repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
+			BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobNumber = jobNumber;
 			MapSectionVectors = mapSectionVectors;
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
-			BlockPosition = screenPosition;
+			BlockPosition = blockPosition;
 			Size = size;
 
 			TargetIterations = targetIterations;

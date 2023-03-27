@@ -21,7 +21,7 @@ namespace MSS.Common
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);
 
-		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, BigVector? blockPosition = null, bool isInverted = false);
+		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, BigVector blockPosition, bool isInverted);
 
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct);
 		Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);

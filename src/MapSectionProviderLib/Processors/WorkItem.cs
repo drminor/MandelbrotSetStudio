@@ -46,4 +46,24 @@ namespace MapSectionProviderLib
 		{
 		}
 	}
+
+	internal class MapSectionPersistRequest 
+	{
+		public MapSectionRequest Request { get; init; }
+		public MapSectionResponse Response { get; init; }
+		public bool OnlyInsertJobMapSectionRecord { get; init; }
+
+
+		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response)
+			: this(request, response, onlyInsertJobMapSectionRecord: false)
+		{ }
+
+		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response, bool onlyInsertJobMapSectionRecord)
+		{
+			Request = request ?? throw new ArgumentNullException(nameof(request));
+			Response = response ?? throw new ArgumentNullException(nameof(response));
+			OnlyInsertJobMapSectionRecord = onlyInsertJobMapSectionRecord;
+		}
+
+	}
 }

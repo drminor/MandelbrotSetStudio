@@ -10,15 +10,11 @@ namespace MSetExplorer
 		public static readonly AreaColorAndCalcSettings Empty = _lazyAreaColorAndCalcSettings.Value;
 
 		public AreaColorAndCalcSettings()
-		{
-			OwnerId = string.Empty;
-			OwnerType = JobOwnerType.Project;
-			MapAreaInfo = MapAreaInfo.Empty;
-			ColorBandSet = new ColorBandSet();
-			MapCalcSettings = new MapCalcSettings();
-		}
+			: this(string.Empty, JobOwnerType.Project, MapAreaInfo.Empty, new ColorBandSet(), new MapCalcSettings())
+		{ }
 
-		public AreaColorAndCalcSettings(AreaColorAndCalcSettings current, MapCalcSettings newMapCalcSettings) : this(current.OwnerId, current.OwnerType, current.MapAreaInfo, current.ColorBandSet, newMapCalcSettings)
+		public AreaColorAndCalcSettings(AreaColorAndCalcSettings current, MapCalcSettings newMapCalcSettings) 
+			: this(current.OwnerId, current.OwnerType, current.MapAreaInfo, current.ColorBandSet, newMapCalcSettings)
 		{ }
 
 		public AreaColorAndCalcSettings(string ownerId, JobOwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)

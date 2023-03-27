@@ -11,13 +11,12 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionPersistProcessor : IDisposable
 	{
-		//private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly MapSectionHelper _mapSectionHelper;
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<MapSectionResponse> _workQueue;
+		private readonly BlockingCollection<MapSectionPersistRequest> _workQueue;
 
 		private Task _workQueueProcessor;
 		private bool disposedValue;
@@ -32,7 +31,7 @@ namespace MapSectionProviderLib
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
-			_workQueue = new BlockingCollection<MapSectionResponse>(QUEUE_CAPACITY);
+			_workQueue = new BlockingCollection<MapSectionPersistRequest>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
 		}
 
@@ -40,15 +39,15 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(MapSectionResponse mapSectionResponse)
+		internal void AddWork(MapSectionPersistRequest mapSectionWorkItem)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
-				_workQueue.Add(mapSectionResponse);
+				_workQueue.Add(mapSectionWorkItem);
 			}
 			else
 			{
-				Debug.WriteLine($"Not adding: {mapSectionResponse}, Adding has been completed.");
+				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, Adding has been completed.");
 			}
 		}
 
@@ -88,69 +87,27 @@ namespace MapSectionProviderLib
 			{
 				try
 				{
-					var mapSectionResponse = _workQueue.Take(ct);
+					var mapSectionPersistRequest = _workQueue.Take(ct);
+					var mapSectionResponse = mapSectionPersistRequest.Response;
 
-					var mapSectionVectors = mapSectionResponse.MapSectionVectors;
-
-					if (mapSectionVectors != null)
+					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{
-						if (mapSectionResponse.RecordOnFile)
-						{
-							var mapSectionId = new ObjectId(mapSectionResponse.MapSectionId!);
-							Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-
-							_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
-
-							if (mapSectionResponse.MapSectionZVectors != null)
-							{
-								if (mapSectionResponse.AllRowsHaveEscaped)
-								{
-									_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId);
-								}
-								else
-								{
-									_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
-								}
-
-								// TODO: The OwnerId may already be on file for this MapSection -- or not.
-							}
-						}
-						else
-						{
-							//Debug.WriteLine($"Creating MapSection for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-							var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
-
-							if (mapSectionId.HasValue)
-							{
-								mapSectionResponse.MapSectionId = mapSectionId.ToString();
-
-								if (mapSectionResponse.MapSectionZVectors != null & !mapSectionResponse.AllRowsHaveEscaped)
-								{
-									_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
-								}
-
-								_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
-							}
-						}
-
-						_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
+						var mapSectionRequest = mapSectionPersistRequest.Request;
+						_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.BlockPosition, mapSectionRequest.IsInverted);
 					}
 					else
 					{
-						Debug.Assert(mapSectionResponse.MapSectionZVectors == null, "MapSectionVectors is NULL, but MapSectionZVectors is not NULL.");
-
-						// TODO: Update this class to use a BlockingCollection with some new type instead of using just the 'raw' MapSectionResponse.
-						// Then we can include directives such as 'OnlyInsertJobMapSectionRecord' into the new type.
-						// Also: Need to include the MapBlockOffset and IsInverted properties.
-						if (mapSectionResponse.InsertJobMapSectionRecord)
+						if (mapSectionResponse.MapSectionVectors != null)
 						{
-							_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse);
+							await PersistTheCountsAndZValuesAsync(mapSectionPersistRequest.Request, mapSectionResponse);
 						}
 						else
 						{
 							Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
 						}
 					}
+
+					_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
 				}
 				catch (OperationCanceledException)
 				{
@@ -161,6 +118,48 @@ namespace MapSectionProviderLib
 					Debug.WriteLine($"The persist queue got an exception: {e}.");
 					Console.WriteLine($"\n\nWARNING:The persist queue got an exception: {e}.\n\n");
 					//throw;
+				}
+			}
+		}
+
+		private async Task PersistTheCountsAndZValuesAsync(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		{
+			if (mapSectionResponse.RecordOnFile)
+			{
+				var mapSectionId = new ObjectId(mapSectionResponse.MapSectionId!);
+				Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+
+				_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
+
+				if (mapSectionResponse.MapSectionZVectors != null)
+				{
+					if (mapSectionResponse.AllRowsHaveEscaped)
+					{
+						_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId);
+					}
+					else
+					{
+						_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
+					}
+
+					// TODO: The OwnerId may already be on file for this MapSection -- or not.
+				}
+			}
+			else
+			{
+				//Debug.WriteLine($"Creating MapSection for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+				var mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
+
+				if (mapSectionId.HasValue)
+				{
+					mapSectionResponse.MapSectionId = mapSectionId.ToString();
+
+					if (mapSectionResponse.MapSectionZVectors != null & !mapSectionResponse.AllRowsHaveEscaped)
+					{
+						_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
+					}
+
+					 _ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.BlockPosition, mapSectionRequest.IsInverted);
 				}
 			}
 		}

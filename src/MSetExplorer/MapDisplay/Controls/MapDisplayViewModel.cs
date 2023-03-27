@@ -1,14 +1,15 @@
-﻿using MSS.Common;
+﻿using MongoDB.Driver.Linq;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -16,6 +17,8 @@ namespace MSetExplorer
 
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
+		#region Private Properties
+
 		private static bool _keepDisplaySquare;
 
 		private readonly SynchronizationContext? _synchronizationContext;
@@ -48,6 +51,8 @@ namespace MSetExplorer
 		private SizeInt _canvasSizeInBlocks;
 		private SizeInt _allocatedBlocks;
 		private int _maxYPtr;
+
+		#endregion
 
 		#region Constructor
 
@@ -310,17 +315,12 @@ namespace MSetExplorer
 					Debug.WriteLine($"Allocating ScreenSections. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
 
 					_allocatedBlocks = newAllocatedBlocks;
-
 					_maxYPtr = _allocatedBlocks.Height - 1;
-
-					var newSize = newAllocatedBlocks.Scale(BlockSize);
-
-					// Create a new Writeable bitmap instance
-					_bitmap = CreateBitmap(newSize);
-
 					_canvasSizeInBlocks = value;
 
-					OnPropertyChanged(nameof(Bitmap));
+					// Create a new Writeable bitmap instance
+					var newSize = newAllocatedBlocks.Scale(BlockSize);
+					Bitmap = CreateBitmap(newSize);
 				}
 			}
 		}
@@ -404,18 +404,15 @@ namespace MSetExplorer
 				if (_colorMap != null && mapSection.MapSectionVectors != null)
 				{
 					var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, BlockSize, _colorMap, !mapSection.IsInverted, useEscapeVelocities: false);
+					
+					// Run PlacePixels on the ui thread.
 					_bitmap.Dispatcher.Invoke(PlacePixels, new object[] { _bitmap, mapSection, pixels });
 				}
 
 				if (isLastSection)
 				{
 					// Used by the Explorer window to signal the ColorBandSet ViewModels to refresh percentages, histogram views, etc.
-					_synchronizationContext?.Post(o => 
-						{
-							//OnPropertyChanged(nameof(Bitmap));
-							DisplayJobCompleted?.Invoke(this, jobNumber);
-
-						}, null);
+					_synchronizationContext?.Post(o => 	{ DisplayJobCompleted?.Invoke(this, jobNumber); }, null);
 				}
 			}
 			else
@@ -503,19 +500,19 @@ namespace MSetExplorer
 
 				foreach (var mapSection in mapSections)
 				{
-					DrawASection(mapSection, colorMap, useEscapVelocities, drawOffline: false);
+					DrawASection(mapSection, colorMap, useEscapVelocities);
 				}
 			}
-			else
-			{
-				foreach (var mapSection in mapSections)
-				{
-					Debug.WriteLine($"Not drawing screen section at position: {mapSection.BlockPosition}, the color map is null.");
-				}
-			}
+			//else
+			//{
+			//	foreach (var mapSection in mapSections)
+			//	{
+			//		Debug.WriteLine($"Not drawing screen section at position: {mapSection.BlockPosition}, the color map is null.");
+			//	}
+			//}
 		}
 
-		private void DrawASection(MapSection mapSection, ColorMap colorMap, bool useEscapVelocities, bool drawOffline)
+		private void DrawASection(MapSection mapSection, ColorMap colorMap, bool useEscapVelocities)
 		{
 			if (mapSection.MapSectionVectors != null)
 			{
@@ -538,14 +535,16 @@ namespace MSetExplorer
 
 				if (mapLoaderJobNumber.HasValue)
 				{
-					var sectionsToRemove = new List<MapSection>();
-					foreach (var ms in MapSections)
-					{
-						if (ms.JobNumber == mapLoaderJobNumber.Value)
-						{
-							sectionsToRemove.Add(ms);
-						}
-					}
+					//var sectionsToRemove = new List<MapSection>();
+					//foreach (var ms in MapSections)
+					//{
+					//	if (ms.JobNumber == mapLoaderJobNumber.Value)
+					//	{
+					//		sectionsToRemove.Add(ms);
+					//	}
+					//}
+
+					var sectionsToRemove = MapSections.Where(x => x.JobNumber == mapLoaderJobNumber.Value).ToList();
 
 					foreach (var ms in sectionsToRemove)
 					{
@@ -576,7 +575,7 @@ namespace MSetExplorer
 			//_bitmap.AddDirtyRect(new Int32Rect(loc.X, loc.Y, BlockSize.Width, BlockSize.Height));
 			//_bitmap.Unlock();
 
-			//OnPropertyChanged(nameof(Bitmap));
+			OnPropertyChanged(nameof(Bitmap));
 		}
 		
 		private PointInt GetInvertedBlockPos(PointInt blockPosition)
@@ -606,6 +605,7 @@ namespace MSetExplorer
 			{
 				_pixelsToClear = new byte[length];
 			}
+
 			return _pixelsToClear;
 		}
 

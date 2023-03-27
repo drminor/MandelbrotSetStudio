@@ -82,7 +82,7 @@ namespace MSetExplorer
 
 		public void RefreshHistogramDisplay()
 		{
-			CbshDisplayViewModel.RefreshHistogramDisplay();
+			//CbshDisplayViewModel.RefreshHistogramDisplay();
 		}
 
 		#endregion

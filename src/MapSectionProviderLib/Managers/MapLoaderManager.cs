@@ -88,16 +88,17 @@ namespace MapSectionProviderLib
 
 		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
 		{
-			_requestsLock.EnterReadLock();
+			// TODO: Re-instate the handling of MapSectionLoaded -- and improve performance, if possible.
+			//_requestsLock.EnterReadLock();
 
-			try
-			{
-				SectionLoaded?.Invoke(this, e);
-			}
-			finally
-			{
-				_requestsLock.ExitReadLock();
-			}
+			//try
+			//{
+			//	SectionLoaded?.Invoke(this, e);
+			//}
+			//finally
+			//{
+			//	_requestsLock.ExitReadLock();
+			//}
 		}
 
 		public Task? GetTaskForJob(int jobNumber)
