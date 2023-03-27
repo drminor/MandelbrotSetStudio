@@ -1,8 +1,6 @@
 ﻿using MSS.Types;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -12,7 +10,7 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for MapDisplay.xaml
 	/// </summary>
-	public partial class MapDisplayControl : UserControl, INotifyPropertyChanged
+	public partial class MapDisplayControl : UserControl
 	{
 		private bool _showBorder;
 		private bool _clipImageBlocks;
@@ -20,7 +18,7 @@ namespace MSetExplorer
 		private IMapDisplayViewModel _vm;
 		
 		private Canvas _canvas;
-		private Image _mapDisplayImage;
+		//private Image _mapDisplayImage;
 		private VectorInt _offset;
 		private double _offsetZoom;
 
@@ -32,7 +30,7 @@ namespace MSetExplorer
 		public MapDisplayControl()
 		{
 			_canvas = new Canvas();
-			_mapDisplayImage = new Image();
+			//_mapDisplayImage = new Image();
 			
 			_showBorder = false;
 			_clipImageBlocks = true;
@@ -79,6 +77,8 @@ namespace MSetExplorer
 				myImage.SetValue(Panel.ZIndexProperty, 5);
 				myImage.SetValue(Canvas.LeftProperty, 0d);
 				myImage.SetValue(Canvas.RightProperty, 0d);
+
+				//myImage.tr
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -154,11 +154,6 @@ namespace MSetExplorer
 			{
 				_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
 			}
-
-			//else if (e.PropertyName == nameof(IMapDisplayViewModel.Bitmap))
-			//{
-			//	PropertyChanged(nameof())
-			//}
 		}
 
 		private void MapDisplay_SizeChanged(object? sender, SizeChangedEventArgs e)
@@ -222,8 +217,8 @@ namespace MSetExplorer
 
 				var scaledInvertedOffset = invertedOffset.Scale(1/displayZoom);
 
-				_mapDisplayImage.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
-				_mapDisplayImage.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
+				myImage.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
+				myImage.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
 			}
 
 			//_vm.ClipRegion = new SizeDbl(
@@ -231,17 +226,6 @@ namespace MSetExplorer
 			//	(double)_mapDisplayImage.GetValue(Canvas.BottomProperty)
 			//	);
 
-		}
-
-		#endregion
-
-		#region INotifyPropertyChanged Support
-
-		public event PropertyChangedEventHandler? PropertyChanged;
-
-		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 
 		#endregion

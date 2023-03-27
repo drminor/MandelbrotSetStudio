@@ -4,20 +4,18 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
+	delegate void PlaceBitmap(WriteableBitmap writeableBitmap, MapSection mapSection, byte[] pixels);
+
 	internal class MapDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
-		private const double SECTION_DRAW_DELAY = 200;
-
-		private static readonly SizeInt INITIAL_SCREEN_SECTION_ALLOCATION = new(100);
-
 		private static bool _keepDisplaySquare;
 
 		private readonly SynchronizationContext? _synchronizationContext;
@@ -25,9 +23,8 @@ namespace MSetExplorer
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private int? _currentMapLoaderJobNumber;
 
-		private readonly DrawingGroup _drawingGroup;
-		private readonly ScaleTransform _scaleTransform;
-		//private readonly IScreenSectionCollection _screenSectionCollection;
+		//private readonly DrawingGroup _drawingGroup;
+		//private readonly ScaleTransform _scaleTransform;
 
 		private SizeDbl _canvasSize;
 		private VectorInt _canvasControlOffset;
@@ -43,25 +40,22 @@ namespace MSetExplorer
 
 		private SizeDbl _containerSize;
 
-		//private bool _cmLoadedButNotHandled;
-
 		private object _paintLocker;
 
 		private WriteableBitmap _bitmap;
+		private byte[] _pixelsToClear = new byte[0];
 
-		//private IntPtr bitmapPtr;
-		//private int bWidth;
-		//private int bHeight;
-
-		//private SKColor _canvasClearColor;
 		private SizeInt _canvasSizeInBlocks;
 		private SizeInt _allocatedBlocks;
+		private int _maxYPtr;
 
 		#region Constructor
 
 		public MapDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
 			_bitmap = CreateBitmap(new SizeInt(10));
+			_maxYPtr = 1;
+
 			_useEscapeVelocities = true;
 			_keepDisplaySquare = true;
 
@@ -72,12 +66,13 @@ namespace MSetExplorer
 			//_mapLoaderManager.MapSectionReady += MapSectionReady;
 
 			BlockSize = blockSize;
+			BlockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
 
-			_drawingGroup = new DrawingGroup();
-			_scaleTransform = new ScaleTransform();
-			_drawingGroup.Transform = _scaleTransform;
+			//_drawingGroup = new DrawingGroup();
+			//_scaleTransform = new ScaleTransform();
+			//_drawingGroup.Transform = _scaleTransform;
 			//_screenSectionCollection = new ScreenSectionCollection(_drawingGroup, BlockSize, INITIAL_SCREEN_SECTION_ALLOCATION);
-			ImageSource = new DrawingImage(_drawingGroup);
+			//ImageSource = new DrawingImage(_drawingGroup);
 
 			_currentJobAreaAndCalcSettings = null;
 
@@ -104,13 +99,14 @@ namespace MSetExplorer
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		public event EventHandler<int>? DisplayJobCompleted;
 
-		//public VectorInt ScreenCollectionIndex => _screenSectionCollection.SectionIndex;
-
 		public new bool InDesignMode => base.InDesignMode;
 
-		public SizeInt BlockSize { get; }
+		public SizeInt BlockSize { get; init; }
+		private Int32Rect BlockRect { get; init; }
 
-		public ImageSource ImageSource { get; init; }
+		//public ImageSource ImageSource { get; init; }
+
+		public ObservableCollection<MapSection> MapSections { get; init; }
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
@@ -141,18 +137,6 @@ namespace MSetExplorer
 					RedrawSections(_colorMap, _useEscapeVelocities, _highlightSelectedColorBand);
 				}
 			}
-		}
-
-		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
-		{
-			_colorBandSet = colorBandSet;
-			var colorMap = new ColorMap(colorBandSet)
-			{
-				UseEscapeVelocities = _useEscapeVelocities,
-				HighlightSelectedColorBand = _highlightSelectedColorBand
-			};
-
-			return colorMap;
 		}
 
 		public bool UseEscapeVelocities
@@ -257,8 +241,9 @@ namespace MSetExplorer
 
 					_displayZoom = value;
 
-					_scaleTransform.ScaleX = 1 / _displayZoom;
-					_scaleTransform.ScaleY = 1 / _displayZoom;
+					// TODO: scc -- Need to place the WriteableBitmap within a DrawingGroup.
+					//_scaleTransform.ScaleX = 1 / _displayZoom;
+					//_scaleTransform.ScaleY = 1 / _displayZoom;
 
 					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
 
@@ -299,8 +284,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public ObservableCollection<MapSection> MapSections { get; init; }
-
 		private void UpdateScreenCollectionSize(SizeInt logicalContainerSize, VectorInt canvasControlOffset)
 		{
 			// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
@@ -309,9 +292,6 @@ namespace MSetExplorer
 			//_screenSectionCollection.CanvasSizeInBlocks = sizeInBlocks;
 			CanvasSizeInBlocks = sizeInBlocks;
 		}
-
-
-		// New Items
 
 		public SizeInt CanvasSizeInBlocks
 		{
@@ -330,12 +310,17 @@ namespace MSetExplorer
 					Debug.WriteLine($"Allocating ScreenSections. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
 
 					_allocatedBlocks = newAllocatedBlocks;
+
+					_maxYPtr = _allocatedBlocks.Height - 1;
+
 					var newSize = newAllocatedBlocks.Scale(BlockSize);
 
 					// Create a new Writeable bitmap instance
 					_bitmap = CreateBitmap(newSize);
 
 					_canvasSizeInBlocks = value;
+
+					OnPropertyChanged(nameof(Bitmap));
 				}
 			}
 		}
@@ -346,17 +331,9 @@ namespace MSetExplorer
 			set
 			{
 				_bitmap = value;
-
-				//bitmapPtr = _bitmap.BackBuffer;
-				//bWidth = (int)_bitmap.Width;
-				//bHeight = (int)_bitmap.Height;
-
 				OnPropertyChanged();
 			}
 		}
-
-		// End New Items
-
 
 		#endregion
 
@@ -381,42 +358,6 @@ namespace MSetExplorer
 			{
 				_mapLoaderManager.StopJob(_currentMapLoaderJobNumber.Value);
 				_currentMapLoaderJobNumber = null;
-			}
-		}
-
-		public void ClearDisplay(int? mapLoaderJobNumber)
-		{
-			lock (_paintLocker)
-			{
-				//_screenSectionCollection.HideScreenSections();
-				// TODO: ssc
-
-				if (mapLoaderJobNumber.HasValue)
-				{
-					var sectionsToRemove = new List<MapSection>();
-					foreach (var ms in MapSections)
-					{
-						if (ms.JobNumber == mapLoaderJobNumber.Value)
-						{
-							sectionsToRemove.Add(ms);
-						}
-					}
-
-					foreach(var ms in sectionsToRemove)
-					{
-						MapSections.Remove(ms);
-						_mapSectionHelper.ReturnMapSection(ms);
-					}
-				}
-				else
-				{
-					foreach (var ms in MapSections)
-					{
-						_mapSectionHelper.ReturnMapSection(ms);
-					}
-				}
-
-				MapSections.Clear();
 			}
 		}
 
@@ -454,59 +395,393 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private int _callCounter;
-		//private List<Tuple<MapSection, int>> _mapSectionsPendingUiUpdate = new List<Tuple<MapSection, int>>();
-		//private Stopwatch? _stopwatch;
-
 		private void MapSectionReady(MapSection mapSection, int jobNumber, bool isLastSection)
 		{
-			if (mapSection.MapSectionVectors != null && _colorMap != null && _synchronizationContext != null)
+			if (jobNumber == _currentMapLoaderJobNumber)
 			{
-				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, BlockSize, _colorMap, mapSection.IsInverted, useEscapeVelocities: false);
+				MapSections.Add(mapSection);
 
-				_synchronizationContext.Post(o =>
+				if (_colorMap != null && mapSection.MapSectionVectors != null)
 				{
-					var size = RMapConstants.BLOCK_SIZE;
-					var loc = new Point(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
-
-					var rect = new Int32Rect(0, 0, size.Width, size.Height);
-
-					_bitmap.WritePixels(rect, pixels, rect.Width * 4, (int)loc.X, (int)loc.Y);
-
-					_bitmap.Lock();
-					_bitmap.AddDirtyRect(rect);
-					_bitmap.Unlock();
-
-					OnPropertyChanged(nameof(Bitmap));
-
-
-				}, null);
-
-			}
-
-			if (isLastSection)
-			{
-				_synchronizationContext?.Post(o =>
-				{
-					//_screenSectionCollection.Finish();
-					DisplayJobCompleted?.Invoke(this, jobNumber);
+					var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, BlockSize, _colorMap, !mapSection.IsInverted, useEscapeVelocities: false);
+					_bitmap.Dispatcher.Invoke(PlacePixels, new object[] { _bitmap, mapSection, pixels });
 				}
-				, null);
+
+				if (isLastSection)
+				{
+					// Used by the Explorer window to signal the ColorBandSet ViewModels to refresh percentages, histogram views, etc.
+					_synchronizationContext?.Post(o => 
+						{
+							//OnPropertyChanged(nameof(Bitmap));
+							DisplayJobCompleted?.Invoke(this, jobNumber);
+
+						}, null);
+				}
+			}
+			else
+			{
+				Debug.WriteLine($"UpdateUi is skipping. The jobNumber = {jobNumber}, our JobNumber = {_currentMapLoaderJobNumber}.");
+				_mapSectionHelper.ReturnMapSection(mapSection);
+			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
+		{
+			_colorBandSet = colorBandSet;
+			var colorMap = new ColorMap(colorBandSet)
+			{
+				UseEscapeVelocities = _useEscapeVelocities,
+				HighlightSelectedColorBand = _highlightSelectedColorBand
+			};
+
+			return colorMap;
+		}
+
+		private void HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
+		{
+			//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
+			if (_currentMapLoaderJobNumber != null)
+			{
+				_mapLoaderManager.StopJob(_currentMapLoaderJobNumber.Value);
+
+				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
+				ClearDisplay(_currentMapLoaderJobNumber);
+
+				_currentMapLoaderJobNumber = null;
 			}
 
-			//Dispatcher.Invoke(new Action(() =>
-			//{
+			if (newJob?.IsEmpty == false)
+			{
+				//if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
+				//{
+				//	_currentMapLoaderJobNumber = ReuseLoadedSections(newJob);
+				//}
+				//else
+				//{
+				//	//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
+				// ClearDisplay();
 
-			//	var size = RMapConstants.BLOCK_SIZE;
-			//	var loc = new Point(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
+				//	CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+				//	_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob);
+				//}
 
-			//	var rect = new Int32Rect(0, 0, size.Width, size.Height);
-			//	PlaceBitmap(pixels, rect, loc);
+				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
+				//ClearDisplay();
 
-			//	CallForUpdate(rect);
+				CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
 
-			//}), DispatcherPriority.Render);
+				if (newJob.ColorBandSet != ColorBandSet)
+				{
+					_colorMap = LoadColorMap(newJob.ColorBandSet);
+				}
+
+				_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady);
+			}
+			else
+			{
+				//ClearDisplay();
+			}
 		}
+
+		private void RedrawSections(ColorMap colorMap, bool useEscapeVelocities, bool highlightSelectedColorBand)
+		{
+			var loadedSections = GetMapSectionsSnapShot();
+			DrawSections(loadedSections, colorMap, useEscapeVelocities, highlightSelectedColorBand);
+			OnPropertyChanged(nameof(Bitmap));
+		}
+
+		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap? colorMap, bool useEscapVelocities, bool highlightSelectedColorBand)
+		{
+			if (colorMap != null)
+			{
+				Debug.Assert(colorMap.UseEscapeVelocities == useEscapVelocities, "UseEscapeVelocities MisMatch on DrawSections.");
+				Debug.Assert(colorMap.HighlightSelectedColorBand == highlightSelectedColorBand, "HighlightSelectedColorBand MisMatch on DrawSections.");
+
+				foreach (var mapSection in mapSections)
+				{
+					DrawASection(mapSection, colorMap, useEscapVelocities, drawOffline: false);
+				}
+			}
+			else
+			{
+				foreach (var mapSection in mapSections)
+				{
+					Debug.WriteLine($"Not drawing screen section at position: {mapSection.BlockPosition}, the color map is null.");
+				}
+			}
+		}
+
+		private void DrawASection(MapSection mapSection, ColorMap colorMap, bool useEscapVelocities, bool drawOffline)
+		{
+			if (mapSection.MapSectionVectors != null)
+			{
+				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
+
+				PlacePixels(_bitmap, mapSection, pixels);
+			}
+			else
+			{
+				Debug.WriteLine($"Not drawing, the MapSectionVectors are empty.");
+			}
+		}
+
+		private void ClearDisplay(int? mapLoaderJobNumber)
+		{
+			lock (_paintLocker)
+			{
+				ClearBitmap(_bitmap);
+
+				if (mapLoaderJobNumber.HasValue)
+				{
+					var sectionsToRemove = new List<MapSection>();
+					foreach (var ms in MapSections)
+					{
+						if (ms.JobNumber == mapLoaderJobNumber.Value)
+						{
+							sectionsToRemove.Add(ms);
+						}
+					}
+
+					foreach (var ms in sectionsToRemove)
+					{
+						MapSections.Remove(ms);
+						_mapSectionHelper.ReturnMapSection(ms);
+					}
+				}
+				else
+				{
+					foreach (var ms in MapSections)
+					{
+						_mapSectionHelper.ReturnMapSection(ms);
+					}
+
+					MapSections.Clear();
+				}
+
+			}
+		}
+
+		private void PlacePixels(WriteableBitmap bitmap, MapSection mapSection, byte[] pixels)
+		{
+			var invertedBlockPos = GetInvertedBlockPos(mapSection.BlockPosition);
+			var loc = invertedBlockPos.Scale(BlockSize);
+			_bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
+
+			//_bitmap.Lock();
+			//_bitmap.AddDirtyRect(new Int32Rect(loc.X, loc.Y, BlockSize.Width, BlockSize.Height));
+			//_bitmap.Unlock();
+
+			//OnPropertyChanged(nameof(Bitmap));
+		}
+		
+		private PointInt GetInvertedBlockPos(PointInt blockPosition)
+		{
+			var result = new PointInt(blockPosition.X, _maxYPtr - blockPosition.Y);
+
+			return result;
+		}
+
+		private void ClearBitmap(WriteableBitmap bitmap)
+		{
+			var zeros = GetPixelsToClear(bitmap.PixelWidth * bitmap.PixelHeight * 4);
+			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight);
+
+			bitmap.WritePixels(rect, zeros, rect.Width * 4, 0);
+
+			//_bitmap.Lock();
+			//_bitmap.AddDirtyRect(new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight));
+			//_bitmap.Unlock();
+
+			OnPropertyChanged(nameof(Bitmap));
+		}
+
+		private byte[] GetPixelsToClear(int length)
+		{
+			if (_pixelsToClear.Length != length)
+			{
+				_pixelsToClear = new byte[length];
+			}
+			return _pixelsToClear;
+		}
+
+		private WriteableBitmap CreateBitmap(SizeInt size)
+		{
+			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
+			//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
+
+			return result;
+		}
+
+		private IReadOnlyList<MapSection> GetMapSectionsSnapShot()
+		{
+			lock (_paintLocker)
+			{
+				return new ReadOnlyCollection<MapSection>(MapSections);
+			}
+		}
+
+		//private int? ReuseLoadedSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
+		//{
+		//	var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(jobAreaAndCalcSettings);
+		//	var loadedSections = GetMapSectionsSnapShot();
+
+		//	// Avoid requesting sections already drawn
+		//	var sectionsToLoad = GetNotYetLoaded(sectionsRequired, loadedSections);
+
+		//	// Remove from the screen sections that are not part of the updated view.
+		//	var shiftAmount = UpdateMapSectionCollection(MapSections, sectionsRequired, out var cntRemoved, out var cntRetained, out var cntUpdated);
+
+		//	Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
+
+		//	var newCanvasControlOffset = jobAreaAndCalcSettings.MapAreaInfo.CanvasControlOffset;
+
+		//	if (!shiftAmount.EqualsZero)
+		//	{
+		//		_screenSectionCollection.Shift(shiftAmount);
+
+		//		if (CanvasControlOffset != newCanvasControlOffset)
+		//		{
+		//			CanvasControlOffset = newCanvasControlOffset;
+		//		}
+
+		//		RedrawSections(MapSections);
+		//	}
+		//	else
+		//	{
+		//		if (CanvasControlOffset != newCanvasControlOffset)
+		//		{
+		//			CanvasControlOffset = newCanvasControlOffset;
+		//		}
+		//	}
+
+		//	if (sectionsToLoad.Count > 0)
+		//	{
+		//		var result = _mapLoaderManager.Push(jobAreaAndCalcSettings, sectionsToLoad);
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		return null;
+		//	}
+		//}
+
+		//private void RedrawSections(IEnumerable<MapSection> source)
+		//{
+		//	Debug.WriteLine($"Hiding all screen sections and redrawing {source.Count()}.");
+		//	ClearDisplay(mapLoaderJobNumber: null);
+
+		//	foreach (var mapSection in source)
+		//	{
+		//		//Debug.WriteLine($"About to redraw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
+
+		//		//_screenSectionCollection.Redraw(mapSection.BlockPosition);
+
+		//		//Thread.Sleep(200);
+		//	}
+		//}
+
+		//private bool ShouldAttemptToReuseLoadedSections(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings newJob)
+		//{
+		//	//if (MapSections.Count == 0 || previousJob is null)
+		//	//{
+		//	//	return false;
+		//	//}
+
+		//	//if (newJob.MapCalcSettings.TargetIterations != previousJob.MapCalcSettings.TargetIterations)
+		//	//{
+		//	//	return false;
+		//	//}
+
+		//	////if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
+		//	////{
+		//	////	return false;
+		//	////}
+
+		//	//var jobSpd = RNormalizer.Normalize(newJob.MapAreaInfo.Subdivision.SamplePointDelta, previousJob.MapAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
+		//	//return jobSpd == previousSpd;
+
+		//	return false;
+		//}
+
+		//private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)
+		//{
+		//	var result = sectionsNeeded.Where(
+		//		neededSection => !sectionsPresent.Any(
+		//			presentSection => presentSection == neededSection 
+		//			&& presentSection.TargetIterations == neededSection.TargetIterations
+		//			)
+		//		).ToList();
+
+		//	return result;
+		//}
+
+		//private VectorInt UpdateMapSectionCollection(ObservableCollection<MapSection> sectionsPresent, IList<MapSection> newSet, out int cntRemoved, out int cntRetained, out int cntUpdated)
+		//{
+		//	cntRemoved = 0;
+		//	cntRetained = 0;
+		//	cntUpdated = 0;
+
+		//	var toBeRemoved = new List<MapSection>();
+		//	var differences = new Dictionary<VectorInt, int>();
+
+		//	foreach (var mapSection in sectionsPresent)
+		//	{
+		//		var matchingNewSection = newSet.FirstOrDefault(x => x == mapSection);
+		//		if (matchingNewSection == null)
+		//		{
+		//			toBeRemoved.Add(mapSection);
+		//			cntRemoved++;
+		//		}
+		//		else
+		//		{
+		//			cntRetained++;
+		//			var diff = matchingNewSection.BlockPosition.Sub(mapSection.BlockPosition);
+		//			if (diff.X != 0 || diff.Y != 0)
+		//			{
+		//				cntUpdated++;
+		//				mapSection.BlockPosition = matchingNewSection.BlockPosition;
+
+		//				if (differences.TryGetValue(diff, out var value))
+		//				{
+		//					differences[diff] = value + 1;
+		//				}
+		//				else
+		//				{
+		//					differences.Add(diff, 1);
+		//				}
+		//			}
+		//		}
+		//	}
+
+		//	VectorInt shiftAmount;
+		//	if (differences.Count > 0)
+		//	{
+		//		var mostPrevalentCnt = differences.Max(x => x.Value);
+		//		shiftAmount = differences.First(x => x.Value == mostPrevalentCnt).Key;
+		//	}
+		//	else
+		//	{
+		//		shiftAmount = new VectorInt();
+		//	}
+
+		//	foreach(var mapSection in toBeRemoved)
+		//	{
+		//		if (!sectionsPresent.Remove(mapSection))
+		//		{
+		//			Debug.WriteLine($"Could not remove MapSection: {mapSection}.");
+		//			//Thread.Sleep(300);
+		//		}
+		//	}
+
+		//	return shiftAmount;
+		//}
+
+		#endregion
 
 		//private void MapSectionReadyOld(MapSection mapSection, int jobNumber, bool isLastSection)
 		//{
@@ -617,291 +892,6 @@ namespace MSetExplorer
 
 		//	return true;
 		//}
-
-		#endregion
-
-		#region Private Methods
-
-		private void RedrawSections(ColorMap colorMap, bool useEscapeVelocities, bool highlightSelectedColorBand)
-		{
-			IReadOnlyList<MapSection> loadedSections;
-			lock (_paintLocker)
-			{
-				loadedSections = GetMapSectionsSnapShot();
-			}
-
-			DrawSections(loadedSections, colorMap, useEscapeVelocities, highlightSelectedColorBand);
-		}
-
-		private void HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
-		{
-			//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
-			if (_currentMapLoaderJobNumber != null)
-			{
-				_mapLoaderManager.StopJob(_currentMapLoaderJobNumber.Value);
-
-				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
-				ClearDisplay(_currentMapLoaderJobNumber);
-
-				_currentMapLoaderJobNumber = null;
-			}
-
-			if (newJob?.IsEmpty == false)
-			{
-				//if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
-				//{
-				//	_currentMapLoaderJobNumber = ReuseLoadedSections(newJob);
-				//}
-				//else
-				//{
-				//	//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
-				// ClearDisplay();
-
-				//	CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
-				//	_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob);
-				//}
-
-				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
-				//ClearDisplay();
-
-				CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
-
-				if (newJob.ColorBandSet != ColorBandSet)
-				{
-					_colorMap = LoadColorMap(newJob.ColorBandSet);
-				}
-
-				_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady);
-			}
-			else
-			{
-				//ClearDisplay();
-			}
-		}
-
-		//private int? ReuseLoadedSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
-		//{
-		//	var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(jobAreaAndCalcSettings);
-		//	var loadedSections = GetMapSectionsSnapShot();
-
-		//	// Avoid requesting sections already drawn
-		//	var sectionsToLoad = GetNotYetLoaded(sectionsRequired, loadedSections);
-
-		//	// Remove from the screen sections that are not part of the updated view.
-		//	var shiftAmount = UpdateMapSectionCollection(MapSections, sectionsRequired, out var cntRemoved, out var cntRetained, out var cntUpdated);
-
-		//	Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {cntRemoved}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
-
-		//	var newCanvasControlOffset = jobAreaAndCalcSettings.MapAreaInfo.CanvasControlOffset;
-
-		//	if (!shiftAmount.EqualsZero)
-		//	{
-		//		_screenSectionCollection.Shift(shiftAmount);
-
-		//		if (CanvasControlOffset != newCanvasControlOffset)
-		//		{
-		//			CanvasControlOffset = newCanvasControlOffset;
-		//		}
-
-		//		RedrawSections(MapSections);
-		//	}
-		//	else
-		//	{
-		//		if (CanvasControlOffset != newCanvasControlOffset)
-		//		{
-		//			CanvasControlOffset = newCanvasControlOffset;
-		//		}
-		//	}
-
-		//	if (sectionsToLoad.Count > 0)
-		//	{
-		//		var result = _mapLoaderManager.Push(jobAreaAndCalcSettings, sectionsToLoad);
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		return null;
-		//	}
-		//}
-
-		//private bool ShouldAttemptToReuseLoadedSections(JobAreaAndCalcSettings? previousJob, JobAreaAndCalcSettings newJob)
-		//{
-		//	//if (MapSections.Count == 0 || previousJob is null)
-		//	//{
-		//	//	return false;
-		//	//}
-
-		//	//if (newJob.MapCalcSettings.TargetIterations != previousJob.MapCalcSettings.TargetIterations)
-		//	//{
-		//	//	return false;
-		//	//}
-
-		//	////if (newJob.CanvasSizeInBlocks != previousJob.CanvasSizeInBlocks)
-		//	////{
-		//	////	return false;
-		//	////}
-
-		//	//var jobSpd = RNormalizer.Normalize(newJob.MapAreaInfo.Subdivision.SamplePointDelta, previousJob.MapAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
-		//	//return jobSpd == previousSpd;
-
-		//	return false;
-		//}
-
-		//private IList<MapSection> GetNotYetLoaded(IList<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)
-		//{
-		//	var result = sectionsNeeded.Where(
-		//		neededSection => !sectionsPresent.Any(
-		//			presentSection => presentSection == neededSection 
-		//			&& presentSection.TargetIterations == neededSection.TargetIterations
-		//			)
-		//		).ToList();
-
-		//	return result;
-		//}
-
-		//private VectorInt UpdateMapSectionCollection(ObservableCollection<MapSection> sectionsPresent, IList<MapSection> newSet, out int cntRemoved, out int cntRetained, out int cntUpdated)
-		//{
-		//	cntRemoved = 0;
-		//	cntRetained = 0;
-		//	cntUpdated = 0;
-
-		//	var toBeRemoved = new List<MapSection>();
-		//	var differences = new Dictionary<VectorInt, int>();
-
-		//	foreach (var mapSection in sectionsPresent)
-		//	{
-		//		var matchingNewSection = newSet.FirstOrDefault(x => x == mapSection);
-		//		if (matchingNewSection == null)
-		//		{
-		//			toBeRemoved.Add(mapSection);
-		//			cntRemoved++;
-		//		}
-		//		else
-		//		{
-		//			cntRetained++;
-		//			var diff = matchingNewSection.BlockPosition.Sub(mapSection.BlockPosition);
-		//			if (diff.X != 0 || diff.Y != 0)
-		//			{
-		//				cntUpdated++;
-		//				mapSection.BlockPosition = matchingNewSection.BlockPosition;
-
-		//				if (differences.TryGetValue(diff, out var value))
-		//				{
-		//					differences[diff] = value + 1;
-		//				}
-		//				else
-		//				{
-		//					differences.Add(diff, 1);
-		//				}
-		//			}
-		//		}
-		//	}
-
-		//	VectorInt shiftAmount;
-		//	if (differences.Count > 0)
-		//	{
-		//		var mostPrevalentCnt = differences.Max(x => x.Value);
-		//		shiftAmount = differences.First(x => x.Value == mostPrevalentCnt).Key;
-		//	}
-		//	else
-		//	{
-		//		shiftAmount = new VectorInt();
-		//	}
-
-		//	foreach(var mapSection in toBeRemoved)
-		//	{
-		//		if (!sectionsPresent.Remove(mapSection))
-		//		{
-		//			Debug.WriteLine($"Could not remove MapSection: {mapSection}.");
-		//			//Thread.Sleep(300);
-		//		}
-		//	}
-
-		//	return shiftAmount;
-		//}
-
-		private IReadOnlyList<MapSection> GetMapSectionsSnapShot()
-		{
-			return new ReadOnlyCollection<MapSection>(MapSections);
-		}
-
-		private void DrawSections(IEnumerable<MapSection> mapSections, ColorMap? colorMap, bool useEscapVelocities, bool highlightSelectedColorBand)
-		{
-			if (colorMap != null)
-			{
-				Debug.Assert(colorMap.UseEscapeVelocities == useEscapVelocities, "UseEscapeVelocities MisMatch on DrawSections.");
-				Debug.Assert(colorMap.HighlightSelectedColorBand == highlightSelectedColorBand, "HighlightSelectedColorBand MisMatch on DrawSections.");
-
-				foreach (var mapSection in mapSections)
-				{
-					DrawASection(mapSection, colorMap, useEscapVelocities, drawOffline: false);
-				}
-			}
-			else
-			{
-				foreach (var mapSection in mapSections)
-				{
-					Debug.WriteLine($"Not drawing screen section at position: {mapSection.BlockPosition}, the color map is null.");
-				}
-			}
-		}
-
-		private void DrawASection(MapSection mapSection, ColorMap? colorMap, bool useEscapVelocities, bool drawOffline)
-		{
-			if (mapSection.MapSectionVectors != null && colorMap != null)
-			{
-				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
-
-				// TODO: ssc
-				//_screenSectionCollection.Draw(mapSection.BlockPosition, pixels, drawOffline);
-			}
-			else
-			{
-				//Debug.WriteLine($"Not drawing -- Counts are null.");
-			}
-		}
-
-		private void RedrawSections(IEnumerable<MapSection> source)
-		{
-			Debug.WriteLine($"Hiding all screen sections and redrawing {source.Count()}.");
-			ClearDisplay(mapLoaderJobNumber: null);
-
-			foreach (var mapSection in source)
-			{
-				//Debug.WriteLine($"About to redraw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-
-				// TODO: ssc
-				//_screenSectionCollection.Redraw(mapSection.BlockPosition);
-				
-				//Thread.Sleep(200);
-			}
-		}
-
-		// New Items
-
-		public void PlaceBitmap(byte[] pixelArray, Int32Rect sourceRect, Point dest)
-		{
-			_bitmap.WritePixels(sourceRect, pixelArray, sourceRect.Width * 4, (int)dest.X, (int)dest.Y);
-			OnPropertyChanged(nameof(Bitmap));
-		}
-
-		public void CallForUpdate(Int32Rect rect)
-		{
-			_bitmap.Lock();
-			_bitmap.AddDirtyRect(rect);
-			_bitmap.Unlock();
-		}
-
-		private WriteableBitmap CreateBitmap(SizeInt size)
-		{
-			//var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
-			var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
-
-			return result;
-		}
-
-		#endregion
 
 		#region IDisposable Support
 
