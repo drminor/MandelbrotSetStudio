@@ -67,11 +67,45 @@ namespace MSS.Types
 			destination[1] = (byte)g;
 			destination[2] = (byte)r;
 			destination[3] = Opacity;
+		}
 
-			//destination[0] = (byte)r;
+		public unsafe void BlendAndPlace(double factor, IntPtr destination)
+		{
+			var rd = factor * DiffRed + SRed;
+			var gd = factor * DiffGreen + SGreen;
+			var bd = factor * DiffBlue + SBlue;
+
+			var r = Math.Round(rd);
+			var g = Math.Round(gd);
+			var b = Math.Round(bd);
+
+			if (r < 0 || r > 255)
+			{
+				Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
+			}
+
+			if (g < 0 || g > 255)
+			{
+				Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
+			}
+
+			if (b < 0 || b > 255)
+			{
+				Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
+			}
+
+			//destination[0] = (byte)b;
 			//destination[1] = (byte)g;
-			//destination[2] = (byte)b;
+			//destination[2] = (byte)r;
 			//destination[3] = Opacity;
+
+			//*(byte*)destination = (byte)b;
+			//*((byte*)destination + 1) = (byte)g;
+			//*((byte*)destination + 2) = (byte)r;
+			//*((byte*)destination + 3) = Opacity;
+
+			var pixelValue = (uint)b + (uint)((byte)g << 8) + (uint)((byte)r << 16) + (uint)(Opacity << 24);
+			*(uint*)destination = pixelValue;
 		}
 
 

@@ -208,9 +208,10 @@ namespace MapSectionProviderLib
 				{
 					var mapSectionWorkRequest = _workQueue.Take(ct);
 
+
 					if (IsJobCancelled(mapSectionWorkRequest.JobId))
 					{
-						mapSectionWorkRequest.Response = _mapSectionHelper.CreateMapSection(mapSectionWorkRequest.Request, mapSectionWorkRequest.JobId, isCancelled: true);
+						mapSectionWorkRequest.Response = _mapSectionHelper.CreateEmptyMapSection(mapSectionWorkRequest.Request, mapSectionWorkRequest.JobId, isCancelled: true);
 						_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
 					}
 					else
@@ -234,6 +235,10 @@ namespace MapSectionProviderLib
 							}
 						}
 					}
+
+					// TODO: Save the previous Request / Response pair
+					// in case the next item on the queue is requesting the same block, just inverted.
+
 				}
 				catch (OperationCanceledException)
 				{
@@ -481,7 +486,7 @@ namespace MapSectionProviderLib
 			{
 				if (mapSectionResponse.RequestCancelled)
 				{
-					mapSection = _mapSectionHelper.CreateMapSection(mapSectionRequest, jobId, isCancelled: true);
+					mapSection = _mapSectionHelper.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: true);
 				}
 				else
 				{
@@ -491,7 +496,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				mapSection = _mapSectionHelper.CreateMapSection(mapSectionRequest, jobId, isCancelled: false);
+				mapSection = _mapSectionHelper.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: false);
 			}
 
 			return mapSection;
@@ -504,7 +509,7 @@ namespace MapSectionProviderLib
 			if (mapSectionVectors == null)
 			{
 				Debug.WriteLine($"WARNING: Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
-				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, jobId, isCancelled: false);
+				mapSectionResult = _mapSectionHelper.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: false);
 			}
 			else
 			{
@@ -515,14 +520,10 @@ namespace MapSectionProviderLib
 			return mapSectionResult;
 		}
 
-		private void PersistJobMapSectionRecord(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
+		private void PersistJobMapSectionRecord(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			if (mapSectionResponse != null)
-			{
-				var copyWithNoVectors = mapSectionResponse.CreateCopySansVectors();
-				copyWithNoVectors.InsertJobMapSectionRecord = true;
-				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, copyWithNoVectors));
-			}
+			var copyWithNoVectors = mapSectionResponse.CreateCopySansVectors();
+			_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, copyWithNoVectors, onlyInsertJobMapSectionRecord: true));
 		}
 
 		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)

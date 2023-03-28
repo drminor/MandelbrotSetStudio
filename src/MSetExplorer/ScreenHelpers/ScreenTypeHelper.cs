@@ -154,6 +154,8 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Rectangle Intersection / BoundingArea Calculations
+
 		public static RectangleDbl Intersect(RectangleDbl a, RectangleDbl b)
 		{
 			var t = ConvertToRect(a);
@@ -173,5 +175,6 @@ namespace MSetExplorer
 			return result;
 		}
 
+		#endregion
 	}
 }

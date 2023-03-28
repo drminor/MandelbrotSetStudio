@@ -61,8 +61,6 @@
 			
 			MapSectionVectors = mapSectionVectors;
 			MapSectionZVectors = mapSectionZVectors;
-
-			InsertJobMapSectionRecord = false;
 		}
 
 		public string? MapSectionId { get; set; }
@@ -88,10 +86,5 @@
 			return result;
 		}
 
-
-		// TODO: Update the MapSectionPersistProcessor to use a Blocking Queue of some new type instead of just a 'raw' MapSectionResponse.
-		// Then remove this property and have that new type hold this value.
-
-		public bool InsertJobMapSectionRecord { get; set; }
 	}
 }

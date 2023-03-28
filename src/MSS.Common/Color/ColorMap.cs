@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace MSS.Common
 {
@@ -41,11 +42,37 @@ namespace MSS.Common
 
         public bool HighlightSelectedColorBand { get; set; }
 
-        #endregion
+		#endregion
 
-        #region Public Methods
+		#region Public Methods
 
-        public void PlaceColor(int countVal, double escapeVelocity, Span<byte> destination)
+		public void PlaceColor(int countVal, double escapeVelocity, IntPtr destination)
+		{
+			var idx = GetColorMapIndex(countVal);
+			var cme = _colorBandSet[idx];
+
+			if (cme.BlendStyle == ColorBandBlendStyle.None)
+			{
+				PutColor(cme.StartColor.ColorComps, destination);
+			}
+			else
+			{
+				var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
+				cme.BlendVals.BlendAndPlace(stepFactor, destination);
+			}
+
+			if (HighlightSelectedColorBand && cme != _colorBandSet.SelectedColorBand)
+			{
+                unsafe
+                {
+                    //destination[3] = 25;
+                    *((byte*)destination + 3) = 25;  // set the opacity to 25, instead of 255.
+                }
+			}
+		}
+
+
+		public void PlaceColor(int countVal, double escapeVelocity, Span<byte> destination)
         {
             var idx = GetColorMapIndex(countVal);
             var cme = _colorBandSet[idx];
@@ -164,18 +191,36 @@ namespace MSS.Common
             destination[1] = comps[1];  // Green
             destination[2] = comps[0];  // Red
             destination[3] = 255;
-
-            //destination[0] = comps[0];  // Red
-            //destination[1] = comps[1];  // Green
-            //destination[2] = comps[2];  // Blue
-            //destination[3] = 255;
         }
 
-        #endregion
+		private unsafe void PutColor(byte[] comps, IntPtr destination)
+		{
+			//destination[0] = comps[2];  // Blue
+			//destination[1] = comps[1];  // Green
+			//destination[2] = comps[0];  // Red
+			//destination[3] = 255;
 
-        #region IEquatable and IEqualityComparer Support
+			//byte alpha = 255;
+			//uint pixelValue = (uint)red + (uint)(green << 8) + (uint)(blue << 16) + (uint)(alpha << 24);
 
-        public override bool Equals(object? obj)
+			//pixelValues[y * width + x] = pixelValue;
+
+			//*(byte*)destination = comps[2];
+			//*((byte*)destination + 1) = comps[1];
+			//*((byte*)destination + 2) = comps[0];
+			//*((byte*)destination + 3) = 255;
+
+			var pixelValue = comps[0] + (uint)(comps[1] << 8) + (uint)(comps[2] << 16) + (255u << 24);
+			*(uint*)destination = pixelValue;
+		}
+
+
+
+		#endregion
+
+		#region IEquatable and IEqualityComparer Support
+
+		public override bool Equals(object? obj)
         {
             return Equals(obj as ColorMap);
         }

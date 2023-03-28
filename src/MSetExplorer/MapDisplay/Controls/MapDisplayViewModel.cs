@@ -51,6 +51,9 @@ namespace MSetExplorer
 		private SizeInt _canvasSizeInBlocks;
 		private SizeInt _allocatedBlocks;
 		private int _maxYPtr;
+		
+		private IntPtr _bitmapBackBuffer;
+		private int _bitmapBackBufferStride;
 
 		#endregion
 
@@ -331,6 +334,8 @@ namespace MSetExplorer
 			set
 			{
 				_bitmap = value;
+				_bitmapBackBuffer = _bitmap.BackBuffer;
+				_bitmapBackBufferStride = _bitmap.BackBufferStride;
 				OnPropertyChanged();
 			}
 		}
@@ -403,16 +408,23 @@ namespace MSetExplorer
 
 				if (_colorMap != null && mapSection.MapSectionVectors != null)
 				{
-					var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, BlockSize, _colorMap, !mapSection.IsInverted, useEscapeVelocities: false);
-					
-					// Run PlacePixels on the ui thread.
-					_bitmap.Dispatcher.Invoke(PlacePixels, new object[] { _bitmap, mapSection, pixels });
+					//var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, BlockSize, _colorMap, !mapSection.IsInverted, useEscapeVelocities: false);
+
+					//// Run PlacePixels on the ui thread.
+					//_bitmap.Dispatcher.Invoke(PlacePixels, new object[] { _bitmap, mapSection, pixels });
+
+					_bitmap.Dispatcher.Invoke(GetAndPlacePixels, new object[] { _bitmap, mapSection.BlockPosition, mapSection.MapSectionVectors, _colorMap, mapSection.IsInverted, _useEscapeVelocities });
 				}
 
 				if (isLastSection)
 				{
 					// Used by the Explorer window to signal the ColorBandSet ViewModels to refresh percentages, histogram views, etc.
-					_synchronizationContext?.Post(o => 	{ DisplayJobCompleted?.Invoke(this, jobNumber); }, null);
+					_synchronizationContext?.Post(o => 
+					{ 
+						DisplayJobCompleted?.Invoke(this, jobNumber);
+						OnPropertyChanged(nameof(Bitmap));
+					}
+					, null);
 				}
 			}
 			else
@@ -425,6 +437,50 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private void GetAndPlacePixelsOld(WriteableBitmap bitmap, PointInt blockPosition, MapSectionVectors mapSectionVectors, ColorMap colorMap, bool isInverted, bool useEscapeVelocities)
+		{
+			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+			var loc = invertedBlockPos.Scale(BlockSize);
+
+			var pixels = _mapSectionHelper.GetPixelArray(mapSectionVectors, BlockSize, colorMap, !isInverted, useEscapeVelocities);
+
+			bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
+
+			//OnPropertyChanged(nameof(Bitmap));
+		}
+
+		private void GetAndPlacePixels(WriteableBitmap bitmap, PointInt blockPosition, MapSectionVectors mapSectionVectors, ColorMap colorMap, bool isInverted, bool useEscapeVelocities)
+		{
+			if (useEscapeVelocities)
+			{
+				Debug.WriteLine("UseEscapeVelocities is not supported. Resetting value.");
+				useEscapeVelocities = false;
+			}
+
+			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+			var loc = invertedBlockPos.Scale(BlockSize);
+
+			//var pixels = _mapSectionHelper.GetPixelArray(mapSectionVectors, BlockSize, colorMap, !isInverted, useEscapeVelocities);
+			//bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
+
+			_mapSectionHelper.FillBackBuffer(_bitmap.BackBuffer, _bitmap.BackBufferStride, loc, BlockSize, mapSectionVectors, colorMap, !isInverted, useEscapeVelocities);
+
+			bitmap.Lock();
+			bitmap.AddDirtyRect(new Int32Rect(loc.X, loc.Y, BlockSize.Width, BlockSize.Height));
+			bitmap.Unlock();
+
+			OnPropertyChanged(nameof(Bitmap));
+		}
+
+		private void PlacePixels(WriteableBitmap bitmap, MapSection mapSection, byte[] pixels)
+		{
+			var invertedBlockPos = GetInvertedBlockPos(mapSection.BlockPosition);
+			var loc = invertedBlockPos.Scale(BlockSize);
+			bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
+
+			OnPropertyChanged(nameof(Bitmap));
+		}
 
 		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
 		{
@@ -502,6 +558,8 @@ namespace MSetExplorer
 				{
 					DrawASection(mapSection, colorMap, useEscapVelocities);
 				}
+
+				OnPropertyChanged(nameof(Bitmap));
 			}
 			//else
 			//{
@@ -512,14 +570,16 @@ namespace MSetExplorer
 			//}
 		}
 
-		private void DrawASection(MapSection mapSection, ColorMap colorMap, bool useEscapVelocities)
+		private void DrawASection(MapSection mapSection, ColorMap colorMap, bool useEscapeVelocities)
 		{
 			if (mapSection.MapSectionVectors != null)
 			{
 				//Debug.WriteLine($"About to draw screen section at position: {mapSection.BlockPosition}. CanvasControlOff: {CanvasOffset}.");
-				var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
 
-				PlacePixels(_bitmap, mapSection, pixels);
+				//var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, mapSection.Size, colorMap, !mapSection.IsInverted, useEscapVelocities);
+				//PlacePixels(_bitmap, mapSection, pixels);
+
+				GetAndPlacePixels(_bitmap, mapSection.BlockPosition, mapSection.MapSectionVectors, colorMap, mapSection.IsInverted, useEscapeVelocities);
 			}
 			else
 			{
@@ -562,20 +622,8 @@ namespace MSetExplorer
 					MapSections.Clear();
 				}
 
+				OnPropertyChanged(nameof(Bitmap));
 			}
-		}
-
-		private void PlacePixels(WriteableBitmap bitmap, MapSection mapSection, byte[] pixels)
-		{
-			var invertedBlockPos = GetInvertedBlockPos(mapSection.BlockPosition);
-			var loc = invertedBlockPos.Scale(BlockSize);
-			_bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
-
-			//_bitmap.Lock();
-			//_bitmap.AddDirtyRect(new Int32Rect(loc.X, loc.Y, BlockSize.Width, BlockSize.Height));
-			//_bitmap.Unlock();
-
-			OnPropertyChanged(nameof(Bitmap));
 		}
 		
 		private PointInt GetInvertedBlockPos(PointInt blockPosition)
@@ -591,12 +639,6 @@ namespace MSetExplorer
 			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight);
 
 			bitmap.WritePixels(rect, zeros, rect.Width * 4, 0);
-
-			//_bitmap.Lock();
-			//_bitmap.AddDirtyRect(new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight));
-			//_bitmap.Unlock();
-
-			OnPropertyChanged(nameof(Bitmap));
 		}
 
 		private byte[] GetPixelsToClear(int length)

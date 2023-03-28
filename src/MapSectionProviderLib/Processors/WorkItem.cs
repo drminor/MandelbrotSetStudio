@@ -53,7 +53,6 @@ namespace MapSectionProviderLib
 		public MapSectionResponse Response { get; init; }
 		public bool OnlyInsertJobMapSectionRecord { get; init; }
 
-
 		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response)
 			: this(request, response, onlyInsertJobMapSectionRecord: false)
 		{ }
