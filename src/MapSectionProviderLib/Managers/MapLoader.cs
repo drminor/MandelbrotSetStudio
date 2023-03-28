@@ -11,7 +11,7 @@ namespace MapSectionProviderLib
 {
 	public class MapLoader
 	{
-		private readonly Action<MapSection, int, bool> _callback;
+		private readonly Action<MapSection, int> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private IList<MapSectionRequest>? _mapSectionRequests;
@@ -24,7 +24,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapLoader(Action<MapSection, int, bool> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(Action<MapSection, int> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
@@ -126,10 +126,9 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSection? mapSection, int jobId)
+		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSection mapSection, int jobId)
 		{
-			var mapSectionResult = mapSection ?? new MapSection();
-			bool isLastSection;
+			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MapLoader's HandleResponse is being called from the Response Processor.");
 
 			mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
@@ -150,14 +149,14 @@ namespace MapSectionProviderLib
 
 			if (_sectionsCompleted >= _mapSectionRequests?.Count || (_isStopping && _sectionsCompleted >= _sectionsRequested))
 			{
-				isLastSection = true;
 				_stopwatch.Stop();
 
-				_callback(mapSectionResult, JobNumber, isLastSection);
+				mapSection.IsLastSection = true;
+				_callback(mapSection, JobNumber);
 
-				if (!mapSectionResult.IsEmpty)
+				if (!mapSection.IsEmpty)
 				{
-					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection));
+					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: true));
 				}
 
 				mapSectionRequest.Handled = true;
@@ -171,11 +170,11 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				isLastSection = false;
-				if (!mapSectionResult.IsEmpty)
+				if (!mapSection.IsEmpty)
 				{
-					_callback(mapSectionResult, JobNumber, isLastSection);
-					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection));
+					mapSection.IsLastSection = false;
+					_callback(mapSection, JobNumber);
+					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: false));
 				}
 				else
 				{

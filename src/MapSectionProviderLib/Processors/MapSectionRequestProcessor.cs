@@ -96,7 +96,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSection?, int> responseHandler)
+		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSection, int> responseHandler)
 		{
 			var mapSectionWorkItem = new MapSectionWorkRequest(jobNumber, mapSectionRequest, responseHandler);
 
@@ -423,9 +423,9 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse, int jobId)
+		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse, int jobId)
 		{
-			IsMapSectionResponseNull(mapSectionWorkRequest, mapSectionResponse);
+			Debug.Assert(jobId == mapSectionWorkRequest.JobId, "The jobId given to the HandleGeneratedResponse is not the same as the JobId of the MapSectionWorkRequest.");
 
 			_requestsLock.EnterUpgradeableReadLock();
 
@@ -478,25 +478,18 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private MapSection BuildMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse, int jobId)
+		private MapSection BuildMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, int jobId)
 		{
 			MapSection mapSection;
 
-			if (mapSectionResponse != null)
+			if (mapSectionResponse.RequestCancelled)
 			{
-				if (mapSectionResponse.RequestCancelled)
-				{
-					mapSection = _mapSectionHelper.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: true);
-				}
-				else
-				{
-					mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, jobId);
-					mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-				}
+				mapSection = _mapSectionHelper.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: true);
 			}
 			else
 			{
-				mapSection = _mapSectionHelper.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: false);
+				mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, jobId);
+				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
 			}
 
 			return mapSection;
@@ -513,8 +506,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				//var mapBlockOffset = mapSectionRequest.MapBlockOffset;
-				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId/*, mapBlockOffset*/);
+				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId);
 			}
 
 			return mapSectionResult;
@@ -579,14 +571,14 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		[Conditional("DEBUG")]
-		private void IsMapSectionResponseNull(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse)
-		{
-			if (mapSectionResponse == null)
-			{
-				Debug.WriteLine($"WARNING: The MapSectionResponse is null in the HandleGeneratedResponse callback for the MapSectionRequestProcessor. The request's block position is {mapSectionWorkRequest.Request.BlockPosition}.");
-			}
-		}
+		//[Conditional("DEBUG")]
+		//private void IsMapSectionResponseNull(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse)
+		//{
+		//	if (mapSectionResponse == null)
+		//	{
+		//		Debug.WriteLine($"WARNING: The MapSectionResponse is null in the HandleGeneratedResponse callback for the MapSectionRequestProcessor. The request's block position is {mapSectionWorkRequest.Request.BlockPosition}.");
+		//	}
+		//}
 
 		[Conditional("DEBUG")]
 		private void WasPrimaryRequestFound(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> pendingRequests)

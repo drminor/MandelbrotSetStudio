@@ -71,7 +71,6 @@ namespace MSS.Common
 			}
 		}
 
-
 		public void PlaceColor(int countVal, double escapeVelocity, Span<byte> destination)
         {
             var idx = GetColorMapIndex(countVal);
@@ -132,7 +131,7 @@ namespace MSS.Common
 			return stepFactor;
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("DEBUG2")]
         private void CheckStepFactor(int countVal, int cutoff, int botBucketVal, int bucketWidth, double stepFactor)
 		{
             if (countVal > 5 && countVal == cutoff)

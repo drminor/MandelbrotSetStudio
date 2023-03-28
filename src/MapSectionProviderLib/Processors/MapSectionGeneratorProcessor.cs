@@ -152,7 +152,7 @@ namespace MapSectionProviderLib
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
 
-					MapSectionResponse? mapSectionResponse;
+					MapSectionResponse mapSectionResponse;
 
 					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out var cts))
 					{
@@ -180,8 +180,7 @@ namespace MapSectionProviderLib
 						}
 					}
 
-					mapSectionGenerateRequest.Response = mapSectionResponse;
-					mapSectionGenerateRequest.RunWorkAction();
+					mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
 				}
 				catch (OperationCanceledException)
 				{
@@ -206,7 +205,7 @@ namespace MapSectionProviderLib
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
 
-					MapSectionResponse? mapSectionResponse;
+					MapSectionResponse mapSectionResponse;
 
 					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out var cts))
 					{
@@ -233,8 +232,7 @@ namespace MapSectionProviderLib
 						}
 					}
 
-					mapSectionGenerateRequest.Response = mapSectionResponse;
-					mapSectionGenerateRequest.RunWorkAction();
+					mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
 				}
 				catch (OperationCanceledException)
 				{

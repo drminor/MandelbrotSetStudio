@@ -101,10 +101,20 @@ namespace MapSectionProviderLib
 					var mapSectionWorkRequest = _workQueue.Take(ct);
 
 					mapSectionWorkRequest.Request.Completed = true;
-					mapSectionWorkRequest.RunWorkAction();
-					if (!mapSectionWorkRequest.Request.ProcessingEndTime.HasValue)
+					var mapSectionResponse = mapSectionWorkRequest.Response;
+
+					if (mapSectionResponse != null)
 					{
-						mapSectionWorkRequest.Request.ProcessingEndTime = DateTime.UtcNow;
+						mapSectionWorkRequest.RunWorkAction(mapSectionResponse);
+						if (!mapSectionWorkRequest.Request.ProcessingEndTime.HasValue)
+						{
+							mapSectionWorkRequest.Request.ProcessingEndTime = DateTime.UtcNow;
+						}
+					}
+					else
+					{
+						// TODO: Create a new class: mapSectionWorkResponse
+						Debug.WriteLine($"WARNING: The response processor found a MapSectionWorkRequest with a null Response value.");
 					}
 				}
 				catch (OperationCanceledException)

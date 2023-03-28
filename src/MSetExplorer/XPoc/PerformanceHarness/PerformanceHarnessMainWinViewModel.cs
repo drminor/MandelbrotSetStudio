@@ -426,9 +426,9 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			OnPropertyChanged(nameof(MaxPeakSectionZVectors));
 		}
 
-		private void MapSectionReady(MapSection mapSection, int jobId, bool isLast)
+		private void MapSectionReady(MapSection mapSection, int jobId)
 		{
-			if (isLast)
+			if (mapSection.IsLastSection)
 			{
 				//_receviedTheLastOne = true;
 				Debug.WriteLine($"{jobId} is complete. Received {MapSectionProcessInfos.Count} process infos.");

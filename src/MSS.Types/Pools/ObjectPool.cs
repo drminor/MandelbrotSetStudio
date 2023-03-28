@@ -82,32 +82,41 @@ namespace MSS.Types
 		/// <returns>True if the object was added back into the pool.</returns>
 		public bool Free(T obj)
 		{
+			bool result;
+
 			if (obj == null)
-				return false;
-
-			lock(_stateLock)
 			{
-				obj.DecreaseRefCount();
+				result = false;
+			}
+			else
+			{
+				lock (_stateLock)
+				{
+					obj.DecreaseRefCount();
 
-				if (obj.ReferenceCount > 0)
-				{
-					return false;
-				}
+					if (obj.ReferenceCount > 0)
+					{
+						result = false;
+					}
+					else
+					{
+						if (TotalFree < MaxSize)
+						{
+							//Reset(obj);
+							_pool.Push(obj);
+							MaxPeak = Math.Max(MaxPeak, TotalFree);
+						}
+						else
+						{
+							obj.Dispose();
+						}
 
-				if (TotalFree < MaxSize)
-				{
-					//Reset(obj);
-					_pool.Push(obj);
-					MaxPeak = Math.Max(MaxPeak, TotalFree);
-					return true;
-				}
-				else
-				{
-					obj.Dispose();
+						result = true;
+					}
 				}
 			}
 
-			return false;
+			return result;
 		}
 
 		/// <summary>
@@ -143,19 +152,19 @@ namespace MSS.Types
 			}
 		}
 
-		public virtual T DuplicateFrom(T obj)
-		{
-			if (obj == null)
-			{
-				throw new ArgumentException("DuplicateFrom must be supplied a non-null value.");
-			}
+		//public virtual T DuplicateFrom(T obj)
+		//{
+		//	if (obj == null)
+		//	{
+		//		throw new ArgumentException("DuplicateFrom must be supplied a non-null value.");
+		//	}
 
-			var source = Obtain();
-			obj.CopyTo(source);
-			var result = source;
+		//	var source = Obtain();
+		//	obj.CopyTo(source);
+		//	var result = source;
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public override string ToString()
 		{

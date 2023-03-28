@@ -43,7 +43,7 @@ namespace MSetExplorer
 		void SubmitJob(AreaColorAndCalcSettings job);
 		void CancelJob();
 		void RestartLastJob();
-		//void ClearDisplay(int? jobNumber);
+		void ClearDisplay(int? jobNumber);
 
 		//VectorInt ScreenCollectionIndex { get; }
 	}

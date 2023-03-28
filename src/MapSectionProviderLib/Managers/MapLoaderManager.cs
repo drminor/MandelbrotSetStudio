@@ -12,6 +12,8 @@ namespace MapSectionProviderLib
 {
 	public class MapLoaderManager : IMapLoaderManager
 	{
+		private readonly bool RAISE_SECTION_LOADED_EVENTS;
+
 		private readonly CancellationTokenSource _cts;
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
@@ -25,6 +27,8 @@ namespace MapSectionProviderLib
 
 		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionHelper mapSectionHelper)
 		{
+			RAISE_SECTION_LOADED_EVENTS = false;
+
 			_cts = new CancellationTokenSource();
 			_mapSectionHelper = mapSectionHelper;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
@@ -50,21 +54,21 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection, int, bool> callback)
+		public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection, int> callback)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
 			var result = Push(mapSectionRequests, callback);
 			return result;
 		}
 
-		public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection, int, bool> callback)
-		{
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
-			var result = Push(mapSectionRequests, callback);
-			return result;
-		}
+		//public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection, int, bool> callback)
+		//{
+		//	var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
+		//	var result = Push(mapSectionRequests, callback);
+		//	return result;
+		//}
 
-		public int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int, bool> callback)
+		public int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int> callback)
 		{
 			var result = 0;
 
@@ -88,17 +92,19 @@ namespace MapSectionProviderLib
 
 		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
 		{
-			// TODO: Re-instate the handling of MapSectionLoaded -- and improve performance, if possible.
-			//_requestsLock.EnterReadLock();
+			if (RAISE_SECTION_LOADED_EVENTS)
+			{
+				_requestsLock.EnterReadLock();
 
-			//try
-			//{
-			//	SectionLoaded?.Invoke(this, e);
-			//}
-			//finally
-			//{
-			//	_requestsLock.ExitReadLock();
-			//}
+				try
+				{
+					SectionLoaded?.Invoke(this, e);
+				}
+				finally
+				{
+					_requestsLock.ExitReadLock();
+				}
+			}
 		}
 
 		public Task? GetTaskForJob(int jobNumber)

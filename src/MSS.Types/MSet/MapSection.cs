@@ -27,22 +27,6 @@ namespace MSS.Types
 				  )
 		{ }
 
-		//public MapSection(MapSectionRequest mapSectionRequest, bool isCancelled = false)
-		//	: this(
-		//		  jobNumber: -1,
-		//		  mapSectionVectors: null,
-		//		  subdivisionId: mapSectionRequest.SubdivisionId,
-		//		  repoBlockPosition: mapSectionRequest.BlockPosition,
-		//		  isInverted: false,
-		//		  blockPosition: new PointInt(),
-		//		  size: new SizeInt(),
-		//		  targetIterations: 0,
-		//		  histogramBuilder: BuildHstFake
-		//		  )
-		//{
-		//	RequestCancelled = isCancelled;
-		//}
-
 		// Used when the Request was cancelled or for was not able to be completed and the MapSectionsVectors was empty. 
 		public MapSection(int jobNumber, string subdivisionId, BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, bool isCancelled)
 			: this(jobNumber, mapSectionVectors: null, subdivisionId, repoBlockPosition, isInverted, blockPosition, size, targetIterations, BuildHstFake)
@@ -86,6 +70,8 @@ namespace MSS.Types
 		public bool IsInverted { get; init; }
 
 		public IHistogram Histogram => _histogram.Value;
+
+		public bool IsLastSection { get; set; }
 
 		#endregion
 

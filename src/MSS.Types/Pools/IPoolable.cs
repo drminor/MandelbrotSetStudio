@@ -10,7 +10,7 @@ namespace MSS.Types
 
 		int DecreaseRefCount();
 
-		void CopyTo(object obj);
+		//void CopyTo(object obj);
 		void ResetObject();
 	}
 }

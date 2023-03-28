@@ -22,6 +22,7 @@ namespace MSS.Types
 
 			Counts = ArrayPool<ushort>.Shared.Rent(ValueCount);
 			EscapeVelocities = ArrayPool<ushort>.Shared.Rent(ValueCount);
+			BackBuffer = ArrayPool<byte>.Shared.Rent(ValueCount * 4);
 
 			ReferenceCount = 0;
 		}
@@ -39,6 +40,7 @@ namespace MSS.Types
 
 		public ushort[] Counts { get; init; }
 		public ushort[] EscapeVelocities { get; init; }
+		public byte[] BackBuffer { get; init; }
 
 		#endregion
 
@@ -210,23 +212,23 @@ namespace MSS.Types
 			Array.Clear(EscapeVelocities);
 		}
 
-		void IPoolable.CopyTo(object obj)
-		{
-			if (obj != null && obj is MapSectionVectors destination)
-			{
-				CopyTo(destination);
-			}
-			else
-			{
-				throw new ArgumentException($"CopyTo required an object of type {nameof(MapSectionVectors)}");
-			}
-		}
+		//void IPoolable.CopyTo(object obj)
+		//{
+		//	if (obj != null && obj is MapSectionVectors destination)
+		//	{
+		//		CopyTo(destination);
+		//	}
+		//	else
+		//	{
+		//		throw new ArgumentException($"CopyTo required an object of type {nameof(MapSectionVectors)}");
+		//	}
+		//}
 
-		public void CopyTo(MapSectionVectors destination)
-		{
-			Array.Copy(Counts, destination.Counts, ValueCount);
-			Array.Copy(EscapeVelocities, destination.EscapeVelocities, ValueCount);
-		}
+		//public void CopyTo(MapSectionVectors destination)
+		//{
+		//	Array.Copy(Counts, destination.Counts, ValueCount);
+		//	Array.Copy(EscapeVelocities, destination.EscapeVelocities, ValueCount);
+		//}
 
 		#endregion
 
@@ -247,7 +249,9 @@ namespace MSS.Types
 					//	ArrayPool<ushort>.Shared.Return(Counts, clearArray: true);
 					//}
 
-					ArrayPool<ushort>.Shared.Return(Counts, clearArray: true);
+					ArrayPool<ushort>.Shared.Return(Counts, clearArray: false);
+					ArrayPool<ushort>.Shared.Return(EscapeVelocities, clearArray: false);
+					ArrayPool<byte>.Shared.Return(BackBuffer, clearArray: false);
 
 				}
 
