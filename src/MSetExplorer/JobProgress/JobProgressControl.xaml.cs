@@ -23,32 +23,49 @@ namespace MSetExplorer
 			_vm = (JobProgressViewModel)DataContext;
 
 			Loaded += JobProgressControl_Loaded;
+			Unloaded += JobProgressControl_Unloaded;
+
 			InitializeComponent();
 		}
-
 		private void JobProgressControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			//if (DataContext is null)
-			//{
-			//	Debug.WriteLine("The DataContext is null as the obProgress Control is being loaded.");
-			//	return;
-			//}
-			//else
-			//{
-			//	_vm = (JobProgressViewModel)DataContext;
-			//	prgBarCurrentJob.Maximum = 100;
-			//	borderTop.DataContext = DataContext;
+			if (DataContext is null)
+			{
+				Debug.WriteLine("The DataContext is null as the obProgress Control is being loaded.");
+				return;
+			}
+			else
+			{
+				_vm = (JobProgressViewModel)DataContext;
+				prgBarCurrentJob.Maximum = 100;
+				borderTop.DataContext = DataContext;
 
-			//	lvJobProgressEntries.ItemsSource = _vm.MapSectionProcessInfos;
-			//	_collectionView = CollectionViewSource.GetDefaultView(_vm.MapSectionProcessInfos);
+				lvJobProgressEntries.ItemsSource = _vm.MapSectionProcessInfos;
+				_collectionView = CollectionViewSource.GetDefaultView(_vm.MapSectionProcessInfos);
 
 
-			//	_vm.MapSectionProcessInfos.CollectionChanged += MapSectionProcessInfos_CollectionChanged;
-			//	_vm.PropertyChanged += ViewModel_PropertyChanged;
+				_vm.MapSectionProcessInfos.CollectionChanged += MapSectionProcessInfos_CollectionChanged;
+				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
-			//	Debug.WriteLine("The JobProgress Control is now loaded");
-			//}
+				// TODO: Subscribe to the JobProgressControl's Visiblity DependencyProperty's OnChanged event.
+				if (Visibility == Visibility.Visible)
+				{
+					_vm.IsEnabled = true;
+				}
+				else
+				{
+					_vm.IsEnabled = false;
+				}
+
+				Debug.WriteLine("The JobProgress Control is now loaded");
+			}
+
 			_collectionView = null;
+		}
+
+		private void JobProgressControl_Unloaded(object sender, RoutedEventArgs e)
+		{
+			_vm.IsEnabled = false;
 		}
 
 		private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -58,8 +75,6 @@ namespace MSetExplorer
 				MoveSelectedToLast();
 
 				prgBarCurrentJob.Value = _vm.PercentComplete;
-
-
 			}
 		}
 

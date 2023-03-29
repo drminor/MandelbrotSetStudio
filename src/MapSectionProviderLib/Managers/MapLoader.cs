@@ -126,7 +126,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSection mapSection, int jobId)
+		private void HandleResponse(MapSectionRequest mapSectionRequest, MapSection mapSection)
 		{
 			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MapLoader's HandleResponse is being called from the Response Processor.");
 

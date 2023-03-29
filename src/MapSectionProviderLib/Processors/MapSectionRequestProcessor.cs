@@ -96,7 +96,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSection, int> responseHandler)
+		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSection> responseHandler)
 		{
 			var mapSectionWorkItem = new MapSectionWorkRequest(jobNumber, mapSectionRequest, responseHandler);
 
@@ -423,10 +423,8 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse, int jobId)
+		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse)
 		{
-			Debug.Assert(jobId == mapSectionWorkRequest.JobId, "The jobId given to the HandleGeneratedResponse is not the same as the JobId of the MapSectionWorkRequest.");
-
 			_requestsLock.EnterUpgradeableReadLock();
 
 			if (UseRepo)
@@ -436,7 +434,7 @@ namespace MapSectionProviderLib
 
 			try
 			{
-				mapSectionWorkRequest.Response = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse, jobId);
+				mapSectionWorkRequest.Response = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse, mapSectionWorkRequest.JobId);
 				_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
 
 				var pendingRequests = GetPendingRequests(mapSectionWorkRequest.Request);
@@ -462,7 +460,7 @@ namespace MapSectionProviderLib
 				{
 					if (workItem != mapSectionWorkRequest)
 					{
-						workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, jobId);
+						workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, workItem.JobId);
 						_mapSectionResponseProcessor.AddWork(workItem);
 					}
 				}

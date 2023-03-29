@@ -1,6 +1,5 @@
 ﻿using MSS.Types;
 using MSS.Types.DataTransferObjects;
-using MSS.Types.MSet;
 
 namespace MSS.Common.DataTransferObjects
 {

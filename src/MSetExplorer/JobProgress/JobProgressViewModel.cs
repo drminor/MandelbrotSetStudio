@@ -9,11 +9,12 @@ namespace MSetExplorer
 {
 	public class JobProgressViewModel : ViewModelBase
 	{
-		#region Constructor
-
 		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private JobProgressInfo _currentJobProgressInfo;
+		private bool _isEnabled;
+
+		#region Constructor
 
 		public JobProgressViewModel(IMapLoaderManager mapLoaderManager)
 		{
@@ -23,11 +24,12 @@ namespace MSetExplorer
 			_currentJobProgressInfo = new JobProgressInfo(0, "temp", DateTime.UtcNow, 0);
 			MapSectionProcessInfos = new ObservableCollection<MapSectionProcessInfo>();
 
-
-			// TODO: Only subscribe if we are visible.
-			_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
-			_mapLoaderManager.SectionLoaded += MapLoaderManager_SectionLoaded;	
+			_isEnabled = false;
 		}
+
+		#endregion
+
+		#region Event Handlers
 
 		private void MapLoaderManager_RequestAdded(object? sender, JobProgressInfo e)
 		{
@@ -123,6 +125,30 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+
+		public bool IsEnabled
+		{
+			get => _isEnabled;
+			set
+			{
+				if (value != _isEnabled)
+				{
+					_isEnabled = value;
+
+					if (_isEnabled)
+					{
+						_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
+						_mapLoaderManager.SectionLoaded += MapLoaderManager_SectionLoaded;
+					}
+					else
+					{
+						_mapLoaderManager.RequestAdded -= MapLoaderManager_RequestAdded;
+						_mapLoaderManager.SectionLoaded -= MapLoaderManager_SectionLoaded;
+					}
+				}
+			}
+		}
 
 		public ObservableCollection<MapSectionProcessInfo> MapSectionProcessInfos { get; }
 

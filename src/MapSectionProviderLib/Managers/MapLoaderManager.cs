@@ -12,7 +12,7 @@ namespace MapSectionProviderLib
 {
 	public class MapLoaderManager : IMapLoaderManager
 	{
-		private readonly bool RAISE_SECTION_LOADED_EVENTS;
+		//private readonly bool RAISE_SECTION_LOADED_EVENTS;
 
 		private readonly CancellationTokenSource _cts;
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -27,7 +27,7 @@ namespace MapSectionProviderLib
 
 		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionHelper mapSectionHelper)
 		{
-			RAISE_SECTION_LOADED_EVENTS = false;
+			//RAISE_SECTION_LOADED_EVENTS = false;
 
 			_cts = new CancellationTokenSource();
 			_mapSectionHelper = mapSectionHelper;
@@ -92,18 +92,29 @@ namespace MapSectionProviderLib
 
 		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
 		{
-			if (RAISE_SECTION_LOADED_EVENTS)
-			{
-				_requestsLock.EnterReadLock();
+			//if (RAISE_SECTION_LOADED_EVENTS)
+			//{
+			//	_requestsLock.EnterReadLock();
 
-				try
-				{
-					SectionLoaded?.Invoke(this, e);
-				}
-				finally
-				{
-					_requestsLock.ExitReadLock();
-				}
+			//	try
+			//	{
+			//		SectionLoaded?.Invoke(this, e);
+			//	}
+			//	finally
+			//	{
+			//		_requestsLock.ExitReadLock();
+			//	}
+			//}
+
+			_requestsLock.EnterReadLock();
+
+			try
+			{
+				SectionLoaded?.Invoke(this, e);
+			}
+			finally
+			{
+				_requestsLock.ExitReadLock();
 			}
 		}
 

@@ -10,9 +10,9 @@ namespace MapSectionProviderLib
 		public T Request { get; init; }
 		public U? Response { get; set; }
 
-		public Action<T, U, int> WorkAction { get; init; }
+		public Action<T, U> WorkAction { get; init; }
 
-		public WorkItem(int jobId, T request, Action<T, U, int> workAction)
+		public WorkItem(int jobId, T request, Action<T, U> workAction)
 		{
 			JobId = jobId;
 			Request = request ?? throw new ArgumentNullException(nameof(request));
@@ -22,7 +22,7 @@ namespace MapSectionProviderLib
 		public void RunWorkAction(U response)
 		{
 			Response = response;
-			WorkAction(Request, Response, JobId);
+			WorkAction(Request, Response);
 		}
 
 		//public void RunWorkAction()
@@ -33,7 +33,7 @@ namespace MapSectionProviderLib
 
 	internal class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSection>
 	{
-		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSection, int> workAction)
+		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSection> workAction)
 			: base(jobId, request, workAction)
 		{
 		}
@@ -41,7 +41,7 @@ namespace MapSectionProviderLib
 
 	internal class MapSectionGenerateRequest : WorkItem<MapSectionWorkRequest, MapSectionResponse>
 	{
-		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse, int> workAction)
+		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse> workAction)
 			: base(jobId, request, workAction)
 		{
 		}

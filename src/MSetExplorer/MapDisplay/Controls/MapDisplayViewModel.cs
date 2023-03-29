@@ -2,7 +2,6 @@
 using MSS.Common;
 using MSS.Types;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -52,9 +51,6 @@ namespace MSetExplorer
 		private SizeInt _allocatedBlocks;
 		private int _maxYPtr;
 		
-		private IntPtr _bitmapBackBuffer;
-		private int _bitmapBackBufferStride;
-
 		#endregion
 
 		#region Constructor
@@ -111,8 +107,6 @@ namespace MSetExplorer
 
 		public SizeInt BlockSize { get; init; }
 		private Int32Rect BlockRect { get; init; }
-
-		//public ImageSource ImageSource { get; init; }
 
 		public ObservableCollection<MapSection> MapSections { get; init; }
 
@@ -334,8 +328,6 @@ namespace MSetExplorer
 			set
 			{
 				_bitmap = value;
-				_bitmapBackBuffer = _bitmap.BackBuffer;
-				_bitmapBackBufferStride = _bitmap.BackBufferStride;
 				OnPropertyChanged();
 			}
 		}
@@ -443,38 +435,6 @@ namespace MSetExplorer
 		{
 			Debug.Assert(mapSection.JobNumber == jobNumber, "JobNumber miss match on MapDisplayViewModel's MapSectionReady.");
 			_bitmap.Dispatcher.Invoke(GetAndPlacePixels, new object[] { mapSection });
-
-			//if (jobNumber == _currentMapLoaderJobNumber)
-			//{
-			//	MapSections.Add(mapSection);
-
-			//	if (_colorMap != null && mapSection.MapSectionVectors != null)
-			//	{
-			//		//var pixels = _mapSectionHelper.GetPixelArray(mapSection.MapSectionVectors, BlockSize, _colorMap, !mapSection.IsInverted, useEscapeVelocities: false);
-
-			//		//// Run PlacePixels on the ui thread.
-			//		//_bitmap.Dispatcher.Invoke(PlacePixels, new object[] { _bitmap, mapSection, pixels });
-
-			//		//_bitmap.Dispatcher.Invoke(GetAndPlacePixels, new object[] { _bitmap, mapSection.BlockPosition, mapSection.MapSectionVectors, _colorMap, mapSection.IsInverted, _useEscapeVelocities });
-			//		_bitmap.Dispatcher.Invoke(GetAndPlacePixels, new object[] { mapSection });
-			//	}
-
-			//	if (mapSection.IsLastSection)
-			//	{
-			//		// Used by the Explorer window to signal the ColorBandSet ViewModels to refresh percentages, histogram views, etc.
-			//		_synchronizationContext?.Post(o => 
-			//		{ 
-			//			DisplayJobCompleted?.Invoke(this, jobNumber);
-			//			OnPropertyChanged(nameof(Bitmap));
-			//		}
-			//		, null);
-			//	}
-			//}
-			//else
-			//{
-			//	Debug.WriteLine($"UpdateUi is skipping. The jobNumber = {jobNumber}, our JobNumber = {_currentMapLoaderJobNumber}.");
-			//	_mapSectionHelper.ReturnMapSection(mapSection);
-			//}
 		}
 
 		#endregion
@@ -514,50 +474,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//private void GetAndPlacePixelsOld(WriteableBitmap bitmap, PointInt blockPosition, MapSectionVectors mapSectionVectors, ColorMap colorMap, bool isInverted, bool useEscapeVelocities)
-		//{
-		//	var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-		//	var loc = invertedBlockPos.Scale(BlockSize);
-
-		//	var pixels = _mapSectionHelper.GetPixelArray(mapSectionVectors, BlockSize, colorMap, !isInverted, useEscapeVelocities);
-
-		//	bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
-
-		//	//OnPropertyChanged(nameof(Bitmap));
-		//}
-
-		//private void GetAndPlacePixelsExp(WriteableBitmap bitmap, PointInt blockPosition, MapSectionVectors mapSectionVectors, ColorMap colorMap, bool isInverted, bool useEscapeVelocities)
-		//{
-		//	if (useEscapeVelocities)
-		//	{
-		//		Debug.WriteLine("UseEscapeVelocities is not supported. Resetting value.");
-		//		useEscapeVelocities = false;
-		//	}
-
-		//	var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-		//	var loc = invertedBlockPos.Scale(BlockSize);
-
-		//	//var pixels = _mapSectionHelper.GetPixelArray(mapSectionVectors, BlockSize, colorMap, !isInverted, useEscapeVelocities);
-		//	//bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
-
-		//	_mapSectionHelper.FillBackBuffer(_bitmap.BackBuffer, _bitmap.BackBufferStride, loc, BlockSize, mapSectionVectors, colorMap, !isInverted, useEscapeVelocities);
-
-		//	bitmap.Lock();
-		//	bitmap.AddDirtyRect(new Int32Rect(loc.X, loc.Y, BlockSize.Width, BlockSize.Height));
-		//	bitmap.Unlock();
-
-		//	OnPropertyChanged(nameof(Bitmap));
-		//}
-
-		//private void PlacePixels(WriteableBitmap bitmap, MapSection mapSection, byte[] pixels)
-		//{
-		//	var invertedBlockPos = GetInvertedBlockPos(mapSection.BlockPosition);
-		//	var loc = invertedBlockPos.Scale(BlockSize);
-		//	bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
-
-		//	OnPropertyChanged(nameof(Bitmap));
-		//}
 
 		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
 		{
@@ -675,6 +591,58 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		#endregion
+
+		#region Old Update Bitmap Routines
+
+		//private void GetAndPlacePixelsOld(WriteableBitmap bitmap, PointInt blockPosition, MapSectionVectors mapSectionVectors, ColorMap colorMap, bool isInverted, bool useEscapeVelocities)
+		//{
+		//	var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+		//	var loc = invertedBlockPos.Scale(BlockSize);
+
+		//	var pixels = _mapSectionHelper.GetPixelArray(mapSectionVectors, BlockSize, colorMap, !isInverted, useEscapeVelocities);
+
+		//	bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
+
+		//	//OnPropertyChanged(nameof(Bitmap));
+		//}
+
+		//private void GetAndPlacePixelsExp(WriteableBitmap bitmap, PointInt blockPosition, MapSectionVectors mapSectionVectors, ColorMap colorMap, bool isInverted, bool useEscapeVelocities)
+		//{
+		//	if (useEscapeVelocities)
+		//	{
+		//		Debug.WriteLine("UseEscapeVelocities is not supported. Resetting value.");
+		//		useEscapeVelocities = false;
+		//	}
+
+		//	var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+		//	var loc = invertedBlockPos.Scale(BlockSize);
+
+		//	//var pixels = _mapSectionHelper.GetPixelArray(mapSectionVectors, BlockSize, colorMap, !isInverted, useEscapeVelocities);
+		//	//bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
+
+		//	_mapSectionHelper.FillBackBuffer(_bitmap.BackBuffer, _bitmap.BackBufferStride, loc, BlockSize, mapSectionVectors, colorMap, !isInverted, useEscapeVelocities);
+
+		//	bitmap.Lock();
+		//	bitmap.AddDirtyRect(new Int32Rect(loc.X, loc.Y, BlockSize.Width, BlockSize.Height));
+		//	bitmap.Unlock();
+
+		//	OnPropertyChanged(nameof(Bitmap));
+		//}
+
+		//private void PlacePixels(WriteableBitmap bitmap, MapSection mapSection, byte[] pixels)
+		//{
+		//	var invertedBlockPos = GetInvertedBlockPos(mapSection.BlockPosition);
+		//	var loc = invertedBlockPos.Scale(BlockSize);
+		//	bitmap.WritePixels(BlockRect, pixels, BlockRect.Width * 4, loc.X, loc.Y);
+
+		//	OnPropertyChanged(nameof(Bitmap));
+		//}
+
+		#endregion
+
+		#region Old Handle Map Changed Handlers
 
 		//private int? ReuseLoadedSections(JobAreaAndCalcSettings jobAreaAndCalcSettings)
 		//{

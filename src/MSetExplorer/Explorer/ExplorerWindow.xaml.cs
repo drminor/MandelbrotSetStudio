@@ -50,7 +50,7 @@ namespace MSetExplorer
 				//_vm = (IExplorerViewModel)DataContext;
 				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
 
-				//jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
+				jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
 				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
