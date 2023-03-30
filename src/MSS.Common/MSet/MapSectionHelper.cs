@@ -272,7 +272,6 @@ namespace MSS.Common
 
 		#region Bitmap Generation
 
-		//MapSectionVectors mapSectionVectors, SizeInt blockSize, ColorMap colorMap, bool invert, byte[] buffer
 		public void LoadPixelArray(MapSection mapSection, ColorMap colorMap)
 		{
 			var mapSectionVectors = mapSection.MapSectionVectors ?? throw new InvalidOperationException("MapSectionVectors is null on LoadPixelArray.");

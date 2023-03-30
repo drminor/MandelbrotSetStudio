@@ -1,7 +1,11 @@
-﻿using MSetRepo;
+﻿using MapSectionProviderLib;
+using MSetRepo;
 using MSS.Common;
 using MSS.Types;
+using System.Collections.Generic;
+using System;
 using System.Windows;
+using MEngineClient;
 
 namespace WpfMapDisplayPOC
 {
@@ -15,9 +19,8 @@ namespace WpfMapDisplayPOC
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 
-		//private static readonly bool USE_ALL_CORES = true;
-
-		//private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
+		private static readonly bool USE_ALL_CORES = true;
+		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 
 		#endregion
 
@@ -56,7 +59,11 @@ namespace WpfMapDisplayPOC
 
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT);
 
-			_mainWindow = GetMainWindow(_mapSectionHelper, _repositoryAdapters);
+			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionHelper);
+
+
+			_mainWindow = GetMainWindow(mapSectionRequestProcessor, _mapSectionHelper, _repositoryAdapters);
 			_mainWindow.Show();
 		}
 
@@ -64,9 +71,9 @@ namespace WpfMapDisplayPOC
 
 		#region Support Methods
 
-		private MainWindow GetMainWindow(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters)
+		private MainWindow GetMainWindow(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters)
 		{
-			var vm = new MainWindowViewModel(repositoryAdapters.ProjectAdapter, repositoryAdapters.MapSectionAdapter, mapSectionHelper);
+			var vm = new MainWindowViewModel(mapSectionRequestProcessor, repositoryAdapters.ProjectAdapter, repositoryAdapters.MapSectionAdapter, mapSectionHelper);
 
 			var win = new MainWindow
 			{
@@ -77,6 +84,48 @@ namespace WpfMapDisplayPOC
 
 			return win;
 		}
+
+		private IMEngineClient[] CreateTheMEngineClients(MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
+		{
+			var result = new List<IMEngineClient>();
+
+			var localTaskCount = GetLocalTaskCount(useAllCores);
+
+			for (var i = 0; i < localTaskCount; i++)
+			{
+				result.Add(new MClientLocal(mSetGenerationStrategy));
+			}
+
+			return result.ToArray();
+		}
+
+		private int GetLocalTaskCount(bool useAllCores)
+		{
+			int result;
+
+			if (useAllCores)
+			{
+				var numberOfLogicalProc = Environment.ProcessorCount;
+				result = numberOfLogicalProc - 1;
+			}
+			else
+			{
+				result = 1;
+			}
+
+			return result;
+		}
+
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
+		{
+			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients);
+			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
+			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionHelper);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionHelper, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
+
+			return mapSectionRequestProcessor;
+		}
+
 
 		#endregion
 	}

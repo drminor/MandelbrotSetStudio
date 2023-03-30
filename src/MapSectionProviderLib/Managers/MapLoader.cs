@@ -11,7 +11,7 @@ namespace MapSectionProviderLib
 {
 	public class MapLoader
 	{
-		private readonly Action<MapSection, int> _callback;
+		private readonly Action<MapSection> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private IList<MapSectionRequest>? _mapSectionRequests;
@@ -24,7 +24,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapLoader(Action<MapSection, int> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
@@ -152,7 +152,7 @@ namespace MapSectionProviderLib
 				_stopwatch.Stop();
 
 				mapSection.IsLastSection = true;
-				_callback(mapSection, JobNumber);
+				_callback(mapSection);
 
 				if (!mapSection.IsEmpty)
 				{
@@ -173,7 +173,7 @@ namespace MapSectionProviderLib
 				if (!mapSection.IsEmpty)
 				{
 					mapSection.IsLastSection = false;
-					_callback(mapSection, JobNumber);
+					_callback(mapSection);
 					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: false));
 				}
 				else

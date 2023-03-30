@@ -46,40 +46,7 @@ namespace WpfMapDisplayPOC
 
 			myImage.Source = Bitmap;
 
-			//var bb = new BindingBase();
-
-			//myImage.SetBinding(Image.SourceProperty, null);
-			//myImage.Source = Bitmap;
-
-			//DispatcherTimer timer = new DispatcherTimer();
-			//timer.Interval = TimeSpan.FromMilliseconds(20);
-			//timer.Tick += Timer_Tick;
-			//timer.Start();
 		}
-
-		//private void Timer_Tick(object? sender, EventArgs e)
-		//{
-		//	var cntr = 0;
-
-		//	while (cntr < 15)
-		//	{
-		//		if (_bitMapOps.TryDequeue(out var bitMapOp))
-		//		{
-		//			BitmapGrid1.PlaceBitmap(bitMapOp.SkBitmap, bitMapOp.SkPoint);
-		//			cntr++;
-		//		}
-		//		else
-		//		{
-		//			break;
-		//		}
-
-		//	}
-
-		//	if (cntr > 0)
-		//	{
-		//		BitmapGrid1.InvalidateVisual();
-		//	}
-		//}
 
 
 		private void MSectionDispControl_Initialized(object? sender, EventArgs e)
@@ -113,7 +80,6 @@ namespace WpfMapDisplayPOC
 
 		#endregion
 
-
 		#region Public Properties
 
 		private IntPtr bitmapPtr;
@@ -141,7 +107,8 @@ namespace WpfMapDisplayPOC
 			if (_bitmap != null)
 			{
 				SkiaHelper.ClearCanvas(_bitmap, _canvasClearColor);
-				//myImage.Source = Bitmap;
+				myImage.Source = Bitmap;
+				OnPropertyChanged(nameof(Bitmap));
 			}
 		}
 
@@ -160,12 +127,13 @@ namespace WpfMapDisplayPOC
 			_bitmap.WritePixels(sourceRect, pixelArray, sourceRect.Width * 4, (int)dest.X, (int)dest.Y);
 		}
 
-
 		public void CallForUpdate(Int32Rect rect)
 		{
 			_bitmap.Lock();
 			_bitmap.AddDirtyRect(rect);
 			_bitmap.Unlock();
+
+			OnPropertyChanged(nameof(Bitmap));
 		}
 
 		#endregion

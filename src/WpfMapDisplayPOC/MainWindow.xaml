@@ -5,12 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfMapDisplayPOC"
         mc:Ignorable="d"
-        Title="MainWindow" Height="1150" Width="1100">
-   
+        Title="MainWindow" Height="1200" Width="1100">
+  
     <Grid>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -24,13 +25,45 @@
         <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+
+                <Button Name="btnClear" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="ClearButton_Click" IsDefault="True" TabIndex="4" >_Clear</Button>
+                
                 <Button Name="btnLoadUi" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="LoadButtonUiThread_Click" IsDefault="True" TabIndex="4" >Load _Ui</Button>
                 <Button Name="btnLoadBg" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="LoadButtonBgThread_Click" IsDefault="True" TabIndex="4" >Load _Bg</Button>
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True" TabIndex="5">_Close</Button>
+                <Button Name="btnLoadOp" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="LoadButtonUiThreadPixOnly_Click" IsDefault="True" TabIndex="4" >Load _Op</Button>
+
+                <Button Name="btnLoadMl" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="LoadButtonMapLoader_Click" IsDefault="True" TabIndex="4" >Load _Ml</Button>
+
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True" TabIndex="5">Close</Button>
 
             </StackPanel>
 
         </Border>
+
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Left" Orientation="Vertical">
+                
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="Ui:" />
+                    <TextBox Width="900" Margin="3" VerticalAlignment="Center" Text="{Binding UiResults}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="Bg:" />
+                    <TextBox Width="900" Margin="3" VerticalAlignment="Center" Text="{Binding BgResults}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,1">
+                    <TextBlock Width="30" Margin="5,3,3,3" FontSize="14" Text="Op:" />
+                    <TextBox Width="900" Margin="3" VerticalAlignment="Center" Text="{Binding OpResults}"/>
+                </StackPanel>
+
+
+            </StackPanel>
+
+        </Border>
+
 
 
     </Grid>

@@ -12,8 +12,6 @@ namespace MapSectionProviderLib
 {
 	public class MapLoaderManager : IMapLoaderManager
 	{
-		//private readonly bool RAISE_SECTION_LOADED_EVENTS;
-
 		private readonly CancellationTokenSource _cts;
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
@@ -27,8 +25,6 @@ namespace MapSectionProviderLib
 
 		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionHelper mapSectionHelper)
 		{
-			//RAISE_SECTION_LOADED_EVENTS = false;
-
 			_cts = new CancellationTokenSource();
 			_mapSectionHelper = mapSectionHelper;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
@@ -54,7 +50,7 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection, int> callback)
+		public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
 			var result = Push(mapSectionRequests, callback);
@@ -68,7 +64,7 @@ namespace MapSectionProviderLib
 		//	return result;
 		//}
 
-		public int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int> callback)
+		public int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection> callback)
 		{
 			var result = 0;
 
@@ -92,20 +88,6 @@ namespace MapSectionProviderLib
 
 		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
 		{
-			//if (RAISE_SECTION_LOADED_EVENTS)
-			//{
-			//	_requestsLock.EnterReadLock();
-
-			//	try
-			//	{
-			//		SectionLoaded?.Invoke(this, e);
-			//	}
-			//	finally
-			//	{
-			//		_requestsLock.ExitReadLock();
-			//	}
-			//}
-
 			_requestsLock.EnterReadLock();
 
 			try

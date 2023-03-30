@@ -11,10 +11,10 @@ namespace MSS.Common
 		event EventHandler<JobProgressInfo>? RequestAdded;
 		event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection, int> callback);
-		//int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection, int, bool> callback);
+		int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback);
+		//int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback);
 
-		int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection, int> callback);
+		int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection> callback);
 
 		Task? GetTaskForJob(int jobNumber);
 		TimeSpan? GetExecutionTimeForJob(int jobNumber);

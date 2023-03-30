@@ -431,9 +431,8 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapSectionReady(MapSection mapSection, int jobNumber)
+		private void MapSectionReady(MapSection mapSection)
 		{
-			Debug.Assert(mapSection.JobNumber == jobNumber, "JobNumber miss match on MapDisplayViewModel's MapSectionReady.");
 			_bitmap.Dispatcher.Invoke(GetAndPlacePixels, new object[] { mapSection });
 		}
 

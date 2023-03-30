@@ -13,11 +13,6 @@
             <Image Name="myImage" Source="{Binding ElementName=bmGrid, Path=Bitmap}"/>
         </Canvas>
 
-        <!--<Canvas Name="myCanvas">
-            <Image Name="myImage" Source="{Binding ElementName=bmGrid, Path=Bitmap}"/>
-        </Canvas>-->
-
-
     </Grid>
 </UserControl>
 

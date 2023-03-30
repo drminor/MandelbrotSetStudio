@@ -241,9 +241,9 @@ namespace ImageBuilder
 			return _currentResponses;
 		}
 
-		private void MapSectionReady(MapSection mapSection, int jobNumber)
+		private void MapSectionReady(MapSection mapSection)
 		{
-			if (!_isStopping && jobNumber == _currentJobNumber)
+			if (!_isStopping && mapSection.JobNumber == _currentJobNumber)
 			{
 				if (!mapSection.IsEmpty)
 				{
@@ -251,7 +251,7 @@ namespace ImageBuilder
 				}
 				else
 				{
-					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. LastSection = {mapSection.IsLastSection}, Job Number: {jobNumber}.");
+					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. LastSection = {mapSection.IsLastSection}, Job Number: {mapSection.JobNumber}.");
 				}
 			}
 		}
