@@ -518,10 +518,13 @@ namespace MapSectionProviderLib
 
 		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
 		{
-			if (mapSectionResponse != null)
+			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled)
 			{
-				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
+				if (mapSectionResponse.RecordOnFile || mapSectionResponse.RequestCompleted)
+				{
+					mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+					_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
+				}
 			}
 		}
 

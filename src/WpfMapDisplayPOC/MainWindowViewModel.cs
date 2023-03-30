@@ -11,7 +11,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace WpfMapDisplayPOC
 {
@@ -38,7 +37,7 @@ namespace WpfMapDisplayPOC
 		public MainWindowViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
 		{
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
-			_mapSectionRequestProcessor.UseRepo = false;
+			_mapSectionRequestProcessor.UseRepo = true;
 
 			_mapJobHelper = new MapJobHelper(mapSectionAdapter);
 			_projectAdapter = projectAdapter;

@@ -362,8 +362,6 @@ namespace MSetRepo
 			}
 		}
 
-
-
 		public long? DeleteMapSectionsForMany(IEnumerable<ObjectId> ownerIds, JobOwnerType jobOwnerType)
 		{
 			var result = 0L;

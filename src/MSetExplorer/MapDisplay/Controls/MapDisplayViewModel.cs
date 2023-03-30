@@ -265,7 +265,9 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
 
-					UpdateScreenCollectionSize(LogicalDisplaySize.Round(), CanvasControlOffset);
+					//CanvasSizeInBlocks = CalculateCanvasSizeInBlocks(LogicalDisplaySize, CanvasControlOffset);
+					CanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(LogicalDisplaySize.Round(), BlockSize);
+
 					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
 				}
 			}
@@ -280,20 +282,18 @@ namespace MSetExplorer
 				{
 					_canvasControlOffset = value;
 
-					UpdateScreenCollectionSize(LogicalDisplaySize.Round(), CanvasControlOffset);
+					//CanvasSizeInBlocks = CalculateCanvasSizeInBlocks(LogicalDisplaySize, CanvasControlOffset);
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		private void UpdateScreenCollectionSize(SizeInt logicalContainerSize, VectorInt canvasControlOffset)
-		{
-			// Calculate the number of Block-Sized screen sections needed to fill the display at the current Zoom.
-			var sizeInBlocks = RMapHelper.GetMapExtentInBlocks(logicalContainerSize, canvasControlOffset, BlockSize);
-
-			//_screenSectionCollection.CanvasSizeInBlocks = sizeInBlocks;
-			CanvasSizeInBlocks = sizeInBlocks;
-		}
+		//private SizeInt CalculateCanvasSizeInBlocks(SizeDbl logicalContainerSize, VectorInt canvasControlOffset)
+		//{
+		//	//var result = RMapHelper.GetMapExtentInBlocks(logicalContainerSize.Round(), canvasControlOffset, BlockSize);
+		//	var result = RMapHelper.GetMapExtentInBlocks(logicalContainerSize.Round(), BlockSize);
+		//	return result;
+		//}
 
 		public SizeInt CanvasSizeInBlocks
 		{
@@ -309,7 +309,7 @@ namespace MSetExplorer
 				{
 					// Calculate new size of bitmap in block-sized units
 					var newAllocatedBlocks = value.Inflate(2);
-					Debug.WriteLine($"Allocating ScreenSections. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
+					Debug.WriteLine($"Resizing the MapDisplay Writeable Bitmap. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
 
 					_allocatedBlocks = newAllocatedBlocks;
 					_maxYPtr = _allocatedBlocks.Height - 1;
