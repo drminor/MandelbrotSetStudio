@@ -11,6 +11,7 @@ namespace MapSectionProviderLib
 {
 	public class MapLoader
 	{
+
 		private readonly Action<MapSection> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
@@ -24,11 +25,12 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapLoader(Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public MapLoader(int jobNumber, Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
+			JobNumber = jobNumber;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
-			JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			//JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
 			_mapSectionRequests = null;
 			_isStopping = false;
@@ -201,14 +203,15 @@ namespace MapSectionProviderLib
 		{
 			var result = new MapSectionProcessInfo
 				(
-				JobNumber, 
-				_sectionsCompleted, 
-				msr.TimeToCompleteGenRequest, 
-				msr.ProcessingDuration, 
-				msr.GenerationDuration, 
+				JobNumber,
 				msr.FoundInRepo,
-				isLastSection,
-				msr.MathOpCounts
+				_sectionsCompleted,
+				isLastSection
+,
+				msr.TimeToCompleteGenRequest,
+				msr.ProcessingDuration,
+				msr.GenerationDuration              //,
+													//msr.MathOpCounts
 				);
 			return result;
 		}

@@ -65,7 +65,7 @@ namespace MSS.Common
 		#region Create MapSectionRequests
 
 
-		public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		public List<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -75,9 +75,10 @@ namespace MSS.Common
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
 			var precision = GetBinaryPrecision(mapAreaInfo);
 
+			var requestNumber = 0;
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
 				result.Add(mapSectionRequest);
 			}
 
@@ -152,7 +153,7 @@ namespace MSS.Common
 		/// <param name="subdivision"></param>
 		/// <param name="mapCalcSettings"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
 			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
 
@@ -174,7 +175,8 @@ namespace MSS.Common
 				limbCount: limbCount,
 				blockSize: subdivision.BlockSize,
 				samplePointDelta: subdivision.SamplePointDelta,
-				mapCalcSettings: mapCalcSettings
+				mapCalcSettings: mapCalcSettings,
+				requestNumber: requestNumber
 			);
 
 			return mapSectionRequest;
@@ -237,7 +239,17 @@ namespace MSS.Common
 			var mapSection = new MapSection(jobNumber, mapSectionVectors, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
 				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
+			UpdateMapSectionWithProcInfo(mapSection, mapSectionRequest, jobNumber);
+
 			return mapSection;
+		}
+
+		[Conditional("PERF")]
+		private void UpdateMapSectionWithProcInfo(MapSection mapSection, MapSectionRequest mapSectionRequest, int jobNumber)
+		{
+			mapSection.MapSectionProcessInfo = new MapSectionProcessInfo(jobNumber, mapSectionRequest.FoundInRepo, mapSectionRequest.RequestNumber, isLastSection: false, requestDuration: mapSectionRequest.TimeToCompleteGenRequest,
+				processingDuration: mapSectionRequest.ProcessingDuration, generationDuration: mapSectionRequest.GenerationDuration);
+
 		}
 
 		//public MapSection CreateMapSection(int jobNumber, BigVector repoBlockPosition, BigVector mapBlockOffset, bool isInverted, string subdivisionId, 

@@ -72,6 +72,8 @@ namespace MSS.Types
 		public IHistogram Histogram => _histogram.Value;
 
 		public bool IsLastSection { get; set; }
+		public MapSectionProcessInfo? MapSectionProcessInfo { get; set; }
+		public MathOpCounts? MathOpCounts { get; set; }
 
 		#endregion
 

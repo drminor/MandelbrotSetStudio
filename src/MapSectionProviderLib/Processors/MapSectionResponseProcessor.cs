@@ -43,7 +43,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, Adding has been completed.");
+				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, The MapSectionResponseProcessor's WorkQueue IsAddingComplete has been set.");
 			}
 		}
 

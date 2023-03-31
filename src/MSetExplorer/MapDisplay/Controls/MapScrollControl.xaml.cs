@@ -99,14 +99,14 @@ namespace MSetExplorer
 					var verticalViewPortSize = logicalDisplaySize.Height;
 
 					VScrollBar.ViewportSize = verticalViewPortSize;
-					VScrollBar.LargeChange = verticalViewPortSize;
+					VScrollBar.LargeChange = 0.5 * verticalViewPortSize;
 					VScrollBar.SmallChange = 0.125 * verticalViewPortSize;
 
 					HScrollBar.Maximum = posterSize.Value.Width - logicalDisplaySize.Width;
 					var horizontalViewPortSize = logicalDisplaySize.Width;
 
 					HScrollBar.ViewportSize = horizontalViewPortSize;
-					HScrollBar.LargeChange = horizontalViewPortSize;
+					HScrollBar.LargeChange = 0.5 * horizontalViewPortSize;
 					HScrollBar.SmallChange = 0.125 * horizontalViewPortSize;
 
 					Debug.WriteLine($"LogicalDisplaySize: {logicalDisplaySize}, V-ViewPortSize: {verticalViewPortSize}, H-ViewPortSize: {horizontalViewPortSize}.");

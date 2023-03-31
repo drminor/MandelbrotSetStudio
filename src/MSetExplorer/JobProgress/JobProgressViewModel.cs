@@ -92,10 +92,10 @@ namespace MSetExplorer
 			{
 				if (x.JobNumber == CurrentJobProgressInfo.JobNumber)
 				{
-					if (x.MathOpCounts != null)
-					{
-						mops.Update(x.MathOpCounts);
-					}
+					//if (x.MathOpCounts != null)
+					//{
+					//	mops.Update(x.MathOpCounts);
+					//}
 
 					if (x.ProcessingDuration.HasValue)
 					{

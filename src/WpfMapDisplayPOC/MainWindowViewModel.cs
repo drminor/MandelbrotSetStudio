@@ -171,7 +171,7 @@ namespace WpfMapDisplayPOC
 			return result;
 		}
 
-		public MapSection? GetMapSection(MapSectionRequest mapSectionRequest, int jobNumber = 1)
+		public MapSection? GetMapSection(MapSectionRequest mapSectionRequest, int jobNumber)
 		{
 			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 
@@ -232,7 +232,9 @@ namespace WpfMapDisplayPOC
 
 			var limbCount = mapSectionRequests[0].LimbCount;
 
-			var mapLoader = new MapLoader(callback, _mapSectionRequestProcessor);
+			var newJobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+
+			var mapLoader = new MapLoader(newJobNumber, callback, _mapSectionRequestProcessor);
 			//AddTiming("Construct MapLoader");
 			//mapLoader.SectionLoaded += MapLoader_SectionLoaded;
 

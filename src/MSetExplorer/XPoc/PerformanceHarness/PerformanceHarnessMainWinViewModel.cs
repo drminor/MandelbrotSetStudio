@@ -19,7 +19,9 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		private readonly MapSectionHelper _mapSectionHelper;
 
 		public JobProgressInfo? JobProgressInfo;
-		public List<MapSectionProcessInfo> MapSectionProcessInfos;
+
+		//public List<MapSectionProcessInfo> MapSectionProcessInfos;
+		public List<MapSection> MapSections;
 
 		//public List<Tuple<long, string>> Timings;
 
@@ -47,7 +49,9 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			_generationElapsed = string.Empty;
 			_processingElapsed = string.Empty;
 
-			MapSectionProcessInfos = new List<MapSectionProcessInfo>();
+			//MapSectionProcessInfos = new List<MapSectionProcessInfo>();
+			MapSections = new List<MapSection>();
+
 			//Timings = new List<Tuple<long, string>>();
 			MathOpCounts = new MathOpCounts();
 
@@ -254,7 +258,9 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		private void RunTest(Job job)
 		{
 			NotifyPropChangedMaxPeek();
-			MapSectionProcessInfos.Clear();
+
+			//MapSectionProcessInfos.Clear();
+			MapSections.Clear();
 			//Timings.Clear();
 
 			var ownerId = job.ProjectId.ToString();
@@ -272,14 +278,16 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			LimbCount = mapSectionRequests[0].LimbCount;
 
-			var mapLoader = new MapLoader(MapSectionReady, _mapSectionRequestProcessor);
+			var newJobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+
+			var mapLoader = new MapLoader(newJobNumber, MapSectionReady, _mapSectionRequestProcessor);
 			//AddTiming("Construct MapLoader");
-			mapLoader.SectionLoaded += MapLoader_SectionLoaded;
+			//mapLoader.SectionLoaded += MapLoader_SectionLoaded;
 
 			var startTask = mapLoader.Start(mapSectionRequests);
 			//AddTiming("Start MapLoader");
 
-			JobProgressInfo = new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
+			JobProgressInfo = new JobProgressInfo(newJobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
 
 			for (var i = 0; i < 100; i++)
 			{
@@ -327,21 +335,18 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var sumProcessingDurations = 0d;
 			var sumGenerationDurations = 0d;
 
-			foreach (var x in MapSectionProcessInfos)
+			foreach (var x in MapSections)
 			{
 				if (x.MathOpCounts != null)
 				{
 					mops.Update(x.MathOpCounts);
 				}
 
-				if (x.ProcessingDuration.HasValue)
+				if (x.MapSectionProcessInfo != null)
 				{
-					sumProcessingDurations += x.ProcessingDuration.Value.TotalSeconds;
-				}
+					sumProcessingDurations += x.MapSectionProcessInfo.ProcessingDuration?.TotalSeconds ?? 0d;
+					sumGenerationDurations += x.MapSectionProcessInfo.GenerationDuration?.TotalSeconds ?? 0d;
 
-				if (x.GenerationDuration.HasValue)
-				{
-					sumGenerationDurations += x.GenerationDuration.Value.TotalSeconds;
 				}
 			}
 
@@ -380,24 +385,24 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			NotifyPropChangedMaxPeek();
 		}
 
-		private void MapLoader_SectionLoaded(object? sender, MapSectionProcessInfo e)
-		{
-			MapSectionProcessInfos.Add(e);
+		//private void MapLoader_SectionLoaded(object? sender, MapSectionProcessInfo e)
+		//{
+		//	MapSectionProcessInfos.Add(e);
 
-			if (JobProgressInfo != null)
-			{
-				if (e.FoundInRepo)
-				{
-					JobProgressInfo.FetchedCount++;
-					//AddTiming($"Fectched: {JobProgressInfo.FetchedCount}");
-				}
-				else
-				{
-					JobProgressInfo.GeneratedCount++;
-					//AddTiming($"Generated: {JobProgressInfo.GeneratedCount}");
-				}
-			}
-		}
+		//	if (JobProgressInfo != null)
+		//	{
+		//		if (e.FoundInRepo)
+		//		{
+		//			JobProgressInfo.FetchedCount++;
+		//			//AddTiming($"Fectched: {JobProgressInfo.FetchedCount}");
+		//		}
+		//		else
+		//		{
+		//			JobProgressInfo.GeneratedCount++;
+		//			//AddTiming($"Generated: {JobProgressInfo.GeneratedCount}");
+		//		}
+		//	}
+		//}
 
 		private void HandleRunComplete()
 		{
@@ -428,10 +433,30 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		private void MapSectionReady(MapSection mapSection)
 		{
+			if (mapSection.MapSectionProcessInfo != null)
+			{
+				MapSections.Add(mapSection);
+
+				if (JobProgressInfo != null)
+				{
+					if (mapSection.MapSectionProcessInfo.FoundInRepo)
+					{
+						JobProgressInfo.FetchedCount++;
+						//AddTiming($"Fectched: {JobProgressInfo.FetchedCount}");
+					}
+					else
+					{
+						JobProgressInfo.GeneratedCount++;
+						//AddTiming($"Generated: {JobProgressInfo.GeneratedCount}");
+					}
+				}
+
+			}
+
 			if (mapSection.IsLastSection)
 			{
 				//_receviedTheLastOne = true;
-				Debug.WriteLine($"{mapSection.JobNumber} is complete. Received {MapSectionProcessInfos.Count} process infos.");
+				Debug.WriteLine($"{mapSection.JobNumber} is complete. Received {MapSections.Count} map sections.");
 			}
 			else
 			{

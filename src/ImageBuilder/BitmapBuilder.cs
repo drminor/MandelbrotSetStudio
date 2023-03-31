@@ -193,7 +193,7 @@ namespace ImageBuilder
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, precision, ownerId, jobOwnerType, subdivision, mapCalcSettings);
+				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, precision, ownerId, jobOwnerType, subdivision, mapCalcSettings, colPtr);
 				requests.Add(mapSectionRequest);
 			}
 
@@ -201,7 +201,9 @@ namespace ImageBuilder
 
 			try
 			{
-				_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
+				//_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
+				var mapSectionResponses = _mapLoaderManager.Push(requests, MapSectionReady, out var newJobNumber);
+				_currentJobNumber = newJobNumber;
 
 				var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
 

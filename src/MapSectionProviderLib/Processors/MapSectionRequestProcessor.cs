@@ -96,6 +96,38 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
+		public List<Tuple<MapSectionRequest, MapSectionResponse>> FetchResponses(List<MapSectionRequest> mapSectionRequests)
+		{
+			var result = new List<Tuple<MapSectionRequest, MapSectionResponse>>();
+
+			foreach (var request in mapSectionRequests)
+			{
+				var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+
+				var mapSectionResponse = FetchAResponse(request, mapSectionVectors);
+
+				if (mapSectionResponse != null)
+				{
+					var requestedIterations = request.MapCalcSettings.TargetIterations;
+
+					if (IsResponseComplete(mapSectionResponse, requestedIterations, out var reason))
+					{
+						//Debug.WriteLine($"Got {request.ScreenPosition} from repo.");
+
+						request.FoundInRepo = true;
+						request.ProcessingEndTime = DateTime.UtcNow;
+
+						mapSectionResponse.OwnerId = request.OwnerId;
+						mapSectionResponse.JobOwnerType = request.JobOwnerType;
+
+						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
+					}
+				}
+			}
+
+			return result;
+		}
+
 		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSection> responseHandler)
 		{
 			var mapSectionWorkItem = new MapSectionWorkRequest(jobNumber, mapSectionRequest, responseHandler);
@@ -106,7 +138,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, Adding has been completed.");
+				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, The MapSectionRequestProcessor's WorkQueue IsAddingComplete has been set.");
 			}
 		}
 
@@ -207,7 +239,6 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionWorkRequest = _workQueue.Take(ct);
-
 
 					if (IsJobCancelled(mapSectionWorkRequest.JobId))
 					{
@@ -416,6 +447,16 @@ namespace MapSectionProviderLib
 			return mapSectionResponse;
 		}
 
+		private MapSectionResponse? FetchAResponse(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
+		{
+			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
+
+			var mapSectionResponse = _mapSectionAdapter.GetMapSection(subdivisionId, blockPosition, mapSectionVectors);
+
+			return mapSectionResponse;
+		}
+
 		private async Task<ZValues?> FetchTheZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
 		{
 			var result = await _mapSectionAdapter.GetMapSectionZValuesAsync(mapSectionId, ct);
@@ -571,15 +612,6 @@ namespace MapSectionProviderLib
 
 			return result;
 		}
-
-		//[Conditional("DEBUG")]
-		//private void IsMapSectionResponseNull(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse? mapSectionResponse)
-		//{
-		//	if (mapSectionResponse == null)
-		//	{
-		//		Debug.WriteLine($"WARNING: The MapSectionResponse is null in the HandleGeneratedResponse callback for the MapSectionRequestProcessor. The request's block position is {mapSectionWorkRequest.Request.BlockPosition}.");
-		//	}
-		//}
 
 		[Conditional("DEBUG")]
 		private void WasPrimaryRequestFound(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> pendingRequests)

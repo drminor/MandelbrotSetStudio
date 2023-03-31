@@ -74,6 +74,8 @@
 		public bool RequestCompleted { get; set; }
 		public bool AllRowsHaveEscaped { get; set; }
 		public bool RequestCancelled { get; set; }
+		
+		public MathOpCounts? MathOpCounts { get; set; }
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionZVectors? MapSectionZVectors { get; set; }

@@ -63,7 +63,7 @@ namespace MSS.Common.MSet
 			_dispPosition = displayPosition;
 			_displayZoom = displayZoom;
 
-			_jobTree = BuildJobTree(jobs, useFlat: true, checkHomeJob: true);
+			_jobTree = BuildJobTree(jobs, useFlat: false, checkHomeJob: true);
 
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			//_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
@@ -362,6 +362,11 @@ namespace MSS.Common.MSet
 			LastSavedUtc = DateTime.UtcNow;
 			_originalCurrentJobId = CurrentJobId;
 			_jobTree.IsDirty = false;
+		}
+
+		public void MarkAsDirty()
+		{
+			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
 		#endregion

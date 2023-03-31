@@ -101,16 +101,16 @@ namespace MSetExplorer
 				//	OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
 				//}
 
-				var previousValue = _displayZoom;
+				//var previousValue = _displayZoom;
 
-				_displayZoom = Math.Min(MaximumDisplayZoom, value);
+				//_displayZoom = Math.Min(MaximumDisplayZoom, value);
 
-				MapDisplayViewModel.DisplayZoom = _displayZoom;
+				//MapDisplayViewModel.DisplayZoom = _displayZoom;
 
-				Debug.WriteLine($"The MapScrollViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
-				// Log: Add Spacer
-				Debug.WriteLine("\n\n");
-				OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
+				//Debug.WriteLine($"The MapScrollViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+				//// Log: Add Spacer
+				//Debug.WriteLine("\n\n");
+				//OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
 			}
 		}
 

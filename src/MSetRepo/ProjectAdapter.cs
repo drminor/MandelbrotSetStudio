@@ -741,43 +741,56 @@ namespace MSetRepo
 
 		public Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
 		{
+			if (jobs.Count == 0)
+			{
+				throw new InvalidOperationException($"Cannot create a poster with name: {name}. No jobs were provided.");
+			}
+
+			if (!colorBandSets.Any())
+			{
+				throw new InvalidOperationException($"Cannot create a poster with name: {name}. No ColorBandSets were provided.");
+			}
+
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 
-			if (!posterReaderWriter.PosterExists(name, out var posterId))
+			if (posterReaderWriter.PosterExists(name, out var posterId))
 			{
-				var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id, 
+				throw new InvalidOperationException($"Cannot create a poster with name: {name}, a poster: {posterId} with that name already exists.");
+			}
+
+			var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id, 
 					DisplayPosition: new VectorIntRecord(0,0), 
 					DisplayZoom: 0,
 					DateCreatedUtc: DateTime.UtcNow,
 					LastSavedUtc: DateTime.UtcNow,
 					LastAccessedUtc: DateTime.UtcNow);
 
-				posterId = posterReaderWriter.Insert(posterRecord);
+			posterId = posterReaderWriter.Insert(posterRecord);
 
-				foreach (var job in jobs)
-				{
-					job.ProjectId = posterId;
-				}
-
-				foreach (var cbs in colorBandSets)
-				{
-					cbs.ProjectId = posterId;
-				}
-
-				var result = AssemblePoster(posterRecord, jobs, colorBandSets, DateTime.MinValue);
-
-				return result;
-			}
-			else
+			foreach (var job in jobs)
 			{
-				throw new InvalidOperationException($"Cannot create a poster with name: {name}, a poster: {posterId} with that name already exists.");
+				job.ProjectId = posterId;
 			}
+
+			foreach (var cbs in colorBandSets)
+			{
+				cbs.ProjectId = posterId;
+			}
+
+			var result = AssemblePoster(posterRecord, jobs, colorBandSets, DateTime.MinValue);
+
+			if (result != null)
+			{
+				result.MarkAsDirty();
+			}
+
+			return result;
 		}
 
-		private Poster? AssemblePoster(PosterRecord? posterRecord, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
+		private Poster? AssemblePoster(PosterRecord posterRecord, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc)
 		{
 			Poster? result;
-			if (posterRecord == null || jobs.Count == 0 || !colorBandSets.Any())
+			if (jobs.Count == 0 || !colorBandSets.Any())
 			{
 				result = null;
 			}

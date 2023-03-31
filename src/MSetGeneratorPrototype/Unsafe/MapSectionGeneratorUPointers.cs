@@ -91,7 +91,7 @@ namespace MSetGeneratorPrototype
 			stopwatch.Stop();
 			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
-			UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
+			UpdateResponseWithMops(result, _iterator, iterationState);
 			ReportResults(coords, mapSectionRequest, result, ct);
 
 			return result;
@@ -474,7 +474,7 @@ namespace MSetGeneratorPrototype
 			var s1 = coords.GetStartingCxStringVal();
 			var s2 = coords.GetStartingCyStringVal();
 
-			Debug.WriteLine($"{s1}, {s2}: {request.MathOpCounts}");
+			Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
 			if (ct.IsCancellationRequested)
 			{
@@ -525,10 +525,10 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("PERF")]
-		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorUPointers iterator, IterationStateUPointers iterationState)
+		private void UpdateResponseWithMops(MapSectionResponse mapSectionResponse, IteratorUPointers iterator, IterationStateUPointers iterationState)
 		{
-			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
-			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+			mapSectionResponse.MathOpCounts = iterator.MathOpCounts.Clone();
+			mapSectionResponse.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
 
 		private void ClearLimbSet(Vector256<uint>[] limbSet)

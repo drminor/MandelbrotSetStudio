@@ -53,7 +53,7 @@ namespace ImageBuilder
 				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
 				var imageSize = mapAreaInfo.CanvasSize;
-				imageSize = imageSize.Scale(4);
+				//imageSize = imageSize.Scale(4);
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
 				var numberOfWholeBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize);
@@ -188,12 +188,20 @@ namespace ImageBuilder
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, precision, ownerId, jobOwnerType, subdivision, mapCalcSettings);
+				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, precision, ownerId, jobOwnerType, subdivision, mapCalcSettings, colPtr);
 				requests.Add(mapSectionRequest);
 			}
 
-			_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
+			//_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
+			var mapSectionResponses = _mapLoaderManager.Push(requests, MapSectionReady, out var newJobNumber);
+			_currentJobNumber = newJobNumber;
+
 			_currentResponses = new Dictionary<int, MapSection?>();
+
+			foreach(var response in mapSectionResponses)
+			{
+				//_currentResponses.Add(response.BlockPosition.X, response);
+			}
 
 			var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
 

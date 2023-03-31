@@ -50,10 +50,10 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback)
+		public List<Tuple<MapSectionRequest, MapSectionResponse>> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
-			var result = Push(mapSectionRequests, callback);
+			var result = Push(mapSectionRequests, callback, out jobNumber);
 			return result;
 		}
 
@@ -64,26 +64,30 @@ namespace MapSectionProviderLib
 		//	return result;
 		//}
 
-		public int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection> callback)
+		public List<Tuple<MapSectionRequest, MapSectionResponse>> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber)
 		{
-			var result = 0;
+			jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
-			DoWithWriteLock(() =>
+			var mapSectionResponses = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests);
+
+			if (mapSectionResponses.Count != mapSectionRequests.Count)
 			{
-				var mapLoader = new MapLoader(callback, _mapSectionRequestProcessor);
-				var startTask = mapLoader.Start(mapSectionRequests);
+				var mapLoader = new MapLoader(jobNumber, callback, _mapSectionRequestProcessor);
 
-				var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, _cts.Token);
-				_requests.Add(genMapRequestInfo);
+				DoWithWriteLock(() =>
+				{
+					var startTask = mapLoader.Start(mapSectionRequests);
 
-				result = genMapRequestInfo.JobNumber;
+					var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, _cts.Token);
+					_requests.Add(genMapRequestInfo);
 
-				genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
+					genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
+				});
 
-				RequestAdded?.Invoke(this, new JobProgressInfo(mapLoader.JobNumber, "temp", DateTime.Now, mapSectionRequests.Count));
-			});
+				RequestAdded?.Invoke(this, new JobProgressInfo(jobNumber, "temp", DateTime.Now, mapSectionRequests.Count));
+			}
 
-			return result;
+			return mapSectionResponses;
 		}
 
 		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
@@ -192,7 +196,7 @@ namespace MapSectionProviderLib
 								{
 									requestInfo.MapLoader.MarkJobAsComplete();
 									_requests.Remove(requestInfo);
-									requestInfo.Dispose();
+									//requestInfo.Dispose();
 								}
 							}
 							finally
@@ -276,10 +280,10 @@ namespace MapSectionProviderLib
 
 					if (_removeCompletedRequestsTask.Wait(5 * 1000))
 					{
-						foreach (var genMapRequestInfo in _requests)
-						{
-							genMapRequestInfo.Dispose();
-						}
+						//foreach (var genMapRequestInfo in _requests)
+						//{
+						//	genMapRequestInfo.Dispose();
+						//}
 
 						_removeCompletedRequestsTask.Dispose();
 						_requestsLock.Dispose();
@@ -302,7 +306,7 @@ namespace MapSectionProviderLib
 
 		#endregion
 
-		private class GenMapRequestInfo : IDisposable
+		private class GenMapRequestInfo //: IDisposable
 		{
 			private readonly CancellationToken _ct;
 			private readonly Task? _onCompletedTask;
@@ -361,54 +365,54 @@ namespace MapSectionProviderLib
 
 			#endregion
 
-			#region IDisposable Support
+			//#region IDisposable Support
 
-			private bool disposedValue;
+			//private bool disposedValue;
 
-			protected virtual void Dispose(bool disposing)
-			{
-				if (!disposedValue)
-				{
-					if (disposing)
-					{
-						// Dispose managed state (managed objects)
+			//protected virtual void Dispose(bool disposing)
+			//{
+			//	if (!disposedValue)
+			//	{
+			//		if (disposing)
+			//		{
+			//			// Dispose managed state (managed objects)
 
-						//if (Task != null)
-						//{
-						//	if (Task.IsCompleted)
-						//	{
-						//		Task.Dispose();
-						//	}
-						//	else
-						//	{
-						//		Debug.WriteLine($"The Task is not null and not completed as the GenMapRequestInfo is being disposed.");
-						//	}
-						//}
+			//			//if (Task != null)
+			//			//{
+			//			//	if (Task.IsCompleted)
+			//			//	{
+			//			//		Task.Dispose();
+			//			//	}
+			//			//	else
+			//			//	{
+			//			//		Debug.WriteLine($"The Task is not null and not completed as the GenMapRequestInfo is being disposed.");
+			//			//	}
+			//			//}
 
-						//if (_onCompletedTask != null)
-						//{
-						//	if (_onCompletedTask.IsCompleted)
-						//	{
-						//		_onCompletedTask.Dispose();
-						//	}
-						//	else
-						//	{
-						//		Debug.WriteLine($"The onCompletedTask is not null and not completed as the GenMapRequestInfo is being disposed.");
-						//	}
-						//}
-					}
+			//			//if (_onCompletedTask != null)
+			//			//{
+			//			//	if (_onCompletedTask.IsCompleted)
+			//			//	{
+			//			//		_onCompletedTask.Dispose();
+			//			//	}
+			//			//	else
+			//			//	{
+			//			//		Debug.WriteLine($"The onCompletedTask is not null and not completed as the GenMapRequestInfo is being disposed.");
+			//			//	}
+			//			//}
+			//		}
 
-					disposedValue = true;
-				}
-			}
+			//		disposedValue = true;
+			//	}
+			//}
 
-			public void Dispose()
-			{
-				Dispose(disposing: true);
-				GC.SuppressFinalize(this);
-			}
+			//public void Dispose()
+			//{
+			//	Dispose(disposing: true);
+			//	GC.SuppressFinalize(this);
+			//}
 
-			#endregion
+			//#endregion
 		}
 	}
 }

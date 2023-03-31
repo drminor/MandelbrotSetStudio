@@ -66,19 +66,17 @@ namespace MSetGeneratorPrototype
 				stopwatch.Stop();
 				mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 
-				UpdateRequestWithMops(mapSectionRequest, _iterator, iterationState);
-
-				mapSectionRequest.MathOpCounts = _iterator.MathOpCounts;
+				UpdateResponseWithMops(result, _iterator, iterationState);
 			}
 
 			return result;
 		}
 
 		[Conditional("PERF")]
-		private void UpdateRequestWithMops(MapSectionRequest mapSectionRequest, IteratorLimbFirst iterator, IterationStateLimbFirst iterationState)
+		private void UpdateResponseWithMops(MapSectionResponse mapSectionResponse, IteratorLimbFirst iterator, IterationStateLimbFirst iterationState)
 		{
-			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
-			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+			mapSectionResponse.MathOpCounts = iterator.MathOpCounts.Clone();
+			mapSectionResponse.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
 
 		// Generate MapSection

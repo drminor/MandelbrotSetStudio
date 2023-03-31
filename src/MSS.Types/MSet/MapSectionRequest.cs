@@ -6,7 +6,7 @@ namespace MSS.Types.MSet
 	{
 		public MapSectionRequest(string ownerId, JobOwnerType jobOwnerType, string subdivisionId,
 			PointInt screenPosition, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
-			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings)
+			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
 			MapSectionId = null;
 			OwnerId = ownerId;
@@ -22,6 +22,8 @@ namespace MSS.Types.MSet
 			BlockSize = blockSize;
 			SamplePointDelta = samplePointDelta;
 			MapCalcSettings = mapCalcSettings;
+			RequestNumber = requestNumber;
+
 			ProcessingStartTime = DateTime.UtcNow;
 		}
 
@@ -51,7 +53,7 @@ namespace MSS.Types.MSet
 		public RPoint MapPosition { get; init; }
 
 		/// <summary>
-		/// True, if this MapSection has a negative Y coordiate. 
+		/// True, if this MapSection has a negative Y coordinate. 
 		/// </summary>
 		public bool IsInverted { get; init; }
 
@@ -59,6 +61,7 @@ namespace MSS.Types.MSet
 		
 		public RSize SamplePointDelta { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
+		public int RequestNumber { get; init; }
 
 		public int Precision { get; set; }
 		public int LimbCount { get; set; }
@@ -81,8 +84,6 @@ namespace MSS.Types.MSet
 		public TimeSpan? TimeToCompleteGenRequest { get; set; }
 		public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
 		public TimeSpan? GenerationDuration { get; set; }
-
-		public MathOpCounts? MathOpCounts { get; set; }
 
 		public override string ToString()
 		{

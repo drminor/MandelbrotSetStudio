@@ -1,7 +1,9 @@
 ﻿using MongoDB.Driver.Linq;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -216,7 +218,9 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"The MapDisplay Canvas Size is now {value}.");
 					_canvasSize = value;
-					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
+
+					//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
+					LogicalDisplaySize = CanvasSize;
 
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
 				}
@@ -247,7 +251,8 @@ namespace MSetExplorer
 					//_scaleTransform.ScaleX = 1 / _displayZoom;
 					//_scaleTransform.ScaleY = 1 / _displayZoom;
 
-					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
+					//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
+					LogicalDisplaySize = CanvasSize;
 
 					OnPropertyChanged();
 				}
@@ -346,7 +351,10 @@ namespace MSetExplorer
 			CancelJob();
 
 			CanvasControlOffset = job.MapAreaInfo.CanvasControlOffset;
-			_currentMapLoaderJobNumber = _mapLoaderManager.Push(job.OwnerId, job.OwnerType, job.MapAreaInfo, job.MapCalcSettings, MapSectionReady);
+			//_currentMapLoaderJobNumber = _mapLoaderManager.Push(job.OwnerId, job.OwnerType, job.MapAreaInfo, job.MapCalcSettings, MapSectionReady);
+
+			var requestResponsePairs = _mapLoaderManager.Push(job.OwnerId, job.OwnerType, job.MapAreaInfo, job.MapCalcSettings, MapSectionReady, out var newJobNumber);
+			_currentMapLoaderJobNumber = newJobNumber;
 		}
 
 		public void CancelJob()
@@ -376,15 +384,6 @@ namespace MSetExplorer
 
 				if (mapLoaderJobNumber.HasValue)
 				{
-					//var sectionsToRemove = new List<MapSection>();
-					//foreach (var ms in MapSections)
-					//{
-					//	if (ms.JobNumber == mapLoaderJobNumber.Value)
-					//	{
-					//		sectionsToRemove.Add(ms);
-					//	}
-					//}
-
 					var sectionsToRemove = MapSections.Where(x => x.JobNumber == mapLoaderJobNumber.Value).ToList();
 
 					foreach (var ms in sectionsToRemove)
@@ -402,9 +401,9 @@ namespace MSetExplorer
 
 					MapSections.Clear();
 				}
-
-				OnPropertyChanged(nameof(Bitmap));
 			}
+
+			OnPropertyChanged(nameof(Bitmap));
 		}
 
 		#endregion
@@ -488,48 +487,95 @@ namespace MSetExplorer
 
 		private void HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
 		{
-			//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
-			if (_currentMapLoaderJobNumber != null)
-			{
-				_mapLoaderManager.StopJob(_currentMapLoaderJobNumber.Value);
+			var lastSectionWasIncluded = false;
 
-				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
-				ClearDisplay(_currentMapLoaderJobNumber);
-
-				_currentMapLoaderJobNumber = null;
-			}
-
-			if (newJob?.IsEmpty == false)
-			{
-				//if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
-				//{
-				//	_currentMapLoaderJobNumber = ReuseLoadedSections(newJob);
-				//}
-				//else
-				//{
-				//	//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
-				// ClearDisplay();
-
-				//	CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
-				//	_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob);
-				//}
-
-				//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
-				//ClearDisplay();
-
-				CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
-
-				if (newJob.ColorBandSet != ColorBandSet)
+			lock (_paintLocker)
+			{ 
+				//Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {newJob?.Id ?? ObjectId.Empty}");
+				if (_currentMapLoaderJobNumber != null)
 				{
-					_colorMap = LoadColorMap(newJob.ColorBandSet);
+					_mapLoaderManager.StopJob(_currentMapLoaderJobNumber.Value);
+
+					//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
+					ClearDisplay(_currentMapLoaderJobNumber);
+
+					_currentMapLoaderJobNumber = null;
 				}
 
-				_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady);
+				if (newJob?.IsEmpty == false)
+				{
+					//if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
+					//{
+					//	_currentMapLoaderJobNumber = ReuseLoadedSections(newJob);
+					//}
+					//else
+					//{
+					//	//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
+					// ClearDisplay();
+
+					//	CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+					//	_currentMapLoaderJobNumber = _mapLoaderManager.Push(newJob);
+					//}
+
+					//Debug.WriteLine($"Clearing Display. TransformType: {newJob.TransformType}.");
+					//ClearDisplay();
+
+					CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+
+					if (newJob.ColorBandSet != ColorBandSet)
+					{
+						_colorMap = LoadColorMap(newJob.ColorBandSet);
+					}
+
+					var requestResponsePairs = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
+					_currentMapLoaderJobNumber = newJobNumber;
+
+					lastSectionWasIncluded = LoadNewSections(requestResponsePairs, newJobNumber);
+				}
 			}
-			else
+
+			if (_currentMapLoaderJobNumber.HasValue && lastSectionWasIncluded)
 			{
-				//ClearDisplay();
+				DisplayJobCompleted?.Invoke(this, _currentMapLoaderJobNumber.Value);
 			}
+
+			OnPropertyChanged(nameof(Bitmap));
+		}
+
+		// Returns true, if all the sections have been loaded.
+		private bool LoadNewSections(List<Tuple<MapSectionRequest, MapSectionResponse>> requestResponsePairs, int jobNumber)
+		{
+			var lastSectionWasIncluded = false;
+
+			foreach (var requestResponsePair in requestResponsePairs)
+			{
+				var request = requestResponsePair.Item1;
+				var response = requestResponsePair.Item2;
+
+				if (response.MapSectionVectors != null)
+				{
+					var mapSection = _mapSectionHelper.CreateMapSection(request, response.MapSectionVectors, jobNumber);
+
+					if (mapSection.IsLastSection)
+					{
+						lastSectionWasIncluded = true;
+					}
+
+					MapSections.Add(mapSection);
+
+					if (_colorMap != null)
+					{
+						var invertedBlockPos = GetInvertedBlockPos(mapSection.BlockPosition);
+						var loc = invertedBlockPos.Scale(BlockSize);
+
+						_mapSectionHelper.LoadPixelArray(mapSection, _colorMap);
+
+						_bitmap.WritePixels(BlockRect, response.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
+					}
+				}
+			}
+
+			return lastSectionWasIncluded;
 		}
 
 		private void RedrawSections(ColorMap colorMap)

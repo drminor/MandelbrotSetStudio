@@ -106,7 +106,7 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IPosterDesignerViewModel.MapDisplaySize))
 			{
-				//Debug.WriteLine($"Handling a size change. Current = {new SizeDbl(Width, Height)}, New = {_vm.MapDisplaySize}.");
+				Debug.WriteLine($"Handling a size change. Current = {new SizeDbl(Width, Height)}, New = {_vm.MapDisplaySize}.");
 
 				_vm.MapDisplayViewModel.HandleContainerSizeUpdates = false;
 				Width = _vm.MapDisplaySize.Width + 481;
@@ -156,7 +156,6 @@ namespace MSetExplorer
 		{
 			CloseOrExit(OnCloseBehavior.Close);
 		}
-
 
 		private void CloseOrExit(OnCloseBehavior onCloseBehavior)
 		{
