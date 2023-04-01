@@ -195,7 +195,7 @@ namespace WpfMapDisplayPOC
 			if (mapSection.MapSectionVectors != null)
 			{
 				_sw.Restart();
-				_mapSectionHelper.LoadPixelArray(mapSection, _colorMap);
+				_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
 				pixelArray = mapSection.MapSectionVectors.BackBuffer;
 				_sw.Stop();
 

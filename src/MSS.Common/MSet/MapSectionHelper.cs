@@ -199,7 +199,7 @@ namespace MSS.Common
 
 		#region Create MapSections
 
-		public IList<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		public List<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSection>();
 

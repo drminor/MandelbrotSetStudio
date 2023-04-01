@@ -12,13 +12,13 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 
-		//ImageSource ImageSource { get; }
 		WriteableBitmap Bitmap { get; }
+
+		//BigVector MapBlockOffset { get; }
 
 		ObservableCollection<MapSection> MapSections { get; }
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; set; }
 
-		//void SetColorBandSet(ColorBandSet value, bool updateDisplay);
 		ColorBandSet ColorBandSet { get; set; }
 
 		bool UseEscapeVelocities { get; set; }
@@ -43,8 +43,7 @@ namespace MSetExplorer
 		void SubmitJob(AreaColorAndCalcSettings job);
 		void CancelJob();
 		void RestartLastJob();
-		void ClearDisplay(int? jobNumber);
+		void ClearDisplay();
 
-		//VectorInt ScreenCollectionIndex { get; }
 	}
 }
