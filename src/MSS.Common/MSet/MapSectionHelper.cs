@@ -64,7 +64,6 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-
 		public List<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
@@ -82,51 +81,25 @@ namespace MSS.Common
 				result.Add(mapSectionRequest);
 			}
 
-			// TODO: Sort the results by the RepoMapPosition.Y value.
-			// This will put requests with same block address, but different IsInverted values, together.
-
 			return result;
 		}
 
-		//public IList<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
-		//{
-		//	var result = new List<MapSectionRequest>();
+		public List<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
+		{
+			var result = new List<MapSectionRequest>();
 
-		//	Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
+			Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
 
-		//	foreach (var mapSection in emptyMapSections)
-		//	{
-		//		var screenPosition = mapSection.BlockPosition;
-		//		var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings);
-		//		result.Add(mapSectionRequest);
-		//	}
+			var requestNumber = 0;
+			foreach (var mapSection in emptyMapSections)
+			{
+				var screenPosition = mapSection.BlockPosition;
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
+				result.Add(mapSectionRequest);
+			}
 
-		//	return result;
-		//}
-		
-		//public IList<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
-		//{
-		//	var result = new List<MapSection>();
-
-		//	var targetIterations = mapCalcSettings.TargetIterations;
-
-		//	var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-		//	Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
-
-		//	var subdivisionId = mapAreaInfo.Subdivision.Id.ToString();
-
-		//	foreach (var screenPosition in Points(mapExtentInBlocks))
-		//	{
-		//		var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapAreaInfo.MapBlockOffset, out var isInverted);
-
-		//		var mapSection = new MapSection(jobNumber: -1, mapSectionVectors: null, subdivisionId: subdivisionId, repoBlockPosition: repoPosition, isInverted: isInverted,
-		//			blockPosition: screenPosition, size: mapAreaInfo.Subdivision.BlockSize, targetIterations: targetIterations, histogramBuilder: BuildHistogram);
-
-		//		result.Add(mapSection);
-		//	}
-
-		//	return result;
-		//}
+			return result;
+		}
 
 		private int GetBinaryPrecision(MapAreaInfo mapAreaInfo)
 		{
@@ -224,7 +197,38 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Create MapSection
+		#region Create MapSections
+
+		public IList<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		{
+			var result = new List<MapSection>();
+
+			var subdivisionId = mapAreaInfo.Subdivision.Id.ToString();
+			var blockSize = mapAreaInfo.Subdivision.BlockSize;
+			var targetIterations = mapCalcSettings.TargetIterations;
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
+			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
+
+			foreach (var screenPosition in Points(mapExtentInBlocks))
+			{
+				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapAreaInfo.MapBlockOffset, out var isInverted);
+
+				var mapSection = new MapSection(
+					jobNumber: -1, 
+					subdivisionId: subdivisionId, 
+					repoBlockPosition: repoPosition, 
+					isInverted: isInverted,
+					blockPosition: screenPosition, 
+					size: blockSize, 
+					targetIterations: targetIterations,
+					isCancelled: false);
+
+				result.Add(mapSection);
+			}
+
+			return result;
+		}
 
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, int jobNumber)
 		{
@@ -252,18 +256,6 @@ namespace MSS.Common
 
 		}
 
-		//public MapSection CreateMapSection(int jobNumber, BigVector repoBlockPosition, BigVector mapBlockOffset, bool isInverted, string subdivisionId, 
-		//	SizeInt blockSize, MapSectionVectors mapSectionVectors, int targetIterations)
-		//{
-		//	var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
-		//	//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
-
-		//	var mapSection = new MapSection(jobNumber, mapSectionVectors, subdivisionId, repoBlockPosition, isInverted,
-		//		screenPosition, blockSize, targetIterations, BuildHistogram);
-
-		//	return mapSection;
-		//}
-
 		public MapSection CreateEmptyMapSection(MapSectionRequest mapSectionRequest, int jobNumber, bool isCancelled)
 		{
 			var repoBlockPosition = mapSectionRequest.BlockPosition;
@@ -284,10 +276,8 @@ namespace MSS.Common
 
 		#region Bitmap Generation
 
-		public void LoadPixelArray(MapSection mapSection, ColorMap colorMap)
+		public void LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
 		{
-			var mapSectionVectors = mapSection.MapSectionVectors ?? throw new InvalidOperationException("MapSectionVectors is null on LoadPixelArray.");
-
 			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
 
 			// Currently EscapeVelocities are not supported.
@@ -296,7 +286,7 @@ namespace MSS.Common
 
 			Debug.Assert(mapSectionVectors.BlockSize == _blockSize, "The block sizes do not match.");
 
-			var invert = !mapSection.IsInverted;
+			//var invert = !mapSection.IsInverted;
 			var backBuffer = mapSectionVectors.BackBuffer;
 
 			var counts = mapSectionVectors.Counts;
@@ -361,91 +351,6 @@ namespace MSS.Common
 			}
 		}
 
-		public byte[] GetPixelArray(MapSectionVectors mapSectionVectors, SizeInt blockSize, ColorMap colorMap, bool invert, bool useEscapeVelocities)
-		{
-			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
-
-			// Currently EscapeVelocities are not supported.
-			useEscapeVelocities = false;
-
-			Debug.Assert(blockSize == _blockSize, "The block sizes do not match.");
-
-			var result = new byte[_pixelArraySize];
-			var counts = mapSectionVectors.Counts;
-			var previousCountVal = counts[0];
-
-			var resultRowPtr = invert ? _maxRowIndex * _pixelStride : 0;
-			var resultRowPtrIncrement = invert ? -1 * _pixelStride : _pixelStride;
-			var sourcePtrUpperBound = _rowCount * _sourceStride;
-
-			if (useEscapeVelocities)
-			{
-				var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
-				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
-				{
-					var diagSum = 0;
-
-					var resultPtr = resultRowPtr;
-					for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
-					{
-						var countVal = counts[sourcePtr];
-						TrackValueSwitches(countVal, ref previousCountVal);
-
-						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
-						CheckEscapeVelocity(escapeVelocity);
-
-						colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(result, resultPtr, BYTES_PER_PIXEL));
-
-						resultPtr += BYTES_PER_PIXEL;
-						sourcePtr++;
-
-						diagSum += countVal;
-					}
-
-					if (diagSum < 10)
-					{
-						Debug.WriteLine("Counts are empty.");
-					}
-				}
-			}
-			else
-			{
-				// The main for loop on GetPixel Array 
-				// is for each row of pixels (0 -> 128)
-				//		for each pixel in that row (0, -> 128)
-				// each new row advanced the resultRowPtr to the pixel byte address at column 0 of the current row.
-				// if inverted, the first row = 127 * # of bytes / Row (Pixel stride)
-
-				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
-				{
-					var resultPtr = resultRowPtr;
-					for (var colPtr = 0; colPtr < _sourceStride; colPtr++)
-					{
-						var countVal = counts[sourcePtr];
-						TrackValueSwitches(countVal, ref previousCountVal);
-
-						colorMap.PlaceColor(countVal, escapeVelocity:0, new Span<byte>(result, resultPtr, BYTES_PER_PIXEL));
-						
-						resultPtr += BYTES_PER_PIXEL;
-						sourcePtr++;
-					}
-				}
-			}
-
-			return result;
-		}
-
-		/*
-			_blockSize = mapSectionVectorsPool.BlockSize;
-			_rowCount = _blockSize.Height;
-			_sourceStride = _blockSize.Width;
-			_maxRowIndex = _blockSize.Height - 1;
-
-			_pixelArraySize = _blockSize.NumberOfCells * BYTES_PER_PIXEL;
-			_pixelStride = _sourceStride * BYTES_PER_PIXEL;
-
-		*/
-
 		public unsafe void FillBackBuffer(IntPtr backBuffer, int backBufferStride, PointInt destination, SizeInt destSize, 
 			MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert, bool useEscapeVelocities)
 		{
@@ -500,7 +405,6 @@ namespace MSS.Common
 				resultRowPtr += backBufferStride;
 			}
 		}
-
 
 		/************** FillBackBuffer notes *******************
 		  

@@ -100,11 +100,11 @@ namespace MapSectionProviderLib
 		{
 			var result = new List<Tuple<MapSectionRequest, MapSectionResponse>>();
 
+			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+
 			foreach (var request in mapSectionRequests)
 			{
-				var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
-
-				var mapSectionResponse = FetchAResponse(request, mapSectionVectors);
+				var mapSectionResponse = Fetch(request, mapSectionVectors);
 
 				if (mapSectionResponse != null)
 				{
@@ -121,6 +121,9 @@ namespace MapSectionProviderLib
 						mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
 						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
+
+						// Since we have just used the current instance of our MapSectionVectors, we need to get a new instance.
+						mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
 					}
 				}
 			}
@@ -266,10 +269,6 @@ namespace MapSectionProviderLib
 							}
 						}
 					}
-
-					// TODO: Save the previous Request / Response pair
-					// in case the next item on the queue is requesting the same block, just inverted.
-
 				}
 				catch (OperationCanceledException)
 				{
@@ -447,7 +446,7 @@ namespace MapSectionProviderLib
 			return mapSectionResponse;
 		}
 
-		private MapSectionResponse? FetchAResponse(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
+		private MapSectionResponse? Fetch(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
@@ -568,6 +567,12 @@ namespace MapSectionProviderLib
 				}
 			}
 		}
+
+		// TODO: Save the MapSectionPersistProcessor hold on to "recent" MapSectionRequest / MapSectionResponse pairs
+		// in case the we get a request for this same block, just inverted.
+		// This cached can be cleared when the MarkJobAsComplete method is called.
+		//				--- OR ---
+		// Have the
 
 		// Returns true, if there is a "Primary" Request already in the queue
 		private bool ThereIsAMatchingRequest(MapSectionRequest mapSectionRequest)

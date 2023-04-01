@@ -21,7 +21,7 @@ namespace MSetExplorer
 			Debug.WriteLine("The JobProgressViewModel is being loaded.");
 			_synchronizationContext = SynchronizationContext.Current;
 			_mapLoaderManager = mapLoaderManager;
-			_currentJobProgressInfo = new JobProgressInfo(0, "temp", DateTime.UtcNow, 0);
+			_currentJobProgressInfo = new JobProgressInfo(0, "temp", DateTime.UtcNow, 0, 0);
 			MapSectionProcessInfos = new ObservableCollection<MapSectionProcessInfo>();
 
 			_isEnabled = false;

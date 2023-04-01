@@ -50,44 +50,66 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public List<Tuple<MapSectionRequest, MapSectionResponse>> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber)
+		public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber)
 		{
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
 			var result = Push(mapSectionRequests, callback, out jobNumber);
 			return result;
 		}
 
-		//public int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection, int, bool> callback)
-		//{
-		//	var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
-		//	var result = Push(mapSectionRequests, callback);
-		//	return result;
-		//}
-
-		public List<Tuple<MapSectionRequest, MapSectionResponse>> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber)
+		public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber)
 		{
-			jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
+			var result = Push(mapSectionRequests, callback, out jobNumber);
+			return result;
+		}
 
-			var mapSectionResponses = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests);
+		public List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber)
+		{
+			var result = FetchResponses(mapSectionRequests, out jobNumber);
 
-			if (mapSectionResponses.Count != mapSectionRequests.Count)
+			if (result.Count != mapSectionRequests.Count)
 			{
+				var requestsNotFound = mapSectionRequests.Where(x => !x.FoundInRepo).ToList();
+
 				var mapLoader = new MapLoader(jobNumber, callback, _mapSectionRequestProcessor);
 
 				DoWithWriteLock(() =>
 				{
-					var startTask = mapLoader.Start(mapSectionRequests);
+					var startTask = mapLoader.Start(requestsNotFound);
 
 					var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, _cts.Token);
 					_requests.Add(genMapRequestInfo);
 
 					genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
 				});
-
-				RequestAdded?.Invoke(this, new JobProgressInfo(jobNumber, "temp", DateTime.Now, mapSectionRequests.Count));
 			}
 
-			return mapSectionResponses;
+			RequestAdded?.Invoke(this, new JobProgressInfo(jobNumber, "temp", DateTime.Now, mapSectionRequests.Count, result.Count));
+
+			return result;
+		}
+
+		private List<MapSection> FetchResponses(List<MapSectionRequest> mapSectionRequests, out int jobNumber)
+		{
+			var result = new List<MapSection>();
+
+			jobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			var requestResponsePairs = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests);
+
+			foreach (var requestResponsePair in requestResponsePairs)
+			{
+				var request = requestResponsePair.Item1;
+				var response = requestResponsePair.Item2;
+
+				if (response.MapSectionVectors != null)
+				{
+					var mapSection = _mapSectionHelper.CreateMapSection(request, response.MapSectionVectors, jobNumber);
+					result.Add(mapSection);
+				}
+			}
+
+			return result;
 		}
 
 		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)

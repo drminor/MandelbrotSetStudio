@@ -48,6 +48,8 @@ namespace MapSectionProviderLib
 
 		#region Public Properties
 
+		// Instead of having other windows subscribe to the MapLoader's SectionLoaded event,
+		// have those other windows subscribe to an event provided by the class to which the callback method belongs.
 		public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
 		//public MathOpCounts MathOpCounts { get; private set; }

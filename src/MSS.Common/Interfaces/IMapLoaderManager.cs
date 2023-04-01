@@ -12,13 +12,15 @@ namespace MSS.Common
 		event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
 		//int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback);
-
-		List<Tuple<MapSectionRequest, MapSectionResponse>> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber);
+		List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, 
+			Action<MapSection> callback, out int jobNumber);
 
 		//int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback);
+		List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
+			IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber);
 
 		//int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection> callback);
-		List<Tuple<MapSectionRequest, MapSectionResponse>> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber);
+		List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber);
 
 		Task? GetTaskForJob(int jobNumber);
 		TimeSpan? GetExecutionTimeForJob(int jobNumber);

@@ -287,7 +287,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var startTask = mapLoader.Start(mapSectionRequests);
 			//AddTiming("Start MapLoader");
 
-			JobProgressInfo = new JobProgressInfo(newJobNumber, "temp", DateTime.Now, mapSectionRequests.Count);
+			JobProgressInfo = new JobProgressInfo(newJobNumber, "temp", DateTime.Now, mapSectionRequests.Count, numberOfSectionsFetched: 0);
 
 			for (var i = 0; i < 100; i++)
 			{

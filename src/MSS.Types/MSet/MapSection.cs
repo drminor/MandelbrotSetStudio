@@ -27,9 +27,25 @@ namespace MSS.Types
 				  )
 		{ }
 
-		// Used when the Request was cancelled or for was not able to be completed and the MapSectionsVectors was empty. 
-		public MapSection(int jobNumber, string subdivisionId, BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, bool isCancelled)
-			: this(jobNumber, mapSectionVectors: null, subdivisionId, repoBlockPosition, isInverted, blockPosition, size, targetIterations, BuildHstFake)
+		// Used when the Request was cancelled or the MapSectionsVectors was empty. 
+		public MapSection(int jobNumber, 
+			string subdivisionId, 
+			BigVector repoBlockPosition, 
+			bool isInverted, 
+			PointInt blockPosition, 
+			SizeInt size, 
+			int targetIterations, 
+			bool isCancelled)
+			: this(
+				  jobNumber, 
+				  mapSectionVectors: null, 
+				  subdivisionId, 
+				  repoBlockPosition, 
+				  isInverted, 
+				  blockPosition, 
+				  size, 
+				  targetIterations, 
+				  BuildHstFake)
 		{
 			RequestCancelled = isCancelled;
 		}
@@ -65,9 +81,13 @@ namespace MSS.Types
 
 		public int TargetIterations { get; init; }
 
-		public string SubdivisionId { get; init; }
-		public BigVector RepoBlockPosition { get; init; }
 		public bool IsInverted { get; init; }
+		public string SubdivisionId { get; init; }
+
+		// TODO: Create a new type: LongVector to hold the MapSectionBlockPosition, instead of using a pair of longs as does the BigVector
+
+		// X,Y coordinates of this section relative to the Job's MapBlockOffset in block-size units.
+		public BigVector RepoBlockPosition { get; init; }
 
 		public IHistogram Histogram => _histogram.Value;
 

@@ -8,12 +8,16 @@ namespace MSS.Types
 		private int _fetchedCount;
 		private int _generatedCount;
 
-		public JobProgressInfo(int jobNumber, string label, DateTime dateCreatedUtc, int totalSections)
+		public JobProgressInfo(int jobNumber, string label, DateTime dateCreatedUtc, int totalSections, int numberOfSectionsFetched)
 		{
 			JobNumber = jobNumber;
 			Label = label;
 			DateCreatedUtc = dateCreatedUtc;
 			TotalSections = totalSections;
+			_fetchedCount = numberOfSectionsFetched;
+			_generatedCount = -1;
+
+			GeneratedCount = 0;
 		}
 
 		public int JobNumber { get; init; }

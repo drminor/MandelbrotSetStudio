@@ -42,8 +42,11 @@ namespace MSS.Types.MSet
 		/// </summary>
 		public BigVector MapBlockOffset { get; init; }
 
+
+		// TODO: Confirm that the ScreenPosition and BlockPostion values are identical, always
+
 		/// <summary>
-		/// X,Y coords for this MapSection, relative to the Subdivision Base in Block-Size units.
+		/// X,Y coords for this MapSection, relative to the MapBlockOffset in Block-Size units.
 		/// </summary>
 		public BigVector BlockPosition { get; init; }
 		
