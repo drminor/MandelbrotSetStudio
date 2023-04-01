@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Windows;
@@ -566,6 +567,12 @@ namespace MSetExplorer
 					//	}
 					//}
 
+
+					//if (TryGetAdjustedBlockPositon(mapSection, jobMapBlockOffset, out var blockPosition))
+					//{
+					//	Debug.Assert(mapSection.BlockPosition == blockPosition, $"GetAdjusted does not equal the original. ms: {mapSection.BlockPosition}, jobs: {jobMapBlockOffset}.");
+					//}
+
 					var invertedBlockPos = GetInvertedBlockPos(mapSection.BlockPosition);
 					var loc = invertedBlockPos.Scale(BlockSize);
 
@@ -592,7 +599,7 @@ namespace MSetExplorer
 			{
 				if (mapSection.MapSectionVectors != null)
 				{
-					if (GetAdjustedBlockPositon(mapSection, currentJobMapBlockOffset, out var blockPosition))
+					if (TryGetAdjustedBlockPositon(mapSection, currentJobMapBlockOffset, out var blockPosition))
 					{
 						if (IsBLockVisible(blockPosition, CanvasSizeInBlocks))
 						{
@@ -671,24 +678,24 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings newJob)
 		{
-			if (MapSections.Count == 0 || previousJob is null)
-			{
-				return false;
-			}
+			//if (MapSections.Count == 0 || previousJob is null)
+			//{
+			//	return false;
+			//}
 
-			if (newJob.MapCalcSettings.TargetIterations != previousJob.MapCalcSettings.TargetIterations)
-			{
-				return false;
-			}
+			//if (newJob.MapCalcSettings.TargetIterations != previousJob.MapCalcSettings.TargetIterations)
+			//{
+			//	return false;
+			//}
 
-			//var jobSpd = RNormalizer.Normalize(newJob.MapAreaInfo.Subdivision.SamplePointDelta, previousJob.MapAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
-			//return jobSpd == previousSpd;
+			////var jobSpd = RNormalizer.Normalize(newJob.MapAreaInfo.Subdivision.SamplePointDelta, previousJob.MapAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
+			////return jobSpd == previousSpd;
 
-			var inSameSubdivision = newJob.MapAreaInfo.Subdivision.Id == previousJob.MapAreaInfo.Subdivision.Id;
+			//var inSameSubdivision = newJob.MapAreaInfo.Subdivision.Id == previousJob.MapAreaInfo.Subdivision.Id;
 
-			return inSameSubdivision;
+			//return inSameSubdivision;
 
-			//return false;
+			return false;
 		}
 
 		private List<MapSection> GetSectionsToLoad(List<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)
@@ -796,7 +803,7 @@ namespace MSetExplorer
 
 				var currentMapBlockOffset = _currentJobAreaAndCalcSettings.MapAreaInfo.MapBlockOffset;
 
-				if (GetAdjustedBlockPositon(mapSection, currentMapBlockOffset, out var blockPosition))
+				if (TryGetAdjustedBlockPositon(mapSection, currentMapBlockOffset, out var blockPosition))
 				{
 					if (IsBLockVisible(blockPosition, CanvasSizeInBlocks))
 					{
@@ -804,7 +811,6 @@ namespace MSetExplorer
 
 						if (_colorMap != null)
 						{
-
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 							var loc = invertedBlockPos.Scale(BlockSize);
 
@@ -832,16 +838,33 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool GetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, out PointInt blockPosition)
+		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, out PointInt blockPosition)
 		{
-			//if (!jobNumber.HasValue || mapAreaInfo == null)
-			//{
-			//	blockPosition = new PointInt(-1, -1);
-			//	return false;
-			//}
+			blockPosition = new PointInt();
+			var result = false;
 
-			blockPosition = mapSection.BlockPosition;
-			var result = true;
+			if (_jobMapOffsets.TryGetValue(mapSection.JobNumber, out var thisSectionsMapBlockOffset))
+			{
+				var df = thisSectionsMapBlockOffset.Diff(mapBlockOffset);
+
+				if (df.IsZero())
+				{
+					blockPosition = mapSection.BlockPosition;
+					result = true;
+				}
+				else
+				{
+					if (int.TryParse(df.X.ToString(), out int x))
+					{
+						if (int.TryParse(df.Y.ToString(), out int y))
+						{
+							var offset = new VectorInt(x, y);
+							blockPosition = mapSection.BlockPosition.Translate(offset);
+							result = true;
+						}
+					}
+				}
+			}
 
 			return result;
 		}

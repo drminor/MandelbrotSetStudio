@@ -107,6 +107,11 @@ namespace MSS.Types
 			return result;
 		}
 
+		public bool IsZero()
+		{
+			return X == 0 && Y == 0; 
+		}
+
 		#endregion
 
 		public static BigVector ConvertToBigVector(RVector rVector)

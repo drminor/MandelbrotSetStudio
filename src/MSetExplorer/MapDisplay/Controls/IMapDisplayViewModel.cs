@@ -14,7 +14,6 @@ namespace MSetExplorer
 
 		WriteableBitmap Bitmap { get; }
 
-		//BigVector MapBlockOffset { get; }
 
 		ObservableCollection<MapSection> MapSections { get; }
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; set; }

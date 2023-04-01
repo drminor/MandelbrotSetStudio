@@ -18,7 +18,6 @@ namespace MSetExplorer
 		private IMapDisplayViewModel _vm;
 		
 		private Canvas _canvas;
-		//private Image _mapDisplayImage;
 		private VectorInt _offset;
 		private double _offsetZoom;
 
@@ -30,8 +29,7 @@ namespace MSetExplorer
 		public MapDisplayControl()
 		{
 			_canvas = new Canvas();
-			//_mapDisplayImage = new Image();
-			
+		
 			_showBorder = false;
 			_clipImageBlocks = true;
 			_offset = new VectorInt(-1, -1);
@@ -67,18 +65,9 @@ namespace MSetExplorer
 
 				_canvas.ClipToBounds = _clipImageBlocks;
 
-				//_mapDisplayImage = new Image { Source = _vm.ImageSource };
-				//_ = _canvas.Children.Add(_mapDisplayImage);
-
-				//_mapDisplayImage.SetValue(Panel.ZIndexProperty, 5);
-				//_mapDisplayImage.SetValue(Canvas.LeftProperty, 0d);
-				//_mapDisplayImage.SetValue(Canvas.RightProperty, 0d);
-
 				myImage.SetValue(Panel.ZIndexProperty, 5);
 				myImage.SetValue(Canvas.LeftProperty, 0d);
 				myImage.SetValue(Canvas.RightProperty, 0d);
-
-				//myImage.tr
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;

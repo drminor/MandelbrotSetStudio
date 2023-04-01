@@ -84,7 +84,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public List<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
+		public List<MapSectionRequest> CreateSectionRequestsFromMapSections(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
 		{
 			var result = new List<MapSectionRequest>();
 

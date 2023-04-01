@@ -59,7 +59,7 @@ namespace MapSectionProviderLib
 
 		public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber)
 		{
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequestsFromMapSections(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
 			var result = Push(mapSectionRequests, callback, out jobNumber);
 			return result;
 		}
