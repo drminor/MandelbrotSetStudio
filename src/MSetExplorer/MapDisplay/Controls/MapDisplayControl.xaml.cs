@@ -65,6 +65,8 @@ namespace MSetExplorer
 
 				_canvas.ClipToBounds = _clipImageBlocks;
 
+				ReportSizes("Loading");
+
 				myImage.SetValue(Panel.ZIndexProperty, 5);
 				myImage.SetValue(Canvas.LeftProperty, 0d);
 				myImage.SetValue(Canvas.RightProperty, 0d);
@@ -129,14 +131,22 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is (nameof(IMapDisplayViewModel.CanvasControlOffset)) or (nameof(IMapDisplayViewModel.DisplayZoom)))
+			if (e.PropertyName is nameof(IMapDisplayViewModel.CanvasControlOffset))
 			{
 				SetCanvasOffset(_vm.CanvasControlOffset, _vm.DisplayZoom);
 			}
 
+			if (e.PropertyName is nameof(IMapDisplayViewModel.DisplayZoom))
+			{
+				var scale = new PointDbl(_vm.DisplayZoom, _vm.DisplayZoom);
+				SetCanvasTransform(scale);
+			}
+
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
+				ReportSizes("Canvas Size Changing");
 				UpdateTheCanvasSize(_vm.CanvasSize.Round());
+				ReportSizes("Canvas Sized Changed");
 			}
 
 			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
@@ -148,7 +158,10 @@ namespace MSetExplorer
 		private void MapDisplay_SizeChanged(object? sender, SizeChangedEventArgs e)
 		{
 			//Debug.WriteLine($"The MapDisplay Size is changing. The new size is {e.NewSize}, the old size is {e.PreviousSize}");
+
+			ReportSizes("Display Sized Changed");
 			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize));
+			ReportSizes("After Updating VM with new Sizes");
 		}
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
@@ -208,13 +221,29 @@ namespace MSetExplorer
 
 				myImage.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
 				myImage.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
+
+				ReportSizes("SetCanvasOffset");
 			}
 
 			//_vm.ClipRegion = new SizeDbl(
 			//	(double)_mapDisplayImage.GetValue(Canvas.LeftProperty),
 			//	(double)_mapDisplayImage.GetValue(Canvas.BottomProperty)
 			//	);
+		}
 
+		private void SetCanvasTransform(PointDbl scale)
+		{
+			_canvas.RenderTransformOrigin = new Point(0.5, 0.5);
+			_canvas.RenderTransform = new ScaleTransform(scale.X, scale.Y);
+		}
+
+		private void ReportSizes(string label)
+		{
+			var cSize = new SizeInt(_canvas.Width, _canvas.Height);
+			var iSize = new SizeInt(myImage.ActualWidth, myImage.ActualHeight);
+			var bSize = new SizeInt(_vm.Bitmap.Width, _vm.Bitmap.Height);
+
+			Debug.WriteLine($"At {label}, the sizes are Canvas: {cSize}, Image: {iSize}, Bitmap: {bSize}.");
 		}
 
 		#endregion

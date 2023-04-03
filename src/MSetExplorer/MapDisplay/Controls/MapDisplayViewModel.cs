@@ -2,19 +2,15 @@
 using MongoDB.Driver.Linq;
 using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Threading;
 using System.Windows;
-using System.Windows.Automation;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Windows.Web.Syndication;
 
 namespace MSetExplorer
 {
@@ -22,9 +18,12 @@ namespace MSetExplorer
 	{
 		#region Private Properties
 
+		private static bool KEEP_DISPLAY_SQUARE;
+
+		private static bool REUSE_SECTIONS_FOR_SOME_OPS;
+
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear = new byte[0];
-		private static bool _keepDisplaySquare;
 
 		//private readonly SynchronizationContext? _synchronizationContext;
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -62,7 +61,9 @@ namespace MSetExplorer
 			BlockSize = blockSize;
 			BlockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
 
-			_keepDisplaySquare = true;
+			KEEP_DISPLAY_SQUARE = true;
+			REUSE_SECTIONS_FOR_SOME_OPS = false;
+
 			_paintLocker = new object();
 
 			_jobMapOffsets = new Dictionary<int, BigVector>();
@@ -206,29 +207,6 @@ namespace MSetExplorer
 
 		public bool HandleContainerSizeUpdates { get; set; }
 
-		public SizeDbl ContainerSizeExp
-		{
-			get => _containerSize;
-			set
-			{
-				if (HandleContainerSizeUpdates)
-				{
-					_containerSize = value;
-
-					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_containerSize, BlockSize, _keepDisplaySquare);
-					var desiredCanvasSize = sizeInWholeBlocks.Scale(BlockSize);
-
-					//Debug.WriteLine($"The Container size is now {value}, updating the CanvasSize from {CanvasSize} to {desiredCanvasSize}.");
-
-					CanvasSize = new SizeDbl(desiredCanvasSize);
-				}
-				else
-				{
-					//Debug.WriteLine($"Not handling the ContainerSize update. The value is {value}.");
-				}
-			}
-		}
-
 		// TODO: Prevent the ContainerSize from being set to a value that would require more than 100 x 100 blocks.
 		public SizeDbl ContainerSize
 		{
@@ -239,7 +217,7 @@ namespace MSetExplorer
 				{
 					_containerSize = value;
 
-					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ContainerSize, BlockSize, _keepDisplaySquare);
+					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ContainerSize, BlockSize, KEEP_DISPLAY_SQUARE);
 					var desiredCanvasSize = sizeInWholeBlocks.Scale(BlockSize);
 
 					//Debug.WriteLine($"The Container size is now {value}, updating the CanvasSize from {CanvasSize} to {desiredCanvasSize}.");
@@ -278,11 +256,11 @@ namespace MSetExplorer
 			{
 				if (Math.Abs(value  -_displayZoom) > 0.01)
 				{
-					ClearMapSectionsAndBitmap(mapLoaderJobNumber: null);
+					//ClearMapSectionsAndBitmap(mapLoaderJobNumber: null);
 
 					// TODO: Prevent the DisplayZoom from being set to a value that would require more than 100 x 100 blocks.
 					// 1 = LogicalDisplay Size = PosterSize
-					// 2 = LogicalDisplay Size Width is 1/2 PosterSize Width (1 Screen Pixel = 2 * (CanvasSize / PosterSize)
+					// 2 = LogicalDisplay Size Width is 1/2 PosterSize Width (Every screen pixels covers a 2x2 group of pixels from the final image, i.e., the poster.)
 					// 4 = 1/4 PosterSize
 					// Maximum is PosterSize / Actual CanvasSize 
 
@@ -312,8 +290,6 @@ namespace MSetExplorer
 					_logicalDisplaySize = value;
 
 					Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
-
-					//CanvasSizeInBlocks = CalculateCanvasSizeInBlocks(LogicalDisplaySize, CanvasControlOffset);
 					CanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(LogicalDisplaySize.Round(), BlockSize);
 
 					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
@@ -329,8 +305,6 @@ namespace MSetExplorer
 				if (value != _canvasControlOffset)
 				{
 					_canvasControlOffset = value;
-
-					//CanvasSizeInBlocks = CalculateCanvasSizeInBlocks(LogicalDisplaySize, CanvasControlOffset);
 					OnPropertyChanged();
 				}
 			}
@@ -601,9 +575,9 @@ namespace MSetExplorer
 				{
 					if (TryGetAdjustedBlockPositon(mapSection, currentJobMapBlockOffset, out var blockPosition))
 					{
-						if (IsBLockVisible(blockPosition, CanvasSizeInBlocks))
+						if (IsBLockVisible(blockPosition.Value, CanvasSizeInBlocks))
 						{
-							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+							var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
 							var loc = invertedBlockPos.Scale(BlockSize);
 
 							_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
@@ -678,24 +652,27 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings newJob)
 		{
-			//if (MapSections.Count == 0 || previousJob is null)
-			//{
-			//	return false;
-			//}
+			if (!REUSE_SECTIONS_FOR_SOME_OPS)
+			{
+				return false;
+			}
 
-			//if (newJob.MapCalcSettings.TargetIterations != previousJob.MapCalcSettings.TargetIterations)
-			//{
-			//	return false;
-			//}
+			if (MapSections.Count == 0 || previousJob is null)
+			{
+				return false;
+			}
 
-			////var jobSpd = RNormalizer.Normalize(newJob.MapAreaInfo.Subdivision.SamplePointDelta, previousJob.MapAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
-			////return jobSpd == previousSpd;
+			if (newJob.MapCalcSettings.TargetIterations != previousJob.MapCalcSettings.TargetIterations)
+			{
+				return false;
+			}
 
-			//var inSameSubdivision = newJob.MapAreaInfo.Subdivision.Id == previousJob.MapAreaInfo.Subdivision.Id;
+			//var jobSpd = RNormalizer.Normalize(newJob.MapAreaInfo.Subdivision.SamplePointDelta, previousJob.MapAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
+			//return jobSpd == previousSpd;
 
-			//return inSameSubdivision;
+			var inSameSubdivision = newJob.MapAreaInfo.Subdivision.Id == previousJob.MapAreaInfo.Subdivision.Id;
 
-			return false;
+			return inSameSubdivision;
 		}
 
 		private List<MapSection> GetSectionsToLoad(List<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent)
@@ -763,15 +740,32 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void ClearBitmap(WriteableBitmap bitmap)
+		private void ClearBitmapOld(WriteableBitmap bitmap)
 		{
-			var zeros = GetPixelsToClear(bitmap.PixelWidth * bitmap.PixelHeight * 4);
+			var zeros = GetClearBytes(bitmap.PixelWidth * bitmap.PixelHeight * 4);
 			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight);
 
 			bitmap.WritePixels(rect, zeros, rect.Width * 4, 0);
 		}
 
-		private byte[] GetPixelsToClear(int length)
+		private void ClearBitmap(WriteableBitmap bitmap)
+		{
+			var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
+			var zeros = GetClearBytes(blockRowPixelCount * 4);
+
+			for( var vPtr = 0; vPtr < _allocatedBlocks.Height; vPtr++)
+			{
+				var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
+
+				var offset = vPtr * blockRowPixelCount;
+
+				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, vPtr * 128);
+			}
+
+		}
+
+
+		private byte[] GetClearBytes(int length)
 		{
 			if (_pixelsToClear.Length != length)
 			{
@@ -805,13 +799,13 @@ namespace MSetExplorer
 
 				if (TryGetAdjustedBlockPositon(mapSection, currentMapBlockOffset, out var blockPosition))
 				{
-					if (IsBLockVisible(blockPosition, CanvasSizeInBlocks))
+					if (IsBLockVisible(blockPosition.Value, CanvasSizeInBlocks))
 					{
 						MapSections.Add(mapSection);
 
 						if (_colorMap != null)
 						{
-							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+							var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
 							var loc = invertedBlockPos.Scale(BlockSize);
 
 							_mapSectionHelper.LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
@@ -838,9 +832,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, out PointInt blockPosition)
+		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition)
 		{
-			blockPosition = new PointInt();
+			blockPosition = null;
 			var result = false;
 
 			if (_jobMapOffsets.TryGetValue(mapSection.JobNumber, out var thisSectionsMapBlockOffset))
@@ -908,13 +902,6 @@ namespace MSetExplorer
 			bitmap.Unlock();
 
 			OnPropertyChanged(nameof(Bitmap));
-		}
-
-		private SizeInt CalculateCanvasSizeInBlocks(SizeDbl logicalContainerSize, VectorInt canvasControlOffset)
-		{
-			//var result = RMapHelper.GetMapExtentInBlocks(logicalContainerSize.Round(), canvasControlOffset, BlockSize);
-			var result = RMapHelper.GetMapExtentInBlocks(logicalContainerSize.Round(), BlockSize);
-			return result;
 		}
 
 		#endregion

@@ -385,6 +385,12 @@ namespace MapSectionProviderLib
 
 			// TODO: Update the mapSectionResponse to include details about which rows are complete. This is required for those cases where the Generator was given a CancellationToken that got cancelled.
 
+			if (!mapSectionResponse.RequestCompleted)
+			{
+				reason = "The response is not complete. Processing was interrupted during generation or during the last target iteration increase.";
+				return false;
+			}
+
 			var fetchedTargetIterations = mapSectionResponse.MapCalcSettings?.TargetIterations ?? 0;
 
 			if (fetchedTargetIterations >= requestedIterations)
@@ -556,15 +562,31 @@ namespace MapSectionProviderLib
 			_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, copyWithNoVectors, onlyInsertJobMapSectionRecord: true));
 		}
 
-		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse? mapSectionResponse)
+		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			if (mapSectionResponse != null && !mapSectionResponse.RequestCancelled)
+			//if (!mapSectionResponse.RequestCancelled)
+			//{
+			//	if (mapSectionResponse.RecordOnFile || mapSectionResponse.RequestCompleted)
+			//	{
+			//		mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+			//		_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
+			//	}
+			//}
+
+			//if (mapSectionResponse.RequestCancelled && !SAVE_THE_ZVALUES)
+			//{
+			//	return;
+			//}
+			//else
+			//{
+			//	mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+			//	_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
+			//}
+
+			if (!mapSectionResponse.RequestCancelled || SAVE_THE_ZVALUES)
 			{
-				if (mapSectionResponse.RecordOnFile || mapSectionResponse.RequestCompleted)
-				{
-					mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-					_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
-				}
+				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
 			}
 		}
 

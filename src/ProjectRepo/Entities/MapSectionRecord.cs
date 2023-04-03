@@ -35,11 +35,15 @@ namespace ProjectRepo.Entities
 		[BsonDefaultValue(128)]
 		public int BlockHeight { get; init; } = 128;
 
-		public DateTime LastSavedUtc { get; set; }
-		public DateTime LastAccessed { get; set; }
-
 		[BsonIgnore]
 		public SizeInt BlockSize => new SizeInt(BlockWidth, BlockHeight);
+
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(true)]
+		public bool Complete { get; init; } = true;
+
+		public DateTime LastSavedUtc { get; set; }
+		public DateTime LastAccessed { get; set; }
 	}
 
 }

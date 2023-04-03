@@ -10,24 +10,7 @@
     <Grid>
         <Border BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Canvas Name="MainCanvas" Width="1024" Height="1024" HorizontalAlignment="Center" VerticalAlignment="Center" Background="Transparent">
-
-                <!--<Image x:Name="myImage">
-                    <Image.Source>
-                        <DrawingImage>
-                            <DrawingImage.Drawing>
-                                <DrawingGroup x:Name="DrwGrpMain">
-                                    <ImageDrawing ImageSource="{Binding Bitmap}"/>
-
-
-
-                                </DrawingGroup>
-                            </DrawingImage.Drawing>
-                        </DrawingImage>
-                    </Image.Source>
-                </Image>-->
-
                 <Image x:Name="myImage" Source="{Binding Bitmap}"/>
-
             </Canvas>
         </Border>
     </Grid>

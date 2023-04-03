@@ -75,7 +75,10 @@ namespace MSetExplorer
 					Debug.WriteLine($"The PosterViewModel's LogicalDisplaySize is being updated to {value}.");
 					_logicalDisplaySize = value;
 
-					UpdateMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+					if (CurrentPoster != null && !CurrentPoster.CurrentJob.IsEmpty)
+					{
+						CurrentAreaColorAndCalcSettings = GetUpdatedMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
 				}
@@ -110,7 +113,10 @@ namespace MSetExplorer
 						//var currentColorBandSet = _currentPoster.CurrentColorBandSet;
 						//CurrentAreaColorAndCalcSettings = CreateDisplayJob(currentJob, currentColorBandSet, DisplayPosition, LogicalDisplaySize.Round(), _currentPoster.DisplayZoom);
 
-						UpdateMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+						if (CurrentPoster != null && !CurrentPoster.CurrentJob.IsEmpty)
+						{
+							CurrentAreaColorAndCalcSettings = GetUpdatedMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+						}
 
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
 					}
@@ -148,7 +154,10 @@ namespace MSetExplorer
 						_logicalDisplaySize = new SizeDbl(10, 10);
 						LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
 
-						UpdateMapView(currentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+						if (!currentPoster.CurrentJob.IsEmpty)
+						{
+							CurrentAreaColorAndCalcSettings = GetUpdatedMapView(currentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+						}
 					}
 					else
 					{
@@ -547,20 +556,18 @@ namespace MSetExplorer
 		#region Private Methods
 
 		// PosterViewModel update from position and zoom changes
-		private void UpdateMapView(Poster? currentPoster, VectorInt displayPosition, SizeDbl logicalDisplaySize, double zoomFactorForDiagnosis)
+		private AreaColorAndCalcSettings GetUpdatedMapView(Poster currentPoster, VectorInt displayPosition, SizeDbl logicalDisplaySize, double zoomFactorForDiagnosis)
 		{
-			if (currentPoster != null && !currentPoster.CurrentJob.IsEmpty)
-			{
-				var job = currentPoster.CurrentJob;
-				var colorBandSet = currentPoster.CurrentColorBandSet;
+			var job = currentPoster.CurrentJob;
+			var colorBandSet = currentPoster.CurrentColorBandSet;
 
+			var msg = $"UpdateMapView is setting CurrentAreaColorAndCalcSettings to DisplayPosition: {DisplayPosition}, LogicalDisplaySize: {LogicalDisplaySize}, Zoom: {DisplayZoom}.";
+			Debug.WriteLine(msg);
 
-				var msg = $"UpdateMapView is setting CurrentAreaColorAndCalcSettings to DisplayPosition: {DisplayPosition}, LogicalDisplaySize: {LogicalDisplaySize}, Zoom: {DisplayZoom}.";
-				Debug.WriteLine(msg);
+			// Use the new map specification and the current zoom and display position to set the region to display.
+			var result = CreateDisplayJob(job, colorBandSet, displayPosition, logicalDisplaySize.Round(), zoomFactorForDiagnosis);
 
-				// Use the new map specification and the current zoom and display position to set the region to display.
-				CurrentAreaColorAndCalcSettings = CreateDisplayJob(job, colorBandSet, DisplayPosition, LogicalDisplaySize.Round(), zoomFactorForDiagnosis);
-			}
+			return result;
 		}
 
 		// Get Display Job

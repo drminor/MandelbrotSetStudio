@@ -259,6 +259,7 @@ namespace MSetRepo
 				)
 			{
 				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
+				Complete = source.RequestCompleted,
 				LastAccessed = DateTime.UtcNow,
 			};
 
@@ -279,7 +280,7 @@ namespace MSetRepo
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
-				requestCompleted: true,
+				requestCompleted: target.Complete,
 				allRowsHaveEscaped: target.AllRowsHaveEscaped,
 				mapSectionVectors: mapSectionVectors
 			);

@@ -13,7 +13,6 @@ namespace MSS.Types
 
 		public static SizeInt Zero => ZeroSingleton;
 
-
 		// Square from single value
 		public SizeInt(int extent) : this(extent, extent)
 		{ }
@@ -25,6 +24,12 @@ namespace MSS.Types
 		{
 			Width = width;
 			Height = height;
+		}
+
+		public SizeInt(double width, double height)
+		{
+			Width = (int) Math.Round(width, MidpointRounding.ToEven);
+			Height = (int)Math.Round(height, MidpointRounding.ToEven);
 		}
 
 		[ProtoMember(1)]
