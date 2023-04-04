@@ -62,7 +62,7 @@ namespace MSetExplorer
 			BlockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
 
 			KEEP_DISPLAY_SQUARE = true;
-			REUSE_SECTIONS_FOR_SOME_OPS = false;
+			REUSE_SECTIONS_FOR_SOME_OPS = true;
 
 			_paintLocker = new object();
 
@@ -96,25 +96,13 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Properties
+		#region Public Properties - Content
 
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		public event EventHandler<int>? DisplayJobCompleted;
 
-		public new bool InDesignMode => base.InDesignMode;
-
 		public SizeInt BlockSize { get; init; }
 		private Int32Rect BlockRect { get; init; }
-
-		public WriteableBitmap Bitmap
-		{
-			get => _bitmap;
-			set
-			{
-				_bitmap = value;
-				OnPropertyChanged();
-			}
-		}
 
 		public ObservableCollection<MapSection> MapSections { get; init; }
 
@@ -204,6 +192,23 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		#endregion
+
+		#region Public Properties - Control
+
+		public new bool InDesignMode => base.InDesignMode;
+
+		public WriteableBitmap Bitmap
+		{
+			get => _bitmap;
+			set
+			{
+				_bitmap = value;
+				OnPropertyChanged();
+			}
+		}
+
 
 		public bool HandleContainerSizeUpdates { get; set; }
 
@@ -761,9 +766,7 @@ namespace MSetExplorer
 
 				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, vPtr * 128);
 			}
-
 		}
-
 
 		private byte[] GetClearBytes(int length)
 		{

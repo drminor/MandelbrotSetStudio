@@ -21,9 +21,10 @@
             </MenuItem>
 
             <MenuItem Header="_Other">
+                <MenuItem Header="_TestContentControl" Click="TestContentControl_Click"/>
                 <MenuItem Header="_SampleTest" Click="SampleTestButton_Click"/>
                 <MenuItem Header="Show System _Colors" Click="ShowSystemColorsButton_Click"/>
-                <MenuItem Header="Performance Tests" Click="ShowPerformanceHarnessMainWin_Click"/>
+                <MenuItem Header="_Performance Tests" Click="ShowPerformanceHarnessMainWin_Click"/>
             </MenuItem>
 
             <!--<MenuItem Header="_Utilities">

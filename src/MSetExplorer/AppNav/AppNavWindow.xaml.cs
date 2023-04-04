@@ -85,6 +85,11 @@ namespace MSetExplorer
 			GoToPerformanceHarnessMainWindow();
 		}
 
+		private void TestContentControl_Click(object sender, RoutedEventArgs e)
+		{
+			GoToTestContentControl();
+		}
+
 		private void SampleTestButton_Click(object sender, RoutedEventArgs e)
 		{
 			GoToSampleTest();
@@ -199,6 +204,20 @@ namespace MSetExplorer
 			_ = xSamplingEditorWindow.Focus();
 		}
 
+		private void GoToTestContentControl(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			Hide();
+
+			var testPanelTestWindow = new TestPanelTestWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
+
+			_lastWindow = testPanelTestWindow;
+			_lastWindow.Name = "TestContentControl";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			testPanelTestWindow.Owner = Application.Current.MainWindow;
+			testPanelTestWindow.Show();
+			_ = testPanelTestWindow.Focus();
+		}
 
 		private void GoToSystemColors(AppNavRequestResponse? appNavRequestResponse = null)
 		{
@@ -283,5 +302,9 @@ namespace MSetExplorer
 
 		#endregion
 
+		private void MenuItem_Click(object sender, RoutedEventArgs e)
+		{
+
+		}
 	}
 }
