@@ -20,7 +20,7 @@ namespace MSS.Types
 				  subdivisionId: string.Empty,
 				  repoBlockPosition: new BigVector(),
 				  isInverted: false,
-				  blockPosition: new PointInt(),
+				  screenPosition: new PointInt(),
 				  size: new SizeInt(),
 				  targetIterations: 0,
 				  histogramBuilder: BuildHstFake
@@ -32,7 +32,7 @@ namespace MSS.Types
 			string subdivisionId, 
 			BigVector repoBlockPosition, 
 			bool isInverted, 
-			PointInt blockPosition, 
+			PointInt screenPosition, 
 			SizeInt size, 
 			int targetIterations, 
 			bool isCancelled)
@@ -42,7 +42,7 @@ namespace MSS.Types
 				  subdivisionId, 
 				  repoBlockPosition, 
 				  isInverted, 
-				  blockPosition, 
+				  screenPosition, 
 				  size, 
 				  targetIterations, 
 				  BuildHstFake)
@@ -51,14 +51,14 @@ namespace MSS.Types
 		}
 
 		public MapSection(int jobNumber, MapSectionVectors? mapSectionVectors, string subdivisionId,
-			BigVector repoBlockPosition, bool isInverted, PointInt blockPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
+			BigVector repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobNumber = jobNumber;
 			MapSectionVectors = mapSectionVectors;
 			SubdivisionId = subdivisionId;
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
-			BlockPosition = blockPosition;
+			ScreenPosition = screenPosition;
 			Size = size;
 
 			TargetIterations = targetIterations;
@@ -76,7 +76,7 @@ namespace MSS.Types
 
 		public bool IsEmpty => MapSectionVectors == null;
 
-		public PointInt BlockPosition { get; set; }
+		public PointInt ScreenPosition { get; set; }
 		public SizeInt Size { get; init; }
 
 		public int TargetIterations { get; init; }

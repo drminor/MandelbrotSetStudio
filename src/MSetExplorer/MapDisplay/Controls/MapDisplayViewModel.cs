@@ -50,6 +50,8 @@ namespace MSetExplorer
 		private bool _useEscapeVelocities;
 		private bool _highlightSelectedColorBand;
 
+		// We're assuming that at any one given time, all entries in the JobMapOffsets Dictionary are from the same subdivision.
+		// Consider tracking the sum of the Job's Subdivision's BaseMapPosition and the Job's MapOffset.
 		private Dictionary<int, BigVector> _jobMapOffsets;
 		
 		#endregion
@@ -73,6 +75,7 @@ namespace MSetExplorer
 			_mapLoaderManager = mapLoaderManager;
 
 			_bitmap = CreateBitmap(new SizeInt(10));
+
 			_maxYPtr = 1;
 
 			_useEscapeVelocities = true;
@@ -407,6 +410,7 @@ namespace MSetExplorer
 		{
 			if (mapSection.MapSectionVectors != null)
 			{
+				//if (_bitmap.Dispatcher.)
 				_bitmap.Dispatcher.Invoke(GetAndPlacePixels, new object[] { mapSection, mapSection.MapSectionVectors });
 			}
 		}
@@ -532,27 +536,7 @@ namespace MSetExplorer
 			{
 				if (mapSection.MapSectionVectors != null)
 				{
-					//if (GetAdjustedBlockPositon(mapSection, jobMapBlockOffset, out var blockPosition))
-					//{
-					//	if (IsBLockVisible(blockPosition, CanvasSizeInBlocks))
-					//	{
-					//		var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-					//		var loc = invertedBlockPos.Scale(BlockSize);
-
-					//		MapSections.Add(mapSection);
-
-					//		_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
-					//		_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
-					//	}
-					//}
-
-
-					//if (TryGetAdjustedBlockPositon(mapSection, jobMapBlockOffset, out var blockPosition))
-					//{
-					//	Debug.Assert(mapSection.BlockPosition == blockPosition, $"GetAdjusted does not equal the original. ms: {mapSection.BlockPosition}, jobs: {jobMapBlockOffset}.");
-					//}
-
-					var invertedBlockPos = GetInvertedBlockPos(mapSection.BlockPosition);
+					var invertedBlockPos = GetInvertedBlockPos(mapSection.ScreenPosition);
 					var loc = invertedBlockPos.Scale(BlockSize);
 
 					MapSections.Add(mapSection);
@@ -755,16 +739,16 @@ namespace MSetExplorer
 
 		private void ClearBitmap(WriteableBitmap bitmap)
 		{
+			// Clear the bitmap, one row of bitmap blocks at a time.
+
+			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
 			var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
 			var zeros = GetClearBytes(blockRowPixelCount * 4);
 
 			for( var vPtr = 0; vPtr < _allocatedBlocks.Height; vPtr++)
 			{
-				var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
-
-				var offset = vPtr * blockRowPixelCount;
-
-				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, vPtr * 128);
+				var offset = vPtr * BlockSize.Height;
+				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
 			}
 		}
 
@@ -846,7 +830,7 @@ namespace MSetExplorer
 
 				if (df.IsZero())
 				{
-					blockPosition = mapSection.BlockPosition;
+					blockPosition = mapSection.ScreenPosition;
 					result = true;
 				}
 				else
@@ -856,7 +840,7 @@ namespace MSetExplorer
 						if (int.TryParse(df.Y.ToString(), out int y))
 						{
 							var offset = new VectorInt(x, y);
-							blockPosition = mapSection.BlockPosition.Translate(offset);
+							blockPosition = mapSection.ScreenPosition.Translate(offset);
 							result = true;
 						}
 					}

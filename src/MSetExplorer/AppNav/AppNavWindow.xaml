@@ -21,7 +21,7 @@
             </MenuItem>
 
             <MenuItem Header="_Other">
-                <MenuItem Header="_TestContentControl" Click="TestContentControl_Click"/>
+                <MenuItem Header="_BitmapGridTestWindow" Click="ShowBitmapGridTestWindow_Click"/>
                 <MenuItem Header="_SampleTest" Click="SampleTestButton_Click"/>
                 <MenuItem Header="Show System _Colors" Click="ShowSystemColorsButton_Click"/>
                 <MenuItem Header="_Performance Tests" Click="ShowPerformanceHarnessMainWin_Click"/>

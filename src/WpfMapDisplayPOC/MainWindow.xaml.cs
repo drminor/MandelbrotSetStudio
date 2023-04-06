@@ -340,7 +340,7 @@ namespace WpfMapDisplayPOC
 
 			//var loc = new Point(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
 
-			var invBp = GetInvertedBlockPos(mapSection.BlockPosition);
+			var invBp = GetInvertedBlockPos(mapSection.ScreenPosition);
 			var sInvBp = invBp.Scale(_blockSize);
 			var loc = new Point(sInvBp.X, sInvBp.Y);
 
@@ -357,7 +357,7 @@ namespace WpfMapDisplayPOC
 			var sKBitmap = SkiaHelper.ArrayToImage(pixelArray, RMapConstants.BLOCK_SIZE);
 
 			//var skPoint = new SKPoint(mapSection.BlockPosition.X * 128, mapSection.BlockPosition.Y * 128);
-			var invBp = GetInvertedBlockPos(mapSection.BlockPosition);
+			var invBp = GetInvertedBlockPos(mapSection.ScreenPosition);
 			var sInvBp = invBp.Scale(_blockSize);
 			var skPoint = new SKPoint(sInvBp.X, sInvBp.Y);
 
@@ -372,7 +372,7 @@ namespace WpfMapDisplayPOC
 		{
 			var sKBitmap = SkiaHelper.ArrayToImage(pixelArray, RMapConstants.BLOCK_SIZE);
 			
-			var invBp = GetInvertedBlockPos(mapSection.BlockPosition);
+			var invBp = GetInvertedBlockPos(mapSection.ScreenPosition);
 			var sInvBp = invBp.Scale(_blockSize);
 			var skPoint = new SKPoint(sInvBp.X, sInvBp.Y);
 			

@@ -226,7 +226,7 @@ namespace ImageBuilder
 			{
 				if (!mapSection.IsEmpty)
 				{
-					_currentResponses?.Add(mapSection.BlockPosition.X, mapSection);
+					_currentResponses?.Add(mapSection.ScreenPosition.X, mapSection);
 				}
 				else
 				{

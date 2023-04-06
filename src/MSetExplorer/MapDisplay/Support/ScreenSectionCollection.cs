@@ -179,7 +179,7 @@ namespace MSetExplorer
 
 		public bool Hide(MapSection mapSection)
 		{
-			var screenSection = GetScreenSection(mapSection.BlockPosition);
+			var screenSection = GetScreenSection(mapSection.ScreenPosition);
 
 			if (screenSection != null)
 			{

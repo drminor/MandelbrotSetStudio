@@ -93,7 +93,7 @@ namespace MSS.Common
 			var requestNumber = 0;
 			foreach (var mapSection in emptyMapSections)
 			{
-				var screenPosition = mapSection.BlockPosition;
+				var screenPosition = mapSection.ScreenPosition;
 				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
 				result.Add(mapSectionRequest);
 			}
@@ -219,7 +219,7 @@ namespace MSS.Common
 					subdivisionId: subdivisionId, 
 					repoBlockPosition: repoPosition, 
 					isInverted: isInverted,
-					blockPosition: screenPosition, 
+					screenPosition: screenPosition, 
 					size: blockSize, 
 					targetIterations: targetIterations,
 					isCancelled: false);

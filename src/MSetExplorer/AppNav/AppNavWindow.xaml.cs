@@ -1,5 +1,6 @@
 ﻿using MSetExplorer.ScreenHelpers;
 using MSetExplorer.XPoc;
+using MSetExplorer.XPoc.BitmapGridControl;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -85,9 +86,9 @@ namespace MSetExplorer
 			GoToPerformanceHarnessMainWindow();
 		}
 
-		private void TestContentControl_Click(object sender, RoutedEventArgs e)
+		private void ShowBitmapGridTestWindow_Click(object sender, RoutedEventArgs e)
 		{
-			GoToTestContentControl();
+			GoToBitmapGridTestWindow();
 		}
 
 		private void SampleTestButton_Click(object sender, RoutedEventArgs e)
@@ -204,19 +205,23 @@ namespace MSetExplorer
 			_ = xSamplingEditorWindow.Focus();
 		}
 
-		private void GoToTestContentControl(AppNavRequestResponse? appNavRequestResponse = null)
+		private void GoToBitmapGridTestWindow(AppNavRequestResponse? appNavRequestResponse = null)
 		{
 			Hide();
 
-			var testPanelTestWindow = new TestPanelTestWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
+			var bitmapGridTestViewModel = new BitmapGridTestViewModel();
+			var bitmapGridTestWindow = new BitmapGridTestWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
+			{
+				DataContext = bitmapGridTestViewModel
+			};
 
-			_lastWindow = testPanelTestWindow;
-			_lastWindow.Name = "TestContentControl";
+			_lastWindow = bitmapGridTestWindow;
+			_lastWindow.Name = "BitmapGridTestWindow";
 			_lastWindow.Closed += LastWindow_Closed;
 
-			testPanelTestWindow.Owner = Application.Current.MainWindow;
-			testPanelTestWindow.Show();
-			_ = testPanelTestWindow.Focus();
+			bitmapGridTestWindow.Owner = Application.Current.MainWindow;
+			bitmapGridTestWindow.Show();
+			_ = bitmapGridTestWindow.Focus();
 		}
 
 		private void GoToSystemColors(AppNavRequestResponse? appNavRequestResponse = null)
@@ -245,6 +250,7 @@ namespace MSetExplorer
 				case "xSampling": return GoToSampleTest;
 				case "SysColors": return GoToSystemColors;
 				case "PerformanceHarness": return GoToPerformanceHarnessMainWindow;
+				case "BitmapGridTestWindow": return GoToBitmapGridTestWindow;
 				default:
 					return x => WindowState = WindowState.Normal;
 			}
