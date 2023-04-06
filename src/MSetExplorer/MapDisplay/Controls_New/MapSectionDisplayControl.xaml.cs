@@ -1,25 +1,23 @@
-﻿using MSetExplorer.ScreenHelpers;
-using MSetExplorer.XPoc.BitmapGridControl;
+﻿using MSetExplorer.XPoc;
 using MSS.Types;
-using System;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 
-namespace MSetExplorer.XPoc
+namespace MSetExplorer
 {
 	/// <summary>
-	/// Interaction logic for BitmapGridTestWindow.xaml
+	/// Interaction logic for MapSectionDisplayControl.xaml
 	/// </summary>
-	public partial class BitmapGridTestWindow : Window, IHaveAppNavRequestResponse
+	public partial class MapSectionDisplayControl : UserControl
 	{
-		private BitmapGridTestViewModel _vm;
+		private MapSectionDisplayViewModel _vm;
 
-		public BitmapGridTestWindow(AppNavRequestResponse appNavRequestResponse)
+		public MapSectionDisplayControl()
 		{
-			_vm = (BitmapGridTestViewModel)DataContext;
-			AppNavRequestResponse = appNavRequestResponse;
+			_vm = (MapSectionDisplayViewModel)DataContext;
 
-			Loaded += TestPanelTestWindow_Loaded;
+			Loaded += MapSectionDisplayControl_Loaded;
 
 			InitializeComponent();
 
@@ -28,21 +26,22 @@ namespace MSetExplorer.XPoc
 
 		}
 
-		private void TestPanelTestWindow_Loaded(object sender, RoutedEventArgs e)
+		private void MapSectionDisplayControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
-				Debug.WriteLine("The DataContext is null as the TestPanelTestWindow Window is being loaded.");
+				Debug.WriteLine("The DataContext is null as the MapSectionDisplayControl is being loaded.");
 				return;
 			}
 			else
 			{
-				_vm = (BitmapGridTestViewModel)DataContext;
+				_vm = (MapSectionDisplayViewModel)DataContext;
 				ReportSizes("Loaded.");
-				Debug.WriteLine("The TestPanelTestWindow Window is now loaded");
+				Debug.WriteLine("The MapSectionDisplayControlis now loaded");
 
 			}
 		}
+
 
 		#region BitmapGridControl Handlers
 
@@ -54,24 +53,6 @@ namespace MSetExplorer.XPoc
 		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (Size, Size) e)
 		{
 			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
-		}
-
-		#endregion
-
-		#region Button Handlers
-
-		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
-
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
-		{
-			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.ReturnToTopNav);
-			Close();
-		}
-
-		private void ExitButton_Click(object sender, RoutedEventArgs e)
-		{
-			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.Close);
-			Close();
 		}
 
 		#endregion
@@ -92,6 +73,6 @@ namespace MSetExplorer.XPoc
 			Debug.WriteLine($"At {label}, the sizes are BmGrid: {bmgcSize}, Canvas: {cSize}, Image: {iSize}, Bitmap: {bSize}.");
 		}
 
-	}
 
+	}
 }

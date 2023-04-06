@@ -14,13 +14,15 @@
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="0" CanContentScroll="False">
+        <!--<ScrollViewer Grid.Row="0" CanContentScroll="False">
             <local:BitmapGridControl x:Name="BitmapGridControl1">
                 <Canvas Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
                     <Image x:Name="myImage" Source="{Binding Bitmap}"/>
                 </Canvas>
             </local:BitmapGridControl>
-        </ScrollViewer>
+        </ScrollViewer>-->
+
+        <local:BitmapGridControl x:Name="BitmapGridControl1" Grid.Row="0"/>
 
         <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 

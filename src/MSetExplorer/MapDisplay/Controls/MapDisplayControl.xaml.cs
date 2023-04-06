@@ -241,8 +241,9 @@ namespace MSetExplorer
 		{
 			var cSize = new SizeInt(_canvas.Width, _canvas.Height);
 			var iSize = new SizeInt(myImage.ActualWidth, myImage.ActualHeight);
-			var bSize = new SizeInt(_vm.Bitmap.Width, _vm.Bitmap.Height);
+			//var bSize = new SizeInt(_vm.Bitmap.Width, _vm.Bitmap.Height);
 
+			var bSize = new SizeInt();
 			Debug.WriteLine($"At {label}, the sizes are Canvas: {cSize}, Image: {iSize}, Bitmap: {bSize}.");
 		}
 
