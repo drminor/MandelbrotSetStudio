@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace MSS.Types
@@ -111,6 +112,21 @@ namespace MSS.Types
 		{
 			return X == 0 && Y == 0; 
 		}
+
+		public bool TryConvertToInt(out VectorInt value)
+		{
+			if (Values[0] > int.MaxValue || Values[0] < int.MinValue || Values[1] > int.MaxValue || Values[1] < int.MinValue)
+			{
+				value = new VectorInt();
+				return false;
+			}
+			else
+			{
+				value = new VectorInt((int)Values[0], (int)Values[1]);
+				return true;
+			}
+		}
+
 
 		#endregion
 

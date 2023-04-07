@@ -12,7 +12,7 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 
-		//WriteableBitmap Bitmap { get; }
+		WriteableBitmap Bitmap { get; }
 
 
 		ObservableCollection<MapSection> MapSections { get; }

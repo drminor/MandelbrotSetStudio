@@ -75,6 +75,7 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<ValueTuple<Size, Size>>? ViewPortSizeChanged;
+
 		public event EventHandler<ValueTuple<SizeInt, SizeInt>>? ViewPortSizeInBlocksChanged;
 
 		#endregion

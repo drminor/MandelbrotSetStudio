@@ -1,5 +1,6 @@
 ﻿using MSetExplorer.XPoc;
 using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,6 +13,8 @@ namespace MSetExplorer
 	public partial class MapSectionDisplayControl : UserControl
 	{
 		private MapSectionDisplayViewModel _vm;
+
+		#region Constructor
 
 		public MapSectionDisplayControl()
 		{
@@ -42,6 +45,37 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Public Events
+
+		public event EventHandler<ValueTuple<Size, Size>>? ViewPortSizeChanged
+		{
+			add
+			{
+				BitmapGridControl1.ViewPortSizeChanged += value;
+			}
+			remove
+			{
+				BitmapGridControl1.ViewPortSizeChanged -= value;
+			}
+		}
+
+		public event EventHandler<ValueTuple<SizeInt, SizeInt>>? ViewPortSizeInBlocksChanged
+		{
+			add
+			{
+				BitmapGridControl1.ViewPortSizeInBlocksChanged += value;
+			}
+			remove
+			{
+				BitmapGridControl1.ViewPortSizeInBlocksChanged -= value;
+			}
+		}
+
+
+
+		#endregion
 
 		#region BitmapGridControl Handlers
 

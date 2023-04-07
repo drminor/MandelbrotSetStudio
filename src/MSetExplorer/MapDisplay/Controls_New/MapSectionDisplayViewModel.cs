@@ -7,8 +7,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -17,6 +15,8 @@ namespace MSetExplorer
 {
 	internal class MapSectionDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
+		#region Private Properties
+
 		private static readonly bool REUSE_SECTIONS_FOR_SOME_OPS = true;
 
 		//private readonly SynchronizationContext? _synchronizationContext;
@@ -25,8 +25,6 @@ namespace MSetExplorer
 		private int? _currentMapLoaderJobNumber;
 
 		private object _paintLocker;
-
-
 
 		private AreaColorAndCalcSettings? _currentJobAreaAndCalcSettings;
 
@@ -38,6 +36,8 @@ namespace MSetExplorer
 		// We're assuming that at any one given time, all entries in the JobMapOffsets Dictionary are from the same subdivision.
 		// Consider tracking the sum of the Job's Subdivision's BaseMapPosition and the Job's MapOffset.
 		private Dictionary<int, BigVector> _jobMapOffsets;
+
+		#endregion
 
 		#region Constructor
 
@@ -75,6 +75,17 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+		private WriteableBitmap _bitmap = new WriteableBitmap(10, 10, 96, 96, PixelFormats.Pbgra32, null);
+
+		public WriteableBitmap Bitmap
+		{
+			get => _bitmap;
+			set
+			{
+				_bitmap = value;
+			}
+		}
 
 		public SizeInt BlockSize { get; init; }
 		private Int32Rect BlockRect { get; init; }
@@ -172,7 +183,11 @@ namespace MSetExplorer
 
 		public bool HandleContainerSizeUpdates { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-		public SizeDbl ContainerSize { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+		public SizeDbl ContainerSize
+		{ 
+			get => throw new NotImplementedException(); 
+			set => throw new NotImplementedException();
+		}
 
 		public SizeDbl CanvasSize => throw new NotImplementedException();
 
@@ -180,9 +195,20 @@ namespace MSetExplorer
 
 		public SizeDbl LogicalDisplaySize => throw new NotImplementedException();
 
-		public double DisplayZoom { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-		bool IMapDisplayViewModel.InDesignMode => throw new NotImplementedException();
+		private double _displayZoom = 1;
+		public double DisplayZoom
+		{
+			get => _displayZoom;
+			set
+			{
+				if (Math.Abs(value - _displayZoom) > 0.01)
+				{
+					_displayZoom = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+		public new bool InDesignMode => base.InDesignMode;
 
 
 		#endregion
@@ -660,14 +686,10 @@ namespace MSetExplorer
 				}
 				else
 				{
-					if (int.TryParse(df.X.ToString(), out int x))
+					if (df.TryConvertToInt(out var offset))
 					{
-						if (int.TryParse(df.Y.ToString(), out int y))
-						{
-							var offset = new VectorInt(x, y);
-							blockPosition = mapSection.ScreenPosition.Translate(offset);
-							result = true;
-						}
+						blockPosition = mapSection.ScreenPosition.Translate(offset);
+						result = true;
 					}
 				}
 			}
@@ -682,6 +704,7 @@ namespace MSetExplorer
 				return false;
 			}
 
+			// TODO: Should we subtract 1 BlockSize from the width when checking the Bounds in IsBlockVisible method.
 			if (blockPosition.X > canvasSizeInBlocks.Width || blockPosition.Y > canvasSizeInBlocks.Height)
 			{
 				return false;
