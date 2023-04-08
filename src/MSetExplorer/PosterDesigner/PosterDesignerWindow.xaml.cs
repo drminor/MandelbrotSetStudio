@@ -75,8 +75,8 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine("The PosterDesigner Window is handling ContentRendered");
 
-			_vm.MapDisplayViewModel.ContainerSize = new SizeDbl(300);
-			_vm.MapDisplayViewModel.ContainerSize = new SizeDbl(600);
+			//_vm.MapDisplayViewModel.ContainerSize = new SizeDbl(300);
+			//_vm.MapDisplayViewModel.ContainerSize = new SizeDbl(600);
 
 			if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.OpenPoster)
 			{
@@ -108,11 +108,11 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Handling a size change. Current = {new SizeDbl(Width, Height)}, New = {_vm.MapDisplaySize}.");
 
-				_vm.MapDisplayViewModel.HandleContainerSizeUpdates = false;
-				Width = _vm.MapDisplaySize.Width + 481;
+				//_vm.MapDisplayViewModel.HandleContainerSizeUpdates = false;
+				//Width = _vm.MapDisplaySize.Width + 481;
 
-				_vm.MapDisplayViewModel.HandleContainerSizeUpdates = true;
-				Height = _vm.MapDisplaySize.Height + 96;
+				//_vm.MapDisplayViewModel.HandleContainerSizeUpdates = true;
+				//Height = _vm.MapDisplaySize.Height + 96;
 			}
 		}
 

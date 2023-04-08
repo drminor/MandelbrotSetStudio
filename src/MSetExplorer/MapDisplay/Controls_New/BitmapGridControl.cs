@@ -6,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
@@ -24,12 +23,10 @@ namespace MSetExplorer
 
 		private Canvas _canvas;
 		private Image _image;
-		private WriteableBitmap _bitmap;
-
 
 		private Point _offset;
 		private Size _unscaledExtent;
-		private Size _viewport;
+		private Size _viewPort;
 
 		private Point _contentRenderTransformOrigin;
 		private TranslateTransform _contentOffsetTransform;
@@ -38,8 +35,7 @@ namespace MSetExplorer
 		private SizeDbl _containerSize;
 
 		private SizeInt _viewPortInBlocks;
-		private SizeInt _allocatedBlocks;
-		private int _maxYPtr;
+
 
 		//private VectorInt _canvasControlOffset;
 
@@ -55,11 +51,10 @@ namespace MSetExplorer
 			_content = null; 
 			_canvas = new Canvas();
 			_image = new Image();
-			_bitmap = CreateBitmap(new SizeInt(10));
 
 			_offset = new Point(0, 0);
 			_unscaledExtent = new Size(0, 0);
-			_viewport = new Size(0, 0);
+			_viewPort = new Size(0, 0);
 
 			_contentRenderTransformOrigin = new Point(0, 0);
 			_transformGroup = new TransformGroup();
@@ -85,58 +80,25 @@ namespace MSetExplorer
 		public Canvas Canvas => _canvas;
 		public Image Image => _image;
 
-		public Size UnscaledExtent
-		{
-			get => _unscaledExtent;
-			set
-			{
-				_unscaledExtent = value;
-			}
-		}
-
-		public Size ViewPort
-		{
-			get => _viewport;
-			set
-			{
-				if (_viewport != value)
-				{
-					var previousValue = ViewPort;
-					_viewport = value;
-
-					Debug.WriteLine($"The BitmapGridControl ViewPort is now {value}.");
-					InvalidateScrollInfo();
-					ViewPortSizeChanged?.Invoke(this, new (previousValue, ViewPort));
-				}
-			}
-		}
-
 		public bool HandleContainerSizeUpdates { get; private set; }
 
 		public SizeDbl ContainerSize
 		{
 			get => _containerSize;
-			set
+			private set
 			{
-				if (HandleContainerSizeUpdates)
-				{
-					_containerSize = value;
+				_containerSize = value;
+				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ContainerSize, _blockSize, KEEP_DISPLAY_SQUARE);
+				ViewPortInBlocks = sizeInWholeBlocks;
 
-					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ContainerSize, _blockSize, KEEP_DISPLAY_SQUARE);
-
-					ViewPortInBlocks = sizeInWholeBlocks;
-				}
-				else
-				{
-					//Debug.WriteLine($"Not handling the ContainerSize update. The value is {value}.");
-				}
+				ViewPort = ScreenTypeHelper.ConvertToSize(ContainerSize);
 			}
 		}
 
 		public SizeInt ViewPortInBlocks
 		{
 			get => _viewPortInBlocks;
-			set
+			private set
 			{
 				if (value.Width < 0 || value.Height < 0)
 				{
@@ -145,23 +107,28 @@ namespace MSetExplorer
 
 				if (_viewPortInBlocks != value)
 				{
-					// Calculate new size of bitmap in block-sized units
-					var newAllocatedBlocks = value.Inflate(2);
-					Debug.WriteLine($"Resizing the BitmapGridControl Writeable Bitmap. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
-
-					ViewPortSizeInBlocksChanged?.Invoke(this, new (_allocatedBlocks, newAllocatedBlocks));
-
-					_allocatedBlocks = newAllocatedBlocks;
-					_maxYPtr = _allocatedBlocks.Height - 1;
+					var previousValue = _viewPortInBlocks;
 					_viewPortInBlocks = value;
 
-					// Create a new Writeable bitmap instance
-					var newSize = newAllocatedBlocks.Scale(_blockSize);
-					_bitmap = CreateBitmap(newSize);
-					_image.Source = _bitmap;
+					Debug.WriteLine($"BitmapGridControl: ViewPortInBlocks is changing: Old size: {previousValue}, new size: {_viewPortInBlocks}.");
+					ViewPortSizeInBlocksChanged?.Invoke(this, new (previousValue, _viewPortInBlocks));
+				}
+			}
+		}
 
-					var newViewPortSize = ViewPortInBlocks.Scale(_blockSize);
-					ViewPort = ScreenTypeHelper.ConvertToSize(newViewPortSize);
+		public Size ViewPort
+		{
+			get => _viewPort;
+			private set
+			{
+				if (_viewPort != value)
+				{
+					var previousValue = _viewPort;
+					_viewPort = value;
+
+					Debug.WriteLine($"BitmapGridControl: ViewPort is changing: Old size: {previousValue}, new size: {_viewPort}.");
+					InvalidateScrollInfo();
+					ViewPortSizeChanged?.Invoke(this, new(previousValue, _viewPort));
 				}
 			}
 		}
@@ -176,6 +143,15 @@ namespace MSetExplorer
 		//			_canvasControlOffset = value;
 		//			OnPropertyChanged();
 		//		}
+		//	}
+		//}
+
+		//public Size UnscaledExtent
+		//{
+		//	get => _unscaledExtent;
+		//	set
+		//	{
+		//		_unscaledExtent = value;
 		//	}
 		//}
 
@@ -257,7 +233,6 @@ namespace MSetExplorer
 				Debug.WriteLine($"Found the BitmapGridControl_Content template.");
 
 				(_canvas, _image) = BuildContentModel(_content);
-				_image.Source = _bitmap;
 
 				// Setup the transform on the content so that we can position the Bitmap to "pull" it left and up so that the
 				// portion of the bitmap that is visible corresponds with the requested map coordinates.
@@ -294,18 +269,6 @@ namespace MSetExplorer
 			{
 				_scrollOwner.InvalidateScrollInfo();
 			}
-		}
-
-		#endregion
-
-		#region Bitmap Methods
-
-		private WriteableBitmap CreateBitmap(SizeInt size)
-		{
-			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
-			//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
-
-			return result;
 		}
 
 		#endregion

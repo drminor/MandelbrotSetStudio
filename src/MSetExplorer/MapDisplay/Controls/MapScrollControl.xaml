@@ -19,7 +19,7 @@
             <ScrollBar DockPanel.Dock="Right" Orientation="Vertical" x:Name="VScrollBar" Width="18"/>
 
             <Border BorderThickness="1" BorderBrush="Black">
-                <local:MapDisplayControl x:Name="mapDisplay1"></local:MapDisplayControl>
+                <local:MapSectionDisplayControl x:Name="mapDisplay1"></local:MapSectionDisplayControl>
             </Border>
         </DockPanel>
     </Grid>

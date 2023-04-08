@@ -15,7 +15,6 @@ namespace MSetExplorer
 	{
 		#region Private Properties
 
-		private static bool KEEP_DISPLAY_SQUARE;
 		private static bool REUSE_SECTIONS_FOR_SOME_OPS;
 
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -25,7 +24,7 @@ namespace MSetExplorer
 
 		private object _paintLocker;
 
-		private SizeDbl _containerSize;
+		//private SizeDbl _containerSize;
 		private SizeDbl _canvasSize;
 
 		private VectorInt _canvasControlOffset;
@@ -42,7 +41,6 @@ namespace MSetExplorer
 		{
 			BlockSize = blockSize;
 
-			KEEP_DISPLAY_SQUARE = true;
 			REUSE_SECTIONS_FOR_SOME_OPS = false;    // TODO: Set REUSE_SECTIONS_FOR_SOME_OPS to TRUE!!
 
 			_paintLocker = new object();
@@ -50,27 +48,30 @@ namespace MSetExplorer
 			_mapSectionHelper = mapSectionHelper;
 			_mapLoaderManager = mapLoaderManager;
 
-			_bitmapGrid = new BitmapGrid(_mapSectionHelper, BlockSize, x => { Bitmap = x; });
-
-			//MapSections = new ObservableCollection<MapSection>();
+			Action<WriteableBitmap> updateBitmapAction = x => { Bitmap = x; };
+			_bitmapGrid = new BitmapGrid(_mapSectionHelper, BlockSize, updateBitmapAction);
 
 			_currentJobAreaAndCalcSettings = null;
 
 			_logicalDisplaySize = new SizeDbl();
 			CanvasControlOffset = new VectorInt();
 
-			HandleContainerSizeUpdates = true;
+			//HandleContainerSizeUpdates = true;
 
 			DisplayZoom = 1.0;
-			ContainerSize = new SizeDbl(600);
+			//ContainerSize = new SizeDbl(600); // Check This Change
 		}
 
 		#endregion
 
-		#region Public Properties - Content
+		#region Events
 
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		public event EventHandler<int>? DisplayJobCompleted;
+
+		#endregion
+
+		#region Public Properties - Content
 
 		public SizeInt BlockSize { get; init; }
 
@@ -146,29 +147,24 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool HandleContainerSizeUpdates { get; set; }
+		//public bool HandleContainerSizeUpdates { get; set; }
 
-		public SizeDbl ContainerSize
-		{
-			get => _containerSize;
-			set
-			{
-				if (HandleContainerSizeUpdates)
-				{
-					_containerSize = value;
-
-					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ContainerSize, BlockSize, KEEP_DISPLAY_SQUARE);
-					var desiredCanvasSize = sizeInWholeBlocks.Scale(BlockSize);
-
-					//Debug.WriteLine($"The Container size is now {value}, updating the CanvasSize from {CanvasSize} to {desiredCanvasSize}.");
-					CanvasSize = new SizeDbl(desiredCanvasSize);
-				}
-				else
-				{
-					//Debug.WriteLine($"Not handling the ContainerSize update. The value is {value}.");
-				}
-			}
-		}
+		//public SizeDbl ContainerSize
+		//{
+		//	get => _containerSize;
+		//	set
+		//	{
+		//		if (HandleContainerSizeUpdates)
+		//		{
+		//			_containerSize = value;
+		//			//OnPropertyChanged(nameof(IMapDisplayViewModel.ContainerSize));
+		//		}
+		//		else
+		//		{
+		//			//Debug.WriteLine($"Not handling the ContainerSize update. The value is {value}.");
+		//		}
+		//	}
+		//}
 
 		public SizeDbl CanvasSize
 		{
@@ -177,15 +173,7 @@ namespace MSetExplorer
 			{
 				if (value != _canvasSize)
 				{
-					Debug.WriteLine($"The MapDisplay Canvas Size is now {value}.");
 					_canvasSize = value;
-
-					//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
-
-					CanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize.Round(), BlockSize);
-
-					LogicalDisplaySize = CanvasSize;
-
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
 				}
 			}
@@ -196,8 +184,11 @@ namespace MSetExplorer
 			get => _bitmapGrid.CanvasSizeInBlocks;
 			set
 			{
-				_bitmapGrid.CanvasSizeInBlocks = value;
-				//OnPropertyChanged(nameof(IMapDisplayViewModel.Bitmap));
+				if (value != _bitmapGrid.CanvasSizeInBlocks)
+				{ 
+					_bitmapGrid.CanvasSizeInBlocks = value;
+					//OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSizeInBlocks));
+				}
 			}
 		}
 

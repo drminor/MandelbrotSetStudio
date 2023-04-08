@@ -70,8 +70,8 @@ namespace MSetExplorer
 			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
-			//IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
+			//IMapDisplayViewModel mapDisplayViewModel = new MapDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
 

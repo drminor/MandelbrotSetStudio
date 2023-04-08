@@ -23,13 +23,15 @@ namespace MSetExplorer
 		bool UseEscapeVelocities { get; set; }
 		bool HighlightSelectedColorBand { get; set; }
 
-		bool HandleContainerSizeUpdates { get; set; }
-		SizeDbl ContainerSize { get; set; }
-		
-		SizeDbl CanvasSize { get; }
+		//bool HandleContainerSizeUpdates { get; set; }
+		//SizeDbl ContainerSize { get; set; }
+
+		SizeDbl CanvasSize { get; set; }
+		SizeInt CanvasSizeInBlocks { get; set; }
+		SizeDbl LogicalDisplaySize { get; set; }
+
 		VectorInt CanvasControlOffset { get; set; }
 
-		SizeDbl LogicalDisplaySize { get; }
 		double DisplayZoom { get; set; }
 
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;

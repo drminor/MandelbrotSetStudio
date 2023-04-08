@@ -142,17 +142,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void RedrawSections()
-		//{
-		//	lock (_paintLocker)
-		//	{
-		//		if (_colorMap != null)
-		//		{
-		//			RedrawSections(_colorMap, MapBlockOffset);
-		//		}
-		//	}
-		//}
-
 		public BigVector MapBlockOffset
 		{
 			get => _mapBlockOffset;
@@ -177,19 +166,24 @@ namespace MSetExplorer
 
 				if (_canvasSizeInBlocks != value)
 				{
-					// Calculate new size of bitmap in block-sized units
-					var newAllocatedBlocks = value.Inflate(2);
-					Debug.WriteLine($"Resizing the MapDisplay Writeable Bitmap. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
-
-					_allocatedBlocks = newAllocatedBlocks;
-					_maxYPtr = _allocatedBlocks.Height - 1;
 					_canvasSizeInBlocks = value;
-
-					// Create a new Writeable bitmap instance
-					var newSize = newAllocatedBlocks.Scale(BlockSize);
-					Bitmap = CreateBitmap(newSize);
+					CalcImageSizeAndCreateBitmap(_canvasSizeInBlocks);
 				}
 			}
+		}
+
+
+		private void CalcImageSizeAndCreateBitmap(SizeInt canvasSizeInBlocks)
+		{
+			// Calculate new size of bitmap in block-sized units
+			var newAllocatedBlocks = canvasSizeInBlocks.Inflate(2);
+			Debug.WriteLine($"Resizing the MapDisplay Writeable Bitmap. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
+
+			_allocatedBlocks = newAllocatedBlocks;
+			_maxYPtr = _allocatedBlocks.Height - 1;
+
+			var newSize = _allocatedBlocks.Scale(BlockSize);
+			Bitmap = CreateBitmap(newSize);
 		}
 
 		//public VectorInt CanvasControlOffset
@@ -237,14 +231,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
-
-		public void MapSectionReady(MapSection mapSection)
-		{
-			if (mapSection.MapSectionVectors != null)
-			{
-				_bitmap.Dispatcher.Invoke(GetAndPlacePixels, new object[] { mapSection, mapSection.MapSectionVectors });
-			}
-		}
 
 		public int? ReuseAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
@@ -345,7 +331,15 @@ namespace MSetExplorer
 					MapSections.Add(mapSection);
 
 					_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
-					_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
+
+					try
+					{
+						_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
+					}
+					catch (Exception e)
+					{
+						Debug.WriteLine($"{e.Message}: Attempting to write a block off-canvas at {loc}. JobNumber: {mapSection.JobNumber}.");
+					}
 
 					if (mapSection.IsLastSection)
 					{
@@ -382,47 +376,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public void GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors)
-		//{
-		//	// The current content of the screen may change from invocation to invocation of this method, but will not change while the _paintLocker is held.
-		//	bool jobIsCompleted = false;
-
-		//	lock (_paintLocker)
-		//	{
-		//		if (TryGetAdjustedBlockPositon(mapSection, MapBlockOffset, out var blockPosition))
-		//		{
-		//			if (IsBLockVisible(blockPosition.Value, CanvasSizeInBlocks))
-		//			{
-		//				MapSections.Add(mapSection);
-
-		//				if (_colorMap != null)
-		//				{
-		//					var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
-		//					var loc = invertedBlockPos.Scale(BlockSize);
-
-		//					_mapSectionHelper.LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
-		//					_bitmap.WritePixels(BlockRect, mapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
-		//				}
-		//			}
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"Not drawing map section: {mapSection} with adjusted block position: {blockPosition} for job number = {mapSection.JobNumber}.");
-		//			_mapSectionHelper.ReturnMapSection(mapSection);
-		//		}
-
-		//		if (mapSection.IsLastSection)
-		//		{
-		//			jobIsCompleted = true;
-		//		}
-		//	}
-
-		//	if (jobIsCompleted)
-		//	{
-		//		DisplayJobCompleted?.Invoke(this, mapSection.JobNumber);
-		//	}
-		//}
 
 		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors, out PointInt? blockPosition)
 		{

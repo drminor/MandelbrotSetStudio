@@ -15,7 +15,14 @@
 
 
   <ItemGroup>
+    <Compile Remove="MapDisplay\Controls\MapDisplayControl.xaml.cs" />
+    <Compile Remove="MapDisplay\Controls\MapDisplayViewModel.cs" />
     <Compile Remove="XPoc\SkiaSharpPOC\SkiaControl.cs" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Page Remove="MapDisplay\Controls\MapDisplayControl.xaml" />
   </ItemGroup>
 
 

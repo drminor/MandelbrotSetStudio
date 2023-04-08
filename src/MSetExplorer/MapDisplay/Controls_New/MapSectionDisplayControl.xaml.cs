@@ -4,7 +4,6 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -13,7 +12,9 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapSectionDisplayControl : UserControl
 	{
-		private readonly static bool SHOW_BORDER = false;
+		#region Private Properties
+
+		//private readonly static bool SHOW_BORDER = false;
 		private readonly static bool CLIP_IMAGE_BLOCKS = true;
 
 		private IMapDisplayViewModel _vm;
@@ -24,7 +25,9 @@ namespace MSetExplorer
 		private double _offsetZoom;
 
 		private SelectionRectangle? _selectionRectangle;
-		private Border? _border;
+		//private Border? _border;
+
+		#endregion
 
 		#region Constructor
 
@@ -57,6 +60,16 @@ namespace MSetExplorer
 
 				_vm = (IMapDisplayViewModel)DataContext;
 
+				_vm.CanvasSizeInBlocks = BitmapGridControl1.ViewPortInBlocks;
+
+				//var ourSize = new SizeDbl(ActualWidth, ActualHeight);
+				//var ourSize = BitmapGridControl1.ViewPort;
+				var ourSize = BitmapGridControl1.ContainerSize;
+
+				//_vm.ContainerSize = ourSize;
+				_vm.CanvasSize = ourSize;
+				_vm.LogicalDisplaySize = ourSize;
+
 				_image.Source = _vm.Bitmap;
 
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
@@ -76,36 +89,14 @@ namespace MSetExplorer
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 
 				// A border is helpful for troubleshooting.
-				_border = SHOW_BORDER && (!CLIP_IMAGE_BLOCKS) ? BuildBorder(_canvas) : null;
+				//_border = SHOW_BORDER && (!CLIP_IMAGE_BLOCKS) ? BuildBorder(_canvas) : null;
+				//_border = null;
 
 				SetCanvasOffset(new VectorInt(), 1);
-
-				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
 
 				ReportSizes("Loaded.");
 				Debug.WriteLine("The MapSectionDisplay Control is now loaded");
 			}
-		}
-
-		private Border BuildBorder(Canvas canvas)
-		{
-			var result = new Border
-			{
-				Width = canvas.Width + 4,
-				Height = canvas.Width + 4,
-				HorizontalAlignment = HorizontalAlignment.Left,
-				VerticalAlignment = VerticalAlignment.Top,
-				BorderThickness = new Thickness(1),
-				BorderBrush = Brushes.BlueViolet,
-				Visibility = Visibility.Visible
-			};
-
-			_ = canvas.Children.Add(result);
-			result.SetValue(Canvas.LeftProperty, -2d);
-			result.SetValue(Canvas.TopProperty, -2d);
-			result.SetValue(Panel.ZIndexProperty, 100);
-
-			return result;
 		}
 
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
@@ -127,6 +118,27 @@ namespace MSetExplorer
 				_vm.Dispose();
 			}
 		}
+
+		//private Border BuildBorder(Canvas canvas)
+		//{
+		//	var result = new Border
+		//	{
+		//		Width = canvas.Width + 4,
+		//		Height = canvas.Width + 4,
+		//		HorizontalAlignment = HorizontalAlignment.Left,
+		//		VerticalAlignment = VerticalAlignment.Top,
+		//		BorderThickness = new Thickness(1),
+		//		BorderBrush = Brushes.BlueViolet,
+		//		Visibility = Visibility.Visible
+		//	};
+
+		//	_ = canvas.Children.Add(result);
+		//	result.SetValue(Canvas.LeftProperty, -2d);
+		//	result.SetValue(Canvas.TopProperty, -2d);
+		//	result.SetValue(Panel.ZIndexProperty, 100);
+
+		//	return result;
+		//}
 
 		#endregion
 
@@ -165,18 +177,25 @@ namespace MSetExplorer
 			var previousSizeInBlocks = e.Item1;
 			var newSizeInBlocks = e.Item2;
 			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort SizeInBlocks Changed. Prev: {previousSizeInBlocks}, New: {newSizeInBlocks}.");
+
+			_vm.CanvasSizeInBlocks = newSizeInBlocks;
 		}
 
 		private void OnViewPortSizeChanged(object? sender, (Size, Size) e)
 		{
 			var previousSize = e.Item1;
 			var newSize = e.Item2;
+	
 			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {previousSize}, New: {newSize}.");
 
-			//Debug.WriteLine($"The MapDisplay Size is changing. The new size is {e.NewSize}, the old size is {e.PreviousSize}");
-
 			ReportSizes("Display Sized Changed");
-			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(newSize));
+
+			var ourSize = ScreenTypeHelper.ConvertToSizeDbl(newSize);
+
+			//_vm.ContainerSize = ourSize;
+			_vm.CanvasSize = ourSize;
+			_vm.LogicalDisplaySize = ourSize;
+
 			ReportSizes("After Updating VM with new Sizes");
 		}
 
@@ -198,13 +217,6 @@ namespace MSetExplorer
 			//	SetCanvasTransform(scale);
 			//}
 
-			//if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
-			//{
-			//	ReportSizes("Canvas Size Changing");
-			//	UpdateTheCanvasSize(_vm.CanvasSize.Round());
-			//	ReportSizes("Canvas Sized Changed");
-			//}
-
 			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
 			{
 				_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
@@ -223,30 +235,7 @@ namespace MSetExplorer
 
 		#endregion
 
-
 		#region Private Methods
-
-		private void UpdateTheVmWithOurSize(SizeDbl size)
-		{
-			if (_border != null)
-			{
-				size = size.Inflate(8);
-			}
-
-			_vm.ContainerSize = size;
-		}
-
-		//private void UpdateTheCanvasSize(SizeInt size)
-		//{
-		//	_canvas.Width = size.Width;
-		//	_canvas.Height = size.Height;
-
-		//	if (_border != null)
-		//	{
-		//		_border.Width = size.Width + 4;
-		//		_border.Height = size.Height + 4;
-		//	}
-		//}
 
 		/// <summary>
 		/// The position of the canvas' origin relative to the Image Block Data
@@ -272,11 +261,6 @@ namespace MSetExplorer
 
 				ReportSizes("SetCanvasOffset");
 			}
-
-			//_vm.ClipRegion = new SizeDbl(
-			//	(double)_mapDisplayImage.GetValue(Canvas.LeftProperty),
-			//	(double)_mapDisplayImage.GetValue(Canvas.BottomProperty)
-			//	);
 		}
 
 		//private void SetCanvasTransform(PointDbl scale)
