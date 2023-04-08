@@ -83,6 +83,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public Canvas Canvas => _canvas;
+		public Image Image => _image;
 
 		public Size UnscaledExtent
 		{

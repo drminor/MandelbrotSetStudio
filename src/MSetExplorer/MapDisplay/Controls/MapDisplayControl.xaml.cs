@@ -38,14 +38,8 @@ namespace MSetExplorer
 			_vm = (IMapDisplayViewModel)DataContext;
 
 			Loaded += MapDisplay_Loaded;
-			Initialized += MapDisplayControl_Initialized;
 			Unloaded += MapDisplayControl_Unloaded;
 			InitializeComponent();
-		}
-
-		private void MapDisplayControl_Initialized(object? sender, EventArgs e)
-		{
-			Debug.WriteLine("The MapDisplayControl is initialized.");
 		}
 
 		private void MapDisplay_Loaded(object sender, RoutedEventArgs e)

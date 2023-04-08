@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -12,21 +13,34 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class MapSectionDisplayControl : UserControl
 	{
-		private MapSectionDisplayViewModel _vm;
+		private readonly static bool SHOW_BORDER = false;
+		private readonly static bool CLIP_IMAGE_BLOCKS = true;
+
+		private IMapDisplayViewModel _vm;
+
+		private Canvas _canvas;
+		private Image _image;
+		private VectorInt _offset;
+		private double _offsetZoom;
+
+		private SelectionRectangle? _selectionRectangle;
+		private Border? _border;
 
 		#region Constructor
 
 		public MapSectionDisplayControl()
 		{
-			_vm = (MapSectionDisplayViewModel)DataContext;
+			_canvas = new Canvas();
+			_image = new Image();
 
+			_offset = new VectorInt(-1, -1);
+			_offsetZoom = 1;
+
+			_vm = (IMapDisplayViewModel)DataContext;
 			Loaded += MapSectionDisplayControl_Loaded;
+			Unloaded += MapSectionDisplayControl_Unloaded;
 
 			InitializeComponent();
-
-			BitmapGridControl1.ViewPortSizeInBlocksChanged += BitmapGridControl1_ViewPortSizeInBlocksChanged;
-			BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
-
 		}
 
 		private void MapSectionDisplayControl_Loaded(object sender, RoutedEventArgs e)
@@ -38,58 +52,238 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (MapSectionDisplayViewModel)DataContext;
+				_canvas = BitmapGridControl1.Canvas;
+				_image = BitmapGridControl1.Image;
+
+				_vm = (IMapDisplayViewModel)DataContext;
+
+				_image.Source = _vm.Bitmap;
+
+				_vm.PropertyChanged += ViewModel_PropertyChanged;
+
+				BitmapGridControl1.ViewPortSizeInBlocksChanged += OnViewPortSizeInBlocksChanged;
+				BitmapGridControl1.ViewPortSizeChanged += OnViewPortSizeChanged;
+
+				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+				ReportSizes("Loading");
+
+				_image.SetValue(Panel.ZIndexProperty, 5);
+				_image.SetValue(Canvas.LeftProperty, 0d);
+				_image.SetValue(Canvas.RightProperty, 0d);
+
+				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
+				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
+				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
+
+				// A border is helpful for troubleshooting.
+				_border = SHOW_BORDER && (!CLIP_IMAGE_BLOCKS) ? BuildBorder(_canvas) : null;
+
+				SetCanvasOffset(new VectorInt(), 1);
+
+				UpdateTheVmWithOurSize(new SizeDbl(ActualWidth, ActualHeight));
+
 				ReportSizes("Loaded.");
-				Debug.WriteLine("The MapSectionDisplayControlis now loaded");
+				Debug.WriteLine("The MapSectionDisplay Control is now loaded");
+			}
+		}
 
+		private Border BuildBorder(Canvas canvas)
+		{
+			var result = new Border
+			{
+				Width = canvas.Width + 4,
+				Height = canvas.Width + 4,
+				HorizontalAlignment = HorizontalAlignment.Left,
+				VerticalAlignment = VerticalAlignment.Top,
+				BorderThickness = new Thickness(1),
+				BorderBrush = Brushes.BlueViolet,
+				Visibility = Visibility.Visible
+			};
+
+			_ = canvas.Children.Add(result);
+			result.SetValue(Canvas.LeftProperty, -2d);
+			result.SetValue(Canvas.TopProperty, -2d);
+			result.SetValue(Panel.ZIndexProperty, 100);
+
+			return result;
+		}
+
+		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
+		{
+			//SizeChanged -= MapDisplay_SizeChanged;
+			BitmapGridControl1.ViewPortSizeInBlocksChanged -= OnViewPortSizeInBlocksChanged;
+			BitmapGridControl1.ViewPortSizeChanged -= OnViewPortSizeChanged;
+
+			if (!(_selectionRectangle is null))
+			{
+				_selectionRectangle.AreaSelected -= SelectionRectangle_AreaSelected;
+				_selectionRectangle.ImageDragged -= SelectionRectangle_ImageDragged;
+				_selectionRectangle.TearDown();
+			}
+
+			if (!(_vm is null))
+			{
+				_vm.PropertyChanged -= ViewModel_PropertyChanged;
+				_vm.Dispose();
 			}
 		}
 
 		#endregion
 
-		#region Public Events
+		//#region Public Events
 
-		public event EventHandler<ValueTuple<Size, Size>>? ViewPortSizeChanged
+		//public event EventHandler<ValueTuple<Size, Size>>? ViewPortSizeChanged
+		//{
+		//	add
+		//	{
+		//		BitmapGridControl1.ViewPortSizeChanged += value;
+		//	}
+		//	remove
+		//	{
+		//		BitmapGridControl1.ViewPortSizeChanged -= value;
+		//	}
+		//}
+
+		//public event EventHandler<ValueTuple<SizeInt, SizeInt>>? ViewPortSizeInBlocksChanged
+		//{
+		//	add
+		//	{
+		//		BitmapGridControl1.ViewPortSizeInBlocksChanged += value;
+		//	}
+		//	remove
+		//	{
+		//		BitmapGridControl1.ViewPortSizeInBlocksChanged -= value;
+		//	}
+		//}
+
+		//#endregion
+
+		#region Event Handlers
+
+		private void OnViewPortSizeInBlocksChanged(object? sender, (SizeInt, SizeInt) e)
 		{
-			add
+			var previousSizeInBlocks = e.Item1;
+			var newSizeInBlocks = e.Item2;
+			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort SizeInBlocks Changed. Prev: {previousSizeInBlocks}, New: {newSizeInBlocks}.");
+		}
+
+		private void OnViewPortSizeChanged(object? sender, (Size, Size) e)
+		{
+			var previousSize = e.Item1;
+			var newSize = e.Item2;
+			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {previousSize}, New: {newSize}.");
+
+			//Debug.WriteLine($"The MapDisplay Size is changing. The new size is {e.NewSize}, the old size is {e.PreviousSize}");
+
+			ReportSizes("Display Sized Changed");
+			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(newSize));
+			ReportSizes("After Updating VM with new Sizes");
+		}
+
+		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName is nameof(IMapDisplayViewModel.Bitmap))
 			{
-				BitmapGridControl1.ViewPortSizeChanged += value;
+				_image.Source = _vm.Bitmap;
 			}
-			remove
+
+			if (e.PropertyName is nameof(IMapDisplayViewModel.CanvasControlOffset))
 			{
-				BitmapGridControl1.ViewPortSizeChanged -= value;
+				SetCanvasOffset(_vm.CanvasControlOffset, _vm.DisplayZoom);
+			}
+
+			//if (e.PropertyName is nameof(IMapDisplayViewModel.DisplayZoom))
+			//{
+			//	var scale = new PointDbl(_vm.DisplayZoom, _vm.DisplayZoom);
+			//	SetCanvasTransform(scale);
+			//}
+
+			//if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			//{
+			//	ReportSizes("Canvas Size Changing");
+			//	UpdateTheCanvasSize(_vm.CanvasSize.Round());
+			//	ReportSizes("Canvas Sized Changed");
+			//}
+
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
+			{
+				_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
 			}
 		}
 
-		public event EventHandler<ValueTuple<SizeInt, SizeInt>>? ViewPortSizeInBlocksChanged
+		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{
-			add
-			{
-				BitmapGridControl1.ViewPortSizeInBlocksChanged += value;
-			}
-			remove
-			{
-				BitmapGridControl1.ViewPortSizeInBlocksChanged -= value;
-			}
+			_vm.UpdateMapViewZoom(e);
 		}
 
-
+		private void SelectionRectangle_ImageDragged(object? sender, ImageDraggedEventArgs e)
+		{
+			_vm.UpdateMapViewPan(e);
+		}
 
 		#endregion
 
-		#region BitmapGridControl Handlers
 
-		private void BitmapGridControl1_ViewPortSizeInBlocksChanged(object? sender, (SizeInt, SizeInt) e)
+		#region Private Methods
+
+		private void UpdateTheVmWithOurSize(SizeDbl size)
 		{
-			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort SizeInBlocks Changed. Prev: {e.Item1}, New: {e.Item2}.");
+			if (_border != null)
+			{
+				size = size.Inflate(8);
+			}
+
+			_vm.ContainerSize = size;
 		}
 
-		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (Size, Size) e)
+		//private void UpdateTheCanvasSize(SizeInt size)
+		//{
+		//	_canvas.Width = size.Width;
+		//	_canvas.Height = size.Height;
+
+		//	if (_border != null)
+		//	{
+		//		_border.Width = size.Width + 4;
+		//		_border.Height = size.Height + 4;
+		//	}
+		//}
+
+		/// <summary>
+		/// The position of the canvas' origin relative to the Image Block Data
+		/// </summary>
+		private void SetCanvasOffset(VectorInt value, double displayZoom)
 		{
-			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
+			if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
+			{
+				//Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
+				Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
+				Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
+
+				_offset = value;
+				_offsetZoom = displayZoom;
+
+				// For a postive offset, we "pull" the image down and to the left.
+				var invertedOffset = value.Invert();
+
+				var scaledInvertedOffset = invertedOffset.Scale(1 / displayZoom);
+
+				_image.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
+				_image.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
+
+				ReportSizes("SetCanvasOffset");
+			}
+
+			//_vm.ClipRegion = new SizeDbl(
+			//	(double)_mapDisplayImage.GetValue(Canvas.LeftProperty),
+			//	(double)_mapDisplayImage.GetValue(Canvas.BottomProperty)
+			//	);
 		}
 
-		#endregion
+		//private void SetCanvasTransform(PointDbl scale)
+		//{
+		//	_canvas.RenderTransformOrigin = new Point(0.5, 0.5);
+		//	_canvas.RenderTransform = new ScaleTransform(scale.X, scale.Y);
+		//}
 
 		private void ReportSizes(string label)
 		{
@@ -107,6 +301,6 @@ namespace MSetExplorer
 			Debug.WriteLine($"At {label}, the sizes are BmGrid: {bmgcSize}, Canvas: {cSize}, Image: {iSize}, Bitmap: {bSize}.");
 		}
 
-
+		#endregion
 	}
 }
