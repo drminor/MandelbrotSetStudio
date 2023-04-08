@@ -1,19 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
-namespace MSetExplorer
+namespace MSetExplorer.MapDisplay.ExpermentalOrUnused
 {
-	public class TestPanel : Panel, IScrollInfo
+	public partial class TestContentControl : ContentControl, IScrollInfo
 	{
-		#region Private Properties
+		#region Scroll Info Properties
 
 		private ScrollViewer? _owner;
 
@@ -29,19 +26,47 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Constructor
-
-		public TestPanel()
+		/// <summary>
+		/// Static constructor to define metadata for the control (and link it to the style in Generic.xaml).
+		/// </summary>
+		static TestContentControl()
 		{
-			_offset = new Point(0, 40);
-
-			_extent = new Size(0, 0);
-			_viewport = new Size(0, 0);
-
-			RenderTransform = _trans;
+			DefaultStyleKeyProperty.OverrideMetadata(typeof(TestContentControl), new FrameworkPropertyMetadata(typeof(TestContentControl)));
 		}
 
-		#endregion
+		/// <summary>
+		/// Called when a template has been applied to the control.
+		/// </summary>
+		public override void OnApplyTemplate()
+		{
+			base.OnApplyTemplate();
+
+			_content = this.Template.FindName("PART_Content", this) as FrameworkElement;
+			if (_content != null)
+			{
+				////
+				//// Setup the transform on the content so that we can scale it by 'ContentScale'.
+				////
+				//this.contentScaleTransform = new ScaleTransform(this.ContentScale, this.ContentScale);
+
+				////
+				//// Setup the transform on the content so that we can translate it by 'ContentOffsetX' and 'ContentOffsetY'.
+				////
+				//this.contentOffsetTransform = new TranslateTransform();
+				//UpdateTranslationX();
+				//UpdateTranslationY();
+
+				////
+				//// Setup a transform group to contain the translation and scale transforms, and then
+				//// assign this to the content's 'RenderTransform'.
+				////
+				//TransformGroup transformGroup = new TransformGroup();
+				//transformGroup.Children.Add(this.contentOffsetTransform);
+				//transformGroup.Children.Add(this.contentScaleTransform);
+				//content.RenderTransform = transformGroup;
+			}
+		}
+
 
 		#region Public Properties
 
@@ -53,13 +78,13 @@ namespace MSetExplorer
 
 		public bool CanHorizontallyScroll
 		{
-			get => _canHScroll; 
+			get => _canHScroll;
 			set => _canHScroll = value;
 		}
-		
-		public bool CanVerticallyScroll 
+
+		public bool CanVerticallyScroll
 		{
-			get => _canVScroll; 
+			get => _canVScroll;
 			set => _canVScroll = value;
 		}
 
@@ -98,6 +123,35 @@ namespace MSetExplorer
 			SetVerticalOffset(VerticalOffset - 1);
 		}
 
+		public Rect MakeVisible(Visual visual, Rect rectangle)
+		{
+			//for (int i = 0; i < InternalChildren.Count; i++)
+			//{
+			//	if (InternalChildren[i] == visual)
+			//	{
+			//		// We found the visual! Let's scroll it into view.
+			//		// First we need to know how big each child is.
+			//		Size finalSize = RenderSize;
+
+			//		Size childSize = new Size(
+			//			finalSize.Width,
+			//			finalSize.Height * 2 / InternalChildren.Count
+			//			);
+
+			//		// now we can calculate the vertical offset that we need and set it
+			//		SetVerticalOffset(childSize.Height * i);
+
+			//		// child size is always smaller than viewport, because that is what makes the Panel
+			//		// an AnnoyingPanel.
+			//		return rectangle;
+			//	}
+			//}
+
+			//throw new ArgumentException("Given visual is not in this Panel");
+
+			return rectangle;
+		}
+
 		public void MouseWheelDown()
 		{
 			SetVerticalOffset(VerticalOffset + 10);
@@ -122,7 +176,7 @@ namespace MSetExplorer
 
 		public void PageDown()
 		{
-			double childHeight = (_viewport.Height * 2) / InternalChildren.Count;
+			double childHeight = _viewport.Height;
 			SetVerticalOffset(VerticalOffset + childHeight);
 		}
 
@@ -140,7 +194,7 @@ namespace MSetExplorer
 
 		public void PageUp()
 		{
-			double childHeight = (_viewport.Height * 2) / InternalChildren.Count;
+			double childHeight = _viewport.Height;
 			SetVerticalOffset(VerticalOffset - childHeight);
 		}
 
@@ -183,116 +237,10 @@ namespace MSetExplorer
 			{
 				_owner.InvalidateScrollInfo();
 			}
-			
-			_trans.Y = -_offset.Y; 
+
+			_trans.Y = -_offset.Y;
 
 			InvalidateMeasure();
-		}
-
-		public Rect MakeVisible(Visual visual, Rect rectangle)
-		{
-			for (int i = 0; i < InternalChildren.Count; i++)
-			{
-				if (InternalChildren[i] == visual)
-				{
-					// We found the visual! Let's scroll it into view.
-					// First we need to know how big each child is.
-					Size finalSize = RenderSize;
-
-					Size childSize = new Size(
-						finalSize.Width,
-						finalSize.Height * 2 / InternalChildren.Count
-						);
-
-					// now we can calculate the vertical offset that we need and set it
-					SetVerticalOffset(childSize.Height * i);
-
-					// child size is always smaller than viewport, because that is what makes the Panel
-					// an AnnoyingPanel.
-					return rectangle;
-				}
-			}
-
-			throw new ArgumentException("Given visual is not in this Panel");
-		}
-
-
-		#endregion
-
-		#region Private Methods
-
-		protected override Size MeasureOverride(Size availableSize)
-		{
-			Size childSize = new Size(
-				availableSize.Width,
-				(availableSize.Height * 2) / InternalChildren.Count
-				);
-
-			Size extent = new Size(
-				availableSize.Width,
-				childSize.Height * InternalChildren.Count);
-
-			if (extent != _extent)
-			{
-				_extent = extent;
-				if (_owner != null)
-				{
-					_owner.InvalidateScrollInfo();
-				}
-			}
-
-			if (availableSize != _viewport)
-			{
-				_viewport = availableSize;
-				if (_owner != null)
-				{
-					_owner.InvalidateScrollInfo();
-				}
-			}
-
-			foreach (UIElement child in InternalChildren)
-			{
-				child.Measure(childSize);
-			}
-
-			return availableSize;
-		}
-
-		protected override Size ArrangeOverride(Size finalSize)
-		{
-			Size childSize = new Size(
-				finalSize.Width,
-				(finalSize.Height * 2) / InternalChildren.Count);
-
-			Size extent = new Size(
-				finalSize.Width,
-				childSize.Height * InternalChildren.Count);
-
-			if (extent != _extent)
-			{
-				_extent = extent;
-				if (_owner != null)
-				{
-					_owner.InvalidateScrollInfo();
-				}
-			}
-
-			if (finalSize != _viewport)
-			{
-				_viewport = finalSize;
-
-				if (_owner != null)
-				{
-					_owner.InvalidateScrollInfo();
-				}
-			}
-
-			for (int i = 0; i < InternalChildren.Count; i++)
-			{
-				InternalChildren[i].Arrange(new Rect(0, childSize.Height * i, childSize.Width, childSize.Height));
-			}
-
-			return finalSize;
 		}
 
 		#endregion

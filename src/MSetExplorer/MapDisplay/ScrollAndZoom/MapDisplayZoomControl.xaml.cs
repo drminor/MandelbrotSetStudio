@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 
-namespace MSetExplorer
+namespace MSetExplorer.MapDisplay.ScrollAndZoom
 {
 	/// <summary>
 	/// Interaction logic for MapDisplayZoomControl.xaml

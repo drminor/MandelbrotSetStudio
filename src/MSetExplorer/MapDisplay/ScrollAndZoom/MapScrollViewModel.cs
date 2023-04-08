@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace MSetExplorer
+namespace MSetExplorer.MapDisplay.ScrollAndZoom
 {
 	internal class MapScrollViewModel : ViewModelBase, IMapScrollViewModel
 	{

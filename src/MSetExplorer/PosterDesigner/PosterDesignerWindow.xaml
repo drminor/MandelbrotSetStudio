@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
+        xmlns:scroll="clr-namespace:MSetExplorer.MapDisplay.ScrollAndZoom"
         mc:Ignorable="d"
         Title="Designer Window" Width="993" Height="608">
 
@@ -116,13 +117,13 @@
                 <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
             </StackPanel>
 
-            <local:MapDisplayZoomControl Grid.Row="1" Margin="0,10"  x:Name="mapDisplayZoom1"/>
+            <scroll:MapDisplayZoomControl Grid.Row="1" Margin="0,10"  x:Name="mapDisplayZoom1"/>
 
         </Grid>
 
         <!-- Scrollable Map Display -->
         <Grid Grid.Row="1" Grid.Column="1" x:Name="colCenter">
-            <local:MapScrollControl x:Name="mapScroll1" Margin="5"></local:MapScrollControl>
+            <scroll:MapScrollControl x:Name="mapScroll1" Margin="5"></scroll:MapScrollControl>
         </Grid>
 
         <!-- Coords, Calc and Colors -->

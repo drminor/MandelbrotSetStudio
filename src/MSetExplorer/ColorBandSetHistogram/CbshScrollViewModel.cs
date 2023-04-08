@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace MSetExplorer
+namespace MSetExplorer.MapDisplay.ScrollAndZoom
 {
 	public class CbshScrollViewModel : ViewModelBase, ICbshScrollViewModel
 	{

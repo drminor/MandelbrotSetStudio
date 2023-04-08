@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Windows.Controls;
 
-namespace MSetExplorer
+namespace MSetExplorer.MapDisplay.ScrollAndZoom
 {
 	/// <summary>
 	/// Interaction logic for MapScrollControl.xaml

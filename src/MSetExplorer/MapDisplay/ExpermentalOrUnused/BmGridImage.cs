@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 
-namespace MSetExplorer.MapDisplay.Controls_New
+namespace MSetExplorer.MapDisplay.ExpermentalOrUnused
 {
-	internal class BmGridImage : Image
-	{
+    internal class BmGridImage : Image
+    {
 
-	}
+    }
 }

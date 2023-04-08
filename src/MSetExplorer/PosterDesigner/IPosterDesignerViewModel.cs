@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.MapDisplay.ScrollAndZoom;
+using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Windows.Media;

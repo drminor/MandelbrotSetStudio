@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.MapDisplay.ScrollAndZoom;
+using MSS.Types;
 using System.ComponentModel;
 
 namespace MSetExplorer

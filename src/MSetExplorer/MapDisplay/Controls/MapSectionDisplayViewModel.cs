@@ -279,8 +279,8 @@ namespace MSetExplorer
 
 				if (currentJob != null && !currentJob.IsEmpty)
 				{
-					var mapSections = _mapLoaderManager.Push(currentJob.OwnerId, currentJob.OwnerType, currentJob.MapAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
-					_bitmapGrid.AddJobNumAndMapOffset(newJobNumber, currentJob.MapAreaInfo.MapBlockOffset);
+					var newMapSections = _mapLoaderManager.Push(currentJob.OwnerId, currentJob.OwnerType, currentJob.MapAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
+					_ = _bitmapGrid.ReuseAndLoad(MapSections, newMapSections, currentJob.ColorBandSet, newJobNumber, currentJob.MapAreaInfo.MapBlockOffset);
 				}
 			}
 		}
@@ -400,53 +400,10 @@ namespace MSetExplorer
 
 			CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
 
-
-			// TODO: Create method on _bitmapGrid to
-			// 1. Take a new ColorMap
-			// 2. Clear and redraw existing sections
-			// 3. Take a list of new sections and draw these.
-
-
-			//// Refresh the display, load the sections immediately available, and send request to generate those not available.
-			//if (newJob.ColorBandSet != ColorBandSet)
-			//{
-			//	_colorMap = LoadColorMap(newJob.ColorBandSet);
-			//}
-
-			//ClearBitmap(_bitmap);
-
-			//if (_colorMap != null)
-			//{
-			//	RedrawSections(_colorMap, newJob.MapAreaInfo.MapBlockOffset);
-
-			//	if (sectionsToLoad.Count > 0)
-			//	{
-			//		var mapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
-
-			//		_bitmapGrid.CurrentMapLoaderJobNumber = newJobNumber;
-
-			//		//_currentMapLoaderJobNumber = newJobNumber;
-			//		//_jobMapOffsets.Add(newJobNumber, newJob.MapAreaInfo.MapBlockOffset);
-
-			//		_bitmapGrid.AddJobNumAndMapOffset(newJobNumber, newJob.MapAreaInfo.MapBlockOffset);
-
-			//		result = newJobNumber;
-
-			//		lastSectionWasIncluded = LoadAndDrawNewSections(mapSections, _colorMap, newJob.MapAreaInfo.MapBlockOffset);
-			//	}
-			//}
-
 			if (sectionsToLoad.Count > 0)
 			{
 				var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
-
-				//_bitmapGrid.CurrentMapLoaderJobNumber = newJobNumber;
-
-				//_currentMapLoaderJobNumber = newJobNumber;
-				//_jobMapOffsets.Add(newJobNumber, newJob.MapAreaInfo.MapBlockOffset);
-
 				result = newJobNumber;
-
 				lastSectionWasIncluded = _bitmapGrid.ReuseAndLoad(MapSections, newMapSections, newJob.ColorBandSet, newJobNumber, newJob.MapAreaInfo.MapBlockOffset);
 			}
 			else

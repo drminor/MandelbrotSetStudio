@@ -1,4 +1,5 @@
 ﻿using MapSectionProviderLib;
+using MSetExplorer.MapDisplay.ScrollAndZoom;
 using MSetExplorer.XPoc;
 using MSetExplorer.XPoc.PerformanceHarness;
 using MSetRepo;

@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.MapDisplay.ScrollAndZoom;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows.Controls;

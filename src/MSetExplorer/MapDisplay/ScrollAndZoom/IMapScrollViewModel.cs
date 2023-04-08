@@ -1,7 +1,7 @@
 ﻿using MSS.Types;
 using System.ComponentModel;
 
-namespace MSetExplorer
+namespace MSetExplorer.MapDisplay.ScrollAndZoom
 {
 	internal interface IMapScrollViewModel : INotifyPropertyChanged
 	{

@@ -1,4 +1,5 @@
 ﻿using ImageBuilder;
+using MSetExplorer.MapDisplay.ScrollAndZoom;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;

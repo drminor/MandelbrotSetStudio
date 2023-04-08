@@ -28,16 +28,11 @@ namespace MSetExplorer
 		private int _maxYPtr;
 
 		private BigVector _mapBlockOffset;
-		//private VectorInt _canvasControlOffset;
 
 		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
 		private bool _useEscapeVelocities;
 		private bool _highlightSelectedColorBand;
-
-		//// We're assuming that at any one given time, all entries in the JobMapOffsets Dictionary are from the same subdivision.
-		//// Consider tracking the sum of the Job's Subdivision's BaseMapPosition and the Job's MapOffset.
-		//private Dictionary<int, BigVector> _jobMapOffsets;
 
 		#endregion
 
@@ -50,14 +45,11 @@ namespace MSetExplorer
 			BlockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
 			_onUpdateBitmap = onUpdateBitmap;
 
-			//MapSections = new ObservableCollection<MapSection>();
-
 			JobMapOffsets = new Dictionary<int, BigVector>();
 			_currentMapLoaderJobNumber = null;
 
 			_bitmap = CreateBitmap(new SizeInt(10));
 			_mapBlockOffset = new BigVector();
-			//_canvasControlOffset = new VectorInt();
 			_maxYPtr = 1;
 
 			_useEscapeVelocities = true;
@@ -68,19 +60,10 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Events
-
-		//public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
-		//public event EventHandler<int>? DisplayJobCompleted;
-
-		#endregion
-
-		#region Public Properties - Content
+		#region Public Properties
 
 		public SizeInt BlockSize { get; init; }
 		private Int32Rect BlockRect { get; init; }
-
-		//public ObservableCollection<MapSection> MapSections { get; init; }
 
 		public ColorBandSet ColorBandSet => _colorBandSet;
 
@@ -164,7 +147,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		private void CalcImageSizeAndCreateBitmap(SizeInt canvasSizeInBlocks)
 		{
 			// Calculate new size of bitmap in block-sized units
@@ -178,18 +160,6 @@ namespace MSetExplorer
 			Bitmap = CreateBitmap(newSize);
 		}
 
-		//public VectorInt CanvasControlOffset
-		//{
-		//	get => _canvasControlOffset;
-		//	set
-		//	{
-		//		if (value != _canvasControlOffset)
-		//		{
-		//			_canvasControlOffset = value;
-		//		}
-		//	}
-		//}
-
 		public WriteableBitmap Bitmap
 		{
 			get => _bitmap;
@@ -198,13 +168,6 @@ namespace MSetExplorer
 				_bitmap = value;
 				_onUpdateBitmap(value);
 			}
-		}
-
-		public void AddJobNumAndMapOffset(int jobNumber, BigVector jobMapOffset)
-		{
-			JobMapOffsets.Add(jobNumber, jobMapOffset);
-			CurrentMapLoaderJobNumber = jobNumber;
-			MapBlockOffset = jobMapOffset;
 		}
 
 		public Dictionary<int, BigVector> JobMapOffsets { get; init; }
@@ -297,8 +260,6 @@ namespace MSetExplorer
 			{
 				if (mapSection.MapSectionVectors != null)
 				{
-					//MapSections.Add(mapSection);
-					
 					var invertedBlockPos = GetInvertedBlockPos(mapSection.ScreenPosition);
 					var loc = invertedBlockPos.Scale(BlockSize);
 
@@ -393,87 +354,6 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
-		{
-			_colorBandSet = colorBandSet;
-			var colorMap = new ColorMap(colorBandSet)
-			{
-				UseEscapeVelocities = _useEscapeVelocities,
-				HighlightSelectedColorBand = _highlightSelectedColorBand
-			};
-
-			return colorMap;
-		}
-
-		//private void ClearMapSectionsAndBitmap(int? mapLoaderJobNumber = null)
-		//{
-		//	ClearBitmap(_bitmap);
-
-		//	if (mapLoaderJobNumber.HasValue)
-		//	{
-		//		var sectionsToRemove = MapSections.Where(x => x.JobNumber == mapLoaderJobNumber.Value).ToList();
-
-		//		foreach (var ms in sectionsToRemove)
-		//		{
-		//			MapSections.Remove(ms);
-		//			_mapSectionHelper.ReturnMapSection(ms);
-		//		}
-		//	}
-		//	else
-		//	{
-		//		foreach (var ms in MapSections)
-		//		{
-		//			_mapSectionHelper.ReturnMapSection(ms);
-		//		}
-
-		//		MapSections.Clear();
-		//	}
-		//}
-
-		#endregion
-
-		#region Bitmap Methods
-
-		private PointInt GetInvertedBlockPos(PointInt blockPosition)
-		{
-			var result = new PointInt(blockPosition.X, _maxYPtr - blockPosition.Y);
-
-			return result;
-		}
-
-		private void ClearBitmap(WriteableBitmap bitmap)
-		{
-			// Clear the bitmap, one row of bitmap blocks at a time.
-
-			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
-			var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
-			var zeros = GetClearBytes(blockRowPixelCount * 4);
-
-			for (var vPtr = 0; vPtr < _allocatedBlocks.Height; vPtr++)
-			{
-				var offset = vPtr * BlockSize.Height;
-				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
-			}
-		}
-
-		private byte[] GetClearBytes(int length)
-		{
-			if (_pixelsToClear.Length != length)
-			{
-				_pixelsToClear = new byte[length];
-			}
-
-			return _pixelsToClear;
-		}
-
-		private WriteableBitmap CreateBitmap(SizeInt size)
-		{
-			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
-			//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
-
-			return result;
-		}
-
 		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition)
 		{
 			blockPosition = null;
@@ -515,6 +395,65 @@ namespace MSetExplorer
 			}
 
 			return true;
+		}
+
+		private PointInt GetInvertedBlockPos(PointInt blockPosition)
+		{
+			var result = new PointInt(blockPosition.X, _maxYPtr - blockPosition.Y);
+
+			return result;
+		}
+
+		private void AddJobNumAndMapOffset(int jobNumber, BigVector jobMapOffset)
+		{
+			JobMapOffsets.Add(jobNumber, jobMapOffset);
+			CurrentMapLoaderJobNumber = jobNumber;
+			MapBlockOffset = jobMapOffset;
+		}
+
+		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
+		{
+			_colorBandSet = colorBandSet;
+			var colorMap = new ColorMap(colorBandSet)
+			{
+				UseEscapeVelocities = _useEscapeVelocities,
+				HighlightSelectedColorBand = _highlightSelectedColorBand
+			};
+
+			return colorMap;
+		}
+
+		private void ClearBitmap(WriteableBitmap bitmap)
+		{
+			// Clear the bitmap, one row of bitmap blocks at a time.
+
+			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
+			var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
+			var zeros = GetClearBytes(blockRowPixelCount * 4);
+
+			for (var vPtr = 0; vPtr < _allocatedBlocks.Height; vPtr++)
+			{
+				var offset = vPtr * BlockSize.Height;
+				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
+			}
+		}
+
+		private byte[] GetClearBytes(int length)
+		{
+			if (_pixelsToClear.Length != length)
+			{
+				_pixelsToClear = new byte[length];
+			}
+
+			return _pixelsToClear;
+		}
+
+		private WriteableBitmap CreateBitmap(SizeInt size)
+		{
+			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
+			//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
+
+			return result;
 		}
 
 		private bool IsCanvasSizeInWBsReasonable(SizeInt canvasSizeInWholeBlocks)
@@ -569,6 +508,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
 	}
 }
