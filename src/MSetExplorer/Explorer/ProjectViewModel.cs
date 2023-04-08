@@ -193,12 +193,13 @@ namespace MSetExplorer
 				if (currentProject != null)
 				{
 					var cbsBefore = CurrentColorBandSet;
-					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-					{
-						Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Current Job changing (ProjectViewModel).");
-						FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
-					}
+
+					//var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
+					//if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+					//{
+					//	Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Current Job changing (ProjectViewModel).");
+					//	FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
+					//}
 
 					if (CurrentColorBandSet != cbsBefore)
 					{
