@@ -11,7 +11,6 @@
                         <ContentPresenter x:Name="BitmapGridControl_Content">
                             <ContentPresenter.Content>
                                 <Canvas Name="bmgcCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
-                                    <Image x:Name="bmgcImage"/>
                                 </Canvas>
 
                             </ContentPresenter.Content>

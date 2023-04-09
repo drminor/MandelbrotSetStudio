@@ -51,6 +51,11 @@ namespace MSS.Types.MSet
 		[BsonDefaultValue(false)]
 		public bool SaveTheZValues { get; set; }
 
+		// TODO: Remove the RequestsPerJob Property on the MapCalcSettings class.
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(0)]
+		public int RequestsPerJob { get; set; } = 0;
+
 		#endregion
 
 		#region Static Convenience Methods

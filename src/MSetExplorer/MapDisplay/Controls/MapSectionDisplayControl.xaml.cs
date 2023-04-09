@@ -20,9 +20,9 @@ namespace MSetExplorer
 		private IMapDisplayViewModel _vm;
 
 		private Canvas _canvas;
-		private Image _image;
-		private VectorInt _offset;
-		private double _offsetZoom;
+		//private Image _image;
+		//private VectorInt _offset;
+		//private double _offsetZoom;
 
 		private SelectionRectangle? _selectionRectangle;
 		//private Border? _border;
@@ -34,10 +34,10 @@ namespace MSetExplorer
 		public MapSectionDisplayControl()
 		{
 			_canvas = new Canvas();
-			_image = new Image();
+			//_image = new Image();
 
-			_offset = new VectorInt(-1, -1);
-			_offsetZoom = 1;
+			//_offset = new VectorInt(-1, -1);
+			//_offsetZoom = 1;
 
 			_vm = (IMapDisplayViewModel)DataContext;
 			Loaded += MapSectionDisplayControl_Loaded;
@@ -56,10 +56,11 @@ namespace MSetExplorer
 			else
 			{
 				_canvas = BitmapGridControl1.Canvas;
-				_image = BitmapGridControl1.Image;
+				//_image = BitmapGridControl1.Image;
 
 				_vm = (IMapDisplayViewModel)DataContext;
 
+				_canvas.Children.Add(_vm.Image);
 				_vm.CanvasSizeInBlocks = BitmapGridControl1.ViewPortInBlocks;
 
 				//var ourSize = new SizeDbl(ActualWidth, ActualHeight);
@@ -70,7 +71,7 @@ namespace MSetExplorer
 				_vm.CanvasSize = ourSize;
 				_vm.LogicalDisplaySize = ourSize;
 
-				_image.Source = _vm.Bitmap;
+				//_image.Source = _vm.Bitmap;
 
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
@@ -80,9 +81,9 @@ namespace MSetExplorer
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				ReportSizes("Loading");
 
-				_image.SetValue(Panel.ZIndexProperty, 5);
-				_image.SetValue(Canvas.LeftProperty, 0d);
-				_image.SetValue(Canvas.RightProperty, 0d);
+				//_image.SetValue(Panel.ZIndexProperty, 5);
+				//_image.SetValue(Canvas.LeftProperty, 0d);
+				//_image.SetValue(Canvas.RightProperty, 0d);
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -92,7 +93,7 @@ namespace MSetExplorer
 				//_border = SHOW_BORDER && (!CLIP_IMAGE_BLOCKS) ? BuildBorder(_canvas) : null;
 				//_border = null;
 
-				SetCanvasOffset(new VectorInt(), 1);
+				//SetCanvasOffset(new VectorInt(), 1);
 
 				ReportSizes("Loaded.");
 				Debug.WriteLine("The MapSectionDisplay Control is now loaded");
@@ -176,7 +177,7 @@ namespace MSetExplorer
 		{
 			var previousSizeInBlocks = e.Item1;
 			var newSizeInBlocks = e.Item2;
-			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort SizeInBlocks Changed. Prev: {previousSizeInBlocks}, New: {newSizeInBlocks}.");
+			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort SizeInBlocks Changed. Prev: {previousSizeInBlocks}, New: {newSizeInBlocks}.");
 
 			_vm.CanvasSizeInBlocks = newSizeInBlocks;
 		}
@@ -186,7 +187,7 @@ namespace MSetExplorer
 			var previousSize = e.Item1;
 			var newSize = e.Item2;
 	
-			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {previousSize}, New: {newSize}.");
+			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousSize}, New: {newSize}.");
 
 			ReportSizes("Display Sized Changed");
 
@@ -201,15 +202,17 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is nameof(IMapDisplayViewModel.Bitmap))
-			{
-				_image.Source = _vm.Bitmap;
-			}
+			//// Bitmap 
+			//if (e.PropertyName is nameof(IMapDisplayViewModel.Bitmap))
+			//{
+			//	_image.Source = _vm.Bitmap;
+			//}
 
-			if (e.PropertyName is nameof(IMapDisplayViewModel.CanvasControlOffset))
-			{
-				SetCanvasOffset(_vm.CanvasControlOffset, _vm.DisplayZoom);
-			}
+			//// Canvas Control Offset
+			//if (e.PropertyName is nameof(IMapDisplayViewModel.CanvasControlOffset))
+			//{
+			//	SetCanvasOffset(_vm.CanvasControlOffset, _vm.DisplayZoom);
+			//}
 
 			//if (e.PropertyName is nameof(IMapDisplayViewModel.DisplayZoom))
 			//{
@@ -217,7 +220,8 @@ namespace MSetExplorer
 			//	SetCanvasTransform(scale);
 			//}
 
-			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
+			// Enable SelectionRectangle when ever we have a non-null "Job."
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
 			{
 				_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
 			}
@@ -237,31 +241,45 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		/// <summary>
-		/// The position of the canvas' origin relative to the Image Block Data
-		/// </summary>
-		private void SetCanvasOffset(VectorInt value, double displayZoom)
-		{
-			if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
-			{
-				//Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
-				Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
-				Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
+		///// <summary>
+		///// The position of the canvas' origin relative to the Image Block Data
+		///// </summary>
+		//private void SetCanvasOffset(VectorInt value, double displayZoom)
+		//{
+		//	if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
+		//	{
+		//		//Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
+		//		Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
+		//		Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
 
-				_offset = value;
-				_offsetZoom = displayZoom;
+		//		_offset = value;
+		//		_offsetZoom = displayZoom;
 
-				// For a postive offset, we "pull" the image down and to the left.
-				var invertedOffset = value.Invert();
+		//		// For a postive offset, we "pull" the image down and to the left.
+		//		var invertedOffset = value.Invert();
 
-				var scaledInvertedOffset = invertedOffset.Scale(1 / displayZoom);
+		//		var roundedZoom = RoundZoomToOne(displayZoom);
 
-				_image.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
-				_image.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
+		//		var scaledInvertedOffset = invertedOffset.Scale(1 / roundedZoom);
 
-				ReportSizes("SetCanvasOffset");
-			}
-		}
+		//		_image.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
+		//		_image.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
+
+		//		ReportSizes("SetCanvasOffset");
+		//	}
+		//}
+
+		//private double RoundZoomToOne(double scale)
+		//{
+		//	var zoomIsOne = Math.Abs(scale - 1) < 0.001;
+
+		//	if (!zoomIsOne)
+		//	{
+		//		Debug.WriteLine($"WARNING: MapSectionDisplayControl: Display Zoom is not one.");
+		//	}
+
+		//	return zoomIsOne ? 1d : scale;
+		//}
 
 		//private void SetCanvasTransform(PointDbl scale)
 		//{

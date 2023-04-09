@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
@@ -27,7 +28,7 @@ namespace MSetExplorer
 		//private SizeDbl _containerSize;
 		private SizeDbl _canvasSize;
 
-		private VectorInt _canvasControlOffset;
+		//private VectorInt _canvasControlOffset;
 		private double _displayZoom;
 		private SizeDbl _logicalDisplaySize;
 
@@ -50,13 +51,13 @@ namespace MSetExplorer
 
 			MapSections = new ObservableCollection<MapSection>();
 
-			Action<WriteableBitmap> updateBitmapAction = x => { Bitmap = x; };
-			_bitmapGrid = new BitmapGrid(_mapSectionHelper, BlockSize, updateBitmapAction);
+			//Action<WriteableBitmap> updateBitmapAction = x => { Bitmap = x; };
+			_bitmapGrid = new BitmapGrid(_mapSectionHelper, BlockSize);
 
 			_currentJobAreaAndCalcSettings = null;
 
 			_logicalDisplaySize = new SizeDbl();
-			CanvasControlOffset = new VectorInt();
+			//CanvasControlOffset = new VectorInt();
 
 			//HandleContainerSizeUpdates = true;
 
@@ -139,34 +140,9 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public WriteableBitmap Bitmap
-		{
-			get => _bitmapGrid.Bitmap;
-			set
-			{
-				//_bitmap = value;
-				OnPropertyChanged();
-			}
-		}
+		public WriteableBitmap Bitmap => _bitmapGrid.Bitmap;
 
-		//public bool HandleContainerSizeUpdates { get; set; }
-
-		//public SizeDbl ContainerSize
-		//{
-		//	get => _containerSize;
-		//	set
-		//	{
-		//		if (HandleContainerSizeUpdates)
-		//		{
-		//			_containerSize = value;
-		//			//OnPropertyChanged(nameof(IMapDisplayViewModel.ContainerSize));
-		//		}
-		//		else
-		//		{
-		//			//Debug.WriteLine($"Not handling the ContainerSize update. The value is {value}.");
-		//		}
-		//	}
-		//}
+		public Image Image => _bitmapGrid.Image;
 
 		public SizeDbl CanvasSize
 		{
@@ -194,18 +170,18 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorInt CanvasControlOffset
-		{
-			get => _canvasControlOffset;
-			set
-			{
-				if (value != _canvasControlOffset)
-				{
-					_canvasControlOffset = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public VectorInt CanvasControlOffset
+		//{
+		//	get => _bitmapGrid.CanvasControlOffset;
+		//	set
+		//	{
+		//		if (value != _bitmapGrid.CanvasControlOffset)
+		//		{
+		//			_bitmapGrid.CanvasControlOffset = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		public double DisplayZoom
 		{
@@ -233,7 +209,9 @@ namespace MSetExplorer
 					//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
 					LogicalDisplaySize = CanvasSize;
 
-					OnPropertyChanged();
+
+					// TODO: DisplayZoom property is not being used on the MapSectionDisplayViewModel
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -280,7 +258,7 @@ namespace MSetExplorer
 				if (currentJob != null && !currentJob.IsEmpty)
 				{
 					var newMapSections = _mapLoaderManager.Push(currentJob.OwnerId, currentJob.OwnerType, currentJob.MapAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
-					_ = _bitmapGrid.ReuseAndLoad(MapSections, newMapSections, currentJob.ColorBandSet, newJobNumber, currentJob.MapAreaInfo.MapBlockOffset);
+					_ = _bitmapGrid.ReuseAndLoad(MapSections, newMapSections, currentJob.ColorBandSet, newJobNumber, currentJob.MapAreaInfo.MapBlockOffset, currentJob.MapAreaInfo.CanvasControlOffset);
 				}
 			}
 		}
@@ -398,17 +376,17 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}.");
 
-			CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+			//_bitmapGrid.CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
 
 			if (sectionsToLoad.Count > 0)
 			{
 				var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
 				result = newJobNumber;
-				lastSectionWasIncluded = _bitmapGrid.ReuseAndLoad(MapSections, newMapSections, newJob.ColorBandSet, newJobNumber, newJob.MapAreaInfo.MapBlockOffset);
+				lastSectionWasIncluded = _bitmapGrid.ReuseAndLoad(MapSections, newMapSections, newJob.ColorBandSet, newJobNumber, newJob.MapAreaInfo.MapBlockOffset, newJob.MapAreaInfo.CanvasControlOffset);
 			}
 			else
 			{
-				_bitmapGrid.Redraw(MapSections, newJob.ColorBandSet);
+				_bitmapGrid.Redraw(MapSections, newJob.ColorBandSet, newJob.MapAreaInfo.CanvasControlOffset);
 			}
 
 			return result;
@@ -416,11 +394,11 @@ namespace MSetExplorer
 
 		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
-			CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+			//_bitmapGrid.CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
 
 			var mapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
-			lastSectionWasIncluded = _bitmapGrid.DiscardAndLoad(mapSections, newJob.ColorBandSet, newJobNumber, newJob.MapAreaInfo.MapBlockOffset);
+			lastSectionWasIncluded = _bitmapGrid.DiscardAndLoad(mapSections, newJob.ColorBandSet, newJobNumber, newJob.MapAreaInfo.MapBlockOffset, newJob.MapAreaInfo.CanvasControlOffset);
 
 			foreach(var mapSection in mapSections)
 			{

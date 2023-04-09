@@ -2,6 +2,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
@@ -12,6 +13,7 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 
+		Image Image { get; }
 		WriteableBitmap Bitmap { get; }
 
 
@@ -30,7 +32,7 @@ namespace MSetExplorer
 		SizeInt CanvasSizeInBlocks { get; set; }
 		SizeDbl LogicalDisplaySize { get; set; }
 
-		VectorInt CanvasControlOffset { get; set; }
+		//VectorInt CanvasControlOffset { get; set; }
 
 		double DisplayZoom { get; set; }
 

@@ -22,7 +22,7 @@ namespace MSetExplorer
 		private FrameworkElement? _content;
 
 		private Canvas _canvas;
-		private Image _image;
+		//private Image _image;
 
 		private Point _offset;
 		private Size _unscaledExtent;
@@ -55,7 +55,7 @@ namespace MSetExplorer
 
 			_content = null; 
 			_canvas = new Canvas();
-			_image = new Image();
+			//_image = new Image();
 
 			_offset = new Point(0, 0);
 			_unscaledExtent = new Size(0, 0);
@@ -66,8 +66,6 @@ namespace MSetExplorer
 
 			_contentOffsetTransform = new TranslateTransform(0, 0);
 			_transformGroup.Children.Add(_contentOffsetTransform);
-
-			HandleContainerSizeUpdates = true;
 		}
 
 		#endregion
@@ -83,9 +81,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public Canvas Canvas => _canvas;
-		public Image Image => _image;
-
-		public bool HandleContainerSizeUpdates { get; private set; }
+		//public Image Image => _image;
 
 		public SizeDbl ContainerSize
 		{
@@ -248,7 +244,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Found the BitmapGridControl_Content template.");
 
-				(_canvas, _image) = BuildContentModel(_content);
+				_canvas = BuildContentModel(_content);
 
 				// Setup the transform on the content so that we can position the Bitmap to "pull" it left and up so that the
 				// portion of the bitmap that is visible corresponds with the requested map coordinates.
@@ -262,16 +258,17 @@ namespace MSetExplorer
 			}
 		}
 
-		private (Canvas, Image) BuildContentModel(FrameworkElement content)
+		private Canvas BuildContentModel(FrameworkElement content)
 		{
 			if (content is ContentPresenter cp)
 			{
 				if (cp.Content is Canvas ca)
 				{
-					if (ca.Children[0] is Image im)
-					{
-						return (ca, im);
-					}
+					return ca;
+					//if (ca.Children[0] is Image im)
+					//{
+					//	return (ca, im);
+					//}
 				}
 			}
 

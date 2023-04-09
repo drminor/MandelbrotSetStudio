@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -17,16 +18,20 @@ namespace MSetExplorer
 
 		private readonly MapSectionHelper _mapSectionHelper;
 
-		private readonly Action<WriteableBitmap> _onUpdateBitmap;
+		//private readonly Action<WriteableBitmap> _onUpdateBitmap;
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear = new byte[0];
+		private Int32Rect _blockRect { get; init; }
 
 		private int? _currentMapLoaderJobNumber;
 
+		//private VectorInt _offset;
+
 		private SizeInt _canvasSizeInBlocks;
-		private SizeInt _allocatedBlocks;
+		private SizeInt _imageSizeInBlocks;
 		private int _maxYPtr;
 
+		private VectorInt _canvasControlOffset;
 		private BigVector _mapBlockOffset;
 
 		private ColorBandSet _colorBandSet;
@@ -38,19 +43,24 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public BitmapGrid(MapSectionHelper mapSectionHelper, SizeInt blockSize, Action<WriteableBitmap> onUpdateBitmap)
+		public BitmapGrid(MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
 			_mapSectionHelper = mapSectionHelper;
 			BlockSize = blockSize;
-			BlockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
-			_onUpdateBitmap = onUpdateBitmap;
+			_blockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
 
 			JobMapOffsets = new Dictionary<int, BigVector>();
 			_currentMapLoaderJobNumber = null;
 
-			_bitmap = CreateBitmap(new SizeInt(10));
-			_mapBlockOffset = new BigVector();
+			Image = new Image();
+			_bitmap = CreateBitmap(sizeInBlocks: new SizeInt(1));
+			Image.Source = _bitmap;
 			_maxYPtr = 1;
+
+			_mapBlockOffset = new BigVector();
+
+			_canvasControlOffset = new VectorInt();
+			SetCanvasOffset(_canvasControlOffset);
 
 			_useEscapeVelocities = true;
 			_highlightSelectedColorBand = false;
@@ -63,7 +73,6 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public SizeInt BlockSize { get; init; }
-		private Int32Rect BlockRect { get; init; }
 
 		public ColorBandSet ColorBandSet => _colorBandSet;
 
@@ -142,23 +151,45 @@ namespace MSetExplorer
 				if (_canvasSizeInBlocks != value)
 				{
 					_canvasSizeInBlocks = value;
-					CalcImageSizeAndCreateBitmap(_canvasSizeInBlocks);
+
+					// The Image must be able to accomodate a postive or negative CanvasControlOffset of up to one full block. 
+					ImageSizeInBlocks = value.Inflate(2);
 				}
 			}
 		}
 
-		private void CalcImageSizeAndCreateBitmap(SizeInt canvasSizeInBlocks)
+		public SizeInt ImageSizeInBlocks
 		{
-			// Calculate new size of bitmap in block-sized units
-			var newAllocatedBlocks = canvasSizeInBlocks.Inflate(2);
-			Debug.WriteLine($"Resizing the MapDisplay Writeable Bitmap. Old size: {_allocatedBlocks}, new size: {newAllocatedBlocks}.");
+			get  => _imageSizeInBlocks;
 
-			_allocatedBlocks = newAllocatedBlocks;
-			_maxYPtr = _allocatedBlocks.Height - 1;
+			private set
+			{
+				if (_imageSizeInBlocks != value)
+				{
+					Debug.WriteLine($"Resizing the MapDisplay Writeable Bitmap. Old size: {_imageSizeInBlocks}, new size: {value}.");
 
-			var newSize = _allocatedBlocks.Scale(BlockSize);
-			Bitmap = CreateBitmap(newSize);
+					_imageSizeInBlocks = value;
+					_maxYPtr = _imageSizeInBlocks.Height - 1;
+					Bitmap = CreateBitmap(_imageSizeInBlocks);
+				}
+			}
 		}
+
+		public VectorInt CanvasControlOffset
+		{
+			get => _canvasControlOffset;
+			set
+			{
+				if (value != _canvasControlOffset)
+				{
+					Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
+					_canvasControlOffset = value;
+					SetCanvasOffset(value);	
+				}
+			}
+		}
+
+		public Image Image { get; init; }
 
 		public WriteableBitmap Bitmap
 		{
@@ -166,7 +197,7 @@ namespace MSetExplorer
 			set
 			{
 				_bitmap = value;
-				_onUpdateBitmap(value);
+				Image.Source = value;
 			}
 		}
 
@@ -187,9 +218,10 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public bool ReuseAndLoad(IList<MapSection> existingMapSections, List<MapSection> newMapSections, ColorBandSet colorBandSet, int jobNumber, BigVector mapBlockOffset)
+		public bool ReuseAndLoad(IList<MapSection> existingMapSections, List<MapSection> newMapSections, ColorBandSet colorBandSet, int jobNumber, BigVector mapBlockOffset, VectorInt canvasControlOffset)
 		{
 			AddJobNumAndMapOffset(jobNumber, mapBlockOffset);
+			CanvasControlOffset = canvasControlOffset;
 
 			if (colorBandSet != ColorBandSet)
 			{
@@ -213,8 +245,10 @@ namespace MSetExplorer
 			return lastSectionWasIncluded;
 		}
 
-		public void Redraw(IList<MapSection> existingMapSections, ColorBandSet colorBandSet)
+		public void Redraw(IList<MapSection> existingMapSections, ColorBandSet colorBandSet, VectorInt canvasControlOffset)
 		{
+			CanvasControlOffset = canvasControlOffset;
+
 			if (colorBandSet != ColorBandSet)
 			{
 				_colorMap = LoadColorMap(colorBandSet);
@@ -227,9 +261,10 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool DiscardAndLoad(List<MapSection> mapSections, ColorBandSet colorBandSet, int jobNumber, BigVector mapBlockOffset)
+		public bool DiscardAndLoad(List<MapSection> mapSections, ColorBandSet colorBandSet, int jobNumber, BigVector mapBlockOffset, VectorInt canvasControlOffset)
 		{
 			AddJobNumAndMapOffset(jobNumber, mapBlockOffset);
+			CanvasControlOffset = canvasControlOffset;
 
 			if (colorBandSet != ColorBandSet)
 			{
@@ -279,7 +314,7 @@ namespace MSetExplorer
 							//	_mapSectionHelper.ReturnMapSection(mapSection);
 							//}
 
-							_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
+							_bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
 
 						}
 					}
@@ -309,7 +344,7 @@ namespace MSetExplorer
 							var loc = invertedBlockPos.Scale(BlockSize);
 
 							_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
-							_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
+							_bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
 						}
 					}
 					else
@@ -338,7 +373,7 @@ namespace MSetExplorer
 						var loc = invertedBlockPos.Scale(BlockSize);
 
 						_mapSectionHelper.LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
-						_bitmap.WritePixels(BlockRect, mapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
+						_bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
 					}
 				}
 			}
@@ -446,7 +481,7 @@ namespace MSetExplorer
 			var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
 			var zeros = GetClearBytes(blockRowPixelCount * 4);
 
-			for (var vPtr = 0; vPtr < _allocatedBlocks.Height; vPtr++)
+			for (var vPtr = 0; vPtr < _imageSizeInBlocks.Height; vPtr++)
 			{
 				var offset = vPtr * BlockSize.Height;
 				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
@@ -463,13 +498,70 @@ namespace MSetExplorer
 			return _pixelsToClear;
 		}
 
-		private WriteableBitmap CreateBitmap(SizeInt size)
+		private WriteableBitmap CreateBitmap(SizeInt sizeInBlocks)
 		{
+			var size = sizeInBlocks.Scale(BlockSize);
 			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
 			//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
 
 			return result;
 		}
+
+		private void SetCanvasOffset(VectorInt offset)
+		{
+			Debug.Assert(offset.X >= 0 && offset.Y >= 0, "Setting offset to negative value.");
+
+			// For a postive offset, we "pull" the image down and to the left.
+			var invertedOffset = offset.Invert();
+
+			Image.SetValue(Canvas.LeftProperty, (double)invertedOffset.X);
+			Image.SetValue(Canvas.BottomProperty, (double)invertedOffset.Y);
+		}
+
+		///// <summary>
+		///// The position of the canvas' origin relative to the Image Block Data
+		///// </summary>
+		//private void SetCanvasOffset(VectorInt value, double displayZoom)
+		//{
+		//	if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
+		//	{
+		//		//Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
+		//		Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
+		//		Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
+
+		//		_offset = value;
+		//		_offsetZoom = displayZoom;
+
+		//		// For a postive offset, we "pull" the image down and to the left.
+		//		var invertedOffset = value.Invert();
+
+		//		var roundedZoom = RoundZoomToOne(displayZoom);
+		//		var scaledInvertedOffset = invertedOffset.Scale(1 / roundedZoom);
+
+		//		_image.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
+		//		_image.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
+
+		//		ReportSizes("SetCanvasOffset");
+		//	}
+		//}
+
+		//private double RoundZoomToOne(double scale)
+		//{
+		//	var zoomIsOne = Math.Abs(scale - 1) < 0.001;
+
+		//	if (!zoomIsOne)
+		//	{
+		//		Debug.WriteLine($"WARNING: MapSectionDisplayControl: Display Zoom is not one.");
+		//	}
+
+		//	return zoomIsOne ? 1d : scale;
+		//}
+
+		//private void SetCanvasTransform(PointDbl scale)
+		//{
+		//	_canvas.RenderTransformOrigin = new Point(0.5, 0.5);
+		//	_canvas.RenderTransform = new ScaleTransform(scale.X, scale.Y);
+		//}
 
 		private bool IsCanvasSizeInWBsReasonable(SizeInt canvasSizeInWholeBlocks)
 		{
