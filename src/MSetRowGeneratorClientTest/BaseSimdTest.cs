@@ -25,7 +25,7 @@ namespace MSetRowGeneratorClientTest
 			var threshold = 4;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold, requestsPerJob: 4);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold);
 			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
 			var iterationState = BuildIterationState(limbCount, mapCalcSettings, iteratorCoords);
 			iterationState.SetRowNumber(ROW_NUMBER);
@@ -45,7 +45,7 @@ namespace MSetRowGeneratorClientTest
 			var threshold = 4;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold, requestsPerJob: 4);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold);
 			var iteratorCoords = GetCoordinates(new BigVector(2, 2), new PointInt(2, 2), new RPoint(1, 1, -2), new RSize(1, 1, -8), apfixedPointFormat);
 
 			var iterationState = BuildIterationState(limbCount, mapCalcSettings, iteratorCoords);
@@ -75,7 +75,7 @@ namespace MSetRowGeneratorClientTest
 			var threshold = 4;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold, requestsPerJob: 4);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold);
 			var iteratorCoords = GetCoordinatesSample1(apfixedPointFormat);
 
 			var iterationState = BuildIterationState(limbCount, mapCalcSettings, iteratorCoords);
@@ -103,7 +103,7 @@ namespace MSetRowGeneratorClientTest
 			var threshold = 4;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold, requestsPerJob: 4);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold);
 			var iteratorCoords = GetCoordinatesSample1(apfixedPointFormat);
 
 			var iterationState = BuildIterationState(limbCount, mapCalcSettings, iteratorCoords);
@@ -139,7 +139,7 @@ namespace MSetRowGeneratorClientTest
 			var threshold = 4;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold, requestsPerJob: 4);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold);
 			var iteratorCoords = GetCoordinatesSample1(apfixedPointFormat);
 
 			var iterationState = BuildIterationState(limbCount, mapCalcSettings, iteratorCoords);
@@ -172,7 +172,7 @@ namespace MSetRowGeneratorClientTest
 			var threshold = 4;
 			var apfixedPointFormat = new ApFixedPointFormat(limbCount);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold, requestsPerJob: 4);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: targetIterations, threshold: threshold);
 			var iteratorCoords = GetCoordinatesSample1(apfixedPointFormat);
 
 			var iterationState = BuildIterationState(limbCount, mapCalcSettings, iteratorCoords);

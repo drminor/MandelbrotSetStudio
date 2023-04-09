@@ -531,7 +531,7 @@ namespace MSetExplorer
 
 			// Use the ColorBandSet's highCutoff to set the targetIterations of the current MapCalcSettings
 			var targetIterations = colorBandSet.HighCutoff;
-			var mapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
+			var mapCalcSettings = MapCalcSettings.UpdateTargetIterations(currentJob.MapCalcSettings, targetIterations);
 
 			// Use the current display size and Map Coordinates
 			var mapSize = currentJob.CanvasSize;

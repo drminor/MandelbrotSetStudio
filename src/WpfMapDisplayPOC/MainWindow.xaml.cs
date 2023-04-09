@@ -55,7 +55,7 @@ namespace WpfMapDisplayPOC
 
 			var size = new SizeInt(w, h);
 
-			Debug.WriteLine($"Window Size is {size}.");
+			Debug.WriteLine($"The MapSectionDispControl has Size: {size} on MainWindow ContentRendered.");
 		}
 
 		#endregion

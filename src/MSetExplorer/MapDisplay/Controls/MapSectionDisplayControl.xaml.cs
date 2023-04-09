@@ -193,8 +193,8 @@ namespace MSetExplorer
 			var ourSize = ScreenTypeHelper.ConvertToSizeDbl(newSize);
 
 			//_vm.ContainerSize = ourSize;
-			_vm.CanvasSize = ourSize;
 			_vm.LogicalDisplaySize = ourSize;
+			_vm.CanvasSize = ourSize;
 
 			ReportSizes("After Updating VM with new Sizes");
 		}

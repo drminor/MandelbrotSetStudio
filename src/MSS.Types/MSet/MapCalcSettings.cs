@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
@@ -8,7 +9,31 @@ namespace MSS.Types.MSet
 	[DataContract]
 	public class MapCalcSettings : IEquatable<MapCalcSettings>, IEqualityComparer<MapCalcSettings?>, ICloneable
 	{
-		private static readonly int DEFAULT_THRESHOLD = 4;
+		#region Constructor
+
+		public MapCalcSettings() : this(0, 0, false, false)
+		{ }
+
+		public MapCalcSettings(int targetIterations) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities: false, saveTheZValues: false)
+		{ }
+
+		public MapCalcSettings(int targetIterations, int threshold) : this(targetIterations, threshold, useEscapeVelocities: false, saveTheZValues: false)
+		{ }
+
+		public MapCalcSettings(int targetIterations, bool useEscapeVelocities, bool saveTheZValues) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities, saveTheZValues)
+		{ }
+
+		public MapCalcSettings(int targetIterations, int threshold, bool useEscapeVelocities, bool saveTheZValues)
+		{
+			TargetIterations = targetIterations;
+			Threshold = threshold;
+			UseEscapeVelocities = useEscapeVelocities;
+			SaveTheZValues = saveTheZValues;		
+		}
+
+		#endregion
+
+		#region Public Properties
 
 		[DataMember(Order = 1)]
 		public int TargetIterations { get; set; }
@@ -17,28 +42,28 @@ namespace MSS.Types.MSet
 		public int Threshold { get; set; }
 
 		[DataMember(Order = 3)]
-		public int RequestsPerJob { get; set; }
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(false)]
+		public bool UseEscapeVelocities { get; set; }
 
-		//public bool UseEscapeVelocities { get; set; }
-
-		#region Constructor
-
-		public MapCalcSettings() : this(0, 0, 0)
-		{ }
-
-		public MapCalcSettings(int targetIterations, int requestsPerJob) : this(targetIterations, DEFAULT_THRESHOLD, requestsPerJob)
-		{ }
-
-		public MapCalcSettings(int targetIterations, int threshold, int requestsPerJob)
-		{
-			TargetIterations = targetIterations;
-			Threshold = threshold;
-			RequestsPerJob = requestsPerJob;
-		}
+		[DataMember(Order = 4)]
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(false)]
+		public bool SaveTheZValues { get; set; }
 
 		#endregion
 
-		#region Public Methods
+		#region Static Convenience Methods
+
+		public static MapCalcSettings UpdateTargetIterations(MapCalcSettings mcs, int targetIterations)
+		{
+			return new MapCalcSettings(targetIterations, mcs.TargetIterations, mcs.UseEscapeVelocities, mcs.SaveTheZValues);
+		}
+
+
+		#endregion
+
+		#region ICloneable and ToString
 
 		object ICloneable.Clone()
 		{
@@ -47,13 +72,13 @@ namespace MSS.Types.MSet
 
 		public MapCalcSettings Clone()
 		{
-			var result = new MapCalcSettings(TargetIterations, Threshold, RequestsPerJob);
+			var result = new MapCalcSettings(TargetIterations, Threshold, UseEscapeVelocities, SaveTheZValues);
 			return result;
 		}
 
 		public override string ToString()
 		{
-			return $"TargetIterations: {TargetIterations}, RequestsPerJob: {RequestsPerJob}, Threshold: {Threshold}";
+			return $"TargetIterations: {TargetIterations}, Threshold: {Threshold}, UseEscapeVelocities: {UseEscapeVelocities}, SaveTheZValues: {SaveTheZValues}.";
 		}
 
 		#endregion
@@ -70,7 +95,8 @@ namespace MSS.Types.MSet
 			return !(other is null)
 				&& TargetIterations == other.TargetIterations
 				&& Threshold == other.Threshold
-				&& RequestsPerJob == other.RequestsPerJob;
+				&& UseEscapeVelocities == other.UseEscapeVelocities
+				&& SaveTheZValues == other.SaveTheZValues;
 		}
 
 		public bool Equals(MapCalcSettings? x, MapCalcSettings? y)
@@ -97,7 +123,7 @@ namespace MSS.Types.MSet
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(TargetIterations, Threshold, RequestsPerJob);
+			return HashCode.Combine(TargetIterations, Threshold, UseEscapeVelocities, SaveTheZValues);
 		}
 
 		public static bool operator ==(MapCalcSettings left, MapCalcSettings right)

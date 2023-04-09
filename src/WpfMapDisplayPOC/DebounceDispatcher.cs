@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Windows.Threading;
 
-namespace MSetExplorer
+namespace WpfMapDisplayPOC
 {
 	/// <summary>
 	/// Provides Debounce() and Throttle() methods.

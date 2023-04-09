@@ -92,7 +92,7 @@ namespace WpfMapDisplayPOC
 			//var coords = new RRectangle(-4, 4, -4, 4, -1);
 			//var coords = new RRectangle(0, 4, 0, 4, -1);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 1000, threshold: 4, requestsPerJob: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 1000, threshold: 4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
 
@@ -142,7 +142,7 @@ namespace WpfMapDisplayPOC
 			var exponent = -74;
 			var coords = new RRectangle(x1, x2, y1, y2, exponent, precision: RMapConstants.DEFAULT_PRECISION);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4, requestsPerJob: 100);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
 

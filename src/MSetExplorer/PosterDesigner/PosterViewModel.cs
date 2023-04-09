@@ -666,7 +666,7 @@ namespace MSetExplorer
 			var mapSize = currentJob.CanvasSize;
 			var coords = currentJob.MapAreaInfo.Coords;
 			var targetIterations = colorBandSet.HighCutoff;
-			var mapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
+			var mapCalcSettings = MapCalcSettings.UpdateTargetIterations(currentJob.MapCalcSettings, targetIterations);
 
 			var transformType = TransformType.IterationUpdate;
 

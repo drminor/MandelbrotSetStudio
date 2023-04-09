@@ -7,17 +7,11 @@ namespace MSetExplorer
 	public class MapCalcSettingsViewModel : ViewModelBase
 	{
 		private MapCalcSettings _mapCalcSettings;
-
-		//private int _targetIterations;
-		//private int _requestsPerJob;
 		private double _targetIterationsAvailable;
 
 		public MapCalcSettingsViewModel()
 		{
 			_mapCalcSettings = new MapCalcSettings();
-
-			//_targetIterations = _mapCalcSettings.TargetIterations;
-			//_requestsPerJob = _mapCalcSettings.RequestsPerJob;
 		}
 
 		#region Public Properties
@@ -33,25 +27,9 @@ namespace MSetExplorer
 				{
 					_mapCalcSettings = value;
 					OnPropertyChanged(nameof(TargetIterations));
-					OnPropertyChanged(nameof(RequestsPerJob));
-					//TargetIterations = _mapCalcSettings.TargetIterations;
-					//RequestsPerJob = _mapCalcSettings.RequestsPerJob;
 				}
 			}
 		}
-
-		//public int TargetIterations
-		//{
-		//	get => _targetIterations;
-		//	set
-		//	{
-		//		if (value != _targetIterations)
-		//		{
-		//			_targetIterations = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
 
 		public int TargetIterations
 		{
@@ -60,36 +38,17 @@ namespace MSetExplorer
 			{
 				if (value != _mapCalcSettings.TargetIterations)
 				{
-					//_mapCalcSettings = new MapCalcSettings(value, _mapCalcSettings.RequestsPerJob);
-					//OnPropertyChanged();
+					_mapCalcSettings = MapCalcSettings.UpdateTargetIterations(_mapCalcSettings, value);	// ADDED: 4/8/2023 -- not tested.
 					TriggerIterationUpdate(value);
 				}
 			}
 		}
 
-		//public int RequestsPerJob
-		//{
-		//	get => _requestsPerJob;
-		//	set
-		//	{
-		//		if (value != _requestsPerJob)
-		//		{
-		//			_requestsPerJob = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
-
-		public int RequestsPerJob
+		public int Threshold
 		{
-			get => _mapCalcSettings.RequestsPerJob;
+			get => _mapCalcSettings.Threshold;
 			set
 			{
-				if (value != RequestsPerJob)
-				{
-					_mapCalcSettings = new MapCalcSettings(_mapCalcSettings.TargetIterations, value);
-					OnPropertyChanged();
-				}
 			}
 		}
 

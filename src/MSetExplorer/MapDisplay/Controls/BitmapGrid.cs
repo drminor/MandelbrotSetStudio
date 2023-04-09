@@ -203,7 +203,7 @@ namespace MSetExplorer
 				ClearBitmap(_bitmap);
 				RedrawSections(existingMapSections, _colorMap, mapBlockOffset);
 
-				lastSectionWasIncluded = LoadAndDrawNewSections(newMapSections, _colorMap, mapBlockOffset);
+				lastSectionWasIncluded = LoadAndDrawNewSections(newMapSections, _colorMap);
 			}
 			else
 			{
@@ -240,7 +240,7 @@ namespace MSetExplorer
 
 			if (_colorMap != null)
 			{
-				lastSectionWasIncluded = LoadAndDrawNewSections(mapSections, _colorMap, mapBlockOffset);
+				lastSectionWasIncluded = LoadAndDrawNewSections(mapSections, _colorMap);
 			}
 			else
 			{
@@ -250,7 +250,7 @@ namespace MSetExplorer
 			return lastSectionWasIncluded;
 		}
 
-		public bool LoadAndDrawNewSections(List<MapSection> mapSections, ColorMap colorMap, BigVector jobMapBlockOffset)
+		public bool LoadAndDrawNewSections(List<MapSection> mapSections, ColorMap colorMap)
 		{
 			// All of these mapSections are new and have the same jobMapBlockOffset as the one provided to the method.
 
@@ -260,20 +260,28 @@ namespace MSetExplorer
 			{
 				if (mapSection.MapSectionVectors != null)
 				{
-					var invertedBlockPos = GetInvertedBlockPos(mapSection.ScreenPosition);
-					var loc = invertedBlockPos.Scale(BlockSize);
-
-					_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
-
-					try
+					if (TryGetAdjustedBlockPositon(mapSection, MapBlockOffset, out var blockPosition, warnOnFail: true))
 					{
-						_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
-					}
-					catch (Exception e)
-					{
-						var inbounds = IsBLockVisible(mapSection.ScreenPosition, CanvasSizeInBlocks);
-						Debug.WriteLine($"{e.Message}: Attempting to write a block off-canvas at {loc}. JobNumber: {mapSection.JobNumber}. IsBlockVisible = {inbounds}.");
-						_mapSectionHelper.ReturnMapSection(mapSection);
+						if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks, warnOnFail: true))
+						{
+							var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
+							var loc = invertedBlockPos.Scale(BlockSize);
+
+							_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
+
+							//try
+							//{
+							//	_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
+							//}
+							//catch (Exception e)
+							//{
+							//	Debug.WriteLine($"{e.Message}: Attempting to write a block off-canvas at {loc}. JobNumber: {mapSection.JobNumber}.");
+							//	_mapSectionHelper.ReturnMapSection(mapSection);
+							//}
+
+							_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
+
+						}
 					}
 
 					if (mapSection.IsLastSection)
@@ -295,7 +303,7 @@ namespace MSetExplorer
 				{
 					if (TryGetAdjustedBlockPositon(mapSection, jobMapBlockOffset, out var blockPosition))
 					{
-						if (IsBLockVisible(blockPosition.Value, CanvasSizeInBlocks))
+						if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks))
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
 							var loc = invertedBlockPos.Scale(BlockSize);
@@ -318,7 +326,7 @@ namespace MSetExplorer
 
 			if (TryGetAdjustedBlockPositon(mapSection, MapBlockOffset, out blockPosition))
 			{
-				if (IsBLockVisible(blockPosition.Value, CanvasSizeInBlocks))
+				if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks))
 				{
 					//MapSections.Add(mapSection);
 
@@ -354,7 +362,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition)
+		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition, bool warnOnFail = false)
 		{
 			blockPosition = null;
 			var result = false;
@@ -378,19 +386,26 @@ namespace MSetExplorer
 				}
 			}
 
+			if (!result && warnOnFail)
+			{
+				Debug.WriteLine($"WARNING: Could not GetAdjustedBlockPosition for MapSection with JobNumber: {mapSection.JobNumber}.");
+			}
+
 			return result;
 		}
 
-		private bool IsBLockVisible(PointInt blockPosition, SizeInt canvasSizeInBlocks)
+		private bool IsBLockVisible(MapSection mapSection, PointInt blockPosition, SizeInt canvasSizeInBlocks, bool warnOnFail = false)
 		{
 			if (blockPosition.X < 0 || blockPosition.Y < 0)
 			{
+				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition} is negative.");
 				return false;
 			}
 
 			// TODO: Should we subtract 1 BlockSize from the width when checking the Bounds in IsBlockVisible method.
 			if (blockPosition.X > canvasSizeInBlocks.Width || blockPosition.Y > canvasSizeInBlocks.Height)
 			{
+				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, CanvasSize: {canvasSizeInBlocks}.");
 				return false;
 			}
 

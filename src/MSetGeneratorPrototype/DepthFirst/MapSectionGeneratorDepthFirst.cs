@@ -150,7 +150,7 @@ namespace MSetGeneratorPrototype
 				iterationState.SetRowNumber(rowNumber);
 
 				// TODO: Include the MapCalcSettings in the iterationState.
-				var mapCalcSettings = new MapCalcSettings(iterationState.TargetIterationsVector.GetElement(0), (int) iterator.Threshold, requestsPerJob: 4);
+				var mapCalcSettings = new MapCalcSettings(iterationState.TargetIterationsVector.GetElement(0));
 
 				var allRowSamplesHaveEscaped = hpMSetRowClient.GenerateMapSectionRow(iterationState, _fp31VecMath.ApFixedPointFormat, mapCalcSettings, ct);
 				//iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;

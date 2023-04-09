@@ -20,9 +20,14 @@ namespace WpfMapDisplayPOC
 		private bool _isLoaded;
 
 		private WriteableBitmap _bitmap;
-		private SKColor _canvasClearColor;
+		private SKColor _canvasClearColorEven;
+		private SKColor _canvasClearColorOdd;
+
+		private int _clearColorOpCount;
 
 		//private readonly ConcurrentQueue<BitMapOp> _bitMapOps;
+
+		private DebounceDispatcher _resizeThrottle;
 
 		#endregion
 
@@ -32,12 +37,15 @@ namespace WpfMapDisplayPOC
 		{
 			_isLoaded = false;
 
-			_canvasClearColor = SKColor.Parse(new SolidColorBrush(Colors.Azure).ToString());
+			_clearColorOpCount = 0;
+			_canvasClearColorEven = SKColor.Parse(new SolidColorBrush(Colors.Azure).ToString());
+			_canvasClearColorOdd = SKColor.Parse(new SolidColorBrush(Colors.LightSalmon).ToString());
+
+			_resizeThrottle = new DebounceDispatcher();
 
 			//_bitMapOps = new ConcurrentQueue<BitMapOp>();
 
 			Loaded += MSectionDispControl_Loaded;
-			Initialized += MSectionDispControl_Initialized;
 			SizeChanged += MSectionDispControl_SizeChanged;
 
 			InitializeComponent();
@@ -45,23 +53,16 @@ namespace WpfMapDisplayPOC
 			_bitmap = CreateBitmap();
 
 			myImage.Source = Bitmap;
-
-		}
-
-
-		private void MSectionDispControl_Initialized(object? sender, EventArgs e)
-		{
-			Debug.WriteLine($"The MSectionDispControl is initialized. Width={ActualWidth}.");
 		}
 
 		private void MSectionDispControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			Debug.WriteLine($"The MSectionDispControl is Loaded. Width={ActualWidth}.");
 
-			//_isLoaded = true;
+			Bitmap = CreateBitmap();
+			ClearCanvas();
 
-			//BitmapGrid1.ClearCanvas();
-			//BitmapGrid1.InvalidateVisual();
+			_isLoaded = true;
 		}
 
 		private void MSectionDispControl_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -73,9 +74,16 @@ namespace WpfMapDisplayPOC
 			else
 			{
 				Debug.WriteLine($"The MSectionDispControl is handling SizeChanged. Width={ActualWidth}.");
-			}
 
-			Bitmap = CreateBitmap();
+				_resizeThrottle.Throttle(
+					interval: 500, 
+					action: parm =>
+						{
+							Bitmap = CreateBitmap();
+							ClearCanvas();
+						}
+					);
+			}
 		}
 
 		#endregion
@@ -106,10 +114,15 @@ namespace WpfMapDisplayPOC
 		{
 			if (_bitmap != null)
 			{
-				SkiaHelper.ClearCanvas(_bitmap, _canvasClearColor);
+				SkiaHelper.ClearCanvas(_bitmap, GetClearColor());
 				myImage.Source = Bitmap;
 				OnPropertyChanged(nameof(Bitmap));
 			}
+		}
+
+		private SKColor GetClearColor()
+		{
+			return ++_clearColorOpCount % 2 == 0 ? _canvasClearColorEven : _canvasClearColorOdd;
 		}
 
 		public void PlaceBitmapBuf(SKBitmap sKBitmap, SKPoint sKPoint)
@@ -165,20 +178,19 @@ namespace WpfMapDisplayPOC
 		//	BitmapGrid1.InvalidateVisual();
 		//}
 
-		private class BitMapOp
-		{
-			public SKBitmap SkBitmap { get; init; }
-			public SKPoint SkPoint { get; init; }
-			//public bool ClearCanvas { get; init; }
+		//private class BitMapOp
+		//{
+		//	public SKBitmap SkBitmap { get; init; }
+		//	public SKPoint SkPoint { get; init; }
+		//	//public bool ClearCanvas { get; init; }
 
-			public BitMapOp(SKBitmap skBitmap, SKPoint skPoint/*, bool clearCanvas*/)
-			{
-				SkBitmap = skBitmap ?? throw new ArgumentNullException(nameof(skBitmap));
-				SkPoint = skPoint;
-				//ClearCanvas = clearCanvas;
-			}
-
-		}
+		//	public BitMapOp(SKBitmap skBitmap, SKPoint skPoint/*, bool clearCanvas*/)
+		//	{
+		//		SkBitmap = skBitmap ?? throw new ArgumentNullException(nameof(skBitmap));
+		//		SkPoint = skPoint;
+		//		//ClearCanvas = clearCanvas;
+		//	}
+		//}
 
 		#endregion
 

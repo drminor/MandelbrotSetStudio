@@ -36,8 +36,10 @@ namespace MSetExplorer
 
 		private SizeInt _viewPortInBlocks;
 
-
 		//private VectorInt _canvasControlOffset;
+
+		private DebounceDispatcher _vpSizeThrottle;
+		private DebounceDispatcher _vpSizeInBlocksThrottle;
 
 		#endregion
 
@@ -45,6 +47,9 @@ namespace MSetExplorer
 
 		public BitmapGridControl()
 		{
+			_vpSizeThrottle = new DebounceDispatcher();
+			_vpSizeInBlocksThrottle = new DebounceDispatcher();
+
 			_blockSize = RMapConstants.BLOCK_SIZE;
 			_scrollOwner = null;
 
@@ -110,8 +115,14 @@ namespace MSetExplorer
 					var previousValue = _viewPortInBlocks;
 					_viewPortInBlocks = value;
 
-					Debug.WriteLine($"BitmapGridControl: ViewPortInBlocks is changing: Old size: {previousValue}, new size: {_viewPortInBlocks}.");
-					ViewPortSizeInBlocksChanged?.Invoke(this, new (previousValue, _viewPortInBlocks));
+					//Debug.WriteLine($"BitmapGridControl: ViewPortInBlocks is changing: Old size: {previousValue}, new size: {_viewPortInBlocks}.");
+
+					//ViewPortSizeInBlocksChanged?.Invoke(this, new (previousValue, _viewPortInBlocks));
+
+					if (ViewPortSizeInBlocksChanged != null)
+					{
+						RaiseViewPortSizeInBlocksChanged(new(previousValue, _viewPortInBlocks));
+					}
 				}
 			}
 		}
@@ -126,9 +137,14 @@ namespace MSetExplorer
 					var previousValue = _viewPort;
 					_viewPort = value;
 
-					Debug.WriteLine($"BitmapGridControl: ViewPort is changing: Old size: {previousValue}, new size: {_viewPort}.");
+					//Debug.WriteLine($"BitmapGridControl: ViewPort is changing: Old size: {previousValue}, new size: {_viewPort}.");
+					
 					InvalidateScrollInfo();
-					ViewPortSizeChanged?.Invoke(this, new(previousValue, _viewPort));
+
+					if (ViewPortSizeChanged != null)
+					{
+						RaiseViewPortSizeChanged(new(previousValue, _viewPort));
+					}
 				}
 			}
 		}
@@ -270,6 +286,29 @@ namespace MSetExplorer
 				_scrollOwner.InvalidateScrollInfo();
 			}
 		}
+
+		private void RaiseViewPortSizeChanged(ValueTuple<Size, Size> e)
+		{
+			_vpSizeThrottle.Throttle(
+				interval: 150,
+				action: parm =>
+				{
+					ViewPortSizeChanged?.Invoke(this, e);
+				}
+			);
+		}
+
+		private void RaiseViewPortSizeInBlocksChanged(ValueTuple<SizeInt, SizeInt> e)
+		{
+			_vpSizeInBlocksThrottle.Throttle(
+				interval: 150,
+				action: parm =>
+				{
+					ViewPortSizeInBlocksChanged?.Invoke(this, e);
+				}
+			);
+		}
+
 
 		#endregion
 	}

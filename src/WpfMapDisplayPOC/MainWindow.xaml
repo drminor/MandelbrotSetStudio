@@ -15,10 +15,10 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Width="1026" Height="1026">
+        <Grid Grid.Row="0">
             <Border BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
-                <local:MapSectionDispControl x:Name="MapSectionDispControl1"/>
+                <local:MapSectionDispControl x:Name="MapSectionDispControl1" Margin="3"/>
             </Border>
         </Grid>
 
