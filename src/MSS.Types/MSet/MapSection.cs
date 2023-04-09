@@ -18,6 +18,7 @@ namespace MSS.Types
 				  jobNumber: -1,
 				  mapSectionVectors: null,
 				  subdivisionId: string.Empty,
+				  jobMapBlockPosition: new BigVector(),
 				  repoBlockPosition: new BigVector(),
 				  isInverted: false,
 				  screenPosition: new PointInt(),
@@ -29,7 +30,8 @@ namespace MSS.Types
 
 		// Used when the Request was cancelled or the MapSectionsVectors was empty. 
 		public MapSection(int jobNumber, 
-			string subdivisionId, 
+			string subdivisionId,
+			BigVector jobMapBlockPosition,
 			BigVector repoBlockPosition, 
 			bool isInverted, 
 			PointInt screenPosition, 
@@ -39,7 +41,8 @@ namespace MSS.Types
 			: this(
 				  jobNumber, 
 				  mapSectionVectors: null, 
-				  subdivisionId, 
+				  subdivisionId,
+				  jobMapBlockPosition,
 				  repoBlockPosition, 
 				  isInverted, 
 				  screenPosition, 
@@ -50,12 +53,13 @@ namespace MSS.Types
 			RequestCancelled = isCancelled;
 		}
 
-		public MapSection(int jobNumber, MapSectionVectors? mapSectionVectors, string subdivisionId,
+		public MapSection(int jobNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, BigVector jobMapBlockPosition,
 			BigVector repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobNumber = jobNumber;
 			MapSectionVectors = mapSectionVectors;
 			SubdivisionId = subdivisionId;
+			JobMapBlockOffset = jobMapBlockPosition;
 			RepoBlockPosition = repoBlockPosition;
 			IsInverted = isInverted;
 			ScreenPosition = screenPosition;
@@ -83,6 +87,7 @@ namespace MSS.Types
 
 		public bool IsInverted { get; init; }
 		public string SubdivisionId { get; init; }
+		public BigVector JobMapBlockOffset { get; init; }	
 
 		// TODO: Create a new type: LongVector to hold the MapSectionBlockPosition, instead of using a pair of longs as does the BigVector
 

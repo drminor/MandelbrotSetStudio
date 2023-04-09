@@ -46,7 +46,9 @@ namespace MSetExplorer
 			BlockSize = blockSize;
 			_blockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
 
-			JobMapOffsets = new Dictionary<int, BigVector>();
+			//JobMapOffsets = new Dictionary<int, BigVector>();
+			ActiveJobNumbers = new List<int>();
+
 			_currentMapLoaderJobNumber = null;
 
 			Image = new Image();
@@ -200,7 +202,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public Dictionary<int, BigVector> JobMapOffsets { get; init; }
+		//public Dictionary<int, BigVector> JobMapOffsets { get; init; }
+
+		public List<int> ActiveJobNumbers { get; init; }
 
 		public int? CurrentMapLoaderJobNumber
 		{
@@ -396,27 +400,56 @@ namespace MSetExplorer
 
 		#region Private Methods
 
+		//private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition, bool warnOnFail = false)
+		//{
+		//	blockPosition = null;
+		//	var result = false;
+
+		//	if (JobMapOffsets.TryGetValue(mapSection.JobNumber, out var thisSectionsMapBlockOffset))
+		//	{
+		//		var df = thisSectionsMapBlockOffset.Diff(mapBlockOffset);
+
+		//		if (df.IsZero())
+		//		{
+		//			blockPosition = mapSection.ScreenPosition;
+		//			result = true;
+		//		}
+		//		else
+		//		{
+		//			if (df.TryConvertToInt(out var offset))
+		//			{
+		//				blockPosition = mapSection.ScreenPosition.Translate(offset);
+		//				result = true;
+		//			}
+		//		}
+		//	}
+
+		//	if (!result && warnOnFail)
+		//	{
+		//		Debug.WriteLine($"WARNING: Could not GetAdjustedBlockPosition for MapSection with JobNumber: {mapSection.JobNumber}.");
+		//	}
+
+		//	return result;
+		//}
+
 		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition, bool warnOnFail = false)
 		{
 			blockPosition = null;
 			var result = false;
 
-			if (JobMapOffsets.TryGetValue(mapSection.JobNumber, out var thisSectionsMapBlockOffset))
-			{
-				var df = thisSectionsMapBlockOffset.Diff(mapBlockOffset);
+			var df = mapSection.JobMapBlockOffset.Diff(mapBlockOffset);
 
-				if (df.IsZero())
+			if (df.IsZero())
+			{
+				blockPosition = mapSection.ScreenPosition;
+				result = true;
+			}
+			else
+			{
+				if (df.TryConvertToInt(out var offset))
 				{
-					blockPosition = mapSection.ScreenPosition;
+					blockPosition = mapSection.ScreenPosition.Translate(offset);
 					result = true;
-				}
-				else
-				{
-					if (df.TryConvertToInt(out var offset))
-					{
-						blockPosition = mapSection.ScreenPosition.Translate(offset);
-						result = true;
-					}
 				}
 			}
 
@@ -427,6 +460,7 @@ namespace MSetExplorer
 
 			return result;
 		}
+
 
 		private bool IsBLockVisible(MapSection mapSection, PointInt blockPosition, SizeInt canvasSizeInBlocks, bool warnOnFail = false)
 		{
@@ -455,7 +489,9 @@ namespace MSetExplorer
 
 		private void AddJobNumAndMapOffset(int jobNumber, BigVector jobMapOffset)
 		{
-			JobMapOffsets.Add(jobNumber, jobMapOffset);
+			//JobMapOffsets.Add(jobNumber, jobMapOffset);
+
+			ActiveJobNumbers.Add(jobNumber);
 			CurrentMapLoaderJobNumber = jobNumber;
 			MapBlockOffset = jobMapOffset;
 		}

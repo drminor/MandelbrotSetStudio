@@ -382,13 +382,17 @@ namespace MSetExplorer
 
 			lastSectionWasIncluded = _bitmapGrid.DiscardAndLoad(mapSections, newJob.ColorBandSet, newJobNumber, newJob.MapAreaInfo.MapBlockOffset, newJob.MapAreaInfo.CanvasControlOffset);
 
-			foreach(var mapSection in mapSections)
-			{
-				if (mapSection.MapSectionVectors != null)
-				{
-					MapSections.Add(mapSection);
-				}
-			}
+
+			var sectionsToAdd = mapSections.Where(x => x.MapSectionVectors != null);
+
+			//MapSections.
+			//foreach(var mapSection in mapSections)
+			//{
+			//	if (mapSection.MapSectionVectors != null)
+			//	{
+			//		MapSections.Add(mapSection);
+			//	}
+			//}
 
 			return newJobNumber;
 		}
@@ -401,17 +405,24 @@ namespace MSetExplorer
 			{
 				_mapLoaderManager.StopJob(currentJobNumber.Value);
 
-				_bitmapGrid.JobMapOffsets.Remove(currentJobNumber.Value);
+				//_bitmapGrid.JobMapOffsets.Remove(currentJobNumber.Value);
 
 				_bitmapGrid.CurrentMapLoaderJobNumber = null;
 			}
 
-			foreach (var kvp in _bitmapGrid.JobMapOffsets)
+			//foreach (var kvp in _bitmapGrid.JobMapOffsets)
+			//{
+			//	_mapLoaderManager.StopJob(kvp.Key);
+			//}
+
+			//_bitmapGrid.JobMapOffsets.Clear();
+
+			foreach(var jobNumber in _bitmapGrid.ActiveJobNumbers)
 			{
-				_mapLoaderManager.StopJob(kvp.Key);
+				_mapLoaderManager.StopJob(jobNumber);
 			}
 
-			_bitmapGrid.JobMapOffsets.Clear();
+			_bitmapGrid.ActiveJobNumbers.Clear();
 
 			ClearDisplayInternal();
 		}

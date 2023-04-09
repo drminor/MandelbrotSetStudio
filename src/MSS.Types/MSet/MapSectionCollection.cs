@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace MSS.Types.MSet
 {
+
+	// TODO: Either scrap this class and use ObservableCollection,
+	// or create a new class based on List<T> and implement the INotifyCollectionChanged interface by hand.
+
 	public class MapSectionCollection : Collection<MapSection>, INotifyCollectionChanged, INotifyPropertyChanged
 	{
 		//public event NotifyCollectionChangedEventHandler? CollectionChanged;

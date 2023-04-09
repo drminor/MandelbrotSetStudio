@@ -217,7 +217,8 @@ namespace MSS.Common
 				var mapSection = new MapSection(
 					jobNumber: -1, 
 					subdivisionId: subdivisionId, 
-					repoBlockPosition: repoPosition, 
+					repoBlockPosition: repoPosition,
+					jobMapBlockPosition: mapAreaInfo.MapBlockOffset,
 					isInverted: isInverted,
 					screenPosition: screenPosition, 
 					size: blockSize, 
@@ -240,7 +241,7 @@ namespace MSS.Common
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			var mapSection = new MapSection(jobNumber, mapSectionVectors, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
+			var mapSection = new MapSection(jobNumber, mapSectionVectors, mapSectionRequest.SubdivisionId, mapBlockOffset, repoBlockPosition, isInverted,
 				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
 
 			UpdateMapSectionWithProcInfo(mapSection, mapSectionRequest, jobNumber);
@@ -266,7 +267,7 @@ namespace MSS.Common
 			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
-			var mapSection = new MapSection(jobNumber, mapSectionRequest.SubdivisionId, repoBlockPosition, isInverted,
+			var mapSection = new MapSection(jobNumber, mapSectionRequest.SubdivisionId, mapBlockOffset, repoBlockPosition, isInverted,
 				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, isCancelled);
 
 			return mapSection;

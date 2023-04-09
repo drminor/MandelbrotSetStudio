@@ -234,12 +234,13 @@ namespace MSetRepo
 
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
 
 			if (source.MapSectionVectors == null)
 			{
 				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
 			}
+
+			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
 
 			var result = new MapSectionRecord
 				(
