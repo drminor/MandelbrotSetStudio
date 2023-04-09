@@ -2,6 +2,7 @@
 using MongoDB.Driver.Linq;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -25,10 +26,7 @@ namespace MSetExplorer
 
 		private object _paintLocker;
 
-		//private SizeDbl _containerSize;
 		private SizeDbl _canvasSize;
-
-		//private VectorInt _canvasControlOffset;
 		private double _displayZoom;
 		private SizeDbl _logicalDisplaySize;
 
@@ -49,20 +47,16 @@ namespace MSetExplorer
 			_mapSectionHelper = mapSectionHelper;
 			_mapLoaderManager = mapLoaderManager;
 
-			MapSections = new ObservableCollection<MapSection>();
+			//MapSections = new ObservableCollection<MapSection>();
+			MapSections = new MapSectionCollection();
 
-			//Action<WriteableBitmap> updateBitmapAction = x => { Bitmap = x; };
 			_bitmapGrid = new BitmapGrid(_mapSectionHelper, BlockSize);
 
 			_currentJobAreaAndCalcSettings = null;
 
 			_logicalDisplaySize = new SizeDbl();
-			//CanvasControlOffset = new VectorInt();
-
-			//HandleContainerSizeUpdates = true;
 
 			DisplayZoom = 1.0;
-			//ContainerSize = new SizeDbl(600); // Check This Change
 		}
 
 		#endregion
@@ -78,7 +72,9 @@ namespace MSetExplorer
 
 		public SizeInt BlockSize { get; init; }
 
-		public ObservableCollection<MapSection> MapSections { get; init; }
+		//public ObservableCollection<MapSection> MapSections { get; init; }
+
+		public MapSectionCollection MapSections { get; init; }
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
@@ -165,23 +161,9 @@ namespace MSetExplorer
 				if (value != _bitmapGrid.CanvasSizeInBlocks)
 				{ 
 					_bitmapGrid.CanvasSizeInBlocks = value;
-					//OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSizeInBlocks));
 				}
 			}
 		}
-
-		//public VectorInt CanvasControlOffset
-		//{
-		//	get => _bitmapGrid.CanvasControlOffset;
-		//	set
-		//	{
-		//		if (value != _bitmapGrid.CanvasControlOffset)
-		//		{
-		//			_bitmapGrid.CanvasControlOffset = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
 
 		public double DisplayZoom
 		{

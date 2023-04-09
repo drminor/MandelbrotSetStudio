@@ -18,14 +18,11 @@ namespace MSetExplorer
 
 		private readonly MapSectionHelper _mapSectionHelper;
 
-		//private readonly Action<WriteableBitmap> _onUpdateBitmap;
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear = new byte[0];
 		private Int32Rect _blockRect { get; init; }
 
 		private int? _currentMapLoaderJobNumber;
-
-		//private VectorInt _offset;
 
 		private SizeInt _canvasSizeInBlocks;
 		private SizeInt _imageSizeInBlocks;
@@ -150,6 +147,8 @@ namespace MSetExplorer
 
 				if (_canvasSizeInBlocks != value)
 				{
+					Debug.WriteLine($"BitmapGrid CanvasSizeUpdate: Old size: {_imageSizeInBlocks}, new size: {value}.");
+
 					_canvasSizeInBlocks = value;
 
 					// The Image must be able to accomodate a postive or negative CanvasControlOffset of up to one full block. 
@@ -166,7 +165,7 @@ namespace MSetExplorer
 			{
 				if (_imageSizeInBlocks != value)
 				{
-					Debug.WriteLine($"Resizing the MapDisplay Writeable Bitmap. Old size: {_imageSizeInBlocks}, new size: {value}.");
+					Debug.WriteLine($"BitmapGrid ImageSizeUpdate Writeable Bitmap. Old size: {_imageSizeInBlocks}, new size: {value}.");
 
 					_imageSizeInBlocks = value;
 					_maxYPtr = _imageSizeInBlocks.Height - 1;
@@ -562,6 +561,14 @@ namespace MSetExplorer
 		//	_canvas.RenderTransformOrigin = new Point(0.5, 0.5);
 		//	_canvas.RenderTransform = new ScaleTransform(scale.X, scale.Y);
 		//}
+
+		private void ReportSizes(string label)
+		{
+			var iSize = new Size(Image.ActualWidth, Image.ActualHeight);
+			var bSize = new Size(Bitmap.Width, Bitmap.Height);
+
+			Debug.WriteLine($"At {label}, the sizes are CanvasSizeInBlocks: {CanvasSizeInBlocks}, ImageSizeInBlocks: {ImageSizeInBlocks}, Image: {iSize}, Bitmap: {bSize}.");
+		}
 
 		private bool IsCanvasSizeInWBsReasonable(SizeInt canvasSizeInWholeBlocks)
 		{

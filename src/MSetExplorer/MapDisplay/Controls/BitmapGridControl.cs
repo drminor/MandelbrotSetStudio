@@ -18,11 +18,8 @@ namespace MSetExplorer
 		private readonly SizeInt _blockSize;
 
 		private ScrollViewer? _scrollOwner;
-
 		private FrameworkElement? _content;
-
 		private Canvas _canvas;
-		//private Image _image;
 
 		private Point _offset;
 		private Size _unscaledExtent;
@@ -35,8 +32,6 @@ namespace MSetExplorer
 		private SizeDbl _containerSize;
 
 		private SizeInt _viewPortInBlocks;
-
-		//private VectorInt _canvasControlOffset;
 
 		private DebounceDispatcher _vpSizeThrottle;
 		private DebounceDispatcher _vpSizeInBlocksThrottle;
@@ -55,7 +50,6 @@ namespace MSetExplorer
 
 			_content = null; 
 			_canvas = new Canvas();
-			//_image = new Image();
 
 			_offset = new Point(0, 0);
 			_unscaledExtent = new Size(0, 0);
@@ -81,7 +75,6 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public Canvas Canvas => _canvas;
-		//public Image Image => _image;
 
 		public SizeDbl ContainerSize
 		{
@@ -144,19 +137,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public VectorInt CanvasControlOffset
-		//{
-		//	get => _canvasControlOffset;
-		//	set
-		//	{
-		//		if (value != _canvasControlOffset)
-		//		{
-		//			_canvasControlOffset = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
 
 		//public Size UnscaledExtent
 		//{
@@ -305,7 +285,6 @@ namespace MSetExplorer
 				}
 			);
 		}
-
 
 		#endregion
 	}
