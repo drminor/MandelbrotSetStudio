@@ -23,7 +23,7 @@ namespace MSetExplorer
 
 		private Point _offset;
 		private Size _unscaledExtent;
-		private Size _viewPort;
+		private Size _viewPortSize;
 
 		private Point _contentRenderTransformOrigin;
 		private TranslateTransform _contentOffsetTransform;
@@ -31,7 +31,7 @@ namespace MSetExplorer
 
 		private SizeDbl _containerSize;
 
-		private SizeInt _viewPortInBlocks;
+		private SizeInt _viewPortSizeInBlocks;
 
 		private DebounceDispatcher _vpSizeThrottle;
 		private DebounceDispatcher _vpSizeInBlocksThrottle;
@@ -53,7 +53,7 @@ namespace MSetExplorer
 
 			_offset = new Point(0, 0);
 			_unscaledExtent = new Size(0, 0);
-			_viewPort = new Size(0, 0);
+			_viewPortSize = new Size(0, 0);
 
 			_contentRenderTransformOrigin = new Point(0, 0);
 			_transformGroup = new TransformGroup();
@@ -83,15 +83,15 @@ namespace MSetExplorer
 			{
 				_containerSize = value;
 				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ContainerSize, _blockSize, KEEP_DISPLAY_SQUARE);
-				ViewPortInBlocks = sizeInWholeBlocks;
+				ViewPortSizeInBlocks = sizeInWholeBlocks;
 
-				ViewPort = ScreenTypeHelper.ConvertToSize(ContainerSize);
+				ViewPortSize = ScreenTypeHelper.ConvertToSize(ContainerSize);
 			}
 		}
 
-		public SizeInt ViewPortInBlocks
+		public SizeInt ViewPortSizeInBlocks
 		{
-			get => _viewPortInBlocks;
+			get => _viewPortSizeInBlocks;
 			private set
 			{
 				if (value.Width < 0 || value.Height < 0)
@@ -99,10 +99,10 @@ namespace MSetExplorer
 					return;
 				}
 
-				if (_viewPortInBlocks != value)
+				if (_viewPortSizeInBlocks != value)
 				{
-					var previousValue = _viewPortInBlocks;
-					_viewPortInBlocks = value;
+					var previousValue = _viewPortSizeInBlocks;
+					_viewPortSizeInBlocks = value;
 
 					//Debug.WriteLine($"BitmapGridControl: ViewPortInBlocks is changing: Old size: {previousValue}, new size: {_viewPortInBlocks}.");
 
@@ -110,21 +110,21 @@ namespace MSetExplorer
 
 					if (ViewPortSizeInBlocksChanged != null)
 					{
-						RaiseViewPortSizeInBlocksChanged(new(previousValue, _viewPortInBlocks));
+						RaiseViewPortSizeInBlocksChanged(new(previousValue, _viewPortSizeInBlocks));
 					}
 				}
 			}
 		}
 
-		public Size ViewPort
+		public Size ViewPortSize
 		{
-			get => _viewPort;
+			get => _viewPortSize;
 			private set
 			{
-				if (_viewPort != value)
+				if (_viewPortSize != value)
 				{
-					var previousValue = _viewPort;
-					_viewPort = value;
+					var previousValue = _viewPortSize;
+					_viewPortSize = value;
 
 					//Debug.WriteLine($"BitmapGridControl: ViewPort is changing: Old size: {previousValue}, new size: {_viewPort}.");
 					
@@ -132,7 +132,7 @@ namespace MSetExplorer
 
 					if (ViewPortSizeChanged != null)
 					{
-						RaiseViewPortSizeChanged(new(previousValue, _viewPort));
+						RaiseViewPortSizeChanged(new(previousValue, _viewPortSize));
 					}
 				}
 			}

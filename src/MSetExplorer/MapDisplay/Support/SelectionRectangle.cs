@@ -707,6 +707,8 @@ namespace MSetExplorer
 			var defaultSideLength = RMapHelper.CalculatePitch(displaySize, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
 
 			_defaultSelectionSize = GetDefaultSelectionSize(_canvas, defaultSideLength);
+
+			Debug.WriteLine($"ScreenSelection Pitch: {_pitch}. SelectionSize: {_defaultSelectionSize}.");
 		}
 
 		private Size GetDefaultSelectionSize(Canvas canvas, double defaultSideLength)

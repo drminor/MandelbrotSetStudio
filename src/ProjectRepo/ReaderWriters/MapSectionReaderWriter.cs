@@ -221,27 +221,29 @@ namespace ProjectRepo
 
 		public async Task<ObjectId?> GetId(ObjectId subdivisionId, BigVectorDto blockPosition)
 		{
-			var filter1 = Builders<BsonDocument>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<BsonDocument>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
-			var filter3 = Builders<BsonDocument>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
-			var filter4 = Builders<BsonDocument>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
-			var filter5 = Builders<BsonDocument>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
+			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
 
-			var bDoc = await BsonDocumentCollection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5);
+			var bDoc = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5);
 
 			var itemsFound = bDoc.ToList();
 
 			if (itemsFound.Count == 1)
 			{
-				var test = itemsFound[0].GetValue("_id");
-				if (test.IsObjectId)
-				{
-					return test.AsObjectId;
-				}
-				else
-				{
-					return null;
-				}
+				var result = itemsFound[0].Id;
+				return result;
+				//var test = itemsFound[0].GetValue("_id");
+				//if (test.IsObjectId)
+				//{
+				//	return test.AsObjectId;
+				//}
+				//else
+				//{
+				//	return null;
+				//}
 			}
 			else if (itemsFound.Count > 1)
 			{

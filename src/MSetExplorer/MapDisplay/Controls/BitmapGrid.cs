@@ -22,7 +22,7 @@ namespace MSetExplorer
 		private byte[] _pixelsToClear = new byte[0];
 		private Int32Rect _blockRect { get; init; }
 
-		private int? _currentMapLoaderJobNumber;
+		//private int? _currentMapLoaderJobNumber;
 
 		private SizeInt _canvasSizeInBlocks;
 		private SizeInt _imageSizeInBlocks;
@@ -46,13 +46,10 @@ namespace MSetExplorer
 			BlockSize = blockSize;
 			_blockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
 
-			//JobMapOffsets = new Dictionary<int, BigVector>();
 			ActiveJobNumbers = new List<int>();
 
-			_currentMapLoaderJobNumber = null;
-
 			Image = new Image();
-			_bitmap = CreateBitmap(sizeInBlocks: new SizeInt(1));
+			_bitmap = CreateBitmap(size: BlockSize);
 			Image.Source = _bitmap;
 			_maxYPtr = 1;
 
@@ -149,7 +146,7 @@ namespace MSetExplorer
 
 				if (_canvasSizeInBlocks != value)
 				{
-					Debug.WriteLine($"BitmapGrid CanvasSizeUpdate: Old size: {_imageSizeInBlocks}, new size: {value}.");
+					Debug.WriteLine($"BitmapGrid CanvasSizeUpdate: Old size: {_canvasSizeInBlocks}, new size: {value}.");
 
 					_canvasSizeInBlocks = value;
 
@@ -170,8 +167,8 @@ namespace MSetExplorer
 					Debug.WriteLine($"BitmapGrid ImageSizeUpdate Writeable Bitmap. Old size: {_imageSizeInBlocks}, new size: {value}.");
 
 					_imageSizeInBlocks = value;
-					_maxYPtr = _imageSizeInBlocks.Height - 1;
-					Bitmap = CreateBitmap(_imageSizeInBlocks);
+					//_maxYPtr = _imageSizeInBlocks.Height - 1;
+					//Bitmap = CreateBitmap(_imageSizeInBlocks);
 				}
 			}
 		}
@@ -202,18 +199,7 @@ namespace MSetExplorer
 			}
 		}
 
-		//public Dictionary<int, BigVector> JobMapOffsets { get; init; }
-
 		public List<int> ActiveJobNumbers { get; init; }
-
-		public int? CurrentMapLoaderJobNumber
-		{
-			get => _currentMapLoaderJobNumber;
-			set
-			{
-				_currentMapLoaderJobNumber = value;
-			}
-		}
 
 		public Dispatcher Dispatcher => _bitmap.Dispatcher;
 
@@ -392,45 +378,12 @@ namespace MSetExplorer
 
 		public void ClearDisplay()
 		{
-			//ClearMapSectionsAndBitmap(mapLoaderJobNumber: null);
 			ClearBitmap(_bitmap);
 		}
 
 		#endregion
 
 		#region Private Methods
-
-		//private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition, bool warnOnFail = false)
-		//{
-		//	blockPosition = null;
-		//	var result = false;
-
-		//	if (JobMapOffsets.TryGetValue(mapSection.JobNumber, out var thisSectionsMapBlockOffset))
-		//	{
-		//		var df = thisSectionsMapBlockOffset.Diff(mapBlockOffset);
-
-		//		if (df.IsZero())
-		//		{
-		//			blockPosition = mapSection.ScreenPosition;
-		//			result = true;
-		//		}
-		//		else
-		//		{
-		//			if (df.TryConvertToInt(out var offset))
-		//			{
-		//				blockPosition = mapSection.ScreenPosition.Translate(offset);
-		//				result = true;
-		//			}
-		//		}
-		//	}
-
-		//	if (!result && warnOnFail)
-		//	{
-		//		Debug.WriteLine($"WARNING: Could not GetAdjustedBlockPosition for MapSection with JobNumber: {mapSection.JobNumber}.");
-		//	}
-
-		//	return result;
-		//}
 
 		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition, bool warnOnFail = false)
 		{
@@ -461,19 +414,18 @@ namespace MSetExplorer
 			return result;
 		}
 
-
 		private bool IsBLockVisible(MapSection mapSection, PointInt blockPosition, SizeInt canvasSizeInBlocks, bool warnOnFail = false)
 		{
 			if (blockPosition.X < 0 || blockPosition.Y < 0)
 			{
-				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition} is negative.");
+				//if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition} is negative.");
 				return false;
 			}
 
 			// TODO: Should we subtract 1 BlockSize from the width when checking the Bounds in IsBlockVisible method.
 			if (blockPosition.X > canvasSizeInBlocks.Width || blockPosition.Y > canvasSizeInBlocks.Height)
 			{
-				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, CanvasSize: {canvasSizeInBlocks}.");
+				//if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, CanvasSize: {canvasSizeInBlocks}.");
 				return false;
 			}
 
@@ -489,10 +441,7 @@ namespace MSetExplorer
 
 		private void AddJobNumAndMapOffset(int jobNumber, BigVector jobMapOffset)
 		{
-			//JobMapOffsets.Add(jobNumber, jobMapOffset);
-
 			ActiveJobNumbers.Add(jobNumber);
-			CurrentMapLoaderJobNumber = jobNumber;
 			MapBlockOffset = jobMapOffset;
 		}
 
@@ -510,16 +459,30 @@ namespace MSetExplorer
 
 		private void ClearBitmap(WriteableBitmap bitmap)
 		{
-			// Clear the bitmap, one row of bitmap blocks at a time.
+			var imageSize = _imageSizeInBlocks.Scale(BlockSize);
 
-			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
-			var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
-			var zeros = GetClearBytes(blockRowPixelCount * 4);
-
-			for (var vPtr = 0; vPtr < _imageSizeInBlocks.Height; vPtr++)
+			if (_bitmap.Width != imageSize.Width || _bitmap.Height != imageSize.Height)
 			{
-				var offset = vPtr * BlockSize.Height;
-				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
+				Debug.WriteLine($"BitmapGrid ClearBitmap is being called Creating new bitmap with size: {imageSize}.");
+
+				_maxYPtr = _imageSizeInBlocks.Height - 1;
+				Bitmap = CreateBitmap(imageSize);
+			}
+			else
+			{
+				Debug.WriteLine($"BitmapGrid ClearBitmap is being called.");
+
+				// Clear the bitmap, one row of bitmap blocks at a time.
+
+				var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
+				var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
+				var zeros = GetClearBytes(blockRowPixelCount * 4);
+
+				for (var vPtr = 0; vPtr < _imageSizeInBlocks.Height; vPtr++)
+				{
+					var offset = vPtr * BlockSize.Height;
+					bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
+				}
 			}
 		}
 
@@ -533,9 +496,9 @@ namespace MSetExplorer
 			return _pixelsToClear;
 		}
 
-		private WriteableBitmap CreateBitmap(SizeInt sizeInBlocks)
+		private WriteableBitmap CreateBitmap(SizeInt size)
 		{
-			var size = sizeInBlocks.Scale(BlockSize);
+			//var size = sizeInBlocks.Scale(BlockSize);
 			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
 			//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
 

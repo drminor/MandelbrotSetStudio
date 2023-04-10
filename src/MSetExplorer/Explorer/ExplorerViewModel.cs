@@ -190,7 +190,7 @@ namespace MSetExplorer
 				ColorBandSetViewModel.ColorBandSet = newColorBandSet;
 				ColorBandSetHistogramViewModel.ColorBandSet = newColorBandSet;
 
-				MapDisplayViewModel.CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
+				MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet

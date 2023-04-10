@@ -171,7 +171,7 @@ namespace MSetExplorer
 					//MapScrollViewModel.PosterSize = null;
 
 					// Let the MapDisplay know to stop any current MapLoader job.
-					MapDisplayViewModel.CurrentAreaColorAndCalcSettings = null;
+					MapDisplayViewModel.CancelJob();
 				}
 			}
 
@@ -187,7 +187,7 @@ namespace MSetExplorer
 
 				//MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);
 
-				MapDisplayViewModel.CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
+				MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet

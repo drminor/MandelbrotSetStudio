@@ -248,6 +248,7 @@ namespace MSetExplorer
 
 		private void GoBack_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
+			//Debug.WriteLine("GoBack_CanExecute is firing.");
 			e.CanExecute = _vm?.ProjectViewModel?.CanGoBack(skipPanJobs:false) ?? false;
 		}
 
@@ -707,30 +708,34 @@ namespace MSetExplorer
 
 		private void W_Up_Button_Click(object sender, RoutedEventArgs e)
 		{
-			//Width += 128;
+			//Width = Math.Max(1280, 128 * ((Width + 128) / 128));
+			Width += 128;
 			//_vm.BumpDispWidth(increase: true);
 		}
 
 		private void W_Down_Button_Click(object sender, RoutedEventArgs e)
 		{
-			//Width -= 128;
+			//Width = Math.Min(128, 128 * ((Width - 128) / 128));
+			Width -= 128;
 			//_vm.BumpDispWidth(increase: false);
 		}
 
 		private void H_Up_Button_Click(object sender, RoutedEventArgs e)
 		{
-			//Height += 128;
+			//Height = Math.Min(1280, 128 * ((Height + 128) / 128));
+			Height += 128;
 			//_vm.BumpDispHeight(increase: true);
 
-			_vm.MapDisplayViewModel.DisplayZoom += 0.1; 
+			//_vm.MapDisplayViewModel.DisplayZoom += 0.1; 
 
 		}
 
 		private void H_Down_Button_Click(object sender, RoutedEventArgs e)
 		{
-			//Height -= 128;
+			//Height = Math.Max(128, 128 * ((Height - 128) / 128));
+			Height -= 128;
 			//_vm.BumpDispHeight(increase: false);
-			_vm.MapDisplayViewModel.DisplayZoom -= 0.1;
+			//_vm.MapDisplayViewModel.DisplayZoom -= 0.1;
 		}
 
 		#endregion

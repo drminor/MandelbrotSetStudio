@@ -53,20 +53,17 @@ namespace MSetExplorer
 			{
 				_canvas = BitmapGridControl1.Canvas;
 				_vm = (IMapDisplayViewModel)DataContext;
+				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.Children.Add(_vm.Image);
 
-				_vm.CanvasSizeInBlocks = BitmapGridControl1.ViewPortInBlocks;
-
-				var ourSize = BitmapGridControl1.ContainerSize;
-				_vm.CanvasSize = ourSize;
-				_vm.LogicalDisplaySize = ourSize;
+				_vm.CanvasSizeInBlocks = BitmapGridControl1.ViewPortSizeInBlocks;
+				_vm.CanvasSize = ScreenTypeHelper.ConvertToSizeDbl(BitmapGridControl1.ViewPortSize);
 
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
 				BitmapGridControl1.ViewPortSizeInBlocksChanged += OnViewPortSizeInBlocksChanged;
 				BitmapGridControl1.ViewPortSizeChanged += OnViewPortSizeChanged;
 
-				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -168,11 +165,7 @@ namespace MSetExplorer
 	
 			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousSize}, New: {newSize}.");
 
-			var ourSize = ScreenTypeHelper.ConvertToSizeDbl(newSize);
-
-			//_vm.ContainerSize = ourSize;
-			_vm.LogicalDisplaySize = ourSize;
-			_vm.CanvasSize = ourSize;
+			_vm.CanvasSize = ScreenTypeHelper.ConvertToSizeDbl(newSize);
 		}
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -184,9 +177,12 @@ namespace MSetExplorer
 			//}
 
 			// Enable SelectionRectangle when ever we have a non-null "Job."
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
 			{
-				_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
+				if (_selectionRectangle != null)
+				{
+					_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
+				}
 			}
 		}
 

@@ -23,6 +23,8 @@ namespace MSetExplorer
 
 		private ColorBandSet? _previewColorBandSet;
 
+		//private Func<SizeInt> _getCanvasSizeFunc;
+
 		#region Constructor
 
 		public ProjectViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
@@ -31,6 +33,8 @@ namespace MSetExplorer
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
 			_blockSize = blockSize;
+
+			//_getCanvasSizeFunc = getCanvasSizeFunc;
 
 			_canvasSize = new SizeInt();
 			_currentProject = null;
@@ -194,12 +198,15 @@ namespace MSetExplorer
 				{
 					var cbsBefore = CurrentColorBandSet;
 
-					//var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-					//if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-					//{
-					//	Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Current Job changing (ProjectViewModel).");
-					//	FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
-					//}
+					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
+					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+					{
+						//	Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Current Job changing (ProjectViewModel).");
+						//	FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
+
+						// TODO: Check to make sure that simply setting the Current Job is sufficent to get a good display
+						Debug.WriteLine($"The current Job's CanvasSizeInBlocks does not match the Current CanvasSizeInBlocks -- CurrentJob is changing -- (ProjectViewModel). NO ACTION TAKEN!");
+					}
 
 					if (CurrentColorBandSet != cbsBefore)
 					{
@@ -248,8 +255,11 @@ namespace MSetExplorer
 					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, project.CurrentJob.CanvasControlOffset, _blockSize);
 					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 					{
-						Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Project Open (ProjectViewModel).");
-						FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+						//Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Project Open (ProjectViewModel).");
+						//FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
+
+						// TODO: Check to make sure that simply setting the Current Job is sufficent to get a good display
+						Debug.WriteLine($"The current Job's CanvasSizeInBlocks does not match the Current CanvasSizeInBlocks -- Project Open (ProjectViewModel). NO ACTION TAKEN!");
 					}
 
 					return true;
@@ -568,9 +578,15 @@ namespace MSetExplorer
 			var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
 			if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
 			{
-				Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- MapControl Size is changing (ProjectViewModel).");
-				FindOrCreateJobForNewCanvasSize(project, CurrentJob, currentCanvasSizeInBlocks);
-				wasUpdated = true;
+				//Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- MapControl Size is changing (ProjectViewModel).");
+				//FindOrCreateJobForNewCanvasSize(project, CurrentJob, currentCanvasSizeInBlocks);
+				//wasUpdated = true;
+
+				// TODO: Check to make sure that simply setting the Current Job is sufficent to get a good display
+				Debug.WriteLine($"The current Job's CanvasSizeInBlocks does not match the Current CanvasSizeInBlocks -- CanvasSize is changing -- (ProjectViewModel) NO ACTION TAKEN!");
+
+				wasUpdated = false;
+
 			}
 
 			if (wasUpdated)

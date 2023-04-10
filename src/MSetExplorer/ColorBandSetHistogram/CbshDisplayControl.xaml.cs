@@ -80,7 +80,7 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			if (e.PropertyName == nameof(ICbshDisplayViewModel.CanvasSize))
 			{
 				UpdateTheCanvasSize(_vm.CanvasSize);
 			}

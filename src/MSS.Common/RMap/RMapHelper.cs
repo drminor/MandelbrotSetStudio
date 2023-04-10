@@ -43,7 +43,6 @@ namespace MSS.Common
 				result = (int)Math.Round(height / Math.Pow(2, Math.Round(Math.Log2(height / pitchTarget))));
 			}
 
-			Debug.WriteLine($"The new ScreenSelection Pitch is {result}.");
 			return result;
 		}
 

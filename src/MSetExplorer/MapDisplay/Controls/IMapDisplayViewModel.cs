@@ -1,7 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -17,12 +16,10 @@ namespace MSetExplorer
 		Image Image { get; }
 		WriteableBitmap Bitmap { get; }
 
-
 		//ObservableCollection<MapSection> MapSections { get; }
-
 		MapSectionCollection MapSections { get; }
 
-		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; set; }
+		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
 
@@ -34,7 +31,7 @@ namespace MSetExplorer
 
 		SizeDbl CanvasSize { get; set; }
 		SizeInt CanvasSizeInBlocks { get; set; }
-		SizeDbl LogicalDisplaySize { get; set; }
+		SizeDbl LogicalDisplaySize { get; }
 
 		//VectorInt CanvasControlOffset { get; set; }
 
@@ -47,7 +44,7 @@ namespace MSetExplorer
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
 		// New Methods to replace the Update... methods above.
-		void SubmitJob(AreaColorAndCalcSettings job);
+		int? SubmitJob(AreaColorAndCalcSettings newValue);
 		void CancelJob();
 		void RestartLastJob();
 		void ClearDisplay();

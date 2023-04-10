@@ -56,7 +56,7 @@ namespace MSetExplorer
 
 			DisplayZoom = 1.0;
 			ContainerSize = new SizeDbl(500, 300);
-			LogicalDisplaySize = CanvasSize;
+			//LogicalDisplaySize = CanvasSize;
 
 			_mapSectionHistogramProcessor.PercentageBandsUpdated += PercentageBandsUpdated;
 			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
@@ -92,7 +92,7 @@ namespace MSetExplorer
 			{
 				if (value != _canvasSize)
 				{
-					Debug.WriteLine($"The MapDisplay Canvas Size is now {value}.");
+					Debug.WriteLine($"The CbshDisplayViewModel's Canvas Size is now {value}.");
 					_canvasSize = value;
 					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
 
@@ -100,7 +100,7 @@ namespace MSetExplorer
 					LogicalDisplaySize = newLogicalWidth.HasValue ? new SizeInt(newLogicalWidth.Value, _canvasSize.Height) : _canvasSize;
 					DrawHistogram();
 
-					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
+					OnPropertyChanged(nameof(ICbshDisplayViewModel.CanvasSize));
 				}
 			}
 		}
@@ -120,7 +120,7 @@ namespace MSetExplorer
 				{
 					_displayZoom = value;
 					_scaleTransform.ScaleX = 1 / _displayZoom;
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(ICbshDisplayViewModel.DisplayZoom));
 				}
 			}
 		}
@@ -134,13 +134,13 @@ namespace MSetExplorer
 				{
 					_logicalDisplaySize = value;
 
-					Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
+					Debug.WriteLine($"ColorBandSetHistogram Display's Logical DisplaySize is now {value}.");
 
 					DisplayZoom = _logicalDisplaySize.Width / (double)_canvasSize.Width;
 
 					UpdateFoundationRectangle(_foundationRectangle, value);
 
-					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
+					OnPropertyChanged(nameof(ICbshDisplayViewModel.LogicalDisplaySize));
 				}
 			}
 		}
@@ -201,7 +201,7 @@ namespace MSetExplorer
 					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
 				}
 
-				OnPropertyChanged();
+				OnPropertyChanged(nameof(ICbshDisplayViewModel.ColorBandsView));
 			}
 		}
 
@@ -222,7 +222,7 @@ namespace MSetExplorer
 					_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
 				}
 
-				OnPropertyChanged();
+				OnPropertyChanged(nameof(ICbshDisplayViewModel.CurrentColorBand));
 			}
 		}
 

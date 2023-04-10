@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver.Linq;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -28,9 +29,9 @@ namespace MSetExplorer
 
 		private SizeDbl _canvasSize;
 		private double _displayZoom;
-		private SizeDbl _logicalDisplaySize;
+		//private SizeDbl _logicalDisplaySize;
 
-		private AreaColorAndCalcSettings? _currentJobAreaAndCalcSettings;
+		private AreaColorAndCalcSettings? _currentAreaColorAndCalcSettings;
 
 		#endregion
 
@@ -52,9 +53,10 @@ namespace MSetExplorer
 
 			_bitmapGrid = new BitmapGrid(_mapSectionHelper, BlockSize);
 
-			_currentJobAreaAndCalcSettings = null;
+			_currentAreaColorAndCalcSettings = null;
 
-			_logicalDisplaySize = new SizeDbl();
+			_canvasSize = new SizeDbl();
+			//_logicalDisplaySize = new SizeDbl();
 
 			DisplayZoom = 1.0;
 		}
@@ -78,19 +80,11 @@ namespace MSetExplorer
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
-			get => _currentJobAreaAndCalcSettings;
-			set
+			get => _currentAreaColorAndCalcSettings;
+			private set
 			{
-				if (value != _currentJobAreaAndCalcSettings)
-				{
-					var previousValue = _currentJobAreaAndCalcSettings;
-					_currentJobAreaAndCalcSettings = value?.Clone() ?? null;
-
-					Debug.WriteLine($"MapDisplay is handling JobChanged. CurrentJobId: {_currentJobAreaAndCalcSettings?.OwnerId ?? ObjectId.Empty.ToString()}");
-					HandleCurrentJobChanged(previousValue, _currentJobAreaAndCalcSettings);
-
-					OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings));
-				}
+				_currentAreaColorAndCalcSettings = value?.Clone() ?? null;
+				OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings));
 			}
 		}
 
@@ -140,6 +134,19 @@ namespace MSetExplorer
 
 		public Image Image => _bitmapGrid.Image;
 
+		public SizeInt CanvasSizeInBlocks
+		{
+			get => _bitmapGrid.CanvasSizeInBlocks;
+			set
+			{
+				if (value != _bitmapGrid.CanvasSizeInBlocks)
+				{
+					_bitmapGrid.CanvasSizeInBlocks = value;
+					//HandleDisplaySizeUpdate();
+				}
+			}
+		}
+
 		public SizeDbl CanvasSize
 		{
 			get => _canvasSize;
@@ -148,22 +155,16 @@ namespace MSetExplorer
 				if (value != _canvasSize)
 				{
 					_canvasSize = value;
+
+					HandleDisplaySizeUpdate();
+
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
+					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
 				}
 			}
 		}
 
-		public SizeInt CanvasSizeInBlocks
-		{
-			get => _bitmapGrid.CanvasSizeInBlocks;
-			set
-			{
-				if (value != _bitmapGrid.CanvasSizeInBlocks)
-				{ 
-					_bitmapGrid.CanvasSizeInBlocks = value;
-				}
-			}
-		}
+		public SizeDbl LogicalDisplaySize => CanvasSize;
 
 		public double DisplayZoom
 		{
@@ -189,7 +190,7 @@ namespace MSetExplorer
 					//_scaleTransform.ScaleY = 1 / _displayZoom;
 
 					//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
-					LogicalDisplaySize = CanvasSize;
+					//LogicalDisplaySize = CanvasSize;
 
 
 					// TODO: DisplayZoom property is not being used on the MapSectionDisplayViewModel
@@ -198,33 +199,58 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl LogicalDisplaySize
-		{
-			get => _logicalDisplaySize;
-			set
-			{
-				if (_logicalDisplaySize != value)
-				{
-					_logicalDisplaySize = value;
+		//public SizeDbl LogicalDisplaySize
+		//{
+		//	get => _logicalDisplaySize;
+		//	private set
+		//	{
+		//		if (_logicalDisplaySize != value)
+		//		{
+		//			_logicalDisplaySize = value;
 
-					Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
+		//			Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
 
-					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
-				}
-			}
-		}
+		//			OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
+		//		}
+		//	}
+		//}
+
+
 
 		#endregion
 
 		#region Public Methods
 
-		public void SubmitJob(AreaColorAndCalcSettings newAreaColorAndCalcSettings)
+		public int? SubmitJob(AreaColorAndCalcSettings newValue)
 		{
-			CurrentAreaColorAndCalcSettings = newAreaColorAndCalcSettings;
+			int? result = null;
+
+			if (newValue != CurrentAreaColorAndCalcSettings)
+			{
+				var previousValue = CurrentAreaColorAndCalcSettings;
+				CurrentAreaColorAndCalcSettings = newValue;
+
+				ReportNewJobOldJob(previousValue, newValue);
+				result = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings);
+			}
+
+			return result;
+		}
+
+		private void ReportNewJobOldJob(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings newValue)
+		{
+			var currentJobId = previousValue?.OwnerId ?? ObjectId.Empty.ToString();
+			var currentSamplePointDelta = previousValue?.MapAreaInfo.Subdivision.SamplePointDelta ?? new RSize();
+			var newJobId = newValue.OwnerId;
+			var newSamplePointDelta = newValue.MapAreaInfo.Subdivision.SamplePointDelta;
+
+			Debug.WriteLine($"MapDisplay is handling SubmitJob. CurrentJobId: {currentJobId} ({currentSamplePointDelta}), NewJobId: {newJobId} ({newSamplePointDelta}).");
 		}
 
 		public void CancelJob()
 		{
+			CurrentAreaColorAndCalcSettings = null;
+
 			lock (_paintLocker)
 			{
 				StopCurrentJobAndClearDisplay();
@@ -260,7 +286,7 @@ namespace MSetExplorer
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
 			var screenArea = e.Area;
-			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, screenArea, e.IsPreview));
+			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, screenArea, CanvasSize, e.IsPreview));
 		}
 
 		public void UpdateMapViewPan(ImageDraggedEventArgs e)
@@ -270,7 +296,7 @@ namespace MSetExplorer
 			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
 			var invOffset = offset.Invert();
 			var screenArea = new RectangleInt(new PointInt(invOffset), CanvasSize.Round());
-			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, screenArea));
+			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, screenArea, CanvasSize));
 		}
 
 		#endregion
@@ -307,9 +333,25 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
+		private void HandleDisplaySizeUpdate()
 		{
-			int? newJobNumber = null;
+			var mapAreaInfo = _currentAreaColorAndCalcSettings?.MapAreaInfo;
+			Debug.WriteLine($"Will Request and Display New Map Sections here. Current MapAreaInfo: {mapAreaInfo}.");
+
+			//var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
+
+			//var transformType = TransformType.CanvasSizeUpdate;
+			//RectangleInt? newArea = null;
+
+			//var newJob = _mapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
+
+			//Debug.WriteLine($"Creating CanvasSizeUpdate Job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+			//Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+		}
+
+		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
+		{
+			int? newJobNumber;
 
 			var lastSectionWasIncluded = false;
 
@@ -330,6 +372,7 @@ namespace MSetExplorer
 				else
 				{
 					StopCurrentJobAndClearDisplay();
+					newJobNumber = null;
 				}
 			}
 
@@ -337,6 +380,8 @@ namespace MSetExplorer
 			{
 				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
 			}
+
+			return newJobNumber;
 		}
 
 		private int? ReuseAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
@@ -399,24 +444,6 @@ namespace MSetExplorer
 
 		private void StopCurrentJobAndClearDisplay()
 		{
-			var currentJobNumber = _bitmapGrid.CurrentMapLoaderJobNumber;
-
-			if (currentJobNumber != null)
-			{
-				_mapLoaderManager.StopJob(currentJobNumber.Value);
-
-				//_bitmapGrid.JobMapOffsets.Remove(currentJobNumber.Value);
-
-				_bitmapGrid.CurrentMapLoaderJobNumber = null;
-			}
-
-			//foreach (var kvp in _bitmapGrid.JobMapOffsets)
-			//{
-			//	_mapLoaderManager.StopJob(kvp.Key);
-			//}
-
-			//_bitmapGrid.JobMapOffsets.Clear();
-
 			foreach(var jobNumber in _bitmapGrid.ActiveJobNumbers)
 			{
 				_mapLoaderManager.StopJob(jobNumber);
