@@ -1,6 +1,4 @@
-﻿using MSetExplorer.XPoc;
-using MSS.Types;
-using System;
+﻿using MSS.Types;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -168,6 +166,7 @@ namespace MSetExplorer
 			_vm.CanvasSize = ScreenTypeHelper.ConvertToSizeDbl(newSize);
 		}
 
+		// TODO: Create Dependency Properties on the BitmapGridControl and then bind these to the VM.
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			//if (e.PropertyName is nameof(IMapDisplayViewModel.DisplayZoom))

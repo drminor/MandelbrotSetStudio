@@ -23,7 +23,10 @@ namespace MSetExplorer
 		public DebounceDispatcher()
 		{
 			Dispatcher = Dispatcher.CurrentDispatcher;
-			Priority = DispatcherPriority.ApplicationIdle;
+
+			//Priority = DispatcherPriority.ApplicationIdle;
+			Priority = DispatcherPriority.Render;
+
 			_timeLastInvoked = DateTime.UtcNow.AddYears(-1);
 			_debug = false;
 		}

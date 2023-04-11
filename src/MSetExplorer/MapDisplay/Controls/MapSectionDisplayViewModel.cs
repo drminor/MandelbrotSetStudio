@@ -31,7 +31,7 @@ namespace MSetExplorer
 		private double _displayZoom;
 		//private SizeDbl _logicalDisplaySize;
 
-		private VectorInt _canvasControlOffset;
+		private VectorDbl _canvasControlOffset;
 
 		private AreaColorAndCalcSettings? _currentAreaColorAndCalcSettings;
 
@@ -62,7 +62,7 @@ namespace MSetExplorer
 			_canvasSize = new SizeDbl();
 			//_logicalDisplaySize = new SizeDbl();
 
-			_canvasControlOffset = new VectorInt();
+			_canvasControlOffset = new VectorDbl();
 
 			DisplayZoom = 1.0;
 		}
@@ -193,7 +193,7 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 		}
 
-		public VectorInt CanvasControlOffset
+		public VectorDbl CanvasControlOffset
 		{
 			get => _canvasControlOffset;
 			set
@@ -310,7 +310,7 @@ namespace MSetExplorer
 					var newMapSections = _mapLoaderManager.Push(currentJob.OwnerId, currentJob.OwnerType, currentJob.MapAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
 					_bitmapGrid.MapBlockOffset = currentJob.MapAreaInfo.MapBlockOffset;
-					CanvasControlOffset = currentJob.MapAreaInfo.CanvasControlOffset;
+					CanvasControlOffset = new VectorDbl(currentJob.MapAreaInfo.CanvasControlOffset);
 
 					_ = _bitmapGrid.DrawSections(MapSections, newMapSections, currentJob.ColorBandSet);
 				}
@@ -435,7 +435,7 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}.");
 
-			CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+			CanvasControlOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
 
 			int? result;
 			List<MapSection> newMapSections;
@@ -465,7 +465,7 @@ namespace MSetExplorer
 			var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
 			_bitmapGrid.MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
-			CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+			CanvasControlOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
 			lastSectionWasIncluded = _bitmapGrid.DrawSections(existingMapSections, newMapSections, newJob.ColorBandSet);
 
 			// ObservableCollection does not support add range

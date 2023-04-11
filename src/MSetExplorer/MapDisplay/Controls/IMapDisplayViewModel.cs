@@ -2,7 +2,6 @@
 using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
@@ -33,7 +32,7 @@ namespace MSetExplorer
 		SizeInt CanvasSizeInBlocks { get; set; }
 		SizeDbl LogicalDisplaySize { get; }
 
-		VectorInt CanvasControlOffset { get; set; }
+		VectorDbl CanvasControlOffset { get; set; }
 
 		double DisplayZoom { get; set; }
 

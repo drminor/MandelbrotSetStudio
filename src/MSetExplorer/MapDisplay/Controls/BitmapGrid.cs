@@ -155,9 +155,9 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"BitmapGrid ImageSizeUpdate Writeable Bitmap. Old size: {_imageSizeInBlocks}, new size: {value}.");
 
+					// Will trigger the Bitmap to be updated with new size 
+					// when ClearDisplay or DrawSections is called next.
 					_imageSizeInBlocks = value;
-					//_maxYPtr = _imageSizeInBlocks.Height - 1;
-					//Bitmap = CreateBitmap(_imageSizeInBlocks);
 				}
 			}
 		}
@@ -179,7 +179,15 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
-
+		
+		public void ClearDisplay()
+		{
+			if (!RefreshBitmap())
+			{
+				ClearBitmap(_bitmap);
+			}
+		}
+		
 		public bool DrawSections(IList<MapSection> existingMapSections, List<MapSection> newMapSections, ColorBandSet colorBandSet)
 		{
 			if (colorBandSet != ColorBandSet)
@@ -193,13 +201,25 @@ namespace MSetExplorer
 			{
 				if (existingMapSections.Count > 0)
 				{
-					ClearBitmap(_bitmap);
-					DrawSections(existingMapSections, _colorMap);
-				}
+					if (!RefreshBitmap())
+					{
+						ClearBitmap(_bitmap);
+					}
 
-				if (newMapSections.Count > 0)
+					DrawSections(existingMapSections, _colorMap);
+
+					if (newMapSections.Count > 0)
+					{
+						lastSectionWasIncluded = DrawSections(newMapSections, _colorMap);
+					}
+				}
+				else
 				{
-					lastSectionWasIncluded = DrawSections(newMapSections, _colorMap);
+					if (newMapSections.Count > 0)
+					{
+						RefreshBitmap();
+						lastSectionWasIncluded = DrawSections(newMapSections, _colorMap);
+					}
 				}
 			}
 
@@ -287,11 +307,6 @@ namespace MSetExplorer
 			}
 
 			return sectionWasAdded;
-		}
-
-		public void ClearDisplay()
-		{
-			ClearBitmap(_bitmap);
 		}
 
 		#endregion
@@ -421,32 +436,37 @@ namespace MSetExplorer
 			return colorMap;
 		}
 
-		private void ClearBitmap(WriteableBitmap bitmap)
+		private bool RefreshBitmap()
 		{
 			var imageSize = _imageSizeInBlocks.Scale(_blockSize);
 
 			if (_bitmap.Width != imageSize.Width || _bitmap.Height != imageSize.Height)
 			{
-				Debug.WriteLine($"BitmapGrid ClearBitmap is being called Creating new bitmap with size: {imageSize}.");
+				Debug.WriteLine($"BitmapGrid RefreshBitmap is being called. BitmapSize {new Size(_bitmap.Width, _bitmap.Height)} != ImageSize: Creating new bitmap with size: {imageSize}.");
 
 				_maxYPtr = _imageSizeInBlocks.Height - 1;
 				Bitmap = CreateBitmap(imageSize);
+				return true;
 			}
 			else
 			{
-				Debug.WriteLine($"BitmapGrid ClearBitmap is being called.");
+				return false;
+			}
+		}
 
-				// Clear the bitmap, one row of bitmap blocks at a time.
+		private void ClearBitmap(WriteableBitmap bitmap)
+		{
+			Debug.WriteLine($"BitmapGrid ClearBitmap is being called.");
 
-				var rect = new Int32Rect(0, 0, bitmap.PixelWidth, _blockSize.Height);
-				var blockRowPixelCount = bitmap.PixelWidth * _blockSize.Height;
-				var zeros = GetClearBytes(blockRowPixelCount * 4);
+			// Clear the bitmap, one row of bitmap blocks at a time.
+			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, _blockSize.Height);
+			var blockRowPixelCount = bitmap.PixelWidth * _blockSize.Height;
+			var zeros = GetClearBytes(blockRowPixelCount * 4);
 
-				for (var vPtr = 0; vPtr < _imageSizeInBlocks.Height; vPtr++)
-				{
-					var offset = vPtr * _blockSize.Height;
-					bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
-				}
+			for (var vPtr = 0; vPtr < _imageSizeInBlocks.Height; vPtr++)
+			{
+				var offset = vPtr * _blockSize.Height;
+				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
 			}
 		}
 

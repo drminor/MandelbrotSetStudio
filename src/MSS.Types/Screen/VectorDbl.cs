@@ -22,6 +22,12 @@ namespace MSS.Types
 			Y = y;
 		}
 
+		public VectorDbl(VectorInt vectorInt)
+		{
+			X = vectorInt.X;
+			Y = vectorInt.Y;
+		}
+
 		public double X { get; set; }
 		public double Y { get; set; }
 
@@ -54,6 +60,18 @@ namespace MSS.Types
 		{
 			return Scale(-1);
 		}
+
+
+		public VectorDbl Add(SizeDbl amount)
+		{
+			return new VectorDbl(X + amount.Width, Y + amount.Height);
+		}
+
+		public VectorDbl Sub(SizeDbl amount)
+		{
+			return new VectorDbl(X - amount.Width, Y - amount.Height);
+		}
+
 
 		//public PointDbl Translate(SizeInt offset)
 		//{
