@@ -13,7 +13,7 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 
-		Image Image { get; }
+		//Image Image { get; }
 		WriteableBitmap Bitmap { get; }
 
 		//ObservableCollection<MapSection> MapSections { get; }
@@ -33,7 +33,7 @@ namespace MSetExplorer
 		SizeInt CanvasSizeInBlocks { get; set; }
 		SizeDbl LogicalDisplaySize { get; }
 
-		//VectorInt CanvasControlOffset { get; set; }
+		VectorInt CanvasControlOffset { get; set; }
 
 		double DisplayZoom { get; set; }
 

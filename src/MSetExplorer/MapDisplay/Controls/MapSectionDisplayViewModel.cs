@@ -31,6 +31,8 @@ namespace MSetExplorer
 		private double _displayZoom;
 		//private SizeDbl _logicalDisplaySize;
 
+		private VectorInt _canvasControlOffset;
+
 		private AreaColorAndCalcSettings? _currentAreaColorAndCalcSettings;
 
 		#endregion
@@ -39,24 +41,28 @@ namespace MSetExplorer
 
 		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
-			BlockSize = blockSize;
-
 			REUSE_SECTIONS_FOR_SOME_OPS = true;
 
 			_paintLocker = new object();
 
-			_mapSectionHelper = mapSectionHelper;
 			_mapLoaderManager = mapLoaderManager;
+			_mapSectionHelper = mapSectionHelper;
+			BlockSize = blockSize;
+
+			ActiveJobNumbers = new List<int>();
 
 			//MapSections = new ObservableCollection<MapSection>();
 			MapSections = new MapSectionCollection();
 
-			_bitmapGrid = new BitmapGrid(_mapSectionHelper, BlockSize);
+			Action<WriteableBitmap> updateBitmapAction = x => { Bitmap = x; };
+			_bitmapGrid = new BitmapGrid(BlockSize, updateBitmapAction);
 
 			_currentAreaColorAndCalcSettings = null;
 
 			_canvasSize = new SizeDbl();
 			//_logicalDisplaySize = new SizeDbl();
+
+			_canvasControlOffset = new VectorInt();
 
 			DisplayZoom = 1.0;
 		}
@@ -73,6 +79,8 @@ namespace MSetExplorer
 		#region Public Properties - Content
 
 		public SizeInt BlockSize { get; init; }
+
+		public List<int> ActiveJobNumbers { get; init; }
 
 		//public ObservableCollection<MapSection> MapSections { get; init; }
 
@@ -130,9 +138,15 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public WriteableBitmap Bitmap => _bitmapGrid.Bitmap;
-
-		public Image Image => _bitmapGrid.Image;
+		public WriteableBitmap Bitmap
+		{
+			get => _bitmapGrid.Bitmap;
+			set
+			{
+				//_bitmap = value;
+				OnPropertyChanged();
+			}
+		}
 
 		public SizeInt CanvasSizeInBlocks
 		{
@@ -142,7 +156,6 @@ namespace MSetExplorer
 				if (value != _bitmapGrid.CanvasSizeInBlocks)
 				{
 					_bitmapGrid.CanvasSizeInBlocks = value;
-					//HandleDisplaySizeUpdate();
 				}
 			}
 		}
@@ -160,6 +173,37 @@ namespace MSetExplorer
 
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
 					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
+				}
+			}
+		}
+
+		private void HandleDisplaySizeUpdate()
+		{
+			var mapAreaInfo = _currentAreaColorAndCalcSettings?.MapAreaInfo;
+			Debug.WriteLine($"Will Request and Display New Map Sections here. Current MapAreaInfo: {mapAreaInfo}.");
+
+			//var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
+
+			//var transformType = TransformType.CanvasSizeUpdate;
+			//RectangleInt? newArea = null;
+
+			//var newJob = _mapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
+
+			//Debug.WriteLine($"Creating CanvasSizeUpdate Job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+			//Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+		}
+
+		public VectorInt CanvasControlOffset
+		{
+			get => _canvasControlOffset;
+			set
+			{
+				if (value != _canvasControlOffset)
+				{
+					Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
+					_canvasControlOffset = value;
+
+					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasControlOffset));
 				}
 			}
 		}
@@ -215,8 +259,6 @@ namespace MSetExplorer
 		//	}
 		//}
 
-
-
 		#endregion
 
 		#region Public Methods
@@ -266,7 +308,11 @@ namespace MSetExplorer
 				if (currentJob != null && !currentJob.IsEmpty)
 				{
 					var newMapSections = _mapLoaderManager.Push(currentJob.OwnerId, currentJob.OwnerType, currentJob.MapAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
-					_ = _bitmapGrid.ReuseAndLoad(MapSections, newMapSections, currentJob.ColorBandSet, newJobNumber, currentJob.MapAreaInfo.MapBlockOffset, currentJob.MapAreaInfo.CanvasControlOffset);
+
+					_bitmapGrid.MapBlockOffset = currentJob.MapAreaInfo.MapBlockOffset;
+					CanvasControlOffset = currentJob.MapAreaInfo.CanvasControlOffset;
+
+					_ = _bitmapGrid.DrawSections(MapSections, newMapSections, currentJob.ColorBandSet);
 				}
 			}
 		}
@@ -314,11 +360,16 @@ namespace MSetExplorer
 			{
 				lock (_paintLocker)
 				{
-					var sectionWasDrawn = _bitmapGrid.GetAndPlacePixels(mapSection, mapSection.MapSectionVectors, out var blockPosition);
+					var sectionWasAdded = _bitmapGrid.GetAndPlacePixels(mapSection, mapSection.MapSectionVectors, out var blockPosition);
 
-					if (sectionWasDrawn)
+					if (sectionWasAdded)
 					{
 						MapSections.Add(mapSection);
+					}
+					else
+					{
+						Debug.WriteLine($"Not drawing map section: {mapSection} with adjusted block position: {blockPosition} for job number = {mapSection.JobNumber}.");
+						_mapSectionHelper.ReturnMapSection(mapSection);
 					}
 				}
 			}
@@ -332,22 +383,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		private void HandleDisplaySizeUpdate()
-		{
-			var mapAreaInfo = _currentAreaColorAndCalcSettings?.MapAreaInfo;
-			Debug.WriteLine($"Will Request and Display New Map Sections here. Current MapAreaInfo: {mapAreaInfo}.");
-
-			//var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
-
-			//var transformType = TransformType.CanvasSizeUpdate;
-			//RectangleInt? newArea = null;
-
-			//var newJob = _mapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
-
-			//Debug.WriteLine($"Creating CanvasSizeUpdate Job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
-			//Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
-		}
 
 		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
 		{
@@ -386,9 +421,6 @@ namespace MSetExplorer
 
 		private int? ReuseAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
-			lastSectionWasIncluded = false;
-			int? result = null;
-
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(newJob.MapAreaInfo, newJob.MapCalcSettings);
 			var loadedSections = new ReadOnlyCollection<MapSection>(MapSections);
 			var sectionsToLoad = GetSectionsToLoad(sectionsRequired, loadedSections);
@@ -403,53 +435,61 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}.");
 
-			//_bitmapGrid.CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+			CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+
+			int? result;
+			List<MapSection> newMapSections;
 
 			if (sectionsToLoad.Count > 0)
 			{
-				var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
+				newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
 				result = newJobNumber;
-				lastSectionWasIncluded = _bitmapGrid.ReuseAndLoad(MapSections, newMapSections, newJob.ColorBandSet, newJobNumber, newJob.MapAreaInfo.MapBlockOffset, newJob.MapAreaInfo.CanvasControlOffset);
+				_bitmapGrid.MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
+				//lastSectionWasIncluded = _bitmapGrid.DrawSections(MapSections, newMapSections, newJob.ColorBandSet);
 			}
 			else
 			{
-				_bitmapGrid.Redraw(MapSections, newJob.ColorBandSet, newJob.MapAreaInfo.CanvasControlOffset);
+				newMapSections = new List<MapSection>();
+				result = null;
+				//_bitmapGrid.Redraw(MapSections, newJob.ColorBandSet);
 			}
 
+			lastSectionWasIncluded = _bitmapGrid.DrawSections(MapSections, newMapSections, newJob.ColorBandSet);
 			return result;
 		}
 
 		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
 			//_bitmapGrid.CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+			var existingMapSections = new List<MapSection>();
+			var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
-			var mapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
+			_bitmapGrid.MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
+			CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
+			lastSectionWasIncluded = _bitmapGrid.DrawSections(existingMapSections, newMapSections, newJob.ColorBandSet);
 
-			lastSectionWasIncluded = _bitmapGrid.DiscardAndLoad(mapSections, newJob.ColorBandSet, newJobNumber, newJob.MapAreaInfo.MapBlockOffset, newJob.MapAreaInfo.CanvasControlOffset);
+			// ObservableCollection does not support add range
+			//var sectionsToAdd = mapSections.Where(x => x.MapSectionVectors != null);
 
-
-			var sectionsToAdd = mapSections.Where(x => x.MapSectionVectors != null);
-
-			//MapSections.
-			//foreach(var mapSection in mapSections)
-			//{
-			//	if (mapSection.MapSectionVectors != null)
-			//	{
-			//		MapSections.Add(mapSection);
-			//	}
-			//}
+			foreach(var mapSection in newMapSections)
+			{
+				if (mapSection.MapSectionVectors != null)
+				{
+					MapSections.Add(mapSection);
+				}
+			}
 
 			return newJobNumber;
 		}
 
 		private void StopCurrentJobAndClearDisplay()
 		{
-			foreach(var jobNumber in _bitmapGrid.ActiveJobNumbers)
+			foreach(var jobNumber in ActiveJobNumbers)
 			{
 				_mapLoaderManager.StopJob(jobNumber);
 			}
 
-			_bitmapGrid.ActiveJobNumbers.Clear();
+			ActiveJobNumbers.Clear();
 
 			ClearDisplayInternal();
 		}
@@ -519,31 +559,31 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private List<MapSection> GetSectionsToLoadX(List<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)
-		{
-			var result = new List<MapSection>();
-			sectionsToRemove = new List<MapSection>();
+		//private List<MapSection> GetSectionsToLoadX(List<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)
+		//{
+		//	var result = new List<MapSection>();
+		//	sectionsToRemove = new List<MapSection>();
 
-			foreach (var ms in sectionsPresent)
-			{
-				var stillNeed = sectionsNeeded.Any(presentSection => presentSection == ms && presentSection.TargetIterations == ms.TargetIterations);
+		//	foreach (var ms in sectionsPresent)
+		//	{
+		//		var stillNeed = sectionsNeeded.Any(presentSection => presentSection == ms && presentSection.TargetIterations == ms.TargetIterations);
 
-				if (!stillNeed)
-				{
-					sectionsToRemove.Add(ms);
-				}
+		//		if (!stillNeed)
+		//		{
+		//			sectionsToRemove.Add(ms);
+		//		}
 
-			}
+		//	}
 
-			//var result = sectionsNeeded.Where(
-			//	neededSection => !sectionsPresent.Any(
-			//		presentSection => presentSection == neededSection
-			//		&& presentSection.TargetIterations == neededSection.TargetIterations
-			//		)
-			//	).ToList();
+		//	//var result = sectionsNeeded.Where(
+		//	//	neededSection => !sectionsPresent.Any(
+		//	//		presentSection => presentSection == neededSection
+		//	//		&& presentSection.TargetIterations == neededSection.TargetIterations
+		//	//		)
+		//	//	).ToList();
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 

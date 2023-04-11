@@ -54,7 +54,7 @@ namespace MSetExplorer
 				_canvas = BitmapGridControl1.Canvas;
 				_vm = (IMapDisplayViewModel)DataContext;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
-				_canvas.Children.Add(_vm.Image);
+				//_canvas.Children.Add(_vm.Image);
 
 				_vm.CanvasSizeInBlocks = BitmapGridControl1.ViewPortSizeInBlocks;
 				_vm.CanvasSize = ScreenTypeHelper.ConvertToSizeDbl(BitmapGridControl1.ViewPortSize);
@@ -183,6 +183,16 @@ namespace MSetExplorer
 				{
 					_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
 				}
+			}
+
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.Bitmap))
+			{
+				BitmapGridControl1.Image.Source = _vm.Bitmap;
+			}
+
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasControlOffset))
+			{
+				BitmapGridControl1.CanvasControlOffset = _vm.CanvasControlOffset;
 			}
 		}
 

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -16,19 +15,17 @@ namespace MSetExplorer
 	{
 		#region Private Properties
 
-		private readonly MapSectionHelper _mapSectionHelper;
+		private SizeInt _blockSize;
 
+		private readonly Action<WriteableBitmap> _onUpdateBitmap;
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear = new byte[0];
 		private Int32Rect _blockRect { get; init; }
-
-		//private int? _currentMapLoaderJobNumber;
 
 		private SizeInt _canvasSizeInBlocks;
 		private SizeInt _imageSizeInBlocks;
 		private int _maxYPtr;
 
-		private VectorInt _canvasControlOffset;
 		private BigVector _mapBlockOffset;
 
 		private ColorBandSet _colorBandSet;
@@ -40,23 +37,17 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public BitmapGrid(MapSectionHelper mapSectionHelper, SizeInt blockSize)
+		public BitmapGrid(SizeInt blockSize, Action<WriteableBitmap> onUpdateBitmap)
 		{
-			_mapSectionHelper = mapSectionHelper;
-			BlockSize = blockSize;
-			_blockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
+			_blockSize = blockSize;
+			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
 
-			ActiveJobNumbers = new List<int>();
+			_onUpdateBitmap = onUpdateBitmap;
 
-			Image = new Image();
-			_bitmap = CreateBitmap(size: BlockSize);
-			Image.Source = _bitmap;
+			_bitmap = CreateBitmap(size: _blockSize);
 			_maxYPtr = 1;
 
 			_mapBlockOffset = new BigVector();
-
-			_canvasControlOffset = new VectorInt();
-			SetCanvasOffset(_canvasControlOffset);
 
 			_useEscapeVelocities = true;
 			_highlightSelectedColorBand = false;
@@ -67,8 +58,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
-
-		public SizeInt BlockSize { get; init; }
 
 		public ColorBandSet ColorBandSet => _colorBandSet;
 
@@ -81,7 +70,7 @@ namespace MSetExplorer
 
 				if (_colorMap != null)
 				{
-					RedrawSections(mapSections, _colorMap, MapBlockOffset);
+					DrawSections(mapSections, _colorMap);
 				}
 			}
 		}
@@ -99,7 +88,7 @@ namespace MSetExplorer
 				if (_colorMap != null)
 				{
 					_colorMap.UseEscapeVelocities = value;
-					RedrawSections(mapSections, _colorMap, MapBlockOffset);
+					DrawSections(mapSections, _colorMap);
 				}
 			}
 		}
@@ -117,7 +106,7 @@ namespace MSetExplorer
 				if (_colorMap != null)
 				{
 					_colorMap.HighlightSelectedColorBand = value;
-					RedrawSections(mapSections, _colorMap, MapBlockOffset);
+					DrawSections(mapSections, _colorMap);
 				}
 			}
 		}
@@ -173,111 +162,144 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorInt CanvasControlOffset
-		{
-			get => _canvasControlOffset;
-			set
-			{
-				if (value != _canvasControlOffset)
-				{
-					Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
-					_canvasControlOffset = value;
-					SetCanvasOffset(value);	
-				}
-			}
-		}
-
-		public Image Image { get; init; }
-
 		public WriteableBitmap Bitmap
 		{
 			get => _bitmap;
 			set
 			{
 				_bitmap = value;
-				Image.Source = value;
+				_onUpdateBitmap(_bitmap);
 			}
 		}
 
-		public List<int> ActiveJobNumbers { get; init; }
-
 		public Dispatcher Dispatcher => _bitmap.Dispatcher;
+
+		public long NumberOfCountValSwitches { get; private set; }
 
 		#endregion
 
 		#region Public Methods
 
-		public bool ReuseAndLoad(IList<MapSection> existingMapSections, List<MapSection> newMapSections, ColorBandSet colorBandSet, int jobNumber, BigVector mapBlockOffset, VectorInt canvasControlOffset)
+		public bool DrawSections(IList<MapSection> existingMapSections, List<MapSection> newMapSections, ColorBandSet colorBandSet)
 		{
-			AddJobNumAndMapOffset(jobNumber, mapBlockOffset);
-			CanvasControlOffset = canvasControlOffset;
-
 			if (colorBandSet != ColorBandSet)
 			{
 				_colorMap = LoadColorMap(colorBandSet);
 			}
 
-			bool lastSectionWasIncluded;
+			bool lastSectionWasIncluded = false;
 
 			if (_colorMap != null)
 			{
-				ClearBitmap(_bitmap);
-				RedrawSections(existingMapSections, _colorMap, mapBlockOffset);
+				if (existingMapSections.Count > 0)
+				{
+					ClearBitmap(_bitmap);
+					DrawSections(existingMapSections, _colorMap);
+				}
 
-				lastSectionWasIncluded = LoadAndDrawNewSections(newMapSections, _colorMap);
-			}
-			else
-			{
-				lastSectionWasIncluded = false;
+				if (newMapSections.Count > 0)
+				{
+					lastSectionWasIncluded = DrawSections(newMapSections, _colorMap);
+				}
 			}
 
 			return lastSectionWasIncluded;
 		}
 
-		public void Redraw(IList<MapSection> existingMapSections, ColorBandSet colorBandSet, VectorInt canvasControlOffset)
+		//public bool ReuseAndLoad(IList<MapSection> existingMapSections, List<MapSection> newMapSections, ColorBandSet colorBandSet)
+		//{
+		//	if (colorBandSet != ColorBandSet)
+		//	{
+		//		_colorMap = LoadColorMap(colorBandSet);
+		//	}
+
+		//	bool lastSectionWasIncluded;
+
+		//	if (_colorMap != null)
+		//	{
+		//		ClearBitmap(_bitmap);
+		//		DrawSections(existingMapSections, _colorMap);
+
+		//		lastSectionWasIncluded = DrawSections(newMapSections, _colorMap);
+		//	}
+		//	else
+		//	{
+		//		lastSectionWasIncluded = false;
+		//	}
+
+		//	return lastSectionWasIncluded;
+		//}
+
+		//public void Redraw(IList<MapSection> existingMapSections, ColorBandSet colorBandSet)
+		//{
+		//	if (colorBandSet != ColorBandSet)
+		//	{
+		//		_colorMap = LoadColorMap(colorBandSet);
+		//	}
+
+		//	if (_colorMap != null)
+		//	{
+		//		ClearBitmap(_bitmap);
+		//		DrawSections(existingMapSections, _colorMap);
+		//	}
+		//}
+
+		//public bool DiscardAndLoad(List<MapSection> mapSections, ColorBandSet colorBandSet)
+		//{
+		//	if (colorBandSet != ColorBandSet)
+		//	{
+		//		_colorMap = LoadColorMap(colorBandSet);
+		//	}
+
+		//	bool lastSectionWasIncluded;
+
+		//	if (_colorMap != null)
+		//	{
+		//		lastSectionWasIncluded = DrawSections(mapSections, _colorMap);
+		//	}
+		//	else
+		//	{
+		//		lastSectionWasIncluded = false;
+		//	}
+
+		//	return lastSectionWasIncluded;
+		//}
+
+		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors, out PointInt? blockPosition)
 		{
-			CanvasControlOffset = canvasControlOffset;
+			var sectionWasAdded = false;
 
-			if (colorBandSet != ColorBandSet)
+			if (TryGetAdjustedBlockPositon(mapSection, MapBlockOffset, out blockPosition))
 			{
-				_colorMap = LoadColorMap(colorBandSet);
+				if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks))
+				{
+					sectionWasAdded = true;
+
+					if (_colorMap != null)
+					{
+						var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
+						var loc = invertedBlockPos.Scale(_blockSize);
+
+						LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
+						_bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+					}
+				}
 			}
 
-			if (_colorMap != null)
-			{
-				ClearBitmap(_bitmap);
-				RedrawSections(existingMapSections, _colorMap, MapBlockOffset);
-			}
+			return sectionWasAdded;
 		}
 
-		public bool DiscardAndLoad(List<MapSection> mapSections, ColorBandSet colorBandSet, int jobNumber, BigVector mapBlockOffset, VectorInt canvasControlOffset)
+		public void ClearDisplay()
 		{
-			AddJobNumAndMapOffset(jobNumber, mapBlockOffset);
-			CanvasControlOffset = canvasControlOffset;
-
-			if (colorBandSet != ColorBandSet)
-			{
-				_colorMap = LoadColorMap(colorBandSet);
-			}
-
-			bool lastSectionWasIncluded;
-
-			if (_colorMap != null)
-			{
-				lastSectionWasIncluded = LoadAndDrawNewSections(mapSections, _colorMap);
-			}
-			else
-			{
-				lastSectionWasIncluded = false;
-			}
-
-			return lastSectionWasIncluded;
+			ClearBitmap(_bitmap);
 		}
 
-		public bool LoadAndDrawNewSections(List<MapSection> mapSections, ColorMap colorMap)
-		{
-			// All of these mapSections are new and have the same jobMapBlockOffset as the one provided to the method.
+		#endregion
 
+		#region Private Methods
+
+		private bool DrawSections(IList<MapSection> mapSections, ColorMap colorMap)
+		{
 			var lastSectionWasIncluded = false;
 
 			foreach (var mapSection in mapSections)
@@ -289,20 +311,9 @@ namespace MSetExplorer
 						if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks, warnOnFail: true))
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
-							var loc = invertedBlockPos.Scale(BlockSize);
+							var loc = invertedBlockPos.Scale(_blockSize);
 
-							_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
-
-							//try
-							//{
-							//	_bitmap.WritePixels(BlockRect, mapSection.MapSectionVectors.BackBuffer, BlockRect.Width * 4, loc.X, loc.Y);
-							//}
-							//catch (Exception e)
-							//{
-							//	Debug.WriteLine($"{e.Message}: Attempting to write a block off-canvas at {loc}. JobNumber: {mapSection.JobNumber}.");
-							//	_mapSectionHelper.ReturnMapSection(mapSection);
-							//}
-
+							LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
 							_bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
 
 						}
@@ -318,72 +329,31 @@ namespace MSetExplorer
 			return lastSectionWasIncluded;
 		}
 
-		public void RedrawSections(IList<MapSection> mapSections, ColorMap colorMap, BigVector jobMapBlockOffset)
-		{
-			// The jobMapBlockOffset reflects the current content on the screen and will not change during the lifetime of this method.
-			foreach (var mapSection in mapSections)
-			{
-				if (mapSection.MapSectionVectors != null)
-				{
-					if (TryGetAdjustedBlockPositon(mapSection, jobMapBlockOffset, out var blockPosition))
-					{
-						if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks))
-						{
-							var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
-							var loc = invertedBlockPos.Scale(BlockSize);
+		//private void RedrawSections(IList<MapSection> mapSections, ColorMap colorMap, BigVector jobMapBlockOffset)
+		//{
+		//	// The jobMapBlockOffset reflects the current content on the screen and will not change during the lifetime of this method.
+		//	foreach (var mapSection in mapSections)
+		//	{
+		//		if (mapSection.MapSectionVectors != null)
+		//		{
+		//			if (TryGetAdjustedBlockPositon(mapSection, jobMapBlockOffset, out var blockPosition))
+		//			{
+		//				if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks))
+		//				{
+		//					var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
+		//					var loc = invertedBlockPos.Scale(_blockSize);
 
-							_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
-							_bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
-						}
-					}
-					else
-					{
-						Debug.WriteLine($"Not drawing, the MapSectionVectors are empty.");
-					}
-				}
-			}
-		}
-
-		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors, out PointInt? blockPosition)
-		{
-			var sectionWasAdded = false;
-
-			if (TryGetAdjustedBlockPositon(mapSection, MapBlockOffset, out blockPosition))
-			{
-				if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks))
-				{
-					//MapSections.Add(mapSection);
-
-					sectionWasAdded = true;
-
-					if (_colorMap != null)
-					{
-						var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
-						var loc = invertedBlockPos.Scale(BlockSize);
-
-						_mapSectionHelper.LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
-						_bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
-					}
-				}
-			}
-
-			if (!sectionWasAdded)
-			{
-				Debug.WriteLine($"Not drawing map section: {mapSection} with adjusted block position: {blockPosition} for job number = {mapSection.JobNumber}.");
-				_mapSectionHelper.ReturnMapSection(mapSection);
-			}
-
-			return sectionWasAdded;
-		}
-
-		public void ClearDisplay()
-		{
-			ClearBitmap(_bitmap);
-		}
-
-		#endregion
-
-		#region Private Methods
+		//					LoadPixelArray(mapSection.MapSectionVectors, colorMap, !mapSection.IsInverted);
+		//					_bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+		//				}
+		//			}
+		//			else
+		//			{
+		//				Debug.WriteLine($"Not drawing, the MapSectionVectors are empty.");
+		//			}
+		//		}
+		//	}
+		//}
 
 		private bool TryGetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset, [NotNullWhen(true)] out PointInt? blockPosition, bool warnOnFail = false)
 		{
@@ -439,12 +409,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void AddJobNumAndMapOffset(int jobNumber, BigVector jobMapOffset)
-		{
-			ActiveJobNumbers.Add(jobNumber);
-			MapBlockOffset = jobMapOffset;
-		}
-
 		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
 		{
 			_colorBandSet = colorBandSet;
@@ -459,7 +423,7 @@ namespace MSetExplorer
 
 		private void ClearBitmap(WriteableBitmap bitmap)
 		{
-			var imageSize = _imageSizeInBlocks.Scale(BlockSize);
+			var imageSize = _imageSizeInBlocks.Scale(_blockSize);
 
 			if (_bitmap.Width != imageSize.Width || _bitmap.Height != imageSize.Height)
 			{
@@ -474,13 +438,13 @@ namespace MSetExplorer
 
 				// Clear the bitmap, one row of bitmap blocks at a time.
 
-				var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
-				var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
+				var rect = new Int32Rect(0, 0, bitmap.PixelWidth, _blockSize.Height);
+				var blockRowPixelCount = bitmap.PixelWidth * _blockSize.Height;
 				var zeros = GetClearBytes(blockRowPixelCount * 4);
 
 				for (var vPtr = 0; vPtr < _imageSizeInBlocks.Height; vPtr++)
 				{
-					var offset = vPtr * BlockSize.Height;
+					var offset = vPtr * _blockSize.Height;
 					bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
 				}
 			}
@@ -505,76 +469,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void SetCanvasOffset(VectorInt offset)
-		{
-			Debug.Assert(offset.X >= 0 && offset.Y >= 0, "Setting offset to negative value.");
-
-			// For a postive offset, we "pull" the image down and to the left.
-			var invertedOffset = offset.Invert();
-
-			Image.SetValue(Canvas.LeftProperty, (double)invertedOffset.X);
-			Image.SetValue(Canvas.BottomProperty, (double)invertedOffset.Y);
-		}
-
-		///// <summary>
-		///// The position of the canvas' origin relative to the Image Block Data
-		///// </summary>
-		//private void SetCanvasOffset(VectorInt value, double displayZoom)
-		//{
-		//	if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
-		//	{
-		//		//Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
-		//		Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
-		//		Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
-
-		//		_offset = value;
-		//		_offsetZoom = displayZoom;
-
-		//		// For a postive offset, we "pull" the image down and to the left.
-		//		var invertedOffset = value.Invert();
-
-		//		var roundedZoom = RoundZoomToOne(displayZoom);
-		//		var scaledInvertedOffset = invertedOffset.Scale(1 / roundedZoom);
-
-		//		_image.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
-		//		_image.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
-
-		//		ReportSizes("SetCanvasOffset");
-		//	}
-		//}
-
-		//private double RoundZoomToOne(double scale)
-		//{
-		//	var zoomIsOne = Math.Abs(scale - 1) < 0.001;
-
-		//	if (!zoomIsOne)
-		//	{
-		//		Debug.WriteLine($"WARNING: MapSectionDisplayControl: Display Zoom is not one.");
-		//	}
-
-		//	return zoomIsOne ? 1d : scale;
-		//}
-
-		//private void SetCanvasTransform(PointDbl scale)
-		//{
-		//	_canvas.RenderTransformOrigin = new Point(0.5, 0.5);
-		//	_canvas.RenderTransform = new ScaleTransform(scale.X, scale.Y);
-		//}
-
-		private void ReportSizes(string label)
-		{
-			var iSize = new Size(Image.ActualWidth, Image.ActualHeight);
-			var bSize = new Size(Bitmap.Width, Bitmap.Height);
-
-			Debug.WriteLine($"At {label}, the sizes are CanvasSizeInBlocks: {CanvasSizeInBlocks}, ImageSizeInBlocks: {ImageSizeInBlocks}, Image: {iSize}, Bitmap: {bSize}.");
-		}
-
-		private bool IsCanvasSizeInWBsReasonable(SizeInt canvasSizeInWholeBlocks)
-		{
-			var result = !(canvasSizeInWholeBlocks.Width > 50 || canvasSizeInWholeBlocks.Height > 50);
-			return result;
-		}
-
 		private void GetAndPlacePixelsExp(WriteableBitmap bitmap, PointInt blockPosition, MapSectionVectors mapSectionVectors, ColorMap colorMap, bool isInverted, bool useEscapeVelocities)
 		{
 			if (useEscapeVelocities)
@@ -584,14 +478,120 @@ namespace MSetExplorer
 			}
 
 			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-			var loc = invertedBlockPos.Scale(BlockSize);
+			var loc = invertedBlockPos.Scale(_blockSize);
 
-			_mapSectionHelper.FillBackBuffer(bitmap.BackBuffer, bitmap.BackBufferStride, loc, BlockSize, mapSectionVectors, colorMap, !isInverted, useEscapeVelocities);
+			//_mapSectionHelper.FillBackBuffer(bitmap.BackBuffer, bitmap.BackBufferStride, loc, BlockSize, mapSectionVectors, colorMap, !isInverted, useEscapeVelocities);
 
 			bitmap.Lock();
-			bitmap.AddDirtyRect(new Int32Rect(loc.X, loc.Y, BlockSize.Width, BlockSize.Height));
+			bitmap.AddDirtyRect(new Int32Rect(loc.X, loc.Y, _blockSize.Width, _blockSize.Height));
 			bitmap.Unlock();
 
+		}
+
+		#endregion
+
+		#region Pixel Array Support
+
+		private const double VALUE_FACTOR = 10000;
+		private const int BYTES_PER_PIXEL = 4;
+
+		public void LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
+		{
+			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
+
+			// Currently EscapeVelocities are not supported.
+			//var useEscapeVelocities = colorMap.UseEscapeVelocities;
+			var useEscapeVelocities = false;
+
+			var rowCount = mapSectionVectors.BlockSize.Height;
+			var sourceStride = mapSectionVectors.BlockSize.Width;
+			var maxRowIndex = mapSectionVectors.BlockSize.Height - 1;
+
+			//_pixelArraySize = _blockSize.NumberOfCells * BYTES_PER_PIXEL;
+			var pixelStride = sourceStride * BYTES_PER_PIXEL;
+
+			//var invert = !mapSection.IsInverted;
+			var backBuffer = mapSectionVectors.BackBuffer;
+
+			var counts = mapSectionVectors.Counts;
+			var previousCountVal = counts[0];
+
+			var resultRowPtr = invert ? maxRowIndex * pixelStride : 0;
+			var resultRowPtrIncrement = invert ? -1 * pixelStride : pixelStride;
+			var sourcePtrUpperBound = rowCount * sourceStride;
+
+			if (useEscapeVelocities)
+			{
+				var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
+				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+				{
+					var diagSum = 0;
+
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < sourceStride; colPtr++)
+					{
+						var countVal = counts[sourcePtr];
+						TrackValueSwitches(countVal, ref previousCountVal);
+
+						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
+						CheckEscapeVelocity(escapeVelocity);
+
+						colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
+
+						diagSum += countVal;
+					}
+
+					if (diagSum < 10)
+					{
+						Debug.WriteLine("Counts are empty.");
+					}
+				}
+			}
+			else
+			{
+				// The main for loop on GetPixel Array 
+				// is for each row of pixels (0 -> 128)
+				//		for each pixel in that row (0, -> 128)
+				// each new row advanced the resultRowPtr to the pixel byte address at column 0 of the current row.
+				// if inverted, the first row = 127 * # of bytes / Row (Pixel stride)
+
+				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+				{
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < sourceStride; colPtr++)
+					{
+						var countVal = counts[sourcePtr];
+						TrackValueSwitches(countVal, ref previousCountVal);
+
+						colorMap.PlaceColor(countVal, escapeVelocity: 0, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
+					}
+				}
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void TrackValueSwitches(ushort countVal, ref ushort previousCountVal)
+		{
+			if (countVal != previousCountVal)
+			{
+				NumberOfCountValSwitches++;
+				previousCountVal = countVal;
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckEscapeVelocity(double escapeVelocity)
+		{
+			if (escapeVelocity > 1.0)
+			{
+				Debug.WriteLine($"The Escape Velocity is greater than 1.0");
+			}
 		}
 
 		#endregion

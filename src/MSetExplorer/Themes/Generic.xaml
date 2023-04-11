@@ -10,7 +10,8 @@
                     <Border BorderThickness="1" BorderBrush="ForestGreen">
                         <ContentPresenter x:Name="BitmapGridControl_Content">
                             <ContentPresenter.Content>
-                                <Canvas Name="bmgcCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+                                <Canvas x:Name="bmgcCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+                                    <Image x:Name="bmgcImage" />
                                 </Canvas>
 
                             </ContentPresenter.Content>

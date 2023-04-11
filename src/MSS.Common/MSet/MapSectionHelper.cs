@@ -24,7 +24,7 @@ namespace MSS.Common
 		private readonly int _sourceStride;
 		private readonly int _maxRowIndex;
 
-		private readonly int _pixelArraySize;
+		//private readonly int _pixelArraySize;
 		private readonly int _pixelStride;
 
 		private int _currentPrecision;
@@ -44,7 +44,7 @@ namespace MSS.Common
 			_sourceStride = _blockSize.Width;
 			_maxRowIndex = _blockSize.Height - 1;
 
-			_pixelArraySize = _blockSize.NumberOfCells * BYTES_PER_PIXEL;
+			//_pixelArraySize = _blockSize.NumberOfCells * BYTES_PER_PIXEL;
 			_pixelStride = _sourceStride * BYTES_PER_PIXEL;
 
 			_currentPrecision = -1;
