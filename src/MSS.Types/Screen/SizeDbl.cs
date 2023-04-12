@@ -27,6 +27,12 @@ namespace MSS.Types
 
 		public double AspectRatio => Height == 0 ? 1 : Width / Height;
 
+		
+		public bool IsNAN()
+		{
+			return double.IsNaN(Width) || double.IsNaN(Height);
+		}
+		
 		public SizeDbl Inflate(int amount)
 		{
 			return new SizeDbl(Width + amount, Height + amount);

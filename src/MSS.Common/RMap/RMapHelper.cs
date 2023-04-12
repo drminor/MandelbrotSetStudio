@@ -34,6 +34,11 @@ namespace MSS.Common
 			var width = displaySize.Width;
 			var height = displaySize.Height;
 
+			if (double.IsNaN(width) || double.IsNaN(height) || width == 0 || height == 0)
+			{
+				return pitchTarget;
+			}
+
 			if (width >= height)
 			{
 				result = (int)Math.Round(width / Math.Pow(2, Math.Round(Math.Log2(width / pitchTarget))));
@@ -41,6 +46,12 @@ namespace MSS.Common
 			else
 			{
 				result = (int)Math.Round(height / Math.Pow(2, Math.Round(Math.Log2(height / pitchTarget))));
+			}
+
+			if (result < 0)
+			{
+				Debug.WriteLine($"WARNING: Calculating Pitch using Display Size: {displaySize} and Pitch Target: {pitchTarget}, produced {result}.");
+				result = pitchTarget;
 			}
 
 			return result;

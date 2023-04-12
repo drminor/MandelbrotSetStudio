@@ -24,8 +24,7 @@ namespace MSetExplorer
 		{
 			Dispatcher = Dispatcher.CurrentDispatcher;
 
-			//Priority = DispatcherPriority.ApplicationIdle;
-			Priority = DispatcherPriority.Render;
+			Priority = DispatcherPriority.ApplicationIdle;
 
 			_timeLastInvoked = DateTime.UtcNow.AddYears(-1);
 			_debug = false;

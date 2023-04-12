@@ -59,7 +59,7 @@ namespace MSetExplorer
 
 			_currentAreaColorAndCalcSettings = null;
 
-			_canvasSize = new SizeDbl();
+			_canvasSize = new SizeDbl(10, 10);
 			//_logicalDisplaySize = new SizeDbl();
 
 			_canvasControlOffset = new VectorDbl();
@@ -165,7 +165,7 @@ namespace MSetExplorer
 			get => _canvasSize;
 			set
 			{
-				if (value != _canvasSize)
+				if (!value.IsNAN() && value != _canvasSize)
 				{
 					_canvasSize = value;
 
@@ -200,7 +200,7 @@ namespace MSetExplorer
 			{
 				if (value != _canvasControlOffset)
 				{
-					Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
+					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
 					_canvasControlOffset = value;
 
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasControlOffset));

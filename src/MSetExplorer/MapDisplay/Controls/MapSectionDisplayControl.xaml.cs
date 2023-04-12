@@ -18,9 +18,6 @@ namespace MSetExplorer
 		private IMapDisplayViewModel _vm;
 
 		private Canvas _canvas;
-		//private Image _image;
-		//private VectorInt _offset;
-		//private double _offsetZoom;
 
 		private SelectionRectangle? _selectionRectangle;
 		//private Border? _border;
@@ -52,16 +49,14 @@ namespace MSetExplorer
 				_canvas = BitmapGridControl1.Canvas;
 				_vm = (IMapDisplayViewModel)DataContext;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
-				//_canvas.Children.Add(_vm.Image);
 
-				_vm.CanvasSizeInBlocks = BitmapGridControl1.ViewPortSizeInBlocks;
-				_vm.CanvasSize = ScreenTypeHelper.ConvertToSizeDbl(BitmapGridControl1.ViewPortSize);
+				//_vm.CanvasSizeInBlocks = BitmapGridControl1.ViewPortSizeInBlocks;
+				//_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
 
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				//_vm.PropertyChanged += ViewModel_PropertyChanged;
 
-				BitmapGridControl1.ViewPortSizeInBlocksChanged += OnViewPortSizeInBlocksChanged;
-				BitmapGridControl1.ViewPortSizeChanged += OnViewPortSizeChanged;
-
+				//BitmapGridControl1.ViewPortSizeInBlocksChanged += OnViewPortSizeInBlocksChanged;
+				//BitmapGridControl1.ViewPortSizeChanged += OnViewPortSizeChanged;
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -77,8 +72,8 @@ namespace MSetExplorer
 
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			BitmapGridControl1.ViewPortSizeInBlocksChanged -= OnViewPortSizeInBlocksChanged;
-			BitmapGridControl1.ViewPortSizeChanged -= OnViewPortSizeChanged;
+			//BitmapGridControl1.ViewPortSizeInBlocksChanged -= OnViewPortSizeInBlocksChanged;
+			//BitmapGridControl1.ViewPortSizeChanged -= OnViewPortSizeChanged;
 
 			if (!(_selectionRectangle is null))
 			{
@@ -87,11 +82,10 @@ namespace MSetExplorer
 				_selectionRectangle.TearDown();
 			}
 
-			if (!(_vm is null))
-			{
-				_vm.PropertyChanged -= ViewModel_PropertyChanged;
-				_vm.Dispose();
-			}
+			//if (!(_vm is null))
+			//{
+			//	_vm.Dispose();
+			//}
 		}
 
 		//private Border BuildBorder(Canvas canvas)
@@ -147,53 +141,36 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void OnViewPortSizeInBlocksChanged(object? sender, (SizeInt, SizeInt) e)
-		{
-			var previousSizeInBlocks = e.Item1;
-			var newSizeInBlocks = e.Item2;
-			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort SizeInBlocks Changed. Prev: {previousSizeInBlocks}, New: {newSizeInBlocks}.");
+		//private void OnViewPortSizeInBlocksChanged(object? sender, (SizeInt, SizeInt) e)
+		//{
+		//	var previousSizeInBlocks = e.Item1;
+		//	var newSizeInBlocks = e.Item2;
+		//	Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort SizeInBlocks Changed. Prev: {previousSizeInBlocks}, New: {newSizeInBlocks}.");
 
-			_vm.CanvasSizeInBlocks = newSizeInBlocks;
-		}
+		//	_vm.CanvasSizeInBlocks = newSizeInBlocks;
+		//}
 
-		private void OnViewPortSizeChanged(object? sender, (Size, Size) e)
-		{
-			var previousSize = e.Item1;
-			var newSize = e.Item2;
+		//private void OnViewPortSizeChanged(object? sender, (Size, Size) e)
+		//{
+		//	var previousSize = e.Item1;
+		//	var newSize = e.Item2;
 	
-			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousSize}, New: {newSize}.");
+		//	Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousSize}, New: {newSize}.");
 
-			_vm.CanvasSize = ScreenTypeHelper.ConvertToSizeDbl(newSize);
-		}
+		//	_vm.CanvasSize = ScreenTypeHelper.ConvertToSizeDbl(newSize);
+		//}
 
-		// TODO: Create Dependency Properties on the BitmapGridControl and then bind these to the VM.
-		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			//if (e.PropertyName is nameof(IMapDisplayViewModel.DisplayZoom))
-			//{
-			//	var scale = new PointDbl(_vm.DisplayZoom, _vm.DisplayZoom);
-			//	SetCanvasTransform(scale);
-			//}
-
-			// Enable SelectionRectangle when ever we have a non-null "Job."
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
-			{
-				if (_selectionRectangle != null)
-				{
-					_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
-				}
-			}
-
-			else if (e.PropertyName == nameof(IMapDisplayViewModel.Bitmap))
-			{
-				BitmapGridControl1.Image.Source = _vm.Bitmap;
-			}
-
-			else if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasControlOffset))
-			{
-				BitmapGridControl1.CanvasControlOffset = _vm.CanvasControlOffset;
-			}
-		}
+		//private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
+		//	// Enable SelectionRectangle when ever we have a non-null "Job."
+		//	if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
+		//	{
+		//		if (_selectionRectangle != null)
+		//		{
+		//			//_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
+		//		}
+		//	}
+		//}
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{

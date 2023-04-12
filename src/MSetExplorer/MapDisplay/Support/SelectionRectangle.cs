@@ -123,7 +123,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool Enabled { get; set; }
+		public bool Enabled => _mapDisplayViewModel.CurrentAreaColorAndCalcSettings != null;
 
 		#endregion
 
@@ -717,6 +717,11 @@ namespace MSetExplorer
 
 			var w = canvas.ActualWidth;
 			var h = canvas.ActualHeight;
+
+			if (double.IsNaN(w) || double.IsNaN(h) || w < 0.1 || h < 0.1)
+			{
+				return new Size(128, 128);
+			}
 
 			if (w >= h)
 			{

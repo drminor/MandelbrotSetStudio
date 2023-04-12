@@ -56,8 +56,8 @@ namespace MSetExplorer
 		public double ExtentWidth => _unscaledExtent.Width;
 		public double ExtentHeight => _unscaledExtent.Height;
 
-		public double ViewportWidth => _viewPortSize.Width;
-		public double ViewportHeight => _viewPortSize.Height;
+		public double ViewportWidth => ViewPortSize.Width;
+		public double ViewportHeight => ViewPortSize.Height;
 
 		#endregion
 
@@ -138,7 +138,7 @@ namespace MSetExplorer
 
 		public void PageDown()
 		{
-			double childHeight = _viewPortSize.Height;
+			double childHeight = ViewPortSize.Height;
 			SetVerticalOffset(VerticalOffset + childHeight);
 		}
 
@@ -156,7 +156,7 @@ namespace MSetExplorer
 
 		public void PageUp()
 		{
-			double childHeight = _viewPortSize.Height;
+			double childHeight = ViewPortSize.Height;
 			SetVerticalOffset(VerticalOffset - childHeight);
 		}
 
@@ -168,15 +168,15 @@ namespace MSetExplorer
 
 		public void SetVerticalOffset(double offset)
 		{
-			if (offset < 0 || _viewPortSize.Height >= _unscaledExtent.Height)
+			if (offset < 0 || ViewPortSize.Height >= _unscaledExtent.Height)
 			{
 				offset = 0;
 			}
 			else
 			{
-				if (offset + _viewPortSize.Height >= _unscaledExtent.Height)
+				if (offset + ViewPortSize.Height >= _unscaledExtent.Height)
 				{
-					offset = _unscaledExtent.Height - _viewPortSize.Height;
+					offset = _unscaledExtent.Height - ViewPortSize.Height;
 				}
 			}
 
@@ -190,7 +190,7 @@ namespace MSetExplorer
 
 		public void SetVerticalOffset2(double offset)
 		{
-			_offset.Y = Math.Max(0, Math.Min(_unscaledExtent.Height - _viewPortSize.Height, Math.Max(0, offset)));
+			_offset.Y = Math.Max(0, Math.Min(_unscaledExtent.Height - ViewPortSize.Height, Math.Max(0, offset)));
 
 			InvalidateScrollInfo();
 

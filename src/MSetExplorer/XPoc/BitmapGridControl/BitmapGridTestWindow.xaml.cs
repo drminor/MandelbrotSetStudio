@@ -51,7 +51,7 @@ namespace MSetExplorer.XPoc
 			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort SizeInBlocks Changed. Prev: {e.Item1}, New: {e.Item2}.");
 		}
 
-		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (Size, Size) e)
+		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
 			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
 		}
