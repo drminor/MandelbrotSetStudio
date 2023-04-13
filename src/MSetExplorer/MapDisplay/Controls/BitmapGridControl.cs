@@ -16,8 +16,6 @@ namespace MSetExplorer
 	{
 		#region Private Properties
 
-		private static readonly bool KEEP_DISPLAY_SQUARE = true;
-
 		private readonly SizeInt _blockSize;
 
 		private ScrollViewer? _scrollOwner;
@@ -84,7 +82,7 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewPortSizeChanged;
-		public event EventHandler<ValueTuple<SizeInt, SizeInt>>? ViewPortSizeInBlocksChanged;
+		//public event EventHandler<ValueTuple<SizeInt, SizeInt>>? ViewPortSizeInBlocksChanged;
 
 		public event EventHandler? ImageOffsetChanged;
 
@@ -125,20 +123,21 @@ namespace MSetExplorer
 					if (previousValue.Width < 5 || previousValue.Height < 5)
 					{
 						// Update the 'real' value immediately
+						Debug.WriteLine($"Updating the ViewPortSize immediately. Previous Size: {previousValue}, New Size: {value}.");
 						ViewPortSize = newViewPortSize;
 					}
 					else
 					{
 						// Update the screen immediately, while we are 'holding' back the update.
-						var originalViewPortSize = ViewPortSize;
-						ImageOffsetInternal = GetAdjustedCanvasControlOffset(originalViewPortSize, ImageOffset, _viewPortSizeInternal);
+						ImageOffsetInternal = GetTempImageOffset(ImageOffset, ViewPortSize, newViewPortSize);
 
 						// Delay the 'real' update until no futher updates in the last 150ms.
 						_viewPortSizeDispatcher.Debounce(
 							interval: 150,
 							action: parm =>
 							{
-								ImageOffset = ImageOffsetInternal;
+								Debug.WriteLine($"Updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}. Resetting the ImageOffset from Temp: {ImageOffsetInternal} to former: {ImageOffset}");
+								ImageOffsetInternal = ImageOffset;
 								ViewPortSize = newViewPortSize;
 							}
 						);
@@ -161,61 +160,17 @@ namespace MSetExplorer
 			}
 		}
 
-		//public Size ViewPortSize
-		//{
-		//	get => _viewPortSize;
-		//	private set
-		//	{
-		//		if (_viewPortSize != value)
-		//		{
-		//			var previousValue = _viewPortSize;
-		//			_viewPortSize = value;
-
-		//			Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing: Old size: {previousValue}, new size: {_viewPortSize}.");
-
-		//			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ContainerSize, _blockSize, KEEP_DISPLAY_SQUARE);
-		//			ViewPortSizeInBlocks = sizeInWholeBlocks;
-
-		//			InvalidateScrollInfo();
-
-		//			ViewPortSizeChanged?.Invoke(this, new (previousValue, _viewPortSize));
-		//		}
-		//	}
-		//}
-
-		//public SizeInt ViewPortSizeInBlocks
-		//{
-		//	get => _viewPortSizeInBlocks;
-		//	private set
-		//	{
-		//		if (value.Width < 0 || value.Height < 0)
-		//		{
-		//			return;
-		//		}
-
-		//		if (_viewPortSizeInBlocks != value)
-		//		{
-		//			var previousValue = _viewPortSizeInBlocks;
-		//			_viewPortSizeInBlocks = value;
-
-		//			//Debug.WriteLine($"BitmapGridControl: ViewPortInBlocks is changing: Old size: {previousValue}, new size: {_viewPortSizeInBlocks}.");
-		//			ViewPortSizeInBlocksChanged?.Invoke(this, new(previousValue, _viewPortSizeInBlocks));
-		//		}
-		//	}
-		//}
-
-
 		public SizeDbl ViewPortSize
 		{
 			get => (SizeDbl)GetValue(ViewPortSizeProperty);
 			set => SetValue(ViewPortSizeProperty, value);
 		}
 
-		public SizeInt ViewPortSizeInBlocks
-		{
-			get => (SizeInt)GetValue(ViewPortSizeInBlocksProperty);
-			set => SetValue(ViewPortSizeInBlocksProperty, value);
-		}
+		//public SizeInt ViewPortSizeInBlocks
+		//{
+		//	get => (SizeInt)GetValue(ViewPortSizeInBlocksProperty);
+		//	set => SetValue(ViewPortSizeInBlocksProperty, value);
+		//}
 
 		public VectorDbl ImageOffset
 		{
@@ -390,12 +345,12 @@ namespace MSetExplorer
 				return;
 			} 
 
-			if (value.Width - previousValue.Width > 0.1 || value.Height - previousValue.Height > 0.1)
+			if (!value.Diff(previousValue).IsNearZero())
 			{
 				Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing. The old size: {previousValue}, new size: {value}.");
 
-				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(c.ContainerSize, c._blockSize, KEEP_DISPLAY_SQUARE);
-				c.ViewPortSizeInBlocks = sizeInWholeBlocks;
+				//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, c._blockSize, KEEP_DISPLAY_SQUARE);
+				//c.ViewPortSizeInBlocks = sizeInWholeBlocks;
 				
 				c.InvalidateScrollInfo();
 				c.ViewPortSizeChanged?.Invoke(c, new(previousValue, value));
@@ -410,27 +365,27 @@ namespace MSetExplorer
 
 		#region ViewPortSizeInBlocks Dependency Property
 
-		public static readonly DependencyProperty ViewPortSizeInBlocksProperty = DependencyProperty.Register(
-					"ViewPortSizeInBlocks", typeof(SizeInt), typeof(BitmapGridControl),
-					new FrameworkPropertyMetadata(SizeInt.Zero, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ViewPortSizeInBlocks_PropertyChanged));
+		//public static readonly DependencyProperty ViewPortSizeInBlocksProperty = DependencyProperty.Register(
+		//			"ViewPortSizeInBlocks", typeof(SizeInt), typeof(BitmapGridControl),
+		//			new FrameworkPropertyMetadata(SizeInt.Zero, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ViewPortSizeInBlocks_PropertyChanged));
 
-		private static void ViewPortSizeInBlocks_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			BitmapGridControl c = (BitmapGridControl)o;
-			var previousValue = (SizeInt)e.OldValue;
-			var value = (SizeInt)e.NewValue;
+		//private static void ViewPortSizeInBlocks_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		//{
+		//	BitmapGridControl c = (BitmapGridControl)o;
+		//	var previousValue = (SizeInt)e.OldValue;
+		//	var value = (SizeInt)e.NewValue;
 
-			if (value.Width < 0 || value.Height < 0)
-			{
-				return;
-			}
+		//	if (value.Width < 0 || value.Height < 0)
+		//	{
+		//		return;
+		//	}
 
-			if (previousValue != value)
-			{
-				Debug.WriteLine($"BitmapGridControl: ViewPortInBlocks is changing: Old size: {previousValue}, new size: {value}.");
-				c.ViewPortSizeInBlocksChanged?.Invoke(c, new(previousValue, value));
-			}
-		}
+		//	if (previousValue != value)
+		//	{
+		//		Debug.WriteLine($"BitmapGridControl: ViewPortInBlocks is changing: Old size: {previousValue}, new size: {value}.");
+		//		c.ViewPortSizeInBlocksChanged?.Invoke(c, new(previousValue, value));
+		//	}
+		//}
 
 		#endregion
 
@@ -467,7 +422,7 @@ namespace MSetExplorer
 			_image.SetValue(Canvas.BottomProperty, invertedOffset.Y);
 		}
 
-		private VectorDbl GetAdjustedCanvasControlOffset(SizeDbl originalSize, VectorDbl originalOffset, SizeDbl newSize)
+		private VectorDbl GetTempImageOffset(VectorDbl originalOffset, SizeDbl originalSize, SizeDbl newSize)
 		{
 			var diff = newSize.Diff(originalSize);
 			var half = diff.Scale(0.5);

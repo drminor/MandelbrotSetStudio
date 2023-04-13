@@ -230,14 +230,24 @@ namespace MSetExplorer
 			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
 			showJobTreeControl = !showJobTreeControl;
 
+			//mnuItem_JobTreeWindow.IsChecked = showJobTreeControl;
+			//mnuItem_CoordsWindow.IsChecked = !showJobTreeControl;
+			//mnuItem_CalcWindow.IsChecked = !showJobTreeControl;
+			////mnuItem_ColorBandWindow.IsChecked = !showJobTreeControl;
+
+			//colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			//colRight.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			//colLeft.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+
 			mnuItem_JobTreeWindow.IsChecked = showJobTreeControl;
-			mnuItem_CoordsWindow.IsChecked = !showJobTreeControl;
-			mnuItem_CalcWindow.IsChecked = !showJobTreeControl;
+			mnuItem_CoordsWindow.IsChecked = showJobTreeControl;
+			mnuItem_CalcWindow.IsChecked = showJobTreeControl;
 			//mnuItem_ColorBandWindow.IsChecked = !showJobTreeControl;
 
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			colRight.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			colLeft.Visibility = !showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			colRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			colLeft.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
+			colLeftBorder.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
 
 			//Width = showJobTreeControl ? 2075 : 1665;
 		}

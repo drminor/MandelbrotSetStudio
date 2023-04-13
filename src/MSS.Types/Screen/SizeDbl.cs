@@ -68,6 +68,11 @@ namespace MSS.Types
 			return new SizeDbl(Width * factor, Height * factor);
 		}
 
+		public SizeDbl Scale(SizeDbl factor)
+		{
+			return new SizeDbl(Width * factor.Width, Height * factor.Height);
+		}
+
 		public SizeDbl Translate(PointDbl offset)
 		{
 			return new SizeDbl(Width + offset.X, Height + offset.Y);
@@ -171,6 +176,11 @@ namespace MSS.Types
 		public SizeDbl Abs()
 		{
 			return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
+		}
+
+		public bool IsNearZero()
+		{
+			return Math.Abs(Width) < 0.1 && Math.Abs(Height) < 0.1;
 		}
 
 		public RectangleDbl PlaceAtCenter(SizeDbl containerSize)

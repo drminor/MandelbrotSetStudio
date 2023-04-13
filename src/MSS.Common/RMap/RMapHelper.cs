@@ -2,6 +2,7 @@
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Numerics;
 
 namespace MSS.Common
@@ -25,6 +26,24 @@ namespace MSS.Common
 
 			return result;
 		}
+
+		public static RRectangle GetMapCoords(SizeInt screenSize, RPoint mapPosition, RSize samplePointDelta)
+		{
+			//Debug.WriteLine($"GetMapCoords is receiving area: {screenArea}.");
+
+			// Convert screen size to map size
+			var mapSize = samplePointDelta.Scale(screenSize);
+
+			// Translate the area by the current map position
+			var nrmPos = RNormalizer.Normalize(mapPosition, mapSize, out var nrmSize);
+			
+			var result = new RRectangle(nrmPos, nrmSize);
+
+			//Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
+
+			return result;
+		}
+
 
 		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
 		public static int CalculatePitch(SizeInt displaySize, int pitchTarget)
@@ -219,6 +238,9 @@ namespace MSS.Common
 
 		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
+			Debug.Assert(canvasControlOffset.X >= 0 && canvasControlOffset.Y >= 0, "Using a canvasControlOffset with a negative w or h when getting the MapExtent in blocks.");
+
+
 			var totalSize = canvasSize.Add(canvasControlOffset);
 
 			var rawResult = totalSize.DivRem(blockSize, out var remainder);

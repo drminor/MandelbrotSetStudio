@@ -10,7 +10,7 @@
     <Grid>
         <Border Grid.Row="0" Grid.Column="0" BorderThickness="1" BorderBrush="Black">
             <local:BitmapGridControl x:Name="BitmapGridControl1" ImageSource="{Binding Bitmap}" ImageOffset="{Binding CanvasControlOffset}"
-                                     ViewPortSize="{Binding CanvasSize}" ViewPortSizeInBlocks="{Binding CanvasSizeInBlocks}"/>
+                                     ViewPortSize="{Binding CanvasSize}" />
         </Border>
     </Grid>
 </UserControl>

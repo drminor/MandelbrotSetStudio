@@ -43,5 +43,11 @@ namespace MSetExplorer
 		{
 			return new AreaColorAndCalcSettings(OwnerId, OwnerType, MapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
 		}
+
+		public AreaColorAndCalcSettings UpdateWith(MapAreaInfo mapAreaInfo)
+		{
+			return new AreaColorAndCalcSettings(OwnerId, OwnerType, mapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
+
+		}
 	}
 }

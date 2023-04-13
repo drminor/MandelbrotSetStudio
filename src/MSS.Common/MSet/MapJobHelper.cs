@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace MSS.Common
@@ -49,7 +50,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
@@ -67,6 +68,44 @@ namespace MSS.Common
 			var job = new Job(parentJobId, projectId, jobName, transformType, newArea, mapAreaInfo, canvasSizeInBlocks, colorBandSetId, mapCalcSettings);
 
 			return job;
+		}
+
+		// NOTE: This is really the negative of what is happening (its the Y axis that needs flipping,
+		// however this allows us to do a Translate (i.e., add, instead of a Sub or Negate and Tranlate.) 
+		private static readonly SizeDbl FLIP_VERTICALLY_AND_HALVE = new SizeDbl(0.5, 0.5);
+
+		public static MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeDbl canvasSize, SizeDbl newCanvasSize, Subdivision subdivision, SizeInt blockSize)
+		{
+			var samplePointDelta = subdivision.SamplePointDelta;
+			//var diff = newCanvasSize.Sub(canvasSize);
+			var diff = canvasSize.Sub(newCanvasSize);
+			diff = diff.Scale(FLIP_VERTICALLY_AND_HALVE);
+			var mapDiff = samplePointDelta.Scale(diff.Round());
+			
+			var mapPos = coords.Position;
+			var nrmPos = RNormalizer.Normalize(mapPos, mapDiff, out var nrmDiff);
+			var newPos = nrmPos.Translate(nrmDiff);
+
+			Debug.WriteLine($"GetMapArea is moving the pos from {mapPos} to {newPos}.");
+
+			var newCoords = RMapHelper.GetMapCoords(newCanvasSize.Round(), newPos, samplePointDelta);
+
+			// Determine the amount to translate from our coordinates to the subdivision coordinates.
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, samplePointDelta, blockSize, out var canvasControlOffset);
+
+			Debug.Assert(canvasControlOffset.X >= 0 && canvasControlOffset.Y >= 0, "GetMapBlockOffset is returning a canvasControlOffset with a negative w or h value.");
+
+			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(newCoords.Right, newCoords.Left, out _);
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
+
+			// TODO: For now, assume that the localMapBlockOffset is the same as the mapBlockOffset.
+			//var subdivision = GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+			var localMapBlockOffset = mapBlockOffset;
+
+			var result = new MapAreaInfo(newCoords, newCanvasSize.Round(), subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+
+			return result;
 		}
 
 		public MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
@@ -124,7 +163,7 @@ namespace MSS.Common
 			return result;
 		} 
 
-		public string GetJobName(TransformType transformType)
+		public static string GetJobName(TransformType transformType)
 		{
 			//var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
 			var result = transformType.ToString();

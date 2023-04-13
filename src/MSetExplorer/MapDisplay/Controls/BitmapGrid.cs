@@ -23,7 +23,6 @@ namespace MSetExplorer
 		private Int32Rect _blockRect { get; init; }
 
 		private SizeInt _canvasSizeInBlocks;
-		private SizeInt _imageSizeInBlocks;
 		private int _maxYPtr;
 
 		private BigVector _mapBlockOffset;
@@ -139,28 +138,28 @@ namespace MSetExplorer
 
 					_canvasSizeInBlocks = value;
 
-					// The Image must be able to accomodate a postive or negative CanvasControlOffset of up to one full block. 
+					// The Image must be able to accommodate a postive or negative CanvasControlOffset of up to one full block. 
 					ImageSizeInBlocks = value.Inflate(2);
 				}
 			}
 		}
 
-		public SizeInt ImageSizeInBlocks
-		{
-			get  => _imageSizeInBlocks;
+		private SizeInt ImageSizeInBlocks { get; set; }
+		//{
+		//	get  => _imageSizeInBlocks;
 
-			private set
-			{
-				if (_imageSizeInBlocks != value)
-				{
-					Debug.WriteLine($"BitmapGrid ImageSizeUpdate Writeable Bitmap. Old size: {_imageSizeInBlocks}, new size: {value}.");
+		//	set
+		//	{
+		//		if (_imageSizeInBlocks != value)
+		//		{
+		//			Debug.WriteLine($"BitmapGrid ImageSizeUpdate Writeable Bitmap. Old size: {_imageSizeInBlocks}, new size: {value}.");
 
-					// Will trigger the Bitmap to be updated with new size 
-					// when ClearDisplay or DrawSections is called next.
-					_imageSizeInBlocks = value;
-				}
-			}
-		}
+		//			// Will trigger the Bitmap to be updated with new size 
+		//			// when ClearDisplay or DrawSections is called next.
+		//			_imageSizeInBlocks = value;
+		//		}
+		//	}
+		//}
 
 		public WriteableBitmap Bitmap
 		{
@@ -438,13 +437,13 @@ namespace MSetExplorer
 
 		private bool RefreshBitmap()
 		{
-			var imageSize = _imageSizeInBlocks.Scale(_blockSize);
+			var imageSize = ImageSizeInBlocks.Scale(_blockSize);
 
 			if (_bitmap.Width != imageSize.Width || _bitmap.Height != imageSize.Height)
 			{
 				Debug.WriteLine($"BitmapGrid RefreshBitmap is being called. BitmapSize {new Size(_bitmap.Width, _bitmap.Height)} != ImageSize: Creating new bitmap with size: {imageSize}.");
 
-				_maxYPtr = _imageSizeInBlocks.Height - 1;
+				_maxYPtr = ImageSizeInBlocks.Height - 1;
 				Bitmap = CreateBitmap(imageSize);
 				return true;
 			}
@@ -463,7 +462,7 @@ namespace MSetExplorer
 			var blockRowPixelCount = bitmap.PixelWidth * _blockSize.Height;
 			var zeros = GetClearBytes(blockRowPixelCount * 4);
 
-			for (var vPtr = 0; vPtr < _imageSizeInBlocks.Height; vPtr++)
+			for (var vPtr = 0; vPtr < ImageSizeInBlocks.Height; vPtr++)
 			{
 				var offset = vPtr * _blockSize.Height;
 				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);

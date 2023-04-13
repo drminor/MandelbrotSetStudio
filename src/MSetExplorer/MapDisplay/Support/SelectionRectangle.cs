@@ -12,6 +12,8 @@ namespace MSetExplorer
 {
 	internal class SelectionRectangle
 	{
+		#region Private Fields
+
 		// TODO: Make the PITCH_TARGET proportional to the map view size.
 		private const int PITCH_TARGET = 16;
 		private const int DRAG_TRIGGER_DIST = 3;
@@ -36,6 +38,8 @@ namespace MSetExplorer
 
 		internal event EventHandler<AreaSelectedEventArgs>? AreaSelected;
 		internal event EventHandler<ImageDraggedEventArgs>? ImageDragged;
+
+		#endregion
 
 		#region Constructor
 

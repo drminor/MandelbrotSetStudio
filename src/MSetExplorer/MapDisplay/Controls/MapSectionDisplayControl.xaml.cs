@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -48,15 +47,8 @@ namespace MSetExplorer
 			{
 				_canvas = BitmapGridControl1.Canvas;
 				_vm = (IMapDisplayViewModel)DataContext;
+				_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
-
-				//_vm.CanvasSizeInBlocks = BitmapGridControl1.ViewPortSizeInBlocks;
-				//_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
-
-				//_vm.PropertyChanged += ViewModel_PropertyChanged;
-
-				//BitmapGridControl1.ViewPortSizeInBlocksChanged += OnViewPortSizeInBlocksChanged;
-				//BitmapGridControl1.ViewPortSizeChanged += OnViewPortSizeChanged;
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -72,20 +64,12 @@ namespace MSetExplorer
 
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			//BitmapGridControl1.ViewPortSizeInBlocksChanged -= OnViewPortSizeInBlocksChanged;
-			//BitmapGridControl1.ViewPortSizeChanged -= OnViewPortSizeChanged;
-
 			if (!(_selectionRectangle is null))
 			{
 				_selectionRectangle.AreaSelected -= SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged -= SelectionRectangle_ImageDragged;
 				_selectionRectangle.TearDown();
 			}
-
-			//if (!(_vm is null))
-			//{
-			//	_vm.Dispose();
-			//}
 		}
 
 		//private Border BuildBorder(Canvas canvas)
@@ -125,40 +109,9 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		//public event EventHandler<ValueTuple<SizeInt, SizeInt>>? ViewPortSizeInBlocksChanged
-		//{
-		//	add
-		//	{
-		//		BitmapGridControl1.ViewPortSizeInBlocksChanged += value;
-		//	}
-		//	remove
-		//	{
-		//		BitmapGridControl1.ViewPortSizeInBlocksChanged -= value;
-		//	}
-		//}
-
 		//#endregion
 
 		#region Event Handlers
-
-		//private void OnViewPortSizeInBlocksChanged(object? sender, (SizeInt, SizeInt) e)
-		//{
-		//	var previousSizeInBlocks = e.Item1;
-		//	var newSizeInBlocks = e.Item2;
-		//	Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort SizeInBlocks Changed. Prev: {previousSizeInBlocks}, New: {newSizeInBlocks}.");
-
-		//	_vm.CanvasSizeInBlocks = newSizeInBlocks;
-		//}
-
-		//private void OnViewPortSizeChanged(object? sender, (Size, Size) e)
-		//{
-		//	var previousSize = e.Item1;
-		//	var newSize = e.Item2;
-	
-		//	Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousSize}, New: {newSize}.");
-
-		//	_vm.CanvasSize = ScreenTypeHelper.ConvertToSizeDbl(newSize);
-		//}
 
 		//private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		//{

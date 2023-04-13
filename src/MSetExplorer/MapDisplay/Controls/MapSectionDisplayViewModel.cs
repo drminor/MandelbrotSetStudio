@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver.Linq;
 using MSS.Common;
-using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -9,8 +8,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -18,7 +17,7 @@ namespace MSetExplorer
 	{
 		#region Private Properties
 
-		private static bool REUSE_SECTIONS_FOR_SOME_OPS;
+		private static readonly bool KEEP_DISPLAY_SQUARE = false;
 
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
@@ -41,8 +40,6 @@ namespace MSetExplorer
 
 		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
-			REUSE_SECTIONS_FOR_SOME_OPS = true;
-
 			_paintLocker = new object();
 
 			_mapLoaderManager = mapLoaderManager;
@@ -148,18 +145,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeInt CanvasSizeInBlocks
-		{
-			get => _bitmapGrid.CanvasSizeInBlocks;
-			set
-			{
-				if (value != _bitmapGrid.CanvasSizeInBlocks)
-				{
-					_bitmapGrid.CanvasSizeInBlocks = value;
-				}
-			}
-		}
-
 		public SizeDbl CanvasSize
 		{
 			get => _canvasSize;
@@ -167,9 +152,17 @@ namespace MSetExplorer
 			{
 				if (!value.IsNAN() && value != _canvasSize)
 				{
+					var previousValue = _canvasSize;
 					_canvasSize = value;
 
-					HandleDisplaySizeUpdate();
+					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, KEEP_DISPLAY_SQUARE);
+					CanvasSizeInBlocks = sizeInWholeBlocks;
+
+					var newJobNumber = HandleDisplaySizeUpdate(previousValue, _canvasSize);
+					if (newJobNumber != null)
+					{
+						ActiveJobNumbers.Add(newJobNumber.Value);
+					}
 
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
 					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
@@ -177,20 +170,10 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleDisplaySizeUpdate()
+		public SizeInt CanvasSizeInBlocks
 		{
-			var mapAreaInfo = _currentAreaColorAndCalcSettings?.MapAreaInfo;
-			Debug.WriteLine($"Will Request and Display New Map Sections here. Current MapAreaInfo: {mapAreaInfo}.");
-
-			//var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
-
-			//var transformType = TransformType.CanvasSizeUpdate;
-			//RectangleInt? newArea = null;
-
-			//var newJob = _mapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
-
-			//Debug.WriteLine($"Creating CanvasSizeUpdate Job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
-			//Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			get => _bitmapGrid.CanvasSizeInBlocks;
+			set => _bitmapGrid.CanvasSizeInBlocks = value;
 		}
 
 		public VectorDbl CanvasControlOffset
@@ -272,21 +255,24 @@ namespace MSetExplorer
 				var previousValue = CurrentAreaColorAndCalcSettings;
 				CurrentAreaColorAndCalcSettings = newValue;
 
-				ReportNewJobOldJob(previousValue, newValue);
+				ReportNewJobOldJob("SubmitJob", previousValue, newValue);
 				result = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings);
+
+				if (result != null)
+					ActiveJobNumbers.Add(result.Value);
 			}
 
 			return result;
 		}
 
-		private void ReportNewJobOldJob(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings newValue)
+		private void ReportNewJobOldJob(string operation, AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings newValue)
 		{
 			var currentJobId = previousValue?.OwnerId ?? ObjectId.Empty.ToString();
 			var currentSamplePointDelta = previousValue?.MapAreaInfo.Subdivision.SamplePointDelta ?? new RSize();
 			var newJobId = newValue.OwnerId;
 			var newSamplePointDelta = newValue.MapAreaInfo.Subdivision.SamplePointDelta;
 
-			Debug.WriteLine($"MapDisplay is handling SubmitJob. CurrentJobId: {currentJobId} ({currentSamplePointDelta}), NewJobId: {newJobId} ({newSamplePointDelta}).");
+			Debug.WriteLine($"MapDisplay is handling {operation}. CurrentJobId: {currentJobId} ({currentSamplePointDelta}), NewJobId: {newJobId} ({newSamplePointDelta}).");
 		}
 
 		public void CancelJob()
@@ -354,7 +340,7 @@ namespace MSetExplorer
 			_bitmapGrid.Dispatcher.Invoke(GetAndPlacePixelsWrapper, new object[] { mapSection });
 		}
 
-		public void GetAndPlacePixelsWrapper(MapSection mapSection)
+		private void GetAndPlacePixelsWrapper(MapSection mapSection)
 		{
 			if (mapSection.MapSectionVectors != null)
 			{
@@ -383,6 +369,35 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private int? HandleDisplaySizeUpdate(SizeDbl previousSize, SizeDbl newSize)
+		{
+			int? newJobNumber = null;
+
+			if (_currentAreaColorAndCalcSettings != null)
+			{
+				var previousValue = _currentAreaColorAndCalcSettings;
+
+				var prevMapAreaInfo = previousValue.MapAreaInfo;
+				var newMapAreaInfo = MapJobHelper.GetMapAreaInfo(prevMapAreaInfo.Coords, previousSize, newSize, prevMapAreaInfo.Subdivision, BlockSize);
+
+				var newAreaColorAndCalcSettings = _currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
+
+				CurrentAreaColorAndCalcSettings = newAreaColorAndCalcSettings;
+
+				ReportNewMapArea(prevMapAreaInfo, newMapAreaInfo);
+				newJobNumber = HandleCurrentJobChanged(previousValue, newAreaColorAndCalcSettings);
+			}
+
+			return newJobNumber;
+		}
+
+		private void ReportNewMapArea(MapAreaInfo previousValue, MapAreaInfo newValue)
+		{
+			Debug.WriteLine($"MapDisplay is handling DisplaySizeUpdate. " +
+				$"Previous Size: {previousValue.CanvasSize}. Pos: {previousValue.Coords.Position}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +
+				$"New Size: {newValue.CanvasSize}. Pos: {newValue.Coords.Position}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset}.");
+		}
 
 		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
 		{
@@ -432,7 +447,6 @@ namespace MSetExplorer
 				_mapSectionHelper.ReturnMapSection(section);
 			}
 
-			//Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}, retaining {cntRetained}, updating {cntUpdated}, shifting {shiftAmount}.");
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}.");
 
 			CanvasControlOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
@@ -445,13 +459,11 @@ namespace MSetExplorer
 				newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
 				result = newJobNumber;
 				_bitmapGrid.MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
-				//lastSectionWasIncluded = _bitmapGrid.DrawSections(MapSections, newMapSections, newJob.ColorBandSet);
 			}
 			else
 			{
 				newMapSections = new List<MapSection>();
 				result = null;
-				//_bitmapGrid.Redraw(MapSections, newJob.ColorBandSet);
 			}
 
 			lastSectionWasIncluded = _bitmapGrid.DrawSections(MapSections, newMapSections, newJob.ColorBandSet);
@@ -508,11 +520,6 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings newJob)
 		{
-			if (!REUSE_SECTIONS_FOR_SOME_OPS)
-			{
-				return false;
-			}
-
 			if (MapSections.Count == 0 || previousJob is null)
 			{
 				return false;
@@ -522,9 +529,6 @@ namespace MSetExplorer
 			{
 				return false;
 			}
-
-			//var jobSpd = RNormalizer.Normalize(newJob.MapAreaInfo.Subdivision.SamplePointDelta, previousJob.MapAreaInfo.Subdivision.SamplePointDelta, out var previousSpd);
-			//return jobSpd == previousSpd;
 
 			var inSameSubdivision = newJob.MapAreaInfo.Subdivision.Id == previousJob.MapAreaInfo.Subdivision.Id;
 

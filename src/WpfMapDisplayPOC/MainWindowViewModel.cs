@@ -195,7 +195,7 @@ namespace WpfMapDisplayPOC
 			if (mapSection.MapSectionVectors != null)
 			{
 				_sw.Restart();
-				_mapSectionHelper.LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
+				LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
 				pixelArray = mapSection.MapSectionVectors.BackBuffer;
 				_sw.Stop();
 
@@ -310,6 +310,114 @@ namespace WpfMapDisplayPOC
 		//}
 
 		#endregion
+
+
+		#region Pixel Array Support
+
+		private const double VALUE_FACTOR = 10000;
+		private const int BYTES_PER_PIXEL = 4;
+
+		public void LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
+		{
+			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
+
+			// Currently EscapeVelocities are not supported.
+			//var useEscapeVelocities = colorMap.UseEscapeVelocities;
+			var useEscapeVelocities = false;
+
+			var rowCount = mapSectionVectors.BlockSize.Height;
+			var sourceStride = mapSectionVectors.BlockSize.Width;
+			var maxRowIndex = mapSectionVectors.BlockSize.Height - 1;
+
+			//_pixelArraySize = _blockSize.NumberOfCells * BYTES_PER_PIXEL;
+			var pixelStride = sourceStride * BYTES_PER_PIXEL;
+
+			//var invert = !mapSection.IsInverted;
+			var backBuffer = mapSectionVectors.BackBuffer;
+
+			var counts = mapSectionVectors.Counts;
+			//var previousCountVal = counts[0];
+
+			var resultRowPtr = invert ? maxRowIndex * pixelStride : 0;
+			var resultRowPtrIncrement = invert ? -1 * pixelStride : pixelStride;
+			var sourcePtrUpperBound = rowCount * sourceStride;
+
+			if (useEscapeVelocities)
+			{
+				var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
+				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+				{
+					var diagSum = 0;
+
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < sourceStride; colPtr++)
+					{
+						var countVal = counts[sourcePtr];
+						//TrackValueSwitches(countVal, ref previousCountVal);
+
+						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
+						CheckEscapeVelocity(escapeVelocity);
+
+						colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
+
+						diagSum += countVal;
+					}
+
+					if (diagSum < 10)
+					{
+						Debug.WriteLine("Counts are empty.");
+					}
+				}
+			}
+			else
+			{
+				// The main for loop on GetPixel Array 
+				// is for each row of pixels (0 -> 128)
+				//		for each pixel in that row (0, -> 128)
+				// each new row advanced the resultRowPtr to the pixel byte address at column 0 of the current row.
+				// if inverted, the first row = 127 * # of bytes / Row (Pixel stride)
+
+				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+				{
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < sourceStride; colPtr++)
+					{
+						var countVal = counts[sourcePtr];
+						//TrackValueSwitches(countVal, ref previousCountVal);
+
+						colorMap.PlaceColor(countVal, escapeVelocity: 0, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
+					}
+				}
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		//private void TrackValueSwitches(ushort countVal, ref ushort previousCountVal)
+		//{
+		//	if (countVal != previousCountVal)
+		//	{
+		//		NumberOfCountValSwitches++;
+		//		previousCountVal = countVal;
+		//	}
+		//}
+
+		[Conditional("DEBUG2")]
+		private void CheckEscapeVelocity(double escapeVelocity)
+		{
+			if (escapeVelocity > 1.0)
+			{
+				Debug.WriteLine($"The Escape Velocity is greater than 1.0");
+			}
+		}
+
+		#endregion
+
 
 		#region INotifyPropertyChanged Support
 
