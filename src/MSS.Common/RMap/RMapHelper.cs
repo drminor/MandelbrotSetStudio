@@ -44,7 +44,6 @@ namespace MSS.Common
 			return result;
 		}
 
-
 		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
 		public static int CalculatePitch(SizeInt displaySize, int pitchTarget)
 		{
@@ -169,7 +168,40 @@ namespace MSS.Common
 			return result;
 		}
 
-		// --- Diagnostics ----
+		public static RSize GetSamplePointDelta2(ref RRectangle coords, SizeInt canvasSize, double toleranceFactor)
+		{
+			var spdH = BigIntegerHelper.Divide(coords.Width, canvasSize.Width, toleranceFactor);
+			var spdV = BigIntegerHelper.Divide(coords.Height, canvasSize.Height, toleranceFactor);
+
+			var nH = RNormalizer.Normalize(spdH, spdV, out var nV);
+
+			// Take the smallest value
+			var rawSamplePointDelta = new RSize(RValue.Min(nH, nV));
+
+			// The size of the new map is equal to the product of the number of samples by the new samplePointDelta.
+			//var adjMapSize = rawSamplePointDelta.Scale(canvasSize);
+
+			// Calculate the new map coordinates using the existing position and the new size.
+			//var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
+
+			//var nrmPos = RNormalizer.Normalize(coords.Position, adjMapSize, out var nrmSize);
+			//var newCoords = new RRectangle(nrmPos, nrmSize);
+
+
+			// Update the MapPosition and the calculated SamplePointDelta have the same exponent.
+			var nrmPos = RNormalizer.Normalize(coords.Position, rawSamplePointDelta, out var nrmSamplePointDelta);
+
+			var adjMapSize = nrmSamplePointDelta.Scale(canvasSize);
+
+			var newCoords = new RRectangle(nrmPos, adjMapSize);
+
+			coords = newCoords;
+			return nrmSamplePointDelta;
+		}
+
+		#endregion
+
+		#region SamplePointDelta Diagnostic Support
 
 		public static SizeDbl GetSamplePointDiag(RRectangle coords, SizeInt canvasSize, out RectangleDbl newCoords)
 		{

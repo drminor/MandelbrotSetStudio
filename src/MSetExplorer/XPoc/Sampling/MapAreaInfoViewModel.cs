@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -7,7 +8,8 @@ namespace MSetExplorer.XPoc
 {
 	internal class MapAreaInfoViewModel : ViewModelBase
 	{
-		private readonly IMapSectionAdapter _mapSectionAdapter;
+		//private readonly IMapSectionAdapter _mapSectionAdapter;
+		private readonly SubdivisonProvider _subdivisonProvider;
 
 		private string _sectionTitle;
 		private MapAreaInfo _mapAreaInfo;
@@ -22,9 +24,11 @@ namespace MSetExplorer.XPoc
 
 		#region Constructor
 
-		public MapAreaInfoViewModel(IMapSectionAdapter mapSectionAdapter)
+		public MapAreaInfoViewModel(SubdivisonProvider subdivisonProvider)
 		{
-			_mapSectionAdapter = mapSectionAdapter;
+			//_mapSectionAdapter = mapSectionAdapter;
+			_subdivisonProvider = subdivisonProvider;
+
 			_sectionTitle = "Section Title";
 			_mapAreaInfo = new MapAreaInfo();
 			_coords = new RRectangle();
@@ -198,7 +202,7 @@ namespace MSetExplorer.XPoc
 
 		private bool IsSubdivisionOnFile(Subdivision subdivision)
 		{
-			var result = _mapSectionAdapter.TryGetSubdivision(subdivision.SamplePointDelta, subdivision.BaseMapPosition, out var _);
+			var result = _subdivisonProvider.TryGetSubdivision(subdivision.SamplePointDelta, subdivision.BaseMapPosition, out var _);
 
 			return result;
 		}

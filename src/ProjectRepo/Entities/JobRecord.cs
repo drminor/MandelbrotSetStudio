@@ -7,9 +7,9 @@ namespace ProjectRepo.Entities
 {
 	public record JobRecord(
 		ObjectId? ParentJobId,
-		bool IsAlternatePathHead, // Remove this on next Schema Update
-		ObjectId ProjectId,
-		ObjectId SubDivisionId,
+		bool IsAlternatePathHead,	// Remove this on next Schema Update
+		ObjectId ProjectId,			// Change ProjectId to OwnerId and add OwnerType field of type JobOwnerType (Enum).
+		ObjectId SubDivisionId,		// Do we really need to have a SubdivisionId field here, it is included in the MapAreaInfoRecord.
 		string? Label,
 		int TransformType,
 

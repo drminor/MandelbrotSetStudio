@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver.Linq;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -19,8 +20,9 @@ namespace MSetExplorer
 
 		private static readonly bool KEEP_DISPLAY_SQUARE = false;
 
-		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapJobHelper _mapJobHelper;
+		private readonly MapSectionHelper _mapSectionHelper;
 
 		private BitmapGrid _bitmapGrid;
 
@@ -38,11 +40,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionHelper mapSectionHelper, SizeInt blockSize)
+		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
 			_paintLocker = new object();
 
 			_mapLoaderManager = mapLoaderManager;
+			_mapJobHelper = mapJobHelper;
 			_mapSectionHelper = mapSectionHelper;
 			BlockSize = blockSize;
 
@@ -379,7 +382,7 @@ namespace MSetExplorer
 				var previousValue = _currentAreaColorAndCalcSettings;
 
 				var prevMapAreaInfo = previousValue.MapAreaInfo;
-				var newMapAreaInfo = MapJobHelper.GetMapAreaInfo(prevMapAreaInfo.Coords, previousSize, newSize, prevMapAreaInfo.Subdivision, BlockSize);
+				var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(prevMapAreaInfo.Coords, previousSize, newSize, prevMapAreaInfo.Subdivision, BlockSize);
 
 				var newAreaColorAndCalcSettings = _currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
 

@@ -626,7 +626,7 @@ namespace MSetExplorer
 			var transformType = TransformType.ZoomIn;
 
 			var newScreenArea = new RectangleInt();
-			var job = MapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Poster Job with new coords: {mapAreaInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 

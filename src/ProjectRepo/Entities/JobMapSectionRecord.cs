@@ -5,6 +5,8 @@ using System;
 
 namespace ProjectRepo.Entities
 {
+
+	// TODO: Change OwnerId to JobId. 
 	public record JobMapSectionRecord 
 	(
 		ObjectId MapSectionId,

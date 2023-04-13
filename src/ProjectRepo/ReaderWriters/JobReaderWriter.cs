@@ -23,6 +23,7 @@ namespace ProjectRepo
 			return jobRecord;
 		}
 
+		// TODO: Since Jobs can be owned by either a Project or Poster, we need to update GetJobIds by ProjectId to be instead GetJobIds by OwnerId, JobOwnerType.
 		public IEnumerable<ObjectId> GetJobIds(ObjectId projectId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression

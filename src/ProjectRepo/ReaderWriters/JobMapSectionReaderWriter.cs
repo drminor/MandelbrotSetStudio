@@ -18,6 +18,7 @@ namespace ProjectRepo
 		public JobMapSectionReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
 
+		// TODO: Since every JobMapSectionRecord belongs to one and only one Job, do we really need to index on OwnerType? Pretty sure that the answer is no.
 		public void CreateOwnerAndTypeIndex()
 		{
 			var indexKeysDef = Builders<JobMapSectionRecord>.IndexKeys

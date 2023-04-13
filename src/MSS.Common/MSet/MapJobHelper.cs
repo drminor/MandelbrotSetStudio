@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -9,16 +10,19 @@ namespace MSS.Common
 {
 	public class MapJobHelper
 	{
-		private const int TERMINAL_LIMB_COUNT = 2;
+		//private const int TERMINAL_LIMB_COUNT = 2;
 
-		//private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, 62));
-		private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB));
+		////private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, 62));
+		//private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB));
 
-		private readonly IMapSectionAdapter _mapSectionAdapter;
+		//private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		public MapJobHelper(IMapSectionAdapter mapSectionAdapter)
+		private readonly SubdivisonProvider _subdivisonProvider;
+
+		public MapJobHelper(SubdivisonProvider subdivisonProvider)
 		{
-			_mapSectionAdapter = mapSectionAdapter;
+			//_mapSectionAdapter = mapSectionAdapter;
+			_subdivisonProvider = subdivisonProvider;
 			ToleranceFactor = 10; // SamplePointDelta values are calculated to within 10 pixels of the display area.
 		}
 
@@ -50,7 +54,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings,
 			TransformType transformType, RectangleInt? newArea)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
@@ -74,7 +78,7 @@ namespace MSS.Common
 		// however this allows us to do a Translate (i.e., add, instead of a Sub or Negate and Tranlate.) 
 		private static readonly SizeDbl FLIP_VERTICALLY_AND_HALVE = new SizeDbl(0.5, 0.5);
 
-		public static MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeDbl canvasSize, SizeDbl newCanvasSize, Subdivision subdivision, SizeInt blockSize)
+		public MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeDbl canvasSize, SizeDbl newCanvasSize, Subdivision subdivision, SizeInt blockSize)
 		{
 			var samplePointDelta = subdivision.SamplePointDelta;
 			//var diff = newCanvasSize.Sub(canvasSize);
@@ -133,35 +137,35 @@ namespace MSS.Common
 			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
 
 			// Get a subdivision record from the database.
-			var subdivision = GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+			var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 
 			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 
 			return result;
 		}
 
-		// Find an existing subdivision record that the same SamplePointDelta
-		public Subdivision GetSubdivision(RSize samplePointDelta, BigVector mapBlockOffset, out BigVector localMapBlockOffset)
-		{
-			var estimatedBaseMapPosition = GetBaseMapPosition(mapBlockOffset, out localMapBlockOffset);
+		//// Find an existing subdivision record that the same SamplePointDelta
+		//public Subdivision GetSubdivision(RSize samplePointDelta, BigVector mapBlockOffset, out BigVector localMapBlockOffset)
+		//{
+		//	var estimatedBaseMapPosition = GetBaseMapPosition(mapBlockOffset, out localMapBlockOffset);
 
-			if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, estimatedBaseMapPosition, out var result))
-			{
-				var subdivision = new Subdivision(samplePointDelta, estimatedBaseMapPosition);
-				result = _mapSectionAdapter.InsertSubdivision(subdivision);
-			}
+		//	if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, estimatedBaseMapPosition, out var result))
+		//	{
+		//		var subdivision = new Subdivision(samplePointDelta, estimatedBaseMapPosition);
+		//		result = _mapSectionAdapter.InsertSubdivision(subdivision);
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public BigVector GetBaseMapPosition(BigVector mapBlockOffset, out BigVector localMapBlockOffset)
-		{
-			var quotient = mapBlockOffset.DivRem(TERMINAL_SUBDIV_SIZE, out localMapBlockOffset);
+		//public BigVector GetBaseMapPosition(BigVector mapBlockOffset, out BigVector localMapBlockOffset)
+		//{
+		//	var quotient = mapBlockOffset.DivRem(TERMINAL_SUBDIV_SIZE, out localMapBlockOffset);
 
-			var result = quotient.Scale(TERMINAL_SUBDIV_SIZE);
+		//	var result = quotient.Scale(TERMINAL_SUBDIV_SIZE);
 
-			return result;
-		} 
+		//	return result;
+		//} 
 
 		public static string GetJobName(TransformType transformType)
 		{

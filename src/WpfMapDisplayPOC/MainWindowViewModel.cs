@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -39,7 +40,10 @@ namespace WpfMapDisplayPOC
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_mapSectionRequestProcessor.UseRepo = true;
 
-			_mapJobHelper = new MapJobHelper(mapSectionAdapter);
+			_mapSectionAdapter = mapSectionAdapter;
+			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
+			_mapJobHelper = new MapJobHelper(subdivisionProvider);
+
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapSectionHelper = mapSectionHelper;

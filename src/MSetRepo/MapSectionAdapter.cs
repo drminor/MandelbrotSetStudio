@@ -110,7 +110,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, CancellationToken ct, MapSectionVectors mapSectionVectors)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct)
 		{
 			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 
@@ -141,6 +141,57 @@ namespace MSetRepo
 				{
 					throw new InvalidOperationException("Cannot delete the bad MapSectionRecord.");
 				}
+
+				return null;
+			}
+		}
+
+		public MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors)
+		{
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+
+			try
+			{
+				var mapSectionRecord = _mapSectionReaderWriter.Get(mapSectionId);
+				if (mapSectionRecord != null)
+				{
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
+
+					return mapSectionResponse;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"While fetching a MapSectionRecord from a MapSectionId, got exception: {e}.");
+				return null;
+			}
+		}
+
+		public MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors)
+		{
+			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
+
+			try
+			{
+				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
+				if (mapSectionRecord != null)
+				{
+					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
+
+					return mapSectionResponse;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"While fetching a MapSectionRecord from Subdivision and BlockPosition (synchronous), got exception: {e}.");
 
 				return null;
 			}
@@ -309,57 +360,6 @@ namespace MSetRepo
 			var mapSectionIds = jobMapSectionReaderWriter.GetMapSectionIdsByOwnerId(ownerId, jobOwnerType);
 
 			return mapSectionIds;
-		}
-
-		public MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors)
-		{
-			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-
-			try
-			{
-				var mapSectionRecord = _mapSectionReaderWriter.Get(mapSectionId);
-				if (mapSectionRecord != null)
-				{
-					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
-
-					return mapSectionResponse;
-				}
-				else
-				{
-					return null;
-				}
-			}
-			catch (Exception e)
-			{
-				Debug.WriteLine($"While fetching a MapSectionRecord from a MapSectionId, got exception: {e}.");
-				return null;
-			}
-		}
-
-		public MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors)
-		{
-			//var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
-
-			try
-			{
-				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
-				if (mapSectionRecord != null)
-				{
-					var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
-
-					return mapSectionResponse;
-				}
-				else
-				{
-					return null;
-				}
-			}
-			catch (Exception e)
-			{
-				Debug.WriteLine($"While fetching a MapSectionRecord from Subdivision and BlockPosition (synchronous), got exception: {e}.");
-
-				return null;
-			}
 		}
 
 		public long? DeleteMapSectionsForMany(IEnumerable<ObjectId> ownerIds, JobOwnerType jobOwnerType)
@@ -531,7 +531,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		//public void AddSubdivisionId()
+		//public void AddSubdivisionId_ToAllJobMapSection_Records()
 		//{
 		//	var mapSectionReaderWriter = new MapSectionReaderWriter(_dbProvider);
 		//	var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);

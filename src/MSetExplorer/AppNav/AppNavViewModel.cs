@@ -4,6 +4,7 @@ using MSetExplorer.XPoc;
 using MSetExplorer.XPoc.PerformanceHarness;
 using MSetRepo;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using System;
 
@@ -36,7 +37,10 @@ namespace MSetExplorer
 			_projectAdapter = repositoryAdapters.ProjectAdapter;
 			_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
 			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
-			_mapJobHelper = new MapJobHelper(repositoryAdapters.MapSectionAdapter);
+
+			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
+			_mapJobHelper = new MapJobHelper(subdivisionProvider);
+
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 		}
@@ -47,7 +51,7 @@ namespace MSetExplorer
 			var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapJobHelper, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
@@ -71,7 +75,7 @@ namespace MSetExplorer
 			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// Map Display View Model
-			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapJobHelper, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
 			IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
 
@@ -94,7 +98,8 @@ namespace MSetExplorer
 
 		public XSamplingEditorViewModel GetXSamplingEditorViewModel()
 		{
-			var result = new XSamplingEditorViewModel(_mapSectionAdapter);
+			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
+			var result = new XSamplingEditorViewModel(subdivisionProvider);
 			return result;
 		}
 

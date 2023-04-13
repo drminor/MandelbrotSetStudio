@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -10,7 +11,9 @@ namespace MSetExplorer.XPoc
 	{
 		private const double TOLERANCE_FACTOR = 10;
 
-		private readonly IMapSectionAdapter _mapSectionAdapter;
+		//private readonly IMapSectionAdapter _mapSectionAdapter;
+		private readonly SubdivisonProvider _subdivisonProvider;
+
 		private readonly SizeInt _blockSize;
 
 		private SizeInt _screenSize;
@@ -25,14 +28,17 @@ namespace MSetExplorer.XPoc
 
 		#region Constructor
 
-		public XSamplingEditorViewModel(IMapSectionAdapter mapSectionAdapter)
+		public XSamplingEditorViewModel(SubdivisonProvider subdivisonProvider)
 		{
-			_mapSectionAdapter = mapSectionAdapter;
-			MapAreaInfoViewModelCanS = new MapAreaInfoViewModel(mapSectionAdapter);
-			MapAreaInfoViewModelSelS = new MapAreaInfoViewModel(mapSectionAdapter);
+			//_mapSectionAdapter = mapSectionAdapter;
 
-			MapAreaInfoViewModelCanN = new MapAreaInfoViewModel(mapSectionAdapter);
-			MapAreaInfoViewModelSelN = new MapAreaInfoViewModel(mapSectionAdapter);
+			_subdivisonProvider = subdivisonProvider;
+
+			MapAreaInfoViewModelCanS = new MapAreaInfoViewModel(_subdivisonProvider);
+			MapAreaInfoViewModelSelS = new MapAreaInfoViewModel(_subdivisonProvider);
+
+			MapAreaInfoViewModelCanN = new MapAreaInfoViewModel(_subdivisonProvider);
+			MapAreaInfoViewModelSelN = new MapAreaInfoViewModel(_subdivisonProvider);
 
 			_blockSize = RMapConstants.BLOCK_SIZE;
 
@@ -384,13 +390,13 @@ namespace MSetExplorer.XPoc
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
 			var binaryPrecision = RValueHelper.GetBinaryPrecision(updatedCoords.Right, updatedCoords.Left, out _);
 
-			var mapJobHelper = new MapJobHelper(_mapSectionAdapter);
+			//var mapJobHelper = new MapJobHelper(_subdivisonProvider);
 			//var baseMapPosition = mapJobHelper.GetBaseMapPosition(mapBlockOffset, binaryPrecision);
 
 			//// Get a subdivision record from the database.
 			//var subdivision =  mapJobHelper.GetSubdivision(samplePointDelta, baseMapPosition);
 
-			var subdivision = mapJobHelper.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+			var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 
 			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 
