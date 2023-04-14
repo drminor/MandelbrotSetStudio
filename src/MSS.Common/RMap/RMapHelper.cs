@@ -247,12 +247,16 @@ namespace MSS.Common
 		{
 			Debug.Assert(canvasControlOffset.X >= 0 && canvasControlOffset.Y >= 0, "Using a canvasControlOffset with a negative w or h when getting the MapExtent in blocks.");
 
-
 			var totalSize = canvasSize.Add(canvasControlOffset);
 
-			var rawResult = totalSize.DivRem(blockSize, out var remainder);
-			var extra = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
-			var result = rawResult.Add(extra);
+			var rawResult1 = totalSize.DivRem(blockSize, out var remainder);
+
+			var extra1 = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
+			var result = rawResult1.Add(extra1);
+			//var rawResult2 = rawResult1.Add(extra1);
+
+			//var extra2 = new VectorInt(canvasControlOffset.X > 0 ? 1 : 0, canvasControlOffset.Y > 0 ? 1 : 0);
+			//var result = rawResult2.Add(extra2);
 
 			return result;
 		}

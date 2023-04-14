@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using PngImageLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,6 +9,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Windows.Graphics.Imaging;
 
 namespace MSetExplorer
 {
@@ -216,7 +218,7 @@ namespace MSetExplorer
 
 			if (TryGetAdjustedBlockPositon(mapSection, MapBlockOffset, out blockPosition))
 			{
-				if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks))
+				if (IsBLockVisible(mapSection, blockPosition.Value, ImageSizeInBlocks))
 				{
 					sectionWasAdded = true;
 
@@ -248,7 +250,7 @@ namespace MSetExplorer
 				{
 					if (TryGetAdjustedBlockPositon(mapSection, MapBlockOffset, out var blockPosition, warnOnFail: true))
 					{
-						if (IsBLockVisible(mapSection, blockPosition.Value, CanvasSizeInBlocks, warnOnFail: true))
+						if (IsBLockVisible(mapSection, blockPosition.Value, ImageSizeInBlocks, warnOnFail: true))
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition.Value);
 							var loc = invertedBlockPos.Scale(_blockSize);
@@ -302,14 +304,14 @@ namespace MSetExplorer
 		{
 			if (blockPosition.X < 0 || blockPosition.Y < 0)
 			{
-				//if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition} is negative.");
+				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition} is negative.");
 				return false;
 			}
 
 			// TODO: Should we subtract 1 BlockSize from the width when checking the Bounds in IsBlockVisible method.
 			if (blockPosition.X > canvasSizeInBlocks.Width || blockPosition.Y > canvasSizeInBlocks.Height)
 			{
-				//if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, CanvasSize: {canvasSizeInBlocks}.");
+				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, CanvasSize: {canvasSizeInBlocks}.");
 				return false;
 			}
 
@@ -341,7 +343,7 @@ namespace MSetExplorer
 
 			if (_bitmap.Width != imageSize.Width || _bitmap.Height != imageSize.Height)
 			{
-				Debug.WriteLine($"BitmapGrid RefreshBitmap is being called. BitmapSize {new Size(_bitmap.Width, _bitmap.Height)} != ImageSize: Creating new bitmap with size: {imageSize}.");
+				Debug.WriteLine($"BitmapGrid RefreshBitmap is being called. BitmapSize {new Size(_bitmap.Width, _bitmap.Height)} != ImageSize: Creating new bitmap with size: {ImageSizeInBlocks}.");
 
 				_maxYPtr = ImageSizeInBlocks.Height - 1;
 				Bitmap = CreateBitmap(imageSize);
@@ -355,7 +357,7 @@ namespace MSetExplorer
 
 		private void ClearBitmap(WriteableBitmap bitmap)
 		{
-			Debug.WriteLine($"BitmapGrid ClearBitmap is being called.");
+			Debug.WriteLine($"BitmapGrid ClearBitmap is being called. BitmapSize {ImageSizeInBlocks}.");
 
 			// Clear the bitmap, one row of bitmap blocks at a time.
 			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, _blockSize.Height);

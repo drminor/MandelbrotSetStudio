@@ -123,8 +123,10 @@ namespace MSetExplorer
 							interval: 150,
 							action: parm =>
 							{
-								Debug.WriteLine($"Updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}. Resetting the ImageOffset from Temp: {ImageOffsetInternal} to former: {ImageOffset}");
-								ImageOffsetInternal = ImageOffset;
+								Debug.WriteLine($"Updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}.");
+								//$"Resetting the ImageOffset from Temp: {ImageOffsetInternal} to former: {ImageOffset}");
+
+								//ImageOffsetInternal = ImageOffset;
 								ViewPortSize = newViewPortSize;
 							}
 						);
@@ -325,9 +327,6 @@ namespace MSetExplorer
 			if (!value.Diff(previousValue).IsNearZero())
 			{
 				//Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing. The old size: {previousValue}, new size: {value}.");
-
-				//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, c._blockSize, KEEP_DISPLAY_SQUARE);
-				//c.ViewPortSizeInBlocks = sizeInWholeBlocks;
 				
 				c.InvalidateScrollInfo();
 				c.ViewPortSizeChanged?.Invoke(c, new(previousValue, value));
@@ -356,9 +355,11 @@ namespace MSetExplorer
 			{
 				//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
 
+				c._imageOffsetInternal = value;
 				c.SetImageOffset(value);
+
+				//c.InvalidateScrollInfo();
 				c.ImageOffsetChanged?.Invoke(c, EventArgs.Empty);
-				c.InvalidateScrollInfo();
 			}
 		}
 

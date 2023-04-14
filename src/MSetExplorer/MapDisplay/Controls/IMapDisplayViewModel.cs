@@ -32,7 +32,7 @@ namespace MSetExplorer
 		SizeInt CanvasSizeInBlocks { get; set; }
 		SizeDbl LogicalDisplaySize { get; }
 
-		VectorDbl CanvasControlOffset { get; set; }
+		VectorDbl ImageOffset { get; set; }
 
 		double DisplayZoom { get; set; }
 
