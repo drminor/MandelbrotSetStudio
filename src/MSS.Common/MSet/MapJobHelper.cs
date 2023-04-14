@@ -58,36 +58,30 @@ namespace MSS.Common
 		}
 
 		/// <summary>
-		/// Get an updated MapAreaInfo based on a new Display Size for the current job.
+		/// Calculate new coordinates, MapBlockOffset and CanvasControlOffset, for a new display size, while keeping the SamplePointDelta, constant.
 		/// </summary>
 		/// <param name="mapAreaInfo"></param>
 		/// <param name="canvasSize"></param>
 		/// <param name="newCanvasSize"></param>
 		/// <returns></returns>
-		public MapAreaInfo GetMapAreaInfo(MapAreaInfo mapAreaInfo, SizeDbl canvasSize, SizeDbl newCanvasSize)
+		public MapAreaInfo GetMapAreaInfo(RPoint mapPosition, Subdivision subdivision, SizeDbl canvasSize, SizeDbl newCanvasSize)
 		{
-			var subdivision = mapAreaInfo.Subdivision;
+			//var subdivision = mapAreaInfo.Subdivision;
 			var samplePointDelta = subdivision.SamplePointDelta;
 			var blockSize = subdivision.BlockSize;
 
-			//var diff = newCanvasSize.Sub(canvasSize);
 			var diff = canvasSize.Sub(newCanvasSize);
 
 			// Take 1/2 of the distance
-
 			diff = diff.Scale(0.5);
-			//var mapDiff = samplePointDelta.Scale(diff.Round());
 
-			var mapPos = mapAreaInfo.Coords.Position;
-			//var nrmPos = RNormalizer.Normalize(mapPos, mapDiff, out var nrmDiff);
-			//var newPos = nrmPos.Translate(nrmDiff);
-
+			//var mapPos = mapAreaInfo.Coords.Position;
 
 			var rectangleDbl = new RectangleDbl(new PointDbl(diff), newCanvasSize);
-			var newCoords = RMapHelper.GetMapCoords(rectangleDbl.Round(), mapPos, samplePointDelta);
+			var newCoords = RMapHelper.GetMapCoords(rectangleDbl.Round(), mapPosition, samplePointDelta);
 
 			var newPos = newCoords.Position;
-			Debug.WriteLine($"GetMapArea is moving the pos from {mapPos} to {newPos}.");
+			Debug.WriteLine($"GetMapArea is moving the pos from {mapPosition} to {newPos}.");
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, samplePointDelta, blockSize, out var canvasControlOffset);
@@ -98,9 +92,8 @@ namespace MSS.Common
 			var binaryPrecision = RValueHelper.GetBinaryPrecision(newCoords.Right, newCoords.Left, out _);
 			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
 
-			// TODO: For now, assume that the localMapBlockOffset is the same as the mapBlockOffset.
-			//var subdivision = GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			var localMapBlockOffset = mapBlockOffset;
+			var checkSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+			Debug.Assert(checkSubdivision.Id == subdivision.Id, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
 
 			var result = new MapAreaInfo(newCoords, newCanvasSize.Round(), subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 
@@ -139,9 +132,8 @@ namespace MSS.Common
 		//	return result;
 		//}
 
-
 		/// <summary>
-		/// Calculate the SamplePointDelta, MapBlockOffset, CanvasControlOffset, given coordinates as a rectangle and the size of the display
+		/// Calculate the SamplePointDelta, MapBlockOffset, CanvasControlOffset, using the specified coordinates and display size
 		/// </summary>
 		/// <param name="coords"></param>
 		/// <param name="canvasSize"></param>

@@ -390,10 +390,11 @@ namespace MSetExplorer
 				var previousValue = _currentAreaColorAndCalcSettings;
 
 				var prevMapAreaInfo = previousValue.MapAreaInfo;
-				var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(prevMapAreaInfo, previousSize, newSize);
+				var mapPosition = prevMapAreaInfo.Coords.Position;
+				var subdivision = prevMapAreaInfo.Subdivision;
 
+				var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(mapPosition, subdivision, previousSize, newSize);
 				var newAreaColorAndCalcSettings = _currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
-
 				CurrentAreaColorAndCalcSettings = newAreaColorAndCalcSettings;
 
 				//ReportNewMapArea(prevMapAreaInfo, newMapAreaInfo);
