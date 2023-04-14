@@ -119,15 +119,17 @@ namespace MSS.Common
 			{
 				JobPathType newPath;
 
-				if (path.Item.TransformType == TransformType.CanvasSizeUpdate)
-				{
-					var parentPath = path.GetParentPath()!;
-					newPath = MakeBranchActive(parentPath).Combine(path.Node);
-				}
-				else
-				{
-					newPath = MakeBranchActive(path);
-				}
+				//if (path.Item.TransformType == TransformType.CanvasSizeUpdate)
+				//{
+				//	var parentPath = path.GetParentPath()!;
+				//	newPath = MakeBranchActive(parentPath).Combine(path.Node);
+				//}
+				//else
+				//{
+				//	newPath = MakeBranchActive(path);
+				//}
+
+				newPath = MakeBranchActive(path);
 
 				ExpandAndSetCurrent(newPath);
 				CurrentPath = newPath;
@@ -354,10 +356,10 @@ namespace MSS.Common
 
 			var parkedAltNode = path.Node;
 
-			if (parkedAltNode.Item.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				throw new InvalidOperationException("MakeActiveBranch does not support CanvasSizeUpdates.");
-			}
+			//if (parkedAltNode.Item.TransformType == TransformType.CanvasSizeUpdate)
+			//{
+			//	throw new InvalidOperationException("MakeActiveBranch does not support CanvasSizeUpdates.");
+			//}
 
 			var activeAltNode = parkedAltNode.ParentNode!;
 

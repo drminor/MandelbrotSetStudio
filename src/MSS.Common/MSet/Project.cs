@@ -385,10 +385,10 @@ namespace MSS.Common.MSet
 		public Job? GetParent(Job job) => _jobTree.GetParentItem(job);
 		//public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetItemAndDescendants(jobId);
 
-		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
-		{
-			return _jobTree.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
-		}
+		//public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
+		//{
+		//	return _jobTree.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
+		//}
 
 		public bool MarkBranchAsPreferred(ObjectId jobId)
 		{

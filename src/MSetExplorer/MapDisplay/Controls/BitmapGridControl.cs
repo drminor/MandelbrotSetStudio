@@ -324,7 +324,7 @@ namespace MSetExplorer
 
 			if (!value.Diff(previousValue).IsNearZero())
 			{
-				Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing. The old size: {previousValue}, new size: {value}.");
+				//Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing. The old size: {previousValue}, new size: {value}.");
 
 				//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, c._blockSize, KEEP_DISPLAY_SQUARE);
 				//c.ViewPortSizeInBlocks = sizeInWholeBlocks;

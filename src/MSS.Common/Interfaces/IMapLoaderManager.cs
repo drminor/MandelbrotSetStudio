@@ -24,6 +24,7 @@ namespace MSS.Common
 
 		Task? GetTaskForJob(int jobNumber);
 		TimeSpan? GetExecutionTimeForJob(int jobNumber);
+		int GetPendingRequests(int jobNumber);
 
 		void StopJob(int jobNumber);
 

@@ -4,24 +4,15 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
-using System.Numerics;
 
 namespace MSS.Common
 {
 	public class MapJobHelper
 	{
-		//private const int TERMINAL_LIMB_COUNT = 2;
-
-		////private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, 62));
-		//private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB));
-
-		//private readonly IMapSectionAdapter _mapSectionAdapter;
-
 		private readonly SubdivisonProvider _subdivisonProvider;
 
 		public MapJobHelper(SubdivisonProvider subdivisonProvider)
 		{
-			//_mapSectionAdapter = mapSectionAdapter;
 			_subdivisonProvider = subdivisonProvider;
 			ToleranceFactor = 10; // SamplePointDelta values are calculated to within 10 pixels of the display area.
 		}
@@ -58,41 +49,45 @@ namespace MSS.Common
 			TransformType transformType, RectangleInt? newArea)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
-			var canvasSize = mapAreaInfo.CanvasSize;
-
-			//var displaySize = RMapHelper.GetCanvasSize(newArea.Size, canvasSize);
-
-			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
-			var displaySize = canvasSize;
-
-			var canvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(displaySize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
+			var canvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
 
 			var jobName = GetJobName(transformType);
-
 			var job = new Job(parentJobId, projectId, jobName, transformType, newArea, mapAreaInfo, canvasSizeInBlocks, colorBandSetId, mapCalcSettings);
 
 			return job;
 		}
 
-		// NOTE: This is really the negative of what is happening (its the Y axis that needs flipping,
-		// however this allows us to do a Translate (i.e., add, instead of a Sub or Negate and Tranlate.) 
-		private static readonly SizeDbl FLIP_VERTICALLY_AND_HALVE = new SizeDbl(0.5, 0.5);
-
-		public MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeDbl canvasSize, SizeDbl newCanvasSize, Subdivision subdivision, SizeInt blockSize)
+		/// <summary>
+		/// Get an updated MapAreaInfo based on a new Display Size for the current job.
+		/// </summary>
+		/// <param name="mapAreaInfo"></param>
+		/// <param name="canvasSize"></param>
+		/// <param name="newCanvasSize"></param>
+		/// <returns></returns>
+		public MapAreaInfo GetMapAreaInfo(MapAreaInfo mapAreaInfo, SizeDbl canvasSize, SizeDbl newCanvasSize)
 		{
+			var subdivision = mapAreaInfo.Subdivision;
 			var samplePointDelta = subdivision.SamplePointDelta;
+			var blockSize = subdivision.BlockSize;
+
 			//var diff = newCanvasSize.Sub(canvasSize);
 			var diff = canvasSize.Sub(newCanvasSize);
-			diff = diff.Scale(FLIP_VERTICALLY_AND_HALVE);
-			var mapDiff = samplePointDelta.Scale(diff.Round());
-			
-			var mapPos = coords.Position;
-			var nrmPos = RNormalizer.Normalize(mapPos, mapDiff, out var nrmDiff);
-			var newPos = nrmPos.Translate(nrmDiff);
 
+			// Take 1/2 of the distance
+
+			diff = diff.Scale(0.5);
+			//var mapDiff = samplePointDelta.Scale(diff.Round());
+
+			var mapPos = mapAreaInfo.Coords.Position;
+			//var nrmPos = RNormalizer.Normalize(mapPos, mapDiff, out var nrmDiff);
+			//var newPos = nrmPos.Translate(nrmDiff);
+
+
+			var rectangleDbl = new RectangleDbl(new PointDbl(diff), newCanvasSize);
+			var newCoords = RMapHelper.GetMapCoords(rectangleDbl.Round(), mapPos, samplePointDelta);
+
+			var newPos = newCoords.Position;
 			Debug.WriteLine($"GetMapArea is moving the pos from {mapPos} to {newPos}.");
-
-			var newCoords = RMapHelper.GetMapCoords(newCanvasSize.Round(), newPos, samplePointDelta);
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, samplePointDelta, blockSize, out var canvasControlOffset);
@@ -112,6 +107,46 @@ namespace MSS.Common
 			return result;
 		}
 
+		//public static RRectangle GetNewCoordsForNewCanvasSize(RRectangle currentCoords, SizeInt currentSizeInBlocks, SizeInt newSizeInBlocks, Subdivision subdivision)
+		//{
+		//	var diff = newSizeInBlocks.Sub(currentSizeInBlocks);
+
+		//	if (diff == SizeInt.Zero)
+		//	{
+		//		return currentCoords;
+		//	}
+
+		//	diff = diff.Scale(subdivision.BlockSize);
+		//	var rDiff = subdivision.SamplePointDelta.Scale(diff);
+		//	rDiff = rDiff.DivideBy2();
+
+		//	var result = AdjustCoords(currentCoords, rDiff);
+		//	return result;
+		//}
+
+		//private static RRectangle AdjustCoords(RRectangle coords, RSize rDiff)
+		//{
+		//	var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
+
+		//	var x1 = nrmArea.X1 - nrmDiff.Width.Value;
+		//	var x2 = nrmArea.X2 + nrmDiff.Width.Value;
+
+		//	var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
+		//	var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
+
+		//	var result = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
+
+		//	return result;
+		//}
+
+
+		/// <summary>
+		/// Calculate the SamplePointDelta, MapBlockOffset, CanvasControlOffset, given coordinates as a rectangle and the size of the display
+		/// </summary>
+		/// <param name="coords"></param>
+		/// <param name="canvasSize"></param>
+		/// <param name="blockSize"></param>
+		/// <returns></returns>
 		public MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
 		{
 			// Determine how much of the canvas control can be covered by the new map.
@@ -144,83 +179,12 @@ namespace MSS.Common
 			return result;
 		}
 
-		//// Find an existing subdivision record that the same SamplePointDelta
-		//public Subdivision GetSubdivision(RSize samplePointDelta, BigVector mapBlockOffset, out BigVector localMapBlockOffset)
-		//{
-		//	var estimatedBaseMapPosition = GetBaseMapPosition(mapBlockOffset, out localMapBlockOffset);
-
-		//	if (! _mapSectionAdapter.TryGetSubdivision(samplePointDelta, estimatedBaseMapPosition, out var result))
-		//	{
-		//		var subdivision = new Subdivision(samplePointDelta, estimatedBaseMapPosition);
-		//		result = _mapSectionAdapter.InsertSubdivision(subdivision);
-		//	}
-
-		//	return result;
-		//}
-
-		//public BigVector GetBaseMapPosition(BigVector mapBlockOffset, out BigVector localMapBlockOffset)
-		//{
-		//	var quotient = mapBlockOffset.DivRem(TERMINAL_SUBDIV_SIZE, out localMapBlockOffset);
-
-		//	var result = quotient.Scale(TERMINAL_SUBDIV_SIZE);
-
-		//	return result;
-		//} 
-
 		public static string GetJobName(TransformType transformType)
 		{
 			//var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
 			var result = transformType.ToString();
 			return result;
 		}
-
-		//public BigVector GetLocalMapBlockOffset(BigVector mapBlockOffset, RVector baseMapPosition)
-		//{
-		//	var rMapBlockOffset = new RVector(mapBlockOffset);
-
-		//	var scaledBaseMapPosition = baseMapPosition.Scale(new RSize(TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB));
-
-		//	var result = scaledBaseMapPosition.Diff(rMapBlockOffset);
-
-		//	//return result;
-
-		//	return new BigVector();
-		//}
-
-		//public RVector GetBaseMapPosition(BigVector mapBlockOffset, int precisionInBinaryDigits)
-		//{
-		//	RVector result;
-
-		//	var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, precisionInBinaryDigits);
-
-		//	if (apFixedPointFormat.LimbCount <= TERMINAL_LIMB_COUNT)
-		//	{
-		//		result = new RVector();
-		//	}
-		//	else
-		//	{
-		//		//var baseLength = apFixedPointFormat.LimbCount - 3;
-
-		//		var bitsPerLimb = ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB;
-		//		var currentExponent = apFixedPointFormat.TargetExponent;
-		//		var baseExponent = currentExponent - TERMINAL_LIMB_COUNT * bitsPerLimb;
-
-		//		var x = new RValue(mapBlockOffset.X, 0);
-		//		var fp31ValX = FP31ValHelper.CreateFP31Val(x, apFixedPointFormat);
-		//		var baseX = new FP31Val(fp31ValX.Mantissa.Skip(TERMINAL_LIMB_COUNT).ToArray(), baseExponent, fp31ValX.BitsBeforeBP, fp31ValX.Precision);
-
-		//		var y = new RValue(mapBlockOffset.Y, 0);
-		//		var fp31ValY = FP31ValHelper.CreateFP31Val(y, apFixedPointFormat);
-		//		var baseY = new FP31Val(fp31ValY.Mantissa.Skip(TERMINAL_LIMB_COUNT).ToArray(), baseExponent, fp31ValY.BitsBeforeBP, fp31ValY.Precision);
-
-		//		var baseRValX = FP31ValHelper.CreateRValue(baseX);
-		//		var baseRValY = FP31ValHelper.CreateRValue(baseY);
-
-		//		result = new RVector(baseRValX.Value, baseRValY.Value, fp31ValX.Exponent - 62);
-		//	}
-
-		//	return result;
-		//}
 
 		//[Conditional("DEBUG")]
 		//public static void CheckCanvasSize(SizeInt canvasSize, SizeInt blockSize)

@@ -77,9 +77,9 @@ namespace MSS.Types.MSet
 			DateTime lastSaved
 			)
 		{
-			if (parentJobId == null && !(TransformType == TransformType.Home || transformType == TransformType.CanvasSizeUpdate))
+			if (parentJobId == null && !(TransformType == TransformType.Home/* || transformType == TransformType.CanvasSizeUpdate*/))
 			{
-				throw new ArgumentException("The ParentJobId cannot be null for Jobs with a TransformType other than Home and CanvasSizeUpdate.");
+				throw new ArgumentException("The ParentJobId can only be null for jobs with TransformType = 'Home.'");
 			}
 
 			Id = id;

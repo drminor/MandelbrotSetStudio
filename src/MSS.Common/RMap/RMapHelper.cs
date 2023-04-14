@@ -2,7 +2,6 @@
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.Numerics;
 
 namespace MSS.Common
@@ -11,6 +10,14 @@ namespace MSS.Common
 	{
 		#region Map Area Support
 
+		/// <summary>
+		/// Convert the screen coordinates given by screenArea into map coordinates,
+		/// then move these map coordiates by the x and y distances specified in the current MapPosition.
+		/// </summary>
+		/// <param name="screenArea">The offset relative to the MapPosition and the size of the new map.</param>
+		/// <param name="mapPosition">The base position to which the new screen area is added.</param>
+		/// <param name="samplePointDelta">Distance between two pixels on the screen in map coordinates.</param>
+		/// <returns></returns>
 		public static RRectangle GetMapCoords(RectangleInt screenArea, RPoint mapPosition, RSize samplePointDelta)
 		{
 			//Debug.WriteLine($"GetMapCoords is receiving area: {screenArea}.");
@@ -27,22 +34,22 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RRectangle GetMapCoords(SizeInt screenSize, RPoint mapPosition, RSize samplePointDelta)
-		{
-			//Debug.WriteLine($"GetMapCoords is receiving area: {screenArea}.");
+		//public static RRectangle GetMapCoords(SizeInt screenSize, RPoint mapPosition, RSize samplePointDelta)
+		//{
+		//	//Debug.WriteLine($"GetMapCoords is receiving area: {screenArea}.");
 
-			// Convert screen size to map size
-			var mapSize = samplePointDelta.Scale(screenSize);
+		//	// Convert screen size to map size
+		//	var mapSize = samplePointDelta.Scale(screenSize);
 
-			// Translate the area by the current map position
-			var nrmPos = RNormalizer.Normalize(mapPosition, mapSize, out var nrmSize);
+		//	// Translate the area by the current map position
+		//	var nrmPos = RNormalizer.Normalize(mapPosition, mapSize, out var nrmSize);
 			
-			var result = new RRectangle(nrmPos, nrmSize);
+		//	var result = new RRectangle(nrmPos, nrmSize);
 
-			//Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
+		//	//Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
 		public static int CalculatePitch(SizeInt displaySize, int pitchTarget)
@@ -75,78 +82,46 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RRectangle GetNewCoordsForNewCanvasSize(RRectangle currentCoords, SizeInt currentSizeInBlocks, SizeInt newSizeInBlocks, Subdivision subdivision)
-		{
-			var diff = newSizeInBlocks.Sub(currentSizeInBlocks);
-
-			if (diff == SizeInt.Zero)
-			{
-				return currentCoords;
-			}
-
-			diff = diff.Scale(subdivision.BlockSize);
-			var rDiff = subdivision.SamplePointDelta.Scale(diff);
-			rDiff = rDiff.DivideBy2();
-
-			var result = AdjustCoords(currentCoords, rDiff);
-			return result;
-		}
-
-		private static RRectangle AdjustCoords(RRectangle coords, RSize rDiff)
-		{
-			var nrmArea = RNormalizer.Normalize(coords, rDiff, out var nrmDiff);
-
-			var x1 = nrmArea.X1 - nrmDiff.Width.Value;
-			var x2 = nrmArea.X2 + nrmDiff.Width.Value;
-
-			var y1 = nrmArea.Y1 - nrmDiff.Height.Value;
-			var y2 = nrmArea.Y2 + nrmDiff.Height.Value;
-
-			var result = new RRectangle(x1, x2, y1, y2, nrmArea.Exponent);
-
-			return result;
-		}
-
 		#endregion
 
 		#region Job Creation
 
-		public static SizeInt GetCanvasSize(SizeInt newArea, SizeInt displaySize)
-		{
-			if (newArea.Width == 0 || newArea.Height == 0)
-			{
-				throw new ArgumentException("New area cannot have zero width or height upon call to GetCanvasSize.");
-			}
+		//public static SizeInt GetCanvasSize(SizeInt newArea, SizeInt displaySize)
+		//{
+		//	if (newArea.Width == 0 || newArea.Height == 0)
+		//	{
+		//		throw new ArgumentException("New area cannot have zero width or height upon call to GetCanvasSize.");
+		//	}
 
-			var wRatio = (double)newArea.Width / displaySize.Width;
-			var hRatio = (double)newArea.Height / displaySize.Height;
+		//	var wRatio = (double)newArea.Width / displaySize.Width;
+		//	var hRatio = (double)newArea.Height / displaySize.Height;
 
-			int w;
-			int h;
+		//	int w;
+		//	int h;
 
-			if (wRatio >= hRatio)
-			{
-				// Width of image in pixels will take up the entire control.
-				w = displaySize.Width;
+		//	if (wRatio >= hRatio)
+		//	{
+		//		// Width of image in pixels will take up the entire control.
+		//		w = displaySize.Width;
 
-				// Height of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
-				var hRat = (double)newArea.Height / newArea.Width;
-				h = (int)Math.Round(displaySize.Width * hRat);
-			}
-			else
-			{
-				// Width of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
-				var wRat = (double)newArea.Width / newArea.Height;
-				w = (int)Math.Round(displaySize.Height * wRat);
+		//		// Height of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+		//		var hRat = (double)newArea.Height / newArea.Width;
+		//		h = (int)Math.Round(displaySize.Width * hRat);
+		//	}
+		//	else
+		//	{
+		//		// Width of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+		//		var wRat = (double)newArea.Width / newArea.Height;
+		//		w = (int)Math.Round(displaySize.Height * wRat);
 
-				// Height of image in pixels will take up the entire control.
-				h = displaySize.Height;
-			}
+		//		// Height of image in pixels will take up the entire control.
+		//		h = displaySize.Height;
+		//	}
 
-			var result = new SizeInt(w, h);
+		//	var result = new SizeInt(w, h);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public static RSize GetSamplePointDelta(ref RRectangle coords, SizeInt canvasSize, double toleranceFactor)
 		{
@@ -293,8 +268,15 @@ namespace MSS.Common
 		//	return result;
 		//}
 
-		// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
-		// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
+		/// <summary>
+		/// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
+		/// The screen origin in the left, bottom corner and the left, bottom corner of the map is displayed here.
+		/// </summary>
+		/// <param name="mapCoords"></param>
+		/// <param name="samplePointDelta"></param>
+		/// <param name="blockSize"></param>
+		/// <param name="canvasControlOffset"></param>
+		/// <returns></returns>
 		public static BigVector GetMapBlockOffset(ref RRectangle mapCoords, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
 			var mapOrigin = mapCoords.Position;
@@ -547,7 +529,6 @@ namespace MSS.Common
 
 		//	return result;
 		//}
-
 
 		#endregion
 	}

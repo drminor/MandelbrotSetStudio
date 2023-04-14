@@ -10,7 +10,7 @@ namespace MSS.Types
 		ZoomIn = 4,					// All new						Yes						Yes
 		Pan = 5,					// Some new or All new			Yes						No
 		ZoomOut = 6,				// All new						Yes						Yes
-		CanvasSizeUpdate = 7		// Depends						No						Depends
+		CanvasSizeUpdate_Depreciated = 7		// Depends						No						Depends
 	}
 
 

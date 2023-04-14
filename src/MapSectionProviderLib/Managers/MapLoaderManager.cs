@@ -148,6 +148,26 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
+		public int GetPendingRequests(int jobNumber)
+		{
+			var result = DoWithReadLock(() =>
+			{
+				var ml = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.MapLoader;
+				if (ml != null)
+				{
+					var p = ml.SectionsRequested - ml.SectionsCompleted;
+					return p;
+				}
+				else
+				{
+					return 0;
+				}
+			});
+
+			return result;
+
+		}
+
 		public void StopJob(int jobNumber)
 		{
 			DoWithWriteLock(() => 

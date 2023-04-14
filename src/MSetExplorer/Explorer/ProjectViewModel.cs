@@ -57,10 +57,10 @@ namespace MSetExplorer
 					_canvasSize = value;
 					OnPropertyChanged(nameof(IProjectViewModel.CanvasSize));
 
-					if (CurrentProject != null)
-					{
-						RerunWithNewDisplaySize(CurrentProject);
-					}
+					//if (CurrentProject != null)
+					//{
+					//	RerunWithNewDisplaySize(CurrentProject);
+					//}
 				}
 			}
 		}
@@ -571,65 +571,65 @@ namespace MSetExplorer
 		//	OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 		//}
 
-		private void RerunWithNewDisplaySize(Project project)
-		{
-			var wasUpdated = false;
+		//private void RerunWithNewDisplaySize(Project project)
+		//{
+		//	var wasUpdated = false;
 
-			var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-			if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-			{
-				//Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- MapControl Size is changing (ProjectViewModel).");
-				//FindOrCreateJobForNewCanvasSize(project, CurrentJob, currentCanvasSizeInBlocks);
-				//wasUpdated = true;
+		//	var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
+		//	if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
+		//	{
+		//		//Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- MapControl Size is changing (ProjectViewModel).");
+		//		//FindOrCreateJobForNewCanvasSize(project, CurrentJob, currentCanvasSizeInBlocks);
+		//		//wasUpdated = true;
 
-				// TODO: Check to make sure that simply setting the Current Job is sufficent to get a good display
-				Debug.WriteLine($"The current Job's CanvasSizeInBlocks does not match the Current CanvasSizeInBlocks -- CanvasSize is changing -- (ProjectViewModel) NO ACTION TAKEN!");
+		//		// TODO: Check to make sure that simply setting the Current Job is sufficent to get a good display
+		//		Debug.WriteLine($"The current Job's CanvasSizeInBlocks does not match the Current CanvasSizeInBlocks -- CanvasSize is changing -- (ProjectViewModel) NO ACTION TAKEN!");
 
-				wasUpdated = false;
+		//		wasUpdated = false;
 
-			}
+		//	}
 
-			if (wasUpdated)
-			{
-				OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
-			}
-		}
+		//	if (wasUpdated)
+		//	{
+		//		OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
+		//	}
+		//}
 
-		private void FindOrCreateJobForNewCanvasSize(Project project, Job job, SizeInt newCanvasSizeInBlocks)
-		{
-			// Note if this job is itself a CanvasSizeUpdate Proxy Job, then its parent is used to conduct the search.
-			if (project.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
-			{
-				Debug.WriteLine("Found existing CanvasSizeUpdate Job.");
-				project.CurrentJob = matchingProxy;
-				return;
-			}
+		//private void FindOrCreateJobForNewCanvasSize(Project project, Job job, SizeInt newCanvasSizeInBlocks)
+		//{
+		//	// Note if this job is itself a CanvasSizeUpdate Proxy Job, then its parent is used to conduct the search.
+		//	if (project.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
+		//	{
+		//		Debug.WriteLine("Found existing CanvasSizeUpdate Job.");
+		//		project.CurrentJob = matchingProxy;
+		//		return;
+		//	}
 
-			// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
-			if (job.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				var preferredJob = project.GetParent(job);
+		//	// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
+		//	if (job.TransformType == TransformType.CanvasSizeUpdate)
+		//	{
+		//		var preferredJob = project.GetParent(job);
 
-				if (preferredJob is null)
-				{
-					throw new InvalidOperationException("Could not get the preferred job as we create a new job for the updated canvas size.");
-				}
+		//		if (preferredJob is null)
+		//		{
+		//			throw new InvalidOperationException("Could not get the preferred job as we create a new job for the updated canvas size.");
+		//		}
 
-				job = preferredJob;
-			}
+		//		job = preferredJob;
+		//	}
 
-			var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
+		//	var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
 
-			var transformType = TransformType.CanvasSizeUpdate;
-			RectangleInt? newArea = null;
+		//	var transformType = TransformType.CanvasSizeUpdate;
+		//	RectangleInt? newArea = null;
 
-			var newJob = _mapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
+		//	var newJob = _mapJobHelper.BuildJob(job.Id, project.Id, CanvasSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
 
-			Debug.WriteLine($"Creating CanvasSizeUpdate Job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
-			Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+		//	Debug.WriteLine($"Creating CanvasSizeUpdate Job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
+		//	Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			project.Add(newJob);
-		}
+		//	project.Add(newJob);
+		//}
 
 		[Conditional("DEBUG")]
 		private void CheckCurrentProject(IJobOwner jobOwner)

@@ -58,6 +58,9 @@ namespace MapSectionProviderLib
 
 		public TimeSpan ElaspedTime => _stopwatch.Elapsed;
 
+		public int SectionsRequested => _sectionsRequested;
+		public int SectionsCompleted => _sectionsCompleted;
+
 		#endregion
 
 		#region Public Methods

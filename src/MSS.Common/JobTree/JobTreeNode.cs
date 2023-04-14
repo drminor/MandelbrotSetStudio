@@ -369,24 +369,26 @@ namespace MSS.Common
 			// TODO: Determine the isIterationChange and isColorMapChange when adding  a new job.
 			var node = new JobTreeNode(job, this, isIterationChange: false, isColorMapChange: false);
 
-			if (job.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				AddCanvasSizeUpdateNode(node);
-			}
-			else
-			{
-				AddNode(node);
-			}
+			//if (job.TransformType == TransformType.CanvasSizeUpdate)
+			//{
+			//	AddCanvasSizeUpdateNode(node);
+			//}
+			//else
+			//{
+			//	AddNode(node);
+			//}
+
+			AddNode(node);
 
 			return node;
 		}
 
 		public override void AddNode(JobTreeNode node)
 		{
-			if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				throw new InvalidOperationException($"Cannot add a JobTreeItem with TransformType = {node.Item.TransformType} to a JobTreeItem.");
-			}
+			//if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
+			//{
+			//	throw new InvalidOperationException($"Cannot add a JobTreeItem with TransformType = {node.Item.TransformType} to a JobTreeItem.");
+			//}
 
 			if (node.Item.Id == ObjectId.Empty)
 			{
@@ -432,11 +434,11 @@ namespace MSS.Common
 
 			bool result;
 
-			if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				result = AlternateDispSizes?.Remove(node) ?? false;
-				return result;
-			}
+			//if (node.Item.TransformType == TransformType.CanvasSizeUpdate)
+			//{
+			//	result = AlternateDispSizes?.Remove(node) ?? false;
+			//	return result;
+			//}
 
 			result = Children.Remove(node);
 
@@ -448,27 +450,27 @@ namespace MSS.Common
 			return result;
 		}
 
-		public JobTreeNode AddCanvasSizeUpdateJob(Job job)
-		{
-			if (job.TransformType != TransformType.CanvasSizeUpdate)
-			{
-				throw new InvalidOperationException($"Cannot add a JobTreeItem that has a Job with TransformType = {job.TransformType} via call to AddCanvasSizeUpdateNode.");
-			}
+		//public JobTreeNode AddCanvasSizeUpdateJob(Job job)
+		//{
+		//	if (job.TransformType != TransformType.CanvasSizeUpdate)
+		//	{
+		//		throw new InvalidOperationException($"Cannot add a JobTreeItem that has a Job with TransformType = {job.TransformType} via call to AddCanvasSizeUpdateNode.");
+		//	}
 
-			var newNode = new JobTreeNode(job, this, isIterationChange: false, isColorMapChange: false);
-			AddCanvasSizeUpdateNode(newNode);
-			return newNode;
-		}
+		//	var newNode = new JobTreeNode(job, this, isIterationChange: false, isColorMapChange: false);
+		//	AddCanvasSizeUpdateNode(newNode);
+		//	return newNode;
+		//}
 
-		private void AddCanvasSizeUpdateNode(JobTreeNode node)
-		{
-			if (AlternateDispSizes == null)
-			{
-				AlternateDispSizes = new List<JobTreeNode>();
-			}
+		//private void AddCanvasSizeUpdateNode(JobTreeNode node)
+		//{
+		//	if (AlternateDispSizes == null)
+		//	{
+		//		AlternateDispSizes = new List<JobTreeNode>();
+		//	}
 
-			AlternateDispSizes.Add(node);
-		}
+		//	AlternateDispSizes.Add(node);
+		//}
 
 		public int AddRealChild(Job job)
 		{

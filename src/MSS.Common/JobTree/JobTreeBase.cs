@@ -86,10 +86,10 @@ namespace MSS.Common
 			{
 				if (value != base.SelectedNode)
 				{
-					if (value != null && value.TransformType == TransformType.CanvasSizeUpdate)
-					{
-						throw new InvalidOperationException("Cannot set the Selected Node to a CanvasSizeUpdate job.");
-					}
+					//if (value != null && value.TransformType == TransformType.CanvasSizeUpdate)
+					//{
+					//	throw new InvalidOperationException("Cannot set the Selected Node to a CanvasSizeUpdate job.");
+					//}
 
 					UpdateIsSelected(base.SelectedNode, false, Root);
 					base.SelectedNode = value;
@@ -174,16 +174,18 @@ namespace MSS.Common
 				{
 					JobTreeNode? parentNode;
 
-					if (job.TransformType == TransformType.CanvasSizeUpdate)
-					{
-						// The path points to a CanvasSizeUpdate job that has a different size that what is sought.
-						// We need to get its parent to continue.
-						parentNode = path.GetParentPath()?.Node;
-					}
-					else
-					{
-						parentNode = path.Node;
-					}
+					//if (job.TransformType == TransformType.CanvasSizeUpdate)
+					//{
+					//	// The path points to a CanvasSizeUpdate job that has a different size that what is sought.
+					//	// We need to get its parent to continue.
+					//	parentNode = path.GetParentPath()?.Node;
+					//}
+					//else
+					//{
+					//	parentNode = path.Node;
+					//}
+
+					parentNode = path.Node;
 
 					var proxyJobTreeItem = parentNode?.AlternateDispSizes?.FirstOrDefault(x => x.Item.CanvasSizeInBlocks == canvasSizeInBlocks);
 					proxy = proxyJobTreeItem?.Item;
@@ -239,53 +241,62 @@ namespace MSS.Common
 		protected override JobPathType AddInternal(Job job, JobBranchType currentBranch)
 		{
 			JobPathType newPath;
-			
-			if (job.TransformType == TransformType.CanvasSizeUpdate)
-			{
-				var csuPath = AddCanvasSizeUpdateJob(job, currentBranch);
-				newPath = csuPath.GetParentPath()!;
-			}
-			else
-			{
-				if (TryFindParentPath(job, currentBranch, out var parentPath))
-				{
-					newPath = AddAtParentPath(job, parentPath);
-				}
-				else
-				{
-					throw new InvalidOperationException($"Cannot find ... FIX ME FIX ME.");
-				}
-			}
 
-			return newPath;
-		}
-
-		private JobPathType AddCanvasSizeUpdateJob(Job job, JobBranchType currentBranch)
-		{
-			if (job.TransformType != TransformType.CanvasSizeUpdate)
-			{
-				throw new InvalidOperationException($"Attempting to add a CanvasSizeUpdate job, but the job's TransformType is {job.TransformType}.");
-			}
-
-			if (job.ParentJobId == null)
-			{
-				throw new InvalidOperationException($"Attempting to add a CanvasSizeUpdate job, but the job's parentJobId is null.");
-			}
+			//if (job.TransformType == TransformType.CanvasSizeUpdate)
+			//{
+			//	var csuPath = AddCanvasSizeUpdateJob(job, currentBranch);
+			//	newPath = csuPath.GetParentPath()!;
+			//}
+			//else
+			//{
+			//	if (TryFindParentPath(job, currentBranch, out var parentPath))
+			//	{
+			//		newPath = AddAtParentPath(job, parentPath);
+			//	}
+			//	else
+			//	{
+			//		throw new InvalidOperationException($"Cannot find ... FIX ME FIX ME.");
+			//	}
+			//}
 
 			if (TryFindParentPath(job, currentBranch, out var parentPath))
 			{
-				var parentNode = parentPath.Node;
-
-				var canvasSizeUpdateNode = parentNode.AddCanvasSizeUpdateJob(job);
-				var newPath = parentPath.Combine(canvasSizeUpdateNode);
-
-				return newPath;
+				newPath = AddAtParentPath(job, parentPath);
 			}
 			else
 			{
 				throw new InvalidOperationException($"Cannot find ... FIX ME FIX ME.");
 			}
+
+			return newPath;
 		}
+
+		//private JobPathType AddCanvasSizeUpdateJob(Job job, JobBranchType currentBranch)
+		//{
+		//	if (job.TransformType != TransformType.CanvasSizeUpdate)
+		//	{
+		//		throw new InvalidOperationException($"Attempting to add a CanvasSizeUpdate job, but the job's TransformType is {job.TransformType}.");
+		//	}
+
+		//	if (job.ParentJobId == null)
+		//	{
+		//		throw new InvalidOperationException($"Attempting to add a CanvasSizeUpdate job, but the job's parentJobId is null.");
+		//	}
+
+		//	if (TryFindParentPath(job, currentBranch, out var parentPath))
+		//	{
+		//		var parentNode = parentPath.Node;
+
+		//		var canvasSizeUpdateNode = parentNode.AddCanvasSizeUpdateJob(job);
+		//		var newPath = parentPath.Combine(canvasSizeUpdateNode);
+
+		//		return newPath;
+		//	}
+		//	else
+		//	{
+		//		throw new InvalidOperationException($"Cannot find ... FIX ME FIX ME.");
+		//	}
+		//}
 
 		protected abstract JobPathType AddAtParentPath(Job job, JobPathType parentPath);
 
@@ -359,7 +370,7 @@ namespace MSS.Common
 				throw new ArgumentException("The list of jobs cannot be empty when constructing a JobTree.", nameof(jobs));
 			}
 
-			var numberOfJobsWithNoParent = jobs.Count(x => !x.ParentJobId.HasValue && x.TransformType != TransformType.CanvasSizeUpdate);
+			var numberOfJobsWithNoParent = jobs.Count(x => !x.ParentJobId.HasValue && x.TransformType != TransformType.CanvasSizeUpdate_Depreciated);
 
 			if (numberOfJobsWithNoParent > 1)
 			{
@@ -407,10 +418,10 @@ namespace MSS.Common
 			{
 				visited++;
 
-				if (job.TransformType == TransformType.CanvasSizeUpdate)
+				if (job.TransformType == TransformType.CanvasSizeUpdate_Depreciated)
 				{
-					Debug.Assert(!jobs.Any(x => x.ParentJobId == job.Id), "Found a CanvasSizeUpdateJob that has children.");
-					_ = AddCanvasSizeUpdateJob(job, currentBranch);
+					//Debug.Assert(!jobs.Any(x => x.ParentJobId == job.Id), "Found a CanvasSizeUpdateJob that has children.");
+					//_ = AddCanvasSizeUpdateJob(job, currentBranch);
 				}
 				else
 				{
@@ -443,41 +454,41 @@ namespace MSS.Common
 
 		#region Private Collection Methods
 
-		private bool TryFindCanvasSizeUpdateJob(Job job, JobBranchType currentBranch, [MaybeNullWhen(false)] out JobPathType path)
-		{
-			if (job.ParentJobId == null)
-			{
-				throw new ArgumentException("The job must have a non-null ParentJobId when finding a CanvasSizeUpdate job.", nameof(job));
-			}
+		//private bool TryFindCanvasSizeUpdateJob(Job job, JobBranchType currentBranch, [MaybeNullWhen(false)] out JobPathType path)
+		//{
+		//	if (job.ParentJobId == null)
+		//	{
+		//		throw new ArgumentException("The job must have a non-null ParentJobId when finding a CanvasSizeUpdate job.", nameof(job));
+		//	}
 
-			if (job.TransformType != TransformType.CanvasSizeUpdate)
-			{
-				throw new ArgumentException("The job must have a TransformType = CanvasSizeUpdate when finding a CanvasSizeUpdate job.", nameof(job));
-			}
+		//	if (job.TransformType != TransformType.CanvasSizeUpdate)
+		//	{
+		//		throw new ArgumentException("The job must have a TransformType = CanvasSizeUpdate when finding a CanvasSizeUpdate job.", nameof(job));
+		//	}
 
-			if (TryFindParentPath(job, currentBranch, out var parentPath))
-			{
-				JobTreeNode parentNode = parentPath.Node;
+		//	if (TryFindParentPath(job, currentBranch, out var parentPath))
+		//	{
+		//		JobTreeNode parentNode = parentPath.Node;
 
-				var canvasSizeUpdateNode = parentNode.AlternateDispSizes?.FirstOrDefault(x => x.Item == job);
+		//		var canvasSizeUpdateNode = parentNode.AlternateDispSizes?.FirstOrDefault(x => x.Item == job);
 
-				if (canvasSizeUpdateNode != null)
-				{
-					path = parentPath.Combine(canvasSizeUpdateNode);
-					return true;
-				}
-				else
-				{
-					path = null;
-					return false;
-				}
-			}
-			else
-			{
-				path = null;
-				return false;
-			}
-		}
+		//		if (canvasSizeUpdateNode != null)
+		//		{
+		//			path = parentPath.Combine(canvasSizeUpdateNode);
+		//			return true;
+		//		}
+		//		else
+		//		{
+		//			path = null;
+		//			return false;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		path = null;
+		//		return false;
+		//	}
+		//}
 
 		#endregion
 
@@ -690,22 +701,28 @@ namespace MSS.Common
 
 		protected override bool MoveCurrentTo(Job item, JobBranchType currentBranch, [MaybeNullWhen(false)] out JobPathType path)
 		{
-			if (item.TransformType == TransformType.CanvasSizeUpdate)
+			//if (item.TransformType == TransformType.CanvasSizeUpdate)
+			//{
+			//	if (TryFindCanvasSizeUpdateJob(item, currentBranch, out var csuPath))
+			//	{
+			//		path = csuPath.GetParentPath()!;
+			//		ExpandAndSetCurrent(path);
+			//		return true;
+			//	}
+			//}
+			//else
+			//{
+			//	if (TryFindPath(item, currentBranch, out path))
+			//	{
+			//		ExpandAndSetCurrent(path);
+			//		return true;
+			//	}
+			//}
+
+			if (TryFindPath(item, currentBranch, out path))
 			{
-				if (TryFindCanvasSizeUpdateJob(item, currentBranch, out var csuPath))
-				{
-					path = csuPath.GetParentPath()!;
-					ExpandAndSetCurrent(path);
-					return true;
-				}
-			}
-			else
-			{
-				if (TryFindPath(item, currentBranch, out path))
-				{
-					ExpandAndSetCurrent(path);
-					return true;
-				}
+				ExpandAndSetCurrent(path);
+				return true;
 			}
 
 			path = null;

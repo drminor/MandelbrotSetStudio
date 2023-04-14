@@ -581,7 +581,6 @@ namespace MSetGeneratorPrototype
 
 		private IteratorCoords GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{
-			var blockPos = mapSectionRequest.BlockPosition;
 			var mapPosition = mapSectionRequest.MapPosition;
 			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 
@@ -589,6 +588,7 @@ namespace MSetGeneratorPrototype
 			var startingCy = FP31ValHelper.CreateFP31Val(mapPosition.Y, apFixedPointFormat);
 			var delta = FP31ValHelper.CreateFP31Val(samplePointDelta.Width, apFixedPointFormat);
 
+			var blockPos = mapSectionRequest.BlockPosition;
 			var screenPos = mapSectionRequest.ScreenPosition;
 
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
