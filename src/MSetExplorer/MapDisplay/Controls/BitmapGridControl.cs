@@ -1,5 +1,4 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -8,7 +7,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Windows.Media.Streaming.Adaptive;
 
 namespace MSetExplorer
 {
@@ -25,11 +23,6 @@ namespace MSetExplorer
 
 		private SizeDbl _containerSize;
 		private SizeDbl _viewPortSizeInternal;
-
-		//private Size _viewPortSize;
-		//private SizeInt _viewPortSizeInBlocks;
-		//private VectorDbl _canvasControlOffset;
-
 		private VectorDbl _imageOffsetInternal;
 
 		private Point _offset;
@@ -61,10 +54,6 @@ namespace MSetExplorer
 			_containerSize = new SizeDbl();
 			_viewPortSizeInternal = new SizeDbl();
 
-			//_viewPortSize = new Size();
-			//_viewPortSizeInBlocks = new SizeInt();
-			//_canvasControlOffset = new VectorDbl();
-
 			_imageOffsetInternal = new VectorDbl();
 
 			_offset = new Point(0, 0);
@@ -82,8 +71,6 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewPortSizeChanged;
-		//public event EventHandler<ValueTuple<SizeInt, SizeInt>>? ViewPortSizeInBlocksChanged;
-
 		public event EventHandler? ImageOffsetChanged;
 
 		#endregion
@@ -166,12 +153,6 @@ namespace MSetExplorer
 			set => SetValue(ViewPortSizeProperty, value);
 		}
 
-		//public SizeInt ViewPortSizeInBlocks
-		//{
-		//	get => (SizeInt)GetValue(ViewPortSizeInBlocksProperty);
-		//	set => SetValue(ViewPortSizeInBlocksProperty, value);
-		//}
-
 		public VectorDbl ImageOffset
 		{
 			get => (VectorDbl)GetValue(ImageOffsetProperty);
@@ -225,25 +206,21 @@ namespace MSetExplorer
 
 		protected override Size ArrangeOverride(Size finalSize)
 		{
-			Size size = base.ArrangeOverride(finalSize);
+			//Size size = base.ArrangeOverride(finalSize);
 
-			if (_unscaledExtent != size)
+			var finalSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(finalSize);
+
+			if (ContainerSize != finalSizeDbl)
 			{
-				// Use the size of the child as the un-scaled extent content.
-				_unscaledExtent = size;
-
 				if (_content != null)
 				{
 					_content.Arrange(new Rect(finalSize));
 				}
 
-				InvalidateScrollInfo();
+				ContainerSize = finalSizeDbl;
 			}
 
-			// Update the size of the viewport using the final size.
-			ContainerSize = ScreenTypeHelper.ConvertToSizeDbl(finalSize);
-
-			return size;
+			return finalSize;
 		}
 
 		public override void OnApplyTemplate()
@@ -360,32 +337,6 @@ namespace MSetExplorer
 				Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing by a very small amount, IGNORING. The old size: {previousValue}, new size: {value}.");
 			}
 		}
-
-		#endregion
-
-		#region ViewPortSizeInBlocks Dependency Property
-
-		//public static readonly DependencyProperty ViewPortSizeInBlocksProperty = DependencyProperty.Register(
-		//			"ViewPortSizeInBlocks", typeof(SizeInt), typeof(BitmapGridControl),
-		//			new FrameworkPropertyMetadata(SizeInt.Zero, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ViewPortSizeInBlocks_PropertyChanged));
-
-		//private static void ViewPortSizeInBlocks_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		//{
-		//	BitmapGridControl c = (BitmapGridControl)o;
-		//	var previousValue = (SizeInt)e.OldValue;
-		//	var value = (SizeInt)e.NewValue;
-
-		//	if (value.Width < 0 || value.Height < 0)
-		//	{
-		//		return;
-		//	}
-
-		//	if (previousValue != value)
-		//	{
-		//		Debug.WriteLine($"BitmapGridControl: ViewPortInBlocks is changing: Old size: {previousValue}, new size: {value}.");
-		//		c.ViewPortSizeInBlocksChanged?.Invoke(c, new(previousValue, value));
-		//	}
-		//}
 
 		#endregion
 
