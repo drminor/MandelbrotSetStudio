@@ -6,10 +6,10 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media.Imaging;
+using ZstdSharp.Unsafe;
 
 namespace MSetExplorer
 {
@@ -50,9 +50,6 @@ namespace MSetExplorer
 
 			ActiveJobNumbers = new List<int>();
 
-			////MapSections = new ObservableCollection<MapSection>();
-			//MapSections = new MapSectionCollection();
-
 			Action<WriteableBitmap> updateBitmapAction = x => { Bitmap = x; };
 			Action<MapSection> disposeMapSection = x => { _mapSectionHelper.ReturnMapSection(x); };
 
@@ -83,9 +80,7 @@ namespace MSetExplorer
 
 		public List<int> ActiveJobNumbers { get; init; }
 
-		//public ObservableCollection<MapSection> MapSections { get; init; }
-
-		public MapSectionCollection MapSections => _bitmapGrid.MapSections;
+		public ObservableCollection<MapSection> MapSections => _bitmapGrid.MapSections;
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
@@ -321,7 +316,6 @@ namespace MSetExplorer
 		{
 			lock (_paintLocker)
 			{
-				//ClearDisplayInternal();
 				_bitmapGrid.ClearDisplay();
 			}
 		}
@@ -371,6 +365,8 @@ namespace MSetExplorer
 					//{
 					//	_mapSectionHelper.ReturnMapSection(mapSection);
 					//}
+
+					//_bitmapGrid.DrawSections(new List<MapSection> { mapSection });
 				}
 			}
 
@@ -470,7 +466,8 @@ namespace MSetExplorer
 			_bitmapGrid.SetColorBandSet(newJob.ColorBandSet);
 			var sectionsRemoved = _bitmapGrid.ReDrawSections();
 
-			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing: {sectionsToRemove.Count}, removed: {sectionsRemoved.Count}.");
+			//Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing: {sectionsToRemove.Count}, removed: {sectionsRemoved.Count}.");
+			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing: {sectionsToRemove.Count}.");
 
 			int? result;
 
@@ -481,15 +478,9 @@ namespace MSetExplorer
 				Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
 
 				lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
-				result = newJobNumber;
+				//lastSectionWasIncluded = newMapSections.Any(x => x.IsLastSection);
 
-				//foreach (var mapSection in newMapSections)
-				//{
-				//	if (mapSection.MapSectionVectors != null)
-				//	{
-				//		MapSections.Add(mapSection);
-				//	}
-				//}
+				result = newJobNumber;
 			}
 			else
 			{
@@ -502,7 +493,6 @@ namespace MSetExplorer
 
 		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
-			//_bitmapGrid.CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
 			var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
 			var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
@@ -513,17 +503,7 @@ namespace MSetExplorer
 
 			_bitmapGrid.SetColorBandSet(newJob.ColorBandSet);
 			lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
-
-			// ObservableCollection does not support add range
-			//var sectionsToAdd = mapSections.Where(x => x.MapSectionVectors != null);
-
-			//foreach(var mapSection in newMapSections)
-			//{
-			//	if (mapSection.MapSectionVectors != null)
-			//	{
-			//		MapSections.Add(mapSection);
-			//	}
-			//}
+			//lastSectionWasIncluded = newMapSections.Any(x => x.IsLastSection);
 
 			return newJobNumber;
 		}
@@ -537,21 +517,8 @@ namespace MSetExplorer
 
 			ActiveJobNumbers.Clear();
 
-			//ClearDisplayInternal();
 			_bitmapGrid.ClearDisplay();
 		}
-
-		//private void ClearDisplayInternal()
-		//{
-		//	_bitmapGrid.ClearDisplay();
-
-		//	foreach (var ms in MapSections)
-		//	{
-		//		_mapSectionHelper.ReturnMapSection(ms);
-		//	}
-
-		//	MapSections.Clear();
-		//}
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings newJob)
 		{

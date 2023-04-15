@@ -19,8 +19,7 @@ namespace MSetExplorer
 {
 	public class ColorBandSetViewModel : INotifyPropertyChanged, IDisposable, IUndoRedoViewModel
 	{
-		//private readonly ObservableCollection<MapSection> _mapSections;
-		private readonly MapSectionCollection _mapSections;
+		private readonly ObservableCollection<MapSection> _mapSections;
 
 		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
@@ -48,7 +47,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetViewModel(/*ObservableCollection<MapSection> mapSections*/ MapSectionCollection mapSections, IMapSectionHistogramProcessor mapSectionHistogramProcessor)
+		public ColorBandSetViewModel(ObservableCollection<MapSection> mapSections, IMapSectionHistogramProcessor mapSectionHistogramProcessor)
 		{
 			_useEscapeVelocities = true;
 			_mapSections = mapSections;

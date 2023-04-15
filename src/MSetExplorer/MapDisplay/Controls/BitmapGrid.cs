@@ -3,8 +3,9 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -12,7 +13,7 @@ using System.Windows.Threading;
 
 namespace MSetExplorer
 {
-	public class BitmapGrid : IDisposable
+	public class BitmapGrid : IDisposable, IBitmapGrid
 	{
 		#region Private Properties
 
@@ -31,7 +32,7 @@ namespace MSetExplorer
 		private bool _highlightSelectedColorBand;
 
 		private readonly Action<WriteableBitmap> _onUpdateBitmap;
-		private readonly Action<MapSection> _diposeMapSection;
+		private readonly Action<MapSection> _disposeMapSection;
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear;
 
@@ -41,8 +42,7 @@ namespace MSetExplorer
 
 		public BitmapGrid(SizeInt blockSize, Action<WriteableBitmap> onUpdateBitmap, Action<MapSection> disposeMapSection)
 		{
-			////MapSections = new ObservableCollection<MapSection>();
-			MapSections = new MapSectionCollection();
+			MapSections = new ObservableCollection<MapSection>();
 
 			_blockSize = blockSize;
 			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
@@ -57,20 +57,69 @@ namespace MSetExplorer
 			_highlightSelectedColorBand = false;
 
 			_onUpdateBitmap = onUpdateBitmap;
-			_diposeMapSection = disposeMapSection;
+			_disposeMapSection = disposeMapSection;
 			_bitmap = CreateBitmap(size: _blockSize);
 			_pixelsToClear = new byte[0];
 		}
+
+		//private void MapSections_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		//{
+		//	switch (e.Action)
+		//	{
+		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
+
+		//			if (e.NewItems != null && e.NewItems.Count > 0)
+		//			{
+		//				if (e.NewItems.Count == 1)
+		//				{
+		//					if (e.NewItems[0] is MapSection ms)
+		//					{
+		//						DrawSections(new List<MapSection> { ms });
+		//					}
+		//				}
+
+		//				else
+		//				{
+		//					var mapSections = e.NewItems.Cast<MapSection>().ToList();
+		//					DrawSections(mapSections);
+		//				}
+		//			}
+
+		//			break;
+
+		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
+		//			break;
+
+		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Replace:
+		//			break;
+
+		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Move:
+
+		//			if (e.NewStartingIndex == -100 && e.OldStartingIndex == -100)
+		//			{
+		//				ReDrawSections();
+		//			}
+		//			break;
+
+		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Reset:
+
+		//			ClearDisplay();
+		//			break;
+
+		//		default:
+		//			break;
+		//	}
+		//}
 
 		#endregion
 
 		#region Public Properties
 
-		public MapSectionCollection MapSections { get; init; }
+		public ObservableCollection<MapSection> MapSections { get; init; }
 
 		public ColorBandSet ColorBandSet
 		{
-			get =>  _colorBandSet;
+			get => _colorBandSet;
 			set
 			{
 				if (value != _colorBandSet)
@@ -81,20 +130,9 @@ namespace MSetExplorer
 
 					if (_colorMap != null)
 					{
-						RefreshBitmap();
-						DrawSections(MapSections);
+						ReDrawSections();
 					}
 				}
-
-			}
-		}
-
-		public void SetColorBandSet(ColorBandSet value)
-		{
-			if (value != _colorBandSet)
-			{
-				_colorBandSet = value;
-				_colorMap = LoadColorMap(value);
 			}
 		}
 
@@ -112,8 +150,7 @@ namespace MSetExplorer
 					if (_colorMap != null)
 					{
 						_colorMap.UseEscapeVelocities = value;
-						RefreshBitmap();
-						DrawSections(MapSections);
+						ReDrawSections();
 					}
 				}
 			}
@@ -133,8 +170,7 @@ namespace MSetExplorer
 					if (_colorMap != null)
 					{
 						_colorMap.HighlightSelectedColorBand = value;
-						RefreshBitmap();
-						DrawSections(MapSections);
+						ReDrawSections();
 					}
 				}
 			}
@@ -193,7 +229,7 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
-		
+
 		public void ClearDisplay()
 		{
 			if (!RefreshBitmap())
@@ -203,7 +239,7 @@ namespace MSetExplorer
 
 			foreach (var ms in MapSections)
 			{
-				_diposeMapSection(ms);
+				_disposeMapSection(ms);
 			}
 
 			MapSections.Clear();
@@ -212,7 +248,6 @@ namespace MSetExplorer
 		public bool DrawSections(IList<MapSection> mapSections)
 		{
 			var lastSectionWasIncluded = false;
-
 			foreach (var mapSection in mapSections)
 			{
 				if (mapSection.MapSectionVectors != null)
@@ -242,7 +277,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						_diposeMapSection(mapSection);
+						_disposeMapSection(mapSection);
 					}
 
 					if (mapSection.IsLastSection)
@@ -292,10 +327,15 @@ namespace MSetExplorer
 					else
 					{
 						sectionsDisposed.Add(mapSection);
-						_diposeMapSection(mapSection);
+						_disposeMapSection(mapSection);
 					}
 				}
 			}
+
+			//foreach(var ms in sectionsDisposed)
+			//{
+			//	MapSections.Remove(ms);
+			//}
 
 			return sectionsDisposed;
 		}
@@ -330,12 +370,21 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_diposeMapSection(mapSection);
+				_disposeMapSection(mapSection);
 				sectionWasAdded = false;
 				Debug.WriteLineIf(DEBUG, $"Not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
 			}
 
 			return sectionWasAdded;
+		}
+
+		public void SetColorBandSet(ColorBandSet value)
+		{
+			if (value != _colorBandSet)
+			{
+				_colorBandSet = value;
+				_colorMap = LoadColorMap(value);
+			}
 		}
 
 		#endregion
@@ -460,7 +509,7 @@ namespace MSetExplorer
 		private const double VALUE_FACTOR = 10000;
 		private const int BYTES_PER_PIXEL = 4;
 
-		public void LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
+		private void LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
 		{
 			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
 

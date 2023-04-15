@@ -1,23 +1,43 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MSS.Types.MSet
 {
-
-	// TODO: Either scrap this class and use ObservableCollection,
-	// or create a new class based on List<T> and implement the INotifyCollectionChanged interface by hand.
-
 	public class MapSectionCollection : Collection<MapSection>, INotifyCollectionChanged, INotifyPropertyChanged
 	{
-		//public event NotifyCollectionChangedEventHandler? CollectionChanged;
+		//public void ReDrawSections()
+		//{
+		//	OnCollectionChanged(NotifyCollectionChangedAction.Move, null, -100, -100);
+		//}
 
-		//public event PropertyChangedEventHandler? PropertyChanged;
+		//private bool _ignoreInsert = false;
+
+		//public void DrawSections(IList items)
+		//{
+		//	_ignoreInsert = true;
+
+		//	try
+		//	{
+		//		foreach(var section in items)
+		//		{
+		//			if (section is MapSection ms)
+		//			{
+		//				Add(ms);
+		//			}
+		//		}
+
+		//		OnCountPropertyChanged();
+		//		OnIndexerPropertyChanged();
+		//		OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, changedItems: items));
+		//	}
+		//	finally
+		//	{
+		//		_ignoreInsert = false;
+		//	}
+		//}
 
 		/// <summary>
 		/// PropertyChanged event (per <see cref="INotifyPropertyChanged" />).

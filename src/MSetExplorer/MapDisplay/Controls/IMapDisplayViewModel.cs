@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Media.Imaging;
 
@@ -15,8 +16,7 @@ namespace MSetExplorer
 		//Image Image { get; }
 		WriteableBitmap Bitmap { get; }
 
-		//ObservableCollection<MapSection> MapSections { get; }
-		MapSectionCollection MapSections { get; }
+		ObservableCollection<MapSection> MapSections { get; }
 
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }
 
