@@ -105,9 +105,17 @@ namespace MSS.Types
 		public override string? ToString()
 		{
 			return IsInverted
-				? $"MapSection:{SubdivisionId}:Pos:{RepoBlockPosition} (Inverted)."
-				: $"MapSection:{SubdivisionId}:Pos:{RepoBlockPosition}.";
+				? $"MapSection: {ScreenPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition} (Inverted)."
+				: $"MapSection: {ScreenPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition}.";
 		}
+
+		public string ToString(PointInt adjustedPosition)
+		{
+			return IsInverted
+				? $"MapSection: AdjBlockPos: {adjustedPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition} (Inverted)."
+				: $"MapSection: AdjBlockPos: {adjustedPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition}.";
+		}
+
 
 		#region IEqualityComparer / IEquatable Support
 

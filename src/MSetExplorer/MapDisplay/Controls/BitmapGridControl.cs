@@ -14,9 +14,10 @@ namespace MSetExplorer
 	{
 		#region Private Properties
 
+		private DebounceDispatcher _viewPortSizeDispatcher;
 		private readonly SizeInt _blockSize;
-
 		private ScrollViewer? _scrollOwner;
+
 		private FrameworkElement? _content;
 		private Canvas _canvas;
 		private Image _image;
@@ -31,8 +32,6 @@ namespace MSetExplorer
 		private Point _contentRenderTransformOrigin;
 		private TranslateTransform _contentOffsetTransform;
 		private TransformGroup _transformGroup;
-
-		private DebounceDispatcher _viewPortSizeDispatcher;
 
 		#endregion
 
@@ -51,9 +50,9 @@ namespace MSetExplorer
 			_content = null; 
 			_canvas = new Canvas();
 			_image = new Image();
+
 			_containerSize = new SizeDbl();
 			_viewPortSizeInternal = new SizeDbl();
-
 			_imageOffsetInternal = new VectorDbl();
 
 			_offset = new Point(0, 0);
@@ -75,7 +74,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Regular Properties -- TODO: Convert to Dependency Properties
+		#region Public Properties
 
 		public Canvas Canvas => _canvas;
 

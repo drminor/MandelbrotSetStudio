@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver.Linq;
 using MSS.Common;
-using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -306,10 +305,11 @@ namespace MSetExplorer
 					var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
 					Debug.WriteLine($"Restarting paused job: received {newMapSections.Count}, {requestsPending} are being generated.");
 
-					MapBlockOffset = currentJob.MapAreaInfo.MapBlockOffset;
-					ImageOffset = new VectorDbl(currentJob.MapAreaInfo.CanvasControlOffset);
+					//_bitmapGrid.SetColorBandSet(currentJob.ColorBandSet);
+					//MapBlockOffset = currentJob.MapAreaInfo.MapBlockOffset;
+					//ImageOffset = new VectorDbl(currentJob.MapAreaInfo.CanvasControlOffset);
 
-					_ = _bitmapGrid.DrawSections(MapSections, newMapSections, currentJob.ColorBandSet);
+					_ = _bitmapGrid.DrawSections(newMapSections);
 				}
 			}
 		}
@@ -357,7 +357,7 @@ namespace MSetExplorer
 			{
 				lock (_paintLocker)
 				{
-					var sectionWasAdded = _bitmapGrid.GetAndPlacePixels(mapSection, mapSection.MapSectionVectors, out var blockPosition);
+					var sectionWasAdded = _bitmapGrid.GetAndPlacePixels(mapSection, mapSection.MapSectionVectors);
 
 					if (sectionWasAdded)
 					{
@@ -365,7 +365,6 @@ namespace MSetExplorer
 					}
 					else
 					{
-						Debug.WriteLine($"Not drawing map section: {mapSection} with adjusted block position: {blockPosition} for job number = {mapSection.JobNumber}.");
 						_mapSectionHelper.ReturnMapSection(mapSection);
 					}
 				}
@@ -464,32 +463,39 @@ namespace MSetExplorer
 			MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
 			ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
 
+			_bitmapGrid.DrawSections(MapSections);
+
 			int? result;
-			List<MapSection> newMapSections;
 
 			if (sectionsToLoad.Count > 0)
 			{
-				newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
+				var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
 				var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
 				//Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
 
+				lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
 				result = newJobNumber;
+
+				foreach (var mapSection in newMapSections)
+				{
+					if (mapSection.MapSectionVectors != null)
+					{
+						MapSections.Add(mapSection);
+					}
+				}
 			}
 			else
 			{
-				newMapSections = new List<MapSection>();
+				lastSectionWasIncluded = false;
 				result = null;
 			}
 
-			//Debug.WriteLine($"Redrawing {MapSections.Count}.");
-			lastSectionWasIncluded = _bitmapGrid.DrawSections(MapSections, newMapSections, newJob.ColorBandSet);
 			return result;
 		}
 
 		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
 			//_bitmapGrid.CanvasControlOffset = newJob.MapAreaInfo.CanvasControlOffset;
-			var existingMapSections = new List<MapSection>();
 			var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
 			var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
@@ -497,7 +503,9 @@ namespace MSetExplorer
 
 			MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
 			ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
-			lastSectionWasIncluded = _bitmapGrid.DrawSections(existingMapSections, newMapSections, newJob.ColorBandSet);
+
+			_bitmapGrid.SetColorBandSet(newJob.ColorBandSet);
+			lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
 
 			// ObservableCollection does not support add range
 			//var sectionsToAdd = mapSections.Where(x => x.MapSectionVectors != null);
