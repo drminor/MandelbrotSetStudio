@@ -1,9 +1,10 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -18,15 +19,10 @@ namespace MSetExplorer
 		private readonly bool DEBUG = true;
 
 		private SizeInt _blockSize;
-
-		private readonly Action<WriteableBitmap> _onUpdateBitmap;
-		private WriteableBitmap _bitmap;
-		private byte[] _pixelsToClear = new byte[0];
 		private Int32Rect _blockRect { get; init; }
 
 		private SizeInt _canvasSizeInBlocks;
 		private int _maxYPtr;
-
 		private BigVector _mapBlockOffset;
 
 		private ColorBandSet _colorBandSet;
@@ -34,33 +30,64 @@ namespace MSetExplorer
 		private bool _useEscapeVelocities;
 		private bool _highlightSelectedColorBand;
 
+		private readonly Action<WriteableBitmap> _onUpdateBitmap;
+		private readonly Action<MapSection> _diposeMapSection;
+		private WriteableBitmap _bitmap;
+		private byte[] _pixelsToClear;
+
 		#endregion
 
 		#region Constructor
 
-		public BitmapGrid(SizeInt blockSize, Action<WriteableBitmap> onUpdateBitmap)
+		public BitmapGrid(SizeInt blockSize, Action<WriteableBitmap> onUpdateBitmap, Action<MapSection> disposeMapSection)
 		{
+			////MapSections = new ObservableCollection<MapSection>();
+			MapSections = new MapSectionCollection();
+
 			_blockSize = blockSize;
 			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
 
-			_onUpdateBitmap = onUpdateBitmap;
-
-			_bitmap = CreateBitmap(size: _blockSize);
+			_canvasSizeInBlocks = new SizeInt();
 			_maxYPtr = 1;
-
 			_mapBlockOffset = new BigVector();
 
-			_useEscapeVelocities = true;
-			_highlightSelectedColorBand = false;
 			_colorBandSet = new ColorBandSet();
 			_colorMap = null;
+			_useEscapeVelocities = true;
+			_highlightSelectedColorBand = false;
+
+			_onUpdateBitmap = onUpdateBitmap;
+			_diposeMapSection = disposeMapSection;
+			_bitmap = CreateBitmap(size: _blockSize);
+			_pixelsToClear = new byte[0];
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public ColorBandSet ColorBandSet => _colorBandSet;
+		public MapSectionCollection MapSections { get; init; }
+
+		public ColorBandSet ColorBandSet
+		{
+			get =>  _colorBandSet;
+			set
+			{
+				if (value != _colorBandSet)
+				{
+					Debug.WriteLineIf(DEBUG, $"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
+					_colorBandSet = value;
+					_colorMap = LoadColorMap(value);
+
+					if (_colorMap != null)
+					{
+						RefreshBitmap();
+						DrawSections(MapSections);
+					}
+				}
+
+			}
+		}
 
 		public void SetColorBandSet(ColorBandSet value)
 		{
@@ -71,56 +98,44 @@ namespace MSetExplorer
 			}
 		}
 
-		public void SetColorBandSet(ColorBandSet value, IList<MapSection> mapSections)
+		public bool UseEscapeVelocities
 		{
-			if (value != _colorBandSet)
+			get => _useEscapeVelocities;
+			set
 			{
-				Debug.WriteLineIf(DEBUG, $"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
-				_colorBandSet = value;
-				_colorMap = LoadColorMap(value);
-
-				if (_colorMap != null)
+				if (value != _useEscapeVelocities)
 				{
-					RefreshBitmap();
-					DrawSections(mapSections);
+					var strState = value ? "On" : "Off";
+					Debug.WriteLineIf(DEBUG, $"The MapDisplay is turning {strState} the use of EscapeVelocities.");
+					_useEscapeVelocities = value;
+
+					if (_colorMap != null)
+					{
+						_colorMap.UseEscapeVelocities = value;
+						RefreshBitmap();
+						DrawSections(MapSections);
+					}
 				}
 			}
 		}
 
-		public bool UseEscapeVelocities => _useEscapeVelocities;
-
-		public void SetUseEscapeVelocities(bool value, IList<MapSection> mapSections)
+		public bool HighlightSelectedColorBand
 		{
-			if (value != _useEscapeVelocities)
+			get => _highlightSelectedColorBand;
+			set
 			{
-				var strState = value ? "On" : "Off";
-				Debug.WriteLineIf(DEBUG, $"The MapDisplay is turning {strState} the use of EscapeVelocities.");
-				_useEscapeVelocities = value;
-
-				if (_colorMap != null)
+				if (value != _highlightSelectedColorBand)
 				{
-					_colorMap.UseEscapeVelocities = value;
-					RefreshBitmap();
-					DrawSections(mapSections);
-				}
-			}
-		}
+					var strState = value ? "On" : "Off";
+					Debug.WriteLineIf(DEBUG, $"The MapDisplay is turning {strState} the Highlighting the selected ColorBand.");
+					_highlightSelectedColorBand = value;
 
-		public bool HighlightSelectedColorBand => _highlightSelectedColorBand;
-
-		public void SetHighlightSelectedColorBand(bool value, IList<MapSection> mapSections)
-		{
-			if (value != _highlightSelectedColorBand)
-			{
-				var strState = value ? "On" : "Off";
-				Debug.WriteLineIf(DEBUG, $"The MapDisplay is turning {strState} the Highlighting the selected ColorBand.");
-				_highlightSelectedColorBand = value;
-
-				if (_colorMap != null)
-				{
-					_colorMap.HighlightSelectedColorBand = value;
-					RefreshBitmap();
-					DrawSections(mapSections);
+					if (_colorMap != null)
+					{
+						_colorMap.HighlightSelectedColorBand = value;
+						RefreshBitmap();
+						DrawSections(MapSections);
+					}
 				}
 			}
 		}
@@ -185,6 +200,13 @@ namespace MSetExplorer
 			{
 				ClearBitmap(_bitmap);
 			}
+
+			foreach (var ms in MapSections)
+			{
+				_diposeMapSection(ms);
+			}
+
+			MapSections.Clear();
 		}
 
 		public bool DrawSections(IList<MapSection> mapSections)
@@ -199,14 +221,28 @@ namespace MSetExplorer
 
 					if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, warnOnFail: true))
 					{
+						MapSections.Add(mapSection);
+
 						if (_colorMap != null)
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 							var loc = invertedBlockPos.Scale(_blockSize);
 
 							LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
-							_bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+
+							try
+							{
+								_bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+							}
+							catch (Exception e)
+							{
+								Debug.WriteLine($"DrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+							}
 						}
+					}
+					else
+					{
+						_diposeMapSection(mapSection);
 					}
 
 					if (mapSection.IsLastSection)
@@ -219,40 +255,50 @@ namespace MSetExplorer
 			return lastSectionWasIncluded;
 		}
 
-		//public bool DrawSections(IList<MapSection> existingMapSections, List<MapSection> newMapSections, ColorBandSet colorBandSet)
-		//{
-		//	if (colorBandSet != ColorBandSet)
-		//	{
-		//		_colorMap = LoadColorMap(colorBandSet);
-		//	}
+		public List<MapSection> ReDrawSections()
+		{
+			if (_colorMap != null)
+			{
+				RefreshBitmap();
+			}
 
-		//	bool lastSectionWasIncluded = false;
+			var sectionsDisposed = new List<MapSection>();
 
-		//	if (existingMapSections.Count > 0)
-		//	{
-		//		if (!RefreshBitmap())
-		//		{
-		//			ClearBitmap(_bitmap);
-		//		}
+			foreach (var mapSection in MapSections)
+			{
+				if (mapSection.MapSectionVectors != null)
+				{
+					var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-		//		DrawSections(existingMapSections);
+					if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, warnOnFail: true))
+					{
+						if (_colorMap != null)
+						{
+							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+							var loc = invertedBlockPos.Scale(_blockSize);
 
-		//		if (newMapSections.Count > 0)
-		//		{
-		//			lastSectionWasIncluded = DrawSections(newMapSections);
-		//		}
-		//	}
-		//	else
-		//	{
-		//		if (newMapSections.Count > 0)
-		//		{
-		//			RefreshBitmap();
-		//			lastSectionWasIncluded = DrawSections(newMapSections);
-		//		}
-		//	}
+							LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
 
-		//	return lastSectionWasIncluded;
-		//}
+							try
+							{
+								_bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+							}
+							catch (Exception e)
+							{
+								Debug.WriteLine($"ReDrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+							}
+						}
+					}
+					else
+					{
+						sectionsDisposed.Add(mapSection);
+						_diposeMapSection(mapSection);
+					}
+				}
+			}
+
+			return sectionsDisposed;
+		}
 
 		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors)
 		{
@@ -262,6 +308,7 @@ namespace MSetExplorer
 
 			if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks))
 			{
+				MapSections.Add(mapSection);
 				sectionWasAdded = true;
 
 				if (_colorMap != null)
@@ -270,11 +317,20 @@ namespace MSetExplorer
 					var loc = invertedBlockPos.Scale(_blockSize);
 
 					LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
-					_bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+
+					try
+					{
+						_bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+					}
+					catch (Exception e)
+					{
+						Debug.WriteLine($"GetAndPlacePixels got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+					}
 				}
 			}
 			else
 			{
+				_diposeMapSection(mapSection);
 				sectionWasAdded = false;
 				Debug.WriteLineIf(DEBUG, $"Not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
 			}
@@ -309,7 +365,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool IsBLockVisible(MapSection mapSection, PointInt blockPosition, SizeInt canvasSizeInBlocks, bool warnOnFail = false)
+		private bool IsBLockVisible(MapSection mapSection, PointInt blockPosition, SizeInt imageSizeInBlocks, bool warnOnFail = false)
 		{
 			if (blockPosition.X < 0 || blockPosition.Y < 0)
 			{
@@ -317,9 +373,9 @@ namespace MSetExplorer
 				return false;
 			}
 
-			if (blockPosition.X > canvasSizeInBlocks.Width || blockPosition.Y > canvasSizeInBlocks.Height)
+			if (blockPosition.X > imageSizeInBlocks.Width || blockPosition.Y > imageSizeInBlocks.Height)
 			{
-				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, CanvasSize: {canvasSizeInBlocks}.");
+				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {imageSizeInBlocks}.");
 				return false;
 			}
 

@@ -6,6 +6,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media.Imaging;
@@ -49,11 +50,13 @@ namespace MSetExplorer
 
 			ActiveJobNumbers = new List<int>();
 
-			//MapSections = new ObservableCollection<MapSection>();
-			MapSections = new MapSectionCollection();
+			////MapSections = new ObservableCollection<MapSection>();
+			//MapSections = new MapSectionCollection();
 
 			Action<WriteableBitmap> updateBitmapAction = x => { Bitmap = x; };
-			_bitmapGrid = new BitmapGrid(BlockSize, updateBitmapAction);
+			Action<MapSection> disposeMapSection = x => { _mapSectionHelper.ReturnMapSection(x); };
+
+			_bitmapGrid = new BitmapGrid(BlockSize, updateBitmapAction, disposeMapSection);
 
 			_currentAreaColorAndCalcSettings = null;
 
@@ -82,7 +85,7 @@ namespace MSetExplorer
 
 		//public ObservableCollection<MapSection> MapSections { get; init; }
 
-		public MapSectionCollection MapSections { get; init; }
+		public MapSectionCollection MapSections => _bitmapGrid.MapSections;
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
@@ -101,7 +104,7 @@ namespace MSetExplorer
 			{
 				lock (_paintLocker)
 				{
-					_bitmapGrid.SetColorBandSet(value, MapSections);
+					_bitmapGrid.ColorBandSet = value;
 				}
 			}
 		}
@@ -109,11 +112,11 @@ namespace MSetExplorer
 		public bool UseEscapeVelocities
 		{
 			get => _bitmapGrid.UseEscapeVelocities;
-			set
+			set 
 			{
 				lock (_paintLocker)
 				{
-					_bitmapGrid.SetUseEscapeVelocities(value, MapSections);
+					_bitmapGrid.UseEscapeVelocities = value;
 				}
 			}
 		}
@@ -125,7 +128,7 @@ namespace MSetExplorer
 			{
 				lock (_paintLocker)
 				{
-					_bitmapGrid.SetHighlightSelectedColorBand(value, MapSections);
+					_bitmapGrid.HighlightSelectedColorBand = value;
 				}
 			}
 		}
@@ -318,7 +321,8 @@ namespace MSetExplorer
 		{
 			lock (_paintLocker)
 			{
-				ClearDisplayInternal();
+				//ClearDisplayInternal();
+				_bitmapGrid.ClearDisplay();
 			}
 		}
 
@@ -359,14 +363,14 @@ namespace MSetExplorer
 				{
 					var sectionWasAdded = _bitmapGrid.GetAndPlacePixels(mapSection, mapSection.MapSectionVectors);
 
-					if (sectionWasAdded)
-					{
-						MapSections.Add(mapSection);
-					}
-					else
-					{
-						_mapSectionHelper.ReturnMapSection(mapSection);
-					}
+					//if (sectionWasAdded)
+					//{
+					//	MapSections.Add(mapSection);
+					//}
+					//else
+					//{
+					//	_mapSectionHelper.ReturnMapSection(mapSection);
+					//}
 				}
 			}
 
@@ -458,12 +462,15 @@ namespace MSetExplorer
 				_mapSectionHelper.ReturnMapSection(section);
 			}
 
-			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}.");
+			//Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing {sectionsToRemove.Count}.");
 
 			MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
 			ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
 
-			_bitmapGrid.DrawSections(MapSections);
+			_bitmapGrid.SetColorBandSet(newJob.ColorBandSet);
+			var sectionsRemoved = _bitmapGrid.ReDrawSections();
+
+			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, removing: {sectionsToRemove.Count}, removed: {sectionsRemoved.Count}.");
 
 			int? result;
 
@@ -471,18 +478,18 @@ namespace MSetExplorer
 			{
 				var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, newJob.MapAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
 				var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
-				//Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
+				Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
 
 				lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
 				result = newJobNumber;
 
-				foreach (var mapSection in newMapSections)
-				{
-					if (mapSection.MapSectionVectors != null)
-					{
-						MapSections.Add(mapSection);
-					}
-				}
+				//foreach (var mapSection in newMapSections)
+				//{
+				//	if (mapSection.MapSectionVectors != null)
+				//	{
+				//		MapSections.Add(mapSection);
+				//	}
+				//}
 			}
 			else
 			{
@@ -510,13 +517,13 @@ namespace MSetExplorer
 			// ObservableCollection does not support add range
 			//var sectionsToAdd = mapSections.Where(x => x.MapSectionVectors != null);
 
-			foreach(var mapSection in newMapSections)
-			{
-				if (mapSection.MapSectionVectors != null)
-				{
-					MapSections.Add(mapSection);
-				}
-			}
+			//foreach(var mapSection in newMapSections)
+			//{
+			//	if (mapSection.MapSectionVectors != null)
+			//	{
+			//		MapSections.Add(mapSection);
+			//	}
+			//}
 
 			return newJobNumber;
 		}
@@ -530,20 +537,21 @@ namespace MSetExplorer
 
 			ActiveJobNumbers.Clear();
 
-			ClearDisplayInternal();
-		}
-
-		private void ClearDisplayInternal()
-		{
+			//ClearDisplayInternal();
 			_bitmapGrid.ClearDisplay();
-
-			foreach (var ms in MapSections)
-			{
-				_mapSectionHelper.ReturnMapSection(ms);
-			}
-
-			MapSections.Clear();
 		}
+
+		//private void ClearDisplayInternal()
+		//{
+		//	_bitmapGrid.ClearDisplay();
+
+		//	foreach (var ms in MapSections)
+		//	{
+		//		_mapSectionHelper.ReturnMapSection(ms);
+		//	}
+
+		//	MapSections.Clear();
+		//}
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings newJob)
 		{
