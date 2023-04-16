@@ -1,5 +1,7 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -13,6 +15,8 @@ namespace MSetExplorer
 	public partial class BitmapGridControl : ContentControl
 	{
 		#region Private Properties
+
+		private static readonly bool KEEP_DISPLAY_SQUARE = false;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 		private readonly SizeInt _blockSize;
@@ -33,6 +37,8 @@ namespace MSetExplorer
 		private TranslateTransform _contentOffsetTransform;
 		private TransformGroup _transformGroup;
 
+		private BitmapGrid _bitmapGrid;
+
 		#endregion
 
 		#region Constructor
@@ -50,6 +56,8 @@ namespace MSetExplorer
 			_content = null; 
 			_canvas = new Canvas();
 			_image = new Image();
+
+			_bitmapGrid = new BitmapGrid(_image, _blockSize, OurDisposeMapSectionImplementation);
 
 			_containerSize = new SizeDbl();
 			_viewPortSizeInternal = new SizeDbl();
@@ -76,9 +84,23 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public Canvas Canvas => _canvas;
+		public Canvas Canvas
+		{
+			get => _canvas;
+			set => _canvas = value;
+		}
 
-		public Image Image => _image;
+		public Image Image
+		{
+			get => _bitmapGrid.Image;
+			set
+			{
+				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ViewPortSize, _blockSize, KEEP_DISPLAY_SQUARE);
+				_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
+
+				_bitmapGrid.Image = value;
+			}
+		}
 
 		private SizeDbl ContainerSize
 		{
@@ -151,7 +173,16 @@ namespace MSetExplorer
 		public SizeDbl ViewPortSize
 		{
 			get => (SizeDbl)GetValue(ViewPortSizeProperty);
-			set => SetValue(ViewPortSizeProperty, value);
+			set
+			{
+				if (IsSizeDblChanged(ViewPortSize, value))
+				{
+					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, KEEP_DISPLAY_SQUARE);
+					_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
+
+					SetValue(ViewPortSizeProperty, value);
+				}
+			}
 		}
 
 		public VectorDbl ImageOffset
@@ -160,10 +191,46 @@ namespace MSetExplorer
 			set => SetValue(ImageOffsetProperty, value);
 		}
 
-		public ImageSource ImageSource
+		public ObservableCollection<MapSection> MapSections
 		{
-			get => (ImageSource)GetValue(ImageSourceProperty);
-			set => SetValue(ImageSourceProperty, value);
+			get => (ObservableCollection<MapSection>)GetValue(MapSectionsProperty);
+			set => SetValue(MapSectionsProperty, value);
+		}
+
+		public ColorBandSet ColorBandSet
+		{
+			get => (ColorBandSet)GetValue(ColorBandSetProperty);
+			set => SetValue(ColorBandSetProperty, value);
+		}
+
+		public bool UseEscapeVelocities
+		{
+			get => (bool)GetValue(UseEscapeVelocitiesProperty);
+			set => SetValue(UseEscapeVelocitiesProperty, value);
+		}
+
+		public bool HighlightSelectedColorBand
+		{
+			get => (bool)GetValue(HighlightSelectedColorBandProperty);
+			set => SetValue(HighlightSelectedColorBandProperty, value);
+		}
+
+		public IBitmapGrid BitmapGrid => _bitmapGrid;
+
+		public Action<MapSection>? DisposeMapSection { get; set; }
+
+		#endregion
+
+		#region Private Methods
+
+		private bool IsSizeDblChanged(SizeDbl a, SizeDbl b)
+		{
+			if (a.IsNAN() || b.IsNAN())
+			{
+				return false;
+			}
+
+			return !a.Diff(b).IsNearZero();
 		}
 
 		#endregion
@@ -233,7 +300,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Found the BitmapGridControl_Content template.");
 
-				(_canvas, _image) = BuildContentModel(_content);
+				(Canvas, Image) = BuildContentModel(_content);
 
 				// Setup the transform on the content so that we can position the Bitmap to "pull" it left and up so that the
 				// portion of the bitmap that is visible corresponds with the requested map coordinates.
@@ -273,33 +340,9 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
-
-		#region ImageSource Dependency Property
-
-		public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register(
-					"ImageSource", typeof(ImageSource), typeof(BitmapGridControl),
-					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ImageSource_PropertyChanged));
-
-
-		private static void ImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		private void OurDisposeMapSectionImplementation(MapSection mapSection)
 		{
-			BitmapGridControl c = (BitmapGridControl)o;
-
-			if (e.NewValue == null)
-			{
-				return;
-			}
-
-			if (e.NewValue is WriteableBitmap wb)
-			{
-				c.Image.Source = wb;
-				c.InvalidateScrollInfo();
-			}
-			else
-			{
-				Debug.WriteLine($"ImageSource is being assigned a value of type {e.NewValue.GetType()} No update made, only values of type WriteableBitmap are supported.");
-			}
+			DisposeMapSection?.Invoke(mapSection);
 		}
 
 		#endregion
@@ -318,21 +361,19 @@ namespace MSetExplorer
 			var previousValue = (SizeDbl)e.OldValue;
 			var value = (SizeDbl)e.NewValue;
 
-			if (double.IsNaN(value.Width) || double.IsNaN(value.Height))
-			{
-				return;
-			} 
-
-			if (!value.Diff(previousValue).IsNearZero())
+			if (c.IsSizeDblChanged(previousValue, value))
 			{
 				//Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing. The old size: {previousValue}, new size: {value}.");
-				
+
+				//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, c._blockSize, KEEP_DISPLAY_SQUARE);
+				//c._bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
+
 				c.InvalidateScrollInfo();
 				c.ViewPortSizeChanged?.Invoke(c, new(previousValue, value));
 			}
 			else
 			{
-				Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing by a very small amount, IGNORING. The old size: {previousValue}, new size: {value}.");
+				//Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing by a very small amount, IGNORING. The old size: {previousValue}, new size: {value}.");
 			}
 		}
 
@@ -369,8 +410,8 @@ namespace MSetExplorer
 			// For a postive offset, we "pull" the image down and to the left.
 			var invertedOffset = offset.Invert();
 
-			_image.SetValue(Canvas.LeftProperty, invertedOffset.X);
-			_image.SetValue(Canvas.BottomProperty, invertedOffset.Y);
+			Image.SetValue(Canvas.LeftProperty, invertedOffset.X);
+			Image.SetValue(Canvas.BottomProperty, invertedOffset.Y);
 		}
 
 		private VectorDbl GetTempImageOffset(VectorDbl originalOffset, SizeDbl originalSize, SizeDbl newSize)
@@ -384,7 +425,117 @@ namespace MSetExplorer
 
 		#endregion
 
-		//#region ContentOffsetX Dependency Property
+		#region MapSections Dependency Property
+
+		private static readonly ObservableCollection<MapSection> DEFAULT_MAPSECTIONS_VALUE = new ObservableCollection<MapSection>();
+
+		public static readonly DependencyProperty MapSectionsProperty = DependencyProperty.Register(
+					"MapSections", typeof(ObservableCollection<MapSection>), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(DEFAULT_MAPSECTIONS_VALUE, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, MapSections_PropertyChanged));
+
+		private static void MapSections_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			BitmapGridControl c = (BitmapGridControl)o;
+			var previousValue = (ObservableCollection<MapSection>)e.OldValue;
+			var value = (ObservableCollection<MapSection>)e.NewValue;
+
+			if (value != previousValue)
+			{
+				//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
+
+				c._bitmapGrid.MapSections = value;
+
+			}
+		}
+
+		#endregion
+
+		#region ColorBandSet Dependency Property
+
+		private static readonly ColorBandSet DEFAULT_COLOR_BAND_SET_VALUE = new ColorBandSet();
+
+		public static readonly DependencyProperty ColorBandSetProperty = DependencyProperty.Register(
+					"ColorBandSet", typeof(ColorBandSet), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(DEFAULT_COLOR_BAND_SET_VALUE, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ColorBandSet_PropertyChanged));
+
+		private static void ColorBandSet_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			BitmapGridControl c = (BitmapGridControl)o;
+			var previousValue = (ColorBandSet)e.OldValue;
+			var value = (ColorBandSet)e.NewValue;
+
+			if (value != previousValue)
+			{
+				//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
+
+				c._bitmapGrid.SetColorBandSet(value);
+			}
+		}
+
+		#endregion
+
+		#region UseEscapeVelocities Dependency Property
+
+		public static readonly DependencyProperty UseEscapeVelocitiesProperty = DependencyProperty.Register(
+					"UseEscapeVelocities", typeof(bool), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ColorBandSet_PropertyChanged));
+
+		private static void UseEscapeVelocities_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			BitmapGridControl c = (BitmapGridControl)o;
+			var value = (bool)e.NewValue;
+
+			c._bitmapGrid.UseEscapeVelocities = value;
+		}
+
+		#endregion
+
+		#region HighlightSelectedColorBand Dependency Property
+
+		public static readonly DependencyProperty HighlightSelectedColorBandProperty = DependencyProperty.Register(
+					"HighlightSelectedColorBand", typeof(bool), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, HighlightSelectedColorBand_PropertyChanged));
+
+		private static void HighlightSelectedColorBand_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			BitmapGridControl c = (BitmapGridControl)o;
+			var value = (bool)e.NewValue;
+
+			c._bitmapGrid.HighlightSelectedColorBand = value;
+		}
+
+		#endregion
+
+		#region ImageSource Dependency Property
+
+		//public static readonly DependencyProperty ImageSourceProperty = DependencyProperty.Register(
+		//			"ImageSource", typeof(ImageSource), typeof(BitmapGridControl),
+		//			new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ImageSource_PropertyChanged));
+
+
+		//private static void ImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		//{
+		//	BitmapGridControl c = (BitmapGridControl)o;
+
+		//	if (e.NewValue == null)
+		//	{
+		//		return;
+		//	}
+
+		//	if (e.NewValue is WriteableBitmap wb)
+		//	{
+		//		c.Image.Source = wb;
+		//		c.InvalidateScrollInfo();
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"ImageSource is being assigned a value of type {e.NewValue.GetType()} No update made, only values of type WriteableBitmap are supported.");
+		//	}
+		//}
+
+		#endregion
+
+		#region ContentOffsetX Dependency Property
 
 		//public static readonly DependencyProperty ContentOffsetXProperty =
 		//		DependencyProperty.Register("ContentOffsetX", typeof(double), typeof(BitmapGridControl),
@@ -449,10 +600,9 @@ namespace MSetExplorer
 		//	set => SetValue(ContentOffsetXProperty, value);
 		//}
 
+		#endregion
 
-		//#endregion
-
-		//#region ContentOffsetY Dependency Property
+		#region ContentOffsetY Dependency Property
 
 		//public static readonly DependencyProperty ContentOffsetYProperty =
 		//		DependencyProperty.Register("ContentOffsetY", typeof(double), typeof(BitmapGridControl),
@@ -519,7 +669,7 @@ namespace MSetExplorer
 		//	set => 	SetValue(ContentOffsetYProperty, value);
 		//}
 
-		//#endregion
+		#endregion
 
 		#region Old SetImageOffset Code
 

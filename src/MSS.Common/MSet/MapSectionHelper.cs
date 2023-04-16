@@ -38,6 +38,9 @@ namespace MSS.Common
 
 		public long NumberOfCountValSwitches { get; private set; }
 
+		public int MapSectionsVectorsInPool => _mapSectionVectorsPool.TotalFree;
+		public int MapSectionsZVectorsInPool => _mapSectionZVectorsPool.TotalFree;
+
 		public int MaxPeakSectionVectors => _mapSectionVectorsPool.MaxPeak;
 		public int MaxPeakSectionZVectors => _mapSectionZVectorsPool.MaxPeak;
 
@@ -189,7 +192,7 @@ namespace MSS.Common
 			var targetIterations = mapCalcSettings.TargetIterations;
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-			Debug.WriteLine($"Creating empty MapSections. The map extent is {mapExtentInBlocks}.");
+			Debug.WriteLine($"Creating empty MapSections. Returned: {mapExtentInBlocks}, For Size: {mapAreaInfo.CanvasSize} and Offset: {mapAreaInfo.CanvasControlOffset}.");
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
@@ -299,54 +302,46 @@ namespace MSS.Common
 
 		public void ReturnMapSection(MapSection mapSection)
 		{
-			if (mapSection.MapSectionVectors != null)
-			{
-				if (_mapSectionVectorsPool.Free(mapSection.MapSectionVectors))
-				{
-					mapSection.MapSectionVectors = null;
-					//Debug.WriteLine($"Just freed a MapSection. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");
-				}
-			}
+			mapSection.MapSectionVectors = ReturnMapSectionVectors(mapSection.MapSectionVectors);
 		}
 
-		//public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
-		//{
-		//	if (mapSectionRequest.MapSectionVectors != null)
-		//	{
-		//		_mapSectionVectorsPool.Free(mapSectionRequest.MapSectionVectors);
-		//		mapSectionRequest.MapSectionVectors = null;
-		//	}
-
-		//	if (mapSectionRequest.MapSectionZVectors != null)
-		//	{
-		//		_mapSectionZVectorsPool.Free(mapSectionRequest.MapSectionZVectors);
-		//		mapSectionRequest.MapSectionZVectors = null;
-		//	}
-		//}
+		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
+		{
+			mapSectionRequest.MapSectionVectors = ReturnMapSectionVectors(mapSectionRequest.MapSectionVectors);
+			mapSectionRequest.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionRequest.MapSectionZVectors);
+		}
 
 		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
 		{
-			if (mapSectionResponse.MapSectionVectors != null)
+			mapSectionResponse.MapSectionVectors = ReturnMapSectionVectors(mapSectionResponse.MapSectionVectors);
+			mapSectionResponse.MapSectionZVectors= ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
+		}
+
+		public MapSectionVectors? ReturnMapSectionVectors(MapSectionVectors? mapSectionVectors)
+		{
+			if (mapSectionVectors != null)
 			{
-				if (_mapSectionVectorsPool.Free(mapSectionResponse.MapSectionVectors))
+				if (_mapSectionVectorsPool.Free(mapSectionVectors))
 				{
-					mapSectionResponse.MapSectionVectors = null;
-					//Debug.WriteLine($"Just freed a MapSectionResponse. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");
+					mapSectionVectors = null;
 				}
 			}
 
-			if (mapSectionResponse.MapSectionZVectors != null)
-			{
-				_mapSectionZVectorsPool.Free(mapSectionResponse.MapSectionZVectors);
-				mapSectionResponse.MapSectionZVectors = null;
-			}
+			return mapSectionVectors;
 		}
 
-		//public MapSectionVectors Duplicate(MapSectionVectors mapSectionVectors)
-		//{
-		//	var result = _mapSectionVectorsPool.DuplicateFrom(mapSectionVectors);
-		//	return result;
-		//}
+		public MapSectionZVectors? ReturnMapSectionZVectors(MapSectionZVectors? mapSectionZVectors)
+		{
+			if (mapSectionZVectors != null)
+			{
+				if (_mapSectionZVectorsPool.Free(mapSectionZVectors))
+				{
+					mapSectionZVectors = null;
+				}
+			}
+
+			return mapSectionZVectors;
+		}
 
 		#endregion
 	}

@@ -386,7 +386,7 @@ namespace MSetExplorer
 
 		#region Public Methods - Job
 
-		public void UpdateMapView(TransformType transformType, RectangleInt screenArea)
+		public void UpdateMapView(TransformType transformType, RectangleInt screenArea, SizeDbl canvasSize)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
@@ -403,7 +403,7 @@ namespace MSetExplorer
 			//var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
 			//LoadMap(CurrentProject, curJob, newCoords, curJob.ColorBandSetId, curJob.MapCalcSettings, transformType, screenArea);
 
-			AddNewCoordinateUpdateJob(currentProject, transformType, screenArea);
+			AddNewCoordinateUpdateJob(currentProject, transformType, screenArea, canvasSize);
 		}
 
 		//// Currently Not Used.
@@ -457,7 +457,7 @@ namespace MSetExplorer
 		//	return true;
 		//}
 
-		public MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea)
+		public MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, SizeDbl canvasSize)
 		{
 			var curJob = CurrentJob;
 
@@ -477,7 +477,13 @@ namespace MSetExplorer
 				var mapPosition = curJob.Coords.Position;
 				var samplePointDelta = curJob.Subdivision.SamplePointDelta;
 				var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
- 				var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, CanvasSize, _blockSize);
+
+				// Use the specified canvasSize, instead of this job's current value for the CanvasSize :: Updated by DRM on 4/16
+
+				//var mapSize = CanvasSize;
+				var mapSize = canvasSize.Round();
+
+ 				var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, mapSize, _blockSize);
 
 				return mapAreaInfo;
 			}
@@ -511,7 +517,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void AddNewCoordinateUpdateJob(Project project, TransformType transformType, RectangleInt newScreenArea)
+		private void AddNewCoordinateUpdateJob(Project project, TransformType transformType, RectangleInt newScreenArea, SizeDbl canvasSize)
 		{
 			var currentJob = project.CurrentJob;
 			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
@@ -522,7 +528,10 @@ namespace MSetExplorer
 			var newCoords = RMapHelper.GetMapCoords(newScreenArea, mapPosition, samplePointDelta);
 
 			// Use the current display size, colors and iterations.
-			var mapSize = currentJob.CanvasSize;
+			//var mapSize = currentJob.CanvasSize;
+
+			var mapSize = canvasSize.Round();
+
 			var colorBandSetId = currentJob.ColorBandSetId;
 			var mapCalcSettings = currentJob.MapCalcSettings;
 

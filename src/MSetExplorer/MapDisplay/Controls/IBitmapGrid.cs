@@ -1,13 +1,20 @@
 ﻿using MSS.Types;
 using System.Collections.Generic;
+using System.Windows.Threading;
 
 namespace MSetExplorer
 {
 	public interface IBitmapGrid
 	{
+		BigVector MapBlockOffset { get; set; }
+
 		void ClearDisplay();
 		bool DrawSections(IList<MapSection> mapSections);
-		bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);
-		List<MapSection> ReDrawSections();
+		int ReDrawSections();
+
+		Dispatcher Dispatcher { get; }
+
+		void GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);
+
 	}
 }

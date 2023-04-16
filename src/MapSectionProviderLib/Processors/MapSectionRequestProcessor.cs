@@ -100,10 +100,15 @@ namespace MapSectionProviderLib
 		{
 			var result = new List<Tuple<MapSectionRequest, MapSectionResponse>>();
 
-			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+			MapSectionVectors? mapSectionVectors = null;
 
 			foreach (var request in mapSectionRequests)
 			{
+				if (mapSectionVectors == null)
+				{
+					mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+				}
+
 				var mapSectionResponse = Fetch(request, mapSectionVectors);
 
 				if (mapSectionResponse != null)
@@ -121,12 +126,12 @@ namespace MapSectionProviderLib
 						mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
 						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
-
-						// Since we have just used the current instance of our MapSectionVectors, we need to get a new instance.
-						mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+						mapSectionVectors = null;
 					}
 				}
 			}
+
+			_mapSectionHelper.ReturnMapSectionVectors(mapSectionVectors);
 
 			return result;
 		}

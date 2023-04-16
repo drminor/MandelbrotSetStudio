@@ -46,9 +46,14 @@ namespace MSetExplorer
 			else
 			{
 				_canvas = BitmapGridControl1.Canvas;
-				_vm = (IMapDisplayViewModel)DataContext;
-				_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+
+				_vm = (IMapDisplayViewModel)DataContext;
+
+				BitmapGridControl1.DisposeMapSection = _vm.DisposeMapSection;
+
+				_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
+				_vm.BitmapGrid = BitmapGridControl1.BitmapGrid;
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;

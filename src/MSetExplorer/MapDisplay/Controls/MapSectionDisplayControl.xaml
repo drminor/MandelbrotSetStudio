@@ -9,7 +9,10 @@
              x:Name="Mdc">
     <Grid>
         <Border Grid.Row="0" Grid.Column="0" BorderThickness="1" BorderBrush="Black">
-            <local:BitmapGridControl x:Name="BitmapGridControl1" ImageSource="{Binding Bitmap}" ViewPortSize="{Binding CanvasSize}" ImageOffset="{Binding ImageOffset}" />
+            <local:BitmapGridControl x:Name="BitmapGridControl1" 
+                                     ViewPortSize="{Binding CanvasSize}" ImageOffset="{Binding ImageOffset}"
+                                     MapSections="{Binding MapSections}" ColorBandSet="{Binding ColorBandSet}"
+                                     UseEscapeVelocities="{Binding UseEscapeVelocities}" HighlightSelectedColorBand="{Binding HighlightSelectedColorBand}"/>
         </Border>
     </Grid>
 </UserControl>

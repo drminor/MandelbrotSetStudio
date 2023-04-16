@@ -1226,7 +1226,7 @@ namespace MSetExplorer
 			var qualifiedAmount = GetPanAmount(amount, qualifer);
 			var panVector = GetPanVector(direction, qualifiedAmount);
 			var newArea = new RectangleInt(new PointInt(panVector), _vm.ProjectViewModel.CanvasSize);
-			_vm.ProjectViewModel.UpdateMapView(TransformType.Pan, newArea);
+			_vm.ProjectViewModel.UpdateMapView(TransformType.Pan, newArea, new SizeDbl(_vm.ProjectViewModel.CanvasSize));
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
@@ -1271,7 +1271,7 @@ namespace MSetExplorer
 			var curArea = new RectangleInt(new PointInt(), _vm.ProjectViewModel.CanvasSize);
 			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
-			_vm.ProjectViewModel.UpdateMapView(TransformType.ZoomOut, newArea);
+			_vm.ProjectViewModel.UpdateMapView(TransformType.ZoomOut, newArea, new SizeDbl(_vm.ProjectViewModel.CanvasSize));
 		}
 
 		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)

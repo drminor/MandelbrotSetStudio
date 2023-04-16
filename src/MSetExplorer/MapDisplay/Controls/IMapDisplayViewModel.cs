@@ -1,9 +1,7 @@
 ﻿using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
@@ -14,7 +12,11 @@ namespace MSetExplorer
 		SizeInt BlockSize { get; }
 
 		//Image Image { get; }
-		WriteableBitmap Bitmap { get; }
+		//WriteableBitmap Bitmap { get; }
+
+		IBitmapGrid? BitmapGrid { get; set; }
+
+		Action<MapSection> DisposeMapSection { get; }
 
 		ObservableCollection<MapSection> MapSections { get; }
 
@@ -29,9 +31,10 @@ namespace MSetExplorer
 		//SizeDbl ContainerSize { get; set; }
 
 		SizeDbl CanvasSize { get; set; }
-		SizeInt CanvasSizeInBlocks { get; set; }
+		//SizeInt CanvasSizeInBlocks { get; set; }
 		SizeDbl LogicalDisplaySize { get; }
 
+		//BigVector MapBlockOffset { get; set; }
 		VectorDbl ImageOffset { get; set; }
 
 		double DisplayZoom { get; set; }

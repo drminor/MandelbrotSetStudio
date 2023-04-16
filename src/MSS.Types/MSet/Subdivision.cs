@@ -1,20 +1,18 @@
 ﻿using MongoDB.Bson;
 using System;
+using System.Collections.Generic;
 
 namespace MSS.Types.MSet
 {
-	public class Subdivision : ICloneable
+	public class Subdivision : ICloneable, IEquatable<Subdivision?>
 	{
 		public ObjectId Id { get; init; }
 		public SizeInt BlockSize { get; init; }
 		public RSize SamplePointDelta { get; init; }
 		public BigVector BaseMapPosition { get; init; }
 
-		public Subdivision()
-		{
-			SamplePointDelta = new RSize();
-			BaseMapPosition = new BigVector();
-		}
+		public Subdivision() : this(ObjectId.GenerateNewId(), new RSize(), new BigVector(), RMapConstants.BLOCK_SIZE)
+		{ }
 
 		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, RMapConstants.BLOCK_SIZE)
 		{ }
@@ -43,5 +41,37 @@ namespace MSS.Types.MSet
 		{
 			return new Subdivision(Id, SamplePointDelta.Clone(), BaseMapPosition.Clone(), BlockSize);
 		}
+
+		#region IEquatable Support
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as Subdivision);
+		}
+
+		public bool Equals(Subdivision? other)
+		{
+			return other is not null &&
+				   BlockSize.Equals(other.BlockSize) &&
+				   EqualityComparer<RSize>.Default.Equals(SamplePointDelta, other.SamplePointDelta) &&
+				   EqualityComparer<BigVector>.Default.Equals(BaseMapPosition, other.BaseMapPosition);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(BlockSize, SamplePointDelta, BaseMapPosition);
+		}
+
+		public static bool operator ==(Subdivision? left, Subdivision? right)
+		{
+			return EqualityComparer<Subdivision>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(Subdivision? left, Subdivision? right)
+		{
+			return !(left == right);
+		}
+
+		#endregion
 	}
 }

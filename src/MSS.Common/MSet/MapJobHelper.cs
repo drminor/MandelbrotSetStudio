@@ -93,7 +93,8 @@ namespace MSS.Common
 			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
 
 			var checkSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			Debug.Assert(checkSubdivision.Id == subdivision.Id, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
+
+			Debug.Assert(checkSubdivision == subdivision, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
 
 			var result = new MapAreaInfo(newCoords, newCanvasSize.Round(), subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 

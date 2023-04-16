@@ -35,10 +35,10 @@ namespace MSetExplorer
 		bool CanGoBack(bool skipPanJobs);
 		bool CanGoForward(bool skipPanJobs);
 
-		void UpdateMapView(TransformType transformType, RectangleInt newArea);
+		void UpdateMapView(TransformType transformType, RectangleInt newArea, SizeDbl canvasSize);
 		//void UpdateMapCoordinates(RRectangle coords);
 
-		MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea);
+		MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, SizeDbl canvasSize);
 
 		// Project Methods
 		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
