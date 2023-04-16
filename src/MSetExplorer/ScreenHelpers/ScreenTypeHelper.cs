@@ -47,6 +47,16 @@ namespace MSetExplorer
 
 		#endregion
 
+		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b)
+		{
+			if (a.IsNAN() || b.IsNAN())
+			{
+				return false;
+			}
+
+			return !a.Diff(b).IsNearZero();
+		}
+
 		#region Convert to MSS Types
 
 		public static PointInt ConvertToPointInt(Point p)

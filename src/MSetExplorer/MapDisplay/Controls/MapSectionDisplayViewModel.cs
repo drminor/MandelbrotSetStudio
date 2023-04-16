@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using Windows.Security.Cryptography.Certificates;
 
 namespace MSetExplorer
 {
@@ -55,13 +56,6 @@ namespace MSetExplorer
 			BlockSize = blockSize;
 
 			ActiveJobNumbers = new List<int>();
-
-			//Action<WriteableBitmap> updateBitmapAction = x => { Bitmap = x; };
-			//Action<MapSection> disposeMapSection = x => { _mapSectionHelper.ReturnMapSection(x); };
-
-			//_bitmapGrid = new BitmapGrid(BlockSize, updateBitmapAction, disposeMapSection);
-
-			//DisposeMapSection = x => { _mapSectionHelper.ReturnMapSection(x); };
 
 			_mapSections = new ObservableCollection<MapSection>();
 
@@ -118,7 +112,7 @@ namespace MSetExplorer
 			private set
 			{
 				_currentAreaColorAndCalcSettings = value?.Clone() ?? null;
-				//OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings));
+				OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings));
 			}
 		}
 
@@ -171,16 +165,6 @@ namespace MSetExplorer
 
 		public IBitmapGrid? BitmapGrid { get; set; }
 
-		//public WriteableBitmap Bitmap
-		//{
-		//	get => _bitmapGrid.Bitmap;
-		//	set
-		//	{
-		//		//_bitmap = value;
-		//		OnPropertyChanged();
-		//	}
-		//}
-
 		public SizeDbl CanvasSize
 		{
 			get => _canvasSize;
@@ -190,10 +174,6 @@ namespace MSetExplorer
 				{
 					var previousValue = _canvasSize;
 					_canvasSize = value;
-
-					// TODO: BMx
-					//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, KEEP_DISPLAY_SQUARE);
-					//CanvasSizeInBlocks = sizeInWholeBlocks;
 
 					var newJobNumber = HandleDisplaySizeUpdate(previousValue, _canvasSize);
 					if (newJobNumber != null)
@@ -206,24 +186,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public SizeInt CanvasSizeInBlocks
-		//{
-		//	get => _bitmapGrid.CanvasSizeInBlocks;
-		//	set => _bitmapGrid.CanvasSizeInBlocks = value;
-		//}
-
-		//public BigVector MapBlockOffset
-		//{
-		//	get => BitmapGrid?.MapBlockOffset ?? new BigVector();
-		//	set
-		//	{
-		//		if (BitmapGrid != null)
-		//		{
-		//			BitmapGrid.MapBlockOffset = value;
-		//		}
-		//	}
-		//}
 
 		public VectorDbl ImageOffset
 		{
@@ -305,9 +267,18 @@ namespace MSetExplorer
 				if (newValue != CurrentAreaColorAndCalcSettings)
 				{
 					var previousValue = CurrentAreaColorAndCalcSettings;
-					CurrentAreaColorAndCalcSettings = newValue;
 
-					ReportNewJobOldJob("SubmitJob", previousValue, newValue);
+					if (newValue != null && ScreenTypeHelper.IsSizeDblChanged(new SizeDbl(newValue.MapAreaInfo.CanvasSize), CanvasSize))
+					{
+						var newAreaColorAndCalcSettings = UpdateSize(newValue, new SizeDbl(newValue.MapAreaInfo.CanvasSize), CanvasSize);
+						CurrentAreaColorAndCalcSettings = newAreaColorAndCalcSettings;
+					}
+					else
+					{
+						CurrentAreaColorAndCalcSettings = newValue;
+					}
+
+					ReportSubmitJobDetails(previousValue, newValue, CurrentAreaColorAndCalcSettings);
 
 					newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
 				}
@@ -322,14 +293,35 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG")]
-		private void ReportNewJobOldJob(string operation, AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings newValue)
+		private void ReportSubmitJobDetails(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings? newValue, AreaColorAndCalcSettings? finalValue)
 		{
 			var currentJobId = previousValue?.OwnerId ?? ObjectId.Empty.ToString();
-			var currentSamplePointDelta = previousValue?.MapAreaInfo.Subdivision.SamplePointDelta ?? new RSize();
-			var newJobId = newValue.OwnerId;
-			var newSamplePointDelta = newValue.MapAreaInfo.Subdivision.SamplePointDelta;
 
-			Debug.WriteLine($"MapDisplay is handling {operation}. CurrentJobId: {currentJobId} ({currentSamplePointDelta}), NewJobId: {newJobId} ({newSamplePointDelta}).");
+			if (newValue == null)
+			{
+				Debug.WriteLine($"MapDisplay is handling SumbitJob. The new value is null. CurrentJobId: {currentJobId}.");
+			}
+			else
+			{
+				var newJobId = newValue.OwnerId;
+				//var currentSamplePointDelta = previousValue?.MapAreaInfo.Subdivision.SamplePointDelta ?? new RSize();
+				//var newSamplePointDelta = newValue.MapAreaInfo.Subdivision.SamplePointDelta;
+
+				if (finalValue == null)
+				{
+					throw new InvalidOperationException("The New Value is non-null, but the Final Value is null.");
+				}
+
+				if (newValue.MapAreaInfo.Coords != finalValue.MapAreaInfo.Coords)
+				{
+					Debug.WriteLine($"MapDisplay is handling SumbitJob. Updating the new value's Area using the current Canvas Size. CurrentJobId: {currentJobId}. NewJobId: {newJobId}. " +
+						$"Old CanvasSize: {newValue.MapAreaInfo.CanvasSize}, Updated CanvasSize: {finalValue.MapAreaInfo.CanvasSize}");
+				}
+				else
+				{
+					Debug.WriteLine($"MapDisplay is handling SumbitJob. Not adjusting the new value's Area. CurrentJobId: {currentJobId}. NewJobId: {newJobId}.");
+				}
+			}
 		}
 
 		public void CancelJob()
@@ -380,18 +372,34 @@ namespace MSetExplorer
 
 		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
 		{
-			var screenArea = e.Area;
-			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, screenArea, CanvasSize, e.IsPreview));
+			if (CurrentAreaColorAndCalcSettings != null)
+			{
+				var screenArea = e.Area;
+
+				//var offset = ImageOffset; 
+				//var yInvertedOffset = new VectorDbl(offset.X , -1 * offset.Y);
+				//var adjScreenArea = screenArea.Translate(yInvertedOffset.Round());
+
+				if (!e.IsPreview)
+				{
+					Debug.WriteLine("Here");
+				}
+
+				MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, screenArea, CurrentAreaColorAndCalcSettings.MapAreaInfo, e.IsPreview));
+			}
 		}
 
 		public void UpdateMapViewPan(ImageDraggedEventArgs e)
 		{
-			var offset = e.Offset;
+			if (CurrentAreaColorAndCalcSettings != null)
+			{
+				var offset = e.Offset;
 
-			// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
-			var invOffset = offset.Invert();
-			var screenArea = new RectangleInt(new PointInt(invOffset), CanvasSize.Round());
-			MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, screenArea, CanvasSize));
+				// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
+				var invOffset = offset.Invert();
+				var screenArea = new RectangleInt(new PointInt(invOffset), CanvasSize.Round());
+				MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, screenArea, CurrentAreaColorAndCalcSettings.MapAreaInfo));
+			}
 		}
 
 		#endregion
@@ -431,16 +439,10 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
-				if (_currentAreaColorAndCalcSettings != null)
+				if (CurrentAreaColorAndCalcSettings != null)
 				{
-					var previousValue = _currentAreaColorAndCalcSettings;
-
-					var prevMapAreaInfo = previousValue.MapAreaInfo;
-					var mapPosition = prevMapAreaInfo.Coords.Position;
-					var subdivision = prevMapAreaInfo.Subdivision;
-
-					var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(mapPosition, subdivision, previousSize, newSize);
-					var newAreaColorAndCalcSettings = _currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
+					var previousValue = CurrentAreaColorAndCalcSettings;
+					var newAreaColorAndCalcSettings = UpdateSize(previousValue, previousSize, newSize);
 					CurrentAreaColorAndCalcSettings = newAreaColorAndCalcSettings;
 
 					//ReportNewMapArea(prevMapAreaInfo, newMapAreaInfo);
@@ -456,11 +458,16 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		private void ReportNewMapArea(MapAreaInfo previousValue, MapAreaInfo newValue)
+		private AreaColorAndCalcSettings UpdateSize(AreaColorAndCalcSettings currentAreaColorAndCalcSettings, SizeDbl previousSize, SizeDbl newSize)
 		{
-			Debug.WriteLine($"MapDisplay is handling DisplaySizeUpdate. " +
-				$"Previous Size: {previousValue.CanvasSize}. Pos: {previousValue.Coords.Position}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +
-				$"New Size: {newValue.CanvasSize}. Pos: {newValue.Coords.Position}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset}.");
+			var prevMapAreaInfo = currentAreaColorAndCalcSettings.MapAreaInfo;
+			var mapPosition = prevMapAreaInfo.Coords.Position;
+			var subdivision = prevMapAreaInfo.Subdivision;
+
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(mapPosition, subdivision, previousSize, newSize);
+			var newAreaColorAndCalcSettings = currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
+
+			return newAreaColorAndCalcSettings;
 		}
 
 		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob, out bool lastSectionWasIncluded)
@@ -646,6 +653,12 @@ namespace MSetExplorer
 			_mapSectionHelper.ReturnMapSection(mapSection);
 		}
 
+		private void ReportNewMapArea(MapAreaInfo previousValue, MapAreaInfo newValue)
+		{
+			Debug.WriteLine($"MapDisplay is handling DisplaySizeUpdate. " +
+				$"Previous Size: {previousValue.CanvasSize}. Pos: {previousValue.Coords.Position}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +
+				$"New Size: {newValue.CanvasSize}. Pos: {newValue.Coords.Position}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset}.");
+		}
 
 		//private List<MapSection> GetSectionsToLoadX(List<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)
 		//{

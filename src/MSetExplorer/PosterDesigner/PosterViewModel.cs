@@ -476,7 +476,7 @@ namespace MSetExplorer
 		}
 
 		// PosterDesigner Pan and Zoom Out
-		public void UpdateMapSpecs(TransformType transformType, RectangleInt screenArea)
+		public void UpdateMapSpecs(TransformType transformType, RectangleInt screenArea, SizeDbl canvasSize)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
@@ -496,7 +496,7 @@ namespace MSetExplorer
 			//var mapCalcSettings = curJob.MapCalcSettings;
 			//LoadMap(currentPoster, curJob, coords, colorBandSetId, mapCalcSettings, transformType, screenArea);
 
-			AddNewCoordinateUpdateJob(currentPoster, transformType, screenArea);
+			AddNewCoordinateUpdateJob(currentPoster, transformType, screenArea, canvasSize);
 
 			//currentPoster.DisplayPosition = new VectorInt();
 			//currentPoster.DisplayZoom = 1;
@@ -635,25 +635,33 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 		}
 
-		private void AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, RectangleInt newScreenArea)
+		private void AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, RectangleInt newScreenArea, SizeDbl canvasSize)
 		{
 			var currentJob = poster.CurrentJob;
 
 			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
 
-			var mapPosition = currentJob.Coords.Position;
-			var samplePointDelta = currentJob.Subdivision.SamplePointDelta;
+			//var mapPosition = currentJob.Coords.Position;
+			//var samplePointDelta = currentJob.Subdivision.SamplePointDelta;
 
-			var newCoords = RMapHelper.GetMapCoords(newScreenArea, mapPosition, samplePointDelta);
+			//var newCoords = RMapHelper.GetMapCoords(newScreenArea, mapPosition, samplePointDelta);
+
+			//var colorBandSetId = currentJob.ColorBandSetId;
+			//var mapSize = currentJob.CanvasSize;
+			//var coords = currentJob.MapAreaInfo.Coords;
+			//var mapCalcSettings = currentJob.MapCalcSettings;
+
+			// Calculate the new Map Coordinates from the newScreenArea, using the current Map's position and samplePointDelta.
+			var mapAreaInfo = BuildMapAreaInfo(currentJob, newScreenArea, canvasSize);
 
 			var colorBandSetId = currentJob.ColorBandSetId;
-			var mapSize = currentJob.CanvasSize;
-			var coords = currentJob.MapAreaInfo.Coords;
 			var mapCalcSettings = currentJob.MapCalcSettings;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, newCoords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
+			//var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, newCoords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
 
-			Debug.WriteLine($"Adding Poster Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+			Debug.WriteLine($"Adding Poster Job with new coords: {job.MapAreaInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			poster.Add(job);
 
@@ -663,69 +671,53 @@ namespace MSetExplorer
 		private void AddNewIterationUpdateJob(Poster poster, ColorBandSet colorBandSet)
 		{
 			var currentJob = poster.CurrentJob;
-			var mapSize = currentJob.CanvasSize;
-			var coords = currentJob.MapAreaInfo.Coords;
+
+			// Use the ColorBandSet's highCutoff to set the targetIterations of the current MapCalcSettings
 			var targetIterations = colorBandSet.HighCutoff;
 			var mapCalcSettings = MapCalcSettings.UpdateTargetIterations(currentJob.MapCalcSettings, targetIterations);
 
+			// Use the current display size and Map Coordinates
+			var mapAreaInfo = currentJob.MapAreaInfo;
+
+			// This an iteration update with the same screen area
 			var transformType = TransformType.IterationUpdate;
-
 			var newScreenArea = new RectangleInt();
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, coords, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea, _blockSize);
 
-			Debug.WriteLine($"Adding Poster Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			//var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, mapSize, coords, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea, _blockSize);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
 
-			poster.Add(job);
-
-			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
-		}
-
-		private void LoadMap(Poster poster, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newScreenArea)
-		{
-			var mapSize = currentJob.CanvasSize;
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, coords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
-
-			Debug.WriteLine($"Adding Poster Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			Debug.WriteLine($"Adding Poster Job with new coords: {job.MapAreaInfo.Coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			poster.Add(job);
 
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 		}
 
-		//private void FindOrCreateJobForNewCanvasSize(Poster poster, Job job, SizeInt newCanvasSizeInBlocks)
+		//private void LoadMap(Poster poster, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newScreenArea)
 		//{
-		//	// Note if this job is itself a CanvasSizeUpdate Proxy Job, then its parent is used to conduct the search.
-		//	if (poster.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out var matchingProxy))
-		//	{
-		//		poster.CurrentJob = matchingProxy;
-		//		return;
-		//	}
+		//	var mapSize = currentJob.CanvasSize;
+		//	var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, coords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
 
-		//	// Make sure we use the original job and not a 'CanvasSizeUpdate Proxy Job'.
-		//	if (job.TransformType == TransformType.CanvasSizeUpdate)
-		//	{
-		//		var preferredJob = poster.GetParent(job);
+		//	Debug.WriteLine($"Adding Poster Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-		//		if (preferredJob is null)
-		//		{
-		//			throw new InvalidOperationException("Could not get the preferred job as we create a new job for the updated canvas size.");
-		//		}
+		//	poster.Add(job);
 
-		//		job = preferredJob;
-		//	}
-
-		//	var newCoords = RMapHelper.GetNewCoordsForNewCanvasSize(job.Coords, job.CanvasSizeInBlocks, newCanvasSizeInBlocks, job.Subdivision);
-
-		//	var transformType = TransformType.CanvasSizeUpdate;
-		//	RectangleInt? newArea = null;
-
-		//	var newJob = _mapJobHelper.BuildJob(job.Id, poster.Id, PosterSize, newCoords, job.ColorBandSetId, job.MapCalcSettings, transformType, newArea, _blockSize);
-
-		//	Debug.WriteLine($"Re-runing job. Current CanvasSize: {job.CanvasSizeInBlocks}, new CanvasSize: {newCanvasSizeInBlocks}.");
-		//	Debug.WriteLine($"Starting Job with new coords: {newCoords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
-
-		//	poster.Add(newJob);
+		//	OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 		//}
+
+		private MapAreaInfo BuildMapAreaInfo(Job curJob, RectangleInt screenArea, SizeDbl canvasSize)
+		{
+			var mapPosition = curJob.Coords.Position;
+			var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
+
+			// Use the specified canvasSize, instead of this job's current value for the CanvasSize :: Updated by DRM on 4/16
+			var mapSize = canvasSize.Round();
+
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, mapSize, _blockSize);
+
+			return mapAreaInfo;
+		}
 
 		[Conditional("DEBUG")]
 		private void CheckCoordsChange(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, RRectangle newCoords)

@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using System;
 
 namespace MSetExplorer
@@ -7,14 +8,14 @@ namespace MSetExplorer
 	{
 		public TransformType TransformType { get; init; }
 		public RectangleInt ScreenArea { get; init; }
-		public SizeDbl CanvasSize { get; init; }
+		public MapAreaInfo CurrentMapAreaInfo { get; init; }
 		public bool IsPreview { get; init; }
 
-		public MapViewUpdateRequestedEventArgs(TransformType transformType, RectangleInt screenArea, SizeDbl canvasSize, bool isPreview = false)
+		public MapViewUpdateRequestedEventArgs(TransformType transformType, RectangleInt screenArea, MapAreaInfo currentMapAreaInfo, bool isPreview = false)
 		{
 			TransformType = transformType;
 			ScreenArea = screenArea;
-			CanvasSize = canvasSize;
+			CurrentMapAreaInfo = currentMapAreaInfo;
 			IsPreview = isPreview;
 		}
 	}

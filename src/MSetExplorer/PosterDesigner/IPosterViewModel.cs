@@ -34,7 +34,7 @@ namespace MSetExplorer
 
 		//void UpdateMapView(Poster poster, RectangleInt? newArea);
 
-		void UpdateMapSpecs(TransformType transformType, RectangleInt newArea);
+		void UpdateMapSpecs(TransformType transformType, RectangleInt newArea, SizeDbl canvasSize);
 		void UpdateMapSpecs(Poster currentPoster, MapAreaInfo newMapAreaInfo);
 		MapAreaInfo GetUpdatedMapAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
 

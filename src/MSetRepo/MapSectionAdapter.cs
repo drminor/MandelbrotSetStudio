@@ -128,6 +128,11 @@ namespace MSetRepo
 					return null;
 				}
 			}
+			catch (OperationCanceledException)
+			{
+				// Ignore
+				return null;
+			}
 			catch (Exception e)
 			{
 				Debug.WriteLine($"While fetching a MapSectionRecord from Subdivision and BlockPosition (Async), got exception: {e}.");

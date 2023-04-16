@@ -982,7 +982,7 @@ namespace MSetExplorer
 			var qualifiedAmount = GetPanAmount(amount, qualifer);
 			var panVector = GetPanVector(direction, qualifiedAmount);
 			var newArea = new RectangleInt(new PointInt(panVector), _vm.PosterViewModel.CanvasSize.Round());
-			_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, newArea);
+			_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, newArea, _vm.PosterViewModel.CanvasSize);
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
@@ -1029,7 +1029,7 @@ namespace MSetExplorer
 			var curArea = new RectangleInt(new PointInt(), _vm.PosterViewModel.CanvasSize.Round());
 			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
-			_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea);
+			_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea, _vm.PosterViewModel.CanvasSize);
 		}
 
 		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)

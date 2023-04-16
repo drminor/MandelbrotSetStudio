@@ -243,7 +243,7 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				// Calculate new Coords for preview
-				var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CanvasSize);
+				var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
 				if (mapAreaInfo != null)
 				{
 					MapCoordsViewModel.Preview(mapAreaInfo);
@@ -252,7 +252,7 @@ namespace MSetExplorer
 			else
 			{
 				// Zoom or Pan Map Coordinates
-				ProjectViewModel.UpdateMapView(e.TransformType, e.ScreenArea, e.CanvasSize);
+				ProjectViewModel.UpdateMapView(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
 			}
 		}
 

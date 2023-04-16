@@ -1223,10 +1223,15 @@ namespace MSetExplorer
 
 		private void Pan(PanDirection direction, PanAmountQualifer qualifer, int amount)
 		{
-			var qualifiedAmount = GetPanAmount(amount, qualifer);
-			var panVector = GetPanVector(direction, qualifiedAmount);
-			var newArea = new RectangleInt(new PointInt(panVector), _vm.ProjectViewModel.CanvasSize);
-			_vm.ProjectViewModel.UpdateMapView(TransformType.Pan, newArea, new SizeDbl(_vm.ProjectViewModel.CanvasSize));
+			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo ?? null;
+
+			if (currentMapAreaInfo != null)
+			{ 
+				var qualifiedAmount = GetPanAmount(amount, qualifer);
+				var panVector = GetPanVector(direction, qualifiedAmount);
+				var newArea = new RectangleInt(new PointInt(panVector), _vm.ProjectViewModel.CanvasSize);
+				_vm.ProjectViewModel.UpdateMapView(TransformType.Pan, newArea, currentMapAreaInfo);
+			}
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
@@ -1267,11 +1272,16 @@ namespace MSetExplorer
 
 		private void ZoomOut(ZoomOutAmountQualifer qualifer, int amount)
 		{
-			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
-			var curArea = new RectangleInt(new PointInt(), _vm.ProjectViewModel.CanvasSize);
-			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
+			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo ?? null;
 
-			_vm.ProjectViewModel.UpdateMapView(TransformType.ZoomOut, newArea, new SizeDbl(_vm.ProjectViewModel.CanvasSize));
+			if (currentMapAreaInfo != null)
+			{
+				var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
+				var curArea = new RectangleInt(new PointInt(), _vm.ProjectViewModel.CanvasSize);
+				var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
+
+				_vm.ProjectViewModel.UpdateMapView(TransformType.ZoomOut, newArea, currentMapAreaInfo);
+			}
 		}
 
 		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)

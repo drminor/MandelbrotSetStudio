@@ -23,6 +23,7 @@ namespace MSetExplorer
 		private readonly IMapDisplayViewModel _mapDisplayViewModel;
 		private readonly SizeInt _blockSize;
 
+		private bool _enabled;
 		private readonly Rectangle _selectedArea;
 		private Size _defaultSelectionSize;
 		private readonly Line _dragLine;
@@ -127,7 +128,14 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool Enabled => _mapDisplayViewModel.CurrentAreaColorAndCalcSettings != null;
+		public bool Enabled
+		{
+			get => _enabled;
+			set
+			{
+				_enabled = value;
+			}
+		}
 
 		#endregion
 
@@ -160,12 +168,24 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
 			{
-				CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
-				_selectedArea.Width = _defaultSelectionSize.Width;
-				_selectedArea.Height = _defaultSelectionSize.Height;
+				Enabled = _mapDisplayViewModel.CurrentAreaColorAndCalcSettings != null;
+
+				if (Enabled)
+				{
+					CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+					_selectedArea.Width = _defaultSelectionSize.Width;
+					_selectedArea.Height = _defaultSelectionSize.Height;
+				}
 			}
+
+			//if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			//{
+			//	CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+			//	_selectedArea.Width = _defaultSelectionSize.Width;
+			//	_selectedArea.Height = _defaultSelectionSize.Height;
+			//}
 		}
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)

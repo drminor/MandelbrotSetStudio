@@ -175,7 +175,7 @@ namespace MSetExplorer
 			get => (SizeDbl)GetValue(ViewPortSizeProperty);
 			set
 			{
-				if (IsSizeDblChanged(ViewPortSize, value))
+				if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
 				{
 					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, KEEP_DISPLAY_SQUARE);
 					_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
@@ -218,20 +218,6 @@ namespace MSetExplorer
 		public IBitmapGrid BitmapGrid => _bitmapGrid;
 
 		public Action<MapSection>? DisposeMapSection { get; set; }
-
-		#endregion
-
-		#region Private Methods
-
-		private bool IsSizeDblChanged(SizeDbl a, SizeDbl b)
-		{
-			if (a.IsNAN() || b.IsNAN())
-			{
-				return false;
-			}
-
-			return !a.Diff(b).IsNearZero();
-		}
 
 		#endregion
 
@@ -361,7 +347,7 @@ namespace MSetExplorer
 			var previousValue = (SizeDbl)e.OldValue;
 			var value = (SizeDbl)e.NewValue;
 
-			if (c.IsSizeDblChanged(previousValue, value))
+			if (ScreenTypeHelper.IsSizeDblChanged(previousValue, value))
 			{
 				//Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing. The old size: {previousValue}, new size: {value}.");
 
