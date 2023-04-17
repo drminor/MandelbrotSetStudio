@@ -374,9 +374,17 @@ namespace MSetExplorer.XPoc
 
 		private MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
 		{
+			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
+			var displaySize = canvasSize;
+
 			// Using the size of the new map and the map coordinates, calculate the sample point size
-			var updatedCoords = coords.Clone();
-			var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, canvasSize, TOLERANCE_FACTOR);
+			//var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, canvasSize, TOLERANCE_FACTOR);
+
+			// Using the size of the new map and the map coordinates, calculate the sample point size
+			var samplePointDelta = RMapHelper.GetSamplePointDelta(coords, displaySize, TOLERANCE_FACTOR, out var wToHRatio);
+
+			// The samplePointDelta may require the coordinates to be adjusted.
+			var updatedCoords = RMapHelper.AdjustCoordsWithNewSPD(coords, samplePointDelta, displaySize);
 
 			Debug.WriteLine($"\nThe new coords are : {updatedCoords},\n old = {coords}. (While calculating SamplePointDelta.)\n");
 
@@ -385,22 +393,26 @@ namespace MSetExplorer.XPoc
 
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
+			//var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
-			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
-			var binaryPrecision = RValueHelper.GetBinaryPrecision(updatedCoords.Right, updatedCoords.Left, out _);
-
-			//var mapJobHelper = new MapJobHelper(_subdivisonProvider);
-			//var baseMapPosition = mapJobHelper.GetBaseMapPosition(mapBlockOffset, binaryPrecision);
-
-			//// Get a subdivision record from the database.
-			//var subdivision =  mapJobHelper.GetSubdivision(samplePointDelta, baseMapPosition);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset, out RPoint newPosition);
+			var newCoords = RMapHelper.CombinePosAndSize(newPosition, updatedCoords.Size);
 
 			var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 
-			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+			var binaryPrecision = GetBinaryPrecision(newCoords, samplePointDelta, out var decimalPrecision);
+
+			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 
 			return result;
+		}
+
+		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
+		{
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
+
+			return binaryPrecision;
 		}
 
 		#endregion

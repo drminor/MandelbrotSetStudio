@@ -445,7 +445,7 @@ namespace MSetExplorer
 					var newAreaColorAndCalcSettings = UpdateSize(previousValue, previousSize, newSize);
 					CurrentAreaColorAndCalcSettings = newAreaColorAndCalcSettings;
 
-					//ReportNewMapArea(prevMapAreaInfo, newMapAreaInfo);
+					//ReportNewMapArea(previousValue.MapAreaInfo, newAreaColorAndCalcSettings.MapAreaInfo);
 					newJobNumber = HandleCurrentJobChanged(previousValue, newAreaColorAndCalcSettings, out lastSectionWasIncluded);
 				}
 			}
@@ -464,10 +464,23 @@ namespace MSetExplorer
 			var mapPosition = prevMapAreaInfo.Coords.Position;
 			var subdivision = prevMapAreaInfo.Subdivision;
 
-			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(mapPosition, subdivision, previousSize, newSize);
+			var newScreenArea = GetNewScreenArea(previousSize, newSize);
+			var newCoords = RMapHelper.GetMapCoords(newScreenArea.Round(), mapPosition, subdivision.SamplePointDelta);
+
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(newCoords, subdivision, newSize.Round());
 			var newAreaColorAndCalcSettings = currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
 
 			return newAreaColorAndCalcSettings;
+		}
+
+		// Calculate new coordinates for a new display size
+		private RectangleDbl GetNewScreenArea(SizeDbl canvasSize, SizeDbl newCanvasSize)
+		{
+			var diff = canvasSize.Sub(newCanvasSize);
+			diff = diff.Scale(0.5);
+			var rectangleDbl = new RectangleDbl(new PointDbl(diff), newCanvasSize);
+
+			return rectangleDbl;
 		}
 
 		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob, out bool lastSectionWasIncluded)
@@ -658,6 +671,8 @@ namespace MSetExplorer
 			Debug.WriteLine($"MapDisplay is handling DisplaySizeUpdate. " +
 				$"Previous Size: {previousValue.CanvasSize}. Pos: {previousValue.Coords.Position}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +
 				$"New Size: {newValue.CanvasSize}. Pos: {newValue.Coords.Position}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset}.");
+
+			Debug.WriteLine($"UpdateSize is moving the pos from {previousValue.Coords.Position} to {newValue.Coords.Position}.");
 		}
 
 		//private List<MapSection> GetSectionsToLoadX(List<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)

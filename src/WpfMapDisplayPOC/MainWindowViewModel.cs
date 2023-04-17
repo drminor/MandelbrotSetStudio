@@ -42,7 +42,7 @@ namespace WpfMapDisplayPOC
 
 			_mapSectionAdapter = mapSectionAdapter;
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper(subdivisionProvider);
+			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
 
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
@@ -96,9 +96,12 @@ namespace WpfMapDisplayPOC
 			//var coords = new RRectangle(-4, 4, -4, 4, -1);
 			//var coords = new RRectangle(0, 4, 0, 4, -1);
 
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, canvasSize);
+
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 1000, threshold: 4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
+
+			var job = _mapJobHelper.BuildHomeJob(mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
 			RunTest(job, callback);
 		}
@@ -146,9 +149,12 @@ namespace WpfMapDisplayPOC
 			var exponent = -74;
 			var coords = new RRectangle(x1, x2, y1, y2, exponent, precision: RMapConstants.DEFAULT_PRECISION);
 
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, canvasSize);
+
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
+
+			var job = _mapJobHelper.BuildHomeJob(mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
 			RunTest(job, callback);
 		}
@@ -228,7 +234,7 @@ namespace WpfMapDisplayPOC
 			//_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize, RMapConstants.BLOCK_SIZE);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize);
 			//AddTiming("GetMapAreaInfo");
 
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);

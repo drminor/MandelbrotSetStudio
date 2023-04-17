@@ -10,7 +10,7 @@ namespace ProjectRepo.Entities
 		bool IsAlternatePathHead,	// Remove this on next Schema Update
 		ObjectId ProjectId,			// Change ProjectId to OwnerId and add OwnerType field of type JobOwnerType (Enum).
 		ObjectId SubDivisionId,		// Do we really need to have a SubdivisionId field here, it is included in the MapAreaInfoRecord.
-		string? Label,
+		string Label,
 		int TransformType,
 
 		MapAreaInfoRecord MapAreaInfoRecord,
@@ -21,7 +21,7 @@ namespace ProjectRepo.Entities
 
 		ObjectId ColorBandSetId,
 		MapCalcSettings MapCalcSettings,
-		SizeIntRecord CanvasSizeInBlocks
+		SizeIntRecord CanvasSizeInBlocks	// This is not being used.
 		)
 	{
 		[BsonId]

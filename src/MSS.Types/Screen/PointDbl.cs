@@ -63,9 +63,9 @@ namespace MSS.Types
 		//	return new PointDbl(X + offset.Width, Y + offset.Height);
 		//}
 
-		public SizeDbl Diff(PointDbl amount)
+		public VectorDbl Diff(PointDbl amount)
 		{
-			return new SizeDbl(X - amount.X, Y - amount.Y);
+			return new VectorDbl(X - amount.X, Y - amount.Y);
 		}
 
 		public PointDbl Min(PointDbl pointB)

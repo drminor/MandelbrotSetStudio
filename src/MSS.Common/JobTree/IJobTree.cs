@@ -19,7 +19,7 @@ namespace MSS.Common
 		bool TryGetNextJob([MaybeNullWhen(false)] out Job item, bool skipPanJobs);
 		bool TryGetPreviousJob([MaybeNullWhen(false)] out Job item, bool skipPanJobs);
 
-		bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy);
+		//bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy);
 
 		IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType);
 	}

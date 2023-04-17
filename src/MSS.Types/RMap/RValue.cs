@@ -108,6 +108,22 @@ namespace MSS.Types
 			}
 		}
 
+		public double DivideLimitedPrecision(RValue dividend)
+		{
+			if (Exponent != dividend.Exponent)
+			{
+				throw new InvalidOperationException("Cannot divide one RValue by another if their Exponents do not agree.");
+			}
+
+			var divisorD = (double)Value;
+			var dividendD = (double)dividend.Value;
+
+			var result = divisorD / dividendD;
+
+			return result;
+
+		}
+
 		#endregion
 
 		#region Clone and To String

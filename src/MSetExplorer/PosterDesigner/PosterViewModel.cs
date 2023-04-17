@@ -519,7 +519,7 @@ namespace MSetExplorer
 			var posterSize = newMapSize.Round();
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 
-			var result = _mapJobHelper.GetMapAreaInfo(coords, posterSize, blockSize);
+			var result = _mapJobHelper.GetMapAreaInfo(coords, posterSize);
 
 			return result;
 		}
@@ -604,8 +604,9 @@ namespace MSetExplorer
 			var mapPosition = currentAreaInfo.Coords.Position;
 			var subdivision = currentAreaInfo.Subdivision;
 
-			var newCoords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
-			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(ref newCoords, subdivision.SamplePointDelta, subdivision.BlockSize, out var newCanvasControlOffset);
+			var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
+			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.SamplePointDelta, subdivision.BlockSize, out var newCanvasControlOffset, out var newPosition);
+			var newCoords = RMapHelper.CombinePosAndSize(newPosition, coords.Size);
 
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
 			var precision = RValueHelper.GetPrecision(newCoords.Right, newCoords.Left, out var _);
@@ -714,7 +715,7 @@ namespace MSetExplorer
 			// Use the specified canvasSize, instead of this job's current value for the CanvasSize :: Updated by DRM on 4/16
 			var mapSize = canvasSize.Round();
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, mapSize, _blockSize);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, mapSize);
 
 			return mapAreaInfo;
 		}

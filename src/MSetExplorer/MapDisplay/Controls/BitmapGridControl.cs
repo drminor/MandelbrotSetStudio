@@ -181,6 +181,8 @@ namespace MSetExplorer
 					_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
 
 					SetValue(ViewPortSizeProperty, value);
+
+
 				}
 			}
 		}
@@ -711,13 +713,18 @@ namespace MSetExplorer
 		//	_canvas.RenderTransform = new ScaleTransform(scale.X, scale.Y);
 		//}
 
-		//private void ReportSizes(string label)
-		//{
-		//	var iSize = new Size(Image.ActualWidth, Image.ActualHeight);
-		//	var bSize = new Size(Bitmap.Width, Bitmap.Height);
+		public void ReportSizes(string label)
+		{
+			var controlSize = new SizeInt(ActualWidth, ActualHeight);
+			var canvasSize = new SizeInt(_canvas.ActualWidth, _canvas.ActualHeight);
+			var imageSize = new Size(Image.ActualWidth, Image.ActualHeight);
 
-		//	Debug.WriteLine($"At {label}, the sizes are CanvasSizeInBlocks: {CanvasSizeInBlocks}, ImageSizeInBlocks: {ImageSizeInBlocks}, Image: {iSize}, Bitmap: {bSize}.");
-		//}
+			var bitmapSize = new Size(_bitmapGrid.Bitmap.Width, _bitmapGrid.Bitmap.Height);
+
+			var canvasSizeInBlocks = _bitmapGrid.CanvasSizeInBlocks;
+
+			Debug.WriteLine($"At {label}, Control: {controlSize}, Canvas: {canvasSize}, Image: {imageSize}, Bitmap: {bitmapSize}, CanvasSizeInBlocks: {canvasSizeInBlocks}.");
+		}
 
 		//private bool IsCanvasSizeInWBsReasonable(SizeInt canvasSizeInWholeBlocks)
 		//{

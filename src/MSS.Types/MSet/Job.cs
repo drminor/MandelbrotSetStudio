@@ -22,6 +22,7 @@ namespace MSS.Types.MSet
 		public Job()
 		{
 			Id = ObjectId.Empty;
+			Label = "Empty";
 			MapAreaInfo = new MapAreaInfo();
 			ColorBandSetId = ObjectId.Empty;
 			MapCalcSettings = new MapCalcSettings();
@@ -36,7 +37,6 @@ namespace MSS.Types.MSet
 
 			MapAreaInfo mapAreaInfo, 
 
-			SizeInt canvasSizeInBlocks,
 			ObjectId colorBandSetId, 
 			MapCalcSettings mapCalcSettings
 			)
@@ -45,13 +45,12 @@ namespace MSS.Types.MSet
 				  ObjectId.GenerateNewId(), 
 				  parentJobId,
 				  projectId, 
-				  label, 
+				  label ?? transformType.ToString(), 
 				  transformType, 
 				  newArea,
 
 				  mapAreaInfo, 
 
-				  canvasSizeInBlocks,
 				  colorBandSetId, 
 				  mapCalcSettings, 
 				  DateTime.UtcNow
@@ -64,14 +63,13 @@ namespace MSS.Types.MSet
 			ObjectId id,
 			ObjectId? parentJobId,
 			ObjectId projectId,
-			string? label,
+			string label,
 
 			TransformType transformType,
 			RectangleInt? newArea,
 
 			MapAreaInfo mapAreaInfo,
 
-			SizeInt canvasSizeInBlocks,
 			ObjectId colorBandSetId,
 			MapCalcSettings mapCalcSettings,
 			DateTime lastSaved
@@ -92,7 +90,7 @@ namespace MSS.Types.MSet
 
 			MapAreaInfo = mapAreaInfo;
 
-			CanvasSizeInBlocks = canvasSizeInBlocks;
+			CanvasSizeInBlocks = new SizeInt(); // This is no longer used.
 			_colorBandSetId = colorBandSetId;
 			MapCalcSettings = mapCalcSettings;
 
@@ -149,7 +147,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public string? Label { get; init; }
+		public string Label { get; init; }
 
 		public TransformType TransformType { get; set; } //TODO: Make this set init.
 		
@@ -222,7 +220,7 @@ namespace MSS.Types.MSet
 		public Job Clone()
 		{
 			var result = new Job(Id, ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
-				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
+				ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
 			{
 				OnFile = OnFile
 			};
@@ -233,7 +231,7 @@ namespace MSS.Types.MSet
 		public Job CreateNewCopy()
 		{
 			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
-				CanvasSizeInBlocks, ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
+				ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
 			{
 				OnFile = false
 			};

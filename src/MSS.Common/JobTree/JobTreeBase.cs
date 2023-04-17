@@ -159,49 +159,49 @@ namespace MSS.Common
 			return result;
 		}
 
-		public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy)
-		{
-			if (job.ParentJobId == null)
-			{
-				throw new ArgumentException("The job must have a non-null ParentJobId.", nameof(job));
-			}
+		//public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt canvasSizeInBlocks, [MaybeNullWhen(false)] out Job proxy)
+		//{
+		//	if (job.ParentJobId == null)
+		//	{
+		//		throw new ArgumentException("The job must have a non-null ParentJobId.", nameof(job));
+		//	}
 
-			TreeLock.EnterUpgradeableReadLock();
+		//	TreeLock.EnterUpgradeableReadLock();
 
-			try
-			{
-				if (TryFindPath(job, Root, out var path))
-				{
-					JobTreeNode? parentNode;
+		//	try
+		//	{
+		//		if (TryFindPath(job, Root, out var path))
+		//		{
+		//			JobTreeNode? parentNode;
 
-					//if (job.TransformType == TransformType.CanvasSizeUpdate)
-					//{
-					//	// The path points to a CanvasSizeUpdate job that has a different size that what is sought.
-					//	// We need to get its parent to continue.
-					//	parentNode = path.GetParentPath()?.Node;
-					//}
-					//else
-					//{
-					//	parentNode = path.Node;
-					//}
+		//			//if (job.TransformType == TransformType.CanvasSizeUpdate)
+		//			//{
+		//			//	// The path points to a CanvasSizeUpdate job that has a different size that what is sought.
+		//			//	// We need to get its parent to continue.
+		//			//	parentNode = path.GetParentPath()?.Node;
+		//			//}
+		//			//else
+		//			//{
+		//			//	parentNode = path.Node;
+		//			//}
 
-					parentNode = path.Node;
+		//			parentNode = path.Node;
 
-					var proxyJobTreeItem = parentNode?.AlternateDispSizes?.FirstOrDefault(x => x.Item.CanvasSizeInBlocks == canvasSizeInBlocks);
-					proxy = proxyJobTreeItem?.Item;
-					return proxy != null;
-				}
-				else
-				{
-					proxy = null;
-					return false;
-				}
-			}
-			finally
-			{
-				TreeLock.ExitUpgradeableReadLock();
-			}
-		}
+		//			var proxyJobTreeItem = parentNode?.AlternateDispSizes?.FirstOrDefault(x => x.Item.CanvasSizeInBlocks == canvasSizeInBlocks);
+		//			proxy = proxyJobTreeItem?.Item;
+		//			return proxy != null;
+		//		}
+		//		else
+		//		{
+		//			proxy = null;
+		//			return false;
+		//		}
+		//	}
+		//	finally
+		//	{
+		//		TreeLock.ExitUpgradeableReadLock();
+		//	}
+		//}
 
 		#endregion
 

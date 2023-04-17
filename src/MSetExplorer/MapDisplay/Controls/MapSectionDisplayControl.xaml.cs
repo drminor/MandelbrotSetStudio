@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using MSetExplorer.XPoc;
+using MSS.Types;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -49,11 +51,11 @@ namespace MSetExplorer
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 
 				_vm = (IMapDisplayViewModel)DataContext;
-
-				BitmapGridControl1.DisposeMapSection = _vm.DisposeMapSection;
-
 				_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
 				_vm.BitmapGrid = BitmapGridControl1.BitmapGrid;
+
+				BitmapGridControl1.DisposeMapSection = _vm.DisposeMapSection;
+				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -69,6 +71,8 @@ namespace MSetExplorer
 
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
+			BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
+
 			if (!(_selectionRectangle is null))
 			{
 				_selectionRectangle.AreaSelected -= SelectionRectangle_AreaSelected;
@@ -118,17 +122,12 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		//{
-		//	// Enable SelectionRectangle when ever we have a non-null "Job."
-		//	if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
-		//	{
-		//		if (_selectionRectangle != null)
-		//		{
-		//			//_selectionRectangle.Enabled = _vm.CurrentAreaColorAndCalcSettings != null;
-		//		}
-		//	}
-		//}
+		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		{
+			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
+
+			BitmapGridControl1.ReportSizes("ViewPortSizeChanged");
+		}
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{

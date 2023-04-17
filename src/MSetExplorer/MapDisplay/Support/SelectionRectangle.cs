@@ -573,10 +573,8 @@ namespace MSetExplorer
 		{
 			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
 			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-			var sizeDbl = endP.Diff(startP);
-
-			// TODO: Create VectoryDbl type
-			var result = new VectorInt(sizeDbl.Round());
+			var vectorDbl = endP.Diff(startP);
+			var result = vectorDbl.Round();
 
 			return result;
 		}

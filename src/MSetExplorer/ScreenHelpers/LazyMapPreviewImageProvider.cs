@@ -94,7 +94,7 @@ namespace MSetExplorer
 			var coords = mapAreaInfo.Coords;
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 
-			var result = _mapJobHelper.GetMapAreaInfo(coords, previewImageSize, blockSize);
+			var result = _mapJobHelper.GetMapAreaInfo(coords, previewImageSize);
 
 			return result;
 		}

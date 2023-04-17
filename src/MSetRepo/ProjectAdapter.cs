@@ -482,7 +482,7 @@ namespace MSetRepo
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 
 				mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord),
-				canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
+				//canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
 				colorBandSetId: jobRecord.ColorBandSetId,
 
 				mapCalcSettings: jobRecord.MapCalcSettings,

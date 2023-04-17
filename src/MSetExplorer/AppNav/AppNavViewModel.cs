@@ -39,7 +39,7 @@ namespace MSetExplorer
 			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
 
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper(subdivisionProvider);
+			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor:10, RMapConstants.BLOCK_SIZE);
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;

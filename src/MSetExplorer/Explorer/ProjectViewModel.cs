@@ -194,31 +194,9 @@ namespace MSetExplorer
 
 			else if (e.PropertyName == nameof(Project.CurrentJob))
 			{
-				var currentProject = CurrentProject;
-
-				if (currentProject != null)
-				{
-					var cbsBefore = CurrentColorBandSet;
-
-					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, CurrentJob.CanvasControlOffset, _blockSize);
-					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-					{
-						//	Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Current Job changing (ProjectViewModel).");
-						//	FindOrCreateJobForNewCanvasSize(currentProject, CurrentJob, currentCanvasSizeInBlocks);
-
-						// TODO: Check to make sure that simply setting the Current Job is sufficent to get a good display
-						Debug.WriteLine($"The current Job's CanvasSizeInBlocks does not match the Current CanvasSizeInBlocks -- CurrentJob is changing -- (ProjectViewModel). NO ACTION TAKEN!");
-					}
-
-					if (CurrentColorBandSet != cbsBefore)
-					{
-						OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
-					}
-
-					//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
-					//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
-					OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
-				}
+				//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
+				//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
+				OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 			}
 		}
 
@@ -234,7 +212,8 @@ namespace MSetExplorer
 				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At ProjectStartNew.");
 			}
 
-			var job = _mapJobHelper.BuildHomeJob(CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, _blockSize);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, CanvasSize);
+			var job = _mapJobHelper.BuildHomeJob(mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
@@ -243,35 +222,25 @@ namespace MSetExplorer
 
 		public bool ProjectOpen(string projectName)
 		{
+			bool result;
+
 			if (_projectAdapter.TryGetProject(projectName, out var project))
 			{
 				CurrentProject = project;
-
 				if (project.CurrentJob.IsEmpty)
 				{
 					Debug.WriteLine("Warning the current job is null or empty on Project Open.");
-					return false;
 				}
-				else
-				{
-					var currentCanvasSizeInBlocks = RMapHelper.GetMapExtentInBlocks(CanvasSize, project.CurrentJob.CanvasControlOffset, _blockSize);
-					if (CurrentJob.CanvasSizeInBlocks != currentCanvasSizeInBlocks)
-					{
-						//Debug.WriteLine($"Finding-Or-Creating Job For New CanvasSize -- Project Open (ProjectViewModel).");
-						//FindOrCreateJobForNewCanvasSize(CurrentProject, CurrentJob, currentCanvasSizeInBlocks);
 
-						// TODO: Check to make sure that simply setting the Current Job is sufficent to get a good display
-						Debug.WriteLine($"The current Job's CanvasSizeInBlocks does not match the Current CanvasSizeInBlocks -- Project Open (ProjectViewModel). NO ACTION TAKEN!");
-					}
-
-					return true;
-				}
+				result = !project.CurrentJob.IsEmpty;
 			}
 			else
 			{
 				Debug.WriteLine($"Cannot find a project record for name = {projectName}.");
-				return false;
+				result = false;
 			}
+
+			return result;
 		}
 
 		public bool ProjectSave()
@@ -366,11 +335,15 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot create a poster, the current job is empty.");
 			}
 
-			var colorBandSet = CurrentProject.CurrentColorBandSet;
 			var coords = curJob.Coords;
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, CanvasSize);
+
+			var colorBandSet = CurrentProject.CurrentColorBandSet;
 			var mapCalcSettings = curJob.MapCalcSettings;
 
-			var job = _mapJobHelper.BuildHomeJob(CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, _blockSize);
+			//var job = _mapJobHelper.BuildHomeJob(CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, _blockSize);
+			var job = _mapJobHelper.BuildHomeJob(mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+
 			Debug.WriteLine($"Starting job for new Poster with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			var sourceJobId = curJob.Id;
@@ -560,7 +533,7 @@ namespace MSetExplorer
 			// Use the specified canvasSize, instead of this job's current value for the CanvasSize :: Updated by DRM on 4/16
 			var mapSize = currentMapAreaInfo.CanvasSize;
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, mapSize, _blockSize);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, mapSize);
 
 			return mapAreaInfo;
 		}

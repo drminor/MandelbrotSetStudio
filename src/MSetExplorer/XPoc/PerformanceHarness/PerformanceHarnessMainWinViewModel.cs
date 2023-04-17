@@ -192,10 +192,12 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN; // new RRectangle(-4, 4, -4, 4, -1);
 
 			var coords = new RRectangle(0, 4, 0, 4, -1);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, canvasSize);
 
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 1000, threshold:4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
+
+			var job = _mapJobHelper.BuildHomeJob(mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
 			RunTest(job);
 		}
@@ -243,9 +245,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var exponent = -74;
 			var coords = new RRectangle(x1, x2, y1, y2, exponent, precision: RMapConstants.DEFAULT_PRECISION);
 
+
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, canvasSize);
+
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			var job = _mapJobHelper.BuildHomeJob(canvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, blockSize);
+			
+			var job = _mapJobHelper.BuildHomeJob(mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
 			RunTest(job);
 		}
@@ -270,7 +276,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize, RMapConstants.BLOCK_SIZE);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize);
 			//AddTiming("GetMapAreaInfo");
 
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
