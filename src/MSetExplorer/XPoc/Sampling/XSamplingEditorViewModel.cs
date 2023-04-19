@@ -402,7 +402,7 @@ namespace MSetExplorer.XPoc
 
 			var binaryPrecision = GetBinaryPrecision(updatedCoords, samplePointDelta, out var decimalPrecision);
 
-			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}

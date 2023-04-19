@@ -36,6 +36,12 @@ namespace MSS.Types
 			return new RRectangle(vals, exponent);
 		}
 
+		public static RPointAndDelta Reduce(RPointAndDelta rRectangle)
+		{
+			var vals = Reduce(rRectangle, out var exponent);
+			return new RPointAndDelta(vals, exponent);
+		}
+
 		public static BigInteger[] Reduce(IBigRatShape bigRatShape, out int newExponent)
 		{
 			var result = Reduce(bigRatShape.Values, bigRatShape.Exponent, out newExponent);

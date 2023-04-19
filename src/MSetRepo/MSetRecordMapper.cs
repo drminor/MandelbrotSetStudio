@@ -158,8 +158,8 @@ namespace MSetRepo
 				coords: _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto),
 				canvasSize: MapFrom(target.CanvasSize),
 				subdivision: MapFrom(target.SubdivisionRecord),
-				mapBlockOffset: MapFrom(target.MapBlockOffset),
 				precision: target.Precision ?? RMapConstants.DEFAULT_PRECISION,
+				mapBlockOffset: MapFrom(target.MapBlockOffset),
 				canvasControlOffset: MapFrom(target.CanvasControlOffset)
 				);
 

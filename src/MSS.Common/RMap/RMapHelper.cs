@@ -413,10 +413,22 @@ namespace MSS.Common
 			return result;
 		}
 
+		#endregion
 
-		public static MapAreaInfo Convert(MapAreaInfo2 mapAreaInfo2)
+		#region MapAreaInfo2 Support
+
+		public static MapAreaInfo Convert(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize)
 		{
-			return MapAreaInfo.Empty;
+			var half = new PointInt(canvasSize.Width / 2, canvasSize.Height / 2);
+
+			var area = new RectangleInt(half.Invert(), canvasSize);
+
+			var coords = GetMapCoords(area, mapAreaInfo2.MapCenter, mapAreaInfo2.SamplePointDelta);
+			var mapBlockOffset = GetMapBlockOffset(coords.Position, mapAreaInfo2.SamplePointDelta, mapAreaInfo2.Subdivision.BlockSize, out var canvasControlOffset);
+
+			var result = new MapAreaInfo(coords, canvasSize, mapAreaInfo2.Subdivision, mapAreaInfo2.Precision, mapBlockOffset, canvasControlOffset);
+
+			return result;
 		}
 
 		public static MapAreaInfo2 Convert(MapAreaInfo mapAreaInfo)
@@ -432,11 +444,10 @@ namespace MSS.Common
 
 			var mapBlockOffset = GetMapBlockOffset(center, samplePointDelta, blockSize, out var canvasControlOffset);
 
-			var result = new MapAreaInfo2(center, mapAreaInfo.Subdivision, mapBlockOffset, mapAreaInfo.Precision, canvasControlOffset);
+			var result = new MapAreaInfo2(center, mapAreaInfo.Subdivision, mapAreaInfo.Precision, mapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
-
 
 		public static RRectangle NormalizeCoordsWithSPD(RRectangle coords, RSize samplePointDelta)
 		{

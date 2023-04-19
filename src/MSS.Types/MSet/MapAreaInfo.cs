@@ -9,10 +9,15 @@ namespace MSS.Types.MSet
 
 		public RRectangle Coords { get; init; }
 		public SizeInt CanvasSize { get; init; }
+
 		public Subdivision Subdivision { get; init; }
-		public BigVector MapBlockOffset { get; init; }
 		public int Precision { get; init; }
+
+		public BigVector MapBlockOffset { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
+
+		public RPoint MapPosition => Coords.Position;
+		public RSize SamplePointDelta => Subdivision.SamplePointDelta;
 
 		public bool IsEmpty => Coords == RRectangle.Zero;
 
@@ -20,11 +25,12 @@ namespace MSS.Types.MSet
 		{
 			Coords = new RRectangle();
 			Subdivision = new Subdivision();
-			MapBlockOffset = new BigVector();
 			Precision = 1;
+			MapBlockOffset = new BigVector();
+			CanvasControlOffset = new VectorInt();
 		}
 
-		public MapAreaInfo(RRectangle coords, SizeInt canvasSize, Subdivision subdivision, BigVector mapBlockOffset, int precision, VectorInt canvasControlOffset)
+		public MapAreaInfo(RRectangle coords, SizeInt canvasSize, Subdivision subdivision, int precision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
 		{
 			Coords = coords;
 			CanvasSize = canvasSize;
@@ -41,7 +47,7 @@ namespace MSS.Types.MSet
 
 		public MapAreaInfo Clone()
 		{
-			return new MapAreaInfo(Coords.Clone(), CanvasSize, Subdivision.Clone(), MapBlockOffset.Clone(), Precision, CanvasControlOffset);
+			return new MapAreaInfo(Coords.Clone(), CanvasSize, Subdivision.Clone(), Precision, MapBlockOffset.Clone(), CanvasControlOffset);
 		}
 	}
 }

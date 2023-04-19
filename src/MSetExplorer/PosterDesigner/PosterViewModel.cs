@@ -611,7 +611,7 @@ namespace MSetExplorer
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
 			var precision = RValueHelper.GetPrecision(coords.Right, coords.Left, out var _);
 
-			var result = new MapAreaInfo(coords, logicalDisplaySize, subdivision, newMapBlockOffset, precision, newCanvasControlOffset);
+			var result = new MapAreaInfo(coords, logicalDisplaySize, subdivision, precision, newMapBlockOffset, newCanvasControlOffset);
 
 			return result;
 		}

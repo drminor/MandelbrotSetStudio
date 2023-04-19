@@ -90,7 +90,7 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(uSpd, mapBlockOffset, out var localMapBlockOffset);
 
 			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
-			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
@@ -103,9 +103,9 @@ namespace MSS.Common
 			var samplePointDelta = previousMapAreaInfo.Subdivision.SamplePointDelta;
 
 			var newCoords = RMapHelper.GetMapCoords(newScreenArea.Round(), mapPosition, samplePointDelta);
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(mapPosition, samplePointDelta, BlockSize, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
 
-			var result = new MapAreaInfo(newCoords, newSize.Round(), previousMapAreaInfo.Subdivision, mapBlockOffset, previousMapAreaInfo.Precision, canvasControlOffset);
+			var result = new MapAreaInfo(newCoords, newSize.Round(), previousMapAreaInfo.Subdivision, previousMapAreaInfo.Precision, mapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
@@ -147,7 +147,7 @@ namespace MSS.Common
 
 			var binaryPrecision = GetBinaryPrecision(adjCoords, samplePointDelta, out _);
 
-			var result = new MapAreaInfo(adjCoords, newSize.Round(), subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+			var result = new MapAreaInfo(adjCoords, newSize.Round(), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
@@ -212,7 +212,7 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 
 			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
-			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
@@ -233,7 +233,7 @@ namespace MSS.Common
 
 			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
 
-			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
@@ -316,7 +316,7 @@ namespace MSS.Common
 
 			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
 
-			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}

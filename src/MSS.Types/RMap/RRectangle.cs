@@ -98,15 +98,6 @@ namespace MSS.Types
 		public RValue Height => new(HeightNumerator, Exponent);
 		public RSize Size => new(WidthNumerator, HeightNumerator, Exponent);
 
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
-
-		public RRectangle Clone()
-		{
-			return Reducer.Reduce(this);
-		}
 
 		//public RRectangle Scale(RPoint factor)
 		//{
@@ -134,14 +125,6 @@ namespace MSS.Types
 		//		: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, amount.Exponent);
 		//}
 
-		public override string ToString()
-		{
-			var reduced = Reducer.Reduce(this);
-
-			var result = $"P1: {reduced.LeftBot.ToString(reduce: false)}, P2: {reduced.RightTop.ToString(reduce: false)}";
-			return result;
-		}
-
 		[Conditional("Debug")]
 		private void Validate()
 		{
@@ -156,7 +139,25 @@ namespace MSS.Types
 			}
 		}
 
-		#region IEqualityComparer / IEquatable Support
+		#region ToString / ICloneable / IEqualityComparer / IEquatable Support
+
+		public override string ToString()
+		{
+			var reduced = Reducer.Reduce(this);
+
+			var result = $"P1: {reduced.LeftBot.ToString(reduce: false)}, P2: {reduced.RightTop.ToString(reduce: false)}";
+			return result;
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public RRectangle Clone()
+		{
+			return Reducer.Reduce(this);
+		}
 
 		public override bool Equals(object? obj)
 		{

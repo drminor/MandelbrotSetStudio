@@ -33,15 +33,6 @@ namespace MSS.Types
 		public RValue Width => new(WidthNumerator, Exponent);
 		public RValue Height => new(HeightNumerator, Exponent);
 
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
-
-		public RSize Clone()
-		{
-			return Reducer.Reduce(this);
-		}
 
 		public RSize Scale(SizeInt factor)
 		{
@@ -128,12 +119,34 @@ namespace MSS.Types
 		//	return new RSize(w, h, Exponent);
 		//}
 
-		#region ToString / IEqualityComparer / IEquatable Support
+		#region ToString / ICloneable / IEqualityComparer / IEquatable Support
 
 		public override string ToString()
 		{
 			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
 			return result;
+		}
+
+		public string ToString(bool reduce)
+		{
+			if (reduce)
+			{
+				return BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
+			}
+			else
+			{
+				return BigIntegerHelper.GetDisplay(this);
+			}
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public RSize Clone()
+		{
+			return Reducer.Reduce(this);
 		}
 
 		public bool Equals(RSize? a, RSize? b)

@@ -85,6 +85,11 @@ namespace MSS.Types
 			return new PointInt(X / dividend.Width, Y / dividend.Height);
 		}
 
+		public PointInt Invert()
+		{
+			return new PointInt(X * -1, Y * -1);
+		}
+
 		public override string? ToString()
 		{
 			return $"x:{X}, y:{Y}";
