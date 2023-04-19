@@ -605,13 +605,13 @@ namespace MSetExplorer
 			var subdivision = currentAreaInfo.Subdivision;
 
 			var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
-			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(coords, subdivision.SamplePointDelta, subdivision.BlockSize, out var newCanvasControlOffset, out var newPosition);
-			var newCoords = RMapHelper.CombinePosAndSize(newPosition, coords.Size);
+			var newMapBlockOffset = RMapHelper.GetMapBlockOffset(coords.Position, subdivision.SamplePointDelta, subdivision.BlockSize, out var newCanvasControlOffset);
+			//var newCoords = RMapHelper.CombinePosAndSize(newPosition, coords.Size);
 
 			// TODO: Check the calculated precision as the new Map Coordinates are calculated.
-			var precision = RValueHelper.GetPrecision(newCoords.Right, newCoords.Left, out var _);
+			var precision = RValueHelper.GetPrecision(coords.Right, coords.Left, out var _);
 
-			var result = new MapAreaInfo(newCoords, logicalDisplaySize, subdivision, newMapBlockOffset, precision, newCanvasControlOffset);
+			var result = new MapAreaInfo(coords, logicalDisplaySize, subdivision, newMapBlockOffset, precision, newCanvasControlOffset);
 
 			return result;
 		}

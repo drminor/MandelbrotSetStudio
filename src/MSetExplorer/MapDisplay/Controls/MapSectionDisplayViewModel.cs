@@ -192,7 +192,7 @@ namespace MSetExplorer
 			get => _imageOffset;
 			set
 			{
-				if (value != _imageOffset)
+				if (ScreenTypeHelper.IsVectorDblChanged(_imageOffset, value))
 				{
 					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
 					_imageOffset = value;
@@ -413,7 +413,6 @@ namespace MSetExplorer
 
 		private void GetAndPlacePixelsWrapper(MapSection mapSection)
 		{
-
 			if (BitmapGrid != null && mapSection.MapSectionVectors != null)
 			{
 				lock (_paintLocker)
@@ -460,28 +459,35 @@ namespace MSetExplorer
 
 		private AreaColorAndCalcSettings UpdateSize(AreaColorAndCalcSettings currentAreaColorAndCalcSettings, SizeDbl previousSize, SizeDbl newSize)
 		{
-			var prevMapAreaInfo = currentAreaColorAndCalcSettings.MapAreaInfo;
-			var mapPosition = prevMapAreaInfo.Coords.Position;
-			var subdivision = prevMapAreaInfo.Subdivision;
+			//var prevMapAreaInfo = currentAreaColorAndCalcSettings.MapAreaInfo;
+			//var mapPosition = prevMapAreaInfo.Coords.Position;
+			//var subdivision = prevMapAreaInfo.Subdivision;
 
-			var newScreenArea = GetNewScreenArea(previousSize, newSize);
-			var newCoords = RMapHelper.GetMapCoords(newScreenArea.Round(), mapPosition, subdivision.SamplePointDelta);
+			//var newScreenArea = GetNewScreenArea(previousSize, newSize);
+			//var newCoords = RMapHelper.GetMapCoords(newScreenArea.Round(), mapPosition, subdivision.SamplePointDelta);
 
-			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(newCoords, subdivision, newSize.Round());
+			//var newMapAreaInfo = _mapJobHelper.GetMapAreaInfo(newCoords, subdivision, newSize.Round());
+			//var newAreaColorAndCalcSettings = currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
+
+			var previousMapAreaInfo = currentAreaColorAndCalcSettings.MapAreaInfo;
+
+			//var newMapAreaInfo = _mapJobHelper.UpdateSize(previousMapAreaInfo, previousSize, newSize);
+			var newMapAreaInfo = _mapJobHelper.UpdateSizeWithDiagnostics(previousMapAreaInfo, previousSize, newSize);
+
 			var newAreaColorAndCalcSettings = currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
 
 			return newAreaColorAndCalcSettings;
 		}
 
-		// Calculate new coordinates for a new display size
-		private RectangleDbl GetNewScreenArea(SizeDbl canvasSize, SizeDbl newCanvasSize)
-		{
-			var diff = canvasSize.Sub(newCanvasSize);
-			diff = diff.Scale(0.5);
-			var rectangleDbl = new RectangleDbl(new PointDbl(diff), newCanvasSize);
+		//// Calculate new coordinates for a new display size
+		//private RectangleDbl GetNewScreenArea(SizeDbl canvasSize, SizeDbl newCanvasSize)
+		//{
+		//	var diff = canvasSize.Sub(newCanvasSize);
+		//	diff = diff.Scale(0.5);
+		//	var rectangleDbl = new RectangleDbl(new PointDbl(diff), newCanvasSize);
 
-			return rectangleDbl;
-		}
+		//	return rectangleDbl;
+		//}
 
 		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob, out bool lastSectionWasIncluded)
 		{
@@ -531,6 +537,7 @@ namespace MSetExplorer
 			if (BitmapGrid != null)
 			{
 				BitmapGrid.MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
+				//BitmapGrid.ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
 			}
 			
 			ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
@@ -573,6 +580,7 @@ namespace MSetExplorer
 			if (BitmapGrid != null)
 			{
 				BitmapGrid.MapBlockOffset = newJob.MapAreaInfo.MapBlockOffset;
+				//BitmapGrid.ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
 			}
 
 			ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);

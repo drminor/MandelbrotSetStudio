@@ -443,7 +443,7 @@ namespace MSetExplorer
 			}
 			else
 			{
- 				var mapAreaInfo = BuildMapAreaInfo(currentJob.MapAreaInfo, screenArea);
+ 				var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
 				return mapAreaInfo;
 			}
 		}

@@ -36,15 +36,6 @@ namespace MSS.Types
 		public RValue X => new RValue(XNumerator, Exponent);
 		public RValue Y => new RValue(YNumerator, Exponent);
 
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
-
-		public RPoint Clone()
-		{
-			return Reducer.Reduce(this);
-		}
 
 		//public RPoint Scale(SizeInt factor)
 		//{
@@ -96,7 +87,12 @@ namespace MSS.Types
 				: new RVector(XNumerator - amount.XNumerator, YNumerator - amount.YNumerator, amount.Exponent);
 		}
 
-		#region ToString / IEqualityComparer / IEquatable Support
+		public bool IsZero()
+		{
+			return XNumerator == 0 && YNumerator == 0;	
+		}
+
+		#region ToString / ICloneable / IEqualityComparer / IEquatable Support
 
 		public override string ToString()
 		{
@@ -114,6 +110,16 @@ namespace MSS.Types
 			{
 				return BigIntegerHelper.GetDisplay(this);
 			}
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public RPoint Clone()
+		{
+			return Reducer.Reduce(this);
 		}
 
 		public bool Equals(RPoint? a, RPoint? b)

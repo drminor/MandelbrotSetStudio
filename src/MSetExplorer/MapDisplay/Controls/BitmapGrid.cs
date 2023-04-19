@@ -9,7 +9,6 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Windows.Media.Core;
 
 namespace MSetExplorer
 {
@@ -22,8 +21,11 @@ namespace MSetExplorer
 		private SizeInt _blockSize;
 		private Int32Rect _blockRect { get; init; }
 
+		private SizeDbl _viewPortSize;
+		//private VectorDbl _imageOffset;
 		private SizeInt _canvasSizeInBlocks;
-		private int _maxYPtr;
+
+		//private int _maxYPtr;
 		private BigVector _mapBlockOffset;
 
 		private ColorBandSet _colorBandSet;
@@ -53,9 +55,12 @@ namespace MSetExplorer
 
 			_disposeMapSection = disposeMapSection;
 
+			_viewPortSize = new SizeDbl();
+			//_imageOffset = new VectorDbl();
+
 			_canvasSizeInBlocks = new SizeInt();
 			ImageSizeInBlocks = new SizeInt();
-			_maxYPtr = 1;
+			//_maxYPtr = 1;
 			_pixelsToClear = new byte[0];
 
 			_mapBlockOffset = new BigVector();
@@ -67,55 +72,6 @@ namespace MSetExplorer
 
 			MapSections = new ObservableCollection<MapSection>();
 		}
-
-		//private void MapSections_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-		//{
-		//	switch (e.Action)
-		//	{
-		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
-
-		//			if (e.NewItems != null && e.NewItems.Count > 0)
-		//			{
-		//				if (e.NewItems.Count == 1)
-		//				{
-		//					if (e.NewItems[0] is MapSection ms)
-		//					{
-		//						DrawSections(new List<MapSection> { ms });
-		//					}
-		//				}
-
-		//				else
-		//				{
-		//					var mapSections = e.NewItems.Cast<MapSection>().ToList();
-		//					DrawSections(mapSections);
-		//				}
-		//			}
-
-		//			break;
-
-		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
-		//			break;
-
-		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Replace:
-		//			break;
-
-		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Move:
-
-		//			if (e.NewStartingIndex == -100 && e.OldStartingIndex == -100)
-		//			{
-		//				ReDrawSections();
-		//			}
-		//			break;
-
-		//		case System.Collections.Specialized.NotifyCollectionChangedAction.Reset:
-
-		//			ClearDisplay();
-		//			break;
-
-		//		default:
-		//			break;
-		//	}
-		//}
 
 		#endregion
 
@@ -216,6 +172,40 @@ namespace MSetExplorer
 			}
 		}
 
+		public SizeDbl ViewPortSize
+		{
+			get => _viewPortSize;
+			set
+			{
+				_viewPortSize = value;
+
+				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, keepSquare: false);
+				CanvasSizeInBlocks = sizeInWholeBlocks;
+
+				//var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(value.Round(), ImageOffset.Round(), _blockSize);
+
+				//Debug.WriteLineIf(DEBUG, $"BitmapGrid Updating the MapExtentInBlocks from: {MapExtentInBlocks} to: {mapExtentInBlocks}.");
+				//MapExtentInBlocks = mapExtentInBlocks;
+			}
+		}
+
+		//public VectorDbl ImageOffset
+		//{
+		//	get => _imageOffset;
+		//	set
+		//	{
+		//		if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
+		//		{
+		//			_imageOffset = value;
+
+		//			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(ViewPortSize.Round(), value.Round(), _blockSize);
+
+		//			Debug.WriteLineIf(DEBUG, $"BitmapGrid is getting a new ImageOffset, updating the MapExtentInBlocks from: {MapExtentInBlocks} to: {mapExtentInBlocks}.");
+		//			MapExtentInBlocks = mapExtentInBlocks;
+		//		}
+		//	}
+		//}
+
 		public SizeInt CanvasSizeInBlocks
 		{
 			get => _canvasSizeInBlocks;
@@ -238,6 +228,9 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		//// Not Used, need to remove the ImageOffset property from this class.
+		//private SizeInt MapExtentInBlocks { get; set; }
 
 		private SizeInt ImageSizeInBlocks { get; set; }
 
@@ -451,7 +444,9 @@ namespace MSetExplorer
 
 		private PointInt GetInvertedBlockPos(PointInt blockPosition)
 		{
-			var result = new PointInt(blockPosition.X, _maxYPtr - blockPosition.Y);
+			//var maxYPtr = MapExtentInBlocks.Height - 1;
+			var maxYPtr = ImageSizeInBlocks.Height - 1;
+			var result = new PointInt(blockPosition.X, maxYPtr - blockPosition.Y);
 
 			return result;
 		}
@@ -476,7 +471,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(DEBUG, $"BitmapGrid RefreshBitmap is being called. BitmapSize {new Size(_bitmap.Width, _bitmap.Height)} != ImageSize: Creating new bitmap with size: {ImageSizeInBlocks}.");
 
-				_maxYPtr = ImageSizeInBlocks.Height - 1;
+				//_maxYPtr = ImageSizeInBlocks.Height - 1;
 				Bitmap = CreateBitmap(imageSize);
 				return true;
 			}

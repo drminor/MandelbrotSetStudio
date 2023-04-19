@@ -1,5 +1,4 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -7,7 +6,6 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 namespace MSetExplorer
@@ -15,8 +13,6 @@ namespace MSetExplorer
 	public partial class BitmapGridControl : ContentControl
 	{
 		#region Private Properties
-
-		private static readonly bool KEEP_DISPLAY_SQUARE = false;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 		private readonly SizeInt _blockSize;
@@ -53,7 +49,7 @@ namespace MSetExplorer
 			_blockSize = RMapConstants.BLOCK_SIZE;
 			_scrollOwner = null;
 
-			_content = null; 
+			_content = null;
 			_canvas = new Canvas();
 			_image = new Image();
 
@@ -95,10 +91,12 @@ namespace MSetExplorer
 			get => _bitmapGrid.Image;
 			set
 			{
-				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ViewPortSize, _blockSize, KEEP_DISPLAY_SQUARE);
-				_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
+				//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ViewPortSize, _blockSize, KEEP_DISPLAY_SQUARE);
+				//_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
 
 				_bitmapGrid.Image = value;
+
+				_bitmapGrid.ViewPortSize = ViewPortSize;
 			}
 		}
 
@@ -177,12 +175,11 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
 				{
-					var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, KEEP_DISPLAY_SQUARE);
-					_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
+					//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, KEEP_DISPLAY_SQUARE);
+					//_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
 
+					_bitmapGrid.ViewPortSize = value;
 					SetValue(ViewPortSizeProperty, value);
-
-
 				}
 			}
 		}
@@ -190,7 +187,14 @@ namespace MSetExplorer
 		public VectorDbl ImageOffset
 		{
 			get => (VectorDbl)GetValue(ImageOffsetProperty);
-			set => SetValue(ImageOffsetProperty, value);
+			set
+			{
+				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
+				{
+					//_bitmapGrid.ImageOffset = value;
+					SetValue(ImageOffsetProperty, value);
+				}
+			}
 		}
 
 		public ObservableCollection<MapSection> MapSections
@@ -379,12 +383,13 @@ namespace MSetExplorer
 			var previousValue = (VectorDbl)e.OldValue;
 			var value = (VectorDbl)e.NewValue;
 
-			if (value != previousValue)
+			if (ScreenTypeHelper.IsVectorDblChanged(previousValue, value))
 			{
 				//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
 
 				c._imageOffsetInternal = value;
 				c.SetImageOffset(value);
+				//c._bitmapGrid.ImageOffset = value;
 
 				//c.InvalidateScrollInfo();
 				c.ImageOffsetChanged?.Invoke(c, EventArgs.Empty);

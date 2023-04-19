@@ -81,6 +81,11 @@ namespace MSS.Types
 			return new BigVector(X + amount.X, Y + amount.Y);
 		}
 
+		public BigVector Tranlate(VectorInt amount)
+		{
+			return new BigVector(X + amount.X, Y + amount.Y);
+		}
+
 		public BigVector Tranlate(BigVector amount)
 		{
 			return new BigVector(X + amount.X, Y + amount.Y);

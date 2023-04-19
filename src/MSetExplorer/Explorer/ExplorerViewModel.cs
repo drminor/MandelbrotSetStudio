@@ -243,11 +243,13 @@ namespace MSetExplorer
 			if (e.IsPreview)
 			{
 				// Calculate new Coords for preview
-				var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
-				if (mapAreaInfo != null)
-				{
-					MapCoordsViewModel.Preview(mapAreaInfo);
-				}
+
+				//// TODO: After testing is complete, uncomment-out this code.
+				//var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
+				//if (mapAreaInfo != null)
+				//{
+				//	MapCoordsViewModel.Preview(mapAreaInfo);
+				//}
 			}
 			else
 			{

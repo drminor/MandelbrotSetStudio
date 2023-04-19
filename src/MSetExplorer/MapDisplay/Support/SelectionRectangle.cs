@@ -255,7 +255,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			Move(selection.Location, selection.Size);
+			MoveAndSize(selection.Location, selection.Size);
 
 			e.Handled = true;
 		}
@@ -619,7 +619,7 @@ namespace MSetExplorer
 		}
 
 		// Reposition the Selection Rectangle and update its size.
-		private void Move(Point posYInverted, Size size)
+		private void MoveAndSize(Point posYInverted, Size size)
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, with size: {size}");
 

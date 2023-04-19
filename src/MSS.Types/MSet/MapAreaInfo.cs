@@ -14,7 +14,7 @@ namespace MSS.Types.MSet
 		public int Precision { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
 
-		public bool IsEmpty => Subdivision.BlockSize.Width == 0;
+		public bool IsEmpty => Coords == RRectangle.Zero;
 
 		public MapAreaInfo()
 		{

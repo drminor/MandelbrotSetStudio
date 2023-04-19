@@ -31,6 +31,11 @@ namespace MSS.Types
 		public double X { get; set; }
 		public double Y { get; set; }
 
+		public bool IsNAN()
+		{
+			return double.IsNaN(X) || double.IsNaN(Y);
+		}
+
 		//public PointDbl Scale(PointDbl factor)
 		//{
 		//	return new PointDbl(X * factor.X, Y * factor.Y);
@@ -72,6 +77,10 @@ namespace MSS.Types
 			return new VectorDbl(X - amount.Width, Y - amount.Height);
 		}
 
+		public VectorDbl Diff(VectorDbl offset)
+		{
+			return new VectorDbl(X - offset.X, Y - offset.Y);
+		}
 
 		//public PointDbl Translate(SizeInt offset)
 		//{
@@ -112,6 +121,11 @@ namespace MSS.Types
 		public VectorDbl Abs()
 		{
 			return new VectorDbl(Math.Abs(X), Math.Abs(Y));
+		}
+
+		public bool IsNearZero()
+		{
+			return Math.Abs(X) < 0.1 && Math.Abs(Y) < 0.1;
 		}
 
 		#region IEquatable and IEqualityComparer Support

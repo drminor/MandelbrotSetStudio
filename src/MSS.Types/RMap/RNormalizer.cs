@@ -1,9 +1,8 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Linq;
 using System.Numerics;
 
-namespace MSS.Common
+namespace MSS.Types
 {
 	public static class RNormalizer
 	{

@@ -63,6 +63,18 @@ namespace MSS.Types
 			return new RSize(Values[0], Values[1], Exponent - 1);
 		}
 
+		/// <summary>
+		/// Returns the distance from this point to the given point.
+		/// </summary>
+		/// <param name="amount"></param>
+		/// <returns></returns>
+		public RSize Diff(RSize amount)
+		{
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot find the diff from a RSize with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
+				: new RSize(WidthNumerator - amount.WidthNumerator, HeightNumerator - amount.HeightNumerator, amount.Exponent);
+		}
+
 		//// TODO rewite RSize.Scale(SizeDbl)
 		//public RSize Scale(SizeDbl factor)
 		//{

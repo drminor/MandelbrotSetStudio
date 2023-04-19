@@ -395,14 +395,14 @@ namespace MSetExplorer.XPoc
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			//var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset, out RPoint newPosition);
-			var newCoords = RMapHelper.CombinePosAndSize(newPosition, updatedCoords.Size);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(updatedCoords.Position, samplePointDelta, blockSize, out var canvasControlOffset);
+			//var newCoords = RMapHelper.CombinePosAndSize(newPosition, updatedCoords.Size);
 
 			var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 
-			var binaryPrecision = GetBinaryPrecision(newCoords, samplePointDelta, out var decimalPrecision);
+			var binaryPrecision = GetBinaryPrecision(updatedCoords, samplePointDelta, out var decimalPrecision);
 
-			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
+			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, localMapBlockOffset, binaryPrecision, canvasControlOffset);
 
 			return result;
 		}

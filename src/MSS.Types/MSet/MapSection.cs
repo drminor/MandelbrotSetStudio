@@ -80,7 +80,7 @@ namespace MSS.Types
 
 		public bool IsEmpty => MapSectionVectors == null;
 
-		public PointInt ScreenPosition { get; set; }
+		public PointInt ScreenPosition { get; init; }
 		public SizeInt Size { get; init; }
 
 		public int TargetIterations { get; init; }
