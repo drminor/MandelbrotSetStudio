@@ -23,7 +23,7 @@ namespace MSS.Types.MSet
 		{
 			Id = ObjectId.Empty;
 			Label = "Empty";
-			MapAreaInfo = new MapAreaInfo();
+			MapAreaInfo = new MapAreaInfo2();
 			ColorBandSetId = ObjectId.Empty;
 			MapCalcSettings = new MapCalcSettings();
 		}
@@ -35,7 +35,7 @@ namespace MSS.Types.MSet
 			TransformType transformType, 
 			RectangleInt? newArea,
 
-			MapAreaInfo mapAreaInfo, 
+			MapAreaInfo2 mapAreaInfo, 
 
 			ObjectId colorBandSetId, 
 			MapCalcSettings mapCalcSettings
@@ -68,7 +68,7 @@ namespace MSS.Types.MSet
 			TransformType transformType,
 			RectangleInt? newArea,
 
-			MapAreaInfo mapAreaInfo,
+			MapAreaInfo2 mapAreaInfo,
 
 			ObjectId colorBandSetId,
 			MapCalcSettings mapCalcSettings,
@@ -102,13 +102,13 @@ namespace MSS.Types.MSet
 
 		#region Public Properties
 
-		public RRectangle Coords => MapAreaInfo.Coords;
-		public SizeInt CanvasSize => MapAreaInfo.CanvasSize;
+		//public RRectangle Coords => MapAreaInfo.Coords;
+		//public SizeInt CanvasSize => MapAreaInfo.CanvasSize;
 		public Subdivision Subdivision => MapAreaInfo.Subdivision;
 		public BigVector MapBlockOffset => MapAreaInfo.MapBlockOffset;
 		public VectorInt CanvasControlOffset => MapAreaInfo.CanvasControlOffset;
 
-		public bool IsEmpty => Coords.WidthNumerator == 0;
+		public bool IsEmpty => MapAreaInfo.IsEmpty;
 		public DateTime DateCreated => Id.CreationTime;
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc;
 
@@ -153,7 +153,7 @@ namespace MSS.Types.MSet
 		
 		public RectangleInt? NewArea { get; init; }
 
-		public MapAreaInfo MapAreaInfo { get; init; }
+		public MapAreaInfo2 MapAreaInfo { get; init; }
 
 		public SizeInt CanvasSizeInBlocks { get; init; }
 

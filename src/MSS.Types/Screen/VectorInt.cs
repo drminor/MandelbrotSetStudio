@@ -72,6 +72,12 @@ namespace MSS.Types
 			return new VectorInt((int)Math.Round(X * factor), (int)Math.Round(Y * factor));
 		}
 
+		public RVector Scale(RSize factor)
+		{
+			var result = factor.Scale(this);
+			return new RVector(result);
+		}
+
 		public bool EqualsZero => X == 0 && Y == 0;
 
 		public override string? ToString()

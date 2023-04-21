@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace MSetExplorer
@@ -24,14 +23,10 @@ namespace MSetExplorer
 
 		private SizeDbl _containerSize;
 		private SizeDbl _viewPortSizeInternal;
-		private VectorDbl _imageOffsetInternal;
 
-		private Point _offset;
-		private Size _unscaledExtent;
-
-		private Point _contentRenderTransformOrigin;
-		private TranslateTransform _contentOffsetTransform;
-		private TransformGroup _transformGroup;
+		//private Point _contentRenderTransformOrigin;
+		//private TranslateTransform _contentOffsetTransform;
+		//private TransformGroup _transformGroup;
 
 		private BitmapGrid _bitmapGrid;
 
@@ -52,21 +47,26 @@ namespace MSetExplorer
 			_content = null;
 			_canvas = new Canvas();
 			_image = new Image();
+			_canvas.Children.Add(_image);
 
-			_bitmapGrid = new BitmapGrid(_image, _blockSize, OurDisposeMapSectionImplementation);
+			var ourSize = new SizeDbl(ActualWidth, ActualHeight);
+
+			_bitmapGrid = new BitmapGrid(_image, ourSize, _blockSize, OurDisposeMapSectionImplementation);
 
 			_containerSize = new SizeDbl();
 			_viewPortSizeInternal = new SizeDbl();
-			_imageOffsetInternal = new VectorDbl();
 
-			_offset = new Point(0, 0);
-			_unscaledExtent = new Size(0, 0);
+			//_contentRenderTransformOrigin = new Point(0, 0);
+			//_transformGroup = new TransformGroup();
 
-			_contentRenderTransformOrigin = new Point(0, 0);
-			_transformGroup = new TransformGroup();
+			//_contentOffsetTransform = new TranslateTransform(0, 0);
+			//_transformGroup.Children.Add(_contentOffsetTransform);
+		}
 
-			_contentOffsetTransform = new TranslateTransform(0, 0);
-			_transformGroup.Children.Add(_contentOffsetTransform);
+		private void _image_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			Debug.WriteLine("Image SizeChanged");
+			SetImageOffset(ImageOffset);
 		}
 
 		#endregion
@@ -74,7 +74,6 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewPortSizeChanged;
-		public event EventHandler? ImageOffsetChanged;
 
 		#endregion
 
@@ -88,17 +87,25 @@ namespace MSetExplorer
 
 		public Image Image
 		{
-			get => _bitmapGrid.Image;
+			get => _image;
 			set
 			{
-				//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(ViewPortSize, _blockSize, KEEP_DISPLAY_SQUARE);
-				//_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
+				if (_image != value)
+				{
+					_image.SizeChanged -= _image_SizeChanged;
 
-				_bitmapGrid.Image = value;
+					_image = value;
+					_image.SizeChanged += _image_SizeChanged;
+					
+					_bitmapGrid.Image = value;
+					_bitmapGrid.ViewPortSize = ViewPortSize;
 
-				_bitmapGrid.ViewPortSize = ViewPortSize;
+					SetImageOffset(ImageOffset);
+				}
 			}
 		}
+
+		public IBitmapGrid BitmapGrid => _bitmapGrid;
 
 		private SizeDbl ContainerSize
 		{
@@ -122,8 +129,6 @@ namespace MSetExplorer
 
 					//Debug.WriteLine($"BitmapGridControl: ViewPort is changing: Old size: {previousValue}, new size: {_viewPort}.");
 
-					InvalidateScrollInfo();
-
 					var newViewPortSize = value;
 
 					if (previousValue.Width < 5 || previousValue.Height < 5)
@@ -135,7 +140,9 @@ namespace MSetExplorer
 					else
 					{
 						// Update the screen immediately, while we are 'holding' back the update.
-						ImageOffsetInternal = GetTempImageOffset(ImageOffset, ViewPortSize, newViewPortSize);
+						//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
+						var tempOffset = GetTempImageOffset(ImageOffset, ViewPortSize, newViewPortSize);
+						_ = SetImageOffset(tempOffset);
 
 						// Delay the 'real' update until no futher updates in the last 150ms.
 						_viewPortSizeDispatcher.Debounce(
@@ -143,27 +150,14 @@ namespace MSetExplorer
 							action: parm =>
 							{
 								Debug.WriteLine($"Updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}.");
-								//$"Resetting the ImageOffset from Temp: {ImageOffsetInternal} to former: {ImageOffset}");
-
-								//ImageOffsetInternal = ImageOffset;
 								ViewPortSize = newViewPortSize;
 							}
 						);
 					}
 				}
-			}
-		}
-
-		private VectorDbl ImageOffsetInternal
-		{
-			get => _imageOffsetInternal;
-			set
-			{
-				if (value != _imageOffsetInternal)
+				else
 				{
-					_imageOffsetInternal = value;
-					//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
-					SetImageOffset(value);
+					Debug.WriteLine($"Skipping the update of the ViewPortSize, the new value is the same as the old value. {_viewPortSizeInternal} vs {value}.");
 				}
 			}
 		}
@@ -175,9 +169,6 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
 				{
-					//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, KEEP_DISPLAY_SQUARE);
-					//_bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
-
 					_bitmapGrid.ViewPortSize = value;
 					SetValue(ViewPortSizeProperty, value);
 				}
@@ -191,7 +182,6 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
 				{
-					//_bitmapGrid.ImageOffset = value;
 					SetValue(ImageOffsetProperty, value);
 				}
 			}
@@ -220,8 +210,6 @@ namespace MSetExplorer
 			get => (bool)GetValue(HighlightSelectedColorBandProperty);
 			set => SetValue(HighlightSelectedColorBandProperty, value);
 		}
-
-		public IBitmapGrid BitmapGrid => _bitmapGrid;
 
 		public Action<MapSection>? DisposeMapSection { get; set; }
 
@@ -264,9 +252,11 @@ namespace MSetExplorer
 			return new Size(width, height);
 		}
 
-		protected override Size ArrangeOverride(Size finalSize)
+		protected override Size ArrangeOverride(Size finalSizeRaw)
 		{
 			//Size size = base.ArrangeOverride(finalSize);
+
+			var finalSize = ForceSize(finalSizeRaw);
 
 			var finalSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(finalSize);
 
@@ -283,6 +273,18 @@ namespace MSetExplorer
 			return finalSize;
 		}
 
+		private Size ForceSize(Size finalSize)
+		{
+			if (finalSize.Width > 1020 && finalSize.Width < 1030 && finalSize.Height > 1020 && finalSize.Height < 1030)
+			{
+				return new Size(1024, 1024);
+			}
+			else
+			{
+				return finalSize;
+			}
+		}
+
 		public override void OnApplyTemplate()
 		{
 			base.OnApplyTemplate();
@@ -292,19 +294,60 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Found the BitmapGridControl_Content template.");
 
-				(Canvas, Image) = BuildContentModel(_content);
-
 				// Setup the transform on the content so that we can position the Bitmap to "pull" it left and up so that the
 				// portion of the bitmap that is visible corresponds with the requested map coordinates.
 
-				_content.RenderTransformOrigin = _contentRenderTransformOrigin;
-				_content.RenderTransform = _transformGroup;
+				//_content.RenderTransformOrigin = _contentRenderTransformOrigin;
+				//_content.RenderTransform = _transformGroup;
+
+				(Canvas, Image) = BuildContentModel(_content);
 			}
 			else
 			{
 				Debug.WriteLine($"WARNING: Did not find the BitmapGridControl_Content template.");
 			}
 		}
+
+		//public IBitmapGrid GetTheBitmapGrid()
+		//{
+		//	Canvas = GetTheCanvas();
+		//	Canvas.Children.Add(Image);
+
+		//	ImageOffset = new VectorDbl();
+
+		//	_bitmapGrid = new BitmapGrid(Image, ViewPortSize, _blockSize, OurDisposeMapSectionImplementation);
+
+		//	return _bitmapGrid;
+		//}
+
+		//private Canvas GetTheCanvas()
+		//{
+		//	var content = Template.FindName("BitmapGridControl_Content", this) as FrameworkElement;
+		//	if (content != null)
+		//	{
+		//		Debug.WriteLine($"Found the BitmapGridControl_Content template.");
+
+		//		if (content is ContentPresenter cp)
+		//		{
+		//			if (cp.Content is Canvas ca)
+		//			{
+		//				return ca;	
+		//			}
+		//		}
+
+		//		throw new InvalidOperationException("The ContentPresenter was not found or its content is not a Canvas.");
+
+		//		// Setup the transform on the content so that we can position the Bitmap to "pull" it left and up so that the
+		//		// portion of the bitmap that is visible corresponds with the requested map coordinates.
+
+		//		//_content.RenderTransformOrigin = _contentRenderTransformOrigin;
+		//		//_content.RenderTransform = _transformGroup;
+		//	}
+		//	else
+		//	{
+		//		throw new InvalidOperationException($"Could not find the BitmapGridControl_Content template.");
+		//	}
+		//}
 
 		private (Canvas, Image) BuildContentModel(FrameworkElement content)
 		{
@@ -338,6 +381,8 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		#region Dependency Properties
 
 		#region ViewPortSize Dependency Property
 
@@ -380,31 +425,38 @@ namespace MSetExplorer
 		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			BitmapGridControl c = (BitmapGridControl)o;
-			var previousValue = (VectorDbl)e.OldValue;
-			var value = (VectorDbl)e.NewValue;
+			//var previousValue = (VectorDbl)e.OldValue;
+			var newValue = (VectorDbl)e.NewValue;
 
-			if (ScreenTypeHelper.IsVectorDblChanged(previousValue, value))
+			if (c.SetImageOffset(newValue))
 			{
-				//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
-
-				c._imageOffsetInternal = value;
-				c.SetImageOffset(value);
-				//c._bitmapGrid.ImageOffset = value;
-
-				//c.InvalidateScrollInfo();
-				c.ImageOffsetChanged?.Invoke(c, EventArgs.Empty);
+				c.InvalidateScrollInfo();
 			}
 		}
 
-		private void SetImageOffset(VectorDbl offset)
+		private bool SetImageOffset(VectorDbl newValue)
 		{
 			//Debug.Assert(offset.X >= 0 && offset.Y >= 0, "Setting offset to negative value.");
 
-			// For a postive offset, we "pull" the image down and to the left.
-			var invertedOffset = offset.Invert();
+			// For a positive offset, we "pull" the image down and to the left.
+			var invertedValue = newValue.Invert();
 
-			Image.SetValue(Canvas.LeftProperty, invertedOffset.X);
-			Image.SetValue(Canvas.BottomProperty, invertedOffset.Y);
+			VectorDbl currentValue = new VectorDbl(
+				(double)Image.GetValue(Canvas.LeftProperty), 
+				(double)Image.GetValue(Canvas.BottomProperty)
+				);
+
+			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
+			{
+				Image.SetValue(Canvas.LeftProperty, invertedValue.X);
+				Image.SetValue(Canvas.BottomProperty, invertedValue.Y);
+
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		private VectorDbl GetTempImageOffset(VectorDbl originalOffset, SizeDbl originalSize, SizeDbl newSize)
@@ -661,6 +713,8 @@ namespace MSetExplorer
 		//	get => (double) GetValue(ContentOffsetYProperty);
 		//	set => 	SetValue(ContentOffsetYProperty, value);
 		//}
+
+		#endregion
 
 		#endregion
 

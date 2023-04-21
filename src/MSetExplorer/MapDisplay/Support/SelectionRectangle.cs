@@ -470,7 +470,7 @@ namespace MSetExplorer
 						_selectedArea.Height = _defaultSelectionSize.Height;
 
 						var noSelectionRect = new RectangleInt();
-						AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, noSelectionRect, isPreview: true));
+						//AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, noSelectionRect, isPreview: true));
 					}
 
 					_selecting = value;
@@ -614,7 +614,7 @@ namespace MSetExplorer
 			if (double.IsNaN(cLeft) || Math.Abs(x - cLeft) > 0.01 || double.IsNaN(cBot) || Math.Abs(y - cBot) > 0.01)
 			{
 				SelectedPosition = new Point(x, y);
-				AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
+				//AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
 			}
 		}
 
@@ -648,10 +648,10 @@ namespace MSetExplorer
 				wasUpdated = true;
 			}
 
-			if (wasUpdated)
-			{
-				AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
-			}
+			//if (wasUpdated)
+			//{
+			//	AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
+			//}
 		}
 
 		// Position the current end of the drag line

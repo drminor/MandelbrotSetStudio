@@ -39,19 +39,34 @@ namespace MSS.Types
 			return new RSize(WidthNumerator * factor.Width, HeightNumerator * factor.Height, Exponent);
 		}
 
-		//public RSize Scale(PointInt factor)
-		//{
-		//	return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
-		//}
+		public RSize Scale(PointInt factor)
+		{
+			return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
+		}
+
+		public RSize Scale(VectorInt factor)
+		{
+			return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
+		}
 
 		public RVector Scale(BigVector factor)
 		{
 			return new RVector(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
 		}
 
-		public RSize DivideBy2()
+		public RSize ScaleByHalf()
 		{
 			return new RSize(Values[0], Values[1], Exponent - 1);
+		}
+
+		public RSize DivideBy2()
+		{
+			return new RSize(Values[0] / 2, Values[1] / 2, Exponent);
+		}
+
+		public RSize Invert()
+		{
+			return new RSize(Values[0] * -1, Values[1] * -1, Exponent);
 		}
 
 		/// <summary>
@@ -123,8 +138,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
-			return result;
+			return ToString(reduce: true);
 		}
 
 		public string ToString(bool reduce)

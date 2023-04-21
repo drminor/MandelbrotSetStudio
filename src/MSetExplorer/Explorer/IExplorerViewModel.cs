@@ -1,6 +1,7 @@
 ﻿using ImageBuilder;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 
@@ -24,7 +25,7 @@ namespace MSetExplorer
 
 		CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath, bool useEscapeVelocities);
 
-		CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits);
+		CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits);
 
 		JobProgressViewModel CreateAJobProgressViewModel();
 

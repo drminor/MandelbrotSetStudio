@@ -756,7 +756,7 @@ namespace MSetExplorer
 
 			var posterAreaInfo = _vm.PosterViewModel.PosterAreaInfo;
 
-			coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(posterAreaInfo.Coords, posterAreaInfo.CanvasSize, allowEdits: true);
+			coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(posterAreaInfo, posterSize.Value, allowEdits: true);
 
 			var coordsEditorWindow = new CoordsEditorWindow()
 			{
@@ -778,7 +778,7 @@ namespace MSetExplorer
 
 			if (_vm.PosterViewModel.TryGetPoster(posterName, out var poster))
 			{
-				MapAreaInfo? newPosterMapAreaInfo;
+				MapAreaInfo2? newPosterMapAreaInfo;
 
 				if (getSizeRequestParameter)
 				{
@@ -797,22 +797,36 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryGetNewSizeFromUser(Poster poster, [MaybeNullWhen(false)] out MapAreaInfo newPosterMapAreaInfo)
+		private bool TryGetNewSizeFromUser(Poster poster, [MaybeNullWhen(false)] out MapAreaInfo2 newPosterMapAreaInfo)
 		{
 			var curJob = poster.CurrentJob;
 
 			var cts = new CancellationTokenSource();
-			var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
+
+			var mapAreaInfo = curJob.MapAreaInfo;
+			//var oldAreaInfo = MapJobHelper2.Convert(mapAreaInfo, new SizeInt(1024));
+			var oldAreaInfo = new MapAreaInfo();
+
+
+			//var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
+			var previewSize = GetPreviewSize(oldAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
 
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
-			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
+			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
+			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(mapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 
-			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo)
+			//var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo)
+			//{
+			//	DataContext = posterSizeEditorViewModel
+			//};
+
+			var posterSizeEditorDialog = new PosterSizeEditorDialog(oldAreaInfo)
 			{
 				DataContext = posterSizeEditorViewModel
 			};
+
 
 			posterSizeEditorDialog.ApplyChangesRequested += PosterSizeEditorDialog_ApplyChangesRequested;
 
@@ -826,7 +840,12 @@ namespace MSetExplorer
 					{
 						var newMapArea = posterSizeEditorDialog.NewMapArea;
 						var newMapSize = posterSizeEditorDialog.NewMapSize;
-						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
+
+						//var mapAreaInfov2 = MapJobHelper2.Convert(posterMapAreaInfo);
+
+						//newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
+						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize) ?? new MapAreaInfo2();
+
 						return true;
 					}
 					else
@@ -862,10 +881,20 @@ namespace MSetExplorer
 				var posterMapAreaInfo = posterSizeEditorDialog.PosterMapAreaInfo;
 				if (posterMapAreaInfo != null)
 				{
+
 					var newMapArea = posterSizeEditorDialog.NewMapArea;
 					var newMapSize = posterSizeEditorDialog.NewMapSize;
+
+					//var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
+					//posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo);
+
 					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
-					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo);
+					if (newPosterMapAreaInfo != null)
+					{
+						//var oldAreaInfo = MapJobHelper2.Convert(newPosterMapAreaInfo, new SizeInt(1024));
+						var oldAreaInfo = new MapAreaInfo();
+						posterSizeEditorDialog.UpdateWithNewMapInfo(oldAreaInfo);
+					}
 				}
 			}
 		}

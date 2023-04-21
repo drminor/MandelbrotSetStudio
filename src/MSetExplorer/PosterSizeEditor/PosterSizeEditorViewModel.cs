@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -72,7 +73,7 @@ namespace MSetExplorer
 			_previewImage = new DrawingImage(_drawingGroup);
 		}
 
-		public void Initialize(MapAreaInfo posterMapAreaInfo, SizeDbl containerSize)
+		public void Initialize(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize)
 		{
 			_preserveAspectRatio = true;
 			_preserveWidth = true;
@@ -90,7 +91,7 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		public void UpdateWithNewMapInfo(MapAreaInfo posterMapAreaInfo)
+		public void UpdateWithNewMapInfo(MapAreaInfo2 posterMapAreaInfo)
 		{
 			UpdateWithChangesInternal(posterMapAreaInfo, ContainerSize);
 
@@ -106,14 +107,17 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		private void UpdateWithChangesInternal(MapAreaInfo posterMapAreaInfo, SizeDbl containerSize)
+		private void UpdateWithChangesInternal(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize)
 		{
 			PosterMapAreaInfo = posterMapAreaInfo;
 			_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
 
 			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
 
-			var posterSize = new SizeDbl(posterMapAreaInfo.CanvasSize);
+			//var posterSize = new SizeDbl(posterMapAreaInfo.CanvasSize);
+
+			var posterSize = new SizeDbl(1024);
+
 			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
 			_layoutInfo = new PreviewImageLayoutInfo(posterSize, previewImageSize, containerSize);
 
@@ -566,7 +570,7 @@ namespace MSetExplorer
 
 		public PreviewImageLayoutInfo LayoutInfo => _layoutInfo;
 
-		public MapAreaInfo? PosterMapAreaInfo { get; private set; }
+		public MapAreaInfo2? PosterMapAreaInfo { get; private set; }
 
 		public ImageSource PreviewImage => _previewImage;
 

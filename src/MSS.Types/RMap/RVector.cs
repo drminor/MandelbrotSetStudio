@@ -16,6 +16,9 @@ namespace MSS.Types
 		public RVector(RPoint rPoint) : this(rPoint.Values, rPoint.Exponent)
 		{ }
 
+		public RVector(RSize rSize) : this(rSize.Values, rSize.Exponent)
+		{ }
+
 		public RVector(BigVector bigVector) : this(bigVector.Values, 0)
 		{ }
 
@@ -71,14 +74,30 @@ namespace MSS.Types
 			return result;
 		}
 
+		public bool IsZero()
+		{
+			return XNumerator == 0 && YNumerator == 0;
+		}
+
 		#endregion
 
 		#region ToString and ICloneable
 
 		public override string ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
-			return result;
+			return ToString(reduce: true);
+		}
+
+		public string ToString(bool reduce)
+		{
+			if (reduce)
+			{
+				return BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
+			}
+			else
+			{
+				return BigIntegerHelper.GetDisplay(this);
+			}
 		}
 
 		object ICloneable.Clone()

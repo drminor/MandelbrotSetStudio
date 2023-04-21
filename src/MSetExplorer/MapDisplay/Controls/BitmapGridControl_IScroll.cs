@@ -19,8 +19,11 @@ namespace MSetExplorer
 	{
 		#region Scroll Info Properties
 
-		private bool _canHScroll;
-		private bool _canVScroll;
+		private Point _offset = new Point();
+		private Size _unscaledExtent = new Size();
+
+		private bool _canHScroll = false;
+		private bool _canVScroll = false;
 
 		#endregion
 
@@ -184,7 +187,7 @@ namespace MSetExplorer
 
 			InvalidateScrollInfo();
 
-			_contentOffsetTransform.Y = -offset;
+			//_contentOffsetTransform.Y = -offset;
 			InvalidateMeasure();
 		}
 
@@ -194,7 +197,7 @@ namespace MSetExplorer
 
 			InvalidateScrollInfo();
 
-			_contentOffsetTransform.Y = -_offset.Y;
+			//_contentOffsetTransform.Y = -_offset.Y;
 			InvalidateMeasure();
 		}
 

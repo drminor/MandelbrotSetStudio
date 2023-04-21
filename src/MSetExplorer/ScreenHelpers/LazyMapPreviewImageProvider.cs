@@ -16,9 +16,9 @@ namespace MSetExplorer
 	{
 		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly BitmapBuilder _bitmapBuilder;
-		private readonly MapJobHelper _mapJobHelper;
+		private readonly MapJobHelper2 _mapJobHelper;
 
-		private MapAreaInfo _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
+		private MapAreaInfo2 _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
 		private SizeInt _previewImageSize;
 		private MapAreaInfo _previewMapAreaInfo;	// Coods, SampleSize, etc. are ajusted for the previewImageSize
 
@@ -32,13 +32,15 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapJobHelper mapJobHelper, MapAreaInfo mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
+		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapJobHelper2 mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
 		{
 			_synchronizationContext = SynchronizationContext.Current;
 			_bitmapBuilder = bitmapBuilder;
 			_mapJobHelper = mapJobHelper;
 
 			_mapAreaInfo = mapAreaInfo;
+
+			//_mapAreaInfo = mapAreaInfo;
 			_previewImageSize = previewImageSize;
 			_colorBandSet = colorBandSet;
 			_mapCalcSettings = mapCalcSettings;
@@ -64,7 +66,7 @@ namespace MSetExplorer
 
 		public WriteableBitmap Bitmap { get; init; }
 
-		public MapAreaInfo MapAreaInfo
+		public MapAreaInfo2 MapAreaInfo
 		{
 			get => _mapAreaInfo;
 			set
@@ -89,12 +91,15 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private MapAreaInfo GetPreviewMapAreaInfo(MapAreaInfo mapAreaInfo, SizeInt previewImageSize)
+		private MapAreaInfo GetPreviewMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt previewImageSize)
 		{
-			var coords = mapAreaInfo.Coords;
-			var blockSize = mapAreaInfo.Subdivision.BlockSize;
+			//var coords = mapAreaInfo.Coords;
+			//var blockSize = mapAreaInfo.Subdivision.BlockSize;
 
-			var result = _mapJobHelper.GetMapAreaInfo(coords, previewImageSize);
+			//var result = _mapJobHelper.GetMapAreaInfo(coords, previewImageSize);
+
+			//var result = MapJobHelper2.Convert(mapAreaInfo, previewImageSize);
+			var result = new MapAreaInfo();
 
 			return result;
 		}

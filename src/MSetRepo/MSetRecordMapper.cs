@@ -115,7 +115,11 @@ namespace MSetRepo
 			//	Precision = source.MapAreaInfo.Precision
 			//};
 
-			var mapAreaInfoRecord = MapTo(source.MapAreaInfo);
+			// TODO: Fix Me
+			var oldAreaInfo = new MapAreaInfo(); // MapJobHelper2.Convert(source.MapAreaInfo, new SizeInt(1024));
+
+			//var mapAreaInfoRecord = MapTo(source.MapAreaInfo);
+			var mapAreaInfoRecord = MapTo(oldAreaInfo);
 
 			var result = new JobRecord(
 				ParentJobId: source.ParentJobId,

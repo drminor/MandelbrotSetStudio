@@ -178,9 +178,9 @@ namespace MSS.Types
 			return new SizeDbl(Math.Abs(Width), Math.Abs(Height));
 		}
 
-		public bool IsNearZero()
+		public bool IsNearZero(double threshold = 0.1)
 		{
-			return Math.Abs(Width) < 0.1 && Math.Abs(Height) < 0.1;
+			return Math.Abs(Width) < threshold && Math.Abs(Height) <threshold;
 		}
 
 		public RectangleDbl PlaceAtCenter(SizeDbl containerSize)

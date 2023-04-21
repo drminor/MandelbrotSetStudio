@@ -6,13 +6,14 @@ using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows.Media;
 
 namespace MSetExplorer
 {
 	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
-		private readonly MapJobHelper _mapJobHelper;
+		private readonly MapJobHelper2 _mapJobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
 		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
@@ -24,7 +25,7 @@ namespace MSetExplorer
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
 			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
-			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
+			MapJobHelper2 mapJobHelper, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
 			CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
 		{
 			_mapJobHelper = mapJobHelper;
@@ -116,20 +117,20 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits)
 		{
-			var result = _coordsEditorViewModelCreator(coords, canvasSize, allowEdits);
+			var result = _coordsEditorViewModelCreator(mapAreaInfo2, canvasSize, allowEdits);
 			return result;
 		}
 
-		public LazyMapPreviewImageProvider GetPreviewImageProvider (MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, SizeInt previewImagesize, Color fallbackColor)
+		public LazyMapPreviewImageProvider GetPreviewImageProvider (MapAreaInfo2 mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, SizeInt previewImagesize, Color fallbackColor)
 		{
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
 			var result = new LazyMapPreviewImageProvider(bitmapBuilder, _mapJobHelper, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
 			return result;
 		}
 
-		public MapAreaInfo GetUpdatedMapAreaInfo(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
+		public MapAreaInfo2? GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
 			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, screenArea, newMapSize);
 			return result;
@@ -182,12 +183,18 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
-				MapCoordsViewModel.JobId = PosterViewModel.CurrentPoster?.CurrentJob.Id.ToString();
-				MapCoordsViewModel.CurrentMapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
+				//MapCoordsViewModel.JobId = PosterViewModel.CurrentPoster?.CurrentJob.Id.ToString();
+				//MapCoordsViewModel.CurrentMapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
 
 				//MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);
 
 				MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
+
+				var currentjob = PosterViewModel.CurrentPoster?.CurrentJob;
+				if (currentjob != null)
+				{
+					UpdateTheMapCoordsView(currentjob, MapDisplayViewModel.CanvasSize);
+				}
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
@@ -197,6 +204,16 @@ namespace MSetExplorer
 
 				MapDisplayViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 			}
+		}
+
+		private void UpdateTheMapCoordsView(Job currentJob, SizeDbl canvasSize)
+		{
+			MapCoordsViewModel.JobId = currentJob.Id.ToString();
+
+			//var oldAreaInfo = MapJobHelper2.Convert(currentJob.MapAreaInfo, canvasSize.Round());
+			var oldAreaInfo = new MapAreaInfo();
+
+			MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
 		}
 
 		private void ColorBandViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)

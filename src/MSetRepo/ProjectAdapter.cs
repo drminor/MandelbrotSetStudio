@@ -472,6 +472,11 @@ namespace MSetRepo
 				jobRecord.MapAreaInfoRecord.SubdivisionRecord.BaseMapPosition = new BigVectorRecord();
 			}
 
+			var oldAreaInfo = _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord);
+
+			var mapAreaInfo = MapJobHelper2.Convert(oldAreaInfo);
+
+
 			var job = new Job(
 				id: jobId,
 				parentJobId: jobRecord.ParentJobId,
@@ -481,8 +486,9 @@ namespace MSetRepo
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 
-				mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord),
+				//mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord),
 				//canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
+				mapAreaInfo: mapAreaInfo,
 				colorBandSetId: jobRecord.ColorBandSetId,
 
 				mapCalcSettings: jobRecord.MapCalcSettings,
@@ -590,11 +596,10 @@ namespace MSetRepo
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount:2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			var mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool/*, mapSectionValuesPool*/, mapSectionZVectorsPool);
 
-			var mapSectionRequests = mapSectionHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
-
+			//var mapSectionRequests = mapSectionHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
 			// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.
-
-			var averageTargetIterations = mapSectionRequests.Average(x => x.MapCalcSettings.TargetIterations);
+			//var averageTargetIterations = mapSectionRequests.Average(x => x.MapCalcSettings.TargetIterations);
+			var averageTargetIterations = job.MapCalcSettings.TargetIterations;
 
 			return averageTargetIterations;
 		}

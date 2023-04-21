@@ -68,6 +68,13 @@ namespace MSS.Types
 			return result;
 		}
 
+		public VectorInt GetCenter()
+		{
+			var half = new VectorInt(Width / 2, Height / 2);
+			var center = Point.Translate(half);
+			return new VectorInt(center);
+		}
+
 		public override string? ToString()
 		{
 			return $"pos:{Position}, size:{Size}";

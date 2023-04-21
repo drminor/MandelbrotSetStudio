@@ -47,24 +47,24 @@ namespace MSetExplorer
 
 		#endregion
 
-		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b)
+		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b, double threshold = 0.1)
 		{
 			if (a.IsNAN() || b.IsNAN())
 			{
 				return false;
 			}
 
-			return !a.Diff(b).IsNearZero();
+			return !a.Diff(b).IsNearZero(threshold);
 		}
 
-		public static bool IsVectorDblChanged(VectorDbl a, VectorDbl b)
+		public static bool IsVectorDblChanged(VectorDbl a, VectorDbl b, double threshold = 0.1)
 		{
 			if (a.IsNAN() || b.IsNAN())
 			{
 				return false;
 			}
 
-			return !a.Diff(b).IsNearZero();
+			return !a.Diff(b).IsNearZero(threshold);
 		}
 
 

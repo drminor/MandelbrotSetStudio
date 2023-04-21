@@ -434,7 +434,8 @@ namespace MSetExplorer
 				var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, useEscapeVelocities, out var name, out var description))
 				{
-					var tentativePosterSize = curJob.CanvasSize;
+					//var tentativePosterSize = curJob.CanvasSize;
+					var tentativePosterSize = new SizeInt(1024);
 
 					if (_vm.ProjectViewModel.TryCreatePoster(name, description, tentativePosterSize, out var newPoster))
 					{
@@ -480,7 +481,8 @@ namespace MSetExplorer
 				return;
 			}
 
-			var imageSize = curProject.CurrentJob.CanvasSize.Scale(4);
+			//var imageSize = curProject.CurrentJob.CanvasSize.Scale(4);
+			var imageSize = new SizeInt(4096);
 
 			var initialImageFilename = GetImageFilename(curProject.Name, imageSize.Width);
 
@@ -975,7 +977,9 @@ namespace MSetExplorer
 			var curJob = _vm.ProjectViewModel.CurrentJob;
 			if (!curJob.IsEmpty)
 			{
-				coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.Coords, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
+				//coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.Coords, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
+
+				coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.MapAreaInfo, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
@@ -1229,8 +1233,9 @@ namespace MSetExplorer
 			{ 
 				var qualifiedAmount = GetPanAmount(amount, qualifer);
 				var panVector = GetPanVector(direction, qualifiedAmount);
-				var newArea = new RectangleInt(new PointInt(panVector), _vm.ProjectViewModel.CanvasSize);
-				_vm.ProjectViewModel.UpdateMapView(TransformType.Pan, newArea, currentMapAreaInfo);
+				//var newArea = new RectangleInt(new PointInt(panVector), _vm.ProjectViewModel.CanvasSize);
+
+				_vm.ProjectViewModel.UpdateMapView(TransformType.Pan, panVector, factor:1, currentMapAreaInfo);
 			}
 		}
 
@@ -1280,19 +1285,28 @@ namespace MSetExplorer
 				var curArea = new RectangleInt(new PointInt(), _vm.ProjectViewModel.CanvasSize);
 				var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
-				_vm.ProjectViewModel.UpdateMapView(TransformType.ZoomOut, newArea, currentMapAreaInfo);
+				_vm.ProjectViewModel.UpdateMapView(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo);
 			}
 		}
 
 		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)
 		{
+			//var targetAmount = qualifer switch
+			//{
+			//	ZoomOutAmountQualifer.x12 => baseAmount * 8,   // 128
+			//	ZoomOutAmountQualifer.x25 => baseAmount * 16,  // 256
+			//	ZoomOutAmountQualifer.x50 => baseAmount * 32,  // 512
+			//	ZoomOutAmountQualifer.x100 => baseAmount * 64, // 1024
+			//	_ => baseAmount * 32,
+			//};
+
 			var targetAmount = qualifer switch
 			{
-				ZoomOutAmountQualifer.x12 => baseAmount * 8,   // 128
-				ZoomOutAmountQualifer.x25 => baseAmount * 16,  // 256
-				ZoomOutAmountQualifer.x50 => baseAmount * 32,  // 512
-				ZoomOutAmountQualifer.x100 => baseAmount * 64, // 1024
-				_ => baseAmount * 32,
+				ZoomOutAmountQualifer.x12 => 1,		//	* 2
+				ZoomOutAmountQualifer.x25 => 2,		//	* 4
+				ZoomOutAmountQualifer.x50 => 3,		//	* 8
+				ZoomOutAmountQualifer.x100 => 4,	//	* 16
+				_ => 1,								//	Default = * 2
 			};
 
 			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize.Round(), targetAmount);

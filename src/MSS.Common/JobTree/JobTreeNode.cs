@@ -127,7 +127,7 @@ namespace MSS.Common
 
 		#region Convenience Properties
 
-		public int Zoom => -1 * Item.MapAreaInfo.Coords.Exponent;
+		public int Zoom => -1 * Item.MapAreaInfo.MapCenter.Exponent;
 		public int Iterations => Item.MapCalcSettings.TargetIterations;
 		public DateTime Created => Item.DateCreated;
 

@@ -1,8 +1,10 @@
 ﻿using ImageBuilder;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows.Input;
 
 namespace MSetExplorer
 {
@@ -128,9 +130,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits)
 		{
-			var result = _coordsEditorViewModelCreator(coords, canvasSize, allowEdits);
+			var result = _coordsEditorViewModelCreator(mapAreaInfo2, canvasSize, allowEdits);
 			return result;
 		}
 
@@ -175,8 +177,8 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
 
-				MapCoordsViewModel.JobId = curJobId;
-				MapCoordsViewModel.CurrentMapAreaInfo = newMapAreaInfo;
+				//MapCoordsViewModel.JobId = curJobId;
+				//MapCoordsViewModel.CurrentMapAreaInfo = newMapAreaInfo;
 
 				var areaColorAndCalcSettings = new AreaColorAndCalcSettings
 					(
@@ -191,6 +193,9 @@ namespace MSetExplorer
 				ColorBandSetHistogramViewModel.ColorBandSet = newColorBandSet;
 
 				MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
+
+				// TODO: Consider having the MapDisplayViewModel have a readonly property of (old) MapAreaInfo
+				UpdateTheMapCoordsView(curJob);
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
@@ -203,6 +208,17 @@ namespace MSetExplorer
 				{
 					MapDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 				}
+			}
+		}
+
+		private void UpdateTheMapCoordsView(Job currentJob)
+		{
+			var oldAreaInfo = MapDisplayViewModel.GetMapAreaInfo(); // MapJobHelper2.Convert(currentJob.MapAreaInfo, canvasSize.Round());
+
+			if (oldAreaInfo != null)
+			{
+				MapCoordsViewModel.JobId = currentJob.Id.ToString();
+				MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
 			}
 		}
 
@@ -254,7 +270,7 @@ namespace MSetExplorer
 			else
 			{
 				// Zoom or Pan Map Coordinates
-				ProjectViewModel.UpdateMapView(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
+				ProjectViewModel.UpdateMapView(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
 			}
 		}
 

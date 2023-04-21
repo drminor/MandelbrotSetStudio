@@ -123,9 +123,9 @@ namespace MSS.Types
 			return new VectorDbl(Math.Abs(X), Math.Abs(Y));
 		}
 
-		public bool IsNearZero()
+		public bool IsNearZero(double threshold = 0.1)
 		{
-			return Math.Abs(X) < 0.1 && Math.Abs(Y) < 0.1;
+			return Math.Abs(X) < threshold && Math.Abs(Y) < threshold;
 		}
 
 		#region IEquatable and IEqualityComparer Support

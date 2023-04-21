@@ -15,7 +15,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		#region Private Properties
 
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly MapJobHelper _mapJobHelper;
+		private readonly MapJobHelper2 _mapJobHelper;
 		private readonly MapSectionHelper _mapSectionHelper;
 
 		public JobProgressInfo? JobProgressInfo;
@@ -34,7 +34,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		#region Constructor
 
-		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper)
+		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper2 mapJobHelper, MapSectionHelper mapSectionHelper)
         {
 			//_stopwatch1 = Stopwatch.StartNew();
 			//_stopwatch1.Stop();
@@ -276,10 +276,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize);
+			//var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize);
+			//var oldAreaInfo = MapJobHelper2.Convert(job.MapAreaInfo, new SizeInt(1024));
+			var oldAreaInfo = new MapAreaInfo();
+
 			//AddTiming("GetMapAreaInfo");
 
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			LimbCount = mapSectionRequests[0].LimbCount;

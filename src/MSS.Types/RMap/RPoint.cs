@@ -61,11 +61,11 @@ namespace MSS.Types
 		//		: new RPoint(XNumerator + amount.XNumerator, YNumerator + amount.YNumerator, amount.Exponent);
 		//}
 
-		public RPoint Translate(RSize amount)
+		public RVector Translate(RSize amount)
 		{
 			return amount.Exponent != Exponent
 				? throw new InvalidOperationException($"Cannot translate a RPoint with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
-				: new RPoint(XNumerator + amount.WidthNumerator, YNumerator + amount.HeightNumerator, amount.Exponent);
+				: new RVector(XNumerator + amount.WidthNumerator, YNumerator + amount.HeightNumerator, amount.Exponent);
 		}
 
 		public RPoint Translate(RVector amount)
@@ -96,8 +96,7 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
-			return result;
+			return ToString(reduce: true);
 		}
 
 		public string ToString(bool reduce)

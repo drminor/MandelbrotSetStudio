@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 
 namespace MSS.Types
@@ -77,6 +78,14 @@ namespace MSS.Types
 			return result;
 		}
 
+
+		public static MapAreaInfo2 BuildHomeArea()
+		{
+			var subdivision = new Subdivision(new RSize(new RValue(1, -8)), new BigVector(), BLOCK_SIZE);
+			var mapAreaInfo = new MapAreaInfo2(new RPoint(0, 0, -8), subdivision, DEFAULT_PRECISION, new BigVector(), new VectorInt());
+
+			return mapAreaInfo;
+		}
 
 	}
 }

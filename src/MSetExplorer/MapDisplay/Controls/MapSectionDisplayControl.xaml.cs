@@ -3,6 +3,7 @@ using MSS.Types;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -35,7 +36,14 @@ namespace MSetExplorer
 			Loaded += MapSectionDisplayControl_Loaded;
 			Unloaded += MapSectionDisplayControl_Unloaded;
 
+			this.LayoutUpdated += MapSectionDisplayControl_LayoutUpdated;
+
 			InitializeComponent();
+		}
+
+		private void MapSectionDisplayControl_LayoutUpdated(object? sender, System.EventArgs e)
+		{
+			Debug.WriteLine("MapSectionDisplayControl_LayoutUpdated.");
 		}
 
 		private void MapSectionDisplayControl_Loaded(object sender, RoutedEventArgs e)
@@ -51,10 +59,13 @@ namespace MSetExplorer
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 
 				_vm = (IMapDisplayViewModel)DataContext;
-				_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
+				BitmapGridControl1.DisposeMapSection = _vm.DisposeMapSection;
 				_vm.BitmapGrid = BitmapGridControl1.BitmapGrid;
 
-				BitmapGridControl1.DisposeMapSection = _vm.DisposeMapSection;
+				//_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
+
+				//BitmapGridControl1.ImageOffset = _vm.ImageOffset;
+
 				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);

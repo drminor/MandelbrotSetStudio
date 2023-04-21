@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace WpfMapDisplayPOC
 {
@@ -20,7 +21,7 @@ namespace WpfMapDisplayPOC
 		#region Private Properties
 
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly MapJobHelper _mapJobHelper;
+		private readonly MapJobHelper2 _mapJobHelper;
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -42,7 +43,7 @@ namespace WpfMapDisplayPOC
 
 			_mapSectionAdapter = mapSectionAdapter;
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
+			_mapJobHelper = new MapJobHelper2(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
 
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
@@ -176,7 +177,10 @@ namespace WpfMapDisplayPOC
 				_colorMap = new ColorMap(colorBandSet);
 			}
 
-			var result = _mapSectionHelper.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
+			var oldAreaInfo = _mapJobHelper.Convert(job.MapAreaInfo, new SizeInt(1024));
+
+
+			var result = _mapSectionHelper.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, oldAreaInfo, job.MapCalcSettings);
 
 			return result;
 		}
@@ -234,10 +238,11 @@ namespace WpfMapDisplayPOC
 			//_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize);
+			var oldAreaInfo = _mapJobHelper.Convert(job.MapAreaInfo, new SizeInt(1024));
+
 			//AddTiming("GetMapAreaInfo");
 
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, job.MapCalcSettings);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			var limbCount = mapSectionRequests[0].LimbCount;

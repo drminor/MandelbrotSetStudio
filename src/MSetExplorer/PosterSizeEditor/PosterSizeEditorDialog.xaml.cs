@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
@@ -75,8 +76,11 @@ namespace MSetExplorer
 					throw new InvalidOperationException("The initialPosterMapAreaInfo is null.");
 				}
 
+				var mapAreaInfoV2 = MapJobHelper2.Convert(_initialPosterMapAreaInfo);
+
 				var containerSize = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
-				_vm.Initialize(_initialPosterMapAreaInfo, containerSize);
+				_vm.Initialize(mapAreaInfoV2, containerSize);
+
 				_initialPosterMapAreaInfo = null;
 
 				_canvas.SizeChanged += CanvasSize_Changed;
@@ -152,7 +156,7 @@ namespace MSetExplorer
 
 		public event EventHandler? ApplyChangesRequested;
 
-		public MapAreaInfo? PosterMapAreaInfo => _vm.PosterMapAreaInfo;
+		public MapAreaInfo2? PosterMapAreaInfo => _vm.PosterMapAreaInfo;
 
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
 		public SizeDbl NewMapSize => _vm.NewMapSize;
@@ -163,7 +167,8 @@ namespace MSetExplorer
 
 		public void UpdateWithNewMapInfo(MapAreaInfo mapAreaInfo)
 		{
-			_vm.UpdateWithNewMapInfo(mapAreaInfo);
+			var mapAreaInfoV2 = MapJobHelper2.Convert(mapAreaInfo);
+			_vm.UpdateWithNewMapInfo(mapAreaInfoV2);
 		}
 
 		#endregion

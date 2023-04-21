@@ -4,7 +4,6 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
-using System.Drawing;
 
 namespace MSS.Common
 {
@@ -36,7 +35,7 @@ namespace MSS.Common
 
 		#region Build Job Methods
 
-		public Job BuildHomeJob(MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
+		public Job BuildHomeJob(MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
 		{
 			ObjectId? parentJobId = null;
 			ObjectId projectId = ObjectId.Empty;
@@ -47,7 +46,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
 			var jobName = GetJobName(transformType);
 			var job = new Job(parentJobId, projectId, jobName, transformType, newArea, mapAreaInfo, colorBandSetId, mapCalcSettings);
@@ -120,6 +119,21 @@ namespace MSS.Common
 			return rectangleDbl;
 		}
 
+		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
+		{
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
+
+			return binaryPrecision;
+		}
+
+		public static string GetJobName(TransformType transformType)
+		{
+			//var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
+			var result = transformType.ToString();
+			return result;
+		}
+
 		public MapAreaInfo UpdateSizeWithDiagnostics(MapAreaInfo previousMapAreaInfo, SizeDbl previousSize, SizeDbl newSize)
 		{
 			var newScreenArea = GetNewScreenArea(previousSize, newSize);
@@ -149,21 +163,6 @@ namespace MSS.Common
 
 			var result = new MapAreaInfo(adjCoords, newSize.Round(), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
-			return result;
-		}
-
-		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
-		{
-			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
-			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
-
-			return binaryPrecision;
-		}
-
-		public static string GetJobName(TransformType transformType)
-		{
-			//var result = transformType == TransformType.Home ? "Home" : transformType.ToString();
-			var result = transformType.ToString();
 			return result;
 		}
 
@@ -273,7 +272,7 @@ namespace MSS.Common
 
 			diff = diff.Scale(subdivision.BlockSize);
 			var rDiff = subdivision.SamplePointDelta.Scale(diff);
-			rDiff = rDiff.DivideBy2();
+			rDiff = rDiff.ScaleByHalf();
 
 			var result = AdjustCoords(currentCoords, rDiff);
 			return result;

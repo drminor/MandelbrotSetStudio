@@ -10,14 +10,10 @@ namespace MSetExplorer
 		public static readonly AreaColorAndCalcSettings Empty = _lazyAreaColorAndCalcSettings.Value;
 
 		public AreaColorAndCalcSettings()
-			: this(string.Empty, JobOwnerType.Project, MapAreaInfo.Empty, new ColorBandSet(), new MapCalcSettings())
+			: this(string.Empty, JobOwnerType.Project, MapAreaInfo2.Empty, new ColorBandSet(), new MapCalcSettings())
 		{ }
 
-		public AreaColorAndCalcSettings(AreaColorAndCalcSettings current, MapCalcSettings newMapCalcSettings) 
-			: this(current.OwnerId, current.OwnerType, current.MapAreaInfo, current.ColorBandSet, newMapCalcSettings)
-		{ }
-
-		public AreaColorAndCalcSettings(string ownerId, JobOwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		public AreaColorAndCalcSettings(string ownerId, JobOwnerType ownerType, MapAreaInfo2 mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			OwnerId = ownerId;
 			OwnerType = ownerType;
@@ -28,7 +24,7 @@ namespace MSetExplorer
 
 		public string OwnerId { get; init; }
 		public JobOwnerType OwnerType { get; init; }
-		public MapAreaInfo MapAreaInfo { get; init; }
+		public MapAreaInfo2 MapAreaInfo { get; init; }
 		public ColorBandSet ColorBandSet { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
 
@@ -44,7 +40,7 @@ namespace MSetExplorer
 			return new AreaColorAndCalcSettings(OwnerId, OwnerType, MapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
 		}
 
-		public AreaColorAndCalcSettings UpdateWith(MapAreaInfo mapAreaInfo)
+		public AreaColorAndCalcSettings UpdateWith(MapAreaInfo2 mapAreaInfo)
 		{
 			return new AreaColorAndCalcSettings(OwnerId, OwnerType, mapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
 

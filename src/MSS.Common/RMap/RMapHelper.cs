@@ -155,7 +155,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Get MapBLockOffset Methods Previous / Ref
+		#region Get MapBlockOffset Methods Previous / Ref
 
 		public static BigVector GetMapBlockOffsetRef(RRectangle mapCoords, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset, out RPoint newPosition)
 		{
@@ -206,7 +206,7 @@ namespace MSS.Common
 			return offsetInSamplePoints;
 		}
 
-		private static BigVector GetOffsetAndRemainder(BigVector offsetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)
+		public static BigVector GetOffsetAndRemainder(BigVector offsetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
 			var blocksH = BigInteger.DivRem(offsetInSamplePoints.X, blockSize.Width, out var remainderH);
 			var blocksV = BigInteger.DivRem(offsetInSamplePoints.Y, blockSize.Height, out var remainderV);
@@ -317,7 +317,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		private static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
+		public static RRectangle ScaleByRsize(RectangleInt area, RSize factor)
 		{
 			var rectangle = new RRectangle(area);
 			var result = rectangle.Scale(factor);
@@ -409,68 +409,6 @@ namespace MSS.Common
 			var hRat = containerSize.Height / sizeToFit.Height;
 
 			var result = Math.Min(wRat, hRat);
-
-			return result;
-		}
-
-		#endregion
-
-		#region MapAreaInfo2 Support
-
-		public static MapAreaInfo Convert(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize)
-		{
-			var half = new PointInt(canvasSize.Width / 2, canvasSize.Height / 2);
-
-			var area = new RectangleInt(half.Invert(), canvasSize);
-
-			var coords = GetMapCoords(area, mapAreaInfo2.MapCenter, mapAreaInfo2.SamplePointDelta);
-			var mapBlockOffset = GetMapBlockOffset(coords.Position, mapAreaInfo2.SamplePointDelta, mapAreaInfo2.Subdivision.BlockSize, out var canvasControlOffset);
-
-			var result = new MapAreaInfo(coords, canvasSize, mapAreaInfo2.Subdivision, mapAreaInfo2.Precision, mapBlockOffset, canvasControlOffset);
-
-			return result;
-		}
-
-		public static MapAreaInfo2 Convert(MapAreaInfo mapAreaInfo)
-		{
-			var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
-			var blockSize = mapAreaInfo.Subdivision.BlockSize;
-
-			var nrmCoords = NormalizeCoordsWithSPD(mapAreaInfo.Coords, mapAreaInfo.Subdivision.SamplePointDelta);
-
-			var offset = new RSize(nrmCoords.WidthNumerator / 2, nrmCoords.HeightNumerator / 2, nrmCoords.Exponent);
-
-			var center = nrmCoords.Position.Translate(offset);
-
-			var mapBlockOffset = GetMapBlockOffset(center, samplePointDelta, blockSize, out var canvasControlOffset);
-
-			var result = new MapAreaInfo2(center, mapAreaInfo.Subdivision, mapAreaInfo.Precision, mapBlockOffset, canvasControlOffset);
-
-			return result;
-		}
-
-		public static RRectangle NormalizeCoordsWithSPD(RRectangle coords, RSize samplePointDelta)
-		{
-			if (coords.Exponent == samplePointDelta.Exponent)
-			{
-				return coords;
-			}
-
-			var rCoords = coords;
-			if (coords.Exponent > samplePointDelta.Exponent)
-			{
-				rCoords = Reducer.Reduce(coords);
-				if (rCoords.Exponent > samplePointDelta.Exponent)
-				{ 
-					throw new InvalidOperationException("Cannot Normalize coords having an exponent > the exponent of the SamplePointDelta.");
-				}
-			}
-
-			var factor = (long)Math.Pow(2, samplePointDelta.Exponent - rCoords.Exponent);
-
-			var newVals = rCoords.Values.Select(v => v * factor).ToArray();
-
-			var result = new RRectangle(newVals, samplePointDelta.Exponent);
 
 			return result;
 		}

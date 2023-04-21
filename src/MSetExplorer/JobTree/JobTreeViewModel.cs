@@ -170,7 +170,8 @@ namespace MSetExplorer
 			var node = path.Node;
 			var job = node.Item;
 
-			var coordVals = RValueHelper.GetValuesAsStrings(job.MapAreaInfo.Coords);
+			//var coordVals = RValueHelper.GetValuesAsStrings(job.MapAreaInfo.Coords);
+			var coordVals = RValueHelper.GetValuesAsStrings(job.MapAreaInfo.PositionAndDelta);
 
 			var nt = node.IsRoot ? " [Root]" : node.IsHome ? " [Home]" : null;
 

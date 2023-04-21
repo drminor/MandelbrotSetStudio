@@ -6,6 +6,7 @@ using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 
 namespace MSetExplorer
@@ -14,7 +15,7 @@ namespace MSetExplorer
 	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, bool useEscapeVelocities, DialogType dialogType);
 
-	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(RRectangle coords, SizeInt canvasSize, bool allowEdits);
+	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits);
 
 	internal class AppNavViewModel
 	{
@@ -26,7 +27,7 @@ namespace MSetExplorer
 
 		private readonly SharedColorBandSetAdapter _sharedColorBandSetAdapter;
 
-		private readonly MapJobHelper _mapJobHelper;
+		private readonly MapJobHelper2 _mapJobHelper;
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
@@ -39,7 +40,7 @@ namespace MSetExplorer
 			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
 
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor:10, RMapConstants.BLOCK_SIZE);
+			_mapJobHelper = new MapJobHelper2(subdivisionProvider, toleranceFactor:10, RMapConstants.BLOCK_SIZE);
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
@@ -143,9 +144,17 @@ namespace MSetExplorer
 			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, _mapSectionAdapter, initalName, useEscapeVelocities, dialogType);
 		}
 
-		private CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeInt canvasSize, bool allowEdits)
+		private CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits)
 		{
-			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, _mapJobHelper);
+			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
+
+			var newMapJobHelper = new MapJobHelper2(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
+			var oldMapJobHelper = new MapJobHelper(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
+
+			var oldAreaInfo = newMapJobHelper.Convert(mapAreaInfo2, canvasSize);
+			var coords = oldAreaInfo.Coords;
+
+			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, oldMapJobHelper);
 			return result;
 		}
 

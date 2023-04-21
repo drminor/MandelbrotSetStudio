@@ -43,25 +43,27 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public BitmapGrid(Image image, SizeInt blockSize, Action<MapSection> disposeMapSection)
+		public BitmapGrid(Image image, SizeDbl viewPortSize, SizeInt blockSize, Action<MapSection> disposeMapSection)
 		{
 			_image = image;
-
 			_blockSize = blockSize;
-			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
-
-			_bitmap = CreateBitmap(size: _blockSize);
-			_image.Source = Bitmap;
-
 			_disposeMapSection = disposeMapSection;
 
-			_viewPortSize = new SizeDbl();
-			//_imageOffset = new VectorDbl();
+			_viewPortSize = viewPortSize;
 
-			_canvasSizeInBlocks = new SizeInt();
-			ImageSizeInBlocks = new SizeInt();
-			//_maxYPtr = 1;
+			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_viewPortSize, _blockSize, keepSquare: false);
+			_canvasSizeInBlocks = sizeInWholeBlocks;
+
+			ImageSizeInBlocks = _canvasSizeInBlocks.Inflate(2);
+
+			_bitmap = CreateBitmap(ImageSizeInBlocks);
+			_image.Source = Bitmap;
+
+			//_image.SetValue(Canvas.LeftProperty, 0d);
+			//_image.SetValue(Canvas.BottomProperty, 0d);
+
 			_pixelsToClear = new byte[0];
+			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
 
 			_mapBlockOffset = new BigVector();
 
@@ -96,6 +98,8 @@ namespace MSetExplorer
 			{
 				_bitmap = value;
 				_image.Source = Bitmap;
+
+				
 			}
 		}
 
@@ -189,23 +193,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public VectorDbl ImageOffset
-		//{
-		//	get => _imageOffset;
-		//	set
-		//	{
-		//		if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
-		//		{
-		//			_imageOffset = value;
-
-		//			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(ViewPortSize.Round(), value.Round(), _blockSize);
-
-		//			Debug.WriteLineIf(DEBUG, $"BitmapGrid is getting a new ImageOffset, updating the MapExtentInBlocks from: {MapExtentInBlocks} to: {mapExtentInBlocks}.");
-		//			MapExtentInBlocks = mapExtentInBlocks;
-		//		}
-		//	}
-		//}
-
 		public SizeInt CanvasSizeInBlocks
 		{
 			get => _canvasSizeInBlocks;
@@ -225,12 +212,17 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(DEBUG, $"BitmapGrid Updating the ImageSizeInBlocks from: {ImageSizeInBlocks} to: {newImageSizeInBlocks}.");
 					ImageSizeInBlocks = newImageSizeInBlocks;
+
+					//if (!_registered)
+					//{
+					//	RefreshBitmap();
+					//	_registered = true;
+					//}
+
+
 				}
 			}
 		}
-
-		//// Not Used, need to remove the ImageOffset property from this class.
-		//private SizeInt MapExtentInBlocks { get; set; }
 
 		private SizeInt ImageSizeInBlocks { get; set; }
 
@@ -477,6 +469,7 @@ namespace MSetExplorer
 			}
 			else
 			{
+				Debug.WriteLineIf(DEBUG, $"BitmapGrid RefreshBitmap is being called. BitmapSize {new Size(_bitmap.Width, _bitmap.Height)} does = ImageSize.");
 				return false;
 			}
 		}
