@@ -383,7 +383,7 @@ namespace MSetExplorer
 			throw new NotImplementedException();
 		}
 
-		public void UpdateMapView(TransformType transformType, VectorInt panAmount, int factor, MapAreaInfo2? diagnosticAreaInfo)
+		public void UpdateMapView(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
@@ -518,7 +518,7 @@ namespace MSetExplorer
 		//	OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 		//}
 
-		private void AddNewCoordinateUpdateJob(Project project, TransformType transformType, VectorInt panAmount, int factor)
+		private void AddNewCoordinateUpdateJob(Project project, TransformType transformType, VectorInt panAmount, double factor)
 		{
 			var currentJob = project.CurrentJob;
 			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
@@ -598,7 +598,7 @@ namespace MSetExplorer
 
 			var zoomPoint = screenArea.GetCenter();
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(currentMapAreaInfo, zoomPoint, 3);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
 
 			return mapAreaInfo;
 		}

@@ -83,73 +83,82 @@ namespace MSS.Common
 		}
 
 		// Zoom
-		public MapAreaInfo2 GetMapAreaInfoZoomCenter(MapAreaInfo2 currentArea, int factor)
+		public MapAreaInfo2 GetMapAreaInfoZoomCenter(MapAreaInfo2 currentArea, double factor)
 		{
-			var currentMapCenter = currentArea.MapCenter;
-			var currentSamplePointDelta = currentArea.SamplePointDelta;
 			var blockSize = currentArea.Subdivision.BlockSize;
 
-			var newSamplePointDelta = new RSize(currentSamplePointDelta.Values, currentSamplePointDelta.Exponent - factor);
+			var scaledPd = GetNewSamplePointDelta(currentArea.PositionAndDelta, factor);
 
-			var adjMapCenter = RNormalizer.Normalize(currentMapCenter, newSamplePointDelta, out var adjSamplePointDelta);
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(adjMapCenter, adjSamplePointDelta, blockSize, out var canvasControlOffset);
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(scaledPd, blockSize, out var canvasControlOffset);
 
 			// Get a subdivision record from the database.
-			var subdivision = _subdivisonProvider.GetSubdivision(adjSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			var binaryPrecision = Math.Abs(adjSamplePointDelta.Exponent);
+			var subdivision = _subdivisonProvider.GetSubdivision(scaledPd.SamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+			var binaryPrecision = Math.Abs(scaledPd.Exponent);
 
-			var result = new MapAreaInfo2(adjMapCenter, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+			var result = new MapAreaInfo2(scaledPd, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
 
 		// Pan and Zoom
-		public MapAreaInfo2 GetMapAreaInfoZoomPoint(MapAreaInfo2 currentArea, VectorInt panAmount, int factor)
+		public MapAreaInfo2 GetMapAreaInfoZoomPoint(MapAreaInfo2 currentArea, VectorInt panAmount, double factor)
 		{
-			var currentMapCenter = currentArea.MapCenter;
-			var currentSamplePointDelta = currentArea.SamplePointDelta;
 			var blockSize = currentArea.Subdivision.BlockSize;
 
-			var rPanAmount = panAmount.Scale(currentSamplePointDelta);
-			var newMapCenter = currentMapCenter.Translate(rPanAmount);
+			var rPanAmount = panAmount.Scale(currentArea.SamplePointDelta);
+			var newMapCenter = currentArea.MapCenter.Translate(rPanAmount);
 
-			var newSamplePointDelta = new RSize(currentSamplePointDelta.Values, currentSamplePointDelta.Exponent - factor);
+			var transPd = new RPointAndDelta(newMapCenter, currentArea.SamplePointDelta);
+			var scaledAndTransPd = GetNewSamplePointDelta(transPd, factor);
 
-			var adjMapCenter = RNormalizer.Normalize(newMapCenter, newSamplePointDelta, out var adjSamplePointDelta);
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(adjMapCenter, adjSamplePointDelta, blockSize, out var canvasControlOffset);
-
+			var mapBlockOffset = RMapHelper.GetMapBlockOffset(scaledAndTransPd, blockSize, out var canvasControlOffset);
+			
 			// Get a subdivision record from the database.
-			var subdivision = _subdivisonProvider.GetSubdivision(adjSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			var binaryPrecision = Math.Abs(adjSamplePointDelta.Exponent);
+			var subdivision = _subdivisonProvider.GetSubdivision(scaledAndTransPd.SamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+			var binaryPrecision = Math.Abs(scaledAndTransPd.Exponent);
 
-			var result = new MapAreaInfo2(adjMapCenter, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+			var result = new MapAreaInfo2(scaledAndTransPd, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+
+
+			return result;
+		}
+
+		private RPointAndDelta GetNewSamplePointDelta(RPointAndDelta pointAndDelta, double factor)
+		{
+			var kFactor = (int)Math.Round(1 / factor * 1024);
+
+			var rKFactor = new RValue(kFactor, -10);
+
+			var rawResult = pointAndDelta.ScaleDelta(rKFactor);
+
+			var result = Reducer.Reduce(rawResult);
 
 			return result;
 		}
 
 		// Pan and Zoom
-		public MapAreaInfo2 GetMapAreaInfo(MapAreaInfo2 currentArea, VectorInt zoomPoint, int factor)
-		{
-			var currentMapCenter = currentArea.MapCenter;
-			var currentSamplePointDelta = currentArea.SamplePointDelta;
-			var blockSize = currentArea.Subdivision.BlockSize;
+		//public MapAreaInfo2 GetMapAreaInfo(MapAreaInfo2 currentArea, VectorInt zoomPoint, int factor)
+		//{
+		//	var currentMapCenter = currentArea.MapCenter;
+		//	var currentSamplePointDelta = currentArea.SamplePointDelta;
+		//	var blockSize = currentArea.Subdivision.BlockSize;
 
-			var rZoomPoint = zoomPoint.Scale(currentSamplePointDelta);
-			var newMapCenter = currentMapCenter.Translate(rZoomPoint);
+		//	var rZoomPoint = zoomPoint.Scale(currentSamplePointDelta);
+		//	var newMapCenter = currentMapCenter.Translate(rZoomPoint);
 
-			var newSamplePointDelta = new RSize(currentSamplePointDelta.Values, currentSamplePointDelta.Exponent - factor);
+		//	var newSamplePointDelta = new RSize(currentSamplePointDelta.Values, currentSamplePointDelta.Exponent - factor);
 
-			var adjMapCenter = RNormalizer.Normalize(newMapCenter, newSamplePointDelta, out var adjSamplePointDelta);
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(adjMapCenter, adjSamplePointDelta, blockSize, out var canvasControlOffset);
+		//	var adjMapCenter = RNormalizer.Normalize(newMapCenter, newSamplePointDelta, out var adjSamplePointDelta);
+		//	var mapBlockOffset = RMapHelper.GetMapBlockOffset(adjMapCenter, adjSamplePointDelta, blockSize, out var canvasControlOffset);
 
-			// Get a subdivision record from the database.
-			var subdivision = _subdivisonProvider.GetSubdivision(adjSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			var binaryPrecision = Math.Abs(adjSamplePointDelta.Exponent);
+		//	// Get a subdivision record from the database.
+		//	var subdivision = _subdivisonProvider.GetSubdivision(adjSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+		//	var binaryPrecision = Math.Abs(adjSamplePointDelta.Exponent);
 
-			var result = new MapAreaInfo2(adjMapCenter, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+		//	var result = new MapAreaInfo2(adjMapCenter, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
 		{
@@ -173,7 +182,7 @@ namespace MSS.Common
 		public MapAreaInfo Convert(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize)
 		{
 			var mapCenterPoint = mapAreaInfo2.MapCenter;
-			var samplePointDelta = mapAreaInfo2.PositionAndDelta.Size;
+			var samplePointDelta = mapAreaInfo2.PositionAndDelta.SamplePointDelta;
 			var blockSize = mapAreaInfo2.Subdivision.BlockSize;
 
 			// Create a rectangle centered at position: x = 0, y = 0
@@ -185,7 +194,11 @@ namespace MSS.Common
 			// add to it the CenterPoint, to get a RRectangle which is the map's coordinates
 
 			//var coords = RMapHelper.GetMapCoords(area, mapCenterPoint, samplePointDelta);
-			var rArea = RMapHelper.ScaleByRsize(area, samplePointDelta);
+
+			//var rArea = RMapHelper.ScaleByRsize(area, samplePointDelta);
+			var rArea = new RRectangle(area);
+			rArea = rArea.Scale(samplePointDelta);
+
 			var nrmArea = RNormalizer.Normalize(rArea, mapCenterPoint, out var nrmMapCenterPoint);
 			var coords = nrmArea.Translate(nrmMapCenterPoint);
 

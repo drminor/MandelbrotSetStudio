@@ -6,16 +6,23 @@ namespace MSetExplorer
 	public class AreaSelectedEventArgs : EventArgs
 	{
 		public TransformType TransformType { get; init; }
-		public RectangleInt Area { get; init; }
+
+		public VectorInt PanAmount { get; init; }
+		public double Factor { get; init; }
 
 		public bool IsPreview { get; init; }
 
-		public AreaSelectedEventArgs(TransformType transformType, RectangleInt area, bool isPreview = false)
+		public AreaSelectedEventArgs(TransformType transformType, VectorInt panAmount, double factor, bool isPreview = false)
 		{
 			TransformType = transformType;
-			Area = area;
+
+			PanAmount = panAmount;
+			Factor = factor;
+
 			IsPreview = isPreview;
+
 		}
+
 	}
 
 }

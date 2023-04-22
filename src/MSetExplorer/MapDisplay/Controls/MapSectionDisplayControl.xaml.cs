@@ -66,7 +66,7 @@ namespace MSetExplorer
 
 				//BitmapGridControl1.ImageOffset = _vm.ImageOffset;
 
-				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
+				//BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
 
 				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -82,7 +82,7 @@ namespace MSetExplorer
 
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
+			//BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
 
 			if (!(_selectionRectangle is null))
 			{
@@ -133,12 +133,12 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		{
-			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
+		//private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		//{
+		//	Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
 
-			BitmapGridControl1.ReportSizes("ViewPortSizeChanged");
-		}
+		//	BitmapGridControl1.ReportSizes("ViewPortSizeChanged");
+		//}
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{

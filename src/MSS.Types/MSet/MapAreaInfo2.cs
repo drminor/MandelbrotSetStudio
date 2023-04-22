@@ -21,7 +21,7 @@ namespace MSS.Types.MSet
 		public VectorInt CanvasControlOffset { get; init; }
 
 		public RPoint MapCenter => PositionAndDelta.Center;
-		public RSize SamplePointDelta => PositionAndDelta.Size;
+		public RSize SamplePointDelta => PositionAndDelta.SamplePointDelta;
 
 		public bool IsEmpty => PositionAndDelta == RPointAndDelta.Zero;
 

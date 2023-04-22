@@ -36,9 +36,9 @@ namespace MSS.Types
 			return new RRectangle(vals, exponent);
 		}
 
-		public static RPointAndDelta Reduce(RPointAndDelta rRectangle)
+		public static RPointAndDelta Reduce(RPointAndDelta rPointAndDelta)
 		{
-			var vals = Reduce(rRectangle, out var exponent);
+			var vals = Reduce(rPointAndDelta, out var exponent);
 			return new RPointAndDelta(vals, exponent);
 		}
 

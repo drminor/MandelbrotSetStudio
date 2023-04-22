@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using Windows.Media.SpeechRecognition;
 
 namespace MSetExplorer
 {
@@ -192,13 +191,6 @@ namespace MSetExplorer
 			get => _imageOffset;
 			set
 			{
-				//if (!_registrationComplete)
-				//{
-				//	ForceImageOffset(value);
-				//	_registrationComplete = true;
-				//	return;
-				//}
-
 				if (ScreenTypeHelper.IsVectorDblChanged(_imageOffset, value))
 				{
 					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
@@ -208,12 +200,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//private void ForceImageOffset(VectorDbl value)
-		//{
-		//	_imageOffset = value;
-		//	OnPropertyChanged(nameof(IMapDisplayViewModel.ImageOffset));
-		//}
 
 		public SizeDbl LogicalDisplaySize => CanvasSize;
 
@@ -401,17 +387,12 @@ namespace MSetExplorer
 		{
 			if (CurrentAreaColorAndCalcSettings != null)
 			{
-				var screenArea = e.Area;
-
 				if (!e.IsPreview)
 				{
 					Debug.WriteLine("Here");
 				}
 
-				var panAmount = screenArea.GetCenter();
-				var factor = 3;
-
-				MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, panAmount, factor, CurrentAreaColorAndCalcSettings.MapAreaInfo, e.IsPreview));
+				MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, e.PanAmount, e.Factor, CurrentAreaColorAndCalcSettings.MapAreaInfo, e.IsPreview));
 			}
 		}
 
@@ -419,12 +400,11 @@ namespace MSetExplorer
 		{
 			if (CurrentAreaColorAndCalcSettings != null)
 			{
-				var offset = e.Offset;
+				var dragOffset = e.DragOffset;
 
 				// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
-				var invOffset = offset.Invert();
-				//var screenArea = new RectangleInt(new PointInt(invOffset), CanvasSize.Round());
-				MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, invOffset, 1, CurrentAreaColorAndCalcSettings.MapAreaInfo));
+				var panAmount = dragOffset.Invert();
+				MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, panAmount, 1, CurrentAreaColorAndCalcSettings.MapAreaInfo));
 			}
 		}
 

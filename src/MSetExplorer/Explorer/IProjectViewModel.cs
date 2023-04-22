@@ -37,7 +37,7 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, RectangleInt newArea, MapAreaInfo2 currentMapAreaInfo);
 
-		void UpdateMapView(TransformType transformType, VectorInt panAmount, int factor, MapAreaInfo2? diagnosticAreaInfo);
+		void UpdateMapView(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo);
 
 		//void UpdateMapCoordinates(RRectangle coords);
 

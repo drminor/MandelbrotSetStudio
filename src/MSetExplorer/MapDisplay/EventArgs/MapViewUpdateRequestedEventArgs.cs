@@ -8,7 +8,7 @@ namespace MSetExplorer
 	{
 		public TransformType TransformType { get; init; }
 		public VectorInt PanAmount { get; init; }
-		public int Factor { get; init; }
+		public double Factor { get; init; }
 
 		public bool IsPreview { get; init; }
 
@@ -27,7 +27,7 @@ namespace MSetExplorer
 			ScreenArea = screenArea;
 		}
 
-		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, int factor, MapAreaInfo2 currentMapAreaInfo, bool isPreview = false)
+		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2 currentMapAreaInfo, bool isPreview = false)
 		{
 			TransformType = transformType;
 			PanAmount = panAmount;

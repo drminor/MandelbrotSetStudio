@@ -59,8 +59,6 @@ namespace MSetExplorer
 			_bitmap = CreateBitmap(ImageSizeInBlocks);
 			_image.Source = Bitmap;
 
-			//_image.SetValue(Canvas.LeftProperty, 0d);
-			//_image.SetValue(Canvas.BottomProperty, 0d);
 
 			_pixelsToClear = new byte[0];
 			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);

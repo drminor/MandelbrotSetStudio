@@ -1302,11 +1302,11 @@ namespace MSetExplorer
 
 			var targetAmount = qualifer switch
 			{
-				ZoomOutAmountQualifer.x12 => 1,		//	* 2
-				ZoomOutAmountQualifer.x25 => 2,		//	* 4
-				ZoomOutAmountQualifer.x50 => 3,		//	* 8
-				ZoomOutAmountQualifer.x100 => 4,	//	* 16
-				_ => 1,								//	Default = * 2
+				ZoomOutAmountQualifer.x12 => -1,		//	* 2
+				ZoomOutAmountQualifer.x25 => -2,		//	* 4
+				ZoomOutAmountQualifer.x50 => -3,		//	* 8
+				ZoomOutAmountQualifer.x100 => -4,	//	* 16
+				_ => -1,								//	Default = * 2
 			};
 
 			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize.Round(), targetAmount);

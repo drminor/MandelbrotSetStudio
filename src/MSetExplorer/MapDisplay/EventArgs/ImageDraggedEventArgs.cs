@@ -6,12 +6,12 @@ namespace MSetExplorer
 	public class ImageDraggedEventArgs : EventArgs
 	{
 		public TransformType TransformType { get; init; }
-		public VectorInt Offset { get; init; }
+		public VectorInt DragOffset { get; init; }
 
-		public ImageDraggedEventArgs(TransformType transformType, VectorInt offset)
+		public ImageDraggedEventArgs(TransformType transformType, VectorInt dragOffset)
 		{
 			TransformType = transformType;
-			Offset = offset;
+			DragOffset = dragOffset;
 		}
 	}
 

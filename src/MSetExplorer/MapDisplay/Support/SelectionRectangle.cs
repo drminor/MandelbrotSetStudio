@@ -7,6 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -37,9 +38,6 @@ namespace MSetExplorer
 
 		private bool _dragHasBegun;
 
-		internal event EventHandler<AreaSelectedEventArgs>? AreaSelected;
-		internal event EventHandler<ImageDraggedEventArgs>? ImageDragged;
-
 		#endregion
 
 		#region Constructor
@@ -50,7 +48,7 @@ namespace MSetExplorer
 			_mapDisplayViewModel = mapDisplayViewModel;
 			_blockSize = blockSize;
 
-			CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
 
 			_selectedArea = BuildSelectionRectangle(_canvas);
 			SelectedPosition = new Point();
@@ -115,6 +113,31 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		internal event EventHandler<AreaSelectedEventArgs>? AreaSelected;
+
+		internal event EventHandler<ImageDraggedEventArgs>? ImageDragged;
+
+		SizeDbl _displaySize;
+		public SizeDbl DisplaySize
+		{
+			get => _displaySize;
+
+			set
+			{
+				_displaySize = value;
+
+				Enabled = _mapDisplayViewModel.CurrentAreaColorAndCalcSettings != null;
+
+				if (Enabled)
+				{
+					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+					_selectedArea.Width = _defaultSelectionSize.Width;
+					_selectedArea.Height = _defaultSelectionSize.Height;
+				}
+
+			}
+		}
+
 		public RectangleDbl Area
 		{
 			get
@@ -174,18 +197,18 @@ namespace MSetExplorer
 
 				if (Enabled)
 				{
-					CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
 					_selectedArea.Width = _defaultSelectionSize.Width;
 					_selectedArea.Height = _defaultSelectionSize.Height;
 				}
 			}
 
-			//if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
-			//{
-			//	CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
-			//	_selectedArea.Width = _defaultSelectionSize.Width;
-			//	_selectedArea.Height = _defaultSelectionSize.Height;
-			//}
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			{
+				(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+				_selectedArea.Width = _defaultSelectionSize.Width;
+				_selectedArea.Height = _defaultSelectionSize.Height;
+			}
 		}
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
@@ -356,11 +379,23 @@ namespace MSetExplorer
 				if (Contains(posYInverted))
 				{
 					//Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = True.");
-					var adjArea = Area.Round();
-					Deactivate();
 
-					//Debug.WriteLine($"Will start job here with position: {adjArea.Position}");
-					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, adjArea));
+					var area = StopSelecting();
+
+					var selectonCenter = area.GetCenter();
+					var zoomPoint = GetCenterOffset(selectonCenter);
+
+					Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
+
+					var xFactor = _canvas.ActualWidth / area.Width;
+					var yFactor = _canvas.ActualHeight / area.Height;
+
+					var factor = Math.Min(xFactor, yFactor);
+
+					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}");
+
+					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor: factor, isPreview: false));
+
 				}
 				else
 				{
@@ -549,9 +584,12 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void Deactivate()
+		private RectangleDbl StopSelecting()
 		{
+			var snapShotOfArea = Area;
 			Selecting = false;
+
+			return snapShotOfArea;
 		}
 
 		private bool Contains(Point position)
@@ -578,7 +616,23 @@ namespace MSetExplorer
 
 			return result;
 		}
-		
+
+		// Return the distance from the Canvas Center to the new mouse position.
+		private VectorInt GetCenterOffset(PointDbl selectionCenter)
+		{
+			var startP = new PointDbl(_canvas.ActualWidth / 2, _canvas.ActualHeight / 2);
+
+			//var endP = new PointDbl(selectionCenter.X, _canvas.ActualHeight - selectionCenter.Y);
+			var endP = new PointDbl(selectionCenter.X, selectionCenter.Y);
+
+			var vectorDbl = endP.Diff(startP);
+
+			
+			var result = vectorDbl.Round();
+
+			return result;
+		}
+
 		// Reposition the Selection Rectangle, keeping it's current size.
 		private void Move(Point posYInverted)
 		{
@@ -723,14 +777,16 @@ namespace MSetExplorer
 			return new Rect(pos, newSize);
 		}
 
-		private void CalculatePitchAndDefaultSelectionSize(SizeInt displaySize, int pitchTarget)
+		private (int pitch, Size selctionSize) CalculatePitchAndDefaultSelectionSize(SizeInt displaySize, int pitchTarget)
 		{
-			_pitch = RMapHelper.CalculatePitch(displaySize, pitchTarget);
+			var pitch = RMapHelper.CalculatePitch(displaySize, pitchTarget);
 			var defaultSideLength = RMapHelper.CalculatePitch(displaySize, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
 
-			_defaultSelectionSize = GetDefaultSelectionSize(_canvas, defaultSideLength);
+			var defaultSelectionSize = GetDefaultSelectionSize(_canvas, defaultSideLength);
 
-			Debug.WriteLine($"ScreenSelection Pitch: {_pitch}. SelectionSize: {_defaultSelectionSize}.");
+			Debug.WriteLine($"ScreenSelection Pitch: {pitch}. SelectionSize: {defaultSelectionSize}.");
+
+			return (pitch, defaultSelectionSize);
 		}
 
 		private Size GetDefaultSelectionSize(Canvas canvas, double defaultSideLength)

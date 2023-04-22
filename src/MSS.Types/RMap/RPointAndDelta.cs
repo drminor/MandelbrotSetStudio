@@ -13,7 +13,9 @@ namespace MSS.Types
 
 		public int Exponent { get; init; }
 
-		public int Precision { get; set; }	// Number of binary digits
+		public int Precision { get; set; }  // Number of binary digits
+
+		#region Constructors
 
 		public RPointAndDelta() : this(0, 0, 0, 0, 0)
 		{ }
@@ -39,39 +41,59 @@ namespace MSS.Types
 			Precision = precision ?? BigIntegerHelper.DEFAULT_PRECISION;
 		}
 
-		public BigInteger X
+		#endregion
+
+		public BigInteger XNumerator
 		{
 			get => Values[0];
 			init => Values[0] = value;
 		}
 
-		public BigInteger Y
+		public BigInteger YNumerator
 		{
 			get => Values[1];
 			init => Values[1] = value;
 		}
 
-		public BigInteger Width
+		public BigInteger DeltaNumerator
 		{
 			get => Values[2];
-			init => Values[2] = value;
+			init
+			{
+				Values[2] = value;
+				Values[3] = value;
+			}
 		}
 
-		public BigInteger Height
+		public RPoint Position => new(XNumerator, YNumerator, Exponent);
+		public RSize SamplePointDelta => new(DeltaNumerator, DeltaNumerator, Exponent);
+
+		public RPoint Center => Position;
+		public RSize Width => new RSize(DeltaNumerator, DeltaNumerator, Exponent);
+		public RSize Height => new RSize(DeltaNumerator, DeltaNumerator, Exponent);
+
+		#region Public Methods
+
+		public RPointAndDelta ScaleDelta(RValue rValue)
 		{
-			get => Values[3];
-			init => Values[3] = value;
+			var deltaNumerator = DeltaNumerator * rValue.Value;
+			var exponent = Exponent + rValue.Exponent;
+			var precision = Math.Min(Precision, rValue.Precision);
+
+			var xNumerator = XNumerator * BigInteger.Pow(2, -1 * rValue.Exponent);
+			var yNumerator = YNumerator * BigInteger.Pow(2, -1 * rValue.Exponent);
+
+			var result = new RPointAndDelta(xNumerator, yNumerator, deltaNumerator, deltaNumerator, exponent, precision);
+
+			return result;
 		}
 
-		public RPoint Center => new(X, Y, Exponent);
-		public RPoint Position => Center; 
 
-		public BigInteger[] PositionValues => new BigInteger[] { X, Y };
-		public BigInteger[] SizeValues => new BigInteger[] { Width, Height };
+		//newExponent = exponent + reductionFactor;
+		//	var result = value / BigInteger.Pow(2, reductionFactor);
 
-		//public RValue[] GetRValues() => new RValue[] { Left, Right, Bottom, Top };
 
-		public RSize Size => new(Width, Height, Exponent);
+		#endregion
 
 		#region ToString / ICloneable / IEqualityComparer / IEquatable Support
 
@@ -82,7 +104,7 @@ namespace MSS.Types
 
 		public string ToString(bool reduce)
 		{
-			return $"Position: {Center.ToString(reduce)}, Size: {Size.ToString(reduce)}";
+			return $"Position: {Center.ToString(reduce)}, SamplePointDelta: {SamplePointDelta.ToString(reduce)}";
 		}
 
 		object ICloneable.Clone()
@@ -103,10 +125,9 @@ namespace MSS.Types
 		public bool Equals(RPointAndDelta? other)
 		{
 			return !(other is null)
-				&& X.Equals(other.X)
-				&& Y.Equals(other.Y)
-				&& Width.Equals(other.Width)
-				&& Height.Equals(other.Height)
+				&& XNumerator.Equals(other.XNumerator)
+				&& YNumerator.Equals(other.YNumerator)
+				&& DeltaNumerator.Equals(other.DeltaNumerator)
 				&& Exponent.Equals(other.Exponent);
 		}
 
@@ -129,7 +150,7 @@ namespace MSS.Types
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(X, Y, Width, Height, Exponent);
+			return HashCode.Combine(XNumerator, YNumerator, DeltaNumerator, Exponent);
 		}
 
 		public static bool operator ==(RPointAndDelta? p1, RPointAndDelta? p2)

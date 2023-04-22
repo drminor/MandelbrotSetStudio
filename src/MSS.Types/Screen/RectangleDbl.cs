@@ -39,6 +39,14 @@ namespace MSS.Types
 		public PointDbl Position => new PointDbl(X1, Y1);
 		public SizeDbl Size => new SizeDbl(Width, Height);
 
+		public PointDbl GetCenter()
+		{
+			// Note: Width and Height are guaranteed to be > 0.
+
+			var vectDbl = new VectorDbl(Width / 2, Height / 2);
+			return Point1.Translate(vectDbl);
+		}
+
 		public RectangleDbl Scale(double factor)
 		{
 			RectangleDbl result = new(X1 * factor, X2 * factor, Y1 * factor, Y2 * factor);

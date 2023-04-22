@@ -87,6 +87,13 @@ namespace MSS.Types
 				: new RVector(XNumerator - amount.XNumerator, YNumerator - amount.YNumerator, amount.Exponent);
 		}
 
+		public BigVector Divide(RSize amount)
+		{
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot Divide an RVector with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
+				: new BigVector(XNumerator / amount.WidthNumerator, YNumerator / amount.HeightNumerator);
+		}
+
 		public bool IsZero()
 		{
 			return XNumerator == 0 && YNumerator == 0;	

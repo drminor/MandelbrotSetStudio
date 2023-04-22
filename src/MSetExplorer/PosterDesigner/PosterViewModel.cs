@@ -756,7 +756,7 @@ namespace MSetExplorer
 			var currentMapAreaInfo = curJob.MapAreaInfo;
 
 			var zoomPoint = screenArea.GetCenter();
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(currentMapAreaInfo, zoomPoint, 3);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
 
 			return mapAreaInfo;
 		}
@@ -772,7 +772,7 @@ namespace MSetExplorer
 
 			var zoomPoint = screenArea.GetCenter();
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(currentMapAreaInfo, zoomPoint, 3);
+			var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
 
 			return mapAreaInfo;
 		}

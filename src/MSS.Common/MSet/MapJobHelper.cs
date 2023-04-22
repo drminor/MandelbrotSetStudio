@@ -94,30 +94,30 @@ namespace MSS.Common
 			return result;
 		}
 
-		public MapAreaInfo UpdateSize(MapAreaInfo previousMapAreaInfo, SizeDbl previousSize, SizeDbl newSize)
-		{
-			var newScreenArea = GetNewScreenArea(previousSize, newSize);
+		//public MapAreaInfo UpdateSize(MapAreaInfo previousMapAreaInfo, SizeDbl previousSize, SizeDbl newSize)
+		//{
+		//	var newScreenArea = GetNewScreenArea(previousSize, newSize);
 
-			var mapPosition = previousMapAreaInfo.Coords.Position;
-			var samplePointDelta = previousMapAreaInfo.Subdivision.SamplePointDelta;
+		//	var mapPosition = previousMapAreaInfo.Coords.Position;
+		//	var samplePointDelta = previousMapAreaInfo.Subdivision.SamplePointDelta;
 
-			var newCoords = RMapHelper.GetMapCoords(newScreenArea.Round(), mapPosition, samplePointDelta);
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
+		//	var newCoords = RMapHelper.GetMapCoords(newScreenArea.Round(), mapPosition, samplePointDelta);
+		//	var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
 
-			var result = new MapAreaInfo(newCoords, newSize.Round(), previousMapAreaInfo.Subdivision, previousMapAreaInfo.Precision, mapBlockOffset, canvasControlOffset);
+		//	var result = new MapAreaInfo(newCoords, newSize.Round(), previousMapAreaInfo.Subdivision, previousMapAreaInfo.Precision, mapBlockOffset, canvasControlOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		// Calculate new coordinates for a new display size
-		private RectangleDbl GetNewScreenArea(SizeDbl canvasSize, SizeDbl newCanvasSize)
-		{
-			var diff = canvasSize.Sub(newCanvasSize);
-			diff = diff.Scale(0.5);
-			var rectangleDbl = new RectangleDbl(new PointDbl(diff), newCanvasSize);
+		//// Calculate new coordinates for a new display size
+		//private RectangleDbl GetNewScreenArea(SizeDbl canvasSize, SizeDbl newCanvasSize)
+		//{
+		//	var diff = canvasSize.Sub(newCanvasSize);
+		//	diff = diff.Scale(0.5);
+		//	var rectangleDbl = new RectangleDbl(new PointDbl(diff), newCanvasSize);
 
-			return rectangleDbl;
-		}
+		//	return rectangleDbl;
+		//}
 
 		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
 		{
@@ -134,37 +134,37 @@ namespace MSS.Common
 			return result;
 		}
 
-		public MapAreaInfo UpdateSizeWithDiagnostics(MapAreaInfo previousMapAreaInfo, SizeDbl previousSize, SizeDbl newSize)
-		{
-			var newScreenArea = GetNewScreenArea(previousSize, newSize);
+		//public MapAreaInfo UpdateSizeWithDiagnostics(MapAreaInfo previousMapAreaInfo, SizeDbl previousSize, SizeDbl newSize)
+		//{
+		//	var newScreenArea = GetNewScreenArea(previousSize, newSize);
 
-			var mapPosition = previousMapAreaInfo.Coords.Position;
-			var subdivision = previousMapAreaInfo.Subdivision;
-			var samplePointDelta = subdivision.SamplePointDelta;
+		//	var mapPosition = previousMapAreaInfo.Coords.Position;
+		//	var subdivision = previousMapAreaInfo.Subdivision;
+		//	var samplePointDelta = subdivision.SamplePointDelta;
 
-			var newCoords = RMapHelper.GetMapCoords(newScreenArea.Round(), mapPosition, samplePointDelta);
+		//	var newCoords = RMapHelper.GetMapCoords(newScreenArea.Round(), mapPosition, samplePointDelta);
 
-			//var newMapAreaInfo = GetMapAreaInfo(newCoords, subdivision, newSize.Round());
+		//	//var newMapAreaInfo = GetMapAreaInfo(newCoords, subdivision, newSize.Round());
 
-			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
+		//	// Determine the amount to translate from our coordinates to the subdivision coordinates.
+		//	var mapBlockOffset = RMapHelper.GetMapBlockOffset(newCoords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
 
-			var newPosition = samplePointDelta.Scale(mapBlockOffset.Scale(BlockSize).Tranlate(canvasControlOffset));
+		//	var newPosition = samplePointDelta.Scale(mapBlockOffset.Scale(BlockSize).Tranlate(canvasControlOffset));
 
-			var adjPos = RNormalizer.Normalize(newPosition, newCoords.Size, out var adjMapSize);
-			var adjCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
+		//	var adjPos = RNormalizer.Normalize(newPosition, newCoords.Size, out var adjMapSize);
+		//	var adjCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
 
-			ReportCoordsDiff(previousMapAreaInfo.Coords, adjCoords, "for a new display size");
+		//	ReportCoordsDiff(previousMapAreaInfo.Coords, adjCoords, "for a new display size");
 
-			var checkSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			Debug.Assert(checkSubdivision == subdivision, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
+		//	var checkSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+		//	Debug.Assert(checkSubdivision == subdivision, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
 
-			var binaryPrecision = GetBinaryPrecision(adjCoords, samplePointDelta, out _);
+		//	var binaryPrecision = GetBinaryPrecision(adjCoords, samplePointDelta, out _);
 
-			var result = new MapAreaInfo(adjCoords, newSize.Round(), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+		//	var result = new MapAreaInfo(adjCoords, newSize.Round(), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private void ReportSamplePointRatios(RRectangle coords, SizeInt displaySize, double samplePointWToHRatio)
 		{
@@ -191,51 +191,51 @@ namespace MSS.Common
 		#region GetMapAreaInfo Methods - Previous / Ref
 
 		// Calculate the SamplePointDelta, MapBlockOffset, CanvasControlOffset, using the specified coordinates and display size
-		public MapAreaInfo GetMapAreaInfoRef(RRectangle coords, SizeInt canvasSize)
-		{
-			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
-			var displaySize = canvasSize;
+		//public MapAreaInfo GetMapAreaInfoRef(RRectangle coords, SizeInt canvasSize)
+		//{
+		//	// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
+		//	var displaySize = canvasSize;
 
-			// Using the size of the new map and the map coordinates, calculate the sample point size
-			var samplePointDelta = RMapHelper.GetSamplePointDelta(coords, displaySize, ToleranceFactor, out var wToHRatio);
+		//	// Using the size of the new map and the map coordinates, calculate the sample point size
+		//	var samplePointDelta = RMapHelper.GetSamplePointDelta(coords, displaySize, ToleranceFactor, out var wToHRatio);
 
-			// The samplePointDelta may require the coordinates to be adjusted.
-			var updatedCoords = RMapHelper.AdjustCoordsWithNewSPD(coords, samplePointDelta, displaySize);
+		//	// The samplePointDelta may require the coordinates to be adjusted.
+		//	var updatedCoords = RMapHelper.AdjustCoordsWithNewSPD(coords, samplePointDelta, displaySize);
 
-			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			var mapBlockOffset = RMapHelper.GetMapBlockOffsetRef(updatedCoords, samplePointDelta, BlockSize, out var canvasControlOffset, out RPoint newPosition);
+		//	// Determine the amount to translate from our coordinates to the subdivision coordinates.
+		//	var mapBlockOffset = RMapHelper.GetMapBlockOffsetRef(updatedCoords, samplePointDelta, BlockSize, out var canvasControlOffset, out RPoint newPosition);
 
-			var newCoords = RMapHelper.CombinePosAndSize(newPosition, updatedCoords.Size);
+		//	var newCoords = RMapHelper.CombinePosAndSize(newPosition, updatedCoords.Size);
 
-			// Get a subdivision record from the database.
-			var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+		//	// Get a subdivision record from the database.
+		//	var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 
-			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
-			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+		//	var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
+		//	var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		// Calculate the MapBlockOffset and CanvasControlOffset while keeping the SamplePointDelta, constant.
-		public MapAreaInfo GetMapAreaInfoRef(RRectangle coords, Subdivision subdivision, SizeInt canvasSize)
-		{
-			var samplePointDelta = subdivision.SamplePointDelta;
-			var updatedCoords = coords.Clone();
+		//// Calculate the MapBlockOffset and CanvasControlOffset while keeping the SamplePointDelta, constant.
+		//public MapAreaInfo GetMapAreaInfoRef(RRectangle coords, Subdivision subdivision, SizeInt canvasSize)
+		//{
+		//	var samplePointDelta = subdivision.SamplePointDelta;
+		//	var updatedCoords = coords.Clone();
 
-			var mapBlockOffset = RMapHelper.GetMapBlockOffsetRef(updatedCoords, samplePointDelta, BlockSize, out var canvasControlOffset, out RPoint newPosition);
-			var newCoords = RMapHelper.CombinePosAndSize(newPosition, updatedCoords.Size);
+		//	var mapBlockOffset = RMapHelper.GetMapBlockOffsetRef(updatedCoords, samplePointDelta, BlockSize, out var canvasControlOffset, out RPoint newPosition);
+		//	var newCoords = RMapHelper.CombinePosAndSize(newPosition, updatedCoords.Size);
 
-			//var localMapBlockOffset = GetLocalMapBlockOffset(mapBlockOffset, subdivision);
+		//	//var localMapBlockOffset = GetLocalMapBlockOffset(mapBlockOffset, subdivision);
 
-			var checkSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			Debug.Assert(checkSubdivision == subdivision, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
+		//	var checkSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+		//	Debug.Assert(checkSubdivision == subdivision, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
 
-			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
+		//	var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
 
-			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+		//	var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 

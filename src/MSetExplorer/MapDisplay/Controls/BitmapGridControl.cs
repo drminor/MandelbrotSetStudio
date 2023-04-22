@@ -308,47 +308,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public IBitmapGrid GetTheBitmapGrid()
-		//{
-		//	Canvas = GetTheCanvas();
-		//	Canvas.Children.Add(Image);
-
-		//	ImageOffset = new VectorDbl();
-
-		//	_bitmapGrid = new BitmapGrid(Image, ViewPortSize, _blockSize, OurDisposeMapSectionImplementation);
-
-		//	return _bitmapGrid;
-		//}
-
-		//private Canvas GetTheCanvas()
-		//{
-		//	var content = Template.FindName("BitmapGridControl_Content", this) as FrameworkElement;
-		//	if (content != null)
-		//	{
-		//		Debug.WriteLine($"Found the BitmapGridControl_Content template.");
-
-		//		if (content is ContentPresenter cp)
-		//		{
-		//			if (cp.Content is Canvas ca)
-		//			{
-		//				return ca;	
-		//			}
-		//		}
-
-		//		throw new InvalidOperationException("The ContentPresenter was not found or its content is not a Canvas.");
-
-		//		// Setup the transform on the content so that we can position the Bitmap to "pull" it left and up so that the
-		//		// portion of the bitmap that is visible corresponds with the requested map coordinates.
-
-		//		//_content.RenderTransformOrigin = _contentRenderTransformOrigin;
-		//		//_content.RenderTransform = _transformGroup;
-		//	}
-		//	else
-		//	{
-		//		throw new InvalidOperationException($"Could not find the BitmapGridControl_Content template.");
-		//	}
-		//}
-
 		private (Canvas, Image) BuildContentModel(FrameworkElement content)
 		{
 			if (content is ContentPresenter cp)
