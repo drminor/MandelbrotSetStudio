@@ -21,7 +21,7 @@ namespace WpfMapDisplayPOC
 		#region Private Properties
 
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-		private readonly MapJobHelper2 _mapJobHelper;
+		private readonly MapJobHelper _mapJobHelper;
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly MapSectionHelper _mapSectionHelper;
@@ -43,7 +43,7 @@ namespace WpfMapDisplayPOC
 
 			_mapSectionAdapter = mapSectionAdapter;
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper2(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
+			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
 
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;

@@ -16,7 +16,7 @@ namespace MSetExplorer
 	{
 		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly BitmapBuilder _bitmapBuilder;
-		private readonly MapJobHelper2 _mapJobHelper;
+		private readonly MapJobHelper _mapJobHelper;
 
 		private MapAreaInfo2 _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
 		private SizeInt _previewImageSize;
@@ -32,7 +32,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapJobHelper2 mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
+		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
 		{
 			_synchronizationContext = SynchronizationContext.Current;
 			_bitmapBuilder = bitmapBuilder;

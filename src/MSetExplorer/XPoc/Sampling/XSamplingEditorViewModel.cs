@@ -339,7 +339,7 @@ namespace MSetExplorer.XPoc
 			var samplePointDelta = screenMapAreaInfo.Subdivision.SamplePointDelta;
 
 			var selectedRectangle = new RectangleInt(new PointInt(), SelectionSize.Round());
-			var selectedCoords = RMapHelper.GetMapCoords(selectedRectangle, mapPosition, samplePointDelta);
+			var selectedCoords = GetMapCoords(selectedRectangle, mapPosition, samplePointDelta);
 
 			var screenSize = screenMapAreaInfo.CanvasSize;
 			var selectedMapAreaInfo = GetMapAreaInfo(selectedCoords, screenSize, _blockSize);
@@ -381,10 +381,10 @@ namespace MSetExplorer.XPoc
 			//var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, canvasSize, TOLERANCE_FACTOR);
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
-			var samplePointDelta = RMapHelper.GetSamplePointDelta(coords, displaySize, TOLERANCE_FACTOR, out var wToHRatio);
+			var samplePointDelta = GetSamplePointDelta(coords, displaySize, TOLERANCE_FACTOR, out var wToHRatio);
 
 			// The samplePointDelta may require the coordinates to be adjusted.
-			var updatedCoords = RMapHelper.AdjustCoordsWithNewSPD(coords, samplePointDelta, displaySize);
+			var updatedCoords = AdjustCoordsWithNewSPD(coords, samplePointDelta, displaySize);
 
 			Debug.WriteLine($"\nThe new coords are : {updatedCoords},\n old = {coords}. (While calculating SamplePointDelta.)\n");
 
@@ -395,7 +395,7 @@ namespace MSetExplorer.XPoc
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			//var mapBlockOffset = RMapHelper.GetMapBlockOffset(ref updatedCoords, samplePointDelta, blockSize, out var canvasControlOffset);
 
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(updatedCoords.Position, samplePointDelta, blockSize, out var canvasControlOffset);
+			var mapBlockOffset = GetMapBlockOffset(updatedCoords.Position, samplePointDelta, blockSize, out var canvasControlOffset);
 			//var newCoords = RMapHelper.CombinePosAndSize(newPosition, updatedCoords.Size);
 
 			var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
@@ -407,6 +407,25 @@ namespace MSetExplorer.XPoc
 			return result;
 		}
 
+		public static RRectangle AdjustCoordsWithNewSPD(RRectangle coords, RSize samplePointDelta, SizeInt canvasSize)
+		{
+			// The size of the new map is equal to the product of the number of samples by the new samplePointDelta.
+			var adjMapSize = samplePointDelta.Scale(canvasSize);
+
+			// Calculate the new map coordinates using the existing position and the new size.
+			var newCoords = CombinePosAndSize(coords.Position, adjMapSize);
+
+			return newCoords;
+		}
+
+		public static RRectangle CombinePosAndSize(RPoint pos, RSize size)
+		{
+			var nrmPos = RNormalizer.Normalize(pos, size, out var nrmSize);
+			var result = new RRectangle(nrmPos, nrmSize);
+
+			return result;
+		}
+
 		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
 		{
 			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
@@ -414,6 +433,109 @@ namespace MSetExplorer.XPoc
 
 			return binaryPrecision;
 		}
+
+		#endregion
+
+		#region Get MapBlockOffset Methods 
+
+		public BigVector GetMapBlockOffset(RPoint mapPosition, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset/*, out RPoint newPosition*/)
+		{
+			// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
+			// The screen origin = left, bottom. Map origin = left, bottom.
+
+			if (mapPosition.IsZero())
+			{
+				canvasControlOffset = new VectorInt();
+				return new BigVector();
+			}
+
+			var distance = new RVector(mapPosition);
+			var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta/*, out newPosition*/);
+
+			var result = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+
+			return result;
+		}
+
+		private BigVector GetNumberOfSamplePoints(RVector distance, RSize samplePointDelta/*, out RPoint newPosition*/)
+		{
+			var nrmDistance = RNormalizer.Normalize(distance, samplePointDelta, out var nrmSamplePointDelta);
+
+			// # of whole sample points between the source and destination origins.
+			var offsetInSamplePoints = nrmDistance.Divide(nrmSamplePointDelta);
+
+			return offsetInSamplePoints;
+		}
+
+		#endregion
+
+		#region Map Area Support
+
+		// Convert the screen coordinates given by screenArea into map coordinates,
+		// then move these map coordiates by the x and y distances specified in the current MapPosition.
+		private RRectangle GetMapCoords(RectangleInt screenArea, RPoint mapPosition, RSize samplePointDelta)
+		{
+			// Convert to map coordinates.
+
+			//var rArea = ScaleByRsize(screenArea, samplePointDelta);
+			var rArea = new RRectangle(screenArea);
+			rArea = rArea.Scale(samplePointDelta);
+
+			// Translate the area by the current map position
+			var nrmArea = RNormalizer.Normalize(rArea, mapPosition, out var nrmPos);
+			var result = nrmArea.Translate(nrmPos);
+
+			//Debug.WriteLine($"GetMapCoords is receiving area: {screenArea}.");
+			//Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
+
+			return result;
+		}
+
+		private RSize GetSamplePointDelta(RRectangle coords, SizeInt canvasSize, double toleranceFactor, out double wToHRatio)
+		{
+			var spdH = BigIntegerHelper.Divide(coords.Width, canvasSize.Width, toleranceFactor);
+			var spdV = BigIntegerHelper.Divide(coords.Height, canvasSize.Height, toleranceFactor);
+
+			var nH = RNormalizer.Normalize(spdH, spdV, out var nV);
+
+			// Take the smallest value
+			var result = new RSize(RValue.Min(nH, nV));
+
+			wToHRatio = nH.DivideLimitedPrecision(nV);
+
+			return result;
+		}
+
+		//public static int CalculatePitch(SizeInt displaySize, int pitchTarget)
+		//{
+		//	// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
+		//	int result;
+
+		//	var width = displaySize.Width;
+		//	var height = displaySize.Height;
+
+		//	if (double.IsNaN(width) || double.IsNaN(height) || width == 0 || height == 0)
+		//	{
+		//		return pitchTarget;
+		//	}
+
+		//	if (width >= height)
+		//	{
+		//		result = (int)Math.Round(width / Math.Pow(2, Math.Round(Math.Log2(width / pitchTarget))));
+		//	}
+		//	else
+		//	{
+		//		result = (int)Math.Round(height / Math.Pow(2, Math.Round(Math.Log2(height / pitchTarget))));
+		//	}
+
+		//	if (result < 0)
+		//	{
+		//		Debug.WriteLine($"WARNING: Calculating Pitch using Display Size: {displaySize} and Pitch Target: {pitchTarget}, produced {result}.");
+		//		result = pitchTarget;
+		//	}
+
+		//	return result;
+		//}
 
 		#endregion
 

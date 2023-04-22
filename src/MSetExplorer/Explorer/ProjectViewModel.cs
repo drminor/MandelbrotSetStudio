@@ -18,7 +18,7 @@ namespace MSetExplorer
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		private readonly MapJobHelper2 _mapJobHelper;
+		private readonly MapJobHelper _mapJobHelper;
 		private readonly SizeInt _blockSize;
 
 		private SizeInt _canvasSize;
@@ -30,7 +30,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ProjectViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper2 mapJobHelper, SizeInt blockSize)
+		public ProjectViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;

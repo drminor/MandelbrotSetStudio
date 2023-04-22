@@ -474,7 +474,7 @@ namespace MSetRepo
 
 			var oldAreaInfo = _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord);
 
-			var mapAreaInfo = MapJobHelper2.Convert(oldAreaInfo);
+			var mapAreaInfo = MapJobHelper.Convert(oldAreaInfo);
 
 
 			var job = new Job(

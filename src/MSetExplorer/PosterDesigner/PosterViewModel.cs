@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using MSetRepo;
+﻿using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -15,8 +14,7 @@ namespace MSetExplorer
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		private readonly MapJobHelper2 _mapJobHelper;
-		private readonly MapJobHelper _oldJobHelper;
+		private readonly MapJobHelper _mapJobHelper;
 
 		private readonly SizeInt _blockSize;
 
@@ -30,7 +28,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper2 mapJobHelper, SizeInt blockSize)
+		public PosterViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
@@ -39,7 +37,7 @@ namespace MSetExplorer
 			_blockSize = blockSize;
 
 			var subdivisionProvider = new SubdivisonProvider(mapSectionAdapter);
-			_oldJobHelper = new MapJobHelper(subdivisionProvider, 10, blockSize);
+			//_oldJobHelper = new MapJobHelper(subdivisionProvider, 10, blockSize);
 
 			_canvasSize = new SizeDbl();
 			_currentPoster = null;

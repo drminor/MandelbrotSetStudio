@@ -76,7 +76,7 @@ namespace MSetExplorer
 					throw new InvalidOperationException("The initialPosterMapAreaInfo is null.");
 				}
 
-				var mapAreaInfoV2 = MapJobHelper2.Convert(_initialPosterMapAreaInfo);
+				var mapAreaInfoV2 = MapJobHelper.Convert(_initialPosterMapAreaInfo);
 
 				var containerSize = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
 				_vm.Initialize(mapAreaInfoV2, containerSize);
@@ -167,7 +167,7 @@ namespace MSetExplorer
 
 		public void UpdateWithNewMapInfo(MapAreaInfo mapAreaInfo)
 		{
-			var mapAreaInfoV2 = MapJobHelper2.Convert(mapAreaInfo);
+			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfo);
 			_vm.UpdateWithNewMapInfo(mapAreaInfoV2);
 		}
 

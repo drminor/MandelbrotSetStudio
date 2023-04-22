@@ -27,7 +27,7 @@ namespace MSetExplorer
 
 		private readonly SharedColorBandSetAdapter _sharedColorBandSetAdapter;
 
-		private readonly MapJobHelper2 _mapJobHelper;
+		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
@@ -40,7 +40,7 @@ namespace MSetExplorer
 			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
 
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper2(subdivisionProvider, toleranceFactor:10, RMapConstants.BLOCK_SIZE);
+			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor:10, RMapConstants.BLOCK_SIZE);
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
@@ -148,13 +148,13 @@ namespace MSetExplorer
 		{
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
 
-			var newMapJobHelper = new MapJobHelper2(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
-			var oldMapJobHelper = new MapJobHelper(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
+			var newMapJobHelper = new MapJobHelper(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
+			//var oldMapJobHelper = new MapJobHelper(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
 
 			var oldAreaInfo = newMapJobHelper.Convert(mapAreaInfo2, canvasSize);
 			var coords = oldAreaInfo.Coords;
 
-			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, oldMapJobHelper);
+			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, newMapJobHelper);
 			return result;
 		}
 

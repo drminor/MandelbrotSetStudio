@@ -16,7 +16,7 @@ namespace MSetExplorer
 		#region Private Properties
 
 		private readonly IMapLoaderManager _mapLoaderManager;
-		private readonly MapJobHelper2 _mapJobHelper;
+		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapSectionHelper _mapSectionHelper;
 
 		private ObservableCollection<MapSection> _mapSections;
@@ -37,7 +37,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapJobHelper2 mapJobHelper, MapSectionHelper mapSectionHelper, SizeInt blockSize)
+		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
 			_paintLocker = new object();
 			BlockSize = blockSize;
@@ -672,7 +672,7 @@ namespace MSetExplorer
 		{
 			var mapAreaInfoV1 = _mapJobHelper.Convert(canonicalMapAreaInfo, canvasSize.Round());
 
-			var mapAreaInfoV2 = MapJobHelper2.Convert(mapAreaInfoV1);
+			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
 
 			CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2, mapAreaInfoV1);
 

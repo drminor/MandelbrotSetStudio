@@ -22,11 +22,6 @@
 
   <ItemGroup>
     <Compile Remove="RMap\JobHelperNotUsed.cs" />
-    <Compile Remove="RMap\RMapHelperOldMethods.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="RMap\RMapHelperOldMethods.cs" />
   </ItemGroup>
 
   <ItemGroup>
