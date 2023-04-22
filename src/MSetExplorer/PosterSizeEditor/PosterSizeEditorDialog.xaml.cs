@@ -165,10 +165,10 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void UpdateWithNewMapInfo(MapAreaInfo mapAreaInfo)
+		public void UpdateWithNewMapInfo(MapAreaInfo2 mapAreaInfo)
 		{
-			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfo);
-			_vm.UpdateWithNewMapInfo(mapAreaInfoV2);
+			//var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfo);
+			_vm.UpdateWithNewMapInfo(mapAreaInfo);
 		}
 
 		#endregion

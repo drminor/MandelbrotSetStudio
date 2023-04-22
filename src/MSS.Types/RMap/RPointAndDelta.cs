@@ -26,11 +26,19 @@ namespace MSS.Types
 		public RPointAndDelta(BigInteger[] posValues, BigInteger[] sizeValues, int exponent) : this(posValues[0], posValues[1], sizeValues[0], sizeValues[1], exponent)
 		{ }
 
-		public RPointAndDelta(RPoint p, RSize s) : this(p.XNumerator, p.YNumerator, s.WidthNumerator, s.HeightNumerator, p.Exponent)
+		public RPointAndDelta(RPoint p, RSize s) : this(p.XNumerator, p.YNumerator, s.WidthNumerator, s.HeightNumerator, s.Exponent)
 		{
 			if (p.Exponent != s.Exponent)
 			{
-				throw new ArgumentException($"Cannot create a RPointAndDelta from a Point with Exponent: {p.Exponent} and a Size with Exponent: {s.Exponent}.");
+				throw new ArgumentException($"Cannot create a RPointAndDelta from a RPoint with Exponent: {p.Exponent} and a RSize with Exponent: {s.Exponent}.");
+			}
+		}
+
+		public RPointAndDelta(RVector r, RSize s) : this(r.XNumerator, r.YNumerator, s.WidthNumerator, s.HeightNumerator, s.Exponent)
+		{
+			if (r.Exponent != s.Exponent)
+			{
+				throw new ArgumentException($"Cannot create a RPointAndDelta from a RVector with Exponent: {r.Exponent} and a RSize with Exponent: {s.Exponent}.");
 			}
 		}
 

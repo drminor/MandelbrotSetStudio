@@ -144,17 +144,15 @@ namespace MSetExplorer
 			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, _mapSectionAdapter, initalName, useEscapeVelocities, dialogType);
 		}
 
-		private CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits)
+		private CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize, bool allowEdits)
 		{
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-
 			var newMapJobHelper = new MapJobHelper(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
-			//var oldMapJobHelper = new MapJobHelper(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
 
-			var oldAreaInfo = newMapJobHelper.Convert(mapAreaInfo2, canvasSize);
+			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, canvasSize);
 			var coords = oldAreaInfo.Coords;
 
-			var result = new CoordsEditorViewModel(coords, canvasSize, allowEdits, newMapJobHelper);
+			var result = new CoordsEditorViewModel(mapAreaInfoV2, coords, canvasSize, allowEdits, newMapJobHelper);
 			return result;
 		}
 

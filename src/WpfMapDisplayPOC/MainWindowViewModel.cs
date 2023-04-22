@@ -177,10 +177,9 @@ namespace WpfMapDisplayPOC
 				_colorMap = new ColorMap(colorBandSet);
 			}
 
-			var oldAreaInfo = _mapJobHelper.Convert(job.MapAreaInfo, new SizeInt(1024));
+			var areaInfoWithSize = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeInt(1024));
 
-
-			var result = _mapSectionHelper.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, oldAreaInfo, job.MapCalcSettings);
+			var result = _mapSectionHelper.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, areaInfoWithSize, job.MapCalcSettings);
 
 			return result;
 		}
@@ -238,11 +237,11 @@ namespace WpfMapDisplayPOC
 			//_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var oldAreaInfo = _mapJobHelper.Convert(job.MapAreaInfo, new SizeInt(1024));
+			var areaInfoWithSize = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeInt(1024));
 
 			//AddTiming("GetMapAreaInfo");
 
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, areaInfoWithSize, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			var limbCount = mapSectionRequests[0].LimbCount;

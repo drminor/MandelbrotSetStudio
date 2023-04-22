@@ -1,9 +1,6 @@
-﻿using MSetExplorer.XPoc;
-using MSS.Types;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -36,14 +33,7 @@ namespace MSetExplorer
 			Loaded += MapSectionDisplayControl_Loaded;
 			Unloaded += MapSectionDisplayControl_Unloaded;
 
-			this.LayoutUpdated += MapSectionDisplayControl_LayoutUpdated;
-
 			InitializeComponent();
-		}
-
-		private void MapSectionDisplayControl_LayoutUpdated(object? sender, System.EventArgs e)
-		{
-			Debug.WriteLine("MapSectionDisplayControl_LayoutUpdated.");
 		}
 
 		private void MapSectionDisplayControl_Loaded(object sender, RoutedEventArgs e)

@@ -125,6 +125,15 @@ namespace MSS.Types
 		//		: new RRectangle(X1 + amount.WidthNumerator , X2 + amount.WidthNumerator, Y1 + amount.HeightNumerator, Y2 + amount.HeightNumerator, amount.Exponent);
 		//}
 
+
+		public RPoint GetCenter()
+		{
+			var offset = Size.DivideBy2();
+			var centerP = new RPoint(Position.Translate(offset));
+
+			return centerP;
+		}
+
 		[Conditional("Debug")]
 		private void Validate()
 		{

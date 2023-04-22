@@ -44,7 +44,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region Get MapBlockOffset Methods - PointAndDelta
+		#region Get MapBlockOffset Methods
 
 		public static BigVector GetMapBlockOffset(RPointAndDelta rPointAndDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{

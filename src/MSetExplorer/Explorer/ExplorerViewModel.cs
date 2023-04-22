@@ -130,9 +130,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits)
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize, bool allowEdits)
 		{
-			var result = _coordsEditorViewModelCreator(mapAreaInfo2, canvasSize, allowEdits);
+			var result = _coordsEditorViewModelCreator(mapAreaInfoV2, canvasSize, allowEdits);
 			return result;
 		}
 

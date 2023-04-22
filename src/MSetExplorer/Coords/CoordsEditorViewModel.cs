@@ -16,21 +16,23 @@ namespace MSetExplorer
 		private bool _coordsAreDirty;
 		private string _zoom;
 
+		private MapAreaInfo2 _mapAreaInfoV2;
+
 		#region Constructor
 
-		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper) 
+		public CoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, RRectangle coords, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper) 
 			: this(new SingleCoordEditorViewModel[] {
 			new SingleCoordEditorViewModel(coords.Left), new SingleCoordEditorViewModel(coords.Right),
-			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, displaySize, allowEdits, mapJobHelper)
+			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, mapAreaInfoV2, displaySize, allowEdits, mapJobHelper)
 		{ }
 
-		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper) 
+		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, MapAreaInfo2 mapAreaInfoV2, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper) 
 			: this(new SingleCoordEditorViewModel[] { 
 			new SingleCoordEditorViewModel(x1), new SingleCoordEditorViewModel(x2),
-			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, displaySize, allowEdits, mapJobHelper)
+			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, mapAreaInfoV2, displaySize, allowEdits, mapJobHelper)
 		{ }
 
-		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper)
+		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, MapAreaInfo2 mapAreaInfoV2, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper)
 		{
 			StartingX = vms[0];
 			EndingX = vms[1];
@@ -46,7 +48,12 @@ namespace MSetExplorer
 
 			_zoom = RValueHelper.GetFormattedResolution(_coords.Width);
 
-			var mapAreaInfo = mapJobHelper.GetMapAreaInfoV1(_coords, _displaySize);
+			_mapAreaInfoV2 = mapAreaInfoV2;
+
+			// TODO: Replace GetMapAreaV1 with GetMapAreaWithSize.
+			//var mapAreaInfo = mapJobHelper.GetMapAreaWithSize(_coords, _displaySize);
+
+			var mapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfoV2, _displaySize);
 			MapCoordsDetail2 = new MapCoordsDetailViewModel(mapAreaInfo);
 		}
 

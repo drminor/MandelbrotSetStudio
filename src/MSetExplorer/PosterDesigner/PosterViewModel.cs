@@ -529,6 +529,27 @@ namespace MSetExplorer
 		//	return result;
 		//}
 
+		//public MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
+		//{
+		//	var currentJob = CurrentJob;
+
+		//	if (currentJob.IsEmpty)
+		//	{
+		//		return null;
+		//	}
+
+		//	if (screenArea == new RectangleInt())
+		//	{
+		//		Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
+		//		return _mapJobHelper.GetMapAreaInfo(curJob, CanvasSize);
+		//	}
+		//	else
+		//	{
+		//		var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
+		//		return mapAreaInfo;
+		//	}
+		//}
+
 		public MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
 		{
 			var currentJob = CurrentJob;

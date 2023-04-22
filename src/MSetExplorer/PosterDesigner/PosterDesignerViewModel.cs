@@ -6,7 +6,6 @@ using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -193,7 +192,7 @@ namespace MSetExplorer
 				var currentjob = PosterViewModel.CurrentPoster?.CurrentJob;
 				if (currentjob != null)
 				{
-					UpdateTheMapCoordsView(currentjob, MapDisplayViewModel.CanvasSize);
+					UpdateTheMapCoordsView(currentjob);
 				}
 			}
 
@@ -206,14 +205,15 @@ namespace MSetExplorer
 			}
 		}
 
-		private void UpdateTheMapCoordsView(Job currentJob, SizeDbl canvasSize)
+		private void UpdateTheMapCoordsView(Job currentJob)
 		{
-			MapCoordsViewModel.JobId = currentJob.Id.ToString();
+			var oldAreaInfo = MapDisplayViewModel.GetMapAreaInfo(); // MapJobHelper2.Convert(currentJob.MapAreaInfo, canvasSize.Round());
 
-			//var oldAreaInfo = MapJobHelper2.Convert(currentJob.MapAreaInfo, canvasSize.Round());
-			var oldAreaInfo = new MapAreaInfo();
-
-			MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
+			if (oldAreaInfo != null)
+			{
+				MapCoordsViewModel.JobId = currentJob.Id.ToString();
+				MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
+			}
 		}
 
 		private void ColorBandViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)

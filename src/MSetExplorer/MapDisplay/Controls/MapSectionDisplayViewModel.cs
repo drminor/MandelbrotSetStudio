@@ -670,10 +670,10 @@ namespace MSetExplorer
 
 		private MapAreaInfo GetScreenAreaInfo(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
-			var mapAreaInfoV1 = _mapJobHelper.Convert(canonicalMapAreaInfo, canvasSize.Round());
+			var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize.Round());
 
+			// Just for diagnostics.
 			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
-
 			CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2, mapAreaInfoV1);
 
 			return mapAreaInfoV1;

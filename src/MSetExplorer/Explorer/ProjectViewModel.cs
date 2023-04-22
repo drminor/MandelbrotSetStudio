@@ -213,7 +213,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At ProjectStartNew.");
 			}
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, CanvasSize);
+			//var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, CanvasSize);
 
 			var mai = RMapConstants.BuildHomeArea();
 

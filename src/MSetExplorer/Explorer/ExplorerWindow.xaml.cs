@@ -481,6 +481,7 @@ namespace MSetExplorer
 				return;
 			}
 
+			// TODO: Provide UI to specify the size of the new Image file.
 			//var imageSize = curProject.CurrentJob.CanvasSize.Scale(4);
 			var imageSize = new SizeInt(4096);
 
