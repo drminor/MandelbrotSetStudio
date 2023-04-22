@@ -142,21 +142,51 @@ namespace MSS.Types
 			}
 		}
 
-		public int SelectedColorBandIndex { get; set; }
+		public int SelectedColorBandIndex { get; set; } // TODO: The SelectedColorBandIndex property of the ColorBandSet class does not raise OnPropertyChanged
 
-		public ColorBand SelectedColorBand
+		public ColorBand? SelectedColorBand
 		{
 			get
 			{
 				if (SelectedColorBandIndex < 0 || SelectedColorBandIndex > Count - 1)
 				{
-					return this[0];
+					return null;
 				}
 				else
 				{
 					return this[SelectedColorBandIndex];
 				}
-			} 
+			}
+			set
+			{
+				var previousValue = SelectedColorBandIndex;
+				if (value == null)
+				{
+					SelectedColorBandIndex = -1;
+				}
+				else
+				{
+					var index = IndexOf(value);
+
+					if (index == -1)
+					{
+						var colorBandWithMatchingCutoff = this.FirstOrDefault(x => x.Cutoff == value.Cutoff);
+						if (colorBandWithMatchingCutoff != null)
+						{
+							SelectedColorBandIndex = IndexOf(colorBandWithMatchingCutoff);
+						}
+					}
+					else
+					{
+						SelectedColorBandIndex = IndexOf(value);
+					}
+				}
+
+				if (SelectedColorBandIndex != previousValue)
+				{
+					OnPropertyChanged();
+				}
+			}
 		}
 
 		public DateTime LastSavedUtc

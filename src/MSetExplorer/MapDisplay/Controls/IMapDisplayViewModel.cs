@@ -20,6 +20,7 @@ namespace MSetExplorer
 		Action<MapSection> DisposeMapSection { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
+		ColorBand? CurrentColorBand { get; set; }
 		bool UseEscapeVelocities { get; set; }
 		bool HighlightSelectedColorBand { get; set; }
 

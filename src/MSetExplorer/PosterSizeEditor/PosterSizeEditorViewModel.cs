@@ -73,6 +73,8 @@ namespace MSetExplorer
 			_previewImage = new DrawingImage(_drawingGroup);
 		}
 
+		
+		// TODO: Confirm that the PosterSizeEditor does not need a MapAreaInfo-V1 object.
 		public void Initialize(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize)
 		{
 			_preserveAspectRatio = true;

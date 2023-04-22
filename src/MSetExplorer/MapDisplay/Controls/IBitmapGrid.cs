@@ -17,5 +17,10 @@ namespace MSetExplorer
 
 		void GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);
 
+		//void SetColorBandSet(ColorBandSet value);
+
+		ColorBandSet ColorBandSet { get; set; }
+
+		ColorBand? CurrentColorBand { get; set; }
 	}
 }

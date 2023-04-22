@@ -382,26 +382,34 @@ namespace MSetExplorer
 
 					var area = StopSelecting();
 
-					var selectonCenter = area.GetCenter();
-					var zoomPoint = GetCenterOffset(selectonCenter);
-
-					Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
-
-					var xFactor = _canvas.ActualWidth / area.Width;
-					var yFactor = _canvas.ActualHeight / area.Height;
-
-					var factor = Math.Min(xFactor, yFactor);
+					var (zoomPoint, factor) = GetAreaSelectedParams(area);
 
 					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}");
 
 					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor: factor, isPreview: false));
-
 				}
 				else
 				{
 					//Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = False.");
 				}
 			}
+		}
+
+		private (VectorInt zoomPoint, double factor) GetAreaSelectedParams(RectangleDbl area)
+		{
+			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
+
+			var selectonCenter = area.GetCenter();
+			var zoomPoint = GetCenterOffset(selectonCenter);
+
+			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
+
+			var xFactor = _canvas.ActualWidth / area.Width;
+			var yFactor = _canvas.ActualHeight / area.Height;
+
+			var factor = Math.Min(xFactor, yFactor);
+
+			return (zoomPoint, factor);
 		}
 
 		private void HandleDragLine(MouseButtonEventArgs e)
@@ -504,8 +512,8 @@ namespace MSetExplorer
 						_selectedArea.Width = _defaultSelectionSize.Width;
 						_selectedArea.Height = _defaultSelectionSize.Height;
 
-						var noSelectionRect = new RectangleInt();
-						//AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, noSelectionRect, isPreview: true));
+						//var noSelectionRect = new RectangleInt();
+						AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, new VectorInt(), double.NegativeInfinity, isPreview: true));
 					}
 
 					_selecting = value;
@@ -702,10 +710,14 @@ namespace MSetExplorer
 				wasUpdated = true;
 			}
 
-			//if (wasUpdated)
-			//{
-			//	AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
-			//}
+			if (wasUpdated)
+			{
+				var (zoomPoint, factor) = GetAreaSelectedParams(Area);
+
+				Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
+
+				AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, isPreview: true));
+			}
 		}
 
 		// Position the current end of the drag line

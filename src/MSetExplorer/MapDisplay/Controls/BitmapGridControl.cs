@@ -470,9 +470,7 @@ namespace MSetExplorer
 
 			if (value != previousValue)
 			{
-				//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
-
-				c._bitmapGrid.SetColorBandSet(value);
+				c._bitmapGrid.ColorBandSet = value;
 			}
 		}
 

@@ -56,7 +56,7 @@ namespace MSS.Common
 			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-			var precision = GetBinaryPrecision(mapAreaInfo);
+			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
 
 			var requestNumber = 0;
 			foreach (var screenPosition in Points(mapExtentInBlocks))
@@ -85,14 +85,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		private int GetBinaryPrecision(MapAreaInfo mapAreaInfo)
-		{
-			var binaryPrecision = RValueHelper.GetBinaryPrecision(mapAreaInfo.Coords.Right, mapAreaInfo.Coords.Left, out _);
 
-			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(mapAreaInfo.Subdivision.SamplePointDelta.Exponent));
-
-			return binaryPrecision;
-		}
 
 		#endregion
 

@@ -232,7 +232,7 @@ namespace MSetExplorer
 			{
 				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
 				{
-					MapDisplayViewModel.ColorBandSet = ColorBandSetViewModel.ColorBandSet;
+					MapDisplayViewModel.CurrentColorBand = ColorBandSetViewModel.CurrentColorBand;
 				}
 			}
 		}

@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson;
+﻿using Microsoft.Windows.Themes;
+using MongoDB.Bson;
 using MongoDB.Driver.Linq;
 using MSS.Common;
 using MSS.Types;
@@ -121,6 +122,22 @@ namespace MSetExplorer
 			}
 		}
 
+		public ColorBand? CurrentColorBand
+		{
+			get => ColorBandSet.SelectedColorBand;
+			set
+			{
+				ColorBandSet.SelectedColorBand = value;
+
+				// TODO: Consider using a Binding to update the SelectedColorBand, instead of setting a property on the BitmapGrid class directly.
+
+				if (HighlightSelectedColorBand && _bitMapGrid != null)
+				{
+					_bitMapGrid.CurrentColorBand = value;
+				}
+			}
+		}
+
 		public bool UseEscapeVelocities
 		{
 			get => _useEscapeVelocities;
@@ -139,11 +156,14 @@ namespace MSetExplorer
 			get => _highlightSelectedColorBand;
 			set
 			{
-				lock (_paintLocker)
-				{
-					_highlightSelectedColorBand = value;
-					OnPropertyChanged(nameof(IMapDisplayViewModel.HighlightSelectedColorBand));
-				}
+				//lock (_paintLocker)
+				//{
+				//	_highlightSelectedColorBand = value;
+				//	OnPropertyChanged(nameof(IMapDisplayViewModel.HighlightSelectedColorBand));
+				//}
+
+				_highlightSelectedColorBand = value;
+				OnPropertyChanged(nameof(IMapDisplayViewModel.HighlightSelectedColorBand));
 			}
 		}
 
@@ -265,16 +285,6 @@ namespace MSetExplorer
 				if (newValue != CurrentAreaColorAndCalcSettings)
 				{
 					var previousValue = CurrentAreaColorAndCalcSettings;
-
-					//if (newValue != null && ScreenTypeHelper.IsSizeDblChanged(new SizeDbl(newValue.MapAreaInfo.CanvasSize), CanvasSize))
-					//{
-					//	var newAreaColorAndCalcSettings = UpdateSize(newValue, new SizeDbl(newValue.MapAreaInfo.CanvasSize), CanvasSize);
-					//	CurrentAreaColorAndCalcSettings = newAreaColorAndCalcSettings;
-					//}
-					//else
-					//{
-					//	CurrentAreaColorAndCalcSettings = newValue;
-					//}
 
 					CurrentAreaColorAndCalcSettings = newValue;
 					ReportSubmitJobDetails(previousValue, newValue);
@@ -436,43 +446,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		//private int? HandleDisplaySizeUpdate(SizeDbl previousSize, SizeDbl newSize)
-		//{
-		//	int? newJobNumber = null;
-		//	bool lastSectionWasIncluded = false;
-
-		//	lock (_paintLocker)
-		//	{
-		//		if (CurrentAreaColorAndCalcSettings != null)
-		//		{
-		//			var previousValue = CurrentAreaColorAndCalcSettings;
-		//			var newAreaColorAndCalcSettings = UpdateSize(previousValue, previousSize, newSize);
-		//			CurrentAreaColorAndCalcSettings = newAreaColorAndCalcSettings;
-
-		//			//ReportNewMapArea(previousValue.MapAreaInfo, newAreaColorAndCalcSettings.MapAreaInfo);
-		//			newJobNumber = HandleCurrentJobChanged(previousValue, newAreaColorAndCalcSettings, out lastSectionWasIncluded);
-		//		}
-		//	}
-
-		//	if (newJobNumber.HasValue && lastSectionWasIncluded)
-		//	{
-		//		DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
-		//	}
-
-		//	return newJobNumber;
-		//}
-
-		//private AreaColorAndCalcSettings UpdateSize(AreaColorAndCalcSettings currentAreaColorAndCalcSettings, SizeDbl previousSize, SizeDbl newSize)
-		//{
-		//	var previousMapAreaInfo = currentAreaColorAndCalcSettings.MapAreaInfo;
-
-		//	var newMapAreaInfo = _mapJobHelper.UpdateSize(previousMapAreaInfo, previousSize, newSize);
-
-		//	var newAreaColorAndCalcSettings = currentAreaColorAndCalcSettings.UpdateWith(newMapAreaInfo);
-
-		//	return newAreaColorAndCalcSettings;
-		//}
 
 		private int? HandleDisplaySizeUpdate()
 		{
@@ -681,12 +654,14 @@ namespace MSetExplorer
 
 		private void DisposeMapSectionInternal(MapSection mapSection)
 		{
-			var refCount = mapSection.MapSectionVectors?.ReferenceCount ?? 0;
+			//var refCount = mapSection.MapSectionVectors?.ReferenceCount ?? 0;
 
-			if (refCount > 1)
-			{
-				Debug.WriteLine("WARNING: MapSectionDisplayViewModel is Disposing a MapSection whose reference count > 1.");
-			}
+			// The MapSection may have refCount > 1; the MapSectionPersistProcessor may not have completed its work, 
+			// But when the MapSectionPersistProcessor doe complete its work, it will Dispose and at that point the refCount will be only 1.
+			//if (refCount > 1)
+			//{
+			//	Debug.WriteLine("WARNING: MapSectionDisplayViewModel is Disposing a MapSection whose reference count > 1.");
+			//}
 
 			_mapSectionHelper.ReturnMapSection(mapSection);
 		}
@@ -707,7 +682,6 @@ namespace MSetExplorer
 				$"\nNew Scale     : {newValue.SamplePointDelta.Width}. Pos: {newValue.MapCenter}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset}" +
 				$"\nIntermediate  : {middleValue.SamplePointDelta.Width}. Pos: {middleValue.MapPosition}. MapOffset: {middleValue.MapBlockOffset}. ImageOffset: {middleValue.CanvasControlOffset} Size: {middleValue.CanvasSize}.");
 		}
-
 
 		//private List<MapSection> GetSectionsToLoadX(List<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)
 		//{

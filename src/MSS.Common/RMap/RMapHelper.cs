@@ -9,6 +9,66 @@ namespace MSS.Common
 {
 	public static class RMapHelper
 	{
+		#region MapAreaInfo Support
+
+		public static RPointAndDelta GetNewCenterPoint(RPointAndDelta rPointAndDelta, VectorInt panAmount)
+		{
+			var rPanAmount = panAmount.Scale(rPointAndDelta.SamplePointDelta);
+			var newMapCenter = rPointAndDelta.Position.Translate(rPanAmount);
+
+			var transPd = new RPointAndDelta(newMapCenter, rPointAndDelta.SamplePointDelta);
+
+			return transPd;
+		}
+
+		public static RPointAndDelta GetNewSamplePointDelta(RPointAndDelta pointAndDelta, double factor)
+		{
+			// Factor = number of new pixels each existing pixel will be replaced with.
+
+			// Divide the SamplePointDelta by the specified factor.
+			// Instead of dividing, multiply by the reciprocal.
+
+			var reciprocal = 1 / factor;
+
+			// Create an RValue that has the same value of the reciprocal.
+
+			// Numerator: reciprocal * 1024
+			// Denominator: 1024
+
+			var rK = (int)Math.Round(reciprocal * 1024);
+			var rReciprocal = new RValue(rK, -10);
+
+			// Multiply the SamplePointDelta by 1/factor, adjusting the exponent as necessary.
+			// as the exponent is futher decreased, the numerators of the X and Y values are increased to compensate.
+			var rawResult = pointAndDelta.ScaleDelta(rReciprocal);
+
+			// Divide all numerators by the greatest power 2 that all three numerators (X, Y and scale) have in common,
+			// and reduce the denominator to compensate.
+			var result = Reducer.Reduce(rawResult);
+
+			return result;
+		}
+
+		public static int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
+		{
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
+
+			return binaryPrecision;
+		}
+
+		public static int GetBinaryPrecision(MapAreaInfo mapAreaInfo)
+		{
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(mapAreaInfo.Coords.Right, mapAreaInfo.Coords.Left, out _);
+
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(mapAreaInfo.Subdivision.SamplePointDelta.Exponent));
+
+			return binaryPrecision;
+		}
+
+
+		#endregion
+
 		#region Get Extents in Blocks
 
 		public static SizeInt GetCanvasSizeInWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)

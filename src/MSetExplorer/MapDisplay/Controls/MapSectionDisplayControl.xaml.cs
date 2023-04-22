@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSS.Common;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -132,6 +133,15 @@ namespace MSetExplorer
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{
+			if (e.IsPreview && _vm.CurrentAreaColorAndCalcSettings != null)
+			{
+				var mapAreaInfo = _vm.CurrentAreaColorAndCalcSettings.MapAreaInfo;
+
+				var newPd = RMapHelper.GetNewSamplePointDelta(mapAreaInfo.PositionAndDelta, e.Factor);
+
+				Debug.WriteLine($"The new SPD is {newPd.SamplePointDelta}.");
+			}
+
 			_vm.UpdateMapViewZoom(e);
 		}
 

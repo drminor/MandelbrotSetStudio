@@ -48,8 +48,9 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty) || e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
+			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty) || e.PropertyName == nameof(ColorBandSetViewModel.ColorBandSet))
 			{
+				// TODO: What is the domain or scope of calling InvalidateRequerySuggested on the ColorBandSetUserControl?
 				CommandManager.InvalidateRequerySuggested();
 			}
 		}

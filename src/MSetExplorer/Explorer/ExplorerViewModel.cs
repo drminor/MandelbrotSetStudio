@@ -238,7 +238,7 @@ namespace MSetExplorer
 			{
 				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null && ProjectViewModel.CurrentProject != null)
 				{
-					MapDisplayViewModel.ColorBandSet = ColorBandSetViewModel.ColorBandSet;
+					MapDisplayViewModel.CurrentColorBand = ColorBandSetViewModel.CurrentColorBand;
 				}
 			}
 		}

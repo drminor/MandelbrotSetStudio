@@ -121,7 +121,7 @@ namespace MSetExplorer
 					// Discard the Preview ColorBandSet. 
 					_previewColorBandSet = null;
 
-					if (value == CurrentColorBandSet)
+					if (value.Id == CurrentColorBandSet.Id)
 					{
 						Debug.WriteLine($"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
 					}

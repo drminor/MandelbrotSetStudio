@@ -70,7 +70,7 @@ namespace MSS.Common
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
-			var transPd = GetNewCenterPoint(currentArea.PositionAndDelta, panAmount);
+			var transPd = RMapHelper.GetNewCenterPoint(currentArea.PositionAndDelta, panAmount);
 
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(transPd, blockSize, out var canvasControlOffset);
 
@@ -88,7 +88,7 @@ namespace MSS.Common
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
-			var scaledPd = GetNewSamplePointDelta(currentArea.PositionAndDelta, factor);
+			var scaledPd = RMapHelper.GetNewSamplePointDelta(currentArea.PositionAndDelta, factor);
 
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(scaledPd, blockSize, out var canvasControlOffset);
 
@@ -106,8 +106,8 @@ namespace MSS.Common
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
-			var transPd = GetNewCenterPoint(currentArea.PositionAndDelta, panAmount);
-			var scaledAndTransPd = GetNewSamplePointDelta(transPd, factor);
+			var transPd = RMapHelper.GetNewCenterPoint(currentArea.PositionAndDelta, panAmount);
+			var scaledAndTransPd = RMapHelper.GetNewSamplePointDelta(transPd, factor);
 
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(scaledAndTransPd, blockSize, out var canvasControlOffset);
 			
@@ -120,57 +120,49 @@ namespace MSS.Common
 			return result;
 		}
 
-		private RPointAndDelta GetNewCenterPoint(RPointAndDelta rPointAndDelta, VectorInt panAmount)
-		{
-			var rPanAmount = panAmount.Scale(rPointAndDelta.SamplePointDelta);
-			var newMapCenter = rPointAndDelta.Position.Translate(rPanAmount);
-
-			var transPd = new RPointAndDelta(newMapCenter, rPointAndDelta.SamplePointDelta);
-
-			return transPd;
-		}
-
-		private RPointAndDelta GetNewSamplePointDelta(RPointAndDelta pointAndDelta, double factor)
-		{
-			// Factor = number of new pixels each existing pixel will be replaced with.
-
-			// Divide the SamplePointDelta by the specified factor.
-			// Instead of dividing, multiply by the reciprocal.
-
-			var reciprocal = 1 / factor;
-
-			// Create an RValue that has the same value of the reciprocal.
-
-			// Numerator: reciprocal * 1024
-			// Denominator: 1/1024
-
-			var rK = (int)Math.Round(reciprocal * 1024);
-			var rReciprocal = new RValue(rK, -10);
-
-			// Multiply the SamplePointDelta by 1/factor, adjusting the exponent as necessary.
-			// as the exponent is futher decreased, the numerators of the X and Y values are increased to compensate.
-			var rawResult = pointAndDelta.ScaleDelta(rReciprocal);
-
-			// Divide all numerators by the greatest power 2 that all three numerators (X, Y and scale) have in common,
-			// and reduce the denominator to compensate.
-			var result = Reducer.Reduce(rawResult);
-
-			return result;
-		}
-
-		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
-		{
-			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
-			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
-
-			return binaryPrecision;
-		}
-
 		#endregion
 
 		#region MapAreaInfo2 Support
 
-		//public MapAreaInfo Convert(RPointAndDelta rPointAndDelta, SizeInt canvasSize, SizeInt blockSize)
+		public static MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
+		{
+			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
+
+			// Create a rectangle centered at position: x = 0, y = 0
+			// Having the same width and height as the given canvasSize.
+			var half = new PointInt(canvasSize.Width / 2, canvasSize.Height / 2);
+			var area = new RectangleInt(half.Invert(), canvasSize);
+
+			// Multiply the area by the SamplePointDelta to get map coordiates
+			var rArea = new RRectangle(area);
+			rArea = rArea.Scale(rPointAndDelta.SamplePointDelta);
+
+			var coords = rArea.Translate(rPointAndDelta.Position);
+
+			// Calculate the total number of sample points from the origin to the lower, left corner of the map's coordinates and the Subdivision origin (i.e., BaseMapBlockOffset.)
+			// Determine the number of full blocks, and number of samplePoints remaining
+			BigVector mapBlockOffset;
+			VectorInt canvasControlOffset;
+
+			if (coords.Position.IsZero())
+			{
+				mapBlockOffset = new BigVector();
+				canvasControlOffset = new VectorInt();
+			}
+			else
+			{
+				var positionV = new RVector(coords.Position);
+				var offsetInSamplePoints = positionV.Divide(rPointAndDelta.SamplePointDelta);
+				var blockSize = mapAreaInfoV2.Subdivision.BlockSize;
+				mapBlockOffset = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+			}
+
+			var result = new MapAreaInfo(coords, canvasSize, mapAreaInfoV2.Subdivision, mapAreaInfoV2.Precision, mapBlockOffset, canvasControlOffset);
+
+			return result;
+		}
+
+		//public MapAreaInfo GetMapAreaWithSizeAlternate(RPointAndDelta rPointAndDelta, SizeInt canvasSize, SizeInt blockSize)
 		//{
 		//	// Create a rectangle centered at position: x = 0, y = 0
 		//	// Having the same width and height as the given canvasSize.
@@ -214,44 +206,6 @@ namespace MSS.Common
 		//	return result;
 		//}
 
-		public static MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
-		{
-			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
-
-			// Create a rectangle centered at position: x = 0, y = 0
-			// Having the same width and height as the given canvasSize.
-			var half = new PointInt(canvasSize.Width / 2, canvasSize.Height / 2);
-			var area = new RectangleInt(half.Invert(), canvasSize);
-
-			// Multiply the area by the SamplePointDelta to get map coordiates
-			var rArea = new RRectangle(area);
-			rArea = rArea.Scale(rPointAndDelta.SamplePointDelta);
-
-			var coords = rArea.Translate(rPointAndDelta.Position);
-
-			// Calculate the total number of sample points from the origin to the lower, left corner of the map's coordinates and the Subdivision origin (i.e., BaseMapBlockOffset.)
-			// Determine the number of full blocks, and number of samplePoints remaining
-			BigVector mapBlockOffset;
-			VectorInt canvasControlOffset;
-
-			if (coords.Position.IsZero())
-			{
-				mapBlockOffset = new BigVector();
-				canvasControlOffset = new VectorInt();
-			}
-			else
-			{
-				var positionV = new RVector(coords.Position);
-				var offsetInSamplePoints = positionV.Divide(rPointAndDelta.SamplePointDelta);
-				var blockSize = mapAreaInfoV2.Subdivision.BlockSize;
-				mapBlockOffset = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
-			}
-
-			var result = new MapAreaInfo(coords, canvasSize, mapAreaInfoV2.Subdivision, mapAreaInfoV2.Precision, mapBlockOffset, canvasControlOffset);
-
-			return result;
-		}
-
 		public static MapAreaInfo2 Convert(MapAreaInfo mapAreaInfo)
 		{
 			var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
@@ -271,7 +225,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RRectangle NormalizeCoordsWithSPD(RRectangle coords, RSize samplePointDelta)
+		private static RRectangle NormalizeCoordsWithSPD(RRectangle coords, RSize samplePointDelta)
 		{
 			RRectangle rCoords;
 
@@ -345,7 +299,7 @@ namespace MSS.Common
 			// Get a subdivision record from the database.
 			var subdivision = _subdivisonProvider.GetSubdivision(uSpd, mapBlockOffset, out var localMapBlockOffset);
 
-			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
+			var binaryPrecision = RMapHelper.GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
 			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;

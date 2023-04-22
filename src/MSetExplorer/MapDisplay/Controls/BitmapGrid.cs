@@ -119,6 +119,30 @@ namespace MSetExplorer
 						ReDrawSections();
 					}
 				}
+				else
+				{
+					if (HighlightSelectedColorBand && value.SelectedColorBand != _colorBandSet.SelectedColorBand)
+					{
+						if (_colorMap != null)
+						{
+							ReDrawSections();
+						}
+					}
+				}
+			}
+		}
+
+		public ColorBand? CurrentColorBand
+		{
+			get => _colorBandSet.SelectedColorBand;
+			set
+			{
+				_colorBandSet.SelectedColorBand = value;
+
+				if (HighlightSelectedColorBand && _colorMap != null)
+				{
+					ReDrawSections();
+				}
 			}
 		}
 
@@ -377,14 +401,31 @@ namespace MSetExplorer
 			}
 		}
 
-		public void SetColorBandSet(ColorBandSet value)
-		{
-			if (value != _colorBandSet)
-			{
-				_colorBandSet = value;
-				_colorMap = LoadColorMap(value);
-			}
-		}
+		//public void SetColorBandSet(ColorBandSet value)
+		//{
+		//	//if (value != _colorBandSet)
+		//	//{
+		//	//	_colorBandSet = value;
+		//	//	_colorMap = LoadColorMap(value);
+
+		//	//	if (_colorMap != null)
+		//	//	{
+		//	//		ReDrawSections();
+		//	//	}
+		//	//}
+
+		//	ColorBandSet = value;
+		//}
+
+		//public void SetCurrentColorBand(ColorBand colorBand)
+		//{
+		//	_colorBandSet.SelectedColorBand = colorBand;
+
+		//	if (HighlightSelectedColorBand && _colorMap != null)
+		//	{
+		//		ReDrawSections();
+		//	}
+		//}
 
 		#endregion
 
