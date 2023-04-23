@@ -270,7 +270,7 @@ namespace MSS.Common
 		#region GetMapAreaInfo Methods - V1
 
 		// Calculate the SamplePointDelta, MapBlockOffset, CanvasControlOffset, using the specified coordinates and display size
-		public MapAreaInfo GetMapAreaInfoV1(RRectangle coords, SizeInt canvasSize)
+		private MapAreaInfo GetMapAreaInfoV1(RRectangle coords, SizeInt canvasSize)
 		{
 			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
 			var displaySize = canvasSize;

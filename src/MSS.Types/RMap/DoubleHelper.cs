@@ -71,7 +71,7 @@ namespace MSS.Types
             return number;
         }
 
-        public static double GetNumberOfBinaryDigits(int numberOfDecimalDigits)
+		public static double GetNumberOfBinaryDigits(int numberOfDecimalDigits)
         {
 			var result = numberOfDecimalDigits / LOG_BASE_TEN_OF_TWO;
 

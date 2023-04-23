@@ -1,5 +1,9 @@
 ﻿using MSS.Common;
+using MSS.Types;
+using MSS.Types.MSet;
+using System;
 using System.Diagnostics;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -133,13 +137,9 @@ namespace MSetExplorer
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{
-			if (e.IsPreview && _vm.CurrentAreaColorAndCalcSettings != null)
+			if (e.PerformDiagnostics && _vm.CurrentAreaColorAndCalcSettings != null)
 			{
-				var mapAreaInfo = _vm.CurrentAreaColorAndCalcSettings.MapAreaInfo;
-
-				var newPd = RMapHelper.GetNewSamplePointDelta(mapAreaInfo.PositionAndDelta, e.Factor);
-
-				Debug.WriteLine($"The new SPD is {newPd.SamplePointDelta}.");
+				ReportFactorsVsSamplePointResolution(_vm.CurrentAreaColorAndCalcSettings.MapAreaInfo, e);
 			}
 
 			_vm.UpdateMapViewZoom(e);
@@ -151,5 +151,35 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private void ReportFactorsVsSamplePointResolution(MapAreaInfo2 mapAreaInfo, AreaSelectedEventArgs e)
+		{
+			Debug.WriteLine("\nReporting various factors vs SamplePointDeltas.");
+
+			var pointAndDelta = mapAreaInfo.PositionAndDelta;
+			var reciprocal = 1 / e.Factor;
+			var rK = (int)Math.Round(reciprocal * 1024);
+
+			Debug.WriteLine($"Current SPD: {pointAndDelta.SamplePointDelta}. Starting with a rk of {rK}.");
+
+			var st = Math.Max(rK - 20, 1);
+
+			for (var i = 0; i < 41; i++)
+			{
+				var sFactor = 1 / ((double)st / 1024);
+
+
+				var rReciprocal = new RValue(st++, -10);
+
+				var rawResult = pointAndDelta.ScaleDelta(rReciprocal);
+				var result = Reducer.Reduce(rawResult);
+
+				Debug.WriteLine($"\t{i}: \t\trk: {st}\t\trawW: {rawResult.SamplePointDelta.Width}\t\t final: {result.SamplePointDelta.Width}\tfactor: {sFactor}.");
+			}
+
+			//var newPd = RMapHelper.GetNewSamplePointDelta(mapAreaInfo.PositionAndDelta, e.Factor);
+			//Debug.WriteLine($"The new SPD is {newPd.SamplePointDelta}.");
+		}
+
 	}
 }

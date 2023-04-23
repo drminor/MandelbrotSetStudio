@@ -146,13 +146,7 @@ namespace MSetExplorer
 
 		private CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize, bool allowEdits)
 		{
-			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			var newMapJobHelper = new MapJobHelper(subdivisionProvider, 10, RMapConstants.BLOCK_SIZE);
-
-			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, canvasSize);
-			var coords = oldAreaInfo.Coords;
-
-			var result = new CoordsEditorViewModel(mapAreaInfoV2, coords, canvasSize, allowEdits, newMapJobHelper);
+			var result = new CoordsEditorViewModel(mapAreaInfoV2, canvasSize, allowEdits);
 			return result;
 		}
 

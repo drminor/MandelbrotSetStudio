@@ -86,9 +86,11 @@ namespace MSS.Common.MSet
 			_jobTree.CurrentItem = currentJob;
 			var colorBandSet = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
 
+			PosterSize = new SizeInt(4096);
+
 			_size = string.Empty;
-			//Size = GetFormattedPosterSize(currentJob.MapAreaInfo.CanvasSize);
-			Size = GetFormattedPosterSize(new SizeInt(4096)); // TODO: Fix Me
+
+			SizeAsString = GetFormattedPosterSize(PosterSize);
 
 			Debug.WriteLine($"Poster is loaded. CurrentJobId: {CurrentJob.Id}, Current ColorBandSetId: {CurrentColorBandSet.Id}. IsDirty: {IsDirty}");
 		}
@@ -159,7 +161,9 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		public string Size
+		public SizeInt PosterSize { get; set; }
+
+		public string SizeAsString
 		{
 			get => _size;
 			private set

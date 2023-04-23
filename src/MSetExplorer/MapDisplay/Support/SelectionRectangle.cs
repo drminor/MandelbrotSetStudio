@@ -15,7 +15,8 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		// TODO: Make the PITCH_TARGET proportional to the map view size.
+		//private readonly static bool USE_INTEGER_FOR_PITCH = false;
+
 		private const int PITCH_TARGET = 16;
 		private const int DRAG_TRIGGER_DIST = 3;
 		private const int DEFAULT_SELECTION_SIZE_FACTOR = 8; // Amount to multiply actual pitch by to get the default side length of the selection rectangle.
@@ -24,12 +25,15 @@ namespace MSetExplorer
 		private readonly IMapDisplayViewModel _mapDisplayViewModel;
 		private readonly SizeInt _blockSize;
 
-		private bool _enabled;
-		private readonly Rectangle _selectedArea;
-		private Size _defaultSelectionSize;
-		private readonly Line _dragLine;
 
 		private int _pitch;
+		private Size _defaultSelectionSize;
+
+		private bool _enabled;
+		private readonly Rectangle _selectedArea;
+
+		private readonly Line _dragLine;
+
 		private bool _selecting;
 		private bool _dragging;
 
@@ -48,7 +52,7 @@ namespace MSetExplorer
 			_mapDisplayViewModel = mapDisplayViewModel;
 			_blockSize = blockSize;
 
-			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
 
 			_selectedArea = BuildSelectionRectangle(_canvas);
 			SelectedPosition = new Point();
@@ -130,7 +134,8 @@ namespace MSetExplorer
 
 				if (Enabled)
 				{
-					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+
 					_selectedArea.Width = _defaultSelectionSize.Width;
 					_selectedArea.Height = _defaultSelectionSize.Height;
 				}
@@ -197,7 +202,8 @@ namespace MSetExplorer
 
 				if (Enabled)
 				{
-					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+
 					_selectedArea.Width = _defaultSelectionSize.Width;
 					_selectedArea.Height = _defaultSelectionSize.Height;
 				}
@@ -205,7 +211,8 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
 			{
-				(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize.Round(), PITCH_TARGET);
+				(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+
 				_selectedArea.Width = _defaultSelectionSize.Width;
 				_selectedArea.Height = _defaultSelectionSize.Height;
 			}
@@ -383,10 +390,12 @@ namespace MSetExplorer
 					var area = StopSelecting();
 
 					var (zoomPoint, factor) = GetAreaSelectedParams(area);
+					var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor: factor, isPreview: false);
+					eventArgs.PerformDiagnostics = true;
 
-					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}");
+					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}.");
 
-					AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor: factor, isPreview: false));
+					AreaSelected?.Invoke(this, eventArgs);
 				}
 				else
 				{
@@ -399,10 +408,17 @@ namespace MSetExplorer
 		{
 			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
 
-			var selectonCenter = area.GetCenter();
-			var zoomPoint = GetCenterOffset(selectonCenter);
+			var selPos = ScreenTypeHelper.ConvertToPointDbl(SelectedPosition);
 
-			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
+			var selectionCenter = area.GetCenter();
+			var zoomPoint = GetCenterOffset(selectionCenter);
+
+			if (!ScreenTypeHelper.IsPointDblChanged(selPos, selectionCenter))
+			{
+				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
+			}
+
+			Debug.Assert(area.Width > 0 && area.Height > 0, "Selection Rectangle has a zero or negative value its width or height.");
 
 			var xFactor = _canvas.ActualWidth / area.Width;
 			var yFactor = _canvas.ActualHeight / area.Height;
@@ -713,10 +729,12 @@ namespace MSetExplorer
 			if (wasUpdated)
 			{
 				var (zoomPoint, factor) = GetAreaSelectedParams(Area);
+				var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, isPreview: true);
+				eventArgs.PerformDiagnostics = false;
 
 				Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
 
-				AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, isPreview: true));
+				AreaSelected?.Invoke(this, eventArgs);
 			}
 		}
 
@@ -789,10 +807,11 @@ namespace MSetExplorer
 			return new Rect(pos, newSize);
 		}
 
-		private (int pitch, Size selctionSize) CalculatePitchAndDefaultSelectionSize(SizeInt displaySize, int pitchTarget)
+		private (int pitch, Size selctionSize) CalculatePitchAndDefaultSelectionSize(SizeDbl displaySize, int pitchTarget)
 		{
-			var pitch = RMapHelper.CalculatePitch(displaySize, pitchTarget);
-			var defaultSideLength = RMapHelper.CalculatePitch(displaySize, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
+			var dispSizeInt = displaySize.Round();
+			var pitch = RMapHelper.CalculatePitch(dispSizeInt, pitchTarget);
+			var defaultSideLength = RMapHelper.CalculatePitch(dispSizeInt, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
 
 			var defaultSelectionSize = GetDefaultSelectionSize(_canvas, defaultSideLength);
 
@@ -800,6 +819,30 @@ namespace MSetExplorer
 
 			return (pitch, defaultSelectionSize);
 		}
+
+		//private (double pitch, Size selctionSize) CalculatePitchAndDefaultSelectionSize(SizeDbl displaySize, int pitchTarget)
+		//{
+		//	double pitch;
+		//	double defaultSideLength;
+
+		//	if (USE_INTEGER_FOR_PITCH)
+		//	{
+		//		var dispSizeInt = displaySize.Round();
+		//		pitch = RMapHelper.CalculatePitch(dispSizeInt, pitchTarget);
+		//		defaultSideLength = RMapHelper.CalculatePitch(dispSizeInt, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
+		//	}
+		//	else
+		//	{
+		//		pitch = RMapHelper.CalculatePitch(displaySize, pitchTarget);
+		//		defaultSideLength = RMapHelper.CalculatePitch(displaySize, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
+		//	}
+
+		//	var defaultSelectionSize = GetDefaultSelectionSize(_canvas, defaultSideLength);
+
+		//	Debug.WriteLine($"ScreenSelection Pitch: {pitch}. SelectionSize: {defaultSelectionSize}.");
+
+		//	return (pitch, defaultSelectionSize);
+		//}
 
 		private Size GetDefaultSelectionSize(Canvas canvas, double defaultSideLength)
 		{

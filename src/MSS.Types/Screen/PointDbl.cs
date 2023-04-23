@@ -28,6 +28,11 @@ namespace MSS.Types
 		public double X { get; set; }
 		public double Y { get; set; }
 
+		public bool IsNAN()
+		{
+			return double.IsNaN(X) || double.IsNaN(Y);
+		}
+
 		//public PointDbl Scale(PointDbl factor)
 		//{
 		//	return new PointDbl(X * factor.X, Y * factor.Y);

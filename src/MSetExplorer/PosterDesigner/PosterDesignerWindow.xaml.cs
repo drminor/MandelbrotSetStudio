@@ -807,13 +807,8 @@ namespace MSetExplorer
 
 			var mapAreaInfo = curJob.MapAreaInfo;
 
-
-
-			var areaWithSizeInfo = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, new SizeInt(1024));
-
-
 			//var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
-			var previewSize = GetPreviewSize(areaWithSizeInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
+			var previewSize = GetPreviewSize(poster.PosterSize, PREVIEW_IMAGE_SIZE);
 
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
@@ -821,16 +816,10 @@ namespace MSetExplorer
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 
-			//var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo)
-			//{
-			//	DataContext = posterSizeEditorViewModel
-			//};
-
-			var posterSizeEditorDialog = new PosterSizeEditorDialog(areaWithSizeInfo)
+			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo)
 			{
 				DataContext = posterSizeEditorViewModel
 			};
-
 
 			posterSizeEditorDialog.ApplyChangesRequested += PosterSizeEditorDialog_ApplyChangesRequested;
 

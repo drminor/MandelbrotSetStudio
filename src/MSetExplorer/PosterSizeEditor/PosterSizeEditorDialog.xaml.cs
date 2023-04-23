@@ -26,11 +26,11 @@ namespace MSetExplorer
 
 		private PosterSizeEditorViewModel _vm;
 
-		private MapAreaInfo? _initialPosterMapAreaInfo;
+		private MapAreaInfo2? _initialPosterMapAreaInfo;
 
 		#region Constructor
 
-		public PosterSizeEditorDialog(MapAreaInfo posterMapAreaInfo)
+		public PosterSizeEditorDialog(MapAreaInfo2 posterMapAreaInfo)
 		{
 			_initialPosterMapAreaInfo = posterMapAreaInfo;
 
@@ -76,10 +76,12 @@ namespace MSetExplorer
 					throw new InvalidOperationException("The initialPosterMapAreaInfo is null.");
 				}
 
-				var mapAreaInfoV2 = MapJobHelper.Convert(_initialPosterMapAreaInfo);
+				//var mapAreaInfoV2 = MapJobHelper.Convert(_initialPosterMapAreaInfo);
+
+				var copyOfInitial = _initialPosterMapAreaInfo.Clone();
 
 				var containerSize = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
-				_vm.Initialize(mapAreaInfoV2, containerSize);
+				_vm.Initialize(copyOfInitial, containerSize);
 
 				_initialPosterMapAreaInfo = null;
 

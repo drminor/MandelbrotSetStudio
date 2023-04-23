@@ -47,28 +47,12 @@ namespace MSetExplorer
 
 		#endregion
 
-		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b, double threshold = 0.1)
-		{
-			if (a.IsNAN() || b.IsNAN())
-			{
-				return false;
-			}
-
-			return !a.Diff(b).IsNearZero(threshold);
-		}
-
-		public static bool IsVectorDblChanged(VectorDbl a, VectorDbl b, double threshold = 0.1)
-		{
-			if (a.IsNAN() || b.IsNAN())
-			{
-				return false;
-			}
-
-			return !a.Diff(b).IsNearZero(threshold);
-		}
-
-
 		#region Convert to MSS Types
+
+		public static PointDbl ConvertToPointDbl(Point p)
+		{
+			return new PointDbl(p.X, p.Y);
+		}
 
 		public static PointInt ConvertToPointInt(Point p)
 		{
@@ -90,6 +74,37 @@ namespace MSetExplorer
 		{
 			return new RectangleDbl(rect.Left, rect.Right, rect.Top, rect.Bottom);
 		}
+
+		public static bool IsPointDblChanged(PointDbl a, PointDbl b, double threshold = 0.1)
+		{
+			if (a.IsNAN() || b.IsNAN())
+			{
+				return false;
+			}
+
+			return !a.Diff(b).IsNearZero(threshold);
+		}
+
+		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b, double threshold = 0.1)
+		{
+			if (a.IsNAN() || b.IsNAN())
+			{
+				return false;
+			}
+
+			return !a.Diff(b).IsNearZero(threshold);
+		}
+
+		public static bool IsVectorDblChanged(VectorDbl a, VectorDbl b, double threshold = 0.1)
+		{
+			if (a.IsNAN() || b.IsNAN())
+			{
+				return false;
+			}
+
+			return !a.Diff(b).IsNearZero(threshold);
+		}
+
 
 		#endregion
 

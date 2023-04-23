@@ -240,6 +240,38 @@ namespace MSS.Common
 		}
 
 
+		//public static double CalculatePitch(SizeDbl displaySize, int pitchTarget)
+		//{
+		//	// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
+		//	double result;
+
+		//	var width = displaySize.Width;
+		//	var height = displaySize.Height;
+
+		//	if (double.IsNaN(width) || double.IsNaN(height) || width == 0 || height == 0)
+		//	{
+		//		return pitchTarget;
+		//	}
+
+		//	if (width >= height)
+		//	{
+		//		result = width / Math.Pow(2, Math.Log2(width / pitchTarget));
+		//	}
+		//	else
+		//	{
+		//		result = height / Math.Pow(2, Math.Log2(height / pitchTarget));
+		//	}
+
+		//	if (result < 0)
+		//	{
+		//		Debug.WriteLine($"WARNING: Calculating Pitch using Display Size: {displaySize} and Pitch Target: {pitchTarget}, produced {result}.");
+		//		result = pitchTarget;
+		//	}
+
+		//	return result;
+		//}
+
+
 		#endregion
 
 		#region Type Helpers
