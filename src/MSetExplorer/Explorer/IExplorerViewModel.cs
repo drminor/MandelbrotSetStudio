@@ -23,7 +23,7 @@ namespace MSetExplorer
 		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
 		IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType);
 
-		CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath, bool useEscapeVelocities);
+		CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/);
 
 		CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits);
 

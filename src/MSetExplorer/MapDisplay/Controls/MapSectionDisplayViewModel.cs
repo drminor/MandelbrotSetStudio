@@ -391,19 +391,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public MapAreaInfo? GetMapAreaInfo()
-		//{
-		//	if (CurrentAreaColorAndCalcSettings != null)
-		//	{
-		//		var result = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, CanvasSize);
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		return null;
-		//	}
-		//}
-
 		#endregion
 
 		#region Raise MapViewUpdateRequested Event Methods

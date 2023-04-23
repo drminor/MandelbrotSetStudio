@@ -123,10 +123,10 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(string imageFilePath, bool useEscapeVelocities)
+		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/)
 		{
 			var pngBuilder = new PngBuilder(_mapLoaderManager);
-			var result = new CreateImageProgressViewModel(pngBuilder, useEscapeVelocities);
+			var result = new CreateImageProgressViewModel(pngBuilder/*, useEscapeVelocities*/);
 			return result;
 		}
 

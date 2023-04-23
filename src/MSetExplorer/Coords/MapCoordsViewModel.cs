@@ -80,9 +80,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public MapAreaInfo CurrentMapAreaInfo
+		public MapAreaInfo? CurrentMapAreaInfo
 		{
-			get => _currentMapAreaInfo ?? new MapAreaInfo();
+			get => _currentMapAreaInfo;
 			set
 			{
 				if (value != _currentMapAreaInfo)

@@ -184,13 +184,12 @@ namespace MSetExplorer
 			//var previewMapArea = new MapAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.Precision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
 
 			//var previewMapArea = MapJobHelper2.Convert(job.MapAreaInfo, imageSize);
-			var previewMapArea = new MapAreaInfo();
-
+			var previewMapArea = MapJobHelper.GetMapAreaWithSizeLean(job.MapAreaInfo, imageSize);
 
 			//byte[]? result = null;
 
 			var cts = new CancellationTokenSource();
-			var bitmapBuilder = new ImageBuilder.BitmapBuilder(_mapLoaderManager);
+			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
 			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, job.MapCalcSettings, _useEscapeVelocities, cts.Token, StatusCallBack));
 
 			var result = task.Result;

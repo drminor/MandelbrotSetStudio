@@ -320,7 +320,9 @@ namespace MSetExplorer
 
 			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
 			{
-				_createImageProgressWindow = StartImageCreation(imageFilePath, curPoster, useEscapeVelocities: true);
+				var areaColorAndCalcSettings = _vm.PosterViewModel.CurrentAreaColorAndCalcSettings;
+
+				_createImageProgressWindow = StartImageCreation(imageFilePath, areaColorAndCalcSettings, curPoster.PosterSize);
 
 				_createImageProgressWindow.Show();
 			}
@@ -352,11 +354,11 @@ namespace MSetExplorer
 			}
 		}
 
-		private CreateImageProgressWindow StartImageCreation(string imageFilePath, Poster poster, bool useEscapeVelocities)
+		private CreateImageProgressWindow StartImageCreation(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeInt imageSize)
 		{
-			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(imageFilePath, useEscapeVelocities);
+			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(/*imageFilePath, areaColorAndCalcSettings, imageSize*/);
 
-			createImageProgressViewModel.CreateImage(imageFilePath, poster);
+			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize);
 
 			var result = new CreateImageProgressWindow()
 			{

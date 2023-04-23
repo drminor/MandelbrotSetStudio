@@ -1,8 +1,7 @@
 ﻿using ImageBuilder;
 using MSS.Common;
 using MSS.Common.MSet;
-using MSS.Types.MSet;
-using PngImageLib;
+using MSS.Types;
 using System;
 using System.IO;
 using System.Threading;
@@ -13,16 +12,14 @@ namespace MSetExplorer
 	public class CreateImageProgressViewModel
 	{
 		private readonly PngBuilder _pngBuilder;
-		private bool _useEscapeVelocities;
 		private CancellationTokenSource _cancellationTokenSource;
 		private Task<bool>?_task;
 
 		#region Constructor
 
-		public CreateImageProgressViewModel(PngBuilder pngBuilder, bool useEscapeVelocities)
+		public CreateImageProgressViewModel(PngBuilder pngBuilder)
 		{
 			_pngBuilder = pngBuilder;
-			_useEscapeVelocities = useEscapeVelocities;
 			_cancellationTokenSource = new CancellationTokenSource();
 			_task = null;
 
@@ -44,16 +41,13 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void CreateImage(string imageFilePath, Poster poster)
+		public void CreateImage(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeInt imageSize)
 		{
 			ImageFilePath = imageFilePath;
-			Poster = poster;
-			var curJob = poster.CurrentJob;
 
-			//var oldAreaInfo = MapJobHelper2.Convert(curJob.MapAreaInfo, new MSS.Types.SizeInt(1024));
-			var oldAreaInfo = new MapAreaInfo();
+			var oldAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(areaColorAndCalcSettings.MapAreaInfo, imageSize);
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, oldAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, _useEscapeVelocities, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
 			//_task.ContinueWith(t =>
 			//{
@@ -62,24 +56,24 @@ namespace MSetExplorer
 			//);
 		}
 
-		public void CreateImage(string imageFilePath, Project project)
-		{
-			ImageFilePath = imageFilePath;
-			//Poster = poster;
+		//public void CreateImage(string imageFilePath, Project project)
+		//{
+		//	ImageFilePath = imageFilePath;
+		//	//Poster = poster;
 
-			var curJob = project.CurrentJob;
-			//var oldAreaInfo = MapJobHelper2.Convert(curJob.MapAreaInfo, new MSS.Types.SizeInt(1024));
-			var oldAreaInfo = new MapAreaInfo();
+		//	var curJob = project.CurrentJob;
+		//	//var oldAreaInfo = MapJobHelper2.Convert(curJob.MapAreaInfo, new MSS.Types.SizeInt(1024));
+		//	var oldAreaInfo = new MapAreaInfo();
 
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, oldAreaInfo, project.CurrentColorBandSet, curJob.MapCalcSettings, _useEscapeVelocities, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+		//	_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, oldAreaInfo, project.CurrentColorBandSet, curJob.MapCalcSettings, _useEscapeVelocities, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
-			//_task.ContinueWith(t =>
-			//{
+		//	//_task.ContinueWith(t =>
+		//	//{
 
-			//}
-			//);
-		}
+		//	//}
+		//	//);
+		//}
 
 
 		public void CancelCreateImage()

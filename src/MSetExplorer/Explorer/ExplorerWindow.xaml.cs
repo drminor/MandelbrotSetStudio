@@ -523,9 +523,13 @@ namespace MSetExplorer
 
 		private CreateImageProgressWindow StartImageCreation(string imageFilePath, Project project, bool useEscapeVelocities)
 		{
-			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(imageFilePath, useEscapeVelocities);
+			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(/*imageFilePath, useEscapeVelocities*/);
 
-			createImageProgressViewModel.CreateImage(imageFilePath, project);
+			var areaColorAndCalcSettings = GetAreaColorAndCalcSettings();
+
+			var imageSize = new SizeInt(4096); // TODO: Create user interface to have the user specify a size for the image.
+
+			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize);
 
 			var result = new CreateImageProgressWindow()
 			{
@@ -533,6 +537,27 @@ namespace MSetExplorer
 			};
 
 			return result;
+		}
+
+		private AreaColorAndCalcSettings GetAreaColorAndCalcSettings()
+		{
+			var curJob = _vm.ProjectViewModel.CurrentJob;
+			var curJobId = curJob.Id.ToString();
+
+			var newMapCalcSettings = curJob.MapCalcSettings;
+			var newMapAreaInfo = curJob.MapAreaInfo;
+			var newColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
+
+			var areaColorAndCalcSettings = new AreaColorAndCalcSettings
+				(
+				curJobId,
+				JobOwnerType.Project,
+				newMapAreaInfo,
+				newColorBandSet,
+				curJob.MapCalcSettings
+				);
+
+			return areaColorAndCalcSettings;
 		}
 
 		private string GetImageFilename(string projectName, int imageWidth)

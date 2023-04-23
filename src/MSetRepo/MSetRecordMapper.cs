@@ -115,7 +115,6 @@ namespace MSetRepo
 			//	Precision = source.MapAreaInfo.Precision
 			//};
 
-			// TODO: Fix Me??
 			var oldAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(source.MapAreaInfo, new SizeInt(1024));
 
 			//var mapAreaInfoRecord = MapTo(source.MapAreaInfo);

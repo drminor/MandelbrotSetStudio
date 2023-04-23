@@ -50,7 +50,7 @@ namespace MSetExplorer
 			_cts = new CancellationTokenSource();
 			_currentBitmapBuilderTask = null;
 
-			_previewMapAreaInfo = GetPreviewMapAreaInfo(_mapAreaInfo, _previewImageSize);
+			_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(_mapAreaInfo, _previewImageSize);
 
 			Bitmap = CreateBitmap(_previewImageSize);
 			FillBitmapWithColor(_fallbackColor, Bitmap);
@@ -75,7 +75,8 @@ namespace MSetExplorer
 				{
 					_mapAreaInfo = value;
 
-					_previewMapAreaInfo = GetPreviewMapAreaInfo(_mapAreaInfo, _previewImageSize);
+					_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(_mapAreaInfo, _previewImageSize);
+
 					FillBitmapWithColor(_fallbackColor, Bitmap);
 					QueueBitmapGeneration(_previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 				}
@@ -91,18 +92,21 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private MapAreaInfo GetPreviewMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt previewImageSize)
-		{
-			//var coords = mapAreaInfo.Coords;
-			//var blockSize = mapAreaInfo.Subdivision.BlockSize;
+		//private MapAreaInfo GetPreviewMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt previewImageSize)
+		//{
+		//	//var coords = mapAreaInfo.Coords;
+		//	//var blockSize = mapAreaInfo.Subdivision.BlockSize;
 
-			//var result = _mapJobHelper.GetMapAreaInfo(coords, previewImageSize);
+		//	//var result = _mapJobHelper.GetMapAreaInfo(coords, previewImageSize);
 
-			//var result = MapJobHelper2.Convert(mapAreaInfo, previewImageSize);
-			var result = new MapAreaInfo();
+		//	//var result = MapJobHelper2.Convert(mapAreaInfo, previewImageSize);
 
-			return result;
-		}
+		//	var result = MapJobHelper.GetMapAreaWithSizeLean(mapAreaInfo, previewImageSize);
+
+		//	var result = new MapAreaInfo();
+
+		//	return result;
+		//}
 
 		private void QueueBitmapGeneration(MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{

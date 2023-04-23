@@ -276,12 +276,9 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			//var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(job.Coords, job.CanvasSize);
-			//var oldAreaInfo = MapJobHelper2.Convert(job.MapAreaInfo, new SizeInt(1024));
-			var oldAreaInfo = new MapAreaInfo();
 
 			//AddTiming("GetMapAreaInfo");
-
+			var oldAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(job.MapAreaInfo, new SizeInt(1024));
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 

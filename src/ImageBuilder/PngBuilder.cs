@@ -35,7 +35,7 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<bool> BuildAsync(string imageFilePath, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Action<double> statusCallBack, CancellationToken ct)
+		public async Task<bool> BuildAsync(string imageFilePath, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -43,7 +43,7 @@ namespace ImageBuilder
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
 			{
-				UseEscapeVelocities = useEscapeVelocities
+				UseEscapeVelocities = mapCalcSettings.UseEscapeVelocities
 			};
 
 			PngImage? pngImage = null;
@@ -53,7 +53,6 @@ namespace ImageBuilder
 				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
 				var imageSize = mapAreaInfo.CanvasSize;
-				//imageSize = imageSize.Scale(4);
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
 				var numberOfWholeBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize);
