@@ -43,6 +43,8 @@ namespace MSetExplorer
 		int? RestartLastJob();
 		void ClearDisplay();
 
-		MapAreaInfo? GetMapAreaInfo();
+		//MapAreaInfo? GetMapAreaInfo();
+
+		MapAreaInfo? LastMapAreaInfo { get; }
 	}
 }

@@ -191,6 +191,7 @@ namespace MSetRepo
 				}
 				else
 				{
+					Debug.WriteLine($"MapSectionNotFound. SubdivisionId: {subdivisionId}, BlockPosition: {blockPosition}.");
 					return null;
 				}
 			}

@@ -12,7 +12,7 @@ namespace MSetExplorer
 
 		public bool IsPreview { get; init; }
 
-		public bool PerformDiagnostics { get; set; }
+		//public bool PerformDiagnostics { get; set; }
 
 		public AreaSelectedEventArgs(TransformType transformType, VectorInt panAmount, double factor, bool isPreview = false)
 		{

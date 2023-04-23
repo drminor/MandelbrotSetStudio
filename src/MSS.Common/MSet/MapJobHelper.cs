@@ -124,7 +124,7 @@ namespace MSS.Common
 
 		#region MapAreaInfo2 Support
 
-		public static MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
+		public static MapAreaInfo GetMapAreaWithSizeLean(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
 		{
 			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
 
@@ -162,49 +162,52 @@ namespace MSS.Common
 			return result;
 		}
 
-		//public MapAreaInfo GetMapAreaWithSizeAlternate(RPointAndDelta rPointAndDelta, SizeInt canvasSize, SizeInt blockSize)
-		//{
-		//	// Create a rectangle centered at position: x = 0, y = 0
-		//	// Having the same width and height as the given canvasSize.
-		//	var half = new PointInt(canvasSize.Width / 2, canvasSize.Height / 2);
-		//	var area = new RectangleInt(half.Invert(), canvasSize);
+		public MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
+		{
+			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
 
-		//	// Multiply the area by the SamplePointDelta to get map coordiates
-		//	var rArea = new RRectangle(area);
-		//	rArea = rArea.Scale(rPointAndDelta.SamplePointDelta);
+			// Create a rectangle centered at position: x = 0, y = 0
+			// Having the same width and height as the given canvasSize.
+			var half = new PointInt(canvasSize.Width / 2, canvasSize.Height / 2);
+			var area = new RectangleInt(half.Invert(), canvasSize);
 
-		//	// Add to it the CenterPoint, to get a RRectangle which is the map's coordinates
-		//	var nrmArea = RNormalizer.Normalize(rArea, rPointAndDelta.Position, out var nrmMapCenterPoint);
-		//	var coords = nrmArea.Translate(nrmMapCenterPoint);
+			// Multiply the area by the SamplePointDelta to get map coordiates
+			var rArea = new RRectangle(area);
+			rArea = rArea.Scale(rPointAndDelta.SamplePointDelta);
 
-		//	// Calculate the total number of sample points from the origin to the lower, left corner of the map's coordinates and the Subdivision origin (i.e., BaseMapBlockOffset.)
-		//	var adjCoords = RNormalizer.Normalize(coords, rPointAndDelta.SamplePointDelta, out var nrmSamplePointDelta);
+			// Add to it the CenterPoint, to get a RRectangle which is the map's coordinates
+			var nrmArea = RNormalizer.Normalize(rArea, rPointAndDelta.Position, out var nrmMapCenterPoint);
+			var coords = nrmArea.Translate(nrmMapCenterPoint);
 
-		//	var positionV = new RVector(adjCoords.Position);
+			// Calculate the total number of sample points from the origin to the lower, left corner of the map's coordinates and the Subdivision origin (i.e., BaseMapBlockOffset.)
+			var adjCoords = RNormalizer.Normalize(coords, rPointAndDelta.SamplePointDelta, out var nrmSamplePointDelta);
 
-		//	// Determine the number of full blocks, and number of samplePoints remaining
-		//	BigVector mapBlockOffset;
-		//	VectorInt canvasControlOffset;
+			var positionV = new RVector(adjCoords.Position);
 
-		//	if (positionV.IsZero())
-		//	{
-		//		mapBlockOffset = new BigVector();
-		//		canvasControlOffset = new VectorInt();
-		//	}
-		//	else
-		//	{
-		//		var offsetInSamplePoints = positionV.Divide(nrmSamplePointDelta);
-		//		mapBlockOffset = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
-		//	}
+			// Determine the number of full blocks, and number of samplePoints remaining
+			BigVector mapBlockOffset;
+			VectorInt canvasControlOffset;
 
-		//	// Find or create a subdivision record in the database.
-		//	var subdivision = _subdivisonProvider.GetSubdivision(nrmSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-		//	var binaryPrecision = Math.Abs(nrmSamplePointDelta.Exponent);
+			if (positionV.IsZero())
+			{
+				mapBlockOffset = new BigVector();
+				canvasControlOffset = new VectorInt();
+			}
+			else
+			{
+				var offsetInSamplePoints = positionV.Divide(nrmSamplePointDelta);
+				var blockSize = mapAreaInfoV2.Subdivision.BlockSize;
+				mapBlockOffset = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+			}
 
-		//	var result = new MapAreaInfo(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+			// Find or create a subdivision record in the database.
+			var subdivision = _subdivisonProvider.GetSubdivision(nrmSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+			var binaryPrecision = Math.Abs(nrmSamplePointDelta.Exponent);
 
-		//	return result;
-		//}
+			var result = new MapAreaInfo(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+
+			return result;
+		}
 
 		public static MapAreaInfo2 Convert(MapAreaInfo mapAreaInfo)
 		{
@@ -249,7 +252,7 @@ namespace MSS.Common
 				return rCoords;
 			}
 
-			var factor = (long)Math.Pow(2, samplePointDelta.Exponent - rCoords.Exponent);
+			var factor = (long)Math.Pow(2, rCoords.Exponent - samplePointDelta.Exponent);
 
 			var newVals = rCoords.Values.Select(v => v * factor).ToArray();
 

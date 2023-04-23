@@ -23,7 +23,7 @@ namespace MSS.Types.MSet
 		public RPoint MapCenter => PositionAndDelta.Center;
 		public RSize SamplePointDelta => PositionAndDelta.SamplePointDelta;
 
-		public bool IsEmpty => PositionAndDelta == RPointAndDelta.Zero;
+		public bool IsEmpty { get; init;}
 
 		#region Constructors
 
@@ -34,6 +34,7 @@ namespace MSS.Types.MSet
 			Precision = 1;
 			MapBlockOffset = new BigVector();
 			CanvasControlOffset = new VectorInt();
+			IsEmpty = true;
 		}
 
 		public MapAreaInfo2(RPoint mapCenter, Subdivision subdivision, int precision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
@@ -47,6 +48,7 @@ namespace MSS.Types.MSet
 			MapBlockOffset = mapBlockOffset;
 			Precision = precision;
 			CanvasControlOffset = canvasControlOffset;
+			IsEmpty = false;
 		}
 
 		private static RPointAndDelta Combine(RPoint mapCenter, RSize samplePointDelta)
@@ -70,7 +72,10 @@ namespace MSS.Types.MSet
 
 		public MapAreaInfo2 Clone()
 		{
-			return new MapAreaInfo2(PositionAndDelta.Clone(), Subdivision.Clone(), Precision, MapBlockOffset.Clone(), CanvasControlOffset);
+			return new MapAreaInfo2(PositionAndDelta.Clone(), Subdivision.Clone(), Precision, MapBlockOffset.Clone(), CanvasControlOffset)
+			{
+				IsEmpty = IsEmpty
+			};
 		}
 
 		#endregion

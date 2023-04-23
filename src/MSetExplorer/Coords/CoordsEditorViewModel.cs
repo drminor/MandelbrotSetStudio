@@ -1,5 +1,4 @@
-﻿using MSetRepo;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 
@@ -18,21 +17,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		//public CoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, RRectangle coords, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper) 
-		//	: this(new SingleCoordEditorViewModel[] {
-		//	new SingleCoordEditorViewModel(coords.Left), new SingleCoordEditorViewModel(coords.Right),
-		//	new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, mapAreaInfoV2, displaySize, allowEdits, mapJobHelper)
-		//{ }
-
-		//public CoordsEditorViewModel(string x1, string x2, string y1, string y2, MapAreaInfo2 mapAreaInfoV2, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper)
-		//	: this(new SingleCoordEditorViewModel[] {
-		//	new SingleCoordEditorViewModel(x1), new SingleCoordEditorViewModel(x2),
-		//	new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, mapAreaInfoV2, displaySize, allowEdits, mapJobHelper)
-		//{ }
-
 		public CoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeInt displaySize, bool allowEdits)
 		{
-			var mapAreaInfo = MapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, _displaySize);
+			var mapAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(mapAreaInfoV2, _displaySize);
 			_coords = mapAreaInfo.Coords;
 
 			StartingX = new SingleCoordEditorViewModel(_coords.Left);
@@ -40,12 +27,6 @@ namespace MSetExplorer
 
 			StartingY = new SingleCoordEditorViewModel(_coords.Bottom);
 			EndingY= new SingleCoordEditorViewModel(_coords.Top);
-
-
-			//StartingX = vms[0];
-			//EndingX = vms[1];
-			//StartingY = vms[2];
-			//EndingY = vms[3];
 
 			_displaySize = displaySize;
 			EditsAllowed = allowEdits;
@@ -56,30 +37,6 @@ namespace MSetExplorer
 
 			MapCoordsDetail2 = new MapCoordsDetailViewModel(mapAreaInfo);
 		}
-
-		//private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, MapAreaInfo2 mapAreaInfoV2, SizeInt displaySize, bool allowEdits, MapJobHelper mapJobHelper)
-		//{
-		//	StartingX = vms[0];
-		//	EndingX = vms[1];
-		//	StartingY = vms[2];
-		//	EndingY = vms[3];
-
-		//	_displaySize = displaySize;
-		//	EditsAllowed = allowEdits;
-		//	_blockSize = RMapConstants.BLOCK_SIZE;
-
-		//	_coords = GetCoords(vms);
-		//	MapCoordsDetail1 = new MapCoordsDetailViewModel(_coords);
-
-		//	_zoom = RValueHelper.GetFormattedResolution(_coords.Width);
-
-		//	//var mapAreaInfo = mapJobHelper.GetMapAreaInfo(_coords, _displaySize, _blockSize);
-		//	//MapCoordsDetail2 = new MapCoordsDetailViewModel(mapAreaInfo);
-
-		//	var mapAreaInfo = MapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, _displaySize);
-		//	MapCoordsDetail2 = new MapCoordsDetailViewModel(mapAreaInfo);
-
-		//}
 
 		#endregion
 

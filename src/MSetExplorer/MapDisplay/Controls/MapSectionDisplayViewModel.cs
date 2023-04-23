@@ -27,6 +27,8 @@ namespace MSetExplorer
 		private bool _highlightSelectedColorBand;
 		private AreaColorAndCalcSettings? _currentAreaColorAndCalcSettings;
 
+		private MapAreaInfo? _latestMapAreaInfo;
+
 		private object _paintLocker;
 
 		private SizeDbl _canvasSize;
@@ -57,6 +59,7 @@ namespace MSetExplorer
 			_useEscapeVelocities = false;
 			_highlightSelectedColorBand = false;
 			_currentAreaColorAndCalcSettings = null;
+			_latestMapAreaInfo = null;
 
 			_canvasSize = new SizeDbl(10, 10);
 
@@ -194,10 +197,16 @@ namespace MSetExplorer
 				{
 					_canvasSize = value;
 
-					var newJobNumber = HandleDisplaySizeUpdate();
-					if (newJobNumber != null)
+					if (LastMapAreaInfo != null)
 					{
-						ActiveJobNumbers.Add(newJobNumber.Value);
+						if (LastMapAreaInfo.CanvasSize != value.Round())
+						{
+							var newJobNumber = HandleDisplaySizeUpdate();
+							if (newJobNumber != null)
+							{
+								ActiveJobNumbers.Add(newJobNumber.Value);
+							}
+						}
 					}
 
 					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
@@ -219,6 +228,12 @@ namespace MSetExplorer
 					OnPropertyChanged(nameof(IMapDisplayViewModel.ImageOffset));
 				}
 			}
+		}
+
+		public MapAreaInfo? LastMapAreaInfo
+		{
+			get => _latestMapAreaInfo;
+			private set { _latestMapAreaInfo = value; }
 		}
 
 		public SizeDbl LogicalDisplaySize => CanvasSize;
@@ -376,18 +391,18 @@ namespace MSetExplorer
 			}
 		}
 
-		public MapAreaInfo? GetMapAreaInfo()
-		{
-			if (CurrentAreaColorAndCalcSettings != null)
-			{
-				var result = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, CanvasSize);
-				return result;
-			}
-			else
-			{
-				return null;
-			}
-		}
+		//public MapAreaInfo? GetMapAreaInfo()
+		//{
+		//	if (CurrentAreaColorAndCalcSettings != null)
+		//	{
+		//		var result = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, CanvasSize);
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		return null;
+		//	}
+		//}
 
 		#endregion
 
@@ -503,6 +518,7 @@ namespace MSetExplorer
 		private int? ReuseAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
 			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, CanvasSize);
+			LastMapAreaInfo = screenAreaInfo;
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
 			var loadedSections = new ReadOnlyCollection<MapSection>(MapSections);
@@ -554,8 +570,11 @@ namespace MSetExplorer
 		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
 			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, CanvasSize);
+			LastMapAreaInfo = screenAreaInfo;
 
-			var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, screenAreaInfo, newJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
+			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
+
+			var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsRequired, MapSectionReady, out var newJobNumber);
 
 			var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
 			Debug.WriteLine($"Clearing Display and Loading New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
@@ -643,7 +662,7 @@ namespace MSetExplorer
 
 		private MapAreaInfo GetScreenAreaInfo(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
-			var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize.Round());
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize.Round());
 
 			// Just for diagnostics.
 			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
@@ -675,12 +694,13 @@ namespace MSetExplorer
 			Debug.WriteLine($"UpdateSize is moving the pos from {previousValue.Coords.Position} to {newValue.Coords.Position}.");
 		}
 
+		[Conditional("DEBUG")]
 		private void CompareMapAreaAfterRoundTrip(MapAreaInfo2 previousValue, MapAreaInfo2 newValue, MapAreaInfo middleValue)
 		{
 			Debug.WriteLine($"MapDisplay is RoundTripping MapAreaInfo" +
 				$"\nPrevious Scale: {previousValue.SamplePointDelta.Width}. Pos: {previousValue.MapCenter}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +
 				$"\nNew Scale     : {newValue.SamplePointDelta.Width}. Pos: {newValue.MapCenter}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset}" +
-				$"\nIntermediate  : {middleValue.SamplePointDelta.Width}. Pos: {middleValue.MapPosition}. MapOffset: {middleValue.MapBlockOffset}. ImageOffset: {middleValue.CanvasControlOffset} Size: {middleValue.CanvasSize}.");
+				$"\nIntermediate  : {middleValue.SamplePointDelta.Width}. Pos: {middleValue.Coords}. MapOffset: {middleValue.MapBlockOffset}. ImageOffset: {middleValue.CanvasControlOffset} Size: {middleValue.CanvasSize}.");
 		}
 
 		//private List<MapSection> GetSectionsToLoadX(List<MapSection> sectionsNeeded, IReadOnlyList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)

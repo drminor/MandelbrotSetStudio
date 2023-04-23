@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -22,16 +23,16 @@ namespace MSetExplorer
 		private const int DEFAULT_SELECTION_SIZE_FACTOR = 8; // Amount to multiply actual pitch by to get the default side length of the selection rectangle.
 
 		private readonly Canvas _canvas;
-		private readonly IMapDisplayViewModel _mapDisplayViewModel;
+		//private readonly IMapDisplayViewModel _mapDisplayViewModel;
 		private readonly SizeInt _blockSize;
 
+		private SizeDbl _displaySize;
+		private MapAreaInfo2? _mapAreaInfo;
 
 		private int _pitch;
 		private Size _defaultSelectionSize;
 
-		private bool _enabled;
 		private readonly Rectangle _selectedArea;
-
 		private readonly Line _dragLine;
 
 		private bool _selecting;
@@ -46,19 +47,23 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public SelectionRectangle(Canvas canvas, IMapDisplayViewModel mapDisplayViewModel, SizeInt blockSize)
+		public SelectionRectangle(Canvas canvas, SizeDbl displaySize, SizeInt blockSize)
 		{
 			_canvas = canvas;
-			_mapDisplayViewModel = mapDisplayViewModel;
+			//_mapDisplayViewModel = mapDisplayViewModel;
 			_blockSize = blockSize;
 
-			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+			_displaySize = displaySize; // mapDisplayViewModel.CanvasSize;
+			_mapAreaInfo = null;
+
+			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
 
 			_selectedArea = BuildSelectionRectangle(_canvas);
 			SelectedPosition = new Point();
+			SelectedCenterPosition = new Point();
 			_dragLine = BuildDragLine(_canvas);
 
-			_mapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
+			//_mapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
 			_dragLine.KeyUp += DragLine_KeyUp;
@@ -115,13 +120,15 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Properties
+		#region Events
 
 		internal event EventHandler<AreaSelectedEventArgs>? AreaSelected;
-
 		internal event EventHandler<ImageDraggedEventArgs>? ImageDragged;
 
-		SizeDbl _displaySize;
+		#endregion
+
+		#region Public Properties
+
 		public SizeDbl DisplaySize
 		{
 			get => _displaySize;
@@ -130,16 +137,30 @@ namespace MSetExplorer
 			{
 				_displaySize = value;
 
-				Enabled = _mapDisplayViewModel.CurrentAreaColorAndCalcSettings != null;
-
-				if (Enabled)
+				if (IsEnabled)
 				{
-					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
 
 					_selectedArea.Width = _defaultSelectionSize.Width;
 					_selectedArea.Height = _defaultSelectionSize.Height;
 				}
+			}
+		}
 
+		public MapAreaInfo2? MapAreaInfo
+		{
+			get => _mapAreaInfo;
+			set
+			{
+				_mapAreaInfo = value;
+
+				if (IsEnabled)
+				{
+					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
+
+					_selectedArea.Width = _defaultSelectionSize.Width;
+					_selectedArea.Height = _defaultSelectionSize.Height;
+				}
 			}
 		}
 
@@ -156,12 +177,106 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool Enabled
+		#endregion
+
+		#region Private Properties
+
+		private bool IsEnabled => MapAreaInfo != null;
+
+		private bool Selecting
 		{
-			get => _enabled;
+			get => _selecting;
+
 			set
 			{
-				_enabled = value;
+				if (_selecting != value)
+				{
+					if (value)
+					{
+						_selectedArea.Visibility = Visibility.Visible;
+						_selectedArea.Focus();
+					}
+					else
+					{
+						_selectedArea.Visibility = Visibility.Hidden;
+						_selectedArea.Width = _defaultSelectionSize.Width;
+						_selectedArea.Height = _defaultSelectionSize.Height;
+
+						//var noSelectionRect = new RectangleInt();
+						AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, new VectorInt(), double.NegativeInfinity, isPreview: true));
+					}
+
+					_selecting = value;
+				}
+			}
+		}
+
+		private bool Dragging
+		{
+			get => _dragging;
+
+			set
+			{
+				if (_dragging != value)
+				{
+					if (value)
+					{
+						_dragLine.Visibility = Visibility.Visible;
+						_dragLine.Focus();
+					}
+					else
+					{
+						_dragLine.Visibility = Visibility.Hidden;
+					}
+
+					_dragging = value;
+				}
+			}
+		}
+
+		private Point SelectedCenterPosition { get; set; }
+
+		private Point SelectedPosition
+		{
+			get
+			{
+				var x = (double)_selectedArea.GetValue(Canvas.LeftProperty);
+				var y = (double)_selectedArea.GetValue(Canvas.BottomProperty);
+
+				return new Point(double.IsNaN(x) ? 0 : x, double.IsNaN(y) ? 0 : y);
+			}
+
+			set
+			{
+				_selectedArea.SetValue(Canvas.LeftProperty, value.X);
+				_selectedArea.SetValue(Canvas.BottomProperty, value.Y);
+			}
+		}
+
+		private Size SelectedSize
+		{
+			get
+			{
+				var result = new Size(_selectedArea.Width, _selectedArea.Height);
+				//Debug.WriteLine($"The selected size is {result}.");
+				return result;
+			}
+
+			set
+			{
+				//Debug.WriteLine($"The selected size is being updated to {value}.");
+				_selectedArea.Width = value.Width;
+				_selectedArea.Height = value.Height;
+			}
+		}
+
+		private Point DragLineTerminus
+		{
+			get => new(_dragLine.X2, _dragLine.Y2);
+			set
+			{
+				_dragLine.X2 = value.X;
+				_dragLine.Y2 = value.Y;
 			}
 		}
 
@@ -173,7 +288,7 @@ namespace MSetExplorer
 		{
 			try
 			{
-				_mapDisplayViewModel.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
+				//_mapDisplayViewModel.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
 
 				_canvas.MouseLeftButtonUp -= Canvas_MouseLeftButtonUp;
 				_canvas.MouseLeftButtonDown -= Canvas_MouseLeftButtonDown;
@@ -194,29 +309,32 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
-			{
-				Enabled = _mapDisplayViewModel.CurrentAreaColorAndCalcSettings != null;
+		//// TODO: Update the SelectionRectangle with dependency properties
+		//// so that the current PositionAndDelta and DisplaySize can be bound.
 
-				if (Enabled)
-				{
-					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+		//private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
+		//	if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
+		//	{
+		//		_enabled = _mapDisplayViewModel.CurrentAreaColorAndCalcSettings != null;
 
-					_selectedArea.Width = _defaultSelectionSize.Width;
-					_selectedArea.Height = _defaultSelectionSize.Height;
-				}
-			}
+		//		if (IsEnabled)
+		//		{
+		//			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
-			{
-				(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+		//			_selectedArea.Width = _defaultSelectionSize.Width;
+		//			_selectedArea.Height = _defaultSelectionSize.Height;
+		//		}
+		//	}
 
-				_selectedArea.Width = _defaultSelectionSize.Width;
-				_selectedArea.Height = _defaultSelectionSize.Height;
-			}
-		}
+		//	if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+		//	{
+		//		(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
+
+		//		_selectedArea.Width = _defaultSelectionSize.Width;
+		//		_selectedArea.Height = _defaultSelectionSize.Height;
+		//	}
+		//}
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
 		{
@@ -259,11 +377,10 @@ namespace MSetExplorer
 
 			//Debug.WriteLine("The canvas received a MouseWheel event.");
 
-			//var cPos = SelectedPosition;
-			var cSize = SelectedSize;
+			var controlPos = e.GetPosition(relativeTo: _canvas);
+			var posYInverted = new Point(controlPos.X, _canvas.ActualHeight - controlPos.Y);
 
-			//Point newPos;
-			//Size newSize;
+			var cSize = SelectedSize;
 
 			Rect selection;
 
@@ -285,7 +402,12 @@ namespace MSetExplorer
 				return;
 			}
 
-			MoveAndSize(selection.Location, selection.Size);
+			var selectedPositionWasUpdated = MoveAndSize(selection.Location, selection.Size);
+
+			if (selectedPositionWasUpdated)
+			{
+				SelectedCenterPosition = posYInverted;
+			}
 
 			e.Handled = true;
 		}
@@ -322,7 +444,7 @@ namespace MSetExplorer
 
 		private void HandleDragMove(MouseEventArgs e)
 		{
-			if (Enabled && _haveMouseDown && (!Dragging) && e.LeftButton == MouseButtonState.Pressed)
+			if (IsEnabled && _haveMouseDown && (!Dragging) && e.LeftButton == MouseButtonState.Pressed)
 			{
 				var controlPos = e.GetPosition(relativeTo: _canvas);
 				var dist = _dragAnchor - controlPos;
@@ -348,7 +470,7 @@ namespace MSetExplorer
 
 		private void Canvas_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			if (!Enabled)
+			if (!IsEnabled)
 			{
 				//Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event -- we are disabled.");
 				return;
@@ -391,7 +513,7 @@ namespace MSetExplorer
 
 					var (zoomPoint, factor) = GetAreaSelectedParams(area);
 					var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor: factor, isPreview: false);
-					eventArgs.PerformDiagnostics = true;
+					ReportFactorsVsSamplePointResolution(MapAreaInfo, eventArgs);
 
 					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}.");
 
@@ -402,30 +524,6 @@ namespace MSetExplorer
 					//Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = False.");
 				}
 			}
-		}
-
-		private (VectorInt zoomPoint, double factor) GetAreaSelectedParams(RectangleDbl area)
-		{
-			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
-
-			var selPos = ScreenTypeHelper.ConvertToPointDbl(SelectedPosition);
-
-			var selectionCenter = area.GetCenter();
-			var zoomPoint = GetCenterOffset(selectionCenter);
-
-			if (!ScreenTypeHelper.IsPointDblChanged(selPos, selectionCenter))
-			{
-				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
-			}
-
-			Debug.Assert(area.Width > 0 && area.Height > 0, "Selection Rectangle has a zero or negative value its width or height.");
-
-			var xFactor = _canvas.ActualWidth / area.Width;
-			var yFactor = _canvas.ActualHeight / area.Height;
-
-			var factor = Math.Min(xFactor, yFactor);
-
-			return (zoomPoint, factor);
 		}
 
 		private void HandleDragLine(MouseButtonEventArgs e)
@@ -502,105 +600,6 @@ namespace MSetExplorer
 			if (!_selectedArea.Focus())
 			{
 				//Debug.WriteLine("Activate did not move the focus to the SelectedRectangle");
-			}
-		}
-
-		#endregion
-
-		#region Private Properties
-
-		private bool Selecting
-		{
-			get => _selecting;
-
-			set
-			{
-				if (_selecting != value)
-				{
-					if (value)
-					{
-						_selectedArea.Visibility = Visibility.Visible;
-						_selectedArea.Focus();
-					}
-					else
-					{
-						_selectedArea.Visibility = Visibility.Hidden;
-						_selectedArea.Width = _defaultSelectionSize.Width;
-						_selectedArea.Height = _defaultSelectionSize.Height;
-
-						//var noSelectionRect = new RectangleInt();
-						AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, new VectorInt(), double.NegativeInfinity, isPreview: true));
-					}
-
-					_selecting = value;
-				}
-			}
-		}
-
-		private bool Dragging
-		{
-			get => _dragging;
-
-			set
-			{
-				if (_dragging != value)
-				{
-					if (value)
-					{
-						_dragLine.Visibility = Visibility.Visible;
-						_dragLine.Focus();
-					}
-					else
-					{
-						_dragLine.Visibility = Visibility.Hidden;
-					}
-
-					_dragging = value;
-				}
-			}
-		}
-
-		private Point SelectedPosition
-		{
-			get
-			{
-				var x = (double)_selectedArea.GetValue(Canvas.LeftProperty);
-				var y = (double)_selectedArea.GetValue(Canvas.BottomProperty);
-
-				return new Point(double.IsNaN(x) ? 0 : x, double.IsNaN(y) ? 0 : y);
-			}
-
-			set
-			{
-				_selectedArea.SetValue(Canvas.LeftProperty, value.X);
-				_selectedArea.SetValue(Canvas.BottomProperty, value.Y);
-			}
-		}
-
-		private Size SelectedSize
-		{
-			get
-			{
-				var result = new Size(_selectedArea.Width, _selectedArea.Height);
-				//Debug.WriteLine($"The selected size is {result}.");
-				return result;
-			}
-
-			set
-			{
-				//Debug.WriteLine($"The selected size is being updated to {value}.");
-				_selectedArea.Width = value.Width;
-				_selectedArea.Height = value.Height;
-			}
-		}
-
-		private Point DragLineTerminus
-		{
-			get => new(_dragLine.X2, _dragLine.Y2);
-			set
-			{
-				_dragLine.X2 = value.X;
-				_dragLine.Y2 = value.Y;
 			}
 		}
 
@@ -691,13 +690,15 @@ namespace MSetExplorer
 
 			if (double.IsNaN(cLeft) || Math.Abs(x - cLeft) > 0.01 || double.IsNaN(cBot) || Math.Abs(y - cBot) > 0.01)
 			{
+				SelectedCenterPosition = posYInverted;
 				SelectedPosition = new Point(x, y);
 				//AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
 			}
 		}
 
 		// Reposition the Selection Rectangle and update its size.
-		private void MoveAndSize(Point posYInverted, Size size)
+		// returns true if the SelectedPosition was updated
+		private bool MoveAndSize(Point posYInverted, Size size)
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, with size: {size}");
 
@@ -706,37 +707,92 @@ namespace MSetExplorer
 				|| posYInverted.X + size.Width > _canvas.ActualWidth
 				|| posYInverted.Y + size.Height > _canvas.ActualHeight)
 			{
-				return;
+				return false;
 			}
 
+			var selectedPositionWasUpdated = false;
 			var cPos = SelectedPosition;
-
-			var wasUpdated = false;
-
 			if (double.IsNaN(cPos.X) || Math.Abs(posYInverted.X - cPos.X) > 0.01 || double.IsNaN(cPos.Y) || Math.Abs(posYInverted.Y - cPos.Y) > 0.01)
 			{
 				SelectedPosition = posYInverted;
-				wasUpdated = true;
+				selectedPositionWasUpdated = true;
 			}
 
+			var selectedSizeWasUpdated = false;
 			var cSize = SelectedSize;
 			if (Math.Abs(size.Width - cSize.Width) > 0.01 || Math.Abs(size.Height - cSize.Height) > 0.01)
 			{
 				SelectedSize = size;
-				wasUpdated = true;
+				selectedSizeWasUpdated = true;
 			}
 
-			if (wasUpdated)
+			if (selectedPositionWasUpdated | selectedSizeWasUpdated)
 			{
 				var (zoomPoint, factor) = GetAreaSelectedParams(Area);
 				var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, isPreview: true);
-				eventArgs.PerformDiagnostics = false;
+				//eventArgs.PerformDiagnostics = false;
 
 				Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
 
 				AreaSelected?.Invoke(this, eventArgs);
 			}
+
+			return selectedPositionWasUpdated;
 		}
+
+		private (VectorInt zoomPoint, double factor) GetAreaSelectedParams(RectangleDbl area)
+		{
+			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
+
+			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
+
+			var selectionCenter = area.GetCenter();
+			var zoomPoint = GetCenterOffset(selectionCenter);
+
+			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter))
+			{
+				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
+			}
+
+			Debug.Assert(area.Width > 0 && area.Height > 0, "Selection Rectangle has a zero or negative value its width or height.");
+
+			var xFactor = _canvas.ActualWidth / area.Width;
+			var yFactor = _canvas.ActualHeight / area.Height;
+
+			var factor = Math.Min(xFactor, yFactor);
+
+			return (zoomPoint, factor);
+		}
+
+		private void ReportFactorsVsSamplePointResolution(MapAreaInfo2? mapAreaInfo, AreaSelectedEventArgs e)
+		{
+			if (mapAreaInfo == null) return;
+
+			Debug.WriteLine("\nReporting various factors vs SamplePointDeltas.");
+
+			var pointAndDelta = mapAreaInfo.PositionAndDelta;
+			var reciprocal = 1 / e.Factor;
+			var rK = (int)Math.Round(reciprocal * 1024);
+
+			Debug.WriteLine($"Current SPD: {pointAndDelta.SamplePointDelta}. Starting with a rk of {rK}.");
+
+			var st = Math.Max(rK - 20, 1);
+
+			for (var i = 0; i < 41; i++)
+			{
+				var sFactor = 1 / ((double)st / 1024);
+				var rReciprocal = new RValue(st++, -10);
+
+				var rawResult = pointAndDelta.ScaleDelta(rReciprocal);
+				var result = Reducer.Reduce(rawResult);
+
+				Debug.WriteLine($"{i,3}: \trk: {st,4}\traw-W: {rawResult.SamplePointDelta.Width,10}\tfinal-W: {result.SamplePointDelta.Width,10}\tfinal-H: {result.SamplePointDelta.Height,10}\tfactor: {sFactor}.");
+			}
+
+			//var newPd = RMapHelper.GetNewSamplePointDelta(mapAreaInfo.PositionAndDelta, e.Factor);
+			//Debug.WriteLine($"The new SPD is {newPd.SamplePointDelta}.");
+		}
+
 
 		// Position the current end of the drag line
 		private void SetDragPosition(Point controlPos)

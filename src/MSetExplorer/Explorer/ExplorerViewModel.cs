@@ -213,7 +213,7 @@ namespace MSetExplorer
 
 		private void UpdateTheMapCoordsView(Job currentJob)
 		{
-			var oldAreaInfo = MapDisplayViewModel.GetMapAreaInfo(); // MapJobHelper2.Convert(currentJob.MapAreaInfo, canvasSize.Round());
+			var oldAreaInfo = MapDisplayViewModel.LastMapAreaInfo;
 
 			if (oldAreaInfo != null)
 			{

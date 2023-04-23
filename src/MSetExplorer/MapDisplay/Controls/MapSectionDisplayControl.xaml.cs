@@ -63,7 +63,9 @@ namespace MSetExplorer
 
 				//BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
 
-				_selectionRectangle = new SelectionRectangle(_canvas, _vm, _vm.BlockSize);
+				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
+
+				_selectionRectangle = new SelectionRectangle(_canvas, _vm.CanvasSize, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 
@@ -78,6 +80,8 @@ namespace MSetExplorer
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			//BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
+
+			_vm.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
 
 			if (!(_selectionRectangle is null))
 			{
@@ -135,12 +139,30 @@ namespace MSetExplorer
 		//	BitmapGridControl1.ReportSizes("ViewPortSizeChanged");
 		//}
 
+		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (_selectionRectangle == null)
+			{
+				return;
+			}
+
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
+			{
+				_selectionRectangle.MapAreaInfo = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
+			}
+
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			{
+				_selectionRectangle.DisplaySize = _vm.CanvasSize;
+			}
+		}
+
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{
-			if (e.PerformDiagnostics && _vm.CurrentAreaColorAndCalcSettings != null)
-			{
-				ReportFactorsVsSamplePointResolution(_vm.CurrentAreaColorAndCalcSettings.MapAreaInfo, e);
-			}
+			//if (e.PerformDiagnostics && _vm.CurrentAreaColorAndCalcSettings != null)
+			//{
+			//	ReportFactorsVsSamplePointResolution(_vm.CurrentAreaColorAndCalcSettings.MapAreaInfo, e);
+			//}
 
 			_vm.UpdateMapViewZoom(e);
 		}
@@ -151,35 +173,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		private void ReportFactorsVsSamplePointResolution(MapAreaInfo2 mapAreaInfo, AreaSelectedEventArgs e)
-		{
-			Debug.WriteLine("\nReporting various factors vs SamplePointDeltas.");
-
-			var pointAndDelta = mapAreaInfo.PositionAndDelta;
-			var reciprocal = 1 / e.Factor;
-			var rK = (int)Math.Round(reciprocal * 1024);
-
-			Debug.WriteLine($"Current SPD: {pointAndDelta.SamplePointDelta}. Starting with a rk of {rK}.");
-
-			var st = Math.Max(rK - 20, 1);
-
-			for (var i = 0; i < 41; i++)
-			{
-				var sFactor = 1 / ((double)st / 1024);
-
-
-				var rReciprocal = new RValue(st++, -10);
-
-				var rawResult = pointAndDelta.ScaleDelta(rReciprocal);
-				var result = Reducer.Reduce(rawResult);
-
-				Debug.WriteLine($"\t{i}: \t\trk: {st}\t\trawW: {rawResult.SamplePointDelta.Width}\t\t final: {result.SamplePointDelta.Width}\tfactor: {sFactor}.");
-			}
-
-			//var newPd = RMapHelper.GetNewSamplePointDelta(mapAreaInfo.PositionAndDelta, e.Factor);
-			//Debug.WriteLine($"The new SPD is {newPd.SamplePointDelta}.");
-		}
 
 	}
 }

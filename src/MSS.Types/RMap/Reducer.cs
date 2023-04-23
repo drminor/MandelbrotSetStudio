@@ -6,11 +6,7 @@ namespace MSS.Types
 {
 	public static class Reducer
 	{
-		public static RValue Reduce(RValue rValue)
-		{
-			var val = Reduce(rValue.Value, rValue.Exponent, out var exponent);
-			return new RValue(val, exponent, rValue.Precision);
-		}
+		#region Shapes
 
 		public static RPoint Reduce(RPoint rPoint)
 		{
@@ -42,18 +38,18 @@ namespace MSS.Types
 			return new RPointAndDelta(vals, exponent);
 		}
 
-		public static BigInteger[] Reduce(IBigRatShape bigRatShape, out int newExponent)
+		private static BigInteger[] Reduce(IBigRatShape bigRatShape, out int newExponent)
 		{
 			var result = Reduce(bigRatShape.Values, bigRatShape.Exponent, out newExponent);
 			return result;
 		}
 
-		public static BigInteger[] Reduce(BigInteger[] vals, int exponent, out int newExponent)
+		private static BigInteger[] Reduce(BigInteger[] vals, int exponent, out int newExponent)
 		{
 			var reductionFactor = 0;
 			long divisor = 1;
 
-			while (exponent + reductionFactor < 0 && IsDivisibleBy(vals, divisor * 2))
+			while (exponent + reductionFactor + 1 < 0 && IsDivisibleBy(vals, divisor * 2))
 			{
 				reductionFactor++;
 				divisor *= 2;
@@ -64,7 +60,31 @@ namespace MSS.Types
 			return result;
 		}
 
-		public static BigInteger Reduce(BigInteger value, int exponent, out int newExponent)
+		// TODO: Use BigInteger instead of long for the divisor
+		private static bool IsDivisibleBy(BigInteger[] dividends, long divisor)
+		{
+			for (var i = 0; i < dividends.Length; i++)
+			{
+				if (BigInteger.Remainder(dividends[i], divisor) != 0)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		#endregion
+
+		#region RValue
+
+		public static RValue Reduce(RValue rValue)
+		{
+			var val = Reduce(rValue.Value, rValue.Exponent, out var exponent);
+			return new RValue(val, exponent, rValue.Precision);
+		}
+
+		private static BigInteger Reduce(BigInteger value, int exponent, out int newExponent)
 		{
 			if (value == 0)
 			{
@@ -80,7 +100,7 @@ namespace MSS.Types
 			var reductionFactor = 0;
 			long divisor = 1;
 
-			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor * 2) == 0)
+			while (exponent + reductionFactor + 1 < 0 && BigInteger.Remainder(value, divisor * 2) == 0)
 			{
 				reductionFactor++;
 				divisor *= 2;
@@ -108,20 +128,6 @@ namespace MSS.Types
 			return result;
 		}
 
-
-		// TODO: Use BigInteger instead of long for the divisor
-		private static bool IsDivisibleBy(BigInteger[] dividends, long divisor)
-		{
-			for (var i = 0; i < dividends.Length; i++)
-			{
-				if (BigInteger.Remainder(dividends[i], divisor) != 0)
-				{
-					return false;
-				}
-			}
-
-			return true;
-		}
-
+		#endregion
 	}
 }

@@ -262,7 +262,12 @@ namespace MSetExplorer
 			}
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSave found the CurrentJob to be empty.");
+
 			var result = JobOwnerHelper.Save(currentProject, _projectAdapter);
+
+			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSave has set the CurrentJob to be empty.");
+
+
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentProjectIsDirty));
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentProjectOnFile));
 

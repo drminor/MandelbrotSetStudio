@@ -19,12 +19,23 @@ namespace MSetRepo
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 
+		//private readonly MapSectionAdapter _mapSectionAdapter;
+		private readonly MapJobHelper _mapJobHelper;
+
+		//MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
+
 		#region Constructor
 
 		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
+
+			//_mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
+			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
+
+			var subdivisionProvider = new SubdivisonProvider(mapSectionAdapter);
+			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
 		}
 
 		#endregion
@@ -450,6 +461,15 @@ namespace MSetRepo
 			return job;
 		}
 
+		[Conditional("DEBUG")]
+		private void CompareMapAreaV1AfterRoundTrip(MapAreaInfo previousValue, MapAreaInfo newValue, MapAreaInfo2 middleValue)
+		{
+			Debug.WriteLine($"MapDisplay is RoundTripping MapAreaInfoV1" +
+				$"\nPrevious Scale: {previousValue.SamplePointDelta.Width}. Pos: {previousValue.Coords}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} Size: {previousValue.CanvasSize} " +
+				$"\nNew Scale     : {newValue.SamplePointDelta.Width}. Pos: {newValue.Coords}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset} Size: {newValue.CanvasSize}" +
+				$"\nIntermediate     : {middleValue.SamplePointDelta.Width}. Pos: {middleValue.MapCenter}. MapOffset: {middleValue.MapBlockOffset}. ImageOffset: {middleValue.CanvasControlOffset}");
+		}
+
 		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, ColorBandSetReaderWriter colorBandSetReaderWriter,
 			IDictionary<ObjectId, Job>? jobCache, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
 		{
@@ -473,9 +493,10 @@ namespace MSetRepo
 			}
 
 			var oldAreaInfo = _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord);
-
 			var mapAreaInfo = MapJobHelper.Convert(oldAreaInfo);
+			var rtAreaInfo = _mapJobHelper.GetMapAreaWithSize(mapAreaInfo, oldAreaInfo.CanvasSize);
 
+			CompareMapAreaV1AfterRoundTrip(oldAreaInfo, rtAreaInfo, mapAreaInfo);
 
 			var job = new Job(
 				id: jobId,
