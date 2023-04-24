@@ -6,6 +6,8 @@ using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Windows.Controls;
+using Windows.UI.Accessibility;
 
 namespace MSetExplorer
 {
@@ -483,32 +485,47 @@ namespace MSetExplorer
 		// PosterDesigner Pan and Zoom Out
 		public void UpdateMapSpecs(TransformType transformType, RectangleInt screenArea, SizeDbl canvasSize)
 		{
+			throw new NotImplementedException();
+			//Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
+
+			//var currentPoster = CurrentPoster;
+			//if (currentPoster == null)
+			//{
+			//	return;
+			//}
+
+			////var curJob = currentPoster.CurrentJob;
+
+			////var mapPosition = curJob.Coords.Position;
+			////var samplePointDelta = curJob.Subdivision.SamplePointDelta;
+			////var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
+
+			////var colorBandSetId = curJob.ColorBandSetId;
+			////var mapCalcSettings = curJob.MapCalcSettings;
+			////LoadMap(currentPoster, curJob, coords, colorBandSetId, mapCalcSettings, transformType, screenArea);
+
+			//AddNewCoordinateUpdateJob(currentPoster, transformType, screenArea, canvasSize);
+
+			////currentPoster.DisplayPosition = new VectorInt();
+			////currentPoster.DisplayZoom = 1;
+			////_logicalDisplaySize = new SizeDbl(10, 10);
+			////LogicalDisplaySize = CanvasSize;
+
+			////UpdateMapView(currentPoster);
+		}
+
+		public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo)
+		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
 			var currentPoster = CurrentPoster;
+
 			if (currentPoster == null)
 			{
 				return;
 			}
 
-			//var curJob = currentPoster.CurrentJob;
-
-			//var mapPosition = curJob.Coords.Position;
-			//var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-			//var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-
-			//var colorBandSetId = curJob.ColorBandSetId;
-			//var mapCalcSettings = curJob.MapCalcSettings;
-			//LoadMap(currentPoster, curJob, coords, colorBandSetId, mapCalcSettings, transformType, screenArea);
-
-			AddNewCoordinateUpdateJob(currentPoster, transformType, screenArea, canvasSize);
-
-			//currentPoster.DisplayPosition = new VectorInt();
-			//currentPoster.DisplayZoom = 1;
-			//_logicalDisplaySize = new SizeDbl(10, 10);
-			//LogicalDisplaySize = CanvasSize;
-
-			//UpdateMapView(currentPoster);
+			AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor);
 		}
 
 		//public MapAreaInfo GetUpdatedMapAreaInfoOLD(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
@@ -550,7 +567,7 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		public MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
+		public MapAreaInfo2? GetUpdatedMapAreaInfoNotUsed(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
 		{
 			var currentJob = CurrentJob;
 
@@ -572,9 +589,19 @@ namespace MSetExplorer
 			}
 		}
 
-		public MapAreaInfo2? GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
-			throw new NotImplementedException();
+			var newCenter = screenArea.GetCenter();
+			var oldCenter = new PointDbl(posterSize.Width / 2, posterSize.Height / 2);
+			var zoomPoint = newCenter.Diff(oldCenter).Round();
+
+			var xFactor = posterSize.Width / screenArea.Width;
+			var yFactor = posterSize.Height / screenArea.Height;
+			var factor = Math.Min(xFactor, yFactor);
+
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
+
+			return newMapAreaInfo;
 		}
 
 		//// Used to service Zoom and Pan jobs raised by the MapDisplay Control
@@ -691,37 +718,76 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 		}
 
-		private void AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, RectangleInt newScreenArea, SizeDbl canvasSize)
+		//private void AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, RectangleInt newScreenArea, SizeDbl canvasSize)
+		//{
+		//	var currentJob = poster.CurrentJob;
+
+		//	Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
+
+		//	//var mapPosition = currentJob.Coords.Position;
+		//	//var samplePointDelta = currentJob.Subdivision.SamplePointDelta;
+
+		//	//var newCoords = RMapHelper.GetMapCoords(newScreenArea, mapPosition, samplePointDelta);
+
+		//	//var colorBandSetId = currentJob.ColorBandSetId;
+		//	//var mapSize = currentJob.CanvasSize;
+		//	//var coords = currentJob.MapAreaInfo.Coords;
+		//	//var mapCalcSettings = currentJob.MapCalcSettings;
+
+		//	// Calculate the new Map Coordinates from the newScreenArea, using the current Map's position and samplePointDelta.
+		//	var mapAreaInfo = BuildMapAreaInfo(currentJob, newScreenArea, canvasSize);
+
+		//	var colorBandSetId = currentJob.ColorBandSetId;
+		//	var mapCalcSettings = currentJob.MapCalcSettings;
+
+		//	//var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, newCoords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
+		//	var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+
+
+		//	Debug.WriteLine($"Adding Poster Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+		//	poster.Add(job);
+
+		//	OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+		//}
+
+		private void AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor)
 		{
 			var currentJob = poster.CurrentJob;
-
 			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
 
-			//var mapPosition = currentJob.Coords.Position;
-			//var samplePointDelta = currentJob.Subdivision.SamplePointDelta;
+			// Calculate the new Map Coordinates 
+			var mapAreaInfo = currentJob.MapAreaInfo;
 
-			//var newCoords = RMapHelper.GetMapCoords(newScreenArea, mapPosition, samplePointDelta);
+			MapAreaInfo2? newMapAreaInfo;
 
-			//var colorBandSetId = currentJob.ColorBandSetId;
-			//var mapSize = currentJob.CanvasSize;
-			//var coords = currentJob.MapAreaInfo.Coords;
-			//var mapCalcSettings = currentJob.MapCalcSettings;
-
-			// Calculate the new Map Coordinates from the newScreenArea, using the current Map's position and samplePointDelta.
-			var mapAreaInfo = BuildMapAreaInfo(currentJob, newScreenArea, canvasSize);
+			if (transformType == TransformType.ZoomIn)
+			{
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor);
+			}
+			else if (transformType == TransformType.Pan)
+			{
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPan(mapAreaInfo, panAmount);
+			}
+			else if (transformType == TransformType.ZoomOut)
+			{
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor);
+			}
+			else
+			{
+				throw new InvalidOperationException($"AddNewCoordinateUpdateJob does not support a TransformType of {transformType}.");
+			}
 
 			var colorBandSetId = currentJob.ColorBandSetId;
 			var mapCalcSettings = currentJob.MapCalcSettings;
 
-			//var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, newCoords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
 
-
-			Debug.WriteLine($"Adding Poster Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			poster.Add(job);
 
-			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 		}
 
 		private void AddNewIterationUpdateJob(Poster poster, ColorBandSet colorBandSet)

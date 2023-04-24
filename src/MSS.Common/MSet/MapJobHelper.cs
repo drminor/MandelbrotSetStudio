@@ -124,7 +124,7 @@ namespace MSS.Common
 
 		#region MapAreaInfo2 Support
 
-		public static MapAreaInfo GetMapAreaWithSizeLean(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
+		public static MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
 		{
 			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
 
@@ -162,7 +162,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
+		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
 		{
 			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
 

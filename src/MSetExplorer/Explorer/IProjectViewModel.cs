@@ -35,11 +35,7 @@ namespace MSetExplorer
 		bool CanGoBack(bool skipPanJobs);
 		bool CanGoForward(bool skipPanJobs);
 
-		void UpdateMapView(TransformType transformType, RectangleInt newArea, MapAreaInfo2 currentMapAreaInfo);
-
 		void UpdateMapView(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo);
-
-		//void UpdateMapCoordinates(RRectangle coords);
 
 		MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo);
 

@@ -50,7 +50,7 @@ namespace MSetExplorer
 			_cts = new CancellationTokenSource();
 			_currentBitmapBuilderTask = null;
 
-			_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(_mapAreaInfo, _previewImageSize);
+			_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfo, _previewImageSize);
 
 			Bitmap = CreateBitmap(_previewImageSize);
 			FillBitmapWithColor(_fallbackColor, Bitmap);
@@ -75,7 +75,7 @@ namespace MSetExplorer
 				{
 					_mapAreaInfo = value;
 
-					_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(_mapAreaInfo, _previewImageSize);
+					_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfo, _previewImageSize);
 
 					FillBitmapWithColor(_fallbackColor, Bitmap);
 					QueueBitmapGeneration(_previewMapAreaInfo, _colorBandSet, _mapCalcSettings);

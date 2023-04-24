@@ -184,7 +184,7 @@ namespace MSetExplorer
 			//var previewMapArea = new MapAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.Precision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
 
 			//var previewMapArea = MapJobHelper2.Convert(job.MapAreaInfo, imageSize);
-			var previewMapArea = MapJobHelper.GetMapAreaWithSizeLean(job.MapAreaInfo, imageSize);
+			var previewMapArea = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, imageSize);
 
 			//byte[]? result = null;
 

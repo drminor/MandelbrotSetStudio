@@ -6,14 +6,16 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+//using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+
+
 
 namespace MSS.Common.MSet
 {
+	using JobPathType = ITreePath<JobTreeNode, Job>;
 
 	// TODO: Dispose the Job Tree
 	public class Poster : INotifyPropertyChanged, ICloneable, IJobOwner
@@ -42,6 +44,7 @@ namespace MSS.Common.MSet
 			)
 			: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
 				  jobs, colorBandSets, currentJobId,
+				  new SizeInt(4096), new VectorInt(),
 				  new VectorInt(), 1.0d,
 				  DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
 		{
@@ -50,6 +53,7 @@ namespace MSS.Common.MSet
 
 		public Poster(ObjectId id, string name, string? description, ObjectId sourceJobId,
 			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
+			SizeInt posterSize, VectorInt offsetFromCenter,
 			VectorInt displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
@@ -59,6 +63,9 @@ namespace MSS.Common.MSet
 			_description = description;
 
 			SourceJobId = sourceJobId;
+
+			PosterSize = posterSize;
+			OffsetFromCenter = offsetFromCenter;
 
 			_dispPosition = displayPosition;
 			_displayZoom = displayZoom;
@@ -162,6 +169,8 @@ namespace MSS.Common.MSet
 		}
 
 		public SizeInt PosterSize { get; set; }
+
+		public VectorInt OffsetFromCenter { get; set; }
 
 		public string SizeAsString
 		{
@@ -489,10 +498,18 @@ namespace MSS.Common.MSet
 
 		Poster Clone()
 		{
-			return new Poster(Name, Description, SourceJobId,
-				//MapAreaInfo.Clone(), ColorBandSet, MapCalcSettings
-				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id
-				);
+			return new Poster(Id, Name, Description, SourceJobId,
+				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id,
+				PosterSize, OffsetFromCenter, DisplayPosition, DisplayZoom,
+				DateCreated, LastSavedUtc, LastAccessedUtc);
+		}
+
+		public Poster CreateNewCopy()
+		{
+			return new Poster(ObjectId.GenerateNewId(), Name, Description, SourceJobId,
+				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id,
+				PosterSize, OffsetFromCenter, DisplayPosition, DisplayZoom,
+				DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow);
 		}
 
 		#endregion

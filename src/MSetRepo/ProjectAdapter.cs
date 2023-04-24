@@ -20,7 +20,7 @@ namespace MSetRepo
 		private readonly MSetRecordMapper _mSetRecordMapper;
 
 		//private readonly MapSectionAdapter _mapSectionAdapter;
-		private readonly MapJobHelper _mapJobHelper;
+		//private readonly MapJobHelper _mapJobHelper;
 
 		//MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 
@@ -31,11 +31,9 @@ namespace MSetRepo
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
 
-			//_mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
-			var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
-
-			var subdivisionProvider = new SubdivisonProvider(mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
+			//var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
+			//var subdivisionProvider = new SubdivisonProvider(mapSectionAdapter);
+			//_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
 		}
 
 		#endregion
@@ -494,7 +492,7 @@ namespace MSetRepo
 
 			var oldAreaInfo = _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord);
 			var mapAreaInfo = MapJobHelper.Convert(oldAreaInfo);
-			var rtAreaInfo = _mapJobHelper.GetMapAreaWithSize(mapAreaInfo, oldAreaInfo.CanvasSize);
+			var rtAreaInfo = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, oldAreaInfo.CanvasSize);
 
 			CompareMapAreaV1AfterRoundTrip(oldAreaInfo, rtAreaInfo, mapAreaInfo);
 
@@ -754,6 +752,8 @@ namespace MSetRepo
 				jobs: jobs,
 				colorBandSets: colorBandSets,
 				currentJobId: target.CurrentJobId,
+				posterSize: new SizeInt(target.Width, target.Height),
+				offsetFromCenter: new VectorInt(target.OffsetFromCenterX, target.OffsetFromCenterY),
 				displayPosition: _mSetRecordMapper.MapFrom(target.DisplayPosition),
 				displayZoom: target.DisplayZoom,
 				dateCreatedUtc: target.DateCreatedUtc,
@@ -823,8 +823,14 @@ namespace MSetRepo
 			else
 			{
 				var displayPosition = _mSetRecordMapper.MapFrom(posterRecord.DisplayPosition);
-				result = new Poster(posterRecord.Id, posterRecord.Name, posterRecord.Description, posterRecord.SourceJobId, jobs, colorBandSets,
-					posterRecord.CurrentJobId, displayPosition, posterRecord.DisplayZoom, DateTime.UtcNow, lastSavedUtc, DateTime.MinValue);
+				result = new Poster(posterRecord.Id, posterRecord.Name, posterRecord.Description, 
+					posterRecord.SourceJobId, jobs, colorBandSets, posterRecord.CurrentJobId, 
+					
+					new SizeInt(posterRecord.Width, posterRecord.Height), 
+					new VectorInt(posterRecord.OffsetFromCenterX, posterRecord.OffsetFromCenterY),
+					
+					displayPosition, posterRecord.DisplayZoom, 
+					DateTime.UtcNow, lastSavedUtc, DateTime.MinValue);
 
 			}
 			return result;

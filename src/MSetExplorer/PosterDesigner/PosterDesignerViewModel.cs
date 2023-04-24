@@ -129,9 +129,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public MapAreaInfo2? GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
-			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, screenArea, newMapSize);
+			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, posterSize, offsetFromCenter, screenArea, newMapSize);
 			return result;
 		}
 

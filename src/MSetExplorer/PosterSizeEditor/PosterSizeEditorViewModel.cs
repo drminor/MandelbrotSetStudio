@@ -75,7 +75,8 @@ namespace MSetExplorer
 
 		
 		// TODO: Confirm that the PosterSizeEditor does not need a MapAreaInfo-V1 object.
-		public void Initialize(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize)
+
+		public void Initialize(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeInt posterSize, VectorInt offsetFromCenter)
 		{
 			_preserveAspectRatio = true;
 			_preserveWidth = true;
@@ -85,7 +86,7 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(PreserveWidth));
 			OnPropertyChanged(nameof(PreserveHeight));
 			
-			UpdateWithChangesInternal(posterMapAreaInfo, containerSize);
+			UpdateWithChangesInternal(posterMapAreaInfo, containerSize, posterSize, offsetFromCenter);
 
 			BeforeOffset = new VectorDbl(BeforeX, BeforeY);
 			AfterOffset = new VectorDbl(AfterX, AfterY);
@@ -93,9 +94,9 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		public void UpdateWithNewMapInfo(MapAreaInfo2 posterMapAreaInfo)
+		public void UpdateWithNewMapInfo(MapAreaInfo2 posterMapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter)
 		{
-			UpdateWithChangesInternal(posterMapAreaInfo, ContainerSize);
+			UpdateWithChangesInternal(posterMapAreaInfo, ContainerSize, posterSize, offsetFromCenter);
 
 			_beforeX = 0; _afterX = 0; _beforeY = 0; _afterY = 0;
 			OnPropertyChanged(nameof(BeforeX));
@@ -109,24 +110,20 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		private void UpdateWithChangesInternal(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize)
+		private void UpdateWithChangesInternal(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeInt posterSize, VectorInt offsetFromCenter)
 		{
 			PosterMapAreaInfo = posterMapAreaInfo;
 			_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
 
 			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
 
-			//var posterSize = new SizeDbl(posterMapAreaInfo.CanvasSize);
-
-			var posterSize = new SizeDbl(1024);
-
 			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
-			_layoutInfo = new PreviewImageLayoutInfo(posterSize, previewImageSize, containerSize);
+			_layoutInfo = new PreviewImageLayoutInfo(new SizeDbl(posterSize), previewImageSize, containerSize);
 
-			_originalSize = posterSize;
-			_currentSize = posterSize;
+			_originalSize = new SizeDbl(posterSize);
+			_currentSize = _originalSize;
 			_scaleFactorCurrentToOrginal = 1;
-			_currentSizeScaled = posterSize;
+			_currentSizeScaled = _originalSize;
 
 			OnPropertyChanged(nameof(Width));
 			OnPropertyChanged(nameof(Height));
@@ -532,6 +529,9 @@ namespace MSetExplorer
 		}
 
 		public RectangleDbl NewMapArea => _layoutInfo.ResultNewMapArea;
+
+		public SizeInt NewMapSizeInt => _layoutInfo.NewMapSize.Round();
+		public VectorInt NewMapOffsetFromCenter => new VectorInt();
 
 		private void PerformLayout()
 		{

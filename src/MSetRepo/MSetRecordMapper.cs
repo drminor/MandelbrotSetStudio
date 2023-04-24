@@ -115,7 +115,7 @@ namespace MSetRepo
 			//	Precision = source.MapAreaInfo.Precision
 			//};
 
-			var oldAreaInfo = MapJobHelper.GetMapAreaWithSizeLean(source.MapAreaInfo, new SizeInt(1024));
+			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(source.MapAreaInfo, new SizeInt(1024));
 
 			//var mapAreaInfoRecord = MapTo(source.MapAreaInfo);
 			var mapAreaInfoRecord = MapTo(oldAreaInfo);
@@ -202,7 +202,11 @@ namespace MSetRepo
 				LastSavedUtc: source.LastSavedUtc,
 				LastAccessedUtc: source.LastAccessedUtc)
 			{
-				Id = source.Id
+				Id = source.Id,
+				OffsetFromCenterX = source.OffsetFromCenter.X,
+				OffsetFromCenterY = source.OffsetFromCenter.Y,
+				Width = source.PosterSize.Width,
+				Height = source.PosterSize.Height
 			};
 
 			return result;

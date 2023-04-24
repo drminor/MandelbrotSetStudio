@@ -744,15 +744,10 @@ namespace MSetExplorer
 		{
 			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
 
-			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
-
 			var selectionCenter = area.GetCenter();
 			var zoomPoint = GetCenterOffset(selectionCenter);
 
-			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter))
-			{
-				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
-			}
+			CheckSelectedCenterPosition(selectionCenter);
 
 			Debug.Assert(area.Width > 0 && area.Height > 0, "Selection Rectangle has a zero or negative value its width or height.");
 
@@ -762,6 +757,17 @@ namespace MSetExplorer
 			var factor = Math.Min(xFactor, yFactor);
 
 			return (zoomPoint, factor);
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckSelectedCenterPosition(PointDbl selectionCenter)
+		{
+			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
+
+			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter))
+			{
+				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
+			}
 		}
 
 		private void ReportFactorsVsSamplePointResolution(MapAreaInfo2? mapAreaInfo, AreaSelectedEventArgs e)

@@ -177,7 +177,7 @@ namespace WpfMapDisplayPOC
 				_colorMap = new ColorMap(colorBandSet);
 			}
 
-			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeInt(1024));
+			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeInt(1024));
 
 			var result = _mapSectionHelper.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, areaInfoWithSize, job.MapCalcSettings);
 
@@ -237,7 +237,7 @@ namespace WpfMapDisplayPOC
 			//_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeInt(1024));
+			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeInt(1024));
 
 			//AddTiming("GetMapAreaInfo");
 

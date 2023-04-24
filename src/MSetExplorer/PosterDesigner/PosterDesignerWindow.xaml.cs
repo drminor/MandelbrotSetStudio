@@ -808,6 +808,8 @@ namespace MSetExplorer
 			var cts = new CancellationTokenSource();
 
 			var mapAreaInfo = curJob.MapAreaInfo;
+			var posterSize = poster.PosterSize;
+			var offsetFromCenter = poster.OffsetFromCenter;
 
 			//var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
 			var previewSize = GetPreviewSize(poster.PosterSize, PREVIEW_IMAGE_SIZE);
@@ -818,7 +820,7 @@ namespace MSetExplorer
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 
-			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo)
+			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo, posterSize, offsetFromCenter)
 			{
 				DataContext = posterSizeEditorViewModel
 			};
@@ -837,12 +839,11 @@ namespace MSetExplorer
 						var newMapArea = posterSizeEditorDialog.NewMapArea;
 						var newMapSize = posterSizeEditorDialog.NewMapSize;
 
-						//var mapAreaInfov2 = MapJobHelper2.Convert(posterMapAreaInfo);
-
-						//var ma = MapJobHelper
+						var newMapSizeInt = posterSizeEditorDialog.NewMapSizeInt;
+						var newMapOffsetFromCenter = posterSizeEditorDialog.NewMapOffsetFromCenter;
 
 						//newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
-						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize) ?? new MapAreaInfo2();
+						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapSizeInt, newMapOffsetFromCenter, newMapArea, newMapSize) ?? new MapAreaInfo2();
 
 						return true;
 					}
@@ -883,16 +884,14 @@ namespace MSetExplorer
 					var newMapArea = posterSizeEditorDialog.NewMapArea;
 					var newMapSize = posterSizeEditorDialog.NewMapSize;
 
-					//var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
-					//posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo);
+					var newMapSizeInt = posterSizeEditorDialog.NewMapSizeInt;
+					var newMapOffsetFromCenter = posterSizeEditorDialog.NewMapOffsetFromCenter;
 
-					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
+					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapSizeInt, newMapOffsetFromCenter, newMapArea, newMapSize);
+
 					if (newPosterMapAreaInfo != null)
 					{
-						//var oldAreaInfo = MapJobHelper2.Convert(newPosterMapAreaInfo, new SizeInt(1024));
-						//var oldAreaInfo = new MapAreaInfo();
-
-						posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo);
+						posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo, newMapSizeInt, newMapOffsetFromCenter);
 					}
 				}
 			}
@@ -1007,10 +1006,18 @@ namespace MSetExplorer
 
 		private void Pan(PanDirection direction, PanAmountQualifer qualifer, int amount)
 		{
+			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo ?? null;
+
 			var qualifiedAmount = GetPanAmount(amount, qualifer);
 			var panVector = GetPanVector(direction, qualifiedAmount);
-			var newArea = new RectangleInt(new PointInt(panVector), _vm.PosterViewModel.CanvasSize.Round());
-			_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, newArea, _vm.PosterViewModel.CanvasSize);
+
+			//var newArea = new RectangleInt(new PointInt(panVector), _vm.PosterViewModel.CanvasSize.Round());
+
+			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, newArea, _vm.PosterViewModel.CanvasSize);
+
+			_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, panVector, factor: 1, currentMapAreaInfo);
+
+
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
@@ -1051,13 +1058,16 @@ namespace MSetExplorer
 
 		private void ZoomOut(ZoomOutAmountQualifer qualifer, int amount)
 		{
+			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo ?? null;
+
 			//_ = MessageBox.Show($"Zooming Out. Amount = {amount}.");
 
 			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
 			var curArea = new RectangleInt(new PointInt(), _vm.PosterViewModel.CanvasSize.Round());
 			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
-			_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea, _vm.PosterViewModel.CanvasSize);
+			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea, _vm.PosterViewModel.CanvasSize);
+			_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo);
 		}
 
 		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)
