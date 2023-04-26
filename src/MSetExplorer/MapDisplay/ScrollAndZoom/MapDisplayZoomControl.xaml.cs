@@ -12,13 +12,13 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 	/// </summary>
 	public partial class MapDisplayZoomControl : UserControl
 	{
-		private IMapScrollViewModel _vm;
+		private IMapDisplayViewModel _vm;
 
 		#region Constructor
 
 		public MapDisplayZoomControl()
 		{
-			_vm = (IMapScrollViewModel)DataContext;
+			_vm = (IMapDisplayViewModel)DataContext;
 
 			Loaded += MapDisplayZoomControl_Loaded;
 			InitializeComponent();
@@ -33,7 +33,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 			}
 			else
 			{
-				_vm = (IMapScrollViewModel)DataContext;
+				_vm = (IMapDisplayViewModel)DataContext;
 
 				scrBarZoom.Minimum = 1;
 				scrBarZoom.Value = 1;
@@ -66,7 +66,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 			if (e.PropertyName == nameof(IMapScrollViewModel.MaximumDisplayZoom))
 			{
 				scrBarZoom.Minimum = 1;
-				scrBarZoom.Maximum = _vm.MaximumDisplayZoom;
+				scrBarZoom.Maximum = 100; // _vm.MaximumDisplayZoom;
 				scrBarZoom.LargeChange = scrBarZoom.Maximum / 8;
 				scrBarZoom.SmallChange = scrBarZoom.LargeChange / 8;
 			}
@@ -82,7 +82,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 		
 		private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
 		{
-			var max = _vm.MaximumDisplayZoom;
+			var max = 100; //_vm.MaximumDisplayZoom;
 			scrBarZoom.Value = max;
 			_vm.DisplayZoom = max;
 		}
@@ -100,7 +100,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 			return et switch
 			{
 				ScrollEventType.EndScroll => val,
-				ScrollEventType.First => _vm.MaximumDisplayZoom,
+				ScrollEventType.First => val, // _vm.MaximumDisplayZoom,
 				ScrollEventType.LargeDecrement => val,
 				ScrollEventType.LargeIncrement => val,
 				ScrollEventType.Last => 1,

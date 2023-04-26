@@ -226,8 +226,9 @@ namespace ImageBuilder
 				}
 				else
 				{
-					Debug.WriteLine($"The BitmapBuilder's MapLoader's Task was not found.");
-					throw new InvalidOperationException("The MapLoaderManger task could be found.");
+					// TODO: Add logic to confirm that all of the responses were received.
+					//Debug.WriteLine($"The BitmapBuilder's MapLoader's Task was not found.");
+					//throw new InvalidOperationException("The MapLoaderManger task could be found.");
 				}
 			}
 			catch

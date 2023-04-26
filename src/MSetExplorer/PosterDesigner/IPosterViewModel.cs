@@ -6,13 +6,13 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
-	internal interface IPosterViewModel
+	public interface IPosterViewModel
 	{
 		bool InDesignMode { get; }
 		event PropertyChangedEventHandler? PropertyChanged;
 
-		SizeDbl CanvasSize { get; set; }
-		SizeDbl LogicalDisplaySize { get; set; }
+		//SizeDbl CanvasSize { get; set; }
+		//SizeDbl LogicalDisplaySize { get; set; }
 
 		Poster? CurrentPoster { get; }
 		string? CurrentPosterName { get; }

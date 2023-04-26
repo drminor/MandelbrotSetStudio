@@ -1,6 +1,7 @@
-﻿using Microsoft.Windows.Themes;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Driver.Linq;
+using MSetExplorer.MapDisplay.Controls;
+using MSetExplorer.MapDisplay.ScrollAndZoom;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -31,10 +32,17 @@ namespace MSetExplorer
 
 		private object _paintLocker;
 
-		private SizeDbl _canvasSize;
+		private SizeDbl _viewPortSize;
 		private VectorDbl _imageOffset;
+
+		private double _invertedVerticalPosition;
+		private double _verticalPosition;
+		private double _horizontalPosition;
+
+		private SizeInt? _posterSize;
+
 		private double _displayZoom;
-		//private SizeDbl _logicalDisplaySize;
+		private double _maximumDisplayZoom;
 
 		#endregion
 
@@ -42,10 +50,11 @@ namespace MSetExplorer
 
 		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper, SizeInt blockSize)
 		{
+			_posterSize = new SizeInt();
 			_paintLocker = new object();
 			BlockSize = blockSize;
 
-			_bitMapGrid = null;
+			BitmapGrid = null;
 
 			ActiveJobNumbers = new List<int>();
 
@@ -61,12 +70,10 @@ namespace MSetExplorer
 			_currentAreaColorAndCalcSettings = null;
 			_latestMapAreaInfo = null;
 
-			_canvasSize = new SizeDbl(10, 10);
-
 			_imageOffset = new VectorDbl();
 
-			DisplayZoom = 1.0;
-			//_logicalDisplaySize = new SizeDbl();
+			_displayZoom = 1;
+			_maximumDisplayZoom = 1;
 		}
 
 		#endregion
@@ -134,9 +141,9 @@ namespace MSetExplorer
 
 				// TODO: Consider using a Binding to update the SelectedColorBand, instead of setting a property on the BitmapGrid class directly.
 
-				if (HighlightSelectedColorBand && _bitMapGrid != null)
+				if (HighlightSelectedColorBand && BitmapGrid != null)
 				{
-					_bitMapGrid.CurrentColorBand = value;
+					BitmapGrid.CurrentColorBand = value;
 				}
 			}
 		}
@@ -178,39 +185,37 @@ namespace MSetExplorer
 
 		public Action<MapSection> DisposeMapSection => DisposeMapSectionInternal;
 
-		private IBitmapGrid? _bitMapGrid;
-		public IBitmapGrid? BitmapGrid
-		{
-			get => _bitMapGrid;
-			set
-			{
-				_bitMapGrid = value;
-			}
-		}
+		public IBitmapGrid? BitmapGrid { get; set; }
 
-		public SizeDbl CanvasSize
+		public SizeDbl ViewPortSize
 		{
-			get => _canvasSize;
+			get => _viewPortSize;
 			set
 			{
-				if (!value.IsNAN() && value != _canvasSize)
+				if (!value.IsNAN() && value != _viewPortSize)
 				{
-					_canvasSize = value;
-
-					if (LastMapAreaInfo != null)
+					if (value.Width <= 2 || value.Height <= 2)
 					{
-						if (LastMapAreaInfo.CanvasSize != value.Round())
+						Debug.WriteLine($"WARNING: MapSectionDisplayViewModel is having its ViewPortSize set to {value}, which is very small. Update was aborted. Previously it was {_viewPortSize}.");
+
+					}
+					else
+					{
+						Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewPortSize set to {value}. Previously it was {_viewPortSize}.");
+						_viewPortSize = value;
+
+						if (LastMapAreaInfo != null && LastMapAreaInfo.CanvasSize != value.Round())
 						{
+							// TODO: Check why we have a guard in place to avoid calling HandleDisplaySizeUpdate, if the value is the same as the LastMapAreaInfo.CanvasSize
 							var newJobNumber = HandleDisplaySizeUpdate();
 							if (newJobNumber != null)
 							{
 								ActiveJobNumbers.Add(newJobNumber.Value);
 							}
 						}
-					}
 
-					OnPropertyChanged(nameof(IMapDisplayViewModel.CanvasSize));
-					OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
+						OnPropertyChanged(nameof(IMapDisplayViewModel.ViewPortSize));
+					}
 				}
 			}
 		}
@@ -236,67 +241,174 @@ namespace MSetExplorer
 			private set { _latestMapAreaInfo = value; }
 		}
 
-		public SizeDbl LogicalDisplaySize => CanvasSize;
+		#endregion
 
+		#region Public Properties - Scroll
+
+		public bool IsBound => PosterSize != null;
+
+		public SizeInt? PosterSize
+		{
+			get => _posterSize;
+
+			set
+			{
+				if (value != _posterSize)
+				{
+					_posterSize = value;
+					//InvertedVerticalPosition = GetInvertedYPos(VerticalPosition);
+
+					//MaximumDisplayZoom = GetMaximumDisplayZoom(PosterSize, ViewPortSize);
+
+					OnPropertyChanged(nameof(IMapDisplayViewModel.PosterSize));
+				}
+			}
+		}
+
+		public double VerticalPosition
+		{
+			get => _verticalPosition;
+			set
+			{
+				if (value != _verticalPosition)
+				{
+					_verticalPosition = value;
+					_invertedVerticalPosition = GetInvertedYPos(value);
+					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
+					OnPropertyChanged(nameof(IMapDisplayViewModel.VerticalPosition));
+					OnPropertyChanged(nameof(IMapDisplayViewModel.InvertedVerticalPosition));
+				}
+			}
+		}
+
+		public double InvertedVerticalPosition
+		{
+			get => _invertedVerticalPosition;
+			set
+			{
+				if (value != _invertedVerticalPosition)
+				{
+					_invertedVerticalPosition = value;
+					_verticalPosition = GetInvertedYPos(value);
+					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
+					OnPropertyChanged(nameof(IMapDisplayViewModel.InvertedVerticalPosition));
+					OnPropertyChanged(nameof(IMapDisplayViewModel.VerticalPosition));
+				}
+			}
+		}
+
+		public double HorizontalPosition
+		{
+			get => _horizontalPosition;
+			set
+			{
+				if (value != _horizontalPosition)
+				{
+					_horizontalPosition = value;
+					Debug.WriteLine($"Horizontal Pos: {value}.");
+					OnPropertyChanged(nameof(IMapDisplayViewModel.HorizontalPosition));
+				}
+			}
+		}
+
+
+		/// <summary>
+		/// Value between 0.0 and 1.0
+		/// 1.0 presents 1 map "pixel" to 1 screen pixel
+		/// 0.5 presents 2 map "pixels" to 1 screen pixel
+		/// </summary>
 		public double DisplayZoom
 		{
 			get => _displayZoom;
 			set
 			{
-				if (Math.Abs(value - _displayZoom) > 0.01)
-				{
-					//ClearMapSectionsAndBitmap(mapLoaderJobNumber: null);
+				//if (Math.Abs(value - DisplayZoom) > 0.001)
+				//{
+				//	_displayZoom = Math.Min(MaximumDisplayZoom, value);
 
-					// TODX: Prevent the DisplayZoom from being set to a value that would require more than 100 x 100 blocks.
-					// 1 = LogicalDisplay Size = PosterSize
-					// 2 = LogicalDisplay Size Width is 1/2 PosterSize Width (Every screen pixels covers a 2x2 group of pixels from the final image, i.e., the poster.)
-					// 4 = 1/4 PosterSize
-					// Maximum is PosterSize / Actual CanvasSize 
+				//	MapDisplayViewModel.DisplayZoom = _displayZoom;
 
-					//Debug.WriteLine($"The DrawingGroup has {_screenSectionCollection.CurrentDrawingGroupCnt} item.");
+				//	Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
+				//	OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
+				//}
 
-					_displayZoom = value;
+				var previousValue = _displayZoom;
 
-					// TODX: scc -- Need to place the WriteableBitmap within a DrawingGroup.
-					//_scaleTransform.ScaleX = 1 / _displayZoom;
-					//_scaleTransform.ScaleY = 1 / _displayZoom;
+				_displayZoom = Math.Min(MaximumDisplayZoom, value);
 
-					//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
-					//LogicalDisplaySize = CanvasSize;
+				//MapDisplayViewModel.DisplayZoom = _displayZoom;
 
-
-					// TODO: DisplayZoom property is not being used on the MapSectionDisplayViewModel
-					//OnPropertyChanged();
-				}
+				Debug.WriteLine($"The MapScrollViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+				// Log: Add Spacer
+				Debug.WriteLine("\n\n");
+				OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
 			}
 		}
 
-		//public SizeDbl LogicalDisplaySize
-		//{
-		//	get => _logicalDisplaySize;
-		//	private set
-		//	{
-		//		if (_logicalDisplaySize != value)
-		//		{
-		//			_logicalDisplaySize = value;
+		public double MaximumDisplayZoom
+		{
+			get => _maximumDisplayZoom;
+			private set
+			{
+				if (Math.Abs(value - _maximumDisplayZoom) > 0.001)
+				{
+					_maximumDisplayZoom = value;
 
-		//			Debug.WriteLine($"MapDisplay's Logical DisplaySize is now {value}.");
+					if (DisplayZoom > MaximumDisplayZoom)
+					{
+						Debug.WriteLine($"The MapScrollViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
+						DisplayZoom = MaximumDisplayZoom;
+					}
+					else
+					{
+						Debug.WriteLine($"The MapScrollViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
+					}
 
-		//			OnPropertyChanged(nameof(IMapDisplayViewModel.LogicalDisplaySize));
-		//		}
-		//	}
-		//}
+					OnPropertyChanged(nameof(IMapScrollViewModel.MaximumDisplayZoom));
+				}
+			}
+		}
 
 		#endregion
 
 		#region Public Methods
 
+		private BoundedMapArea? _boundedMapArea;
+
 		public int? SubmitJob(AreaColorAndCalcSettings newValue)
 		{
-			int? newJobNumber = null;
+			return SubmitJob(newValue, posterSize: null);
+		}
 
+		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize)
+		{
+			return SubmitJob(newValue, (SizeInt?) posterSize);
+		}
+
+		private int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt? posterSize)
+		{
 			lock (_paintLocker)
 			{
+				CheckVPSize();
+
+				int? newJobNumber = null;
+
+				if (posterSize.HasValue)
+				{
+					// Bounded
+
+					// Save the MapAreaInfo for the entire poster.
+					_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, ViewPortSize, posterSize.Value);
+
+					// Get the MapAreaInfo subset for the upper, left-hand corner.
+					var mapAreaInfo2Subset = _boundedMapArea.GetView(new VectorInt(0, 0));
+
+					// Update the value using the new view. 
+					newValue = newValue.UpdateWith(mapAreaInfo2Subset);
+				}
+
+				// Unbounded
+
 				if (newValue != CurrentAreaColorAndCalcSettings)
 				{
 					var previousValue = CurrentAreaColorAndCalcSettings;
@@ -306,9 +418,18 @@ namespace MSetExplorer
 
 					newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings);
 				}
-			}
 
-			return newJobNumber;
+				return newJobNumber;
+			}
+		}
+
+		private void CheckVPSize()
+		{
+			if (ViewPortSize.Width < 0.1 || ViewPortSize.Height < 0.1)
+			{
+				Debug.WriteLine("WARNING: ViewPortSize is zero, using the value from the BitmapGrid.");
+				ViewPortSize = BitmapGrid?.ViewPortSize ?? throw new InvalidOperationException("ViewPortSize is 0 and the BitmapGrid is null.");
+			}
 		}
 
 		[Conditional("DEBUG")]
@@ -359,7 +480,7 @@ namespace MSetExplorer
 
 				if (currentJob != null && !currentJob.IsEmpty)
 				{
-					var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, CanvasSize);
+					var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, ViewPortSize);
 					var newMapSections = _mapLoaderManager.Push(currentJob.OwnerId, currentJob.OwnerType, screenAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
 					var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
@@ -504,7 +625,7 @@ namespace MSetExplorer
 
 		private int? ReuseAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
-			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, CanvasSize);
+			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewPortSize);
 			LastMapAreaInfo = screenAreaInfo;
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
@@ -521,7 +642,6 @@ namespace MSetExplorer
 			if (BitmapGrid != null)
 			{
 				BitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
-				//BitmapGrid.ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
 			}
 			
 			ImageOffset = new VectorDbl(screenAreaInfo.CanvasControlOffset);
@@ -556,7 +676,7 @@ namespace MSetExplorer
 
 		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
-			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, CanvasSize);
+			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewPortSize);
 			LastMapAreaInfo = screenAreaInfo;
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
@@ -569,7 +689,6 @@ namespace MSetExplorer
 			if (BitmapGrid != null)
 			{
 				BitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
-				//BitmapGrid.ImageOffset = new VectorDbl(newJob.MapAreaInfo.CanvasControlOffset);
 			}
 
 			ImageOffset = new VectorDbl(screenAreaInfo.CanvasControlOffset);
@@ -649,12 +768,17 @@ namespace MSetExplorer
 
 		private MapAreaInfo GetScreenAreaInfo(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
-			//var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize.Round());
-			var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize.Round());
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize.Round());
 
 			// Just for diagnostics.
 			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
 			CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2, mapAreaInfoV1);
+
+			var mapAreaInfoV1Diag = MapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize.Round());
+
+			// Just for diagnostics.
+			var mapAreaInfoV2Diag = MapJobHelper.Convert(mapAreaInfoV1Diag);
+			CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2Diag, mapAreaInfoV1Diag);
 
 			return mapAreaInfoV1;
 		}
@@ -716,6 +840,26 @@ namespace MSetExplorer
 
 		//	return result;
 		//}
+
+		#endregion
+
+		#region Private Methods - Scroll
+
+		private double GetInvertedYPos(double yPos)
+		{
+			double result = 0;
+
+			if (PosterSize.HasValue)
+			{
+				result = PosterSize.Value.Height - yPos;
+				
+				var logicalDisplayHeight = ViewPortSize.Height;
+
+				result -= logicalDisplayHeight;
+			}
+
+			return result;
+		}
 
 		#endregion
 

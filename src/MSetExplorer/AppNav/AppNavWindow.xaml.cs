@@ -153,10 +153,10 @@ namespace MSetExplorer
 			Hide();
 
 			var posterDesignerViewModel = _vm.GetPosterDesignerViewModel();
-			var designerWindow = new PosterDesignerWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
-			{
-				DataContext = posterDesignerViewModel
-			};
+			var designerWindow = new PosterDesignerWindow(posterDesignerViewModel, appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
+			//{
+			//	DataContext = posterDesignerViewModel
+			//};
 
 			_lastWindow = designerWindow;
 			_lastWindow.Name = "Designer";

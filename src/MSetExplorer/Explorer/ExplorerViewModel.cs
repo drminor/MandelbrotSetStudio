@@ -25,8 +25,8 @@ namespace MSetExplorer
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 			IMapLoaderManager mapLoaderManager,
-			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, 
-			PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
+			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator,
+			CoordsEditorViewModelCreator coordsEditorViewModelCreator, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator)
 		{
 
 			_mapLoaderManager = mapLoaderManager;
@@ -41,9 +41,9 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			ProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize.Round();
-			DispWidth = MapDisplayViewModel.CanvasSize.Width;
-			DispHeight = MapDisplayViewModel.CanvasSize.Height;
+			//ProjectViewModel.CanvasSize = MapDisplayViewModel.ViewPortSize.Round();
+			DispWidth = MapDisplayViewModel.ViewPortSize.Width;
+			DispHeight = MapDisplayViewModel.ViewPortSize.Height;
 
 			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
@@ -246,11 +246,11 @@ namespace MSetExplorer
 		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			// Let the Map Project know about Map Display size changes
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
 			{
-				DispWidth = MapDisplayViewModel.CanvasSize.Width;
-				DispHeight = MapDisplayViewModel.CanvasSize.Height;
-				ProjectViewModel.CanvasSize = MapDisplayViewModel.CanvasSize.Round();
+				DispWidth = MapDisplayViewModel.ViewPortSize.Width;
+				DispHeight = MapDisplayViewModel.ViewPortSize.Height;
+				//ProjectViewModel.CanvasSize = MapDisplayViewModel.ViewPortSize.Round();
 			}
 		}
 

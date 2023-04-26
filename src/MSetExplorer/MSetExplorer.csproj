@@ -17,6 +17,7 @@
   <ItemGroup>
     <Compile Remove="MapDisplay\Controls\MapDisplayControl.xaml.cs" />
     <Compile Remove="MapDisplay\Controls\MapDisplayViewModel.cs" />
+    <Compile Remove="MapDisplay\ScrollAndZoom\MapScrollViewModel.cs" />
     <Compile Remove="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
@@ -27,6 +28,7 @@
 
 
   <ItemGroup>
+    <None Include="MapDisplay\ScrollAndZoom\MapScrollViewModel.cs" />
     <None Include="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 

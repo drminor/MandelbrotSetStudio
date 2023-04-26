@@ -33,9 +33,32 @@ namespace MSetExplorer
 			AppNavRequestResponse = appNavRequestResponse;
 
 			Loaded += ExplorerWindow_Loaded;
-			Closing += ExplorerWindow_Closing;
 			ContentRendered += ExplorerWindow_ContentRendered;
+			Closing += ExplorerWindow_Closing;
+			Unloaded += ExplorerWindow_Unloaded;
+
 			InitializeComponent();
+
+			jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
+			
+			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
+			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
+			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
+
+			cbsh1.DataContext = _vm.ColorBandSetHistogramViewModel;
+			jobTree1.DataContext = _vm.JobTreeViewModel;
+		}
+
+		private void ExplorerWindow_Unloaded(object sender, RoutedEventArgs e)
+		{
+			Loaded -= ExplorerWindow_Loaded;
+			ContentRendered -= ExplorerWindow_ContentRendered;
+			Closing -= ExplorerWindow_Closing;
+			Unloaded -= ExplorerWindow_Unloaded;
+
+			_vm.ProjectViewModel.PropertyChanged -= ProjectViewModel_PropertyChanged;
+			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
 		}
 
 		private void ExplorerWindow_Loaded(object sender, RoutedEventArgs e)
@@ -49,20 +72,7 @@ namespace MSetExplorer
 			{
 				//_vm = (IExplorerViewModel)DataContext;
 				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
-
-				jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
-				mapDisplay1.DataContext = _vm.MapDisplayViewModel;
-
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
-				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
-
-				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
-
-				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
-
-				cbsh1.DataContext = _vm.ColorBandSetHistogramViewModel;
-
-				jobTree1.DataContext = _vm.JobTreeViewModel;
 
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
@@ -1005,7 +1015,9 @@ namespace MSetExplorer
 			{
 				//coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.Coords, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
 
-				coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.MapAreaInfo, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
+				var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+
+				coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.MapAreaInfo, displaySize.Round(), allowEdits: true);
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
@@ -1275,7 +1287,7 @@ namespace MSetExplorer
 				_ => baseAmount * 8,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.ProjectViewModel.CanvasSize, targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.ViewPortSize.Round(), targetAmount);
 
 			return result;
 		}
@@ -1308,8 +1320,8 @@ namespace MSetExplorer
 			if (currentMapAreaInfo != null)
 			{
 				var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
-				var curArea = new RectangleInt(new PointInt(), _vm.ProjectViewModel.CanvasSize);
-				var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
+				//var curArea = new RectangleInt(new PointInt(), _vm.ProjectViewModel.CanvasSize);
+				//var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
 				_vm.ProjectViewModel.UpdateMapView(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo);
 			}
@@ -1335,7 +1347,7 @@ namespace MSetExplorer
 				_ => -1,								//	Default = * 2
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize.Round(), targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.ViewPortSize.Round(), targetAmount);
 
 			return result;
 		}

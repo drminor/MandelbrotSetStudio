@@ -25,12 +25,10 @@ namespace MSetExplorer
 		bool HighlightSelectedColorBand { get; set; }
 
 
-		SizeDbl CanvasSize { get; set; }
-		SizeDbl LogicalDisplaySize { get; }
+		SizeDbl ViewPortSize { get; set; }
 
 		VectorDbl ImageOffset { get; set; }
 
-		double DisplayZoom { get; set; }
 
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		event EventHandler<int>? DisplayJobCompleted;
@@ -39,6 +37,8 @@ namespace MSetExplorer
 		void UpdateMapViewPan(ImageDraggedEventArgs e);
 
 		int? SubmitJob(AreaColorAndCalcSettings newValue);
+		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize);
+
 		void CancelJob();
 		int? RestartLastJob();
 		void ClearDisplay();
@@ -46,5 +46,17 @@ namespace MSetExplorer
 		//MapAreaInfo? GetMapAreaInfo();
 
 		MapAreaInfo? LastMapAreaInfo { get; }
+
+
+		SizeInt? PosterSize { get; set; }
+
+		//SizeDbl LogicalDisplaySize { get; }
+		double DisplayZoom { get; set; }
+		//double MaximumDisplayZoom { get; }
+
+		double HorizontalPosition { get; set; }
+
+		double VerticalPosition { get; set; }
+		double InvertedVerticalPosition { get; set; }
 	}
 }

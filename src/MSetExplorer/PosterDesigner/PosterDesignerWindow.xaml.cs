@@ -30,16 +30,40 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterDesignerWindow(AppNavRequestResponse appNavRequestResponse)
+		public PosterDesignerWindow(IPosterDesignerViewModel dataContext, AppNavRequestResponse appNavRequestResponse)
 		{
-			_vm = (IPosterDesignerViewModel)DataContext;
+			//_vm = (IPosterDesignerViewModel)DataContext;
+			DataContext = dataContext;
+			_vm = dataContext;
+
 			AppNavRequestResponse = appNavRequestResponse;
 			_createImageProgressWindow = null;
 
 			Loaded += PosterDesignerWindow_Loaded;
-			Closing += PosterDesignerWindow_Closing;
 			ContentRendered += PosterDesignerWindow_ContentRendered;
+			Closing += PosterDesignerWindow_Closing;
+			Unloaded += PosterDesignerWindow_Unloaded;
+
 			InitializeComponent();
+
+			jobTree1.DataContext = _vm.JobTreeViewModel;
+
+			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+			mapDisplayZoom1.DataContext = _vm.MapDisplayViewModel;
+			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
+			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
+			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
+		}
+
+		private void PosterDesignerWindow_Unloaded(object sender, RoutedEventArgs e)
+		{
+			Loaded -= PosterDesignerWindow_Loaded;
+			ContentRendered -= PosterDesignerWindow_ContentRendered;
+			Closing -= PosterDesignerWindow_Closing;
+			Unloaded -= PosterDesignerWindow_Unloaded;
+
+			_vm.PosterViewModel.PropertyChanged -= PosterViewModel_PropertyChanged;
+			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
 		}
 
 		private void PosterDesignerWindow_Loaded(object sender, RoutedEventArgs e)
@@ -51,23 +75,25 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (IPosterDesignerViewModel)DataContext;
+				//_vm = (IPosterDesignerViewModel)DataContext;
 
-				jobTree1.DataContext = _vm.JobTreeViewModel;
-				mapScroll1.DataContext = _vm.MapScrollViewModel;
-				mapDisplayZoom1.DataContext = _vm.MapScrollViewModel;
-				colorBandView1.DataContext = _vm.ColorBandSetViewModel;
-				mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
-				mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
+				//jobTree1.DataContext = _vm.JobTreeViewModel;
+				//mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+				//mapDisplayZoom1.DataContext = _vm.MapDisplayViewModel;
 
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				//colorBandView1.DataContext = _vm.ColorBandSetViewModel;
+				//mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
+				//mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
+
+				//_vm.PropertyChanged += ViewModel_PropertyChanged;
 				_vm.PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 
-				_vm.PosterViewModel.LogicalDisplaySize = _vm.MapDisplayViewModel.LogicalDisplaySize;
-				_vm.MapScrollViewModel.CanvasSize = _vm.MapDisplayViewModel.CanvasSize;
+				//_vm.PosterViewModel.LogicalDisplaySize = _vm.MapDisplayViewModel.LogicalDisplaySize;
 
-				Debug.WriteLine("The MainWindow is now loaded");
+				//_vm.MapScrollViewModel.CanvasSize = _vm.MapDisplayViewModel.CanvasSize;
+
+				Debug.WriteLine("The PosterDesigner Window is now loaded");
 			}
 		}
 
@@ -102,19 +128,19 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IPosterDesignerViewModel.MapDisplaySize))
-			{
-				Debug.WriteLine($"Handling a size change. Current = {new SizeDbl(Width, Height)}, New = {_vm.MapDisplaySize}.");
+		//private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		//{
+		//	if (e.PropertyName == nameof(IPosterDesignerViewModel.MapDisplaySize))
+		//	{
+		//		Debug.WriteLine($"Handling a size change. Current = {new SizeDbl(Width, Height)}, New = {_vm.MapDisplaySize}.");
 
-				//_vm.MapDisplayViewModel.HandleContainerSizeUpdates = false;
-				//Width = _vm.MapDisplaySize.Width + 481;
+		//		//_vm.MapDisplayViewModel.HandleContainerSizeUpdates = false;
+		//		//Width = _vm.MapDisplaySize.Width + 481;
 
-				//_vm.MapDisplayViewModel.HandleContainerSizeUpdates = true;
-				//Height = _vm.MapDisplaySize.Height + 96;
-			}
-		}
+		//		//_vm.MapDisplayViewModel.HandleContainerSizeUpdates = true;
+		//		//Height = _vm.MapDisplaySize.Height + 96;
+		//	}
+		//}
 
 		private void PosterViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
@@ -751,7 +777,7 @@ namespace MSetExplorer
 			CoordsEditorViewModel coordsEditorViewModel;
 
 			var curPoster = _vm.PosterViewModel.CurrentPoster;
-			var posterSize = _vm.MapScrollViewModel.PosterSize;
+			var posterSize = _vm.MapDisplayViewModel.PosterSize;
 
 			if (! (curPoster != null && posterSize.HasValue) )
 			{
@@ -1030,7 +1056,7 @@ namespace MSetExplorer
 				_ => baseAmount * 8,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.PosterViewModel.CanvasSize.Round(), targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.ViewPortSize.Round(), targetAmount);
 
 			return result;
 		}
@@ -1063,7 +1089,7 @@ namespace MSetExplorer
 			//_ = MessageBox.Show($"Zooming Out. Amount = {amount}.");
 
 			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
-			var curArea = new RectangleInt(new PointInt(), _vm.PosterViewModel.CanvasSize.Round());
+			var curArea = new RectangleInt(new PointInt(), _vm.MapDisplayViewModel.ViewPortSize.Round());
 			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
 			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea, _vm.PosterViewModel.CanvasSize);
@@ -1081,7 +1107,7 @@ namespace MSetExplorer
 				_ => baseAmount * 32,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.CanvasSize.Round(), targetAmount);
+			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.ViewPortSize.Round(), targetAmount);
 
 			return result;
 		}

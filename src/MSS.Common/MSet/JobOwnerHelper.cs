@@ -55,7 +55,7 @@ namespace MSS.Common
 			else
 			{
 				// TODO: Have Projects record the Id of the Project from which it was created -- just as Posters do.
-				// Then replace thi CreateJobOwner "thingy" with a delegate that can be used for either.
+				// Then replace the CreateJobOwner "thingy" with a delegate that can be used for either.
 				return CreateProject(name, description, jobs, colorBandSets, projectAdapter);
 			}
 		}

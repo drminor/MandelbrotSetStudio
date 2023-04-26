@@ -6,6 +6,7 @@ namespace MSetExplorer
 {
 	public interface IBitmapGrid
 	{
+		SizeDbl ViewPortSize { get; }
 		BigVector MapBlockOffset { get; set; }
 		//VectorDbl ImageOffset { get; set; }
 
@@ -17,7 +18,6 @@ namespace MSetExplorer
 
 		void GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);
 
-		//void SetColorBandSet(ColorBandSet value);
 
 		ColorBandSet ColorBandSet { get; set; }
 

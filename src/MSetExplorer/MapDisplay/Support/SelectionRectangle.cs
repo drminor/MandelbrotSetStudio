@@ -147,6 +147,7 @@ namespace MSetExplorer
 			}
 		}
 
+		// TODO: Only for diagnostics
 		public MapAreaInfo2? MapAreaInfo
 		{
 			get => _mapAreaInfo;

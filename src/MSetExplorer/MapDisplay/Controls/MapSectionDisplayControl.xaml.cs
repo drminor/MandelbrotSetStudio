@@ -56,16 +56,13 @@ namespace MSetExplorer
 				_vm = (IMapDisplayViewModel)DataContext;
 				BitmapGridControl1.DisposeMapSection = _vm.DisposeMapSection;
 				_vm.BitmapGrid = BitmapGridControl1.BitmapGrid;
+				_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
 
-				//_vm.CanvasSize = BitmapGridControl1.ViewPortSize;
-
-				//BitmapGridControl1.ImageOffset = _vm.ImageOffset;
-
-				//BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
+				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
 
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
-				_selectionRectangle = new SelectionRectangle(_canvas, _vm.CanvasSize, _vm.BlockSize);
+				_selectionRectangle = new SelectionRectangle(_canvas, _vm.ViewPortSize, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 
@@ -79,7 +76,7 @@ namespace MSetExplorer
 
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			//BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
+			BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
 
 			_vm.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
 
@@ -132,38 +129,43 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		//{
-		//	Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
+		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		{
+			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
 
-		//	BitmapGridControl1.ReportSizes("ViewPortSizeChanged");
-		//}
+			_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
+
+			if (_selectionRectangle != null)
+			{
+				_selectionRectangle.DisplaySize = _vm.ViewPortSize;
+			}
+		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (_selectionRectangle == null)
-			{
-				return;
-			}
+			//if (e.PropertyName == nameof(IMapDisplayViewModel.PosterSize))
+			//{
+			//	BitmapGridControl1.PosterSize = _vm.PosterSize ?? new SizeInt();
+			//}
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
+
+			// TODO: Only for diagnostics
+			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
 			{
 				_selectionRectangle.MapAreaInfo = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
 			}
 
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
-			{
-				_selectionRectangle.DisplaySize = _vm.CanvasSize;
-			}
+			//if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
+			//{
+			//	if (_selectionRectangle != null)
+			//	{
+			//		_selectionRectangle.DisplaySize = _vm.ViewPortSize;
+			//	}
+			//}
 		}
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{
-			//if (e.PerformDiagnostics && _vm.CurrentAreaColorAndCalcSettings != null)
-			//{
-			//	ReportFactorsVsSamplePointResolution(_vm.CurrentAreaColorAndCalcSettings.MapAreaInfo, e);
-			//}
-
 			_vm.UpdateMapViewZoom(e);
 		}
 

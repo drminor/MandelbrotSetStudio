@@ -57,7 +57,7 @@ namespace MSetExplorer
 
 		private void CbshDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
+			if (e.PropertyName == nameof(CbshDisplayViewModel.LogicalDisplaySize))
 			{
 				ConfigureScrollBars(_vm.CbshDisplayViewModel.LogicalDisplaySize, _vm.HistogramSize);
 			}
@@ -65,7 +65,7 @@ namespace MSetExplorer
 
 		private void CbshScrollViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapScrollViewModel.PosterSize))
+			if (e.PropertyName == nameof(ICbshScrollViewModel.CanvasSize))
 			{
 				ConfigureScrollBars(_vm.CbshDisplayViewModel.LogicalDisplaySize, _vm.HistogramSize);
 			}
@@ -75,7 +75,7 @@ namespace MSetExplorer
 			//	VScrollBar.Value = _vm.VerticalPosition;
 			//}
 
-			if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition))
+			if (e.PropertyName == nameof(ICbshScrollViewModel.HorizontalPosition))
 			{
 				HScrollBar.Value = _vm.HorizontalPosition;
 			}

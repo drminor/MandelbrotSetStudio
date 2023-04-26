@@ -19,9 +19,9 @@ namespace MSetExplorer
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly SizeInt _blockSize;
+		//private readonly SizeInt _blockSize;
 
-		private SizeInt _canvasSize;
+		//private SizeInt _canvasSize;
 		private Project? _currentProject;
 
 		private ColorBandSet? _previewColorBandSet;
@@ -35,11 +35,11 @@ namespace MSetExplorer
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
-			_blockSize = blockSize;
+			//_blockSize = blockSize;
 
 			//_getCanvasSizeFunc = getCanvasSizeFunc;
 
-			_canvasSize = new SizeInt();
+			//_canvasSize = new SizeInt();
 			_currentProject = null;
 			_previewColorBandSet = null;
 		}
@@ -50,23 +50,23 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public SizeInt CanvasSize
-		{
-			get => _canvasSize;
-			set
-			{
-				if(value != _canvasSize)
-				{
-					_canvasSize = value;
-					OnPropertyChanged(nameof(IProjectViewModel.CanvasSize));
+		//public SizeInt CanvasSize
+		//{
+		//	get => _canvasSize;
+		//	set
+		//	{
+		//		if(value != _canvasSize)
+		//		{
+		//			_canvasSize = value;
+		//			OnPropertyChanged(nameof(IProjectViewModel.CanvasSize));
 
-					//if (CurrentProject != null)
-					//{
-					//	RerunWithNewDisplaySize(CurrentProject);
-					//}
-				}
-			}
-		}
+		//			//if (CurrentProject != null)
+		//			//{
+		//			//	RerunWithNewDisplaySize(CurrentProject);
+		//			//}
+		//		}
+		//	}
+		//}
 
 		public Project? CurrentProject
 		{

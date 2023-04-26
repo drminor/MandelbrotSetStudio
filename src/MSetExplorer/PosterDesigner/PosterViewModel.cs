@@ -6,27 +6,29 @@ using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Windows.Controls;
-using Windows.UI.Accessibility;
 
 namespace MSetExplorer
 {
 	internal class PosterViewModel : ViewModelBase, IPosterViewModel, IDisposable
 	{
+		#region Private Fields
+
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
 		private readonly MapJobHelper _mapJobHelper;
 
-		private readonly SizeInt _blockSize;
+		//private readonly SizeInt _blockSize;
 
-		private SizeDbl _canvasSize;
-		private SizeDbl _logicalDisplaySize;
+		//private SizeDbl _canvasSize;
+		//private SizeDbl _logicalDisplaySize;
 
 		private Poster? _currentPoster;
 
 		AreaColorAndCalcSettings _areaColorAndCalcSettings;
 		private ColorBandSet? _previewColorBandSet;
+
+		#endregion
 
 		#region Constructor
 
@@ -36,12 +38,12 @@ namespace MSetExplorer
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
 
-			_blockSize = blockSize;
+			//_blockSize = blockSize;
 
-			var subdivisionProvider = new SubdivisonProvider(mapSectionAdapter);
+			//var subdivisionProvider = new SubdivisonProvider(mapSectionAdapter);
 			//_oldJobHelper = new MapJobHelper(subdivisionProvider, 10, blockSize);
 
-			_canvasSize = new SizeDbl();
+			//_canvasSize = new SizeDbl();
 			_currentPoster = null;
 			_areaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
 			_previewColorBandSet = null;
@@ -57,39 +59,41 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public SizeDbl CanvasSize
-		{
-			get => _canvasSize;
-			set
-			{
-				if(value != _canvasSize)
-				{
-					_canvasSize = value;
-					OnPropertyChanged(nameof(IPosterViewModel.CanvasSize));
+		//public SizeDbl CanvasSize
+		//{
+		//	get => _canvasSize;
+		//	set
+		//	{
+		//		if(value != _canvasSize)
+		//		{
+		//			_canvasSize = value;
+		//			OnPropertyChanged(nameof(IPosterViewModel.CanvasSize));
 
-				}
-			}
-		}
+		//		}
+		//	}
+		//}
 
-		public SizeDbl LogicalDisplaySize
-		{
-			get => _logicalDisplaySize;
-			set
-			{
-				if (value != _logicalDisplaySize)
-				{
-					Debug.WriteLine($"The PosterViewModel's LogicalDisplaySize is being updated to {value}.");
-					_logicalDisplaySize = value;
+		//private SizeDbl LogicalDisplaySize => CanvasSize;
 
-					if (CurrentPoster != null && !CurrentPoster.CurrentJob.IsEmpty)
-					{
-						CurrentAreaColorAndCalcSettings = GetUpdatedMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
-					}
+		//public SizeDbl LogicalDisplaySize
+		//{
+		//	get => _logicalDisplaySize;
+		//	set
+		//	{
+		//		if (value != _logicalDisplaySize)
+		//		{
+		//			Debug.WriteLine($"The PosterViewModel's LogicalDisplaySize is being updated to {value}.");
+		//			_logicalDisplaySize = value;
 
-					OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
-				}
-			}
-		}
+		//			if (CurrentPoster != null && !CurrentPoster.CurrentJob.IsEmpty)
+		//			{
+		//				CurrentAreaColorAndCalcSettings = GetUpdatedMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+		//			}
+
+		//			OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
+		//		}
+		//	}
+		//}
 
 		public Poster? CurrentPoster
 		{
@@ -107,13 +111,13 @@ namespace MSetExplorer
 
 					if (_currentPoster != null)
 					{
-						var dispPos = _currentPoster.DisplayPosition;
-						OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
-						OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
+						//var dispPos = _currentPoster.DisplayPosition;
+						//OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+						//OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
 
 						// Setting the PosterSize and DisplayZoom can update the DisplayPosition. Use the value read from file.
-						_currentPoster.DisplayPosition = dispPos;
-						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
+						//_currentPoster.DisplayPosition = dispPos;
+						//OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 
 						//var currentJob = _currentPoster.CurrentJob;
 						//var currentColorBandSet = _currentPoster.CurrentColorBandSet;
@@ -121,7 +125,12 @@ namespace MSetExplorer
 
 						if (CurrentPoster != null && !CurrentPoster.CurrentJob.IsEmpty)
 						{
-							CurrentAreaColorAndCalcSettings = GetUpdatedMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+							var currentJob = CurrentPoster.CurrentJob;
+							Debug.WriteLine("The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentPoster is being updated.");
+
+							//CurrentAreaColorAndCalcSettings = GetUpdatedMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, currentJob.MapAreaInfo, CurrentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
+							CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 						}
 
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
@@ -157,12 +166,19 @@ namespace MSetExplorer
 
 						currentPoster.DisplayPosition = new VectorInt();
 						currentPoster.DisplayZoom = 1;
-						_logicalDisplaySize = new SizeDbl(10, 10);
-						LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
+
+						//_logicalDisplaySize = new SizeDbl(10, 10);
+						//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
 
 						if (!currentPoster.CurrentJob.IsEmpty)
 						{
-							CurrentAreaColorAndCalcSettings = GetUpdatedMapView(currentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+							var currentJob = currentPoster.CurrentJob;
+
+							Debug.WriteLine("The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentJob is being updated.");
+							//CurrentAreaColorAndCalcSettings = GetUpdatedMapView(currentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+
+							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, currentJob.MapAreaInfo, currentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
+							CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 						}
 					}
 					else
@@ -179,8 +195,21 @@ namespace MSetExplorer
 
 		public MapAreaInfo2 PosterAreaInfo => CurrentPoster?.CurrentJob.MapAreaInfo ?? MapAreaInfo2.Empty;
 
-		//public SizeInt PosterSize => PosterAreaInfo.CanvasSize;
-		public SizeInt PosterSize => new SizeInt(1024);
+		public SizeInt PosterSize
+		{
+			get => CurrentPoster?.PosterSize ?? new SizeInt(1024);
+			set
+			{
+				var curPoster = CurrentPoster;
+				if (curPoster != null)
+				{
+					if (value != PosterSize)
+					{
+						curPoster.PosterSize = value;
+					}
+				}
+			}
+		}
 
 		public ColorBandSet CurrentColorBandSet
 		{
@@ -270,26 +299,26 @@ namespace MSetExplorer
 				{
 					if (value != DisplayPosition)
 					{
-						Debug.WriteLine($"The PosterViewModel's DisplayPosition is being updated to {value}.");
+						//Debug.WriteLine($"The PosterViewModel's DisplayPosition is being updated to {value}.");
 						curPoster.DisplayPosition = value;
 
-						var currentJob = curPoster.CurrentJob;
-						var currentColorBandSet = curPoster.CurrentColorBandSet;
+						//var currentJob = curPoster.CurrentJob;
+						//var currentColorBandSet = curPoster.CurrentColorBandSet;
 
-						var msg = $"The PosterViewModel DisplayPosition setter is setting CurrentAreaColorAndCalcSettings to " +
-							$"DisplayPosition: {value}, LogicalDisplaySize: {LogicalDisplaySize}, Zoom: {DisplayZoom}.";
-						Debug.WriteLine(msg);
+						//var msg = $"The PosterViewModel DisplayPosition setter is setting CurrentAreaColorAndCalcSettings to " +
+						//	$"DisplayPosition: {value}, LogicalDisplaySize: {LogicalDisplaySize}, Zoom: {DisplayZoom}.";
+						//Debug.WriteLine(msg);
 
-						CurrentAreaColorAndCalcSettings = CreateDisplayJob(currentJob, currentColorBandSet, value, LogicalDisplaySize.Round(), DisplayZoom);
+						//CurrentAreaColorAndCalcSettings = CreateDisplayJob(currentJob, currentColorBandSet, value, LogicalDisplaySize.Round(), DisplayZoom);
 
-						OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
+						//OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 					}
 				}
 				else
 				{
-					var msg = $"The PosterViewModel DisplayPosition setter is setting CurrentAreaColorAndCalcSettings to NULL -- The CurrentPoster is Null.";
-					Debug.WriteLine(msg);
-					CurrentAreaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
+					//var msg = $"The PosterViewModel DisplayPosition setter is setting CurrentAreaColorAndCalcSettings to NULL -- The CurrentPoster is Null.";
+					//Debug.WriteLine(msg);
+					//CurrentAreaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
 				}
 			}
 		}
@@ -305,8 +334,8 @@ namespace MSetExplorer
 					if (Math.Abs(value - DisplayZoom) > 0.001)
 					{
 						curPoster.DisplayZoom = value;
-						Debug.WriteLine($"The PosterViewModel's DisplayZoom is being updated to {value}.");
-						OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
+						//Debug.WriteLine($"The PosterViewModel's DisplayZoom is being updated to {value}.");
+						//OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
 					}
 				}
 			}
@@ -347,22 +376,25 @@ namespace MSetExplorer
 
 			else if (e.PropertyName == nameof(IPosterViewModel.CurrentColorBandSet))
 			{
-				Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
+				Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentColorBandSet as the Poster's ColorBandSet is being updated.");
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 			}
 
 			else if (e.PropertyName == nameof(Project.CurrentJob))
 			{
-				if (CurrentPoster != null)
-				{
+				//if (CurrentPoster != null)
+				//{
+				//	CurrentJob = CurrentPoster.CurrentJob;
+				//}
 
-					CurrentJob = CurrentPoster.CurrentJob;
-				}
+				Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentJob as the Poster's CurrentJob is being updated.");
+				OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+
 			}
-			else if (e.PropertyName == nameof(DisplayZoom))
-			{
-				OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
-			}
+			//else if (e.PropertyName == nameof(DisplayZoom))
+			//{
+			//	OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
+			//}
 		}
 
 		#endregion
@@ -376,15 +408,9 @@ namespace MSetExplorer
 
 		public bool PosterOpen(string name)
 		{
-			Debug.WriteLine($"Opening Poster: {name}. DisplayPosition: {DisplayPosition}, LogicalDisplaySize: {LogicalDisplaySize}, Zoom: {DisplayZoom}.");
+			Debug.WriteLine($"Opening Poster: {name}.");
 			if (_projectAdapter.TryGetPoster(name, out var poster))
 			{
-				if (poster.DisplayZoom - 0 < 0.01)
-				{
-					poster.DisplayPosition = new VectorInt(0, 0);
-					poster.DisplayZoom = 1;
-				}
-
 				CurrentPoster = poster;
 				return true;
 			}
@@ -482,38 +508,6 @@ namespace MSetExplorer
 			AddNewCoordinateUpdateJob(currentPoster, newMapAreaInfo);
 		}
 
-		// PosterDesigner Pan and Zoom Out
-		public void UpdateMapSpecs(TransformType transformType, RectangleInt screenArea, SizeDbl canvasSize)
-		{
-			throw new NotImplementedException();
-			//Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
-
-			//var currentPoster = CurrentPoster;
-			//if (currentPoster == null)
-			//{
-			//	return;
-			//}
-
-			////var curJob = currentPoster.CurrentJob;
-
-			////var mapPosition = curJob.Coords.Position;
-			////var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-			////var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-
-			////var colorBandSetId = curJob.ColorBandSetId;
-			////var mapCalcSettings = curJob.MapCalcSettings;
-			////LoadMap(currentPoster, curJob, coords, colorBandSetId, mapCalcSettings, transformType, screenArea);
-
-			//AddNewCoordinateUpdateJob(currentPoster, transformType, screenArea, canvasSize);
-
-			////currentPoster.DisplayPosition = new VectorInt();
-			////currentPoster.DisplayZoom = 1;
-			////_logicalDisplaySize = new SizeDbl(10, 10);
-			////LogicalDisplaySize = CanvasSize;
-
-			////UpdateMapView(currentPoster);
-		}
-
 		public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
@@ -526,67 +520,6 @@ namespace MSetExplorer
 			}
 
 			AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor);
-		}
-
-		//public MapAreaInfo GetUpdatedMapAreaInfoOLD(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize)
-		//{
-		//	var mapPosition = mapAreaInfo.Coords.Position;
-		//	var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
-		//	var screenAreaInt = screenArea.Round();
-
-		//	var coords = RMapHelper.GetMapCoords(screenAreaInt, mapPosition, samplePointDelta);
-
-		//	CheckCoordsChange(mapAreaInfo, screenArea, coords);
-
-		//	var posterSize = newMapSize.Round();
-		//	var blockSize = mapAreaInfo.Subdivision.BlockSize;
-
-		//	var result = _mapJobHelper.GetMapAreaInfo(coords, posterSize);
-
-		//	return result;
-		//}
-
-		//public MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
-		//{
-		//	var currentJob = CurrentJob;
-
-		//	if (currentJob.IsEmpty)
-		//	{
-		//		return null;
-		//	}
-
-		//	if (screenArea == new RectangleInt())
-		//	{
-		//		Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
-		//		return _mapJobHelper.GetMapAreaInfo(curJob, CanvasSize);
-		//	}
-		//	else
-		//	{
-		//		var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
-		//		return mapAreaInfo;
-		//	}
-		//}
-
-		public MapAreaInfo2? GetUpdatedMapAreaInfoNotUsed(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
-		{
-			var currentJob = CurrentJob;
-
-			if (currentJob.IsEmpty)
-			{
-				return null;
-			}
-
-			if (screenArea == new RectangleInt())
-			{
-				Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
-				//return MapJobHelper.GetMapAreaInfo(curJob, CanvasSize);
-				return currentJob.MapAreaInfo;
-			}
-			else
-			{
-				var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
-				return mapAreaInfo;
-			}
 		}
 
 		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter, RectangleDbl screenArea, SizeDbl newMapSize)
@@ -604,98 +537,104 @@ namespace MSetExplorer
 			return newMapAreaInfo;
 		}
 
-		//// Used to service Zoom and Pan jobs raised by the MapDisplay Control
-		//public MapAreaInfo? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea)
-		//{
-		//	var curJob = CurrentJob;
-
-		//	if (curJob.IsEmpty)
-		//	{
-		//		return null;
-		//	}
-
-		//	if (screenArea == new RectangleInt())
-		//	{
-		//		Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
-		//		//return MapJobHelper.GetMapAreaInfo(curJob, CanvasSize);
-		//		return curJob.MapAreaInfo;
-		//	}
-		//	else
-		//	{
-		//		var mapPosition = curJob.Coords.Position;
-		//		var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-		//		var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-		//		var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, PosterSize, _blockSize);
-
-		//		return mapAreaInfo;
-		//	}
-		//}
-
 		#endregion
 
 		#region Private Methods
 
-		// PosterViewModel update from position and zoom changes
-		private AreaColorAndCalcSettings GetUpdatedMapView(Poster currentPoster, VectorInt displayPosition, SizeDbl logicalDisplaySize, double zoomFactorForDiagnosis)
+		//// PosterViewModel update from position and zoom changes
+		//private AreaColorAndCalcSettings GetUpdatedMapView(Poster currentPoster, VectorInt displayPosition, SizeDbl logicalDisplaySize, double zoomFactorForDiagnosis)
+		//{
+		//	var job = currentPoster.CurrentJob;
+		//	var colorBandSet = currentPoster.CurrentColorBandSet;
+
+		//	var msg = $"UpdateMapView is setting CurrentAreaColorAndCalcSettings to DisplayPosition: {DisplayPosition}, LogicalDisplaySize: {LogicalDisplaySize}, Zoom: {DisplayZoom}.";
+		//	Debug.WriteLine(msg);
+
+		//	// Use the new map specification and the current zoom and display position to set the region to display.
+		//	var result = CreateDisplayJob(job, colorBandSet, displayPosition, logicalDisplaySize.Round(), zoomFactorForDiagnosis);
+
+		//	return result;
+		//}
+
+		//// Get Display Job
+		//private AreaColorAndCalcSettings CreateDisplayJob(Job currentJob, ColorBandSet currentColorBandSet, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
+		//{
+		//	var viewPortArea = GetNewViewPort(currentJob.MapAreaInfo, displayPosition, logicalDisplaySize, zoomFactorForDiagnosis);
+
+		//	var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, viewPortArea, currentColorBandSet, currentJob.MapCalcSettings.Clone());
+
+		//	return areaColorAndCalcSettings;
+		//}
+
+		//private MapAreaInfo2 GetNewViewPortOld(MapAreaInfo2 currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
+		//{
+		//	if (CurrentPoster == null)
+		//	{
+		//		return currentAreaInfo;
+		//	}
+
+		//	var posterSize = CurrentPoster.PosterSize;
+
+		//	var diagScreenArea = new RectangleInt(new PointInt(), posterSize);
+		//	var screenArea = new RectangleInt(new PointInt(displayPosition), logicalDisplaySize);
+		//	ReportNewDisplayInfo(diagScreenArea, screenArea, displayPosition, logicalDisplaySize, zoomFactorForDiagnosis);
+
+		//	var totalLeft = diagScreenArea.Position.X + diagScreenArea.Width;
+		//	var screenLeft = screenArea.Position.X + screenArea.Width;
+		//	var totalTop = diagScreenArea.Position.Y + diagScreenArea.Height;
+		//	var screenTop = screenArea.Position.Y + screenArea.Height;
+		//	var trAmt = new VectorInt(Math.Max(screenLeft - totalLeft, 0), Math.Max(screenTop - totalTop, 0));
+
+		//	//screenArea = screenArea.Translate(trAmt);
+		//	//var mapPosition = currentAreaInfo.Coords.Position;
+		//	//var subdivision = currentAreaInfo.Subdivision;
+
+		//	//var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
+		//	//var newMapBlockOffset = RMapHelper.GetMapBlockOffset(coords.Position, subdivision.SamplePointDelta, subdivision.BlockSize, out var newCanvasControlOffset);
+		//	////var newCoords = RMapHelper.CombinePosAndSize(newPosition, coords.Size);
+
+		//	//// TODO: Check the calculated precision as the new Map Coordinates are calculated.
+		//	//var precision = RValueHelper.GetPrecision(coords.Right, coords.Left, out var _);
+		//	//var result = new MapAreaInfo(coords, logicalDisplaySize, subdivision, precision, newMapBlockOffset, newCanvasControlOffset);
+
+		//	//var result = _mapJobHelper.GetMapAreaInfoPan(currentAreaInfo, trAmt);
+		//	var result = _mapJobHelper.GetMapAreaInfoPan(currentAreaInfo, displayPosition);
+
+		//	return result;
+		//}
+
+		//private MapAreaInfo2 GetNewViewPort(MapAreaInfo2 currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
+		//{
+		//	if (CurrentPoster == null)
+		//	{
+		//		return currentAreaInfo;
+		//	}
+
+		//	var posterSize = CurrentPoster.PosterSize;
+
+		//	var diagScreenArea = new RectangleInt(new PointInt(), posterSize);
+		//	var screenArea = new RectangleInt(new PointInt(displayPosition), logicalDisplaySize);
+		//	ReportNewDisplayInfo(diagScreenArea, screenArea, displayPosition, logicalDisplaySize, zoomFactorForDiagnosis);
+
+		//	var posterCenter = diagScreenArea.GetCenter();
+		//	var screenCenter = screenArea.GetCenter();
+
+		//	var trAmt = new VectorDbl(screenCenter).Diff(new VectorDbl(posterCenter));
+
+		//	var result = _mapJobHelper.GetMapAreaInfoPan(currentAreaInfo, trAmt.Round());
+
+		//	return result;
+		//}
+
+
+		private void ReportNewDisplayInfo(RectangleInt diagScreenArea, RectangleInt screenArea, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
 		{
-			var job = currentPoster.CurrentJob;
-			var colorBandSet = currentPoster.CurrentColorBandSet;
+			var diagSqAmt = diagScreenArea.Width * diagScreenArea.Height;
+			var screenSqAmt = screenArea.Width * screenArea.Height;
+			var sizeRat = screenSqAmt / (double)diagSqAmt;
 
-			var msg = $"UpdateMapView is setting CurrentAreaColorAndCalcSettings to DisplayPosition: {DisplayPosition}, LogicalDisplaySize: {LogicalDisplaySize}, Zoom: {DisplayZoom}.";
-			Debug.WriteLine(msg);
-
-			// Use the new map specification and the current zoom and display position to set the region to display.
-			var result = CreateDisplayJob(job, colorBandSet, displayPosition, logicalDisplaySize.Round(), zoomFactorForDiagnosis);
-
-			return result;
-		}
-
-		// Get Display Job
-		private AreaColorAndCalcSettings CreateDisplayJob(Job currentJob, ColorBandSet currentColorBandSet, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
-		{
-			var viewPortArea = GetNewViewPort(currentJob.MapAreaInfo, displayPosition, logicalDisplaySize, zoomFactorForDiagnosis);
-
-			var mapCalcSettingsCpy = currentJob.MapCalcSettings.Clone();
-			//mapCalcSettingsCpy.DontFetchZValuesFromRepo = true;
-
-			var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, viewPortArea, currentColorBandSet, mapCalcSettingsCpy);
-
-			return areaColorAndCalcSettings;
-		}
-
-		private MapAreaInfo2 GetNewViewPort(MapAreaInfo2 currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
-		{
-			//var diagScreenArea = new RectangleInt(new PointInt(), currentAreaInfo.CanvasSize);
-			//var screenArea = new RectangleInt(new PointInt(displayPosition), logicalDisplaySize);
-			//var diagSqAmt = diagScreenArea.Width * diagScreenArea.Height;
-			//var screenSqAmt = screenArea.Width * screenArea.Height;
-			//var sizeRat = screenSqAmt / (double) diagSqAmt;
-
-			//Debug.WriteLine($"Creating ViewPort at pos: {displayPosition} and size: {logicalDisplaySize} zoom: {zoomFactorForDiagnosis}.");
-			//Debug.WriteLine($"The new ViewPort covers {sizeRat}. Total Screen Area: {diagScreenArea}, viewPortArea: {screenArea}.");
-
-			//var totalLeft = diagScreenArea.Position.X + diagScreenArea.Width;
-			//var screenLeft = screenArea.Position.X + screenArea.Width;
-			//var totalTop = diagScreenArea.Position.Y + diagScreenArea.Height;
-			//var screenTop = screenArea.Position.Y + screenArea.Height;
-			//var trAmt = new VectorInt(Math.Max(screenLeft - totalLeft, 0), Math.Max(screenTop - totalTop, 0));
-			//screenArea = screenArea.Translate(trAmt);
-
-			//var mapPosition = currentAreaInfo.Coords.Position;
-			//var subdivision = currentAreaInfo.Subdivision;
-
-			//var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, subdivision.SamplePointDelta);
-			//var newMapBlockOffset = RMapHelper.GetMapBlockOffset(coords.Position, subdivision.SamplePointDelta, subdivision.BlockSize, out var newCanvasControlOffset);
-			////var newCoords = RMapHelper.CombinePosAndSize(newPosition, coords.Size);
-
-			//// TODO: Check the calculated precision as the new Map Coordinates are calculated.
-			//var precision = RValueHelper.GetPrecision(coords.Right, coords.Left, out var _);
-
-			//var result = new MapAreaInfo(coords, logicalDisplaySize, subdivision, precision, newMapBlockOffset, newCanvasControlOffset);
-
-			var result = currentAreaInfo.Clone();
-
-			return result;
+			Debug.WriteLine($"Creating ViewPort at pos: {displayPosition} and size: {logicalDisplaySize} zoom: {zoomFactorForDiagnosis}.");
+			Debug.WriteLine($"The new ViewPort covers {sizeRat}. Total Screen Area: {diagScreenArea}, viewPortArea: {screenArea}.");
 		}
 
 		// Create new Poster Specs using a new MapAreaInfo
@@ -717,39 +656,6 @@ namespace MSetExplorer
 
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 		}
-
-		//private void AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, RectangleInt newScreenArea, SizeDbl canvasSize)
-		//{
-		//	var currentJob = poster.CurrentJob;
-
-		//	Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
-
-		//	//var mapPosition = currentJob.Coords.Position;
-		//	//var samplePointDelta = currentJob.Subdivision.SamplePointDelta;
-
-		//	//var newCoords = RMapHelper.GetMapCoords(newScreenArea, mapPosition, samplePointDelta);
-
-		//	//var colorBandSetId = currentJob.ColorBandSetId;
-		//	//var mapSize = currentJob.CanvasSize;
-		//	//var coords = currentJob.MapAreaInfo.Coords;
-		//	//var mapCalcSettings = currentJob.MapCalcSettings;
-
-		//	// Calculate the new Map Coordinates from the newScreenArea, using the current Map's position and samplePointDelta.
-		//	var mapAreaInfo = BuildMapAreaInfo(currentJob, newScreenArea, canvasSize);
-
-		//	var colorBandSetId = currentJob.ColorBandSetId;
-		//	var mapCalcSettings = currentJob.MapCalcSettings;
-
-		//	//var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, newCoords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
-		//	var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
-
-
-		//	Debug.WriteLine($"Adding Poster Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
-
-		//	poster.Add(job);
-
-		//	OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
-		//}
 
 		private void AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor)
 		{
@@ -813,67 +719,6 @@ namespace MSetExplorer
 			poster.Add(job);
 
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
-		}
-
-		//private void LoadMap(Poster poster, Job currentJob, RRectangle coords, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newScreenArea)
-		//{
-		//	var mapSize = currentJob.CanvasSize;
-		//	var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapSize, coords, colorBandSetId, mapCalcSettings, transformType, newScreenArea, _blockSize);
-
-		//	Debug.WriteLine($"Adding Poster Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
-
-		//	poster.Add(job);
-
-		//	OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
-		//}
-
-		private MapAreaInfo2 BuildMapAreaInfo(Job curJob, RectangleInt screenArea, SizeDbl canvasSize)
-		{
-			//var mapPosition = curJob.Coords.Position;
-			//var samplePointDelta = curJob.Subdivision.SamplePointDelta;
-			//var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-
-			//// Use the specified canvasSize, instead of this job's current value for the CanvasSize :: Updated by DRM on 4/16
-			//var mapSize = canvasSize.Round();
-
-			//var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, mapSize);
-
-			var currentMapAreaInfo = curJob.MapAreaInfo;
-
-			var zoomPoint = screenArea.GetCenter();
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
-
-			return mapAreaInfo;
-		}
-
-		private MapAreaInfo2 BuildMapAreaInfo(MapAreaInfo2 currentMapAreaInfo, RectangleInt screenArea)
-		{
-			//var mapPosition = currentMapAreaInfo.Coords.Position;
-			//var samplePointDelta = currentMapAreaInfo.Subdivision.SamplePointDelta;
-			//var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-
-			//// Use the specified canvasSize, instead of this job's current value for the CanvasSize :: Updated by DRM on 4/16
-			//var mapSize = currentMapAreaInfo.CanvasSize;
-
-			var zoomPoint = screenArea.GetCenter();
-
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
-
-			return mapAreaInfo;
-		}
-
-
-		[Conditional("DEBUG")]
-		private void CheckCoordsChange(MapAreaInfo mapAreaInfo, RectangleDbl screenArea, RRectangle newCoords)
-		{
-			if (screenArea == new RectangleDbl(new RectangleInt(new PointInt(), mapAreaInfo.CanvasSize)))
-			{
-				if (Reducer.Reduce(newCoords) != Reducer.Reduce(mapAreaInfo.Coords))
-				{
-					Debug.WriteLine($"The new ScreenArea matches the existing ScreenArea, but the Coords were updated.");
-					//throw new InvalidOperationException("if the pos has not changed, the coords should not change.");
-				}
-			}
 		}
 
 		#endregion

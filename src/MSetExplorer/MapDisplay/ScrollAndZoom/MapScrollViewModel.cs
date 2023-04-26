@@ -81,6 +81,43 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 			}
 		}
 
+		/* DisplayZoom Property Definition from the old MapDisplayViewModel
+		  
+		public double DisplayZoom
+		{
+			get => _displayZoom;
+			set
+			{
+				if (Math.Abs(value - _displayZoom) > 0.01)
+				{
+					//ClearMapSectionsAndBitmap(mapLoaderJobNumber: null);
+
+					// TODX: Prevent the DisplayZoom from being set to a value that would require more than 100 x 100 blocks.
+					// 1 = LogicalDisplay Size = PosterSize
+					// 2 = LogicalDisplay Size Width is 1/2 PosterSize Width (Every screen pixels covers a 2x2 group of pixels from the final image, i.e., the poster.)
+					// 4 = 1/4 PosterSize
+					// Maximum is PosterSize / Actual CanvasSize 
+
+					//Debug.WriteLine($"The DrawingGroup has {_screenSectionCollection.CurrentDrawingGroupCnt} item.");
+
+					_displayZoom = value;
+
+					// TODX: scc -- Need to place the WriteableBitmap within a DrawingGroup.
+					//_scaleTransform.ScaleX = 1 / _displayZoom;
+					//_scaleTransform.ScaleY = 1 / _displayZoom;
+
+					//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
+					//LogicalDisplaySize = CanvasSize;
+
+
+					// TODO: DisplayZoom property is not being used on the MapSectionDisplayViewModel
+					//OnPropertyChanged();
+				}
+			}
+		}
+
+		*/
+
 		/// <summary>
 		/// Value between 0.0 and 1.0
 		/// 1.0 presents 1 map "pixel" to 1 screen pixel

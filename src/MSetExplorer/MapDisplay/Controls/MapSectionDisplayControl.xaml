@@ -9,10 +9,35 @@
              x:Name="Mdc">
     <Grid>
         <Border Grid.Row="0" Grid.Column="0" BorderThickness="1" BorderBrush="Black">
-            <local:BitmapGridControl x:Name="BitmapGridControl1" 
-                                     ViewPortSize="{Binding CanvasSize}" ImageOffset="{Binding ImageOffset}"
-                                     MapSections="{Binding MapSections}" ColorBandSet="{Binding ColorBandSet}"
-                                     UseEscapeVelocities="{Binding UseEscapeVelocities}" HighlightSelectedColorBand="{Binding HighlightSelectedColorBand}"/>
+            
+            <ScrollViewer
+                x:Name="ScrollViewer1"
+                CanContentScroll="True"
+                VerticalScrollBarVisibility="Hidden"
+                HorizontalScrollBarVisibility="Hidden"
+                >
+
+                <local:BitmapGridControl
+                    x:Name="BitmapGridControl1"
+                    ImageOffset="{Binding ImageOffset}"
+                    MapSections="{Binding MapSections}"
+                    ColorBandSet="{Binding ColorBandSet}"
+                    UseEscapeVelocities="{Binding UseEscapeVelocities}"
+                    HighlightSelectedColorBand="{Binding HighlightSelectedColorBand}"
+                    />
+
+                <!--<local:BitmapGridControl
+                    x:Name="BitmapGridControl1"
+                    ViewPortSize="{Binding ViewPortSize}"
+                    ImageOffset="{Binding ImageOffset}"
+                    MapSections="{Binding MapSections}"
+                    ColorBandSet="{Binding ColorBandSet}"
+                    UseEscapeVelocities="{Binding UseEscapeVelocities}"
+                    HighlightSelectedColorBand="{Binding HighlightSelectedColorBand}"
+                    />-->
+
+
+            </ScrollViewer>
         </Border>
     </Grid>
 </UserControl>

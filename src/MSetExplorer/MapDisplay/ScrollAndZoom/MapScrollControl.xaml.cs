@@ -51,9 +51,9 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
 			{
-				ConfigureScrollBars(_vm.MapDisplayViewModel.LogicalDisplaySize, _vm.PosterSize);
+				ConfigureScrollBars(_vm.MapDisplayViewModel.ViewPortSize, _vm.PosterSize);
 			}
 		}
 
@@ -61,7 +61,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 		{
 			if (e.PropertyName == nameof(IMapScrollViewModel.PosterSize))
 			{
-				ConfigureScrollBars(_vm.MapDisplayViewModel.LogicalDisplaySize, _vm.PosterSize);
+				ConfigureScrollBars(_vm.MapDisplayViewModel.ViewPortSize, _vm.PosterSize);
 			}
 
 			if (e.PropertyName == nameof(IMapScrollViewModel.VerticalPosition))

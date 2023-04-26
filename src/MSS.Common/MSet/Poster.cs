@@ -70,7 +70,7 @@ namespace MSS.Common.MSet
 			_dispPosition = displayPosition;
 			_displayZoom = displayZoom;
 
-			_jobTree = BuildJobTree(jobs, useFlat: false, checkHomeJob: true);
+			_jobTree = BuildJobTree(jobs, useFlat: false, checkHomeJob: false);
 
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			//_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
@@ -187,38 +187,38 @@ namespace MSS.Common.MSet
 
 		public ObjectId SourceJobId { get; init; }
 
-		public VectorInt DisplayPosition
-		{
-			get => _dispPosition;
-			set
-			{
-				if (value != _dispPosition)
-				{
-					_dispPosition = value;
-					//LastUpdatedUtc = DateTime.UtcNow;
-					OnPropertyChanged();
-				}
-			}
-		}
+		public VectorInt DisplayPosition { get; set; }
+		//{
+		//	get => _dispPosition;
+		//	set
+		//	{
+		//		if (value != _dispPosition)
+		//		{
+		//			_dispPosition = value;
+		//			//LastUpdatedUtc = DateTime.UtcNow;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		/// <summary>
 		/// Value between 1.0 and a maximum, where the maximum is posterSize / displaySize
 		/// 1.0 presents 1 map "pixel" to 1 screen pixel
 		/// 2.0 presents 2 map "pixels" to 1 screen pixel
 		/// </summary>
-		public double DisplayZoom
-		{
-			get => _displayZoom;
-			set
-			{
-				if (Math.Abs(value - _displayZoom) > 0.1)
-				{
-					_displayZoom = value;
-					//LastUpdatedUtc = DateTime.UtcNow;
-					OnPropertyChanged();
-				}
-			}
-		}
+		public double DisplayZoom { get; set; }
+		//{
+		//	get => _displayZoom;
+		//	set
+		//	{
+		//		if (Math.Abs(value - _displayZoom) > 0.1)
+		//		{
+		//			_displayZoom = value;
+		//			//LastUpdatedUtc = DateTime.UtcNow;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		public DateTime DateCreatedUtc { get; init; }
 

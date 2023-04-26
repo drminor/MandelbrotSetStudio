@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -26,7 +27,7 @@ namespace MSetExplorer
 		private SizeInt _canvasSizeInBlocks;
 
 		//private int _maxYPtr;
-		private BigVector _mapBlockOffset;
+		//private BigVector _mapBlockOffset;
 
 		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
@@ -63,7 +64,8 @@ namespace MSetExplorer
 			_pixelsToClear = new byte[0];
 			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
 
-			_mapBlockOffset = new BigVector();
+			//_mapBlockOffset = new BigVector();
+			MapBlockOffset = new BigVector();
 
 			_colorBandSet = new ColorBandSet();
 			_useEscapeVelocities = true;
@@ -186,17 +188,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public BigVector MapBlockOffset
-		{
-			get => _mapBlockOffset;
-			set
-			{
-				if (value != _mapBlockOffset)
-				{
-					_mapBlockOffset = value;
-				}
-			}
-		}
+		public BigVector MapBlockOffset { get; set; }
 
 		public SizeDbl ViewPortSize
 		{
@@ -214,6 +206,9 @@ namespace MSetExplorer
 				//MapExtentInBlocks = mapExtentInBlocks;
 			}
 		}
+
+
+		public VectorDbl ImageOffset { get; set; }
 
 		public SizeInt CanvasSizeInBlocks
 		{

@@ -63,9 +63,10 @@ namespace MSetExplorer
 			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
+			
 			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
 				_mapLoaderManager,
-				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
+				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel, CreateAPosterOpenSaveViewModel);
 
 			return result;
 		}
@@ -78,7 +79,7 @@ namespace MSetExplorer
 			// Map Display View Model
 			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapJobHelper, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
-			IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
+			//IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
 
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
@@ -90,7 +91,7 @@ namespace MSetExplorer
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapScrollViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
+			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel/* mapScrollViewModel*/, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
 				_mapJobHelper, _mapLoaderManager,
 				CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel);
 

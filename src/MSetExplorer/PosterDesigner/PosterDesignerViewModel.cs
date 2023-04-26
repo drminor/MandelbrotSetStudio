@@ -22,7 +22,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapScrollViewModel mapScrollViewModel, ColorBandSetViewModel colorBandViewModel,
+		public PosterDesignerViewModel(IPosterViewModel posterViewModel, /*IMapScrollViewModel mapScrollViewModel*/ IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator, 
 			CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator, CoordsEditorViewModelCreator coordsEditorViewModelCreator)
@@ -32,16 +32,19 @@ namespace MSetExplorer
 
 			PosterViewModel = posterViewModel;
 			JobTreeViewModel = jobTreeViewModel;
-			MapScrollViewModel = mapScrollViewModel;
+
+			//MapScrollViewModel = mapScrollViewModel;
+			MapDisplayViewModel = mapDisplayViewModel;
 
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
-			MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
-
+			
+			//MapScrollViewModel.PropertyChanged += MapScrollViewModel_PropertyChanged;
 			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
+			
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
+			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
-			MapDisplaySize = MapDisplayViewModel.CanvasSize;
+			MapDisplaySize = MapDisplayViewModel.ViewPortSize;
 
 			_posterOpenSaveViewModelCreator = posterOpenSaveViewModelCreator;
 			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
@@ -66,8 +69,13 @@ namespace MSetExplorer
 		public IPosterViewModel PosterViewModel { get; }
 		public IJobTreeViewModel JobTreeViewModel { get; }
 
-		public IMapScrollViewModel MapScrollViewModel { get; }
-		public IMapDisplayViewModel MapDisplayViewModel => MapScrollViewModel.MapDisplayViewModel;
+		//public IMapScrollViewModel MapScrollViewModel { get; }
+		//public IMapDisplayViewModel MapDisplayViewModel => MapScrollViewModel.MapDisplayViewModel;
+
+		public IMapDisplayViewModel MapDisplayViewModel { get; }
+
+		//public IMapDisplayViewModel MapScrollViewModel { get; }
+
 
 		public MapCoordsViewModel MapCoordsViewModel { get; }
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
@@ -143,37 +151,37 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentJob))
 			{
-				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
+				//MapDisplayViewModel.PosterSize = PosterViewModel.PosterSize;
 			}
 
-			else if (e.PropertyName == nameof(IPosterViewModel.LogicalDisplaySize))
-			{
-				MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
-				MapScrollViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
-				MapScrollViewModel.HorizontalPosition = PosterViewModel.DisplayPosition.X;
-				MapScrollViewModel.InvertedVerticalPosition = PosterViewModel.DisplayPosition.Y;
-			}
+			//else if (e.PropertyName == nameof(IPosterViewModel.LogicalDisplaySize))
+			//{
+			//	MapDisplayViewModel.PosterSize = PosterViewModel.PosterSize;
+			//	MapDisplayViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
+			//	MapDisplayViewModel.HorizontalPosition = PosterViewModel.DisplayPosition.X;
+			//	MapDisplayViewModel.InvertedVerticalPosition = PosterViewModel.DisplayPosition.Y;
+			//}
 
-			// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
-			else if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
-			{
-				var curPoster = PosterViewModel.CurrentPoster;
+			//// Update the MapCalcSettings, MapCoords and Map Display with the new Poster
+			//else if (e.PropertyName == nameof(IPosterViewModel.CurrentPoster))
+			//{
+			//	var curPoster = PosterViewModel.CurrentPoster;
 
-				if (curPoster != null)
-				{
-					MapScrollViewModel.PosterSize = PosterViewModel.PosterSize;
-					MapScrollViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
-					MapScrollViewModel.HorizontalPosition = PosterViewModel.DisplayPosition.X;
-					MapScrollViewModel.InvertedVerticalPosition = PosterViewModel.DisplayPosition.Y;
-				}
-				else
-				{
-					//MapScrollViewModel.PosterSize = null;
+			//	if (curPoster != null)
+			//	{
+			//		MapDisplayViewModel.PosterSize = PosterViewModel.PosterSize;
+			//		MapDisplayViewModel.DisplayZoom = PosterViewModel.DisplayZoom;
+			//		MapDisplayViewModel.HorizontalPosition = PosterViewModel.DisplayPosition.X;
+			//		MapDisplayViewModel.InvertedVerticalPosition = PosterViewModel.DisplayPosition.Y;
+			//	}
+			//	else
+			//	{
+			//		//MapDisplayViewModel.PosterSize = null;
 
-					// Let the MapDisplay know to stop any current MapLoader job.
-					MapDisplayViewModel.CancelJob();
-				}
-			}
+			//		// Let the MapDisplay know to stop any current MapLoader job.
+			//		MapDisplayViewModel.CancelJob();
+			//	}
+			//}
 
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Job Area and Calc Settings
 			else if (e.PropertyName == nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings))
@@ -182,18 +190,21 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
-				//MapCoordsViewModel.JobId = PosterViewModel.CurrentPoster?.CurrentJob.Id.ToString();
-				//MapCoordsViewModel.CurrentMapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
+				// UPDATE THE MapDisplayView model for a new Poster or Poster Job.
 
-				//MapDisplayViewModel.SetColorBandSet(PosterViewModel.ColorBandSet, updateDisplay: false);
+				var currentPoster = PosterViewModel.CurrentPoster;
 
-				MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
-
-				var currentjob = PosterViewModel.CurrentPoster?.CurrentJob;
-				if (currentjob != null)
+				if (currentPoster != null)
 				{
-					UpdateTheMapCoordsView(currentjob);
+					var currentjob = currentPoster.CurrentJob;
+					if (currentjob != null)
+					{
+						UpdateTheMapCoordsView(currentjob);
+						var posterSize = currentPoster.PosterSize;
+						MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize);
+					}
 				}
+
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
@@ -240,40 +251,62 @@ namespace MSetExplorer
 		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			// Let the Map Project know about Map Display size changes
-			if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
 			{
-				MapDisplaySize = MapDisplayViewModel.CanvasSize;
-				PosterViewModel.CanvasSize = MapDisplayViewModel.CanvasSize;
+				MapDisplaySize = MapDisplayViewModel.ViewPortSize;
+				//PosterViewModel.CanvasSize = MapDisplayViewModel.ViewPortSize;
 			}
 
-			else if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
+			//else if (e.PropertyName == nameof(IMapDisplayViewModel.LogicalDisplaySize))
+			//{
+			//	PosterViewModel.DisplayZoom = MapDisplayViewModel.DisplayZoom;
+			//	PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;
+			//}
+
+			if (e.PropertyName == nameof(IMapDisplayViewModel.HorizontalPosition))
 			{
-				PosterViewModel.DisplayZoom = MapDisplayViewModel.DisplayZoom;
-				PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;
+				PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapDisplayViewModel.HorizontalPosition), PosterViewModel.DisplayPosition.Y);
 			}
+
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.InvertedVerticalPosition))
+			{
+				PosterViewModel.DisplayPosition = new VectorInt(PosterViewModel.DisplayPosition.X, (int)Math.Round(MapDisplayViewModel.InvertedVerticalPosition));
+			}
+
+			//else if (e.PropertyName == nameof(IMapScrollViewModel.DisplayZoom))
+			//{
+			//	PosterViewModel.DisplayZoom = MapDisplayViewModel.DisplayZoom;
+			//}
+
 		}
 
-		private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition))
-			{
-				PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), PosterViewModel.DisplayPosition.Y);
-			}
+		//private void MapScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		//{
+		//	if (e.PropertyName == nameof(IMapScrollViewModel.HorizontalPosition))
+		//	{
+		//		PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapDisplayViewModel.HorizontalPosition), PosterViewModel.DisplayPosition.Y);
+		//	}
 
-			else if (e.PropertyName == nameof(IMapScrollViewModel.InvertedVerticalPosition))
-			{
-				PosterViewModel.DisplayPosition = new VectorInt(PosterViewModel.DisplayPosition.X, (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
-			}
+		//	else if (e.PropertyName == nameof(IMapScrollViewModel.InvertedVerticalPosition))
+		//	{
+		//		PosterViewModel.DisplayPosition = new VectorInt(PosterViewModel.DisplayPosition.X, (int)Math.Round(MapDisplayViewModel.InvertedVerticalPosition));
+		//	}
 
-			else if (e.PropertyName == nameof(IMapScrollViewModel.DisplayZoom))
-			{
-				PosterViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
-			}
-		}
+		//	else if (e.PropertyName == nameof(IMapScrollViewModel.DisplayZoom))
+		//	{
+		//		PosterViewModel.DisplayZoom = MapDisplayViewModel.DisplayZoom;
+		//	}
+		//}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
 			// TODO: Verify that the Poster Designer will not be handling MapView Updates
+		}
+
+		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
+		{
+			ColorBandSetViewModel.RefreshPercentages();
+			ColorBandSetHistogramViewModel.RefreshHistogramDisplay();
 		}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)

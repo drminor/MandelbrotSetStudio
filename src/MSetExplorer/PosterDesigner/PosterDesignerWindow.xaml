@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         xmlns:scroll="clr-namespace:MSetExplorer.MapDisplay.ScrollAndZoom"
+        d:DataContext="{d:DesignInstance Type=local:PosterDesignerViewModel}"        
         mc:Ignorable="d"
         Title="Designer Window" Width="993" Height="608">
 
@@ -123,7 +124,10 @@
 
         <!-- Scrollable Map Display -->
         <Grid Grid.Row="1" Grid.Column="1" x:Name="colCenter">
-            <scroll:MapScrollControl x:Name="mapScroll1" Margin="5"></scroll:MapScrollControl>
+            <!--<scroll:MapScrollControl x:Name="mapScroll1" Margin="5"></scroll:MapScrollControl>-->
+
+            <local:MapSectionDisplayControl x:Name="mapDisplay1"></local:MapSectionDisplayControl>
+
         </Grid>
 
         <!-- Coords, Calc and Colors -->

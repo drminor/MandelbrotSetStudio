@@ -13,10 +13,9 @@ namespace MSetExplorer
 
 		event PropertyChangedEventHandler? PropertyChanged;
 
-		SizeInt CanvasSize { get; set; }
+		//SizeInt CanvasSize { get; set; }
 
 		Project? CurrentProject { get; }
-
 		string? CurrentProjectName { get; }
 		bool CurrentProjectOnFile { get; }
 		bool CurrentProjectIsDirty { get; }

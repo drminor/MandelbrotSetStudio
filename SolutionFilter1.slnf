@@ -1,0 +1,25 @@
+{
+  "solution": {
+    "path": "MandelbrotSetStudio.sln",
+    "projects": [
+      "cpp_src\\HpMSetGenerator\\HpMSetGenerator.vcxproj",
+      "src\\ImageBuilder\\ImageBuilder.csproj",
+      "src\\MEngineClient\\MEngineClient.csproj",
+      "src\\MEngineDataContracts\\MEngineDataContracts.csproj",
+      "src\\MSS.Common\\MSS.Common.csproj",
+      "src\\MSS.Types\\MSS.Types.csproj",
+      "src\\MSetExplorer\\MSetExplorer.csproj",
+      "src\\MSetGeneratorPrototypeTest\\MSetGeneratorPrototypeTest.csproj",
+      "src\\MSetGeneratorPrototype\\MSetGeneratorPrototype.csproj",
+      "src\\MSetRepo\\MSetRepo.csproj",
+      "src\\MSetRowGeneratorClientTest\\MSetRowGeneratorClientTest.csproj",
+      "src\\MSetRowGeneratorClient\\MSetRowGeneratorClient.csproj",
+      "src\\MapSectionProviderLib\\MapSectionProviderLib.csproj",
+      "src\\PngImageLib\\PngImageLib.csproj",
+      "src\\ProjectRepo\\ProjectRepo.csproj",
+      "src\\VecMathTest\\VecMathTest.csproj",
+      "src\\WpfDisplayPOC\\WpfDisplayPOC.csproj",
+      "src\\WpfMapDisplayPOC\\WpfMapDisplayPOC.csproj"
+    ]
+  }
+}

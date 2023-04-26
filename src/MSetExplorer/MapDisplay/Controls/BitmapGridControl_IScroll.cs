@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,7 +21,7 @@ namespace MSetExplorer
 		#region Scroll Info Properties
 
 		private Point _offset = new Point();
-		private Size _unscaledExtent = new Size();
+		private SizeInt _unscaledExtent = new SizeInt();
 
 		private bool _canHScroll = false;
 		private bool _canVScroll = false;
@@ -34,6 +35,18 @@ namespace MSetExplorer
 		}
 
 		#region Public Properties
+
+		public SizeInt PosterSize
+		{
+			get => _unscaledExtent;
+			set
+			{
+				_unscaledExtent = value;
+				SetHorizontalOffset(0);
+				SetVerticalOffset(0);
+				InvalidateScrollInfo();
+			}
+		}
 
 		public ScrollViewer ScrollOwner
 		{
@@ -56,11 +69,26 @@ namespace MSetExplorer
 		public double HorizontalOffset => _offset.X;
 		public double VerticalOffset => _offset.Y;
 
-		public double ExtentWidth => _unscaledExtent.Width;
-		public double ExtentHeight => _unscaledExtent.Height;
+		public double ExtentWidth => Math.Max(_unscaledExtent.Width, _containerSize.Width);
+		public double ExtentHeight => Math.Max(_unscaledExtent.Height, _containerSize.Height);
 
-		public double ViewportWidth => ViewPortSize.Width;
-		public double ViewportHeight => ViewPortSize.Height;
+		public double ViewportWidth
+		{
+			get
+			{	
+				Debug.WriteLine($"Vpw: {ViewPortSize.Width}.");
+				return ViewPortSize.Width;
+			}
+		}
+
+		public double ViewportHeight
+		{
+			get
+			{
+				Debug.WriteLine($"Vph: {ViewPortSize.Height}.");
+				return ViewPortSize.Height;
+			}
+		}
 
 		#endregion
 
@@ -171,15 +199,15 @@ namespace MSetExplorer
 
 		public void SetVerticalOffset(double offset)
 		{
-			if (offset < 0 || ViewPortSize.Height >= _unscaledExtent.Height)
+			if (offset < 0 || ViewPortSize.Height >= _containerSize.Height)
 			{
 				offset = 0;
 			}
 			else
 			{
-				if (offset + ViewPortSize.Height >= _unscaledExtent.Height)
+				if (offset + ViewPortSize.Height >= _containerSize.Height)
 				{
-					offset = _unscaledExtent.Height - ViewPortSize.Height;
+					offset = _containerSize.Height - ViewPortSize.Height;
 				}
 			}
 
@@ -193,7 +221,7 @@ namespace MSetExplorer
 
 		public void SetVerticalOffset2(double offset)
 		{
-			_offset.Y = Math.Max(0, Math.Min(_unscaledExtent.Height - ViewPortSize.Height, Math.Max(0, offset)));
+			_offset.Y = Math.Max(0, Math.Min(_containerSize.Height - ViewPortSize.Height, Math.Max(0, offset)));
 
 			InvalidateScrollInfo();
 
@@ -202,5 +230,88 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		/* Sample MeasureOverrride and ArrangeOverride implementations.
+
+		/// <summary>
+		/// Measure the control and it's children.
+		/// </summary>
+		protected override Size MeasureOverride(Size constraint)
+		{
+			Size infiniteSize = new Size(double.PositiveInfinity, double.PositiveInfinity);
+			Size childSize = base.MeasureOverride(infiniteSize);
+
+			if (childSize != unScaledExtent)
+			{
+				//
+				// Use the size of the child as the un-scaled extent content.
+				//
+				unScaledExtent = childSize;
+
+				if (scrollOwner != null)
+				{
+					scrollOwner.InvalidateScrollInfo();
+				}
+			}
+
+			//
+			// Update the size of the viewport onto the content based on the passed in 'constraint'.
+			//
+			UpdateViewportSize(constraint);
+
+			double width = constraint.Width;
+			double height = constraint.Height;
+
+			if (double.IsInfinity(width))
+			{
+				//
+				// Make sure we don't return infinity!
+				//
+				width = childSize.Width;
+			}
+
+			if (double.IsInfinity(height))
+			{
+				//
+				// Make sure we don't return infinity!
+				//
+				height = childSize.Height;
+			}
+
+			UpdateTranslationX();
+			UpdateTranslationY();
+
+			return new Size(width, height);
+		}
+
+		/// <summary>
+		/// Arrange the control and it's children.
+		/// </summary>
+		protected override Size ArrangeOverride(Size arrangeBounds)
+		{
+			Size size = base.ArrangeOverride(this.DesiredSize);
+
+			if (content.DesiredSize != unScaledExtent)
+			{
+				//
+				// Use the size of the child as the un-scaled extent content.
+				//
+				unScaledExtent = content.DesiredSize;
+
+				if (scrollOwner != null)
+				{
+					scrollOwner.InvalidateScrollInfo();
+				}
+			}
+
+			//
+			// Update the size of the viewport onto the content based on the passed in 'arrangeBounds'.
+			//
+			UpdateViewportSize(arrangeBounds);
+
+			return size;
+		}
+
+		*/
 	}
 }

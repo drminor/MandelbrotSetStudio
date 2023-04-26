@@ -6,12 +6,12 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	internal interface IPosterDesignerViewModel : INotifyPropertyChanged
+	public interface IPosterDesignerViewModel : INotifyPropertyChanged
 	{
 		SizeDbl MapDisplaySize { get; }
 		IPosterViewModel PosterViewModel { get; }
 
-		IMapScrollViewModel MapScrollViewModel { get; }
+		//IMapScrollViewModel MapScrollViewModel { get; }
 		IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		MapCoordsViewModel MapCoordsViewModel { get; }
