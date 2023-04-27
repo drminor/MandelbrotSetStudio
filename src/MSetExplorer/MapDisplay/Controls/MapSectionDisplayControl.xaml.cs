@@ -51,7 +51,7 @@ namespace MSetExplorer
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 
 				_vm = (IMapDisplayViewModel)DataContext;
-				BitmapGridControl1.DisposeMapSection = _vm.DisposeMapSection;
+				//BitmapGridControl1.DisposeMapSection = _vm.DisposeMapSection;
 				_vm.BitmapGrid = BitmapGridControl1.BitmapGrid;
 				_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
 

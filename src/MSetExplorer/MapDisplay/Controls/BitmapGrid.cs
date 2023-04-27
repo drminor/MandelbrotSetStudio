@@ -19,7 +19,6 @@ namespace MSetExplorer
 
 		private readonly bool DEBUG = true;
 
-		private SizeInt _blockSize;
 		private Int32Rect _blockRect { get; init; }
 
 		private SizeDbl _viewPortSize;
@@ -34,7 +33,6 @@ namespace MSetExplorer
 		private bool _useEscapeVelocities;
 		private bool _highlightSelectedColorBand;
 
-		private readonly Action<MapSection> _disposeMapSection;
 
 		private Image _image;
 		private WriteableBitmap _bitmap;
@@ -44,15 +42,15 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public BitmapGrid(Image image, SizeDbl viewPortSize, SizeInt blockSize, Action<MapSection> disposeMapSection)
+		public BitmapGrid(Image image, SizeDbl viewPortSize)
 		{
 			_image = image;
-			_blockSize = blockSize;
-			_disposeMapSection = disposeMapSection;
+			BlockSize = RMapConstants.BLOCK_SIZE;
+			DisposeMapSection = null;
 
 			_viewPortSize = viewPortSize;
 
-			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_viewPortSize, _blockSize, keepSquare: false);
+			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_viewPortSize, BlockSize, keepSquare: false);
 			_canvasSizeInBlocks = sizeInWholeBlocks;
 
 			ImageSizeInBlocks = _canvasSizeInBlocks.Inflate(2);
@@ -62,7 +60,7 @@ namespace MSetExplorer
 
 
 			_pixelsToClear = new byte[0];
-			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
+			_blockRect = new Int32Rect(0, 0, BlockSize.Width, BlockSize.Height);
 
 			//_mapBlockOffset = new BigVector();
 			MapBlockOffset = new BigVector();
@@ -197,7 +195,7 @@ namespace MSetExplorer
 			{
 				_viewPortSize = value;
 
-				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, keepSquare: false);
+				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, BlockSize, keepSquare: false);
 				CanvasSizeInBlocks = sizeInWholeBlocks;
 
 				//var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(value.Round(), ImageOffset.Round(), _blockSize);
@@ -206,7 +204,6 @@ namespace MSetExplorer
 				//MapExtentInBlocks = mapExtentInBlocks;
 			}
 		}
-
 
 		public VectorDbl ImageOffset { get; set; }
 
@@ -243,6 +240,10 @@ namespace MSetExplorer
 
 		private SizeInt ImageSizeInBlocks { get; set; }
 
+		public SizeInt BlockSize { get; set; }
+
+		public Action<MapSection>? DisposeMapSection { get; set; }
+
 		public long NumberOfCountValSwitches { get; private set; }
 
 		#endregion
@@ -256,9 +257,12 @@ namespace MSetExplorer
 				ClearBitmap(_bitmap);
 			}
 
-			foreach (var ms in MapSections)
+			if (DisposeMapSection != null)
 			{
-				_disposeMapSection(ms);
+				foreach (var ms in MapSections)
+				{
+					DisposeMapSection(ms);
+				}
 			}
 
 			MapSections.Clear();
@@ -280,7 +284,7 @@ namespace MSetExplorer
 						if (_colorMap != null)
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-							var loc = invertedBlockPos.Scale(_blockSize);
+							var loc = invertedBlockPos.Scale(BlockSize);
 
 							LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
 
@@ -296,7 +300,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						_disposeMapSection(mapSection);
+						if (DisposeMapSection != null) DisposeMapSection(mapSection);
 					}
 
 					if (mapSection.IsLastSection)
@@ -329,7 +333,7 @@ namespace MSetExplorer
 						if (_colorMap != null)
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-							var loc = invertedBlockPos.Scale(_blockSize);
+							var loc = invertedBlockPos.Scale(BlockSize);
 
 							LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
 
@@ -345,8 +349,11 @@ namespace MSetExplorer
 					}
 					else
 					{
-						sectionsDisposed.Add(mapSection);
-						_disposeMapSection(mapSection);
+						if (DisposeMapSection != null)
+						{
+							DisposeMapSection(mapSection);
+							sectionsDisposed.Add(mapSection);
+						}
 					}
 				}
 			}
@@ -375,7 +382,7 @@ namespace MSetExplorer
 				if (_colorMap != null)
 				{
 					var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-					var loc = invertedBlockPos.Scale(_blockSize);
+					var loc = invertedBlockPos.Scale(BlockSize);
 
 					LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
 
@@ -391,8 +398,16 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_disposeMapSection(mapSection);
-				Debug.WriteLineIf(DEBUG, $"Not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
+				if (DisposeMapSection != null)
+				{
+					Debug.WriteLineIf(DEBUG, $"Not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
+					DisposeMapSection(mapSection);
+				}
+				else
+				{
+					Debug.WriteLineIf(DEBUG, $"Not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map. The value of the DisposeMapSection (Action<MapSection>) is null.");
+
+				}
 			}
 		}
 
@@ -491,7 +506,7 @@ namespace MSetExplorer
 
 		private bool RefreshBitmap()
 		{
-			var imageSize = ImageSizeInBlocks.Scale(_blockSize);
+			var imageSize = ImageSizeInBlocks.Scale(BlockSize);
 
 			if (_bitmap.Width != imageSize.Width || _bitmap.Height != imageSize.Height)
 			{
@@ -511,7 +526,7 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void CheckBitmapSize(WriteableBitmap bitmap, SizeInt imageSizeInBlocks, string desc)
 		{
-			var imageSize = ImageSizeInBlocks.Scale(_blockSize);
+			var imageSize = ImageSizeInBlocks.Scale(BlockSize);
 			var bitmapSize = new SizeInt(bitmap.PixelWidth, bitmap.PixelHeight);
 				
 			if (bitmapSize != imageSize)
@@ -525,13 +540,13 @@ namespace MSetExplorer
 			Debug.WriteLineIf(DEBUG, $"BitmapGrid ClearBitmap is being called. BitmapSize {ImageSizeInBlocks}.");
 
 			// Clear the bitmap, one row of bitmap blocks at a time.
-			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, _blockSize.Height);
-			var blockRowPixelCount = bitmap.PixelWidth * _blockSize.Height;
+			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, BlockSize.Height);
+			var blockRowPixelCount = bitmap.PixelWidth * BlockSize.Height;
 			var zeros = GetClearBytes(blockRowPixelCount * 4);
 
 			for (var vPtr = 0; vPtr < ImageSizeInBlocks.Height; vPtr++)
 			{
-				var offset = vPtr * _blockSize.Height;
+				var offset = vPtr * BlockSize.Height;
 				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
 			}
 		}

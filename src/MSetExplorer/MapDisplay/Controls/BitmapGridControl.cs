@@ -16,7 +16,6 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
-		private readonly SizeInt _blockSize;
 		private ScrollViewer? _scrollOwner;
 
 		private FrameworkElement? _content;
@@ -40,7 +39,6 @@ namespace MSetExplorer
 				Priority = DispatcherPriority.Render
 			};
 
-			_blockSize = RMapConstants.BLOCK_SIZE;
 			_scrollOwner = null;
 
 			_content = null;
@@ -50,7 +48,7 @@ namespace MSetExplorer
 
 			var ourSize = new SizeDbl(ActualWidth, ActualHeight);
 
-			_bitmapGrid = new BitmapGrid(_image, ourSize, _blockSize, OurDisposeMapSectionImplementation);
+			_bitmapGrid = new BitmapGrid(_image, ourSize);
 
 			_containerSize = new SizeDbl();
 			_viewPortSizeInternal = new SizeDbl();
@@ -361,11 +359,6 @@ namespace MSetExplorer
 			{
 				_scrollOwner.InvalidateScrollInfo();
 			}
-		}
-
-		private void OurDisposeMapSectionImplementation(MapSection mapSection)
-		{
-			DisposeMapSection?.Invoke(mapSection);
 		}
 
 		#endregion

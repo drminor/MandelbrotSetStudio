@@ -75,21 +75,8 @@ namespace MSetExplorer
 			}
 			else
 			{
-				//_vm = (IPosterDesignerViewModel)DataContext;
-
-				//jobTree1.DataContext = _vm.JobTreeViewModel;
-				//mapDisplay1.DataContext = _vm.MapDisplayViewModel;
-				//mapDisplayZoom1.DataContext = _vm.MapDisplayViewModel;
-
-				//colorBandView1.DataContext = _vm.ColorBandSetViewModel;
-				//mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
-				//mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
-
-				//_vm.PropertyChanged += ViewModel_PropertyChanged;
 				_vm.PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
-
-				//_vm.PosterViewModel.LogicalDisplaySize = _vm.MapDisplayViewModel.LogicalDisplaySize;
 
 				//_vm.MapScrollViewModel.CanvasSize = _vm.MapDisplayViewModel.CanvasSize;
 
@@ -100,9 +87,6 @@ namespace MSetExplorer
 		private void PosterDesignerWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			Debug.WriteLine("The PosterDesigner Window is handling ContentRendered");
-
-			//_vm.MapDisplayViewModel.ContainerSize = new SizeDbl(300);
-			//_vm.MapDisplayViewModel.ContainerSize = new SizeDbl(600);
 
 			if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.OpenPoster)
 			{
@@ -134,20 +118,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
-
-		//private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		//{
-		//	if (e.PropertyName == nameof(IPosterDesignerViewModel.MapDisplaySize))
-		//	{
-		//		Debug.WriteLine($"Handling a size change. Current = {new SizeDbl(Width, Height)}, New = {_vm.MapDisplaySize}.");
-
-		//		//_vm.MapDisplayViewModel.HandleContainerSizeUpdates = false;
-		//		//Width = _vm.MapDisplaySize.Width + 481;
-
-		//		//_vm.MapDisplayViewModel.HandleContainerSizeUpdates = true;
-		//		//Height = _vm.MapDisplaySize.Height + 96;
-		//	}
-		//}
 
 		private void PosterViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{

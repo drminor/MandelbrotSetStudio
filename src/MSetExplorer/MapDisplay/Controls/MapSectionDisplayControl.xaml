@@ -20,7 +20,6 @@
                 <local:BitmapGridControl
                     x:Name="BitmapGridControl1"
                     ImageOffset="{Binding ImageOffset}"
-                    MapSections="{Binding MapSections}"
                     ColorBandSet="{Binding ColorBandSet}"
                     UseEscapeVelocities="{Binding UseEscapeVelocities}"
                     HighlightSelectedColorBand="{Binding HighlightSelectedColorBand}"

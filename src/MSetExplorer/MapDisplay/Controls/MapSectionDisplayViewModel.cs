@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.RightsManagement;
 
 namespace MSetExplorer
 {
@@ -32,6 +31,8 @@ namespace MSetExplorer
 		private MapAreaInfo? _latestMapAreaInfo;
 
 		private object _paintLocker;
+
+		private IBitmapGrid? _bitmapGrid;
 
 		private SizeDbl _viewPortSize;
 		private VectorDbl _imageOffset;
@@ -186,7 +187,23 @@ namespace MSetExplorer
 
 		public Action<MapSection> DisposeMapSection => DisposeMapSectionInternal;
 
-		public IBitmapGrid? BitmapGrid { get; set; }
+		public IBitmapGrid? BitmapGrid
+		{
+			get => _bitmapGrid;
+			set
+			{
+				_bitmapGrid = value;
+				if (_bitmapGrid != null)
+				{
+					_bitmapGrid.MapSections = MapSections;
+					_bitmapGrid.BlockSize = BlockSize;
+					_bitmapGrid.DisposeMapSection = DisposeMapSectionInternal;
+
+
+					//_bitmapGrid
+				}
+			}
+		}
 
 		public SizeDbl ViewPortSize
 		{
@@ -416,6 +433,8 @@ namespace MSetExplorer
 
 		private int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt? posterSize)
 		{
+			CheckBlockSize(newValue);
+
 			lock (_paintLocker)
 			{
 				CheckVPSize();
@@ -468,6 +487,14 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine("WARNING: ViewPortSize is zero, using the value from the BitmapGrid.");
 				ViewPortSize = BitmapGrid?.ViewPortSize ?? throw new InvalidOperationException("ViewPortSize is 0 and the BitmapGrid is null.");
+			}
+		}
+
+		private void CheckBlockSize(AreaColorAndCalcSettings newValue)
+		{
+			if (_bitmapGrid != null && _bitmapGrid.BlockSize != newValue.MapAreaInfo.Subdivision.BlockSize)
+			{
+				throw new ArgumentException("BlockSize mismatch", nameof(AreaColorAndCalcSettings.MapAreaInfo.Subdivision));
 			}
 		}
 
@@ -616,9 +643,21 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
-				if (CurrentAreaColorAndCalcSettings != null)
+				if (_boundedMapArea != null)
 				{
-					newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
+					var displayPosition = new VectorDbl(_horizontalPosition, _invertedVerticalPosition);
+
+					_boundedMapArea.ViewPortSize = ViewPortSize;
+					var mapAreaInfo2Subset = _boundedMapArea.GetView(displayPosition);
+
+					newJobNumber = HandleDisplayPositionChange(_boundedMapArea.AreaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
+				}
+				else
+				{
+					if (CurrentAreaColorAndCalcSettings != null)
+					{
+						newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
+					}
 				}
 			}
 

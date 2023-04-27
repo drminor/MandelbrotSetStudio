@@ -41,21 +41,10 @@ namespace MSetExplorer.MapDisplay.Controls
 
 		public MapAreaInfo2 MapAreaInfo => AreaColorAndCalcSettings.MapAreaInfo;
 
-		public SizeDbl ViewPortSize { get; init; }
 		public SizeInt PosterSize { get; init; }
+		public SizeDbl ViewPortSize { get; set; }
 
 		public VectorDbl DisplayPosition { get; private set; }
-		//{
-		//	get => _displayPosition;
-			
-		//	private set
-		//	{
-		//		if (ScreenTypeHelper.IsVectorDblChanged(value, _displayPosition))
-		//		{
-		//			_displayPosition = value;
-		//		}
-		//	}
-		//}
 
 		#endregion
 
