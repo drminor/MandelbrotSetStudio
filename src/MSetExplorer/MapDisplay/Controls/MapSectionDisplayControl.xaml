@@ -13,8 +13,8 @@
             <ScrollViewer
                 x:Name="ScrollViewer1"
                 CanContentScroll="True"
-                VerticalScrollBarVisibility="Hidden"
-                HorizontalScrollBarVisibility="Hidden"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Auto"
                 >
 
                 <local:BitmapGridControl

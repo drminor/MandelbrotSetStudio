@@ -972,7 +972,7 @@ namespace MSetExplorer
 
 		private bool ProjectShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
 		{
-			var projectOpenSaveVm = _vm.CreateAProjectOpenSaveViewModel(initalName, dialogType);
+			var projectOpenSaveVm = _vm.ViewModelFactory.CreateAProjectOpenSaveViewModel(initalName, dialogType);
 			var projectOpenSaveWindow = new ProjectOpenSaveWindow
 			{
 				DataContext = projectOpenSaveVm
@@ -1017,7 +1017,7 @@ namespace MSetExplorer
 
 				var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
 
-				coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.MapAreaInfo, displaySize.Round(), allowEdits: true);
+				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(curJob.MapAreaInfo, displaySize.Round(), allowEdits: true);
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
@@ -1136,7 +1136,7 @@ namespace MSetExplorer
 
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, bool useEscapeVelocities, out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm
@@ -1189,7 +1189,7 @@ namespace MSetExplorer
 
 		private bool ColorsShowOpenWindow(string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.CreateACbsOpenViewModel(initalName, DialogType.Open);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(initalName, DialogType.Open);
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm
@@ -1238,7 +1238,7 @@ namespace MSetExplorer
 
 		private bool ColorsShowSaveWindow(ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.CreateACbsOpenViewModel(colorBandSet.Name, DialogType.Save);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(colorBandSet.Name, DialogType.Save);
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm

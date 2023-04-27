@@ -1,9 +1,6 @@
-﻿using MSS.Common;
-using MSS.Types;
-using MSS.Types.MSet;
+﻿using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -59,6 +56,8 @@ namespace MSetExplorer
 				_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
 
 				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
+				BitmapGridControl1.ContentOffsetXChanged += BitmapGridControl1_ContentOffsetXChanged;
+				BitmapGridControl1.ContentOffsetYChanged += BitmapGridControl1_ContentOffsetYChanged;
 
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
@@ -77,6 +76,8 @@ namespace MSetExplorer
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
+			BitmapGridControl1.ContentOffsetXChanged -= BitmapGridControl1_ContentOffsetXChanged;
+			BitmapGridControl1.ContentOffsetYChanged -= BitmapGridControl1_ContentOffsetYChanged;
 
 			_vm.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
 
@@ -141,27 +142,36 @@ namespace MSetExplorer
 			}
 		}
 
+		private void BitmapGridControl1_ContentOffsetYChanged(object? sender, EventArgs e)
+		{
+			_vm.VerticalPosition = BitmapGridControl1.ContentOffsetY;
+		}
+
+		private void BitmapGridControl1_ContentOffsetXChanged(object? sender, EventArgs e)
+		{
+			_vm.HorizontalPosition = BitmapGridControl1.ContentOffsetX;
+		}
+
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			//if (e.PropertyName == nameof(IMapDisplayViewModel.PosterSize))
-			//{
-			//	BitmapGridControl1.PosterSize = _vm.PosterSize ?? new SizeInt();
-			//}
+			if (e.PropertyName == nameof(IMapDisplayViewModel.PosterSize))
+			{
+				var posterSize = _vm.PosterSize ?? new SizeInt();
 
+				//if (posterSize.Width == 0 || posterSize.Height == 0)
+				//{
+				//	ScrollViewer1.HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
+				//	ScrollViewer1.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+				//}
+
+				BitmapGridControl1.PosterSize = posterSize;
+			}
 
 			// TODO: Only for diagnostics
 			if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
 			{
 				_selectionRectangle.MapAreaInfo = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
 			}
-
-			//if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
-			//{
-			//	if (_selectionRectangle != null)
-			//	{
-			//		_selectionRectangle.DisplaySize = _vm.ViewPortSize;
-			//	}
-			//}
 		}
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)

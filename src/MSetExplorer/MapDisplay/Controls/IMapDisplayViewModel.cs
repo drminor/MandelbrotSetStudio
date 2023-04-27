@@ -52,7 +52,7 @@ namespace MSetExplorer
 
 		//SizeDbl LogicalDisplaySize { get; }
 		double DisplayZoom { get; set; }
-		//double MaximumDisplayZoom { get; }
+		double MaximumDisplayZoom { get; }
 
 		double HorizontalPosition { get; set; }
 

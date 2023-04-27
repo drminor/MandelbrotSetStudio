@@ -63,14 +63,14 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapScrollViewModel.MaximumDisplayZoom))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.MaximumDisplayZoom))
 			{
 				scrBarZoom.Minimum = 1;
 				scrBarZoom.Maximum = 100; // _vm.MaximumDisplayZoom;
 				scrBarZoom.LargeChange = scrBarZoom.Maximum / 8;
 				scrBarZoom.SmallChange = scrBarZoom.LargeChange / 8;
 			}
-			else if (e.PropertyName == nameof(IMapScrollViewModel.DisplayZoom))
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
 			{
 				txtblkZoomValue.Text = Math.Round(_vm.DisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
 			}

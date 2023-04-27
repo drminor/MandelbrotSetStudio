@@ -26,6 +26,9 @@ namespace MSS.Types
 			Height = height;
 		}
 
+		public SizeInt(SizeDbl sizeDbl) : this(sizeDbl.Width, sizeDbl.Height)
+		{ }
+
 		public SizeInt(double width, double height)
 		{
 			Width = (int) Math.Round(width, MidpointRounding.ToEven);

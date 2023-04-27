@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.RightsManagement;
 
 namespace MSetExplorer
 {
@@ -258,8 +259,7 @@ namespace MSetExplorer
 					_posterSize = value;
 					//InvertedVerticalPosition = GetInvertedYPos(VerticalPosition);
 
-					//MaximumDisplayZoom = GetMaximumDisplayZoom(PosterSize, ViewPortSize);
-
+					// Let the BitmapGridControl know the entire size.
 					OnPropertyChanged(nameof(IMapDisplayViewModel.PosterSize));
 				}
 			}
@@ -274,9 +274,13 @@ namespace MSetExplorer
 				{
 					_verticalPosition = value;
 					_invertedVerticalPosition = GetInvertedYPos(value);
+
+					MoveTo(new VectorDbl(_horizontalPosition, _invertedVerticalPosition));
+
+
 					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
-					OnPropertyChanged(nameof(IMapDisplayViewModel.VerticalPosition));
-					OnPropertyChanged(nameof(IMapDisplayViewModel.InvertedVerticalPosition));
+					//OnPropertyChanged(nameof(IMapDisplayViewModel.VerticalPosition));
+					//OnPropertyChanged(nameof(IMapDisplayViewModel.InvertedVerticalPosition));
 				}
 			}
 		}
@@ -291,8 +295,8 @@ namespace MSetExplorer
 					_invertedVerticalPosition = value;
 					_verticalPosition = GetInvertedYPos(value);
 					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
-					OnPropertyChanged(nameof(IMapDisplayViewModel.InvertedVerticalPosition));
-					OnPropertyChanged(nameof(IMapDisplayViewModel.VerticalPosition));
+					//OnPropertyChanged(nameof(IMapDisplayViewModel.InvertedVerticalPosition));
+					//OnPropertyChanged(nameof(IMapDisplayViewModel.VerticalPosition));
 				}
 			}
 		}
@@ -306,22 +310,23 @@ namespace MSetExplorer
 				{
 					_horizontalPosition = value;
 					Debug.WriteLine($"Horizontal Pos: {value}.");
-					OnPropertyChanged(nameof(IMapDisplayViewModel.HorizontalPosition));
+
+					MoveTo(new VectorDbl(_horizontalPosition, _invertedVerticalPosition));
+					//OnPropertyChanged(nameof(IMapDisplayViewModel.HorizontalPosition));
 				}
 			}
 		}
 
-
-		/// <summary>
-		/// Value between 0.0 and 1.0
-		/// 1.0 presents 1 map "pixel" to 1 screen pixel
-		/// 0.5 presents 2 map "pixels" to 1 screen pixel
-		/// </summary>
 		public double DisplayZoom
 		{
 			get => _displayZoom;
 			set
 			{
+
+				// Value between 0.0 and 1.0
+				// 1.0 presents 1 map "pixel" to 1 screen pixel
+				// 0.5 presents 2 map "pixels" to 1 screen pixel
+
 				//if (Math.Abs(value - DisplayZoom) > 0.001)
 				//{
 				//	_displayZoom = Math.Min(MaximumDisplayZoom, value);
@@ -375,6 +380,30 @@ namespace MSetExplorer
 
 		private BoundedMapArea? _boundedMapArea;
 
+		public int? MoveTo(VectorDbl displayPosition)
+		{
+			int? newJobNumber = null;
+
+			if (_boundedMapArea != null)
+			{
+				// Get the MapAreaInfo subset for the given display position
+				var mapAreaInfo2Subset = _boundedMapArea.GetView(displayPosition);
+
+				newJobNumber = HandleDisplayPositionChange(_boundedMapArea.AreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
+
+				if (newJobNumber.HasValue && lastSectionWasIncluded)
+				{
+					DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+				}
+			}
+			else
+			{
+				Debug.WriteLine($"WARNING: Cannot MoveTo {displayPosition}, there is no bounding info set.");
+			}
+
+			return newJobNumber;
+		}
+
 		public int? SubmitJob(AreaColorAndCalcSettings newValue)
 		{
 			return SubmitJob(newValue, posterSize: null);
@@ -396,27 +425,37 @@ namespace MSetExplorer
 				if (posterSize.HasValue)
 				{
 					// Bounded
+					PosterSize = posterSize.Value;
 
 					// Save the MapAreaInfo for the entire poster.
-					_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, ViewPortSize, posterSize.Value);
+					_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue, ViewPortSize, posterSize.Value);
 
 					// Get the MapAreaInfo subset for the upper, left-hand corner.
-					var mapAreaInfo2Subset = _boundedMapArea.GetView(new VectorInt(0, 0));
+					var displayPosition = new VectorDbl(0, 0);
+					var mapAreaInfo2Subset = _boundedMapArea.GetView(displayPosition);
 
-					// Update the value using the new view. 
-					newValue = newValue.UpdateWith(mapAreaInfo2Subset);
+					newJobNumber = HandleDisplayPositionChange(_boundedMapArea.AreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
+
+					if (newJobNumber.HasValue && lastSectionWasIncluded)
+					{
+						DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+					}
 				}
-
-				// Unbounded
-
-				if (newValue != CurrentAreaColorAndCalcSettings)
+				else
 				{
-					var previousValue = CurrentAreaColorAndCalcSettings;
+					// Unbounded
+					PosterSize = null;
+					_boundedMapArea = null;
 
-					CurrentAreaColorAndCalcSettings = newValue;
-					ReportSubmitJobDetails(previousValue, newValue);
+					if (newValue != CurrentAreaColorAndCalcSettings)
+					{
+						var previousValue = CurrentAreaColorAndCalcSettings;
 
-					newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings);
+						CurrentAreaColorAndCalcSettings = newValue;
+						ReportSubmitJobDetails(previousValue, newValue);
+
+						newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings);
+					}
 				}
 
 				return newJobNumber;
@@ -626,6 +665,9 @@ namespace MSetExplorer
 		private int? ReuseAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
 			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewPortSize);
+
+			// TODO: Call HandleDisplayPositionChange here.
+
 			LastMapAreaInfo = screenAreaInfo;
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
@@ -698,6 +740,57 @@ namespace MSetExplorer
 
 			ActiveJobNumbers.Add(newJobNumber);
 			return newJobNumber;
+		}
+
+
+		private int? HandleDisplayPositionChange(AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
+		{
+			LastMapAreaInfo = screenAreaInfo;
+
+			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
+			var loadedSections = new ReadOnlyCollection<MapSection>(MapSections);
+			var sectionsToLoad = GetSectionsToLoad(sectionsRequired, loadedSections);
+			var sectionsToRemove = GetSectionsToRemove(sectionsRequired, loadedSections);
+
+			foreach (var section in sectionsToRemove)
+			{
+				MapSections.Remove(section);
+				_mapSectionHelper.ReturnMapSection(section);
+			}
+
+			if (BitmapGrid != null)
+			{
+				BitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
+			}
+
+			ImageOffset = new VectorDbl(screenAreaInfo.CanvasControlOffset);
+
+			ColorBandSet = newJob.ColorBandSet;
+
+			var sectionsRemoved = BitmapGrid?.ReDrawSections() ?? 0;
+
+			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, we removed {sectionsToRemove.Count} ReDraw removed {sectionsRemoved}. Keeping {MapSections.Count}. {_mapSectionHelper.MapSectionsVectorsInPool} MapSection in the pool.");
+
+			int? result;
+
+			if (sectionsToLoad.Count > 0)
+			{
+				var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
+				var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
+				Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
+
+				lastSectionWasIncluded = BitmapGrid?.DrawSections(newMapSections) ?? false;
+
+				result = newJobNumber;
+				ActiveJobNumbers.Add(newJobNumber);
+			}
+			else
+			{
+				lastSectionWasIncluded = false;
+				result = null;
+			}
+
+			return result;
 		}
 
 		private void StopCurrentJobAndClearDisplay()

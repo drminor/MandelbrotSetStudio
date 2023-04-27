@@ -10,12 +10,9 @@ namespace MSetExplorer
 {
 	internal class ExplorerViewModel : ViewModelBase, IExplorerViewModel 
 	{
-		private readonly ProjectOpenSaveViewModelCreator _projectOpenSaveViewModelCreator;
-		private readonly CbsOpenSaveViewModelCreator _cbsOpenSaveViewModelCreator;
-		private readonly PosterOpenSaveViewModelCreator _posterOpenSaveViewModelCreator;
-		private readonly CoordsEditorViewModelCreator _coordsEditorViewModelCreator;
-
 		private readonly IMapLoaderManager _mapLoaderManager;
+
+		private readonly ViewModelFactory _viewModelFactory;
 
 		private double _dispWidth;
 		private double _dispHeight;
@@ -24,9 +21,7 @@ namespace MSetExplorer
 
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
-			IMapLoaderManager mapLoaderManager,
-			ProjectOpenSaveViewModelCreator projectOpenSaveViewModelCreator, CbsOpenSaveViewModelCreator cbsOpenSaveViewModelCreator,
-			CoordsEditorViewModelCreator coordsEditorViewModelCreator, PosterOpenSaveViewModelCreator posterOpenSaveViewModelCreator)
+			IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
 		{
 
 			_mapLoaderManager = mapLoaderManager;
@@ -41,14 +36,10 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			//ProjectViewModel.CanvasSize = MapDisplayViewModel.ViewPortSize.Round();
 			DispWidth = MapDisplayViewModel.ViewPortSize.Width;
 			DispHeight = MapDisplayViewModel.ViewPortSize.Height;
 
-			_projectOpenSaveViewModelCreator = projectOpenSaveViewModelCreator;
-			_cbsOpenSaveViewModelCreator = cbsOpenSaveViewModelCreator;
-			_posterOpenSaveViewModelCreator = posterOpenSaveViewModelCreator;
-			_coordsEditorViewModelCreator = coordsEditorViewModelCreator;
+			_viewModelFactory = viewModelFactory;
 
 			MapCoordsViewModel = new MapCoordsViewModel();
 
@@ -75,6 +66,8 @@ namespace MSetExplorer
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 
+		public ViewModelFactory ViewModelFactory => _viewModelFactory;
+
 		public double DispWidth
 		{
 			get => _dispWidth;
@@ -87,7 +80,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
 		public double DispHeight
 		{
 			get => _dispHeight;
@@ -105,48 +97,12 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
-		{
-			var result = _projectOpenSaveViewModelCreator(initalName, dialogType);
-			return result;
-		}
-
-		public IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType)
-		{
-			var result = _cbsOpenSaveViewModelCreator(initalName, dialogType);
-			return result;
-		}
-
-		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
-		{
-			var result = _posterOpenSaveViewModelCreator(initalName, useEscapeVelocities, dialogType);
-			return result;
-		}
-
-		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/)
+		public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
 		{
 			var pngBuilder = new PngBuilder(_mapLoaderManager);
-			var result = new CreateImageProgressViewModel(pngBuilder/*, useEscapeVelocities*/);
+			var result = new CreateImageProgressViewModel(pngBuilder);
 			return result;
 		}
-
-		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize, bool allowEdits)
-		{
-			var result = _coordsEditorViewModelCreator(mapAreaInfoV2, canvasSize, allowEdits);
-			return result;
-		}
-
-		//// TODO: Once every job has a value for the Canvas Size, then consider using that property's value instead of the current display size.
-		//public SizeInt GetCanvasSize(Job job)
-		//{
-		//	var result = job.CanvasSize;
-		//	if (result.Width == 0 || result.Height == 0)
-		//	{
-		//		result = MapDisplayViewModel.CanvasSize;
-		//	}
-
-		//	return result;
-		//}
 
 		public JobProgressViewModel CreateAJobProgressViewModel()
 		{
@@ -177,9 +133,6 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
 
-				//MapCoordsViewModel.JobId = curJobId;
-				//MapCoordsViewModel.CurrentMapAreaInfo = newMapAreaInfo;
-
 				var areaColorAndCalcSettings = new AreaColorAndCalcSettings
 					(
 					curJobId,
@@ -194,7 +147,6 @@ namespace MSetExplorer
 
 				MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
 
-				// TODO: Consider having the MapDisplayViewModel have a readonly property of (old) MapAreaInfo
 				UpdateTheMapCoordsView(curJob);
 			}
 

@@ -8,7 +8,7 @@ namespace MSetExplorer
 {
 	public interface IPosterDesignerViewModel : INotifyPropertyChanged
 	{
-		SizeDbl MapDisplaySize { get; }
+		//SizeDbl MapDisplaySize { get; }
 		IPosterViewModel PosterViewModel { get; }
 
 		//IMapScrollViewModel MapScrollViewModel { get; }
@@ -20,12 +20,13 @@ namespace MSetExplorer
 
 		IJobTreeViewModel JobTreeViewModel { get; }
 
-		IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType);
-		IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
+		//IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType);
+		//IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
+		//CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo, SizeInt canvasSize, bool allowEdits);
+
+		ViewModelFactory ViewModelFactory { get; }
 
 		CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/);
-		
-		CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo, SizeInt canvasSize, bool allowEdits);
 
 		LazyMapPreviewImageProvider GetPreviewImageProvider(MapAreaInfo2 mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, SizeInt previewImagesize, Color fallbackColor);
 

@@ -112,6 +112,13 @@ namespace MSetExplorer
 
 		private void PosterDesignerWindow_Closing(object? sender, CancelEventArgs e)
 		{
+			_vm.PosterViewModel.DisplayPosition = new VectorDbl
+				(
+					_vm.MapDisplayViewModel.HorizontalPosition,
+					_vm.MapDisplayViewModel.VerticalPosition
+				).Round();
+
+
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
 			{
@@ -185,6 +192,13 @@ namespace MSetExplorer
 
 		private void CloseOrExit(OnCloseBehavior onCloseBehavior)
 		{
+			_vm.PosterViewModel.DisplayPosition = new VectorDbl
+				(
+					_vm.MapDisplayViewModel.HorizontalPosition,
+					_vm.MapDisplayViewModel.VerticalPosition
+				)
+				.Round();
+
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
 			{
@@ -222,6 +236,13 @@ namespace MSetExplorer
 		// Open
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
+
+			_vm.PosterViewModel.DisplayPosition = new VectorDbl
+			(
+				_vm.MapDisplayViewModel.HorizontalPosition,
+				_vm.MapDisplayViewModel.VerticalPosition
+			).Round();
+
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
 			{
@@ -257,6 +278,13 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
+			//_vm.MapDisplayViewModel.HorizontalPosition
+
+			_vm.PosterViewModel.DisplayPosition = new VectorDbl(
+				_vm.MapDisplayViewModel.HorizontalPosition, 
+				_vm.MapDisplayViewModel.VerticalPosition).Round();
+
+
 			if (!_vm.PosterViewModel.PosterSave())
 			{
 				_ = MessageBox.Show("Could not save changes.");
@@ -739,7 +767,7 @@ namespace MSetExplorer
 
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, bool useEscapeVelocities, out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm
@@ -786,7 +814,7 @@ namespace MSetExplorer
 
 			var posterAreaInfo = _vm.PosterViewModel.PosterAreaInfo;
 
-			coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(posterAreaInfo, posterSize.Value, allowEdits: true);
+			coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(posterAreaInfo, posterSize.Value, allowEdits: true);
 
 			var coordsEditorWindow = new CoordsEditorWindow()
 			{
@@ -956,7 +984,7 @@ namespace MSetExplorer
 
 		private bool ColorsShowOpenWindow(string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.CreateACbsOpenViewModel(initalName, DialogType.Open);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(initalName, DialogType.Open);
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm
@@ -1005,7 +1033,7 @@ namespace MSetExplorer
 
 		private bool ColorsShowSaveWindow(ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.CreateACbsOpenViewModel(colorBandSet.Name, DialogType.Save);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(colorBandSet.Name, DialogType.Save);
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm
@@ -1038,12 +1066,9 @@ namespace MSetExplorer
 			var panVector = GetPanVector(direction, qualifiedAmount);
 
 			//var newArea = new RectangleInt(new PointInt(panVector), _vm.PosterViewModel.CanvasSize.Round());
-
 			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, newArea, _vm.PosterViewModel.CanvasSize);
 
 			_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, panVector, factor: 1, currentMapAreaInfo);
-
-
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)

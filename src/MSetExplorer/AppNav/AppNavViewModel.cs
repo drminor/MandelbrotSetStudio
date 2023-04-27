@@ -1,26 +1,17 @@
 ﻿using MapSectionProviderLib;
-using MSetExplorer.MapDisplay.ScrollAndZoom;
 using MSetExplorer.XPoc;
 using MSetExplorer.XPoc.PerformanceHarness;
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 
 namespace MSetExplorer
 {
-	internal delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, bool useEscapeVelocities, DialogType dialogType);
-
-	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits);
-
 	internal class AppNavViewModel
 	{
 		private static readonly bool _useSimpleJobTree = true;
-
 
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
@@ -31,6 +22,8 @@ namespace MSetExplorer
 		private readonly MapSectionHelper _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
+
+		private readonly ViewModelFactory _viewModelFactory;
 
 		public AppNavViewModel(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor	mapSectionRequestProcessor)
 		{
@@ -44,6 +37,8 @@ namespace MSetExplorer
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
+
+			_viewModelFactory = new ViewModelFactory(_projectAdapter, _mapSectionAdapter, _sharedColorBandSetAdapter, _mapLoaderManager);
 		}
 
 		public ExplorerViewModel GetExplorerViewModel()
@@ -63,10 +58,9 @@ namespace MSetExplorer
 			var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
-			
+
 			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
-				_mapLoaderManager,
-				CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel, CreateAPosterOpenSaveViewModel);
+				_mapLoaderManager, _viewModelFactory);
 
 			return result;
 		}
@@ -79,8 +73,6 @@ namespace MSetExplorer
 			// Map Display View Model
 			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapJobHelper, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
 
-			//IMapScrollViewModel mapScrollViewModel = new MapScrollViewModel(mapDisplayViewModel);
-
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
 			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
@@ -92,8 +84,7 @@ namespace MSetExplorer
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel/* mapScrollViewModel*/, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
-				_mapJobHelper, _mapLoaderManager,
-				CreateAPosterOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateACoordsEditorViewModel);
+				_mapJobHelper, _mapLoaderManager, _viewModelFactory);
 
 			return result;
 		}
@@ -127,27 +118,6 @@ namespace MSetExplorer
 			//	CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 
 			var result = new PerformanceHarnessMainWinViewModel(_mapSectionRequestProcessor, _mapJobHelper, _mapSectionHelper);
-			return result;
-		}
-
-		private IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
-		{
-			return new ProjectOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, initalName, dialogType);
-		}
-
-		private IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType)
-		{
-			return new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
-		}
-
-		private IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
-		{
-			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, _mapSectionAdapter, initalName, useEscapeVelocities, dialogType);
-		}
-
-		private CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize, bool allowEdits)
-		{
-			var result = new CoordsEditorViewModel(mapAreaInfoV2, canvasSize, allowEdits);
 			return result;
 		}
 

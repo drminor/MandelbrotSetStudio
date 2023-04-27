@@ -204,6 +204,8 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(nrmSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 			var binaryPrecision = Math.Abs(nrmSamplePointDelta.Exponent);
 
+			CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
+
 			var result = new MapAreaInfo(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
@@ -268,9 +270,76 @@ namespace MSS.Common
 			return mapAreaInfo;
 		}
 
+		[Conditional("DEBUG")]
+		private void CheckSubdivisionConsistency(Subdivision original, Subdivision result, int normalizedPositionExponent, int normalizedSpdExponent)
+		{
+			Debug.WriteLine($"While calculating the MapAreaWithSize. Original SubdivisionId: {original.Id}, Result SubdivisionId: {result.Id}. " +
+				$"Exponents (Original-0, Position-1, SPD-2, Result-3): {original.SamplePointDelta.Exponent}, {normalizedPositionExponent}, {normalizedSpdExponent}, {result.SamplePointDelta.Exponent}.");
+		}
+
 		#endregion
 
+
 		#region GetMapAreaInfo Methods - V1
+
+		// Convert the screen coordinates given by screenArea into map coordinates,
+		// then move these map coordiates by the x and y distances specified in the current MapPosition.
+		public RRectangle GetMapCoords(RectangleInt screenArea, RPoint mapPosition, RSize samplePointDelta)
+		{
+			// Convert to map coordinates.
+
+			//var rArea = ScaleByRsize(screenArea, samplePointDelta);
+			var rArea = new RRectangle(screenArea);
+			rArea = rArea.Scale(samplePointDelta);
+
+			// Translate the area by the current map position
+			var nrmArea = RNormalizer.Normalize(rArea, mapPosition, out var nrmPos);
+			var result = nrmArea.Translate(nrmPos);
+
+			//Debug.WriteLine($"GetMapCoords is receiving area: {screenArea}.");
+			//Debug.WriteLine($"Calc Map Coords: Trans: {result}, Pos: {nrmPos}, Area: {nrmArea}, area rat: {GetAspectRatio(nrmArea)}, result rat: {GetAspectRatio(result)}");
+
+			return result;
+		}
+
+		// Calculate the MapBlockOffset and CanvasControlOffset while keeping the SamplePointDelta, constant.
+		public MapAreaInfo GetMapAreaInfoScaleConstant(RRectangle coords, Subdivision subdivision, SizeInt canvasSize)
+		{
+			var samplePointDelta = subdivision.SamplePointDelta;
+			//var updatedCoords = coords.Clone();
+
+			// Determine the amount to translate from our coordinates to the subdivision coordinates.
+			var mapBlockOffset = GetMapBlockOffset(coords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
+
+			var newPosition = samplePointDelta.Scale(mapBlockOffset.Scale(BlockSize).Tranlate(canvasControlOffset));
+
+			var adjPos = RNormalizer.Normalize(newPosition, coords.Size, out var adjMapSize);
+			var newCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
+
+			ReportCoordsDiff(coords, newCoords, "for a new display size");
+
+			//var localMapBlockOffset = GetLocalMapBlockOffset(mapBlockOffset, subdivision);
+			var checkSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
+			Debug.Assert(checkSubdivision == subdivision, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
+
+			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
+
+			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+
+			return result;
+		}
+
+		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
+		{
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
+			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
+
+			return binaryPrecision;
+		}
+
+		#endregion
+
+		#region GetMapAreaInfo Methods - V1 - Depreciated
 
 		// Calculate the SamplePointDelta, MapBlockOffset, CanvasControlOffset, using the specified coordinates and display size
 		private MapAreaInfo GetMapAreaInfoV1(RRectangle coords, SizeInt canvasSize)
