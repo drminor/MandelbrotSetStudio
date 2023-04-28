@@ -175,7 +175,7 @@
 
         <!-- Map Display -->
         <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" x:Name="colCenter" Margin="0,5">
-            <local:MapSectionDisplayControl x:Name="mapDisplay1"></local:MapSectionDisplayControl>
+            <local:MapSectionDisplayControl2 x:Name="mapDisplay1"></local:MapSectionDisplayControl2>
         </Border>
 
         <Grid Grid.Row="1" Grid.Column="2" x:Name="colRight" Visibility="Visible">

@@ -1,6 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using System.Windows;
 
 namespace MSetExplorer
 {
@@ -8,8 +9,7 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
-		private readonly SizeInt _displaySize;
-		private readonly SizeInt _blockSize;
+		private readonly Size _displaySize;
 
 		private RRectangle _coords;
 		private bool _coordsAreDirty;
@@ -17,9 +17,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfoV2, SizeInt displaySize, bool allowEdits)
+		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfoV2, Size displaySize, bool allowEdits)
 		{
-			var mapAreaInfo = mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfoV2, _displaySize);
+			var mapAreaInfo = mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfoV2, ScreenTypeHelper.ConvertToSizeInt(_displaySize));
 			_coords = mapAreaInfo.Coords;
 
 			StartingX = new SingleCoordEditorViewModel(_coords.Left);
@@ -30,7 +30,6 @@ namespace MSetExplorer
 
 			_displaySize = displaySize;
 			EditsAllowed = allowEdits;
-			_blockSize = RMapConstants.BLOCK_SIZE;
 
 			MapCoordsDetail1 = new MapCoordsDetailViewModel(_coords);
 			_zoom = RValueHelper.GetFormattedResolution(_coords.Width);

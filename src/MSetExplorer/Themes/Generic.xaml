@@ -3,11 +3,33 @@
                     xmlns:local="clr-namespace:MSetExplorer">
 
 
+    <Style TargetType="{x:Type local:BitmapGridControl2}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:BitmapGridControl2}">
+                    <Border BorderThickness="1" BorderBrush="ForestGreen">
+
+                        <ContentPresenter x:Name="BitmapGridControl_Content">
+                            <ContentPresenter.Content>
+                                <Canvas x:Name="bmgcCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+                                    <Image x:Name="bmgcImage" />
+                                </Canvas>
+
+                            </ContentPresenter.Content>
+                        </ContentPresenter>
+
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
     <Style TargetType="{x:Type local:BitmapGridControl}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:BitmapGridControl}">
-                    <Border BorderThickness="1" BorderBrush="ForestGreen">
+                    <Border BorderThickness="1" BorderBrush="DarkRed">
 
                         <ContentPresenter x:Name="BitmapGridControl_Content">
                             <ContentPresenter.Content>

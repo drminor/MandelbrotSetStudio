@@ -23,7 +23,6 @@ namespace MSetExplorer
 		private const int DEFAULT_SELECTION_SIZE_FACTOR = 8; // Amount to multiply actual pitch by to get the default side length of the selection rectangle.
 
 		private readonly Canvas _canvas;
-		//private readonly IMapDisplayViewModel _mapDisplayViewModel;
 		private readonly SizeInt _blockSize;
 
 		private SizeDbl _displaySize;
@@ -50,7 +49,6 @@ namespace MSetExplorer
 		public SelectionRectangle(Canvas canvas, SizeDbl displaySize, SizeInt blockSize)
 		{
 			_canvas = canvas;
-			//_mapDisplayViewModel = mapDisplayViewModel;
 			_blockSize = blockSize;
 
 			_displaySize = displaySize; // mapDisplayViewModel.CanvasSize;
@@ -62,8 +60,6 @@ namespace MSetExplorer
 			SelectedPosition = new Point();
 			SelectedCenterPosition = new Point();
 			_dragLine = BuildDragLine(_canvas);
-
-			//_mapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
 			_selectedArea.KeyUp += SelectedArea_KeyUp;
 			_dragLine.KeyUp += DragLine_KeyUp;

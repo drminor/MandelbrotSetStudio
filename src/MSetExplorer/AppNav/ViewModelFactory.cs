@@ -3,6 +3,7 @@ using MSS.Common;
 using MSS.Types.MSet;
 using MSS.Types;
 using MSS.Common.MSet;
+using System.Windows;
 
 namespace MSetExplorer
 {
@@ -10,7 +11,7 @@ namespace MSetExplorer
 	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, bool useEscapeVelocities, DialogType dialogType);
 
-	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits);
+	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, Size canvasSize, bool allowEdits);
 
 	public class ViewModelFactory
 	{
@@ -48,7 +49,7 @@ namespace MSetExplorer
 			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, _mapSectionAdapter, initalName, useEscapeVelocities, dialogType);
 		}
 
-		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize, bool allowEdits)
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, Size canvasSize, bool allowEdits)
 		{
 			var result = new CoordsEditorViewModel(_mapJobHelper, mapAreaInfoV2, canvasSize, allowEdits);
 			return result;

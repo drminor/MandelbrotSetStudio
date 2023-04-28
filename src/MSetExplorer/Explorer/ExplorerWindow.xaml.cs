@@ -1015,9 +1015,9 @@ namespace MSetExplorer
 			{
 				//coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.Coords, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
 
-				var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+				var displaySize = ScreenTypeHelper.ConvertToSize(_vm.MapDisplayViewModel.ViewPortSize);
 
-				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(curJob.MapAreaInfo, displaySize.Round(), allowEdits: true);
+				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(curJob.MapAreaInfo, displaySize, allowEdits: true);
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else

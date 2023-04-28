@@ -12,13 +12,13 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 	/// </summary>
 	public partial class MapDisplayZoomControl : UserControl
 	{
-		private IMapDisplayViewModel _vm;
+		private IMapDisplayViewModel2 _vm;
 
 		#region Constructor
 
 		public MapDisplayZoomControl()
 		{
-			_vm = (IMapDisplayViewModel)DataContext;
+			_vm = (IMapDisplayViewModel2)DataContext;
 
 			Loaded += MapDisplayZoomControl_Loaded;
 			InitializeComponent();
@@ -33,7 +33,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 			}
 			else
 			{
-				_vm = (IMapDisplayViewModel)DataContext;
+				_vm = (IMapDisplayViewModel2)DataContext;
 
 				scrBarZoom.Minimum = 1;
 				scrBarZoom.Value = 1;
