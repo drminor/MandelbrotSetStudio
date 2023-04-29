@@ -152,11 +152,6 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			//if (e.PropertyName == nameof(IMapDisplayViewModel2.PosterSize))
-			//{
-			//	BitmapGridControl1.UnscaledExtent = ScreenTypeHelper.ConvertToSize(_vm.PosterSize ?? new SizeInt());
-			//}
-
 			// TODO: Only for diagnostics
 			if (e.PropertyName == nameof(IMapDisplayViewModel2.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
 			{
@@ -175,6 +170,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
 	}
 }

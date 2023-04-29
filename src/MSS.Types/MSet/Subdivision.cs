@@ -11,14 +11,22 @@ namespace MSS.Types.MSet
 		public RSize SamplePointDelta { get; init; }
 		public BigVector BaseMapPosition { get; init; }
 
+		public bool OnFile { get; init; }
+
 		public Subdivision() : this(ObjectId.GenerateNewId(), new RSize(), new BigVector(), RMapConstants.BLOCK_SIZE)
-		{ }
+		{
+			OnFile = false;
+		}
 
 		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, RMapConstants.BLOCK_SIZE)
-		{ }
+		{
+			OnFile = false;
+		}
 
 		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon, SizeInt blockSize) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, blockSize)
-		{ }
+		{
+			OnFile = false;
+		}
 
 		public Subdivision(ObjectId id, RSize samplePointDelta, BigVector baseMapPosition, SizeInt blockSize)
 		{
@@ -26,6 +34,7 @@ namespace MSS.Types.MSet
 			BlockSize = blockSize;
 			SamplePointDelta = samplePointDelta ?? throw new ArgumentNullException(nameof(samplePointDelta));
 			BaseMapPosition = baseMapPosition ?? throw new ArgumentNullException(nameof(baseMapPosition));
+			OnFile = true;
 		}
 
 		public DateTime DateCreated => Id.CreationTime;
@@ -39,7 +48,12 @@ namespace MSS.Types.MSet
 
 		public Subdivision Clone()
 		{
-			return new Subdivision(Id, SamplePointDelta.Clone(), BaseMapPosition.Clone(), BlockSize);
+			var result = new Subdivision(Id, SamplePointDelta.Clone(), BaseMapPosition.Clone(), BlockSize)
+			{
+				OnFile = OnFile
+			};
+
+			return result;
 		}
 
 		#region IEquatable Support

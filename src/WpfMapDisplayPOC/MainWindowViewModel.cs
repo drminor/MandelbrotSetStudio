@@ -24,7 +24,7 @@ namespace WpfMapDisplayPOC
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 		private readonly DtoMapper _dtoMapper;
 
 		private int _targetIterations;
@@ -36,7 +36,7 @@ namespace WpfMapDisplayPOC
 
 		#region Constructor
 
-		public MainWindowViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
+		public MainWindowViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
 		{
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_mapSectionRequestProcessor.UseRepo = true;

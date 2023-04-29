@@ -17,7 +17,7 @@ namespace ImageBuilder
 		private const double VALUE_FACTOR = 10000;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection?>? _currentResponses;
@@ -27,7 +27,7 @@ namespace ImageBuilder
 			_mapLoaderManager = mapLoaderManager;
 			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount: 2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool, mapSectionZVectorsPool);
+			_mapSectionHelper = new MapSectionBuilder(mapSectionVectorsPool, mapSectionZVectorsPool);
 
 			_currentJobNumber = null;
 			_currentResponses = null;

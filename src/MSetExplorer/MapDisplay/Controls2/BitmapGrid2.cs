@@ -16,6 +16,9 @@ namespace MSetExplorer
 	{
 		#region Private Properties
 
+		private const double VALUE_FACTOR = 10000;
+		private const int BYTES_PER_PIXEL = 4;
+
 		private readonly bool DEBUG = true;
 
 		private readonly SizeInt _blockSize;
@@ -519,9 +522,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Pixel Array Support
-
-		private const double VALUE_FACTOR = 10000;
-		private const int BYTES_PER_PIXEL = 4;
 
 		private void LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
 		{

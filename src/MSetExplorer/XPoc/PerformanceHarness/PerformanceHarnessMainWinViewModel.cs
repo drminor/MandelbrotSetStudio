@@ -16,7 +16,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 
 		public JobProgressInfo? JobProgressInfo;
 
@@ -34,7 +34,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		#region Constructor
 
-		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper)
+		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionHelper)
         {
 			//_stopwatch1 = Stopwatch.StartNew();
 			//_stopwatch1.Stop();

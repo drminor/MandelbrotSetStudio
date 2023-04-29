@@ -24,7 +24,13 @@ namespace MSS.Common.MSet
 			return result;
 		}
 
-		// Find an existing subdivision record that the same SamplePointDelta
+
+		//public Subdivision GetSubdivision(Subdivision subdivisionNotYetSaved, BigVector mapBlockOffset,)
+		//{
+		//	var result = GetSubdivision(subdivisionNotYetSaved.SamplePointDelta, subdivisionNotYetSaved.BaseMapPosition, tenativelocalMapBlockOffset);  
+		//}
+
+		// Find an existing subdivision record with the same SamplePointDelta
 		public Subdivision GetSubdivision(RSize samplePointDelta, BigVector mapBlockOffset, out BigVector localMapBlockOffset)
 		{
 			var estimatedBaseMapPosition = GetBaseMapPosition(mapBlockOffset, out localMapBlockOffset);

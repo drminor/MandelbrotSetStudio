@@ -1,6 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSetExplorer.MapDisplay.Controls;
-using MSetExplorer.MapDisplay.ScrollAndZoom;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -21,7 +19,7 @@ namespace MSetExplorer
 
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 
 		private AreaColorAndCalcSettings? _currentAreaColorAndCalcSettings;
 
@@ -48,7 +46,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapSectionDisplayViewModel2(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionHelper mapSectionHelper, SizeInt blockSize)
+		public MapSectionDisplayViewModel2(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionHelper, SizeInt blockSize)
 		{
 			_posterSize = new Size();
 			_paintLocker = new object();
@@ -301,7 +299,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"The MapScrollViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
 				// Log: Add Spacer
 				Debug.WriteLine("\n\n");
-				OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
+				OnPropertyChanged(nameof(IMapDisplayViewModel2.DisplayZoom));
 			}
 		}
 
@@ -324,7 +322,7 @@ namespace MSetExplorer
 						Debug.WriteLine($"The MapScrollViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
 					}
 
-					OnPropertyChanged(nameof(IMapScrollViewModel.MaximumDisplayZoom));
+					OnPropertyChanged(nameof(IMapDisplayViewModel2.MaximumDisplayZoom));
 				}
 			}
 		}

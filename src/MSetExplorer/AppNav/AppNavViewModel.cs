@@ -19,13 +19,13 @@ namespace MSetExplorer
 		private readonly SharedColorBandSetAdapter _sharedColorBandSetAdapter;
 
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private readonly ViewModelFactory _viewModelFactory;
 
-		public AppNavViewModel(MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor	mapSectionRequestProcessor)
+		public AppNavViewModel(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor	mapSectionRequestProcessor)
 		{
 			_mapSectionHelper = mapSectionHelper;
 			_projectAdapter = repositoryAdapters.ProjectAdapter;

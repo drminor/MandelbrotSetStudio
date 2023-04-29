@@ -613,7 +613,7 @@ namespace MSetRepo
 			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			//var mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount:2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			var mapSectionHelper = new MapSectionHelper(mapSectionVectorsPool/*, mapSectionValuesPool*/, mapSectionZVectorsPool);
+			var mapSectionHelper = new MapSectionBuilder(mapSectionVectorsPool/*, mapSectionValuesPool*/, mapSectionZVectorsPool);
 
 			//var mapSectionRequests = mapSectionHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
 			// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.

@@ -73,28 +73,24 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public bool RequestCancelled { get; set; }
-
 		public int JobNumber { get; init; }
 		public MapSectionVectors? MapSectionVectors { get; set; }
 
-		public bool IsEmpty => MapSectionVectors == null;
-
-		public PointInt ScreenPosition { get; init; }
-		public SizeInt Size { get; init; }
-
-		public int TargetIterations { get; init; }
-
-		public bool IsInverted { get; init; }
 		public string SubdivisionId { get; init; }
 		public BigVector JobMapBlockOffset { get; init; }	
 
-		// TODO: Create a new type: LongVector to hold the MapSectionBlockPosition, instead of using a pair of longs as does the BigVector
-
 		// X,Y coordinates of this section relative to the Job's MapBlockOffset in block-size units.
 		public BigVector RepoBlockPosition { get; init; }
+		public bool IsInverted { get; init; }
+		public PointInt ScreenPosition { get; init; }
+
+		public SizeInt Size { get; init; }
+		public int TargetIterations { get; init; }
 
 		public IHistogram Histogram => _histogram.Value;
+
+		public bool RequestCancelled { get; set; }
+		public bool IsEmpty => MapSectionVectors == null;
 
 		public bool IsLastSection { get; set; }
 		public MapSectionProcessInfo? MapSectionProcessInfo { get; set; }

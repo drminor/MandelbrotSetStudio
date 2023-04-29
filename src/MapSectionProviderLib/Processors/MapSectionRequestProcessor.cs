@@ -26,7 +26,7 @@ namespace MapSectionProviderLib
 		private const int QUEUE_CAPACITY = 10; //200;
 
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 
 		private readonly DtoMapper _dtoMapper;
 
@@ -55,7 +55,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper,
+		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper,
 			MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
 			//_isStopped = false;

@@ -49,10 +49,29 @@ namespace MSS.Common
 
 		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
+			var mapAreaInfoWithRegisteredSub = RegisterTheSubdivision(mapAreaInfo);
+
 			var jobName = GetJobName(transformType);
-			var job = new Job(parentJobId, projectId, jobName, transformType, newArea, mapAreaInfo, colorBandSetId, mapCalcSettings);
+			var job = new Job(parentJobId, projectId, jobName, transformType, newArea, mapAreaInfoWithRegisteredSub, colorBandSetId, mapCalcSettings);
 
 			return job;
+		}
+
+		public MapAreaInfo2 RegisterTheSubdivision(MapAreaInfo2 value)
+		{
+			if (value.Subdivision.Id == ObjectId.Empty)
+			{
+				var originalUnSavedSubdivision = value.Subdivision;
+				var totalMapBlockOffset = value.MapBlockOffset.Tranlate(originalUnSavedSubdivision.BaseMapPosition);
+				var newSubdivision = _subdivisonProvider.GetSubdivision(originalUnSavedSubdivision.SamplePointDelta, totalMapBlockOffset, out var localMapBlockOffset);
+				var result = new MapAreaInfo2(value.PositionAndDelta, newSubdivision, value.Precision, localMapBlockOffset, value.CanvasControlOffset);
+
+				return result;
+			}
+			else
+			{
+				return value;
+			}
 		}
 
 		public static string GetJobName(TransformType transformType)
@@ -278,7 +297,6 @@ namespace MSS.Common
 		}
 
 		#endregion
-
 
 		#region GetMapAreaInfo Methods - V1
 

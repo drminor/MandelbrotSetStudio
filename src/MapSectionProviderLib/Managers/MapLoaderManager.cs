@@ -13,7 +13,7 @@ namespace MapSectionProviderLib
 	public class MapLoaderManager : IMapLoaderManager
 	{
 		private readonly CancellationTokenSource _cts;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private readonly List<GenMapRequestInfo> _requests;
@@ -23,7 +23,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionHelper mapSectionHelper)
+		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionBuilder mapSectionHelper)
 		{
 			_cts = new CancellationTokenSource();
 			_mapSectionHelper = mapSectionHelper;
@@ -44,7 +44,7 @@ namespace MapSectionProviderLib
 
 		public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		public long NumberOfCountValSwitches => _mapSectionHelper.NumberOfCountValSwitches;
+		//public long NumberOfCountValSwitches => _mapSectionHelper.NumberOfCountValSwitches;
 
 		#endregion
 

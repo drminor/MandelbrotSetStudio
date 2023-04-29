@@ -12,7 +12,7 @@ namespace MapSectionProviderLib
 	public class MapSectionPersistProcessor : IDisposable
 	{
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
@@ -25,7 +25,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
+		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
 		{
 			_mapSectionHelper = mapSectionHelper;
 			_mapSectionAdapter = mapSectionAdapter;

@@ -28,7 +28,7 @@ namespace WpfMapDisplayPOC
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
-		private readonly MapSectionHelper _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionHelper;
 
 		private RepositoryAdapters? _repositoryAdapters;
 		//private IMapLoaderManager? _mapLoaderManager;
@@ -45,7 +45,7 @@ namespace WpfMapDisplayPOC
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionHelper(_mapSectionVectorsPool, _mapSectionZVectorsPool);
+			_mapSectionHelper = new MapSectionBuilder(_mapSectionVectorsPool, _mapSectionZVectorsPool);
 
 			//if (START_LOCAL_ENGINE)
 			//{
@@ -71,7 +71,7 @@ namespace WpfMapDisplayPOC
 
 		#region Support Methods
 
-		private MainWindow GetMainWindow(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionHelper mapSectionHelper, RepositoryAdapters repositoryAdapters)
+		private MainWindow GetMainWindow(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters)
 		{
 			var vm = new MainWindowViewModel(mapSectionRequestProcessor, repositoryAdapters.ProjectAdapter, repositoryAdapters.MapSectionAdapter, mapSectionHelper);
 
@@ -116,7 +116,7 @@ namespace WpfMapDisplayPOC
 			return result;
 		}
 
-		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionHelper mapSectionHelper)
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
 		{
 			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients);
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();

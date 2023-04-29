@@ -2,15 +2,12 @@
 using MSS.Types;
 using MSS.Types.MSet;
 
-namespace MSetExplorer.MapDisplay.Controls
+namespace MSetExplorer
 {
 	internal class BoundedMapArea
 	{
 		private readonly MapJobHelper _mapJobHelper;
-		//private VectorDbl _displayPosition;
-
 		private MapAreaInfo _virtualScreenAreaInfo;
-		//private BigVector _pixelOrigin;
 
 		#region Constructor
 
@@ -25,12 +22,6 @@ namespace MSetExplorer.MapDisplay.Controls
 			DisplayPosition = displayPosition ?? new VectorDbl(0, 0);
 
 			_virtualScreenAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(MapAreaInfo, PosterSize);
-
-			//_pixelOrigin = new BigVector(
-			//	_virtualScreenAreaInfo.MapBlockOffset.X * 128 + _virtualScreenAreaInfo.CanvasControlOffset.X,
-			//	_virtualScreenAreaInfo.MapBlockOffset.Y * 128 + _virtualScreenAreaInfo.CanvasControlOffset.Y);
-
-
 		}
 
 		#endregion
@@ -74,22 +65,6 @@ namespace MSetExplorer.MapDisplay.Controls
 			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, _virtualScreenAreaInfo.Subdivision, ViewPortSize.Round());
 
 			return mapAreaInfoV1;
-		}
-
-
-		private MapAreaInfo2 GetUpdatedMapAreaInfoOLD(VectorDbl displayPosition)
-		{
-			// TODO: Update the BoundedMapArea, GetView logic.
-			var newCenter = new PointDbl(ViewPortSize.Width / 2, ViewPortSize.Height / 2);
-
-
-			var oldCenter = new PointDbl(PosterSize.Width / 2, PosterSize.Height / 2);
-			var panAmount = newCenter.Diff(oldCenter).Round();
-
-
-			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPan(MapAreaInfo, panAmount);
-
-			return newMapAreaInfo;
 		}
 
 		#endregion

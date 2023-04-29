@@ -3,12 +3,15 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace MSS.Common
 {
-	public class MapSectionHelper
+	public class MapSectionBuilder
 	{
 		#region Private Properties
+
+		private const int BYTES_PER_PIXEL = 4;
 
 		private const int PRECSION_PADDING = 4;
 		private const int MIN_LIMB_COUNT = 1;
@@ -23,7 +26,7 @@ namespace MSS.Common
 
 		#region Constructor
 
-		public MapSectionHelper(MapSectionVectorsPool mapSectionVectorsPool, MapSectionZVectorsPool mapSectionZVectorsPool)
+		public MapSectionBuilder(MapSectionVectorsPool mapSectionVectorsPool, MapSectionZVectorsPool mapSectionZVectorsPool)
 		{
 			_mapSectionVectorsPool = mapSectionVectorsPool;
 			_mapSectionZVectorsPool = mapSectionZVectorsPool;
@@ -35,8 +38,6 @@ namespace MSS.Common
 		#endregion
 
 		#region Public Properties
-
-		public long NumberOfCountValSwitches { get; private set; }
 
 		public int MapSectionsVectorsInPool => _mapSectionVectorsPool.TotalFree;
 		public int MapSectionsZVectorsInPool => _mapSectionZVectorsPool.TotalFree;
@@ -79,13 +80,14 @@ namespace MSS.Common
 			{
 				var screenPosition = mapSection.ScreenPosition;
 				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
+
+				mapSectionRequest.MapSectionVectors = mapSection.MapSectionVectors;
+
 				result.Add(mapSectionRequest);
 			}
 
 			return result;
 		}
-
-
 
 		#endregion
 
@@ -96,18 +98,20 @@ namespace MSS.Common
 		/// and prepare a MapSectionRequest
 		/// </summary>
 		/// <param name="screenPosition"></param>
-		/// <param name="mapBlockOffset"></param>
+		/// <param name="jobMapBlockOffset"></param>
 		/// <param name="precision"></param>
 		/// <param name="ownerId"></param>
 		/// <param name="jobOwnerType"></param>
 		/// <param name="subdivision"></param>
 		/// <param name="mapCalcSettings"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector mapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings, int requestNumber)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector jobMapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
-			var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapBlockOffset, out var isInverted);
+			// Block Position, relative to the Subdivision's BaseMapPosition
+			var localBlockPosition = RMapHelper.ToSubdivisionCoords(screenPosition, jobMapBlockOffset, out var isInverted);
 
-			var mapPosition = GetMapPosition(subdivision, repoPosition);
+			// Absolute position in Map Coordinates.
+			var mapPosition = GetMapPosition(subdivision, localBlockPosition);
 
 			var limbCount = GetLimbCount(precision);
 
@@ -117,8 +121,8 @@ namespace MSS.Common
 				jobOwnerType: jobOwnerType,
 				subdivisionId: subdivision.Id.ToString(),
 				screenPosition: screenPosition,
-				mapBlockOffset: mapBlockOffset,
-				blockPosition: repoPosition,
+				mapBlockOffset: jobMapBlockOffset,
+				blockPosition: localBlockPosition,
 				mapPosition: mapPosition,
 				isInverted: isInverted,
 				precision: precision,
@@ -134,13 +138,23 @@ namespace MSS.Common
 
 		private RPoint GetMapPosition(Subdivision subdivision, BigVector localBlockPosition)
 		{
-			var mapBlockPosition = subdivision.BaseMapPosition.Tranlate(localBlockPosition);
+			RVector mapDistance;
 
-			// Multiply the blockPosition by the blockSize
-			var numberOfSamplePointsFromSubOrigin = mapBlockPosition.Scale(subdivision.BlockSize);
+			if (subdivision.BaseMapPosition.IsZero())
+			{
+				mapDistance = subdivision.SamplePointDelta.Scale(localBlockPosition.Scale(subdivision.BlockSize));
+			}
+			else
+			{
+				var mapBlockPosition = localBlockPosition.Tranlate(subdivision.BaseMapPosition);
 
-			// Convert sample points to map coordinates.
-			var mapDistance = subdivision.SamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
+				// Multiply the blockPosition by the blockSize
+				var numberOfSamplePointsFromSubOrigin = mapBlockPosition.Scale(subdivision.BlockSize);
+
+				// Convert sample points to map coordinates.
+				mapDistance = subdivision.SamplePointDelta.Scale(numberOfSamplePointsFromSubOrigin);
+
+			}
 
 			var result = new RPoint(mapDistance);
 
@@ -265,6 +279,88 @@ namespace MSS.Common
 					yield return new PointInt(xBlockPtr, yBlockPtr);
 				}
 			}
+		}
+
+		#endregion
+
+		#region Merge and Split Methods
+
+		/*
+					-----------------
+					|		|		|
+		Hi			|	0	|	1	|
+					|		|		|
+					-----------------
+					|		|		|
+		Low			|	2	|	3	|
+					|		|		|
+					-----------------
+		*/
+
+		public (MapSection dest2, MapSection dest3) SplitLow(MapAreaInfo2 mapAreaInfo, MapAreaInfo2 x2, int jobNumber, MapSection source)
+		{
+			var mapSectionVectors = source.MapSectionVectors ?? throw new ArgumentException("The source MapSection must have a non-null MapSectionVectors.");
+
+
+			var dest2Vecs = ObtainMapSectionVectors();
+			var dest3Vecs = ObtainMapSectionVectors();
+
+			var rowCount = mapSectionVectors.BlockSize.Height;
+			var sourceStride = mapSectionVectors.BlockSize.Width;
+			var halfSourceStride = sourceStride / 2;
+			var doubleResultStride = mapSectionVectors.BlockSize.Width * 2;
+
+			var sourceCounts = mapSectionVectors.Counts;
+			var sourceEscapeVelocities = mapSectionVectors.EscapeVelocities;
+
+			var dest2Counts = dest2Vecs.Counts;
+			var dest2EscapeVelocities = dest2Vecs.EscapeVelocities;
+
+			var dest3Counts = dest3Vecs.Counts;
+			var dest3EscapeVelocities = dest2Vecs.EscapeVelocities;
+
+			var resultRowPtr = 0;
+			var sourcePtrUpperBound = rowCount / 2 * sourceStride;
+
+			for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += doubleResultStride)
+			{
+				var resultPtr = resultRowPtr;
+
+				for (var colPtr = 0; colPtr < halfSourceStride; colPtr++)
+				{
+					dest2Counts[resultPtr] = sourceCounts[sourcePtr];
+					dest2EscapeVelocities[resultPtr] = sourceEscapeVelocities[sourcePtr];
+
+					resultPtr += 2;
+					sourcePtr += 1;
+				}
+
+				resultPtr = resultRowPtr;
+
+				for (var colPtr = 0; colPtr < halfSourceStride; colPtr++)
+				{
+					dest3Counts[resultPtr] = sourceCounts[sourcePtr];
+					dest3EscapeVelocities[resultPtr] = sourceEscapeVelocities[sourcePtr];
+
+					resultPtr += 2;
+					sourcePtr += 1;
+				}
+			}
+
+
+			//// Block Position, relative to the Subdivision's BaseMapPosition
+			//var localBlockPosition = RMapHelper.ToSubdivisionCoords(source.ScreenPosition, source.JobMapBlockOffset, out var isInverted);
+
+			//var subdivision = mapAreaInfo.Subdivision;
+
+			//// Absolute position in Map Coordinates.
+			//var mapPosition = GetMapPosition(subdivision, localBlockPosition);
+
+
+			var dest2 = new MapSection(jobNumber: jobNumber, subdivisionId: "", jobMapBlockPosition: new BigVector(), repoBlockPosition: new BigVector(), isInverted: false, screenPosition: new PointInt(), size: new SizeInt(), targetIterations: source.TargetIterations, isCancelled: false);
+			var dest3 = new MapSection(jobNumber: jobNumber, subdivisionId: "", jobMapBlockPosition: new BigVector(), repoBlockPosition: new BigVector(), isInverted: false, screenPosition: new PointInt(), size: new SizeInt(), targetIterations: source.TargetIterations, isCancelled: false);
+
+			return (dest2, dest3);
 		}
 
 		#endregion

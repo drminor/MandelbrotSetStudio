@@ -21,7 +21,7 @@ namespace MSS.Types.MSet
 			RowsHasEscaped = new byte[0];
 		}
 
-		public ZValues(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapeFlags, byte[] rowHasEscaped)
+		public ZValues(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapedFlags, byte[] rowHasEscaped)
 		{
 			BlockWidth = blockSize.Width;
 			BlockHeight = blockSize.Height;
@@ -45,7 +45,7 @@ namespace MSS.Types.MSet
 				Zis = zis;
 			}
 
-			HasEscapedFlags = hasEscapeFlags;
+			HasEscapedFlags = hasEscapedFlags;
 			RowsHasEscaped = rowHasEscaped;
 		}
 

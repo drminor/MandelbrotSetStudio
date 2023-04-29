@@ -241,6 +241,7 @@ namespace MSetRepo
 
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
+			// TODO: Create a new type: LongVector to hold the RepoBlockPosition, instead of using a pair of longs as does the BigVector
 
 			if (source.MapSectionVectors == null)
 			{

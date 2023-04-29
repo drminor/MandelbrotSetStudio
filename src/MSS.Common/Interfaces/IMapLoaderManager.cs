@@ -28,6 +28,6 @@ namespace MSS.Common
 
 		void StopJob(int jobNumber);
 
-		long NumberOfCountValSwitches { get; }
+		//long NumberOfCountValSwitches { get; }
 	}
 }

@@ -115,7 +115,7 @@ namespace MSS.Types
 			}
 		}
 
-		// Vector256<int>
+		// Vector256<float>
 		public void FillCountsRow(int rowNumber, Vector256<float>[] dest)
 		{
 			var destBack = MemoryMarshal.Cast<Vector256<float>, float>(dest);
