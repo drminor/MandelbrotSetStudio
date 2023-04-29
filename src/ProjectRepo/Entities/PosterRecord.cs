@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types;
 using System;
 
 namespace ProjectRepo.Entities
@@ -23,13 +24,13 @@ namespace ProjectRepo.Entities
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
-		[BsonIgnoreIfDefault]
-		[BsonDefaultValue(0)]
-		public int OffsetFromCenterX { get; set; }
+		//[BsonIgnoreIfDefault]
+		//[BsonDefaultValue(0)]
+		//public int OffsetFromCenterX { get; set; }
 
-		[BsonIgnoreIfDefault]
-		[BsonDefaultValue(0)]
-		public int OffsetFromCenterY { get; set; }
+		//[BsonIgnoreIfDefault]
+		//[BsonDefaultValue(0)]
+		//public int OffsetFromCenterY { get; set; }
 
 		[BsonIgnoreIfDefault]
 		[BsonDefaultValue(0)]
@@ -38,5 +39,21 @@ namespace ProjectRepo.Entities
 		[BsonIgnoreIfDefault]
 		[BsonDefaultValue(0)]
 		public int Height { get; set; }
+
+		public SizeInt PosterSize
+		{
+			get
+			{
+				if (Width == 0 || Height == 0)
+				{
+					return new SizeInt(1024);
+				}
+				else
+				{
+					return new SizeInt(Width, Height);
+				}
+			}
+		}
+
 	}
 }

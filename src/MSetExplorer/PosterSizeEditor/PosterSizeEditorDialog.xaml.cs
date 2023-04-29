@@ -28,15 +28,13 @@ namespace MSetExplorer
 
 		private MapAreaInfo2? _initialPosterMapAreaInfo;
 		private SizeInt _initialPosterSize;
-		private VectorInt _intitalOffsetFromCenter;
 
 		#region Constructor
 
-		public PosterSizeEditorDialog(MapAreaInfo2 posterMapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter)
+		public PosterSizeEditorDialog(MapAreaInfo2 posterMapAreaInfo, SizeInt posterSize)
 		{
 			_initialPosterMapAreaInfo = posterMapAreaInfo;
 			_initialPosterSize = posterSize;
-			_intitalOffsetFromCenter = offsetFromCenter;
 
 			_canvas = new Canvas();
 			_image = new Image();
@@ -83,7 +81,7 @@ namespace MSetExplorer
 				var copyOfInitial = _initialPosterMapAreaInfo.Clone();
 
 				var containerSize = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
-				_vm.Initialize(copyOfInitial, containerSize, _initialPosterSize, _intitalOffsetFromCenter);
+				_vm.Initialize(copyOfInitial, containerSize, _initialPosterSize);
 
 				_initialPosterMapAreaInfo = null;
 
@@ -167,16 +165,14 @@ namespace MSetExplorer
 
 		public SizeInt NewMapSizeInt => _vm.NewMapSizeInt;
 
-		public VectorInt NewMapOffsetFromCenter => _vm.NewMapOffsetFromCenter;
-
 		#endregion
 
 		#region Public Methods
 
-		public void UpdateWithNewMapInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter)
+		public void UpdateWithNewMapInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize)
 		{
 			//var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfo);
-			_vm.UpdateWithNewMapInfo(mapAreaInfo, posterSize, offsetFromCenter);
+			_vm.UpdateWithNewMapInfo(mapAreaInfo, posterSize);
 		}
 
 		#endregion

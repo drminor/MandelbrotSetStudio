@@ -106,9 +106,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter, RectangleDbl screenArea, SizeDbl newMapSize)
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
-			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, posterSize, offsetFromCenter, screenArea, newMapSize);
+			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, posterSize, screenArea, newMapSize);
 			return result;
 		}
 
@@ -183,7 +183,22 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
-			// TODO: Verify that the Poster Designer will not be handling MapView Updates
+			if (e.IsPreview)
+			{
+				// Calculate new Coords for preview
+
+				//// TODO: After testing is complete, uncomment-out this code.
+				//var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
+				//if (mapAreaInfo != null)
+				//{
+				//	MapCoordsViewModel.Preview(mapAreaInfo);
+				//}
+			}
+			else
+			{
+				// Zoom or Pan Map Coordinates
+				PosterViewModel.UpdateMapSpecs(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
+			}
 		}
 
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)

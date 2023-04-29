@@ -391,6 +391,44 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static SizeInt GetCanvasSize(SizeDbl newArea, SizeInt displaySize)
+		{
+			if (newArea.Width == 0 || newArea.Height == 0)
+			{
+				throw new ArgumentException("New area cannot have zero width or height upon call to GetCanvasSize.");
+			}
+
+			var wRatio = newArea.Width / displaySize.Width;
+			var hRatio = newArea.Height / displaySize.Height;
+
+			int w;
+			int h;
+
+			if (wRatio >= hRatio)
+			{
+				// Width of image in pixels will take up the entire control.
+				w = displaySize.Width;
+
+				// Height of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+				var hRat = newArea.Height / newArea.Width;
+				h = (int)Math.Round(displaySize.Width * hRat);
+			}
+			else
+			{
+				// Width of image in pixels will be somewhat less, in proportion to the ratio of the width and height of the coordinates.
+				var wRat = newArea.Width / newArea.Height;
+				w = (int)Math.Round(displaySize.Height * wRat);
+
+				// Height of image in pixels will take up the entire control.
+				h = displaySize.Height;
+			}
+
+			var result = new SizeInt(w, h);
+
+			return result;
+		}
+
+
 		#endregion
 
 		#region SamplePointDelta Diagnostic Support

@@ -83,6 +83,8 @@ namespace ProjectRepo
 
 			var updateDefinition = Builders<PosterRecord>.Update
 				.Set(u => u.CurrentJobId, posterRecord.CurrentJobId)
+				.Set(u => u.Width, posterRecord.Width)
+				.Set(u=> u.Height, posterRecord.Height)
 				.Set(u => u.DisplayPosition, posterRecord.DisplayPosition)
 				.Set(u => u.DisplayZoom, posterRecord.DisplayZoom)
 				.Set(u => u.LastSavedUtc, DateTime.UtcNow);

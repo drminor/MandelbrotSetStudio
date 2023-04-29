@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -52,8 +53,36 @@ namespace MSetExplorer
 			set => _canVScroll = value;
 		}
 
-		public double ExtentWidth => UnscaledExtent.Width * _contentScale;
-		public double ExtentHeight => UnscaledExtent.Height * _contentScale;
+		public double ExtentWidth
+		{
+			get
+			{
+				var nrmExtentWidth = Math.Min(UnscaledExtent.Width, ViewportWidth);
+
+				if (nrmExtentWidth < 1)
+				{
+					Debug.WriteLine("WARNING: ExtentWidth < 1.");
+				}
+
+				return nrmExtentWidth * _contentScale;
+			}
+		}
+
+		public double ExtentHeight
+		{
+			get
+			{
+				var nrmExtentHeight = Math.Min(UnscaledExtent.Height, ViewportHeight);
+
+				if (nrmExtentHeight < 1)
+				{
+					Debug.WriteLine("WARNING: ExtentHeight < 1.");
+				}
+
+
+				return nrmExtentHeight * _contentScale;
+			}
+		}
 
 		public double ViewportWidth
 		{
@@ -259,172 +288,6 @@ namespace MSetExplorer
 			ContentOffsetX = contentOffset.X;
 			ContentOffsetY = contentOffset.Y;
 		}
-
-		#endregion
-
-		#region Public Methods - Old
-
-		//public double ExtentWidth => Math.Max(_unscaledExtent.Width, _containerSize.Width);
-		//public double ExtentHeight => Math.Max(_unscaledExtent.Height, _containerSize.Height);
-
-		//public double HorizontalOffset => _offset.X;
-		//public double VerticalOffset => _offset.Y;
-
-		//private Point _offset = new Point();
-
-
-		//public void LineDown()
-		//{
-		//	SetVerticalOffset(VerticalOffset + 32);
-		//}
-
-		//public void LineLeft()
-		//{
-		//	SetHorizontalOffset(HorizontalOffset + 32);
-		//}
-
-		//public void LineRight()
-		//{
-		//	SetHorizontalOffset(HorizontalOffset - 32);
-		//}
-
-		//public void LineUp()
-		//{
-		//	SetVerticalOffset(VerticalOffset - 32);
-		//}
-
-		//public Rect MakeVisible(Visual visual, Rect rectangle)
-		//{
-		//	//for (int i = 0; i < InternalChildren.Count; i++)
-		//	//{
-		//	//	if (InternalChildren[i] == visual)
-		//	//	{
-		//	//		// We found the visual! Let's scroll it into view.
-		//	//		// First we need to know how big each child is.
-		//	//		Size finalSize = RenderSize;
-
-		//	//		Size childSize = new Size(
-		//	//			finalSize.Width,
-		//	//			finalSize.Height * 2 / InternalChildren.Count
-		//	//			);
-
-		//	//		// now we can calculate the vertical offset that we need and set it
-		//	//		SetVerticalOffset(childSize.Height * i);
-
-		//	//		// child size is always smaller than viewport, because that is what makes the Panel
-		//	//		// an AnnoyingPanel.
-		//	//		return rectangle;
-		//	//	}
-		//	//}
-
-		//	//throw new ArgumentException("Given visual is not in this Panel");
-
-		//	return rectangle;
-		//}
-
-		//public void MouseWheelDown()
-		//{
-		//	SetVerticalOffset(VerticalOffset + 32);
-		//}
-
-		//public void MouseWheelLeft()
-		//{
-		//	SetHorizontalOffset(HorizontalOffset + 32);
-		//}
-
-		//public void MouseWheelRight()
-		//{
-		//	SetHorizontalOffset(HorizontalOffset - 32);
-		//}
-
-		//public void MouseWheelUp()
-		//{
-		//	SetVerticalOffset(VerticalOffset - 32);
-		//}
-
-		//public void PageDown()
-		//{
-		//	double childHeight = ViewPortSize.Height;
-		//	SetVerticalOffset(VerticalOffset + childHeight);
-		//}
-
-		//public void PageLeft()
-		//{
-		//	SetHorizontalOffset(HorizontalOffset - 128);
-
-		//}
-
-		//public void PageRight()
-		//{
-		//	SetHorizontalOffset(HorizontalOffset + 128);
-		//}
-
-		//public void PageUp()
-		//{
-		//	double childHeight = ViewPortSize.Height;
-		//	SetVerticalOffset(VerticalOffset - childHeight);
-		//}
-
-		//public void SetHorizontalOffset(double offset)
-		//{
-		//	//Debug.WriteLine($"WARNING: Not Handling {nameof(SetHorizontalOffset)}.");
-
-		//	if (offset < 0 || ViewPortSize.Width >= _unscaledExtent.Width)
-		//	{
-		//		offset = 0;
-		//	}
-		//	else
-		//	{
-		//		if (offset + ViewPortSize.Width >= _unscaledExtent.Width)
-		//		{
-		//			offset = _unscaledExtent.Width - ViewPortSize.Width;
-		//		}
-		//	}
-
-		//	_offset.X = offset;
-
-		//	ContentOffsetXChanged?.Invoke(this, EventArgs.Empty);
-
-		//	InvalidateScrollInfo();
-
-		//	//_contentOffsetTransform.Y = -offset;
-		//	//InvalidateMeasure();
-
-		//}
-
-		//public void SetVerticalOffset(double offset)
-		//{
-		//	if (offset < 0 || ViewPortSize.Height >= _unscaledExtent.Height)
-		//	{
-		//		offset = 0;
-		//	}
-		//	else
-		//	{
-		//		if (offset + ViewPortSize.Height >= _unscaledExtent.Height)
-		//		{
-		//			offset = _unscaledExtent.Height - ViewPortSize.Height;
-		//		}
-		//	}
-
-		//	_offset.Y = offset;
-
-		//	ContentOffsetYChanged?.Invoke(this, EventArgs.Empty);
-
-		//	InvalidateScrollInfo();
-
-		//	//_contentOffsetTransform.Y = -offset;
-		//	InvalidateMeasure();
-		//}
-
-		//public void SetVerticalOffset2(double offset)
-		//{
-		//	_offset.Y = Math.Max(0, Math.Min(_containerSize.Height - ViewPortSize.Height, Math.Max(0, offset)));
-
-		//	InvalidateScrollInfo();
-
-		//	//_contentOffsetTransform.Y = -_offset.Y;
-		//	InvalidateMeasure();
-		//}
 
 		#endregion
 

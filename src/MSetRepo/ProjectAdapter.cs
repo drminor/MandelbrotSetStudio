@@ -696,7 +696,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public bool TryGetPoster(ObjectId posterId, [MaybeNullWhen(false)] out Poster poster)
+		public bool TryGetPoster(ObjectId posterId, [NotNullWhen(true)] out Poster? poster)
 		{
 			//Debug.WriteLine($"Retrieving Poster object with Id: {posterId}.");
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
@@ -716,7 +716,7 @@ namespace MSetRepo
 			return poster != null;
 		}
 
-		public bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster)
+		public bool TryGetPoster(string name, [NotNullWhen(true)] out Poster? poster)
 		{
 			//Debug.WriteLine($"Retrieving Poster object with name: {name}.");
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
@@ -752,8 +752,7 @@ namespace MSetRepo
 				jobs: jobs,
 				colorBandSets: colorBandSets,
 				currentJobId: target.CurrentJobId,
-				posterSize: new SizeInt(target.Width, target.Height),
-				offsetFromCenter: new VectorInt(target.OffsetFromCenterX, target.OffsetFromCenterY),
+				posterSize: target.PosterSize,
 				displayPosition: _mSetRecordMapper.MapFrom(target.DisplayPosition),
 				displayZoom: target.DisplayZoom,
 				dateCreatedUtc: target.DateCreatedUtc,
@@ -765,7 +764,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
+		public Poster? CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			if (jobs.Count == 0)
 			{
@@ -784,12 +783,16 @@ namespace MSetRepo
 				throw new InvalidOperationException($"Cannot create a poster with name: {name}, a poster: {posterId} with that name already exists.");
 			}
 
-			var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id, 
-					DisplayPosition: new VectorIntRecord(0,0), 
+			var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id,
+					DisplayPosition: new VectorIntRecord(0, 0),
 					DisplayZoom: 0,
 					DateCreatedUtc: DateTime.UtcNow,
 					LastSavedUtc: DateTime.UtcNow,
-					LastAccessedUtc: DateTime.UtcNow);
+					LastAccessedUtc: DateTime.UtcNow)
+			{
+				Width = posterSize.Width,
+				Height = posterSize.Height,
+			};
 
 			posterId = posterReaderWriter.Insert(posterRecord);
 
@@ -823,13 +826,11 @@ namespace MSetRepo
 			else
 			{
 				var displayPosition = _mSetRecordMapper.MapFrom(posterRecord.DisplayPosition);
+
 				result = new Poster(posterRecord.Id, posterRecord.Name, posterRecord.Description, 
 					posterRecord.SourceJobId, jobs, colorBandSets, posterRecord.CurrentJobId, 
 					
-					new SizeInt(posterRecord.Width, posterRecord.Height), 
-					new VectorInt(posterRecord.OffsetFromCenterX, posterRecord.OffsetFromCenterY),
-					
-					displayPosition, posterRecord.DisplayZoom, 
+					posterSize: posterRecord.PosterSize, displayPosition, posterRecord.DisplayZoom, 
 					DateTime.UtcNow, lastSavedUtc, DateTime.MinValue);
 
 			}
@@ -934,10 +935,12 @@ namespace MSetRepo
 		{
 			Debug.WriteLine($"Retrieving PosterInfo. Poster: {posterRec.Id}, Current Job: {posterRec.CurrentJobId}");
 			var jobRec = jobReaderWriter.Get(posterRec.CurrentJobId);
-			var lastSavedUtc = jobRec != null ? jobRec.LastSaved > posterRec.LastSavedUtc ? jobRec.LastSaved : posterRec.LastSavedUtc : posterRec.LastSavedUtc;
-			var size = jobRec != null ? _mSetRecordMapper.MapFrom(jobRec.MapAreaInfoRecord.CanvasSize) : new SizeInt();
 
-			var result = new PosterInfo(posterRec.Id, posterRec.Name, posterRec.Description, posterRec.CurrentJobId, size, posterRec.DateCreatedUtc, lastSavedUtc, posterRec.LastAccessedUtc);
+			var jobLastSaved = jobRec?.LastSaved ?? DateTime.MinValue;
+			var posterLastSaved = posterRec.LastSavedUtc;
+			var lastSavedUtc = jobLastSaved > posterLastSaved ? jobLastSaved : posterLastSaved;
+
+			var result = new PosterInfo(posterRec.Id, posterRec.Name, posterRec.Description, posterRec.CurrentJobId, posterRec.PosterSize, posterRec.DateCreatedUtc, lastSavedUtc, posterRec.LastAccessedUtc);
 			return result;
 		}
 

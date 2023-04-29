@@ -59,42 +59,6 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		//public SizeDbl CanvasSize
-		//{
-		//	get => _canvasSize;
-		//	set
-		//	{
-		//		if(value != _canvasSize)
-		//		{
-		//			_canvasSize = value;
-		//			OnPropertyChanged(nameof(IPosterViewModel.CanvasSize));
-
-		//		}
-		//	}
-		//}
-
-		//private SizeDbl LogicalDisplaySize => CanvasSize;
-
-		//public SizeDbl LogicalDisplaySize
-		//{
-		//	get => _logicalDisplaySize;
-		//	set
-		//	{
-		//		if (value != _logicalDisplaySize)
-		//		{
-		//			Debug.WriteLine($"The PosterViewModel's LogicalDisplaySize is being updated to {value}.");
-		//			_logicalDisplaySize = value;
-
-		//			if (CurrentPoster != null && !CurrentPoster.CurrentJob.IsEmpty)
-		//			{
-		//				CurrentAreaColorAndCalcSettings = GetUpdatedMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
-		//			}
-
-		//			OnPropertyChanged(nameof(IPosterViewModel.LogicalDisplaySize));
-		//		}
-		//	}
-		//}
-
 		public Poster? CurrentPoster
 		{
 			get => _currentPoster;
@@ -374,13 +338,13 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterOnFile));
 			}
 
-			else if (e.PropertyName == nameof(IPosterViewModel.CurrentColorBandSet))
+			else if (e.PropertyName == nameof(Poster.CurrentColorBandSet))
 			{
 				Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentColorBandSet as the Poster's ColorBandSet is being updated.");
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 			}
 
-			else if (e.PropertyName == nameof(Project.CurrentJob))
+			else if (e.PropertyName == nameof(Poster.CurrentJob))
 			{
 				//if (CurrentPoster != null)
 				//{
@@ -391,10 +355,6 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 
 			}
-			//else if (e.PropertyName == nameof(DisplayZoom))
-			//{
-			//	OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
-			//}
 		}
 
 		#endregion
@@ -522,7 +482,7 @@ namespace MSetExplorer
 			AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor);
 		}
 
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter, RectangleDbl screenArea, SizeDbl newMapSize)
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, RectangleDbl screenArea, SizeDbl newMapSize)
 		{
 			var newCenter = screenArea.GetCenter();
 			var oldCenter = new PointDbl(posterSize.Width / 2, posterSize.Height / 2);

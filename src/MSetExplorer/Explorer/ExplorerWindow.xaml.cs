@@ -444,8 +444,9 @@ namespace MSetExplorer
 				var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, useEscapeVelocities, out var name, out var description))
 				{
-					//var tentativePosterSize = curJob.CanvasSize;
-					var tentativePosterSize = new SizeInt(1024);
+					var currentDisplaySize = _vm.MapDisplayViewModel.ViewPortSize;
+
+					var tentativePosterSize = RMapHelper.GetCanvasSize(currentDisplaySize, new SizeInt(1024));
 
 					if (_vm.ProjectViewModel.TryCreatePoster(name, description, tentativePosterSize, out var newPoster))
 					{

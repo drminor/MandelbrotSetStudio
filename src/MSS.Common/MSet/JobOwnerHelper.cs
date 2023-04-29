@@ -50,7 +50,7 @@ namespace MSS.Common
 		{
 			if (sourceJobOwner is Poster p)
 			{
-				return CreatePoster(name, description, p.CurrentJob.Id, jobs, colorBandSets, projectAdapter);
+				return CreatePoster(name, description, p.PosterSize, p.CurrentJob.Id, jobs, colorBandSets, projectAdapter);
 			}
 			else
 			{
@@ -71,9 +71,9 @@ namespace MSS.Common
 			return project;
 		}
 
-		private static IJobOwner CreatePoster(string name, string? description, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		private static IJobOwner CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
 		{
-			var project = projectAdapter.CreatePoster(name, description, sourceJobId, jobs, colorBandSets);
+			var project = projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, jobs, colorBandSets);
 
 			if (project is null)
 			{

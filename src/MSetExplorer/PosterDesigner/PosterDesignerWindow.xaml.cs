@@ -833,7 +833,6 @@ namespace MSetExplorer
 
 			var mapAreaInfo = curJob.MapAreaInfo;
 			var posterSize = poster.PosterSize;
-			var offsetFromCenter = poster.OffsetFromCenter;
 
 			//var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
 			var previewSize = GetPreviewSize(poster.PosterSize, PREVIEW_IMAGE_SIZE);
@@ -844,7 +843,7 @@ namespace MSetExplorer
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 
-			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo, posterSize, offsetFromCenter)
+			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo, posterSize)
 			{
 				DataContext = posterSizeEditorViewModel
 			};
@@ -864,10 +863,10 @@ namespace MSetExplorer
 						var newMapSize = posterSizeEditorDialog.NewMapSize;
 
 						var newMapSizeInt = posterSizeEditorDialog.NewMapSizeInt;
-						var newMapOffsetFromCenter = posterSizeEditorDialog.NewMapOffsetFromCenter;
+						//var newMapOffsetFromCenter = posterSizeEditorDialog.NewMapOffsetFromCenter;
 
 						//newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapArea, newMapSize);
-						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapSizeInt, newMapOffsetFromCenter, newMapArea, newMapSize) ?? new MapAreaInfo2();
+						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapSizeInt, newMapArea, newMapSize) ?? new MapAreaInfo2();
 
 						return true;
 					}
@@ -909,13 +908,12 @@ namespace MSetExplorer
 					var newMapSize = posterSizeEditorDialog.NewMapSize;
 
 					var newMapSizeInt = posterSizeEditorDialog.NewMapSizeInt;
-					var newMapOffsetFromCenter = posterSizeEditorDialog.NewMapOffsetFromCenter;
 
-					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapSizeInt, newMapOffsetFromCenter, newMapArea, newMapSize);
+					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, newMapSizeInt, newMapArea, newMapSize);
 
 					if (newPosterMapAreaInfo != null)
 					{
-						posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo, newMapSizeInt, newMapOffsetFromCenter);
+						posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo, newMapSizeInt);
 					}
 				}
 			}

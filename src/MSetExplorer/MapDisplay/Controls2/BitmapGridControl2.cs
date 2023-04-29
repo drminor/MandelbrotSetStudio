@@ -789,11 +789,11 @@ namespace MSetExplorer
 
 		#region Unused SetCanvasTransform / ReportSizes / CheckImageSize
 
-		private void SetCanvasTransform(PointDbl scale)
-		{
-			_canvas.RenderTransformOrigin = new Point(0.5, 0.5);
-			_canvas.RenderTransform = new ScaleTransform(scale.X, scale.Y);
-		}
+		//private void SetCanvasTransform(PointDbl scale)
+		//{
+		//	_canvas.RenderTransformOrigin = new Point(0.5, 0.5);
+		//	_canvas.RenderTransform = new ScaleTransform(scale.X, scale.Y);
+		//}
 
 		public void ReportSizes(string label)
 		{
@@ -809,50 +809,50 @@ namespace MSetExplorer
 			Debug.WriteLine($"At {label}, Control: {controlSize}, Canvas: {canvasSize}, Image: {imageSize}.");
 		}
 
-		private bool IsCanvasSizeInWBsReasonable(SizeInt canvasSizeInWholeBlocks)
-		{
-			var result = !(canvasSizeInWholeBlocks.Width > 50 || canvasSizeInWholeBlocks.Height > 50);
-			return result;
-		}
+		//private bool IsCanvasSizeInWBsReasonable(SizeInt canvasSizeInWholeBlocks)
+		//{
+		//	var result = !(canvasSizeInWholeBlocks.Width > 50 || canvasSizeInWholeBlocks.Height > 50);
+		//	return result;
+		//}
 
-		/// <summary>
-		/// The position of the canvas' origin relative to the Image Block Data
-		/// </summary>
-		private void SetCanvasOffset(VectorInt value, double displayZoom)
-		{
-			//if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
-			//{
-			//	//Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
-			//	Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
-			//	Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
+		///// <summary>
+		///// The position of the canvas' origin relative to the Image Block Data
+		///// </summary>
+		//private void SetCanvasOffset(VectorInt value, double displayZoom)
+		//{
+		//	//if (value != _offset || Math.Abs(displayZoom - _offsetZoom) > 0.001)
+		//	//{
+		//	//	//Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}. The ScreenCollection Index is {_vm.ScreenCollectionIndex}");
+		//	//	Debug.WriteLine($"CanvasOffset is being set to {value} with zoom: {displayZoom}.");
+		//	//	Debug.Assert(value.X >= 0 && value.Y >= 0, "Setting offset to negative value.");
 
-			//	_offset = value;
-			//	_offsetZoom = displayZoom;
+		//	//	_offset = value;
+		//	//	_offsetZoom = displayZoom;
 
-			//	// For a postive offset, we "pull" the image down and to the left.
-			//	var invertedOffset = value.Invert();
+		//	//	// For a postive offset, we "pull" the image down and to the left.
+		//	//	var invertedOffset = value.Invert();
 
-			//	var roundedZoom = RoundZoomToOne(displayZoom);
-			//	var scaledInvertedOffset = invertedOffset.Scale(1 / roundedZoom);
+		//	//	var roundedZoom = RoundZoomToOne(displayZoom);
+		//	//	var scaledInvertedOffset = invertedOffset.Scale(1 / roundedZoom);
 
-			//	_image.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
-			//	_image.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
+		//	//	_image.SetValue(Canvas.LeftProperty, (double)scaledInvertedOffset.X);
+		//	//	_image.SetValue(Canvas.BottomProperty, (double)scaledInvertedOffset.Y);
 
-			//	ReportSizes("SetCanvasOffset");
-			//}
-		}
+		//	//	ReportSizes("SetCanvasOffset");
+		//	//}
+		//}
 
-		private double RoundZoomToOne(double scale)
-		{
-			var zoomIsOne = Math.Abs(scale - 1) < 0.001;
+		//private double RoundZoomToOne(double scale)
+		//{
+		//	var zoomIsOne = Math.Abs(scale - 1) < 0.001;
 
-			if (!zoomIsOne)
-			{
-				Debug.WriteLine($"WARNING: MapSectionDisplayControl: Display Zoom is not one.");
-			}
+		//	if (!zoomIsOne)
+		//	{
+		//		Debug.WriteLine($"WARNING: MapSectionDisplayControl: Display Zoom is not one.");
+		//	}
 
-			return zoomIsOne ? 1d : scale;
-		}
+		//	return zoomIsOne ? 1d : scale;
+		//}
 
 		#endregion
 	}

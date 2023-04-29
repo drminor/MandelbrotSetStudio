@@ -11,8 +11,6 @@ using System.Runtime.CompilerServices;
 
 //using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
 
-
-
 namespace MSS.Common.MSet
 {
 	using JobPathType = ITreePath<JobTreeNode, Job>;
@@ -22,7 +20,7 @@ namespace MSS.Common.MSet
 	{
 		private string _name;
 		private string? _description;
-		private string _size;
+		private string _sizeAsString;
 
 		private readonly IJobTree _jobTree;
 		private readonly List<ColorBandSet> _colorBandSets;
@@ -34,9 +32,6 @@ namespace MSS.Common.MSet
 
 		private ObjectId? _originalCurrentJobId;
 
-		private VectorInt _dispPosition;
-		private double _displayZoom;
-
 		#region Constructor
 
 		public Poster(string name, string? description, ObjectId sourceJobId,
@@ -44,8 +39,7 @@ namespace MSS.Common.MSet
 			)
 			: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
 				  jobs, colorBandSets, currentJobId,
-				  new SizeInt(4096), new VectorInt(),
-				  new VectorInt(), 1.0d,
+				  posterSize: new SizeInt(4096), displayPosition: new VectorInt(), displayZoom: 1.0d,
 				  DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
 		{
 			OnFile = false;
@@ -53,7 +47,7 @@ namespace MSS.Common.MSet
 
 		public Poster(ObjectId id, string name, string? description, ObjectId sourceJobId,
 			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
-			SizeInt posterSize, VectorInt offsetFromCenter,
+			SizeInt posterSize, 
 			VectorInt displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
@@ -65,10 +59,10 @@ namespace MSS.Common.MSet
 			SourceJobId = sourceJobId;
 
 			PosterSize = posterSize;
-			OffsetFromCenter = offsetFromCenter;
+			_sizeAsString = GetFormattedPosterSize(PosterSize);
 
-			_dispPosition = displayPosition;
-			_displayZoom = displayZoom;
+			DisplayPosition = displayPosition;
+			DisplayZoom = displayZoom;
 
 			_jobTree = BuildJobTree(jobs, useFlat: false, checkHomeJob: false);
 
@@ -76,8 +70,11 @@ namespace MSS.Common.MSet
 			//_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			DateCreatedUtc = dateCreatedUtc;
+
 			LastUpdatedUtc = DateTime.MinValue;
-			LastSavedUtc = lastSavedUtc;
+			_lastSavedUtc =  lastSavedUtc;
+			OnFile = true;
+
 			LastAccessedUtc = lastAccessedUtc;
 
 			_originalCurrentJobId = currentJobId;
@@ -92,12 +89,6 @@ namespace MSS.Common.MSet
 
 			_jobTree.CurrentItem = currentJob;
 			var colorBandSet = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
-
-			PosterSize = new SizeInt(4096);
-
-			_size = string.Empty;
-
-			SizeAsString = GetFormattedPosterSize(PosterSize);
 
 			Debug.WriteLine($"Poster is loaded. CurrentJobId: {CurrentJob.Id}, Current ColorBandSetId: {CurrentColorBandSet.Id}. IsDirty: {IsDirty}");
 		}
@@ -170,55 +161,23 @@ namespace MSS.Common.MSet
 
 		public SizeInt PosterSize { get; set; }
 
-		public VectorInt OffsetFromCenter { get; set; }
-
 		public string SizeAsString
 		{
-			get => _size;
+			get => _sizeAsString;
 			private set
 			{
-				if (value != _size)
+				if (value != _sizeAsString)
 				{
-					_size = value;
+					_sizeAsString = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public ObjectId SourceJobId { get; init; }
-
 		public VectorInt DisplayPosition { get; set; }
-		//{
-		//	get => _dispPosition;
-		//	set
-		//	{
-		//		if (value != _dispPosition)
-		//		{
-		//			_dispPosition = value;
-		//			//LastUpdatedUtc = DateTime.UtcNow;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
-
-		/// <summary>
-		/// Value between 1.0 and a maximum, where the maximum is posterSize / displaySize
-		/// 1.0 presents 1 map "pixel" to 1 screen pixel
-		/// 2.0 presents 2 map "pixels" to 1 screen pixel
-		/// </summary>
 		public double DisplayZoom { get; set; }
-		//{
-		//	get => _displayZoom;
-		//	set
-		//	{
-		//		if (Math.Abs(value - _displayZoom) > 0.1)
-		//		{
-		//			_displayZoom = value;
-		//			//LastUpdatedUtc = DateTime.UtcNow;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
+
+		public ObjectId SourceJobId { get; init; }
 
 		public DateTime DateCreatedUtc { get; init; }
 
@@ -500,16 +459,22 @@ namespace MSS.Common.MSet
 		{
 			return new Poster(Id, Name, Description, SourceJobId,
 				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id,
-				PosterSize, OffsetFromCenter, DisplayPosition, DisplayZoom,
-				DateCreated, LastSavedUtc, LastAccessedUtc);
+				PosterSize, DisplayPosition, DisplayZoom,
+				DateCreated, LastSavedUtc, LastAccessedUtc)
+			{
+				OnFile = OnFile
+			};
 		}
 
 		public Poster CreateNewCopy()
 		{
 			return new Poster(ObjectId.GenerateNewId(), Name, Description, SourceJobId,
 				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id,
-				PosterSize, OffsetFromCenter, DisplayPosition, DisplayZoom,
-				DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow);
+				PosterSize, DisplayPosition, DisplayZoom,
+				DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
+			{
+				OnFile = false
+			};
 		}
 
 		#endregion

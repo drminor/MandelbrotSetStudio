@@ -203,8 +203,6 @@ namespace MSetRepo
 				LastAccessedUtc: source.LastAccessedUtc)
 			{
 				Id = source.Id,
-				OffsetFromCenterX = source.OffsetFromCenter.X,
-				OffsetFromCenterY = source.OffsetFromCenter.Y,
 				Width = source.PosterSize.Width,
 				Height = source.PosterSize.Height
 			};

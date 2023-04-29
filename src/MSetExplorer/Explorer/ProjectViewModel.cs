@@ -356,7 +356,7 @@ namespace MSetExplorer
 
 			var sourceJobId = curJob.Id;
 
-			poster = _projectAdapter.CreatePoster(name, description, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet });
+			poster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet });
 			if (poster != null)
 			{
 				_ = JobOwnerHelper.Save(poster, _projectAdapter);

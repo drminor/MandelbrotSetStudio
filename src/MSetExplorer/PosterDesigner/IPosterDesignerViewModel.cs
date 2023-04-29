@@ -32,6 +32,6 @@ namespace MSetExplorer
 
 		//MapAreaInfo2? GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, RectangleDbl screenArea, SizeDbl newMapSize);
 
-		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, VectorInt offsetFromCenter, RectangleDbl screenArea, SizeDbl newMapSize);
+		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, RectangleDbl screenArea, SizeDbl newMapSize);
 	}
 }

@@ -29,7 +29,7 @@ namespace MSS.Common
 		bool DeleteProject(ObjectId projectId);
 		IEnumerable<IProjectInfo> GetAllProjectInfos();
 
-		Poster? CreatePoster(string name, string? description, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
+		Poster? CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
 		List<Poster> GetAllPosters();
 		List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
 		List<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
