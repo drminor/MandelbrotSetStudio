@@ -137,7 +137,8 @@ namespace MSetExplorer
 
 		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
-			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
+			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {e.Item1}/{e.Item1.IsNAN()}, New: {e.Item2}/{e.Item2.IsNAN()} " +
+				$"The MapSectionDisplayControl's ViewPortSize is {_vm.ViewPortSize}.");
 
 			_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
 

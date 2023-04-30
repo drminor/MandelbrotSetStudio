@@ -10,76 +10,25 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 	/// </summary>
 	public partial class MapDisplayZoomControl : UserControl
 	{
-		//private IMapDisplayViewModel2 _vm;
-
 		#region Constructor
 
 		public MapDisplayZoomControl()
 		{
-			//_vm = (IMapDisplayViewModel2)DataContext;
-
 			Loaded += MapDisplayZoomControl_Loaded;
 			InitializeComponent();
 		}
 
 		private void MapDisplayZoomControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			if (DataContext is null)
-			{
-				//throw new InvalidOperationException("The DataContext is null as the MapScroll UserControl is being loaded.");
-				return;
-			}
-			else
-			{
-				//_vm = (IMapDisplayViewModel2)DataContext;
-
-				//scrollBarZoomValue.Minimum = 1;
-				//scrollBarZoomValue.Value = 1;
-
-				//scrollBarZoomValue.Maximum = 10;
-				//scrollBarZoomValue.SmallChange = 0.1;
-				//scrollBarZoomValue.LargeChange = 1;
-
-				//scrollBarZoomValue.Value = 1;
-
-				//scrollBarZoomValue.Scroll += scrollBarZoomValue_Scroll;
-
-				//_vm.PropertyChanged += ViewModel_PropertyChanged;
-
-				scrollBarZoomValue.ValueChanged += ScrollBarZoomValue_ValueChanged;
-
-				Debug.WriteLine("The MapDisplayZoom Control is now loaded.");
-			}
+			//SetScrollBarSettings(scrollBar1);
+			scrollBar1.ValueChanged += ScrollBar1_ValueChanged;
+			Debug.WriteLine("The MapDisplayZoom Control is now loaded.");
 		}
 
-		private void ScrollBarZoomValue_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		private void ScrollBar1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
-			textBlockZoomValue.Text = e.NewValue.ToString("G2");
+			textBlock1.Text = e.NewValue.ToString("G2");
 		}
-
-		//private void scrollBarZoomValue_Scroll(object sender, ScrollEventArgs e)
-		//{
-		//	var zoomValue = GetZoomValue(e.ScrollEventType, e.NewValue);
-		//	if (zoomValue != -1)
-		//	{
-		//		_vm.DisplayZoom = zoomValue;
-		//	}
-		//}
-
-		//private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		//{
-		//	if (e.PropertyName == nameof(IMapDisplayViewModel.MaximumDisplayZoom))
-		//	{
-		//		scrollBarZoomValue.Minimum = 1;
-		//		scrollBarZoomValue.Maximum = 100; // _vm.MaximumDisplayZoom;
-		//		scrollBarZoomValue.LargeChange = scrollBarZoomValue.Maximum / 8;
-		//		scrollBarZoomValue.SmallChange = scrollBarZoomValue.LargeChange / 8;
-		//	}
-		//	else if (e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
-		//	{
-		//		textBlockZoomValue.Text = Math.Round(_vm.DisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
-		//	}
-		//}
 
 		#endregion
 
@@ -87,15 +36,27 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 
 		private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
 		{
-			scrollBarZoomValue.Value = scrollBarZoomValue.Maximum;
+			scrollBar1.Value = scrollBar1.Maximum;
 		}
 
 		private void ButtonSetMinZoom_Click(object sender, RoutedEventArgs e)
 		{
-			scrollBarZoomValue.Value = scrollBarZoomValue.Minimum;
+			scrollBar1.Value = scrollBar1.Minimum;
 		}
 
 		#endregion
+
+		private void SetScrollBarSettings(ScrollBar sb)
+		{
+			sb.Minimum = 1;
+			sb.Value = 1;
+
+			sb.Maximum = 10;
+			sb.SmallChange = 0.1;
+			sb.LargeChange = 1;
+
+			sb.Value = 1;
+		}
 
 		//private double GetZoomValue(ScrollEventType et, double val)
 		//{

@@ -236,6 +236,8 @@ namespace MSetExplorer
 				{
 					_verticalPosition = value;
 
+					Debug.Assert(!UnscaledExtent.IsEmpty, "Moving display, but we have no Unscaled Extent.");
+
 					Debug.WriteLine($"Moving to {HorizontalPosition}, {InvertedVerticalPosition}. Uninverted Y:{VerticalPosition}. Poster Size: {UnscaledExtent}. ViewPort: {ViewPortSize}.");
 					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
 				}
@@ -253,6 +255,8 @@ namespace MSetExplorer
 				{
 					_horizontalPosition = value;
 					Debug.WriteLine($"Horizontal Pos: {value}.");
+
+					Debug.Assert(!UnscaledExtent.IsEmpty, "Moving display, but we have no Unscaled Extent.");
 
 					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
 				}
@@ -391,7 +395,7 @@ namespace MSetExplorer
 				{
 					// Unbounded
 
-					UnscaledExtent = ScreenTypeHelper.ConvertToSize(ViewPortSize);
+					UnscaledExtent = Size.Empty;
 
 					_boundedMapArea = null;
 
@@ -719,6 +723,11 @@ namespace MSetExplorer
 
 		private MapAreaInfo GetScreenAreaInfo(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
+			if (canvasSize.IsNAN())
+			{
+				throw new InvalidOperationException("canvas size is undefined.");
+			}
+
 			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize.Round());
 
 			return mapAreaInfoV1;
@@ -804,6 +813,8 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void CheckVPSize()
 		{
+			Debug.WriteLine($"At checkVPSize: ViewportSize: {ViewPortSize}, DisplayZoom: {DisplayZoom}, MaxZoom: {MaximumDisplayZoom}.");
+
 			if (ViewPortSize.Width < 0.1 || ViewPortSize.Height < 0.1)
 			{
 				Debug.WriteLine("WARNING: ViewPortSize is zero, using the value from the BitmapGrid.");

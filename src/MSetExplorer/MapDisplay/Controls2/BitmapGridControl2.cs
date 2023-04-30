@@ -13,6 +13,10 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
+		public static readonly double DefaultContentScale = 1.0;
+		public static readonly double DefaultMinContentScale = 0.01;
+		public static readonly double DefaultMaxContentScale = 10.0;
+
 		private DebounceDispatcher _viewPortSizeDispatcher;
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomSlider;
@@ -47,9 +51,6 @@ namespace MSetExplorer
 			_containerSize = new SizeDbl();
 			_viewPortSizeInternal = new SizeDbl();
 			_viewPortSize = new SizeDbl();
-
-			MinContentScale = 0.1;
-			MaxContentScale = 15.0;
 		}
 
 		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -218,18 +219,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorDbl ImageOffset
-		{
-			get => (VectorDbl)GetValue(ImageOffsetProperty);
-			set
-			{
-				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
-				{
-					SetValue(ImageOffsetProperty, value);
-				}
-			}
-		}
-
 		#endregion
 
 		#region Private ContentControl Methods
@@ -337,27 +326,33 @@ namespace MSetExplorer
 
 		//#region ViewPortSize Dependency Property
 
-		//private static SizeDbl DEFAULT_VIEWPORT_SIZE = new SizeDbl(200, 200);
+		////public static readonly DependencyProperty ViewPortSizeProperty = DependencyProperty.Register(
+		////			"ViewPortSize", typeof(Size), typeof(BitmapGridControl2),
+		////			new FrameworkPropertyMetadata(Size.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ViewPortSize_PropertyChanged));
+
 
 		//public static readonly DependencyProperty ViewPortSizeProperty = DependencyProperty.Register(
-		//			"ViewPortSize", typeof(SizeDbl), typeof(BitmapGridControl2),
-		//			new FrameworkPropertyMetadata(DEFAULT_VIEWPORT_SIZE, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ViewPortSize_PropertyChanged));
+		//			"ViewPortSize", typeof(Size), typeof(BitmapGridControl2),
+		//			new FrameworkPropertyMetadata(ViewPortSize_PropertyChanged));
 
 		//private static void ViewPortSize_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		//{
-		//	BitmapGridControl c = (BitmapGridControl)o;
-		//	var previousValue = (SizeDbl)e.OldValue;
-		//	var value = (SizeDbl)e.NewValue;
+		//	BitmapGridControl2 c = (BitmapGridControl2)o;
 
-		//	if (ScreenTypeHelper.IsSizeDblChanged(previousValue, value))
+		//	var dpValue = o.GetValue(ViewPortSizeProperty);
+
+		//	var previousValueDbl = ScreenTypeHelper.ConvertToSizeDbl((Size)e.OldValue);
+		//	var valueDbl = ScreenTypeHelper.ConvertToSizeDbl((Size)e.NewValue);
+
+		//	if (ScreenTypeHelper.IsSizeDblChanged(previousValueDbl, valueDbl))
 		//	{
-		//		//Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing. The old size: {previousValue}, new size: {value}.");
+		//		Debug.WriteLine($"BitmapGridControl: ViewPortSize is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
 
-		//		//var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, c._blockSize, KEEP_DISPLAY_SQUARE);
-		//		//c._bitmapGrid.CanvasSizeInBlocks = sizeInWholeBlocks;
+		//		var value = (Size)e.NewValue;
 
 		//		//c.InvalidateScrollInfo();
-		//		c.ViewPortSizeChanged?.Invoke(c, new(previousValue, value));
+
+		//		c.ViewPortSizeChanged?.Invoke(c, new((Size)e.OldValue, value));
 		//	}
 		//	else
 		//	{
@@ -365,16 +360,19 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		//public SizeDbl ViewPortSize
+		//public Size ViewPortSize
 		//{
-		//	get => (SizeDbl)GetValue(ViewPortSizeProperty);
+		//	get => (Size)GetValue(ViewPortSizeProperty);
 		//	set
 		//	{
-		//		if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
-		//		{
-		//			_bitmapGrid.ViewPortSize = value;
-		//			SetValue(ViewPortSizeProperty, value);
-		//		}
+		//		//if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
+		//		//{
+		//		//	_bitmapGrid.ViewPortSize = value;
+		//		//	SetValue(ViewPortSizeProperty, value);
+		//		//}
+
+		//		SetCurrentValue(ViewPortSizeProperty, value);
+
 		//	}
 		//}
 
@@ -384,7 +382,7 @@ namespace MSetExplorer
 
 		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
 					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl2),
-					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, BitmapGridImageSource_PropertyChanged));
+					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, BitmapGridImageSource_PropertyChanged));
 
 		private static void BitmapGridImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
@@ -410,7 +408,7 @@ namespace MSetExplorer
 
 		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
 					"ImageOffset", typeof(VectorDbl), typeof(BitmapGridControl2),
-					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, ImageOffset_PropertyChanged));
+					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
 
 		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
@@ -423,6 +421,19 @@ namespace MSetExplorer
 				c.InvalidateScrollInfo();
 			}
 		}
+
+		public VectorDbl ImageOffset
+		{
+			get => (VectorDbl)GetValue(ImageOffsetProperty);
+			set
+			{
+				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
+				{
+					SetCurrentValue(ImageOffsetProperty, value);
+				}
+			}
+		}
+
 
 		private bool SetImageOffset(VectorDbl newValue)
 		{
@@ -464,7 +475,7 @@ namespace MSetExplorer
 
 		public static readonly DependencyProperty UnscaledExtentProperty = DependencyProperty.Register(
 					"UnscaledExtent", typeof(Size), typeof(BitmapGridControl2),
-					new FrameworkPropertyMetadata(Size.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, UnscaledExtent_PropertyChanged));
+					new FrameworkPropertyMetadata(Size.Empty, FrameworkPropertyMetadataOptions.None, UnscaledExtent_PropertyChanged));
 
 		private static void UnscaledExtent_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
@@ -484,22 +495,25 @@ namespace MSetExplorer
 		public Size UnscaledExtent
 		{
 			get => (Size)GetValue(UnscaledExtentProperty);
-			set => SetValue(UnscaledExtentProperty, value);
+			set => SetCurrentValue(UnscaledExtentProperty, value);
 		}
 
 		#endregion
 
 		#region ContentScale Dependency Property
 
+		// TODO: Make this use two-way binding
 		public static readonly DependencyProperty ContentScaleProperty =
 				DependencyProperty.Register("ContentScale", typeof(double), typeof(BitmapGridControl2),
-											new FrameworkPropertyMetadata(1.0, ContentScale_PropertyChanged, ContentScale_Coerce));
+											new FrameworkPropertyMetadata(DefaultContentScale, ContentScale_PropertyChanged, ContentScale_Coerce));
 
 		/// <summary>
 		/// Event raised when the 'ContentScale' property has changed value.
 		/// </summary>
 		private static void ContentScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
+			Debug.WriteLine($"BitmapGridControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+
 			BitmapGridControl2 c = (BitmapGridControl2)o;
 
 			if (c._contentScaleTransform != null)
@@ -577,11 +591,6 @@ namespace MSetExplorer
 			set => SetValue(ContentScaleProperty, value);
 		}
 
-		public void SetContentScale(double contentScale)
-		{
-			SetValue(ContentScaleProperty, contentScale);
-		}
-
 		/// <summary>
 		/// Event raised when the ContentScale property has changed.
 		/// </summary>
@@ -593,12 +602,12 @@ namespace MSetExplorer
 
 		public static readonly DependencyProperty MinContentScaleProperty =
 				DependencyProperty.Register("MinContentScale", typeof(double), typeof(BitmapGridControl2),
-											new FrameworkPropertyMetadata(0.01, MinOrMaxContentScale_PropertyChanged));
+											new FrameworkPropertyMetadata(DefaultMinContentScale, MinOrMaxContentScale_PropertyChanged));
 
 
 		public static readonly DependencyProperty MaxContentScaleProperty =
 				DependencyProperty.Register("MaxContentScale", typeof(double), typeof(BitmapGridControl2),
-											new FrameworkPropertyMetadata(10.0, MinOrMaxContentScale_PropertyChanged));
+											new FrameworkPropertyMetadata(DefaultMaxContentScale, MinOrMaxContentScale_PropertyChanged));
 
 		/// <summary>
 		/// Event raised 'MinContentScale' or 'MaxContentScale' has changed.
@@ -729,11 +738,20 @@ namespace MSetExplorer
 		/// </summary>
 		private void UpdateContentViewportSize()
 		{
-			ContentViewportWidth = ViewportWidth / _contentScale;
-			ContentViewportHeight = ViewportHeight / _contentScale;
+			ContentViewportWidth = ViewportWidth / ContentScale;
+			ContentViewportHeight = ViewportHeight / ContentScale;
 
-			_constrainedContentViewportWidth = Math.Min(ContentViewportWidth - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
-			_constrainedContentViewportHeight = Math.Min(ContentViewportHeight - VERTICAL_SCROLL_BAR_WIDTH, UnscaledExtent.Height);
+			if (UnscaledExtent.IsEmpty)
+			{
+				_constrainedContentViewportWidth = ContentViewportWidth;
+				_constrainedContentViewportHeight = ContentViewportHeight;
+			}
+			else
+			{
+				Debug.Assert(UnscaledExtent.Width != double.NegativeInfinity && UnscaledExtent.Height != double.NegativeInfinity, "UnscaledExtent is not empty but the Width or Height is Negative Infinity.");
+				_constrainedContentViewportWidth = Math.Min(ContentViewportWidth - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
+				_constrainedContentViewportHeight = Math.Min(ContentViewportHeight - VERTICAL_SCROLL_BAR_WIDTH, UnscaledExtent.Height);
+			}
 
 			UpdateTranslationX();
 			UpdateTranslationY();
@@ -746,7 +764,7 @@ namespace MSetExplorer
 		{
 			if (_contentOffsetTransform != null)
 			{
-				double scaledContentWidth = UnscaledExtent.Width * _contentScale;
+				double scaledContentWidth = UnscaledExtent.Width * ContentScale;
 				if (scaledContentWidth < ViewportWidth)
 				{
 					//
@@ -768,7 +786,7 @@ namespace MSetExplorer
 		{
 			if (_contentOffsetTransform != null)
 			{
-				double scaledContentHeight = UnscaledExtent.Height * _contentScale;
+				double scaledContentHeight = UnscaledExtent.Height * ContentScale;
 				if (scaledContentHeight < ViewportHeight)
 				{
 					//
@@ -845,12 +863,24 @@ namespace MSetExplorer
 			double maxOffsetX = c.UnscaledExtent.IsEmpty ? 0.0 : Math.Max(0.0, c.UnscaledExtent.Width - c._constrainedContentViewportWidth);
 			value = Math.Min(Math.Max(value, minOffsetX), maxOffsetX);
 
-			Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}. UnscaledExtent.Width: {c.UnscaledExtent.Width}, ContrainedContentViewportWidth: {c._constrainedContentViewportWidth}. " +
-				$"ViewportWidth: {c.ViewportWidth} ContentViewPortWidth: {c.ContentViewportWidth}. " +
-				$"Gaps: {gap}, {gap2a}, {gap2}");
+			if (gap || gap2)
+			{
+				Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}. UnscaledExtent.Width: {c.UnscaledExtent.Width}, ContrainedContentViewportWidth: {c._constrainedContentViewportWidth}. " +
+					$"ViewportWidth: {c.ViewportWidth} ContentViewPortWidth: {c.ContentViewportWidth}. " +
+					$"Gaps: {gap}, {gap2a}, {gap2}");
+			}
 
 			return value;
 		}
+
+		/*
+
+			ContentViewportWidth = ViewportWidth / ContentScale;
+			_constrainedContentViewportWidth = Math.Min(ContentViewportWidth - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
+
+		*/
+
+
 
 		/// <summary>
 		/// Get/set the X offset (in content coordinates) of the view on the content.

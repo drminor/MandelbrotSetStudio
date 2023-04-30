@@ -21,7 +21,8 @@ namespace MSetExplorer
 
 		private const double VERTICAL_SCROLL_BAR_WIDTH = 17;
 		private const double HORIZONTAL_SCROLL_BAR_WIDTH = 17;
-		private double _contentScale = 1.0d;
+
+		//private double _contentScale = 1.0d;
 
 		private bool _canHScroll = true;
 		private bool _canVScroll = true;
@@ -55,18 +56,6 @@ namespace MSetExplorer
 			set => _canVScroll = value;
 		}
 
-		public ZoomSlider? ZoomSliderOwner
-		{
-			get => _zoomSlider;
-			set => _zoomSlider = value;
-		}
-		
-		public bool CanZoom
-		{
-			get => _canZoom;
-			set => _canZoom = value;
-		}
-
 		public double ExtentWidth
 		{
 			get
@@ -79,7 +68,7 @@ namespace MSetExplorer
 				//	Debug.WriteLine("WARNING: ExtentWidth < 10.");
 				//}
 
-				return nrmExtentWidth * _contentScale;
+				return nrmExtentWidth * ContentScale;
 			}
 		}
 
@@ -95,7 +84,7 @@ namespace MSetExplorer
 				//	Debug.WriteLine("WARNING: ExtentHeight < 10.");
 				//}
 
-				return nrmExtentHeight * _contentScale;
+				return nrmExtentHeight * ContentScale;
 			}
 		}
 
@@ -104,7 +93,7 @@ namespace MSetExplorer
 			get
 			{	
 				//Debug.WriteLine($"Vpw: {ViewPortSize.Width}. Ew: {ExtentWidth}.");
-				return _viewPortSize.Width;
+				return ContainerSize.Width;
 			}
 		}
 
@@ -113,12 +102,12 @@ namespace MSetExplorer
 			get
 			{
 				//Debug.WriteLine($"Vph: {ViewPortSize.Height}. Eh: {ExtentHeight}");
-				return _viewPortSize.Height;
+				return ContainerSize.Height;
 			}
 		}
 
-		public double HorizontalOffset => ContentOffsetX * _contentScale;
-		public double VerticalOffset => ContentOffsetY * _contentScale;
+		public double HorizontalOffset => ContentOffsetX * ContentScale;
+		public double VerticalOffset => ContentOffsetY * ContentScale;
 
 		/// <summary>
 		/// Called when the offset of the horizontal scrollbar has been set.
@@ -134,7 +123,7 @@ namespace MSetExplorer
 			{
 				_disableScrollOffsetSync = true;
 
-				ContentOffsetX = offset / _contentScale;
+				ContentOffsetX = offset / ContentScale;
 			}
 			finally
 			{
@@ -156,7 +145,7 @@ namespace MSetExplorer
 			{
 				_disableScrollOffsetSync = true;
 
-				ContentOffsetY = offset / _contentScale;
+				ContentOffsetY = offset / ContentScale;
 			}
 			finally
 			{
@@ -262,6 +251,55 @@ namespace MSetExplorer
 
 			ContentOffsetX = contentOffset.X;
 			ContentOffsetY = contentOffset.Y;
+		}
+
+		#endregion
+
+		#region IContentScaleInfo Support
+
+		public ZoomSlider? ZoomSliderOwner
+		{
+			get => _zoomSlider;
+			set => _zoomSlider = value;
+		}
+
+		public bool CanZoom
+		{
+			get => _canZoom;
+			set => _canZoom = value;
+		}
+
+		public double Scale
+		{
+			get
+			{
+				//Debug.WriteLine($"Our Scale property is being read: {ContentScale}.");
+				return ContentScale;
+			}
+		}
+
+		public double MinScale
+		{
+			get
+			{
+				//Debug.WriteLine($"Our MinScale property is being read: {MinContentScale}.");
+				return MinContentScale;
+			}
+		}
+
+		public double MaxScale
+		{
+			get
+			{
+				//Debug.WriteLine($"Our MaxScale property is being read: {MaxContentScale}.");
+				return MaxContentScale;
+			}
+
+		}
+
+		public void SetScale(double contentScale)
+		{
+			SetValue(ContentScaleProperty, contentScale);
 		}
 
 		#endregion

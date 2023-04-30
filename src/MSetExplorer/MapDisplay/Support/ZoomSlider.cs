@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows.Controls.Primitives;
 
 namespace MSetExplorer
@@ -7,6 +8,8 @@ namespace MSetExplorer
 	{
 		private readonly ScrollBar _scrollbar;
 		private readonly IContentScaleInfo _zoomedControl;
+
+		private bool _disableScrollValueSync = false;
 
 		public ZoomSlider(ScrollBar scrollBar, IContentScaleInfo zoomedControl)
 		{
@@ -18,30 +21,46 @@ namespace MSetExplorer
 
 		private void _scrollbar_ValueChanged(object sender, System.Windows.RoutedPropertyChangedEventArgs<double> e)
 		{
-			if (_zoomedControl.CanZoom)
+			if (!_disableScrollValueSync)
 			{
-				_zoomedControl.SetContentScale(_scrollbar.Value);
+				if (_zoomedControl.CanZoom)
+				{
+					_zoomedControl.SetScale(_scrollbar.Value);
+				}
 			}
 		}
 
 		public void ContentScaleWasUpdated(double scale)
 		{
-			// TODO: Validate that Min < scale and scale < Max
+			Debug.Assert(scale > _scrollbar.Minimum && scale < _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {scale}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
 			_scrollbar.Value = scale;
 		}
 
 		public void InvalidateScaleContentInfo()
 		{
+			if (_disableScrollValueSync)
+			{
+				return;
+			}
+
 			if (_zoomedControl.CanZoom)
 			{
-				// TODO: Set the scrollBar Max, Min and value in the correct order.
-				_scrollbar.Maximum = _zoomedControl.MaxContentScale;
-				_scrollbar.Minimum = _zoomedControl.MinContentScale;
-				_scrollbar.Value = _zoomedControl.ContentScale;
+				_disableScrollValueSync = true;
 
-				_scrollbar.SmallChange = 2;
-				_scrollbar.LargeChange = 4;
+				try
+				{
+					_scrollbar.Value = 0;
+					_scrollbar.Maximum = _zoomedControl.MaxScale;
+					_scrollbar.Minimum = _zoomedControl.MinScale;
 
+					_scrollbar.SmallChange = 2;
+					_scrollbar.LargeChange = 4;
+				}
+				finally
+				{
+					_disableScrollValueSync = false;
+					_scrollbar.Value = _zoomedControl.Scale;
+				}
 			}
 		}
 

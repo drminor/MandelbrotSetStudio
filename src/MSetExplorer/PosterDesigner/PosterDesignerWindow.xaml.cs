@@ -54,7 +54,7 @@ namespace MSetExplorer
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 
 			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
-			mapDisplayZoom1.DataContext = _vm.MapDisplayViewModel;
+			//mapDisplayZoom1.DataContext = _vm.MapDisplayViewModel;
 
 			_vm.MapDisplayViewModel.ZoomSliderFactory = CreateNewZoomSlider;
 
@@ -65,7 +65,7 @@ namespace MSetExplorer
 
 		private ZoomSlider CreateNewZoomSlider(IContentScaleInfo controlToBeZoomed)
 		{
-			var sb = mapDisplayZoom1.scrollBarZoomValue;
+			var sb = mapDisplayZoom1.scrollBar1;
 
 			var result = new ZoomSlider(sb, controlToBeZoomed);
 			_zoomSlidersToDispose.Add(result);
@@ -799,9 +799,11 @@ namespace MSetExplorer
 			CoordsEditorViewModel coordsEditorViewModel;
 
 			var curPoster = _vm.PosterViewModel.CurrentPoster;
-			var posterSize = _vm.MapDisplayViewModel.UnscaledExtent;
 
-			if (! (curPoster != null && !posterSize.IsEmpty) )
+			// TODO: Convert UnscaledExtent to SizeDbl on MapDisplayViewModel.
+			var posterSize = ScreenTypeHelper.ConvertToSizeDbl(_vm.MapDisplayViewModel.UnscaledExtent);
+
+			if (! (curPoster != null && !posterSize.IsNAN()) )
 			{
 				return;
 			}
@@ -1088,7 +1090,8 @@ namespace MSetExplorer
 				_ => baseAmount * 8,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.ViewPortSize.Round(), targetAmount);
+			var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
 
 			return result;
 		}
@@ -1121,8 +1124,11 @@ namespace MSetExplorer
 			//_ = MessageBox.Show($"Zooming Out. Amount = {amount}.");
 
 			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
-			var curArea = new RectangleInt(new PointInt(), _vm.MapDisplayViewModel.ViewPortSize.Round());
-			var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
+
+			var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+
+			var curArea = new RectangleInt(new PointInt(), displaySize.Round());
+			//var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
 			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea, _vm.PosterViewModel.CanvasSize);
 			_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo);
@@ -1139,7 +1145,8 @@ namespace MSetExplorer
 				_ => baseAmount * 32,
 			};
 
-			var result = RMapHelper.CalculatePitch(_vm.MapDisplayViewModel.ViewPortSize.Round(), targetAmount);
+			var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
 
 			return result;
 		}

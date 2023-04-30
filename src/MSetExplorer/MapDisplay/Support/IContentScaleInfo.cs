@@ -6,11 +6,11 @@
 
 		bool CanZoom { get; set;}
 
-		double ContentScale { get; }
-		double MinContentScale { get; }
-		double MaxContentScale { get; }
+		double Scale { get; }
+		double MinScale { get; }
+		double MaxScale { get; }
 
-		void SetContentScale(double contentScale);
+		void SetScale(double scale);
 	}
 
 }

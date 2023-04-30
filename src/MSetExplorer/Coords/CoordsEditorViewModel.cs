@@ -9,7 +9,7 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
-		private readonly Size _displaySize;
+		private readonly SizeDbl _displaySize;
 
 		private RRectangle _coords;
 		private bool _coordsAreDirty;
@@ -17,9 +17,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfoV2, Size displaySize, bool allowEdits)
+		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfoV2, SizeDbl displaySize, bool allowEdits)
 		{
-			var mapAreaInfo = mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfoV2, ScreenTypeHelper.ConvertToSizeInt(_displaySize));
+			var mapAreaInfo = mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfoV2, _displaySize.Round());
 			_coords = mapAreaInfo.Coords;
 
 			StartingX = new SingleCoordEditorViewModel(_coords.Left);

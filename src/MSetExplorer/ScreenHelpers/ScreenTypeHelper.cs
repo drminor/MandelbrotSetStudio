@@ -67,7 +67,14 @@ namespace MSetExplorer
 
 		public static SizeDbl ConvertToSizeDbl(Size size)
 		{
-			return new SizeDbl(size.Width, size.Height);
+			if (size.IsEmpty)
+			{
+				return new SizeDbl(double.NaN, double.NaN);
+			}
+			else
+			{
+				return new SizeDbl(size.Width, size.Height);
+			}
 		}
 
 		public static RectangleDbl ConvertToRectangleDbl(Rect rect)
@@ -87,6 +94,11 @@ namespace MSetExplorer
 
 		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b, double threshold = 0.1)
 		{
+			if (a.IsNAN() && !b.IsNAN() || (!a.IsNAN()) && b.IsNAN())
+			{
+				return true;
+			}
+
 			if (a.IsNAN() || b.IsNAN())
 			{
 				return false;
