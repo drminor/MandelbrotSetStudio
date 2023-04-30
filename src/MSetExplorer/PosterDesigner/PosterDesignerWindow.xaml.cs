@@ -4,6 +4,7 @@ using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -27,15 +28,18 @@ namespace MSetExplorer
 
 		private IPosterDesignerViewModel _vm;
 
+		private List<ZoomSlider> _zoomSlidersToDispose;
+
 		private CreateImageProgressWindow? _createImageProgressWindow;
 
 		#region Constructor
 
 		public PosterDesignerWindow(IPosterDesignerViewModel dataContext, AppNavRequestResponse appNavRequestResponse)
 		{
-			//_vm = (IPosterDesignerViewModel)DataContext;
 			DataContext = dataContext;
 			_vm = dataContext;
+
+			_zoomSlidersToDispose = new List<ZoomSlider>();
 
 			AppNavRequestResponse = appNavRequestResponse;
 			_createImageProgressWindow = null;
@@ -51,9 +55,22 @@ namespace MSetExplorer
 
 			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 			mapDisplayZoom1.DataContext = _vm.MapDisplayViewModel;
+
+			_vm.MapDisplayViewModel.ZoomSliderFactory = CreateNewZoomSlider;
+
 			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
+		}
+
+		private ZoomSlider CreateNewZoomSlider(IContentScaleInfo controlToBeZoomed)
+		{
+			var sb = mapDisplayZoom1.scrollBarZoomValue;
+
+			var result = new ZoomSlider(sb, controlToBeZoomed);
+			_zoomSlidersToDispose.Add(result);
+
+			return result;
 		}
 
 		private void PosterDesignerWindow_Unloaded(object sender, RoutedEventArgs e)
@@ -65,6 +82,11 @@ namespace MSetExplorer
 
 			_vm.PosterViewModel.PropertyChanged -= PosterViewModel_PropertyChanged;
 			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
+
+			foreach (ZoomSlider zoomSlider in _zoomSlidersToDispose)
+			{
+				zoomSlider.Dispose();
+			}
 		}
 
 		private void PosterDesignerWindow_Loaded(object sender, RoutedEventArgs e)

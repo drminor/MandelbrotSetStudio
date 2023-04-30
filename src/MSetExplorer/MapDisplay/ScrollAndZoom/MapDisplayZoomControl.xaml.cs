@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
+﻿using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -12,13 +10,13 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 	/// </summary>
 	public partial class MapDisplayZoomControl : UserControl
 	{
-		private IMapDisplayViewModel2 _vm;
+		//private IMapDisplayViewModel2 _vm;
 
 		#region Constructor
 
 		public MapDisplayZoomControl()
 		{
-			_vm = (IMapDisplayViewModel2)DataContext;
+			//_vm = (IMapDisplayViewModel2)DataContext;
 
 			Loaded += MapDisplayZoomControl_Loaded;
 			InitializeComponent();
@@ -33,83 +31,87 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 			}
 			else
 			{
-				_vm = (IMapDisplayViewModel2)DataContext;
+				//_vm = (IMapDisplayViewModel2)DataContext;
 
-				scrBarZoom.Minimum = 1;
-				scrBarZoom.Value = 1;
+				//scrollBarZoomValue.Minimum = 1;
+				//scrollBarZoomValue.Value = 1;
 
-				scrBarZoom.Maximum = 10;
-				scrBarZoom.SmallChange = 0.1;
-				scrBarZoom.LargeChange = 1;
+				//scrollBarZoomValue.Maximum = 10;
+				//scrollBarZoomValue.SmallChange = 0.1;
+				//scrollBarZoomValue.LargeChange = 1;
 
-				scrBarZoom.Value = 1;
+				//scrollBarZoomValue.Value = 1;
 
-				scrBarZoom.Scroll += ScrBarZoom_Scroll;
+				//scrollBarZoomValue.Scroll += scrollBarZoomValue_Scroll;
 
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				//_vm.PropertyChanged += ViewModel_PropertyChanged;
+
+				scrollBarZoomValue.ValueChanged += ScrollBarZoomValue_ValueChanged;
 
 				Debug.WriteLine("The MapDisplayZoom Control is now loaded.");
 			}
 		}
 
-		private void ScrBarZoom_Scroll(object sender, ScrollEventArgs e)
+		private void ScrollBarZoomValue_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
-			var zoomValue = GetZoomValue(e.ScrollEventType, e.NewValue);
-			if (zoomValue != -1)
-			{
-				_vm.DisplayZoom = zoomValue;
-			}
+			textBlockZoomValue.Text = e.NewValue.ToString("G2");
 		}
 
-		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.MaximumDisplayZoom))
-			{
-				scrBarZoom.Minimum = 1;
-				scrBarZoom.Maximum = 100; // _vm.MaximumDisplayZoom;
-				scrBarZoom.LargeChange = scrBarZoom.Maximum / 8;
-				scrBarZoom.SmallChange = scrBarZoom.LargeChange / 8;
-			}
-			else if (e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
-			{
-				txtblkZoomValue.Text = Math.Round(_vm.DisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
-			}
-		}
+		//private void scrollBarZoomValue_Scroll(object sender, ScrollEventArgs e)
+		//{
+		//	var zoomValue = GetZoomValue(e.ScrollEventType, e.NewValue);
+		//	if (zoomValue != -1)
+		//	{
+		//		_vm.DisplayZoom = zoomValue;
+		//	}
+		//}
+
+		//private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
+		//	if (e.PropertyName == nameof(IMapDisplayViewModel.MaximumDisplayZoom))
+		//	{
+		//		scrollBarZoomValue.Minimum = 1;
+		//		scrollBarZoomValue.Maximum = 100; // _vm.MaximumDisplayZoom;
+		//		scrollBarZoomValue.LargeChange = scrollBarZoomValue.Maximum / 8;
+		//		scrollBarZoomValue.SmallChange = scrollBarZoomValue.LargeChange / 8;
+		//	}
+		//	else if (e.PropertyName == nameof(IMapDisplayViewModel.DisplayZoom))
+		//	{
+		//		textBlockZoomValue.Text = Math.Round(_vm.DisplayZoom, 2).ToString(CultureInfo.InvariantCulture);
+		//	}
+		//}
 
 		#endregion
 
 		#region DisplayZoom Min Max Button Handlers
-		
+
 		private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
 		{
-			var max = 100; //_vm.MaximumDisplayZoom;
-			scrBarZoom.Value = max;
-			_vm.DisplayZoom = max;
+			scrollBarZoomValue.Value = scrollBarZoomValue.Maximum;
 		}
 
 		private void ButtonSetMinZoom_Click(object sender, RoutedEventArgs e)
 		{
-			scrBarZoom.Value = 1;
-			_vm.DisplayZoom = 1;
+			scrollBarZoomValue.Value = scrollBarZoomValue.Minimum;
 		}
 
 		#endregion
 
-		private double GetZoomValue(ScrollEventType et, double val)
-		{
-			return et switch
-			{
-				ScrollEventType.EndScroll => val,
-				ScrollEventType.First => val, // _vm.MaximumDisplayZoom,
-				ScrollEventType.LargeDecrement => val,
-				ScrollEventType.LargeIncrement => val,
-				ScrollEventType.Last => 1,
-				ScrollEventType.SmallDecrement => val,
-				ScrollEventType.SmallIncrement => val,
-				ScrollEventType.ThumbPosition => val,
-				ScrollEventType.ThumbTrack => val,
-				_ => -1,
-			};
-		}
+		//private double GetZoomValue(ScrollEventType et, double val)
+		//{
+		//	return et switch
+		//	{
+		//		ScrollEventType.EndScroll => val,
+		//		ScrollEventType.First => val, // _vm.MaximumDisplayZoom,
+		//		ScrollEventType.LargeDecrement => val,
+		//		ScrollEventType.LargeIncrement => val,
+		//		ScrollEventType.Last => 1,
+		//		ScrollEventType.SmallDecrement => val,
+		//		ScrollEventType.SmallIncrement => val,
+		//		ScrollEventType.ThumbPosition => val,
+		//		ScrollEventType.ThumbTrack => val,
+		//		_ => -1,
+		//	};
+		//}
 	}
 }

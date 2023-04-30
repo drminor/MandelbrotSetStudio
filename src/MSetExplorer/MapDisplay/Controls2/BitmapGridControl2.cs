@@ -15,6 +15,7 @@ namespace MSetExplorer
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 		private ScrollViewer? _scrollOwner;
+		private ZoomSlider? _zoomSlider;
 
 		private FrameworkElement? _content;
 		private Canvas _canvas;
@@ -36,6 +37,7 @@ namespace MSetExplorer
 			};
 
 			_scrollOwner = null;
+			_zoomSlider = null;
 
 			_content = null;
 			_canvas = new Canvas();
@@ -45,6 +47,9 @@ namespace MSetExplorer
 			_containerSize = new SizeDbl();
 			_viewPortSizeInternal = new SizeDbl();
 			_viewPortSize = new SizeDbl();
+
+			MinContentScale = 0.1;
+			MaxContentScale = 15.0;
 		}
 
 		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -151,6 +156,44 @@ namespace MSetExplorer
 			}
 		}
 
+		//public SizeDbl ViewPortSize
+		//{
+		//	get => _viewPortSize;
+		//	set
+		//	{
+		//		if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
+		//		{
+		//			Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewPortSizeChanged event.");
+
+		//			var previousValue = ViewPortSize;
+		//			var copyOfNewValue = value;
+		//			var contentViewPortSizeBefore = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
+
+
+		//			_viewPortSize = value;
+
+
+		//			InvalidateScrollInfo();
+		//			var copyOfNewValue2 = _viewPortSize;
+		//			var contentViewPortSizeAfter = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
+		//			Debug.WriteLine($"The BitmapGridControl just called InvalidateScrollInfo. The ContentViewPortSize before: {contentViewPortSizeBefore}, after: {contentViewPortSizeAfter}. " +
+		//				$"The value of ViewPortSize before raising the event is {copyOfNewValue}, the value after is {_viewPortSize}.");
+
+
+		//			ViewPortSizeChanged?.Invoke(this, (ViewPortSize, value));
+
+		//			var contentViewPortSize2 = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
+
+		//			Debug.WriteLine($"The BitmapGridControl just raised the ViewPortSizeChanged event. The ContentViewPortSize before: {contentViewPortSizeAfter}, after: {contentViewPortSize2}. " +
+		//				$"The value of ViewPortSize before raising the event is {copyOfNewValue2}, the value after is {_viewPortSize}.");
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is already: {_viewPortSize}; not raising the ViewPortSizeChanged event.");
+		//		}
+		//	}
+		//}
+
 		public SizeDbl ViewPortSize
 		{
 			get => _viewPortSize;
@@ -161,26 +204,12 @@ namespace MSetExplorer
 					Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewPortSizeChanged event.");
 
 					var previousValue = ViewPortSize;
-					var copyOfNewValue = value;
-					var contentViewPortSizeBefore = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
-
-
 					_viewPortSize = value;
 
-
-					InvalidateScrollInfo();
-					var copyOfNewValue2 = _viewPortSize;
-					var contentViewPortSizeAfter = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
-					Debug.WriteLine($"The BitmapGridControl just called InvalidateScrollInfo. The ContentViewPortSize before: {contentViewPortSizeBefore}, after: {contentViewPortSizeAfter}. " +
-						$"The value of ViewPortSize before raising the event is {copyOfNewValue}, the value after is {_viewPortSize}.");
-
+					UpdateContentViewportSize();
 
 					ViewPortSizeChanged?.Invoke(this, (ViewPortSize, value));
 
-					var contentViewPortSize2 = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
-
-					Debug.WriteLine($"The BitmapGridControl just raised the ViewPortSizeChanged event. The ContentViewPortSize before: {contentViewPortSizeAfter}, after: {contentViewPortSize2}. " +
-						$"The value of ViewPortSize before raising the event is {copyOfNewValue2}, the value after is {_viewPortSize}.");
 				}
 				else
 				{
@@ -460,6 +489,145 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region ContentScale Dependency Property
+
+		public static readonly DependencyProperty ContentScaleProperty =
+				DependencyProperty.Register("ContentScale", typeof(double), typeof(BitmapGridControl2),
+											new FrameworkPropertyMetadata(1.0, ContentScale_PropertyChanged, ContentScale_Coerce));
+
+		/// <summary>
+		/// Event raised when the 'ContentScale' property has changed value.
+		/// </summary>
+		private static void ContentScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			BitmapGridControl2 c = (BitmapGridControl2)o;
+
+			if (c._contentScaleTransform != null)
+			{
+				//
+				// Update the content scale transform whenever 'ContentScale' changes.
+				//
+				c._contentScaleTransform.ScaleX = c.ContentScale;
+				c._contentScaleTransform.ScaleY = c.ContentScale;
+			}
+
+			//
+			// Update the size of the viewport in content coordinates.
+			//
+			c.UpdateContentViewportSize();
+
+			if (c._enableContentOffsetUpdateFromScale)
+			{
+				try
+				{
+					// 
+					// Disable content focus syncronization.  We are about to update content offset whilst zooming
+					// to ensure that the viewport is focused on our desired content focus point.  Setting this
+					// to 'true' stops the automatic update of the content focus when content offset changes.
+					//
+					c._disableContentFocusSync = true;
+
+					//
+					// Whilst zooming in or out keep the content offset up-to-date so that the viewport is always
+					// focused on the content focus point (and also so that the content focus is locked to the 
+					// viewport focus point - this is how the google maps style zooming works).
+					//
+					//double viewportOffsetX = c.ViewportZoomFocusX - (c.ViewportWidth / 2);
+					//double viewportOffsetY = c.ViewportZoomFocusY - (c.ViewportHeight / 2);
+
+					//double contentOffsetX = viewportOffsetX / c.ContentScale;
+					//double contentOffsetY = viewportOffsetY / c.ContentScale;
+
+					//c.ContentOffsetX = (c.ContentZoomFocusX - (c.ContentViewportWidth / 2)) - contentOffsetX;
+					//c.ContentOffsetY = (c.ContentZoomFocusY - (c.ContentViewportHeight / 2)) - contentOffsetY;
+				}
+				finally
+				{
+					c._disableContentFocusSync = false;
+				}
+			}
+
+			if (c.ContentScaleChanged != null)
+			{
+				c.ContentScaleChanged(c, EventArgs.Empty);
+			}
+
+			c.ZoomSliderOwner?.ContentScaleWasUpdated(c.ContentScale);
+
+			c.InvalidateScrollInfo();
+		}
+
+		/// <summary>
+		/// Method called to clamp the 'ContentScale' value to its valid range.
+		/// </summary>
+		private static object ContentScale_Coerce(DependencyObject d, object baseValue)
+		{
+			BitmapGridControl2 c = (BitmapGridControl2)d;
+			double value = (double)baseValue;
+			value = Math.Min(Math.Max(value, c.MinContentScale), c.MaxContentScale);
+			return value;
+		}
+
+		/// <summary>
+		/// Get/set the current scale (or zoom factor) of the content.
+		/// </summary>
+		public double ContentScale
+		{
+			get => (double)GetValue(ContentScaleProperty);
+			set => SetValue(ContentScaleProperty, value);
+		}
+
+		public void SetContentScale(double contentScale)
+		{
+			SetValue(ContentScaleProperty, contentScale);
+		}
+
+		/// <summary>
+		/// Event raised when the ContentScale property has changed.
+		/// </summary>
+		public event EventHandler? ContentScaleChanged;
+
+		#endregion
+
+		#region MinContentScale and MaxContentScale Dependency Properties
+
+		public static readonly DependencyProperty MinContentScaleProperty =
+				DependencyProperty.Register("MinContentScale", typeof(double), typeof(BitmapGridControl2),
+											new FrameworkPropertyMetadata(0.01, MinOrMaxContentScale_PropertyChanged));
+
+
+		public static readonly DependencyProperty MaxContentScaleProperty =
+				DependencyProperty.Register("MaxContentScale", typeof(double), typeof(BitmapGridControl2),
+											new FrameworkPropertyMetadata(10.0, MinOrMaxContentScale_PropertyChanged));
+
+		/// <summary>
+		/// Event raised 'MinContentScale' or 'MaxContentScale' has changed.
+		/// </summary>
+		private static void MinOrMaxContentScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			BitmapGridControl2 c = (BitmapGridControl2)o;
+			c.ContentScale = Math.Min(Math.Max(c.ContentScale, c.MinContentScale), c.MaxContentScale);
+
+			c.ZoomSliderOwner?.InvalidateScaleContentInfo();
+		}
+
+		public double MinContentScale
+		{
+			get => (double)GetValue(MinContentScaleProperty);
+			set => SetValue(MinContentScaleProperty, value);
+		}
+
+		/// <summary>
+		/// Get/set the maximum value for 'ContentScale'.
+		/// </summary>
+		public double MaxContentScale
+		{
+			get => (double)GetValue(MaxContentScaleProperty);
+			set => SetValue(MaxContentScaleProperty, value);
+		}
+
+		#endregion
+
 		#endregion Dependency Properties
 
 		#region Scroll Support
@@ -474,13 +642,13 @@ namespace MSetExplorer
 		///// <summary>
 		///// The transform that is applied to the content to scale it by 'ContentScale'.
 		///// </summary>
-		//private ScaleTransform? _contentScaleTransform = null;
+		private ScaleTransform? _contentScaleTransform = null;
 
 		///// <summary>
 		///// Enable the update of the content offset as the content scale changes.
 		///// This enabled for zooming about a point (google-maps style zooming) and zooming to a rect.
 		///// </summary>
-		//private bool _enableContentOffsetUpdateFromScale = false;
+		private bool _enableContentOffsetUpdateFromScale = false;
 
 		/// <summary>
 		/// Used to disable syncronization between IScrollInfo interface and ContentOffsetX/ContentOffsetY.
@@ -666,12 +834,20 @@ namespace MSetExplorer
 		private static object ContentOffsetX_Coerce(DependencyObject d, object baseValue)
 		{
 			BitmapGridControl2 c = (BitmapGridControl2)d;
+
+			var gap = c.ContentViewportWidth != c.ViewportWidth;
+
+			var gap2a = Math.Min(c.ContentViewportWidth - HORIZONTAL_SCROLL_BAR_WIDTH, c.UnscaledExtent.Width);
+			var gap2 = c._constrainedContentViewportWidth != gap2a;
+
 			double value = (double)baseValue;
 			double minOffsetX = 0.0;
 			double maxOffsetX = c.UnscaledExtent.IsEmpty ? 0.0 : Math.Max(0.0, c.UnscaledExtent.Width - c._constrainedContentViewportWidth);
 			value = Math.Min(Math.Max(value, minOffsetX), maxOffsetX);
 
-			Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}. UnscaledExtent.Width: {c.UnscaledExtent.Width}, ContrainedContentViewportWidth: {c._constrainedContentViewportWidth}. ViewportWidth: {c.ViewportWidth} ContentViewPortWidth: {c.ContentViewportWidth}.");
+			Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}. UnscaledExtent.Width: {c.UnscaledExtent.Width}, ContrainedContentViewportWidth: {c._constrainedContentViewportWidth}. " +
+				$"ViewportWidth: {c.ViewportWidth} ContentViewPortWidth: {c.ContentViewportWidth}. " +
+				$"Gaps: {gap}, {gap2a}, {gap2}");
 
 			return value;
 		}
@@ -752,14 +928,7 @@ namespace MSetExplorer
 		/// </summary>
 		public double ContentViewportWidth
 		{
-			get
-			{
-				return (double)GetValue(ContentViewportWidthProperty);
-			}
-			set
-			{
-				SetValue(ContentViewportWidthProperty, value);
-			}
+			get => (double)GetValue(ContentViewportWidthProperty); set => SetValue(ContentViewportWidthProperty, value);
 		}
 
 		#endregion
@@ -775,14 +944,7 @@ namespace MSetExplorer
 		/// </summary>
 		public double ContentViewportHeight
 		{
-			get
-			{
-				return (double)GetValue(ContentViewportHeightProperty);
-			}
-			set
-			{
-				SetValue(ContentViewportHeightProperty, value);
-			}
+			get => (double)GetValue(ContentViewportHeightProperty); set => SetValue(ContentViewportHeightProperty, value);
 		}
 
 		#endregion

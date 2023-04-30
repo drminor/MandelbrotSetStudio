@@ -22,6 +22,8 @@
                     UnscaledExtent="{Binding UnscaledExtent}"
                     BitmapGridImageSource="{Binding ImageSource}"
                     ImageOffset="{Binding ImageOffset}"
+                    ContentScale="{Binding DisplayZoom}"
+                    MaxContentScale="{Binding MaximumDisplayZoom}"
                     />
 
                 <!--<local:BitmapGridControl

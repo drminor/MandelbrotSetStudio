@@ -50,5 +50,7 @@ namespace MSetExplorer
 		void CancelJob();
 		int? RestartLastJob();
 		void ClearDisplay();
+
+		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 	}
 }

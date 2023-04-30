@@ -83,7 +83,7 @@ namespace MSetExplorer
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel/* mapScrollViewModel*/, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
+			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandSetViewModel, colorBandSetHistogramViewModel, jobTreeViewModel,
 				_mapJobHelper, _mapLoaderManager, _viewModelFactory);
 
 			return result;
@@ -176,6 +176,5 @@ namespace MSetExplorer
 
 
 		#endregion
-
 	}
 }

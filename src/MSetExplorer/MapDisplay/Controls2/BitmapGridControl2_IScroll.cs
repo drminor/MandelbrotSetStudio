@@ -15,7 +15,7 @@ namespace MSetExplorer
 	/// 
 	/// </remarks>
 
-	public partial class BitmapGridControl2 : ContentControl, IScrollInfo
+	public partial class BitmapGridControl2 : ContentControl, IScrollInfo, IContentScaleInfo
 	{
 		#region Scroll Info Fields
 
@@ -25,6 +25,8 @@ namespace MSetExplorer
 
 		private bool _canHScroll = true;
 		private bool _canVScroll = true;
+
+		private bool _canZoom = true;
 
 		#endregion
 
@@ -51,6 +53,18 @@ namespace MSetExplorer
 		{
 			get => _canVScroll;
 			set => _canVScroll = value;
+		}
+
+		public ZoomSlider? ZoomSliderOwner
+		{
+			get => _zoomSlider;
+			set => _zoomSlider = value;
+		}
+		
+		public bool CanZoom
+		{
+			get => _canZoom;
+			set => _canZoom = value;
 		}
 
 		public double ExtentWidth

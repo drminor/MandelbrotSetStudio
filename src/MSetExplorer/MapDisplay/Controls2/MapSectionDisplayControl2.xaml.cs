@@ -53,6 +53,11 @@ namespace MSetExplorer
 				_vm = (IMapDisplayViewModel2)DataContext;
 				_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
 
+				if (_vm.ZoomSliderFactory != null)
+				{
+					BitmapGridControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(BitmapGridControl1);
+				}
+
 				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
 				BitmapGridControl1.ContentOffsetXChanged += BitmapGridControl1_ContentOffsetXChanged;
 				BitmapGridControl1.ContentOffsetYChanged += BitmapGridControl1_ContentOffsetYChanged;
@@ -73,6 +78,8 @@ namespace MSetExplorer
 
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
+			BitmapGridControl1.ZoomSliderOwner = null;
+
 			BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
 			BitmapGridControl1.ContentOffsetXChanged -= BitmapGridControl1_ContentOffsetXChanged;
 			BitmapGridControl1.ContentOffsetYChanged -= BitmapGridControl1_ContentOffsetYChanged;

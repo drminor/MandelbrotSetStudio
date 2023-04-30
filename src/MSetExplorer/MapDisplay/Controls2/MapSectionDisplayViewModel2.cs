@@ -68,7 +68,7 @@ namespace MSetExplorer
 			_imageOffset = new VectorDbl();
 
 			_displayZoom = 1;
-			_maximumDisplayZoom = 1;
+			_maximumDisplayZoom = 12;
 		}
 
 		#endregion
@@ -235,34 +235,14 @@ namespace MSetExplorer
 				if (value != _verticalPosition)
 				{
 					_verticalPosition = value;
-					//_invertedVerticalPosition = GetInvertedYPos(value);
 
 					Debug.WriteLine($"Moving to {HorizontalPosition}, {InvertedVerticalPosition}. Uninverted Y:{VerticalPosition}. Poster Size: {UnscaledExtent}. ViewPort: {ViewPortSize}.");
 					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
-
-					//OnPropertyChanged(nameof(IMapDisplayViewModel2.VerticalPosition));
-					//OnPropertyChanged(nameof(IMapDisplayViewModel2.InvertedVerticalPosition));
 				}
 			}
 		}
 
-		//public double InvertedVerticalPosition => VerticalPosition;
 		public double InvertedVerticalPosition => GetInvertedYPos(VerticalPosition);
-
-		//{
-		//	get => _invertedVerticalPosition;
-		//	set
-		//	{
-		//		if (value != _invertedVerticalPosition)
-		//		{
-		//			_invertedVerticalPosition = value;
-		//			_verticalPosition = GetInvertedYPos(value);
-		//			Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
-		//			//OnPropertyChanged(nameof(IMapDisplayViewModel2.InvertedVerticalPosition));
-		//			//OnPropertyChanged(nameof(IMapDisplayViewModel2.VerticalPosition));
-		//		}
-		//	}
-		//}
 
 		public double HorizontalPosition
 		{
@@ -275,7 +255,6 @@ namespace MSetExplorer
 					Debug.WriteLine($"Horizontal Pos: {value}.");
 
 					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
-					//OnPropertyChanged(nameof(IMapDisplayViewModel2.HorizontalPosition));
 				}
 			}
 		}
@@ -306,7 +285,7 @@ namespace MSetExplorer
 
 				//MapDisplayViewModel.DisplayZoom = _displayZoom;
 
-				Debug.WriteLine($"The MapScrollViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+				Debug.WriteLine($"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
 				// Log: Add Spacer
 				Debug.WriteLine("\n\n");
 				OnPropertyChanged(nameof(IMapDisplayViewModel2.DisplayZoom));
@@ -324,18 +303,20 @@ namespace MSetExplorer
 
 					if (DisplayZoom > MaximumDisplayZoom)
 					{
-						Debug.WriteLine($"The MapScrollViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
+						Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
 						DisplayZoom = MaximumDisplayZoom;
 					}
 					else
 					{
-						Debug.WriteLine($"The MapScrollViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
+						Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
 					}
 
 					OnPropertyChanged(nameof(IMapDisplayViewModel2.MaximumDisplayZoom));
 				}
 			}
 		}
+
+		public Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
 		#endregion
 
