@@ -33,11 +33,11 @@ namespace MSetExplorer
 		private SizeDbl _viewPortSize;
 		private VectorDbl _imageOffset;
 
-		private double _invertedVerticalPosition;
+		//private double _invertedVerticalPosition;
 		private double _verticalPosition;
 		private double _horizontalPosition;
 
-		private Size? _posterSize;
+		private Size _unscaledExtent;
 
 		private double _displayZoom;
 		private double _maximumDisplayZoom;
@@ -48,7 +48,7 @@ namespace MSetExplorer
 
 		public MapSectionDisplayViewModel2(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionHelper, SizeInt blockSize)
 		{
-			_posterSize = new Size();
+			_unscaledExtent = new Size();
 			_paintLocker = new object();
 			BlockSize = blockSize;
 
@@ -168,9 +168,18 @@ namespace MSetExplorer
 								ActiveJobNumbers.Add(newJobNumber.Value);
 							}
 						}
+						else
+						{
+							if (LastMapAreaInfo != null)
+								Debug.WriteLine($"Not calling HandleDisplaySizeUpdate, the LastMapAreaInfo.CanvasSize {LastMapAreaInfo.CanvasSize} is the same as the new ViewPortSize: {value}.");
+						}
 
 						OnPropertyChanged(nameof(IMapDisplayViewModel2.ViewPortSize));
 					}
+				}
+				else
+				{
+					Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewPortSize set to {value}.The current value is aleady: {_viewPortSize}, not calling HandleDisplaySizeUpdate, not raising OnPropertyChanged.");
 				}
 			}
 		}
@@ -200,20 +209,20 @@ namespace MSetExplorer
 
 		#region Public Properties - Scroll
 
-		public bool IsBound => PosterSize != null;
+		public bool IsBound => _boundedMapArea != null;
 
-		public Size? PosterSize
+		public Size UnscaledExtent
 		{
-			get => _posterSize;
+			get => _unscaledExtent;
 
 			set
 			{
-				if (value != _posterSize)
+				if (value != _unscaledExtent)
 				{
-					_posterSize = value;
+					_unscaledExtent = value;
 
 					// Let the BitmapGridControl know the entire size.
-					OnPropertyChanged(nameof(IMapDisplayViewModel2.PosterSize));
+					OnPropertyChanged(nameof(IMapDisplayViewModel2.UnscaledExtent));
 				}
 			}
 		}
@@ -226,33 +235,34 @@ namespace MSetExplorer
 				if (value != _verticalPosition)
 				{
 					_verticalPosition = value;
-					_invertedVerticalPosition = GetInvertedYPos(value);
+					//_invertedVerticalPosition = GetInvertedYPos(value);
 
-					MoveTo(new VectorDbl(_horizontalPosition, _invertedVerticalPosition));
+					Debug.WriteLine($"Moving to {HorizontalPosition}, {InvertedVerticalPosition}. Uninverted Y:{VerticalPosition}. Poster Size: {UnscaledExtent}. ViewPort: {ViewPortSize}.");
+					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
 
-
-					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
 					//OnPropertyChanged(nameof(IMapDisplayViewModel2.VerticalPosition));
 					//OnPropertyChanged(nameof(IMapDisplayViewModel2.InvertedVerticalPosition));
 				}
 			}
 		}
 
-		public double InvertedVerticalPosition
-		{
-			get => _invertedVerticalPosition;
-			set
-			{
-				if (value != _invertedVerticalPosition)
-				{
-					_invertedVerticalPosition = value;
-					_verticalPosition = GetInvertedYPos(value);
-					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
-					//OnPropertyChanged(nameof(IMapDisplayViewModel2.InvertedVerticalPosition));
-					//OnPropertyChanged(nameof(IMapDisplayViewModel2.VerticalPosition));
-				}
-			}
-		}
+		//public double InvertedVerticalPosition => VerticalPosition;
+		public double InvertedVerticalPosition => GetInvertedYPos(VerticalPosition);
+
+		//{
+		//	get => _invertedVerticalPosition;
+		//	set
+		//	{
+		//		if (value != _invertedVerticalPosition)
+		//		{
+		//			_invertedVerticalPosition = value;
+		//			_verticalPosition = GetInvertedYPos(value);
+		//			Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
+		//			//OnPropertyChanged(nameof(IMapDisplayViewModel2.InvertedVerticalPosition));
+		//			//OnPropertyChanged(nameof(IMapDisplayViewModel2.VerticalPosition));
+		//		}
+		//	}
+		//}
 
 		public double HorizontalPosition
 		{
@@ -264,7 +274,7 @@ namespace MSetExplorer
 					_horizontalPosition = value;
 					Debug.WriteLine($"Horizontal Pos: {value}.");
 
-					MoveTo(new VectorDbl(_horizontalPosition, _invertedVerticalPosition));
+					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
 					//OnPropertyChanged(nameof(IMapDisplayViewModel2.HorizontalPosition));
 				}
 			}
@@ -376,16 +386,16 @@ namespace MSetExplorer
 
 				int? newJobNumber = null;
 
-				if (posterSize.HasValue)
+				if (posterSize != null)
 				{
 					// Bounded
-					PosterSize = ScreenTypeHelper.ConvertToSize(posterSize.Value);
+					UnscaledExtent = ScreenTypeHelper.ConvertToSize(posterSize.Value);
 
 					// Save the MapAreaInfo for the entire poster.
 					_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue, ViewPortSize, posterSize.Value);
 
 					// Get the MapAreaInfo subset for the upper, left-hand corner.
-					var displayPosition = new VectorDbl(0, 0);
+					var displayPosition = new VectorDbl(0, GetInvertedYPos(0));
 					var mapAreaInfo2Subset = _boundedMapArea.GetView(displayPosition);
 
 					//newJobNumber = HandleDisplayPositionChange(_boundedMapArea.AreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
@@ -399,7 +409,9 @@ namespace MSetExplorer
 				else
 				{
 					// Unbounded
-					PosterSize = null;
+
+					UnscaledExtent = ScreenTypeHelper.ConvertToSize(ViewPortSize);
+
 					_boundedMapArea = null;
 
 					if (newValue != CurrentAreaColorAndCalcSettings)
@@ -439,7 +451,7 @@ namespace MSetExplorer
 				if (currentJob != null && !currentJob.IsEmpty)
 				{
 					var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, ViewPortSize);
-					var newMapSections = _mapLoaderManager.Push(currentJob.OwnerId, currentJob.OwnerType, screenAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
+					var newMapSections = _mapLoaderManager.Push(currentJob.JobId, currentJob.JobOwnerType, screenAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
 					var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
 					Debug.WriteLine($"Restarting paused job: received {newMapSections.Count}, {requestsPending} are being generated.");
@@ -537,7 +549,7 @@ namespace MSetExplorer
 			{
 				if (_boundedMapArea != null)
 				{
-					var displayPosition = new VectorDbl(_horizontalPosition, _invertedVerticalPosition);
+					var displayPosition = new VectorDbl(HorizontalPosition, InvertedVerticalPosition);
 
 					_boundedMapArea.ViewPortSize = ViewPortSize;
 					var mapAreaInfo2Subset = _boundedMapArea.GetView(displayPosition);
@@ -627,7 +639,7 @@ namespace MSetExplorer
 
 			if (sectionsToLoad.Count > 0)
 			{
-				var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
+				var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
 				var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
 				Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
 
@@ -652,7 +664,7 @@ namespace MSetExplorer
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
 
-			var newMapSections = _mapLoaderManager.Push(newJob.OwnerId, newJob.OwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsRequired, MapSectionReady, out var newJobNumber);
+			var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsRequired, MapSectionReady, out var newJobNumber);
 
 			var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
 			Debug.WriteLine($"Clearing Display and Loading New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
@@ -750,16 +762,23 @@ namespace MSetExplorer
 
 		private double GetInvertedYPos(double yPos)
 		{
-			double result = 0;
+			double result;
+			double maxV;
 
-			if (PosterSize.HasValue)
+			if (UnscaledExtent.IsEmpty)
 			{
-				result = PosterSize.Value.Height - yPos;
-
-				var logicalDisplayHeight = ViewPortSize.Height;
-
-				result -= logicalDisplayHeight;
+				maxV = ViewPortSize.Height;
+				result = maxV - yPos;
 			}
+			else
+			{
+				//maxV = UnscaledExtent.Height; //Math.Max(ViewPortSize.Height, PosterSize.Height - ViewPortSize.Height);
+				//result = maxV - (yPos + ViewPortSize.Height);
+
+				maxV = Math.Max(0.0, UnscaledExtent.Height - ViewPortSize.Height);
+				result = maxV - yPos;
+			}
+
 
 			return result;
 		}
@@ -823,7 +842,7 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void ReportSubmitJobDetails(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings? newValue)
 		{
-			var currentJobId = previousValue?.OwnerId ?? ObjectId.Empty.ToString();
+			var currentJobId = previousValue?.JobId ?? ObjectId.Empty.ToString();
 
 			if (newValue == null)
 			{
@@ -831,7 +850,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var newJobId = newValue.OwnerId;
+				var newJobId = newValue.JobId;
 
 				//if (newValue.MapAreaInfo.Coords != finalValue.MapAreaInfo.Coords)
 				//{

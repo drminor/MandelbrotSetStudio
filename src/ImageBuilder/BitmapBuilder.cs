@@ -205,6 +205,11 @@ namespace ImageBuilder
 				var mapSectionResponses = _mapLoaderManager.Push(requests, MapSectionReady, out var newJobNumber);
 				_currentJobNumber = newJobNumber;
 
+				foreach (var response in mapSectionResponses)
+				{
+					_currentResponses.Add(response.ScreenPosition.X, response);
+				}
+
 				var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
 
 				if (task != null)

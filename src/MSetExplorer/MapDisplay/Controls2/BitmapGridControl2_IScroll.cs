@@ -19,9 +19,9 @@ namespace MSetExplorer
 	{
 		#region Scroll Info Fields
 
+		private const double VERTICAL_SCROLL_BAR_WIDTH = 17;
+		private const double HORIZONTAL_SCROLL_BAR_WIDTH = 17;
 		private double _contentScale = 1.0d;
-
-		//private SizeDbl _unscaledExtent = new SizeDbl();
 
 		private bool _canHScroll = true;
 		private bool _canVScroll = true;
@@ -57,12 +57,13 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var nrmExtentWidth = Math.Min(UnscaledExtent.Width, ViewportWidth);
+				//var nrmExtentWidth = UnscaledExtent.IsEmpty ? ViewportWidth : Math.Min(UnscaledExtent.Width, ViewportWidth);
+				var nrmExtentWidth = UnscaledExtent.IsEmpty ? ViewportWidth : UnscaledExtent.Width;
 
-				if (nrmExtentWidth < 1)
-				{
-					Debug.WriteLine("WARNING: ExtentWidth < 1.");
-				}
+				//if (nrmExtentWidth < 10)
+				//{
+				//	Debug.WriteLine("WARNING: ExtentWidth < 10.");
+				//}
 
 				return nrmExtentWidth * _contentScale;
 			}
@@ -72,13 +73,13 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var nrmExtentHeight = Math.Min(UnscaledExtent.Height, ViewportHeight);
+				//var nrmExtentHeight = UnscaledExtent.IsEmpty ? ViewportHeight : Math.Min(UnscaledExtent.Height, ViewportHeight);
+				var nrmExtentHeight = UnscaledExtent.IsEmpty ? ViewportHeight : UnscaledExtent.Height;
 
-				if (nrmExtentHeight < 1)
-				{
-					Debug.WriteLine("WARNING: ExtentHeight < 1.");
-				}
-
+				//if (nrmExtentHeight < 10)
+				//{
+				//	Debug.WriteLine("WARNING: ExtentHeight < 10.");
+				//}
 
 				return nrmExtentHeight * _contentScale;
 			}
@@ -153,13 +154,13 @@ namespace MSetExplorer
 
 		#region Line / Page / MouseWheel 
 
-		public void LineUp() => ContentOffsetY -= (ContentViewportHeight / 10);
+		public void LineDown() => ContentOffsetY += ContentViewportHeight / 10;
 
-		public void LineDown() => ContentOffsetY += (ContentViewportHeight / 10);
+		public void LineUp() => ContentOffsetY -= ContentViewportHeight / 10;
 
-		public void LineLeft() => ContentOffsetX -= (ContentViewportWidth / 10);
+		public void LineLeft() => ContentOffsetX -= ContentViewportWidth / 10;
 
-		public void LineRight() => ContentOffsetX += (ContentViewportWidth / 10);
+		public void LineRight() => ContentOffsetX += ContentViewportWidth / 10;
 
 		public void PageUp() => ContentOffsetY -= ContentViewportHeight;
 
@@ -169,53 +170,13 @@ namespace MSetExplorer
 
 		public void PageRight() => ContentOffsetX += ContentViewportWidth;
 
-		/// <summary>
-		/// Don't handle mouse wheel input from the ScrollViewer, the mouse wheel is
-		/// used for zooming in and out, not for manipulating the scrollbars.
-		/// </summary>
-		public void MouseWheelDown()
-		{
-			if (IsMouseWheelScrollingEnabled)
-			{
-				LineDown();
-			}
-		}
+		public void MouseWheelDown() { if (IsMouseWheelScrollingEnabled) LineDown(); }
 
-		/// <summary>
-		/// Don't handle mouse wheel input from the ScrollViewer, the mouse wheel is
-		/// used for zooming in and out, not for manipulating the scrollbars.
-		/// </summary>
-		public void MouseWheelLeft()
-		{
-			if (IsMouseWheelScrollingEnabled)
-			{
-				LineLeft();
-			}
-		}
+		public void MouseWheelLeft() { if (IsMouseWheelScrollingEnabled) LineLeft(); }
 
-		/// <summary>
-		/// Don't handle mouse wheel input from the ScrollViewer, the mouse wheel is
-		/// used for zooming in and out, not for manipulating the scrollbars.
-		/// </summary>
-		public void MouseWheelRight()
-		{
-			if (IsMouseWheelScrollingEnabled)
-			{
-				LineRight();
-			}
-		}
+		public void MouseWheelRight() { if (IsMouseWheelScrollingEnabled) LineRight(); }
 
-		/// <summary>
-		/// Don't handle mouse wheel input from the ScrollViewer, the mouse wheel is
-		/// used for zooming in and out, not for manipulating the scrollbars.
-		/// </summary>
-		public void MouseWheelUp()
-		{
-			if (IsMouseWheelScrollingEnabled)
-			{
-				LineUp();
-			}
-		}
+		public void MouseWheelUp() { if (IsMouseWheelScrollingEnabled) LineUp(); }
 
 		#endregion
 

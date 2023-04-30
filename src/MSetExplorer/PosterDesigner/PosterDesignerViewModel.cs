@@ -106,9 +106,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, RectangleDbl screenArea, SizeDbl newMapSize)
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt currentPosterSize, RectangleDbl screenArea)
 		{
-			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, posterSize, screenArea, newMapSize);
+			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, currentPosterSize, screenArea);
 			return result;
 		}
 
@@ -125,7 +125,7 @@ namespace MSetExplorer
 
 				MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
-				// UPDATE THE MapDisplayView model for a new Poster or Poster Job.
+				// Update the MapDisplayView model for a new Poster or Poster Job.
 				var currentPoster = PosterViewModel.CurrentPoster;
 
 				if (currentPoster != null)

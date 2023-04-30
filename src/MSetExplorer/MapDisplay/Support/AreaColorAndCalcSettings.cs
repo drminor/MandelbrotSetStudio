@@ -13,17 +13,17 @@ namespace MSetExplorer
 			: this(string.Empty, JobOwnerType.Project, MapAreaInfo2.Empty, new ColorBandSet(), new MapCalcSettings())
 		{ }
 
-		public AreaColorAndCalcSettings(string ownerId, JobOwnerType ownerType, MapAreaInfo2 mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		public AreaColorAndCalcSettings(string jobId, JobOwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
-			OwnerId = ownerId;
-			OwnerType = ownerType;
+			JobId = jobId;
+			JobOwnerType = jobOwnerType;
 			MapAreaInfo = mapAreaInfo;
 			ColorBandSet = colorBandSet;
 			MapCalcSettings = mapCalcSettings;
 		}
 
-		public string OwnerId { get; init; }
-		public JobOwnerType OwnerType { get; init; }
+		public string JobId { get; init; }
+		public JobOwnerType JobOwnerType { get; init; }
 		public MapAreaInfo2 MapAreaInfo { get; init; }
 		public ColorBandSet ColorBandSet { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
@@ -37,12 +37,12 @@ namespace MSetExplorer
 
 		public AreaColorAndCalcSettings Clone()
 		{
-			return new AreaColorAndCalcSettings(OwnerId, OwnerType, MapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
+			return new AreaColorAndCalcSettings(JobId, JobOwnerType, MapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
 		}
 
 		public AreaColorAndCalcSettings UpdateWith(MapAreaInfo2 mapAreaInfo)
 		{
-			return new AreaColorAndCalcSettings(OwnerId, OwnerType, mapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
+			return new AreaColorAndCalcSettings(JobId, JobOwnerType, mapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
 
 		}
 	}

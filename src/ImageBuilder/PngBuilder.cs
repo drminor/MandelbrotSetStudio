@@ -199,7 +199,7 @@ namespace ImageBuilder
 
 			foreach(var response in mapSectionResponses)
 			{
-				//_currentResponses.Add(response.BlockPosition.X, response);
+				_currentResponses.Add(response.ScreenPosition.X, response);
 			}
 
 			var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);

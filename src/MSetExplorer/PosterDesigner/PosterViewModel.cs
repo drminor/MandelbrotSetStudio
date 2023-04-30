@@ -462,12 +462,30 @@ namespace MSetExplorer
 
 		#region Public Methods - Job
 
-		// PosterDesigner Edit Size
+		// Called in preparation to call UpdateMapSpecs
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt currentPosterSize, RectangleDbl screenArea)
+		{
+			var newCenter = screenArea.GetCenter();
+			var oldCenter = new PointDbl(currentPosterSize.Width / 2, currentPosterSize.Height / 2);
+			var zoomPoint = newCenter.Diff(oldCenter).Round();
+
+			var xFactor = currentPosterSize.Width / screenArea.Width;
+			var yFactor = currentPosterSize.Height / screenArea.Height;
+			var factor = Math.Min(xFactor, yFactor);
+
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
+
+			return newMapAreaInfo;
+		}
+
+		// Always called after GetUpdatedMapAreaInfo
 		public void UpdateMapSpecs(Poster currentPoster, MapAreaInfo2 newMapAreaInfo)
 		{
 			AddNewCoordinateUpdateJob(currentPoster, newMapAreaInfo);
 		}
 
+		// Called in response to the MapDisplayViewModel raising a MapViewUpdateRequested event,
+		// or the PosterDesignerView code behind handling a Pan or Zoom UI event.
 		public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
@@ -480,21 +498,6 @@ namespace MSetExplorer
 			}
 
 			AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor);
-		}
-
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize, RectangleDbl screenArea, SizeDbl newMapSize)
-		{
-			var newCenter = screenArea.GetCenter();
-			var oldCenter = new PointDbl(posterSize.Width / 2, posterSize.Height / 2);
-			var zoomPoint = newCenter.Diff(oldCenter).Round();
-
-			var xFactor = posterSize.Width / screenArea.Width;
-			var yFactor = posterSize.Height / screenArea.Height;
-			var factor = Math.Min(xFactor, yFactor);
-
-			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
-
-			return newMapAreaInfo;
 		}
 
 		#endregion
@@ -585,7 +588,6 @@ namespace MSetExplorer
 
 		//	return result;
 		//}
-
 
 		private void ReportNewDisplayInfo(RectangleInt diagScreenArea, RectangleInt screenArea, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
 		{

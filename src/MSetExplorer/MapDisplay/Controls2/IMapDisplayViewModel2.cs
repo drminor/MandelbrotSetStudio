@@ -26,7 +26,7 @@ namespace MSetExplorer
 
 		ImageSource ImageSource { get; set; }
 
-		Size? PosterSize { get; set; }
+		Size UnscaledExtent { get; set; }
 		SizeDbl ViewPortSize { get; set; }
 
 		VectorDbl ImageOffset { get; set; }
@@ -36,7 +36,7 @@ namespace MSetExplorer
 		double HorizontalPosition { get; set; }
 
 		double VerticalPosition { get; set; }
-		double InvertedVerticalPosition { get; set; }
+		double InvertedVerticalPosition { get; }
 
 		double DisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; }

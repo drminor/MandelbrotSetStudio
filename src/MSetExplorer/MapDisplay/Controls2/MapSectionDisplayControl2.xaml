@@ -13,13 +13,13 @@
             <ScrollViewer
                 x:Name="ScrollViewer1"
                 CanContentScroll="True"
-                VerticalScrollBarVisibility="Auto"
-                HorizontalScrollBarVisibility="Auto"
+                VerticalScrollBarVisibility="Visible"
+                HorizontalScrollBarVisibility="Visible"
                 >
 
                 <local:BitmapGridControl2
                     x:Name="BitmapGridControl1"
-                    UnscaledExtent="{Binding PosterSize}"
+                    UnscaledExtent="{Binding UnscaledExtent}"
                     BitmapGridImageSource="{Binding ImageSource}"
                     ImageOffset="{Binding ImageOffset}"
                     />

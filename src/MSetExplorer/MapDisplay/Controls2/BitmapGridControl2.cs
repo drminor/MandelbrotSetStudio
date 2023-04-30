@@ -95,9 +95,12 @@ namespace MSetExplorer
 			get => _containerSize;
 			set
 			{
+				var contentViewPortSize = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
+				Debug.WriteLine($"The BitmapGridControl is having its ContainerSize updated to {value}, the current value is {_containerSize}. The ContentViewPortSize is {contentViewPortSize}.");
+
 				_containerSize = value;
 				
-				InvalidateScrollInfo();
+				//InvalidateScrollInfo();
 				
 				ViewPortSizeInternal = value;
 			}
@@ -155,11 +158,33 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
 				{
-					var previousValue = ViewPortSize;
+					Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewPortSizeChanged event.");
 
-					//_bitmapGrid.ViewPortSize = value;
+					var previousValue = ViewPortSize;
+					var copyOfNewValue = value;
+					var contentViewPortSizeBefore = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
+
+
 					_viewPortSize = value;
+
+
+					InvalidateScrollInfo();
+					var copyOfNewValue2 = _viewPortSize;
+					var contentViewPortSizeAfter = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
+					Debug.WriteLine($"The BitmapGridControl just called InvalidateScrollInfo. The ContentViewPortSize before: {contentViewPortSizeBefore}, after: {contentViewPortSizeAfter}. " +
+						$"The value of ViewPortSize before raising the event is {copyOfNewValue}, the value after is {_viewPortSize}.");
+
+
 					ViewPortSizeChanged?.Invoke(this, (ViewPortSize, value));
+
+					var contentViewPortSize2 = new SizeDbl(ContentViewportWidth, ContentViewportHeight);
+
+					Debug.WriteLine($"The BitmapGridControl just raised the ViewPortSizeChanged event. The ContentViewPortSize before: {contentViewPortSizeAfter}, after: {contentViewPortSize2}. " +
+						$"The value of ViewPortSize before raising the event is {copyOfNewValue2}, the value after is {_viewPortSize}.");
+				}
+				else
+				{
+					Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is already: {_viewPortSize}; not raising the ViewPortSizeChanged event.");
 				}
 			}
 		}
@@ -408,11 +433,9 @@ namespace MSetExplorer
 
 		#region UnscaledExtent Dependency Property
 
-		private static Size DEFAULT_UNSCALED_EXTENT = new Size(0, 0);
-
 		public static readonly DependencyProperty UnscaledExtentProperty = DependencyProperty.Register(
 					"UnscaledExtent", typeof(Size), typeof(BitmapGridControl2),
-					new FrameworkPropertyMetadata(DEFAULT_UNSCALED_EXTENT, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, UnscaledExtent_PropertyChanged));
+					new FrameworkPropertyMetadata(Size.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, UnscaledExtent_PropertyChanged));
 
 		private static void UnscaledExtent_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
@@ -425,6 +448,8 @@ namespace MSetExplorer
 				c.ContentOffsetX = 0;
 				c.ContentOffsetY = 0;
 			}
+
+			c.InvalidateMeasure();
 		}
 
 		public Size UnscaledExtent
@@ -539,8 +564,8 @@ namespace MSetExplorer
 			ContentViewportWidth = ViewportWidth / _contentScale;
 			ContentViewportHeight = ViewportHeight / _contentScale;
 
-			_constrainedContentViewportWidth = Math.Min(ContentViewportWidth, UnscaledExtent.Width);
-			_constrainedContentViewportHeight = Math.Min(ContentViewportHeight, UnscaledExtent.Height);
+			_constrainedContentViewportWidth = Math.Min(ContentViewportWidth - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
+			_constrainedContentViewportHeight = Math.Min(ContentViewportHeight - VERTICAL_SCROLL_BAR_WIDTH, UnscaledExtent.Height);
 
 			UpdateTranslationX();
 			UpdateTranslationY();
@@ -643,11 +668,12 @@ namespace MSetExplorer
 			BitmapGridControl2 c = (BitmapGridControl2)d;
 			double value = (double)baseValue;
 			double minOffsetX = 0.0;
-			double maxOffsetX = Math.Max(0.0, c.UnscaledExtent.Width - c._constrainedContentViewportWidth);
+			double maxOffsetX = c.UnscaledExtent.IsEmpty ? 0.0 : Math.Max(0.0, c.UnscaledExtent.Width - c._constrainedContentViewportWidth);
 			value = Math.Min(Math.Max(value, minOffsetX), maxOffsetX);
-			return value;
 
-			//return baseValue;
+			Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}. UnscaledExtent.Width: {c.UnscaledExtent.Width}, ContrainedContentViewportWidth: {c._constrainedContentViewportWidth}. ViewportWidth: {c.ViewportWidth} ContentViewPortWidth: {c.ContentViewportWidth}.");
+
+			return value;
 		}
 
 		/// <summary>
@@ -696,11 +722,12 @@ namespace MSetExplorer
 			BitmapGridControl2 c = (BitmapGridControl2)d;
 			double value = (double)baseValue;
 			double minOffsetY = 0.0;
-			double maxOffsetY = Math.Max(0.0, c.UnscaledExtent.Height - c._constrainedContentViewportHeight);
+			double maxOffsetY = c.UnscaledExtent.IsEmpty ? 0.0  : Math.Max(0.0, c.UnscaledExtent.Height - c._constrainedContentViewportHeight);
 			value = Math.Min(Math.Max(value, minOffsetY), maxOffsetY);
-			return value;
 
-			//return baseValue;
+			Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}.");
+			
+			return value;
 		}
 
 		/// <summary>
