@@ -40,7 +40,7 @@ namespace MSetExplorer
 
 		public ScrollViewer ScrollOwner
 		{
-			get => _scrollOwner ?? new ScrollViewer();
+			get => _scrollOwner ?? (_scrollOwner = new ScrollViewer());
 			set => _scrollOwner = value;
 		}
 
@@ -56,62 +56,47 @@ namespace MSetExplorer
 			set => _canVScroll = value;
 		}
 
-		public double ExtentWidth
-		{
-			get
-			{
-				//var nrmExtentWidth = UnscaledExtent.IsEmpty ? ViewportWidth : Math.Min(UnscaledExtent.Width, ViewportWidth);
-				var nrmExtentWidth = UnscaledExtent.IsEmpty ? ViewportWidth : UnscaledExtent.Width;
+		public double ExtentWidth => Math.Min(Math.Abs(UnscaledExtent.Width), ViewportWidth) * ContentScale;
+		public double ExtentHeight => Math.Min(Math.Abs(UnscaledExtent.Height), ViewportHeight) * ContentScale;
 
-				//if (nrmExtentWidth < 10)
-				//{
-				//	Debug.WriteLine("WARNING: ExtentWidth < 10.");
-				//}
-
-				return nrmExtentWidth * ContentScale;
-			}
-		}
-
-		public double ExtentHeight
-		{
-			get
-			{
-				//var nrmExtentHeight = UnscaledExtent.IsEmpty ? ViewportHeight : Math.Min(UnscaledExtent.Height, ViewportHeight);
-				var nrmExtentHeight = UnscaledExtent.IsEmpty ? ViewportHeight : UnscaledExtent.Height;
-
-				//if (nrmExtentHeight < 10)
-				//{
-				//	Debug.WriteLine("WARNING: ExtentHeight < 10.");
-				//}
-
-				return nrmExtentHeight * ContentScale;
-			}
-		}
-
-		public double ViewportWidth
-		{
-			get
-			{	
-				//Debug.WriteLine($"Vpw: {ViewPortSize.Width}. Ew: {ExtentWidth}.");
-				return ContainerSize.Width;
-			}
-		}
-
-		public double ViewportHeight
-		{
-			get
-			{
-				//Debug.WriteLine($"Vph: {ViewPortSize.Height}. Eh: {ExtentHeight}");
-				return ContainerSize.Height;
-			}
-		}
+		public double ViewportWidth => ViewPortSizeInternal.Width;
+		public double ViewportHeight => ViewPortSizeInternal.Height;
 
 		public double HorizontalOffset => ContentOffsetX * ContentScale;
 		public double VerticalOffset => ContentOffsetY * ContentScale;
 
-		/// <summary>
-		/// Called when the offset of the horizontal scrollbar has been set.
-		/// </summary>
+		#endregion
+
+		#region Line / Page / MouseWheel 
+
+		public void LineDown() => ContentOffsetY += ContentViewportSize.Height / 10;
+
+		public void LineUp() => ContentOffsetY -= ContentViewportSize.Height / 10;
+
+		public void LineLeft() => ContentOffsetX -= ContentViewportSize.Width / 10;
+
+		public void LineRight() => ContentOffsetX += ContentViewportSize.Width / 10;
+
+		public void PageUp() => ContentOffsetY -= ContentViewportSize.Height;
+
+		public void PageDown() => ContentOffsetY += ContentViewportSize.Height;
+
+		public void PageLeft() => ContentOffsetX -= ContentViewportSize.Width;
+
+		public void PageRight() => ContentOffsetX += ContentViewportSize.Width;
+
+		public void MouseWheelDown() { if (IsMouseWheelScrollingEnabled) LineDown(); }
+
+		public void MouseWheelLeft() { if (IsMouseWheelScrollingEnabled) LineLeft(); }
+
+		public void MouseWheelRight() { if (IsMouseWheelScrollingEnabled) LineRight(); }
+
+		public void MouseWheelUp() { if (IsMouseWheelScrollingEnabled) LineUp(); }
+
+		#endregion
+
+		#region SetHorizontalOffset, SetVerticalOffset and  MakeVisible 
+
 		public void SetHorizontalOffset(double offset)
 		{
 			if (_disableScrollOffsetSync)
@@ -131,9 +116,6 @@ namespace MSetExplorer
 			}
 		}
 
-		/// <summary>
-		/// Called when the offset of the vertical scrollbar has been set.
-		/// </summary>
 		public void SetVerticalOffset(double offset)
 		{
 			if (_disableScrollOffsetSync)
@@ -153,37 +135,6 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
-
-		#region Line / Page / MouseWheel 
-
-		public void LineDown() => ContentOffsetY += ContentViewportHeight / 10;
-
-		public void LineUp() => ContentOffsetY -= ContentViewportHeight / 10;
-
-		public void LineLeft() => ContentOffsetX -= ContentViewportWidth / 10;
-
-		public void LineRight() => ContentOffsetX += ContentViewportWidth / 10;
-
-		public void PageUp() => ContentOffsetY -= ContentViewportHeight;
-
-		public void PageDown() => ContentOffsetY += ContentViewportHeight;
-
-		public void PageLeft() => ContentOffsetX -= ContentViewportWidth;
-
-		public void PageRight() => ContentOffsetX += ContentViewportWidth;
-
-		public void MouseWheelDown() { if (IsMouseWheelScrollingEnabled) LineDown(); }
-
-		public void MouseWheelLeft() { if (IsMouseWheelScrollingEnabled) LineLeft(); }
-
-		public void MouseWheelRight() { if (IsMouseWheelScrollingEnabled) LineRight(); }
-
-		public void MouseWheelUp() { if (IsMouseWheelScrollingEnabled) LineUp(); }
-
-		#endregion
-
-		#region MakeVisible 
 
 		/// <summary>
 		/// Bring the specified rectangle to view.
@@ -199,7 +150,8 @@ namespace MSetExplorer
 			if (_content.IsAncestorOf(visual))
 			{
 				Rect transformedRect = visual.TransformToAncestor(_content).TransformBounds(rectangle);
-				Rect viewportRect = new Rect(ContentOffsetX, ContentOffsetY, ContentViewportWidth, ContentViewportHeight);
+				Rect viewportRect = new Rect(new Point(ContentOffsetX, ContentOffsetY), ScreenTypeHelper.ConvertToSize(ContentViewportSize));
+				
 				if (!transformedRect.Contains(viewportRect))
 				{
 					double horizOffset = 0;
@@ -269,38 +221,13 @@ namespace MSetExplorer
 			set => _canZoom = value;
 		}
 
-		public double Scale
-		{
-			get
-			{
-				//Debug.WriteLine($"Our Scale property is being read: {ContentScale}.");
-				return ContentScale;
-			}
-		}
+		public double Scale => ContentScale;
 
-		public double MinScale
-		{
-			get
-			{
-				//Debug.WriteLine($"Our MinScale property is being read: {MinContentScale}.");
-				return MinContentScale;
-			}
-		}
+		public double MinScale => MinContentScale;
 
-		public double MaxScale
-		{
-			get
-			{
-				//Debug.WriteLine($"Our MaxScale property is being read: {MaxContentScale}.");
-				return MaxContentScale;
-			}
+		public double MaxScale => MaxContentScale;
 
-		}
-
-		public void SetScale(double contentScale)
-		{
-			SetValue(ContentScaleProperty, contentScale);
-		}
+		public void SetScale(double contentScale) => SetValue(ContentScaleProperty, contentScale);
 
 		#endregion
 

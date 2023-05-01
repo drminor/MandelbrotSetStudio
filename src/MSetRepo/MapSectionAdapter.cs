@@ -576,7 +576,7 @@ namespace MSetRepo
 
 		#region Subdivision
 
-		public bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [MaybeNullWhen(false)] out Subdivision subdivision)
+		public bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [NotNullWhen(true)] out Subdivision? subdivision)
 		{
 			//var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 

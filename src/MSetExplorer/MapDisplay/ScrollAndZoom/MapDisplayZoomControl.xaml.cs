@@ -20,7 +20,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 
 		private void MapDisplayZoomControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			//SetScrollBarSettings(scrollBar1);
+			SetScrollBarSettings(scrollBar1);
 			scrollBar1.ValueChanged += ScrollBar1_ValueChanged;
 			Debug.WriteLine("The MapDisplayZoom Control is now loaded.");
 		}
@@ -48,12 +48,12 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 
 		private void SetScrollBarSettings(ScrollBar sb)
 		{
-			sb.Minimum = 1;
+			sb.Minimum = 0.0625;
 			sb.Value = 1;
 
-			sb.Maximum = 10;
-			sb.SmallChange = 0.1;
-			sb.LargeChange = 1;
+			sb.Maximum = 1;
+			sb.SmallChange = 0.125;
+			sb.LargeChange = 0.25;
 
 			sb.Value = 1;
 		}

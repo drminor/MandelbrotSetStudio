@@ -32,7 +32,7 @@ namespace MSetExplorer
 
 		public void ContentScaleWasUpdated(double scale)
 		{
-			Debug.Assert(scale > _scrollbar.Minimum && scale < _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {scale}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
+			Debug.Assert(scale >= _scrollbar.Minimum && scale <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {scale}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
 			_scrollbar.Value = scale;
 		}
 
