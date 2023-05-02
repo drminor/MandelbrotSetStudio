@@ -32,7 +32,7 @@ namespace MSetExplorer
 			JobTreeViewModel = jobTreeViewModel;
 
 			MapDisplayViewModel = mapDisplayViewModel;
-			MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
+			//MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
@@ -195,16 +195,16 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			// Let the Map Project know about Map Display size changes
-			if (e.PropertyName == nameof(IMapDisplayViewModel2.ViewPortSize))
-			{
-				DispWidth = MapDisplayViewModel.ViewPortSize.Width;
-				DispHeight = MapDisplayViewModel.ViewPortSize.Height;
-				//ProjectViewModel.CanvasSize = MapDisplayViewModel.ViewPortSize.Round();
-			}
-		}
+		//private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		//{
+		//	// Let the Map Project know about Map Display size changes
+		//	if (e.PropertyName == nameof(IMapDisplayViewModel2.ViewPortSize))
+		//	{
+		//		DispWidth = MapDisplayViewModel.ViewPortSize.Width;
+		//		DispHeight = MapDisplayViewModel.ViewPortSize.Height;
+		//		//ProjectViewModel.CanvasSize = MapDisplayViewModel.ViewPortSize.Round();
+		//	}
+		//}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
@@ -276,7 +276,16 @@ namespace MSetExplorer
 				if (disposing)
 				{
 					// Dispose managed state (managed objects)
+
+					MapDisplayViewModel.MapViewUpdateRequested -= MapDisplayViewModel_MapViewUpdateRequested;
+					MapDisplayViewModel.DisplayJobCompleted -= MapDisplayViewModel_DisplayJobCompleted;
+
+					MapCalcSettingsViewModel.MapSettingsUpdateRequested -= MapCalcSettingsViewModel_MapSettingsUpdateRequested;
+					ColorBandSetViewModel.PropertyChanged -= ColorBandViewModel_PropertyChanged;
+					ColorBandSetViewModel.ColorBandSetUpdateRequested -= ColorBandSetViewModel_ColorBandSetUpdateRequested;
+
 					MapDisplayViewModel.Dispose();
+					ColorBandSetViewModel.Dispose();
 				}
 
 				disposedValue = true;

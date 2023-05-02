@@ -64,7 +64,7 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapScrollViewModel.MaximumDisplayZoom))
+			if (e.PropertyName == nameof(ICbshScrollViewModel.MaximumDisplayZoom))
 			{
 				scrBarZoom.Minimum = 1;
 				scrBarZoom.Maximum = _vm.MaximumDisplayZoom;

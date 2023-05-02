@@ -49,9 +49,8 @@ namespace MSetExplorer
 		public SelectionRectangle(Canvas canvas, SizeDbl displaySize, SizeInt blockSize)
 		{
 			_canvas = canvas;
+			_displaySize = displaySize;
 			_blockSize = blockSize;
-
-			_displaySize = displaySize; // mapDisplayViewModel.CanvasSize;
 			_mapAreaInfo = null;
 
 			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
@@ -125,6 +124,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public bool IsEnabled { get; set; }
+
 		public SizeDbl DisplaySize
 		{
 			get => _displaySize;
@@ -133,7 +134,7 @@ namespace MSetExplorer
 			{
 				_displaySize = value;
 
-				if (IsEnabled)
+				if (!_displaySize.IsNAN() & !_displaySize.IsNearZero())
 				{
 					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
 
@@ -147,18 +148,7 @@ namespace MSetExplorer
 		public MapAreaInfo2? MapAreaInfo
 		{
 			get => _mapAreaInfo;
-			set
-			{
-				_mapAreaInfo = value;
-
-				if (IsEnabled)
-				{
-					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
-
-					_selectedArea.Width = _defaultSelectionSize.Width;
-					_selectedArea.Height = _defaultSelectionSize.Height;
-				}
-			}
+			set => _mapAreaInfo = value;
 		}
 
 		public RectangleDbl Area
@@ -177,8 +167,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Properties
-
-		private bool IsEnabled => MapAreaInfo != null;
 
 		private bool Selecting
 		{

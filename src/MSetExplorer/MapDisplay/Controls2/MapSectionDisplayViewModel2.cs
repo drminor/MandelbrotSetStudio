@@ -82,10 +82,6 @@ namespace MSetExplorer
 
 		#region Public Properties - Content
 
-		public SizeInt BlockSize { get; init; }
-
-		public List<int> ActiveJobNumbers { get; init; }
-
 		public ObservableCollection<MapSection> MapSections { get; init; }
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
@@ -127,6 +123,10 @@ namespace MSetExplorer
 		#region Public Properties - Control
 
 		public new bool InDesignMode => base.InDesignMode;
+
+		public SizeInt BlockSize { get; init; }
+
+		public List<int> ActiveJobNumbers { get; init; }
 
 		public ImageSource ImageSource
 		{
@@ -269,30 +269,30 @@ namespace MSetExplorer
 			set
 			{
 
-				// Value between 0.0 and 1.0
-				// 1.0 presents 1 map "pixel" to 1 screen pixel
-				// 0.5 presents 2 map "pixels" to 1 screen pixel
+				//// Value between 0.0 and 1.0
+				//// 1.0 presents 1 map "pixel" to 1 screen pixel
+				//// 0.5 presents 2 map "pixels" to 1 screen pixel
 
-				//if (Math.Abs(value - DisplayZoom) > 0.001)
-				//{
-				//	_displayZoom = Math.Min(MaximumDisplayZoom, value);
+				////if (Math.Abs(value - DisplayZoom) > 0.001)
+				////{
+				////	_displayZoom = Math.Min(MaximumDisplayZoom, value);
 
-				//	MapDisplayViewModel.DisplayZoom = _displayZoom;
+				////	MapDisplayViewModel.DisplayZoom = _displayZoom;
 
-				//	Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
-				//	OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
-				//}
+				////	Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
+				////	OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
+				////}
 
-				var previousValue = _displayZoom;
+				//var previousValue = _displayZoom;
 
-				_displayZoom = Math.Min(MaximumDisplayZoom, value);
+				//_displayZoom = Math.Min(MaximumDisplayZoom, value);
 
-				//MapDisplayViewModel.DisplayZoom = _displayZoom;
+				////MapDisplayViewModel.DisplayZoom = _displayZoom;
 
-				Debug.WriteLine($"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
-				// Log: Add Spacer
-				Debug.WriteLine("\n\n");
-				OnPropertyChanged(nameof(IMapDisplayViewModel2.DisplayZoom));
+				//Debug.WriteLine($"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+				//// Log: Add Spacer
+				//Debug.WriteLine("\n\n");
+				//OnPropertyChanged(nameof(IMapDisplayViewModel2.DisplayZoom));
 			}
 		}
 
@@ -301,22 +301,22 @@ namespace MSetExplorer
 			get => _maximumDisplayZoom;
 			private set
 			{
-				if (Math.Abs(value - _maximumDisplayZoom) > 0.001)
-				{
-					_maximumDisplayZoom = value;
+				//if (Math.Abs(value - _maximumDisplayZoom) > 0.001)
+				//{
+				//	_maximumDisplayZoom = value;
 
-					if (DisplayZoom > MaximumDisplayZoom)
-					{
-						Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
-						DisplayZoom = MaximumDisplayZoom;
-					}
-					else
-					{
-						Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
-					}
+				//	if (DisplayZoom > MaximumDisplayZoom)
+				//	{
+				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
+				//		DisplayZoom = MaximumDisplayZoom;
+				//	}
+				//	else
+				//	{
+				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
+				//	}
 
-					OnPropertyChanged(nameof(IMapDisplayViewModel2.MaximumDisplayZoom));
-				}
+				//	OnPropertyChanged(nameof(IMapDisplayViewModel2.MaximumDisplayZoom));
+				//}
 			}
 		}
 

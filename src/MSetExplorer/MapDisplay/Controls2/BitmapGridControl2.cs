@@ -13,9 +13,16 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
+		private const double VERTICAL_SCROLL_BAR_WIDTH = 17;
+		private const double HORIZONTAL_SCROLL_BAR_WIDTH = 17;
+
 		public static readonly double DefaultContentScale = 1.0;
 		public static readonly double DefaultMinContentScale = 0.0625;
 		public static readonly double DefaultMaxContentScale = 1.0;
+
+		private bool _canHScroll = true;
+		private bool _canVScroll = true;
+		private bool _canZoom = true;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 		private ScrollViewer? _scrollOwner;
@@ -25,7 +32,6 @@ namespace MSetExplorer
 		private Canvas _canvas;
 		private Image _image;
 
-		//private SizeDbl _containerSize;
 		private SizeDbl _viewPortSizeInternal;
 		private SizeDbl _viewPortSize;
 
@@ -161,7 +167,8 @@ namespace MSetExplorer
 							{
 								Debug.WriteLine($"Updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}.");
 								ViewPortSize = newViewPortSize;
-							}
+							},
+							param: null
 						);
 					}
 				}
@@ -188,8 +195,7 @@ namespace MSetExplorer
 
 					//UpdateViewportSize()
 
-					ViewPortSizeChanged?.Invoke(this, (ViewPortSize, value));
-
+					ViewPortSizeChanged?.Invoke(this, (previousValue, value));
 				}
 				else
 				{
@@ -848,6 +854,8 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+
 
 		#region Unused SetCanvasTransform / ReportSizes / CheckImageSize
 

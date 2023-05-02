@@ -54,7 +54,6 @@ namespace MSetExplorer
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 
 			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
-			//mapDisplayZoom1.DataContext = _vm.MapDisplayViewModel;
 
 			_vm.MapDisplayViewModel.ZoomSliderFactory = CreateNewZoomSlider;
 
@@ -100,8 +99,6 @@ namespace MSetExplorer
 			{
 				_vm.PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
-
-				//_vm.MapScrollViewModel.CanvasSize = _vm.MapDisplayViewModel.CanvasSize;
 
 				Debug.WriteLine("The PosterDesigner Window is now loaded");
 			}

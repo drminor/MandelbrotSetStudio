@@ -20,7 +20,7 @@ namespace MSetExplorer
 
 		private Canvas _canvas;
 
-		private SelectionRectangle? _selectionRectangle;
+		private SelectionRectangle _selectionRectangle;
 		//private Border? _border;
 
 		#endregion
@@ -31,6 +31,7 @@ namespace MSetExplorer
 		{
 			_canvas = new Canvas();
 			_vm = (IMapDisplayViewModel2)DataContext;
+			_selectionRectangle = new SelectionRectangle(_canvas, new SizeDbl(), RMapConstants.BLOCK_SIZE);
 
 			Loaded += MapSectionDisplayControl_Loaded;
 			Unloaded += MapSectionDisplayControl_Unloaded;
@@ -64,6 +65,7 @@ namespace MSetExplorer
 
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
+				_selectionRectangle = new SelectionRectangle(_canvas, _vm.ViewPortSize, _vm.BlockSize);
 
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
@@ -135,17 +137,21 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
+		//private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		//{
+		//	var previousValue = e.Item1;
+		//	var newValue = e.Item2;
+
+		//	Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewPortSize}.");
+
+		//	_vm.ViewPortSize = newValue;
+
+		//	//_selectionRectangle.DisplaySize = _vm.ViewPortSize;
+		//}
+
 		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
-			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {e.Item1}/{e.Item1.IsNAN()}, New: {e.Item2}/{e.Item2.IsNAN()} " +
-				$"The MapSectionDisplayControl's ViewPortSize is {_vm.ViewPortSize}.");
-
-			_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
-
-			if (_selectionRectangle != null)
-			{
-				_selectionRectangle.DisplaySize = _vm.ViewPortSize;
-			}
+			_vm.ViewPortSize = e.Item2;
 		}
 
 		private void BitmapGridControl1_ContentOffsetYChanged(object? sender, EventArgs e)
@@ -160,9 +166,15 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			// TODO: Only for diagnostics
-			if (e.PropertyName == nameof(IMapDisplayViewModel2.CurrentAreaColorAndCalcSettings) && _selectionRectangle != null)
+			if (e.PropertyName == nameof(IMapDisplayViewModel2.ViewPortSize))
 			{
+				_selectionRectangle.DisplaySize = _vm.ViewPortSize;
+			}
+			else if (e.PropertyName == nameof(IMapDisplayViewModel2.CurrentAreaColorAndCalcSettings))
+			{
+				_selectionRectangle.IsEnabled = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo != null;
+
+				// Just for Diagnostics
 				_selectionRectangle.MapAreaInfo = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
 			}
 		}

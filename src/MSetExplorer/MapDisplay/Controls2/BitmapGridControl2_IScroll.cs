@@ -17,20 +17,6 @@ namespace MSetExplorer
 
 	public partial class BitmapGridControl2 : ContentControl, IScrollInfo, IContentScaleInfo
 	{
-		#region Scroll Info Fields
-
-		private const double VERTICAL_SCROLL_BAR_WIDTH = 17;
-		private const double HORIZONTAL_SCROLL_BAR_WIDTH = 17;
-
-		//private double _contentScale = 1.0d;
-
-		private bool _canHScroll = true;
-		private bool _canVScroll = true;
-
-		private bool _canZoom = true;
-
-		#endregion
-
 		static BitmapGridControl2()
 		{
 			DefaultStyleKeyProperty.OverrideMetadata(typeof(BitmapGridControl2), new FrameworkPropertyMetadata(typeof(BitmapGridControl2)));
@@ -56,14 +42,59 @@ namespace MSetExplorer
 			set => _canVScroll = value;
 		}
 
-		public double ExtentWidth => Math.Min(Math.Abs(UnscaledExtent.Width), ViewportWidth) * ContentScale;
-		public double ExtentHeight => Math.Min(Math.Abs(UnscaledExtent.Height), ViewportHeight) * ContentScale;
+		public double ExtentWidth
+		{ 
+			get
+			{
+				var x = Math.Max(UnscaledExtent.Width, ViewportWidth) * ContentScale;
+				return x;
+			}
+		}
+		
+		public double ExtentHeight
+		{
+			get
+			{
+				var y = Math.Max(UnscaledExtent.Height, ViewportHeight) * ContentScale;
+				return y;	
+			}
+		}
 
-		public double ViewportWidth => ViewPortSizeInternal.Width;
-		public double ViewportHeight => ViewPortSizeInternal.Height;
+		public double ViewportWidth
+		{
+			get
+			{
+				var w = ViewPortSizeInternal.Width;
+				return w;
+			}
+		}
+		
+		public double ViewportHeight
+		{
+			get
+			{
+				var h = ViewPortSizeInternal.Height;
+				return h;
+			}
+		}
 
-		public double HorizontalOffset => ContentOffsetX * ContentScale;
-		public double VerticalOffset => ContentOffsetY * ContentScale;
+		public double HorizontalOffset
+		{
+			get
+			{
+				var hOffset = ContentOffsetX * ContentScale;
+				return hOffset;
+			}
+		}
+
+		public double VerticalOffset
+		{
+			get
+			{
+				var vOffset = ContentOffsetY * ContentScale;
+				return vOffset;
+			}
+		}
 
 		#endregion
 

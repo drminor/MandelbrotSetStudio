@@ -15,22 +15,11 @@
 
 
   <ItemGroup>
-    <Compile Remove="MapDisplay\Controls\MapDisplayControl.xaml.cs" />
-    <Compile Remove="MapDisplay\Controls\MapDisplayViewModel.cs" />
-    <Compile Remove="MapDisplay\Controls\MapSectionDisplayViewModel.cs" />
-    <Compile Remove="MapDisplay\ScrollAndZoom\MapScrollViewModel.cs" />
     <Compile Remove="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
 
   <ItemGroup>
-    <Page Remove="MapDisplay\Controls\MapDisplayControl.xaml" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <None Include="MapDisplay\Controls\MapSectionDisplayViewModel.cs" />
-    <None Include="MapDisplay\ScrollAndZoom\MapScrollViewModel.cs" />
     <None Include="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 

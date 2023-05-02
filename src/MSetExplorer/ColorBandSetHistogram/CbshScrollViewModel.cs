@@ -58,7 +58,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 					_canvasSize = value;
 					MaximumDisplayZoom = GetMaximumDisplayZoom(HistogramSize, CanvasSize);
 
-					OnPropertyChanged(nameof(IMapScrollViewModel.CanvasSize));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.CanvasSize));
 				}
 			}
 		}
@@ -76,7 +76,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 
 					MaximumDisplayZoom = GetMaximumDisplayZoom(HistogramSize, CanvasSize);
 
-					OnPropertyChanged(nameof(IMapScrollViewModel.PosterSize));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.HistogramSize));
 				}
 			}
 		}
@@ -98,7 +98,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 					CbshDisplayViewModel.DisplayZoom = _displayZoom;
 
 					Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
-					OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.DisplayZoom));
 				}
 			}
 		}
@@ -118,7 +118,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 						DisplayZoom = MaximumDisplayZoom;
 					}
 
-					OnPropertyChanged(nameof(IMapScrollViewModel.MaximumDisplayZoom));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.MaximumDisplayZoom));
 				}
 			}
 		}
@@ -133,8 +133,8 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 					_verticalPosition = value;
 					_invertedVerticalPosition = GetInvertedYPos(value);
 					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
-					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
-					OnPropertyChanged(nameof(IMapScrollViewModel.InvertedVerticalPosition));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.VerticalPosition));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.InvertedVerticalPosition));
 				}
 			}
 		}
@@ -149,8 +149,8 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 					_invertedVerticalPosition = value;
 					_verticalPosition = GetInvertedYPos(value);
 					Debug.WriteLine($"Vertical Pos: {VerticalPosition}, Inverted: {InvertedVerticalPosition}.");
-					OnPropertyChanged(nameof(IMapScrollViewModel.InvertedVerticalPosition));
-					OnPropertyChanged(nameof(IMapScrollViewModel.VerticalPosition));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.InvertedVerticalPosition));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.VerticalPosition));
 				}
 			}
 		}
@@ -164,7 +164,7 @@ namespace MSetExplorer.MapDisplay.ScrollAndZoom
 				{
 					_horizontalPosition = value;
 					Debug.WriteLine($"Horizontal Pos: {value}.");
-					OnPropertyChanged(nameof(IMapScrollViewModel.HorizontalPosition));
+					OnPropertyChanged(nameof(ICbshScrollViewModel.HorizontalPosition));
 				}
 			}
 		}
