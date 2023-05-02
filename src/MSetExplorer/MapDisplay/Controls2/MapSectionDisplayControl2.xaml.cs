@@ -64,7 +64,7 @@ namespace MSetExplorer
 
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
-				_selectionRectangle = new SelectionRectangle(_canvas, _vm.ViewPortSize, _vm.BlockSize);
+
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 
