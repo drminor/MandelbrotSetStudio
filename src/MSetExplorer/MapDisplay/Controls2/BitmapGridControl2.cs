@@ -64,7 +64,6 @@ namespace MSetExplorer
 			_image = new Image();
 			_canvas.Children.Add(_image);
 
-			//_containerSize = new SizeDbl();
 			_viewPortSizeInternal = new SizeDbl();
 			_viewPortSize = new SizeDbl();
 
@@ -116,22 +115,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//private SizeDbl ContainerSize
-		//{
-		//	get => _containerSize;
-		//	set
-		//	{
-		//		var contentViewPortSize = ContentViewportSize;
-		//		Debug.WriteLine($"The BitmapGridControl is having its ContainerSize updated to {value}, the current value is {_containerSize}. The ContentViewPortSize is {contentViewPortSize}.");
-
-		//		_containerSize = value;
-				
-		//		//InvalidateScrollInfo();
-				
-		//		ViewPortSizeInternal = value;
-		//	}
-		//}
 
 		private SizeDbl ViewPortSizeInternal
 		{
@@ -204,7 +187,61 @@ namespace MSetExplorer
 			}
 		}
 
+		public ImageSource BitmapGridImageSource
+		{
+			get => (ImageSource)GetValue(BitmapGridImageSourceProperty);
+			set => SetCurrentValue(BitmapGridImageSourceProperty, value);
+		}
+
+		public VectorDbl ImageOffset
+		{
+			get => (VectorDbl)GetValue(ImageOffsetProperty);
+			set
+			{
+				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
+				{
+					SetCurrentValue(ImageOffsetProperty, value);
+				}
+			}
+		}
+
+		public Size UnscaledExtent
+		{
+			get => (Size)GetValue(UnscaledExtentProperty);
+			set => SetCurrentValue(UnscaledExtentProperty, value);
+		}
+
+		public double ContentScale
+		{
+			get => (double)GetValue(ContentScaleProperty);
+			set => SetValue(ContentScaleProperty, value);
+		}
+
+		public double MinContentScale
+		{
+			get => (double)GetValue(MinContentScaleProperty);
+			set => SetValue(MinContentScaleProperty, value);
+		}
+
+		public double MaxContentScale
+		{
+			get => (double)GetValue(MaxContentScaleProperty);
+			set => SetValue(MaxContentScaleProperty, value);
+		}
+
 		public SizeDbl ContentViewportSize { get; set; }
+
+		public double ContentOffsetX
+		{
+			get => (double)GetValue(ContentOffsetXProperty);
+			set => SetValue(ContentOffsetXProperty, value);
+		}
+
+		public double ContentOffsetY
+		{
+			get => (double)GetValue(ContentOffsetYProperty);
+			set => SetValue(ContentOffsetYProperty, value);
+		}
 
 		public bool IsMouseWheelScrollingEnabled { get; set; }
 
@@ -327,18 +364,41 @@ namespace MSetExplorer
 			throw new InvalidOperationException("Cannot find the bmgcImage element on the BitmapGridControl_Content.");
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void InvalidateScrollInfo()
+		private bool UpdateImageOffset(VectorDbl newValue)
 		{
-			if (_scrollOwner != null && !_disableScrollOffsetSync)
+			// For a positive offset, we "pull" the image down and to the left.
+			var invertedValue = newValue.Invert();
+
+			VectorDbl currentValue = new VectorDbl(
+				(double)Image.GetValue(Canvas.LeftProperty),
+				(double)Image.GetValue(Canvas.BottomProperty)
+				);
+
+			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
 			{
-				_scrollOwner.InvalidateScrollInfo();
+				Image.SetValue(Canvas.LeftProperty, invertedValue.X);
+				Image.SetValue(Canvas.BottomProperty, invertedValue.Y);
+
+				return true;
 			}
+			else
+			{
+				return false;
+			}
+		}
+
+		private VectorDbl GetTempImageOffset(VectorDbl originalOffset, SizeDbl originalSize, SizeDbl newSize)
+		{
+			var diff = newSize.Diff(originalSize);
+			var half = diff.Scale(0.5);
+			var result = originalOffset.Sub(half);
+
+			return result;
 		}
 
 		#endregion
 
-		#region ImageSource Dependency Property
+		#region BitmapGridImageSource Dependency Property
 
 		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
 					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl2),
@@ -356,11 +416,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public ImageSource BitmapGridImageSource
-		{
-			get => (ImageSource)GetValue(BitmapGridImageSourceProperty);
-			set => SetCurrentValue(BitmapGridImageSourceProperty, value);
-		}
+
 
 		#endregion
 
@@ -380,27 +436,6 @@ namespace MSetExplorer
 			{
 				c.InvalidateScrollInfo();
 			}
-		}
-
-		public VectorDbl ImageOffset
-		{
-			get => (VectorDbl)GetValue(ImageOffsetProperty);
-			set
-			{
-				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
-				{
-					SetCurrentValue(ImageOffsetProperty, value);
-				}
-			}
-		}
-
-		private VectorDbl GetTempImageOffset(VectorDbl originalOffset, SizeDbl originalSize, SizeDbl newSize)
-		{
-			var diff = newSize.Diff(originalSize);
-			var half = diff.Scale(0.5);
-			var result = originalOffset.Sub(half);
-
-			return result;
 		}
 
 		#endregion
@@ -426,17 +461,12 @@ namespace MSetExplorer
 			c.InvalidateMeasure();
 		}
 
-		public Size UnscaledExtent
-		{
-			get => (Size)GetValue(UnscaledExtentProperty);
-			set => SetCurrentValue(UnscaledExtentProperty, value);
-		}
+
 
 		#endregion
 
 		#region ContentScale Dependency Property
 
-		// TODO: Make this use two-way binding
 		public static readonly DependencyProperty ContentScaleProperty =
 				DependencyProperty.Register("ContentScale", typeof(double), typeof(BitmapGridControl2),
 											new FrameworkPropertyMetadata(DefaultContentScale, ContentScale_PropertyChanged, ContentScale_Coerce));
@@ -482,14 +512,7 @@ namespace MSetExplorer
 			return value;
 		}
 
-		/// <summary>
-		/// Get/set the current scale (or zoom factor) of the content.
-		/// </summary>
-		public double ContentScale
-		{
-			get => (double)GetValue(ContentScaleProperty);
-			set => SetValue(ContentScaleProperty, value);
-		}
+
 
 		#endregion
 
@@ -513,21 +536,6 @@ namespace MSetExplorer
 			c.ContentScale = Math.Min(Math.Max(c.ContentScale, c.MinContentScale), c.MaxContentScale);
 
 			c.ZoomSliderOwner?.InvalidateScaleContentInfo();
-		}
-
-		public double MinContentScale
-		{
-			get => (double)GetValue(MinContentScaleProperty);
-			set => SetValue(MinContentScaleProperty, value);
-		}
-
-		/// <summary>
-		/// Get/set the maximum value for 'ContentScale'.
-		/// </summary>
-		public double MaxContentScale
-		{
-			get => (double)GetValue(MaxContentScaleProperty);
-			set => SetValue(MaxContentScaleProperty, value);
 		}
 
 		#endregion
@@ -583,25 +591,11 @@ namespace MSetExplorer
 					$"Gaps: {gap}, {gap2a}, {gap2}");
 			}
 
+			// --- ConstrainedContentViewportWidth DEFINITION ---
+			//	ContentViewportWidth = ViewportWidth / ContentScale;
+			//	_constrainedContentViewportWidth = Math.Min(ContentViewportWidth - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
+
 			return value;
-		}
-
-		/*
-
-			ContentViewportWidth = ViewportWidth / ContentScale;
-			_constrainedContentViewportWidth = Math.Min(ContentViewportWidth - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
-
-		*/
-
-
-
-		/// <summary>
-		/// Get/set the X offset (in content coordinates) of the view on the content.
-		/// </summary>
-		public double ContentOffsetX
-		{
-			get => (double)GetValue(ContentOffsetXProperty);
-			set => SetValue(ContentOffsetXProperty, value);
 		}
 
 		#endregion
@@ -647,15 +641,6 @@ namespace MSetExplorer
 			Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}.");
 			
 			return value;
-		}
-
-		/// <summary>
-		/// Get/set the Y offset (in content coordinates) of the view on the content.
-		/// </summary>
-		public double ContentOffsetY
-		{
-			get => (double)GetValue(ContentOffsetYProperty);
-			set => SetValue(ContentOffsetYProperty, value);
 		}
 
 		#endregion
@@ -774,29 +759,6 @@ namespace MSetExplorer
 			//ContentZoomFocusY = ContentOffsetY + (_constrainedContentViewportHeight / 2);
 		}
 
-		private bool UpdateImageOffset(VectorDbl newValue)
-		{
-			// For a positive offset, we "pull" the image down and to the left.
-			var invertedValue = newValue.Invert();
-
-			VectorDbl currentValue = new VectorDbl(
-				(double)Image.GetValue(Canvas.LeftProperty),
-				(double)Image.GetValue(Canvas.BottomProperty)
-				);
-
-			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
-			{
-				Image.SetValue(Canvas.LeftProperty, invertedValue.X);
-				Image.SetValue(Canvas.BottomProperty, invertedValue.Y);
-
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
 		private bool UpdateScale(double contentScale)
 		{
 			var result = false;
@@ -850,6 +812,15 @@ namespace MSetExplorer
 				{
 					_disableContentFocusSync = false;
 				}
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void InvalidateScrollInfo()
+		{
+			if (_scrollOwner != null && !_disableScrollOffsetSync)
+			{
+				_scrollOwner.InvalidateScrollInfo();
 			}
 		}
 
