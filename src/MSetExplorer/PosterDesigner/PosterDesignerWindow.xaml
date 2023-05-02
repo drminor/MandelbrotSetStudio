@@ -125,7 +125,7 @@
         <Grid Grid.Row="1" Grid.Column="1" x:Name="colCenter">
             <!--<scroll:MapScrollControl x:Name="mapScroll1" Margin="5"></scroll:MapScrollControl>-->
 
-            <local:MapSectionDisplayControl2 x:Name="mapDisplay1"></local:MapSectionDisplayControl2>
+            <local:MapSectionPzControl x:Name="mapDisplay1"></local:MapSectionPzControl>
 
         </Grid>
 

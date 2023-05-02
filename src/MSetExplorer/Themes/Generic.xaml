@@ -3,6 +3,30 @@
                     xmlns:local="clr-namespace:MSetExplorer">
 
 
+
+    <!--<Style TargetType="{x:Type local:BitmapGridControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:BitmapGridControl}">
+                    <Border BorderThickness="1" BorderBrush="DarkSlateBlue">
+
+                        <ContentPresenter x:Name="BitmapGridControl_Content">
+                            <ContentPresenter.Content>
+                                <Canvas x:Name="bmgcCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+                                    <Image x:Name="bmgcImage" />
+                                </Canvas>
+
+                            </ContentPresenter.Content>
+                        </ContentPresenter>
+
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>-->
+
+
+
     <Style TargetType="{x:Type local:BitmapGridControl2}">
         <Setter Property="Template">
             <Setter.Value>
@@ -14,6 +38,26 @@
                                 <Canvas x:Name="bmgcCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
                                     <Image x:Name="bmgcImage" />
                                 </Canvas>
+
+                            </ContentPresenter.Content>
+                        </ContentPresenter>
+
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="{x:Type local:PanAndZoomControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:PanAndZoomControl}">
+                    <Border BorderThickness="1" BorderBrush="Moccasin">
+
+                        <ContentPresenter x:Name="PanAndZoom_Content">
+                            <ContentPresenter.Content>
+
+                                <Canvas x:Name="pAndZCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent"/>
 
                             </ContentPresenter.Content>
                         </ContentPresenter>

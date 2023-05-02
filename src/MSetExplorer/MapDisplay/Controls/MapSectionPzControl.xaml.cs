@@ -9,7 +9,7 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for MapSectionDisplayControl.xaml
 	/// </summary>
-	public partial class MapSectionDisplayControl2 : UserControl
+	public partial class MapSectionPzControl : UserControl
 	{
 		#region Private Properties
 
@@ -27,19 +27,19 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapSectionDisplayControl2()
+		public MapSectionPzControl()
 		{
 			_canvas = new Canvas();
 			_vm = (IMapDisplayViewModel2)DataContext;
 			_selectionRectangle = new SelectionRectangle(_canvas, new SizeDbl(), RMapConstants.BLOCK_SIZE);
 
-			Loaded += MapSectionDisplayControl_Loaded;
-			Unloaded += MapSectionDisplayControl_Unloaded;
+			Loaded += MapSectionPzControl_Loaded;
+			Unloaded += MapSectionPzControl_Unloaded;
 
 			InitializeComponent();
 		}
 
-		private void MapSectionDisplayControl_Loaded(object sender, RoutedEventArgs e)
+		private void MapSectionPzControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
@@ -78,7 +78,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
+		private void MapSectionPzControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			BitmapGridControl1.ZoomSliderOwner = null;
 

@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
-	internal class MapSectionDisplayViewModel2 : ViewModelBase, IMapDisplayViewModel2
+	internal class MapSectionDisplayViewModel : ViewModelBase, IMapDisplayViewModel2
 	{
 		#region Private Properties
 
@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapSectionDisplayViewModel2(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionHelper, SizeInt blockSize)
+		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionHelper, SizeInt blockSize)
 		{
 			_unscaledExtent = new Size();
 			_paintLocker = new object();
