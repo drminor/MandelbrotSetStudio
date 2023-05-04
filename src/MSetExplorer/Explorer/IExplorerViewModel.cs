@@ -12,7 +12,7 @@ namespace MSetExplorer
 		IProjectViewModel ProjectViewModel { get; }
 		IJobTreeViewModel JobTreeViewModel { get; }
 
-		IMapDisplayViewModel2 MapDisplayViewModel { get; }
+		IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		MapCoordsViewModel MapCoordsViewModel { get; }
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }

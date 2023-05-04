@@ -8,7 +8,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public interface IMapDisplayViewModel2 : INotifyPropertyChanged, IDisposable
+	public interface IMapDisplayViewModel : INotifyPropertyChanged, IDisposable
 	{
 		bool InDesignMode { get; }
 

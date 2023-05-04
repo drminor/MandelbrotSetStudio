@@ -15,7 +15,7 @@ namespace MSetExplorer
 	/// 
 	/// </remarks>
 
-	public partial class BitmapGridControl2 : ContentControl, IScrollInfo, IContentScaleInfo
+	public partial class BitmapGridControl2 : ContentControl, IScrollInfo//, IContentScaleInfo
 	{
 		static BitmapGridControl2()
 		{

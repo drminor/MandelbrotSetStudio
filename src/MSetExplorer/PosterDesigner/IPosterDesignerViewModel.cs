@@ -12,7 +12,7 @@ namespace MSetExplorer
 		IPosterViewModel PosterViewModel { get; }
 
 		//IMapScrollViewModel MapScrollViewModel { get; }
-		IMapDisplayViewModel2 MapDisplayViewModel { get; }
+		IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		MapCoordsViewModel MapCoordsViewModel { get; }
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }

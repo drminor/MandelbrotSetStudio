@@ -19,7 +19,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel2 mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
+		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
 		{
@@ -60,7 +60,7 @@ namespace MSetExplorer
 		public IPosterViewModel PosterViewModel { get; }
 		public IJobTreeViewModel JobTreeViewModel { get; }
 
-		public IMapDisplayViewModel2 MapDisplayViewModel { get; }
+		public IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		public MapCoordsViewModel MapCoordsViewModel { get; }
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }

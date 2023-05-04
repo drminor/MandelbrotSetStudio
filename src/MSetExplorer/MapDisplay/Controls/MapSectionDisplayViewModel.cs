@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
-	internal class MapSectionDisplayViewModel : ViewModelBase, IMapDisplayViewModel2
+	internal class MapSectionDisplayViewModel : ViewModelBase, IMapDisplayViewModel
 	{
 		#region Private Properties
 
@@ -90,7 +90,7 @@ namespace MSetExplorer
 			private set
 			{
 				_currentAreaColorAndCalcSettings = value?.Clone() ?? null;
-				OnPropertyChanged(nameof(IMapDisplayViewModel2.CurrentAreaColorAndCalcSettings));
+				OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings));
 			}
 		}
 
@@ -136,7 +136,7 @@ namespace MSetExplorer
 				// This is called by the BitmapGrid, to let us know that we need to raise the OnPropertyChanged event.
 
 				Debug.WriteLine($"The MapSectionViewModel's ImageSource is being set to value: {value}.");
-				OnPropertyChanged(nameof(IMapDisplayViewModel2.ImageSource));
+				OnPropertyChanged(nameof(IMapDisplayViewModel.ImageSource));
 			}
 		}
 
@@ -154,10 +154,10 @@ namespace MSetExplorer
 					}
 					else
 					{
-						Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewPortSize set to {value}. Previously it was {_viewPortSize}.");
+						Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewPortSize set to {value}. Previously it was {_viewPortSize}. The VM is updating the _bitmapGrid.ViewPort Size.");
 						_viewPortSize = value;
 
-						_bitmapGrid.ViewPortSize = _viewPortSize;
+						 _bitmapGrid.ViewPortSize = _viewPortSize;
 
 						if (LastMapAreaInfo != null && LastMapAreaInfo.CanvasSize != value.Round())
 						{
@@ -174,7 +174,7 @@ namespace MSetExplorer
 								Debug.WriteLine($"Not calling HandleDisplaySizeUpdate, the LastMapAreaInfo.CanvasSize {LastMapAreaInfo.CanvasSize} is the same as the new ViewPortSize: {value}.");
 						}
 
-						OnPropertyChanged(nameof(IMapDisplayViewModel2.ViewPortSize));
+						OnPropertyChanged(nameof(IMapDisplayViewModel.ViewPortSize));
 					}
 				}
 				else
@@ -194,7 +194,7 @@ namespace MSetExplorer
 					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
 					_imageOffset = value;
 
-					OnPropertyChanged(nameof(IMapDisplayViewModel2.ImageOffset));
+					OnPropertyChanged(nameof(IMapDisplayViewModel.ImageOffset));
 				}
 			}
 		}
@@ -222,7 +222,7 @@ namespace MSetExplorer
 					_unscaledExtent = value;
 
 					// Let the BitmapGridControl know the entire size.
-					OnPropertyChanged(nameof(IMapDisplayViewModel2.UnscaledExtent));
+					OnPropertyChanged(nameof(IMapDisplayViewModel.UnscaledExtent));
 				}
 			}
 		}
@@ -292,7 +292,7 @@ namespace MSetExplorer
 				//Debug.WriteLine($"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
 				//// Log: Add Spacer
 				//Debug.WriteLine("\n\n");
-				//OnPropertyChanged(nameof(IMapDisplayViewModel2.DisplayZoom));
+				//OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
 			}
 		}
 
@@ -315,7 +315,7 @@ namespace MSetExplorer
 				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
 				//	}
 
-				//	OnPropertyChanged(nameof(IMapDisplayViewModel2.MaximumDisplayZoom));
+				//	OnPropertyChanged(nameof(IMapDisplayViewModel.MaximumDisplayZoom));
 				//}
 			}
 		}

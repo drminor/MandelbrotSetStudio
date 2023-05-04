@@ -4,12 +4,12 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using System.Windows.Threading;
 
 namespace MSetExplorer
 {
-	public partial class PanAndZoomControl : ContentControl
+	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IContentScaleInfo
 	{
 		#region Private Fields
 
@@ -24,13 +24,9 @@ namespace MSetExplorer
 		private bool _canVScroll = true;
 		private bool _canZoom = true;
 
-		private DebounceDispatcher _viewPortSizeDispatcher;
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomSlider;
 
-		private FrameworkElement? _content;
-
-		private SizeDbl _viewPortSizeInternal;
 		private SizeDbl _viewPortSize;
 
 		private TranslateTransform? _contentOffsetTransform = null;
@@ -40,8 +36,10 @@ namespace MSetExplorer
 		private bool _disableScrollOffsetSync = false;
 		private bool _disableContentFocusSync = false;
 
-		private double _constrainedContentViewportWidth = 0.0;
-		private double _constrainedContentViewportHeight = 0.0;
+		//private double _constrainedContentViewportWidth = 0.0;
+		//private double _constrainedContentViewportHeight = 0.0;
+
+		private SizeDbl _maxContentOffset = new SizeDbl();
 
 		#endregion
 
@@ -49,17 +47,11 @@ namespace MSetExplorer
 
 		public PanAndZoomControl()
 		{
-			_viewPortSizeDispatcher = new DebounceDispatcher
-			{
-				Priority = DispatcherPriority.Render
-			};
+			ContentBeingZoomed = null;
 
 			_scrollOwner = null;
 			_zoomSlider = null;
 
-			_content = null;
-
-			_viewPortSizeInternal = new SizeDbl();
 			_viewPortSize = new SizeDbl();
 
 			ContentViewportSize = new SizeDbl();
@@ -80,46 +72,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		private SizeDbl ViewPortSizeInternal
-		{
-			get => _viewPortSizeInternal;
-			set
-			{
-				if (value.Width > 1 && value.Height > 1 && _viewPortSizeInternal != value)
-				{
-					var previousValue = _viewPortSizeInternal;
-					_viewPortSizeInternal = value;
-
-					//Debug.WriteLine($"BitmapGridControl: ViewPort is changing: Old size: {previousValue}, new size: {_viewPort}.");
-
-					var newViewPortSize = value;
-
-					if (previousValue.Width < 25 || previousValue.Height < 25)
-					{
-						// Update the 'real' value immediately
-						Debug.WriteLine($"Updating the ViewPortSize immediately. Previous Size: {previousValue}, New Size: {value}.");
-						ViewPortSize = newViewPortSize;
-					}
-					else
-					{
-						// Delay the 'real' update until no futher updates in the last 150ms.
-						_viewPortSizeDispatcher.Debounce(
-							interval: 150,
-							action: parm =>
-							{
-								Debug.WriteLine($"Updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}.");
-								ViewPortSize = newViewPortSize;
-							},
-							param: null
-						);
-					}
-				}
-				else
-				{
-					Debug.WriteLine($"Skipping the update of the ViewPortSize, the new value {value} is the same as the old value. {ViewPortSizeInternal}.");
-				}
-			}
-		}
+		public FrameworkElement? ContentBeingZoomed { get; set; }
 
 		public SizeDbl ViewPortSize
 		{
@@ -128,20 +81,16 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
 				{
-					Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewPortSizeChanged event.");
+					Debug.WriteLine($"The PanAndZoomControl is having its ViewPortSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewPortSizeChanged event.");
 
 					var previousValue = ViewPortSize;
 					_viewPortSize = value;
-
-					Debug.Assert(_viewPortSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
-
-					//UpdateViewportSize()
 
 					ViewPortSizeChanged?.Invoke(this, (previousValue, value));
 				}
 				else
 				{
-					Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is already: {_viewPortSize}; not raising the ViewPortSizeChanged event.");
+					Debug.WriteLine($"The PanAndZoomControl is having its ViewPortSize updated to {value}, the current value is already: {_viewPortSize}; not raising the ViewPortSizeChanged event.");
 				}
 			}
 		}
@@ -190,100 +139,185 @@ namespace MSetExplorer
 
 		#region Private Methods - Control
 
-		protected override Size MeasureOverride(Size constraint)
-		{
-			Size infiniteSize = new Size(double.PositiveInfinity, double.PositiveInfinity);
-			Size childSize = base.MeasureOverride(infiniteSize);
+		//protected override Size MeasureOverride(Size constraint)
+		//{
+		//	Size infiniteSize = new Size(double.PositiveInfinity, double.PositiveInfinity);
+		//	Size childSize = base.MeasureOverride(infiniteSize);
 
-			double width = constraint.Width;
-			double height = constraint.Height;
+		//	double width = constraint.Width;
+		//	double height = constraint.Height;
+
+		//	if (double.IsInfinity(width))
+		//	{
+		//		// Make sure we don't return infinity!
+		//		width = childSize.Width;
+		//	}
+
+		//	if (double.IsInfinity(height))
+		//	{
+		//		// Make sure we don't return infinity!
+		//		height = childSize.Height;
+		//	}
+
+		//	// Update the size of the viewport onto the content based on the passed in 'constraint'.
+		//	var theNewSize = new Size(width, height);
+		//	UpdateViewportSize(theNewSize);
+
+		//	return theNewSize;
+		//}
+
+		//protected override Size ArrangeOverride(Size finalSizeRaw)
+		//{
+		//	var finalSize = ForceSize(finalSizeRaw);
+
+		//	UpdateViewportSize(finalSize);
+
+		//	return finalSize;
+		//}
+
+		//private Size ForceSize(Size finalSize)
+		//{
+		//	if (finalSize.Width > 1020 && finalSize.Width < 1030 && finalSize.Height > 1020 && finalSize.Height < 1030)
+		//	{
+		//		return new Size(1024, 1024);
+		//	}
+		//	else
+		//	{
+		//		return finalSize;
+		//	}
+		//}
+
+		/// <summary>
+		/// Measure the control and it's children.
+		/// </summary>
+		protected override Size MeasureOverride(Size availableSize)
+		{
+			Size childSize = base.MeasureOverride(availableSize);
+
+			ContentBeingZoomed?.Measure(availableSize);
+
+			UpdateViewportSize(availableSize);
+
+			double width = availableSize.Width;
+			double height = availableSize.Height;
 
 			if (double.IsInfinity(width))
 			{
-				// Make sure we don't return infinity!
 				width = childSize.Width;
 			}
 
 			if (double.IsInfinity(height))
 			{
-				// Make sure we don't return infinity!
 				height = childSize.Height;
 			}
 
-			// Update the size of the viewport onto the content based on the passed in 'constraint'.
-			var theNewSize = new Size(width, height);
-			UpdateViewportSize(theNewSize);
+			var result = new Size(width, height);
 
-			return theNewSize;
+			Debug.WriteLine($"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
+
+			// TODO: Figure out when its best to call UpdateViewportSize.
+			//UpdateViewportSize(childSize);
+			//UpdateViewportSize(result);
+
+			UpdateTranslationX();
+			UpdateTranslationY();
+
+			return result;
 		}
 
-		protected override Size ArrangeOverride(Size finalSizeRaw)
+		/// <summary>
+		/// Arrange the control and it's children.
+		/// </summary>
+		protected override Size ArrangeOverride(Size finalSize)
 		{
-			var finalSize = ForceSize(finalSizeRaw);
+			//var finalSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(finalSize);
 
-			UpdateViewportSize(finalSize);
+			Size childSize = base.ArrangeOverride(finalSize);
+
+
+			if (ContentBeingZoomed != null)
+			{
+				var canvas = ContentAsCanvas;
+
+				if (canvas != null)
+				{
+					Debug.WriteLine($"Before _content.Arrange({finalSize}. Base returns {childSize}. The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
+					ContentBeingZoomed.Arrange(new Rect(finalSize));
+
+					if (canvas.ActualWidth != childSize.Width)
+					{
+						canvas.Width = childSize.Width;
+					}
+
+					if (canvas.ActualHeight != childSize.Height)
+					{
+						canvas.Height = childSize.Height;
+					}
+
+					Debug.WriteLine($"After _content.Arrange(The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
+				}
+
+				if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
+
+				UpdateViewportSize(childSize);
+			}
 
 			return finalSize;
-		}
-
-		private Size ForceSize(Size finalSize)
-		{
-			if (finalSize.Width > 1020 && finalSize.Width < 1030 && finalSize.Height > 1020 && finalSize.Height < 1030)
-			{
-				return new Size(1024, 1024);
-			}
-			else
-			{
-				return finalSize;
-			}
 		}
 
 		public override void OnApplyTemplate()
 		{
 			base.OnApplyTemplate();
 
-			_content = Template.FindName("PanAndZoomControl_Content", this) as FrameworkElement;
-			if (_content != null)
+			ContentBeingZoomed = Template.FindName("PART_Content", this) as FrameworkElement;
+			if (ContentBeingZoomed != null)
 			{
 				Debug.WriteLine($"Found the PanAndZoomControl_Content template.");
 
-				// Setup the transform on the content so that we can position the Bitmap to "pull" it left and up so that the
-				// portion of the bitmap that is visible corresponds with the requested map coordinates.
-
-				//_content.RenderTransformOrigin = _contentRenderTransformOrigin;
-				//_content.RenderTransform = _transformGroup;
-
-				//
-				// Setup the transform on the content so that we can scale it by 'ContentScale'.
-				//
 				_contentScaleTransform = new ScaleTransform(ContentScale, ContentScale);
 
-
-				//
-				// Setup the transform on the content so that we can translate it by 'ContentOffsetX' and 'ContentOffsetY'.
-				//
-				//_contentOffsetTransform = new TranslateTransform();
 				UpdateTranslationX();
 				UpdateTranslationY();
 
-				//
-				// Setup a transform group to contain the translation and scale transforms, and then
-				// assign this to the content's 'RenderTransform'.
-				//
-				//TransformGroup transformGroup = new TransformGroup();
-
-				//transformGroup.Children.Add(_contentOffsetTransform);
-				//transformGroup.Children.Add(_contentScaleTransform);
-
-				//_content.RenderTransform = transformGroup;
-
-				_content.RenderTransform = _contentScaleTransform;
-
+				ContentBeingZoomed.RenderTransform = _contentScaleTransform;
 			}
 			else
 			{
-				Debug.WriteLine($"WARNING: Did not find the BitmapGridControl_Content template.");
+				Debug.WriteLine($"WARNING: Did not find the PanAndZoomControl_Content template.");
 			}
+		}
+
+		private Canvas? ContentAsCanvas
+		{
+			get
+			{
+				if (ContentBeingZoomed != null && ContentBeingZoomed is ContentPresenter cp)
+				{
+					if (cp.Content is Canvas ca)
+					{
+						return ca;
+					}
+				}
+
+				return null;
+			}
+		}
+
+		private (Canvas, Image) BuildContentModel(FrameworkElement content)
+		{
+			if (content is ContentPresenter cp)
+			{
+				if (cp.Content is Canvas ca)
+				{
+					//return ca;
+					if (ca.Children[0] is Image im)
+					{
+						return (ca, im);
+					}
+				}
+			}
+
+			throw new InvalidOperationException("Cannot find the bmgcImage element on the BitmapGridControl_Content.");
 		}
 
 		#endregion
@@ -300,13 +334,15 @@ namespace MSetExplorer
 			var previousValue = (Size)e.OldValue;
 			var value = (Size)e.NewValue;
 
-			if (value != previousValue)
+			if (value.IsEmpty || value != previousValue)
 			{
 				c.ContentOffsetX = 0;
 				c.ContentOffsetY = 0;
+
+				c.UpdateContentViewportSize();
 			}
 
-			c.InvalidateMeasure();
+			//c.InvalidateMeasure();
 		}
 
 		#endregion
@@ -352,7 +388,7 @@ namespace MSetExplorer
 		/// </summary>
 		private static object ContentScale_Coerce(DependencyObject d, object baseValue)
 		{
-			BitmapGridControl2 c = (BitmapGridControl2)d;
+			PanAndZoomControl c = (PanAndZoomControl)d;
 			double value = (double)baseValue;
 			value = Math.Min(Math.Max(value, c.MinContentScale), c.MaxContentScale);
 			return value;
@@ -423,16 +459,16 @@ namespace MSetExplorer
 			var gap = c.ContentViewportSize.Width != c.ViewportWidth;
 
 			var gap2a = Math.Min(c.ContentViewportSize.Width - HORIZONTAL_SCROLL_BAR_WIDTH, c.UnscaledExtent.Width);
-			var gap2 = c._constrainedContentViewportWidth != gap2a;
+			var gap2 = c._maxContentOffset.Width != gap2a;
 
 			double value = (double)baseValue;
 			double minOffsetX = 0.0;
-			double maxOffsetX = c.UnscaledExtent.IsEmpty ? 0.0 : Math.Max(0.0, c.UnscaledExtent.Width - c._constrainedContentViewportWidth);
+			double maxOffsetX = Math.Max(0.0, c._maxContentOffset.Width);
 			value = Math.Min(Math.Max(value, minOffsetX), maxOffsetX);
 
 			if (gap || gap2)
 			{
-				Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}. UnscaledExtent.Width: {c.UnscaledExtent.Width}, ContrainedContentViewportWidth: {c._constrainedContentViewportWidth}. " +
+				Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}. UnscaledExtent.Width: {c.UnscaledExtent.Width}, MaxContentOffsetWidth: {c._maxContentOffset.Width}. " +
 					$"ViewportWidth: {c.ViewportWidth} ContentViewPortWidth: {c.ContentViewportSize.Width}. " +
 					$"Gaps: {gap}, {gap2a}, {gap2}");
 			}
@@ -481,7 +517,7 @@ namespace MSetExplorer
 			PanAndZoomControl c = (PanAndZoomControl)d;
 			double value = (double)baseValue;
 			double minOffsetY = 0.0;
-			double maxOffsetY = c.UnscaledExtent.IsEmpty ? 0.0 : Math.Max(0.0, c.UnscaledExtent.Height - c._constrainedContentViewportHeight);
+			double maxOffsetY = Math.Max(0.0, c._maxContentOffset.Height);
 			value = Math.Min(Math.Max(value, minOffsetY), maxOffsetY);
 
 			Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}.");
@@ -503,18 +539,12 @@ namespace MSetExplorer
 		{
 			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(newSize);
 
-			if (ViewPortSizeInternal == newSizeDbl)
+			if (ViewPortSize == newSizeDbl)
 			{
-				// The viewport is already the specified size.
 				return;
 			}
 
-			if (_content != null)
-			{
-				_content.Arrange(new Rect(newSize));
-			}
-
-			ViewPortSizeInternal = newSizeDbl;
+			ViewPortSize = newSizeDbl;
 
 			// Update the viewport size in content coordiates.
 			UpdateContentViewportSize();
@@ -536,25 +566,27 @@ namespace MSetExplorer
 
 		private void UpdateContentViewportSize()
 		{
-			//ContentViewportWidth = ViewportWidth / ContentScale;
-			//ContentViewportHeight = ViewportHeight / ContentScale;
-
-			ContentViewportSize = ViewPortSizeInternal.Divide(ContentScale);
+			ContentViewportSize = ViewPortSize.Divide(ContentScale);
 
 			if (UnscaledExtent.IsEmpty)
 			{
-				_constrainedContentViewportWidth = ContentViewportSize.Width;
-				_constrainedContentViewportHeight = ContentViewportSize.Height;
+				_maxContentOffset = ContentViewportSize;
 			}
 			else
 			{
-				Debug.Assert(UnscaledExtent.Width != double.NegativeInfinity && UnscaledExtent.Height != double.NegativeInfinity, "UnscaledExtent is not empty but the Width or Height is Negative Infinity.");
-				_constrainedContentViewportWidth = Math.Min(ContentViewportSize.Width - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
-				_constrainedContentViewportHeight = Math.Min(ContentViewportSize.Height - VERTICAL_SCROLL_BAR_WIDTH, UnscaledExtent.Height);
+				// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
+				var unscaledExtentDbl = ScreenTypeHelper.ConvertToSizeDbl(UnscaledExtent);
+				_maxContentOffset = unscaledExtentDbl.Sub(unscaledExtentDbl.Min(ContentViewportSize.Sub(new SizeDbl(HORIZONTAL_SCROLL_BAR_WIDTH, VERTICAL_SCROLL_BAR_WIDTH))));
+
+				//_constrainedContentViewportWidth = Math.Min(ContentViewportSize.Width - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
+				//_constrainedContentViewportHeight = Math.Min(ContentViewportSize.Height - VERTICAL_SCROLL_BAR_WIDTH, UnscaledExtent.Height);
+
 			}
 
 			UpdateTranslationX();
 			UpdateTranslationY();
+
+			InvalidateScrollInfo();
 		}
 
 		private void UpdateTranslationX()

@@ -17,27 +17,37 @@
                 HorizontalScrollBarVisibility="Visible"
                 >
 
-                <local:BitmapGridControl2
-                    x:Name="BitmapGridControl1"
+                <local:PanAndZoomControl
+                    x:Name="PanAndZoomControl1"
                     UnscaledExtent="{Binding UnscaledExtent}"
-                    BitmapGridImageSource="{Binding ImageSource}"
-                    ImageOffset="{Binding ImageOffset}"
                     ContentScale="{Binding DisplayZoom}"
                     MaxContentScale="{Binding MaximumDisplayZoom}"
-                    />
+                    >
 
-                <!--<local:BitmapGridControl
-                    x:Name="BitmapGridControl1"
-                    ViewPortSize="{Binding ViewPortSize}"
-                    ImageOffset="{Binding ImageOffset}"
-                    MapSections="{Binding MapSections}"
-                    ColorBandSet="{Binding ColorBandSet}"
-                    UseEscapeVelocities="{Binding UseEscapeVelocities}"
-                    HighlightSelectedColorBand="{Binding HighlightSelectedColorBand}"
-                    />-->
+                    <Canvas x:Name="mainCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <local:BitmapGridControl x:Name="BitmapGridControl1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                            BitmapGridImageSource="{Binding ImageSource}"
+                            ImageOffset="{Binding ImageOffset}"
+                        />
+                    </Canvas>
+
+
+                </local:PanAndZoomControl>
+
+
+
 
 
             </ScrollViewer>
         </Border>
     </Grid>
 </UserControl>
+
+<!--<local:BitmapGridControl2
+                    x:Name="BitmapGridControl1"
+                    UnscaledExtent="{Binding UnscaledExtent}"
+                    BitmapGridImageSource="{Binding ImageSource}"
+                    ImageOffset="{Binding ImageOffset}"
+                    ContentScale="{Binding DisplayZoom}"
+                    MaxContentScale="{Binding MaximumDisplayZoom}"
+                    />-->

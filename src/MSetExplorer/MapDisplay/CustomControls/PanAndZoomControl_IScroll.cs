@@ -64,7 +64,7 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var w = ViewPortSizeInternal.Width;
+				var w = ViewPortSize.Width;
 				return w;
 			}
 		}
@@ -73,7 +73,7 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var h = ViewPortSizeInternal.Height;
+				var h = ViewPortSize.Height;
 				return h;
 			}
 		}
@@ -172,15 +172,15 @@ namespace MSetExplorer
 		/// </summary>
 		public Rect MakeVisible(Visual visual, Rect rectangle)
 		{
-			if (_content == null)
+			if (ContentBeingZoomed == null)
 			{
-				Debug.WriteLine("MakeVisible is being called, however _content = null. Returning.");
+				Debug.WriteLine("MakeVisible is being called, however ContentBeingZoomed = null. Returning.");
 				return rectangle;
 			}
 
-			if (_content.IsAncestorOf(visual))
+			if (ContentBeingZoomed.IsAncestorOf(visual))
 			{
-				Rect transformedRect = visual.TransformToAncestor(_content).TransformBounds(rectangle);
+				Rect transformedRect = visual.TransformToAncestor(ContentBeingZoomed).TransformBounds(rectangle);
 				Rect viewportRect = new Rect(new Point(ContentOffsetX, ContentOffsetY), ScreenTypeHelper.ConvertToSize(ContentViewportSize));
 
 				if (!transformedRect.Contains(viewportRect))

@@ -204,6 +204,11 @@ namespace MSS.Types
 			return result;
 		}
 
+		public SizeDbl Min(SizeDbl sizeB)
+		{
+			return new SizeDbl(Math.Min(Width, sizeB.Width), Math.Min(Height, sizeB.Height));
+		}
+
 		//public SizeInt Ceiling()
 		//{
 		//	return new SizeInt((int)Math.Ceiling(Width), (int)Math.Ceiling(Height));

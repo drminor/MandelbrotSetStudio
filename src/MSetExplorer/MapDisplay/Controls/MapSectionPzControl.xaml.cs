@@ -16,7 +16,7 @@ namespace MSetExplorer
 		//private readonly static bool SHOW_BORDER = false;
 		private readonly static bool CLIP_IMAGE_BLOCKS = true;
 
-		private IMapDisplayViewModel2 _vm;
+		private IMapDisplayViewModel _vm;
 
 		private Canvas _canvas;
 
@@ -30,7 +30,7 @@ namespace MSetExplorer
 		public MapSectionPzControl()
 		{
 			_canvas = new Canvas();
-			_vm = (IMapDisplayViewModel2)DataContext;
+			_vm = (IMapDisplayViewModel)DataContext;
 			_selectionRectangle = new SelectionRectangle(_canvas, new SizeDbl(), RMapConstants.BLOCK_SIZE);
 
 			Loaded += MapSectionPzControl_Loaded;
@@ -48,20 +48,22 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_canvas = BitmapGridControl1.Canvas;
+				mainCanvas.SizeChanged += MainCanvas_SizeChanged;
+				_canvas = mainCanvas;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 
-				_vm = (IMapDisplayViewModel2)DataContext;
-				_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
+				_vm = (IMapDisplayViewModel)DataContext;
+				_vm.ViewPortSize = PanAndZoomControl1.ViewPortSize;
 
 				if (_vm.ZoomSliderFactory != null)
 				{
-					BitmapGridControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(BitmapGridControl1);
+					PanAndZoomControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(PanAndZoomControl1);
 				}
 
 				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
-				BitmapGridControl1.ContentOffsetXChanged += BitmapGridControl1_ContentOffsetXChanged;
-				BitmapGridControl1.ContentOffsetYChanged += BitmapGridControl1_ContentOffsetYChanged;
+
+				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
+				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
@@ -80,11 +82,12 @@ namespace MSetExplorer
 
 		private void MapSectionPzControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			BitmapGridControl1.ZoomSliderOwner = null;
+			PanAndZoomControl1.ZoomSliderOwner = null;
 
 			BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
-			BitmapGridControl1.ContentOffsetXChanged -= BitmapGridControl1_ContentOffsetXChanged;
-			BitmapGridControl1.ContentOffsetYChanged -= BitmapGridControl1_ContentOffsetYChanged;
+
+			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
+			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
 
 			_vm.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
 
@@ -94,6 +97,8 @@ namespace MSetExplorer
 				_selectionRectangle.ImageDragged -= SelectionRectangle_ImageDragged;
 				_selectionRectangle.TearDown();
 			}
+
+			mainCanvas.SizeChanged -= MainCanvas_SizeChanged;
 		}
 
 		//private Border BuildBorder(Canvas canvas)
@@ -125,11 +130,11 @@ namespace MSetExplorer
 		//{
 		//	add
 		//	{
-		//		BitmapGridControl1.ViewPortSizeChanged += value;
+		//		PanAndZoomControl1.ViewPortSizeChanged += value;
 		//	}
 		//	remove
 		//	{
-		//		BitmapGridControl1.ViewPortSizeChanged -= value;
+		//		PanAndZoomControl1.ViewPortSizeChanged -= value;
 		//	}
 		//}
 
@@ -137,40 +142,63 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		//{
-		//	var previousValue = e.Item1;
-		//	var newValue = e.Item2;
-
-		//	Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewPortSize}.");
-
-		//	_vm.ViewPortSize = newValue;
-
-		//	//_selectionRectangle.DisplaySize = _vm.ViewPortSize;
-		//}
+		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			Debug.WriteLine($"The MainCanvas's size is being updated to {new SizeDbl(mainCanvas.ActualWidth, mainCanvas.ActualHeight)} ({new SizeDbl(mainCanvas.Width, mainCanvas.Height)}). The VM's ViewPortSize is {_vm.ViewPortSize}.");
+			BitmapGridControl1.ViewPortSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(e.NewSize);
+		}
 
 		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
 			_vm.ViewPortSize = e.Item2;
 		}
 
-		private void BitmapGridControl1_ContentOffsetYChanged(object? sender, EventArgs e)
+		//private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		//{
+		//	var previousValue = e.Item1;
+		//	var newValue = e.Item2;
+
+		//	Debug.WriteLine($"The {nameof(MapSectionPzControl)} is handling the BitmapGridControl's ViewPort Size Changed. Prev: {previousValue}, New: {newValue}, , VM's ViewPortSize is {_vm.ViewPortSize}. The Canvas Size is {new SizeDbl(mainCanvas.ActualWidth, mainCanvas.ActualHeight)} ({new SizeDbl(mainCanvas.Width, mainCanvas.Height)}).");
+
+		//	_vm.ViewPortSize = newValue;
+		//}
+
+		//private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		//{
+		//	_vm.ViewPortSize = e.Item2;
+		//}
+
+		//private void PanAndZoomControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		//{
+		//	//mainCanvas.Width = e.Item2.Width;
+		//	//mainCanvas.Height = e.Item2.Height;
+
+		//	var previousValue = e.Item1;
+		//	var newValue = e.Item2;
+
+		//	Debug.WriteLine($"The {nameof(MapSectionPzControl)} is handling the MapSectionPzControl's ViewPort Size Changed. Prev: {previousValue}, New: {newValue}, VM's ViewPortSize is {_vm.ViewPortSize}. The Canvas Size is {new SizeDbl(mainCanvas.ActualWidth, mainCanvas.ActualHeight)} ({new SizeDbl(mainCanvas.Width, mainCanvas.Height)}).");
+
+		//	BitmapGridControl1.ViewPortSizeInternal = newValue;
+		//	//BitmapGridControl1.ViewPortSize = newValue;
+		//}
+
+		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)
 		{
-			_vm.VerticalPosition = BitmapGridControl1.ContentOffsetY;
+			_vm.VerticalPosition = PanAndZoomControl1.ContentOffsetY;
 		}
 
-		private void BitmapGridControl1_ContentOffsetXChanged(object? sender, EventArgs e)
+		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			_vm.HorizontalPosition = BitmapGridControl1.ContentOffsetX;
+			_vm.HorizontalPosition = PanAndZoomControl1.ContentOffsetX;
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel2.ViewPortSize))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
 			{
 				_selectionRectangle.DisplaySize = _vm.ViewPortSize;
 			}
-			else if (e.PropertyName == nameof(IMapDisplayViewModel2.CurrentAreaColorAndCalcSettings))
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
 			{
 				_selectionRectangle.IsEnabled = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo != null;
 

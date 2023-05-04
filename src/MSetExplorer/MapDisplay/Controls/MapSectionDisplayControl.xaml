@@ -9,7 +9,7 @@
              x:Name="Mspz">
     <Grid>
         <Border Grid.Row="0" Grid.Column="0" BorderThickness="1" BorderBrush="Black">
-            <Canvas x:Name="mainCanvas"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+            <Canvas x:Name="mainCanvas" Background="Transparent">
             <local:BitmapGridControl
                 x:Name="BitmapGridControl1"
                 BitmapGridImageSource="{Binding ImageSource}"

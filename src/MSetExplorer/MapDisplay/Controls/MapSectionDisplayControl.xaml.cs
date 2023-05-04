@@ -15,7 +15,7 @@ namespace MSetExplorer
 		//private readonly static bool SHOW_BORDER = false;
 		private readonly static bool CLIP_IMAGE_BLOCKS = true;
 
-		private IMapDisplayViewModel2 _vm;
+		private IMapDisplayViewModel _vm;
 
 		private Canvas _canvas;
 
@@ -29,7 +29,7 @@ namespace MSetExplorer
 		public MapSectionDisplayControl()
 		{
 			_canvas = new Canvas();
-			_vm = (IMapDisplayViewModel2)DataContext;
+			_vm = (IMapDisplayViewModel)DataContext;
 			_selectionRectangle = new SelectionRectangle(_canvas, new SizeDbl(), RMapConstants.BLOCK_SIZE);
 
 			Loaded += MapSectionPzControl_Loaded;
@@ -50,7 +50,7 @@ namespace MSetExplorer
 				_canvas = mainCanvas;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 
-				_vm = (IMapDisplayViewModel2)DataContext;
+				_vm = (IMapDisplayViewModel)DataContext;
 				_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
 
 
@@ -71,10 +71,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			BitmapGridControl1.ViewPortSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(e.NewSize);
-		}
 
 		private void MapSectionPzControl_Unloaded(object sender, RoutedEventArgs e)
 		{
@@ -131,30 +127,35 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
+		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			BitmapGridControl1.ViewPortSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(e.NewSize);
+		}
+
 		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
-			var previousValue = e.Item1;
-			var newValue = e.Item2;
-
-			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewPortSize}.");
-
-			_vm.ViewPortSize = newValue;
-
-			//_selectionRectangle.DisplaySize = _vm.ViewPortSize;
+			_vm.ViewPortSize = e.Item2;
 		}
 
 		//private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		//{
-		//	_vm.ViewPortSize = e.Item2;
+		//	var previousValue = e.Item1;
+		//	var newValue = e.Item2;
+
+		//	Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewPortSize}.");
+
+		//	_vm.ViewPortSize = newValue;
+
+		//	//_selectionRectangle.DisplaySize = _vm.ViewPortSize;
 		//}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel2.ViewPortSize))
+			if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
 			{
 				_selectionRectangle.DisplaySize = _vm.ViewPortSize;
 			}
-			else if (e.PropertyName == nameof(IMapDisplayViewModel2.CurrentAreaColorAndCalcSettings))
+			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
 			{
 				_selectionRectangle.IsEnabled = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo != null;
 

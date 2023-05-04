@@ -19,7 +19,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel2 mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
+		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 			IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
 		{
@@ -59,7 +59,7 @@ namespace MSetExplorer
 
 		public IProjectViewModel ProjectViewModel { get; }
 		public IJobTreeViewModel JobTreeViewModel { get; }
-		public IMapDisplayViewModel2 MapDisplayViewModel { get; }
+		public IMapDisplayViewModel MapDisplayViewModel { get; }
 
 		public MapCoordsViewModel MapCoordsViewModel { get; } 
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
@@ -198,7 +198,7 @@ namespace MSetExplorer
 		//private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		//{
 		//	// Let the Map Project know about Map Display size changes
-		//	if (e.PropertyName == nameof(IMapDisplayViewModel2.ViewPortSize))
+		//	if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
 		//	{
 		//		DispWidth = MapDisplayViewModel.ViewPortSize.Width;
 		//		DispHeight = MapDisplayViewModel.ViewPortSize.Height;

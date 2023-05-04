@@ -15,11 +15,15 @@
 
 
   <ItemGroup>
+    <Compile Remove="MapDisplay\CustomControls\BitmapGridControl2.cs" />
+    <Compile Remove="MapDisplay\CustomControls\BitmapGridControl2_IScroll.cs" />
     <Compile Remove="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
 
   <ItemGroup>
+    <None Include="MapDisplay\ExpermentalOrUnused\BitmapGridControl2.cs" />
+    <None Include="MapDisplay\ExpermentalOrUnused\BitmapGridControl2_IScroll.cs" />
     <None Include="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
