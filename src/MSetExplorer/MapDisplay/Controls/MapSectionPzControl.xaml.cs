@@ -14,13 +14,12 @@ namespace MSetExplorer
 		#region Private Properties
 
 		//private readonly static bool SHOW_BORDER = false;
-		private readonly static bool CLIP_IMAGE_BLOCKS = true;
 
 		private IMapDisplayViewModel _vm;
 
-		private Canvas _canvas;
+		//private Canvas _canvas;
 
-		private SelectionRectangle _selectionRectangle;
+		//private SelectionRectangle _selectionRectangle;
 		//private Border? _border;
 
 		#endregion
@@ -29,9 +28,9 @@ namespace MSetExplorer
 
 		public MapSectionPzControl()
 		{
-			_canvas = new Canvas();
+			//_canvas = new Canvas();
 			_vm = (IMapDisplayViewModel)DataContext;
-			_selectionRectangle = new SelectionRectangle(_canvas, new SizeDbl(), RMapConstants.BLOCK_SIZE);
+			//_selectionRectangle = new SelectionRectangle(_canvas, new SizeDbl(), RMapConstants.BLOCK_SIZE);
 
 			Loaded += MapSectionPzControl_Loaded;
 			Unloaded += MapSectionPzControl_Unloaded;
@@ -48,9 +47,9 @@ namespace MSetExplorer
 			}
 			else
 			{
-				mainCanvas.SizeChanged += MainCanvas_SizeChanged;
-				_canvas = mainCanvas;
-				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+				//mainCanvas.SizeChanged += MainCanvas_SizeChanged;
+				//_canvas = mainCanvas;
+				//_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 
 				_vm = (IMapDisplayViewModel)DataContext;
 				_vm.ViewPortSize = PanAndZoomControl1.ViewPortSize;
@@ -65,12 +64,12 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 
-				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
+				//_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
-				_selectionRectangle = new SelectionRectangle(_canvas, _vm.ViewPortSize, _vm.BlockSize);
+				//_selectionRectangle = new SelectionRectangle(_canvas, _vm.ViewPortSize, _vm.BlockSize);
 
-				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
-				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
+				//_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
+				//_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 
 				// A border is helpful for troubleshooting.
 				//_border = SHOW_BORDER && (!CLIP_IMAGE_BLOCKS) ? BuildBorder(_canvas) : null;
@@ -89,16 +88,16 @@ namespace MSetExplorer
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
 
-			_vm.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
+			//_vm.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
 
-			if (!(_selectionRectangle is null))
-			{
-				_selectionRectangle.AreaSelected -= SelectionRectangle_AreaSelected;
-				_selectionRectangle.ImageDragged -= SelectionRectangle_ImageDragged;
-				_selectionRectangle.TearDown();
-			}
+			//if (!(_selectionRectangle is null))
+			//{
+			//	_selectionRectangle.AreaSelected -= SelectionRectangle_AreaSelected;
+			//	_selectionRectangle.ImageDragged -= SelectionRectangle_ImageDragged;
+			//	_selectionRectangle.TearDown();
+			//}
 
-			mainCanvas.SizeChanged -= MainCanvas_SizeChanged;
+			//mainCanvas.SizeChanged -= MainCanvas_SizeChanged;
 		}
 
 		//private Border BuildBorder(Canvas canvas)
@@ -142,11 +141,11 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			Debug.WriteLine($"The MainCanvas's size is being updated to {new SizeDbl(mainCanvas.ActualWidth, mainCanvas.ActualHeight)} ({new SizeDbl(mainCanvas.Width, mainCanvas.Height)}). The VM's ViewPortSize is {_vm.ViewPortSize}.");
-			BitmapGridControl1.ViewPortSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(e.NewSize);
-		}
+		//private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		//{
+		//	Debug.WriteLine($"The MainCanvas's size is being updated to {new SizeDbl(mainCanvas.ActualWidth, mainCanvas.ActualHeight)} ({new SizeDbl(mainCanvas.Width, mainCanvas.Height)}). The VM's ViewPortSize is {_vm.ViewPortSize}.");
+		//	BitmapGridControl1.ViewPortSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(e.NewSize);
+		//}
 
 		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
@@ -192,30 +191,30 @@ namespace MSetExplorer
 			_vm.HorizontalPosition = PanAndZoomControl1.ContentOffsetX;
 		}
 
-		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
-			{
-				_selectionRectangle.DisplaySize = _vm.ViewPortSize;
-			}
-			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
-			{
-				_selectionRectangle.IsEnabled = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo != null;
+		//private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
+		//	if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
+		//	{
+		//		_selectionRectangle.DisplaySize = _vm.ViewPortSize;
+		//	}
+		//	else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
+		//	{
+		//		_selectionRectangle.IsEnabled = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo != null;
 
-				// Just for Diagnostics
-				_selectionRectangle.MapAreaInfo = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
-			}
-		}
+		//		// Just for Diagnostics
+		//		_selectionRectangle.MapAreaInfo = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
+		//	}
+		//}
 
-		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
-		{
-			_vm.UpdateMapViewZoom(e);
-		}
+		//private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
+		//{
+		//	_vm.UpdateMapViewZoom(e);
+		//}
 
-		private void SelectionRectangle_ImageDragged(object? sender, ImageDraggedEventArgs e)
-		{
-			_vm.UpdateMapViewPan(e);
-		}
+		//private void SelectionRectangle_ImageDragged(object? sender, ImageDraggedEventArgs e)
+		//{
+		//	_vm.UpdateMapViewPan(e);
+		//}
 
 		#endregion
 	}

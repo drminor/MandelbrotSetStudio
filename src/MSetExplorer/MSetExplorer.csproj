@@ -15,8 +15,10 @@
 
 
   <ItemGroup>
-    <Compile Remove="MapDisplay\CustomControls\BitmapGridControl2.cs" />
-    <Compile Remove="MapDisplay\CustomControls\BitmapGridControl2_IScroll.cs" />
+    <Compile Remove="MapDisplay\ExpermentalOrUnused\BitmapGridControl2.cs" />
+    <Compile Remove="MapDisplay\ExpermentalOrUnused\BitmapGridControl2_IScroll.cs" />
+    <Compile Remove="MapDisplay\ExpermentalOrUnused\BitmapGridControlV1.cs" />
+    <Compile Remove="MapDisplay\ExpermentalOrUnused\BitmapGridControlV1_IScroll.cs" />
     <Compile Remove="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
@@ -24,6 +26,8 @@
   <ItemGroup>
     <None Include="MapDisplay\ExpermentalOrUnused\BitmapGridControl2.cs" />
     <None Include="MapDisplay\ExpermentalOrUnused\BitmapGridControl2_IScroll.cs" />
+    <None Include="MapDisplay\ExpermentalOrUnused\BitmapGridControlV1.cs" />
+    <None Include="MapDisplay\ExpermentalOrUnused\BitmapGridControlV1_IScroll.cs" />
     <None Include="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
@@ -54,6 +58,11 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Folder Include="MapDisplay\Incoming\" />
   </ItemGroup>
 
 </Project>

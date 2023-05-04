@@ -3,19 +3,28 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Windows.Security.Cryptography.Certificates;
 
 namespace MSetExplorer
 {
-	public partial class BitmapGridControl_Old : ContentControl
+	//[TemplatePart(Name = "MainCanvasElement", Type = typeof(Canvas))]
+	public partial class BitmapGridControl3: ContentControl
 	{
 		#region Private Fields
+
+		private readonly static bool CLIP_IMAGE_BLOCKS = true;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 
 		private FrameworkElement? _content;
+
 		private Canvas _canvas;
+		//private Canvas _mainCanvasElement;
+
+
 		private Image _image;
 
 		private SizeDbl _viewPortSizeInternal;
@@ -25,12 +34,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		static BitmapGridControl_Old()
+		static BitmapGridControl3()
 		{
-			DefaultStyleKeyProperty.OverrideMetadata(typeof(BitmapGridControl_Old), new FrameworkPropertyMetadata(typeof(BitmapGridControl_Old)));
+			DefaultStyleKeyProperty.OverrideMetadata(typeof(BitmapGridControl3), new FrameworkPropertyMetadata(typeof(BitmapGridControl3)));
 		}
 
-		public BitmapGridControl_Old()
+		public BitmapGridControl3()
 		{
 			_viewPortSizeDispatcher = new DebounceDispatcher
 			{
@@ -39,8 +48,11 @@ namespace MSetExplorer
 
 			_content = null;
 			_canvas = new Canvas();
+
+			//_mainCanvasElement = new Canvas();
+
 			_image = new Image();
-			_canvas.Children.Add(_image);
+			//_canvas.Children.Add(_image);
 
 			_viewPortSizeInternal = new SizeDbl();
 			_viewPortSize = new SizeDbl();
@@ -65,8 +77,24 @@ namespace MSetExplorer
 		public Canvas Canvas
 		{
 			get => _canvas;
-			set => _canvas = value;
+			set
+			{
+				_canvas = value;
+				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+			}
 		}
+
+		//public Canvas MainCanvasElement
+		//{
+		//	get => _mainCanvasElement;
+
+		//	set
+		//	{
+
+		//		_mainCanvasElement = value;
+		//		_mainCanvasElement.ClipToBounds = CLIP_IMAGE_BLOCKS;
+		//	}
+		//}
 
 		public Image Image
 		{
@@ -85,6 +113,20 @@ namespace MSetExplorer
 					UpdateImageOffset(ImageOffset);
 				}
 			}
+		}
+
+
+		private bool IsImageAChildOfCanvas(Image image, Canvas canvas)
+		{
+			foreach(var v in canvas.Children)
+			{
+				if (v == image)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		private SizeDbl ViewPortSizeInternal
@@ -180,49 +222,137 @@ namespace MSetExplorer
 
 		#region Private Methods - Control
 
-		protected override Size MeasureOverride(Size constraint)
-		{
-			Size infiniteSize = new Size(double.PositiveInfinity, double.PositiveInfinity);
-			Size childSize = base.MeasureOverride(infiniteSize);
+		//protected override Size MeasureOverride(Size constraint)
+		//{
+		//	Size infiniteSize = new Size(double.PositiveInfinity, double.PositiveInfinity);
+		//	Size childSize = base.MeasureOverride(infiniteSize);
 
-			double width = constraint.Width;
-			double height = constraint.Height;
+		//	double width = constraint.Width;
+		//	double height = constraint.Height;
+
+		//	if (double.IsInfinity(width))
+		//	{
+		//		// Make sure we don't return infinity!
+		//		width = childSize.Width;
+		//	}
+
+		//	if (double.IsInfinity(height))
+		//	{
+		//		// Make sure we don't return infinity!
+		//		height = childSize.Height;
+		//	}
+
+		//	// Update the size of the viewport onto the content based on the passed in 'constraint'.
+		//	var theNewSize = new Size(width, height);
+
+		//	var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(theNewSize);
+
+		//	if (ViewPortSizeInternal != newSizeDbl)
+		//	{
+		//		ViewPortSizeInternal = newSizeDbl;
+
+		//		if (_content != null)
+		//		{
+		//			_content.Arrange(new Rect(theNewSize));
+		//		}
+		//	}
+
+		//	return theNewSize;
+		//}
+
+		//protected override Size ArrangeOverride(Size finalSizeRaw)
+		//{
+		//	var finalSize = ForceSize(finalSizeRaw);
+
+		//	var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(finalSize);
+
+		//	if (ViewPortSizeInternal != newSizeDbl)
+		//	{
+		//		ViewPortSizeInternal = newSizeDbl;
+		//	}
+
+		//	return finalSize;
+		//}
+
+		/// <summary>
+		/// Measure the control and it's children.
+		/// </summary>
+		protected override Size MeasureOverride(Size availableSize)
+		{
+			Size childSize = base.MeasureOverride(availableSize);
+
+			_content?.Measure(availableSize);
+
+			//UpdateViewportSize(availableSize);
+
+			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
+
+			if (ViewPortSizeInternal != newSizeDbl)
+			{
+				ViewPortSizeInternal = newSizeDbl;
+			}
+
+			double width = availableSize.Width;
+			double height = availableSize.Height;
 
 			if (double.IsInfinity(width))
 			{
-				// Make sure we don't return infinity!
 				width = childSize.Width;
 			}
 
 			if (double.IsInfinity(height))
 			{
-				// Make sure we don't return infinity!
 				height = childSize.Height;
 			}
 
-			// Update the size of the viewport onto the content based on the passed in 'constraint'.
-			var theNewSize = new Size(width, height);
+			var result = new Size(width, height);
 
-			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(theNewSize);
+			Debug.WriteLine($"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
 
-			if (ViewPortSizeInternal != newSizeDbl)
-			{
-				ViewPortSizeInternal = newSizeDbl;
+			// TODO: Figure out when its best to call UpdateViewportSize.
+			//UpdateViewportSize(childSize);
+			//UpdateViewportSize(result);
 
-				if (_content != null)
-				{
-					_content.Arrange(new Rect(theNewSize));
-				}
-			}
-
-			return theNewSize;
+			return result;
 		}
 
+
+		/// <summary>
+		/// Arrange the control and it's children.
+		/// </summary>
 		protected override Size ArrangeOverride(Size finalSizeRaw)
 		{
 			var finalSize = ForceSize(finalSizeRaw);
+			Size childSize = base.ArrangeOverride(finalSize);
 
-			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(finalSize);
+			if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
+
+			if (_content != null)
+			{
+				if (Canvas != null)
+				{
+					var canvas = Canvas;
+					Debug.WriteLine($"Before _content.Arrange({finalSize}. Base returns {childSize}. The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
+					
+					_content.Arrange(new Rect(finalSize));
+
+					if (canvas.ActualWidth != childSize.Width)
+					{
+						canvas.Width = childSize.Width;
+					}
+
+					if (canvas.ActualHeight != childSize.Height)
+					{
+						canvas.Height = childSize.Height;
+					}
+
+					Debug.WriteLine($"After _content.Arrange(The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
+				}
+			}
+
+			//UpdateViewportSize(childSize);
+
+			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(childSize);
 
 			if (ViewPortSizeInternal != newSizeDbl)
 			{
@@ -246,19 +376,24 @@ namespace MSetExplorer
 
 		public override void OnApplyTemplate()
 		{
-			base.OnApplyTemplate();
+			//base.OnApplyTemplate();
 
-			_content = Template.FindName("BitmapGridControl_Content", this) as FrameworkElement;
+			_content = Template.FindName("PART_Content", this) as FrameworkElement;
 			if (_content != null)
 			{
-				Debug.WriteLine($"Found the BitmapGridControl_Content template.");
+				Debug.WriteLine($"Found the BitmapGridControl3_Content template.");
 
 				(Canvas, Image) = BuildContentModel(_content);
+
+				Debug.Assert(IsImageAChildOfCanvas(Image, Canvas), "Image is not a child of the Canvas.");
+
 			}
 			else
 			{
-				Debug.WriteLine($"WARNING: Did not find the BitmapGridControl_Content template.");
+				Debug.WriteLine($"WARNING: Did not find the BitmapGridControl3_Content template.");
 			}
+
+			//MainCanvasElement = GetTemplateChild("MainCanvas") as Canvas ?? new Canvas();
 		}
 
 		private (Canvas, Image) BuildContentModel(FrameworkElement content)
@@ -267,7 +402,6 @@ namespace MSetExplorer
 			{
 				if (cp.Content is Canvas ca)
 				{
-					//return ca;
 					if (ca.Children[0] is Image im)
 					{
 						return (ca, im);
@@ -275,7 +409,7 @@ namespace MSetExplorer
 				}
 			}
 
-			throw new InvalidOperationException("Cannot find the bmgcImage element on the BitmapGridControl_Content.");
+			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
 		}
 
 		private bool UpdateImageOffset(VectorDbl newValue)
@@ -315,12 +449,12 @@ namespace MSetExplorer
 		#region BitmapGridImageSource Dependency Property
 
 		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
-					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl_Old),
+					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl3),
 					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, BitmapGridImageSource_PropertyChanged));
 
 		private static void BitmapGridImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			var c = (BitmapGridControl_Old)o;
+			var c = (BitmapGridControl3)o;
 			var previousValue = (ImageSource)e.OldValue;
 			var value = (ImageSource)e.NewValue;
 
@@ -335,12 +469,12 @@ namespace MSetExplorer
 		#region ImageOffset Dependency Property
 
 		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
-					"ImageOffset", typeof(VectorDbl), typeof(BitmapGridControl_Old),
+					"ImageOffset", typeof(VectorDbl), typeof(BitmapGridControl3),
 					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
 
 		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			BitmapGridControl_Old c = (BitmapGridControl_Old)o;
+			BitmapGridControl3 c = (BitmapGridControl3)o;
 			//var previousValue = (VectorDbl)e.OldValue;
 			var newValue = (VectorDbl)e.NewValue;
 

@@ -9,13 +9,17 @@
              x:Name="Mspz">
     <Grid>
         <Border Grid.Row="0" Grid.Column="0" BorderThickness="1" BorderBrush="Black">
-            <Canvas x:Name="mainCanvas" Background="Transparent">
-            <local:BitmapGridControl
+            <local:BitmapGridControl3
                 x:Name="BitmapGridControl1"
                 BitmapGridImageSource="{Binding ImageSource}"
                 ImageOffset="{Binding ImageOffset}"
-                />
-            </Canvas>
+                >
+                
+                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+                    <Image x:Name="MainImage" />
+                </Canvas>
+
+            </local:BitmapGridControl3>
         </Border>
     </Grid>
 </UserControl>
