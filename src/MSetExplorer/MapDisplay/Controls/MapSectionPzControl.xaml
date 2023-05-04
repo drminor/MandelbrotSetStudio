@@ -23,43 +23,16 @@
                     ContentScale="{Binding DisplayZoom}"
                     MaxContentScale="{Binding MaximumDisplayZoom}"
                     >
-                    
-                    <local:BitmapGridControl3
+
+                    <local:BitmapGridControl
                         x:Name="BitmapGridControl1"
                         BitmapGridImageSource="{Binding ImageSource}"
                         ImageOffset="{Binding ImageOffset}"
-                        >
-                        
-                        <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
-                            <Image x:Name="MainImage" />
-                        </Canvas>
-
-                    </local:BitmapGridControl3>
-
-                    <!--<Canvas x:Name="mainCanvas" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <local:BitmapGridControl x:Name="BitmapGridControl1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                            BitmapGridImageSource="{Binding ImageSource}"
-                            ImageOffset="{Binding ImageOffset}"
-                        />
-                    </Canvas>-->
-
+                    />
 
                 </local:PanAndZoomControl>
-
-
-
-
 
             </ScrollViewer>
         </Border>
     </Grid>
 </UserControl>
-
-<!--<local:BitmapGridControl2
-                    x:Name="BitmapGridControl1"
-                    UnscaledExtent="{Binding UnscaledExtent}"
-                    BitmapGridImageSource="{Binding ImageSource}"
-                    ImageOffset="{Binding ImageOffset}"
-                    ContentScale="{Binding DisplayZoom}"
-                    MaxContentScale="{Binding MaximumDisplayZoom}"
-                    />-->

@@ -8,11 +8,18 @@ using System.Windows.Threading;
 
 namespace MSetExplorer
 {
-	public partial class BitmapGridControl : Image
+	//[TemplatePart(Name = "MainCanvasElement", Type = typeof(Canvas))]
+	public partial class BitmapGridControl: ContentControl
 	{
 		#region Private Fields
 
+		private readonly static bool CLIP_IMAGE_BLOCKS = true;
+
 		private DebounceDispatcher _viewPortSizeDispatcher;
+
+		private FrameworkElement? _content;
+		private Canvas _canvas;
+		private Image _image;
 
 		private SizeDbl _viewPortSizeInternal;
 		private SizeDbl _viewPortSize;
@@ -33,17 +40,18 @@ namespace MSetExplorer
 				Priority = DispatcherPriority.Render
 			};
 
-			SizeChanged += ImageSize_Changed;
+			_content = null;
+			_canvas = new Canvas();
+
+			_image = new Image();
 
 			_viewPortSizeInternal = new SizeDbl();
 			_viewPortSize = new SizeDbl();
 		}
 
-		private void ImageSize_Changed(object sender, SizeChangedEventArgs e)
+		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			Debug.WriteLine("ImageSize Changed");
-
-			//ViewPortSizeInternal = new SizeDbl(ActualWidth, ActualHeight);
+			//Debug.WriteLine("Image SizeChanged");
 			UpdateImageOffset(ImageOffset);
 		}
 
@@ -57,7 +65,51 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public SizeDbl ViewPortSizeInternal
+		public Canvas Canvas
+		{
+			get => _canvas;
+			set
+			{
+				_canvas = value;
+				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+			}
+		}
+
+		public Image Image
+		{
+			get => _image;
+			set
+			{
+				if (_image != value)
+				{
+					_image.SizeChanged -= Image_SizeChanged;
+
+					_image = value;
+					_image.SizeChanged += Image_SizeChanged;
+
+					_image.Source = BitmapGridImageSource;
+
+					UpdateImageOffset(ImageOffset);
+
+					Debug.Assert(IsImageAChildOfCanvas(Image, Canvas), "Image is not a child of the Canvas.");
+				}
+			}
+		}
+
+		private bool IsImageAChildOfCanvas(Image image, Canvas canvas)
+		{
+			foreach(var v in canvas.Children)
+			{
+				if (v == image)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		private SizeDbl ViewPortSizeInternal
 		{
 			get => _viewPortSizeInternal;
 			set
@@ -67,14 +119,14 @@ namespace MSetExplorer
 					var previousValue = _viewPortSizeInternal;
 					_viewPortSizeInternal = value;
 
-					Debug.WriteLine($"BitmapGridControl's ViewPortSize INTERNAL is changing: Old size: {previousValue}, new size: {_viewPortSizeInternal}.");
+					//Debug.WriteLine($"BitmapGridControl: ViewPort is changing: Old size: {previousValue}, new size: {_viewPort}.");
 
 					var newViewPortSize = value;
 
 					if (previousValue.Width < 25 || previousValue.Height < 25)
 					{
 						// Update the 'real' value immediately
-						Debug.WriteLine($"The BitmapGridControl is updating the ViewPortSize immediately. Previous Size: {previousValue}, New Size: {value}.");
+						Debug.WriteLine($"Updating the ViewPortSize immediately. Previous Size: {previousValue}, New Size: {value}.");
 						ViewPortSize = newViewPortSize;
 					}
 					else
@@ -89,7 +141,7 @@ namespace MSetExplorer
 							interval: 150,
 							action: parm =>
 							{
-								Debug.WriteLine($"The BitmapGridControl is updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}.");
+								Debug.WriteLine($"Updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}.");
 								ViewPortSize = newViewPortSize;
 							},
 							param: null
@@ -98,7 +150,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"The BitmapGridControl is skipping the update of the ViewPortSize, the new value {value} is the same as the old value. {ViewPortSizeInternal}.");
+					Debug.WriteLine($"Skipping the update of the ViewPortSize, the new value {value} is the same as the old value. {ViewPortSizeInternal}.");
 				}
 			}
 		}
@@ -115,7 +167,7 @@ namespace MSetExplorer
 					var previousValue = ViewPortSize;
 					_viewPortSize = value;
 
-					//Debug.Assert(_viewPortSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
+					Debug.Assert(_viewPortSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
 
 					//UpdateViewportSize()
 
@@ -137,48 +189,157 @@ namespace MSetExplorer
 		public VectorDbl ImageOffset
 		{
 			get => (VectorDbl)GetValue(ImageOffsetProperty);
-			set => SetCurrentValue(ImageOffsetProperty, value);
-		}
-
-		#endregion
-
-		#region BitmapGridImageSource Dependency Property
-
-		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
-					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl),
-					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, BitmapGridImageSource_PropertyChanged));
-
-		private static void BitmapGridImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			var c = (BitmapGridControl)o;
-			var previousValue = (ImageSource)e.OldValue;
-			var value = (ImageSource)e.NewValue;
-
-			if (value != previousValue)
+			set
 			{
-				c.Source = value;
+				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
+				{
+					SetCurrentValue(ImageOffsetProperty, value);
+				}
 			}
 		}
 
 		#endregion
 
-		#region ImageOffset Dependency Property
+		#region Private Methods - Control
 
-		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
-					"ImageOffset", typeof(VectorDbl), typeof(BitmapGridControl),
-					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
-
-		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		/// <summary>
+		/// Measure the control and it's children.
+		/// </summary>
+		protected override Size MeasureOverride(Size availableSize)
 		{
-			BitmapGridControl c = (BitmapGridControl)o;
-			var newValue = (VectorDbl)e.NewValue;
+			Size childSize = base.MeasureOverride(availableSize);
 
-			_ = c.UpdateImageOffset(newValue);
+			_content?.Measure(availableSize);
+
+			//UpdateViewportSize(availableSize);
+
+			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
+
+			if (ViewPortSizeInternal != newSizeDbl)
+			{
+				ViewPortSizeInternal = newSizeDbl;
+			}
+
+			double width = availableSize.Width;
+			double height = availableSize.Height;
+
+			if (double.IsInfinity(width))
+			{
+				width = childSize.Width;
+			}
+
+			if (double.IsInfinity(height))
+			{
+				height = childSize.Height;
+			}
+
+			var result = new Size(width, height);
+
+			Debug.WriteLine($"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
+
+			// TODO: Figure out when its best to call UpdateViewportSize.
+			//UpdateViewportSize(childSize);
+			//UpdateViewportSize(result);
+
+			return result;
 		}
 
-		#endregion
 
-		#region Private Methods
+		/// <summary>
+		/// Arrange the control and it's children.
+		/// </summary>
+		protected override Size ArrangeOverride(Size finalSizeRaw)
+		{
+			var finalSize = ForceSize(finalSizeRaw);
+			Size childSize = base.ArrangeOverride(finalSize);
+
+			if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
+
+			if (_content != null)
+			{
+				if (Canvas != null)
+				{
+					var canvas = Canvas;
+					//Debug.WriteLine($"Before _content.Arrange({finalSize}. Base returns {childSize}. The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
+					
+					_content.Arrange(new Rect(finalSize));
+
+					if (canvas.ActualWidth != childSize.Width)
+					{
+						canvas.Width = childSize.Width;
+					}
+
+					if (canvas.ActualHeight != childSize.Height)
+					{
+						canvas.Height = childSize.Height;
+					}
+
+					//Debug.WriteLine($"After _content.Arrange(The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
+				}
+			}
+
+			//UpdateViewportSize(childSize);
+
+			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(childSize);
+
+			if (ViewPortSizeInternal != newSizeDbl)
+			{
+				ViewPortSizeInternal = newSizeDbl;
+			}
+
+			return finalSize;
+		}
+
+		private Size ForceSize(Size finalSize)
+		{
+			if (finalSize.Width > 1020 && finalSize.Width < 1030 && finalSize.Height > 1020 && finalSize.Height < 1030)
+			{
+				return new Size(1024, 1024);
+			}
+			else
+			{
+				return finalSize;
+			}
+		}
+
+		public override void OnApplyTemplate()
+		{
+			//base.OnApplyTemplate();
+
+			_content = Template.FindName("PART_Content", this) as FrameworkElement;
+			if (_content != null)
+			{
+				//Debug.WriteLine($"Found the BitmapGridControl3_Content template.");
+
+				(Canvas, Image) = BuildContentModel(_content);
+
+				Debug.Assert(IsImageAChildOfCanvas(Image, Canvas), "Image is not a child of the Canvas.");
+
+				Content = _content;
+			}
+			else
+			{
+				//Debug.WriteLine($"WARNING: Did not find the BitmapGridControl_Content template.");
+				throw new InvalidOperationException("Did not find the BitmapGridControl_Content template.");
+
+			}
+		}
+
+		private (Canvas, Image) BuildContentModel(FrameworkElement content)
+		{
+			if (content is ContentPresenter cp)
+			{
+				if (cp.Content is Canvas ca)
+				{
+					if (ca.Children[0] is Image im)
+					{
+						return (ca, im);
+					}
+				}
+			}
+
+			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
+		}
 
 		private bool UpdateImageOffset(VectorDbl newValue)
 		{
@@ -186,15 +347,14 @@ namespace MSetExplorer
 			var invertedValue = newValue.Invert();
 
 			VectorDbl currentValue = new VectorDbl(
-				(double)GetValue(Canvas.LeftProperty),
-				(double)GetValue(Canvas.BottomProperty)
+				(double)Image.GetValue(Canvas.LeftProperty),
+				(double)Image.GetValue(Canvas.BottomProperty)
 				);
 
 			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
 			{
-				Debug.WriteLine($"The BitmapGridControl is updating the CanvasControlOffset.");
-				SetValue(Canvas.LeftProperty, invertedValue.X);
-				SetValue(Canvas.BottomProperty, invertedValue.Y);
+				Image.SetValue(Canvas.LeftProperty, invertedValue.X);
+				Image.SetValue(Canvas.BottomProperty, invertedValue.Y);
 
 				return true;
 			}
@@ -213,23 +373,44 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//public override void OnApplyTemplate()
-		//{
-		//	base.OnApplyTemplate();
-		//}
+		#endregion
 
-		//protected override Size ArrangeOverride(Size arrangeSize)
-		//{
-		//	return base.ArrangeOverride(arrangeSize);
-		//}
+		#region BitmapGridImageSource Dependency Property
 
-		//protected override Size MeasureOverride(Size constraint)
-		//{
-		//	return base.MeasureOverride(constraint);
-		//}
+		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
+					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, BitmapGridImageSource_PropertyChanged));
 
+		private static void BitmapGridImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			var c = (BitmapGridControl)o;
+			var previousValue = (ImageSource)e.OldValue;
+			var value = (ImageSource)e.NewValue;
 
+			if (value != previousValue)
+			{
+				c.Image.Source = value;
+			}
+		}
 
 		#endregion
+
+		#region ImageOffset Dependency Property
+
+		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
+					"ImageOffset", typeof(VectorDbl), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
+
+		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			BitmapGridControl c = (BitmapGridControl)o;
+			//var previousValue = (VectorDbl)e.OldValue;
+			var newValue = (VectorDbl)e.NewValue;
+
+			_ = c.UpdateImageOffset(newValue);
+		}
+
+		#endregion
+
 	}
 }

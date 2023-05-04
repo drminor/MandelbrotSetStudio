@@ -13,11 +13,8 @@ namespace MSetExplorer
 		#region Private Properties
 
 		//private readonly static bool SHOW_BORDER = false;
-		//private readonly static bool CLIP_IMAGE_BLOCKS = true;
 
 		private IMapDisplayViewModel _vm;
-
-		//private Canvas _canvas;
 
 		private SelectionRectangle _selectionRectangle;
 		//private Border? _border;
@@ -46,20 +43,14 @@ namespace MSetExplorer
 			}
 			else
 			{
-				//mainCanvas.SizeChanged += MainCanvas_SizeChanged;
-				//_canvas = mainCanvas;
-				//_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
-
 				_vm = (IMapDisplayViewModel)DataContext;
 				_vm.ViewPortSize = BitmapGridControl1.ViewPortSize;
+				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
 				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
 
-				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
-
 				var canvas = BitmapGridControl1.Canvas;
 				_selectionRectangle = new SelectionRectangle(canvas, _vm.ViewPortSize, _vm.BlockSize);
-
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 
@@ -108,28 +99,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		//#region Public Events
-
-		//public event EventHandler<ValueTuple<Size, Size>>? ViewPortSizeChanged
-		//{
-		//	add
-		//	{
-		//		BitmapGridControl1.ViewPortSizeChanged += value;
-		//	}
-		//	remove
-		//	{
-		//		BitmapGridControl1.ViewPortSizeChanged -= value;
-		//	}
-		//}
-
-		//#endregion
-
 		#region Event Handlers
-
-		//private void MainCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
-		//{
-		//	BitmapGridControl1.ViewPortSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(e.NewSize);
-		//}
 
 		//private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		//{
@@ -144,8 +114,6 @@ namespace MSetExplorer
 			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling ViewPort Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewPortSize}.");
 
 			_vm.ViewPortSize = newValue;
-
-			//_selectionRectangle.DisplaySize = _vm.ViewPortSize;
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
