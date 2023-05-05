@@ -15,6 +15,7 @@ namespace MSetExplorer
 		{
 			_scrollbar = scrollBar;
 			_zoomedControl = zoomedControl;
+			InvalidateScaleContentInfo();
 
 			_scrollbar.ValueChanged += _scrollbar_ValueChanged;
 		}
@@ -49,12 +50,13 @@ namespace MSetExplorer
 
 				try
 				{
-					_scrollbar.Value = 0;
+
+					//_scrollbar.Value = 1;
 					_scrollbar.Maximum = _zoomedControl.MaxScale;
 					_scrollbar.Minimum = _zoomedControl.MinScale;
 
-					_scrollbar.SmallChange = 2;
-					_scrollbar.LargeChange = 4;
+					_scrollbar.SmallChange = _scrollbar.Minimum;
+					_scrollbar.LargeChange = _scrollbar.Minimum * 2;
 				}
 				finally
 				{

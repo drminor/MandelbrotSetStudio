@@ -320,8 +320,6 @@ namespace MSetExplorer
 			return value;
 		}
 
-
-
 		#endregion
 
 		#region MinContentScale and MaxContentScale Dependency Properties

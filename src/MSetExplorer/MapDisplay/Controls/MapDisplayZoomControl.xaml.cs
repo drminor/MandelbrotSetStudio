@@ -20,19 +20,20 @@ namespace MSetExplorer
 
 		private void MapDisplayZoomControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			SetScrollBarSettings(scrollBar1);
+			var minimumScale = 0.0625;
+			SetScrollBarSettings(scrollBar1, minimumScale);
 			scrollBar1.ValueChanged += ScrollBar1_ValueChanged;
 			Debug.WriteLine("The MapDisplayZoom Control is now loaded.");
 		}
 
 		private void ScrollBar1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
-			textBlock1.Text = e.NewValue.ToString("G2");
+			textBlock1.Text = e.NewValue.ToString("F3");
 		}
 
 		#endregion
 
-		#region DisplayZoom Min Max Button Handlers
+		#region Min Max Button Handlers
 
 		private void ButtonSetMaxZoom_Click(object sender, RoutedEventArgs e)
 		{
@@ -46,14 +47,14 @@ namespace MSetExplorer
 
 		#endregion
 
-		private void SetScrollBarSettings(ScrollBar sb)
+		private void SetScrollBarSettings(ScrollBar sb, double minimumScale)
 		{
-			sb.Minimum = 0.0625;
+			sb.Minimum = minimumScale;
 			sb.Value = 1;
 
 			sb.Maximum = 1;
-			sb.SmallChange = 0.125;
-			sb.LargeChange = 0.25;
+			sb.SmallChange = minimumScale;
+			sb.LargeChange = minimumScale * 2;
 
 			sb.Value = 1;
 		}

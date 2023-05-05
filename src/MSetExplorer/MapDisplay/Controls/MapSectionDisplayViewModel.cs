@@ -40,7 +40,7 @@ namespace MSetExplorer
 		private SizeDbl _unscaledExtent;
 
 		private double _displayZoom;
-		private double _maximumDisplayZoom;
+		private double _minimumDisplayZoom;
 
 		#endregion
 
@@ -68,7 +68,7 @@ namespace MSetExplorer
 			_imageOffset = new VectorDbl();
 
 			_displayZoom = 1;
-			_maximumDisplayZoom = 12;
+			_minimumDisplayZoom = 0.0625;
 		}
 
 		#endregion
@@ -296,9 +296,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public double MaximumDisplayZoom
+		public double MinimumDisplayZoom
 		{
-			get => _maximumDisplayZoom;
+			get => _minimumDisplayZoom;
 			private set
 			{
 				//if (Math.Abs(value - _maximumDisplayZoom) > 0.001)
@@ -815,7 +815,7 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void CheckVPSize()
 		{
-			Debug.WriteLine($"At checkVPSize: ViewportSize: {ViewPortSize}, DisplayZoom: {DisplayZoom}, MaxZoom: {MaximumDisplayZoom}.");
+			Debug.WriteLine($"At checkVPSize: ViewportSize: {ViewPortSize}, DisplayZoom: {DisplayZoom}, MaxZoom: {MinimumDisplayZoom}.");
 
 			if (ViewPortSize.Width < 0.1 || ViewPortSize.Height < 0.1)
 			{

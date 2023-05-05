@@ -47,7 +47,7 @@ namespace MSetExplorer
 		double InvertedVerticalPosition { get; }
 
 		double DisplayZoom { get; set; }
-		double MaximumDisplayZoom { get; }
+		double MinimumDisplayZoom { get; }
 
 		MapAreaInfo? LastMapAreaInfo { get; }
 		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }

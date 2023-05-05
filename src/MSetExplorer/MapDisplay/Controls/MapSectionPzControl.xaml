@@ -21,7 +21,7 @@
                     x:Name="PanAndZoomControl1"
                     UnscaledExtent="{Binding UnscaledExtent}"
                     ContentScale="{Binding DisplayZoom}"
-                    MaxContentScale="{Binding MaximumDisplayZoom}"
+                    MinContentScale="{Binding MinimumDisplayZoom}"
                     >
 
                     <local:BitmapGridControl
