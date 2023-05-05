@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,19 +28,38 @@ namespace MSetExplorer
 		public ScrollViewer ScrollOwner
 		{
 			get => _scrollOwner ?? (_scrollOwner = new ScrollViewer());
-			set => _scrollOwner = value;
+			set
+			{
+				_scrollOwner = value;
+				_originalVerticalScrollBarVisibility = _scrollOwner.VerticalScrollBarVisibility;
+				ScrollBarDisplacement = GetScrollBarDisplacement();
+			}
 		}
 
 		public bool CanHorizontallyScroll
 		{
 			get => _canHScroll;
-			set => _canHScroll = value;
+			set
+			{
+				_canHScroll = value;
+				//ScrollBarDisplacement = new SizeDbl(value ? VERTICAL_SCROLL_BAR_WIDTH : 0, ScrollBarDisplacement.Height);
+			}
 		}
 
 		public bool CanVerticallyScroll
 		{
 			get => _canVScroll;
-			set => _canVScroll = value;
+			set
+			{
+				_canVScroll = value;
+				//ScrollBarDisplacement = new SizeDbl(ScrollBarDisplacement.Width, value ? VERTICAL_SCROLL_BAR_WIDTH : 0);
+			}
+		}
+
+		public SizeDbl ScrollBarDisplacement
+		{
+			get => _scrollBarDisplacement;
+			set => _scrollBarDisplacement = value;
 		}
 
 		public double ExtentWidth
@@ -126,7 +146,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region SetHorizontalOffset, SetVerticalOffset and  MakeVisible 
+		#region SetHorizontalOffset, SetVerticalOffset and MakeVisible 
 
 		public void SetHorizontalOffset(double offset)
 		{
@@ -234,6 +254,29 @@ namespace MSetExplorer
 
 			ContentOffsetX = contentOffset.X;
 			ContentOffsetY = contentOffset.Y;
+		}
+
+		private void SetVerticalScrollBarVisibility(bool show)
+		{
+			//if (_scrollOwner != null && _scrollOwner.VerticalScrollBarVisibility != value)
+			//{
+			//	_scrollOwner.VerticalScrollBarVisibility = value;
+			//}
+
+			if (_scrollOwner != null)
+			{
+				if (show && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Visible)
+				{
+					_scrollOwner.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
+				}
+				else
+				{
+					if(_scrollOwner.VerticalScrollBarVisibility == ScrollBarVisibility.Visible && !show)
+					{
+						_scrollOwner.VerticalScrollBarVisibility = _originalVerticalScrollBarVisibility;
+					}
+				}
+			}
 		}
 
 		#endregion

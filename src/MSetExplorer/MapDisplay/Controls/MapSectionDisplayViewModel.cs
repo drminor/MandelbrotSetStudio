@@ -37,7 +37,7 @@ namespace MSetExplorer
 		private double _verticalPosition;
 		private double _horizontalPosition;
 
-		private Size _unscaledExtent;
+		private SizeDbl _unscaledExtent;
 
 		private double _displayZoom;
 		private double _maximumDisplayZoom;
@@ -48,7 +48,7 @@ namespace MSetExplorer
 
 		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionHelper, SizeInt blockSize)
 		{
-			_unscaledExtent = new Size();
+			_unscaledExtent = new SizeDbl();
 			_paintLocker = new object();
 			BlockSize = blockSize;
 
@@ -211,7 +211,7 @@ namespace MSetExplorer
 
 		public bool IsBound => _boundedMapArea != null;
 
-		public Size UnscaledExtent
+		public SizeDbl UnscaledExtent
 		{
 			get => _unscaledExtent;
 
@@ -236,7 +236,7 @@ namespace MSetExplorer
 				{
 					_verticalPosition = value;
 
-					Debug.Assert(!UnscaledExtent.IsEmpty, "Moving display, but we have no Unscaled Extent.");
+					Debug.Assert(!UnscaledExtent.IsNearZero(), "Moving display, but we have no Unscaled Extent.");
 
 					Debug.WriteLine($"Moving to {HorizontalPosition}, {InvertedVerticalPosition}. Uninverted Y:{VerticalPosition}. Poster Size: {UnscaledExtent}. ViewPort: {ViewPortSize}.");
 					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
@@ -256,7 +256,7 @@ namespace MSetExplorer
 					_horizontalPosition = value;
 					Debug.WriteLine($"Horizontal Pos: {value}.");
 
-					Debug.Assert(!UnscaledExtent.IsEmpty, "Moving display, but we have no Unscaled Extent.");
+					Debug.Assert(!UnscaledExtent.IsNearZero(), "Moving display, but we have no Unscaled Extent.");
 
 					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
 				}
@@ -374,7 +374,7 @@ namespace MSetExplorer
 				if (posterSize != null)
 				{
 					// Bounded
-					UnscaledExtent = ScreenTypeHelper.ConvertToSize(posterSize.Value);
+					UnscaledExtent = new SizeDbl(posterSize.Value);
 
 					// Save the MapAreaInfo for the entire poster.
 					_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue, ViewPortSize, posterSize.Value);
@@ -395,7 +395,7 @@ namespace MSetExplorer
 				{
 					// Unbounded
 
-					UnscaledExtent = Size.Empty;
+					UnscaledExtent = SizeDbl.Zero;
 
 					_boundedMapArea = null;
 
@@ -471,7 +471,7 @@ namespace MSetExplorer
 
 		#region Raise MapViewUpdateRequested Event Methods
 
-		public void UpdateMapViewZoom(AreaSelectedEventArgs e)
+		public void RaiseMapViewZoomUpdate(AreaSelectedEventArgs e)
 		{
 			if (CurrentAreaColorAndCalcSettings != null)
 			{
@@ -484,7 +484,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void UpdateMapViewPan(ImageDraggedEventArgs e)
+		public void RaiseMapViewPanUpdate(ImageDraggedEventArgs e)
 		{
 			if (CurrentAreaColorAndCalcSettings != null)
 			{
@@ -755,20 +755,22 @@ namespace MSetExplorer
 			double result;
 			double maxV;
 
-			if (UnscaledExtent.IsEmpty)
-			{
-				maxV = ViewPortSize.Height;
-				result = maxV - yPos;
-			}
-			else
-			{
-				//maxV = UnscaledExtent.Height; //Math.Max(ViewPortSize.Height, PosterSize.Height - ViewPortSize.Height);
-				//result = maxV - (yPos + ViewPortSize.Height);
+			//if (UnscaledExtent.IsEmpty)
+			//{
+			//	maxV = ViewPortSize.Height;
+			//	result = maxV - yPos;
+			//}
+			//else
+			//{
+			//	//maxV = UnscaledExtent.Height; //Math.Max(ViewPortSize.Height, PosterSize.Height - ViewPortSize.Height);
+			//	//result = maxV - (yPos + ViewPortSize.Height);
 
-				maxV = Math.Max(0.0, UnscaledExtent.Height - ViewPortSize.Height);
-				result = maxV - yPos;
-			}
+			//	maxV = Math.Max(0.0, UnscaledExtent.Height - ViewPortSize.Height);
+			//	result = maxV - yPos;
+			//}
 
+			maxV = Math.Max(0.0, UnscaledExtent.Height - ViewPortSize.Height);
+			result = maxV - yPos;
 
 			return result;
 		}

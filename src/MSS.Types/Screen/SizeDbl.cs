@@ -6,6 +6,10 @@ namespace MSS.Types
 {
 	public struct SizeDbl : IEquatable<SizeDbl>, IEqualityComparer<SizeDbl>
 	{
+		private static SizeDbl _zeroSingleton = new SizeDbl(0, 0);
+
+		public static SizeDbl Zero => _zeroSingleton;
+
 		// Square from single value
 		public SizeDbl(double extent) : this(extent, extent)
 		{ }
@@ -207,6 +211,12 @@ namespace MSS.Types
 		public SizeDbl Min(SizeDbl sizeB)
 		{
 			return new SizeDbl(Math.Min(Width, sizeB.Width), Math.Min(Height, sizeB.Height));
+		}
+
+		public SizeDbl Max(double amount)
+		{
+			return new SizeDbl(Math.Max(Width, amount), Math.Max(Height, amount));
+
 		}
 
 		//public SizeInt Ceiling()

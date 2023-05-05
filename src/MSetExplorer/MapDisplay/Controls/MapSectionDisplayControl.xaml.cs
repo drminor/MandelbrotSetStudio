@@ -133,12 +133,12 @@ namespace MSetExplorer
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{
-			_vm.UpdateMapViewZoom(e);
+			_vm.RaiseMapViewZoomUpdate(e);
 		}
 
 		private void SelectionRectangle_ImageDragged(object? sender, ImageDraggedEventArgs e)
 		{
-			_vm.UpdateMapViewPan(e);
+			_vm.RaiseMapViewPanUpdate(e);
 		}
 
 		#endregion

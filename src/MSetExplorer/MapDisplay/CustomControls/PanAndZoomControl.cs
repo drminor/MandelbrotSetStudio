@@ -21,8 +21,10 @@ namespace MSetExplorer
 		public static readonly double DefaultMaxContentScale = 1.0;
 
 		private bool _canHScroll = true;
-		private bool _canVScroll = true;
+		private bool _canVScroll = false;
 		private bool _canZoom = true;
+
+		private SizeDbl _scrollBarDisplacement = new SizeDbl();
 
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomSlider;
@@ -41,6 +43,8 @@ namespace MSetExplorer
 
 		private SizeDbl _maxContentOffset = new SizeDbl();
 
+		ScrollBarVisibility _originalVerticalScrollBarVisibility;
+
 		#endregion
 
 		#region Constructor
@@ -57,6 +61,8 @@ namespace MSetExplorer
 			ContentViewportSize = new SizeDbl();
 
 			IsMouseWheelScrollingEnabled = false;
+
+			_originalVerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
 		}
 
 		#endregion
@@ -64,6 +70,9 @@ namespace MSetExplorer
 		#region Events
 
 		//public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewPortSizeChanged;
+
+		public event EventHandler<ScaledImageViewInfo>? ViewPortChanged;
+
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
 		public event EventHandler? ContentScaleChanged;
@@ -95,9 +104,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public Size UnscaledExtent
+		public SizeDbl UnscaledExtent
 		{
-			get => (Size)GetValue(UnscaledExtentProperty);
+			get => (SizeDbl)GetValue(UnscaledExtentProperty);
 			set => SetCurrentValue(UnscaledExtentProperty, value);
 		}
 
@@ -133,6 +142,8 @@ namespace MSetExplorer
 			set => SetValue(ContentOffsetYProperty, value);
 		}
 
+
+
 		public bool IsMouseWheelScrollingEnabled { get; set; }
 
 		#endregion
@@ -148,7 +159,7 @@ namespace MSetExplorer
 
 			ContentBeingZoomed?.Measure(availableSize);
 
-			UpdateViewportSize(availableSize);
+			UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(availableSize));
 
 			double width = availableSize.Width;
 			double height = availableSize.Height;
@@ -190,7 +201,7 @@ namespace MSetExplorer
 
 				if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
 
-				UpdateViewportSize(childSize);
+				UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(childSize));
 			}
 
 			return finalSize;
@@ -240,16 +251,16 @@ namespace MSetExplorer
 		#region UnscaledExtent Dependency Property
 
 		public static readonly DependencyProperty UnscaledExtentProperty = DependencyProperty.Register(
-					"UnscaledExtent", typeof(Size), typeof(PanAndZoomControl),
-					new FrameworkPropertyMetadata(Size.Empty, FrameworkPropertyMetadataOptions.None, UnscaledExtent_PropertyChanged));
+					"UnscaledExtent", typeof(SizeDbl), typeof(PanAndZoomControl),
+					new FrameworkPropertyMetadata(SizeDbl.Zero, FrameworkPropertyMetadataOptions.None, UnscaledExtent_PropertyChanged));
 
 		private static void UnscaledExtent_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			PanAndZoomControl c = (PanAndZoomControl)o;
-			var previousValue = (Size)e.OldValue;
-			var value = (Size)e.NewValue;
+			var previousValue = (SizeDbl)e.OldValue;
+			var value = (SizeDbl)e.NewValue;
 
-			if (value.IsEmpty || value != previousValue)
+			if (!value.Diff(previousValue).IsNearZero())
 			{
 				c.ContentOffsetX = 0;
 				c.ContentOffsetY = 0;
@@ -377,7 +388,7 @@ namespace MSetExplorer
 
 			double value = (double)baseValue;
 			double minOffsetX = 0.0;
-			double maxOffsetX = Math.Max(0.0, c._maxContentOffset.Width);
+			double maxOffsetX = c._maxContentOffset.Width;
 			value = Math.Min(Math.Max(value, minOffsetX), maxOffsetX);
 
 			//if (gap || gap2)
@@ -430,7 +441,7 @@ namespace MSetExplorer
 			PanAndZoomControl c = (PanAndZoomControl)d;
 			double value = (double)baseValue;
 			double minOffsetY = 0.0;
-			double maxOffsetY = Math.Max(0.0, c._maxContentOffset.Height);
+			double maxOffsetY = c._maxContentOffset.Height;
 			value = Math.Min(Math.Max(value, minOffsetY), maxOffsetY);
 
 			//Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}.");
@@ -448,16 +459,14 @@ namespace MSetExplorer
 			//ViewportZoomFocusY = ViewportHeight / 2;
 		}
 
-		private void UpdateViewportSize(Size newSize)
+		private void UpdateViewportSize(SizeDbl newValue)
 		{
-			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(newSize);
-
-			if (ViewPortSize == newSizeDbl)
+			if (ViewPortSize == newValue)
 			{
 				return;
 			}
 
-			ViewPortSize = newSizeDbl;
+			ViewPortSize = newValue;
 
 			// Update the viewport size in content coordiates.
 			UpdateContentViewportSize();
@@ -479,27 +488,55 @@ namespace MSetExplorer
 
 		private void UpdateContentViewportSize()
 		{
-			ContentViewportSize = ViewPortSize.Divide(ContentScale);
+			var currentMaxContentOffset = _maxContentOffset;
+			var currentScrollBarDisplacement = ScrollBarDisplacement;
 
-			if (UnscaledExtent.IsEmpty)
-			{
-				_maxContentOffset = ContentViewportSize;
-			}
-			else
-			{
-				// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
-				var unscaledExtentDbl = ScreenTypeHelper.ConvertToSizeDbl(UnscaledExtent);
-				_maxContentOffset = unscaledExtentDbl.Sub(unscaledExtentDbl.Min(ContentViewportSize.Sub(new SizeDbl(HORIZONTAL_SCROLL_BAR_WIDTH, VERTICAL_SCROLL_BAR_WIDTH))));
+			var viewPortSizeSansScrBarThicknesses = ViewPortSize.Diff(ScrollBarDisplacement);
 
-				//_constrainedContentViewportWidth = Math.Min(ContentViewportSize.Width - HORIZONTAL_SCROLL_BAR_WIDTH, UnscaledExtent.Width);
-				//_constrainedContentViewportHeight = Math.Min(ContentViewportSize.Height - VERTICAL_SCROLL_BAR_WIDTH, UnscaledExtent.Height);
+			ContentViewportSize = viewPortSizeSansScrBarThicknesses.Divide(ContentScale);
 
-			}
+			// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
+
+			// Usually the track position can vary over the entire ContentViewPortSize,
+			// however if the unscaled extents are less than the ContentViewPortSize, no adjustment of the track position is possible.
+			var maxTrackVariance = UnscaledExtent.Min(ContentViewportSize);
+
+			// If we want to avoid having the content shifted beyond the canvas boundary (thus leaving part of the canvas blank before/after the content),
+			// the maximum value for the offsets is size of the ContentViewportSize subtracted from the the unscaled extents. 
+			_maxContentOffset = UnscaledExtent.Sub(maxTrackVariance).Max(0);
+			
+			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
+
+			ScrollBarDisplacement = GetScrollBarDisplacement();
 
 			UpdateTranslationX();
 			UpdateTranslationY();
 
+			ViewPortChanged?.Invoke(this, new ScaledImageViewInfo(new VectorDbl(ContentOffsetX, ContentOffsetY), ContentViewportSize));
+
 			InvalidateScrollInfo();
+		}
+
+		private SizeDbl GetScrollBarDisplacement(SizeDbl? currentValue = null)
+		{
+			var result = _scrollOwner == null
+				? new SizeDbl()
+				: new SizeDbl
+					(
+						_scrollOwner.HorizontalScrollBarVisibility == ScrollBarVisibility.Visible
+							? HORIZONTAL_SCROLL_BAR_WIDTH
+							: 0,
+						_scrollOwner.VerticalScrollBarVisibility == ScrollBarVisibility.Visible
+							? VERTICAL_SCROLL_BAR_WIDTH
+							: 0
+					);
+
+			if (currentValue != null && currentValue.Value.Height != result.Height)
+			{
+				Debug.WriteLine($"The vertical scrollbar visibility has been updated from {currentValue.Value.Height == 0} to {result.Height == 0}.");
+			}
+
+			return result;
 		}
 
 		private void UpdateTranslationX()

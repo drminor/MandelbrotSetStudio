@@ -13,7 +13,7 @@
             <ScrollViewer
                 x:Name="ScrollViewer1"
                 CanContentScroll="True"
-                VerticalScrollBarVisibility="Visible"
+                VerticalScrollBarVisibility="Disabled"
                 HorizontalScrollBarVisibility="Visible"
                 >
 

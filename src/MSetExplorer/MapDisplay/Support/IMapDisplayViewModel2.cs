@@ -25,13 +25,21 @@ namespace MSetExplorer
 		bool HighlightSelectedColorBand { get; set; }
 
 		ImageSource ImageSource { get; set; }
-
-		Size UnscaledExtent { get; set; }
-		SizeDbl ViewPortSize { get; set; }
-
 		VectorDbl ImageOffset { get; set; }
 
-		MapAreaInfo? LastMapAreaInfo { get; }
+		void RaiseMapViewZoomUpdate(AreaSelectedEventArgs e);
+		void RaiseMapViewPanUpdate(ImageDraggedEventArgs e);
+
+		int? SubmitJob(AreaColorAndCalcSettings newValue);
+		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize);
+
+		void CancelJob();
+		int? RestartLastJob();
+		void ClearDisplay();
+
+
+		SizeDbl UnscaledExtent { get; set; }
+		SizeDbl ViewPortSize { get; set; }
 
 		double HorizontalPosition { get; set; }
 
@@ -41,16 +49,7 @@ namespace MSetExplorer
 		double DisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; }
 
-		void UpdateMapViewZoom(AreaSelectedEventArgs e);
-		void UpdateMapViewPan(ImageDraggedEventArgs e);
-
-		int? SubmitJob(AreaColorAndCalcSettings newValue);
-		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize);
-
-		void CancelJob();
-		int? RestartLastJob();
-		void ClearDisplay();
-
+		MapAreaInfo? LastMapAreaInfo { get; }
 		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 	}
 }

@@ -6,9 +6,9 @@ namespace MSS.Types
 {
 	public struct VectorDbl : IEquatable<VectorDbl>, IEqualityComparer<VectorDbl>
 	{
-		private static VectorDbl ZeroSingleton = new VectorDbl();
+		private static VectorDbl _zeroSingleton = new VectorDbl(0, 0);
 
-		public static VectorDbl Zero => ZeroSingleton;
+		public static VectorDbl Zero => _zeroSingleton;
 
 		public VectorDbl(PointDbl pointDbl) : this(pointDbl.X, pointDbl.Y)
 		{ }

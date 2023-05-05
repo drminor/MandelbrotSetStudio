@@ -22,7 +22,7 @@
             </local:BitmapGridControl>
         </ScrollViewer>-->
 
-        <local:BitmapGridControl_Old x:Name="BitmapGridControl1" Grid.Row="0"/>
+        <local:BitmapGridControl x:Name="BitmapGridControl1" Grid.Row="0"/>
 
         <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
