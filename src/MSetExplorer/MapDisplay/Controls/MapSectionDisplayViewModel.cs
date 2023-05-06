@@ -819,8 +819,9 @@ namespace MSetExplorer
 
 			if (ViewportSize.Width < 0.1 || ViewportSize.Height < 0.1)
 			{
-				Debug.WriteLine("WARNING: ViewportSize is zero, using the value from the BitmapGrid.");
-				ViewportSize = _bitmapGrid.ViewportSize;
+				//Debug.WriteLine("WARNING: ViewportSize is zero, using the value from the BitmapGrid.");
+				//ViewportSize = _bitmapGrid.ViewportSize;
+				throw new InvalidOperationException("ViewportSize is zero at CheckVPSize.");
 			}
 		}
 

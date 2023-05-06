@@ -7,8 +7,10 @@ namespace MSS.Types
 	public struct SizeDbl : IEquatable<SizeDbl>, IEqualityComparer<SizeDbl>
 	{
 		private static SizeDbl _zeroSingleton = new SizeDbl(0, 0);
+		private static SizeDbl _naNSingleton = new SizeDbl(double.NaN, double.NaN);
 
 		public static SizeDbl Zero => _zeroSingleton;
+		public static SizeDbl NaN => _naNSingleton;
 
 		// Square from single value
 		public SizeDbl(double extent) : this(extent, extent)

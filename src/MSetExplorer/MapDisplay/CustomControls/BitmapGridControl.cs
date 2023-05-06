@@ -13,7 +13,7 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private readonly static bool CLIP_IMAGE_BLOCKS = false;
+		private readonly static bool CLIP_IMAGE_BLOCKS = true;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 
@@ -24,10 +24,7 @@ namespace MSetExplorer
 		private SizeDbl _viewportSizeInternal;
 		private SizeDbl _viewportSize;
 
-
 		private SizeDbl _contentViewportSize;
-
-
 
 		#endregion
 
@@ -52,7 +49,8 @@ namespace MSetExplorer
 
 			_viewportSizeInternal = new SizeDbl();
 			_viewportSize = new SizeDbl();
-			
+
+			_contentViewportSize = SizeDbl.NaN;
 		}
 
 		private void RenderTransform_Changed(object? sender, EventArgs e)
@@ -241,14 +239,7 @@ namespace MSetExplorer
 
 			_content?.Measure(availableSize);
 
-			//UpdateViewportSize(availableSize);
-
-			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
-
-			if (ViewportSizeInternal != newSizeDbl)
-			{
-				ViewportSizeInternal = newSizeDbl;
-			}
+			UpdateViewportSize(availableSize);
 
 			double width = availableSize.Width;
 			double height = availableSize.Height;
@@ -274,7 +265,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-
 		/// <summary>
 		/// Arrange the control and it's children.
 		/// </summary>
@@ -287,12 +277,14 @@ namespace MSetExplorer
 
 			if (_content != null)
 			{
-				if (Canvas != null)
+				_content.Arrange(new Rect(finalSize));
+
+				if (Canvas != null && ContentViewportSize.IsNAN())
 				{
 					var canvas = Canvas;
 					//Debug.WriteLine($"Before _content.Arrange({finalSize}. Base returns {childSize}. The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
 					
-					_content.Arrange(new Rect(finalSize));
+					//_content.Arrange(new Rect(finalSize));
 
 					if (canvas.ActualWidth != childSize.Width)
 					{
@@ -308,16 +300,19 @@ namespace MSetExplorer
 				}
 			}
 
-			//UpdateViewportSize(childSize);
+			UpdateViewportSize(childSize);
 
-			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(childSize);
+			return finalSize;
+		}
+
+		private void UpdateViewportSize(Size newValue)
+		{
+			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(newValue);
 
 			if (ViewportSizeInternal != newSizeDbl)
 			{
 				ViewportSizeInternal = newSizeDbl;
 			}
-
-			return finalSize;
 		}
 
 		private Size ForceSize(Size finalSize)
@@ -351,7 +346,6 @@ namespace MSetExplorer
 			{
 				//Debug.WriteLine($"WARNING: Did not find the BitmapGridControl_Content template.");
 				throw new InvalidOperationException("Did not find the BitmapGridControl_Content template.");
-
 			}
 		}
 
