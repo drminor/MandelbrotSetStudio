@@ -28,7 +28,7 @@ namespace MSetExplorer
 
 		private object _paintLocker;
 
-		private BitmapGrid2 _bitmapGrid;
+		private BitmapGrid _bitmapGrid;
 
 		private SizeDbl _viewPortSize;
 		private VectorDbl _imageOffset;
@@ -54,7 +54,7 @@ namespace MSetExplorer
 
 			MapSections = new ObservableCollection<MapSection>();
 
-			_bitmapGrid = new BitmapGrid2(MapSections, new SizeDbl(128), DisposeMapSection, OnBitmapUpdate, blockSize);
+			_bitmapGrid = new BitmapGrid(MapSections, new SizeDbl(128), DisposeMapSection, OnBitmapUpdate, blockSize);
 
 			ActiveJobNumbers = new List<int>();
 
@@ -140,7 +140,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl ViewPortSize
+		public SizeDbl ViewportSize
 		{
 			get => _viewPortSize;
 			set
@@ -149,15 +149,15 @@ namespace MSetExplorer
 				{
 					if (value.Width <= 2 || value.Height <= 2)
 					{
-						Debug.WriteLine($"WARNING: MapSectionDisplayViewModel is having its ViewPortSize set to {value}, which is very small. Update was aborted. Previously it was {_viewPortSize}.");
+						Debug.WriteLine($"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {value}, which is very small. Update was aborted. Previously it was {_viewPortSize}.");
 
 					}
 					else
 					{
-						Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewPortSize set to {value}. Previously it was {_viewPortSize}. The VM is updating the _bitmapGrid.ViewPort Size.");
+						Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {value}. Previously it was {_viewPortSize}. The VM is updating the _bitmapGrid.Viewport Size.");
 						_viewPortSize = value;
 
-						 _bitmapGrid.ViewPortSize = _viewPortSize;
+						 _bitmapGrid.ViewportSize = _viewPortSize;
 
 						if (LastMapAreaInfo != null && LastMapAreaInfo.CanvasSize != value.Round())
 						{
@@ -171,15 +171,15 @@ namespace MSetExplorer
 						else
 						{
 							if (LastMapAreaInfo != null)
-								Debug.WriteLine($"Not calling HandleDisplaySizeUpdate, the LastMapAreaInfo.CanvasSize {LastMapAreaInfo.CanvasSize} is the same as the new ViewPortSize: {value}.");
+								Debug.WriteLine($"Not calling HandleDisplaySizeUpdate, the LastMapAreaInfo.CanvasSize {LastMapAreaInfo.CanvasSize} is the same as the new ViewportSize: {value}.");
 						}
 
-						OnPropertyChanged(nameof(IMapDisplayViewModel.ViewPortSize));
+						OnPropertyChanged(nameof(IMapDisplayViewModel.ViewportSize));
 					}
 				}
 				else
 				{
-					Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewPortSize set to {value}.The current value is aleady: {_viewPortSize}, not calling HandleDisplaySizeUpdate, not raising OnPropertyChanged.");
+					Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {value}.The current value is aleady: {_viewPortSize}, not calling HandleDisplaySizeUpdate, not raising OnPropertyChanged.");
 				}
 			}
 		}
@@ -238,7 +238,7 @@ namespace MSetExplorer
 
 					Debug.Assert(!UnscaledExtent.IsNearZero(), "Moving display, but we have no Unscaled Extent.");
 
-					Debug.WriteLine($"Moving to {HorizontalPosition}, {InvertedVerticalPosition}. Uninverted Y:{VerticalPosition}. Poster Size: {UnscaledExtent}. ViewPort: {ViewPortSize}.");
+					Debug.WriteLine($"Moving to {HorizontalPosition}, {InvertedVerticalPosition}. Uninverted Y:{VerticalPosition}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}.");
 					MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
 				}
 			}
@@ -377,7 +377,7 @@ namespace MSetExplorer
 					UnscaledExtent = new SizeDbl(posterSize.Value);
 
 					// Save the MapAreaInfo for the entire poster.
-					_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue, ViewPortSize, posterSize.Value);
+					_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue, ViewportSize, posterSize.Value);
 
 					// Get the MapAreaInfo subset for the upper, left-hand corner.
 					var displayPosition = new VectorDbl(0, GetInvertedYPos(0));
@@ -435,7 +435,7 @@ namespace MSetExplorer
 
 				if (currentJob != null && !currentJob.IsEmpty)
 				{
-					var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, ViewPortSize);
+					var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, ViewportSize);
 					var newMapSections = _mapLoaderManager.Push(currentJob.JobId, currentJob.JobOwnerType, screenAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
 
 					var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
@@ -536,7 +536,7 @@ namespace MSetExplorer
 				{
 					var displayPosition = new VectorDbl(HorizontalPosition, InvertedVerticalPosition);
 
-					_boundedMapArea.ViewPortSize = ViewPortSize;
+					_boundedMapArea.ViewportSize = ViewportSize;
 					var mapAreaInfo2Subset = _boundedMapArea.GetView(displayPosition);
 
 					//newJobNumber = HandleDisplayPositionChange(_boundedMapArea.AreaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
@@ -546,7 +546,7 @@ namespace MSetExplorer
 				{
 					if (CurrentAreaColorAndCalcSettings != null)
 					{
-						var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, ViewPortSize);
+						var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, ViewportSize);
 						newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
 					}
 				}
@@ -570,7 +570,7 @@ namespace MSetExplorer
 			{
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
-					var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewPortSize);
+					var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewportSize);
 					newJobNumber = ReuseAndLoad(newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 				else
@@ -644,7 +644,7 @@ namespace MSetExplorer
 
 		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, out bool lastSectionWasIncluded)
 		{
-			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewPortSize);
+			var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewportSize);
 			LastMapAreaInfo = screenAreaInfo;
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
@@ -757,19 +757,19 @@ namespace MSetExplorer
 
 			//if (UnscaledExtent.IsEmpty)
 			//{
-			//	maxV = ViewPortSize.Height;
+			//	maxV = ViewportSize.Height;
 			//	result = maxV - yPos;
 			//}
 			//else
 			//{
-			//	//maxV = UnscaledExtent.Height; //Math.Max(ViewPortSize.Height, PosterSize.Height - ViewPortSize.Height);
-			//	//result = maxV - (yPos + ViewPortSize.Height);
+			//	//maxV = UnscaledExtent.Height; //Math.Max(ViewportSize.Height, PosterSize.Height - ViewportSize.Height);
+			//	//result = maxV - (yPos + ViewportSize.Height);
 
-			//	maxV = Math.Max(0.0, UnscaledExtent.Height - ViewPortSize.Height);
+			//	maxV = Math.Max(0.0, UnscaledExtent.Height - ViewportSize.Height);
 			//	result = maxV - yPos;
 			//}
 
-			maxV = Math.Max(0.0, UnscaledExtent.Height - ViewPortSize.Height);
+			maxV = Math.Max(0.0, UnscaledExtent.Height - ViewportSize.Height);
 			result = maxV - yPos;
 
 			return result;
@@ -815,12 +815,12 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void CheckVPSize()
 		{
-			Debug.WriteLine($"At checkVPSize: ViewportSize: {ViewPortSize}, DisplayZoom: {DisplayZoom}, MaxZoom: {MinimumDisplayZoom}.");
+			Debug.WriteLine($"At checkVPSize: ViewportSize: {ViewportSize}, DisplayZoom: {DisplayZoom}, MaxZoom: {MinimumDisplayZoom}.");
 
-			if (ViewPortSize.Width < 0.1 || ViewPortSize.Height < 0.1)
+			if (ViewportSize.Width < 0.1 || ViewportSize.Height < 0.1)
 			{
-				Debug.WriteLine("WARNING: ViewPortSize is zero, using the value from the BitmapGrid.");
-				ViewPortSize = _bitmapGrid.ViewPortSize;
+				Debug.WriteLine("WARNING: ViewportSize is zero, using the value from the BitmapGrid.");
+				ViewportSize = _bitmapGrid.ViewportSize;
 			}
 		}
 

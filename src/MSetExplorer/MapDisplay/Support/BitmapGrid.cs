@@ -12,7 +12,7 @@ using System.Windows.Threading;
 
 namespace MSetExplorer
 {
-	public class BitmapGrid2 : IDisposable, IBitmapGrid2
+	public class BitmapGrid : IDisposable, IBitmapGrid
 	{
 		#region Private Properties
 
@@ -29,7 +29,7 @@ namespace MSetExplorer
 
 		private Int32Rect _blockRect { get; init; }
 
-		private SizeDbl _viewPortSize;
+		private SizeDbl _viewportSize;
 		private SizeInt _canvasSizeInBlocks;
 
 		private ColorBandSet _colorBandSet;
@@ -44,15 +44,15 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public BitmapGrid2(ObservableCollection<MapSection> mapSections, SizeDbl viewPortSize, Action<MapSection> disposeMapSection, Action<WriteableBitmap> onBitmapUpdate, SizeInt blockSize)
+		public BitmapGrid(ObservableCollection<MapSection> mapSections, SizeDbl viewPortSize, Action<MapSection> disposeMapSection, Action<WriteableBitmap> onBitmapUpdate, SizeInt blockSize)
 		{
 			_mapSections = mapSections;
-			_viewPortSize = viewPortSize;
+			_viewportSize = viewPortSize;
 			_onBitmapUpdate = onBitmapUpdate;
 			_disposeMapSection = disposeMapSection;
 			_blockSize = blockSize;
 
-			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_viewPortSize, _blockSize, keepSquare: false);
+			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_viewportSize, _blockSize, keepSquare: false);
 			_canvasSizeInBlocks = sizeInWholeBlocks;
 
 			ImageSizeInBlocks = _canvasSizeInBlocks.Inflate(2);
@@ -172,12 +172,12 @@ namespace MSetExplorer
 
 		public BigVector MapBlockOffset { get; set; }
 
-		public SizeDbl ViewPortSize
+		public SizeDbl ViewportSize
 		{
-			get => _viewPortSize;
+			get => _viewportSize;
 			set
 			{
-				_viewPortSize = value;
+				_viewportSize = value;
 
 				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, keepSquare: false);
 				CanvasSizeInBlocks = sizeInWholeBlocks;

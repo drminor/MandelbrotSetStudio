@@ -1087,7 +1087,7 @@ namespace MSetExplorer
 				_ => baseAmount * 8,
 			};
 
-			var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
 
 			return result;
@@ -1122,7 +1122,7 @@ namespace MSetExplorer
 
 			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
 
-			var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 
 			var curArea = new RectangleInt(new PointInt(), displaySize.Round());
 			//var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
@@ -1142,7 +1142,7 @@ namespace MSetExplorer
 				_ => baseAmount * 32,
 			};
 
-			var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
 
 			return result;

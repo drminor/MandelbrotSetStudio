@@ -39,7 +39,7 @@ namespace MSetExplorer
 
 
 		SizeDbl UnscaledExtent { get; set; }
-		SizeDbl ViewPortSize { get; set; }
+		SizeDbl ViewportSize { get; set; }
 
 		double HorizontalPosition { get; set; }
 

@@ -102,20 +102,20 @@ namespace MSetExplorer
 				try
 				{
 					//VScrollBar.Maximum = posterSize.Value.Height - logicalDisplaySize.Height;
-					var verticalViewPortSize = logicalDisplaySize.Height;
+					var verticalViewportSize = logicalDisplaySize.Height;
 
-					//VScrollBar.ViewportSize = verticalViewPortSize;
-					//VScrollBar.LargeChange = verticalViewPortSize;
-					//VScrollBar.SmallChange = 0.125 * verticalViewPortSize;
+					//VScrollBar.ViewportSize = verticalViewportSize;
+					//VScrollBar.LargeChange = verticalViewportSize;
+					//VScrollBar.SmallChange = 0.125 * verticalViewportSize;
 
 					HScrollBar.Maximum = posterSize.Value.Width - logicalDisplaySize.Width;
-					var horizontalViewPortSize = logicalDisplaySize.Width;
+					var horizontalViewportSize = logicalDisplaySize.Width;
 
-					HScrollBar.ViewportSize = horizontalViewPortSize;
-					HScrollBar.LargeChange = horizontalViewPortSize;
-					HScrollBar.SmallChange = 0.125 * horizontalViewPortSize;
+					HScrollBar.ViewportSize = horizontalViewportSize;
+					HScrollBar.LargeChange = horizontalViewportSize;
+					HScrollBar.SmallChange = 0.125 * horizontalViewportSize;
 
-					Debug.WriteLine($"LogicalDisplaySize: {logicalDisplaySize}, V-ViewPortSize: {verticalViewPortSize}, H-ViewPortSize: {horizontalViewPortSize}.");
+					Debug.WriteLine($"LogicalDisplaySize: {logicalDisplaySize}, V-ViewportSize: {verticalViewportSize}, H-ViewportSize: {horizontalViewportSize}.");
 				}
 				catch (Exception e)
 				{

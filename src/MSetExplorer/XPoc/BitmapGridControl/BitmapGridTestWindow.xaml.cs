@@ -23,8 +23,8 @@ namespace MSetExplorer.XPoc
 
 			InitializeComponent();
 
-			//BitmapGridControl1.ViewPortSizeInBlocksChanged += BitmapGridControl1_ViewPortSizeInBlocksChanged;
-			BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
+			//BitmapGridControl1.ViewportSizeInBlocksChanged += BitmapGridControl1_ViewportSizeInBlocksChanged;
+			BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
 
 		}
 
@@ -46,14 +46,14 @@ namespace MSetExplorer.XPoc
 
 		#region BitmapGridControl Handlers
 
-		//private void BitmapGridControl1_ViewPortSizeInBlocksChanged(object? sender, (SizeInt, SizeInt) e)
+		//private void BitmapGridControl1_ViewportSizeInBlocksChanged(object? sender, (SizeInt, SizeInt) e)
 		//{
-		//	Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort SizeInBlocks Changed. Prev: {e.Item1}, New: {e.Item2}.");
+		//	Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling Viewport SizeInBlocks Changed. Prev: {e.Item1}, New: {e.Item2}.");
 		//}
 
-		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
-			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling ViewPort Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
+			Debug.WriteLine($"The {nameof(BitmapGridTestWindow)} is handling Viewport Size Changed. Prev: {e.Item1}, New: {e.Item2}.");
 		}
 
 		#endregion

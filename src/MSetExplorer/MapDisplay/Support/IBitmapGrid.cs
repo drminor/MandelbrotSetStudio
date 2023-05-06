@@ -4,11 +4,11 @@ using System.Windows.Threading;
 
 namespace MSetExplorer
 {
-	public interface IBitmapGrid2
+	public interface IBitmapGrid
 	{
 		Dispatcher Dispatcher { get; }
 
-		SizeDbl ViewPortSize { get; }
+		SizeDbl ViewportSize { get; }
 		BigVector MapBlockOffset { get; set; }
 		VectorDbl ImageOffset { get; set; }
 

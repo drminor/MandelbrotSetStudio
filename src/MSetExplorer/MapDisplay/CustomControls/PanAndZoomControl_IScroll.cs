@@ -84,7 +84,7 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var w = ViewPortSize.Width;
+				var w = ViewportSize.Width;
 				return w;
 			}
 		}
@@ -93,7 +93,7 @@ namespace MSetExplorer
 		{
 			get
 			{
-				var h = ViewPortSize.Height;
+				var h = ViewportSize.Height;
 				return h;
 			}
 		}

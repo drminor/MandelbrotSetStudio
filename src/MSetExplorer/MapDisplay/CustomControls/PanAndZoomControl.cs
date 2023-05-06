@@ -29,10 +29,10 @@ namespace MSetExplorer
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomSlider;
 
-		private SizeDbl _viewPortSize;
+		private SizeDbl _viewportSize;
 
 		private TranslateTransform? _contentOffsetTransform = null;
-		private ScaleTransform? _contentScaleTransform = null;
+		private ScaleTransform _contentScaleTransform = new ScaleTransform();
 
 		private bool _enableContentOffsetUpdateFromScale = false;
 		private bool _disableScrollOffsetSync = false;
@@ -56,7 +56,7 @@ namespace MSetExplorer
 			_scrollOwner = null;
 			_zoomSlider = null;
 
-			_viewPortSize = new SizeDbl();
+			_viewportSize = new SizeDbl();
 
 			ContentViewportSize = new SizeDbl();
 
@@ -69,9 +69,9 @@ namespace MSetExplorer
 
 		#region Events
 
-		//public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewPortSizeChanged;
+		//public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
 
-		public event EventHandler<ScaledImageViewInfo>? ViewPortChanged;
+		public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
 
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
@@ -83,23 +83,23 @@ namespace MSetExplorer
 
 		public FrameworkElement? ContentBeingZoomed { get; set; }
 
-		public SizeDbl ViewPortSize
+		public SizeDbl ViewportSize
 		{
-			get => _viewPortSize;
+			get => _viewportSize;
 			set
 			{
-				if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
+				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
 				{
-					//Debug.WriteLine($"The PanAndZoomControl is having its ViewPortSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewPortSizeChanged event.");
+					//Debug.WriteLine($"The PanAndZoomControl is having its ViewportSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewportSizeChanged event.");
 
-					var previousValue = ViewPortSize;
-					_viewPortSize = value;
+					var previousValue = ViewportSize;
+					_viewportSize = value;
 
-					//ViewPortSizeChanged?.Invoke(this, (previousValue, value));
+					//ViewportSizeChanged?.Invoke(this, (previousValue, value));
 				}
 				else
 				{
-					//Debug.WriteLine($"The PanAndZoomControl is having its ViewPortSize updated to {value}, the current value is already: {_viewPortSize}; not raising the ViewPortSizeChanged event.");
+					//Debug.WriteLine($"The PanAndZoomControl is having its ViewportSize updated to {value}, the current value is already: {_viewPortSize}; not raising the ViewportSizeChanged event.");
 				}
 			}
 		}
@@ -214,7 +214,7 @@ namespace MSetExplorer
 			ContentBeingZoomed = Template.FindName("PART_Content", this) as FrameworkElement;
 			if (ContentBeingZoomed != null)
 			{
-				//Debug.WriteLine($"Found the PanAndZoomControl_Content template.");
+				Debug.WriteLine($"Found the PanAndZoomControl_Content template. The ContentBeingZoomed is {ContentBeingZoomed} /w type: {ContentBeingZoomed.GetType()}.");
 
 				_contentScaleTransform = new ScaleTransform(ContentScale, ContentScale);
 
@@ -222,6 +222,9 @@ namespace MSetExplorer
 				UpdateTranslationY();
 
 				ContentBeingZoomed.RenderTransform = _contentScaleTransform;
+
+				//var fe = Content as FrameworkElement;
+				//Debug.Assert(fe!.RenderTransform == ContentBeingZoomed.RenderTransform, "RenderTransform Mismatch.");
 			}
 			else
 			{
@@ -229,22 +232,6 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Did not find the PanAndZoomControl_Content template.");
 			}
 		}
-
-		//private Canvas? ContentAsCanvas
-		//{
-		//	get
-		//	{
-		//		if (ContentBeingZoomed != null && ContentBeingZoomed is ContentPresenter cp)
-		//		{
-		//			if (cp.Content is Canvas ca)
-		//			{
-		//				return ca;
-		//			}
-		//		}
-
-		//		return null;
-		//	}
-		//}
 
 		#endregion
 
@@ -392,7 +379,7 @@ namespace MSetExplorer
 			//if (gap || gap2)
 			//{
 			//	Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}. UnscaledExtent.Width: {c.UnscaledExtent.Width}, MaxContentOffsetWidth: {c._maxContentOffset.Width}. " +
-			//		$"ViewportWidth: {c.ViewportWidth} ContentViewPortWidth: {c.ContentViewportSize.Width}. " +
+			//		$"ViewportWidth: {c.ViewportWidth} ContentViewportWidth: {c.ContentViewportSize.Width}. " +
 			//		$"Gaps: {gap}, {gap2a}, {gap2}");
 			//}
 
@@ -459,12 +446,12 @@ namespace MSetExplorer
 
 		private void UpdateViewportSize(SizeDbl newValue)
 		{
-			if (ViewPortSize == newValue)
+			if (ViewportSize == newValue)
 			{
 				return;
 			}
 
-			ViewPortSize = newValue;
+			ViewportSize = newValue;
 
 			// Update the viewport size in content coordiates.
 			UpdateContentViewportSize();
@@ -486,17 +473,22 @@ namespace MSetExplorer
 
 		private void UpdateContentViewportSize()
 		{
+			if (_contentScaleTransform.ScaleX != ContentScale)
+			{
+				Debug.WriteLine($"Not using the current value for ContentScale.");
+			}
+
 			var currentMaxContentOffset = _maxContentOffset;
 			var currentScrollBarDisplacement = ScrollBarDisplacement;
 
-			var viewPortSizeSansScrBarThicknesses = ViewPortSize.Diff(ScrollBarDisplacement);
+			var viewPortSizeSansScrBarThicknesses = ViewportSize.Diff(ScrollBarDisplacement);
 
 			ContentViewportSize = viewPortSizeSansScrBarThicknesses.Divide(ContentScale);
 
 			// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
 
-			// Usually the track position can vary over the entire ContentViewPortSize,
-			// however if the unscaled extents are less than the ContentViewPortSize, no adjustment of the track position is possible.
+			// Usually the track position can vary over the entire ContentViewportSize,
+			// however if the unscaled extents are less than the ContentViewportSize, no adjustment of the track position is possible.
 			var maxTrackVariance = UnscaledExtent.Min(ContentViewportSize);
 
 			// If we want to avoid having the content shifted beyond the canvas boundary (thus leaving part of the canvas blank before/after the content),
@@ -510,7 +502,7 @@ namespace MSetExplorer
 			UpdateTranslationX();
 			UpdateTranslationY();
 
-			ViewPortChanged?.Invoke(this, new ScaledImageViewInfo(new VectorDbl(ContentOffsetX, ContentOffsetY), ContentViewportSize));
+			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(new VectorDbl(ContentOffsetX, ContentOffsetY), ContentViewportSize));
 
 			InvalidateScrollInfo();
 		}
@@ -589,19 +581,16 @@ namespace MSetExplorer
 		{
 			var result = false;
 
-			if (_contentScaleTransform != null)
+			if (_contentScaleTransform.ScaleX != contentScale)
 			{
-				if (_contentScaleTransform.ScaleX != contentScale)
-				{
-					_contentScaleTransform.ScaleX = contentScale;
-					result = true;
-				}
+				_contentScaleTransform.ScaleX = contentScale;
+				result = true;
+			}
 
-				if (_contentScaleTransform.ScaleY != contentScale)
-				{
-					_contentScaleTransform.ScaleY = contentScale;
-					result = true;
-				}
+			if (_contentScaleTransform.ScaleY != contentScale)
+			{
+				_contentScaleTransform.ScaleY = contentScale;
+				result = true;
 			}
 
 			return result;

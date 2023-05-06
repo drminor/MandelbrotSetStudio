@@ -444,7 +444,7 @@ namespace MSetExplorer
 				var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, useEscapeVelocities, out var name, out var description))
 				{
-					var currentDisplaySize = _vm.MapDisplayViewModel.ViewPortSize;
+					var currentDisplaySize = _vm.MapDisplayViewModel.ViewportSize;
 					var tentativePosterSize = RMapHelper.GetCanvasSize(currentDisplaySize, new SizeInt(1024));
 
 					if (_vm.ProjectViewModel.TryCreatePoster(name, description, tentativePosterSize, out var newPoster))
@@ -1015,7 +1015,7 @@ namespace MSetExplorer
 			{
 				//coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.Coords, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
 
-				var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+				var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 
 				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(curJob.MapAreaInfo, displaySize, allowEdits: true);
 				mapCalcSettings = curJob.MapCalcSettings;
@@ -1287,7 +1287,7 @@ namespace MSetExplorer
 				_ => baseAmount * 8,
 			};
 
-			var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
 
 			return result;
@@ -1348,7 +1348,7 @@ namespace MSetExplorer
 				_ => -1,								//	Default = * 2
 			};
 
-			var displaySize = _vm.MapDisplayViewModel.ViewPortSize;
+			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
 
 			return result;

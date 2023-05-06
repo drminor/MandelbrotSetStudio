@@ -13,7 +13,7 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private readonly static bool CLIP_IMAGE_BLOCKS = true;
+		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 
@@ -21,8 +21,13 @@ namespace MSetExplorer
 		private Canvas _canvas;
 		private Image _image;
 
-		private SizeDbl _viewPortSizeInternal;
-		private SizeDbl _viewPortSize;
+		private SizeDbl _viewportSizeInternal;
+		private SizeDbl _viewportSize;
+
+
+		private SizeDbl _contentViewportSize;
+
+
 
 		#endregion
 
@@ -45,21 +50,32 @@ namespace MSetExplorer
 
 			_image = new Image();
 
-			_viewPortSizeInternal = new SizeDbl();
-			_viewPortSize = new SizeDbl();
+			_viewportSizeInternal = new SizeDbl();
+			_viewportSize = new SizeDbl();
+			
+		}
+
+		private void RenderTransform_Changed(object? sender, EventArgs e)
+		{
+			if (RenderTransform is ScaleTransform st)
+			{
+				var scaleX = st.ScaleX;
+				Debug.WriteLine($"The BitmapGrid's RenderTransform was updated. The new value for scaleX is {scaleX}.");
+			}
 		}
 
 		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			//Debug.WriteLine("Image SizeChanged");
 			UpdateImageOffset(ImageOffset);
+			Debug.WriteLine($"The canvas's RenderTransform is {Canvas.RenderTransform}.");
 		}
 
 		#endregion
 
 		#region Events
 
-		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewPortSizeChanged;
+		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
 
 		#endregion
 
@@ -109,31 +125,31 @@ namespace MSetExplorer
 			return false;
 		}
 
-		private SizeDbl ViewPortSizeInternal
+		private SizeDbl ViewportSizeInternal
 		{
-			get => _viewPortSizeInternal;
+			get => _viewportSizeInternal;
 			set
 			{
-				if (value.Width > 1 && value.Height > 1 && _viewPortSizeInternal != value)
+				if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
 				{
-					var previousValue = _viewPortSizeInternal;
-					_viewPortSizeInternal = value;
+					var previousValue = _viewportSizeInternal;
+					_viewportSizeInternal = value;
 
-					//Debug.WriteLine($"BitmapGridControl: ViewPort is changing: Old size: {previousValue}, new size: {_viewPort}.");
+					//Debug.WriteLine($"BitmapGridControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
 
-					var newViewPortSize = value;
+					var newViewportSize = value;
 
 					if (previousValue.Width < 25 || previousValue.Height < 25)
 					{
 						// Update the 'real' value immediately
-						Debug.WriteLine($"Updating the ViewPortSize immediately. Previous Size: {previousValue}, New Size: {value}.");
-						ViewPortSize = newViewPortSize;
+						Debug.WriteLine($"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
+						ViewportSize = newViewportSize;
 					}
 					else
 					{
 						// Update the screen immediately, while we are 'holding' back the update.
 						//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
-						var tempOffset = GetTempImageOffset(ImageOffset, ViewPortSize, newViewPortSize);
+						var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
 						_ = UpdateImageOffset(tempOffset);
 
 						// Delay the 'real' update until no futher updates in the last 150ms.
@@ -141,8 +157,8 @@ namespace MSetExplorer
 							interval: 150,
 							action: parm =>
 							{
-								Debug.WriteLine($"Updating the ViewPortSize after debounce. Previous Size: {ViewPortSize}, New Size: {newViewPortSize}.");
-								ViewPortSize = newViewPortSize;
+								Debug.WriteLine($"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
+								ViewportSize = newViewportSize;
 							},
 							param: null
 						);
@@ -150,32 +166,46 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"Skipping the update of the ViewPortSize, the new value {value} is the same as the old value. {ViewPortSizeInternal}.");
+					Debug.WriteLine($"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
 				}
 			}
 		}
 
-		public SizeDbl ViewPortSize
+		public SizeDbl ViewportSize
 		{
-			get => _viewPortSize;
+			get => _viewportSize;
 			set
 			{
-				if (ScreenTypeHelper.IsSizeDblChanged(ViewPortSize, value))
+				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
 				{
-					Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewPortSizeChanged event.");
+					Debug.WriteLine($"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
 
-					var previousValue = ViewPortSize;
-					_viewPortSize = value;
+					var previousValue = ViewportSize;
+					_viewportSize = value;
 
-					Debug.Assert(_viewPortSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
+					Debug.Assert(_viewportSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
 
 					//UpdateViewportSize()
 
-					ViewPortSizeChanged?.Invoke(this, (previousValue, value));
+					ViewportSizeChanged?.Invoke(this, (previousValue, value));
 				}
 				else
 				{
-					Debug.WriteLine($"The BitmapGridControl is having its ViewPortSize updated to {value}, the current value is already: {_viewPortSize}; not raising the ViewPortSizeChanged event.");
+					Debug.WriteLine($"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+				}
+			}
+		}
+
+		public SizeDbl ContentViewportSize
+		{
+			get => _contentViewportSize;
+			set
+			{
+				if (ScreenTypeHelper.IsSizeDblChanged(ContentViewportSize, value))
+				{
+					_contentViewportSize = value;
+					_canvas.Width = _contentViewportSize.Width;
+					_canvas.Height = _contentViewportSize.Height;
 				}
 			}
 		}
@@ -215,9 +245,9 @@ namespace MSetExplorer
 
 			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
 
-			if (ViewPortSizeInternal != newSizeDbl)
+			if (ViewportSizeInternal != newSizeDbl)
 			{
-				ViewPortSizeInternal = newSizeDbl;
+				ViewportSizeInternal = newSizeDbl;
 			}
 
 			double width = availableSize.Width;
@@ -282,9 +312,9 @@ namespace MSetExplorer
 
 			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(childSize);
 
-			if (ViewPortSizeInternal != newSizeDbl)
+			if (ViewportSizeInternal != newSizeDbl)
 			{
-				ViewPortSizeInternal = newSizeDbl;
+				ViewportSizeInternal = newSizeDbl;
 			}
 
 			return finalSize;
@@ -408,6 +438,16 @@ namespace MSetExplorer
 			var newValue = (VectorDbl)e.NewValue;
 
 			_ = c.UpdateImageOffset(newValue);
+		}
+
+		protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+		{
+			base.OnRenderSizeChanged(sizeInfo);
+		}
+
+		protected override void ParentLayoutInvalidated(UIElement child)
+		{
+			base.ParentLayoutInvalidated(child);
 		}
 
 		#endregion

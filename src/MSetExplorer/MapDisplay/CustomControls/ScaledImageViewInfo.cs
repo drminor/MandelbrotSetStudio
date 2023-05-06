@@ -6,7 +6,7 @@ namespace MSetExplorer
 	public class ScaledImageViewInfo
 	{
 		public VectorDbl PositionRelativeToPosterMapBlockOffset { get; init; }
-		public SizeDbl ContentViewPortSize { get; init; }
+		public SizeDbl ContentViewportSize { get; init; }
 
 		public double OffsetX => PositionRelativeToPosterMapBlockOffset.X;
 		public double OffsetY => PositionRelativeToPosterMapBlockOffset.Y;
@@ -14,7 +14,7 @@ namespace MSetExplorer
 		public ScaledImageViewInfo(VectorDbl offsets, SizeDbl viewPortSize)
 		{
 			PositionRelativeToPosterMapBlockOffset = offsets;
-			ContentViewPortSize = viewPortSize;
+			ContentViewportSize = viewPortSize;
 		}
 	}
 

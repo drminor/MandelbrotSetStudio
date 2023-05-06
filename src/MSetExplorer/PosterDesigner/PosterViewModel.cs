@@ -522,14 +522,14 @@ namespace MSetExplorer
 		//// Get Display Job
 		//private AreaColorAndCalcSettings CreateDisplayJob(Job currentJob, ColorBandSet currentColorBandSet, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
 		//{
-		//	var viewPortArea = GetNewViewPort(currentJob.MapAreaInfo, displayPosition, logicalDisplaySize, zoomFactorForDiagnosis);
+		//	var viewPortArea = GetNewViewport(currentJob.MapAreaInfo, displayPosition, logicalDisplaySize, zoomFactorForDiagnosis);
 
 		//	var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, viewPortArea, currentColorBandSet, currentJob.MapCalcSettings.Clone());
 
 		//	return areaColorAndCalcSettings;
 		//}
 
-		//private MapAreaInfo2 GetNewViewPortOld(MapAreaInfo2 currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
+		//private MapAreaInfo2 GetNewViewportOld(MapAreaInfo2 currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
 		//{
 		//	if (CurrentPoster == null)
 		//	{
@@ -566,7 +566,7 @@ namespace MSetExplorer
 		//	return result;
 		//}
 
-		//private MapAreaInfo2 GetNewViewPort(MapAreaInfo2 currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
+		//private MapAreaInfo2 GetNewViewport(MapAreaInfo2 currentAreaInfo, VectorInt displayPosition, SizeInt logicalDisplaySize, double zoomFactorForDiagnosis)
 		//{
 		//	if (CurrentPoster == null)
 		//	{
@@ -595,8 +595,8 @@ namespace MSetExplorer
 			var screenSqAmt = screenArea.Width * screenArea.Height;
 			var sizeRat = screenSqAmt / (double)diagSqAmt;
 
-			Debug.WriteLine($"Creating ViewPort at pos: {displayPosition} and size: {logicalDisplaySize} zoom: {zoomFactorForDiagnosis}.");
-			Debug.WriteLine($"The new ViewPort covers {sizeRat}. Total Screen Area: {diagScreenArea}, viewPortArea: {screenArea}.");
+			Debug.WriteLine($"Creating Viewport at pos: {displayPosition} and size: {logicalDisplaySize} zoom: {zoomFactorForDiagnosis}.");
+			Debug.WriteLine($"The new Viewport covers {sizeRat}. Total Screen Area: {diagScreenArea}, viewPortArea: {screenArea}.");
 		}
 
 		// Create new Poster Specs using a new MapAreaInfo

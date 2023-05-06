@@ -37,7 +37,7 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			//MapDisplaySize = MapDisplayViewModel.ViewPortSize;
+			//MapDisplaySize = MapDisplayViewModel.ViewportSize;
 
 			_viewModelFactory = viewModelFactory;
 

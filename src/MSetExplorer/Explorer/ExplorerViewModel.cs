@@ -36,8 +36,8 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			DispWidth = MapDisplayViewModel.ViewPortSize.Width;
-			DispHeight = MapDisplayViewModel.ViewPortSize.Height;
+			DispWidth = MapDisplayViewModel.ViewportSize.Width;
+			DispHeight = MapDisplayViewModel.ViewportSize.Height;
 
 			_viewModelFactory = viewModelFactory;
 
@@ -198,11 +198,11 @@ namespace MSetExplorer
 		//private void MapDisplayViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		//{
 		//	// Let the Map Project know about Map Display size changes
-		//	if (e.PropertyName == nameof(IMapDisplayViewModel.ViewPortSize))
+		//	if (e.PropertyName == nameof(IMapDisplayViewModel.ViewportSize))
 		//	{
-		//		DispWidth = MapDisplayViewModel.ViewPortSize.Width;
-		//		DispHeight = MapDisplayViewModel.ViewPortSize.Height;
-		//		//ProjectViewModel.CanvasSize = MapDisplayViewModel.ViewPortSize.Round();
+		//		DispWidth = MapDisplayViewModel.ViewportSize.Width;
+		//		DispHeight = MapDisplayViewModel.ViewportSize.Height;
+		//		//ProjectViewModel.CanvasSize = MapDisplayViewModel.ViewportSize.Round();
 		//	}
 		//}
 

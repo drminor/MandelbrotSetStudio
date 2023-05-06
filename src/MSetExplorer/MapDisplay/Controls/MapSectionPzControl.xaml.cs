@@ -39,15 +39,16 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
-				_vm.ViewPortSize = PanAndZoomControl1.ViewPortSize;
+				_vm.ViewportSize = PanAndZoomControl1.ViewportSize;
 
 				if (_vm.ZoomSliderFactory != null)
 				{
 					PanAndZoomControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(PanAndZoomControl1);
 				}
 
-				BitmapGridControl1.ViewPortSizeChanged += BitmapGridControl1_ViewPortSizeChanged;
+				//BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
 
+				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 
@@ -59,20 +60,26 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl1.ZoomSliderOwner = null;
 
-			BitmapGridControl1.ViewPortSizeChanged -= BitmapGridControl1_ViewPortSizeChanged;
+			//BitmapGridControl1.ViewportSizeChanged -= BitmapGridControl1_ViewportSizeChanged;
 
+			PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
-
 		}
 
 		#endregion
 
 		#region Event Handlers
 
-		private void BitmapGridControl1_ViewPortSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		//private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		//{
+		//	_vm.ViewportSize = e.Item2;
+		//}
+
+		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
-			_vm.ViewPortSize = e.Item2;
+			_vm.ViewportSize = e.ContentViewportSize;
+			BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
 		}
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)

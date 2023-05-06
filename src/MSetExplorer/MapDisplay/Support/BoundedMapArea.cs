@@ -17,7 +17,7 @@ namespace MSetExplorer
 			_mapJobHelper = mapJobHelper;
 
 			AreaColorAndCalcSettings = areaColorAndCalcSettings;
-			ViewPortSize = viewPortSize;
+			ViewportSize = viewPortSize;
 			PosterSize = posterSize;
 
 			DisplayPosition = displayPosition ?? new VectorDbl(0, 0);
@@ -34,7 +34,7 @@ namespace MSetExplorer
 		public MapAreaInfo2 MapAreaInfo => AreaColorAndCalcSettings.MapAreaInfo;
 
 		public SizeInt PosterSize { get; init; }
-		public SizeDbl ViewPortSize { get; set; }
+		public SizeDbl ViewportSize { get; set; }
 
 		public VectorDbl DisplayPosition { get; private set; }
 
@@ -57,13 +57,13 @@ namespace MSetExplorer
 
 		private MapAreaInfo GetUpdatedMapAreaInfo(VectorDbl displayPosition)
 		{
-			var newScreenArea = new RectangleDbl(new PointDbl(displayPosition), ViewPortSize);
+			var newScreenArea = new RectangleDbl(new PointDbl(displayPosition), ViewportSize);
 
 			var newScreenAreaInt = newScreenArea.Round();
 
 			var newCoords = _mapJobHelper.GetMapCoords(newScreenAreaInt, _virtualScreenAreaInfo.MapPosition, _virtualScreenAreaInfo.SamplePointDelta);
 
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, _virtualScreenAreaInfo.Subdivision, ViewPortSize.Round());
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, _virtualScreenAreaInfo.Subdivision, ViewportSize.Round());
 
 			return mapAreaInfoV1;
 		}
