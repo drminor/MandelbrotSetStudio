@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -17,7 +18,7 @@ namespace MSetExplorer
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 
-		private FrameworkElement? _content;
+		private FrameworkElement _ourContent;
 		private Canvas _canvas;
 		private Image _image;
 
@@ -42,14 +43,12 @@ namespace MSetExplorer
 				Priority = DispatcherPriority.Render
 			};
 
-			_content = null;
+			_ourContent = new FrameworkElement();
 			_canvas = new Canvas();
-
 			_image = new Image();
 
 			_viewportSizeInternal = new SizeDbl();
 			_viewportSize = new SizeDbl();
-
 			_contentViewportSize = SizeDbl.NaN;
 		}
 
@@ -196,14 +195,14 @@ namespace MSetExplorer
 
 		public SizeDbl ContentViewportSize
 		{
-			get => _contentViewportSize;
+			get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
 			set
 			{
-				if (ScreenTypeHelper.IsSizeDblChanged(ContentViewportSize, value))
+				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value))
 				{
 					_contentViewportSize = value;
-					_canvas.Width = _contentViewportSize.Width;
-					_canvas.Height = _contentViewportSize.Height;
+					Canvas.Width = _contentViewportSize.Width;
+					Canvas.Height = _contentViewportSize.Height;
 				}
 			}
 		}
@@ -237,7 +236,7 @@ namespace MSetExplorer
 		{
 			Size childSize = base.MeasureOverride(availableSize);
 
-			_content?.Measure(availableSize);
+			_ourContent.Measure(availableSize);
 
 			UpdateViewportSize(availableSize);
 
@@ -275,32 +274,25 @@ namespace MSetExplorer
 
 			if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
 
-			if (_content != null)
-			{
-				_content.Arrange(new Rect(finalSize));
+			UpdateViewportSize(childSize);
 
-				if (Canvas != null && ContentViewportSize.IsNAN())
-				{
-					var canvas = Canvas;
-					//Debug.WriteLine($"Before _content.Arrange({finalSize}. Base returns {childSize}. The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
+			Debug.WriteLine($"Before _content.Arrange({finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+
+			_ourContent.Arrange(new Rect(finalSize));
+
+			var canvas = Canvas;
 					
-					//_content.Arrange(new Rect(finalSize));
-
-					if (canvas.ActualWidth != childSize.Width)
-					{
-						canvas.Width = childSize.Width;
-					}
-
-					if (canvas.ActualHeight != childSize.Height)
-					{
-						canvas.Height = childSize.Height;
-					}
-
-					//Debug.WriteLine($"After _content.Arrange(The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
-				}
+			if (canvas.ActualWidth != ContentViewportSize.Width)
+			{
+				canvas.Width = ContentViewportSize.Width;
 			}
 
-			UpdateViewportSize(childSize);
+			if (canvas.ActualHeight != ContentViewportSize.Height)
+			{
+				canvas.Height = ContentViewportSize.Height;
+			}
+
+			Debug.WriteLine($"After _content.Arrange(The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
 
 			return finalSize;
 		}
@@ -317,7 +309,7 @@ namespace MSetExplorer
 
 		private Size ForceSize(Size finalSize)
 		{
-			if (finalSize.Width > 1020 && finalSize.Width < 1030 && finalSize.Height > 1020 && finalSize.Height < 1030)
+			if (finalSize.Width > 1000 && finalSize.Width < 1040 && finalSize.Height > 1000 && finalSize.Height < 1040)
 			{
 				return new Size(1024, 1024);
 			}
@@ -329,18 +321,19 @@ namespace MSetExplorer
 
 		public override void OnApplyTemplate()
 		{
-			//base.OnApplyTemplate();
+			base.OnApplyTemplate();
 
-			_content = Template.FindName("PART_Content", this) as FrameworkElement;
-			if (_content != null)
+			Content = Template.FindName("PART_Content", this) as FrameworkElement;
+
+			if (Content != null)
 			{
+				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
+
 				//Debug.WriteLine($"Found the BitmapGridControl3_Content template.");
 
-				(Canvas, Image) = BuildContentModel(_content);
+				(Canvas, Image) = BuildContentModel(_ourContent);
 
 				Debug.Assert(IsImageAChildOfCanvas(Image, Canvas), "Image is not a child of the Canvas.");
-
-				Content = _content;
 			}
 			else
 			{

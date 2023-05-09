@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -33,7 +32,6 @@ namespace MSetExplorer
 		private SizeDbl _viewPortSize;
 		private VectorDbl _imageOffset;
 
-		//private double _invertedVerticalPosition;
 		private double _verticalPosition;
 		private double _horizontalPosition;
 
@@ -138,6 +136,14 @@ namespace MSetExplorer
 				Debug.WriteLine($"The MapSectionViewModel's ImageSource is being set to value: {value}.");
 				OnPropertyChanged(nameof(IMapDisplayViewModel.ImageSource));
 			}
+		}
+
+		public void UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl positionRelativeToPosterMapBlockOffset)
+		{
+			_horizontalPosition = positionRelativeToPosterMapBlockOffset.X;
+			_verticalPosition = positionRelativeToPosterMapBlockOffset.Y;
+
+			ViewportSize = contentViewportSize;
 		}
 
 		public SizeDbl ViewportSize
@@ -539,7 +545,6 @@ namespace MSetExplorer
 					_boundedMapArea.ViewportSize = ViewportSize;
 					var mapAreaInfo2Subset = _boundedMapArea.GetView(displayPosition);
 
-					//newJobNumber = HandleDisplayPositionChange(_boundedMapArea.AreaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
 					newJobNumber = ReuseAndLoad(_boundedMapArea.AreaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
 				}
 				else
@@ -600,8 +605,6 @@ namespace MSetExplorer
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
 			var loadedSections = new ReadOnlyCollection<MapSection>(MapSections);
 
-			//var sectionsToLoad = GetSectionsToLoad(sectionsRequired, loadedSections);
-			//var sectionsToRemove = GetSectionsToRemove(sectionsRequired, loadedSections);
 			var sectionsToLoad = GetSectionsToLoadAndRemove(sectionsRequired, loadedSections, out var sectionsToRemove);
 
 			foreach (var section in sectionsToRemove)
@@ -752,25 +755,8 @@ namespace MSetExplorer
 
 		private double GetInvertedYPos(double yPos)
 		{
-			double result;
-			double maxV;
-
-			//if (UnscaledExtent.IsEmpty)
-			//{
-			//	maxV = ViewportSize.Height;
-			//	result = maxV - yPos;
-			//}
-			//else
-			//{
-			//	//maxV = UnscaledExtent.Height; //Math.Max(ViewportSize.Height, PosterSize.Height - ViewportSize.Height);
-			//	//result = maxV - (yPos + ViewportSize.Height);
-
-			//	maxV = Math.Max(0.0, UnscaledExtent.Height - ViewportSize.Height);
-			//	result = maxV - yPos;
-			//}
-
-			maxV = Math.Max(0.0, UnscaledExtent.Height - ViewportSize.Height);
-			result = maxV - yPos;
+			var maxV = Math.Max(0.0, UnscaledExtent.Height - ViewportSize.Height);
+			var result = maxV - yPos;
 
 			return result;
 		}

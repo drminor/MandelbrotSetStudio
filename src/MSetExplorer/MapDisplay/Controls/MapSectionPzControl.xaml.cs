@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -78,8 +77,13 @@ namespace MSetExplorer
 
 		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
-			_vm.ViewportSize = e.ContentViewportSize;
 			BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
+			
+			//_vm.ViewportSize = e.ContentViewportSize;
+			//_vm.HorizontalPosition = e.OffsetX;
+			//_vm.VerticalPosition = e.OffsetY;
+
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.PositionRelativeToPosterMapBlockOffset);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)

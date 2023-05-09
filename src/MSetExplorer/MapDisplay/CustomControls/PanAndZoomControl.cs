@@ -24,7 +24,7 @@ namespace MSetExplorer
 		private bool _canVScroll = false;
 		private bool _canZoom = true;
 
-		private SizeDbl _scrollBarDisplacement = new SizeDbl();
+		//private SizeDbl _scrollBarDisplacement = new SizeDbl();
 
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomSlider;
@@ -92,7 +92,7 @@ namespace MSetExplorer
 				{
 					//Debug.WriteLine($"The PanAndZoomControl is having its ViewportSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewportSizeChanged event.");
 
-					var previousValue = ViewportSize;
+					//var previousValue = ViewportSize;
 					_viewportSize = value;
 
 					//ViewportSizeChanged?.Invoke(this, (previousValue, value));
@@ -141,8 +141,6 @@ namespace MSetExplorer
 			get => (double)GetValue(ContentOffsetYProperty);
 			set => SetValue(ContentOffsetYProperty, value);
 		}
-
-
 
 		public bool IsMouseWheelScrollingEnabled { get; set; }
 
@@ -253,9 +251,12 @@ namespace MSetExplorer
 				c.ContentOffsetY = 0;
 
 				c.UpdateContentViewportSize();
-			}
 
-			//c.InvalidateMeasure();
+				//c.InvalidateMeasure();
+				c.InvalidateScrollInfo();
+
+				c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentViewportSize));
+			}
 		}
 
 		#endregion
@@ -289,11 +290,13 @@ namespace MSetExplorer
 
 			c.UpdateContentOffsetsFromScale();
 
-			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
-
 			c.ZoomSliderOwner?.ContentScaleWasUpdated(c.ContentScale);
+			c.InvalidateScrollInfo();
 
-			c.InvalidateVisual(); // Is this really necessary?
+			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
+			c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentViewportSize));
+
+			//c.InvalidateVisual(); // Is this really necessary?
 		}
 
 		/// <summary>
@@ -438,12 +441,6 @@ namespace MSetExplorer
 
 		#region Private Methods - Scroll Support
 
-		private void ResetViewportZoomFocus()
-		{
-			//ViewportZoomFocusX = ViewportWidth / 2;
-			//ViewportZoomFocusY = ViewportHeight / 2;
-		}
-
 		private void UpdateViewportSize(SizeDbl newValue)
 		{
 			if (ViewportSize == newValue)
@@ -469,6 +466,8 @@ namespace MSetExplorer
 			ContentOffsetY = ContentOffsetY;
 
 			InvalidateScrollInfo();
+
+			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(new VectorDbl(ContentOffsetX, ContentOffsetY), ContentViewportSize));
 		}
 
 		private void UpdateContentViewportSize()
@@ -478,12 +477,13 @@ namespace MSetExplorer
 				Debug.WriteLine($"Not using the current value for ContentScale.");
 			}
 
-			var currentMaxContentOffset = _maxContentOffset;
-			var currentScrollBarDisplacement = ScrollBarDisplacement;
+			var maxContentOffsetBeforeUpdate = _maxContentOffset;
+			
+			//var currentScrollBarDisplacement = ScrollBarDisplacement;
+			//var viewPortSizeSansScrBarThicknesses = ViewportSize.Diff(ScrollBarDisplacement);
+			//ContentViewportSize = viewPortSizeSansScrBarThicknesses.Divide(ContentScale);
 
-			var viewPortSizeSansScrBarThicknesses = ViewportSize.Diff(ScrollBarDisplacement);
-
-			ContentViewportSize = viewPortSizeSansScrBarThicknesses.Divide(ContentScale);
+			ContentViewportSize = ViewportSize.Divide(ContentScale);
 
 			// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
 
@@ -497,14 +497,17 @@ namespace MSetExplorer
 			
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
 
-			ScrollBarDisplacement = GetScrollBarDisplacement();
+			//ScrollBarDisplacement = GetScrollBarDisplacement();
 
 			UpdateTranslationX();
 			UpdateTranslationY();
 
-			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(new VectorDbl(ContentOffsetX, ContentOffsetY), ContentViewportSize));
+			if (_maxContentOffset != maxContentOffsetBeforeUpdate)
+			{
+				Debug.Print($"MaxContentOffset was updated. Prev: {maxContentOffsetBeforeUpdate}, New: {_maxContentOffset}.");
+			}
 
-			InvalidateScrollInfo();
+			//InvalidateScrollInfo();
 		}
 
 		private SizeDbl GetScrollBarDisplacement(SizeDbl? currentValue = null)
@@ -575,6 +578,12 @@ namespace MSetExplorer
 		private void UpdateContentZoomFocusY()
 		{
 			//ContentZoomFocusY = ContentOffsetY + (_constrainedContentViewportHeight / 2);
+		}
+
+		private void ResetViewportZoomFocus()
+		{
+			//ViewportZoomFocusX = ViewportWidth / 2;
+			//ViewportZoomFocusY = ViewportHeight / 2;
 		}
 
 		private bool UpdateScale(double contentScale)

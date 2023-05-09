@@ -32,7 +32,7 @@ namespace MSetExplorer
 			{
 				_scrollOwner = value;
 				_originalVerticalScrollBarVisibility = _scrollOwner.VerticalScrollBarVisibility;
-				ScrollBarDisplacement = GetScrollBarDisplacement();
+				//ScrollBarDisplacement = GetScrollBarDisplacement();
 			}
 		}
 
@@ -56,11 +56,11 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl ScrollBarDisplacement
-		{
-			get => _scrollBarDisplacement;
-			set => _scrollBarDisplacement = value;
-		}
+		//public SizeDbl ScrollBarDisplacement
+		//{
+		//	get => _scrollBarDisplacement;
+		//	set => _scrollBarDisplacement = value;
+		//}
 
 		public double ExtentWidth
 		{
@@ -399,83 +399,6 @@ namespace MSetExplorer
 			//}
 		*/
 
-		/* Sample MeasureOverride - Mark2
 
-		//protected override Size MeasureOverride(Size availableSize)
-		//{
-		//	//var childSize = new SizeDbl(
-		//	//	availableSize.Width,
-		//	//	availableSize.Height / 2);
-
-		//	//var extent = new SizeDbl(
-		//	//	availableSize.Width,
-		//	//	childSize.Height);
-
-		//	//if (extent != _unScaledExtent)
-		//	//{
-		//	//	_unScaledExtent = extent;
-
-		//	//	InvalidateScrollInfo();
-		//	//}
-
-		//	//_unScaledExtent = new SizeDbl(4096, 4096);
-
-		//	var ourSize = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
-
-		//	if (_viewPortSize != ourSize)
-		//	{
-		//		_viewPortSize = ourSize;
-
-		//		InvalidateScrollInfo();
-		//	}
-
-		//	// If we had visual children, here is where we would call Measure for each.
-
-		//	return availableSize;
-		//}
-
-
-		//protected override Size ArrangeOverride(Size finalSize)
-		//{
-		//	//Size childSize = new Size(
-		//	//  finalSize.Width,
-		//	//  (finalSize.Height * 2) / this.InternalChildren.Count);
-		//	//Size extent = new Size(
-		//	//  finalSize.Width,
-		//	//  childSize.Height * this.InternalChildren.Count);
-
-		//	//if (extent != _extent)
-		//	//{
-		//	//	_extent = extent;
-		//	//	if (_owner != null)
-		//	//		_owner.InvalidateScrollInfo();
-		//	//}
-
-		//	//if (finalSize != _viewport)
-		//	//{
-		//	//	_viewport = finalSize;
-		//	//	if (_owner != null)
-		//	//		_owner.InvalidateScrollInfo();
-		//	//}
-
-		//	var ourSize = ScreenTypeHelper.ConvertToSizeDbl(finalSize);
-
-		//	if (_viewPortSize != ourSize)
-		//	{
-		//		_viewPortSize = ourSize;
-
-		//		InvalidateScrollInfo();
-		//	}
-
-		//	//for (int i = 0; i < this.InternalChildren.Count; i++)
-		//	//{
-		//	//	this.InternalChildren[i].Arrange(new Rect(0, childSize.Height * i, childSize.Width, childSize.Height));
-		//	//}
-
-		//	return finalSize;
-		//}
-
-
-		*/
 	}
 }
