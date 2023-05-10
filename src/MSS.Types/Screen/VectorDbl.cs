@@ -82,6 +82,16 @@ namespace MSS.Types
 			return new VectorDbl(X - offset.X, Y - offset.Y);
 		}
 
+		public VectorDbl Divide(double dividend)
+		{
+			var resultH = X / dividend;
+			var resultV = X / dividend;
+
+			var result = new VectorDbl(resultH, resultV);
+
+			return result;
+		}
+
 		//public PointDbl Translate(SizeInt offset)
 		//{
 		//	return new PointDbl(X + offset.Width, Y + offset.Height);
@@ -128,7 +138,17 @@ namespace MSS.Types
 			return Math.Abs(X) < threshold && Math.Abs(Y) < threshold;
 		}
 
-		#region IEquatable and IEqualityComparer Support
+		#region ToString, IEquatable and IEqualityComparer Support
+
+		public override string? ToString()
+		{
+			return $"x:{X}, y:{Y}";
+		}
+
+		public string? ToString(string? format)
+		{
+			return $"x:{X.ToString(format)}, y:{Y.ToString(format)}";
+		}
 
 		public override bool Equals(object? obj)
 		{
@@ -167,16 +187,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
-		public override string? ToString()
-		{
-			return $"x:{X}, y:{Y}";
-		}
-
-		public string? ToString(string? format)
-		{
-			return $"x:{X.ToString(format)}, y:{Y.ToString(format)}";
-		}
-
 	}
 }

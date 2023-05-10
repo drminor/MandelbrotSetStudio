@@ -38,7 +38,9 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
-				_vm.ViewportSize = PanAndZoomControl1.ViewportSize;
+
+				//_vm.ViewportSize = PanAndZoomControl1.ViewportSize;
+				_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
 
 				if (_vm.ZoomSliderFactory != null)
 				{
@@ -83,7 +85,7 @@ namespace MSetExplorer
 			//_vm.HorizontalPosition = e.OffsetX;
 			//_vm.VerticalPosition = e.OffsetY;
 
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.PositionRelativeToPosterMapBlockOffset);
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.PositionRelativeToPosterMapBlockOffset, e.ContentScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)

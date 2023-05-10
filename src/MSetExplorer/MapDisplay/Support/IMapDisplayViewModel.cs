@@ -24,8 +24,8 @@ namespace MSetExplorer
 		bool UseEscapeVelocities { get; set; }
 		bool HighlightSelectedColorBand { get; set; }
 
-		ImageSource ImageSource { get; set; }
-		VectorDbl ImageOffset { get; set; }
+		ImageSource ImageSource { get; }
+		VectorDbl ImageOffset { get; }
 
 		void RaiseMapViewZoomUpdate(AreaSelectedEventArgs e);
 		void RaiseMapViewPanUpdate(ImageDraggedEventArgs e);
@@ -37,22 +37,21 @@ namespace MSetExplorer
 		int? RestartLastJob();
 		void ClearDisplay();
 
-
-		SizeDbl UnscaledExtent { get; set; }
-		SizeDbl ViewportSize { get; set; }
+		SizeDbl UnscaledExtent { get; }
+		SizeDbl ViewportSize { get; }
 
 		double HorizontalPosition { get; set; }
-
 		double VerticalPosition { get; set; }
-		double InvertedVerticalPosition { get; }
+		//double InvertedVerticalPosition { get; }
 
-		double DisplayZoom { get; set; }
+		double DisplayZoom { get; }
 		double MinimumDisplayZoom { get; }
 
 		MapAreaInfo? LastMapAreaInfo { get; }
 		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
-		void UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl positionRelativeToPosterMapBlockOffset);
+		int? UpdateViewportSize(SizeDbl viewportSize);
+		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl positionRelativeToPosterMapBlockOffset, double contentScale);
 
 	}
 }

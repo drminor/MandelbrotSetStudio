@@ -22,7 +22,10 @@ namespace MSetExplorer
 		{
 			var minimumScale = 0.0625;
 			SetScrollBarSettings(scrollBar1, minimumScale);
+			textBlock1.Text = scrollBar1.Value.ToString("F3");
+
 			scrollBar1.ValueChanged += ScrollBar1_ValueChanged;
+			
 			Debug.WriteLine("The MapDisplayZoom Control is now loaded.");
 		}
 

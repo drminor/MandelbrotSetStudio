@@ -44,7 +44,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
-				_vm.ViewportSize = BitmapGridControl1.ViewportSize;
+				_vm.UpdateViewportSize(BitmapGridControl1.ViewportSize);
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
 				BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
@@ -113,7 +113,8 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling Viewport Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewportSize}.");
 
-			_vm.ViewportSize = newValue;
+			//_vm.ViewportSize = newValue;
+			_vm.UpdateViewportSize(newValue);
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

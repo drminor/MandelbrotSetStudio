@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -37,6 +38,7 @@ namespace MSetExplorer
 		private bool _enableContentOffsetUpdateFromScale = false;
 		private bool _disableScrollOffsetSync = false;
 		private bool _disableContentFocusSync = false;
+		private bool _disableContentOffsetChangeEvents = false;
 
 		//private double _constrainedContentViewportWidth = 0.0;
 		//private double _constrainedContentViewportHeight = 0.0;
@@ -129,6 +131,11 @@ namespace MSetExplorer
 		}
 
 		public SizeDbl ContentViewportSize { get; set; }
+
+		public PointDbl ContentZoomFocus { get; set; }
+
+		public PointDbl ViewportZoomFocus { get; set; }
+
 
 		public double ContentOffsetX
 		{
@@ -247,15 +254,24 @@ namespace MSetExplorer
 
 			if (!value.Diff(previousValue).IsNearZero())
 			{
-				c.ContentOffsetX = 0;
-				c.ContentOffsetY = 0;
+				c._disableContentOffsetChangeEvents = true;
 
-				c.UpdateContentViewportSize();
+				try
+				{
+					c.ContentOffsetX = 0;
+					c.ContentOffsetY = 0;
 
-				//c.InvalidateMeasure();
-				c.InvalidateScrollInfo();
+					c.UpdateContentViewportSize();
 
-				c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentViewportSize));
+					//c.InvalidateMeasure();
+					c.InvalidateScrollInfo();
+				}
+				finally
+				{
+					c._disableContentOffsetChangeEvents = false;
+				}
+
+				//c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentViewportSize, c.ContentScale));
 			}
 		}
 
@@ -286,15 +302,24 @@ namespace MSetExplorer
 				return;
 			}
 
-			c.UpdateContentViewportSize();
+			c._disableContentOffsetChangeEvents = true;
 
-			c.UpdateContentOffsetsFromScale();
+			try
+			{
+				c.UpdateContentViewportSize();
+
+				c.UpdateContentOffsetsFromScale();
+			}
+			finally
+			{
+				c._enableContentOffsetUpdateFromScale = false;
+			}
 
 			c.ZoomSliderOwner?.ContentScaleWasUpdated(c.ContentScale);
 			c.InvalidateScrollInfo();
 
 			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
-			c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentViewportSize));
+			c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentViewportSize, c.ContentScale));
 
 			//c.InvalidateVisual(); // Is this really necessary?
 		}
@@ -357,8 +382,11 @@ namespace MSetExplorer
 				c.UpdateContentZoomFocusX();
 			}
 
-			// Raise an event to let users of the control know that the content offset has changed.
-			c.ContentOffsetXChanged?.Invoke(c, EventArgs.Empty);
+			if (!c._disableContentOffsetChangeEvents)
+			{
+				// Raise an event to let users of the control know that the content offset has changed.
+				c.ContentOffsetXChanged?.Invoke(c, EventArgs.Empty);
+			}
 
 			c.InvalidateScrollInfo();
 		}
@@ -415,8 +443,11 @@ namespace MSetExplorer
 				c.UpdateContentZoomFocusY();
 			}
 
-			// Raise an event to let users of the control know that the content offset has changed.
-			c.ContentOffsetYChanged?.Invoke(c, EventArgs.Empty);
+			if (!c._disableContentOffsetChangeEvents)
+			{ 
+				// Raise an event to let users of the control know that the content offset has changed.
+				c.ContentOffsetYChanged?.Invoke(c, EventArgs.Empty);
+			}
 
 			c.InvalidateScrollInfo();
 		}
@@ -460,14 +491,23 @@ namespace MSetExplorer
 			// Reset the viewport zoom focus to the center of the viewport.
 			ResetViewportZoomFocus();
 
-			// Update content offset from itself when the size of the viewport changes.
-			// This ensures that the content offset remains properly clamped to its valid range.
-			ContentOffsetX = ContentOffsetX;
-			ContentOffsetY = ContentOffsetY;
+			_disableContentOffsetChangeEvents = true;
+
+			try
+			{
+				// Update content offset from itself when the size of the viewport changes.
+				// This ensures that the content offset remains properly clamped to its valid range.
+				ContentOffsetX = ContentOffsetX;
+				ContentOffsetY = ContentOffsetY;
+			}
+			finally
+			{
+				_disableContentOffsetChangeEvents = false;
+			}
 
 			InvalidateScrollInfo();
 
-			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(new VectorDbl(ContentOffsetX, ContentOffsetY), ContentViewportSize));
+			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(new VectorDbl(ContentOffsetX, ContentOffsetY), ContentViewportSize, ContentScale));
 		}
 
 		private void UpdateContentViewportSize()
@@ -611,26 +651,25 @@ namespace MSetExplorer
 			{
 				try
 				{
-					// 
-					// Disable content focus syncronization.  We are about to update content offset whilst zooming
-					// to ensure that the viewport is focused on our desired content focus point.  Setting this
-					// to 'true' stops the automatic update of the content focus when content offset changes.
-					//
 					_disableContentFocusSync = true;
 
-					//
-					// Whilst zooming in or out keep the content offset up-to-date so that the viewport is always
-					// focused on the content focus point (and also so that the content focus is locked to the 
-					// viewport focus point - this is how the google maps style zooming works).
-					//
-					//double viewportOffsetX = c.ViewportZoomFocusX - (c.ViewportWidth / 2);
-					//double viewportOffsetY = c.ViewportZoomFocusY - (c.ViewportHeight / 2);
+					//var viewportOffsetX = ViewportZoomFocusX - (ViewportWidth / 2);
+					//var viewportOffsetY = ViewportZoomFocusY - (ViewportHeight / 2);
 
-					//double contentOffsetX = viewportOffsetX / c.ContentScale;
-					//double contentOffsetY = viewportOffsetY / c.ContentScale;
+					//var contentOffsetX = viewportOffsetX / ContentScale;
+					//var contentOffsetY = viewportOffsetY / ContentScale;
 
-					//c.ContentOffsetX = (c.ContentZoomFocusX - (c.ContentViewportWidth / 2)) - contentOffsetX;
-					//c.ContentOffsetY = (c.ContentZoomFocusY - (c.ContentViewportHeight / 2)) - contentOffsetY;
+					//c.ContentOffsetX = (c.ContentZoomFocusX - (ContentViewportSize.Width / 2)) - contentOffsetX;
+					//c.ContentOffsetY = (c.ContentZoomFocusY - (ContentViewportSize.Height / 2)) - contentOffsetY;
+
+					var viewportOffset = ViewportZoomFocus.Sub(ViewportSize.Divide(2));
+					var contentOffset = viewportOffset.Divide(ContentScale);
+					contentOffset = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)).Diff(contentOffset);
+
+					ContentOffsetX = contentOffset.X;
+					ContentOffsetY = contentOffset.Y;
+
+
 				}
 				finally
 				{

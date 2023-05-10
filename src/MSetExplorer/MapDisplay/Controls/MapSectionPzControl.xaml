@@ -26,8 +26,8 @@
 
                     <local:BitmapGridControl
                         x:Name="BitmapGridControl1"
-                        BitmapGridImageSource="{Binding ImageSource}"
-                        ImageOffset="{Binding ImageOffset}"
+                        BitmapGridImageSource="{Binding ImageSource, Mode=OneWay}"
+                        ImageOffset="{Binding ImageOffset, Mode=OneWay}"
                     />
 
                 </local:PanAndZoomControl>

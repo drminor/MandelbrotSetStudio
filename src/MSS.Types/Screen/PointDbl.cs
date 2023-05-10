@@ -73,6 +73,11 @@ namespace MSS.Types
 			return new VectorDbl(X - amount.X, Y - amount.Y);
 		}
 
+		public VectorDbl Sub(SizeDbl amount)
+		{
+			return new VectorDbl(X - amount.Width, Y - amount.Height);
+		}
+
 		public PointDbl Min(PointDbl pointB)
 		{
 			return new PointDbl(Math.Min(X, pointB.X), Math.Min(Y, pointB.Y));
@@ -104,7 +109,17 @@ namespace MSS.Types
 			return new PointDbl(Math.Abs(X), Math.Abs(Y));
 		}
 
-		#region IEquatable and IEqualityComparer Support
+		#region ToString, IEquatable and IEqualityComparer Support
+
+		public override string? ToString()
+		{
+			return $"x:{X}, y:{Y}";
+		}
+
+		public string? ToString(string? format)
+		{
+			return $"x:{X.ToString(format)}, y:{Y.ToString(format)}";
+		}
 
 		public override bool Equals(object? obj)
 		{
@@ -143,16 +158,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
-		public override string? ToString()
-		{
-			return $"x:{X}, y:{Y}";
-		}
-
-		public string? ToString(string? format)
-		{
-			return $"x:{X.ToString(format)}, y:{Y.ToString(format)}";
-		}
-
 	}
 }

@@ -32,7 +32,6 @@ namespace MSetExplorer
 			{
 				_scrollOwner = value;
 				_originalVerticalScrollBarVisibility = _scrollOwner.VerticalScrollBarVisibility;
-				//ScrollBarDisplacement = GetScrollBarDisplacement();
 			}
 		}
 
@@ -42,7 +41,6 @@ namespace MSetExplorer
 			set
 			{
 				_canHScroll = value;
-				//ScrollBarDisplacement = new SizeDbl(value ? VERTICAL_SCROLL_BAR_WIDTH : 0, ScrollBarDisplacement.Height);
 			}
 		}
 
@@ -52,15 +50,8 @@ namespace MSetExplorer
 			set
 			{
 				_canVScroll = value;
-				//ScrollBarDisplacement = new SizeDbl(ScrollBarDisplacement.Width, value ? VERTICAL_SCROLL_BAR_WIDTH : 0);
 			}
 		}
-
-		//public SizeDbl ScrollBarDisplacement
-		//{
-		//	get => _scrollBarDisplacement;
-		//	set => _scrollBarDisplacement = value;
-		//}
 
 		public double ExtentWidth
 		{
