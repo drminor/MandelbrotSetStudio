@@ -40,10 +40,6 @@ namespace MSetExplorer
 		SizeDbl UnscaledExtent { get; }
 		SizeDbl ViewportSize { get; }
 
-		//double HorizontalPosition { get; }
-		//double VerticalPosition { get; }
-		//double InvertedVerticalPosition { get; }
-
 		VectorDbl DisplayPosition { get; }
 
 		double DisplayZoom { get; }

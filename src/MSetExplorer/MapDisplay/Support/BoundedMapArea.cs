@@ -69,7 +69,7 @@ namespace MSetExplorer
 			return mapAreaInfoV1;
 		}
 
-		private double GetInvertedYPos(double yPos)
+		public double GetInvertedYPos(double yPos)
 		{
 			var maxV = PosterSize.Height; //Math.Max(ViewportSize.Height, PosterSize.Height - ViewportSize.Height);
 			var result = maxV - (yPos + ViewportSize.Height);

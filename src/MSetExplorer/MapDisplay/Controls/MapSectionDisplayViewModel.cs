@@ -32,9 +32,6 @@ namespace MSetExplorer
 		private SizeDbl _viewportSize;
 		private VectorDbl _imageOffset;
 
-		//private double _verticalPosition;
-		//private double _horizontalPosition;
-
 		private VectorDbl _displayPosition;
 
 		private SizeDbl _unscaledExtent;
@@ -152,50 +149,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//{
-		//	get => _viewPortSize;
-		//	set
-		//	{
-		//		if (!value.IsNAN() && value != _viewPortSize)
-		//		{
-		//			if (value.Width <= 2 || value.Height <= 2)
-		//			{
-		//				Debug.WriteLine($"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {value}, which is very small. Update was aborted. The ViewportSize remains: {_viewPortSize}.");
-		//			}
-		//			else
-		//			{
-		//				Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {value}. Previously it was {_viewPortSize}. The VM is updating the _bitmapGrid.Viewport Size.");
-		//				_viewPortSize = value;
-
-		//				_bitmapGrid.ViewportSize = _viewPortSize;
-
-		//				if (LastMapAreaInfo != null && LastMapAreaInfo.CanvasSize != value.Round())
-		//				{
-		//					// TODO: Check why we have a guard in place to avoid calling HandleDisplaySizeUpdate, if the value is the same as the LastMapAreaInfo.CanvasSize
-		//					var newJobNumber = HandleDisplaySizeUpdate();
-		//					if (newJobNumber != null)
-		//					{
-		//						ActiveJobNumbers.Add(newJobNumber.Value);
-		//					}
-		//				}
-		//				else
-		//				{
-		//					if (LastMapAreaInfo != null)
-		//					{
-		//						Debug.WriteLine($"Not calling HandleDisplaySizeUpdate, the LastMapAreaInfo.CanvasSize {LastMapAreaInfo.CanvasSize} is the same as the new ViewportSize: {value}.");
-		//					}
-		//				}
-
-		//				OnPropertyChanged(nameof(IMapDisplayViewModel.ViewportSize));
-		//			}
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {value}.The current value is aleady: {_viewPortSize}, not calling HandleDisplaySizeUpdate, not raising OnPropertyChanged.");
-		//		}
-		//	}
-		//}
-
 		public VectorDbl ImageOffset
 		{
 			get => _imageOffset;
@@ -238,44 +191,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public double VerticalPosition
-		//{
-		//	get => _verticalPosition;
-		//	private set
-		//	{
-		//		_verticalPosition = value;
-		//		//if (value != _verticalPosition)
-		//		//{
-		//		//	_verticalPosition = value;
-
-		//		//	Debug.Assert(!UnscaledExtent.IsNearZero(), "Moving display, but we have no Unscaled Extent.");
-
-		//		//	Debug.WriteLine($"Moving to {HorizontalPosition}, {InvertedVerticalPosition}. Uninverted Y:{VerticalPosition}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}.");
-		//		//	MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
-		//		//}
-		//	}
-		//}
-
-		////public double InvertedVerticalPosition => GetInvertedYPos(VerticalPosition);
-
-		//public double HorizontalPosition
-		//{
-		//	get => _horizontalPosition;
-		//	private set
-		//	{
-		//		_horizontalPosition = value;
-		//		//if (value != _horizontalPosition)
-		//		//{
-		//		//	_horizontalPosition = value;
-		//		//	Debug.WriteLine($"Horizontal Pos: {value}.");
-
-		//		//	Debug.Assert(!UnscaledExtent.IsNearZero(), "Moving display, but we have no Unscaled Extent.");
-
-		//		//	MoveTo(new VectorDbl(HorizontalPosition, InvertedVerticalPosition));
-		//		//}
-		//	}
-		//}
 
 		public VectorDbl DisplayPosition
 		{
@@ -449,8 +364,6 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
 					newJobNumber = HandleDisplaySizeUpdate(newValue);
-
-					//OnPropertyChanged(nameof(IMapDisplayViewModel.ViewportSize));
 				}
 			}
 			else
@@ -459,7 +372,6 @@ namespace MSetExplorer
 			}
 
 			return newJobNumber;
-
 		}
 
 		public int? MoveTo(VectorDbl displayPosition)
@@ -470,15 +382,7 @@ namespace MSetExplorer
 				return null;
 			}
 
-			//var x = displayPosition.X;
-			//var y = displayPosition.Y;
-			//var invertedY = GetInvertedYPos(y);
-			//Debug.WriteLine($"Moving to {x}, {invertedY}. Uninverted Y:{y}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}.");
-
-			//HorizontalPosition = x;
-			//VerticalPosition = y;
-
-			//var invertedYPosition = new VectorDbl(x, invertedY);
+			ReportMove(_boundedMapArea, displayPosition);
 
 			// Get the MapAreaInfo subset for the given display position
 			var mapAreaInfo2Subset = _boundedMapArea.GetView(displayPosition);
@@ -742,7 +646,6 @@ namespace MSetExplorer
 
 		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
 		{
-			//var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewportSize);
 			LastMapAreaInfo = screenAreaInfo;
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
@@ -856,31 +759,6 @@ namespace MSetExplorer
 			return mapAreaInfoV1;
 		}
 
-		private double GetInvertedYPos(double yPos)
-		{
-			//var maxV = Math.Max(ViewportSize.Height, _unscaledExtent.Height - ViewportSize.Height);
-			//var result = maxV - yPos;
-
-			//return result;
-
-			double result;
-			double maxV;
-
-			if (_boundedMapArea == null)
-			{
-				maxV = ViewportSize.Height;
-				result = maxV - yPos;
-			}
-			else
-			{
-				maxV = UnscaledExtent.Height; //Math.Max(ViewportSize.Height, PosterSize.Height - ViewportSize.Height);
-				result = maxV - (yPos + ViewportSize.Height);
-			}
-
-			return result;
-
-		}
-
 		private void DisposeMapSection(MapSection mapSection)
 		{
 			//var refCount = mapSection.MapSectionVectors?.ReferenceCount ?? 0;
@@ -965,6 +843,16 @@ namespace MSetExplorer
 
 				Debug.WriteLine($"MapDisplay is handling SumbitJob. CurrentJobId: {currentJobId}. NewJobId: {newJobId}.");
 			}
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl displayPosition)
+		{
+			var x = displayPosition.X;
+			var y = displayPosition.Y;
+			var invertedY = boundedMapArea.GetInvertedYPos(y);
+
+			Debug.WriteLine($"Moving to {x}, {invertedY}. Uninverted Y:{y}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}.");
 		}
 
 		#endregion
