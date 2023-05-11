@@ -32,10 +32,11 @@ namespace MSetExplorer
 
 		private SizeDbl _viewportSize;
 
-		private TranslateTransform? _contentOffsetTransform = null;
+		//private TranslateTransform? _contentOffsetTransform = null;
 		private ScaleTransform _contentScaleTransform = new ScaleTransform();
 
-		private bool _enableContentOffsetUpdateFromScale = false;
+		private bool _enableContentOffsetUpdateFromScale = true;
+
 		private bool _disableScrollOffsetSync = false;
 		private bool _disableContentFocusSync = false;
 		private bool _disableContentOffsetChangeEvents = false;
@@ -254,16 +255,23 @@ namespace MSetExplorer
 
 			if (!value.Diff(previousValue).IsNearZero())
 			{
-				c._disableContentOffsetChangeEvents = true;
 
 				try
 				{
+					c._disableContentOffsetChangeEvents = true;
+
 					c.ContentOffsetX = 0;
 					c.ContentOffsetY = 0;
 
-					c.UpdateContentViewportSize();
+					if (c.ContentScale != 1.0)
+					{
+						c.ContentScale = 1.0;
+					}
+					else
+					{
+						c.UpdateContentViewportSize();
+					}
 
-					//c.InvalidateMeasure();
 					c.InvalidateScrollInfo();
 				}
 				finally
@@ -302,24 +310,23 @@ namespace MSetExplorer
 				return;
 			}
 
-			c._disableContentOffsetChangeEvents = true;
-
 			try
 			{
-				c.UpdateContentViewportSize();
+				c._disableContentOffsetChangeEvents = true;
 
+				c.UpdateContentViewportSize();
 				c.UpdateContentOffsetsFromScale();
 			}
 			finally
 			{
-				c._enableContentOffsetUpdateFromScale = false;
+				c._disableContentOffsetChangeEvents = false;
 			}
 
 			c.ZoomSliderOwner?.ContentScaleWasUpdated(c.ContentScale);
 			c.InvalidateScrollInfo();
 
 			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
-			c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentViewportSize, c.ContentScale));
+			c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale));
 
 			//c.InvalidateVisual(); // Is this really necessary?
 		}
@@ -491,12 +498,13 @@ namespace MSetExplorer
 			// Reset the viewport zoom focus to the center of the viewport.
 			ResetViewportZoomFocus();
 
-			_disableContentOffsetChangeEvents = true;
-
 			try
 			{
+				_disableContentOffsetChangeEvents = true;
+				
 				// Update content offset from itself when the size of the viewport changes.
 				// This ensures that the content offset remains properly clamped to its valid range.
+				
 				ContentOffsetX = ContentOffsetX;
 				ContentOffsetY = ContentOffsetY;
 			}
@@ -507,7 +515,7 @@ namespace MSetExplorer
 
 			InvalidateScrollInfo();
 
-			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(new VectorDbl(ContentOffsetX, ContentOffsetY), ContentViewportSize, ContentScale));
+			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale));
 		}
 
 		private void UpdateContentViewportSize()
@@ -574,40 +582,40 @@ namespace MSetExplorer
 
 		private void UpdateTranslationX()
 		{
-			if (_contentOffsetTransform != null)
-			{
-				double scaledContentWidth = UnscaledExtent.Width * ContentScale;
-				if (scaledContentWidth < ViewportWidth)
-				{
-					//
-					// When the content can fit entirely within the viewport, center it.
-					//
-					_contentOffsetTransform.X = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
-				}
-				else
-				{
-					_contentOffsetTransform.X = -ContentOffsetX;
-				}
-			}
+			//if (_contentOffsetTransform != null)
+			//{
+			//	double scaledContentWidth = UnscaledExtent.Width * ContentScale;
+			//	if (scaledContentWidth < ViewportWidth)
+			//	{
+			//		//
+			//		// When the content can fit entirely within the viewport, center it.
+			//		//
+			//		_contentOffsetTransform.X = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
+			//	}
+			//	else
+			//	{
+			//		_contentOffsetTransform.X = -ContentOffsetX;
+			//	}
+			//}
 		}
 
 		private void UpdateTranslationY()
 		{
-			if (_contentOffsetTransform != null)
-			{
-				double scaledContentHeight = UnscaledExtent.Height * ContentScale;
-				if (scaledContentHeight < ViewportHeight)
-				{
-					//
-					// When the content can fit entirely within the viewport, center it.
-					//
-					_contentOffsetTransform.Y = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
-				}
-				else
-				{
-					_contentOffsetTransform.Y = -ContentOffsetY;
-				}
-			}
+			//if (_contentOffsetTransform != null)
+			//{
+			//	double scaledContentHeight = UnscaledExtent.Height * ContentScale;
+			//	if (scaledContentHeight < ViewportHeight)
+			//	{
+			//		//
+			//		// When the content can fit entirely within the viewport, center it.
+			//		//
+			//		_contentOffsetTransform.Y = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
+			//	}
+			//	else
+			//	{
+			//		_contentOffsetTransform.Y = -ContentOffsetY;
+			//	}
+			//}
 		}
 
 		private void UpdateContentZoomFocusX()
@@ -668,8 +676,6 @@ namespace MSetExplorer
 
 					ContentOffsetX = contentOffset.X;
 					ContentOffsetY = contentOffset.Y;
-
-
 				}
 				finally
 				{

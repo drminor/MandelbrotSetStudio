@@ -1,7 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
-using System.Windows;
 
 namespace MSetExplorer
 {
@@ -20,7 +19,9 @@ namespace MSetExplorer
 			ViewportSize = viewPortSize;
 			PosterSize = posterSize;
 
-			DisplayPosition = displayPosition ?? new VectorDbl(0, 0);
+			var dispPos = displayPosition ?? new VectorDbl(0, 0);
+
+			DisplayPositionWithInverseY = new VectorDbl(dispPos.X, GetInvertedYPos(dispPos.Y));
 
 			_virtualScreenAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(MapAreaInfo, PosterSize);
 		}
@@ -36,7 +37,7 @@ namespace MSetExplorer
 		public SizeInt PosterSize { get; init; }
 		public SizeDbl ViewportSize { get; set; }
 
-		public VectorDbl DisplayPosition { get; private set; }
+		public VectorDbl DisplayPositionWithInverseY { get; private set; }
 
 		#endregion
 
@@ -44,9 +45,9 @@ namespace MSetExplorer
 
 		public MapAreaInfo GetView(VectorDbl newDisplayPosition)
 		{
-			DisplayPosition = newDisplayPosition;
+			DisplayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, GetInvertedYPos(newDisplayPosition.Y));
 
-			var result = GetUpdatedMapAreaInfo(DisplayPosition);
+			var result = GetUpdatedMapAreaInfo(DisplayPositionWithInverseY);
 
 			return result;
 		}
@@ -55,9 +56,9 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private MapAreaInfo GetUpdatedMapAreaInfo(VectorDbl displayPosition)
+		private MapAreaInfo GetUpdatedMapAreaInfo(VectorDbl displayPositionWithInverseY)
 		{
-			var newScreenArea = new RectangleDbl(new PointDbl(displayPosition), ViewportSize);
+			var newScreenArea = new RectangleDbl(new PointDbl(displayPositionWithInverseY), ViewportSize);
 
 			var newScreenAreaInt = newScreenArea.Round();
 
@@ -66,6 +67,14 @@ namespace MSetExplorer
 			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, _virtualScreenAreaInfo.Subdivision, ViewportSize.Round());
 
 			return mapAreaInfoV1;
+		}
+
+		private double GetInvertedYPos(double yPos)
+		{
+			var maxV = PosterSize.Height; //Math.Max(ViewportSize.Height, PosterSize.Height - ViewportSize.Height);
+			var result = maxV - (yPos + ViewportSize.Height);
+
+			return result;
 		}
 
 		#endregion

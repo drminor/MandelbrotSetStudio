@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -85,17 +86,30 @@ namespace MSetExplorer
 			//_vm.HorizontalPosition = e.OffsetX;
 			//_vm.VerticalPosition = e.OffsetY;
 
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.PositionRelativeToPosterMapBlockOffset, e.ContentScale);
+			var contentOffsetDirect = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
+
+			
+			if (ScreenTypeHelper.IsVectorDblChanged(e.ContentOffset, contentOffsetDirect))
+			{
+				Debug.WriteLine($"ContentOffset is stale on MapSectionPzControl event handler. Compare: {e.ContentOffset} to {contentOffsetDirect}.");
+			}
+
+
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)
 		{
-			_vm.VerticalPosition = PanAndZoomControl1.ContentOffsetY;
+			//_vm.VerticalPosition = PanAndZoomControl1.ContentOffsetY;
+			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
+			_ = _vm.MoveTo(displayPosition);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			_vm.HorizontalPosition = PanAndZoomControl1.ContentOffsetX;
+			//_vm.HorizontalPosition = PanAndZoomControl1.ContentOffsetX;
+			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
+			_ = _vm.MoveTo(displayPosition);
 		}
 
 		#endregion

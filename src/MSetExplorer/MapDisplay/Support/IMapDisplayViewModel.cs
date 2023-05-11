@@ -40,9 +40,11 @@ namespace MSetExplorer
 		SizeDbl UnscaledExtent { get; }
 		SizeDbl ViewportSize { get; }
 
-		double HorizontalPosition { get; set; }
-		double VerticalPosition { get; set; }
+		//double HorizontalPosition { get; }
+		//double VerticalPosition { get; }
 		//double InvertedVerticalPosition { get; }
+
+		VectorDbl DisplayPosition { get; }
 
 		double DisplayZoom { get; }
 		double MinimumDisplayZoom { get; }
@@ -52,6 +54,8 @@ namespace MSetExplorer
 
 		int? UpdateViewportSize(SizeDbl viewportSize);
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl positionRelativeToPosterMapBlockOffset, double contentScale);
+
+		int? MoveTo(VectorDbl displayPosition);
 
 	}
 }

@@ -116,12 +116,13 @@ namespace MSetExplorer
 
 		private void PosterDesignerWindow_Closing(object? sender, CancelEventArgs e)
 		{
-			_vm.PosterViewModel.DisplayPosition = new VectorDbl
-				(
-					_vm.MapDisplayViewModel.HorizontalPosition,
-					_vm.MapDisplayViewModel.VerticalPosition
-				).Round();
+			//_vm.PosterViewModel.DisplayPosition = new VectorDbl
+			//	(
+			//		_vm.MapDisplayViewModel.HorizontalPosition,
+			//		_vm.MapDisplayViewModel.VerticalPosition
+			//	).Round();
 
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition.Round();
 
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
@@ -182,12 +183,15 @@ namespace MSetExplorer
 
 		private void CloseOrExit(OnCloseBehavior onCloseBehavior)
 		{
-			_vm.PosterViewModel.DisplayPosition = new VectorDbl
-				(
-					_vm.MapDisplayViewModel.HorizontalPosition,
-					_vm.MapDisplayViewModel.VerticalPosition
-				)
-				.Round();
+			//_vm.PosterViewModel.DisplayPosition = new VectorDbl
+			//	(
+			//		_vm.MapDisplayViewModel.HorizontalPosition,
+			//		_vm.MapDisplayViewModel.VerticalPosition
+			//	)
+			//	.Round();
+
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition.Round();
+
 
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
@@ -226,12 +230,13 @@ namespace MSetExplorer
 		// Open
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
+			//_vm.PosterViewModel.DisplayPosition = new VectorDbl
+			//(
+			//	_vm.MapDisplayViewModel.HorizontalPosition,
+			//	_vm.MapDisplayViewModel.VerticalPosition
+			//).Round();
 
-			_vm.PosterViewModel.DisplayPosition = new VectorDbl
-			(
-				_vm.MapDisplayViewModel.HorizontalPosition,
-				_vm.MapDisplayViewModel.VerticalPosition
-			).Round();
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition.Round();
 
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
@@ -270,9 +275,11 @@ namespace MSetExplorer
 		{
 			//_vm.MapDisplayViewModel.HorizontalPosition
 
-			_vm.PosterViewModel.DisplayPosition = new VectorDbl(
-				_vm.MapDisplayViewModel.HorizontalPosition, 
-				_vm.MapDisplayViewModel.VerticalPosition).Round();
+			//_vm.PosterViewModel.DisplayPosition = new VectorDbl(
+			//	_vm.MapDisplayViewModel.HorizontalPosition, 
+			//	_vm.MapDisplayViewModel.VerticalPosition).Round();
+
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition.Round();
 
 
 			if (!_vm.PosterViewModel.PosterSave())
