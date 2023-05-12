@@ -2,21 +2,16 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Security.Policy;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
 	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IContentScaleInfo
 	{
 		#region Private Fields
-
-		private const double VERTICAL_SCROLL_BAR_WIDTH = 17;
-		private const double HORIZONTAL_SCROLL_BAR_WIDTH = 17;
 
 		public static readonly double DefaultContentScale = 1.0;
 		public static readonly double DefaultMinContentScale = 0.0625;
@@ -25,8 +20,6 @@ namespace MSetExplorer
 		private bool _canHScroll = true;
 		private bool _canVScroll = false;
 		private bool _canZoom = true;
-
-		//private SizeDbl _scrollBarDisplacement = new SizeDbl();
 
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomSlider;
@@ -42,10 +35,7 @@ namespace MSetExplorer
 		private bool _disableContentFocusSync = false;
 		private bool _disableContentOffsetChangeEvents = false;
 
-		//private double _constrainedContentViewportWidth = 0.0;
-		//private double _constrainedContentViewportHeight = 0.0;
-
-		private SizeDbl _maxTrackVariance = new SizeDbl();
+		private SizeDbl _constrainedContentViewportSize = new SizeDbl();
 		private SizeDbl _maxContentOffset = new SizeDbl();
 
 		ScrollBarVisibility _originalVerticalScrollBarVisibility;
@@ -74,8 +64,6 @@ namespace MSetExplorer
 
 		#region Events
 
-		//public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
-
 		public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
 
 		public event EventHandler? ContentOffsetXChanged;
@@ -95,16 +83,7 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
 				{
-					//Debug.WriteLine($"The PanAndZoomControl is having its ViewportSize updated to {value}, the current value is {_viewPortSize}; will raise the ViewportSizeChanged event.");
-
-					//var previousValue = ViewportSize;
 					_viewportSize = value;
-
-					//ViewportSizeChanged?.Invoke(this, (previousValue, value));
-				}
-				else
-				{
-					//Debug.WriteLine($"The PanAndZoomControl is having its ViewportSize updated to {value}, the current value is already: {_viewPortSize}; not raising the ViewportSizeChanged event.");
 				}
 			}
 		}
@@ -118,19 +97,19 @@ namespace MSetExplorer
 		public double ContentScale
 		{
 			get => (double)GetValue(ContentScaleProperty);
-			set => SetValue(ContentScaleProperty, value);
+			set => SetCurrentValue(ContentScaleProperty, value);
 		}
 
 		public double MinContentScale
 		{
 			get => (double)GetValue(MinContentScaleProperty);
-			set => SetValue(MinContentScaleProperty, value);
+			set => SetCurrentValue(MinContentScaleProperty, value);
 		}
 
 		public double MaxContentScale
 		{
 			get => (double)GetValue(MaxContentScaleProperty);
-			set => SetValue(MaxContentScaleProperty, value);
+			set => SetCurrentValue(MaxContentScaleProperty, value);
 		}
 
 		public SizeDbl ContentViewportSize { get; set; }
@@ -139,17 +118,16 @@ namespace MSetExplorer
 
 		public PointDbl ViewportZoomFocus { get; set; }
 
-
 		public double ContentOffsetX
 		{
 			get => (double)GetValue(ContentOffsetXProperty);
-			set => SetValue(ContentOffsetXProperty, value);
+			set => SetCurrentValue(ContentOffsetXProperty, value);
 		}
 
 		public double ContentOffsetY
 		{
 			get => (double)GetValue(ContentOffsetYProperty);
-			set => SetValue(ContentOffsetYProperty, value);
+			set => SetCurrentValue(ContentOffsetYProperty, value);
 		}
 
 		public bool IsMouseWheelScrollingEnabled { get; set; }
@@ -496,8 +474,6 @@ namespace MSetExplorer
 			UpdateContentViewportSize();
 
 			// Initialise the content zoom focus point.
-			//UpdateContentZoomFocusX();
-			//UpdateContentZoomFocusY();
 			UpdateContentZoomFocus();
 
 			// Reset the viewport zoom focus to the center of the viewport.
@@ -509,7 +485,6 @@ namespace MSetExplorer
 				
 				// Update content offset from itself when the size of the viewport changes.
 				// This ensures that the content offset remains properly clamped to its valid range.
-				
 				ContentOffsetX = ContentOffsetX;
 				ContentOffsetY = ContentOffsetY;
 			}
@@ -532,21 +507,17 @@ namespace MSetExplorer
 
 			var maxContentOffsetBeforeUpdate = _maxContentOffset;
 			
-			//var currentScrollBarDisplacement = ScrollBarDisplacement;
-			//var viewPortSizeSansScrBarThicknesses = ViewportSize.Diff(ScrollBarDisplacement);
-			//ContentViewportSize = viewPortSizeSansScrBarThicknesses.Divide(ContentScale);
-
 			ContentViewportSize = ViewportSize.Divide(ContentScale);
 
 			// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
 
 			// Usually the track position can vary over the entire ContentViewportSize,
 			// however if the unscaled extents are less than the ContentViewportSize, no adjustment of the track position is possible.
-			_maxTrackVariance = UnscaledExtent.Min(ContentViewportSize);
+			_constrainedContentViewportSize = UnscaledExtent.Min(ContentViewportSize);
 
 			// If we want to avoid having the content shifted beyond the canvas boundary (thus leaving part of the canvas blank before/after the content),
 			// the maximum value for the offsets is size of the ContentViewportSize subtracted from the the unscaled extents. 
-			_maxContentOffset = UnscaledExtent.Sub(_maxTrackVariance).Max(0);
+			_maxContentOffset = UnscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
 			
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
 
@@ -561,28 +532,6 @@ namespace MSetExplorer
 			}
 
 			//InvalidateScrollInfo();
-		}
-
-		private SizeDbl GetScrollBarDisplacement(SizeDbl? currentValue = null)
-		{
-			var result = _scrollOwner == null
-				? new SizeDbl()
-				: new SizeDbl
-					(
-						_scrollOwner.HorizontalScrollBarVisibility == ScrollBarVisibility.Visible
-							? HORIZONTAL_SCROLL_BAR_WIDTH
-							: 0,
-						_scrollOwner.VerticalScrollBarVisibility == ScrollBarVisibility.Visible
-							? VERTICAL_SCROLL_BAR_WIDTH
-							: 0
-					);
-
-			if (currentValue != null && currentValue.Value.Height != result.Height)
-			{
-				Debug.WriteLine($"The vertical scrollbar visibility has been updated from {currentValue.Value.Height == 0} to {result.Height == 0}.");
-			}
-
-			return result;
 		}
 
 		private void UpdateTranslationX()
@@ -623,24 +572,14 @@ namespace MSetExplorer
 			//}
 		}
 
-		//private void UpdateContentZoomFocusX()
-		//{
-		//	//ContentZoomFocusX = ContentOffsetX + (_constrainedContentViewportWidth / 2);
-		//}
-
-		//private void UpdateContentZoomFocusY()
-		//{
-		//	//ContentZoomFocusY = ContentOffsetY + (_constrainedContentViewportHeight / 2);
-		//}
-
 		private void UpdateContentZoomFocus()
 		{
 			var contentOffset = new PointDbl(ContentOffsetX, ContentOffsetY);
 
-			ContentZoomFocus = contentOffset.Translate(_maxTrackVariance.Divide(2));
+			ContentZoomFocus = contentOffset.Translate(_constrainedContentViewportSize.Divide(2));
 		}
 
-		// This implementation, the ViewportZoomFocus is always at the center
+		// For this implementation the ViewportZoomFocus is always at the center
 		// so we don't need to keep track of this value.
 		private void ResetViewportZoomFocus()
 		{
@@ -675,22 +614,9 @@ namespace MSetExplorer
 				{
 					_disableContentFocusSync = true;
 
-					//var viewportOffsetX = ViewportZoomFocusX - (ViewportWidth / 2);
-					//var viewportOffsetY = ViewportZoomFocusY - (ViewportHeight / 2);
-
-					//var contentOffsetX = viewportOffsetX / ContentScale;
-					//var contentOffsetY = viewportOffsetY / ContentScale;
-
-					//c.ContentOffsetX = (c.ContentZoomFocusX - (ContentViewportSize.Width / 2)) - contentOffsetX;
-					//c.ContentOffsetY = (c.ContentZoomFocusY - (ContentViewportSize.Height / 2)) - contentOffsetY;
-
-
-					//var viewportOffset = ViewportZoomFocus.Sub(ViewportSize.Divide(2));
-					//var contentOffset = viewportOffset.Divide(ContentScale);
-					//contentOffset = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)).Diff(contentOffset);
-
 					// Since the ViewportZoomFocus is always centered, 
-					// we can simply examine the ContentZoomFocus
+					// we can simply examine the ContentZoomFocus.
+
 					//var viewportOffset = ViewportZoomFocus.Sub(ViewportSize.Divide(2));
 					//var contentOffset = viewportOffset.Divide(ContentScale);
 

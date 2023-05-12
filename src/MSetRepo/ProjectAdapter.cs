@@ -24,6 +24,8 @@ namespace MSetRepo
 
 		//MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
 
+		private readonly bool _useDetailedDebug = false;
+
 		#region Constructor
 
 		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
@@ -324,7 +326,7 @@ namespace MSetRepo
 
 		private ColorBandSet? GetColorBandSet(ObjectId id, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
-			Debug.WriteLine($"Retrieving ColorBandSet with Id: {id}.");
+			if (_useDetailedDebug) Debug.WriteLine($"Retrieving ColorBandSet with Id: {id}.");
 
 			var colorBandSetRecord = colorBandSetReaderWriter.Get(id);
 
@@ -494,7 +496,7 @@ namespace MSetRepo
 			var mapAreaInfo = MapJobHelper.Convert(oldAreaInfo);
 			var rtAreaInfo = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, oldAreaInfo.CanvasSize);
 
-			CompareMapAreaV1AfterRoundTrip(oldAreaInfo, rtAreaInfo, mapAreaInfo);
+			if (_useDetailedDebug) CompareMapAreaV1AfterRoundTrip(oldAreaInfo, rtAreaInfo, mapAreaInfo);
 
 			var job = new Job(
 				id: jobId,
@@ -656,7 +658,7 @@ namespace MSetRepo
 
 			var dur = dt2 - dt;
 
-			Debug.WriteLine($"The job date created has changeed by {dur}.");
+			Debug.WriteLine($"The job date created has changed by {dur}.");
 		}
 
 		public void UpdateJobDetails(Job job)

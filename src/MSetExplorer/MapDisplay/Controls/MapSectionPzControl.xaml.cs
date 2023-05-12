@@ -39,16 +39,12 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
-
-				//_vm.ViewportSize = PanAndZoomControl1.ViewportSize;
 				_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
 
 				if (_vm.ZoomSliderFactory != null)
 				{
 					PanAndZoomControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(PanAndZoomControl1);
 				}
-
-				//BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
 
 				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
@@ -73,43 +69,42 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		//{
-		//	_vm.ViewportSize = e.Item2;
-		//}
-
 		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
+			CheckForStaleContentOffset(e.ContentOffset);
+
 			BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
-			
-			//_vm.ViewportSize = e.ContentViewportSize;
-			//_vm.HorizontalPosition = e.OffsetX;
-			//_vm.VerticalPosition = e.OffsetY;
 
-			var contentOffsetDirect = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
+			var baseScale = PanAndZoomControl1.ZoomSliderOwner?.BaseValue ?? 1.0;
 
-			
-			if (ScreenTypeHelper.IsVectorDblChanged(e.ContentOffset, contentOffsetDirect))
-			{
-				Debug.WriteLine($"ContentOffset is stale on MapSectionPzControl event handler. Compare: {e.ContentOffset} to {contentOffsetDirect}.");
-			}
-
-
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale, baseScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)
 		{
-			//_vm.VerticalPosition = PanAndZoomControl1.ContentOffsetY;
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			//_vm.HorizontalPosition = PanAndZoomControl1.ContentOffsetX;
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		[Conditional("DEBUG")]
+		private void CheckForStaleContentOffset(VectorDbl contentOffset)
+		{
+			var contentOffsetDirect = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
+
+			if (ScreenTypeHelper.IsVectorDblChanged(contentOffset, contentOffsetDirect))
+			{
+				Debug.WriteLine($"ContentOffset is stale on MapSectionPzControl event handler. Compare: {contentOffset} to {contentOffsetDirect}.");
+			}
 		}
 
 		#endregion

@@ -14,6 +14,8 @@ namespace MSS.Common
 
 		private readonly SubdivisonProvider _subdivisonProvider;
 
+		private readonly bool _useDetailedDebug = false;
+
 		#endregion
 
 		#region Constructor
@@ -223,7 +225,7 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(nrmSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 			var binaryPrecision = Math.Abs(nrmSamplePointDelta.Exponent);
 
-			CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
+			if (_useDetailedDebug) CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
 
 			var result = new MapAreaInfo(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
@@ -334,7 +336,7 @@ namespace MSS.Common
 			var adjPos = RNormalizer.Normalize(newPosition, coords.Size, out var adjMapSize);
 			var newCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
 
-			ReportCoordsDiff(coords, newCoords, "for a new display size");
+			if (_useDetailedDebug) ReportCoordsDiff(coords, newCoords, "for a new display size");
 
 			//var localMapBlockOffset = GetLocalMapBlockOffset(mapBlockOffset, subdivision);
 			var checkSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
@@ -367,7 +369,7 @@ namespace MSS.Common
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var samplePointDelta = GetSamplePointDelta(coords, displaySize, ToleranceFactor, out var wToHRatio);
-			ReportSamplePointRatios(coords, displaySize, wToHRatio);
+			if (_useDetailedDebug) ReportSamplePointRatios(coords, displaySize, wToHRatio);
 
 			// The samplePointDelta may require the coordinates to be adjusted.
 			var mapSize = samplePointDelta.Scale(displaySize);
@@ -384,7 +386,7 @@ namespace MSS.Common
 			var adjPos2 = RNormalizer.Normalize(newPosition, uCoords.Size, out var adjMapSize2);
 			var newCoords = new RRectangle(new RPoint(adjPos2), adjMapSize2);
 
-			ReportCoordsDiff(coords, newCoords, "for a new Job");
+			if (_useDetailedDebug) ReportCoordsDiff(coords, newCoords, "for a new Job");
 
 			// Get a subdivision record from the database.
 			var subdivision = _subdivisonProvider.GetSubdivision(uSpd, mapBlockOffset, out var localMapBlockOffset);

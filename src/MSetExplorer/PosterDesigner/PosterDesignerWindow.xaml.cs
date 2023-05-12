@@ -609,22 +609,22 @@ namespace MSetExplorer
 
 		private void ZoomOut12_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ZoomOut(ZoomOutAmountQualifer.x12, SHIFT_AMOUNT);
+			ZoomOut(ZoomOutAmountQualifer.x12);
 		}
 
 		private void ZoomOut25_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ZoomOut(ZoomOutAmountQualifer.x25, SHIFT_AMOUNT);
+			ZoomOut(ZoomOutAmountQualifer.x25);
 		}
 
 		private void ZoomOut50_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ZoomOut(ZoomOutAmountQualifer.x50, SHIFT_AMOUNT);
+			ZoomOut(ZoomOutAmountQualifer.x50);
 		}
 
 		private void ZoomOut100_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ZoomOut(ZoomOutAmountQualifer.x100, SHIFT_AMOUNT);
+			ZoomOut(ZoomOutAmountQualifer.x100);
 		}
 
 
@@ -1121,13 +1121,13 @@ namespace MSetExplorer
 				: PanAmountQualifer.Regular;
 		}
 
-		private void ZoomOut(ZoomOutAmountQualifer qualifer, int amount)
+		private void ZoomOut(ZoomOutAmountQualifer qualifer)
 		{
 			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo ?? null;
 
 			//_ = MessageBox.Show($"Zooming Out. Amount = {amount}.");
 
-			var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
+			var qualifiedAmount = GetZoomOutAmount(qualifer);
 
 			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 
@@ -1138,21 +1138,27 @@ namespace MSetExplorer
 			_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo);
 		}
 
-		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)
+		private double GetZoomOutAmount(ZoomOutAmountQualifer qualifer)
 		{
-			var targetAmount = qualifer switch
+			//var targetAmount = qualifer switch
+			//{
+			//	ZoomOutAmountQualifer.x12 => baseAmount * 8,   // 128
+			//	ZoomOutAmountQualifer.x25 => baseAmount * 16,  // 256
+			//	ZoomOutAmountQualifer.x50 => baseAmount * 32,  // 512
+			//	ZoomOutAmountQualifer.x100 => baseAmount * 64, // 1024
+			//	_ => baseAmount * 32,
+			//};
+
+			var zoomInFactor = qualifer switch
 			{
-				ZoomOutAmountQualifer.x12 => baseAmount * 8,   // 128
-				ZoomOutAmountQualifer.x25 => baseAmount * 16,  // 256
-				ZoomOutAmountQualifer.x50 => baseAmount * 32,  // 512
-				ZoomOutAmountQualifer.x100 => baseAmount * 64, // 1024
-				_ => baseAmount * 32,
+				ZoomOutAmountQualifer.x12 => 2,     //	* 2
+				ZoomOutAmountQualifer.x25 => 4,     //	* 4
+				ZoomOutAmountQualifer.x50 => 8,     //	* 8
+				ZoomOutAmountQualifer.x100 => 16,   //	* 16
+				_ => 8,                             //	Default = 8
 			};
 
-			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
-			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
-
-			return result;
+			return 1 / (double)zoomInFactor;
 		}
 
 		#endregion

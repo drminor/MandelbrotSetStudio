@@ -49,7 +49,7 @@ namespace MSetExplorer
 		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
 		int? UpdateViewportSize(SizeDbl viewportSize);
-		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl positionRelativeToPosterMapBlockOffset, double contentScale);
+		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale, double baseScale);
 
 		int? MoveTo(VectorDbl displayPosition);
 

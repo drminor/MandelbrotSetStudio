@@ -726,22 +726,22 @@ namespace MSetExplorer
 
 		private void ZoomOut12_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ZoomOut(ZoomOutAmountQualifer.x12, SHIFT_AMOUNT);
+			ZoomOut(ZoomOutAmountQualifer.x12);
 		}
 
 		private void ZoomOut25_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ZoomOut(ZoomOutAmountQualifer.x25, SHIFT_AMOUNT);
+			ZoomOut(ZoomOutAmountQualifer.x25);
 		}
 
 		private void ZoomOut50_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ZoomOut(ZoomOutAmountQualifer.x50, SHIFT_AMOUNT);
+			ZoomOut(ZoomOutAmountQualifer.x50);
 		}
 
 		private void ZoomOut100_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			ZoomOut(ZoomOutAmountQualifer.x100, SHIFT_AMOUNT);
+			ZoomOut(ZoomOutAmountQualifer.x100);
 		}
 
 		private void ZoomOutCustom_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -1314,13 +1314,13 @@ namespace MSetExplorer
 				: PanAmountQualifer.Regular;
 		}
 
-		private void ZoomOut(ZoomOutAmountQualifer qualifer, int amount)
+		private void ZoomOut(ZoomOutAmountQualifer qualifer)
 		{
 			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo ?? null;
 
 			if (currentMapAreaInfo != null)
 			{
-				var qualifiedAmount = GetZoomOutAmount(amount, qualifer);
+				var qualifiedAmount = GetZoomOutAmount(qualifer);
 				//var curArea = new RectangleInt(new PointInt(), _vm.ProjectViewModel.CanvasSize);
 				//var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
@@ -1328,7 +1328,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private int GetZoomOutAmount(int baseAmount, ZoomOutAmountQualifer qualifer)
+		private double GetZoomOutAmount(ZoomOutAmountQualifer qualifer)
 		{
 			//var targetAmount = qualifer switch
 			//{
@@ -1339,19 +1339,16 @@ namespace MSetExplorer
 			//	_ => baseAmount * 32,
 			//};
 
-			var targetAmount = qualifer switch
+			var zoomInFactor = qualifer switch
 			{
-				ZoomOutAmountQualifer.x12 => -1,		//	* 2
-				ZoomOutAmountQualifer.x25 => -2,		//	* 4
-				ZoomOutAmountQualifer.x50 => -3,		//	* 8
-				ZoomOutAmountQualifer.x100 => -4,	//	* 16
-				_ => -1,								//	Default = * 2
+				ZoomOutAmountQualifer.x12 => 2,		//	* 2
+				ZoomOutAmountQualifer.x25 => 4,		//	* 4
+				ZoomOutAmountQualifer.x50 => 8,		//	* 8
+				ZoomOutAmountQualifer.x100 => 16,	//	* 16
+				_ => 8,								//	Default = 8
 			};
 
-			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
-			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
-
-			return result;
+			return 1 / (double) zoomInFactor;
 		}
 
 		#endregion
