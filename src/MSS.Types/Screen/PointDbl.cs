@@ -43,10 +43,10 @@ namespace MSS.Types
 			return new PointDbl(X + offset.X, Y + offset.Y);
 		}
 
-		//public PointDbl Translate(SizeDbl offset)
-		//{
-		//	return new PointDbl(X + offset.Width, Y + offset.Height);
-		//}
+		public PointDbl Translate(SizeDbl offset)
+		{
+			return new PointDbl(X + offset.Width, Y + offset.Height);
+		}
 
 		//public PointDbl Scale(SizeInt factor)
 		//{

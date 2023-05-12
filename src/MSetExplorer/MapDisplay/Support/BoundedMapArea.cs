@@ -7,7 +7,6 @@ namespace MSetExplorer
 	internal class BoundedMapArea
 	{
 		private readonly MapJobHelper _mapJobHelper;
-		private MapAreaInfo _virtualScreenAreaInfo;
 
 		#region Constructor
 
@@ -15,7 +14,7 @@ namespace MSetExplorer
 		{
 			_mapJobHelper = mapJobHelper;
 
-			AreaColorAndCalcSettings = areaColorAndCalcSettings;
+			//AreaColorAndCalcSettings = areaColorAndCalcSettings;
 			ViewportSize = viewPortSize;
 			PosterSize = posterSize;
 
@@ -23,31 +22,46 @@ namespace MSetExplorer
 
 			DisplayPositionWithInverseY = new VectorDbl(dispPos.X, GetInvertedYPos(dispPos.Y));
 
-			_virtualScreenAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(MapAreaInfo, PosterSize);
+			MapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, PosterSize);
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public AreaColorAndCalcSettings AreaColorAndCalcSettings { get; init; }
+		//public AreaColorAndCalcSettings AreaColorAndCalcSettings { get; init; }
 
-		public MapAreaInfo2 MapAreaInfo => AreaColorAndCalcSettings.MapAreaInfo;
+		//public MapAreaInfo2 MapAreaInfo => AreaColorAndCalcSettings.MapAreaInfo;
+		public MapAreaInfo MapAreaInfoWithSize { get; init; }
 
 		public SizeInt PosterSize { get; init; }
-		public SizeDbl ViewportSize { get; set; }
 
+		public SizeDbl ViewportSize { get; private set; }
 		public VectorDbl DisplayPositionWithInverseY { get; private set; }
 
 		#endregion
 
 		#region Public Methods
 
+		// New Size and Position
+		public MapAreaInfo GetView(SizeDbl viewportSize, VectorDbl newDisplayPosition)
+		{
+			ViewportSize = viewportSize;
+			DisplayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, GetInvertedYPos(newDisplayPosition.Y));
+
+			var newScreenArea = new RectangleDbl(new PointDbl(DisplayPositionWithInverseY), ViewportSize);
+			var result = GetUpdatedMapAreaInfo(newScreenArea);
+
+			return result;
+		}
+
+		// New postion, same size
 		public MapAreaInfo GetView(VectorDbl newDisplayPosition)
 		{
 			DisplayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, GetInvertedYPos(newDisplayPosition.Y));
 
-			var result = GetUpdatedMapAreaInfo(DisplayPositionWithInverseY);
+			var newScreenArea = new RectangleDbl(new PointDbl(DisplayPositionWithInverseY), ViewportSize);
+			var result = GetUpdatedMapAreaInfo(newScreenArea);
 
 			return result;
 		}
@@ -56,15 +70,10 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private MapAreaInfo GetUpdatedMapAreaInfo(VectorDbl displayPositionWithInverseY)
+		private MapAreaInfo GetUpdatedMapAreaInfo(RectangleDbl newScreenArea)
 		{
-			var newScreenArea = new RectangleDbl(new PointDbl(displayPositionWithInverseY), ViewportSize);
-
-			var newScreenAreaInt = newScreenArea.Round();
-
-			var newCoords = _mapJobHelper.GetMapCoords(newScreenAreaInt, _virtualScreenAreaInfo.MapPosition, _virtualScreenAreaInfo.SamplePointDelta);
-
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, _virtualScreenAreaInfo.Subdivision, ViewportSize.Round());
+			var newCoords = _mapJobHelper.GetMapCoords(newScreenArea.Round(), MapAreaInfoWithSize.MapPosition, MapAreaInfoWithSize.SamplePointDelta);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, MapAreaInfoWithSize.Subdivision, newScreenArea.Size.Round());
 
 			return mapAreaInfoV1;
 		}

@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -44,6 +45,7 @@ namespace MSetExplorer
 		//private double _constrainedContentViewportWidth = 0.0;
 		//private double _constrainedContentViewportHeight = 0.0;
 
+		private SizeDbl _maxTrackVariance = new SizeDbl();
 		private SizeDbl _maxContentOffset = new SizeDbl();
 
 		ScrollBarVisibility _originalVerticalScrollBarVisibility;
@@ -386,7 +388,8 @@ namespace MSetExplorer
 			if (!c._disableContentFocusSync)
 			{
 				// Don't update the ZoomFocus if zooming is in progress.
-				c.UpdateContentZoomFocusX();
+				//c.UpdateContentZoomFocusX();
+				c.UpdateContentZoomFocus();
 			}
 
 			if (!c._disableContentOffsetChangeEvents)
@@ -447,7 +450,8 @@ namespace MSetExplorer
 			if (!c._disableContentFocusSync)
 			{
 				// Don't update the ZoomFocus if zooming is in progress.
-				c.UpdateContentZoomFocusY();
+				//c.UpdateContentZoomFocusY();
+				c.UpdateContentZoomFocus();
 			}
 
 			if (!c._disableContentOffsetChangeEvents)
@@ -492,8 +496,9 @@ namespace MSetExplorer
 			UpdateContentViewportSize();
 
 			// Initialise the content zoom focus point.
-			UpdateContentZoomFocusX();
-			UpdateContentZoomFocusY();
+			//UpdateContentZoomFocusX();
+			//UpdateContentZoomFocusY();
+			UpdateContentZoomFocus();
 
 			// Reset the viewport zoom focus to the center of the viewport.
 			ResetViewportZoomFocus();
@@ -537,11 +542,11 @@ namespace MSetExplorer
 
 			// Usually the track position can vary over the entire ContentViewportSize,
 			// however if the unscaled extents are less than the ContentViewportSize, no adjustment of the track position is possible.
-			var maxTrackVariance = UnscaledExtent.Min(ContentViewportSize);
+			_maxTrackVariance = UnscaledExtent.Min(ContentViewportSize);
 
 			// If we want to avoid having the content shifted beyond the canvas boundary (thus leaving part of the canvas blank before/after the content),
 			// the maximum value for the offsets is size of the ContentViewportSize subtracted from the the unscaled extents. 
-			_maxContentOffset = UnscaledExtent.Sub(maxTrackVariance).Max(0);
+			_maxContentOffset = UnscaledExtent.Sub(_maxTrackVariance).Max(0);
 			
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
 
@@ -618,16 +623,25 @@ namespace MSetExplorer
 			//}
 		}
 
-		private void UpdateContentZoomFocusX()
+		//private void UpdateContentZoomFocusX()
+		//{
+		//	//ContentZoomFocusX = ContentOffsetX + (_constrainedContentViewportWidth / 2);
+		//}
+
+		//private void UpdateContentZoomFocusY()
+		//{
+		//	//ContentZoomFocusY = ContentOffsetY + (_constrainedContentViewportHeight / 2);
+		//}
+
+		private void UpdateContentZoomFocus()
 		{
-			//ContentZoomFocusX = ContentOffsetX + (_constrainedContentViewportWidth / 2);
+			var contentOffset = new PointDbl(ContentOffsetX, ContentOffsetY);
+
+			ContentZoomFocus = contentOffset.Translate(_maxTrackVariance.Divide(2));
 		}
 
-		private void UpdateContentZoomFocusY()
-		{
-			//ContentZoomFocusY = ContentOffsetY + (_constrainedContentViewportHeight / 2);
-		}
-
+		// This implementation, the ViewportZoomFocus is always at the center
+		// so we don't need to keep track of this value.
 		private void ResetViewportZoomFocus()
 		{
 			//ViewportZoomFocusX = ViewportWidth / 2;
@@ -670,9 +684,17 @@ namespace MSetExplorer
 					//c.ContentOffsetX = (c.ContentZoomFocusX - (ContentViewportSize.Width / 2)) - contentOffsetX;
 					//c.ContentOffsetY = (c.ContentZoomFocusY - (ContentViewportSize.Height / 2)) - contentOffsetY;
 
-					var viewportOffset = ViewportZoomFocus.Sub(ViewportSize.Divide(2));
-					var contentOffset = viewportOffset.Divide(ContentScale);
-					contentOffset = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)).Diff(contentOffset);
+
+					//var viewportOffset = ViewportZoomFocus.Sub(ViewportSize.Divide(2));
+					//var contentOffset = viewportOffset.Divide(ContentScale);
+					//contentOffset = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)).Diff(contentOffset);
+
+					// Since the ViewportZoomFocus is always centered, 
+					// we can simply examine the ContentZoomFocus
+					//var viewportOffset = ViewportZoomFocus.Sub(ViewportSize.Divide(2));
+					//var contentOffset = viewportOffset.Divide(ContentScale);
+
+					var contentOffset = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)); //.Diff(contentOffset);
 
 					ContentOffsetX = contentOffset.X;
 					ContentOffsetY = contentOffset.Y;
