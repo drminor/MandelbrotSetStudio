@@ -13,6 +13,9 @@ namespace MSS.Types
 		public RectangleDbl(PointDbl point, SizeDbl size) : this(point.X, point.X + size.Width, point.Y, point.Y + size.Height)
 		{ }
 
+		public RectangleDbl(VectorDbl point, SizeDbl size) : this(point.X, point.X + size.Width, point.Y, point.Y + size.Height)
+		{ }
+
 		public RectangleDbl(RectangleInt rectangleInt) : this(rectangleInt.X1, rectangleInt.X2, rectangleInt.Y1, rectangleInt.Y2)
 		{ }
 

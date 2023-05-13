@@ -530,18 +530,24 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
-				//_bitmapGrid.ViewportSize = viewportSize.Scale(boundedMapArea.ScaleFactor);
-				_bitmapGrid.ViewportSize = viewportSize;
+				var currentBaseScale = boundedMapArea.BaseScale;
 
 				var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, baseScale);
 
+				var scaledViewportSize = viewportSize.Scale(boundedMapArea.ScaleFactor);
+				_bitmapGrid.ViewportSize = scaledViewportSize;
+
 				ReportUpdateSizeAndPos(boundedMapArea, viewportSize, contentOffset, contentScale, baseScale);
 
-
-				//newJobNumber = ReuseAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
-
-				StopCurrentJobAndClearDisplay();
-				newJobNumber = DiscardAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
+				if (boundedMapArea.BaseScale != currentBaseScale)
+				{
+					StopCurrentJobAndClearDisplay();
+					newJobNumber = DiscardAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
+				}
+				else
+				{
+					newJobNumber = ReuseAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
+				}
 			}
 
 			ViewportSize = viewportSize;
@@ -928,7 +934,6 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}. ContentScale: {contentScale}, BaseScale: {baseScale}.");
 		}
-
 
 		#endregion
 

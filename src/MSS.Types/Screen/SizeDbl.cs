@@ -185,9 +185,9 @@ namespace MSS.Types
 		//	return new SizeDbl(Width - offset.Width, Height - offset.Height);
 		//}
 
-		public SizeDbl Diff(SizeDbl offset)
+		public VectorDbl Diff(SizeDbl offset)
 		{
-			return new SizeDbl(Width - offset.Width, Height - offset.Height);
+			return new VectorDbl(Width - offset.Width, Height - offset.Height);
 		}
 
 		public SizeDbl Abs()
@@ -204,7 +204,7 @@ namespace MSS.Types
 		{
 			var diff = containerSize.Diff(this);
 			var halfDiff = diff.Scale(0.5);
-			var result = new RectangleDbl(new PointDbl(halfDiff), this);
+			var result = new RectangleDbl(halfDiff, this);
 
 			return result;
 		}

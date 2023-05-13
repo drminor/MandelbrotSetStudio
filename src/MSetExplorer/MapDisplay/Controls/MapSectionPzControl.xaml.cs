@@ -73,6 +73,7 @@ namespace MSetExplorer
 		{
 			CheckForStaleContentOffset(e.ContentOffset);
 
+			// TODO: Consider adding this to the IContentScaler interface
 			BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
 
 			var baseScale = PanAndZoomControl1.ZoomSliderOwner?.BaseValue ?? 1.0;

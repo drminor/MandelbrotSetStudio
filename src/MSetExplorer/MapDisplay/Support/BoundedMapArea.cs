@@ -13,7 +13,7 @@ namespace MSetExplorer
 
 		private double _baseScale;
 
-		private MapAreaInfo? _scaledMapAreaInfo;
+		private MapAreaInfo _scaledMapAreaInfo;
 
 		#region Constructor
 
@@ -26,12 +26,14 @@ namespace MSetExplorer
 			PosterSize = new SizeDbl(MapAreaInfoWithSize.CanvasSize);
 			ViewportSize = viewportSize;
 
-			var dispPos = displayPosition ?? new VectorDbl(0, 0);
+			//var dispPos = displayPosition ?? new VectorDbl(0, 0);
 			//DisplayPositionWithInverseY = new VectorDbl(dispPos.X, GetInvertedYPos(dispPos.Y));
 
 			_baseScale = 0;
 			ScaleFactor = 1;
-			_scaledMapAreaInfo = null;
+
+			//_scaledMapAreaInfo = null;
+			_scaledMapAreaInfo = MapAreaInfoWithSize;
 		}
 
 		#endregion
@@ -57,7 +59,7 @@ namespace MSetExplorer
 
 					if (_baseScale == 0)
 					{
-						_scaledMapAreaInfo = null;
+						_scaledMapAreaInfo = MapAreaInfoWithSize;
 					}
 					else
 					{
@@ -93,28 +95,42 @@ namespace MSetExplorer
 			//var displayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, GetInvertedYPos(newDisplayPosition.Y));
 			//var scaledDispPos = displayPositionWithInverseY.Scale(ScaleFactor);
 
-			var scaledDispPos = GetScaledDisplayPosition(newDisplayPosition, out _);
+			//// -- Scale the Position and Size separately
+			//var scaledDispPos = GetScaledDisplayPosition(newDisplayPosition, out _);
+			//var scaledViewportSize = ViewportSize.Scale(ScaleFactor);
+			//var scaledNewScreenArea = new RectangleDbl(scaledDispPos, scaledViewportSize);
 
-			var scaledNewScreenArea = new RectangleDbl(new PointDbl(scaledDispPos), ViewportSize);
 
-			var scaledMapAreaInfo = _scaledMapAreaInfo ?? MapAreaInfoWithSize;
+			// -- Scale the Position and Size together.
+			var invertedY = GetInvertedYPos2(newDisplayPosition.Y);
+			var displayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, invertedY);
+			var newScreenArea = new RectangleDbl(displayPositionWithInverseY, ViewportSize);
+			var scaledNewScreenArea = newScreenArea.Scale(ScaleFactor);
 
-			var result = GetUpdatedMapAreaInfo(scaledNewScreenArea, scaledMapAreaInfo);
+			//var scaledMapAreaInfo = _scaledMapAreaInfo ?? MapAreaInfoWithSize;
+			//var result = GetUpdatedMapAreaInfo(scaledNewScreenArea, scaledMapAreaInfo);
+
+			var result = GetUpdatedMapAreaInfo(scaledNewScreenArea, _scaledMapAreaInfo);
 
 			return result;
 		}
 
 		public VectorDbl GetScaledDisplayPosition(VectorDbl displayPosition, out double unInvertedY)
 		{
-			var scaledDispPos = displayPosition.Scale(ScaleFactor);
-			unInvertedY = scaledDispPos.Y;
+			// Scale, then invert.
+			//var scaledDispPos = displayPosition.Scale(ScaleFactor);
+			//unInvertedY = scaledDispPos.Y;
+			//var invertedY = GetInvertedYPos(unInvertedY);
+			//var result = new VectorDbl(scaledDispPos.X, invertedY);
 
-			var invertedY = GetInvertedYPos(unInvertedY);
+			var t = displayPosition.Scale(ScaleFactor);
+			unInvertedY = t.Y;
 
-			var result = new VectorDbl(scaledDispPos.X, invertedY);
+			// Invert first, then scale
+			var invertedY = GetInvertedYPos2(displayPosition.Y);
+			var result = new VectorDbl(displayPosition.X, invertedY).Scale(ScaleFactor);
 
 			return result;
-
 		}
 
 		#endregion
@@ -133,13 +149,25 @@ namespace MSetExplorer
 		{
 			//var maxV = PosterSize.Height; //Math.Max(ViewportSize.Height, PosterSize.Height - ViewportSize.Height);
 
+			// The yPos has already been scaled, scale all values
 			var newUnscaledExtent = PosterSize.Scale(ScaleFactor);
 			var maxV = newUnscaledExtent.Height;
+			var scaledViewportSize = ViewportSize.Scale(ScaleFactor);
 
+			var result = maxV - (yPos + scaledViewportSize.Height);
+
+			return result;
+		}
+
+		private double GetInvertedYPos2(double yPos)
+		{
+			// The yPos has not been scaled, use the same values, used by the PanAndZoomControl
+			var maxV = PosterSize.Height;
 			var result = maxV - (yPos + ViewportSize.Height);
 
 			return result;
 		}
+
 
 		#endregion
 	}

@@ -202,12 +202,15 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Found the PanAndZoomControl_Content template. The ContentBeingZoomed is {ContentBeingZoomed} /w type: {ContentBeingZoomed.GetType()}.");
 
+
 				_contentScaleTransform = new ScaleTransform(ContentScale, ContentScale);
 
 				UpdateTranslationX();
 				UpdateTranslationY();
 
-				ContentBeingZoomed.RenderTransform = _contentScaleTransform;
+				//ContentBeingZoomed.RenderTransform = _contentScaleTransform;
+
+				WireupScaleTransform(ContentBeingZoomed, _contentScaleTransform);
 
 				//var fe = Content as FrameworkElement;
 				//Debug.Assert(fe!.RenderTransform == ContentBeingZoomed.RenderTransform, "RenderTransform Mismatch.");
@@ -216,6 +219,25 @@ namespace MSetExplorer
 			{
 				//Debug.WriteLine($"WARNING: Did not find the PanAndZoomControl_Content template.");
 				throw new InvalidOperationException("Did not find the PanAndZoomControl_Content template.");
+			}
+		}
+
+		private void WireupScaleTransform(FrameworkElement content, Transform transform) 
+		{
+			if (content is ContentPresenter cp)
+			{
+				if (cp.Content is IContentScaler contentScaler)
+				{
+					contentScaler.ScaleTransform = _contentScaleTransform;
+				}
+				else
+				{
+					cp.RenderTransform = _contentScaleTransform;
+				}
+			}
+			else
+			{
+				throw new InvalidOperationException("Expecting the PanAndZoomControl's content to be a ContentPresentor.");
 			}
 		}
 

@@ -38,9 +38,10 @@ namespace MSetExplorer
 			{
 				if (_zoomedControl.CanZoom)
 				{
-					(BaseValue, RelativeValue) = GetBaseAndRelative(_scrollbar.Value);
+					var combinedValue = _scrollbar.Value;
+					(BaseValue, RelativeValue) = GetBaseAndRelative(combinedValue);
 
-					_zoomedControl.SetScale(RelativeValue);
+					_zoomedControl.SetScale(combinedValue);
 				}
 			}
 		}
@@ -60,11 +61,13 @@ namespace MSetExplorer
 		{
 			if (double.IsNaN(_scrollbar.Value) || RelativeValue != contentScale)
 			{
-				RelativeValue = contentScale;
-				var combinedValue = GetCombinedValue(BaseValue, RelativeValue);
-				Debug.Assert(combinedValue >= _scrollbar.Minimum && combinedValue <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {contentScale}, producing combinedValue: {combinedValue}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
+				//RelativeValue = contentScale;
+				//var combinedValue = GetCombinedValue(BaseValue, RelativeValue);
+				//Debug.Assert(combinedValue >= _scrollbar.Minimum && combinedValue <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {contentScale}, producing combinedValue: {combinedValue}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
 
-				_scrollbar.Value = combinedValue;
+				//_scrollbar.Value = combinedValue;
+
+				_scrollbar.Value = contentScale;
 			}
 		}
 
@@ -88,11 +91,13 @@ namespace MSetExplorer
 					_scrollbar.SmallChange = _scrollbar.Minimum;
 					_scrollbar.LargeChange = _scrollbar.Minimum * 2;
 
-					RelativeValue = _zoomedControl.Scale;
-					var combinedValue = GetCombinedValue(BaseValue, RelativeValue);
-					Debug.Assert(combinedValue >= _scrollbar.Minimum && combinedValue <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {RelativeValue}, producing combinedValue: {combinedValue}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
+					//RelativeValue = _zoomedControl.Scale;
+					//var combinedValue = GetCombinedValue(BaseValue, RelativeValue);
+					//Debug.Assert(combinedValue >= _scrollbar.Minimum && combinedValue <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {RelativeValue}, producing combinedValue: {combinedValue}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
 
-					_scrollbar.Value = combinedValue;
+					//_scrollbar.Value = combinedValue;
+
+					_scrollbar.Value = _zoomedControl.Scale;
 				}
 				finally
 				{
@@ -103,9 +108,9 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods
+		#region Static Methods
 
-		private (double baseValue, double relativeValue) GetBaseAndRelative(double value)
+		public static (double baseScale, double relativeScale) GetBaseAndRelative(double contentScale)
 		{
 
 			//var t = value / BREAK_DOWN_FACTOR;
@@ -123,27 +128,27 @@ namespace MSetExplorer
 			double b;
 			double r;
 
-			if (value > 0.5)
+			if (contentScale > 0.5)
 			{
 				b = 0;
-				r = value;
+				r = contentScale;
 			}
-			else if (value == 0.5)
+			else if (contentScale == 0.5)
 			{
 				b = 1;
 				r = 1;
 			}
-			else if (value == 0.4375)
+			else if (contentScale == 0.4375)
 			{
 				b = 1;
 				r = 0.875;
 			}
-			else if (value == 0.375)
+			else if (contentScale == 0.375)
 			{
 				b = 1;
 				r = 0.75;
 			}
-			else if (value == 0.3125)
+			else if (contentScale == 0.3125)
 			{
 				b = 1;
 				r = 0.625;
@@ -157,11 +162,26 @@ namespace MSetExplorer
 			return (b, r);
 		}
 
-		private double GetCombinedValue(double b, double r)
+		public static double GetCombinedValue(double baseScale, double relativeScale)
 		{
-			var combinedValue = Math.Pow(BREAK_DOWN_FACTOR, b) * r;
+			var combinedValue = Math.Pow(BREAK_DOWN_FACTOR, baseScale) * relativeScale;
 			return combinedValue;
 		}
+
+		public static double GetScaleFactor(double contentScale)
+		{
+			var (baseScale, _) = GetBaseAndRelative(contentScale);
+			var result = Math.Pow(BREAK_DOWN_FACTOR, baseScale);
+			return result;
+		}
+
+		public static double GetScaleFactorFromBase(double baseScale)
+		{
+			var result = Math.Pow(BREAK_DOWN_FACTOR, baseScale);
+			return result;
+		}
+
+		//var(baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
 
 
 		/*
