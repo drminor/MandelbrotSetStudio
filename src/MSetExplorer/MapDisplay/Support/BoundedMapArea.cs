@@ -27,7 +27,7 @@ namespace MSetExplorer
 			ViewportSize = viewportSize;
 
 			var dispPos = displayPosition ?? new VectorDbl(0, 0);
-			DisplayPositionWithInverseY = new VectorDbl(dispPos.X, GetInvertedYPos(dispPos.Y));
+			//DisplayPositionWithInverseY = new VectorDbl(dispPos.X, GetInvertedYPos(dispPos.Y));
 
 			_baseScale = 0;
 			ScaleFactor = 1;
@@ -43,7 +43,7 @@ namespace MSetExplorer
 		public SizeDbl PosterSize { get; init; }
 
 		public SizeDbl ViewportSize { get; private set; }
-		public VectorDbl DisplayPositionWithInverseY { get; private set; }
+		//public VectorDbl DisplayPositionWithInverseY { get; private set; }
 
 		public double BaseScale
 		{
@@ -87,11 +87,13 @@ namespace MSetExplorer
 		// New postion, same size
 		public MapAreaInfo GetView(VectorDbl newDisplayPosition)
 		{
-			DisplayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, GetInvertedYPos(newDisplayPosition.Y));
-			var scaledDispPos = DisplayPositionWithInverseY.Scale(ScaleFactor);
-
 			//var newScreenArea = new RectangleDbl(new PointDbl(DisplayPositionWithInverseY), ViewportSize);
 			//var scaledNewScreenArea = newScreenArea.Scale(ScaleFactor);
+
+			//var displayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, GetInvertedYPos(newDisplayPosition.Y));
+			//var scaledDispPos = displayPositionWithInverseY.Scale(ScaleFactor);
+
+			var scaledDispPos = GetScaledDisplayPosition(newDisplayPosition, out _);
 
 			var scaledNewScreenArea = new RectangleDbl(new PointDbl(scaledDispPos), ViewportSize);
 
@@ -100,6 +102,19 @@ namespace MSetExplorer
 			var result = GetUpdatedMapAreaInfo(scaledNewScreenArea, scaledMapAreaInfo);
 
 			return result;
+		}
+
+		public VectorDbl GetScaledDisplayPosition(VectorDbl displayPosition, out double unInvertedY)
+		{
+			var scaledDispPos = displayPosition.Scale(ScaleFactor);
+			unInvertedY = scaledDispPos.Y;
+
+			var invertedY = GetInvertedYPos(unInvertedY);
+
+			var result = new VectorDbl(scaledDispPos.X, invertedY);
+
+			return result;
+
 		}
 
 		#endregion
@@ -114,9 +129,13 @@ namespace MSetExplorer
 			return mapAreaInfoV1;
 		}
 
-		public double GetInvertedYPos(double yPos)
+		private double GetInvertedYPos(double yPos)
 		{
-			var maxV = PosterSize.Height; //Math.Max(ViewportSize.Height, PosterSize.Height - ViewportSize.Height);
+			//var maxV = PosterSize.Height; //Math.Max(ViewportSize.Height, PosterSize.Height - ViewportSize.Height);
+
+			var newUnscaledExtent = PosterSize.Scale(ScaleFactor);
+			var maxV = newUnscaledExtent.Height;
+
 			var result = maxV - (yPos + ViewportSize.Height);
 
 			return result;

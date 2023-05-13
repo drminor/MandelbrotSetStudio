@@ -395,10 +395,11 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot call MoveTo, if the CurrentAreaColorAndCalcSettings is null.");
 			}
 
-			ReportMove(BoundedMapArea, displayPosition);
-
 			// Get the MapAreaInfo subset for the given display position
 			var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
+
+			ReportMove(BoundedMapArea, displayPosition);
+
 			var newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
 
 			DisplayPosition = displayPosition;
@@ -537,7 +538,10 @@ namespace MSetExplorer
 				ReportUpdateSizeAndPos(boundedMapArea, viewportSize, contentOffset, contentScale, baseScale);
 
 
-				newJobNumber = ReuseAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
+				//newJobNumber = ReuseAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
+
+				StopCurrentJobAndClearDisplay();
+				newJobNumber = DiscardAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
 			}
 
 			ViewportSize = viewportSize;
@@ -549,16 +553,6 @@ namespace MSetExplorer
 			}
 
 			return newJobNumber;
-		}
-
-		[Conditional("DEBUG")]
-		private void ReportUpdateSizeAndPos(BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset, double contentScale, double baseScale)
-		{
-			var x = contentOffset.X;
-			var y = contentOffset.Y;
-			var invertedY = boundedMapArea.GetInvertedYPos(y);
-
-			Debug.WriteLine($"Loading new view. X: {x}, Y: {invertedY}. Uninverted Y:{y}. Poster Size: {UnscaledExtent}. Viewport: {viewportSize}. ContentScale: {contentScale}, BaseScale: {baseScale}.");
 		}
 
 		private int? HandleDisplaySizeUpdate(SizeDbl viewportSize)
@@ -908,12 +902,33 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset)
 		{
-			var x = contentOffset.X;
-			var y = contentOffset.Y;
-			var invertedY = boundedMapArea.GetInvertedYPos(y);
+			//var x = contentOffset.X;
+			//var y = contentOffset.Y;
+			//var invertedY = boundedMapArea.GetInvertedYPos(y);
 
-			Debug.WriteLine($"Moving to {x}, {invertedY}. Uninverted Y:{y}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}.");
+			//var displayPositionWithInverseY = new VectorDbl(contentOffset.X, boundedMapArea.GetInvertedYPos(contentOffset.Y));
+			//var scaledDispPos = displayPositionWithInverseY.Scale(boundedMapArea.ScaleFactor);
+
+			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
+
+			var x = scaledDispPos.X;
+			var y = scaledDispPos.Y;
+			//var unInvertedY = contentOffset.Y * boundedMapArea.ScaleFactor;
+
+			Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}.");
 		}
+
+		[Conditional("DEBUG")]
+		private void ReportUpdateSizeAndPos(BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset, double contentScale, double baseScale)
+		{
+			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
+
+			var x = scaledDispPos.X;
+			var y = scaledDispPos.Y;
+
+			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}. ContentScale: {contentScale}, BaseScale: {baseScale}.");
+		}
+
 
 		#endregion
 
