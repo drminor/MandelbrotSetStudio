@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MSS.Types;
 using System.Windows.Media;
 
 namespace MSetExplorer
 {
 	internal interface IContentScaler
 	{
+		ScaleTransform ScaleTransform { get; set; }
 
-		public ScaleTransform ScaleTransform { get; set; }
-
+		SizeDbl ContentViewportSize { get; set; }
 	}
 }

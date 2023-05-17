@@ -125,18 +125,6 @@ namespace MSS.Types
 			return this;
 		}
 
-		public override string? ToString()
-		{
-			return $"pos:{Position}, size:{Size}";
-		}
-
-		public string? ToString(string? format)
-		{
-			return $"pos:{Position.ToString(format)}, size:{Size.ToString(format)}";
-
-		}
-
-
 		[Conditional("Debug")]
 		private void Validate()
 		{
@@ -151,7 +139,18 @@ namespace MSS.Types
 			}
 		}
 
-		#region IEquatable and IEqualityComparer Support
+		#region ToString, IEquatable and IEqualityComparer Support
+
+		public override string? ToString()
+		{
+			return $"pos:{Position}, size:{Size}";
+		}
+
+		public string? ToString(string? format)
+		{
+			return $"pos:{Position.ToString(format)}, size:{Size.ToString(format)}";
+
+		}
 
 		public override bool Equals(object? obj)
 		{
@@ -192,6 +191,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
 	}
 }

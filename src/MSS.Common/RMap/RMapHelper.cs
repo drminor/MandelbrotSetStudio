@@ -83,21 +83,21 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
-		{
-			var rawResult = canvasSize.DivRem(blockSize, out var remainder);
-			var extra = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
-			var result = rawResult.Add(extra);
-
-			return result;
-		}
-
 		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
 			Debug.Assert(canvasControlOffset.X >= 0 && canvasControlOffset.Y >= 0, "Using a canvasControlOffset with a negative w or h when getting the MapExtent in blocks.");
 
 			var totalSize = canvasSize.Add(canvasControlOffset);
 			var result = GetMapExtentInBlocks(totalSize, blockSize);
+
+			return result;
+		}
+
+		private static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
+		{
+			var rawResult = canvasSize.DivRem(blockSize, out var remainder);
+			var extra = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
+			var result = rawResult.Add(extra);
 
 			return result;
 		}

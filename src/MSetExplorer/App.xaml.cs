@@ -28,7 +28,7 @@ namespace MSetExplorer
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
-		private readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2023-04-03");
+		private readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2023-05-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
 

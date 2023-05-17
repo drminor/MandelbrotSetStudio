@@ -26,9 +26,13 @@ namespace MSetExplorer
 
 		private SizeDbl _contentViewportSize;
 
-		private ScaleTransform _scaleTransform;
+		private ScaleTransform _controlScaleTransform;
 
-		private ScaleTransform _canvasRenderTransform;
+		private TransformGroup _canvasRenderTransform;
+		private TranslateTransform _canvasTranslateTransform;
+		private ScaleTransform _canvasScaleTransform;
+
+		private VectorDbl _canvasOffset;
 
 		#endregion
 
@@ -55,30 +59,34 @@ namespace MSetExplorer
 			_viewportSize = new SizeDbl();
 			_contentViewportSize = SizeDbl.NaN;
 
-			_scaleTransform = new ScaleTransform();
-			_scaleTransform.Changed += ScaleTransform_Changed;
+			_controlScaleTransform = new ScaleTransform();
+			_controlScaleTransform.Changed += _controlScaleTransform_Changed; 
 
-			_canvasRenderTransform = new ScaleTransform();
+			_canvasTranslateTransform = new TranslateTransform();
+			_canvasScaleTransform = new ScaleTransform();
+
+			_canvasRenderTransform = new TransformGroup();
+			_canvasRenderTransform.Children.Add(_canvasTranslateTransform);
+			_canvasRenderTransform.Children.Add(_canvasScaleTransform);
+
+			_canvas.RenderTransform = _canvasRenderTransform;
 		}
+
+		#endregion
+
+		#region Event Handlers
 
 		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			Debug.WriteLine($"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
+			//Debug.WriteLine($"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
+			Debug.WriteLine($"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
+
 			UpdateImageOffset(ImageOffset);
 		}
 
-		private void ScaleTransform_Changed(object? sender, EventArgs e)
+		private void _controlScaleTransform_Changed(object? sender, EventArgs e)
 		{
-			//SetTheCanvasRenderTransform(ScaleTransform);
-
-			if (sender is ScaleTransform st)
-			{
-				SetTheCanvasRenderTransform(st);
-			}
-			else
-			{
-				throw new InvalidOperationException("Expecting the sender of the ScaleTransform_Changed event to be able to be cast as a ScaleTransform.");
-			}
+			SetTheCanvasScaleTransform(_controlScaleTransform);
 		}
 
 		#endregion
@@ -98,6 +106,7 @@ namespace MSetExplorer
 			{
 				_canvas = value;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+				_canvas.RenderTransform = _canvasRenderTransform;
 			}
 		}
 
@@ -109,32 +118,17 @@ namespace MSetExplorer
 				if (_image != value)
 				{
 					_image.SizeChanged -= Image_SizeChanged;
-
 					_image = value;
-					_image.RenderTransform = _canvasRenderTransform;
-
 					_image.SizeChanged += Image_SizeChanged;
 
 					_image.Source = BitmapGridImageSource;
+					//_image.RenderTransform = _canvasScaleTransform;
 
 					UpdateImageOffset(ImageOffset);
 
-					Debug.Assert(IsImageAChildOfCanvas(Image, Canvas), "Image is not a child of the Canvas.");
+					CheckThatImageIsAChildOfCanvas(Image, Canvas);
 				}
 			}
-		}
-
-		private bool IsImageAChildOfCanvas(Image image, Canvas canvas)
-		{
-			foreach(var v in canvas.Children)
-			{
-				if (v == image)
-				{
-					return true;
-				}
-			}
-
-			return false;
 		}
 
 		private SizeDbl ViewportSizeInternal
@@ -215,15 +209,8 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value))
 				{
-					var scaleFactor = ZoomSlider.GetScaleFactor(ScaleTransform.ScaleX);
-					var newCanvasSize = value.Scale(scaleFactor);
-
-					Debug.WriteLine($"The BitmapGridControl's ContentViewportSize is being set to {value}. Setting the Canvas Size to {newCanvasSize}.");
-
 					_contentViewportSize = value;
-
-					Canvas.Width = newCanvasSize.Width;
-					Canvas.Height = newCanvasSize.Height;
+					SetTheCanvasSize(value, _controlScaleTransform);
 				}
 			}
 		}
@@ -246,20 +233,30 @@ namespace MSetExplorer
 			}
 		}
 
-		public ScaleTransform ScaleTransform
+		public VectorDbl CanvasOffset
 		{
-			get => _scaleTransform;
+			get => _canvasOffset;
 			set
 			{
-				if (_scaleTransform != value)
+				_canvasOffset = value;
+				SetTheCanvasTranslateTransform(CanvasOffset);
+			}
+		}
+
+		ScaleTransform IContentScaler.ScaleTransform
+		{
+			get => _controlScaleTransform;
+			set
+			{
+				if (_controlScaleTransform != value)
 				{
-					Debug.WriteLine($"The BitmapGridControl's ScaleTransform is being set to {value.ScaleX}, {value.ScaleY}.");
+					_controlScaleTransform.Changed -= _controlScaleTransform_Changed;
+					_controlScaleTransform = value;
+					_controlScaleTransform.Changed += _controlScaleTransform_Changed;
 
-					_scaleTransform.Changed -= ScaleTransform_Changed;
-					_scaleTransform = value;
-					_scaleTransform.Changed += ScaleTransform_Changed;
+					SetTheCanvasScaleTransform(_controlScaleTransform);
 
-					SetTheCanvasRenderTransform(ScaleTransform);
+					UpdateImageOffset(ImageOffset);
 				}
 			}
 		}
@@ -277,7 +274,9 @@ namespace MSetExplorer
 
 			_ourContent.Measure(availableSize);
 
-			UpdateViewportSize(availableSize);
+			//UpdateViewportSize(availableSize);
+
+			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
 
 			double width = availableSize.Width;
 			double height = availableSize.Height;
@@ -294,7 +293,7 @@ namespace MSetExplorer
 
 			var result = new Size(width, height);
 
-			Debug.WriteLine($"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
+			Debug.WriteLine($"BitmapGripControl Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
 
 			// TODO: Figure out when its best to call UpdateViewportSize.
 			//UpdateViewportSize(childSize);
@@ -313,38 +312,40 @@ namespace MSetExplorer
 
 			if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
 
-			UpdateViewportSize(childSize);
+			//UpdateViewportSize(childSize);
 
-			Debug.WriteLine($"Before _content.Arrange({finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
+
+			Debug.WriteLine($"BitmapGridControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			_ourContent.Arrange(new Rect(finalSize));
 
 			var canvas = Canvas;
-					
-			if (canvas.ActualWidth != ContentViewportSize.Width)
+
+			if (canvas.ActualWidth != finalSize.Width)
 			{
-				canvas.Width = ContentViewportSize.Width;
+				canvas.Width = finalSize.Width;
 			}
 
-			if (canvas.ActualHeight != ContentViewportSize.Height)
+			if (canvas.ActualHeight != finalSize.Height)
 			{
-				canvas.Height = ContentViewportSize.Height;
+				canvas.Height = finalSize.Height;
 			}
 
-			Debug.WriteLine($"After _content.Arrange(The canvas size is {new Size(canvas.Width, canvas.Height)} / {new Size(canvas.ActualWidth, canvas.ActualHeight)}.");
+			Debug.WriteLine($"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			return finalSize;
 		}
 
-		private void UpdateViewportSize(Size newValue)
-		{
-			var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(newValue);
+		//private void UpdateViewportSize(Size newValue)
+		//{
+		//	var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(newValue);
 
-			if (ViewportSizeInternal != newSizeDbl)
-			{
-				ViewportSizeInternal = newSizeDbl;
-			}
-		}
+		//	if (ViewportSizeInternal != newSizeDbl)
+		//	{
+		//		ViewportSizeInternal = newSizeDbl;
+		//	}
+		//}
 
 		private Size ForceSize(Size finalSize)
 		{
@@ -367,16 +368,10 @@ namespace MSetExplorer
 			if (Content != null)
 			{
 				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
-
-				//Debug.WriteLine($"Found the BitmapGridControl3_Content template.");
-
 				(Canvas, Image) = BuildContentModel(_ourContent);
-
-				Debug.Assert(IsImageAChildOfCanvas(Image, Canvas), "Image is not a child of the Canvas.");
 			}
 			else
 			{
-				//Debug.WriteLine($"WARNING: Did not find the BitmapGridControl_Content template.");
 				throw new InvalidOperationException("Did not find the BitmapGridControl_Content template.");
 			}
 		}
@@ -397,8 +392,57 @@ namespace MSetExplorer
 			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
 		}
 
-		private bool UpdateImageOffset(VectorDbl newValue)
+		#endregion
+
+		#region Private Methods
+
+		private void SetTheCanvasSize(SizeDbl contentViewportSize, ScaleTransform st)
 		{
+			var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
+			var scaleFactor = ZoomSlider.GetScaleFactorFromBase(baseScale);
+
+			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
+
+			CompareViewportAndContentViewportSizes(viewportSize, contentViewportSize, scaleFactor, relativeScale);
+
+			var newCanvasSize = contentViewportSize.Scale(scaleFactor);
+
+			Debug.WriteLine($"The BitmapGridControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
+
+			Canvas.Width = newCanvasSize.Width;
+			Canvas.Height = newCanvasSize.Height;
+		}
+
+		private void SetTheCanvasScaleTransform(ScaleTransform st)
+		{
+			var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
+
+			var combinedScale = new SizeDbl(st.ScaleX, st.ScaleY);
+
+			var currentScaleX = _canvasScaleTransform.ScaleX;
+			Debug.WriteLine($"\n\nThe BitmapGridControl's Image ScaleTransform is being set to {relativeScale} from {currentScaleX}. CombinedScale: {combinedScale}, BaseScale is {baseScale}. The CanvasOffset is {_canvasOffset}.");
+
+			_canvasScaleTransform.ScaleX = relativeScale;
+			_canvasScaleTransform.ScaleY = relativeScale;
+		}
+
+		private void SetTheCanvasTranslateTransform(VectorDbl canvasOffset)
+		{
+			Debug.WriteLine($"Setting the BitmapGridControl's CanvasOffset to {canvasOffset}. The ImageOffset is {ImageOffset}.");
+
+			_canvasTranslateTransform.X = canvasOffset.X;
+			_canvasTranslateTransform.Y = canvasOffset.Y;
+		}
+
+		private bool UpdateImageOffset(VectorDbl rawValue)
+		{
+			//var newValue = rawValue.Scale(_scaleTransform.ScaleX);
+			//Debug.WriteLine($"Updating ImageOffset: raw: {rawValue}, scaled: {newValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_scaleTransform.ScaleX}.");
+
+			var newValue = rawValue;
+			Debug.WriteLine($"Updating ImageOffset: {newValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
+
+
 			// For a positive offset, we "pull" the image down and to the left.
 			var invertedValue = newValue.Invert();
 
@@ -429,15 +473,59 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void SetTheCanvasRenderTransform(ScaleTransform st)
+		[Conditional("DEBUG")]
+		private void CompareViewportAndContentViewportSizes(SizeDbl viewportSize, SizeDbl contentViewportSize, double scaleFactor, double relativeScale)
 		{
-			var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
+			// The contentViewportSize when reduced by the BaseScale Factor
+			// should equal the ViewportSize when it is expanded by the RelativeScale
 
-			Debug.WriteLine($"Setting the BitmapGridControl's Canvas RenderTransform to {relativeScale}. The BaseScale is {baseScale}.");
+			var contentViewportSizeReduced = contentViewportSize.Scale(scaleFactor);
+			var viewportSizeExpanded = viewportSize.Scale(1 / relativeScale);
 
-			_canvasRenderTransform.ScaleX = relativeScale;
-			_canvasRenderTransform.ScaleY = relativeScale;
+			if (ScreenTypeHelper.IsSizeDblChanged(contentViewportSizeReduced, viewportSizeExpanded))
+			{
+				Debug.WriteLine("WARNING: The ContentViewport and Viewport Sizes when scaled appropriately are not equal.");
+			}
 		}
+
+		[Conditional("DEBUG")]
+		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)
+		{
+			foreach (var v in canvas.Children)
+			{
+				if (v == image)
+				{
+					return;
+				}
+			}
+
+			throw new InvalidOperationException("The image is not a child of the canvas.");
+		}
+
+		//protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+		//{
+		//	base.OnRenderSizeChanged(sizeInfo);
+		//}
+
+		//protected override void ParentLayoutInvalidated(UIElement child)
+		//{
+		//	base.ParentLayoutInvalidated(child);
+		//}
+
+		//protected override DependencyObject GetUIParentCore()
+		//{
+		//	return base.GetUIParentCore();
+		//}
+
+		//protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+		//{
+		//	if (e.Property.Name == "RenderTransform" && e.NewValue is ScaleTransform st)
+		//	{
+		//		Debug.WriteLine($"The new RenderTransform ScaleX value is {st.ScaleX}.");
+		//	}
+
+		//	base.OnPropertyChanged(e);
+		//}
 
 		#endregion
 
@@ -476,32 +564,6 @@ namespace MSetExplorer
 			_ = c.UpdateImageOffset(newValue);
 		}
 
-		protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
-		{
-			base.OnRenderSizeChanged(sizeInfo);
-		}
-
-		protected override void ParentLayoutInvalidated(UIElement child)
-		{
-			base.ParentLayoutInvalidated(child);
-		}
-
-		protected override DependencyObject GetUIParentCore()
-		{
-			return base.GetUIParentCore();
-		}
-
-		protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
-		{
-			if (e.Property.Name == "RenderTransform" && e.NewValue is ScaleTransform st)
-			{
-				Debug.WriteLine($"The new RenderTransform ScaleX value is {st.ScaleX}.");
-			}
-
-			base.OnPropertyChanged(e);
-		}
-
 		#endregion
-
 	}
 }

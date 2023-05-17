@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.Xml;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -27,7 +28,7 @@ namespace MSetExplorer
 		private SizeDbl _viewportSize;
 
 		//private TranslateTransform? _contentOffsetTransform = null;
-		private ScaleTransform _contentScaleTransform = new ScaleTransform();
+		private ScaleTransform _contentScaleTransform;
 
 		private bool _enableContentOffsetUpdateFromScale = true;
 
@@ -52,6 +53,7 @@ namespace MSetExplorer
 			_zoomSlider = null;
 
 			_viewportSize = new SizeDbl();
+			_contentScaleTransform = new ScaleTransform(DefaultContentScale, DefaultContentScale);
 
 			ContentViewportSize = new SizeDbl();
 
@@ -78,7 +80,11 @@ namespace MSetExplorer
 
 		public SizeDbl ViewportSize
 		{
-			get => _viewportSize;
+			get
+			{
+				CheckViewportSize(_viewportSize);
+				return _viewportSize;
+			}
 			set
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
@@ -202,42 +208,31 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Found the PanAndZoomControl_Content template. The ContentBeingZoomed is {ContentBeingZoomed} /w type: {ContentBeingZoomed.GetType()}.");
 
-
-				_contentScaleTransform = new ScaleTransform(ContentScale, ContentScale);
-
 				UpdateTranslationX();
 				UpdateTranslationY();
 
-				//ContentBeingZoomed.RenderTransform = _contentScaleTransform;
-
-				WireupScaleTransform(ContentBeingZoomed, _contentScaleTransform);
-
-				//var fe = Content as FrameworkElement;
-				//Debug.Assert(fe!.RenderTransform == ContentBeingZoomed.RenderTransform, "RenderTransform Mismatch.");
+				if (ContentBeingZoomed is ContentPresenter cp)
+				{
+					if (cp.Content is IContentScaler contentScaler)
+					{
+						_contentScaler = contentScaler;
+						_contentScaler.ScaleTransform = _contentScaleTransform;
+					}
+					else
+					{
+						_contentScaler = null;
+						cp.RenderTransform = _contentScaleTransform;
+					}
+				}
+				else
+				{
+					throw new InvalidOperationException("Expecting the PanAndZoomControl's content to be a ContentPresentor.");
+				}
 			}
 			else
 			{
 				//Debug.WriteLine($"WARNING: Did not find the PanAndZoomControl_Content template.");
 				throw new InvalidOperationException("Did not find the PanAndZoomControl_Content template.");
-			}
-		}
-
-		private void WireupScaleTransform(FrameworkElement content, Transform transform) 
-		{
-			if (content is ContentPresenter cp)
-			{
-				if (cp.Content is IContentScaler contentScaler)
-				{
-					contentScaler.ScaleTransform = _contentScaleTransform;
-				}
-				else
-				{
-					cp.RenderTransform = _contentScaleTransform;
-				}
-			}
-			else
-			{
-				throw new InvalidOperationException("Expecting the PanAndZoomControl's content to be a ContentPresentor.");
 			}
 		}
 
@@ -328,6 +323,8 @@ namespace MSetExplorer
 			c.InvalidateScrollInfo();
 
 			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
+
+			//if (c._contentScaler != null) c._contentScaler.ContentViewportSize = c.ContentViewportSize;
 			c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale));
 
 			//c.InvalidateVisual(); // Is this really necessary?
@@ -450,7 +447,6 @@ namespace MSetExplorer
 			if (!c._disableContentFocusSync)
 			{
 				// Don't update the ZoomFocus if zooming is in progress.
-				//c.UpdateContentZoomFocusY();
 				c.UpdateContentZoomFocus();
 			}
 
@@ -517,6 +513,7 @@ namespace MSetExplorer
 
 			InvalidateScrollInfo();
 
+			//if (_contentScaler != null) _contentScaler.ContentViewportSize = ContentViewportSize;
 			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale));
 		}
 
@@ -667,6 +664,17 @@ namespace MSetExplorer
 		{
 			var controlSize = new SizeInt(ActualWidth, ActualHeight);
 			Debug.WriteLine($"At {label}, Control: {controlSize}.");
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckViewportSize(SizeDbl viewportSize)
+		{
+			var controlSize = new SizeDbl(ActualWidth, ActualHeight);
+
+			if (ScreenTypeHelper.IsSizeDblChanged(viewportSize, controlSize, threshold: 0.05))
+			{
+				Debug.WriteLine($"WARNING: The viewportSize: {viewportSize} is not the same size as the control: {controlSize}.");
+			}
 		}
 
 		#endregion

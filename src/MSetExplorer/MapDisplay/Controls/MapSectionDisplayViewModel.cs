@@ -189,10 +189,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl UnscaledExtent
-		{
-			get => _boundedMapArea?.PosterSize ?? SizeDbl.Zero;
-		}
+		public SizeDbl UnscaledExtent => _boundedMapArea?.PosterSize ?? SizeDbl.Zero;
+
+		public SizeDbl ScaledExtent => UnscaledExtent.Scale(_boundedMapArea?.ScaleFactor ?? 1.0);	
 
 		public VectorDbl DisplayPosition
 		{
@@ -295,7 +294,9 @@ namespace MSetExplorer
 					// Bounded
 
 					// Save the MapAreaInfo for the entire poster.
-					BoundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize.Value, ViewportSize);
+					var contentScale = 1;
+					var baseScale = 0;
+					BoundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize.Value, ViewportSize, contentScale, baseScale);
 					
 					var previousValue = CurrentAreaColorAndCalcSettings;
 					if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue);
@@ -333,14 +334,14 @@ namespace MSetExplorer
 			}
 		}
 
-		public int? UpdateViewportSizeAndPos(SizeDbl viewportSize, VectorDbl contentOffset, double contentScale, double baseScale)
+		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale, double baseScale)
 		{
 			int? newJobNumber;
 
 			if (CurrentAreaColorAndCalcSettings == null)
 			{
-				_bitmapGrid.ViewportSize = viewportSize;
-				ViewportSize = viewportSize;
+				_bitmapGrid.ViewportSize = contentViewportSize;
+				ViewportSize = contentViewportSize;
 				newJobNumber = null;
 			}
 			else
@@ -350,7 +351,7 @@ namespace MSetExplorer
 					throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
 				}
 
-				newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, viewportSize, contentOffset, contentScale, baseScale);
+				newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, contentViewportSize, contentOffset, contentScale, baseScale);
 			}
 
 			return newJobNumber;
@@ -398,7 +399,7 @@ namespace MSetExplorer
 			// Get the MapAreaInfo subset for the given display position
 			var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
 
-			ReportMove(BoundedMapArea, displayPosition);
+			ReportMove(BoundedMapArea, displayPosition/*, BoundedMapArea.ContentScale, BoundedMapArea.BaseScale*/);
 
 			var newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
 
@@ -532,7 +533,7 @@ namespace MSetExplorer
 			{
 				var currentBaseScale = boundedMapArea.BaseScale;
 
-				var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, baseScale);
+				var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, contentScale, baseScale);
 
 				var scaledViewportSize = viewportSize.Scale(boundedMapArea.ScaleFactor);
 				_bitmapGrid.ViewportSize = scaledViewportSize;
@@ -906,22 +907,21 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG")]
-		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset)
+		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset/*, double contentScale, double baseScale*/)
 		{
-			//var x = contentOffset.X;
-			//var y = contentOffset.Y;
-			//var invertedY = boundedMapArea.GetInvertedYPos(y);
-
-			//var displayPositionWithInverseY = new VectorDbl(contentOffset.X, boundedMapArea.GetInvertedYPos(contentOffset.Y));
-			//var scaledDispPos = displayPositionWithInverseY.Scale(boundedMapArea.ScaleFactor);
-
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
 
 			var x = scaledDispPos.X;
 			var y = scaledDispPos.Y;
-			//var unInvertedY = contentOffset.Y * boundedMapArea.ScaleFactor;
 
-			Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}.");
+			var posterSize = boundedMapArea.PosterSize;
+			var scaledExtent = posterSize.Scale(boundedMapArea.ScaleFactor);
+
+			var physicalViewportSize = ViewportSize.Scale(boundedMapArea.ContentScale);
+
+
+			Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {ViewportSize}. ContentScale: {boundedMapArea.ContentScale}, BaseScaleFactor: {boundedMapArea.ScaleFactor}. " +
+				$"Scaled Extent: {scaledExtent}, ViewportSize: {physicalViewportSize}.");
 		}
 
 		[Conditional("DEBUG")]
@@ -932,7 +932,13 @@ namespace MSetExplorer
 			var x = scaledDispPos.X;
 			var y = scaledDispPos.Y;
 
-			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {UnscaledExtent}. Viewport: {ViewportSize}. ContentScale: {contentScale}, BaseScale: {baseScale}.");
+			var posterSize = boundedMapArea.PosterSize;
+			var scaledExtent = posterSize.Scale(boundedMapArea.ContentScale);
+
+			var physicalViewportSize = viewportSize.Scale(contentScale);
+
+			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {viewportSize}. ContentScale: {contentScale}, BaseScale: {baseScale}. " +
+				$"Scaled Extent: {scaledExtent}, ViewportSize: {physicalViewportSize}.");
 		}
 
 		#endregion

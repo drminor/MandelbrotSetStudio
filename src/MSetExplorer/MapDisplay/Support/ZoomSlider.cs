@@ -153,10 +153,29 @@ namespace MSetExplorer
 				b = 1;
 				r = 0.625;
 			}
-			else
+			else if (contentScale == 0.25)
 			{
 				b = 2;
 				r = 1;
+			}
+			else if (contentScale == 0.1875)
+			{
+				b = 2;
+				r = 0.75;
+			}
+			else if (contentScale == 0.125)
+			{
+				b = 3;
+				r = 1;
+			}
+			else if (contentScale == 0.0625)
+			{
+				b = 4;
+				r = 1;
+			}
+			else
+			{
+				throw new InvalidOperationException($"The value: {contentScale} is not a supported value for ContentScale.");
 			}
 
 			return (b, r);
@@ -194,8 +213,8 @@ namespace MSetExplorer
 		7/16	0.4375		1		0.875		0.5 * 0.875				= 0.5 x ((2 * 7) / 16) 14/16 = 0.875
 		6/16	0.375		1		0.75		0.5 * 3/4				= 1.5/4 = 3/8 = 6/16
 		5/16	0.3125		1		0.625		0.5 * 5/8
-		4/16	0.25		2		1			0.5 * 0.5 * 1			= 0.25 * 1 = 0.25			
-		3/16	0.1875		2		0.5			0.5 * 0.5 * 12/16		= 0.25 x 12/16 = (0.25 * 12) / 16 = 3/16
+		4/16	0.25		2		1			0.5 * 0.5 * 1		4	= 0.25 * 1 = 0.25			
+		3/16	0.1875		2		0.75		0.5 * 0.5 * 12/16		= 0.25 x 12/16 = (0.25 * 12) / 16 = 3/16
 		2/16	0.125		3		1			0.5 * 0.5 * 0.5 x 1
 		1/16				4		1			0.5 x 0.5 * 0.5 * 0.5	8/16 ^4 = 8^4 / 16^4 = 4096 / 65536 = 1/16 = 0.0625
 

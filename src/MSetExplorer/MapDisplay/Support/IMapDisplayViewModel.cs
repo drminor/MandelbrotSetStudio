@@ -39,8 +39,9 @@ namespace MSetExplorer
 
 		SizeDbl UnscaledExtent { get; }
 		SizeDbl ViewportSize { get; }
-
 		VectorDbl DisplayPosition { get; }
+
+		SizeDbl ScaledExtent { get; }
 
 		double DisplayZoom { get; }
 		double MinimumDisplayZoom { get; }

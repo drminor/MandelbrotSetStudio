@@ -296,6 +296,13 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region IContentScaler Support
+
+		private IContentScaler? _contentScaler;
+
+		#endregion
+
+
 		/* Sample MeasureOverrride and ArrangeOverride implementations.
 
 		/// <summary>
