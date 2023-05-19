@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using Windows.Media.Ocr;
 
@@ -92,13 +93,13 @@ namespace MSetExplorer
 
 			var baseScale = PanAndZoomControl1.ZoomSliderOwner?.BaseValue ?? 1.0;
 
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale, baseScale);
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset/*, e.ContentScale*/, baseScale);
 
 			//var scaledExtent = _vm.UnscaledExtent.Scale(e.ContentScale);
 			//var outline = new RectangleDbl(new PointDbl(), scaledExtent);
 			//ShowOutline(scaledExtent, PanAndZoomControl1.ViewportSize);
 
-			ShowOutline(_vm.ScaledExtent, PanAndZoomControl1.ViewportSize);
+			ShowOutline(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
@@ -112,7 +113,7 @@ namespace MSetExplorer
 			//var outline = new RectangleDbl(new PointDbl(), scaledExtent);
 			//ShowOutline(scaledExtent, PanAndZoomControl1.ViewportSize);
 
-			ShowOutline(_vm.ScaledExtent, PanAndZoomControl1.ViewportSize);
+			ShowOutline(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)
@@ -126,56 +127,80 @@ namespace MSetExplorer
 			//var outline = new RectangleDbl(new PointDbl(), scaledExtent);
 			//ShowOutline(scaledExtent, PanAndZoomControl1.ViewportSize);
 
-			ShowOutline(_vm.ScaledExtent, PanAndZoomControl1.ViewportSize);
+			ShowOutline(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private void ShowOutline(SizeDbl scaledExtent, SizeDbl viewportSize)
+		private void ShowOutline(SizeDbl unscaledExtent, SizeDbl viewportSize, double contentScale)
 		{
 			if (DRAW_OUTLINE)
 			{
+				var scaledExtent = unscaledExtent.Scale(contentScale);
+
 				var x = Math.Max(0, (viewportSize.Width - scaledExtent.Width) / 2);
 				var y = Math.Max(0, (viewportSize.Height - scaledExtent.Height) / 2);
 
-				var invertedY = viewportSize.Height - y;
+				var displayOffset = new PointDbl(x, y);
 
-
-				// Position the outline rectangle.
-				_outline.SetValue(Canvas.LeftProperty, x);
-				_outline.SetValue(Canvas.BottomProperty, invertedY);
-				//_outline.SetValue(Canvas.TopProperty, y);
-
-				_outline.Width = scaledExtent.Width;
-				_outline.Height = scaledExtent.Height;
-				_outline.Visibility = Visibility.Visible;
-
-				if (scaledExtent.Width < viewportSize.Width || scaledExtent.Height < viewportSize.Height)
+				if (x > 0 || y > 0)
 				{
-					OffsetAndClip(x, y, scaledExtent);
 
-					Debug.WriteLine($"Scaled Extent is smaller than viewportSize. CanvasOffset: {x}, {y} (InvertedY: {invertedY}). Clip Size: {scaledExtent}, Viewport Size: {viewportSize}.");
+					var scaleFactor = ZoomSlider.GetScaleFactor(contentScale);
+					var screenToRelativeScaleFactor = scaleFactor / contentScale;
+
+					var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(contentScale);
+
+					var chkRelativeScale = 1 / relativeScale;
+					Debug.Assert(Math.Abs(screenToRelativeScaleFactor - chkRelativeScale) < 0.1, "ScreenToRelativeScaleFactor maybe incorrect.");
+
+					// Build rectangle for the position and size on screen
+					var displayArea = new RectangleDbl(displayOffset, scaledExtent);
+
+					// The screen is scaled by relativeScale;
+					// multiply this by 1 / relativeScale to draw on the canvas so that
+					// the end result is no scaling for what's drawn
+					var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
+
+					// Position the outline rectangle.
+					//_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
+					//_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
+
+					//_outline.Width = scaledDisplayArea.Width;
+					//_outline.Height = scaledDisplayArea.Height;
+					//_outline.Visibility = Visibility.Visible;
+
+					//OffsetAndClip(clipRect);
+
+					// Center the Canvas, using Canvas coordinates
+					BitmapGridControl1.CanvasOffset = new VectorDbl(scaledDisplayArea.Position);
+					var scaledDisplaySize = ScreenTypeHelper.ConvertToSize(scaledDisplayArea.Size);
+
+					BitmapGridControl1.CanvasClip = new RectangleGeometry(new Rect(scaledDisplaySize));
+
+					Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {displayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayOffset}. Clip Position: {scaledDisplayArea.Position}. Clip Size: {scaledDisplayArea.Size}.");
 				}
 				else
 				{
-					Debug.WriteLine($"Scaled Extent is NOT smaller than viewportSize. Drawing rectangle at {x}, {y} (InvertedY: {invertedY}).");
+					Debug.WriteLine($"Scaled Extent is NOT smaller than viewportSize. ScaledExtent: {scaledExtent} ViewportSize: {viewportSize}. DisplayOffset: {displayOffset}.");
 
 					BitmapGridControl1.CanvasOffset = VectorDbl.Zero;
+					BitmapGridControl1.CanvasClip = null;
 				}
 			}
 		}
 
-		private void OffsetAndClip(double x, double y, SizeDbl clipSize) 
-		{
-			// Center the Canvas
-			BitmapGridControl1.CanvasOffset = new VectorDbl(x, -1 * y);
+		//private void OffsetAndClip(RectangleDbl clipRectangle) 
+		//{
+		//	// Center the Canvas
+		//	BitmapGridControl1.CanvasOffset = new VectorDbl(clipRectangle.Position);
 
-			// Clip the Image
-			var clipRect = new Rect(new Point(x, y), ScreenTypeHelper.ConvertToSize(clipSize));
-			BitmapGridControl1.Clip = new RectangleGeometry(clipRect);
-		}
+		//	// Clip the Image
+		//	//var clipRect = ScreenTypeHelper.ConvertToRect(clipRectangle);
+		//	//BitmapGridControl1.Clip = new RectangleGeometry(clipRect);
+		//}
 
 		private void HideOutline()
 		{

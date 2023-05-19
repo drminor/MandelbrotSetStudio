@@ -23,7 +23,7 @@ namespace MSetExplorer
 			PosterSize = new SizeDbl(MapAreaInfoWithSize.CanvasSize);
 			ViewportSize = viewportSize;
 
-			ContentScale = contentScale;
+			//ContentScale = contentScale;
 			_baseScale = baseScale;
 
 			ScaleFactor = Math.Pow(0.5, _baseScale);
@@ -65,7 +65,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public double ContentScale { get; set; }
+		//public double ContentScale { get; set; }
 
 		public double ScaleFactor { get; private set; }
 
@@ -74,10 +74,10 @@ namespace MSetExplorer
 		#region Public Methods
 
 		// New Size and Position
-		public MapAreaInfo GetView(SizeDbl viewportSize, VectorDbl newDisplayPosition, double contentScale, double baseScale)
+		public MapAreaInfo GetView(SizeDbl viewportSize, VectorDbl newDisplayPosition/*, double contentScale*/, double baseScale)
 		{
 			ViewportSize = viewportSize;
-			ContentScale = contentScale;
+			//ContentScale = contentScale;
 			BaseScale = baseScale;
 
 			return GetView(newDisplayPosition);
@@ -86,18 +86,6 @@ namespace MSetExplorer
 		// New postion, same size
 		public MapAreaInfo GetView(VectorDbl newDisplayPosition)
 		{
-			//var newScreenArea = new RectangleDbl(new PointDbl(DisplayPositionWithInverseY), ViewportSize);
-			//var scaledNewScreenArea = newScreenArea.Scale(ScaleFactor);
-
-			//var displayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, GetInvertedYPos(newDisplayPosition.Y));
-			//var scaledDispPos = displayPositionWithInverseY.Scale(ScaleFactor);
-
-			//// -- Scale the Position and Size separately
-			//var scaledDispPos = GetScaledDisplayPosition(newDisplayPosition, out _);
-			//var scaledViewportSize = ViewportSize.Scale(ScaleFactor);
-			//var scaledNewScreenArea = new RectangleDbl(scaledDispPos, scaledViewportSize);
-
-
 			// -- Scale the Position and Size together.
 			var invertedY = GetInvertedYPos(newDisplayPosition.Y);
 			var displayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, invertedY);
@@ -147,19 +135,29 @@ namespace MSetExplorer
 			return mapAreaInfoV1;
 		}
 
+		//private double GetInvertedYPos(double yPos)
+		//{
+		//	// The yPos has not been scaled, use the same values, used by the PanAndZoomControl
+
+		//	var maxV = PosterSize.Height;
+
+		//	// Calculate the physicalViewport Size using the ContentViewportSize.
+		//	var physicalViewportHeight = ViewportSize.Height * ScaleFactor;
+		//	var result = maxV - (yPos + physicalViewportHeight);
+
+		//	//var result = maxV - (yPos + ViewportSize.Height);
+
+		//	//var result = maxV - yPos;
+
+		//	return result;
+		//}
+
 		private double GetInvertedYPos(double yPos)
 		{
 			// The yPos has not been scaled, use the same values, used by the PanAndZoomControl
 
-			var maxV = PosterSize.Height;
-
-			// Calculate the physicalViewport Size using the ContentViewportSize.
-			var physicalViewportHeight = ViewportSize.Height * ScaleFactor;
-			var result = maxV - (yPos + physicalViewportHeight);
-
-			//var result = maxV - (yPos + ViewportSize.Height);
-
-			//var result = maxV - yPos;
+			var maxV = PosterSize.Height - ViewportSize.Height;
+			var result = maxV - yPos;
 
 			return result;
 		}

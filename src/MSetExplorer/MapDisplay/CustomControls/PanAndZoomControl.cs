@@ -151,7 +151,7 @@ namespace MSetExplorer
 
 			ContentBeingZoomed?.Measure(availableSize);
 
-			UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(availableSize));
+			//UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(availableSize));
 
 			double width = availableSize.Width;
 			double height = availableSize.Height;
@@ -171,6 +171,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
 
 			// TODO: Figure out when its best to call UpdateViewportSize.
+			// ANSWER: Don't call Update during Measure, only during Arrange.
 			//UpdateViewportSize(childSize);
 			//UpdateViewportSize(result);
 
@@ -470,7 +471,7 @@ namespace MSetExplorer
 			double maxOffsetY = c._maxContentOffset.Height;
 			value = Math.Min(Math.Max(value, minOffsetY), maxOffsetY);
 
-			//Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}.");
+			Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}.");
 
 			return value;
 		}

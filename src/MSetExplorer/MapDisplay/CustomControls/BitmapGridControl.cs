@@ -33,6 +33,7 @@ namespace MSetExplorer
 		private ScaleTransform _canvasScaleTransform;
 
 		private VectorDbl _canvasOffset;
+		private RectangleGeometry? _canvasClip;
 
 		#endregion
 
@@ -70,7 +71,38 @@ namespace MSetExplorer
 			_canvasRenderTransform.Children.Add(_canvasScaleTransform);
 
 			_canvas.RenderTransform = _canvasRenderTransform;
+
+			_canvasOffset = new VectorDbl();
+			_canvasClip = null;
+
+			//MouseEnter += BitmapGridControl_MouseEnter;
+			//MouseLeave += BitmapGridControl_MouseLeave;
 		}
+
+		//private void BitmapGridControl_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+		//{
+		//	//SetTheCanvasTranslateTransform(new VectorDbl(), _canvasOffset);
+		//	//Clip = _clipT;
+
+		//	if (_clipT != null)
+		//	{
+		//		_canvas.ClipToBounds = false;
+		//		_canvas.Clip = _clipT;
+		//	}
+		//	else
+		//	{
+		//		_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+		//	}
+		//}
+
+		//private void BitmapGridControl_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+		//{
+		//	//SetTheCanvasTranslateTransform(_canvasOffset, new VectorDbl());
+		//	//Clip = null;
+
+		//	_canvas.ClipToBounds = false;
+		//	_canvas.Clip = null;
+		//}
 
 		#endregion
 
@@ -106,6 +138,7 @@ namespace MSetExplorer
 			{
 				_canvas = value;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+				_canvas.Clip = _canvasClip;
 				_canvas.RenderTransform = _canvasRenderTransform;
 			}
 		}
@@ -122,7 +155,6 @@ namespace MSetExplorer
 					_image.SizeChanged += Image_SizeChanged;
 
 					_image.Source = BitmapGridImageSource;
-					//_image.RenderTransform = _canvasScaleTransform;
 
 					UpdateImageOffset(ImageOffset);
 
@@ -233,16 +265,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorDbl CanvasOffset
-		{
-			get => _canvasOffset;
-			set
-			{
-				_canvasOffset = value;
-				SetTheCanvasTranslateTransform(CanvasOffset);
-			}
-		}
-
 		ScaleTransform IContentScaler.ScaleTransform
 		{
 			get => _controlScaleTransform;
@@ -258,6 +280,27 @@ namespace MSetExplorer
 
 					UpdateImageOffset(ImageOffset);
 				}
+			}
+		}
+
+		public VectorDbl CanvasOffset
+		{
+			get => _canvasOffset;
+			set
+			{
+				var previousVal = _canvasOffset;
+				_canvasOffset = value;
+				SetTheCanvasTranslateTransform(previousVal, value);
+			}
+		}
+
+		public RectangleGeometry? CanvasClip
+		{
+			get => _canvasClip;
+			set
+			{
+				_canvasClip = value;
+				_canvas.Clip = value;
 			}
 		}
 
@@ -394,7 +437,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods
+		#region Private Methods - Canvas
 
 		private void SetTheCanvasSize(SizeDbl contentViewportSize, ScaleTransform st)
 		{
@@ -405,7 +448,8 @@ namespace MSetExplorer
 
 			CompareViewportAndContentViewportSizes(viewportSize, contentViewportSize, scaleFactor, relativeScale);
 
-			var newCanvasSize = contentViewportSize.Scale(scaleFactor);
+			//var newCanvasSize = contentViewportSize.Scale(scaleFactor);
+			var newCanvasSize = viewportSize.Divide(relativeScale);
 
 			Debug.WriteLine($"The BitmapGridControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
 
@@ -426,9 +470,9 @@ namespace MSetExplorer
 			_canvasScaleTransform.ScaleY = relativeScale;
 		}
 
-		private void SetTheCanvasTranslateTransform(VectorDbl canvasOffset)
+		private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl canvasOffset)
 		{
-			Debug.WriteLine($"Setting the BitmapGridControl's CanvasOffset to {canvasOffset}. The ImageOffset is {ImageOffset}.");
+			Debug.WriteLine($"The BitmapGridControl's CanvasOffset is being set to {canvasOffset} from {previousValue}. The ImageOffset is {ImageOffset}.");
 
 			_canvasTranslateTransform.X = canvasOffset.X;
 			_canvasTranslateTransform.Y = canvasOffset.Y;
@@ -440,7 +484,6 @@ namespace MSetExplorer
 			//Debug.WriteLine($"Updating ImageOffset: raw: {rawValue}, scaled: {newValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_scaleTransform.ScaleX}.");
 
 			var newValue = rawValue;
-			Debug.WriteLine($"Updating ImageOffset: {newValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
 
 
 			// For a positive offset, we "pull" the image down and to the left.
@@ -453,6 +496,10 @@ namespace MSetExplorer
 
 			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
 			{
+				Debug.WriteLine($"The BitmapGridControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
+
+				CompareCanvasAndControlHeights();
+
 				Image.SetValue(Canvas.LeftProperty, invertedValue.X);
 				Image.SetValue(Canvas.BottomProperty, invertedValue.Y);
 
@@ -482,9 +529,25 @@ namespace MSetExplorer
 			var contentViewportSizeReduced = contentViewportSize.Scale(scaleFactor);
 			var viewportSizeExpanded = viewportSize.Scale(1 / relativeScale);
 
-			if (ScreenTypeHelper.IsSizeDblChanged(contentViewportSizeReduced, viewportSizeExpanded))
+			if (ScreenTypeHelper.IsSizeDblChanged(contentViewportSizeReduced, viewportSizeExpanded, threshold: 1.1))
 			{
 				Debug.WriteLine("WARNING: The ContentViewport and Viewport Sizes when scaled appropriately are not equal.");
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void CompareCanvasAndControlHeights()
+		{
+			// The contentViewportSize when reduced by the BaseScale Factor
+			// should equal the ViewportSize when it is expanded by the RelativeScale
+
+			//var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(_controlScaleTransform.ScaleX);
+
+			//var canvasHeightScaled = Canvas.ActualHeight * relativeScale;
+
+			if (Math.Abs(Canvas.ActualHeight - ActualHeight) > 0.1)
+			{
+				Debug.WriteLine($"WARNING: The Canvas Height : {Canvas.ActualHeight} does not match the BitmapGridControl's height: {ActualHeight}.");
 			}
 		}
 
