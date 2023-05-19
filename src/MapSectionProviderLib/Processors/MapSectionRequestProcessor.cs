@@ -23,7 +23,7 @@ namespace MapSectionProviderLib
 		private readonly bool SAVE_THE_ZVALUES;
 
 		private const int NUMBER_OF_CONSUMERS = 2;
-		private const int QUEUE_CAPACITY = 10; //200;
+		private const int QUEUE_CAPACITY = 200; //100;
 
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly MapSectionBuilder _mapSectionHelper;
@@ -49,7 +49,7 @@ namespace MapSectionProviderLib
 		private int _nextJobId;
 		private bool disposedValue;
 
-		//private bool _isStopped;
+		private bool _isStopped;
 
 		#endregion
 
@@ -96,8 +96,9 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public List<Tuple<MapSectionRequest, MapSectionResponse>> FetchResponses(List<MapSectionRequest> mapSectionRequests)
+		public List<Tuple<MapSectionRequest, MapSectionResponse>> FetchResponses(List<MapSectionRequest> mapSectionRequests, out int jobNumber)
 		{
+			jobNumber = GetNextRequestId();
 			var result = new List<Tuple<MapSectionRequest, MapSectionResponse>>();
 
 			MapSectionVectors? mapSectionVectors = null;
@@ -190,12 +191,15 @@ namespace MapSectionProviderLib
 
 		public void Stop(bool immediately)
 		{
+			_mapSectionGeneratorProcessor?.Stop(immediately);
+			_mapSectionResponseProcessor?.Stop(immediately);
+
 			lock (_cancelledJobsLock)
 			{
-				//if (_isStopped)
-				//{
-				//	return;
-				//}
+				if (_isStopped)
+				{
+					return;
+				}
 
 				if (immediately)
 				{
@@ -209,7 +213,7 @@ namespace MapSectionProviderLib
 					}
 				}
 
-				//_isStopped = true;
+				_isStopped = true;
 			}
 
 			try
@@ -221,9 +225,6 @@ namespace MapSectionProviderLib
 				}
 			}
 			catch { }
-
-			_mapSectionGeneratorProcessor?.Stop(immediately);
-			_mapSectionResponseProcessor?.Stop(immediately);
 		}
 
 		public int GetNextRequestId()

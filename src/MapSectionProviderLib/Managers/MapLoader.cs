@@ -11,7 +11,6 @@ namespace MapSectionProviderLib
 {
 	public class MapLoader
 	{
-
 		private readonly Action<MapSection> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
@@ -100,6 +99,16 @@ namespace MapSectionProviderLib
 			_mapSectionRequestProcessor.MarkJobAsComplete(JobNumber);
 		}
 
+		public void CancelRequest(MapSection mapSection)
+		{
+			MapSectionRequest? req = _mapSectionRequests?.FirstOrDefault(x => x.ScreenPosition == mapSection.ScreenPosition);
+
+			if (req != null)
+			{
+				req.CancellationTokenSource.Cancel();
+			}
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -125,11 +134,15 @@ namespace MapSectionProviderLib
 
 				//Debug.WriteLine($"Sending request: {blockPosition}::{mapPosition} for ScreenBlkPos: {screenPosition}");
 
-				mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
-				_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
-				mapSectionRequest.Sent = true;
+				if (!mapSectionRequest.CancellationTokenSource.IsCancellationRequested)
+				{
 
-				_ = Interlocked.Increment(ref _sectionsRequested);
+					mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
+					_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
+					mapSectionRequest.Sent = true;
+
+					_ = Interlocked.Increment(ref _sectionsRequested);
+				}
 			}
 		}
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace MSS.Types.MSet
 {
@@ -23,6 +24,7 @@ namespace MSS.Types.MSet
 			SamplePointDelta = samplePointDelta;
 			MapCalcSettings = mapCalcSettings;
 			RequestNumber = requestNumber;
+			CancellationTokenSource = new CancellationTokenSource();
 
 			ProcessingStartTime = DateTime.UtcNow;
 		}
@@ -65,6 +67,8 @@ namespace MSS.Types.MSet
 		public RSize SamplePointDelta { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
 		public int RequestNumber { get; init; }
+
+		public CancellationTokenSource CancellationTokenSource { get; init; }
 
 		public int Precision { get; set; }
 		public int LimbCount { get; set; }

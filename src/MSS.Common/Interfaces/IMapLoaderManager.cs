@@ -11,22 +11,18 @@ namespace MSS.Common
 		event EventHandler<JobProgressInfo>? RequestAdded;
 		event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		//int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback);
-		List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, 
-			Action<MapSection> callback, out int jobNumber);
-
-		//int Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback);
 		List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
-			IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber);
+			IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration);
 
-		//int Push(IList<MapSectionRequest> mapSectionRequests, Action<MapSection> callback);
-		List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber);
+		List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber, out List<MapSectionRequest> pendingGeneration);
 
 		Task? GetTaskForJob(int jobNumber);
 		TimeSpan? GetExecutionTimeForJob(int jobNumber);
 		int GetPendingRequests(int jobNumber);
 
 		void StopJob(int jobNumber);
+		void CancelRequests(IList<MapSection> sectionsToCancel);
+
 
 		//long NumberOfCountValSwitches { get; }
 	}

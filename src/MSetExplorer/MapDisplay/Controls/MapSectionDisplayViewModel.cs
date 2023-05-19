@@ -51,6 +51,7 @@ namespace MSetExplorer
 			BoundedMapArea = null;
 
 			MapSections = new ObservableCollection<MapSection>();
+			MapSectionsPendingGeneration = new ObservableCollection<MapSection>();
 
 			_bitmapGrid = new BitmapGrid(MapSections, new SizeDbl(128), DisposeMapSection, OnBitmapUpdate, blockSize);
 
@@ -83,6 +84,8 @@ namespace MSetExplorer
 		#region Public Properties - Content
 
 		public ObservableCollection<MapSection> MapSections { get; init; }
+
+		public ObservableCollection<MapSection> MapSectionsPendingGeneration { get; init; }
 
 		public AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings
 		{
@@ -287,6 +290,7 @@ namespace MSetExplorer
 			{
 				CheckVPSize();
 
+				var lastSectionWasIncluded = false;
 				int? newJobNumber = null;
 
 				if (posterSize != null)
@@ -294,9 +298,7 @@ namespace MSetExplorer
 					// Bounded
 
 					// Save the MapAreaInfo for the entire poster.
-					var contentScale = 1;
-					var baseScale = 0;
-					BoundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize.Value, ViewportSize, contentScale, baseScale);
+					BoundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize.Value, ViewportSize);
 					
 					var previousValue = CurrentAreaColorAndCalcSettings;
 					if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue);
@@ -306,14 +308,9 @@ namespace MSetExplorer
 					var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
 
 					StopCurrentJobAndClearDisplay();
-					newJobNumber = DiscardAndLoad(newValue, mapAreaInfo2Subset, out var lastSectionWasIncluded);
+					newJobNumber = DiscardAndLoad(newValue, mapAreaInfo2Subset, out lastSectionWasIncluded);
 
 					CurrentAreaColorAndCalcSettings = newValue;
-
-					if (newJobNumber.HasValue && lastSectionWasIncluded)
-					{
-						DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
-					}
 				}
 				else
 				{
@@ -326,15 +323,20 @@ namespace MSetExplorer
 						if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue);
 
 						CurrentAreaColorAndCalcSettings = newValue;
-						newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings);
+						newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
 					}
+				}
+
+				if (newJobNumber.HasValue && lastSectionWasIncluded)
+				{
+					DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
 				}
 
 				return newJobNumber;
 			}
 		}
 
-		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset/*, double contentScale*/, double baseScale)
+		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double baseScale)
 		{
 			int? newJobNumber;
 
@@ -351,7 +353,7 @@ namespace MSetExplorer
 					throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
 				}
 
-				newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, contentViewportSize, contentOffset/*, contentScale*/, baseScale);
+				newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, contentViewportSize, contentOffset, baseScale);
 			}
 
 			return newJobNumber;
@@ -435,10 +437,13 @@ namespace MSetExplorer
 				if (currentJob != null && !currentJob.IsEmpty)
 				{
 					var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, ViewportSize);
-					var newMapSections = _mapLoaderManager.Push(currentJob.JobId, currentJob.JobOwnerType, screenAreaInfo, currentJob.MapCalcSettings, MapSectionReady, out var newJobNumber);
+					var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, currentJob.MapCalcSettings);
+					var newMapSections = _mapLoaderManager.Push(currentJob.JobId, currentJob.JobOwnerType, screenAreaInfo, currentJob.MapCalcSettings, sectionsRequired, MapSectionReady, 
+						out var newJobNumber, out var mapSectionsPendingGeneration);
 
-					var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
-					Debug.WriteLine($"Restarting paused job: received {newMapSections.Count}, {requestsPending} are being generated.");
+					AddPendingSections(mapSectionsPendingGeneration);
+
+					Debug.WriteLine($"Restarting paused job: received {newMapSections.Count}, {mapSectionsPendingGeneration.Count} are being generated.");
 
 					result = newJobNumber;
 					lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
@@ -456,6 +461,14 @@ namespace MSetExplorer
 			}
 
 			return result;
+		}
+
+		private void AddPendingSections(IList<MapSection> pendingSections)
+		{
+			foreach(var ms in pendingSections)
+			{
+				MapSectionsPendingGeneration.Add(ms);
+			}
 		}
 
 		public void ClearDisplay()
@@ -511,6 +524,7 @@ namespace MSetExplorer
 				lock (_paintLocker)
 				{
 					_bitmapGrid.GetAndPlacePixels(mapSection, mapSection.MapSectionVectors);
+					MapSectionsPendingGeneration.Remove(mapSection);
 				}
 			}
 
@@ -524,7 +538,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset/*, double contentScale*/, double baseScale)
+		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset, double baseScale)
 		{
 			int? newJobNumber = null;
 			bool lastSectionWasIncluded = false;
@@ -588,11 +602,9 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob)
+		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob, out bool lastSectionWasIncluded)
 		{
 			int? newJobNumber;
-
-			var lastSectionWasIncluded = false;
 
 			if (newJob != null && !newJob.IsEmpty)
 			{
@@ -611,12 +623,8 @@ namespace MSetExplorer
 			else
 			{
 				StopCurrentJobAndClearDisplay();
+				lastSectionWasIncluded = false;
 				newJobNumber = null;
-			}
-
-			if (newJobNumber.HasValue && lastSectionWasIncluded)
-			{
-				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
 			}
 
 			return newJobNumber;
@@ -627,14 +635,29 @@ namespace MSetExplorer
 			LastMapAreaInfo = screenAreaInfo;
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
-			var loadedSections = new ReadOnlyCollection<MapSection>(MapSections);
+			var loadedSections = new List<MapSection>(MapSections);
+			
+			foreach(var ms in MapSectionsPendingGeneration)
+			{
+				loadedSections.Add(ms);
+			}
 
 			var sectionsToLoad = GetSectionsToLoadAndRemove(sectionsRequired, loadedSections, out var sectionsToRemove);
 
+			var sectionsToCancel = new List<MapSection>();
+
 			foreach (var section in sectionsToRemove)
 			{
-				MapSections.Remove(section);
-				_mapSectionHelper.ReturnMapSection(section);
+				if (MapSectionsPendingGeneration.Contains(section))
+				{
+					MapSectionsPendingGeneration.Remove(section);
+					sectionsToCancel.Add(section);
+				}
+				else
+				{
+					MapSections.Remove(section);
+					_mapSectionHelper.ReturnMapSection(section);
+				}
 			}
 	
 			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
@@ -645,53 +668,23 @@ namespace MSetExplorer
 
 			int? result;
 
-			//if (sectionsToRemove.Count == 0 && sectionsToLoad.Count == 0)
-			//{
-			//	Debug.WriteLine($"Reusing Loaded Sections: No change. Keeping {MapSections.Count}. {_mapSectionHelper.MapSectionsVectorsInPool} MapSection in the pool.");
-			//	lastSectionWasIncluded = false;
-			//	result = null;
-			//}
-			//else
-			//{
-			//	var sectionsRemoved = _bitmapGrid.ReDrawSections();
-
-			//	Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, we removed {sectionsToRemove.Count} ReDraw removed {sectionsRemoved}. Keeping {MapSections.Count}. {_mapSectionHelper.MapSectionsVectorsInPool} MapSection in the pool.");
-
-			//	if (sectionsToLoad.Count > 0)
-			//	{
-			//		var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
-			//		var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
-			//		Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
-
-			//		lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
-
-			//		result = newJobNumber;
-
-			//		//ActiveJobNumbers.Add(newJobNumber);
-			//		AddJobNumber(newJobNumber);
-			//	}
-			//	else
-			//	{
-			//		lastSectionWasIncluded = false;
-			//		result = null;
-			//	}
-			//}
-
 			var sectionsRemoved = _bitmapGrid.ReDrawSections();
 
 			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, we removed {sectionsToRemove.Count} ReDraw removed {sectionsRemoved}. Keeping {MapSections.Count}. {_mapSectionHelper.MapSectionsVectorsInPool} MapSection in the pool.");
 
 			if (sectionsToLoad.Count > 0)
 			{
-				var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber);
-				var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
-				Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
+				var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady,
+					out var newJobNumber, out var mapSectionsPendingGeneration);
+
+				AddPendingSections(mapSectionsPendingGeneration);
+
+				Debug.WriteLine($"Fetching New Sections: received {newMapSections.Count}, {mapSectionsPendingGeneration.Count} are being generated.");
 
 				lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
 
 				result = newJobNumber;
 
-				//ActiveJobNumbers.Add(newJobNumber);
 				AddJobNumber(newJobNumber);
 			}
 			else
@@ -709,10 +702,12 @@ namespace MSetExplorer
 
 			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
 
-			var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsRequired, MapSectionReady, out var newJobNumber);
+			var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsRequired, MapSectionReady,
+					out var newJobNumber, out var mapSectionsPendingGeneration);
 
-			var requestsPending = _mapLoaderManager.GetPendingRequests(newJobNumber);
-			Debug.WriteLine($"Clearing Display and Loading New Sections: received {newMapSections.Count}, {requestsPending} are being generated.");
+			AddPendingSections(mapSectionsPendingGeneration);
+
+			Debug.WriteLine($"Clearing Display and Loading New Sections: received {newMapSections.Count}, {mapSectionsPendingGeneration.Count} are being generated.");
 
 			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
 
@@ -721,7 +716,6 @@ namespace MSetExplorer
 			ColorBandSet = newJob.ColorBandSet;
 			lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
 
-			//ActiveJobNumbers.Add(newJobNumber);
 			AddJobNumber(newJobNumber);
 
 			return newJobNumber;
@@ -762,7 +756,7 @@ namespace MSetExplorer
 			return inSameSubdivision;
 		}
 
-		private List<MapSection> GetSectionsToLoadAndRemove(List<MapSection> sectionsToRequest, IReadOnlyList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)
+		private List<MapSection> GetSectionsToLoadAndRemove(List<MapSection> sectionsToRequest, IList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)
 		{
 			var result = new List<MapSection>(sectionsToRequest);
 

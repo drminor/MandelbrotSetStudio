@@ -107,7 +107,7 @@ namespace MSS.Types
 		/// <returns>Example: FlipY(p1:(0,0), p2:(100,100), 200) -> p1:(0,200), p2:100,100) </returns>
 		public RectangleDbl FlipY(double maxY)
 		{
-			return new RectangleDbl(X1, X2, maxY - Y1, maxY - Y2);
+			return new RectangleDbl(X1, X2, maxY - Y2, maxY - Y1);
 		}
 
 		public RectangleDbl MakeSafe()

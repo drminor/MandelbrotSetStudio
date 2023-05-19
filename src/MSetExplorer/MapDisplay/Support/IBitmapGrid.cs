@@ -23,6 +23,6 @@ namespace MSetExplorer
 		bool DrawSections(IList<MapSection> mapSections);
 		int ReDrawSections();
 
-		void GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);
+		bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);
 	}
 }

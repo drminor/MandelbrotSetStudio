@@ -14,7 +14,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public BoundedMapArea(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeInt posterSize, SizeDbl viewportSize, double contentScale, double baseScale)
+		public BoundedMapArea(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeInt posterSize, SizeDbl viewportSize)
 		{
 			_mapJobHelper = mapJobHelper;
 			_mapAreaInfo = mapAreaInfo;
@@ -23,10 +23,8 @@ namespace MSetExplorer
 			PosterSize = new SizeDbl(MapAreaInfoWithSize.CanvasSize);
 			ViewportSize = viewportSize;
 
-			//ContentScale = contentScale;
-			_baseScale = baseScale;
-
-			ScaleFactor = Math.Pow(0.5, _baseScale);
+			_baseScale = 0;
+			ScaleFactor = 1;
 
 			_scaledMapAreaInfo = MapAreaInfoWithSize;
 		}
@@ -65,8 +63,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public double ContentScale { get; set; }
-
 		public double ScaleFactor { get; private set; }
 
 		#endregion
@@ -74,10 +70,9 @@ namespace MSetExplorer
 		#region Public Methods
 
 		// New Size and Position
-		public MapAreaInfo GetView(SizeDbl viewportSize, VectorDbl newDisplayPosition/*, double contentScale*/, double baseScale)
+		public MapAreaInfo GetView(SizeDbl viewportSize, VectorDbl newDisplayPosition, double baseScale)
 		{
 			ViewportSize = viewportSize;
-			//ContentScale = contentScale;
 			BaseScale = baseScale;
 
 			return GetView(newDisplayPosition);
@@ -134,23 +129,6 @@ namespace MSetExplorer
 
 			return mapAreaInfoV1;
 		}
-
-		//private double GetInvertedYPos(double yPos)
-		//{
-		//	// The yPos has not been scaled, use the same values, used by the PanAndZoomControl
-
-		//	var maxV = PosterSize.Height;
-
-		//	// Calculate the physicalViewport Size using the ContentViewportSize.
-		//	var physicalViewportHeight = ViewportSize.Height * ScaleFactor;
-		//	var result = maxV - (yPos + physicalViewportHeight);
-
-		//	//var result = maxV - (yPos + ViewportSize.Height);
-
-		//	//var result = maxV - yPos;
-
-		//	return result;
-		//}
 
 		private double GetInvertedYPos(double yPos)
 		{

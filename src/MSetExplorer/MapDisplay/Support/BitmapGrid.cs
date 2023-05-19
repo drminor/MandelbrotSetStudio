@@ -349,18 +349,22 @@ namespace MSetExplorer
 			return sectionsDisposed.Count;
 		}
 
-		public void GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors)
+		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors)
 		{
-			Bitmap.Dispatcher.Invoke(DrawSectionOnUiThread, new object[] { mapSection, mapSectionVectors });
+			var result = Bitmap.Dispatcher.Invoke(DrawSectionOnUiThread, new object[] { mapSection, mapSectionVectors });
+
+			return (bool)result;
 		}
 
-		private void DrawSectionOnUiThread(MapSection mapSection, MapSectionVectors mapSectionVectors)
+		private bool DrawSectionOnUiThread(MapSection mapSection, MapSectionVectors mapSectionVectors)
 		{
+			var wasAdded = false;
 			var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
 			if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, "GetAndPlacePixels"))
 			{
 				_mapSections.Add(mapSection);
+				wasAdded = true;
 
 				if (_colorMap != null)
 				{
@@ -384,6 +388,8 @@ namespace MSetExplorer
 				Debug.WriteLineIf(DEBUG, $"Not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
 				_disposeMapSection(mapSection);
 			}
+
+			return wasAdded;
 		}
 
 		#endregion

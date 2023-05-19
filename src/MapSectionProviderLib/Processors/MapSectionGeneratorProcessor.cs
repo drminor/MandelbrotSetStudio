@@ -13,7 +13,7 @@ namespace MapSectionProviderLib
 	{
 		#region Private Properties
 
-		private const int QUEUE_CAPACITY = 200;
+		private const int QUEUE_CAPACITY = 500;
 
 		//private readonly IMEngineClient[] _mEngineClients;
 
@@ -141,58 +141,59 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private async Task ProcessTheQueueAsync(IMEngineClient mEngineClient, CancellationToken ct)
-		{
-			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
-			{
-				try
-				{
-					var mapSectionGenerateRequest = _workQueue.Take(ct);
+		//private async Task ProcessTheQueueAsync(IMEngineClient mEngineClient, CancellationToken ct)
+		//{
+		//	while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+		//	{
+		//		try
+		//		{
+		//			var mapSectionGenerateRequest = _workQueue.Take(ct);
 
-					// The original request is in the Request's Request property.
-					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
+		//			// The original request is in the Request's Request property.
+		//			var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
+		//			var cts = mapSectionRequest.CancellationTokenSource;
 
-					MapSectionResponse mapSectionResponse;
+		//			MapSectionResponse mapSectionResponse;
 
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out var cts))
-					{
-						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
-						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
-						mapSectionResponse.MapSectionVectors = msv;
-						mapSectionResponse.MapSectionZVectors = mszv;
+		//			if (IsJobCancelled(mapSectionGenerateRequest.JobId, cts))
+		//			{
+		//				mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
+		//				var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
+		//				mapSectionResponse.MapSectionVectors = msv;
+		//				mapSectionResponse.MapSectionZVectors = mszv;
 
-					}
-					else
-					{
-						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
-						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
-						mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest, cts.Token);
-						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
+		//			}
+		//			else
+		//			{
+		//				//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+		//				mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
+		//				mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
+		//				//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						if (!cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
-						{
-							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
-						}
+		//				if (!cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
+		//				{
+		//					Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
+		//				}
 
-						if (mapSectionRequest.MapSectionId != null)
-						{
-							Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
-						}
-					}
+		//				if (mapSectionRequest.MapSectionId != null)
+		//				{
+		//					Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
+		//				}
+		//			}
 
-					mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
-				}
-				catch (OperationCanceledException)
-				{
-					//Debug.WriteLine("The response queue got a OCE.");
-				}
-				catch (Exception e)
-				{
-					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
-					throw;
-				}
-			}
-		}
+		//			mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
+		//		}
+		//		catch (OperationCanceledException)
+		//		{
+		//			//Debug.WriteLine("The response queue got a OCE.");
+		//		}
+		//		catch (Exception e)
+		//		{
+		//			Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
+		//			throw;
+		//		}
+		//	}
+		//}
 
 		private void ProcessTheQueue(IMEngineClient mEngineClient, CancellationToken ct)
 		{
@@ -204,10 +205,11 @@ namespace MapSectionProviderLib
 
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
+					var cts = mapSectionRequest.CancellationTokenSource;
 
 					MapSectionResponse mapSectionResponse;
 
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId, out var cts))
+					if (IsJobCancelled(mapSectionGenerateRequest.JobId) || cts.IsCancellationRequested)
 					{
 						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
 						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
@@ -218,10 +220,10 @@ namespace MapSectionProviderLib
 					{
 						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
 						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
-						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, cts.Token);
+						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
 						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						if (!cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
+						if (!IsJobCancelled(mapSectionGenerateRequest.JobId) && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
 						{
 							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
 						}
@@ -246,19 +248,19 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private bool IsJobCancelled(int jobId, out CancellationTokenSource cts)
+		private bool IsJobCancelled(int jobId)
 		{
 			bool result;
 			lock (_jobsStatusLock)
 			{
 				if (_jobs.ContainsKey(jobId))
 				{
-					cts = _jobs[jobId];
+					var cts = _jobs[jobId];
 					result = cts.IsCancellationRequested;
 				}
 				else
 				{
-					cts = new CancellationTokenSource();
+					var cts = new CancellationTokenSource();
 					_jobs.Add(jobId, cts);
 					result = false;
 				}

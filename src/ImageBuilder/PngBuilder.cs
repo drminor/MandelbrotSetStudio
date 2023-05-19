@@ -192,7 +192,7 @@ namespace ImageBuilder
 			}
 
 			//_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
-			var mapSectionResponses = _mapLoaderManager.Push(requests, MapSectionReady, out var newJobNumber);
+			var mapSectionResponses = _mapLoaderManager.Push(requests, MapSectionReady, out var newJobNumber, out var _);
 			_currentJobNumber = newJobNumber;
 
 			_currentResponses = new Dictionary<int, MapSection?>();

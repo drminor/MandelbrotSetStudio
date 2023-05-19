@@ -17,6 +17,8 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 		ObservableCollection<MapSection> MapSections { get; }
+		ObservableCollection<MapSection> MapSectionsPendingGeneration { get; }
+		
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }
 
 		ColorBandSet ColorBandSet { get; set; }

@@ -145,16 +145,24 @@ namespace MEngineClient
 
 		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
-			var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest, ct);
-
-			if (++_sectionCntr % 10 == 0)
+			try
 			{
-				Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
+				var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest, ct);
+
+				if (++_sectionCntr % 10 == 0)
+				{
+					Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
+				}
+
+				//mapSectionResponse.IncludeZValues = false;
+
+				return mapSectionResponse;
 			}
-
-			//mapSectionResponse.IncludeZValues = false;
-
-			return mapSectionResponse;
+			catch (Exception e)
+			{
+				Debug.WriteLine($"GenerateMapSectionInternal raised Exception: {e}.");
+				throw;
+			}
 		}
 
 		#endregion

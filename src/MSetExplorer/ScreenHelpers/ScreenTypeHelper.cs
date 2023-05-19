@@ -160,6 +160,11 @@ namespace MSetExplorer
 			return new Rect(rectangle.X1, rectangle.Y1, rectangle.Width, rectangle.Height);	
 		}
 
+		//public static Rect ConvertToRectLoose(RectangleDbl rectangle)
+		//{
+		//	return new Rect(ConvertToPoint(rectangle.Point1), ConvertToPoint(rectangle.Point2));
+		//}
+
 		public static Rect CreateRect(PointInt pointInt, SizeInt sizeInt)
 		{
 			return new Rect(ConvertToPoint(pointInt), ConvertToSize(sizeInt));
