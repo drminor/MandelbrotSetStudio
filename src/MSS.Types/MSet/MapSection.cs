@@ -67,6 +67,8 @@ namespace MSS.Types
 
 			TargetIterations = targetIterations;
 			_histogram = new Lazy<IHistogram>(() => histogramBuilder(MapSectionVectors?.Counts ?? new ushort[0]), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+
+			ScreenPosHasBeenUpdated = false;
 		}
 
 		#endregion
@@ -77,12 +79,12 @@ namespace MSS.Types
 		public MapSectionVectors? MapSectionVectors { get; set; }
 
 		public string SubdivisionId { get; init; }
-		public BigVector JobMapBlockOffset { get; init; }	
+		public BigVector JobMapBlockOffset { get; private set; }	
 
 		// X,Y coordinates of this section relative to the Job's MapBlockOffset in block-size units.
 		public BigVector RepoBlockPosition { get; init; }
 		public bool IsInverted { get; init; }
-		public PointInt ScreenPosition { get; init; }
+		public PointInt ScreenPosition { get; private set; }
 
 		public SizeInt Size { get; init; }
 		public int TargetIterations { get; init; }
@@ -96,7 +98,16 @@ namespace MSS.Types
 		public MapSectionProcessInfo? MapSectionProcessInfo { get; set; }
 		public MathOpCounts? MathOpCounts { get; set; }
 
+		public bool ScreenPosHasBeenUpdated { get; set; }
+
 		#endregion
+
+		public void UpdateJobMapBlockOffsetAndPos(BigVector blockOffset, PointInt screenPos)
+		{
+			JobMapBlockOffset = blockOffset;
+			ScreenPosition = screenPos;
+			ScreenPosHasBeenUpdated = true;
+		}
 
 		public override string? ToString()
 		{

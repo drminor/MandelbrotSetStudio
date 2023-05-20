@@ -42,8 +42,14 @@ namespace MSetExplorer
 
 		public AreaColorAndCalcSettings UpdateWith(MapAreaInfo2 mapAreaInfo)
 		{
-			return new AreaColorAndCalcSettings(JobId, JobOwnerType, mapAreaInfo.Clone(), ColorBandSet.Clone(), MapCalcSettings.Clone());
+			return new AreaColorAndCalcSettings(JobId, JobOwnerType, mapAreaInfo.Clone(), ColorBandSet, MapCalcSettings);
+		}
+
+		public AreaColorAndCalcSettings UpdateWith(ColorBandSet colorBandSet)
+		{
+			return new AreaColorAndCalcSettings(JobId, JobOwnerType, MapAreaInfo, colorBandSet, MapCalcSettings);
 
 		}
+
 	}
 }

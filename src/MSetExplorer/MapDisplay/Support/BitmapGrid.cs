@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -272,7 +273,7 @@ namespace MSetExplorer
 
 							try
 							{
-								Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+								Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
 							}
 							catch (Exception e)
 							{
@@ -293,6 +294,33 @@ namespace MSetExplorer
 			}
 
 			return lastSectionWasIncluded;
+		}
+
+		public void ClearSections(IList<MapSection> mapSections)
+		{
+			var blockRowPixelCount = Bitmap.PixelWidth * _blockSize.Height;
+			var zeros = GetClearBytes(blockRowPixelCount * BYTES_PER_PIXEL);
+			var sourceStride = Bitmap.PixelWidth * BYTES_PER_PIXEL;
+
+			foreach (var mapSection in mapSections)
+			{
+				var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
+
+				if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, "Clear", warnOnFail: true))
+				{
+					var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+					var loc = invertedBlockPos.Scale(_blockSize);
+
+					try
+					{
+						Bitmap.WritePixels(_blockRect, zeros, sourceStride, loc.X, loc.Y);
+					}
+					catch (Exception e)
+					{
+						Debug.WriteLine($"DrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+					}
+				}
+			}
 		}
 
 		public int ReDrawSections()
@@ -325,7 +353,7 @@ namespace MSetExplorer
 
 							try
 							{
-								Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+								Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
 							}
 							catch (Exception e)
 							{
@@ -345,6 +373,8 @@ namespace MSetExplorer
 			{
 				_mapSections.Remove(ms);
 			}
+
+			ReportPercentMapSectionsWithUpdatedScrPos();
 
 			return sectionsDisposed.Count;
 		}
@@ -375,7 +405,7 @@ namespace MSetExplorer
 
 					try
 					{
-						Bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * 4, loc.X, loc.Y);
+						Bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
 					}
 					catch (Exception e)
 					{
@@ -414,6 +444,9 @@ namespace MSetExplorer
 				}
 
 				result = mapSection.ScreenPosition.Translate(offset);
+
+				// Update the mapSection's JobMapBlockOffset and ScreenPosition to avoid this transalation again.
+				mapSection.UpdateJobMapBlockOffsetAndPos(mapBlockOffset, result);
 			}
 
 			return result;
@@ -498,12 +531,12 @@ namespace MSetExplorer
 			// Clear the bitmap, one row of bitmap blocks at a time.
 			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, _blockSize.Height);
 			var blockRowPixelCount = bitmap.PixelWidth * _blockSize.Height;
-			var zeros = GetClearBytes(blockRowPixelCount * 4);
+			var zeros = GetClearBytes(blockRowPixelCount * BYTES_PER_PIXEL);
 
 			for (var vPtr = 0; vPtr < ImageSizeInBlocks.Height; vPtr++)
 			{
 				var offset = vPtr * _blockSize.Height;
-				bitmap.WritePixels(rect, zeros, rect.Width * 4, 0, offset);
+				bitmap.WritePixels(rect, zeros, rect.Width * BYTES_PER_PIXEL, 0, offset);
 			}
 		}
 
@@ -605,6 +638,14 @@ namespace MSetExplorer
 					}
 				}
 			}
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportPercentMapSectionsWithUpdatedScrPos()
+		{
+			var numberOfMapSectionsWithUpdatedScrPos = _mapSections.Count(x => x.ScreenPosHasBeenUpdated);
+			var percentWithUpdatedScrPos = 100 * (numberOfMapSectionsWithUpdatedScrPos / (double)_mapSections.Count);
+			Debug.WriteLine($"{percentWithUpdatedScrPos:F3} MapSections have updated Screen Positions.");
 		}
 
 		[Conditional("DEBUG2")]
