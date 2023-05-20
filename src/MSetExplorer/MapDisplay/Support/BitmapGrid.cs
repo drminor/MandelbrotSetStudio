@@ -19,8 +19,6 @@ namespace MSetExplorer
 		private const double VALUE_FACTOR = 10000;
 		private const int BYTES_PER_PIXEL = 4;
 
-		private readonly bool DEBUG = true;
-
 		private readonly SizeInt _blockSize;
 		private readonly Action<MapSection> _disposeMapSection;
 		private readonly Action<WriteableBitmap> _onBitmapUpdate;
@@ -39,6 +37,8 @@ namespace MSetExplorer
 
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear;
+
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -94,7 +94,7 @@ namespace MSetExplorer
 			{
 				if (value != _colorBandSet)
 				{
-					Debug.WriteLineIf(DEBUG, $"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
 					_colorBandSet = value;
 					_colorMap = LoadColorMap(value);
 
@@ -138,7 +138,7 @@ namespace MSetExplorer
 				if (value != _useEscapeVelocities)
 				{
 					var strState = value ? "On" : "Off";
-					Debug.WriteLineIf(DEBUG, $"The MapDisplay is turning {strState} the use of EscapeVelocities.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The MapDisplay is turning {strState} the use of EscapeVelocities.");
 					_useEscapeVelocities = value;
 
 					if (_colorMap != null)
@@ -158,7 +158,7 @@ namespace MSetExplorer
 				if (value != _highlightSelectedColorBand)
 				{
 					var strState = value ? "On" : "Off";
-					Debug.WriteLineIf(DEBUG, $"The MapDisplay is turning {strState} the Highlighting the selected ColorBand.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The MapDisplay is turning {strState} the Highlighting the selected ColorBand.");
 					_highlightSelectedColorBand = value;
 
 					if (_colorMap != null)
@@ -208,7 +208,7 @@ namespace MSetExplorer
 					// The Image must be able to accommodate one block before and one block after the set of visible blocks.
 					var newImageSizeInBlocks = value.Inflate(2);
 
-					Debug.WriteLineIf(DEBUG, $"BitmapGrid Updating the ImageSizeInBlocks from: {ImageSizeInBlocks} to: {newImageSizeInBlocks}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid Updating the ImageSizeInBlocks from: {ImageSizeInBlocks} to: {newImageSizeInBlocks}.");
 					ImageSizeInBlocks = newImageSizeInBlocks;
 
 					//if (!_registered)
@@ -385,7 +385,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLineIf(DEBUG, $"Not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
+				Debug.WriteLine($"GetAndPlacePixels is not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
 				_disposeMapSection(mapSection);
 			}
 
@@ -465,7 +465,7 @@ namespace MSetExplorer
 
 			if (bitmapSize.Width != imageSize.Width || bitmapSize.Height != imageSize.Height)
 			{
-				Debug.WriteLineIf(DEBUG, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
 
 				//_maxYPtr = ImageSizeInBlocks.Height - 1;
 				bitmap = CreateBitmap(imageSize);
@@ -473,7 +473,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLineIf(DEBUG, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} = ImageSize. Not creating a new bitmap.");
+				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} = ImageSize. Not creating a new bitmap.");
 				bitmap = null;
 				return false;
 			}
@@ -493,7 +493,7 @@ namespace MSetExplorer
 
 		private void ClearBitmap(WriteableBitmap bitmap)
 		{
-			Debug.WriteLineIf(DEBUG, $"BitmapGrid ClearBitmap is being called. BitmapSize {ImageSizeInBlocks}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid ClearBitmap is being called. BitmapSize {ImageSizeInBlocks}.");
 
 			// Clear the bitmap, one row of bitmap blocks at a time.
 			var rect = new Int32Rect(0, 0, bitmap.PixelWidth, _blockSize.Height);

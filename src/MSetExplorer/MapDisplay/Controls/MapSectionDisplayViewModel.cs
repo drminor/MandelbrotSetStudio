@@ -194,8 +194,6 @@ namespace MSetExplorer
 
 		public SizeDbl UnscaledExtent => _boundedMapArea?.PosterSize ?? SizeDbl.Zero;
 
-		//public SizeDbl ScaledExtent => UnscaledExtent.Scale(_boundedMapArea?.ScaleFactor ?? 1.0);	
-
 		public VectorDbl DisplayPosition
 		{
 			get => _displayPosition;
@@ -659,6 +657,8 @@ namespace MSetExplorer
 					_mapSectionHelper.ReturnMapSection(section);
 				}
 			}
+
+			_mapLoaderManager.CancelRequests(sectionsToCancel);
 	
 			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
 			
@@ -668,9 +668,12 @@ namespace MSetExplorer
 
 			int? result;
 
-			var sectionsRemoved = _bitmapGrid.ReDrawSections();
+			var numberOfSectionsReturned = _bitmapGrid.ReDrawSections();
 
-			Debug.WriteLine($"Reusing Loaded Sections: requesting {sectionsToLoad.Count} new sections, we removed {sectionsToRemove.Count} ReDraw removed {sectionsRemoved}. Keeping {MapSections.Count}. {_mapSectionHelper.MapSectionsVectorsInPool} MapSection in the pool.");
+			var numberOfRequestsCancelled = sectionsToCancel.Count;
+			numberOfSectionsReturned += sectionsToRemove.Count - numberOfRequestsCancelled;
+			Debug.WriteLine($"Reusing Loaded Sections. Requesting {sectionsToLoad.Count} sections, Cancelling {numberOfRequestsCancelled} pending requests, returned {numberOfSectionsReturned} sections. " +
+				$"Keeping {MapSections.Count} sections. The MapSection Pool has: {_mapSectionHelper.MapSectionsVectorsInPool} sections.");
 
 			if (sectionsToLoad.Count > 0)
 			{

@@ -35,6 +35,8 @@ namespace MSetExplorer
 		private VectorDbl _canvasOffset;
 		private RectangleGeometry? _canvasClip;
 
+		private bool _useDetailedDebug = false;
+
 		#endregion
 
 		#region Constructor
@@ -111,7 +113,7 @@ namespace MSetExplorer
 		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			//Debug.WriteLine($"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
-			Debug.WriteLine($"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
 
 			UpdateImageOffset(ImageOffset);
 		}
@@ -180,7 +182,7 @@ namespace MSetExplorer
 					if (previousValue.Width < 25 || previousValue.Height < 25)
 					{
 						// Update the 'real' value immediately
-						Debug.WriteLine($"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
 						ViewportSize = newViewportSize;
 					}
 					else
@@ -195,7 +197,7 @@ namespace MSetExplorer
 							interval: 150,
 							action: parm =>
 							{
-								Debug.WriteLine($"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
+								Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
 								ViewportSize = newViewportSize;
 							},
 							param: null
@@ -216,7 +218,7 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
 				{
-					Debug.WriteLine($"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
 
 					var previousValue = ViewportSize;
 					_viewportSize = value;
@@ -336,7 +338,7 @@ namespace MSetExplorer
 
 			var result = new Size(width, height);
 
-			Debug.WriteLine($"BitmapGripControl Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGripControl Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
 
 			// TODO: Figure out when its best to call UpdateViewportSize.
 			//UpdateViewportSize(childSize);
@@ -359,7 +361,7 @@ namespace MSetExplorer
 
 			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
 
-			Debug.WriteLine($"BitmapGridControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			_ourContent.Arrange(new Rect(finalSize));
 
@@ -375,7 +377,7 @@ namespace MSetExplorer
 				canvas.Height = finalSize.Height;
 			}
 
-			Debug.WriteLine($"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			return finalSize;
 		}
@@ -451,7 +453,7 @@ namespace MSetExplorer
 			//var newCanvasSize = contentViewportSize.Scale(scaleFactor);
 			var newCanvasSize = viewportSize.Divide(relativeScale);
 
-			Debug.WriteLine($"The BitmapGridControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
 
 			Canvas.Width = newCanvasSize.Width;
 			Canvas.Height = newCanvasSize.Height;
@@ -464,7 +466,7 @@ namespace MSetExplorer
 			var combinedScale = new SizeDbl(st.ScaleX, st.ScaleY);
 
 			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLine($"\n\nThe BitmapGridControl's Image ScaleTransform is being set to {relativeScale} from {currentScaleX}. CombinedScale: {combinedScale}, BaseScale is {baseScale}. The CanvasOffset is {_canvasOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe BitmapGridControl's Image ScaleTransform is being set to {relativeScale} from {currentScaleX}. CombinedScale: {combinedScale}, BaseScale is {baseScale}. The CanvasOffset is {_canvasOffset}.");
 
 			_canvasScaleTransform.ScaleX = relativeScale;
 			_canvasScaleTransform.ScaleY = relativeScale;
@@ -472,7 +474,7 @@ namespace MSetExplorer
 
 		private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl canvasOffset)
 		{
-			Debug.WriteLine($"The BitmapGridControl's CanvasOffset is being set to {canvasOffset} from {previousValue}. The ImageOffset is {ImageOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's CanvasOffset is being set to {canvasOffset} from {previousValue}. The ImageOffset is {ImageOffset}.");
 
 			_canvasTranslateTransform.X = canvasOffset.X;
 			_canvasTranslateTransform.Y = canvasOffset.Y;
@@ -496,7 +498,7 @@ namespace MSetExplorer
 
 			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
 			{
-				Debug.WriteLine($"The BitmapGridControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
 
 				CompareCanvasAndControlHeights();
 

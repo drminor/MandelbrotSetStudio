@@ -38,10 +38,8 @@ namespace MSetExplorer
 			{
 				if (_zoomedControl.CanZoom)
 				{
-					var combinedValue = _scrollbar.Value;
-					(BaseValue, RelativeValue) = GetBaseAndRelative(combinedValue);
-
-					_zoomedControl.SetScale(combinedValue);
+					(BaseValue, RelativeValue) = GetBaseAndRelative(_scrollbar.Value);
+					_zoomedControl.SetScale(_scrollbar.Value);
 				}
 			}
 		}
@@ -59,14 +57,11 @@ namespace MSetExplorer
 
 		public void ContentScaleWasUpdated(double contentScale)
 		{
-			if (double.IsNaN(_scrollbar.Value) || RelativeValue != contentScale)
+			if (double.IsNaN(_scrollbar.Value) || _scrollbar.Value != contentScale)
 			{
-				//RelativeValue = contentScale;
-				//var combinedValue = GetCombinedValue(BaseValue, RelativeValue);
-				//Debug.Assert(combinedValue >= _scrollbar.Minimum && combinedValue <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {contentScale}, producing combinedValue: {combinedValue}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
+				Debug.Assert(contentScale >= _scrollbar.Minimum && contentScale <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {contentScale} which is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
 
-				//_scrollbar.Value = combinedValue;
-
+				(BaseValue, RelativeValue) = GetBaseAndRelative(contentScale);
 				_scrollbar.Value = contentScale;
 			}
 		}
@@ -91,12 +86,7 @@ namespace MSetExplorer
 					_scrollbar.SmallChange = _scrollbar.Minimum;
 					_scrollbar.LargeChange = _scrollbar.Minimum * 2;
 
-					//RelativeValue = _zoomedControl.Scale;
-					//var combinedValue = GetCombinedValue(BaseValue, RelativeValue);
-					//Debug.Assert(combinedValue >= _scrollbar.Minimum && combinedValue <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {RelativeValue}, producing combinedValue: {combinedValue}, but it is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
-
-					//_scrollbar.Value = combinedValue;
-
+					(BaseValue, RelativeValue) = GetBaseAndRelative(_zoomedControl.Scale);
 					_scrollbar.Value = _zoomedControl.Scale;
 				}
 				finally
@@ -200,11 +190,8 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//var(baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
-
-
-		/*
-		
+		/*			Math used to calculate base and relative scales.
+		 			
 				combined	base	relative
 		1		1			0		1			1 * 1
 		15/16	0.9375		0		0.9375		1 * 0.9375
@@ -218,7 +205,6 @@ namespace MSetExplorer
 		2/16	0.125		3		1			0.5 * 0.5 * 0.5 x 1
 		1/16				4		1			0.5 x 0.5 * 0.5 * 0.5	8/16 ^4 = 8^4 / 16^4 = 4096 / 65536 = 1/16 = 0.0625
 
-		
 		*/
 
 		#endregion

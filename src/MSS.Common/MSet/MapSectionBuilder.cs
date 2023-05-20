@@ -3,15 +3,12 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace MSS.Common
 {
 	public class MapSectionBuilder
 	{
 		#region Private Properties
-
-		private const int BYTES_PER_PIXEL = 4;
 
 		private const int PRECSION_PADDING = 4;
 		private const int MIN_LIMB_COUNT = 1;
@@ -21,6 +18,8 @@ namespace MSS.Common
 
 		private int _currentPrecision;
 		private int _currentLimbCount;
+
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -54,7 +53,7 @@ namespace MSS.Common
 			var result = new List<MapSectionRequest>();
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-			Debug.WriteLine($"Creating section requests. The map extent is {mapExtentInBlocks}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
 			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
@@ -73,7 +72,7 @@ namespace MSS.Common
 		{
 			var result = new List<MapSectionRequest>();
 
-			Debug.WriteLine($"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
 
 			var requestNumber = 0;
 			foreach (var mapSection in emptyMapSections)
@@ -199,7 +198,7 @@ namespace MSS.Common
 			var targetIterations = mapCalcSettings.TargetIterations;
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-			Debug.WriteLine($"Creating empty MapSections. Returned: {mapExtentInBlocks}, For Size: {mapAreaInfo.CanvasSize} and Offset: {mapAreaInfo.CanvasControlOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Creating empty MapSections. Returned: {mapExtentInBlocks}, For Size: {mapAreaInfo.CanvasSize} and Offset: {mapAreaInfo.CanvasControlOffset}.");
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{

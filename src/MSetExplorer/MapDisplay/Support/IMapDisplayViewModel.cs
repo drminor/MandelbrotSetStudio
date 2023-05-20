@@ -3,7 +3,6 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Windows;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -43,8 +42,6 @@ namespace MSetExplorer
 		SizeDbl ViewportSize { get; }
 		VectorDbl DisplayPosition { get; }
 
-		//SizeDbl ScaledExtent { get; }
-
 		double DisplayZoom { get; }
 		double MinimumDisplayZoom { get; }
 
@@ -52,7 +49,7 @@ namespace MSetExplorer
 		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
 		int? UpdateViewportSize(SizeDbl viewportSize);
-		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset/*, double contentScale*/, double baseScale);
+		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double baseScale);
 
 		int? MoveTo(VectorDbl displayPosition);
 
