@@ -1,5 +1,4 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,6 +12,8 @@ namespace MSetExplorer
 {
 	public class CbshDisplayViewModel : ViewModelBase, ICbshDisplayViewModel
 	{
+		#region Private Fields
+
 		//private readonly SynchronizationContext? _synchronizationContext;
 		private readonly object _paintLocker;
 
@@ -22,16 +23,27 @@ namespace MSetExplorer
 
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
 
-		private SizeDbl _containerSize;
-		private SizeInt _canvasSize;
-		private double _displayZoom;
-		private SizeInt _logicalDisplaySize;
-
 		private ColorBandSet _colorBandSet;
 		private ListCollectionView _colorBandsView;
 		private readonly IList<GeometryDrawing> _colorBandRectangles;
 
 		private readonly IList<GeometryDrawing> _historgramItems;
+
+		private SizeDbl _viewportSize;
+		private VectorDbl _imageOffset;
+
+		private VectorDbl _displayPosition;
+
+		private double _displayZoom;
+		private double _minimumDisplayZoom;
+
+		private SizeDbl _containerSize;
+		private SizeInt _canvasSize;
+		private SizeDbl _unscaledExtent;
+
+		//private bool _useDetailedDebug = false;
+
+		#endregion
 
 		#region Constructor
 
@@ -46,13 +58,17 @@ namespace MSetExplorer
 			_colorBandRectangles = new List<GeometryDrawing>();
 			_historgramItems = new List<GeometryDrawing>();
 
+			_viewportSize = new SizeDbl();
+			_imageOffset = new VectorDbl();
+			_displayPosition = new VectorDbl();
+
 			_drawingGroup = new DrawingGroup();
 			_scaleTransform = new ScaleTransform();
 			_drawingGroup.Transform = _scaleTransform;
 			ImageSource = new DrawingImage(_drawingGroup);
 
-			_logicalDisplaySize = new SizeInt();
-			_foundationRectangle = BuildFoundationRectangle(_logicalDisplaySize);
+			_unscaledExtent = new SizeDbl();
+			_foundationRectangle = BuildFoundationRectangle(_unscaledExtent);
 			_drawingGroup.Children.Add(_foundationRectangle);
 
 
@@ -66,13 +82,54 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Properties
+		#region Events
 
 		//public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
+
+		#endregion
+
+		#region Public Properties - Content
+
+		public int StartPtr { get; set; }
+		public int EndPtr { get; set; }
+
+		public ColorBandSet ColorBandSet
+		{
+			get => _colorBandSet;
+			set
+			{
+				if (value != _colorBandSet)
+				{
+					Debug.WriteLine($"The ColorBandSetHistogram Display is processing a new ColorBandSet. Id = {value.Id}.");
+
+					_colorBandSet = value;
+					StartPtr = 0;
+					EndPtr = _colorBandSet.Count - 1;
+					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
+
+					var newLogicalWidth = DrawColorBands();
+					UnscaledExtent = newLogicalWidth.HasValue ? new SizeDbl(newLogicalWidth.Value, _canvasSize.Height) : new SizeDbl(_canvasSize);
+				}
+			}
+		}
+
+		#endregion
+
+		#region Public Properties - Control
 
 		public new bool InDesignMode => base.InDesignMode;
 
 		public ImageSource ImageSource { get; init; }
+
+		public SizeDbl ViewportSize
+		{
+			get => _viewportSize;
+			private set
+			{
+				_viewportSize = value;
+				OnPropertyChanged(nameof(IMapDisplayViewModel.ViewportSize));
+			}
+		}
 
 		public SizeDbl ContainerSize
 		{
@@ -96,15 +153,60 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"The CbshDisplayViewModel's Canvas Size is now {value}.");
 					_canvasSize = value;
-					LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
+					UnscaledExtent = new SizeDbl(CanvasSize.Scale(DisplayZoom));
 
 					var newLogicalWidth = DrawColorBands();
-					LogicalDisplaySize = newLogicalWidth.HasValue ? new SizeInt(newLogicalWidth.Value, _canvasSize.Height) : _canvasSize;
+					UnscaledExtent = newLogicalWidth.HasValue ? new SizeDbl(newLogicalWidth.Value, _canvasSize.Height) : new SizeDbl(_canvasSize);
 					DrawHistogram();
 
 					OnPropertyChanged(nameof(ICbshDisplayViewModel.CanvasSize));
 				}
 			}
+		}
+
+		public VectorDbl ImageOffset
+		{
+			get => _imageOffset;
+			set
+			{
+				if (ScreenTypeHelper.IsVectorDblChanged(_imageOffset, value))
+				{
+					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
+					_imageOffset = value;
+
+					OnPropertyChanged(nameof(IMapDisplayViewModel.ImageOffset));
+				}
+			}
+		}
+
+		#endregion
+
+		#region Public Properties - Scroll
+
+		public SizeDbl UnscaledExtent
+		{
+			get => _unscaledExtent;
+			set
+			{
+				if (_unscaledExtent != value)
+				{
+					_unscaledExtent = value;
+
+					Debug.WriteLine($"ColorBandSetHistogram Display's Logical DisplaySize is now {value}.");
+
+					DisplayZoom = _unscaledExtent.Width / (double)_canvasSize.Width;
+
+					UpdateFoundationRectangle(_foundationRectangle, value);
+
+					OnPropertyChanged(nameof(ICbshDisplayViewModel.UnscaledExtent));
+				}
+			}
+		}
+
+		public VectorDbl DisplayPosition
+		{
+			get => _displayPosition;
+			private set => _displayPosition = value;
 		}
 
 		/// <summary>
@@ -127,48 +229,32 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeInt LogicalDisplaySize
+		public double MinimumDisplayZoom
 		{
-			get => _logicalDisplaySize;
-			set
+			get => _minimumDisplayZoom;
+			private set
 			{
-				if (_logicalDisplaySize != value)
-				{
-					_logicalDisplaySize = value;
+				_minimumDisplayZoom = value;
+				//if (Math.Abs(value - _maximumDisplayZoom) > 0.001)
+				//{
+				//	_maximumDisplayZoom = value;
 
-					Debug.WriteLine($"ColorBandSetHistogram Display's Logical DisplaySize is now {value}.");
+				//	if (DisplayZoom > MaximumDisplayZoom)
+				//	{
+				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
+				//		DisplayZoom = MaximumDisplayZoom;
+				//	}
+				//	else
+				//	{
+				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
+				//	}
 
-					DisplayZoom = _logicalDisplaySize.Width / (double)_canvasSize.Width;
-
-					UpdateFoundationRectangle(_foundationRectangle, value);
-
-					OnPropertyChanged(nameof(ICbshDisplayViewModel.LogicalDisplaySize));
-				}
+				//	OnPropertyChanged(nameof(IMapDisplayViewModel.MaximumDisplayZoom));
+				//}
 			}
 		}
 
-		public int StartPtr { get; set; }
-		public int EndPtr { get; set; }
-
-		public ColorBandSet ColorBandSet
-		{
-			get => _colorBandSet;
-			set
-			{
-				if (value != _colorBandSet)
-				{
-					Debug.WriteLine($"The ColorBandSetHistogram Display is processing a new ColorBandSet. Id = {value.Id}.");
-
-					_colorBandSet = value;
-					StartPtr = 0;
-					EndPtr = _colorBandSet.Count - 1;
-					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
-
-					var newLogicalWidth = DrawColorBands();
-					LogicalDisplaySize = newLogicalWidth.HasValue ? new SizeInt(newLogicalWidth.Value, _canvasSize.Height) : _canvasSize;
-				}
-			}
-		}
+		//public Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
 		#endregion
 
@@ -381,7 +467,9 @@ namespace MSetExplorer
 
 			//LogicalDisplaySize = new SizeInt(rn + 10, _canvasSize.Height);
 
-			DrawHistogramBorder(LogicalDisplaySize.Width - 10, _histDispHeight);
+			var w = (int) Math.Round(UnscaledExtent.Width - 10);
+
+			DrawHistogramBorder(w, _histDispHeight);
 
 			var hEntries = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
 
@@ -495,7 +583,7 @@ namespace MSetExplorer
 			_historgramItems.Clear();
 		}
 
-		private GeometryDrawing BuildFoundationRectangle(SizeInt logicalDisplaySize)
+		private GeometryDrawing BuildFoundationRectangle(SizeDbl logicalDisplaySize)
 		{
 			var result = new GeometryDrawing
 			(
@@ -507,7 +595,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void UpdateFoundationRectangle(GeometryDrawing foundationRectangle, SizeInt logicalDisplaySize)
+		private void UpdateFoundationRectangle(GeometryDrawing foundationRectangle, SizeDbl logicalDisplaySize)
 		{
 			foundationRectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(logicalDisplaySize));
 		}

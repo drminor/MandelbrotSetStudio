@@ -64,8 +64,8 @@ namespace MSetExplorer
 			_currentAreaColorAndCalcSettings = null;
 			_latestMapAreaInfo = null;
 
+			_viewportSize = new SizeDbl();
 			_imageOffset = new VectorDbl();
-
 			_displayPosition = new VectorDbl();
 
 			_displayZoom = 1;
@@ -149,7 +149,7 @@ namespace MSetExplorer
 
 		public SizeDbl ViewportSize
 		{
-			get =>_viewportSize;
+			get => _viewportSize;
 			private set
 			{
 				_viewportSize = value;

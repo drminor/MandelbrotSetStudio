@@ -98,7 +98,7 @@ namespace MSetExplorer
 				DispHeight = CbshDisplayViewModel.CanvasSize.Height;
 			}
 
-			if (e.PropertyName == nameof(CbshDisplayViewModel.LogicalDisplaySize))
+			if (e.PropertyName == nameof(CbshDisplayViewModel.UnscaledExtent))
 			{
 				//PosterViewModel.LogicalDisplaySize = MapDisplayViewModel.LogicalDisplaySize;
 			}

@@ -10,7 +10,7 @@ namespace MSetExplorer
 		SizeDbl ContainerSize { get; set; }
 		SizeInt CanvasSize { get; set; }
 
-		SizeInt LogicalDisplaySize { get; set; }
+		SizeDbl UnscaledExtent { get; set; }
 		double DisplayZoom { get; set; }
 
 		bool InDesignMode { get; }
