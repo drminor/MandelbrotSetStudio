@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:MSetExplorer"
+             xmlns:local="clr-namespace:MSetExplorer"  d:DataContext="{d:DesignInstance Type=local:CbshDisplayViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="240" d:DesignWidth="1044">
     <Grid>
@@ -19,11 +19,35 @@
                 </Border>
 
                 <Border Grid.Column="1" BorderThickness="0.75" BorderBrush="Black">
-                    <local:CbshScrollControl x:Name="cbshScroll1"/>
+                    
+                    <!-- <local:CbshDisplayControl x:Name="cbshDisplay1"/> -->
+                    <ScrollViewer
+                        x:Name="ScrollViewer1"
+                        CanContentScroll="True"
+                        VerticalScrollBarVisibility="Disabled"
+                        HorizontalScrollBarVisibility="Visible"
+                        >
+
+                        <local:PanAndZoomControl
+                            x:Name="PanAndZoomControl1"
+                            UnscaledExtent="{Binding UnscaledExtent}"
+                            ContentScale="{Binding DisplayZoom}"
+                            MinContentScale="{Binding MinimumDisplayZoom}"
+                            >
+
+                            <local:BitmapGridControl
+                                x:Name="BitmapGridControl1"
+                                BitmapGridImageSource="{Binding ImageSource, Mode=OneWay}"
+                                ImageOffset="{Binding ImageOffset, Mode=OneWay}"
+                            />
+
+                        </local:PanAndZoomControl>
+
+                    </ScrollViewer>
+
                 </Border>
             </Grid>
-            
-            
         </Border>
+        
     </Grid>
 </UserControl>

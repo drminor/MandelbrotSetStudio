@@ -62,21 +62,5 @@ namespace MSetExplorer
 			sb.Value = 1;
 		}
 
-		//private double GetZoomValue(ScrollEventType et, double val)
-		//{
-		//	return et switch
-		//	{
-		//		ScrollEventType.EndScroll => val,
-		//		ScrollEventType.First => val, // _vm.MaximumDisplayZoom,
-		//		ScrollEventType.LargeDecrement => val,
-		//		ScrollEventType.LargeIncrement => val,
-		//		ScrollEventType.Last => 1,
-		//		ScrollEventType.SmallDecrement => val,
-		//		ScrollEventType.SmallIncrement => val,
-		//		ScrollEventType.ThumbPosition => val,
-		//		ScrollEventType.ThumbTrack => val,
-		//		_ => -1,
-		//	};
-		//}
 	}
 }

@@ -1,5 +1,4 @@
-﻿using MSetExplorer.MapDisplay.ScrollAndZoom;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Windows.Media;
@@ -17,6 +16,9 @@ namespace MSetExplorer
 		MapCoordsViewModel MapCoordsViewModel { get; }
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
+
+		//ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
+		ICbshDisplayViewModel CbshDisplayViewModel { get; }
 
 		IJobTreeViewModel JobTreeViewModel { get; }
 

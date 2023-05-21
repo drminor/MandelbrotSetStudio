@@ -1,5 +1,4 @@
 ﻿using ImageBuilder;
-using MSetExplorer.MapDisplay.ScrollAndZoom;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -20,7 +19,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
-			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
+			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
 			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
 		{
 			_mapJobHelper = mapJobHelper;
@@ -50,7 +49,8 @@ namespace MSetExplorer
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
-			ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
+			//ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
+			CbshDisplayViewModel = cbshDisplayViewModel;
 		}
 
 		#endregion
@@ -65,7 +65,9 @@ namespace MSetExplorer
 		public MapCoordsViewModel MapCoordsViewModel { get; }
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
-		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
+
+		//public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
+		public ICbshDisplayViewModel CbshDisplayViewModel { get; }
 
 		public ViewModelFactory ViewModelFactory => _viewModelFactory;
 
@@ -204,7 +206,7 @@ namespace MSetExplorer
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
 		{
 			ColorBandSetViewModel.RefreshPercentages();
-			ColorBandSetHistogramViewModel.RefreshHistogramDisplay();
+			CbshDisplayViewModel.RefreshHistogramDisplay();
 		}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)

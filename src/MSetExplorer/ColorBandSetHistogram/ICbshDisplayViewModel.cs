@@ -22,5 +22,11 @@ namespace MSetExplorer
 		int StartPtr { get; set; }
 
 		void RefreshHistogramDisplay();
+
+		int? UpdateViewportSize(SizeDbl viewportSize);
+		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double baseScale);
+
+		int? MoveTo(VectorDbl displayPosition);
+
 	}
 }

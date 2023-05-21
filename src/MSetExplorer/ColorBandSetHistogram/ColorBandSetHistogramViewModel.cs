@@ -1,5 +1,4 @@
-﻿using MSetExplorer.MapDisplay.ScrollAndZoom;
-using MSS.Types;
+﻿using MSS.Types;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -19,22 +18,23 @@ namespace MSetExplorer
 			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
 			_colorBandSet = new ColorBandSet();
 
-			var cbshDisplayViewModel = new CbshDisplayViewModel(_mapSectionHistogramProcessor);
-			CbshScrollViewModel = new CbshScrollViewModel(cbshDisplayViewModel);
-			CbshScrollViewModel.PropertyChanged += CbshScrollViewModel_PropertyChanged;
+			CbshDisplayViewModel = new CbshDisplayViewModel(_mapSectionHistogramProcessor);
+
+			//CbshScrollViewModel = new CbshScrollViewModel(cbshDisplayViewModel);
+			//CbshScrollViewModel.PropertyChanged += CbshScrollViewModel_PropertyChanged;
 
 			CbshDisplayViewModel.PropertyChanged += CbshDisplayViewModel_PropertyChanged;
 
-			DispWidth = CbshScrollViewModel.CanvasSize.Width;
-			DispHeight = CbshScrollViewModel.CanvasSize.Height;
+			//DispWidth = CbshScrollViewModel.CanvasSize.Width;
+			//DispHeight = CbshScrollViewModel.CanvasSize.Height;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public CbshScrollViewModel CbshScrollViewModel { get; init; }
-		public CbshDisplayViewModel CbshDisplayViewModel => CbshScrollViewModel.CbshDisplayViewModel;
+		//public CbshScrollViewModel CbshScrollViewModel { get; init; }
+		public CbshDisplayViewModel CbshDisplayViewModel { get; init; }
 
 		public ColorBandSet ColorBandSet
 		{
@@ -104,23 +104,23 @@ namespace MSetExplorer
 			}
 		}
 
-		private void CbshScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(CbshScrollViewModel.HorizontalPosition))
-			{
-				//PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), PosterViewModel.DisplayPosition.Y);
-			}
+		//private void CbshScrollViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		//{
+		//	if (e.PropertyName == nameof(CbshScrollViewModel.HorizontalPosition))
+		//	{
+		//		//PosterViewModel.DisplayPosition = new VectorInt((int)Math.Round(MapScrollViewModel.HorizontalPosition), PosterViewModel.DisplayPosition.Y);
+		//	}
 
-			else if (e.PropertyName == nameof(CbshScrollViewModel.InvertedVerticalPosition))
-			{
-				//PosterViewModel.DisplayPosition = new VectorInt(PosterViewModel.DisplayPosition.X, (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
-			}
+		//	else if (e.PropertyName == nameof(CbshScrollViewModel.InvertedVerticalPosition))
+		//	{
+		//		//PosterViewModel.DisplayPosition = new VectorInt(PosterViewModel.DisplayPosition.X, (int)Math.Round(MapScrollViewModel.InvertedVerticalPosition));
+		//	}
 
-			else if (e.PropertyName == nameof(CbshScrollViewModel.DisplayZoom))
-			{
-				//PosterViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
-			}
-		}
+		//	else if (e.PropertyName == nameof(CbshScrollViewModel.DisplayZoom))
+		//	{
+		//		//PosterViewModel.DisplayZoom = MapScrollViewModel.DisplayZoom;
+		//	}
+		//}
 
 		#endregion
 	}

@@ -80,10 +80,9 @@ namespace MSetExplorer
 		public WriteableBitmap Bitmap
 		{
 			get => _bitmap;
-			set
+			private set
 			{
 				_bitmap = value;
-				//_image.Source = Bitmap;
 				_onBitmapUpdate(_bitmap);
 			}
 		}
@@ -182,11 +181,6 @@ namespace MSetExplorer
 
 				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, keepSquare: false);
 				CanvasSizeInBlocks = sizeInWholeBlocks;
-
-				//var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(value.Round(), ImageOffset.Round(), _blockSize);
-
-				//Debug.WriteLineIf(DEBUG, $"BitmapGrid Updating the MapExtentInBlocks from: {MapExtentInBlocks} to: {mapExtentInBlocks}.");
-				//MapExtentInBlocks = mapExtentInBlocks;
 			}
 		}
 
@@ -211,14 +205,6 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid Updating the ImageSizeInBlocks from: {ImageSizeInBlocks} to: {newImageSizeInBlocks}.");
 					ImageSizeInBlocks = newImageSizeInBlocks;
-
-					//if (!_registered)
-					//{
-					//	RefreshBitmap();
-					//	_registered = true;
-					//}
-
-
 				}
 			}
 		}
@@ -314,6 +300,8 @@ namespace MSetExplorer
 					try
 					{
 						Bitmap.WritePixels(_blockRect, zeros, sourceStride, loc.X, loc.Y);
+						_mapSections.Remove(mapSection);
+						_disposeMapSection(mapSection);
 					}
 					catch (Exception e)
 					{

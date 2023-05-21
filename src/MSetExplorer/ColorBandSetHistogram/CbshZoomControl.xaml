@@ -13,7 +13,7 @@
             <TextBlock DockPanel.Dock="Top" Margin="5,5,5,0">Zoom</TextBlock>
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="5,10" x:Name="dispSecZoom">
                 <!--<TextBlock x:Name="txtblkZoomValue" Margin="5,95,2,0" >10</TextBlock>-->
-                <ScrollBar x:Name="scrBarZoom" Orientation="Vertical" Minimum="1" Maximum="20" Value="1"/>
+                <ScrollBar x:Name="scrollBar1" Orientation="Vertical" Minimum="1" Maximum="20" Value="1"/>
             </StackPanel>
             <!--<Button Click="ButtonSetMaxZoom_Click">Max</Button>-->
 

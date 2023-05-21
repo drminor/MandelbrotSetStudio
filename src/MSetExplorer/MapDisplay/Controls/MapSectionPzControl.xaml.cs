@@ -114,48 +114,6 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		//private void ShowOutline(SizeDbl unscaledExtent, SizeDbl viewportSize, double contentScale)
-		//{
-		//	if (DRAW_OUTLINE)
-		//	{
-		//		// Get the number of pixels in unscaled coordinates
-		//		// from the top, right of the control to the top, right of the content
-		//		var scaledExtent = unscaledExtent.Scale(contentScale);
-
-		//		var x = Math.Max(0, (viewportSize.Width - scaledExtent.Width) / 2);
-		//		var y = Math.Max(0, (viewportSize.Height - scaledExtent.Height) / 2);
-
-		//		var displayOffset = new PointDbl(x, y);
-
-		//		if (x > 0 || y > 0)
-		//		{
-		//			// Build rectangle for the position and size on screen
-		//			var displayArea = new RectangleDbl(displayOffset, scaledExtent);
-
-		//			// The screen is scaled by relativeScale.
-		//			// Convert screen coordinates to 'display' coordinates
-		//			var scaleFactor = ZoomSlider.GetScaleFactor(contentScale);
-		//			var screenToRelativeScaleFactor = scaleFactor / contentScale;
-
-		//			CheckScreenToRelativeScaleFactor(screenToRelativeScaleFactor, contentScale);
-
-		//			var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
-
-
-		//			OffsetAndClip(scaledDisplayArea);
-
-		//			Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {displayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayOffset}. Clip Position: {scaledDisplayArea.Position}. Clip Size: {scaledDisplayArea.Size}.");
-		//		}
-		//		else
-		//		{
-		//			//Debug.WriteLine($"Scaled Extent is NOT smaller than viewportSize. ScaledExtent: {scaledExtent} ViewportSize: {viewportSize}. DisplayOffset: {displayOffset}.");
-
-		//			BitmapGridControl1.CanvasOffset = VectorDbl.Zero;
-		//			BitmapGridControl1.CanvasClip = null;
-		//		}
-		//	}
-		//}
-
 		private void CenterContent(SizeDbl unscaledExtent, SizeDbl viewportSize, double contentScale)
 		{
 			// The display area is a Vector + Size specfing the bounding box of the contents in screen coordinates,
@@ -272,7 +230,6 @@ namespace MSetExplorer
 
 		private DrawingBrush BuildDrawingBrush()
 		{
-
 			var db = new DrawingBrush();
 			db.Viewport = new Rect(0, 0, 20, 20);
 			db.ViewboxUnits = BrushMappingMode.Absolute;

@@ -26,9 +26,9 @@ namespace MSetExplorer
 
 		private MapAreaInfo? _latestMapAreaInfo;
 
-		private object _paintLocker;
+		private readonly object _paintLocker;
 
-		private BitmapGrid _bitmapGrid;
+		private IBitmapGrid _bitmapGrid;
 
 		private SizeDbl _viewportSize;
 		private VectorDbl _imageOffset;
@@ -548,12 +548,12 @@ namespace MSetExplorer
 			{
 				var currentBaseScale = boundedMapArea.BaseScale;
 
-				var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset/*, contentScale*/, baseScale);
+				var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, baseScale);
 
 				var scaledViewportSize = viewportSize.Scale(boundedMapArea.ScaleFactor);
 				_bitmapGrid.ViewportSize = scaledViewportSize;
 
-				ReportUpdateSizeAndPos(boundedMapArea, viewportSize, contentOffset/*, contentScale, baseScale*/);
+				ReportUpdateSizeAndPos(boundedMapArea, viewportSize, contentOffset);
 
 				if (boundedMapArea.BaseScale != currentBaseScale)
 				{
@@ -657,7 +657,7 @@ namespace MSetExplorer
 			else
 			{
 				var sectionsToCancel = new List<MapSection>();
-				var sectionsToClear = new List<MapSection>();
+				//var sectionsToClear = new List<MapSection>();
 
 				foreach (var section in sectionsToRemove)
 				{
@@ -670,13 +670,15 @@ namespace MSetExplorer
 					{
 						MapSections.Remove(section);
 						_mapSectionHelper.ReturnMapSection(section);
-						sectionsToClear.Add(section);
+						//sectionsToClear.Add(section);
 					}
 				}
 
 				_mapLoaderManager.CancelRequests(sectionsToCancel);
 
-				_bitmapGrid.ClearSections(sectionsToClear);
+				//_bitmapGrid.ClearSections(sectionsToClear);
+
+				_bitmapGrid.ClearDisplay();
 
 				_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
 				ImageOffset = new VectorDbl(screenAreaInfo.CanvasControlOffset);

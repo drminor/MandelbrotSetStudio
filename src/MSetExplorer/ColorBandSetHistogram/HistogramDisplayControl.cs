@@ -1,6 +1,10 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -8,9 +12,9 @@ using System.Windows.Threading;
 
 namespace MSetExplorer
 {
-	public class BitmapGridControl: ContentControl, IContentScaler
+	public class HistogramDisplayControl : ContentControl, IContentScaler
 	{
-		#region Private Fields
+		#region Private Fields 
 
 		private readonly static bool CLIP_IMAGE_BLOCKS = true;
 
@@ -22,7 +26,6 @@ namespace MSetExplorer
 
 		private SizeDbl _viewportSizeInternal;
 		private SizeDbl _viewportSize;
-
 		private SizeDbl _contentViewportSize;
 
 		private ScaleTransform _controlScaleTransform;
@@ -40,12 +43,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		static BitmapGridControl()
+		static HistogramDisplayControl()
 		{
-			DefaultStyleKeyProperty.OverrideMetadata(typeof(BitmapGridControl), new FrameworkPropertyMetadata(typeof(BitmapGridControl)));
+			DefaultStyleKeyProperty.OverrideMetadata(typeof(HistogramDisplayControl), new FrameworkPropertyMetadata(typeof(HistogramDisplayControl)));
 		}
 
-		public BitmapGridControl()
+		public HistogramDisplayControl()
 		{
 			_viewPortSizeDispatcher = new DebounceDispatcher
 			{
@@ -62,7 +65,7 @@ namespace MSetExplorer
 			_contentViewportSize = SizeDbl.NaN;
 
 			_controlScaleTransform = new ScaleTransform();
-			_controlScaleTransform.Changed += _controlScaleTransform_Changed; 
+			_controlScaleTransform.Changed += _controlScaleTransform_Changed;
 
 			_canvasTranslateTransform = new TranslateTransform();
 			_canvasScaleTransform = new ScaleTransform();
@@ -76,11 +79,11 @@ namespace MSetExplorer
 			_canvasOffset = new VectorDbl();
 			_canvasClip = null;
 
-			//MouseEnter += BitmapGridControl_MouseEnter;
-			//MouseLeave += BitmapGridControl_MouseLeave;
+			//MouseEnter += HistogramDisplayControl_MouseEnter;
+			//MouseLeave += HistogramDisplayControl_MouseLeave;
 		}
 
-		//private void BitmapGridControl_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+		//private void HistogramDisplayControl_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
 		//{
 		//	//SetTheCanvasTranslateTransform(new VectorDbl(), _canvasOffset);
 		//	//Clip = _clipT;
@@ -96,7 +99,7 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		//private void BitmapGridControl_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+		//private void HistogramDisplayControl_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
 		//{
 		//	//SetTheCanvasTranslateTransform(_canvasOffset, new VectorDbl());
 		//	//Clip = null;
@@ -111,15 +114,15 @@ namespace MSetExplorer
 
 		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			//Debug.WriteLine($"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
-			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
+			//Debug.WriteLine($"The HistogramDisplayControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
 
 			UpdateImageOffset(ImageOffset);
 		}
 
 		private void _controlScaleTransform_Changed(object? sender, EventArgs e)
 		{
-			SetTheCanvasScaleTransform(_controlScaleTransform);
+			//SetTheCanvasScaleTransform(_controlScaleTransform);
 		}
 
 		#endregion
@@ -169,44 +172,44 @@ namespace MSetExplorer
 			get => _viewportSizeInternal;
 			set
 			{
-				if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
-				{
-					var previousValue = _viewportSizeInternal;
-					_viewportSizeInternal = value;
+				//if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
+				//{
+				//	var previousValue = _viewportSizeInternal;
+				//	_viewportSizeInternal = value;
 
-					//Debug.WriteLine($"BitmapGridControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
+				//	//Debug.WriteLine($"HistogramDisplayControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
 
-					var newViewportSize = value;
+				//	var newViewportSize = value;
 
-					if (previousValue.Width < 25 || previousValue.Height < 25)
-					{
-						// Update the 'real' value immediately
-						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
-						ViewportSize = newViewportSize;
-					}
-					else
-					{
-						// Update the screen immediately, while we are 'holding' back the update.
-						//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
-						var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
-						_ = UpdateImageOffset(tempOffset);
+				//	if (previousValue.Width < 25 || previousValue.Height < 25)
+				//	{
+				//		// Update the 'real' value immediately
+				//		Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
+				//		ViewportSize = newViewportSize;
+				//	}
+				//	else
+				//	{
+				//		// Update the screen immediately, while we are 'holding' back the update.
+				//		//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
+				//		var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
+				//		_ = UpdateImageOffset(tempOffset);
 
-						// Delay the 'real' update until no futher updates in the last 150ms.
-						_viewPortSizeDispatcher.Debounce(
-							interval: 150,
-							action: parm =>
-							{
-								Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
-								ViewportSize = newViewportSize;
-							},
-							param: null
-						);
-					}
-				}
-				else
-				{
-					Debug.WriteLine($"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
-				}
+				//		// Delay the 'real' update until no futher updates in the last 150ms.
+				//		_viewPortSizeDispatcher.Debounce(
+				//			interval: 150,
+				//			action: parm =>
+				//			{
+				//				Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
+				//				ViewportSize = newViewportSize;
+				//			},
+				//			param: null
+				//		);
+				//	}
+				//}
+				//else
+				//{
+				//	Debug.WriteLine($"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
+				//}
 			}
 		}
 
@@ -217,7 +220,7 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
 
 					var previousValue = ViewportSize;
 					_viewportSize = value;
@@ -228,7 +231,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+					Debug.WriteLine($"The HistogramDisplayControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
 				}
 			}
 		}
@@ -253,7 +256,8 @@ namespace MSetExplorer
 
 		public SizeDbl ContentViewportSize
 		{
-			get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
+			//get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
+			get => _contentViewportSize;
 			set
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value))
@@ -299,7 +303,7 @@ namespace MSetExplorer
 			set
 			{
 				_canvasClip = value;
-				_canvas.Clip = value;
+				//_canvas.Clip = value;
 			}
 		}
 
@@ -315,8 +319,6 @@ namespace MSetExplorer
 			Size childSize = base.MeasureOverride(availableSize);
 
 			_ourContent.Measure(availableSize);
-
-			//UpdateViewportSize(availableSize);
 
 			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
 
@@ -337,28 +339,21 @@ namespace MSetExplorer
 
 			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGripControl Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
 
-			// TODO: Figure out when its best to call UpdateViewportSize.
-			//UpdateViewportSize(childSize);
-			//UpdateViewportSize(result);
-
 			return result;
 		}
 
 		/// <summary>
 		/// Arrange the control and it's children.
 		/// </summary>
-		protected override Size ArrangeOverride(Size finalSizeRaw)
+		protected override Size ArrangeOverride(Size finalSize)
 		{
-			var finalSize = ForceSize(finalSizeRaw);
 			Size childSize = base.ArrangeOverride(finalSize);
 
 			if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
 
-			//UpdateViewportSize(childSize);
-
 			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramDisplayControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			_ourContent.Arrange(new Rect(finalSize));
 
@@ -374,31 +369,9 @@ namespace MSetExplorer
 				canvas.Height = finalSize.Height;
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramDisplayControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			return finalSize;
-		}
-
-		//private void UpdateViewportSize(Size newValue)
-		//{
-		//	var newSizeDbl = ScreenTypeHelper.ConvertToSizeDbl(newValue);
-
-		//	if (ViewportSizeInternal != newSizeDbl)
-		//	{
-		//		ViewportSizeInternal = newSizeDbl;
-		//	}
-		//}
-
-		private Size ForceSize(Size finalSize)
-		{
-			if (finalSize.Width > 1000 && finalSize.Width < 1040 && finalSize.Height > 1000 && finalSize.Height < 1040)
-			{
-				return new Size(1024, 1024);
-			}
-			else
-			{
-				return finalSize;
-			}
 		}
 
 		public override void OnApplyTemplate()
@@ -414,7 +387,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				throw new InvalidOperationException("Did not find the BitmapGridControl_Content template.");
+				throw new InvalidOperationException("Did not find the HistogramDisplayControl_Content template.");
 			}
 		}
 
@@ -447,10 +420,9 @@ namespace MSetExplorer
 
 			CompareViewportAndContentViewportSizes(viewportSize, contentViewportSize, scaleFactor, relativeScale);
 
-			//var newCanvasSize = contentViewportSize.Scale(scaleFactor);
 			var newCanvasSize = viewportSize.Divide(relativeScale);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
 
 			Canvas.Width = newCanvasSize.Width;
 			Canvas.Height = newCanvasSize.Height;
@@ -463,7 +435,7 @@ namespace MSetExplorer
 			var combinedScale = new SizeDbl(st.ScaleX, st.ScaleY);
 
 			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe BitmapGridControl's Image ScaleTransform is being set to {relativeScale} from {currentScaleX}. CombinedScale: {combinedScale}, BaseScale is {baseScale}. The CanvasOffset is {_canvasOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramDisplayControl's Image ScaleTransform is being set to {relativeScale} from {currentScaleX}. CombinedScale: {combinedScale}, BaseScale is {baseScale}. The CanvasOffset is {_canvasOffset}.");
 
 			_canvasScaleTransform.ScaleX = relativeScale;
 			_canvasScaleTransform.ScaleY = relativeScale;
@@ -471,7 +443,7 @@ namespace MSetExplorer
 
 		private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl canvasOffset)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's CanvasOffset is being set to {canvasOffset} from {previousValue}. The ImageOffset is {ImageOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's CanvasOffset is being set to {canvasOffset} from {previousValue}. The ImageOffset is {ImageOffset}.");
 
 			_canvasTranslateTransform.X = canvasOffset.X;
 			_canvasTranslateTransform.Y = canvasOffset.Y;
@@ -484,7 +456,6 @@ namespace MSetExplorer
 
 			var newValue = rawValue;
 
-
 			// For a positive offset, we "pull" the image down and to the left.
 			var invertedValue = newValue.Invert();
 
@@ -495,7 +466,7 @@ namespace MSetExplorer
 
 			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
 
 				CompareCanvasAndControlHeights();
 
@@ -546,7 +517,7 @@ namespace MSetExplorer
 
 			if (Math.Abs(Canvas.ActualHeight - ActualHeight) > 0.1)
 			{
-				Debug.WriteLine($"WARNING: The Canvas Height : {Canvas.ActualHeight} does not match the BitmapGridControl's height: {ActualHeight}.");
+				Debug.WriteLine($"WARNING: The Canvas Height : {Canvas.ActualHeight} does not match the HistogramDisplayControl's height: {ActualHeight}.");
 			}
 		}
 
@@ -569,19 +540,19 @@ namespace MSetExplorer
 		#region BitmapGridImageSource Dependency Property
 
 		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
-					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl),
+					"BitmapGridImageSource", typeof(ImageSource), typeof(HistogramDisplayControl),
 					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, BitmapGridImageSource_PropertyChanged));
 
 		private static void BitmapGridImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			var c = (BitmapGridControl)o;
+			var c = (HistogramDisplayControl)o;
 			var previousValue = (ImageSource)e.OldValue;
 			var value = (ImageSource)e.NewValue;
 
-			if (value != previousValue)
-			{
-				c.Image.Source = value;
-			}
+			//if (value != previousValue)
+			//{
+			//	c.Image.Source = value;
+			//}
 		}
 
 		#endregion
@@ -589,12 +560,12 @@ namespace MSetExplorer
 		#region ImageOffset Dependency Property
 
 		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
-					"ImageOffset", typeof(VectorDbl), typeof(BitmapGridControl),
+					"ImageOffset", typeof(VectorDbl), typeof(HistogramDisplayControl),
 					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
 
 		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			BitmapGridControl c = (BitmapGridControl)o;
+			HistogramDisplayControl c = (HistogramDisplayControl)o;
 			//var previousValue = (VectorDbl)e.OldValue;
 			var newValue = (VectorDbl)e.NewValue;
 
@@ -602,5 +573,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
 	}
 }

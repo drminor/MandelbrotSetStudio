@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System.Collections.Generic;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
 namespace MSetExplorer
@@ -8,7 +9,9 @@ namespace MSetExplorer
 	{
 		Dispatcher Dispatcher { get; }
 
-		SizeDbl ViewportSize { get; }
+		WriteableBitmap Bitmap { get; }
+
+		SizeDbl ViewportSize { get; set; }
 		BigVector MapBlockOffset { get; set; }
 		VectorDbl ImageOffset { get; set; }
 

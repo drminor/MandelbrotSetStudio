@@ -41,6 +41,28 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-    </Style>    
+    </Style>
+
+
+    <Style TargetType="{x:Type local:HistogramDisplayControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:BitmapGridControl}">
+                    <Border BorderThickness="0" BorderBrush="DarkSlateBlue">
+
+                        <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ContentPresenter.Content>
+                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+                                    <Image x:Name="MainImage" />
+                                </Canvas>
+                            </ContentPresenter.Content>
+
+                        </ContentPresenter>
+
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
 </ResourceDictionary>

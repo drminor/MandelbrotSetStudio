@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,7 +14,7 @@ namespace MSetExplorer
 	public class CbshDisplayViewModel : ViewModelBase, ICbshDisplayViewModel
 	{
 		//private readonly SynchronizationContext? _synchronizationContext;
-		//private readonly object _paintLocker;
+		private readonly object _paintLocker;
 
 		private readonly DrawingGroup _drawingGroup;
 		private readonly ScaleTransform _scaleTransform;
@@ -38,6 +39,7 @@ namespace MSetExplorer
 		{
 			//_synchronizationContext = SynchronizationContext.Current;
 
+			_paintLocker = new object();
 			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
 			_colorBandSet = new ColorBandSet();
 			_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
@@ -223,6 +225,99 @@ namespace MSetExplorer
 				}
 
 				OnPropertyChanged(nameof(ICbshDisplayViewModel.CurrentColorBand));
+			}
+		}
+
+		#endregion
+
+		#region Public Methods
+
+		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double baseScale)
+		{
+			int? newJobNumber;
+
+			//if (CurrentAreaColorAndCalcSettings == null)
+			//{
+			//	_bitmapGrid.ViewportSize = contentViewportSize;
+			//	ViewportSize = contentViewportSize;
+			//	newJobNumber = null;
+			//}
+			//else
+			//{
+			//	if (BoundedMapArea == null)
+			//	{
+			//		throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
+			//	}
+
+			//	newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, contentViewportSize, contentOffset, baseScale);
+			//}
+
+			newJobNumber = null;
+			return newJobNumber;
+		}
+
+		public int? UpdateViewportSize(SizeDbl newValue)
+		{
+			int? newJobNumber = null;
+
+			//if (!newValue.IsNAN() && newValue != _viewportSize)
+			//{
+			//	if (newValue.Width <= 2 || newValue.Height <= 2)
+			//	{
+			//		Debug.WriteLine($"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
+			//	}
+			//	else
+			//	{
+			//		Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
+			//		newJobNumber = HandleDisplaySizeUpdate(newValue);
+			//	}
+			//}
+			//else
+			//{
+			//	Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate, not raising OnPropertyChanged.");
+			//}
+
+			return newJobNumber;
+		}
+
+		public int? MoveTo(VectorDbl displayPosition)
+		{
+			//if (BoundedMapArea == null || UnscaledExtent.IsNearZero())
+			//{
+			//	//Debug.WriteLine($"WARNING: Cannot MoveTo {displayPosition}, there is no bounding info set or the UnscaledExtent is zero.");
+			//	//return null;
+
+			//	throw new InvalidOperationException("Cannot call MoveTo, if the boundedMapArea is null or if the UnscaledExtent is zero.");
+			//}
+
+			//if (CurrentAreaColorAndCalcSettings == null)
+			//{
+			//	throw new InvalidOperationException("Cannot call MoveTo, if the CurrentAreaColorAndCalcSettings is null.");
+			//}
+
+			//// Get the MapAreaInfo subset for the given display position
+			//var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
+
+			//ReportMove(BoundedMapArea, displayPosition/*, BoundedMapArea.ContentScale, BoundedMapArea.BaseScale*/);
+
+			//var newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
+
+			//DisplayPosition = displayPosition;
+
+			//if (newJobNumber.HasValue && lastSectionWasIncluded)
+			//{
+			//	DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+			//}
+
+			int? newJobNumber = null;
+			return newJobNumber;
+		}
+
+		public void ClearDisplay()
+		{
+			lock (_paintLocker)
+			{
+				//_bitmapGrid.ClearDisplay();
 			}
 		}
 

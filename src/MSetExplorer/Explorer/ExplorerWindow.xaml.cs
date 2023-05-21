@@ -46,7 +46,7 @@ namespace MSetExplorer
 			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 
-			cbsh1.DataContext = _vm.ColorBandSetHistogramViewModel;
+			cbsh1.DataContext = _vm.CbshDisplayViewModel;
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 		}
 

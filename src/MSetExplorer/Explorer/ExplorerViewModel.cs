@@ -20,7 +20,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
-			ColorBandSetHistogramViewModel colorBandSetHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
+			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
 			IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
 		{
 
@@ -50,7 +50,8 @@ namespace MSetExplorer
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
-			ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
+			//ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
+			CbshDisplayViewModel = cbshDisplayViewModel;
 		}
 
 		#endregion
@@ -64,7 +65,9 @@ namespace MSetExplorer
 		public MapCoordsViewModel MapCoordsViewModel { get; } 
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
-		public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
+
+		//public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
+		public ICbshDisplayViewModel CbshDisplayViewModel { get; }
 
 		public ViewModelFactory ViewModelFactory => _viewModelFactory;
 
@@ -143,7 +146,7 @@ namespace MSetExplorer
 					);
 
 				ColorBandSetViewModel.ColorBandSet = newColorBandSet;
-				ColorBandSetHistogramViewModel.ColorBandSet = newColorBandSet;
+				CbshDisplayViewModel.ColorBandSet = newColorBandSet;
 
 				MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
 
@@ -154,7 +157,7 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(IProjectViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
-				ColorBandSetHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
+				CbshDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 
 				if (ProjectViewModel.CurrentProject != null)
 				{
@@ -229,7 +232,7 @@ namespace MSetExplorer
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
 		{
 			ColorBandSetViewModel.RefreshPercentages();
-			ColorBandSetHistogramViewModel.RefreshHistogramDisplay();
+			CbshDisplayViewModel.RefreshHistogramDisplay();
 		}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
@@ -260,7 +263,7 @@ namespace MSetExplorer
 				ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 
-			ColorBandSetHistogramViewModel.ColorBandSet = colorBandSet;
+			CbshDisplayViewModel.ColorBandSet = colorBandSet;
 		}
 
 		#endregion
