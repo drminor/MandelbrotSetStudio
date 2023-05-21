@@ -34,7 +34,7 @@ namespace MSetExplorer
 		private TranslateTransform _canvasTranslateTransform;
 		private ScaleTransform _canvasScaleTransform;
 
-		private VectorDbl _canvasOffset;
+		private VectorDbl _contentOffset;
 		private RectangleGeometry? _canvasClip;
 
 		private bool _useDetailedDebug = false;
@@ -76,7 +76,7 @@ namespace MSetExplorer
 
 			_canvas.RenderTransform = _canvasRenderTransform;
 
-			_canvasOffset = new VectorDbl();
+			_contentOffset = new VectorDbl();
 			_canvasClip = null;
 
 			//MouseEnter += HistogramDisplayControl_MouseEnter;
@@ -172,44 +172,44 @@ namespace MSetExplorer
 			get => _viewportSizeInternal;
 			set
 			{
-				//if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
-				//{
-				//	var previousValue = _viewportSizeInternal;
-				//	_viewportSizeInternal = value;
+				if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
+				{
+					var previousValue = _viewportSizeInternal;
+					_viewportSizeInternal = value;
 
-				//	//Debug.WriteLine($"HistogramDisplayControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
+					//Debug.WriteLine($"HistogramDisplayControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
 
-				//	var newViewportSize = value;
+					var newViewportSize = value;
 
-				//	if (previousValue.Width < 25 || previousValue.Height < 25)
-				//	{
-				//		// Update the 'real' value immediately
-				//		Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
-				//		ViewportSize = newViewportSize;
-				//	}
-				//	else
-				//	{
-				//		// Update the screen immediately, while we are 'holding' back the update.
-				//		//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
-				//		var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
-				//		_ = UpdateImageOffset(tempOffset);
+					if (previousValue.Width < 25 || previousValue.Height < 25)
+					{
+						// Update the 'real' value immediately
+						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
+						ViewportSize = newViewportSize;
+					}
+					else
+					{
+						// Update the screen immediately, while we are 'holding' back the update.
+						//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
+						var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
+						_ = UpdateImageOffset(tempOffset);
 
-				//		// Delay the 'real' update until no futher updates in the last 150ms.
-				//		_viewPortSizeDispatcher.Debounce(
-				//			interval: 150,
-				//			action: parm =>
-				//			{
-				//				Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
-				//				ViewportSize = newViewportSize;
-				//			},
-				//			param: null
-				//		);
-				//	}
-				//}
-				//else
-				//{
-				//	Debug.WriteLine($"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
-				//}
+						// Delay the 'real' update until no futher updates in the last 150ms.
+						_viewPortSizeDispatcher.Debounce(
+							interval: 150,
+							action: parm =>
+							{
+								Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
+								ViewportSize = newViewportSize;
+							},
+							param: null
+						);
+					}
+				}
+				else
+				{
+					Debug.WriteLine($"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
+				}
 			}
 		}
 
@@ -286,16 +286,16 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorDbl CanvasOffset
-		{
-			get => _canvasOffset;
-			set
-			{
-				var previousVal = _canvasOffset;
-				_canvasOffset = value;
-				SetTheCanvasTranslateTransform(previousVal, value);
-			}
-		}
+		//public VectorDbl CanvasOffset
+		//{
+		//	get => _canvasOffset;
+		//	set
+		//	{
+		//		var previousVal = _canvasOffset;
+		//		_canvasOffset = value;
+		//		SetTheCanvasTranslateTransform(previousVal, value);
+		//	}
+		//}
 
 		public RectangleGeometry? CanvasClip
 		{
@@ -306,6 +306,31 @@ namespace MSetExplorer
 				//_canvas.Clip = value;
 			}
 		}
+
+		//VectorDbl ContentOffset { get; set; }
+
+		public VectorDbl ContentOffset
+		{
+			get => _contentOffset;
+			set
+			{
+				var previousVal = _contentOffset;
+				_contentOffset = value;
+				SetTheCanvasTranslateTransform(previousVal, value);
+			}
+		}
+
+		//public VectorDbl ContentOffset
+		//{
+		//	get => _contentOffset;
+		//	set
+		//	{
+		//		var previousVal = _contentOffset;
+		//		_contentOffset = value;
+		//		SetTheCanvasTranslateTransform(previousVal, value);
+		//	}
+		//}
+
 
 		#endregion
 
@@ -435,7 +460,7 @@ namespace MSetExplorer
 			var combinedScale = new SizeDbl(st.ScaleX, st.ScaleY);
 
 			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramDisplayControl's Image ScaleTransform is being set to {relativeScale} from {currentScaleX}. CombinedScale: {combinedScale}, BaseScale is {baseScale}. The CanvasOffset is {_canvasOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramDisplayControl's Image ScaleTransform is being set to {relativeScale} from {currentScaleX}. CombinedScale: {combinedScale}, BaseScale is {baseScale}. The CanvasOffset is {_contentOffset}.");
 
 			_canvasScaleTransform.ScaleX = relativeScale;
 			_canvasScaleTransform.ScaleY = relativeScale;
@@ -466,7 +491,7 @@ namespace MSetExplorer
 
 			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_canvasOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_contentOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
 
 				CompareCanvasAndControlHeights();
 
@@ -549,10 +574,10 @@ namespace MSetExplorer
 			var previousValue = (ImageSource)e.OldValue;
 			var value = (ImageSource)e.NewValue;
 
-			//if (value != previousValue)
-			//{
-			//	c.Image.Source = value;
-			//}
+			if (value != previousValue)
+			{
+				c.Image.Source = value;
+			}
 		}
 
 		#endregion

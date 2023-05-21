@@ -174,14 +174,14 @@ namespace MSetExplorer
 		{
 			if (scaledDisplayArea == null)
 			{
-				BitmapGridControl1.CanvasOffset = VectorDbl.Zero;
+				BitmapGridControl1.ContentOffset = VectorDbl.Zero;
 				BitmapGridControl1.CanvasClip = null;
 			}
 			else
 			{
 				// Center the Canvas, using Canvas coordinates
 				var offset = new VectorDbl(scaledDisplayArea.Value.Position);
-				BitmapGridControl1.CanvasOffset = offset;
+				BitmapGridControl1.ContentOffset = offset;
 
 
 				// Only show the pixels belonging to the Poster.

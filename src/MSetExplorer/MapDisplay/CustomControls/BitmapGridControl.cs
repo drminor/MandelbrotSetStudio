@@ -282,7 +282,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorDbl CanvasOffset
+		public VectorDbl ContentOffset
 		{
 			get => _canvasOffset;
 			set

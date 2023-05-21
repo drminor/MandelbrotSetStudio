@@ -8,5 +8,7 @@ namespace MSetExplorer
 		ScaleTransform ScaleTransform { get; set; }
 
 		SizeDbl ContentViewportSize { get; set; }
+
+		VectorDbl ContentOffset { get; set; }
 	}
 }

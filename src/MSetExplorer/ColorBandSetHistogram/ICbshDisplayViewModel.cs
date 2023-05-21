@@ -6,7 +6,7 @@ namespace MSetExplorer
 {
 	public interface ICbshDisplayViewModel
 	{
-		ImageSource ImageSource { get; init; }
+		ImageSource ImageSource { get; }
 		SizeDbl ContainerSize { get; set; }
 		SizeInt CanvasSize { get; set; }
 

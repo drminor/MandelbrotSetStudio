@@ -35,8 +35,8 @@
                             MinContentScale="{Binding MinimumDisplayZoom}"
                             >
 
-                            <local:BitmapGridControl
-                                x:Name="BitmapGridControl1"
+                            <local:HistogramDisplayControl
+                                x:Name="HistogramDisplayControl1"
                                 BitmapGridImageSource="{Binding ImageSource, Mode=OneWay}"
                                 ImageOffset="{Binding ImageOffset, Mode=OneWay}"
                             />

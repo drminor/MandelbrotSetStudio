@@ -32,7 +32,7 @@ namespace MSetExplorer
 
 			InitializeComponent();
 
-			_outline = BuildOutline(BitmapGridControl1.Canvas);
+			_outline = BuildOutline(HistogramDisplayControl1.Canvas);
 		}
 
 		private void ColorBandSetHistogramControl_Loaded(object sender, RoutedEventArgs e)
@@ -53,6 +53,14 @@ namespace MSetExplorer
 				//{
 				//	PanAndZoomControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(PanAndZoomControl1);
 				//}
+
+				//var zoomSlider = new ZoomSlider(ScrollViewer1)
+
+				var sb = cbshZoom1.scrollBar1;
+
+				var result = new ZoomSlider(sb, PanAndZoomControl1);
+				//_zoomSlidersToDispose.Add(result);
+
 
 				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
@@ -85,7 +93,7 @@ namespace MSetExplorer
 			//HideOutline();
 
 			// TODO: Consider adding this to the IContentScaler interface
-			BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
+			HistogramDisplayControl1.ContentViewportSize = e.ContentViewportSize;
 
 			var baseScale = PanAndZoomControl1.ZoomSliderOwner?.BaseValue ?? 1.0;
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, baseScale);
@@ -172,19 +180,19 @@ namespace MSetExplorer
 		{
 			if (scaledDisplayArea == null)
 			{
-				BitmapGridControl1.CanvasOffset = VectorDbl.Zero;
-				BitmapGridControl1.CanvasClip = null;
+				HistogramDisplayControl1.ContentOffset = VectorDbl.Zero;
+				HistogramDisplayControl1.CanvasClip = null;
 			}
 			else
 			{
 				// Center the Canvas, using Canvas coordinates
 				var offset = new VectorDbl(scaledDisplayArea.Value.Position);
-				BitmapGridControl1.CanvasOffset = offset;
+				HistogramDisplayControl1.ContentOffset = offset;
 
 
 				// Only show the pixels belonging to the Poster.
 				var scaledDisplaySize = ScreenTypeHelper.ConvertToSize(scaledDisplayArea.Value.Size);
-				BitmapGridControl1.CanvasClip = new RectangleGeometry(new Rect(scaledDisplaySize));
+				HistogramDisplayControl1.CanvasClip = new RectangleGeometry(new Rect(scaledDisplaySize));
 			}
 		}
 

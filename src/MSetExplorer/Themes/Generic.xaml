@@ -47,7 +47,7 @@
     <Style TargetType="{x:Type local:HistogramDisplayControl}">
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type local:BitmapGridControl}">
+                <ControlTemplate TargetType="{x:Type local:HistogramDisplayControl}">
                     <Border BorderThickness="0" BorderBrush="DarkSlateBlue">
 
                         <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">

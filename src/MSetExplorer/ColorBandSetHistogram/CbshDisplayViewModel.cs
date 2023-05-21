@@ -34,6 +34,8 @@ namespace MSetExplorer
 
 		private VectorDbl _displayPosition;
 
+		private ImageSource _imageSource;
+
 		private double _displayZoom;
 		private double _minimumDisplayZoom;
 
@@ -41,7 +43,7 @@ namespace MSetExplorer
 		private SizeInt _canvasSize;
 		private SizeDbl _unscaledExtent;
 
-		//private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -65,7 +67,8 @@ namespace MSetExplorer
 			_drawingGroup = new DrawingGroup();
 			_scaleTransform = new ScaleTransform();
 			_drawingGroup.Transform = _scaleTransform;
-			ImageSource = new DrawingImage(_drawingGroup);
+
+			_imageSource = new DrawingImage(_drawingGroup);
 
 			_unscaledExtent = new SizeDbl();
 			_foundationRectangle = BuildFoundationRectangle(_unscaledExtent);
@@ -119,7 +122,16 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public ImageSource ImageSource { get; init; }
+		public ImageSource ImageSource
+		{
+			get => _imageSource;
+			set
+			{
+				if (_useDetailedDebug) Debug.WriteLine($"The CbshDisplayViewModel's ImageSource is being set to value: {value}.");
+				_imageSource = value;
+				OnPropertyChanged(nameof(ICbshDisplayViewModel.ImageSource));
+			}
+		}
 
 		public SizeDbl ViewportSize
 		{
