@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSetExplorer.MapDisplay.Support;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -337,7 +338,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double baseScale)
+		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
 			int? newJobNumber;
 
@@ -353,6 +354,8 @@ namespace MSetExplorer
 				{
 					throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
 				}
+
+				var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(contentScale);
 
 				newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, contentViewportSize, contentOffset, baseScale);
 			}

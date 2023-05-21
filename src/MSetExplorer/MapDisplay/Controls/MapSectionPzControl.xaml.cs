@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.MapDisplay.Support;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -27,13 +28,12 @@ namespace MSetExplorer
 		public MapSectionPzControl()
 		{
 			_vm = (IMapDisplayViewModel)DataContext;
+			_outline = new Rectangle();
 
 			Loaded += MapSectionPzControl_Loaded;
 			Unloaded += MapSectionPzControl_Unloaded;
 
 			InitializeComponent();
-
-			_outline = BuildOutline(BitmapGridControl1.Canvas);
 		}
 
 		private void MapSectionPzControl_Loaded(object sender, RoutedEventArgs e)
@@ -67,8 +67,6 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl1.ZoomSliderOwner = null;
 
-			//BitmapGridControl1.ViewportSizeChanged -= BitmapGridControl1_ViewportSizeChanged;
-
 			PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
@@ -80,22 +78,17 @@ namespace MSetExplorer
 
 		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
-			//HideOutline();
-
 			CheckForStaleContentOffset(e.ContentOffset);
 
 			// TODO: Consider adding this to the IContentScaler interface
 			BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
 
-			var baseScale = PanAndZoomControl1.ZoomSliderOwner?.BaseValue ?? 1.0;
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, baseScale);
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			//HideOutline();
-
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
@@ -128,17 +121,14 @@ namespace MSetExplorer
 
 				// The screen is scaled by relativeScale.
 				// Convert screen coordinates to 'display' coordinates
-				var scaleFactor = ZoomSlider.GetScaleFactor(contentScale);
+				var scaleFactor = ContentScalerHelper.GetScaleFactor(contentScale);
 				var screenToRelativeScaleFactor = scaleFactor / contentScale;
 
 				CheckScreenToRelativeScaleFactor(screenToRelativeScaleFactor, contentScale);
 
 				var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
 
-				if (DRAW_OUTLINE)
-				{
-					ShowBorderForDiagnositics(scaledDisplayArea);
-				}
+				ShowOutline(scaledDisplayArea);
 
 				OffsetAndClip(scaledDisplayArea);
 
@@ -190,15 +180,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ShowBorderForDiagnositics(RectangleDbl scaledDisplayArea)
+		private void ShowOutline(RectangleDbl scaledDisplayArea)
 		{
-			// Position the outline rectangle.
-			_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
-			_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
+			if (DRAW_OUTLINE)
+			{
+				// Position the outline rectangle.
+				_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
+				_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
 
-			_outline.Width = scaledDisplayArea.Width;
-			_outline.Height = scaledDisplayArea.Height;
-			_outline.Visibility = Visibility.Visible;
+				_outline.Width = scaledDisplayArea.Width;
+				_outline.Height = scaledDisplayArea.Height;
+				_outline.Visibility = Visibility.Visible;
+			}
 		}
 
 		//private void HideOutline()
@@ -294,7 +287,7 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void CheckScreenToRelativeScaleFactor(double screenToRelativeScaleFactor, double contentScale)
 		{
-			var (_, relativeScale) = ZoomSlider.GetBaseAndRelative(contentScale);
+			var (_, relativeScale) = ContentScalerHelper.GetBaseAndRelative(contentScale);
 
 			var chkRelativeScale = 1 / relativeScale;
 			Debug.Assert(Math.Abs(screenToRelativeScaleFactor - chkRelativeScale) < 0.1, "ScreenToRelativeScaleFactor maybe incorrect.");

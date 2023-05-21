@@ -122,7 +122,7 @@ namespace MSetExplorer
 
 		private void _controlScaleTransform_Changed(object? sender, EventArgs e)
 		{
-			//SetTheCanvasScaleTransform(_controlScaleTransform);
+			SetTheCanvasScaleTransform(_controlScaleTransform);
 		}
 
 		#endregion
@@ -158,7 +158,7 @@ namespace MSetExplorer
 					_image = value;
 					_image.SizeChanged += Image_SizeChanged;
 
-					_image.Source = BitmapGridImageSource;
+					_image.Source = HistogramImageSource;
 
 					UpdateImageOffset(ImageOffset);
 
@@ -236,10 +236,10 @@ namespace MSetExplorer
 			}
 		}
 
-		public ImageSource BitmapGridImageSource
+		public ImageSource HistogramImageSource
 		{
-			get => (ImageSource)GetValue(BitmapGridImageSourceProperty);
-			set => SetCurrentValue(BitmapGridImageSourceProperty, value);
+			get => (ImageSource)GetValue(HistogramImageSourceProperty);
+			set => SetCurrentValue(HistogramImageSourceProperty, value);
 		}
 
 		public VectorDbl ImageOffset
@@ -256,8 +256,7 @@ namespace MSetExplorer
 
 		public SizeDbl ContentViewportSize
 		{
-			//get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
-			get => _contentViewportSize;
+			get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
 			set
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value))
@@ -286,28 +285,15 @@ namespace MSetExplorer
 			}
 		}
 
-		//public VectorDbl CanvasOffset
-		//{
-		//	get => _canvasOffset;
-		//	set
-		//	{
-		//		var previousVal = _canvasOffset;
-		//		_canvasOffset = value;
-		//		SetTheCanvasTranslateTransform(previousVal, value);
-		//	}
-		//}
-
 		public RectangleGeometry? CanvasClip
 		{
 			get => _canvasClip;
 			set
 			{
 				_canvasClip = value;
-				//_canvas.Clip = value;
+				_canvas.Clip = value;
 			}
 		}
-
-		//VectorDbl ContentOffset { get; set; }
 
 		public VectorDbl ContentOffset
 		{
@@ -319,18 +305,6 @@ namespace MSetExplorer
 				SetTheCanvasTranslateTransform(previousVal, value);
 			}
 		}
-
-		//public VectorDbl ContentOffset
-		//{
-		//	get => _contentOffset;
-		//	set
-		//	{
-		//		var previousVal = _contentOffset;
-		//		_contentOffset = value;
-		//		SetTheCanvasTranslateTransform(previousVal, value);
-		//	}
-		//}
-
 
 		#endregion
 
@@ -438,14 +412,10 @@ namespace MSetExplorer
 
 		private void SetTheCanvasSize(SizeDbl contentViewportSize, ScaleTransform st)
 		{
-			var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
-			var scaleFactor = ZoomSlider.GetScaleFactorFromBase(baseScale);
-
 			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
+			var contentScale = new SizeDbl(st.ScaleX, st.ScaleY);
 
-			CompareViewportAndContentViewportSizes(viewportSize, contentViewportSize, scaleFactor, relativeScale);
-
-			var newCanvasSize = viewportSize.Divide(relativeScale);
+			var newCanvasSize = viewportSize.Divide(contentScale.Width);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
 
@@ -455,15 +425,11 @@ namespace MSetExplorer
 
 		private void SetTheCanvasScaleTransform(ScaleTransform st)
 		{
-			var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
-
-			var combinedScale = new SizeDbl(st.ScaleX, st.ScaleY);
-
 			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramDisplayControl's Image ScaleTransform is being set to {relativeScale} from {currentScaleX}. CombinedScale: {combinedScale}, BaseScale is {baseScale}. The CanvasOffset is {_contentOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramDisplayControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}. The CanvasOffset is {_contentOffset}.");
 
-			_canvasScaleTransform.ScaleX = relativeScale;
-			_canvasScaleTransform.ScaleY = relativeScale;
+			_canvasScaleTransform.ScaleX = st.ScaleX;
+			_canvasScaleTransform.ScaleY = st.ScaleY;
 		}
 
 		private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl canvasOffset)
@@ -516,21 +482,6 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG")]
-		private void CompareViewportAndContentViewportSizes(SizeDbl viewportSize, SizeDbl contentViewportSize, double scaleFactor, double relativeScale)
-		{
-			// The contentViewportSize when reduced by the BaseScale Factor
-			// should equal the ViewportSize when it is expanded by the RelativeScale
-
-			var contentViewportSizeReduced = contentViewportSize.Scale(scaleFactor);
-			var viewportSizeExpanded = viewportSize.Scale(1 / relativeScale);
-
-			if (ScreenTypeHelper.IsSizeDblChanged(contentViewportSizeReduced, viewportSizeExpanded, threshold: 1.1))
-			{
-				Debug.WriteLine("WARNING: The ContentViewport and Viewport Sizes when scaled appropriately are not equal.");
-			}
-		}
-
-		[Conditional("DEBUG")]
 		private void CompareCanvasAndControlHeights()
 		{
 			// The contentViewportSize when reduced by the BaseScale Factor
@@ -562,13 +513,13 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region BitmapGridImageSource Dependency Property
+		#region HistogramImageSource Dependency Property
 
-		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
-					"BitmapGridImageSource", typeof(ImageSource), typeof(HistogramDisplayControl),
-					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, BitmapGridImageSource_PropertyChanged));
+		public static readonly DependencyProperty HistogramImageSourceProperty = DependencyProperty.Register(
+					"HistogramImageSource", typeof(ImageSource), typeof(HistogramDisplayControl),
+					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, HistogramImageSource_PropertyChanged));
 
-		private static void BitmapGridImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		private static void HistogramImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			var c = (HistogramDisplayControl)o;
 			var previousValue = (ImageSource)e.OldValue;

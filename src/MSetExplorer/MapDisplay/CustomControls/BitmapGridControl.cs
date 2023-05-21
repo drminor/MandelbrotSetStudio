@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.MapDisplay.Support;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -440,8 +441,8 @@ namespace MSetExplorer
 
 		private void SetTheCanvasSize(SizeDbl contentViewportSize, ScaleTransform st)
 		{
-			var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
-			var scaleFactor = ZoomSlider.GetScaleFactorFromBase(baseScale);
+			var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(st.ScaleX);
+			var scaleFactor = ContentScalerHelper.GetScaleFactorFromBase(baseScale);
 
 			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
 
@@ -458,7 +459,7 @@ namespace MSetExplorer
 
 		private void SetTheCanvasScaleTransform(ScaleTransform st)
 		{
-			var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(st.ScaleX);
+			var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(st.ScaleX);
 
 			var combinedScale = new SizeDbl(st.ScaleX, st.ScaleY);
 

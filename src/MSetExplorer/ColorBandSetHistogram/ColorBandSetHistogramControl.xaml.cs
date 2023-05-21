@@ -26,13 +26,12 @@ namespace MSetExplorer
 		public ColorBandSetHistogramControl()
 		{
 			_vm = (CbshDisplayViewModel)DataContext;
+			_outline = new Rectangle();
 
 			Loaded += ColorBandSetHistogramControl_Loaded;
 			Unloaded += ColorBandSetHistogramControl_Unloaded;
 
 			InitializeComponent();
-
-			_outline = BuildOutline(HistogramDisplayControl1.Canvas);
 		}
 
 		private void ColorBandSetHistogramControl_Loaded(object sender, RoutedEventArgs e)
@@ -45,28 +44,16 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (CbshDisplayViewModel)DataContext;
-				//cbshDisplay1.DataContext = _vm.CbshDisplayViewModel;
 
 				_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
 
-				//if (_vm.ZoomSliderFactory != null)
-				//{
-				//	PanAndZoomControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(PanAndZoomControl1);
-				//}
-
-				//var zoomSlider = new ZoomSlider(ScrollViewer1)
-
-				var sb = cbshZoom1.scrollBar1;
-
-				var result = new ZoomSlider(sb, PanAndZoomControl1);
-				//_zoomSlidersToDispose.Add(result);
-
+				PanAndZoomControl1.ZoomSliderOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
 				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 
-				//_outline = BuildOutline(BitmapGridControl1.Canvas);
+				_outline = BuildOutline(HistogramDisplayControl1.Canvas);
 
 
 				Debug.WriteLine("The ColorBandSetHistogram UserControl is now loaded.");
@@ -76,8 +63,6 @@ namespace MSetExplorer
 		private void ColorBandSetHistogramControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			PanAndZoomControl1.ZoomSliderOwner = null;
-
-			//BitmapGridControl1.ViewportSizeChanged -= BitmapGridControl1_ViewportSizeChanged;
 
 			PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
@@ -90,20 +75,15 @@ namespace MSetExplorer
 
 		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
-			//HideOutline();
-
 			// TODO: Consider adding this to the IContentScaler interface
 			HistogramDisplayControl1.ContentViewportSize = e.ContentViewportSize;
 
-			var baseScale = PanAndZoomControl1.ZoomSliderOwner?.BaseValue ?? 1.0;
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, baseScale);
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			//HideOutline();
-
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
@@ -111,8 +91,6 @@ namespace MSetExplorer
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)
 		{
-			//HideOutline();
-
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
@@ -136,15 +114,11 @@ namespace MSetExplorer
 
 				// The screen is scaled by relativeScale.
 				// Convert screen coordinates to 'display' coordinates
-				var scaleFactor = ZoomSlider.GetScaleFactor(contentScale);
-				var screenToRelativeScaleFactor = scaleFactor / contentScale;
+				var screenToRelativeScaleFactor = 1 / contentScale;
 
 				var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
 
-				if (DRAW_OUTLINE)
-				{
-					ShowBorderForDiagnositics(scaledDisplayArea);
-				}
+				ShowOutline(scaledDisplayArea);
 
 				OffsetAndClip(scaledDisplayArea);
 
@@ -196,15 +170,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ShowBorderForDiagnositics(RectangleDbl scaledDisplayArea)
+		private void ShowOutline(RectangleDbl scaledDisplayArea)
 		{
-			// Position the outline rectangle.
-			_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
-			_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
+			if (DRAW_OUTLINE)
+			{
+				// Position the outline rectangle.
+				_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
+				_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
 
-			_outline.Width = scaledDisplayArea.Width;
-			_outline.Height = scaledDisplayArea.Height;
-			_outline.Visibility = Visibility.Visible;
+				_outline.Width = scaledDisplayArea.Width;
+				_outline.Height = scaledDisplayArea.Height;
+				_outline.Visibility = Visibility.Visible;
+			}
 		}
 
 		//private void HideOutline()

@@ -206,7 +206,7 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"ColorBandSetHistogram Display's Logical DisplaySize is now {value}.");
 
-					DisplayZoom = _unscaledExtent.Width / (double)_canvasSize.Width;
+					DisplayZoom = _unscaledExtent.Width / _canvasSize.Width;
 
 					UpdateFoundationRectangle(_foundationRectangle, value);
 
@@ -330,7 +330,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double baseScale)
+		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
 			int? newJobNumber;
 

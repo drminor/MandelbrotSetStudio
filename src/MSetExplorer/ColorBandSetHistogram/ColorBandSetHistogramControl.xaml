@@ -20,7 +20,6 @@
 
                 <Border Grid.Column="1" BorderThickness="0.75" BorderBrush="Black">
                     
-                    <!-- <local:CbshDisplayControl x:Name="cbshDisplay1"/> -->
                     <ScrollViewer
                         x:Name="ScrollViewer1"
                         CanContentScroll="True"
@@ -37,7 +36,7 @@
 
                             <local:HistogramDisplayControl
                                 x:Name="HistogramDisplayControl1"
-                                BitmapGridImageSource="{Binding ImageSource, Mode=OneWay}"
+                                HistogramImageSource="{Binding ImageSource, Mode=OneWay}"
                                 ImageOffset="{Binding ImageOffset, Mode=OneWay}"
                             />
 
