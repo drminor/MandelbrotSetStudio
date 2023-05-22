@@ -47,6 +47,9 @@ namespace MSetExplorer
 
 				_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
 
+				PanAndZoomControl1.MaxContentScale = 10;
+				PanAndZoomControl1.MinContentScale = 1;
+
 				PanAndZoomControl1.ZoomSliderOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
 				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;

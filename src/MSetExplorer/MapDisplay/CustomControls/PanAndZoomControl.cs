@@ -27,8 +27,7 @@ namespace MSetExplorer
 
 		private SizeDbl _viewportSize;
 
-		//private TranslateTransform? _contentOffsetTransform = null;
-		private ScaleTransform _contentScaleTransform;
+		//private ScaleTransform _contentScaleTransform;
 
 		private bool _enableContentOffsetUpdateFromScale = true;
 
@@ -53,7 +52,7 @@ namespace MSetExplorer
 			_zoomSlider = null;
 
 			_viewportSize = new SizeDbl();
-			_contentScaleTransform = new ScaleTransform(DefaultContentScale, DefaultContentScale);
+			//_contentScaleTransform = new ScaleTransform(DefaultContentScale, DefaultContentScale);
 
 			ContentViewportSize = new SizeDbl();
 
@@ -118,7 +117,24 @@ namespace MSetExplorer
 			set => SetCurrentValue(MaxContentScaleProperty, value);
 		}
 
-		public SizeDbl ContentViewportSize { get; set; }
+		private SizeDbl _contentViewportSize;
+
+		public SizeDbl ContentViewportSize
+		{ 
+			get
+			{
+				return _contentViewportSize;
+			}
+
+			set
+			{
+				_contentViewportSize = value;
+				if (_contentScaler != null)
+				{
+					_contentScaler.ContentViewportSize = value;
+				}
+			}
+		}
 
 		public PointDbl ContentZoomFocus { get; set; }
 
@@ -209,21 +225,22 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Found the PanAndZoomControl_Content template. The ContentBeingZoomed is {ContentBeingZoomed} /w type: {ContentBeingZoomed.GetType()}.");
 
-				UpdateTranslationX();
-				UpdateTranslationY();
-
 				if (ContentBeingZoomed is ContentPresenter cp)
 				{
 					if (cp.Content is IContentScaler contentScaler)
 					{
 						_contentScaler = contentScaler;
-						_contentScaler.ScaleTransform = _contentScaleTransform;
 					}
 					else
 					{
-						_contentScaler = null;
-						cp.RenderTransform = _contentScaleTransform;
+						_contentScaler = new ContentScaler(cp);
 					}
+
+					_contentScaler.ScaleTransform.ScaleX = ContentScale;
+					_contentScaler.ScaleTransform.ScaleY = ContentScale;
+
+					UpdateTranslationX();
+					UpdateTranslationY();
 				}
 				else
 				{
@@ -520,7 +537,12 @@ namespace MSetExplorer
 
 		private void UpdateContentViewportSize()
 		{
-			if (_contentScaleTransform.ScaleX != ContentScale)
+			if (_contentScaler == null)
+			{
+				Debug.WriteLine($"WARNING: The PanAndZoomControl is updating the ContentViewportSize, however the _contentScaler is null.");
+			}
+
+			if (_contentScaler?.ScaleTransform.ScaleX != ContentScale)
 			{
 				Debug.WriteLine($"Not using the current value for ContentScale.");
 			}
@@ -556,40 +578,40 @@ namespace MSetExplorer
 
 		private void UpdateTranslationX()
 		{
-			//if (_contentOffsetTransform != null)
-			//{
-			//	double scaledContentWidth = UnscaledExtent.Width * ContentScale;
-			//	if (scaledContentWidth < ViewportWidth)
-			//	{
-			//		//
-			//		// When the content can fit entirely within the viewport, center it.
-			//		//
-			//		_contentOffsetTransform.X = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
-			//	}
-			//	else
-			//	{
-			//		_contentOffsetTransform.X = -ContentOffsetX;
-			//	}
-			//}
+			if (_contentScaler != null)
+			{
+				double scaledContentWidth = UnscaledExtent.Width * ContentScale;
+				if (scaledContentWidth < ViewportWidth)
+				{
+					//
+					// When the content can fit entirely within the viewport, center it.
+					//
+					_contentScaler.TranslateTransform.X = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
+				}
+				else
+				{
+					_contentScaler.TranslateTransform.X = -ContentOffsetX;
+				}
+			}
 		}
 
 		private void UpdateTranslationY()
 		{
-			//if (_contentOffsetTransform != null)
-			//{
-			//	double scaledContentHeight = UnscaledExtent.Height * ContentScale;
-			//	if (scaledContentHeight < ViewportHeight)
-			//	{
-			//		//
-			//		// When the content can fit entirely within the viewport, center it.
-			//		//
-			//		_contentOffsetTransform.Y = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
-			//	}
-			//	else
-			//	{
-			//		_contentOffsetTransform.Y = -ContentOffsetY;
-			//	}
-			//}
+			if (_contentScaler != null)
+			{
+				double scaledContentHeight = UnscaledExtent.Height * ContentScale;
+				if (scaledContentHeight < ViewportHeight)
+				{
+					//
+					// When the content can fit entirely within the viewport, center it.
+					//
+					_contentScaler.TranslateTransform.Y = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
+				}
+				else
+				{
+					_contentScaler.TranslateTransform.Y = -ContentOffsetY;
+				}
+			}
 		}
 
 		private void UpdateContentZoomFocus()
@@ -611,16 +633,19 @@ namespace MSetExplorer
 		{
 			var result = false;
 
-			if (_contentScaleTransform.ScaleX != contentScale)
+			if (_contentScaler != null)
 			{
-				_contentScaleTransform.ScaleX = contentScale;
-				result = true;
-			}
+				if (_contentScaler.ScaleTransform.ScaleX != contentScale)
+				{
+					_contentScaler.ScaleTransform.ScaleX = contentScale;
+					result = true;
+				}
 
-			if (_contentScaleTransform.ScaleY != contentScale)
-			{
-				_contentScaleTransform.ScaleY = contentScale;
-				result = true;
+				if (_contentScaler.ScaleTransform.ScaleY != contentScale)
+				{
+					_contentScaler.ScaleTransform.ScaleY = contentScale;
+					result = true;
+				}
 			}
 
 			return result;

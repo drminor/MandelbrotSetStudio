@@ -681,7 +681,7 @@ namespace MSetExplorer
 
 				//_bitmapGrid.ClearSections(sectionsToClear);
 
-				_bitmapGrid.ClearDisplay();
+				//_bitmapGrid.ClearDisplay();
 
 				_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
 				ImageOffset = new VectorDbl(screenAreaInfo.CanvasControlOffset);

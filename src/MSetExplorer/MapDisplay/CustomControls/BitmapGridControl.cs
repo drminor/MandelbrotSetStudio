@@ -265,23 +265,30 @@ namespace MSetExplorer
 			}
 		}
 
+
 		ScaleTransform IContentScaler.ScaleTransform
 		{
 			get => _controlScaleTransform;
-			set
-			{
-				if (_controlScaleTransform != value)
-				{
-					_controlScaleTransform.Changed -= _controlScaleTransform_Changed;
-					_controlScaleTransform = value;
-					_controlScaleTransform.Changed += _controlScaleTransform_Changed;
+			//set
+			//{
+			//	if (_controlScaleTransform != value)
+			//	{
+			//		_controlScaleTransform.Changed -= _controlScaleTransform_Changed;
+			//		_controlScaleTransform = value;
+			//		_controlScaleTransform.Changed += _controlScaleTransform_Changed;
 
-					SetTheCanvasScaleTransform(_controlScaleTransform);
+			//		SetTheCanvasScaleTransform(_controlScaleTransform);
 
-					UpdateImageOffset(ImageOffset);
-				}
-			}
+			//		UpdateImageOffset(ImageOffset);
+			//	}
+			//}
 		}
+
+		// We are ignoring changes made on the TranslateTransform
+		// Instead The MapSectionPzControl is handling the calculation of the Translation
+		// and settign the ContentOffset
+
+		TranslateTransform IContentScaler.TranslateTransform => _canvasTranslateTransform;
 
 		public VectorDbl ContentOffset
 		{

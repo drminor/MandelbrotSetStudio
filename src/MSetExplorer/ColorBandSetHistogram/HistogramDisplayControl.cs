@@ -267,7 +267,9 @@ namespace MSetExplorer
 			}
 		}
 
-		ScaleTransform IContentScaler.ScaleTransform
+		ScaleTransform IContentScaler.ScaleTransform => _canvasScaleTransform;
+
+		public ScaleTransform ScaleTransform
 		{
 			get => _controlScaleTransform;
 			set
@@ -284,6 +286,10 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		TranslateTransform IContentScaler.TranslateTransform => _canvasTranslateTransform;
+
+		//TranslateTransform TranslateTransform { get; init; }
 
 		public RectangleGeometry? CanvasClip
 		{

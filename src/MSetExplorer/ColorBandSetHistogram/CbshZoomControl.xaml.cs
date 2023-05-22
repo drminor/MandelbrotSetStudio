@@ -20,20 +20,19 @@ namespace MSetExplorer
 
 		private void CbshZoomControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			var minimumScale = 0.0625;
-			SetScrollBarSettings(scrollBar1, minimumScale);
+			var maximumScale = 10;
+			SetScrollBarSettings(scrollBar1, maximumScale);
 
 			Debug.WriteLine("The CbshZoom Control is now loaded.");
 		}
 
-		private void SetScrollBarSettings(ScrollBar sb, double minimumScale)
+		private void SetScrollBarSettings(ScrollBar sb, double maximumScale)
 		{
-			sb.Minimum = minimumScale;
-			sb.Value = 1;
+			sb.Minimum = 1;
 
-			sb.Maximum = 1;
-			sb.SmallChange = minimumScale;
-			sb.LargeChange = minimumScale * 2;
+			sb.Maximum = maximumScale;
+			sb.SmallChange = sb.Minimum;
+			sb.LargeChange = sb.Minimum * 2;
 
 			sb.Value = 1;
 		}
