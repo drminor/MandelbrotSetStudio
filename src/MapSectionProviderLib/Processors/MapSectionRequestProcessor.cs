@@ -646,7 +646,7 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void WasPrimaryRequestFound(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> pendingRequests)
 		{
 			if (!RequestExists(mapSectionWorkRequest.Request, pendingRequests))

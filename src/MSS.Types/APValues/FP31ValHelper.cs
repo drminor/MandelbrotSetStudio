@@ -114,7 +114,7 @@ namespace MSS.Types.APValues
 			return result;
 		}
 
-		//[Conditional("DEBUG")]
+		//[Conditional("DEBUG2")]
 		//private static void CheckFP31ValFromRValueResult(RValue rValue, int targetExponent, int limbCount, byte bitsBeforeBP, BigInteger adjustedValue, FP31Val result, string bitExpInfo) 
 		//{
 		//	var rValueStrVal = RValueHelper.ConvertToString(rValue);
@@ -290,7 +290,7 @@ namespace MSS.Types.APValues
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private static void CheckNegation(uint[] originalPartialWordLimbs, uint[] negatedPartialWordLimbs)
 		{
 			var currentSign = GetSign(originalPartialWordLimbs);
@@ -465,7 +465,7 @@ namespace MSS.Types.APValues
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private static void CheckPWLimb(ulong source, uint result)
 		{
 			var diff = source - result;

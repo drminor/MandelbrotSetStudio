@@ -291,7 +291,7 @@ namespace MSS.Common
 			return mapAreaInfo;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckSubdivisionConsistency(Subdivision original, Subdivision result, int normalizedPositionExponent, int normalizedSpdExponent)
 		{
 			Debug.WriteLine($"While calculating the MapAreaWithSize. Original SubdivisionId: {original.Id}, Result SubdivisionId: {result.Id}. " +

@@ -563,7 +563,7 @@ namespace MSetExplorer
 			return mapAreaInfo;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckCurrentProject(IJobOwner jobOwner)
 		{
 			if (jobOwner.CurrentJob.IsEmpty)

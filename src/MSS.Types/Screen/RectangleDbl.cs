@@ -125,7 +125,7 @@ namespace MSS.Types
 			return this;
 		}
 
-		[Conditional("Debug")]
+		[Conditional("DEBUG2")]
 		private void Validate()
 		{
 			if (! (X2 >= X1 || double.IsNaN(X1) || double.IsNaN(X2) || double.IsInfinity(X1) || double.IsInfinity(X2)) )

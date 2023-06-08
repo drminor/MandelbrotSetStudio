@@ -696,7 +696,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportTopLevelJobsRemoved(List<(JobTreeNode parent, JobTreeNode child)> topLevelPairs)
 		{
 			Debug.WriteLine($"Remove Jobs: removed these top-level pairs:");

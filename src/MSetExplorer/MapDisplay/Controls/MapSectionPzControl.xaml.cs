@@ -273,7 +273,7 @@ namespace MSetExplorer
 			//</ DrawingBrush >
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckForStaleContentOffset(VectorDbl contentOffset)
 		{
 			var contentOffsetDirect = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
@@ -284,7 +284,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckScreenToRelativeScaleFactor(double screenToRelativeScaleFactor, double contentScale)
 		{
 			var (_, relativeScale) = ContentScalerHelper.GetBaseAndRelative(contentScale);

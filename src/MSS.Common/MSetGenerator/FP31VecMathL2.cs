@@ -302,7 +302,7 @@ namespace MSS.Common
 			IncrementConversionsCount(32);
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void WarnIfAnyCarry(Vector256<uint> source, Vector256<int> mask, string description)
 		{

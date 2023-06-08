@@ -304,6 +304,7 @@ namespace MSS.Common
 
 		#region Private Populate Methods
 
+		[Conditional("DEBUG2")]
 		private void ReportInput(IList<Job> jobs)
 		{
 			Debug.WriteLine("INPUT Report");
@@ -330,6 +331,7 @@ namespace MSS.Common
 			}
 		}
 
+		[Conditional("DEBUG2")]
 		private void ReportOutput(JobBranchType root, JobPathType? currentPath)
 		{
 			Debug.WriteLine($"OUTPUT Report for currentPath: {currentPath}");
@@ -441,7 +443,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ValidateAddInternal(Job job, JobBranchType currentBranch)
 		{
 			if (!TryFindPath(job, currentBranch.GetRoot(), out _))

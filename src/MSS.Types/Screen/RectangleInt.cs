@@ -80,7 +80,7 @@ namespace MSS.Types
 			return $"pos:{Position}, size:{Size}";
 		}
 
-		[Conditional("Debug")]
+		[Conditional("DEBUG2")]
 		private void Validate()
 		{
 			if (X1 > X2)

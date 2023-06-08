@@ -744,7 +744,7 @@ namespace MSetExplorer
 			return (zoomPoint, factor);
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckSelectedCenterPosition(PointDbl selectionCenter)
 		{
 			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
@@ -755,6 +755,7 @@ namespace MSetExplorer
 			}
 		}
 
+		[Conditional("DEBUG2")]
 		private void ReportFactorsVsSamplePointResolution(MapAreaInfo2? mapAreaInfo, AreaSelectedEventArgs e)
 		{
 			if (mapAreaInfo == null) return;

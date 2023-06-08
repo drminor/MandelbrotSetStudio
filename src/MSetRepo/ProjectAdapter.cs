@@ -461,7 +461,7 @@ namespace MSetRepo
 			return job;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CompareMapAreaV1AfterRoundTrip(MapAreaInfo previousValue, MapAreaInfo newValue, MapAreaInfo2 middleValue)
 		{
 			Debug.WriteLine($"MapDisplay is RoundTripping MapAreaInfoV1" +

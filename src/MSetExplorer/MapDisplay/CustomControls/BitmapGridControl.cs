@@ -382,7 +382,9 @@ namespace MSetExplorer
 				canvas.Height = finalSize.Height;
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+			
+			Debug.WriteLine($"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			return finalSize;
 		}
@@ -527,7 +529,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CompareViewportAndContentViewportSizes(SizeDbl viewportSize, SizeDbl contentViewportSize, double scaleFactor, double relativeScale)
 		{
 			// The contentViewportSize when reduced by the BaseScale Factor
@@ -542,7 +544,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CompareCanvasAndControlHeights()
 		{
 			// The contentViewportSize when reduced by the BaseScale Factor
@@ -558,7 +560,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)
 		{
 			foreach (var v in canvas.Children)

@@ -134,7 +134,7 @@ namespace MSS.Types
 			return centerP;
 		}
 
-		[Conditional("Debug")]
+		[Conditional("DEBUG2")]
 		private void Validate()
 		{
 			if (X1 > X2)

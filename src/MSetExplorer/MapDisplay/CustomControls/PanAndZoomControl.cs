@@ -692,7 +692,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"At {label}, Control: {controlSize}.");
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckViewportSize(SizeDbl viewportSize)
 		{
 			var controlSize = new SizeDbl(ActualWidth, ActualHeight);
