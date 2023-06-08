@@ -237,9 +237,9 @@ namespace MSetExplorer
 			_mapSections.Clear();
 		}
 
-		public bool DrawSections(IList<MapSection> mapSections)
+		public void DrawSections(IList<MapSection> mapSections)
 		{
-			var lastSectionWasIncluded = false;
+			//var lastSectionWasIncluded = false;
 			foreach (var mapSection in mapSections)
 			{
 				if (mapSection.MapSectionVectors != null)
@@ -272,14 +272,14 @@ namespace MSetExplorer
 						_disposeMapSection(mapSection);
 					}
 
-					if (mapSection.IsLastSection)
-					{
-						lastSectionWasIncluded = true;
-					}
+					//if (mapSection.IsLastSection)
+					//{
+					//	lastSectionWasIncluded = true;
+					//}
 				}
 			}
 
-			return lastSectionWasIncluded;
+			//return lastSectionWasIncluded;
 		}
 
 		public void ClearSections(IList<MapSection> mapSections)
@@ -500,7 +500,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckBitmapSize(WriteableBitmap bitmap, SizeInt imageSizeInBlocks, string desc)
 		{
 			var imageSize = ImageSizeInBlocks.Scale(_blockSize);
@@ -628,7 +628,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportPercentMapSectionsWithUpdatedScrPos()
 		{
 			var numberOfMapSectionsWithUpdatedScrPos = _mapSections.Count(x => x.ScreenPosHasBeenUpdated);

@@ -456,8 +456,10 @@ namespace MSetExplorer
 
 		#endregion
 
+		private int _histElevation = 50;
 		private int _histDispHeight = 150;
-		private int _cbElevation = 160;
+
+		private int _cbElevation = 200;
 		private int _cbHeight = 35;
 
 		#region Private Methods
@@ -513,7 +515,7 @@ namespace MSetExplorer
 
 		private LineGeometry BuildHLine(int x, double height)
 		{
-			var result = new LineGeometry(new Point(x, _histDispHeight - 2), new Point(x, _histDispHeight - height - 2));
+			var result = new LineGeometry(new Point(x, _histDispHeight + _histElevation), new Point(x, _histDispHeight - height + _histElevation));
 			return result;
 		}
 
@@ -524,7 +526,7 @@ namespace MSetExplorer
 			(
 				Brushes.Transparent,
 				new Pen(Brushes.DarkGray, 0.5),
-				new RectangleGeometry(new Rect(new Point(2, 2), borderSize))
+				new RectangleGeometry(new Rect(new Point(2, _histElevation), borderSize))
 			);
 
 			_historgramItems.Add(histogramBorder);

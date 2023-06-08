@@ -1,6 +1,4 @@
 ﻿using MSS.Types;
-using System;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -16,9 +14,8 @@ namespace MSetExplorer
 		{
 			_contentPresenter = contentPresenter;
 
-			ScaleTransform = new ScaleTransform();
-
 			TranslateTransform = new TranslateTransform();
+			ScaleTransform = new ScaleTransform();
 
 			TransformGroup transformGroup = new TransformGroup();
 			transformGroup.Children.Add(TranslateTransform);
@@ -27,8 +24,9 @@ namespace MSetExplorer
 			_contentPresenter.RenderTransform = transformGroup;
 		}
 
-		public ScaleTransform ScaleTransform { get; init; }
-		
+		// Although we are implementing the interface, we are not actually doing anything.
+		// The Content is sized via the standard calls to Arrange on the content
+		// as the PanAndZoom control is executing its ArrangeOverride method.
 		public SizeDbl ContentViewportSize
 		{
 			get => _contentViewPortSize;
@@ -37,5 +35,6 @@ namespace MSetExplorer
 
 		public TranslateTransform TranslateTransform { get; init; }
 
+		public ScaleTransform ScaleTransform { get; init; }
 	}
 }

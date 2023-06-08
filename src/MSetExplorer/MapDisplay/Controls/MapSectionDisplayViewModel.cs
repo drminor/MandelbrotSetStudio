@@ -450,7 +450,11 @@ namespace MSetExplorer
 					Debug.WriteLine($"Restarting paused job: received {newMapSections.Count}, {mapSectionsPendingGeneration.Count} are being generated.");
 
 					result = newJobNumber;
-					lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
+					
+					//lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
+
+					_bitmapGrid.DrawSections(newMapSections);
+					lastSectionWasIncluded = mapSectionsPendingGeneration.Count == 0;
 				}
 				else
 				{
@@ -703,7 +707,9 @@ namespace MSetExplorer
 
 					Debug.WriteLine($"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapSectionsPendingGeneration.Count} are being generated.");
 
-					lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
+					_bitmapGrid.DrawSections(newMapSections);
+
+					lastSectionWasIncluded = mapSectionsPendingGeneration.Count == 0;
 
 					result = newJobNumber;
 
@@ -739,7 +745,10 @@ namespace MSetExplorer
 			ImageOffset = new VectorDbl(screenAreaInfo.CanvasControlOffset);
 
 			ColorBandSet = newJob.ColorBandSet;
-			lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
+
+			//lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
+			_bitmapGrid.DrawSections(newMapSections);
+			lastSectionWasIncluded = mapSectionsPendingGeneration.Count == 0;
 
 			AddJobNumber(newJobNumber);
 
@@ -865,7 +874,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"UpdateSize is moving the pos from {previousValue.Coords.Position} to {newValue.Coords.Position}.");
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CompareMapAreaAfterRoundTrip(MapAreaInfo2 previousValue, MapAreaInfo2 newValue, MapAreaInfo middleValue)
 		{
 			Debug.WriteLine($"MapDisplay is RoundTripping MapAreaInfo" +
@@ -874,7 +883,7 @@ namespace MSetExplorer
 				$"\nIntermediate  : {middleValue.SamplePointDelta.Width}. Pos: {middleValue.Coords}. MapOffset: {middleValue.MapBlockOffset}. ImageOffset: {middleValue.CanvasControlOffset} Size: {middleValue.CanvasSize}.");
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckVPSize()
 		{
 			if (_useDetailedDebug)
@@ -897,7 +906,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportSubmitJobDetails(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings? newValue)
 		{
 			var currentJobId = previousValue?.JobId ?? ObjectId.Empty.ToString();
@@ -925,7 +934,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset/*, double contentScale, double baseScale*/)
 		{
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
@@ -948,7 +957,7 @@ namespace MSetExplorer
 
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportUpdateSizeAndPos(BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset/*, double contentScale, double baseScale*/)
 		{
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);

@@ -23,7 +23,8 @@ namespace MSetExplorer
 		bool UseEscapeVelocities { get; set; }
 
 		void ClearDisplay();
-		bool DrawSections(IList<MapSection> mapSections);
+		//bool DrawSections(IList<MapSection> mapSections);
+		void DrawSections(IList<MapSection> mapSections);
 		int ReDrawSections();
 
 		bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);

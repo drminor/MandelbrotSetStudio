@@ -1,10 +1,6 @@
 ﻿using MSS.Types;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -487,7 +483,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CompareCanvasAndControlHeights()
 		{
 			// The contentViewportSize when reduced by the BaseScale Factor
@@ -503,7 +499,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)
 		{
 			foreach (var v in canvas.Children)
