@@ -18,6 +18,7 @@ namespace MSetExplorer
 	{
 		#region Configuration
 
+		private const string MONGO_DB_NAME = "MandelbrotProjects";
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 
@@ -70,7 +71,8 @@ namespace MSetExplorer
 
 			//_mEngineServerManager?.Start();
 
-			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT);
+			var (repoDbServerName, repoDbPort, repoDbName) = GetRepositoryConnectionParameters();
+			_repositoryAdapters = new RepositoryAdapters(repoDbServerName, repoDbPort, repoDbName);
 			PrepareRepositories(CREATE_COLLECTIONS, DROP_MAP_SECTIONS_AND_SUBDIVISIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
 
 			if (_repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
@@ -112,6 +114,18 @@ namespace MSetExplorer
 		#endregion
 
 		#region Support Methods
+
+		private (string serverName, int port, string databaseName) GetRepositoryConnectionParameters()
+		{
+
+			//var severName = Current.Properties["MongoDbServer"];
+
+			var severName = MSetExplorer.Properties.Settings.Default.MongoDbServer;
+			var port = MSetExplorer.Properties.Settings.Default.MondogDbPort;
+			var dbName = MSetExplorer.Properties.Settings.Default.MongoDbName;
+
+			return new(severName, port, dbName);
+		}
 
 		private AppNavWindow GetAppNavWindow(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{

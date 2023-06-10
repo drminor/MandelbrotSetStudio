@@ -82,5 +82,32 @@ namespace MSetExplorer.Properties {
                 this["LastPosterName"] = value;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("desktop-bau7fe6")]
+        public string MongoDbServer {
+            get {
+                return ((string)(this["MongoDbServer"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("27017")]
+        public int MondogDbPort {
+            get {
+                return ((int)(this["MondogDbPort"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("MandelbrotProjects")]
+        public string MongoDbName {
+            get {
+                return ((string)(this["MongoDbName"]));
+            }
+        }
     }
 }

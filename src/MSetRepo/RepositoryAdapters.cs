@@ -1,19 +1,23 @@
 ﻿using MSS.Common;
+using MSS.Common.DataTransferObjects;
+using ProjectRepo;
 
 namespace MSetRepo
 {
 	public class RepositoryAdapters
 	{
-		public RepositoryAdapters(string server, int port)
+		public RepositoryAdapters(string server, int port, string databaseName)
 		{
-			// Project Repository Adapter
-			ProjectAdapter = MSetRepoHelper.GetProjectAdapter(server, port);
+			var dbProvider = new DbProvider(server, port, databaseName);
 
-			// MapSection Repository Adapter
-			MapSectionAdapter = MSetRepoHelper.GetMapSectionAdapter(server, port);
+			var dtoMapper = new DtoMapper();
+			var mSetRecordMapper = new MSetRecordMapper(dtoMapper);
 
-			// SharedColorBandSet Repository Adapter
-			SharedColorBandSetAdapter = MSetRepoHelper.GetSharedColorBandSetAdapter(server, port);
+			ProjectAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper);
+
+			MapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
+
+			SharedColorBandSetAdapter = new SharedColorBandSetAdapter(dbProvider, mSetRecordMapper);
 		}
 
 		#region Public Properties
@@ -39,6 +43,48 @@ namespace MSetRepo
 		}
 
 		#endregion
+
+
+		//#region Private Methods
+
+		//private IProjectAdapter CreateProjectAdapter(string server, int port)
+		//{
+		//	var dbProvider = new DbProvider(server, port);
+		//	var mSetRecordMapper = CreateMSetRecordMapper();
+		//	var projectAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper);
+
+		//	return projectAdapter;
+		//}
+
+		//private IMapSectionAdapter CreateMapSectionAdapter(string server, int port)
+		//{
+		//	var dbProvider = new DbProvider(server, port);
+		//	var mSetRecordMapper = CreateMSetRecordMapper();
+		//	var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
+
+		//	return mapSectionAdapter;
+		//}
+
+		//private SharedColorBandSetAdapter CreateGetSharedColorBandSetAdapter(string server, int port)
+		//{
+		//	var dbProvider = new DbProvider(server, port);
+		//	var mSetRecordMapper = CreateMSetRecordMapper();
+		//	var sharedColorBandSetAdapter = new SharedColorBandSetAdapter(dbProvider, mSetRecordMapper);
+
+		//	return sharedColorBandSetAdapter;
+		//}
+
+		//private MSetRecordMapper CreateMSetRecordMapper()
+		//{
+		//	var dtoMapper = new DtoMapper();
+		//	var result = new MSetRecordMapper(dtoMapper);
+
+		//	return result;
+		//}
+
+
+		//#endregion
+
 
 	}
 }
