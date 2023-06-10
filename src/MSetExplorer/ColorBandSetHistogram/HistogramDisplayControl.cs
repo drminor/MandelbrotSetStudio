@@ -263,7 +263,7 @@ namespace MSetExplorer
 			}
 		}
 
-		ScaleTransform IContentScaler.ScaleTransform => _canvasScaleTransform;
+		ScaleTransform IContentScaler.ScaleTransform => _controlScaleTransform;
 
 		public ScaleTransform ScaleTransform
 		{
@@ -284,8 +284,6 @@ namespace MSetExplorer
 		}
 
 		TranslateTransform IContentScaler.TranslateTransform => _canvasTranslateTransform;
-
-		//TranslateTransform TranslateTransform { get; init; }
 
 		public RectangleGeometry? CanvasClip
 		{
@@ -415,9 +413,9 @@ namespace MSetExplorer
 		private void SetTheCanvasSize(SizeDbl contentViewportSize, ScaleTransform st)
 		{
 			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
-			var contentScale = new SizeDbl(st.ScaleX, st.ScaleY);
+			var contentScale = new SizeDbl(st.ScaleX, 1);
 
-			var newCanvasSize = viewportSize.Divide(contentScale.Width);
+			var newCanvasSize = viewportSize.Divide(contentScale);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
 
@@ -431,7 +429,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramDisplayControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}. The CanvasOffset is {_contentOffset}.");
 
 			_canvasScaleTransform.ScaleX = st.ScaleX;
-			_canvasScaleTransform.ScaleY = st.ScaleY;
+			//_canvasScaleTransform.ScaleY = st.ScaleY;
 		}
 
 		private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl canvasOffset)

@@ -89,6 +89,10 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
 				{
 					_viewportSize = value;
+					if (_contentScaler != null)
+					{
+						_contentScaler.ContentViewportSize = value;
+					}
 				}
 			}
 		}
@@ -343,7 +347,9 @@ namespace MSetExplorer
 			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
 
 			//if (c._contentScaler != null) c._contentScaler.ContentViewportSize = c.ContentViewportSize;
-			c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale));
+
+			var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
 
 			//c.InvalidateVisual(); // Is this really necessary?
 		}
@@ -532,7 +538,9 @@ namespace MSetExplorer
 			InvalidateScrollInfo();
 
 			//if (_contentScaler != null) _contentScaler.ContentViewportSize = ContentViewportSize;
-			ViewportChanged?.Invoke(this, new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale));
+
+			var scaledImageViewInfo = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
+			ViewportChanged?.Invoke(this, scaledImageViewInfo);
 		}
 
 		private void UpdateContentViewportSize()
@@ -580,18 +588,21 @@ namespace MSetExplorer
 		{
 			if (_contentScaler != null)
 			{
-				double scaledContentWidth = UnscaledExtent.Width * ContentScale;
+				double result;
+				var scaledContentWidth = UnscaledExtent.Width * ContentScale;
+
 				if (scaledContentWidth < ViewportWidth)
 				{
-					//
 					// When the content can fit entirely within the viewport, center it.
-					//
-					_contentScaler.TranslateTransform.X = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
+					result = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
 				}
 				else
 				{
-					_contentScaler.TranslateTransform.X = -ContentOffsetX;
+					result = -ContentOffsetX;
 				}
+
+				Debug.WriteLine($"PanAndZoomControl would be setting the TranslateTransform.X to {result}.");
+				//_contentScaler.TranslateTransform.X = result;
 			}
 		}
 
@@ -599,18 +610,21 @@ namespace MSetExplorer
 		{
 			if (_contentScaler != null)
 			{
-				double scaledContentHeight = UnscaledExtent.Height * ContentScale;
+				double result;
+				var scaledContentHeight = UnscaledExtent.Height * ContentScale;
+
 				if (scaledContentHeight < ViewportHeight)
 				{
-					//
 					// When the content can fit entirely within the viewport, center it.
-					//
-					_contentScaler.TranslateTransform.Y = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
+					result = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
 				}
 				else
 				{
-					_contentScaler.TranslateTransform.Y = -ContentOffsetY;
+					result = -ContentOffsetY;
 				}
+
+				Debug.WriteLine($"PanAndZoomControl would be setting the TranslateTransform.Y to {result}.");
+				//_contentScaler.TranslateTransform.Y = result;
 			}
 		}
 

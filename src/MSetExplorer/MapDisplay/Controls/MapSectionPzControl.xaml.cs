@@ -81,7 +81,11 @@ namespace MSetExplorer
 			CheckForStaleContentOffset(e.ContentOffset);
 
 			// TODO: Consider adding this to the IContentScaler interface
-			BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
+
+			// Now the PanAndZoomControl updates the content control's ContentViewportSize property.
+			//BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
+
+			Debug.Assert(BitmapGridControl1.ContentViewportSize == e.ContentViewportSize, "MapSectionPzControl - code behind is handling the PanAndZoomControl's ViewportChanged and the BitmapGridControl's ContentViewportSize does not match the upddated PanAndZoomControl's ContentViewportSize.");
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);

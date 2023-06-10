@@ -8,21 +8,21 @@ namespace MSS.Types
 	{
 		public static readonly SizeInt BLOCK_SIZE;
 		public const int DEFAULT_THRESHOLD = 4;
+
 		public const byte BITS_BEFORE_BP = 8;
+
+		public const int DEFAULT_LIMB_COUNT = 2;
+		public const int DEFAULT_TARGET_EXPONENT = -64;
+
+		public const int DEFAULT_PRECISION = 53;
+
+		public const int MAP_SECTION_VALUE_POOL_SIZE = 10;
 
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE;
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE_EVEN;
 
-
 		public static readonly RRectangle TEST_RECTANGLE;
 		public static readonly RRectangle TEST_RECTANGLE_HALF;
-
-		public const int DEFAULT_PRECISION = 53;
-		public const int DEFAULT_TARGET_EXPONENT = -64;
-
-		public const int DEFAULT_LIMB_COUNT = 2;
-		public const int MAP_SECTION_VALUE_POOL_SIZE = 10;
-
 
 		static RMapConstants()
 		{

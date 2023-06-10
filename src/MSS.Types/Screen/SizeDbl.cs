@@ -110,6 +110,16 @@ namespace MSS.Types
 			return result;
 		}
 
+		public SizeDbl Divide(SizeDbl dividend)
+		{
+			var resultH = Width / dividend.Width;
+			var resultV = Height / dividend.Height;
+
+			var result = new SizeDbl(resultH, resultV);
+
+			return result;
+		}
+
 		public SizeDbl Divide(SizeInt dividend)
 		{
 			var resultH = Width / dividend.Width;

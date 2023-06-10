@@ -36,6 +36,7 @@ namespace MSetExplorer
 			ContentRendered += ExplorerWindow_ContentRendered;
 			Closing += ExplorerWindow_Closing;
 			Unloaded += ExplorerWindow_Unloaded;
+			SizeChanged += ExplorerWindow_SizeChanged;
 
 			InitializeComponent();
 
@@ -48,6 +49,12 @@ namespace MSetExplorer
 
 			cbsh1.DataContext = _vm.CbshDisplayViewModel;
 			jobTree1.DataContext = _vm.JobTreeViewModel;
+		}
+
+		private void ExplorerWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			var explorerSize = new SizeDbl(ActualWidth, ActualHeight);
+			Debug.WriteLine($"The ExplorerWindow is now {explorerSize}:");
 		}
 
 		private void ExplorerWindow_Unloaded(object sender, RoutedEventArgs e)

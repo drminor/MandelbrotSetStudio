@@ -30,8 +30,15 @@ namespace MSetExplorer
 
 			Loaded += ColorBandSetHistogramControl_Loaded;
 			Unloaded += ColorBandSetHistogramControl_Unloaded;
+			SizeChanged += ColorBandSetHistogramControl_SizeChanged;
 
 			InitializeComponent();
+		}
+
+		private void ColorBandSetHistogramControl_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
+			Debug.WriteLine($"CBSH_Control_SizeChanged: {cntrlSize}.");
 		}
 
 		private void ColorBandSetHistogramControl_Loaded(object sender, RoutedEventArgs e)
@@ -79,7 +86,12 @@ namespace MSetExplorer
 		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
 			// TODO: Consider adding this to the IContentScaler interface
-			HistogramDisplayControl1.ContentViewportSize = e.ContentViewportSize;
+			//HistogramDisplayControl1.ContentViewportSize = e.ContentViewportSize;
+
+			// Now the PanAndZoomControl updates the content control's ContentViewportSize property.
+			//BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
+
+			//Debug.Assert(HistogramDisplayControl1.ContentViewportSize == e.ContentViewportSize, "MapSectionPzControl - code behind is handling the PanAndZoomControl's ViewportChanged and the BitmapGridControl's ContentViewportSize does not match the upddated PanAndZoomControl's ContentViewportSize.");
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
@@ -118,6 +130,7 @@ namespace MSetExplorer
 				// The screen is scaled by relativeScale.
 				// Convert screen coordinates to 'display' coordinates
 				var screenToRelativeScaleFactor = 1 / contentScale;
+				//var screenToRelativeScaleFactor = contentScale;
 
 				var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
 

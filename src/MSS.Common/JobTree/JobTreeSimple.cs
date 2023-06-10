@@ -15,6 +15,8 @@ namespace MSS.Common
 	{
 		#region Constructor
 
+		private bool _useDetailedDebug = false;
+
 		public JobTreeSimple(List<Job> jobs, bool checkHomeJob) : base(jobs, checkHomeJob)
 		{ }
 
@@ -32,7 +34,7 @@ namespace MSS.Common
 
 			if (path == null)
 			{
-				Debug.WriteLine("MakePreferred is clearing all nodes.");
+				Debug.WriteLineIf(_useDetailedDebug, "MakePreferred is clearing all nodes.");
 				Root.GetNodeOrRoot().PreferredChild = null;
 			}
 			else
@@ -57,17 +59,17 @@ namespace MSS.Common
 
 		public override IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
 		{
-			Debug.WriteLine($"Remove Jobs: Starting for path: {path.Node.Id}. SelectionType: {nodeSelectionType}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: Starting for path: {path.Node.Id}. SelectionType: {nodeSelectionType}.");
 			var jobsToRemove = GetJobsToRemove(path, nodeSelectionType);
 
 			if (jobsToRemove.Count == 0)
 			{
-				Debug.WriteLine("Remove Jobs: found no jobs to remove.");
+				Debug.WriteLineIf(_useDetailedDebug, "Remove Jobs: found no jobs to remove.");
 				return new List<JobTreeNode>();
 			}
 
 			var saveSelectedNode = SelectedNode;
-			Debug.WriteLine("Remove Jobs: is setting the Selected Node to null.");
+			Debug.WriteLineIf(_useDetailedDebug, "Remove Jobs: is setting the Selected Node to null.");
 			SelectedNode = null;
 
 			//var newCurrentNode = GetNewCurrentNode(path);
@@ -89,14 +91,14 @@ namespace MSS.Common
 			// Reset the Current Job
 			//var newCurrentItem = TryFindPath(saveCurrentItem, Root, out var newPath) ? newPath.Item : newCurrentNode?.Item ?? Root.Children[0].Item;
 			var newCurrentItem = TryFindPath(saveCurrentItem, Root, out var savedItemPath) ? savedItemPath.Item : newPath?.Item ?? Root.Children[0].Item;
-			Debug.WriteLine($"Remove Jobs is updating the Current Item to {newCurrentItem.Id}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs is updating the Current Item to {newCurrentItem.Id}.");
 			CurrentItem = newCurrentItem;
 
 			// Reset the Selected Job
 			if (saveSelectedNode != null)
 			{
 				SelectedNode = TryFindPath(saveSelectedNode.Item, Root, out var selectedPath) ? selectedPath.Node : newPath?.Node;
-				Debug.WriteLine($"Remove Jobs: moved the Selected Node to {SelectedNode}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: moved the Selected Node to {SelectedNode}.");
 			}
 
 			// Restore or set the Preferred Path
@@ -114,7 +116,7 @@ namespace MSS.Common
 				//}
 
 				var newPreferredItemId = newPath?.Item.Id ?? Root.Children[0].Item.Id;
-				Debug.WriteLine($"Remove Jobs is updating the preferred path using node: {newPreferredItemId}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs is updating the preferred path using node: {newPreferredItemId}.");
 				_ = MakePreferred(newPreferredItemId);
 			}
 
@@ -175,17 +177,17 @@ namespace MSS.Common
 				{
 					if (TryFindPath(existingJob, Root, out var existingJobpath))
 					{
-						Debug.WriteLine($"Moving job: {existingJob.Id}, to be a child of {parentNode.Id}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"Moving job: {existingJob.Id}, to be a child of {parentNode.Id}.");
 						_ = existingJobpath.Node.Move(parentNode);
 					}
 				}
 
-				Debug.WriteLine($"Adding job: {job.Id}, as a child of {parentPath.Node.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Adding job: {job.Id}, as a child of {parentPath.Node.Id}.");
 				newPath = AddItem(job, parentPath);
 			}
 			else if (DoesNodeChangeZoom(parentNode))
 			{
-				Debug.WriteLine($"Adding job: {job.Id}, as a child of {parentPath.Node.Id}. The parent's TransformType is {parentPath.Node.TransformType}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Adding job: {job.Id}, as a child of {parentPath.Node.Id}. The parent's TransformType is {parentPath.Node.TransformType}.");
 				newPath = AddItem(job, parentPath);
 			}
 			else
@@ -203,7 +205,7 @@ namespace MSS.Common
 		{
 			var grandparentBranch = parentPath.GetParentBranch();
 			var grandparentNode = parentPath.GetParentNodeOrRoot();
-			Debug.WriteLine($"Adding job: {job.Id}, a sibling to its parent: {parentPath.Node.Id} as a child of {grandparentNode.Id}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Adding job: {job.Id}, a sibling to its parent: {parentPath.Node.Id} as a child of {grandparentNode.Id}.");
 			var newPath = AddItem(job, grandparentBranch);
 
 			return newPath;
@@ -225,18 +227,18 @@ namespace MSS.Common
 				{
 					if (TryFindPath(existingJob, Root, out var existingJobpath))
 					{
-						Debug.WriteLine($"Moving job: {existingJob.Id}, to be a child of {parentNode.Id}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"Moving job: {existingJob.Id}, to be a child of {parentNode.Id}.");
 						_ = existingJobpath.Node.Move(parentNode);
 					}
 				}
 
 				//var parentNode = parentBranch.GetNodeOrRoot();
-				Debug.WriteLine($"Adding JobTreeNode: {node.Id}, as a child of {parentNode.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Adding JobTreeNode: {node.Id}, as a child of {parentNode.Id}.");
 				newPath = AddNode(node, parentNode, parentBranch);
 			}
 			else if (DoesNodeChangeZoom(parentNode))
 			{
-				Debug.WriteLine($"Adding JobTreeNode: {node.Id}, as a child of {parentNode.Id}. The parent's TransformType is {parentNode.TransformType}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Adding JobTreeNode: {node.Id}, as a child of {parentNode.Id}. The parent's TransformType is {parentNode.TransformType}.");
 				newPath = AddNode(node, parentNode, parentBranch);
 			}
 			else
@@ -261,7 +263,7 @@ namespace MSS.Common
 		{
 			var grandparentBranch = parentPath.GetParentBranch();
 			var grandparentNode = parentPath.GetParentNodeOrRoot();
-			Debug.WriteLine($"Adding JobTreeNode: {node.Id}, a sibling to its parent: {parentPath.Node.Id} as a child of {grandparentNode.Id}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Adding JobTreeNode: {node.Id}, a sibling to its parent: {parentPath.Node.Id} as a child of {grandparentNode.Id}.");
 
 			var newPath = AddNode(node, grandparentNode, grandparentBranch);
 			return newPath;
@@ -283,7 +285,7 @@ namespace MSS.Common
 		{
 			if (node == null)
 			{
-				Debug.WriteLine($"UpdateIsSelected, value = null, no action taken.");
+				Debug.WriteLineIf(_useDetailedDebug, $"UpdateIsSelected, value = null, no action taken.");
 				return;
 			}
 
@@ -322,7 +324,7 @@ namespace MSS.Common
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"UpdateIsSelected received exception: {e} while attempting to set IsSelected to {isSelected} for node: {node}");
+				Debug.WriteLineIf(_useDetailedDebug, $"UpdateIsSelected received exception: {e} while attempting to set IsSelected to {isSelected} for node: {node}");
 			}
 		}
 
@@ -604,13 +606,13 @@ namespace MSS.Common
 			// Remove the nodes that will become orphaned.
 			foreach (var (child, grandchild) in pairsToBeOrphaned)
 			{
-				Debug.WriteLine($"Remove Jobs: is removing node to be orphaned: {grandchild.Id} from it's parent: {child.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: is removing node to be orphaned: {grandchild.Id} from it's parent: {child.Id}.");
 				_ = RemoveNode(grandchild, child);
 			}
 
 			foreach (var (parent, child) in topLevelPairs)
 			{
-				Debug.WriteLine($"Remove Jobs: removing child: {child.Id} from parent: {parent.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: removing child: {child.Id} from parent: {parent.Id}.");
 				_ = RemoveNode(child, parent);
 
 				var siblings = parent.RealChildJobs;
@@ -626,13 +628,13 @@ namespace MSS.Common
 						var parentPath = path.CreatePath(parent);
 						var grandparentNode = parentPath.GetParentNodeOrRoot();
 
-						Debug.WriteLine($"Remove Jobs: having removed child: {child.Id}, it's real parent: {child.ParentId} now has but one real child: {soleChildJob.Id}.");
-						Debug.WriteLine($"Remove Jobs: moving the logical children of parent: {parent.Id}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: having removed child: {child.Id}, it's real parent: {child.ParentId} now has but one real child: {soleChildJob.Id}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: moving the logical children of parent: {parent.Id}.");
 						
 						var nodesToMove = new List<JobTreeNode>(parent.Children);
 						foreach(var logicalChildNode in nodesToMove)
 						{
-							Debug.WriteLine($"Remove Jobs: moving logical child: {logicalChildNode.Id} to the grandparent node: {grandparentNode.Id}.");
+							Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: moving logical child: {logicalChildNode.Id} to the grandparent node: {grandparentNode.Id}.");
 							_ = logicalChildNode.Move(grandparentNode);
 						}
 					}
@@ -646,12 +648,12 @@ namespace MSS.Common
 
 			if (firstParentNode.IsRoot && pairsToBeOrphaned.Count > 1)
 			{
-				Debug.WriteLine("WARNING: The Tree will have multiple Home Jobs.");
+				Debug.WriteLineIf(_useDetailedDebug, "WARNING: The Tree will have multiple Home Jobs.");
 			}
 
 			foreach (var (child, grandchild) in pairsToBeOrphaned)
 			{
-				Debug.WriteLine($"Remove Jobs: is adding the orphaned node: {grandchild.Id} to {firstParentNode.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: is adding the orphaned node: {grandchild.Id} to {firstParentNode.Id}.");
 				grandchild.Item.ParentJobId = parentId;
 				_ = AddNodeAtParentPath(grandchild, firstParentNode, parentBranch);
 			}
@@ -669,19 +671,19 @@ namespace MSS.Common
 					var realParentNode = realParentPath.Node;
 					if (!realParentNode.RemoveRealChild(child.Item))
 					{
-						Debug.WriteLine($"WARNING: could not remove RealChildJob: {child.Id} from real parent: {realParentNode.Id}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"WARNING: could not remove RealChildJob: {child.Id} from real parent: {realParentNode.Id}.");
 					}
 				}
 				else
 				{
-					Debug.WriteLine($"WARNING: could not remove RealChildJob: {child.Id}, could not find any node with Id = {child.ParentJobId.Value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"WARNING: could not remove RealChildJob: {child.Id}, could not find any node with Id = {child.ParentJobId.Value}.");
 				}
 			}
 			else
 			{
 				if (!parent.RemoveRealChild(child.Item))
 				{
-					Debug.WriteLine($"WARNING: could not remove RealChildJob: {child.Id} from parent: {parent.Id}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"WARNING: could not remove RealChildJob: {child.Id} from parent: {parent.Id}.");
 				}
 			}
 
@@ -699,10 +701,10 @@ namespace MSS.Common
 		[Conditional("DEBUG2")]
 		private void ReportTopLevelJobsRemoved(List<(JobTreeNode parent, JobTreeNode child)> topLevelPairs)
 		{
-			Debug.WriteLine($"Remove Jobs: removed these top-level pairs:");
+			Debug.WriteLineIf(_useDetailedDebug, $"Remove Jobs: removed these top-level pairs:");
 			foreach (var (parent, child) in topLevelPairs)
 			{
-				Debug.WriteLine($"\tChild: {child.Id}, Parent: {parent.Id}");
+				Debug.WriteLineIf(_useDetailedDebug, $"\tChild: {child.Id}, Parent: {parent.Id}");
 			}
 		}
 

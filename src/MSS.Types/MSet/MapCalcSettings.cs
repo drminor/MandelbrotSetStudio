@@ -62,7 +62,7 @@ namespace MSS.Types.MSet
 
 		public static MapCalcSettings UpdateTargetIterations(MapCalcSettings mcs, int targetIterations)
 		{
-			return new MapCalcSettings(targetIterations, mcs.TargetIterations, mcs.UseEscapeVelocities, mcs.SaveTheZValues);
+			return new MapCalcSettings(targetIterations, mcs.Threshold, mcs.UseEscapeVelocities, mcs.SaveTheZValues);
 		}
 
 

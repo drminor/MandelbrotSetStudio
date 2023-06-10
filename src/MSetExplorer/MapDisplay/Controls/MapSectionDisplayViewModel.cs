@@ -381,7 +381,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate, not raising OnPropertyChanged.");
+				Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate.");
 			}
 
 			return newJobNumber;

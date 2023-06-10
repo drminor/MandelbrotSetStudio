@@ -286,7 +286,7 @@ namespace MSetExplorer
 
 		// We are ignoring changes made on the TranslateTransform
 		// Instead The MapSectionPzControl is handling the calculation of the Translation
-		// and settign the ContentOffset
+		// and setting the ContentOffset
 
 		TranslateTransform IContentScaler.TranslateTransform => _canvasTranslateTransform;
 

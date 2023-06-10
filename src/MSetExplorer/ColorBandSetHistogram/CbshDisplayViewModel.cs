@@ -7,6 +7,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -165,7 +166,7 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"The CbshDisplayViewModel's Canvas Size is now {value}.");
 					_canvasSize = value;
-					UnscaledExtent = new SizeDbl(CanvasSize.Scale(DisplayZoom));
+					//UnscaledExtent = new SizeDbl(CanvasSize.Scale(DisplayZoom));
 
 					var newLogicalWidth = DrawColorBands();
 					UnscaledExtent = newLogicalWidth.HasValue ? new SizeDbl(newLogicalWidth.Value, _canvasSize.Height) : new SizeDbl(_canvasSize);
@@ -270,15 +271,6 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Methods
-
-		public void RefreshHistogramDisplay()
-		{
-			DrawHistogram();
-		}
-
-		#endregion
-
 		#region Private Properties
 
 		private ColorBand? _currentColorBand;
@@ -330,85 +322,57 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public void RefreshHistogramDisplay()
+		{
+			DrawHistogram();
+		}
+		
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
-			int? newJobNumber;
+			Debug.WriteLine($"CbshDisplayViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
 
-			//if (CurrentAreaColorAndCalcSettings == null)
-			//{
-			//	_bitmapGrid.ViewportSize = contentViewportSize;
-			//	ViewportSize = contentViewportSize;
-			//	newJobNumber = null;
-			//}
-			//else
-			//{
-			//	if (BoundedMapArea == null)
-			//	{
-			//		throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
-			//	}
+			var offset = new VectorDbl(contentOffset.X * _scaleTransform.ScaleX, 0);
+			ImageOffset = offset;
 
-			//	newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, contentViewportSize, contentOffset, baseScale);
-			//}
-
-			newJobNumber = null;
-			return newJobNumber;
+			return null;
 		}
 
 		public int? UpdateViewportSize(SizeDbl newValue)
 		{
-			int? newJobNumber = null;
+			if (!newValue.IsNAN() && newValue != _viewportSize)
+			{
+				if (newValue.Width <= 2 || newValue.Height <= 2)
+				{
+					Debug.WriteLine($"WARNING: CbshDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
+				}
+				else
+				{
+					Debug.WriteLine($"CbshDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
+					ContainerSize = newValue;
+				}
+			}
+			else
+			{
+				Debug.WriteLine($"CbshDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not updating the ContainerSize.");
+			}
 
-			//if (!newValue.IsNAN() && newValue != _viewportSize)
-			//{
-			//	if (newValue.Width <= 2 || newValue.Height <= 2)
-			//	{
-			//		Debug.WriteLine($"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
-			//	}
-			//	else
-			//	{
-			//		Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
-			//		newJobNumber = HandleDisplaySizeUpdate(newValue);
-			//	}
-			//}
-			//else
-			//{
-			//	Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate, not raising OnPropertyChanged.");
-			//}
-
-			return newJobNumber;
+			return null;
 		}
 
 		public int? MoveTo(VectorDbl displayPosition)
 		{
-			//if (BoundedMapArea == null || UnscaledExtent.IsNearZero())
-			//{
-			//	//Debug.WriteLine($"WARNING: Cannot MoveTo {displayPosition}, there is no bounding info set or the UnscaledExtent is zero.");
-			//	//return null;
+			if (UnscaledExtent.IsNearZero())
+			{
+				throw new InvalidOperationException("Cannot call MoveTo, if the UnscaledExtent is zero.");
+			}
 
-			//	throw new InvalidOperationException("Cannot call MoveTo, if the boundedMapArea is null or if the UnscaledExtent is zero.");
-			//}
+			Debug.WriteLine($"CbshDisplayViewModel is moving to position:{displayPosition}.");
 
-			//if (CurrentAreaColorAndCalcSettings == null)
-			//{
-			//	throw new InvalidOperationException("Cannot call MoveTo, if the CurrentAreaColorAndCalcSettings is null.");
-			//}
+			var offset = new VectorDbl(displayPosition.X * _scaleTransform.ScaleX, 0);
+			//var offset = new VectorDbl(displayPosition.X, 0);
+			ImageOffset = offset;
 
-			//// Get the MapAreaInfo subset for the given display position
-			//var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
-
-			//ReportMove(BoundedMapArea, displayPosition/*, BoundedMapArea.ContentScale, BoundedMapArea.BaseScale*/);
-
-			//var newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
-
-			//DisplayPosition = displayPosition;
-
-			//if (newJobNumber.HasValue && lastSectionWasIncluded)
-			//{
-			//	DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
-			//}
-
-			int? newJobNumber = null;
-			return newJobNumber;
+			return null;
 		}
 
 		public void ClearDisplay()
@@ -456,10 +420,10 @@ namespace MSetExplorer
 
 		#endregion
 
-		private int _histElevation = 50;
-		private int _histDispHeight = 150;
+		private int _histElevation = 2;
+		private int _histDispHeight = 182;
 
-		private int _cbElevation = 200;
+		private int _cbElevation = 199;
 		private int _cbHeight = 35;
 
 		#region Private Methods
@@ -481,7 +445,7 @@ namespace MSetExplorer
 
 			//LogicalDisplaySize = new SizeInt(rn + 10, _canvasSize.Height);
 
-			var w = (int) Math.Round(UnscaledExtent.Width - 10);
+			var w = (int) Math.Round(UnscaledExtent.Width + 10);
 
 			DrawHistogramBorder(w, _histDispHeight);
 
@@ -521,7 +485,10 @@ namespace MSetExplorer
 
 		private GeometryDrawing DrawHistogramBorder(int width, int height)
 		{
+			Debug.WriteLine($"Drawing the Histogram Border with width: {width}.");
+
 			var borderSize = width > 1 && height > 1 ? new Size(width - 1, height - 1) : new Size(1, 1);
+
 			var histogramBorder = new GeometryDrawing
 			(
 				Brushes.Transparent,
@@ -559,7 +526,7 @@ namespace MSetExplorer
 				curOffset += lastWidth;
 			}
 
-			return GetExtent() + 10;
+			return GetExtent();
 		}
 
 		private int GetExtent()
@@ -567,7 +534,10 @@ namespace MSetExplorer
 			var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
 			var endingIndex = _colorBandSet[EndPtr].Cutoff;
 
-			var result = 1 + endingIndex - startingIndex;
+			//var result = 1 + endingIndex - startingIndex;
+
+			var highCWidth = _colorBandSet.HighCutoff - _colorBandSet[EndPtr].Cutoff;
+			var result = highCWidth + endingIndex - startingIndex;
 
 			return result;
 		}
