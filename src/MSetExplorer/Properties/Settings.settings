@@ -17,13 +17,13 @@
     <Setting Name="LastPosterName" Type="System.String" Scope="User">
       <Value Profile="(Default)">l3-Mark45</Value>
     </Setting>
-    <Setting Name="MongoDbServer" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">desktop-bau7fe6</Value>
+    <Setting Name="MongoDbServerx" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
     </Setting>
-    <Setting Name="MondogDbPort" Type="System.Int32" Scope="Application">
+    <Setting Name="MongoDbPortx" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">27017</Value>
     </Setting>
-    <Setting Name="MongoDbName" Type="System.String" Scope="Application">
+    <Setting Name="MongoDbNamex" Type="System.String" Scope="Application">
       <Value Profile="(Default)">MandelbrotProjects</Value>
     </Setting>
   </Settings>

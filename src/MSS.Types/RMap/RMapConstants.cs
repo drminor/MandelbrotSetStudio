@@ -6,6 +6,11 @@ namespace MSS.Types
 {
 	public class RMapConstants
 	{
+		public const string SERVICE_NAME = "MongoDB";
+		
+		public const int DEFAULT_MONGO_DB_PORT = 27017;
+		public const string DEFAULT_DATA_BASE_NAME = "MandelbrotProjectsXX";
+
 		public static readonly SizeInt BLOCK_SIZE;
 		public const int DEFAULT_THRESHOLD = 4;
 

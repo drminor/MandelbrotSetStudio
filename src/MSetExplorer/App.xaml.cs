@@ -3,9 +3,13 @@ using MEngineClient;
 using MSetRepo;
 using MSS.Common;
 using MSS.Types;
+using ProjectRepo;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.ServiceProcess;
 using System.Text;
 using System.Windows;
 
@@ -18,18 +22,18 @@ namespace MSetExplorer
 	{
 		#region Configuration
 
-		private const string MONGO_DB_NAME = "MandelbrotProjects";
-		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
-		private const int MONGO_DB_PORT = 27017;
+		//private const string MONGO_DB_NAME = "MandelbrotProjects";
+		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
+		//private const int MONGO_DB_PORT = 27017;
 
 		private static readonly bool USE_ALL_CORES = true;
 
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 
-		private static readonly bool CREATE_COLLECTIONS = false;
+		private static readonly bool CREATE_COLLECTIONS = true;
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
-		private readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2023-05-01");
+		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2023-05-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
 
@@ -71,8 +75,12 @@ namespace MSetExplorer
 
 			//_mEngineServerManager?.Start();
 
-			var (repoDbServerName, repoDbPort, repoDbName) = GetRepositoryConnectionParameters();
-			_repositoryAdapters = new RepositoryAdapters(repoDbServerName, repoDbPort, repoDbName);
+			if (!TryGetRepositoryAdapters(out _repositoryAdapters))
+			{
+				Current.Shutdown();
+				return;
+			}
+
 			PrepareRepositories(CREATE_COLLECTIONS, DROP_MAP_SECTIONS_AND_SUBDIVISIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
 
 			if (_repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
@@ -114,18 +122,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Support Methods
-
-		private (string serverName, int port, string databaseName) GetRepositoryConnectionParameters()
-		{
-
-			//var severName = Current.Properties["MongoDbServer"];
-
-			var severName = MSetExplorer.Properties.Settings.Default.MongoDbServer;
-			var port = MSetExplorer.Properties.Settings.Default.MondogDbPort;
-			var dbName = MSetExplorer.Properties.Settings.Default.MongoDbName;
-
-			return new(severName, port, dbName);
-		}
 
 		private AppNavWindow GetAppNavWindow(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
@@ -197,11 +193,144 @@ namespace MSetExplorer
 			{
 				repositoryAdapters.CreateCollections();
 			}
+
+			repositoryAdapters.WarmUp();
+		}
+
+		#endregion
+
+		#region Get Repository Connection Parameters
+
+		private bool TryGetRepositoryAdapters([NotNullWhen(true)] out RepositoryAdapters? repositoryAdapters)
+		{
+			var (repoDbServerName, repoDbPort, repoDbName) = GetConnectionSettings();
+
+			var needServerName = string.IsNullOrEmpty(repoDbServerName?.Trim());
+			var needDbName = string.IsNullOrEmpty(repoDbName?.Trim());
+			var serviceStatus = ServiceHelper.CheckService(RMapConstants.SERVICE_NAME);
+
+			if (needServerName || needDbName || serviceStatus != ServiceControllerStatus.Running || !CheckRepoConnectivity(repoDbServerName, repoDbPort, repoDbName))
+			{
+				if (TryEditConnectionSettings(repoDbServerName, repoDbPort, repoDbName, out var s, out var p, out var d))
+				{
+					repoDbServerName = s;
+					repoDbPort = p;
+					repoDbName = d;
+
+					SaveConnectionSettings(repoDbServerName, repoDbPort, repoDbName);
+				}
+				else
+				{
+					repositoryAdapters = null;
+					return false;
+				}
+			}
+
+			if (repoDbServerName == null || repoDbName == null)
+			{
+				repositoryAdapters = null;
+				return false;
+			}
 			else
 			{
-				repositoryAdapters.WarmUp();
+				repositoryAdapters = new RepositoryAdapters(repoDbServerName, repoDbPort, repoDbName);
+				return true;
 			}
 		}
+
+		private (string? serverName, int port, string? databaseName) GetConnectionSettings()
+		{
+			var appSettings = ConfigurationManager.AppSettings;
+
+			var serverName = appSettings["MongoDbServer"];
+			var strPort = appSettings["MongoDbPort"];
+			var dbName = appSettings["MongoDbName"];
+
+			if (!int.TryParse(strPort, out var port))
+			{
+				port = RMapConstants.DEFAULT_MONGO_DB_PORT;
+			}
+
+			return new(serverName, port, dbName);
+		}
+
+		private bool TryEditConnectionSettings(string? initialServerName, int initialPort, string? initialDatabaseName, [NotNullWhen(true)] out string? serverName, out int port, [NotNullWhen(true)] out string? databaseName)
+		{
+			var repoConnParametersViewModel = new RepoConnParametersViewModel(initialServerName, initialPort, initialDatabaseName);
+			
+			var repoConnParametersDialog = new RepoConnParametersDialog()
+			{
+				DataContext = repoConnParametersViewModel
+			};
+
+			if (repoConnParametersDialog.ShowDialog() == true && repoConnParametersViewModel.ServerName != null && repoConnParametersViewModel.DatabaseName != null)
+			{
+				serverName = repoConnParametersViewModel.ServerName;
+				port = repoConnParametersViewModel.Port;
+				databaseName = repoConnParametersViewModel.DatabaseName;
+
+				return true;
+			}
+			else
+			{
+				serverName = initialServerName;
+				port = initialPort;
+				databaseName = initialDatabaseName;
+				return false;
+			}
+		}
+
+		private void SaveConnectionSettings(string? serverName, int port, string? databaseName)
+		{
+			Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
+			var settings = config.AppSettings.Settings;
+
+			AddOrUpdate(settings, "MongoDbServer", serverName);
+			AddOrUpdate(settings, "MongoDbPort", port.ToString());
+			AddOrUpdate(settings, "MongoDbName", databaseName);
+
+
+			config.Save(ConfigurationSaveMode.Modified);
+			ConfigurationManager.RefreshSection(config.AppSettings.SectionInformation.Name);
+		}
+
+		private void AddOrUpdate(KeyValueConfigurationCollection settings, string key, string? value)
+		{
+			if (settings[key] == null)
+			{
+				settings.Add(key, value);
+			}
+			else
+			{
+				if (value == null)
+				{
+					settings.Remove(key);
+				}
+				else
+				{
+					settings[key].Value = value;
+				}
+			}
+		}
+
+		private bool CheckRepoConnectivity(string? serverName, int port, string? databaseName)
+		{
+			if (serverName != null && databaseName != null)
+			{
+				var dbProvider = new DbProvider(serverName, port, databaseName);
+				var result = dbProvider.TestConnection(databaseName, TimeSpan.FromSeconds(10));
+				return result;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		#endregion
+
+		#region Schema Update Support
 
 		//private void DoSchemaUpdates()
 		//{

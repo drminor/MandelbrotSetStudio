@@ -1,0 +1,82 @@
+﻿<Window x:Class="MSetExplorer.RepoConnParametersDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:RepoConnParametersViewModel}"
+        mc:Ignorable="d"
+        Title="Repository Connection Parameters" Height="350" Width="600">
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <Border x:Name="borderServiceNotInstalled" Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" Visibility="Collapsed">
+            <StackPanel Orientation="Vertical" Margin="0,5">
+                <TextBlock Margin="10,10,10,10" Text="MongoDB version 5.0.3 is requirded "/>
+                <TextBlock Margin="10,0,10,10" Text="Download from: https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-5.0.3.zip."/>
+                <TextBlock Margin="10,0,10,10" Text="Launch the installer and complete the installation."/>
+
+                <Button x:Name="btnCheckService" Width="225" Height="22" HorizontalAlignment="Center" Margin="0,1,0,0" Click="CheckServiceButton_Click">Check MongoDB Installation</Button>
+
+            </StackPanel>
+        </Border>        
+        
+        <Border x:Name="borderServiceFound" Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" Visibility="Visible">
+            <StackPanel Orientation="Vertical" Margin="0,5">
+                <TextBlock x:Name="txtBlockServiceStatus" Margin="10,10,10,10" Text="The MongoDB Windows Service is not running."/>
+                <TextBlock Margin="10,0,10,10" Text="Please start the service and refresh the status."/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Status:" VerticalAlignment="Top"/>
+                    <TextBlock x:Name="txtBlockStatus" Text="{Binding ServiceStatus, Mode=OneWay}" Width="200" Height="22" FontSize="16" VerticalAlignment="Top"/>
+                    <Button Width="125" Height="22" HorizontalAlignment="Center" Margin="10,0,0,0" Click="CheckServiceButton_Click">Refresh Status</Button>
+                </StackPanel>                
+
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+            <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Server:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtServerName" Text="{Binding ServerName}" Width="200" Height="22"/>
+                    <Button x:Name="btnBrowseServer" Width="25" Height="22" Margin="10,0,0,0" Click="BrowseServerButton_Click">...</Button>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Port:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtPort" Text="{Binding Port}" Width="60" Height="22"/>
+                </StackPanel>                
+                
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Width="50" Margin="10,0,5,0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtDatabaseName" Text="{Binding DatabaseName}" Width="200" Height="22"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Width="80" Margin="10,0,5,0" FontSize="16" Text="Connected:" VerticalAlignment="Top"/>
+                    <TextBlock x:Name="txtBlockConnectionStatus" Text="{Binding ConnectionStatus, Mode=OneWay}" Width="170" Height="22" FontSize="16" VerticalAlignment="Top"/>
+                    <Button x:Name="btnCheckConnection" Width="125" Height="22" HorizontalAlignment="Center" Margin="10,0,0,0" Click="CheckConnectionButton_Click">Check Connection</Button>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="SaveButton_Click"  IsDefault="True" >_Save</Button>
+                <Button Name="btnCancel" HorizontalAlignment="Center" Width="140" FontSize="16" Margin="10" Click="CancelButton_Click" IsCancel="True">_Cancel</Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

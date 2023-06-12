@@ -85,28 +85,28 @@ namespace MSetExplorer.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("desktop-bau7fe6")]
-        public string MongoDbServer {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string MongoDbServerx {
             get {
-                return ((string)(this["MongoDbServer"]));
+                return ((string)(this["MongoDbServerx"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("27017")]
-        public int MondogDbPort {
+        public int MongoDbPortx {
             get {
-                return ((int)(this["MondogDbPort"]));
+                return ((int)(this["MongoDbPortx"]));
             }
         }
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("MandelbrotProjects")]
-        public string MongoDbName {
+        public string MongoDbNamex {
             get {
-                return ((string)(this["MongoDbName"]));
+                return ((string)(this["MongoDbNamex"]));
             }
         }
     }

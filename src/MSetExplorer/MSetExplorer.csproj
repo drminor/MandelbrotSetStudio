@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="PixiEditor.ColorPicker" Version="3.2.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="7.0.0" />
   </ItemGroup>
 
 

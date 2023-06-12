@@ -16,6 +16,7 @@ namespace WpfMapDisplayPOC
 	{
 		#region Configuration
 
+		private const string MONGO_DB_NAME = "MandelbrotProjects";
 		private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		private const int MONGO_DB_PORT = 27017;
 
@@ -57,7 +58,7 @@ namespace WpfMapDisplayPOC
 		{
 			base.OnStartup(e);
 
-			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT);
+			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, MONGO_DB_NAME);
 
 			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionHelper);
