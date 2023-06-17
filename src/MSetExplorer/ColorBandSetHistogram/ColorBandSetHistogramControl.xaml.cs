@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.MapDisplay.Support;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -16,7 +17,7 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private bool DRAW_OUTLINE = false;
-		private Rectangle _outline;
+		//private Rectangle _outline;
 		private ICbshDisplayViewModel _vm;
 
 		#endregion
@@ -26,7 +27,7 @@ namespace MSetExplorer
 		public ColorBandSetHistogramControl()
 		{
 			_vm = (CbshDisplayViewModel)DataContext;
-			_outline = new Rectangle();
+			//_outline = new Rectangle();
 
 			Loaded += ColorBandSetHistogramControl_Loaded;
 			Unloaded += ColorBandSetHistogramControl_Unloaded;
@@ -37,8 +38,11 @@ namespace MSetExplorer
 
 		private void ColorBandSetHistogramControl_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
-			Debug.WriteLine($"CBSH_Control_SizeChanged: {cntrlSize}.");
+			if (_vm != null)
+			{
+				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
+				Debug.WriteLine($"CBSH_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.CanvasSize}, ViewPort: {_vm.ViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
+			}
 		}
 
 		private void ColorBandSetHistogramControl_Loaded(object sender, RoutedEventArgs e)
@@ -63,7 +67,7 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 
-				_outline = BuildOutline(HistogramDisplayControl1.Canvas);
+				//_outline = BuildOutline(HistogramDisplayControl1.Canvas);
 
 
 				Debug.WriteLine("The ColorBandSetHistogram UserControl is now loaded.");
@@ -91,7 +95,7 @@ namespace MSetExplorer
 			// Now the PanAndZoomControl updates the content control's ContentViewportSize property.
 			//BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
 
-			//Debug.Assert(HistogramDisplayControl1.ContentViewportSize == e.ContentViewportSize, "MapSectionPzControl - code behind is handling the PanAndZoomControl's ViewportChanged and the BitmapGridControl's ContentViewportSize does not match the upddated PanAndZoomControl's ContentViewportSize.");
+			Debug.Assert(HistogramDisplayControl1.ContentViewportSize == e.ContentViewportSize, "MapSectionPzControl - code behind is handling the PanAndZoomControl's ViewportChanged and the BitmapGridControl's ContentViewportSize does not match the upddated PanAndZoomControl's ContentViewportSize.");
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
@@ -127,16 +131,14 @@ namespace MSetExplorer
 				// Move the content to the center of the control
 				// and clip so that only the content is visible.
 
-				// The screen is scaled by relativeScale.
-				// Convert screen coordinates to 'display' coordinates
 				var screenToRelativeScaleFactor = 1 / contentScale;
-				//var screenToRelativeScaleFactor = contentScale;
 
 				var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
 
 				ShowOutline(scaledDisplayArea);
-
 				OffsetAndClip(scaledDisplayArea);
+
+				//Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {scaledDisplayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. ");
 
 				Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {displayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. " +
 					$"Clip Position: {scaledDisplayArea.Position}. Clip Size: {scaledDisplayArea.Size}.");
@@ -152,7 +154,7 @@ namespace MSetExplorer
 		private RectangleDbl GetContentDispayAreaInScreenCoordinates(SizeDbl unscaledExtent, SizeDbl viewportSize, double contentScale)
 		{
 			// Get the number of pixels in unscaled coordinates
-			// from the top, right of the control to the top, right of the content
+			// from the top, left of the control to the top, left of the content
 			var scaledExtent = unscaledExtent.Scale(contentScale);
 
 			var x = Math.Max(0, (viewportSize.Width - scaledExtent.Width) / 2);
@@ -180,7 +182,7 @@ namespace MSetExplorer
 				HistogramDisplayControl1.ContentOffset = offset;
 
 
-				// Only show the pixels belonging to the Poster.
+				//// Only show the pixels belonging to the Poster.
 				var scaledDisplaySize = ScreenTypeHelper.ConvertToSize(scaledDisplayArea.Value.Size);
 				HistogramDisplayControl1.CanvasClip = new RectangleGeometry(new Rect(scaledDisplaySize));
 			}
@@ -188,16 +190,16 @@ namespace MSetExplorer
 
 		private void ShowOutline(RectangleDbl scaledDisplayArea)
 		{
-			if (DRAW_OUTLINE)
-			{
-				// Position the outline rectangle.
-				_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
-				_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
+			//if (DRAW_OUTLINE)
+			//{
+			//	// Position the outline rectangle.
+			//	_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
+			//	_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
 
-				_outline.Width = scaledDisplayArea.Width;
-				_outline.Height = scaledDisplayArea.Height;
-				_outline.Visibility = Visibility.Visible;
-			}
+			//	_outline.Width = scaledDisplayArea.Width;
+			//	_outline.Height = scaledDisplayArea.Height;
+			//	_outline.Visibility = Visibility.Visible;
+			//}
 		}
 
 		//private void HideOutline()
@@ -215,7 +217,7 @@ namespace MSetExplorer
 				Width = 1,
 				Height = 1,
 				Fill = Brushes.Transparent,
-				Stroke = BuildDrawingBrush(), // new SolidColorBrush(Colors.DarkSeaGreen), // 
+				Stroke = new SolidColorBrush(Colors.DarkSeaGreen), 	//BuildDrawingBrush(), // 
 				StrokeThickness = 2,
 				Visibility = Visibility.Hidden,
 				Focusable = false

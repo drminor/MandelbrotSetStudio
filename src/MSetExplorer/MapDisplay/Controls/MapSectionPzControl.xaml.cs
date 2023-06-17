@@ -150,7 +150,7 @@ namespace MSetExplorer
 		private RectangleDbl GetContentDispayAreaInScreenCoordinates(SizeDbl unscaledExtent, SizeDbl viewportSize, double contentScale)
 		{
 			// Get the number of pixels in unscaled coordinates
-			// from the top, right of the control to the top, right of the content
+			// from the top, left of the control to the top, left of the content
 			var scaledExtent = unscaledExtent.Scale(contentScale);
 
 			var x = Math.Max(0, (viewportSize.Width - scaledExtent.Width) / 2);

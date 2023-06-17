@@ -12,7 +12,7 @@ namespace MSetExplorer
 	{
 		#region Private Fields 
 
-		private readonly static bool CLIP_IMAGE_BLOCKS = true;
+		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 
@@ -155,6 +155,8 @@ namespace MSetExplorer
 					_image.SizeChanged += Image_SizeChanged;
 
 					_image.Source = HistogramImageSource;
+
+					_image.SetValue(Panel.ZIndexProperty, 20);
 
 					UpdateImageOffset(ImageOffset);
 
@@ -302,6 +304,7 @@ namespace MSetExplorer
 			{
 				var previousVal = _contentOffset;
 				_contentOffset = value;
+
 				SetTheCanvasTranslateTransform(previousVal, value);
 			}
 		}

@@ -254,7 +254,7 @@ namespace MSetExplorer
 			//	_scrollOwner.VerticalScrollBarVisibility = value;
 			//}
 
-			if (_scrollOwner != null)
+			if (_scrollOwner != null && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled)
 			{
 				if (show && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Visible)
 				{

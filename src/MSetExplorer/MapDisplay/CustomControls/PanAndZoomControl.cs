@@ -6,6 +6,7 @@ using System.Security.Cryptography.Xml;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -434,9 +435,16 @@ namespace MSetExplorer
 			//var gap2 = c._maxContentOffset.Width != gap2a;
 
 			double value = (double)baseValue;
-			double minOffsetX = 0.0;
+			//double minOffsetX = 0.0;
 			double maxOffsetX = c._maxContentOffset.Width;
-			value = Math.Min(Math.Max(value, minOffsetX), maxOffsetX);
+
+			double v1 = value >= 0 ? value : 0;
+
+			double maxOffsetXTest = maxOffsetX + 50;
+
+			//value = Math.Min(v1, maxOffsetX);
+			value = Math.Min(v1, maxOffsetXTest);
+
 
 			//if (gap || gap2)
 			//{
@@ -445,8 +453,7 @@ namespace MSetExplorer
 			//		$"Gaps: {gap}, {gap2a}, {gap2}");
 			//}
 
-			//Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}.");
-
+			Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}.");
 
 			return value;
 		}
@@ -494,7 +501,7 @@ namespace MSetExplorer
 			double maxOffsetY = c._maxContentOffset.Height;
 			value = Math.Min(Math.Max(value, minOffsetY), maxOffsetY);
 
-			Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}.");
+			//Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}.");
 
 			return value;
 		}
@@ -559,6 +566,7 @@ namespace MSetExplorer
 			
 			ContentViewportSize = ViewportSize.Divide(ContentScale);
 
+
 			// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
 
 			// Usually the track position can vary over the entire ContentViewportSize,
@@ -568,7 +576,10 @@ namespace MSetExplorer
 			// If we want to avoid having the content shifted beyond the canvas boundary (thus leaving part of the canvas blank before/after the content),
 			// the maximum value for the offsets is size of the ContentViewportSize subtracted from the the unscaled extents. 
 			_maxContentOffset = UnscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
-			
+
+			Debug.WriteLine($"PanAndZoomControl: UpdateContentViewportSize: {ContentViewportSize}, ViewportSize: {ViewportSize}, ConstrainedViewportSize: {_constrainedContentViewportSize}, ContentScale: {ContentScale}. MaxContentOffset: {_maxContentOffset}");
+
+
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
 
 			//ScrollBarDisplacement = GetScrollBarDisplacement();

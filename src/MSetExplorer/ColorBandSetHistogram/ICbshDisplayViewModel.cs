@@ -6,20 +6,27 @@ namespace MSetExplorer
 {
 	public interface ICbshDisplayViewModel
 	{
-		ImageSource ImageSource { get; }
-		SizeDbl ContainerSize { get; set; }
-		SizeInt CanvasSize { get; set; }
-
-		SizeDbl UnscaledExtent { get; set; }
-		double DisplayZoom { get; set; }
-
 		bool InDesignMode { get; }
+
 		ListCollectionView ColorBandsView { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
 		ColorBandSet ColorBandSet { get; set; }
 
 		int EndPtr { get; set; }
 		int StartPtr { get; set; }
+
+		ImageSource ImageSource { get; }
+		VectorDbl ImageOffset { get; }
+
+		SizeDbl ContainerSize { get; set; }
+		SizeInt CanvasSize { get; set; }		
+
+		SizeDbl UnscaledExtent { get; }         // PosterSize
+		SizeDbl ViewportSize { get; }			// ContainerSize
+		VectorDbl DisplayPosition { get; }
+
+		double DisplayZoom { get; }
+		double MinimumDisplayZoom { get; }
 
 		void RefreshHistogramDisplay();
 

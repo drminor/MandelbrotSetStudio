@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Text;
 using System.Windows;
@@ -81,24 +83,35 @@ namespace MSetExplorer
 				return;
 			}
 
-			PrepareRepositories(CREATE_COLLECTIONS, DROP_MAP_SECTIONS_AND_SUBDIVISIONS, DROP_RECENT_MAP_SECTIONS, _repositoryAdapters);
+			#region Repo Maintenance
 
-			if (_repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
+			if (DROP_MAP_SECTIONS_AND_SUBDIVISIONS)
 			{
-				DoSchemaUpdates(pa);
+				_repositoryAdapters.MapSectionAdapter.DropMapSectionsAndSubdivisions();
+			}
+			else if (DROP_RECENT_MAP_SECTIONS)
+			{
+				_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
 			}
 
-			if (_repositoryAdapters.MapSectionAdapter is MapSectionAdapter maForSu)
+			if (CREATE_COLLECTIONS)
 			{
-				DoSchemaUpdates(maForSu);
+				_repositoryAdapters.CreateCollections();
 			}
+
+			_repositoryAdapters.WarmUp();
+
+			DoSchemaUpdates(_repositoryAdapters);
 
 			if (CLEAN_UP_JOB_MAP_SECTIONS)
 			{
 				CleanUpMapSections(_repositoryAdapters.MapSectionAdapter);
 			}
 
+			#endregion
+
 			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
+
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionHelper);
 			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor, _mapSectionHelper);
 
@@ -121,95 +134,18 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Support Methods
-
-		private AppNavWindow GetAppNavWindow(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
-		{
-			var appNavViewModel = new AppNavViewModel(mapSectionHelper, repositoryAdapters, mapLoaderManager, mapSectionRequestProcessor);
-
-			var appNavWindow = new AppNavWindow
-			{
-				DataContext = appNavViewModel
-			};
-
-			appNavWindow.WindowState = WindowState.Minimized;
-
-			return appNavWindow;
-		}
-
-		private IMEngineClient[] CreateTheMEngineClients(MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
-		{
-			var result = new List<IMEngineClient>();
-
-			var localTaskCount = GetLocalTaskCount(useAllCores);
-
-			for (var i = 0; i < localTaskCount; i++)
-			{
-				result.Add(new MClientLocal(mSetGenerationStrategy));
-			}
-
-			return result.ToArray();
-		}
-
-		private int GetLocalTaskCount(bool useAllCores)
-		{
-			int result;
-
-			if (useAllCores)
-			{
-				var numberOfLogicalProc = Environment.ProcessorCount;
-				result = numberOfLogicalProc - 1;
-			}
-			else
-			{
-				result = 1;
-			}
-
-			return result;
-		}
-
-		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
-		{
-			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients);
-			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
-			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionHelper);
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionHelper, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
-
-			return mapSectionRequestProcessor;
-		}
-
-		private void PrepareRepositories(bool createCollections, bool dropMapSectionsAndSubdivions, bool dropRecentMapSections, RepositoryAdapters repositoryAdapters)
-		{
-			if (dropMapSectionsAndSubdivions)
-			{
-				repositoryAdapters.MapSectionAdapter.DropMapSectionsAndSubdivisions();
-			}
-			else if (dropRecentMapSections)
-			{
-				repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
-			}
-
-			if (createCollections)
-			{
-				repositoryAdapters.CreateCollections();
-			}
-
-			repositoryAdapters.WarmUp();
-		}
-
-		#endregion
-
-		#region Get Repository Connection Parameters
+		#region Get Repository Adapters
 
 		private bool TryGetRepositoryAdapters([NotNullWhen(true)] out RepositoryAdapters? repositoryAdapters)
 		{
 			var (repoDbServerName, repoDbPort, repoDbName) = GetConnectionSettings();
 
-			var needServerName = string.IsNullOrEmpty(repoDbServerName?.Trim());
-			var needDbName = string.IsNullOrEmpty(repoDbName?.Trim());
-			var serviceStatus = ServiceHelper.CheckService(RMapConstants.SERVICE_NAME);
+			var haveServerName = !string.IsNullOrEmpty(repoDbServerName?.Trim());
+			var haveDbName = !string.IsNullOrEmpty(repoDbName?.Trim());
+			var serviceIsRunning = ServiceHelper.CheckService(RMapConstants.SERVICE_NAME) == ServiceControllerStatus.Running;
+			var isConnected = serviceIsRunning ? CheckRepoConnectivity(repoDbServerName, repoDbPort, repoDbName) : false;
 
-			if (needServerName || needDbName || serviceStatus != ServiceControllerStatus.Running || !CheckRepoConnectivity(repoDbServerName, repoDbPort, repoDbName))
+			if (!haveServerName || !haveDbName || !serviceIsRunning || !isConnected)
 			{
 				if (TryEditConnectionSettings(repoDbServerName, repoDbPort, repoDbName, out var s, out var p, out var d))
 				{
@@ -332,6 +268,25 @@ namespace MSetExplorer
 
 		#region Schema Update Support
 
+		private void DoSchemaUpdates(RepositoryAdapters repositoryAdapters)
+		{
+			if (repositoryAdapters.ProjectAdapter is ProjectAdapter pa)
+			{
+				pa.DoSchemaUpdates();
+
+				//pa.AddIsIsAlternatePathHeadToAllJobs();
+				//pa.RemoveColorBandSetIdFromProject();
+				//pa.RemoveEscapeVels();
+			}
+
+			if (repositoryAdapters.MapSectionAdapter is MapSectionAdapter maForSu)
+			{
+				maForSu.DoSchemaUpdates();
+
+				//maForSu.AddSubdivisionId();
+			}
+		}
+
 		//private void DoSchemaUpdates()
 		//{
 		//	//_projectAdapter.AddColorBandSetIdToAllJobs();
@@ -358,22 +313,10 @@ namespace MSetExplorer
 		//	//}
 		//}
 
-		private void DoSchemaUpdates(ProjectAdapter projectAdapter)
-		{
-			projectAdapter.DoSchemaUpdates();
+		#endregion
 
+		#region Cleanup Map Sections
 
-			//projectAdapter.AddIsIsAlternatePathHeadToAllJobs();
-			//projectAdapter.RemoveColorBandSetIdFromProject();
-			//projectAdapter.RemoveEscapeVels();
-		}
-
-		private void DoSchemaUpdates(MapSectionAdapter mapSectionAdapter)
-		{
-			mapSectionAdapter.DoSchemaUpdates();
-			//mapSectionAdapter.AddSubdivisionId();
-		}
-		
 		private void CleanUpMapSections(IMapSectionAdapter mapSectionAdapter)
 		{
 			if (mapSectionAdapter is MapSectionAdapter ma)
@@ -410,7 +353,40 @@ namespace MSetExplorer
 
 		#endregion
 
-		/* Old Code to Support calling a remote MEngine 
+		#region MEngine Support
+
+		private IMEngineClient[] CreateTheMEngineClients(MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
+		{
+			var result = new List<IMEngineClient>();
+
+			var localTaskCount = GetLocalTaskCount(useAllCores);
+
+			for (var i = 0; i < localTaskCount; i++)
+			{
+				result.Add(new MClientLocal(mSetGenerationStrategy));
+			}
+
+			return result.ToArray();
+		}
+
+		private int GetLocalTaskCount(bool useAllCores)
+		{
+			int result;
+
+			if (useAllCores)
+			{
+				var numberOfLogicalProc = Environment.ProcessorCount;
+				result = numberOfLogicalProc - 1;
+			}
+			else
+			{
+				result = 1;
+			}
+
+			return result;
+		}
+
+		#region MEngine Constants
 
 		//private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\src_FGEN\MEngineService\bin\x64\Debug\net6.0\MEngineService.exe";
 		//private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\x64\Debug\MEngineService.exe";
@@ -419,6 +395,7 @@ namespace MSetExplorer
 		//private static readonly bool USE_LOCAL_ENGINE = false; // If true, we will host a server -- AND include it in the list of servers to use by our client.
 		//private static readonly bool USE_REMOTE_ENGINE = false;  // If true, send part of our work to the remote server(s)
 
+		#endregion
 
 		private IMEngineClient[] CreateTheMEngineClients(bool useRemoteEngine, bool useLocalEngine, MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
 		{
@@ -442,8 +419,6 @@ namespace MSetExplorer
 
 		//var mEngineClients = ChooseMEngineClientImplementation(CLIENT_IMPLEMENTATION, mEngineAddresses, _repositoryAdapters.MapSectionAdapter);
 
-
-
 		//private IMEngineClient[] ChooseMEngineClientImplementation(ClientImplementation clientImplementation, IList<string> mEngineEndPointAddresses, IMapSectionAdapter mapSectionAdapter)
 		//{
 		//	var result = clientImplementation switch
@@ -461,11 +436,11 @@ namespace MSetExplorer
 		//	return result;
 		//}
 
-		private IMEngineClient[] CreateMEngineClients(IList<string> mEngineEndPointAddresses)
-		{
-			var mEngineClients = mEngineEndPointAddresses.Select(x => new MClient(x)).ToArray();
-			return mEngineClients;
-		}
+		//private IMEngineClient[] CreateMEngineClients(IList<string> mEngineEndPointAddresses)
+		//{
+		//	var mEngineClients = mEngineEndPointAddresses.Select(x => new MClient(x)).ToArray();
+		//	return mEngineClients;
+		//}
 
 		//private IMEngineClient[] CreateInProcessMEngineClient(IMapSectionAdapter mapSectionAdapter, out MapSectionPersistProcessor mapSectionPersistProcessor)
 		//{
@@ -475,7 +450,38 @@ namespace MSetExplorer
 		//	return mEngineClients;
 		//}
 
+		#endregion
 
-		*/
+		#region Map Section Request Processor
+
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
+		{
+			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients);
+			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
+			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionHelper);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionHelper, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
+
+			return mapSectionRequestProcessor;
+		}
+
+		#endregion
+
+		#region AppNav Window
+
+		private AppNavWindow GetAppNavWindow(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
+		{
+			var appNavViewModel = new AppNavViewModel(mapSectionHelper, repositoryAdapters, mapLoaderManager, mapSectionRequestProcessor);
+
+			var appNavWindow = new AppNavWindow
+			{
+				DataContext = appNavViewModel
+			};
+
+			appNavWindow.WindowState = WindowState.Minimized;
+
+			return appNavWindow;
+		}
+
+		#endregion
 	}
 }
