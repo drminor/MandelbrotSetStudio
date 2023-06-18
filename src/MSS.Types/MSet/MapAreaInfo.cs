@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace MSS.Types.MSet
 {
@@ -48,6 +49,21 @@ namespace MSS.Types.MSet
 		public MapAreaInfo Clone()
 		{
 			return new MapAreaInfo(Coords.Clone(), CanvasSize, Subdivision.Clone(), Precision, MapBlockOffset.Clone(), CanvasControlOffset);
+		}
+
+		public override string ToString()
+		{
+			var sb = new StringBuilder();
+
+			sb.Append($"MapAreaInfoV1: CanvasSize: {CanvasSize}");
+
+			sb.AppendLine($"Subdivision: Pos:{Subdivision.Position}, Delta: {Subdivision.SamplePointDelta.WidthNumerator} / {Subdivision.SamplePointDelta.Exponent}.");
+			sb.AppendLine($"MapBlockOffset: X:{MapBlockOffset.X}, Y:{MapBlockOffset.Y}");
+			sb.AppendLine($"CanvasControlOffset: {CanvasControlOffset}");
+			sb.AppendLine($"Coords: {Coords}");
+
+
+			return sb.ToString();
 		}
 	}
 }

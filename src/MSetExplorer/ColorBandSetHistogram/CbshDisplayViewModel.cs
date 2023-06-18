@@ -7,7 +7,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -103,7 +102,7 @@ namespace MSetExplorer
 			{
 				if (value != _colorBandSet)
 				{
-					Debug.WriteLine($"The ColorBandSetHistogram Display is processing a new ColorBandSet. Id = {value.Id}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetHistogram Display is processing a new ColorBandSet. Id = {value.Id}.");
 
 					_colorBandSet = value;
 					StartPtr = 0;
@@ -136,7 +135,7 @@ namespace MSetExplorer
 			get => _imageSource;
 			set
 			{
-				if (_useDetailedDebug) Debug.WriteLine($"The CbshDisplayViewModel's ImageSource is being set to value: {value}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbshDisplayViewModel's ImageSource is being set to value: {value}.");
 				_imageSource = value;
 				OnPropertyChanged(nameof(ICbshDisplayViewModel.ImageSource));
 			}
@@ -159,7 +158,7 @@ namespace MSetExplorer
 			{
 				_containerSize = value;
 
-				Debug.WriteLine($"The container size is now {value}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The container size is now {value}.");
 
 				CanvasSize = ContainerSize.Round();
 			}
@@ -172,7 +171,7 @@ namespace MSetExplorer
 			{
 				if (value != _canvasSize)
 				{
-					Debug.WriteLine($"The CbshDisplayViewModel's Canvas Size is now {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbshDisplayViewModel's Canvas Size is now {value}.");
 					_canvasSize = value;
 
 					//UnscaledExtent = new SizeDbl(CanvasSize.Scale(DisplayZoom));
@@ -223,7 +222,7 @@ namespace MSetExplorer
 				{
 					_unscaledExtent = value;
 
-					Debug.WriteLine($"ColorBandSetHistogram Display's Logical DisplaySize is now {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetHistogram's UnscaledExtent is being set to {value}.");
 
 					//UpdateFoundationRectangle(_foundationRectangle, value);
 
@@ -253,7 +252,7 @@ namespace MSetExplorer
 				{
 					_displayZoom = value;
 					_scaleTransform.ScaleX = 1 / _displayZoom;
-					Debug.WriteLine($"ColorBandSetHistogram is setting it's DrawingGroup ScaleTransform to {_scaleTransform.ScaleX}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetHistogram is setting it's DrawingGroup ScaleTransform to {_scaleTransform.ScaleX}.");
 					OnPropertyChanged(nameof(ICbshDisplayViewModel.DisplayZoom));
 				}
 			}
@@ -271,12 +270,12 @@ namespace MSetExplorer
 
 				//	if (DisplayZoom > MaximumDisplayZoom)
 				//	{
-				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
+				//		Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
 				//		DisplayZoom = MaximumDisplayZoom;
 				//	}
 				//	else
 				//	{
-				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
+				//		Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
 				//	}
 
 				//	OnPropertyChanged(nameof(IMapDisplayViewModel.MaximumDisplayZoom));
@@ -346,7 +345,7 @@ namespace MSetExplorer
 		
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
-			Debug.WriteLine($"CbshDisplayViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
 
 			ViewportSize = contentViewportSize;
 
@@ -366,13 +365,13 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"CbshDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
+					Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
 					ContainerSize = newValue;
 				}
 			}
 			else
 			{
-				Debug.WriteLine($"CbshDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not updating the ContainerSize.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not updating the ContainerSize.");
 			}
 
 			return null;
@@ -385,7 +384,7 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot call MoveTo, if the UnscaledExtent is zero.");
 			}
 
-			Debug.WriteLine($"CbshDisplayViewModel is moving to position:{displayPosition}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is moving to position:{displayPosition}.");
 
 			var offset = new VectorDbl(displayPosition.X * _scaleTransform.ScaleX, 0);
 			//var offset = new VectorDbl(displayPosition.X, 0);
@@ -477,7 +476,7 @@ namespace MSetExplorer
 			//var rn = 1 + endingIndex - startingIndex;
 			//if (Math.Abs(LogicalDisplaySize.Width - rn) > 20)
 			//{
-			//	Debug.WriteLine($"The range of indexes does not match the Logical Display Width. Range: {endingIndex - startingIndex}, Width: {LogicalDisplaySize.Width}.");
+			//	Debug.WriteLineIf(_useDetailedDebug, $"The range of indexes does not match the Logical Display Width. Range: {endingIndex - startingIndex}, Width: {LogicalDisplaySize.Width}.");
 			//	return;
 			//}
 
@@ -491,7 +490,7 @@ namespace MSetExplorer
 
 			if (hEntries.Length < 1)
 			{
-				Debug.WriteLine($"The Histogram is empty.");
+				Debug.WriteLine($"WARNING: The Histogram is empty.");
 				return;
 			}
 
@@ -534,7 +533,7 @@ namespace MSetExplorer
 
 		//private GeometryDrawing DrawHistogramBorder(int width, int height)
 		//{
-		//	Debug.WriteLine($"Drawing the Histogram Border with width: {width}.");
+		//	Debug.WriteLineIf(_useDetailedDebug, $"Drawing the Histogram Border with width: {width}.");
 
 		//	var borderSize = width > 1 && height > 1 ? new Size(width - 1, height - 1) : new Size(1, 1);
 
@@ -563,7 +562,7 @@ namespace MSetExplorer
 				new RectangleGeometry(new Rect(topLeft, borderSize))
 			);
 
-			Debug.WriteLine($"Drawing the Histogram Border with Size: {borderSize} at pos: {topLeft}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Drawing the Histogram Border with Size: {borderSize} at pos: {topLeft}.");
 
 
 			_historgramItems.Add(histogramBorder);

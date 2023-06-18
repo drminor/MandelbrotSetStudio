@@ -204,7 +204,7 @@ namespace MSS.Common
 				{
 					//Debug.WriteLine($"Updating the IsOnPreferredPath to {value} for {Id}.");
 					_isOnPreferredPath = value;
-					Item.IsAlternatePathHead = value;
+					Item.IsOnPreferredPath = value;
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(IsOnPreferredPathMarker));
 					OnPropertyChanged(nameof(IsOnPreferredPathMarkerOpacity));

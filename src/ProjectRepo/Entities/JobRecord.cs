@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 
@@ -7,13 +8,15 @@ namespace ProjectRepo.Entities
 {
 	public record JobRecord(
 		ObjectId? ParentJobId,
-		bool IsAlternatePathHead,	// Remove this on next Schema Update
-		ObjectId ProjectId,			// Change ProjectId to OwnerId and add OwnerType field of type JobOwnerType (Enum).
-		ObjectId SubDivisionId,		// Do we really need to have a SubdivisionId field here, it is included in the MapAreaInfoRecord.
+
+		ObjectId OwnerId,
+		JobOwnerType? JobOwnerType,
+
+		ObjectId SubDivisionId,     // Do we really need to have a SubdivisionId field here, it is included in the MapAreaInfoRecord.
 		string Label,
 		int TransformType,
 
-		MapAreaInfoRecord MapAreaInfoRecord,
+		MapAreaInfo2Record MapAreaInfo2Record,
 		string TransformTypeString,
 
 		PointIntRecord NewAreaPosition,
@@ -21,7 +24,8 @@ namespace ProjectRepo.Entities
 
 		ObjectId ColorBandSetId,
 		MapCalcSettings MapCalcSettings,
-		SizeIntRecord CanvasSizeInBlocks	// This is not being used.
+
+		DateTime LastAccessedUtc
 		)
 	{
 		[BsonId]
@@ -30,12 +34,14 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		// TODO: Rename LastSaved to LastSavedUtc
-		public DateTime LastSaved { get; set; }
-		public DateTime LastAccessedUtc { get; set; }
+		public DateTime? LastSavedUtc { get; set; }
+		public DateTime? LastSaved { get; set; }
 
 		public IterationUpdateRecord[]? IterationUpdates { get; set; }
 		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
+
+
+
 	}
 
 }

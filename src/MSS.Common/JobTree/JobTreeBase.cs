@@ -605,7 +605,7 @@ namespace MSS.Common
 
 				// Note: This assumes that every node has its "IsOnPreferredPath" value assigned.
 				// TODO: Optimize calls to GetPath by providing a closer starting point.
-				var preferredRealChildJob = currentNode.RealChildJobs.FirstOrDefault(x => x.Value.IsAlternatePathHead).Value ?? currentNode.RealChildJobs.LastOrDefault().Value;
+				var preferredRealChildJob = currentNode.RealChildJobs.FirstOrDefault(x => x.Value.IsOnPreferredPath).Value ?? currentNode.RealChildJobs.LastOrDefault().Value;
 				result = preferredRealChildJob != null ? GetPath(preferredRealChildJob, Root) : null;
 
 				//Debug.WriteLine($"GetNextPath, initial result is null, using RealChildJobs.\n{result}.");

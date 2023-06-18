@@ -41,6 +41,8 @@ namespace MSetExplorer
 
 		ScrollBarVisibility _originalVerticalScrollBarVisibility;
 
+		private readonly bool _useDetailedDebug;
+
 		#endregion
 
 		#region Constructor
@@ -189,7 +191,7 @@ namespace MSetExplorer
 
 			var result = new Size(width, height);
 
-			Debug.WriteLine($"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
 
 			// TODO: Figure out when its best to call UpdateViewportSize.
 			// ANSWER: Don't call Update during Measure, only during Arrange.
@@ -213,8 +215,11 @@ namespace MSetExplorer
 			{
 				ContentBeingZoomed.Arrange(new Rect(finalSize));
 
-				if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
-
+				if (childSize != finalSize)
+				{
+					Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize} vs. {finalSize}.");
+				}
+				
 				UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(childSize));
 			}
 
@@ -228,7 +233,7 @@ namespace MSetExplorer
 			ContentBeingZoomed = Template.FindName("PART_Content", this) as FrameworkElement;
 			if (ContentBeingZoomed != null)
 			{
-				Debug.WriteLine($"Found the PanAndZoomControl_Content template. The ContentBeingZoomed is {ContentBeingZoomed} /w type: {ContentBeingZoomed.GetType()}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Found the PanAndZoomControl_Content template. The ContentBeingZoomed is {ContentBeingZoomed} /w type: {ContentBeingZoomed.GetType()}.");
 
 				if (ContentBeingZoomed is ContentPresenter cp)
 				{
@@ -316,9 +321,9 @@ namespace MSetExplorer
 		/// </summary>
 		private static void ContentScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			Debug.WriteLine($"BitmapGridControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
-
 			PanAndZoomControl c = (PanAndZoomControl)o;
+
+			Debug.WriteLineIf(c._useDetailedDebug, $"BitmapGridControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
 
 			var newValue = (double)e.NewValue;
 
@@ -453,7 +458,7 @@ namespace MSetExplorer
 			//		$"Gaps: {gap}, {gap2a}, {gap2}");
 			//}
 
-			Debug.WriteLine($"CoerceOffsetX got: {baseValue} and returned {value}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CoerceOffsetX got: {baseValue} and returned {value}.");
 
 			return value;
 		}
@@ -559,7 +564,7 @@ namespace MSetExplorer
 
 			if (_contentScaler?.ScaleTransform.ScaleX != ContentScale)
 			{
-				Debug.WriteLine($"Not using the current value for ContentScale.");
+				Debug.WriteLine($"WARNING: Not using the current value for ContentScale.");
 			}
 
 			var maxContentOffsetBeforeUpdate = _maxContentOffset;
@@ -577,7 +582,7 @@ namespace MSetExplorer
 			// the maximum value for the offsets is size of the ContentViewportSize subtracted from the the unscaled extents. 
 			_maxContentOffset = UnscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
 
-			Debug.WriteLine($"PanAndZoomControl: UpdateContentViewportSize: {ContentViewportSize}, ViewportSize: {ViewportSize}, ConstrainedViewportSize: {_constrainedContentViewportSize}, ContentScale: {ContentScale}. MaxContentOffset: {_maxContentOffset}");
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {ContentViewportSize}, ViewportSize: {ViewportSize}, ConstrainedViewportSize: {_constrainedContentViewportSize}, ContentScale: {ContentScale}. MaxContentOffset: {_maxContentOffset}");
 
 
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
@@ -589,7 +594,7 @@ namespace MSetExplorer
 
 			if (_maxContentOffset != maxContentOffsetBeforeUpdate)
 			{
-				Debug.Print($"MaxContentOffset was updated. Prev: {maxContentOffsetBeforeUpdate}, New: {_maxContentOffset}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"MaxContentOffset was updated. Prev: {maxContentOffsetBeforeUpdate}, New: {_maxContentOffset}.");
 			}
 
 			//InvalidateScrollInfo();
@@ -612,7 +617,7 @@ namespace MSetExplorer
 					result = -ContentOffsetX;
 				}
 
-				Debug.WriteLine($"PanAndZoomControl would be setting the TranslateTransform.X to {result}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl would be setting the TranslateTransform.X to {result}.");
 				//_contentScaler.TranslateTransform.X = result;
 			}
 		}
@@ -634,7 +639,7 @@ namespace MSetExplorer
 					result = -ContentOffsetY;
 				}
 
-				Debug.WriteLine($"PanAndZoomControl would be setting the TranslateTransform.Y to {result}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl would be setting the TranslateTransform.Y to {result}.");
 				//_contentScaler.TranslateTransform.Y = result;
 			}
 		}
@@ -714,7 +719,7 @@ namespace MSetExplorer
 		public void ReportSizes(string label)
 		{
 			var controlSize = new SizeInt(ActualWidth, ActualHeight);
-			Debug.WriteLine($"At {label}, Control: {controlSize}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"At {label}, Control: {controlSize}.");
 		}
 
 		[Conditional("DEBUG2")]

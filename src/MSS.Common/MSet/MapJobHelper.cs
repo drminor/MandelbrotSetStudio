@@ -41,20 +41,21 @@ namespace MSS.Common
 		public Job BuildHomeJob(MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
 		{
 			ObjectId? parentJobId = null;
-			ObjectId projectId = ObjectId.Empty;
+			ObjectId ownerId = ObjectId.Empty;
+			var jobOwnerType = JobOwnerType.Undetermined;
 			var transformType = TransformType.Home;
 			RectangleInt? newArea = null;
 
-			var result = BuildJob(parentJobId, projectId, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
+			var result = BuildJob(parentJobId, ownerId, jobOwnerType, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId projectId, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		public Job BuildJob(ObjectId? parentJobId, ObjectId ownerId, JobOwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
 			var mapAreaInfoWithRegisteredSub = RegisterTheSubdivision(mapAreaInfo);
 
 			var jobName = GetJobName(transformType);
-			var job = new Job(parentJobId, projectId, jobName, transformType, newArea, mapAreaInfoWithRegisteredSub, colorBandSetId, mapCalcSettings);
+			var job = new Job(parentJobId, ownerId, jobOwnerType, jobName, transformType, newArea, mapAreaInfoWithRegisteredSub, colorBandSetId, mapCalcSettings);
 
 			return job;
 		}

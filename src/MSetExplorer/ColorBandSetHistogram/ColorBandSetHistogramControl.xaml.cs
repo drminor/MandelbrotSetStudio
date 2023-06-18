@@ -16,7 +16,7 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private bool DRAW_OUTLINE = false;
+		//private bool DRAW_OUTLINE = false;
 		//private Rectangle _outline;
 		private ICbshDisplayViewModel _vm;
 

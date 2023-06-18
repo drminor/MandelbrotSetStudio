@@ -269,7 +269,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			MapSections.Clear();
 			//Timings.Clear();
 
-			var ownerId = job.ProjectId.ToString();
+			var ownerId = job.OwnerId.ToString();
 			var jobOwnerType = JobOwnerType.Project;
 
 			var stopwatch = Stopwatch.StartNew();

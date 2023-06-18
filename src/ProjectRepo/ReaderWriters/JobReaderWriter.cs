@@ -1,5 +1,8 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MSS.Common;
+using MSS.Common.DataTransferObjects;
+using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
@@ -15,7 +18,9 @@ namespace ProjectRepo
 		public JobReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
 
-		public JobRecord Get(ObjectId jobId)
+		#region Get / Insert / Delete
+
+		public JobRecord? Get(ObjectId jobId)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 			var jobRecord = Collection.Find(filter).FirstOrDefault();
@@ -23,15 +28,14 @@ namespace ProjectRepo
 			return jobRecord;
 		}
 
-		// TODO: Since Jobs can be owned by either a Project or Poster, we need to update GetJobIds by ProjectId to be instead GetJobIds by OwnerId, JobOwnerType.
-		public IEnumerable<ObjectId> GetJobIds(ObjectId projectId)
+		public IEnumerable<ObjectId> GetJobIdsByOwner(ObjectId ownerId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
 					p => p.Id
 				);
 
-			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
+			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", ownerId);
 			var result = Collection.Find(filter).Project(projection1).ToEnumerable();
 
 			return result;
@@ -62,13 +66,15 @@ namespace ProjectRepo
 
 			var updateDefinition = Builders<JobRecord>.Update
 				.Set(u => u.ParentJobId, jobRecord.ParentJobId)
-				.Set(u => u.IsAlternatePathHead, jobRecord.IsAlternatePathHead)
-				.Set(u => u.ProjectId, jobRecord.ProjectId)
+				.Set(u => u.OwnerId, jobRecord.OwnerId)
+				.Set(u => u.JobOwnerType, jobRecord.JobOwnerType)
 
-				.Set(u => u.MapAreaInfoRecord, jobRecord.MapAreaInfoRecord)
+				.Set(u => u.MapAreaInfo2Record, jobRecord.MapAreaInfo2Record)
 				.Set(u => u.ColorBandSetId, jobRecord.ColorBandSetId)
 				.Set(u => u.MapCalcSettings, jobRecord.MapCalcSettings)
-				.Set(u => u.LastSaved, DateTime.UtcNow);
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow)
+				.Set(u => u.LastAccessedUtc, jobRecord.LastAccessedUtc);
+
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -80,7 +86,7 @@ namespace ProjectRepo
 			var updateDefinition = Builders<JobRecord>.Update
 				.Set(u => u.MapCalcSettings.TargetIterations, targetIterations)
 				.Set(u => u.ColorBandSetId, colorBandSetId)
-				.Set(u => u.LastSaved, DateTime.UtcNow);
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -95,7 +101,7 @@ namespace ProjectRepo
 
 		public long? DeleteAllForProject(ObjectId projectId)
 		{
-			var ids = GetJobIds(projectId);
+			var ids = GetJobIdsByOwner(projectId);
 
 			// Create an $in filter for those ids
 			var idsFilter = Builders<JobRecord>.Filter.In(d => d.Id, ids);
@@ -104,6 +110,8 @@ namespace ProjectRepo
 			var deleteResult = Collection.DeleteMany(idsFilter);
 			return GetReturnCount(deleteResult);
 		}
+
+		#endregion
 
 		#region Aggregate Results
 
@@ -126,7 +134,7 @@ namespace ProjectRepo
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => new JobInfoRecord(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MapAreaInfoRecord.CoordsRecord.CoordsDto.Exponent)
+					p => new JobInfoRecord(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
 				);
 
 			//List models = collection.Find(_ => true).Project(projection1).ToList();
@@ -140,6 +148,169 @@ namespace ProjectRepo
 		#endregion
 
 		#region SCHEMA Changes
+
+		/*
+		private DtoMapper _dtoMapper = new DtoMapper();
+
+		public long UpdateJobsToUseMapAreaInfo2()
+		{
+
+			var updateDefinition = Builders<JobRecord>.Update
+				.Unset(f => f.MapAreaInfoRecord)
+				.Unset(f => f.ProjectId)
+				.Unset(f => f.IsAlternatePathHead)
+				.Unset(f => f.CanvasSizeInBlocks);
+
+			var options = new UpdateOptions { IsUpsert = false };
+
+			var result = 0L;
+
+			var filter = Builders<JobRecord>.Filter.Empty;
+
+			var jobs = Collection.Find(filter).ToList();
+
+			foreach (var jobRecord in jobs)
+			{
+				var mapAreaInfoV1 = MapFrom(jobRecord.MapAreaInfoRecord);
+
+				var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
+
+				var mapAreaInfoV2Record = MapTo(mapAreaInfoV2);
+
+				var updateDef2 = updateDefinition
+					.Set(u => u.MapAreaInfo2Record, mapAreaInfoV2Record)
+					.Set(u => u.OwnerId, jobRecord.ProjectId)
+					.Set(u => u.JobOwnerType, JobOwnerType.Project)
+					.Set(u => u.LastSavedUtc, jobRecord.LastSaved);
+
+				filter = Builders<JobRecord>.Filter.Eq("_id", jobRecord.Id);
+				var updateResult2 = Collection.UpdateOne(filter, updateDef2, options);
+				var cnt = GetReturnCount(updateResult2) ?? -1;
+				result += cnt;
+			}
+
+			//var result = 0L;
+
+			return result;
+		}
+
+		public MapAreaInfo2Record MapTo(MapAreaInfo2 source)
+		{
+			var result = new MapAreaInfo2Record(
+				RPointAndDeltaRecord: MapTo(source.PositionAndDelta),
+				SubdivisionRecord: MapTo(source.Subdivision),
+				MapBlockOffset: MapTo(source.MapBlockOffset),
+				CanvasControlOffset: MapTo(source.CanvasControlOffset),
+				Precsion: source.Precision
+				);
+
+			return result;
+		}
+
+		public RPointAndDeltaRecord MapTo(RPointAndDelta source)
+		{
+			var rPointAndDeltaDto = _dtoMapper.MapTo(source);
+			var display = source.ToString();
+			var result = new RPointAndDeltaRecord(display, rPointAndDeltaDto);
+
+			return result;
+		}
+
+		public SubdivisionRecord MapTo(Subdivision source)
+		{
+			var baseMapPosition = MapTo(source.BaseMapPosition);
+			var samplePointDelta = MapTo(source.SamplePointDelta);
+
+			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BlockSize))
+			{
+				Id = source.Id,
+				BaseMapPosition = MapTo(source.BaseMapPosition)
+			};
+
+			return result;
+		}
+
+		public RSizeRecord MapTo(RSize rSize)
+		{
+			var rSizeDto = _dtoMapper.MapTo(rSize);
+			var display = rSize.ToString();
+			var result = new RSizeRecord(display, rSizeDto);
+
+			return result;
+		}
+
+		public SizeIntRecord MapTo(SizeInt source)
+		{
+			return new SizeIntRecord(source.Width, source.Height);
+		}
+
+		public VectorIntRecord MapTo(VectorInt source)
+		{
+			return new VectorIntRecord(source.X, source.Y);
+		}
+
+		public MapAreaInfo MapFrom(MapAreaInfoRecord target)
+		{
+			var result = new MapAreaInfo(
+				coords: _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto),
+				canvasSize: MapFrom(target.CanvasSize),
+				subdivision: MapFrom(target.SubdivisionRecord),
+				precision: target.Precision ?? RMapConstants.DEFAULT_PRECISION,
+				mapBlockOffset: MapFrom(target.MapBlockOffset),
+				canvasControlOffset: MapFrom(target.CanvasControlOffset)
+				);
+
+			return result;
+		}
+
+		public SizeInt MapFrom(SizeIntRecord target)
+		{
+			return new SizeInt(target.Width, target.Height);
+		}
+
+		public Subdivision MapFrom(SubdivisionRecord target)
+		{
+			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
+
+			BigVector baseMapPosition;
+
+			if (target.BaseMapPosition != null)
+			{
+				baseMapPosition = _dtoMapper.MapFrom(target.BaseMapPosition.BigVector);
+			}
+			else
+			{
+				baseMapPosition = new BigVector();
+			}
+
+			var result = new Subdivision(target.Id, samplePointDelta, baseMapPosition, MapFrom(target.BlockSize));
+
+			return result;
+		}
+
+		public BigVector MapFrom(BigVectorRecord target)
+		{
+			var result = _dtoMapper.MapFrom(target.BigVector);
+
+			return result;
+		}
+
+		public BigVectorRecord MapTo(BigVector bigVector)
+		{
+			var bigVectorDto = _dtoMapper.MapTo(bigVector);
+			var display = bigVector.ToString() ?? "0";
+			var result = new BigVectorRecord(display, bigVectorDto);
+
+			return result;
+		}
+
+		public VectorInt MapFrom(VectorIntRecord target)
+		{
+			return new VectorInt(target.X, target.Y);
+		}
+
+*/
+
 
 		//public void RemoveEscapeVelsFromAllJobs()
 		//{
@@ -339,6 +510,5 @@ namespace ProjectRepo
 		//}
 
 		#endregion
-
 	}
 }

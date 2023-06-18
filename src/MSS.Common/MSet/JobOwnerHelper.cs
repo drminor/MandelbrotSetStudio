@@ -103,7 +103,8 @@ namespace MSS.Common
 				else if (jobOwner is Poster poster) 
 				{
 					projectAdapter.UpdatePosterMapArea(poster);
-					//projectAdapter.UpdateProjectCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
+
+					projectAdapter.UpdatePosterCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
 				}
 				else
 				{
@@ -166,7 +167,7 @@ namespace MSS.Common
 
 			foreach (var job in unSavedJobs)
 			{
-				job.ProjectId = jobOwner.Id;
+				job.OwnerId = jobOwner.Id;
 				projectAdapter.InsertJob(job);
 			}
 

@@ -47,7 +47,17 @@ namespace MSetExplorer
 		public VectorDbl AfterOffset { get; set; } // Really a vector. This added to the original MapDisplay position (i.e., 0,0) gives the new MapDisplay position.
 
 		//public RectangleDbl ResultNewMapArea => new RectangleDbl(new PointDbl().Translate(BeforeOffset), OriginalMapArea.Point2.Translate(AfterOffset));
-		public RectangleDbl ResultNewMapArea => ScreenTypeHelper.GetNewBoundingArea(OriginalMapArea, BeforeOffset, AfterOffset);
+		public RectangleDbl ResultNewMapArea
+		{
+			get
+			{
+				var result = ScreenTypeHelper.GetNewBoundingArea(OriginalMapArea, BeforeOffset, AfterOffset);
+
+				Debug.WriteLine($"PreviewImageLayoutInfo is returning {result} for the ResultNewMapArea.");
+
+				return result;
+			}
+		}
 
 		// Outputs
 		public RectangleDbl OriginalImageArea { get; private set; } // Size and placement of the preview image, relative to the NewImageArea

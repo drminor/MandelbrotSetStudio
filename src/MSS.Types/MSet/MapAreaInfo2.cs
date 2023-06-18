@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace MSS.Types.MSet
 {
@@ -76,6 +77,20 @@ namespace MSS.Types.MSet
 			{
 				IsEmpty = IsEmpty
 			};
+		}
+
+		public override string ToString()
+		{
+			var sb = new StringBuilder();
+
+			sb.Append($"MapAreaInfoV1: Center: {MapCenter}, Delta: {SamplePointDelta.WidthNumerator} / {SamplePointDelta.Exponent}");
+
+			sb.AppendLine($"Subdivision: Pos:{Subdivision.Position}, Delta: {Subdivision.SamplePointDelta.WidthNumerator} / {Subdivision.SamplePointDelta.Exponent}.");
+			sb.AppendLine($"MapBlockOffset: X:{MapBlockOffset.X}, Y:{MapBlockOffset.Y}");
+			sb.AppendLine($"CanvasControlOffset: {CanvasControlOffset}");
+
+
+			return sb.ToString();
 		}
 
 		#endregion

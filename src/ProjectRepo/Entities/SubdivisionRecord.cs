@@ -5,6 +5,7 @@ using System;
 namespace ProjectRepo.Entities
 {
 	public record SubdivisionRecord(
+		//BigVectorRecord BaseMapPosition,
 		RSizeRecord SamplePointDelta,
 		SizeIntRecord BlockSize
 		)
@@ -15,7 +16,7 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		public BigVectorRecord BaseMapPosition { get; set; } = new BigVectorRecord();
+		public BigVectorRecord? BaseMapPosition { get; set; } = new BigVectorRecord();
 
 
 	}

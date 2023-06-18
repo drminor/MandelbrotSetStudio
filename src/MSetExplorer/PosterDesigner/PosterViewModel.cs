@@ -406,6 +406,9 @@ namespace MSetExplorer
 
 			Debug.Assert(!poster.CurrentJob.IsEmpty, "Poster Savefound the CurrentJob to be empty.");
 
+
+			Debug.WriteLine($"Saving Poster: The CurrentJobId is {poster.CurrentJobId}.");
+
 			var result = JobOwnerHelper.Save(poster, _projectAdapter);
 			
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterIsDirty));
@@ -474,6 +477,10 @@ namespace MSetExplorer
 			var factor = Math.Min(xFactor, yFactor);
 
 			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
+
+			Debug.WriteLine($"PosterViewModel GetUpdatedMapAreaInfo: CurrentPosterSize: {currentPosterSize}, ScreenArea: {screenArea}. " +
+				$"\n MapAreaInfo2: {mapAreaInfo} " +
+				$"\n Produces newMapAreaInfo: {newMapAreaInfo}.");
 
 			return newMapAreaInfo;
 		}
@@ -610,7 +617,7 @@ namespace MSetExplorer
 			var transformType = TransformType.ZoomIn;
 
 			var newScreenArea = new RectangleInt();
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Poster Job with new coords: {mapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -649,11 +656,13 @@ namespace MSetExplorer
 			var colorBandSetId = currentJob.ColorBandSetId;
 			var mapCalcSettings = currentJob.MapCalcSettings;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
 
 			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			poster.Add(job);
+
+			Debug.WriteLine($"AddNewCoordinateUpdateJob: PreviousJobId {currentJob.Id} NewJobId: {poster.CurrentJobId}.");
 
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 		}
@@ -674,7 +683,7 @@ namespace MSetExplorer
 			var newScreenArea = new RectangleInt();
 
 			//var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, mapSize, coords, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea, _blockSize);
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Poster Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 

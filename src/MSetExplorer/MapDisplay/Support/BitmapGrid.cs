@@ -468,16 +468,24 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private ColorMap LoadColorMap(ColorBandSet colorBandSet)
+		private ColorMap? LoadColorMap(ColorBandSet colorBandSet)
 		{
 			_colorBandSet = colorBandSet;
-			var colorMap = new ColorMap(colorBandSet)
-			{
-				UseEscapeVelocities = _useEscapeVelocities,
-				HighlightSelectedColorBand = _highlightSelectedColorBand
-			};
 
-			return colorMap;
+			if (colorBandSet.Count < 2)
+			{
+				return null;
+			}
+			else
+			{
+				var colorMap = new ColorMap(colorBandSet)
+				{
+					UseEscapeVelocities = _useEscapeVelocities,
+					HighlightSelectedColorBand = _highlightSelectedColorBand
+				};
+
+				return colorMap;
+			}
 		}
 
 		private bool RefreshBitmap(SizeDbl bitmapSize, [NotNullWhen(true)] out WriteableBitmap? bitmap)

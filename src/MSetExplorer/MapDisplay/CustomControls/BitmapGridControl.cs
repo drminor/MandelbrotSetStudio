@@ -206,7 +206,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
 				}
 			}
 		}
@@ -229,7 +229,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
 				}
 			}
 		}
@@ -360,7 +360,10 @@ namespace MSetExplorer
 			var finalSize = ForceSize(finalSizeRaw);
 			Size childSize = base.ArrangeOverride(finalSize);
 
-			if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
+			if (childSize != finalSize)
+			{
+				Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
+			}
 
 			//UpdateViewportSize(childSize);
 

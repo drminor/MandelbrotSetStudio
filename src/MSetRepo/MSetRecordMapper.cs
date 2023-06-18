@@ -26,7 +26,7 @@ namespace MSetRepo
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
 		IMapper<Subdivision, SubdivisionRecord>, //IMapper<MapSectionResponse, MapSectionRecord>,
-		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
+		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>, IMapper<RPointAndDelta, RPointAndDeltaRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
@@ -115,21 +115,20 @@ namespace MSetRepo
 			//	Precision = source.MapAreaInfo.Precision
 			//};
 
-			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(source.MapAreaInfo, new SizeInt(1024));
-
-			//var mapAreaInfoRecord = MapTo(source.MapAreaInfo);
-			var mapAreaInfoRecord = MapTo(oldAreaInfo);
+			//// TODO: Remove this once all JobRecords have been updated on the Repository.
+			//var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(source.MapAreaInfo, new SizeInt(1024));
+			//var mapAreaInfoRecord = MapTo(oldAreaInfo);
 
 			var result = new JobRecord(
 				ParentJobId: source.ParentJobId,
-				IsAlternatePathHead: false,  // source.IsAlternatePathHead,
-				ProjectId: source.ProjectId,
+				OwnerId: source.OwnerId,
+				JobOwnerType: source.JobOwnerType,
 				SubDivisionId: source.Subdivision.Id,
 				Label: source.Label,
 
 				TransformType: (int)source.TransformType,
 
-				MapAreaInfoRecord: mapAreaInfoRecord,
+				MapAreaInfo2Record: MapTo(source.MapAreaInfo),
 				TransformTypeString: Enum.GetName(source.TransformType) ?? "unknown",
 				
 
@@ -137,14 +136,15 @@ namespace MSetRepo
 				NewAreaSize: MapTo(source.NewArea?.Size ?? new SizeInt()), 
 				ColorBandSetId: source.ColorBandSetId,
 				MapCalcSettings: source.MapCalcSettings,
-				CanvasSizeInBlocks: MapTo(source.CanvasSizeInBlocks)
+				LastAccessedUtc: source.LastAccessedUtc
+				
 				)
 			{
 				Id = source.Id,
-				LastSaved = source.LastSavedUtc,
+				LastSavedUtc = source.LastSavedUtc,
 				LastAccessedUtc = source.LastAccessedUtc,
 				IterationUpdates = source.IterationUpdates,
-				ColorMapUpdates = source.ColorMapUpdates
+				ColorMapUpdates = source.ColorMapUpdates,
 			};
 
 			return result;
@@ -184,6 +184,34 @@ namespace MSetRepo
 			return result;
 		}
 
+		public MapAreaInfo2 MapFrom(MapAreaInfo2Record target)
+		{
+			var result = new MapAreaInfo2(
+				rPointAndDelta: _dtoMapper.MapFrom(target.RPointAndDeltaRecord.RPointAndDeltaDto),
+				subdivision: MapFrom(target.SubdivisionRecord),
+				precision: target.Precsion,
+				mapBlockOffset: MapFrom(target.MapBlockOffset),
+				canvasControlOffset: MapFrom(target.CanvasControlOffset)
+				);
+
+			return result;
+		}
+
+		public MapAreaInfo2Record MapTo(MapAreaInfo2 source)
+		{
+			var result = new MapAreaInfo2Record(
+				RPointAndDeltaRecord: MapTo(source.PositionAndDelta),
+				SubdivisionRecord: MapTo(source.Subdivision),
+				MapBlockOffset: MapTo(source.MapBlockOffset),
+				CanvasControlOffset: MapTo(source.CanvasControlOffset),
+				Precsion: source.Precision
+				);
+
+			return result;
+		}
+
+
+
 		public Poster MapFrom(PosterRecord target)
 		{
 			throw new NotImplementedException();
@@ -214,7 +242,9 @@ namespace MSetRepo
 		{
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
 
-			var baseMapPosition = _dtoMapper.MapFrom(target.BaseMapPosition.BigVector);
+
+
+			var baseMapPosition = _dtoMapper.MapFrom(target.BaseMapPosition?.BigVector ?? new BigVectorDto()) ;
 
 			var result = new Subdivision(target.Id, samplePointDelta, baseMapPosition, MapFrom(target.BlockSize));
 
@@ -223,8 +253,10 @@ namespace MSetRepo
 
 		public SubdivisionRecord MapTo(Subdivision source)
 		{
+			var baseMapPosition = MapTo(source.BaseMapPosition);
 			var samplePointDelta = MapTo(source.SamplePointDelta);
-			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BlockSize))
+
+			var result = new SubdivisionRecord(/*baseMapPosition,*/ samplePointDelta, MapTo(source.BlockSize))
 			{
 				Id = source.Id,
 				BaseMapPosition = MapTo(source.BaseMapPosition)
@@ -415,6 +447,21 @@ namespace MSetRepo
 		{
 			return _dtoMapper.MapFrom(target.CoordsDto);
 		}
+
+		public RPointAndDeltaRecord MapTo(RPointAndDelta source)
+		{
+			var rPointAndDeltaDto = _dtoMapper.MapTo(source);
+			var display = source.ToString();
+			var result = new RPointAndDeltaRecord(display, rPointAndDeltaDto);
+
+			return result;
+		}
+
+		public RPointAndDelta MapFrom(RPointAndDeltaRecord target)
+		{
+			return _dtoMapper.MapFrom(target.RPointAndDeltaDto);
+		}
+
 
 		#endregion
 	}

@@ -171,7 +171,7 @@ namespace MSetRepo
 
 				foreach (var job in jobs)
 				{
-					job.ProjectId = projectId;
+					job.OwnerId = projectId;
 				}
 
 				foreach (var cbs in colorBandSets)
@@ -226,7 +226,7 @@ namespace MSetRepo
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-			var jobIds = jobReaderWriter.GetJobIds(projectId);
+			var jobIds = jobReaderWriter.GetJobIdsByOwner(projectId);
 
 			foreach (var jobId in jobIds)
 			{
@@ -404,7 +404,7 @@ namespace MSetRepo
 		public List<ObjectId> GetAllJobIdsForPoster(ObjectId posterId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var result = jobReaderWriter.GetJobIds(posterId).ToList();
+			var result = jobReaderWriter.GetJobIdsByOwner(posterId).ToList();
 
 			return result;
 		}
@@ -420,7 +420,7 @@ namespace MSetRepo
 		public List<ObjectId> GetAllJobIdsForProject(ObjectId projectId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var result = jobReaderWriter.GetJobIds(projectId).ToList();
+			var result = jobReaderWriter.GetJobIdsByOwner(projectId).ToList();
 
 			return result;
 		}
@@ -441,7 +441,7 @@ namespace MSetRepo
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var jobCache = new Dictionary<ObjectId, Job>();
 
-			var ids = jobReaderWriter.GetJobIds(projectId);
+			var ids = jobReaderWriter.GetJobIdsByOwner(projectId);
 			foreach (var jobId in ids)
 			{
 				var job = GetJob(jobId, jobReaderWriter, colorBandSetReaderWriter, jobCache, colorBandSetCache);
@@ -487,38 +487,46 @@ namespace MSetRepo
 				throw new KeyNotFoundException($"Could not find a job with jobId = {jobId}.");
 			}
 
-			if (jobRecord.MapAreaInfoRecord.SubdivisionRecord.BaseMapPosition == null)
+			//if (jobRecord.MapAreaInfoRecord.SubdivisionRecord.BaseMapPosition == null)
+			//{
+			//	jobRecord.MapAreaInfoRecord.SubdivisionRecord.BaseMapPosition = new BigVectorRecord();
+			//}
+
+			DateTime lastSaved = DateTime.UtcNow;
+
+			if (jobRecord.LastSavedUtc.HasValue)
 			{
-				jobRecord.MapAreaInfoRecord.SubdivisionRecord.BaseMapPosition = new BigVectorRecord();
+				lastSaved = jobRecord.LastSavedUtc.Value;
 			}
-
-			var oldAreaInfo = _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord);
-			var mapAreaInfo = MapJobHelper.Convert(oldAreaInfo);
-			var rtAreaInfo = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, oldAreaInfo.CanvasSize);
-
-			if (_useDetailedDebug) CompareMapAreaV1AfterRoundTrip(oldAreaInfo, rtAreaInfo, mapAreaInfo);
+			else if (jobRecord.LastSaved.HasValue)
+			{
+				lastSaved = jobRecord.LastSaved.Value;
+			}
+			else
+			{
+				lastSaved = DateTime.UtcNow;
+			}
 
 			var job = new Job(
 				id: jobId,
 				parentJobId: jobRecord.ParentJobId,
-				//isAlternatePathHead: jobRecord.IsAlternatePathHead,
-				projectId: jobRecord.ProjectId,
+				ownerId: jobRecord.OwnerId,
+				jobOwnerType: jobRecord.JobOwnerType ?? JobOwnerType.Undetermined,
 				label: jobRecord.Label,
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 
-				//mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfoRecord),
-				//canvasSizeInBlocks: _mSetRecordMapper.MapFrom(jobRecord.CanvasSizeInBlocks),
-				mapAreaInfo: mapAreaInfo,
+
+				mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfo2Record),
 				colorBandSetId: jobRecord.ColorBandSetId,
 
 				mapCalcSettings: jobRecord.MapCalcSettings,
-				lastSaved: jobRecord.LastSaved
+				lastSavedUtc: lastSaved 
 				)
 			{
 				LastAccessedUtc = jobRecord.LastAccessedUtc,
 				IterationUpdates = jobRecord.IterationUpdates,
-				ColorMapUpdates = jobRecord.ColorMapUpdates
+				ColorMapUpdates = jobRecord.ColorMapUpdates,
 			};
 
 			var colorBandSet = GetColorBandSet(job, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
@@ -569,7 +577,7 @@ namespace MSetRepo
 				var colorBandSetRecord = colorBandSetReaderWriter.Get(job.ColorBandSetId);
 				if (colorBandSetRecord == null)
 				{
-					Debug.WriteLine($"The colorBandSetRecord is null for the CbsId: {colorBandSetId}, job : {job.Id}, of Project: {job.ProjectId} .");
+					Debug.WriteLine($"The colorBandSetRecord is null for the CbsId: {colorBandSetId}, job : {job.Id}, of Project: {job.OwnerId} .");
 				}
 
 				if (colorBandSetRecord == null)
@@ -580,9 +588,9 @@ namespace MSetRepo
 				{
 					colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
 
-					if (colorBandSet.ProjectId != job.ProjectId)
+					if (colorBandSet.ProjectId != job.OwnerId)
 					{
-						result = GetUpdatedCbsForProject(colorBandSet, job.ProjectId, colorBandSetReaderWriter);
+						result = GetUpdatedCbsForProject(colorBandSet, job.OwnerId, colorBandSetReaderWriter);
 					}
 					else
 					{
@@ -650,7 +658,7 @@ namespace MSetRepo
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 
-			jobRecord.LastSaved = DateTime.UtcNow;
+			jobRecord.LastSavedUtc = DateTime.UtcNow;
 			_ = jobReaderWriter.Insert(jobRecord);
 			job.LastSavedUtc = DateTime.UtcNow;
 
@@ -800,7 +808,7 @@ namespace MSetRepo
 
 			foreach (var job in jobs)
 			{
-				job.ProjectId = posterId;
+				job.OwnerId = posterId;
 			}
 
 			foreach (var cbs in colorBandSets)
@@ -834,6 +842,9 @@ namespace MSetRepo
 					
 					posterSize: posterRecord.PosterSize, displayPosition, posterRecord.DisplayZoom, 
 					DateTime.UtcNow, lastSavedUtc, DateTime.MinValue);
+
+
+				Debug.WriteLine($"AssemblePoster completed. Name: {result.Name}, CurrentJobId: {result.CurrentJobId}, DisplayPosition: {result.DisplayPosition}, DisplayZoom: {result.DisplayZoom}.");
 
 			}
 			return result;
@@ -887,7 +898,7 @@ namespace MSetRepo
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-			var jobIds = jobReaderWriter.GetJobIds(posterId);
+			var jobIds = jobReaderWriter.GetJobIdsByOwner(posterId);
 
 			foreach (var jobId in jobIds)
 			{
@@ -938,11 +949,43 @@ namespace MSetRepo
 			Debug.WriteLine($"Retrieving PosterInfo. Poster: {posterRec.Id}, Current Job: {posterRec.CurrentJobId}");
 			var jobRec = jobReaderWriter.Get(posterRec.CurrentJobId);
 
-			var jobLastSaved = jobRec?.LastSaved ?? DateTime.MinValue;
-			var posterLastSaved = posterRec.LastSavedUtc;
-			var lastSavedUtc = jobLastSaved > posterLastSaved ? jobLastSaved : posterLastSaved;
+			PosterInfo result;
 
-			var result = new PosterInfo(posterRec.Id, posterRec.Name, posterRec.Description, posterRec.CurrentJobId, posterRec.PosterSize, posterRec.DateCreatedUtc, lastSavedUtc, posterRec.LastAccessedUtc);
+			DateTime lastSavedUtc;
+
+			if (jobRec == null)
+			{
+				//throw new InvalidOperationException($"Poster with ID: {posterRec.CurrentJobId} could not be found in the repository.");
+
+				Debug.WriteLine($"WARNING: Could not find Job with Id: {posterRec.CurrentJobId} for Poster with ID: {posterRec.Id}.");
+
+				lastSavedUtc = posterRec.LastSavedUtc;
+			}
+			else
+			{
+				var jobLastSaved = jobRec.LastSavedUtc;
+				var posterLastSaved = posterRec.LastSavedUtc;
+
+
+				if (jobLastSaved == null)
+				{
+					lastSavedUtc = posterLastSaved;
+				}
+				else
+				{
+					if (jobLastSaved > posterLastSaved)
+					{
+						lastSavedUtc = jobLastSaved.Value;
+					}
+					else
+					{
+						lastSavedUtc = posterLastSaved;
+					}
+				}
+
+			}
+
+			result = new PosterInfo(posterRec.Id, posterRec.Name, posterRec.Description, posterRec.CurrentJobId, posterRec.PosterSize, posterRec.DateCreatedUtc, lastSavedUtc, posterRec.LastAccessedUtc);
 			return result;
 		}
 
@@ -952,8 +995,15 @@ namespace MSetRepo
 
 		public void DoSchemaUpdates()
 		{
-
+			//UpdateAllJobsWithMapAreaInfo2();
 		}
+
+		//public void UpdateAllJobsWithMapAreaInfo2()
+		//{
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+		//	jobReaderWriter.UpdateJobsToUseMapAreaInfo2();
+		//}
 
 		//public void RemoveEscapeVels()
 		//{

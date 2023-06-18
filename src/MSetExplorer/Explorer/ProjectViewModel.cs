@@ -218,7 +218,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
-			job.ProjectId = CurrentProject.Id;
+			job.OwnerId = CurrentProject.Id;
 		}
 
 		public bool ProjectOpen(string projectName)
@@ -514,7 +514,7 @@ namespace MSetExplorer
 			var colorBandSetId = currentJob.ColorBandSetId;
 			var mapCalcSettings = currentJob.MapCalcSettings;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, JobOwnerType.Project, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
 
 			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -538,7 +538,7 @@ namespace MSetExplorer
 			var transformType = TransformType.IterationUpdate;
 			var newScreenArea = new RectangleInt();
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, JobOwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 

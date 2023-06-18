@@ -10,9 +10,11 @@ namespace MSS.Types.MSet
 		private static readonly Lazy<Job> _lazyJob = new Lazy<Job>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly Job Empty = _lazyJob.Value;
 
-		private ObjectId _projectId;
+		private ObjectId _ownerId;
+		private JobOwnerType _jobOwnerType;
+
 		private ObjectId? _parentJobId;
-		private bool _isAlternatePathHead;
+		private bool _isOnPreferredPath;
 		private ObjectId _colorBandSetId;
 
 		private DateTime _lastSavedUtc;
@@ -30,7 +32,8 @@ namespace MSS.Types.MSet
 
 		public Job(
 			ObjectId? parentJobId, 
-			ObjectId projectId, 
+			ObjectId ownerId,
+			JobOwnerType jobOwnerType,
 			string? label, 
 			TransformType transformType, 
 			RectangleInt? newArea,
@@ -44,7 +47,8 @@ namespace MSS.Types.MSet
 			: this(
 				  ObjectId.GenerateNewId(), 
 				  parentJobId,
-				  projectId, 
+				  ownerId,
+				  jobOwnerType,
 				  label ?? transformType.ToString(), 
 				  transformType, 
 				  newArea,
@@ -62,7 +66,8 @@ namespace MSS.Types.MSet
 		public Job(
 			ObjectId id,
 			ObjectId? parentJobId,
-			ObjectId projectId,
+			ObjectId ownerId,
+			JobOwnerType jobOwnerType,
 			string label,
 
 			TransformType transformType,
@@ -72,7 +77,7 @@ namespace MSS.Types.MSet
 
 			ObjectId colorBandSetId,
 			MapCalcSettings mapCalcSettings,
-			DateTime lastSaved
+			DateTime lastSavedUtc
 			)
 		{
 			if (parentJobId == null && !(TransformType == TransformType.Home/* || transformType == TransformType.CanvasSizeUpdate*/))
@@ -82,7 +87,8 @@ namespace MSS.Types.MSet
 
 			Id = id;
 			_parentJobId = parentJobId;
-			_projectId = projectId;
+			_ownerId = ownerId;
+			_jobOwnerType = jobOwnerType;
 			Label = label;
 
 			TransformType = transformType;
@@ -94,8 +100,7 @@ namespace MSS.Types.MSet
 			_colorBandSetId = colorBandSetId;
 			MapCalcSettings = mapCalcSettings;
 
-			LastSavedUtc = lastSaved;
-
+			LastSavedUtc = lastSavedUtc;
 		}
 
 		#endregion
@@ -116,12 +121,22 @@ namespace MSS.Types.MSet
 
 		public ObjectId Id { get; init; }
 
-		public ObjectId ProjectId
+		public ObjectId OwnerId
 		{
-			get => _projectId;
+			get => _ownerId;
 			set
 			{
-				_projectId = value;
+				_ownerId = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
+
+		public JobOwnerType JobOwnerType
+		{
+			get => _jobOwnerType;
+			set 
+			{
+				_jobOwnerType = value;
 				LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
@@ -136,13 +151,12 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		// TODO: Rename the IsAlternatePathHead property: IsOnPreferredPath (class: Job.)
-		public bool IsAlternatePathHead
+		public bool IsOnPreferredPath
 		{
-			get => _isAlternatePathHead;
+			get => _isOnPreferredPath;
 			set
 			{
-				_isAlternatePathHead = value;
+				_isOnPreferredPath = value;
 				//LastUpdatedUtc = DateTime.UtcNow;
 			}
 		}
@@ -219,10 +233,11 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+			var result = new Job(Id, ParentJobId, OwnerId, JobOwnerType, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
 			{
-				OnFile = OnFile
+				OnFile = OnFile,
+				IsOnPreferredPath = IsOnPreferredPath
 			};
 
 			return result;
@@ -230,7 +245,7 @@ namespace MSS.Types.MSet
 
 		public Job CreateNewCopy()
 		{
-			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, ProjectId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, OwnerId, JobOwnerType, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
 			{
 				OnFile = false

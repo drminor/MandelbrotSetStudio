@@ -52,6 +52,19 @@ namespace MSS.Common.DataTransferObjects
 			return result;
 		}
 
+		public RPointAndDeltaDto MapTo(RPointAndDelta source)
+		{
+			var result = new RPointAndDeltaDto(source.Values, source.Exponent);
+			return result;
+		}
+
+		public RPointAndDelta MapFrom(RPointAndDeltaDto target)
+		{
+			var bVals = BigIntegerHelper.FromLongsDeprecated(target.GetValues());
+			var result = new RPointAndDelta(bVals, target.Exponent);
+			return result;
+		}
+
 		public BigVectorDto MapTo(BigVector source)
 		{
 			var result = new BigVectorDto(source.Values);
