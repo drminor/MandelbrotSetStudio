@@ -131,19 +131,7 @@ namespace MSetExplorer
 						currentPoster.DisplayPosition = new VectorInt();
 						currentPoster.DisplayZoom = 1;
 
-						//_logicalDisplaySize = new SizeDbl(10, 10);
-						//LogicalDisplaySize = CanvasSize.Scale(DisplayZoom);
-
-						if (!currentPoster.CurrentJob.IsEmpty)
-						{
-							var currentJob = currentPoster.CurrentJob;
-
-							Debug.WriteLine("The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentJob is being updated.");
-							//CurrentAreaColorAndCalcSettings = GetUpdatedMapView(currentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
-
-							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, currentJob.MapAreaInfo, currentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
-							CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
-						}
+						UpdateCurrentAreaColorAndCalcSettings(currentPoster);
 					}
 					else
 					{
@@ -154,6 +142,20 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"Not setting the CurrentJob {value.Id}, the CurrentPoster is null.");
 				}
+			}
+		}
+
+		private void UpdateCurrentAreaColorAndCalcSettings(Poster currentPoster)
+		{
+			if (!currentPoster.CurrentJob.IsEmpty)
+			{
+				var currentJob = currentPoster.CurrentJob;
+
+				Debug.WriteLine("The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentJob is being updated.");
+				//CurrentAreaColorAndCalcSettings = GetUpdatedMapView(currentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+
+				var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, currentJob.MapAreaInfo, currentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
+				CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 			}
 		}
 
@@ -202,7 +204,7 @@ namespace MSetExplorer
 
 						currentProject.Add(value);
 
-						AddNewIterationUpdateJob(currentProject, value);
+						_ = AddNewIterationUpdateJob(currentProject, value);
 					}
 					else
 					{
@@ -351,8 +353,13 @@ namespace MSetExplorer
 				//	CurrentJob = CurrentPoster.CurrentJob;
 				//}
 
-				Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentJob as the Poster's CurrentJob is being updated.");
-				OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+				//Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentJob as the Poster's CurrentJob is being updated.");
+				//OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+
+				if (CurrentPoster != null)
+				{
+					UpdateCurrentAreaColorAndCalcSettings(CurrentPoster);
+				}
 
 			}
 		}
@@ -384,7 +391,8 @@ namespace MSetExplorer
 		{
 			if (newMapArea != null)
 			{
-				AddNewCoordinateUpdateJob(poster, newMapArea);
+				var job = AddNewCoordinateUpdateJob(poster, newMapArea);
+				poster.CurrentJob = job;
 			}
 
 			CurrentPoster = poster;
@@ -466,13 +474,13 @@ namespace MSetExplorer
 		#region Public Methods - Job
 
 		// Called in preparation to call UpdateMapSpecs
-		
+
 		/// <summary>
 		/// Calculate the adjusted MapAreaInfo using the new ScreenArea
 		/// </summary>
 		/// <param name="mapAreaInfo">The original value </param>
 		/// <param name="currentPosterSize">The original size in screen pixels</param>
-		/// <param name="screenArea">The new size in screen pixels</param>
+		/// <param name="screenArea">The new size in screen pixels. ScreenTypeHelper.GetNewBoundingArea(OriginalMapArea, BeforeOffset, AfterOffset);</param>
 		/// <returns></returns>
 		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea)
 		{
@@ -480,36 +488,40 @@ namespace MSetExplorer
 			var yFactor = newPosterSize.Height / currentPosterSize.Height;
 			var factor = Math.Min(xFactor, yFactor);
 
-			////var scaledPosterSize = currentPosterSize.Scale(1 / factor);
+			var newCenter = screenArea.GetCenter();
+			//var scaledPosterSize = currentPosterSize.Scale(1 / factor);
+			//var oldCenter = new PointDbl(scaledPosterSize.Width / 2, scaledPosterSize.Height / 2);
+			var oldCenter = new PointDbl(newPosterSize.Width / 2, newPosterSize.Height / 2);
 
-			//var newCenter = screenArea.GetCenter();
-			////var oldCenter = new PointDbl(scaledPosterSize.Width / 2, scaledPosterSize.Height / 2);
-			//var oldCenter = new PointDbl(newPosterSize.Width / 2, newPosterSize.Height / 2);
-			
-			//var zoomPoint = newCenter.Diff(oldCenter).Round();
-
-			var zoomPoint = new VectorInt();
+			var zoomPoint = newCenter.Diff(oldCenter).Round();
 
 			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
 
-			Debug.WriteLine($"PosterViewModel GetUpdatedMapAreaInfo: CurrentPosterSize: {currentPosterSize}, NewPosterSize: {newPosterSize}, ScreenArea: {screenArea}. " +
-				$"\n MapAreaInfo2: {mapAreaInfo} " +
+			Debug.WriteLine($"PosterViewModel GetUpdatedMapAreaInfo:" +
+				$"\n CurrentPosterSize: {currentPosterSize}, NewPosterSize: {newPosterSize}, ScreenArea: {screenArea}." +
+				$"\n XFactor: {xFactor}, YFactor: {yFactor}, Factor: {factor}." +
+				$"\n Using: {mapAreaInfo}" +
 				$"\n Produces newMapAreaInfo: {newMapAreaInfo}.");
 
 			return newMapAreaInfo;
 		}
 
 		// Always called after GetUpdatedMapAreaInfo
-		public void UpdateMapSpecs(Poster currentPoster, MapAreaInfo2 newMapAreaInfo)
+		public void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo)
 		{
-			AddNewCoordinateUpdateJob(currentPoster, newMapAreaInfo);
+			if (CurrentPoster == null)
+			{
+				return;
+			}
+
+			_ = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
 		}
 
 		// Called in response to the MapDisplayViewModel raising a MapViewUpdateRequested event,
 		// or the PosterDesignerView code behind handling a Pan or Zoom UI event.
 		public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo)
 		{
-			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
+			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapSpecs received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
 			var currentPoster = CurrentPoster;
 
@@ -518,7 +530,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor);
+			_ = AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor);
 		}
 
 		#endregion
@@ -621,7 +633,7 @@ namespace MSetExplorer
 		}
 
 		// Create new Poster Specs using a new MapAreaInfo
-		private void AddNewCoordinateUpdateJob(Poster poster, MapAreaInfo2 mapAreaInfo)
+		private Job AddNewCoordinateUpdateJob(Poster poster, MapAreaInfo2 mapAreaInfo)
 		{
 			var currentJob = poster.CurrentJob;
 			var colorBandSetId = currentJob.ColorBandSetId;
@@ -630,20 +642,16 @@ namespace MSetExplorer
 			// TODO: Determine TransformType
 			var transformType = TransformType.ZoomIn;
 
-			var newScreenArea = new RectangleInt();
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
 
 			Debug.WriteLine($"Adding Poster Job with new coords: {mapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			poster.Add(job);
-			poster.CurrentJob = job;
 
-			Debug.Assert(CurrentJob.Id == job.Id, $"The CurrentJob {CurrentJob.Id} is not the same as the job {job.Id} just added to this poster {poster.Id}. The job that was current previously, has Id: {currentJob.Id}.");
-
-			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+			return job;
 		}
 
-		private void AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor)
+		private Job AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor)
 		{
 			var currentJob = poster.CurrentJob;
 			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
@@ -680,11 +688,11 @@ namespace MSetExplorer
 			poster.Add(job);
 
 			Debug.WriteLine($"AddNewCoordinateUpdateJob: PreviousJobId {currentJob.Id} NewJobId: {poster.CurrentJobId}.");
-
-			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
+			
+			return job;
 		}
 
-		private void AddNewIterationUpdateJob(Poster poster, ColorBandSet colorBandSet)
+		private Job AddNewIterationUpdateJob(Poster poster, ColorBandSet colorBandSet)
 		{
 			var currentJob = poster.CurrentJob;
 
@@ -706,7 +714,7 @@ namespace MSetExplorer
 
 			poster.Add(job);
 
-			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+			return job;
 		}
 
 		#endregion

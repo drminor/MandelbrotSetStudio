@@ -83,17 +83,22 @@ namespace MSS.Types.MSet
 		{
 			var sb = new StringBuilder();
 
-			sb.Append($"MapAreaInfoV1: Center: {MapCenter}, Delta: {SamplePointDelta.WidthNumerator} / {SamplePointDelta.Exponent}");
-
-			sb.AppendLine($"Subdivision: Pos:{Subdivision.Position}, Delta: {Subdivision.SamplePointDelta.WidthNumerator} / {Subdivision.SamplePointDelta.Exponent}.");
+			sb.AppendLine($"Center: {MapCenter}, Delta: {SamplePointDelta.WidthNumerator} / {SamplePointDelta.Exponent} (Subdivision: Pos:{Subdivision.Position}, Delta: {Subdivision.SamplePointDelta.WidthNumerator} / {Subdivision.SamplePointDelta.Exponent}.)");
 			sb.AppendLine($"MapBlockOffset: X:{MapBlockOffset.X}, Y:{MapBlockOffset.Y}");
 			sb.AppendLine($"CanvasControlOffset: {CanvasControlOffset}");
-
 
 			return sb.ToString();
 		}
 
 		#endregion
+
+		/*
+	
+		Center: -9589679/2^23; 1776682/2^23, Delta: 1 / -30Subdivision: Pos:0/2^0; 0/2^0, Delta: 1 / -30.
+		MapBlockOffset: X:-9589679, Y:1776682
+		CanvasControlOffset: x:0, y:0
+
+		*/
 	}
 }
 

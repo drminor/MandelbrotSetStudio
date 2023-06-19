@@ -528,7 +528,7 @@ namespace MSetExplorer
 
 		public RectangleDbl NewMapArea => _layoutInfo.ResultNewMapArea;
 
-		public SizeInt NewMapSizeInt => _layoutInfo.NewMapSize.Round();
+		//public SizeInt NewMapSizeInt => _layoutInfo.NewMapSize.Round();
 
 		private void PerformLayout()
 		{

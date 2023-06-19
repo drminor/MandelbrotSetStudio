@@ -331,8 +331,8 @@ namespace MSetExplorer
 
 				if (TryGetNewSizeFromUser(curPoster, out var newPosterMapAreaInfo, out var newPosterSize))
 				{
-					curPoster.PosterSize = newPosterSize;
-					_vm.PosterViewModel.UpdateMapSpecs(curPoster, newPosterMapAreaInfo);
+					curPoster.PosterSize = newPosterSize.Round();
+					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo);
 				}
 				else
 				{
@@ -842,7 +842,7 @@ namespace MSetExplorer
 				{
 					if (TryGetNewSizeFromUser(poster, out newPosterMapAreaInfo, out var newPosterSize))
 					{
-						poster.PosterSize = newPosterSize;
+						poster.PosterSize = newPosterSize.Round();
 					}
 					else
 					{
@@ -864,7 +864,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryGetNewSizeFromUser(Poster poster, [NotNullWhen(true)] out MapAreaInfo2? newPosterMapAreaInfo, out SizeInt newPosterSize)
+		private bool TryGetNewSizeFromUser(Poster poster, [NotNullWhen(true)] out MapAreaInfo2? newPosterMapAreaInfo, out SizeDbl newPosterSize)
 		{
 			var curJob = poster.CurrentJob;
 
@@ -898,24 +898,20 @@ namespace MSetExplorer
 					if (posterMapAreaInfo != null)
 					{
 						var newMapArea = posterSizeEditorDialog.NewMapArea;
-						newPosterSize = posterSizeEditorDialog.NewMapSizeInt;
-						var newPosterSizeDbl = posterSizeEditorDialog.NewMapSize;
+						newPosterSize = posterSizeEditorDialog.NewMapSize;
 
-						poster.PosterSize = newPosterSize;
-						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSizeDbl, newMapArea);
+						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea);
 						return true;
 					}
 					else
 					{
-						//newPosterMapAreaInfo = null;
-						//return false;
-						throw new InvalidOperationException("The MapAreaInfo is null as the PosterSizeEditorDialog is returning Accepted (i.e., true.");
+						throw new InvalidOperationException("The MapAreaInfo is null as the PosterSizeEditorDialog is returning Accepted (i.e., true.)");
 					}
 				}
 				else
 				{
 					newPosterMapAreaInfo = null;
-					newPosterSize = currentPosterSize.Round();
+					newPosterSize = currentPosterSize;
 					return false;
 				}
 			}
@@ -948,20 +944,19 @@ namespace MSetExplorer
 				if (posterMapAreaInfo != null)
 				{
 					var newMapArea = posterSizeEditorDialog.NewMapArea;
-					var newPosterSizeDbl = posterSizeEditorDialog.NewMapSize;
-					var newPosterSize = posterSizeEditorDialog.NewMapSizeInt;
+					var newPosterSize = posterSizeEditorDialog.NewMapSize;
 
 					// Update the Poster's Size
-					_vm.PosterViewModel.CurrentPoster.PosterSize = newPosterSize;
+					_vm.PosterViewModel.CurrentPoster.PosterSize = newPosterSize.Round();
 
 					// Get the new coordinates
-					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSizeDbl, newMapArea);
+					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea);
 					
 					// Update the ViewModel with the new coordinates
-					_vm.PosterViewModel.UpdateMapSpecs(_vm.PosterViewModel.CurrentPoster, newPosterMapAreaInfo);
+					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo);
 
 					// Update the SizeEditor with the new coordinates.
-					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo, newPosterSizeDbl);
+					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo, newPosterSize);
 				}
 			}
 		}

@@ -324,6 +324,8 @@ namespace MSS.Common.MSet
 			LastUpdatedUtc = DateTime.UtcNow;
 
 			Debug.Assert(IsDirty, "After adding a job to the poster, the Poster IsDirty flag is still false.");
+
+			OnPropertyChanged(nameof(CurrentJob));
 		}
 
 		public void Add(ColorBandSet colorBandSet)

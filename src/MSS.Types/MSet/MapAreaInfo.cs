@@ -55,12 +55,11 @@ namespace MSS.Types.MSet
 		{
 			var sb = new StringBuilder();
 
-			sb.Append($"MapAreaInfoV1: CanvasSize: {CanvasSize}");
-
+			sb.AppendLine($"Coords: {Coords}");
+			sb.AppendLine($"CanvasSize: {CanvasSize}");
 			sb.AppendLine($"Subdivision: Pos:{Subdivision.Position}, Delta: {Subdivision.SamplePointDelta.WidthNumerator} / {Subdivision.SamplePointDelta.Exponent}.");
 			sb.AppendLine($"MapBlockOffset: X:{MapBlockOffset.X}, Y:{MapBlockOffset.Y}");
 			sb.AppendLine($"CanvasControlOffset: {CanvasControlOffset}");
-			sb.AppendLine($"Coords: {Coords}");
 
 
 			return sb.ToString();

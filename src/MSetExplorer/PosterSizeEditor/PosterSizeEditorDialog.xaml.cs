@@ -163,7 +163,7 @@ namespace MSetExplorer
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
 		public SizeDbl NewMapSize => _vm.NewMapSize;
 
-		public SizeInt NewMapSizeInt => _vm.NewMapSizeInt;
+		//public SizeInt NewMapSizeInt => _vm.NewMapSizeInt;
 
 		#endregion
 
