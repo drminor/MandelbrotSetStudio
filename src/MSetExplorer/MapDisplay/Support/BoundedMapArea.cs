@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -20,6 +21,9 @@ namespace MSetExplorer
 			_mapAreaInfo = mapAreaInfo;
 
 			MapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
+
+			Debug.Assert(MapAreaInfoWithSize.CanvasSize == posterSize, $"GetMapAreaWithSizeFat is returning a CanvasSize: {MapAreaInfoWithSize.CanvasSize} different from the posterSize: {posterSize}.");
+
 			PosterSize = new SizeDbl(MapAreaInfoWithSize.CanvasSize);
 			ViewportSize = viewportSize;
 

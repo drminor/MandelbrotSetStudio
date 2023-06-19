@@ -341,24 +341,22 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot create a poster, the current job is empty.");
 			}
 
-			//var coords = curJob.Coords;
-			//var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, CanvasSize);
-
 			var colorBandSet = CurrentProject.CurrentColorBandSet;
-			//var mapCalcSettings = curJob.MapCalcSettings;
-
-			////var job = _mapJobHelper.BuildHomeJob(CanvasSize, coords, colorBandSet.Id, mapCalcSettings, TransformType.Home, _blockSize);
-			//var job = _mapJobHelper.BuildHomeJob(mapAreaInfo, colorBandSet.Id, mapCalcSettings);
-
-			var job = curJob.CreateNewCopy();
-
-			Debug.WriteLine($"Starting job for new Poster with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			var sourceJobId = curJob.Id;
+
+			// Create a copy of the current job, commit it to the repo and get the new job with the updated Id on file.
+			var newCopy = curJob.CreateNewCopy();
+			newCopy.JobOwnerType = JobOwnerType.Poster;
+			var newJobId = _projectAdapter.InsertJob(newCopy);
+			var job = _projectAdapter.GetJob(newJobId);
+
+			Debug.WriteLine($"Starting job for new Poster: SourceJobId: {sourceJobId} with Position&Delta: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			poster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet });
 			if (poster != null)
 			{
+				// This will update the OwnerId of the new Job and ColorBandSet and commit the updates to the repo.
 				_ = JobOwnerHelper.Save(poster, _projectAdapter);
 			}
 

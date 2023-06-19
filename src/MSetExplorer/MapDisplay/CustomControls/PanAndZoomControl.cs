@@ -62,6 +62,8 @@ namespace MSetExplorer
 			IsMouseWheelScrollingEnabled = false;
 
 			_originalVerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+
+			_useDetailedDebug = false;
 		}
 
 		#endregion

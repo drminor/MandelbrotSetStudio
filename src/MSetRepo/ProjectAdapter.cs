@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -509,9 +508,9 @@ namespace MSetRepo
 
 			var job = new Job(
 				id: jobId,
-				parentJobId: jobRecord.ParentJobId,
 				ownerId: jobRecord.OwnerId,
 				jobOwnerType: jobRecord.JobOwnerType ?? JobOwnerType.Undetermined,
+				parentJobId: jobRecord.ParentJobId,
 				label: jobRecord.Label,
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
@@ -521,7 +520,7 @@ namespace MSetRepo
 				colorBandSetId: jobRecord.ColorBandSetId,
 
 				mapCalcSettings: jobRecord.MapCalcSettings,
-				lastSavedUtc: lastSaved 
+				lastSavedUtc: lastSaved
 				)
 			{
 				LastAccessedUtc = jobRecord.LastAccessedUtc,
@@ -650,23 +649,16 @@ namespace MSetRepo
 			return updatedCbs;
 		}
 
-		public void InsertJob(Job job)
+		public ObjectId InsertJob(Job job)
 		{
-			var dt = job.DateCreated;
-
 			job.LastSavedUtc = DateTime.UtcNow;
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 
 			jobRecord.LastSavedUtc = DateTime.UtcNow;
-			_ = jobReaderWriter.Insert(jobRecord);
-			job.LastSavedUtc = DateTime.UtcNow;
+			var newJobId = jobReaderWriter.Insert(jobRecord);
 
-			var dt2 = job.DateCreated;
-
-			var dur = dt2 - dt;
-
-			Debug.WriteLine($"The job date created has changed by {dur}.");
+			return newJobId;
 		}
 
 		public void UpdateJobDetails(Job job)
@@ -795,7 +787,7 @@ namespace MSetRepo
 
 			var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id,
 					DisplayPosition: new VectorIntRecord(0, 0),
-					DisplayZoom: 0,
+					DisplayZoom: 1,
 					DateCreatedUtc: DateTime.UtcNow,
 					LastSavedUtc: DateTime.UtcNow,
 					LastAccessedUtc: DateTime.UtcNow)
@@ -803,6 +795,8 @@ namespace MSetRepo
 				Width = posterSize.Width,
 				Height = posterSize.Height,
 			};
+
+			Debug.WriteLine($"Creating new Poster with name: {name}.");
 
 			posterId = posterReaderWriter.Insert(posterRecord);
 
@@ -850,22 +844,22 @@ namespace MSetRepo
 			return result;
 		}
 
-		public void CreatePoster(Poster poster)
-		{
-			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+		//public void CreatePoster(Poster poster)
+		//{
+		//	var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 
-			if (!posterReaderWriter.PosterExists(poster.Name, out var posterId))
-			{
-				var posterRecord = _mSetRecordMapper.MapTo(poster);
-				var posterRecordId = posterReaderWriter.Insert(posterRecord);
+		//	if (!posterReaderWriter.PosterExists(poster.Name, out var posterId))
+		//	{
+		//		var posterRecord = _mSetRecordMapper.MapTo(poster);
+		//		var posterRecordId = posterReaderWriter.Insert(posterRecord);
 
-				Debug.Assert(poster.Id == posterRecordId);
-			}
-			else
-			{
-				throw new InvalidOperationException($"Cannot create poster with name: {poster.Name}, a poster: {posterId} with that name already exists.");
-			}
-		}
+		//		Debug.Assert(poster.Id == posterRecordId);
+		//	}
+		//	else
+		//	{
+		//		throw new InvalidOperationException($"Cannot create poster with name: {poster.Name}, a poster: {posterId} with that name already exists.");
+		//	}
+		//}
 
 		public void UpdatePosterCurrentJobId(ObjectId posterId, ObjectId? currentJobId)
 		{

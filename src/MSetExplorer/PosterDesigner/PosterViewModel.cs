@@ -466,19 +466,33 @@ namespace MSetExplorer
 		#region Public Methods - Job
 
 		// Called in preparation to call UpdateMapSpecs
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeInt currentPosterSize, RectangleDbl screenArea)
+		
+		/// <summary>
+		/// Calculate the adjusted MapAreaInfo using the new ScreenArea
+		/// </summary>
+		/// <param name="mapAreaInfo">The original value </param>
+		/// <param name="currentPosterSize">The original size in screen pixels</param>
+		/// <param name="screenArea">The new size in screen pixels</param>
+		/// <returns></returns>
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea)
 		{
-			var newCenter = screenArea.GetCenter();
-			var oldCenter = new PointDbl(currentPosterSize.Width / 2, currentPosterSize.Height / 2);
-			var zoomPoint = newCenter.Diff(oldCenter).Round();
-
-			var xFactor = currentPosterSize.Width / screenArea.Width;
-			var yFactor = currentPosterSize.Height / screenArea.Height;
+			var xFactor = newPosterSize.Width / currentPosterSize.Width;
+			var yFactor = newPosterSize.Height / currentPosterSize.Height;
 			var factor = Math.Min(xFactor, yFactor);
+
+			////var scaledPosterSize = currentPosterSize.Scale(1 / factor);
+
+			//var newCenter = screenArea.GetCenter();
+			////var oldCenter = new PointDbl(scaledPosterSize.Width / 2, scaledPosterSize.Height / 2);
+			//var oldCenter = new PointDbl(newPosterSize.Width / 2, newPosterSize.Height / 2);
+			
+			//var zoomPoint = newCenter.Diff(oldCenter).Round();
+
+			var zoomPoint = new VectorInt();
 
 			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
 
-			Debug.WriteLine($"PosterViewModel GetUpdatedMapAreaInfo: CurrentPosterSize: {currentPosterSize}, ScreenArea: {screenArea}. " +
+			Debug.WriteLine($"PosterViewModel GetUpdatedMapAreaInfo: CurrentPosterSize: {currentPosterSize}, NewPosterSize: {newPosterSize}, ScreenArea: {screenArea}. " +
 				$"\n MapAreaInfo2: {mapAreaInfo} " +
 				$"\n Produces newMapAreaInfo: {newMapAreaInfo}.");
 
@@ -622,6 +636,9 @@ namespace MSetExplorer
 			Debug.WriteLine($"Adding Poster Job with new coords: {mapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			poster.Add(job);
+			poster.CurrentJob = job;
+
+			Debug.Assert(CurrentJob.Id == job.Id, $"The CurrentJob {CurrentJob.Id} is not the same as the job {job.Id} just added to this poster {poster.Id}. The job that was current previously, has Id: {currentJob.Id}.");
 
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 		}

@@ -250,14 +250,14 @@ namespace MSS.Common.MSet
 				}
 				return currentJob.Id;
 			}
-			set
-			{
-				if (value != CurrentJobId)
-				{
-					CurrentJobId = value;
-					OnPropertyChanged();
-				}
-			}
+			//set
+			//{
+			//	if (value != CurrentJobId)
+			//	{
+			//		CurrentJobId = value;
+			//		OnPropertyChanged();
+			//	}
+			//}
 		}
 
 		public ColorBandSet CurrentColorBandSet
@@ -322,6 +322,8 @@ namespace MSS.Common.MSet
 			_jobTree.Add(job, selectTheAddedItem: true);
 
 			LastUpdatedUtc = DateTime.UtcNow;
+
+			Debug.Assert(IsDirty, "After adding a job to the poster, the Poster IsDirty flag is still false.");
 		}
 
 		public void Add(ColorBandSet colorBandSet)

@@ -155,34 +155,34 @@ namespace MSetRepo
 			throw new NotImplementedException();
 		}
 
-		public MapAreaInfo MapFrom(MapAreaInfoRecord target)
-		{
-			var result = new MapAreaInfo(
-				coords: _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto),
-				canvasSize: MapFrom(target.CanvasSize),
-				subdivision: MapFrom(target.SubdivisionRecord),
-				precision: target.Precision ?? RMapConstants.DEFAULT_PRECISION,
-				mapBlockOffset: MapFrom(target.MapBlockOffset),
-				canvasControlOffset: MapFrom(target.CanvasControlOffset)
-				);
+		//public MapAreaInfo MapFrom(MapAreaInfoRecord target)
+		//{
+		//	var result = new MapAreaInfo(
+		//		coords: _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto),
+		//		canvasSize: MapFrom(target.CanvasSize),
+		//		subdivision: MapFrom(target.SubdivisionRecord),
+		//		precision: target.Precision ?? RMapConstants.DEFAULT_PRECISION,
+		//		mapBlockOffset: MapFrom(target.MapBlockOffset),
+		//		canvasControlOffset: MapFrom(target.CanvasControlOffset)
+		//		);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public MapAreaInfoRecord MapTo(MapAreaInfo source)
-		{
-			var result = new MapAreaInfoRecord(
-				CoordsRecord: MapTo(source.Coords),
-				CanvasSize: MapTo(source.CanvasSize),
-				SubdivisionRecord: MapTo(source.Subdivision),
-				MapBlockOffset: MapTo(source.MapBlockOffset),
-				CanvasControlOffset: MapTo(source.CanvasControlOffset)
-				);
+		//public MapAreaInfoRecord MapTo(MapAreaInfo source)
+		//{
+		//	var result = new MapAreaInfoRecord(
+		//		CoordsRecord: MapTo(source.Coords),
+		//		CanvasSize: MapTo(source.CanvasSize),
+		//		SubdivisionRecord: MapTo(source.Subdivision),
+		//		MapBlockOffset: MapTo(source.MapBlockOffset),
+		//		CanvasControlOffset: MapTo(source.CanvasControlOffset)
+		//		);
 
-			result.Precision = source.Precision;
+		//	result.Precision = source.Precision;
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public MapAreaInfo2 MapFrom(MapAreaInfo2Record target)
 		{

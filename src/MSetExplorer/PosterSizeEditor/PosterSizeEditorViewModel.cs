@@ -15,7 +15,7 @@ namespace MSetExplorer
 
 		private bool _preserveAspectRatio;
 		private SizeDbl _currentSize;
-		private double _scaleFactorCurrentToOrginal;
+		private double _scaleFactorCurrentToOriginal;
 		private SizeDbl _currentSizeScaled;
 
 		private bool _preserveWidth;
@@ -74,7 +74,7 @@ namespace MSetExplorer
 		
 		// TODO: Confirm that the PosterSizeEditor does not need a MapAreaInfo-V1 object.
 
-		public void Initialize(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeInt posterSize)
+		public void Initialize(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
 			_preserveAspectRatio = true;
 			_preserveWidth = true;
@@ -92,7 +92,7 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		public void UpdateWithNewMapInfo(MapAreaInfo2 posterMapAreaInfo, SizeInt posterSize)
+		public void UpdateWithNewMapInfo(MapAreaInfo2 posterMapAreaInfo, SizeDbl posterSize)
 		{
 			UpdateWithChangesInternal(posterMapAreaInfo, ContainerSize, posterSize);
 
@@ -108,7 +108,7 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		private void UpdateWithChangesInternal(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeInt posterSize)
+		private void UpdateWithChangesInternal(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
 			PosterMapAreaInfo = posterMapAreaInfo;
 			_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
@@ -116,11 +116,11 @@ namespace MSetExplorer
 			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
 
 			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
-			_layoutInfo = new PreviewImageLayoutInfo(new SizeDbl(posterSize), previewImageSize, containerSize);
+			_layoutInfo = new PreviewImageLayoutInfo(posterSize, previewImageSize, containerSize);
 
-			_originalSize = new SizeDbl(posterSize);
+			_originalSize = posterSize;
 			_currentSize = _originalSize;
-			_scaleFactorCurrentToOrginal = 1;
+			_scaleFactorCurrentToOriginal = 1;
 			_currentSizeScaled = _originalSize;
 
 			OnPropertyChanged(nameof(Width));
@@ -191,8 +191,8 @@ namespace MSetExplorer
 					{
 						_currentSize = new SizeDbl(value, value / _currentSize.AspectRatio);
 
-						_scaleFactorCurrentToOrginal = _originalSize.Width / _currentSize.Width;
-						_currentSizeScaled = _currentSize.Scale(_scaleFactorCurrentToOrginal);
+						_scaleFactorCurrentToOriginal = _originalSize.Width / _currentSize.Width;
+						_currentSizeScaled = _currentSize.Scale(_scaleFactorCurrentToOriginal);
 
 						//OnPropertyChanged();
 
@@ -209,7 +209,7 @@ namespace MSetExplorer
 						//var newAreaScaled = new RectangleDbl(new PointDbl().Translate(newBeforeOffset), new PointDbl(_originalSize.Width + newAfterOffset.X, _originalSize.Height + newAfterOffset.Y));
 						var newAreaScaled = ScreenTypeHelper.GetNewBoundingArea(_originalSize, newBeforeOffset, newAfterOffset);
 						_currentSizeScaled = newAreaScaled.Size;
-						_currentSize = _currentSizeScaled.Scale(1 / _scaleFactorCurrentToOrginal);
+						_currentSize = _currentSizeScaled.Scale(1 / _scaleFactorCurrentToOriginal);
 
 						//OnPropertyChanged();
 
@@ -242,8 +242,8 @@ namespace MSetExplorer
 					if (PreserveAspectRatio)
 					{
 						_currentSize = new SizeDbl(value * _currentSize.AspectRatio, value);
-						_scaleFactorCurrentToOrginal = _originalSize.Width / _currentSize.Width;
-						_currentSizeScaled = _currentSize.Scale(_scaleFactorCurrentToOrginal);
+						_scaleFactorCurrentToOriginal = _originalSize.Width / _currentSize.Width;
+						_currentSizeScaled = _currentSize.Scale(_scaleFactorCurrentToOriginal);
 
 						//OnPropertyChanged();
 
@@ -260,7 +260,7 @@ namespace MSetExplorer
 						//var newAreaScaled = new RectangleDbl(newBeforeOffset, new PointDbl(_originalSize.Width + newAfterOffset.X, _originalSize.Height + newAfterOffset.Y));
 						var newAreaScaled = ScreenTypeHelper.GetNewBoundingArea(_originalSize, newBeforeOffset, newAfterOffset);
 						_currentSizeScaled = newAreaScaled.Size;
-						_currentSize = _currentSizeScaled.Scale(1 / _scaleFactorCurrentToOrginal);
+						_currentSize = _currentSizeScaled.Scale(1 / _scaleFactorCurrentToOriginal);
 
 						//OnPropertyChanged();
 
@@ -532,7 +532,7 @@ namespace MSetExplorer
 
 		private void PerformLayout()
 		{
-			_layoutInfo.Update(_scaleFactorCurrentToOrginal);
+			_layoutInfo.Update(_scaleFactorCurrentToOriginal);
 			_scaleTransform.ScaleX = _layoutInfo.ScaleFactorForPreviewImage;
 			_scaleTransform.ScaleY = _layoutInfo.ScaleFactorForPreviewImage;
 
@@ -674,8 +674,8 @@ namespace MSetExplorer
 
 		private VectorDbl GetOffsetsForNewWidth(SizeDbl previousSize, SizeDbl size, VectorDbl beforeOffsets, VectorDbl afterOffsets, out VectorDbl newAfterOffsets)
 		{
-			var ps = previousSize.Scale(_scaleFactorCurrentToOrginal);
-			var cs = size.Scale(_scaleFactorCurrentToOrginal);
+			var ps = previousSize.Scale(_scaleFactorCurrentToOriginal);
+			var cs = size.Scale(_scaleFactorCurrentToOriginal);
 
 			var newWidthSameHeight = ps.Width / ps.AspectRatio * cs.AspectRatio;
 			var deltaWidth = newWidthSameHeight - ps.Width;
@@ -689,8 +689,8 @@ namespace MSetExplorer
 
 		private VectorDbl GetOffsetsForNewHeight(SizeDbl previousSize, SizeDbl size, VectorDbl beforeOffsets, VectorDbl afterOffsets, out VectorDbl newAfterOffsets)
 		{
-			var ps = previousSize.Scale(_scaleFactorCurrentToOrginal);
-			var cs = size.Scale(_scaleFactorCurrentToOrginal);
+			var ps = previousSize.Scale(_scaleFactorCurrentToOriginal);
+			var cs = size.Scale(_scaleFactorCurrentToOriginal);
 
 			var newHeightSameWidth = ps.Height * ps.AspectRatio / cs.AspectRatio;
 			var deltaHeight = newHeightSameWidth - ps.Height;
@@ -705,44 +705,44 @@ namespace MSetExplorer
 		private SizeDbl HandleBeforeXUpdate(double previous, int val)
 		{
 
-			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOrginal);
+			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOriginal);
 			var delta = val - previous;
 			var width = scaledSize.Width + delta;
 			var height = PreserveAspectRatio ? width / AspectRatio : scaledSize.Height;
-			var result = new SizeDbl(width, height).Scale(1 / _scaleFactorCurrentToOrginal);
+			var result = new SizeDbl(width, height).Scale(1 / _scaleFactorCurrentToOriginal);
 
 			return result;
 		}
 
 		private SizeDbl HandleAfterXUpdate(double previous, int val)
 		{
-			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOrginal);
+			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOriginal);
 			var delta = val - previous;
 			var width = scaledSize.Width + delta;
 			var height = PreserveAspectRatio ? width / AspectRatio : scaledSize.Height;
-			var	result = new SizeDbl(width, height).Scale(1 / _scaleFactorCurrentToOrginal);
+			var	result = new SizeDbl(width, height).Scale(1 / _scaleFactorCurrentToOriginal);
 
 			return result;
 		}
 
 		private SizeDbl HandleBeforeYUpdate(double previous, int val)
 		{
-			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOrginal);
+			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOriginal);
 			var delta = val - previous;
 			var height = scaledSize.Height + delta;
 			var width = PreserveAspectRatio ? height * AspectRatio : scaledSize.Width;
-			var result = new SizeDbl(width, height).Scale(1 / _scaleFactorCurrentToOrginal);
+			var result = new SizeDbl(width, height).Scale(1 / _scaleFactorCurrentToOriginal);
 
 			return result;
 		}
 
 		private SizeDbl HandleAfterYUpdate(double previous, int val)
 		{
-			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOrginal);
+			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOriginal);
 			var delta = val - previous;
 			var height = scaledSize.Height + delta;
 			var width = PreserveAspectRatio ? height * AspectRatio : scaledSize.Width;
-			var result = new SizeDbl(width, height).Scale(1 / _scaleFactorCurrentToOrginal);
+			var result = new SizeDbl(width, height).Scale(1 / _scaleFactorCurrentToOriginal);
 
 			return result;
 		}

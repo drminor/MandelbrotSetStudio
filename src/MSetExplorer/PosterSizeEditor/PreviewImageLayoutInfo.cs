@@ -53,6 +53,9 @@ namespace MSetExplorer
 			{
 				var result = ScreenTypeHelper.GetNewBoundingArea(OriginalMapArea, BeforeOffset, AfterOffset);
 
+				//result = result.Scale(1 / CurrentToOriginalScaleFactor);
+
+
 				Debug.WriteLine($"PreviewImageLayoutInfo is returning {result} for the ResultNewMapArea.");
 
 				return result;
@@ -67,12 +70,15 @@ namespace MSetExplorer
 		public RectangleDbl PreviewImageClipRegion { get; private set; }
 		public RectangleDbl PreviewImageClipRegionYInverted { get; private set; }
 
+		public double CurrentToOriginalScaleFactor { get; private set; } = 1.0; 
+
 		#endregion
 
 		#region Public Methods
 
 		public void Update(double currentToOriginalScaleFactor)
 		{
+			CurrentToOriginalScaleFactor = currentToOriginalScaleFactor;
 			Debug.WriteLine($"Edit Poster Size Layout Update: BeforeOffset: {BeforeOffset}, AfterOffset: {AfterOffset}, NewMapSize: {NewMapSize}, ContainerSize: {ContainerSize}.");
 
 			// Get the portion of the originalMapArea that will be part of the new Image.

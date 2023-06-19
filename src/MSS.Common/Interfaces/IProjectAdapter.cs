@@ -49,7 +49,7 @@ namespace MSS.Common
 		IEnumerable<IPosterInfo> GetAllPosterInfos();
 
 		Job GetJob(ObjectId jobId);
-		void InsertJob(Job job);
+		ObjectId InsertJob(Job job);
 		void UpdateJobDetails(Job job);
 		bool DeleteJob(ObjectId jobId);
 

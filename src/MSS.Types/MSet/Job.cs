@@ -31,33 +31,33 @@ namespace MSS.Types.MSet
 		}
 
 		public Job(
-			ObjectId? parentJobId, 
 			ObjectId ownerId,
 			JobOwnerType jobOwnerType,
-			string? label, 
-			TransformType transformType, 
+			ObjectId? parentJobId,
+			string? label,
+			TransformType transformType,
 			RectangleInt? newArea,
 
-			MapAreaInfo2 mapAreaInfo, 
+			MapAreaInfo2 mapAreaInfo,
 
-			ObjectId colorBandSetId, 
+			ObjectId colorBandSetId,
 			MapCalcSettings mapCalcSettings
 			)
 
 			: this(
-				  ObjectId.GenerateNewId(), 
-				  parentJobId,
+				  ObjectId.GenerateNewId(),
 				  ownerId,
 				  jobOwnerType,
-				  label ?? transformType.ToString(), 
-				  transformType, 
+				  parentJobId,
+				  label ?? transformType.ToString(),
+				  transformType,
 				  newArea,
 
-				  mapAreaInfo, 
+				  mapAreaInfo,
 
-				  colorBandSetId, 
-				  mapCalcSettings, 
-				  DateTime.UtcNow
+				  colorBandSetId,
+				  mapCalcSettings,
+				  lastSavedUtc: DateTime.UtcNow
 				  )
 		{
 			OnFile = false;
@@ -65,9 +65,9 @@ namespace MSS.Types.MSet
 
 		public Job(
 			ObjectId id,
-			ObjectId? parentJobId,
 			ObjectId ownerId,
 			JobOwnerType jobOwnerType,
+			ObjectId? parentJobId,
 			string label,
 
 			TransformType transformType,
@@ -85,10 +85,14 @@ namespace MSS.Types.MSet
 				throw new ArgumentException("The ParentJobId can only be null for jobs with TransformType = 'Home.'");
 			}
 
+			OnFile = true;
+
 			Id = id;
-			_parentJobId = parentJobId;
 			_ownerId = ownerId;
 			_jobOwnerType = jobOwnerType;
+			_parentJobId = parentJobId;
+			IsOnPreferredPath = false;
+
 			Label = label;
 
 			TransformType = transformType;
@@ -96,19 +100,17 @@ namespace MSS.Types.MSet
 
 			MapAreaInfo = mapAreaInfo;
 
-			CanvasSizeInBlocks = new SizeInt(); // This is no longer used.
 			_colorBandSetId = colorBandSetId;
 			MapCalcSettings = mapCalcSettings;
 
 			LastSavedUtc = lastSavedUtc;
+			LastAccessedUtc = default;
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		//public RRectangle Coords => MapAreaInfo.Coords;
-		//public SizeInt CanvasSize => MapAreaInfo.CanvasSize;
 		public Subdivision Subdivision => MapAreaInfo.Subdivision;
 		public BigVector MapBlockOffset => MapAreaInfo.MapBlockOffset;
 		public VectorInt CanvasControlOffset => MapAreaInfo.CanvasControlOffset;
@@ -169,8 +171,6 @@ namespace MSS.Types.MSet
 
 		public MapAreaInfo2 MapAreaInfo { get; init; }
 
-		public SizeInt CanvasSizeInBlocks { get; init; }
-
 		public ObjectId ColorBandSetId
 		{
 			get => _colorBandSetId;
@@ -196,7 +196,7 @@ namespace MSS.Types.MSet
 			{
 				_lastSavedUtc = value;
 				_lastUpdatedUtc = value;
-				OnFile = true;
+				//OnFile = true;
 			}
 		}
 
@@ -233,19 +233,22 @@ namespace MSS.Types.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, ParentJobId, OwnerId, JobOwnerType, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+			var result = new Job(Id, OwnerId, JobOwnerType, ParentJobId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				ColorBandSetId, MapCalcSettings.Clone(), LastSavedUtc)
 			{
 				OnFile = OnFile,
 				IsOnPreferredPath = IsOnPreferredPath
 			};
 
+			result.IterationUpdates = (IterationUpdateRecord[]?)IterationUpdates?.Clone() ?? null;
+			result.ColorMapUpdates = (ColorMapUpdateRecord[]?)ColorMapUpdates?.Clone() ?? null;
+			
 			return result;
 		}
 
 		public Job CreateNewCopy()
 		{
-			var result = new Job(ObjectId.GenerateNewId(), ParentJobId, OwnerId, JobOwnerType, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+			var result = new Job(ObjectId.GenerateNewId(), OwnerId, JobOwnerType, ParentJobId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow)
 			{
 				OnFile = false

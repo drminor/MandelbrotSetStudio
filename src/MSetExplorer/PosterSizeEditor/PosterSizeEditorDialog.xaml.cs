@@ -27,11 +27,11 @@ namespace MSetExplorer
 		private PosterSizeEditorViewModel _vm;
 
 		private MapAreaInfo2? _initialPosterMapAreaInfo;
-		private SizeInt _initialPosterSize;
+		private SizeDbl _initialPosterSize;
 
 		#region Constructor
 
-		public PosterSizeEditorDialog(MapAreaInfo2 posterMapAreaInfo, SizeInt posterSize)
+		public PosterSizeEditorDialog(MapAreaInfo2 posterMapAreaInfo, SizeDbl posterSize)
 		{
 			_initialPosterMapAreaInfo = posterMapAreaInfo;
 			_initialPosterSize = posterSize;
@@ -169,7 +169,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void UpdateWithNewMapInfo(MapAreaInfo2 mapAreaInfo, SizeInt posterSize)
+		public void UpdateWithNewMapInfo(MapAreaInfo2 mapAreaInfo, SizeDbl posterSize)
 		{
 			//var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfo);
 			_vm.UpdateWithNewMapInfo(mapAreaInfo, posterSize);

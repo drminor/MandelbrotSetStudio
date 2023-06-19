@@ -55,7 +55,7 @@ namespace MSS.Common
 			var mapAreaInfoWithRegisteredSub = RegisterTheSubdivision(mapAreaInfo);
 
 			var jobName = GetJobName(transformType);
-			var job = new Job(parentJobId, ownerId, jobOwnerType, jobName, transformType, newArea, mapAreaInfoWithRegisteredSub, colorBandSetId, mapCalcSettings);
+			var job = new Job(ownerId, jobOwnerType, parentJobId, jobName, transformType, newArea, mapAreaInfoWithRegisteredSub, colorBandSetId, mapCalcSettings);
 
 			return job;
 		}
