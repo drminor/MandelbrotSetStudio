@@ -10,10 +10,12 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+//using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
 
 namespace MSS.Common.MSet
 {
+	using JobPathType = ITreePath<JobTreeNode, Job>;
+
 	public class Project : IDisposable, INotifyPropertyChanged, IJobOwner
 	{
 		private string _name;
@@ -31,13 +33,18 @@ namespace MSS.Common.MSet
 
 		#region Constructor
 
-		public Project(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId)
-			: this(ObjectId.GenerateNewId(), name, description, jobs, colorBandSets, currentJobId, DateTime.MinValue, DateTime.UtcNow)
+		public Project(string name, string? description, 
+			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId
+			)
+			: this(ObjectId.GenerateNewId(), name, description, 
+				  jobs, colorBandSets, currentJobId, 
+				  DateTime.MinValue, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
 
-		public Project(ObjectId id, string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
+		public Project(ObjectId id, string name, string? description, 
+			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
 			DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			if (!jobs.Any())
@@ -277,7 +284,7 @@ namespace MSS.Common.MSet
 
 		#endregion
 
-		#region Public Methods - Job Tree
+		#region Public Methods
 
 		public void Add(Job job)
 		{
@@ -303,6 +310,15 @@ namespace MSS.Common.MSet
 			_originalCurrentJobId = CurrentJobId;
 			_jobTree.IsDirty = false;
 		}
+
+		public void MarkAsDirty()
+		{
+			LastUpdatedUtc = DateTime.UtcNow;
+		}
+
+		#endregion
+
+		#region Public Methods - Job Tree
 
 		public bool GoBack(bool skipPanJobs)
 		{
@@ -384,11 +400,6 @@ namespace MSS.Common.MSet
 		public Job? GetParent(Job job) => _jobTree.GetParentItem(job);
 		//public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetItemAndDescendants(jobId);
 
-		//public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
-		//{
-		//	return _jobTree.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
-		//}
-
 		public bool MarkBranchAsPreferred(ObjectId jobId)
 		{
 			var result = _jobTree.MakePreferred(jobId);
@@ -421,8 +432,7 @@ namespace MSS.Common.MSet
 
 		public int GetNumberOfDirtyJobs()
 		{
-			var jobs = _jobTree.GetItems();
-			var result = jobs.Count(x => !x.OnFile || x.IsDirty);
+			var result = _jobTree.GetItems().Count(x => !x.OnFile || x.IsDirty);
 			return result;
 		}
 
@@ -565,5 +575,4 @@ namespace MSS.Common.MSet
 
 		#endregion
 	}
-
 }

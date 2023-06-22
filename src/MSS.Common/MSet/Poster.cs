@@ -15,8 +15,7 @@ namespace MSS.Common.MSet
 {
 	using JobPathType = ITreePath<JobTreeNode, Job>;
 
-	// TODO: Dispose the Job Tree
-	public class Poster : INotifyPropertyChanged, ICloneable, IJobOwner
+	public class Poster : IDisposable, INotifyPropertyChanged, ICloneable, IJobOwner
 	{
 		private string _name;
 		private string? _description;
@@ -115,15 +114,19 @@ namespace MSS.Common.MSet
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
-		public ObservableCollection<JobTreeNode>? JobNodes => _jobTree.Nodes;
+		private ObservableCollection<JobTreeNode>? _jobItems;
+
+		public ObservableCollection<JobTreeNode>? JobNodes
+		{
+			get => _jobItems;
+			set
+			{
+				_jobItems = value;
+				OnPropertyChanged();
+			}
+		}
 
 		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty; // || _jobTree.AnyItemIsDirty;
-
-		public int GetNumberOfDirtyJobs()
-		{
-			var result = _jobTree.GetItems().Count(x => !x.OnFile || x.IsDirty);
-			return result;
-		}
 
 		public bool IsCurrentJobIdChanged => CurrentJobId != _originalCurrentJobId;
 
@@ -219,18 +222,20 @@ namespace MSS.Common.MSet
 				{
 					if (!value.IsEmpty)
 					{
-						if (value != CurrentJob)
+						if (!value.OnFile)
 						{
-							var colorBandSetIdBeforeUpdate = _jobTree.CurrentItem.ColorBandSetId;
+							LastUpdatedUtc = DateTime.UtcNow;
+						}
 
-							_ = LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
+						var colorBandSetIdBeforeUpdate = _jobTree.CurrentItem.ColorBandSetId;
 
-							_jobTree.CurrentItem = value;
+						_ = LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
 
-							if (_jobTree.CurrentItem.ColorBandSetId != colorBandSetIdBeforeUpdate)
-							{
-								OnPropertyChanged(nameof(CurrentColorBandSet));
-							}
+						_jobTree.CurrentItem = value;
+
+						if (_jobTree.CurrentItem.ColorBandSetId != colorBandSetIdBeforeUpdate)
+						{
+							OnPropertyChanged(nameof(CurrentColorBandSet));
 						}
 					}
 
@@ -250,14 +255,6 @@ namespace MSS.Common.MSet
 				}
 				return currentJob.Id;
 			}
-			//set
-			//{
-			//	if (value != CurrentJobId)
-			//	{
-			//		CurrentJobId = value;
-			//		OnPropertyChanged();
-			//	}
-			//}
 		}
 
 		public ColorBandSet CurrentColorBandSet
@@ -367,20 +364,45 @@ namespace MSS.Common.MSet
 		public Job? GetParent(Job job) => _jobTree.GetParentItem(job);
 		//public List<Job>? GetJobAndDescendants(ObjectId jobId) => _jobTree.GetItemAndDescendants(jobId);
 
-		//public bool TryGetCanvasSizeUpdateProxy(Job job, SizeInt newCanvasSizeInBlocks, [MaybeNullWhen(false)] out Job matchingProxy)
-		//{
-		//	return _jobTree.TryGetCanvasSizeUpdateProxy(job, newCanvasSizeInBlocks, out matchingProxy);
-		//}
-
 		public bool MarkBranchAsPreferred(ObjectId jobId)
 		{
 			var result = _jobTree.MakePreferred(jobId);
 			return result;
 		}
 
+		//public IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
+		//{
+		//	var result = _jobTree.RemoveJobs(path, nodeSelectionType);
+		//	return result;
+		//}
+
 		public IList<JobTreeNode> RemoveJobs(JobPathType path, NodeSelectionType nodeSelectionType)
 		{
-			var result = _jobTree.RemoveJobs(path, nodeSelectionType);
+			var saveCurrentPath = _jobTree.GetCurrentPath();
+			var saveCurrentItem = _jobTree.CurrentItem;
+			var nodesRemoved = _jobTree.RemoveJobs(path, nodeSelectionType);
+			var newCurrentPath = _jobTree.GetCurrentPath();
+			var newCurrentItem = _jobTree.CurrentItem;
+
+			var wasCurrentJobRemoved = nodesRemoved.Any(x => x.Id == CurrentJob?.Id);
+			//if (wasCurrentJobRemoved || newCurrentPath != saveCurrentPath)
+			//{
+			//	Debug.WriteLine($"RemoveJobs has changed the current path. Old: {saveCurrentPath}, new: {newCurrentPath}");
+			//	OnPropertyChanged(nameof(CurrentJob));
+			//}
+
+			if (wasCurrentJobRemoved || newCurrentItem != saveCurrentItem)
+			{
+				Debug.WriteLine($"RemoveJobs has changed the current path. Old: {saveCurrentItem}, new: {newCurrentItem}");
+				OnPropertyChanged(nameof(CurrentJob));
+			}
+
+			return nodesRemoved;
+		}
+
+		public int GetNumberOfDirtyJobs()
+		{
+			var result = _jobTree.GetItems().Count(x => !x.OnFile || x.IsDirty);
 			return result;
 		}
 
@@ -490,6 +512,44 @@ namespace MSS.Common.MSet
 		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		#endregion
+
+		#region IDisposable Support
+
+		private bool disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+
+					if (_jobTree != null)
+					{
+						_jobTree.Dispose();
+					}
+
+					if (_colorBandSets != null)
+					{
+						//_colorBandSetCollection.Dispose();
+						//_colorBandSetCollection = null;
+					}
+
+				}
+
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
 		}
 
 		#endregion

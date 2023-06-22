@@ -18,13 +18,7 @@ namespace MSetExplorer
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
 
-		//ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 		ICbshDisplayViewModel CbshDisplayViewModel { get; }
-
-		//IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType);
-		//IColorBandSetOpenSaveViewModel CreateACbsOpenViewModel(string? initalName, DialogType dialogType);
-		//IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType);
-		//CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfo2, SizeInt canvasSize, bool allowEdits);
 
 		ViewModelFactory ViewModelFactory { get; }
 

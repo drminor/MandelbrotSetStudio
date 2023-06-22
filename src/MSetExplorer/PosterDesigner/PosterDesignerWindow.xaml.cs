@@ -336,7 +336,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					_vm.MapDisplayViewModel.RestartLastJob();
+					_vm.RunCurrentJob();
 				}
 			}
 		}

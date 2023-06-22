@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace MSS.Types.MSet
@@ -8,7 +9,7 @@ namespace MSS.Types.MSet
 	/// Same as the MapAreaInfo class, but this one records the MapCenter instead of a RRectangle
 	/// </remarks>
 
-	public class MapAreaInfo2 : ICloneable
+	public class MapAreaInfo2 : ICloneable, IEquatable<MapAreaInfo2?>
 	{
 		private static readonly Lazy<MapAreaInfo2> _lazyMapAreaInfo = new Lazy<MapAreaInfo2>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
 		public static readonly MapAreaInfo2 Empty = _lazyMapAreaInfo.Value;
@@ -88,6 +89,36 @@ namespace MSS.Types.MSet
 			sb.AppendLine($"CanvasControlOffset: {CanvasControlOffset}");
 
 			return sb.ToString();
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as MapAreaInfo2);
+		}
+
+		public bool Equals(MapAreaInfo2? other)
+		{
+			return other is not null &&
+				IsEmpty == other.IsEmpty &&
+				EqualityComparer<RPointAndDelta>.Default.Equals(PositionAndDelta, other.PositionAndDelta) &&
+				EqualityComparer<Subdivision>.Default.Equals(Subdivision, other.Subdivision) &&
+				EqualityComparer<BigVector>.Default.Equals(MapBlockOffset, other.MapBlockOffset) &&
+				CanvasControlOffset.Equals(other.CanvasControlOffset);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(PositionAndDelta, Subdivision, MapBlockOffset, CanvasControlOffset, IsEmpty);
+		}
+
+		public static bool operator ==(MapAreaInfo2? left, MapAreaInfo2? right)
+		{
+			return EqualityComparer<MapAreaInfo2>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(MapAreaInfo2? left, MapAreaInfo2? right)
+		{
+			return !(left == right);
 		}
 
 		#endregion

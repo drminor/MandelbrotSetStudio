@@ -150,6 +150,17 @@ namespace MSS.Types
 			return result;
 		}
 
+		public string ToString(bool includeDecimalOutput)
+		{
+			//var reducedVal = Reducer.Reduce(this);
+			//var result = BigIntegerHelper.GetDisplay(reducedVal);
+
+			var result = BigIntegerHelper.GetDisplay(this, includeDecimalOutput);
+
+
+			return result;
+		}
+
 		#endregion
 
 		#region IEqualityComparer / IEquatable Support

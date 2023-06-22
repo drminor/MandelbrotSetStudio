@@ -458,6 +458,8 @@ namespace MSetExplorer
 				}
 				else
 				{
+					Debug.WriteLine($"RestartLastJob was called but the current job is null or empty.");
+
 					lastSectionWasIncluded = false;
 					result = null;
 				}

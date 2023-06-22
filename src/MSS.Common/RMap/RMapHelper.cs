@@ -38,6 +38,9 @@ namespace MSS.Common
 			var rK = (int)Math.Round(reciprocal * 1024);
 			var rReciprocal = new RValue(rK, -10);
 
+			//var rReciprocalDiag = rK * Math.Pow(2, -10);
+			var rReciprocalDiagStr = rReciprocal.ToString(includeDecimalOutput: true);
+
 			// Multiply the SamplePointDelta by 1/factor, adjusting the exponent as necessary.
 			// as the exponent is futher decreased, the numerators of the X and Y values are increased to compensate.
 			var rawResult = pointAndDelta.ScaleDelta(rReciprocal);
@@ -45,6 +48,8 @@ namespace MSS.Common
 			// Divide all numerators by the greatest power 2 that all three numerators (X, Y and scale) have in common,
 			// and reduce the denominator to compensate.
 			var result = Reducer.Reduce(rawResult);
+
+			Debug.WriteLine($"GetNewSamplePointDelta scaled {pointAndDelta.SamplePointDelta} by {rReciprocalDiagStr} and got {result.SamplePointDelta}.");
 
 			return result;
 		}

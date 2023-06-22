@@ -123,23 +123,7 @@ namespace MSetExplorer
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Job Area and Calc Settings
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings))
 			{
-				var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
-
-				MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
-
-				// Update the MapDisplayView model for a new Poster or Poster Job.
-				var currentPoster = PosterViewModel.CurrentPoster;
-
-				if (currentPoster != null)
-				{
-					var currentjob = currentPoster.CurrentJob;
-					if (currentjob != null)
-					{
-						UpdateTheMapCoordsView(currentjob);
-						var posterSize = currentPoster.PosterSize;
-						MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize);
-					}
-				}
+				RunCurrentJob();
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
@@ -233,6 +217,27 @@ namespace MSetExplorer
 				Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
 				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
 				PosterViewModel.CurrentColorBandSet = colorBandSet;
+			}
+		}
+
+		public void RunCurrentJob()
+		{
+			var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
+
+			MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
+
+			// Update the MapDisplayView model for a new Poster or Poster Job.
+			var currentPoster = PosterViewModel.CurrentPoster;
+
+			if (currentPoster != null)
+			{
+				var currentjob = currentPoster.CurrentJob;
+				if (currentjob != null)
+				{
+					UpdateTheMapCoordsView(currentjob);
+					var posterSize = currentPoster.PosterSize;
+					MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize);
+				}
 			}
 		}
 

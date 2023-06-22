@@ -176,7 +176,7 @@ namespace MSS.Types
 
 			var result = $"{rValue.Value}/2^{(-1 * rValue.Exponent).ToString(formatProvider)}";
 
-			// TODO: Use Convert RValue To String insted of ConvertToDouble.
+			// TODO: Use Convert RValue To String instead of ConvertToDouble.
 			// TODO: Use the RValue's precision to inform the ConvertToDouble method
 			if (includeDecimalOutput)
 			{

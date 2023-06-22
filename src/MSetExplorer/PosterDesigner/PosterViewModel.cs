@@ -489,10 +489,7 @@ namespace MSetExplorer
 			var factor = Math.Min(xFactor, yFactor);
 
 			var newCenter = screenArea.GetCenter();
-			//var scaledPosterSize = currentPosterSize.Scale(1 / factor);
-			//var oldCenter = new PointDbl(scaledPosterSize.Width / 2, scaledPosterSize.Height / 2);
-			var oldCenter = new PointDbl(newPosterSize.Width / 2, newPosterSize.Height / 2);
-
+			var oldCenter = new PointDbl(currentPosterSize.Scale(0.5));
 			var zoomPoint = newCenter.Diff(oldCenter).Round();
 
 			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
@@ -500,6 +497,7 @@ namespace MSetExplorer
 			Debug.WriteLine($"PosterViewModel GetUpdatedMapAreaInfo:" +
 				$"\n CurrentPosterSize: {currentPosterSize}, NewPosterSize: {newPosterSize}, ScreenArea: {screenArea}." +
 				$"\n XFactor: {xFactor}, YFactor: {yFactor}, Factor: {factor}." +
+				$"\n NewCenter: {newCenter}, OldCenter: {oldCenter}, ZoomPoint: {zoomPoint}." +
 				$"\n Using: {mapAreaInfo}" +
 				$"\n Produces newMapAreaInfo: {newMapAreaInfo}.");
 
