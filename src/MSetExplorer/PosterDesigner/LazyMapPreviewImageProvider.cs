@@ -29,10 +29,14 @@ namespace MSetExplorer
 		private CancellationTokenSource _cts;
 		private Task? _currentBitmapBuilderTask;
 
+		private MapJobHelper _mapJobHelper;
+
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(BitmapBuilder bitmapBuilder, MapAreaInfo2 mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
+		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, MapAreaInfo2 mapAreaInfo, SizeInt previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
 		{
+			_mapJobHelper = mapJobHelper;
+
 			_synchronizationContext = SynchronizationContext.Current;
 			_bitmapBuilder = bitmapBuilder;
 
@@ -47,7 +51,8 @@ namespace MSetExplorer
 			_cts = new CancellationTokenSource();
 			_currentBitmapBuilderTask = null;
 
-			_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfo, _previewImageSize);
+			//_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfo, _previewImageSize);
+			_previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(_mapAreaInfo, _previewImageSize);
 
 			Bitmap = CreateBitmap(_previewImageSize);
 			FillBitmapWithColor(_fallbackColor, Bitmap);
@@ -72,7 +77,8 @@ namespace MSetExplorer
 				{
 					_mapAreaInfo = value;
 
-					_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfo, _previewImageSize);
+					//_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfo, _previewImageSize);
+					_previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(_mapAreaInfo, _previewImageSize);
 
 					FillBitmapWithColor(_fallbackColor, Bitmap);
 					QueueBitmapGeneration(_previewMapAreaInfo, _colorBandSet, _mapCalcSettings);

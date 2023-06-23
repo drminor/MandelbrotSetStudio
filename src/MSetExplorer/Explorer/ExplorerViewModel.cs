@@ -68,6 +68,8 @@ namespace MSetExplorer
 
 		public ViewModelFactory ViewModelFactory => _viewModelFactory;
 
+		public bool MapCoordsIsVisible { get; set; }
+
 		public double DispWidth
 		{
 			get => _dispWidth;
@@ -213,13 +215,15 @@ namespace MSetExplorer
 			{
 				// Calculate new Coords for preview
 
-				// TODO: After testing is complete, uncomment-out this code.
-				var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
-				if (mapAreaInfo != null)
+				if (MapCoordsIsVisible)
 				{
-					var displaySize = MapDisplayViewModel.ViewportSize;
-					var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize.Round());
-					MapCoordsViewModel.Preview(mapAreaInfoV1);
+					var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
+					if (mapAreaInfo != null)
+					{
+						var displaySize = MapDisplayViewModel.ViewportSize;
+						var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize.Round());
+						MapCoordsViewModel.Preview(mapAreaInfoV1);
+					}
 				}
 			}
 			else

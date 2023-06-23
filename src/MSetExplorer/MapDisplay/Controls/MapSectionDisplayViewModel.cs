@@ -666,6 +666,7 @@ namespace MSetExplorer
 			}
 			else
 			{
+				// TODO: Clear the sections that are pending generation
 				var sectionsToCancel = new List<MapSection>();
 				//var sectionsToClear = new List<MapSection>();
 

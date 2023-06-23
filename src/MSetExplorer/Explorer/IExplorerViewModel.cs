@@ -1,8 +1,4 @@
-﻿using ImageBuilder;
-using MSS.Common;
-using MSS.Types;
-using MSS.Types.MSet;
-using System;
+﻿using System;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -21,6 +17,9 @@ namespace MSetExplorer
 		ICbshDisplayViewModel CbshDisplayViewModel { get; }
 
 		ViewModelFactory ViewModelFactory { get; }
+
+		bool MapCoordsIsVisible { get; set; }
+
 
 		CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/);
 		JobProgressViewModel CreateAJobProgressViewModel();

@@ -678,6 +678,10 @@ namespace MSetExplorer
 				SelectedCenterPosition = posYInverted;
 				SelectedPosition = new Point(x, y);
 				//AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
+
+				//var (zoomPoint, factor) = GetAreaSelectedParams(Area);
+				//var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, isPreview: true);
+				//AreaSelected?.Invoke(this, eventArgs);
 			}
 		}
 

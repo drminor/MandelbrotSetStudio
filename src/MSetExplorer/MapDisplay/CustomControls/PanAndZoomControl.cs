@@ -2,12 +2,9 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.Xml;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -286,8 +283,6 @@ namespace MSetExplorer
 
 			if (!value.Diff(previousValue).IsNearZero())
 			{
-				//var maxContentOffsetBefore = c._maxContentOffset;
-
 				try
 				{
 					c._disableContentOffsetChangeEvents = true;
@@ -311,15 +306,6 @@ namespace MSetExplorer
 				{
 					c._disableContentOffsetChangeEvents = false;
 				}
-
-
-				//if (c.ContentBeCenteredIsChanged(maxContentOffsetBefore, c._maxContentOffset))
-				//{
-				//	c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
-				//}
-
-				//var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-				//c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
 
 				c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
 			}
@@ -345,32 +331,8 @@ namespace MSetExplorer
 				_disableContentOffsetChangeEvents = false;
 			}
 
-			//var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-			//c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
-
 			ScrollbarVisibilityChanged?.Invoke(this, new EventArgs());
 		}
-
-
-		//private bool ContentBeCenteredIsChanged(SizeDbl maxContentOffsetBefore, SizeDbl maxContentOffsetAfter)
-		//{
-		//	// TODO: Return this info, and let the method that is calling UpdateContentViewportSize determine if the RaiseScrollBarVisibility event should be raised.
-		//	if (maxContentOffsetAfter != maxContentOffsetBefore)
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, $"MaxContentOffset was updated. Prev: {maxContentOffsetBefore}, New: {maxContentOffsetAfter}.");
-
-		//		var result = maxContentOffsetBefore.Width == 0 && maxContentOffsetAfter.Width != 0
-		//			|| maxContentOffsetBefore.Width != 0 && maxContentOffsetAfter.Width == 0
-		//			|| maxContentOffsetBefore.Height == 0 && maxContentOffsetAfter.Height != 0
-		//			|| maxContentOffsetBefore.Height != 0 && maxContentOffsetAfter.Height == 0;
-
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		return false;
-		//	}
-		//}
 
 		#endregion
 

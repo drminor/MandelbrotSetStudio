@@ -100,8 +100,10 @@ namespace MSetExplorer
 
 		public LazyMapPreviewImageProvider GetPreviewImageProvider(MapAreaInfo2 mapAreaInfo, SizeInt previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
 		{
+			var mapJobHelper = _viewModelFactory.ProvisionAMapJopHelper();
+
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var result = new LazyMapPreviewImageProvider(bitmapBuilder, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
+			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
 			return result;
 		}
 

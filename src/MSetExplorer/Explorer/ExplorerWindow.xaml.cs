@@ -49,6 +49,8 @@ namespace MSetExplorer
 
 			cbsh1.DataContext = _vm.CbshDisplayViewModel;
 			jobTree1.DataContext = _vm.JobTreeViewModel;
+
+			_vm.MapCoordsIsVisible = mnuItem_CoordsWindow.IsChecked;
 		}
 
 		private void ExplorerWindow_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -165,7 +167,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Window Button Handlers
+		#region Window Close / Exit / Return  Button Handlers
 
 		private void CloseAndReturnButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -199,11 +201,18 @@ namespace MSetExplorer
 			Close();
 		}
 
+		#endregion
+
+		#region Window Component Show / Hide Handlers
+
 		// Show Hide Coords Window
 		private void CoordsWindow_Checked(object sender, RoutedEventArgs e)
 		{
 			var showCoord = mnuItem_CoordsWindow.IsChecked;
 			dispSecMapCoords.Visibility = showCoord ? Visibility.Visible : Visibility.Collapsed;
+
+			// TODO: Create Bindings for these WindowComponent Is Visible settings.
+			_vm.MapCoordsIsVisible = showCoord;
 		}
 
 		// Show Hide CalcSettings Window

@@ -196,7 +196,7 @@ namespace MSS.Types.MSet
 			{
 				_lastSavedUtc = value;
 				_lastUpdatedUtc = value;
-				//OnFile = true;
+				OnFile = true;
 			}
 		}
 

@@ -769,13 +769,12 @@ namespace MSetExplorer
 			return result;
 		}
 
-		/*
 
-		private PointDbl GetOffsetsForNewWidth(SizeDbl previousSize, SizeDbl size, PointDbl beforeOffsets, PointDbl afterOffsets, out PointDbl newAfterOffsets)
+		private PointDbl GetOffsetsForNewWidth_NotUsed(SizeDbl previousSize, SizeDbl size, PointDbl beforeOffsets, PointDbl afterOffsets, out PointDbl newAfterOffsets)
 		{
 
-			var ps = previousSize.Scale(_scaleFactorCurrentToOrginal);
-			var cs = _currentSize.Scale(_scaleFactorCurrentToOrginal);
+			var ps = previousSize.Scale(_scaleFactorCurrentToOriginal);
+			var cs = _currentSize.Scale(_scaleFactorCurrentToOriginal);
 
 			var newWidthSameHeight = previousSize.Width / previousSize.AspectRatio * size.AspectRatio;
 			var newHeightSameWidth = previousSize.Height * previousSize.AspectRatio / size.AspectRatio;
@@ -815,8 +814,6 @@ namespace MSetExplorer
 			return newBeforeOffsets;
 
 		}
-
-		*/
 
 		#endregion
 	}

@@ -127,8 +127,6 @@ namespace MSS.Common
 
 				SaveColorBandSets(jobOwner, projectAdapter);
 				SaveJobs(jobOwner, projectAdapter);
-
-				jobOwner.MarkAsSaved();
 			}
 
 			return true;

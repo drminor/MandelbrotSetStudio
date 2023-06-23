@@ -337,8 +337,6 @@ namespace MSetExplorer
 				return;
 			}
 
-			// TODO: Provide UI to specify the size of the new Image file and/or update the Poster class to record the 'current' Image size.
-
 			var initialImageFilename = GetImageFilename(curPoster.Name, _vm.PosterViewModel.PosterSize.Width);
 
 			if (TryGetImagePath(initialImageFilename, out var imageFilePath))

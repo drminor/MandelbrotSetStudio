@@ -55,5 +55,14 @@ namespace MSetExplorer
 			return result;
 		}
 
+
+		public MapJobHelper ProvisionAMapJopHelper()
+		{
+			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
+			var mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
+
+			return mapJobHelper;
+		}
+
 	}
 }
