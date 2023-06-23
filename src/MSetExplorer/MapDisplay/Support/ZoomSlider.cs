@@ -79,9 +79,10 @@ namespace MSetExplorer
 
 				try
 				{
-					//_scrollbar.Value = 1;
-					_scrollbar.Maximum = _zoomedControl.MaxScale;
+					_scrollbar.Value = _scrollbar.Maximum;
+
 					_scrollbar.Minimum = _zoomedControl.MinScale;
+					_scrollbar.Maximum = _zoomedControl.MaxScale;
 
 					_scrollbar.SmallChange = _scrollbar.Minimum;
 					_scrollbar.LargeChange = _scrollbar.Minimum * 2;

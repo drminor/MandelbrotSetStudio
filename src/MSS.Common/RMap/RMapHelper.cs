@@ -7,6 +7,23 @@ using System.Numerics;
 
 namespace MSS.Common
 {
+
+	/*
+			Scale			Exp   Base Scale	Relative Scale
+	---------------------------------------------------------------		
+		>	0.5			|	0	|	1	|	x / 1
+		>	0.25		|	1	|	2	|	x / 0.5
+		>	0.125		|	2	|	4	|	x / 0.25
+		>	0.0625		|	3	|   8	|	x / 0.125
+		>	0.03125		|	4	|  16	|	x / 0.0625
+		>	0.015625	|	5	|  32	|	x / 0.03125
+		>	0.0078125	|	6	|  64	|	x / 0.015625
+		>   0.00390625  |   7	| 128	|	x / 0.0078125 	
+
+		else throw
+		 
+	*/
+
 	public static class RMapHelper
 	{
 		#region MapAreaInfo Support

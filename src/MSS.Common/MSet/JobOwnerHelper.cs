@@ -100,9 +100,9 @@ namespace MSS.Common
 				{
 					projectAdapter.UpdateProjectCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
 				}
-				else if (jobOwner is Poster poster) 
+				else if (jobOwner is Poster) 
 				{
-					projectAdapter.UpdatePosterMapArea(poster);
+					//projectAdapter.UpdatePosterMapArea(poster);
 
 					projectAdapter.UpdatePosterCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
 				}
@@ -116,6 +116,11 @@ namespace MSS.Common
 			{
 				var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(jobOwner, projectAdapter);
 				Debug.WriteLine($"Removed {numberColorBandSetsRemoved} unused ColorBandSets.");
+
+				if (jobOwner is Poster poster)
+				{
+					projectAdapter.UpdatePosterMapArea(poster);
+				}
 
 				//projectAdapter.UpdateProjectName(jobOwner.Id, jobOwner.Name);
 				//projectAdapter.UpdateProjectDescription(jobOwner.Id, jobOwner.Description);

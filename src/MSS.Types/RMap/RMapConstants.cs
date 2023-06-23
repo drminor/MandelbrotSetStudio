@@ -23,6 +23,10 @@ namespace MSS.Types
 
 		public const int MAP_SECTION_VALUE_POOL_SIZE = 10;
 
+		public const double DEFAULT_POSTER_DISPLAY_ZOOM = 0.01; // Default to full screen view
+		public static readonly SizeInt DEFAULT_POSTER_SIZE = new SizeInt(4096);
+
+
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE;
 		public static readonly RRectangle ENTIRE_SET_RECTANGLE_EVEN;
 

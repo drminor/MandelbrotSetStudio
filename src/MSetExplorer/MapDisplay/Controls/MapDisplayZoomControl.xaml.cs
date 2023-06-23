@@ -20,7 +20,7 @@ namespace MSetExplorer
 
 		private void MapDisplayZoomControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			var minimumScale = 0.0625;
+			var minimumScale = 0.015625; // 0.0625;
 			SetScrollBarSettings(scrollBar1, minimumScale);
 			textBlock1.Text = scrollBar1.Value.ToString("F3");
 

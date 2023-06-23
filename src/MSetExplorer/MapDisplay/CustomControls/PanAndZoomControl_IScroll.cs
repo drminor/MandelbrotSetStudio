@@ -32,6 +32,7 @@ namespace MSetExplorer
 			{
 				_scrollOwner = value;
 				_originalVerticalScrollBarVisibility = _scrollOwner.VerticalScrollBarVisibility;
+				_originalHorizontalScrollBarVisibility = _scrollOwner.HorizontalScrollBarVisibility;
 			}
 		}
 
@@ -249,11 +250,6 @@ namespace MSetExplorer
 
 		private void SetVerticalScrollBarVisibility(bool show)
 		{
-			//if (_scrollOwner != null && _scrollOwner.VerticalScrollBarVisibility != value)
-			//{
-			//	_scrollOwner.VerticalScrollBarVisibility = value;
-			//}
-
 			if (_scrollOwner != null && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled)
 			{
 				if (show && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Visible)
@@ -265,6 +261,24 @@ namespace MSetExplorer
 					if(_scrollOwner.VerticalScrollBarVisibility == ScrollBarVisibility.Visible && !show)
 					{
 						_scrollOwner.VerticalScrollBarVisibility = _originalVerticalScrollBarVisibility;
+					}
+				}
+			}
+		}
+
+		private void SetHorizontalScrollBarVisibility(bool show)
+		{
+			if (_scrollOwner != null && _scrollOwner.HorizontalScrollBarVisibility != ScrollBarVisibility.Disabled)
+			{
+				if (show && _scrollOwner.HorizontalScrollBarVisibility != ScrollBarVisibility.Visible)
+				{
+					_scrollOwner.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
+				}
+				else
+				{
+					if (_scrollOwner.HorizontalScrollBarVisibility == ScrollBarVisibility.Visible && !show)
+					{
+						_scrollOwner.HorizontalScrollBarVisibility = _originalHorizontalScrollBarVisibility;
 					}
 				}
 			}
@@ -301,7 +315,6 @@ namespace MSetExplorer
 		private IContentScaler? _contentScaler;
 
 		#endregion
-
 
 		/* Sample MeasureOverrride and ArrangeOverride implementations.
 
@@ -396,7 +409,6 @@ namespace MSetExplorer
 			//	ContainerSize = finalSizeDbl;
 			//}
 		*/
-
 
 	}
 }

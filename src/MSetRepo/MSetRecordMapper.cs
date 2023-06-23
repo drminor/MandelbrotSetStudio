@@ -374,6 +374,18 @@ namespace MSetRepo
 			return new VectorInt(target.X, target.Y);
 		}
 
+		public VectorDblRecord MapTo(VectorDbl source)
+		{
+			return new VectorDblRecord(source.X, source.Y);
+		}
+
+		public VectorDbl MapFrom(VectorDblRecord target)
+		{
+			return new VectorDbl(target.X, target.Y);
+		}
+
+
+
 		public BigVectorRecord MapTo(BigVector bigVector)
 		{
 			var bigVectorDto = _dtoMapper.MapTo(bigVector);

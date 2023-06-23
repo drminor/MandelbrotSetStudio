@@ -7,9 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Windows.Input;
-using System.Windows.Media;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -19,27 +16,19 @@ namespace MSetExplorer
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
 		private readonly MapJobHelper _mapJobHelper;
-		//private readonly SizeInt _blockSize;
 
-		//private SizeInt _canvasSize;
 		private Project? _currentProject;
 
 		private ColorBandSet? _previewColorBandSet;
 
-		//private Func<SizeInt> _getCanvasSizeFunc;
-
 		#region Constructor
 
-		public ProjectViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
+		public ProjectViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
-			//_blockSize = blockSize;
 
-			//_getCanvasSizeFunc = getCanvasSizeFunc;
-
-			//_canvasSize = new SizeInt();
 			_currentProject = null;
 			_previewColorBandSet = null;
 		}
@@ -49,24 +38,6 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public new bool InDesignMode => base.InDesignMode;
-
-		//public SizeInt CanvasSize
-		//{
-		//	get => _canvasSize;
-		//	set
-		//	{
-		//		if(value != _canvasSize)
-		//		{
-		//			_canvasSize = value;
-		//			OnPropertyChanged(nameof(IProjectViewModel.CanvasSize));
-
-		//			//if (CurrentProject != null)
-		//			//{
-		//			//	RerunWithNewDisplaySize(CurrentProject);
-		//			//}
-		//		}
-		//	}
-		//}
 
 		public Project? CurrentProject
 		{
@@ -381,57 +352,6 @@ namespace MSetExplorer
 			AddNewCoordinateUpdateJob(currentProject, transformType, panAmount, factor);
 		}
 
-		//// Currently Not Used.
-		//public void UpdateMapCoordinates(RRectangle coords)
-		//{
-		//	if (CurrentProject == null)
-		//	{
-		//		return;
-		//	}
-
-		//	if (CurrentJob.Coords != coords)
-		//	{
-		//		LoadMap(CurrentProject, CurrentJob, coords, CurrentJob.ColorBandSetId, CurrentJob.MapCalcSettings, TransformType.CoordinatesUpdate, null);
-		//	}
-		//}
-
-		//private bool UpdateColorBandSet(Project project, ColorBandSet colorBandSet)
-		//{
-		//	// Discard the Preview ColorBandSet. 
-		//	_previewColorBandSet = null;
-
-		//	var currentJob = project.CurrentJob;
-
-		//	if (CurrentColorBandSet.Id != currentJob.ColorBandSetId)
-		//	{
-		//		Debug.WriteLine($"The project's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands. The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
-		//	}
-
-		//	if (colorBandSet == CurrentColorBandSet)
-		//	{
-		//		Debug.WriteLine($"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
-		//		return false;
-		//	}
-
-		//	var targetIterations = colorBandSet.HighCutoff;
-
-		//	if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
-		//	{
-		//		project.Add(colorBandSet);
-
-		//		Debug.WriteLine($"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {project.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
-		//		var mapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
-		//		LoadMap(project, currentJob, currentJob.Coords, colorBandSet.Id, mapCalcSettings, TransformType.IterationUpdate, null);
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine($"ProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {project.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
-		//		project.CurrentColorBandSet = colorBandSet;
-		//	}
-
-		//	return true;
-		//}
-
 		public MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
 		{
 			var currentJob = CurrentJob;
@@ -449,7 +369,11 @@ namespace MSetExplorer
 			}
 			else
 			{
- 				var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
+				//var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
+				//return mapAreaInfo;
+
+				var zoomPoint = screenArea.GetCenter();
+				var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
 				return mapAreaInfo;
 			}
 		}
@@ -543,22 +467,6 @@ namespace MSetExplorer
 			project.Add(job);
 
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
-		}
-
-		private MapAreaInfo2 BuildMapAreaInfo(MapAreaInfo2 currentMapAreaInfo, RectangleInt screenArea)
-		{
-			//var mapPosition = currentMapAreaInfo.Coords.Position;
-			//var samplePointDelta = currentMapAreaInfo.Subdivision.SamplePointDelta;
-			//var coords = RMapHelper.GetMapCoords(screenArea, mapPosition, samplePointDelta);
-
-			//// Use the specified canvasSize, instead of this job's current value for the CanvasSize :: Updated by DRM on 4/16
-			//var mapSize = currentMapAreaInfo.CanvasSize;
-
-			var zoomPoint = screenArea.GetCenter();
-
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
-
-			return mapAreaInfo;
 		}
 
 		[Conditional("DEBUG2")]

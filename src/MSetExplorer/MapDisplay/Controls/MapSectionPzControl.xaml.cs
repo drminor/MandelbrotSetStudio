@@ -56,10 +56,15 @@ namespace MSetExplorer
 				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
+				PanAndZoomControl1.ScrollbarVisibilityChanged += PanAndZoomControl1_ScrollbarVisibilityChanged;
+
+				//_vm.PropertyChanged += MapSectionDisplayViewModel_PropertyChanged;
+
+				_vm.JobSubmitted += MapSectionDisplayViewModel_JobSubmitted;
 
 				_outline = BuildOutline(BitmapGridControl1.Canvas);
 
-				Debug.WriteLine("The MapSectionDisplay Control is now loaded");
+				Debug.WriteLine("The MapSectionPzControl is now loaded");
 			}
 		}
 
@@ -70,6 +75,9 @@ namespace MSetExplorer
 			PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
+			PanAndZoomControl1.ScrollbarVisibilityChanged -= PanAndZoomControl1_ScrollbarVisibilityChanged;
+
+			_vm.JobSubmitted -= MapSectionDisplayViewModel_JobSubmitted;
 		}
 
 		#endregion
@@ -79,12 +87,6 @@ namespace MSetExplorer
 		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
 			CheckForStaleContentOffset(e.ContentOffset);
-
-			// TODO: Consider adding this to the IContentScaler interface
-
-			// Now the PanAndZoomControl updates the content control's ContentViewportSize property.
-			//BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
-
 			Debug.Assert(BitmapGridControl1.ContentViewportSize == e.ContentViewportSize, "MapSectionPzControl - code behind is handling the PanAndZoomControl's ViewportChanged and the BitmapGridControl's ContentViewportSize does not match the upddated PanAndZoomControl's ContentViewportSize.");
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
@@ -93,8 +95,8 @@ namespace MSetExplorer
 
 		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
-			_ = _vm.MoveTo(displayPosition);
+			var contentOffset = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
+			_ = _vm.MoveTo(contentOffset);
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
@@ -107,10 +109,31 @@ namespace MSetExplorer
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
+		private void PanAndZoomControl1_ScrollbarVisibilityChanged(object? sender, EventArgs e)
+		{
+			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
+		}
+
+
+		private void MapSectionDisplayViewModel_JobSubmitted(object? sender, EventArgs e)
+		{
+			PanAndZoomControl1.SetPositionAndZoom(_vm.DisplayPosition, _vm.DisplayZoom);
+		}
+
+		//private void MapSectionDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
+		//	if (e.PropertyName == "DisplayPosition")
+		//	{
+		//		PanAndZoomControl1.SetHorizontalOffset(_vm.DisplayPosition.X);
+		//		PanAndZoomControl1.SetVerticalOffset(_vm.DisplayPosition.Y);
+		//	}
+		//}
+
 		#endregion
 
 		#region Private Methods
 
+		// TODO: Consider moving this to the MapSectionDisplayControl and/or using the PanAndZoomControl's _contentScaler.TranslateTransform
 		private void CenterContent(SizeDbl unscaledExtent, SizeDbl viewportSize, double contentScale)
 		{
 			// The display area is a Vector + Size specfing the bounding box of the contents in screen coordinates,

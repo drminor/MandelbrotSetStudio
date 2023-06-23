@@ -4,7 +4,6 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows.Input;
 
 namespace MSetExplorer
 {
@@ -50,7 +49,6 @@ namespace MSetExplorer
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
-			//ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
 			CbshDisplayViewModel = cbshDisplayViewModel;
 		}
 
@@ -66,7 +64,6 @@ namespace MSetExplorer
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
-		//public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 		public ICbshDisplayViewModel CbshDisplayViewModel { get; }
 
 		public ViewModelFactory ViewModelFactory => _viewModelFactory;
@@ -211,16 +208,19 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
+			// TODO: Only update the MapCoordsViewModel if the Map Coordinate Window is visible.
 			if (e.IsPreview)
 			{
 				// Calculate new Coords for preview
 
-				//// TODO: After testing is complete, uncomment-out this code.
-				//var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
-				//if (mapAreaInfo != null)
-				//{
-				//	MapCoordsViewModel.Preview(mapAreaInfo);
-				//}
+				// TODO: After testing is complete, uncomment-out this code.
+				var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
+				if (mapAreaInfo != null)
+				{
+					var displaySize = MapDisplayViewModel.ViewportSize;
+					var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize.Round());
+					MapCoordsViewModel.Preview(mapAreaInfoV1);
+				}
 			}
 			else
 			{

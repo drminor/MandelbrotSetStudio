@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:MSetExplorer"
         d:DataContext="{d:DesignInstance Type=local:PosterDesignerViewModel}"        
         mc:Ignorable="d"
-        Title="Designer Window" Width="993" Height="608">
+        Title="Designer Window" Width="1580" Height="1190">
 
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.PosterSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />

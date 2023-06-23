@@ -12,7 +12,7 @@ namespace ProjectRepo.Entities
 		ObjectId SourceJobId,
 		ObjectId CurrentJobId, 
 
-		VectorIntRecord DisplayPosition,
+		VectorDblRecord DisplayPosition,
 		double DisplayZoom,
 
 		DateTime DateCreatedUtc,

@@ -116,14 +116,6 @@ namespace MSetExplorer
 
 		private void PosterDesignerWindow_Closing(object? sender, CancelEventArgs e)
 		{
-			//_vm.PosterViewModel.DisplayPosition = new VectorDbl
-			//	(
-			//		_vm.MapDisplayViewModel.HorizontalPosition,
-			//		_vm.MapDisplayViewModel.VerticalPosition
-			//	).Round();
-
-			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition.Round();
-
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
 			{
@@ -183,16 +175,6 @@ namespace MSetExplorer
 
 		private void CloseOrExit(OnCloseBehavior onCloseBehavior)
 		{
-			//_vm.PosterViewModel.DisplayPosition = new VectorDbl
-			//	(
-			//		_vm.MapDisplayViewModel.HorizontalPosition,
-			//		_vm.MapDisplayViewModel.VerticalPosition
-			//	)
-			//	.Round();
-
-			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition.Round();
-
-
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
 			{
@@ -230,14 +212,6 @@ namespace MSetExplorer
 		// Open
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
-			//_vm.PosterViewModel.DisplayPosition = new VectorDbl
-			//(
-			//	_vm.MapDisplayViewModel.HorizontalPosition,
-			//	_vm.MapDisplayViewModel.VerticalPosition
-			//).Round();
-
-			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition.Round();
-
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResultP.ChangesSaved)
 			{
@@ -273,14 +247,8 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			//_vm.MapDisplayViewModel.HorizontalPosition
-
-			//_vm.PosterViewModel.DisplayPosition = new VectorDbl(
-			//	_vm.MapDisplayViewModel.HorizontalPosition, 
-			//	_vm.MapDisplayViewModel.VerticalPosition).Round();
-
-			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition.Round();
-
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition;
+			_vm.PosterViewModel.DisplayZoom = _vm.MapDisplayViewModel.DisplayZoom;
 
 			if (!_vm.PosterViewModel.PosterSave())
 			{
@@ -307,12 +275,15 @@ namespace MSetExplorer
 				return;
 			}
 
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition;
+			_vm.PosterViewModel.DisplayZoom = _vm.MapDisplayViewModel.DisplayZoom;
+
 			if (!ColorsCommitUpdates().HasValue)
 			{
 				return;
 			}
 
-			_ = SavePosterInteractive(curPoster);
+			_ = PosterSaveInteractive(curPoster);
 		}
 
 		// Project Save As
@@ -641,13 +612,15 @@ namespace MSetExplorer
 		// TOOD: Update the PosterSaveChanges logic to match the ProjectSaveChanges logic.
 		private SaveResultP PosterSaveChanges()
 		{
-			// TODO: Replace with PosterDesigner viewmodel
 			var curProject = _vm.PosterViewModel.CurrentPoster;
 
 			if (curProject == null)
 			{
 				return SaveResultP.NoChangesToSave;
 			}
+
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition;
+			_vm.PosterViewModel.DisplayZoom = _vm.MapDisplayViewModel.DisplayZoom;
 
 			if (!_vm.PosterViewModel.CurrentPosterIsDirty)
 			{
@@ -693,7 +666,7 @@ namespace MSetExplorer
 				else
 				{
 					// The Project is not on-file, must ask user for the name and optional description.
-					triResult = SavePosterInteractive(curProject);
+					triResult = PosterSaveInteractive(curProject);
 					if (triResult == true)
 					{
 						return SaveResultP.ChangesSaved;
@@ -714,7 +687,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool? SavePosterInteractive(Poster curPoster)
+		private bool? PosterSaveInteractive(Poster curPoster)
 		{
 			bool? result;
 
@@ -735,8 +708,6 @@ namespace MSetExplorer
 					{
 						result = true;
 					}
-
-
 				}
 				else
 				{
@@ -878,7 +849,7 @@ namespace MSetExplorer
 
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
-			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(mapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
+			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 

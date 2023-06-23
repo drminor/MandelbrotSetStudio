@@ -70,7 +70,7 @@ namespace MSetExplorer
 			_displayPosition = new VectorDbl();
 
 			_displayZoom = 1;
-			_minimumDisplayZoom = 0.0625;
+			_minimumDisplayZoom = 0.015625; // 0.0625;
 		}
 
 		#endregion
@@ -79,6 +79,8 @@ namespace MSetExplorer
 
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		public event EventHandler<int>? DisplayJobCompleted;
+
+		public event EventHandler? JobSubmitted;
 
 		#endregion
 
@@ -202,45 +204,26 @@ namespace MSetExplorer
 		public VectorDbl DisplayPosition
 		{
 			get => _displayPosition;
-			private set => _displayPosition = value;
+			private set
+			{
+				if (ScreenTypeHelper.IsVectorDblChanged(_displayPosition, value))
+				{
+					_displayPosition = value;
+					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPosition));
+				}
+			}
 		}
 
 		public double DisplayZoom
 		{
-			/*		TODO: Update MapSectionDisplayControl with logic that 
-					sets the DisplayZoom and MinimumDisplayZoom properties.
-					Verify that the PanAndZoom control bindings work and these updates propagate to the 
-					MapDisplayZoom control via the ZoomSlider 'mediator.' 
-			*/
-
 			get => _displayZoom;
 			private set
 			{
+				var previousValue = _displayZoom;
 				_displayZoom = value;
-				//// Value between 0.0 and 1.0
-				//// 1.0 presents 1 map "pixel" to 1 screen pixel
-				//// 0.5 presents 2 map "pixels" to 1 screen pixel
 
-				////if (Math.Abs(value - DisplayZoom) > 0.001)
-				////{
-				////	_displayZoom = Math.Min(MaximumDisplayZoom, value);
-
-				////	MapDisplayViewModel.DisplayZoom = _displayZoom;
-
-				////	Debug.WriteLine($"The DispZoom is {DisplayZoom}.");
-				////	OnPropertyChanged(nameof(IMapScrollViewModel.DisplayZoom));
-				////}
-
-				//var previousValue = _displayZoom;
-
-				//_displayZoom = Math.Min(MaximumDisplayZoom, value);
-
-				////MapDisplayViewModel.DisplayZoom = _displayZoom;
-
-				//Debug.WriteLine($"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
-				//// Log: Add Spacer
-				//Debug.WriteLine("\n\n");
-				//OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
+				Debug.WriteLine($"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+				OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
 			}
 		}
 
@@ -250,22 +233,7 @@ namespace MSetExplorer
 			private set
 			{
 				_minimumDisplayZoom = value;
-				//if (Math.Abs(value - _maximumDisplayZoom) > 0.001)
-				//{
-				//	_maximumDisplayZoom = value;
-
-				//	if (DisplayZoom > MaximumDisplayZoom)
-				//	{
-				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being adjusted to be less or equal to this.");
-				//		DisplayZoom = MaximumDisplayZoom;
-				//	}
-				//	else
-				//	{
-				//		Debug.WriteLine($"The MapSectionViewModel's MaxDispZoom is being updated to {MaximumDisplayZoom} and the DisplayZoom is being kept the same.");
-				//	}
-
-				//	OnPropertyChanged(nameof(IMapDisplayViewModel.MaximumDisplayZoom));
-				//}
+				OnPropertyChanged(nameof(IMapDisplayViewModel.MinimumDisplayZoom));
 			}
 		}
 
@@ -277,15 +245,37 @@ namespace MSetExplorer
 
 		public int? SubmitJob(AreaColorAndCalcSettings newValue)
 		{
-			return SubmitJob(newValue, posterSize: null);
+			CheckBlockSize(newValue);
+
+			lock (_paintLocker)
+			{
+				CheckVPSize();
+
+				var lastSectionWasIncluded = false;
+				int? newJobNumber = null;
+
+				// Unbounded
+				BoundedMapArea = null;
+
+				if (newValue != CurrentAreaColorAndCalcSettings)
+				{
+					var previousValue = CurrentAreaColorAndCalcSettings;
+					if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue);
+
+					CurrentAreaColorAndCalcSettings = newValue;
+					newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
+				}
+
+				if (newJobNumber.HasValue && lastSectionWasIncluded)
+				{
+					DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+				}
+
+				return newJobNumber;
+			}
 		}
 
-		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize)
-		{
-			return SubmitJob(newValue, (SizeInt?) posterSize);
-		}
-
-		private int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt? posterSize)
+		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize, VectorDbl displayPosition, double displayZoom)
 		{
 			CheckBlockSize(newValue);
 
@@ -296,38 +286,36 @@ namespace MSetExplorer
 				var lastSectionWasIncluded = false;
 				int? newJobNumber = null;
 
-				if (posterSize != null)
+				// Bounded
+
+				// Save the MapAreaInfo for the entire poster.
+				BoundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize);
+
+				MinimumDisplayZoom = GetMinDisplayZoom(new SizeDbl(posterSize), ViewportSize);
+
+				if (displayZoom < MinimumDisplayZoom)
 				{
-					// Bounded
-
-					// Save the MapAreaInfo for the entire poster.
-					BoundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize.Value, ViewportSize);
-					
-					var previousValue = CurrentAreaColorAndCalcSettings;
-					if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue);
-
-					// Get the MapAreaInfo subset for the upper, left-hand corner.
-					var displayPosition = new VectorDbl(0, 0);
-					var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
-
-					newJobNumber = DiscardAndLoad(newValue, mapAreaInfo2Subset, out lastSectionWasIncluded);
-
-					CurrentAreaColorAndCalcSettings = newValue;
+					DisplayZoom = MinimumDisplayZoom;
 				}
 				else
 				{
-					// Unbounded
-					BoundedMapArea = null;
-
-					if (newValue != CurrentAreaColorAndCalcSettings)
-					{
-						var previousValue = CurrentAreaColorAndCalcSettings;
-						if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue);
-
-						CurrentAreaColorAndCalcSettings = newValue;
-						newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
-					}
+					DisplayZoom = displayZoom;
 				}
+
+				// TODO: Add bindings so that the PanAndZoomControl can have its OffsetX and OffsetY properties set.
+
+				var previousValue = CurrentAreaColorAndCalcSettings;
+				if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue);
+
+				// Get the MapAreaInfo subset for the upper, left-hand corner.
+				var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
+
+				newJobNumber = DiscardAndLoad(newValue, mapAreaInfo2Subset, out lastSectionWasIncluded);
+
+				CurrentAreaColorAndCalcSettings = newValue;
+				DisplayPosition = displayPosition;
+
+				JobSubmitted?.Invoke(this, new EventArgs());
 
 				if (newJobNumber.HasValue && lastSectionWasIncluded)
 				{
@@ -336,6 +324,18 @@ namespace MSetExplorer
 
 				return newJobNumber;
 			}
+		}
+
+		private double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewport)
+		{
+			// Calculate the Zoom level at which the poster fills the screen, leaving a 20 pixel border.
+
+			var framedViewPort = viewport.Sub(new SizeDbl(20));
+			var minScale = framedViewPort.Divide(extent);
+			var result = Math.Min(minScale.Width, minScale.Height);
+			result = Math.Min(result, 1);
+
+			return result;
 		}
 
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
@@ -357,6 +357,7 @@ namespace MSetExplorer
 
 				var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(contentScale);
 
+				DisplayZoom = contentScale;
 				newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, contentViewportSize, contentOffset, baseScale);
 			}
 
@@ -387,7 +388,7 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		public int? MoveTo(VectorDbl displayPosition)
+		public int? MoveTo(VectorDbl contentOffset)
 		{
 			if (BoundedMapArea == null || UnscaledExtent.IsNearZero())
 			{
@@ -403,13 +404,13 @@ namespace MSetExplorer
 			}
 
 			// Get the MapAreaInfo subset for the given display position
-			var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
+			var mapAreaInfo2Subset = BoundedMapArea.GetView(contentOffset);
 
-			ReportMove(BoundedMapArea, displayPosition/*, BoundedMapArea.ContentScale, BoundedMapArea.BaseScale*/);
+			ReportMove(BoundedMapArea, contentOffset/*, BoundedMapArea.ContentScale, BoundedMapArea.BaseScale*/);
 
 			var newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
 
-			DisplayPosition = displayPosition;
+			DisplayPosition = contentOffset;
 
 			if (newJobNumber.HasValue && lastSectionWasIncluded)
 			{

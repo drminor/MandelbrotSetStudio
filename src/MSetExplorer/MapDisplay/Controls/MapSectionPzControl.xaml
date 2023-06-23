@@ -14,7 +14,7 @@
                 x:Name="ScrollViewer1"
                 CanContentScroll="True"
                 VerticalScrollBarVisibility="Hidden"
-                HorizontalScrollBarVisibility="Visible"
+                HorizontalScrollBarVisibility="Auto"
                 >
 
                 <local:PanAndZoomControl

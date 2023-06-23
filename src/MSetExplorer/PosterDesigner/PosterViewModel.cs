@@ -18,11 +18,6 @@ namespace MSetExplorer
 
 		private readonly MapJobHelper _mapJobHelper;
 
-		//private readonly SizeInt _blockSize;
-
-		//private SizeDbl _canvasSize;
-		//private SizeDbl _logicalDisplaySize;
-
 		private Poster? _currentPoster;
 
 		AreaColorAndCalcSettings _areaColorAndCalcSettings;
@@ -38,12 +33,6 @@ namespace MSetExplorer
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
 
-			//_blockSize = blockSize;
-
-			//var subdivisionProvider = new SubdivisonProvider(mapSectionAdapter);
-			//_oldJobHelper = new MapJobHelper(subdivisionProvider, 10, blockSize);
-
-			//_canvasSize = new SizeDbl();
 			_currentPoster = null;
 			_areaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
 			_previewColorBandSet = null;
@@ -128,7 +117,8 @@ namespace MSetExplorer
 					{
 						currentPoster.CurrentJob = value;
 
-						currentPoster.DisplayPosition = new VectorInt();
+						// TODO: Avoid reseting the DisplayPosition when creating a new Poster Job
+						currentPoster.DisplayPosition = new VectorDbl();
 						currentPoster.DisplayZoom = 1;
 
 						UpdateCurrentAreaColorAndCalcSettings(currentPoster);
@@ -255,9 +245,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorInt DisplayPosition
+		public VectorDbl DisplayPosition
 		{
-			get => CurrentPoster?.DisplayPosition ?? new VectorInt();
+			get => CurrentPoster?.DisplayPosition ?? new VectorDbl();
 			set
 			{
 				var curPoster = CurrentPoster;
@@ -416,6 +406,8 @@ namespace MSetExplorer
 
 
 			Debug.WriteLine($"Saving Poster: The CurrentJobId is {poster.CurrentJobId}.");
+
+			poster.MarkAsDirty();
 
 			var result = JobOwnerHelper.Save(poster, _projectAdapter);
 			

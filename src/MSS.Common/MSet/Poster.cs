@@ -33,21 +33,21 @@ namespace MSS.Common.MSet
 
 		#region Constructor
 
-		public Poster(string name, string? description, ObjectId sourceJobId,
-			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId
-			)
-			: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
-				  jobs, colorBandSets, currentJobId,
-				  posterSize: new SizeInt(4096), displayPosition: new VectorInt(), displayZoom: 1.0d,
-				  DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
-		{
-			OnFile = false;
-		}
+		//public Poster(string name, string? description, ObjectId sourceJobId,
+		//	List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId
+		//	)
+		//	: this(ObjectId.GenerateNewId(), name, description, sourceJobId,
+		//		  jobs, colorBandSets, currentJobId,
+		//		  posterSize: RMapConstants.DEFAULT_POSTER_SIZE, displayPosition: new VectorInt(), displayZoom: RMapConstants.DEFAULT_POSTER_DISPLAY_ZOOM,
+		//		  DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
+		//{
+		//	OnFile = false;
+		//}
 
 		public Poster(ObjectId id, string name, string? description, ObjectId sourceJobId,
 			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
 			SizeInt posterSize, 
-			VectorInt displayPosition, double displayZoom,
+			VectorDbl displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			Id = id;
@@ -177,7 +177,7 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		public VectorInt DisplayPosition { get; set; }
+		public VectorDbl DisplayPosition { get; set; }
 		public double DisplayZoom { get; set; }
 
 		public ObjectId SourceJobId { get; init; }

@@ -25,7 +25,7 @@ namespace MSetExplorer
 
 		private readonly ViewModelFactory _viewModelFactory;
 
-		public AppNavViewModel(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor	mapSectionRequestProcessor)
+		public AppNavViewModel(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_mapSectionHelper = mapSectionHelper;
 			_projectAdapter = repositoryAdapters.ProjectAdapter;
@@ -44,7 +44,7 @@ namespace MSetExplorer
 		public ExplorerViewModel GetExplorerViewModel()
 		{
 			// Project ViewModel
-			var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
+			var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
 
 			// Map Display View Model
 			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapJobHelper, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
@@ -87,7 +87,7 @@ namespace MSetExplorer
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandSetViewModel, cbshDisplayViewModel, jobTreeViewModel,
-				_mapJobHelper, _mapLoaderManager, _viewModelFactory);
+				_mapLoaderManager, _viewModelFactory);
 
 			return result;
 		}

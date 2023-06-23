@@ -786,8 +786,8 @@ namespace MSetRepo
 			}
 
 			var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id,
-					DisplayPosition: new VectorIntRecord(0, 0),
-					DisplayZoom: 1,
+					DisplayPosition: new VectorDblRecord(0, 0),
+					DisplayZoom: RMapConstants.DEFAULT_POSTER_DISPLAY_ZOOM,
 					DateCreatedUtc: DateTime.UtcNow,
 					LastSavedUtc: DateTime.UtcNow,
 					LastAccessedUtc: DateTime.UtcNow)

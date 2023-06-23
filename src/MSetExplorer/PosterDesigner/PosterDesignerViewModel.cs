@@ -11,18 +11,17 @@ namespace MSetExplorer
 {
 	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
-		private readonly MapJobHelper _mapJobHelper;
+		//private readonly MapJobHelper _mapJobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
-
 		private readonly ViewModelFactory _viewModelFactory;
 
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
-			MapJobHelper mapJobHelper, IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
+			IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
 		{
-			_mapJobHelper = mapJobHelper;
+			//_mapJobHelper = mapJobHelper;
 			_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
@@ -36,7 +35,6 @@ namespace MSetExplorer
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			//MapDisplaySize = MapDisplayViewModel.ViewportSize;
 
 			_viewModelFactory = viewModelFactory;
 
@@ -49,7 +47,6 @@ namespace MSetExplorer
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
-			//ColorBandSetHistogramViewModel = colorBandSetHistogramViewModel;
 			CbshDisplayViewModel = cbshDisplayViewModel;
 		}
 
@@ -101,10 +98,10 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public LazyMapPreviewImageProvider GetPreviewImageProvider (MapAreaInfo2 mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, SizeInt previewImagesize, Color fallbackColor)
+		public LazyMapPreviewImageProvider GetPreviewImageProvider(MapAreaInfo2 mapAreaInfo, SizeInt previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
 		{
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var result = new LazyMapPreviewImageProvider(bitmapBuilder, _mapJobHelper, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
+			var result = new LazyMapPreviewImageProvider(bitmapBuilder, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
 			return result;
 		}
 
@@ -236,7 +233,11 @@ namespace MSetExplorer
 				{
 					UpdateTheMapCoordsView(currentjob);
 					var posterSize = currentPoster.PosterSize;
-					MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize);
+
+					var displayPosition = currentPoster.DisplayPosition;
+					var displayZoom = currentPoster.DisplayZoom;
+
+					MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize, displayPosition, displayZoom);
 				}
 			}
 		}

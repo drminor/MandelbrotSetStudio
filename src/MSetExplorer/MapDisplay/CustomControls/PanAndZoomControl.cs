@@ -16,7 +16,7 @@ namespace MSetExplorer
 		#region Private Fields
 
 		public static readonly double DefaultContentScale = 1.0;
-		public static readonly double DefaultMinContentScale = 0.0625;
+		public static readonly double DefaultMinContentScale = 0.015625;
 		public static readonly double DefaultMaxContentScale = 1.0;
 
 		private bool _canHScroll = true;
@@ -40,6 +40,7 @@ namespace MSetExplorer
 		private SizeDbl _maxContentOffset = new SizeDbl();
 
 		ScrollBarVisibility _originalVerticalScrollBarVisibility;
+		ScrollBarVisibility _originalHorizontalScrollBarVisibility;
 
 		private readonly bool _useDetailedDebug;
 
@@ -62,8 +63,9 @@ namespace MSetExplorer
 			IsMouseWheelScrollingEnabled = false;
 
 			_originalVerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+			_originalHorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
 
-			_useDetailedDebug = false;
+			_useDetailedDebug = true;
 		}
 
 		#endregion
@@ -75,6 +77,8 @@ namespace MSetExplorer
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
 		public event EventHandler? ContentScaleChanged;
+
+		public event EventHandler? ScrollbarVisibilityChanged;
 
 		#endregion
 
@@ -282,6 +286,7 @@ namespace MSetExplorer
 
 			if (!value.Diff(previousValue).IsNearZero())
 			{
+				//var maxContentOffsetBefore = c._maxContentOffset;
 
 				try
 				{
@@ -289,6 +294,7 @@ namespace MSetExplorer
 
 					c.ContentOffsetX = 0;
 					c.ContentOffsetY = 0;
+
 
 					if (c.ContentScale != 1.0)
 					{
@@ -306,9 +312,65 @@ namespace MSetExplorer
 					c._disableContentOffsetChangeEvents = false;
 				}
 
-				//c.ViewportChanged?.Invoke(c, new ScaledImageViewInfo(new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentViewportSize, c.ContentScale));
+
+				//if (c.ContentBeCenteredIsChanged(maxContentOffsetBefore, c._maxContentOffset))
+				//{
+				//	c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
+				//}
+
+				//var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+				//c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
+
+				c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
 			}
 		}
+
+		public void SetPositionAndZoom(VectorDbl displayPosition, double contentScale) 
+		{
+			try
+			{
+				_disableContentOffsetChangeEvents = true;
+
+				ContentScale = contentScale;
+
+				ContentOffsetX = displayPosition.X;
+				ContentOffsetY = displayPosition.Y;
+
+				UpdateContentViewportSize();
+
+				InvalidateScrollInfo();
+			}
+			finally
+			{
+				_disableContentOffsetChangeEvents = false;
+			}
+
+			//var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			//c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
+
+			ScrollbarVisibilityChanged?.Invoke(this, new EventArgs());
+		}
+
+
+		//private bool ContentBeCenteredIsChanged(SizeDbl maxContentOffsetBefore, SizeDbl maxContentOffsetAfter)
+		//{
+		//	// TODO: Return this info, and let the method that is calling UpdateContentViewportSize determine if the RaiseScrollBarVisibility event should be raised.
+		//	if (maxContentOffsetAfter != maxContentOffsetBefore)
+		//	{
+		//		Debug.WriteLineIf(_useDetailedDebug, $"MaxContentOffset was updated. Prev: {maxContentOffsetBefore}, New: {maxContentOffsetAfter}.");
+
+		//		var result = maxContentOffsetBefore.Width == 0 && maxContentOffsetAfter.Width != 0
+		//			|| maxContentOffsetBefore.Width != 0 && maxContentOffsetAfter.Width == 0
+		//			|| maxContentOffsetBefore.Height == 0 && maxContentOffsetAfter.Height != 0
+		//			|| maxContentOffsetBefore.Height != 0 && maxContentOffsetAfter.Height == 0;
+
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		return false;
+		//	}
+		//}
 
 		#endregion
 
@@ -568,8 +630,6 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"WARNING: Not using the current value for ContentScale.");
 			}
-
-			var maxContentOffsetBeforeUpdate = _maxContentOffset;
 			
 			ContentViewportSize = ViewportSize.Divide(ContentScale);
 
@@ -586,20 +646,11 @@ namespace MSetExplorer
 
 			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {ContentViewportSize}, ViewportSize: {ViewportSize}, ConstrainedViewportSize: {_constrainedContentViewportSize}, ContentScale: {ContentScale}. MaxContentOffset: {_maxContentOffset}");
 
-
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
-
-			//ScrollBarDisplacement = GetScrollBarDisplacement();
+			SetHorizontalScrollBarVisibility(_maxContentOffset.Width > 0);
 
 			UpdateTranslationX();
 			UpdateTranslationY();
-
-			if (_maxContentOffset != maxContentOffsetBeforeUpdate)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"MaxContentOffset was updated. Prev: {maxContentOffsetBeforeUpdate}, New: {_maxContentOffset}.");
-			}
-
-			//InvalidateScrollInfo();
 		}
 
 		private void UpdateTranslationX()

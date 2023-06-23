@@ -10,10 +10,7 @@ namespace MSetExplorer
 	public interface IProjectViewModel
 	{
 		bool InDesignMode { get; }
-
 		event PropertyChangedEventHandler? PropertyChanged;
-
-		//SizeInt CanvasSize { get; set; }
 
 		Project? CurrentProject { get; }
 		string? CurrentProjectName { get; }
@@ -40,6 +37,7 @@ namespace MSetExplorer
 
 		// Project Methods
 		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
+
 		bool ProjectOpen(string name);
 		bool ProjectSave();
 		bool ProjectSaveAs(string name, string? description, [MaybeNullWhen(true)] out string errorText);
