@@ -6,6 +6,7 @@ namespace MSS.Types
 		Undetermined,
 		Poster,
 		Project,
-		ImageBuilder
+		ImageBuilder,
+		BitmapBuilder
 	}
 }

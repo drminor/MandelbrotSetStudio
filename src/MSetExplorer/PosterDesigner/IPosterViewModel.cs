@@ -1,6 +1,8 @@
-﻿using MSS.Common.MSet;
+﻿using MongoDB.Bson;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
@@ -41,6 +43,11 @@ namespace MSetExplorer
 		bool PosterOpen(string name);
 		bool PosterSave();
 		bool PosterSaveAs(string name, string? description, [MaybeNullWhen(true)] out string errorText);
-		void Close();
+		long PosterClose();
+
+		long DeleteMapSectionsForUnsavedJobs();
+
+		List<ObjectId> GetAllNonCurrentJobIds();
+		List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD();
 	}
 }

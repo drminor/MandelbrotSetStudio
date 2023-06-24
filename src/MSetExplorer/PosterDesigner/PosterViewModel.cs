@@ -1,11 +1,15 @@
-﻿using MSetRepo;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
+using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace MSetExplorer
 {
@@ -91,6 +95,40 @@ namespace MSetExplorer
 		public int GetGetNumberOfDirtyJobs()
 		{
 			return CurrentPoster?.GetNumberOfDirtyJobs() ?? 0;
+		}
+
+		public List<ObjectId> GetAllNonCurrentJobIds()
+		{
+			var currentProject = CurrentPoster;
+			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+			{
+				var currentJobId = currentProject.CurrentJob.Id;
+
+
+
+				var result = currentProject.GetJobs().Where(x => x.Id != currentJobId).Select(x => x.Id).ToList();
+				return result;
+			}
+			else
+			{
+				return Enumerable.Empty<ObjectId>().ToList();
+			}
+		}
+
+		public List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD()
+		{
+			var currentProject = CurrentPoster;
+			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+			{
+				var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
+
+				var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator != currentSpdWidth).Select(x => x.Id).ToList();
+				return result;
+			}
+			else
+			{
+				return Enumerable.Empty<ObjectId>().ToList();
+			}
 		}
 
 		public string? CurrentPosterName => CurrentPoster?.Name;
@@ -363,7 +401,7 @@ namespace MSetExplorer
 
 			poster.MarkAsDirty();
 
-			var result = JobOwnerHelper.Save(poster, _projectAdapter);
+			var result = JobOwnerHelper.SavePoster(poster, _projectAdapter);
 			
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterIsDirty));
 			OnPropertyChanged(nameof(IPosterViewModel.CurrentPosterOnFile));
@@ -397,7 +435,7 @@ namespace MSetExplorer
 
 			var poster = (Poster)JobOwnerHelper.CreateCopy(currentPoster, name, description, _projectAdapter, _mapSectionAdapter);
 
-			if (JobOwnerHelper.Save(currentPoster, _projectAdapter))
+			if (JobOwnerHelper.SavePoster(currentPoster, _projectAdapter))
 			{
 				CurrentPoster = poster;
 				errorText = null;
@@ -410,9 +448,34 @@ namespace MSetExplorer
 			}
 		}
 
-		public void Close()
+		public long PosterClose()
 		{
-			CurrentPoster = null;
+			long result = 0;
+
+			if (CurrentPoster != null)
+			{
+				var jobIdsToRemoveMapSections = GetAllJobIdsNotMatchingCurrentSPD();
+
+				result = JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Poster, _mapSectionAdapter);
+
+				CurrentPoster = null;
+			}
+
+			return result;
+		}
+
+		public long DeleteMapSectionsForUnsavedJobs()
+		{
+			var currentPoster = CurrentPoster;
+
+			if (currentPoster == null)
+			{
+				throw new InvalidOperationException("The project must be non-null.");
+			}
+
+			var result = JobOwnerHelper.DeleteMapSectionsForUnsavedJobs(currentPoster, _mapSectionAdapter);
+
+			return result;
 		}
 
 		#endregion

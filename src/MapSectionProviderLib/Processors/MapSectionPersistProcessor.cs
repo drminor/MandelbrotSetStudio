@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
@@ -39,11 +40,11 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		internal void AddWork(MapSectionPersistRequest mapSectionWorkItem)
+		internal void AddWork(MapSectionPersistRequest mapSectionWorkItem, CancellationToken ct)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
-				_workQueue.Add(mapSectionWorkItem);
+				_workQueue.Add(mapSectionWorkItem, ct);
 			}
 			else
 			{
@@ -70,8 +71,14 @@ namespace MapSectionProviderLib
 
 			try
 			{
-				_ =_workQueueProcessor.Wait(120 * 1000);
-				Debug.WriteLine("The MapSectionPersistProcesssor's WorkQueueProcessor Task has completed.");
+				if (_workQueueProcessor.Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
+				{
+					Debug.WriteLine("The MapSectionPersistProcesssor's WorkQueueProcessor Task has completed.");
+				}
+				else
+				{
+					Debug.WriteLine($"The MapSectionPersistProcesssor's WorkQueueProcessor Task did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
+				}
 			}
 			catch
 			{ }
@@ -186,11 +193,6 @@ namespace MapSectionProviderLib
 					{
 						_workQueue.Dispose();
 					}
-
-					//if (_workQueueProcessor != null)
-					//{
-					//	_workQueueProcessor.Dispose();
-					//}
 				}
 
 				disposedValue = true;

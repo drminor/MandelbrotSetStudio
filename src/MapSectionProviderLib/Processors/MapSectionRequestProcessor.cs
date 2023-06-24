@@ -220,8 +220,14 @@ namespace MapSectionProviderLib
 			{
 				for (var i = 0; i < _workQueueProcessors.Length; i++)
 				{
-					_ = _workQueueProcessors[i].Wait(120 * 1000);
-					Debug.WriteLine($"The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} has completed.");
+					if (_workQueueProcessors[i].Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
+					{
+						Debug.WriteLine($"The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} has completed.");
+					}
+					else
+					{
+						Debug.WriteLine($"The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
+					}
 				}
 			}
 			catch { }
@@ -252,7 +258,7 @@ namespace MapSectionProviderLib
 					if (IsJobCancelled(mapSectionWorkRequest.JobId))
 					{
 						mapSectionWorkRequest.Response = _mapSectionHelper.CreateEmptyMapSection(mapSectionWorkRequest.Request, mapSectionWorkRequest.JobId, isCancelled: true);
-						_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
+						_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 					}
 					else
 					{
@@ -271,7 +277,7 @@ namespace MapSectionProviderLib
 								var mapSection = CreateMapSection(mapSectionWorkRequest.Request, mapSectionResponse.MapSectionVectors, mapSectionWorkRequest.JobId);
 
 								mapSectionWorkRequest.Response = mapSection;
-								_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
+								_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 							}
 						}
 					}
@@ -310,7 +316,7 @@ namespace MapSectionProviderLib
 					mapSectionResponse.OwnerId = request.OwnerId;
 					mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
-					PersistJobMapSectionRecord(request, mapSectionResponse);
+					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
 
 					return mapSectionResponse;
 				}
@@ -418,6 +424,9 @@ namespace MapSectionProviderLib
 
 		private void QueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor)
 		{
+			// Use our CancellationSource when adding work
+			var ct = _cts.Token;
+
 			if (mapSectionWorkRequest == null)
 			{
 				throw new ArgumentNullException(nameof(mapSectionWorkRequest), "The mapSectionWorkRequest must be non-null.");
@@ -439,7 +448,7 @@ namespace MapSectionProviderLib
 					_pendingRequests.Add(mapSectionWorkRequest);
 
 					var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, HandleGeneratedResponse);
-					mapSectionGeneratorProcessor.AddWork(mapSectionGenerateRequest);
+					mapSectionGeneratorProcessor.AddWork(mapSectionGenerateRequest, ct);
 				}
 			}
 			finally
@@ -477,17 +486,20 @@ namespace MapSectionProviderLib
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse)
 		{
+			// Use our CancellationSource when adding work
+			var ct = _cts.Token;
+
 			_requestsLock.EnterUpgradeableReadLock();
 
 			if (UseRepo)
 			{
-				PersistResponse(mapSectionWorkRequest.Request, mapSectionResponse);
+				PersistResponse(mapSectionWorkRequest.Request, mapSectionResponse, ct);
 			}
 
 			try
 			{
 				mapSectionWorkRequest.Response = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse, mapSectionWorkRequest.JobId);
-				_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest);
+				_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 
 				var pendingRequests = GetPendingRequests(mapSectionWorkRequest.Request);
 				//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkRequest.Request}");
@@ -513,7 +525,7 @@ namespace MapSectionProviderLib
 					if (workItem != mapSectionWorkRequest)
 					{
 						workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, workItem.JobId);
-						_mapSectionResponseProcessor.AddWork(workItem);
+						_mapSectionResponseProcessor.AddWork(workItem, ct);
 					}
 				}
 			}
@@ -562,13 +574,13 @@ namespace MapSectionProviderLib
 			return mapSectionResult;
 		}
 
-		private void PersistJobMapSectionRecord(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		private void PersistJobMapSectionRecord(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
 		{
 			var copyWithNoVectors = mapSectionResponse.CreateCopySansVectors();
-			_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, copyWithNoVectors, onlyInsertJobMapSectionRecord: true));
+			_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, copyWithNoVectors, onlyInsertJobMapSectionRecord: true), ct);
 		}
 
-		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
 		{
 			//if (!mapSectionResponse.RequestCancelled)
 			//{
@@ -592,7 +604,7 @@ namespace MapSectionProviderLib
 			if (!mapSectionResponse.RequestCancelled || SAVE_THE_ZVALUES)
 			{
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
+				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse), ct);
 			}
 		}
 
@@ -717,14 +729,6 @@ namespace MapSectionProviderLib
 					{
 						_workQueue.Dispose();
 					}
-
-					//for(var i = 0; i < _workQueueProcessors.Length; i++)
-					//{
-					//	if (_workQueueProcessors[i] != null)
-					//	{
-					//		_workQueueProcessors[i].Dispose();
-					//	}
-					//}
 
 					if (_mapSectionGeneratorProcessor != null)
 					{

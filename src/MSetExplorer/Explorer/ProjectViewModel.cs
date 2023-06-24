@@ -231,7 +231,7 @@ namespace MSetExplorer
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSave found the CurrentJob to be empty.");
 
-			var result = JobOwnerHelper.Save(currentProject, _projectAdapter);
+			var result = JobOwnerHelper.SaveProject(currentProject, _projectAdapter);
 
 			Debug.Assert(!CurrentJob.IsEmpty, "ProjectSave has set the CurrentJob to be empty.");
 
@@ -268,7 +268,7 @@ namespace MSetExplorer
 
 			var project = (Project)JobOwnerHelper.CreateCopy(currentProject, name, description, _projectAdapter, _mapSectionAdapter);
 
-			if (JobOwnerHelper.Save(project, _projectAdapter))
+			if (JobOwnerHelper.SaveProject(project, _projectAdapter))
 			{
 				CurrentProject = project;
 				errorText = null;
@@ -328,7 +328,7 @@ namespace MSetExplorer
 			if (poster != null)
 			{
 				// This will update the OwnerId of the new Job and ColorBandSet and commit the updates to the repo.
-				_ = JobOwnerHelper.Save(poster, _projectAdapter);
+				_ = JobOwnerHelper.SavePoster(poster, _projectAdapter);
 			}
 
 			return poster != null;

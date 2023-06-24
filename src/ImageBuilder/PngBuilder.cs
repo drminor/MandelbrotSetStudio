@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace ImageBuilder
 {
-	public class PngBuilder
+	public class PngBuilder : IImageBuilder
 	{
 		private const double VALUE_FACTOR = 10000;
 
@@ -47,7 +47,7 @@ namespace ImageBuilder
 			};
 
 			PngImage? pngImage = null;
-			
+
 			try
 			{
 				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
@@ -197,7 +197,7 @@ namespace ImageBuilder
 
 			_currentResponses = new Dictionary<int, MapSection?>();
 
-			foreach(var response in mapSectionResponses)
+			foreach (var response in mapSectionResponses)
 			{
 				_currentResponses.Add(response.ScreenPosition.X, response);
 			}

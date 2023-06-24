@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ImageBuilder
 {
-	public class BitmapBuilder
+	public class BitmapBuilder : IBitmapBuilder
 	{
 		private const double VALUE_FACTOR = 10000;
 
@@ -26,7 +26,7 @@ namespace ImageBuilder
 			_mapLoaderManager = mapLoaderManager;
 
 			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount:2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount: 2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionHelper = new MapSectionBuilder(mapSectionVectorsPool, mapSectionZVectorsPool);
 
 			_currentJobNumber = null;
@@ -67,7 +67,7 @@ namespace ImageBuilder
 					if (ct.IsCancellationRequested || blocksForThisRow.Count == 0)
 					{
 						return null;
-					} 
+					}
 
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);

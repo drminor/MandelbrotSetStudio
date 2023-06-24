@@ -116,16 +116,52 @@ namespace MSetExplorer
 
 		private void PosterDesignerWindow_Closing(object? sender, CancelEventArgs e)
 		{
-			var saveResult = PosterSaveChanges();
-			if (saveResult == SaveResultP.ChangesSaved)
+			if (!CloseTheCurrentPoster())
 			{
-				_ = MessageBox.Show("Changes Saved");
-			}
-			else if (saveResult == SaveResultP.SaveCancelled)
-			{
-				// user cancelled.
 				e.Cancel = true;
 			}
+		}
+
+		private bool CloseTheCurrentPoster()
+		{
+			string introMessage = string.Empty;
+			var mapSectionsDeletedUnsavedJobs = 0L;
+
+			var saveResult = PosterSaveChanges();
+			if (saveResult == SaveResult.ChangesSaved)
+			{
+				introMessage = "Changes Saved. ";
+			}
+			else if (saveResult == SaveResult.NotSavingChanges)
+			{
+				introMessage = "Changes Not Saved. ";
+				mapSectionsDeletedUnsavedJobs = _vm.PosterViewModel.DeleteMapSectionsForUnsavedJobs();
+			}
+			else if (saveResult == SaveResult.SaveCancelled)
+			{
+				// user cancelled.
+				return false;
+			}
+
+			var mapSectionsDeletedUnusedJobs = _vm.PosterViewModel.PosterClose();
+
+			if (mapSectionsDeletedUnsavedJobs > 0 && mapSectionsDeletedUnusedJobs > 0)
+			{
+				_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved and {mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
+			}
+			else
+			{
+				if (mapSectionsDeletedUnsavedJobs > 0)
+				{
+					_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved were deleted.");
+				}
+				if (mapSectionsDeletedUnusedJobs > 0)
+				{
+					_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
+				}
+			}
+
+			return true;
 		}
 
 		#endregion
@@ -175,18 +211,11 @@ namespace MSetExplorer
 
 		private void CloseOrExit(OnCloseBehavior onCloseBehavior)
 		{
-			var saveResult = PosterSaveChanges();
-			if (saveResult == SaveResultP.ChangesSaved)
+			if (!CloseTheCurrentPoster())
 			{
-				_ = MessageBox.Show("Changes Saved");
-			}
-			else if (saveResult == SaveResultP.SaveCancelled)
-			{
-				// user cancelled.
 				return;
 			}
 
-			_vm.PosterViewModel.Close();
 			AppNavRequestResponse.OnCloseBehavior = onCloseBehavior;
 			Close();
 		}
@@ -212,14 +241,8 @@ namespace MSetExplorer
 		// Open
 		private void OpenButton_Click(object sender, RoutedEventArgs e)
 		{
-			var saveResult = PosterSaveChanges();
-			if (saveResult == SaveResultP.ChangesSaved)
+			if (!CloseTheCurrentPoster())
 			{
-				_ = MessageBox.Show("Changes Saved");
-			}
-			else if (saveResult == SaveResultP.SaveCancelled)
-			{
-				// user cancelled.
 				return;
 			}
 
@@ -607,18 +630,22 @@ namespace MSetExplorer
 
 		#region Private Methods - Poster
 
-		// TOOD: Update the PosterSaveChanges logic to match the ProjectSaveChanges logic.
-		private SaveResultP PosterSaveChanges()
+		private SaveResult PosterSaveChanges()
 		{
 			var curProject = _vm.PosterViewModel.CurrentPoster;
 
 			if (curProject == null)
 			{
-				return SaveResultP.NoChangesToSave;
+				return SaveResult.NoChangesToSave;
 			}
 
 			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition;
 			_vm.PosterViewModel.DisplayZoom = _vm.MapDisplayViewModel.DisplayZoom;
+
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return SaveResult.SaveCancelled;
+			}
 
 			if (!_vm.PosterViewModel.CurrentPosterIsDirty)
 			{
@@ -627,23 +654,16 @@ namespace MSetExplorer
 					// Silently record the new CurrentJob selection
 					if (_vm.PosterViewModel.PosterSave())
 					{
-						return SaveResultP.CurrentJobAutoSaved;
+						return SaveResult.CurrentJobAutoSaved;
 					}
 					else
 					{
-						return SaveResultP.NoChangesToSave;
+						return SaveResult.NoChangesToSave;
 					}
 				}
 
-				return SaveResultP.NoChangesToSave;
+				return SaveResult.NoChangesToSave;
 			}
-
-			if (!ColorsCommitUpdates().HasValue)
-			{
-				return SaveResultP.SaveCancelled;
-			}
-
-			//return SaveResultP.NotSavingChanges;
 
 			var triResult = PosterUserSaysSaveChanges();
 
@@ -654,11 +674,11 @@ namespace MSetExplorer
 					// The Project is on-file, just save the pending changes.
 					if (_vm.PosterViewModel.PosterSave())
 					{
-						return SaveResultP.ChangesSaved;
+						return SaveResult.ChangesSaved;
 					}
 					else
 					{
-						return SaveResultP.NoChangesToSave;
+						return SaveResult.NoChangesToSave;
 					}
 				}
 				else
@@ -667,21 +687,21 @@ namespace MSetExplorer
 					triResult = PosterSaveInteractive(curProject);
 					if (triResult == true)
 					{
-						return SaveResultP.ChangesSaved;
+						return SaveResult.ChangesSaved;
 					}
 					else
 					{
-						return SaveResultP.SaveCancelled;
+						return SaveResult.SaveCancelled;
 					}
 				}
 			}
 			else if (triResult == false)
 			{
-				return SaveResultP.NotSavingChanges;
+				return SaveResult.NotSavingChanges;
 			}
 			else
 			{
-				return SaveResultP.SaveCancelled;
+				return SaveResult.SaveCancelled;
 			}
 		}
 
@@ -1128,15 +1148,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		private enum SaveResultP
-		{
-			NoChangesToSave,
-			CurrentJobAutoSaved,
-			ChangesSaved,
-			NotSavingChanges,
-			SaveCancelled,
-		}
 
 		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
 	}

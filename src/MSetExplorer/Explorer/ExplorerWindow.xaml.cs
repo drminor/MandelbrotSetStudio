@@ -1369,15 +1369,6 @@ namespace MSetExplorer
 
 		#endregion
 
-		private enum SaveResult
-		{
-			NoChangesToSave,
-			CurrentJobAutoSaved,
-			ChangesSaved,
-			NotSavingChanges,
-			SaveCancelled,
-		}
-
 		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
 	}
 }

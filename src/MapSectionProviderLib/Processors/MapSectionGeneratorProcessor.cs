@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
@@ -61,11 +62,11 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		internal void AddWork(MapSectionGenerateRequest mapSectionWorkItem)
+		internal void AddWork(MapSectionGenerateRequest mapSectionWorkItem, CancellationToken ct)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
-				_workQueue.Add(mapSectionWorkItem);
+				_workQueue.Add(mapSectionWorkItem, ct);
 			}
 			else
 			{
@@ -130,8 +131,15 @@ namespace MapSectionProviderLib
 			{
 				for (var i = 0; i < _workQueueProcessors.Count; i++)
 				{
-					_ = _workQueueProcessors[i].Wait(120 * 1000);
-					Debug.WriteLine($"The MapSectionGeneratorProcesssor's WorkQueueProcessor Task #{i} has completed.");
+					if (_workQueueProcessors[i].Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
+					{
+						Debug.WriteLine($"The MapSectionGeneratorProcesssor's WorkQueueProcessor Task #{i} has completed.");
+					}
+					else
+					{
+						Debug.WriteLine($"The MapSectionGeneratorProcesssor's WorkQueueProcessor Task #{i} did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
+					}
+
 				}
 			}
 			catch { }
@@ -296,19 +304,6 @@ namespace MapSectionProviderLib
 					{
 						_workQueue.Dispose();
 					}
-
-					//for (var i = 0; i < _workQueueProcessors.Count; i++)
-					//{
-					//	if (_workQueueProcessors[i] != null)
-					//	{
-					//		_workQueueProcessors[i].Dispose();
-					//	}
-					//}
-
-					//if (_mapSectionPersistProcessor != null)
-					//{
-					//	_mapSectionPersistProcessor.Dispose();
-					//}
 				}
 
 				disposedValue = true;

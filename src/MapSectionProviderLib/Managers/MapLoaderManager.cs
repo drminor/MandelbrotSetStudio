@@ -106,7 +106,6 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-
 		public Task? GetTaskForJob(int jobNumber)
 		{
 			var result = DoWithReadLock(() =>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
@@ -35,11 +36,11 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		internal void AddWork(MapSectionWorkRequest mapSectionWorkItem)
+		internal void AddWork(MapSectionWorkRequest mapSectionWorkItem, CancellationToken ct)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
-				_workQueue.Add(mapSectionWorkItem);
+				_workQueue.Add(mapSectionWorkItem, ct);
 			}
 			else
 			{
@@ -79,8 +80,14 @@ namespace MapSectionProviderLib
 		{
 			try
 			{
-				_ = _workQueueProcessor.Wait(10 * 1000);
-				Debug.WriteLine("The MapSectionReponseProcesssor's WorkQueueProcessor Task has completed.");
+				if (_workQueueProcessor.Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
+				{
+					Debug.WriteLine("The MapSectionReponseProcesssor's WorkQueueProcessor Task has completed.");
+				}
+				else
+				{
+					Debug.WriteLine($"The MapSectionReponseProcesssor's WorkQueueProcessor Task did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
+				}
 			}
 			catch (Exception e) 
 			{
@@ -151,11 +158,6 @@ namespace MapSectionProviderLib
 					{
 						_workQueue.Dispose();
 					}
-
-					//if (_workQueueProcessor != null)
-					//{
-					//	_workQueueProcessor.Dispose();
-					//}
 				}
 
 				disposedValue = true;

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 
 namespace MSS.Common
 {
@@ -86,47 +87,56 @@ namespace MSS.Common
 
 		#region Save
 
-		public static bool Save(IJobOwner jobOwner, IProjectAdapter projectAdapter)
+		public static bool SaveProject(Project project, IProjectAdapter projectAdapter)
 		{
-			if (!(jobOwner.IsCurrentJobIdChanged || jobOwner.IsDirty))
+			if (!(project.IsCurrentJobIdChanged || project.IsDirty))
+			{
+				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
+				return true;
+			}
+
+			if (project.IsCurrentJobIdChanged)
+			{
+				projectAdapter.UpdateProjectCurrentJobId(project.Id, project.CurrentJob.Id);
+			}
+
+			if (project.IsDirty)
+			{
+				var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(project, projectAdapter);
+				Debug.WriteLine($"Removed {numberColorBandSetsRemoved} unused ColorBandSets.");
+
+				//projectAdapter.UpdateProjectName(jobOwner.Id, jobOwner.Name);
+				//projectAdapter.UpdateProjectDescription(jobOwner.Id, jobOwner.Description);
+
+				SaveColorBandSets(project, projectAdapter);
+				SaveJobs(project, projectAdapter);
+			}
+
+			return true;
+		}
+
+		public static bool SavePoster(Poster poster, IProjectAdapter projectAdapter)
+		{
+			if (!(poster.IsCurrentJobIdChanged || poster.IsDirty))
 			{
 				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
 				return true; // Our caller interprets false as a critical error.
 			}
 
-			if (jobOwner.IsCurrentJobIdChanged)
+			if (poster.IsCurrentJobIdChanged)
 			{
-				if (jobOwner is Project)
-				{
-					projectAdapter.UpdateProjectCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
-				}
-				else if (jobOwner is Poster) 
-				{
-					//projectAdapter.UpdatePosterMapArea(poster);
-
-					projectAdapter.UpdatePosterCurrentJobId(jobOwner.Id, jobOwner.CurrentJob.Id);
-				}
-				else
-				{
-					throw new InvalidOperationException("The JobOwner is neither a Project or a Poster");
-				}
+				projectAdapter.UpdatePosterCurrentJobId(poster.Id, poster.CurrentJob.Id);
 			}
 
-			if (jobOwner.IsDirty)
+			if (poster.IsDirty)
 			{
-				var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(jobOwner, projectAdapter);
+				var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(poster, projectAdapter);
 				Debug.WriteLine($"Removed {numberColorBandSetsRemoved} unused ColorBandSets.");
 
-				if (jobOwner is Poster poster)
-				{
-					projectAdapter.UpdatePosterMapArea(poster);
-				}
+				projectAdapter.UpdatePosterMapArea(poster);
 
-				//projectAdapter.UpdateProjectName(jobOwner.Id, jobOwner.Name);
-				//projectAdapter.UpdateProjectDescription(jobOwner.Id, jobOwner.Description);
-
-				SaveColorBandSets(jobOwner, projectAdapter);
-				SaveJobs(jobOwner, projectAdapter);
+				SaveColorBandSets(poster, projectAdapter);
+				SaveJobs(poster, projectAdapter);
 			}
 
 			return true;
@@ -227,7 +237,47 @@ namespace MSS.Common
 
 			foreach (var job in jobs)
 			{
-				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, JobOwnerType.Project);
+				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, GetJobOwnerType(jobOwner));
+				if (numberDeleted.HasValue)
+				{
+					result += numberDeleted.Value;
+				}
+			}
+
+			return result;
+		}
+
+		public static JobOwnerType GetJobOwnerType(IJobOwner jobOwner)
+		{
+			if (jobOwner is Project)
+			{
+				return JobOwnerType.Project;
+			}
+			else if (jobOwner is Poster)
+			{
+				return JobOwnerType.Poster;
+			}
+			else if (jobOwner is IImageBuilder)
+			{
+				return JobOwnerType.ImageBuilder;
+			}
+			else if (jobOwner is IBitmapBuilder)
+			{
+				return JobOwnerType.BitmapBuilder;
+			}
+			else
+			{
+				return JobOwnerType.Undetermined;
+			}
+		}
+
+		public static long DeleteMapSectionsForJobIds(IList<ObjectId> jobIds, JobOwnerType jobOwnerType, IMapSectionDeleter mapSectionDeleter)
+		{
+			var result = 0L;
+
+			foreach (var jobId in jobIds)
+			{
+				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(jobId, jobOwnerType);
 				if (numberDeleted.HasValue)
 				{
 					result += numberDeleted.Value;
