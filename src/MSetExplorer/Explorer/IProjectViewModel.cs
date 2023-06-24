@@ -33,7 +33,7 @@ namespace MSetExplorer
 
 		void UpdateMapView(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo);
 
-		MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo);
+		MapAreaInfo2 GetUpdatedMapAreaInfo(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2 currentMapAreaInfo);
 
 		// Project Methods
 		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);

@@ -134,17 +134,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private void UpdateTheMapCoordsView(Job currentJob)
-		{
-			var oldAreaInfo = MapDisplayViewModel.LastMapAreaInfo;
-
-			if (oldAreaInfo != null)
-			{
-				MapCoordsViewModel.JobId = currentJob.Id.ToString();
-				MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
-			}
-		}
-
 		private void ColorBandViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(ColorBandSetViewModel.UseEscapeVelocities))
@@ -241,6 +230,17 @@ namespace MSetExplorer
 
 					MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize, displayPosition, displayZoom);
 				}
+			}
+		}
+
+		private void UpdateTheMapCoordsView(Job currentJob)
+		{
+			var oldAreaInfo = MapDisplayViewModel.LastMapAreaInfo;
+
+			if (oldAreaInfo != null)
+			{
+				MapCoordsViewModel.JobId = currentJob.Id.ToString();
+				MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
 			}
 		}
 

@@ -187,8 +187,7 @@ namespace MSetExplorer
 						_selectedArea.Width = _defaultSelectionSize.Width;
 						_selectedArea.Height = _defaultSelectionSize.Height;
 
-						//var noSelectionRect = new RectangleInt();
-						AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, new VectorInt(), double.NegativeInfinity, isPreview: true));
+						AreaSelected?.Invoke(this, AreaSelectedEventArgs.CreateCancelPreviewInstance(TransformType.ZoomIn));
 					}
 
 					_selecting = value;
@@ -350,6 +349,8 @@ namespace MSetExplorer
 				//Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
 				_dragHasBegun = false;
 				Dragging = false;
+
+				ImageDragged?.Invoke(this, ImageDraggedEventArgs.CreateCancelPreviewInstance(TransformType.Pan));
 			}
 		}
 
@@ -495,9 +496,10 @@ namespace MSetExplorer
 					//Debug.WriteLine($"The canvas is getting a Mouse Left Button Down at {posYInverted} Contains = True.");
 
 					var area = StopSelecting();
+					var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
 
-					var (zoomPoint, factor) = GetAreaSelectedParams(area);
-					var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor: factor, isPreview: false);
+					var (zoomPoint, factor) = GetAreaSelectedParams(area, displaySize);
+					var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, area, displaySize, isPreview: false);
 					ReportFactorsVsSamplePointResolution(MapAreaInfo, eventArgs);
 
 					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}.");
@@ -523,28 +525,26 @@ namespace MSetExplorer
 			{
 				Dragging = false;
 				var offset = GetDragOffset(DragLineTerminus);
-
-				if (offset == null)
-				{
-					//Debug.WriteLine($"DragOffset is null, cannot process the DragComplete event:{offset}.");
-				}
-				else
-				{
-					ImageDragged?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset.Value));
-				}
+				ImageDragged?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset, isPreview: false));
 			}
 		}
 
 		private void Canvas_MouseLeave(object sender, MouseEventArgs e)
 		{
-			_haveMouseDown = false;
+			//_haveMouseDown = false;
 			if (Selecting)
 			{
 				_selectedArea.Visibility = Visibility.Hidden;
 			}
 
-			if (Dragging)
+			else if (Dragging)
 			{
+				if (_dragHasBegun)
+				{
+					_dragHasBegun = false;
+					Dragging = false;
+				}
+
 				_dragLine.Visibility = Visibility.Hidden;
 			}
 		}
@@ -561,20 +561,20 @@ namespace MSetExplorer
 				}
 			}
 
-			if (Dragging)
+			else if (Dragging)
 			{
 				_dragLine.Visibility = Visibility.Visible;
 
 				if (!_dragLine.Focus())
 				{
-					//Debug.WriteLine("Canvas Enter did not move the focus to the DragLine.");
+					Debug.WriteLine("Canvas Enter did not move the focus to the DragLine.");
 				}
 			}
-			else
-			{
-				_dragAnchor = e.GetPosition(relativeTo: _canvas);
-				_haveMouseDown = true;
-			}
+			//else
+			//{
+			//	_dragAnchor = e.GetPosition(relativeTo: _canvas);
+			//	_haveMouseDown = true;
+			//}
 		}
 
 		private void Activate(Point position)
@@ -615,7 +615,7 @@ namespace MSetExplorer
 		}
 
 		// Return the distance from the DragAnchor to the new mouse position.
-		private VectorInt? GetDragOffset(Point controlPos)
+		private VectorInt GetDragOffset(Point controlPos)
 		{
 			var startP = new PointDbl(_dragAnchor.X, _canvas.ActualHeight - _dragAnchor.Y);
 			var endP = new PointDbl(controlPos.X, _canvas.ActualHeight - controlPos.Y);
@@ -634,7 +634,6 @@ namespace MSetExplorer
 			var endP = new PointDbl(selectionCenter.X, selectionCenter.Y);
 
 			var vectorDbl = endP.Diff(startP);
-
 			
 			var result = vectorDbl.Round();
 
@@ -677,11 +676,14 @@ namespace MSetExplorer
 			{
 				SelectedCenterPosition = posYInverted;
 				SelectedPosition = new Point(x, y);
-				//AreaSelected?.Invoke(this, new AreaSelectedEventArgs(TransformType.ZoomIn, Area.Round(), isPreview: true));
 
-				//var (zoomPoint, factor) = GetAreaSelectedParams(Area);
-				//var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, isPreview: true);
-				//AreaSelected?.Invoke(this, eventArgs);
+				var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
+				var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
+				var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
+
+				//Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
+
+				AreaSelected?.Invoke(this, eventArgs);
 			}
 		}
 
@@ -717,11 +719,14 @@ namespace MSetExplorer
 
 			if (selectedPositionWasUpdated | selectedSizeWasUpdated)
 			{
-				var (zoomPoint, factor) = GetAreaSelectedParams(Area);
-				var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, isPreview: true);
-				//eventArgs.PerformDiagnostics = false;
+				// TODO: When invoking the AreaSelected event from the SelectionRectangle class, should we use the DisplaySize property instead of the actual canvas size.
 
-				Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
+
+				var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
+				var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
+				var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
+
+				//Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
 
 				AreaSelected?.Invoke(this, eventArgs);
 			}
@@ -729,7 +734,7 @@ namespace MSetExplorer
 			return selectedPositionWasUpdated;
 		}
 
-		private (VectorInt zoomPoint, double factor) GetAreaSelectedParams(RectangleDbl area)
+		private (VectorInt zoomPoint, double factor) GetAreaSelectedParams(RectangleDbl area, SizeDbl displaySize)
 		{
 			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
 
@@ -738,12 +743,12 @@ namespace MSetExplorer
 
 			CheckSelectedCenterPosition(selectionCenter);
 
-			Debug.Assert(area.Width > 0 && area.Height > 0, "Selection Rectangle has a zero or negative value its width or height.");
+			//var xFactor = _canvas.ActualWidth / area.Width;
+			//var yFactor = _canvas.ActualHeight / area.Height;
+			//var factor = Math.Min(xFactor, yFactor);
 
-			var xFactor = _canvas.ActualWidth / area.Width;
-			var yFactor = _canvas.ActualHeight / area.Height;
-
-			var factor = Math.Min(xFactor, yFactor);
+			var factor2D = displaySize.Divide(area.Size);
+			var factor = Math.Min(factor2D.Width, factor2D.Height);
 
 			return (zoomPoint, factor);
 		}
@@ -789,7 +794,6 @@ namespace MSetExplorer
 			//Debug.WriteLine($"The new SPD is {newPd.SamplePointDelta}.");
 		}
 
-
 		// Position the current end of the drag line
 		private void SetDragPosition(Point controlPos)
 		{
@@ -834,7 +838,10 @@ namespace MSetExplorer
 
 			if ( (dragLineTerminus - newDlt).LengthSquared > 0.05 )
 			{
-					DragLineTerminus = newDlt;
+				DragLineTerminus = newDlt;
+
+				var offset = GetDragOffset(DragLineTerminus);
+				ImageDragged?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset, isPreview: true));
 			}
 		}
 

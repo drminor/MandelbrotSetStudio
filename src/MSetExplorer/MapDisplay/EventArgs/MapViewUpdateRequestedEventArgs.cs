@@ -10,33 +10,48 @@ namespace MSetExplorer
 		public VectorInt PanAmount { get; init; }
 		public double Factor { get; init; }
 
-		public bool IsPreview { get; init; }
-
-		public RectangleInt ScreenArea { get; init; }
 		public MapAreaInfo2 CurrentMapAreaInfo { get; init; }
 
-		public MapViewUpdateRequestedEventArgs(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo, bool isPreview = false)
-		{
-			TransformType = transformType;
-			PanAmount = new VectorInt();
-			Factor = 1;
+		public RectangleDbl ScreenArea { get; init; }
+		public SizeDbl DisplaySize { get; init; }
 
-			CurrentMapAreaInfo = currentMapAreaInfo;
-			IsPreview = isPreview;
+		public bool IsPreview { get; init; }
+		public bool IsPreviewBeingCancelled { get; init; }
 
-			ScreenArea = screenArea;
-		}
-
-		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2 currentMapAreaInfo, bool isPreview = false)
+		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2 currentMapAreaInfo, bool isPreview)
 		{
 			TransformType = transformType;
 			PanAmount = panAmount;
 			Factor = factor;
-			
+
+			ScreenArea = new RectangleDbl();
+			DisplaySize = new SizeDbl();
+
 			CurrentMapAreaInfo = currentMapAreaInfo;
 			IsPreview = isPreview;
+		}
 
-			ScreenArea = new RectangleInt();
+		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, RectangleDbl screenArea, SizeDbl displaySize, MapAreaInfo2 currentMapAreaInfo, bool isPreview)
+		{
+			TransformType = transformType;
+			PanAmount = panAmount;
+			Factor = factor;
+
+			ScreenArea = screenArea;
+			DisplaySize = displaySize;
+
+			CurrentMapAreaInfo = currentMapAreaInfo;
+			IsPreview = isPreview;
+		}
+
+		public static MapViewUpdateRequestedEventArgs CreateCancelPreviewInstance(TransformType transformType)
+		{
+			var result = new MapViewUpdateRequestedEventArgs(transformType, new VectorInt(), 0.0, new MapAreaInfo2(), isPreview: true)
+			{
+				IsPreviewBeingCancelled = true
+			};
+
+			return result;
 		}
 
 	}

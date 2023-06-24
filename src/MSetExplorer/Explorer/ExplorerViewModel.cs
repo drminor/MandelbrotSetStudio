@@ -4,6 +4,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows.Input;
 
 namespace MSetExplorer
 {
@@ -210,17 +211,21 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
-			// TODO: Only update the MapCoordsViewModel if the Map Coordinate Window is visible.
 			if (e.IsPreview)
 			{
-				// Calculate new Coords for preview
-
 				if (MapCoordsIsVisible)
 				{
-					var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
-					if (mapAreaInfo != null)
+					if (e.IsPreviewBeingCancelled)
 					{
-						var displaySize = MapDisplayViewModel.ViewportSize;
+						MapCoordsViewModel.CancelPreview();
+					}
+					else
+					{
+						// Calculate new Coords for preview
+
+						var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
+						var displaySize = GetDisplaySize(e);
+
 						var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize.Round());
 						MapCoordsViewModel.Preview(mapAreaInfoV1);
 					}
@@ -230,6 +235,21 @@ namespace MSetExplorer
 			{
 				// Zoom or Pan Map Coordinates
 				ProjectViewModel.UpdateMapView(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
+			}
+		}
+
+		private SizeDbl GetDisplaySize(MapViewUpdateRequestedEventArgs e)
+		{
+			if (e.DisplaySize.Equals(SizeDbl.Zero))
+			{
+				Debug.WriteLine("WARNING: The DisplaySize is zero on the MapViewUpdateRequestedEventArgs.");
+				return MapDisplayViewModel.ViewportSize;
+			}
+			else
+			{
+				Debug.Assert(e.DisplaySize.Equals(MapDisplayViewModel.ViewportSize), "The DisplaySize property of the MapViewUpdateRequestedEventArgs is not equal to the MapDisplayViewModel's ViewportSize.");
+
+				return e.DisplaySize;
 			}
 		}
 

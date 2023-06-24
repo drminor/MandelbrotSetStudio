@@ -497,13 +497,14 @@ namespace MSetExplorer
 		}
 
 		// Always called after GetUpdatedMapAreaInfo
-		public void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo)
+		public void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize)
 		{
 			if (CurrentPoster == null)
 			{
 				return;
 			}
 
+			CurrentPoster.PosterSize = posterSize.Round();
 			_ = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
 		}
 

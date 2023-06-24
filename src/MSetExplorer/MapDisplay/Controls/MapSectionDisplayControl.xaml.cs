@@ -101,11 +101,6 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		//{
-		//	_vm.ViewportSize = e.Item2;
-		//}
-
 		private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
 			var previousValue = e.Item1;

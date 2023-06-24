@@ -207,7 +207,7 @@ namespace MSS.Types
 
 		public bool IsNearZero(double threshold = 0.1)
 		{
-			return Math.Abs(Width) < threshold && Math.Abs(Height) <threshold;
+			return Math.Abs(Width) < threshold && Math.Abs(Height) < threshold;
 		}
 
 		public RectangleDbl PlaceAtCenter(SizeDbl containerSize)

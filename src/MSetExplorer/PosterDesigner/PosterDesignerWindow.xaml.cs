@@ -302,8 +302,8 @@ namespace MSetExplorer
 
 				if (TryGetNewSizeFromUser(curPoster, out var newPosterMapAreaInfo, out var newPosterSize))
 				{
-					curPoster.PosterSize = newPosterSize.Round();
-					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo);
+					//curPoster.PosterSize = newPosterSize.Round();
+					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo, newPosterSize);
 				}
 				else
 				{
@@ -916,13 +916,13 @@ namespace MSetExplorer
 					var newPosterSize = posterSizeEditorDialog.NewMapSize;
 
 					// Update the Poster's Size
-					_vm.PosterViewModel.CurrentPoster.PosterSize = newPosterSize.Round();
+					//_vm.PosterViewModel.CurrentPoster.PosterSize = newPosterSize.Round(); -- The UpdateMapSpecs method is now updating the CurrentPoster's PosterSize.
 
 					// Get the new coordinates
 					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea);
 					
 					// Update the ViewModel with the new coordinates
-					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo);
+					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo, newPosterSize);
 
 					// Update the SizeEditor with the new coordinates.
 					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo, newPosterSize);

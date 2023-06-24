@@ -352,31 +352,56 @@ namespace MSetExplorer
 			AddNewCoordinateUpdateJob(currentProject, transformType, panAmount, factor);
 		}
 
-		public MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
+		//public MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
+		//{
+		//	var currentJob = CurrentJob;
+
+		//	if (currentJob.IsEmpty)
+		//	{
+		//		return null;
+		//	}
+
+		//	if (screenArea == new RectangleInt())
+		//	{
+		//		Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
+		//		//return MapJobHelper.GetMapAreaInfo(curJob, CanvasSize);
+		//		return currentJob.MapAreaInfo;
+		//	}
+		//	else
+		//	{
+		//		//var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
+		//		//return mapAreaInfo;
+
+		//		var zoomPoint = screenArea.GetCenter();
+		//		var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
+		//		return mapAreaInfo;
+		//	}
+		//}
+
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2 currentMapAreaInfo)
 		{
-			var currentJob = CurrentJob;
+			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "GetUpdatedMapAreaInfo received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
-			if (currentJob.IsEmpty)
-			{
-				return null;
-			}
+			CheckProvidedMapAreaInfo(currentMapAreaInfo);
 
-			if (screenArea == new RectangleInt())
-			{
-				Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
-				//return MapJobHelper.GetMapAreaInfo(curJob, CanvasSize);
-				return currentJob.MapAreaInfo;
-			}
-			else
-			{
-				//var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
-				//return mapAreaInfo;
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, panAmount, factor);
 
-				var zoomPoint = screenArea.GetCenter();
-				var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
-				return mapAreaInfo;
-			}
+			return newMapAreaInfo;
 		}
+
+		[Conditional("DEBUG2")]
+		private void CheckProvidedMapAreaInfo(MapAreaInfo2 currentMapAreaInfo)
+		{
+			var currentJob = CurrentProject?.CurrentJob;
+
+			Debug.Assert(currentJob != null && !currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
+
+			var mapAreaInfo = currentJob.MapAreaInfo;
+
+			Debug.Assert(currentMapAreaInfo.Equals(mapAreaInfo), "The provided MapAreaInfo is not the same as the Current Project's Curernt Job's MapAreaInfo.");
+		}
+
+
 
 		public bool GoBack(bool skipPanJobs)
 		{
@@ -414,7 +439,7 @@ namespace MSetExplorer
 			// Calculate the new Map Coordinates 
 			var mapAreaInfo = currentJob.MapAreaInfo;
 
-			MapAreaInfo2? newMapAreaInfo;
+			MapAreaInfo2 newMapAreaInfo;
 
 			if (transformType == TransformType.ZoomIn)
 			{

@@ -498,12 +498,11 @@ namespace MSetExplorer
 		{
 			if (CurrentAreaColorAndCalcSettings != null)
 			{
-				//if (!e.IsPreview)
-				//{
-				//	Debug.WriteLine("Here");
-				//}
+				var eventArgs = e.IsPreviewBeingCancelled
+					? MapViewUpdateRequestedEventArgs.CreateCancelPreviewInstance(e.TransformType)
+					: new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, e.PanAmount, e.Factor, e.ScreenArea, e.DisplaySize, CurrentAreaColorAndCalcSettings.MapAreaInfo, e.IsPreview);
 
-				MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, e.PanAmount, e.Factor, CurrentAreaColorAndCalcSettings.MapAreaInfo, e.IsPreview));
+				MapViewUpdateRequested?.Invoke(this, eventArgs);
 			}
 		}
 
@@ -511,11 +510,21 @@ namespace MSetExplorer
 		{
 			if (CurrentAreaColorAndCalcSettings != null)
 			{
-				var dragOffset = e.DragOffset;
+				MapViewUpdateRequestedEventArgs eventArgs;
 
-				// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
-				var panAmount = dragOffset.Invert();
-				MapViewUpdateRequested?.Invoke(this, new MapViewUpdateRequestedEventArgs(TransformType.Pan, panAmount, 1, CurrentAreaColorAndCalcSettings.MapAreaInfo));
+				if (e.IsPreviewBeingCancelled)
+				{
+					eventArgs = MapViewUpdateRequestedEventArgs.CreateCancelPreviewInstance(e.TransformType);
+				}
+				else
+				{
+					// If the user has dragged the existing image to the right, then we need to move the map coordinates to the left.
+					var panAmount = e.DragOffset.Invert();
+
+					eventArgs = new MapViewUpdateRequestedEventArgs(TransformType.Pan, panAmount, 1, CurrentAreaColorAndCalcSettings.MapAreaInfo, e.IsPreview);
+				}
+
+				MapViewUpdateRequested?.Invoke(this, eventArgs);
 			}
 		}
 

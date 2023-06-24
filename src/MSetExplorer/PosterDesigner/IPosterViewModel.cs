@@ -29,7 +29,7 @@ namespace MSetExplorer
 		VectorDbl DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }
 
-		void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo);
+		void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize);
 
 		void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo);
 

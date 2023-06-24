@@ -307,6 +307,11 @@ namespace MSetExplorer
 			UpdateCoords(mapAreaInfo);
 		}
 
+		public void CancelPreview()
+		{
+			UpdateCoords(CurrentMapAreaInfo);
+		}
+
 		public string GetStringValues()
 		{
 			var sb = new StringBuilder();
