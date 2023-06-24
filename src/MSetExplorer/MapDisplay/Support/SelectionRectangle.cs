@@ -35,12 +35,12 @@ namespace MSetExplorer
 		private readonly Line _dragLine;
 
 		private bool _selecting;
-		private bool _dragging;
+		//private bool _dragging;
 
 		private Point _dragAnchor;
 		private bool _haveMouseDown;
 
-		private bool _dragHasBegun;
+		//private bool _dragHasBegun;
 
 		#endregion
 
@@ -48,6 +48,8 @@ namespace MSetExplorer
 
 		public SelectionRectangle(Canvas canvas, SizeDbl displaySize, SizeInt blockSize)
 		{
+			_dragState = DragState.None;
+
 			_canvas = canvas;
 			_displaySize = displaySize;
 			_blockSize = blockSize;
@@ -195,28 +197,58 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool Dragging
+		private DragState _dragState;
+		private DragState DragState
 		{
-			get => _dragging;
-
+			get => _dragState;
 			set
 			{
-				if (_dragging != value)
+				if (_dragState != value)
 				{
-					if (value)
+					if (value == DragState.None)
+					{
+						_dragLine.Visibility = Visibility.Hidden;
+					}
+					else if (value == DragState.Begun)
 					{
 						_dragLine.Visibility = Visibility.Visible;
 						_dragLine.Focus();
 					}
 					else
 					{
-						_dragLine.Visibility = Visibility.Hidden;
+						_dragLine.Visibility = Visibility.Visible;
+
+						// TODO: Check This -- is this needed?>
+						_dragLine.Focus();
 					}
 
-					_dragging = value;
+					_dragState = value;
 				}
 			}
 		}
+
+		//private bool Dragging
+		//{
+		//	get => _dragging;
+
+		//	set
+		//	{
+		//		if (_dragging != value)
+		//		{
+		//			if (value)
+		//			{
+		//				_dragLine.Visibility = Visibility.Visible;
+		//				_dragLine.Focus();
+		//			}
+		//			else
+		//			{
+		//				_dragLine.Visibility = Visibility.Hidden;
+		//			}
+
+		//			_dragging = value;
+		//		}
+		//	}
+		//}
 
 		private Point SelectedCenterPosition { get; set; }
 
@@ -338,7 +370,8 @@ namespace MSetExplorer
 
 		private void DragLine_KeyUp(object sender, KeyEventArgs e)
 		{
-			if (!Dragging)
+			if (DragState == DragState.None)
+			//if (!Dragging) 
 			{
 				//Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
 				return;
@@ -347,8 +380,10 @@ namespace MSetExplorer
 			if (e.Key == Key.Escape)
 			{
 				//Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
-				_dragHasBegun = false;
-				Dragging = false;
+				//_dragHasBegun = false;
+				//Dragging = false;
+
+				DragState = DragState.None;
 
 				ImageDragged?.Invoke(this, ImageDraggedEventArgs.CreateCancelPreviewInstance(TransformType.Pan));
 			}
@@ -401,7 +436,9 @@ namespace MSetExplorer
 		private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
 			_haveMouseDown = true;
-			if (!Dragging)
+			//if (!Dragging)
+
+			if (DragState == DragState.None)
 			{
 				_dragAnchor = e.GetPosition(relativeTo: _canvas);
 			}
@@ -430,24 +467,60 @@ namespace MSetExplorer
 
 		private void HandleDragMove(MouseEventArgs e)
 		{
-			if (IsEnabled && _haveMouseDown && (!Dragging) && e.LeftButton == MouseButtonState.Pressed)
+			if (!IsEnabled)
 			{
-				var controlPos = e.GetPosition(relativeTo: _canvas);
-				var dist = _dragAnchor - controlPos;
-				if (Math.Abs(dist.Length) > DRAG_TRIGGER_DIST)
-				{
-					_dragLine.X1 = _dragAnchor.X;
-					_dragLine.Y1 = _dragAnchor.Y;
-					_dragLine.X2 = _dragAnchor.X;
-					_dragLine.Y2 = _dragAnchor.Y;
-
-					Dragging = true;
-					_dragHasBegun = true;
-					_dragLine.Focus();
-				}
+				return;
 			}
 
-			if (Dragging)
+			//if (Dragging)
+			//{
+			//	var controlPos = e.GetPosition(relativeTo: _canvas);
+			//	SetDragPosition(controlPos);
+			//}
+			//else
+			//{
+			//	if (_haveMouseDown && e.LeftButton == MouseButtonState.Pressed)
+			//	{
+			//		var controlPos = e.GetPosition(relativeTo: _canvas);
+			//		var dist = _dragAnchor - controlPos;
+
+			//		if (Math.Abs(dist.Length) > DRAG_TRIGGER_DIST)
+			//		{
+			//			_dragLine.X1 = _dragAnchor.X;
+			//			_dragLine.Y1 = _dragAnchor.Y;
+			//			_dragLine.X2 = _dragAnchor.X;
+			//			_dragLine.Y2 = _dragAnchor.Y;
+
+			//			Dragging = true;
+			//			_dragHasBegun = true;
+			//			_haveMouseDown = false;
+			//			_dragLine.Focus();
+			//		}
+			//	}
+			//}
+
+
+			if (DragState == DragState.None)
+			{
+				if (_haveMouseDown && e.LeftButton == MouseButtonState.Pressed)
+				{
+					var controlPos = e.GetPosition(relativeTo: _canvas);
+					var dist = _dragAnchor - controlPos;
+
+					if (Math.Abs(dist.Length) > DRAG_TRIGGER_DIST)
+					{
+						_dragLine.X1 = _dragAnchor.X;
+						_dragLine.Y1 = _dragAnchor.Y;
+						_dragLine.X2 = _dragAnchor.X;
+						_dragLine.Y2 = _dragAnchor.Y;
+
+						DragState = DragState.Begun;
+						_haveMouseDown = false;
+						_dragLine.Focus();
+					}
+				}
+			}
+			else
 			{
 				var controlPos = e.GetPosition(relativeTo: _canvas);
 				SetDragPosition(controlPos);
@@ -464,16 +537,30 @@ namespace MSetExplorer
 
 			//Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a mouse down event = {_haveMouseDown}, IsDragging = {Dragging}, Selecting = {Selecting}");
 
-			if (Dragging)
-			{
-				HandleDragLine(e);
-			}
-			else
+			//if (Dragging)
+			//{
+			//	HandleDragLine(e);
+			//}
+			//else
+			//{
+			//	if (_haveMouseDown)
+			//	{
+			//		_haveMouseDown = false;
+			//		HandleSelectionRect(e);
+			//	}
+			//}
+
+			if (DragState == DragState.None)
 			{
 				if (_haveMouseDown)
 				{
+					_haveMouseDown = false;
 					HandleSelectionRect(e);
 				}
+			}
+			else
+			{
+				HandleDragLine(e);
 			}
 		}
 
@@ -517,13 +604,25 @@ namespace MSetExplorer
 		{
 			var controlPos = e.GetPosition(relativeTo: _canvas);
 
-			if (_dragHasBegun)
+			//if (_dragHasBegun)
+			//{
+			//	_dragHasBegun = false;
+			//}
+			//else
+			//{
+			//	Dragging = false;
+			//	var offset = GetDragOffset(DragLineTerminus);
+			//	ImageDragged?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset, isPreview: false));
+			//}
+
+
+			if (DragState == DragState.Begun)
 			{
-				_dragHasBegun = false;
+				DragState = DragState.InProcess;
 			}
 			else
 			{
-				Dragging = false;
+				DragState = DragState.None;
 				var offset = GetDragOffset(DragLineTerminus);
 				ImageDragged?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset, isPreview: false));
 			}
@@ -537,14 +636,25 @@ namespace MSetExplorer
 				_selectedArea.Visibility = Visibility.Hidden;
 			}
 
-			else if (Dragging)
-			{
-				if (_dragHasBegun)
-				{
-					_dragHasBegun = false;
-					Dragging = false;
-				}
+			//else if (Dragging)
+			//{
+			//	if (_dragHasBegun)
+			//	{
+			//		_dragHasBegun = false;
+			//		Dragging = false;
+			//	}
 
+			//	_dragLine.Visibility = Visibility.Hidden;
+			//}
+
+			else if (DragState == DragState.Begun)
+			{
+				DragState = DragState.None;
+				_dragLine.Visibility = Visibility.Hidden;
+			}
+
+			else if (DragState == DragState.InProcess)
+			{
 				_dragLine.Visibility = Visibility.Hidden;
 			}
 		}
@@ -557,24 +667,34 @@ namespace MSetExplorer
 
 				if (!_selectedArea.Focus())
 				{
-					//Debug.WriteLine("Canvas Enter did not move the focus to the SelectedRectangle.");
+					Debug.WriteLine("WARNING: Canvas Enter did not move the focus to the SelectedRectangle.");
 				}
 			}
 
-			else if (Dragging)
+			//else if (Dragging)
+			//{
+			//	_dragLine.Visibility = Visibility.Visible;
+
+			//	if (!_dragLine.Focus())
+			//	{
+			//		Debug.WriteLine("WARNING: Canvas Enter did not move the focus to the DragLine.");
+			//	}
+			//}
+			////else
+			////{
+			////	_dragAnchor = e.GetPosition(relativeTo: _canvas);
+			////	_haveMouseDown = true;
+			////}
+			
+			else if (DragState != DragState.None)
 			{
 				_dragLine.Visibility = Visibility.Visible;
 
 				if (!_dragLine.Focus())
 				{
-					Debug.WriteLine("Canvas Enter did not move the focus to the DragLine.");
+					Debug.WriteLine("WARNING: Canvas Enter did not move the focus to the DragLine.");
 				}
 			}
-			//else
-			//{
-			//	_dragAnchor = e.GetPosition(relativeTo: _canvas);
-			//	_haveMouseDown = true;
-			//}
 		}
 
 		private void Activate(Point position)
@@ -584,7 +704,7 @@ namespace MSetExplorer
 
 			if (!_selectedArea.Focus())
 			{
-				//Debug.WriteLine("Activate did not move the focus to the SelectedRectangle");
+				Debug.WriteLine("WARNING: Activate did not move the focus to the SelectedRectangle");
 			}
 		}
 
@@ -797,10 +917,10 @@ namespace MSetExplorer
 		// Position the current end of the drag line
 		private void SetDragPosition(Point controlPos)
 		{
-			if (!_haveMouseDown)
-			{
-				return;
-			}
+			//if (!_haveMouseDown)
+			//{
+			//	return;
+			//}
 
 			var dist = controlPos - _dragAnchor;
 
@@ -1072,5 +1192,12 @@ namespace MSetExplorer
 		}
 
 		#endregion
+	}
+
+	internal enum DragState
+	{
+		None,
+		Begun,
+		InProcess
 	}
 }
