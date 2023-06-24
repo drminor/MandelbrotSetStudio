@@ -940,7 +940,7 @@ namespace MSetRepo
 
 		private IPosterInfo GetPosterInfoInternal(PosterRecord posterRec, JobReaderWriter jobReaderWriter)
 		{
-			Debug.WriteLine($"Retrieving PosterInfo. Poster: {posterRec.Id}, Current Job: {posterRec.CurrentJobId}");
+			//Debug.WriteLine($"Retrieving PosterInfo. Poster: {posterRec.Id}, Current Job: {posterRec.CurrentJobId}");
 			var jobRec = jobReaderWriter.Get(posterRec.CurrentJobId);
 
 			PosterInfo result;
@@ -951,7 +951,7 @@ namespace MSetRepo
 			{
 				//throw new InvalidOperationException($"Poster with ID: {posterRec.CurrentJobId} could not be found in the repository.");
 
-				Debug.WriteLine($"WARNING: Could not find Job with Id: {posterRec.CurrentJobId} for Poster with ID: {posterRec.Id}.");
+				Debug.WriteLine($"WARNING: Could not find Job with Id: {posterRec.CurrentJobId} for Poster Name: {posterRec.Name} and ID: {posterRec.Id}.");
 
 				lastSavedUtc = posterRec.LastSavedUtc;
 			}

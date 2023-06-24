@@ -62,7 +62,7 @@ namespace MSetExplorer
 			_originalVerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
 			_originalHorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
 
-			_useDetailedDebug = true;
+			_useDetailedDebug = false;
 		}
 
 		#endregion
@@ -332,6 +332,9 @@ namespace MSetExplorer
 			}
 
 			ScrollbarVisibilityChanged?.Invoke(this, new EventArgs());
+
+			//var scaledImageViewInfo = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
+			//ViewportChanged?.Invoke(this, scaledImageViewInfo);
 		}
 
 		#endregion

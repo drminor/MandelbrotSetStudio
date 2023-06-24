@@ -23,12 +23,16 @@ namespace MSetExplorer
 		AreaColorAndCalcSettings _areaColorAndCalcSettings;
 		private ColorBandSet? _previewColorBandSet;
 
+		private readonly bool _useDetailedDebug;
+
 		#endregion
 
 		#region Constructor
 
-		public PosterViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper, SizeInt blockSize)
+		public PosterViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
 		{
+			_useDetailedDebug = false;
+
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
@@ -64,24 +68,11 @@ namespace MSetExplorer
 
 					if (_currentPoster != null)
 					{
-						//var dispPos = _currentPoster.DisplayPosition;
-						//OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
-						//OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
-
-						// Setting the PosterSize and DisplayZoom can update the DisplayPosition. Use the value read from file.
-						//_currentPoster.DisplayPosition = dispPos;
-						//OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
-
-						//var currentJob = _currentPoster.CurrentJob;
-						//var currentColorBandSet = _currentPoster.CurrentColorBandSet;
-						//CurrentAreaColorAndCalcSettings = CreateDisplayJob(currentJob, currentColorBandSet, DisplayPosition, LogicalDisplaySize.Round(), _currentPoster.DisplayZoom);
-
 						if (CurrentPoster != null && !CurrentPoster.CurrentJob.IsEmpty)
 						{
 							var currentJob = CurrentPoster.CurrentJob;
-							Debug.WriteLine("The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentPoster is being updated.");
+							Debug.WriteLineIf(_useDetailedDebug, "The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentPoster is being updated.");
 
-							//CurrentAreaColorAndCalcSettings = GetUpdatedMapView(CurrentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
 							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, currentJob.MapAreaInfo, CurrentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
 							CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 						}
@@ -125,7 +116,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						Debug.WriteLine($"Not setting the CurrentJob {value.Id}, the CurrentJob already has this value.");
+						Debug.WriteLineIf(_useDetailedDebug, $"Not setting the CurrentJob {value.Id}, the CurrentJob already has this value.");
 					}
 				}
 				else
@@ -141,8 +132,7 @@ namespace MSetExplorer
 			{
 				var currentJob = currentPoster.CurrentJob;
 
-				Debug.WriteLine("The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentJob is being updated.");
-				//CurrentAreaColorAndCalcSettings = GetUpdatedMapView(currentPoster, DisplayPosition, LogicalDisplaySize, DisplayZoom);
+				Debug.WriteLineIf(_useDetailedDebug, "The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentJob is being updated.");
 
 				var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, currentJob.MapAreaInfo, currentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
 				CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
@@ -190,7 +180,7 @@ namespace MSetExplorer
 
 					if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
 					{
-						Debug.WriteLine($"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 
 						currentProject.Add(value);
 
@@ -203,22 +193,6 @@ namespace MSetExplorer
 					}
 
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
-				}
-			}
-		}
-
-		[Conditional("DEBUG2")]
-		private void CheckCurrentProject(IJobOwner jobOwner)
-		{
-			if (jobOwner.CurrentJob.IsEmpty)
-			{
-				Debug.WriteLine($"The CurrentJob IsEmpty = { CurrentJob.IsEmpty}.");
-			}
-			else
-			{
-				if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
-				{
-					Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
 				}
 			}
 		}
@@ -255,27 +229,13 @@ namespace MSetExplorer
 				{
 					if (value != DisplayPosition)
 					{
-						//Debug.WriteLine($"The PosterViewModel's DisplayPosition is being updated to {value}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"The PosterViewModel's DisplayPosition is being updated to {value}.");
 						curPoster.DisplayPosition = value;
-
-						//var currentJob = curPoster.CurrentJob;
-						//var currentColorBandSet = curPoster.CurrentColorBandSet;
-
-						//var msg = $"The PosterViewModel DisplayPosition setter is setting CurrentAreaColorAndCalcSettings to " +
-						//	$"DisplayPosition: {value}, LogicalDisplaySize: {LogicalDisplaySize}, Zoom: {DisplayZoom}.";
-						//Debug.WriteLine(msg);
-
-						//CurrentAreaColorAndCalcSettings = CreateDisplayJob(currentJob, currentColorBandSet, value, LogicalDisplaySize.Round(), DisplayZoom);
 
 						//OnPropertyChanged(nameof(IPosterViewModel.DisplayPosition));
 					}
 				}
-				else
-				{
-					//var msg = $"The PosterViewModel DisplayPosition setter is setting CurrentAreaColorAndCalcSettings to NULL -- The CurrentPoster is Null.";
-					//Debug.WriteLine(msg);
-					//CurrentAreaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
-				}
+
 			}
 		}
 
@@ -290,7 +250,7 @@ namespace MSetExplorer
 					if (Math.Abs(value - DisplayZoom) > 0.001)
 					{
 						curPoster.DisplayZoom = value;
-						//Debug.WriteLine($"The PosterViewModel's DisplayZoom is being updated to {value}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"The PosterViewModel's DisplayZoom is being updated to {value}.");
 						//OnPropertyChanged(nameof(IPosterViewModel.DisplayZoom));
 					}
 				}
@@ -332,19 +292,13 @@ namespace MSetExplorer
 
 			else if (e.PropertyName == nameof(Poster.CurrentColorBandSet))
 			{
-				Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentColorBandSet as the Poster's ColorBandSet is being updated.");
+				Debug.WriteLineIf(_useDetailedDebug, "The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentColorBandSet as the Poster's ColorBandSet is being updated.");
 				OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 			}
 
 			else if (e.PropertyName == nameof(Poster.CurrentJob))
 			{
-				//if (CurrentPoster != null)
-				//{
-				//	CurrentJob = CurrentPoster.CurrentJob;
-				//}
-
-				//Debug.WriteLine("The PosterViewModel is raising PropertyChanged: IPosterViewModel.CurrentJob as the Poster's CurrentJob is being updated.");
-				//OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
+				Debug.WriteLineIf(_useDetailedDebug, "The PosterViewModel is updating the CurrentAreaColorAndCalcSettings as the Poster's CurrentJob is being updated.");
 
 				if (CurrentPoster != null)
 				{
@@ -365,7 +319,7 @@ namespace MSetExplorer
 
 		public bool PosterOpen(string name)
 		{
-			Debug.WriteLine($"Opening Poster: {name}.");
+			Debug.WriteLine($"\n\nOpening Poster: {name}.\n");
 			if (_projectAdapter.TryGetPoster(name, out var poster))
 			{
 				CurrentPoster = poster;
@@ -405,7 +359,7 @@ namespace MSetExplorer
 			Debug.Assert(!poster.CurrentJob.IsEmpty, "Poster Savefound the CurrentJob to be empty.");
 
 
-			Debug.WriteLine($"Saving Poster: The CurrentJobId is {poster.CurrentJobId}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Saving Poster: The CurrentJobId is {poster.CurrentJobId}.");
 
 			poster.MarkAsDirty();
 
@@ -486,7 +440,7 @@ namespace MSetExplorer
 
 			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
 
-			Debug.WriteLine($"PosterViewModel GetUpdatedMapAreaInfo:" +
+			Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel GetUpdatedMapAreaInfo:" +
 				$"\n CurrentPosterSize: {currentPosterSize}, NewPosterSize: {newPosterSize}, ScreenArea: {screenArea}." +
 				$"\n XFactor: {xFactor}, YFactor: {yFactor}, Factor: {factor}." +
 				$"\n NewCenter: {newCenter}, OldCenter: {oldCenter}, ZoomPoint: {zoomPoint}." +
@@ -603,14 +557,29 @@ namespace MSetExplorer
 			var transformType = TransformType.IterationUpdate;
 			var newScreenArea = new RectangleInt();
 
-			//var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, mapSize, coords, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea, _blockSize);
 			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
 
-			Debug.WriteLine($"Adding Poster Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			Debug.WriteLine($"Adding Poster Job with target iterations: {targetIterations}.");
 
 			poster.Add(job);
 
 			return job;
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckCurrentProject(IJobOwner jobOwner)
+		{
+			if (jobOwner.CurrentJob.IsEmpty)
+			{
+				Debug.WriteLine($"The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
+			}
+			else
+			{
+				if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
+				{
+					Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
+				}
+			}
 		}
 
 		#endregion

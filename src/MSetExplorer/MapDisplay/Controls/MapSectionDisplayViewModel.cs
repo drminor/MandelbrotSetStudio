@@ -145,7 +145,7 @@ namespace MSetExplorer
 			{
 				// This is called by the BitmapGrid, to let us know that we need to raise the OnPropertyChanged event.
 
-				if (_useDetailedDebug) Debug.WriteLine($"The MapSectionViewModel's ImageSource is being set to value: {value}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's ImageSource is being set to value: {value}.");
 				OnPropertyChanged(nameof(IMapDisplayViewModel.ImageSource));
 			}
 		}
@@ -222,7 +222,7 @@ namespace MSetExplorer
 				var previousValue = _displayZoom;
 				_displayZoom = value;
 
-				Debug.WriteLine($"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
 				OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
 			}
 		}
@@ -372,17 +372,17 @@ namespace MSetExplorer
 			{
 				if (newValue.Width <= 2 || newValue.Height <= 2)
 				{
-					Debug.WriteLine($"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
 				}
 				else
 				{
-					Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
+					Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
 					newJobNumber = HandleDisplaySizeUpdate(newValue);
 				}
 			}
 			else
 			{
-				Debug.WriteLine($"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate.");
+				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate.");
 			}
 
 			return newJobNumber;
@@ -430,49 +430,49 @@ namespace MSetExplorer
 			}
 		}
 
-		public int? RestartLastJob()
-		{
-			int? result;
-			bool lastSectionWasIncluded;
+		//public int? RestartLastJob()
+		//{
+		//	int? result;
+		//	bool lastSectionWasIncluded;
 
-			lock (_paintLocker)
-			{
-				var currentJob = CurrentAreaColorAndCalcSettings;
+		//	lock (_paintLocker)
+		//	{
+		//		var currentJob = CurrentAreaColorAndCalcSettings;
 
-				if (currentJob != null && !currentJob.IsEmpty)
-				{
-					var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, ViewportSize);
-					var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, currentJob.MapCalcSettings);
-					var newMapSections = _mapLoaderManager.Push(currentJob.JobId, currentJob.JobOwnerType, screenAreaInfo, currentJob.MapCalcSettings, sectionsRequired, MapSectionReady, 
-						out var newJobNumber, out var mapSectionsPendingGeneration);
+		//		if (currentJob != null && !currentJob.IsEmpty)
+		//		{
+		//			var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, ViewportSize);
+		//			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, currentJob.MapCalcSettings);
+		//			var newMapSections = _mapLoaderManager.Push(currentJob.JobId, currentJob.JobOwnerType, screenAreaInfo, currentJob.MapCalcSettings, sectionsRequired, MapSectionReady, 
+		//				out var newJobNumber, out var mapSectionsPendingGeneration);
 
-					AddPendingSections(mapSectionsPendingGeneration);
+		//			AddPendingSections(mapSectionsPendingGeneration);
 
-					Debug.WriteLine($"Restarting paused job: received {newMapSections.Count}, {mapSectionsPendingGeneration.Count} are being generated.");
+		//			Debug.WriteLine($"Restarting paused job: received {newMapSections.Count}, {mapSectionsPendingGeneration.Count} are being generated.");
 
-					result = newJobNumber;
+		//			result = newJobNumber;
 					
-					//lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
+		//			//lastSectionWasIncluded = _bitmapGrid.DrawSections(newMapSections);
 
-					_bitmapGrid.DrawSections(newMapSections);
-					lastSectionWasIncluded = mapSectionsPendingGeneration.Count == 0;
-				}
-				else
-				{
-					Debug.WriteLine($"RestartLastJob was called but the current job is null or empty.");
+		//			_bitmapGrid.DrawSections(newMapSections);
+		//			lastSectionWasIncluded = mapSectionsPendingGeneration.Count == 0;
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"RestartLastJob was called but the current job is null or empty.");
 
-					lastSectionWasIncluded = false;
-					result = null;
-				}
-			}
+		//			lastSectionWasIncluded = false;
+		//			result = null;
+		//		}
+		//	}
 
-			if (result.HasValue && lastSectionWasIncluded)
-			{
-				DisplayJobCompleted?.Invoke(this, result.Value);
-			}
+		//	if (result.HasValue && lastSectionWasIncluded)
+		//	{
+		//		DisplayJobCompleted?.Invoke(this, result.Value);
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private void AddPendingSections(IList<MapSection> pendingSections)
 		{
@@ -665,7 +665,7 @@ namespace MSetExplorer
 
 			if (sectionsToLoad.Count == 0 && sectionsToRemove.Count == 0)
 			{
-				Debug.WriteLine("ReuseAndLoad is performing a 'simple' update.");
+				Debug.WriteLineIf(_useDetailedDebug, "ReuseAndLoad is performing a 'simple' update.");
 				_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
 				ImageOffset = new VectorDbl(screenAreaInfo.CanvasControlOffset);
 				ColorBandSet = newJob.ColorBandSet;
@@ -708,7 +708,7 @@ namespace MSetExplorer
 
 				var numberOfRequestsCancelled = sectionsToCancel.Count;
 				numberOfSectionsReturned += sectionsToRemove.Count - numberOfRequestsCancelled;
-				Debug.WriteLine($"Reusing Loaded Sections. Requesting {sectionsToLoad.Count} sections, Cancelling {numberOfRequestsCancelled} pending requests, returned {numberOfSectionsReturned} sections. " +
+				Debug.WriteLineIf(_useDetailedDebug, $"Reusing Loaded Sections. Requesting {sectionsToLoad.Count} sections, Cancelling {numberOfRequestsCancelled} pending requests, returned {numberOfSectionsReturned} sections. " +
 					$"Keeping {MapSections.Count} sections. The MapSection Pool has: {_mapSectionHelper.MapSectionsVectorsInPool} sections.");
 
 				if (sectionsToLoad.Count > 0)
@@ -718,7 +718,7 @@ namespace MSetExplorer
 
 					AddPendingSections(mapSectionsPendingGeneration);
 
-					Debug.WriteLine($"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapSectionsPendingGeneration.Count} are being generated.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapSectionsPendingGeneration.Count} are being generated.");
 
 					_bitmapGrid.DrawSections(newMapSections);
 
@@ -751,7 +751,7 @@ namespace MSetExplorer
 
 			AddPendingSections(mapSectionsPendingGeneration);
 
-			Debug.WriteLine($"DiscardAndLoad: {newMapSections.Count} were found in the repo, {mapSectionsPendingGeneration.Count} are being generated.");
+			Debug.WriteLineIf(_useDetailedDebug, $"DiscardAndLoad: {newMapSections.Count} were found in the repo, {mapSectionsPendingGeneration.Count} are being generated.");
 
 			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
 
@@ -783,7 +783,7 @@ namespace MSetExplorer
 		private void AddJobNumber(int jobNumber)
 		{
 			ActiveJobNumbers.Add(jobNumber);
-			Debug.WriteLine($"Adding jobNumber: {jobNumber}. There are now {ActiveJobNumbers.Count} active jobs.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Adding jobNumber: {jobNumber}. There are now {ActiveJobNumbers.Count} active jobs.");
 		}
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings newJob)

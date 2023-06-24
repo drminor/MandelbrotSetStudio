@@ -20,12 +20,17 @@ namespace MSetExplorer
 		//private Rectangle _outline;
 		private ICbshDisplayViewModel _vm;
 
+		private readonly bool _useDetailedDebug;
+
+
 		#endregion
 
 		#region Constructor
 
 		public ColorBandSetHistogramControl()
 		{
+			_useDetailedDebug = false;
+
 			_vm = (CbshDisplayViewModel)DataContext;
 			//_outline = new Rectangle();
 
@@ -41,7 +46,7 @@ namespace MSetExplorer
 			if (_vm != null)
 			{
 				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
-				Debug.WriteLine($"CBSH_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.CanvasSize}, ViewPort: {_vm.ViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CBSH_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.CanvasSize}, ViewPort: {_vm.ViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
 			}
 		}
 
@@ -140,7 +145,7 @@ namespace MSetExplorer
 
 				//Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {scaledDisplayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. ");
 
-				Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {displayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. " +
+				Debug.WriteLineIf(_useDetailedDebug, $"Scaled Extent is smaller than viewportSize. ScaledExtent: {displayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. " +
 					$"Clip Position: {scaledDisplayArea.Position}. Clip Size: {scaledDisplayArea.Size}.");
 			}
 			else

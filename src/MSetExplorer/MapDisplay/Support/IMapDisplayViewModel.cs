@@ -37,7 +37,7 @@ namespace MSetExplorer
 		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize, VectorDbl displayPosition, double displayZoom);
 
 		void CancelJob();
-		int? RestartLastJob();
+		//int? RestartLastJob();
 		void ClearDisplay();
 
 		SizeDbl UnscaledExtent { get; }

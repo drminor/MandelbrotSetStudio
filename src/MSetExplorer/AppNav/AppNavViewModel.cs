@@ -69,7 +69,7 @@ namespace MSetExplorer
 		public PosterDesignerViewModel GetPosterDesignerViewModel()
 		{
 			// Poster ViewModel
-			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper, RMapConstants.BLOCK_SIZE);
+			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
 
 			// Map Display View Model
 			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapJobHelper, _mapSectionHelper, RMapConstants.BLOCK_SIZE);
@@ -122,14 +122,6 @@ namespace MSetExplorer
 
 			var result = new PerformanceHarnessMainWinViewModel(_mapSectionRequestProcessor, _mapJobHelper, _mapSectionHelper);
 			return result;
-		}
-
-		private long? DropRecentMapSections(IMapSectionDeleter mapSectionDeleter)
-		{
-			var lastSaved = DateTime.Parse("2022-05-29");
-			var result = mapSectionDeleter.DeleteMapSectionsCreatedSince(lastSaved, overrideRecentGuard: true);
-			return result;
-
 		}
 
 		#region Utilities

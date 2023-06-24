@@ -58,8 +58,6 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 				PanAndZoomControl1.ScrollbarVisibilityChanged += PanAndZoomControl1_ScrollbarVisibilityChanged;
 
-				//_vm.PropertyChanged += MapSectionDisplayViewModel_PropertyChanged;
-
 				_vm.JobSubmitted += MapSectionDisplayViewModel_JobSubmitted;
 
 				_outline = BuildOutline(BitmapGridControl1.Canvas);
@@ -114,20 +112,10 @@ namespace MSetExplorer
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
-
 		private void MapSectionDisplayViewModel_JobSubmitted(object? sender, EventArgs e)
 		{
 			PanAndZoomControl1.SetPositionAndZoom(_vm.DisplayPosition, _vm.DisplayZoom);
 		}
-
-		//private void MapSectionDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		//{
-		//	if (e.PropertyName == "DisplayPosition")
-		//	{
-		//		PanAndZoomControl1.SetHorizontalOffset(_vm.DisplayPosition.X);
-		//		PanAndZoomControl1.SetVerticalOffset(_vm.DisplayPosition.Y);
-		//	}
-		//}
 
 		#endregion
 
@@ -159,8 +147,8 @@ namespace MSetExplorer
 
 				OffsetAndClip(scaledDisplayArea);
 
-				Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {displayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. " +
-					$"Clip Position: {scaledDisplayArea.Position}. Clip Size: {scaledDisplayArea.Size}.");
+				//Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {displayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. " +
+				//	$"Clip Position: {scaledDisplayArea.Position}. Clip Size: {scaledDisplayArea.Size}.");
 			}
 			else
 			{

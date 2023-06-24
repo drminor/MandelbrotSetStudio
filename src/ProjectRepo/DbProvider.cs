@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using MongoDB.Driver;
 
 namespace ProjectRepo
@@ -27,23 +29,29 @@ namespace ProjectRepo
 			{
 				var dbClient = GetClient(connectTimeout);
 
-				var task = dbClient.ListDatabaseNamesAsync();
-				var e = task.Result.ToEnumerable();
+				//var task = dbClient.ListDatabaseNamesAsync();
+				//task.Wait();
+				//var e = task.Result.ToEnumerable();
 
-				if (!e.Any())
-				{
-					return false;
-				}
+				//if (!e.Any())
+				//{
+				//	return false;
+				//}
 
-				task = dbClient.ListDatabaseNamesAsync();
-				e = task.Result.ToEnumerable();
+				//task = dbClient.ListDatabaseNamesAsync();
+				//e = task.Result.ToEnumerable();
 
-				var result = e.FirstOrDefault(x => x.Equals(databaseName)) != null;
+				//var result = e.FirstOrDefault(x => x.Equals(databaseName)) != null;
+
+				var list = dbClient.ListDatabaseNames().ToEnumerable();
+
+				var result = list.FirstOrDefault(x => x.Equals(databaseName)) != null;
 
 				return result;
 			}
-			catch
+			catch (Exception ex)
 			{
+				Debug.WriteLine($"Got exception: {ex} during call to TestConnection.");
 				return false;
 			}
 		}
@@ -52,29 +60,44 @@ namespace ProjectRepo
 
 		private IMongoDatabase GetDb()
 		{
-			var dbClient = GetClient();
+			try
+			{
+				var dbClient = GetClient();
 
-			var mongoDatabase = dbClient.GetDatabase(_databaseName);
-			return mongoDatabase;
+				var mongoDatabase = dbClient.GetDatabase(_databaseName);
+				return mongoDatabase;
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"Got exception: {ex} during call to GetDb.");
+				throw;
+			}
 		}
 
 		private MongoClient GetClient(TimeSpan? connectTimeout = null)
 		{
-			var settings = new MongoClientSettings
+			try
 			{
-				Server = new MongoServerAddress(_server, _port),
-				IPv6 = true,
-			};
+				var settings = new MongoClientSettings
+				{
+					Server = new MongoServerAddress(_server, _port),
+					IPv6 = true,
+				};
 
-			if (connectTimeout != null)
-			{
-				settings.ConnectTimeout = connectTimeout.Value;
+				if (connectTimeout != null)
+				{
+					settings.ConnectTimeout = connectTimeout.Value;
+				}
+
+				var dbClient = new MongoClient(settings);
+
+				return dbClient;
 			}
-
-			var dbClient = new MongoClient(settings);
-
-			return dbClient;
-
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"Got exception: {ex} during call to GetClient.");
+				throw;
+			}
 		}
 	}
 }
