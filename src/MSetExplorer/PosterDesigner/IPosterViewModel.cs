@@ -46,6 +46,7 @@ namespace MSetExplorer
 		long PosterClose();
 
 		long DeleteMapSectionsForUnsavedJobs();
+		long DeleteMapSections(List<MapSectionRequest> mapSectionRequests);
 
 		List<ObjectId> GetAllNonCurrentJobIds();
 		List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD();

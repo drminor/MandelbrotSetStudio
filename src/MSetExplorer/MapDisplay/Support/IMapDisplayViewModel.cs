@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Media;
@@ -35,6 +36,8 @@ namespace MSetExplorer
 
 		int? SubmitJob(AreaColorAndCalcSettings newValue);
 		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom);
+
+		List<MapSectionRequest> GetMapSectionRequests(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize);
 
 		void CancelJob();
 		//int? RestartLastJob();

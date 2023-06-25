@@ -15,7 +15,7 @@ namespace ImageBuilder
 		private const double VALUE_FACTOR = 10000;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection?>? _currentResponses;
@@ -27,7 +27,7 @@ namespace ImageBuilder
 
 			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount: 2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionBuilder(mapSectionVectorsPool, mapSectionZVectorsPool);
+			_mapSectionBuilder = new MapSectionBuilder(mapSectionVectorsPool, mapSectionZVectorsPool);
 
 			_currentJobNumber = null;
 			_currentResponses = null;
@@ -195,7 +195,7 @@ namespace ImageBuilder
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, precision, jobId.ToString(), jobOwnerType, subdivision, mapCalcSettings, colPtr);
+				var mapSectionRequest = _mapSectionBuilder.CreateRequest(key, mapBlockOffset, precision, jobId.ToString(), jobOwnerType, subdivision, mapCalcSettings, colPtr);
 				requests.Add(mapSectionRequest);
 			}
 

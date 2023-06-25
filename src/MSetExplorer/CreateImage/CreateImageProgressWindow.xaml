@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Image Creation Progress" Height="180" Width="520">
+        Title="Creating Image..." Height="180" Width="520">
     <Grid>
 
         <Grid.RowDefinitions>

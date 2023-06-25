@@ -13,7 +13,7 @@ namespace MapSectionProviderLib
 	public class MapLoaderManager : IMapLoaderManager
 	{
 		private readonly CancellationTokenSource _cts;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private readonly List<GenMapRequestInfo> _requests;
@@ -26,7 +26,7 @@ namespace MapSectionProviderLib
 		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionBuilder mapSectionHelper)
 		{
 			_cts = new CancellationTokenSource();
-			_mapSectionHelper = mapSectionHelper;
+			_mapSectionBuilder = mapSectionHelper;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 
 			_requests = new List<GenMapRequestInfo>();
@@ -44,7 +44,7 @@ namespace MapSectionProviderLib
 
 		public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		//public long NumberOfCountValSwitches => _mapSectionHelper.NumberOfCountValSwitches;
+		//public long NumberOfCountValSwitches => _mapSectionBuilder.NumberOfCountValSwitches;
 
 		#endregion
 
@@ -52,15 +52,15 @@ namespace MapSectionProviderLib
 
 		//public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber)
 		//{
-		//	var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
+		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
 		//	var result = Push(mapSectionRequests, callback, out jobNumber);
 		//	return result;
 		//}
 
-		public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, 
+		public List<MapSection> Push(string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, 
 			out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
 		{
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequestsFromMapSections(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
 			var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
 
 			mapSectionsPendingGeneration = new List<MapSection>();
@@ -181,7 +181,7 @@ namespace MapSectionProviderLib
 
 				if (response.MapSectionVectors != null)
 				{
-					var mapSection = _mapSectionHelper.CreateMapSection(request, response.MapSectionVectors, jobNumber);
+					var mapSection = _mapSectionBuilder.CreateMapSection(request, response.MapSectionVectors, jobNumber);
 					result.Add(mapSection);
 				}
 			}

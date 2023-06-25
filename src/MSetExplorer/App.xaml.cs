@@ -45,7 +45,7 @@ namespace MSetExplorer
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private RepositoryAdapters? _repositoryAdapters;
 		//private readonly MEngineServerManager? _mEngineServerManager;
@@ -63,7 +63,7 @@ namespace MSetExplorer
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionBuilder(_mapSectionVectorsPool, _mapSectionZVectorsPool);
+			_mapSectionBuilder = new MapSectionBuilder(_mapSectionVectorsPool, _mapSectionZVectorsPool);
 
 			//if (START_LOCAL_ENGINE)
 			//{
@@ -112,10 +112,10 @@ namespace MSetExplorer
 
 			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
 
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionHelper);
-			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor, _mapSectionHelper);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionBuilder);
+			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor, _mapSectionBuilder);
 
-			_appNavWindow = GetAppNavWindow(_mapSectionHelper, _repositoryAdapters, _mapLoaderManager, mapSectionRequestProcessor);
+			_appNavWindow = GetAppNavWindow(_mapSectionBuilder, _repositoryAdapters, _mapLoaderManager, mapSectionRequestProcessor);
 			_appNavWindow.Show();
 		}
 

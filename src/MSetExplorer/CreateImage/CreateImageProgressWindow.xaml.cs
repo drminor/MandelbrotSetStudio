@@ -45,6 +45,7 @@ namespace MSetExplorer
 			{
 				WindowState = WindowState.Normal;
 				btnCancel.Content = "Close";
+				Title = "Image Created";
 				Topmost = true;
 			}
 		}

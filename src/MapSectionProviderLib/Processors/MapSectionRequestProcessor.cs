@@ -26,7 +26,7 @@ namespace MapSectionProviderLib
 		private const int QUEUE_CAPACITY = 200; //100;
 
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private readonly DtoMapper _dtoMapper;
 
@@ -51,6 +51,8 @@ namespace MapSectionProviderLib
 
 		private bool _isStopped;
 
+		private readonly bool _useDetailedDebug;
+
 		#endregion
 
 		#region Constructor
@@ -58,14 +60,15 @@ namespace MapSectionProviderLib
 		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper,
 			MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
-			//_isStopped = false;
+			_isStopped = false;
+			_useDetailedDebug = true;
 
 			UseRepo = true;
 			SAVE_THE_ZVALUES = false;
 
 			_nextJobId = 0;
 			_mapSectionAdapter = mapSectionAdapter;
-			_mapSectionHelper = mapSectionHelper;
+			_mapSectionBuilder = mapSectionHelper;
 			_dtoMapper = new DtoMapper();
 
 			_mapSectionGeneratorProcessor = mapSectionGeneratorProcessor;
@@ -107,7 +110,7 @@ namespace MapSectionProviderLib
 			{
 				if (mapSectionVectors == null)
 				{
-					mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+					mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
 				}
 
 				var mapSectionResponse = Fetch(request, mapSectionVectors);
@@ -118,8 +121,6 @@ namespace MapSectionProviderLib
 
 					if (IsResponseComplete(mapSectionResponse, requestedIterations, out var reason))
 					{
-						//Debug.WriteLine($"Got {request.ScreenPosition} from repo.");
-
 						request.FoundInRepo = true;
 						request.ProcessingEndTime = DateTime.UtcNow;
 
@@ -132,7 +133,7 @@ namespace MapSectionProviderLib
 				}
 			}
 
-			_mapSectionHelper.ReturnMapSectionVectors(mapSectionVectors);
+			_mapSectionBuilder.ReturnMapSectionVectors(mapSectionVectors);
 
 			return result;
 		}
@@ -147,7 +148,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				Debug.WriteLine($"Not adding: {mapSectionWorkItem.Request}, The MapSectionRequestProcessor's WorkQueue IsAddingComplete has been set.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Not adding: {mapSectionWorkItem.Request}, The MapSectionRequestProcessor's WorkQueue IsAddingComplete has been set.");
 			}
 		}
 
@@ -226,7 +227,7 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						Debug.WriteLine($"The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
+						Debug.WriteLine($"WARNING: The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
 					}
 				}
 			}
@@ -257,7 +258,7 @@ namespace MapSectionProviderLib
 
 					if (IsJobCancelled(mapSectionWorkRequest.JobId))
 					{
-						mapSectionWorkRequest.Response = _mapSectionHelper.CreateEmptyMapSection(mapSectionWorkRequest.Request, mapSectionWorkRequest.JobId, isCancelled: true);
+						mapSectionWorkRequest.Response = _mapSectionBuilder.CreateEmptyMapSection(mapSectionWorkRequest.Request, mapSectionWorkRequest.JobId, isCancelled: true);
 						_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 					}
 					else
@@ -265,7 +266,7 @@ namespace MapSectionProviderLib
 						if (!UseRepo)
 						{
 							//await Task.Delay(20);
-							var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+							var mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
 							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 						}
 						else
@@ -284,11 +285,11 @@ namespace MapSectionProviderLib
 				}
 				catch (OperationCanceledException)
 				{
-					//Debug.WriteLine("The work queue got a OCE.");
+					//Debug.WriteLineIf(_useDetailedDebug, "The work queue got a OCE.");
 				}
 				catch (Exception e)
 				{
-					Debug.WriteLine($"The work queue got an exception: {e}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The work queue got an exception: {e}.");
 					throw;
 				}
 			}
@@ -298,17 +299,19 @@ namespace MapSectionProviderLib
 		{
 			var request = mapSectionWorkRequest.Request;
 
-			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+			var mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
 
 			var mapSectionResponse = await FetchAsync(request, ct, mapSectionVectors);
 
 			if (mapSectionResponse != null)
 			{
+				request.MapSectionId = mapSectionResponse.MapSectionId;
+
 				var requestedIterations = request.MapCalcSettings.TargetIterations;
 
 				if (IsResponseComplete(mapSectionResponse, requestedIterations, out var reason))
 				{
-					//Debug.WriteLine($"Got {request.ScreenPosition} from repo.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Got {request.ScreenPosition} from repo.");
 
 					request.FoundInRepo = true;
 					request.ProcessingEndTime = DateTime.UtcNow;
@@ -322,14 +325,14 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					//Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}. The response was incomplete for reason: {reason}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Requesting the iteration count to be increased for {request.ScreenPosition}. The response was incomplete for reason: {reason}.");
 					request.IncreasingIterations = true;
 					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
 					if (UseRepo && SAVE_THE_ZVALUES)
 					{
 						var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
-						var mapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(request.LimbCount);
+						var mapSectionZVectors = _mapSectionBuilder.ObtainMapSectionZVectors(request.LimbCount);
 						request.MapSectionZVectors = mapSectionZVectors;
 
 						var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
@@ -342,23 +345,22 @@ namespace MapSectionProviderLib
 							request.MapSectionZVectors.ResetObject();
 						}
 
-						request.MapSectionId = mapSectionId.ToString();
+						//request.MapSectionId = mapSectionId.ToString();
 					}
-					else
-					{
-						request.MapSectionId = mapSectionResponse.MapSectionId;
-					}
+					//else
+					//{
+					//	request.MapSectionId = mapSectionResponse.MapSectionId;
+					//}
 
-					//Debug.WriteLine($"Requesting the iteration count to be increased for {request.ScreenPosition}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Requesting the iteration count to be increased for {request.ScreenPosition}.");
 					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 
-					//Debug.WriteLine($"Response found, but is incomplete. Creating brand new request -- not updating for {request.ScreenPosition}.");
-					//PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 					return null;
 				}
 			}
 			else
 			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Request for {request.ScreenPosition} not found in the repo: Queuing for generation.");
 				PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 				return null;
 			}
@@ -375,14 +377,14 @@ namespace MapSectionProviderLib
 
 			if (UseRepo && SAVE_THE_ZVALUES)
 			{
-				request.MapSectionZVectors = _mapSectionHelper.ObtainMapSectionZVectors(request.LimbCount);
+				request.MapSectionZVectors = _mapSectionBuilder.ObtainMapSectionZVectors(request.LimbCount);
 				request.MapSectionZVectors.ResetObject();
 			}
 
 			if (request.ScreenPosition.IsZero())
 			{
 				var note = request.MapSectionZVectors == null ? "Not Saving the ZValues." : "LimbCount = { request.MapSectionZVectors.LimbCount}.";
-				Debug.WriteLine($"Requesting {request.ScreenPosition} to be generated. {note}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Requesting {request.ScreenPosition} to be generated. {note}.");
 			}
 
 			QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
@@ -502,7 +504,7 @@ namespace MapSectionProviderLib
 				_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 
 				var pendingRequests = GetPendingRequests(mapSectionWorkRequest.Request);
-				//Debug.WriteLine($"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkRequest.Request}");
+				Debug.WriteLineIf(_useDetailedDebug, $"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkRequest.Request}");
 
 				if (pendingRequests.Count > 0)
 				{
@@ -533,7 +535,7 @@ namespace MapSectionProviderLib
 			{
 				if (mapSectionResponse != null)
 				{
-					_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
+					_mapSectionBuilder.ReturnMapSectionResponse(mapSectionResponse);
 				}
 
 				_requestsLock.ExitUpgradeableReadLock();
@@ -546,7 +548,7 @@ namespace MapSectionProviderLib
 
 			if (mapSectionResponse.RequestCancelled)
 			{
-				mapSection = _mapSectionHelper.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: true);
+				mapSection = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: true);
 			}
 			else
 			{
@@ -564,11 +566,11 @@ namespace MapSectionProviderLib
 			if (mapSectionVectors == null)
 			{
 				Debug.WriteLine($"WARNING: Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
-				mapSectionResult = _mapSectionHelper.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: false);
+				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: false);
 			}
 			else
 			{
-				mapSectionResult = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId);
+				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId);
 			}
 
 			return mapSectionResult;
@@ -582,37 +584,12 @@ namespace MapSectionProviderLib
 
 		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
 		{
-			//if (!mapSectionResponse.RequestCancelled)
-			//{
-			//	if (mapSectionResponse.RecordOnFile || mapSectionResponse.RequestCompleted)
-			//	{
-			//		mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-			//		_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
-			//	}
-			//}
-
-			//if (mapSectionResponse.RequestCancelled && !SAVE_THE_ZVALUES)
-			//{
-			//	return;
-			//}
-			//else
-			//{
-			//	mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-			//	_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse));
-			//}
-
 			if (!mapSectionResponse.RequestCancelled || SAVE_THE_ZVALUES)
 			{
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
 				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse), ct);
 			}
 		}
-
-		// TODO: Save the MapSectionPersistProcessor hold on to "recent" MapSectionRequest / MapSectionResponse pairs
-		// in case the we get a request for this same block, just inverted.
-		// This cached can be cleared when the MarkJobAsComplete method is called.
-		//				--- OR ---
-		// Have the
 
 		// Returns true, if there is a "Primary" Request already in the queue
 		private bool ThereIsAMatchingRequest(MapSectionRequest mapSectionRequest)

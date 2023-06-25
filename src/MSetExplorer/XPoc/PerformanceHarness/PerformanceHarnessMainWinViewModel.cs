@@ -16,7 +16,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		public JobProgressInfo? JobProgressInfo;
 
@@ -43,7 +43,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			_mapSectionRequestProcessor.UseRepo = false;
 
 			_mapJobHelper = mapJobHelper;
-			_mapSectionHelper = mapSectionHelper;
+			_mapSectionBuilder = mapSectionHelper;
 
 			_overallElapsed = string.Empty;
 			_generationElapsed = string.Empty;
@@ -162,13 +162,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		public int MaxPeakSectionVectors
 		{
-			get => _mapSectionHelper.MaxPeakSectionVectors;
+			get => _mapSectionBuilder.MaxPeakSectionVectors;
 			set { }
 		}
 
 		public int MaxPeakSectionZVectors
 		{
-			get => _mapSectionHelper.MaxPeakSectionZVectors;
+			get => _mapSectionBuilder.MaxPeakSectionZVectors;
 			set { }
 		}
 
@@ -279,7 +279,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			//AddTiming("GetMapAreaInfo");
 			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeDbl(1024));
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			LimbCount = mapSectionRequests[0].LimbCount;

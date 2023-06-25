@@ -24,7 +24,7 @@ namespace WpfMapDisplayPOC
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 		private readonly DtoMapper _dtoMapper;
 
 		private int _targetIterations;
@@ -47,7 +47,7 @@ namespace WpfMapDisplayPOC
 
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
-			_mapSectionHelper = mapSectionHelper;
+			_mapSectionBuilder = mapSectionHelper;
 			_dtoMapper = new DtoMapper();
 
 			_targetIterations = 400;
@@ -179,14 +179,14 @@ namespace WpfMapDisplayPOC
 
 			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeDbl(1024));
 
-			var result = _mapSectionHelper.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, areaInfoWithSize, job.MapCalcSettings);
+			var result = _mapSectionBuilder.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, areaInfoWithSize, job.MapCalcSettings);
 
 			return result;
 		}
 
 		public MapSection? GetMapSection(MapSectionRequest mapSectionRequest, int jobNumber)
 		{
-			var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+			var mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
 
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
@@ -194,7 +194,7 @@ namespace WpfMapDisplayPOC
 
 			if (mapSectionResponse != null)
 			{
-				var result = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobNumber);
+				var result = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobNumber);
 				return result;
 			}
 			else
@@ -241,7 +241,7 @@ namespace WpfMapDisplayPOC
 
 			//AddTiming("GetMapAreaInfo");
 
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobId, jobOwnerType, areaInfoWithSize, job.MapCalcSettings);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobId, jobOwnerType, areaInfoWithSize, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			var limbCount = mapSectionRequests[0].LimbCount;
@@ -447,7 +447,7 @@ namespace WpfMapDisplayPOC
 
 		//public MapSection GetMapSection(ObjectId mapSectionId)
 		//{
-		//	var mapSectionVectors = _mapSectionHelper.ObtainMapSectionVectors();
+		//	var mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
 
 		//	var mapSectionResponse = _mapSectionAdapter.GetMapSection(mapSectionId, mapSectionVectors);
 
@@ -464,9 +464,9 @@ namespace WpfMapDisplayPOC
 		//	var blockSize = RMapConstants.BLOCK_SIZE;
 		//	var targetIterations = mapSectionResponse.MapCalcSettings.TargetIterations;
 
-		//	var result = _mapSectionHelper.CreateMapSection(jobNumber, repoBlockPosition, mapBlockOffset, isInverted, subdivisionId, blockSize, mapSectionVectors, targetIterations);
+		//	var result = _mapSectionBuilder.CreateMapSection(jobNumber, repoBlockPosition, mapBlockOffset, isInverted, subdivisionId, blockSize, mapSectionVectors, targetIterations);
 
-		//	//var result = _mapSectionHelper.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId: 1, new BigVector());
+		//	//var result = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId: 1, new BigVector());
 
 		//	return result;
 		//}

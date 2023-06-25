@@ -580,7 +580,7 @@ namespace MSetExplorer
 				JobOwnerType.Project,
 				newMapAreaInfo,
 				newColorBandSet,
-				curJob.MapCalcSettings
+				newMapCalcSettings
 				);
 
 			return areaColorAndCalcSettings;

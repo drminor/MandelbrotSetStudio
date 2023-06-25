@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSetExplorer.MapDisplay.Support;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -19,7 +20,7 @@ namespace MSetExplorer
 
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private AreaColorAndCalcSettings? _currentAreaColorAndCalcSettings;
 
@@ -60,7 +61,7 @@ namespace MSetExplorer
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapJobHelper = mapJobHelper;
-			_mapSectionHelper = mapSectionHelper;
+			_mapSectionBuilder = mapSectionHelper;
 
 			_currentAreaColorAndCalcSettings = null;
 			_latestMapAreaInfo = null;
@@ -275,6 +276,20 @@ namespace MSetExplorer
 			}
 		}
 
+		public List<MapSectionRequest> GetMapSectionRequests(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize)
+		{
+			var jobId = areaColorAndCalcSettings.JobId;
+			var jobOwnerType = areaColorAndCalcSettings.JobOwnerType;
+			var mapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
+			var mapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
+
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
+			var emptyMapSections = _mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId, jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
+
+			return mapSectionRequests;
+		}
+
 		// TODO: SubmitJob may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
 		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
 		{
@@ -444,7 +459,7 @@ namespace MSetExplorer
 		//		if (currentJob != null && !currentJob.IsEmpty)
 		//		{
 		//			var screenAreaInfo = GetScreenAreaInfo(currentJob.MapAreaInfo, ViewportSize);
-		//			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, currentJob.MapCalcSettings);
+		//			var sectionsRequired = _mapSectionBuilder.CreateEmptyMapSections(screenAreaInfo, currentJob.MapCalcSettings);
 		//			var newMapSections = _mapLoaderManager.Push(currentJob.JobId, currentJob.JobOwnerType, screenAreaInfo, currentJob.MapCalcSettings, sectionsRequired, MapSectionReady, 
 		//				out var newJobNumber, out var mapSectionsPendingGeneration);
 
@@ -653,7 +668,7 @@ namespace MSetExplorer
 		{
 			LastMapAreaInfo = screenAreaInfo;
 
-			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
+			var sectionsRequired = _mapSectionBuilder.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
 			var loadedSections = new List<MapSection>(MapSections);
 			
 			foreach(var ms in MapSectionsPendingGeneration)
@@ -691,7 +706,7 @@ namespace MSetExplorer
 					else
 					{
 						MapSections.Remove(section);
-						_mapSectionHelper.ReturnMapSection(section);
+						_mapSectionBuilder.ReturnMapSection(section);
 						//sectionsToClear.Add(section);
 					}
 				}
@@ -711,7 +726,7 @@ namespace MSetExplorer
 				var numberOfRequestsCancelled = sectionsToCancel.Count;
 				numberOfSectionsReturned += sectionsToRemove.Count - numberOfRequestsCancelled;
 				Debug.WriteLineIf(_useDetailedDebug, $"Reusing Loaded Sections. Requesting {sectionsToLoad.Count} sections, Cancelling {numberOfRequestsCancelled} pending requests, returned {numberOfSectionsReturned} sections. " +
-					$"Keeping {MapSections.Count} sections. The MapSection Pool has: {_mapSectionHelper.MapSectionsVectorsInPool} sections.");
+					$"Keeping {MapSections.Count} sections. The MapSection Pool has: {_mapSectionBuilder.MapSectionsVectorsInPool} sections.");
 
 				if (sectionsToLoad.Count > 0)
 				{
@@ -746,7 +761,7 @@ namespace MSetExplorer
 
 			LastMapAreaInfo = screenAreaInfo;
 
-			var sectionsRequired = _mapSectionHelper.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
+			var sectionsRequired = _mapSectionBuilder.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
 
 			var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsRequired, MapSectionReady,
 					out var newJobNumber, out var mapSectionsPendingGeneration);
@@ -872,7 +887,7 @@ namespace MSetExplorer
 			//	Debug.WriteLine("WARNING: MapSectionDisplayViewModel is Disposing a MapSection whose reference count > 1.");
 			//}
 
-			_mapSectionHelper.ReturnMapSection(mapSection);
+			_mapSectionBuilder.ReturnMapSection(mapSection);
 		}
 
 		private void OnBitmapUpdate(WriteableBitmap bitmap)

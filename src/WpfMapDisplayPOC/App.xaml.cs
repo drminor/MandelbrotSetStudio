@@ -29,7 +29,7 @@ namespace WpfMapDisplayPOC
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private RepositoryAdapters? _repositoryAdapters;
 		//private IMapLoaderManager? _mapLoaderManager;
@@ -46,7 +46,7 @@ namespace WpfMapDisplayPOC
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionHelper = new MapSectionBuilder(_mapSectionVectorsPool, _mapSectionZVectorsPool);
+			_mapSectionBuilder = new MapSectionBuilder(_mapSectionVectorsPool, _mapSectionZVectorsPool);
 
 			//if (START_LOCAL_ENGINE)
 			//{
@@ -61,10 +61,10 @@ namespace WpfMapDisplayPOC
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, MONGO_DB_NAME);
 
 			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionHelper);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionBuilder);
 
 
-			_mainWindow = GetMainWindow(mapSectionRequestProcessor, _mapSectionHelper, _repositoryAdapters);
+			_mainWindow = GetMainWindow(mapSectionRequestProcessor, _mapSectionBuilder, _repositoryAdapters);
 			_mainWindow.Show();
 		}
 

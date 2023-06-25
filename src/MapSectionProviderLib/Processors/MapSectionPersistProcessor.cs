@@ -13,7 +13,7 @@ namespace MapSectionProviderLib
 	public class MapSectionPersistProcessor : IDisposable
 	{
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly MapSectionBuilder _mapSectionHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
@@ -28,7 +28,7 @@ namespace MapSectionProviderLib
 
 		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
 		{
-			_mapSectionHelper = mapSectionHelper;
+			_mapSectionBuilder = mapSectionHelper;
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
@@ -114,7 +114,7 @@ namespace MapSectionProviderLib
 						}
 					}
 
-					_mapSectionHelper.ReturnMapSectionResponse(mapSectionResponse);
+					_mapSectionBuilder.ReturnMapSectionResponse(mapSectionResponse);
 				}
 				catch (OperationCanceledException)
 				{
@@ -149,7 +149,10 @@ namespace MapSectionProviderLib
 						_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
 					}
 
-					// TODO: The OwnerId may already be on file for this MapSection -- or not.
+					// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType)
+					// may not be on file. This will insert one if not already present.
+					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.BlockPosition, mapSectionRequest.IsInverted);
+
 				}
 			}
 			else

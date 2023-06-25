@@ -166,7 +166,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		public string? CurrentPosterName => CurrentPoster?.Name;
 		public bool CurrentPosterOnFile => CurrentPoster?.OnFile ?? false;
 
@@ -342,6 +341,7 @@ namespace MSetExplorer
 			{
 				if (value != _areaColorAndCalcSettings)
 				{
+					Debug.Assert(value.JobOwnerType == JobOwnerType.Poster, "The PosterViewModel is receiving a CurrentAreaColorAndCalcSetting that has a JobOwnerType other than 'Poster'.");
 					_areaColorAndCalcSettings = value;
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings));
 				}
@@ -488,21 +488,23 @@ namespace MSetExplorer
 		{
 			long result = 0;
 
-			if (CurrentPoster != null)
-			{
-				var zoomLevelOneJobId = GetJobForZoomLevelOne();
+			//if (CurrentPoster != null)
+			//{
+			//	var zoomLevelOneJobId = GetJobForZoomLevelOne();
 
-				if (zoomLevelOneJobId != null)
-				{
-					var jobIdsToRemoveMapSections = GetJobIdsExceptZoomLevelOne(); // GetAllJobIdsNotMatchingCurrentSPD();
-					result = JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Poster, _mapSectionAdapter);
-					result += JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Project, _mapSectionAdapter);
-					result += JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.ImageBuilder, _mapSectionAdapter);
-				}
+			//	// TODO: Fix Me
+			//	//if (zoomLevelOneJobId != null)
+			//	//{
+			//	//	var jobIdsToRemoveMapSections = GetJobIdsExceptZoomLevelOne(); // GetAllJobIdsNotMatchingCurrentSPD();
+			//	//	result = JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Poster, _mapSectionAdapter);
+			//	//	result += JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Project, _mapSectionAdapter);
+			//	//	result += JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.ImageBuilder, _mapSectionAdapter);
+			//	//}
 
-				CurrentPoster = null;
-			}
-
+			//	CurrentPoster = null;
+			//}
+			
+			CurrentPoster = null;
 			return result;
 		}
 
@@ -519,6 +521,18 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		public long DeleteMapSections(List<MapSectionRequest> mapSectionRequests)
+		{
+			// Fetch the list of MapSectionIdsInUse in use from the repo using the provided list.
+
+			// Get a list of all MapSectionIdsAll for the current project.
+
+			// Delete MapSection whose ID is in MapSectionIdsAll, but not in MapSectionIdsInUse.
+			// 
+			return 0L;
+		}
+
 
 		#endregion
 

@@ -124,6 +124,13 @@ namespace MSetExplorer
 
 		private bool CloseTheCurrentPoster()
 		{
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster == null)
+			{
+				return true;
+			}
+
 			string introMessage = string.Empty;
 			var mapSectionsDeletedUnsavedJobs = 0L;
 
@@ -143,7 +150,13 @@ namespace MSetExplorer
 				return false;
 			}
 
-			var mapSectionsDeletedUnusedJobs = _vm.PosterViewModel.PosterClose();
+			var areaColorAndCalcSettings = _vm.PosterViewModel.CurrentAreaColorAndCalcSettings;
+			var posterSize = _vm.PosterViewModel.PosterSize;
+			var mapSectionRequests = _vm.MapDisplayViewModel.GetMapSectionRequests(areaColorAndCalcSettings, new SizeDbl(posterSize));
+
+			var mapSectionsDeletedUnusedJobs = _vm.PosterViewModel.DeleteMapSections(mapSectionRequests);
+
+			_vm.PosterViewModel.PosterClose();
 
 			if (mapSectionsDeletedUnsavedJobs > 0 && mapSectionsDeletedUnusedJobs > 0)
 			{
