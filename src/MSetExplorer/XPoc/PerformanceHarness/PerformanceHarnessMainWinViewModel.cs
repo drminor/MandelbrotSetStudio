@@ -269,7 +269,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			MapSections.Clear();
 			//Timings.Clear();
 
-			var ownerId = job.OwnerId.ToString();
+			var jobId = job.Id.ToString();
 			var jobOwnerType = JobOwnerType.Project;
 
 			var stopwatch = Stopwatch.StartNew();
@@ -279,7 +279,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			//AddTiming("GetMapAreaInfo");
 			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeDbl(1024));
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			LimbCount = mapSectionRequests[0].LimbCount;

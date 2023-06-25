@@ -867,7 +867,7 @@ namespace MSetExplorer
 
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
-			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
+			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.Id, mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 

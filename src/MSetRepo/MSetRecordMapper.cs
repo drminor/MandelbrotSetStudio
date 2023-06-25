@@ -313,7 +313,7 @@ namespace MSetRepo
 			var result = new MapSectionResponse
 			(
 				mapSectionId: target.Id.ToString(),
-				ownerId: string.Empty,
+				jobId: string.Empty,
 				jobOwnerType: JobOwnerType.Undetermined,
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,

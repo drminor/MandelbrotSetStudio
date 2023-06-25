@@ -1,4 +1,5 @@
 ﻿using ImageBuilder;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -33,13 +34,14 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, MapAreaInfo2 mapAreaInfo, SizeDbl previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
+		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
 		{
 			_mapJobHelper = mapJobHelper;
 
 			_synchronizationContext = SynchronizationContext.Current;
 			_bitmapBuilder = bitmapBuilder;
 
+			JobId = jobId;
 			_mapAreaInfo = mapAreaInfo;
 
 			_previewImageSize = previewImageSize;
@@ -57,7 +59,7 @@ namespace MSetExplorer
 			Bitmap = CreateBitmap(_previewImageSize.Round());
 			FillBitmapWithColor(_fallbackColor, Bitmap);
 
-			QueueBitmapGeneration(_previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
+			QueueBitmapGeneration(JobId, _previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 		}
 
 		#endregion
@@ -67,6 +69,8 @@ namespace MSetExplorer
 		public event EventHandler? BitmapHasBeenLoaded;
 
 		public WriteableBitmap Bitmap { get; init; }
+
+		public ObjectId JobId { get; set; }
 
 		public MapAreaInfo2 MapAreaInfo
 		{
@@ -81,7 +85,7 @@ namespace MSetExplorer
 					_previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(_mapAreaInfo, _previewImageSize);
 
 					FillBitmapWithColor(_fallbackColor, Bitmap);
-					QueueBitmapGeneration(_previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
+					QueueBitmapGeneration(JobId, _previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 				}
 			}
 		}
@@ -95,7 +99,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void QueueBitmapGeneration(MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		private void QueueBitmapGeneration(ObjectId jobId, MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			var previewImageSize = previewMapArea.CanvasSize;
 			Debug.WriteLine($"Creating a preview image with size: {previewMapArea.CanvasSize} and map coords: {previewMapArea.Coords}.");
@@ -118,7 +122,7 @@ namespace MSetExplorer
 				{
 					try
 					{
-						var pixels = await _bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, mapCalcSettings, _useEscapeVelocitites, _cts.Token);
+						var pixels = await _bitmapBuilder.BuildAsync(jobId, previewMapArea, colorBandSet, mapCalcSettings, _useEscapeVelocitites, _cts.Token);
 						if (!_cts.IsCancellationRequested)
 						{
 							_synchronizationContext?.Post(o => BitmapCompleted(pixels, o), _cts);

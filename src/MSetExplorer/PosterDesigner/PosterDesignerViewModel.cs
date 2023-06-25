@@ -1,4 +1,5 @@
 ﻿using ImageBuilder;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -98,12 +99,12 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public LazyMapPreviewImageProvider GetPreviewImageProvider(MapAreaInfo2 mapAreaInfo, SizeDbl previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
+		public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
 		{
 			var mapJobHelper = _viewModelFactory.ProvisionAMapJopHelper();
 
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
+			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
 			return result;
 		}
 

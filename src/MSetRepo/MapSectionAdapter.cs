@@ -322,10 +322,10 @@ namespace MSetRepo
 				throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");
 			}
 
-			var ownerIdStr = mapSectionResponse.OwnerId;
+			var ownerIdStr = mapSectionResponse.JobId;
 			if (string.IsNullOrEmpty(ownerIdStr))
 			{
-				throw new ArgumentNullException(nameof(MapSectionResponse.OwnerId), "The OwnerId cannot be null.");
+				throw new ArgumentNullException(nameof(MapSectionResponse.JobId), "The OwnerId cannot be null.");
 			}
 
 			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(ownerIdStr), mapSectionResponse.JobOwnerType, blockPosition, isInverted);

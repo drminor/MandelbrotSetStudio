@@ -275,6 +275,7 @@ namespace MSetExplorer
 			}
 		}
 
+		// TODO: SubmitJob may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
 		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
 		{
 			CheckBlockSize(newValue);
@@ -338,6 +339,7 @@ namespace MSetExplorer
 			return result;
 		}
 
+		// TODO: UpdateViewportSizeAndPos may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
 			int? newJobNumber;

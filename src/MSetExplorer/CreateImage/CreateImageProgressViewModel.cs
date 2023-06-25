@@ -1,4 +1,5 @@
 ﻿using ImageBuilder;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -46,8 +47,9 @@ namespace MSetExplorer
 			ImageFilePath = imageFilePath;
 
 			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(areaColorAndCalcSettings.MapAreaInfo, imageSize);
+			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
 			//_task.ContinueWith(t =>
 			//{

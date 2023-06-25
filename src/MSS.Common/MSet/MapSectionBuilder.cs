@@ -48,7 +48,7 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-		public List<MapSectionRequest> CreateSectionRequests(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		public List<MapSectionRequest> CreateSectionRequests(string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -61,14 +61,14 @@ namespace MSS.Common
 			var requestNumber = 0;
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
 				result.Add(mapSectionRequest);
 			}
 
 			return result;
 		}
 
-		public List<MapSectionRequest> CreateSectionRequestsFromMapSections(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
+		public List<MapSectionRequest> CreateSectionRequestsFromMapSections(string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -78,7 +78,7 @@ namespace MSS.Common
 			foreach (var mapSection in emptyMapSections)
 			{
 				var screenPosition = mapSection.ScreenPosition;
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, ownerId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
 
 				mapSectionRequest.MapSectionVectors = mapSection.MapSectionVectors;
 
@@ -99,12 +99,12 @@ namespace MSS.Common
 		/// <param name="screenPosition"></param>
 		/// <param name="jobMapBlockOffset"></param>
 		/// <param name="precision"></param>
-		/// <param name="ownerId"></param>
+		/// <param name="jobId"></param>
 		/// <param name="jobOwnerType"></param>
 		/// <param name="subdivision"></param>
 		/// <param name="mapCalcSettings"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector jobMapBlockOffset, int precision, string ownerId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings, int requestNumber)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector jobMapBlockOffset, int precision, string jobId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
 			// Block Position, relative to the Subdivision's BaseMapPosition
 			var localBlockPosition = RMapHelper.ToSubdivisionCoords(screenPosition, jobMapBlockOffset, out var isInverted);
@@ -116,7 +116,7 @@ namespace MSS.Common
 
 			var mapSectionRequest = new MapSectionRequest
 			(
-				ownerId: ownerId,
+				jobId: jobId,
 				jobOwnerType: jobOwnerType,
 				subdivisionId: subdivision.Id.ToString(),
 				screenPosition: screenPosition,

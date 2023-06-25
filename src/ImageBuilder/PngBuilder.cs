@@ -35,7 +35,7 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<bool> BuildAsync(string imageFilePath, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
+		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -63,7 +63,7 @@ namespace ImageBuilder
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					var blocksForThisRow = await GetAllBlocksForRowAsync(blockPtrY, w, mapBlockOffset, mapAreaInfo.Precision, mapAreaInfo.Subdivision, mapCalcSettings);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, mapAreaInfo.Subdivision, mapBlockOffset, blockPtrY, w, mapCalcSettings, mapAreaInfo.Precision);
 
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);
@@ -178,16 +178,16 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(int rowPtr, int stride, BigVector mapBlockOffset, int precision, Subdivision subdivision, MapCalcSettings mapCalcSettings)
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, Subdivision subdivision, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
 		{
 			var requests = new List<MapSectionRequest>();
-			var ownerId = ObjectId.GenerateNewId().ToString();
+			//var jobId = ObjectId.GenerateNewId().ToString();
 			var jobOwnerType = JobOwnerType.ImageBuilder;
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, precision, ownerId, jobOwnerType, subdivision, mapCalcSettings, colPtr);
+				var mapSectionRequest = _mapSectionHelper.CreateRequest(key, mapBlockOffset, precision, jobId.ToString(), jobOwnerType, subdivision, mapCalcSettings, colPtr);
 				requests.Add(mapSectionRequest);
 			}
 

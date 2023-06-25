@@ -177,7 +177,7 @@ namespace WpfMapDisplayPOC
 				_colorMap = new ColorMap(colorBandSet);
 			}
 
-			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeInt(1024));
+			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeDbl(1024));
 
 			var result = _mapSectionHelper.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, areaInfoWithSize, job.MapCalcSettings);
 
@@ -230,18 +230,18 @@ namespace WpfMapDisplayPOC
 
 		private void RunTest(Job job, Action<MapSection> callback)
 		{
-			var ownerId = job.OwnerId.ToString();
+			var jobId = job.Id.ToString();
 			var jobOwnerType = JobOwnerType.Project;
 
 			var stopwatch = Stopwatch.StartNew();
 			//_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeInt(1024));
+			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeDbl(1024));
 
 			//AddTiming("GetMapAreaInfo");
 
-			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, areaInfoWithSize, job.MapCalcSettings);
+			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(jobId, jobOwnerType, areaInfoWithSize, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			var limbCount = mapSectionRequests[0].LimbCount;

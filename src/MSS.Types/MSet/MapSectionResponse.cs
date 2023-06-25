@@ -6,7 +6,7 @@
 			bool isCancelled = false)
 			: this(
 				  mapSectionRequest.MapSectionId, 
-				  mapSectionRequest.OwnerId,
+				  mapSectionRequest.JobId,
 				  mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.BlockPosition,
@@ -25,7 +25,7 @@
 			MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
 			: this(
 				  mapSectionRequest.MapSectionId, 
-				  mapSectionRequest.OwnerId,
+				  mapSectionRequest.JobId,
 				  mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
 				  blockPosition: mapSectionRequest.BlockPosition,
@@ -40,7 +40,7 @@
 
 		public MapSectionResponse(
 			string? mapSectionId, 
-			string ownerId, 
+			string jobId, 
 			JobOwnerType jobOwnerType, 
 			string subdivisionId, 
 			BigVector blockPosition,
@@ -50,7 +50,7 @@
 			MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
 		{
 			MapSectionId = mapSectionId;
-			OwnerId = ownerId;
+			JobId = jobId;
 			JobOwnerType = jobOwnerType;
 			SubdivisionId = subdivisionId;
 			BlockPosition = blockPosition;
@@ -64,7 +64,7 @@
 		}
 
 		public string? MapSectionId { get; set; }
-		public string OwnerId { get; set; }
+		public string JobId { get; set; }
 		public JobOwnerType JobOwnerType { get; set; }
 
 		public string SubdivisionId { get; init; }
@@ -84,7 +84,7 @@
 
 		public MapSectionResponse CreateCopySansVectors()
 		{
-			var result = new MapSectionResponse(MapSectionId, OwnerId, JobOwnerType, SubdivisionId, BlockPosition, MapCalcSettings, RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
+			var result = new MapSectionResponse(MapSectionId, JobId, JobOwnerType, SubdivisionId, BlockPosition, MapCalcSettings, RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
 			return result;
 		}
 
