@@ -136,13 +136,12 @@ namespace MSetRepo
 				NewAreaSize: MapTo(source.NewArea?.Size ?? new SizeInt()), 
 				ColorBandSetId: source.ColorBandSetId,
 				MapCalcSettings: source.MapCalcSettings,
+				LastSavedUtc: source.LastSavedUtc,
 				LastAccessedUtc: source.LastAccessedUtc
 				
 				)
 			{
 				Id = source.Id,
-				LastSavedUtc = source.LastSavedUtc,
-				LastAccessedUtc = source.LastAccessedUtc,
 				IterationUpdates = source.IterationUpdates,
 				ColorMapUpdates = source.ColorMapUpdates,
 			};

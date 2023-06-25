@@ -918,6 +918,12 @@ namespace MSetExplorer
 		private bool? ProjectSaveUserConfirm()
 		{
 			var numberOfDirtyJobs = _vm.ProjectViewModel.GetGetNumberOfDirtyJobs();
+
+			if (numberOfDirtyJobs == 0)
+			{
+				return true;
+			}
+
 			var	message = $"The current project has {numberOfDirtyJobs} un-saved jobs. Save Changes?";
 
 			var defaultResult = _vm.ProjectViewModel.CurrentProjectOnFile ? MessageBoxResult.Yes : MessageBoxResult.No;

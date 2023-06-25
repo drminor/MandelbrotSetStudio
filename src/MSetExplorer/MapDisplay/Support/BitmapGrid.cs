@@ -548,6 +548,11 @@ namespace MSetExplorer
 
 		private WriteableBitmap CreateBitmap(SizeInt size)
 		{
+			if (size.NumberOfCells > 5000000) // 5M
+			{
+				Debug.WriteLine($"Creating a HUGE Bitmap. Size is {size}.");
+			}
+
 			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
 			//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
 

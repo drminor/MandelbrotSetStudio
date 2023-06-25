@@ -559,21 +559,30 @@ namespace MSS.Types
 
 		public override string ToString()
 		{
-			var result = $"ColorBandSet: {Id}\n{GetString(this)}";
-			return result;
-		}
-
-		public static string GetString(ICollection<ColorBand> colorBands)
-		{
 			var sb = new StringBuilder();
 
-			foreach (var cb in colorBands)
+			sb.AppendLine($"Id: {Id}, Serial: {ColorBandsSerialNumber}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
+
+			for(var i = 0; i < Count; i++)
 			{
-				_ = sb.AppendLine(cb.ToString());
+				_ = sb.AppendLine($"{i,2} {this[i]}");
+
 			}
 
 			return sb.ToString();
 		}
+
+		//public static string GetString(ICollection<ColorBand> colorBands)
+		//{
+		//	var sb = new StringBuilder();
+
+		//	foreach (var cb in colorBands)
+		//	{
+		//		_ = sb.AppendLine(cb.ToString());
+		//	}
+
+		//	return sb.ToString();
+		//}
 
 		#endregion
 

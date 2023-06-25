@@ -25,6 +25,7 @@ namespace ProjectRepo.Entities
 		ObjectId ColorBandSetId,
 		MapCalcSettings MapCalcSettings,
 
+		DateTime LastSavedUtc,
 		DateTime LastAccessedUtc
 		)
 	{
@@ -34,14 +35,11 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		public DateTime? LastSavedUtc { get; set; }
-		public DateTime? LastSaved { get; set; }
+		
+		public DateTime? LastSaved { get; set; } // TODO: Remove the LastSaved from all Jobs on file.
 
 		public IterationUpdateRecord[]? IterationUpdates { get; set; }
 		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
-
-
-
 	}
 
 }

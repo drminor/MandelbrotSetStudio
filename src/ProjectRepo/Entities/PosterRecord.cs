@@ -24,14 +24,6 @@ namespace ProjectRepo.Entities
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
-		//[BsonIgnoreIfDefault]
-		//[BsonDefaultValue(0)]
-		//public int OffsetFromCenterX { get; set; }
-
-		//[BsonIgnoreIfDefault]
-		//[BsonDefaultValue(0)]
-		//public int OffsetFromCenterY { get; set; }
-
 		[BsonIgnoreIfDefault]
 		[BsonDefaultValue(0)]
 		public int Width { get; set; }

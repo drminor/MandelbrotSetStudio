@@ -22,6 +22,8 @@ namespace MSS.Common.MSet
 		private string? _description;
 
 		private readonly IJobTree _jobTree;
+		private ObservableCollection<JobTreeNode>? _jobItems;
+
 		private readonly List<ColorBandSet> _colorBandSets;
 
 		private readonly ReaderWriterLockSlim _stateLock;
@@ -68,12 +70,16 @@ namespace MSS.Common.MSet
 			LastAccessedUtc = lastAccessedUtc;
 			_originalCurrentJobId = currentJobId;
 
-			var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
+			var jobsFromTree = _jobTree.GetItems().ToList();
+
+			//var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
+			var currentJob = jobsFromTree.FirstOrDefault(x => x.Id == currentJobId);
 
 			if (currentJob == null)
 			{
 				Debug.WriteLine($"WARNING: The Project has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
-				currentJob = jobs.Last();
+				//currentJob = jobs.Last();
+				currentJob = jobsFromTree.Last();
 			}
 
 			_ = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
@@ -107,7 +113,6 @@ namespace MSS.Common.MSet
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
-		private ObservableCollection<JobTreeNode>? _jobItems;
 
 		public ObservableCollection<JobTreeNode>? JobNodes
 		{
@@ -249,7 +254,7 @@ namespace MSS.Common.MSet
 							{
 								// Make a copy of the incoming ColorBandSet
 								// and set it's ProjectId to this Project's Id.
-								newCbs = newCbs.Clone();
+								newCbs = newCbs.CreateNewCopy();
 								newCbs.ProjectId = Id;
 							}
 							_colorBandSets.Add(newCbs);
@@ -449,14 +454,14 @@ namespace MSS.Common.MSet
 
 			if (result == null)
 			{
-				Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found {operationDescription}."); //as the project is being constructed
+				Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found in the Project's list of ColorBandSets {operationDescription}."); //as the project is being constructed
 				result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
 				job.ColorBandSetId = result.Id;
 				LastUpdatedUtc = DateTime.UtcNow;
 			}
 			else if (result.HighCutoff != targetIterations)
 			{
-				Debug.WriteLine($"WARNING: A ColorBandSet different than the currentJob's ColorBandSet is being loaded {operationDescription}.");
+				Debug.WriteLine($"WARNING: A ColorBandSet different than the currentJob's ColorBandSet is being loaded because the currentJob's ColorBandSet's HighCutoff is not equal to the TargetIterations {operationDescription}.");
 				result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
 				job.ColorBandSetId = result.Id;
 				LastUpdatedUtc = DateTime.UtcNow;
@@ -468,10 +473,10 @@ namespace MSS.Common.MSet
 		private ColorBandSet? GetColorBandSetForJob(ObjectId colorBandSetId)
 		{
 			var result = _colorBandSets.FirstOrDefault(x => x.Id == colorBandSetId);
-			if (result == null)
-			{
-				Debug.WriteLine($"WARNING: The job's current ColorBandSet: {colorBandSetId} does not exist in the Project list of ColorBandSets.");
-			}
+			//if (result == null)
+			//{
+			//	Debug.WriteLine($"WARNING: The job's current ColorBandSet: {colorBandSetId} does not exist in the Project's list of ColorBandSets.");
+			//}
 
 			return result;
 		}

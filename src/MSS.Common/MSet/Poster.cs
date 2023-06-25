@@ -274,7 +274,7 @@ namespace MSS.Common.MSet
 							{
 								// Make a copy of the incoming ColorBandSet
 								// and set it's ProjectId to this Project's Id.
-								newCbs = newCbs.Clone();
+								newCbs = newCbs.CreateNewCopy();
 								newCbs.ProjectId = Id;
 							}
 							_colorBandSets.Add(newCbs);

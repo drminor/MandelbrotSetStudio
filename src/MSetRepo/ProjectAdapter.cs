@@ -80,28 +80,6 @@ namespace MSetRepo
 
 		#region Project
 
-		//public bool TryGetProject(ObjectId projectId, [MaybeNullWhen(false)] out Project project)
-		//{
-		//	//Debug.WriteLine($"Retrieving Project object for Project with name: {name}.");
-
-		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
-		//	if (projectReaderWriter.TryGet(projectId, out var projectRecord))
-		//	{
-		//		var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
-		//		var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
-		//		//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
-
-		//		project = AssembleProject(projectRecord, jobs, colorBandSets, projectRecord.LastSavedUtc);
-		//		return project != null;
-		//	}
-		//	else
-		//	{
-		//		project = null;
-		//		return false;
-		//	}
-		//}
-
 		public bool TryGetProject(string name, [MaybeNullWhen(false)] out Project project)
 		{
 			//Debug.WriteLine($"Retrieving Project object for Project with name: {name}.");
@@ -112,6 +90,7 @@ namespace MSetRepo
 			{
 				var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
 				var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
+
 				colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
 
 				project = AssembleProject(projectRecord, jobs, colorBandSets, projectRecord.LastSavedUtc, projectRecord.LastAccessedUtc);
@@ -123,38 +102,6 @@ namespace MSetRepo
 				return false;
 			}
 		}
-
-		//public Project? CreateProject(string name, string? description, ObjectId currentJobId)
-		//{
-		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
-		//	if (!projectReaderWriter.ExistsWithName(name))
-		//	{
-		//		var projectRecord = new ProjectRecord(name, description, currentJobId, DateTime.UtcNow);
-
-		//		var projectId = projectReaderWriter.Insert(projectRecord);
-		//		projectRecord = projectReaderWriter.Get(projectId);
-
-		//		if (projectRecord != null)
-		//		{
-		//			var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
-		//			var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
-		//			//colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
-
-		//			var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue);
-
-		//			return result;
-		//		}
-		//		else
-		//		{
-		//			throw new InvalidOperationException($"Could not retrieve newly created project record with id: {projectId}.");
-		//		}
-		//	}
-		//	else
-		//	{
-		//		throw new InvalidOperationException($"Cannot create project with name: {name}, a project with that name already exists.");
-		//	}
-		//}
 
 		public Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
 		{
@@ -491,20 +438,20 @@ namespace MSetRepo
 			//	jobRecord.MapAreaInfoRecord.SubdivisionRecord.BaseMapPosition = new BigVectorRecord();
 			//}
 
-			DateTime lastSaved = DateTime.UtcNow;
+			//DateTime lastSaved = DateTime.UtcNow;
 
-			if (jobRecord.LastSavedUtc.HasValue)
-			{
-				lastSaved = jobRecord.LastSavedUtc.Value;
-			}
-			else if (jobRecord.LastSaved.HasValue)
-			{
-				lastSaved = jobRecord.LastSaved.Value;
-			}
-			else
-			{
-				lastSaved = DateTime.UtcNow;
-			}
+			//if (jobRecord.LastSavedUtc.HasValue)
+			//{
+			//	lastSaved = jobRecord.LastSavedUtc.Value;
+			//}
+			//else if (jobRecord.LastSaved.HasValue)
+			//{
+			//	lastSaved = jobRecord.LastSaved.Value;
+			//}
+			//else
+			//{
+			//	lastSaved = DateTime.UtcNow;
+			//}
 
 			var job = new Job(
 				id: jobId,
@@ -520,7 +467,7 @@ namespace MSetRepo
 				colorBandSetId: jobRecord.ColorBandSetId,
 
 				mapCalcSettings: jobRecord.MapCalcSettings,
-				lastSavedUtc: lastSaved
+				lastSavedUtc: jobRecord.LastSavedUtc
 				)
 			{
 				LastAccessedUtc = jobRecord.LastAccessedUtc,
@@ -655,7 +602,7 @@ namespace MSetRepo
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
 
-			jobRecord.LastSavedUtc = DateTime.UtcNow;
+			//jobRecord.LastSavedUtc = DateTime.UtcNow;
 			var newJobId = jobReaderWriter.Insert(jobRecord);
 
 			return newJobId;
@@ -957,26 +904,7 @@ namespace MSetRepo
 			}
 			else
 			{
-				var jobLastSaved = jobRec.LastSavedUtc;
-				var posterLastSaved = posterRec.LastSavedUtc;
-
-
-				if (jobLastSaved == null)
-				{
-					lastSavedUtc = posterLastSaved;
-				}
-				else
-				{
-					if (jobLastSaved > posterLastSaved)
-					{
-						lastSavedUtc = jobLastSaved.Value;
-					}
-					else
-					{
-						lastSavedUtc = posterLastSaved;
-					}
-				}
-
+				lastSavedUtc = jobRec.LastSavedUtc;
 			}
 
 			result = new PosterInfo(posterRec.Id, posterRec.Name, posterRec.Description, posterRec.CurrentJobId, posterRec.PosterSize, posterRec.DateCreatedUtc, lastSavedUtc, posterRec.LastAccessedUtc);

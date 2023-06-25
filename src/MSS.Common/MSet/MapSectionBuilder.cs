@@ -200,7 +200,14 @@ namespace MSS.Common
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize, mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
 			//Debug.WriteLineIf(_useDetailedDebug, $"Creating empty MapSections. Returned: {mapExtentInBlocks}, For Size: {mapAreaInfo.CanvasSize} and Offset: {mapAreaInfo.CanvasControlOffset}.");
 
-			Debug.WriteLineIf(_useDetailedDebug, $"Creating empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}.");
+
+			Debug.WriteLine($"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}.");
+
+			if (mapExtentInBlocks.NumberOfCells > 300)
+			{
+				Debug.WriteLine($"About to request {mapExtentInBlocks.NumberOfCells} map sections!!");
+			}
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{

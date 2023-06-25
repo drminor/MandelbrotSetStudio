@@ -152,7 +152,7 @@ namespace MSS.Common
 				if (cbs.ProjectId != jobOwner.Id)
 				{
 					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.ProjectId}, current Project: {jobOwner.Id}.");
-					var newCbs = cbs.Clone();
+					var newCbs = cbs.CreateNewCopy();
 					newCbs.ProjectId = jobOwner.Id;
 					projectAdapter.InsertColorBandSet(newCbs);
 				}

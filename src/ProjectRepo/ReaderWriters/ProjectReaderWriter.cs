@@ -116,6 +116,17 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
+		//public void UpdateCurrentColorBandSetId(ObjectId projectId, ObjectId? currentJobId)
+		//{
+		//	var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);
+
+		//	var updateDefinition = Builders<ProjectRecord>.Update
+		//		.Set(u => u.CurrentJobId, currentJobId)
+		//		.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
+
 		public long? Delete(ObjectId projectId)
 		{
 			var filter = Builders<ProjectRecord>.Filter.Eq("_id", projectId);

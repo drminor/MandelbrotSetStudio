@@ -209,7 +209,7 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsVectorDblChanged(_displayPosition, value))
 				{
 					_displayPosition = value;
-					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPosition));
+					//OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPosition));
 				}
 			}
 		}
@@ -223,7 +223,7 @@ namespace MSetExplorer
 				_displayZoom = value;
 
 				Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
-				OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
+				//OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
 			}
 		}
 
