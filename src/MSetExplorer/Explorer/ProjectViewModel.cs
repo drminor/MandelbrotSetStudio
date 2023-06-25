@@ -384,7 +384,7 @@ namespace MSetExplorer
 
 			CheckProvidedMapAreaInfo(currentMapAreaInfo);
 
-			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, panAmount, factor);
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, panAmount, factor, out var diaReciprocal);
 
 			return newMapAreaInfo;
 		}
@@ -443,7 +443,7 @@ namespace MSetExplorer
 
 			if (transformType == TransformType.ZoomIn)
 			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor);
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor, out var diaReciprocal);
 			}
 			else if (transformType == TransformType.Pan)
 			{
@@ -451,7 +451,7 @@ namespace MSetExplorer
 			}
 			else if (transformType == TransformType.ZoomOut)
 			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor);
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor, out var diaReciprocal);
 			}
 			else
 			{

@@ -12,6 +12,7 @@ namespace MSS.Common
 		string? Description { get; set; }
 		ObjectId CurrentJobId { get; init; }
 		SizeInt Size { get; init; }
+		int Bytes { get; init; }
 
 		DateTime DateCreatedUtc { get; init; }
 		DateTime LastSavedUtc { get; set; }

@@ -275,7 +275,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize, VectorDbl displayPosition, double displayZoom)
+		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
 		{
 			CheckBlockSize(newValue);
 
@@ -291,7 +291,7 @@ namespace MSetExplorer
 				// Save the MapAreaInfo for the entire poster.
 				BoundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize);
 
-				MinimumDisplayZoom = GetMinDisplayZoom(new SizeDbl(posterSize), ViewportSize);
+				MinimumDisplayZoom = GetMinDisplayZoom(posterSize, ViewportSize);
 
 				if (displayZoom < MinimumDisplayZoom)
 				{
@@ -307,7 +307,7 @@ namespace MSetExplorer
 				var previousValue = CurrentAreaColorAndCalcSettings;
 				if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue);
 
-				// Get the MapAreaInfo subset for the upper, left-hand corner.
+				// Get the MapAreaInfo subset for the current view. The display postion specifies the left, bottom pixel to be displayed.
 				var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
 
 				newJobNumber = DiscardAndLoad(newValue, mapAreaInfo2Subset, out lastSectionWasIncluded);
@@ -837,20 +837,20 @@ namespace MSetExplorer
 				throw new InvalidOperationException("canvas size is undefined.");
 			}
 
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize.Round());
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize);
 
 			return mapAreaInfoV1;
 		}
 
 		private MapAreaInfo GetScreenAreaInfoWithDiagnostics(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize.Round());
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize);
 
 			// Just for diagnostics.
 			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
 			CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2, mapAreaInfoV1);
 
-			var mapAreaInfoV1Diag = MapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize.Round());
+			var mapAreaInfoV1Diag = MapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize);
 
 			// Just for diagnostics.
 			var mapAreaInfoV2Diag = MapJobHelper.Convert(mapAreaInfoV1Diag);

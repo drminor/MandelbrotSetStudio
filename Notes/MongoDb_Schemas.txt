@@ -32,54 +32,90 @@ Project
 Job
 	ObjectId Id
 	DateTime DateCreated
-	string Label
-	ObjectId ProjectId
 	ObjectId ParentJobId
 
-	TransformType Operation			// These can be calculated by comparing the SubDivision and the Parent Job's SubDivision
-	Double OperationAmount
+	ObjectId OwnerId
+	JobOwnerType OwnerType			// One of Project | Poster | Image | Bitmap
 
-	SizeInt CanvasSize				// Number of pixels being drawn.
-	Coords Coords					// Consider only storing X1 and Y1
-	ObjectId SubDivisionId
-	SizeRecord SubDivisionPosition	// This can be calculated from Coords and the SubDivision's Position
+	string Label
 
-	int MaxIterations
-	int Threshold
-	int InterationsPerStep
+	int TransformType
+	string TransformTypeString
 
-	ColorMapEntry[] ColorMapEntries
-	String HighColorCss
+	MapAreaInfo2Record MapAreaInfo2Record
+
+		RPointAndDelta PositionAndDelta
+			RPoint MapCenter			// Position in SamplePointDelta units of the Center Pixel of the map, Releative to the Subdivision's BaseMapPosition * BlockSize
+			RSize SamplePointDelta		// Same value as is found in the Subdivision record
+		
+		Subdivision Subdivision
+			ObjectId Id
+			DateTime DateCreated
+			SizeInt BlockSize			// Number of sample points in each MapSection
+			RSize SamplePointDelta		// Distance from one sample point to the next
+			BigVector BaseMapPosition	// Absolute coordinates in SamplePointDelta * BlockSize units. MapSections belonging to this Subdivision use this as a base position
+
+		int Precision
+		BigVector MapBlockOffset		// Position in SamplePointDelta * BlockSize units of the Left, Bottom MapSection, relative to the Subdivision's BaseMapPosition **See Note below
+		VectorInt CanvasControlOffset	// Position in SamplePointDelta units of the Left, Bottom pixel of the Map, relative to the MapBlockOffset. **See Note below.
+
+	PointIntRecord NewAreaPosition		// Point on the Parent's Map for this Job
+	SizeIntRecord NewAreaSize			// Size of the portion of the Parent's Map that corresponds to this Map.
+
+	ObjectId ColorBandSetId				// Used to find the ColorBandSet record -- these are cached in memory.
+	
+	MapCalcSettings MapCalcSettings
+		int TargetIterations
+		int Threshold
+		bool UseEscapeVelocities
+		bool SaveTheZValues
+
+	DateTime LastSavedUtc
+	DateTime LastAccessedUtc
+
+				** Note: The MapAreaInfo field of each job stores the position data in two forms:
+					1. Using the RPointAndDelta format to specify the center pixel.
+					2. Using the MapBlockOffset and CanvasControlOffset to specify the Left, Bottom pixel of the Map
+					The MapBlockOffset and CanvasControlOffset, although stored in the repository, are recalculated 
+					for each Job request based on the current display size.
+
 
 SubDivison
 	ObjectId Id
 	DateTime DateCreated
+	SizeInt BlockSize			// Number of sample points in each MapSection
+	RSize SamplePointDelta		// Distance from one sample point to the next
+	BigVector BaseMapPosition	// Absolute coordinates in SamplePointDelta * BlockSize units. MapSections belonging to this Subdivision use this as a base position
 
-	PointRecord Position		// absolute coordinates on the complex plane of the origin (Left, Bottom) point of the MapSection whose BlockPosition = 0,0.
-	SizeInt BlockSize			// number of sample points in each MapSection
-	SizeRecord SamplePointDelta	// distance from one sample point to the next
-
-MapSection
+MapSectionRecord
 	ObjectId Id
 	DateTime DateCreated
 	ObjectId SubDivisionId		
-	PointInt BlockPosition		// in units of SamplePointDelta * BlockSize
+	PointInt BlockPosition		// Coordinates in units of SamplePointDelta * BlockSize, relative to the Subdivision's BaseMapPosition
 	PointRecord Position		// Can be calculated from the BlockPosition and the SubDivision's Position -- absolute coordinates on the complex plane.
 	int[] Counts
-	bool[] DoneFlags
-	double[] ZValues
+	int[] EscapeVelocities
 
-----------
-Known Types or Used by the in-memory object -- no corresponding record type
-
-MapSectionRef
-	ObjectId MapSectionId
-	RectangleInt ClippingRectangle
-
-MapSectionNeighbors
+MapSectionZValuesRecord
 	ObjectId Id
 	DateTime DateCreated
-	ObjectId Left
-	ObjectId Top
-	ObjectId Right
-	ObjectId Bottom
+	MapSectionId				// Id of the MapSection for which these ZValues belong
+	ZValues ZValues
+
+		int LimbCount			// Number of 32 bit words used to represent each Real and Imaginary component of a single value of Z
+
+		byte[] Zrs				// Array of Real components of the Z values in row first order for the block
+		byte[] Zis
+		byte[] HasEscapedFlags
+		byte[] RowsHasEscaped
+
+JobMapSectionRecord
+	ObjectId Id
+	DateTime DateCreated
+	ObjectId MapSectionId
+
+	ObjectId SubdivisionId
+	ObjectId OwnerId
+	JobOwnerType OwnerType
+	bool IsInverted
+	BigVectorRecord MapBlockOffset

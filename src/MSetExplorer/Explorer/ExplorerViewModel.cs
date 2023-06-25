@@ -226,7 +226,7 @@ namespace MSetExplorer
 						var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
 						var displaySize = GetDisplaySize(e);
 
-						var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize.Round());
+						var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
 						MapCoordsViewModel.Preview(mapAreaInfoV1);
 					}
 				}

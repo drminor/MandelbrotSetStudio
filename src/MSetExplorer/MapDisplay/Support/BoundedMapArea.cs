@@ -11,24 +11,29 @@ namespace MSetExplorer
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapAreaInfo2 _mapAreaInfo;
 		private double _baseScale;
+		private double _scaleFactor;
 		private MapAreaInfo _scaledMapAreaInfo;
 
 		#region Constructor
 
-		public BoundedMapArea(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeInt posterSize, SizeDbl viewportSize)
+		public BoundedMapArea(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, SizeDbl viewportSize)
 		{
 			_mapJobHelper = mapJobHelper;
 			_mapAreaInfo = mapAreaInfo;
 
-			MapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
+			_baseScale = 0;
+			_scaleFactor = 1;
 
-			Debug.Assert(MapAreaInfoWithSize.CanvasSize == posterSize, $"GetMapAreaWithSizeFat is returning a CanvasSize: {MapAreaInfoWithSize.CanvasSize} different from the posterSize: {posterSize}.");
-
-			PosterSize = new SizeDbl(MapAreaInfoWithSize.CanvasSize);
+			PosterSize = posterSize;
 			ViewportSize = viewportSize;
 
-			_baseScale = 0;
-			ScaleFactor = 1;
+			//MapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
+
+			//Debug.Assert(MapAreaInfoWithSize.CanvasSize == posterSize, $"GetMapAreaWithSizeFat is returning a CanvasSize: {MapAreaInfoWithSize.CanvasSize} different from the posterSize: {posterSize}.");
+
+			MapAreaInfoWithSize = GetScaledMapAreaInfoV1(mapAreaInfo, posterSize, _scaleFactor);
+
+			Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(MapAreaInfoWithSize.CanvasSize, posterSize), $"Since the scale factor = 1, the MapAreaInfoV1.CanvasSize should equal the PosterSize. Compare: {MapAreaInfoWithSize.CanvasSize} with {posterSize}.");
 
 			_scaledMapAreaInfo = MapAreaInfoWithSize;
 		}
@@ -53,21 +58,27 @@ namespace MSetExplorer
 					_baseScale = value;
 					ScaleFactor = Math.Pow(0.5, _baseScale);
 
-					if (_baseScale == 0)
-					{
-						_scaledMapAreaInfo = MapAreaInfoWithSize;
-					}
-					else
-					{
-						var mapArV2 = _mapJobHelper.GetMapAreaInfoZoomCenter(_mapAreaInfo, ScaleFactor);
-						var newUnscaledExtent = PosterSize.Scale(ScaleFactor);
-						_scaledMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(mapArV2, newUnscaledExtent.Round());
-					}
+					//if (_baseScale == 0)
+					//{
+					//	_scaledMapAreaInfo = MapAreaInfoWithSize;
+					//}
+					//else
+					//{
+					//	var mapArV2 = _mapJobHelper.GetMapAreaInfoZoomCenter(_mapAreaInfo, ScaleFactor, out var diaReciprocal);
+					//	var displaySize = PosterSize.Scale(ScaleFactor);
+					//	_scaledMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(mapArV2, displaySize.Round());
+					//}
+
+					_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, ScaleFactor);
 				}
 			}
 		}
 
-		public double ScaleFactor { get; private set; }
+		public double ScaleFactor
+		{
+			get => _scaleFactor;
+			private set => _scaleFactor = value;
+		}
 
 		#endregion
 
@@ -126,10 +137,19 @@ namespace MSetExplorer
 
 		#region Private Methods
 
+		private MapAreaInfo GetScaledMapAreaInfoV1(MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, double scaleFactor)
+		{
+			var adjustedMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, scaleFactor, out var diaReciprocal);
+			var displaySize = posterSize.Scale(scaleFactor);
+			var result = _mapJobHelper.GetMapAreaWithSizeFat(adjustedMapAreaInfo, displaySize);
+
+			return result;
+		}
+
 		private MapAreaInfo GetUpdatedMapAreaInfo(RectangleDbl newScreenArea, MapAreaInfo mapAreaInfoWithSize)
 		{
 			var newCoords = _mapJobHelper.GetMapCoords(newScreenArea.Round(), mapAreaInfoWithSize.MapPosition, mapAreaInfoWithSize.SamplePointDelta);
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, mapAreaInfoWithSize.Subdivision, newScreenArea.Size.Round());
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, mapAreaInfoWithSize.Subdivision, newScreenArea.Size);
 
 			return mapAreaInfoV1;
 		}

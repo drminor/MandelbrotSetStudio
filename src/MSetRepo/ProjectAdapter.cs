@@ -877,18 +877,21 @@ namespace MSetRepo
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+
 
 			var allPosterRecords = posterReaderWriter.GetAll();
 
-			var result = allPosterRecords.Select(x => GetPosterInfoInternal(x, jobReaderWriter));
+			var result = allPosterRecords.Select(x => GetPosterInfoInternal(x, jobReaderWriter, jobMapSectionReaderWriter));
 
 			return result;
 		}
 
-		private IPosterInfo GetPosterInfoInternal(PosterRecord posterRec, JobReaderWriter jobReaderWriter)
+		private IPosterInfo GetPosterInfoInternal(PosterRecord posterRecord, JobReaderWriter jobReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
 		{
 			//Debug.WriteLine($"Retrieving PosterInfo. Poster: {posterRec.Id}, Current Job: {posterRec.CurrentJobId}");
-			var jobRec = jobReaderWriter.Get(posterRec.CurrentJobId);
+
+			var jobRec = jobReaderWriter.Get(posterRecord.CurrentJobId);
 
 			PosterInfo result;
 
@@ -898,16 +901,48 @@ namespace MSetRepo
 			{
 				//throw new InvalidOperationException($"Poster with ID: {posterRec.CurrentJobId} could not be found in the repository.");
 
-				Debug.WriteLine($"WARNING: Could not find Job with Id: {posterRec.CurrentJobId} for Poster Name: {posterRec.Name} and ID: {posterRec.Id}.");
+				Debug.WriteLine($"WARNING: Could not find Job with Id: {posterRecord.CurrentJobId} for Poster Name: {posterRecord.Name} and ID: {posterRecord.Id}.");
 
-				lastSavedUtc = posterRec.LastSavedUtc;
+				lastSavedUtc = posterRecord.LastSavedUtc;
 			}
 			else
 			{
 				lastSavedUtc = jobRec.LastSavedUtc;
 			}
 
-			result = new PosterInfo(posterRec.Id, posterRec.Name, posterRec.Description, posterRec.CurrentJobId, posterRec.PosterSize, posterRec.DateCreatedUtc, lastSavedUtc, posterRec.LastAccessedUtc);
+			var bytes = GetBytes(posterRecord, jobReaderWriter, jobMapSectionReaderWriter);
+
+
+			result = new PosterInfo(posterRecord.Id, posterRecord.Name, posterRecord.Description, posterRecord.CurrentJobId, posterRecord.PosterSize, bytes, posterRecord.DateCreatedUtc, lastSavedUtc, posterRecord.LastAccessedUtc);
+			return result;
+		}
+
+		private int GetBytes(PosterRecord posterRecord, JobReaderWriter jobReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
+		{
+			if (posterRecord.Name == "Art3-13-4")
+			{
+				Debug.WriteLine("Here at Art3-13-4");
+			}
+
+			var allJobIds = jobReaderWriter.GetJobIdsByOwner(posterRecord.Id).ToList();
+
+			List<ObjectId> mapSectionIds = new List<ObjectId>();
+
+			foreach(var jobId in allJobIds)
+			{
+				var ids = jobMapSectionReaderWriter.GetMapSectionIdsByOwnerId(jobId, JobOwnerType.Poster);
+
+				foreach(var id in ids)
+				{
+					if (!mapSectionIds.Contains(id))
+					{
+						mapSectionIds.Add(id);
+					}
+				}
+			}
+
+			var result = mapSectionIds.Count * 64300;
+
 			return result;
 		}
 

@@ -84,7 +84,7 @@ namespace ProjectRepo
 			return jobMapSectionRecords;
 		}
 
-		public IList<ObjectId> GetMapSectionIdsByOwnerId(ObjectId ownerId, JobOwnerType jobOwnerType)
+		public List<ObjectId> GetMapSectionIdsByOwnerId(ObjectId ownerId, JobOwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerId, ownerId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);

@@ -324,7 +324,15 @@ namespace MSetExplorer
 				var report = GetJobMapSectionsReferenceReport(ma);
 				Debug.WriteLine(report);
 
-				report = DeleteNonExtantJobsReferenced(ma);
+				report = DeleteNonExtantJobsReferenced(ma, JobOwnerType.Project);
+				Debug.WriteLine(report);
+
+				Debug.WriteLine("\n\n");
+				report = DeleteNonExtantJobsReferenced(ma, JobOwnerType.Poster);
+				Debug.WriteLine(report);
+
+				Debug.WriteLine("\n\n");
+				report = DeleteNonExtantJobsReferenced(ma, JobOwnerType.ImageBuilder);
 				Debug.WriteLine(report);
 			}
 		}
@@ -335,11 +343,13 @@ namespace MSetExplorer
 			return report;
 		}
 
-		private string DeleteNonExtantJobsReferenced(MapSectionAdapter mapSectionAdapter)
+		private string DeleteNonExtantJobsReferenced(MapSectionAdapter mapSectionAdapter, JobOwnerType jobOwnerType)
 		{
-			var jobsNotFound = mapSectionAdapter.DeleteNonExtantJobsReferenced();
+			var jobsNotFound = mapSectionAdapter.DeleteNonExtantJobsReferenced(jobOwnerType);
 
 			var sb = new StringBuilder();
+
+			sb.AppendLine($"Handling Jobs for owners of type: {jobOwnerType}.");
 
 			sb.AppendLine("JobIds referenced in one or more JobMapSectionRecords for which no Job record exists.");
 			sb.AppendLine("JobId\tMapSectionsDelerted");

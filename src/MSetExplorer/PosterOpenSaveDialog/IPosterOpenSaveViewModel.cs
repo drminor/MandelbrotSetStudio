@@ -18,7 +18,5 @@ namespace MSetExplorer
 
 		bool IsNameTaken(string? name);
 		bool DeleteSelected(out long numberOfMapSectionsDeleted);
-
-		byte[]? GetPreviewImageData(SizeInt imageSize);
 	}
 }

@@ -33,9 +33,9 @@ namespace MSetExplorer
 
 		void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize);
 
-		void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo);
+		void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo, out double diagReciprocal);
 
-		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea);
+		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal);
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
 		void Load(Poster poster, MapAreaInfo2? newMapAreaInfo);

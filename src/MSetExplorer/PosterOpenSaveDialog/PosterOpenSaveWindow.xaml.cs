@@ -135,15 +135,6 @@ namespace MSetExplorer
 				: MessageBox.Show("Could not delete this Project.");
 		}
 
-		private void ButtonPreview_Click(object sender, RoutedEventArgs e)
-		{
-			var imageSize = new SizeInt(1024);
-
- 			var imageData = _vm.GetPreviewImageData(imageSize);
-
-			Debug.WriteLine($"The ImageData has {imageData?.Length ?? 0} bytes.");
-		}
-
 		private void TakeSelection()
 		{
 			if (_vm.DialogType == DialogType.Save)

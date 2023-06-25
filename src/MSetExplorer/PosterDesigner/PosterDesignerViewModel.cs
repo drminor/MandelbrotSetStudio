@@ -98,7 +98,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public LazyMapPreviewImageProvider GetPreviewImageProvider(MapAreaInfo2 mapAreaInfo, SizeInt previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
+		public LazyMapPreviewImageProvider GetPreviewImageProvider(MapAreaInfo2 mapAreaInfo, SizeDbl previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
 		{
 			var mapJobHelper = _viewModelFactory.ProvisionAMapJopHelper();
 
@@ -107,9 +107,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea)
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal)
 		{
-			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, currentPosterSize, newPosterSize, screenArea);
+			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, currentPosterSize, newPosterSize, screenArea, out diagReciprocal);
 			return result;
 		}
 
@@ -171,7 +171,7 @@ namespace MSetExplorer
 			else
 			{
 				// Zoom or Pan Map Coordinates
-				PosterViewModel.UpdateMapSpecs(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
+				PosterViewModel.UpdateMapSpecs(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo, out var diagReciprocal);
 			}
 		}
 
@@ -223,7 +223,7 @@ namespace MSetExplorer
 				if (currentjob != null)
 				{
 					UpdateTheMapCoordsView(currentjob);
-					var posterSize = currentPoster.PosterSize;
+					var posterSize = new SizeDbl(currentPoster.PosterSize);
 
 					var displayPosition = currentPoster.DisplayPosition;
 					var displayZoom = currentPoster.DisplayZoom;

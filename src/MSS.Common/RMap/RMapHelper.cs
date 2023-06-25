@@ -38,7 +38,7 @@ namespace MSS.Common
 			return transPd;
 		}
 
-		public static RPointAndDelta GetNewSamplePointDelta(RPointAndDelta pointAndDelta, double factor)
+		public static RPointAndDelta GetNewSamplePointDelta(RPointAndDelta pointAndDelta, double factor, out double diagReciprocal)
 		{
 			// Factor = number of new pixels each existing pixel will be replaced with.
 
@@ -54,9 +54,7 @@ namespace MSS.Common
 
 			var rK = (int)Math.Round(reciprocal * 1024);
 			var rReciprocal = new RValue(rK, -10);
-
-			//var rReciprocalDiag = rK * Math.Pow(2, -10);
-			var rReciprocalDiagStr = rReciprocal.ToString(includeDecimalOutput: true);
+			diagReciprocal = BigIntegerHelper.ConvertToDouble(rReciprocal);
 
 			// Multiply the SamplePointDelta by 1/factor, adjusting the exponent as necessary.
 			// as the exponent is futher decreased, the numerators of the X and Y values are increased to compensate.
@@ -66,9 +64,16 @@ namespace MSS.Common
 			// and reduce the denominator to compensate.
 			var result = Reducer.Reduce(rawResult);
 
-			Debug.WriteLine($"GetNewSamplePointDelta scaled {pointAndDelta.SamplePointDelta} by {rReciprocalDiagStr} and got {result.SamplePointDelta}.");
+			ReportSamplePointDeltaScaling(pointAndDelta.SamplePointDelta, factor, rReciprocal, result.SamplePointDelta);
 
 			return result;
+		}
+
+		[Conditional("DEBUG")]
+		private static void ReportSamplePointDeltaScaling(RSize original, double factor, RValue rReciprocal, RSize result)
+		{
+			var rReciprocalDiagStr = rReciprocal.ToString(includeDecimalOutput: true);
+			Debug.WriteLine($"GetNewSamplePointDelta scaled {original} by {factor} ({rReciprocalDiagStr}) and got {result}.");
 		}
 
 		public static int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)

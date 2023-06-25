@@ -553,7 +553,7 @@ namespace MSetExplorer
 
 			var areaColorAndCalcSettings = GetAreaColorAndCalcSettings();
 
-			var imageSize = new SizeInt(4096); // TODO: Create user interface to have the user specify a size for the image.
+			var imageSize = new SizeDbl(4096); // TODO: Create user interface to have the user specify a size for the image.
 
 			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize);
 

@@ -162,48 +162,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public byte[]? GetPreviewImageData(SizeInt imageSize)
-		{
-			var posterInfo = SelectedPoster;
-
-			if (posterInfo == null)
-			{
-				throw new InvalidOperationException("No Selected Poster.");
-			}
-
-			var job = _projectAdapter.GetJob(posterInfo.CurrentJobId);
-			var colorBandSet = _projectAdapter.GetColorBandSet(job.ColorBandSetId.ToString());
-			if (colorBandSet == null)
-			{
-				throw new KeyNotFoundException($"Could not fetch the Current ColorBandSet: {job.ColorBandSetId} for job: {posterInfo.CurrentJobId}.");
-			}
-
-			//Task.Run(async bitmapBuilder.BuildAsync(poster.))
-
-			//var posterAreaInfo = job.MapAreaInfo;
-			//var previewMapArea = new MapAreaInfo(posterAreaInfo.Coords, imageSize, posterAreaInfo.Subdivision, posterAreaInfo.Precision, posterAreaInfo.MapBlockOffset, posterAreaInfo.CanvasControlOffset);
-
-			//var previewMapArea = MapJobHelper2.Convert(job.MapAreaInfo, imageSize);
-			var previewMapArea = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, imageSize);
-
-			//byte[]? result = null;
-
-			var cts = new CancellationTokenSource();
-			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var task = Task.Run(async () => await bitmapBuilder.BuildAsync(previewMapArea, colorBandSet, job.MapCalcSettings, _useEscapeVelocities, cts.Token, StatusCallBack));
-
-			var result = task.Result;
-
-			//task.GetAwaiter().GetResult();
-
-			//Task<LogEntity> task = Task.Run<LogEntity>(async () => await GetLogAsync());
-			//return task.Result;
-
-			//var task = bitmapBuilder.BuildAsync(previewMapArea, poster.ColorBandSet, poster.MapCalcSettings, StatusCallBack, cts.Token); 
-			//var result = task.GetAwaiter()
-			return result;
-		}
-
 		private Progress<double> _previewImageDataBuilderProgress = new Progress<double>();
 
 		private void StatusCallBack(double value)

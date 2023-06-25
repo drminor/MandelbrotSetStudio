@@ -190,7 +190,7 @@ namespace MSetExplorer.XPoc
 			}
 		}
 
-		private double GetCoordDiff(double sampleWidth, int screenWidth, double mapWidth)
+		private double GetCoordDiff(double sampleWidth, double screenWidth, double mapWidth)
 		{
 			var rWidth = sampleWidth * screenWidth;
 			var result = mapWidth - rWidth;

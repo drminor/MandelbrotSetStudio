@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 		public PosterViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
 		{
-			_useDetailedDebug = false;
+			_useDetailedDebug = true;
 
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
@@ -104,8 +104,6 @@ namespace MSetExplorer
 			{
 				var currentJobId = currentProject.CurrentJob.Id;
 
-
-
 				var result = currentProject.GetJobs().Where(x => x.Id != currentJobId).Select(x => x.Id).ToList();
 				return result;
 			}
@@ -130,6 +128,44 @@ namespace MSetExplorer
 				return Enumerable.Empty<ObjectId>().ToList();
 			}
 		}
+
+		public ObjectId? GetJobForZoomLevelOne()
+		{
+			var currentProject = CurrentPoster;
+			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+			{
+				var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
+
+				var minExponent = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth).Min(x => x.Subdivision.SamplePointDelta.Exponent);
+
+				var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth && x.Subdivision.SamplePointDelta.Exponent == minExponent).FirstOrDefault();
+
+				return result?.Id ?? null;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		public List<ObjectId> GetJobIdsExceptZoomLevelOne()
+		{
+			var currentProject = CurrentPoster;
+			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+			{
+				var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
+
+				var minExponent = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth).Min(x => x.Subdivision.SamplePointDelta.Exponent);
+
+				var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator != currentSpdWidth || x.Subdivision.SamplePointDelta.Exponent != minExponent).Select(x => x.Id).ToList();
+				return result;
+			}
+			else
+			{
+				return Enumerable.Empty<ObjectId>().ToList();
+			}
+		}
+
 
 		public string? CurrentPosterName => CurrentPoster?.Name;
 		public bool CurrentPosterOnFile => CurrentPoster?.OnFile ?? false;
@@ -230,7 +266,7 @@ namespace MSetExplorer
 						currentProject.CurrentColorBandSet = value;
 					}
 
-					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
+					OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 				}
 			}
 		}
@@ -252,7 +288,7 @@ namespace MSetExplorer
 						_previewColorBandSet = adjustedColorBandSet;
 					}
 
-					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
+					OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 				}
 			}
 		}
@@ -454,9 +490,15 @@ namespace MSetExplorer
 
 			if (CurrentPoster != null)
 			{
-				var jobIdsToRemoveMapSections = GetAllJobIdsNotMatchingCurrentSPD();
+				var zoomLevelOneJobId = GetJobForZoomLevelOne();
 
-				result = JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Poster, _mapSectionAdapter);
+				if (zoomLevelOneJobId != null)
+				{
+					var jobIdsToRemoveMapSections = GetJobIdsExceptZoomLevelOne(); // GetAllJobIdsNotMatchingCurrentSPD();
+					result = JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Poster, _mapSectionAdapter);
+					result += JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Project, _mapSectionAdapter);
+					result += JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.ImageBuilder, _mapSectionAdapter);
+				}
 
 				CurrentPoster = null;
 			}
@@ -491,7 +533,7 @@ namespace MSetExplorer
 		/// <param name="currentPosterSize">The original size in screen pixels</param>
 		/// <param name="screenArea">The new size in screen pixels. ScreenTypeHelper.GetNewBoundingArea(OriginalMapArea, BeforeOffset, AfterOffset);</param>
 		/// <returns></returns>
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea)
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal)
 		{
 			var xFactor = newPosterSize.Width / currentPosterSize.Width;
 			var yFactor = newPosterSize.Height / currentPosterSize.Height;
@@ -501,11 +543,11 @@ namespace MSetExplorer
 			var oldCenter = new PointDbl(currentPosterSize.Scale(0.5));
 			var zoomPoint = newCenter.Diff(oldCenter).Round();
 
-			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor);
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor, out diagReciprocal);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel GetUpdatedMapAreaInfo:" +
 				$"\n CurrentPosterSize: {currentPosterSize}, NewPosterSize: {newPosterSize}, ScreenArea: {screenArea}." +
-				$"\n XFactor: {xFactor}, YFactor: {yFactor}, Factor: {factor}." +
+				$"\n XFactor: {xFactor}, YFactor: {yFactor}, Factor: {factor}, Reciprocal: {diagReciprocal}." +
 				$"\n NewCenter: {newCenter}, OldCenter: {oldCenter}, ZoomPoint: {zoomPoint}." +
 				$"\n Using: {mapAreaInfo}" +
 				$"\n Produces newMapAreaInfo: {newMapAreaInfo}.");
@@ -525,9 +567,10 @@ namespace MSetExplorer
 			_ = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
 		}
 
+
 		// Called in response to the MapDisplayViewModel raising a MapViewUpdateRequested event,
 		// or the PosterDesignerView code behind handling a Pan or Zoom UI event.
-		public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo)
+		public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo, out double diagReciprocal)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapSpecs received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
@@ -535,10 +578,11 @@ namespace MSetExplorer
 
 			if (currentPoster == null)
 			{
+				diagReciprocal = 0.0;
 				return;
 			}
 
-			_ = AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor);
+			_ = AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor, out diagReciprocal);
 		}
 
 		#endregion
@@ -564,8 +608,10 @@ namespace MSetExplorer
 			return job;
 		}
 
-		private Job AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor)
+		private Job AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
 		{
+			diagReciprocal = 0.0;
+
 			var currentJob = poster.CurrentJob;
 			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
 
@@ -576,7 +622,7 @@ namespace MSetExplorer
 
 			if (transformType == TransformType.ZoomIn)
 			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor);
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor, out diagReciprocal);
 			}
 			else if (transformType == TransformType.Pan)
 			{
@@ -584,7 +630,7 @@ namespace MSetExplorer
 			}
 			else if (transformType == TransformType.ZoomOut)
 			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor);
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor, out diagReciprocal);
 			}
 			else
 			{

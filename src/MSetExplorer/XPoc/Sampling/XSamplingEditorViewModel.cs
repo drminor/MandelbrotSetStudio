@@ -325,7 +325,7 @@ namespace MSetExplorer.XPoc
 
 		private void UpdateScreenCoords()
 		{
-			var screenMapAreaInfo = GetMapAreaInfo(Coords, ScreenSize, _blockSize);
+			var screenMapAreaInfo = GetMapAreaInfo(Coords, new SizeDbl(ScreenSize), _blockSize);
 			MapAreaInfoViewModelCanS.UpdateMapAreaInfo(screenMapAreaInfo, Coords);
 
 			UpdateSelectionCoords();
@@ -372,10 +372,10 @@ namespace MSetExplorer.XPoc
 		}
 
 
-		private MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeInt canvasSize, SizeInt blockSize)
+		private MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeDbl canvasSize, SizeInt blockSize)
 		{
 			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
-			var displaySize = canvasSize;
+			var displaySize = canvasSize.Round();
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			//var samplePointDelta = RMapHelper.GetSamplePointDelta(ref updatedCoords, canvasSize, TOLERANCE_FACTOR);
@@ -388,7 +388,7 @@ namespace MSetExplorer.XPoc
 
 			Debug.WriteLine($"\nThe new coords are : {updatedCoords},\n old = {coords}. (While calculating SamplePointDelta.)\n");
 
-			var samplePointDeltaD = RMapHelper.GetSamplePointDiag(coords, canvasSize, out var newDCoords);
+			var samplePointDeltaD = RMapHelper.GetSamplePointDiag(coords, displaySize, out var newDCoords);
 			RMapHelper.ReportSamplePointDiff(samplePointDelta, samplePointDeltaD, coords, updatedCoords, newDCoords);
 
 
@@ -402,7 +402,7 @@ namespace MSetExplorer.XPoc
 
 			var binaryPrecision = GetBinaryPrecision(updatedCoords, samplePointDelta, out var decimalPrecision);
 
-			var result = new MapAreaInfo(updatedCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+			var result = new MapAreaInfo(updatedCoords, new SizeDbl(displaySize), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}

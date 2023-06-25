@@ -278,7 +278,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 
 			//AddTiming("GetMapAreaInfo");
-			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeInt(1024));
+			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeDbl(1024));
 			var mapSectionRequests = _mapSectionHelper.CreateSectionRequests(ownerId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 

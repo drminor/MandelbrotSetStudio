@@ -5,6 +5,7 @@ using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 
 namespace MSS.Common
 {
@@ -106,11 +107,11 @@ namespace MSS.Common
 		}
 
 		// Zoom
-		public MapAreaInfo2 GetMapAreaInfoZoomCenter(MapAreaInfo2 currentArea, double factor)
+		public MapAreaInfo2 GetMapAreaInfoZoomCenter(MapAreaInfo2 currentArea, double factor, out double diagReciprocal)
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
-			var scaledPd = RMapHelper.GetNewSamplePointDelta(currentArea.PositionAndDelta, factor);
+			var scaledPd = RMapHelper.GetNewSamplePointDelta(currentArea.PositionAndDelta, factor, out diagReciprocal);
 
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(scaledPd, blockSize, out var canvasControlOffset);
 
@@ -124,12 +125,12 @@ namespace MSS.Common
 		}
 
 		// Pan and Zoom
-		public MapAreaInfo2 GetMapAreaInfoZoomPoint(MapAreaInfo2 currentArea, VectorInt panAmount, double factor)
+		public MapAreaInfo2 GetMapAreaInfoZoomPoint(MapAreaInfo2 currentArea, VectorInt panAmount, double factor, out double diagReciprocal)
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
 			var transPd = RMapHelper.GetNewCenterPoint(currentArea.PositionAndDelta, panAmount);
-			var scaledAndTransPd = RMapHelper.GetNewSamplePointDelta(transPd, factor);
+			var scaledAndTransPd = RMapHelper.GetNewSamplePointDelta(transPd, factor, out diagReciprocal);
 
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(scaledAndTransPd, blockSize, out var canvasControlOffset);
 			
@@ -146,20 +147,11 @@ namespace MSS.Common
 
 		#region MapAreaInfo2 Support
 
-		public static MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
+		public static MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize)
 		{
 			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
 
-			// TODO: Update the GetMapAreaWithSize method to take a SizeDbl instead of a SizeInt for the canvasSize.
-
-			// Create a rectangle centered at position: x = 0, y = 0
-			// Having the same width and height as the given canvasSize.
-			var half = new PointInt(canvasSize.Width / 2, canvasSize.Height / 2);
-			var area = new RectangleInt(half.Invert(), canvasSize);
-
-			// Multiply the area by the SamplePointDelta to get map coordiates
-			var rArea = new RRectangle(area);
-			rArea = rArea.Scale(rPointAndDelta.SamplePointDelta);
+			var rArea = ConvertScreenRectToMapCenterCoords(canvasSize, rPointAndDelta.SamplePointDelta);
 
 			//var coords = rArea.Translate(rPointAndDelta.Position);
 
@@ -190,6 +182,7 @@ namespace MSS.Common
 
 			if (nrmSamplePointDelta.Exponent != rPointAndDelta.Exponent)
 			{
+				// Consider using the version of Normalize that attempts to keep one of the exponents the same. See method: GetMapAreaInfoScaleConstant
 				throw new InvalidOperationException("Cannot create a MapAreaWithSize from the given mapAreaInfoV2 and CanvasSize: The existing subdivision is not compatible. Please use the GetMapAreaWithSizeFat method instead.");
 			}
 
@@ -218,18 +211,11 @@ namespace MSS.Common
 			return result;
 		}
 
-		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfoV2, SizeInt canvasSize)
+		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize)
 		{
 			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
 
-			// Create a rectangle centered at position: x = 0, y = 0
-			// Having the same width and height as the given canvasSize.
-			var half = new PointInt(canvasSize.Width / 2, canvasSize.Height / 2);
-			var area = new RectangleInt(half.Invert(), canvasSize);
-
-			// Multiply the area by the SamplePointDelta to get map coordiates
-			var rArea = new RRectangle(area);
-			rArea = rArea.Scale(rPointAndDelta.SamplePointDelta);
+			var rArea = ConvertScreenRectToMapCenterCoords(canvasSize, rPointAndDelta.SamplePointDelta);
 
 			// Add to it the CenterPoint, to get a RRectangle which is the map's coordinates
 			var nrmArea = RNormalizer.Normalize(rArea, rPointAndDelta.Position, out var nrmMapCenterPoint);
@@ -287,6 +273,28 @@ namespace MSS.Common
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(convertedPd, blockSize, out var canvasControlOffset);
 
 			var result = new MapAreaInfo2(convertedPd, mapAreaInfo.Subdivision, mapAreaInfo.Precision, mapBlockOffset, canvasControlOffset);
+
+			return result;
+		}
+
+		public static RRectangle ConvertScreenRectToMapCenterCoords(SizeDbl canvasSize, RSize samplePointDelta)
+		{
+			// Create a rectangle centered at position: x = 0, y = 0
+			// Having the same width and height as the given canvasSize.
+			var half = new PointDbl(canvasSize.Width / 2, canvasSize.Height / 2);
+			var area = new RectangleDbl(half.Invert(), canvasSize);
+
+			// Multiply the area by the SamplePointDelta to get map coordiates
+			var rArea = new RRectangle(
+				new BigInteger(Math.Round(area.X1 * 2)),
+				new BigInteger(Math.Round(area.X2 * 2)),
+				new BigInteger(Math.Round(area.Y1 * 2)),
+				new BigInteger(Math.Round(area.Y2 * 2)),
+				-1,
+				RMapConstants.DEFAULT_PRECISION
+			);
+
+			var result = rArea.Scale(samplePointDelta);
 
 			return result;
 		}
@@ -363,7 +371,7 @@ namespace MSS.Common
 		}
 
 		// Calculate the MapBlockOffset and CanvasControlOffset while keeping the SamplePointDelta, constant.
-		public MapAreaInfo GetMapAreaInfoScaleConstant(RRectangle coords, Subdivision subdivision, SizeInt canvasSize)
+		public MapAreaInfo GetMapAreaInfoScaleConstant(RRectangle coords, Subdivision subdivision, SizeDbl canvasSize)
 		{
 			var samplePointDelta = subdivision.SamplePointDelta;
 			//var updatedCoords = coords.Clone();
@@ -432,7 +440,7 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(uSpd, mapBlockOffset, out var localMapBlockOffset);
 
 			var binaryPrecision = RMapHelper.GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
-			var result = new MapAreaInfo(newCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+			var result = new MapAreaInfo(newCoords, new SizeDbl(canvasSize), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}

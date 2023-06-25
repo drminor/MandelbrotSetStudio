@@ -47,7 +47,7 @@ namespace ImageBuilder
 				UseEscapeVelocities = useEscapeVelocities
 			};
 
-			var imageSize = mapAreaInfo.CanvasSize;
+			var imageSize = mapAreaInfo.CanvasSize.Round();
 
 			var result = new byte[imageSize.NumberOfCells * 4];
 

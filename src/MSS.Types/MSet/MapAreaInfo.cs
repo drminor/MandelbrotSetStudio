@@ -9,7 +9,7 @@ namespace MSS.Types.MSet
 		public static readonly MapAreaInfo Empty = _lazyMapAreaInfo.Value;
 
 		public RRectangle Coords { get; init; }
-		public SizeInt CanvasSize { get; init; }
+		public SizeDbl CanvasSize { get; init; }
 
 		public Subdivision Subdivision { get; init; }
 		public int Precision { get; init; }
@@ -25,13 +25,14 @@ namespace MSS.Types.MSet
 		public MapAreaInfo()
 		{
 			Coords = new RRectangle();
+			CanvasSize = new SizeDbl();
 			Subdivision = new Subdivision();
 			Precision = 1;
 			MapBlockOffset = new BigVector();
 			CanvasControlOffset = new VectorInt();
 		}
 
-		public MapAreaInfo(RRectangle coords, SizeInt canvasSize, Subdivision subdivision, int precision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
+		public MapAreaInfo(RRectangle coords, SizeDbl canvasSize, Subdivision subdivision, int precision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
 		{
 			Coords = coords;
 			CanvasSize = canvasSize;

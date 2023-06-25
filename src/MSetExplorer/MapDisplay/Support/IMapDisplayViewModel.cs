@@ -34,7 +34,7 @@ namespace MSetExplorer
 		void RaiseMapViewPanUpdate(ImageDraggedEventArgs e);
 
 		int? SubmitJob(AreaColorAndCalcSettings newValue);
-		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeInt posterSize, VectorDbl displayPosition, double displayZoom);
+		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom);
 
 		void CancelJob();
 		//int? RestartLastJob();

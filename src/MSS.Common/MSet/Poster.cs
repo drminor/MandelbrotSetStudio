@@ -162,6 +162,7 @@ namespace MSS.Common.MSet
 			}
 		}
 
+		//TODO: Convert the PosterSize to a SizeDbl
 		public SizeInt PosterSize { get; set; }
 
 		public string SizeAsString

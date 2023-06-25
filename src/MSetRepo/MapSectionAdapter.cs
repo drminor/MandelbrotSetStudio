@@ -500,7 +500,7 @@ namespace MSetRepo
 			return headLine + sb.ToString();
 		}
 
-		public List<Tuple<string, long?>> DeleteNonExtantJobsReferenced()
+		public List<Tuple<string, long?>> DeleteNonExtantJobsReferenced(JobOwnerType jobOwnerType)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			//var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
@@ -516,7 +516,7 @@ namespace MSetRepo
 
 			var jobIdsNotFound = new List<ObjectId>();
 
-			var msJobIds = _jobMapSectionReaderWriter.GetDistinctJobIdsFromJobMapSections(JobOwnerType.Project);
+			var msJobIds = _jobMapSectionReaderWriter.GetDistinctJobIdsFromJobMapSections(jobOwnerType);
 
 			foreach (var jobId in msJobIds)
 			{
@@ -530,7 +530,7 @@ namespace MSetRepo
 
 			foreach(var jobId in jobIdsNotFound)
 			{
-				var numberDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, JobOwnerType.Project);
+				var numberDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, jobOwnerType);
 				result.Add(new Tuple<string, long?>(jobId.ToString(), numberDeleted));
 			}
 
