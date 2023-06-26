@@ -43,12 +43,12 @@ namespace MSetExplorer
 		bool PosterOpen(string name);
 		bool PosterSave();
 		bool PosterSaveAs(string name, string? description, [MaybeNullWhen(true)] out string errorText);
-		long PosterClose();
+		void PosterClose();
 
 		long DeleteMapSectionsForUnsavedJobs();
-		long DeleteMapSections(List<MapSectionRequest> mapSectionRequests);
+		long DeleteNonEssentialMapSections(List<MapSectionRequest> mapSectionRequests);
 
-		List<ObjectId> GetAllNonCurrentJobIds();
-		List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD();
+		//List<ObjectId> GetAllNonCurrentJobIds();
+		//List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD();
 	}
 }

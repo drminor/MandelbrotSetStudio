@@ -37,7 +37,7 @@ namespace MSetExplorer
 		int? SubmitJob(AreaColorAndCalcSettings newValue);
 		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom);
 
-		List<MapSectionRequest> GetMapSectionRequests(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize);
+		List<MapSectionRequest> GetMapSectionRequests(Job job, SizeDbl posterSize);
 
 		void CancelJob();
 		//int? RestartLastJob();

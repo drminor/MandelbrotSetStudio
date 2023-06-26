@@ -178,6 +178,16 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
+		public long? DeleteJobMapSectionsByMapSectionId(IEnumerable<ObjectId> mapSectionIds, JobOwnerType jobOwnerType)
+		{
+			var filter1 = Builders<JobMapSectionRecord>.Filter.In(f => f.MapSectionId, mapSectionIds);
+			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
+
+			var deleteResult = Collection.DeleteMany(filter1 & filter2);
+
+			return GetReturnCount(deleteResult);
+		}
+
 		#endregion
 
 		#region Aggregate

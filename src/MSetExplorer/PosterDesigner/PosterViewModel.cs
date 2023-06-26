@@ -97,75 +97,6 @@ namespace MSetExplorer
 			return CurrentPoster?.GetNumberOfDirtyJobs() ?? 0;
 		}
 
-		public List<ObjectId> GetAllNonCurrentJobIds()
-		{
-			var currentProject = CurrentPoster;
-			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-			{
-				var currentJobId = currentProject.CurrentJob.Id;
-
-				var result = currentProject.GetJobs().Where(x => x.Id != currentJobId).Select(x => x.Id).ToList();
-				return result;
-			}
-			else
-			{
-				return Enumerable.Empty<ObjectId>().ToList();
-			}
-		}
-
-		public List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD()
-		{
-			var currentProject = CurrentPoster;
-			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-			{
-				var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
-
-				var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator != currentSpdWidth).Select(x => x.Id).ToList();
-				return result;
-			}
-			else
-			{
-				return Enumerable.Empty<ObjectId>().ToList();
-			}
-		}
-
-		public ObjectId? GetJobForZoomLevelOne()
-		{
-			var currentProject = CurrentPoster;
-			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-			{
-				var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
-
-				var minExponent = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth).Min(x => x.Subdivision.SamplePointDelta.Exponent);
-
-				var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth && x.Subdivision.SamplePointDelta.Exponent == minExponent).FirstOrDefault();
-
-				return result?.Id ?? null;
-			}
-			else
-			{
-				return null;
-			}
-		}
-
-		public List<ObjectId> GetJobIdsExceptZoomLevelOne()
-		{
-			var currentProject = CurrentPoster;
-			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-			{
-				var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
-
-				var minExponent = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth).Min(x => x.Subdivision.SamplePointDelta.Exponent);
-
-				var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator != currentSpdWidth || x.Subdivision.SamplePointDelta.Exponent != minExponent).Select(x => x.Id).ToList();
-				return result;
-			}
-			else
-			{
-				return Enumerable.Empty<ObjectId>().ToList();
-			}
-		}
-
 		public string? CurrentPosterName => CurrentPoster?.Name;
 		public bool CurrentPosterOnFile => CurrentPoster?.OnFile ?? false;
 
@@ -484,28 +415,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public long PosterClose()
+		public void PosterClose()
 		{
-			long result = 0;
-
-			//if (CurrentPoster != null)
-			//{
-			//	var zoomLevelOneJobId = GetJobForZoomLevelOne();
-
-			//	// TODO: Fix Me
-			//	//if (zoomLevelOneJobId != null)
-			//	//{
-			//	//	var jobIdsToRemoveMapSections = GetJobIdsExceptZoomLevelOne(); // GetAllJobIdsNotMatchingCurrentSPD();
-			//	//	result = JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Poster, _mapSectionAdapter);
-			//	//	result += JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.Project, _mapSectionAdapter);
-			//	//	result += JobOwnerHelper.DeleteMapSectionsForJobIds(jobIdsToRemoveMapSections, JobOwnerType.ImageBuilder, _mapSectionAdapter);
-			//	//}
-
-			//	CurrentPoster = null;
-			//}
-			
 			CurrentPoster = null;
-			return result;
 		}
 
 		public long DeleteMapSectionsForUnsavedJobs()
@@ -522,17 +434,125 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public long DeleteMapSections(List<MapSectionRequest> mapSectionRequests)
+		public long DeleteNonEssentialMapSections(List<MapSectionRequest> mapSectionRequests)
 		{
-			// Fetch the list of MapSectionIdsInUse in use from the repo using the provided list.
+			if (mapSectionRequests.Count == 0)
+			{
+				return 0;
+			}
 
 			// Get a list of all MapSectionIdsAll for the current project.
 
-			// Delete MapSection whose ID is in MapSectionIdsAll, but not in MapSectionIdsInUse.
-			// 
-			return 0L;
+			var jobId = new ObjectId(mapSectionRequests[0].JobId);
+			var jobOwnerType = mapSectionRequests[0].JobOwnerType;
+
+			if (jobOwnerType == JobOwnerType.Project)
+			{
+				Debug.WriteLine("WARNING: DeleteNonEssentialMapSections found the first MapSectionRequest to have a JobOwnerType of Project. Overriding to use Poster instead.");
+				jobOwnerType = JobOwnerType.Poster;
+			}
+
+			var allMapSectionIds = _mapSectionAdapter.GetMapSectionIds(jobId, jobOwnerType);
+
+			if (allMapSectionIds.Count == 0)
+			{
+				return 0;
+			}
+
+			// For each MapSectionRequest in the provided list, retrieve the MapSectionId
+			// and remove that Id from the list of AllMapSectionIds.
+
+			for (var i = 0; i < mapSectionRequests.Count; i++)
+			{
+				var mapSectionRequest = mapSectionRequests[i];
+				var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+				var blockPosition = mapSectionRequest.BlockPosition;
+
+				var mapSectionId = _mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
+
+				if (mapSectionId != null)
+				{
+					allMapSectionIds.Remove(mapSectionId.Value);
+				}
+			}
+
+			// Now the AllMapSectionIds only contains Ids not included in the provided list.
+
+			// Delete all MapSections for the given job, except for those in the specified list
+			// or those MapSections referenced by some other Job.
+			var result = _mapSectionAdapter.DeleteMapSectionsWithJobType(allMapSectionIds, jobOwnerType);
+
+			return result ?? -1;
 		}
 
+		//public List<ObjectId> GetAllNonCurrentJobIds()
+		//{
+		//	var currentProject = CurrentPoster;
+		//	if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+		//	{
+		//		var currentJobId = currentProject.CurrentJob.Id;
+
+		//		var result = currentProject.GetJobs().Where(x => x.Id != currentJobId).Select(x => x.Id).ToList();
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		return Enumerable.Empty<ObjectId>().ToList();
+		//	}
+		//}
+
+		//public List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD()
+		//{
+		//	var currentProject = CurrentPoster;
+		//	if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+		//	{
+		//		var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
+
+		//		var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator != currentSpdWidth).Select(x => x.Id).ToList();
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		return Enumerable.Empty<ObjectId>().ToList();
+		//	}
+		//}
+
+		//public ObjectId? GetJobForZoomLevelOne()
+		//{
+		//	var currentProject = CurrentPoster;
+		//	if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+		//	{
+		//		var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
+
+		//		var minExponent = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth).Min(x => x.Subdivision.SamplePointDelta.Exponent);
+
+		//		var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth && x.Subdivision.SamplePointDelta.Exponent == minExponent).FirstOrDefault();
+
+		//		return result?.Id ?? null;
+		//	}
+		//	else
+		//	{
+		//		return null;
+		//	}
+		//}
+
+		//public List<ObjectId> GetJobIdsExceptZoomLevelOne()
+		//{
+		//	var currentProject = CurrentPoster;
+		//	if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+		//	{
+		//		var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
+
+		//		var minExponent = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth).Min(x => x.Subdivision.SamplePointDelta.Exponent);
+
+		//		var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator != currentSpdWidth || x.Subdivision.SamplePointDelta.Exponent != minExponent).Select(x => x.Id).ToList();
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		return Enumerable.Empty<ObjectId>().ToList();
+		//	}
+		//}
 
 		#endregion
 

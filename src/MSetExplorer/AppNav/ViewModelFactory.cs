@@ -4,12 +4,13 @@ using MSS.Types.MSet;
 using MSS.Types;
 using MSS.Common.MSet;
 using System.Windows;
+using System;
 
 namespace MSetExplorer
 {
 	internal delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, bool useEscapeVelocities, DialogType dialogType);
+	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType, Func<long, Job, SizeDbl>? deleteNonEssentialMapSectionsFunction);
 
 	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, SizeDbl canvasSize, bool allowEdits);
 
@@ -44,9 +45,9 @@ namespace MSetExplorer
 			return new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
 
-		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, bool useEscapeVelocities, DialogType dialogType)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType, Func<Job, SizeDbl, long>? deleteNonEssentialMapSectionsFunction)
 		{
-			return new PosterOpenSaveViewModel(_mapLoaderManager, _projectAdapter, _mapSectionAdapter, initalName, useEscapeVelocities, dialogType);
+			return new PosterOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, deleteNonEssentialMapSectionsFunction, initalName, dialogType);
 		}
 
 		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize, bool allowEdits)
@@ -54,7 +55,6 @@ namespace MSetExplorer
 			var result = new CoordsEditorViewModel(_mapJobHelper, mapAreaInfoV2, canvasSize, allowEdits);
 			return result;
 		}
-
 
 		public MapJobHelper ProvisionAMapJopHelper()
 		{

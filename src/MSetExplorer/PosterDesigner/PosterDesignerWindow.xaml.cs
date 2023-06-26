@@ -131,18 +131,16 @@ namespace MSetExplorer
 				return true;
 			}
 
-			string introMessage = string.Empty;
-			var mapSectionsDeletedUnsavedJobs = 0L;
-
 			var saveResult = PosterSaveChanges();
 			if (saveResult == SaveResult.ChangesSaved)
 			{
-				introMessage = "Changes Saved. ";
+				_ = MessageBox.Show("Changes Saved");
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
-				introMessage = "Changes Not Saved. ";
-				mapSectionsDeletedUnsavedJobs = _vm.PosterViewModel.DeleteMapSectionsForUnsavedJobs();
+				var numberOfMapSectionsDeleted = _vm.PosterViewModel.DeleteMapSectionsForUnsavedJobs();
+
+				_ = MessageBox.Show($"Changes Discarded. {numberOfMapSectionsDeleted} map sections created during this session, have been deleted.");
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -150,29 +148,7 @@ namespace MSetExplorer
 				return false;
 			}
 
-			var areaColorAndCalcSettings = _vm.PosterViewModel.CurrentAreaColorAndCalcSettings;
-			var posterSize = _vm.PosterViewModel.PosterSize;
-			var mapSectionRequests = _vm.MapDisplayViewModel.GetMapSectionRequests(areaColorAndCalcSettings, new SizeDbl(posterSize));
-
-			var mapSectionsDeletedUnusedJobs = _vm.PosterViewModel.DeleteMapSections(mapSectionRequests);
-
 			_vm.PosterViewModel.PosterClose();
-
-			if (mapSectionsDeletedUnsavedJobs > 0 && mapSectionsDeletedUnusedJobs > 0)
-			{
-				_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved and {mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
-			}
-			else
-			{
-				if (mapSectionsDeletedUnsavedJobs > 0)
-				{
-					_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved were deleted.");
-				}
-				if (mapSectionsDeletedUnusedJobs > 0)
-				{
-					_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
-				}
-			}
 
 			return true;
 		}
@@ -260,8 +236,7 @@ namespace MSetExplorer
 			}
 
 			var initialName = _vm.PosterViewModel.CurrentPosterName;
-			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
-			if (PosterShowOpenSaveWindow(DialogType.Open, initialName, useEscapeVelocities, out var selectedName, out _))
+			if (PosterShowOpenSaveWindow(DialogType.Open, initialName, out var selectedName, out _))
 			{
 				if (selectedName != null)
 				{
@@ -723,8 +698,7 @@ namespace MSetExplorer
 			bool? result;
 
 			var initialName = curPoster.Name;
-			var useEscapeVelocitities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
-			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, useEscapeVelocitities, out var selectedName, out var description))
+			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, out var selectedName, out var description))
 			{
 				if (selectedName != null)
 				{
@@ -765,9 +739,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, bool useEscapeVelocities, out string? selectedName, out string? description)
+		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, TrimMapSections);
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm
@@ -785,6 +759,13 @@ namespace MSetExplorer
 				description = null;
 				return false;
 			}
+		}
+
+		private long TrimMapSections(Job job, SizeDbl posterSize)
+		{
+			var mapSectionRequests = _vm.MapDisplayViewModel.GetMapSectionRequests(job, posterSize);
+			var numberOfMapSectionsDeleted = _vm.PosterViewModel.DeleteNonEssentialMapSections(mapSectionRequests);
+			return numberOfMapSectionsDeleted;
 		}
 
 		private string GetWindowTitle(string? posterName, string? colorBandSetName)

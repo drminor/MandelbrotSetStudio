@@ -457,8 +457,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
-				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, useEscapeVelocities, out var name, out var description))
+				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, out var name, out var description))
 				{
 					var currentDisplaySize = _vm.MapDisplayViewModel.ViewportSize;
 					var tentativePosterSize = RMapHelper.GetCanvasSize(currentDisplaySize, new SizeInt(1024));
@@ -1132,11 +1131,11 @@ namespace MSetExplorer
 
 		#region Private Methods - Poster
 
-		private bool SavePosterInteractive(string? initialName, bool useEscapeVelocities, [MaybeNullWhen(false)] out string name, out string? description)
+		private bool SavePosterInteractive(string? initialName, [NotNullWhen(true)] out string? name, out string? description)
 		{
 			bool result;
 
-			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, useEscapeVelocities, out name, out description))
+			if (PosterShowOpenSaveWindow(DialogType.Save, initialName, out name, out description))
 			{
 				if (name != null)
 				{
@@ -1156,9 +1155,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, bool useEscapeVelocities, out string? selectedName, out string? description)
+		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, [NotNullWhen(true)] out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, useEscapeVelocities, dialogType);
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, deleteNonEssentialMapSectionsFunction: null);
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm
@@ -1166,7 +1165,7 @@ namespace MSetExplorer
 
 			if (posterOpenSaveWindow.ShowDialog() == true)
 			{
-				selectedName = posterOpenSaveWindow.PosterName;
+				selectedName = posterOpenSaveWindow.PosterName ?? string.Empty; // TODO: Fix Me
 				description = posterOpenSaveWindow.PosterDescription;
 				return true;
 			}
@@ -1176,6 +1175,17 @@ namespace MSetExplorer
 				description = null;
 				return false;
 			}
+		}
+
+		private long TrimMapSections(Job job, SizeDbl posterSize)
+		{
+			//TODO: Implement TrimMapSections on the ExplorerWindow - CodeBehind.
+
+			//var mapSectionRequests = _vm.MapDisplayViewModel.GetMapSectionRequests(job, posterSize);
+			//var numberOfMapSectionsDeleted = _vm.PosterViewModel.DeleteNonEssentialMapSections(mapSectionRequests);
+			//return numberOfMapSectionsDeleted;
+
+			return 0;
 		}
 
 		#endregion

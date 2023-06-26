@@ -247,30 +247,6 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static JobOwnerType GetJobOwnerType(IJobOwner jobOwner)
-		{
-			if (jobOwner is Project)
-			{
-				return JobOwnerType.Project;
-			}
-			else if (jobOwner is Poster)
-			{
-				return JobOwnerType.Poster;
-			}
-			else if (jobOwner is IImageBuilder)
-			{
-				return JobOwnerType.ImageBuilder;
-			}
-			else if (jobOwner is IBitmapBuilder)
-			{
-				return JobOwnerType.BitmapBuilder;
-			}
-			else
-			{
-				return JobOwnerType.Undetermined;
-			}
-		}
-
 		public static long DeleteMapSectionsForJobIds(IList<ObjectId> jobIds, JobOwnerType jobOwnerType, IMapSectionDeleter mapSectionDeleter)
 		{
 			var result = 0L;
@@ -315,5 +291,30 @@ namespace MSS.Common
 		}
 
 		#endregion
+
+		public static JobOwnerType GetJobOwnerType(IJobOwner jobOwner)
+		{
+			if (jobOwner is Project)
+			{
+				return JobOwnerType.Project;
+			}
+			else if (jobOwner is Poster)
+			{
+				return JobOwnerType.Poster;
+			}
+			else if (jobOwner is IImageBuilder)
+			{
+				return JobOwnerType.ImageBuilder;
+			}
+			else if (jobOwner is IBitmapBuilder)
+			{
+				return JobOwnerType.BitmapBuilder;
+			}
+			else
+			{
+				return JobOwnerType.Undetermined;
+			}
+		}
+
 	}
 }

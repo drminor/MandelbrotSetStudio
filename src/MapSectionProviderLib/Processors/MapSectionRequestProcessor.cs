@@ -61,7 +61,7 @@ namespace MapSectionProviderLib
 			MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
 			_isStopped = false;
-			_useDetailedDebug = true;
+			_useDetailedDebug = false;
 
 			UseRepo = true;
 			SAVE_THE_ZVALUES = false;

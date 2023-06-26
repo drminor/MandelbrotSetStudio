@@ -109,16 +109,6 @@ namespace MSetRepo
 
 		public JobRecord MapTo(Job source)
 		{
-			//var coords = MapTo(source.Coords);
-			//var mapAreaInfoRecord = new MapAreaInfoRecord(coords, MapTo(source.CanvasSize), MapTo(source.Subdivision), MapTo(source.MapBlockOffset), MapTo(source.CanvasControlOffset))
-			//{
-			//	Precision = source.MapAreaInfo.Precision
-			//};
-
-			//// TODO: Remove this once all JobRecords have been updated on the Repository.
-			//var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(source.MapAreaInfo, new SizeInt(1024));
-			//var mapAreaInfoRecord = MapTo(oldAreaInfo);
-
 			var result = new JobRecord(
 				ParentJobId: source.ParentJobId,
 				OwnerId: source.OwnerId,

@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
@@ -104,7 +105,6 @@ namespace ProjectRepo
 			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
 			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
 
-
 			var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5, options: null, ct);
 
 			var itemsFound = mapSectionRecord.ToList();
@@ -128,7 +128,7 @@ namespace ProjectRepo
 			try
 			{
 				var blockPos = GetBlockPos(mapSectionRecord);
-				var id = await GetId(mapSectionRecord.SubdivisionId, blockPos);
+				var id = await GetIdAsync(mapSectionRecord.SubdivisionId, blockPos);
 				if (id != null)
 				{
 					Debug.WriteLine($"Not Inserting MapSectionRecord with BlockPos: {blockPos}. A record already exists for this block position with Id: {id}.");
@@ -219,7 +219,7 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public async Task<ObjectId?> GetId(ObjectId subdivisionId, BigVectorDto blockPosition)
+		public async Task<ObjectId?> GetIdAsync(ObjectId subdivisionId, BigVectorDto blockPosition)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
 			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
@@ -244,6 +244,33 @@ namespace ProjectRepo
 				//{
 				//	return null;
 				//}
+			}
+			else if (itemsFound.Count > 1)
+			{
+				throw new InvalidOperationException("There should only be as single MapSection record.");
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		public ObjectId? GetId(ObjectId subdivisionId, BigVectorDto blockPosition)
+		{
+			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
+
+			var bDoc = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5);
+
+			var itemsFound = bDoc.ToList();
+
+			if (itemsFound.Count == 1)
+			{
+				var result = itemsFound[0].Id;
+				return result;
 			}
 			else if (itemsFound.Count > 1)
 			{

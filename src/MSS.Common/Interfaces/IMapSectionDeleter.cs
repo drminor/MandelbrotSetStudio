@@ -7,9 +7,11 @@ namespace MSS.Common
 {
 	public interface IMapSectionDeleter
 	{
-		long? DeleteMapSectionsForJob(ObjectId ownerId, JobOwnerType jobOwnerType);
+		long? DeleteMapSectionsForJob(ObjectId jobId, JobOwnerType jobOwnerType);
 
-		long? DeleteMapSectionsForMany(IEnumerable<ObjectId> ownerIds, JobOwnerType jobOwnerType);
+		long? DeleteMapSectionsForMany(IEnumerable<ObjectId> jobIds, JobOwnerType jobOwnerType);
+
+		long? DeleteMapSectionsWithJobType(IList<ObjectId> mapSectionIds, JobOwnerType jobOwnerType);
 
 		long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);
 	}

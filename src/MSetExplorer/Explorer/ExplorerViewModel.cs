@@ -96,27 +96,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private AreaColorAndCalcSettings GetAreaColorAndCalcSettings()
-		{
-			var curJob = _vm.ProjectViewModel.CurrentJob;
-			var curJobId = curJob.Id.ToString();
-
-			var newMapCalcSettings = curJob.MapCalcSettings;
-			var newMapAreaInfo = curJob.MapAreaInfo;
-			var newColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
-
-			var areaColorAndCalcSettings = new AreaColorAndCalcSettings
-				(
-				curJobId,
-				JobOwnerType.Project,
-				newMapAreaInfo,
-				newColorBandSet,
-				newMapCalcSettings
-				);
-
-			return areaColorAndCalcSettings;
-		}
-
 		#endregion
 
 		#region Public Methods

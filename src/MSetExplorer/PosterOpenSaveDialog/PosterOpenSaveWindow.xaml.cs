@@ -130,9 +130,40 @@ namespace MSetExplorer
 
 		private void DeleteButton_Click(object sender, RoutedEventArgs e)
 		{
+			var selectedName = _vm.SelectedName;
+
 			_ = _vm.DeleteSelected(out var numberOfMapSectionsDeleted)
-				? MessageBox.Show($"Project deleted. {numberOfMapSectionsDeleted} map sections were deleted.")
-				: MessageBox.Show("Could not delete this Project.");
+				? MessageBox.Show($"The poster: {selectedName} has been deleted. {numberOfMapSectionsDeleted} map sections were deleted.")
+				: MessageBox.Show($"Could not delete the selected poster: {selectedName}.");
+		}
+
+		private void TrimMapSectionsButton_Click(object sender, RoutedEventArgs e)
+		{
+			var numberOfMapSectionsDeleted = _vm.TrimSelected();
+
+			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+		}
+
+		private void TrimMapSectionsHeavyButton_Click(object sender, RoutedEventArgs e)
+		{
+			var numberOfMapSectionsDeleted = _vm.TrimHeavySelected();
+			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+
+			//if (mapSectionsDeletedUnsavedJobs > 0 && mapSectionsDeletedUnusedJobs > 0)
+			//{
+			//	_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved and {mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
+			//}
+			//else
+			//{
+			//	if (mapSectionsDeletedUnsavedJobs > 0)
+			//	{
+			//		_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved were deleted.");
+			//	}
+			//	if (mapSectionsDeletedUnusedJobs > 0)
+			//	{
+			//		_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
+			//	}
+			//}
 		}
 
 		private void TakeSelection()

@@ -276,19 +276,34 @@ namespace MSetExplorer
 			}
 		}
 
-		public List<MapSectionRequest> GetMapSectionRequests(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize)
+		//public List<MapSectionRequest> GetMapSectionRequests(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize)
+		//{
+		//	var jobId = areaColorAndCalcSettings.JobId;
+		//	var jobOwnerType = areaColorAndCalcSettings.JobOwnerType;
+		//	var mapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
+		//	var mapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
+
+		//	var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
+		//	var emptyMapSections = _mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
+		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId, jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
+
+		//	return mapSectionRequests;
+		//}
+
+		public List<MapSectionRequest> GetMapSectionRequests(Job job, SizeDbl posterSize)
 		{
-			var jobId = areaColorAndCalcSettings.JobId;
-			var jobOwnerType = areaColorAndCalcSettings.JobOwnerType;
-			var mapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
-			var mapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
+			var jobId = job.Id;
+			var jobOwnerType = job.JobOwnerType;
+			var mapAreaInfo = job.MapAreaInfo;
+			var mapCalcSettings = job.MapCalcSettings;
 
 			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
 			var emptyMapSections = _mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId, jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
 
 			return mapSectionRequests;
 		}
+
 
 		// TODO: SubmitJob may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
 		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)

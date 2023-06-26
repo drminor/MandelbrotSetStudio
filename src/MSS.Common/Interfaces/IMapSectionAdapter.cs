@@ -21,6 +21,8 @@ namespace MSS.Common
 		MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors);
 		MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors);
 
+		ObjectId? GetMapSectionId(ObjectId subdivisionId, BigVector blockPosition);
+
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);
 

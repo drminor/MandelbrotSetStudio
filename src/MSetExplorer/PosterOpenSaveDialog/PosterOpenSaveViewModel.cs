@@ -1,28 +1,26 @@
-﻿using ImageBuilder;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Data;
 
 namespace MSetExplorer
 {
 	public class PosterOpenSaveViewModel : IPosterOpenSaveViewModel, INotifyPropertyChanged
 	{
-		private readonly IMapLoaderManager _mapLoaderManager;
+		#region Private Fieldas
+
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		private bool _useEscapeVelocities;
+		private readonly Func<Job, SizeDbl, long>? _deleteNonEssentialMapSectionsFunction;
+
 		private IPosterInfo? _selectedPoster;
 
 		private string? _selectedName;
@@ -30,15 +28,18 @@ namespace MSetExplorer
 
 		private bool _userIsSettingTheName;
 
+		#endregion
+
+
 		#region Constructor
 
-		public PosterOpenSaveViewModel(IMapLoaderManager mapLoaderManager, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, string? initialName, bool useEscapeVelocitites, DialogType dialogType)
+		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, Func<Job, SizeDbl, long>? deleteNonEssentialMapSectionsFunction, string? initialName, DialogType dialogType)
 		{
-			_mapLoaderManager = mapLoaderManager;
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 
-			_useEscapeVelocities = useEscapeVelocitites;
+			_deleteNonEssentialMapSectionsFunction = deleteNonEssentialMapSectionsFunction;
+
 			DialogType = dialogType;
 
 			var posters = _projectAdapter.GetAllPosterInfos();
@@ -162,11 +163,25 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Progress<double> _previewImageDataBuilderProgress = new Progress<double>();
-
-		private void StatusCallBack(double value)
+		public long TrimSelected()
 		{
-			((IProgress<double>)_previewImageDataBuilderProgress).Report(value);
+			if (SelectedPoster == null || _deleteNonEssentialMapSectionsFunction == null)
+			{
+				return -1;
+			}
+
+			var jobId = SelectedPoster.CurrentJobId;
+			var job = _projectAdapter.GetJob(jobId);
+			var posterSize = SelectedPoster.Size;
+
+			var result = _deleteNonEssentialMapSectionsFunction(job, new SizeDbl(posterSize));
+
+			return result;
+		}
+
+		public long TrimHeavySelected()
+		{
+			return -1;
 		}
 
 		#endregion
