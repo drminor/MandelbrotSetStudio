@@ -114,6 +114,17 @@ namespace ProjectRepo
 			return jobMapSectionRecords.FirstOrDefault();
 		}
 
+		public JobMapSectionRecord? GetByMapAndOwnerId(ObjectId mapSectionId, ObjectId jobId, JobOwnerType jobOwnerType)
+		{
+			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.MapSectionId, mapSectionId);
+			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerId, jobId);
+			var filter3 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
+
+			var jobMapSectionRecords = Collection.Find(filter1 & filter2 & filter3).ToList();
+
+			return jobMapSectionRecords.FirstOrDefault();
+		}
+
 		#endregion
 
 		#region Insert
@@ -126,7 +137,10 @@ namespace ProjectRepo
 			}
 
 			jobMapSectionRecord.Id = ObjectId.GenerateNewId();
-			jobMapSectionRecord.LastSaved = DateTime.UtcNow;
+
+			// After the next Schema Update, we can remove these two lines.
+			jobMapSectionRecord.JobId = jobMapSectionRecord.OwnerId;
+			jobMapSectionRecord.LastSavedUtc = DateTime.UtcNow;
 
 			await Collection.InsertOneAsync(jobMapSectionRecord).ConfigureAwait(false);
 			return jobMapSectionRecord.Id;
@@ -140,10 +154,27 @@ namespace ProjectRepo
 			}
 
 			jobMapSectionRecord.Id = ObjectId.GenerateNewId();
-			jobMapSectionRecord.LastSaved = DateTime.UtcNow;
+
+			// After the next Schema Update, we can remove these two lines.
+			jobMapSectionRecord.JobId = jobMapSectionRecord.OwnerId;
+			jobMapSectionRecord.LastSavedUtc = DateTime.UtcNow;
 
 			Collection.InsertOne(jobMapSectionRecord);
 			return jobMapSectionRecord.Id;
+		}
+
+		#endregion
+
+		#region Update 
+
+		public void SetSubdivisionId(ObjectId jobMapSectionId, ObjectId subdivisionId)
+		{
+			var filter = Builders<JobMapSectionRecord>.Filter.Eq(f => f.Id, jobMapSectionId);
+
+			var updateDefinition = Builders<JobMapSectionRecord>.Update
+				.Set(u => u.SubdivisionId, subdivisionId);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
 		#endregion

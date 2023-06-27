@@ -19,6 +19,7 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
@@ -46,7 +47,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionHelper, SizeInt blockSize)
+		public MapSectionDisplayViewModel(IMapLoaderManager mapLoaderManager, MapSectionVectorProvider mapSectionVectorProvider, MapJobHelper mapJobHelper, SizeInt blockSize)
 		{
 			_paintLocker = new object();
 			BlockSize = blockSize;
@@ -60,8 +61,9 @@ namespace MSetExplorer
 			ActiveJobNumbers = new List<int>();
 
 			_mapLoaderManager = mapLoaderManager;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapJobHelper = mapJobHelper;
-			_mapSectionBuilder = mapSectionHelper;
+			_mapSectionBuilder = new MapSectionBuilder();
 
 			_currentAreaColorAndCalcSettings = null;
 			_latestMapAreaInfo = null;
@@ -275,35 +277,6 @@ namespace MSetExplorer
 				return newJobNumber;
 			}
 		}
-
-		//public List<MapSectionRequest> GetMapSectionRequests(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize)
-		//{
-		//	var jobId = areaColorAndCalcSettings.JobId;
-		//	var jobOwnerType = areaColorAndCalcSettings.JobOwnerType;
-		//	var mapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
-		//	var mapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
-
-		//	var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
-		//	var emptyMapSections = _mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
-		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId, jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
-
-		//	return mapSectionRequests;
-		//}
-
-		public List<MapSectionRequest> GetMapSectionRequests(Job job, SizeDbl posterSize)
-		{
-			var jobId = job.Id;
-			var jobOwnerType = job.JobOwnerType;
-			var mapAreaInfo = job.MapAreaInfo;
-			var mapCalcSettings = job.MapCalcSettings;
-
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
-			var emptyMapSections = _mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
-
-			return mapSectionRequests;
-		}
-
 
 		// TODO: SubmitJob may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
 		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
@@ -721,7 +694,7 @@ namespace MSetExplorer
 					else
 					{
 						MapSections.Remove(section);
-						_mapSectionBuilder.ReturnMapSection(section);
+						_mapSectionVectorProvider.ReturnMapSection(section);
 						//sectionsToClear.Add(section);
 					}
 				}
@@ -741,7 +714,7 @@ namespace MSetExplorer
 				var numberOfRequestsCancelled = sectionsToCancel.Count;
 				numberOfSectionsReturned += sectionsToRemove.Count - numberOfRequestsCancelled;
 				Debug.WriteLineIf(_useDetailedDebug, $"Reusing Loaded Sections. Requesting {sectionsToLoad.Count} sections, Cancelling {numberOfRequestsCancelled} pending requests, returned {numberOfSectionsReturned} sections. " +
-					$"Keeping {MapSections.Count} sections. The MapSection Pool has: {_mapSectionBuilder.MapSectionsVectorsInPool} sections.");
+					$"Keeping {MapSections.Count} sections. The MapSection Pool has: {_mapSectionVectorProvider.MapSectionsVectorsInPool} sections.");
 
 				if (sectionsToLoad.Count > 0)
 				{
@@ -902,7 +875,7 @@ namespace MSetExplorer
 			//	Debug.WriteLine("WARNING: MapSectionDisplayViewModel is Disposing a MapSection whose reference count > 1.");
 			//}
 
-			_mapSectionBuilder.ReturnMapSection(mapSection);
+			_mapSectionVectorProvider.ReturnMapSection(mapSection);
 		}
 
 		private void OnBitmapUpdate(WriteableBitmap bitmap)

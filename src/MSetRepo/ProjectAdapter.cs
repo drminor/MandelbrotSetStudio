@@ -355,10 +355,10 @@ namespace MSetRepo
 			return result;
 		}
 
-		public List<Job> GetAllJobsForPoster(ObjectId poster, IEnumerable<ColorBandSet> colorBandSets)
+		public List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
-			var result = GetAllJobsForProject(poster, colorBandSetCache);
+			var result = GetAllJobsForProject(posterId, colorBandSetCache);
 
 			return result;
 		}
@@ -567,9 +567,10 @@ namespace MSetRepo
 			//var mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
 
 			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			//var mapSectionValuesPool = new MapSectionValuesPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount:2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			var mapSectionHelper = new MapSectionBuilder(mapSectionVectorsPool/*, mapSectionValuesPool*/, mapSectionZVectorsPool);
+
+			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
+			var mapSectionHelper = new MapSectionBuilder();
 
 			//var mapSectionRequests = mapSectionHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
 			// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.

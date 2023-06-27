@@ -29,7 +29,8 @@ namespace WpfMapDisplayPOC
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
-		private readonly MapSectionBuilder _mapSectionBuilder;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
+		//private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private RepositoryAdapters? _repositoryAdapters;
 		//private IMapLoaderManager? _mapLoaderManager;
@@ -46,7 +47,7 @@ namespace WpfMapDisplayPOC
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionBuilder = new MapSectionBuilder(_mapSectionVectorsPool, _mapSectionZVectorsPool);
+			_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
 
 			//if (START_LOCAL_ENGINE)
 			//{
@@ -61,10 +62,10 @@ namespace WpfMapDisplayPOC
 			_repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, MONGO_DB_NAME);
 
 			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionBuilder);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
 
 
-			_mainWindow = GetMainWindow(mapSectionRequestProcessor, _mapSectionBuilder, _repositoryAdapters);
+			_mainWindow = GetMainWindow(mapSectionRequestProcessor, _mapSectionVectorProvider, _repositoryAdapters);
 			_mainWindow.Show();
 		}
 
@@ -72,9 +73,9 @@ namespace WpfMapDisplayPOC
 
 		#region Support Methods
 
-		private MainWindow GetMainWindow(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters)
+		private MainWindow GetMainWindow(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionVectorProvider mapSectionVectorProvider, RepositoryAdapters repositoryAdapters)
 		{
-			var vm = new MainWindowViewModel(mapSectionRequestProcessor, repositoryAdapters.ProjectAdapter, repositoryAdapters.MapSectionAdapter, mapSectionHelper);
+			var vm = new MainWindowViewModel(mapSectionRequestProcessor, repositoryAdapters.ProjectAdapter, repositoryAdapters.MapSectionAdapter, mapSectionVectorProvider);
 
 			var win = new MainWindow
 			{
@@ -117,12 +118,12 @@ namespace WpfMapDisplayPOC
 			return result;
 		}
 
-		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients);
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
-			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionHelper);
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionHelper, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
+			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionVectorProvider);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionVectorProvider, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
 
 			return mapSectionRequestProcessor;
 		}

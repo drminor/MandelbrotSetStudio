@@ -13,8 +13,7 @@ namespace ProjectRepo.Entities
 		ObjectId SubdivisionId,
 		ObjectId OwnerId,
 		JobOwnerType OwnerType,
-		bool IsInverted,
-		BigVectorRecord MapBlockOffset
+		bool IsInverted
 	)
 	{
 		[BsonId]
@@ -26,6 +25,14 @@ namespace ProjectRepo.Entities
 		public bool Onfile => Id != ObjectId.Empty;
 
 		public DateTime LastSaved { get; set; }
+
+		public ObjectId JobId { get; set; }
+		public bool RefIsHard { get; set; } = true;
+		public DateTime LastSavedUtc { get; set; }
+
+		public BigVectorRecord? MapBlockOffset { get; set; }
+
+
 	}
 
 }

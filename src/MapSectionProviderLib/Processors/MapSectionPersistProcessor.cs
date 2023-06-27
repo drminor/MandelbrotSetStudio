@@ -12,8 +12,8 @@ namespace MapSectionProviderLib
 {
 	public class MapSectionPersistProcessor : IDisposable
 	{
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private const int QUEUE_CAPACITY = 200;
 		private readonly CancellationTokenSource _cts;
@@ -26,9 +26,9 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
+		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionVectorProvider mapSectionVectorProvider)
 		{
-			_mapSectionBuilder = mapSectionHelper;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapSectionAdapter = mapSectionAdapter;
 			_cts = new CancellationTokenSource();
 
@@ -114,7 +114,7 @@ namespace MapSectionProviderLib
 						}
 					}
 
-					_mapSectionBuilder.ReturnMapSectionResponse(mapSectionResponse);
+					_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
 				}
 				catch (OperationCanceledException)
 				{

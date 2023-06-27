@@ -19,21 +19,25 @@ namespace MSetExplorer
 		private readonly SharedColorBandSetAdapter _sharedColorBandSetAdapter;
 
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly MapSectionBuilder _mapSectionBuilder;
+
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
+
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private readonly ViewModelFactory _viewModelFactory;
 
-		public AppNavViewModel(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
+		public AppNavViewModel(MapSectionVectorProvider mapSectionVectorProvider, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			_mapSectionBuilder = mapSectionHelper;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_projectAdapter = repositoryAdapters.ProjectAdapter;
 			_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
 			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
 
-			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor:10, RMapConstants.BLOCK_SIZE);
+			//var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
+			//_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor:10, RMapConstants.BLOCK_SIZE);
+
+			_mapJobHelper = mapJobHelper;
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
@@ -47,7 +51,7 @@ namespace MSetExplorer
 			var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
 
 			// Map Display View Model
-			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapJobHelper, _mapSectionBuilder, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionVectorProvider, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
@@ -72,7 +76,7 @@ namespace MSetExplorer
 			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
 
 			// Map Display View Model
-			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapJobHelper, _mapSectionBuilder, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionVectorProvider, _mapJobHelper, RMapConstants.BLOCK_SIZE);
 
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
@@ -120,7 +124,7 @@ namespace MSetExplorer
 			//	_mapLoaderManager,
 			//	CreateAProjectOpenSaveViewModel, CreateACbsOpenSaveViewModel, CreateAPosterOpenSaveViewModel, CreateACoordsEditorViewModel);
 
-			var result = new PerformanceHarnessMainWinViewModel(_mapSectionRequestProcessor, _mapJobHelper, _mapSectionBuilder);
+			var result = new PerformanceHarnessMainWinViewModel(_mapSectionRequestProcessor, _mapJobHelper, _mapSectionVectorProvider);
 			return result;
 		}
 

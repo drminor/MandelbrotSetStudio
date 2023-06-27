@@ -14,6 +14,8 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 	{
 		#region Private Properties
 
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
+
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapSectionBuilder _mapSectionBuilder;
@@ -34,16 +36,17 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		#region Constructor
 
-		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionHelper)
+		public PerformanceHarnessMainWinViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, MapJobHelper mapJobHelper, MapSectionVectorProvider mapSectionVectorProvider)
         {
 			//_stopwatch1 = Stopwatch.StartNew();
 			//_stopwatch1.Stop();
-			
+
+			_mapSectionVectorProvider = mapSectionVectorProvider;			
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_mapSectionRequestProcessor.UseRepo = false;
 
 			_mapJobHelper = mapJobHelper;
-			_mapSectionBuilder = mapSectionHelper;
+			_mapSectionBuilder = new MapSectionBuilder();
 
 			_overallElapsed = string.Empty;
 			_generationElapsed = string.Empty;
@@ -162,13 +165,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		public int MaxPeakSectionVectors
 		{
-			get => _mapSectionBuilder.MaxPeakSectionVectors;
+			get => _mapSectionVectorProvider.MaxPeakSectionVectors;
 			set { }
 		}
 
 		public int MaxPeakSectionZVectors
 		{
-			get => _mapSectionBuilder.MaxPeakSectionZVectors;
+			get => _mapSectionVectorProvider.MaxPeakSectionZVectors;
 			set { }
 		}
 

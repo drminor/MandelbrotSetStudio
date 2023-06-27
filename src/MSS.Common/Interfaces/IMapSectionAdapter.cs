@@ -28,6 +28,7 @@ namespace MSS.Common
 
 		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, BigVector blockPosition, bool isInverted);
 
+
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct);
 		Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
 		Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
@@ -37,7 +38,7 @@ namespace MSS.Common
 		Subdivision InsertSubdivision(Subdivision subdivision);
 
 		IList<ObjectId> GetMapSectionIds(ObjectId jobId, JobOwnerType jobOwnerType);
-
+		bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
 
 	}
 

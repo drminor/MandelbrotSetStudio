@@ -12,7 +12,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace WpfMapDisplayPOC
 {
@@ -20,6 +19,7 @@ namespace WpfMapDisplayPOC
 	{
 		#region Private Properties
 
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly IProjectAdapter _projectAdapter;
@@ -36,8 +36,9 @@ namespace WpfMapDisplayPOC
 
 		#region Constructor
 
-		public MainWindowViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
+		public MainWindowViewModel(MapSectionRequestProcessor mapSectionRequestProcessor, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapSectionVectorProvider mapSectionVectorProvider)
 		{
+			_mapSectionVectorProvider = mapSectionVectorProvider; 
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 			_mapSectionRequestProcessor.UseRepo = true;
 
@@ -47,7 +48,7 @@ namespace WpfMapDisplayPOC
 
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
-			_mapSectionBuilder = mapSectionHelper;
+			_mapSectionBuilder = new MapSectionBuilder();
 			_dtoMapper = new DtoMapper();
 
 			_targetIterations = 400;
@@ -186,7 +187,7 @@ namespace WpfMapDisplayPOC
 
 		public MapSection? GetMapSection(MapSectionRequest mapSectionRequest, int jobNumber)
 		{
-			var mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
+			var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);

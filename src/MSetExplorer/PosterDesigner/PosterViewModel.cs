@@ -21,6 +21,7 @@ namespace MSetExplorer
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
 		private readonly MapJobHelper _mapJobHelper;
+		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private Poster? _currentPoster;
 
@@ -40,6 +41,7 @@ namespace MSetExplorer
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
+			_mapSectionBuilder = new MapSectionBuilder();
 
 			_currentPoster = null;
 			_areaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
@@ -434,29 +436,35 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public long DeleteNonEssentialMapSections(List<MapSectionRequest> mapSectionRequests)
+		public long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize)
 		{
+			var posterId = job.OwnerId;
+
+			var nonCurrentJobIds = _projectAdapter.GetAllJobIdsForPoster(posterId);
+
+			var numberOfMapSectionsDeleted = JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.Poster, _mapSectionAdapter);
+			numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.ImageBuilder, _mapSectionAdapter);
+			numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.BitmapBuilder, _mapSectionAdapter);
+
+			//_projectAdapter.GetAllJobsForPoster()
+
+			var mapSectionRequests = GetMapSectionRequests(job, posterSize);
+
 			if (mapSectionRequests.Count == 0)
 			{
-				return 0;
+				return numberOfMapSectionsDeleted;
 			}
 
 			// Get a list of all MapSectionIdsAll for the current project.
 
-			var jobId = new ObjectId(mapSectionRequests[0].JobId);
-			var jobOwnerType = mapSectionRequests[0].JobOwnerType;
-
-			if (jobOwnerType == JobOwnerType.Project)
-			{
-				Debug.WriteLine("WARNING: DeleteNonEssentialMapSections found the first MapSectionRequest to have a JobOwnerType of Project. Overriding to use Poster instead.");
-				jobOwnerType = JobOwnerType.Poster;
-			}
+			var jobId = job.Id;
+			var jobOwnerType = job.JobOwnerType;
 
 			var allMapSectionIds = _mapSectionAdapter.GetMapSectionIds(jobId, jobOwnerType);
 
 			if (allMapSectionIds.Count == 0)
 			{
-				return 0;
+				return numberOfMapSectionsDeleted;
 			}
 
 			// For each MapSectionRequest in the provided list, retrieve the MapSectionId
@@ -482,7 +490,26 @@ namespace MSetExplorer
 			// or those MapSections referenced by some other Job.
 			var result = _mapSectionAdapter.DeleteMapSectionsWithJobType(allMapSectionIds, jobOwnerType);
 
-			return result ?? -1;
+			if (result.HasValue)
+			{
+				numberOfMapSectionsDeleted += result.Value;
+			}
+
+			return numberOfMapSectionsDeleted;
+		}
+
+		private List<MapSectionRequest> GetMapSectionRequests(Job job, SizeDbl posterSize)
+		{
+			var jobId = job.Id;
+			var jobOwnerType = job.JobOwnerType;
+			var mapAreaInfo = job.MapAreaInfo;
+			var mapCalcSettings = job.MapCalcSettings;
+
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
+			var emptyMapSections = _mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
+
+			return mapSectionRequests;
 		}
 
 		//public List<ObjectId> GetAllNonCurrentJobIds()

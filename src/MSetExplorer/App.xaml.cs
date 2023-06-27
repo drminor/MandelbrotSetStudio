@@ -2,6 +2,7 @@
 using MEngineClient;
 using MSetRepo;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using ProjectRepo;
 using System;
@@ -9,8 +10,6 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Text;
 using System.Windows;
@@ -33,11 +32,16 @@ namespace MSetExplorer
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 
 		private static readonly bool CREATE_COLLECTIONS = false;
+
+		private static readonly bool CREATE_JOB_MAP_SECTION_REPORT = false;
+		private static readonly bool POPULATE_JOB_MAP_SECTIONS = false; 
 		private static readonly bool CLEAN_UP_JOB_MAP_SECTIONS = false;
 
-		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2023-05-01");
+		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2093-05-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
+
+		private static readonly bool EXIT_AFTER_REPORTING = false;
 
 		#endregion
 
@@ -45,7 +49,7 @@ namespace MSetExplorer
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
-		private readonly MapSectionBuilder _mapSectionBuilder;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 
 		private RepositoryAdapters? _repositoryAdapters;
 		//private readonly MEngineServerManager? _mEngineServerManager;
@@ -63,7 +67,8 @@ namespace MSetExplorer
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionBuilder = new MapSectionBuilder(_mapSectionVectorsPool, _mapSectionZVectorsPool);
+			_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
+
 
 			//if (START_LOCAL_ENGINE)
 			//{
@@ -82,6 +87,9 @@ namespace MSetExplorer
 				Current.Shutdown();
 				return;
 			}
+
+			var subdivisionProvider = new SubdivisonProvider(_repositoryAdapters.MapSectionAdapter);
+			var mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
 
 			#region Repo Maintenance
 
@@ -103,19 +111,38 @@ namespace MSetExplorer
 
 			DoSchemaUpdates(_repositoryAdapters);
 
+			if (CREATE_JOB_MAP_SECTION_REPORT)
+			{
+				var report = CreateJobMapSectionsReferenceReport(_repositoryAdapters.MapSectionAdapter);
+				Debug.WriteLine(report);
+			}
+
+			if (POPULATE_JOB_MAP_SECTIONS)
+			{
+				var report = PopulateJobMapSections(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter, mapJobHelper);
+				Debug.WriteLine(report);
+			}
+
 			if (CLEAN_UP_JOB_MAP_SECTIONS)
 			{
 				CleanUpMapSections(_repositoryAdapters.MapSectionAdapter);
+			}
+
+			//if (EXIT_AFTER_REPORTING && (CREATE_JOB_MAP_SECTION_REPORT | POPULATE_JOB_MAP_SECTIONS | CLEAN_UP_JOB_MAP_SECTIONS))
+			if (EXIT_AFTER_REPORTING)
+			{
+				Current.Shutdown();
+				return;
 			}
 
 			#endregion
 
 			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
 
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionBuilder);
-			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor, _mapSectionBuilder);
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
+			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
 
-			_appNavWindow = GetAppNavWindow(_mapSectionBuilder, _repositoryAdapters, _mapLoaderManager, mapSectionRequestProcessor);
+			_appNavWindow = GetAppNavWindow(_mapSectionVectorProvider, _repositoryAdapters, _mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
 			_appNavWindow.Show();
 		}
 
@@ -317,14 +344,23 @@ namespace MSetExplorer
 
 		#region Cleanup Map Sections
 
+		private string PopulateJobMapSections(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
+		{
+			//var report = ProjectAndMapSectionHelper.PopulateMapJobSectionsForAllProjects(projectAdapter, mapSectionAdapter, mapJobHelper);
+
+			var report = ProjectAndMapSectionHelper.PopulateMapJobSectionsForAllPosters(projectAdapter, mapSectionAdapter, mapJobHelper);
+
+			return report;
+		}
+
 		private void CleanUpMapSections(IMapSectionAdapter mapSectionAdapter)
 		{
 			if (mapSectionAdapter is MapSectionAdapter ma)
 			{
-				var report = GetJobMapSectionsReferenceReport(ma);
-				Debug.WriteLine(report);
+				//var report = CreateJobMapSectionsReferenceReport(ma);
+				//Debug.WriteLine(report);
 
-				report = DeleteNonExtantJobsReferenced(ma, JobOwnerType.Project);
+				var report = DeleteNonExtantJobsReferenced(ma, JobOwnerType.Project);
 				Debug.WriteLine(report);
 
 				Debug.WriteLine("\n\n");
@@ -337,10 +373,17 @@ namespace MSetExplorer
 			}
 		}
 		
-		private string GetJobMapSectionsReferenceReport(MapSectionAdapter mapSectionAdapter)
+		private string CreateJobMapSectionsReferenceReport(IMapSectionAdapter mapSectionAdapter)
 		{
-			var report = mapSectionAdapter.GetJobMapSectionsReferenceReport();
-			return report;
+			if (mapSectionAdapter is MapSectionAdapter ma)
+			{
+				var report = ma.GetJobMapSectionsReferenceReport();
+				return report;
+			}
+			else
+			{
+				return "Report not available.";
+			}
 		}
 
 		private string DeleteNonExtantJobsReferenced(MapSectionAdapter mapSectionAdapter, JobOwnerType jobOwnerType)
@@ -464,12 +507,12 @@ namespace MSetExplorer
 
 		#region Map Section Request Processor
 
-		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper)
+		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients);
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
-			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionHelper);
-			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionHelper, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
+			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionVectorProvider);
+			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionVectorProvider, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
 
 			return mapSectionRequestProcessor;
 		}
@@ -478,9 +521,9 @@ namespace MSetExplorer
 
 		#region AppNav Window
 
-		private AppNavWindow GetAppNavWindow(MapSectionBuilder mapSectionHelper, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapSectionRequestProcessor mapSectionRequestProcessor)
+		private AppNavWindow GetAppNavWindow(MapSectionVectorProvider mapSectionVectorProvider, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
-			var appNavViewModel = new AppNavViewModel(mapSectionHelper, repositoryAdapters, mapLoaderManager, mapSectionRequestProcessor);
+			var appNavViewModel = new AppNavViewModel(mapSectionVectorProvider, repositoryAdapters, mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
 
 			var appNavWindow = new AppNavWindow
 			{

@@ -741,7 +741,9 @@ namespace MSetExplorer
 
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, TrimMapSections);
+			var deleteNonEssentialMapSectionsFunction = _vm.PosterViewModel.DeleteNonEssentialMapSections;
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, deleteNonEssentialMapSectionsFunction);
+			
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm
@@ -759,13 +761,6 @@ namespace MSetExplorer
 				description = null;
 				return false;
 			}
-		}
-
-		private long TrimMapSections(Job job, SizeDbl posterSize)
-		{
-			var mapSectionRequests = _vm.MapDisplayViewModel.GetMapSectionRequests(job, posterSize);
-			var numberOfMapSectionsDeleted = _vm.PosterViewModel.DeleteNonEssentialMapSections(mapSectionRequests);
-			return numberOfMapSectionsDeleted;
 		}
 
 		private string GetWindowTitle(string? posterName, string? colorBandSetName)

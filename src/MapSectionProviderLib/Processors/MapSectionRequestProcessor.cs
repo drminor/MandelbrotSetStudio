@@ -25,6 +25,7 @@ namespace MapSectionProviderLib
 		private const int NUMBER_OF_CONSUMERS = 2;
 		private const int QUEUE_CAPACITY = 200; //100;
 
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
@@ -57,7 +58,7 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionBuilder mapSectionHelper,
+		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionVectorProvider mapSectionVectorProvider,
 			MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
 			_isStopped = false;
@@ -67,8 +68,9 @@ namespace MapSectionProviderLib
 			SAVE_THE_ZVALUES = false;
 
 			_nextJobId = 0;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapSectionAdapter = mapSectionAdapter;
-			_mapSectionBuilder = mapSectionHelper;
+			_mapSectionBuilder = new MapSectionBuilder();
 			_dtoMapper = new DtoMapper();
 
 			_mapSectionGeneratorProcessor = mapSectionGeneratorProcessor;
@@ -110,7 +112,7 @@ namespace MapSectionProviderLib
 			{
 				if (mapSectionVectors == null)
 				{
-					mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
+					mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 				}
 
 				var mapSectionResponse = Fetch(request, mapSectionVectors);
@@ -133,7 +135,7 @@ namespace MapSectionProviderLib
 				}
 			}
 
-			_mapSectionBuilder.ReturnMapSectionVectors(mapSectionVectors);
+			_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
 
 			return result;
 		}
@@ -266,7 +268,7 @@ namespace MapSectionProviderLib
 						if (!UseRepo)
 						{
 							//await Task.Delay(20);
-							var mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
+							var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 						}
 						else
@@ -299,7 +301,7 @@ namespace MapSectionProviderLib
 		{
 			var request = mapSectionWorkRequest.Request;
 
-			var mapSectionVectors = _mapSectionBuilder.ObtainMapSectionVectors();
+			var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 
 			var mapSectionResponse = await FetchAsync(request, ct, mapSectionVectors);
 
@@ -332,7 +334,7 @@ namespace MapSectionProviderLib
 					if (UseRepo && SAVE_THE_ZVALUES)
 					{
 						var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
-						var mapSectionZVectors = _mapSectionBuilder.ObtainMapSectionZVectors(request.LimbCount);
+						var mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
 						request.MapSectionZVectors = mapSectionZVectors;
 
 						var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
@@ -377,7 +379,7 @@ namespace MapSectionProviderLib
 
 			if (UseRepo && SAVE_THE_ZVALUES)
 			{
-				request.MapSectionZVectors = _mapSectionBuilder.ObtainMapSectionZVectors(request.LimbCount);
+				request.MapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
 				request.MapSectionZVectors.ResetObject();
 			}
 
@@ -535,7 +537,7 @@ namespace MapSectionProviderLib
 			{
 				if (mapSectionResponse != null)
 				{
-					_mapSectionBuilder.ReturnMapSectionResponse(mapSectionResponse);
+					_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
 				}
 
 				_requestsLock.ExitUpgradeableReadLock();

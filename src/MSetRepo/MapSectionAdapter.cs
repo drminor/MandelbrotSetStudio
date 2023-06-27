@@ -336,8 +336,9 @@ namespace MSetRepo
 			var existingRecord = await _jobMapSectionReaderWriter.GetByMapAndOwnerIdAsync(mapSectionId, jobId, jobOwnerType);
 			if (existingRecord == null)
 			{
-				var blockPositionRec = _mSetRecordMapper.MapTo(blockPosition);
-				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, jobId, jobOwnerType, isInverted, blockPositionRec);
+				//var blockPositionRec = _mSetRecordMapper.MapTo(blockPosition);
+				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, jobId, jobOwnerType, isInverted/*, blockPositionRec*/);
+				jobMapSectionRecord.RefIsHard = true;
 
 				try
 				{
@@ -355,6 +356,40 @@ namespace MSetRepo
 				return existingRecord.Id;
 			}
 		}
+
+		public bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId)
+		{
+			var existingRecord = _jobMapSectionReaderWriter.GetByMapAndOwnerId(mapSectionId, jobId, jobOwnerType);
+			if (existingRecord == null)
+			{
+				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, jobId, jobOwnerType, isInverted);
+				jobMapSectionRecord.RefIsHard = refIsHard;
+
+				try
+				{
+					jobMapSectionId = _jobMapSectionReaderWriter.Insert(jobMapSectionRecord);
+					return true;
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"Got exception: {e}.");
+					throw;
+				}
+			}
+			else
+			{
+				jobMapSectionId = existingRecord.Id;
+
+				if (existingRecord.SubdivisionId != subdivisionId)
+				{
+					Debug.WriteLine($"The subdivisionId on the existing JobMapSectionRecord: {existingRecord.SubdivisionId} does not match the Job's SubdivisionId: {subdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
+					_jobMapSectionReaderWriter.SetSubdivisionId(jobMapSectionId, subdivisionId);
+				}
+
+				return false;
+			}
+		}
+
 
 		public IList<ObjectId> GetMapSectionIds(ObjectId jobId, JobOwnerType jobOwnerType)
 		{
@@ -450,13 +485,15 @@ namespace MSetRepo
 			return result;
 		}
 
-		public long? DuplicateJobMapSections(ObjectId jobId, JobOwnerType jobOwnerType, ObjectId newOwnerId)
+		public long? DuplicateJobMapSections(ObjectId jobId, JobOwnerType jobOwnerType, ObjectId newJobId)
 		{
 			var jobMapSectionRecords = _jobMapSectionReaderWriter.GetByOwnerId(jobId, jobOwnerType);
 
 			foreach (var jmsr in jobMapSectionRecords)
 			{
-				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, jmsr.SubdivisionId, newOwnerId, jmsr.OwnerType, jmsr.IsInverted, jmsr.MapBlockOffset);
+				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, jmsr.SubdivisionId, newJobId, jmsr.OwnerType, jmsr.IsInverted);
+				newJmsr.RefIsHard = jmsr.RefIsHard;
+
 				_ = _jobMapSectionReaderWriter.Insert(newJmsr);
 			}
 
@@ -495,7 +532,7 @@ namespace MSetRepo
 			}
 
 			var headLine = $"\nThere are {dict.Count} MapSections and {runningCnt} references.\n";
-			headLine += $"MapSectionId\tCount Refs";
+			headLine += $"MapSectionId\tCount Refs\n";
 
 			return headLine + sb.ToString();
 		}

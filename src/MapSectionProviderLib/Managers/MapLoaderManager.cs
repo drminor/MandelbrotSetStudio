@@ -23,10 +23,10 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
-		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor, MapSectionBuilder mapSectionHelper)
+		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_cts = new CancellationTokenSource();
-			_mapSectionBuilder = mapSectionHelper;
+			_mapSectionBuilder = new MapSectionBuilder();
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 
 			_requests = new List<GenMapRequestInfo>();
