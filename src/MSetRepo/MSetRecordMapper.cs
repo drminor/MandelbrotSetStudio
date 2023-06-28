@@ -245,7 +245,7 @@ namespace MSetRepo
 			var baseMapPosition = MapTo(source.BaseMapPosition);
 			var samplePointDelta = MapTo(source.SamplePointDelta);
 
-			var result = new SubdivisionRecord(/*baseMapPosition,*/ samplePointDelta, MapTo(source.BlockSize))
+			var result = new SubdivisionRecord(baseMapPosition, samplePointDelta, MapTo(source.BlockSize))
 			{
 				Id = source.Id,
 				BaseMapPosition = MapTo(source.BaseMapPosition)

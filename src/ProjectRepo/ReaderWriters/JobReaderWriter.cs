@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
@@ -48,6 +49,30 @@ namespace ProjectRepo
 			var result = Collection.Find(filter).Project(projection1).ToEnumerable();
 
 			return result;
+		}
+
+		public (ObjectId, MapAreaInfo2Record)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
+		{
+			var projection1 = Builders<JobRecord>.Projection.Expression
+				(
+					p => new ValueTuple<ObjectId, MapAreaInfo2Record>(p.SubDivisionId, p.MapAreaInfo2Record)
+				);
+
+			var filter = Builders<JobRecord>.Filter.Eq(f => f.Id, jobId);
+			
+			//var (subdivisionId, mapAreaInfo) = Collection.Find(filter).Project(projection1).FirstOrDefault();
+			//return (subdivisionId, mapAreaInfo);
+
+			var x = Collection.Find(filter).Project(projection1).FirstOrDefault();
+			if (x.Item1 == ObjectId.Empty)
+			{
+				return null;
+			}
+			else
+			{
+				var (subdivisionId, mapAreaInfo) = x;
+				return (subdivisionId, mapAreaInfo);
+			}
 		}
 
 		public ObjectId Insert(JobRecord jobRecord)

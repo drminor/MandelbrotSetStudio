@@ -14,6 +14,7 @@ namespace MSS.Common
 	public interface IMapSectionAdapter : IMapSectionDuplicator, IMapSectionDeleter
 	{
 		void CreateCollections();
+		void CreateIndexes();
 		void DropMapSections();
 		void DropMapSectionsAndSubdivisions();
 
@@ -26,7 +27,7 @@ namespace MSS.Common
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);
 
-		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, BigVector blockPosition, bool isInverted);
+		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted);
 
 
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct);
@@ -40,6 +41,12 @@ namespace MSS.Common
 		IList<ObjectId> GetMapSectionIds(ObjectId jobId, JobOwnerType jobOwnerType);
 		bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
 
+		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections();
+		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections();
+
+		ObjectId? GetSubdivisionId(ObjectId mapSectionId);
+
+		long DeleteJobMapSectionsInList(IEnumerable<ObjectId> jobMapSectionIds);
 	}
 
 }

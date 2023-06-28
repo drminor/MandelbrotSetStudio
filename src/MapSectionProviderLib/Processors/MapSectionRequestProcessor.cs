@@ -103,6 +103,9 @@ namespace MapSectionProviderLib
 
 		public List<Tuple<MapSectionRequest, MapSectionResponse>> FetchResponses(List<MapSectionRequest> mapSectionRequests, out int jobNumber)
 		{
+			var cts = new CancellationTokenSource();
+			var ct = cts.Token;
+
 			jobNumber = GetNextRequestId();
 			var result = new List<Tuple<MapSectionRequest, MapSectionResponse>>();
 
@@ -131,6 +134,8 @@ namespace MapSectionProviderLib
 
 						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
 						mapSectionVectors = null;
+
+						PersistJobMapSectionRecord(request, mapSectionResponse, ct);
 					}
 				}
 			}

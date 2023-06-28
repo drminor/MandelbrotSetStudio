@@ -2,7 +2,12 @@
 
 namespace MSS.Types.DataTransferObjects
 {
-	public record RPointAndDeltaDto(long[] X1, long[] X2, long[] Y1, long[] Y2, int Exponent)
+	public record RPointAndDeltaDto(
+		long[] X1, 
+		long[] X2, 
+		long[] Y1, 
+		long[] Y2, 
+		int Exponent)
 	{
 		public RPointAndDeltaDto() : this(new BigInteger[] { 0, 0, 0, 0 }, 0)
 		{ }

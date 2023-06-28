@@ -63,5 +63,9 @@ namespace MSS.Common
 		void UpdateColorBandSetDetails(ColorBandSet colorBandSet);
 		void UpdateColorBandSetName(ObjectId colorBandSetId, string? name);
 		int DeleteUnusedColorBandSets();
+
+
+
+		(ObjectId, MapAreaInfo2)? GetSubdivisionId(ObjectId jobId);
 	}
 }

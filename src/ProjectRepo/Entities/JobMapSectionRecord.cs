@@ -5,15 +5,15 @@ using System;
 
 namespace ProjectRepo.Entities
 {
-
-	// TODO: Change OwnerId to JobId. 
 	public record JobMapSectionRecord 
 	(
 		ObjectId MapSectionId,
 		ObjectId SubdivisionId,
-		ObjectId OwnerId,
+		ObjectId JobId,
 		JobOwnerType OwnerType,
-		bool IsInverted
+		bool IsInverted,
+		DateTime LastSavedUtc,
+		bool RefIsHard
 	)
 	{
 		[BsonId]
@@ -23,16 +23,5 @@ namespace ProjectRepo.Entities
 		public DateTime DateCreated => Id.CreationTime;
 
 		public bool Onfile => Id != ObjectId.Empty;
-
-		public DateTime LastSaved { get; set; }
-
-		public ObjectId JobId { get; set; }
-		public bool RefIsHard { get; set; } = true;
-		public DateTime LastSavedUtc { get; set; }
-
-		public BigVectorRecord? MapBlockOffset { get; set; }
-
-
 	}
-
 }

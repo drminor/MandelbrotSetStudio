@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Bson.IO;
 using MongoDB.Driver;
 using MSS.Common;
 using MSS.Types;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace MSetRepo
 {
@@ -92,10 +94,9 @@ namespace MSetRepo
 
 		#endregion
 
+		#region Populate JobMapSections
 
-		#region Populate MapJobSections
-
-		public static string PopulateMapJobSectionsForAllProjects(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
+		public static string PopulateJobMapSectionsForAllProjects(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
 		{
 			var numberOfRecordsInserted = 0L;
 
@@ -113,37 +114,33 @@ namespace MSetRepo
 				var displaySize = new SizeDbl(1024);
 
 				numberOfRecordsInserted += CreateMissingJobMapSectionRecords(projectId, projectInfo.Name, jobs, jobOwnerTypeForThisRun, displaySize, mapSectionAdapter, mapJobHelper);
-
-				//foreach (var job in jobs)
-				//{
-				//	if (job.JobOwnerType != jobOwnerTypeForThisRun)
-				//	{
-				//		Debug.WriteLine("WARNING: Found a JobOwnerType mismatch.");
-				//	}
-
-				//	var mapSectionRequests = GetMapSectionRequests(job, jobOwnerTypeForThisRun, displaySize, mapJobHelper, mapSectionBuilder);
-
-				//	for (var i = 0; i < mapSectionRequests.Count; i++)
-				//	{
-				//		var mapSectionRequest = mapSectionRequests[i];
-				//		var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-				//		var blockPosition = mapSectionRequest.BlockPosition;
-
-				//		var mapSectionId = mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
-
-				//		if (mapSectionId != null)
-				//		{
-				//			//var subdivision = subdivisonProvider.GetSubdivision(mapSectionRequest.SamplePointDelta, mapSectionRequest.MapBlockOffset, out var localMapBlockOffset);
-
-				//			var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(mapSectionId.Value, subdivisionId, job.Id, jobOwnerTypeForThisRun, mapSectionRequest.IsInverted, refIsHard: false, out var mapJobSectionId);
-
-				//			numberOfRecordsInserted += inserted ? 1 : 0;
-				//		}
-				//	}
-				//}
 			}
 
 			return $"For JobOwnerType: Project: {numberOfRecordsInserted} new JobMapSection records were created.";
+		}
+
+		public static string PopulateJobMapSectionsForAllPosters(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
+		{
+			var numberOfRecordsInserted = 0L;
+
+			var jobOwnerTypeForThisRun = JobOwnerType.Poster;
+
+			IEnumerable<IPosterInfo> posterInfos = projectAdapter.GetAllPosterInfos();
+
+			foreach (var posterInfo in posterInfos)
+			{
+				var posterId = posterInfo.PosterId;
+
+				var colorBandSets = projectAdapter.GetColorBandSetsForProject(posterId);
+				var jobs = projectAdapter.GetAllJobsForPoster(posterId, colorBandSets);
+
+				var displaySize = new SizeDbl(posterInfo.Size);
+
+				numberOfRecordsInserted += CreateMissingJobMapSectionRecords(posterId, posterInfo.Name, jobs, jobOwnerTypeForThisRun, displaySize, mapSectionAdapter, mapJobHelper);
+
+			}
+
+			return $"For JobOwnerType: Poster: {numberOfRecordsInserted} new JobMapSection records were created.";
 		}
 
 		private static long CreateMissingJobMapSectionRecords(ObjectId ownerId, string ownerName, List<Job> jobs, JobOwnerType jobOwnerTypeForThisRun, SizeDbl displaySize, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
@@ -173,7 +170,7 @@ namespace MSetRepo
 					{
 						//var subdivision = subdivisonProvider.GetSubdivision(mapSectionRequest.SamplePointDelta, mapSectionRequest.MapBlockOffset, out var localMapBlockOffset);
 
-						var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(mapSectionId.Value, subdivisionId, job.Id, jobOwnerTypeForThisRun, mapSectionRequest.IsInverted, refIsHard: false, out var mapJobSectionId);
+						var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(mapSectionId.Value, subdivisionId, job.Id, jobOwnerTypeForThisRun, mapSectionRequest.IsInverted, refIsHard: false, out var jobMapSectionId);
 
 						numberOfRecordsInserted += inserted ? 1 : 0;
 					}
@@ -182,104 +179,6 @@ namespace MSetRepo
 
 			return numberOfRecordsInserted;
 		}
-
-		public static string PopulateMapJobSectionsForAllPosters(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
-		{
-			var numberOfRecordsInserted = 0L;
-
-			var jobOwnerTypeForThisRun = JobOwnerType.Poster;
-
-			IEnumerable<IPosterInfo> posterInfos = projectAdapter.GetAllPosterInfos();
-
-			foreach (var posterInfo in posterInfos)
-			{
-				var posterId = posterInfo.PosterId;
-
-				var colorBandSets = projectAdapter.GetColorBandSetsForProject(posterId);
-				var jobs = projectAdapter.GetAllJobsForPoster(posterId, colorBandSets);
-
-				var displaySize = new SizeDbl(posterInfo.Size);
-
-				//foreach (var job in jobs)
-				//{
-				//	if (job.JobOwnerType != jobOwnerTypeForThisRun)
-				//	{
-				//		Debug.WriteLine("WARNING: Found a JobOwnerType mismatch.");
-				//	}
-
-				//	var mapSectionRequests = GetMapSectionRequests(job, jobOwnerTypeForThisRun, displaySize, mapJobHelper, mapSectionBuilder);
-
-				//	for (var i = 0; i < mapSectionRequests.Count; i++)
-				//	{
-				//		var mapSectionRequest = mapSectionRequests[i];
-				//		var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-				//		var blockPosition = mapSectionRequest.BlockPosition;
-
-				//		var mapSectionId = mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
-
-				//		if (mapSectionId != null)
-				//		{
-				//			var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(mapSectionId.Value, subdivisionId, job.Id, jobOwnerTypeForThisRun, mapSectionRequest.IsInverted, refIsHard: false, out var mapJobSectionId);
-
-				//			numberOfRecordsInserted += inserted ? 1 : 0;
-				//		}
-				//	}
-				//}
-
-				numberOfRecordsInserted += CreateMissingJobMapSectionRecords(posterId, posterInfo.Name, jobs, jobOwnerTypeForThisRun, displaySize, mapSectionAdapter, mapJobHelper);
-
-			}
-
-			return $"For JobOwnerType: Poster: {numberOfRecordsInserted} new JobMapSection records were created.";
-		}
-
-
-		//public long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize)
-		//{
-		//	var mapSectionRequests = GetMapSectionRequests(job, posterSize);
-
-		//	if (mapSectionRequests.Count == 0)
-		//	{
-		//		return 0;
-		//	}
-
-		//	// Get a list of all MapSectionIdsAll for the current project.
-
-		//	var jobId = job.Id;
-		//	var jobOwnerType = job.JobOwnerType;
-
-		//	var allMapSectionIds = _mapSectionAdapter.GetMapSectionIds(jobId, jobOwnerType);
-
-		//	if (allMapSectionIds.Count == 0)
-		//	{
-		//		return 0;
-		//	}
-
-		//	// For each MapSectionRequest in the provided list, retrieve the MapSectionId
-		//	// and remove that Id from the list of AllMapSectionIds.
-
-		//	for (var i = 0; i < mapSectionRequests.Count; i++)
-		//	{
-		//		var mapSectionRequest = mapSectionRequests[i];
-		//		var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-		//		var blockPosition = mapSectionRequest.BlockPosition;
-
-		//		var mapSectionId = _mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
-
-		//		if (mapSectionId != null)
-		//		{
-		//			allMapSectionIds.Remove(mapSectionId.Value);
-		//		}
-		//	}
-
-		//	// Now the AllMapSectionIds only contains Ids not included in the provided list.
-
-		//	// Delete all MapSections for the given job, except for those in the specified list
-		//	// or those MapSections referenced by some other Job.
-		//	var result = _mapSectionAdapter.DeleteMapSectionsWithJobType(allMapSectionIds, jobOwnerType);
-
-		//	return result ?? -1;
-		//}
 
 		private static List<MapSectionRequest> GetMapSectionRequests(Job job, JobOwnerType jobOwnerType, SizeDbl displaySize, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionBuilder)
 		{
@@ -296,5 +195,112 @@ namespace MSetRepo
 
 		#endregion
 
+		#region Cleanup SubdivisionIds
+
+		/// <summary>
+		/// For each job
+		///	1. Compare the SubdivisionId with MapAreaInfo2Record.SubdivisionRecord.Id
+		///
+		///	2. Retrieve the Subdivision Record from the repo and compare
+		///		a.	SamplePointDelta.RSizeDto.Width to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Y1	
+		///		b.	SamplePointDelta.RSizeDto.Height to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Y2
+		///		c.	SamplePointDelta.RSizeDto.Exponent to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent
+		///
+		///		d.	SamplePointDelta.RSizeDto.Width to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Width
+		///		e.	SamplePointDelta.RSizeDto.Height to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Height
+		///		f.	SamplePointDelta.RSizeDto.Exponent to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Exponent
+		///
+		///
+		///		g.	BaseMapPosition.BigVectorDto.X to MapAreaInfo2Record.SubdivisionRecord.BaseMapPosition.BigVectorDto.X
+		///		h.	BaseMapPosition.BigVectorDto.Y to MapAreaInfo2Record.SubdivisionRecord.BaseMapPosition.BigVectorDto.Y
+		/// 
+		/// 
+		/// </summary>
+		/// <param name="mapSectionAdapter"></param>
+		/// <param name="jobMapSectionIdsWithMissingMapSection"></param>
+		/// <param name="subdivisionIdsForMissingMapSections"></param>
+		/// <returns></returns>
+		public static string CheckJobRefsAndSubdivisions(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, out List<ObjectId> jobMapSectionIdsWithMissingJobRecord, out List<ObjectId> subdivisionIdsForMissingJobs)
+		{
+			jobMapSectionIdsWithMissingJobRecord = new List<ObjectId>();
+			subdivisionIdsForMissingJobs = new List<ObjectId>();
+
+			var sb = new StringBuilder();
+			sb.AppendLine("List of All JobMapSection records having a SubdivisionId different from its Job's SubdivisionId.");
+			sb.AppendLine($"JobMapSectionId\tJobId\tSubdivisionId-JobMapSection\tSubdivisionId-JobRecord\tSubdivisionId-JobRecordMapAreaInfo");
+
+			var listOfJobMapIdAndSubdivisionId = mapSectionAdapter.GetJobAndSubdivisionIdsForAllJobMapSections();
+
+			foreach (var (jobMapSectionId, jobId, subdivisionIdFromJobMapSection) in listOfJobMapIdAndSubdivisionId)
+			{
+				var subAndMap = projectAdapter.GetSubdivisionId(jobId);
+
+				if (subAndMap.HasValue)
+				{
+					var (subdivisionIdFromJobRecord, mapAreaInfo2) = subAndMap.Value;
+
+					var subdivisionIdFromJobRecordMapInfo = mapAreaInfo2.Subdivision.Id;
+
+					if (subdivisionIdFromJobRecord != subdivisionIdFromJobMapSection | subdivisionIdFromJobRecordMapInfo != subdivisionIdFromJobMapSection)
+					{
+						sb.AppendLine($"{jobMapSectionId}\t{jobId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromJobRecord}\t{subdivisionIdFromJobRecordMapInfo}");
+					}
+
+					// TODO: Fetch the SubdivisionRecord and compare the details of the mapAreaInfo value. 
+				}
+				else
+				{
+					jobMapSectionIdsWithMissingJobRecord.Add(jobMapSectionId);
+
+					if (!subdivisionIdsForMissingJobs.Contains(subdivisionIdFromJobMapSection))
+					{
+						subdivisionIdsForMissingJobs.Add(subdivisionIdFromJobMapSection);
+					}
+				}
+			}
+
+			return sb.ToString() + $"\n{jobMapSectionIdsWithMissingJobRecord.Count} JobMapSections records reference a non extant Job Record";
+		}
+
+		public static string CheckMapRefsAndSubdivisions(IMapSectionAdapter mapSectionAdapter, out List<ObjectId> jobMapSectionIdsWithMissingMapSection, out List<ObjectId> subdivisionIdsForMissingMapSections)
+		{
+			// For each JobMapSection, retrieve the MapSection Record from the repo
+			// and compare the SubdivisionId to the SubdivisionId
+
+			jobMapSectionIdsWithMissingMapSection = new List<ObjectId>();
+			subdivisionIdsForMissingMapSections = new List<ObjectId>();
+
+			var sb = new StringBuilder();
+			sb.AppendLine("List of All JobMapSection records having a SubdivisionId different from its MapSection's SubdivisionId.");
+			sb.AppendLine($"JobMapSectionId\tMapSectionId\tSubdivisionId-JobMapSection\tSubdivisionId-MapSection");
+
+			var listOfJobMapIdAndSubdivisionId = mapSectionAdapter.GetMapSectionAndSubdivisionIdsForAllJobMapSections();
+
+			foreach(var (jobMapSectionId, mapSectionId, subdivisionIdFromJobMapSection) in listOfJobMapIdAndSubdivisionId)
+			{
+				var subdivisionIdFromMapSection = mapSectionAdapter.GetSubdivisionId(mapSectionId);
+
+				if (subdivisionIdFromMapSection.HasValue)
+				{
+					if (subdivisionIdFromMapSection != subdivisionIdFromJobMapSection)
+					{
+						sb.AppendLine($"{jobMapSectionId}\t{mapSectionId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromMapSection}");
+					}
+				}
+				else
+				{
+					jobMapSectionIdsWithMissingMapSection.Add(jobMapSectionId);
+
+					if (!subdivisionIdsForMissingMapSections.Contains(subdivisionIdFromJobMapSection))
+					{
+						subdivisionIdsForMissingMapSections.Add(subdivisionIdFromJobMapSection);
+					}
+				}
+			}
+
+			return sb.ToString() + $"\n{jobMapSectionIdsWithMissingMapSection.Count} JobMapSections records reference a non extant MapSection";
+		}
+
+		#endregion
 	}
 }

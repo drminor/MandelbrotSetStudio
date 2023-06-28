@@ -18,11 +18,6 @@ namespace MSetRepo
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 
-		//private readonly MapSectionAdapter _mapSectionAdapter;
-		//private readonly MapJobHelper _mapJobHelper;
-
-		//MapSectionAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
-
 		private readonly bool _useDetailedDebug = false;
 
 		#region Constructor
@@ -31,10 +26,6 @@ namespace MSetRepo
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
-
-			//var mapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
-			//var subdivisionProvider = new SubdivisonProvider(mapSectionAdapter);
-			//_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
 		}
 
 		#endregion
@@ -503,6 +494,33 @@ namespace MSetRepo
 			jobCache?.Add(job.Id, job);
 
 			return job;
+		}
+
+		public (ObjectId, MapAreaInfo2)? GetSubdivisionId(ObjectId jobId)
+		{
+			try
+			{
+				var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+				var subAndMap = jobReaderWriter.GetSubdivisionIdAndMapAreaInfo(jobId);
+
+				if (subAndMap.HasValue)
+				{
+					var (subdivisionId, mapAreaInfo2Record) = subAndMap.Value;
+					var mapAreaInfo2 = _mSetRecordMapper.MapFrom(mapAreaInfo2Record);
+
+					return (subdivisionId, mapAreaInfo2);
+				}
+				else
+				{
+					return null;
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"While GetSubdivisionId from a JobId, got exception: {e}.");
+				return null;
+			}
 		}
 
 		private ColorBandSet? GetColorBandSet(Job job, ColorBandSetReaderWriter colorBandSetReaderWriter, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache, out bool isCacheHit)
