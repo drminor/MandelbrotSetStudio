@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using ProjectRepo;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -195,7 +196,7 @@ namespace MSetRepo
 
 		#endregion
 
-		#region Cleanup SubdivisionIds
+		#region Check for Missing Job and MapSections
 
 		/// <summary>
 		/// For each job
@@ -299,6 +300,30 @@ namespace MSetRepo
 			}
 
 			return sb.ToString() + $"\n{jobMapSectionIdsWithMissingMapSection.Count} JobMapSections records reference a non extant MapSection";
+		}
+
+		#endregion
+
+		#region Check for Orphan Jobs and MapSections
+
+		public static string FindOrphanMapSections(IMapSectionAdapter mapSectionAdapter, out List<ObjectId> mapSectionIdsWithNoJob)
+		{
+			var mapSectionIds = mapSectionAdapter.GetAllMapSectionIds();
+
+			var jobMapSectionIds = mapSectionAdapter.GetJobMapSectionIds(mapSectionIds).ToList();
+
+			var stopWatch = Stopwatch.StartNew();
+
+			var mapSectionsNotReferenced = mapSectionIds.Where(x => !jobMapSectionIds.Contains(x)).ToList();
+
+			stopWatch.Stop();
+			Debug.WriteLine($"Find missing MapSections took: {stopWatch.ElapsedMilliseconds}ms.");
+
+			mapSectionIdsWithNoJob = mapSectionsNotReferenced;
+
+			var result = string.Join("\n", mapSectionsNotReferenced);
+
+			return result;
 		}
 
 		#endregion

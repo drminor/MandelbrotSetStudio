@@ -38,16 +38,16 @@ namespace MSetExplorer
 
 		private static readonly bool CREATE_JOB_MAP_SECTION_REPORT = false;
 
+		private static readonly bool FIND_AND_DELETE_ORPHAN_MAP_SECTIONS = false;
+
 		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false;
-		private static readonly bool DELETE_JOB_MAP_JOB_REFS = true;
+		private static readonly bool DELETE_JOB_MAP_JOB_REFS = false;
 
 		private static readonly bool POPULATE_JOB_MAP_SECTIONS = false;
-
 
 		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2093-05-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
-
 
 		#endregion
 
@@ -137,6 +137,11 @@ namespace MSetExplorer
 				Debug.WriteLine(report);
 			}
 
+			if (FIND_AND_DELETE_ORPHAN_MAP_SECTIONS)
+			{
+				FindAndDeleteOrphanMapSections(_repositoryAdapters.MapSectionAdapter);
+			}
+
 			if (DELETE_JOB_MAP_MAP_REFS)
 			{
 				CheckAndDeleteMapRefsFromJobMapCollection(_repositoryAdapters.MapSectionAdapter);
@@ -153,9 +158,9 @@ namespace MSetExplorer
 				Debug.WriteLine(report);
 			}
 
-			if (CREATE_JOB_MAP_SECTION_REPORT | DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS | POPULATE_JOB_MAP_SECTIONS)
+			if (CREATE_JOB_MAP_SECTION_REPORT | FIND_AND_DELETE_ORPHAN_MAP_SECTIONS | DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS | POPULATE_JOB_MAP_SECTIONS)
 			{
-				if (MessageBoxResult.No == MessageBox.Show("Reporting completed. Continue with startup?", "Continue?", MessageBoxButton.YesNo))
+				if (MessageBoxResult.No == MessageBox.Show("Reporting completed. Continue with startup?", "Continue?", MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No))
 				{
 					Current.Shutdown();
 					return;
@@ -197,7 +202,7 @@ namespace MSetExplorer
 			var haveServerName = !string.IsNullOrEmpty(repoDbServerName?.Trim());
 			var haveDbName = !string.IsNullOrEmpty(repoDbName?.Trim());
 			var serviceIsRunning = ServiceHelper.CheckService(RMapConstants.SERVICE_NAME) == ServiceControllerStatus.Running;
-			var isConnected = serviceIsRunning ? CheckRepoConnectivity(repoDbServerName, repoDbPort, repoDbName) : false;
+			var isConnected = serviceIsRunning && CheckRepoConnectivity(repoDbServerName, repoDbPort, repoDbName);
 
 			if (!haveServerName || !haveDbName || !serviceIsRunning || !isConnected)
 			{
@@ -380,28 +385,6 @@ namespace MSetExplorer
 			return report;
 		}
 
-		// TODO: Remove this once we confirm that the CheckJobRefsFromJobMapCollection method is working.
-		private void DeleteJobMapSectionsWithMissingJob(IMapSectionAdapter mapSectionAdapter)
-		{
-			if (mapSectionAdapter is MapSectionAdapter ma)
-			{
-				//var report = CreateJobMapSectionsReferenceReport(ma);
-				//Debug.WriteLine(report);
-
-				var report = DeleteJobMapSectionsWithMissingJobByType(ma, JobOwnerType.Project);
-				Debug.WriteLine(report);
-
-				Debug.WriteLine("\n\n");
-				report = DeleteJobMapSectionsWithMissingJobByType(ma, JobOwnerType.Poster);
-				Debug.WriteLine(report);
-
-				Debug.WriteLine("\n\n");
-				report = DeleteJobMapSectionsWithMissingJobByType(ma, JobOwnerType.ImageBuilder);
-				Debug.WriteLine(report);
-			}
-		}
-
-		// TODO: Update how the CreateJobMapSectionsReferenceReport is called / used
 		private string CreateJobMapSectionsReferenceReport(IMapSectionAdapter mapSectionAdapter)
 		{
 			if (mapSectionAdapter is MapSectionAdapter ma)
@@ -413,6 +396,32 @@ namespace MSetExplorer
 			{
 				return "Report not available.";
 			}
+		}
+
+		private void FindAndDeleteOrphanMapSections(IMapSectionAdapter mapSectionAdapter)
+		{
+			var report = FindOrphanMapSections(mapSectionAdapter, out var mapSectionIdsWithNoJob);
+			Debug.WriteLine(report);
+
+			var countOrphanMapSections = mapSectionIdsWithNoJob.Count;
+
+			if (countOrphanMapSections > 0)
+			{
+				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOrphanMapSections} MapSection that are not reference by any job?", "Delete JobMapSection Records?",
+					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
+
+				if (msgBoxResult == MessageBoxResult.Yes)
+				{
+					var numberDeleted = mapSectionAdapter.DeleteMapSectionsInList(mapSectionIdsWithNoJob);
+					MessageBox.Show($"{numberDeleted} JobMapSections were deleted.");
+				}
+			}
+		}
+
+		private string FindOrphanMapSections(IMapSectionAdapter mapSectionAdapter, out List<ObjectId> mapSectionIdsWithNoJob)
+		{
+			var report = ProjectAndMapSectionHelper.FindOrphanMapSections(mapSectionAdapter, out mapSectionIdsWithNoJob);
+			return report;
 		}
 
 		private void CheckAndDeleteJobRefsFromJobMapCollection(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
@@ -427,7 +436,7 @@ namespace MSetExplorer
 				var formattedSubdivisionList = string.Join("\n", subdivisionIdsForMissingJobs);
 				Debug.WriteLine($"SubdivisionIds for the records with a missing JobRecord:\n{formattedSubdivisionList}\n");
 
-				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOfRecordsWithMissingMapSection} JobMapSection records referencing a Job record that does not exist.", "Delete JobMapSection Records?",
+				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOfRecordsWithMissingMapSection} JobMapSection records referencing a Job record that does not exist?", "Delete JobMapSection Records?",
 					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
 
 				if (msgBoxResult == MessageBoxResult.Yes)
@@ -458,7 +467,7 @@ namespace MSetExplorer
 				var formattedSubdivisionList = string.Join("\n", subdivisionIdsForMissingMapSections);
 				Debug.WriteLine($"SubdivisionIds for the records with a missing MapSection:\n{formattedSubdivisionList}\n");
 
-				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOfRecordsWithMissingMapSection} JobMapSection records referencing a MapSection record that does not exist.", "Delete JobMapSection Records?",
+				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOfRecordsWithMissingMapSection} JobMapSection records referencing a MapSection record that does not exist?", "Delete JobMapSection Records?",
 					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
 
 				if (msgBoxResult == MessageBoxResult.Yes)
@@ -473,24 +482,6 @@ namespace MSetExplorer
 		{
 			var report = ProjectAndMapSectionHelper.CheckMapRefsAndSubdivisions(mapSectionAdapter, out jobMapSectionIdsWithMissingMapSection, out subdivisionIdsForMissingMapSections);
 			return report;
-		}
-
-		private string DeleteJobMapSectionsWithMissingJobByType(MapSectionAdapter mapSectionAdapter, JobOwnerType jobOwnerType)
-		{
-			var jobsNotFound = mapSectionAdapter.DeleteJobMapSectionsWithMissingJob(jobOwnerType);
-
-			var sb = new StringBuilder();
-
-			sb.AppendLine($"Handling Jobs for owners of type: {jobOwnerType}.");
-
-			sb.AppendLine("JobIds referenced in one or more JobMapSectionRecords for which no Job record exists.");
-			sb.AppendLine("JobId\tMapSectionsDeleted");
-			foreach(Tuple<string, long?> entry in jobsNotFound)
-			{
-				sb.AppendLine($"{entry.Item1}\t{entry.Item2}");
-			}
-
-			return sb.ToString();
 		}
 
 		#endregion

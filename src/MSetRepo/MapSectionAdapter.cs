@@ -399,7 +399,6 @@ namespace MSetRepo
 			}
 		}
 
-
 		public IList<ObjectId> GetMapSectionIds(ObjectId jobId, JobOwnerType jobOwnerType)
 		{
 			var mapSectionIds = _jobMapSectionReaderWriter.GetMapSectionIdsByOwnerId(jobId, jobOwnerType);
@@ -412,7 +411,12 @@ namespace MSetRepo
 			var result = _jobMapSectionReaderWriter.DeleteJobMapSectionsInList(jobMapSectionIds);
 
 			return result ?? 0;
+		}
 
+		public IEnumerable<ObjectId> GetAllMapSectionIds()
+		{
+			var result = _mapSectionReaderWriter.GetAllMapSectionIds();
+			return result;
 		}
 
 		public long? DeleteMapSectionsForMany(IEnumerable<ObjectId> jobIds, JobOwnerType jobOwnerType)
@@ -434,8 +438,6 @@ namespace MSetRepo
 			return result;
 		}
 
-
-
 		public long? DeleteMapSectionsForJob(ObjectId jobId, JobOwnerType jobOwnerType)
 		{
 			Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {jobId}.");
@@ -453,7 +455,7 @@ namespace MSetRepo
 
 			numberJobMapSectionsDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, jobOwnerType);
 
-			var foundMapSectionRefs = _jobMapSectionReaderWriter.DoJobMapSectionRecordsExist(mapSectionIds).ToArray();
+			var foundMapSectionRefs = _jobMapSectionReaderWriter.GetJobMapSectionIds(mapSectionIds).ToArray();
 			var mapSectionsNotReferenced = mapSectionIds.Where(x => !foundMapSectionRefs.Contains(x)).ToList();
 
 			var numberDeleted = _mapSectionReaderWriter.Delete(mapSectionsNotReferenced);
@@ -465,7 +467,7 @@ namespace MSetRepo
 		{
 			var numberOfMapSectionRefsDeleted = _jobMapSectionReaderWriter.DeleteJobMapSectionsByMapSectionId(mapSectionIds, jobOwnerType);
 
-			var foundMapSectionRefs = _jobMapSectionReaderWriter.DoJobMapSectionRecordsExist(mapSectionIds).ToArray();
+			var foundMapSectionRefs = _jobMapSectionReaderWriter.GetJobMapSectionIds(mapSectionIds).ToArray();
 
 			var mapSectionsNotReferenced = mapSectionIds.Where(x => !foundMapSectionRefs.Contains(x)).ToList();
 
@@ -481,7 +483,7 @@ namespace MSetRepo
 			var mapSectionIds = _jobMapSectionReaderWriter.GetMapSectionIdsByOwnerId(jobId, jobOwnerType);
 			numberJobMapSectionsDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, jobOwnerType);
 
-			var foundMapSectionRefs = _jobMapSectionReaderWriter.DoJobMapSectionRecordsExist(mapSectionIds);
+			var foundMapSectionRefs = _jobMapSectionReaderWriter.GetJobMapSectionIds(mapSectionIds);
 
 			var result = 0L;
 			foreach (var mapSectionId in mapSectionIds)
@@ -556,41 +558,41 @@ namespace MSetRepo
 			return headLine + sb.ToString();
 		}
 
-		public List<Tuple<string, long?>> DeleteJobMapSectionsWithMissingJob(JobOwnerType jobOwnerType)
-		{
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+		//public List<Tuple<string, long?>> DeleteJobMapSectionsWithMissingJob(JobOwnerType jobOwnerType)
+		//{
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-			var jobIds = jobReaderWriter.GetAllJobIds();
+		//	var jobIds = jobReaderWriter.GetAllJobIds();
 
-			var dict = new SortedDictionary<ObjectId, int>();
+		//	var dict = new SortedDictionary<ObjectId, int>();
 
-			foreach(var jobId in jobIds)
-			{
-				dict.Add(jobId, 0);
-			}
+		//	foreach(var jobId in jobIds)
+		//	{
+		//		dict.Add(jobId, 0);
+		//	}
 
-			var jobIdsNotFound = new List<ObjectId>();
+		//	var jobIdsNotFound = new List<ObjectId>();
 
-			var msJobIds = _jobMapSectionReaderWriter.GetDistinctJobIdsFromJobMapSections(jobOwnerType);
+		//	var msJobIds = _jobMapSectionReaderWriter.GetDistinctJobIdsFromJobMapSections(jobOwnerType);
 
-			foreach (var jobId in msJobIds)
-			{
-				if (!dict.TryGetValue(jobId, out _))
-				{
-					jobIdsNotFound.Add(jobId);
-				}
-			}
+		//	foreach (var jobId in msJobIds)
+		//	{
+		//		if (!dict.TryGetValue(jobId, out _))
+		//		{
+		//			jobIdsNotFound.Add(jobId);
+		//		}
+		//	}
 
-			var result = new List<Tuple<string, long?>>();
+		//	var result = new List<Tuple<string, long?>>();
 
-			foreach(var jobId in jobIdsNotFound)
-			{
-				var numberDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, jobOwnerType);
-				result.Add(new Tuple<string, long?>(jobId.ToString(), numberDeleted));
-			}
+		//	foreach(var jobId in jobIdsNotFound)
+		//	{
+		//		var numberDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, jobOwnerType);
+		//		result.Add(new Tuple<string, long?>(jobId.ToString(), numberDeleted));
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public IEnumerable<JobMapSectionRecord> GetAllJobMapSections()
 		{
@@ -632,6 +634,23 @@ namespace MSetRepo
 				return null;
 			}
 		}
+
+
+		public IEnumerable<ObjectId> GetJobMapSectionIds(IEnumerable<ObjectId> mapSectionIds)
+		{
+			var result = _jobMapSectionReaderWriter.GetJobMapSectionIds(mapSectionIds);
+
+			return result;
+		}
+
+		public long DeleteMapSectionsInList(IList<ObjectId> mapSectionIds)
+		{
+			var numberDeleted = _mapSectionReaderWriter.Delete(mapSectionIds);
+
+			return numberDeleted;
+
+		}
+
 
 		#endregion
 

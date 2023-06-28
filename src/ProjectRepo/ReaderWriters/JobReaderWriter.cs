@@ -160,7 +160,7 @@ namespace ProjectRepo
 
 			//List models = collection.Find(_ => true).Project(projection1).ToList();
 
-			var filter = Builders<JobRecord>.Filter.Eq("ProjectId", projectId);
+			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", projectId);
 			var jobInfos = Collection.Find(filter).Project(projection1).ToEnumerable();
 
 			return jobInfos;

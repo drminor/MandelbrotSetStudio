@@ -47,6 +47,12 @@ namespace MSS.Common
 		ObjectId? GetSubdivisionId(ObjectId mapSectionId);
 
 		long DeleteJobMapSectionsInList(IEnumerable<ObjectId> jobMapSectionIds);
+
+		IEnumerable<ObjectId> GetAllMapSectionIds();
+
+		IEnumerable<ObjectId> GetJobMapSectionIds(IEnumerable<ObjectId> mapSectionIds);
+
+		long DeleteMapSectionsInList(IList<ObjectId> mapSectionIds);
 	}
 
 }

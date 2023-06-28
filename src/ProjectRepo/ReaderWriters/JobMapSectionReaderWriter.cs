@@ -73,7 +73,7 @@ namespace ProjectRepo
 			return count > 0;
 		}
 
-		public IEnumerable<ObjectId> DoJobMapSectionRecordsExist(IEnumerable<ObjectId> mapSectionIds)
+		public IEnumerable<ObjectId> GetJobMapSectionIds(IEnumerable<ObjectId> mapSectionIds)
 		{
 			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => p.MapSectionId);
 			var filter1 = Builders<JobMapSectionRecord>.Filter.In(f => f.MapSectionId, mapSectionIds);
@@ -82,6 +82,19 @@ namespace ProjectRepo
 
 			return foundMapSectionIds;
 		}
+
+		//public IEnumerable<ObjectId> GetOrphanMapSectionIds(IEnumerable<ObjectId> mapSectionIds)
+		//{
+		//	var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => p.MapSectionId);
+		//	var filter1 = Builders<JobMapSectionRecord>.Filter.In(f => f.MapSectionId, mapSectionIds);
+
+		//	var notInFilter1 = Builders<JobMapSectionRecord>.Filter.Not(filter1);
+
+		//	var foundMapSectionIds = Collection.Find(notInFilter1).Project(projection1).ToEnumerable();
+
+		//	return foundMapSectionIds;
+		//}
+
 
 		public IList<JobMapSectionRecord> GetByOwnerId(ObjectId jobId, JobOwnerType jobOwnerType)
 		{
@@ -145,11 +158,6 @@ namespace ProjectRepo
 			}
 
 			jobMapSectionRecord.Id = ObjectId.GenerateNewId();
-
-			//// After the next Schema Update, we can remove these two lines.
-			//jobMapSectionRecord.JobId = jobMapSectionRecord.OwnerId;
-			//jobMapSectionRecord.LastSavedUtc = DateTime.UtcNow;
-
 			await Collection.InsertOneAsync(jobMapSectionRecord).ConfigureAwait(false);
 			return jobMapSectionRecord.Id;
 		}
@@ -162,11 +170,6 @@ namespace ProjectRepo
 			}
 
 			jobMapSectionRecord.Id = ObjectId.GenerateNewId();
-
-			// After the next Schema Update, we can remove these two lines.
-			//jobMapSectionRecord.JobId = jobMapSectionRecord.OwnerId;
-			//jobMapSectionRecord.LastSavedUtc = DateTime.UtcNow;
-
 			Collection.InsertOne(jobMapSectionRecord);
 			return jobMapSectionRecord.Id;
 		}
@@ -235,8 +238,6 @@ namespace ProjectRepo
 
 			return GetReturnCount(deleteResult);
 		}
-
-
 
 		#endregion
 

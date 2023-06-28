@@ -189,12 +189,12 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public long? Delete(IList<ObjectId> mapSectionIds)
+		public long Delete(IList<ObjectId> mapSectionIds)
 		{
 			var filter = Builders<MapSectionRecord>.Filter.In(u => u.Id, mapSectionIds);
 			var deleteResult = Collection.DeleteMany(filter);
 
-			return GetReturnCount(deleteResult);
+			return GetReturnCount(deleteResult) ?? 0;
 		}
 
 		public long? DeleteAllWithSubId(ObjectId subdivisionId)
