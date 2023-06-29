@@ -134,6 +134,8 @@ namespace MSS.Common.MSet
 
 		public bool OnFile { get; private set; }
 
+		public JobOwnerType JobOwnerType => JobOwnerType.Poster;
+
 		public string Name
 		{
 			get => _name;

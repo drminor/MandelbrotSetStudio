@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MSS.Types.MSet;
+using MSS.Types;
+using System;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -20,8 +22,10 @@ namespace MSetExplorer
 
 		bool MapCoordsIsVisible { get; set; }
 
-
 		CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/);
 		JobProgressViewModel CreateAJobProgressViewModel();
+
+		MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize);
+
 	}
 }

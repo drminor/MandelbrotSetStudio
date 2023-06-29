@@ -188,6 +188,16 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
+		public void SetOriginalSourceSubdivisionId(ObjectId jobMapSectionId, ObjectId originalSourceSubdivisionId)
+		{
+			var filter = Builders<JobMapSectionRecord>.Filter.Eq(f => f.Id, jobMapSectionId);
+
+			var updateDefinition = Builders<JobMapSectionRecord>.Update
+				.Set(u => u.OriginalSourceSubdivisionId, originalSourceSubdivisionId);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
 		#endregion
 
 		#region Delete
@@ -263,25 +273,25 @@ namespace ProjectRepo
 			return jobIds;
 		}
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections()
+		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections()
 		{
-			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, ObjectId>(p.Id, p.MapSectionId, p.SubdivisionId));
+			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>(p.Id, p.MapSectionId, p.SubdivisionId, p.OriginalSourceSubdivisionId));
 
 			var filter = Builders<JobMapSectionRecord>.Filter.Empty;
 
-			IFindFluent<JobMapSectionRecord, ValueTuple<ObjectId, ObjectId, ObjectId>> operation = Collection.Find(filter).Project(projection1);
+			IFindFluent<JobMapSectionRecord, ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> operation = Collection.Find(filter).Project(projection1);
 
 			var itemsFound = operation.ToEnumerable();
 			return itemsFound;
 		}
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections()
+		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections()
 		{
-			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, ObjectId>(p.Id, p.JobId, p.SubdivisionId));
+			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>(p.Id, p.JobId, p.SubdivisionId, p.OriginalSourceSubdivisionId));
 
 			var filter = Builders<JobMapSectionRecord>.Filter.Empty;
 
-			IFindFluent<JobMapSectionRecord, ValueTuple<ObjectId, ObjectId, ObjectId>> operation = Collection.Find(filter).Project(projection1);
+			IFindFluent<JobMapSectionRecord, ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> operation = Collection.Find(filter).Project(projection1);
 
 			var itemsFound = operation.ToEnumerable();
 			return itemsFound;

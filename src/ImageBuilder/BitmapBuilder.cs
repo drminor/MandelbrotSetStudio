@@ -65,7 +65,7 @@ namespace ImageBuilder
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, mapAreaInfo.Subdivision, mapBlockOffset, blockPtrY, w, mapCalcSettings, mapAreaInfo.Precision);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtrY, w, mapCalcSettings, mapAreaInfo.Precision);
 					if (ct.IsCancellationRequested || blocksForThisRow.Count == 0)
 					{
 						return null;
@@ -188,7 +188,7 @@ namespace ImageBuilder
 
 		//private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(Subdivision subdivision, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
 
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, Subdivision subdivision, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, Subdivision subdivision, ObjectId originalSourceSubdivisionId, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
 		{
 			var requests = new List<MapSectionRequest>();
 			//var jobId = ObjectId.GenerateNewId().ToString();
@@ -197,7 +197,7 @@ namespace ImageBuilder
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var mapSectionRequest = _mapSectionBuilder.CreateRequest(key, mapBlockOffset, precision, jobId.ToString(), jobOwnerType, subdivision, mapCalcSettings, colPtr);
+				var mapSectionRequest = _mapSectionBuilder.CreateRequest(key, mapBlockOffset, precision, jobId.ToString(), jobOwnerType, subdivision, originalSourceSubdivisionId, mapCalcSettings, colPtr);
 				requests.Add(mapSectionRequest);
 			}
 

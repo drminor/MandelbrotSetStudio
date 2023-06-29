@@ -5,7 +5,7 @@ namespace MSS.Types.MSet
 {
 	public class MapSectionRequest
 	{
-		public MapSectionRequest(string jobId, JobOwnerType jobOwnerType, string subdivisionId,
+		public MapSectionRequest(string jobId, JobOwnerType jobOwnerType, string subdivisionId, string originalSourceSubdivisionId,
 			PointInt screenPosition, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
 			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
@@ -13,6 +13,7 @@ namespace MSS.Types.MSet
 			JobId = jobId;
 			JobOwnerType = jobOwnerType;
 			SubdivisionId = subdivisionId;
+			OriginalSourceSubdivisionId = originalSourceSubdivisionId;
 			ScreenPosition = screenPosition;
 			MapBlockOffset = mapBlockOffset;
 			BlockPosition = blockPosition;
@@ -33,6 +34,7 @@ namespace MSS.Types.MSet
 		public string JobId { get; init; }
 		public JobOwnerType JobOwnerType { get; init; }
 		public string SubdivisionId { get; init; }
+		public string OriginalSourceSubdivisionId { get; init; }
 
 		/// <summary>
 		/// X,Y coords on screen in Block-Size units

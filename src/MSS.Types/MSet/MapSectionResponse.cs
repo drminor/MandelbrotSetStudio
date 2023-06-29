@@ -9,6 +9,7 @@
 				  mapSectionRequest.JobId,
 				  mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
+				  mapSectionRequest.OriginalSourceSubdivisionId,
 				  mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted: false,
@@ -28,6 +29,7 @@
 				  mapSectionRequest.JobId,
 				  mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
+				  mapSectionRequest.OriginalSourceSubdivisionId,
 				  blockPosition: mapSectionRequest.BlockPosition,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted,
@@ -42,7 +44,8 @@
 			string? mapSectionId, 
 			string jobId, 
 			JobOwnerType jobOwnerType, 
-			string subdivisionId, 
+			string subdivisionId,
+			string originalSourceSubdivisionId,
 			BigVector blockPosition,
 			MapCalcSettings mapCalcSettings,
 			bool requestCompleted,
@@ -53,6 +56,7 @@
 			JobId = jobId;
 			JobOwnerType = jobOwnerType;
 			SubdivisionId = subdivisionId;
+			OriginalSourceSubdivisionId = originalSourceSubdivisionId;
 			BlockPosition = blockPosition;
 			MapCalcSettings = mapCalcSettings;
 			RequestCompleted = requestCompleted;
@@ -68,6 +72,8 @@
 		public JobOwnerType JobOwnerType { get; set; }
 
 		public string SubdivisionId { get; init; }
+		public string OriginalSourceSubdivisionId { get; init; }
+
 		public BigVector BlockPosition { get; init; }
 
 		public MapCalcSettings MapCalcSettings { get; init; }
@@ -84,7 +90,8 @@
 
 		public MapSectionResponse CreateCopySansVectors()
 		{
-			var result = new MapSectionResponse(MapSectionId, JobId, JobOwnerType, SubdivisionId, BlockPosition, MapCalcSettings, RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
+			var result = new MapSectionResponse(MapSectionId, JobId, JobOwnerType, SubdivisionId, OriginalSourceSubdivisionId, BlockPosition, MapCalcSettings, 
+				RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
 			return result;
 		}
 

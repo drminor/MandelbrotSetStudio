@@ -12,7 +12,7 @@ namespace MSetExplorer
 {
 	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
-		//private readonly MapJobHelper _mapJobHelper;
+		private readonly MapJobHelper _mapJobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly ViewModelFactory _viewModelFactory;
 
@@ -20,9 +20,9 @@ namespace MSetExplorer
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
-			IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
+			IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, ViewModelFactory viewModelFactory)
 		{
-			//_mapJobHelper = mapJobHelper;
+			_mapJobHelper = mapJobHelper;
 			_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
@@ -105,6 +105,13 @@ namespace MSetExplorer
 
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
 			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
+			return result;
+		}
+
+		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
+		{
+			var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
+
 			return result;
 		}
 

@@ -1,7 +1,9 @@
 ﻿using MapSectionProviderLib;
+using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using PngImageLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -281,7 +283,15 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 
 			//AddTiming("GetMapAreaInfo");
-			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeDbl(1024));
+
+			var oldAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeDbl(1024));
+
+			//var mapAreaInfoWithSize = GetMapAreaWithSizeFat(areaColorAndCalcSettings, imageSize);
+			//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
+			//createImageProgressViewModel.CreateImage(imageFilePath, jobId, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
+
+
+
 			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobId, jobOwnerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
@@ -476,6 +486,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		public void ResetMapSectionRequestProcessor()
 		{
 			_mapSectionRequestProcessor.UseRepo = true;
+		}
+
+		private MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
+		{
+			var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
+
+			return result;
 		}
 
 		#endregion

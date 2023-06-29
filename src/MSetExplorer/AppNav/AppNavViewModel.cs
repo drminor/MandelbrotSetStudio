@@ -65,7 +65,7 @@ namespace MSetExplorer
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, cbshDisplayViewModel, jobTreeViewModel,
-				_mapLoaderManager, _viewModelFactory);
+				_mapLoaderManager, _mapJobHelper, _viewModelFactory);
 
 			return result;
 		}
@@ -91,7 +91,7 @@ namespace MSetExplorer
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandSetViewModel, cbshDisplayViewModel, jobTreeViewModel,
-				_mapLoaderManager, _viewModelFactory);
+				_mapLoaderManager, _mapJobHelper, _viewModelFactory);
 
 			return result;
 		}

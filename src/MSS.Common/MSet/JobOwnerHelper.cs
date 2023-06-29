@@ -25,7 +25,7 @@ namespace MSS.Common
 				var newJobId = oldIdAndNewJob.Item2.Id;
 				UpdateJobParents(formerJobId, newJobId, jobs);
 
-				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, JobOwnerType.Project, newJobId);
+				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, sourceProject.JobOwnerType, newJobId);
 				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
 			}
 

@@ -11,6 +11,7 @@ namespace MSetExplorer
 	internal class ExplorerViewModel : ViewModelBase, IExplorerViewModel 
 	{
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapJobHelper _mapJobHelper;
 
 		private readonly ViewModelFactory _viewModelFactory;
 
@@ -21,10 +22,11 @@ namespace MSetExplorer
 
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
-			IMapLoaderManager mapLoaderManager, ViewModelFactory viewModelFactory)
+			IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, ViewModelFactory viewModelFactory)
 		{
 
 			_mapLoaderManager = mapLoaderManager;
+			_mapJobHelper = mapJobHelper;
 
 			ProjectViewModel = projectViewModel;
 			ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
@@ -112,6 +114,15 @@ namespace MSetExplorer
 			var result = new JobProgressViewModel(_mapLoaderManager);
 			return result;
 		}
+
+		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
+		{
+			var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
+
+			return result;
+		}
+
+
 
 		#endregion
 
@@ -224,9 +235,9 @@ namespace MSetExplorer
 						// Calculate new Coords for preview
 
 						var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
-						var displaySize = GetDisplaySize(e);
+						var displaySize = GetDisplaySize(e.DisplaySize);
 
-						var mapAreaInfoV1 = MapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
+						var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, displaySize);
 						MapCoordsViewModel.Preview(mapAreaInfoV1);
 					}
 				}
@@ -238,18 +249,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeDbl GetDisplaySize(MapViewUpdateRequestedEventArgs e)
+		private SizeDbl GetDisplaySize(SizeDbl displaySize)
 		{
-			if (e.DisplaySize.Equals(SizeDbl.Zero))
+			if (displaySize.Equals(SizeDbl.Zero))
 			{
 				Debug.WriteLine("WARNING: The DisplaySize is zero on the MapViewUpdateRequestedEventArgs.");
 				return MapDisplayViewModel.ViewportSize;
 			}
 			else
 			{
-				Debug.Assert(e.DisplaySize.Equals(MapDisplayViewModel.ViewportSize), "The DisplaySize property of the MapViewUpdateRequestedEventArgs is not equal to the MapDisplayViewModel's ViewportSize.");
+				Debug.Assert(displaySize.Equals(MapDisplayViewModel.ViewportSize), "The DisplaySize property of the MapViewUpdateRequestedEventArgs is not equal to the MapDisplayViewModel's ViewportSize.");
 
-				return e.DisplaySize;
+				return displaySize;
 			}
 		}
 

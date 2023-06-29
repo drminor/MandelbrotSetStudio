@@ -1,4 +1,5 @@
-﻿using MSetExplorer.ScreenHelpers;
+﻿using MongoDB.Bson;
+using MSetExplorer.ScreenHelpers;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -391,7 +392,9 @@ namespace MSetExplorer
 		{
 			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(/*imageFilePath, areaColorAndCalcSettings, imageSize*/);
 
-			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize);
+			var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
+			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
+			createImageProgressViewModel.CreateImage(imageFilePath, jobId, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings); 
 
 			var result = new CreateImageProgressWindow()
 			{

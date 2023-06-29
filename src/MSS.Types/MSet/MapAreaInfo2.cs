@@ -7,6 +7,10 @@ namespace MSS.Types.MSet
 
 	/// <remarks>
 	/// Same as the MapAreaInfo class, but this one records the MapCenter instead of a RRectangle
+	/// 
+	/// TODO: Rename the MapAreaInfo2 to MapAreaInfo
+	/// TODO: Rename the MapAreaInfo to MapAreaInfoWithSize
+	/// 
 	/// </remarks>
 
 	public class MapAreaInfo2 : ICloneable, IEquatable<MapAreaInfo2?>

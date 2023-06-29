@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -45,7 +46,7 @@ namespace MSS.Common
 			var requestNumber = 0;
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
 				result.Add(mapSectionRequest);
 			}
 
@@ -62,7 +63,7 @@ namespace MSS.Common
 			foreach (var mapSection in emptyMapSections)
 			{
 				var screenPosition = mapSection.ScreenPosition;
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapCalcSettings, requestNumber++);
+				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
 
 				mapSectionRequest.MapSectionVectors = mapSection.MapSectionVectors;
 
@@ -88,7 +89,7 @@ namespace MSS.Common
 		/// <param name="subdivision"></param>
 		/// <param name="mapCalcSettings"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector jobMapBlockOffset, int precision, string jobId, JobOwnerType jobOwnerType, Subdivision subdivision, MapCalcSettings mapCalcSettings, int requestNumber)
+		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector jobMapBlockOffset, int precision, string jobId, JobOwnerType jobOwnerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
 			// Block Position, relative to the Subdivision's BaseMapPosition
 			var localBlockPosition = RMapHelper.ToSubdivisionCoords(screenPosition, jobMapBlockOffset, out var isInverted);
@@ -103,6 +104,7 @@ namespace MSS.Common
 				jobId: jobId,
 				jobOwnerType: jobOwnerType,
 				subdivisionId: subdivision.Id.ToString(),
+				originalSourceSubdivisionId: originalSourceSubdivisionId.ToString(),
 				screenPosition: screenPosition,
 				mapBlockOffset: jobMapBlockOffset,
 				blockPosition: localBlockPosition,

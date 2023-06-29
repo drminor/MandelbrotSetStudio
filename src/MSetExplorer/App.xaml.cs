@@ -40,8 +40,8 @@ namespace MSetExplorer
 
 		private static readonly bool FIND_AND_DELETE_ORPHAN_MAP_SECTIONS = false;
 
+		private static readonly bool DELETE_JOB_MAP_JOB_REFS = true;
 		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false;
-		private static readonly bool DELETE_JOB_MAP_JOB_REFS = false;
 
 		private static readonly bool POPULATE_JOB_MAP_SECTIONS = false;
 
@@ -142,14 +142,14 @@ namespace MSetExplorer
 				FindAndDeleteOrphanMapSections(_repositoryAdapters.MapSectionAdapter);
 			}
 
-			if (DELETE_JOB_MAP_MAP_REFS)
-			{
-				CheckAndDeleteMapRefsFromJobMapCollection(_repositoryAdapters.MapSectionAdapter);
-			}
-
 			if (DELETE_JOB_MAP_JOB_REFS)
 			{
 				CheckAndDeleteJobRefsFromJobMapCollection(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter);
+			}
+
+			if (DELETE_JOB_MAP_MAP_REFS)
+			{
+				CheckAndDeleteMapRefsFromJobMapCollection(_repositoryAdapters.MapSectionAdapter);
 			}
 
 			if (POPULATE_JOB_MAP_SECTIONS)

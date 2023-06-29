@@ -23,5 +23,7 @@ namespace ProjectRepo.Entities
 		public DateTime DateCreated => Id.CreationTime;
 
 		public bool Onfile => Id != ObjectId.Empty;
+
+		public ObjectId OriginalSourceSubdivisionId { get; set; } = ObjectId.Empty;
 	}
 }

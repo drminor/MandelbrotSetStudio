@@ -847,22 +847,22 @@ namespace MSetExplorer
 			return mapAreaInfoV1;
 		}
 
-		private MapAreaInfo GetScreenAreaInfoWithDiagnostics(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
-		{
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize);
+		//private MapAreaInfo GetScreenAreaInfoWithDiagnostics(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
+		//{
+		//	var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize);
 
-			// Just for diagnostics.
-			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
-			CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2, mapAreaInfoV1);
+		//	// Just for diagnostics.
+		//	var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
+		//	CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2, mapAreaInfoV1);
 
-			var mapAreaInfoV1Diag = MapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize);
+		//	var mapAreaInfoV1Diag = MapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize);
 
-			// Just for diagnostics.
-			var mapAreaInfoV2Diag = MapJobHelper.Convert(mapAreaInfoV1Diag);
-			CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2Diag, mapAreaInfoV1Diag);
+		//	// Just for diagnostics.
+		//	var mapAreaInfoV2Diag = MapJobHelper.Convert(mapAreaInfoV1Diag);
+		//	CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2Diag, mapAreaInfoV1Diag);
 
-			return mapAreaInfoV1;
-		}
+		//	return mapAreaInfoV1;
+		//}
 
 		private void DisposeMapSection(MapSection mapSection)
 		{

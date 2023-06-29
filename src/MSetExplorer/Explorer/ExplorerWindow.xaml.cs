@@ -11,6 +11,7 @@ using MSS.Common;
 using MSS.Common.MSet;
 using System.Linq;
 using System.IO;
+using MongoDB.Bson;
 
 namespace MSetExplorer
 {
@@ -554,7 +555,10 @@ namespace MSetExplorer
 
 			var imageSize = new SizeDbl(4096); // TODO: Create user interface to have the user specify a size for the image.
 
-			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize);
+
+			var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
+			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
+			createImageProgressViewModel.CreateImage(imageFilePath, jobId, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
 
 			var result = new CreateImageProgressWindow()
 			{

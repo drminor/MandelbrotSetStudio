@@ -310,6 +310,7 @@ namespace MSetRepo
 				jobId: string.Empty,
 				jobOwnerType: JobOwnerType.Undetermined,
 				subdivisionId: target.SubdivisionId.ToString(),
+				originalSourceSubdivisionId: ObjectId.Empty.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
 				requestCompleted: target.Complete,

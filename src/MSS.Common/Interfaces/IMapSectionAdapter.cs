@@ -39,10 +39,10 @@ namespace MSS.Common
 		Subdivision InsertSubdivision(Subdivision subdivision);
 
 		IList<ObjectId> GetMapSectionIds(ObjectId jobId, JobOwnerType jobOwnerType);
-		bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
+		bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
 
-		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections();
-		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections();
+		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections();
+		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections();
 
 		ObjectId? GetSubdivisionId(ObjectId mapSectionId);
 

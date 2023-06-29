@@ -3,6 +3,7 @@ using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.IO;
 using System.Threading;
@@ -42,14 +43,15 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void CreateImage(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
+		public void CreateImage(string imageFilePath, ObjectId jobId, MapAreaInfo mapAreaInfoWithSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			ImageFilePath = imageFilePath;
 
-			var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(areaColorAndCalcSettings.MapAreaInfo, imageSize);
-			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
+			//var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(areaColorAndCalcSettings.MapAreaInfo, imageSize);
+			//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
+			//_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
 			//_task.ContinueWith(t =>
 			//{

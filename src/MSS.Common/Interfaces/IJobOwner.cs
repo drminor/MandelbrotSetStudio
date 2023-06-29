@@ -12,6 +12,7 @@ namespace MSS.Common.MSet
 	public interface IJobOwner
 	{
 		ObjectId Id { get; init; }
+		JobOwnerType JobOwnerType { get; }	
 		string Name { get; set; }
 		string? Description { get; set; }
 

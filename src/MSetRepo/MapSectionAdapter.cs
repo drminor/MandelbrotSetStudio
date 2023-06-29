@@ -332,23 +332,32 @@ namespace MSetRepo
 				throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");
 			}
 
+			var origSrcSubdivisionIdStr = mapSectionResponse.OriginalSourceSubdivisionId;
+			if (string.IsNullOrEmpty(origSrcSubdivisionIdStr))
+			{
+				throw new ArgumentNullException(nameof(MapSectionResponse.OriginalSourceSubdivisionId), "The OriginalSourceSubdivisionId cannot be null.");
+			}
+
 			var jobIdStr = mapSectionResponse.JobId;
 			if (string.IsNullOrEmpty(jobIdStr))
 			{
 				throw new ArgumentNullException(nameof(MapSectionResponse.JobId), "The OwnerId cannot be null.");
 			}
 
-			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(jobIdStr), mapSectionResponse.JobOwnerType, isInverted);
+			var result = await SaveJobMapSectionAsync(new ObjectId(mapSectionIdStr), new ObjectId(subdivisionIdStr), new ObjectId(origSrcSubdivisionIdStr), new ObjectId(jobIdStr), mapSectionResponse.JobOwnerType, isInverted);
 			return result;
 		}
 
-		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted)
+		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted)
 		{
 			var existingRecord = await _jobMapSectionReaderWriter.GetByMapAndOwnerIdAsync(mapSectionId, jobId, jobOwnerType);
 			if (existingRecord == null)
 			{
 				//var blockPositionRec = _mSetRecordMapper.MapTo(blockPosition);
-				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, jobId, jobOwnerType, isInverted, DateTime.UtcNow, RefIsHard:true);
+				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, jobId, jobOwnerType, isInverted, DateTime.UtcNow, RefIsHard:true)
+				{
+					OriginalSourceSubdivisionId = originalSourceSubdivisionId
+				};
 
 				try
 				{
@@ -363,16 +372,38 @@ namespace MSetRepo
 			}
 			else
 			{
+
+				var jobMapSectionId = existingRecord.Id;
+
+				if (existingRecord.SubdivisionId != subdivisionId)
+				{
+					Debug.WriteLine($"The subdivisionId on the existing JobMapSectionRecord: {existingRecord.SubdivisionId} does not match the Job's SubdivisionId: {subdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
+					//_jobMapSectionReaderWriter.SetSubdivisionId(jobMapSectionId, subdivisionId);
+				}
+
+				if (existingRecord.OriginalSourceSubdivisionId != originalSourceSubdivisionId)
+				{
+					if (existingRecord.OriginalSourceSubdivisionId != ObjectId.Empty)
+					{
+						Debug.WriteLine($"The origSrcSubdivisionId on the existing JobMapSectionRecord: {existingRecord.OriginalSourceSubdivisionId} does not match the Job's origSrcSubdivisionId: {originalSourceSubdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
+					}
+
+					_jobMapSectionReaderWriter.SetOriginalSourceSubdivisionId(jobMapSectionId, originalSourceSubdivisionId);
+				}
+
 				return existingRecord.Id;
 			}
 		}
 
-		public bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId)
+		public bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId)
 		{
 			var existingRecord = _jobMapSectionReaderWriter.GetByMapAndOwnerId(mapSectionId, jobId, jobOwnerType);
 			if (existingRecord == null)
 			{
-				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, jobId, jobOwnerType, isInverted, DateTime.UtcNow, refIsHard);
+				var jobMapSectionRecord = new JobMapSectionRecord(mapSectionId, subdivisionId, jobId, jobOwnerType, isInverted, DateTime.UtcNow, refIsHard)
+				{
+					OriginalSourceSubdivisionId = originalSourceSubdivisionId
+				};
 
 				try
 				{
@@ -393,6 +424,16 @@ namespace MSetRepo
 				{
 					Debug.WriteLine($"The subdivisionId on the existing JobMapSectionRecord: {existingRecord.SubdivisionId} does not match the Job's SubdivisionId: {subdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
 					_jobMapSectionReaderWriter.SetSubdivisionId(jobMapSectionId, subdivisionId);
+				}
+
+				if (existingRecord.OriginalSourceSubdivisionId != originalSourceSubdivisionId)
+				{
+					if (existingRecord.OriginalSourceSubdivisionId != ObjectId.Empty)
+					{
+						Debug.WriteLine($"The origSrcSubdivisionId on the existing JobMapSectionRecord: {existingRecord.OriginalSourceSubdivisionId} does not match the Job's origSrcSubdivisionId: {originalSourceSubdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
+					}
+
+					_jobMapSectionReaderWriter.SetOriginalSourceSubdivisionId(jobMapSectionId, originalSourceSubdivisionId);
 				}
 
 				return false;
@@ -512,7 +553,10 @@ namespace MSetRepo
 
 			foreach (var jmsr in jobMapSectionRecords)
 			{
-				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, jmsr.SubdivisionId, newJobId, jmsr.OwnerType, jmsr.IsInverted, DateTime.UtcNow, jmsr.RefIsHard);
+				var newJmsr = new JobMapSectionRecord(jmsr.MapSectionId, jmsr.SubdivisionId, newJobId, jmsr.OwnerType, jmsr.IsInverted, DateTime.UtcNow, jmsr.RefIsHard)
+				{
+					OriginalSourceSubdivisionId = jmsr.OriginalSourceSubdivisionId
+				};
 
 				_ = _jobMapSectionReaderWriter.Insert(newJmsr);
 			}
@@ -600,14 +644,14 @@ namespace MSetRepo
 			return result;
 		}
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections()
+		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections()
 		{
 			var result = _jobMapSectionReaderWriter.GetMapSectionAndSubdivisionIdsForAllJobMapSections();	
 
 			return result;
 		}
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections()
+		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections()
 		{
 			var result = _jobMapSectionReaderWriter.GetJobAndSubdivisionIdsForAllJobMapSections();
 
