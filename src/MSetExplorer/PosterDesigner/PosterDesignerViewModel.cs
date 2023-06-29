@@ -162,17 +162,14 @@ namespace MSetExplorer
 			{
 				// Calculate new Coords for preview
 
-				//// TODO: After testing is complete, uncomment-out this code.
-				//var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.ScreenArea, e.CurrentMapAreaInfo);
-				//if (mapAreaInfo != null)
-				//{
-				//	MapCoordsViewModel.Preview(mapAreaInfo);
-				//}
+				//var newMapAreaInfo = PosterViewModel.GetUpdatedMapAreaInfo(e.CurrentMapAreaInfo, e.TransformType, e.PanAmount, e.Factor, out var diagReciprocal);
+				//MapCoordsViewModel.Preview(newMapAreaInfo);
 			}
 			else
 			{
 				// Zoom or Pan Map Coordinates
-				PosterViewModel.UpdateMapSpecs(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo, out var diagReciprocal);
+				var newMapAreaInfo = PosterViewModel.GetUpdatedMapAreaInfo(e.CurrentMapAreaInfo, e.TransformType, e.PanAmount, e.Factor, out var diagReciprocal);
+				PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
 			}
 		}
 
@@ -224,7 +221,7 @@ namespace MSetExplorer
 				if (currentjob != null)
 				{
 					UpdateTheMapCoordsView(currentjob);
-					var posterSize = new SizeDbl(currentPoster.PosterSize);
+					var posterSize = currentPoster.PosterSize;
 
 					var displayPosition = currentPoster.DisplayPosition;
 					var displayZoom = currentPoster.DisplayZoom;

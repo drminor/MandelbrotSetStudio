@@ -185,7 +185,7 @@ namespace MSetExplorer
 
 			var mapAreaInfo = RMapConstants.BuildHomeArea();
 
-			var job = _mapJobHelper.BuildHomeJob(mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(JobOwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
@@ -304,7 +304,7 @@ namespace MSetExplorer
 
 		#region Public Methods - Poster 
 
-		public bool TryCreatePoster(string name, string? description, SizeInt posterSize, [MaybeNullWhen(false)] out Poster poster)
+		public bool TryCreatePoster(string name, string? description, SizeDbl posterSize, [NotNullWhen(true)] out Poster? poster)
 		{
 			var curJob = CurrentJob;
 			if (CurrentProject == null || curJob.IsEmpty)
@@ -324,14 +324,22 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Starting job for new Poster: SourceJobId: {sourceJobId} with Position&Delta: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			poster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet });
-			if (poster != null)
+			var newPoster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet });
+
+			if (newPoster == null)
 			{
+				poster = null;
+				return false;
+			}
+			else
+			{
+				poster = newPoster;
+
 				// This will update the OwnerId of the new Job and ColorBandSet and commit the updates to the repo.
 				_ = JobOwnerHelper.SavePoster(poster, _projectAdapter);
+				
+				return true;
 			}
-
-			return poster != null;
 		}
 
 		#endregion

@@ -32,17 +32,17 @@ namespace ProjectRepo.Entities
 		[BsonDefaultValue(0)]
 		public int Height { get; set; }
 
-		public SizeInt PosterSize
+		public SizeDbl PosterSize
 		{
 			get
 			{
 				if (Width == 0 || Height == 0)
 				{
-					return new SizeInt(1024);
+					return new SizeDbl(1024);
 				}
 				else
 				{
-					return new SizeInt(Width, Height);
+					return new SizeDbl(Width, Height);
 				}
 			}
 		}

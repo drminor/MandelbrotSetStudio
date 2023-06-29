@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net;
 
 namespace MSetExplorer
 {
@@ -147,9 +148,9 @@ namespace MSetExplorer
 
 		public MapAreaInfo2 PosterAreaInfo => CurrentPoster?.CurrentJob.MapAreaInfo ?? MapAreaInfo2.Empty;
 
-		public SizeInt PosterSize
+		public SizeDbl PosterSize
 		{
-			get => CurrentPoster?.PosterSize ?? new SizeInt(1024);
+			get => CurrentPoster?.PosterSize ?? new SizeDbl(1024);
 			set
 			{
 				var curPoster = CurrentPoster;
@@ -616,34 +617,59 @@ namespace MSetExplorer
 			return newMapAreaInfo;
 		}
 
+		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
+		{
+			MapAreaInfo2? newMapAreaInfo;
+
+			if (transformType == TransformType.ZoomIn)
+			{
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor, out diagReciprocal);
+			}
+			else if (transformType == TransformType.Pan)
+			{
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPan(mapAreaInfo, panAmount);
+				diagReciprocal = 0.0;
+			}
+			else if (transformType == TransformType.ZoomOut)
+			{
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor, out diagReciprocal);
+			}
+			else
+			{
+				throw new InvalidOperationException($"AddNewCoordinateUpdateJob does not support a TransformType of {transformType}.");
+			}
+
+			return newMapAreaInfo;
+		}
+
+		//// Called in response to the MapDisplayViewModel raising a MapViewUpdateRequested event,
+		//// or the PosterDesignerView code behind handling a Pan or Zoom UI event.
+		//public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
+		//{
+		//	Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapSpecs received a TransformType other than ZoomIn, Pan or ZoomOut.");
+
+		//	if (CurrentPoster == null)
+		//	{
+		//		diagReciprocal = 0.0;
+		//		return;
+		//	}
+
+		//	//_ = AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor, out diagReciprocal);
+
+		//	var newMapAreaInfo = GetUpdatedMapAreaInfo(CurrentPoster.CurrentJob.MapAreaInfo, transformType, panAmount, factor, out diagReciprocal);
+
+		//	_ = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
+		//}
+
 		// Always called after GetUpdatedMapAreaInfo
-		public void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize)
+		public void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo)
 		{
 			if (CurrentPoster == null)
 			{
 				return;
 			}
 
-			CurrentPoster.PosterSize = posterSize.Round();
 			_ = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
-		}
-
-
-		// Called in response to the MapDisplayViewModel raising a MapViewUpdateRequested event,
-		// or the PosterDesignerView code behind handling a Pan or Zoom UI event.
-		public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo, out double diagReciprocal)
-		{
-			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapSpecs received a TransformType other than ZoomIn, Pan or ZoomOut.");
-
-			var currentPoster = CurrentPoster;
-
-			if (currentPoster == null)
-			{
-				diagReciprocal = 0.0;
-				return;
-			}
-
-			_ = AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor, out diagReciprocal);
 		}
 
 		#endregion
@@ -654,6 +680,8 @@ namespace MSetExplorer
 		private Job AddNewCoordinateUpdateJob(Poster poster, MapAreaInfo2 mapAreaInfo)
 		{
 			var currentJob = poster.CurrentJob;
+			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
+
 			var colorBandSetId = currentJob.ColorBandSetId;
 			var mapCalcSettings = currentJob.MapCalcSettings;
 
@@ -669,48 +697,47 @@ namespace MSetExplorer
 			return job;
 		}
 
-		private Job AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
-		{
-			diagReciprocal = 0.0;
+		//private Job AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
+		//{
+		//	diagReciprocal = 0.0;
 
-			var currentJob = poster.CurrentJob;
-			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
+		//	var currentJob = poster.CurrentJob;
 
-			// Calculate the new Map Coordinates 
-			var mapAreaInfo = currentJob.MapAreaInfo;
+		//	// Calculate the new Map Coordinates 
+		//	var mapAreaInfo = currentJob.MapAreaInfo;
 
-			MapAreaInfo2? newMapAreaInfo;
+		//	MapAreaInfo2? newMapAreaInfo;
 
-			if (transformType == TransformType.ZoomIn)
-			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor, out diagReciprocal);
-			}
-			else if (transformType == TransformType.Pan)
-			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPan(mapAreaInfo, panAmount);
-			}
-			else if (transformType == TransformType.ZoomOut)
-			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor, out diagReciprocal);
-			}
-			else
-			{
-				throw new InvalidOperationException($"AddNewCoordinateUpdateJob does not support a TransformType of {transformType}.");
-			}
+		//	if (transformType == TransformType.ZoomIn)
+		//	{
+		//		newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor, out diagReciprocal);
+		//	}
+		//	else if (transformType == TransformType.Pan)
+		//	{
+		//		newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPan(mapAreaInfo, panAmount);
+		//	}
+		//	else if (transformType == TransformType.ZoomOut)
+		//	{
+		//		newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor, out diagReciprocal);
+		//	}
+		//	else
+		//	{
+		//		throw new InvalidOperationException($"AddNewCoordinateUpdateJob does not support a TransformType of {transformType}.");
+		//	}
 
-			var colorBandSetId = currentJob.ColorBandSetId;
-			var mapCalcSettings = currentJob.MapCalcSettings;
+		//	var colorBandSetId = currentJob.ColorBandSetId;
+		//	var mapCalcSettings = currentJob.MapCalcSettings;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
+		//	var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
 
-			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+		//	Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			poster.Add(job);
+		//	poster.Add(job);
 
-			Debug.WriteLine($"AddNewCoordinateUpdateJob: PreviousJobId {currentJob.Id} NewJobId: {poster.CurrentJobId}.");
+		//	Debug.WriteLine($"AddNewCoordinateUpdateJob: PreviousJobId {currentJob.Id} NewJobId: {poster.CurrentJobId}.");
 			
-			return job;
-		}
+		//	return job;
+		//}
 
 		private Job AddNewIterationUpdateJob(Poster poster, ColorBandSet colorBandSet)
 		{

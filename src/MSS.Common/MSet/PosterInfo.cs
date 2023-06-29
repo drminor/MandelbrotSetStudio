@@ -15,7 +15,7 @@ namespace MSS.Common.MSet
 
 		#region Constructor
 
-		public PosterInfo(ObjectId posterId, string name, string? description, ObjectId currentJobId, SizeInt size, int bytes, DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
+		public PosterInfo(ObjectId posterId, string name, string? description, ObjectId currentJobId, SizeDbl size, int bytes, DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			PosterId = posterId;
 			_name = name;
@@ -50,7 +50,7 @@ namespace MSS.Common.MSet
 
 		public ObjectId CurrentJobId { get; init; }
 
-		public SizeInt Size { get; init; }
+		public SizeDbl Size { get; init; }
 
 		public int Bytes { get; init; }
 

@@ -314,7 +314,8 @@ namespace MSetExplorer
 				if (TryGetNewSizeFromUser(curPoster, out var newPosterMapAreaInfo, out var newPosterSize))
 				{
 					//curPoster.PosterSize = newPosterSize.Round();
-					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo, newPosterSize);
+					_vm.PosterViewModel.PosterSize = newPosterSize;
+					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo);
 				}
 				else
 				{
@@ -348,13 +349,13 @@ namespace MSetExplorer
 				return;
 			}
 
-			var initialImageFilename = GetImageFilename(curPoster.Name, _vm.PosterViewModel.PosterSize.Width);
+			var initialImageFilename = GetImageFilename(curPoster);
 
 			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
 			{
 				var areaColorAndCalcSettings = _vm.PosterViewModel.CurrentAreaColorAndCalcSettings;
 
-				_createImageProgressWindow = StartImageCreation(imageFilePath, areaColorAndCalcSettings, new SizeDbl(curPoster.PosterSize));
+				_createImageProgressWindow = StartImageCreation(imageFilePath, areaColorAndCalcSettings, curPoster.PosterSize);
 
 				_createImageProgressWindow.Show();
 			}
@@ -400,9 +401,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private string GetImageFilename(string projectName, int imageWidth)
+		private string GetImageFilename(Poster poster)
 		{
-			var result = $"{projectName}_{imageWidth}_v4.png";
+			var result = $"{poster.Name}_{poster.SizeAsString}_v4.png";
 			return result;
 		}
 
@@ -820,7 +821,7 @@ namespace MSetExplorer
 				{
 					if (TryGetNewSizeFromUser(poster, out newPosterMapAreaInfo, out var newPosterSize))
 					{
-						poster.PosterSize = newPosterSize.Round();
+						poster.PosterSize = newPosterSize;
 					}
 					else
 					{
@@ -849,10 +850,10 @@ namespace MSetExplorer
 			var cts = new CancellationTokenSource();
 
 			var mapAreaInfo = curJob.MapAreaInfo;
-			var currentPosterSize = new SizeDbl(poster.PosterSize);
+			var currentPosterSize = poster.PosterSize;
 
 			//var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
-			var previewSize = GetPreviewSize(new SizeDbl(poster.PosterSize), PREVIEW_IMAGE_SIZE);
+			var previewSize = GetPreviewSize(poster.PosterSize, PREVIEW_IMAGE_SIZE);
 
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
@@ -916,7 +917,7 @@ namespace MSetExplorer
 					throw new InvalidOperationException($"The Current Poster is null while handling the {nameof(PosterSizeEditorDialog_ApplyChangesRequested)} event.");
 				}
 
-				var currentPosterSize = new SizeDbl(_vm.PosterViewModel.CurrentPoster.PosterSize);
+				var currentPosterSize = _vm.PosterViewModel.CurrentPoster.PosterSize;
 
 				var posterMapAreaInfo = posterSizeEditorDialog.PosterMapAreaInfo;
 				if (posterMapAreaInfo != null)
@@ -929,9 +930,10 @@ namespace MSetExplorer
 
 					// Get the new coordinates
 					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea, out var diagReciprocal);
-					
+
 					// Update the ViewModel with the new coordinates
-					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo, newPosterSize);
+					_vm.PosterViewModel.PosterSize = newPosterSize;
+					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo);
 
 					// Update the SizeEditor with the new coordinates.
 					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo, newPosterSize);
@@ -1048,15 +1050,19 @@ namespace MSetExplorer
 
 		private void Pan(PanDirection direction, PanAmountQualifer qualifer, int amount)
 		{
-			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo ?? null;
+			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
+
+			if (currentMapAreaInfo == null)
+			{
+				return;
+			}
 
 			var qualifiedAmount = GetPanAmount(amount, qualifer);
 			var panVector = GetPanVector(direction, qualifiedAmount);
 
-			//var newArea = new RectangleInt(new PointInt(panVector), _vm.PosterViewModel.CanvasSize.Round());
-			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, newArea, _vm.PosterViewModel.CanvasSize);
+			var newMapAreaInfo = _vm.PosterViewModel.GetUpdatedMapAreaInfo(currentMapAreaInfo, TransformType.Pan, panVector, factor: 1, out var diagReciprocal);
 
-			_vm.PosterViewModel.UpdateMapSpecs(TransformType.Pan, panVector, factor: 1, currentMapAreaInfo, out var diagReciprocal);
+			_vm.PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
@@ -1098,7 +1104,11 @@ namespace MSetExplorer
 
 		private void ZoomOut(ZoomOutAmountQualifer qualifer)
 		{
-			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo ?? null;
+			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
+			if (currentMapAreaInfo == null)
+			{
+				return;
+			}
 
 			//_ = MessageBox.Show($"Zooming Out. Amount = {amount}.");
 
@@ -1106,11 +1116,15 @@ namespace MSetExplorer
 
 			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 
-			var curArea = new RectangleInt(new PointInt(), displaySize.Round());
+			//var curArea = new RectangleInt(new PointInt(), displaySize.Round());
 			//var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
 			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea, _vm.PosterViewModel.CanvasSize);
-			_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo, out var diagReciprocal);
+			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo, out var diagReciprocal);
+
+			var newMapAreaInfo = _vm.PosterViewModel.GetUpdatedMapAreaInfo(currentMapAreaInfo, TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, out var diagReciprocal);
+			_vm.PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
+
 		}
 
 		private double GetZoomOutAmount(ZoomOutAmountQualifer qualifer)

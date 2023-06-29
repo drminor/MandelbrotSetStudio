@@ -19,7 +19,7 @@ namespace MSetExplorer
 		bool CurrentPosterIsDirty { get; }
 		int GetGetNumberOfDirtyJobs();
 
-		SizeInt PosterSize { get; }
+		SizeDbl PosterSize { get; set; }
 
 		Job CurrentJob { get; }
 		AreaColorAndCalcSettings CurrentAreaColorAndCalcSettings { get; }
@@ -31,11 +31,12 @@ namespace MSetExplorer
 		VectorDbl DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }
 
-		void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize);
-
-		void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo, out double diagReciprocal);
-
 		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal);
+		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal);
+
+		void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo/*, SizeDbl posterSize*/);
+
+		//void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo, out double diagReciprocal);
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
 		void Load(Poster poster, MapAreaInfo2? newMapAreaInfo);

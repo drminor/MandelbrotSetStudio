@@ -460,7 +460,7 @@ namespace MSetExplorer
 				if (SavePosterInteractive(_vm.ProjectViewModel.CurrentProjectName, out var name, out var description))
 				{
 					var currentDisplaySize = _vm.MapDisplayViewModel.ViewportSize;
-					var tentativePosterSize = RMapHelper.GetCanvasSize(currentDisplaySize, new SizeInt(1024));
+					var tentativePosterSize = RMapHelper.GetCanvasSize(currentDisplaySize, new SizeDbl(1024));
 
 					if (_vm.ProjectViewModel.TryCreatePoster(name, description, tentativePosterSize, out var newPoster))
 					{

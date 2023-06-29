@@ -10,9 +10,9 @@ namespace ProjectRepo.Entities
 		ObjectId? ParentJobId,
 
 		ObjectId OwnerId,
-		JobOwnerType? JobOwnerType,
+		JobOwnerType JobOwnerType,
 
-		ObjectId SubDivisionId,     // Do we really need to have a SubdivisionId field here, it is included in the MapAreaInfoRecord.
+		ObjectId SubDivisionId,     // This is not used when reading. When writing its value comes from the MapAreaInfo2Record.Subdivision.Id
 		string Label,
 		int TransformType,
 

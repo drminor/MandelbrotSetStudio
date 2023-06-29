@@ -174,7 +174,7 @@ namespace MSetExplorer
 			var job = _projectAdapter.GetJob(jobId);
 			var posterSize = SelectedPoster.Size;
 
-			var result = _deleteNonEssentialMapSectionsFunction(job, new SizeDbl(posterSize));
+			var result = _deleteNonEssentialMapSectionsFunction(job, posterSize);
 
 			return result;
 		}

@@ -45,6 +45,6 @@ namespace MSetExplorer
 
 		long DeleteMapSectionsForUnsavedJobs();
 
-		bool TryCreatePoster(string name, string? description, SizeInt posterSize, [MaybeNullWhen(false)] out Poster poster);
+		bool TryCreatePoster(string name, string? description, SizeDbl posterSize, [NotNullWhen(true)] out Poster? poster);
 	}
 }

@@ -39,11 +39,10 @@ namespace MSS.Common
 
 		#region Build Job Methods
 
-		public Job BuildHomeJob(MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
+		public Job BuildHomeJob(JobOwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
 		{
 			ObjectId? parentJobId = null;
 			ObjectId ownerId = ObjectId.Empty;
-			var jobOwnerType = JobOwnerType.Undetermined;
 			var transformType = TransformType.Home;
 			RectangleInt? newArea = null;
 

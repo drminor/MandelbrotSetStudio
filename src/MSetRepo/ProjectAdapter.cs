@@ -447,7 +447,7 @@ namespace MSetRepo
 			var job = new Job(
 				id: jobId,
 				ownerId: jobRecord.OwnerId,
-				jobOwnerType: jobRecord.JobOwnerType ?? JobOwnerType.Undetermined,
+				jobOwnerType: jobRecord.JobOwnerType, // ?? JobOwnerType.Undetermined,
 				parentJobId: jobRecord.ParentJobId,
 				label: jobRecord.Label,
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
@@ -629,8 +629,9 @@ namespace MSetRepo
 
 		public void UpdateJobDetails(Job job)
 		{
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobRecord = _mSetRecordMapper.MapTo(job);
+
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			jobReaderWriter.UpdateJobDetails(jobRecord);
 			job.LastSavedUtc = DateTime.UtcNow;
 		}
@@ -732,7 +733,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public Poster? CreatePoster(string name, string? description, SizeInt posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
+		public Poster? CreatePoster(string name, string? description, SizeDbl posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets)
 		{
 			if (jobs.Count == 0)
 			{
@@ -751,6 +752,9 @@ namespace MSetRepo
 				throw new InvalidOperationException($"Cannot create a poster with name: {name}, a poster: {posterId} with that name already exists.");
 			}
 
+			var posterSizeRounded = posterSize.Round(MidpointRounding.AwayFromZero);
+
+			// TODO: Update all PosterRecords to use double instead of int for the Width and Height
 			var posterRecord = new PosterRecord(name, description, sourceJobId, jobs.First().Id,
 					DisplayPosition: new VectorDblRecord(0, 0),
 					DisplayZoom: RMapConstants.DEFAULT_POSTER_DISPLAY_ZOOM,
@@ -758,8 +762,8 @@ namespace MSetRepo
 					LastSavedUtc: DateTime.UtcNow,
 					LastAccessedUtc: DateTime.UtcNow)
 			{
-				Width = posterSize.Width,
-				Height = posterSize.Height,
+				Width = posterSizeRounded.Width,
+				Height = posterSizeRounded.Height,
 			};
 
 			Debug.WriteLine($"Creating new Poster with name: {name}.");

@@ -418,7 +418,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetCanvasSize(SizeDbl newArea, SizeInt displaySize)
+		public static SizeDbl GetCanvasSize(SizeDbl newArea, SizeDbl displaySize)
 		{
 			if (newArea.Width == 0 || newArea.Height == 0)
 			{
@@ -428,8 +428,8 @@ namespace MSS.Common
 			var wRatio = newArea.Width / displaySize.Width;
 			var hRatio = newArea.Height / displaySize.Height;
 
-			int w;
-			int h;
+			double w;
+			double h;
 
 			if (wRatio >= hRatio)
 			{
@@ -450,7 +450,7 @@ namespace MSS.Common
 				h = displaySize.Height;
 			}
 
-			var result = new SizeInt(w, h);
+			var result = new SizeDbl(w, h);
 
 			return result;
 		}

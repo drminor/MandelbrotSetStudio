@@ -135,10 +135,9 @@ namespace MSetRepo
 				var colorBandSets = projectAdapter.GetColorBandSetsForProject(posterId);
 				var jobs = projectAdapter.GetAllJobsForPoster(posterId, colorBandSets);
 
-				var displaySize = new SizeDbl(posterInfo.Size);
+				var displaySize = posterInfo.Size;
 
 				numberOfRecordsInserted += CreateMissingJobMapSectionRecords(posterId, posterInfo.Name, jobs, jobOwnerTypeForThisRun, displaySize, mapSectionAdapter, mapJobHelper);
-
 			}
 
 			return $"For JobOwnerType: Poster: {numberOfRecordsInserted} new JobMapSection records were created.";

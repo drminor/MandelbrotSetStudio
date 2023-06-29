@@ -208,6 +208,10 @@ namespace MSetRepo
 
 		public PosterRecord MapTo(Poster source)
 		{
+			// TODO: Update all PosterRecords to use double instead of int for the Width and Height
+
+			var posterSizeRounded = source.PosterSize.Round(MidpointRounding.AwayFromZero);
+
 			var result = new PosterRecord(
 				Name: source.Name,
 				Description: source.Description,
@@ -220,8 +224,8 @@ namespace MSetRepo
 				LastAccessedUtc: source.LastAccessedUtc)
 			{
 				Id = source.Id,
-				Width = source.PosterSize.Width,
-				Height = source.PosterSize.Height
+				Width = posterSizeRounded.Width,
+				Height = posterSizeRounded.Height
 			};
 
 			return result;

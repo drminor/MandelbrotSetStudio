@@ -46,7 +46,7 @@ namespace MSS.Common.MSet
 
 		public Poster(ObjectId id, string name, string? description, ObjectId sourceJobId,
 			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
-			SizeInt posterSize, 
+			SizeDbl posterSize, 
 			VectorDbl displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
@@ -162,8 +162,7 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		//TODO: Convert the PosterSize to a SizeDbl
-		public SizeInt PosterSize { get; set; }
+		public SizeDbl PosterSize { get; set; }
 
 		public string SizeAsString
 		{
@@ -467,9 +466,11 @@ namespace MSS.Common.MSet
 			return colorBandSet;
 		}
 
-		private string GetFormattedPosterSize(SizeInt size)
+		private string GetFormattedPosterSize(SizeDbl size)
 		{
-			var result = $"{size.Width} x {size.Height}";
+			var roundedPosterSize = size.Round(MidpointRounding.AwayFromZero);
+
+			var result = $"{roundedPosterSize.Width} x {roundedPosterSize.Height}";
 			return result;
 		}
 
