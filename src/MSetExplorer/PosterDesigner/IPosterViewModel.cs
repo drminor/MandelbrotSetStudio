@@ -47,7 +47,8 @@ namespace MSetExplorer
 		void PosterClose();
 
 		long DeleteMapSectionsForUnsavedJobs();
-		long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize);
+		//long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize);
+		long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize, bool aggressive);
 
 		//List<ObjectId> GetAllNonCurrentJobIds();
 		//List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD();

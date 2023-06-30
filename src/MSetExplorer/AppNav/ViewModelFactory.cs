@@ -45,7 +45,7 @@ namespace MSetExplorer
 			return new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
 
-		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType, Func<Job, SizeDbl, long>? deleteNonEssentialMapSectionsFunction)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType, Func<Job, SizeDbl, bool, long>? deleteNonEssentialMapSectionsFunction)
 		{
 			return new PosterOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, deleteNonEssentialMapSectionsFunction, initalName, dialogType);
 		}

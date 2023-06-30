@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MongoDB.Driver;
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
@@ -9,8 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Net;
 
 namespace MSetExplorer
 {
@@ -437,63 +434,65 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize)
+		public long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize, bool aggressive)
 		{
-			var posterId = job.OwnerId;
+			var currentJobId = job.Id;
+			var jobOwnerType = job.JobOwnerType;
 
-			var nonCurrentJobIds = _projectAdapter.GetAllJobIdsForPoster(posterId);
+			var jobOwnerId = job.OwnerId;	// Identifies either a Project or Poster record.
+
+			var nonCurrentJobIds = _projectAdapter.GetAllJobIdsForPoster(jobOwnerId);
+			nonCurrentJobIds.Remove(currentJobId);
 
 			var numberOfMapSectionsDeleted = JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.Poster, _mapSectionAdapter);
 			numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.ImageBuilder, _mapSectionAdapter);
 			numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.BitmapBuilder, _mapSectionAdapter);
 
-			//_projectAdapter.GetAllJobsForPoster()
-
-			var mapSectionRequests = GetMapSectionRequests(job, posterSize);
-
-			if (mapSectionRequests.Count == 0)
+			if (aggressive)
 			{
-				return numberOfMapSectionsDeleted;
-			}
+				// Get the set of MapSection required for this poster's current job.
+				var mapSectionRequests = GetMapSectionRequests(job, posterSize);
 
-			// Get a list of all MapSectionIdsAll for the current project.
-
-			var jobId = job.Id;
-			var jobOwnerType = job.JobOwnerType;
-
-			var allMapSectionIds = _mapSectionAdapter.GetMapSectionIds(jobId, jobOwnerType);
-
-			if (allMapSectionIds.Count == 0)
-			{
-				return numberOfMapSectionsDeleted;
-			}
-
-			// For each MapSectionRequest in the provided list, retrieve the MapSectionId
-			// and remove that Id from the list of AllMapSectionIds.
-
-			for (var i = 0; i < mapSectionRequests.Count; i++)
-			{
-				var mapSectionRequest = mapSectionRequests[i];
-				var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-				var blockPosition = mapSectionRequest.BlockPosition;
-
-				var mapSectionId = _mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
-
-				if (mapSectionId != null)
+				if (mapSectionRequests.Count == 0)
 				{
-					allMapSectionIds.Remove(mapSectionId.Value);
+					return numberOfMapSectionsDeleted;
 				}
-			}
 
-			// Now the AllMapSectionIds only contains Ids not included in the provided list.
+				// Get a list of all the MapSectionIds from the JobMapSection table.
+				var allMapSectionIds = _mapSectionAdapter.GetMapSectionIds(currentJobId, jobOwnerType);
 
-			// Delete all MapSections for the given job, except for those in the specified list
-			// or those MapSections referenced by some other Job.
-			var result = _mapSectionAdapter.DeleteMapSectionsWithJobType(allMapSectionIds, jobOwnerType);
+				if (allMapSectionIds.Count == 0)
+				{
+					return numberOfMapSectionsDeleted;
+				}
 
-			if (result.HasValue)
-			{
-				numberOfMapSectionsDeleted += result.Value;
+				// For each MapSectionRequest in the provided list,
+				// submit the request to fetch the MapSection from the repository if it exists.
+				// If found, remove this MapSectionId from the list of allMapSectionIds.
+
+				for (var i = 0; i < mapSectionRequests.Count; i++)
+				{
+					var mapSectionRequest = mapSectionRequests[i];
+					var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+					var blockPosition = mapSectionRequest.BlockPosition;
+
+					var mapSectionId = _mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
+
+					if (mapSectionId != null)
+					{
+						allMapSectionIds.Remove(mapSectionId.Value);
+					}
+				}
+
+				// Now the AllMapSectionIds only contains Ids not required by the current Project or Poster.
+
+				// Delete all MapSection Records not required, that belong to the current Job.
+				var result = _mapSectionAdapter.DeleteMapSectionsWithJobType(allMapSectionIds, jobOwnerType);
+
+				if (result.HasValue)
+				{
+					numberOfMapSectionsDeleted += result.Value;
+				}
 			}
 
 			return numberOfMapSectionsDeleted;
@@ -642,25 +641,6 @@ namespace MSetExplorer
 			return newMapAreaInfo;
 		}
 
-		//// Called in response to the MapDisplayViewModel raising a MapViewUpdateRequested event,
-		//// or the PosterDesignerView code behind handling a Pan or Zoom UI event.
-		//public void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
-		//{
-		//	Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapSpecs received a TransformType other than ZoomIn, Pan or ZoomOut.");
-
-		//	if (CurrentPoster == null)
-		//	{
-		//		diagReciprocal = 0.0;
-		//		return;
-		//	}
-
-		//	//_ = AddNewCoordinateUpdateJob(currentPoster, transformType, panAmount, factor, out diagReciprocal);
-
-		//	var newMapAreaInfo = GetUpdatedMapAreaInfo(CurrentPoster.CurrentJob.MapAreaInfo, transformType, panAmount, factor, out diagReciprocal);
-
-		//	_ = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
-		//}
-
 		// Always called after GetUpdatedMapAreaInfo
 		public void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo)
 		{
@@ -696,48 +676,6 @@ namespace MSetExplorer
 
 			return job;
 		}
-
-		//private Job AddNewCoordinateUpdateJob(Poster poster, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
-		//{
-		//	diagReciprocal = 0.0;
-
-		//	var currentJob = poster.CurrentJob;
-
-		//	// Calculate the new Map Coordinates 
-		//	var mapAreaInfo = currentJob.MapAreaInfo;
-
-		//	MapAreaInfo2? newMapAreaInfo;
-
-		//	if (transformType == TransformType.ZoomIn)
-		//	{
-		//		newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor, out diagReciprocal);
-		//	}
-		//	else if (transformType == TransformType.Pan)
-		//	{
-		//		newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPan(mapAreaInfo, panAmount);
-		//	}
-		//	else if (transformType == TransformType.ZoomOut)
-		//	{
-		//		newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor, out diagReciprocal);
-		//	}
-		//	else
-		//	{
-		//		throw new InvalidOperationException($"AddNewCoordinateUpdateJob does not support a TransformType of {transformType}.");
-		//	}
-
-		//	var colorBandSetId = currentJob.ColorBandSetId;
-		//	var mapCalcSettings = currentJob.MapCalcSettings;
-
-		//	var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
-
-		//	Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
-
-		//	poster.Add(job);
-
-		//	Debug.WriteLine($"AddNewCoordinateUpdateJob: PreviousJobId {currentJob.Id} NewJobId: {poster.CurrentJobId}.");
-			
-		//	return job;
-		//}
 
 		private Job AddNewIterationUpdateJob(Poster poster, ColorBandSet colorBandSet)
 		{

@@ -2,6 +2,7 @@
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -11,7 +12,7 @@ namespace MSS.Common
 	{
 		void CreateCollections();
 		//void DropCollections();
-		void WarmUp();
+		bool ProjectCollectionIsEmpty();
 
 		Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
 		List<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
@@ -67,5 +68,12 @@ namespace MSS.Common
 
 
 		(ObjectId, MapAreaInfo2)? GetSubdivisionId(ObjectId jobId);
+		IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndOwnerIdsByJobOwnerType(JobOwnerType jobOwnerType);
+
+		IEnumerable<ObjectId> GetAllProjectIds();
+		IEnumerable<ObjectId> GetAllPosterIds();
+
+		void UpdateJobOwnerType(ObjectId jobId, JobOwnerType jobOwnerType);
+
 	}
 }

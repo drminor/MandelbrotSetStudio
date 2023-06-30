@@ -19,7 +19,7 @@ namespace MSetExplorer
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		private readonly Func<Job, SizeDbl, long>? _deleteNonEssentialMapSectionsFunction;
+		private readonly Func<Job, SizeDbl, bool, long>? _deleteNonEssentialMapSectionsFunction;
 
 		private IPosterInfo? _selectedPoster;
 
@@ -33,7 +33,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, Func<Job, SizeDbl, long>? deleteNonEssentialMapSectionsFunction, string? initialName, DialogType dialogType)
+		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, Func<Job, SizeDbl, bool, long>? deleteNonEssentialMapSectionsFunction, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
@@ -163,7 +163,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public long TrimSelected()
+		public long TrimSelected(bool agressive)
 		{
 			if (SelectedPoster == null || _deleteNonEssentialMapSectionsFunction == null)
 			{
@@ -174,7 +174,7 @@ namespace MSetExplorer
 			var job = _projectAdapter.GetJob(jobId);
 			var posterSize = SelectedPoster.Size;
 
-			var result = _deleteNonEssentialMapSectionsFunction(job, posterSize);
+			var result = _deleteNonEssentialMapSectionsFunction(job, posterSize, agressive);
 
 			return result;
 		}

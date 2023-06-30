@@ -1,4 +1,5 @@
-﻿using MSetExplorer.ScreenHelpers;
+﻿using MongoDB.Bson;
+using MSetExplorer.ScreenHelpers;
 using MSetExplorer.XPoc;
 using MSetExplorer.XPoc.BitmapGridControl;
 using System;
@@ -99,6 +100,11 @@ namespace MSetExplorer
 		private void ShowSystemColorsButton_Click(object sender, RoutedEventArgs e)
 		{
 			GoToSystemColors();
+		}
+
+		private void ModelStorage_Click(object sender, RoutedEventArgs e)
+		{
+			GoToModelStorage();
 		}
 
 		private void ExitAppButton_Click(object sender, RoutedEventArgs e)
@@ -237,6 +243,15 @@ namespace MSetExplorer
 			sysColorsWindow.Owner = Application.Current.MainWindow;
 			sysColorsWindow.Show();
 			_ = sysColorsWindow.Focus();
+		}
+
+		private void GoToModelStorage(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			var storageModelPoc = _vm.GetStorageModelPOC();
+
+			var projectId = new ObjectId("6258fe80712f62b28ce55c15");
+
+			storageModelPoc.PlayWithStorageModel(projectId);
 		}
 
 		#region Nav Window Support

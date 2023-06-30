@@ -20,7 +20,6 @@ namespace MSetExplorer
 
 		bool DeleteSelected(out long numberOfMapSectionsDeleted);
 
-		long TrimSelected();
-		long TrimHeavySelected();
+		long TrimSelected(bool agressive);
 	}
 }

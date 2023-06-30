@@ -139,14 +139,14 @@ namespace MSetExplorer
 
 		private void TrimMapSectionsButton_Click(object sender, RoutedEventArgs e)
 		{
-			var numberOfMapSectionsDeleted = _vm.TrimSelected();
+			var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: false);
 
 			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
 		}
 
 		private void TrimMapSectionsHeavyButton_Click(object sender, RoutedEventArgs e)
 		{
-			var numberOfMapSectionsDeleted = _vm.TrimHeavySelected();
+			var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: true);
 			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
 
 			//if (mapSectionsDeletedUnsavedJobs > 0 && mapSectionsDeletedUnusedJobs > 0)

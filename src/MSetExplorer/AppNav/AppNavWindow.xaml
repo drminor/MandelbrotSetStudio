@@ -25,6 +25,7 @@
                 <MenuItem Header="_SampleTest" Click="SampleTestButton_Click"/>
                 <MenuItem Header="Show System _Colors" Click="ShowSystemColorsButton_Click"/>
                 <MenuItem Header="_Performance Tests" Click="ShowPerformanceHarnessMainWin_Click"/>
+                <MenuItem Header="_Model Storage" Click="ModelStorage_Click"/>
             </MenuItem>
 
             <!--<MenuItem Header="_Utilities">
@@ -37,9 +38,10 @@
             
             <Button Width="100" Height="25" TabIndex="1" Click="DesignPosterButton_Click" Margin="0,10">Design Poster</Button>
 
-            <Button Width="100" Height="25" TabIndex="2" Click="ShowPerformanceHarnessMainWin_Click" Margin="0,10" >Perf Test</Button>
+            <!--<Button Width="100" Height="25" TabIndex="2" Click="ShowPerformanceHarnessMainWin_Click" Margin="0,10" >Perf Test</Button>-->
+            <Button Width="100" Height="25" TabIndex="2" Click="ModelStorage_Click" Margin="0,10" >Model Storage</Button>
 
-            <Button Width="100" Height="25" TabIndex="2" Click="ExitAppButton_Click" Margin="0,30" >Exit Program</Button>
+            <Button Width="100" Height="25" TabIndex="3" Click="ExitAppButton_Click" Margin="0,30" >Exit Program</Button>
 
         </StackPanel>
     </Grid>

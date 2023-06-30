@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
@@ -38,26 +39,34 @@ namespace ProjectRepo
 			return result;
 		}
 
-		public IEnumerable<ObjectId> GetAllJobIds()
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsByOwner(ObjectId ownerId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => p.Id
+					p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.SubDivisionId)
 				);
 
-			var filter = Builders<JobRecord>.Filter.Empty;
+			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", ownerId);
 			var result = Collection.Find(filter).Project(projection1).ToEnumerable();
 
 			return result;
 		}
 
+
+
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndOwnerIdsByJobOwnerType(JobOwnerType jobOwnerType)
+		{
+			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.OwnerId));
+			var filter = Builders<JobRecord>.Filter.Eq(f => f.JobOwnerType, jobOwnerType);
+			IFindFluent<JobRecord, ValueTuple<ObjectId, ObjectId>> operation = Collection.Find(filter).Project(projection1);
+
+			var itemsFound = operation.ToEnumerable();
+			return itemsFound;
+		}
+
 		public (ObjectId, MapAreaInfo2Record)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
 		{
-			var projection1 = Builders<JobRecord>.Projection.Expression
-				(
-					p => new ValueTuple<ObjectId, MapAreaInfo2Record>(p.SubDivisionId, p.MapAreaInfo2Record)
-				);
-
+			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, MapAreaInfo2Record>(p.SubDivisionId, p.MapAreaInfo2Record));
 			var filter = Builders<JobRecord>.Filter.Eq(f => f.Id, jobId);
 			
 			//var (subdivisionId, mapAreaInfo) = Collection.Find(filter).Project(projection1).FirstOrDefault();
@@ -100,7 +109,7 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
-		public void UpdateJobsColorBandSet(ObjectId jobId, int targetIterations, ObjectId colorBandSetId)
+		public void UpdateColorBandSet(ObjectId jobId, int targetIterations, ObjectId colorBandSetId)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 
@@ -111,6 +120,18 @@ namespace ProjectRepo
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
+
+		public void UpdateJobOwnerType(ObjectId jobId, JobOwnerType jobOwnerType)
+		{
+			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
+
+			var updateDefinition = Builders<JobRecord>.Update
+				.Set(u => u.JobOwnerType, jobOwnerType)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
 
 		public long? Delete(ObjectId jobId)
 		{

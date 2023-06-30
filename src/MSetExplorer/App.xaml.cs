@@ -1,19 +1,23 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
 using MongoDB.Bson;
+using MSetExplorer.RepositoryManagement;
+using MSetExplorer.StorageManagement;
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
 using ProjectRepo;
+using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.ServiceProcess;
-using System.Text;
 using System.Windows;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -22,6 +26,8 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
+		private static readonly bool TEST_STORAGE_MODEL = true;
+
 		#region Configuration
 
 		//private const string MONGO_DB_NAME = "MandelbrotProjects";
@@ -29,6 +35,8 @@ namespace MSetExplorer
 		//private const int MONGO_DB_PORT = 27017;
 
 		private static readonly bool USE_ALL_CORES = true;
+
+		private static readonly bool CHECK_CONN_BEFORE_USE = false;
 
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 
@@ -38,16 +46,23 @@ namespace MSetExplorer
 
 		private static readonly bool CREATE_JOB_MAP_SECTION_REPORT = false;
 
+		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS = false;
+		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS = false;
+
+
 		private static readonly bool FIND_AND_DELETE_ORPHAN_MAP_SECTIONS = false;
 
-		private static readonly bool DELETE_JOB_MAP_JOB_REFS = true;
+		private static readonly bool DELETE_JOB_MAP_JOB_REFS = false;
 		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false;
 
-		private static readonly bool POPULATE_JOB_MAP_SECTIONS = false;
+		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS = false;
+		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS = false;
 
 		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2093-05-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
+
+		//private Stopwatch? _ambientStopWatch;
 
 		#endregion
 
@@ -58,6 +73,7 @@ namespace MSetExplorer
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 
 		private RepositoryAdapters? _repositoryAdapters;
+
 		//private readonly MEngineServerManager? _mEngineServerManager;
 		private IMapLoaderManager? _mapLoaderManager;
 
@@ -69,12 +85,12 @@ namespace MSetExplorer
 
 		public App()
 		{
+			//_ambientStopWatch = Stopwatch.StartNew();
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
 			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
 			_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
-
 
 			//if (START_LOCAL_ENGINE)
 			//{
@@ -84,19 +100,43 @@ namespace MSetExplorer
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
+			//var currentStopwatch = _ambientStopWatch ?? Stopwatch.StartNew();
 			base.OnStartup(e);
+
+			if (TEST_STORAGE_MODEL)
+			{
+				TestStorageModel();
+
+				MessageBox.Show("Exiting.");
+				Current.Shutdown();
+			}
 
 			//_mEngineServerManager?.Start();
 
-			if (!TryGetRepositoryAdapters(out _repositoryAdapters))
+			//Debug.WriteLine($"Before Get Repos. {currentStopwatch.ElapsedMilliseconds}.");
+
+			if (CHECK_CONN_BEFORE_USE)
 			{
-				Current.Shutdown();
-				return;
+				if (!TryGetRepositoryAdapters(out _repositoryAdapters))
+				{
+					Current.Shutdown();
+					return;
+				}
+				//Debug.WriteLine($"After Get Repos. {currentStopwatch.ElapsedMilliseconds}.");
+			}
+			else
+			{
+				_repositoryAdapters = GetRepositoryAdaptersFast();
+				//Debug.WriteLine($"After Get Repos FAST. {currentStopwatch.ElapsedMilliseconds}.");
 			}
 
-
 			var subdivisionProvider = new SubdivisonProvider(_repositoryAdapters.MapSectionAdapter);
+			//Debug.WriteLine($"After Create SubdivisionProvider. {currentStopwatch.ElapsedMilliseconds}.");
+
 			var mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
+			//Debug.WriteLine($"After Create MapJobHelper. {currentStopwatch.ElapsedMilliseconds}.");
+
+			var repositoryIntegrityUtility = new RepoIntegrityUtility(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter, mapJobHelper);
 
 			#region Repo Maintenance
 
@@ -104,9 +144,12 @@ namespace MSetExplorer
 			{
 				_repositoryAdapters.MapSectionAdapter.DropMapSectionsAndSubdivisions();
 			}
-			else if (DROP_RECENT_MAP_SECTIONS)
+			else
 			{
-				_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+				if (DROP_RECENT_MAP_SECTIONS)
+				{
+					_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+				}
 			}
 
 			if (CREATE_COLLECTIONS)
@@ -126,39 +169,57 @@ namespace MSetExplorer
 			{
 				DoSchemaUpdates(_repositoryAdapters);
 				MessageBox.Show("Schema Updates are completed.");
-				
+
 				Current.Shutdown();
 				return;
 			}
 
 			if (CREATE_JOB_MAP_SECTION_REPORT)
 			{
-				var report = CreateJobMapSectionsReferenceReport(_repositoryAdapters.MapSectionAdapter);
+				var report = repositoryIntegrityUtility.CreateJobMapSectionsReferenceReport();
 				Debug.WriteLine(report);
+			}
+
+			if (FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS)
+			{
+				repositoryIntegrityUtility.FindAndDeleteOrphanJobs(JobOwnerType.Project);
+			}
+
+			if (FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS)
+			{
+				repositoryIntegrityUtility.FindAndDeleteOrphanJobs(JobOwnerType.Poster);
 			}
 
 			if (FIND_AND_DELETE_ORPHAN_MAP_SECTIONS)
 			{
-				FindAndDeleteOrphanMapSections(_repositoryAdapters.MapSectionAdapter);
+				repositoryIntegrityUtility.FindAndDeleteOrphanMapSections();
 			}
 
 			if (DELETE_JOB_MAP_JOB_REFS)
 			{
-				CheckAndDeleteJobRefsFromJobMapCollection(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter);
+				repositoryIntegrityUtility.CheckAndDeleteJobRefsFromJobMapCollection();
 			}
 
 			if (DELETE_JOB_MAP_MAP_REFS)
 			{
-				CheckAndDeleteMapRefsFromJobMapCollection(_repositoryAdapters.MapSectionAdapter);
+				repositoryIntegrityUtility.CheckAndDeleteMapRefsFromJobMapCollection();
 			}
 
-			if (POPULATE_JOB_MAP_SECTIONS)
+			if (POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS)
 			{
-				var report = PopulateJobMapSections(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter, mapJobHelper);
+				var report = repositoryIntegrityUtility.PopulateJobMapSections(JobOwnerType.Project);
 				Debug.WriteLine(report);
 			}
 
-			if (CREATE_JOB_MAP_SECTION_REPORT | FIND_AND_DELETE_ORPHAN_MAP_SECTIONS | DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS | POPULATE_JOB_MAP_SECTIONS)
+			if (POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS)
+			{
+				var report = repositoryIntegrityUtility.PopulateJobMapSections(JobOwnerType.Poster);
+				Debug.WriteLine(report);
+			}
+
+			if (CREATE_JOB_MAP_SECTION_REPORT | FIND_AND_DELETE_ORPHAN_MAP_SECTIONS | DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS |
+				POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS | POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS |
+				FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS | FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS)
 			{
 				if (MessageBoxResult.No == MessageBox.Show("Reporting completed. Continue with startup?", "Continue?", MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No))
 				{
@@ -170,12 +231,25 @@ namespace MSetExplorer
 			#endregion
 
 			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
+			//Debug.WriteLine($"After Create MEngineClients. {currentStopwatch.ElapsedMilliseconds}.");
 
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
+			//Debug.WriteLine($"After Create MapSectionProcesors. {currentStopwatch.ElapsedMilliseconds}.");
+
 			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
+			//Debug.WriteLine($"After Create MapLoaderManager. {currentStopwatch.ElapsedMilliseconds}.");
 
 			_appNavWindow = GetAppNavWindow(_mapSectionVectorProvider, _repositoryAdapters, _mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
+			//Debug.WriteLine($"After Get AppNavWindow. {currentStopwatch.ElapsedMilliseconds}.");
+
 			_appNavWindow.Show();
+			//Debug.WriteLine($"After AppNav Show. {currentStopwatch.ElapsedMilliseconds}.");
+
+			//if (_ambientStopWatch != null)
+			//{
+			//	_ambientStopWatch.Stop();
+			//	_ambientStopWatch = null;
+			//}
 		}
 
 		protected override void OnExit(ExitEventArgs e)
@@ -231,6 +305,14 @@ namespace MSetExplorer
 				repositoryAdapters = new RepositoryAdapters(repoDbServerName, repoDbPort, repoDbName);
 				return true;
 			}
+		}
+
+		private RepositoryAdapters GetRepositoryAdaptersFast()
+		{
+			var (repoDbServerName, repoDbPort, repoDbName) = GetConnectionSettings();
+
+			var repositoryAdapters = new RepositoryAdapters(repoDbServerName!, repoDbPort, repoDbName!);
+			return repositoryAdapters;
 		}
 
 		private (string? serverName, int port, string? databaseName) GetConnectionSettings()
@@ -374,118 +456,6 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Cleanup Map Sections
-
-		private string PopulateJobMapSections(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
-		{
-			//var report = ProjectAndMapSectionHelper.PopulateJobMapSectionsForAllProjects(projectAdapter, mapSectionAdapter, mapJobHelper);
-
-			var report = ProjectAndMapSectionHelper.PopulateJobMapSectionsForAllPosters(projectAdapter, mapSectionAdapter, mapJobHelper);
-
-			return report;
-		}
-
-		private string CreateJobMapSectionsReferenceReport(IMapSectionAdapter mapSectionAdapter)
-		{
-			if (mapSectionAdapter is MapSectionAdapter ma)
-			{
-				var report = ma.GetJobMapSectionsToMapSectionReferenceReport();
-				return report;
-			}
-			else
-			{
-				return "Report not available.";
-			}
-		}
-
-		private void FindAndDeleteOrphanMapSections(IMapSectionAdapter mapSectionAdapter)
-		{
-			var report = FindOrphanMapSections(mapSectionAdapter, out var mapSectionIdsWithNoJob);
-			Debug.WriteLine(report);
-
-			var countOrphanMapSections = mapSectionIdsWithNoJob.Count;
-
-			if (countOrphanMapSections > 0)
-			{
-				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOrphanMapSections} MapSection that are not reference by any job?", "Delete JobMapSection Records?",
-					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
-
-				if (msgBoxResult == MessageBoxResult.Yes)
-				{
-					var numberDeleted = mapSectionAdapter.DeleteMapSectionsInList(mapSectionIdsWithNoJob);
-					MessageBox.Show($"{numberDeleted} JobMapSections were deleted.");
-				}
-			}
-		}
-
-		private string FindOrphanMapSections(IMapSectionAdapter mapSectionAdapter, out List<ObjectId> mapSectionIdsWithNoJob)
-		{
-			var report = ProjectAndMapSectionHelper.FindOrphanMapSections(mapSectionAdapter, out mapSectionIdsWithNoJob);
-			return report;
-		}
-
-		private void CheckAndDeleteJobRefsFromJobMapCollection(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
-		{
-			var report = CheckJobRefsFromJobMapCollection(projectAdapter, mapSectionAdapter, out var jobMapSectionIdsWithMissingJobRecord, out var subdivisionIdsForMissingJobs);
-			Debug.WriteLine(report);
-
-			var countOfRecordsWithMissingMapSection = jobMapSectionIdsWithMissingJobRecord.Count;
-
-			if (countOfRecordsWithMissingMapSection > 0)
-			{
-				var formattedSubdivisionList = string.Join("\n", subdivisionIdsForMissingJobs);
-				Debug.WriteLine($"SubdivisionIds for the records with a missing JobRecord:\n{formattedSubdivisionList}\n");
-
-				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOfRecordsWithMissingMapSection} JobMapSection records referencing a Job record that does not exist?", "Delete JobMapSection Records?",
-					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
-
-				if (msgBoxResult == MessageBoxResult.Yes)
-				{
-					var numberDeleted = mapSectionAdapter.DeleteJobMapSectionsInList(jobMapSectionIdsWithMissingJobRecord);
-					MessageBox.Show($"{numberDeleted} JobMapSections were deleted.");
-
-					//MessageBox.Show("This is in progress -- must test first.");
-				}
-			}
-		}
-
-		private string CheckJobRefsFromJobMapCollection(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, out List<ObjectId> jobMapSectionIdsWithMissingJobRecord, out List<ObjectId> subdivisionIdsForMissingJobs)
-		{
-			var report = ProjectAndMapSectionHelper.CheckJobRefsAndSubdivisions(projectAdapter, mapSectionAdapter, out jobMapSectionIdsWithMissingJobRecord, out subdivisionIdsForMissingJobs);
-			return report;
-		}
-
-		private void CheckAndDeleteMapRefsFromJobMapCollection(IMapSectionAdapter mapSectionAdapter)
-		{
-			var report = CheckMapRefsFromJobMapCollection(mapSectionAdapter, out var jobMapSectionIdsWithMissingMapSection, out var subdivisionIdsForMissingMapSections);
-			Debug.WriteLine(report);
-
-			var countOfRecordsWithMissingMapSection = jobMapSectionIdsWithMissingMapSection.Count;
-
-			if (countOfRecordsWithMissingMapSection > 0)
-			{
-				var formattedSubdivisionList = string.Join("\n", subdivisionIdsForMissingMapSections);
-				Debug.WriteLine($"SubdivisionIds for the records with a missing MapSection:\n{formattedSubdivisionList}\n");
-
-				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOfRecordsWithMissingMapSection} JobMapSection records referencing a MapSection record that does not exist?", "Delete JobMapSection Records?",
-					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
-
-				if (msgBoxResult == MessageBoxResult.Yes)
-				{
-					var numberDeleted = mapSectionAdapter.DeleteJobMapSectionsInList(jobMapSectionIdsWithMissingMapSection);
-					MessageBox.Show($"{numberDeleted} JobMapSections were deleted.");
-				}
-			}
-		}
-
-		private string CheckMapRefsFromJobMapCollection(IMapSectionAdapter mapSectionAdapter, out List<ObjectId> jobMapSectionIdsWithMissingMapSection, out List<ObjectId> subdivisionIdsForMissingMapSections)
-		{
-			var report = ProjectAndMapSectionHelper.CheckMapRefsAndSubdivisions(mapSectionAdapter, out jobMapSectionIdsWithMissingMapSection, out subdivisionIdsForMissingMapSections);
-			return report;
-		}
-
-		#endregion
-
 		#region MEngine Support
 
 		private IMEngineClient[] CreateTheMEngineClients(MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
@@ -616,5 +586,28 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private void TestStorageModel()
+		{
+			_repositoryAdapters = GetRepositoryAdaptersFast();
+
+			var storageModelPoc = GetStorageModelPOC(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter);
+
+			var projectId = new ObjectId("6258fe80712f62b28ce55c15");
+			storageModelPoc.PlayWithStorageModel(projectId);
+		}
+
+		private StorageModelPOC GetStorageModelPOC(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		{
+			if (projectAdapter is ProjectAdapter pa && mapSectionAdapter is MapSectionAdapter ma)
+			{
+				var result = new StorageModelPOC(pa, ma);
+				return result;
+			}
+			else
+			{
+				throw new InvalidOperationException("Either the _projectAdapter is not an instance of a ProjectAdapter or the _mapSectionAdapter is not an instance of a MapSectionAdapter.");
+			}
+		}
 	}
 }

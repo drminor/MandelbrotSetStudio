@@ -1,6 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using ProjectRepo;
+using System.Diagnostics;
 
 namespace MSetRepo
 {
@@ -45,11 +46,15 @@ namespace MSetRepo
 
 		public void WarmUp()
 		{
-			ProjectAdapter.WarmUp();
+			var result = ProjectAdapter.ProjectCollectionIsEmpty();
+
+			if (result)
+			{
+				Debug.WriteLine("WARNING: The Project Collection is empty.");
+			}
 		}
 
 		#endregion
-
 
 		//#region Private Methods
 
@@ -90,7 +95,5 @@ namespace MSetRepo
 
 
 		//#endregion
-
-
 	}
 }

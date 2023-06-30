@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using MSS.Common;
 using MSS.Types;
@@ -23,7 +24,7 @@ namespace MSetRepo
 			{
 				var jobIds = projectAdapter.GetAllJobIdsForProject(projectId);
 
-				numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForMany(jobIds, JobOwnerType.Project) ?? 0;
+				numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds, JobOwnerType.Project) ?? 0;
 				if (numberOfMapSectionsDeleted == 0)
 				{
 					Debug.WriteLine("WARNING: No MapSections were removed as the project is being deleted.");
@@ -44,7 +45,7 @@ namespace MSetRepo
 			{
 				var jobIds = projectAdapter.GetAllJobIdsForPoster(posterId);
 
-				numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForMany(jobIds, JobOwnerType.Poster) ?? 0;
+				numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds, JobOwnerType.Poster) ?? 0;
 				if (numberOfMapSectionsDeleted == 0)
 				{
 					Debug.WriteLine("WARNING: No MapSections were removed as the poster is being deleted.");
@@ -62,11 +63,26 @@ namespace MSetRepo
 		public static long DeleteJobs(IEnumerable<Job> jobs, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
 		{
 			var jobIds = jobs.Select(x => x.Id);
-			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForMany(jobIds, JobOwnerType.Project);
+			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds, JobOwnerType.Project);
 
 			foreach(var job in jobs.Where(x => x.OnFile))
 			{
 				if (!projectAdapter.DeleteJob(job.Id))
+				{
+					throw new InvalidOperationException("Cannot delete existing job record.");
+				}
+			}
+
+			return numberOfMapSectionsDeleted ?? 0;
+		}
+
+		public static long DeleteJobsOnFile(IEnumerable<ObjectId> jobIds, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		{
+			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds, JobOwnerType.Project);
+
+			foreach (var jobId in jobIds)
+			{
+				if (!projectAdapter.DeleteJob(jobId))
 				{
 					throw new InvalidOperationException("Cannot delete existing job record.");
 				}
@@ -87,8 +103,6 @@ namespace MSetRepo
 			{
 				throw new InvalidOperationException("Cannot delete existing job record.");
 			}
-
-			//projectAdapter.d
 
 			return numberOfMapSectionsDeleted ?? 0;
 		}
@@ -335,6 +349,93 @@ namespace MSetRepo
 		#endregion
 
 		#region Check for Orphan Jobs and MapSections
+
+		public static string FindOrphanJobs(IProjectAdapter projectAdapter, JobOwnerType jobOwnerType, out List<ObjectId> jobIdsWithNoOwner, out List<ObjectId> jobIdsWithOwnerOfWrongType)
+		{
+			jobIdsWithNoOwner = new List<ObjectId>();
+			jobIdsWithOwnerOfWrongType = new List<ObjectId>();
+
+			List<ObjectId> ownerIds;
+			List<ObjectId> ownerIdsOfOtherType;
+
+			if (jobOwnerType == JobOwnerType.Project)
+			{
+				ownerIds = projectAdapter.GetAllProjectIds().ToList();
+				ownerIdsOfOtherType = projectAdapter.GetAllPosterIds().ToList();
+			}
+			else
+			{
+				ownerIdsOfOtherType = projectAdapter.GetAllProjectIds().ToList();
+				ownerIds = projectAdapter.GetAllPosterIds().ToList();
+			}
+
+			if (!ListsAreUnique(ownerIds, ownerIdsOfOtherType))
+			{
+				throw new InvalidCastException("The repository has one or more Projects that have the same Id as a Poster.");
+			}
+
+			var jobAndOwnerIds = projectAdapter.GetJobAndOwnerIdsByJobOwnerType(jobOwnerType);
+
+			foreach (var (jobId, ownerId) in jobAndOwnerIds)
+			{
+				if (ownerIdsOfOtherType.Exists(x => x == ownerId))
+				{
+					jobIdsWithOwnerOfWrongType.Add(jobId);
+				}
+				else
+				{
+					if (!ownerIds.Exists(x => x == ownerId))
+					{
+						jobIdsWithNoOwner.Add(jobId);
+					}
+				}
+			}
+
+			var sb = new StringBuilder();
+
+			sb.AppendLine();
+			sb.AppendLine($"There are {jobIdsWithNoOwner.Count} Jobs with no owner.");
+			sb.AppendLine($"There are {jobIdsWithOwnerOfWrongType.Count} {jobOwnerType} jobs that have an owner of the wrong type.");
+
+			if (jobIdsWithNoOwner.Count > 0)
+			{
+				sb.AppendLine($"{jobOwnerType} Jobs with no owner:");
+				sb.AppendLine(string.Join("\n", jobIdsWithNoOwner));
+			}
+
+			if (jobIdsWithOwnerOfWrongType.Count > 0)
+			{
+				sb.AppendLine($"{jobOwnerType} Jobs with with the wrong job type:");
+				sb.AppendLine(string.Join("\n", jobIdsWithOwnerOfWrongType));
+			}
+
+			return sb.ToString();
+		}
+
+		private static bool ListsAreUnique(List<ObjectId> listA, List<ObjectId> listB)
+		{
+			var commonItems = GetItemsCommonToBothLists(listA, listB);
+
+			//Debug.Assert(commonItems.Count == 0, $"These ids are used for both a project and a poster. {string.Join("\n", commonItems)}.");
+			var result = commonItems.Count == 0;
+
+			return result;
+		}
+
+		private static List<ObjectId> GetItemsCommonToBothLists(List<ObjectId> listA, List<ObjectId> listB)
+		{
+			var result = new List<ObjectId>();
+
+			foreach(ObjectId item in listA)
+			{
+				if (listB.Contains(item))
+				{
+					result.Add(item);
+				}
+			}
+
+			return result;
+		}
 
 		public static string FindOrphanMapSections(IMapSectionAdapter mapSectionAdapter, out List<ObjectId> mapSectionIdsWithNoJob)
 		{

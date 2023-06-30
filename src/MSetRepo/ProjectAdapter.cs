@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Driver;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -60,11 +61,16 @@ namespace MSetRepo
 		//}
 
 
-		public void WarmUp()
+		public bool ProjectCollectionIsEmpty()
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var x = projectReaderWriter.Collection.Indexes;
-			_ = x.List();
+			var x = projectReaderWriter.GetAllIds();
+			var t = x.FirstOrDefault();
+
+			return t == ObjectId.Empty;
+			
+			//var x = projectReaderWriter.Collection.Indexes;
+			//_ = x.List();
 		}
 
 		#endregion
@@ -193,6 +199,13 @@ namespace MSetRepo
 			return result != null;
 		}
 
+		public IEnumerable<ObjectId> GetAllProjectIds()
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			var result = projectReaderWriter.GetAllIds();
+			return result;
+		}
+
 		#endregion
 
 		#region ProjectInfo
@@ -201,10 +214,11 @@ namespace MSetRepo
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var allProjectRecords = projectReaderWriter.GetAll();
-			var result = allProjectRecords.Select(x => GetProjectInfoInternal(x, jobReaderWriter, subdivisionReaderWriter));
+			var result = allProjectRecords.Select(x => GetProjectInfoInternal(x, jobReaderWriter, subdivisionReaderWriter, jobMapSectionReaderWriter));
 
 			return result;
 		}
@@ -216,7 +230,7 @@ namespace MSetRepo
 		//	return GetProjectInfoInternal(project, jobReaderWriter, subdivisionReaderWriter);
 		//}
 
-		private IProjectInfo GetProjectInfoInternal(ProjectRecord projectRec, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter)
+		private IProjectInfo GetProjectInfoInternal(ProjectRecord projectRec, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
 		{
 			IProjectInfo result;
 			var dateCreated = projectRec.DateCreated.ToLocalTime();
@@ -230,22 +244,26 @@ namespace MSetRepo
 				var minSamplePointDeltaExponent = subdivisonReaderWriter.GetMinExponent(subdivisionIds);
 
 				// Greater of the date of the last updated job and the date when the project was last updated.
-				var lastSaved = jobInfos.Max(x => x.DateCreated);
-				var lastUpdated = projectRec.LastSavedUtc;
-				if (lastSaved > lastUpdated)
+				var lastSavedUtc = jobInfos.Max(x => x.DateCreated);
+				var lastUpdatedUtc = projectRec.LastSavedUtc;
+
+				if (lastSavedUtc > lastUpdatedUtc)
 				{
-					lastUpdated = lastSaved;
+					lastUpdatedUtc = lastSavedUtc;
 				}
 
 				var numberOfFirstLevelChildJobs = jobInfos.Count(x => !x.ParentJobId.HasValue);
 
 				var jobCount = numberOfFirstLevelChildJobs > 1 ? jobInfos.Count() : -1 * jobInfos.Count();
 
-				result = new ProjectInfo(projectRec.Id, dateCreated, projectRec.Name, projectRec.Description, lastUpdated, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
+				var jobIds = jobInfos.Select(x => x.Id).ToList();
+				var bytes = GetBytes(jobIds, JobOwnerType.Project, jobMapSectionReaderWriter);
+
+				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, bytes, dateCreated, lastUpdatedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
 			else
 			{
-				result = new ProjectInfo(projectRec.Id, dateCreated, projectRec.Name, projectRec.Description, DateTime.MinValue, 0, 0, 0);
+				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, 0, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
 			}
 
 			return result;
@@ -338,6 +356,14 @@ namespace MSetRepo
 
 		#region Job
 
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndOwnerIdsByJobOwnerType(JobOwnerType jobOwnerType)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.GetJobAndOwnerIdsByJobOwnerType(jobOwnerType);
+
+			return result;
+		}
+
 		public List<ObjectId> GetAllJobIdsForPoster(ObjectId posterId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
@@ -358,6 +384,17 @@ namespace MSetRepo
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var result = jobReaderWriter.GetJobIdsByOwner(projectId).ToList();
+
+			return result;
+		}
+
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetAllJobAndSubdivisionIdsForProject(ObjectId projectId)
+		{
+			//IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsByOwner(ObjectId ownerId)
+			//var result = 
+
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.GetJobAndSubdivisionIdsByOwner(projectId);
 
 			return result;
 		}
@@ -476,12 +513,12 @@ namespace MSetRepo
 				if (!isCacheHit)
 				{
 					colorBandSetCache?.Add(colorBandSet.Id, colorBandSet);
-					jobReaderWriter.UpdateJobsColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
+					jobReaderWriter.UpdateColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
 				}
 
 				if (cbsId != jobRecord.ColorBandSetId)
 				{
-					jobReaderWriter.UpdateJobsColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
+					jobReaderWriter.UpdateColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
 				}
 			}
 			else
@@ -636,6 +673,13 @@ namespace MSetRepo
 			job.LastSavedUtc = DateTime.UtcNow;
 		}
 
+		public void UpdateJobOwnerType(ObjectId jobId, JobOwnerType jobOwnerType)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+			jobReaderWriter.UpdateJobOwnerType(jobId, jobOwnerType);
+		}
+
 		public bool DeleteJob(ObjectId jobId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
@@ -662,6 +706,13 @@ namespace MSetRepo
 
 			var result = posterRecords.Select(x => BuildPoster(x, colorBandSetReaderWriter)).ToList();
 
+			return result;
+		}
+
+		public IEnumerable<ObjectId> GetAllPosterIds()
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			var result = posterReaderWriter.GetAllIds();
 			return result;
 		}
 
@@ -902,7 +953,6 @@ namespace MSetRepo
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 
-
 			var allPosterRecords = posterReaderWriter.GetAll();
 
 			var result = allPosterRecords.Select(x => GetPosterInfoInternal(x, jobReaderWriter, jobMapSectionReaderWriter));
@@ -933,38 +983,35 @@ namespace MSetRepo
 				lastSavedUtc = jobRec.LastSavedUtc;
 			}
 
-			var bytes = GetBytes(posterRecord, jobReaderWriter, jobMapSectionReaderWriter);
-
-
-			result = new PosterInfo(posterRecord.Id, posterRecord.Name, posterRecord.Description, posterRecord.CurrentJobId, posterRecord.PosterSize, bytes, posterRecord.DateCreatedUtc, lastSavedUtc, posterRecord.LastAccessedUtc);
-			return result;
-		}
-
-		private int GetBytes(PosterRecord posterRecord, JobReaderWriter jobReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
-		{
 			if (posterRecord.Name == "Art3-13-4")
 			{
 				Debug.WriteLine("Here at Art3-13-4");
 			}
 
-			var allJobIds = jobReaderWriter.GetJobIdsByOwner(posterRecord.Id).ToList();
+			var bytes = GetBytes(posterRecord.Id, JobOwnerType.Poster, jobReaderWriter, jobMapSectionReaderWriter);
 
-			List<ObjectId> mapSectionIds = new List<ObjectId>();
+			result = new PosterInfo(posterRecord.Id, posterRecord.Name, posterRecord.Description, posterRecord.CurrentJobId, posterRecord.PosterSize, bytes, posterRecord.DateCreatedUtc, lastSavedUtc, posterRecord.LastAccessedUtc);
+			return result;
+		}
 
-			foreach(var jobId in allJobIds)
+		private int GetBytes(ObjectId ownerId, JobOwnerType jobOwnerType, JobReaderWriter jobReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
+		{
+			var jobIds = jobReaderWriter.GetJobIdsByOwner(ownerId).ToList();
+			var result = GetBytes(jobIds, jobOwnerType, jobMapSectionReaderWriter);
+			return result;
+		}
+
+		private int GetBytes(List<ObjectId> jobIds, JobOwnerType jobOwnerType, JobMapSectionReaderWriter jobMapSectionReaderWriter)
+		{
+			var numberOfMapSections = 0;
+
+			foreach (var jobId in jobIds)
 			{
-				var ids = jobMapSectionReaderWriter.GetMapSectionIdsByOwnerId(jobId, JobOwnerType.Poster);
-
-				foreach(var id in ids)
-				{
-					if (!mapSectionIds.Contains(id))
-					{
-						mapSectionIds.Add(id);
-					}
-				}
+				var numberOfMapSectionsForJob = jobMapSectionReaderWriter.GetCountOfMapSectionsByJobId(jobId, jobOwnerType);
+				numberOfMapSections += numberOfMapSectionsForJob;
 			}
 
-			var result = mapSectionIds.Count * 64300;
+			var result = numberOfMapSections * 64300;
 
 			return result;
 		}

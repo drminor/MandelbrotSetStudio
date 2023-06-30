@@ -9,12 +9,13 @@ namespace MSS.Common
 		//Project Project { get; }
 
 		ObjectId ProjectId { get; }
-		DateTime DateCreated { get; }
 		string Name { get; set; }
 		string? Description { get; set; }
+		int Bytes { get; set; }
 		int NumberOfJobs { get; }
 		int MinSamplePointDeltaExponent { get; }
 
+		DateTime DateCreated { get; }
 		DateTime LastSavedUtc { get; set; }
 		DateTime LastSaved { get; }
 	}

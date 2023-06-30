@@ -1,0 +1,44 @@
+Before Get Repos.		156.
+After Get Repos.		5039.	4.833
+After Repo Maintainence.	9224.	4.185
+After Create MEngineClients.	9267.	0.043
+After Create MapLoaderManager.	9285.	0.018
+After Get AppNavWindow.		9858.	0.573
+After AppNav Show.		10236.	0.378
+
+
+Before Get Repos. 42.
+After Get Repos. 5023.
+After Create SubdivisionProvider. 5025.
+After Create MapJobHelper. 5027.
+After Create MEngineClients. 9259.
+After Create MapSectionProcesors. 9311.
+After Create MapLoaderManager. 9312.
+After Get AppNavWindow. 9559.
+After AppNav Show. 9871.
+
+Get Repos
+Create MEngineClients
+
+
+
+Before Get Repos. 66.
+After Get Repos FAST. 107.
+After Create SubdivisionProvider. 108.
+After Create MapJobHelper. 110.
+After Create MEngineClients. 4950.
+After Create MapSectionProcesors. 5006.
+After Create MapLoaderManager. 5007.
+After AppNav Show. 5790.
+
+
+Before Get Repos. 50.
+
+After Get Repos FAST. 78.
+After Create SubdivisionProvider. 80.
+After Create MapJobHelper. 81.
+After Create MEngineClients. 4673.
+After Create MapSectionProcesors. 4693.
+After Create MapLoaderManager. 4694.
+After Get AppNavWindow. 4878.
+After AppNav Show. 5137.

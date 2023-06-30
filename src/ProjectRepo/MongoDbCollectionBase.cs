@@ -7,6 +7,8 @@ namespace ProjectRepo
 {
 	public class MongoDbCollectionBase<T> : IMongoDbCollection<T>
     {
+		private static readonly long BYTES_MB = 1024 * 1024;
+
         private readonly DbProvider _dbProvider;
         private readonly string _collectionName;
 
@@ -63,6 +65,31 @@ namespace ProjectRepo
 			}
 
 			return null;
+		}
+
+		public virtual long GetSizeOfCollectionInMB()
+		{
+			// NOTE: Need to add 22 bytes * total number of documents to get the actual size.
+			var sizeOnServer = Collection
+				.Aggregate()
+				.AppendStage<BsonDocument>("{ $group: { _id : null, collectionSize: { $sum: { $bsonSize: '$$ROOT' } } } }")
+				.FirstOrDefault();
+
+			var collectionSize = sizeOnServer["collectionSize"].AsInt64;
+			var collectionSizeInMB = collectionSize / BYTES_MB;
+
+			return collectionSizeInMB;
+		}
+
+		public virtual int GetSizeOfDocZero()
+		{
+			var documentSizeOnServer = Collection
+				.Aggregate()
+				.AppendStage<BsonDocument>("{ $project : { documentSize : { $bsonSize : '$$ROOT' }, _id : 0 } }")
+				.FirstOrDefault();
+
+			var docSize = documentSizeOnServer["documentSize"].AsInt32;
+			return docSize;
 		}
 
 		#region unused

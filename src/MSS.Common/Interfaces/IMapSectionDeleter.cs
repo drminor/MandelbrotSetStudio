@@ -9,7 +9,7 @@ namespace MSS.Common
 	{
 		long? DeleteMapSectionsForJob(ObjectId jobId, JobOwnerType jobOwnerType);
 
-		long? DeleteMapSectionsForMany(IEnumerable<ObjectId> jobIds, JobOwnerType jobOwnerType);
+		long? DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, JobOwnerType jobOwnerType);
 
 		long? DeleteMapSectionsWithJobType(IList<ObjectId> mapSectionIds, JobOwnerType jobOwnerType);
 

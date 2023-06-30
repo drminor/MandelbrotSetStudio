@@ -5,11 +5,11 @@ using System;
 
 namespace ProjectRepo.Entities
 {
-	public record JobMapSectionRecord 
+	public record JobMapSectionRecord
 	(
+		ObjectId JobId,
 		ObjectId MapSectionId,
 		ObjectId SubdivisionId,
-		ObjectId JobId,
 		JobOwnerType OwnerType,
 		bool IsInverted,
 		DateTime LastSavedUtc,

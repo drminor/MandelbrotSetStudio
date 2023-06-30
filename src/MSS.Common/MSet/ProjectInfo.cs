@@ -13,18 +13,20 @@ namespace MSS.Common.MSet
 
 		#region Constructor
 
-		public ProjectInfo(ObjectId projectId, DateTime dateCreated, string name, string? description, DateTime lastSavedUtc, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
+		public ProjectInfo(ObjectId projectId, string name, string? description, int bytes, DateTime dateCreatedUtc, DateTime lastSavedUtc, int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
 			ProjectId = projectId;
-			DateCreated = dateCreated;
+			_name = name;
+			_description = description;
+			Bytes = bytes;
+
+			DateCreated = dateCreatedUtc;
 
 			_lastSavedUtc = lastSavedUtc;
 			NumberOfJobs = numberOfJobs;
+
 			MinMapCoordsExponent = minMapCoordsExponent;
 			MinSamplePointDeltaExponent = minSamplePointDeltaExponent;
-
-			_name = name;
-			_description = description;
 		}
 
 		#endregion
@@ -32,11 +34,6 @@ namespace MSS.Common.MSet
 		#region Public Properties
 
 		public ObjectId ProjectId { get; init; }
-
-		public DateTime DateCreated { get; init; }
-		public int NumberOfJobs { get; init; }
-		public int MinMapCoordsExponent { get; init; }
-		public int MinSamplePointDeltaExponent { get; init; }
 
 		public string Name
 		{
@@ -50,6 +47,10 @@ namespace MSS.Common.MSet
 			set { _description = value; OnPropertyChanged(); }
 		}
 
+		public int Bytes { get; set; }
+
+		public DateTime DateCreated { get; init; }
+
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
@@ -57,6 +58,11 @@ namespace MSS.Common.MSet
 		}
 
 		public DateTime LastSaved => LastSavedUtc.ToLocalTime();
+
+		public int NumberOfJobs { get; init; }
+		public int MinMapCoordsExponent { get; init; }
+		public int MinSamplePointDeltaExponent { get; init; }
+
 
 		//public int NumberOfJobs
 		//{
