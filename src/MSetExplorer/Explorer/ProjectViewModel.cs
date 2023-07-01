@@ -295,6 +295,8 @@ namespace MSetExplorer
 				return 0;
 			}
 
+
+			// TODO: Make sure that the Project's Current Job (as it exists on the repository) points to an existing job
 			var result = JobOwnerHelper.DeleteMapSectionsForUnsavedJobs(currentProject, _mapSectionAdapter);
 
 			return result;

@@ -53,6 +53,14 @@ namespace MSS.Common
 		IEnumerable<ObjectId> GetJobMapSectionIds(IEnumerable<ObjectId> mapSectionIds);
 
 		long DeleteMapSectionsInList(IList<ObjectId> mapSectionIds);
+
+		IEnumerable<Subdivision> GetAllSubdivisions();
+		IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobs();
+		IEnumerable<ObjectId> GetSubdivisionIdsForAllJobs();
+
+		IEnumerable<ObjectId> GetSubdivisionIdsForAllMapSections();
+		long DeleteSubdivisionsInList(IList<ObjectId> subdivisionIds);
+
 	}
 
 }

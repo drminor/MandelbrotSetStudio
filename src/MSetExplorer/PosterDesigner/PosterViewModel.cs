@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace MSetExplorer
 {
@@ -441,8 +442,7 @@ namespace MSetExplorer
 
 			var jobOwnerId = job.OwnerId;	// Identifies either a Project or Poster record.
 
-			var nonCurrentJobIds = _projectAdapter.GetAllJobIdsForPoster(jobOwnerId);
-			nonCurrentJobIds.Remove(currentJobId);
+			var nonCurrentJobIds = _projectAdapter.GetAllJobIdsForPoster(jobOwnerId).Where(x => x != currentJobId).ToList();
 
 			var numberOfMapSectionsDeleted = JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.Poster, _mapSectionAdapter);
 			numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.ImageBuilder, _mapSectionAdapter);

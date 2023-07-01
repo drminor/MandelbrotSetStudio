@@ -62,6 +62,14 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
+		public long Delete(IList<ObjectId> subDivisionIds)
+		{
+			var filter = Builders<SubdivisionRecord>.Filter.In(u => u.Id, subDivisionIds);
+			var deleteResult = Collection.DeleteMany(filter);
+
+			return GetReturnCount(deleteResult) ?? 0;
+		}
+
 		public int GetMinExponent(IEnumerable<ObjectId> subdivisionIds)
 		{
 			var items = Collection.AsQueryable()

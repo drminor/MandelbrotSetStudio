@@ -22,7 +22,7 @@ namespace MSetExplorer.RepositoryManagement
 			_mapJobHelper = mapJobHelper;
 		}
 
-		#region Cleanup Job Map Sections
+		#region Populate JobMapSections
 
 		public string PopulateJobMapSections(JobOwnerType jobOwnerType)
 		{
@@ -58,11 +58,14 @@ namespace MSetExplorer.RepositoryManagement
 			}
 		}
 
+		#endregion
+
+		#region Find And Delete Jobs Not Referenced by any Project or Poster
+
 		public void FindAndDeleteOrphanJobs(JobOwnerType jobOwnerType)
 		{
 			var report = FindOrphanJobs(jobOwnerType, out var jobIdsWithNoOwner, out var jobIdsWithOwnerOfWrongType);
 			Debug.WriteLine(report);
-
 
 			var countWrongTypeJobs = jobIdsWithOwnerOfWrongType.Count;
 
@@ -112,6 +115,10 @@ namespace MSetExplorer.RepositoryManagement
 			return report;
 		}
 
+		#endregion
+
+		#region Find And Delete Map Sections Not Referenced by any Job
+
 		public void FindAndDeleteOrphanMapSections()
 		{
 			var report = FindOrphanMapSections(out var mapSectionIdsWithNoJob);
@@ -138,19 +145,23 @@ namespace MSetExplorer.RepositoryManagement
 			return report;
 		}
 
+		#endregion
+
+		#region Check and Delete JobMapSections referencing a non-extant Job Record
+
 		public void CheckAndDeleteJobRefsFromJobMapCollection()
 		{
 			var report = CheckJobRefsFromJobMapCollection(out var jobMapSectionIdsWithMissingJobRecord, out var subdivisionIdsForMissingJobs);
 			Debug.WriteLine(report);
 
-			var countOfRecordsWithMissingMapSection = jobMapSectionIdsWithMissingJobRecord.Count;
+			var countOfRecordsWithMissingJob = jobMapSectionIdsWithMissingJobRecord.Count;
 
-			if (countOfRecordsWithMissingMapSection > 0)
+			if (countOfRecordsWithMissingJob > 0)
 			{
 				var formattedSubdivisionList = string.Join("\n", subdivisionIdsForMissingJobs);
 				Debug.WriteLine($"SubdivisionIds for the records with a missing JobRecord:\n{formattedSubdivisionList}\n");
 
-				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOfRecordsWithMissingMapSection} JobMapSection records referencing a Job record that does not exist?", "Delete JobMapSection Records?",
+				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOfRecordsWithMissingJob} JobMapSection records referencing a Job record that does not exist?", "Delete JobMapSection Records?",
 					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
 
 				if (msgBoxResult == MessageBoxResult.Yes)
@@ -166,6 +177,10 @@ namespace MSetExplorer.RepositoryManagement
 			var report = ProjectAndMapSectionHelper.CheckJobRefsAndSubdivisions(_projectAdapter, _mapSectionAdapter, out jobMapSectionIdsWithMissingJobRecord, out subdivisionIdsForMissingJobs);
 			return report;
 		}
+
+		#endregion
+
+		#region Check and Delete JobMapSections referencing a non-extant MapSection
 
 		public void CheckAndDeleteMapRefsFromJobMapCollection()
 		{
@@ -197,5 +212,37 @@ namespace MSetExplorer.RepositoryManagement
 		}
 
 		#endregion
+
+		#region Find And Delete Subdivision Records Not Referenced by any Job, MapSection or JobMapSection
+
+		public void FindAndDeleteOrphanSubdivisions()
+		{
+			var report = FindOrphanSubdivisions(out var subdivisionIdsWithNoOwner);
+			Debug.WriteLine(report);
+
+			var countOrphanSubdivisions = subdivisionIdsWithNoOwner.Count;
+
+			if (countOrphanSubdivisions > 0)
+			{
+				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOrphanSubdivisions} Subdivisions that are not referenced by any Job, MapSection or JobMapSection?", "Delete Subdivision Records?",
+					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
+
+				if (msgBoxResult == MessageBoxResult.Yes)
+				{
+					var numberDeleted = _mapSectionAdapter.DeleteSubdivisionsInList(subdivisionIdsWithNoOwner);
+					MessageBox.Show($"{numberDeleted} Subdivision Records were deleted.");
+				}
+			}
+		}
+
+		public string FindOrphanSubdivisions(out List<ObjectId> subdivisionIdsWithNoOwner)
+		{
+			var report = ProjectAndMapSectionHelper.FindOrphanSubdivisions(_mapSectionAdapter, out subdivisionIdsWithNoOwner);
+			return report;
+		}
+
+		#endregion
+
+
 	}
 }

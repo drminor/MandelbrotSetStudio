@@ -52,6 +52,31 @@ namespace ProjectRepo
 			return result;
 		}
 
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobs()
+		{
+			var projection1 = Builders<JobRecord>.Projection.Expression
+				(
+					p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.SubDivisionId)
+				);
+
+			var filter = Builders<JobRecord>.Filter.Empty;
+			var result = Collection.Find(filter).Project(projection1).ToEnumerable();
+
+			return result;
+		}
+
+		public IEnumerable<ObjectId> GetSubdivisionIdsForAllJobs()
+		{
+			var projection1 = Builders<JobRecord>.Projection.Expression
+				(
+					p => p.SubDivisionId
+				);
+
+			var filter = Builders<JobRecord>.Filter.Empty;
+			var result = Collection.Find(filter).Project(projection1).ToEnumerable();
+
+			return result;
+		}
 
 
 		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndOwnerIdsByJobOwnerType(JobOwnerType jobOwnerType)
@@ -82,6 +107,16 @@ namespace ProjectRepo
 				var (subdivisionId, mapAreaInfo) = x;
 				return (subdivisionId, mapAreaInfo);
 			}
+		}
+
+		public ObjectId? GetSubdivisionId(ObjectId jobId)
+		{
+			var projection1 = Builders<JobRecord>.Projection.Expression(p => p.MapAreaInfo2Record.SubdivisionRecord.Id);
+			var filter = Builders<JobRecord>.Filter.Eq(f => f.Id, jobId);
+
+			var result = Collection.Find(filter).Project(projection1).FirstOrDefault();
+
+			return result;
 		}
 
 		public ObjectId Insert(JobRecord jobRecord)

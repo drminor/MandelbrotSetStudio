@@ -294,7 +294,7 @@ namespace ProjectRepo
 			return itemsFound;
 		}
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetSubdivisionIdsFromAllMapSections()
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsFromAllMapSections()
 		{
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.SubdivisionId));
 
@@ -305,6 +305,19 @@ namespace ProjectRepo
 			var itemsFound = operation.ToEnumerable();
 			return itemsFound;
 		}
+
+		public IEnumerable<ObjectId> GetAllSubdivisionIds()
+		{
+			var projection1 = Builders<MapSectionRecord>.Projection.Expression(p => p.SubdivisionId);
+
+			var filter = Builders<MapSectionRecord>.Filter.Empty;
+
+			IFindFluent<MapSectionRecord, ObjectId> operation = Collection.Find(filter).Project(projection1);
+
+			var itemsFound = operation.ToEnumerable();
+			return itemsFound;
+		}
+
 
 		private BigVectorDto GetBlockPos(MapSectionRecord msr)
 		{

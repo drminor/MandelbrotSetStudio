@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -267,6 +266,14 @@ namespace MSetRepo
 			return result;
 		}
 
+		public IEnumerable<ObjectId> GetSubdivisionIdsForAllMapSections()
+		{
+			var result = _mapSectionReaderWriter.GetAllSubdivisionIds();
+
+			return result;
+		}
+
+
 		#endregion
 
 		#region MapSection ZValues
@@ -509,6 +516,8 @@ namespace MSetRepo
 			return result;
 		}
 
+		// TODO: Estimate how many MapSections will actually be removed.
+
 		private long? DeleteMapSectionsForJobInternalNew(ObjectId jobId, JobOwnerType jobOwnerType, out long? numberJobMapSectionsDeleted)
 		{
 			var mapSectionIds = _jobMapSectionReaderWriter.GetMapSectionIdsByJobId(jobId, jobOwnerType);
@@ -711,9 +720,7 @@ namespace MSetRepo
 			var numberDeleted = _mapSectionReaderWriter.Delete(mapSectionIds);
 
 			return numberDeleted;
-
 		}
-
 
 		#endregion
 
@@ -721,8 +728,9 @@ namespace MSetRepo
 
 		public bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [NotNullWhen(true)] out Subdivision? subdivision)
 		{
-			var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta);
-			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDeltaReduced);
+			//var samplePointDeltaReduced = Reducer.Reduce(samplePointDelta); THIS CANNOT BE CHANGED
+
+			var samplePointDeltaDto = _dtoMapper.MapTo(samplePointDelta);
 
 			var baseMapPositionDto = _dtoMapper.MapTo(baseMapPosition);
 
@@ -771,31 +779,50 @@ namespace MSetRepo
 		//	return subsDeleted.HasValue && subsDeleted.Value > 0;
 		//}
 
-		//public Subdivision[] GetAllSubdivions()
-		//{
-		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+		public IEnumerable<Subdivision> GetAllSubdivisions()
+		{
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
-		//	var allRecs = subdivisionReaderWriter.GetAll();
+			var allRecs = subdivisionReaderWriter.GetAll();
 
-		//	var result = allRecs.Select(x => _mSetRecordMapper.MapFrom(x)).ToArray();
+			var result = allRecs.Select(x => _mSetRecordMapper.MapFrom(x));
 
-		//	return result;
-		//}
+			return result;
+		}
 
-		//public SubdivisionInfo[] GetAllSubdivisionInfos()
-		//{
-		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+		public SubdivisionInfo[] GetAllSubdivisionInfos()
+		{
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
-		//	var allRecs = subdivisionReaderWriter.GetAll();
+			var allRecs = subdivisionReaderWriter.GetAll();
 
-		//	var result = allRecs
-		//		.Select(x => _mSetRecordMapper.MapFrom(x))
-		//		.Select(x => new SubdivisionInfo(x.Id, x.SamplePointDelta.Width))
-		//		.ToArray();
+			var result = allRecs
+				.Select(x => _mSetRecordMapper.MapFrom(x))
+				.Select(x => new SubdivisionInfo(x.Id, x.SamplePointDelta.Width, x.BaseMapPosition))
+				.ToArray();
 
-		//	return result;
-		//}
+			return result;
+		}
 
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobs()
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.GetJobAndSubdivisionIdsForAllJobs();
+			return result;
+		}
+
+		public IEnumerable<ObjectId> GetSubdivisionIdsForAllJobs()
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.GetSubdivisionIdsForAllJobs();
+			return result;
+		}
+
+		public long DeleteSubdivisionsInList(IList<ObjectId> subdivisionIds)
+		{
+			var numberDeleted = _subdivisionReaderWriter.Delete(subdivisionIds);
+			return numberDeleted;
+		}
 
 		#endregion
 

@@ -21,6 +21,7 @@ namespace MSS.Common
 		{
 			var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
 			var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
+
 			var samplePointsX = BuildSamplePoints(iteratorCoords.StartingCx, samplePointOffsets, fP31ScalarMath);
 			var samplePointsY = BuildSamplePoints(iteratorCoords.StartingCy, samplePointOffsets, fP31ScalarMath);
 

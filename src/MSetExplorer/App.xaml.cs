@@ -26,7 +26,7 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class App : Application
 	{
-		private static readonly bool TEST_STORAGE_MODEL = true;
+		private static readonly bool TEST_STORAGE_MODEL = false;
 
 		#region Configuration
 
@@ -46,11 +46,14 @@ namespace MSetExplorer
 
 		private static readonly bool CREATE_JOB_MAP_SECTION_REPORT = false;
 
-		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS = false;
-		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS = false;
+		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS = true;
+		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS = true;
 
 
 		private static readonly bool FIND_AND_DELETE_ORPHAN_MAP_SECTIONS = false;
+
+		private static readonly bool FIND_AND_DELETE_ORPHAN_SUBDIVISIONS = false;
+
 
 		private static readonly bool DELETE_JOB_MAP_JOB_REFS = false;
 		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false;
@@ -109,6 +112,7 @@ namespace MSetExplorer
 
 				MessageBox.Show("Exiting.");
 				Current.Shutdown();
+				return;
 			}
 
 			//_mEngineServerManager?.Start();
@@ -195,6 +199,11 @@ namespace MSetExplorer
 				repositoryIntegrityUtility.FindAndDeleteOrphanMapSections();
 			}
 
+			if (FIND_AND_DELETE_ORPHAN_SUBDIVISIONS)
+			{
+				repositoryIntegrityUtility.FindAndDeleteOrphanSubdivisions();
+			}
+
 			if (DELETE_JOB_MAP_JOB_REFS)
 			{
 				repositoryIntegrityUtility.CheckAndDeleteJobRefsFromJobMapCollection();
@@ -219,7 +228,9 @@ namespace MSetExplorer
 
 			if (CREATE_JOB_MAP_SECTION_REPORT | FIND_AND_DELETE_ORPHAN_MAP_SECTIONS | DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS |
 				POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS | POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS |
-				FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS | FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS)
+				FIND_AND_DELETE_ORPHAN_MAP_SECTIONS |
+				FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS | FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS |
+				FIND_AND_DELETE_ORPHAN_SUBDIVISIONS)
 			{
 				if (MessageBoxResult.No == MessageBox.Show("Reporting completed. Continue with startup?", "Continue?", MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No))
 				{

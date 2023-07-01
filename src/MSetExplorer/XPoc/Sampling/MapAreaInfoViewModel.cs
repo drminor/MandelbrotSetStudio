@@ -1,6 +1,7 @@
 ﻿using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
+using System.Diagnostics;
 
 namespace MSetExplorer.XPoc
 {
@@ -200,9 +201,16 @@ namespace MSetExplorer.XPoc
 
 		private bool IsSubdivisionOnFile(Subdivision subdivision)
 		{
-			var result = _subdivisonProvider.TryGetSubdivision(subdivision.SamplePointDelta, subdivision.BaseMapPosition, out var _);
+			if (_subdivisonProvider.TryGetSubdivision(subdivision.SamplePointDelta, subdivision.BaseMapPosition, out var foundSubdivision))
+			{
+				Debug.Assert(subdivision.Id == foundSubdivision.Id, "The Subdivision Ids do not match.");
 
-			return result;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		#endregion

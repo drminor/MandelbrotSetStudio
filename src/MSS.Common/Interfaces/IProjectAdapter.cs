@@ -33,7 +33,7 @@ namespace MSS.Common
 		Poster? CreatePoster(string name, string? description, SizeDbl posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
 		List<Poster> GetAllPosters();
 		List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
-		List<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
+		IEnumerable<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
 
 		bool PosterExists(string name, [MaybeNullWhen(false)] out ObjectId posterId);
 		bool PosterExists(ObjectId posterId);
@@ -65,9 +65,9 @@ namespace MSS.Common
 		void UpdateColorBandSetName(ObjectId colorBandSetId, string? name);
 		int DeleteUnusedColorBandSets();
 
+		ObjectId? GetSubdivisionId(ObjectId jobId);
+		(ObjectId, MapAreaInfo2)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId);
 
-
-		(ObjectId, MapAreaInfo2)? GetSubdivisionId(ObjectId jobId);
 		IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndOwnerIdsByJobOwnerType(JobOwnerType jobOwnerType);
 
 		IEnumerable<ObjectId> GetAllProjectIds();

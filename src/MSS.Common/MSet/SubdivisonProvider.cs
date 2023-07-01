@@ -7,6 +7,8 @@ namespace MSS.Common.MSet
 {
 	public class SubdivisonProvider
 	{
+		//private static readonly bool _useDetailedDebug = true;
+
 		private const int TERMINAL_LIMB_COUNT = 2;
 		private const int TERMINAL_SUBDIVISION_POW = TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB;
 

@@ -1,0 +1,4 @@
+{$and: [{OwnerType: {$eq:0}}, {OwnerId:ObjectId('64988104325e5aa9299909ac')}]}
+
+
+644cb937d866a123d4a011a2

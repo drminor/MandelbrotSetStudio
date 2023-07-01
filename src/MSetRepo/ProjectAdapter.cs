@@ -364,10 +364,10 @@ namespace MSetRepo
 			return result;
 		}
 
-		public List<ObjectId> GetAllJobIdsForPoster(ObjectId posterId)
+		public IEnumerable<ObjectId> GetAllJobIdsForPoster(ObjectId posterId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var result = jobReaderWriter.GetJobIdsByOwner(posterId).ToList();
+			var result = jobReaderWriter.GetJobIdsByOwner(posterId);
 
 			return result;
 		}
@@ -533,7 +533,7 @@ namespace MSetRepo
 			return job;
 		}
 
-		public (ObjectId, MapAreaInfo2)? GetSubdivisionId(ObjectId jobId)
+		public (ObjectId, MapAreaInfo2)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
 		{
 			try
 			{
@@ -552,6 +552,21 @@ namespace MSetRepo
 				{
 					return null;
 				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"While GetSubdivisionId from a JobId, got exception: {e}.");
+				return null;
+			}
+		}
+
+		public ObjectId? GetSubdivisionId(ObjectId jobId)
+		{
+			try
+			{
+				var jobReaderWriter = new JobReaderWriter(_dbProvider);
+				var subdivisionId = jobReaderWriter.GetSubdivisionId(jobId);
+				return subdivisionId;
 			}
 			catch (Exception e)
 			{
