@@ -53,7 +53,7 @@
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Cancel</Button>
                 <Button Name="btnDelete" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="40,10, 10, 10" Click="DeleteButton_Click">_Delete</Button>
 
-                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TrimMapSectionsButton_Click">_Trim</Button>
+                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="110" FontSize="16" Margin="10" Click="ViewJobsButton_Click">_View Jobs</Button>
                 <!--<Button Name="btnTrimMapSectionsHeavy" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TrimMapSectionsHeavyButton_Click">Trim _Heavy</Button>-->
             </StackPanel>
 

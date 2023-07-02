@@ -17,6 +17,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.ServiceProcess;
 using System.Windows;
+using System.Windows.Media.Converters;
 using Windows.UI.WebUI;
 
 namespace MSetExplorer
@@ -27,6 +28,8 @@ namespace MSetExplorer
 	public partial class App : Application
 	{
 		private static readonly bool TEST_STORAGE_MODEL = false;
+
+		private static readonly bool TEST_JOB_DETAILS_DIALOG = true;
 
 		#region Configuration
 
@@ -54,7 +57,7 @@ namespace MSetExplorer
 		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false;
 
 		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS = false;
-		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS = true;
+		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS = false;
 
 		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2093-05-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
@@ -104,6 +107,14 @@ namespace MSetExplorer
 			if (TEST_STORAGE_MODEL)
 			{
 				TestStorageModel();
+
+				MessageBox.Show("Exiting.");
+				Current.Shutdown();
+				return;
+			}
+			else if (TEST_JOB_DETAILS_DIALOG)
+			{
+				TestJobDetailsWindow();
 
 				MessageBox.Show("Exiting.");
 				Current.Shutdown();
@@ -611,5 +622,55 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Either the _projectAdapter is not an instance of a ProjectAdapter or the _mapSectionAdapter is not an instance of a MapSectionAdapter.");
 			}
 		}
+
+		private void TestJobDetailsWindow()
+		{
+			_repositoryAdapters = GetRepositoryAdaptersFast();
+
+			var ownerId = new ObjectId("64913f6d0d20aad9f1a64737"); // Poster Art3-13-4
+			var ownerType = OwnerType.Poster;
+			var initialJobId = new ObjectId("649141932b7c6bda0e7ccf81");
+
+			OpenJobDetailsDialog(ownerId, ownerType, initialJobId);
+		}
+
+		private void OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
+		{
+			DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSections = null;
+
+
+
+			var jobDetailsViewModel = CreateAJobDetailsDialog(ownerId, ownerType, initialJobId, deleteNonEssentialMapSections);
+			var jobDetailsDialog = new JobDetailsWindow
+			{
+				DataContext = jobDetailsViewModel
+			};
+
+			jobDetailsDialog.ShowDialog();
+
+			//if (jobDetailsDialog.ShowDialog() == true)
+			//{
+			//	Debug.WriteLine("JobDetailDialog is returning True.");
+			//	return true;
+			//}
+			//else
+			//{
+			//	Debug.WriteLine("JobDetailDialog is returning False.");
+			//	return false;
+			//}
+		}
+
+		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
+		{
+			if (_repositoryAdapters == null)
+			{
+				throw new InvalidOperationException("The _repositoryAdapters is null.");
+			}
+			var projectAdapter = _repositoryAdapters.ProjectAdapter;
+			var mapSectionAdapter = _repositoryAdapters.MapSectionAdapter;
+
+			return new JobDetailsViewModel(projectAdapter, mapSectionAdapter, deleteNonEssentialMapSectionsFunction, ownerId, ownerType, initialJobId);
+		}
+
 	}
 }

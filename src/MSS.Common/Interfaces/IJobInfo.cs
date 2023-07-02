@@ -7,9 +7,9 @@ namespace MSS.Common
 	{
 		DateTime DateCreatedUtc { get; set; }
 		ObjectId Id { get; set; }
-		int MapCoordExponent { get; set; }
 		ObjectId? ParentJobId { get; set; }
 		ObjectId SubDivisionId { get; set; }
 		int TransformType { get; set; }
+		int MapCoordExponent { get; set; }
 	}
 }

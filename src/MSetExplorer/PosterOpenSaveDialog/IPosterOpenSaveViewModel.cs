@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		long TrimSelected(bool agressive);
 
-		Func<Job, SizeDbl, bool, long>? DeleteNonEssentialMapSectionsFunction { get; }
+		DeleteNonEssentialMapSectionsDelegate? DeleteNonEssentialMapSectionsFunction { get; }
 
 		ViewModelFactory ViewModelFactory { get; }
 	}

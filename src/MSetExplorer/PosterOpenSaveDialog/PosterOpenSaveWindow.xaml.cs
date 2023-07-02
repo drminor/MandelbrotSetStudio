@@ -138,6 +138,20 @@ namespace MSetExplorer
 				: MessageBox.Show($"Could not delete the selected poster: {selectedName}.");
 		}
 
+		private void ViewJobsButton_Click(object sender, RoutedEventArgs e)
+		{
+			var selectedPoster = _vm.SelectedPoster;
+
+			if (selectedPoster != null)
+			{
+				var ownerId = selectedPoster.PosterId;
+				var ownerType = OwnerType.Poster;
+				var currentJobId = selectedPoster.CurrentJobId;
+
+				OpenJobDetailsDialog(ownerId, ownerType, currentJobId);
+			}
+		}
+
 		private void TrimMapSectionsButton_Click(object sender, RoutedEventArgs e)
 		{
 			var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: false);
@@ -191,27 +205,27 @@ namespace MSetExplorer
 		#region Jobs Dialog
 
 
-		private bool OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
+		private void OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
 		{
 			var deleteNonEssentialMapSectionsFunction = _vm.DeleteNonEssentialMapSectionsFunction;
-
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAJobDetailsDialog(ownerId, ownerType, initialJobId, deleteNonEssentialMapSectionsFunction);
-
-			var posterOpenSaveWindow = new PosterOpenSaveWindow
+			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(ownerId, ownerType, initialJobId, deleteNonEssentialMapSectionsFunction);
+			var jobDetailsDialog = new JobDetailsWindow
 			{
-				DataContext = posterOpenSaveVm
+				DataContext = jobDetailsViewModel
 			};
 
-			if (posterOpenSaveWindow.ShowDialog() == true)
-			{
-				Debug.WriteLine("JobDetailDialog is returning True.");
-				return true;
-			}
-			else
-			{
-				Debug.WriteLine("JobDetailDialog is returning False.");
-				return false;
-			}
+			jobDetailsDialog.ShowDialog();
+
+			//if (jobDetailsDialog.ShowDialog() == true)
+			//{
+			//	Debug.WriteLine("JobDetailDialog is returning True.");
+			//	return true;
+			//}
+			//else
+			//{
+			//	Debug.WriteLine("JobDetailDialog is returning False.");
+			//	return false;
+			//}
 		}
 
 

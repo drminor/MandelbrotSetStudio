@@ -19,7 +19,7 @@ namespace MSetExplorer
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		private readonly Func<Job, SizeDbl, bool, long>? _deleteNonEssentialMapSectionsFunction;
+		private readonly DeleteNonEssentialMapSectionsDelegate? _deleteNonEssentialMapSectionsFunction;
 
 		private IJobInfo? _selectedJob;
 
@@ -27,7 +27,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public JobDetailsViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, Func<Job, SizeDbl, bool, long>? deleteNonEssentialMapSectionsFunction, ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
+		public JobDetailsViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction, ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;

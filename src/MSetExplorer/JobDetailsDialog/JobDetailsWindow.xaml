@@ -16,14 +16,15 @@
 
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
 
-            <ListView Margin="10" Name="lvJobDetails" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedPoster}">
+            <ListView Margin="10" Name="lvJobDetails" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedJobInfo}">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Name" Width="250" DisplayMemberBinding="{Binding Name}" />
-                        <GridViewColumn Header="Size" Width="110" DisplayMemberBinding="{Binding Size}" />
-                        <GridViewColumn Header="Bytes" Width="100" DisplayMemberBinding="{Binding Bytes, StringFormat=n0}" />
+                        <GridViewColumn Header="Id" Width="250" DisplayMemberBinding="{Binding Id}" />
+                        <!--<GridViewColumn Header="Size" Width="110" DisplayMemberBinding="{Binding Size}" />-->
+                        <!--<GridViewColumn Header="Bytes" Width="100" DisplayMemberBinding="{Binding Bytes, StringFormat=n0}" />-->
                         <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreatedUtc}" />
-                        <GridViewColumn Header="Updated" Width="190" DisplayMemberBinding="{Binding LastSavedUtc}" />
+                        <GridViewColumn Header="Sub" Width="190" DisplayMemberBinding="{Binding SubdivisionId}" />
+                        <GridViewColumn Header="Exp" Width="190" DisplayMemberBinding="{Binding MapCoordinateExponent}" />
                     </GridView>
                 </ListView.View>
             </ListView>

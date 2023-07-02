@@ -18,6 +18,8 @@ namespace MSetExplorer
 
 	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, SizeDbl canvasSize, bool allowEdits);
 
+	public delegate long DeleteNonEssentialMapSectionsDelegate(Job job, SizeDbl canvasSize, bool agressive);
+
 	public class ViewModelFactory
 	{
 		private readonly IProjectAdapter _projectAdapter;
@@ -26,17 +28,15 @@ namespace MSetExplorer
 
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
-
 		public ViewModelFactory(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, SharedColorBandSetAdapter sharedColorBandSetAdapter, IMapLoaderManager mapLoaderManager)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_sharedColorBandSetAdapter = sharedColorBandSetAdapter;
+			_mapLoaderManager = mapLoaderManager;
 
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
 			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
-
-			_mapLoaderManager = mapLoaderManager;
 		}
 
 		// Project Open/Save
@@ -46,13 +46,14 @@ namespace MSetExplorer
 		}
 
 		// Poster Open/Save
-		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType, Func<Job, SizeDbl, bool, long>? deleteNonEssentialMapSectionsFunction, ViewModelFactory viewModelFactory)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
 		{
+			var viewModelFactory = this;
 			return new PosterOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, viewModelFactory, deleteNonEssentialMapSectionsFunction, initalName, dialogType);
 		}
 
 		// JobDetils
-		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId, Func<Job, SizeDbl, bool, long>? deleteNonEssentialMapSectionsFunction)
+		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
 		{
 			return new JobDetailsViewModel(_projectAdapter, _mapSectionAdapter, deleteNonEssentialMapSectionsFunction, ownerId, ownerType, initialJobId);
 		}
@@ -79,14 +80,6 @@ namespace MSetExplorer
 			var result = new CreateImageProgressViewModel(pngBuilder, mapJobHelper);
 			return result;
 		}
-
-
-		//var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(/*imageFilePath, areaColorAndCalcSettings, imageSize*/);
-
-		//var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
-		//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-		//createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Poster, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
-
 
 
 		// Poster Size Editor Preview
