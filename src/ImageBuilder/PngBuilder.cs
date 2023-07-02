@@ -37,7 +37,7 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, JobOwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
+		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -65,7 +65,8 @@ namespace ImageBuilder
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtrY, w, mapCalcSettings, mapAreaInfo.Precision);
+					var blockIndexY = blockPtrY - (h / 2);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtrY, blockIndexY, w, mapCalcSettings, mapAreaInfo.Precision);
 
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);
@@ -180,15 +181,17 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, JobOwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, OwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, BigVector mapBlockOffset, int rowPtr, int blockIndexY, int stride, MapCalcSettings mapCalcSettings, int precision)
 		{
-			var jobType = JobType.SizeEditorPreview;
+			var jobType = JobType.Image;
 			var requests = new List<MapSectionRequest>();
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var screenPositionRelativeToCenter = new VectorInt(key);
+
+				var blockIndexX = colPtr - (stride / 2);
+				var screenPositionRelativeToCenter = new VectorInt(blockIndexX, blockIndexY);
 				var mapSectionRequest = _mapSectionBuilder.CreateRequest(jobType, key, screenPositionRelativeToCenter, mapBlockOffset, precision, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId, mapCalcSettings, colPtr);
 				requests.Add(mapSectionRequest);
 			}

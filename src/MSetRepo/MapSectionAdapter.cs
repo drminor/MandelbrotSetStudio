@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -123,7 +122,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct)
+		public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct)
 		{
 			try
 			{
@@ -185,10 +184,12 @@ namespace MSetRepo
 			}
 		}
 
-		public MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors)
+		public MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors)
 		{
 			try
 			{
+				var blockPositionRecord = _mSetRecordMapper.MapTo(blockPosition);
+
 				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
 				if (mapSectionRecord != null)
 				{
@@ -214,8 +215,7 @@ namespace MSetRepo
 		{
 			try
 			{
-				var blockPositionRecord = _mSetRecordMapper.MapTo(blockPosition);
-				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPositionRecord.BigVector);
+				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
 
 				if (mapSectionRecord != null)
 				{
@@ -340,7 +340,7 @@ namespace MSetRepo
 
 		#region JobMapSection
 
-		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, JobOwnerType jobOwnerType, JobType jobType, SizeInt blockIndex)
+		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, OwnerType jobOwnerType, JobType jobType, SizeInt blockIndex)
 		{
 			var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			if (string.IsNullOrEmpty(mapSectionIdStr))
@@ -371,7 +371,7 @@ namespace MSetRepo
 		}
 
 		// TODO: Add JobType and BlockIndex arguments
-		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, JobType jobType, SizeInt blockIndex)
+		private async Task<ObjectId?> SaveJobMapSectionAsync(ObjectId mapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, ObjectId jobId, OwnerType jobOwnerType, bool isInverted, JobType jobType, SizeInt blockIndex)
 		{
 			var existingRecord = await _jobMapSectionReaderWriter.GetByMapAndJobIdAsync(mapSectionId, jobId, jobOwnerType);
 			if (existingRecord == null)
@@ -421,7 +421,7 @@ namespace MSetRepo
 
 		// TODO: Add JobType and BlockIndex arguments
 
-		public bool InsertIfNotFoundJobMapSection(JobType jobType, ObjectId mapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, ObjectId jobId, JobOwnerType ownerType, bool isInverted, SizeInt blockIndex, out ObjectId jobMapSectionId)
+		public bool InsertIfNotFoundJobMapSection(JobType jobType, ObjectId mapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, ObjectId jobId, OwnerType ownerType, bool isInverted, SizeInt blockIndex, out ObjectId jobMapSectionId)
 		{
 			var existingRecord = _jobMapSectionReaderWriter.GetByMapAndJobId(mapSectionId, jobId, ownerType);
 			if (existingRecord == null)
@@ -471,13 +471,13 @@ namespace MSetRepo
 			}
 		}
 
-		public List<JobMapSectionRecord> GetByJobId(ObjectId jobId, JobOwnerType jobOwnerType)
+		public List<JobMapSectionRecord> GetByJobId(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var jobMapSectionRecords = _jobMapSectionReaderWriter.GetByJobId(jobId, jobOwnerType);
 			return jobMapSectionRecords;
 		}
 
-		public IList<ObjectId> GetMapSectionIds(ObjectId jobId, JobOwnerType jobOwnerType)
+		public IList<ObjectId> GetMapSectionIds(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var mapSectionIds = _jobMapSectionReaderWriter.GetMapSectionIdsByJobId(jobId, jobOwnerType);
 
@@ -497,7 +497,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public long? DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, JobOwnerType jobOwnerType)
+		public long? DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, OwnerType jobOwnerType)
 		{
 			var result = 0L;
 
@@ -516,7 +516,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public long? DeleteMapSectionsForJob(ObjectId jobId, JobOwnerType jobOwnerType)
+		public long? DeleteMapSectionsForJob(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			Debug.WriteLine($"Removing MapSections and JobMapSections for {jobOwnerType}: {jobId}.");
 
@@ -529,7 +529,7 @@ namespace MSetRepo
 
 		// TODO: Estimate how many MapSections will actually be removed.
 
-		private long? DeleteMapSectionsForJobInternalNew(ObjectId jobId, JobOwnerType jobOwnerType, out long? numberJobMapSectionsDeleted)
+		private long? DeleteMapSectionsForJobInternalNew(ObjectId jobId, OwnerType jobOwnerType, out long? numberJobMapSectionsDeleted)
 		{
 			var mapSectionIds = _jobMapSectionReaderWriter.GetMapSectionIdsByJobId(jobId, jobOwnerType);
 
@@ -543,7 +543,7 @@ namespace MSetRepo
 			return numberDeleted;
 		}
 
-		public long? DeleteMapSectionsWithJobType(IList<ObjectId> mapSectionIds, JobOwnerType jobOwnerType)
+		public long? DeleteMapSectionsWithJobType(IList<ObjectId> mapSectionIds, OwnerType jobOwnerType)
 		{
 			var numberOfMapSectionRefsDeleted = _jobMapSectionReaderWriter.DeleteJobMapSectionsByMapSectionId(mapSectionIds, jobOwnerType);
 
@@ -586,7 +586,7 @@ namespace MSetRepo
 		//	return result;
 		//}
 
-		public long? DuplicateJobMapSections(ObjectId jobId, JobOwnerType jobOwnerType, ObjectId newJobId)
+		public long? DuplicateJobMapSections(ObjectId jobId, OwnerType jobOwnerType, ObjectId newJobId)
 		{
 			var jobMapSectionRecords = _jobMapSectionReaderWriter.GetByJobId(jobId, jobOwnerType);
 

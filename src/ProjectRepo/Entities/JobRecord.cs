@@ -10,7 +10,7 @@ namespace ProjectRepo.Entities
 		ObjectId? ParentJobId,
 
 		ObjectId OwnerId,
-		JobOwnerType JobOwnerType,	// TODO_schema: Rename JobOwnerType -> OwnerType
+		OwnerType JobOwnerType,	// TODO_schema: Rename JobOwnerType -> OwnerType
 
 		ObjectId SubDivisionId,     // TODO_schema: Delete the JobRecord.SubdivisionId
 		string Label,

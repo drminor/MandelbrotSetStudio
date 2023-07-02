@@ -33,7 +33,7 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-		public List<MapSectionRequest> CreateSectionRequests(JobType jobType, string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		public List<MapSectionRequest> CreateSectionRequests(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -43,10 +43,13 @@ namespace MSS.Common
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
 			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
 
+			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
+
 			var requestNumber = 0;
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var screenPositionRelativeToCenter = new VectorInt(screenPosition);
+				var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
+
 				var mapSectionRequest = CreateRequest(jobType, screenPosition, screenPositionRelativeToCenter, mapAreaInfo.MapBlockOffset, precision, jobId, jobOwnerType, 
 					mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
 				result.Add(mapSectionRequest);
@@ -55,17 +58,23 @@ namespace MSS.Common
 			return result;
 		}
 
-		public List<MapSectionRequest> CreateSectionRequestsFromMapSections(JobType jobType, string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
+		public List<MapSectionRequest> CreateSectionRequestsFromMapSections(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
 		{
 			var result = new List<MapSectionRequest>();
 
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
+			Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests. The map extent is {mapExtentInBlocks}.");
+
+
 			Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
+
+			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
 
 			var requestNumber = 0;
 			foreach (var mapSection in emptyMapSections)
 			{
 				var screenPosition = mapSection.ScreenPosition;
-				var screenPositionRelativeToCenter = new VectorInt(screenPosition);
+				var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
 
 				var mapSectionRequest = CreateRequest(jobType, screenPosition, screenPositionRelativeToCenter, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, 
 					mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
@@ -94,7 +103,7 @@ namespace MSS.Common
 		/// <param name="subdivision"></param>
 		/// <param name="mapCalcSettings"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(JobType jobType, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector jobMapBlockOffset, int precision, string jobId, JobOwnerType ownerType, 
+		public MapSectionRequest CreateRequest(JobType jobType, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector jobMapBlockOffset, int precision, string jobId, OwnerType ownerType, 
 			Subdivision subdivision, ObjectId originalSourceSubdivisionId, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
 			// Block Position, relative to the Subdivision's BaseMapPosition

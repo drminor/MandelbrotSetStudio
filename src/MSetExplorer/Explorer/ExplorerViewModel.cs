@@ -150,7 +150,7 @@ namespace MSetExplorer
 				var areaColorAndCalcSettings = new AreaColorAndCalcSettings
 					(
 					curJobId,
-					JobOwnerType.Project,
+					OwnerType.Project,
 					newMapAreaInfo,
 					newColorBandSet,
 					newMapCalcSettings

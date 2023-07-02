@@ -202,7 +202,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 1000, threshold:4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 
-			var job = _mapJobHelper.BuildHomeJob(JobOwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
 			RunTest(job);
 		}
@@ -256,7 +256,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			
-			var job = _mapJobHelper.BuildHomeJob(JobOwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
 			RunTest(job);
 		}
@@ -275,7 +275,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//Timings.Clear();
 
 			var jobId = job.Id.ToString();
-			var ownerType = JobOwnerType.Project;
+			var ownerType = OwnerType.Project;
 			var jobType = JobType.FullScale;
 
 			var stopwatch = Stopwatch.StartNew();

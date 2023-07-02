@@ -79,13 +79,13 @@ namespace ProjectRepo
 		}
 
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId, JobOwnerType>> GetJobAndOwnerIdsWithJobOwnerType()
+		public IEnumerable<ValueTuple<ObjectId, ObjectId, OwnerType>> GetJobAndOwnerIdsWithJobOwnerType()
 		{
-			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, JobOwnerType>(p.Id, p.OwnerId, p.JobOwnerType));
+			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, OwnerType>(p.Id, p.OwnerId, p.JobOwnerType));
 
 			var filter = Builders<JobRecord>.Filter.Empty;
 
-			IFindFluent<JobRecord, ValueTuple<ObjectId, ObjectId, JobOwnerType>> operation = Collection.Find(filter).Project(projection1);
+			IFindFluent<JobRecord, ValueTuple<ObjectId, ObjectId, OwnerType>> operation = Collection.Find(filter).Project(projection1);
 
 			var itemsFound = operation.ToEnumerable();
 			return itemsFound;
@@ -158,7 +158,7 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
-		public void UpdateJobOwnerType(ObjectId jobId, JobOwnerType jobOwnerType)
+		public void UpdateJobOwnerType(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 

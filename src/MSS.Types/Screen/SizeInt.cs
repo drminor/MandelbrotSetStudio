@@ -26,6 +26,9 @@ namespace MSS.Types
 			Height = height;
 		}
 
+		public SizeInt(VectorInt vectorInt) : this(vectorInt.X, vectorInt.Y)
+		{ }
+
 		public SizeInt(SizeDbl sizeDbl) : this(sizeDbl.Width, sizeDbl.Height)
 		{ }
 

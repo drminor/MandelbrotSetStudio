@@ -43,7 +43,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void CreateImage(string imageFilePath, ObjectId jobId, JobOwnerType ownerType, MapAreaInfo mapAreaInfoWithSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfoWithSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			ImageFilePath = imageFilePath;
 

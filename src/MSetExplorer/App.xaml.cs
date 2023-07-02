@@ -208,13 +208,13 @@ namespace MSetExplorer
 
 			if (POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS)
 			{
-				var report = repositoryIntegrityUtility.PopulateJobMapSections(JobOwnerType.Project);
+				var report = repositoryIntegrityUtility.PopulateJobMapSections(OwnerType.Project);
 				Debug.WriteLine(report);
 			}
 
 			if (POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS)
 			{
-				var report = repositoryIntegrityUtility.PopulateJobMapSections(JobOwnerType.Poster);
+				var report = repositoryIntegrityUtility.PopulateJobMapSections(OwnerType.Poster);
 				Debug.WriteLine(report);
 			}
 

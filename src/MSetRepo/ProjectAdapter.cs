@@ -257,7 +257,7 @@ namespace MSetRepo
 				var jobCount = numberOfFirstLevelChildJobs > 1 ? jobInfos.Count() : -1 * jobInfos.Count();
 
 				var jobIds = jobInfos.Select(x => x.Id).ToList();
-				var bytes = GetBytes(jobIds, JobOwnerType.Project, jobMapSectionReaderWriter);
+				var bytes = GetBytes(jobIds, OwnerType.Project, jobMapSectionReaderWriter);
 
 				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, bytes, dateCreated, lastUpdatedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
@@ -356,7 +356,7 @@ namespace MSetRepo
 
 		#region Job
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId, JobOwnerType>> GetJobAndOwnerIdsWithJobOwnerType()
+		public IEnumerable<ValueTuple<ObjectId, ObjectId, OwnerType>> GetJobAndOwnerIdsWithJobOwnerType()
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var result = jobReaderWriter.GetJobAndOwnerIdsWithJobOwnerType();
@@ -688,7 +688,7 @@ namespace MSetRepo
 			job.LastSavedUtc = DateTime.UtcNow;
 		}
 
-		public void UpdateJobOwnerType(ObjectId jobId, JobOwnerType jobOwnerType)
+		public void UpdateJobOwnerType(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
@@ -1003,20 +1003,20 @@ namespace MSetRepo
 				Debug.WriteLine("Here at Art3-13-4");
 			}
 
-			var bytes = GetBytes(posterRecord.Id, JobOwnerType.Poster, jobReaderWriter, jobMapSectionReaderWriter);
+			var bytes = GetBytes(posterRecord.Id, OwnerType.Poster, jobReaderWriter, jobMapSectionReaderWriter);
 
 			result = new PosterInfo(posterRecord.Id, posterRecord.Name, posterRecord.Description, posterRecord.CurrentJobId, posterRecord.PosterSize, bytes, posterRecord.DateCreatedUtc, lastSavedUtc, posterRecord.LastAccessedUtc);
 			return result;
 		}
 
-		private int GetBytes(ObjectId ownerId, JobOwnerType jobOwnerType, JobReaderWriter jobReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
+		private int GetBytes(ObjectId ownerId, OwnerType jobOwnerType, JobReaderWriter jobReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
 		{
 			var jobIds = jobReaderWriter.GetJobIdsByOwner(ownerId).ToList();
 			var result = GetBytes(jobIds, jobOwnerType, jobMapSectionReaderWriter);
 			return result;
 		}
 
-		private int GetBytes(List<ObjectId> jobIds, JobOwnerType jobOwnerType, JobMapSectionReaderWriter jobMapSectionReaderWriter)
+		private int GetBytes(List<ObjectId> jobIds, OwnerType jobOwnerType, JobMapSectionReaderWriter jobMapSectionReaderWriter)
 		{
 			var numberOfMapSections = 0;
 

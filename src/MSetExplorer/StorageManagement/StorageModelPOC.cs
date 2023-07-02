@@ -44,7 +44,7 @@ namespace MSetExplorer.StorageManagement
 
 			foreach (var smJob in jobOwner.Jobs)
 			{
-				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(smJob.JobId, JobOwnerType.Project);
+				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(smJob.JobId, OwnerType.Project);
 
 				foreach (var jobMapSectionRecord in jobMapSectionRecords)
 				{

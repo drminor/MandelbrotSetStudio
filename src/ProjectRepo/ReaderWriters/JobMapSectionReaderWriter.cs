@@ -84,7 +84,7 @@ namespace ProjectRepo
 			return foundMapSectionIds;
 		}
 
-		public List<JobMapSectionRecord> GetByJobId(ObjectId jobId, JobOwnerType jobOwnerType)
+		public List<JobMapSectionRecord> GetByJobId(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
@@ -93,7 +93,7 @@ namespace ProjectRepo
 			return jobMapSectionRecords;
 		}
 
-		public List<ObjectId> GetMapSectionIdsByJobId(ObjectId jobId, JobOwnerType jobOwnerType)
+		public List<ObjectId> GetMapSectionIdsByJobId(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
@@ -102,7 +102,7 @@ namespace ProjectRepo
 			return jobMapSectionRecordIds;
 		}
 
-		public int GetCountOfMapSectionsByJobId(ObjectId jobId, JobOwnerType jobOwnerType)
+		public int GetCountOfMapSectionsByJobId(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
@@ -112,7 +112,7 @@ namespace ProjectRepo
 			return numberDistinctOfMapSectionsForJob;
 		}
 
-		public async Task<IList<JobMapSectionRecord>> GetByJobIdAsync(ObjectId jobId, JobOwnerType jobOwnerType)
+		public async Task<IList<JobMapSectionRecord>> GetByJobIdAsync(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
@@ -122,7 +122,7 @@ namespace ProjectRepo
 			return jobMapSectionRecords;
 		}
 
-		public async Task<JobMapSectionRecord?> GetByMapAndJobIdAsync(ObjectId mapSectionId, ObjectId jobId, JobOwnerType jobOwnerType)
+		public async Task<JobMapSectionRecord?> GetByMapAndJobIdAsync(ObjectId mapSectionId, ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.MapSectionId, mapSectionId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
@@ -133,7 +133,7 @@ namespace ProjectRepo
 			return jobMapSectionRecords.FirstOrDefault();
 		}
 
-		public JobMapSectionRecord? GetByMapAndJobId(ObjectId mapSectionId, ObjectId jobId, JobOwnerType jobOwnerType)
+		public JobMapSectionRecord? GetByMapAndJobId(ObjectId mapSectionId, ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.MapSectionId, mapSectionId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
@@ -210,7 +210,7 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public async Task<long?> DeleteJobMapSectionsAsync(ObjectId jobId, JobOwnerType jobOwnerType)
+		public async Task<long?> DeleteJobMapSectionsAsync(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
@@ -220,7 +220,7 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public long? DeleteJobMapSections(ObjectId jobId, JobOwnerType jobOwnerType)
+		public long? DeleteJobMapSections(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
@@ -239,7 +239,7 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public long? DeleteJobMapSectionsByMapSectionId(IEnumerable<ObjectId> mapSectionIds, JobOwnerType jobOwnerType)
+		public long? DeleteJobMapSectionsByMapSectionId(IEnumerable<ObjectId> mapSectionIds, OwnerType jobOwnerType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.In(f => f.MapSectionId, mapSectionIds);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
@@ -263,7 +263,7 @@ namespace ProjectRepo
 			return mapSectionIds;
 		}
 
-		public IList<ObjectId> GetDistinctJobIdsFromJobMapSections(JobOwnerType jobOwnerType)
+		public IList<ObjectId> GetDistinctJobIdsFromJobMapSections(OwnerType jobOwnerType)
 		{
 			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => p.JobId);
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);

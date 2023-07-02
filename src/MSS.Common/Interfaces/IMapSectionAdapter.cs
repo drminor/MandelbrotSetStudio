@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
-using MSS.Types.DataTransferObjects;
+//using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -18,9 +18,9 @@ namespace MSS.Common
 		void DropMapSections();
 		void DropMapSectionsAndSubdivisions();
 
-		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct);
+		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct);
 		MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors);
-		MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVectorDto blockPosition, MapSectionVectors mapSectionVectors);
+		MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors);
 
 		ObjectId? GetMapSectionId(ObjectId subdivisionId, BigVector blockPosition);
 
@@ -29,7 +29,7 @@ namespace MSS.Common
 
 		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted);
 		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, JobOwnerType jobOwnerType, JobType jobType);
-		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, JobOwnerType jobOwnerType, JobType jobType, SizeInt blockIndex);
+		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, OwnerType jobOwnerType, JobType jobType, SizeInt blockIndex);
 
 
 
@@ -41,10 +41,10 @@ namespace MSS.Common
 		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [NotNullWhen(true)] out Subdivision? subdivision);
 		Subdivision InsertSubdivision(Subdivision subdivision);
 
-		IList<ObjectId> GetMapSectionIds(ObjectId jobId, JobOwnerType jobOwnerType);
+		IList<ObjectId> GetMapSectionIds(ObjectId jobId, OwnerType jobOwnerType);
 		
 		//bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
-		bool InsertIfNotFoundJobMapSection(JobType jobType, ObjectId mapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, ObjectId jobId, JobOwnerType ownerType, bool isInverted, SizeInt blockIndex, out ObjectId jobMapSectionId);
+		bool InsertIfNotFoundJobMapSection(JobType jobType, ObjectId mapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, ObjectId jobId, OwnerType ownerType, bool isInverted, SizeInt blockIndex, out ObjectId jobMapSectionId);
 
 
 		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections();

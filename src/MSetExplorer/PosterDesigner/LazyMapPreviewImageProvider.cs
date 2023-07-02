@@ -34,7 +34,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, ObjectId jobId, JobOwnerType ownerType, MapAreaInfo2 mapAreaInfo, SizeDbl previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
+		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, ObjectId jobId, OwnerType ownerType, MapAreaInfo2 mapAreaInfo, SizeDbl previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
 		{
 			_mapJobHelper = mapJobHelper;
 
@@ -73,7 +73,7 @@ namespace MSetExplorer
 
 		public ObjectId JobId { get; set; }
 
-		public JobOwnerType OwnerType { get; set; }
+		public OwnerType OwnerType { get; set; }
 
 		public MapAreaInfo2 MapAreaInfo
 		{
@@ -102,7 +102,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void QueueBitmapGeneration(ObjectId jobId, JobOwnerType ownerType, MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		private void QueueBitmapGeneration(ObjectId jobId, OwnerType ownerType, MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			var previewImageSize = previewMapArea.CanvasSize;
 			Debug.WriteLine($"Creating a preview image with size: {previewMapArea.CanvasSize} and map coords: {previewMapArea.Coords}.");

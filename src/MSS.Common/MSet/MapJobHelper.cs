@@ -39,7 +39,7 @@ namespace MSS.Common
 
 		#region Build Job Methods
 
-		public Job BuildHomeJob(JobOwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
+		public Job BuildHomeJob(OwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
 		{
 			ObjectId? parentJobId = null;
 			ObjectId ownerId = ObjectId.Empty;
@@ -50,7 +50,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId ownerId, JobOwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		public Job BuildJob(ObjectId? parentJobId, ObjectId ownerId, OwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
 			var mapAreaInfoWithRegisteredSub = RegisterTheSubdivision(mapAreaInfo);
 

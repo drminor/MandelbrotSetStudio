@@ -103,7 +103,7 @@ namespace WpfMapDisplayPOC
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 1000, threshold: 4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 
-			var job = _mapJobHelper.BuildHomeJob(JobOwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
 			RunTest(job, callback);
 		}
@@ -156,7 +156,7 @@ namespace WpfMapDisplayPOC
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 
-			var job = _mapJobHelper.BuildHomeJob(JobOwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
 			RunTest(job, callback);
 		}
@@ -180,7 +180,7 @@ namespace WpfMapDisplayPOC
 
 			var areaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeDbl(1024));
 
-			var result = _mapSectionBuilder.CreateSectionRequests(jobId.ToString(), JobOwnerType.Project, areaInfoWithSize, job.MapCalcSettings);
+			var result = _mapSectionBuilder.CreateSectionRequests(jobId.ToString(), OwnerType.Project, areaInfoWithSize, job.MapCalcSettings);
 
 			return result;
 		}
@@ -232,7 +232,7 @@ namespace WpfMapDisplayPOC
 		private void RunTest(Job job, Action<MapSection> callback)
 		{
 			var jobId = job.Id.ToString();
-			var jobOwnerType = JobOwnerType.Project;
+			var jobOwnerType = OwnerType.Project;
 
 			var stopwatch = Stopwatch.StartNew();
 			//_stopwatch1.Restart();

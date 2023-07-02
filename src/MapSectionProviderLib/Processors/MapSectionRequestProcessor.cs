@@ -469,9 +469,7 @@ namespace MapSectionProviderLib
 		private async Task<MapSectionResponse?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
-
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, blockPosition, mapSectionVectors, ct);
+			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors, ct);
 
 			return mapSectionResponse;
 		}
@@ -479,9 +477,8 @@ namespace MapSectionProviderLib
 		private MapSectionResponse? Fetch(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-			var blockPosition = _dtoMapper.MapTo(mapSectionRequest.BlockPosition);
 
-			var mapSectionResponse = _mapSectionAdapter.GetMapSection(subdivisionId, blockPosition, mapSectionVectors);
+			var mapSectionResponse = _mapSectionAdapter.GetMapSection(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors);
 
 			return mapSectionResponse;
 		}

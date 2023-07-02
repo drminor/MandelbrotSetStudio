@@ -132,7 +132,7 @@ namespace MSS.Common.MSet
 
 		public bool OnFile { get; private set; }
 
-		public JobOwnerType JobOwnerType => JobOwnerType.Project;
+		public OwnerType OwnerType => OwnerType.Project;
 
 		public string Name
 		{

@@ -104,7 +104,7 @@ namespace MSetExplorer
 			var mapJobHelper = _viewModelFactory.ProvisionAMapJopHelper();
 
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, JobOwnerType.Poster, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
+			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, OwnerType.Poster, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
 			return result;
 		}
 

@@ -68,12 +68,12 @@ namespace MSS.Common
 		ObjectId? GetSubdivisionId(ObjectId jobId);
 		(ObjectId, MapAreaInfo2)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId);
 
-		IEnumerable<ValueTuple<ObjectId, ObjectId, JobOwnerType>> GetJobAndOwnerIdsWithJobOwnerType();
+		IEnumerable<ValueTuple<ObjectId, ObjectId, OwnerType>> GetJobAndOwnerIdsWithJobOwnerType();
 
 		IEnumerable<ObjectId> GetAllProjectIds();
 		IEnumerable<ObjectId> GetAllPosterIds();
 
-		void UpdateJobOwnerType(ObjectId jobId, JobOwnerType jobOwnerType);
+		void UpdateJobOwnerType(ObjectId jobId, OwnerType jobOwnerType);
 
 	}
 }

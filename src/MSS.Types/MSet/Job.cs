@@ -11,7 +11,7 @@ namespace MSS.Types.MSet
 		public static readonly Job Empty = _lazyJob.Value;
 
 		private ObjectId _ownerId;
-		private JobOwnerType _jobOwnerType;
+		private OwnerType _jobOwnerType;
 
 		private ObjectId? _parentJobId;
 		private bool _isOnPreferredPath;
@@ -32,7 +32,7 @@ namespace MSS.Types.MSet
 
 		public Job(
 			ObjectId ownerId,
-			JobOwnerType jobOwnerType,
+			OwnerType jobOwnerType,
 			ObjectId? parentJobId,
 			string? label,
 			TransformType transformType,
@@ -66,7 +66,7 @@ namespace MSS.Types.MSet
 		public Job(
 			ObjectId id,
 			ObjectId ownerId,
-			JobOwnerType jobOwnerType,
+			OwnerType jobOwnerType,
 			ObjectId? parentJobId,
 			string label,
 
@@ -133,7 +133,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public JobOwnerType JobOwnerType
+		public OwnerType JobOwnerType
 		{
 			get => _jobOwnerType;
 			set 

@@ -25,7 +25,7 @@ namespace MEngineDataContracts
 				  mapSectionRequest.MapCalcSettings/*, mapSectionVectors*/, zValues)
 		{ }
 
-		public MapSectionServiceResponse(string mapSectionId, string ownerId, JobOwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition,
+		public MapSectionServiceResponse(string mapSectionId, string ownerId, OwnerType jobOwnerType, string subdivisionId, BigVectorDto blockPosition,
 			MapCalcSettings mapCalcSettings/*, MapSectionVectors mapSectionVectors*/, double[] zValues)
 		{
 			MapSectionId = mapSectionId;
@@ -47,7 +47,7 @@ namespace MEngineDataContracts
 		public string OwnerId { get; set; }
 
 		[DataMember(Order = 3)]
-		public JobOwnerType JobOwnerType { get; set; }
+		public OwnerType JobOwnerType { get; set; }
 
 		[DataMember(Order = 4)]
 		public string SubdivisionId { get; init; }

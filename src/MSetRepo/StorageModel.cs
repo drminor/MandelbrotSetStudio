@@ -95,7 +95,7 @@ namespace MSetRepo
 			public ObjectId JobId { get; init; }
 			public ObjectId SectionId { get; init; }
 			public ObjectId SubdivisionId { get; set; }
-			public JobOwnerType JobOwnerType { get; set; }
+			public OwnerType JobOwnerType { get; set; }
 
 			public ObjectId OriginalSourceSubdivisionId { get; set; }
 

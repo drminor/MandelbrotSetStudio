@@ -185,7 +185,7 @@ namespace MSetExplorer
 
 			var mapAreaInfo = RMapConstants.BuildHomeArea();
 
-			var job = _mapJobHelper.BuildHomeJob(JobOwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
@@ -320,7 +320,7 @@ namespace MSetExplorer
 
 			// Create a copy of the current job, commit it to the repo and get the new job with the updated Id on file.
 			var newCopy = curJob.CreateNewCopy();
-			newCopy.JobOwnerType = JobOwnerType.Poster;
+			newCopy.JobOwnerType = OwnerType.Poster;
 			var newJobId = _projectAdapter.InsertJob(newCopy);
 			var job = _projectAdapter.GetJob(newJobId);
 
@@ -471,7 +471,7 @@ namespace MSetExplorer
 			var colorBandSetId = currentJob.ColorBandSetId;
 			var mapCalcSettings = currentJob.MapCalcSettings;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, JobOwnerType.Project, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
 
 			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -495,7 +495,7 @@ namespace MSetExplorer
 			var transformType = TransformType.IterationUpdate;
 			var newScreenArea = new RectangleInt();
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, JobOwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 

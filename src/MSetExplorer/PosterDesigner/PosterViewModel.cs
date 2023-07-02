@@ -78,7 +78,7 @@ namespace MSetExplorer
 							var currentJob = CurrentPoster.CurrentJob;
 							Debug.WriteLineIf(_useDetailedDebug, "The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentPoster is being updated.");
 
-							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, currentJob.MapAreaInfo, CurrentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
+							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), OwnerType.Poster, currentJob.MapAreaInfo, CurrentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
 							CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 						}
 
@@ -139,7 +139,7 @@ namespace MSetExplorer
 
 				Debug.WriteLineIf(_useDetailedDebug, "The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentJob is being updated.");
 
-				var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), JobOwnerType.Poster, currentJob.MapAreaInfo, currentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
+				var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), OwnerType.Poster, currentJob.MapAreaInfo, currentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
 				CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 			}
 		}
@@ -273,7 +273,7 @@ namespace MSetExplorer
 			{
 				if (value != _areaColorAndCalcSettings)
 				{
-					Debug.Assert(value.JobOwnerType == JobOwnerType.Poster, "The PosterViewModel is receiving a CurrentAreaColorAndCalcSetting that has a JobOwnerType other than 'Poster'.");
+					Debug.Assert(value.JobOwnerType == OwnerType.Poster, "The PosterViewModel is receiving a CurrentAreaColorAndCalcSetting that has a JobOwnerType other than 'Poster'.");
 					_areaColorAndCalcSettings = value;
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings));
 				}
@@ -444,9 +444,9 @@ namespace MSetExplorer
 
 			var nonCurrentJobIds = _projectAdapter.GetAllJobIdsForPoster(jobOwnerId).Where(x => x != currentJobId).ToList();
 
-			var numberOfMapSectionsDeleted = JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.Poster, _mapSectionAdapter);
-			numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.ImageBuilder, _mapSectionAdapter);
-			numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, JobOwnerType.BitmapBuilder, _mapSectionAdapter);
+			var numberOfMapSectionsDeleted = JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, OwnerType.Poster, _mapSectionAdapter);
+			//numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, OwnerType.ImageBuilder, _mapSectionAdapter);
+			//numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, OwnerType.BitmapBuilder, _mapSectionAdapter);
 
 			if (aggressive)
 			{
@@ -668,7 +668,7 @@ namespace MSetExplorer
 			// TODO: Determine TransformType
 			var transformType = TransformType.ZoomIn;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, OwnerType.Poster, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
 
 			Debug.WriteLine($"Adding Poster Job with new coords: {mapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -692,7 +692,7 @@ namespace MSetExplorer
 			var transformType = TransformType.IterationUpdate;
 			var newScreenArea = new RectangleInt();
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, JobOwnerType.Poster, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, OwnerType.Poster, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Poster Job with target iterations: {targetIterations}.");
 

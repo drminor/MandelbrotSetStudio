@@ -24,15 +24,15 @@ namespace MSetExplorer.RepositoryManagement
 
 		#region Populate JobMapSections
 
-		public string PopulateJobMapSections(JobOwnerType jobOwnerType)
+		public string PopulateJobMapSections(OwnerType jobOwnerType)
 		{
 			string report;
 
-			if (jobOwnerType == JobOwnerType.Project)
+			if (jobOwnerType == OwnerType.Project)
 			{
 				report = ProjectAndMapSectionHelper.PopulateJobMapSectionsForAllProjects(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
 			}
-			else if (jobOwnerType == JobOwnerType.Poster)
+			else if (jobOwnerType == OwnerType.Poster)
 			{
 
 				report = ProjectAndMapSectionHelper.PopulateJobMapSectionsForAllPosters(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
@@ -76,7 +76,7 @@ namespace MSetExplorer.RepositoryManagement
 
 				if (msgBoxResult == MessageBoxResult.Yes)
 				{
-					var numberUpdated = UpdateJobOwnerTypeForMany(jobIdsToBeAssignedJOTofPoster, JobOwnerType.Poster);
+					var numberUpdated = UpdateJobOwnerTypeForMany(jobIdsToBeAssignedJOTofPoster, OwnerType.Poster);
 					MessageBox.Show($"{numberUpdated} Job records were updated to have JobOwnerType = Poster.");
 				}
 			}
@@ -90,7 +90,7 @@ namespace MSetExplorer.RepositoryManagement
 
 				if (msgBoxResult == MessageBoxResult.Yes)
 				{
-					var numberUpdated = UpdateJobOwnerTypeForMany(jobIdsToBeAssignedJOTofPoster, JobOwnerType.Project);
+					var numberUpdated = UpdateJobOwnerTypeForMany(jobIdsToBeAssignedJOTofPoster, OwnerType.Project);
 					MessageBox.Show($"{numberUpdated} Job records were updated to have JobOwnerType = Project.");
 				}
 			}
@@ -112,7 +112,7 @@ namespace MSetExplorer.RepositoryManagement
 			}
 		}
 
-		private long UpdateJobOwnerTypeForMany(List<ObjectId> jobIds, JobOwnerType jobOwnerType)
+		private long UpdateJobOwnerTypeForMany(List<ObjectId> jobIds, OwnerType jobOwnerType)
 		{
 			foreach(var jobId in jobIds)
 			{

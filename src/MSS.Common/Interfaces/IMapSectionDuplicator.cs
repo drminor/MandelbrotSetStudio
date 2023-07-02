@@ -4,6 +4,6 @@ namespace MSS.Common
 {
 	public interface IMapSectionDuplicator
 	{
-		long? DuplicateJobMapSections(ObjectId ownerId, JobOwnerType jobOwnerType, ObjectId newOwnerId);
+		long? DuplicateJobMapSections(ObjectId ownerId, OwnerType jobOwnerType, ObjectId newOwnerId);
 	}
 }

@@ -100,9 +100,9 @@ namespace MapSectionProviderLib
 					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{
 						var mapSectionRequest = mapSectionPersistRequest.Request;
-						var blockIndex = new SizeInt();
+						var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
 
-						_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobType: JobType.FullScale, blockIndex);
+						_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, mapSectionRequest.JobType, blockIndex);
 					}
 					else
 					{
@@ -154,8 +154,8 @@ namespace MapSectionProviderLib
 					// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType) may not be on file.
 					// This will insert one if not already present.
 
-					var blockIndex = new SizeInt();
-					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobType: JobType.FullScale, blockIndex);
+					var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
+					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, mapSectionRequest.JobType, blockIndex);
 
 				}
 			}
@@ -173,8 +173,8 @@ namespace MapSectionProviderLib
 						_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
 					}
 
-					var blockIndex = new SizeInt();
-					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobType: JobType.FullScale, blockIndex);
+					var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
+					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, mapSectionRequest.JobType, blockIndex);
 				}
 			}
 		}

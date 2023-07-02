@@ -25,7 +25,7 @@ namespace MSS.Common
 				var newJobId = oldIdAndNewJob.Item2.Id;
 				UpdateJobParents(formerJobId, newJobId, jobs);
 
-				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, sourceProject.JobOwnerType, newJobId);
+				var numberJobMapSectionRefsCreated = mapSectionDuplicator.DuplicateJobMapSections(formerJobId, sourceProject.OwnerType, newJobId);
 				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
 			}
 
@@ -247,7 +247,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static long DeleteMapSectionsForJobIds(IList<ObjectId> jobIds, JobOwnerType jobOwnerType, IMapSectionDeleter mapSectionDeleter)
+		public static long DeleteMapSectionsForJobIds(IList<ObjectId> jobIds, OwnerType jobOwnerType, IMapSectionDeleter mapSectionDeleter)
 		{
 			var result = 0L;
 
@@ -292,23 +292,15 @@ namespace MSS.Common
 
 		#endregion
 
-		public static JobOwnerType GetJobOwnerType(IJobOwner jobOwner)
+		public static OwnerType GetJobOwnerType(IJobOwner jobOwner)
 		{
 			if (jobOwner is Project)
 			{
-				return JobOwnerType.Project;
+				return OwnerType.Project;
 			}
 			else if (jobOwner is Poster)
 			{
-				return JobOwnerType.Poster;
-			}
-			else if (jobOwner is IImageBuilder)
-			{
-				return JobOwnerType.ImageBuilder;
-			}
-			else if (jobOwner is IBitmapBuilder)
-			{
-				return JobOwnerType.BitmapBuilder;
+				return OwnerType.Poster;
 			}
 			else
 			{

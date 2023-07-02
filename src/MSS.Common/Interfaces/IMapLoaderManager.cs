@@ -11,7 +11,7 @@ namespace MSS.Common
 		event EventHandler<JobProgressInfo>? RequestAdded;
 		event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		List<MapSection> Push(JobType jobType, string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
+		List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
 			IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration);
 
 		List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber, out List<MapSectionRequest> pendingGeneration);

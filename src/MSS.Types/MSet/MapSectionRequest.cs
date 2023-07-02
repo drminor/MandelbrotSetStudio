@@ -5,7 +5,7 @@ namespace MSS.Types.MSet
 {
 	public class MapSectionRequest
 	{
-		public MapSectionRequest(JobType jobType, string jobId, JobOwnerType ownerType, string subdivisionId, string originalSourceSubdivisionId,
+		public MapSectionRequest(JobType jobType, string jobId, OwnerType ownerType, string subdivisionId, string originalSourceSubdivisionId,
 			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
 			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
@@ -35,7 +35,7 @@ namespace MSS.Types.MSet
 		public JobType JobType { get; init; }
 		public string? MapSectionId { get; set; }
 		public string JobId { get; init; }
-		public JobOwnerType OwnerType { get; init; }
+		public OwnerType OwnerType { get; init; }
 		public string SubdivisionId { get; init; }
 		public string OriginalSourceSubdivisionId { get; init; }
 
