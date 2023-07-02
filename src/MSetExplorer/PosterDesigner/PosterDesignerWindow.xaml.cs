@@ -388,13 +388,30 @@ namespace MSetExplorer
 			}
 		}
 
+		//private CreateImageProgressWindow StartImageCreation(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
+		//{
+		//	var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(/*imageFilePath, areaColorAndCalcSettings, imageSize*/);
+
+		//	var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
+		//	var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
+		//	createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Poster, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings); 
+
+		//	var result = new CreateImageProgressWindow()
+		//	{
+		//		DataContext = createImageProgressViewModel
+		//	};
+
+		//	return result;
+		//}
+
 		private CreateImageProgressWindow StartImageCreation(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
 		{
-			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(/*imageFilePath, areaColorAndCalcSettings, imageSize*/);
+			var viewModelFactory = _vm.ViewModelFactory;
 
-			var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
+			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel();
+
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Poster, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings); 
+			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Poster, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
 
 			var result = new CreateImageProgressWindow()
 			{
@@ -746,7 +763,7 @@ namespace MSetExplorer
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
 		{
 			var deleteNonEssentialMapSectionsFunction = _vm.PosterViewModel.DeleteNonEssentialMapSections;
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, deleteNonEssentialMapSectionsFunction);
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, deleteNonEssentialMapSectionsFunction, _vm.ViewModelFactory);
 			
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
@@ -767,15 +784,20 @@ namespace MSetExplorer
 			}
 		}
 
+		private const string dash = "\u2014";
+		private const string colon = "\u003A";
+		//private const string _windowName = "Designer Window";
+		private const string _windowName = "Poster";
+		private const string _firstTitleSep = colon;
+		private const string _secondTitleSep = dash;
+
 		private string GetWindowTitle(string? posterName, string? colorBandSetName)
 		{
-			const string dash = "\u2014";
-
 			var result = posterName != null
 				? colorBandSetName != null
-					? $"Designer Window {dash} {posterName} {dash} {colorBandSetName}"
-					: $"Designer Window {dash} {posterName}"
-				: "Designer Window";
+					? $"{_windowName} {_firstTitleSep} {posterName} {_secondTitleSep} {colorBandSetName}"
+					: $"{_windowName} {_firstTitleSep} {posterName}"
+				: _windowName;
 
 			return result;
 		}
@@ -860,7 +882,11 @@ namespace MSetExplorer
 
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
-			var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.Id, mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
+			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.Id, mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
+
+			var viewModelFactory = _vm.ViewModelFactory;
+			var lazyMapPreviewImageProvider = viewModelFactory.GetPreviewImageProvider(curJob.Id, mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
+
 
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 

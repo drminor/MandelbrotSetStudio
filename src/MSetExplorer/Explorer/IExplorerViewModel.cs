@@ -22,10 +22,10 @@ namespace MSetExplorer
 
 		bool MapCoordsIsVisible { get; set; }
 
-		CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/);
-		JobProgressViewModel CreateAJobProgressViewModel();
+		//CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/);
+		//JobProgressViewModel CreateAJobProgressViewModel();
 
-		MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize);
+		//MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize);
 
 	}
 }

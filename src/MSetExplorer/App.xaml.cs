@@ -54,7 +54,7 @@ namespace MSetExplorer
 		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false;
 
 		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS = false;
-		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS = false;
+		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS = true;
 
 		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2093-05-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;

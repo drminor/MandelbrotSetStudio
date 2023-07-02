@@ -14,14 +14,16 @@ namespace MSetExplorer
 	public class CreateImageProgressViewModel
 	{
 		private readonly PngBuilder _pngBuilder;
+		private readonly MapJobHelper _mapJobHelper;
 		private CancellationTokenSource _cancellationTokenSource;
 		private Task<bool>?_task;
 
 		#region Constructor
 
-		public CreateImageProgressViewModel(PngBuilder pngBuilder)
+		public CreateImageProgressViewModel(PngBuilder pngBuilder, MapJobHelper mapJobHelper)
 		{
 			_pngBuilder = pngBuilder;
+			_mapJobHelper = mapJobHelper;
 			_cancellationTokenSource = new CancellationTokenSource();
 			_task = null;
 
@@ -59,6 +61,26 @@ namespace MSetExplorer
 			//}
 			//);
 		}
+
+		public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		{
+			ImageFilePath = imageFilePath;
+
+			//var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(areaColorAndCalcSettings.MapAreaInfo, imageSize);
+			//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
+			//_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+
+			var mapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfoV2, canvasSize);
+
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+
+			//_task.ContinueWith(t =>
+			//{
+
+			//}
+			//);
+		}
+
 
 		//public void CreateImage(string imageFilePath, Project project)
 		//{

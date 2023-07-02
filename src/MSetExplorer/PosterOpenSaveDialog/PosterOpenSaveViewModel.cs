@@ -14,12 +14,13 @@ namespace MSetExplorer
 {
 	public class PosterOpenSaveViewModel : IPosterOpenSaveViewModel, INotifyPropertyChanged
 	{
-		#region Private Fieldas
+		#region Private Fields
 
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
+		
 
-		private readonly Func<Job, SizeDbl, bool, long>? _deleteNonEssentialMapSectionsFunction;
+		//private readonly Func<Job, SizeDbl, bool, long>? _deleteNonEssentialMapSectionsFunction;
 
 		private IPosterInfo? _selectedPoster;
 
@@ -33,12 +34,13 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, Func<Job, SizeDbl, bool, long>? deleteNonEssentialMapSectionsFunction, string? initialName, DialogType dialogType)
+		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, ViewModelFactory viewModelFactory, Func<Job, SizeDbl, bool, long>? deleteNonEssentialMapSectionsFunction, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
+			ViewModelFactory = viewModelFactory;
 
-			_deleteNonEssentialMapSectionsFunction = deleteNonEssentialMapSectionsFunction;
+			DeleteNonEssentialMapSectionsFunction = deleteNonEssentialMapSectionsFunction;
 
 			DialogType = dialogType;
 
@@ -128,6 +130,10 @@ namespace MSetExplorer
 			}
 		}
 
+		public ViewModelFactory ViewModelFactory { get; init; }
+
+		public Func<Job, SizeDbl, bool, long>? DeleteNonEssentialMapSectionsFunction { get; }
+
 		#endregion
 
 		#region Public Methods
@@ -165,7 +171,7 @@ namespace MSetExplorer
 
 		public long TrimSelected(bool agressive)
 		{
-			if (SelectedPoster == null || _deleteNonEssentialMapSectionsFunction == null)
+			if (SelectedPoster == null || DeleteNonEssentialMapSectionsFunction == null)
 			{
 				return -1;
 			}
@@ -174,7 +180,7 @@ namespace MSetExplorer
 			var job = _projectAdapter.GetJob(jobId);
 			var posterSize = SelectedPoster.Size;
 
-			var result = _deleteNonEssentialMapSectionsFunction(job, posterSize, agressive);
+			var result = DeleteNonEssentialMapSectionsFunction(job, posterSize, agressive);
 
 			return result;
 		}

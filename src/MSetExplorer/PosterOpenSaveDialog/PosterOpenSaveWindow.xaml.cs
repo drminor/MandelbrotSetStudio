@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,12 +19,12 @@ namespace MSetExplorer
 		{
 			_vm = (IPosterOpenSaveViewModel)DataContext;
 
-			Loaded += ProjectOpenSaveWindow_Loaded;
+			Loaded += PosterOpenSaveWindow_Loaded;
 			ContentRendered += PosterOpenSaveWindow_ContentRendered;
 			InitializeComponent();
 		}
 
-		private void ProjectOpenSaveWindow_Loaded(object sender, RoutedEventArgs e)
+		private void PosterOpenSaveWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
@@ -184,6 +185,35 @@ namespace MSetExplorer
 			DialogResult = true;
 			Close();
 		}
+
+		#endregion
+
+		#region Jobs Dialog
+
+
+		private bool OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
+		{
+			var deleteNonEssentialMapSectionsFunction = _vm.DeleteNonEssentialMapSectionsFunction;
+
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAJobDetailsDialog(ownerId, ownerType, initialJobId, deleteNonEssentialMapSectionsFunction);
+
+			var posterOpenSaveWindow = new PosterOpenSaveWindow
+			{
+				DataContext = posterOpenSaveVm
+			};
+
+			if (posterOpenSaveWindow.ShowDialog() == true)
+			{
+				Debug.WriteLine("JobDetailDialog is returning True.");
+				return true;
+			}
+			else
+			{
+				Debug.WriteLine("JobDetailDialog is returning False.");
+				return false;
+			}
+		}
+
 
 		#endregion
 

@@ -41,7 +41,7 @@ namespace MSetExplorer
 
 			InitializeComponent();
 
-			jobProgress1.DataContext = _vm.CreateAJobProgressViewModel();
+			jobProgress1.DataContext = _vm.ViewModelFactory.CreateAJobProgressViewModel();
 			
 			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
@@ -549,16 +549,17 @@ namespace MSetExplorer
 
 		private CreateImageProgressWindow StartImageCreation(string imageFilePath, Project project, bool useEscapeVelocities)
 		{
-			var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(/*imageFilePath, useEscapeVelocities*/);
+			var viewModelFactory = _vm.ViewModelFactory;
+			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel();
 
 			var areaColorAndCalcSettings = GetAreaColorAndCalcSettings();
 
 			var imageSize = new SizeDbl(4096); // TODO: Create user interface to have the user specify a size for the image.
 
 
-			var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
+			//var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Project, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
+			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Project, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
 
 			var result = new CreateImageProgressWindow()
 			{
@@ -1161,7 +1162,7 @@ namespace MSetExplorer
 
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, [NotNullWhen(true)] out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, deleteNonEssentialMapSectionsFunction: null);
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, deleteNonEssentialMapSectionsFunction: null, _vm.ViewModelFactory);
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm

@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
@@ -209,22 +210,56 @@ namespace ProjectRepo
 			return colorBandSetIds;
 		}
 
-		public IEnumerable<JobInfoRecord> GetJobInfos(ObjectId projectId)
+		public IEnumerable<JobSudivisionInfo> GetJobSubdivisionInfosForOwner(ObjectId ownerId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => new JobInfoRecord(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
+					p => new JobSudivisionInfo(p.Id, p.DateCreatedUtc, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
 				);
 
 			//List models = collection.Find(_ => true).Project(projection1).ToList();
 
-			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", projectId);
+			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", ownerId);
 			var jobInfos = Collection.Find(filter).Project(projection1).ToEnumerable();
 
 			return jobInfos;
 		}
 
+		public IEnumerable<JobInfo> GetJobInfosForOwner(ObjectId ownerId)
+		{
+			var projection1 = Builders<JobRecord>.Projection.Expression
+				(
+					//p => new JobSudivisionInfo(p.Id, p.DateCreatedUtc, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
+					p => new JobInfo(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
+
+				);
+
+
+			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", ownerId);
+			var jobInfos = Collection.Find(filter).Project(projection1).ToEnumerable();
+
+			return jobInfos;
+		}
+
+
 		#endregion
+
+		public class JobSudivisionInfo
+		{
+			public JobSudivisionInfo(ObjectId id, DateTime dateCreatedUtc, ObjectId subdivisionId, int mapCoordExponent)
+			{
+				Id = id;
+				DateCreatedUtc = dateCreatedUtc;
+				SubdivisionId = subdivisionId;
+				MapCoordExponent = mapCoordExponent;
+			}
+
+			public ObjectId Id { get; init; }
+			public DateTime DateCreatedUtc { get; init; }
+
+			public ObjectId SubdivisionId { get; init; }
+			public int MapCoordExponent { get; init; }
+		}
 
 		#region SCHEMA Changes
 

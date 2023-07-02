@@ -34,7 +34,6 @@ namespace MSetExplorer.RepositoryManagement
 			}
 			else if (jobOwnerType == OwnerType.Poster)
 			{
-
 				report = ProjectAndMapSectionHelper.PopulateJobMapSectionsForAllPosters(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
 			}
 			else

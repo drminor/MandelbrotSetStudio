@@ -92,28 +92,28 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
-		{
-			var pngBuilder = new PngBuilder(_mapLoaderManager);
-			var result = new CreateImageProgressViewModel(pngBuilder);
-			return result;
-		}
+		//public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
+		//{
+		//	var pngBuilder = new PngBuilder(_mapLoaderManager);
+		//	var result = new CreateImageProgressViewModel(pngBuilder);
+		//	return result;
+		//}
 
-		public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
-		{
-			var mapJobHelper = _viewModelFactory.ProvisionAMapJopHelper();
+		//public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
+		//{
+		//	var mapJobHelper = _viewModelFactory.ProvisionAMapJopHelper();
 
-			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, OwnerType.Poster, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
-			return result;
-		}
+		//	var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+		//	var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, OwnerType.Poster, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
+		//	return result;
+		//}
 
-		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
-		{
-			var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
+		//public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
+		//{
+		//	var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal)
 		{

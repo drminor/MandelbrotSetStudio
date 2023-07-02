@@ -174,20 +174,35 @@ namespace MSetRepo
 					var mapSectionRequest = mapSectionRequests[i];
 					var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 					var originalSourceSubdivisionId = new ObjectId(mapSectionRequest.OriginalSourceSubdivisionId);
-					var blockPosition = mapSectionRequest.BlockPosition;
 
-					var mapSectionId = mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
-
-					if (mapSectionId != null)
+					if (originalSourceSubdivisionId != subdivisionId)
 					{
-						//var subdivision = subdivisonProvider.GetSubdivision(mapSectionRequest.SamplePointDelta, mapSectionRequest.MapBlockOffset, out var localMapBlockOffset);
+						Debug.WriteLine($"WARNING: The SubdivisionId from the MapSection is not the same as the SubdivisionId from the Job for the MapSectionRequest: {mapSectionRequest}");
+						// and MapSection for {subdivisionId} and {blockPosition} is not on file.
+					}
+					else
+					{
+						var blockPosition = mapSectionRequest.BlockPosition;
+						var mapSectionId = mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
 
-						var blockIndex = new SizeInt(0, 0);
+						if (mapSectionId != null)
+						{
+							//Debug.WriteLine($"");
+							////var subdivision = subdivisonProvider.GetSubdivision(mapSectionRequest.SamplePointDelta, mapSectionRequest.MapBlockOffset, out var localMapBlockOffset);
 
-						var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(JobType.FullScale, mapSectionId.Value, subdivisionId, originalSourceSubdivisionId, job.Id, ownerType, 
-							mapSectionRequest.IsInverted, blockIndex, out var jobMapSectionId);
+							//var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
 
-						numberOfRecordsInserted += inserted ? 1 : 0;
+							//var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(JobType.FullScale, mapSectionId.Value, subdivisionId, originalSourceSubdivisionId, job.Id, ownerType, 
+							//	mapSectionRequest.IsInverted, blockIndex, out var jobMapSectionId);
+
+							//numberOfRecordsInserted += inserted ? 1 : 0;
+
+							numberOfRecordsInserted++;
+						}
+						else
+						{
+							Debug.WriteLine($"WARNING: MapSection for {subdivisionId} and {blockPosition} is not on file.");
+						}
 					}
 				}
 			}

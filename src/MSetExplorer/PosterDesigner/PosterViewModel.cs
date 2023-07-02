@@ -167,10 +167,10 @@ namespace MSetExplorer
 			get => PreviewColorBandSet ?? CurrentPoster?.CurrentColorBandSet ?? new ColorBandSet();
 			set
 			{
-				var currentProject = CurrentPoster;
-				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+				var currentPoster = CurrentPoster;
+				if (currentPoster != null && !currentPoster.CurrentJob.IsEmpty)
 				{
-					CheckCurrentProject(currentProject);
+					CheckCurrentProject(currentPoster);
 
 					// Discard the Preview ColorBandSet. 
 					_previewColorBandSet = null;
@@ -181,20 +181,20 @@ namespace MSetExplorer
 					}
 
 					var targetIterations = value.HighCutoff;
-					var currentJob = currentProject.CurrentJob;
+					var currentJob = currentPoster.CurrentJob;
 
 					if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 
-						currentProject.Add(value);
+						currentPoster.Add(value);
 
-						_ = AddNewIterationUpdateJob(currentProject, value);
+						_ = AddNewIterationUpdateJob(currentPoster, value);
 					}
 					else
 					{
-						Debug.WriteLine($"PosterViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
-						currentProject.CurrentColorBandSet = value;
+						Debug.WriteLine($"PosterViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+						currentPoster.CurrentColorBandSet = value;
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));

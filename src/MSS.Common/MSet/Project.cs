@@ -454,16 +454,32 @@ namespace MSS.Common.MSet
 
 			var result = GetColorBandSetForJob(colorBandSetId);
 
-			if (result == null)
+			//if (result == null)
+			//{
+			//	Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found in the Project's list of ColorBandSets {operationDescription}."); //as the project is being constructed
+			//	result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
+			//	job.ColorBandSetId = result.Id;
+			//	LastUpdatedUtc = DateTime.UtcNow;
+			//}
+			//else if (result.HighCutoff != targetIterations)
+			//{
+			//	Debug.WriteLine($"WARNING: A ColorBandSet different than the currentJob's ColorBandSet is being loaded because the currentJob's ColorBandSet's HighCutoff is not equal to the TargetIterations {operationDescription}.");
+			//	result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
+			//	job.ColorBandSetId = result.Id;
+			//	LastUpdatedUtc = DateTime.UtcNow;
+			//}
+
+			if (result == null || result.HighCutoff != targetIterations)
 			{
-				Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found in the Project's list of ColorBandSets {operationDescription}."); //as the project is being constructed
-				result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
-				job.ColorBandSetId = result.Id;
-				LastUpdatedUtc = DateTime.UtcNow;
-			}
-			else if (result.HighCutoff != targetIterations)
-			{
-				Debug.WriteLine($"WARNING: A ColorBandSet different than the currentJob's ColorBandSet is being loaded because the currentJob's ColorBandSet's HighCutoff is not equal to the TargetIterations {operationDescription}.");
+				if (result == null)
+				{
+					Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found in the Project's list of ColorBandSets {operationDescription}."); //as the project is being constructed
+				}
+				else
+				{
+					Debug.WriteLine($"WARNING: A ColorBandSet different than the currentJob's ColorBandSet is being loaded because the currentJob's ColorBandSet's HighCutoff is not equal to the TargetIterations {operationDescription}.");
+				}
+
 				result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
 				job.ColorBandSetId = result.Id;
 				LastUpdatedUtc = DateTime.UtcNow;

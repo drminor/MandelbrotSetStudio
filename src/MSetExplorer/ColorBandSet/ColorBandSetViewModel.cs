@@ -695,6 +695,8 @@ namespace MSetExplorer
 			_colorBandSet = newSet;
 
 			var curPos = ColorBandsView.CurrentPosition;
+
+			// Clear all existing items from history and add the new set.
 			_colorBandSetHistoryCollection.Load(_colorBandSet);
 
 			BuildViewAndRaisePropertyChangeEvents(curPos);
@@ -705,6 +707,7 @@ namespace MSetExplorer
 
 		public void RevertChanges()
 		{
+			// Remove all but the first entry from the History Collection
 			_colorBandSetHistoryCollection.Trim(0);
 
 			var curPos = ColorBandsView.CurrentPosition;

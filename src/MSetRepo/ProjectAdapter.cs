@@ -235,16 +235,16 @@ namespace MSetRepo
 			IProjectInfo result;
 			var dateCreated = projectRec.DateCreated.ToLocalTime();
 
-			var jobInfos = jobReaderWriter.GetJobInfos(projectRec.Id);
+			var jobInfos = jobReaderWriter.GetJobSubdivisionInfosForOwner(projectRec.Id);
 
 			if (jobInfos.Any())
 			{
-				var subdivisionIds = jobInfos.Select(j => j.SubDivisionId).Distinct();
+				var subdivisionIds = jobInfos.Select(j => j.SubdivisionId).Distinct();
 				var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
 				var minSamplePointDeltaExponent = subdivisonReaderWriter.GetMinExponent(subdivisionIds);
 
 				// Greater of the date of the last updated job and the date when the project was last updated.
-				var lastSavedUtc = jobInfos.Max(x => x.DateCreated);
+				var lastSavedUtc = jobInfos.Max(x => x.DateCreatedUtc);
 				var lastUpdatedUtc = projectRec.LastSavedUtc;
 
 				if (lastSavedUtc > lastUpdatedUtc)
@@ -252,9 +252,9 @@ namespace MSetRepo
 					lastUpdatedUtc = lastSavedUtc;
 				}
 
-				var numberOfFirstLevelChildJobs = jobInfos.Count(x => !x.ParentJobId.HasValue);
-
-				var jobCount = numberOfFirstLevelChildJobs > 1 ? jobInfos.Count() : -1 * jobInfos.Count();
+				//var numberOfFirstLevelChildJobs = jobInfos.Count(x => !x.ParentJobId.HasValue);
+				//var jobCount = numberOfFirstLevelChildJobs > 1 ? jobInfos.Count() : -1 * jobInfos.Count();
+				var jobCount = jobInfos.Count();
 
 				var jobIds = jobInfos.Select(x => x.Id).ToList();
 				var bytes = GetBytes(jobIds, OwnerType.Project, jobMapSectionReaderWriter);
@@ -710,6 +710,18 @@ namespace MSetRepo
 
 		#endregion
 
+		#region JobInfo
+
+		public IEnumerable<JobInfo> GetJobInfosForOwner(ObjectId ownerId)
+		{
+			var jobReaderWriter = new JobReaderWriter(_dbProvider);
+			var result = jobReaderWriter.GetJobInfosForOwner(ownerId);
+
+			return result;
+		}
+
+		#endregion
+
 		#region Poster
 
 		public List<Poster> GetAllPosters()
@@ -1003,16 +1015,10 @@ namespace MSetRepo
 				Debug.WriteLine("Here at Art3-13-4");
 			}
 
-			var bytes = GetBytes(posterRecord.Id, OwnerType.Poster, jobReaderWriter, jobMapSectionReaderWriter);
+			var jobIds = jobReaderWriter.GetJobIdsByOwner(posterRecord.Id).ToList();
+			var bytes = GetBytes(jobIds, OwnerType.Poster, jobMapSectionReaderWriter);
 
 			result = new PosterInfo(posterRecord.Id, posterRecord.Name, posterRecord.Description, posterRecord.CurrentJobId, posterRecord.PosterSize, bytes, posterRecord.DateCreatedUtc, lastSavedUtc, posterRecord.LastAccessedUtc);
-			return result;
-		}
-
-		private int GetBytes(ObjectId ownerId, OwnerType jobOwnerType, JobReaderWriter jobReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
-		{
-			var jobIds = jobReaderWriter.GetJobIdsByOwner(ownerId).ToList();
-			var result = GetBytes(jobIds, jobOwnerType, jobMapSectionReaderWriter);
 			return result;
 		}
 

@@ -102,25 +102,25 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
-		{
-			var pngBuilder = new PngBuilder(_mapLoaderManager);
-			var result = new CreateImageProgressViewModel(pngBuilder);
-			return result;
-		}
+		//public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
+		//{
+		//	var pngBuilder = new PngBuilder(_mapLoaderManager);
+		//	var result = new CreateImageProgressViewModel(pngBuilder);
+		//	return result;
+		//}
 
-		public JobProgressViewModel CreateAJobProgressViewModel()
-		{
-			var result = new JobProgressViewModel(_mapLoaderManager);
-			return result;
-		}
+		//public JobProgressViewModel CreateAJobProgressViewModel()
+		//{
+		//	var result = new JobProgressViewModel(_mapLoaderManager);
+		//	return result;
+		//}
 
-		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
-		{
-			var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
+		//public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
+		//{
+		//	var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 
 
