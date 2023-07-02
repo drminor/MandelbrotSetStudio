@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{787FD6F3
 		Notes\LatticeMultiplicationIndexGuide.txt = Notes\LatticeMultiplicationIndexGuide.txt
 		Notes\MapSectionVectors_LifeCycle.txt = Notes\MapSectionVectors_LifeCycle.txt
 		Notes\MapViewerMapInfoDivisionStrategy.txt = Notes\MapViewerMapInfoDivisionStrategy.txt
+		Notes\MongoDbQuerySyntaxForAndClause.txt = Notes\MongoDbQuerySyntaxForAndClause.txt
 		Notes\MongoDb_Schemas.txt = Notes\MongoDb_Schemas.txt
 		Notes\MultiplicationAlgorythms.txt = Notes\MultiplicationAlgorythms.txt
 		Notes\NaturalLog_Of_Arbitray_Precision_Integer.txt = Notes\NaturalLog_Of_Arbitray_Precision_Integer.txt

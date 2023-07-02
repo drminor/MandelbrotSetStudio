@@ -192,7 +192,7 @@ namespace ImageBuilder
 		{
 			var requests = new List<MapSectionRequest>();
 			//var jobId = ObjectId.GenerateNewId().ToString();
-			var jobOwnerType = JobOwnerType.ImageBuilder;
+			var jobOwnerType = JobOwnerType.BitmapBuilder;
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{

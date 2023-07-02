@@ -16,6 +16,8 @@ namespace ProjectRepo.Entities
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
 		public DateTime DateCreated => Id.CreationTime;
+		public DateTime DateCreatedUtc { get; set; }    // TODO_schema: Add DateCreatedUtc to ProjectRecord
+
 
 		public DateTime LastAccessedUtc { get; set; }
 	}

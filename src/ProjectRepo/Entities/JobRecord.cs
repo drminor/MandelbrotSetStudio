@@ -10,9 +10,9 @@ namespace ProjectRepo.Entities
 		ObjectId? ParentJobId,
 
 		ObjectId OwnerId,
-		JobOwnerType JobOwnerType,
+		JobOwnerType JobOwnerType,	// TODO_schema: Rename JobOwnerType -> OwnerType
 
-		ObjectId SubDivisionId,     // This is not used when reading. When writing its value comes from the MapAreaInfo2Record.Subdivision.Id
+		ObjectId SubDivisionId,     // TODO_schema: Delete the JobRecord.SubdivisionId
 		string Label,
 		int TransformType,
 
@@ -35,8 +35,8 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		
-		public DateTime? LastSaved { get; set; } // TODO: Remove the LastSaved from all Jobs on file.
+		public DateTime DateCreatedUtc { get; set; }	// TODO_schema: Add DateCreatedUtc to JobRecord
+		public DateTime? LastSaved { get; set; }		// TODO_schema: Remove the LastSaved from all Jobs on file.
 
 		public IterationUpdateRecord[]? IterationUpdates { get; set; }
 		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }

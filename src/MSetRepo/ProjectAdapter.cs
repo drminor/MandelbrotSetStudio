@@ -356,10 +356,10 @@ namespace MSetRepo
 
 		#region Job
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndOwnerIdsByJobOwnerType(JobOwnerType jobOwnerType)
+		public IEnumerable<ValueTuple<ObjectId, ObjectId, JobOwnerType>> GetJobAndOwnerIdsWithJobOwnerType()
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var result = jobReaderWriter.GetJobAndOwnerIdsByJobOwnerType(jobOwnerType);
+			var result = jobReaderWriter.GetJobAndOwnerIdsWithJobOwnerType();
 
 			return result;
 		}

@@ -62,22 +62,36 @@ namespace MSetExplorer.RepositoryManagement
 
 		#region Find And Delete Jobs Not Referenced by any Project or Poster
 
-		public void FindAndDeleteOrphanJobs(JobOwnerType jobOwnerType)
+		public void FindAndDeleteOrphanJobs()
 		{
-			var report = FindOrphanJobs(jobOwnerType, out var jobIdsWithNoOwner, out var jobIdsWithOwnerOfWrongType);
+			var report = FindOrphanJobs(out var jobIdsWithNoOwner, out var jobIdsToBeAssignedJOTofPoster, out var jobIdsToBeAssignedJOTofProject);
 			Debug.WriteLine(report);
 
-			var countWrongTypeJobs = jobIdsWithOwnerOfWrongType.Count;
+			var countJobsToUpdateToPoster = jobIdsToBeAssignedJOTofPoster.Count;
 
-			if (countWrongTypeJobs > 0)
+			if (countJobsToUpdateToPoster > 0)
 			{
-				var msgBoxResult = MessageBox.Show($"Would you like to update the job type for the {countWrongTypeJobs} {jobOwnerType} Jobs that are listed as being of the other type.", "Update Job Types?",
+				var msgBoxResult = MessageBox.Show($"Would you like to update the job type for the {countJobsToUpdateToPoster} Jobs that belong to Posters but have a Project JobOwnerType?.", "Update Job Types?",
 					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
 
 				if (msgBoxResult == MessageBoxResult.Yes)
 				{
-					var numberUpdated = UpdateJobOwnerTypeForMany(jobIdsWithOwnerOfWrongType, jobOwnerType);
-					MessageBox.Show($"{numberUpdated} Job records were updated to have JobOwnerType = {jobOwnerType}.");
+					var numberUpdated = UpdateJobOwnerTypeForMany(jobIdsToBeAssignedJOTofPoster, JobOwnerType.Poster);
+					MessageBox.Show($"{numberUpdated} Job records were updated to have JobOwnerType = Poster.");
+				}
+			}
+
+			var countJobsToUpdateToProject = jobIdsToBeAssignedJOTofProject.Count;
+
+			if (countJobsToUpdateToProject > 0)
+			{
+				var msgBoxResult = MessageBox.Show($"Would you like to update the job type for the {countJobsToUpdateToProject} Jobs that belong to Projects but have a Poster JobOwnerType?.", "Update Job Types?",
+					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
+
+				if (msgBoxResult == MessageBoxResult.Yes)
+				{
+					var numberUpdated = UpdateJobOwnerTypeForMany(jobIdsToBeAssignedJOTofPoster, JobOwnerType.Project);
+					MessageBox.Show($"{numberUpdated} Job records were updated to have JobOwnerType = Project.");
 				}
 			}
 
@@ -85,7 +99,7 @@ namespace MSetExplorer.RepositoryManagement
 
 			if (countOrphanJobs > 0)
 			{
-				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOrphanJobs} Jobs that are not referenced by any {jobOwnerType}?", "Delete Job Records?",
+				var msgBoxResult = MessageBox.Show($"Would you like to delete the {countOrphanJobs} Jobs that are not referenced by any Project or Poster?", "Delete Job Records?",
 					MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
 
 				if (msgBoxResult == MessageBoxResult.Yes)
@@ -108,9 +122,9 @@ namespace MSetExplorer.RepositoryManagement
 			return jobIds.Count;
 		}
 
-		public string FindOrphanJobs(JobOwnerType jobOwnerType, out List<ObjectId> jobIdsWithNoOwner, out List<ObjectId> jobIdsWithOwnerOfWrongType)
+		public string FindOrphanJobs(out List<ObjectId> jobIdsWithNoOwner, out List<ObjectId> jobIdsToBeAssignedJOTofPoster, out List<ObjectId> jobIdsToBeAssignedJOTofProject)
 		{
-			var report = ProjectAndMapSectionHelper.FindOrphanJobs(_projectAdapter, jobOwnerType, out jobIdsWithNoOwner, out jobIdsWithOwnerOfWrongType);
+			var report = ProjectAndMapSectionHelper.FindOrphanJobs(_projectAdapter, out jobIdsWithNoOwner, out jobIdsToBeAssignedJOTofPoster, out jobIdsToBeAssignedJOTofProject);
 
 			return report;
 		}

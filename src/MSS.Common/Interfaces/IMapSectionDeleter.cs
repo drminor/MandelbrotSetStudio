@@ -11,6 +11,7 @@ namespace MSS.Common
 
 		long? DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, JobOwnerType jobOwnerType);
 
+		// TODO: UpdateDeleteMapSectionsWithJobType to use JobType instead of OwnerType
 		long? DeleteMapSectionsWithJobType(IList<ObjectId> mapSectionIds, JobOwnerType jobOwnerType);
 
 		long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);

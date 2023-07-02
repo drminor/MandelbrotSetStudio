@@ -46,14 +46,9 @@ namespace MSetExplorer
 
 		private static readonly bool CREATE_JOB_MAP_SECTION_REPORT = false;
 
-		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS = true;
-		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS = true;
-
-
+		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS = true;
 		private static readonly bool FIND_AND_DELETE_ORPHAN_MAP_SECTIONS = false;
-
 		private static readonly bool FIND_AND_DELETE_ORPHAN_SUBDIVISIONS = false;
-
 
 		private static readonly bool DELETE_JOB_MAP_JOB_REFS = false;
 		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false;
@@ -184,14 +179,9 @@ namespace MSetExplorer
 				Debug.WriteLine(report);
 			}
 
-			if (FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS)
+			if (FIND_AND_DELETE_ORPHAN_JOBS)
 			{
-				repositoryIntegrityUtility.FindAndDeleteOrphanJobs(JobOwnerType.Project);
-			}
-
-			if (FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS)
-			{
-				repositoryIntegrityUtility.FindAndDeleteOrphanJobs(JobOwnerType.Poster);
+				repositoryIntegrityUtility.FindAndDeleteOrphanJobs();
 			}
 
 			if (FIND_AND_DELETE_ORPHAN_MAP_SECTIONS)
@@ -214,6 +204,8 @@ namespace MSetExplorer
 				repositoryIntegrityUtility.CheckAndDeleteMapRefsFromJobMapCollection();
 			}
 
+			// TODO: Check each JobMapSection to make sure its JobOwnerType and the referenced Job Record's JobOwnerType match.
+
 			if (POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS)
 			{
 				var report = repositoryIntegrityUtility.PopulateJobMapSections(JobOwnerType.Project);
@@ -226,11 +218,10 @@ namespace MSetExplorer
 				Debug.WriteLine(report);
 			}
 
-			if (CREATE_JOB_MAP_SECTION_REPORT | FIND_AND_DELETE_ORPHAN_MAP_SECTIONS | DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS |
-				POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS | POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS |
-				FIND_AND_DELETE_ORPHAN_MAP_SECTIONS |
-				FIND_AND_DELETE_ORPHAN_JOBS_FOR_PROJECTS | FIND_AND_DELETE_ORPHAN_JOBS_FOR_POSTERS |
-				FIND_AND_DELETE_ORPHAN_SUBDIVISIONS)
+			if (CREATE_JOB_MAP_SECTION_REPORT 
+				| FIND_AND_DELETE_ORPHAN_JOBS | FIND_AND_DELETE_ORPHAN_MAP_SECTIONS | FIND_AND_DELETE_ORPHAN_SUBDIVISIONS
+				| DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS
+				| POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS | POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS)
 			{
 				if (MessageBoxResult.No == MessageBox.Show("Reporting completed. Continue with startup?", "Continue?", MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No))
 				{

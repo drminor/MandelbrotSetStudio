@@ -7,7 +7,7 @@
 			: this(
 				  mapSectionRequest.MapSectionId, 
 				  mapSectionRequest.JobId,
-				  mapSectionRequest.JobOwnerType,
+				  //mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.OriginalSourceSubdivisionId,
 				  mapSectionRequest.BlockPosition,
@@ -27,7 +27,7 @@
 			: this(
 				  mapSectionRequest.MapSectionId, 
 				  mapSectionRequest.JobId,
-				  mapSectionRequest.JobOwnerType,
+				  //mapSectionRequest.JobOwnerType,
 				  mapSectionRequest.SubdivisionId,
 				  mapSectionRequest.OriginalSourceSubdivisionId,
 				  blockPosition: mapSectionRequest.BlockPosition,
@@ -43,7 +43,7 @@
 		public MapSectionResponse(
 			string? mapSectionId, 
 			string jobId, 
-			JobOwnerType jobOwnerType, 
+			//JobOwnerType jobOwnerType, 
 			string subdivisionId,
 			string originalSourceSubdivisionId,
 			BigVector blockPosition,
@@ -54,7 +54,7 @@
 		{
 			MapSectionId = mapSectionId;
 			JobId = jobId;
-			JobOwnerType = jobOwnerType;
+			//JobOwnerType = jobOwnerType;
 			SubdivisionId = subdivisionId;
 			OriginalSourceSubdivisionId = originalSourceSubdivisionId;
 			BlockPosition = blockPosition;
@@ -69,7 +69,7 @@
 
 		public string? MapSectionId { get; set; }
 		public string JobId { get; set; }
-		public JobOwnerType JobOwnerType { get; set; }
+		//public JobOwnerType JobOwnerType { get; set; }
 
 		public string SubdivisionId { get; init; }
 		public string OriginalSourceSubdivisionId { get; init; }
@@ -90,7 +90,7 @@
 
 		public MapSectionResponse CreateCopySansVectors()
 		{
-			var result = new MapSectionResponse(MapSectionId, JobId, JobOwnerType, SubdivisionId, OriginalSourceSubdivisionId, BlockPosition, MapCalcSettings, 
+			var result = new MapSectionResponse(MapSectionId, JobId/*, JobOwnerType*/, SubdivisionId, OriginalSourceSubdivisionId, BlockPosition, MapCalcSettings, 
 				RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
 			return result;
 		}

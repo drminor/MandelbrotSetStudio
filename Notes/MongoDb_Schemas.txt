@@ -43,7 +43,7 @@ Job
 	ObjectId ParentJobId
 
 	ObjectId OwnerId
-	JobOwnerType OwnerType			// One of Project | Poster | Image | Bitmap
+	JobOwnerType OwnerType			// One of Project | Poster
 	ObjectId SubdivisionId			// Duplicate of the value found in the MapAreaInfo2Record.Subdivision.Id
 	string Label
 
@@ -81,38 +81,38 @@ Job
 	DateTime LastSavedUtc
 	DateTime LastAccessedUtc
 
-				** Note: The MapAreaInfo field of each job stores the position data in two forms:
-					1. Using the RPointAndDelta format to specify the center pixel.
-					2. Using the MapBlockOffset and CanvasControlOffset to specify the Left, Bottom pixel of the Map
-					The MapBlockOffset and CanvasControlOffset, although stored in the repository, are recalculated 
-					for each Job request based on the current display size.
+										** Note: The MapAreaInfo field of each job stores the position data in two forms:
+											1. Using the RPointAndDelta format to specify the center pixel.
+											2. Using the MapBlockOffset and CanvasControlOffset to specify the Left, Bottom pixel of the Map
+											The MapBlockOffset and CanvasControlOffset, although stored in the repository, are recalculated 
+											for each Job request based on the current display size.
 
 
 Subdivison
 	ObjectId Id
 	DateTime DateCreated
-	SizeInt BlockSize			// Number of sample points in each MapSection
-	RSize SamplePointDelta		// Distance from one sample point to the next
-	BigVector BaseMapPosition	// Absolute coordinates in SamplePointDelta * BlockSize units. MapSections belonging to this Subdivision use this as a base position
+	SizeInt BlockSize					// Number of sample points in each MapSection
+	RSize SamplePointDelta				// Distance from one sample point to the next
+	BigVector BaseMapPosition			// Absolute coordinates in SamplePointDelta * BlockSize units. MapSections belonging to this Subdivision use this as a base position
 
 MapSectionRecord
 	ObjectId Id
 	DateTime DateCreated
-	ObjectId SubDivisionId		
-	PointInt BlockPosition		// Coordinates in units of SamplePointDelta * BlockSize, relative to the Subdivision's BaseMapPosition
-	PointRecord Position		// Can be calculated from the BlockPosition and the SubDivision's Position -- absolute coordinates on the complex plane.
+	ObjectId SubdivisionId		
+	PointInt BlockPosition				// Coordinates in units of SamplePointDelta * BlockSize, relative to the Subdivision's BaseMapPosition
+	PointRecord Position				// Can be calculated from the BlockPosition and the Subdivision's Position -- absolute coordinates on the complex plane.
 	int[] Counts
 	int[] EscapeVelocities
 
 MapSectionZValuesRecord
 	ObjectId Id
 	DateTime DateCreated
-	MapSectionId				// Id of the MapSection for which these ZValues belong
+	MapSectionId						// Id of the MapSection for which these ZValues belong
 	ZValues ZValues
 
-		int LimbCount			// Number of 32 bit words used to represent each Real and Imaginary component of a single value of Z
+		int LimbCount					// Number of 32 bit words used to represent each Real and Imaginary component of a single value of Z
 
-		byte[] Zrs				// Array of Real components of the Z values in row first order for the block
+		byte[] Zrs						// Array of Real components of the Z values in row first order for the block
 		byte[] Zis
 		byte[] HasEscapedFlags
 		byte[] RowsHasEscaped
@@ -120,14 +120,14 @@ MapSectionZValuesRecord
 JobMapSectionRecord
 	ObjectId Id
 	DateTime DateCreated
-	ObjectId MapSectionId
 
-	ObjectId SubdivisionId
 	ObjectId JobId
-	JobOwnerType OwnerType
-	bool IsInverted
-	BigVectorRecord MapBlockOffset
+	ObjectId MapSectionId
+	bool IsInverted						// True if the job includes a request for section to produce output below the X-Axis.
 
+	JobOwnerType OwnerType				// Convenience - same as the Job's OwnerType (Either Project or Poster.)
+	ObjectId MapSectionSubdivisionId	// Convenience - same as the MapSection's SubdivisionId
+	ObjectId JobSubdivisionId			// Convenience - same as the Job's SubdivisionId
 
 	--------------------
 	Each Project has 1 or more Jobs

@@ -100,7 +100,7 @@ namespace MapSectionProviderLib
 					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{
 						var mapSectionRequest = mapSectionPersistRequest.Request;
-						_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted);
+						_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.JobOwnerType, jobType: JobType.FullScale);
 					}
 					else
 					{
@@ -151,7 +151,7 @@ namespace MapSectionProviderLib
 
 					// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType)
 					// may not be on file. This will insert one if not already present.
-					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted);
+					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.JobOwnerType, jobType: JobType.FullScale);
 
 				}
 			}
@@ -169,7 +169,7 @@ namespace MapSectionProviderLib
 						_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
 					}
 
-					 _ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted);
+					 _ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.JobOwnerType, jobType: JobType.FullScale);
 				}
 			}
 		}

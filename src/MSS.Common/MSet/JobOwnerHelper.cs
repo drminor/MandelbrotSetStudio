@@ -312,7 +312,7 @@ namespace MSS.Common
 			}
 			else
 			{
-				return JobOwnerType.Undetermined;
+				throw new NotImplementedException($"Cannot determined the JobOwnerType from the Project or Poster: {jobOwner}.");
 			}
 		}
 

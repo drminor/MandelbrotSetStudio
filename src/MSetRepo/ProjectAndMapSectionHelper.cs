@@ -8,7 +8,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
+using System.Text.RegularExpressions;
+using ZstdSharp;
 
 namespace MSetRepo
 {
@@ -211,133 +214,28 @@ namespace MSetRepo
 
 		#region Find JobMapSections Not Referenced by any Job / by any MapSection
 
-		//public static string CheckJobRefsAndSubdivisions_OLD(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, out List<ObjectId> jobMapSectionIdsWithMissingJobRecord, out List<ObjectId> subdivisionIdsForMissingJobs)
-		//{
-		//	jobMapSectionIdsWithMissingJobRecord = new List<ObjectId>();
-		//	subdivisionIdsForMissingJobs = new List<ObjectId>();
-
-		//	var sb = new StringBuilder();
-		//	sb.AppendLine("List of All JobMapSection records having a SubdivisionId different from its Job's SubdivisionId.");
-
-		//	//sb.AppendLine($"JobMapSectionId\tJobId\tSubdivisionId-JobMapSection\tSubdivisionId-JobRecord\tSubdivisionId-JobRecordMapAreaInfo\tSubdivisionId-JobMapSection-Original");
-		//	sb.AppendLine($"JobMapSectionId\tJobId\tSubdivisionId-JobMapSection\tSubdivisionId-JobRecord\tSubdivisionId-JobMapSection-Original");
-
-		//	var listOfJobMapIdAndSubdivisionId = mapSectionAdapter.GetJobAndSubdivisionIdsForAllJobMapSections();
-
-		//	var jobMapSectionCounter = 0;
-
-		//	foreach (var (jobMapSectionId, jobId, subdivisionIdFromJobMapSection, originalSourceSubdivisionId) in listOfJobMapIdAndSubdivisionId)
-		//	{
-		//		jobMapSectionCounter++;
-
-		//		//var subAndMap = projectAdapter.GetSubdivisionId(jobId);
-
-		//		//if (subAndMap.HasValue)
-		//		//{
-		//		//	var (subdivisionIdFromJobRecord, mapAreaInfo2) = subAndMap.Value;
-
-		//		//	var subdivisionIdFromJobRecordMapInfo = mapAreaInfo2.Subdivision.Id;
-
-		//		//	//if (subdivisionIdFromJobRecord != subdivisionIdFromJobMapSection | subdivisionIdFromJobRecordMapInfo != subdivisionIdFromJobMapSection)
-		//		//	//{
-		//		//	//	sb.AppendLine($"{jobMapSectionId}\t{jobId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromJobRecord}\t{subdivisionIdFromJobRecordMapInfo}\t{originalSourceSubdivisionId}");
-		//		//	//}
-
-		//		//	if (originalSourceSubdivisionId != ObjectId.Empty && subdivisionIdFromJobRecord != originalSourceSubdivisionId)
-		//		//	{
-		//		//		sb.AppendLine($"{jobMapSectionId}\t{jobId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromJobRecord}\t{subdivisionIdFromJobRecordMapInfo}\t{originalSourceSubdivisionId}");
-		//		//	}
-
-		//		//	// TODO: Fetch the SubdivisionRecord and compare the details of the mapAreaInfo value. 
-		//		//}
-		//		//else
-		//		//{
-		//		//	jobMapSectionIdsWithMissingJobRecord.Add(jobMapSectionId);
-
-		//		//	if (!subdivisionIdsForMissingJobs.Contains(subdivisionIdFromJobMapSection))
-		//		//	{
-		//		//		subdivisionIdsForMissingJobs.Add(subdivisionIdFromJobMapSection);
-		//		//	}
-		//		//}
-
-		//		var subdivisionIdFromJobRecord = projectAdapter.GetSubdivisionId(jobId);
-
-		//		if (subdivisionIdFromJobRecord.HasValue)
-		//		{
-		//			if (subdivisionIdFromJobRecord.Value != subdivisionIdFromJobMapSection)
-		//			{
-		//				sb.AppendLine($"{jobMapSectionId}\t{jobId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromJobRecord}\t{originalSourceSubdivisionId}");
-		//			}
-		//		}
-		//		else
-		//		{
-		//			jobMapSectionIdsWithMissingJobRecord.Add(jobMapSectionId);
-
-		//			if (!subdivisionIdsForMissingJobs.Contains(subdivisionIdFromJobMapSection))
-		//			{
-		//				subdivisionIdsForMissingJobs.Add(subdivisionIdFromJobMapSection);
-		//			}
-		//		}
-
-		//		// TODO: Fetch the SubdivisionRecord and compare the details of the mapAreaInfo value. (This only comparing the Ids.
-
-		//		if (jobMapSectionCounter % 100 == 0)
-		//		{
-		//			Debug.WriteLine($"{nameof(CheckMapRefsAndSubdivisions)} has processed {jobMapSectionCounter} records.");
-		//		}
-
-		//	}
-
-		//	return sb.ToString() + $"\n{jobMapSectionIdsWithMissingJobRecord.Count} JobMapSections records reference a non extant Job Record";
-		//}
-
-
-		/// <summary>
-		/// For each job
-		///	1. Compare the SubdivisionId with MapAreaInfo2Record.SubdivisionRecord.Id
-		///
-		///	2. Retrieve the Subdivision Record from the repo and compare
-		///		a.	SamplePointDelta.RSizeDto.Width to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Y1	
-		///		b.	SamplePointDelta.RSizeDto.Height to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Y2
-		///		c.	SamplePointDelta.RSizeDto.Exponent to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent
-		///
-		///		d.	SamplePointDelta.RSizeDto.Width to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Width
-		///		e.	SamplePointDelta.RSizeDto.Height to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Height
-		///		f.	SamplePointDelta.RSizeDto.Exponent to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Exponent
-		///
-		///
-		///		g.	BaseMapPosition.BigVectorDto.X to MapAreaInfo2Record.SubdivisionRecord.BaseMapPosition.BigVectorDto.X
-		///		h.	BaseMapPosition.BigVectorDto.Y to MapAreaInfo2Record.SubdivisionRecord.BaseMapPosition.BigVectorDto.Y
-		/// 
-		/// 
-		/// </summary>
-		/// <param name="mapSectionAdapter"></param>
-		/// <param name="jobMapSectionIdsWithMissingMapSection"></param>
-		/// <param name="subdivisionIdsForMissingMapSections"></param>
-		/// <returns></returns>
 		public static string CheckJobRefsAndSubdivisions(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, out List<ObjectId> jobMapSectionIdsWithMissingJobRecord, out List<ObjectId> subdivisionIdsForMissingJobs)
 		{
-			jobMapSectionIdsWithMissingJobRecord = new List<ObjectId>();
-			subdivisionIdsForMissingJobs = new List<ObjectId>();
-
 			var sb = new StringBuilder();
 			sb.AppendLine("List of All JobMapSection records having a SubdivisionId different from its Job's SubdivisionId.");
-
-			//sb.AppendLine($"JobMapSectionId\tJobId\tSubdivisionId-JobMapSection\tSubdivisionId-JobRecord\tSubdivisionId-JobRecordMapAreaInfo\tSubdivisionId-JobMapSection-Original");
 			sb.AppendLine($"JobMapSectionId\tJobId\tSubdivisionId-JobMapSection\tSubdivisionId-JobRecord\tSubdivisionId-JobMapSection-Original");
 
 			var listOfJobMapIdAndSubdivisionId = mapSectionAdapter.GetJobAndSubdivisionIdsForAllJobMapSections();
 
 			var jobMapSectionCounter = 0;
+			jobMapSectionIdsWithMissingJobRecord = new List<ObjectId>();
+			subdivisionIdsForMissingJobs = new List<ObjectId>();
 
 			foreach (var (jobMapSectionId, jobId, subdivisionIdFromJobMapSection, originalSourceSubdivisionId) in listOfJobMapIdAndSubdivisionId)
 			{
 				jobMapSectionCounter++;
 
+				//Use the JobId to fetch the Job's SubdivisionId.
 				var subdivisionIdFromJobRecord = projectAdapter.GetSubdivisionId(jobId);
 
 				if (subdivisionIdFromJobRecord.HasValue)
 				{
+					// If the SubdivisionIds don't match include details in the report result.
 					if (subdivisionIdFromJobRecord.Value != subdivisionIdFromJobMapSection)
 					{
 						sb.AppendLine($"{jobMapSectionId}\t{jobId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromJobRecord}\t{originalSourceSubdivisionId}");
@@ -345,8 +243,10 @@ namespace MSetRepo
 				}
 				else
 				{
+					// The Job cannot be found, add it's Id to the list
 					jobMapSectionIdsWithMissingJobRecord.Add(jobMapSectionId);
-
+					
+					// Also collect a list of the distinct SubdivisionIds 
 					if (!subdivisionIdsForMissingJobs.Contains(subdivisionIdFromJobMapSection))
 					{
 						subdivisionIdsForMissingJobs.Add(subdivisionIdFromJobMapSection);
@@ -354,6 +254,18 @@ namespace MSetRepo
 				}
 
 				// TODO: Fetch the SubdivisionRecord and compare the details of the mapAreaInfo value. (This only comparing the Ids.
+				//	4. Not yet implemented --- Retrieve the Subdivision Record from the repo and compare
+				//		a.	SamplePointDelta.RSizeDto.Width to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Y1	
+				//		b.	SamplePointDelta.RSizeDto.Height to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Y2
+				//		c.	SamplePointDelta.RSizeDto.Exponent to MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent
+				//
+				//		d.	SamplePointDelta.RSizeDto.Width to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Width
+				//		e.	SamplePointDelta.RSizeDto.Height to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Height
+				//		f.	SamplePointDelta.RSizeDto.Exponent to MapAreaInfo2Record.SubdivisionRecord.SamplePointDelta.RSizeDto.Exponent
+				//
+				//
+				//		g.	BaseMapPosition.BigVectorDto.X to MapAreaInfo2Record.SubdivisionRecord.BaseMapPosition.BigVectorDto.X
+				//		h.	BaseMapPosition.BigVectorDto.Y to MapAreaInfo2Record.SubdivisionRecord.BaseMapPosition.BigVectorDto.Y
 
 				if (jobMapSectionCounter % 100 == 0)
 				{
@@ -421,63 +333,91 @@ namespace MSetRepo
 
 		#region Check for Orphan Jobs, MapSections and Subdivisions
 
-		public static string FindOrphanJobs(IProjectAdapter projectAdapter, JobOwnerType jobOwnerType, out List<ObjectId> jobIdsWithNoOwner, out List<ObjectId> jobIdsWithOwnerOfWrongType)
+		public static string FindOrphanJobs(IProjectAdapter projectAdapter, out List<ObjectId> jobIdsWithNoOwner, out List<ObjectId> jobIdsToBeAssignedJOTofPoster, out List<ObjectId> jobIdsToBeAssignedJOTofProject)
 		{
 			jobIdsWithNoOwner = new List<ObjectId>();
-			jobIdsWithOwnerOfWrongType = new List<ObjectId>();
+			jobIdsToBeAssignedJOTofPoster = new List<ObjectId>();
+			jobIdsToBeAssignedJOTofProject = new List<ObjectId>();
 
-			List<ObjectId> ownerIds;
-			List<ObjectId> ownerIdsOfOtherType;
+			var jobIdsToBeAssignedJOTofUndetermined = new List<ObjectId>();
 
-			if (jobOwnerType == JobOwnerType.Project)
-			{
-				ownerIds = projectAdapter.GetAllProjectIds().ToList();
-				ownerIdsOfOtherType = projectAdapter.GetAllPosterIds().ToList();
-			}
-			else
-			{
-				ownerIds = projectAdapter.GetAllPosterIds().ToList();
-				ownerIdsOfOtherType = projectAdapter.GetAllProjectIds().ToList();
-			}
+			var	projectIds = projectAdapter.GetAllProjectIds().ToList();
+			var	posterIds = projectAdapter.GetAllPosterIds().ToList();
 
-			if (!ListsAreUnique(ownerIds, ownerIdsOfOtherType))
+			if (!ListsAreUnique(projectIds, posterIds))
 			{
 				throw new InvalidCastException("The repository has one or more Projects that have the same Id as a Poster.");
 			}
 
-			var jobAndOwnerIds = projectAdapter.GetJobAndOwnerIdsByJobOwnerType(jobOwnerType);
+			var jobAndOwnerIds = projectAdapter.GetJobAndOwnerIdsWithJobOwnerType();
 
-			foreach (var (jobId, ownerId) in jobAndOwnerIds)
+			foreach (var (jobId, ownerId, jobOwnerType) in jobAndOwnerIds)
 			{
-				if (ownerIdsOfOtherType.Exists(x => x == ownerId))
+				if (jobOwnerType == JobOwnerType.Project)
 				{
-					jobIdsWithOwnerOfWrongType.Add(jobId);
+					if (posterIds.Exists(x => x == ownerId))
+					{
+						jobIdsToBeAssignedJOTofPoster.Add(jobId);
+					}
+					else
+					{
+						if (!projectIds.Exists(x => x == ownerId))
+						{
+							jobIdsWithNoOwner.Add(jobId);
+						}
+					}
+				}
+				else if (jobOwnerType == JobOwnerType.Poster)
+				{
+					if (projectIds.Exists(x => x == ownerId))
+					{
+						jobIdsToBeAssignedJOTofProject.Add(jobId);
+					}
+					else
+					{
+						if (!posterIds.Exists(x => x == ownerId))
+						{
+							jobIdsWithNoOwner.Add(jobId);
+						}
+					}
 				}
 				else
 				{
-					if (!ownerIds.Exists(x => x == ownerId))
-					{
-						jobIdsWithNoOwner.Add(jobId);
-					}
+					jobIdsToBeAssignedJOTofUndetermined.Add(jobId);
 				}
+			}
+
+			// TODO: Create a new enum: JobRequestType = Regular, Display, Image, EditorPreview
+			// TODO: Add a new property on MapSectionRequest and MapSectionResponse of type JobRequestType
+			if (jobIdsToBeAssignedJOTofUndetermined.Count > 0)
+			{
+				//Debug.WriteLine("BREAK HERE");
+				throw new InvalidOperationException("There are Job Records having a JobOwnerType other than Project or Poster.");
 			}
 
 			var sb = new StringBuilder();
 
 			sb.AppendLine();
 			sb.AppendLine($"There are {jobIdsWithNoOwner.Count} Jobs with no owner.");
-			sb.AppendLine($"There are {jobIdsWithOwnerOfWrongType.Count} {jobOwnerType} jobs that have an owner of the wrong type.");
+			sb.AppendLine($"There are {jobIdsToBeAssignedJOTofPoster.Count} Jobs that belong to a Poster that have a JobOwnerType of Project.");
+			sb.AppendLine($"There are {jobIdsToBeAssignedJOTofProject.Count} Jobs that belong to a Project that have a JobOwnerType of Poster.");
 
 			if (jobIdsWithNoOwner.Count > 0)
 			{
-				sb.AppendLine($"{jobOwnerType} Jobs with no owner:");
+				sb.AppendLine($"Jobs with no owner:");
 				sb.AppendLine(string.Join("\n", jobIdsWithNoOwner));
 			}
 
-			if (jobIdsWithOwnerOfWrongType.Count > 0)
+			if (jobIdsToBeAssignedJOTofPoster.Count > 0)
 			{
-				sb.AppendLine($"{jobOwnerType} Jobs with with the wrong job type:");
-				sb.AppendLine(string.Join("\n", jobIdsWithOwnerOfWrongType));
+				sb.AppendLine($"Jobs having JobOwnerType = Project that belong to a Poster:");
+				sb.AppendLine(string.Join("\n", jobIdsToBeAssignedJOTofPoster));
+			}
+
+			if (jobIdsToBeAssignedJOTofProject.Count > 0)
+			{
+				sb.AppendLine($"Jobs having JobOwnerType = Poster that belong to a Project:");
+				sb.AppendLine(string.Join("\n", jobIdsToBeAssignedJOTofProject));
 			}
 
 			return sb.ToString();

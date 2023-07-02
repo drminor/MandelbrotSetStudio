@@ -79,11 +79,13 @@ namespace ProjectRepo
 		}
 
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndOwnerIdsByJobOwnerType(JobOwnerType jobOwnerType)
+		public IEnumerable<ValueTuple<ObjectId, ObjectId, JobOwnerType>> GetJobAndOwnerIdsWithJobOwnerType()
 		{
-			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.OwnerId));
-			var filter = Builders<JobRecord>.Filter.Eq(f => f.JobOwnerType, jobOwnerType);
-			IFindFluent<JobRecord, ValueTuple<ObjectId, ObjectId>> operation = Collection.Find(filter).Project(projection1);
+			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, JobOwnerType>(p.Id, p.OwnerId, p.JobOwnerType));
+
+			var filter = Builders<JobRecord>.Filter.Empty;
+
+			IFindFluent<JobRecord, ValueTuple<ObjectId, ObjectId, JobOwnerType>> operation = Collection.Find(filter).Project(projection1);
 
 			var itemsFound = operation.ToEnumerable();
 			return itemsFound;

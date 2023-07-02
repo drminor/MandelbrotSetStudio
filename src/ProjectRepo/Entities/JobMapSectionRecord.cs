@@ -9,11 +9,11 @@ namespace ProjectRepo.Entities
 	(
 		ObjectId JobId,
 		ObjectId MapSectionId,
-		ObjectId SubdivisionId,
+		ObjectId SubdivisionId,         // TODO_schema: Rename JobMapSectionRecord.SubdivisionId -> MapSectionSubdivisionId
 		JobOwnerType OwnerType,
 		bool IsInverted,
 		DateTime LastSavedUtc,
-		bool RefIsHard
+		bool RefIsHard					// TODO_schema: Remove field RefIsHard
 	)
 	{
 		[BsonId]
@@ -21,9 +21,12 @@ namespace ProjectRepo.Entities
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
 		public DateTime DateCreated => Id.CreationTime;
+		public DateTime DateCreatedUtc { get; set; }    // TODO_schema: Add DateCreatedUtc to JobMapSectionRecord
+
 
 		public bool Onfile => Id != ObjectId.Empty;
 
-		public ObjectId OriginalSourceSubdivisionId { get; set; } = ObjectId.Empty;
+		public ObjectId OriginalSourceSubdivisionId { get; set; } = ObjectId.Empty; // TODO_schema: Rename JobMapSectionRecord.OriginalSourceSubdivisionId -> JobSubdivisionId
+
 	}
 }
