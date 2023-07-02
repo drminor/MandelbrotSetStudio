@@ -57,10 +57,10 @@ namespace MapSectionProviderLib
 		//	return result;
 		//}
 
-		public List<MapSection> Push(string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, 
+		public List<MapSection> Push(JobType jobType, string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, 
 			out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
 		{
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
 			var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
 
 			mapSectionsPendingGeneration = new List<MapSection>();

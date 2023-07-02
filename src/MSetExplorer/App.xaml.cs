@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 		private static readonly bool CREATE_JOB_MAP_SECTION_REPORT = false;
 
-		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS = true;
+		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS = false;
 		private static readonly bool FIND_AND_DELETE_ORPHAN_MAP_SECTIONS = false;
 		private static readonly bool FIND_AND_DELETE_ORPHAN_SUBDIVISIONS = false;
 

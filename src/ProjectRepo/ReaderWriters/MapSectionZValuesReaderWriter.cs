@@ -39,7 +39,7 @@ namespace ProjectRepo
 			if (itemsFound.Count > 0)
 			{
 				var result = itemsFound[0];
-				result.LastAccessed = DateTime.UtcNow;
+				result.LastAccessedUtc = DateTime.UtcNow;
 				return result;
 			}
 			else
@@ -61,7 +61,7 @@ namespace ProjectRepo
 			if (itemsFound.Count > 0)
 			{
 				var result = itemsFound[0];
-				result.LastAccessed = DateTime.UtcNow;
+				result.LastAccessedUtc = DateTime.UtcNow;
 				return result;
 			}
 			else

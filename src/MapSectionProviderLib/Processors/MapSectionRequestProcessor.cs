@@ -130,7 +130,7 @@ namespace MapSectionProviderLib
 						request.ProcessingEndTime = DateTime.UtcNow;
 
 						mapSectionResponse.JobId = request.JobId;
-						mapSectionResponse.JobOwnerType = request.JobOwnerType;
+						//mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
 						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
 						mapSectionVectors = null;
@@ -324,7 +324,7 @@ namespace MapSectionProviderLib
 					request.ProcessingEndTime = DateTime.UtcNow;
 
 					mapSectionResponse.JobId = request.JobId;
-					mapSectionResponse.JobOwnerType = request.JobOwnerType;
+					//mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
 					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
 

@@ -28,7 +28,10 @@ namespace MSS.Common
 		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);
 
 		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted);
-		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, JobOwnerType jobOwnerType, JobType jobType);
+		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, JobOwnerType jobOwnerType, JobType jobType);
+		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, JobOwnerType jobOwnerType, JobType jobType, SizeInt blockIndex);
+
+
 
 		Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct);
 		Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
@@ -39,7 +42,10 @@ namespace MSS.Common
 		Subdivision InsertSubdivision(Subdivision subdivision);
 
 		IList<ObjectId> GetMapSectionIds(ObjectId jobId, JobOwnerType jobOwnerType);
-		bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
+		
+		//bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
+		bool InsertIfNotFoundJobMapSection(JobType jobType, ObjectId mapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, ObjectId jobId, JobOwnerType ownerType, bool isInverted, SizeInt blockIndex, out ObjectId jobMapSectionId);
+
 
 		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections();
 		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections();

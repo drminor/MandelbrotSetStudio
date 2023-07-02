@@ -558,7 +558,7 @@ namespace MSetExplorer
 
 			var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-			createImageProgressViewModel.CreateImage(imageFilePath, jobId, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
+			createImageProgressViewModel.CreateImage(imageFilePath, jobId, JobOwnerType.Project, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
 
 			var result = new CreateImageProgressWindow()
 			{

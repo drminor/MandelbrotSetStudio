@@ -38,7 +38,7 @@ namespace ImageBuilder
 
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<byte[]?> BuildAsync(ObjectId jobId, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, CancellationToken ct, Action<double>? statusCallBack = null)
+		public async Task<byte[]?> BuildAsync(ObjectId jobId, JobOwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, CancellationToken ct, Action<double>? statusCallBack = null)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -65,7 +65,7 @@ namespace ImageBuilder
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtrY, w, mapCalcSettings, mapAreaInfo.Precision);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtrY, w, mapCalcSettings, mapAreaInfo.Precision);
 					if (ct.IsCancellationRequested || blocksForThisRow.Count == 0)
 					{
 						return null;
@@ -188,16 +188,16 @@ namespace ImageBuilder
 
 		//private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(Subdivision subdivision, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
 
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, Subdivision subdivision, ObjectId originalSourceSubdivisionId, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, JobOwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
 		{
+			var jobType = JobType.SizeEditorPreview;
 			var requests = new List<MapSectionRequest>();
-			//var jobId = ObjectId.GenerateNewId().ToString();
-			var jobOwnerType = JobOwnerType.BitmapBuilder;
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
-				var mapSectionRequest = _mapSectionBuilder.CreateRequest(key, mapBlockOffset, precision, jobId.ToString(), jobOwnerType, subdivision, originalSourceSubdivisionId, mapCalcSettings, colPtr);
+				var screenPositionRelativeToCenter = new VectorInt(key);
+				var mapSectionRequest = _mapSectionBuilder.CreateRequest(jobType, key, screenPositionRelativeToCenter, mapBlockOffset, precision, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId, mapCalcSettings, colPtr);
 				requests.Add(mapSectionRequest);
 			}
 

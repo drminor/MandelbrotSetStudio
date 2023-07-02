@@ -43,7 +43,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void CreateImage(string imageFilePath, ObjectId jobId, MapAreaInfo mapAreaInfoWithSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		public void CreateImage(string imageFilePath, ObjectId jobId, JobOwnerType ownerType, MapAreaInfo mapAreaInfoWithSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			ImageFilePath = imageFilePath;
 
@@ -51,7 +51,7 @@ namespace MSetExplorer
 			//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 			//_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
 			//_task.ContinueWith(t =>
 			//{

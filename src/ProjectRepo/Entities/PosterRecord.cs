@@ -24,28 +24,11 @@ namespace ProjectRepo.Entities
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
-		[BsonIgnoreIfDefault]
-		[BsonDefaultValue(0)]
-		public int Width { get; set; }
 
-		[BsonIgnoreIfDefault]
-		[BsonDefaultValue(0)]
+		public int Width { get; set; }		// TODO_schema: Use a SizeIntRecord for the PosterRecord.Size property
 		public int Height { get; set; }
 
-		public SizeDbl PosterSize
-		{
-			get
-			{
-				if (Width == 0 || Height == 0)
-				{
-					return new SizeDbl(1024);
-				}
-				else
-				{
-					return new SizeDbl(Width, Height);
-				}
-			}
-		}
+		public SizeDbl PosterSize => new SizeDbl(Width, Height);
 
 	}
 }

@@ -3,19 +3,19 @@
 
 Collection
 	ObjectId
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	String Name
 
 MapRepository
 	ObjectId Id
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	String Name
 	String MongoDB_Connection_String
 	String DatabaseName
 
 ProjectRef
 	ObjectId Id
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	String Name
 	ObjectId CollectionId
 	ObjectId MapRespositoryId
@@ -26,20 +26,20 @@ ProjectRef
 
 Project
 	ObjectId Id
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	String Name
 	String Description
 
 Poster
 	ObjectId Id
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	String Name
 	String Description
 
 
 Job
 	ObjectId Id
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	ObjectId ParentJobId
 
 	ObjectId OwnerId
@@ -58,7 +58,7 @@ Job
 		
 		Subdivision Subdivision
 			ObjectId Id
-			DateTime DateCreated
+			DateTime DateCreatedUtc
 			SizeInt BlockSize			// Number of sample points in each MapSection
 			RSize SamplePointDelta		// Distance from one sample point to the next
 			BigVector BaseMapPosition	// Absolute coordinates in SamplePointDelta * BlockSize units. MapSections belonging to this Subdivision use this as a base position
@@ -90,14 +90,14 @@ Job
 
 Subdivison
 	ObjectId Id
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	SizeInt BlockSize					// Number of sample points in each MapSection
 	RSize SamplePointDelta				// Distance from one sample point to the next
 	BigVector BaseMapPosition			// Absolute coordinates in SamplePointDelta * BlockSize units. MapSections belonging to this Subdivision use this as a base position
 
 MapSectionRecord
 	ObjectId Id
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	ObjectId SubdivisionId		
 	PointInt BlockPosition				// Coordinates in units of SamplePointDelta * BlockSize, relative to the Subdivision's BaseMapPosition
 	PointRecord Position				// Can be calculated from the BlockPosition and the Subdivision's Position -- absolute coordinates on the complex plane.
@@ -106,7 +106,7 @@ MapSectionRecord
 
 MapSectionZValuesRecord
 	ObjectId Id
-	DateTime DateCreated
+	DateTime DateCreatedUtc
 	MapSectionId						// Id of the MapSection for which these ZValues belong
 	ZValues ZValues
 
@@ -119,11 +119,12 @@ MapSectionZValuesRecord
 
 JobMapSectionRecord
 	ObjectId Id
-	DateTime DateCreated
 
 	ObjectId JobId
 	ObjectId MapSectionId
 	bool IsInverted						// True if the job includes a request for section to produce output below the X-Axis.
+	SizeInt BlockIndex					// BlockIndex of the MapSection relative to the Job's center block.
+	DateTime DateCreatedUtc
 
 	JobOwnerType OwnerType				// Convenience - same as the Job's OwnerType (Either Project or Poster.)
 	ObjectId MapSectionSubdivisionId	// Convenience - same as the MapSection's SubdivisionId

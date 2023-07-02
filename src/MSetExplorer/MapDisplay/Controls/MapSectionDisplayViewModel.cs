@@ -313,8 +313,9 @@ namespace MSetExplorer
 
 				// Get the MapAreaInfo subset for the current view. The display postion specifies the left, bottom pixel to be displayed.
 				var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
+				var jobType = JobType.FullScale;
 
-				newJobNumber = DiscardAndLoad(newValue, mapAreaInfo2Subset, out lastSectionWasIncluded);
+				newJobNumber = DiscardAndLoad(jobType, newValue, mapAreaInfo2Subset, out lastSectionWasIncluded);
 
 				CurrentAreaColorAndCalcSettings = newValue;
 				DisplayPosition = displayPosition;
@@ -410,10 +411,11 @@ namespace MSetExplorer
 
 			// Get the MapAreaInfo subset for the given display position
 			var mapAreaInfo2Subset = BoundedMapArea.GetView(contentOffset);
+			var jobType = JobType.FullScale;
 
 			ReportMove(BoundedMapArea, contentOffset/*, BoundedMapArea.ContentScale, BoundedMapArea.BaseScale*/);
 
-			var newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
+			var newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
 
 			DisplayPosition = contentOffset;
 
@@ -573,6 +575,7 @@ namespace MSetExplorer
 				var currentBaseScale = boundedMapArea.BaseScale;
 
 				var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, baseScale);
+				var jobType = JobType.FullScale;
 
 				var scaledViewportSize = viewportSize.Scale(boundedMapArea.ScaleFactor);
 				_bitmapGrid.ViewportSize = scaledViewportSize;
@@ -581,11 +584,11 @@ namespace MSetExplorer
 
 				if (boundedMapArea.BaseScale != currentBaseScale)
 				{
-					newJobNumber = DiscardAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
+					newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
 				}
 				else
 				{
-					newJobNumber = ReuseAndLoad(areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
+					newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
 				}
 			}
 
@@ -612,7 +615,7 @@ namespace MSetExplorer
 				if (CurrentAreaColorAndCalcSettings != null)
 				{
 					var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, viewportSize);
-					newJobNumber = ReuseAndLoad(CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
+					newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
 				}
 			}
 
@@ -635,11 +638,11 @@ namespace MSetExplorer
 				var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewportSize);
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
-					newJobNumber = ReuseAndLoad(newJob, screenAreaInfo, out lastSectionWasIncluded);
+					newJobNumber = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 				else
 				{
-					newJobNumber = DiscardAndLoad(newJob, screenAreaInfo, out lastSectionWasIncluded);
+					newJobNumber = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 			}
 			else
@@ -652,7 +655,7 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		private int? ReuseAndLoad(AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
+		private int? ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
 		{
 			LastMapAreaInfo = screenAreaInfo;
 
@@ -718,7 +721,7 @@ namespace MSetExplorer
 
 				if (sectionsToLoad.Count > 0)
 				{
-					var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady,
+					var newMapSections = _mapLoaderManager.Push(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady,
 						out var newJobNumber, out var mapSectionsPendingGeneration);
 
 					AddPendingSections(mapSectionsPendingGeneration);
@@ -743,7 +746,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private int DiscardAndLoad(AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
+		private int DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
 		{
 			StopCurrentJobAndClearDisplay();
 
@@ -751,7 +754,7 @@ namespace MSetExplorer
 
 			var sectionsRequired = _mapSectionBuilder.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
 
-			var newMapSections = _mapLoaderManager.Push(newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsRequired, MapSectionReady,
+			var newMapSections = _mapLoaderManager.Push(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsRequired, MapSectionReady,
 					out var newJobNumber, out var mapSectionsPendingGeneration);
 
 			AddPendingSections(mapSectionsPendingGeneration);

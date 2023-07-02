@@ -507,7 +507,7 @@ namespace MSetExplorer
 
 			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
 			var emptyMapSections = _mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(JobType.FullScale, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
 
 			return mapSectionRequests;
 		}

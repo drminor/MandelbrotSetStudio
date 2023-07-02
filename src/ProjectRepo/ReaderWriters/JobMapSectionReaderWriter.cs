@@ -176,13 +176,13 @@ namespace ProjectRepo
 
 		#region Update 
 
-		public void SetSubdivisionId(ObjectId jobMapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId)
+		public void SetSubdivisionId(ObjectId jobMapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId)
 		{
 			var filter = Builders<JobMapSectionRecord>.Filter.Eq(f => f.Id, jobMapSectionId);
 
 			var updateDefinition = Builders<JobMapSectionRecord>.Update
-				.Set(u => u.SubdivisionId, subdivisionId)
-				.Set(u => u.OriginalSourceSubdivisionId, originalSourceSubdivisionId);
+				.Set(u => u.MapSectionId, mapSectionSubdivisionId)
+				.Set(u => u.JobSubdivisionId, jobSubdivisionId);
 
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
@@ -275,7 +275,7 @@ namespace ProjectRepo
 
 		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections()
 		{
-			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>(p.Id, p.MapSectionId, p.SubdivisionId, p.OriginalSourceSubdivisionId));
+			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>(p.Id, p.MapSectionId, p.MapSectionSubdivisionId, p.JobSubdivisionId));
 
 			var filter = Builders<JobMapSectionRecord>.Filter.Empty;
 
@@ -287,7 +287,7 @@ namespace ProjectRepo
 
 		public IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections()
 		{
-			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>(p.Id, p.JobId, p.SubdivisionId, p.OriginalSourceSubdivisionId));
+			var projection1 = Builders<JobMapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>(p.Id, p.JobId, p.MapSectionSubdivisionId, p.JobSubdivisionId));
 
 			var filter = Builders<JobMapSectionRecord>.Filter.Empty;
 
@@ -300,6 +300,36 @@ namespace ProjectRepo
 		#endregion
 
 		#region Maintenance
+
+		//public void AddJobTypeAndBlockIndex()
+		//{
+		//	var filter1 = Builders<JobMapSectionRecord>.Filter.Empty;
+
+		//	var allRecords = Collection.Find(filter1).ToEnumerable();
+
+		//	foreach (var rec in allRecords)
+		//	{
+		//		var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.Id, rec.Id);
+
+		//		var updateDefinition = Builders<JobMapSectionRecord>.Update
+		//		.Set(f => f.MapSectionSubdivisionId, rec.SubdivisionId)
+		//		.Set(f => f.JobSubdivisionId, rec.OriginalSourceSubdivisionId)
+
+		//		.Set(f => f.JobType, JobType.FullScale)
+		//		.Set(f => f.BlockIndex, new SizeIntRecord(0, 0))
+		//		.Set(f => f.DateCreatedUtc, rec.DateCreated)
+		//		.Unset(f => f.RefIsHard)
+		//		.Unset(f => f.SubdivisionId)
+		//		.Unset(f => f.OriginalSourceSubdivisionId)
+		//		.Unset(f => f.OwnerId)
+		//		.Unset(f => f.LastSaved);
+
+		//		var options = new UpdateOptions { IsUpsert = false };
+
+		//		_ = Collection.UpdateOne(filter2, updateDefinition, options);
+		//	}
+		//}
+
 
 		//public void ReplaceOwnerIdWithJobId()
 		//{

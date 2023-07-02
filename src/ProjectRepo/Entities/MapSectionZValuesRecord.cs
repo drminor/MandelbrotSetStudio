@@ -9,9 +9,9 @@ namespace ProjectRepo.Entities
 	/// Record used to store the data found in a MapSectionResponse
 	/// </summary>
 	public record MapSectionZValuesRecord(
-		DateTime DateCreatedUtc,
 		ObjectId MapSectionId,
 
+		DateTime DateCreatedUtc,
 		ZValues ZValues
 		)
 	{
@@ -20,8 +20,7 @@ namespace ProjectRepo.Entities
 		public ObjectId Id { get; init; } = ObjectId.GenerateNewId();
 
 		public DateTime LastSavedUtc { get; set; }
-		public DateTime LastAccessed { get; set; }
+		public DateTime LastAccessedUtc { get; set; }
 	}
-
 
 }

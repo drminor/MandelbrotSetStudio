@@ -100,7 +100,9 @@ namespace MapSectionProviderLib
 					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{
 						var mapSectionRequest = mapSectionPersistRequest.Request;
-						_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.JobOwnerType, jobType: JobType.FullScale);
+						var blockIndex = new SizeInt();
+
+						_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobType: JobType.FullScale, blockIndex);
 					}
 					else
 					{
@@ -149,9 +151,11 @@ namespace MapSectionProviderLib
 						_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
 					}
 
-					// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType)
-					// may not be on file. This will insert one if not already present.
-					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.JobOwnerType, jobType: JobType.FullScale);
+					// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType) may not be on file.
+					// This will insert one if not already present.
+
+					var blockIndex = new SizeInt();
+					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobType: JobType.FullScale, blockIndex);
 
 				}
 			}
@@ -169,7 +173,8 @@ namespace MapSectionProviderLib
 						_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
 					}
 
-					 _ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.JobOwnerType, jobType: JobType.FullScale);
+					var blockIndex = new SizeInt();
+					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse/*, mapSectionRequest.BlockPosition*/, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobType: JobType.FullScale, blockIndex);
 				}
 			}
 		}

@@ -33,7 +33,7 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-		public List<MapSectionRequest> CreateSectionRequests(string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		public List<MapSectionRequest> CreateSectionRequests(JobType jobType, string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -46,14 +46,16 @@ namespace MSS.Common
 			var requestNumber = 0;
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, precision, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
+				var screenPositionRelativeToCenter = new VectorInt(screenPosition);
+				var mapSectionRequest = CreateRequest(jobType, screenPosition, screenPositionRelativeToCenter, mapAreaInfo.MapBlockOffset, precision, jobId, jobOwnerType, 
+					mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
 				result.Add(mapSectionRequest);
 			}
 
 			return result;
 		}
 
-		public List<MapSectionRequest> CreateSectionRequestsFromMapSections(string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
+		public List<MapSectionRequest> CreateSectionRequestsFromMapSections(JobType jobType, string jobId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -63,7 +65,10 @@ namespace MSS.Common
 			foreach (var mapSection in emptyMapSections)
 			{
 				var screenPosition = mapSection.ScreenPosition;
-				var mapSectionRequest = CreateRequest(screenPosition, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
+				var screenPositionRelativeToCenter = new VectorInt(screenPosition);
+
+				var mapSectionRequest = CreateRequest(jobType, screenPosition, screenPositionRelativeToCenter, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, 
+					mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
 
 				mapSectionRequest.MapSectionVectors = mapSection.MapSectionVectors;
 
@@ -85,11 +90,12 @@ namespace MSS.Common
 		/// <param name="jobMapBlockOffset"></param>
 		/// <param name="precision"></param>
 		/// <param name="jobId"></param>
-		/// <param name="jobOwnerType"></param>
+		/// <param name="ownerType"></param>
 		/// <param name="subdivision"></param>
 		/// <param name="mapCalcSettings"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(PointInt screenPosition, BigVector jobMapBlockOffset, int precision, string jobId, JobOwnerType jobOwnerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, MapCalcSettings mapCalcSettings, int requestNumber)
+		public MapSectionRequest CreateRequest(JobType jobType, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector jobMapBlockOffset, int precision, string jobId, JobOwnerType ownerType, 
+			Subdivision subdivision, ObjectId originalSourceSubdivisionId, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
 			// Block Position, relative to the Subdivision's BaseMapPosition
 			var localBlockPosition = RMapHelper.ToSubdivisionCoords(screenPosition, jobMapBlockOffset, out var isInverted);
@@ -101,11 +107,13 @@ namespace MSS.Common
 
 			var mapSectionRequest = new MapSectionRequest
 			(
+				jobType: jobType,
 				jobId: jobId,
-				jobOwnerType: jobOwnerType,
+				ownerType: ownerType,
 				subdivisionId: subdivision.Id.ToString(),
 				originalSourceSubdivisionId: originalSourceSubdivisionId.ToString(),
 				screenPosition: screenPosition,
+				screenPositionRelativeToCenter: screenPositionRelativeToCenter,
 				mapBlockOffset: jobMapBlockOffset,
 				blockPosition: localBlockPosition,
 				mapPosition: mapPosition,

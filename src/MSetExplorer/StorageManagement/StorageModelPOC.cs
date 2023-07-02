@@ -62,8 +62,8 @@ namespace MSetExplorer.StorageManagement
 					var js = new StorageModel.JobSection(jobMapSectionRecord.Id, jobMapSectionRecord.JobId, sectionId)
 					{
 						JobOwnerType = jobMapSectionRecord.OwnerType,
-						SubdivisionId = jobMapSectionRecord.SubdivisionId,
-						OriginalSourceSubdivisionId = jobMapSectionRecord.OriginalSourceSubdivisionId,
+						SubdivisionId = jobMapSectionRecord.MapSectionSubdivisionId,
+						OriginalSourceSubdivisionId = jobMapSectionRecord.JobSubdivisionId,
 					};
 
 					jobOwner.JobSections.Add(js);

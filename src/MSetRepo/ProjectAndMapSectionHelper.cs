@@ -116,8 +116,6 @@ namespace MSetRepo
 		{
 			var numberOfRecordsInserted = 0L;
 
-			var jobOwnerTypeForThisRun = JobOwnerType.Project;
-
 			IEnumerable<IProjectInfo> projectInfos = projectAdapter.GetAllProjectInfos();
 
 			foreach (var projectInfo in projectInfos)
@@ -129,7 +127,7 @@ namespace MSetRepo
 
 				var displaySize = new SizeDbl(1024);
 
-				numberOfRecordsInserted += CreateMissingJobMapSectionRecords(projectId, projectInfo.Name, jobs, jobOwnerTypeForThisRun, displaySize, mapSectionAdapter, mapJobHelper);
+				numberOfRecordsInserted += CreateMissingJobMapSectionRecords(JobType.FullScale, projectId, projectInfo.Name, jobs, JobOwnerType.Project, displaySize, mapSectionAdapter, mapJobHelper);
 			}
 
 			return $"For JobOwnerType: Project: {numberOfRecordsInserted} new JobMapSection records were created.";
@@ -138,8 +136,6 @@ namespace MSetRepo
 		public static string PopulateJobMapSectionsForAllPosters(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
 		{
 			var numberOfRecordsInserted = 0L;
-
-			var jobOwnerTypeForThisRun = JobOwnerType.Poster;
 
 			IEnumerable<IPosterInfo> posterInfos = projectAdapter.GetAllPosterInfos();
 
@@ -152,13 +148,13 @@ namespace MSetRepo
 
 				var displaySize = posterInfo.Size;
 
-				numberOfRecordsInserted += CreateMissingJobMapSectionRecords(posterId, posterInfo.Name, jobs, jobOwnerTypeForThisRun, displaySize, mapSectionAdapter, mapJobHelper);
+				numberOfRecordsInserted += CreateMissingJobMapSectionRecords(JobType.FullScale, posterId, posterInfo.Name, jobs, JobOwnerType.Poster, displaySize, mapSectionAdapter, mapJobHelper);
 			}
 
 			return $"For JobOwnerType: Poster: {numberOfRecordsInserted} new JobMapSection records were created.";
 		}
 
-		private static long CreateMissingJobMapSectionRecords(ObjectId ownerId, string ownerName, List<Job> jobs, JobOwnerType jobOwnerTypeForThisRun, SizeDbl displaySize, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
+		private static long CreateMissingJobMapSectionRecords(JobType jobType, ObjectId ownerId, string ownerName, List<Job> jobs, JobOwnerType ownerType, SizeDbl displaySize, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
 		{
 			var mapSectionBuilder = new MapSectionBuilder();
 
@@ -166,12 +162,12 @@ namespace MSetRepo
 
 			foreach (var job in jobs)
 			{
-				if (job.JobOwnerType != jobOwnerTypeForThisRun)
+				if (job.JobOwnerType != ownerType)
 				{
-					Debug.WriteLine($"WARNING: Found a JobOwnerType mismatch: Expecting {jobOwnerTypeForThisRun} but found {job.JobOwnerType}. JobOwnerId: {ownerId} - Name: {ownerName}.");
+					Debug.WriteLine($"WARNING: Found a JobOwnerType mismatch: Expecting {ownerType} but found {job.JobOwnerType}. JobOwnerId: {ownerId} - Name: {ownerName}.");
 				}
 
-				var mapSectionRequests = GetMapSectionRequests(job, jobOwnerTypeForThisRun, displaySize, mapJobHelper, mapSectionBuilder);
+				var mapSectionRequests = GetMapSectionRequests(jobType, job, ownerType, displaySize, mapJobHelper, mapSectionBuilder);
 
 				for (var i = 0; i < mapSectionRequests.Count; i++)
 				{
@@ -186,8 +182,10 @@ namespace MSetRepo
 					{
 						//var subdivision = subdivisonProvider.GetSubdivision(mapSectionRequest.SamplePointDelta, mapSectionRequest.MapBlockOffset, out var localMapBlockOffset);
 
-						var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(mapSectionId.Value, subdivisionId, originalSourceSubdivisionId, job.Id, jobOwnerTypeForThisRun, 
-							mapSectionRequest.IsInverted, refIsHard: false, out var jobMapSectionId);
+						var blockIndex = new SizeInt(0, 0);
+
+						var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(JobType.FullScale, mapSectionId.Value, subdivisionId, originalSourceSubdivisionId, job.Id, ownerType, 
+							mapSectionRequest.IsInverted, blockIndex, out var jobMapSectionId);
 
 						numberOfRecordsInserted += inserted ? 1 : 0;
 					}
@@ -197,7 +195,7 @@ namespace MSetRepo
 			return numberOfRecordsInserted;
 		}
 
-		private static List<MapSectionRequest> GetMapSectionRequests(Job job, JobOwnerType jobOwnerType, SizeDbl displaySize, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionBuilder)
+		private static List<MapSectionRequest> GetMapSectionRequests(JobType jobType, Job job, JobOwnerType jobOwnerType, SizeDbl displaySize, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionBuilder)
 		{
 			var jobId = job.Id;
 			var mapAreaInfo = job.MapAreaInfo;
@@ -205,7 +203,7 @@ namespace MSetRepo
 
 			var mapAreaInfoV1 = mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, displaySize);
 			var emptyMapSections = mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
-			var mapSectionRequests = mapSectionBuilder.CreateSectionRequestsFromMapSections(jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
+			var mapSectionRequests = mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
 
 			return mapSectionRequests;
 		}

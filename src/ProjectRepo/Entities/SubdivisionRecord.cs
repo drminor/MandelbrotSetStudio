@@ -17,9 +17,5 @@ namespace ProjectRepo.Entities
 		public DateTime DateCreated => Id.CreationTime;
 		public DateTime DateCreatedUtc { get; set; }    // TODO_schema: Add DateCreatedUtc to SubdivisionRecord
 
-
-		//public BigVectorRecord? BaseMapPosition { get; set; } = new BigVectorRecord();
-
-
 	}
 }

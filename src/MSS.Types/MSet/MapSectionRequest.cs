@@ -5,16 +5,18 @@ namespace MSS.Types.MSet
 {
 	public class MapSectionRequest
 	{
-		public MapSectionRequest(string jobId, JobOwnerType jobOwnerType, string subdivisionId, string originalSourceSubdivisionId,
-			PointInt screenPosition, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
+		public MapSectionRequest(JobType jobType, string jobId, JobOwnerType ownerType, string subdivisionId, string originalSourceSubdivisionId,
+			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
 			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
+			JobType = jobType;
 			MapSectionId = null;
 			JobId = jobId;
-			JobOwnerType = jobOwnerType;
+			OwnerType = ownerType;
 			SubdivisionId = subdivisionId;
 			OriginalSourceSubdivisionId = originalSourceSubdivisionId;
 			ScreenPosition = screenPosition;
+			ScreenPositionReleativeToCenter = screenPositionRelativeToCenter;
 			MapBlockOffset = mapBlockOffset;
 			BlockPosition = blockPosition;
 			MapPosition = mapPosition;
@@ -30,9 +32,10 @@ namespace MSS.Types.MSet
 			ProcessingStartTime = DateTime.UtcNow;
 		}
 
+		public JobType JobType { get; init; }
 		public string? MapSectionId { get; set; }
 		public string JobId { get; init; }
-		public JobOwnerType JobOwnerType { get; init; }
+		public JobOwnerType OwnerType { get; init; }
 		public string SubdivisionId { get; init; }
 		public string OriginalSourceSubdivisionId { get; init; }
 
@@ -40,6 +43,8 @@ namespace MSS.Types.MSet
 		/// X,Y coords on screen in Block-Size units
 		/// </summary>
 		public PointInt ScreenPosition { get; init; }
+
+		public VectorInt ScreenPositionReleativeToCenter { get; init; }
 		
 		/// <summary>
 		/// X,Y coords for the Job, relative to Subdivision Base in Block-Size units
