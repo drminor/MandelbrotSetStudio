@@ -7,9 +7,9 @@ namespace MSS.Common
 {
 	public interface IMapSectionDeleter
 	{
-		long? DeleteMapSectionsForJob(ObjectId jobId, OwnerType jobOwnerType);
+		long? DeleteMapSectionsForJob(ObjectId jobId);
 
-		long? DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, OwnerType jobOwnerType);
+		long? DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds);
 
 		// TODO: UpdateDeleteMapSectionsWithJobType to use JobType instead of OwnerType
 		long? DeleteMapSectionsWithJobType(IList<ObjectId> mapSectionIds, OwnerType jobOwnerType);

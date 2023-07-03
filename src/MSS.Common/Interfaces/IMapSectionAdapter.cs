@@ -41,10 +41,10 @@ namespace MSS.Common
 		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [NotNullWhen(true)] out Subdivision? subdivision);
 		Subdivision InsertSubdivision(Subdivision subdivision);
 
-		IList<ObjectId> GetMapSectionIds(ObjectId jobId, OwnerType jobOwnerType);
+		IList<ObjectId> GetMapSectionIds(ObjectId jobId);
 		
 		//bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
-		bool InsertIfNotFoundJobMapSection(JobType jobType, ObjectId mapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, ObjectId jobId, OwnerType ownerType, bool isInverted, SizeInt blockIndex, out ObjectId jobMapSectionId);
+		bool InsertIfNotFoundJobMapSection(JobType jobType, ObjectId jobId, ObjectId mapSectionId, SizeInt blockIndex, bool isInverted, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, OwnerType ownerType, out ObjectId jobMapSectionId);
 
 
 		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections();
@@ -67,6 +67,9 @@ namespace MSS.Common
 		IEnumerable<ObjectId> GetSubdivisionIdsForAllMapSections();
 		long DeleteSubdivisionsInList(IList<ObjectId> subdivisionIds);
 
+		long GetSizeOfCollectionInMB();
+
+		void UpdateJobMapSectionSubdivisionIds(ObjectId jobMapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId);
 	}
 
 }

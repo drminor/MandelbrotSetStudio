@@ -76,6 +76,7 @@ namespace MSS.Common
 		void UpdateJobOwnerType(ObjectId jobId, OwnerType jobOwnerType);
 
 		IEnumerable<JobInfo> GetJobInfosForOwner(ObjectId ownerId);
+		IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsForOwner(ObjectId ownerId);
 
 	}
 }

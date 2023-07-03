@@ -40,7 +40,7 @@ namespace ProjectRepo
 			return result;
 		}
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsByOwner(ObjectId ownerId)
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsForOwner(ObjectId ownerId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
@@ -230,7 +230,7 @@ namespace ProjectRepo
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
 					//p => new JobSudivisionInfo(p.Id, p.DateCreatedUtc, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
-					p => new JobInfo(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
+					p => new JobInfo(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.MapAreaInfo2Record.SubdivisionRecord.Id, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
 
 				);
 

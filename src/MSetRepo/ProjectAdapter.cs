@@ -257,7 +257,7 @@ namespace MSetRepo
 				var jobCount = jobInfos.Count();
 
 				var jobIds = jobInfos.Select(x => x.Id).ToList();
-				var bytes = GetBytes(jobIds, OwnerType.Project, jobMapSectionReaderWriter);
+				var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
 
 				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, bytes, dateCreated, lastUpdatedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
@@ -388,13 +388,13 @@ namespace MSetRepo
 			return result;
 		}
 
-		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetAllJobAndSubdivisionIdsForProject(ObjectId projectId)
+		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsForOwner(ObjectId projectId)
 		{
 			//IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsByOwner(ObjectId ownerId)
 			//var result = 
 
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var result = jobReaderWriter.GetJobAndSubdivisionIdsByOwner(projectId);
+			var result = jobReaderWriter.GetJobAndSubdivisionIdsForOwner(projectId);
 
 			return result;
 		}
@@ -1016,19 +1016,19 @@ namespace MSetRepo
 			}
 
 			var jobIds = jobReaderWriter.GetJobIdsByOwner(posterRecord.Id).ToList();
-			var bytes = GetBytes(jobIds, OwnerType.Poster, jobMapSectionReaderWriter);
+			var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
 
 			result = new PosterInfo(posterRecord.Id, posterRecord.Name, posterRecord.Description, posterRecord.CurrentJobId, posterRecord.PosterSize, bytes, posterRecord.DateCreatedUtc, lastSavedUtc, posterRecord.LastAccessedUtc);
 			return result;
 		}
 
-		private int GetBytes(List<ObjectId> jobIds, OwnerType jobOwnerType, JobMapSectionReaderWriter jobMapSectionReaderWriter)
+		private int GetBytes(List<ObjectId> jobIds, JobMapSectionReaderWriter jobMapSectionReaderWriter)
 		{
 			var numberOfMapSections = 0;
 
 			foreach (var jobId in jobIds)
 			{
-				var numberOfMapSectionsForJob = jobMapSectionReaderWriter.GetCountOfMapSectionsByJobId(jobId, jobOwnerType);
+				var numberOfMapSectionsForJob = jobMapSectionReaderWriter.GetCountOfMapSectionsByJobId(jobId);
 				numberOfMapSections += numberOfMapSectionsForJob;
 			}
 

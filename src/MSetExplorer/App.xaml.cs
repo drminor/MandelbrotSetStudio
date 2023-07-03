@@ -8,17 +8,13 @@ using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
 using ProjectRepo;
-using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
 using System.ServiceProcess;
 using System.Windows;
-using System.Windows.Media.Converters;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -29,7 +25,7 @@ namespace MSetExplorer
 	{
 		private static readonly bool TEST_STORAGE_MODEL = false;
 
-		private static readonly bool TEST_JOB_DETAILS_DIALOG = true;
+		private static readonly bool TEST_JOB_DETAILS_DIALOG = false;
 
 		#region Configuration
 
@@ -47,6 +43,7 @@ namespace MSetExplorer
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CREATE_COLLECTION_INDEXES = false;
 
+
 		private static readonly bool CREATE_JOB_MAP_SECTION_REPORT = false;
 
 		private static readonly bool FIND_AND_DELETE_ORPHAN_JOBS = false;
@@ -54,10 +51,12 @@ namespace MSetExplorer
 		private static readonly bool FIND_AND_DELETE_ORPHAN_SUBDIVISIONS = false;
 
 		private static readonly bool DELETE_JOB_MAP_JOB_REFS = false;
-		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false;
+		private static readonly bool DELETE_JOB_MAP_MAP_REFS = false; // True
 
 		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS = false;
 		private static readonly bool POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS = false;
+
+		private static readonly bool UPDATE_JOB_SUBDIVSION_IDS_FOR_ALL_JobMapSections = false;
 
 		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2093-05-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
@@ -184,6 +183,11 @@ namespace MSetExplorer
 				return;
 			}
 
+			if (UPDATE_JOB_SUBDIVSION_IDS_FOR_ALL_JobMapSections)
+			{
+				repositoryIntegrityUtility.UpdateJobMapSectionSubdivisionIds();
+			}
+
 			if (CREATE_JOB_MAP_SECTION_REPORT)
 			{
 				var report = repositoryIntegrityUtility.CreateJobMapSectionsReferenceReport();
@@ -252,7 +256,8 @@ namespace MSetExplorer
 			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
 			//Debug.WriteLine($"After Create MapLoaderManager. {currentStopwatch.ElapsedMilliseconds}.");
 
-			_appNavWindow = GetAppNavWindow(_mapSectionVectorProvider, _repositoryAdapters, _mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
+			var appNavViewModel = GetAppNavViewModel(_mapSectionVectorProvider, _repositoryAdapters, _mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
+			_appNavWindow = GetAppNavWindow(appNavViewModel);
 			//Debug.WriteLine($"After Get AppNavWindow. {currentStopwatch.ElapsedMilliseconds}.");
 
 			_appNavWindow.Show();
@@ -584,10 +589,8 @@ namespace MSetExplorer
 
 		#region AppNav Window
 
-		private AppNavWindow GetAppNavWindow(MapSectionVectorProvider mapSectionVectorProvider, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
+		private AppNavWindow GetAppNavWindow(AppNavViewModel appNavViewModel)
 		{
-			var appNavViewModel = new AppNavViewModel(mapSectionVectorProvider, repositoryAdapters, mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
-
 			var appNavWindow = new AppNavWindow
 			{
 				DataContext = appNavViewModel
@@ -598,7 +601,16 @@ namespace MSetExplorer
 			return appNavWindow;
 		}
 
+		private AppNavViewModel GetAppNavViewModel(MapSectionVectorProvider mapSectionVectorProvider, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
+		{
+			var appNavViewModel = new AppNavViewModel(mapSectionVectorProvider, repositoryAdapters, mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
+
+			return appNavViewModel;
+		}
+
 		#endregion
+
+		#region Test Storage Model
 
 		private void TestStorageModel()
 		{
@@ -623,6 +635,10 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Test JobDetailsDialog
+
 		private void TestJobDetailsWindow()
 		{
 			_repositoryAdapters = GetRepositoryAdaptersFast();
@@ -638,8 +654,6 @@ namespace MSetExplorer
 		{
 			DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSections = null;
 
-
-
 			var jobDetailsViewModel = CreateAJobDetailsDialog(ownerId, ownerType, initialJobId, deleteNonEssentialMapSections);
 			var jobDetailsDialog = new JobDetailsWindow
 			{
@@ -647,17 +661,6 @@ namespace MSetExplorer
 			};
 
 			jobDetailsDialog.ShowDialog();
-
-			//if (jobDetailsDialog.ShowDialog() == true)
-			//{
-			//	Debug.WriteLine("JobDetailDialog is returning True.");
-			//	return true;
-			//}
-			//else
-			//{
-			//	Debug.WriteLine("JobDetailDialog is returning False.");
-			//	return false;
-			//}
 		}
 
 		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
@@ -672,5 +675,6 @@ namespace MSetExplorer
 			return new JobDetailsViewModel(projectAdapter, mapSectionAdapter, deleteNonEssentialMapSectionsFunction, ownerId, ownerType, initialJobId);
 		}
 
+		#endregion
 	}
 }

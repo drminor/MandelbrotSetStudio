@@ -27,7 +27,7 @@ namespace MSetExplorer.StorageManagement
 
 		public void PlayWithStorageModel(ObjectId projectId)
 		{
-			var jobAndSubIds = _projectAdapter.GetAllJobAndSubdivisionIdsForProject(projectId);
+			var jobAndSubIds = _projectAdapter.GetJobAndSubdivisionIdsForOwner(projectId);
 
 			var jobs = new List<StorageModel.Job>();
 
@@ -44,7 +44,7 @@ namespace MSetExplorer.StorageManagement
 
 			foreach (var smJob in jobOwner.Jobs)
 			{
-				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(smJob.JobId, OwnerType.Project);
+				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(smJob.JobId);
 
 				foreach (var jobMapSectionRecord in jobMapSectionRecords)
 				{

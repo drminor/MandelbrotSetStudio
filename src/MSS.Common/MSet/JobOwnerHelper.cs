@@ -237,7 +237,7 @@ namespace MSS.Common
 
 			foreach (var job in jobs)
 			{
-				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id, GetJobOwnerType(jobOwner));
+				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(job.Id);
 				if (numberDeleted.HasValue)
 				{
 					result += numberDeleted.Value;
@@ -253,7 +253,7 @@ namespace MSS.Common
 
 			foreach (var jobId in jobIds)
 			{
-				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(jobId, jobOwnerType);
+				var numberDeleted = mapSectionDeleter.DeleteMapSectionsForJob(jobId);
 				if (numberDeleted.HasValue)
 				{
 					result += numberDeleted.Value;

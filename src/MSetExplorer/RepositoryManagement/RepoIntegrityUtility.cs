@@ -57,6 +57,13 @@ namespace MSetExplorer.RepositoryManagement
 			}
 		}
 
+		public long UpdateJobMapSectionSubdivisionIds()
+		{
+			var numberRecordsUpdated = ProjectAndMapSectionHelper.UpdateJobMapSectionSubdivisionIds(_projectAdapter, _mapSectionAdapter);
+
+			return numberRecordsUpdated;
+		}
+
 		#endregion
 
 		#region Find And Delete Jobs Not Referenced by any Project or Poster

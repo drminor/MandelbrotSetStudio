@@ -459,7 +459,7 @@ namespace MSetExplorer
 				}
 
 				// Get a list of all the MapSectionIds from the JobMapSection table.
-				var allMapSectionIds = _mapSectionAdapter.GetMapSectionIds(currentJobId, jobOwnerType);
+				var allMapSectionIds = _mapSectionAdapter.GetMapSectionIds(currentJobId);
 
 				if (allMapSectionIds.Count == 0)
 				{

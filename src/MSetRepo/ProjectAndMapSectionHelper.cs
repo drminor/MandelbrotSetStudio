@@ -25,7 +25,7 @@ namespace MSetRepo
 			{
 				var jobIds = projectAdapter.GetAllJobIdsForProject(projectId);
 
-				numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds, OwnerType.Project) ?? 0;
+				numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds) ?? 0;
 				if (numberOfMapSectionsDeleted == 0)
 				{
 					Debug.WriteLine("WARNING: No MapSections were removed as the project is being deleted.");
@@ -46,7 +46,7 @@ namespace MSetRepo
 			{
 				var jobIds = projectAdapter.GetAllJobIdsForPoster(posterId);
 
-				numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds, OwnerType.Poster) ?? 0;
+				numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds) ?? 0;
 				if (numberOfMapSectionsDeleted == 0)
 				{
 					Debug.WriteLine("WARNING: No MapSections were removed as the poster is being deleted.");
@@ -64,7 +64,7 @@ namespace MSetRepo
 		public static long DeleteJobs(IEnumerable<Job> jobs, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
 		{
 			var jobIds = jobs.Select(x => x.Id);
-			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds, OwnerType.Project);
+			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds);
 
 			foreach(var job in jobs.Where(x => x.OnFile))
 			{
@@ -79,7 +79,7 @@ namespace MSetRepo
 
 		public static long DeleteJobsOnFile(IEnumerable<ObjectId> jobIds, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
 		{
-			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds, OwnerType.Project);
+			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds);
 
 			foreach (var jobId in jobIds)
 			{
@@ -94,7 +94,7 @@ namespace MSetRepo
 
 		public static long DeleteJob(Job job, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
 		{
-			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForJob(job.Id, OwnerType.Project);
+			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForJob(job.Id);
 			if (numberOfMapSectionsDeleted == 0)
 			{
 				Debug.WriteLine($"WARNING: No MapSections were removed for job: {job.Id}.");
@@ -154,6 +154,29 @@ namespace MSetRepo
 			return $"For JobOwnerType: Poster: {numberOfRecordsInserted} new JobMapSection records were created.";
 		}
 
+		public static long UpdateJobMapSectionSubdivisionIds(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		{
+			var ma = mapSectionAdapter as MapSectionAdapter;
+
+			if (ma == null) return 0;
+
+			var jobMapSectionRecords = ma.GetAllJobMapSections();
+
+			var cnt = 0L;
+			foreach (var jobMapSectionRecord in jobMapSectionRecords)
+			{
+				var jobMapSectionId = jobMapSectionRecord.Id;
+				var mapSectionSubdivionId = jobMapSectionRecord.MapSectionSubdivisionId;
+
+				var jobSubdivisionId = projectAdapter.GetSubdivisionId(jobMapSectionRecord.JobId);
+
+				ma.UpdateJobMapSectionSubdivisionIds(jobMapSectionId, mapSectionSubdivionId, jobMapSectionId);
+				cnt++;
+			}
+
+			return cnt;
+		}
+
 		private static long CreateMissingJobMapSectionRecords(JobType jobType, ObjectId ownerId, string ownerName, List<Job> jobs, OwnerType ownerType, SizeDbl displaySize, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
 		{
 			var mapSectionBuilder = new MapSectionBuilder();
@@ -164,7 +187,7 @@ namespace MSetRepo
 			{
 				if (job.JobOwnerType != ownerType)
 				{
-					Debug.WriteLine($"WARNING: Found a JobOwnerType mismatch: Expecting {ownerType} but found {job.JobOwnerType}. JobOwnerId: {ownerId} - Name: {ownerName}.");
+					Debug.WriteLine($"WARNING: Found a OwnerType mismatch: Expecting {ownerType} but found {job.JobOwnerType}. OwnerId: {ownerId} - Name: {ownerName}.");
 				}
 
 				var mapSectionRequests = GetMapSectionRequests(jobType, job, ownerType, displaySize, mapJobHelper, mapSectionBuilder);
@@ -187,17 +210,17 @@ namespace MSetRepo
 
 						if (mapSectionId != null)
 						{
-							//Debug.WriteLine($"");
-							////var subdivision = subdivisonProvider.GetSubdivision(mapSectionRequest.SamplePointDelta, mapSectionRequest.MapBlockOffset, out var localMapBlockOffset);
+							Debug.WriteLine($"");
+							//var subdivision = subdivisonProvider.GetSubdivision(mapSectionRequest.SamplePointDelta, mapSectionRequest.MapBlockOffset, out var localMapBlockOffset);
 
-							//var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
+							var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
 
-							//var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(JobType.FullScale, mapSectionId.Value, subdivisionId, originalSourceSubdivisionId, job.Id, ownerType, 
-							//	mapSectionRequest.IsInverted, blockIndex, out var jobMapSectionId);
+							var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(JobType.FullScale, job.Id, mapSectionId.Value, blockIndex, mapSectionRequest.IsInverted, subdivisionId,
+								originalSourceSubdivisionId, ownerType, out var jobMapSectionId);
 
-							//numberOfRecordsInserted += inserted ? 1 : 0;
+							numberOfRecordsInserted += inserted ? 1 : 0;
 
-							numberOfRecordsInserted++;
+							//numberOfRecordsInserted++;
 						}
 						else
 						{
