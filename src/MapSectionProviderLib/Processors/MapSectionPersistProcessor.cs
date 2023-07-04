@@ -95,20 +95,19 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionPersistRequest = _workQueue.Take(ct);
+
+					var mapSectionRequest = mapSectionPersistRequest.Request;
 					var mapSectionResponse = mapSectionPersistRequest.Response;
 
 					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{
-						var mapSectionRequest = mapSectionPersistRequest.Request;
-						var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
-
-						_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, mapSectionRequest.JobType, blockIndex);
+						_ = await SaveJobMapSection(mapSectionRequest, mapSectionResponse);
 					}
 					else
 					{
 						if (mapSectionResponse.MapSectionVectors != null)
 						{
-							await PersistTheCountsAndZValuesAsync(mapSectionPersistRequest.Request, mapSectionResponse);
+							await PersistTheCountsAndZValuesAsync(mapSectionRequest, mapSectionResponse);
 						}
 						else
 						{
@@ -154,9 +153,7 @@ namespace MapSectionProviderLib
 					// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType) may not be on file.
 					// This will insert one if not already present.
 
-					var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
-					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, mapSectionRequest.JobType, blockIndex);
-
+					_ = await SaveJobMapSection(mapSectionRequest, mapSectionResponse);
 				}
 			}
 			else
@@ -173,10 +170,20 @@ namespace MapSectionProviderLib
 						_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
 					}
 
-					var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
-					_ = await _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, mapSectionRequest.JobType, blockIndex);
+					_ = await SaveJobMapSection(mapSectionRequest, mapSectionResponse);
 				}
 			}
+		}
+
+		private Task<ObjectId?> SaveJobMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		{
+			var jobSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
+			var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
+
+			var result = _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.JobId, mapSectionRequest.JobType, blockIndex, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobSubdivisionId);
+
+			return result;
+
 		}
 
 		#endregion

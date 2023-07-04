@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace MSS.Types.MSet
@@ -24,7 +25,7 @@ namespace MSS.Types.MSet
 		public RPoint MapPosition => Coords.Position;
 		public RSize SamplePointDelta => Subdivision.SamplePointDelta;
 
-		public ObjectId OriginalSourceSubdivisionId { get; init; }
+		public ObjectId OriginalSourceSubdivisionId { get; set; }
 
 		public bool IsEmpty => Coords == RRectangle.Zero;
 
@@ -42,11 +43,16 @@ namespace MSS.Types.MSet
 
 		public MapAreaInfo(RRectangle coords, SizeDbl canvasSize, Subdivision subdivision, int precision, BigVector mapBlockOffset, VectorInt canvasControlOffset, ObjectId originalSourceSubdivisionId)
 		{
+			if (originalSourceSubdivisionId == ObjectId.Empty)
+			{
+				Debug.WriteLine($"The originalSourceSubdivisionId is blank during MapAreaInfo construction.");
+			}
+
 			Coords = coords;
 			CanvasSize = canvasSize;
 			Subdivision = subdivision;
+			Precision = precision;
 			MapBlockOffset = mapBlockOffset;
-			Precision = precision;	
 			CanvasControlOffset = canvasControlOffset;
 			OriginalSourceSubdivisionId = originalSourceSubdivisionId;
 		}

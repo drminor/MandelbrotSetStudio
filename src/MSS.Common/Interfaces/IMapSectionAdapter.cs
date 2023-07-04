@@ -29,7 +29,7 @@ namespace MSS.Common
 
 		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted);
 		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, JobOwnerType jobOwnerType, JobType jobType);
-		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, OwnerType jobOwnerType, JobType jobType, SizeInt blockIndex);
+		Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, string jobIdStr, JobType jobType, SizeInt blockIndex, bool isInverted, OwnerType ownerType, string jobSubdivionIdStr);
 
 
 
@@ -70,6 +70,8 @@ namespace MSS.Common
 		long GetSizeOfCollectionInMB();
 
 		void UpdateJobMapSectionSubdivisionIds(ObjectId jobMapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId);
+
+		IEnumerable<ValueTuple<ObjectId, DateTime, ObjectId>> GetMapSectionCreationDates(IEnumerable<ObjectId> mapSectionIds);
 	}
 
 }

@@ -129,7 +129,7 @@ namespace MapSectionProviderLib
 						request.FoundInRepo = true;
 						request.ProcessingEndTime = DateTime.UtcNow;
 
-						mapSectionResponse.JobId = request.JobId;
+						//mapSectionResponse.JobId = request.JobId;
 						//mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
 						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
@@ -323,7 +323,7 @@ namespace MapSectionProviderLib
 					request.FoundInRepo = true;
 					request.ProcessingEndTime = DateTime.UtcNow;
 
-					mapSectionResponse.JobId = request.JobId;
+					//mapSectionResponse.JobId = request.JobId;
 					//mapSectionResponse.JobOwnerType = request.JobOwnerType;
 
 					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
@@ -469,7 +469,11 @@ namespace MapSectionProviderLib
 		private async Task<MapSectionResponse?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+
+			// TODO_OrigSourceSub -- update
+
 			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors, ct);
+			//mapSectionResponse.OriginalSourceSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
 
 			return mapSectionResponse;
 		}
@@ -477,6 +481,8 @@ namespace MapSectionProviderLib
 		private MapSectionResponse? Fetch(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+
+			// TODO_OrigSourceSub -- update
 
 			var mapSectionResponse = _mapSectionAdapter.GetMapSection(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors);
 

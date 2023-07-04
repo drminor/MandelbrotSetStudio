@@ -142,6 +142,7 @@ namespace MSetExplorer
 			var adjustedMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, scaleFactor, out var diaReciprocal);
 			var displaySize = posterSize.Scale(scaleFactor);
 			var result = _mapJobHelper.GetMapAreaWithSizeFat(adjustedMapAreaInfo, displaySize);
+			result.OriginalSourceSubdivisionId = _mapAreaInfo.Subdivision.Id;
 
 			return result;
 		}
@@ -149,7 +150,7 @@ namespace MSetExplorer
 		private MapAreaInfo GetUpdatedMapAreaInfo(RectangleDbl newScreenArea, MapAreaInfo mapAreaInfoWithSize)
 		{
 			var newCoords = _mapJobHelper.GetMapCoords(newScreenArea.Round(), mapAreaInfoWithSize.MapPosition, mapAreaInfoWithSize.SamplePointDelta);
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, mapAreaInfoWithSize.Subdivision, newScreenArea.Size);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, mapAreaInfoWithSize.Subdivision, mapAreaInfoWithSize.OriginalSourceSubdivisionId, newScreenArea.Size);
 
 			return mapAreaInfoV1;
 		}

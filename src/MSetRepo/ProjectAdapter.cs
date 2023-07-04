@@ -141,7 +141,7 @@ namespace MSetRepo
 			}
 			else
 			{
-				result = new Project(projectRecord.Id, projectRecord.Name, projectRecord.Description, jobs, colorBandSets, projectRecord.CurrentJobId, lastSavedUtc, lastAccessedUtc);
+				result = new Project(projectRecord.Id, projectRecord.Name, projectRecord.Description, jobs, colorBandSets, projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc);
 			}
 			return result;
 		}
@@ -495,6 +495,7 @@ namespace MSetRepo
 				colorBandSetId: jobRecord.ColorBandSetId,
 
 				mapCalcSettings: jobRecord.MapCalcSettings,
+				dateCreatedUtc: jobRecord.DateCreatedUtc,
 				lastSavedUtc: jobRecord.LastSavedUtc
 				)
 			{
@@ -883,7 +884,7 @@ namespace MSetRepo
 					posterRecord.SourceJobId, jobs, colorBandSets, posterRecord.CurrentJobId, 
 					
 					posterSize: posterRecord.PosterSize, displayPosition, posterRecord.DisplayZoom, 
-					DateTime.UtcNow, lastSavedUtc, DateTime.MinValue);
+					dateCreatedUtc: posterRecord.DateCreatedUtc, lastSavedUtc: lastSavedUtc, lastAccessedUtc: DateTime.MinValue);
 
 
 				Debug.WriteLine($"AssemblePoster completed. Name: {result.Name}, CurrentJobId: {result.CurrentJobId}, DisplayPosition: {result.DisplayPosition}, DisplayZoom: {result.DisplayZoom}.");

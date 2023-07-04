@@ -490,7 +490,7 @@ namespace MSS.Common.MSet
 			return new Poster(Id, Name, Description, SourceJobId,
 				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id,
 				PosterSize, DisplayPosition, DisplayZoom,
-				DateCreated, LastSavedUtc, LastAccessedUtc)
+				DateCreatedUtc, LastSavedUtc, LastAccessedUtc)
 			{
 				OnFile = OnFile
 			};
@@ -500,8 +500,8 @@ namespace MSS.Common.MSet
 		{
 			return new Poster(ObjectId.GenerateNewId(), Name, Description, SourceJobId,
 				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id,
-				PosterSize, DisplayPosition, DisplayZoom,
-				DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow)
+				PosterSize, DisplayPosition, DisplayZoom, 
+				dateCreatedUtc: DateTime.UtcNow, lastSavedUtc: DateTime.MinValue, lastAccessedUtc: DateTime.UtcNow)
 			{
 				OnFile = false
 			};

@@ -132,6 +132,7 @@ namespace MSetRepo
 				)
 			{
 				Id = source.Id,
+				DateCreatedUtc = source.DateCreated,
 				IterationUpdates = source.IterationUpdates,
 				ColorMapUpdates = source.ColorMapUpdates,
 			};
@@ -235,11 +236,9 @@ namespace MSetRepo
 		{
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
 
-
-
 			var baseMapPosition = _dtoMapper.MapFrom(target.BaseMapPosition?.BigVector ?? new BigVectorDto()) ;
 
-			var result = new Subdivision(target.Id, samplePointDelta, baseMapPosition, MapFrom(target.BlockSize));
+			var result = new Subdivision(target.Id, samplePointDelta, baseMapPosition, MapFrom(target.BlockSize), target.DateCreatedUtc);
 
 			return result;
 		}
@@ -252,7 +251,7 @@ namespace MSetRepo
 			var result = new SubdivisionRecord(baseMapPosition, samplePointDelta, MapTo(source.BlockSize))
 			{
 				Id = source.Id,
-				BaseMapPosition = MapTo(source.BaseMapPosition)
+				DateCreatedUtc = source.DateCreatedUtc
 			};
 
 			return result;
@@ -307,10 +306,8 @@ namespace MSetRepo
 			var result = new MapSectionResponse
 			(
 				mapSectionId: target.Id.ToString(),
-				jobId: string.Empty,
-				//jobOwnerType: JobOwnerType.Undetermined,
+				//jobId: string.Empty,
 				subdivisionId: target.SubdivisionId.ToString(),
-				originalSourceSubdivisionId: ObjectId.Empty.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
 				requestCompleted: target.Complete,

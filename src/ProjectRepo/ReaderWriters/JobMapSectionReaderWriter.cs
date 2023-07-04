@@ -186,7 +186,7 @@ namespace ProjectRepo
 			var filter = Builders<JobMapSectionRecord>.Filter.Eq(f => f.Id, jobMapSectionId);
 
 			var updateDefinition = Builders<JobMapSectionRecord>.Update
-				.Set(u => u.MapSectionId, mapSectionSubdivisionId)
+				.Set(u => u.MapSectionSubdivisionId, mapSectionSubdivisionId)
 				.Set(u => u.JobSubdivisionId, jobSubdivisionId);
 
 
@@ -250,6 +250,21 @@ namespace ProjectRepo
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
 
 			var deleteResult = Collection.DeleteMany(filter1 & filter2);
+
+			return GetReturnCount(deleteResult);
+		}
+
+
+		public long? DeleteJobMapSectionsSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
+		{
+			if (!overrideRecentGuard && DateTime.UtcNow - dateCreatedUtc > TimeSpan.FromHours(3))
+			{
+				Debug.WriteLine($"Warning: Not deleting JobMapSections created since: {dateCreatedUtc}, {dateCreatedUtc} is longer than 3 hours ago.");
+				return 0;
+			}
+
+			var filter = Builders<JobMapSectionRecord>.Filter.Gt("DateCreatedUtc", dateCreatedUtc);
+			var deleteResult = Collection.DeleteMany(filter);
 
 			return GetReturnCount(deleteResult);
 		}

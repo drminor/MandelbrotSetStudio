@@ -58,8 +58,10 @@ namespace MSetExplorer
 
 		private static readonly bool UPDATE_JOB_SUBDIVSION_IDS_FOR_ALL_JobMapSections = false;
 
-		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2093-05-01");
+		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2083-07-01");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
+		private static readonly bool DROP_RECENT_JOB_MAP_SECTIONS = false;
+
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
 
 		//private Stopwatch? _ambientStopWatch;
@@ -157,7 +159,14 @@ namespace MSetExplorer
 			{
 				if (DROP_RECENT_MAP_SECTIONS)
 				{
-					_repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+					var countMapSectionsDeleted =  _repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+					MessageBox.Show($"Deleted {countMapSectionsDeleted} MapSection records that have been created since {DELETE_MAP_SECTIONS_AFTER_DATE}.");
+				}
+
+				if (DROP_RECENT_JOB_MAP_SECTIONS)
+				{
+					var countJobMapSectionsDeleted = _repositoryAdapters.MapSectionAdapter.DeleteJobMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+					MessageBox.Show($"Deleted {countJobMapSectionsDeleted} JobMapSection records that have been created since {DELETE_MAP_SECTIONS_AFTER_DATE}.");
 				}
 			}
 
@@ -619,7 +628,7 @@ namespace MSetExplorer
 			var storageModelPoc = GetStorageModelPOC(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter);
 
 			var projectId = new ObjectId("6258fe80712f62b28ce55c15");
-			storageModelPoc.PlayWithStorageModel(projectId);
+			//storageModelPoc.PlayWithStorageModel(projectId);
 		}
 
 		private StorageModelPOC GetStorageModelPOC(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
@@ -645,16 +654,17 @@ namespace MSetExplorer
 
 			var ownerId = new ObjectId("64913f6d0d20aad9f1a64737"); // Poster Art3-13-4
 			var ownerType = OwnerType.Poster;
-			var initialJobId = new ObjectId("649141932b7c6bda0e7ccf81");
+			var currentJobId = new ObjectId("649141932b7c6bda0e7ccf81");
+			var ownerCreationDate = DateTime.Parse("2023-06-01 10:40:03");
 
-			OpenJobDetailsDialog(ownerId, ownerType, initialJobId);
+			OpenJobDetailsDialog(ownerId, ownerType, currentJobId, ownerCreationDate);
 		}
 
-		private void OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
+		private void OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
 		{
 			DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSections = null;
 
-			var jobDetailsViewModel = CreateAJobDetailsDialog(ownerId, ownerType, initialJobId, deleteNonEssentialMapSections);
+			var jobDetailsViewModel = CreateAJobDetailsDialog(ownerId, ownerType, currentJobId, ownerCreationDate, deleteNonEssentialMapSections);
 			var jobDetailsDialog = new JobDetailsWindow
 			{
 				DataContext = jobDetailsViewModel
@@ -663,7 +673,7 @@ namespace MSetExplorer
 			jobDetailsDialog.ShowDialog();
 		}
 
-		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
+		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
 		{
 			if (_repositoryAdapters == null)
 			{
@@ -672,7 +682,7 @@ namespace MSetExplorer
 			var projectAdapter = _repositoryAdapters.ProjectAdapter;
 			var mapSectionAdapter = _repositoryAdapters.MapSectionAdapter;
 
-			return new JobDetailsViewModel(projectAdapter, mapSectionAdapter, deleteNonEssentialMapSectionsFunction, ownerId, ownerType, initialJobId);
+			return new JobDetailsViewModel(ownerId, ownerType, currentJobId, ownerCreationDate, deleteNonEssentialMapSectionsFunction, projectAdapter, mapSectionAdapter);
 		}
 
 		#endregion

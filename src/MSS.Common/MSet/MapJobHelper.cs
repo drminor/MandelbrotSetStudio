@@ -370,7 +370,7 @@ namespace MSS.Common
 		}
 
 		// Calculate the MapBlockOffset and CanvasControlOffset while keeping the SamplePointDelta, constant.
-		public MapAreaInfo GetMapAreaInfoScaleConstant(RRectangle coords, Subdivision subdivision, SizeDbl canvasSize)
+		public MapAreaInfo GetMapAreaInfoScaleConstant(RRectangle coords, Subdivision subdivision, ObjectId originalSourceSubdivisionId, SizeDbl canvasSize)
 		{
 			var samplePointDelta = subdivision.SamplePointDelta;
 			//var updatedCoords = coords.Clone();
@@ -391,7 +391,7 @@ namespace MSS.Common
 
 			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
 
-			var result = new MapAreaInfo(newCoords, canvasSize, newSubdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, subdivision.Id);
+			var result = new MapAreaInfo(newCoords, canvasSize, newSubdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSourceSubdivisionId);
 
 			return result;
 		}

@@ -12,23 +12,19 @@ namespace MSS.Types.MSet
 		public BigVector BaseMapPosition { get; init; }
 
 		public bool OnFile { get; init; }
+		public DateTime DateCreatedUtc { get; init; }
 
-		public Subdivision() : this(ObjectId.GenerateNewId(), new RSize(), new BigVector(), RMapConstants.BLOCK_SIZE)
+		public Subdivision() : this(ObjectId.GenerateNewId(), new RSize(), new BigVector(), RMapConstants.BLOCK_SIZE, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
 
-		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, RMapConstants.BLOCK_SIZE)
+		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, RMapConstants.BLOCK_SIZE, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
 
-		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon, SizeInt blockSize) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, blockSize)
-		{
-			OnFile = false;
-		}
-
-		public Subdivision(ObjectId id, RSize samplePointDelta, BigVector baseMapPosition, SizeInt blockSize)
+		public Subdivision(ObjectId id, RSize samplePointDelta, BigVector baseMapPosition, SizeInt blockSize, DateTime dateCreatedUtc)
 		{
 			Id = id;
 			BlockSize = blockSize;
@@ -48,7 +44,7 @@ namespace MSS.Types.MSet
 
 		public Subdivision Clone()
 		{
-			var result = new Subdivision(Id, SamplePointDelta.Clone(), BaseMapPosition.Clone(), BlockSize)
+			var result = new Subdivision(Id, SamplePointDelta.Clone(), BaseMapPosition.Clone(), BlockSize, DateCreatedUtc)
 			{
 				OnFile = OnFile
 			};

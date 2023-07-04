@@ -251,7 +251,6 @@ namespace MSetRepo
 			return result;
 		}
 
-
 		public void UpdateJobMapSectionSubdivisionIds(ObjectId jobMapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId)
 		{
 			_jobMapSectionReaderWriter.SetSubdivisionId(jobMapSectionId, mapSectionSubdivisionId, jobSubdivisionId);
@@ -280,7 +279,12 @@ namespace MSetRepo
 			return result;
 		}
 
+		public IEnumerable<ValueTuple<ObjectId, DateTime, ObjectId>> GetMapSectionCreationDates(IEnumerable<ObjectId> mapSectionIds)
+		{
+			var result = _mapSectionReaderWriter.GetCreationDatesAndSubIds(mapSectionIds);
 
+			return result;
+		}
 		#endregion
 
 		#region MapSection ZValues
@@ -346,7 +350,7 @@ namespace MSetRepo
 
 		#region JobMapSection
 
-		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, OwnerType ownerType, JobType jobType, SizeInt blockIndex)
+		public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, string jobIdStr, JobType jobType, SizeInt blockIndex, bool isInverted, OwnerType ownerType, string jobSubdivisionIdStr)
 		{
 			var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			if (string.IsNullOrEmpty(mapSectionIdStr))
@@ -360,16 +364,16 @@ namespace MSetRepo
 				throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");
 			}
 
-			var jobSubdivisionIdStr = mapSectionResponse.OriginalSourceSubdivisionId;
+			//var jobSubdivisionIdStr = mapSectionResponse.OriginalSourceSubdivisionId;
 			if (string.IsNullOrEmpty(jobSubdivisionIdStr))
 			{
-				throw new ArgumentNullException(nameof(MapSectionResponse.OriginalSourceSubdivisionId), "The OriginalSourceSubdivisionId cannot be null.");
+				throw new ArgumentNullException(nameof(jobSubdivisionIdStr), "The OriginalSourceSubdivisionId cannot be null.");
 			}
 
-			var jobIdStr = mapSectionResponse.JobId;
+			//var jobIdStr = mapSectionResponse.JobId;
 			if (string.IsNullOrEmpty(jobIdStr))
 			{
-				throw new ArgumentNullException(nameof(MapSectionResponse.JobId), "The OwnerId cannot be null.");
+				throw new ArgumentNullException(nameof(jobIdStr), "The OwnerId cannot be null.");
 			}
 
 			var result = await SaveJobMapSectionAsync(jobType, new ObjectId(jobIdStr), new ObjectId(mapSectionIdStr), blockIndex, isInverted, new ObjectId(mapSubdivisionIdStr), new ObjectId(jobSubdivisionIdStr), ownerType);
@@ -590,7 +594,14 @@ namespace MSetRepo
 
 		//	return result;
 		//}
+		
+		public long? DeleteJobMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
+		{
+			var result = _jobMapSectionReaderWriter.DeleteJobMapSectionsSince(dateCreatedUtc, overrideRecentGuard) ?? 0;
 
+			return result;
+		}
+		
 		public long? DuplicateJobMapSections(ObjectId jobId, OwnerType jobOwnerType, ObjectId newJobId)
 		{
 			var jobMapSectionRecords = _jobMapSectionReaderWriter.GetByJobId(jobId);
@@ -777,7 +788,7 @@ namespace MSetRepo
 			var subdivisionRecord = _mSetRecordMapper.MapTo(subdivision);
 			var id = _subdivisionReaderWriter.Insert(subdivisionRecord);
 
-			var result = new Subdivision(id, subdivision.SamplePointDelta, subdivision.BaseMapPosition, subdivision.BlockSize);
+			var result = new Subdivision(id, subdivision.SamplePointDelta, subdivision.BaseMapPosition, subdivision.BlockSize, subdivisionRecord.DateCreatedUtc);
 
 			return result;
 		}

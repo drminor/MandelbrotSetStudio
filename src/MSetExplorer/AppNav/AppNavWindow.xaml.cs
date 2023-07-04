@@ -251,7 +251,7 @@ namespace MSetExplorer
 
 			var projectId = new ObjectId("6258fe80712f62b28ce55c15");
 
-			storageModelPoc.PlayWithStorageModel(projectId);
+			//storageModelPoc.PlayWithStorageModel(projectId);
 		}
 
 		#region Nav Window Support

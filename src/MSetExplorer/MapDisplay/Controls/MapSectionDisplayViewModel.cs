@@ -313,7 +313,7 @@ namespace MSetExplorer
 
 				// Get the MapAreaInfo subset for the current view. The display postion specifies the left, bottom pixel to be displayed.
 				var mapAreaInfo2Subset = BoundedMapArea.GetView(displayPosition);
-				var jobType = JobType.FullScale;
+				var jobType = BoundedMapArea.BaseScale == 0 ? JobType.FullScale : JobType.ReducedScale;
 
 				newJobNumber = DiscardAndLoad(jobType, newValue, mapAreaInfo2Subset, out lastSectionWasIncluded);
 
@@ -411,7 +411,7 @@ namespace MSetExplorer
 
 			// Get the MapAreaInfo subset for the given display position
 			var mapAreaInfo2Subset = BoundedMapArea.GetView(contentOffset);
-			var jobType = JobType.FullScale;
+			var jobType = BoundedMapArea.BaseScale == 0 ? JobType.FullScale : JobType.ReducedScale;
 
 			ReportMove(BoundedMapArea, contentOffset/*, BoundedMapArea.ContentScale, BoundedMapArea.BaseScale*/);
 
@@ -575,7 +575,7 @@ namespace MSetExplorer
 				var currentBaseScale = boundedMapArea.BaseScale;
 
 				var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, baseScale);
-				var jobType = JobType.FullScale;
+				var jobType = boundedMapArea.BaseScale == 0 ? JobType.FullScale : JobType.ReducedScale;
 
 				var scaledViewportSize = viewportSize.Scale(boundedMapArea.ScaleFactor);
 				_bitmapGrid.ViewportSize = scaledViewportSize;

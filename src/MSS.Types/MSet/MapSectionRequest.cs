@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace MSS.Types.MSet
@@ -9,6 +11,14 @@ namespace MSS.Types.MSet
 			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
 			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int requestNumber)
 		{
+			ObjectId test = new ObjectId(originalSourceSubdivisionId);
+
+			if (test == ObjectId.Empty)
+			{
+				Debug.WriteLine($"The originalSourceSubdivisionId is blank during MapSectionRequest construction.");
+			}
+
+
 			JobType = jobType;
 			MapSectionId = null;
 			JobId = jobId;

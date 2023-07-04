@@ -53,9 +53,9 @@ namespace MSetExplorer
 		}
 
 		// JobDetils
-		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
+		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
 		{
-			return new JobDetailsViewModel(_projectAdapter, _mapSectionAdapter, deleteNonEssentialMapSectionsFunction, ownerId, ownerType, initialJobId);
+			return new JobDetailsViewModel(ownerId, ownerType, currentJobId, ownerCreationDate, deleteNonEssentialMapSectionsFunction, _projectAdapter, _mapSectionAdapter);
 		}
 
 		// Import/Export ColorBandSet

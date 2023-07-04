@@ -1,20 +1,9 @@
-﻿using MongoDB.Bson;
-using MSS.Types;
+﻿using MSS.Common;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Xml.Linq;
 
 namespace MSetExplorer
 {
@@ -46,7 +35,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (JobDetailsViewModel)DataContext;
-				borderTop.DataContext = DataContext;
+				//borderDetails.DataContext = DataContext;
 
 				lvJobDetails.ItemsSource = _vm.JobInfos;
 				lvJobDetails.SelectionChanged += LvJobDetails_SelectionChanged;
@@ -62,7 +51,7 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void JobDetailsWindow_ContentRendered(object? sender, System.EventArgs e)
+		private void JobDetailsWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			if (lvJobDetails.ItemContainerGenerator.ContainerFromItem(lvJobDetails.Items[0]) is ListViewItem item)
 			{
@@ -71,7 +60,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void LvJobDetails_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		private void LvJobDetails_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			//TakeSelection();
 		}
@@ -79,6 +68,7 @@ namespace MSetExplorer
 
 		private void LvJobDetails_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
+			_vm.SelectedJobInfo = (IJobInfo) lvJobDetails.SelectedItem;
 			//btnSave.IsEnabled = _vm.SelectedName != null;
 		}
 
@@ -118,7 +108,7 @@ namespace MSetExplorer
 			//_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
 		}
 
-		private void TrimMapSectionsHeavyButton_Click(object sender, RoutedEventArgs e)
+		private void DeleteMapSectionsButton_Click(object sender, RoutedEventArgs e)
 		{
 			//var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: true);
 			//_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");

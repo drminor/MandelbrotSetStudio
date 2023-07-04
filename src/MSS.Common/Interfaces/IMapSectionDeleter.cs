@@ -15,5 +15,6 @@ namespace MSS.Common
 		long? DeleteMapSectionsWithJobType(IList<ObjectId> mapSectionIds, OwnerType jobOwnerType);
 
 		long? DeleteMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);
+		long? DeleteJobMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false);
 	}
 }

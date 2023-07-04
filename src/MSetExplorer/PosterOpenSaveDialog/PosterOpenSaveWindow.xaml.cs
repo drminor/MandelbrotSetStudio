@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -147,8 +148,9 @@ namespace MSetExplorer
 				var ownerId = selectedPoster.PosterId;
 				var ownerType = OwnerType.Poster;
 				var currentJobId = selectedPoster.CurrentJobId;
+				var ownerCreationDate = selectedPoster.DateCreatedUtc;
 
-				OpenJobDetailsDialog(ownerId, ownerType, currentJobId);
+				OpenJobDetailsDialog(ownerId, ownerType, currentJobId, ownerCreationDate);
 			}
 		}
 
@@ -205,10 +207,10 @@ namespace MSetExplorer
 		#region Jobs Dialog
 
 
-		private void OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
+		private void OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
 		{
 			var deleteNonEssentialMapSectionsFunction = _vm.DeleteNonEssentialMapSectionsFunction;
-			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(ownerId, ownerType, initialJobId, deleteNonEssentialMapSectionsFunction);
+			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(ownerId, ownerType, currentJobId, ownerCreationDate, deleteNonEssentialMapSectionsFunction);
 			var jobDetailsDialog = new JobDetailsWindow
 			{
 				DataContext = jobDetailsViewModel

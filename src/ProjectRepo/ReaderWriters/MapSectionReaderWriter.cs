@@ -306,10 +306,18 @@ namespace ProjectRepo
 		public IEnumerable<ValueTuple<ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsFromAllMapSections()
 		{
 			var projection1 = Builders<MapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.SubdivisionId));
-
 			var filter = Builders<MapSectionRecord>.Filter.Empty;
-
 			IFindFluent<MapSectionRecord, ValueTuple<ObjectId, ObjectId>> operation = Collection.Find(filter).Project(projection1);
+
+			var itemsFound = operation.ToEnumerable();
+			return itemsFound;
+		}
+
+		public IEnumerable<ValueTuple<ObjectId, DateTime, ObjectId>> GetCreationDatesAndSubIds(IEnumerable<ObjectId> mapSectionIds)
+		{
+			var projection = Builders<MapSectionRecord>.Projection.Expression(p => new ValueTuple<ObjectId, DateTime, ObjectId>(p.Id, p.DateCreatedUtc, p.SubdivisionId));
+			var filter = Builders<MapSectionRecord>.Filter.In(f => f.Id, mapSectionIds);
+			IFindFluent<MapSectionRecord, ValueTuple<ObjectId, DateTime, ObjectId>> operation = Collection.Find(filter).Project(projection);
 
 			var itemsFound = operation.ToEnumerable();
 			return itemsFound;

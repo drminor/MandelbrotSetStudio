@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:JobDetailsViewModel}"
         mc:Ignorable="d"
-        Title="Open Poster" Height="1000" Width="855">
+        Title="Manage Job Storage" Height="500" Width="855">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -31,33 +31,40 @@
 
         </Border>
 
-        <Border x:Name="borderTop" Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
-            <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
 
-                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
-                    <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="170" Height="22"/>
-                </StackPanel>
-
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                    <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Description:" VerticalAlignment="Top"/>
-                    <TextBox x:Name="txtDescription" Text="{Binding SelectedDescription}" Width="500" Height="22"/>
-                </StackPanel>
-
-            </StackPanel>
-        </Border>
-
-        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Save</Button>
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Cancel</Button>
-                <Button Name="btnDelete" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="40,10, 10, 10" Click="DeleteButton_Click">_Delete</Button>
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
+                <Button Name="btnDelete" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="40, 10, 10, 10" Click="DeleteButton_Click">_Delete Job</Button>
 
-                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TrimMapSectionsButton_Click">_Trim</Button>
-                <!--<Button Name="btnTrimMapSectionsHeavy" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TrimMapSectionsHeavyButton_Click">Trim _Heavy</Button>-->
+                <Button Name="btnDeleteMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="10" Click="TrimMapSectionsButton_Click">Delete Map_Sections</Button>
+                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="10" Click="DeleteMapSectionsButton_Click">_Trim Map Sections</Button>
             </StackPanel>
 
+        </Border>
+
+        <Border x:Name="borderDetails" Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <TextBlock Width="200" FontSize="16" Margin="10">Stat1</TextBlock>
+                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding SelectedJobInfo.Stat1}"/>
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <TextBlock Width="200" FontSize="16" Margin="10">Stat2</TextBlock>
+                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding SelectedJobInfo.Stat2}"/>
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <TextBlock Width="200" FontSize="16" Margin="10">Stat3</TextBlock>
+                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding SelectedJobInfo.Stat3}"/>
+                </StackPanel>
+
+
+            </StackPanel>
         </Border>
 
     </Grid>

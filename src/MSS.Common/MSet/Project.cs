@@ -35,19 +35,23 @@ namespace MSS.Common.MSet
 
 		#region Constructor
 
-		public Project(string name, string? description, 
-			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId
-			)
-			: this(ObjectId.GenerateNewId(), name, description, 
-				  jobs, colorBandSets, currentJobId, 
-				  DateTime.MinValue, DateTime.UtcNow)
+		public Project(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId)
+			: this(
+				  ObjectId.GenerateNewId(), 
+				  name, 
+				  description, 
+				  jobs, 
+				  colorBandSets, 
+				  currentJobId,
+				  dateCreatedUtc: DateTime.UtcNow,
+				  lastSavedUtc: DateTime.MinValue, 
+				  lastAccessedUtc: DateTime.UtcNow
+				  )
 		{
 			OnFile = false;
 		}
 
-		public Project(ObjectId id, string name, string? description, 
-			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
-			DateTime lastSavedUtc, DateTime lastAccessedUtc)
+		public Project(ObjectId id, string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId, DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			if (!jobs.Any())
 			{
@@ -66,6 +70,7 @@ namespace MSS.Common.MSet
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			LastUpdatedUtc = DateTime.MinValue;
+			DateCreatedUtc = dateCreatedUtc;
 			LastSavedUtc = lastSavedUtc;
 			LastAccessedUtc = lastAccessedUtc;
 			_originalCurrentJobId = currentJobId;

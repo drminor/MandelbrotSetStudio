@@ -6,6 +6,7 @@ using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ProjectRepo
@@ -124,7 +125,17 @@ namespace ProjectRepo
 
 		public ObjectId Insert(JobRecord jobRecord)
 		{
+			var idValueBeoreInsert = jobRecord.Id;
+
 			Collection.InsertOne(jobRecord);
+
+			if (jobRecord.Id != idValueBeoreInsert)
+			{
+				Debug.WriteLine("WARNING: The jobrecord's Id was udated upon insert.");
+			}
+
+
+
 			return jobRecord.Id;
 		}
 

@@ -51,6 +51,27 @@ namespace MSS.Common.MSet
 
 		public int MapCoordExponent { get; set; }
 
+		private int _stat1;
+		private int _stat2;
+		private int _stat3;
+
+		public int Stat1
+		{
+			get => _stat1;
+			set { _stat1 = value; OnPropertyChanged(); }
+		}
+
+		public int Stat2
+		{
+			get => _stat2;
+			set { _stat2 = value; OnPropertyChanged(); }
+		}
+
+		public int Stat3
+		{
+			get => _stat3;
+			set { _stat3 = value; OnPropertyChanged(); }
+		}
 
 		#endregion
 

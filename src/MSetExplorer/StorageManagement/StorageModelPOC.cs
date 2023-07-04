@@ -25,51 +25,51 @@ namespace MSetExplorer.StorageManagement
 			_mapSectionDocSize = _mapSectionAdapter.GetSizeOfDocZero();
 		}
 
-		public void PlayWithStorageModel(ObjectId projectId)
-		{
-			var jobAndSubIds = _projectAdapter.GetJobAndSubdivisionIdsForOwner(projectId);
+		//public void PlayWithStorageModel(ObjectId projectId)
+		//{
+		//	var jobAndSubIds = _projectAdapter.GetJobAndSubdivisionIdsForOwner(projectId);
 
-			var jobs = new List<StorageModel.Job>();
+		//	var jobs = new List<StorageModel.Job>();
 
-			foreach (var (jobId, subId) in jobAndSubIds)
-			{
-				jobs.Add(new StorageModel.Job(jobId, subId));
-			}
+		//	foreach (var (jobId, subId) in jobAndSubIds)
+		//	{
+		//		jobs.Add(new StorageModel.Job(jobId, subId));
+		//	}
 
-			var currentJobId = jobs[0].JobId;
+		//	var currentJobId = jobs[0].JobId;
 
-			var storageModel = new StorageModel(projectId, jobs, currentJobId);
+		//	var storageModel = new StorageModel(projectId, jobs, currentJobId);
 
-			var jobOwner = storageModel.OwnerBeingManaged;
+		//	var jobOwner = storageModel.Owner;
 
-			foreach (var smJob in jobOwner.Jobs)
-			{
-				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(smJob.JobId);
+		//	foreach (var smJob in jobOwner.Jobs)
+		//	{
+		//		var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(smJob.JobId);
 
-				foreach (var jobMapSectionRecord in jobMapSectionRecords)
-				{
-					var sectionId = jobMapSectionRecord.MapSectionId;
+		//		foreach (var jobMapSectionRecord in jobMapSectionRecords)
+		//		{
+		//			var sectionId = jobMapSectionRecord.MapSectionId;
 
-					var sectionSubId = _mapSectionAdapter.GetSubdivisionId(sectionId);
+		//			var sectionSubId = _mapSectionAdapter.GetSubdivisionId(sectionId);
 
-					if (!sectionSubId.HasValue)
-					{
-						throw new InvalidOperationException($"Cannot get the SubdivisionId from the MapSection with Id: {sectionId}.");
-					}
+		//			if (!sectionSubId.HasValue)
+		//			{
+		//				throw new InvalidOperationException($"Cannot get the SubdivisionId from the MapSection with Id: {sectionId}.");
+		//			}
 
-					jobOwner.Sections.Add(new StorageModel.Section(sectionId, sectionSubId.Value));
+		//			storageModel.Sections.Add(new StorageModel.Section(sectionId, sectionSubId.Value));
 
-					var js = new StorageModel.JobSection(jobMapSectionRecord.Id, jobMapSectionRecord.JobId, sectionId)
-					{
-						JobOwnerType = jobMapSectionRecord.OwnerType,
-						SubdivisionId = jobMapSectionRecord.MapSectionSubdivisionId,
-						OriginalSourceSubdivisionId = jobMapSectionRecord.JobSubdivisionId,
-					};
+		//			var js = new StorageModel.JobSection(jobMapSectionRecord.Id, jobMapSectionRecord.JobId, sectionId)
+		//			{
+		//				JobOwnerType = jobMapSectionRecord.OwnerType,
+		//				SubdivisionId = jobMapSectionRecord.MapSectionSubdivisionId,
+		//				OriginalSourceSubdivisionId = jobMapSectionRecord.JobSubdivisionId,
+		//			};
 
-					jobOwner.JobSections.Add(js);
-				}
-			}
-		}
+		//			jobOwner.JobSections.Add(js);
+		//		}
+		//	}
+		//}
 
 		public void TestGetDocSizes()
 		{

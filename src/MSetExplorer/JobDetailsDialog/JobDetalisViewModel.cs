@@ -1,8 +1,8 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
+using MSetRepo.Storage;
 using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -28,7 +28,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public JobDetailsViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction, ObjectId ownerId, OwnerType ownerType, ObjectId? initialJobId)
+		public JobDetailsViewModel(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
 		{
 			_projectAdapter = projectAdapter;
 
@@ -51,14 +51,22 @@ namespace MSetExplorer
 
 			var jobInfos = _projectAdapter.GetJobInfosForOwner(ownerId);
 
+			var cntr = 0;
+			foreach(var ji in jobInfos)
+			{
+				ji.Stat1 = cntr++;
+				ji.Stat2 = cntr += 10;
+				ji.Stat3 = cntr += 12;
+			}
+
 			JobInfos = new ObservableCollection<IJobInfo>(jobInfos);
 
-			SelectedJobInfo = JobInfos.FirstOrDefault(x => x.Id == initialJobId);
+			SelectedJobInfo = JobInfos.FirstOrDefault(x => x.Id == currentJobId);
 
 			var view = CollectionViewSource.GetDefaultView(JobInfos);
 			_ = view.MoveCurrentTo(SelectedJobInfo);
 
-			//PlayWithStorageModel(OwnerId);
+			CreateStorageModel(OwnerId, ownerType, currentJobId, ownerCreationDate, JobInfos);
 		}
 
 		#endregion
@@ -137,53 +145,27 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		public void PlayWithStorageModel(ObjectId ownerId)
+		public StorageModel CreateStorageModel(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, IEnumerable<IJobInfo> jobInfos)
 		{
-			var jobAndSubIds = _projectAdapter.GetJobAndSubdivisionIdsForOwner(ownerId);
+			var jobs = jobInfos.Select(x => new Job(x.Id, x.DateCreatedUtc, x.SubdivisionId)).ToList();
 
-			var jobs = new List<StorageModel.Job>();
+			var storageModel = new StorageModel(ownerId, ownerCreationDate, ownerType, jobs, currentJobId);
 
-			foreach (var (jobId, subId) in jobAndSubIds)
+			foreach (var job in jobs)
 			{
-				jobs.Add(new StorageModel.Job(jobId, subId));
+				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(job.JobId);
+
+				var mapSectionIds = jobMapSectionRecords.Select(x => x.MapSectionId);
+				var mapSectionCreationDatesAndSubIds = _mapSectionAdapter.GetMapSectionCreationDates(mapSectionIds);
+				var sections = mapSectionCreationDatesAndSubIds.Select(x => new Section(x.Item1, x.Item2, x.Item3));
+				storageModel.Sections.AddRange(sections);
+
+				var jobSections = jobMapSectionRecords.Select(x => new JobSection(x.Id, x.DateCreatedUtc, x.JobType, x.JobId, x.MapSectionId, new SizeInt(x.BlockIndex.Width, x.BlockIndex.Height), x.IsInverted, x.MapSectionSubdivisionId, x.JobSubdivisionId, x.OwnerType));
+				storageModel.JobSections.AddRange(jobSections);
 			}
 
-			var currentJobId = jobs[0].JobId;
-
-			var storageModel = new StorageModel(ownerId, jobs, currentJobId);
-
-			var jobOwner = storageModel.OwnerBeingManaged;
-
-			foreach (var smJob in jobOwner.Jobs)
-			{
-				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(smJob.JobId);
-
-				foreach (var jobMapSectionRecord in jobMapSectionRecords)
-				{
-					var sectionId = jobMapSectionRecord.MapSectionId;
-
-					var sectionSubId = _mapSectionAdapter.GetSubdivisionId(sectionId);
-
-					if (!sectionSubId.HasValue)
-					{
-						throw new InvalidOperationException($"Cannot get the SubdivisionId from the MapSection with Id: {sectionId}.");
-					}
-
-					jobOwner.Sections.Add(new StorageModel.Section(sectionId, sectionSubId.Value));
-
-					var js = new StorageModel.JobSection(jobMapSectionRecord.Id, jobMapSectionRecord.JobId, sectionId)
-					{
-						JobOwnerType = jobMapSectionRecord.OwnerType,
-						SubdivisionId = jobMapSectionRecord.MapSectionSubdivisionId,
-						OriginalSourceSubdivisionId = jobMapSectionRecord.JobSubdivisionId,
-					};
-
-					jobOwner.JobSections.Add(js);
-				}
-			}
+			return storageModel;
 		}
-
-
 
 		#endregion
 

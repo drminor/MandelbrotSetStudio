@@ -262,7 +262,7 @@ namespace MSetRepo
 			jobMapSectionIdsWithMissingJobRecord = new List<ObjectId>();
 			subdivisionIdsForMissingJobs = new List<ObjectId>();
 
-			foreach (var (jobMapSectionId, jobId, subdivisionIdFromJobMapSection, originalSourceSubdivisionId) in listOfJobMapIdAndSubdivisionId)
+			foreach (var (jobMapSectionId, jobId, mapSectionSubdivisionId, jobSubdivisionId) in listOfJobMapIdAndSubdivisionId)
 			{
 				jobMapSectionCounter++;
 
@@ -272,9 +272,9 @@ namespace MSetRepo
 				if (subdivisionIdFromJobRecord.HasValue)
 				{
 					// If the SubdivisionIds don't match include details in the report result.
-					if (subdivisionIdFromJobRecord.Value != subdivisionIdFromJobMapSection)
+					if (subdivisionIdFromJobRecord.Value != mapSectionSubdivisionId)
 					{
-						sb.AppendLine($"{jobMapSectionId}\t{jobId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromJobRecord}\t{originalSourceSubdivisionId}");
+						sb.AppendLine($"{jobMapSectionId}\t{jobId}\t{mapSectionSubdivisionId}\t{subdivisionIdFromJobRecord}\t{jobSubdivisionId}");
 					}
 				}
 				else
@@ -283,9 +283,9 @@ namespace MSetRepo
 					jobMapSectionIdsWithMissingJobRecord.Add(jobMapSectionId);
 					
 					// Also collect a list of the distinct SubdivisionIds 
-					if (!subdivisionIdsForMissingJobs.Contains(subdivisionIdFromJobMapSection))
+					if (!subdivisionIdsForMissingJobs.Contains(mapSectionSubdivisionId))
 					{
-						subdivisionIdsForMissingJobs.Add(subdivisionIdFromJobMapSection);
+						subdivisionIdsForMissingJobs.Add(mapSectionSubdivisionId);
 					}
 				}
 
@@ -329,30 +329,30 @@ namespace MSetRepo
 
 			var jobMapSectionCounter = 0;
 
-			foreach(var (jobMapSectionId, mapSectionId, subdivisionIdFromJobMapSection, originalSourceSubdivisionId) in listOfJobMapIdAndSubdivisionId)
+			foreach (var (jobMapSectionId, mapSectionId, mapSectionSubdivisionId, jobSubdivisionId) in listOfJobMapIdAndSubdivisionId)
 			{
 				jobMapSectionCounter++;
 				var subdivisionIdFromMapSection = mapSectionAdapter.GetSubdivisionId(mapSectionId);
 
 				if (subdivisionIdFromMapSection.HasValue)
 				{
-					if (subdivisionIdFromMapSection.Value != subdivisionIdFromJobMapSection)
+					if (subdivisionIdFromMapSection.Value != mapSectionSubdivisionId)
 					{
-						sb.AppendLine($"{jobMapSectionId}\t{mapSectionId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromMapSection}\t{originalSourceSubdivisionId}");
+						sb.AppendLine($"{jobMapSectionId}\t{mapSectionId}\t{mapSectionSubdivisionId}\t{subdivisionIdFromMapSection}\t{jobSubdivisionId}");
 					}
 
-					if (originalSourceSubdivisionId != ObjectId.Empty && subdivisionIdFromMapSection.Value != originalSourceSubdivisionId)
+					if (jobSubdivisionId != ObjectId.Empty && subdivisionIdFromMapSection.Value != jobSubdivisionId)
 					{
-						sb.AppendLine($"{jobMapSectionId}\t{mapSectionId}\t{subdivisionIdFromJobMapSection}\t{subdivisionIdFromMapSection}\t{originalSourceSubdivisionId}");
+						sb.AppendLine($"{jobMapSectionId}\t{mapSectionId}\t{mapSectionSubdivisionId}\t{subdivisionIdFromMapSection}\t{jobSubdivisionId}");
 					}
 				}
 				else
 				{
 					jobMapSectionIdsWithMissingMapSection.Add(jobMapSectionId);
 
-					if (!subdivisionIdsForMissingMapSections.Contains(subdivisionIdFromJobMapSection))
+					if (!subdivisionIdsForMissingMapSections.Contains(mapSectionSubdivisionId))
 					{
-						subdivisionIdsForMissingMapSections.Add(subdivisionIdFromJobMapSection);
+						subdivisionIdsForMissingMapSections.Add(mapSectionSubdivisionId);
 					}
 				}
 
