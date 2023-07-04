@@ -177,10 +177,36 @@ namespace MapSectionProviderLib
 
 		private Task<ObjectId?> SaveJobMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var jobSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
+
+			var mapSectionIdStr = mapSectionResponse.MapSectionId;
+			if (string.IsNullOrEmpty(mapSectionIdStr))
+			{
+				throw new ArgumentNullException(nameof(MapSectionResponse.MapSectionId), "The MapSectionId cannot be null.");
+			}
+
+			var mapSubdivisionIdStr = mapSectionResponse.SubdivisionId;
+			if (string.IsNullOrEmpty(mapSubdivisionIdStr))
+			{
+				throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");
+			}
+
+			var jobSubdivisionIdStr = mapSectionRequest.OriginalSourceSubdivisionId;
+			if (string.IsNullOrEmpty(jobSubdivisionIdStr))
+			{
+				throw new ArgumentNullException(nameof(mapSectionRequest.OriginalSourceSubdivisionId), "The OriginalSourceSubdivisionId cannot be null.");
+			}
+
+			var jobIdStr = mapSectionRequest.JobId;
+			if (string.IsNullOrEmpty(jobIdStr))
+			{
+				throw new ArgumentNullException(nameof(mapSectionRequest.JobId), "The OwnerId cannot be null.");
+			}
+
 			var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
 
-			var result = _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.JobId, mapSectionRequest.JobType, blockIndex, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobSubdivisionId);
+			//var result = _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionResponse, mapSectionRequest.JobId, mapSectionRequest.JobType, blockIndex, mapSectionRequest.IsInverted, mapSectionRequest.OwnerType, jobSubdivisionId);
+
+			var result = _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionRequest.JobType, new ObjectId(jobIdStr), new ObjectId(mapSectionIdStr), blockIndex, mapSectionRequest.IsInverted, new ObjectId(mapSubdivisionIdStr), new ObjectId(jobSubdivisionIdStr), mapSectionRequest.OwnerType);
 
 			return result;
 

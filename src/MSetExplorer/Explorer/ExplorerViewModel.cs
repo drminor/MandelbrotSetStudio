@@ -1,17 +1,16 @@
-﻿using ImageBuilder;
-using MSS.Common;
+﻿using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows.Input;
 
 namespace MSetExplorer
 {
 	internal class ExplorerViewModel : ViewModelBase, IExplorerViewModel 
 	{
-		private readonly IMapLoaderManager _mapLoaderManager;
-		private readonly MapJobHelper _mapJobHelper;
+		//private readonly IMapLoaderManager _mapLoaderManager;
+		//private readonly MapJobHelper _mapJobHelper;
 
 		private readonly ViewModelFactory _viewModelFactory;
 
@@ -22,11 +21,11 @@ namespace MSetExplorer
 
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
-			IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, ViewModelFactory viewModelFactory)
+			/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */ViewModelFactory viewModelFactory)
 		{
 
-			_mapLoaderManager = mapLoaderManager;
-			_mapJobHelper = mapJobHelper;
+			//_mapLoaderManager = mapLoaderManager;
+			//_mapJobHelper = mapJobHelper;
 
 			ProjectViewModel = projectViewModel;
 			ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
@@ -43,7 +42,7 @@ namespace MSetExplorer
 
 			_viewModelFactory = viewModelFactory;
 
-			MapCoordsViewModel = new MapCoordsViewModel();
+			MapCoordsViewModel = viewModelFactory.CreateAMapCoordsViewModel();
 
 			MapCalcSettingsViewModel = new MapCalcSettingsViewModel();
 			MapCalcSettingsViewModel.MapSettingsUpdateRequested += MapCalcSettingsViewModel_MapSettingsUpdateRequested;
@@ -237,8 +236,7 @@ namespace MSetExplorer
 						var mapAreaInfo = ProjectViewModel.GetUpdatedMapAreaInfo(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
 						var displaySize = GetDisplaySize(e.DisplaySize);
 
-						var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, displaySize);
-						MapCoordsViewModel.Preview(mapAreaInfoV1);
+						MapCoordsViewModel.Preview(mapAreaInfo, displaySize);
 					}
 				}
 			}

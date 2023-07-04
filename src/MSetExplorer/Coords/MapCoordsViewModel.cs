@@ -8,6 +8,9 @@ namespace MSetExplorer
 {
 	public class MapCoordsViewModel : ViewModelBase
 	{
+		
+		private readonly MapJobHelper _mapJobHelper;
+
 		private const int _numDigitsForDisplayExtent = 4;
 
 		private string? _jobId;
@@ -37,8 +40,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public MapCoordsViewModel()
+		public MapCoordsViewModel(MapJobHelper mapJobHelper)
 		{
+			_mapJobHelper = mapJobHelper;
 			_jobId = null;
 			_currentMapAreaInfo = null;
 
@@ -302,9 +306,11 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Preview(MapAreaInfo mapAreaInfo)
+		public void Preview(MapAreaInfo2 mapAreaInfo, SizeDbl displaySize)
 		{
-			UpdateCoords(mapAreaInfo);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, displaySize);
+
+			UpdateCoords(mapAreaInfoV1);
 		}
 
 		public void CancelPreview()

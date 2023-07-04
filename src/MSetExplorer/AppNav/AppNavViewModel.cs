@@ -65,7 +65,8 @@ namespace MSetExplorer
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, cbshDisplayViewModel, jobTreeViewModel,
-				_mapLoaderManager, _mapJobHelper, _viewModelFactory);
+				//_mapLoaderManager, _mapJobHelper,
+				_viewModelFactory);
 
 			return result;
 		}
@@ -91,7 +92,8 @@ namespace MSetExplorer
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandSetViewModel, cbshDisplayViewModel, jobTreeViewModel,
-				_mapLoaderManager, _mapJobHelper, _viewModelFactory);
+				//_mapLoaderManager, _mapJobHelper,
+				_viewModelFactory);
 
 			return result;
 		}
@@ -142,52 +144,5 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		#region Utilities
-
-		//// Remove FetchZValuesFromRepo property from MapSections
-		//public long? DoSchemaUpdates()
-		//{
-		//	var numUpdated = ((MapSectionAdapter)_mapSectionAdapter).RemoveFetchZValuesProp();
-		//	return numUpdated;
-		//}
-
-		//// Update all Job Records to use MapAreaInfo
-		//public long? DoSchemaUpdates()
-		//{
-		//	var numUpdated = ((ProjectAdapter)_projectAdapter).UpdateAllJobsToUseMapAreaInfoRec1();
-		//	return numUpdated;
-		//}
-
-		//// Remove all (orphaned) Job Records. (I.e., those without a Project.)
-		//public long? DoSchemaUpdates()
-		//{
-		//	var numUpdated = ((ProjectAdapter)_projectAdapter).UpdateAllJobsToUseMapAreaInfoRec2();
-		//	return numUpdated;
-		//}
-
-		//// Update all Job Records to have a MapCalcSettings
-		//public long? DoSchemaUpdates()
-		//{
-		//	var numUpdated = ((ProjectAdapter)_projectAdapter).UpdateAllJobsToHaveMapCalcSettings();
-		//	return numUpdated;
-		//}
-
-		//// Update all Job Records to have a MapCalcSettings
-		//public long? DoSchemaUpdates()
-		//{
-		//	var numUpdated = ((ProjectAdapter)_projectAdapter).RemoveFetchZValuesPropFromAllJobs();
-		//	numUpdated += ((ProjectAdapter)_projectAdapter).RemoveFetchZValuesPropFromAllJobs2();
-		//	return numUpdated;
-		//}
-
-		// Remove the old properties that are now part of the MapAreaInfo record
-		//public long? DoSchemaUpdates()
-		//{
-		//	var numUpdated = ((ProjectAdapter)_projectAdapter).RemoveOldMapAreaPropsFromAllJobs();
-		//	return numUpdated;
-		//}
-
-
-		#endregion
 	}
 }

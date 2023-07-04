@@ -1,9 +1,11 @@
 ﻿using MongoDB.Bson;
+using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MSS.Types.MSet
+namespace MSS.Common.MSet
 {
 	public class Job : IEquatable<Job?>, IEqualityComparer<Job?>, IComparable<Job?>, ICloneable
 	{

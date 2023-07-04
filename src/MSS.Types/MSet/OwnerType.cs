@@ -1,5 +1,5 @@
 ﻿
-namespace MSS.Types
+namespace MSS.Types.MSet
 {
 	public enum OwnerType
 	{

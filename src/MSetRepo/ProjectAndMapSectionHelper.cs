@@ -1,17 +1,14 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
-using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Intrinsics.X86;
 using System.Text;
-using System.Text.RegularExpressions;
-using ZstdSharp;
 
 namespace MSetRepo
 {
@@ -101,6 +98,22 @@ namespace MSetRepo
 			}
 
 			if (job.OnFile && !projectAdapter.DeleteJob(job.Id))
+			{
+				throw new InvalidOperationException("Cannot delete existing job record.");
+			}
+
+			return numberOfMapSectionsDeleted ?? 0;
+		}
+
+		public static long DeleteJobOnFile(ObjectId jobId, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		{
+			var numberOfMapSectionsDeleted = mapSectionAdapter.DeleteMapSectionsForJob(jobId);
+			if (numberOfMapSectionsDeleted == 0)
+			{
+				Debug.WriteLine($"WARNING: No MapSections were removed for job: {jobId}.");
+			}
+
+			if (!projectAdapter.DeleteJob(jobId))
 			{
 				throw new InvalidOperationException("Cannot delete existing job record.");
 			}

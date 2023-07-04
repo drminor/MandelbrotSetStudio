@@ -53,9 +53,9 @@ namespace MSetExplorer
 		}
 
 		// JobDetils
-		public JobDetailsViewModel CreateAJobDetailsDialog(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
+		public JobDetailsViewModel CreateAJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
 		{
-			return new JobDetailsViewModel(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate, _projectAdapter, _mapSectionAdapter);
+			return new JobDetailsViewModel(jobOwnerInfo, _projectAdapter, _mapSectionAdapter);
 		}
 
 		// Import/Export ColorBandSet
@@ -99,6 +99,15 @@ namespace MSetExplorer
 			var result = new JobProgressViewModel(_mapLoaderManager);
 			return result;
 		}
+
+		public MapCoordsViewModel CreateAMapCoordsViewModel()
+		{
+			var mapJobHelper = ProvisionAMapJopHelper();
+
+			var result = new MapCoordsViewModel(mapJobHelper);
+			return result;
+		}
+
 
 		public MapJobHelper ProvisionAMapJopHelper()
 		{

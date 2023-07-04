@@ -12,6 +12,16 @@ namespace MSS.Common.MSet
 		private ObjectId _id;
 		private DateTime _dateCreatedUtc;
 
+		private int _numberOfMapSections;
+
+		private int _numberOfFullScale;
+		private int _numberOfReducedScale;
+		private int _numberOfImage;
+		private int _numberOfSizeEditorPreview;
+
+		private double _percentageMapSectionsShared;
+		private double _percentageMapSectionsSharedWithSameOwner;
+
 		#endregion
 
 		#region Constructor
@@ -24,11 +34,6 @@ namespace MSS.Common.MSet
 			TransformType = transformType;
 			SubdivisionId = subdivisionId;
 			MapCoordExponent = mapCoordExponent;
-
-			//NumberOfMapSections = 3;
-
-			//PercentageMapSectionsShared = 1.21;
-			//PercentageMapSectionsSharedWithSameOwner = 8.12;
 		}
 
 		#endregion
@@ -55,11 +60,6 @@ namespace MSS.Common.MSet
 
 		public int MapCoordExponent { get; set; }
 
-		private int _numberOfMapSections;
-
-		private double _percentageMapSectionsShared;
-		private double _percentageMapSectionsSharedWithSameOwner;
-
 		public int NumberOfMapSections
 		{
 			get => _numberOfMapSections;
@@ -68,6 +68,58 @@ namespace MSS.Common.MSet
 				if (value != _numberOfMapSections)
 				{
 					_numberOfMapSections = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int NumberOfFullScale
+		{
+			get => _numberOfFullScale;
+			set
+			{
+				if (value != _numberOfFullScale)
+				{
+					_numberOfFullScale = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int NumberOfReducedScale
+		{
+			get => _numberOfReducedScale;
+			set
+			{
+				if (value != _numberOfReducedScale)
+				{
+					_numberOfReducedScale = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int NumberOfImage
+		{
+			get => _numberOfImage;
+			set
+			{
+				if (value != _numberOfImage)
+				{
+					_numberOfImage = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int NumberOfSizeEditorPreview
+		{
+			get => _numberOfSizeEditorPreview;
+			set
+			{
+				if (value != _numberOfSizeEditorPreview)
+				{
+					_numberOfSizeEditorPreview = value;
 					OnPropertyChanged();
 				}
 			}
@@ -111,7 +163,5 @@ namespace MSS.Common.MSet
 		}
 
 		#endregion
-
 	}
-
 }

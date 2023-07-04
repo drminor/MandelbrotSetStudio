@@ -5,12 +5,13 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:JobDetailsViewModel}"
         mc:Ignorable="d"
-        Title="Manage Job Storage" Height="500" Width="999">
+        Title="Manage Job Storage" Height="500" Width="1100">
     <Grid>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -29,12 +30,20 @@
             <ListView Margin="10" Name="lvJobDetails" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedJobInfo}">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Id" Width="250" DisplayMemberBinding="{Binding Id}" />
+                        <GridViewColumn Header="Id" Width="180" DisplayMemberBinding="{Binding Id}" />
+                        <GridViewColumn Header="Date Created" Width="180" DisplayMemberBinding="{Binding DateCreatedUtc}" />
                         <GridViewColumn Header="MapSections" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
+
+                        <GridViewColumn Header="Full" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
+                        <GridViewColumn Header="Scaled" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
+                        <GridViewColumn Header="Image" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
+                        <GridViewColumn Header="Preview" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
+
+
                         <GridViewColumn Header="Shared" Width="80" DisplayMemberBinding="{Binding PercentageMapSectionsSharedWithSameOwner}" />
-                        <GridViewColumn Header="SharedGlobally" Width="140" DisplayMemberBinding="{Binding PercentageMapSectionsShared}" />
-                        <GridViewColumn Header="Sub" Width="190" DisplayMemberBinding="{Binding SubdivisionId}" />
-                        <GridViewColumn Header="Exp" Width="190" DisplayMemberBinding="{Binding MapCoordExponent}" />
+                        <GridViewColumn Header="Shared Globally" Width="100" DisplayMemberBinding="{Binding PercentageMapSectionsShared}" />
+                        <!--<GridViewColumn Header="Sub" Width="190" DisplayMemberBinding="{Binding SubdivisionId}" />-->
+                        <GridViewColumn Header="Exp" Width="70" DisplayMemberBinding="{Binding MapCoordExponent}" />
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -44,37 +53,44 @@
 
         <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
-            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
-                <Button Name="btnDelete" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="40, 10, 10, 10" Click="DeleteButton_Click">_Delete Job</Button>
+            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="25,0,0,0">
+                <Button Name="btnDelete" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="40, 10, 20, 10" Click="DeleteJobButton_Click">_Delete Job</Button>
 
-                <Button Name="btnDeleteMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="10" Click="TrimMapSectionsButton_Click">Delete Map_Sections</Button>
-                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="10" Click="DeleteMapSectionsButton_Click">_Trim Map Sections</Button>
+                <Button Name="btnDeleteMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="TrimMapSectionsButton_Click">Delete Map_Sections</Button>
+                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="DeleteMapSectionsButton_Click">_Trim Map Sections</Button>
             </StackPanel>
 
         </Border>
 
-        <Border x:Name="borderDetails" Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
+        <Border x:Name="borderDetails" Grid.Row="3" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,20">
 
-            <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+            <StackPanel HorizontalAlignment="Left" Orientation="Vertical" Margin="20,0,0,0">
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="200" FontSize="16" Margin="10">Stat1</TextBlock>
+                    <TextBlock Width="200" FontSize="16" Margin="10">Total Full Scale </TextBlock>
                     <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat1}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="200" FontSize="16" Margin="10">Stat2</TextBlock>
+                    <TextBlock Width="200" FontSize="16" Margin="10">Total Scaled</TextBlock>
                     <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat2}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="200" FontSize="16" Margin="10">Stat3</TextBlock>
+                    <TextBlock Width="200" FontSize="16" Margin="10">Total Image</TextBlock>
                     <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat3}"/>
                 </StackPanel>
 
 
             </StackPanel>
+        </Border>
+
+        <Border Grid.Row="4" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
+            </StackPanel>
+
         </Border>
 
     </Grid>

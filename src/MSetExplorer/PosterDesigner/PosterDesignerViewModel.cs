@@ -1,29 +1,26 @@
-﻿using ImageBuilder;
-using MongoDB.Bson;
-using MSS.Common;
+﻿using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
 	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
-		private readonly MapJobHelper _mapJobHelper;
-		private readonly IMapLoaderManager _mapLoaderManager;
+		//private readonly MapJobHelper _mapJobHelper;
+		//private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly ViewModelFactory _viewModelFactory;
 
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
-			IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, ViewModelFactory viewModelFactory)
+			/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */ViewModelFactory viewModelFactory)
 		{
-			_mapJobHelper = mapJobHelper;
-			_mapLoaderManager = mapLoaderManager;
+			//_mapJobHelper = mapJobHelper;
+			//_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
 			JobTreeViewModel = jobTreeViewModel;
@@ -32,14 +29,12 @@ namespace MSetExplorer
 
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 			
-			
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-
 			_viewModelFactory = viewModelFactory;
 
-			MapCoordsViewModel = new MapCoordsViewModel();
+			MapCoordsViewModel = _viewModelFactory.CreateAMapCoordsViewModel();
 
 			MapCalcSettingsViewModel = new MapCalcSettingsViewModel();
 			MapCalcSettingsViewModel.MapSettingsUpdateRequested += MapCalcSettingsViewModel_MapSettingsUpdateRequested;

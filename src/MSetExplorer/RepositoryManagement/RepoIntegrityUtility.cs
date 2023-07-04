@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
-using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

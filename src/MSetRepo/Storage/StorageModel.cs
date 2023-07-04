@@ -1,5 +1,7 @@
 ﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,10 +10,12 @@ namespace MSetRepo.Storage
 {
     public class StorageModel
     {
+		private readonly Dictionary<ObjectId, long> _MapSectionRefCounts;
+
         #region Constructor
 
-        public StorageModel(ObjectId jobOwnerId, DateTime datecreated, OwnerType ownerType, List<Job> jobs, ObjectId currentJobId) :
-            this(new JobOwner(jobOwnerId, datecreated, ownerType, jobs, currentJobId))
+        public StorageModel(IJobOwnerInfo jobOwnerInfo, List<Job> jobs) :
+            this(new JobOwner(jobOwnerInfo, jobs))
         { }
 
         public StorageModel(JobOwner jobOwner) : this(jobOwner, new List<Section>(), new List<JobSection>(), new List<JobOwner>())
@@ -26,6 +30,8 @@ namespace MSetRepo.Storage
 			Sections = sections;
 			JobSections = jobSections;
 			OtherOwners = otherOwners;
+
+			_MapSectionRefCounts = new Dictionary<ObjectId, long>();
 		}
 
 		#endregion
@@ -46,14 +52,6 @@ namespace MSetRepo.Storage
 
 		public void UpdateStats()
 		{
-			//Owner.Jobs.Select(x => JobSections.Where(y => y.JobId == x.JobId && y.JobType == JobType.FullScale)).Count();
-
-			//Owner.NumberOfMapSections = 0;
-			//Owner.NumberOfFullScale = 0;
-			//Owner.NumberOfReducedScale = 0;
-			//Owner.NumberOfImage = 0;
-			//Owner.NumberOfSizeEditorPreview = 0;
-
 			foreach(var job in Owner.Jobs)
 			{
 				var byJobIdFilter = JobSections.Where(x => x.JobId == job.JobId);
@@ -63,15 +61,10 @@ namespace MSetRepo.Storage
 				job.NumberOfImage = byJobIdFilter.Count(x => x.JobType == JobType.Image);
 				job.NumberOfSizeEditorPreview = byJobIdFilter.Count(x => x.JobType == JobType.SizeEditorPreview);
 
-				//Owner.NumberOfFullScale += job.NumberOfFullScale;
-				//Owner.NumberOfReducedScale += job.NumberOfReducedScale;
-				//Owner.NumberOfImage += job.NumberOfImage;
-				//Owner.NumberOfSizeEditorPreview += job.NumberOfSizeEditorPreview;
-
 				job.NumberOfMapSections = job.NumberOfFullScale + job.NumberOfReducedScale + job.NumberOfImage + job.NumberOfSizeEditorPreview;
-				//Owner.NumberOfMapSections += job.NumberOfMapSections;
+
+
 			}
-			//var s = Owner.Jobs.Select(x =>  JobSections.Where(y => y.JobId == x.JobId));
 		}
 
 		#endregion
@@ -87,6 +80,9 @@ namespace MSetRepo.Storage
 		//public Job CurrentJob { get; set; }
 		public ObjectId CurrentJobId { get; set;}
 
+		public JobOwner(IJobOwnerInfo jobOwnerInfo, List<Job> jobs) : this(jobOwnerInfo.OwnerId, jobOwnerInfo.DateCreatedUtc, jobOwnerInfo.OwnerType, jobs, jobOwnerInfo.CurrentJobId)
+		{ }
+
 		public JobOwner(ObjectId jobOwnerId, DateTime dateCreated, OwnerType ownerType, List<Job> jobs, ObjectId currentJobId)
 		{
 			JobOwnerId = jobOwnerId;
@@ -94,22 +90,7 @@ namespace MSetRepo.Storage
 			OwnerType = ownerType;
 			Jobs = jobs;
 			CurrentJobId = currentJobId;
-
-			//var test = jobs.FirstOrDefault(x => x.JobId == currentJobId);
-			//if (test == null)
-			//{
-			//	throw new InvalidOperationException("The currentJobId cannot be found in the list of jobs.");
-			//}
-
-			//CurrentJob = test;
 		}
-
-		//public int NumberOfMapSections { get; set; }
-
-		//public int NumberOfFullScale { get; set; }
-		//public int NumberOfReducedScale { get; set; }
-		//public int NumberOfImage { get; set; }
-		//public int NumberOfSizeEditorPreview { get; set; }
 
 		public int NumberOfMapSections => Jobs.Sum(x => x.NumberOfMapSections);
 
@@ -123,16 +104,19 @@ namespace MSetRepo.Storage
 
 	public class Job
 	{
+
 		public ObjectId JobId { get; init; }
 		public DateTime DateCreated { get; init; }
 
 		public ObjectId SubdivisionId { get; set; }
 
-		public Job(ObjectId jobId, DateTime dateCreated, ObjectId subdivisionId)
+		public Job(ObjectId jobId, DateTime dateCreated, ObjectId subdivisionId, List<ObjectId> uniqueMapSectionIds)
 		{
 			JobId = jobId;
 			DateCreated = dateCreated;
 			SubdivisionId = subdivisionId;
+
+			UniqueMapSectionIds = uniqueMapSectionIds;
 		}
 
 		public int NumberOfMapSections { get; set; }
@@ -144,6 +128,9 @@ namespace MSetRepo.Storage
 
 		public double PercentageMapSectionsShared { get; set; }
 		public double PercentageMapSectionsSharedWithSameOwner { get; set; }
+
+		public List<ObjectId> UniqueMapSectionIds { get; init; }
+
 	}
 
 	public class Section

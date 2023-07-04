@@ -1,5 +1,7 @@
 ﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -145,13 +147,7 @@ namespace MSetExplorer
 
 			if (selectedPoster != null)
 			{
-				var ownerName = selectedPoster.Name;
-				var ownerId = selectedPoster.PosterId;
-				var ownerType = OwnerType.Poster;
-				var currentJobId = selectedPoster.CurrentJobId;
-				var ownerCreationDate = selectedPoster.DateCreatedUtc;
-
-				OpenJobDetailsDialog(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate);
+				OpenJobDetailsDialog(selectedPoster);
 			}
 		}
 
@@ -166,22 +162,6 @@ namespace MSetExplorer
 		{
 			var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: true);
 			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
-
-			//if (mapSectionsDeletedUnsavedJobs > 0 && mapSectionsDeletedUnusedJobs > 0)
-			//{
-			//	_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved and {mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
-			//}
-			//else
-			//{
-			//	if (mapSectionsDeletedUnsavedJobs > 0)
-			//	{
-			//		_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved were deleted.");
-			//	}
-			//	if (mapSectionsDeletedUnusedJobs > 0)
-			//	{
-			//		_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
-			//	}
-			//}
 		}
 
 		private void TakeSelection()
@@ -207,31 +187,17 @@ namespace MSetExplorer
 
 		#region Jobs Dialog
 
-
-		private void OpenJobDetailsDialog(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
+		private void OpenJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
 		{
-			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate);
+			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(jobOwnerInfo);
 			var jobDetailsDialog = new JobDetailsWindow
 			{
 				DataContext = jobDetailsViewModel
 			};
 
 			jobDetailsDialog.ShowDialog();
-
-			//if (jobDetailsDialog.ShowDialog() == true)
-			//{
-			//	Debug.WriteLine("JobDetailDialog is returning True.");
-			//	return true;
-			//}
-			//else
-			//{
-			//	Debug.WriteLine("JobDetailDialog is returning False.");
-			//	return false;
-			//}
 		}
 
-
 		#endregion
-
 	}
 }

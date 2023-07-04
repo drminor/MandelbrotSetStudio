@@ -234,6 +234,8 @@ namespace MSetRepo
 		{
 			IProjectInfo result;
 			var dateCreated = projectRec.DateCreated.ToLocalTime();
+			var lastAccessed = projectRec.LastAccessedUtc;
+			var currentJobId = projectRec.CurrentJobId;
 
 			var jobInfos = jobReaderWriter.GetJobSubdivisionInfosForOwner(projectRec.Id);
 
@@ -259,11 +261,11 @@ namespace MSetRepo
 				var jobIds = jobInfos.Select(x => x.Id).ToList();
 				var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
 
-				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, bytes, dateCreated, lastUpdatedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
+				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, currentJobId, bytes, dateCreated, lastUpdatedUtc, lastSavedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
 			else
 			{
-				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, 0, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
+				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, currentJobId, 0, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
 			}
 
 			return result;
@@ -1067,6 +1069,37 @@ namespace MSetRepo
 		//	var result = projectReaderWriter.RemoveCurrentColorBandSetProp();
 		//	return result;
 		//}
+
+		//// Update all Job Records to use MapAreaInfo
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = UpdateAllJobsToUseMapAreaInfoRec1();
+		//	return numUpdated;
+		//}
+
+
+		//// Update all Job Records to have a MapCalcSettings
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = UpdateAllJobsToHaveMapCalcSettings();
+		//	return numUpdated;
+		//}
+
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = RemoveFetchZValuesPropFromAllJobs();
+		//	numUpdated += RemoveFetchZValuesPropFromAllJobs2();
+		//	return numUpdated;
+		//}
+
+		// Remove the old properties that are now part of the MapAreaInfo record
+		//public long? DoSchemaUpdates()
+		//{
+		//	var numUpdated = RemoveOldMapAreaPropsFromAllJobs();
+		//	return numUpdated;
+		//}
+
+
 
 		public int DeleteUnusedColorBandSets()
 		{

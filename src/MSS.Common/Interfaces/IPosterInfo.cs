@@ -5,17 +5,18 @@ using System.ComponentModel;
 
 namespace MSS.Common
 {
-	public interface IPosterInfo : INotifyPropertyChanged
+	public interface IPosterInfo : IJobOwnerInfo, INotifyPropertyChanged
 	{
 		ObjectId PosterId { get; init; }
-		string Name { get; set; }
-		string? Description { get; set; }
-		ObjectId CurrentJobId { get; init; }
+		//string Name { get; set; }
+		//string? Description { get; set; }
+		//ObjectId CurrentJobId { get; init; }
+		
 		SizeDbl Size { get; init; }
-		int Bytes { get; init; }
+		//int Bytes { get; init; }
 
-		DateTime DateCreatedUtc { get; init; }
-		DateTime LastSavedUtc { get; set; }
-		DateTime LastAccessedUtc { get; set; }
+		//DateTime DateCreatedUtc { get; init; }
+		//DateTime LastSavedUtc { get; set; }
+		//DateTime LastAccessedUtc { get; set; }
 	}
 }

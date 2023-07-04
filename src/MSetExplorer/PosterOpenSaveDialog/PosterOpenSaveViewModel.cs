@@ -1,14 +1,18 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
+using MSetRepo.Storage;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
+using System.Windows.Media.Animation;
 
 namespace MSetExplorer
 {
@@ -171,23 +175,58 @@ namespace MSetExplorer
 
 		public long TrimSelected(bool agressive)
 		{
-			if (SelectedPoster == null || DeleteNonEssentialMapSectionsFunction == null)
+			var posterInfo = SelectedPoster;
+
+			if (posterInfo == null)
 			{
 				return -1;
 			}
 
-			var jobId = SelectedPoster.CurrentJobId;
-			var job = _projectAdapter.GetJob(jobId);
-			var posterSize = SelectedPoster.Size;
+			var currentJobId = posterInfo.CurrentJobId;
 
-			var result = DeleteNonEssentialMapSectionsFunction(job, posterSize, agressive);
+			var ownerId = posterInfo.PosterId;
 
-			return result;
+			var allJobIds = _projectAdapter.GetAllJobIdsForPoster(ownerId);
+
+			var allNonCurrentJobIds = allJobIds.Where(x => x != currentJobId);
+
+			DeleteMapSectionsForManyJobs(allNonCurrentJobIds, out var numberOfMapSectionsDeleted);
+
+
+			if (agressive)
+			{
+				// In addition to deleting all the MapSections for all of the jobs for this poster, except for the current job..
+				// Delete all of the ReducedScale and Preview MapSections for the current job.
+
+				TrimMapSectionsForSelectedJob(currentJobId);
+			}
+
+			return numberOfMapSectionsDeleted;
 		}
 
-		public long TrimHeavySelected()
+
+		private bool DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, out long numberOfMapSectionsDeleted)
 		{
-			return -1;
+			var numberDeleted = _mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds);
+
+			if (numberDeleted.HasValue)
+			{
+				numberOfMapSectionsDeleted = numberDeleted.Value;
+				return true;
+			}
+			else
+			{
+				numberOfMapSectionsDeleted = -1;
+				return true;
+			}
+		}
+
+		private long TrimMapSectionsForSelectedJob(ObjectId selectedJobId)
+		{
+			var nonEssentialJobTypes = new JobType[] { JobType.ReducedScale, JobType.SizeEditorPreview };
+			var result = _mapSectionAdapter.DeleteMapSectionsForJobHavingJobTypes(selectedJobId, nonEssentialJobTypes) ?? 0;
+
+			return result;
 		}
 
 		#endregion

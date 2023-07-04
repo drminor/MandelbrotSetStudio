@@ -3,6 +3,7 @@ using MSetRepo;
 using MSetRepo.Storage;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,6 +11,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
+
+using Job = MSetRepo.Storage.Job;
 
 namespace MSetExplorer
 {
@@ -21,15 +24,19 @@ namespace MSetExplorer
 		private readonly MapSectionAdapter _mapSectionAdapter;
 		//private long _mapSectionCollectionSize;
 
+		private readonly StorageModel _storageModel;
+
 		private IJobInfo? _selectedJob;
 
-		private StorageModel _storageModel;
+		private int _stat1;
+		private int _stat2;
+		private int _stat3;
 
 		#endregion
 
 		#region Constructor
 
-		public JobDetailsViewModel(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		public JobDetailsViewModel(IJobOwnerInfo jobOwnerInfo, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
 		{
 			_projectAdapter = projectAdapter;
 
@@ -42,55 +49,36 @@ namespace MSetExplorer
 				throw new InvalidOperationException("The mapSectionAdapter argument must be implemented by the MapSectionAdapter class.");
 			}
 
-			OwnerName = ownerName;
-			OwnerId = ownerId;
-			OwnerType = ownerType;
+			JobOwnerInfo = jobOwnerInfo;
 
 			//_mapSectionCollectionSize = _mapSectionAdapter.GetSizeOfCollectionInMB();
 			//_mapSectionDocSize = _mapSectionAdapter.GetSizeOfDocZero();
 
-			var jobInfos = _projectAdapter.GetJobInfosForOwner(ownerId);
-
-			//var cntr = 0;
-			//foreach(var ji in jobInfos)
-			//{
-			//	Stat1 = cntr++;
-			//	Stat2 = cntr += 10;
-			//	Stat3 = cntr += 12;
-			//}
+			var jobInfos = _projectAdapter.GetJobInfosForOwner(jobOwnerInfo.OwnerId);
 
 			JobInfos = new ObservableCollection<IJobInfo>(jobInfos);
-
-			SelectedJobInfo = JobInfos.FirstOrDefault(x => x.Id == currentJobId);
+			SelectedJobInfo = JobInfos.FirstOrDefault(x => x.Id == jobOwnerInfo.CurrentJobId);
 
 			var view = CollectionViewSource.GetDefaultView(JobInfos);
 			_ = view.MoveCurrentTo(SelectedJobInfo);
 
-			_storageModel = CreateStorageModel(OwnerId, ownerType, currentJobId, ownerCreationDate, JobInfos);
-
-			_storageModel.UpdateStats();
-
-			for(int i = 0; i < JobInfos.Count; i++)
-			{
-				var jobInfo = JobInfos[i];
-				jobInfo.NumberOfMapSections = _storageModel.Owner.Jobs[i].NumberOfMapSections;
-				
-				//jobInfo.PercentageMapSectionsShared = 1.34;
-				//jobInfo.PercentageMapSectionsSharedWithSameOwner = 28.3;
-			}
-
-			Stat1 = _storageModel.Owner.NumberOfMapSections;
-			Stat2 = _storageModel.Owner.NumberOfReducedScale;
-			Stat3 = _storageModel.Owner.NumberOfImage;
+			_storageModel = CreateStorageModel(jobOwnerInfo, JobInfos);
+			UpdateStats();
 		}
 
 		#endregion
 
 		#region Public Properties
 
-		public string OwnerName { get; init; }
-		public ObjectId OwnerId { get; init; }
-		public OwnerType OwnerType { get; init; }
+		public IJobOwnerInfo JobOwnerInfo { get; init; }
+
+		public string OwnerName => JobOwnerInfo.Name;
+		public ObjectId CurrentJobId => JobOwnerInfo.CurrentJobId;
+
+		//public ObjectId OwnerId { get; init; }
+		//public OwnerType OwnerType { get; init; }
+
+		//public ObjectId CurrentJobId { get; init; }
 
 		public ObservableCollection<IJobInfo> JobInfos { get; init; }
 
@@ -105,9 +93,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private int _stat1;
-		private int _stat2;
-		private int _stat3;
+		public bool TheCurrentJobIsSelected => SelectedJobInfo == null ? false : SelectedJobInfo.Id == CurrentJobId;
 
 		public int Stat1
 		{
@@ -127,82 +113,128 @@ namespace MSetExplorer
 			set { _stat3 = value; OnPropertyChanged(); }
 		}
 
-
 		#endregion
 
 		#region Public Methods
 
-		public bool DeleteSelected(out long numberOfMapSectionsDeleted)
+		public bool DeleteSelectedJob(out long numberOfMapSectionsDeleted)
 		{
 			numberOfMapSectionsDeleted = 0;
 
-			//var posterInfo = SelectedJobInfo;
+			if (SelectedJobInfo == null)
+			{
+				return false;
+			}
 
-			//if (posterInfo == null)
-			//{
-			//	return false;
-			//}
+			var selectedJobId = SelectedJobInfo.Id;
 
-			//bool result;
-			//if (ProjectAndMapSectionHelper.DeletePoster(posterInfo.PosterId, _projectAdapter, _mapSectionAdapter, out numberOfMapSectionsDeleted))
-			//{
-			//	_ = PosterInfos.Remove(posterInfo);
-			//	result = true;
-			//}
-			//else
-			//{
-			//	result = false;
-			//}
+			if (SelectedJobInfo.Id == _storageModel.Owner.CurrentJobId)
+			{
+				return false;
+			}
 
-			var result = false;
+			numberOfMapSectionsDeleted = ProjectAndMapSectionHelper.DeleteJobOnFile(selectedJobId, _projectAdapter, _mapSectionAdapter);
+
+			return true;
+		}
+
+		public long DeleteAllMapSectionsForSelectedJob()
+		{
+			if (SelectedJobInfo == null)
+			{
+				return -1;
+			}
+
+			var selectedJobId = SelectedJobInfo.Id;
+
+			var result = _mapSectionAdapter.DeleteMapSectionsForJob(selectedJobId) ?? 0;
+
 			return result;
 		}
 
-		//public long TrimSelected(bool agressive)
-		//{
-		//	if (SelectedJobInfo == null || _deleteNonEssentialMapSectionsFunction == null)
-		//	{
-		//		return -1;
-		//	}
+		public long TrimMapSectionsForSelectedJob()
+		{
+			if (SelectedJobInfo == null)
+			{
+				return -1;
+			}
 
-		//	var jobId = SelectedJobInfo.CurrentJobId;
-		//	var job = _projectAdapter.GetJob(jobId);
-		//	var posterSize = SelectedJobInfo.Size;
+			var selectedJobId = SelectedJobInfo.Id;
 
-		//	var result = _deleteNonEssentialMapSectionsFunction(job, posterSize, agressive);
+			var nonEssentialJobTypes = new JobType[] { JobType.ReducedScale, JobType.SizeEditorPreview };
+			var result = _mapSectionAdapter.DeleteMapSectionsForJobHavingJobTypes(selectedJobId, nonEssentialJobTypes) ?? 0;
 
-		//	return result;
-		//}
-
-		//public long TrimHeavySelected()
-		//{
-		//	return -1;
-		//}
+			return result;
+		}
 
 		#endregion
 
 		#region Private Methods
 
-		public StorageModel CreateStorageModel(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, IEnumerable<IJobInfo> jobInfos)
+		//private StorageModel CreateStorageModel(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, IEnumerable<IJobInfo> jobInfos)
+		//{
+
+		//}
+
+
+		private StorageModel CreateStorageModel(IJobOwnerInfo jobOwnerInfo, IEnumerable<IJobInfo> jobInfos)
 		{
-			var jobs = jobInfos.Select(x => new Job(x.Id, x.DateCreatedUtc, x.SubdivisionId)).ToList();
+			//ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate
+			//var jobs = jobInfos.Select(x => new Job(x.Id, x.DateCreatedUtc, x.SubdivisionId)).ToList();
 
-			var storageModel = new StorageModel(ownerId, ownerCreationDate, ownerType, jobs, currentJobId);
+			//var storageModel = new StorageModel(ownerId, ownerCreationDate, ownerType, jobs, currentJobId);
 
-			foreach (var job in jobs)
+			var jobs = new List<Job>();
+
+			var sectionsAcc = new List<Section>();
+			var jobSectionsAcc = new List<JobSection>();
+
+			foreach (var jobInfo in jobInfos)
 			{
-				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(job.JobId);
+				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(jobInfo.Id);
 
 				var mapSectionIds = jobMapSectionRecords.Select(x => x.MapSectionId);
 				var mapSectionCreationDatesAndSubIds = _mapSectionAdapter.GetMapSectionCreationDates(mapSectionIds);
 				var sections = mapSectionCreationDatesAndSubIds.Select(x => new Section(x.Item1, x.Item2, x.Item3));
-				storageModel.Sections.AddRange(sections);
+				//storageModel.Sections.AddRange(sections);
+				sectionsAcc.AddRange(sections);
 
 				var jobSections = jobMapSectionRecords.Select(x => new JobSection(x.Id, x.DateCreatedUtc, x.JobType, x.JobId, x.MapSectionId, new SizeInt(x.BlockIndex.Width, x.BlockIndex.Height), x.IsInverted, x.MapSectionSubdivisionId, x.JobSubdivisionId, x.OwnerType));
-				storageModel.JobSections.AddRange(jobSections);
+				//storageModel.JobSections.AddRange(jobSections);
+				jobSectionsAcc.AddRange(jobSections);
+
+				var distinctMapSectionIds = mapSectionIds.Distinct().ToList();
+
+				jobs.Add(new Job(jobInfo.Id, jobInfo.DateCreatedUtc, jobInfo.SubdivisionId, distinctMapSectionIds));
 			}
 
+			var jobOwner = new JobOwner(jobOwnerInfo, jobs);
+
+			var storageModel = new StorageModel(jobOwner, sectionsAcc, jobSectionsAcc);
+
 			return storageModel;
+		}
+
+		private void UpdateStats()
+		{
+			_storageModel.UpdateStats();
+
+			for (int i = 0; i < JobInfos.Count; i++)
+			{
+				var jobInfo = JobInfos[i];
+				jobInfo.NumberOfMapSections = _storageModel.Owner.Jobs[i].NumberOfMapSections;
+				jobInfo.NumberOfFullScale = _storageModel.Owner.Jobs[i].NumberOfFullScale;
+				jobInfo.NumberOfReducedScale = _storageModel.Owner.Jobs[i].NumberOfReducedScale;
+				jobInfo.NumberOfImage = _storageModel.Owner.Jobs[i].NumberOfImage;
+				jobInfo.NumberOfSizeEditorPreview = _storageModel.Owner.Jobs[i].NumberOfSizeEditorPreview;
+
+				//jobInfo.PercentageMapSectionsShared = 1.34;
+				//jobInfo.PercentageMapSectionsSharedWithSameOwner = 28.3;
+			}
+
+			Stat1 = _storageModel.Owner.NumberOfMapSections;
+			Stat2 = _storageModel.Owner.NumberOfReducedScale;
+			Stat3 = _storageModel.Owner.NumberOfImage;
 		}
 
 		#endregion

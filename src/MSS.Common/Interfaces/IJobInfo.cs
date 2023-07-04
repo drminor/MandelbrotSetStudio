@@ -13,6 +13,12 @@ namespace MSS.Common
 		DateTime DateCreatedUtc { get; set; }
 
 		int NumberOfMapSections { get; set; }
+
+		public int NumberOfFullScale { get; set; }
+		public int NumberOfReducedScale { get; set; }
+		public int NumberOfImage { get; set; }
+		public int NumberOfSizeEditorPreview { get; set; }
+
 		double PercentageMapSectionsShared { get; set; }
 		double PercentageMapSectionsSharedWithSameOwner { get; set; }
 

@@ -1,6 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using MSS.Types;
+using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
@@ -102,6 +102,15 @@ namespace ProjectRepo
 			return jobMapSectionRecordIds;
 		}
 
+		public List<ObjectId> GetMapSectionIdsByJobIdAndJobTypes(ObjectId jobId, JobType[] jobTypes)
+		{
+			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
+			var filter2 = Builders<JobMapSectionRecord>.Filter.In(f => f.JobType, jobTypes);
+			var jobMapSectionRecordIds = Collection.Find(filter1 & filter2).Project(x => x.MapSectionId).ToList();
+
+			return jobMapSectionRecordIds;
+		}
+
 		public int GetCountOfMapSectionsByJobId(ObjectId jobId)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
@@ -122,7 +131,7 @@ namespace ProjectRepo
 			return jobMapSectionRecords;
 		}
 
-		public async Task<JobMapSectionRecord?> GetByMapAndJobIdAsync(ObjectId mapSectionId, ObjectId jobId, JobType jobType)
+		public async Task<JobMapSectionRecord?> GetByMapSectionIdJobIdAndJobTypeAsync(ObjectId mapSectionId, ObjectId jobId, JobType jobType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.MapSectionId, mapSectionId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
@@ -136,7 +145,7 @@ namespace ProjectRepo
 			return jobMapSectionRecords.FirstOrDefault();
 		}
 
-		public JobMapSectionRecord? GetByMapAndJobId(ObjectId mapSectionId, ObjectId jobId, JobType jobType)
+		public JobMapSectionRecord? GetByMapSectionIdJobIdAndJobType(ObjectId mapSectionId, ObjectId jobId, JobType jobType)
 		{
 			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.MapSectionId, mapSectionId);
 			var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
@@ -193,6 +202,20 @@ namespace ProjectRepo
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
+		public async Task<UpdateResult?> SetSubdivisionIdAsync(ObjectId jobMapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId)
+		{
+			var filter = Builders<JobMapSectionRecord>.Filter.Eq(f => f.Id, jobMapSectionId);
+
+			var updateDefinition = Builders<JobMapSectionRecord>.Update
+				.Set(u => u.MapSectionSubdivisionId, mapSectionSubdivisionId)
+				.Set(u => u.JobSubdivisionId, jobSubdivisionId);
+
+
+			var updateResult = await Collection.UpdateOneAsync(filter, updateDefinition).ConfigureAwait(false);
+
+			return updateResult;
+		}
+
 		//public void SetOriginalSourceSubdivisionId(ObjectId jobMapSectionId, ObjectId originalSourceSubdivisionId)
 		//{
 		//	var filter = Builders<JobMapSectionRecord>.Filter.Eq(f => f.Id, jobMapSectionId);
@@ -231,6 +254,16 @@ namespace ProjectRepo
 			//var filter2 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.OwnerType, jobOwnerType);
 
 			var deleteResult = Collection.DeleteMany(filter1);
+
+			return GetReturnCount(deleteResult);
+		}
+
+		public long? DeleteJobMapSectionsByJobIdAndJobTypes(ObjectId jobId, JobType[] jobTypes)
+		{
+			var filter1 = Builders<JobMapSectionRecord>.Filter.Eq(f => f.JobId, jobId);
+			var filter2 = Builders<JobMapSectionRecord>.Filter.In(f => f.JobType, jobTypes);
+
+			var deleteResult = Collection.DeleteMany(filter1 & filter2);
 
 			return GetReturnCount(deleteResult);
 		}

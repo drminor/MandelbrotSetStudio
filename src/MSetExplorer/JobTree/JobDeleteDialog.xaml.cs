@@ -1,6 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
+using MSS.Common.MSet;
 using System.Windows;
 
 namespace MSetExplorer

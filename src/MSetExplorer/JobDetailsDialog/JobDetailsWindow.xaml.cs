@@ -69,7 +69,7 @@ namespace MSetExplorer
 		private void LvJobDetails_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			_vm.SelectedJobInfo = (IJobInfo) lvJobDetails.SelectedItem;
-			//btnSave.IsEnabled = _vm.SelectedName != null;
+			btnDelete.IsEnabled = !_vm.TheCurrentJobIsSelected;
 		}
 
 		#endregion
@@ -92,44 +92,41 @@ namespace MSetExplorer
 			Close();
 		}
 
-		private void DeleteButton_Click(object sender, RoutedEventArgs e)
+		private void DeleteJobButton_Click(object sender, RoutedEventArgs e)
 		{
-			//var selectedName = _vm.SelectedName;
+			string msg;
+			
+			if (_vm.DeleteSelectedJob(out var numberOfMapSectionsDeleted))
+			{
+				msg = $"The job has been deleted. {numberOfMapSectionsDeleted} map sections were deleted.";
+			}
+			else
+			{
+				msg = $"Could not delete the selected job.";
+			}
 
-			//_ = _vm.DeleteSelected(out var numberOfMapSectionsDeleted)
-			//	? MessageBox.Show($"The poster: {selectedName} has been deleted. {numberOfMapSectionsDeleted} map sections were deleted.")
-			//	: MessageBox.Show($"Could not delete the selected poster: {selectedName}.");
-		}
-
-		private void TrimMapSectionsButton_Click(object sender, RoutedEventArgs e)
-		{
-			//var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: false);
-
-			//_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+			_ = MessageBox.Show(msg, "Delete Job", MessageBoxButton.OK);
 		}
 
 		private void DeleteMapSectionsButton_Click(object sender, RoutedEventArgs e)
 		{
-			//var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: true);
-			//_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+			if (_vm.TheCurrentJobIsSelected)
+			{
+				if (MessageBoxResult.Yes != MessageBox.Show("This will delete all Map Sections for the current job. Are you sure?", "Delete All Map Sections", MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.Yes))
+				{
+					return;
+				}
+			}
 
-			//if (mapSectionsDeletedUnsavedJobs > 0 && mapSectionsDeletedUnusedJobs > 0)
-			//{
-			//	_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved and {mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
-			//}
-			//else
-			//{
-			//	if (mapSectionsDeletedUnsavedJobs > 0)
-			//	{
-			//		_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnsavedJobs} map sections belonging to jobs not saved were deleted.");
-			//	}
-			//	if (mapSectionsDeletedUnusedJobs > 0)
-			//	{
-			//		_ = MessageBox.Show($"{introMessage}{mapSectionsDeletedUnusedJobs} map sections belonging to non-current jobs were deleted.");
-			//	}
-			//}
+			var numberOfMapSectionsDeleted = _vm.DeleteAllMapSectionsForSelectedJob();
+			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.", "Delete All Map Sections");
 		}
 
+		private void TrimMapSectionsButton_Click(object sender, RoutedEventArgs e)
+		{
+			var numberOfMapSectionsDeleted = _vm.TrimMapSectionsForSelectedJob();
+			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.", "Trim Map Sections");
+		}
 
 		#endregion
 

@@ -6,6 +6,7 @@ using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
+using MSS.Types.MSet;
 using ProjectRepo;
 using System;
 using System.Collections.Generic;
@@ -653,16 +654,18 @@ namespace MSetExplorer
 
 			var ownerName = "Poster Art3-13-4";
 			var ownerId = new ObjectId("64913f6d0d20aad9f1a64737"); // Poster Art3-13-4
-			var ownerType = OwnerType.Poster;
 			var currentJobId = new ObjectId("649141932b7c6bda0e7ccf81");
 			var ownerCreationDate = DateTime.Parse("2023-06-01 10:40:03");
 
-			OpenJobDetailsDialog(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate);
+			var posterInfo = new PosterInfo(ownerId, ownerName, description: null, currentJobId, new SizeDbl(1024), bytes: 0, ownerCreationDate, DateTime.MinValue, DateTime.MinValue);
+
+
+			OpenJobDetailsDialog(posterInfo);
 		}
 
-		private void OpenJobDetailsDialog(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
+		private void OpenJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
 		{
-			var jobDetailsViewModel = CreateAJobDetailsDialog(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate);
+			var jobDetailsViewModel = CreateAJobDetailsDialog(jobOwnerInfo);
 			var jobDetailsDialog = new JobDetailsWindow
 			{
 				DataContext = jobDetailsViewModel
@@ -671,7 +674,7 @@ namespace MSetExplorer
 			jobDetailsDialog.ShowDialog();
 		}
 
-		public JobDetailsViewModel CreateAJobDetailsDialog(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
+		public JobDetailsViewModel CreateAJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
 		{
 			if (_repositoryAdapters == null)
 			{
@@ -680,7 +683,7 @@ namespace MSetExplorer
 			var projectAdapter = _repositoryAdapters.ProjectAdapter;
 			var mapSectionAdapter = _repositoryAdapters.MapSectionAdapter;
 
-			return new JobDetailsViewModel(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate, projectAdapter, mapSectionAdapter);
+			return new JobDetailsViewModel(jobOwnerInfo, projectAdapter, mapSectionAdapter);
 		}
 
 		#endregion

@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -15,14 +16,18 @@ namespace MSS.Common.MSet
 
 		#region Constructor
 
-		public PosterInfo(ObjectId posterId, string name, string? description, ObjectId currentJobId, SizeDbl size, int bytes, DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
+		public PosterInfo(ObjectId posterId, string name, string? description, ObjectId currentJobId, 
+			SizeDbl size, int bytes, 
+			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			PosterId = posterId;
 			_name = name;
 			_description = description;
 			CurrentJobId = currentJobId;
+			
 			Size = size;
 			Bytes = bytes;
+
 			DateCreatedUtc = dateCreatedUtc;
 			_lastSavedUtc = lastSavedUtc;
 			_lastAccessedUtc = lastAccessedUtc;
@@ -33,6 +38,9 @@ namespace MSS.Common.MSet
 		#endregion
 
 		#region Public Properties
+
+		public OwnerType OwnerType => OwnerType.Project;
+		public ObjectId OwnerId => PosterId;
 
 		public ObjectId PosterId { get; init; }
 
@@ -52,7 +60,7 @@ namespace MSS.Common.MSet
 
 		public SizeDbl Size { get; init; }
 
-		public int Bytes { get; init; }
+		public int Bytes { get; set; }
 
 		public string SizeAsString { get; set; }
 
@@ -70,6 +78,9 @@ namespace MSS.Common.MSet
 			set { _lastAccessedUtc = value; OnPropertyChanged(); }
 		}
 
+		public int NumberOfJobs { get; init; }
+		public int MinMapCoordsExponent { get; init; }
+		public int MinSamplePointDeltaExponent { get; init; }
 
 		#endregion
 
