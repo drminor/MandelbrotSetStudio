@@ -44,15 +44,38 @@ namespace MSetRepo.Storage
 
         #region Public Methods
 
+		public void UpdateStats()
+		{
+			//Owner.Jobs.Select(x => JobSections.Where(y => y.JobId == x.JobId && y.JobType == JobType.FullScale)).Count();
 
-        #endregion
+			//Owner.NumberOfMapSections = 0;
+			//Owner.NumberOfFullScale = 0;
+			//Owner.NumberOfReducedScale = 0;
+			//Owner.NumberOfImage = 0;
+			//Owner.NumberOfSizeEditorPreview = 0;
 
-        #region Our Classes
+			foreach(var job in Owner.Jobs)
+			{
+				var byJobIdFilter = JobSections.Where(x => x.JobId == job.JobId);
 
+				job.NumberOfFullScale = byJobIdFilter.Count(x => x.JobType == JobType.FullScale);
+				job.NumberOfReducedScale = byJobIdFilter.Count(x => x.JobType == JobType.ReducedScale);
+				job.NumberOfImage = byJobIdFilter.Count(x => x.JobType == JobType.Image);
+				job.NumberOfSizeEditorPreview = byJobIdFilter.Count(x => x.JobType == JobType.SizeEditorPreview);
 
+				//Owner.NumberOfFullScale += job.NumberOfFullScale;
+				//Owner.NumberOfReducedScale += job.NumberOfReducedScale;
+				//Owner.NumberOfImage += job.NumberOfImage;
+				//Owner.NumberOfSizeEditorPreview += job.NumberOfSizeEditorPreview;
 
-        #endregion
-    }
+				job.NumberOfMapSections = job.NumberOfFullScale + job.NumberOfReducedScale + job.NumberOfImage + job.NumberOfSizeEditorPreview;
+				//Owner.NumberOfMapSections += job.NumberOfMapSections;
+			}
+			//var s = Owner.Jobs.Select(x =>  JobSections.Where(y => y.JobId == x.JobId));
+		}
+
+		#endregion
+	}
 
 	public class JobOwner
 	{
@@ -80,6 +103,22 @@ namespace MSetRepo.Storage
 
 			//CurrentJob = test;
 		}
+
+		//public int NumberOfMapSections { get; set; }
+
+		//public int NumberOfFullScale { get; set; }
+		//public int NumberOfReducedScale { get; set; }
+		//public int NumberOfImage { get; set; }
+		//public int NumberOfSizeEditorPreview { get; set; }
+
+		public int NumberOfMapSections => Jobs.Sum(x => x.NumberOfMapSections);
+
+		public int NumberOfFullScale => Jobs.Sum(x => x.NumberOfFullScale);
+		public int NumberOfReducedScale => Jobs.Sum(x => x.NumberOfReducedScale);
+		public int NumberOfImage => Jobs.Sum(x => x.NumberOfImage);
+		public int NumberOfSizeEditorPreview => Jobs.Sum(x => x.NumberOfSizeEditorPreview);
+
+		public double PercentageMapSectionsShared { get; set; }
 	}
 
 	public class Job
@@ -95,6 +134,16 @@ namespace MSetRepo.Storage
 			DateCreated = dateCreated;
 			SubdivisionId = subdivisionId;
 		}
+
+		public int NumberOfMapSections { get; set; }
+
+		public int NumberOfFullScale { get; set; }
+		public int NumberOfReducedScale { get; set; }
+		public int NumberOfImage { get; set; }
+		public int NumberOfSizeEditorPreview { get; set; }
+
+		public double PercentageMapSectionsShared { get; set; }
+		public double PercentageMapSectionsSharedWithSameOwner { get; set; }
 	}
 
 	public class Section

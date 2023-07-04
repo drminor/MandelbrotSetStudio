@@ -12,9 +12,9 @@ namespace MSS.Common
 		int MapCoordExponent { get; set; }
 		DateTime DateCreatedUtc { get; set; }
 
-		int Stat1 { get; set; }
-		int Stat2 { get; set; }
-		int Stat3 { get; set; }
+		int NumberOfMapSections { get; set; }
+		double PercentageMapSectionsShared { get; set; }
+		double PercentageMapSectionsSharedWithSameOwner { get; set; }
 
 	}
 }

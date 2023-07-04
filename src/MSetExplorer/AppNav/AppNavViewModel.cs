@@ -1,6 +1,4 @@
 ﻿using MapSectionProviderLib;
-using MongoDB.Bson;
-using MSetExplorer.StorageManagement;
 using MSetExplorer.XPoc;
 using MSetExplorer.XPoc.PerformanceHarness;
 using MSetRepo;
@@ -130,19 +128,19 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public StorageModelPOC GetStorageModelPOC()
-		{
-			if (_projectAdapter is ProjectAdapter pa && _mapSectionAdapter is MapSectionAdapter ma)
-			{
-				var result = new StorageModelPOC(pa, ma);
-				return result;
-			}
+		//public StorageModelPOC GetStorageModelPOC()
+		//{
+		//	if (_projectAdapter is ProjectAdapter pa && _mapSectionAdapter is MapSectionAdapter ma)
+		//	{
+		//		var result = new StorageModelPOC(pa, ma);
+		//		return result;
+		//	}
 
-			else
-			{
-				throw new InvalidOperationException("Either the _projectAdapter is not an instance of a ProjectAdapter or the _mapSectionAdapter is not an instance of a MapSectionAdapter.");
-			}
-		}
+		//	else
+		//	{
+		//		throw new InvalidOperationException("Either the _projectAdapter is not an instance of a ProjectAdapter or the _mapSectionAdapter is not an instance of a MapSectionAdapter.");
+		//	}
+		//}
 
 		#region Utilities
 

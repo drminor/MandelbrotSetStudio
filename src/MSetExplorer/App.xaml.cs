@@ -2,7 +2,6 @@
 using MEngineClient;
 using MongoDB.Bson;
 using MSetExplorer.RepositoryManagement;
-using MSetExplorer.StorageManagement;
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
@@ -623,26 +622,26 @@ namespace MSetExplorer
 
 		private void TestStorageModel()
 		{
-			_repositoryAdapters = GetRepositoryAdaptersFast();
+			//_repositoryAdapters = GetRepositoryAdaptersFast();
 
-			var storageModelPoc = GetStorageModelPOC(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter);
+			//var storageModelPoc = GetStorageModelPOC(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter);
 
-			var projectId = new ObjectId("6258fe80712f62b28ce55c15");
-			//storageModelPoc.PlayWithStorageModel(projectId);
+			//var projectId = new ObjectId("6258fe80712f62b28ce55c15");
+			////storageModelPoc.PlayWithStorageModel(projectId);
 		}
 
-		private StorageModelPOC GetStorageModelPOC(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
-		{
-			if (projectAdapter is ProjectAdapter pa && mapSectionAdapter is MapSectionAdapter ma)
-			{
-				var result = new StorageModelPOC(pa, ma);
-				return result;
-			}
-			else
-			{
-				throw new InvalidOperationException("Either the _projectAdapter is not an instance of a ProjectAdapter or the _mapSectionAdapter is not an instance of a MapSectionAdapter.");
-			}
-		}
+		//private StorageModelPOC GetStorageModelPOC(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		//{
+		//	if (projectAdapter is ProjectAdapter pa && mapSectionAdapter is MapSectionAdapter ma)
+		//	{
+		//		var result = new StorageModelPOC(pa, ma);
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		throw new InvalidOperationException("Either the _projectAdapter is not an instance of a ProjectAdapter or the _mapSectionAdapter is not an instance of a MapSectionAdapter.");
+		//	}
+		//}
 
 		#endregion
 
@@ -652,19 +651,18 @@ namespace MSetExplorer
 		{
 			_repositoryAdapters = GetRepositoryAdaptersFast();
 
+			var ownerName = "Poster Art3-13-4";
 			var ownerId = new ObjectId("64913f6d0d20aad9f1a64737"); // Poster Art3-13-4
 			var ownerType = OwnerType.Poster;
 			var currentJobId = new ObjectId("649141932b7c6bda0e7ccf81");
 			var ownerCreationDate = DateTime.Parse("2023-06-01 10:40:03");
 
-			OpenJobDetailsDialog(ownerId, ownerType, currentJobId, ownerCreationDate);
+			OpenJobDetailsDialog(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate);
 		}
 
-		private void OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
+		private void OpenJobDetailsDialog(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
 		{
-			DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSections = null;
-
-			var jobDetailsViewModel = CreateAJobDetailsDialog(ownerId, ownerType, currentJobId, ownerCreationDate, deleteNonEssentialMapSections);
+			var jobDetailsViewModel = CreateAJobDetailsDialog(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate);
 			var jobDetailsDialog = new JobDetailsWindow
 			{
 				DataContext = jobDetailsViewModel
@@ -673,7 +671,7 @@ namespace MSetExplorer
 			jobDetailsDialog.ShowDialog();
 		}
 
-		public JobDetailsViewModel CreateAJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
+		public JobDetailsViewModel CreateAJobDetailsDialog(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
 		{
 			if (_repositoryAdapters == null)
 			{
@@ -682,7 +680,7 @@ namespace MSetExplorer
 			var projectAdapter = _repositoryAdapters.ProjectAdapter;
 			var mapSectionAdapter = _repositoryAdapters.MapSectionAdapter;
 
-			return new JobDetailsViewModel(ownerId, ownerType, currentJobId, ownerCreationDate, deleteNonEssentialMapSectionsFunction, projectAdapter, mapSectionAdapter);
+			return new JobDetailsViewModel(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate, projectAdapter, mapSectionAdapter);
 		}
 
 		#endregion

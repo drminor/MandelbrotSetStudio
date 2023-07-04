@@ -5,24 +5,34 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:JobDetailsViewModel}"
         mc:Ignorable="d"
-        Title="Manage Job Storage" Height="500" Width="855">
+        Title="Manage Job Storage" Height="500" Width="999">
     <Grid>
 
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
+            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                
+                <TextBlock Margin="20, 5, 1, 5">Jobs and MapSection Details for Poster:</TextBlock>
+                <TextBlock Text="{Binding OwnerName}" Margin="1, 5, 20, 5"/>
+
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
 
             <ListView Margin="10" Name="lvJobDetails" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedJobInfo}">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Id" Width="250" DisplayMemberBinding="{Binding Id}" />
-                        <!--<GridViewColumn Header="Size" Width="110" DisplayMemberBinding="{Binding Size}" />-->
-                        <!--<GridViewColumn Header="Bytes" Width="100" DisplayMemberBinding="{Binding Bytes, StringFormat=n0}" />-->
-                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreatedUtc}" />
+                        <GridViewColumn Header="MapSections" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
+                        <GridViewColumn Header="Shared" Width="80" DisplayMemberBinding="{Binding PercentageMapSectionsSharedWithSameOwner}" />
+                        <GridViewColumn Header="SharedGlobally" Width="140" DisplayMemberBinding="{Binding PercentageMapSectionsShared}" />
                         <GridViewColumn Header="Sub" Width="190" DisplayMemberBinding="{Binding SubdivisionId}" />
                         <GridViewColumn Header="Exp" Width="190" DisplayMemberBinding="{Binding MapCoordExponent}" />
                     </GridView>
@@ -32,7 +42,7 @@
         </Border>
 
 
-        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
@@ -44,23 +54,23 @@
 
         </Border>
 
-        <Border x:Name="borderDetails" Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
+        <Border x:Name="borderDetails" Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                     <TextBlock Width="200" FontSize="16" Margin="10">Stat1</TextBlock>
-                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding SelectedJobInfo.Stat1}"/>
+                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat1}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                     <TextBlock Width="200" FontSize="16" Margin="10">Stat2</TextBlock>
-                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding SelectedJobInfo.Stat2}"/>
+                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat2}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                     <TextBlock Width="200" FontSize="16" Margin="10">Stat3</TextBlock>
-                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding SelectedJobInfo.Stat3}"/>
+                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat3}"/>
                 </StackPanel>
 
 

@@ -24,8 +24,12 @@ namespace MSS.Common.MSet
 			TransformType = transformType;
 			SubdivisionId = subdivisionId;
 			MapCoordExponent = mapCoordExponent;
-		}
 
+			//NumberOfMapSections = 3;
+
+			//PercentageMapSectionsShared = 1.21;
+			//PercentageMapSectionsSharedWithSameOwner = 8.12;
+		}
 
 		#endregion
 
@@ -51,26 +55,48 @@ namespace MSS.Common.MSet
 
 		public int MapCoordExponent { get; set; }
 
-		private int _stat1;
-		private int _stat2;
-		private int _stat3;
+		private int _numberOfMapSections;
 
-		public int Stat1
+		private double _percentageMapSectionsShared;
+		private double _percentageMapSectionsSharedWithSameOwner;
+
+		public int NumberOfMapSections
 		{
-			get => _stat1;
-			set { _stat1 = value; OnPropertyChanged(); }
+			get => _numberOfMapSections;
+			set
+			{
+				if (value != _numberOfMapSections)
+				{
+					_numberOfMapSections = value;
+					OnPropertyChanged();
+				}
+			}
 		}
 
-		public int Stat2
+		public double PercentageMapSectionsShared
 		{
-			get => _stat2;
-			set { _stat2 = value; OnPropertyChanged(); }
+			get => _percentageMapSectionsShared;
+			set
+			{
+				if (value != _percentageMapSectionsShared)
+				{
+					_percentageMapSectionsShared = value;
+					OnPropertyChanged();
+				}
+			}
 		}
 
-		public int Stat3
+		public double PercentageMapSectionsSharedWithSameOwner
 		{
-			get => _stat3;
-			set { _stat3 = value; OnPropertyChanged(); }
+			get => _percentageMapSectionsSharedWithSameOwner;
+			set
+			{
+				if (value != _percentageMapSectionsSharedWithSameOwner)
+				{
+					_percentageMapSectionsSharedWithSameOwner = value;
+					OnPropertyChanged();
+				}
+			}
 		}
 
 		#endregion

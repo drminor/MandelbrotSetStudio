@@ -19,16 +19,17 @@ namespace MSetExplorer
 
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly MapSectionAdapter _mapSectionAdapter;
-		private readonly DeleteNonEssentialMapSectionsDelegate? _deleteNonEssentialMapSectionsFunction;
 		//private long _mapSectionCollectionSize;
 
 		private IJobInfo? _selectedJob;
+
+		private StorageModel _storageModel;
 
 		#endregion
 
 		#region Constructor
 
-		public JobDetailsViewModel(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
+		public JobDetailsViewModel(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter)
 		{
 			_projectAdapter = projectAdapter;
 
@@ -41,8 +42,7 @@ namespace MSetExplorer
 				throw new InvalidOperationException("The mapSectionAdapter argument must be implemented by the MapSectionAdapter class.");
 			}
 
-			_deleteNonEssentialMapSectionsFunction = deleteNonEssentialMapSectionsFunction;
-
+			OwnerName = ownerName;
 			OwnerId = ownerId;
 			OwnerType = ownerType;
 
@@ -51,13 +51,13 @@ namespace MSetExplorer
 
 			var jobInfos = _projectAdapter.GetJobInfosForOwner(ownerId);
 
-			var cntr = 0;
-			foreach(var ji in jobInfos)
-			{
-				ji.Stat1 = cntr++;
-				ji.Stat2 = cntr += 10;
-				ji.Stat3 = cntr += 12;
-			}
+			//var cntr = 0;
+			//foreach(var ji in jobInfos)
+			//{
+			//	Stat1 = cntr++;
+			//	Stat2 = cntr += 10;
+			//	Stat3 = cntr += 12;
+			//}
 
 			JobInfos = new ObservableCollection<IJobInfo>(jobInfos);
 
@@ -66,15 +66,30 @@ namespace MSetExplorer
 			var view = CollectionViewSource.GetDefaultView(JobInfos);
 			_ = view.MoveCurrentTo(SelectedJobInfo);
 
-			CreateStorageModel(OwnerId, ownerType, currentJobId, ownerCreationDate, JobInfos);
+			_storageModel = CreateStorageModel(OwnerId, ownerType, currentJobId, ownerCreationDate, JobInfos);
+
+			_storageModel.UpdateStats();
+
+			for(int i = 0; i < JobInfos.Count; i++)
+			{
+				var jobInfo = JobInfos[i];
+				jobInfo.NumberOfMapSections = _storageModel.Owner.Jobs[i].NumberOfMapSections;
+				
+				//jobInfo.PercentageMapSectionsShared = 1.34;
+				//jobInfo.PercentageMapSectionsSharedWithSameOwner = 28.3;
+			}
+
+			Stat1 = _storageModel.Owner.NumberOfMapSections;
+			Stat2 = _storageModel.Owner.NumberOfReducedScale;
+			Stat3 = _storageModel.Owner.NumberOfImage;
 		}
 
 		#endregion
 
 		#region Public Properties
 
+		public string OwnerName { get; init; }
 		public ObjectId OwnerId { get; init; }
-
 		public OwnerType OwnerType { get; init; }
 
 		public ObservableCollection<IJobInfo> JobInfos { get; init; }
@@ -89,6 +104,29 @@ namespace MSetExplorer
 				OnPropertyChanged();
 			}
 		}
+
+		private int _stat1;
+		private int _stat2;
+		private int _stat3;
+
+		public int Stat1
+		{
+			get => _stat1;
+			set { _stat1 = value; OnPropertyChanged(); }
+		}
+
+		public int Stat2
+		{
+			get => _stat2;
+			set { _stat2 = value; OnPropertyChanged(); }
+		}
+
+		public int Stat3
+		{
+			get => _stat3;
+			set { _stat3 = value; OnPropertyChanged(); }
+		}
+
 
 		#endregion
 

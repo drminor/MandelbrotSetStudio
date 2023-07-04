@@ -145,12 +145,13 @@ namespace MSetExplorer
 
 			if (selectedPoster != null)
 			{
+				var ownerName = selectedPoster.Name;
 				var ownerId = selectedPoster.PosterId;
 				var ownerType = OwnerType.Poster;
 				var currentJobId = selectedPoster.CurrentJobId;
 				var ownerCreationDate = selectedPoster.DateCreatedUtc;
 
-				OpenJobDetailsDialog(ownerId, ownerType, currentJobId, ownerCreationDate);
+				OpenJobDetailsDialog(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate);
 			}
 		}
 
@@ -207,10 +208,9 @@ namespace MSetExplorer
 		#region Jobs Dialog
 
 
-		private void OpenJobDetailsDialog(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
+		private void OpenJobDetailsDialog(string ownerName, ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate)
 		{
-			var deleteNonEssentialMapSectionsFunction = _vm.DeleteNonEssentialMapSectionsFunction;
-			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(ownerId, ownerType, currentJobId, ownerCreationDate, deleteNonEssentialMapSectionsFunction);
+			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(ownerName, ownerId, ownerType, currentJobId, ownerCreationDate);
 			var jobDetailsDialog = new JobDetailsWindow
 			{
 				DataContext = jobDetailsViewModel
