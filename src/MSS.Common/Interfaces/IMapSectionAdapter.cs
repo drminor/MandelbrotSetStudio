@@ -71,7 +71,7 @@ namespace MSS.Common
 
 		void UpdateJobMapSectionSubdivisionIds(ObjectId jobMapSectionId, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId);
 
-		IEnumerable<ValueTuple<ObjectId, DateTime, ObjectId>> GetMapSectionCreationDates(IEnumerable<ObjectId> mapSectionIds);
+		IEnumerable<ValueTuple<ObjectId, DateTime, ObjectId>> GetMapSectionCreationDatesAndSubIds(IEnumerable<ObjectId> mapSectionIds);
 
 		long? DeleteMapSectionsForJobHavingJobTypes(ObjectId jobId, JobType[] jobTypes);
 

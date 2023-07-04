@@ -69,16 +69,31 @@ namespace ProjectRepo
 
 		public virtual long GetSizeOfCollectionInMB()
 		{
+			var result = 0L;
+
 			// NOTE: Need to add 22 bytes * total number of documents to get the actual size.
 			var sizeOnServer = Collection
 				.Aggregate()
 				.AppendStage<BsonDocument>("{ $group: { _id : null, collectionSize: { $sum: { $bsonSize: '$$ROOT' } } } }")
 				.FirstOrDefault();
 
-			var collectionSize = sizeOnServer["collectionSize"].AsInt64;
-			var collectionSizeInMB = collectionSize / BYTES_MB;
+			var collectionSize = sizeOnServer["collectionSize"];
 
-			return collectionSizeInMB;
+			if (collectionSize.IsInt32)
+			{
+				result = collectionSize.AsInt32 / BYTES_MB;
+
+			}
+			else if (collectionSize.IsInt64)
+			{
+				result = collectionSize.AsInt64 / BYTES_MB;
+			}
+			else
+			{
+				result = -1;
+			}
+
+			return result;
 		}
 
 		public virtual int GetSizeOfDocZero()

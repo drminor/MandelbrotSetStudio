@@ -15,16 +15,20 @@ namespace MSetRepo.Storage
         #region Constructor
 
         public StorageModel(IJobOwnerInfo jobOwnerInfo, List<Job> jobs) :
-            this(new JobOwner(jobOwnerInfo, jobs))
-        { }
-
-        public StorageModel(JobOwner jobOwner) : this(jobOwner, new List<Section>(), new List<JobSection>(), new List<JobOwner>())
-        { }
-
-		public StorageModel(JobOwner jobOwner, List<Section> sections, List<JobSection> jobSections) : this(jobOwner, sections, jobSections, new List<JobOwner>())
+            this(new JobOwner(jobOwnerInfo, jobs), new List<JobSection>(), new List<Section>(), new List<JobOwner>())
 		{ }
 
-		public StorageModel(JobOwner jobOwner, List<Section> sections, List<JobSection> jobSections, List<JobOwner> otherOwners)
+		public StorageModel(IJobOwnerInfo jobOwnerInfo, List<Job> jobs, List<JobSection> jobSections, List<Section> sections) :
+			this(new JobOwner(jobOwnerInfo, jobs), jobSections, sections, new List<JobOwner>())
+		{ }
+
+		public StorageModel(JobOwner jobOwner) : this(jobOwner, new List<JobSection>(), new List<Section>(), new List<JobOwner>())
+		{ }
+
+		public StorageModel(JobOwner jobOwner, List<JobSection> jobSections, List<Section> sections) : this(jobOwner, jobSections, sections, new List<JobOwner>())
+		{ }
+
+		public StorageModel(JobOwner jobOwner, List<JobSection> jobSections, List<Section> sections, List<JobOwner> otherOwners)
 		{
 			Owner = jobOwner;
 			Sections = sections;

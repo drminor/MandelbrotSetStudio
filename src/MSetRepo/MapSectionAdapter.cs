@@ -279,7 +279,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public IEnumerable<ValueTuple<ObjectId, DateTime, ObjectId>> GetMapSectionCreationDates(IEnumerable<ObjectId> mapSectionIds)
+		public IEnumerable<ValueTuple<ObjectId, DateTime, ObjectId>> GetMapSectionCreationDatesAndSubIds(IEnumerable<ObjectId> mapSectionIds)
 		{
 			var result = _mapSectionReaderWriter.GetCreationDatesAndSubIds(mapSectionIds);
 

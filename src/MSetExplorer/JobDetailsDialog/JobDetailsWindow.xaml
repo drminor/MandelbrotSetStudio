@@ -20,8 +20,11 @@
             <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                 
                 <TextBlock Margin="20, 5, 1, 5">Jobs and MapSection Details for Poster:</TextBlock>
-                <TextBlock Text="{Binding OwnerName}" Margin="1, 5, 20, 5"/>
+                <TextBlock Text="{Binding OwnerName}" Margin="2, 5, 20, 5"/>
 
+                <TextBlock Margin="200, 5, 1, 5">Current Collection Size in Mb:</TextBlock>
+                <TextBlock Text="{Binding MapSectionCollectionSize, StringFormat=n0}" Width="100" Margin="2, 5, 20, 5"/>
+                
             </StackPanel>
         </Border>
 
@@ -34,10 +37,10 @@
                         <GridViewColumn Header="Date Created" Width="180" DisplayMemberBinding="{Binding DateCreatedUtc}" />
                         <GridViewColumn Header="MapSections" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
 
-                        <GridViewColumn Header="Full" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
-                        <GridViewColumn Header="Scaled" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
-                        <GridViewColumn Header="Image" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
-                        <GridViewColumn Header="Preview" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
+                        <GridViewColumn Header="Full" Width="80" DisplayMemberBinding="{Binding NumberOfFullScale, StringFormat=n0}" />
+                        <GridViewColumn Header="Scaled" Width="80" DisplayMemberBinding="{Binding NumberOfReducedScale, StringFormat=n0}" />
+                        <GridViewColumn Header="Image" Width="80" DisplayMemberBinding="{Binding NumberOfImage, StringFormat=n0}" />
+                        <GridViewColumn Header="Preview" Width="80" DisplayMemberBinding="{Binding NumberOfSizeEditorPreview, StringFormat=n0}" />
 
 
                         <GridViewColumn Header="Shared" Width="80" DisplayMemberBinding="{Binding PercentageMapSectionsSharedWithSameOwner}" />
@@ -67,21 +70,35 @@
             <StackPanel HorizontalAlignment="Left" Orientation="Vertical" Margin="20,0,0,0">
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="200" FontSize="16" Margin="10">Total Full Scale </TextBlock>
-                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat1}"/>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Full Scale - Total </TextBlock>
+                    <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat1}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="200" FontSize="16" Margin="10">Total Scaled</TextBlock>
-                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat2}"/>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Scaled - Total</TextBlock>
+                    <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat2}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="200" FontSize="16" Margin="10">Total Image</TextBlock>
-                    <TextBlock Width="200" FontSize="16" Margin="10" Text="{Binding Stat3}"/>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Image - Total</TextBlock>
+                    <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat3}"/>
                 </StackPanel>
 
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Full Scale - % Shared</TextBlock>
+                    <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat4}"/>
+                </StackPanel>
 
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Scaled - % Shared</TextBlock>
+                    <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat5}"/>
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Image - % Shared</TextBlock>
+                    <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat6}"/>
+                </StackPanel>                
+                
             </StackPanel>
         </Border>
 

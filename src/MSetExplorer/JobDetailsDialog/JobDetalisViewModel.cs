@@ -22,7 +22,8 @@ namespace MSetExplorer
 
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly MapSectionAdapter _mapSectionAdapter;
-		//private long _mapSectionCollectionSize;
+
+		private long _mapSectionCollectionSize;
 
 		private readonly StorageModel _storageModel;
 
@@ -31,6 +32,10 @@ namespace MSetExplorer
 		private int _stat1;
 		private int _stat2;
 		private int _stat3;
+
+		private double _stat4;
+		private double _stat5;
+		private double _stat6;
 
 		#endregion
 
@@ -51,7 +56,7 @@ namespace MSetExplorer
 
 			JobOwnerInfo = jobOwnerInfo;
 
-			//_mapSectionCollectionSize = _mapSectionAdapter.GetSizeOfCollectionInMB();
+			_mapSectionCollectionSize = _mapSectionAdapter.GetSizeOfCollectionInMB();
 			//_mapSectionDocSize = _mapSectionAdapter.GetSizeOfDocZero();
 
 			var jobInfos = _projectAdapter.GetJobInfosForOwner(jobOwnerInfo.OwnerId);
@@ -70,15 +75,21 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public long MapSectionCollectionSize
+		{
+			get => _mapSectionCollectionSize;
+
+			set
+			{
+				_mapSectionCollectionSize = value;
+				OnPropertyChanged();
+			}
+		}
+
 		public IJobOwnerInfo JobOwnerInfo { get; init; }
 
 		public string OwnerName => JobOwnerInfo.Name;
 		public ObjectId CurrentJobId => JobOwnerInfo.CurrentJobId;
-
-		//public ObjectId OwnerId { get; init; }
-		//public OwnerType OwnerType { get; init; }
-
-		//public ObjectId CurrentJobId { get; init; }
 
 		public ObservableCollection<IJobInfo> JobInfos { get; init; }
 
@@ -88,8 +99,19 @@ namespace MSetExplorer
 
 			set
 			{
-				_selectedJob = value;
-				OnPropertyChanged();
+				if (value != _selectedJob)
+				{
+					_selectedJob = value;
+
+					if (_selectedJob != null)
+					{
+						Stat4 = _selectedJob.NumberOfFullScale;
+						Stat5 = _selectedJob.NumberOfReducedScale;
+						Stat6 = _selectedJob.NumberOfImage;
+					}
+
+					OnPropertyChanged();
+				}
 			}
 		}
 
@@ -111,6 +133,24 @@ namespace MSetExplorer
 		{
 			get => _stat3;
 			set { _stat3 = value; OnPropertyChanged(); }
+		}
+
+		public double Stat4
+		{
+			get => _stat4;
+			set { _stat4 = value; OnPropertyChanged(); }
+		}
+
+		public double Stat5
+		{
+			get => _stat5;
+			set { _stat5 = value; OnPropertyChanged(); }
+		}
+
+		public double Stat6
+		{
+			get => _stat6;
+			set { _stat6 = value; OnPropertyChanged(); }
 		}
 
 		#endregion
@@ -171,46 +211,33 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		//private StorageModel CreateStorageModel(ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate, IEnumerable<IJobInfo> jobInfos)
-		//{
-
-		//}
-
-
 		private StorageModel CreateStorageModel(IJobOwnerInfo jobOwnerInfo, IEnumerable<IJobInfo> jobInfos)
 		{
-			//ObjectId ownerId, OwnerType ownerType, ObjectId currentJobId, DateTime ownerCreationDate
-			//var jobs = jobInfos.Select(x => new Job(x.Id, x.DateCreatedUtc, x.SubdivisionId)).ToList();
-
-			//var storageModel = new StorageModel(ownerId, ownerCreationDate, ownerType, jobs, currentJobId);
-
 			var jobs = new List<Job>();
 
-			var sectionsAcc = new List<Section>();
 			var jobSectionsAcc = new List<JobSection>();
+			var sectionsAcc = new List<Section>();
 
 			foreach (var jobInfo in jobInfos)
 			{
 				var jobMapSectionRecords = _mapSectionAdapter.GetByJobId(jobInfo.Id);
 
-				var mapSectionIds = jobMapSectionRecords.Select(x => x.MapSectionId);
-				var mapSectionCreationDatesAndSubIds = _mapSectionAdapter.GetMapSectionCreationDates(mapSectionIds);
-				var sections = mapSectionCreationDatesAndSubIds.Select(x => new Section(x.Item1, x.Item2, x.Item3));
-				//storageModel.Sections.AddRange(sections);
-				sectionsAcc.AddRange(sections);
-
+				// Create a list of 'model' jobMapSections from the list of JobMapSectionRecords.
 				var jobSections = jobMapSectionRecords.Select(x => new JobSection(x.Id, x.DateCreatedUtc, x.JobType, x.JobId, x.MapSectionId, new SizeInt(x.BlockIndex.Width, x.BlockIndex.Height), x.IsInverted, x.MapSectionSubdivisionId, x.JobSubdivisionId, x.OwnerType));
-				//storageModel.JobSections.AddRange(jobSections);
 				jobSectionsAcc.AddRange(jobSections);
 
-				var distinctMapSectionIds = mapSectionIds.Distinct().ToList();
+				// Get the list of distinct MapSectionIds from the list of JobMapSectionRecords.
+				var distinctMapSectionIds = jobMapSectionRecords.Select(x => x.MapSectionId).Distinct();
 
-				jobs.Add(new Job(jobInfo.Id, jobInfo.DateCreatedUtc, jobInfo.SubdivisionId, distinctMapSectionIds));
+				// For each distinct MapSectionId, retreive the DateCreated and SubdivisionId
+				var mapSectionCreationDatesAndSubIds = _mapSectionAdapter.GetMapSectionCreationDatesAndSubIds(distinctMapSectionIds);
+				var sections = mapSectionCreationDatesAndSubIds.Select(x => new Section(x.Item1, x.Item2, x.Item3));
+				sectionsAcc.AddRange(sections);
+
+				jobs.Add(new Job(jobInfo.Id, jobInfo.DateCreatedUtc, jobInfo.SubdivisionId, distinctMapSectionIds.ToList()));
 			}
 
-			var jobOwner = new JobOwner(jobOwnerInfo, jobs);
-
-			var storageModel = new StorageModel(jobOwner, sectionsAcc, jobSectionsAcc);
+			var storageModel = new StorageModel(jobOwnerInfo, jobs, jobSectionsAcc, sectionsAcc);
 
 			return storageModel;
 		}
