@@ -37,13 +37,22 @@ namespace MSetExplorer
 				_vm = (JobDetailsViewModel)DataContext;
 				//borderDetails.DataContext = DataContext;
 
+				_vm.PropertyChanged += JobDetailsViewModel_PropertyChanged;
+
 				lvJobDetails.ItemsSource = _vm.JobInfos;
 				lvJobDetails.SelectionChanged += LvJobDetails_SelectionChanged;
 
 				lvJobDetails.MouseDoubleClick += LvJobDetails_MouseDoubleClick;
 
-
 				Debug.WriteLine("The JobDetails Window is now loaded");
+			}
+		}
+
+		private void JobDetailsViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == "JobInfos")
+			{
+				lvJobDetails.ItemsSource = _vm.JobInfos;
 			}
 		}
 

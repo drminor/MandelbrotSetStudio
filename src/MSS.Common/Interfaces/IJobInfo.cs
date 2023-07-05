@@ -6,11 +6,13 @@ namespace MSS.Common
 	public interface IJobInfo
 	{
 		ObjectId Id { get; set; }
+		DateTime DateCreatedUtc { get; set; }
+
 		ObjectId? ParentJobId { get; set; }
+		bool IsCurrentOnOwner { get; set; }
 		ObjectId SubdivisionId { get; set; }
 		int TransformType { get; set; }
 		int MapCoordExponent { get; set; }
-		DateTime DateCreatedUtc { get; set; }
 
 		int NumberOfMapSections { get; set; }
 		int NumberOfCritical { get; set; }

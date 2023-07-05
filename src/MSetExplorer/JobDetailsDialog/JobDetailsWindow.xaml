@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:JobDetailsViewModel}"
         mc:Ignorable="d"
-        Title="Manage Job Storage" Height="500" Width="1100">
+        Title="Manage Job Storage" Height="500" Width="820">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -33,20 +33,24 @@
             <ListView Margin="10" Name="lvJobDetails" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedJobInfo}">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Id" Width="180" DisplayMemberBinding="{Binding Id}" />
+                        <GridViewColumn Header="Current" Width="70" DisplayMemberBinding="{Binding IsCurrentOnOwner}" />
                         <GridViewColumn Header="Date Created" Width="180" DisplayMemberBinding="{Binding DateCreatedUtc}" />
                         <GridViewColumn Header="MapSections" Width="80" DisplayMemberBinding="{Binding NumberOfMapSections, StringFormat=n0}" />
 
-                        <GridViewColumn Header="Full" Width="80" DisplayMemberBinding="{Binding NumberOfFullScale, StringFormat=n0}" />
+                        <GridViewColumn Header="Critical" Width="80" DisplayMemberBinding="{Binding NumberOfCritical, StringFormat=n0}" />
+                        <GridViewColumn Header="Non Critical" Width="80" DisplayMemberBinding="{Binding NumberOfNonCritical, StringFormat=n0}" />
+
+
+                        <!--<GridViewColumn Header="Full" Width="80" DisplayMemberBinding="{Binding NumberOfFullScale, StringFormat=n0}" />
                         <GridViewColumn Header="Scaled" Width="80" DisplayMemberBinding="{Binding NumberOfReducedScale, StringFormat=n0}" />
                         <GridViewColumn Header="Image" Width="80" DisplayMemberBinding="{Binding NumberOfImage, StringFormat=n0}" />
                         <GridViewColumn Header="Preview" Width="80" DisplayMemberBinding="{Binding NumberOfSizeEditorPreview, StringFormat=n0}" />
-
-
                         <GridViewColumn Header="Shared" Width="80" DisplayMemberBinding="{Binding PercentageMapSectionsSharedWithSameOwner}" />
-                        <GridViewColumn Header="Shared Globally" Width="100" DisplayMemberBinding="{Binding PercentageMapSectionsShared}" />
+                        <GridViewColumn Header="Shared Globally" Width="100" DisplayMemberBinding="{Binding PercentageMapSectionsShared}" />-->
+                        
                         <!--<GridViewColumn Header="Sub" Width="190" DisplayMemberBinding="{Binding SubdivisionId}" />-->
                         <GridViewColumn Header="Exp" Width="70" DisplayMemberBinding="{Binding MapCoordExponent}" />
+                        <GridViewColumn Header="Id" Width="180" DisplayMemberBinding="{Binding Id}" />
                     </GridView>
                 </ListView.View>
             </ListView>
@@ -70,32 +74,33 @@
             <StackPanel HorizontalAlignment="Left" Orientation="Vertical" Margin="20,0,0,0">
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Full Scale - Total </TextBlock>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Critical</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat1}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Scaled - Total</TextBlock>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Non Critical</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat2}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Image - Total</TextBlock>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Total</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat3}"/>
                 </StackPanel>
 
+                
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Full Scale - % Shared</TextBlock>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Critical Shared</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat4}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Scaled - % Shared</TextBlock>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Non Critical Shared</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat5}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Image - % Shared</TextBlock>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Total Shared</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat6}"/>
                 </StackPanel>                
                 

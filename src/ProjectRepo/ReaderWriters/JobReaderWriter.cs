@@ -242,16 +242,13 @@ namespace ProjectRepo
 				(
 					//p => new JobSudivisionInfo(p.Id, p.DateCreatedUtc, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
 					p => new JobInfo(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.MapAreaInfo2Record.SubdivisionRecord.Id, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
-
 				);
-
 
 			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", ownerId);
 			var jobInfos = Collection.Find(filter).Project(projection1).ToEnumerable();
 
 			return jobInfos;
 		}
-
 
 		#endregion
 

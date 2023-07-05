@@ -59,15 +59,17 @@ namespace MSetExplorer
 			_mapSectionCollectionSize = _mapSectionAdapter.GetSizeOfCollectionInMB();
 			//_mapSectionDocSize = _mapSectionAdapter.GetSizeOfDocZero();
 
-			var jobInfos = _projectAdapter.GetJobInfosForOwner(jobOwnerInfo.OwnerId);
+			JobOwnerInfo = jobOwnerInfo;
+			var jobInfos = _projectAdapter.GetJobInfosForOwner(jobOwnerInfo.OwnerId, jobOwnerInfo.CurrentJobId);
 
 			_storageModel = CreateStorageModel(jobOwnerInfo, jobInfos);
-			UpdateStats(jobInfos);
 
-			JobOwnerInfo = jobOwnerInfo;
+			_jobInfos = new ObservableCollection<IJobInfo>(jobInfos);
+			UpdateStats(_jobInfos);
 
-			JobInfos = new ObservableCollection<IJobInfo>(jobInfos);
-			SelectedJobInfo = JobInfos.FirstOrDefault(x => x.Id == jobOwnerInfo.CurrentJobId);
+			OnPropertyChanged(nameof(JobInfos));
+
+			SelectedJobInfo = JobInfos.FirstOrDefault(x => x.Id == jobOwnerInfo.CurrentJobId) ?? JobInfos.FirstOrDefault(x => x.IsCurrentOnOwner) ?? JobInfos.FirstOrDefault();
 
 			var view = CollectionViewSource.GetDefaultView(JobInfos);
 			_ = view.MoveCurrentTo(SelectedJobInfo);
@@ -93,7 +95,20 @@ namespace MSetExplorer
 		public string OwnerName => JobOwnerInfo.Name;
 		public ObjectId CurrentJobId => JobOwnerInfo.CurrentJobId;
 
-		public ObservableCollection<IJobInfo> JobInfos { get; init; }
+		private ObservableCollection<IJobInfo> _jobInfos;
+
+		public ObservableCollection<IJobInfo> JobInfos
+		{
+			get => _jobInfos;
+			set
+			{
+				if (value != _jobInfos)
+				{
+					_jobInfos = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public IJobInfo? SelectedJobInfo
 		{
@@ -244,7 +259,7 @@ namespace MSetExplorer
 			return storageModel;
 		}
 
-		private void UpdateStats(IEnumerable<IJobInfo> jobInfos)	
+		private void UpdateStats(ObservableCollection<IJobInfo> jobInfos)
 		{
 			_storageModel.UpdateStats();
 
@@ -275,23 +290,26 @@ namespace MSetExplorer
 				//jobInfo.PercentageMapSectionsSharedWithSameOwner = 28.3;
 			}
 
-			Stat1 = _storageModel.Owner.NumberOfMapSections;
-			Stat2 = _storageModel.Owner.NumberOfCriticalMapSections;
-			Stat3 = _storageModel.Owner.NumberOfNonCriticalMapSections;
+			Stat1 = _storageModel.Owner.NumberOfCriticalMapSections;
+			Stat2 = _storageModel.Owner.NumberOfNonCriticalMapSections;
+			Stat3 = _storageModel.Owner.NumberOfMapSections;
 		}
 
 		private void UpdateSharedPercentages(IJobInfo? selectedJob)
 		{
 			if (selectedJob != null)
 			{
-				var (numberOfSharedCritical, numberOfSharedNonCritical) = GetNumberOfShared(selectedJob);
+				var jobId = selectedJob.Id;
+				var smJob = _storageModel.Owner.Jobs.FirstOrDefault(x => x.JobId == jobId);
+
+				var (numberOfSharedCritical, numberOfSharedNonCritical) = GetNumberOfShared(smJob);
 
 				selectedJob.PercentageMapSectionsShared = numberOfSharedCritical;
 				selectedJob.PercentageMapSectionsSharedWithSameOwner = numberOfSharedNonCritical;
 
 				Stat4 = selectedJob.PercentageMapSectionsShared;
 				Stat5 = selectedJob.PercentageMapSectionsSharedWithSameOwner;
-				Stat6 = 0;
+				Stat6 = Stat4 + Stat5;
 			}
 			else
 			{
@@ -302,24 +320,15 @@ namespace MSetExplorer
 		}
 
 		// GetNumberOfShared
-		private (int numberOfSharedCritical, int numberOfSharedNonCritical) GetNumberOfShared(IJobInfo selectedJob)
+		private (int numberOfSharedCritical, int numberOfSharedNonCritical) GetNumberOfShared(Job? selectedJob)
 		{
-			var jobId = selectedJob.Id;
-			var smJob = _storageModel.Owner.Jobs.FirstOrDefault(x => x.JobId == jobId);
-
-			int numberOfSharedCritical;
-			int numberOfSharedNonCritical;
-
-			if (smJob == null)
+			if (selectedJob == null)
 			{
-				numberOfSharedCritical = 0;
-				numberOfSharedNonCritical = 0;
+				return (0, 0);
 			}
-			else
-			{
-				numberOfSharedCritical = _storageModel.GetNumberOfSharedSectionIds(smJob.DistinctCriticalSectionIds, _storageModel.CriticalSectionIdRefs);
-				numberOfSharedNonCritical = _storageModel.GetNumberOfSharedSectionIds(smJob.DistinctNonCriticalSectionIds, _storageModel.NonCriticalSectionIdRefs);
-			}
+
+			var numberOfSharedCritical = _storageModel.GetNumberOfSharedSectionIds(selectedJob.DistinctCriticalSectionIds, _storageModel.CriticalSectionIdRefs);
+			var numberOfSharedNonCritical = _storageModel.GetNumberOfSharedSectionIds(selectedJob.DistinctNonCriticalSectionIds, _storageModel.NonCriticalSectionIdRefs);
 
 			return (numberOfSharedCritical, numberOfSharedNonCritical);
 		}

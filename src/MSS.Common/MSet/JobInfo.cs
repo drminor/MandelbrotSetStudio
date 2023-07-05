@@ -51,6 +51,8 @@ namespace MSS.Common.MSet
 
 		public ObjectId? ParentJobId { get; set; }
 
+		public bool IsCurrentOnOwner { get; set; }
+
 		public DateTime DateCreatedUtc
 		{
 			get => _dateCreatedUtc;

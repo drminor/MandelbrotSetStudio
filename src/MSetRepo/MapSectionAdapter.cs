@@ -404,11 +404,18 @@ namespace MSetRepo
 			else
 			{
 				var jobMapSectionId = existingRecord.Id;
-				if (existingRecord.MapSectionId != mapSectionSubdivisionId | existingRecord.JobSubdivisionId != jobSubdivisionId)
+				if (existingRecord.JobSubdivisionId != jobSubdivisionId)
 				{
-					Debug.WriteLine($"The subdivisionId on the existing JobMapSectionRecord: {existingRecord.MapSectionId} does not match the MapSection's: {mapSectionSubdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
+					Debug.WriteLine($"The JobSubdivisionId on the existing JobMapSectionRecord: {existingRecord.JobSubdivisionId} does not match the Job's SubdivisionId: {jobSubdivisionId}. JobMapSectionId: {jobMapSectionId}, JobId: {jobId}, MapSectionId: {mapSectionId}.");
 					await _jobMapSectionReaderWriter.SetSubdivisionIdAsync(jobMapSectionId, mapSectionSubdivisionId, jobSubdivisionId);
 				}
+
+				if (existingRecord.MapSectionSubdivisionId != mapSectionSubdivisionId)
+				{
+					Debug.WriteLine($"The MapSubdivisionId on the existing JobMapSectionRecord: {existingRecord.MapSectionSubdivisionId} does not match the MapSection's SubdivisionId: {mapSectionSubdivisionId}. JobMapSectionId: {jobMapSectionId}, JobId: {jobId}, MapSectionId: {mapSectionId}.");
+					await _jobMapSectionReaderWriter.SetSubdivisionIdAsync(jobMapSectionId, mapSectionSubdivisionId, jobSubdivisionId);
+				}
+
 
 				//if (existingRecord.OriginalSourceSubdivisionId != originalSourceSubdivisionId)
 				//{

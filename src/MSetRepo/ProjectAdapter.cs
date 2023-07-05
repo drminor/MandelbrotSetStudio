@@ -715,10 +715,29 @@ namespace MSetRepo
 
 		#region JobInfo
 
-		public IEnumerable<JobInfo> GetJobInfosForOwner(ObjectId ownerId)
+		public IEnumerable<JobInfo> GetJobInfosForOwner(ObjectId ownerId, ObjectId currentJobId)
 		{
 			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var result = jobReaderWriter.GetJobInfosForOwner(ownerId);
+			var result = jobReaderWriter.GetJobInfosForOwner(ownerId).ToList();
+
+			if (result.Count > 0)
+			{
+				var foundTheCurrentJob = false;
+				for (var i = 0; i < result.Count; i++)
+				{
+					if (result[i].Id == currentJobId)
+					{
+						result[i].IsCurrentOnOwner = true;
+						foundTheCurrentJob = true;
+						break;
+					}
+				}
+
+				if (!foundTheCurrentJob)
+				{
+					result[0].IsCurrentOnOwner = true;
+				}
+			}
 
 			return result;
 		}
