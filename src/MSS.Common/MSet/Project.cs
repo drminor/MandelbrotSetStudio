@@ -10,7 +10,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-//using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+//using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Common.MSet.Job>;
 
 namespace MSS.Common.MSet
 {
@@ -22,7 +22,6 @@ namespace MSS.Common.MSet
 		private string? _description;
 
 		private readonly IJobTree _jobTree;
-		private ObservableCollection<JobTreeNode>? _jobItems;
 
 		private readonly List<ColorBandSet> _colorBandSets;
 
@@ -51,7 +50,11 @@ namespace MSS.Common.MSet
 			OnFile = false;
 		}
 
-		public Project(ObjectId id, string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId, DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
+		public Project(ObjectId id, string name, string? description, 
+			List<Job> jobs, 
+			IEnumerable<ColorBandSet> colorBandSets, 
+			ObjectId currentJobId, 
+			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			if (!jobs.Any())
 			{
@@ -73,6 +76,7 @@ namespace MSS.Common.MSet
 			DateCreatedUtc = dateCreatedUtc;
 			LastSavedUtc = lastSavedUtc;
 			LastAccessedUtc = lastAccessedUtc;
+
 			_originalCurrentJobId = currentJobId;
 
 			var jobsFromTree = _jobTree.GetItems().ToList();
@@ -118,6 +122,7 @@ namespace MSS.Common.MSet
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
+		private ObservableCollection<JobTreeNode>? _jobItems;
 
 		public ObservableCollection<JobTreeNode>? JobNodes
 		{

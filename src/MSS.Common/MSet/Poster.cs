@@ -9,7 +9,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-//using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Types.MSet.Job>;
+//using JobPathType = MSS.Types.ITreePath<MSS.Common.JobTreeNode, MSS.Common.MSet.Job>;
 
 namespace MSS.Common.MSet
 {
@@ -44,10 +44,11 @@ namespace MSS.Common.MSet
 		//	OnFile = false;
 		//}
 
-		public Poster(ObjectId id, string name, string? description, ObjectId sourceJobId,
-			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId,
-			SizeDbl posterSize, 
-			VectorDbl displayPosition, double displayZoom,
+		public Poster(ObjectId id, string name, string? description, 
+			ObjectId sourceJobId, 
+			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, 
+			ObjectId currentJobId,
+			SizeDbl posterSize, VectorDbl displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			Id = id;
@@ -78,16 +79,23 @@ namespace MSS.Common.MSet
 
 			_originalCurrentJobId = currentJobId;
 
-			var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
+			var jobsFromTree = _jobTree.GetItems().ToList();
+
+			//var currentJob = jobs.FirstOrDefault(x => x.Id == currentJobId);
+			var currentJob = jobsFromTree.FirstOrDefault(x => x.Id == currentJobId);
 
 			if (currentJob == null)
 			{
-				currentJob = jobs.Last();
-				Debug.WriteLine($"WARNING: The Project has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
+				Debug.WriteLine($"WARNING: The Poster has a CurrentJobId of {Id}, but this job cannot be found. Setting the current job to be the last job.");
+				//currentJob = jobs.Last();
+				currentJob = jobsFromTree.Last();
 			}
 
+			_ = LoadColorBandSet(currentJob, operationDescription: "as the poster is being constructed");
 			_jobTree.CurrentItem = currentJob;
-			var colorBandSet = LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed");
+			
+			//_ = _jobTree.MakePreferred(_jobTree.GetCurrentPath());
+			//JobNodes = _jobTree.Nodes;
 
 			Debug.WriteLine($"Poster is loaded. CurrentJobId: {CurrentJob.Id}, Current ColorBandSetId: {CurrentColorBandSet.Id}. IsDirty: {IsDirty}");
 		}

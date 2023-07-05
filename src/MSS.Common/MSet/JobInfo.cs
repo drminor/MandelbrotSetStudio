@@ -14,10 +14,13 @@ namespace MSS.Common.MSet
 
 		private int _numberOfMapSections;
 
-		private int _numberOfFullScale;
-		private int _numberOfReducedScale;
-		private int _numberOfImage;
-		private int _numberOfSizeEditorPreview;
+		//private int _numberOfFullScale;
+		//private int _numberOfReducedScale;
+		//private int _numberOfImage;
+		//private int _numberOfSizeEditorPreview;
+
+		private int _numberOfCrtical;
+		private int _numberOfNonCritical;
 
 		private double _percentageMapSectionsShared;
 		private double _percentageMapSectionsSharedWithSameOwner;
@@ -73,57 +76,83 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		public int NumberOfFullScale
+		public int NumberOfCritical
 		{
-			get => _numberOfFullScale;
+			get => _numberOfCrtical;
 			set
 			{
-				if (value != _numberOfFullScale)
+				if (value != _numberOfCrtical)
 				{
-					_numberOfFullScale = value;
+					_numberOfCrtical = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public int NumberOfReducedScale
+		public int NumberOfNonCritical
 		{
-			get => _numberOfReducedScale;
+			get => _numberOfNonCritical;
 			set
 			{
-				if (value != _numberOfReducedScale)
+				if (value != _numberOfNonCritical)
 				{
-					_numberOfReducedScale = value;
+					_numberOfNonCritical = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public int NumberOfImage
-		{
-			get => _numberOfImage;
-			set
-			{
-				if (value != _numberOfImage)
-				{
-					_numberOfImage = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public int NumberOfFullScale
+		//{
+		//	get => _numberOfFullScale;
+		//	set
+		//	{
+		//		if (value != _numberOfFullScale)
+		//		{
+		//			_numberOfFullScale = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
-		public int NumberOfSizeEditorPreview
-		{
-			get => _numberOfSizeEditorPreview;
-			set
-			{
-				if (value != _numberOfSizeEditorPreview)
-				{
-					_numberOfSizeEditorPreview = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public int NumberOfReducedScale
+		//{
+		//	get => _numberOfReducedScale;
+		//	set
+		//	{
+		//		if (value != _numberOfReducedScale)
+		//		{
+		//			_numberOfReducedScale = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
+
+		//public int NumberOfImage
+		//{
+		//	get => _numberOfImage;
+		//	set
+		//	{
+		//		if (value != _numberOfImage)
+		//		{
+		//			_numberOfImage = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
+
+		//public int NumberOfSizeEditorPreview
+		//{
+		//	get => _numberOfSizeEditorPreview;
+		//	set
+		//	{
+		//		if (value != _numberOfSizeEditorPreview)
+		//		{
+		//			_numberOfSizeEditorPreview = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		public double PercentageMapSectionsShared
 		{

@@ -2,12 +2,14 @@
 using MSetRepo;
 using MSetRepo.Storage;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
@@ -54,21 +56,21 @@ namespace MSetExplorer
 				throw new InvalidOperationException("The mapSectionAdapter argument must be implemented by the MapSectionAdapter class.");
 			}
 
-			JobOwnerInfo = jobOwnerInfo;
-
 			_mapSectionCollectionSize = _mapSectionAdapter.GetSizeOfCollectionInMB();
 			//_mapSectionDocSize = _mapSectionAdapter.GetSizeOfDocZero();
 
 			var jobInfos = _projectAdapter.GetJobInfosForOwner(jobOwnerInfo.OwnerId);
+
+			_storageModel = CreateStorageModel(jobOwnerInfo, jobInfos);
+			UpdateStats(jobInfos);
+
+			JobOwnerInfo = jobOwnerInfo;
 
 			JobInfos = new ObservableCollection<IJobInfo>(jobInfos);
 			SelectedJobInfo = JobInfos.FirstOrDefault(x => x.Id == jobOwnerInfo.CurrentJobId);
 
 			var view = CollectionViewSource.GetDefaultView(JobInfos);
 			_ = view.MoveCurrentTo(SelectedJobInfo);
-
-			_storageModel = CreateStorageModel(jobOwnerInfo, JobInfos);
-			UpdateStats();
 		}
 
 		#endregion
@@ -102,13 +104,7 @@ namespace MSetExplorer
 				if (value != _selectedJob)
 				{
 					_selectedJob = value;
-
-					if (_selectedJob != null)
-					{
-						Stat4 = _selectedJob.NumberOfFullScale;
-						Stat5 = _selectedJob.NumberOfReducedScale;
-						Stat6 = _selectedJob.NumberOfImage;
-					}
+					UpdateSharedPercentages(_selectedJob);
 
 					OnPropertyChanged();
 				}
@@ -226,15 +222,21 @@ namespace MSetExplorer
 				var jobSections = jobMapSectionRecords.Select(x => new JobSection(x.Id, x.DateCreatedUtc, x.JobType, x.JobId, x.MapSectionId, new SizeInt(x.BlockIndex.Width, x.BlockIndex.Height), x.IsInverted, x.MapSectionSubdivisionId, x.JobSubdivisionId, x.OwnerType));
 				jobSectionsAcc.AddRange(jobSections);
 
-				// Get the list of distinct MapSectionIds from the list of JobMapSectionRecords.
-				var distinctMapSectionIds = jobMapSectionRecords.Select(x => x.MapSectionId).Distinct();
-
+				// Get the list of critical distinct MapSectionIds from the list of JobMapSectionRecords
+				var distinctCriticalMapSectionIds = jobMapSectionRecords.Where(x => x.JobType == JobType.FullScale || x.JobType == JobType.Image).Select(x => x.MapSectionId).Distinct();
 				// For each distinct MapSectionId, retreive the DateCreated and SubdivisionId
-				var mapSectionCreationDatesAndSubIds = _mapSectionAdapter.GetMapSectionCreationDatesAndSubIds(distinctMapSectionIds);
+				var mapSectionCreationDatesAndSubIds = _mapSectionAdapter.GetMapSectionCreationDatesAndSubIds(distinctCriticalMapSectionIds);
 				var sections = mapSectionCreationDatesAndSubIds.Select(x => new Section(x.Item1, x.Item2, x.Item3));
 				sectionsAcc.AddRange(sections);
 
-				jobs.Add(new Job(jobInfo.Id, jobInfo.DateCreatedUtc, jobInfo.SubdivisionId, distinctMapSectionIds.ToList()));
+				// Get the list of non critical distinct MapSectionIds from the list of JobMapSectionRecords.
+				var distinctNonCriticalMapSectionIds = jobMapSectionRecords.Where(x => !(x.JobType == JobType.FullScale || x.JobType == JobType.Image)).Select(x => x.MapSectionId).Distinct();
+				// For each distinct MapSectionId, retreive the DateCreated and SubdivisionId
+				mapSectionCreationDatesAndSubIds = _mapSectionAdapter.GetMapSectionCreationDatesAndSubIds(distinctCriticalMapSectionIds);
+				sections = mapSectionCreationDatesAndSubIds.Select(x => new Section(x.Item1, x.Item2, x.Item3));
+				sectionsAcc.AddRange(sections);
+
+				jobs.Add(new Job(jobInfo.Id, jobInfo.DateCreatedUtc, jobInfo.SubdivisionId, distinctCriticalMapSectionIds.ToList(), distinctNonCriticalMapSectionIds.ToList()));
 			}
 
 			var storageModel = new StorageModel(jobOwnerInfo, jobs, jobSectionsAcc, sectionsAcc);
@@ -242,26 +244,84 @@ namespace MSetExplorer
 			return storageModel;
 		}
 
-		private void UpdateStats()
+		private void UpdateStats(IEnumerable<IJobInfo> jobInfos)	
 		{
 			_storageModel.UpdateStats();
 
-			for (int i = 0; i < JobInfos.Count; i++)
+			foreach(var jobInfo in jobInfos)
 			{
-				var jobInfo = JobInfos[i];
-				jobInfo.NumberOfMapSections = _storageModel.Owner.Jobs[i].NumberOfMapSections;
-				jobInfo.NumberOfFullScale = _storageModel.Owner.Jobs[i].NumberOfFullScale;
-				jobInfo.NumberOfReducedScale = _storageModel.Owner.Jobs[i].NumberOfReducedScale;
-				jobInfo.NumberOfImage = _storageModel.Owner.Jobs[i].NumberOfImage;
-				jobInfo.NumberOfSizeEditorPreview = _storageModel.Owner.Jobs[i].NumberOfSizeEditorPreview;
+				var smJob =  _storageModel.Owner.Jobs.FirstOrDefault(x => x.JobId == jobInfo.Id);
+				if (smJob == null)
+				{
+					Debug.WriteLine($"No job with id: {jobInfo.Id} could be found in the storage model.");
+				}
+				else
+				{
+					jobInfo.NumberOfMapSections = smJob.NumberOfMapSections;
+					jobInfo.NumberOfCritical = smJob.NumberOfCriticalMapSections;
+					jobInfo.NumberOfNonCritical = smJob.NumberOfNonCriticalMapSections;
+				}
+
+				//jobInfo.NumberOfMapSections = _storageModel.Owner.Jobs[i].NumberOfMapSections;
+				//jobInfo.NumberOfCritical = _storageModel.Owner.Jobs[i].NumberOfCriticalMapSections;
+				//jobInfo.NumberOfNonCritical = _storageModel.Owner.Jobs[i].NumberOfNonCriticalMapSections;
+
+				//jobInfo.NumberOfFullScale = _storageModel.Owner.Jobs[i].NumberOfFullScale;
+				//jobInfo.NumberOfReducedScale = _storageModel.Owner.Jobs[i].NumberOfReducedScale;
+				//jobInfo.NumberOfImage = _storageModel.Owner.Jobs[i].NumberOfImage;
+				//jobInfo.NumberOfSizeEditorPreview = _storageModel.Owner.Jobs[i].NumberOfSizeEditorPreview;
 
 				//jobInfo.PercentageMapSectionsShared = 1.34;
 				//jobInfo.PercentageMapSectionsSharedWithSameOwner = 28.3;
 			}
 
 			Stat1 = _storageModel.Owner.NumberOfMapSections;
-			Stat2 = _storageModel.Owner.NumberOfReducedScale;
-			Stat3 = _storageModel.Owner.NumberOfImage;
+			Stat2 = _storageModel.Owner.NumberOfCriticalMapSections;
+			Stat3 = _storageModel.Owner.NumberOfNonCriticalMapSections;
+		}
+
+		private void UpdateSharedPercentages(IJobInfo? selectedJob)
+		{
+			if (selectedJob != null)
+			{
+				var (numberOfSharedCritical, numberOfSharedNonCritical) = GetNumberOfShared(selectedJob);
+
+				selectedJob.PercentageMapSectionsShared = numberOfSharedCritical;
+				selectedJob.PercentageMapSectionsSharedWithSameOwner = numberOfSharedNonCritical;
+
+				Stat4 = selectedJob.PercentageMapSectionsShared;
+				Stat5 = selectedJob.PercentageMapSectionsSharedWithSameOwner;
+				Stat6 = 0;
+			}
+			else
+			{
+				Stat4 = 0;
+				Stat5 = 0;
+				Stat6 = 0;
+			}
+		}
+
+		// GetNumberOfShared
+		private (int numberOfSharedCritical, int numberOfSharedNonCritical) GetNumberOfShared(IJobInfo selectedJob)
+		{
+			var jobId = selectedJob.Id;
+			var smJob = _storageModel.Owner.Jobs.FirstOrDefault(x => x.JobId == jobId);
+
+			int numberOfSharedCritical;
+			int numberOfSharedNonCritical;
+
+			if (smJob == null)
+			{
+				numberOfSharedCritical = 0;
+				numberOfSharedNonCritical = 0;
+			}
+			else
+			{
+				numberOfSharedCritical = _storageModel.GetNumberOfSharedSectionIds(smJob.DistinctCriticalSectionIds, _storageModel.CriticalSectionIdRefs);
+				numberOfSharedNonCritical = _storageModel.GetNumberOfSharedSectionIds(smJob.DistinctNonCriticalSectionIds, _storageModel.NonCriticalSectionIdRefs);
+			}
+
+			return (numberOfSharedCritical, numberOfSharedNonCritical);
 		}
 
 		#endregion
