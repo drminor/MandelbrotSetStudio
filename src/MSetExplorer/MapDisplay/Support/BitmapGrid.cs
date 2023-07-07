@@ -282,8 +282,10 @@ namespace MSetExplorer
 			//return lastSectionWasIncluded;
 		}
 
-		public void ClearSections(IList<MapSection> mapSections)
+		public int ClearSections(IList<MapSection> mapSections)
 		{
+			var numberCleared = 0;
+
 			var blockRowPixelCount = Bitmap.PixelWidth * _blockSize.Height;
 			var zeros = GetClearBytes(blockRowPixelCount * BYTES_PER_PIXEL);
 			var sourceStride = Bitmap.PixelWidth * BYTES_PER_PIXEL;
@@ -300,8 +302,10 @@ namespace MSetExplorer
 					try
 					{
 						Bitmap.WritePixels(_blockRect, zeros, sourceStride, loc.X, loc.Y);
-						_mapSections.Remove(mapSection);
-						_disposeMapSection(mapSection);
+						numberCleared++;
+						
+						//_mapSections.Remove(mapSection);
+						//_disposeMapSection(mapSection);
 					}
 					catch (Exception e)
 					{
@@ -309,6 +313,8 @@ namespace MSetExplorer
 					}
 				}
 			}
+
+			return numberCleared;
 		}
 
 		public int ReDrawSections()

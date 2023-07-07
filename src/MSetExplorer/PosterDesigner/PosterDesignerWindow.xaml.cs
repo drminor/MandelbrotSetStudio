@@ -24,8 +24,14 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class PosterDesignerWindow : Window, IHaveAppNavRequestResponse
 	{
-		private const double PREVIEW_IMAGE_SIZE = 1024;
 		private readonly static Color FALL_BACK_COLOR = Colors.LightGreen;
+
+		// Used to build the window title.
+		private const string dash = "\u2014";
+		private const string colon = "\u003A";
+		private const string _windowName = "Poster"; // used to be set to "Designer Window";
+		private const string _firstTitleSep = colon;
+		private const string _secondTitleSep = dash;
 
 		private IPosterDesignerViewModel _vm;
 
@@ -310,7 +316,7 @@ namespace MSetExplorer
 
 			if (curPoster != null)
 			{
-				_vm.MapDisplayViewModel.CancelJob();
+				_vm.MapDisplayViewModel.PauseJob();
 
 				if (TryGetNewSizeFromUser(curPoster, out var newPosterMapAreaInfo, out var newPosterSize))
 				{
@@ -320,7 +326,8 @@ namespace MSetExplorer
 				}
 				else
 				{
-					_vm.RunCurrentJob();
+					//_vm.RunCurrentJob();
+					_vm.MapDisplayViewModel.RestartJob();
 				}
 			}
 		}
@@ -784,13 +791,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private const string dash = "\u2014";
-		private const string colon = "\u003A";
-		//private const string _windowName = "Designer Window";
-		private const string _windowName = "Poster";
-		private const string _firstTitleSep = colon;
-		private const string _secondTitleSep = dash;
-
 		private string GetWindowTitle(string? posterName, string? colorBandSetName)
 		{
 			var result = posterName != null
@@ -877,17 +877,15 @@ namespace MSetExplorer
 			var mapAreaInfo = curJob.MapAreaInfo;
 			var currentPosterSize = poster.PosterSize;
 
-			//var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
-			var previewSize = GetPreviewSize(poster.PosterSize, PREVIEW_IMAGE_SIZE);
+			////var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
+			//var previewSize = GetPreviewSize(poster.PosterSize, PREVIEW_IMAGE_SIZE);
 
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
 			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.Id, mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
 
 			var viewModelFactory = _vm.ViewModelFactory;
-			var lazyMapPreviewImageProvider = viewModelFactory.GetPreviewImageProvider(curJob.Id, mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
-
-
+			var lazyMapPreviewImageProvider = viewModelFactory.GetPreviewImageProvider(curJob.Id, mapAreaInfo, poster.PosterSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 
 			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo, currentPosterSize)
@@ -929,13 +927,13 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeDbl GetPreviewSize(SizeDbl currentSize, double previewImageSideLength)
-		{
-			var scaleFactor = RMapHelper.GetSmallestScaleFactor(currentSize, new SizeDbl(previewImageSideLength));
-			var previewSize = currentSize.Scale(scaleFactor);
+		//private SizeDbl GetPreviewSize(SizeDbl currentSize, double previewImageSideLength)
+		//{
+		//	var scaleFactor = RMapHelper.GetSmallestScaleFactor(currentSize, new SizeDbl(previewImageSideLength));
+		//	var previewSize = currentSize.Scale(scaleFactor);
 
-			return previewSize;
-		}
+		//	return previewSize;
+		//}
 
 		private void PosterSizeEditorDialog_ApplyChangesRequested(object? sender, EventArgs e)
 		{
@@ -1079,19 +1077,19 @@ namespace MSetExplorer
 
 		private void Pan(PanDirection direction, PanAmountQualifer qualifer, int amount)
 		{
-			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
+			//var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
 
-			if (currentMapAreaInfo == null)
-			{
-				return;
-			}
+			//if (currentMapAreaInfo == null)
+			//{
+			//	return;
+			//}
 
-			var qualifiedAmount = GetPanAmount(amount, qualifer);
-			var panVector = GetPanVector(direction, qualifiedAmount);
+			//var qualifiedAmount = GetPanAmount(amount, qualifer);
+			//var panVector = GetPanVector(direction, qualifiedAmount);
 
-			var newMapAreaInfo = _vm.PosterViewModel.GetUpdatedMapAreaInfo(currentMapAreaInfo, TransformType.Pan, panVector, factor: 1, out var diagReciprocal);
+			//var newMapAreaInfo = _vm.PosterViewModel.GetUpdatedMapAreaInfo(currentMapAreaInfo, TransformType.Pan, panVector, factor: 1, out var diagReciprocal);
 
-			_vm.PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
+			//_vm.PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
 		}
 
 		private int GetPanAmount(int baseAmount, PanAmountQualifer qualifer)
@@ -1133,27 +1131,26 @@ namespace MSetExplorer
 
 		private void ZoomOut(ZoomOutAmountQualifer qualifer)
 		{
-			var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
-			if (currentMapAreaInfo == null)
-			{
-				return;
-			}
+			//var currentMapAreaInfo = _vm.MapDisplayViewModel.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
+			//if (currentMapAreaInfo == null)
+			//{
+			//	return;
+			//}
 
-			//_ = MessageBox.Show($"Zooming Out. Amount = {amount}.");
+			////_ = MessageBox.Show($"Zooming Out. Amount = {amount}.");
 
-			var qualifiedAmount = GetZoomOutAmount(qualifer);
+			//var qualifiedAmount = GetZoomOutAmount(qualifer);
 
-			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
+			//var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 
-			//var curArea = new RectangleInt(new PointInt(), displaySize.Round());
-			//var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
+			////var curArea = new RectangleInt(new PointInt(), displaySize.Round());
+			////var newArea = curArea.Expand(new SizeInt(qualifiedAmount));
 
-			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea, _vm.PosterViewModel.CanvasSize);
-			//_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo, out var diagReciprocal);
+			////_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, newArea, _vm.PosterViewModel.CanvasSize);
+			////_vm.PosterViewModel.UpdateMapSpecs(TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, currentMapAreaInfo, out var diagReciprocal);
 
-			var newMapAreaInfo = _vm.PosterViewModel.GetUpdatedMapAreaInfo(currentMapAreaInfo, TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, out var diagReciprocal);
-			_vm.PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
-
+			//var newMapAreaInfo = _vm.PosterViewModel.GetUpdatedMapAreaInfo(currentMapAreaInfo, TransformType.ZoomOut, new VectorInt(1, 1), factor: qualifiedAmount, out var diagReciprocal);
+			//_vm.PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
 		}
 
 		private double GetZoomOutAmount(ZoomOutAmountQualifer qualifer)

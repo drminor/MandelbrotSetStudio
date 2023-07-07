@@ -15,37 +15,43 @@ namespace MSetExplorer
 {
 	public class LazyMapPreviewImageProvider 
 	{
+		#region Private Fields
+
+		private const int MS_WAIT_FOR_CANCELLED_TASK_TO_COMPLETE = 500;
+
+		private const double PREVIEW_CONTAINER_SIZE = 1024;
+
+		private MapJobHelper _mapJobHelper;
 		private readonly SynchronizationContext? _synchronizationContext;
 		private readonly BitmapBuilder _bitmapBuilder;
-
-		private MapAreaInfo2 _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
-		private SizeDbl _previewImageSize;
-		private MapAreaInfo _previewMapAreaInfo;	// Coods, SampleSize, etc. are ajusted for the previewImageSize
 
 		private readonly ColorBandSet _colorBandSet;
 		private readonly MapCalcSettings _mapCalcSettings;
 		private readonly bool _useEscapeVelocitites;
 		private readonly Color _fallbackColor;
 
+		private MapAreaInfo2 _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
+		private SizeDbl _posterSize;
+		private SizeDbl _containerSize;
+
+		//private SizeDbl _previewImageSize;
+		//private double _scaleFactor;
+		//private MapAreaInfo _previewMapAreaInfo;	// Coods, SampleSize, etc. are ajusted for the previewImageSize
+
 		private CancellationTokenSource _cts;
 		private Task? _currentBitmapBuilderTask;
 
-		private MapJobHelper _mapJobHelper;
+		#endregion
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, ObjectId jobId, OwnerType ownerType, MapAreaInfo2 mapAreaInfo, SizeDbl previewImageSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
+		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, ObjectId jobId, OwnerType ownerType, MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
 		{
 			_mapJobHelper = mapJobHelper;
 
 			_synchronizationContext = SynchronizationContext.Current;
 			_bitmapBuilder = bitmapBuilder;
 
-			JobId = jobId;
-			OwnerType = ownerType;
-			_mapAreaInfo = mapAreaInfo;
-
-			_previewImageSize = previewImageSize;
 			_colorBandSet = colorBandSet;
 			_mapCalcSettings = mapCalcSettings;
 			_useEscapeVelocitites = useEscapeVelocities;
@@ -54,43 +60,63 @@ namespace MSetExplorer
 			_cts = new CancellationTokenSource();
 			_currentBitmapBuilderTask = null;
 
-			//_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfo, _previewImageSize);
-			_previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(_mapAreaInfo, _previewImageSize);
+			JobId = jobId;
+			OwnerType = ownerType;
 
-			Bitmap = CreateBitmap(_previewImageSize.Round());
+			_mapAreaInfo = mapAreaInfo;
+			_posterSize = posterSize;
+
+			var containerSize = new SizeDbl(PREVIEW_CONTAINER_SIZE);
+			var previewMapAreaInfo = GetMapAreaInfoWithSize(_mapAreaInfo, containerSize, _posterSize);
+
+			Bitmap = CreateBitmap(previewMapAreaInfo.CanvasSize.Round());
 			FillBitmapWithColor(_fallbackColor, Bitmap);
 
-			QueueBitmapGeneration(JobId, ownerType, _previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
+			QueueBitmapGeneration(JobId, ownerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 		}
+
+		#endregion
+
+		#region Public Events
+
+		public event EventHandler? BitmapHasBeenLoaded;
 
 		#endregion
 
 		#region Public Properties
 
-		public event EventHandler? BitmapHasBeenLoaded;
-
-		public WriteableBitmap Bitmap { get; init; }
-
 		public ObjectId JobId { get; set; }
-
 		public OwnerType OwnerType { get; set; }
+		public MapAreaInfo2 MapAreaInfo => _mapAreaInfo;
+		public SizeDbl ContainerSize => _containerSize;
+		public WriteableBitmap Bitmap { get; set; }
 
-		public MapAreaInfo2 MapAreaInfo
+		#endregion
+
+		#region Public Methods
+
+		//public void RequestBitmapGenerationOld(MapAreaInfo2 mapAreaInfo, SizeDbl posterSize)
+		//{
+		//	_mapAreaInfo = mapAreaInfo;
+		//	_posterSize = posterSize;
+
+		//	var previewMapAreaInfo = GetMapAreaInfoWithSize(_mapAreaInfo, _posterSize);
+
+		//	Bitmap = CreateBitmap(previewMapAreaInfo.CanvasSize.Round());
+		//	FillBitmapWithColor(_fallbackColor, Bitmap);
+		//	QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
+		//}
+
+		public void RequestBitmapGeneration(MapAreaInfo2 mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
-			get => _mapAreaInfo;
-			set
-			{
-				if (value != _mapAreaInfo)
-				{
-					_mapAreaInfo = value;
+			_mapAreaInfo = mapAreaInfo;
+			_posterSize = posterSize;
 
-					//_previewMapAreaInfo = MapJobHelper.GetMapAreaWithSize(_mapAreaInfo, _previewImageSize);
-					_previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(_mapAreaInfo, _previewImageSize);
+			var previewMapAreaInfo = GetMapAreaInfoWithSize(mapAreaInfo, containerSize, _posterSize);
 
-					FillBitmapWithColor(_fallbackColor, Bitmap);
-					QueueBitmapGeneration(JobId, OwnerType, _previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
-				}
-			}
+			Bitmap = CreateBitmap(previewMapAreaInfo.CanvasSize.Round());
+			FillBitmapWithColor(_fallbackColor, Bitmap);
+			QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 		}
 
 		public void CancelBitmapGeneration()
@@ -98,28 +124,63 @@ namespace MSetExplorer
 			_cts.Cancel();
 		}
 
+		public void UpdateContainerSize(SizeDbl value)
+		{
+			if (value != _containerSize)
+			{
+				// TODO: Use the given Container Size and find the closest SamplePointDelta at or below the standard SPD for this map.
+				Debug.WriteLine($"THe LazyMapPreviewImageProvider is having its Container Size updated from: {_containerSize} to {value}.");
+				_containerSize = value;
+			}
+		}
+
 		#endregion
 
 		#region Private Methods
+
+		// Calculate the map coordinates needed to display the entire poster content in the Size Editor preview window.
+		private MapAreaInfo GetMapAreaInfoWithSize(MapAreaInfo2 mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
+		{
+			//var factorW = containerSize.Width / posterSize.Width;
+			//var factorH = containerSize.Height / posterSize.Height;
+			//var factor = Math.Min(factorW, factorH);
+			//factor /= 0.3247802734375;
+
+			var fContainerSize = new SizeDbl(1024);
+
+			//var factorW = 1024d / posterSize.Width;
+			//var factorH = 1024d / posterSize.Height;
+
+			////var factorW = containerSize.Width / posterSize.Width;
+			////var factorH = containerSize.Height / posterSize.Height;
+
+			//var factor = Math.Min(factorW, factorH);
+
+			var scaleFactor = RMapHelper.GetSmallestScaleFactor(posterSize, fContainerSize);
+
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, scaleFactor, out var diagReciprocal);
+			var previewImageSize = posterSize.Scale(scaleFactor);
+
+			//Debug.WriteLine($"MapPreviewImage provider is getting the new coordinates. DiagReciprocal is {diagReciprocal}, Factor: w:{factorW}, h:{factorH}. ScaleFactor: {scaleFactor}.");
+			//Debug.Assert(Math.Abs(factor - scaleFactor) < 0.01d, "factor and scalefactor are different.");
+
+			var previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(newMapAreaInfo, previewImageSize);
+			Debug.WriteLine($"MapPreviewImage provider is getting the new coordinates. DiagReciprocal is {diagReciprocal}, ScaleFactor: {scaleFactor}. Canvas Size: {previewMapAreaInfo.CanvasSize}. Preview Image Size: {previewImageSize}.");
+
+			return previewMapAreaInfo;
+		}
 
 		private void QueueBitmapGeneration(ObjectId jobId, OwnerType ownerType, MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			var previewImageSize = previewMapArea.CanvasSize;
 			Debug.WriteLine($"Creating a preview image with size: {previewMapArea.CanvasSize} and map coords: {previewMapArea.Coords}.");
 
-			if (_currentBitmapBuilderTask != null)
+			if (_currentBitmapBuilderTask != null && !_currentBitmapBuilderTask.IsCompleted)
 			{
-				if (!_cts.IsCancellationRequested)
-				{
-					_cts.Cancel();
-				}
-
-				// TODO: Wait on the current task to complete.
-
-				Thread.Sleep(1 * 1000);
-
-				_cts = new CancellationTokenSource();
+				CancelCurrentBitmapGeneration(_currentBitmapBuilderTask, _cts);
 			}
+
+			_cts = new CancellationTokenSource();
 
 			_currentBitmapBuilderTask = Task.Run(async () =>
 				{
@@ -139,9 +200,44 @@ namespace MSetExplorer
 			);
 		}
 
+		private void CancelCurrentBitmapGeneration(Task task, CancellationTokenSource cts)
+		{
+			var stopWatch = Stopwatch.StartNew();
+
+			if (!cts.IsCancellationRequested)
+			{
+				cts.Cancel(throwOnFirstException: false);
+			}
+
+			try
+			{
+				if (!task.Wait(MS_WAIT_FOR_CANCELLED_TASK_TO_COMPLETE))
+				{
+					Debug.WriteLine($"WARNING: The current BitmapBuilder task did not complete within {MS_WAIT_FOR_CANCELLED_TASK_TO_COMPLETE}ms.");
+				}
+			}
+			catch (TaskCanceledException)
+			{
+				Debug.WriteLine("CancelCurrentBitmapGeneration received a TaskCancelledException.");
+			}
+			catch (AggregateException ae)
+			{
+				if (!(ae.InnerException is TaskCanceledException))
+				{
+					Debug.WriteLine($"Received exception: {ae} while waiting for the Bitmap to be generated.");
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Received exception: {e} while waiting for the Bitmap to be generated.");
+			}
+
+			Debug.WriteLine($"Canceling the CurrentBitmapGeneration Task took: {stopWatch.ElapsedMilliseconds}ms.");
+		}
+
 		private void BitmapCompleted(byte[]? pixels, object? state)
 		{
-			if (state != null && state == _cts && !((CancellationTokenSource) state).IsCancellationRequested)
+			if (state != null && state is CancellationTokenSource cts && !cts.IsCancellationRequested)
 			{
 				if (pixels != null)
 				{
@@ -206,6 +302,14 @@ namespace MSetExplorer
 			var bitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
 			return bitmap;
 		}
+
+		//private SizeDbl GetPreviewSize(SizeDbl currentSize, double previewImageSideLength)
+		//{
+		//	var scaleFactor = RMapHelper.GetSmallestScaleFactor(currentSize, new SizeDbl(previewImageSideLength));
+		//	var previewSize = currentSize.Scale(scaleFactor);
+
+		//	return previewSize;
+		//}
 
 		#endregion
 	}

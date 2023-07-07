@@ -137,6 +137,20 @@ namespace MSetExplorer
 			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.", "Trim Map Sections");
 		}
 
+		private void TrimAllButton_Click(object sender, RoutedEventArgs e)
+		{
+			var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: false);
+
+			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+		}
+
+		private void TrimAllHeavyButton_Click(object sender, RoutedEventArgs e)
+		{
+			var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: true);
+			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+		}
+
+
 		#endregion
 
 	}

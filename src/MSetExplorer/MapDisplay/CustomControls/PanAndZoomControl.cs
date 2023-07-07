@@ -311,7 +311,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void SetPositionAndZoom(VectorDbl displayPosition, double contentScale) 
+		public void SetPositionAndZoomNotUsed(VectorDbl displayPosition, double contentScale) 
 		{
 			try
 			{
@@ -352,7 +352,8 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl c = (PanAndZoomControl)o;
 
-			Debug.WriteLineIf(c._useDetailedDebug, $"BitmapGridControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+			//Debug.WriteLineIf(c._useDetailedDebug, $"PanAndZoomControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+			Debug.WriteLine($"PanAndZoomControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
 
 			var newValue = (double)e.NewValue;
 

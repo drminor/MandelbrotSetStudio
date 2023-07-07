@@ -2,7 +2,6 @@
 using MSetRepo;
 using MSetRepo.Storage;
 using MSS.Common;
-using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -212,6 +211,64 @@ namespace MSetExplorer
 
 			var selectedJobId = SelectedJobInfo.Id;
 
+			var nonEssentialJobTypes = new JobType[] { JobType.ReducedScale, JobType.SizeEditorPreview };
+			var result = _mapSectionAdapter.DeleteMapSectionsForJobHavingJobTypes(selectedJobId, nonEssentialJobTypes) ?? 0;
+
+			return result;
+		}
+
+		#endregion
+
+		#region Public Methods Owner-Level Operations  
+
+		// TOOD: Move the TrimSelected method from the JobDetailsViewModel to the ProjectAndMapSectionHelper (static) class.
+		// NOTE: These methods were copied from the PosterOpenSaveViewModel class.
+
+		public long TrimSelected(bool agressive)
+		{
+			var jobOwnerInfo = JobOwnerInfo;
+
+			if (jobOwnerInfo == null)
+			{
+				return -1;
+			}
+
+			var currentJobId = jobOwnerInfo.CurrentJobId;
+			var ownerId = jobOwnerInfo.OwnerId;
+			var allJobIds = _projectAdapter.GetAllJobIdsForPoster(ownerId);
+			var allNonCurrentJobIds = allJobIds.Where(x => x != currentJobId);
+
+			DeleteMapSectionsForManyJobs(allNonCurrentJobIds, out var numberOfMapSectionsDeleted);
+
+			if (agressive)
+			{
+				// In addition to deleting all the MapSections for all of the jobs for this poster, except for the current job..
+				// Delete all of the ReducedScale and Preview MapSections for the current job.
+
+				TrimMapSectionsForSelectedJob(currentJobId);
+			}
+
+			return numberOfMapSectionsDeleted;
+		}
+
+		private bool DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, out long numberOfMapSectionsDeleted)
+		{
+			var numberDeleted = _mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds);
+
+			if (numberDeleted.HasValue)
+			{
+				numberOfMapSectionsDeleted = numberDeleted.Value;
+				return true;
+			}
+			else
+			{
+				numberOfMapSectionsDeleted = -1;
+				return true;
+			}
+		}
+
+		private long TrimMapSectionsForSelectedJob(ObjectId selectedJobId)
+		{
 			var nonEssentialJobTypes = new JobType[] { JobType.ReducedScale, JobType.SizeEditorPreview };
 			var result = _mapSectionAdapter.DeleteMapSectionsForJobHavingJobTypes(selectedJobId, nonEssentialJobTypes) ?? 0;
 

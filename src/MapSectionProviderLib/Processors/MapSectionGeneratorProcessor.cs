@@ -216,13 +216,19 @@ namespace MapSectionProviderLib
 					var cts = mapSectionRequest.CancellationTokenSource;
 
 					MapSectionResponse mapSectionResponse;
+					var jobIsCancelled = IsJobCancelled(mapSectionGenerateRequest.JobId);
 
-					if (IsJobCancelled(mapSectionGenerateRequest.JobId) || cts.IsCancellationRequested)
+					if (jobIsCancelled || cts.IsCancellationRequested)
 					{
 						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
 						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
 						mapSectionResponse.MapSectionVectors = msv;
 						mapSectionResponse.MapSectionZVectors = mszv;
+
+						var msg = $"The MapSectionGeneratorProcessor is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
+
+						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
+						Debug.WriteLine(msg);
 					}
 					else
 					{

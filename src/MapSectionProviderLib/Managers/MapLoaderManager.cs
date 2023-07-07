@@ -84,6 +84,12 @@ namespace MapSectionProviderLib
 
 				var mapLoader = new MapLoader(jobNumber, callback, _mapSectionRequestProcessor);
 
+				if (requestsNotFound.Any(x => x.CancellationTokenSource.IsCancellationRequested))
+				{
+					Debug.WriteLine("The MapLoaderManager found at least one MapSectionRequest that has been cancelled, but not yet pushed.");
+				}
+
+
 				DoWithWriteLock(() =>
 				{
 					var startTask = mapLoader.Start(requestsNotFound);
@@ -156,6 +162,15 @@ namespace MapSectionProviderLib
 			});
 		}
 
+		public void StopJobs(List<int> jobNumbers)
+		{
+			DoWithWriteLock(() =>
+			{
+				StopCurrentJobsInternal(jobNumbers);
+			});
+
+		}
+
 		public void CancelRequests(IList<MapSection> sectionsToCancel)
 		{
 			DoWithWriteLock(() =>
@@ -213,6 +228,16 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		private void StopCurrentJobsInternal(List<int> jobNumbers)
+		{
+			var requestsToStop = _requests.Where(x => jobNumbers.Contains(x.JobNumber));
+
+			foreach(var request in requestsToStop)
+			{
+				request.MapLoader.Stop();
+			}
+		}
+
 		private void CancelRequestsInternal(IList<MapSection> sectionsToCancel)
 		{
 			foreach (var section in sectionsToCancel)
@@ -239,7 +264,7 @@ namespace MapSectionProviderLib
 
 				while (!ct.IsCancellationRequested)
 				{
-					Thread.Sleep(5 * 1000);
+					Thread.Sleep(5 * 1000); // TODO: Can the RemoveCompletedRequests background thread be made avoid calls to Thread.Sleep.
 					 requestsLock.EnterUpgradeableReadLock();
 
 					try

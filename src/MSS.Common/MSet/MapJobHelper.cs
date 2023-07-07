@@ -146,70 +146,6 @@ namespace MSS.Common
 
 		#region MapAreaInfo2 Support
 
-		//public static MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize)
-		//{
-		//	var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
-
-		//	var rArea = ConvertScreenRectToMapCenterCoords(canvasSize, rPointAndDelta.SamplePointDelta);
-
-		//	//var coords = rArea.Translate(rPointAndDelta.Position);
-
-		//	//// Calculate the total number of sample points from the origin to the lower, left corner of the map's coordinates and the Subdivision origin (i.e., BaseMapBlockOffset.)
-		//	//// Determine the number of full blocks, and number of samplePoints remaining
-		//	//BigVector mapBlockOffset;
-		//	//VectorInt canvasControlOffset;
-
-		//	//if (coords.Position.IsZero())
-		//	//{
-		//	//	mapBlockOffset = new BigVector();
-		//	//	canvasControlOffset = new VectorInt();
-		//	//}
-		//	//else
-		//	//{
-		//	//	var positionV = new RVector(coords.Position);
-		//	//	var offsetInSamplePoints = positionV.Divide(rPointAndDelta.SamplePointDelta);
-		//	//	var blockSize = mapAreaInfoV2.Subdivision.BlockSize;
-		//	//	mapBlockOffset = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
-		//	//}
-
-		//	// Add to it the CenterPoint, to get a RRectangle which is the map's coordinates
-		//	var nrmArea = RNormalizer.Normalize(rArea, rPointAndDelta.Position, out var nrmMapCenterPoint);
-		//	var coords = nrmArea.Translate(nrmMapCenterPoint);
-
-		//	// Calculate the total number of sample points from the origin to the lower, left corner of the map's coordinates and the Subdivision origin (i.e., BaseMapBlockOffset.)
-		//	var adjCoords = RNormalizer.Normalize(coords, rPointAndDelta.SamplePointDelta, out var nrmSamplePointDelta);
-
-		//	if (nrmSamplePointDelta.Exponent != rPointAndDelta.Exponent)
-		//	{
-		//		// Consider using the version of Normalize that attempts to keep one of the exponents the same. See method: GetMapAreaInfoScaleConstant
-		//		throw new InvalidOperationException("Cannot create a MapAreaWithSize from the given mapAreaInfoV2 and CanvasSize: The existing subdivision is not compatible. Please use the GetMapAreaWithSizeFat method instead.");
-		//	}
-
-		//	var positionV = new RVector(adjCoords.Position);
-
-		//	// Determine the number of full blocks, and number of samplePoints remaining
-		//	BigVector mapBlockOffset;
-		//	VectorInt canvasControlOffset;
-
-		//	if (positionV.IsZero())
-		//	{
-		//		mapBlockOffset = new BigVector();
-		//		canvasControlOffset = new VectorInt();
-		//	}
-		//	else
-		//	{
-		//		var offsetInSamplePoints = positionV.Divide(rPointAndDelta.SamplePointDelta);
-		//		var blockSize = mapAreaInfoV2.Subdivision.BlockSize;
-		//		mapBlockOffset = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
-		//	}
-
-		//	var binaryPrecision = Math.Abs(nrmSamplePointDelta.Exponent);
-
-		//	var result = new MapAreaInfo(coords, canvasSize, mapAreaInfoV2.Subdivision, binaryPrecision, mapBlockOffset, canvasControlOffset);
-
-		//	return result;
-		//}
-
 		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize)
 		{
 			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
@@ -511,3 +447,6 @@ namespace MSS.Common
 		#endregion
 	}
 }
+
+
+

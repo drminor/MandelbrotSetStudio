@@ -21,6 +21,7 @@ namespace MSS.Common
 		int GetPendingRequests(int jobNumber);
 
 		void StopJob(int jobNumber);
+		void StopJobs(List<int> jobNumbers);
 		void CancelRequests(IList<MapSection> sectionsToCancel);
 
 

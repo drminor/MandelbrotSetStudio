@@ -5,6 +5,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,10 +13,9 @@ namespace ImageBuilder
 {
 	public class BitmapBuilder : IBitmapBuilder
 	{
-		private const double VALUE_FACTOR = 10000;
+		//private const double VALUE_FACTOR = 10000;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
-		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private int? _currentJobNumber;
@@ -25,10 +25,6 @@ namespace ImageBuilder
 		public BitmapBuilder(IMapLoaderManager mapLoaderManager)
 		{
 			_mapLoaderManager = mapLoaderManager;
-
-			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount: 2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
 			_mapSectionBuilder = new MapSectionBuilder();
 
 			_currentJobNumber = null;
@@ -59,7 +55,7 @@ namespace ImageBuilder
 				var w = numberOfWholeBlocks.Width;
 				var h = numberOfWholeBlocks.Height;
 
-				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {numberOfWholeBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
+				Debug.WriteLine($"The BitmapBuilder is processing section requests. The map extent is {numberOfWholeBlocks} w = {w}, h = {h} CanvasControlOffset = {canvasControlOffset}. The ColorMap has Id: {colorBandSet.Id}.");
 
 				var destPixPtr = 0;
 
@@ -75,7 +71,7 @@ namespace ImageBuilder
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);
 
-					var numberOfLines = GetNumberOfLines(blockPtrY, imageSize.Height, h, blockSize.Height, canvasControlOffset.Y, out var linesTopSkip);
+					var numberOfLines = BitmapHelper.GetNumberOfLines(blockPtrY, imageSize.Height, h, blockSize.Height, canvasControlOffset.Y, out var linesTopSkip);
 
 					var startingLinePtr = blockSize.Height - 1 - linesTopSkip;
 					var endingLinePtr = startingLinePtr - (numberOfLines - 1);
@@ -100,16 +96,16 @@ namespace ImageBuilder
 								Debug.WriteLine($"Got a null mapSection.");
 							}
 
-							var countsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSize.Width);
+							var countsForThisSegment = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSize.Width);
 							//var escVelsForThisSegment = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
 							var escVelsForThisSegment = new ushort[countsForThisSegment?.Length ?? 0];
 
 
-							var segmentLength = GetSegmentLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
+							var segmentLength = BitmapHelper.GetSegmentLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
 
 							try
 							{
-								FillImageLineSegment(result, destPixPtr, countsForThisSegment, escVelsForThisSegment, segmentLength, samplesToSkip, colorMap);
+								BitmapHelper.FillImageLineSegment(result, destPixPtr, countsForThisSegment, escVelsForThisSegment, segmentLength, samplesToSkip, colorMap);
 								destPixPtr += segmentLength;
 							}
 							catch (Exception e)
@@ -139,53 +135,65 @@ namespace ImageBuilder
 			return result;
 		}
 
-		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int linesToSkip)
-		{
-			int numberOfLines;
+		//private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int linesToSkip)
+		//{
+		//	int numberOfLines;
 
-			if (blockPtrY == 0)
-			{
-				linesToSkip = canvasControlOffsetY;
-				numberOfLines = blockHeight - canvasControlOffsetY;
-			}
-			else if (blockPtrY == numberOfWholeBlocksY - 1)
-			{
-				numberOfLines = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
-				linesToSkip = blockHeight - numberOfLines;
+		//	if (blockPtrY == 0)
+		//	{
+		//		// This is the block with the largest y coordinate (aka the last block)
+		//		linesToSkip = 0;
+		//		var numberOfLinesForFirstBlock = GetNumberOfLinesForFirstBlock(imageHeight, numberOfWholeBlocksY, blockHeight, canvasControlOffsetY);
+		//		var numberOfLinesSoFar = numberOfLinesForFirstBlock + (blockHeight * (numberOfWholeBlocksY - 2));
+		//		numberOfLines = imageHeight - numberOfLinesSoFar;
+		//	}
+		//	else if (blockPtrY == numberOfWholeBlocksY - 1)
+		//	{
+		//		// This is the block with the smallest y coordinate (aka the first block)
+		//		numberOfLines = GetNumberOfLinesForFirstBlock(imageHeight, numberOfWholeBlocksY, blockHeight, canvasControlOffsetY);
+		//		linesToSkip = blockHeight - numberOfLines; // (Since the pixel lines are accessed from high to low index, this is measured from index = blockHeight - 1)
+		//	}
+		//	else
+		//	{
+		//		linesToSkip = 0;
+		//		numberOfLines = blockHeight;
+		//	}
 
-			}
-			else
-			{
-				linesToSkip = 0;
-				numberOfLines = blockHeight;
-			}
+		//	return numberOfLines;
 
-			return numberOfLines;
+		//}
 
-		}
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//private int GetNumberOfLinesForFirstBlock(int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY)
+		//{
+		//	return canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
+		//}
 
-		private int GetSegmentLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
-		{
-			int result;
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//private int GetSegmentLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
+		//{
+		//	// TODO: Build an array of Segment lengths, once and then re-use for each row.
+		//	int result;
 
-			if (blockPtrX == 0)
-			{
-				samplesToSkip = canvasControlOffsetX;
-				result = blockWidth - canvasControlOffsetX;
-			}
-			else if (blockPtrX == numberOfWholeBlocksX - 1)
-			{
-				samplesToSkip = 0;
-				result = canvasControlOffsetX + imageWidth - (blockWidth * (numberOfWholeBlocksX - 1));
-			}
-			else
-			{
-				samplesToSkip = 0;
-				result = blockWidth;
-			}
+		//	if (blockPtrX == 0)
+		//	{
+		//		// TODO: Why does this work for the x-axis, but not the y-axis.
+		//		samplesToSkip = canvasControlOffsetX;
+		//		result = blockWidth - canvasControlOffsetX;
+		//	}
+		//	else if (blockPtrX == numberOfWholeBlocksX - 1)
+		//	{
+		//		samplesToSkip = 0;
+		//		result = canvasControlOffsetX + imageWidth - (blockWidth * (numberOfWholeBlocksX - 1));
+		//	}
+		//	else
+		//	{
+		//		samplesToSkip = 0;
+		//		result = blockWidth;
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		//private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(Subdivision subdivision, BigVector mapBlockOffset, int rowPtr, int stride, MapCalcSettings mapCalcSettings, int precision)
 
@@ -271,67 +279,67 @@ namespace ImageBuilder
 			}
 		}
 
-		private ushort[]? GetOneLineFromCountsBlock(ushort[]? counts, int lPtr, int stride)
-		{
-			if (counts == null)
-			{
-				return null;
-			}
-			else
-			{
-				var result = new ushort[stride];
+		//private ushort[]? GetOneLineFromCountsBlock(ushort[]? counts, int lPtr, int stride)
+		//{
+		//	if (counts == null)
+		//	{
+		//		return null;
+		//	}
+		//	else
+		//	{
+		//		var result = new ushort[stride];
 
-				Array.Copy(counts, lPtr * stride, result, 0, stride);
-				return result;
-			}
-		}
+		//		Array.Copy(counts, lPtr * stride, result, 0, stride);
+		//		return result;
+		//	}
+		//}
 
-		private void FillImageLineSegment(byte[] imageData, int pixPtr, ushort[]? counts, ushort[]? escapeVelocities, int lineLength, int samplesToSkip, ColorMap colorMap)
-		{
-			if (counts == null || escapeVelocities == null)
-			{
-				FillPngImageLineSegmentWithWhite(imageData, pixPtr, lineLength);
-				return;
-			}
+		//private void FillImageLineSegment(byte[] imageData, int pixPtr, ushort[]? counts, ushort[]? escapeVelocities, int lineLength, int samplesToSkip, ColorMap colorMap)
+		//{
+		//	if (counts == null || escapeVelocities == null)
+		//	{
+		//		FillPngImageLineSegmentWithWhite(imageData, pixPtr, lineLength);
+		//		return;
+		//	}
 
-			var previousCountVal = counts[0];
+		//	var previousCountVal = counts[0];
 
-			for (var xPtr = 0; xPtr < lineLength; xPtr++)
-			{
-				var countVal = counts[xPtr + samplesToSkip];
+		//	for (var xPtr = 0; xPtr < lineLength; xPtr++)
+		//	{
+		//		var countVal = counts[xPtr + samplesToSkip];
 
-				if (countVal != previousCountVal)
-				{
-					NumberOfCountValSwitches++;
-					previousCountVal = countVal;
-				}
+		//		if (countVal != previousCountVal)
+		//		{
+		//			NumberOfCountValSwitches++;
+		//			previousCountVal = countVal;
+		//		}
 
-				var escapeVelocity = colorMap.UseEscapeVelocities ? escapeVelocities[xPtr + samplesToSkip] / VALUE_FACTOR : 0;
+		//		var escapeVelocity = colorMap.UseEscapeVelocities ? escapeVelocities[xPtr + samplesToSkip] / VALUE_FACTOR : 0;
 
-				if (escapeVelocity > 1.0)
-				{
-					Debug.WriteLine($"The Escape Velocity is greater that 1.0");
-				}
+		//		if (escapeVelocity > 1.0)
+		//		{
+		//			Debug.WriteLine($"The Escape Velocity is greater that 1.0");
+		//		}
 
-				var offset = pixPtr++ * 4;
-				var dest = new Span<byte>(imageData, offset, 4);
+		//		var offset = pixPtr++ * 4;
+		//		var dest = new Span<byte>(imageData, offset, 4);
 
-				colorMap.PlaceColor(countVal, escapeVelocity, dest);
-			}
-		}
+		//		colorMap.PlaceColor(countVal, escapeVelocity, dest);
+		//	}
+		//}
 
-		private void FillPngImageLineSegmentWithWhite(Span<byte> imageLine, int pixPtr, int len)
-		{
-			for (var xPtr = 0; xPtr < len; xPtr++)
-			{
-				var offset = pixPtr++ * 4;
+		//private void FillPngImageLineSegmentWithWhite(Span<byte> imageLine, int pixPtr, int len)
+		//{
+		//	for (var xPtr = 0; xPtr < len; xPtr++)
+		//	{
+		//		var offset = pixPtr++ * 4;
 
-				imageLine[offset] = 255;
-				imageLine[offset + 1] = 255;
-				imageLine[offset + 2] = 255;
-				imageLine[offset + 3] = 255;
-			}
-		}
+		//		imageLine[offset] = 255;
+		//		imageLine[offset + 1] = 255;
+		//		imageLine[offset + 2] = 255;
+		//		imageLine[offset + 3] = 255;
+		//	}
+		//}
 
 	}
 }

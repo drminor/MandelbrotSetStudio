@@ -26,14 +26,14 @@ namespace MSetExplorer
 
 		private PosterSizeEditorViewModel _vm;
 
-		private MapAreaInfo2? _initialPosterMapAreaInfo;
+		private MapAreaInfo2 _initialPosterMapAreaInfo;
 		private SizeDbl _initialPosterSize;
 
 		#region Constructor
 
 		public PosterSizeEditorDialog(MapAreaInfo2 posterMapAreaInfo, SizeDbl posterSize)
 		{
-			_initialPosterMapAreaInfo = posterMapAreaInfo;
+			_initialPosterMapAreaInfo = posterMapAreaInfo.Clone();
 			_initialPosterSize = posterSize;
 
 			_canvas = new Canvas();
@@ -41,6 +41,8 @@ namespace MSetExplorer
 			_newImageRectangle = new Rectangle();
 			_clipRectangle = new Rectangle();
 			_showBorder = false;
+
+			
 
 			_vm = (PosterSizeEditorViewModel)DataContext;
 			Loaded += PosterSizeEditorDialog_Loaded;
@@ -66,30 +68,33 @@ namespace MSetExplorer
 				_vm.PropertyChanged += ViewModel_PropertyChanged;
 				_canvas = canvas1;
 
+				var s1 = new Size(_canvas.ActualWidth, _canvas.ActualHeight);
+
 				_image = new Image { Source = _vm.PreviewImage };
 				_ = canvas1.Children.Add(_image);
+
+				var s2 = new Size(_canvas.ActualWidth, _canvas.ActualHeight);
+				var previewImageSize = new SizeDbl(_vm.PreviewImage.Width, _vm.PreviewImage.Height);
+				var controlSize = new SizeDbl(ActualWidth, ActualHeight);
+				Debug.WriteLine
+					(
+						$"PosterSizeEditor: CanvasSize before: {s1}, CanvasSize after adding the PreviewImage: {s2}. Image Size: {previewImageSize}. Container Size: {_canvas.RenderSize}. Control Size: {controlSize}."
+					);
+
 				_image.SetValue(Panel.ZIndexProperty, 10);
 
 				_newImageRectangle = BuildNewImageRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
 				_clipRectangle = BuildClipRectangle(_canvas, new RectangleDbl(1, 1, 2, 2));
 
-				if (_initialPosterMapAreaInfo == null)
-				{
-					throw new InvalidOperationException("The initialPosterMapAreaInfo is null.");
-				}
-
-				var copyOfInitial = _initialPosterMapAreaInfo.Clone();
-
-				var containerSize = ScreenTypeHelper.ConvertToSizeDbl(_canvas.RenderSize);
-				_vm.Initialize(copyOfInitial, containerSize, _initialPosterSize);
-
-				_initialPosterMapAreaInfo = null;
+				// Initialize the ViewModel 
+				var containerSize = _canvas.RenderSize;
+				_vm.Initialize(_initialPosterMapAreaInfo, containerSize, _initialPosterSize);
 
 				_canvas.SizeChanged += CanvasSize_Changed;
 
 				// A border is helpful for troubleshooting.
 				_border = _showBorder ? BuildBorder(_canvas) : null;
-				UpdateTheBorderSize(containerSize.Round());
+				UpdateTheBorderSize(containerSize);
 
 				Debug.WriteLine("The PosterSizeEditor Dialog is now loaded");
 			}
@@ -163,16 +168,14 @@ namespace MSetExplorer
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
 		public SizeDbl NewMapSize => _vm.NewMapSize;
 
-		//public SizeInt NewMapSizeInt => _vm.NewMapSizeInt;
-
 		#endregion
 
 		#region Public Methods
 
 		public void UpdateWithNewMapInfo(MapAreaInfo2 mapAreaInfo, SizeDbl posterSize)
 		{
-			//var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfo);
-			_vm.UpdateWithNewMapInfo(mapAreaInfo, posterSize);
+			var containerSize = _canvas.RenderSize;
+			_vm.UpdateWithNewMapInfo(mapAreaInfo, containerSize, posterSize);
 		}
 
 		#endregion
@@ -183,6 +186,10 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(PosterSizeEditorViewModel.LayoutInfo))
 			{
+				var previewImageSize = new SizeDbl(_vm.PreviewImage.Width, _vm.PreviewImage.Height);
+				Debug.WriteLine($"Here at PosterSizeEditor - Code Behind - LayoutInfo property changed. ContainerSize: {_vm.ContainerSize}, PreviewImageSize: {previewImageSize}, PreviewImageScaleFactor: {_vm.LayoutInfo.ScaleFactorForPreviewImage}.");
+
+
 				SetOriginalImageOffset(_vm.LayoutInfo.OriginalImageArea.Position);
 
 				ClipOriginalImage(_vm.LayoutInfo.PreviewImageClipRegionYInverted);
@@ -194,25 +201,26 @@ namespace MSetExplorer
 
 		private void CanvasSize_Changed(object sender, SizeChangedEventArgs e)
 		{
-			UpdateTheVmWithOurSize(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize));
-			UpdateTheBorderSize(ScreenTypeHelper.ConvertToSizeInt(e.NewSize));
+			UpdateTheVmWithOurSize(e.NewSize);
+			UpdateTheBorderSize(e.NewSize);
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private void UpdateTheVmWithOurSize(SizeDbl size)
+		private void UpdateTheVmWithOurSize(Size size)
 		{
+			var sizeDbl = ScreenTypeHelper.ConvertToSizeDbl(size);
 			if (_border != null)
 			{
-				size = size.Inflate(8);
+				sizeDbl = sizeDbl.Inflate(8);
 			}
 
-			_vm.ContainerSize = size;
+			_vm.ContainerSize = sizeDbl;
 		}
 
-		private void UpdateTheBorderSize(SizeInt size)
+		private void UpdateTheBorderSize(Size size)
 		{
 			if (_border != null)
 			{

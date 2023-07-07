@@ -70,13 +70,14 @@ namespace MSetExplorer
 		public RectangleDbl PreviewImageClipRegion { get; private set; }
 		public RectangleDbl PreviewImageClipRegionYInverted { get; private set; }
 
-		public double CurrentToOriginalScaleFactor { get; private set; } = 1.0; 
+		public double CurrentToOriginalScaleFactor { get; private set; } = 1.0;
 
 		#endregion
 
 		#region Public Methods
 
-		public void Update(double currentToOriginalScaleFactor)
+		// Returns the ScaleFactorForPreviewImage
+		public double Update(double currentToOriginalScaleFactor)
 		{
 			CurrentToOriginalScaleFactor = currentToOriginalScaleFactor;
 			Debug.WriteLine($"Edit Poster Size Layout Update: BeforeOffset: {BeforeOffset}, AfterOffset: {AfterOffset}, NewMapSize: {NewMapSize}, ContainerSize: {ContainerSize}.");
@@ -120,7 +121,13 @@ namespace MSetExplorer
 			PreviewImageClipRegion = rawPreviewImageClipRegion.Translate(OriginalImageArea.Position);
 			PreviewImageClipRegionYInverted = rawPreviewImageClipRegion.FlipY(OriginalImageArea.Height);
 
-			// Diagnostics
+			ReportBoundingValues(boundingImageArea, newImageSize, newImagePos, originalImageSize, originalImagePos, rawPreviewImageClipRegion);
+
+			return ScaleFactorForPreviewImage;
+		}
+
+		private void ReportBoundingValues(RectangleDbl boundingImageArea, SizeDbl newImageSize, PointDbl newImagePos, SizeDbl originalImageSize, PointDbl originalImagePos, RectangleDbl rawPreviewImageClipRegion)
+		{
 			Debug.WriteLine($"BoundingSize: {boundingImageArea.Size.ToString("F2")}, NewSize: {newImageSize.ToString("F2")}, OriginalSize: {originalImageSize.ToString("F2")}.");
 			Debug.WriteLine($"BoundingPos: {boundingImageArea.Position.ToString("F2")}, NewPos: {newImagePos.ToString("F2")}, OrigPos: {originalImagePos.ToString("F2")}");
 			Debug.WriteLine($"ClipSize: {rawPreviewImageClipRegion.Size.ToString("F2")}, Tr.ClipSize: {PreviewImageClipRegion.Size.ToString("F2")}");

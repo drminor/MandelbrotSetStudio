@@ -1,5 +1,4 @@
-﻿using MSetRowGeneratorClient;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Common.MSetGenerator;
 using MSS.Types;
 using MSS.Types.APValues;
@@ -21,7 +20,7 @@ namespace MSetGeneratorPrototype
 		private IIterator _iterator;
 
 		private readonly bool _useCImplementation;
-		private HpMSetRowClient _hpMSetRowClient;
+		//private HpMSetRowClient? _hpMSetRowClient;
 
 		private Vector256<uint>[] _crs;
 		private Vector256<uint>[] _cis;
@@ -46,7 +45,7 @@ namespace MSetGeneratorPrototype
 			_fp31VecMath = _samplePointBuilder.GetVecMath(limbCount);
 			_iterator = new IteratorDepthFirst(_fp31VecMath);
 			_useCImplementation = useCImplementation;
-			_hpMSetRowClient = new HpMSetRowClient();
+			//_hpMSetRowClient = null; // new HpMSetRowClient();
 
 			_crs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_cis = FP31VecMathHelper.CreateNewLimbSet(limbCount);
@@ -91,7 +90,7 @@ namespace MSetGeneratorPrototype
 				? new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors, mapCalcSettings.TargetIterations)
 				: new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
 
-			var completed = GeneratorOrUpdateRows(_iterator, iterationState, _hpMSetRowClient, ct, out var allRowsHaveEscaped);
+			var completed = GeneratorOrUpdateRows(_iterator, iterationState/*, _hpMSetRowClient*/, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();
 
 			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
@@ -103,13 +102,14 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		private bool GeneratorOrUpdateRows(IIterator iterator, IIterationState iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool GeneratorOrUpdateRows(IIterator iterator, IIterationState iterationState/*, HpMSetRowClient? hpMSetRowClient*/, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			bool completed;
 
 			if (_useCImplementation)
 			{
-				completed = HighPerfGenerateMapSectionRows(iterator, iterationState, hpMSetRowClient, ct, out allRowsHaveEscaped);
+				//completed = HighPerfGenerateMapSectionRows(iterator, iterationState, hpMSetRowClient, ct, out allRowsHaveEscaped);
+				throw new NotImplementedException("HighPerfGenerateMapSectionRows is not currently supported.");
 			}
 			else
 			{
@@ -134,46 +134,46 @@ namespace MSetGeneratorPrototype
 			return completed;
 		}
 
-		private bool HighPerfGenerateMapSectionRows(IIterator iterator, IIterationState iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
-		{
-			allRowsHaveEscaped = false;
+		//private bool HighPerfGenerateMapSectionRows(IIterator iterator, IIterationState iterationState, HpMSetRowClient hpMSetRowClient, CancellationToken ct, out bool allRowsHaveEscaped)
+		//{
+		//	allRowsHaveEscaped = false;
 
-			if (ct.IsCancellationRequested)
-			{
-				return false;
-			}
+		//	if (ct.IsCancellationRequested)
+		//	{
+		//		return false;
+		//	}
 
-			allRowsHaveEscaped = true;
+		//	allRowsHaveEscaped = true;
 
-			for (var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
-			{
-				iterationState.SetRowNumber(rowNumber);
+		//	for (var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
+		//	{
+		//		iterationState.SetRowNumber(rowNumber);
 
-				// TODO: Include the MapCalcSettings in the iterationState.
-				var mapCalcSettings = new MapCalcSettings(iterationState.TargetIterationsVector.GetElement(0));
+		//		// TODO: Include the MapCalcSettings in the iterationState.
+		//		var mapCalcSettings = new MapCalcSettings(iterationState.TargetIterationsVector.GetElement(0));
 
-				var allRowSamplesHaveEscaped = hpMSetRowClient.GenerateMapSectionRow(iterationState, _fp31VecMath.ApFixedPointFormat, mapCalcSettings, ct);
-				//iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
+		//		var allRowSamplesHaveEscaped = hpMSetRowClient.GenerateMapSectionRow(iterationState, _fp31VecMath.ApFixedPointFormat, mapCalcSettings, ct);
+		//		//iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
 
-				if (!allRowSamplesHaveEscaped)
-				{
-					allRowsHaveEscaped = false;
-				}
+		//		if (!allRowSamplesHaveEscaped)
+		//		{
+		//			allRowsHaveEscaped = false;
+		//		}
 
-				if (ct.IsCancellationRequested)
-				{
-					allRowsHaveEscaped = false;
-					return false;
-				}
-			}
+		//		if (ct.IsCancellationRequested)
+		//		{
+		//			allRowsHaveEscaped = false;
+		//			return false;
+		//		}
+		//	}
 
-			// 'Close out' the iterationState
-			iterationState.SetRowNumber(iterationState.RowCount);
+		//	// 'Close out' the iterationState
+		//	iterationState.SetRowNumber(iterationState.RowCount);
 
-			Debug.Assert(iterationState.RowNumber == null, $"The iterationState should have a null RowNumber, but instead has {iterationState.RowNumber}.");
+		//	Debug.Assert(iterationState.RowNumber == null, $"The iterationState should have a null RowNumber, but instead has {iterationState.RowNumber}.");
 
-			return true;
-		}
+		//	return true;
+		//}
 
 		private bool GenerateMapSectionRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
@@ -284,6 +284,7 @@ namespace MSetGeneratorPrototype
 
 			if (ct.IsCancellationRequested)
 			{
+				Debug.WriteLine("GenerateMapSectionRowsNoZ is cancelled before processing the first row.");
 				return false;
 			}
 
@@ -298,6 +299,7 @@ namespace MSetGeneratorPrototype
 
 				if (ct.IsCancellationRequested)
 				{
+					Debug.WriteLine($"GenerateMapSectionRowsNoZ is cancelled after row:{rowNumber}.");
 					completed = false;
 					break;
 				}

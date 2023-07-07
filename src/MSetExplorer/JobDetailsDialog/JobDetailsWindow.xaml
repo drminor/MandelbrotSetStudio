@@ -58,7 +58,7 @@
         </Border>
 
 
-        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!--<Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="25,0,0,0">
                 <Button Name="btnDelete" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="40, 10, 20, 10" Click="DeleteJobButton_Click">_Delete Job</Button>
@@ -67,7 +67,7 @@
                 <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="DeleteMapSectionsButton_Click">_Trim Map Sections</Button>
             </StackPanel>
 
-        </Border>
+        </Border>-->
 
         <Border x:Name="borderDetails" Grid.Row="3" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,20">
 
@@ -102,15 +102,27 @@
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
                     <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Total Shared</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Stat6}"/>
-                </StackPanel>                
-                
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="25,2,0,0">
+                    <Button Name="btnDelete" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="40, 10, 20, 10" Click="DeleteJobButton_Click">_Delete Job</Button>
+
+                    <Button HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="TrimMapSectionsButton_Click">Delete Map_Sections</Button>
+                    <Button HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="DeleteMapSectionsButton_Click">_Trim Map Sections</Button>
+                </StackPanel>
+
             </StackPanel>
+        
+        
+        
         </Border>
 
         <Border Grid.Row="4" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
+                <Button HorizontalAlignment="Center" Width="200" FontSize="16" Margin="80, 10, 10, 10" Click="TrimAllButton_Click">Delete _All Map Sections</Button>
+                <Button HorizontalAlignment="Center" Width="200" FontSize="16" Margin="10" Click="TrimAllHeavyButton_Click">Trim All Map _Sections</Button>                
             </StackPanel>
 
         </Border>

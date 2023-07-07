@@ -262,10 +262,16 @@ namespace MapSectionProviderLib
 				try
 				{
 					var mapSectionWorkRequest = _workQueue.Take(ct);
+					var mapSectionRequest = mapSectionWorkRequest.Request;
 
-					if (IsJobCancelled(mapSectionWorkRequest.JobId))
+					var jobIsCancelled = IsJobCancelled(mapSectionWorkRequest.JobId);
+					if (jobIsCancelled || mapSectionRequest.CancellationTokenSource.IsCancellationRequested)
 					{
-						mapSectionWorkRequest.Response = _mapSectionBuilder.CreateEmptyMapSection(mapSectionWorkRequest.Request, mapSectionWorkRequest.JobId, isCancelled: true);
+						var msg = $"The MapSectionRequestProcessor is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
+
+						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
+
+						mapSectionWorkRequest.Response = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, mapSectionWorkRequest.JobId, isCancelled: true);
 						_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 					}
 					else
@@ -282,7 +288,7 @@ namespace MapSectionProviderLib
 
 							if (mapSectionResponse != null)
 							{
-								var mapSection = CreateMapSection(mapSectionWorkRequest.Request, mapSectionResponse.MapSectionVectors, mapSectionWorkRequest.JobId);
+								var mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, mapSectionWorkRequest.JobId);
 
 								mapSectionWorkRequest.Response = mapSection;
 								_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);

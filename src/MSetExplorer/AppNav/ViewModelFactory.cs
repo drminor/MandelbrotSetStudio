@@ -83,13 +83,13 @@ namespace MSetExplorer
 
 
 		// Poster Size Editor Preview
-		public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, 
+		public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, 
 			bool useEscapeVelocitites, Color fallbackColor)
 		{
 			var mapJobHelper = ProvisionAMapJopHelper();
 
 			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, OwnerType.Poster, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
+			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, OwnerType.Poster, mapAreaInfo, posterSize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
 			return result;
 		}
 

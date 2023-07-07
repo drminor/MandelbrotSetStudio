@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MSetRowGeneratorClient\MSetRowGeneratorClient.csproj" />
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
   </ItemGroup>
 

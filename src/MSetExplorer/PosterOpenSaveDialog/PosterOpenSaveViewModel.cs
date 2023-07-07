@@ -173,6 +173,7 @@ namespace MSetExplorer
 			return result;
 		}
 
+		// TODO: Move these methods to the ProjectAndMapSectionHelper (static) class
 		public long TrimSelected(bool agressive)
 		{
 			var posterInfo = SelectedPoster;
@@ -203,7 +204,6 @@ namespace MSetExplorer
 
 			return numberOfMapSectionsDeleted;
 		}
-
 
 		private bool DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, out long numberOfMapSectionsDeleted)
 		{

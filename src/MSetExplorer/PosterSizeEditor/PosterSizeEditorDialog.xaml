@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Edit Poster Size" Height="624" Width="607"
+        Title="Edit Poster Size" Height="800" Width="607"
         MinHeight="500" MinWidth="500">
     <Grid>
 

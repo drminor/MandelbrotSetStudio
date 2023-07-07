@@ -205,7 +205,8 @@ namespace MSS.Common
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}.");
 
-			Debug.WriteLine($"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}.");
+			var ts = DateTime.Now.ToLongTimeString();
+			Debug.WriteLine($"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}. At ts={ts}.");
 
 			if (mapExtentInBlocks.NumberOfCells > 300)
 			{

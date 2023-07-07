@@ -19,7 +19,7 @@ namespace MSetExplorer
 
 		SizeInt BlockSize { get; }
 		ObservableCollection<MapSection> MapSections { get; }
-		ObservableCollection<MapSection> MapSectionsPendingGeneration { get; }
+		//ObservableCollection<MapSection> MapSectionsPendingGeneration { get; }
 		
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }
 
@@ -38,7 +38,8 @@ namespace MSetExplorer
 		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom);
 
 		void CancelJob();
-		//int? RestartLastJob();
+		void PauseJob();
+		int? RestartJob();
 		void ClearDisplay();
 
 		SizeDbl UnscaledExtent { get; }

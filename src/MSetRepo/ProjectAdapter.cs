@@ -637,12 +637,6 @@ namespace MSetRepo
 			var targetIterations = job.MapCalcSettings.TargetIterations;
 			var highCutoff = colorBandSet.HighCutoff;
 
-			//var mapSectionHelper = new MapSectionHelper(new MapSectionValuesPool(RMapConstants.BLOCK_SIZE));
-
-			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, limbCount:2, RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-
-			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
 			var mapSectionHelper = new MapSectionBuilder();
 
 			//var mapSectionRequests = mapSectionHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
@@ -908,9 +902,11 @@ namespace MSetRepo
 					dateCreatedUtc: posterRecord.DateCreatedUtc, lastSavedUtc: lastSavedUtc, lastAccessedUtc: DateTime.MinValue);
 
 
-				Debug.WriteLine($"AssemblePoster completed. Name: {result.Name}, CurrentJobId: {result.CurrentJobId}, DisplayPosition: {result.DisplayPosition}, DisplayZoom: {result.DisplayZoom}.");
+				var ts = DateTime.Now.ToLongTimeString();
+				Debug.WriteLine($"AssemblePoster completed. Name: {result.Name}, CurrentJobId: {result.CurrentJobId}, DisplayPosition: {result.DisplayPosition}, DisplayZoom: {result.DisplayZoom}. At ts={ts}.");
 
 			}
+
 			return result;
 		}
 

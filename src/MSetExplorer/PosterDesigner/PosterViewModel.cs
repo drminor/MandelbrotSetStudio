@@ -649,7 +649,16 @@ namespace MSetExplorer
 				return;
 			}
 
-			_ = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
+			var job = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
+
+			if (CurrentPoster.CurrentJob != job)
+			{
+				throw new InvalidOperationException("Adding a job to the poster should set the value of the PosterViewModel's CurrentPoster's CurrentJob.");
+			}
+
+			OnPropertyChanged(nameof())
+
+			CurrentPoster.CurrentJob = job;
 		}
 
 		#endregion

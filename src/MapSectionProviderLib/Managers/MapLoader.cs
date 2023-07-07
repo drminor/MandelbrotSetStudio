@@ -142,7 +142,12 @@ namespace MapSectionProviderLib
 					mapSectionRequest.Sent = true;
 
 					_ = Interlocked.Increment(ref _sectionsRequested);
+
+					var msg = $"The MapLoader is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
+					msg += "MapSectionRequest's Cancellation Token is cancelled.";
+					Debug.WriteLine($"{msg}");
 				}
+
 			}
 		}
 

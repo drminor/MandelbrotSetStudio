@@ -10,6 +10,8 @@ namespace MSetExplorer
 {
 	public class PosterSizeEditorViewModel : ViewModelBase //, IDataErrorInfo
 	{
+		#region Private Fields
+
 		private readonly DrawingGroup _drawingGroup;
 		private readonly ScaleTransform _scaleTransform;
 
@@ -35,6 +37,8 @@ namespace MSetExplorer
 
 		private readonly LazyMapPreviewImageProvider _lazyMapPreviewImageProvider;
 
+		#endregion
+
 		#region Constructor
 
 		public PosterSizeEditorViewModel(LazyMapPreviewImageProvider lazyMapPreviewImageProvider)
@@ -57,24 +61,7 @@ namespace MSetExplorer
 			_lazyMapPreviewImageProvider.BitmapHasBeenLoaded += MapPreviewImageProvider_BitmapHasBeenLoaded;
 		}
 
-		private void MapPreviewImageProvider_BitmapHasBeenLoaded(object? sender, EventArgs e)
-		{
-			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
-			LoadPreviewImage(previewImage);
-		}
-
-		private void LoadPreviewImage(WriteableBitmap previewImage)
-		{
-			_ = _drawingGroup.Children.Remove(_previewImageDrawing);
-			_previewImageDrawing = CreateImageDrawing(previewImage);
-			_drawingGroup.Children.Add(_previewImageDrawing);
-			_previewImage = new DrawingImage(_drawingGroup);
-		}
-
-		
-		// TODO: Confirm that the PosterSizeEditor does not need a MapAreaInfo-V1 object.
-
-		public void Initialize(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
+		public void Initialize(MapAreaInfo2 posterMapAreaInfo, Size containerSize, SizeDbl posterSize)
 		{
 			_preserveAspectRatio = true;
 			_preserveWidth = true;
@@ -83,8 +70,8 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(PreserveAspectRatio));
 			OnPropertyChanged(nameof(PreserveWidth));
 			OnPropertyChanged(nameof(PreserveHeight));
-			
-			UpdateWithChangesInternal(posterMapAreaInfo, containerSize, posterSize);
+
+			UpdateWithChangesInternal(posterMapAreaInfo, ScreenTypeHelper.ConvertToSizeDbl(containerSize), posterSize);
 
 			BeforeOffset = new VectorDbl(BeforeX, BeforeY);
 			AfterOffset = new VectorDbl(AfterX, AfterY);
@@ -92,8 +79,9 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		public void UpdateWithNewMapInfo(MapAreaInfo2 posterMapAreaInfo, SizeDbl posterSize)
+		public void UpdateWithNewMapInfo(MapAreaInfo2 posterMapAreaInfo, Size containerSize, SizeDbl posterSize)
 		{
+			ContainerSize = ScreenTypeHelper.ConvertToSizeDbl(containerSize);
 			UpdateWithChangesInternal(posterMapAreaInfo, ContainerSize, posterSize);
 
 			_beforeX = 0; _afterX = 0; _beforeY = 0; _afterY = 0;
@@ -111,11 +99,13 @@ namespace MSetExplorer
 		private void UpdateWithChangesInternal(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
 			PosterMapAreaInfo = posterMapAreaInfo;
-			_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
+
+			//_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
+			_lazyMapPreviewImageProvider.RequestBitmapGeneration(posterMapAreaInfo, containerSize, posterSize);
 
 			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
-
 			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
+
 			_layoutInfo = new PreviewImageLayoutInfo(posterSize, previewImageSize, containerSize);
 
 			_originalSize = posterSize;
@@ -132,12 +122,30 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(OriginalAspectRatio));
 		}
 
-		private ImageDrawing CreateImageDrawing(ImageSource previewImage)
+		private void MapPreviewImageProvider_BitmapHasBeenLoaded(object? sender, EventArgs e)
 		{
-			var rect = new Rect(new Size(previewImage.Width, previewImage.Height));
-			var result = new ImageDrawing(previewImage, rect);
-			return result;
+			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
+			LoadPreviewImage(previewImage);
 		}
+
+		private void LoadPreviewImage(WriteableBitmap previewImage)
+		{
+			_ = _drawingGroup.Children.Remove(_previewImageDrawing);
+
+			var previewImageSize = new Size(previewImage.Width, previewImage.Height);
+			_previewImageDrawing = new ImageDrawing(previewImage, new Rect(previewImageSize));
+
+			_drawingGroup.Children.Add(_previewImageDrawing);
+
+			PreviewImage = new DrawingImage(_drawingGroup);
+		}
+		
+		//private ImageDrawing CreateImageDrawing(ImageSource previewImage)
+		//{
+		//	var rect = new Rect(new Size(previewImage.Width, previewImage.Height));
+		//	var result = new ImageDrawing(previewImage, rect);
+		//	return result;
+		//}
 
 		#endregion
 
@@ -437,6 +445,7 @@ namespace MSetExplorer
 				if (!_layoutInfo.IsEmpty && value != _layoutInfo.ContainerSize)
 				{
 					_layoutInfo.ContainerSize = value;
+					//_lazyMapPreviewImageProvider.
 
 					BeforeOffset = new VectorDbl(BeforeX, BeforeY);
 					AfterOffset = new VectorDbl(AfterX, AfterY);
@@ -528,56 +537,25 @@ namespace MSetExplorer
 
 		public RectangleDbl NewMapArea => _layoutInfo.ResultNewMapArea;
 
-		//public SizeInt NewMapSizeInt => _layoutInfo.NewMapSize.Round();
-
-		private void PerformLayout()
-		{
-			_layoutInfo.Update(_scaleFactorCurrentToOriginal);
-			_scaleTransform.ScaleX = _layoutInfo.ScaleFactorForPreviewImage;
-			_scaleTransform.ScaleY = _layoutInfo.ScaleFactorForPreviewImage;
-
-			OnPropertyChanged(nameof(LayoutInfo));
-
-			////OnPropertyChanged();
-
-			//var previousAspect = _currentSize.AspectRatio;
-			//var newSize = value.Size.Round();
-
-			//if (newSize.Width != _currentSize.Width && newSize.Height != _currentSize.Height)
-			//{
-			//	_currentSize = newSize;
-			//	OnPropertyChanged(nameof(Width));
-			//	OnPropertyChanged(nameof(Height));
-			//}
-			//else if (newSize.Width != _currentSize.Width)
-			//{
-			//	_currentSize = newSize;
-			//	OnPropertyChanged(nameof(Width));
-			//}
-			//else if (newSize.Height != _currentSize.Height)
-			//{
-			//	_currentSize = newSize;
-			//	OnPropertyChanged(nameof(Height));
-			//}
-
-			//if (_currentSize.AspectRatio != previousAspect)
-			//{
-			//	OnPropertyChanged(nameof(AspectRatio));
-			//}
-
-		}
-
 		public PreviewImageLayoutInfo LayoutInfo => _layoutInfo;
 
 		public MapAreaInfo2? PosterMapAreaInfo { get; private set; }
 
-		public ImageSource PreviewImage => _previewImage;
+		public ImageSource PreviewImage
+		{
+			get => _previewImage;
+			private set
+			{
+				_previewImage = value;
+				OnPropertyChanged();
+			}
+		}
 
 		#endregion
 
 		#region Public Properties - UI Display
 
-		public double AspectRatio => _currentSize.AspectRatio;
+		public double AspectRatio => _currentSize.AspectRatio; // AspectRatio of NewMapSize
 
 		public int OriginalWidth
 		{
@@ -607,7 +585,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public double OriginalAspectRatio => _originalSize.AspectRatio;
+		public double OriginalAspectRatio => _originalSize.AspectRatio; // AspectRatio of PosterSize
 
 		#endregion
 
@@ -671,6 +649,60 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private void PerformLayoutOld()
+		{
+			_layoutInfo.Update(_scaleFactorCurrentToOriginal);
+
+			// Set the RenderTransform for the PreviewImage Drawing Group
+			_scaleTransform.ScaleX = _layoutInfo.ScaleFactorForPreviewImage;
+			_scaleTransform.ScaleY = _layoutInfo.ScaleFactorForPreviewImage;
+
+			OnPropertyChanged(nameof(LayoutInfo));
+
+			////OnPropertyChanged();
+
+			//var previousAspect = _currentSize.AspectRatio;
+			//var newSize = value.Size.Round();
+
+			//if (newSize.Width != _currentSize.Width && newSize.Height != _currentSize.Height)
+			//{
+			//	_currentSize = newSize;
+			//	OnPropertyChanged(nameof(Width));
+			//	OnPropertyChanged(nameof(Height));
+			//}
+			//else if (newSize.Width != _currentSize.Width)
+			//{
+			//	_currentSize = newSize;
+			//	OnPropertyChanged(nameof(Width));
+			//}
+			//else if (newSize.Height != _currentSize.Height)
+			//{
+			//	_currentSize = newSize;
+			//	OnPropertyChanged(nameof(Height));
+			//}
+
+			//if (_currentSize.AspectRatio != previousAspect)
+			//{
+			//	OnPropertyChanged(nameof(AspectRatio));
+			//}
+
+		}
+
+		private void PerformLayout()
+		{
+			var scaleFactorForPreviewImage = _layoutInfo.Update(_scaleFactorCurrentToOriginal);
+
+			Debug.WriteLine($"PosterSizeViewModel is having its PreviewImage ScaleFactor set to {scaleFactorForPreviewImage}.");
+			// Set the RenderTransform for the PreviewImage Drawing Group
+			//_scaleTransform.ScaleX = _layoutInfo.ScaleFactorForPreviewImage;
+			//_scaleTransform.ScaleY = _layoutInfo.ScaleFactorForPreviewImage;
+
+			_scaleTransform.ScaleX = scaleFactorForPreviewImage;
+			_scaleTransform.ScaleY = scaleFactorForPreviewImage;
+
+			OnPropertyChanged(nameof(LayoutInfo));
+		}
 
 		private VectorDbl GetOffsetsForNewWidth(SizeDbl previousSize, SizeDbl size, VectorDbl beforeOffsets, VectorDbl afterOffsets, out VectorDbl newAfterOffsets)
 		{

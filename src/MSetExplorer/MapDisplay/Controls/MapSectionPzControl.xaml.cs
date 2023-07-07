@@ -58,7 +58,7 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 				PanAndZoomControl1.ScrollbarVisibilityChanged += PanAndZoomControl1_ScrollbarVisibilityChanged;
 
-				_vm.JobSubmitted += MapSectionDisplayViewModel_JobSubmitted;
+				//_vm.JobSubmitted += MapSectionDisplayViewModel_JobSubmitted;
 
 				_outline = BuildOutline(BitmapGridControl1.Canvas);
 
@@ -75,7 +75,7 @@ namespace MSetExplorer
 			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
 			PanAndZoomControl1.ScrollbarVisibilityChanged -= PanAndZoomControl1_ScrollbarVisibilityChanged;
 
-			_vm.JobSubmitted -= MapSectionDisplayViewModel_JobSubmitted;
+			//_vm.JobSubmitted -= MapSectionDisplayViewModel_JobSubmitted;
 		}
 
 		#endregion
@@ -112,10 +112,10 @@ namespace MSetExplorer
 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
-		private void MapSectionDisplayViewModel_JobSubmitted(object? sender, EventArgs e)
-		{
-			PanAndZoomControl1.SetPositionAndZoom(_vm.DisplayPosition, _vm.DisplayZoom);
-		}
+		//private void MapSectionDisplayViewModel_JobSubmitted(object? sender, EventArgs e)
+		//{
+		//	PanAndZoomControl1.SetPositionAndZoom(_vm.DisplayPosition, _vm.DisplayZoom);
+		//}
 
 		#endregion
 
@@ -130,6 +130,8 @@ namespace MSetExplorer
 
 			if (displayArea.Point1.X > 0 || displayArea.Point1.Y > 0)
 			{
+				Debug.WriteLine($"The MapSectionPzControl is centering the content. DisplayArea.Point1: {displayArea.Point1}.");
+
 				// The content does not fill the entire control.
 				// Move the content to the center of the control
 				// and clip so that only the content is visible.

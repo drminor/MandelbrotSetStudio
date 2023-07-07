@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:PosterOpenSaveViewModel}"
         mc:Ignorable="d"
-        Title="Open Poster" Height="1000" Width="855">
+        Title="Open Poster" Height="1000" Width="930">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -53,8 +53,9 @@
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Cancel</Button>
                 <Button Name="btnDelete" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="40,10, 10, 10" Click="DeleteButton_Click">_Delete</Button>
 
-                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="110" FontSize="16" Margin="10" Click="ViewJobsButton_Click">_View Jobs</Button>
-                <!--<Button Name="btnTrimMapSectionsHeavy" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="TrimMapSectionsHeavyButton_Click">Trim _Heavy</Button>-->
+                <Button Name="btnViewJobs" HorizontalAlignment="Center" Width="110" FontSize="16" Margin="10" Click="ViewJobsButton_Click">_View Jobs</Button>
+                <Button Name="btnTrimMapSectionsHeavy" HorizontalAlignment="Center" Width="160" FontSize="16" Margin="10" Click="TrimMapSectionsHeavyButton_Click">Delete Map Sections</Button>
+                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="10" Click="TrimMapSectionsHeavyButton_Click">Trim Map Sections</Button>
             </StackPanel>
 
         </Border>

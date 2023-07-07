@@ -129,6 +129,7 @@ namespace MEngineClient
 		{
 			if (ct.IsCancellationRequested)
 			{
+				Debug.WriteLine($"The MClientLocal is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.");
 				return new MapSectionResponse(mapSectionRequest, isCancelled: true);
 			}
 

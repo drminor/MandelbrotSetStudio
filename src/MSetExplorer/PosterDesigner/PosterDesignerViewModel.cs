@@ -29,7 +29,7 @@ namespace MSetExplorer
 
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 			
-			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
+			//MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
 			_viewModelFactory = viewModelFactory;
@@ -125,7 +125,12 @@ namespace MSetExplorer
 			// Update the MapCalcSettings, MapCoords and Map Display with the new Job Area and Calc Settings
 			if (e.PropertyName == nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings))
 			{
-				RunCurrentJob();
+				SubmitMapDisplayJob();
+			}
+
+			if (e.PropertyName == nameof(IPosterViewModel.CurrentJob))
+			{
+				Debug.WriteLine("The PosterViewModel's CurrentJob is changing.");
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
@@ -158,22 +163,22 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
-		{
-			if (e.IsPreview)
-			{
-				// Calculate new Coords for preview
+		//private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
+		//{
+		//	if (e.IsPreview)
+		//	{
+		//		// Calculate new Coords for preview
 
-				//var newMapAreaInfo = PosterViewModel.GetUpdatedMapAreaInfo(e.CurrentMapAreaInfo, e.TransformType, e.PanAmount, e.Factor, out var diagReciprocal);
-				//MapCoordsViewModel.Preview(newMapAreaInfo);
-			}
-			else
-			{
-				// Zoom or Pan Map Coordinates
-				var newMapAreaInfo = PosterViewModel.GetUpdatedMapAreaInfo(e.CurrentMapAreaInfo, e.TransformType, e.PanAmount, e.Factor, out var diagReciprocal);
-				PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
-			}
-		}
+		//		//var newMapAreaInfo = PosterViewModel.GetUpdatedMapAreaInfo(e.CurrentMapAreaInfo, e.TransformType, e.PanAmount, e.Factor, out var diagReciprocal);
+		//		//MapCoordsViewModel.Preview(newMapAreaInfo);
+		//	}
+		//	else
+		//	{
+		//		// Zoom or Pan Map Coordinates
+		//		var newMapAreaInfo = PosterViewModel.GetUpdatedMapAreaInfo(e.CurrentMapAreaInfo, e.TransformType, e.PanAmount, e.Factor, out var diagReciprocal);
+		//		PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
+		//	}
+		//}
 
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
 		{
@@ -208,7 +213,11 @@ namespace MSetExplorer
 			}
 		}
 
-		public void RunCurrentJob()
+
+		//var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), OwnerType.Poster, currentJob.MapAreaInfo, CurrentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
+
+
+		public void SubmitMapDisplayJob()
 		{
 			var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
 
@@ -225,8 +234,11 @@ namespace MSetExplorer
 					UpdateTheMapCoordsView(currentjob);
 					var posterSize = currentPoster.PosterSize;
 
-					var displayPosition = currentPoster.DisplayPosition;
-					var displayZoom = currentPoster.DisplayZoom;
+					//var displayPosition = currentPoster.DisplayPosition;
+					//var displayZoom = currentPoster.DisplayZoom;
+
+					var displayPosition = new VectorDbl();
+					var displayZoom = RMapConstants.DEFAULT_POSTER_DISPLAY_ZOOM;
 
 					MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize, displayPosition, displayZoom);
 				}

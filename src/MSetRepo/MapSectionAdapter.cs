@@ -3,7 +3,6 @@ using MongoDB.Driver;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
-using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo;
 using ProjectRepo.Entities;
@@ -350,36 +349,6 @@ namespace MSetRepo
 
 		#region JobMapSection
 
-		//public async Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, string jobIdStr, JobType jobType, SizeInt blockIndex, bool isInverted, OwnerType ownerType, string jobSubdivisionIdStr)
-		//{
-		//	var mapSectionIdStr = mapSectionResponse.MapSectionId;
-		//	if (string.IsNullOrEmpty(mapSectionIdStr))
-		//	{
-		//		throw new ArgumentNullException(nameof(MapSectionResponse.MapSectionId), "The MapSectionId cannot be null.");
-		//	}
-
-		//	var mapSubdivisionIdStr = mapSectionResponse.SubdivisionId;
-		//	if (string.IsNullOrEmpty(mapSubdivisionIdStr))
-		//	{
-		//		throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");
-		//	}
-
-		//	//var jobSubdivisionIdStr = mapSectionResponse.OriginalSourceSubdivisionId;
-		//	if (string.IsNullOrEmpty(jobSubdivisionIdStr))
-		//	{
-		//		throw new ArgumentNullException(nameof(jobSubdivisionIdStr), "The OriginalSourceSubdivisionId cannot be null.");
-		//	}
-
-		//	//var jobIdStr = mapSectionResponse.JobId;
-		//	if (string.IsNullOrEmpty(jobIdStr))
-		//	{
-		//		throw new ArgumentNullException(nameof(jobIdStr), "The OwnerId cannot be null.");
-		//	}
-
-		//	var result = await SaveJobMapSectionAsync(jobType, new ObjectId(jobIdStr), new ObjectId(mapSectionIdStr), blockIndex, isInverted, new ObjectId(mapSubdivisionIdStr), new ObjectId(jobSubdivisionIdStr), ownerType);
-		//	return result;
-		//}
-
 		public async Task<ObjectId?> SaveJobMapSectionAsync(JobType jobType, ObjectId jobId, ObjectId mapSectionId, SizeInt blockIndex, bool isInverted, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, OwnerType ownerType)
 		{
 			var existingRecord = await _jobMapSectionReaderWriter.GetByMapSectionIdJobIdAndJobTypeAsync(mapSectionId, jobId, jobType);
@@ -416,18 +385,7 @@ namespace MSetRepo
 					await _jobMapSectionReaderWriter.SetSubdivisionIdAsync(jobMapSectionId, mapSectionSubdivisionId, jobSubdivisionId);
 				}
 
-
-				//if (existingRecord.OriginalSourceSubdivisionId != originalSourceSubdivisionId)
-				//{
-				//	if (existingRecord.OriginalSourceSubdivisionId != ObjectId.Empty)
-				//	{
-				//		Debug.WriteLine($"The origSrcSubdivisionId on the existing JobMapSectionRecord: {existingRecord.OriginalSourceSubdivisionId} does not match the Job's origSrcSubdivisionId: {originalSourceSubdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
-				//	}
-
-				//	_jobMapSectionReaderWriter.SetOriginalSourceSubdivisionId(jobMapSectionId, originalSourceSubdivisionId);
-				//}
-
-				return existingRecord.Id;
+				return jobMapSectionId;
 			}
 		}
 
@@ -436,11 +394,6 @@ namespace MSetRepo
 			var existingRecord = _jobMapSectionReaderWriter.GetByMapSectionIdJobIdAndJobType(mapSectionId, jobId, jobType);
 			if (existingRecord == null)
 			{
-				//var jobMapSectionRecord = new JobMapSectionRecord(jobId, mapSectionId, subdivisionId, jobOwnerType, isInverted, DateTime.UtcNow, refIsHard)
-				//{
-				//	OriginalSourceSubdivisionId = jobSubdivisionId
-				//};
-
 				var blockIndexRecord = _mSetRecordMapper.MapTo(blockIndex);
 
 				var jobMapSectionRecord = new JobMapSectionRecord(jobType, jobId, mapSectionId, blockIndexRecord, isInverted, DateCreatedUtc: DateTime.UtcNow, LastSavedUtc: DateTime.UtcNow,
@@ -461,21 +414,17 @@ namespace MSetRepo
 			{
 				jobMapSectionId = existingRecord.Id;
 
-				if (existingRecord.MapSectionSubdivisionId != mapSectionSubdivisionId | existingRecord.JobSubdivisionId != jobSubdivisionId)
+				if (existingRecord.JobSubdivisionId != jobSubdivisionId)
 				{
-					Debug.WriteLine($"The subdivisionId on the existing JobMapSectionRecord: {existingRecord.MapSectionSubdivisionId} does not match the MapSection's SubdivisionId: {mapSectionSubdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
+					Debug.WriteLine($"The JobSubdivisionId on the existing JobMapSectionRecord: {existingRecord.JobSubdivisionId} does not match the Job's SubdivisionId: {jobSubdivisionId}. JobMapSectionId: {jobMapSectionId}, JobId: {jobId}, MapSectionId: {mapSectionId}.");
 					_jobMapSectionReaderWriter.SetSubdivisionId(jobMapSectionId, mapSectionSubdivisionId, jobSubdivisionId);
 				}
 
-				//if (existingRecord.OriginalSourceSubdivisionId != originalSourceSubdivisionId)
-				//{
-				//	if (existingRecord.OriginalSourceSubdivisionId != ObjectId.Empty)
-				//	{
-				//		Debug.WriteLine($"The origSrcSubdivisionId on the existing JobMapSectionRecord: {existingRecord.OriginalSourceSubdivisionId} does not match the Job's origSrcSubdivisionId: {originalSourceSubdivisionId}. JobId: {jobId}, MapSectionId: {mapSectionId}.");
-				//	}
-
-				//	_jobMapSectionReaderWriter.SetOriginalSourceSubdivisionId(jobMapSectionId, originalSourceSubdivisionId);
-				//}
+				if (existingRecord.MapSectionSubdivisionId != mapSectionSubdivisionId)
+				{
+					Debug.WriteLine($"The MapSubdivisionId on the existing JobMapSectionRecord: {existingRecord.MapSectionSubdivisionId} does not match the MapSection's SubdivisionId: {mapSectionSubdivisionId}. JobMapSectionId: {jobMapSectionId}, JobId: {jobId}, MapSectionId: {mapSectionId}.");
+					_jobMapSectionReaderWriter.SetSubdivisionId(jobMapSectionId, mapSectionSubdivisionId, jobSubdivisionId);
+				}
 
 				return false;
 			}
