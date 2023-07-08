@@ -1,18 +1,13 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
-using MSetRepo.Storage;
 using MSS.Common;
-using MSS.Types;
 using MSS.Types.MSet;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
-using System.Windows.Media.Animation;
 
 namespace MSetExplorer
 {
@@ -22,7 +17,6 @@ namespace MSetExplorer
 
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
-		
 
 		//private readonly Func<Job, SizeDbl, bool, long>? _deleteNonEssentialMapSectionsFunction;
 
@@ -38,13 +32,13 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, ViewModelFactory viewModelFactory, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction, string? initialName, DialogType dialogType)
+		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, ViewModelFactory viewModelFactory/*, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction*/, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			ViewModelFactory = viewModelFactory;
 
-			DeleteNonEssentialMapSectionsFunction = deleteNonEssentialMapSectionsFunction;
+			//DeleteNonEssentialMapSectionsFunction = deleteNonEssentialMapSectionsFunction;
 
 			DialogType = dialogType;
 
@@ -136,7 +130,7 @@ namespace MSetExplorer
 
 		public ViewModelFactory ViewModelFactory { get; init; }
 
-		public DeleteNonEssentialMapSectionsDelegate? DeleteNonEssentialMapSectionsFunction { get; }
+		//public DeleteNonEssentialMapSectionsDelegate? DeleteNonEssentialMapSectionsFunction { get; }
 
 		#endregion
 

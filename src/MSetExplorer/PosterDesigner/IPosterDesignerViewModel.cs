@@ -1,8 +1,4 @@
-﻿using MongoDB.Bson;
-using MSS.Types;
-using MSS.Types.MSet;
-using System.ComponentModel;
-using System.Windows.Media;
+﻿using System.ComponentModel;
 
 namespace MSetExplorer
 {
@@ -24,9 +20,9 @@ namespace MSetExplorer
 		//CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/);
 		//LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor);
 
-		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal);
+		//MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal);
 
-		void SubmitMapDisplayJob();
+		//void SubmitMapDisplayJob();
 
 		//MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize);
 	}

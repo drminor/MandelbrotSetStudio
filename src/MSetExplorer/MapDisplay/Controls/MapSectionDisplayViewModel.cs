@@ -10,8 +10,10 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -34,6 +36,7 @@ namespace MSetExplorer
 		private IBitmapGrid _bitmapGrid;
 		private AreaColorAndCalcSettings? _currentAreaColorAndCalcSettings;
 
+		private SizeDbl _unscaledExtent;
 		private SizeDbl _viewportSize;
 		private VectorDbl _imageOffset;
 		private VectorDbl _displayPosition;
@@ -68,6 +71,7 @@ namespace MSetExplorer
 			ActiveJobNumbers = new List<int>();
 			_currentAreaColorAndCalcSettings = null;
 
+			_unscaledExtent = new SizeDbl();
 			_viewportSize = new SizeDbl();
 			_imageOffset = new VectorDbl();
 			_displayPosition = new VectorDbl();
@@ -83,7 +87,7 @@ namespace MSetExplorer
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		public event EventHandler<int>? DisplayJobCompleted;
 
-		public event EventHandler? JobSubmitted;
+		public event EventHandler<InitialDisplaySettingsEventArgs>? InitializeDisplaySettings;
 
 		#endregion
 
@@ -151,6 +155,9 @@ namespace MSetExplorer
 			}
 		}
 
+		/// <summary>
+		/// Unscaled Display Size.
+		/// </summary>
 		public SizeDbl ViewportSize
 		{
 			get => _viewportSize;
@@ -195,12 +202,26 @@ namespace MSetExplorer
 			{
 				_boundedMapArea = value;
 
-				// Let the BitmapGridControl know the entire size.
-				OnPropertyChanged(nameof(IMapDisplayViewModel.UnscaledExtent));
+				//// Let the BitmapGridControl know the entire size.
+				//OnPropertyChanged(nameof(IMapDisplayViewModel.UnscaledExtent));
 			}
 		}
 
-		public SizeDbl UnscaledExtent => _boundedMapArea?.PosterSize ?? SizeDbl.Zero;
+		//public SizeDbl UnscaledExtent => _boundedMapArea?.PosterSize ?? SizeDbl.Zero;
+
+		public SizeDbl UnscaledExtent
+		{
+			get => _unscaledExtent;
+
+			set
+			{
+				if (value != _unscaledExtent)
+				{
+					_unscaledExtent = value;
+					OnPropertyChanged(nameof(IMapDisplayViewModel.UnscaledExtent));
+				}
+			}
+		}
 
 		public VectorDbl DisplayPosition
 		{
@@ -221,10 +242,14 @@ namespace MSetExplorer
 			private set
 			{
 				var previousValue = _displayZoom;
-				_displayZoom = value;
 
-				Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
-				//OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
+				if (ScreenTypeHelper.IsDoubleChanged(value, _displayZoom, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
+				{
+					_displayZoom = value;
+
+					Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+					//OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
+				}
 			}
 		}
 
@@ -244,6 +269,12 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public void ReceiveAdjustedContentScale(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl)
+		{
+			Debug.WriteLine($"Receiving the adjusted content scale. Current: {_displayZoom}, New: {contentScaleFromPanAndZoomControl}, Check: {contentScaleFromBitmapGridControl}.");
+			_displayZoom = contentScaleFromPanAndZoomControl;	
+		}
+
 		public int? SubmitJob(AreaColorAndCalcSettings newValue)
 		{
 			CheckBlockSize(newValue);
@@ -258,6 +289,7 @@ namespace MSetExplorer
 
 				// Unbounded
 				BoundedMapArea = null;
+				UnscaledExtent = new SizeDbl();
 
 				if (newValue != CurrentAreaColorAndCalcSettings)
 				{
@@ -282,7 +314,7 @@ namespace MSetExplorer
 		}
 
 		// TODO: SubmitJob may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
-		public int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
+		public int? SubmitJobOld(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
 		{
 			CheckBlockSize(newValue);
 
@@ -314,7 +346,7 @@ namespace MSetExplorer
 				CurrentAreaColorAndCalcSettings = newValue;
 				DisplayPosition = displayPosition;
 
-				JobSubmitted?.Invoke(this, new EventArgs());
+				//JobSubmitted?.Invoke(this, new EventArgs());
 
 				if (newJobNumber.HasValue && lastSectionWasIncluded)
 				{
@@ -325,7 +357,107 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
+		// TODO: SubmitJob may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
+		public void SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
+		{
+			CheckBlockSize(newValue);
+
+			//int? newJobNumber;
+
+			lock (_paintLocker)
+			{
+				CheckViewPortSize();
+
+				var previousValue = CurrentAreaColorAndCalcSettings;
+				ReportSubmitJobDetails(previousValue, newValue, isBound: true);
+
+				// Make sure no content is loaded while we reset the PanAndZoom control.
+				CurrentAreaColorAndCalcSettings = null;
+
+				_minimumDisplayZoom = GetMinDisplayZoom(posterSize, ViewportSize);
+				var maxDisplayZoom = 1.0;
+				_displayZoom = displayZoom;
+				_displayPosition = displayPosition;
+
+				InitializeDisplaySettings?.Invoke(this, new InitialDisplaySettingsEventArgs(posterSize, _displayPosition, _minimumDisplayZoom, maxDisplayZoom, _displayZoom));
+
+				//UnscaledExtent = new SizeDbl();
+
+				// Save the MapAreaInfo for the entire poster.
+				BoundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize);
+
+				// Update the values to which the PanAndZoom control are bound.	See the comment below this method for details.
+				//MinimumDisplayZoom = GetMinDisplayZoom(posterSize, ViewportSize);
+				//DisplayZoom = Math.Max(displayZoom, MinimumDisplayZoom);
+				//DisplayPosition = displayPosition;
+
+				CurrentAreaColorAndCalcSettings = newValue;
+
+				// Trigger a ViewportChanged event on the PanAndZoomControl -- this should result in our UpdateViewportSizeAndPos method being called.
+				UnscaledExtent = BoundedMapArea.PosterSize;
+			}
+		}
+
+		//private (SizeDbl posterSize, double minDZoom, double dZoom, VectorDbl pos) GetCurrentValues(BoundedMapArea boundedMapArea)
+		//{
+		//	if (boundedMapArea == null)
+		//	{
+		//		return (new SizeDbl(), 0, 0, new VectorDbl());
+		//	}
+		//	else
+		//	{
+		//		//var posterSize = boundedMapArea.PosterSize;
+		//		var minDZoom = 0;
+		//		var dZoom = 0;
+		//		var pos = new VectorDbl();
+
+		//		return (boundedMapArea.PosterSize, minDZoom, dZoom, pos);
+		//	}
+		//}
+
+		/*	Details regarding what the PanAndZoomControl does as the Extent and DisplayZoom values are updated.
+
+				The PanAndZoom control will update scroll bar extents and positions.
+				The PanAndZoom control will update the BitmapGridControl's Scale Transform and Canvas Size.
+				 	
+			 As the UnscaledExtent is updated...
+				1. The PanAndZoomControl will update it's 
+					a. ContentOffsetX
+					b. ContentOffsetY
+					c. If the ContentScale is not 1.0, 
+						i. The ContentScale is set to 1.0
+							otherwise
+						ii. The ContentViewportSize is updated.
+					
+					d. Raise the ScrollBarVisibilityChanged Event
+				
+			 As the ContentScale is updated, the following are updated.
+				1. The BitmapGridControl's ScaleTransform
+				2. The ContentViewportSize
+				3. OffsetX
+				4. OffsetY
+				5. ZoomSlider is updated by calling it's ContentScaleWasUpdated method
+			  6. The ScrollViewer is updated via calling it's InvalidateScrollInfo method
+				7. The ContentScaleChanged event is raised
+				8. The ViewportChanged event is raised
+				 
+			
+			 As the ContentViewportSize is changed, the following are also updated...
+				1. The BitmapGridControl's
+					a. ContentViewportSize.
+					b. The Size of the (main) Canvas -- using the new value for ContentViewportSize and ScaleTransform
+				2. The Size of the (main) Canvas
+				3. VerticalScrollBarVisibility
+				4. HorizontalScrollBarVisibility.
+				5. TranslationX
+				6. TranslationY
+
+		*/
+
 		// TODO: UpdateViewportSizeAndPos may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
+		// TODO: Consider adding a property of type ScaledImageViewInfo to this (MapSectionDisplayViewModel)
+		// and also add a Dependency Property on the PanAndZoom control so that the 
+		// triplet of ViewportSize, Offset and Scale can be bound.
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
 			int? newJobNumber;
@@ -347,7 +479,7 @@ namespace MSetExplorer
 
 					var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(contentScale);
 
-					Debug.WriteLine($"The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Offset:{contentOffset}, Scale:{contentScale}. BaseScale: {baseScale}, RelativeScale: {relativeScale}.");
+					//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseScale, relativeScale);
 
 					//DisplayZoom = contentScale;
 					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, BoundedMapArea, contentViewportSize, contentOffset, baseScale);
@@ -355,6 +487,31 @@ namespace MSetExplorer
 			}
 
 			return newJobNumber;
+		}
+		
+		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseScale, double relativeScale) 
+		//{
+		//	Debug.Assert(UnscaledExtent == BoundedMapArea?.PosterSize, "UnscaledExtent is out of sync.");
+
+		//	var sanityContentScale = CalculateContentScale(UnscaledExtent, contentViewportSize);
+
+		//	if (Math.Abs(sanityContentScale.Width - contentScale) > 0.01 && Math.Abs(sanityContentScale.Height - contentScale) > 0.01)
+		//	{
+		//		Debug.WriteLine($"Content Scale is Off. SanityCheck vs Value at UpdateViewPortSize: {sanityContentScale} vs {contentScale}.");
+		//		//throw new InvalidOperationException("Content Scale is OFF!!");
+		//	}
+
+		//	Debug.WriteLine($"CHECK THIS: The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Scale:{contentScale}. BaseScale: {baseScale}, RelativeScale: {relativeScale}.");
+
+		//}
+
+
+		private SizeDbl CalculateContentScale(SizeDbl unscaledExtent, SizeDbl contentViewPortSize)
+		{
+			var scale2D = contentViewPortSize.Divide(unscaledExtent);
+			//var result = Math.Min(scale2D.Width, scale2D.Height);
+
+			return scale2D;
 		}
 
 		public int? UpdateViewportSize(SizeDbl newValue)
@@ -595,6 +752,11 @@ namespace MSetExplorer
 
 		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset, double baseScale)
 		{
+			if (contentOffset.X != 0 || contentOffset.Y != 0)
+			{
+				Debug.WriteLine("The ContentOffset is non-zero on call to LoadNewView.");
+			}
+
 			int? newJobNumber;
 			bool lastSectionWasIncluded;
 

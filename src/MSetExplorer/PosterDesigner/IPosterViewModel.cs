@@ -1,8 +1,6 @@
-﻿using MongoDB.Bson;
-using MSS.Common.MSet;
+﻿using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
@@ -19,7 +17,7 @@ namespace MSetExplorer
 		bool CurrentPosterIsDirty { get; }
 		int GetGetNumberOfDirtyJobs();
 
-		SizeDbl PosterSize { get; set; }
+		SizeDbl PosterSize { get; /*set;*/ }
 
 		Job CurrentJob { get; }
 		AreaColorAndCalcSettings CurrentAreaColorAndCalcSettings { get; }
@@ -34,12 +32,18 @@ namespace MSetExplorer
 		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal);
 		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal);
 
-		void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo/*, SizeDbl posterSize*/);
+		void AddNewCoordinateUpdateJob(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize);
 
 		//void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo, out double diagReciprocal);
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
-		void Load(Poster poster, MapAreaInfo2? newMapAreaInfo);
+
+
+		void PosterAddNewJobAndLoad(Poster poster, MapAreaInfo2? newMapAreaInfo, SizeDbl posterSize);
+		void PosterLoad(Poster poster);
+
+
+
 
 		bool PosterOpen(string name);
 		bool PosterSave();
@@ -48,7 +52,7 @@ namespace MSetExplorer
 
 		long DeleteMapSectionsForUnsavedJobs();
 		//long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize);
-		long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize, bool aggressive);
+		//long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize, bool aggressive);
 
 		//List<ObjectId> GetAllNonCurrentJobIds();
 		//List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD();

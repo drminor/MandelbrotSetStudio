@@ -78,5 +78,7 @@ namespace MSS.Common
 		IEnumerable<JobInfo> GetJobInfosForOwner(ObjectId ownerId, ObjectId currentJobId);
 		IEnumerable<ValueTuple<ObjectId, ObjectId>> GetJobAndSubdivisionIdsForOwner(ObjectId ownerId);
 
+		void UpdatePosterDisplayPositionAndZoom(Poster poster);
+
 	}
 }

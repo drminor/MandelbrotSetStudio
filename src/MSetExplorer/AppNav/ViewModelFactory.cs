@@ -18,7 +18,7 @@ namespace MSetExplorer
 
 	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, SizeDbl canvasSize, bool allowEdits);
 
-	public delegate long DeleteNonEssentialMapSectionsDelegate(Job job, SizeDbl canvasSize, bool agressive);
+	//public delegate long DeleteNonEssentialMapSectionsDelegate(Job job, SizeDbl canvasSize, bool agressive);
 
 	public class ViewModelFactory
 	{
@@ -46,10 +46,10 @@ namespace MSetExplorer
 		}
 
 		// Poster Open/Save
-		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType/*, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction*/)
 		{
 			var viewModelFactory = this;
-			return new PosterOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, viewModelFactory, deleteNonEssentialMapSectionsFunction, initalName, dialogType);
+			return new PosterOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, viewModelFactory/*, deleteNonEssentialMapSectionsFunction*/, initalName, dialogType);
 		}
 
 		// JobDetils

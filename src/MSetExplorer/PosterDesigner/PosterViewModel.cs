@@ -149,17 +149,17 @@ namespace MSetExplorer
 		public SizeDbl PosterSize
 		{
 			get => CurrentPoster?.PosterSize ?? new SizeDbl(1024);
-			set
-			{
-				var curPoster = CurrentPoster;
-				if (curPoster != null)
-				{
-					if (value != PosterSize)
-					{
-						curPoster.PosterSize = value;
-					}
-				}
-			}
+			//set
+			//{
+			//	var curPoster = CurrentPoster;
+			//	if (curPoster != null)
+			//	{
+			//		if (value != PosterSize)
+			//		{
+			//			curPoster.PosterSize = value;
+			//		}
+			//	}
+			//}
 		}
 
 		public ColorBandSet CurrentColorBandSet
@@ -252,7 +252,7 @@ namespace MSetExplorer
 				var curPoster = CurrentPoster;
 				if (curPoster != null)
 				{
-					if (Math.Abs(value - DisplayZoom) > 0.001)
+					if (Math.Abs(value - DisplayZoom) > RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF)
 					{
 						curPoster.DisplayZoom = value;
 						Debug.WriteLineIf(_useDetailedDebug, $"The PosterViewModel's DisplayZoom is being updated to {value}.");
@@ -273,7 +273,7 @@ namespace MSetExplorer
 			{
 				if (value != _areaColorAndCalcSettings)
 				{
-					Debug.Assert(value.JobOwnerType == OwnerType.Poster, "The PosterViewModel is receiving a CurrentAreaColorAndCalcSetting that has a JobOwnerType other than 'Poster'.");
+					Debug.Assert(value.JobOwnerType == OwnerType.Poster, "The PosterViewModel is receiving a CurrentAreaColorAndCalcSetting that has an OwnerType other than 'Poster'.");
 					_areaColorAndCalcSettings = value;
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings));
 				}
@@ -337,14 +337,23 @@ namespace MSetExplorer
 			}
 		}
 
-		public void Load(Poster poster, MapAreaInfo2? newMapArea)
+		public void PosterAddNewJobAndLoad(Poster poster, MapAreaInfo2? newMapAreaInfo, SizeDbl posterSize)
 		{
-			if (newMapArea != null)
+			if (newMapAreaInfo != null)
 			{
-				var job = AddNewCoordinateUpdateJob(poster, newMapArea);
-				poster.CurrentJob = job;
+				poster.PosterSize = posterSize;
+				
+				//var job = AddNewCoordinateUpdateJob(poster, newMapAreaInfo);
+				//poster.CurrentJob = job;
+
+				_ = AddNewCoordinateUpdateJob(poster, newMapAreaInfo);
 			}
 
+			PosterLoad(poster);
+		}
+
+		public void PosterLoad(Poster poster)
+		{
 			CurrentPoster = poster;
 		}
 
@@ -435,160 +444,13 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize, bool aggressive)
-		{
-			var currentJobId = job.Id;
-			var jobOwnerType = job.JobOwnerType;
-
-			var jobOwnerId = job.OwnerId;	// Identifies either a Project or Poster record.
-
-			var nonCurrentJobIds = _projectAdapter.GetAllJobIdsForPoster(jobOwnerId).Where(x => x != currentJobId).ToList();
-
-			var numberOfMapSectionsDeleted = JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, OwnerType.Poster, _mapSectionAdapter);
-			//numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, OwnerType.ImageBuilder, _mapSectionAdapter);
-			//numberOfMapSectionsDeleted += JobOwnerHelper.DeleteMapSectionsForJobIds(nonCurrentJobIds, OwnerType.BitmapBuilder, _mapSectionAdapter);
-
-			if (aggressive)
-			{
-				// Get the set of MapSection required for this poster's current job.
-				var mapSectionRequests = GetMapSectionRequests(job, posterSize);
-
-				if (mapSectionRequests.Count == 0)
-				{
-					return numberOfMapSectionsDeleted;
-				}
-
-				// Get a list of all the MapSectionIds from the JobMapSection table.
-				var allMapSectionIds = _mapSectionAdapter.GetMapSectionIds(currentJobId);
-
-				if (allMapSectionIds.Count == 0)
-				{
-					return numberOfMapSectionsDeleted;
-				}
-
-				// For each MapSectionRequest in the provided list,
-				// submit the request to fetch the MapSection from the repository if it exists.
-				// If found, remove this MapSectionId from the list of allMapSectionIds.
-
-				for (var i = 0; i < mapSectionRequests.Count; i++)
-				{
-					var mapSectionRequest = mapSectionRequests[i];
-					var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-					var blockPosition = mapSectionRequest.BlockPosition;
-
-					var mapSectionId = _mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
-
-					if (mapSectionId != null)
-					{
-						allMapSectionIds.Remove(mapSectionId.Value);
-					}
-				}
-
-				// Now the AllMapSectionIds only contains Ids not required by the current Project or Poster.
-
-				// Delete all MapSection Records not required, that belong to the current Job.
-				var result = _mapSectionAdapter.DeleteMapSectionsWithJobType(allMapSectionIds, jobOwnerType);
-
-				if (result.HasValue)
-				{
-					numberOfMapSectionsDeleted += result.Value;
-				}
-			}
-
-			return numberOfMapSectionsDeleted;
-		}
-
-		private List<MapSectionRequest> GetMapSectionRequests(Job job, SizeDbl posterSize)
-		{
-			var jobId = job.Id;
-			var jobOwnerType = job.JobOwnerType;
-			var mapAreaInfo = job.MapAreaInfo;
-			var mapCalcSettings = job.MapCalcSettings;
-
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
-			var emptyMapSections = _mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(JobType.FullScale, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
-
-			return mapSectionRequests;
-		}
-
-		//public List<ObjectId> GetAllNonCurrentJobIds()
-		//{
-		//	var currentProject = CurrentPoster;
-		//	if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-		//	{
-		//		var currentJobId = currentProject.CurrentJob.Id;
-
-		//		var result = currentProject.GetJobs().Where(x => x.Id != currentJobId).Select(x => x.Id).ToList();
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		return Enumerable.Empty<ObjectId>().ToList();
-		//	}
-		//}
-
-		//public List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD()
-		//{
-		//	var currentProject = CurrentPoster;
-		//	if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-		//	{
-		//		var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
-
-		//		var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator != currentSpdWidth).Select(x => x.Id).ToList();
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		return Enumerable.Empty<ObjectId>().ToList();
-		//	}
-		//}
-
-		//public ObjectId? GetJobForZoomLevelOne()
-		//{
-		//	var currentProject = CurrentPoster;
-		//	if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-		//	{
-		//		var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
-
-		//		var minExponent = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth).Min(x => x.Subdivision.SamplePointDelta.Exponent);
-
-		//		var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth && x.Subdivision.SamplePointDelta.Exponent == minExponent).FirstOrDefault();
-
-		//		return result?.Id ?? null;
-		//	}
-		//	else
-		//	{
-		//		return null;
-		//	}
-		//}
-
-		//public List<ObjectId> GetJobIdsExceptZoomLevelOne()
-		//{
-		//	var currentProject = CurrentPoster;
-		//	if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-		//	{
-		//		var currentSpdWidth = currentProject.CurrentJob.Subdivision.SamplePointDelta.WidthNumerator;
-
-		//		var minExponent = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator == currentSpdWidth).Min(x => x.Subdivision.SamplePointDelta.Exponent);
-
-		//		var result = currentProject.GetJobs().Where(x => x.Subdivision.SamplePointDelta.WidthNumerator != currentSpdWidth || x.Subdivision.SamplePointDelta.Exponent != minExponent).Select(x => x.Id).ToList();
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		return Enumerable.Empty<ObjectId>().ToList();
-		//	}
-		//}
-
 		#endregion
 
 		#region Public Methods - Job
 
-		// Called in preparation to call UpdateMapSpecs
-
 		/// <summary>
-		/// Calculate the adjusted MapAreaInfo using the new ScreenArea
+		/// Calculate the adjusted MapAreaInfo using the new ScreenArea.
+		/// Called in preparation to call UpdateMapSpecs
 		/// </summary>
 		/// <param name="mapAreaInfo">The original value </param>
 		/// <param name="currentPosterSize">The original size in screen pixels</param>
@@ -599,6 +461,9 @@ namespace MSetExplorer
 			var xFactor = newPosterSize.Width / currentPosterSize.Width;
 			var yFactor = newPosterSize.Height / currentPosterSize.Height;
 			var factor = Math.Min(xFactor, yFactor);
+
+			// TODO: Use GetSmallestFactor
+			//var factor = RMapHelper.GetSmallestScaleFactor(currentPosterSize, newPosterSize);
 
 			var newCenter = screenArea.GetCenter();
 			var oldCenter = new PointDbl(currentPosterSize.Scale(0.5));
@@ -642,13 +507,14 @@ namespace MSetExplorer
 		}
 
 		// Always called after GetUpdatedMapAreaInfo
-		public void UpdateMapSpecs(MapAreaInfo2 newMapAreaInfo)
+		public void AddNewCoordinateUpdateJob(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize)
 		{
 			if (CurrentPoster == null)
 			{
 				return;
 			}
 
+			CurrentPoster.PosterSize = posterSize;
 			var job = AddNewCoordinateUpdateJob(CurrentPoster, newMapAreaInfo);
 
 			if (CurrentPoster.CurrentJob != job)
@@ -656,9 +522,8 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Adding a job to the poster should set the value of the PosterViewModel's CurrentPoster's CurrentJob.");
 			}
 
-			OnPropertyChanged(nameof())
-
-			CurrentPoster.CurrentJob = job;
+			// TODO: Do we need to raise this OnPropertyChanged event -- or is the CurrentPoster_PropertyChanged Event Handler handling the update.
+			//CurrentPoster.CurrentJob = job;
 		}
 
 		#endregion

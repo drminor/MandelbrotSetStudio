@@ -265,6 +265,7 @@ namespace MSetExplorer
 			}
 		}
 
+		public double ContentScale => (this as IContentScaler).ScaleTransform.ScaleX;
 
 		ScaleTransform IContentScaler.ScaleTransform
 		{

@@ -24,6 +24,9 @@ namespace MSS.Types
 		public const int MAP_SECTION_VALUE_POOL_SIZE = 10;
 
 		public const double DEFAULT_POSTER_DISPLAY_ZOOM = 0.01; // Default to full screen view
+
+		public const double POSTER_DISPLAY_ZOOM_MIN_DIFF = 0.0001; // The minimum amount by which two DisplayZoom values must differ in order to considered a 'real' update.
+
 		public static readonly SizeInt DEFAULT_POSTER_SIZE = new SizeInt(4096);
 
 		public const int MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS = 30;

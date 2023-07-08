@@ -320,9 +320,9 @@ namespace MSetExplorer
 
 				if (TryGetNewSizeFromUser(curPoster, out var newPosterMapAreaInfo, out var newPosterSize))
 				{
-					//curPoster.PosterSize = newPosterSize.Round();
-					_vm.PosterViewModel.PosterSize = newPosterSize;
-					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo);
+					// This will result in the PosterDesignerViewModel submitting a new MapDisplayJob on the MapSectionDisplayViewModel
+					//_vm.PosterViewModel.PosterSize = newPosterSize;
+					_vm.PosterViewModel.AddNewCoordinateUpdateJob(newPosterMapAreaInfo, newPosterSize);
 				}
 				else
 				{
@@ -769,8 +769,8 @@ namespace MSetExplorer
 
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
 		{
-			DeleteNonEssentialMapSectionsDelegate deleteNonEssentialMapSectionsFunction = _vm.PosterViewModel.DeleteNonEssentialMapSections;
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType, deleteNonEssentialMapSectionsFunction);
+			//DeleteNonEssentialMapSectionsDelegate deleteNonEssentialMapSectionsFunction = _vm.PosterViewModel.DeleteNonEssentialMapSections;
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType/*, deleteNonEssentialMapSectionsFunction*/);
 			
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
@@ -847,23 +847,23 @@ namespace MSetExplorer
 					if (TryGetNewSizeFromUser(poster, out newPosterMapAreaInfo, out var newPosterSize))
 					{
 						poster.PosterSize = newPosterSize;
+						_vm.PosterViewModel.PosterAddNewJobAndLoad(poster, newPosterMapAreaInfo, newPosterSize);
 					}
 					else
 					{
 						Debug.WriteLine($"User did not update the size during Poster Open with request parameter = OpenSizeDialog.");
-						newPosterMapAreaInfo = null;
+						_vm.PosterViewModel.PosterLoad(poster);
 					}
 				}
 				else
 				{
 					Debug.WriteLine($"OpenSizeDialog was not set during Poster Open.");
-					newPosterMapAreaInfo = null;
+					_vm.PosterViewModel.PosterLoad(poster);
 				}
-
-				_vm.PosterViewModel.Load(poster, newPosterMapAreaInfo);
 			}
 			else
 			{
+				Debug.WriteLine($"Could not find a poster record with name: {posterName} during call to {nameof(OpenPosterFromAppRequest)}.");
 				_ = MessageBox.Show($"Could not find a poster record with name: {posterName}.", "Poster Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
 			}
 		}
@@ -876,13 +876,7 @@ namespace MSetExplorer
 
 			var mapAreaInfo = curJob.MapAreaInfo;
 			var currentPosterSize = poster.PosterSize;
-
-			////var previewSize = GetPreviewSize(curJob.MapAreaInfo.CanvasSize, PREVIEW_IMAGE_SIZE);
-			//var previewSize = GetPreviewSize(poster.PosterSize, PREVIEW_IMAGE_SIZE);
-
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
-			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.MapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, previewSize, FALL_BACK_COLOR);
-			//var lazyMapPreviewImageProvider = _vm.GetPreviewImageProvider(curJob.Id, mapAreaInfo, previewSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
 
 			var viewModelFactory = _vm.ViewModelFactory;
 			var lazyMapPreviewImageProvider = viewModelFactory.GetPreviewImageProvider(curJob.Id, mapAreaInfo, poster.PosterSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
@@ -906,7 +900,8 @@ namespace MSetExplorer
 						var newMapArea = posterSizeEditorDialog.NewMapArea;
 						newPosterSize = posterSizeEditorDialog.NewMapSize;
 
-						newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea, out var diagReciprocal);
+						//newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea, out var diagReciprocal);
+						newPosterMapAreaInfo = _vm.PosterViewModel.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea, out var diagReciprocal);
 						return true;
 					}
 					else
@@ -935,6 +930,7 @@ namespace MSetExplorer
 		//	return previewSize;
 		//}
 
+		// TODO: handle the case where the user Applies Changes and then Chooses OK to save changes without making any subseqent changes.
 		private void PosterSizeEditorDialog_ApplyChangesRequested(object? sender, EventArgs e)
 		{
 			if (sender is PosterSizeEditorDialog posterSizeEditorDialog)
@@ -952,15 +948,12 @@ namespace MSetExplorer
 					var newMapArea = posterSizeEditorDialog.NewMapArea;
 					var newPosterSize = posterSizeEditorDialog.NewMapSize;
 
-					// Update the Poster's Size
-					//_vm.PosterViewModel.CurrentPoster.PosterSize = newPosterSize.Round(); -- The UpdateMapSpecs method is now updating the CurrentPoster's PosterSize.
-
 					// Get the new coordinates
-					var newPosterMapAreaInfo = _vm.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea, out var diagReciprocal);
+					var newPosterMapAreaInfo = _vm.PosterViewModel.GetUpdatedMapAreaInfo(posterMapAreaInfo, currentPosterSize, newPosterSize, newMapArea, out var diagReciprocal);
 
 					// Update the ViewModel with the new coordinates
-					_vm.PosterViewModel.PosterSize = newPosterSize;
-					_vm.PosterViewModel.UpdateMapSpecs(newPosterMapAreaInfo);
+					//_vm.PosterViewModel.PosterSize = newPosterSize;
+					_vm.PosterViewModel.AddNewCoordinateUpdateJob(newPosterMapAreaInfo, newPosterSize);
 
 					// Update the SizeEditor with the new coordinates.
 					posterSizeEditorDialog.UpdateWithNewMapInfo(newPosterMapAreaInfo, newPosterSize);

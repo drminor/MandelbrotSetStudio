@@ -1,5 +1,4 @@
-﻿using MSS.Common;
-using MSS.Common.MSet;
+﻿using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System.ComponentModel;
@@ -99,32 +98,6 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Methods
-
-		//public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
-		//{
-		//	var pngBuilder = new PngBuilder(_mapLoaderManager);
-		//	var result = new CreateImageProgressViewModel(pngBuilder);
-		//	return result;
-		//}
-
-		//public JobProgressViewModel CreateAJobProgressViewModel()
-		//{
-		//	var result = new JobProgressViewModel(_mapLoaderManager);
-		//	return result;
-		//}
-
-		//public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
-		//{
-		//	var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
-
-		//	return result;
-		//}
-
-
-
-		#endregion
-
 		#region Event Handlers
 
 		private void ProjectViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -137,30 +110,7 @@ namespace MSetExplorer
 			// Update the MSet Info and Map Display with the new Job
 			if (e.PropertyName == nameof(IProjectViewModel.CurrentJob))
 			{
-				var curJob = ProjectViewModel.CurrentJob;
-				var curJobId = curJob.Id.ToString();
-
-				var newMapCalcSettings = curJob.MapCalcSettings;
-				var newMapAreaInfo = curJob.MapAreaInfo;
-				var newColorBandSet = ProjectViewModel.CurrentColorBandSet;
-
-				MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
-
-				var areaColorAndCalcSettings = new AreaColorAndCalcSettings
-					(
-					curJobId,
-					OwnerType.Project,
-					newMapAreaInfo,
-					newColorBandSet,
-					newMapCalcSettings
-					);
-
-				ColorBandSetViewModel.ColorBandSet = newColorBandSet;
-				CbshDisplayViewModel.ColorBandSet = newColorBandSet;
-
-				MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
-
-				UpdateTheMapCoordsView(curJob);
+				SubmitMapDisplayJob();
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
@@ -173,17 +123,6 @@ namespace MSetExplorer
 				{
 					MapDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 				}
-			}
-		}
-
-		private void UpdateTheMapCoordsView(Job currentJob)
-		{
-			var oldAreaInfo = MapDisplayViewModel.LastMapAreaInfo;
-
-			if (oldAreaInfo != null)
-			{
-				MapCoordsViewModel.JobId = currentJob.Id.ToString();
-				MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
 			}
 		}
 
@@ -219,6 +158,12 @@ namespace MSetExplorer
 		//	}
 		//}
 
+		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
+		{
+			ColorBandSetViewModel.RefreshPercentages();
+			CbshDisplayViewModel.RefreshHistogramDisplay();
+		}
+
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
 			if (e.IsPreview)
@@ -245,27 +190,6 @@ namespace MSetExplorer
 				// Zoom or Pan Map Coordinates
 				ProjectViewModel.UpdateMapView(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
 			}
-		}
-
-		private SizeDbl GetDisplaySize(SizeDbl displaySize)
-		{
-			if (displaySize.Equals(SizeDbl.Zero))
-			{
-				Debug.WriteLine("WARNING: The DisplaySize is zero on the MapViewUpdateRequestedEventArgs.");
-				return MapDisplayViewModel.ViewportSize;
-			}
-			else
-			{
-				Debug.Assert(displaySize.Equals(MapDisplayViewModel.ViewportSize), "The DisplaySize property of the MapViewUpdateRequestedEventArgs is not equal to the MapDisplayViewModel's ViewportSize.");
-
-				return displaySize;
-			}
-		}
-
-		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
-		{
-			ColorBandSetViewModel.RefreshPercentages();
-			CbshDisplayViewModel.RefreshHistogramDisplay();
 		}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
@@ -297,6 +221,64 @@ namespace MSetExplorer
 			}
 
 			CbshDisplayViewModel.ColorBandSet = colorBandSet;
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private void SubmitMapDisplayJob()
+		{
+			var curJob = ProjectViewModel.CurrentJob;
+			var curJobId = curJob.Id.ToString();
+
+			var newMapCalcSettings = curJob.MapCalcSettings;
+			var newMapAreaInfo = curJob.MapAreaInfo;
+			var newColorBandSet = ProjectViewModel.CurrentColorBandSet;
+
+			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
+
+			var areaColorAndCalcSettings = new AreaColorAndCalcSettings
+				(
+				curJobId,
+				OwnerType.Project,
+				newMapAreaInfo,
+				newColorBandSet,
+				newMapCalcSettings
+				);
+
+			ColorBandSetViewModel.ColorBandSet = newColorBandSet;
+			CbshDisplayViewModel.ColorBandSet = newColorBandSet;
+
+			MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
+
+			UpdateTheMapCoordsView(curJob);
+		}
+
+		private void UpdateTheMapCoordsView(Job currentJob)
+		{
+			var oldAreaInfo = MapDisplayViewModel.LastMapAreaInfo;
+
+			if (oldAreaInfo != null)
+			{
+				MapCoordsViewModel.JobId = currentJob.Id.ToString();
+				MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
+			}
+		}
+
+		private SizeDbl GetDisplaySize(SizeDbl displaySize)
+		{
+			if (displaySize.Equals(SizeDbl.Zero))
+			{
+				Debug.WriteLine("WARNING: The DisplaySize is zero on the MapViewUpdateRequestedEventArgs.");
+				return MapDisplayViewModel.ViewportSize;
+			}
+			else
+			{
+				Debug.Assert(displaySize.Equals(MapDisplayViewModel.ViewportSize), "The DisplaySize property of the MapViewUpdateRequestedEventArgs is not equal to the MapDisplayViewModel's ViewportSize.");
+
+				return displaySize;
+			}
 		}
 
 		#endregion

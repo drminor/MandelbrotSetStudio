@@ -83,6 +83,16 @@ namespace MSetExplorer
 			return new RectangleDbl(rect.Left, rect.Right, rect.Top, rect.Bottom);
 		}
 
+		public static bool IsDoubleChanged(double a, double b, double threshold = 0.1)
+		{
+			if (double.IsNaN(a) || double.IsNaN(b))
+			{
+				return false;
+			}
+
+			return Math.Abs(a - b) > threshold;
+		}
+
 		public static bool IsPointDblChanged(PointDbl a, PointDbl b, double threshold = 0.1)
 		{
 			if (a.IsNAN() || b.IsNAN())

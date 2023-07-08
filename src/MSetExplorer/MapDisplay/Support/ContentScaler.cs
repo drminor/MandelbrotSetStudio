@@ -4,6 +4,9 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
+	/// <summary>
+	/// Default implementation
+	/// </summary>
 	internal class ContentScaler : IContentScaler
 	{
 		private readonly ContentPresenter _contentPresenter;

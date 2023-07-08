@@ -24,7 +24,9 @@ namespace MSetExplorer
 
 		long TrimSelected(bool agressive);
 
-		DeleteNonEssentialMapSectionsDelegate? DeleteNonEssentialMapSectionsFunction { get; }
+		/// <summary>
+		/// DeleteNonEssentialMapSectionsDelegate? DeleteNonEssentialMapSectionsFunction { get; }
+		/// </summary>
 
 		ViewModelFactory ViewModelFactory { get; }
 	}

@@ -61,8 +61,16 @@ namespace MSetExplorer
 			{
 				Debug.Assert(contentScale >= _scrollbar.Minimum && contentScale <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {contentScale} which is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
 
-				//(BaseValue, RelativeValue) = GetBaseAndRelative(contentScale);
-				_scrollbar.Value = contentScale;
+				_disableScrollValueSync = true;
+				try
+				{
+					//(BaseValue, RelativeValue) = GetBaseAndRelative(_zoomedControl.Scale);
+					_scrollbar.Value = contentScale;
+				}
+				finally
+				{
+					_disableScrollValueSync = false;
+				}
 			}
 		}
 

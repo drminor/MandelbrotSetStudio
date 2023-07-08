@@ -953,6 +953,14 @@ namespace MSetRepo
 			posterReaderWriter.UpdateMapArea(posterRecord);
 		}
 
+		public void UpdatePosterDisplayPositionAndZoom(Poster poster)
+		{
+			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			var posterRecord = _mSetRecordMapper.MapTo(poster);
+
+			posterReaderWriter.UpdateDisplayPositionAndZoom(posterRecord);
+		}
+
 		public bool DeletePoster(ObjectId posterId)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);

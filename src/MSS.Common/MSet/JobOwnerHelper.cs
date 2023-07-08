@@ -117,17 +117,6 @@ namespace MSS.Common
 
 		public static bool SavePoster(Poster poster, IProjectAdapter projectAdapter)
 		{
-			if (!(poster.IsCurrentJobIdChanged || poster.IsDirty))
-			{
-				Debug.WriteLine($"WARNING: Not Saving, IsDirty and IsCurrentJobChanged are both reset.");
-				return true; // Our caller interprets false as a critical error.
-			}
-
-			if (poster.IsCurrentJobIdChanged)
-			{
-				projectAdapter.UpdatePosterCurrentJobId(poster.Id, poster.CurrentJob.Id);
-			}
-
 			if (poster.IsDirty)
 			{
 				var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(poster, projectAdapter);
@@ -137,6 +126,20 @@ namespace MSS.Common
 
 				SaveColorBandSets(poster, projectAdapter);
 				SaveJobs(poster, projectAdapter);
+
+				poster.MarkAsSaved();
+			}
+			else if (poster.IsCurrentJobIdChanged)
+			{
+				Debug.WriteLine($"WARNING: IsCurrentJobChanged but IsDirty is false. Not saving any jobs.");
+				projectAdapter.UpdatePosterMapArea(poster); // Includes DisplayPosition and Display Zoom.
+
+				poster.MarkAsSaved();
+			}
+			else
+			{
+				Debug.WriteLine($"WARNING: IsDirty and IsCurrentJobChanged are both reset. Only Saving the Poster's Display Position and Zoom.");
+				projectAdapter.UpdatePosterDisplayPositionAndZoom(poster);
 			}
 
 			return true;

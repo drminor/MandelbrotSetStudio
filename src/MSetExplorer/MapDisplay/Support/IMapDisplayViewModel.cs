@@ -14,8 +14,9 @@ namespace MSetExplorer
 
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		event EventHandler<int>? DisplayJobCompleted;
-		event EventHandler? JobSubmitted;
-
+		
+		//event EventHandler? JobSubmitted;
+		event EventHandler<InitialDisplaySettingsEventArgs>? InitializeDisplaySettings;
 
 		SizeInt BlockSize { get; }
 		ObservableCollection<MapSection> MapSections { get; }
@@ -35,7 +36,7 @@ namespace MSetExplorer
 		void RaiseMapViewPanUpdate(ImageDraggedEventArgs e);
 
 		int? SubmitJob(AreaColorAndCalcSettings newValue);
-		int? SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom);
+		void SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom);
 
 		void CancelJob();
 		void PauseJob();
@@ -56,6 +57,8 @@ namespace MSetExplorer
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
 		int? MoveTo(VectorDbl contentOffset);
+
+		void ReceiveAdjustedContentScale(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl);
 
 	}
 }

@@ -57,18 +57,6 @@ namespace MSetExplorer
 				{
 					_baseScale = value;
 					ScaleFactor = Math.Pow(0.5, _baseScale);
-
-					//if (_baseScale == 0)
-					//{
-					//	_scaledMapAreaInfo = MapAreaInfoWithSize;
-					//}
-					//else
-					//{
-					//	var mapArV2 = _mapJobHelper.GetMapAreaInfoZoomCenter(_mapAreaInfo, ScaleFactor, out var diaReciprocal);
-					//	var displaySize = PosterSize.Scale(ScaleFactor);
-					//	_scaledMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(mapArV2, displaySize.Round());
-					//}
-
 					_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, ScaleFactor);
 				}
 			}
@@ -93,7 +81,7 @@ namespace MSetExplorer
 			return GetView(newDisplayPosition);
 		}
 
-		// New postion, same size
+		// New position, same size
 		public MapAreaInfo GetView(VectorDbl newDisplayPosition)
 		{
 			// -- Scale the Position and Size together.

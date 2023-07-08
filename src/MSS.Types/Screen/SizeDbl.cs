@@ -22,6 +22,9 @@ namespace MSS.Types
 		public SizeDbl(PointDbl point) : this(point.X, point.Y)
 		{ }
 
+		public SizeDbl(VectorDbl vector) : this(vector.X, vector.Y)
+		{ }
+
 		public SizeDbl(double width, double height)
 		{
 			Width = width;

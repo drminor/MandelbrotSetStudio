@@ -64,59 +64,17 @@ namespace MSetExplorer
 
 		public ViewModelFactory ViewModelFactory => _viewModelFactory;
 
-		//public SizeDbl MapDisplaySize
-		//{
-		//	get => _mapDisplaySize;
-		//	set
-		//	{
-		//		if (value != _mapDisplaySize)
-		//		{
-		//			//var prev = _mapDisplaySize;
-		//			_mapDisplaySize = value;
-		//			//Debug.WriteLine($"Raising the OnPropertyChanged for the MapDisplaySize. Old = {prev}, new = {value}.");
-		//			OnPropertyChanged(nameof(IPosterDesignerViewModel.MapDisplaySize));
-		//		}
-		//		else
-		//		{
-		//			//Debug.WriteLine($"Not raising the OnPropertyChanged for the MapDisplaySize, the value {value} is unchanged.");
-		//		}
-		//	}
-		//}
-
 		#endregion
 
-		#region Public Methods
+		//#region Public Methods
 
-		//public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
+		//public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal)
 		//{
-		//	var pngBuilder = new PngBuilder(_mapLoaderManager);
-		//	var result = new CreateImageProgressViewModel(pngBuilder);
+		//	var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, currentPosterSize, newPosterSize, screenArea, out diagReciprocal);
 		//	return result;
 		//}
 
-		//public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl previewImagesize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocitites, Color fallbackColor)
-		//{
-		//	var mapJobHelper = _viewModelFactory.ProvisionAMapJopHelper();
-
-		//	var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
-		//	var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, OwnerType.Poster, mapAreaInfo, previewImagesize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
-		//	return result;
-		//}
-
-		//public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
-		//{
-		//	var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
-
-		//	return result;
-		//}
-
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal)
-		{
-			var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, currentPosterSize, newPosterSize, screenArea, out diagReciprocal);
-			return result;
-		}
-
-		#endregion
+		//#endregion
 
 		#region Event Handlers
 
@@ -213,11 +171,11 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
 
-		//var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id.ToString(), OwnerType.Poster, currentJob.MapAreaInfo, CurrentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
+		#region Private Methods
 
-
-		public void SubmitMapDisplayJob()
+		private void SubmitMapDisplayJob()
 		{
 			var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
 
@@ -234,11 +192,8 @@ namespace MSetExplorer
 					UpdateTheMapCoordsView(currentjob);
 					var posterSize = currentPoster.PosterSize;
 
-					//var displayPosition = currentPoster.DisplayPosition;
-					//var displayZoom = currentPoster.DisplayZoom;
-
-					var displayPosition = new VectorDbl();
-					var displayZoom = RMapConstants.DEFAULT_POSTER_DISPLAY_ZOOM;
+					var displayPosition = currentPoster.DisplayPosition;
+					var displayZoom = currentPoster.DisplayZoom;
 
 					MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize, displayPosition, displayZoom);
 				}

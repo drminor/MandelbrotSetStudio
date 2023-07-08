@@ -136,18 +136,18 @@ namespace MapSectionProviderLib
 
 				if (!mapSectionRequest.CancellationTokenSource.IsCancellationRequested)
 				{
-
 					mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 					_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
 					mapSectionRequest.Sent = true;
 
 					_ = Interlocked.Increment(ref _sectionsRequested);
-
+				}
+				else
+				{
 					var msg = $"The MapLoader is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
 					msg += "MapSectionRequest's Cancellation Token is cancelled.";
 					Debug.WriteLine($"{msg}");
 				}
-
 			}
 		}
 

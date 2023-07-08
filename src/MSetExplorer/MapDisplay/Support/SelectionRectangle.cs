@@ -756,8 +756,12 @@ namespace MSetExplorer
 			//var yFactor = _canvas.ActualHeight / area.Height;
 			//var factor = Math.Min(xFactor, yFactor);
 
+			var factor = RMapHelper.GetSmallestScaleFactor(area.Size, displaySize);
+
 			var factor2D = displaySize.Divide(area.Size);
-			var factor = Math.Min(factor2D.Width, factor2D.Height);
+			var factorCheck = Math.Min(factor2D.Width, factor2D.Height);
+
+			Debug.Assert(factorCheck == factor, "GetSmallestScaleFactor is not the same.");
 
 			return (zoomPoint, factor);
 		}

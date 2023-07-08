@@ -32,6 +32,7 @@ namespace MSetExplorer
 		private bool _disableScrollOffsetSync = false;
 		private bool _disableContentFocusSync = false;
 		private bool _disableContentOffsetChangeEvents = false;
+		private bool _disableMinMaxContentScaleChecks = false;
 
 		private SizeDbl _constrainedContentViewportSize = new SizeDbl();
 		private SizeDbl _maxContentOffset = new SizeDbl();
@@ -92,13 +93,13 @@ namespace MSetExplorer
 			}
 			set
 			{
-				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
+				if (ScreenTypeHelper.IsSizeDblChanged(_viewportSize, value))
 				{
 					_viewportSize = value;
-					if (_contentScaler != null)
-					{
-						_contentScaler.ContentViewportSize = value;
-					}
+					//if (_contentScaler != null)
+					//{
+					//	_contentScaler.ContentViewportSize = value;
+					//}
 				}
 			}
 		}
@@ -277,64 +278,78 @@ namespace MSetExplorer
 
 		private static void UnscaledExtent_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			PanAndZoomControl c = (PanAndZoomControl)o;
-			var previousValue = (SizeDbl)e.OldValue;
 			var value = (SizeDbl)e.NewValue;
+			var previousValue = (SizeDbl)e.OldValue;
 
-			if (!value.Diff(previousValue).IsNearZero())
+			if (value.IsNearZero() || value.Diff(previousValue).IsNearZero())
 			{
-				try
-				{
-					c._disableContentOffsetChangeEvents = true;
-
-					c.ContentOffsetX = 0;
-					c.ContentOffsetY = 0;
-
-
-					if (c.ContentScale != 1.0)
-					{
-						c.ContentScale = 1.0;
-					}
-					else
-					{
-						c.UpdateContentViewportSize();
-					}
-
-					c.InvalidateScrollInfo();
-				}
-				finally
-				{
-					c._disableContentOffsetChangeEvents = false;
-				}
-
-				c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
+				return;
 			}
-		}
 
-		public void SetPositionAndZoomNotUsed(VectorDbl displayPosition, double contentScale) 
-		{
+			PanAndZoomControl c = (PanAndZoomControl)o;
+
 			try
 			{
-				_disableContentOffsetChangeEvents = true;
+				c._disableContentOffsetChangeEvents = true;
 
-				ContentScale = contentScale;
+				//if (isBeingReset)
+				//{
+				//	c.ContentOffsetX = 0;
+				//	c.ContentOffsetY = 0;
+
+				//	if (c.ContentScale != 1.0)
+				//	{
+				//		c.ContentScale = 1.0;
+				//	}
+				//	else
+				//	{
+				//		c.UpdateContentViewportSize();
+				//	}
+				//}
+				//else
+				//{
+				//	c.UpdateContentViewportSize();
+				//}
+
+				c.UpdateContentViewportSize();
+
+				c.InvalidateScrollInfo();
+			}
+			finally
+			{
+				c._disableContentOffsetChangeEvents = false;
+			}
+
+			c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
+
+			var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
+		}
+
+		public void ResetExtentWithPositionAndScale(VectorDbl displayPosition, double minContentScale, double maxContentScale, double contentScale) 
+		{
+			// Let the existing PropertyChanged logic for the UnscaledExtent Dependency Property do most of the work for us.
+			UnscaledExtent = new SizeDbl();
+
+			try
+			{
+				_disableMinMaxContentScaleChecks = true;
+
+				_maxContentOffset = new SizeDbl(displayPosition).Inflate(100);
 
 				ContentOffsetX = displayPosition.X;
 				ContentOffsetY = displayPosition.Y;
 
-				UpdateContentViewportSize();
+				MinContentScale = minContentScale;
+				MaxContentScale = maxContentScale;
 
-				InvalidateScrollInfo();
+				ContentScale = contentScale;
+				ZoomSliderOwner?.ContentScaleWasUpdated(ContentScale);
 			}
 			finally
 			{
-				_disableContentOffsetChangeEvents = false;
+				_disableMinMaxContentScaleChecks = false;
 			}
-
-			ScrollbarVisibilityChanged?.Invoke(this, new EventArgs());
-
-			//var scaledImageViewInfo = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
-			//ViewportChanged?.Invoke(this, scaledImageViewInfo);
 		}
 
 		#endregion
@@ -362,6 +377,11 @@ namespace MSetExplorer
 			if (!c.UpdateScale(newValue))
 			{
 				// The new value is the same as the both the ScaleX and ScaleY value on the _contentScaleTransform property.
+				return;
+			}
+
+			if (c._disableMinMaxContentScaleChecks)
+			{
 				return;
 			}
 
@@ -420,9 +440,12 @@ namespace MSetExplorer
 		private static void MinOrMaxContentScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			PanAndZoomControl c = (PanAndZoomControl)o;
-			c.ContentScale = Math.Min(Math.Max(c.ContentScale, c.MinContentScale), c.MaxContentScale);
 
-			c.ZoomSliderOwner?.InvalidateScaleContentInfo();
+			if (!c._disableMinMaxContentScaleChecks)
+			{
+				c.ContentScale = Math.Min(Math.Max(c.ContentScale, c.MinContentScale), c.MaxContentScale);
+				c.ZoomSliderOwner?.InvalidateScaleContentInfo();
+			}
 		}
 
 		#endregion
@@ -439,6 +462,11 @@ namespace MSetExplorer
 		private static void ContentOffsetX_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			PanAndZoomControl c = (PanAndZoomControl)o;
+
+			if (c._disableMinMaxContentScaleChecks)
+			{
+				return;
+			}
 
 			c.UpdateTranslationX();
 
@@ -468,6 +496,11 @@ namespace MSetExplorer
 			//var gap = c.ContentViewportSize.Width != c.ViewportWidth;
 			//var gap2a = Math.Min(c.ContentViewportSize.Width/* - HORIZONTAL_SCROLL_BAR_WIDTH*/, c.UnscaledExtent.Width);
 			//var gap2 = c._maxContentOffset.Width != gap2a;
+
+			if (c._disableMinMaxContentScaleChecks)
+			{
+				return (double)baseValue;
+			}
 
 			double value = (double)baseValue;
 			//double minOffsetX = 0.0;
@@ -508,6 +541,11 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl c = (PanAndZoomControl)o;
 
+			if (c._disableMinMaxContentScaleChecks)
+			{
+				return;
+			}
+
 			c.UpdateTranslationY();
 
 			if (!c._disableContentFocusSync)
@@ -531,6 +569,12 @@ namespace MSetExplorer
 		private static object ContentOffsetY_Coerce(DependencyObject d, object baseValue)
 		{
 			PanAndZoomControl c = (PanAndZoomControl)d;
+
+			if (c._disableMinMaxContentScaleChecks)
+			{
+				return (double)baseValue;
+			}
+
 			double value = (double)baseValue;
 			double minOffsetY = 0.0;
 			double maxOffsetY = c._maxContentOffset.Height;
