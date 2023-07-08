@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -22,7 +23,7 @@ namespace MSetExplorer
 		private Image _image;
 
 		private SizeDbl _viewportSizeInternal;
-		private SizeDbl _viewportSize;
+		//private SizeDbl _viewportSize;
 
 		private SizeDbl _contentViewportSize;
 
@@ -59,7 +60,7 @@ namespace MSetExplorer
 			_image.SizeChanged += Image_SizeChanged;
 
 			_viewportSizeInternal = new SizeDbl();
-			_viewportSize = new SizeDbl();
+			//_viewportSize = new SizeDbl();
 			_contentViewportSize = SizeDbl.NaN;
 
 			_controlScaleTransform = new ScaleTransform();
@@ -127,7 +128,7 @@ namespace MSetExplorer
 
 		#region Events
 
-		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
+		//public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
 
 		#endregion
 
@@ -213,24 +214,34 @@ namespace MSetExplorer
 
 		public SizeDbl ViewportSize
 		{
-			get => _viewportSize;
+			//get => _viewportSize;
+			//set
+			//{
+			//	if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
+			//	{
+			//		Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
+
+			//		var previousValue = ViewportSize;
+			//		_viewportSize = value;
+
+			//		Debug.Assert(_viewportSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
+
+			//		ViewportSizeChanged?.Invoke(this, (previousValue, value));
+			//	}
+			//	else
+			//	{
+			//		Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+			//	}
+			//}
+
+			get => (SizeDbl)GetValue(ViewportSizeProperty);
 			set
 			{
-				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
-
-					var previousValue = ViewportSize;
-					_viewportSize = value;
-
-					Debug.Assert(_viewportSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
-
-					ViewportSizeChanged?.Invoke(this, (previousValue, value));
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
-				}
+				//if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
+				//{
+				//	SetCurrentValue(ViewportSizeProperty, value);
+				//}
+				SetCurrentValue(ViewportSizeProperty, value);
 			}
 		}
 
@@ -576,6 +587,36 @@ namespace MSetExplorer
 			}
 
 			throw new InvalidOperationException("The image is not a child of the canvas.");
+		}
+
+		#endregion
+
+		#region ContentViewportSize Dependency Property
+
+		public static readonly DependencyProperty ViewportSizeProperty = DependencyProperty.Register(
+					"ViewportSize", typeof(SizeDbl), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(SizeDbl.Zero, FrameworkPropertyMetadataOptions.None, ViewportSize_PropertyChanged));
+
+		private static void ViewportSize_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			((BitmapGridControl)o).CheckViewportSize_PropertyChanged(o, e);
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckViewportSize_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			var c = (BitmapGridControl)o;
+			var previousValue = (SizeDbl)e.OldValue;
+			var newValue = (SizeDbl)e.NewValue;
+
+			Debug.WriteLineIf(c._useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {newValue}, the current value is {previousValue}.");
+
+			//Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(newValue, c._viewportSizeInternal), "The container size has been updated since the Debouncer fired.");
+
+			if (ScreenTypeHelper.IsSizeDblChanged(newValue, c._viewportSizeInternal))
+			{
+				Debug.WriteLine("The container size has been updated since the Debouncer fired.");
+			}
 		}
 
 		#endregion

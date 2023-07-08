@@ -44,10 +44,13 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
-				_vm.UpdateViewportSize(BitmapGridControl1.ViewportSize);
+
+				_vm.ViewportSize = BitmapGridControl1.ViewportSize;
+
+				//_vm.UpdateViewportSize(BitmapGridControl1.ViewportSize);
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
-				BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
+				//BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
 
 				var canvas = BitmapGridControl1.Canvas;
 				_selectionRectangle = new SelectionRectangle(canvas, _vm.ViewportSize, _vm.BlockSize);
@@ -64,7 +67,7 @@ namespace MSetExplorer
 
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			BitmapGridControl1.ViewportSizeChanged -= BitmapGridControl1_ViewportSizeChanged;
+			//BitmapGridControl1.ViewportSizeChanged -= BitmapGridControl1_ViewportSizeChanged;
 
 			_vm.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
 
@@ -103,13 +106,13 @@ namespace MSetExplorer
 
 		private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
-			var previousValue = e.Item1;
-			var newValue = e.Item2;
+			//var previousValue = e.Item1;
+			//var newValue = e.Item2;
 
-			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling Viewport Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewportSize}.");
+			//Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling Viewport Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewportSize}.");
 
-			//_vm.ViewportSize = newValue;
-			_vm.UpdateViewportSize(newValue);
+			////_vm.ViewportSize = newValue;
+			//_vm.UpdateViewportSize(newValue);
 		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

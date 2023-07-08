@@ -22,6 +22,7 @@
                     UnscaledExtent="{Binding UnscaledExtent}"
                     ContentScale="{Binding DisplayZoom}"
                     MinContentScale="{Binding MinimumDisplayZoom}"
+                    ContentVpSizeOffsetAndScale="{Binding ViewportSizePositionAndScale, Mode=TwoWay}"
                     >
 
                     <local:BitmapGridControl

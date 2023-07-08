@@ -70,7 +70,7 @@ namespace MSetExplorer
 
 		#region Events
 
-		public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
+		//public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
 
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
@@ -161,6 +161,12 @@ namespace MSetExplorer
 		{
 			get => (double)GetValue(ContentOffsetYProperty);
 			set => SetCurrentValue(ContentOffsetYProperty, value);
+		}
+
+		public ScaledImageViewInfo ContentVpSizeOffsetAndScale
+		{
+			get => (ScaledImageViewInfo)GetValue(ContentVpSizeOffsetAndScaleProperty);
+			set => SetCurrentValue(ContentVpSizeOffsetAndScaleProperty, value);
 		}
 
 		public bool IsMouseWheelScrollingEnabled { get; set; }
@@ -322,8 +328,10 @@ namespace MSetExplorer
 
 			c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
 
-			var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-			c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
+			c.ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+
+			//var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			//c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
 		}
 
 		public void ResetExtentWithPositionAndScale(VectorDbl displayPosition, double minContentScale, double maxContentScale, double contentScale) 
@@ -404,8 +412,10 @@ namespace MSetExplorer
 
 			//if (c._contentScaler != null) c._contentScaler.ContentViewportSize = c.ContentViewportSize;
 
-			var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-			c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
+			c.ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+
+			//var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			//c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
 
 			//c.InvalidateVisual(); // Is this really necessary?
 		}
@@ -420,14 +430,14 @@ namespace MSetExplorer
 			//double value = (double)baseValue;
 			var value = Math.Min(Math.Max(bVal, c.MinContentScale), c.MaxContentScale);
 
-			if (value != bVal)
-			{
-				Debug.WriteLine($"ContentScale is being coerced from {bVal} to {value}.");
-			}
-			else
-			{
-				Debug.WriteLine("....*******.........");
-			}
+			//if (value != bVal)
+			//{
+			//	Debug.WriteLine($"ContentScale is being coerced from {bVal} to {value}.");
+			//}
+			//else
+			//{
+			//	Debug.WriteLine("....*******.........");
+			//}
 
 			return value;
 		}
@@ -598,6 +608,26 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region xx Dependency Property
+
+		//			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
+
+
+		public static readonly DependencyProperty ContentVpSizeOffsetAndScaleProperty =
+				DependencyProperty.Register("ContentVpSizeOffsetAndScale", typeof(ScaledImageViewInfo), typeof(PanAndZoomControl),
+											new FrameworkPropertyMetadata(ScaledImageViewInfo.Zero, FrameworkPropertyMetadataOptions.None, ContentVpSizeOffsetAndScale_PropertyChanged));
+
+		/// <summary>
+		/// Event raised when the 'ContentOffsetY' property has changed value.
+		/// </summary>
+		private static void ContentVpSizeOffsetAndScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			PanAndZoomControl c = (PanAndZoomControl)o;
+		}
+
+		#endregion
+
+
 		#region Private Methods - Scroll Support
 
 		private void UpdateViewportSize(SizeDbl newValue)
@@ -636,8 +666,10 @@ namespace MSetExplorer
 
 			//if (_contentScaler != null) _contentScaler.ContentViewportSize = ContentViewportSize;
 
-			var scaledImageViewInfo = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
-			ViewportChanged?.Invoke(this, scaledImageViewInfo);
+			ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
+
+			//var scaledImageViewInfo = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
+			//ViewportChanged?.Invoke(this, scaledImageViewInfo);
 		}
 
 		private void UpdateContentViewportSize()

@@ -68,7 +68,7 @@ namespace MSetExplorer
 
 				PanAndZoomControl1.ZoomSliderOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
-				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
+				//PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 
@@ -83,7 +83,7 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl1.ZoomSliderOwner = null;
 
-			PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
+			//PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
 		}

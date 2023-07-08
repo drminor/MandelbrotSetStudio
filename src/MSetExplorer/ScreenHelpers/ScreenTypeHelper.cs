@@ -103,6 +103,7 @@ namespace MSetExplorer
 			return !a.Diff(b).IsNearZero(threshold);
 		}
 
+		// TODO: Update IsPointDblChanged, IsVectorDblChanged and IsDoubleChanged to return false if both A and B are NAN.
 		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b, double threshold = 0.1)
 		{
 			if (a.IsNAN() && !b.IsNAN() || (!a.IsNAN()) && b.IsNAN())

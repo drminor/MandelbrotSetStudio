@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -43,6 +44,8 @@ namespace MSetExplorer
 
 		private bool _useDetailedDebug = false;
 
+		private ScaledImageViewInfo _viewportSizePositionAndScale;
+
 		#endregion
 
 		#region Constructor
@@ -57,6 +60,8 @@ namespace MSetExplorer
 			_mapSectionBuilder = new MapSectionBuilder();
 
 			_paintLocker = new object();
+
+			_viewportSizePositionAndScale = ScaledImageViewInfo.Zero;
 
 			_boundedMapArea = null;
 			MapSections = new ObservableCollection<MapSection>();
@@ -158,10 +163,46 @@ namespace MSetExplorer
 		public SizeDbl ViewportSize
 		{
 			get => _viewportSize;
-			private set
+			set
 			{
-				_viewportSize = value;
-				OnPropertyChanged(nameof(IMapDisplayViewModel.ViewportSize));
+				if (ScreenTypeHelper.IsSizeDblChanged(value, _viewportSize))
+				{
+					if (value.Width >= 2 && value.Height >= 2)
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {value}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
+
+						int? newJobNumber = null;
+						bool lastSectionWasIncluded = false;
+
+						_bitmapGrid.ViewportSize = value;
+
+						lock (_paintLocker)
+						{
+							if (CurrentAreaColorAndCalcSettings != null)
+							{
+								var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
+								newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
+							}
+						}
+
+						_viewportSize = value;
+
+						if (newJobNumber.HasValue && lastSectionWasIncluded)
+						{
+							DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+						}
+
+						OnPropertyChanged(nameof(IMapDisplayViewModel.ViewportSize));
+					}
+					else
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {value}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size");
+					}
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {value}.The current value is aleady: {_viewportSize}, The VM is updating the _bitmapGrid.Viewport Size.");
+				}
 			}
 		}
 
@@ -412,33 +453,78 @@ namespace MSetExplorer
 		//		3. Binding these two
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
-			int? newJobNumber;
+			//int? newJobNumber;
 
-			lock (_paintLocker)
+			//lock (_paintLocker)
+			//{
+			//	if (CurrentAreaColorAndCalcSettings == null)
+			//	{
+			//		_bitmapGrid.ViewportSize = contentViewportSize;
+			//		ViewportSize = contentViewportSize;
+			//		newJobNumber = null;
+			//	}
+			//	else
+			//	{
+			//		if (_boundedMapArea == null)
+			//		{
+			//			throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
+			//		}
+
+			//		var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(contentScale);
+
+			//		//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseScale, relativeScale);
+
+			//		//DisplayZoom = contentScale;
+			//		newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, baseScale);
+			//	}
+			//}
+
+			//return newJobNumber;
+
+			var scaledImageViewInfo = new ScaledImageViewInfo(contentViewportSize, contentOffset, contentScale);
+
+			ViewportSizePositionAndScale = scaledImageViewInfo;
+
+			return null;
+		}
+
+
+		public ScaledImageViewInfo ViewportSizePositionAndScale
+		{
+			get => _viewportSizePositionAndScale;
+			set
 			{
-				if (CurrentAreaColorAndCalcSettings == null)
+				int? newJobNumber;
+
+				lock (_paintLocker)
 				{
-					_bitmapGrid.ViewportSize = contentViewportSize;
-					ViewportSize = contentViewportSize;
-					newJobNumber = null;
-				}
-				else
-				{
-					if (_boundedMapArea == null)
+					if (CurrentAreaColorAndCalcSettings == null)
 					{
-						throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
+						_bitmapGrid.ViewportSize = value.ContentViewportSize;
+						_viewportSize = value.ContentViewportSize;
+						_displayZoom = value.ContentScale;
+						_displayPosition = value.ContentOffset;
+						newJobNumber = null;
 					}
+					else
+					{
+						if (_boundedMapArea == null)
+						{
+							throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
+						}
 
-					var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(contentScale);
+						var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(value.ContentScale);
 
-					//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseScale, relativeScale);
+						//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseScale, relativeScale);
 
-					//DisplayZoom = contentScale;
-					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, baseScale);
+						_viewportSize = value.ContentViewportSize;
+						_displayZoom = value.ContentScale;
+						_displayPosition = value.ContentOffset;
+
+						newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, value.ContentViewportSize, value.ContentOffset, baseScale);
+					}
 				}
 			}
-
-			return newJobNumber;
 		}
 		
 		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseScale, double relativeScale) 
@@ -465,29 +551,33 @@ namespace MSetExplorer
 			return scale2D;
 		}
 
-		public int? UpdateViewportSize(SizeDbl newValue)
-		{
-			int? newJobNumber = null;
+		//public int? UpdateViewportSize(SizeDbl newValue)
+		//{
+		//	//int? newJobNumber = null;
 
-			if (!newValue.IsNAN() && newValue != _viewportSize)
-			{
-				if (newValue.Width <= 2 || newValue.Height <= 2)
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
-					newJobNumber = HandleDisplaySizeUpdate(newValue);
-				}
-			}
-			else
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate.");
-			}
+		//	//if (!newValue.IsNAN() && newValue != _viewportSize)
+		//	//{
+		//	//	if (newValue.Width <= 2 || newValue.Height <= 2)
+		//	//	{
+		//	//		Debug.WriteLineIf(_useDetailedDebug, $"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
+		//	//	}
+		//	//	else
+		//	//	{
+		//	//		Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
+		//	//		newJobNumber = HandleDisplaySizeUpdate(newValue);
+		//	//	}
+		//	//}
+		//	//else
+		//	//{
+		//	//	Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate.");
+		//	//}
 
-			return newJobNumber;
-		}
+		//	//return newJobNumber;
+
+		//	ViewportSize =	newValue;
+
+		//	return null;
+		//}
 
 		public int? MoveTo(VectorDbl contentOffset)
 		{
@@ -681,8 +771,8 @@ namespace MSetExplorer
 				newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
 			}
 
-			ViewportSize = viewportSize;
-			DisplayPosition = contentOffset;
+			_viewportSize = viewportSize;
+			_displayPosition = contentOffset;
 
 			if (newJobNumber.HasValue && lastSectionWasIncluded)
 			{
@@ -692,31 +782,35 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		private int? HandleDisplaySizeUpdate(SizeDbl viewportSize)
-		{
-			int? newJobNumber = null;
-			bool lastSectionWasIncluded = false;
+		//private int? HandleDisplaySizeUpdate(SizeDbl viewportSize)
+		//{
+		//	//int? newJobNumber = null;
+		//	//bool lastSectionWasIncluded = false;
 			
-			_bitmapGrid.ViewportSize = viewportSize;
+		//	//_bitmapGrid.ViewportSize = viewportSize;
 
-			lock (_paintLocker)
-			{
-				if (CurrentAreaColorAndCalcSettings != null)
-				{
-					var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, viewportSize);
-					newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
-				}
-			}
+		//	//lock (_paintLocker)
+		//	//{
+		//	//	if (CurrentAreaColorAndCalcSettings != null)
+		//	//	{
+		//	//		var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, viewportSize);
+		//	//		newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
+		//	//	}
+		//	//}
 
-			ViewportSize = viewportSize;
+		//	//ViewportSize = viewportSize;
 
-			if (newJobNumber.HasValue && lastSectionWasIncluded)
-			{
-				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
-			}
+		//	//if (newJobNumber.HasValue && lastSectionWasIncluded)
+		//	//{
+		//	//	DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+		//	//}
 
-			return newJobNumber;
-		}
+		//	//return newJobNumber;
+
+		//	ViewportSize = viewportSize;
+
+		//	return null;
+		//}
 
 		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob, out bool lastSectionWasIncluded)
 		{

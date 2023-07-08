@@ -15,12 +15,10 @@ namespace MSetExplorer
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		event EventHandler<int>? DisplayJobCompleted;
 		
-		//event EventHandler? JobSubmitted;
 		event EventHandler<InitialDisplaySettingsEventArgs>? InitializeDisplaySettings;
 
 		SizeInt BlockSize { get; }
 		ObservableCollection<MapSection> MapSections { get; }
-		//ObservableCollection<MapSection> MapSectionsPendingGeneration { get; }
 		
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }
 
@@ -44,7 +42,7 @@ namespace MSetExplorer
 		void ClearDisplay();
 
 		SizeDbl UnscaledExtent { get; }
-		SizeDbl ViewportSize { get; }
+		SizeDbl ViewportSize { get; set; }
 
 		VectorDbl DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }
@@ -54,7 +52,7 @@ namespace MSetExplorer
 		MapAreaInfo? LastMapAreaInfo { get; }
 		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
-		int? UpdateViewportSize(SizeDbl viewportSize);
+		//int? UpdateViewportSize(SizeDbl viewportSize);
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
 		int? MoveTo(VectorDbl contentOffset);

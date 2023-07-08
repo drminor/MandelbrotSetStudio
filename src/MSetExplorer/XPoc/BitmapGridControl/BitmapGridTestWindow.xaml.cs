@@ -24,7 +24,9 @@ namespace MSetExplorer.XPoc
 			InitializeComponent();
 
 			//BitmapGridControl1.ViewportSizeInBlocksChanged += BitmapGridControl1_ViewportSizeInBlocksChanged;
-			BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
+
+			// TODO: MUST convert to binding to the ViewportSize property instead of using an event handler.
+			//BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
 
 		}
 

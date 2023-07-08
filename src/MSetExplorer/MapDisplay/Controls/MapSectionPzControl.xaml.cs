@@ -50,14 +50,16 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
-				_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
+
+				//_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
+				_vm.ViewportSize = PanAndZoomControl1.ViewportSize;
 
 				if (_vm.ZoomSliderFactory != null)
 				{
 					PanAndZoomControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(PanAndZoomControl1);
 				}
 
-				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
+				//PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 				PanAndZoomControl1.ScrollbarVisibilityChanged += PanAndZoomControl1_ScrollbarVisibilityChanged;
@@ -77,7 +79,7 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl1.ZoomSliderOwner = null;
 
-			PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
+			//PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
 			PanAndZoomControl1.ScrollbarVisibilityChanged -= PanAndZoomControl1_ScrollbarVisibilityChanged;
@@ -91,24 +93,24 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
-		{
-			CheckForStaleContentValues(e);
+		//private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
+		//{
+		//	CheckForStaleContentValues(e);
 
-			//if (_unscaledExtentWasZeroOnlastViewportUpdate)
-			//{
-			//	_unscaledExtentWasZeroOnlastViewportUpdate = false;
-			//	if (e.ContentOffset.X != 0 || e.ContentOffset.Y != 0)
-			//	{
-			//		Debug.WriteLine("The ContentOffset is non-zero on first call to UpdateViewportSizeAndPos after the UnscaledExtent was reset.");
-			//	}
-			//}
+		//	//if (_unscaledExtentWasZeroOnlastViewportUpdate)
+		//	//{
+		//	//	_unscaledExtentWasZeroOnlastViewportUpdate = false;
+		//	//	if (e.ContentOffset.X != 0 || e.ContentOffset.Y != 0)
+		//	//	{
+		//	//		Debug.WriteLine("The ContentOffset is non-zero on first call to UpdateViewportSizeAndPos after the UnscaledExtent was reset.");
+		//	//	}
+		//	//}
 
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
-			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
+		//	_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
+		//	CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
 
-			//_unscaledExtentWasZeroOnlastViewportUpdate = PanAndZoomControl1.UnscaledExtent.IsNearZero();
-		}
+		//	//_unscaledExtentWasZeroOnlastViewportUpdate = PanAndZoomControl1.UnscaledExtent.IsNearZero();
+		//}
 
 		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
 		{

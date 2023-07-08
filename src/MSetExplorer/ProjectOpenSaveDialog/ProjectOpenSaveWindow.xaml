@@ -21,11 +21,11 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Name" Width="250" DisplayMemberBinding="{Binding Name}" />
-                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreated}" />
+                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreatedUtc}" />
                         <GridViewColumn Header="Job Count" Width="80" DisplayMemberBinding="{Binding NumberOfJobs}" />
                         <GridViewColumn Header="Bytes" Width="100" DisplayMemberBinding="{Binding Bytes, StringFormat=n0}" />
                         <GridViewColumn Header="Zoom" Width="70" DisplayMemberBinding="{Binding MinMapCoordsExponent}" />
-                        <GridViewColumn Header="Updated" Width="190" DisplayMemberBinding="{Binding LastSaved}" />
+                        <GridViewColumn Header="Updated" Width="190" DisplayMemberBinding="{Binding LastSavedUtc}" />
                     </GridView>
                 </ListView.View>
             </ListView>

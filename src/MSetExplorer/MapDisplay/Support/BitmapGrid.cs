@@ -209,6 +209,8 @@ namespace MSetExplorer
 			}
 		}
 
+		// Each time a drawing operation is performed this is checked to see if the current canvas need to be resized.
+		// NOTE: Every drawing operation should begin with a call to ClearDisplay or RedrawSections.
 		private SizeInt ImageSizeInBlocks { get; set; }
 
 		public long NumberOfCountValSwitches { get; private set; }
@@ -222,6 +224,7 @@ namespace MSetExplorer
 			var bitmapSize = new SizeDbl(_bitmap.Width, _bitmap.Height);
 			if (RefreshBitmap(bitmapSize, out var bitmap))
 			{
+				Debug.WriteLine("WARNING: Creating a new bitmap, just to clear the display.");
 				Bitmap = bitmap;
 			}
 			else
