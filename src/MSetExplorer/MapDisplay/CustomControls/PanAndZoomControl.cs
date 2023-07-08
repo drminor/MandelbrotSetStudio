@@ -416,8 +416,19 @@ namespace MSetExplorer
 		private static object ContentScale_Coerce(DependencyObject d, object baseValue)
 		{
 			PanAndZoomControl c = (PanAndZoomControl)d;
-			double value = (double)baseValue;
-			value = Math.Min(Math.Max(value, c.MinContentScale), c.MaxContentScale);
+			var bVal = (double)baseValue;
+			//double value = (double)baseValue;
+			var value = Math.Min(Math.Max(bVal, c.MinContentScale), c.MaxContentScale);
+
+			if (value != bVal)
+			{
+				Debug.WriteLine($"ContentScale is being coerced from {bVal} to {value}.");
+			}
+			else
+			{
+				Debug.WriteLine("....*******.........");
+			}
+
 			return value;
 		}
 

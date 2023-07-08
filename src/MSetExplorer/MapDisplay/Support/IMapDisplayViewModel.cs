@@ -45,10 +45,11 @@ namespace MSetExplorer
 
 		SizeDbl UnscaledExtent { get; }
 		SizeDbl ViewportSize { get; }
-		VectorDbl DisplayPosition { get; }
 
-		double DisplayZoom { get; }
-		double MinimumDisplayZoom { get; }
+		VectorDbl DisplayPosition { get; set; }
+		double DisplayZoom { get; set; }
+		double MinimumDisplayZoom { get; set; }
+		double MaximumDisplayZoom { get; set; }
 
 		MapAreaInfo? LastMapAreaInfo { get; }
 		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }

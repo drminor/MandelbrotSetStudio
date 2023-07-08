@@ -1162,7 +1162,7 @@ namespace MSetExplorer
 
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, [NotNullWhen(true)] out string? selectedName, out string? description)
 		{
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType/*, deleteNonEssentialMapSectionsFunction: null*/);
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType);
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{
 				DataContext = posterOpenSaveVm
@@ -1180,17 +1180,6 @@ namespace MSetExplorer
 				description = null;
 				return false;
 			}
-		}
-
-		private long TrimMapSections(Job job, SizeDbl posterSize)
-		{
-			//TODO: Implement TrimMapSections on the ExplorerWindow - CodeBehind.
-
-			//var mapSectionRequests = _vm.MapDisplayViewModel.GetMapSectionRequests(job, posterSize);
-			//var numberOfMapSectionsDeleted = _vm.PosterViewModel.DeleteNonEssentialMapSections(mapSectionRequests);
-			//return numberOfMapSectionsDeleted;
-
-			return 0;
 		}
 
 		#endregion

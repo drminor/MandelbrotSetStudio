@@ -14,11 +14,10 @@ namespace MSetExplorer
 {
 	internal delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-	//internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType, Func<long, Job, SizeDbl>? deleteNonEssentialMapSectionsFunction);
+	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
 	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, SizeDbl canvasSize, bool allowEdits);
 
-	//public delegate long DeleteNonEssentialMapSectionsDelegate(Job job, SizeDbl canvasSize, bool agressive);
 
 	public class ViewModelFactory
 	{
@@ -46,13 +45,13 @@ namespace MSetExplorer
 		}
 
 		// Poster Open/Save
-		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType/*, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction*/)
+		public IPosterOpenSaveViewModel CreateAPosterOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			var viewModelFactory = this;
-			return new PosterOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, viewModelFactory/*, deleteNonEssentialMapSectionsFunction*/, initalName, dialogType);
+			return new PosterOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, viewModelFactory, initalName, dialogType);
 		}
 
-		// JobDetils
+		// JobDetails
 		public JobDetailsViewModel CreateAJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
 		{
 			return new JobDetailsViewModel(jobOwnerInfo, _projectAdapter, _mapSectionAdapter);

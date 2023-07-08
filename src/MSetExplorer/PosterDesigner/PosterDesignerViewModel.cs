@@ -1,7 +1,5 @@
-﻿using MSS.Common;
-using MSS.Common.MSet;
+﻿using MSS.Common.MSet;
 using MSS.Types;
-using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -65,16 +63,6 @@ namespace MSetExplorer
 		public ViewModelFactory ViewModelFactory => _viewModelFactory;
 
 		#endregion
-
-		//#region Public Methods
-
-		//public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal)
-		//{
-		//	var result = PosterViewModel.GetUpdatedMapAreaInfo(mapAreaInfo, currentPosterSize, newPosterSize, screenArea, out diagReciprocal);
-		//	return result;
-		//}
-
-		//#endregion
 
 		#region Event Handlers
 

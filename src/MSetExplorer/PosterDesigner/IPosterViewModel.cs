@@ -34,16 +34,10 @@ namespace MSetExplorer
 
 		void AddNewCoordinateUpdateJob(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize);
 
-		//void UpdateMapSpecs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo, out double diagReciprocal);
-
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
-
 
 		void PosterAddNewJobAndLoad(Poster poster, MapAreaInfo2? newMapAreaInfo, SizeDbl posterSize);
 		void PosterLoad(Poster poster);
-
-
-
 
 		bool PosterOpen(string name);
 		bool PosterSave();
@@ -51,10 +45,6 @@ namespace MSetExplorer
 		void PosterClose();
 
 		long DeleteMapSectionsForUnsavedJobs();
-		//long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize);
-		//long DeleteNonEssentialMapSections(Job job, SizeDbl posterSize, bool aggressive);
 
-		//List<ObjectId> GetAllNonCurrentJobIds();
-		//List<ObjectId> GetAllJobIdsNotMatchingCurrentSPD();
 	}
 }

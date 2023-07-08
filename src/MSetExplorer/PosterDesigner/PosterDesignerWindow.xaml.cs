@@ -769,8 +769,7 @@ namespace MSetExplorer
 
 		private bool PosterShowOpenSaveWindow(DialogType dialogType, string? initalName, out string? selectedName, out string? description)
 		{
-			//DeleteNonEssentialMapSectionsDelegate deleteNonEssentialMapSectionsFunction = _vm.PosterViewModel.DeleteNonEssentialMapSections;
-			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType/*, deleteNonEssentialMapSectionsFunction*/);
+			var posterOpenSaveVm = _vm.ViewModelFactory.CreateAPosterOpenSaveViewModel(initalName, dialogType);
 			
 			var posterOpenSaveWindow = new PosterOpenSaveWindow
 			{

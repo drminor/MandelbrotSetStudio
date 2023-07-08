@@ -18,8 +18,6 @@ namespace MSetExplorer
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		//private readonly Func<Job, SizeDbl, bool, long>? _deleteNonEssentialMapSectionsFunction;
-
 		private IPosterInfo? _selectedPoster;
 
 		private string? _selectedName;
@@ -32,13 +30,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, ViewModelFactory viewModelFactory/*, DeleteNonEssentialMapSectionsDelegate? deleteNonEssentialMapSectionsFunction*/, string? initialName, DialogType dialogType)
+		public PosterOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, ViewModelFactory viewModelFactory, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			ViewModelFactory = viewModelFactory;
-
-			//DeleteNonEssentialMapSectionsFunction = deleteNonEssentialMapSectionsFunction;
 
 			DialogType = dialogType;
 
@@ -129,8 +125,6 @@ namespace MSetExplorer
 		}
 
 		public ViewModelFactory ViewModelFactory { get; init; }
-
-		//public DeleteNonEssentialMapSectionsDelegate? DeleteNonEssentialMapSectionsFunction { get; }
 
 		#endregion
 
