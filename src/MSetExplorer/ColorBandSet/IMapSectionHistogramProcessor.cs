@@ -19,6 +19,9 @@ namespace MSetExplorer
 		void Reset();
 		void Reset(int newSize);
 		void Stop(bool immediately);
+
+		IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff);
+
 	}
 
 

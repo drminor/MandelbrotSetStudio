@@ -3,7 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MSetExplorer"
+
+        xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:ExplorerViewModel}"
+        
+        
         mc:Ignorable="d"
         Title="Explorer Window" Width="1484" Height="1332">
 
@@ -212,9 +215,12 @@
         </Grid>
 
         <!-- Histogram -->
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Visible">
-            <local:ColorBandSetHistogramControl x:Name="cbsh1"/>
-            
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" x:Name="botRow" BorderThickness="1" HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Visible">
+            <!--<local:ColorBandSetHistogramControl x:Name="cbsh1"/>-->
+            <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
+            <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
+            <local:CbsHistogramControl x:Name="cbsHistogram1"/>
+
         </Border>
 
     </Grid>

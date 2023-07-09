@@ -10,7 +10,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public class CbshDisplayViewModel : ViewModelBase, ICbshDisplayViewModel
+	public class CbsHistogramViewModel : ViewModelBase, ICbsHistogramViewModel
 	{
 		#region Private Fields
 
@@ -51,7 +51,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbshDisplayViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
+		public CbsHistogramViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
 		{
 			//_synchronizationContext = SynchronizationContext.Current;
 
@@ -141,7 +141,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The CbshDisplayViewModel's ImageSource is being set to value: {value}.");
 				_imageSource = value;
-				OnPropertyChanged(nameof(ICbshDisplayViewModel.ImageSource));
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.ImageSource));
 			}
 		}
 
@@ -151,7 +151,7 @@ namespace MSetExplorer
 			private set
 			{
 				_viewportSize = value;
-				OnPropertyChanged(nameof(ICbshDisplayViewModel.ViewportSize));
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.ViewportSize));
 			}
 		}
 
@@ -193,7 +193,7 @@ namespace MSetExplorer
 						UnscaledExtent = new SizeDbl(_canvasSize);
 					}
 
-					OnPropertyChanged(nameof(ICbshDisplayViewModel.CanvasSize));
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.CanvasSize));
 				}
 			}
 		}
@@ -208,7 +208,7 @@ namespace MSetExplorer
 					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
 					_imageOffset = value;
 
-					OnPropertyChanged(nameof(ICbshDisplayViewModel.ImageOffset));
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.ImageOffset));
 				}
 			}
 		}
@@ -230,7 +230,7 @@ namespace MSetExplorer
 
 					//UpdateFoundationRectangle(_foundationRectangle, value);
 
-					OnPropertyChanged(nameof(ICbshDisplayViewModel.UnscaledExtent));
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.UnscaledExtent));
 				}
 			}
 		}
@@ -257,7 +257,7 @@ namespace MSetExplorer
 					_displayZoom = value;
 					_scaleTransform.ScaleX = 1 / _displayZoom;
 					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetHistogram is setting it's DrawingGroup ScaleTransform to {_scaleTransform.ScaleX}.");
-					OnPropertyChanged(nameof(ICbshDisplayViewModel.DisplayZoom));
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.DisplayZoom));
 				}
 			}
 		}
@@ -328,7 +328,7 @@ namespace MSetExplorer
 					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
 				}
 
-				OnPropertyChanged(nameof(ICbshDisplayViewModel.ColorBandsView));
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
 			}
 		}
 
@@ -349,7 +349,7 @@ namespace MSetExplorer
 					_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
 				}
 
-				OnPropertyChanged(nameof(ICbshDisplayViewModel.CurrentColorBand));
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
 			}
 		}
 
@@ -361,7 +361,21 @@ namespace MSetExplorer
 		{
 			DrawHistogram();
 		}
-		
+
+		public KeyValuePair<int, int>[] GetKeyValuePairsForBand(int startingIndex, int endingIndex, bool includeCatchAll)
+		{
+			var hEntries = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true);
+
+			return hEntries;
+
+		}
+
+		public IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff)
+		{
+			return _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff);
+		}
+
+
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");

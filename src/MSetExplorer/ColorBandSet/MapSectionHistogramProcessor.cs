@@ -148,6 +148,13 @@ namespace MSetExplorer
 			return result.ToArray();
 		}
 
+		public IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff)
+		{
+			var result = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
+
+			return result;
+		}
+
 		#endregion
 
 		#region Private Methods

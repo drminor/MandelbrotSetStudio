@@ -19,7 +19,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
-			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
+			ICbsHistogramViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
 			/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */ViewModelFactory viewModelFactory)
 		{
 
@@ -65,7 +65,7 @@ namespace MSetExplorer
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
-		public ICbshDisplayViewModel CbshDisplayViewModel { get; }
+		public ICbsHistogramViewModel CbshDisplayViewModel { get; }
 
 		public ViewModelFactory ViewModelFactory => _viewModelFactory;
 

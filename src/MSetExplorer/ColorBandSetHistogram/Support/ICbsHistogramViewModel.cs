@@ -1,10 +1,11 @@
 ﻿using MSS.Types;
+using System.Collections.Generic;
 using System.Windows.Data;
 using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public interface ICbshDisplayViewModel
+	public interface ICbsHistogramViewModel
 	{
 		bool InDesignMode { get; }
 
@@ -29,6 +30,9 @@ namespace MSetExplorer
 		double MinimumDisplayZoom { get; }
 
 		void RefreshHistogramDisplay();
+		KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll);
+
+		IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff);
 
 		int? UpdateViewportSize(SizeDbl viewportSize);
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);

@@ -48,7 +48,8 @@ namespace MSetExplorer
 			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 
-			cbsh1.DataContext = _vm.CbshDisplayViewModel;
+			//cbsPlotControl1.DataContext = _vm.CbshDisplayViewModel;
+			cbsHistogram1.DataContext = _vm.CbshDisplayViewModel;
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 
 			_vm.MapCoordsIsVisible = mnuItem_CoordsWindow.IsChecked;

@@ -11,13 +11,13 @@ namespace MSetExplorer
 	/// <summary>
 	/// Interaction logic for ColorBandSetHistogramControl.xaml
 	/// </summary>
-	public partial class ColorBandSetHistogramControl : UserControl
+	public partial class CbsHistogramControl : UserControl
 	{
 		#region Private Fields
 
 		//private bool DRAW_OUTLINE = false;
 		//private Rectangle _outline;
-		private ICbshDisplayViewModel _vm;
+		private ICbsHistogramViewModel _vm;
 
 		private readonly bool _useDetailedDebug;
 
@@ -26,11 +26,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetHistogramControl()
+		public CbsHistogramControl()
 		{
 			_useDetailedDebug = false;
 
-			_vm = (CbshDisplayViewModel)DataContext;
+			_vm = (CbsHistogramViewModel)DataContext;
 			//_outline = new Rectangle();
 
 			Loaded += ColorBandSetHistogramControl_Loaded;
@@ -58,7 +58,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				_vm = (CbshDisplayViewModel)DataContext;
+				_vm = (CbsHistogramViewModel)DataContext;
 
 				_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
 
@@ -72,7 +72,6 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
 
 				//_outline = BuildOutline(HistogramDisplayControl1.Canvas);
-
 
 				Debug.WriteLine("The ColorBandSetHistogram UserControl is now loaded.");
 			}

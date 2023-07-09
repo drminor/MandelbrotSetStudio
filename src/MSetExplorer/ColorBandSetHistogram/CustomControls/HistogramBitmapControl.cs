@@ -8,7 +8,7 @@ using System.Windows.Threading;
 
 namespace MSetExplorer
 {
-	public class HistogramDisplayControl : ContentControl, IContentScaler
+	public class HistogramBitmapControl : ContentControl, IContentScaler
 	{
 		#region Private Fields 
 
@@ -39,12 +39,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		static HistogramDisplayControl()
+		static HistogramBitmapControl()
 		{
-			DefaultStyleKeyProperty.OverrideMetadata(typeof(HistogramDisplayControl), new FrameworkPropertyMetadata(typeof(HistogramDisplayControl)));
+			DefaultStyleKeyProperty.OverrideMetadata(typeof(HistogramBitmapControl), new FrameworkPropertyMetadata(typeof(HistogramBitmapControl)));
 		}
 
-		public HistogramDisplayControl()
+		public HistogramBitmapControl()
 		{
 			_viewPortSizeDispatcher = new DebounceDispatcher
 			{
@@ -519,12 +519,12 @@ namespace MSetExplorer
 		#region HistogramImageSource Dependency Property
 
 		public static readonly DependencyProperty HistogramImageSourceProperty = DependencyProperty.Register(
-					"HistogramImageSource", typeof(ImageSource), typeof(HistogramDisplayControl),
+					"HistogramImageSource", typeof(ImageSource), typeof(HistogramBitmapControl),
 					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, HistogramImageSource_PropertyChanged));
 
 		private static void HistogramImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			var c = (HistogramDisplayControl)o;
+			var c = (HistogramBitmapControl)o;
 			var previousValue = (ImageSource)e.OldValue;
 			var value = (ImageSource)e.NewValue;
 
@@ -539,12 +539,12 @@ namespace MSetExplorer
 		#region ImageOffset Dependency Property
 
 		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
-					"ImageOffset", typeof(VectorDbl), typeof(HistogramDisplayControl),
+					"ImageOffset", typeof(VectorDbl), typeof(HistogramBitmapControl),
 					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
 
 		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			HistogramDisplayControl c = (HistogramDisplayControl)o;
+			HistogramBitmapControl c = (HistogramBitmapControl)o;
 			//var previousValue = (VectorDbl)e.OldValue;
 			var newValue = (VectorDbl)e.NewValue;
 

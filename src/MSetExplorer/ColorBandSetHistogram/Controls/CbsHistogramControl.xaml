@@ -1,9 +1,9 @@
-﻿<UserControl x:Class="MSetExplorer.ColorBandSetHistogramControl"
+﻿<UserControl x:Class="MSetExplorer.CbsHistogramControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:CbshDisplayViewModel}"
+             xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:CbsHistogramViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="240" d:DesignWidth="1044">
     <Grid>
@@ -18,7 +18,7 @@
                     <local:CbshZoomControl x:Name="cbshZoom1"/>
                 </Border>
 
-                <Border Grid.Column="1" BorderThickness="0.75" BorderBrush="Black">
+                <Border Grid.Column="2" BorderThickness="0.75" BorderBrush="Black">
                     
                     <ScrollViewer
                         x:Name="ScrollViewer1"
@@ -36,7 +36,7 @@
 
                             >
 
-                            <local:HistogramDisplayControl
+                            <local:HistogramBitmapControl
                                 x:Name="HistogramDisplayControl1"
                                 HistogramImageSource="{Binding ImageSource, Mode=OneWay}"
                                 ImageOffset="{Binding ImageOffset, Mode=OneWay}"

@@ -44,10 +44,10 @@
     </Style>
 
 
-    <Style TargetType="{x:Type local:HistogramDisplayControl}">
+    <Style TargetType="{x:Type local:HistogramBitmapControl}">
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="{x:Type local:HistogramDisplayControl}">
+                <ControlTemplate TargetType="{x:Type local:HistogramBitmapControl}">
                     <Border BorderThickness="0" BorderBrush="DarkSlateBlue">
 
                         <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">

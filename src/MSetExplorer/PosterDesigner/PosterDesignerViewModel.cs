@@ -14,7 +14,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
-			ICbshDisplayViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
+			ICbsHistogramViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
 			/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */ViewModelFactory viewModelFactory)
 		{
 			//_mapJobHelper = mapJobHelper;
@@ -58,7 +58,7 @@ namespace MSetExplorer
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		//public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
-		public ICbshDisplayViewModel CbshDisplayViewModel { get; }
+		public ICbsHistogramViewModel CbshDisplayViewModel { get; }
 
 		public ViewModelFactory ViewModelFactory { get; init;}
 

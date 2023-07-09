@@ -60,7 +60,7 @@ namespace MSetExplorer
 
 			// ColorBand Histogram ViewModel
 			//var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
-			var cbshDisplayViewModel = new CbshDisplayViewModel(mapSectionHistogramProcessor);	
+			var cbshDisplayViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);	
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
@@ -86,7 +86,7 @@ namespace MSetExplorer
 
 			// ColorBand Histogram ViewModel
 			//var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
-			var cbshDisplayViewModel = new CbshDisplayViewModel(mapSectionHistogramProcessor);
+			var cbshDisplayViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);
 
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
