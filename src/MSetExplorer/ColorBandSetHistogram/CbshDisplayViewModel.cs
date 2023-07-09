@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.MapDisplay.Support;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -34,6 +35,8 @@ namespace MSetExplorer
 
 		private VectorDbl _displayPosition;
 
+		private ScaledImageViewInfo _viewportSizePositionAndScale;
+
 		private ImageSource _imageSource;
 
 		private double _displayZoom;
@@ -63,6 +66,8 @@ namespace MSetExplorer
 			_viewportSize = new SizeDbl();
 			_imageOffset = new VectorDbl();
 			_displayPosition = new VectorDbl();
+
+			_viewportSizePositionAndScale = ScaledImageViewInfo.Zero;
 
 			_drawingGroup = new DrawingGroup();
 			_scaleTransform = new ScaleTransform();
@@ -284,6 +289,21 @@ namespace MSetExplorer
 		}
 
 		//public Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
+
+		public ScaledImageViewInfo ViewportSizePositionAndScale
+		{
+			get => _viewportSizePositionAndScale;
+			set
+			{
+				lock (_paintLocker)
+				{
+					_viewportSize = value.ContentViewportSize;
+					var offset = new VectorDbl(value.ContentOffset.X * _scaleTransform.ScaleX, 0);
+					ImageOffset = offset;
+				}
+			}
+		}
+
 
 		#endregion
 

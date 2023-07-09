@@ -45,62 +45,22 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfoWithSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
-		{
-			ImageFilePath = imageFilePath;
+		//public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfoWithSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		//{
+		//	ImageFilePath = imageFilePath;
 
-			//var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(areaColorAndCalcSettings.MapAreaInfo, imageSize);
-			//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-			//_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-
-			//_task.ContinueWith(t =>
-			//{
-
-			//}
-			//);
-		}
+		//	_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+		//}
 
 		public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			ImageFilePath = imageFilePath;
 
-			//var oldAreaInfo = MapJobHelper.GetMapAreaWithSize(areaColorAndCalcSettings.MapAreaInfo, imageSize);
-			//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-			//_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, oldAreaInfo, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-
 			var mapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfoV2, canvasSize);
 
 			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
-			//_task.ContinueWith(t =>
-			//{
-
-			//}
-			//);
 		}
-
-
-		//public void CreateImage(string imageFilePath, Project project)
-		//{
-		//	ImageFilePath = imageFilePath;
-		//	//Poster = poster;
-
-		//	var curJob = project.CurrentJob;
-		//	//var oldAreaInfo = MapJobHelper2.Convert(curJob.MapAreaInfo, new MSS.Types.SizeInt(1024));
-		//	var oldAreaInfo = new MapAreaInfo();
-
-
-		//	_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, oldAreaInfo, project.CurrentColorBandSet, curJob.MapCalcSettings, _useEscapeVelocities, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-
-		//	//_task.ContinueWith(t =>
-		//	//{
-
-		//	//}
-		//	//);
-		//}
-
 
 		public void CancelCreateImage()
 		{

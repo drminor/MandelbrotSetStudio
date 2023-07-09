@@ -12,6 +12,7 @@ using MSS.Common.MSet;
 using System.Linq;
 using System.IO;
 using MongoDB.Bson;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -28,7 +29,6 @@ namespace MSetExplorer
 
 		public ExplorerWindow(IExplorerViewModel dataContext, AppNavRequestResponse appNavRequestResponse)
 		{
-			//_vm = (IExplorerViewModel)DataContext;
 			DataContext = dataContext;
 			_vm = dataContext;
 			AppNavRequestResponse = appNavRequestResponse;
@@ -84,6 +84,10 @@ namespace MSetExplorer
 				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 
+				// Position the Window near the left top.
+				Left = 20;
+				Top = 20;
+
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
 		}
@@ -91,18 +95,29 @@ namespace MSetExplorer
 		private void ExplorerWindow_ContentRendered(object? sender, EventArgs e)
 		{
 			Debug.WriteLine("The Explorer Window is handling ContentRendered");
+
+
+
+
 			//LoadNewProject();
 			//ShowMapCoordsEditor();
 			//ShowCoordsEditor();
 
 			//SpIdxTest();
 
-			DisplayJobTree(true);
+			DisplayJobTree(show: true);
 
-			if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.OpenProject)
-			{
-				OpenProjectFromAppRequest(AppNavRequestResponse.RequestParameters);
-			}
+			//if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.OpenProject)
+			//{
+			//	OpenProjectFromAppRequest(AppNavRequestResponse.RequestParameters);
+			//}
+			//else if (AppNavRequestResponse.RequestCommand == RequestResponseCommand.CreateNewProject)
+			//{
+			//	LoadNewProject();
+			//}
+
+			//LoadNewProject();
+			OpenProjectFromAppRequest(new string[] {"Art3"});
 		}
 
 		private void ExplorerWindow_Closing(object? sender, CancelEventArgs e)
@@ -511,11 +526,13 @@ namespace MSetExplorer
 			//var imageSize = curProject.CurrentJob.CanvasSize.Scale(4);
 			var imageSize = new SizeInt(4096);
 
+			var areaColorAndCalcSettings = GetAreaColorAndCalcSettings();
+
 			var initialImageFilename = GetImageFilename(curProject.Name, imageSize.Width);
 
 			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
 			{
-				_createImageProgressWindow = StartImageCreation(imageFilePath, curProject, useEscapeVelocities: true);
+				_createImageProgressWindow = StartImageCreation(imageFilePath, areaColorAndCalcSettings, new SizeDbl(imageSize));
 
 				_createImageProgressWindow.Show();
 			}
@@ -547,17 +564,11 @@ namespace MSetExplorer
 			}
 		}
 
-		private CreateImageProgressWindow StartImageCreation(string imageFilePath, Project project, bool useEscapeVelocities)
+		private CreateImageProgressWindow StartImageCreation(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
 		{
 			var viewModelFactory = _vm.ViewModelFactory;
 			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel();
 
-			var areaColorAndCalcSettings = GetAreaColorAndCalcSettings();
-
-			var imageSize = new SizeDbl(4096); // TODO: Create user interface to have the user specify a size for the image.
-
-
-			//var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Project, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
 

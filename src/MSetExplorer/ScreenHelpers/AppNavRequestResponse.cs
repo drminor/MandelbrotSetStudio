@@ -51,6 +51,7 @@ namespace MSetExplorer.ScreenHelpers
 	{
 		OpenPoster,
 		OpenProject,
+		CreateNewProject,
 		None
 	}
 

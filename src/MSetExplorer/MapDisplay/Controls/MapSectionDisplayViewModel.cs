@@ -298,7 +298,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
+		//public Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
 		#endregion
 
@@ -310,10 +310,15 @@ namespace MSetExplorer
 
 			if (ScreenTypeHelper.IsDoubleChanged(_displayZoom, contentScaleFromPanAndZoomControl, 0.5))
 			{
-				Debug.WriteLine($"Warning: The DisplayZoom field is not being updated via its binding.");
+				Debug.WriteLine($"WARNING: The DisplayZoom field is not being updated via its binding.");
+				_displayZoom = contentScaleFromPanAndZoomControl;
+			}
+			else
+			{
+				Debug.WriteLine($"Notice: The DisplayZoom field is being updated via its binding.");
+
 			}
 
-			_displayZoom = contentScaleFromPanAndZoomControl;	
 		}
 
 		public int? SubmitJob(AreaColorAndCalcSettings newValue)

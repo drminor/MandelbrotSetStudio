@@ -123,7 +123,7 @@
 
         <!-- Scrollable Map Display -->
         <Grid Grid.Row="1" Grid.Column="1" x:Name="colCenter">
-            <local:MapSectionPzControl x:Name="mapDisplay1"></local:MapSectionPzControl>
+            <local:MapSectionPzControl x:Name="mapSectionPzControl1"></local:MapSectionPzControl>
         </Grid>
 
         <!-- Coords, Calc and Colors -->

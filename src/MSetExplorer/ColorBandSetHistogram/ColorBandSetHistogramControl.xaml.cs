@@ -92,19 +92,19 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
-		{
-			// TODO: Consider adding this to the IContentScaler interface
-			//HistogramDisplayControl1.ContentViewportSize = e.ContentViewportSize;
+		//private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
+		//{
+		//	// TODO: Consider adding this to the IContentScaler interface
+		//	//HistogramDisplayControl1.ContentViewportSize = e.ContentViewportSize;
 
-			// Now the PanAndZoomControl updates the content control's ContentViewportSize property.
-			//BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
+		//	// Now the PanAndZoomControl updates the content control's ContentViewportSize property.
+		//	//BitmapGridControl1.ContentViewportSize = e.ContentViewportSize;
 
-			Debug.Assert(HistogramDisplayControl1.ContentViewportSize == e.ContentViewportSize, "MapSectionPzControl - code behind is handling the PanAndZoomControl's ViewportChanged and the BitmapGridControl's ContentViewportSize does not match the upddated PanAndZoomControl's ContentViewportSize.");
+		//	Debug.Assert(HistogramDisplayControl1.ContentViewportSize == e.ContentViewportSize, "MapSectionPzControl - code behind is handling the PanAndZoomControl's ViewportChanged and the BitmapGridControl's ContentViewportSize does not match the upddated PanAndZoomControl's ContentViewportSize.");
 
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
-			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
-		}
+		//	_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
+		//	CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
+		//}
 
 		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
 		{

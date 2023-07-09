@@ -5,7 +5,6 @@ using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -15,7 +14,6 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -35,8 +33,6 @@ namespace MSetExplorer
 
 		private IPosterDesignerViewModel _vm;
 
-		private List<ZoomSlider> _zoomSlidersToDispose;
-
 		private CreateImageProgressWindow? _createImageProgressWindow;
 
 		#region Constructor
@@ -45,8 +41,6 @@ namespace MSetExplorer
 		{
 			DataContext = dataContext;
 			_vm = dataContext;
-
-			_zoomSlidersToDispose = new List<ZoomSlider>();
 
 			AppNavRequestResponse = appNavRequestResponse;
 			_createImageProgressWindow = null;
@@ -60,39 +54,12 @@ namespace MSetExplorer
 
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 
-			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
-
-			_vm.MapDisplayViewModel.ZoomSliderFactory = CreateNewZoomSlider;
+			mapSectionPzControl1.DataContext = _vm.MapDisplayViewModel;
+			mapSectionPzControl1.Loaded += MapSectionPzControl1_Loaded;
 
 			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
-		}
-
-		private ZoomSlider CreateNewZoomSlider(IContentScaleInfo controlToBeZoomed)
-		{
-			var sb = mapDisplayZoom1.scrollBar1;
-
-			var result = new ZoomSlider(sb, controlToBeZoomed);
-			_zoomSlidersToDispose.Add(result);
-
-			return result;
-		}
-
-		private void PosterDesignerWindow_Unloaded(object sender, RoutedEventArgs e)
-		{
-			Loaded -= PosterDesignerWindow_Loaded;
-			ContentRendered -= PosterDesignerWindow_ContentRendered;
-			Closing -= PosterDesignerWindow_Closing;
-			Unloaded -= PosterDesignerWindow_Unloaded;
-
-			_vm.PosterViewModel.PropertyChanged -= PosterViewModel_PropertyChanged;
-			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
-
-			foreach (ZoomSlider zoomSlider in _zoomSlidersToDispose)
-			{
-				zoomSlider.Dispose();
-			}
 		}
 
 		private void PosterDesignerWindow_Loaded(object sender, RoutedEventArgs e)
@@ -129,35 +96,22 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool CloseTheCurrentPoster()
+		private void PosterDesignerWindow_Unloaded(object sender, RoutedEventArgs e)
 		{
-			var curPoster = _vm.PosterViewModel.CurrentPoster;
+			Loaded -= PosterDesignerWindow_Loaded;
+			ContentRendered -= PosterDesignerWindow_ContentRendered;
+			Closing -= PosterDesignerWindow_Closing;
+			Unloaded -= PosterDesignerWindow_Unloaded;
 
-			if (curPoster == null)
-			{
-				return true;
-			}
+			_vm.PosterViewModel.PropertyChanged -= PosterViewModel_PropertyChanged;
+			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
 
-			var saveResult = PosterSaveChanges();
-			if (saveResult == SaveResult.ChangesSaved)
-			{
-				_ = MessageBox.Show("Changes Saved");
-			}
-			else if (saveResult == SaveResult.NotSavingChanges)
-			{
-				var numberOfMapSectionsDeleted = _vm.PosterViewModel.DeleteMapSectionsForUnsavedJobs();
+		}
 
-				_ = MessageBox.Show($"Changes Discarded. {numberOfMapSectionsDeleted} map sections created during this session, have been deleted.");
-			}
-			else if (saveResult == SaveResult.SaveCancelled)
-			{
-				// user cancelled.
-				return false;
-			}
-
-			_vm.PosterViewModel.PosterClose();
-
-			return true;
+		private void MapSectionPzControl1_Loaded(object sender, RoutedEventArgs e)
+		{
+			mapSectionPzControl1.Loaded -= MapSectionPzControl1_Loaded;
+			mapSectionPzControl1.PanAndZoomControl1.ZoomSliderOwner = new ZoomSlider(mapDisplayZoom1.scrollBar1, mapSectionPzControl1.PanAndZoomControl1);
 		}
 
 		#endregion
@@ -394,22 +348,6 @@ namespace MSetExplorer
 				return false;
 			}
 		}
-
-		//private CreateImageProgressWindow StartImageCreation(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
-		//{
-		//	var createImageProgressViewModel = _vm.CreateACreateImageProgressViewModel(/*imageFilePath, areaColorAndCalcSettings, imageSize*/);
-
-		//	var mapAreaInfoWithSize = _vm.GetMapAreaWithSizeFat(areaColorAndCalcSettings.MapAreaInfo, imageSize);
-		//	var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-		//	createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Poster, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings); 
-
-		//	var result = new CreateImageProgressWindow()
-		//	{
-		//		DataContext = createImageProgressViewModel
-		//	};
-
-		//	return result;
-		//}
 
 		private CreateImageProgressWindow StartImageCreation(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
 		{
@@ -921,14 +859,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private SizeDbl GetPreviewSize(SizeDbl currentSize, double previewImageSideLength)
-		//{
-		//	var scaleFactor = RMapHelper.GetSmallestScaleFactor(currentSize, new SizeDbl(previewImageSideLength));
-		//	var previewSize = currentSize.Scale(scaleFactor);
-
-		//	return previewSize;
-		//}
-
 		// TODO: handle the case where the user Applies Changes and then Chooses OK to save changes without making any subseqent changes.
 		private void PosterSizeEditorDialog_ApplyChangesRequested(object? sender, EventArgs e)
 		{
@@ -959,6 +889,38 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		private bool CloseTheCurrentPoster()
+		{
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster == null)
+			{
+				return true;
+			}
+
+			var saveResult = PosterSaveChanges();
+			if (saveResult == SaveResult.ChangesSaved)
+			{
+				_ = MessageBox.Show("Changes Saved");
+			}
+			else if (saveResult == SaveResult.NotSavingChanges)
+			{
+				var numberOfMapSectionsDeleted = _vm.PosterViewModel.DeleteMapSectionsForUnsavedJobs();
+
+				_ = MessageBox.Show($"Changes Discarded. {numberOfMapSectionsDeleted} map sections created during this session, have been deleted.");
+			}
+			else if (saveResult == SaveResult.SaveCancelled)
+			{
+				// user cancelled.
+				return false;
+			}
+
+			_vm.PosterViewModel.PosterClose();
+
+			return true;
+		}
+
 
 		#endregion
 

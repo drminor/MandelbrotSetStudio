@@ -613,9 +613,9 @@ namespace MSetExplorer
 
 			//Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(newValue, c._viewportSizeInternal), "The container size has been updated since the Debouncer fired.");
 
-			if (ScreenTypeHelper.IsSizeDblChanged(newValue, c._viewportSizeInternal))
+			if (!newValue.IsNearZero() && ScreenTypeHelper.IsSizeDblChanged(newValue, c._viewportSizeInternal))
 			{
-				Debug.WriteLine("The container size has been updated since the Debouncer fired.");
+				Debug.WriteLine("The ViewportSize is being updated from some source other than the ViewportSizeInternal property. If the ViewportSize property is holding back updates, the value just set may be undone.");
 			}
 		}
 

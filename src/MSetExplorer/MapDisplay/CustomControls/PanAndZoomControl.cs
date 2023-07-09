@@ -8,7 +8,7 @@ using System.Windows.Controls.Primitives;
 
 namespace MSetExplorer
 {
-	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IContentScaleInfo
+	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IContentScaleInfo, IDisposable
 	{
 		#region Private Fields
 
@@ -836,6 +836,14 @@ namespace MSetExplorer
 			if (ScreenTypeHelper.IsSizeDblChanged(viewportSize, controlSize, threshold: 0.05))
 			{
 				Debug.WriteLine($"WARNING: The viewportSize: {viewportSize} is not the same size as the control: {controlSize}.");
+			}
+		}
+
+		public void Dispose()
+		{
+			if (ZoomSliderOwner != null)
+			{
+				((IDisposable)ZoomSliderOwner).Dispose();
 			}
 		}
 

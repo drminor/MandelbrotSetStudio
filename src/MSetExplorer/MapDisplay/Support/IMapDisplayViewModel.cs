@@ -50,7 +50,7 @@ namespace MSetExplorer
 		double MaximumDisplayZoom { get; set; }
 
 		MapAreaInfo? LastMapAreaInfo { get; }
-		Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
+		//Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
 		//int? UpdateViewportSize(SizeDbl viewportSize);
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);

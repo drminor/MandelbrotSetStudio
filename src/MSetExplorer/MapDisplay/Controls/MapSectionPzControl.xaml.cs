@@ -54,10 +54,12 @@ namespace MSetExplorer
 				//_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
 				_vm.ViewportSize = PanAndZoomControl1.ViewportSize;
 
-				if (_vm.ZoomSliderFactory != null)
-				{
-					PanAndZoomControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(PanAndZoomControl1);
-				}
+				//if (_vm.ZoomSliderFactory != null)
+				//{
+				//	PanAndZoomControl1.ZoomSliderOwner = _vm.ZoomSliderFactory(PanAndZoomControl1);
+				//}
+
+				//PanAndZoomControl1.ZoomSliderOwner = new ZoomSlider()
 
 				//PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
@@ -66,7 +68,7 @@ namespace MSetExplorer
 
 				_vm.InitializeDisplaySettings += MapSectionDisplayViewModel_InitializeDisplaySettings;
 
-				PanAndZoomControl1.ContentScaleChanged += PanAndZoomControl1_ContentScaleChanged;
+				//PanAndZoomControl1.ContentScaleChanged += PanAndZoomControl1_ContentScaleChanged;
 
 
 				_outline = BuildOutline(BitmapGridControl1.Canvas);
@@ -77,8 +79,6 @@ namespace MSetExplorer
 
 		private void MapSectionPzControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			PanAndZoomControl1.ZoomSliderOwner = null;
-
 			//PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
@@ -86,7 +86,10 @@ namespace MSetExplorer
 
 			_vm.InitializeDisplaySettings -= MapSectionDisplayViewModel_InitializeDisplaySettings;
 
-			PanAndZoomControl1.ContentScaleChanged -= PanAndZoomControl1_ContentScaleChanged;
+			//PanAndZoomControl1.ContentScaleChanged -= PanAndZoomControl1_ContentScaleChanged;
+
+			PanAndZoomControl1.Dispose();
+			PanAndZoomControl1.ZoomSliderOwner = null;
 		}
 
 		#endregion
@@ -164,15 +167,15 @@ namespace MSetExplorer
 			PanAndZoomControl1.ResetExtentWithPositionAndScale(e.ContentOffset, e.MinContentScale, e.MaxContentScale, e.ContentScale);
 		}
 
-		private void PanAndZoomControl1_ContentScaleChanged(object? sender, EventArgs e)
-		{
-			var contentScaleFromPanAndZoomControl = PanAndZoomControl1.ContentScale;
-			var contentScaleFromBitmapGridControl = BitmapGridControl1.ContentScale;
+		//private void PanAndZoomControl1_ContentScaleChanged(object? sender, EventArgs e)
+		//{
+		//	var contentScaleFromPanAndZoomControl = PanAndZoomControl1.ContentScale;
+		//	var contentScaleFromBitmapGridControl = BitmapGridControl1.ContentScale;
 
-			CheckForOutofSyncScaleFactor(contentScaleFromPanAndZoomControl, contentScaleFromBitmapGridControl);
+		//	CheckForOutofSyncScaleFactor(contentScaleFromPanAndZoomControl, contentScaleFromBitmapGridControl);
 
-			_vm.ReceiveAdjustedContentScale(contentScaleFromPanAndZoomControl, contentScaleFromBitmapGridControl);
-		}
+		//	_vm.ReceiveAdjustedContentScale(contentScaleFromPanAndZoomControl, contentScaleFromBitmapGridControl);
+		//}
 
 		#endregion
 

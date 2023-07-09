@@ -9,7 +9,7 @@ namespace MSetExplorer
 	{
 		//private readonly MapJobHelper _mapJobHelper;
 		//private readonly IMapLoaderManager _mapLoaderManager;
-		private readonly ViewModelFactory _viewModelFactory;
+		//private readonly ViewModelFactory _viewModelFactory;
 
 		#region Constructor
 
@@ -30,9 +30,9 @@ namespace MSetExplorer
 			//MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
 			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 
-			_viewModelFactory = viewModelFactory;
+			ViewModelFactory = viewModelFactory;
 
-			MapCoordsViewModel = _viewModelFactory.CreateAMapCoordsViewModel();
+			MapCoordsViewModel = viewModelFactory.CreateAMapCoordsViewModel();
 
 			MapCalcSettingsViewModel = new MapCalcSettingsViewModel();
 			MapCalcSettingsViewModel.MapSettingsUpdateRequested += MapCalcSettingsViewModel_MapSettingsUpdateRequested;
@@ -60,7 +60,7 @@ namespace MSetExplorer
 		//public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
 		public ICbshDisplayViewModel CbshDisplayViewModel { get; }
 
-		public ViewModelFactory ViewModelFactory => _viewModelFactory;
+		public ViewModelFactory ViewModelFactory { get; init;}
 
 		#endregion
 
