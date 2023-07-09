@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSetExplorer.MapDisplay.Support;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -10,7 +9,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {

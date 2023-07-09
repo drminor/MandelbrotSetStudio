@@ -1,5 +1,4 @@
-﻿using MSetExplorer.MapDisplay.Support;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

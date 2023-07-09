@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MSetExplorer.MapDisplay.Support
+namespace MSetExplorer
 {
 	internal class ContentScalerHelper
 	{

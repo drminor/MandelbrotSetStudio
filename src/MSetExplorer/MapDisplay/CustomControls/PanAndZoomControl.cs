@@ -5,9 +5,18 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
+	/// <remarks>
+	/// 
+	/// This code is based on the CodeProject: A WPF Custom Control for Zooming and Panning
+	/// https://www.codeproject.com/Articles/85603/A-WPF-custom-control-for-zooming-and-panning
+	/// Written by Ashley Davis
+	/// 
+	/// </remarks>
+	
 	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IContentScaleInfo, IDisposable
 	{
 		#region Private Fields
@@ -16,16 +25,11 @@ namespace MSetExplorer
 		public static readonly double DefaultMinContentScale = 0.015625;
 		public static readonly double DefaultMaxContentScale = 1.0;
 
-		private bool _canHScroll = true;
-		private bool _canVScroll = false;
-		private bool _canZoom = true;
 
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomSlider;
 
 		private SizeDbl _viewportSize;
-
-		//private ScaleTransform _contentScaleTransform;
 
 		private bool _enableContentOffsetUpdateFromScale = true;
 
@@ -46,8 +50,16 @@ namespace MSetExplorer
 
 		#region Constructor
 
+		static PanAndZoomControl()
+		{
+			DefaultStyleKeyProperty.OverrideMetadata(typeof(PanAndZoomControl), new FrameworkPropertyMetadata(typeof(PanAndZoomControl)));
+		}
+
 		public PanAndZoomControl()
 		{
+			CanHorizontallyScroll = true;
+			CanVerticallyScroll = false;
+			CanZoom = true;
 			ContentBeingZoomed = null;
 
 			_scrollOwner = null;
@@ -608,17 +620,14 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region xx Dependency Property
-
-		//			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
-
+		#region ContentVpSizeOffsetAndScale Dependency Property
 
 		public static readonly DependencyProperty ContentVpSizeOffsetAndScaleProperty =
 				DependencyProperty.Register("ContentVpSizeOffsetAndScale", typeof(ScaledImageViewInfo), typeof(PanAndZoomControl),
 											new FrameworkPropertyMetadata(ScaledImageViewInfo.Zero, FrameworkPropertyMetadataOptions.None, ContentVpSizeOffsetAndScale_PropertyChanged));
 
 		/// <summary>
-		/// Event raised when the 'ContentOffsetY' property has changed value.
+		/// Event raised when the 'ContentVpSizeOffsetAndScale' property has changed value.
 		/// </summary>
 		private static void ContentVpSizeOffsetAndScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
@@ -626,7 +635,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
 
 		#region Private Methods - Scroll Support
 
@@ -822,12 +830,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public void ReportSizes(string label)
-		{
-			var controlSize = new SizeInt(ActualWidth, ActualHeight);
-			Debug.WriteLineIf(_useDetailedDebug, $"At {label}, Control: {controlSize}.");
-		}
-
 		[Conditional("DEBUG2")]
 		private void CheckViewportSize(SizeDbl viewportSize)
 		{
@@ -839,6 +841,242 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Public Properties - IScrollInfo
+
+		public ScrollViewer ScrollOwner
+		{
+			get => _scrollOwner ?? (_scrollOwner = new ScrollViewer());
+			set
+			{
+				_scrollOwner = value;
+				_originalVerticalScrollBarVisibility = _scrollOwner.VerticalScrollBarVisibility;
+				_originalHorizontalScrollBarVisibility = _scrollOwner.HorizontalScrollBarVisibility;
+			}
+		}
+
+		public bool CanHorizontallyScroll { get; set; }
+
+		public bool CanVerticallyScroll { get; set; }
+
+		public double ExtentWidth => Math.Max(UnscaledExtent.Width, ViewportWidth) * ContentScale;
+
+		public double ExtentHeight => Math.Max(UnscaledExtent.Height, ViewportHeight) * ContentScale;
+
+		public double ViewportWidth => ViewportSize.Width;
+
+		public double ViewportHeight => ViewportSize.Height;
+
+		public double HorizontalOffset => ContentOffsetX * ContentScale;
+
+		public double VerticalOffset => ContentOffsetY * ContentScale;
+
+		#endregion
+
+		#region Line / Page / MouseWheel - IScrollInfo
+
+		public void LineDown() => ContentOffsetY += ContentViewportSize.Height / 10;
+
+		public void LineUp() => ContentOffsetY -= ContentViewportSize.Height / 10;
+
+		public void LineLeft() => ContentOffsetX -= ContentViewportSize.Width / 10;
+
+		public void LineRight() => ContentOffsetX += ContentViewportSize.Width / 10;
+
+		public void PageUp() => ContentOffsetY -= ContentViewportSize.Height;
+
+		public void PageDown() => ContentOffsetY += ContentViewportSize.Height;
+
+		public void PageLeft() => ContentOffsetX -= ContentViewportSize.Width;
+
+		public void PageRight() => ContentOffsetX += ContentViewportSize.Width;
+
+		public void MouseWheelDown() { if (IsMouseWheelScrollingEnabled) LineDown(); }
+
+		public void MouseWheelLeft() { if (IsMouseWheelScrollingEnabled) LineLeft(); }
+
+		public void MouseWheelRight() { if (IsMouseWheelScrollingEnabled) LineRight(); }
+
+		public void MouseWheelUp() { if (IsMouseWheelScrollingEnabled) LineUp(); }
+
+		#endregion
+
+		#region SetHorizontalOffset, SetVerticalOffset and MakeVisible 
+
+		public void SetHorizontalOffset(double offset)
+		{
+			if (_disableScrollOffsetSync)
+			{
+				return;
+			}
+
+			try
+			{
+				_disableScrollOffsetSync = true;
+
+				ContentOffsetX = offset / ContentScale;
+			}
+			finally
+			{
+				_disableScrollOffsetSync = false;
+			}
+		}
+
+		public void SetVerticalOffset(double offset)
+		{
+			if (_disableScrollOffsetSync)
+			{
+				return;
+			}
+
+			try
+			{
+				_disableScrollOffsetSync = true;
+
+				ContentOffsetY = offset / ContentScale;
+			}
+			finally
+			{
+				_disableScrollOffsetSync = false;
+			}
+		}
+
+		/// <summary>
+		/// Bring the specified rectangle to view.
+		/// </summary>
+		public Rect MakeVisible(Visual visual, Rect rectangle)
+		{
+			if (ContentBeingZoomed == null)
+			{
+				Debug.WriteLine("MakeVisible is being called, however ContentBeingZoomed = null. Returning.");
+				return rectangle;
+			}
+
+			if (ContentBeingZoomed.IsAncestorOf(visual))
+			{
+				Rect transformedRect = visual.TransformToAncestor(ContentBeingZoomed).TransformBounds(rectangle);
+				Rect viewportRect = new Rect(new Point(ContentOffsetX, ContentOffsetY), ScreenTypeHelper.ConvertToSize(ContentViewportSize));
+
+				if (!transformedRect.Contains(viewportRect))
+				{
+					double horizOffset = 0;
+					double vertOffset = 0;
+
+					if (transformedRect.Left < viewportRect.Left)
+					{
+						//
+						// Want to move viewport left.
+						//
+						horizOffset = transformedRect.Left - viewportRect.Left;
+					}
+					else if (transformedRect.Right > viewportRect.Right)
+					{
+						//
+						// Want to move viewport right.
+						//
+						horizOffset = transformedRect.Right - viewportRect.Right;
+					}
+
+					if (transformedRect.Top < viewportRect.Top)
+					{
+						//
+						// Want to move viewport up.
+						//
+						vertOffset = transformedRect.Top - viewportRect.Top;
+					}
+					else if (transformedRect.Bottom > viewportRect.Bottom)
+					{
+						//
+						// Want to move viewport down.
+						//
+						vertOffset = transformedRect.Bottom - viewportRect.Bottom;
+					}
+
+					SnapContentOffsetTo(new Point(ContentOffsetX + horizOffset, ContentOffsetY + vertOffset));
+				}
+			}
+			return rectangle;
+		}
+
+		/// <summary>
+		/// Instantly center the view on the specified point (in content coordinates).
+		/// </summary>
+		public void SnapContentOffsetTo(Point contentOffset)
+		{
+			//AnimationHelper.CancelAnimation(this, ContentOffsetXProperty);
+			//AnimationHelper.CancelAnimation(this, ContentOffsetYProperty);
+
+			ContentOffsetX = contentOffset.X;
+			ContentOffsetY = contentOffset.Y;
+		}
+
+		private void SetVerticalScrollBarVisibility(bool show)
+		{
+			if (_scrollOwner != null && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled)
+			{
+				if (show && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Visible)
+				{
+					_scrollOwner.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
+				}
+				else
+				{
+					if (_scrollOwner.VerticalScrollBarVisibility == ScrollBarVisibility.Visible && !show)
+					{
+						_scrollOwner.VerticalScrollBarVisibility = _originalVerticalScrollBarVisibility;
+					}
+				}
+			}
+		}
+
+		private void SetHorizontalScrollBarVisibility(bool show)
+		{
+			if (_scrollOwner != null && _scrollOwner.HorizontalScrollBarVisibility != ScrollBarVisibility.Disabled)
+			{
+				if (show && _scrollOwner.HorizontalScrollBarVisibility != ScrollBarVisibility.Visible)
+				{
+					_scrollOwner.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
+				}
+				else
+				{
+					if (_scrollOwner.HorizontalScrollBarVisibility == ScrollBarVisibility.Visible && !show)
+					{
+						_scrollOwner.HorizontalScrollBarVisibility = _originalHorizontalScrollBarVisibility;
+					}
+				}
+			}
+		}
+
+		#endregion
+
+		#region IContentScaleInfo Support
+
+		public ZoomSlider? ZoomSliderOwner
+		{
+			get => _zoomSlider;
+			set => _zoomSlider = value;
+		}
+
+		public bool CanZoom { get; set; }
+
+		public double Scale => ContentScale;
+
+		public double MinScale => MinContentScale;
+
+		public double MaxScale => MaxContentScale;
+
+		public void SetScale(double contentScale) => SetValue(ContentScaleProperty, contentScale);
+
+		#endregion
+
+		#region IContentScaler Support
+
+		private IContentScaler? _contentScaler;
+
+		#endregion
+
+		#region IDisposable Support
+
 		public void Dispose()
 		{
 			if (ZoomSliderOwner != null)
@@ -848,5 +1086,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
 	}
 }

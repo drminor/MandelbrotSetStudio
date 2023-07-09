@@ -1,5 +1,4 @@
-﻿using MSetExplorer.MapDisplay.Support;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -255,37 +254,25 @@ namespace MSetExplorer
 			db.Drawing = geometryDrawing;
 
 			return db;
-
-
-			//			< DrawingBrush Viewport = "0,0,20,20" ViewportUnits = "Absolute" TileMode = "Tile" >
-
-			//	< DrawingBrush.Drawing >
-
-			//		< DrawingGroup >
-
-			//			< GeometryDrawing Brush = "Black" >
-
-			//				< GeometryDrawing.Geometry >
-
-			//					< GeometryGroup >
-
-			//						< RectangleGeometry Rect = "0,0,50,50" />
-
-			//						< RectangleGeometry Rect = "50,50,50,50" />
-
-			//					</ GeometryGroup >
-
-			//				</ GeometryDrawing.Geometry >
-
-			//			</ GeometryDrawing >
-
-			//		</ DrawingGroup >
-
-			//	</ DrawingBrush.Drawing >
-
-			//</ DrawingBrush >
 		}
 
+		/*		< DrawingBrush Viewport = "0,0,20,20" ViewportUnits = "Absolute" TileMode = "Tile" >
+					< DrawingBrush.Drawing >
+						< DrawingGroup >
+							< GeometryDrawing Brush = "Black" >
+								< GeometryDrawing.Geometry >
+									< GeometryGroup >
+										< RectangleGeometry Rect = "0,0,50,50" />
+										< RectangleGeometry Rect = "50,50,50,50" />
+									</ GeometryGroup >
+								</ GeometryDrawing.Geometry >
+							</ GeometryDrawing >
+						</ DrawingGroup >
+					</ DrawingBrush.Drawing >
+				</ DrawingBrush >
+
+		*/
+		
 		#endregion
 	}
 }
