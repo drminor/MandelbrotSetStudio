@@ -1,7 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Media;
@@ -21,6 +20,7 @@ namespace MSetExplorer
 		ObservableCollection<MapSection> MapSections { get; }
 		
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }
+		MapAreaInfo? LastMapAreaInfo { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
@@ -49,11 +49,10 @@ namespace MSetExplorer
 		double MinimumDisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; set; }
 
-		MapAreaInfo? LastMapAreaInfo { get; }
 		//Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
 
 		//int? UpdateViewportSize(SizeDbl viewportSize);
-		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
+		//int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
 		int? MoveTo(VectorDbl contentOffset);
 

@@ -44,7 +44,7 @@ namespace MSetExplorer
 		ScrollBarVisibility _originalVerticalScrollBarVisibility;
 		ScrollBarVisibility _originalHorizontalScrollBarVisibility;
 
-		private readonly bool _useDetailedDebug;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -74,8 +74,6 @@ namespace MSetExplorer
 
 			_originalVerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
 			_originalHorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
-
-			_useDetailedDebug = false;
 		}
 
 		#endregion
@@ -213,7 +211,7 @@ namespace MSetExplorer
 
 			var result = new Size(width, height);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
 
 			// TODO: Figure out when its best to call UpdateViewportSize.
 			// ANSWER: Don't call Update during Measure, only during Arrange.
@@ -255,7 +253,7 @@ namespace MSetExplorer
 			ContentBeingZoomed = Template.FindName("PART_Content", this) as FrameworkElement;
 			if (ContentBeingZoomed != null)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Found the PanAndZoomControl_Content template. The ContentBeingZoomed is {ContentBeingZoomed} /w type: {ContentBeingZoomed.GetType()}.");
+				//Debug.WriteLineIf(_useDetailedDebug, $"Found the PanAndZoomControl_Content template. The ContentBeingZoomed is {ContentBeingZoomed} /w type: {ContentBeingZoomed.GetType()}.");
 
 				if (ContentBeingZoomed is ContentPresenter cp)
 				{

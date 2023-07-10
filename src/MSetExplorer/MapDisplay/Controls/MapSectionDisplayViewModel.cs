@@ -229,9 +229,6 @@ namespace MSetExplorer
 
 		#region Public Properties - Scroll
 
-		public bool IsBound => _boundedMapArea != null;
-
-
 		public SizeDbl UnscaledExtent
 		{
 			get => _unscaledExtent;
@@ -314,9 +311,7 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"Notice: The DisplayZoom field is being updated via its binding.");
-
 			}
-
 		}
 
 		public int? SubmitJob(AreaColorAndCalcSettings newValue)
@@ -393,23 +388,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private (SizeDbl posterSize, double minDZoom, double dZoom, VectorDbl pos) GetCurrentValues(BoundedMapArea boundedMapArea)
-		//{
-		//	if (boundedMapArea == null)
-		//	{
-		//		return (new SizeDbl(), 0, 0, new VectorDbl());
-		//	}
-		//	else
-		//	{
-		//		//var posterSize = boundedMapArea.PosterSize;
-		//		var minDZoom = 0;
-		//		var dZoom = 0;
-		//		var pos = new VectorDbl();
-
-		//		return (boundedMapArea.PosterSize, minDZoom, dZoom, pos);
-		//	}
-		//}
-
 		/*	Details regarding what the PanAndZoomControl does as the Extent and DisplayZoom values are updated.
 
 				The PanAndZoom control will update scroll bar extents and positions.
@@ -449,49 +427,6 @@ namespace MSetExplorer
 
 		*/
 
-		// TODO: UpdateViewportSizeAndPos may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
-		// TODO: Consider
-		//		1. adding a property of type ScaledImageViewInfo to this class (MapSectionDisplayViewModel)
-		//		2. adding a Dependency Property on the PanAndZoom control
-		//		3. Binding these two
-		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
-		{
-			//int? newJobNumber;
-
-			//lock (_paintLocker)
-			//{
-			//	if (CurrentAreaColorAndCalcSettings == null)
-			//	{
-			//		_bitmapGrid.ViewportSize = contentViewportSize;
-			//		ViewportSize = contentViewportSize;
-			//		newJobNumber = null;
-			//	}
-			//	else
-			//	{
-			//		if (_boundedMapArea == null)
-			//		{
-			//			throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
-			//		}
-
-			//		var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(contentScale);
-
-			//		//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseScale, relativeScale);
-
-			//		//DisplayZoom = contentScale;
-			//		newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, baseScale);
-			//	}
-			//}
-
-			//return newJobNumber;
-
-			var scaledImageViewInfo = new ScaledImageViewInfo(contentViewportSize, contentOffset, contentScale);
-
-			ViewportSizePositionAndScale = scaledImageViewInfo;
-
-			return null;
-		}
-
-
 		public ScaledImageViewInfo ViewportSizePositionAndScale
 		{
 			get => _viewportSizePositionAndScale;
@@ -529,12 +464,13 @@ namespace MSetExplorer
 				}
 			}
 		}
-		
+
 		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseScale, double relativeScale) 
 		//{
 		//	Debug.Assert(UnscaledExtent == BoundedMapArea?.PosterSize, "UnscaledExtent is out of sync.");
 
 		//	var sanityContentScale = CalculateContentScale(UnscaledExtent, contentViewportSize);
+		////  var sanityContentScale = contentViewPortSize.Divide(unscaledExtent);
 
 		//	if (Math.Abs(sanityContentScale.Width - contentScale) > 0.01 && Math.Abs(sanityContentScale.Height - contentScale) > 0.01)
 		//	{
@@ -544,42 +480,6 @@ namespace MSetExplorer
 
 		//	Debug.WriteLine($"CHECK THIS: The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Scale:{contentScale}. BaseScale: {baseScale}, RelativeScale: {relativeScale}.");
 
-		//}
-
-		private SizeDbl CalculateContentScale(SizeDbl unscaledExtent, SizeDbl contentViewPortSize)
-		{
-			var scale2D = contentViewPortSize.Divide(unscaledExtent);
-			//var result = Math.Min(scale2D.Width, scale2D.Height);
-
-			return scale2D;
-		}
-
-		//public int? UpdateViewportSize(SizeDbl newValue)
-		//{
-		//	//int? newJobNumber = null;
-
-		//	//if (!newValue.IsNAN() && newValue != _viewportSize)
-		//	//{
-		//	//	if (newValue.Width <= 2 || newValue.Height <= 2)
-		//	//	{
-		//	//		Debug.WriteLineIf(_useDetailedDebug, $"WARNING: MapSectionDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
-		//	//	}
-		//	//	else
-		//	//	{
-		//	//		Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
-		//	//		newJobNumber = HandleDisplaySizeUpdate(newValue);
-		//	//	}
-		//	//}
-		//	//else
-		//	//{
-		//	//	Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not calling HandleDisplaySizeUpdate.");
-		//	//}
-
-		//	//return newJobNumber;
-
-		//	ViewportSize =	newValue;
-
-		//	return null;
 		//}
 
 		public int? MoveTo(VectorDbl contentOffset)

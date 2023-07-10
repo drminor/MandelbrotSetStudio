@@ -33,17 +33,16 @@
                             ContentScale="{Binding DisplayZoom}"
                             MinContentScale="{Binding MinimumDisplayZoom}" 
                             ContentVpSizeOffsetAndScale="{Binding ViewportSizePositionAndScale, Mode=TwoWay}"
-
                             >
 
-                            <local:HistogramBitmapControl
+                            <local:HistogramPlotCustomControl
                                 x:Name="HistogramDisplayControl1"
+                                SeriesData="{Binding SeriesData, Mode=OneWay}"
                                 HistogramImageSource="{Binding ImageSource, Mode=OneWay}"
                                 ImageOffset="{Binding ImageOffset, Mode=OneWay}"
                             />
 
                         </local:PanAndZoomControl>
-
                     </ScrollViewer>
 
                 </Border>

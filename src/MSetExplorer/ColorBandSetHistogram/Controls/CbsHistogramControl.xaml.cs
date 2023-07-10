@@ -9,7 +9,7 @@ using System.Windows.Shapes;
 namespace MSetExplorer
 {
 	/// <summary>
-	/// Interaction logic for ColorBandSetHistogramControl.xaml
+	/// Interaction logic for CbsHistogramControl.xaml
 	/// </summary>
 	public partial class CbsHistogramControl : UserControl
 	{
@@ -33,23 +33,23 @@ namespace MSetExplorer
 			_vm = (CbsHistogramViewModel)DataContext;
 			//_outline = new Rectangle();
 
-			Loaded += ColorBandSetHistogramControl_Loaded;
-			Unloaded += ColorBandSetHistogramControl_Unloaded;
-			SizeChanged += ColorBandSetHistogramControl_SizeChanged;
+			Loaded += CbsHistogramControl_Loaded;
+			Unloaded += CbsHistogramControl_Unloaded;
+			SizeChanged += CbsHistogramControl_SizeChanged;
 
 			InitializeComponent();
 		}
 
-		private void ColorBandSetHistogramControl_SizeChanged(object sender, SizeChangedEventArgs e)
+		private void CbsHistogramControl_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			if (_vm != null)
 			{
 				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
-				Debug.WriteLineIf(_useDetailedDebug, $"CBSH_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.CanvasSize}, ViewPort: {_vm.ViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.CanvasSize}, ViewPort: {_vm.ViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
 			}
 		}
 
-		private void ColorBandSetHistogramControl_Loaded(object sender, RoutedEventArgs e)
+		private void CbsHistogramControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
@@ -77,7 +77,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBandSetHistogramControl_Unloaded(object sender, RoutedEventArgs e)
+		private void CbsHistogramControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			PanAndZoomControl1.ZoomSliderOwner = null;
 

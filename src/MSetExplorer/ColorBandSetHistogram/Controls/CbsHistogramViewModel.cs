@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.ColorBandSetHistogram.Support;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -25,25 +26,31 @@ namespace MSetExplorer
 
 		private ColorBandSet _colorBandSet;
 		private ListCollectionView _colorBandsView;
+
+		private ColorBand? _currentColorBand;
+
 		private readonly IList<GeometryDrawing> _colorBandRectangles;
 
 		private readonly IList<GeometryDrawing> _historgramItems;
+		private HPlotSeriesData _seriesData;
+
+		private SizeDbl _unscaledExtent;
 
 		private SizeDbl _viewportSize;
+		private SizeDbl _containerSize;
+		private SizeInt _canvasSize;
+
+
+
+		private ImageSource _imageSource;
 		private VectorDbl _imageOffset;
 
 		private VectorDbl _displayPosition;
 
-		private ScaledImageViewInfo _viewportSizePositionAndScale;
-
-		private ImageSource _imageSource;
-
 		private double _displayZoom;
 		private double _minimumDisplayZoom;
 
-		private SizeDbl _containerSize;
-		private SizeInt _canvasSize;
-		private SizeDbl _unscaledExtent;
+		private ScaledImageViewInfo _viewportSizePositionAndScale;
 
 		private bool _useDetailedDebug = false;
 
@@ -56,14 +63,19 @@ namespace MSetExplorer
 			//_synchronizationContext = SynchronizationContext.Current;
 
 			_paintLocker = new object();
+
 			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
+
 			_colorBandSet = new ColorBandSet();
 			_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 			_colorBandRectangles = new List<GeometryDrawing>();
-			_historgramItems = new List<GeometryDrawing>();
 
+			_historgramItems = new List<GeometryDrawing>();
+			_seriesData = HPlotSeriesData.Zero;
+
+			_unscaledExtent = new SizeDbl();
 			_viewportSize = new SizeDbl();
-			_imageOffset = new VectorDbl();
+
 			_displayPosition = new VectorDbl();
 
 			_viewportSizePositionAndScale = ScaledImageViewInfo.Zero;
@@ -73,8 +85,8 @@ namespace MSetExplorer
 			_drawingGroup.Transform = _scaleTransform;
 
 			_imageSource = new DrawingImage(_drawingGroup);
+			_imageOffset = new VectorDbl();
 
-			_unscaledExtent = new SizeDbl();
 			//_foundationRectangle = BuildFoundationRectangle(_unscaledExtent);
 			//_drawingGroup.Children.Add(_foundationRectangle);
 
@@ -128,22 +140,54 @@ namespace MSetExplorer
 			}
 		}
 
+		public ListCollectionView ColorBandsView
+		{
+			get => _colorBandsView;
+
+			set
+			{
+				if (_colorBandsView != null)
+				{
+					_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
+				}
+
+				_colorBandsView = value;
+
+				if (_colorBandsView != null)
+				{
+					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
+				}
+
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
+			}
+		}
+
+		public ColorBand? CurrentColorBand
+		{
+			get => _currentColorBand;
+			set
+			{
+				if (_currentColorBand != null)
+				{
+					_currentColorBand.PropertyChanged -= CurrentColorBand_PropertyChanged;
+				}
+
+				_currentColorBand = value;
+
+				if (_currentColorBand != null)
+				{
+					_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
+				}
+
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
+			}
+		}
+
 		#endregion
 
 		#region Public Properties - Control
 
 		public new bool InDesignMode => base.InDesignMode;
-
-		public ImageSource ImageSource
-		{
-			get => _imageSource;
-			set
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbshDisplayViewModel's ImageSource is being set to value: {value}.");
-				_imageSource = value;
-				OnPropertyChanged(nameof(ICbsHistogramViewModel.ImageSource));
-			}
-		}
 
 		public SizeDbl ViewportSize
 		{
@@ -175,7 +219,7 @@ namespace MSetExplorer
 			{
 				if (value != _canvasSize)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbshDisplayViewModel's Canvas Size is now {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's Canvas Size is now {value}.");
 					_canvasSize = value;
 
 					//UnscaledExtent = new SizeDbl(CanvasSize.Scale(DisplayZoom));
@@ -185,6 +229,10 @@ namespace MSetExplorer
 					if (unscaledWidth.HasValue)
 					{
 						UnscaledExtent = new SizeDbl(unscaledWidth.Value, _canvasSize.Height);
+
+						//SeriesData = BuildSeriesData();
+						SeriesData = BuildTestSeries();
+
 						DrawColorBands();
 						DrawHistogram();
 					}
@@ -195,6 +243,28 @@ namespace MSetExplorer
 
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CanvasSize));
 				}
+			}
+		}
+
+		public HPlotSeriesData SeriesData
+		{
+			get => _seriesData;
+			set
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's Series is being set. There are {value.DataX.Length} entries.");
+				_seriesData = value;
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.SeriesData));
+			}
+		}
+
+		public ImageSource ImageSource
+		{
+			get => _imageSource;
+			set
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's ImageSource is being set to value: {value}.");
+				_imageSource = value;
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.ImageSource));
 			}
 		}
 
@@ -303,62 +373,16 @@ namespace MSetExplorer
 			}
 		}
 
-
-		#endregion
-
-		#region Private Properties
-
-		private ColorBand? _currentColorBand;
-
-		public ListCollectionView ColorBandsView
-		{
-			get => _colorBandsView;
-
-			set
-			{
-				if (_colorBandsView != null)
-				{
-					_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
-				}
-
-				_colorBandsView = value;
-
-				if (_colorBandsView != null)
-				{
-					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
-				}
-
-				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
-			}
-		}
-
-		public ColorBand? CurrentColorBand
-		{
-			get => _currentColorBand;
-			set
-			{
-				if (_currentColorBand != null)
-				{
-					_currentColorBand.PropertyChanged -= CurrentColorBand_PropertyChanged;
-				}
-
-				_currentColorBand = value;
-
-				if (_currentColorBand != null)
-				{
-					_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
-				}
-
-				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
-			}
-		}
-
 		#endregion
 
 		#region Public Methods
 
 		public void RefreshHistogramDisplay()
 		{
+			//SeriesData = BuildSeriesData();
+			SeriesData = BuildTestSeries();
+
+
 			DrawHistogram();
 		}
 
@@ -378,7 +402,7 @@ namespace MSetExplorer
 
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
 
 			ViewportSize = contentViewportSize;
 
@@ -394,17 +418,17 @@ namespace MSetExplorer
 			{
 				if (newValue.Width <= 2 || newValue.Height <= 2)
 				{
-					Debug.WriteLine($"WARNING: CbshDisplayViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
+					Debug.WriteLine($"WARNING: CbsHistogramViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
 				}
 				else
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
 					ContainerSize = newValue;
 				}
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not updating the ContainerSize.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not updating the ContainerSize.");
 			}
 
 			return null;
@@ -417,7 +441,7 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot call MoveTo, if the UnscaledExtent is zero.");
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"CbshDisplayViewModel is moving to position:{displayPosition}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is moving to position:{displayPosition}.");
 
 			var offset = new VectorDbl(displayPosition.X * _scaleTransform.ScaleX, 0);
 			//var offset = new VectorDbl(displayPosition.X, 0);
@@ -460,6 +484,9 @@ namespace MSetExplorer
 			}
 			else if (e == HistogramUpdateType.Refresh)
 			{
+				//SeriesData = BuildSeriesData();
+				SeriesData = BuildTestSeries();
+
 				DrawHistogram();
 			}
 		}
@@ -471,32 +498,82 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Private Methods
+
+		private HPlotSeriesData BuildSeriesData()
+		{
+			var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
+			var endingIndex = _colorBandSet[EndPtr].Cutoff;
+			//var highCutoff = _colorBandSet.HighCutoff;
+
+			var hEntries = GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
+
+			if (hEntries.Length < 1)
+			{
+				Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
+				return HPlotSeriesData.Zero;
+			}
+
+			var dataX = new double[hEntries.Length];
+			var dataY = new double[hEntries.Length];
+
+			for (var hPtr = 0; hPtr < hEntries.Length; hPtr++)
+			{
+				var hEntry = hEntries[hPtr];
+				dataX[hPtr] = hEntry.Key;
+				dataY[hPtr] = hEntry.Value;
+			}
+
+			var result = new HPlotSeriesData(dataX, dataY);
+
+			return result;
+		}
+
+		private HPlotSeriesData BuildTestSeries()
+		{
+			double[] dataX = new double[] { 1, 2, 3, 4, 5 };
+			double[] dataY = new double[] { 1, 4, 9, 16, 25 };
+
+			var result = new HPlotSeriesData(dataX, dataY);
+
+			return result;
+		}
+
+		//private (double[] dataX, double[] dataY) GetPlotData1()
+		//{
+		//	//ClearHistogramItems();
+
+		//	var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
+		//	var endingIndex = _colorBandSet[EndPtr].Cutoff;
+		//	var highCutoff = _colorBandSet.HighCutoff;
+
+		//	var hEntries = GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
+
+		//	if (hEntries.Length < 1)
+		//	{
+		//		Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
+		//		return (new double[0], new double[0]);
+		//	}
+
+		//	var dataX = new double[hEntries.Length];
+		//	var dataY = new double[hEntries.Length];
+
+		//	for (var hPtr = 0; hPtr < hEntries.Length; hPtr++)
+		//	{
+		//		var hEntry = hEntries[hPtr];
+		//		dataX[hPtr] = hEntry.Key;
+		//		dataY[hPtr] = hEntry.Value;
+		//	}
+
+		//	return (dataX, dataY);
+		//}
+
+
 		private int _histElevation = 2;
 		private int _histDispHeight = 165;
 
 		private int _cbElevation = 195;
 		private int _cbHeight = 35;
-
-		#region Private Methods
-
-		private int? GetUnscaledWidth()
-		{
-			if (_colorBandSet.Count < 2)
-			{
-				return null;
-			}
-
-			//var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
-			//var endingIndex = _colorBandSet[EndPtr].Cutoff;
-
-			////var result = 1 + endingIndex - startingIndex;
-
-			//var highCWidth = _colorBandSet.HighCutoff - _colorBandSet[EndPtr].Cutoff;
-			//var result = highCWidth + endingIndex - startingIndex;
-
-			var result = _colorBandSet.HighCutoff;
-			return result;
-		}
 
 		private void DrawHistogram()
 		{
@@ -523,7 +600,7 @@ namespace MSetExplorer
 
 			if (hEntries.Length < 1)
 			{
-				Debug.WriteLine($"WARNING: The Histogram is empty.");
+				Debug.WriteLine($"WARNING: The Histogram is empty. (DrawHistogram)");
 				return;
 			}
 
@@ -563,6 +640,26 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		private int? GetUnscaledWidth()
+		{
+			if (_colorBandSet.Count < 2)
+			{
+				return null;
+			}
+
+			//var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
+			//var endingIndex = _colorBandSet[EndPtr].Cutoff;
+
+			////var result = 1 + endingIndex - startingIndex;
+
+			//var highCWidth = _colorBandSet.HighCutoff - _colorBandSet[EndPtr].Cutoff;
+			//var result = highCWidth + endingIndex - startingIndex;
+
+			var result = _colorBandSet.HighCutoff;
+			return result;
+		}
+
 
 		//private GeometryDrawing DrawHistogramBorder(int width, int height)
 		//{

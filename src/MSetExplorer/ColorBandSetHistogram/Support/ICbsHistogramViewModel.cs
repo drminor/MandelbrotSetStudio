@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.ColorBandSetHistogram.Support;
+using MSS.Types;
 using System.Collections.Generic;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -16,6 +17,7 @@ namespace MSetExplorer
 		int EndPtr { get; set; }
 		int StartPtr { get; set; }
 
+		HPlotSeriesData SeriesData { get; }
 		ImageSource ImageSource { get; }
 		VectorDbl ImageOffset { get; }
 
