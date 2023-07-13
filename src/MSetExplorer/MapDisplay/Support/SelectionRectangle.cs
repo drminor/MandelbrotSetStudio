@@ -125,6 +125,7 @@ namespace MSetExplorer
 
 		public bool IsEnabled { get; set; }
 
+		// Same as ContentViewportSize - i.e., logical size or canvas size, and not the size of the container
 		public SizeDbl DisplaySize
 		{
 			get => _displaySize;

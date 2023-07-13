@@ -172,7 +172,7 @@ namespace MSetExplorer
 
 		public BigVector MapBlockOffset { get; set; }
 
-		public SizeDbl ViewportSize
+		public SizeDbl ContentViewportSize
 		{
 			get => _viewportSize;
 			set
@@ -506,7 +506,7 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
 
 				//_maxYPtr = ImageSizeInBlocks.Height - 1;
-				bitmap = CreateBitmap(imageSize);
+				bitmap = CreateBitmap(ImageSizeInBlocks);
 				return true;
 			}
 			else
@@ -555,11 +555,13 @@ namespace MSetExplorer
 			return _pixelsToClear;
 		}
 
-		private WriteableBitmap CreateBitmap(SizeInt size)
+		private WriteableBitmap CreateBitmap(SizeInt imageSizeInBlocks)
 		{
-			if (size.NumberOfCells > 5000000) // 5M
+			var size = imageSizeInBlocks.Scale(_blockSize);
+
+			if (imageSizeInBlocks.NumberOfCells > 550) // 550 x 128 x 128 = ~9 Megapixels
 			{
-				Debug.WriteLine($"Creating a HUGE Bitmap. Size is {size}.");
+				Debug.WriteLine($"Creating a HUGE Bitmap. Size is {imageSizeInBlocks}.");
 			}
 
 			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);

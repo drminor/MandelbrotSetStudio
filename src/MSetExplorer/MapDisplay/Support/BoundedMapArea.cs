@@ -10,8 +10,8 @@ namespace MSetExplorer
 	{
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly MapAreaInfo2 _mapAreaInfo;
+		private double _baseFactor;
 		private double _baseScale;
-		private double _scaleFactor;
 		private MapAreaInfo _scaledMapAreaInfo;
 
 		#region Constructor
@@ -21,8 +21,8 @@ namespace MSetExplorer
 			_mapJobHelper = mapJobHelper;
 			_mapAreaInfo = mapAreaInfo;
 
-			_baseScale = 0;
-			_scaleFactor = 1;
+			_baseFactor = 0;
+			_baseScale = 1;
 
 			PosterSize = posterSize;
 			ViewportSize = viewportSize;
@@ -31,7 +31,7 @@ namespace MSetExplorer
 
 			//Debug.Assert(MapAreaInfoWithSize.CanvasSize == posterSize, $"GetMapAreaWithSizeFat is returning a CanvasSize: {MapAreaInfoWithSize.CanvasSize} different from the posterSize: {posterSize}.");
 
-			MapAreaInfoWithSize = GetScaledMapAreaInfoV1(mapAreaInfo, posterSize, _scaleFactor);
+			MapAreaInfoWithSize = GetScaledMapAreaInfoV1(mapAreaInfo, posterSize, _baseScale);
 
 			Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(MapAreaInfoWithSize.CanvasSize, posterSize), $"Since the scale factor = 1, the MapAreaInfoV1.CanvasSize should equal the PosterSize. Compare: {MapAreaInfoWithSize.CanvasSize} with {posterSize}.");
 
@@ -48,24 +48,24 @@ namespace MSetExplorer
 
 		public SizeDbl ViewportSize { get; private set; }
 
-		public double BaseScale
+		public double BaseFactor
 		{
-			get => _baseScale;
+			get => _baseFactor;
 			set
 			{
-				if (value != _baseScale)
+				if (value != _baseFactor)
 				{
-					_baseScale = value;
-					ScaleFactor = Math.Pow(0.5, _baseScale);
-					_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, ScaleFactor);
+					_baseFactor = value;
+					BaseScale = Math.Pow(0.5, _baseFactor);
+					_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, BaseScale);
 				}
 			}
 		}
 
-		public double ScaleFactor
+		public double BaseScale
 		{
-			get => _scaleFactor;
-			private set => _scaleFactor = value;
+			get => _baseScale;
+			private set => _baseScale = value;
 		}
 
 		#endregion
@@ -73,10 +73,10 @@ namespace MSetExplorer
 		#region Public Methods
 
 		// New Size and Position
-		public MapAreaInfo GetView(SizeDbl viewportSize, VectorDbl newDisplayPosition, double baseScale)
+		public MapAreaInfo GetView(SizeDbl viewportSize, VectorDbl newDisplayPosition, double baseFactor)
 		{
 			ViewportSize = viewportSize;
-			BaseScale = baseScale;
+			BaseFactor = baseFactor;
 
 			return GetView(newDisplayPosition);
 		}
@@ -88,7 +88,7 @@ namespace MSetExplorer
 			var invertedY = GetInvertedYPos(newDisplayPosition.Y);
 			var displayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, invertedY);
 			var newScreenArea = new RectangleDbl(displayPositionWithInverseY, ViewportSize);
-			var scaledNewScreenArea = newScreenArea.Scale(ScaleFactor);
+			var scaledNewScreenArea = newScreenArea.Scale(BaseScale);
 
 			var result = GetUpdatedMapAreaInfo(scaledNewScreenArea, _scaledMapAreaInfo);
 
@@ -97,26 +97,26 @@ namespace MSetExplorer
 
 		public RectangleDbl GetScaledScreenAreaNotUsed(VectorDbl displayPosition, SizeDbl viewportSize, out double unInvertedY)
 		{
-			var t = displayPosition.Scale(ScaleFactor);
+			var t = displayPosition.Scale(BaseScale);
 			unInvertedY = t.Y;
 
 			// Invert first, then scale
 			var invertedY = GetInvertedYPos(displayPosition.Y);
 			var displayPositionWithInverseY = new VectorDbl(displayPosition.X, invertedY);
 			var newScreenArea = new RectangleDbl(displayPositionWithInverseY, viewportSize);
-			var scaledNewScreenArea = newScreenArea.Scale(ScaleFactor);
+			var scaledNewScreenArea = newScreenArea.Scale(BaseScale);
 
 			return scaledNewScreenArea;
 		}
 
 		public VectorDbl GetScaledDisplayPosition(VectorDbl displayPosition, out double unInvertedY)
 		{
-			var t = displayPosition.Scale(ScaleFactor);
+			var t = displayPosition.Scale(BaseScale);
 			unInvertedY = t.Y;
 
 			// Invert first, then scale
 			var invertedY = GetInvertedYPos(displayPosition.Y);
-			var result = new VectorDbl(displayPosition.X, invertedY).Scale(ScaleFactor);
+			var result = new VectorDbl(displayPosition.X, invertedY).Scale(BaseScale);
 
 			return result;
 		}

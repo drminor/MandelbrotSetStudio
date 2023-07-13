@@ -11,7 +11,7 @@ namespace MSetExplorer
 		//private const double BREAK_DOWN_FACTOR = 0.5;
 
 		private readonly ScrollBar _scrollbar;
-		private readonly IContentScaleInfo _zoomedControl;
+		private readonly IZoomInfo _zoomedControl;
 
 		private bool _disableScrollValueSync = false;
 
@@ -19,7 +19,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ZoomSlider(ScrollBar scrollBar, IContentScaleInfo zoomedControl)
+		public ZoomSlider(ScrollBar scrollBar, IZoomInfo zoomedControl)
 		{
 			_scrollbar = scrollBar;
 			_zoomedControl = zoomedControl;
@@ -59,12 +59,12 @@ namespace MSetExplorer
 		{
 			if (double.IsNaN(_scrollbar.Value) || _scrollbar.Value != contentScale)
 			{
-				Debug.Assert(contentScale >= _scrollbar.Minimum && contentScale <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {contentScale} which is not withing the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
+				Debug.Assert(contentScale >= _scrollbar.Minimum && contentScale <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {contentScale} which is not within the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
 
 				_disableScrollValueSync = true;
 				try
 				{
-					//(BaseValue, RelativeValue) = GetBaseAndRelative(_zoomedControl.Scale);
+					//(BaseFactor, RelativeValue) = GetBaseFactorAndRelativeScale(_zoomedControl.Scale);
 					_scrollbar.Value = contentScale;
 				}
 				finally
@@ -95,7 +95,7 @@ namespace MSetExplorer
 					_scrollbar.SmallChange = _scrollbar.Minimum;
 					_scrollbar.LargeChange = _scrollbar.Minimum * 2;
 
-					//(BaseValue, RelativeValue) = GetBaseAndRelative(_zoomedControl.Scale);
+					//(BaseFactor, RelativeValue) = GetBaseFactorAndRelativeScale(_zoomedControl.Scale);
 					_scrollbar.Value = _zoomedControl.Scale;
 				}
 				finally

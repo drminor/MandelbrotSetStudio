@@ -299,6 +299,40 @@ namespace MSS.Common
 		//}
 
 
+		/// <summary>
+		/// Returns the value of ContentScale, aka Zoom required to have the content fill the screen.
+		/// </summary>
+		/// <param name="extent">Size of the map, aka Project Job or Poster Job</param>
+		/// <param name="viewportSize">Size of the display in device pixels</param>
+		/// <param name="margin">The number of pixels of blank space on each side.</param>
+		/// <param name="maximumZoom">The largest value that is allowed to be returned</param>
+		/// <returns><The ContentScale to use to have the entire content be displayed on screen./returns>
+		public static double GetMinDisplayZoom2(SizeDbl extent, SizeDbl viewportSize, VectorDbl margin, double maximumZoom)
+		{
+			// Calculate the Zoom level at which the poster fills the screen, leaving a 10 pixel border, on all sides.
+
+			var framedViewPort = viewportSize.Deflate(margin.Scale(2));
+
+			var result = RMapHelper.GetSmallestScaleFactor(extent, framedViewPort);
+			result = Math.Min(result, maximumZoom);
+
+			return result;
+		}
+
+		public static double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewportSize, double margin, double maximumZoom = 1)
+		{
+			// Calculate the Zoom level at which the poster fills the screen, leaving a 20 pixel border.
+
+			var framedViewPort = viewportSize.Sub(new SizeDbl(margin * 2));
+			var minScale = framedViewPort.Divide(extent);
+			var result = Math.Min(minScale.Width, minScale.Height);
+			result = Math.Min(result, maximumZoom);
+
+			return result;
+		}
+
+
+
 		#endregion
 
 		#region Type Helpers
@@ -398,20 +432,20 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static double GetSmallestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
+		public static double GetSmallestScaleFactor(SizeDbl sizeOfItemBeingFitted, SizeDbl containerSize)
 		{
-			var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
-			var hRat = containerSize.Height / sizeToFit.Height;
+			var wRat = containerSize.Width / sizeOfItemBeingFitted.Width; // Scale Factor to multiply item being fitted to get container units.
+			var hRat = containerSize.Height / sizeOfItemBeingFitted.Height;
 
 			var result = Math.Min(wRat, hRat);
 
 			return result;
 		}
 
-		public static double GetLargestScaleFactor(SizeDbl sizeToFit, SizeDbl containerSize)
+		public static double GetLargestScaleFactor(SizeDbl sizeOfItemBeingFitted, SizeDbl containerSize)
 		{
-			var wRat = containerSize.Width / sizeToFit.Width; // Scale Factor to multiply item being fitted to get container units.
-			var hRat = containerSize.Height / sizeToFit.Height;
+			var wRat = containerSize.Width / sizeOfItemBeingFitted.Width; // Scale Factor to multiply item being fitted to get container units.
+			var hRat = containerSize.Height / sizeOfItemBeingFitted.Height;
 
 			var result = Math.Max(wRat, hRat);
 

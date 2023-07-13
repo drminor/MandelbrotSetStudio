@@ -20,8 +20,8 @@
                 <local:PanAndZoomControl
                     x:Name="PanAndZoomControl1"
                     UnscaledExtent="{Binding UnscaledExtent}"
-                    ContentScale="{Binding DisplayZoom}"
-                    MinContentScale="{Binding MinimumDisplayZoom}"
+                    ContentScale="{Binding DisplayZoom, Mode=TwoWay}"
+                    MinContentScale="{Binding MinimumDisplayZoom, Mode=TwoWay}"
                     ContentVpSizeOffsetAndScale="{Binding ViewportSizePositionAndScale, Mode=TwoWay}"
                     >
 

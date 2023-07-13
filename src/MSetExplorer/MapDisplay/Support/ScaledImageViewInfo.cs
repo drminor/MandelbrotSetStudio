@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System;
 
 namespace MSetExplorer
 {
@@ -21,6 +22,12 @@ namespace MSetExplorer
 			ContentOffset = contentOffset;
 			ContentScale = contentScale;
 		}
+
+		public bool IsEmpty(double threshold = 0.1)
+		{
+			return Math.Abs(ContentScale) < threshold && ContentViewportSize.IsNearZero();
+		}
+
 	}
 
 }

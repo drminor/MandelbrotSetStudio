@@ -39,5 +39,9 @@ namespace MSetExplorer
 		public TranslateTransform TranslateTransform { get; init; }
 
 		public ScaleTransform ScaleTransform { get; init; }
+
+		public SizeDbl ContentScale { get; set; }
+
+		public VectorDbl ContentPresenterOffset { get; set; }
 	}
 }

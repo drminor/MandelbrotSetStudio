@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -8,76 +10,76 @@ namespace MSetExplorer
 
 		#region Static Methods
 
-		public static (double baseScale, double relativeScale) GetBaseAndRelative(double contentScale)
+		public static (double baseFactor, double relativeScale) GetBaseFactorAndRelativeScale(double contentScale)
 		{
 			//var t = value / BREAK_DOWN_FACTOR;
 
-			//var b = (double)(int)t;
-			//b = b *= BREAK_DOWN_FACTOR;
+			//var baseFactor = (double)(int)t;
+			//baseFactor = baseFactor *= BREAK_DOWN_FACTOR;
 
-			//var r = t - b;
+			//var relativeScale = t - baseFactor;
 
-			//r = r *= BREAK_DOWN_FACTOR;
+			//relativeScale = relativeScale *= BREAK_DOWN_FACTOR;
 
-			//return (b, r);
+			//return (baseFactor, relativeScale);
 
-			double b;
-			double r;
+			double baseFactor;
+			double relativeScale;
 
 			// Between 1/2 and 1
 			if (contentScale > 0.5)
 			{
-				b = 0;
-				r = contentScale;
+				baseFactor = 0;
+				relativeScale = contentScale;
 			}
 
 			// Between 1/4 and 1/2
 			else if (contentScale > 0.25)
 			{
-				b = 1;
-				r = contentScale / 0.5;
+				baseFactor = 1;
+				relativeScale = contentScale / 0.5;
 			}
 
 			// Between 1/4 and 1/8
 			else if (contentScale > 0.125)
 			{
-				b = 2;
-				r = contentScale / 0.25;
+				baseFactor = 2;
+				relativeScale = contentScale / 0.25;
 			}
 
 			// Between 1/8 and 1/16
 			else if (contentScale > 0.0625)
 			{
-				b = 3;
-				r = contentScale / 0.125;
+				baseFactor = 3;
+				relativeScale = contentScale / 0.125;
 			}
 
 			// Between 1/16 and 1/32
 			else if (contentScale > 0.03125)
 			{
-				b = 4;
-				r = contentScale / 0.0625;
+				baseFactor = 4;
+				relativeScale = contentScale / 0.0625;
 			}
 
 			// Between 1/32 and 1/64
 			else if (contentScale > 0.015625)
 			{
-				b = 5;
-				r = contentScale / 0.03125;
+				baseFactor = 5;
+				relativeScale = contentScale / 0.03125;
 			}
 
 			// Between 1/64 and 1/128
 			else if (contentScale > 0.0078125)
 			{
-				b = 6;
-				r = contentScale / 0.015625;
+				baseFactor = 6;
+				relativeScale = contentScale / 0.015625;
 			}
 
 			// Between 1/128 and 1/256
 			else if (contentScale > 0.00390625)
 			{
-				b = 7;
-				r = contentScale / 0.0078125;
+				baseFactor = 7;
+				relativeScale = contentScale / 0.0078125;
 			}
 
 			else
@@ -85,7 +87,7 @@ namespace MSetExplorer
 				throw new InvalidOperationException($"Values for the ContentScale < 1/256 and less are not supported.");
 			}
 
-			return (b, r);
+			return (baseFactor, relativeScale);
 		}
 
 		public static double GetCombinedValue(double baseScale, double relativeScale)
@@ -94,20 +96,30 @@ namespace MSetExplorer
 			return combinedValue;
 		}
 
-		public static double GetScaleFactor(double contentScale)
+		public static double GetBaseScale(double contentScale)
 		{
-			var (baseScale, _) = GetBaseAndRelative(contentScale);
+			var (baseScale, _) = GetBaseFactorAndRelativeScale(contentScale);
 			var result = Math.Pow(BREAK_DOWN_FACTOR, baseScale);
 			return result;
 		}
 
-		public static double GetScaleFactorFromBase(double baseScale)
+		public static double GetBaseScaleFromBaseFactor(double baseScale)
 		{
 			var result = Math.Pow(BREAK_DOWN_FACTOR, baseScale);
 			return result;
 		}
 
 		/*			Math used to calculate base and relative scales.
+
+			The content coordinates, when multiplied by the relativeScale, produces screen coordinates.
+			The contentScale is broken into two parts
+			The BaseScale is that ratio between the original content and the 'scaled down' content used to reduce the amount of I/O.
+			The RelativeScale is that ratio between the 'scaled down' content and the screen coordinates.
+						
+				For example, instead of reducing a high-resolution resource by 3/8, use a resource with a resolution 1/2 of of the original.
+				the BaseScale is 0.5 and the RelativeScale is 0.75 -- 0.75 x 0.5 -> 0.375 which is 3/8ths.
+
+
 		 			
 				combined	base	relative
 		1		1			0		1			1 * 1
@@ -140,6 +152,45 @@ namespace MSetExplorer
 		 
 		 
 		 */
+
+		#endregion
+
+		#region Methods to Convert Coordinates To / From
+
+		// Convert screen coordinates to content coordinates
+		public static RectangleDbl GetContentFromScreen(RectangleDbl displayArea, double contentScale)
+		{
+			var baseScale = ContentScalerHelper.GetBaseScale(contentScale);
+			var screenToRelativeScaleFactor = baseScale / contentScale;
+
+			// The screenToRelativeScaleFactor (how to get from screen coordinates to content coordinates
+			// should equal the reciprocal of the relativeScaleFactor (how to get from content coordinates to screen coordinates)
+			//
+			//		(1 / relativeScale) ==> BaseScale / ContentScale, because...
+			//				relativeScale == ContentScale / BaseScale
+
+			CheckScreenToRelativeScaleFactor(screenToRelativeScaleFactor, contentScale);
+
+			// The displayArea's position (aka offset) is in device pixels.
+			// The displayArea's size (aka extent) is also in device pixels
+
+			// If the amount of screen realstate required to display the entire content is < the physical ViewPortSize,
+			// then displayArea is in physical coordinates.
+			var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
+
+			return scaledDisplayArea;
+		}
+
+		[Conditional("DEBUG")]
+		private static void CheckScreenToRelativeScaleFactor(double screenToRelativeScaleFactor, double contentScale)
+		{
+			var (_, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
+
+			var chkRelativeScale = 1 / relativeScale;
+			Debug.Assert(!ScreenTypeHelper.IsDoubleChanged(screenToRelativeScaleFactor, chkRelativeScale, 0.000001), "ScreenToRelativeScaleFactor maybe incorrect.");
+		}
+
+
 
 		#endregion
 

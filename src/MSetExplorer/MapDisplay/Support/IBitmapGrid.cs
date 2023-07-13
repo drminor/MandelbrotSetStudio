@@ -11,7 +11,7 @@ namespace MSetExplorer
 
 		WriteableBitmap Bitmap { get; }
 
-		SizeDbl ViewportSize { get; set; }
+		SizeDbl ContentViewportSize { get; set; }
 		BigVector MapBlockOffset { get; set; }
 		VectorDbl ImageOffset { get; set; }
 

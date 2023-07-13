@@ -54,13 +54,26 @@ namespace MSetExplorer
 
 		private bool _useDetailedDebug = false;
 
-		#endregion
+		private int _thePlotExtent;
 
-		#region Constructor
+		private double[] _theXValues;
 
-		public CbsHistogramViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
+
+	#endregion
+
+	#region Constructor
+
+	public CbsHistogramViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
 		{
 			//_synchronizationContext = SynchronizationContext.Current;
+
+			_thePlotExtent = 400;
+			_theXValues = new double[_thePlotExtent];
+
+			for (int i = 0; i < _thePlotExtent; i++)
+			{
+				_theXValues[i] = i;
+			}
 
 			_paintLocker = new object();
 
@@ -230,8 +243,8 @@ namespace MSetExplorer
 					{
 						UnscaledExtent = new SizeDbl(unscaledWidth.Value, _canvasSize.Height);
 
-						//SeriesData = BuildSeriesData();
-						SeriesData = BuildTestSeries();
+						SeriesData = BuildSeriesData();
+						//SeriesData = BuildTestSeries();
 
 						DrawColorBands();
 						DrawHistogram();
@@ -379,8 +392,8 @@ namespace MSetExplorer
 
 		public void RefreshHistogramDisplay()
 		{
-			//SeriesData = BuildSeriesData();
-			SeriesData = BuildTestSeries();
+			SeriesData = BuildSeriesData();
+			//SeriesData = BuildTestSeries();
 
 
 			DrawHistogram();
@@ -399,6 +412,10 @@ namespace MSetExplorer
 			return _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff);
 		}
 
+		public int[] GetACopyOfTheValuesArray()
+		{
+			return _mapSectionHistogramProcessor.Histogram.Values;
+		}
 
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
@@ -484,8 +501,8 @@ namespace MSetExplorer
 			}
 			else if (e == HistogramUpdateType.Refresh)
 			{
-				//SeriesData = BuildSeriesData();
-				SeriesData = BuildTestSeries();
+				SeriesData = BuildSeriesData();
+				//SeriesData = BuildTestSeries();
 
 				DrawHistogram();
 			}
@@ -500,7 +517,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private HPlotSeriesData BuildSeriesData()
+		private HPlotSeriesData BuildSeriesDataOld()
 		{
 			var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
 			var endingIndex = _colorBandSet[EndPtr].Cutoff;
@@ -517,9 +534,12 @@ namespace MSetExplorer
 			var dataX = new double[hEntries.Length];
 			var dataY = new double[hEntries.Length];
 
-			for (var hPtr = 0; hPtr < hEntries.Length; hPtr++)
+			var extent = Math.Min(hEntries.Length, _thePlotExtent);
+
+			for (var hPtr = 0; hPtr < extent; hPtr++)
 			{
 				var hEntry = hEntries[hPtr];
+
 				dataX[hPtr] = hEntry.Key;
 				dataY[hPtr] = hEntry.Value;
 			}
@@ -528,6 +548,37 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		private HPlotSeriesData BuildSeriesData()
+		{
+			var dataY = new double[_thePlotExtent];
+
+			int[] values = _mapSectionHistogramProcessor.Histogram.Values;
+			
+			if (values.Length < 1)
+			{
+				Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
+			}
+			else
+			{
+				if (values.Length != _thePlotExtent)
+				{
+					Debug.WriteLine($"WARNING: The length of values is {values.Length}.");
+				}
+
+				var extent = Math.Min(values.Length, _thePlotExtent - 50);
+
+				for (var hPtr = 0; hPtr < extent; hPtr++)
+				{
+					dataY[hPtr] = values[hPtr];
+				}
+			}
+
+			var result = new HPlotSeriesData(_theXValues, dataY);
+
+			return result;
+		}
+
 
 		private HPlotSeriesData BuildTestSeries()
 		{

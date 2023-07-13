@@ -1,8 +1,8 @@
 ﻿namespace MSetExplorer
 {
-	public interface IContentScaleInfo
+	public interface IZoomInfo
 	{
-		ZoomSlider? ZoomSliderOwner { get; set; }
+		ZoomSlider? ZoomOwner { get; set; }
 
 		bool CanZoom { get; set;}
 

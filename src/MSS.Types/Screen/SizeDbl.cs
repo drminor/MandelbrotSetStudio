@@ -62,6 +62,11 @@ namespace MSS.Types
 			return new SizeDbl(Width - amount, Height - amount);
 		}
 
+		public SizeDbl Deflate(VectorDbl amount)
+		{
+			return new SizeDbl(Width - amount.X, Height - amount.Y);
+		}
+
 		//public SizeDbl Scale(PointDbl factor)
 		//{
 		//	return new SizeDbl(Width * factor.X, Height * factor.Y);

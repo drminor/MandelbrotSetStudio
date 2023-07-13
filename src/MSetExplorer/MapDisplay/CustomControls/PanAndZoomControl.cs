@@ -17,7 +17,7 @@ namespace MSetExplorer
 	/// 
 	/// </remarks>
 	
-	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IContentScaleInfo, IDisposable
+	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IZoomInfo, IDisposable
 	{
 		#region Private Fields
 
@@ -27,9 +27,9 @@ namespace MSetExplorer
 
 
 		private ScrollViewer? _scrollOwner;
-		private ZoomSlider? _zoomSlider;
+		private ZoomSlider? _zoomOwner;
 
-		private SizeDbl _viewportSize;
+		private SizeDbl _unscaledViewportSize;
 
 		private bool _enableContentOffsetUpdateFromScale = true;
 
@@ -63,9 +63,9 @@ namespace MSetExplorer
 			ContentBeingZoomed = null;
 
 			_scrollOwner = null;
-			_zoomSlider = null;
+			_zoomOwner = null;
 
-			_viewportSize = new SizeDbl();
+			_unscaledViewportSize = new SizeDbl();
 			//_contentScaleTransform = new ScaleTransform(DefaultContentScale, DefaultContentScale);
 
 			ContentViewportSize = new SizeDbl();
@@ -80,7 +80,7 @@ namespace MSetExplorer
 
 		#region Events
 
-		//public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
+		public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
 
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
@@ -94,22 +94,18 @@ namespace MSetExplorer
 
 		public FrameworkElement? ContentBeingZoomed { get; set; }
 
-		public SizeDbl ViewportSize
+		public SizeDbl UnScaledViewportSize
 		{
 			get
 			{
-				CheckViewportSize(_viewportSize);
-				return _viewportSize;
+				CheckViewportSize(_unscaledViewportSize);
+				return _unscaledViewportSize;
 			}
 			set
 			{
-				if (ScreenTypeHelper.IsSizeDblChanged(_viewportSize, value))
+				if (ScreenTypeHelper.IsSizeDblChanged(_unscaledViewportSize, value))
 				{
-					_viewportSize = value;
-					//if (_contentScaler != null)
-					//{
-					//	_contentScaler.ContentViewportSize = value;
-					//}
+					_unscaledViewportSize = value;
 				}
 			}
 		}
@@ -141,11 +137,8 @@ namespace MSetExplorer
 		private SizeDbl _contentViewportSize;
 
 		public SizeDbl ContentViewportSize
-		{ 
-			get
-			{
-				return _contentViewportSize;
-			}
+		{
+			get => _contentViewportSize;
 
 			set
 			{
@@ -220,6 +213,7 @@ namespace MSetExplorer
 
 			UpdateTranslationX();
 			UpdateTranslationY();
+			//UpdateTranslation();
 
 			return result;
 		}
@@ -266,11 +260,14 @@ namespace MSetExplorer
 						_contentScaler = new ContentScaler(cp);
 					}
 
-					_contentScaler.ScaleTransform.ScaleX = ContentScale;
-					_contentScaler.ScaleTransform.ScaleY = ContentScale;
+					//_contentScaler.ScaleTransform.ScaleX = ContentScale;
+					//_contentScaler.ScaleTransform.ScaleY = ContentScale;
+
+					_contentScaler.ContentScale = new SizeDbl(ContentScale, ContentScale);
 
 					UpdateTranslationX();
 					UpdateTranslationY();
+					//UpdateTranslation();
 				}
 				else
 				{
@@ -340,11 +337,13 @@ namespace MSetExplorer
 
 			c.ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
 
+			// The ViewportChanged event is now raised in the property changed code for ContentVpSizeOffsetAndScale DP.
+			
 			//var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
 			//c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
 		}
 
-		public void ResetExtentWithPositionAndScale(VectorDbl displayPosition, double minContentScale, double maxContentScale, double contentScale) 
+		public void ResetExtentWithPositionAndScale(VectorDbl displayPosition, double contentScale, double minContentScale, double maxContentScale)
 		{
 			// Let the existing PropertyChanged logic for the UnscaledExtent Dependency Property do most of the work for us.
 			UnscaledExtent = new SizeDbl();
@@ -353,7 +352,7 @@ namespace MSetExplorer
 			{
 				_disableMinMaxContentScaleChecks = true;
 
-				_maxContentOffset = new SizeDbl(displayPosition).Inflate(100);
+				_maxContentOffset = new SizeDbl(displayPosition).Inflate(100); // Temporary to allow the updates to ContentOffset not get caught by the Coercers.
 
 				ContentOffsetX = displayPosition.X;
 				ContentOffsetY = displayPosition.Y;
@@ -362,7 +361,7 @@ namespace MSetExplorer
 				MaxContentScale = maxContentScale;
 
 				ContentScale = contentScale;
-				ZoomSliderOwner?.ContentScaleWasUpdated(ContentScale);
+				ZoomOwner?.ContentScaleWasUpdated(ContentScale);
 			}
 			finally
 			{
@@ -415,7 +414,7 @@ namespace MSetExplorer
 				c._disableContentOffsetChangeEvents = false;
 			}
 
-			c.ZoomSliderOwner?.ContentScaleWasUpdated(c.ContentScale);
+			c.ZoomOwner?.ContentScaleWasUpdated(c.ContentScale);
 			c.InvalidateScrollInfo();
 
 			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
@@ -475,7 +474,7 @@ namespace MSetExplorer
 			if (!c._disableMinMaxContentScaleChecks)
 			{
 				c.ContentScale = Math.Min(Math.Max(c.ContentScale, c.MinContentScale), c.MaxContentScale);
-				c.ZoomSliderOwner?.InvalidateScaleContentInfo();
+				c.ZoomOwner?.InvalidateScaleContentInfo();
 			}
 		}
 
@@ -500,6 +499,7 @@ namespace MSetExplorer
 			}
 
 			c.UpdateTranslationX();
+			//c.UpdateTranslation();
 
 			if (!c._disableContentFocusSync)
 			{
@@ -578,6 +578,7 @@ namespace MSetExplorer
 			}
 
 			c.UpdateTranslationY();
+			//c.UpdateTranslation();
 
 			if (!c._disableContentFocusSync)
 			{
@@ -630,6 +631,13 @@ namespace MSetExplorer
 		private static void ContentVpSizeOffsetAndScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			PanAndZoomControl c = (PanAndZoomControl)o;
+
+			var newValue = (ScaledImageViewInfo)e.NewValue;
+
+			if (!newValue.IsEmpty())
+			{
+				c.ViewportChanged?.Invoke(c, newValue);
+			}
 		}
 
 		#endregion
@@ -638,12 +646,12 @@ namespace MSetExplorer
 
 		private void UpdateViewportSize(SizeDbl newValue)
 		{
-			if (ViewportSize == newValue)
+			if (UnScaledViewportSize == newValue)
 			{
 				return;
 			}
 
-			ViewportSize = newValue;
+			UnScaledViewportSize = newValue;
 
 			// Update the viewport size in content coordiates.
 			UpdateContentViewportSize();
@@ -685,12 +693,12 @@ namespace MSetExplorer
 				Debug.WriteLine($"WARNING: The PanAndZoomControl is updating the ContentViewportSize, however the _contentScaler is null.");
 			}
 
-			if (_contentScaler?.ScaleTransform.ScaleX != ContentScale)
+			if (_contentScaler?.ContentScale.Width != ContentScale)
 			{
 				Debug.WriteLine($"WARNING: Not using the current value for ContentScale.");
 			}
-			
-			ContentViewportSize = ViewportSize.Divide(ContentScale);
+
+			ContentViewportSize = UnScaledViewportSize.Divide(ContentScale);
 
 
 			// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
@@ -703,58 +711,108 @@ namespace MSetExplorer
 			// the maximum value for the offsets is size of the ContentViewportSize subtracted from the the unscaled extents. 
 			_maxContentOffset = UnscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {ContentViewportSize}, ViewportSize: {ViewportSize}, ConstrainedViewportSize: {_constrainedContentViewportSize}, ContentScale: {ContentScale}. MaxContentOffset: {_maxContentOffset}");
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {ContentViewportSize}, UnscaledViewportSize: {UnScaledViewportSize}, ConstrainedViewportSize: {_constrainedContentViewportSize}, ContentScale: {ContentScale}. MaxContentOffset: {_maxContentOffset}");
 
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
 			SetHorizontalScrollBarVisibility(_maxContentOffset.Width > 0);
 
 			UpdateTranslationX();
 			UpdateTranslationY();
+			//UpdateTranslation();
 		}
 
 		private void UpdateTranslationX()
 		{
-			if (_contentScaler != null)
-			{
-				double result;
-				var scaledContentWidth = UnscaledExtent.Width * ContentScale;
+			//if (_contentScaler != null)
+			//{
+			//	double result;
+			//	var scaledContentWidth = UnscaledExtent.Width * ContentScale;
 
-				if (scaledContentWidth < ViewportWidth)
-				{
-					// When the content can fit entirely within the viewport, center it.
-					result = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
-				}
-				else
-				{
-					result = -ContentOffsetX;
-				}
+			//	if (scaledContentWidth < ViewportWidth)
+			//	{
+			//		// When the content can fit entirely within the viewport, center it.
+			//		result = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
+			//	}
+			//	else
+			//	{
+			//		result = -ContentOffsetX;
+			//	}
 
-				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl would be setting the TranslateTransform.X to {result}.");
-				//_contentScaler.TranslateTransform.X = result;
-			}
+			//	Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl would be setting the TranslateTransform.X to {result}.");
+			//	//_contentScaler.TranslateTransform.X = result;
+
+			//	//_contentScaler.ContentPresenterOffset = result;
+			//}
 		}
 
 		private void UpdateTranslationY()
 		{
-			if (_contentScaler != null)
-			{
-				double result;
-				var scaledContentHeight = UnscaledExtent.Height * ContentScale;
+			//if (_contentScaler != null)
+			//{
+			//	double result;
+			//	var scaledContentHeight = UnscaledExtent.Height * ContentScale;
 
-				if (scaledContentHeight < ViewportHeight)
-				{
-					// When the content can fit entirely within the viewport, center it.
-					result = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
-				}
-				else
-				{
-					result = -ContentOffsetY;
-				}
+			//	if (scaledContentHeight < ViewportHeight)
+			//	{
+			//		// When the content can fit entirely within the viewport, center it.
+			//		result = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
+			//	}
+			//	else
+			//	{
+			//		result = -ContentOffsetY;
+			//	}
 
-				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl would be setting the TranslateTransform.Y to {result}.");
-				//_contentScaler.TranslateTransform.Y = result;
-			}
+			//	Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl would be setting the TranslateTransform.Y to {result}.");
+			//	//_contentScaler.TranslateTransform.Y = result;
+			//}
 		}
+
+		//// TODO: Create the UpdateTranslationX and UpdateTranslationY for when the ContentOffsets are being set individually.
+		//private void UpdateTranslation()
+		//{
+		//	if (UnscaledExtent.Width == 0 || UnscaledExtent.Height == 0)
+		//	{
+		//		return;
+		//	}
+
+		//	if (_contentScaler != null)
+		//	{
+		//		SizeDbl contentScale2D = new SizeDbl(ContentScale, ContentScale);
+
+		//		var scaledExtent = UnscaledExtent.Scale(contentScale2D);
+
+		//		double resultWidth;
+		//		if (scaledExtent.Width < ViewportSize.Width)
+		//		{
+		//			// When the content can fit entirely within the viewport, center it.
+		//			resultWidth = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
+		//		}
+		//		else
+		//		{
+		//			resultWidth = -ContentOffsetX;
+		//		}
+
+		//		double resultHeight;
+		//		if (scaledExtent.Height < ViewportSize.Height)
+		//		{
+		//			// When the content can fit entirely within the viewport, center it.
+		//			resultHeight = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
+		//		}
+		//		else
+		//		{
+		//			resultHeight = -ContentOffsetY;
+		//		}
+
+		//		var newContentPresenterOffset = new VectorDbl(resultWidth, resultHeight);
+
+		//		Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl is setting the ContentPresenterOffset to {newContentPresenterOffset}.");
+		//		//_contentScaler.TranslateTransform.X = result;
+
+		//		_contentScaler.ContentPresenterOffset = newContentPresenterOffset;
+		//	}
+		//}
+
+		// This is called like: 			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale);
 
 		private void UpdateContentZoomFocus()
 		{
@@ -777,17 +835,34 @@ namespace MSetExplorer
 
 			if (_contentScaler != null)
 			{
-				if (_contentScaler.ScaleTransform.ScaleX != contentScale)
-				{
-					_contentScaler.ScaleTransform.ScaleX = contentScale;
-					result = true;
-				}
+				//if (_contentScaler.ScaleTransform.ScaleX != contentScale)
+				//{
+				//	_contentScaler.ScaleTransform.ScaleX = contentScale;
+				//	result = true;
+				//}
 
-				if (_contentScaler.ScaleTransform.ScaleY != contentScale)
-				{
-					_contentScaler.ScaleTransform.ScaleY = contentScale;
-					result = true;
-				}
+				//if (_contentScaler.ScaleTransform.ScaleY != contentScale)
+				//{
+				//	_contentScaler.ScaleTransform.ScaleY = contentScale;
+				//	result = true;
+				//}
+
+				//var newContentScale = new SizeDbl(contentScale, contentScale);
+
+				//if (ScreenTypeHelper.IsSizeDblChanged(newContentScale, _contentScaler.ContentScale, 0.0002))
+				//{
+				//	_contentScaler.ContentScale = new SizeDbl(contentScale, contentScale);
+				//	result = true;
+				//}
+				//else
+				//{
+				//	Debug.WriteLine("Not updating the Scale, the new values almost the same as the old value.");
+				//}
+
+				_contentScaler.ContentScale = new SizeDbl(contentScale, contentScale);
+				result = true;
+
+
 			}
 
 			return result;
@@ -862,9 +937,9 @@ namespace MSetExplorer
 
 		public double ExtentHeight => Math.Max(UnscaledExtent.Height, ViewportHeight) * ContentScale;
 
-		public double ViewportWidth => ViewportSize.Width;
+		public double ViewportWidth => UnScaledViewportSize.Width;
 
-		public double ViewportHeight => ViewportSize.Height;
+		public double ViewportHeight => UnScaledViewportSize.Height;
 
 		public double HorizontalOffset => ContentOffsetX * ContentScale;
 
@@ -1049,10 +1124,10 @@ namespace MSetExplorer
 
 		#region IContentScaleInfo Support
 
-		public ZoomSlider? ZoomSliderOwner
+		public ZoomSlider? ZoomOwner
 		{
-			get => _zoomSlider;
-			set => _zoomSlider = value;
+			get => _zoomOwner;
+			set => _zoomOwner = value;
 		}
 
 		public bool CanZoom { get; set; }
@@ -1077,9 +1152,9 @@ namespace MSetExplorer
 
 		public void Dispose()
 		{
-			if (ZoomSliderOwner != null)
+			if (ZoomOwner != null)
 			{
-				((IDisposable)ZoomSliderOwner).Dispose();
+				((IDisposable)ZoomOwner).Dispose();
 			}
 		}
 

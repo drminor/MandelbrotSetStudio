@@ -111,7 +111,7 @@ namespace MSetExplorer
 		private void MapSectionPzControl1_Loaded(object sender, RoutedEventArgs e)
 		{
 			mapSectionPzControl1.Loaded -= MapSectionPzControl1_Loaded;
-			mapSectionPzControl1.PanAndZoomControl1.ZoomSliderOwner = new ZoomSlider(mapDisplayZoom1.scrollBar1, mapSectionPzControl1.PanAndZoomControl1);
+			mapSectionPzControl1.PanAndZoomControl1.ZoomOwner = new ZoomSlider(mapDisplayZoom1.scrollBar1, mapSectionPzControl1.PanAndZoomControl1);
 		}
 
 		#endregion

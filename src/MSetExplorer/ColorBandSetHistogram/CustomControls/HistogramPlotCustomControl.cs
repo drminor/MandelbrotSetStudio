@@ -22,8 +22,12 @@ namespace MSetExplorer
 		private FrameworkElement _ourContent;
 
 		private WpfPlot? _wpfPlot1;
-
 		private ScottPlot.Plottable.ScatterPlot? _thePlot;
+		private int _thePlotExtent;
+
+		private int[] _theXValues;
+
+
 		private Canvas _canvas;
 		private Image _image;
 
@@ -39,6 +43,9 @@ namespace MSetExplorer
 
 		private VectorDbl _contentOffset;
 		private RectangleGeometry? _canvasClip;
+
+		private SizeDbl _contentScale;
+		private VectorDbl _contentPresenterOffset;
 
 		private bool _useDetailedDebug = false;
 
@@ -62,6 +69,15 @@ namespace MSetExplorer
 
 			_wpfPlot1 = null;
 			_thePlot = null;
+			_thePlotExtent = 400;
+
+			_theXValues = new int[_thePlotExtent];
+
+			for(int i = 0; i < _thePlotExtent; i++)
+			{
+				_theXValues[i] = i;
+			}
+
 			_canvas = new Canvas();
 			_image = new Image();
 			_image.SizeChanged += Image_SizeChanged;
@@ -84,6 +100,9 @@ namespace MSetExplorer
 
 			_contentOffset = new VectorDbl();
 			_canvasClip = null;
+
+			_contentScale = new SizeDbl(1);
+			_contentPresenterOffset = new VectorDbl();
 
 			//MouseEnter += HistogramDisplayControl_MouseEnter;
 			//MouseLeave += HistogramDisplayControl_MouseLeave;
@@ -131,6 +150,7 @@ namespace MSetExplorer
 			SetTheCanvasScaleTransform(_controlScaleTransform);
 		}
 
+
 		#endregion
 
 		#region Events
@@ -153,14 +173,14 @@ namespace MSetExplorer
 					return;
 				}
 
-				//var seriesData = SeriesData;
+				var seriesData = SeriesData;
 
-				//if (seriesData.IsZero())
-				//{
-				//	return;
-				//}
+				if (seriesData.IsZero())
+				{
+					return;
+				}
 
-				var seriesData = BuildTestSeries();
+				//var seriesData = BuildTestSeries();
 
 				_thePlot = _wpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
 
@@ -169,6 +189,47 @@ namespace MSetExplorer
 				_wpfPlot1.Plot.YLabel("YLabel");
 
 				_wpfPlot1.Refresh();
+			}
+		}
+
+		private void DisplayPlot(HPlotSeriesData seriesData)
+		{
+			if (WpfPlot1 == null)
+			{
+				return;
+			}
+
+			//WpfPlot1.Plot.Clear();
+
+			if (seriesData.IsZero())
+			{
+				return;
+			}
+
+			if (_thePlot == null)
+			{
+				_thePlot = WpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
+
+				WpfPlot1.Plot.Title("Hi There, I'm initialized.");
+				WpfPlot1.Plot.XLabel("XLabel");
+				WpfPlot1.Plot.YLabel("YLabel");
+
+				_thePlotExtent = seriesData.DataX.Length;
+
+				WpfPlot1.Refresh();
+			}
+			else
+			{
+				if (seriesData.DataX.Length == _thePlotExtent)
+				{
+					_thePlot.UpdateY(seriesData.DataY);
+					WpfPlot1.Refresh();
+				}
+				else
+				{
+					Debug.WriteLine($"The Series has {seriesData.DataX.Length}, not updating.");
+				}
+
 			}
 		}
 
@@ -184,8 +245,8 @@ namespace MSetExplorer
 
 		private HPlotSeriesData BuildTestSeries2()
 		{
-			double[] dataX = new double[] { 11, 12, 13, 14, 15 };
-			double[] dataY = new double[] { 1, 4, 9, 16, 25 };
+			double[] dataX = new double[] { 1, 2, 3, 4, 5 };
+			double[] dataY = new double[] { 1, 14, 29, 16, 5 };
 
 			var result = new HPlotSeriesData(dataX, dataY);
 
@@ -327,12 +388,12 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value))
 				{
 					_contentViewportSize = value;
-					SetTheCanvasSize(value, _controlScaleTransform);
+					SetTheCanvasSize(value, ContentScale);
 				}
 			}
 		}
 
-		ScaleTransform IContentScaler.ScaleTransform => _controlScaleTransform;
+		//ScaleTransform IContentScaler.ScaleTransform => _controlScaleTransform;
 
 		public ScaleTransform ScaleTransform
 		{
@@ -354,6 +415,56 @@ namespace MSetExplorer
 
 		TranslateTransform IContentScaler.TranslateTransform => _canvasTranslateTransform;
 
+		public SizeDbl ContentScale
+		{
+			get => _contentScale;
+			set
+			{
+				if (value != _contentScale)
+				{
+					_contentScale = value;
+					SetTheCanvasScaleTransformNew(_contentScale);
+				}
+			}
+		}
+
+		//ScaleTransform IContentScaler.ScaleTransform
+		//{
+		//	get => _controlScaleTransform;
+		//	//set
+		//	//{
+		//	//	if (_controlScaleTransform != value)
+		//	//	{
+		//	//		_controlScaleTransform.Changed -= _controlScaleTransform_Changed;
+		//	//		_controlScaleTransform = value;
+		//	//		_controlScaleTransform.Changed += _controlScaleTransform_Changed;
+
+		//	//		SetTheCanvasScaleTransform(_controlScaleTransform);
+
+		//	//		UpdateImageOffset(ImageOffset);
+		//	//	}
+		//	//}
+		//}
+
+		// We are ignoring changes made on the TranslateTransform
+		// Instead The MapSectionPzControl is handling the calculation of the Translation
+		// and setting the ContentOffset
+
+		//TranslateTransform IContentScaler.TranslateTransform => _canvasTranslateTransform;
+
+		public VectorDbl ContentPresenterOffset
+		{
+			get => _contentPresenterOffset; // _canvasOffset;
+			set
+			{
+				var previousVal = _contentPresenterOffset; // _canvasOffset;
+				_contentPresenterOffset = value; //  _canvasOffset = value;
+
+				SetTheCanvasTranslateTransform(previousVal, value);
+			}
+		}
+
+
 		public RectangleGeometry? CanvasClip
 		{
 			get => _canvasClip;
@@ -364,17 +475,17 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorDbl ContentOffset
-		{
-			get => _contentOffset;
-			set
-			{
-				var previousVal = _contentOffset;
-				_contentOffset = value;
+		//public VectorDbl ContentOffset
+		//{
+		//	get => _contentOffset;
+		//	set
+		//	{
+		//		var previousVal = _contentOffset;
+		//		_contentOffset = value;
 
-				SetTheCanvasTranslateTransform(previousVal, value);
-			}
-		}
+		//		SetTheCanvasTranslateTransform(previousVal, value);
+		//	}
+		//}
 
 		#endregion
 
@@ -484,56 +595,18 @@ namespace MSetExplorer
 
 		#region Private Methods - Plot
 
-		private void DisplayPlot(HPlotSeriesData seriesData)
-		{
-			if (WpfPlot1 == null)
-			{
-				return;
-			}
 
-			//WpfPlot1.Plot.Clear();
-
-			//if (seriesData.IsZero())
-			//{
-			//	return;
-			//}
-
-			//return;
-
-			var testSeries = BuildTestSeries2();
-
-			if (_thePlot != null)
-			{
-				_thePlot.UpdateX(testSeries.DataX);
-				_thePlot.UpdateY(testSeries.DataY);
-
-				WpfPlot1.Refresh();
-			}
-
-			//WpfPlot1.Refresh();
-
-
-			//if (_thePlot != null)
-			//{
-			//	_thePlot.UpdateX(seriesData.DataX);
-			//	_thePlot.UpdateY(seriesData.DataY);
-			//}
-
-			//WpfPlot1.Refresh();
-		}
 
 		#endregion
 
 		#region Private Methods - Canvas
 
-		private void SetTheCanvasSize(SizeDbl contentViewportSize, ScaleTransform st)
+		private void SetTheCanvasSize(SizeDbl contentViewportSize, SizeDbl contentScale)
 		{
 			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
-			var contentScale = new SizeDbl(st.ScaleX, 1);
-
 			var newCanvasSize = viewportSize.Divide(contentScale);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
 
 			Canvas.Width = newCanvasSize.Width;
 			Canvas.Height = newCanvasSize.Height;
@@ -548,12 +621,29 @@ namespace MSetExplorer
 			//_canvasScaleTransform.ScaleY = st.ScaleY;
 		}
 
-		private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl canvasOffset)
-		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's CanvasOffset is being set to {canvasOffset} from {previousValue}. The ImageOffset is {ImageOffset}.");
+		//private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl canvasOffset)
+		//{
+		//	Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's CanvasOffset is being set to {canvasOffset} from {previousValue}. The ImageOffset is {ImageOffset}.");
 
-			_canvasTranslateTransform.X = canvasOffset.X;
-			_canvasTranslateTransform.Y = canvasOffset.Y;
+		//	_canvasTranslateTransform.X = canvasOffset.X;
+		//	_canvasTranslateTransform.Y = canvasOffset.Y;
+		//}
+
+		private void SetTheCanvasScaleTransformNew(SizeDbl contentScale)
+		{
+			var currentScaleX = _canvasScaleTransform.ScaleX;
+			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}. The CanvasOffset is {_contentOffset}.");
+
+			_canvasScaleTransform.ScaleX = contentScale.Width;
+			_canvasScaleTransform.ScaleY = contentScale.Height;
+		}
+
+		private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl newValue)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's {nameof(ContentPresenterOffset)} is being set to {newValue} from {previousValue}. The ImageOffset is {ImageOffset}.");
+
+			_canvasTranslateTransform.X = newValue.X;
+			_canvasTranslateTransform.Y = newValue.Y;
 		}
 
 		private bool UpdateImageOffset(VectorDbl rawValue)
@@ -573,7 +663,7 @@ namespace MSetExplorer
 
 			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_contentOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_contentOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
 
 				CompareCanvasAndControlHeights();
 
@@ -603,7 +693,7 @@ namespace MSetExplorer
 			// The contentViewportSize when reduced by the BaseScale Factor
 			// should equal the ViewportSize when it is expanded by the RelativeScale
 
-			//var (baseScale, relativeScale) = ZoomSlider.GetBaseAndRelative(_controlScaleTransform.ScaleX);
+			//var (baseFactor, relativeScale) = ZoomSlider.GetBaseAndRelative(_controlScaleTransform.ScaleX);
 
 			//var canvasHeightScaled = Canvas.ActualHeight * relativeScale;
 

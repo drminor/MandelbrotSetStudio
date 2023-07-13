@@ -87,7 +87,7 @@ namespace MSetExplorer
 
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		public event EventHandler<int>? DisplayJobCompleted;
-		public event EventHandler<InitialDisplaySettingsEventArgs>? InitializeDisplaySettings;
+		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
 		#endregion
 
@@ -156,7 +156,7 @@ namespace MSetExplorer
 		}
 
 		/// <summary>
-		/// Unscaled Display Size.
+		/// Scaled, aka Logical Display Size.
 		/// </summary>
 		public SizeDbl ViewportSize
 		{
@@ -172,7 +172,7 @@ namespace MSetExplorer
 						int? newJobNumber = null;
 						bool lastSectionWasIncluded = false;
 
-						_bitmapGrid.ViewportSize = value;
+						_bitmapGrid.ContentViewportSize = value;
 
 						lock (_paintLocker)
 						{
@@ -303,7 +303,9 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine($"Receiving the adjusted content scale. Current: {_displayZoom}, New: {contentScaleFromPanAndZoomControl}, Check: {contentScaleFromBitmapGridControl}.");
 
-			if (ScreenTypeHelper.IsDoubleChanged(_displayZoom, contentScaleFromPanAndZoomControl, 0.5))
+			// TODO: The ContentScale properties of PanAndZoom control are in some cases a tiny fraction different -- WHY?
+
+			if (ScreenTypeHelper.IsDoubleChanged(_displayZoom, contentScaleFromPanAndZoomControl, 1.001)) // 0.00001
 			{
 				Debug.WriteLine($"WARNING: The DisplayZoom field is not being updated via its binding.");
 				_displayZoom = contentScaleFromPanAndZoomControl;
@@ -369,17 +371,26 @@ namespace MSetExplorer
 				// Make sure no content is loaded while we reset the PanAndZoom control.
 				CurrentAreaColorAndCalcSettings = null;
 
-				_minimumDisplayZoom = GetMinDisplayZoom(posterSize, ViewportSize);
-				var maxDisplayZoom = 1.0;
-				_displayZoom = displayZoom;
+				//var margin = 20d;
+
+				//var maximumDisplayZoom = 1;
+				//_minimumDisplayZoom = RMapHelper.GetMinDisplayZoom(posterSize, ViewportSize, margin); //GetMinDisplayZoom(posterSize, ViewportSize); // 
+				//_displayZoom = Math.Min(Math.Max(_displayZoom, _minimumDisplayZoom), maximumDisplayZoom);
+
 				_displayPosition = displayPosition;
+				_displayZoom = displayZoom;
 
-				InitializeDisplaySettings?.Invoke(this, new InitialDisplaySettingsEventArgs(posterSize, _displayPosition, _minimumDisplayZoom, maxDisplayZoom, _displayZoom));
+				DisplaySettingsInitialized?.Invoke(this, new DisplaySettingsInitializedEventArgs(posterSize, _displayPosition/*, _minimumDisplayZoom, maximumDisplayZoom*/, _displayZoom));
 
-				//UnscaledExtent = new SizeDbl();
+				_displayZoom = MinimumDisplayZoom;
+
+				var (b, r) = ContentScalerHelper.GetBaseFactorAndRelativeScale(_displayZoom);
 
 				// Save the MapAreaInfo for the entire poster.
-				_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize);
+				_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize)
+				{
+					BaseFactor = b
+				};
 
 				CurrentAreaColorAndCalcSettings = newValue;
 
@@ -438,7 +449,7 @@ namespace MSetExplorer
 				{
 					if (CurrentAreaColorAndCalcSettings == null)
 					{
-						_bitmapGrid.ViewportSize = value.ContentViewportSize;
+						_bitmapGrid.ContentViewportSize = value.ContentViewportSize;
 						_viewportSize = value.ContentViewportSize;
 						_displayZoom = value.ContentScale;
 						_displayPosition = value.ContentOffset;
@@ -451,21 +462,22 @@ namespace MSetExplorer
 							throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
 						}
 
-						var (baseScale, relativeScale) = ContentScalerHelper.GetBaseAndRelative(value.ContentScale);
+						var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(value.ContentScale);
 
-						//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseScale, relativeScale);
+						// TODO: Make the CheckContentScale work correctly.
+						//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseFactor, relativeScale);
 
 						_viewportSize = value.ContentViewportSize;
 						_displayZoom = value.ContentScale;
 						_displayPosition = value.ContentOffset;
 
-						newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, value.ContentViewportSize, value.ContentOffset, baseScale);
+						newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, value.ContentViewportSize, value.ContentOffset, baseFactor);
 					}
 				}
 			}
 		}
 
-		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseScale, double relativeScale) 
+		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseFactor, double relativeScale) 
 		//{
 		//	Debug.Assert(UnscaledExtent == BoundedMapArea?.PosterSize, "UnscaledExtent is out of sync.");
 
@@ -478,7 +490,7 @@ namespace MSetExplorer
 		//		//throw new InvalidOperationException("Content Scale is OFF!!");
 		//	}
 
-		//	Debug.WriteLine($"CHECK THIS: The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Scale:{contentScale}. BaseScale: {baseScale}, RelativeScale: {relativeScale}.");
+		//	Debug.WriteLine($"CHECK THIS: The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Scale:{contentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
 
 		//}
 
@@ -500,9 +512,9 @@ namespace MSetExplorer
 
 				// Get the MapAreaInfo subset for the given display position
 				var mapAreaInfo2Subset = _boundedMapArea.GetView(contentOffset);
-				var jobType = _boundedMapArea.BaseScale == 0 ? JobType.FullScale : JobType.ReducedScale;
+				var jobType = _boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
-				ReportMove(_boundedMapArea, contentOffset/*, BoundedMapArea.ContentScale, BoundedMapArea.BaseScale*/);
+				ReportMove(_boundedMapArea, contentOffset);
 
 				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
 
@@ -554,7 +566,7 @@ namespace MSetExplorer
 
 				var jobType = _boundedMapArea == null
 					? JobType.FullScale
-					: _boundedMapArea.BaseScale == 0
+					: _boundedMapArea.BaseFactor == 0
 						? JobType.FullScale
 						: JobType.ReducedScale;
 
@@ -645,7 +657,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset, double baseScale)
+		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset, double baseFactor)
 		{
 			if (contentOffset.X != 0 || contentOffset.Y != 0)
 			{
@@ -655,17 +667,17 @@ namespace MSetExplorer
 			int? newJobNumber;
 			bool lastSectionWasIncluded;
 
-			var currentBaseScale = boundedMapArea.BaseScale;
+			var currentBaseFactor = boundedMapArea.BaseFactor;
 
-			var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, baseScale);
-			var jobType = boundedMapArea.BaseScale == 0 ? JobType.FullScale : JobType.ReducedScale;
+			var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, baseFactor);
+			var jobType = boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
-			var scaledViewportSize = viewportSize.Scale(boundedMapArea.ScaleFactor);
-			_bitmapGrid.ViewportSize = scaledViewportSize;
+			var scaledViewportSize = viewportSize.Scale(boundedMapArea.BaseScale);
+			_bitmapGrid.ContentViewportSize = scaledViewportSize;
 
 			ReportUpdateSizeAndPos(boundedMapArea, viewportSize, contentOffset);
 
-			if (boundedMapArea.BaseScale != currentBaseScale)
+			if (boundedMapArea.BaseFactor != currentBaseFactor)
 			{
 				newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
 			}
@@ -961,6 +973,19 @@ namespace MSetExplorer
 			return mapAreaInfoV1;
 		}
 
+		//private double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewport, SizeDbl margin, double maximumZoom)
+		//{
+		//	// Calculate the Zoom level at which the poster fills the screen, leaving a 10 pixel border, on all sides.
+
+		//	var framedViewPort = viewport.Sub(margin);
+
+		//	var result = RMapHelper.GetSmallestScaleFactor(extent, framedViewPort);
+		//	result = Math.Max(result, maximumZoom);
+
+		//	return result;
+		//}
+
+
 		private double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewport)
 		{
 			// Calculate the Zoom level at which the poster fills the screen, leaving a 20 pixel border.
@@ -1062,7 +1087,7 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG2")]
-		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset/*, double contentScale, double baseScale*/)
+		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset/*, double contentScale, double baseFactor*/)
 		{
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
 
@@ -1079,13 +1104,13 @@ namespace MSetExplorer
 
 			var posterSize = boundedMapArea.PosterSize;
 
-			Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {ViewportSize}. BaseScaleFactor: {boundedMapArea.ScaleFactor}.");
+			Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {ViewportSize}. BaseScaleFactor: {boundedMapArea.BaseScale}.");
 
 
 		}
 
 		[Conditional("DEBUG2")]
-		private void ReportUpdateSizeAndPos(BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset/*, double contentScale, double baseScale*/)
+		private void ReportUpdateSizeAndPos(BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset/*, double contentScale, double baseFactor*/)
 		{
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
 
@@ -1097,12 +1122,12 @@ namespace MSetExplorer
 
 			//var physicalViewportSize = viewportSize.Scale(contentScale);
 
-			//Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {viewportSize}. ContentScale: {contentScale}, BaseScale: {baseScale}. " +
+			//Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {viewportSize}. ContentScale: {contentScale}, BaseFactor: {baseFactor}. " +
 			//	$"Scaled Extent: {scaledExtent}, ViewportSize: {physicalViewportSize}.");
 
 			var posterSize = boundedMapArea.PosterSize;
 
-			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {viewportSize}. BaseScaleFactor: {boundedMapArea.ScaleFactor}.");
+			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {viewportSize}. BaseScaleFactor: {boundedMapArea.BaseScale}.");
 
 		}
 

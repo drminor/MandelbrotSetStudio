@@ -60,12 +60,12 @@ namespace MSetExplorer
 			{
 				_vm = (CbsHistogramViewModel)DataContext;
 
-				_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
+				_vm.UpdateViewportSize(PanAndZoomControl1.UnScaledViewportSize);
 
 				PanAndZoomControl1.MaxContentScale = 10;
 				PanAndZoomControl1.MinContentScale = 1;
 
-				PanAndZoomControl1.ZoomSliderOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
+				PanAndZoomControl1.ZoomOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
 				//PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
 				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
@@ -79,7 +79,7 @@ namespace MSetExplorer
 
 		private void CbsHistogramControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			PanAndZoomControl1.ZoomSliderOwner = null;
+			PanAndZoomControl1.ZoomOwner = null;
 
 			//PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
 			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
@@ -108,14 +108,14 @@ namespace MSetExplorer
 		{
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
-			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
+			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)
 		{
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
-			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.ViewportSize, PanAndZoomControl1.ContentScale);
+			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		#endregion
@@ -175,14 +175,14 @@ namespace MSetExplorer
 		{
 			if (scaledDisplayArea == null)
 			{
-				HistogramDisplayControl1.ContentOffset = VectorDbl.Zero;
+				HistogramDisplayControl1.ContentPresenterOffset = VectorDbl.Zero;
 				HistogramDisplayControl1.CanvasClip = null;
 			}
 			else
 			{
 				// Center the Canvas, using Canvas coordinates
 				var offset = new VectorDbl(scaledDisplayArea.Value.Position);
-				HistogramDisplayControl1.ContentOffset = offset;
+				HistogramDisplayControl1.ContentPresenterOffset = offset;
 
 
 				//// Only show the pixels belonging to the Poster.

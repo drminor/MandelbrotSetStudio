@@ -14,7 +14,7 @@ namespace MSetExplorer
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		event EventHandler<int>? DisplayJobCompleted;
 		
-		event EventHandler<InitialDisplaySettingsEventArgs>? InitializeDisplaySettings;
+		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
 		SizeInt BlockSize { get; }
 		ObservableCollection<MapSection> MapSections { get; }
