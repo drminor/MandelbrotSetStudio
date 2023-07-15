@@ -8,7 +8,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -19,7 +18,7 @@ namespace MSetExplorer
 	/// Written by Ashley Davis
 	/// 
 	/// </remarks>
-	
+
 	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IZoomInfo, IDisposable
 	{
 		#region Private Fields
@@ -28,18 +27,16 @@ namespace MSetExplorer
 		public static readonly double DefaultMinContentScale = 0.015625;
 		public static readonly double DefaultMaxContentScale = 1.0;
 
-
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomOwner;
 
 		private SizeDbl _unscaledViewportSize;
 
-		private bool _enableContentOffsetUpdateFromScale = true;
+		private bool _enableContentOffsetUpdateFromScale = false; // true;
 
 		private bool _disableScrollOffsetSync = false;
 		private bool _disableContentFocusSync = false;
 		private bool _disableContentOffsetChangeEvents = false;
-		//private bool _disableMinMaxContentScaleChecks = false;
 
 		private SizeDbl _constrainedContentViewportSize = new SizeDbl();
 		private SizeDbl _maxContentOffset = new SizeDbl();
@@ -69,7 +66,6 @@ namespace MSetExplorer
 			_zoomOwner = null;
 
 			_unscaledViewportSize = new SizeDbl();
-			//_contentScaleTransform = new ScaleTransform(DefaultContentScale, DefaultContentScale);
 
 			ContentViewportSize = new SizeDbl();
 
@@ -83,14 +79,13 @@ namespace MSetExplorer
 
 		#region Events
 
-		//public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
+		public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
 
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
 
-		//public event EventHandler? ContentScaleChanged;
-
-		//public event EventHandler? ScrollbarVisibilityChanged;
+		public event EventHandler? ContentScaleChanged;
+		public event EventHandler? ScrollbarVisibilityChanged;
 
 		#endregion
 
@@ -178,10 +173,24 @@ namespace MSetExplorer
 			set => SetCurrentValue(ContentOffsetYProperty, value);
 		}
 
-		public ScaledImageViewInfo ContentVpSizeOffsetAndScale
+		public VectorDbl ContentOffset => new VectorDbl((double)GetValue(ContentOffsetXProperty), (double)GetValue(ContentOffsetYProperty));
+
+		//public double ContentPositionX
+		//{
+		//	get => (double)GetValue(ContentPositionXProperty);
+		//	set => SetCurrentValue(ContentPositionXProperty, value);
+		//}
+
+		//public double ContentPositionY
+		//{
+		//	get => (double)GetValue(ContentPositionYProperty);
+		//	set => SetCurrentValue(ContentPositionYProperty, value);
+		//}
+
+		public ScaledImageViewInfo ViewportSizeOffsetAndScale
 		{
-			get => (ScaledImageViewInfo)GetValue(ContentVpSizeOffsetAndScaleProperty);
-			set => SetCurrentValue(ContentVpSizeOffsetAndScaleProperty, value);
+			get => (ScaledImageViewInfo)GetValue(ViewportSizeOffsetAndScaleProperty);
+			set => SetCurrentValue(ViewportSizeOffsetAndScaleProperty, value);
 		}
 
 		public bool IsMouseWheelScrollingEnabled { get; set; }
@@ -304,47 +313,19 @@ namespace MSetExplorer
 		private static void UnscaledExtent_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			var value = (SizeDbl)e.NewValue;
-			var previousValue = (SizeDbl)e.OldValue;
 
-			PanAndZoomControl c = (PanAndZoomControl)o;
-
-			if (value.IsNearZero() /*|| value.Diff(previousValue).IsNearZero()*/)
+			if (value.IsNearZero())
 			{
-				if (c._contentScaler != null)
-				{
-					c._contentScaler.ScaledContentArea = null;
-				}
-				
 				return;
 			}
+
+			PanAndZoomControl c = (PanAndZoomControl)o;
 
 			try
 			{
 				c._disableContentOffsetChangeEvents = true;
 
-				//if (isBeingReset)
-				//{
-				//	c.ContentOffsetX = 0;
-				//	c.ContentOffsetY = 0;
-
-				//	if (c.ContentScale != 1.0)
-				//	{
-				//		c.ContentScale = 1.0;
-				//	}
-				//	else
-				//	{
-				//		c.UpdateContentViewportSize();
-				//	}
-				//}
-				//else
-				//{
-				//	c.UpdateContentViewportSize();
-				//}
-
-				c.MinContentScale = RMapHelper.GetMinDisplayZoom(value, c.UnscaledViewportSize, 10, c.MaxScale);
-
 				c.UpdateContentViewportSize();
-
 				c.InvalidateScrollInfo();
 			}
 			finally
@@ -353,40 +334,32 @@ namespace MSetExplorer
 			}
 
 			// TODO: CheckEvent
-			//c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
+			c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
 
-			c.ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			//c.ViewportSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			var sivi = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			c.ViewportChanged?.Invoke(c, sivi);
 		}
 
 		public void ResetExtentWithPositionAndScale(VectorDbl displayPosition, double contentScale, double minContentScale, double maxContentScale)
 		{
-		//	// Let the existing PropertyChanged logic for the UnscaledExtent Dependency Property do most of the work for us.
-		//	UnscaledExtent = new SizeDbl();
+			UnscaledExtent = new SizeDbl();
 
-		//	try
-		//	{
-		//		_disableMinMaxContentScaleChecks = true;
+			if (_contentScaler != null)
+			{
+				_contentScaler.ScaledContentArea = null;
+			}
 
-		//		_maxContentOffset = new SizeDbl(displayPosition).Inflate(100); // Temporary to allow the updates to ContentOffset not get caught by the Coercers.
+			_maxContentOffset = new SizeDbl(displayPosition).Inflate(100); // Temporary to allow the updates to ContentOffset not get caught by the Coercers.
 
-		//		ContentOffsetX = displayPosition.X;
-		//		ContentOffsetY = displayPosition.Y;
+			ContentOffsetX = displayPosition.X;
+			ContentOffsetY = displayPosition.Y;
 
-		//		MinContentScale = minContentScale;
-		//		MaxContentScale = maxContentScale;
+			MinContentScale = minContentScale;
+			MaxContentScale = maxContentScale;
 
-		//		ContentScale = contentScale;
-		//		ZoomOwner?.InvalidateScaleContentInfo();
-
-		//		//if (_contentScaler != null)
-		//		//{
-
-		//		//}
-		//	}
-		//	finally
-		//	{
-		//		_disableMinMaxContentScaleChecks = false;
-		//	}
+			ContentScale = contentScale;
+			ZoomOwner?.InvalidateScaleContentInfo();
 		}
 
 		#endregion
@@ -434,7 +407,11 @@ namespace MSetExplorer
 				c._disableContentOffsetChangeEvents = true;
 
 				c.UpdateContentViewportSize();
-				c.UpdateContentOffsetsFromScale();
+
+				if (c._enableContentOffsetUpdateFromScale)
+				{
+					c.UpdateContentOffsetsFromScale();
+				}
 			}
 			finally
 			{
@@ -445,16 +422,11 @@ namespace MSetExplorer
 			c.InvalidateScrollInfo();
 
 			// TODO: CheckEvent
-			//c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
+			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
 
-			//if (c._contentScaler != null) c._contentScaler.ContentViewportSize = c.ContentViewportSize;
-
-			c.ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-
-			//var scaledImageViewInfo = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-			//c.ViewportChanged?.Invoke(c, scaledImageViewInfo);
-
-			//c.InvalidateVisual(); // Is this really necessary?
+			//c.ViewportSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			var sivi = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			c.ViewportChanged?.Invoke(c, sivi);
 		}
 
 		/// <summary>
@@ -518,9 +490,13 @@ namespace MSetExplorer
 												ContentOffsetX_PropertyChanged, 
 												ContentOffsetX_Coerce,
 												false, 
-												UpdateSourceTrigger.Explicit
+												UpdateSourceTrigger.PropertyChanged
 												)
 					);
+
+		//public static readonly DependencyProperty ContentPositionXProperty =
+		//	DependencyProperty.Register("ContentPositionX", typeof(double), typeof(PanAndZoomControl),
+		//		new FrameworkPropertyMetadata(0.0));
 
 		/// <summary>
 		/// Event raised when the 'ContentOffsetX' property has changed value.
@@ -534,21 +510,19 @@ namespace MSetExplorer
 				return;
 			}
 
-			//c.UpdateTranslationX();
 			c.UpdateTranslation();
 
 			if (!c._disableContentFocusSync)
 			{
 				// Don't update the ZoomFocus if zooming is in progress.
-				//c.UpdateContentZoomFocusX();
 				c.UpdateContentZoomFocus();
 			}
 
 			if (!c._disableContentOffsetChangeEvents)
 			{
-				// Raise an event to let users of the control know that the content offset has changed.
-				c.ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+				//c.ContentPositionX = (double)e.NewValue;
 
+				// Raise an event to let users of the control know that the content offset has changed.
 				c.ContentOffsetXChanged?.Invoke(c, EventArgs.Empty);
 			}
 
@@ -568,8 +542,7 @@ namespace MSetExplorer
 			{
 				double maxOffsetX = c._maxContentOffset.Width;
 				double v1 = value >= 0 ? value : 0;
-				double maxOffsetXTest = maxOffsetX + 50;
-				value = Math.Min(v1, maxOffsetXTest);
+				value = Math.Min(v1, maxOffsetX);
 			}
 
 			Debug.WriteLineIf(c._useDetailedDebug, $"CoerceOffsetX got: {baseValue} and returned {value}. The maximum is {c._maxContentOffset.Width}.");
@@ -586,14 +559,16 @@ namespace MSetExplorer
 											new FrameworkPropertyMetadata(
 												0.0,
 												FrameworkPropertyMetadataOptions.BindsTwoWayByDefault | FrameworkPropertyMetadataOptions.Journal,
-												ContentOffsetY_PropertyChanged, 
+												ContentOffsetY_PropertyChanged,
 												ContentOffsetY_Coerce,
 												false,
-												UpdateSourceTrigger.Explicit
+												UpdateSourceTrigger.PropertyChanged
 												)
 					);
 
-
+		//public static readonly DependencyProperty ContentPositionYProperty = 
+		//	DependencyProperty.Register("ContentPositionY", typeof(double), typeof(PanAndZoomControl),
+		//		new FrameworkPropertyMetadata(0.0));
 
 		/// <summary>
 		/// Event raised when the 'ContentOffsetY' property has changed value.
@@ -607,7 +582,6 @@ namespace MSetExplorer
 				return;
 			}
 
-			//c.UpdateTranslationY();
 			c.UpdateTranslation();
 
 			if (!c._disableContentFocusSync)
@@ -618,7 +592,7 @@ namespace MSetExplorer
 
 			if (!c._disableContentOffsetChangeEvents)
 			{
-				c.ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+				//c.ContentOffsetX = (double)e.NewValue; // c.ContentOffsetY;
 
 				// Raise an event to let users of the control know that the content offset has changed.
 				c.ContentOffsetYChanged?.Invoke(c, EventArgs.Empty);
@@ -650,26 +624,17 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region ContentVpSizeOffsetAndScale Dependency Property
+		#region ViewportSizeOffsetAndScale Dependency Property
 
-		public static readonly DependencyProperty ContentVpSizeOffsetAndScaleProperty =
-				DependencyProperty.Register("ContentVpSizeOffsetAndScale", typeof(ScaledImageViewInfo), typeof(PanAndZoomControl),
-											new FrameworkPropertyMetadata(ScaledImageViewInfo.Zero, FrameworkPropertyMetadataOptions.None, ContentVpSizeOffsetAndScale_PropertyChanged));
+		public static readonly DependencyProperty ViewportSizeOffsetAndScaleProperty =
+				DependencyProperty.Register("ViewportSizeOffsetAndScale", typeof(ScaledImageViewInfo), typeof(PanAndZoomControl),
+											new FrameworkPropertyMetadata(ScaledImageViewInfo.Zero, FrameworkPropertyMetadataOptions.None, ViewportSizeOffsetAndScale_PropertyChanged));
 
 		/// <summary>
-		/// Event raised when the 'ContentVpSizeOffsetAndScale' property has changed value.
+		/// Event raised when the 'ViewportSizeOffsetAndScale' property has changed value.
 		/// </summary>
-		private static void ContentVpSizeOffsetAndScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		private static void ViewportSizeOffsetAndScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			// TODO: CheckEvent
-			//PanAndZoomControl c = (PanAndZoomControl)o;
-
-			//var newValue = (ScaledImageViewInfo)e.NewValue;
-
-			//if (!newValue.IsEmpty())
-			//{
-			//	c.ViewportChanged?.Invoke(c, newValue);
-			//}
 		}
 
 		#endregion
@@ -710,12 +675,8 @@ namespace MSetExplorer
 
 			InvalidateScrollInfo();
 
-			//if (_contentScaler != null) _contentScaler.ContentViewportSize = ContentViewportSize;
-
-			ContentVpSizeOffsetAndScale = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
-
-			//var scaledImageViewInfo = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
-			//ViewportChanged?.Invoke(this, scaledImageViewInfo);
+			ViewportSizeOffsetAndScale = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
+			ViewportChanged?.Invoke(this, ViewportSizeOffsetAndScale);
 		}
 
 		private void UpdateContentViewportSize()
@@ -732,7 +693,6 @@ namespace MSetExplorer
 
 			ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
 
-
 			// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
 
 			// Usually the track position can vary over the entire ContentViewportSize,
@@ -748,58 +708,9 @@ namespace MSetExplorer
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
 			SetHorizontalScrollBarVisibility(_maxContentOffset.Width > 0);
 
-			//UpdateTranslationX();
-			//UpdateTranslationY();
 			UpdateTranslation();
 		}
 
-		//private void UpdateTranslationX()
-		//{
-		//	//if (_contentScaler != null)
-		//	//{
-		//	//	double result;
-		//	//	var scaledContentWidth = UnscaledExtent.Width * ContentScale;
-
-		//	//	if (scaledContentWidth < ViewportWidth)
-		//	//	{
-		//	//		// When the content can fit entirely within the viewport, center it.
-		//	//		result = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
-		//	//	}
-		//	//	else
-		//	//	{
-		//	//		result = -ContentOffsetX;
-		//	//	}
-
-		//	//	Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl would be setting the TranslateTransform.X to {result}.");
-		//	//	//_contentScaler.TranslateTransform.X = result;
-
-		//	//	//_contentScaler.ContentPresenterOffset = result;
-		//	//}
-		//}
-
-		//private void UpdateTranslationY()
-		//{
-		//	//if (_contentScaler != null)
-		//	//{
-		//	//	double result;
-		//	//	var scaledContentHeight = UnscaledExtent.Height * ContentScale;
-
-		//	//	if (scaledContentHeight < ViewportHeight)
-		//	//	{
-		//	//		// When the content can fit entirely within the viewport, center it.
-		//	//		result = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
-		//	//	}
-		//	//	else
-		//	//	{
-		//	//		result = -ContentOffsetY;
-		//	//	}
-
-		//	//	Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl would be setting the TranslateTransform.Y to {result}.");
-		//	//	//_contentScaler.TranslateTransform.Y = result;
-		//	//}
-		//}
-
-		// TODO: Create the UpdateTranslationX and UpdateTranslationY for when the ContentOffsets are being set individually.
 		private void UpdateTranslation()
 		{
 			if (UnscaledExtent.Width == 0 || UnscaledExtent.Height == 0)
@@ -852,6 +763,30 @@ namespace MSetExplorer
 			}
 		}
 
+		private bool UpdateScale(double contentScale)
+		{
+			var result = false;
+
+			if (_contentScaler != null)
+			{
+				var contentScale2D = new SizeDbl(contentScale, contentScale);
+
+				if (ScreenTypeHelper.IsSizeDblChanged(contentScale2D, _contentScaler.ContentScale, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
+				{
+					Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale to {contentScale2D}. Update was successful.");
+
+					_contentScaler.ContentScale = contentScale2D;
+					result = true;
+				}
+				else
+				{
+					Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale. Update was NOT made, value already: {contentScale}.");
+				}
+			}
+
+			return result;
+		}
+
 		private void UpdateContentZoomFocus()
 		{
 			var contentOffset = new PointDbl(ContentOffsetX, ContentOffsetY);
@@ -865,63 +800,32 @@ namespace MSetExplorer
 		{
 			//ViewportZoomFocusX = ViewportWidth / 2;
 			//ViewportZoomFocusY = ViewportHeight / 2;
-		}
 
-		private bool UpdateScale(double contentScale)
-		{
-			var result = false;
-
-			if (_contentScaler != null)
-			{
-				var contentScale2D = new SizeDbl(contentScale, contentScale);
-
-				//if (ScreenTypeHelper.IsSizeDblChanged(contentScale2D, _contentScaler.ContentScale, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
-				//{
-				//	Debug.WriteLine("The PanAndZoom control is setting the ContentScaler's ContentScale. Update was made.");
-
-				//	_contentScaler.ContentScale = contentScale2D;
-				//	result = true;
-				//}
-				//else
-				//{
-				//	Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale. Update was NOT made, value already: {contentScale}.");
-				//}
-
-				Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale to {contentScale2D}.");
-
-				_contentScaler.ContentScale = contentScale2D;
-				result = true;
-
-			}
-
-			return result;
+			ViewportZoomFocus = new PointDbl(UnscaledViewportSize.Divide(2));
 		}
 
 		private void UpdateContentOffsetsFromScale()
 		{
-			if (_enableContentOffsetUpdateFromScale)
+			try
 			{
-				try
-				{
-					_disableContentFocusSync = true;
+				_disableContentFocusSync = true;
 
-					// Since the ViewportZoomFocus is always centered, 
-					// we can simply examine the ContentZoomFocus.
+				// Since the ViewportZoomFocus is always centered, 
+				// we can simply examine the ContentZoomFocus.
 
-					//var viewportOffset = ViewportZoomFocus.Sub(ViewportSize.Divide(2));
-					//var contentOffset = viewportOffset.Divide(ContentScale);
+				var viewportOffset = ViewportZoomFocus.Sub(UnscaledViewportSize.Divide(2));
+				var contentOffset = viewportOffset.Divide(ContentScale);
 
-					var contentOffset = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)); //.Diff(contentOffset);
+				//var contentOffset = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)); //.Diff(contentOffset);
 
-					Debug.WriteLine($"WARNING: ContentOffsets are being updated after updating the scale. NewValue: {contentOffset}.");
+				Debug.WriteLine($"WARNING: ContentOffsets are being updated after updating the scale. NewValue: {contentOffset}.");
 
-					ContentOffsetX = contentOffset.X;
-					ContentOffsetY = contentOffset.Y;
-				}
-				finally
-				{
-					_disableContentFocusSync = false;
-				}
+				ContentOffsetX = contentOffset.X;
+				ContentOffsetY = contentOffset.Y;
+			}
+			finally
+			{
+				_disableContentFocusSync = false;
 			}
 		}
 
@@ -980,7 +884,10 @@ namespace MSetExplorer
 
 		#region Line / Page / MouseWheel - IScrollInfo
 
-		public void LineDown() => ContentOffsetY += ContentViewportSize.Height / 10;
+		public void LineDown()
+		{
+			ContentOffsetY += ContentViewportSize.Height / 10;
+		}
 
 		public void LineUp() => ContentOffsetY -= ContentViewportSize.Height / 10;
 
@@ -988,13 +895,29 @@ namespace MSetExplorer
 
 		public void LineRight() => ContentOffsetX += ContentViewportSize.Width / 10;
 
-		public void PageUp() => ContentOffsetY -= ContentViewportSize.Height;
+		public void PageUp()
+		{
+			Debug.WriteLine("\n\nUser is Paging Up.");
+			ContentOffsetY -= ContentViewportSize.Height;
+		}
 
-		public void PageDown() => ContentOffsetY += ContentViewportSize.Height;
+		public void PageDown()
+		{
+			Debug.WriteLine("\n\nUser is Paging Down.");
+			ContentOffsetY += ContentViewportSize.Height;
+		}
 
-		public void PageLeft() => ContentOffsetX -= ContentViewportSize.Width;
+		public void PageLeft()
+		{
+			Debug.WriteLine("\n\nUser is Paging Left.");
+			ContentOffsetX -= ContentViewportSize.Width;
+		}
 
-		public void PageRight() => ContentOffsetX += ContentViewportSize.Width;
+		public void PageRight()
+		{
+			Debug.WriteLine("\n\nUser is Paging Right.");
+			ContentOffsetX += ContentViewportSize.Width;
+		}
 
 		public void MouseWheelDown() { if (IsMouseWheelScrollingEnabled) LineDown(); }
 

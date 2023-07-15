@@ -224,7 +224,7 @@ namespace MSetExplorer
 			var bitmapSize = new SizeDbl(_bitmap.Width, _bitmap.Height);
 			if (RefreshBitmap(bitmapSize, out var bitmap))
 			{
-				Debug.WriteLine("WARNING: Creating a new bitmap, just to clear the display.");
+				//Debug.WriteLine("WARNING: Creating a new bitmap, just to clear the display.");
 				Bitmap = bitmap;
 			}
 			else

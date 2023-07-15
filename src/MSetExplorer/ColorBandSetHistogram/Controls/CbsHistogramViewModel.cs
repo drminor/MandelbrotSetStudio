@@ -562,8 +562,9 @@ namespace MSetExplorer
 			else
 			{
 				if (values.Length != _thePlotExtent)
-				{
-					Debug.WriteLine($"WARNING: The length of values is {values.Length}.");
+				{	
+					// TODO: Uncomment this Debug statment for the CbsHistogramViewModel
+					// Debug.WriteLine($"WARNING: Building Series Data for the CbsHistogram only found {values.Length} entries, which is less than the Plot Extent: {_thePlotExtent}.");
 				}
 
 				var extent = Math.Min(values.Length, _thePlotExtent - 50);

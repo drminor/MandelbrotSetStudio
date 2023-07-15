@@ -39,6 +39,10 @@ namespace MSetExplorer
 				if (_zoomedControl.CanZoom)
 				{
 					//(BaseValue, RelativeValue) = GetBaseAndRelative(_scrollbar.Value);
+
+					Debug.WriteLine("\n\n========== The user is setting the scale.");
+
+
 					Debug.WriteLine("The ZoomSlider is updating the PanAndZoomControl's Scale.");
 					_zoomedControl.SetScale(_scrollbar.Value);
 				}

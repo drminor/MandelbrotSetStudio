@@ -140,9 +140,6 @@ namespace MSetExplorer
 
 			var explorerViewModel = _vm.GetExplorerViewModel();
 			var explorerWindow = new ExplorerWindow(explorerViewModel, appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
-			//{
-			//	DataContext = explorerViewModel
-			//};
 
 			_lastWindow = explorerWindow;
 			_lastWindow.Name = "Explorer";
@@ -159,9 +156,6 @@ namespace MSetExplorer
 
 			var posterDesignerViewModel = _vm.GetPosterDesignerViewModel();
 			var designerWindow = new PosterDesignerWindow(posterDesignerViewModel, appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
-			//{
-			//	DataContext = posterDesignerViewModel
-			//};
 
 			_lastWindow = designerWindow;
 			_lastWindow.Name = "Designer";

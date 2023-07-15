@@ -121,6 +121,20 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public VectorDbl GetUnScaledDisplayPosition(VectorDbl scaledDisplayPosition, double baseFactor, out double unInvertedY)
+		{
+			var inverseBaseScale = Math.Pow(2, baseFactor);
+
+			// First unscale, then invert
+			var t = scaledDisplayPosition.Scale(inverseBaseScale);
+			unInvertedY = GetInvertedYPos(t.Y);
+
+			var result = new VectorDbl(t.X, unInvertedY);
+
+			return result;
+		}
+
+
 		#endregion
 
 		#region Private Methods
@@ -143,7 +157,7 @@ namespace MSetExplorer
 			return mapAreaInfoV1;
 		}
 
-		private double GetInvertedYPos(double yPos)
+		public double GetInvertedYPos(double yPos)
 		{
 			// The yPos has not been scaled, use the same values, used by the PanAndZoomControl
 

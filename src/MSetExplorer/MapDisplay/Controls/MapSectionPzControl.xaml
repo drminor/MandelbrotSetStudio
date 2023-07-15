@@ -17,15 +17,22 @@
                 HorizontalScrollBarVisibility="Auto"
                 >
 
+                <!--<local:PanAndZoomControl
+                    x:Name="PanAndZoomControl1"
+                    UnscaledExtent="{Binding UnscaledExtent}"
+                    ContentPositionX="{Binding DisplayPositionX, Mode=TwoWay}"
+                    ContentPositionY="{Binding DisplayPositionY, Mode=TwoWay}"
+                    ContentScale="{Binding DisplayZoom, Mode=TwoWay}"
+                    MinContentScale="{Binding MinimumDisplayZoom, Mode=TwoWay}"
+                    ViewportSizeOffsetAndScale="{Binding ViewportSizePositionAndScale, Mode=TwoWay}"
+                    
+                    >-->
+
                 <local:PanAndZoomControl
                     x:Name="PanAndZoomControl1"
                     UnscaledExtent="{Binding UnscaledExtent}"
-                    ContentOffsetX="{Binding DisplayPositionX, Mode=TwoWay}"
-                    ContentOffsetY="{Binding DisplayPositionY, Mode=TwoWay}"
                     ContentScale="{Binding DisplayZoom, Mode=TwoWay}"
                     MinContentScale="{Binding MinimumDisplayZoom, Mode=TwoWay}"
-                    ContentVpSizeOffsetAndScale="{Binding ViewportSizePositionAndScale, Mode=TwoWay}"
-                    
                     >
 
                     <local:BitmapGridControl

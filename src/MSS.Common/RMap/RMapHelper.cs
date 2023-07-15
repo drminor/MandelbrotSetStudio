@@ -319,7 +319,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewportSize, double margin, double maximumZoom = 1)
+		public static double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewportSize, double margin, double maximumZoom)
 		{
 			// Calculate the Zoom level at which the poster fills the screen, leaving a 20 pixel border.
 

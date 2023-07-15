@@ -7,16 +7,12 @@ namespace MSetExplorer
 	{
 		public SizeDbl UnscaledExtent { get; init; }
 		public VectorDbl ContentOffset { get; init; }
-		//public double MinContentScale { get; init; }
-		//public double MaxContentScale { get; init; }
 		public double ContentScale { get; init; }
 
-		public DisplaySettingsInitializedEventArgs(SizeDbl unscaledExtent, VectorDbl contentOffset/*, double minContentScale, double maxContentScale*/, double contentScale)
+		public DisplaySettingsInitializedEventArgs(SizeDbl unscaledExtent, VectorDbl contentOffset, double contentScale)
 		{
 			UnscaledExtent = unscaledExtent;
 			ContentOffset = contentOffset;
-			//MinContentScale = minContentScale;
-			//MaxContentScale = maxContentScale;
 			ContentScale = contentScale;
 		}
 	}

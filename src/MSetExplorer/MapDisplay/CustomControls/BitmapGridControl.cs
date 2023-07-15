@@ -231,14 +231,28 @@ namespace MSetExplorer
 			get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
 			set
 			{
+				//var currentSize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
+
+				//if (ScreenTypeHelper.IsSizeDblChanged(value, currentSize))
+				//{
+				//	var previousValue = _contentViewportSize;
+				//	Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ContentViewportSize is being updated from {previousValue} to {value}. " +
+				//		$"Updating the Canvas Size from {currentSize} to {value}.");
+
+				//	_contentViewportSize = value;
+
+				//	_canvas.Width = value.Width;
+				//	_canvas.Height = value.Height;
+				//}
+
 				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value))
 				{
-					var previousValue = _contentViewportSize;
+					//var previousValue = _contentViewportSize;
 
 					_contentViewportSize = value;
 
 					// Update the Canvas size to accomodate the ContentViewportSize.
-					SetTheCanvasSize(previousValue, value, _contentScale);
+					//SetTheCanvasSize(previousValue, value, _contentScale);
 				}
 			}
 		}
@@ -403,31 +417,30 @@ namespace MSetExplorer
 
 		#region Private Methods - Canvas
 
-		private void SetTheCanvasSize(SizeDbl previousContentViewportSize, SizeDbl newContentViewportSize, SizeDbl contentScale)
-		{
-			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale.Width);
-			var baseScale = ContentScalerHelper.GetBaseScaleFromBaseFactor(baseFactor);
+		//private void SetTheCanvasSize(SizeDbl previousContentViewportSize, SizeDbl newContentViewportSize, SizeDbl contentScale)
+		//{
+		//	var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale.Width);
+		//	var baseScale = ContentScalerHelper.GetBaseScaleFromBaseFactor(baseFactor);
 
-			Debug.Assert(_lastKnownRelativeScale == _canvasScaleTransform.ScaleX, "LastKnownRelativeScale is out of sync.");
-			Debug.Assert(relativeScale == _lastKnownRelativeScale, "The relativeScale calculated from what is presumably the same ContentScale used to calculate the LastKnownRelativeScale does not match the LastKnownRelativeScale.");
+		//	Debug.Assert(_lastKnownRelativeScale == _canvasScaleTransform.ScaleX, "LastKnownRelativeScale is out of sync.");
+		//	Debug.Assert(relativeScale == _lastKnownRelativeScale, "The relativeScale calculated from what is presumably the same ContentScale used to calculate the LastKnownRelativeScale does not match the LastKnownRelativeScale.");
 
+		//	var newCanvasSize = newContentViewportSize.Scale(baseScale);
+		//	//var newCanvasSizePhy = ViewportSize.Divide(relativeScale);
 
-			var newCanvasSize = newContentViewportSize.Scale(baseScale);
-			//var newCanvasSizePhy = ViewportSize.Divide(relativeScale);
+		//	//CheckNewCanvasSize(newCanvasSize, relativeScale);
 
-			//CheckNewCanvasSize(newCanvasSize, relativeScale);
+		//	Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ContentViewportSize is being updated from {previousContentViewportSize} to {newContentViewportSize}. " +
+		//		$"Setting the Canvas Size to {newCanvasSize}.");
 
-			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ContentViewportSize is being updated from {previousContentViewportSize} to {newContentViewportSize}. " +
-				$"Setting the Canvas Size to {newCanvasSize}.");
+		//	//Canvas.Width = newCanvasSize.Width;
+		//	//Canvas.Height = newCanvasSize.Height;
 
-			Canvas.Width = newCanvasSize.Width;
-			Canvas.Height = newCanvasSize.Height;
+		//	_lastKnownBaseFactor = baseFactor;
+		//	_lastKnownRelativeScale = relativeScale;
 
-			_lastKnownBaseFactor = baseFactor;
-			_lastKnownRelativeScale = relativeScale;
-
-			//return newCanvasSize;
-		}
+		//	//return newCanvasSize;
+		//}
 
 		private void SetTheCanvasScale(SizeDbl previousContentScale, SizeDbl newContentScale)
 		{
