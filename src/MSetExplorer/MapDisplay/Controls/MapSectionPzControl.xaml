@@ -20,9 +20,12 @@
                 <local:PanAndZoomControl
                     x:Name="PanAndZoomControl1"
                     UnscaledExtent="{Binding UnscaledExtent}"
+                    ContentOffsetX="{Binding DisplayPositionX, Mode=TwoWay}"
+                    ContentOffsetY="{Binding DisplayPositionY, Mode=TwoWay}"
                     ContentScale="{Binding DisplayZoom, Mode=TwoWay}"
                     MinContentScale="{Binding MinimumDisplayZoom, Mode=TwoWay}"
                     ContentVpSizeOffsetAndScale="{Binding ViewportSizePositionAndScale, Mode=TwoWay}"
+                    
                     >
 
                     <local:BitmapGridControl

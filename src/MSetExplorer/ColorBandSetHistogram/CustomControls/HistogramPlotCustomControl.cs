@@ -35,17 +35,13 @@ namespace MSetExplorer
 		private SizeDbl _viewportSize;
 		private SizeDbl _contentViewportSize;
 
-		private ScaleTransform _controlScaleTransform;
-
-		private TransformGroup _canvasRenderTransform;
 		private TranslateTransform _canvasTranslateTransform;
 		private ScaleTransform _canvasScaleTransform;
+		private TransformGroup _canvasRenderTransform;
 
-		private VectorDbl _contentOffset;
 		private RectangleGeometry? _canvasClip;
-
 		private SizeDbl _contentScale;
-		private VectorDbl _contentPresenterOffset;
+		private RectangleDbl? _scaledContentArea;
 
 		private bool _useDetailedDebug = false;
 
@@ -86,8 +82,6 @@ namespace MSetExplorer
 			_viewportSize = new SizeDbl();
 			_contentViewportSize = SizeDbl.NaN;
 
-			_controlScaleTransform = new ScaleTransform();
-			_controlScaleTransform.Changed += _controlScaleTransform_Changed;
 
 			_canvasTranslateTransform = new TranslateTransform();
 			_canvasScaleTransform = new ScaleTransform();
@@ -98,11 +92,10 @@ namespace MSetExplorer
 
 			_canvas.RenderTransform = _canvasRenderTransform;
 
-			_contentOffset = new VectorDbl();
 			_canvasClip = null;
 
 			_contentScale = new SizeDbl(1);
-			_contentPresenterOffset = new VectorDbl();
+			_scaledContentArea = new RectangleDbl();
 
 			//MouseEnter += HistogramDisplayControl_MouseEnter;
 			//MouseLeave += HistogramDisplayControl_MouseLeave;
@@ -144,12 +137,6 @@ namespace MSetExplorer
 
 			UpdateImageOffset(ImageOffset);
 		}
-
-		private void _controlScaleTransform_Changed(object? sender, EventArgs e)
-		{
-			SetTheCanvasScaleTransform(_controlScaleTransform);
-		}
-
 
 		#endregion
 
@@ -373,7 +360,7 @@ namespace MSetExplorer
 			get => (VectorDbl)GetValue(ImageOffsetProperty);
 			set
 			{
-				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
+				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value, 0.00001))
 				{
 					SetCurrentValue(ImageOffsetProperty, value);
 				}
@@ -385,35 +372,13 @@ namespace MSetExplorer
 			get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
 			set
 			{
-				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value))
+				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value, 0.00001))
 				{
 					_contentViewportSize = value;
 					SetTheCanvasSize(value, ContentScale);
 				}
 			}
 		}
-
-		//ScaleTransform IContentScaler.ScaleTransform => _controlScaleTransform;
-
-		public ScaleTransform ScaleTransform
-		{
-			get => _controlScaleTransform;
-			set
-			{
-				if (_controlScaleTransform != value)
-				{
-					_controlScaleTransform.Changed -= _controlScaleTransform_Changed;
-					_controlScaleTransform = value;
-					_controlScaleTransform.Changed += _controlScaleTransform_Changed;
-
-					SetTheCanvasScaleTransform(_controlScaleTransform);
-
-					UpdateImageOffset(ImageOffset);
-				}
-			}
-		}
-
-		TranslateTransform IContentScaler.TranslateTransform => _canvasTranslateTransform;
 
 		public SizeDbl ContentScale
 		{
@@ -423,47 +388,22 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
-					SetTheCanvasScaleTransformNew(_contentScale);
+					SetTheCanvasScale(_contentScale);
 				}
 			}
 		}
 
-		//ScaleTransform IContentScaler.ScaleTransform
-		//{
-		//	get => _controlScaleTransform;
-		//	//set
-		//	//{
-		//	//	if (_controlScaleTransform != value)
-		//	//	{
-		//	//		_controlScaleTransform.Changed -= _controlScaleTransform_Changed;
-		//	//		_controlScaleTransform = value;
-		//	//		_controlScaleTransform.Changed += _controlScaleTransform_Changed;
-
-		//	//		SetTheCanvasScaleTransform(_controlScaleTransform);
-
-		//	//		UpdateImageOffset(ImageOffset);
-		//	//	}
-		//	//}
-		//}
-
-		// We are ignoring changes made on the TranslateTransform
-		// Instead The MapSectionPzControl is handling the calculation of the Translation
-		// and setting the ContentOffset
-
-		//TranslateTransform IContentScaler.TranslateTransform => _canvasTranslateTransform;
-
-		public VectorDbl ContentPresenterOffset
+		public RectangleDbl? ScaledContentArea
 		{
-			get => _contentPresenterOffset; // _canvasOffset;
+			get => _scaledContentArea; 
 			set
 			{
-				var previousVal = _contentPresenterOffset; // _canvasOffset;
-				_contentPresenterOffset = value; //  _canvasOffset = value;
+				var previousVal = _scaledContentArea;
+				_scaledContentArea = value;
 
-				SetTheCanvasTranslateTransform(previousVal, value);
+				ClipAndOffset(previousVal, value);
 			}
 		}
-
 
 		public RectangleGeometry? CanvasClip
 		{
@@ -474,18 +414,6 @@ namespace MSetExplorer
 				_canvas.Clip = value;
 			}
 		}
-
-		//public VectorDbl ContentOffset
-		//{
-		//	get => _contentOffset;
-		//	set
-		//	{
-		//		var previousVal = _contentOffset;
-		//		_contentOffset = value;
-
-		//		SetTheCanvasTranslateTransform(previousVal, value);
-		//	}
-		//}
 
 		#endregion
 
@@ -612,38 +540,31 @@ namespace MSetExplorer
 			Canvas.Height = newCanvasSize.Height;
 		}
 
-		private void SetTheCanvasScaleTransform(ScaleTransform st)
+		private void SetTheCanvasScale(SizeDbl contentScale)
 		{
 			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramDisplayControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}. The CanvasOffset is {_contentOffset}.");
-
-			_canvasScaleTransform.ScaleX = st.ScaleX;
-			//_canvasScaleTransform.ScaleY = st.ScaleY;
-		}
-
-		//private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl canvasOffset)
-		//{
-		//	Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl's CanvasOffset is being set to {canvasOffset} from {previousValue}. The ImageOffset is {ImageOffset}.");
-
-		//	_canvasTranslateTransform.X = canvasOffset.X;
-		//	_canvasTranslateTransform.Y = canvasOffset.Y;
-		//}
-
-		private void SetTheCanvasScaleTransformNew(SizeDbl contentScale)
-		{
-			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}. The CanvasOffset is {_contentOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}.");
 
 			_canvasScaleTransform.ScaleX = contentScale.Width;
 			_canvasScaleTransform.ScaleY = contentScale.Height;
 		}
 
-		private void SetTheCanvasTranslateTransform(VectorDbl previousValue, VectorDbl newValue)
+		private void ClipAndOffset(RectangleDbl? previousValue, RectangleDbl? newValue)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's {nameof(ContentPresenterOffset)} is being set to {newValue} from {previousValue}. The ImageOffset is {ImageOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's {nameof(ScaledContentArea)} is being set to {newValue} from {previousValue}.");
 
-			_canvasTranslateTransform.X = newValue.X;
-			_canvasTranslateTransform.Y = newValue.Y;
+			if (newValue != null)
+			{ 
+				_canvasTranslateTransform.X = newValue.Value.Position.X;
+				_canvasTranslateTransform.Y = newValue.Value.Position.Y;
+				CanvasClip = new RectangleGeometry(new Rect(ScreenTypeHelper.ConvertToSize(newValue.Value.Size)));
+			}
+			else
+			{
+				_canvasTranslateTransform.X = 0;
+				_canvasTranslateTransform.Y = 0;
+				CanvasClip = null;
+			}
 		}
 
 		private bool UpdateImageOffset(VectorDbl rawValue)
@@ -661,9 +582,9 @@ namespace MSetExplorer
 				(double)Image.GetValue(Canvas.BottomProperty)
 				);
 
-			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.1))
+			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.00001))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's ImageOffset is being set to {newValue} from {currentValue}. CanvasOffset: {_contentOffset}. ImageScaleTransform: {_controlScaleTransform.ScaleX}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's ImageOffset is being set to {newValue} from {currentValue}.");
 
 				CompareCanvasAndControlHeights();
 

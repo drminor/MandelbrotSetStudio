@@ -323,7 +323,7 @@ namespace MSS.Common
 		{
 			// Calculate the Zoom level at which the poster fills the screen, leaving a 20 pixel border.
 
-			var framedViewPort = viewportSize.Sub(new SizeDbl(margin * 2));
+			var framedViewPort = viewportSize.Sub(new SizeDbl(margin));
 			var minScale = framedViewPort.Divide(extent);
 			var result = Math.Min(minScale.Width, minScale.Height);
 			result = Math.Min(result, maximumZoom);

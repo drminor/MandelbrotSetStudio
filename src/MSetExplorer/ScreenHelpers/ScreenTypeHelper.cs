@@ -83,7 +83,7 @@ namespace MSetExplorer
 			return new RectangleDbl(rect.Left, rect.Right, rect.Top, rect.Bottom);
 		}
 
-		public static bool IsDoubleChanged(double a, double b, double threshold = 0.1)
+		public static bool IsDoubleChanged(double a, double b, double threshold = 0.001)
 		{
 			if (double.IsNaN(a) || double.IsNaN(b))
 			{
@@ -93,7 +93,7 @@ namespace MSetExplorer
 			return Math.Abs(a - b) > threshold;
 		}
 
-		public static bool IsPointDblChanged(PointDbl a, PointDbl b, double threshold = 0.1)
+		public static bool IsPointDblChanged(PointDbl a, PointDbl b, double threshold = 0.001)
 		{
 			if (a.IsNAN() || b.IsNAN())
 			{
@@ -104,7 +104,7 @@ namespace MSetExplorer
 		}
 
 		// TODO: Update IsPointDblChanged, IsVectorDblChanged and IsDoubleChanged to return false if both A and B are NAN.
-		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b, double threshold = 0.1)
+		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b, double threshold = 0.001)
 		{
 			if (a.IsNAN() && !b.IsNAN() || (!a.IsNAN()) && b.IsNAN())
 			{
@@ -119,7 +119,7 @@ namespace MSetExplorer
 			return !a.Diff(b).IsNearZero(threshold);
 		}
 
-		public static bool IsVectorDblChanged(VectorDbl a, VectorDbl b, double threshold = 0.1)
+		public static bool IsVectorDblChanged(VectorDbl a, VectorDbl b, double threshold = 0.001)
 		{
 			if (a.IsNAN() || b.IsNAN())
 			{

@@ -60,7 +60,7 @@ namespace MSetExplorer
 			{
 				_vm = (CbsHistogramViewModel)DataContext;
 
-				_vm.UpdateViewportSize(PanAndZoomControl1.UnScaledViewportSize);
+				_vm.UpdateViewportSize(PanAndZoomControl1.UnscaledViewportSize);
 
 				PanAndZoomControl1.MaxContentScale = 10;
 				PanAndZoomControl1.MinContentScale = 1;
@@ -108,14 +108,14 @@ namespace MSetExplorer
 		{
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
-			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale);
+			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)
 		{
 			var displayPosition = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
 			_ = _vm.MoveTo(displayPosition);
-			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale);
+			CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
 		}
 
 		#endregion
@@ -139,8 +139,7 @@ namespace MSetExplorer
 				var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
 
 				ShowOutline(scaledDisplayArea);
-				OffsetAndClip(scaledDisplayArea);
-
+				HistogramDisplayControl1.ScaledContentArea = displayArea;
 				//Debug.WriteLine($"Scaled Extent is smaller than viewportSize. ScaledExtent: {scaledDisplayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. ");
 
 				Debug.WriteLineIf(_useDetailedDebug, $"Scaled Extent is smaller than viewportSize. ScaledExtent: {displayArea.Size} ViewportSize: {viewportSize}. DisplayOffset: {displayArea.Position}. " +
@@ -148,7 +147,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				OffsetAndClip(null);
+				HistogramDisplayControl1.ScaledContentArea = null;
 
 				//Debug.WriteLine($"Scaled Extent is NOT smaller than viewportSize. ScaledExtent: {scaledExtent} ViewportSize: {viewportSize}. DisplayOffset: {displayOffset}.");
 			}
@@ -171,25 +170,25 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void OffsetAndClip(RectangleDbl? scaledDisplayArea)
-		{
-			if (scaledDisplayArea == null)
-			{
-				HistogramDisplayControl1.ContentPresenterOffset = VectorDbl.Zero;
-				HistogramDisplayControl1.CanvasClip = null;
-			}
-			else
-			{
-				// Center the Canvas, using Canvas coordinates
-				var offset = new VectorDbl(scaledDisplayArea.Value.Position);
-				HistogramDisplayControl1.ContentPresenterOffset = offset;
+		//private void OffsetAndClip(RectangleDbl? scaledDisplayArea)
+		//{
+		//	if (scaledDisplayArea == null)
+		//	{
+		//		HistogramDisplayControl1.ContentPresenterOffset = VectorDbl.Zero;
+		//		HistogramDisplayControl1.CanvasClip = null;
+		//	}
+		//	else
+		//	{
+		//		// Center the Canvas, using Canvas coordinates
+		//		var offset = new VectorDbl(scaledDisplayArea.Value.Position);
+		//		HistogramDisplayControl1.ContentPresenterOffset = offset;
 
 
-				//// Only show the pixels belonging to the Poster.
-				var scaledDisplaySize = ScreenTypeHelper.ConvertToSize(scaledDisplayArea.Value.Size);
-				HistogramDisplayControl1.CanvasClip = new RectangleGeometry(new Rect(scaledDisplaySize));
-			}
-		}
+		//		//// Only show the pixels belonging to the Poster.
+		//		var scaledDisplaySize = ScreenTypeHelper.ConvertToSize(scaledDisplayArea.Value.Size);
+		//		HistogramDisplayControl1.CanvasClip = new RectangleGeometry(new Rect(scaledDisplaySize));
+		//	}
+		//}
 
 		private void ShowOutline(RectangleDbl scaledDisplayArea)
 		{

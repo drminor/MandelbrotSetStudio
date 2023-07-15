@@ -88,6 +88,11 @@ namespace MSS.Types
 			return new PointDbl(Math.Max(X, pointB.X), Math.Max(Y, pointB.Y));
 		}
 
+		public PointDbl Max(double amount)
+		{
+			return new PointDbl(Math.Max(X, amount), Math.Max(Y, amount));
+		}
+
 		public bool IsNearZero(double threshold = 0.1)
 		{
 			return Math.Abs(X) < threshold && Math.Abs(Y) < threshold;

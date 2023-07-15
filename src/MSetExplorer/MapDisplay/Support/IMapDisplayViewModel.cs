@@ -14,7 +14,7 @@ namespace MSetExplorer
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		event EventHandler<int>? DisplayJobCompleted;
 		
-		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
+		//event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
 		SizeInt BlockSize { get; }
 		ObservableCollection<MapSection> MapSections { get; }
@@ -45,6 +45,10 @@ namespace MSetExplorer
 		SizeDbl ViewportSize { get; set; }
 
 		VectorDbl DisplayPosition { get; set; }
+
+		double DisplayPositionX { get; set; }
+		double DisplayPositionY { get; set; }
+
 		double DisplayZoom { get; set; }
 		double MinimumDisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; set; }
@@ -56,7 +60,7 @@ namespace MSetExplorer
 
 		int? MoveTo(VectorDbl contentOffset);
 
-		void ReceiveAdjustedContentScale(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl);
+		//void ReceiveAdjustedContentScale(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl);
 
 	}
 }

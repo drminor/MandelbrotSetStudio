@@ -13,7 +13,7 @@ namespace MSetExplorer
 		private readonly ScrollBar _scrollbar;
 		private readonly IZoomInfo _zoomedControl;
 
-		private bool _disableScrollValueSync = false;
+		private bool _disableScrollValueSync = false;	// If true, do not call SetScale, presumbably because this call is being made from the control being controlled, aka Zoomed.
 
 		#endregion
 
@@ -39,6 +39,7 @@ namespace MSetExplorer
 				if (_zoomedControl.CanZoom)
 				{
 					//(BaseValue, RelativeValue) = GetBaseAndRelative(_scrollbar.Value);
+					Debug.WriteLine("The ZoomSlider is updating the PanAndZoomControl's Scale.");
 					_zoomedControl.SetScale(_scrollbar.Value);
 				}
 			}
@@ -87,13 +88,18 @@ namespace MSetExplorer
 
 				try
 				{
+					Debug.WriteLine("The ZoomSlider is handling the InvalidateScaleContentInfo.");
 					_scrollbar.Value = _scrollbar.Maximum;
 
 					_scrollbar.Minimum = _zoomedControl.MinScale;
 					_scrollbar.Maximum = _zoomedControl.MaxScale;
 
-					_scrollbar.SmallChange = _scrollbar.Minimum;
-					_scrollbar.LargeChange = _scrollbar.Minimum * 2;
+					//var recip = 1 / _scrollbar.Minimum;
+					//var in10Parts = recip / 20;
+					//var inverse10Parts = 1 / in10Parts;
+
+					_scrollbar.SmallChange = 0.05; // _zoomedControl.MinScale / 2;
+					_scrollbar.LargeChange = 0.20; // _zoomedControl.MinScale * 2; // _scrollbar.Minimum * 8;
 
 					//(BaseFactor, RelativeValue) = GetBaseFactorAndRelativeScale(_zoomedControl.Scale);
 					_scrollbar.Value = _zoomedControl.Scale;

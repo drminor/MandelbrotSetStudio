@@ -286,7 +286,7 @@ namespace MSetExplorer
 			get => _imageOffset;
 			set
 			{
-				if (ScreenTypeHelper.IsVectorDblChanged(_imageOffset, value))
+				if (ScreenTypeHelper.IsVectorDblChanged(_imageOffset, value, 0.00001))
 				{
 					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
 					_imageOffset = value;

@@ -35,12 +35,14 @@ namespace MSetExplorer
 		private SizeDbl _unscaledExtent;
 		private SizeDbl _viewportSize;
 		private VectorDbl _imageOffset;
+
 		private VectorDbl _displayPosition;
+
 		private double _displayZoom;
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		private ScaledImageViewInfo _viewportSizePositionAndScale;
 
@@ -87,7 +89,8 @@ namespace MSetExplorer
 
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 		public event EventHandler<int>? DisplayJobCompleted;
-		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
+
+		//public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
 		#endregion
 
@@ -133,6 +136,12 @@ namespace MSetExplorer
 			set => _bitmapGrid.HighlightSelectedColorBand = value;
 		}
 
+		public MapAreaInfo? LastMapAreaInfo
+		{
+			get => _latestMapAreaInfo;
+			private set { _latestMapAreaInfo = value; }
+		}
+
 		#endregion
 
 		#region Public Properties - Control
@@ -140,20 +149,6 @@ namespace MSetExplorer
 		public new bool InDesignMode => base.InDesignMode;
 
 		public SizeInt BlockSize { get; init; }
-
-		public List<int> ActiveJobNumbers { get; init; }
-
-		public ImageSource ImageSource
-		{
-			get => _bitmapGrid.Bitmap;
-			private set
-			{
-				// This is called by the BitmapGrid, to let us know that we need to raise the OnPropertyChanged event.
-
-				Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's ImageSource is being set to value: {value}.");
-				OnPropertyChanged(nameof(IMapDisplayViewModel.ImageSource));
-			}
-		}
 
 		/// <summary>
 		/// Scaled, aka Logical Display Size.
@@ -163,32 +158,32 @@ namespace MSetExplorer
 			get => _viewportSize;
 			set
 			{
-				if (ScreenTypeHelper.IsSizeDblChanged(value, _viewportSize))
+				if (ScreenTypeHelper.IsSizeDblChanged(value, _viewportSize, 0.001))
 				{
 					if (value.Width >= 2 && value.Height >= 2)
 					{
 						Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {value}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
 
-						int? newJobNumber = null;
-						bool lastSectionWasIncluded = false;
-
+						_viewportSize = value;
 						_bitmapGrid.ContentViewportSize = value;
 
-						lock (_paintLocker)
-						{
-							if (CurrentAreaColorAndCalcSettings != null)
-							{
-								var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
-								newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
-							}
-						}
+						//int? newJobNumber = null;
+						//bool lastSectionWasIncluded = false;
 
-						_viewportSize = value;
+						//lock (_paintLocker)
+						//{
+						//	if (CurrentAreaColorAndCalcSettings != null)
+						//	{
+						//		var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
+						//		newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
+						//	}
+						//}
 
-						if (newJobNumber.HasValue && lastSectionWasIncluded)
-						{
-							DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
-						}
+
+						//if (newJobNumber.HasValue && lastSectionWasIncluded)
+						//{
+						//	DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+						//}
 
 						OnPropertyChanged(nameof(IMapDisplayViewModel.ViewportSize));
 					}
@@ -204,12 +199,66 @@ namespace MSetExplorer
 			}
 		}
 
+		public ScaledImageViewInfo ViewportSizePositionAndScale
+		{
+			get => _viewportSizePositionAndScale;
+			set
+			{
+				int? newJobNumber;
+
+				lock (_paintLocker)
+				{
+					if (CurrentAreaColorAndCalcSettings == null)
+					{
+						ViewportSize = value.ContentViewportSize;
+
+						_displayZoom = value.ContentScale;
+						_displayPosition = value.ContentOffset;
+						newJobNumber = null;
+					}
+					else
+					{
+						if (_boundedMapArea == null)
+						{
+							throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
+						}
+
+						var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(value.ContentScale);
+
+						// TODO: Make the CheckContentScale work correctly.
+						//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseFactor, relativeScale);
+
+						ViewportSize = value.ContentViewportSize;
+
+						DisplayZoom = value.ContentScale;
+						DisplayPosition = value.ContentOffset;
+
+						newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, value.ContentViewportSize, value.ContentOffset, baseFactor);
+					}
+				}
+			}
+		}
+
+		public List<int> ActiveJobNumbers { get; init; }
+
+		public ImageSource ImageSource
+		{
+			get => _bitmapGrid.Bitmap;
+			private set
+			{
+				// This is called by the BitmapGrid, to let us know that we need to raise the OnPropertyChanged event.
+
+				Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's ImageSource is being set to value: {value}.");
+				OnPropertyChanged(nameof(IMapDisplayViewModel.ImageSource));
+			}
+		}
+
 		public VectorDbl ImageOffset
 		{
 			get => _imageOffset;
 			set
 			{
-				if (ScreenTypeHelper.IsVectorDblChanged(_imageOffset, value))
+				if (ScreenTypeHelper.IsVectorDblChanged(_imageOffset, value, 0.00001))
 				{
 					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
 					_imageOffset = value;
@@ -219,11 +268,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public MapAreaInfo? LastMapAreaInfo
-		{
-			get => _latestMapAreaInfo;
-			private set { _latestMapAreaInfo = value; }
-		}
 
 		#endregion
 
@@ -243,6 +287,34 @@ namespace MSetExplorer
 			}
 		}
 
+		public double DisplayPositionX
+		{
+			get => DisplayPosition.X;
+			set
+			{
+				if (ScreenTypeHelper.IsDoubleChanged(value, _displayPosition.X, 0.00001))
+				{
+					_displayPosition = new VectorDbl(value, _displayPosition.Y);
+					MoveTo(DisplayPosition);
+					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPositionX));
+				}
+			}
+		}
+
+		public double DisplayPositionY
+		{
+			get => DisplayPosition.Y;
+			set
+			{
+				if (ScreenTypeHelper.IsDoubleChanged(value, _displayPosition.Y, 0.00001))
+				{
+					_displayPosition = new VectorDbl(_displayPosition.X, value);
+					MoveTo(DisplayPosition);
+					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPositionY));
+				}
+			}
+		}
+
 		public VectorDbl DisplayPosition
 		{
 			get => _displayPosition;
@@ -252,6 +324,9 @@ namespace MSetExplorer
 				{
 					_displayPosition = value;
 					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPosition));
+
+					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPositionX));
+					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPositionY));
 				}
 			}
 		}
@@ -293,28 +368,26 @@ namespace MSetExplorer
 			}
 		}
 
-		//public Func<IContentScaleInfo, ZoomSlider>? ZoomSliderFactory { get; set; }
-
 		#endregion
 
 		#region Public Methods
 
-		public void ReceiveAdjustedContentScale(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl)
-		{
-			Debug.WriteLine($"Receiving the adjusted content scale. Current: {_displayZoom}, New: {contentScaleFromPanAndZoomControl}, Check: {contentScaleFromBitmapGridControl}.");
+		//public void ReceiveAdjustedContentScale(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl)
+		//{
+		//	Debug.WriteLine($"Receiving the adjusted content scale. Current: {_displayZoom}, New: {contentScaleFromPanAndZoomControl}, Check: {contentScaleFromBitmapGridControl}.");
 
-			// TODO: The ContentScale properties of PanAndZoom control are in some cases a tiny fraction different -- WHY?
+		//	// TODO: The ContentScale properties of PanAndZoom control are in some cases a tiny fraction different -- WHY?
 
-			if (ScreenTypeHelper.IsDoubleChanged(_displayZoom, contentScaleFromPanAndZoomControl, 1.001)) // 0.00001
-			{
-				Debug.WriteLine($"WARNING: The DisplayZoom field is not being updated via its binding.");
-				_displayZoom = contentScaleFromPanAndZoomControl;
-			}
-			else
-			{
-				Debug.WriteLine($"Notice: The DisplayZoom field is being updated via its binding.");
-			}
-		}
+		//	if (ScreenTypeHelper.IsDoubleChanged(_displayZoom, contentScaleFromPanAndZoomControl, 1.001)) // 0.00001
+		//	{
+		//		Debug.WriteLine($"WARNING: The DisplayZoom field is not being updated via its binding.");
+		//		_displayZoom = contentScaleFromPanAndZoomControl;
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"Notice: The DisplayZoom field is being updated via its binding.");
+		//	}
+		//}
 
 		public int? SubmitJob(AreaColorAndCalcSettings newValue)
 		{
@@ -377,12 +450,17 @@ namespace MSetExplorer
 				//_minimumDisplayZoom = RMapHelper.GetMinDisplayZoom(posterSize, ViewportSize, margin); //GetMinDisplayZoom(posterSize, ViewportSize); // 
 				//_displayZoom = Math.Min(Math.Max(_displayZoom, _minimumDisplayZoom), maximumDisplayZoom);
 
-				_displayPosition = displayPosition;
-				_displayZoom = displayZoom;
+				//_displayPosition = displayPosition;
+				////_displayZoom = displayZoom;
+				//_displayZoom = 1.0;
 
-				DisplaySettingsInitialized?.Invoke(this, new DisplaySettingsInitializedEventArgs(posterSize, _displayPosition/*, _minimumDisplayZoom, maximumDisplayZoom*/, _displayZoom));
+				//DisplaySettingsInitialized?.Invoke(this, new DisplaySettingsInitializedEventArgs(posterSize, _displayPosition/*, _minimumDisplayZoom, maximumDisplayZoom*/, _displayZoom));
 
-				_displayZoom = MinimumDisplayZoom;
+				UnscaledExtent = new SizeDbl();
+				DisplayPosition = displayPosition;	
+
+				//DisplayZoom = displayZoom;
+				DisplayZoom = 1.0d;
 
 				var (b, r) = ContentScalerHelper.GetBaseFactorAndRelativeScale(_displayZoom);
 
@@ -438,62 +516,6 @@ namespace MSetExplorer
 
 		*/
 
-		public ScaledImageViewInfo ViewportSizePositionAndScale
-		{
-			get => _viewportSizePositionAndScale;
-			set
-			{
-				int? newJobNumber;
-
-				lock (_paintLocker)
-				{
-					if (CurrentAreaColorAndCalcSettings == null)
-					{
-						_bitmapGrid.ContentViewportSize = value.ContentViewportSize;
-						_viewportSize = value.ContentViewportSize;
-						_displayZoom = value.ContentScale;
-						_displayPosition = value.ContentOffset;
-						newJobNumber = null;
-					}
-					else
-					{
-						if (_boundedMapArea == null)
-						{
-							throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
-						}
-
-						var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(value.ContentScale);
-
-						// TODO: Make the CheckContentScale work correctly.
-						//CheckContentScale(UnscaledExtent, contentViewportSize, contentScale, baseFactor, relativeScale);
-
-						_viewportSize = value.ContentViewportSize;
-						_displayZoom = value.ContentScale;
-						_displayPosition = value.ContentOffset;
-
-						newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, value.ContentViewportSize, value.ContentOffset, baseFactor);
-					}
-				}
-			}
-		}
-
-		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseFactor, double relativeScale) 
-		//{
-		//	Debug.Assert(UnscaledExtent == BoundedMapArea?.PosterSize, "UnscaledExtent is out of sync.");
-
-		//	var sanityContentScale = CalculateContentScale(UnscaledExtent, contentViewportSize);
-		////  var sanityContentScale = contentViewPortSize.Divide(unscaledExtent);
-
-		//	if (Math.Abs(sanityContentScale.Width - contentScale) > 0.01 && Math.Abs(sanityContentScale.Height - contentScale) > 0.01)
-		//	{
-		//		Debug.WriteLine($"Content Scale is Off. SanityCheck vs Value at UpdateViewPortSize: {sanityContentScale} vs {contentScale}.");
-		//		//throw new InvalidOperationException("Content Scale is OFF!!");
-		//	}
-
-		//	Debug.WriteLine($"CHECK THIS: The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Scale:{contentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
-
-		//}
-
 		public int? MoveTo(VectorDbl contentOffset)
 		{
 			int? newJobNumber;
@@ -518,7 +540,7 @@ namespace MSetExplorer
 
 				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
 
-				DisplayPosition = contentOffset;
+				//DisplayPosition = contentOffset;
 
 				if (newJobNumber.HasValue && lastSectionWasIncluded)
 				{
@@ -685,9 +707,6 @@ namespace MSetExplorer
 			{
 				newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaInfo2Subset, out lastSectionWasIncluded);
 			}
-
-			_viewportSize = viewportSize;
-			_displayPosition = contentOffset;
 
 			if (newJobNumber.HasValue && lastSectionWasIncluded)
 			{
@@ -1130,6 +1149,25 @@ namespace MSetExplorer
 			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {viewportSize}. BaseScaleFactor: {boundedMapArea.BaseScale}.");
 
 		}
+
+
+		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseFactor, double relativeScale) 
+		//{
+		//	Debug.Assert(UnscaledExtent == BoundedMapArea?.PosterSize, "UnscaledExtent is out of sync.");
+
+		//	var sanityContentScale = CalculateContentScale(UnscaledExtent, contentViewportSize);
+		////  var sanityContentScale = contentViewPortSize.Divide(unscaledExtent);
+
+		//	if (Math.Abs(sanityContentScale.Width - contentScale) > 0.01 && Math.Abs(sanityContentScale.Height - contentScale) > 0.01)
+		//	{
+		//		Debug.WriteLine($"Content Scale is Off. SanityCheck vs Value at UpdateViewPortSize: {sanityContentScale} vs {contentScale}.");
+		//		//throw new InvalidOperationException("Content Scale is OFF!!");
+		//	}
+
+		//	Debug.WriteLine($"CHECK THIS: The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Scale:{contentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
+
+		//}
+
 
 		#endregion
 

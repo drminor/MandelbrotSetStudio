@@ -772,7 +772,7 @@ namespace MSetExplorer
 		{
 			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
 
-			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter))
+			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter, threshold:0.001))
 			{
 				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
 			}

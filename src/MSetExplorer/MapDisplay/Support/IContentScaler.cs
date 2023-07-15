@@ -7,12 +7,9 @@ namespace MSetExplorer
 	{
 		SizeDbl ContentViewportSize { get; set; }
 
-		//ScaleTransform ScaleTransform { get;  }
 		SizeDbl ContentScale { get; set; }
 
-		TranslateTransform TranslateTransform { get; }
-		//VectorDbl ContentPresenterOffset { get; set; }
+		RectangleDbl? ScaledContentArea { get; set; }
 
-		//void Reset(SizeDbl contentViewportSize, SizeDbl contentScale);
 	}
 }
