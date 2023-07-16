@@ -43,6 +43,7 @@ namespace MSetExplorer
 
 		SizeDbl UnscaledExtent { get; }
 		SizeDbl ViewportSize { get; set; }
+		SizeDbl ContentViewportSize { get; }	
 
 		//ValueTuple<VectorDbl, double>? ScaledDisplayPositionYInverted { get; set; }
 		//VectorDbl GetCurrentDisplayPosition();

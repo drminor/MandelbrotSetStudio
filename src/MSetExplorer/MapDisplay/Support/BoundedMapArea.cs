@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using MSetExplorer.MapDisplay.Support;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -16,27 +17,22 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public BoundedMapArea(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, SizeDbl viewportSize)
+		public BoundedMapArea(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, SizeDbl viewportSize, double baseFactor = 0)
 		{
 			_mapJobHelper = mapJobHelper;
 			_mapAreaInfo = mapAreaInfo;
 
-			_baseFactor = 0;
-			_baseScale = 1;
-
 			PosterSize = posterSize;
 			ViewportSize = viewportSize;
 
-			//MapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, posterSize);
+			_baseFactor = baseFactor;
+			BaseScale = Math.Pow(0.5, _baseFactor);
+			_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, BaseScale);
 
-			//Debug.Assert(MapAreaInfoWithSize.CanvasSize == posterSize, $"GetMapAreaWithSizeFat is returning a CanvasSize: {MapAreaInfoWithSize.CanvasSize} different from the posterSize: {posterSize}.");
-
-			MapAreaInfoWithSize = GetScaledMapAreaInfoV1(mapAreaInfo, posterSize, _baseScale);
-
-			Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(MapAreaInfoWithSize.CanvasSize, posterSize), $"Since the scale factor = 1, the MapAreaInfoV1.CanvasSize should equal the PosterSize. Compare: {MapAreaInfoWithSize.CanvasSize} with {posterSize}.");
-
-			_scaledMapAreaInfo = MapAreaInfoWithSize;
+			MapAreaInfoWithSize = _scaledMapAreaInfo;
 		}
+
+		//Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(MapAreaInfoWithSize.CanvasSize, posterSize), $"Since the scale factor = 1, the MapAreaInfoV1.CanvasSize should equal the PosterSize. Compare: {MapAreaInfoWithSize.CanvasSize} with {posterSize}.");
 
 		#endregion
 
@@ -95,6 +91,22 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public ScaledDisplayPosition GetWorkingPosition(VectorDbl newDisplayPosition, double baseFactor)
+		{
+			var scaledDispPos = GetScaledDisplayPosition(newDisplayPosition, out var scaledButNotInvertedY);
+
+			var invertedYPos = GetInvertedYPos(newDisplayPosition.Y);
+
+			var result = new ScaledDisplayPosition(
+				baseFactor: baseFactor,
+				unscaled: newDisplayPosition,
+				yInvertedAndScaled: scaledDispPos,
+				invertedY: invertedYPos,
+				scaledY: scaledButNotInvertedY);
+
+			return result;
+		}
+
 		public RectangleDbl GetScaledScreenAreaNotUsed(VectorDbl displayPosition, SizeDbl viewportSize, out double unInvertedY)
 		{
 			var t = displayPosition.Scale(BaseScale);
@@ -109,10 +121,10 @@ namespace MSetExplorer
 			return scaledNewScreenArea;
 		}
 
-		public VectorDbl GetScaledDisplayPosition(VectorDbl displayPosition, out double unInvertedY)
+		public VectorDbl GetScaledDisplayPosition(VectorDbl displayPosition, out double scaledButNotInvertedY)
 		{
 			var t = displayPosition.Scale(BaseScale);
-			unInvertedY = t.Y;
+			scaledButNotInvertedY = t.Y;
 
 			// Invert first, then scale
 			var invertedY = GetInvertedYPos(displayPosition.Y);

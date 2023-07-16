@@ -86,6 +86,7 @@
 
                     <local:BitmapGridControl
                         x:Name="BitmapGridControl1"
+                        ViewportSize="{Binding ViewportSize, Mode=TwoWay}"
                         BitmapGridImageSource="{Binding ImageSource, Mode=OneWay}"
                         ImageOffset="{Binding ImageOffset, Mode=OneWay}"
                     />

@@ -12,16 +12,9 @@ namespace MSetExplorer
 
 		public static (double baseFactor, double relativeScale) GetBaseFactorAndRelativeScale(double contentScale)
 		{
-			//var t = value / BREAK_DOWN_FACTOR;
-
-			//var baseFactor = (double)(int)t;
-			//baseFactor = baseFactor *= BREAK_DOWN_FACTOR;
-
-			//var relativeScale = t - baseFactor;
-
-			//relativeScale = relativeScale *= BREAK_DOWN_FACTOR;
-
-			//return (baseFactor, relativeScale);
+			var l2Cs = Math.Log2(contentScale);
+			var baseF = Math.Round(l2Cs, MidpointRounding.ToZero);
+			var relS = contentScale / Math.Pow(2, baseF);
 
 			double baseFactor;
 			double relativeScale;
@@ -84,8 +77,11 @@ namespace MSetExplorer
 
 			else
 			{
-				throw new InvalidOperationException($"Values for the ContentScale < 1/256 and less are not supported.");
+				//throw new InvalidOperationException($"Values for the ContentScale < 1/256 and less are not supported.");
+				baseFactor = baseF;
+				relativeScale = relS;
 			}
+
 
 			return (baseFactor, relativeScale);
 		}

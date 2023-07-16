@@ -367,19 +367,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl ContentViewportSize
-		{
-			get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
-			set
-			{
-				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value, 0.00001))
-				{
-					_contentViewportSize = value;
-					SetTheCanvasSize(value, ContentScale);
-				}
-			}
-		}
-
 		public SizeDbl ContentScale
 		{
 			get => _contentScale;

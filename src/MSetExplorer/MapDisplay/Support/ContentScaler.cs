@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -29,6 +30,13 @@ namespace MSetExplorer
 			_canvasRenderTransform.Children.Add(_canvasScaleTransform);
 
 			//_canvas.RenderTransform = _canvasRenderTransform;
+
+			_contentPresenter.SizeChanged += ContentPresenter_SizeChanged;
+		}
+
+		private void ContentPresenter_SizeChanged(object sender, System.Windows.SizeChangedEventArgs e)
+		{
+			ViewportSizeChanged?.Invoke(this, new ValueTuple<SizeDbl, SizeDbl>(ScreenTypeHelper.ConvertToSizeDbl(e.PreviousSize), ScreenTypeHelper.ConvertToSizeDbl(e.NewSize)));
 		}
 
 		// Although we are implementing the interface, we are not actually doing anything.
@@ -44,5 +52,6 @@ namespace MSetExplorer
 
 		public RectangleDbl? TranslationAndClipSize { get; set; }
 
+		public event EventHandler<(SizeDbl, SizeDbl)>? ViewportSizeChanged;
 	}
 }

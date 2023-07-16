@@ -29,7 +29,7 @@ namespace MSetExplorer
 		private TransformGroup _canvasRenderTransform;
 
 		private SizeDbl _contentScale;
-		private RectangleDbl? _scaledContentArea;
+		private RectangleDbl? _translationAndClipSize;
 
 		private double _lastKnownBaseFactor;
 		private double _lastKnownRelativeScale;
@@ -119,7 +119,7 @@ namespace MSetExplorer
 
 		#region Events
 
-		//public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
+		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
 
 		#endregion
 
@@ -226,37 +226,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl ContentViewportSize
-		{
-			get => _contentViewportSize.IsNAN() ? ViewportSizeInternal : _contentViewportSize;
-			set
-			{
-				//var currentSize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
-
-				//if (ScreenTypeHelper.IsSizeDblChanged(value, currentSize))
-				//{
-				//	var previousValue = _contentViewportSize;
-				//	Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ContentViewportSize is being updated from {previousValue} to {value}. " +
-				//		$"Updating the Canvas Size from {currentSize} to {value}.");
-
-				//	_contentViewportSize = value;
-
-				//	_canvas.Width = value.Width;
-				//	_canvas.Height = value.Height;
-				//}
-
-				if (ScreenTypeHelper.IsSizeDblChanged(_contentViewportSize, value))
-				{
-					//var previousValue = _contentViewportSize;
-
-					_contentViewportSize = value;
-
-					// Update the Canvas size to accomodate the ContentViewportSize.
-					//SetTheCanvasSize(previousValue, value, _contentScale);
-				}
-			}
-		}
-
 		public SizeDbl ContentScale
 		{
 			get => _contentScale;
@@ -277,11 +246,11 @@ namespace MSetExplorer
 
 		public RectangleDbl? TranslationAndClipSize
 		{
-			get => _scaledContentArea;
+			get => _translationAndClipSize;
 			set
 			{
-				var previousVal = _scaledContentArea;
-				_scaledContentArea = value;
+				var previousVal = _translationAndClipSize;
+				_translationAndClipSize = value;
 
 				ClipAndOffset(previousVal, value);
 			}
@@ -302,7 +271,7 @@ namespace MSetExplorer
 
 			//UpdateViewportSize(availableSize);
 
-			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
+			//ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
 
 			double width = availableSize.Width;
 			double height = availableSize.Height;
@@ -343,8 +312,6 @@ namespace MSetExplorer
 
 			//UpdateViewportSize(childSize);
 
-			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
-
 			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			_ourContent.Arrange(new Rect(finalSize));
@@ -362,8 +329,12 @@ namespace MSetExplorer
 			}
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
-			
-			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+
+			//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: Is setting the ViewportSizeInternal property to {childSize}.");
+
+			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
 
 			return finalSize;
 		}
@@ -449,7 +420,7 @@ namespace MSetExplorer
 
 			Debug.Assert(_lastKnownRelativeScale == _canvasScaleTransform.ScaleX, "LastKnownRelativeScale is out of sync.");
 
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe BitmapGridControl's Canvas ContentScale is being updated from {previousContentScale} to {newContentScale}. " +
+			Debug.WriteLineIf(_useDetailedDebug, $"\nThe BitmapGridControl's Canvas ContentScale is being updated from {previousContentScale} to {newContentScale}. " +
 				$"RelativeScale from {_lastKnownRelativeScale} to {relativeScale}. " +
 				$"BaseFactor from {_lastKnownBaseFactor} to {baseFactor}.");
 
@@ -486,25 +457,23 @@ namespace MSetExplorer
 
 		#region Image and Image Offset
 
-		private bool UpdateImageOffset(VectorDbl rawValue)
+		private bool UpdateImageOffset(VectorDbl newValue)
 		{
 			//var newValue = rawValue.Scale(_scaleTransform.ScaleX);
 			//Debug.WriteLine($"Updating ImageOffset: raw: {rawValue}, scaled: {newValue}. ContentPresenterOffset: {ContentPresenterOffset}. ImageScaleTransform: {_scaleTransform.ScaleX}.");
-
-			var newValue = rawValue;
 
 
 			// For a positive offset, we "pull" the image down and to the left.
 			var invertedValue = newValue.Invert();
 
-			VectorDbl currentValue = new VectorDbl(
+			VectorDbl previousValue = new VectorDbl(
 				(double)Image.GetValue(Canvas.LeftProperty),
 				(double)Image.GetValue(Canvas.BottomProperty)
 				);
 
-			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.00001))
+			if (previousValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(invertedValue, previousValue))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ImageOffset is being set to {newValue} from {currentValue}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ImageOffset is being set from {previousValue} to {invertedValue}.");
 
 				CompareCanvasAndControlHeights();
 
@@ -542,7 +511,7 @@ namespace MSetExplorer
 
 			//var canvasHeightScaled = Canvas.ActualHeight * relativeScale;
 
-			if (Math.Abs(Canvas.ActualHeight - ActualHeight) > 0.1)
+			if (Math.Abs(Canvas.ActualHeight - ActualHeight) > 5)
 			{
 				Debug.WriteLine($"WARNING: The Canvas Height : {Canvas.ActualHeight} does not match the BitmapGridControl's height: {ActualHeight}.");
 			}
@@ -590,21 +559,38 @@ namespace MSetExplorer
 
 		private static void ViewportSize_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
-			((BitmapGridControl)o).CheckViewportSize_PropertyChanged(o, e);
-		}
-
-		[Conditional("DEBUG")]
-		private void CheckViewportSize_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
 			var c = (BitmapGridControl)o;
+
 			var previousValue = (SizeDbl)e.OldValue;
 			var newValue = (SizeDbl)e.NewValue;
 
-			Debug.WriteLineIf(c._useDetailedDebug, $"The BitmapGridControl is having its ViewportSize updated to {newValue}, the current value is {previousValue}.");
+			var canvas = c.Canvas;
+
+			if (canvas.ActualWidth != newValue.Width)
+			{
+				canvas.Width = newValue.Width;
+			}
+
+			if (canvas.ActualHeight != newValue.Height)
+			{
+				canvas.Height = newValue.Height;
+			}
+
+			c.CheckViewportSize(previousValue, newValue);
+
+			c.ViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckViewportSize(SizeDbl previousValue, SizeDbl newValue)
+		{
+			//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+
+			Debug.WriteLine($"The BitmapGridControl is having its ViewportSize updated from {previousValue} to {newValue}.");
 
 			//Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(newValue, c._viewportSizeInternal), "The container size has been updated since the Debouncer fired.");
 
-			if (!newValue.IsNearZero() && ScreenTypeHelper.IsSizeDblChanged(newValue, c._viewportSizeInternal))
+			if (!newValue.IsNearZero() && ScreenTypeHelper.IsSizeDblChanged(newValue, _viewportSizeInternal))
 			{
 				Debug.WriteLine("The ViewportSize is being updated from some source other than the ViewportSizeInternal property. If the ViewportSize property is holding back updates, the value just set may be undone.");
 			}

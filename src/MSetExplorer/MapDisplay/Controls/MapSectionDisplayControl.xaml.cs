@@ -104,16 +104,19 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		//{
-		//	//var previousValue = e.Item1;
-		//	//var newValue = e.Item2;
+		// This is now being handled by a Dependency Property
+		private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		{
+			var previousValue = e.Item1;
+			var newValue = e.Item2;
 
-		//	//Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling Viewport Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewportSize}.");
+			Debug.WriteLine($"The {nameof(MapSectionDisplayControl)} is handling Viewport Size Changed. Prev: {previousValue}, New: {newValue}, CurrentVM: {_vm.ViewportSize}.");
 
-		//	////_vm.ViewportSize = newValue;
-		//	//_vm.UpdateViewportSize(newValue);
-		//}
+			//_vm.ViewportSize = newValue;
+
+			_vm.UpdateViewportSize(newValue);
+
+		}
 
 		private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{

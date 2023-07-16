@@ -84,8 +84,8 @@ namespace MSetExplorer
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
 
-		public event EventHandler? ContentScaleChanged;
-		public event EventHandler? ScrollbarVisibilityChanged;
+		//public event EventHandler? ContentScaleChanged;
+		//public event EventHandler? ScrollbarVisibilityChanged;
 
 		#endregion
 
@@ -138,24 +138,7 @@ namespace MSetExplorer
 			set => SetCurrentValue(MaxContentScaleProperty, value);
 		}
 
-		private SizeDbl _contentViewportSize;
-
-		public SizeDbl ContentViewportSize
-		{
-			get => _contentViewportSize;
-
-			set
-			{
-				_contentViewportSize = value;
-
-
-				if (_contentScaler != null/* && !_disableMinMaxContentScaleChecks*/)
-				{
-					Debug.WriteLine("The PanAndZoom control is settting the ContentScaler's ContentViewportSize.");
-					_contentScaler.ContentViewportSize = value;
-				}
-			}
-		}
+		public SizeDbl ContentViewportSize { get; set; }
 
 		public PointDbl ContentZoomFocus { get; set; }
 
@@ -187,11 +170,11 @@ namespace MSetExplorer
 		//	set => SetCurrentValue(ContentPositionYProperty, value);
 		//}
 
-		public ScaledImageViewInfo ViewportSizeOffsetAndScale
-		{
-			get => (ScaledImageViewInfo)GetValue(ViewportSizeOffsetAndScaleProperty);
-			set => SetCurrentValue(ViewportSizeOffsetAndScaleProperty, value);
-		}
+		//public ScaledImageViewInfo ViewportSizeOffsetAndScale
+		//{
+		//	get => (ScaledImageViewInfo)GetValue(ViewportSizeOffsetAndScaleProperty);
+		//	set => SetCurrentValue(ViewportSizeOffsetAndScaleProperty, value);
+		//}
 
 		public bool IsMouseWheelScrollingEnabled { get; set; }
 
@@ -255,7 +238,7 @@ namespace MSetExplorer
 					Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize} vs. {finalSize}.");
 				}
 				
-				UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(childSize));
+				//UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(childSize));
 			}
 
 			return finalSize;
@@ -281,13 +264,9 @@ namespace MSetExplorer
 						_contentScaler = new ContentScaler(cp);
 					}
 
-					//_contentScaler.ScaleTransform.ScaleX = ContentScale;
-					//_contentScaler.ScaleTransform.ScaleY = ContentScale;
-
+					_contentScaler.ViewportSizeChanged += ContentScaler_ViewportSizeChanged;
 					_contentScaler.ContentScale = new SizeDbl(ContentScale, ContentScale);
 
-					//UpdateTranslationX();
-					//UpdateTranslationY();
 					UpdateTranslation();
 				}
 				else
@@ -300,6 +279,11 @@ namespace MSetExplorer
 				//Debug.WriteLine($"WARNING: Did not find the PanAndZoomControl_Content template.");
 				throw new InvalidOperationException("Did not find the PanAndZoomControl_Content template.");
 			}
+		}
+
+		private void ContentScaler_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		{
+			UpdateViewportSize(e.Item2);
 		}
 
 		#endregion
@@ -334,10 +318,10 @@ namespace MSetExplorer
 			}
 
 			// TODO: CheckEvent
-			c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
+			//c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
 
 			//c.ViewportSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-			var sivi = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			var sivi = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
 			c.ViewportChanged?.Invoke(c, sivi);
 		}
 
@@ -386,19 +370,23 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl c = (PanAndZoomControl)o;
 
-			//Debug.WriteLineIf(c._useDetailedDebug, $"PanAndZoomControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
-			Debug.WriteLine($"PanAndZoomControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
-
+			var oldValue = (double)e.OldValue;
 			var newValue = (double)e.NewValue;
+
+			//Debug.WriteLineIf(c._useDetailedDebug, $"PanAndZoomControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+			Debug.WriteLine($"PanAndZoomControl: ContentScale is changing from {oldValue} to {newValue}.");
 
 			if (!c.UpdateScale(newValue))
 			{
 				// The new value is the same as the both the ScaleX and ScaleY value on the _contentScaleTransform property.
+
+				Debug.WriteLine("On ContentScale_PropertyChanged, the content's ScaleTransform was not updated. The existing value is equal to the new value.");
 				return;
 			}
 
 			if (c.UnscaledExtent.IsNearZero())
 			{
+				Debug.WriteLine("On ContentScale_PropertyChanged, the UnscaledExtent is Zero, the ContentScale has been updated, however no futher processing will be done.");
 				return;
 			}
 
@@ -422,10 +410,10 @@ namespace MSetExplorer
 			c.InvalidateScrollInfo();
 
 			// TODO: CheckEvent
-			c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
+			//c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
 
 			//c.ViewportSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-			var sivi = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
+			var sivi = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
 			c.ViewportChanged?.Invoke(c, sivi);
 		}
 
@@ -626,16 +614,16 @@ namespace MSetExplorer
 
 		#region ViewportSizeOffsetAndScale Dependency Property
 
-		public static readonly DependencyProperty ViewportSizeOffsetAndScaleProperty =
-				DependencyProperty.Register("ViewportSizeOffsetAndScale", typeof(ScaledImageViewInfo), typeof(PanAndZoomControl),
-											new FrameworkPropertyMetadata(ScaledImageViewInfo.Zero, FrameworkPropertyMetadataOptions.None, ViewportSizeOffsetAndScale_PropertyChanged));
+		//public static readonly DependencyProperty ViewportSizeOffsetAndScaleProperty =
+		//		DependencyProperty.Register("ViewportSizeOffsetAndScale", typeof(ScaledImageViewInfo), typeof(PanAndZoomControl),
+		//									new FrameworkPropertyMetadata(ScaledImageViewInfo.Zero, FrameworkPropertyMetadataOptions.None, ViewportSizeOffsetAndScale_PropertyChanged));
 
-		/// <summary>
-		/// Event raised when the 'ViewportSizeOffsetAndScale' property has changed value.
-		/// </summary>
-		private static void ViewportSizeOffsetAndScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-		}
+		///// <summary>
+		///// Event raised when the 'ViewportSizeOffsetAndScale' property has changed value.
+		///// </summary>
+		//private static void ViewportSizeOffsetAndScale_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		//{
+		//}
 
 		#endregion
 
@@ -675,8 +663,10 @@ namespace MSetExplorer
 
 			InvalidateScrollInfo();
 
-			ViewportSizeOffsetAndScale = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
-			ViewportChanged?.Invoke(this, ViewportSizeOffsetAndScale);
+			//var ViewportSizeOffsetAndScale = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
+			var sivi = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale, _contentScaler?.TranslationAndClipSize);
+
+			ViewportChanged?.Invoke(this, sivi);
 		}
 
 		private void UpdateContentViewportSize()
@@ -703,13 +693,31 @@ namespace MSetExplorer
 			// the maximum value for the offsets is size of the ContentViewportSize subtracted from the the unscaled extents. 
 			_maxContentOffset = UnscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {ContentViewportSize}, UnscaledViewportSize: {UnscaledViewportSize}, ConstrainedViewportSize: {_constrainedContentViewportSize}, ContentScale: {ContentScale}. MaxContentOffset: {_maxContentOffset}");
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {FmtSizeDblDp4(ContentViewportSize)}, UnscaledViewportSize: {FmtSizeDblDp4(UnscaledViewportSize)}, ConstrainedViewportSize: {FmtSizeDblDp4(_constrainedContentViewportSize)}, ContentScale: {ContentScale:n8}. MaxContentOffset: {_maxContentOffset:n8}");
+
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentVpSize-Y: {ContentViewportSize.Width:n4}, UnscaledViewportSize-Y: {UnscaledViewportSize.Width:n4}, ConstrainedViewportSize-Y: {_constrainedContentViewportSize.Width:n4}, ContentScale: {ContentScale:n8}. MaxContentOffset-Y: {_maxContentOffset.Width:n4}");
+
+
+			//PanAndZoomControl: UpdateContentViewportSize: w: 1874.3454526918686, h: 1852.6863496829849, UnscaledViewportSize: w: 1125, h: 1112, ConstrainedViewportSize: w: 1874.3454526918686, h: 1852.6863496829849, ContentScale: 0.600209528283228.MaxContentOffset: w: 173.65454730813144, h: 195.31365031701512
+
+
 
 			SetVerticalScrollBarVisibility(_maxContentOffset.Height > 0);
 			SetHorizontalScrollBarVisibility(_maxContentOffset.Width > 0);
 
 			UpdateTranslation();
 		}
+
+		private string FmtSizeDblDp4(SizeDbl a)
+		{
+			return $"w: {a.Width:n4}, h:{a.Height:n4}"; 
+		}
+
+		private string FmtSizeDblDp8(SizeDbl a)
+		{
+			return $"w: {a.Width:n8}, h:{a.Height:n8}";
+		}
+
 
 		private void UpdateTranslation()
 		{
@@ -764,24 +772,26 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool UpdateScale(double contentScale)
+		private bool UpdateScale(double newContentScale)
 		{
 			var result = false;
 
 			if (_contentScaler != null)
 			{
-				var contentScale2D = new SizeDbl(contentScale, contentScale);
+				var contentScale2D = new SizeDbl(newContentScale, newContentScale);
 
-				if (ScreenTypeHelper.IsSizeDblChanged(contentScale2D, _contentScaler.ContentScale, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
+				var previousValue = _contentScaler.ContentScale.Width;
+
+				if (ScreenTypeHelper.IsDoubleChanged(newContentScale, previousValue, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
 				{
-					Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale to {contentScale2D}. Update was successful.");
+					Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale from: {previousValue} to {newContentScale}. Update was successful.");
 
 					_contentScaler.ContentScale = contentScale2D;
 					result = true;
 				}
 				else
 				{
-					Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale. Update was NOT made, value already: {contentScale}.");
+					Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale. Update was NOT made, value already: {newContentScale}.");
 				}
 			}
 
@@ -1134,6 +1144,11 @@ namespace MSetExplorer
 			if (ZoomOwner != null)
 			{
 				((IDisposable)ZoomOwner).Dispose();
+			}
+
+			if (_contentScaler != null)
+			{
+				_contentScaler.ViewportSizeChanged -= ContentScaler_ViewportSizeChanged;
 			}
 		}
 

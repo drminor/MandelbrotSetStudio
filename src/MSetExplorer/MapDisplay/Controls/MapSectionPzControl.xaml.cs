@@ -63,8 +63,8 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetYChanged;
 
-				PanAndZoomControl1.ScrollbarVisibilityChanged += ScrollbarVisibilityChanged;
-				PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
+				//PanAndZoomControl1.ScrollbarVisibilityChanged += ScrollbarVisibilityChanged;
+				//PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
 
 				//_outline = BuildOutline(BitmapGridControl1.Canvas);
 
@@ -81,8 +81,8 @@ namespace MSetExplorer
 			PanAndZoomControl1.ContentOffsetXChanged -= ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= ContentOffsetYChanged;
 
-			PanAndZoomControl1.ScrollbarVisibilityChanged -= ScrollbarVisibilityChanged;
-			PanAndZoomControl1.ContentScaleChanged -= ContentScaleChanged;
+			//PanAndZoomControl1.ScrollbarVisibilityChanged -= ScrollbarVisibilityChanged;
+			//PanAndZoomControl1.ContentScaleChanged -= ContentScaleChanged;
 
 			PanAndZoomControl1.Dispose();
 			PanAndZoomControl1.ZoomOwner = null;
@@ -97,16 +97,27 @@ namespace MSetExplorer
 			var maxContentScale = _vm.MaximumDisplayZoom;
 			var unscaledViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 
+			if (unscaledViewportSize.IsNearZero() || unscaledViewportSize.IsNAN())
+			{
+				unscaledViewportSize = new SizeDbl(ActualWidth, ActualHeight);
+			}
+
 			var minContentScale = RMapHelper.GetMinDisplayZoom(e.UnscaledExtent, unscaledViewportSize, POSTER_DISPLAY_MARGIN, maxContentScale);
+
+			if (minContentScale < 0)
+			{
+				minContentScale = 0.001;	
+			}
+
 			_vm.MinimumDisplayZoom = minContentScale;
-			_vm.DisplayZoom =  Math.Min(Math.Max(_vm.DisplayZoom, _vm.MaximumDisplayZoom), _vm.MaximumDisplayZoom);
+			_vm.DisplayZoom =  Math.Min(Math.Max(_vm.DisplayZoom, _vm.MinimumDisplayZoom), _vm.MaximumDisplayZoom);
 
 			PanAndZoomControl1.ResetExtentWithPositionAndScale(e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
 		}
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
-			CheckForStaleContentValues(e);
+			//CheckForStaleContentValues(e);
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 
@@ -120,8 +131,9 @@ namespace MSetExplorer
 
 		private void ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			var usvs = PanAndZoomControl1.UnscaledViewportSize;
-			_vm.UpdateViewportSize(usvs);
+			// NOTE: The UpdateViewportSize method is to be used by the 'regular' MapSectionDisplayControl -- that does not use Scaling.
+			//var unscaledViewportSize = PanAndZoomControl1.UnscaledViewportSize;
+			//_vm.UpdateViewportSize(unscaledViewportSize);
 
 			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContentViewportSize);
 
@@ -408,30 +420,6 @@ namespace MSetExplorer
 
 		//	//</ DrawingBrush >
 		//}
-
-		[Conditional("DEBUG")]
-		private void CheckForStaleContentValues(ScaledImageViewInfo scaledImageViewInfo/*VectorDbl contentOffset*/)
-		{
-			var contentOffsetDirect = new VectorDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
-
-			//if (ScreenTypeHelper.IsVectorDblChanged(scaledImageViewInfo.ContentOffset, contentOffsetDirect))
-			//{
-			//	Debug.WriteLine($"ContentOffset is stale on MapSectionPzControl event handler. Compare: {scaledImageViewInfo.ContentOffset} to {contentOffsetDirect}.");
-			//}
-
-			Debug.Assert(!ScreenTypeHelper.IsVectorDblChanged(scaledImageViewInfo.ContentOffset, contentOffsetDirect),
-				$"ContentOffset is stale on MapSectionPzControl event handler. Compare: {scaledImageViewInfo.ContentOffset} to {contentOffsetDirect}.");
-
-			var contentViewportSizeDirect = BitmapGridControl1.ContentViewportSize;
-
-			//if (ScreenTypeHelper.IsSizeDblChanged(scaledImageViewInfo.ContentViewportSize, contentViewportSizeDirect))
-			//{
-			//	Debug.WriteLine($"ContentViewportSize is stale on MapSectionPzControl event handler. Compare: {scaledImageViewInfo.ContentViewportSize} to {contentViewportSizeDirect}.");
-			//}
-
-			Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(scaledImageViewInfo.ContentViewportSize, contentViewportSizeDirect),
-				$"ContentViewportSize is stale on MapSectionPzControl event handler. Compare: {scaledImageViewInfo.ContentViewportSize} to {contentViewportSizeDirect}.");
-		}
 
 		[Conditional("DEBUG")]
 		private void CheckForOutofSyncScaleFactor(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl)

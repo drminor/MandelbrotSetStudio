@@ -151,9 +151,12 @@ namespace MSetExplorer
 
 		public SizeInt BlockSize { get; init; }
 
-		/// <summary>
-		/// Scaled, aka Logical Display Size.
-		/// </summary>
+
+
+		// TODO: Create a ContentViewportSize property, distinct from the existing ViewportSize property on the MapSectionDisplayViewModel.
+		// The ViewportSize property on the MapSectionDisplayViewModel is being used for both the Physical and Logical sizes.
+		// This is ok when the ContentScale will always be 1.0
+		// 1
 		public SizeDbl ViewportSize
 		{
 			get => _viewportSize;
@@ -201,7 +204,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl ContentViewportSize { get; set; }
+		public SizeDbl ContentViewportSize => _boundedMapArea?.ViewportSize ?? SizeDbl.Zero;
 
 		//public ScaledImageViewInfo ViewportSizePositionAndScale
 		//{
@@ -460,20 +463,22 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
-				Debug.WriteLine($"\n\n========== A new Job is being submitted: Size: {posterSize}, Display Position: {displayPosition}, Zoom: {displayZoom}.");
+				Debug.WriteLine($"\n========== A new Job is being submitted: Size: {posterSize}, Display Position: {displayPosition}, Zoom: {displayZoom}.");
 
 				CheckViewPortSize();
 
 				var previousValue = CurrentAreaColorAndCalcSettings;
 				ReportSubmitJobDetails(previousValue, newValue, isBound: true);
 
-				// Save the MapAreaInfo for the entire poster.
-				_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize);
-
 				_displayZoom = displayZoom;
-				var (b, r) = ContentScalerHelper.GetBaseFactorAndRelativeScale(displayZoom);
+				var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(displayZoom);
 
-				_boundedMapArea.BaseFactor = b;
+				//_boundedMapArea.BaseFactor = b;
+
+				// Save the MapAreaInfo for the entire poster.
+				_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize, baseFactor);
+
+
 				//ScaledDisplayPositionYInverted = new ValueTuple<VectorDbl, double> (_boundedMapArea.GetScaledDisplayPosition(displayPosition, out var unInvertedY), _boundedMapArea.BaseFactor);
 
 				// Make sure no content is loaded while we reset the PanAndZoom control.
@@ -540,9 +545,9 @@ namespace MSetExplorer
 			{
 				if (CurrentAreaColorAndCalcSettings == null)
 				{
-					ViewportSize = contentViewportSize;
+					ViewportSize = contentViewportSize; // TODO: Check this assignment
 
-					ContentViewportSize = contentViewportSize;
+					//ContentViewportSize = contentViewportSize;
 
 					//_bitmapGrid.ContentViewportSize = contentViewportSize;
 					newJobNumber = null;
@@ -572,6 +577,11 @@ namespace MSetExplorer
 
 		public int? UpdateViewportSize(SizeDbl newValue)
 		{
+			if (_boundedMapArea != null)
+			{
+				throw new InvalidOperationException("The UpdateViewportSize method on the IMapDisplayViewModel interface should only be called in 'Unbounded' mode.");
+			}
+
 			int? newJobNumber = null;
 
 			if (!newValue.IsNAN() && newValue != _viewportSize)
@@ -638,16 +648,13 @@ namespace MSetExplorer
 				var mapAreaInfo2Subset = _boundedMapArea.GetView(contentOffset);
 				var jobType = _boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
+				Debug.Assert(contentViewportSize == _boundedMapArea.ViewportSize, $"MoveTo is being called with a ContentViewportSize {contentViewportSize}  different than {_boundedMapArea.ViewportSize}, the one being used to by the BoundedMapArea to determine which MapSections are neeeded.");
 
-				Debug.WriteLine($"MoveTo. the incoming contentViewportSize is {contentViewportSize}. The value of the MapSectionDisplayViewModels ContentViewportSize property is {ContentViewportSize}.");
-
-				ContentViewportSize = contentViewportSize;
-
-				ReportMove(_boundedMapArea, contentOffset, contentViewportSize);
+				ReportMove(_boundedMapArea, contentOffset);
 
 				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
 
-				//DisplayPosition = contentOffset;
+				DisplayPosition = contentOffset;
 
 				if (newJobNumber.HasValue && lastSectionWasIncluded)
 				{
@@ -831,6 +838,12 @@ namespace MSetExplorer
 
 			var currentBaseFactor = boundedMapArea.BaseFactor;
 
+			// Coordinates to cover the ContentViewportSize, taking into account that we may be using a more coarse sample rate to avoid excessive I/O.
+
+			// NOTE: The viewportSize is the same as the ContentViewportSize on the PanAndZoom control.
+			// The scaledViewportSize is the actual canvas size, but reduced by 0.5, 0.25, 0.125, etc. depending on how 'Zoomed Out' we are.
+
+			// NOTE: As GetView is called the viewPortSize is saved on the boundedMapArea so that subsequent 'MoveTo' calls can be serviced without having to supply the contentViewport size each time.
 			var mapAreaInfo2Subset = boundedMapArea.GetView(viewportSize, contentOffset, baseFactor);
 			var jobType = boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
@@ -1220,26 +1233,18 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG")]
-		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset, SizeDbl contentViewportSize)
+		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset/*, SizeDbl contentViewportSize*/)
 		{
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
 
 			var x = scaledDispPos.X;
 			var y = scaledDispPos.Y;
 
-			//var posterSize = boundedMapArea.PosterSize;
-			//var scaledExtent = posterSize.Scale(boundedMapArea.ScaleFactor);
-
-			//var physicalViewportSize = ViewportSize.Scale(boundedMapArea.ContentScale);
-
-			//Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {ViewportSize}. ContentScale: {boundedMapArea.ContentScale}, BaseScaleFactor: {boundedMapArea.ScaleFactor}. " +
-			//	$"Scaled Extent: {scaledExtent}, ViewportSize: {physicalViewportSize}.");
 
 			var posterSize = boundedMapArea.PosterSize;
+			var contentViewportSize = boundedMapArea.ViewportSize;
 
 			Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {contentViewportSize}. BaseScaleFactor: {boundedMapArea.BaseScale}.");
-
-
 		}
 
 		[Conditional("DEBUG2")]
