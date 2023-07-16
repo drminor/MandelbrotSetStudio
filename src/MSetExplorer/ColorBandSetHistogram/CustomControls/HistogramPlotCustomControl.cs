@@ -393,7 +393,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public RectangleDbl? ScaledContentArea
+		public RectangleDbl? TranslationAndClipSize
 		{
 			get => _scaledContentArea; 
 			set
@@ -551,7 +551,7 @@ namespace MSetExplorer
 
 		private void ClipAndOffset(RectangleDbl? previousValue, RectangleDbl? newValue)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's {nameof(ScaledContentArea)} is being set to {newValue} from {previousValue}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's {nameof(TranslationAndClipSize)} is being set to {newValue} from {previousValue}.");
 
 			if (newValue != null)
 			{ 

@@ -40,7 +40,7 @@ namespace MSetExplorer
 				{
 					//(BaseValue, RelativeValue) = GetBaseAndRelative(_scrollbar.Value);
 
-					Debug.WriteLine("\n\n========== The user is setting the scale.");
+					Debug.WriteLine("\n========== The user is setting the scale.");
 
 
 					Debug.WriteLine("The ZoomSlider is updating the PanAndZoomControl's Scale.");

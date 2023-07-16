@@ -42,7 +42,7 @@ namespace MSetExplorer
 
 		public SizeDbl ContentScale { get; set; }
 
-		public RectangleDbl? ScaledContentArea { get; set; }
+		public RectangleDbl? TranslationAndClipSize { get; set; }
 
 	}
 }

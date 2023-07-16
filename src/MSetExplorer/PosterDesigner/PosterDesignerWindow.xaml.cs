@@ -219,7 +219,7 @@ namespace MSetExplorer
 
 		private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.GetCurrentDisplayPosition();
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition;
 			_vm.PosterViewModel.DisplayZoom = _vm.MapDisplayViewModel.DisplayZoom;
 
 			if (!_vm.PosterViewModel.PosterSave())
@@ -247,7 +247,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.GetCurrentDisplayPosition();
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition;
 			_vm.PosterViewModel.DisplayZoom = _vm.MapDisplayViewModel.DisplayZoom;
 
 			if (!ColorsCommitUpdates().HasValue)
@@ -593,7 +593,7 @@ namespace MSetExplorer
 				return SaveResult.NoChangesToSave;
 			}
 
-			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.GetCurrentDisplayPosition();
+			_vm.PosterViewModel.DisplayPosition = _vm.MapDisplayViewModel.DisplayPosition;
 			_vm.PosterViewModel.DisplayZoom = _vm.MapDisplayViewModel.DisplayZoom;
 
 			if (!ColorsCommitUpdates().HasValue)

@@ -275,7 +275,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public RectangleDbl? ScaledContentArea
+		public RectangleDbl? TranslationAndClipSize
 		{
 			get => _scaledContentArea;
 			set
@@ -462,7 +462,7 @@ namespace MSetExplorer
 
 		private void ClipAndOffset(RectangleDbl? previousValue, RectangleDbl? newValue)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's {nameof(ScaledContentArea)} is being updated from {previousValue} to {newValue}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's {nameof(TranslationAndClipSize)} is being updated from {RectangleDbl.FormatNully(previousValue)} to {RectangleDbl.FormatNully(newValue)}.");
 
 			if (newValue != null)
 			{

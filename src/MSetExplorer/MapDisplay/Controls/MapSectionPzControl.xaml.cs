@@ -120,7 +120,10 @@ namespace MSetExplorer
 
 		private void ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
+			var usvs = PanAndZoomControl1.UnscaledViewportSize;
+			_vm.UpdateViewportSize(usvs);
+
+			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContentViewportSize);
 
 			//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale);
 
@@ -134,7 +137,7 @@ namespace MSetExplorer
 		{
 			//HideOutline();
 
-			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
+			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContentViewportSize);
 
 			//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale);
 

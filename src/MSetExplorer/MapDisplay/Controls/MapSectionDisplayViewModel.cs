@@ -201,6 +201,8 @@ namespace MSetExplorer
 			}
 		}
 
+		public SizeDbl ContentViewportSize { get; set; }
+
 		//public ScaledImageViewInfo ViewportSizePositionAndScale
 		//{
 		//	get => _viewportSizePositionAndScale;
@@ -346,31 +348,28 @@ namespace MSetExplorer
 		//	}
 		//}
 
+		//public double DisplayPositionX { get; set; }
 
-		public double DisplayPositionX { get; set; }
+		//public double DisplayPositionY { get; set; }
 
-		public double DisplayPositionY { get; set; }
+		//public double DisplayPositionYInverted { get; set; }
 
-		public double DisplayPositionYInverted { get; set; }
-
-		public ValueTuple<VectorDbl, double>? ScaledDisplayPositionYInverted { get; set; }		// This is the value of the PanAndZoom control's ContentOffset.
+		//public ValueTuple<VectorDbl, double>? ScaledDisplayPositionYInverted { get; set; }      // This is the value of the PanAndZoom control's ContentOffset.
 
 
-		public VectorDbl GetCurrentDisplayPosition()
+		public VectorDbl DisplayPosition
 		{
-			if (_boundedMapArea == null)
+			get => _displayPosition;
+			set
 			{
-				throw new InvalidOperationException("GetCurrentDisplayPosition is only supported when there is a Bounded context.");
+				if (ScreenTypeHelper.IsVectorDblChanged(value, _displayPosition))
+				{
+					_displayPosition = value;
+					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayPosition));
+				}
 			}
-
-			if (!ScaledDisplayPositionYInverted.HasValue)
-			{
-				throw new InvalidOperationException("There is no current value for the DisplayPosition.");
-			}
-
-			var displayPosition = _boundedMapArea.GetUnScaledDisplayPosition(ScaledDisplayPositionYInverted.Value.Item1, ScaledDisplayPositionYInverted.Value.Item2, out var unInvertedY);
-			return displayPosition;
 		}
+
 
 		public double DisplayZoom
 		{
@@ -451,53 +450,6 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		//public void SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
-		//{
-		//	CheckBlockSize(newValue);
-
-		//	//int? newJobNumber;
-
-		//	lock (_paintLocker)
-		//	{
-		//		Debug.WriteLine($"\n\n========== A new Job is being submitted: Size: {posterSize}, Display Position: {displayPosition}, Zoom: {displayZoom}.");
-
-		//		CheckViewPortSize();
-
-		//		var previousValue = CurrentAreaColorAndCalcSettings;
-		//		ReportSubmitJobDetails(previousValue, newValue, isBound: true);
-
-		//		// Make sure no content is loaded while we reset the PanAndZoom control.
-		//		CurrentAreaColorAndCalcSettings = null;
-
-		//		Debug.WriteLine("========== Raising the DisplaySettingsInitialized Event.");
-		//		DisplaySettingsInitialized?.Invoke(this, new DisplaySettingsInitializedEventArgs(posterSize, _displayPosition/*, _minimumDisplayZoom, maximumDisplayZoom*/, _displayZoom));
-
-		//		Debug.WriteLine("========== Resetting the Unscaled Extent.");
-		//		UnscaledExtent = new SizeDbl();
-
-		//		_displayZoom = 1.0d;
-
-		//		var (b, r) = ContentScalerHelper.GetBaseFactorAndRelativeScale(_displayZoom);
-
-		//		// Save the MapAreaInfo for the entire poster.
-		//		_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize)
-		//		{
-		//			BaseFactor = b
-		//		};
-
-		//		// Get the MapAreaInfo subset for the upper, left-hand corner.
-		//		DisplayPosition = new VectorDbl(0, _boundedMapArea.GetInvertedYPos(0));
-
-		//		CurrentAreaColorAndCalcSettings = newValue;
-
-		//		// Trigger a ViewportChanged event on the PanAndZoomControl -- this should result in our UpdateViewportSizeAndPos method being called.
-
-
-		//		Debug.WriteLine("========== Setting the Unscaled Extent after having set the Display Position and Zoom.");
-		//		UnscaledExtent = _boundedMapArea.PosterSize;
-		//	}
-		//}
-
 		public void SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
 		{
 			// NOTE: SubmitJob may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
@@ -508,6 +460,8 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
+				Debug.WriteLine($"\n\n========== A new Job is being submitted: Size: {posterSize}, Display Position: {displayPosition}, Zoom: {displayZoom}.");
+
 				CheckViewPortSize();
 
 				var previousValue = CurrentAreaColorAndCalcSettings;
@@ -520,19 +474,20 @@ namespace MSetExplorer
 				var (b, r) = ContentScalerHelper.GetBaseFactorAndRelativeScale(displayZoom);
 
 				_boundedMapArea.BaseFactor = b;
-				ScaledDisplayPositionYInverted = new ValueTuple<VectorDbl, double> (_boundedMapArea.GetScaledDisplayPosition(displayPosition, out var unInvertedY), _boundedMapArea.BaseFactor);
+				//ScaledDisplayPositionYInverted = new ValueTuple<VectorDbl, double> (_boundedMapArea.GetScaledDisplayPosition(displayPosition, out var unInvertedY), _boundedMapArea.BaseFactor);
 
 				// Make sure no content is loaded while we reset the PanAndZoom control.
 				CurrentAreaColorAndCalcSettings = null;
-				
-				_displayPosition = ScaledDisplayPositionYInverted.Value.Item1;
-				_displayZoom = displayZoom;
-				
+
+				_displayPosition = _boundedMapArea.GetScaledDisplayPosition(displayPosition, out var unInvertedY);
+
+				Debug.WriteLine("\n========== Raising the DisplaySettingsInitialized Event.");
 				DisplaySettingsInitialized?.Invoke(this, new DisplaySettingsInitializedEventArgs(posterSize, _displayPosition, _displayZoom));
 
 				CurrentAreaColorAndCalcSettings = newValue;
 
 				// Trigger a ViewportChanged event on the PanAndZoomControl -- this should result in our UpdateViewportSizeAndPos method being called.
+				Debug.WriteLine("\n========== Setting the Unscaled Extent to complete the process of submitting the job.");
 				UnscaledExtent = _boundedMapArea.PosterSize;
 			}
 		}
@@ -586,6 +541,9 @@ namespace MSetExplorer
 				if (CurrentAreaColorAndCalcSettings == null)
 				{
 					ViewportSize = contentViewportSize;
+
+					ContentViewportSize = contentViewportSize;
+
 					//_bitmapGrid.ContentViewportSize = contentViewportSize;
 					newJobNumber = null;
 				}
@@ -602,6 +560,9 @@ namespace MSetExplorer
 					Debug.WriteLine($"The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Offset:{contentOffset}, Scale:{contentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
 
 					//DisplayZoom = contentScale;
+
+					Debug.WriteLine("\n========== UpdateViewportSizeAndPos is calling LoadNewView.");
+
 					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, baseFactor);
 				}
 			}
@@ -621,7 +582,8 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
+					Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set from {_viewportSize} to {newValue}.");
+					_viewportSize = newValue;
 					newJobNumber = HandleDisplaySizeUpdate(newValue);
 				}
 			}
@@ -633,27 +595,27 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		public int? MoveToX(double displayPositionX)
-		{
-			DisplayPositionX = displayPositionX;
-			var result = MoveTo(new VectorDbl(DisplayPositionX, DisplayPositionY));
-			return result;
-		}
+		//public int? MoveToX(double displayPositionX)
+		//{
+		//	DisplayPositionX = displayPositionX;
+		//	var result = MoveTo(new VectorDbl(DisplayPositionX, DisplayPositionY));
+		//	return result;
+		//}
 
-		public int? MoveToYInverted(double displayPositionYInverted)
-		{
-			if (_boundedMapArea == null)
-			{
-				throw new InvalidOperationException("MoveToYInverted is only supported when there is a bounded context.");
-			}
+		//public int? MoveToYInverted(double displayPositionYInverted)
+		//{
+		//	if (_boundedMapArea == null)
+		//	{
+		//		throw new InvalidOperationException("MoveToYInverted is only supported when there is a bounded context.");
+		//	}
 
-			DisplayPositionY = _boundedMapArea.GetInvertedYPos(displayPositionYInverted);
+		//	DisplayPositionY = _boundedMapArea.GetInvertedYPos(displayPositionYInverted);
 
-			var result = MoveTo(new VectorDbl(DisplayPositionX, DisplayPositionY));
-			return result;
-		}
+		//	var result = MoveTo(new VectorDbl(DisplayPositionX, DisplayPositionY));
+		//	return result;
+		//}
 
-		public int? MoveTo(VectorDbl contentOffset)
+		public int? MoveTo(VectorDbl contentOffset, SizeDbl contentViewportSize) // including the contentViewportSize only for diagnostics.
 		{
 			int? newJobNumber;
 
@@ -669,14 +631,19 @@ namespace MSetExplorer
 					throw new InvalidOperationException("Cannot call MoveTo, if the CurrentAreaColorAndCalcSettings is null.");
 				}
 
-				Debug.WriteLine("========== Executing MoveTo.");
+				Debug.WriteLine("\n========== Executing MoveTo.");
 
 
 				// Get the MapAreaInfo subset for the given display position
 				var mapAreaInfo2Subset = _boundedMapArea.GetView(contentOffset);
 				var jobType = _boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
-				ReportMove(_boundedMapArea, contentOffset);
+
+				Debug.WriteLine($"MoveTo. the incoming contentViewportSize is {contentViewportSize}. The value of the MapSectionDisplayViewModels ContentViewportSize property is {ContentViewportSize}.");
+
+				ContentViewportSize = contentViewportSize;
+
+				ReportMove(_boundedMapArea, contentOffset, contentViewportSize);
 
 				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
 
@@ -690,6 +657,22 @@ namespace MSetExplorer
 
 			return newJobNumber;
 		}
+
+		//public VectorDbl GetCurrentDisplayPosition()
+		//{
+		//	if (_boundedMapArea == null)
+		//	{
+		//		throw new InvalidOperationException("GetCurrentDisplayPosition is only supported when there is a Bounded context.");
+		//	}
+
+		//	if (!ScaledDisplayPositionYInverted.HasValue)
+		//	{
+		//		throw new InvalidOperationException("There is no current value for the DisplayPosition.");
+		//	}
+
+		//	var displayPosition = _boundedMapArea.GetUnScaledDisplayPosition(ScaledDisplayPositionYInverted.Value.Item1, ScaledDisplayPositionYInverted.Value.Item2, out var unInvertedY);
+		//	return displayPosition;
+		//}
 
 		public void CancelJob()
 		{
@@ -1237,7 +1220,7 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG")]
-		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset/*, double contentScale, double baseFactor*/)
+		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset, SizeDbl contentViewportSize)
 		{
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
 
@@ -1254,7 +1237,7 @@ namespace MSetExplorer
 
 			var posterSize = boundedMapArea.PosterSize;
 
-			Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {ViewportSize}. BaseScaleFactor: {boundedMapArea.BaseScale}.");
+			Debug.WriteLine($"Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {contentViewportSize}. BaseScaleFactor: {boundedMapArea.BaseScale}.");
 
 
 		}

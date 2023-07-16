@@ -347,7 +347,7 @@ namespace MSetExplorer
 
 			if (_contentScaler != null)
 			{
-				_contentScaler.ScaledContentArea = null;
+				_contentScaler.TranslationAndClipSize = null;
 			}
 
 			_maxContentOffset = new SizeDbl(displayPosition).Inflate(100); // Temporary to allow the updates to ContentOffset not get caught by the Coercers.
@@ -643,7 +643,7 @@ namespace MSetExplorer
 
 		private void UpdateViewportSize(SizeDbl newValue)
 		{
-			if (UnscaledViewportSize == newValue)
+			if (UnscaledViewportSize == newValue )
 			{
 				return;
 			}
@@ -758,8 +758,9 @@ namespace MSetExplorer
 					? new RectangleDbl(new PointDbl(offsetX, offsetY), new SizeDbl(clipWidth, clipHeight)) 
 					: null;
 
-				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl is setting the ContentScaler's ScaledContentArea to {contentClip}.");
-				_contentScaler.ScaledContentArea = contentClip;
+
+				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl is setting the ContentScaler's {nameof(IContentScaler.TranslationAndClipSize)} to {RectangleDbl.FormatNully(contentClip)}.");
+				_contentScaler.TranslationAndClipSize = contentClip;
 			}
 		}
 

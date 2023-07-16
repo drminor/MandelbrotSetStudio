@@ -44,12 +44,12 @@ namespace MSetExplorer
 		SizeDbl UnscaledExtent { get; }
 		SizeDbl ViewportSize { get; set; }
 
-		ValueTuple<VectorDbl, double>? ScaledDisplayPositionYInverted { get; set; }
+		//ValueTuple<VectorDbl, double>? ScaledDisplayPositionYInverted { get; set; }
+		//VectorDbl GetCurrentDisplayPosition();
+		//double DisplayPositionX { get; set; }
+		//double DisplayPositionY { get; set; }
 
-		VectorDbl GetCurrentDisplayPosition();
-
-		double DisplayPositionX { get; set; }
-		double DisplayPositionY { get; set; }
+		VectorDbl DisplayPosition { get; set; }
 
 		double DisplayZoom { get; set; }
 		double MinimumDisplayZoom { get; set; }
@@ -58,7 +58,7 @@ namespace MSetExplorer
 		int? UpdateViewportSize(SizeDbl viewportSize);
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
-		int? MoveTo(VectorDbl contentOffset);
+		int? MoveTo(VectorDbl contentOffset, SizeDbl contentViewportSize);
 
 		//void ReceiveAdjustedContentScale(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl);
 

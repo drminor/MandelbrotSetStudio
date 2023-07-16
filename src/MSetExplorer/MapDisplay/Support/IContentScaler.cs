@@ -9,7 +9,7 @@ namespace MSetExplorer
 
 		SizeDbl ContentScale { get; set; }
 
-		RectangleDbl? ScaledContentArea { get; set; }
+		RectangleDbl? TranslationAndClipSize { get; set; }
 
 	}
 }

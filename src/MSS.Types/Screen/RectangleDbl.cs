@@ -149,7 +149,11 @@ namespace MSS.Types
 		public string? ToString(string? format)
 		{
 			return $"pos:{Position.ToString(format)}, size:{Size.ToString(format)}";
+		}
 
+		public static string FormatNully(RectangleDbl? a)
+		{
+			return a.HasValue ? a.Value.ToString() ?? "RectangleDbl /wo ToString Override.": "null";
 		}
 
 		public override bool Equals(object? obj)
