@@ -7,34 +7,37 @@ using System.Threading.Tasks;
 
 namespace MSetExplorer.MapDisplay.Support
 {
-	public class ScaledDisplayPosition
-	{
-		public ScaledDisplayPosition(double baseFactor, 
-			VectorDbl unscaled, VectorDbl yInvertedAndScaled,
-			double invertedY, double scaledY)
-		{
-			BaseFactor = baseFactor;
-			Unscaled = unscaled;
-			YInvertedAndScaled = yInvertedAndScaled;
-			InvertedY = invertedY;
-			ScaledButNotInvertedY = scaledY;
-		}
+	// THIS HAS BEEN MOVED TO the BoundedMapArea.cs code file.
 
-		public double BaseFactor { get; init; }
 
-		public VectorDbl Unscaled { get; init; }
-		public VectorDbl YInvertedAndScaled { get; init; }
+	//public class ScaledDisplayPosition
+	//{
+	//	public ScaledDisplayPosition(double baseFactor, 
+	//		VectorDbl unscaled, VectorDbl yInvertedAndScaled,
+	//		double invertedY, double scaledY)
+	//	{
+	//		BaseFactor = baseFactor;
+	//		Unscaled = unscaled;
+	//		YInvertedAndScaled = yInvertedAndScaled;
+	//		InvertedY = invertedY;
+	//		ScaledButNotInvertedY = scaledY;
+	//	}
 
-		public double X => Unscaled.X;
+	//	public double BaseFactor { get; init; }
 
-		public double Y => Unscaled.Y;
+	//	public VectorDbl Unscaled { get; init; }
+	//	public VectorDbl YInvertedAndScaled { get; init; }
 
-		public double InvertedY { get; init; }
+	//	public double X => Unscaled.X;
 
-		public double InvertedAndScaledX => YInvertedAndScaled.X;
-		public double InvertedAndScaledY => YInvertedAndScaled.Y;
+	//	public double Y => Unscaled.Y;
 
-		public double ScaledButNotInvertedY { get; init; }
+	//	public double InvertedY { get; init; }
 
-	}
+	//	public double InvertedAndScaledX => YInvertedAndScaled.X;
+	//	public double InvertedAndScaledY => YInvertedAndScaled.Y;
+
+	//	public double ScaledButNotInvertedY { get; init; }
+
+	//}
 }

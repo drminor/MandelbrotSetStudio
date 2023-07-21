@@ -172,7 +172,7 @@ namespace MSetExplorer
 
 		public BigVector MapBlockOffset { get; set; }
 
-		public SizeDbl ContentViewportSize
+		public SizeDbl LogicalViewportSize
 		{
 			get => _viewportSize;
 			set
@@ -183,8 +183,6 @@ namespace MSetExplorer
 				CanvasSizeInBlocks = sizeInWholeBlocks;
 			}
 		}
-
-		public VectorDbl ImageOffset { get; set; }
 
 		public SizeInt CanvasSizeInBlocks
 		{
@@ -505,7 +503,6 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
 
-				//_maxYPtr = ImageSizeInBlocks.Height - 1;
 				bitmap = CreateBitmap(ImageSizeInBlocks);
 				return true;
 			}

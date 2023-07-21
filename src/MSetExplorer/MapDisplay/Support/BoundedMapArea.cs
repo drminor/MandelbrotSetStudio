@@ -23,13 +23,15 @@ namespace MSetExplorer
 			_mapAreaInfo = mapAreaInfo;
 
 			PosterSize = posterSize;
-			ViewportSize = viewportSize;
+			ContentViewportSize = viewportSize;
 
-			_baseFactor = baseFactor;
+			MapAreaInfoWithSize = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, 1);
+
+			BaseFactor = baseFactor;
 			BaseScale = Math.Pow(0.5, _baseFactor);
-			_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, BaseScale);
 
-			MapAreaInfoWithSize = _scaledMapAreaInfo;
+			
+			_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, BaseScale);
 		}
 
 		//Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(MapAreaInfoWithSize.CanvasSize, posterSize), $"Since the scale factor = 1, the MapAreaInfoV1.CanvasSize should equal the PosterSize. Compare: {MapAreaInfoWithSize.CanvasSize} with {posterSize}.");
@@ -38,24 +40,18 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public MapAreaInfo MapAreaInfoWithSize { get; init; }
-
 		public SizeDbl PosterSize { get; init; }
 
-		public SizeDbl ViewportSize { get; private set; }
+		public SizeDbl ContentViewportSize { get; private set; }
+
+		public SizeDbl UnscaledViewportSize { get; private set; }	
+
+		public MapAreaInfo MapAreaInfoWithSize { get; init; }
 
 		public double BaseFactor
 		{
 			get => _baseFactor;
-			set
-			{
-				if (value != _baseFactor)
-				{
-					_baseFactor = value;
-					BaseScale = Math.Pow(0.5, _baseFactor);
-					_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, BaseScale);
-				}
-			}
+			private set => _baseFactor = value;
 		}
 
 		public double BaseScale
@@ -69,12 +65,14 @@ namespace MSetExplorer
 		#region Public Methods
 
 		// New Size and Position
-		public MapAreaInfo GetView(SizeDbl viewportSize, VectorDbl newDisplayPosition, double baseFactor)
+		public void UpdateSizeAndScale(SizeDbl contentViewportSize, SizeDbl unscaledViewPortSize, double baseFactor)
 		{
-			ViewportSize = viewportSize;
+			ContentViewportSize = contentViewportSize;
+			UnscaledViewportSize = unscaledViewPortSize;
 			BaseFactor = baseFactor;
 
-			return GetView(newDisplayPosition);
+			BaseScale = Math.Pow(0.5, BaseFactor);
+			_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, BaseScale);
 		}
 
 		// New position, same size
@@ -83,26 +81,10 @@ namespace MSetExplorer
 			// -- Scale the Position and Size together.
 			var invertedY = GetInvertedYPos(newDisplayPosition.Y);
 			var displayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, invertedY);
-			var newScreenArea = new RectangleDbl(displayPositionWithInverseY, ViewportSize);
+			var newScreenArea = new RectangleDbl(displayPositionWithInverseY, ContentViewportSize);
 			var scaledNewScreenArea = newScreenArea.Scale(BaseScale);
 
 			var result = GetUpdatedMapAreaInfo(scaledNewScreenArea, _scaledMapAreaInfo);
-
-			return result;
-		}
-
-		public ScaledDisplayPosition GetWorkingPosition(VectorDbl newDisplayPosition, double baseFactor)
-		{
-			var scaledDispPos = GetScaledDisplayPosition(newDisplayPosition, out var scaledButNotInvertedY);
-
-			var invertedYPos = GetInvertedYPos(newDisplayPosition.Y);
-
-			var result = new ScaledDisplayPosition(
-				baseFactor: baseFactor,
-				unscaled: newDisplayPosition,
-				yInvertedAndScaled: scaledDispPos,
-				invertedY: invertedYPos,
-				scaledY: scaledButNotInvertedY);
 
 			return result;
 		}
@@ -121,6 +103,7 @@ namespace MSetExplorer
 			return scaledNewScreenArea;
 		}
 
+		// Locations in the Content coordinates only use the ContentScale, the Base / Relative breakdown is only for data and physical views.
 		public VectorDbl GetScaledDisplayPosition(VectorDbl displayPosition, out double scaledButNotInvertedY)
 		{
 			var t = displayPosition.Scale(BaseScale);
@@ -133,15 +116,18 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public VectorDbl GetUnScaledDisplayPosition(VectorDbl scaledDisplayPosition, double baseFactor, out double unInvertedY)
+		public VectorDbl GetUnScaledDisplayPosition(VectorDbl scaledDisplayPosition)
 		{
-			var inverseBaseScale = Math.Pow(2, baseFactor);
+			var inverseBaseScale = Math.Pow(2, BaseFactor);
 
 			// First unscale, then invert
-			var t = scaledDisplayPosition.Scale(inverseBaseScale);
-			unInvertedY = GetInvertedYPos(t.Y);
+			var unscaledDisplayPosition = scaledDisplayPosition.Scale(inverseBaseScale);
+			var unInvertedY = GetInvertedYPos(unscaledDisplayPosition.Y);
 
-			var result = new VectorDbl(t.X, unInvertedY);
+			var result = new VectorDbl(unscaledDisplayPosition.X, unInvertedY);
+
+			//var invertedY = GetInvertedYPos(scaledDisplayPosition.Y);
+			//var result = new VectorDbl(scaledDisplayPosition.X, invertedY); //.Scale(BaseScale);
 
 			return result;
 		}
@@ -156,7 +142,7 @@ namespace MSetExplorer
 			var adjustedMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, scaleFactor, out var diaReciprocal);
 			var displaySize = posterSize.Scale(scaleFactor);
 			var result = _mapJobHelper.GetMapAreaWithSizeFat(adjustedMapAreaInfo, displaySize);
-			result.OriginalSourceSubdivisionId = _mapAreaInfo.Subdivision.Id;
+			result.OriginalSourceSubdivisionId = mapAreaInfo.Subdivision.Id;
 
 			return result;
 		}
@@ -173,11 +159,63 @@ namespace MSetExplorer
 		{
 			// The yPos has not been scaled, use the same values, used by the PanAndZoomControl
 
-			var maxV = PosterSize.Height - ViewportSize.Height;
+			var maxV = PosterSize.Height - UnscaledViewportSize.Height;
 			var result = maxV - yPos;
 
 			return result;
 		}
+
+		#endregion
+
+		#region Experimental
+
+		public ScaledDisplayPosition GetWorkingPosition(VectorDbl newDisplayPosition, double baseFactor)
+		{
+			var scaledDispPos = GetScaledDisplayPosition(newDisplayPosition, out var scaledButNotInvertedY);
+
+			var invertedYPos = GetInvertedYPos(newDisplayPosition.Y);
+
+			var result = new ScaledDisplayPosition(
+				baseFactor: baseFactor,
+				unscaled: newDisplayPosition,
+				yInvertedAndScaled: scaledDispPos,
+				invertedY: invertedYPos,
+				scaledY: scaledButNotInvertedY);
+
+			return result;
+		}
+
+		public class ScaledDisplayPosition
+		{
+			public ScaledDisplayPosition(double baseFactor,
+				VectorDbl unscaled, VectorDbl yInvertedAndScaled,
+				double invertedY, double scaledY)
+			{
+				BaseFactor = baseFactor;
+				Unscaled = unscaled;
+				YInvertedAndScaled = yInvertedAndScaled;
+				InvertedY = invertedY;
+				ScaledButNotInvertedY = scaledY;
+			}
+
+			public double BaseFactor { get; init; }
+
+			public VectorDbl Unscaled { get; init; }
+			public VectorDbl YInvertedAndScaled { get; init; }
+
+			public double X => Unscaled.X;
+
+			public double Y => Unscaled.Y;
+
+			public double InvertedY { get; init; }
+
+			public double InvertedAndScaledX => YInvertedAndScaled.X;
+			public double InvertedAndScaledY => YInvertedAndScaled.Y;
+
+			public double ScaledButNotInvertedY { get; init; }
+
+		}
+
 
 		#endregion
 	}

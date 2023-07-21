@@ -74,34 +74,47 @@ namespace MSetExplorer
 			_lastKnownBaseFactor = 0;
 			_lastKnownRelativeScale = 1;
 
-			//MouseEnter += BitmapGridControl_MouseEnter;
-			//MouseLeave += BitmapGridControl_MouseLeave;
+			MouseEnter += BitmapGridControl_MouseEnter;
+			MouseLeave += BitmapGridControl_MouseLeave;
+
+			_canvas.SizeChanged += Canvas_SizeChanged;
 		}
 
-		//private void BitmapGridControl_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-		//{
-		//	//SetTheCanvasTranslateTransform(new VectorDbl(), _canvasOffset);
-		//	//Clip = _clipT;
+		private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			try
+			{
+				_canvas.RenderTransformOrigin = new Point(0, _canvas.Height);
+			}
+			catch (Exception ex) 
+			{
+				Debug.WriteLine($"Got exception: {ex} while setting the Canvas' RenderTransformOrigin.");
+			}
+		}
 
-		//	if (_clipT != null)
-		//	{
-		//		_canvas.ClipToBounds = false;
-		//		_canvas.Clip = _clipT;
-		//	}
-		//	else
-		//	{
-		//		_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
-		//	}
-		//}
+		private void BitmapGridControl_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+		{
+			//if (_clipT != null)
+			//{
+			//	_canvas.ClipToBounds = false;
+			//	_canvas.Clip = _clipT;
+			//}
+			//else
+			//{
+			//	_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
+			//}
 
-		//private void BitmapGridControl_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-		//{
-		//	//SetTheCanvasTranslateTransform(_canvasOffset, new VectorDbl());
-		//	//Clip = null;
+			ClipAndOffset(null, _translationAndClipSize);
+		}
 
-		//	_canvas.ClipToBounds = false;
-		//	_canvas.Clip = null;
-		//}
+		private void BitmapGridControl_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+		{
+			//_canvas.ClipToBounds = false;
+			//_canvas.Clip = null;
+
+			ClipAndOffset(null, null);
+
+		}
 
 		#endregion
 
@@ -112,7 +125,14 @@ namespace MSetExplorer
 			//Debug.WriteLine($"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
 			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
 
-			UpdateImageOffset(ImageOffset);
+			if ( UpdateImageOffset(ImageOffset) )
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's Image Size has changed. NOTE: The Image postion on the canvas had drifted -- but is now reset. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's Image Size has changed, the imageOffset remains the same. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
+			}
 		}
 
 		#endregion
@@ -156,6 +176,52 @@ namespace MSetExplorer
 			}
 		}
 
+		//private SizeDbl ViewportSizeInternal
+		//{
+		//	get => _viewportSizeInternal;
+		//	set
+		//	{
+		//		if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
+		//		{
+		//			var previousValue = _viewportSizeInternal;
+		//			_viewportSizeInternal = value;
+
+		//			//Debug.WriteLine($"BitmapGridControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
+
+		//			var newViewportSize = value;
+
+		//			if (previousValue.Width < 25 || previousValue.Height < 25)
+		//			{
+		//				// Update the 'real' value immediately
+		//				Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
+		//				ViewportSize = newViewportSize;
+		//			}
+		//			else
+		//			{
+		//				// Update the screen immediately, while we are 'holding' back the update.
+		//				//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
+		//				var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
+		//				_ = UpdateImageOffset(tempOffset);
+
+		//				// Delay the 'real' update until no futher updates in the last 150ms.
+		//				_viewPortSizeDispatcher.Debounce(
+		//					interval: 150,
+		//					action: parm =>
+		//					{
+		//						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
+		//						ViewportSize = newViewportSize;
+		//					},
+		//					param: null
+		//				);
+		//			}
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLineIf(_useDetailedDebug, $"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
+		//		}
+		//	}
+		//}
+
 		private SizeDbl ViewportSizeInternal
 		{
 			get => _viewportSizeInternal;
@@ -166,34 +232,9 @@ namespace MSetExplorer
 					var previousValue = _viewportSizeInternal;
 					_viewportSizeInternal = value;
 
-					//Debug.WriteLine($"BitmapGridControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
+					Debug.WriteLine($"BitmapGridControl: Viewport is changing from {previousValue} to {value}.");
 
-					var newViewportSize = value;
-
-					if (previousValue.Width < 25 || previousValue.Height < 25)
-					{
-						// Update the 'real' value immediately
-						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
-						ViewportSize = newViewportSize;
-					}
-					else
-					{
-						// Update the screen immediately, while we are 'holding' back the update.
-						//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
-						var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
-						_ = UpdateImageOffset(tempOffset);
-
-						// Delay the 'real' update until no futher updates in the last 150ms.
-						_viewPortSizeDispatcher.Debounce(
-							interval: 150,
-							action: parm =>
-							{
-								Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
-								ViewportSize = newViewportSize;
-							},
-							param: null
-						);
-					}
+					ViewportSize = value;
 				}
 				else
 				{
@@ -440,10 +481,13 @@ namespace MSetExplorer
 				var offset = newValue.Value.Position.Max(0);
 				var size = newValue.Value.Size;
 
-				 _canvasTranslateTransform.X = offset.X;
+				_canvasTranslateTransform.X = offset.X;
 				_canvasTranslateTransform.Y = offset.Y;
 
-				Canvas.Clip = new RectangleGeometry(new Rect(ScreenTypeHelper.ConvertToSize(size)));
+				//var clipOrigin = new Point(offset.X, offset.Y);
+				var clipOrigin = new Point(0, 0);
+
+				Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(size)));
 			}
 			else
 			{
@@ -496,58 +540,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-
-		#endregion
-
-		#region Diagnostics
-
-		[Conditional("DEBUG")]
-		private void CompareCanvasAndControlHeights()
-		{
-			// The contentViewportSize when reduced by the BaseScale Factor
-			// should equal the ViewportSize when it is expanded by the RelativeScale
-
-			//var (baseFactor, relativeScale) = ZoomSlider.GetBaseFactorAndRelativeScale(_controlScaleTransform.ScaleX);
-
-			//var canvasHeightScaled = Canvas.ActualHeight * relativeScale;
-
-			if (Math.Abs(Canvas.ActualHeight - ActualHeight) > 5)
-			{
-				Debug.WriteLine($"WARNING: The Canvas Height : {Canvas.ActualHeight} does not match the BitmapGridControl's height: {ActualHeight}.");
-			}
-		}
-
-		[Conditional("DEBUG")]
-		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)
-		{
-			foreach (var v in canvas.Children)
-			{
-				if (v == image)
-				{
-					return;
-				}
-			}
-
-			throw new InvalidOperationException("The image is not a child of the canvas.");
-		}
-
-
-		[Conditional("DEBUG")]
-		private void CheckNewCanvasSize(SizeDbl canvasSize, double relativeScale)
-		{
-			// The Canvas Size (which is equal to the contentViewportSize reduced by the BaseScale Factor)
-			// should equal the ViewportSize when it is expanded by the RelativeScale
-
-			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
-			var viewportSizeExpanded = viewportSize.Scale(1 / relativeScale);
-
-			// TODO: Take into account the scrollbar widths.
-			if (ScreenTypeHelper.IsSizeDblChanged(canvasSize, viewportSizeExpanded, threshold: 0.0001))
-			{
-				Debug.WriteLine("WARNING: The new CanvasSize is not equal to the Control's ActualSize  * 1 / relativeScale.");
-			}
-		}
-
 
 		#endregion
 
@@ -631,6 +623,57 @@ namespace MSetExplorer
 			var newValue = (VectorDbl)e.NewValue;
 
 			_ = c.UpdateImageOffset(newValue);
+		}
+
+		#endregion
+
+		#region Diagnostics
+
+		[Conditional("DEBUG")]
+		private void CompareCanvasAndControlHeights()
+		{
+			// The contentViewportSize when reduced by the BaseScale Factor
+			// should equal the ViewportSize when it is expanded by the RelativeScale
+
+			//var (baseFactor, relativeScale) = ZoomSlider.GetBaseFactorAndRelativeScale(_controlScaleTransform.ScaleX);
+
+			//var canvasHeightScaled = Canvas.ActualHeight * relativeScale;
+
+			if (Math.Abs(Canvas.ActualHeight - ActualHeight) > 5)
+			{
+				Debug.WriteLine($"WARNING: The Canvas Height : {Canvas.ActualHeight} does not match the BitmapGridControl's height: {ActualHeight}.");
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)
+		{
+			foreach (var v in canvas.Children)
+			{
+				if (v == image)
+				{
+					return;
+				}
+			}
+
+			throw new InvalidOperationException("The image is not a child of the canvas.");
+		}
+
+
+		[Conditional("DEBUG")]
+		private void CheckNewCanvasSize(SizeDbl canvasSize, double relativeScale)
+		{
+			// The Canvas Size (which is equal to the contentViewportSize reduced by the BaseScale Factor)
+			// should equal the ViewportSize when it is expanded by the RelativeScale
+
+			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
+			var viewportSizeExpanded = viewportSize.Scale(1 / relativeScale);
+
+			// TODO: Take into account the scrollbar widths.
+			if (ScreenTypeHelper.IsSizeDblChanged(canvasSize, viewportSizeExpanded, threshold: 0.0001))
+			{
+				Debug.WriteLine("WARNING: The new CanvasSize is not equal to the Control's ActualSize  * 1 / relativeScale.");
+			}
 		}
 
 		#endregion

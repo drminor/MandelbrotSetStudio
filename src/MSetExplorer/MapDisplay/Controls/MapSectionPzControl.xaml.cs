@@ -19,8 +19,8 @@ namespace MSetExplorer
 		private const double POSTER_DISPLAY_MARGIN = 20;
 		//private const double MAX_CONTENT_SCALE = 1;
 
-		//private bool DRAW_OUTLINE = false;
-		//private Rectangle _outline;
+		private bool DRAW_OUTLINE = true;
+		private Rectangle _outline;
 
 		private IMapDisplayViewModel _vm;
 
@@ -35,7 +35,7 @@ namespace MSetExplorer
 			//_unscaledExtentWasZeroOnlastViewportUpdate = false;
 			
 			_vm = (IMapDisplayViewModel)DataContext;
-			//_outline = new Rectangle();
+			_outline = new Rectangle();
 
 			Loaded += MapSectionPzControl_Loaded;
 			Unloaded += MapSectionPzControl_Unloaded;
@@ -66,10 +66,17 @@ namespace MSetExplorer
 				//PanAndZoomControl1.ScrollbarVisibilityChanged += ScrollbarVisibilityChanged;
 				//PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
 
-				//_outline = BuildOutline(BitmapGridControl1.Canvas);
+				BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
+
+				_outline = BuildOutline(BitmapGridControl1.Canvas);
 
 				Debug.WriteLine("The MapSectionPzControl is now loaded");
 			}
+		}
+
+		private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		{
+			_outline = BuildOutline(BitmapGridControl1.Canvas);
 		}
 
 		private void MapSectionPzControl_Unloaded(object sender, RoutedEventArgs e)
@@ -119,7 +126,10 @@ namespace MSetExplorer
 		{
 			//CheckForStaleContentValues(e);
 
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.UnscaledViewportSize, e.ContentOffset, e.ContentScale);
+
+			var scaledDisplayArea = GetScaledDisplayArea();
+			ShowOutline(scaledDisplayArea);
 
 			//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
 
@@ -169,18 +179,21 @@ namespace MSetExplorer
 			//}
 		}
 
-		private void ContentScaleChanged(object? sender, EventArgs e)
-		{
-			CheckForOutofSyncScaleFactor(PanAndZoomControl1.ContentScale, BitmapGridControl1.ContentScale.Width);
+		//private void ContentScaleChanged(object? sender, EventArgs e)
+		//{
+		//	CheckForOutofSyncScaleFactor(PanAndZoomControl1.ContentScale, BitmapGridControl1.ContentScale.Width);
 
-			//if (WouldCenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale))
-			//{
-			//	Debug.WriteLine("Would Center Content = true for ContentScaleChanged.");
-			//}
+		//	var scaledDisplayArea = GetScaledDisplayArea();
+		//	ShowOutline(scaledDisplayArea);
 
-			//_vm.ReceiveAdjustedContentScale(PanAndZoomControl1.ContentScale, BitmapGridControl1.ContentScale.Width);
-			//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
-		}
+		//	//if (WouldCenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale))
+		//	//{
+		//	//	Debug.WriteLine("Would Center Content = true for ContentScaleChanged.");
+		//	//}
+
+		//	//_vm.ReceiveAdjustedContentScale(PanAndZoomControl1.ContentScale, BitmapGridControl1.ContentScale.Width);
+		//	//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
+		//}
 
 		//private bool IsUnscaledExtentBeingInitialized(VectorDbl contentOffset, out bool contentOffsetIsNonZeroUponInitialization)
 		//{
@@ -328,98 +341,119 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		//private void ShowOutline(RectangleDbl scaledDisplayArea)
-		//{
-		//	if (DRAW_OUTLINE)
-		//	{
-		//		// Position the outline rectangle.
-		//		_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
-		//		_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
 
-		//		_outline.Width = scaledDisplayArea.Width;
-		//		_outline.Height = scaledDisplayArea.Height;
-		//		_outline.Visibility = Visibility.Visible;
-		//	}
-		//}
+		private RectangleDbl GetScaledDisplayArea()
+		{
+			var contentScale = PanAndZoomControl1.ContentScale;
 
-		//private void HideOutline()
-		//{
-		//	if (DRAW_OUTLINE)
-		//	{
-		//		_outline.Visibility = Visibility.Hidden;
-		//	}
-		//}
+			var baseScale = ContentScalerHelper.GetBaseScale(contentScale);
+			var contentOffset = new PointDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
+			var adjustedSize = PanAndZoomControl1.ContentViewportSize.Scale(baseScale);
 
-		//private Rectangle BuildOutline(Canvas canvas)
-		//{
-		//	var result = new Rectangle()
-		//	{
-		//		Width = 1,
-		//		Height = 1,
-		//		Fill = Brushes.Transparent,
-		//		Stroke = BuildDrawingBrush(), // new SolidColorBrush(Colors.DarkSeaGreen), // 
-		//		StrokeThickness = 2,
-		//		Visibility = Visibility.Hidden,
-		//		Focusable = false
-		//	};
+			var result = new RectangleDbl(contentOffset, adjustedSize);
 
-		//	_ = canvas.Children.Add(result);
-		//	result.SetValue(Panel.ZIndexProperty, 10);
+			return result;
+		}
 
-		//	return result;
-		//}
+		private void ShowOutline(RectangleDbl scaledDisplayArea)
+		{
+			if (DRAW_OUTLINE)
+			{
+				// Position the outline rectangle.
 
-		//private DrawingBrush BuildDrawingBrush()
-		//{
-		//	var db = new DrawingBrush();
-		//	db.Viewport = new Rect(0, 0, 20, 20);
-		//	db.ViewboxUnits = BrushMappingMode.Absolute;
-		//	db.TileMode = TileMode.Tile;
+				if (scaledDisplayArea.Width > 10 && scaledDisplayArea.Height > 10)
+				{
+					var pos = scaledDisplayArea.Position;
 
-		//	//db.Drawing = new DrawingGroup();
+					_outline.SetValue(Canvas.LeftProperty, pos.X + 2);
+					_outline.SetValue(Canvas.BottomProperty, pos.Y + 2);
 
-		//	var geometryDrawing = new GeometryDrawing();
-		//	geometryDrawing.Brush = new SolidColorBrush(Colors.Green);
+					_outline.Width = scaledDisplayArea.Width - 4;
+					_outline.Height = scaledDisplayArea.Height - 4;
+					_outline.Visibility = Visibility.Visible;
+				}
+			}
+		}
 
-		//	var geometryGroup = new GeometryGroup();
-		//	geometryGroup.Children.Add(new RectangleGeometry(new Rect(0, 0, 50, 50)));
-		//	geometryGroup.Children.Add(new RectangleGeometry(new Rect(50, 50, 50, 50)));
+		private void HideOutline()
+		{
+			if (DRAW_OUTLINE)
+			{
+				_outline.Visibility = Visibility.Hidden;
+			}
+		}
 
-		//	geometryDrawing.Geometry = geometryGroup;
+		private Rectangle BuildOutline(Canvas canvas)
+		{
+			var result = new Rectangle()
+			{
+				Width = 1,
+				Height = 1,
+				Fill = Brushes.Transparent, // new SolidColorBrush(Colors.LightBlue),
+				Stroke = new SolidColorBrush(Colors.DarkSeaGreen), // BuildDrawingBrush(), // 
+				StrokeThickness = 4,
+				Visibility = Visibility.Hidden,
+				Focusable = false,
+				Opacity = 0.75,
+			};
 
-		//	db.Drawing = geometryDrawing;
+			_ = canvas.Children.Add(result);
+			result.SetValue(Panel.ZIndexProperty, 10);
 
-		//	return db;
+			return result;
+		}
+
+		private DrawingBrush BuildDrawingBrush()
+		{
+			var db = new DrawingBrush();
+			db.Viewport = new Rect(0, 0, 20, 20);
+			db.ViewboxUnits = BrushMappingMode.Absolute;
+			db.TileMode = TileMode.Tile;
+
+			//db.Drawing = new DrawingGroup();
+
+			var geometryDrawing = new GeometryDrawing();
+			geometryDrawing.Brush = new SolidColorBrush(Colors.Green);
+
+			var geometryGroup = new GeometryGroup();
+			geometryGroup.Children.Add(new RectangleGeometry(new Rect(0, 0, 50, 50)));
+			geometryGroup.Children.Add(new RectangleGeometry(new Rect(50, 50, 50, 50)));
+
+			geometryDrawing.Geometry = geometryGroup;
+
+			db.Drawing = geometryDrawing;
+
+			return db;
 
 
-		//	//	< DrawingBrush Viewport = "0,0,20,20" ViewportUnits = "Absolute" TileMode = "Tile" >
+			//	< DrawingBrush Viewport = "0,0,20,20" ViewportUnits = "Absolute" TileMode = "Tile" >
 
-		//	//	< DrawingBrush.Drawing >
+			//	< DrawingBrush.Drawing >
 
-		//	//		< DrawingGroup >
+			//		< DrawingGroup >
 
-		//	//			< GeometryDrawing Brush = "Black" >
+			//			< GeometryDrawing Brush = "Black" >
 
-		//	//				< GeometryDrawing.Geometry >
+			//				< GeometryDrawing.Geometry >
 
-		//	//					< GeometryGroup >
+			//					< GeometryGroup >
 
-		//	//						< RectangleGeometry Rect = "0,0,50,50" />
+			//						< RectangleGeometry Rect = "0,0,50,50" />
 
-		//	//						< RectangleGeometry Rect = "50,50,50,50" />
+			//						< RectangleGeometry Rect = "50,50,50,50" />
 
-		//	//					</ GeometryGroup >
+			//					</ GeometryGroup >
 
-		//	//				</ GeometryDrawing.Geometry >
+			//				</ GeometryDrawing.Geometry >
 
-		//	//			</ GeometryDrawing >
+			//			</ GeometryDrawing >
 
-		//	//		</ DrawingGroup >
+			//		</ DrawingGroup >
 
-		//	//	</ DrawingBrush.Drawing >
+			//	</ DrawingBrush.Drawing >
 
-		//	//</ DrawingBrush >
-		//}
+			//</ DrawingBrush >
+		}
 
 		[Conditional("DEBUG")]
 		private void CheckForOutofSyncScaleFactor(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl)

@@ -12,10 +12,6 @@ namespace MSetExplorer
 
 		public static (double baseFactor, double relativeScale) GetBaseFactorAndRelativeScale(double contentScale)
 		{
-			var l2Cs = Math.Log2(contentScale);
-			var baseF = Math.Round(l2Cs, MidpointRounding.ToZero);
-			var relS = contentScale / Math.Pow(2, baseF);
-
 			double baseFactor;
 			double relativeScale;
 
@@ -75,13 +71,29 @@ namespace MSetExplorer
 				relativeScale = contentScale / 0.0078125;
 			}
 
+			else if (contentScale > 0.001953125)
+			{
+				baseFactor = 8;
+				relativeScale = contentScale / 0.00390625;
+			}
 			else
 			{
-				//throw new InvalidOperationException($"Values for the ContentScale < 1/256 and less are not supported.");
-				baseFactor = baseF;
-				relativeScale = relS;
+				throw new InvalidOperationException($"Values for the ContentScale of 1/256 and less are not supported.");
 			}
 
+			var (bf, rs) = GetBaseFactorAndRelativeScaleAlt(contentScale);
+
+			Debug.Assert(bf == baseFactor && rs == relativeScale, $"GetBaseFactorAndRelativeScaleAlt disagree. Compare: {baseFactor} / {relativeScale} to {bf} / {rs}.");
+
+			return (baseFactor, relativeScale);
+		}
+
+
+		public static (double baseFactor, double relativeScale) GetBaseFactorAndRelativeScaleAlt(double contentScale)
+		{
+			var l2Cs = Math.Log2(contentScale);
+			var baseFactor = Math.Round(l2Cs, MidpointRounding.ToZero) * -1;
+			var relativeScale = contentScale * Math.Pow(2, baseFactor);
 
 			return (baseFactor, relativeScale);
 		}
@@ -156,13 +168,13 @@ namespace MSetExplorer
 		// Convert screen coordinates to content coordinates
 		public static RectangleDbl GetContentFromScreen(RectangleDbl displayArea, double contentScale)
 		{
-			var baseScale = ContentScalerHelper.GetBaseScale(contentScale);
+			var baseScale = GetBaseScale(contentScale);
 			var screenToRelativeScaleFactor = baseScale / contentScale;
 
 			// The screenToRelativeScaleFactor (how to get from screen coordinates to content coordinates
 			// should equal the reciprocal of the relativeScaleFactor (how to get from content coordinates to screen coordinates)
 			//
-			//		(1 / relativeScale) ==> BaseScale / ContentScale, because...
+			//		(1 / relativeScale) == BaseScale / ContentScale, because...
 			//				relativeScale == ContentScale / BaseScale
 
 			CheckScreenToRelativeScaleFactor(screenToRelativeScaleFactor, contentScale);
@@ -180,16 +192,12 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private static void CheckScreenToRelativeScaleFactor(double screenToRelativeScaleFactor, double contentScale)
 		{
-			var (_, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
+			var (_, relativeScale) = GetBaseFactorAndRelativeScale(contentScale);
 
 			var chkRelativeScale = 1 / relativeScale;
 			Debug.Assert(!ScreenTypeHelper.IsDoubleChanged(screenToRelativeScaleFactor, chkRelativeScale, 0.000001), "ScreenToRelativeScaleFactor maybe incorrect.");
 		}
 
-
-
 		#endregion
-
-
 	}
 }

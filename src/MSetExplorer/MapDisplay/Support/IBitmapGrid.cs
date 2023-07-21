@@ -11,9 +11,8 @@ namespace MSetExplorer
 
 		WriteableBitmap Bitmap { get; }
 
-		SizeDbl ContentViewportSize { get; set; }
+		SizeDbl LogicalViewportSize { get; set; }
 		BigVector MapBlockOffset { get; set; }
-		VectorDbl ImageOffset { get; set; }
 
 		ColorBandSet ColorBandSet { get; set; }
 		ColorBand? CurrentColorBand { get; set; }

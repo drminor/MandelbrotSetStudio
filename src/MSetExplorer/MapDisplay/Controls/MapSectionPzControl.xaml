@@ -86,12 +86,20 @@
 
                     <local:BitmapGridControl
                         x:Name="BitmapGridControl1"
-                        ViewportSize="{Binding ViewportSize, Mode=TwoWay}"
+                        ViewportSize="{Binding LogicalViewportSize, Mode=TwoWay}"
                         BitmapGridImageSource="{Binding ImageSource, Mode=OneWay}"
                         ImageOffset="{Binding ImageOffset, Mode=OneWay}"
                     />
 
                 </local:PanAndZoomControl>
+
+                <!--
+                    Do Not Bind the ViewportSize. This is only used for the 'regular', un-bounded MapSectionDisplayControl
+                    
+                
+                    ViewportSize="{Binding ViewportSize, Mode=TwoWay}"
+                -->
+
 
             </ScrollViewer>
         </Border>
