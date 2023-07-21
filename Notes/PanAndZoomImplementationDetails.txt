@@ -1,0 +1,38 @@
+		/*	Details regarding what the PanAndZoomControl does as the Extent and DisplayZoom values are updated.
+
+				The PanAndZoom control will update scroll bar extents and positions.
+				The PanAndZoom control will update the BitmapGridControl's Scale Transform and Canvas Size.
+				 	
+			 As the UnscaledExtent is updated...
+				1. The PanAndZoomControl will update it's 
+					a. ContentOffsetX
+					b. ContentOffsetY
+					c. If the ContentScale is not 1.0, 
+						i. The ContentScale is set to 1.0
+							otherwise
+						ii. The ContentViewportSize is updated.
+					
+					d. Raise the ScrollBarVisibilityChanged Event
+				
+			 As the ContentScale is updated, the following are updated.
+				1. The BitmapGridControl's ScaleTransform
+				2. The ContentViewportSize
+				3. OffsetX
+				4. OffsetY
+				5. ZoomSlider is updated by calling it's ContentScaleWasUpdated method
+			  6. The ScrollViewer is updated via calling it's InvalidateScrollInfo method
+				7. The ContentScaleChanged event is raised
+				8. The ViewportChanged event is raised
+				 
+			
+			 As the ContentViewportSize is changed, the following are also updated...
+				1. The BitmapGridControl's
+					a. ContentViewportSize.
+					b. The Size of the (main) Canvas -- using the new value for ContentViewportSize and ScaleTransform
+				2. The Size of the (main) Canvas
+				3. VerticalScrollBarVisibility
+				4. HorizontalScrollBarVisibility.
+				5. TranslationX
+				6. TranslationY
+
+		*/

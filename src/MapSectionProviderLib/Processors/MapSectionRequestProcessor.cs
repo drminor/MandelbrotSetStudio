@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,8 +23,9 @@ namespace MapSectionProviderLib
 
 		private readonly bool SAVE_THE_ZVALUES;
 
-		private const int NUMBER_OF_CONSUMERS = 2;
-		private const int QUEUE_CAPACITY = 200; //100;
+		private const int NUMBER_OF_REQUEST_CONSUMERS = 2;
+		private const int REQUEST_QUEUE_CAPACITY = 50;
+		private const int RETURN_QUEUE_CAPACITY = 200;
 
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
@@ -35,10 +37,9 @@ namespace MapSectionProviderLib
 		private readonly MapSectionResponseProcessor _mapSectionResponseProcessor;
 		private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
-		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<MapSectionWorkRequest> _workQueue;
-
-		private readonly Task[] _workQueueProcessors;
+		private readonly CancellationTokenSource _requestQueueCts;
+		private readonly BlockingCollection<MapSectionWorkRequest> _requestQueue;
+		private readonly Task[] _requestQueueProcessors;
 
 		private readonly object _cancelledJobsLock = new();
 
@@ -51,6 +52,13 @@ namespace MapSectionProviderLib
 		private bool disposedValue;
 
 		private bool _isStopped;
+
+
+		private readonly CancellationTokenSource _returnQueueCts;
+		private readonly BlockingCollection<MapSectionGenerateRequest> _returnQueue;
+		private readonly Task _returnQueueProcess;
+
+
 
 		private readonly bool _useDetailedDebug;
 
@@ -77,18 +85,23 @@ namespace MapSectionProviderLib
 			_mapSectionResponseProcessor = mapSectionResponseProcessor;
 			_mapSectionPersistProcessor = mapSectionPersistProcessor;
 
-			_cts = new CancellationTokenSource();
-			_workQueue = new BlockingCollection<MapSectionWorkRequest>(QUEUE_CAPACITY);
+			_requestQueueCts = new CancellationTokenSource();
+			_requestQueue = new BlockingCollection<MapSectionWorkRequest>(REQUEST_QUEUE_CAPACITY);
 			_pendingRequests = new List<MapSectionWorkRequest>();
 			_requestsLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
 			_cancelledJobIds = new List<int>();
 
-			_workQueueProcessors = new Task[NUMBER_OF_CONSUMERS];
+			_requestQueueProcessors = new Task[NUMBER_OF_REQUEST_CONSUMERS];
 
-			for (var i = 0; i < _workQueueProcessors.Length; i++)
+			for (var i = 0; i < _requestQueueProcessors.Length; i++)
 			{
-				_workQueueProcessors[i] = Task.Run(async () => await ProcessTheQueueAsync(_mapSectionGeneratorProcessor, _cts.Token));
+				_requestQueueProcessors[i] = Task.Run(async () => await ProcessTheRequestQueueAsync(_mapSectionGeneratorProcessor, _requestQueueCts.Token));
 			}
+
+			_returnQueueCts = new CancellationTokenSource();
+			_returnQueue = new BlockingCollection<MapSectionGenerateRequest>(RETURN_QUEUE_CAPACITY);
+
+			_returnQueueProcess = Task.Run(() => ProcessTheReturnQueue(_returnQueueCts.Token));
 		}
 
 		#endregion
@@ -149,13 +162,13 @@ namespace MapSectionProviderLib
 		{
 			var mapSectionWorkItem = new MapSectionWorkRequest(jobNumber, mapSectionRequest, responseHandler);
 
-			if (!_workQueue.IsAddingCompleted)
+			if (!_requestQueue.IsAddingCompleted)
 			{
-				_workQueue.Add(mapSectionWorkItem);
+				_requestQueue.Add(mapSectionWorkItem);
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Not adding: {mapSectionWorkItem.Request}, The MapSectionRequestProcessor's WorkQueue IsAddingComplete has been set.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Not adding: {mapSectionWorkItem.Request}, The MapSectionRequestProcessor's RequestQueue IsAddingComplete has been set.");
 			}
 		}
 
@@ -211,14 +224,22 @@ namespace MapSectionProviderLib
 
 				if (immediately)
 				{
-					_cts.Cancel();
+					_requestQueueCts.Cancel();
+					_returnQueueCts.Cancel();
 				}
 				else
 				{
-					if (!_workQueue.IsCompleted && !_workQueue.IsAddingCompleted)
+					if (!_requestQueue.IsCompleted && !_requestQueue.IsAddingCompleted)
 					{
-						_workQueue.CompleteAdding();
+						_requestQueue.CompleteAdding();
 					}
+
+					if (!_returnQueue.IsCompleted && !_returnQueue.IsAddingCompleted)
+					{
+						_returnQueue.CompleteAdding();
+					}
+
+
 				}
 
 				_isStopped = true;
@@ -226,16 +247,25 @@ namespace MapSectionProviderLib
 
 			try
 			{
-				for (var i = 0; i < _workQueueProcessors.Length; i++)
+				for (var i = 0; i < _requestQueueProcessors.Length; i++)
 				{
-					if (_workQueueProcessors[i].Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
+					if (_requestQueueProcessors[i].Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
 					{
-						Debug.WriteLine($"The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} has completed.");
+						Debug.WriteLine($"The MapSectionRequestProcesssor's RequestQueueProcessor Task #{i} has completed.");
 					}
 					else
 					{
-						Debug.WriteLine($"WARNING: The MapSectionRequestProcesssor's WorkQueueProcessor Task #{i} did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
+						Debug.WriteLine($"WARNING: The MapSectionRequestProcesssor's RequestQueueProcessor Task #{i} did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
 					}
+				}
+
+				if (_returnQueueProcess.Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
+				{
+					Debug.WriteLine($"The MapSectionRequestProcesssor's ReturnQueueProcessor Task has completed.");
+				}
+				else
+				{
+					Debug.WriteLine($"WARNING: The MapSectionRequestProcesssor's ReturnQueueProcessor Task did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
 				}
 			}
 			catch { }
@@ -255,13 +285,13 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private async Task ProcessTheQueueAsync(MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
+		private async Task ProcessTheRequestQueueAsync(MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
-			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			while (!ct.IsCancellationRequested && !_requestQueue.IsCompleted)
 			{
 				try
 				{
-					var mapSectionWorkRequest = _workQueue.Take(ct);
+					var mapSectionWorkRequest = _requestQueue.Take(ct);
 					var mapSectionRequest = mapSectionWorkRequest.Request;
 
 					var jobIsCancelled = IsJobCancelled(mapSectionWorkRequest.JobId);
@@ -440,7 +470,7 @@ namespace MapSectionProviderLib
 		private void QueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor)
 		{
 			// Use our CancellationSource when adding work
-			var ct = _cts.Token;
+			var ct = _requestQueueCts.Token;
 
 			if (mapSectionWorkRequest == null)
 			{
@@ -462,7 +492,7 @@ namespace MapSectionProviderLib
 					// Let other's know about our request.
 					_pendingRequests.Add(mapSectionWorkRequest);
 
-					var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, HandleGeneratedResponse);
+					var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, QueueGeneratedResponse);
 					mapSectionGeneratorProcessor.AddWork(mapSectionGenerateRequest, ct);
 				}
 			}
@@ -502,10 +532,23 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
+		private void QueueGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse)
+		{
+			if (!_returnQueue.IsAddingCompleted)
+			{
+				var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, HandleGeneratedResponse, mapSectionResponse);
+				_returnQueue.Add(mapSectionGenerateRequest);
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Not adding: {mapSectionWorkRequest.Request}, The MapSectionRequestProcessor's ReturnQueue IsAddingComplete has been set.");
+			}
+		}
+
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse)
 		{
 			// Use our CancellationSource when adding work
-			var ct = _cts.Token;
+			var ct = _requestQueueCts.Token;
 
 			_requestsLock.EnterUpgradeableReadLock();
 
@@ -670,6 +713,42 @@ namespace MapSectionProviderLib
 
 		#endregion
 
+
+		#region Private Methods - Return Queue
+
+		private void ProcessTheReturnQueue(CancellationToken ct)
+		{
+			while (!ct.IsCancellationRequested && !_returnQueue.IsCompleted)
+			{
+				try
+				{
+					var mapSectionGenerateRequest = _returnQueue.Take(ct);
+
+					var mapSectionResponse = mapSectionGenerateRequest.Response;
+
+					if (mapSectionResponse != null)
+					{
+						mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
+					}
+					else
+					{
+						Debug.WriteLine($"WARNING: The return processor found a MapSectionGenerateRequest with a null Response value.");
+					}
+				}
+				catch (OperationCanceledException)
+				{
+					//Debug.WriteLine("The response queue got a OCE.");
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"The return queue got an exception: {e}.");
+					throw;
+				}
+			}
+		}
+
+		#endregion
+
 		#region Lock Helpers
 
 		private T DoWithReadLock<T>(Func<T> function)
@@ -713,15 +792,26 @@ namespace MapSectionProviderLib
 					Stop(true);
 
 					// Dispose managed state (managed objects)
-					if (_cts != null)
+					if (_requestQueueCts != null)
 					{
-						_cts.Dispose();
+						_requestQueueCts.Dispose();
 					}
 
-					if (_workQueue != null)
+					if (_requestQueue != null)
 					{
-						_workQueue.Dispose();
+						_requestQueue.Dispose();
 					}
+
+					if (_returnQueueCts != null)
+					{
+						_returnQueueCts.Dispose();
+					}
+
+					if (_returnQueue != null)
+					{
+						_returnQueue.Dispose();
+					}
+
 
 					if (_mapSectionGeneratorProcessor != null)
 					{

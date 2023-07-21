@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 
@@ -41,10 +42,15 @@ namespace MapSectionProviderLib
 
 	internal class MapSectionGenerateRequest : WorkItem<MapSectionWorkRequest, MapSectionResponse>
 	{
+		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse> workAction, MapSectionResponse mapSectionResponse)
+			: this(jobId, request, workAction)
+		{
+			Response = mapSectionResponse;
+		}
+
 		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse> workAction)
 			: base(jobId, request, workAction)
-		{
-		}
+		{ }
 	}
 
 	internal class MapSectionPersistRequest 
