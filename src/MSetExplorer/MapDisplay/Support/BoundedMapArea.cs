@@ -1,5 +1,4 @@
-﻿using MSetExplorer.MapDisplay.Support;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -25,13 +24,13 @@ namespace MSetExplorer
 			PosterSize = posterSize;
 			ContentViewportSize = viewportSize;
 
-			MapAreaInfoWithSize = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, 1);
+			MapAreaInfoWithSize = GetMapAreaWithSizeForScale(_mapAreaInfo, PosterSize, 1);
 
 			BaseFactor = baseFactor;
 			BaseScale = Math.Pow(0.5, _baseFactor);
 
 			
-			_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, BaseScale);
+			_scaledMapAreaInfo = GetMapAreaWithSizeForScale(_mapAreaInfo, PosterSize, BaseScale);
 		}
 
 		//Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(MapAreaInfoWithSize.CanvasSize, posterSize), $"Since the scale factor = 1, the MapAreaInfoV1.CanvasSize should equal the PosterSize. Compare: {MapAreaInfoWithSize.CanvasSize} with {posterSize}.");
@@ -44,7 +43,7 @@ namespace MSetExplorer
 
 		public SizeDbl ContentViewportSize { get; private set; }
 
-		public SizeDbl UnscaledViewportSize { get; private set; }	
+		//public SizeDbl UnscaledViewportSize { get; private set; }	
 
 		public MapAreaInfo MapAreaInfoWithSize { get; init; }
 
@@ -65,14 +64,14 @@ namespace MSetExplorer
 		#region Public Methods
 
 		// New Size and Position
-		public void UpdateSizeAndScale(SizeDbl contentViewportSize, SizeDbl unscaledViewPortSize, double baseFactor)
+		public void UpdateSizeAndScale(SizeDbl contentViewportSize/*, SizeDbl unscaledViewPortSize*/, double baseFactor)
 		{
 			ContentViewportSize = contentViewportSize;
-			UnscaledViewportSize = unscaledViewPortSize;
+			//UnscaledViewportSize = unscaledViewPortSize;
 			BaseFactor = baseFactor;
 
 			BaseScale = Math.Pow(0.5, BaseFactor);
-			_scaledMapAreaInfo = GetScaledMapAreaInfoV1(_mapAreaInfo, PosterSize, BaseScale);
+			_scaledMapAreaInfo = GetMapAreaWithSizeForScale(_mapAreaInfo, PosterSize, BaseScale);
 		}
 
 		// New position, same size
@@ -137,11 +136,11 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private MapAreaInfo GetScaledMapAreaInfoV1(MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, double scaleFactor)
+		private MapAreaInfo GetMapAreaWithSizeForScale(MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, double scale)
 		{
-			var adjustedMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, scaleFactor, out var diaReciprocal);
-			var displaySize = posterSize.Scale(scaleFactor);
-			var result = _mapJobHelper.GetMapAreaWithSizeFat(adjustedMapAreaInfo, displaySize);
+			var adjustedMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoom(mapAreaInfo, scale, out var diaReciprocal);
+			var displaySize = posterSize.Scale(scale);
+			var result = _mapJobHelper.GetMapAreaWithSize(adjustedMapAreaInfo, displaySize);
 			result.OriginalSourceSubdivisionId = mapAreaInfo.Subdivision.Id;
 
 			return result;
@@ -149,6 +148,8 @@ namespace MSetExplorer
 
 		private MapAreaInfo GetUpdatedMapAreaInfo(RectangleDbl newScreenArea, MapAreaInfo mapAreaInfoWithSize)
 		{
+			Debug.WriteLine($"Getting Updated MapAreaInfo. newPos: {newScreenArea.Position}, newSize: {newScreenArea.Size}. From MapAreaInfo: CanvasSize: {mapAreaInfoWithSize.CanvasSize}, BlockOffset: {mapAreaInfoWithSize.MapBlockOffset}, spd: {mapAreaInfoWithSize.SamplePointDelta.Width}.");
+
 			var newCoords = _mapJobHelper.GetMapCoords(newScreenArea.Round(), mapAreaInfoWithSize.MapPosition, mapAreaInfoWithSize.SamplePointDelta);
 			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, mapAreaInfoWithSize.Subdivision, mapAreaInfoWithSize.OriginalSourceSubdivisionId, newScreenArea.Size);
 
@@ -159,7 +160,7 @@ namespace MSetExplorer
 		{
 			// The yPos has not been scaled, use the same values, used by the PanAndZoomControl
 
-			var maxV = PosterSize.Height - UnscaledViewportSize.Height;
+			var maxV = PosterSize.Height - ContentViewportSize.Height; // UnscaledViewportSize.Height;
 			var result = maxV - yPos;
 
 			return result;

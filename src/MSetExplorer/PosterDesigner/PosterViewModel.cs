@@ -469,7 +469,7 @@ namespace MSetExplorer
 			var oldCenter = new PointDbl(currentPosterSize.Scale(0.5));
 			var zoomPoint = newCenter.Diff(oldCenter).Round();
 
-			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, zoomPoint, factor, out diagReciprocal);
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPanThenZoom(mapAreaInfo, zoomPoint, factor, out diagReciprocal);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel GetUpdatedMapAreaInfo:" +
 				$"\n CurrentPosterSize: {currentPosterSize}, NewPosterSize: {newPosterSize}, ScreenArea: {screenArea}." +
@@ -487,7 +487,7 @@ namespace MSetExplorer
 
 			if (transformType == TransformType.ZoomIn)
 			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(mapAreaInfo, panAmount, factor, out diagReciprocal);
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPanThenZoom(mapAreaInfo, panAmount, factor, out diagReciprocal);
 			}
 			else if (transformType == TransformType.Pan)
 			{
@@ -496,7 +496,7 @@ namespace MSetExplorer
 			}
 			else if (transformType == TransformType.ZoomOut)
 			{
-				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, factor, out diagReciprocal);
+				newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoom(mapAreaInfo, factor, out diagReciprocal);
 			}
 			else
 			{

@@ -158,13 +158,13 @@ namespace MSetExplorer
 
 			var scaleFactor = RMapHelper.GetSmallestScaleFactor(posterSize, fContainerSize);
 
-			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomCenter(mapAreaInfo, scaleFactor, out var diagReciprocal);
+			var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoom(mapAreaInfo, scaleFactor, out var diagReciprocal);
 			var previewImageSize = posterSize.Scale(scaleFactor);
 
 			//Debug.WriteLine($"MapPreviewImage provider is getting the new coordinates. DiagReciprocal is {diagReciprocal}, Factor: w:{factorW}, h:{factorH}. ScaleFactor: {scaleFactor}.");
 			//Debug.Assert(Math.Abs(factor - scaleFactor) < 0.01d, "factor and scalefactor are different.");
 
-			var previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(newMapAreaInfo, previewImageSize);
+			var previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSize(newMapAreaInfo, previewImageSize);
 			Debug.WriteLine($"MapPreviewImage provider is getting the new coordinates. DiagReciprocal is {diagReciprocal}, ScaleFactor: {scaleFactor}. Canvas Size: {previewMapAreaInfo.CanvasSize}. Preview Image Size: {previewImageSize}.");
 
 			return previewMapAreaInfo;

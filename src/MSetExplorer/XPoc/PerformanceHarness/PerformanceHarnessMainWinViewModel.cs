@@ -284,7 +284,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			//AddTiming("GetMapAreaInfo");
 
-			var oldAreaInfo = _mapJobHelper.GetMapAreaWithSizeFat(job.MapAreaInfo, new SizeDbl(1024));
+			var oldAreaInfo = _mapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeDbl(1024));
 
 			//var mapAreaInfoWithSize = GetMapAreaWithSizeFat(areaColorAndCalcSettings, imageSize);
 			//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
@@ -490,7 +490,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		private MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
 		{
-			var result = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo2, imageSize);
+			var result = _mapJobHelper.GetMapAreaWithSize(mapAreaInfo2, imageSize);
 
 			return result;
 		}

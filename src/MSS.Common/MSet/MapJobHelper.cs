@@ -106,11 +106,11 @@ namespace MSS.Common
 		}
 
 		// Zoom
-		public MapAreaInfo2 GetMapAreaInfoZoomCenter(MapAreaInfo2 currentArea, double factor, out double diagReciprocal)
+		public MapAreaInfo2 GetMapAreaInfoZoom(MapAreaInfo2 currentArea, double zoomAmount, out double diagReciprocal)
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
-			var scaledPd = RMapHelper.GetNewSamplePointDelta(currentArea.PositionAndDelta, factor, out diagReciprocal);
+			var scaledPd = RMapHelper.GetNewSamplePointDelta(currentArea.PositionAndDelta, zoomAmount, out diagReciprocal);
 
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(scaledPd, blockSize, out var canvasControlOffset);
 
@@ -124,12 +124,12 @@ namespace MSS.Common
 		}
 
 		// Pan and Zoom
-		public MapAreaInfo2 GetMapAreaInfoZoomPoint(MapAreaInfo2 currentArea, VectorInt panAmount, double factor, out double diagReciprocal)
+		public MapAreaInfo2 GetMapAreaInfoPanThenZoom(MapAreaInfo2 currentArea, VectorInt panAmount, double zoomAmount, out double diagReciprocal)
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
 			var transPd = RMapHelper.GetNewCenterPoint(currentArea.PositionAndDelta, panAmount);
-			var scaledAndTransPd = RMapHelper.GetNewSamplePointDelta(transPd, factor, out diagReciprocal);
+			var scaledAndTransPd = RMapHelper.GetNewSamplePointDelta(transPd, zoomAmount, out diagReciprocal);
 
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(scaledAndTransPd, blockSize, out var canvasControlOffset);
 			
@@ -146,7 +146,7 @@ namespace MSS.Common
 
 		#region MapAreaInfo2 Support
 
-		public MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize)
+		public MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize)
 		{
 			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
 
@@ -212,7 +212,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static RRectangle ConvertScreenRectToMapCenterCoords(SizeDbl canvasSize, RSize samplePointDelta)
+		private static RRectangle ConvertScreenRectToMapCenterCoords(SizeDbl canvasSize, RSize samplePointDelta)
 		{
 			// Create a rectangle centered at position: x = 0, y = 0
 			// Having the same width and height as the given canvasSize.

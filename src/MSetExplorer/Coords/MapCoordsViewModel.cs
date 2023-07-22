@@ -308,7 +308,7 @@ namespace MSetExplorer
 
 		public void Preview(MapAreaInfo2 mapAreaInfo, SizeDbl displaySize)
 		{
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfo, displaySize);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
 
 			UpdateCoords(mapAreaInfoV1);
 		}

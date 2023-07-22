@@ -38,14 +38,14 @@ namespace MSS.Common
 			return transPd;
 		}
 
-		public static RPointAndDelta GetNewSamplePointDelta(RPointAndDelta pointAndDelta, double factor, out double diagReciprocal)
+		public static RPointAndDelta GetNewSamplePointDelta(RPointAndDelta pointAndDelta, double zoomAmount, out double diagReciprocal)
 		{
 			// Factor = number of new pixels each existing pixel will be replaced with.
 
 			// Divide the SamplePointDelta by the specified factor.
 			// Instead of dividing, multiply by the reciprocal.
 
-			var reciprocal = 1 / factor;
+			var reciprocal = 1 / zoomAmount;
 
 			// Create an RValue that has the same value of the reciprocal.
 
@@ -64,7 +64,7 @@ namespace MSS.Common
 			// and reduce the denominator to compensate.
 			var result = Reducer.Reduce(rawResult);
 
-			ReportSamplePointDeltaScaling(pointAndDelta.SamplePointDelta, factor, rReciprocal, result.SamplePointDelta);
+			ReportSamplePointDeltaScaling(pointAndDelta.SamplePointDelta, zoomAmount, rReciprocal, result.SamplePointDelta);
 
 			return result;
 		}

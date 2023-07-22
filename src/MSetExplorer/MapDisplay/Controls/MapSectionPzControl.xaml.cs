@@ -70,13 +70,11 @@ namespace MSetExplorer
 
 				_outline = BuildOutline(BitmapGridControl1.Canvas);
 
+				_ = BitmapGridControl1.Canvas.Children.Add(_outline);
+				_outline.SetValue(Panel.ZIndexProperty, 10);
+
 				Debug.WriteLine("The MapSectionPzControl is now loaded");
 			}
-		}
-
-		private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		{
-			_outline = BuildOutline(BitmapGridControl1.Canvas);
 		}
 
 		private void MapSectionPzControl_Unloaded(object sender, RoutedEventArgs e)
@@ -125,6 +123,9 @@ namespace MSetExplorer
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
 			//CheckForStaleContentValues(e);
+
+			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(e.ContentScale);
+			Debug.WriteLine($"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} / Unscaled: {e.UnscaledViewportSize}, Offset:{e.ContentOffset}, Scale:{e.ContentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.UnscaledViewportSize, e.ContentOffset, e.ContentScale);
 
@@ -234,6 +235,24 @@ namespace MSetExplorer
 		//	return result;
 		//}
 
+		private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
+		{
+			////var contentScale = PanAndZoomControl1.ContentScale;
+			////var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
+
+			////_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
+			////_vm.LogicalViewportSize = _vm.ViewportSize.Scale(1 / relativeScale);
+
+			//var canvas = BitmapGridControl1.Canvas;
+
+			//canvas.Children.Remove(_outline);
+
+			//_outline = BuildOutline(canvas);
+
+			//_ = canvas.Children.Add(_outline);
+			//_outline.SetValue(Panel.ZIndexProperty, 10);
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -341,16 +360,39 @@ namespace MSetExplorer
 		//	}
 		//}
 
-
 		private RectangleDbl GetScaledDisplayArea()
 		{
 			var contentScale = PanAndZoomControl1.ContentScale;
 
-			var baseScale = ContentScalerHelper.GetBaseScale(contentScale);
-			var contentOffset = new PointDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
-			var adjustedSize = PanAndZoomControl1.ContentViewportSize.Scale(baseScale);
+			//var baseScale = ContentScalerHelper.GetBaseScale(contentScale);
+			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
+			var baseScale = ContentScalerHelper.GetBaseScaleFromBaseFactor(baseFactor);
 
+			var contentOffset = new PointDbl(PanAndZoomControl1.ContentOffsetX, PanAndZoomControl1.ContentOffsetY);
+			var contentViewportSize = PanAndZoomControl1.ContentViewportSize;
+
+			var adjustedSize = contentViewportSize.Scale(baseScale);
 			var result = new RectangleDbl(contentOffset, adjustedSize);
+
+			var unscaledViewportSize = PanAndZoomControl1.UnscaledViewportSize;
+			var chkAdjustedSize = unscaledViewportSize.Divide(relativeScale);
+
+			if (ScreenTypeHelper.IsSizeDblChanged(chkAdjustedSize, adjustedSize))
+			{
+				Debug.WriteLine($"Adjusted ViewportSizes do not match.");
+			}
+
+			//var cSize1 = _vm.ViewportSize;
+
+			//var cSizeMatches = !ScreenTypeHelper.IsSizeDblChanged(cSize1, unscaledViewportSize);
+			//Debug.Assert(cSizeMatches, "VM.ViewportSize ne UnscaledViewportSize.");
+
+			//var lSize = _vm.LogicalViewportSize;
+			//var lSizeMatches = !ScreenTypeHelper.IsSizeDblChanged(lSize, adjustedSize);
+			//Debug.Assert(lSizeMatches, "VM.LogicalViewportSize ne scaled canvasSize.");
+
+
+			//var result = new RectangleDbl(contentOffset, contentViewportSize);
 
 			return result;
 		}
@@ -365,8 +407,8 @@ namespace MSetExplorer
 				{
 					var pos = scaledDisplayArea.Position;
 
-					_outline.SetValue(Canvas.LeftProperty, pos.X + 2);
-					_outline.SetValue(Canvas.BottomProperty, pos.Y + 2);
+					_outline.SetValue(Canvas.LeftProperty, 2d);
+					_outline.SetValue(Canvas.BottomProperty, 2d);
 
 					_outline.Width = scaledDisplayArea.Width - 4;
 					_outline.Height = scaledDisplayArea.Height - 4;
@@ -396,9 +438,6 @@ namespace MSetExplorer
 				Focusable = false,
 				Opacity = 0.75,
 			};
-
-			_ = canvas.Children.Add(result);
-			result.SetValue(Panel.ZIndexProperty, 10);
 
 			return result;
 		}

@@ -19,7 +19,7 @@ namespace MSetExplorer
 
 		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfoV2, SizeDbl displaySize, bool allowEdits)
 		{
-			var mapAreaInfo = mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfoV2, _displaySize);
+			var mapAreaInfo = mapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, _displaySize);
 			_coords = mapAreaInfo.Coords;
 
 			StartingX = new SingleCoordEditorViewModel(_coords.Left);

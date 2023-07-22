@@ -37,7 +37,7 @@ namespace MSetExplorer
 		private SizeDbl _viewportSize;
 		private VectorDbl _imageOffset;
 
-		private VectorDbl _ourDisplayPosition;
+		//private VectorDbl _ourDisplayPosition;
 		private VectorDbl _theirDisplayPosition;
 
 
@@ -81,7 +81,7 @@ namespace MSetExplorer
 			_viewportSize = new SizeDbl();
 			_imageOffset = new VectorDbl();
 
-			_ourDisplayPosition = new VectorDbl();
+			//_ourDisplayPosition = new VectorDbl();
 			_theirDisplayPosition = new VectorDbl(double.NaN, double.NaN);
 
 			_minimumDisplayZoom = 0.015625; // 0.0625;
@@ -451,18 +451,15 @@ namespace MSetExplorer
 				_displayZoom = displayZoom;
 				var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(displayZoom);
 
-				//_boundedMapArea.BaseFactor = b;
-
 				// Save the MapAreaInfo for the entire poster.
 				_boundedMapArea = new BoundedMapArea(_mapJobHelper, newValue.MapAreaInfo, posterSize, ViewportSize, baseFactor);
-
 
 				//ScaledDisplayPositionYInverted = new ValueTuple<VectorDbl, double> (_boundedMapArea.GetScaledDisplayPosition(displayPosition, out var unInvertedY), _boundedMapArea.BaseFactor);
 
 				// Make sure no content is loaded while we reset the PanAndZoom control.
 				CurrentAreaColorAndCalcSettings = null;
 
-				_ourDisplayPosition = displayPosition;
+				//_ourDisplayPosition = displayPosition;
 				_theirDisplayPosition = _boundedMapArea.GetScaledDisplayPosition(displayPosition, out var unInvertedY);
 
 				Debug.WriteLine("\n========== Raising the DisplaySettingsInitialized Event.");
@@ -476,52 +473,10 @@ namespace MSetExplorer
 			}
 		}
 
-		/*	Details regarding what the PanAndZoomControl does as the Extent and DisplayZoom values are updated.
-
-				The PanAndZoom control will update scroll bar extents and positions.
-				The PanAndZoom control will update the BitmapGridControl's Scale Transform and Canvas Size.
-				 	
-			 As the UnscaledExtent is updated...
-				1. The PanAndZoomControl will update it's 
-					a. ContentOffsetX
-					b. ContentOffsetY
-					c. If the ContentScale is not 1.0, 
-						i. The ContentScale is set to 1.0
-							otherwise
-						ii. The ContentViewportSize is updated.
-					
-					d. Raise the ScrollBarVisibilityChanged Event
-				
-			 As the ContentScale is updated, the following are updated.
-				1. The BitmapGridControl's ScaleTransform
-				2. The ContentViewportSize
-				3. OffsetX
-				4. OffsetY
-				5. ZoomSlider is updated by calling it's ContentScaleWasUpdated method
-			  6. The ScrollViewer is updated via calling it's InvalidateScrollInfo method
-				7. The ContentScaleChanged event is raised
-				8. The ViewportChanged event is raised
-				 
-			
-			 As the ContentViewportSize is changed, the following are also updated...
-				1. The BitmapGridControl's
-					a. ContentViewportSize.
-					b. The Size of the (main) Canvas -- using the new value for ContentViewportSize and ScaleTransform
-				2. The Size of the (main) Canvas
-				3. VerticalScrollBarVisibility
-				4. HorizontalScrollBarVisibility.
-				5. TranslationX
-				6. TranslationY
-
-		*/
-
-		// TODO: UpdateViewportSizeAndPos may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
-
 
 		/// <summary>
 		/// Updates the ImageSource (i.e., the Bitmap) with Counts, Escape Velocities, etc., for the specified contentOffset (aka Display Position.)
 		/// NOTE: This may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId.
-		///
 		/// </summary>
 		/// <param name="contentViewportSize">UnscaledViewportSize divided by the ContentScale</param>
 		/// <param name="contentOffset">The logical X and Y coordinates of the top, left-hand pixel of the current view, relative to the top, left-hand pixel of the current map (i.e. Project or Poster.</param>
@@ -555,16 +510,9 @@ namespace MSetExplorer
 						throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
 					}
 
-					var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
-					///var baseScale = ContentScalerHelper.GetBaseScaleFromBaseFactor(baseFactor);
-
-					Debug.WriteLine($"The MapSectionDisplayViewModel is UpdatingViewportSizeAndPos. ViewportSize:{contentViewportSize}, Offset:{contentOffset}, Scale:{contentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
-
-					//DisplayZoom = contentScale;
-
 					Debug.WriteLine("\n========== UpdateViewportSizeAndPos is calling LoadNewView.");
 
-					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, unscaledViewportSize, contentOffset, baseFactor);
+					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize/*, unscaledViewportSize*/, contentOffset, contentScale);
 				}
 			}
 
@@ -604,7 +552,7 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		public int? MoveTo(VectorDbl contentOffset, SizeDbl contentViewportSize) // including the contentViewportSize only for diagnostics.
+		public int? MoveTo(VectorDbl contentOffset, SizeDbl contentViewportSize/*, double contentScale*/) // including the contentViewportSize only for diagnostics.
 		{
 			int? newJobNumber;
 
@@ -623,10 +571,9 @@ namespace MSetExplorer
 				Debug.WriteLine("\n========== Executing MoveTo.");
 
 				_theirDisplayPosition = contentOffset;
-				_ourDisplayPosition = _boundedMapArea.GetUnScaledDisplayPosition(contentOffset);
 
 				// Get the MapAreaInfo subset for the given display position
-				var mapAreaInfo2Subset = _boundedMapArea.GetView(_theirDisplayPosition);
+				var mapAreaInfo2Subset = _boundedMapArea.GetView(_theirDisplayPosition/*, contentScale*/);
 				var jobType = _boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
 				Debug.Assert(contentViewportSize == _boundedMapArea.ContentViewportSize, $"MoveTo is being called with a ContentViewportSize {contentViewportSize}  different than {_boundedMapArea.ContentViewportSize}, the one being used by the BoundedMapArea to determine which MapSections are neeeded.");
@@ -634,8 +581,6 @@ namespace MSetExplorer
 				ReportMove(_boundedMapArea, contentOffset);
 
 				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaInfo2Subset, out var lastSectionWasIncluded);
-
-
 
 				if (newJobNumber.HasValue && lastSectionWasIncluded)
 				{
@@ -791,7 +736,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, SizeDbl unscaledViewportSize, VectorDbl contentOffset, double baseFactor)
+		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize/*, SizeDbl unscaledViewportSize*/, VectorDbl contentOffset, double contentScale)
 		{
 			int? newJobNumber;
 			bool lastSectionWasIncluded;
@@ -803,17 +748,21 @@ namespace MSetExplorer
 			// NOTE: The viewportSize is the same as the ContentViewportSize on the PanAndZoom control.
 			// The scaledViewportSize is the actual canvas size, but reduced by 0.5, 0.25, 0.125, etc. depending on how 'Zoomed Out' we are.
 
-			boundedMapArea.UpdateSizeAndScale(contentViewportSize, unscaledViewportSize, baseFactor);
+			var (baseFactor, _) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
+
+			boundedMapArea.UpdateSizeAndScale(contentViewportSize/*, unscaledViewportSize*/, baseFactor);
 
 			_theirDisplayPosition = contentOffset;
-			_ourDisplayPosition = boundedMapArea.GetUnScaledDisplayPosition(contentOffset);
 
 			var mapAreaInfo2Subset = boundedMapArea.GetView(_theirDisplayPosition);
 			var jobType = boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
 			// Let our Bitmap Grid know about the change in View size.
-			var scaledViewportSize = contentViewportSize.Scale(boundedMapArea.BaseScale);
-			_bitmapGrid.LogicalViewportSize = scaledViewportSize;
+			//var scaledViewportSize = contentViewportSize.Scale(boundedMapArea.BaseScale);
+			//_bitmapGrid.LogicalViewportSize = scaledViewportSize;
+
+			_bitmapGrid.LogicalViewportSize = contentViewportSize;
+			
 
 			ReportUpdateSizeAndPos(boundedMapArea, contentViewportSize, contentOffset);
 
@@ -1090,14 +1039,14 @@ namespace MSetExplorer
 				throw new InvalidOperationException("canvas size is undefined.");
 			}
 
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize);
 
 			return mapAreaInfoV1;
 		}
 
 		private MapAreaInfo GetScreenAreaInfoWithDiagnostics(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSizeFat(canonicalMapAreaInfo, canvasSize);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize);
 
 			// Just for diagnostics.
 			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);

@@ -53,12 +53,9 @@ namespace MapSectionProviderLib
 
 		private bool _isStopped;
 
-
 		private readonly CancellationTokenSource _returnQueueCts;
 		private readonly BlockingCollection<MapSectionGenerateRequest> _returnQueue;
 		private readonly Task _returnQueueProcess;
-
-
 
 		private readonly bool _useDetailedDebug;
 

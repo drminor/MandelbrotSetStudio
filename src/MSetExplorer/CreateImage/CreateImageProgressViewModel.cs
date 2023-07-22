@@ -56,7 +56,7 @@ namespace MSetExplorer
 		{
 			ImageFilePath = imageFilePath;
 
-			var mapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSizeFat(mapAreaInfoV2, canvasSize);
+			var mapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, canvasSize);
 
 			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 
