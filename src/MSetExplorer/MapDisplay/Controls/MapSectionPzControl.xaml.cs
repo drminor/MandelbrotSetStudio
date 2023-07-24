@@ -19,8 +19,8 @@ namespace MSetExplorer
 		private const double POSTER_DISPLAY_MARGIN = 20;
 		//private const double MAX_CONTENT_SCALE = 1;
 
-		private bool DRAW_OUTLINE = true;
-		private Rectangle _outline;
+		//private bool DRAW_OUTLINE = true;
+		//private Rectangle _outline;
 
 		private IMapDisplayViewModel _vm;
 
@@ -35,7 +35,7 @@ namespace MSetExplorer
 			//_unscaledExtentWasZeroOnlastViewportUpdate = false;
 			
 			_vm = (IMapDisplayViewModel)DataContext;
-			_outline = new Rectangle();
+			//_outline = new Rectangle();
 
 			Loaded += MapSectionPzControl_Loaded;
 			Unloaded += MapSectionPzControl_Unloaded;
@@ -55,7 +55,7 @@ namespace MSetExplorer
 				_vm = (IMapDisplayViewModel)DataContext;
 
 				//_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
-				//_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
+				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 
 				_vm.DisplaySettingsInitialized += _vm_DisplaySettingsInitialzed;
 				PanAndZoomControl1.ViewportChanged += ViewportChanged;
@@ -66,12 +66,12 @@ namespace MSetExplorer
 				//PanAndZoomControl1.ScrollbarVisibilityChanged += ScrollbarVisibilityChanged;
 				//PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
 
-				BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
+				//BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
 
-				_outline = BuildOutline(BitmapGridControl1.Canvas);
+				//_outline = BuildOutline(BitmapGridControl1.Canvas);
 
-				_ = BitmapGridControl1.Canvas.Children.Add(_outline);
-				_outline.SetValue(Panel.ZIndexProperty, 10);
+				//_ = BitmapGridControl1.Canvas.Children.Add(_outline);
+				//_outline.SetValue(Panel.ZIndexProperty, 10);
 
 				Debug.WriteLine("The MapSectionPzControl is now loaded");
 			}
@@ -109,28 +109,36 @@ namespace MSetExplorer
 
 			var minContentScale = RMapHelper.GetMinDisplayZoom(e.UnscaledExtent, unscaledViewportSize, POSTER_DISPLAY_MARGIN, maxContentScale);
 
-			if (minContentScale < 0)
+			//minContentScale *= 0.85; // Provide some head room.
+
+			if (minContentScale <= 0)
 			{
-				minContentScale = 0.001;	
+				minContentScale = 0.0001;	
 			}
 
 			_vm.MinimumDisplayZoom = minContentScale;
-			_vm.DisplayZoom =  Math.Min(Math.Max(_vm.DisplayZoom, _vm.MinimumDisplayZoom), _vm.MaximumDisplayZoom);
+			_vm.DisplayZoom = Math.Min(Math.Max(e.ContentScale, _vm.MinimumDisplayZoom), _vm.MaximumDisplayZoom);
 
-			PanAndZoomControl1.ResetExtentWithPositionAndScale(e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
+			PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, unscaledViewportSize, e.ContentOffset, _vm.DisplayZoom, minContentScale, maxContentScale);
 		}
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
+			Debug.WriteLine("\n========== The MapSectionPzControl is handling the PanAndZoom control's ViewportChanged event.");
+
 			//CheckForStaleContentValues(e);
 
 			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(e.ContentScale);
 			Debug.WriteLine($"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} / Unscaled: {e.UnscaledViewportSize}, Offset:{e.ContentOffset}, Scale:{e.ContentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
 
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.UnscaledViewportSize, e.ContentOffset, e.ContentScale);
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize,  e.ContentOffset, e.ContentScale);
 
-			var scaledDisplayArea = GetScaledDisplayArea();
-			ShowOutline(scaledDisplayArea);
+			var imagePos = BitmapGridControl1.ImagePositionYInv;
+
+			Debug.WriteLine($"After setting the Image Offset using the Canvas.BottomProperty, the Canvas.TopProperty is {imagePos.Y}. The ImageOffset is {BitmapGridControl1.ImageOffset}");
+
+			//var scaledDisplayArea = GetScaledDisplayArea();
+			//ShowOutline(scaledDisplayArea);
 
 			//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
 
@@ -170,15 +178,15 @@ namespace MSetExplorer
 			//}
 		}
 
-		private void ScrollbarVisibilityChanged(object? sender, EventArgs e)
-		{
-			//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
+		//private void ScrollbarVisibilityChanged(object? sender, EventArgs e)
+		//{
+		//	//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
 
-			//if (WouldCenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale))
-			//{
-			//	Debug.WriteLine("Would Center Content = true for ScrollbarVisibilityChanged.");
-			//}
-		}
+		//	//if (WouldCenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale))
+		//	//{
+		//	//	Debug.WriteLine("Would Center Content = true for ScrollbarVisibilityChanged.");
+		//	//}
+		//}
 
 		//private void ContentScaleChanged(object? sender, EventArgs e)
 		//{
@@ -196,62 +204,23 @@ namespace MSetExplorer
 		//	//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnscaledViewportSize, PanAndZoomControl1.ContentScale);
 		//}
 
-		//private bool IsUnscaledExtentBeingInitialized(VectorDbl contentOffset, out bool contentOffsetIsNonZeroUponInitialization)
+		//private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		//{
-		//	contentOffsetIsNonZeroUponInitialization = false;
-		//	bool result;
+		//	////var contentScale = PanAndZoomControl1.ContentScale;
+		//	////var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
 
-		//	var unscaledExtentIsZero = PanAndZoomControl1.UnscaledExtent.IsNearZero();
+		//	////_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
+		//	////_vm.LogicalViewportSize = _vm.ViewportSize.Scale(1 / relativeScale);
 
-		//	if (!unscaledExtentIsZero)
-		//	{
-		//		if (_unscaledExtentWasZeroOnlastViewportUpdate)
-		//		{
-		//			// UnscaledExtent was zero, but now has a non-zero value, We are being initialized. 
-		//			result = true;
+		//	//var canvas = BitmapGridControl1.Canvas;
 
+		//	//canvas.Children.Remove(_outline);
 
-		//			contentOffsetIsNonZeroUponInitialization = contentOffset.X != 0 || contentOffset.Y != 0;
-		//		}
-		//		else
-		//		{
-		//			result = false;
-		//		}
-		//	}
-		//	else
-		//	{
-		//		result = false;
-		//	}
+		//	//_outline = BuildOutline(canvas);
 
-		//	if (contentOffsetIsNonZeroUponInitialization)
-		//	{
-		//		// The last known display position is being restored from the repo
-		//		Debug.WriteLine("The last know display position is being restored.");
-		//		}
-
-		//	// Update the state for the next time.
-		//	_unscaledExtentWasZeroOnlastViewportUpdate = unscaledExtentIsZero;
-
-		//	return result;
+		//	//_ = canvas.Children.Add(_outline);
+		//	//_outline.SetValue(Panel.ZIndexProperty, 10);
 		//}
-
-		private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		{
-			////var contentScale = PanAndZoomControl1.ContentScale;
-			////var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
-
-			////_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
-			////_vm.LogicalViewportSize = _vm.ViewportSize.Scale(1 / relativeScale);
-
-			//var canvas = BitmapGridControl1.Canvas;
-
-			//canvas.Children.Remove(_outline);
-
-			//_outline = BuildOutline(canvas);
-
-			//_ = canvas.Children.Add(_outline);
-			//_outline.SetValue(Panel.ZIndexProperty, 10);
-		}
 
 		#endregion
 
@@ -360,6 +329,51 @@ namespace MSetExplorer
 		//	}
 		//}
 
+		//private bool IsUnscaledExtentBeingInitialized(VectorDbl contentOffset, out bool contentOffsetIsNonZeroUponInitialization)
+		//{
+		//	contentOffsetIsNonZeroUponInitialization = false;
+		//	bool result;
+
+		//	var unscaledExtentIsZero = PanAndZoomControl1.UnscaledExtent.IsNearZero();
+
+		//	if (!unscaledExtentIsZero)
+		//	{
+		//		if (_unscaledExtentWasZeroOnlastViewportUpdate)
+		//		{
+		//			// UnscaledExtent was zero, but now has a non-zero value, We are being initialized. 
+		//			result = true;
+
+
+		//			contentOffsetIsNonZeroUponInitialization = contentOffset.X != 0 || contentOffset.Y != 0;
+		//		}
+		//		else
+		//		{
+		//			result = false;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		result = false;
+		//	}
+
+		//	if (contentOffsetIsNonZeroUponInitialization)
+		//	{
+		//		// The last known display position is being restored from the repo
+		//		Debug.WriteLine("The last know display position is being restored.");
+		//		}
+
+		//	// Update the state for the next time.
+		//	_unscaledExtentWasZeroOnlastViewportUpdate = unscaledExtentIsZero;
+
+		//	return result;
+		//}
+
+		#endregion
+
+		#region Show Outline Support
+
+		/*
+		
 		private RectangleDbl GetScaledDisplayArea()
 		{
 			var contentScale = PanAndZoomControl1.ContentScale;
@@ -436,7 +450,7 @@ namespace MSetExplorer
 				StrokeThickness = 4,
 				Visibility = Visibility.Hidden,
 				Focusable = false,
-				Opacity = 0.75,
+				Opacity = 0.85,
 			};
 
 			return result;
@@ -493,6 +507,12 @@ namespace MSetExplorer
 
 			//</ DrawingBrush >
 		}
+
+		*/
+
+		#endregion
+
+		#region Diagnostics
 
 		[Conditional("DEBUG")]
 		private void CheckForOutofSyncScaleFactor(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl)

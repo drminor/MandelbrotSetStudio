@@ -63,7 +63,7 @@
                 x:Name="ScrollViewer1"
                 CanContentScroll="True"
                 VerticalScrollBarVisibility="Hidden"
-                HorizontalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Hidden"
                 >
 
                 <!--<local:PanAndZoomControl
@@ -86,7 +86,7 @@
 
                     <local:BitmapGridControl
                         x:Name="BitmapGridControl1"
-                        ViewportSize="{Binding LogicalViewportSize, Mode=TwoWay}"
+                        
                         BitmapGridImageSource="{Binding ImageSource, Mode=OneWay}"
                         ImageOffset="{Binding ImageOffset, Mode=OneWay}"
                     />
@@ -98,6 +98,8 @@
                     
                 
                     ViewportSize="{Binding ViewportSize, Mode=TwoWay}"
+                
+                    ViewportSize="{Binding LogicalViewportSize, Mode=TwoWay}"
                 -->
 
 

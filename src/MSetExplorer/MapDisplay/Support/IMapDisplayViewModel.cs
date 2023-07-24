@@ -43,7 +43,7 @@ namespace MSetExplorer
 
 		SizeDbl UnscaledExtent { get; }
 		SizeDbl ViewportSize { get; set; }
-		SizeDbl LogicalViewportSize { get; set; }	
+		//SizeDbl LogicalViewportSize { get; set; }	
 
 		//ValueTuple<VectorDbl, double>? ScaledDisplayPositionYInverted { get; set; }
 		//VectorDbl GetCurrentDisplayPosition();
@@ -56,8 +56,8 @@ namespace MSetExplorer
 		double MinimumDisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; set; }
 
-		int? UpdateViewportSize(SizeDbl viewportSize);
-		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, SizeDbl unscaledViewportSize, VectorDbl contentOffset, double contentScale);
+		//int? UpdateViewportSize(SizeDbl viewportSize);
+		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
 		int? MoveTo(VectorDbl contentOffset, SizeDbl contentViewportSize);
 

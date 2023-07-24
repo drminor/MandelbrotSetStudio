@@ -8,12 +8,10 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		//private const double BREAK_DOWN_FACTOR = 0.5;
-
 		private readonly ScrollBar _scrollbar;
 		private readonly IZoomInfo _zoomedControl;
 
-		private bool _disableScrollValueSync = false;	// If true, do not call SetScale, presumbably because this call is being made from the control being controlled, aka Zoomed.
+		private bool _disableScrollValueSync = false;	// If true, do update the _zoomedControl's Scale property.
 
 		#endregion
 
@@ -34,27 +32,14 @@ namespace MSetExplorer
 
 		private void _scrollbar_ValueChanged(object sender, System.Windows.RoutedPropertyChangedEventArgs<double> e)
 		{
-			if (!_disableScrollValueSync)
+			if (_zoomedControl.CanZoom && !_disableScrollValueSync)
 			{
-				if (_zoomedControl.CanZoom)
-				{
-					//(BaseValue, RelativeValue) = GetBaseAndRelative(_scrollbar.Value);
+				Debug.WriteLine("\n========== The user is setting the scale.");
 
-					Debug.WriteLine("\n========== The user is setting the scale.");
-
-
-					Debug.WriteLine("The ZoomSlider is updating the PanAndZoomControl's Scale.");
-					_zoomedControl.SetScale(_scrollbar.Value);
-				}
+				Debug.WriteLine("The ZoomSlider is updating the PanAndZoomControl's Scale.");
+				_zoomedControl.Scale = _scrollbar.Value;
 			}
 		}
-
-		#endregion
-
-		#region Public Properties
-
-		//public double BaseValue { get; set; }
-		//public double RelativeValue { get; set; }
 
 		#endregion
 
@@ -69,7 +54,6 @@ namespace MSetExplorer
 				_disableScrollValueSync = true;
 				try
 				{
-					//(BaseFactor, RelativeValue) = GetBaseFactorAndRelativeScale(_zoomedControl.Scale);
 					_scrollbar.Value = contentScale;
 				}
 				finally

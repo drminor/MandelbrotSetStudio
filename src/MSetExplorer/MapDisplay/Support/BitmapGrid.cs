@@ -177,10 +177,13 @@ namespace MSetExplorer
 			get => _viewportSize;
 			set
 			{
-				_viewportSize = value;
-
 				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, keepSquare: false);
+
+				Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_viewportSize} to {value}. CanvasSizeInBlocks from: {CanvasSizeInBlocks} to {sizeInWholeBlocks}.");
+
 				CanvasSizeInBlocks = sizeInWholeBlocks;
+
+				_viewportSize = value;
 			}
 		}
 
@@ -558,7 +561,7 @@ namespace MSetExplorer
 
 			if (imageSizeInBlocks.NumberOfCells > 550) // 550 x 128 x 128 = ~9 Megapixels
 			{
-				Debug.WriteLine($"Creating a HUGE Bitmap. Size is {imageSizeInBlocks}.");
+				Debug.WriteLine($"Creating a HUGE Bitmap. Size is {imageSizeInBlocks} / ({size}).");
 			}
 
 			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);

@@ -50,7 +50,7 @@ namespace MSetExplorer
 
 		public SizeDbl ContentScale { get; set; }
 
-		public RectangleDbl? TranslationAndClipSize { get; set; }
+		public RectangleDbl TranslationAndClipSize { get; set; }
 
 		public event EventHandler<(SizeDbl, SizeDbl)>? ViewportSizeChanged;
 	}

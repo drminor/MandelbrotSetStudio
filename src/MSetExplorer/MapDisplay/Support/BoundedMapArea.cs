@@ -64,10 +64,9 @@ namespace MSetExplorer
 		#region Public Methods
 
 		// New Size and Position
-		public void UpdateSizeAndScale(SizeDbl contentViewportSize/*, SizeDbl unscaledViewPortSize*/, double baseFactor)
+		public void UpdateSizeAndScale(SizeDbl contentViewportSize, double baseFactor)
 		{
 			ContentViewportSize = contentViewportSize;
-			//UnscaledViewportSize = unscaledViewPortSize;
 			BaseFactor = baseFactor;
 
 			BaseScale = Math.Pow(0.5, BaseFactor);

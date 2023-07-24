@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using ScottPlot.Plottable;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -85,7 +86,15 @@ namespace MSetExplorer
 
 		public static bool IsDoubleChanged(double a, double b, double threshold = 0.001)
 		{
-			if (double.IsNaN(a) || double.IsNaN(b))
+			var aIsNAN = double.IsNaN(a);
+			var bIsNAN = double.IsNaN(b);
+
+			if ((aIsNAN && !bIsNAN) || (bIsNAN && !aIsNAN))
+			{
+				return true;
+			}
+
+			if (aIsNAN || bIsNAN)
 			{
 				return false;
 			}
@@ -95,7 +104,15 @@ namespace MSetExplorer
 
 		public static bool IsPointDblChanged(PointDbl a, PointDbl b, double threshold = 0.001)
 		{
-			if (a.IsNAN() || b.IsNAN())
+			var aIsNAN = a.IsNAN();
+			var bIsNAN = b.IsNAN();
+
+			if ((aIsNAN && !bIsNAN) || (bIsNAN && !aIsNAN))
+			{
+				return true;
+			}
+
+			if (aIsNAN || bIsNAN)
 			{
 				return false;
 			}
@@ -103,15 +120,17 @@ namespace MSetExplorer
 			return !a.Diff(b).IsNearZero(threshold);
 		}
 
-		// TODO: Update IsPointDblChanged, IsVectorDblChanged and IsDoubleChanged to return false if both A and B are NAN.
 		public static bool IsSizeDblChanged(SizeDbl a, SizeDbl b, double threshold = 0.001)
 		{
-			if (a.IsNAN() && !b.IsNAN() || (!a.IsNAN()) && b.IsNAN())
+			var aIsNAN = a.IsNAN();
+			var bIsNAN = b.IsNAN();
+
+			if ((aIsNAN && !bIsNAN) || (bIsNAN && !aIsNAN))
 			{
 				return true;
 			}
 
-			if (a.IsNAN() || b.IsNAN())
+			if (aIsNAN || bIsNAN)
 			{
 				return false;
 			}
@@ -121,14 +140,21 @@ namespace MSetExplorer
 
 		public static bool IsVectorDblChanged(VectorDbl a, VectorDbl b, double threshold = 0.001)
 		{
-			if (a.IsNAN() || b.IsNAN())
+			var aIsNAN = a.IsNAN();
+			var bIsNAN = b.IsNAN();
+
+			if ((aIsNAN && !bIsNAN) || (bIsNAN && !aIsNAN))
+			{
+				return true;
+			}
+
+			if (aIsNAN || bIsNAN)
 			{
 				return false;
 			}
 
 			return !a.Diff(b).IsNearZero(threshold);
 		}
-
 
 		#endregion
 

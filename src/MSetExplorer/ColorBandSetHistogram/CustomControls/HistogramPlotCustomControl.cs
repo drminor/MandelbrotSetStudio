@@ -41,7 +41,7 @@ namespace MSetExplorer
 
 		private RectangleGeometry? _canvasClip;
 		private SizeDbl _contentScale;
-		private RectangleDbl? _scaledContentArea;
+		private RectangleDbl _scaledContentArea;
 
 		private bool _useDetailedDebug = false;
 
@@ -380,7 +380,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public RectangleDbl? TranslationAndClipSize
+		public RectangleDbl TranslationAndClipSize
 		{
 			get => _scaledContentArea; 
 			set

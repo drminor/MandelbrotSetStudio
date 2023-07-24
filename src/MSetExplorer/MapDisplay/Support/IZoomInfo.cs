@@ -6,11 +6,11 @@
 
 		bool CanZoom { get; set;}
 
-		double Scale { get; }
+		double Scale { get; set; }
 		double MinScale { get; }
 		double MaxScale { get; }
 
-		void SetScale(double scale);
+		//void SetScale(double scale);
 	}
 
 }
