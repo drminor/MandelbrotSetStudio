@@ -156,6 +156,35 @@ namespace MSetExplorer
 			return !a.Diff(b).IsNearZero(threshold);
 		}
 
+		public static bool IsRectangleDblChanged(RectangleDbl a, RectangleDbl b, double threshold = 0.001)
+		{
+			var diff = a.Diff(b);
+
+			var result = Math.Abs(diff.X1) > threshold
+				|| Math.Abs(diff.Y1) > threshold
+				|| Math.Abs(diff.X2) > threshold
+				|| Math.Abs(diff.Y2) > threshold;
+
+			return result;
+		}
+
+		public static bool IsRectangleDblChanged(RectangleDbl? a, RectangleDbl? b)
+		{
+			if ((a.HasValue && !b.HasValue) | (b.HasValue && !a.HasValue))
+			{
+				return true;
+			}
+
+			if (a.HasValue && b.HasValue)
+			{
+				return IsRectangleDblChanged(a.Value, b.Value);
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 		#endregion
 
 		#region Convert To Widows 

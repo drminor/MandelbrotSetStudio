@@ -316,8 +316,7 @@ namespace MSetExplorer
 			// TODO: CheckEvent
 			//c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
 
-			//c.ViewportSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-			var sivi = new ScaledImageViewInfo(c.ContentViewportSize, c.UnscaledViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
+			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize, c.UnscaledViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
 			c.ViewportChanged?.Invoke(c, sivi);
 		}
 
@@ -334,8 +333,8 @@ namespace MSetExplorer
 				_disableViewportChangedEvents = true;
 				try
 				{
-					// Temporary
-					_contentScaler.TranslationAndClipSize = new RectangleDbl(new PointDbl(0, 0), constrainedViewportSize);
+					//_contentScaler.TranslationAndClipSize = new RectangleDbl(new PointDbl(0, 0), constrainedViewportSize);
+					_contentScaler.TranslationAndClipSize = new RectangleDbl(new PointDbl(0, 0), UnscaledViewportSize);
 				}
 				finally
 				{
@@ -431,7 +430,7 @@ namespace MSetExplorer
 			//c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
 
 			//c.ViewportSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
-			var sivi = new ScaledImageViewInfo(c.ContentViewportSize, c.UnscaledViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
+			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize, c.UnscaledViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
 			c.ViewportChanged?.Invoke(c, sivi);
 		}
 
@@ -681,13 +680,17 @@ namespace MSetExplorer
 
 			InvalidateScrollInfo();
 
-			//if (!_disableViewportChangedEvents)
-			//{
-				//var ViewportSizeOffsetAndScale = new ScaledImageViewInfo(ContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
-				var sivi = new ScaledImageViewInfo(ContentViewportSize, UnscaledViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale, _contentScaler?.TranslationAndClipSize);
+			if (!_disableViewportChangedEvents)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is raising the ViewportChanged event as the ViewportSize is updated. The _disableViewportChangedEvents guard has not been set.");
 
+				var sivi = new ScaledImageViewInfo(_constrainedContentViewportSize, UnscaledViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale, _contentScaler?.TranslationAndClipSize);
 				ViewportChanged?.Invoke(this, sivi);
-			//}
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is skipping raising the ViewportChanged event as the ViewportSize is updated. The _disableViewportChangedEvents guard has been set.");
+			}
 		}
 
 		/// <summary>
@@ -801,6 +804,12 @@ namespace MSetExplorer
 			return $"w: {a.Width:n8}, h:{a.Height:n8}";
 		}
 
+		/// <summary>
+		/// Provide the Offset in unscaled pixels using the actual display size.
+		/// Provide the Clip Size in scaled pixels
+		/// The ClipSize is the same as the _constrainedContentViewportSize = UnscaledExtent.Min(ContentViewportSize);
+		///
+		/// </summary>
 		private void UpdateTranslation()
 		{
 			if (UnscaledExtent.Width == 0 || UnscaledExtent.Height == 0)
@@ -821,10 +830,10 @@ namespace MSetExplorer
 					// When the content can fit entirely within the viewport, center it.
 					//resultWidth = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
 
-					//offsetX = (UnscaledViewportSize.Width - scaledExtent.Width) / 2;
+					offsetX = (UnscaledViewportSize.Width - scaledExtent.Width) / 2;
 					//clipWidth = scaledExtent.Width;
 
-					offsetX = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
+					//offsetX = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
 					clipWidth = UnscaledExtent.Width;
 				}
 				else
@@ -841,17 +850,17 @@ namespace MSetExplorer
 					// When the content can fit entirely within the viewport, center it.
 					//resultHeight = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
 
-					//offsetY = (UnscaledViewportSize.Height - scaledExtent.Height) / 2;
+					offsetY = (UnscaledViewportSize.Height - scaledExtent.Height) / 2;
 					//clipHeight = scaledExtent.Height;
 
-					offsetY = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
+					//offsetY = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
 					clipHeight = UnscaledExtent.Height;
 				}
 				else
 				{
 					offsetY = 0;
 					//clipHeight = UnscaledViewportSize.Height;
-					clipHeight= ContentViewportSize.Height;
+					clipHeight = ContentViewportSize.Height;
 				}
 
 				var clipSize = new SizeDbl(clipWidth, clipHeight);

@@ -21,9 +21,9 @@ namespace MSetExplorer
 			return (baseFactor, relativeScale);
 		}
 
-		public static double GetCombinedValue(double baseScale, double relativeScale)
+		public static double GetCombinedValue(double baseFactor, double relativeScale)
 		{
-			var combinedValue = Math.Pow(BREAK_DOWN_FACTOR, baseScale) * relativeScale;
+			var combinedValue = Math.Pow(BREAK_DOWN_FACTOR, baseFactor) * relativeScale;
 			return combinedValue;
 		}
 
@@ -38,6 +38,67 @@ namespace MSetExplorer
 		{
 			var result = Math.Pow(BREAK_DOWN_FACTOR, baseFactor);
 			return result;
+		}
+
+		// Convert screen coordinates to content coordinates
+		public static RectangleDbl GetContentFromScreen(RectangleDbl displayArea, double contentScale)
+		{
+			// This method has not been tested -- some notes:
+
+			// NOTE: ContentScale = BaseScale * RelativeScale
+			// RelativeScale = ContentScale / BaseScale
+
+			// X = 2500. ContentScale = 0.3. BaseScale = 0.5; relativeScale = 0.6 (0.6 x 0.5 = 0.3)
+			// X' = 750 
+			// x' / baseScale = x' / 0.5 = 750 x 2.
+			// (x' / baseScale) / relativeScale = 1500 / 0.6 = 2500
+			// x' / relativeScale = 1250.
+			// (x' / relativeScale) / baseScale = 2500
+
+			// When applying a clip to a canvas it needs to be done using the native size of the canvas -- any scaling is done after applying the clip.
+
+			// The size provided to this method is size of the content before any scaling takes place.
+			// Because our implementation reduces the actual content by BaseScale before it is displayed,
+			// we need to adjust this regular value by BaseScale to get the actual 'raw' canvas size
+
+			// Given a value X' that is the result of scaling X by contentScale
+			// Find a value X'' that when scaled by RelativeScale produces X'
+			// Basically we want to 'undo' the portion of the scaling already performed that is the RelativeScale
+
+			// X' = X'' * RelativeScale, solve for X''
+
+			// X'' = X' / RelativeScale
+
+
+			// Dividing both sides by X'
+			// 1 = X'' * RelativeScale
+			// X'' = 1 / RelativeScale
+
+			//var scaledArea = newValue.Scale(1 / relativeScale);
+
+			//var baseScale = GetBaseScale(contentScale);
+
+			var (baseFactor, relativeScale) = GetBaseFactorAndRelativeScale(contentScale);
+			var baseScale = GetBaseScaleFromBaseFactor(baseFactor);
+			var screenToRelativeScaleFactor = baseScale / contentScale;
+
+			// The screenToRelativeScaleFactor (how to get from screen coordinates to content coordinates
+			// should equal the reciprocal of the relativeScaleFactor (how to get from content coordinates to screen coordinates)
+			//
+			//		(1 / relativeScale) == BaseScale / ContentScale, because...
+			//				relativeScale == ContentScale / BaseScale
+
+			CheckScreenToRelativeScaleFactor(screenToRelativeScaleFactor, contentScale);
+
+			// The displayArea's position (aka offset) is in device pixels.
+			// The displayArea's size (aka extent) is also in device pixels
+
+			// If the amount of screen realstate required to display the entire content is < the physical ViewPortSize,
+			// then displayArea is in physical coordinates.
+			//var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
+			var scaledDisplayArea = displayArea.Scale(1 / relativeScale);
+
+			return scaledDisplayArea;
 		}
 
 		/*			Math used to calculate base and relative scales.
@@ -95,30 +156,6 @@ namespace MSetExplorer
 
 			var chkRelativeScale = 1 / relativeScale;
 			Debug.Assert(!ScreenTypeHelper.IsDoubleChanged(screenToRelativeScaleFactor, chkRelativeScale, 0.000001), "ScreenToRelativeScaleFactor maybe incorrect.");
-		}
-
-		// Convert screen coordinates to content coordinates
-		public static RectangleDbl GetContentFromScreen(RectangleDbl displayArea, double contentScale)
-		{
-			var baseScale = GetBaseScale(contentScale);
-			var screenToRelativeScaleFactor = baseScale / contentScale;
-
-			// The screenToRelativeScaleFactor (how to get from screen coordinates to content coordinates
-			// should equal the reciprocal of the relativeScaleFactor (how to get from content coordinates to screen coordinates)
-			//
-			//		(1 / relativeScale) == BaseScale / ContentScale, because...
-			//				relativeScale == ContentScale / BaseScale
-
-			CheckScreenToRelativeScaleFactor(screenToRelativeScaleFactor, contentScale);
-
-			// The displayArea's position (aka offset) is in device pixels.
-			// The displayArea's size (aka extent) is also in device pixels
-
-			// If the amount of screen realstate required to display the entire content is < the physical ViewPortSize,
-			// then displayArea is in physical coordinates.
-			var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
-
-			return scaledDisplayArea;
 		}
 
 		[Conditional("DEBUG")]
@@ -202,7 +239,6 @@ namespace MSetExplorer
 
 			return (baseFactor, relativeScale);
 		}
-
 
 		#endregion
 	}

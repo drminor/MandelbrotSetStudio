@@ -1,6 +1,5 @@
 ﻿using MSS.Types;
 using System;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
