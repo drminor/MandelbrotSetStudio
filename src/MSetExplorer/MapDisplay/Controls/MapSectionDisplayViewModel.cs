@@ -8,7 +8,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
@@ -155,11 +154,10 @@ namespace MSetExplorer
 		public new bool InDesignMode => base.InDesignMode;
 
 		public SizeInt BlockSize { get; init; }
-
 		
 		/// <summary>
-		/// The size of the display.
-		/// Only used in unbounded mode
+		/// The size of the display in pixels.
+		/// Only used in unbounded mode (via a Binding declared on the XAML for the MapSectionDisplayControl.)
 		/// </summary>
 		public SizeDbl ViewportSize
 		{
@@ -182,13 +180,12 @@ namespace MSetExplorer
 						{
 							if (CurrentAreaColorAndCalcSettings != null)
 							{
-								Debug.WriteLine("\n========== As the ViewportSize is updated, the MapSectionDisplayViewModel is calling ReuseAndLoad.");
+								Debug.WriteLine("\n\t\t====== As the ViewportSize is updated, the MapSectionDisplayViewModel is calling ReuseAndLoad.");
 
 								var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
 								newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
 							}
 						}
-
 
 						if (newJobNumber.HasValue && lastSectionWasIncluded)
 						{
@@ -471,13 +468,13 @@ namespace MSetExplorer
 				//_ourDisplayPosition = displayPosition;
 				_theirDisplayPosition = _boundedMapArea.GetScaledDisplayPosition(displayPosition, out var unInvertedY);
 
-				Debug.WriteLine("\n========== Raising the DisplaySettingsInitialized Event.");
+				Debug.WriteLine("\n\t\t====== Raising the DisplaySettingsInitialized Event.");
 				DisplaySettingsInitialized?.Invoke(this, new DisplaySettingsInitializedEventArgs(posterSize, _theirDisplayPosition, _displayZoom));
 
 				CurrentAreaColorAndCalcSettings = newValue;
 
 				// Trigger a ViewportChanged event on the PanAndZoomControl -- this should result in our UpdateViewportSizeAndPos method being called.
-				Debug.WriteLine("\n========== Setting the Unscaled Extent to complete the process of submitting the job.");
+				Debug.WriteLine("\n\t\t====== Setting the Unscaled Extent to complete the process of submitting the job.");
 				UnscaledExtent = _boundedMapArea.PosterSize;
 			}
 		}
@@ -499,16 +496,6 @@ namespace MSetExplorer
 			{
 				if (CurrentAreaColorAndCalcSettings == null)
 				{
-					// Note: The LoadNewView method will update the current BoundedMapArea's ViewportSize -- there is no need to assign it to a property on this class.
-
-					// Note: The ViewportSize property on this class stores the Logical Canvas Size.
-					// The Logical Canvas Size is the same as the physical canvas size (in Device-Independent Pixels), but then multiplied by the BaseScale.
-					// This is the same as the BitmapGrid's LogicalViewportSize.
-
-					//ViewportSize = contentViewportSize;
-					//_bitmapGrid.LogicalViewportSize = contentViewportSize;
-
-
 					newJobNumber = null;
 				}
 				else
@@ -518,7 +505,7 @@ namespace MSetExplorer
 						throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
 					}
 
-					Debug.WriteLine($"\n========== UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}. ContentScale: {contentScale}.");
+					Debug.WriteLine($"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}. ContentScale: {contentScale}.");
 
 					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, contentScale);
 				}
@@ -549,7 +536,7 @@ namespace MSetExplorer
 		//		{
 		//			if (CurrentAreaColorAndCalcSettings != null)
 		//			{
-		//				Debug.WriteLine("\n========== UpdateViewportSize is calling HandleDisplaySizeUpdate.");
+		//				Debug.WriteLine("\n\t\t====== UpdateViewportSize is calling HandleDisplaySizeUpdate.");
 		//			}
 
 		//			Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set from {_viewportSize} to {newValue}.");
@@ -582,7 +569,7 @@ namespace MSetExplorer
 					throw new InvalidOperationException("Cannot call MoveTo, if the CurrentAreaColorAndCalcSettings is null.");
 				}
 
-				Debug.WriteLine("\n========== Executing MoveTo.");
+				Debug.WriteLine("\n==========  Executing MoveTo.");
 
 				_theirDisplayPosition = contentOffset;
 
@@ -757,10 +744,18 @@ namespace MSetExplorer
 
 			var currentBaseFactor = boundedMapArea.BaseFactor;
 
-			// Get the coordinates for the current view, i.e., the ContentViewportSize, taking into account that we may be using a more coarse sample rate to avoid excessive I/O.
+			// Get the coordinates for the current view, i.e., the ContentViewportSize
 
-			// NOTE: The viewportSize is the same as the ContentViewportSize on the PanAndZoom control.
-			// The scaledViewportSize is the actual canvas size, but reduced by 0.5, 0.25, 0.125, etc. depending on how 'Zoomed Out' we are.
+			// The contentViewportSize is the actual canvas size, but scaled up by the contentScale
+			// The ContentViewportSize is the logical display size, it is the minimum of
+			//		a. UnscaledViewportSize divided by the ContentScale and
+			//		b. The PosterSize scaled by the ContentScale
+
+			// The ContentViewportSize is used to update the BoundedMapArea.
+
+			// The ViewportSize property on this class stores the Logical Canvas Size.
+			// This is the same as the ContentViewportSize, but scaled down by the BaseScale of 1, 0.5, 0.25, 0.125, etc., depending on how 'Zoomed Out' we are.
+			// The BitmapGrid's LogicalViewportSize is synched with this ViewportSize.
 
 			var (baseFactor, _) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
 
@@ -772,10 +767,10 @@ namespace MSetExplorer
 			var jobType = boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
 			// Let our Bitmap Grid know about the change in View size.
-			//var scaledViewportSize = contentViewportSize.Scale(boundedMapArea.BaseScale);
-			//_bitmapGrid.LogicalViewportSize = scaledViewportSize;
-
 			_bitmapGrid.LogicalViewportSize = mapAreaSubset.CanvasSize;
+
+			// Keep our ViewportSize property in sync.
+			_viewportSize = mapAreaSubset.CanvasSize;
 
 			ReportUpdateSizeAndPos(boundedMapArea, contentViewportSize, contentOffset);
 
@@ -789,35 +784,6 @@ namespace MSetExplorer
 			//}
 
 			newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
-
-
-			if (newJobNumber.HasValue && lastSectionWasIncluded)
-			{
-				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
-			}
-
-			return newJobNumber;
-		}
-
-		private int? HandleDisplaySizeUpdate(SizeDbl viewportSize)
-		{
-			int? newJobNumber = null;
-			bool lastSectionWasIncluded = false;
-
-			_bitmapGrid.LogicalViewportSize = viewportSize;
-
-			lock (_paintLocker)
-			{
-				if (CurrentAreaColorAndCalcSettings != null)
-				{
-					//Debug.WriteLine("\n========== HandleSizeUpdate is calling ReuseAndLoad.");
-
-					var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, viewportSize);
-					newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
-				}
-			}
-
-			//ViewportSize = viewportSize;
 
 			if (newJobNumber.HasValue && lastSectionWasIncluded)
 			{
@@ -836,12 +802,12 @@ namespace MSetExplorer
 				var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewportSize);
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
-					Debug.WriteLine("\n========== HandleCurrentJobChanged is calling ReuseAndLoad.");
+					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
 					newJobNumber = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 				else
 				{
-					Debug.WriteLine("\n========== HandleCurrentJobChanged is calling DiscardAndLoad.");
+					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
 					newJobNumber = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 			}
@@ -972,9 +938,6 @@ namespace MSetExplorer
 			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
 
 			ImageOffset = new VectorDbl(screenAreaInfo.CanvasControlOffset);
-
-
-
 
 			ColorBandSet = newJob.ColorBandSet;
 

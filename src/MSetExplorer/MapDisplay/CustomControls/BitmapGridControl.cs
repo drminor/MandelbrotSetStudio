@@ -761,7 +761,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			Debug.WriteLineIf(c._useDetailedDebug, $"The BitmapGridControl's ViewportSize is being updated from {previousValue} to {newValue}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The BitmapGridControl's ViewportSize is being updated from {previousValue} to {newValue}.");
 
 			c.ViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
 		}

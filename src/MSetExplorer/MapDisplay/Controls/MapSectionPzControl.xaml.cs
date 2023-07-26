@@ -54,7 +54,7 @@ namespace MSetExplorer
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
 
-				//_vm.UpdateViewportSize(PanAndZoomControl1.ViewportSize);
+				// Start off with a ViewportSize using a BaseScale = 1.
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 
 				_vm.DisplaySettingsInitialized += _vm_DisplaySettingsInitialzed;
@@ -129,13 +129,14 @@ namespace MSetExplorer
 			//CheckForStaleContentValues(e);
 
 			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(e.ContentScale);
-			Debug.WriteLine($"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} / Unscaled: {e.UnscaledViewportSize}, Offset:{e.ContentOffset}, Scale:{e.ContentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
+			Debug.WriteLine($"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} / Unscaled: {e.UnscaledViewportSize}, " +
+				$"Offset:{e.ContentOffset}, Scale:{e.ContentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize,  e.ContentOffset, e.ContentScale);
 
 			var imagePos = BitmapGridControl1.ImagePositionYInv;
 
-			Debug.WriteLine($"After setting the Image Offset using the Canvas.BottomProperty, the Canvas.TopProperty is {imagePos.Y}. The ImageOffset is {BitmapGridControl1.ImageOffset}");
+			Debug.WriteLine($"========== The MapSectionPzControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
 
 			//var scaledDisplayArea = GetScaledDisplayArea();
 			//ShowOutline(scaledDisplayArea);
@@ -154,7 +155,7 @@ namespace MSetExplorer
 			//var unscaledViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 			//_vm.UpdateViewportSize(unscaledViewportSize);
 
-			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContentViewportSize);
+			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContrainedViewportSize);
 
 			//CenterContent(PanAndZoomControl1.UnscaledExtent, PanAndZoomControl1.UnScaledViewportSize, PanAndZoomControl1.ContentScale);
 

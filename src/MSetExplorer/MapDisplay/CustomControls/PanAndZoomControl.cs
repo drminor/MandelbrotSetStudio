@@ -141,6 +141,8 @@ namespace MSetExplorer
 
 		public SizeDbl ContentViewportSize { get; set; }
 
+		public SizeDbl ContrainedViewportSize => _constrainedContentViewportSize;
+
 		public PointDbl ContentZoomFocus { get; set; }
 
 		public PointDbl ViewportZoomFocus { get; set; }
@@ -218,7 +220,7 @@ namespace MSetExplorer
 
 			//UpdateTranslationX();
 			//UpdateTranslationY();
-			UpdateTranslation();
+			//UpdateTranslation();
 
 			return result;
 		}
@@ -653,6 +655,7 @@ namespace MSetExplorer
 				return;
 			}
 
+			var previousValue = UnscaledViewportSize;
 			UnscaledViewportSize = newValue;
 
 			// Update the viewport size in content coordiates.
@@ -682,14 +685,14 @@ namespace MSetExplorer
 
 			if (!_disableViewportChangedEvents)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is raising the ViewportChanged event as the ViewportSize is updated. The _disableViewportChangedEvents guard has not been set.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is raising the ViewportChanged event as the ViewportSize is updated from {previousValue} to {newValue}. The _disableViewportChangedEvents guard has not been set.");
 
 				var sivi = new ScaledImageViewInfo(_constrainedContentViewportSize, UnscaledViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale, _contentScaler?.TranslationAndClipSize);
 				ViewportChanged?.Invoke(this, sivi);
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is skipping raising the ViewportChanged event as the ViewportSize is updated. The _disableViewportChangedEvents guard has been set.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is skipping raising the ViewportChanged event as the ViewportSize is updated from {previousValue} to {newValue}. The _disableViewportChangedEvents guard has been set.");
 			}
 		}
 
@@ -1022,40 +1025,34 @@ namespace MSetExplorer
 			}
 		}
 
-
 		/*
+            try
+            {
+                // 
+                // Disable content focus syncronization.  We are about to update content offset whilst zooming
+                // to ensure that the viewport is focused on our desired content focus point.  Setting this
+                // to 'true' stops the automatic update of the content focus when content offset changes.
+                //
+                c.disableContentFocusSync = true;
 
-                try
-                {
-                    // 
-                    // Disable content focus syncronization.  We are about to update content offset whilst zooming
-                    // to ensure that the viewport is focused on our desired content focus point.  Setting this
-                    // to 'true' stops the automatic update of the content focus when content offset changes.
-                    //
-                    c.disableContentFocusSync = true;
+                //
+                // Whilst zooming in or out keep the content offset up-to-date so that the viewport is always
+                // focused on the content focus point (and also so that the content focus is locked to the 
+                // viewport focus point - this is how the google maps style zooming works).
+                //
+                double viewportOffsetX = c.ViewportZoomFocusX - (c.ViewportWidth / 2);
+                double viewportOffsetY = c.ViewportZoomFocusY - (c.ViewportHeight / 2);
 
-                    //
-                    // Whilst zooming in or out keep the content offset up-to-date so that the viewport is always
-                    // focused on the content focus point (and also so that the content focus is locked to the 
-                    // viewport focus point - this is how the google maps style zooming works).
-                    //
-                    double viewportOffsetX = c.ViewportZoomFocusX - (c.ViewportWidth / 2);
-                    double viewportOffsetY = c.ViewportZoomFocusY - (c.ViewportHeight / 2);
+                double contentOffsetX = viewportOffsetX / c.ContentScale;
+                double contentOffsetY = viewportOffsetY / c.ContentScale;
 
-                    double contentOffsetX = viewportOffsetX / c.ContentScale;
-                    double contentOffsetY = viewportOffsetY / c.ContentScale;
-
-                    c.ContentOffsetX = (c.ContentZoomFocusX - (c.ContentViewportWidth / 2)) - contentOffsetX;
-                    c.ContentOffsetY = (c.ContentZoomFocusY - (c.ContentViewportHeight / 2)) - contentOffsetY;
-                }
-                finally
-                {
-                    c.disableContentFocusSync = false;
-                }		
-
-
-
-		
+                c.ContentOffsetX = (c.ContentZoomFocusX - (c.ContentViewportWidth / 2)) - contentOffsetX;
+                c.ContentOffsetY = (c.ContentZoomFocusY - (c.ContentViewportHeight / 2)) - contentOffsetY;
+            }
+            finally
+            {
+                c.disableContentFocusSync = false;
+            }		
 		*/
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1093,9 +1090,38 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool CanHorizontallyScroll { get; set; }
+		private bool _canHorizontallyScroll;
+		private bool _canVerticallyScroll;
 
-		public bool CanVerticallyScroll { get; set; }
+		public bool CanHorizontallyScroll
+		{
+			get => _canHorizontallyScroll;
+			set
+			{
+				if (_canHorizontallyScroll != value)
+				{
+					var prevVal = _canHorizontallyScroll;
+					Debug.WriteLineIf(_useDetailedDebug, $"CanHorizontallyScroll is about to be updated from: {prevVal} to {value}.");
+					_canHorizontallyScroll = value;
+					Debug.WriteLineIf(_useDetailedDebug, $"CanHorizontallyScroll was updated from: {prevVal} to {value}.");
+				}
+			}
+		}
+
+		public bool CanVerticallyScroll
+		{
+			get => _canVerticallyScroll;
+			set
+			{
+				if (_canVerticallyScroll != value)
+				{
+					var prevVal = _canVerticallyScroll;
+					Debug.WriteLineIf(_useDetailedDebug, $"CanVerticallyScroll is about to be updated from: {prevVal} to {value}.");
+					_canVerticallyScroll = value;
+					Debug.WriteLineIf(_useDetailedDebug, $"CanVerticallyScroll was updated from: {prevVal} to {value}.");
+				}
+			}
+		}
 
 		public double ExtentWidth => Math.Max(UnscaledExtent.Width, ViewportWidth) * ContentScale;
 
@@ -1126,25 +1152,25 @@ namespace MSetExplorer
 
 		public void PageUp()
 		{
-			Debug.WriteLine("\n\nUser is Paging Up.");
+			Debug.WriteLine("\nUser is Paging Up.");
 			ContentOffsetY -= ContentViewportSize.Height;
 		}
 
 		public void PageDown()
 		{
-			Debug.WriteLine("\n\nUser is Paging Down.");
+			Debug.WriteLine("\nUser is Paging Down.");
 			ContentOffsetY += ContentViewportSize.Height;
 		}
 
 		public void PageLeft()
 		{
-			Debug.WriteLine("\n\nUser is Paging Left.");
+			Debug.WriteLine("\nUser is Paging Left.");
 			ContentOffsetX -= ContentViewportSize.Width;
 		}
 
 		public void PageRight()
 		{
-			Debug.WriteLine("\n\nUser is Paging Right.");
+			Debug.WriteLine("\nUser is Paging Right.");
 			ContentOffsetX += ContentViewportSize.Width;
 		}
 
@@ -1269,36 +1295,28 @@ namespace MSetExplorer
 
 		private void SetVerticalScrollBarVisibility(bool show)
 		{
-			if (_scrollOwner != null && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled)
+			if (_scrollOwner != null && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Auto)
 			{
-				if (show && _scrollOwner.VerticalScrollBarVisibility != ScrollBarVisibility.Visible)
+				var visibility = show ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+
+				if (_scrollOwner.VerticalScrollBarVisibility != visibility)
 				{
-					_scrollOwner.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
-				}
-				else
-				{
-					if (_scrollOwner.VerticalScrollBarVisibility == ScrollBarVisibility.Visible && !show)
-					{
-						_scrollOwner.VerticalScrollBarVisibility = _originalVerticalScrollBarVisibility;
-					}
+					Debug.WriteLineIf(_useDetailedDebug, $"Vertical ScrollBar Visibility changing from {_scrollOwner.VerticalScrollBarVisibility} to {visibility}.");
+					_scrollOwner.VerticalScrollBarVisibility = visibility;
 				}
 			}
 		}
 
 		private void SetHorizontalScrollBarVisibility(bool show)
 		{
-			if (_scrollOwner != null && _scrollOwner.HorizontalScrollBarVisibility != ScrollBarVisibility.Disabled)
+			if (_scrollOwner != null && _scrollOwner.HorizontalScrollBarVisibility != ScrollBarVisibility.Disabled && _scrollOwner.HorizontalScrollBarVisibility != ScrollBarVisibility.Auto)
 			{
-				if (show && _scrollOwner.HorizontalScrollBarVisibility != ScrollBarVisibility.Visible)
+				var visibility = show ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+
+				if (_scrollOwner.HorizontalScrollBarVisibility != visibility)
 				{
-					_scrollOwner.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
-				}
-				else
-				{
-					if (_scrollOwner.HorizontalScrollBarVisibility == ScrollBarVisibility.Visible && !show)
-					{
-						_scrollOwner.HorizontalScrollBarVisibility = _originalHorizontalScrollBarVisibility;
-					}
+					Debug.WriteLineIf(_useDetailedDebug, $"Horizontal ScrollBar Visibility changing from {_scrollOwner.HorizontalScrollBarVisibility} to {visibility}.");
+					_scrollOwner.HorizontalScrollBarVisibility = visibility;
 				}
 			}
 		}
