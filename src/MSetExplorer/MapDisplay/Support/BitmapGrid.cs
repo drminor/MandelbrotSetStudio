@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -28,8 +29,9 @@ namespace MSetExplorer
 
 		private Int32Rect _blockRect { get; init; }
 
-		private SizeDbl _viewportSize;
-		private SizeInt _canvasSizeInBlocks;
+		private SizeDbl _logicalViewportSize;
+		private VectorInt _canvasControlOffset;
+		private SizeInt _imageSizeInBlocks;
 
 		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
@@ -48,15 +50,14 @@ namespace MSetExplorer
 		public BitmapGrid(ObservableCollection<MapSection> mapSections, SizeDbl viewPortSize, Action<MapSection> disposeMapSection, Action<WriteableBitmap> onBitmapUpdate, SizeInt blockSize)
 		{
 			_mapSections = mapSections;
-			_viewportSize = viewPortSize;
-			_onBitmapUpdate = onBitmapUpdate;
+			_logicalViewportSize = viewPortSize;
+			_canvasControlOffset = new VectorInt();
+
 			_disposeMapSection = disposeMapSection;
+			_onBitmapUpdate = onBitmapUpdate;
 			_blockSize = blockSize;
 
-			var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(_viewportSize, _blockSize, keepSquare: false);
-			_canvasSizeInBlocks = sizeInWholeBlocks;
-
-			ImageSizeInBlocks = _canvasSizeInBlocks.Inflate(2);
+			ImageSizeInBlocks = CalculateImageSize(_logicalViewportSize, _canvasControlOffset);
 
 			_bitmap = CreateBitmap(ImageSizeInBlocks);
 
@@ -174,22 +175,61 @@ namespace MSetExplorer
 
 		public SizeDbl LogicalViewportSize
 		{
-			get => _viewportSize;
+			get => _logicalViewportSize;
 			set
 			{
-				var sizeInWholeBlocks = RMapHelper.GetCanvasSizeInWholeBlocks(value, _blockSize, keepSquare: false);
+				var imageSizeInBlocks = CalculateImageSize(value, _canvasControlOffset);
 
-				Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_viewportSize} to {value}. CanvasSizeInBlocks from: {CanvasSizeInBlocks} to {sizeInWholeBlocks}.");
+				if (imageSizeInBlocks != ImageSizeInBlocks)
+				{
+					Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					ImageSizeInBlocks = imageSizeInBlocks;
+				}
+				else
+				{
+					Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks remains the same.");
+				}
 
-				CanvasSizeInBlocks = sizeInWholeBlocks;
-
-				_viewportSize = value;
+				_logicalViewportSize = value;
 			}
 		}
 
-		public SizeInt CanvasSizeInBlocks
+		public VectorInt CanvasControlOffset
 		{
-			get => _canvasSizeInBlocks;
+			get => _canvasControlOffset;
+			set
+			{
+				var imageSizeInBlocks = CalculateImageSize(_logicalViewportSize, value);
+
+				if (imageSizeInBlocks != ImageSizeInBlocks)
+				{
+					Debug.WriteLine($"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					ImageSizeInBlocks = imageSizeInBlocks;
+				}
+				else
+				{
+					Debug.WriteLine($"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks remains the same.");
+				}
+
+				_canvasControlOffset = value;
+			}
+		}
+
+		private SizeInt CalculateImageSize(SizeDbl logicalViewportSize, VectorInt canvasControlOffset)
+		{
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(logicalViewportSize.Round(), canvasControlOffset, _blockSize);
+
+			//var adjMapExtentInBlocks = mapExtentInBlocks.Inflate(1);
+			var adjMapExtentInBlocks = mapExtentInBlocks;
+
+			return adjMapExtentInBlocks;
+		}
+
+		// Each time a drawing operation is performed this is checked to see if the current canvas need to be resized.
+		// NOTE: Every drawing operation should begin with a call to ClearDisplay or RedrawSections.
+		public SizeInt ImageSizeInBlocks
+		{
+			get => _imageSizeInBlocks;
 			set
 			{
 				if (value.Width < 0 || value.Height < 0)
@@ -197,22 +237,16 @@ namespace MSetExplorer
 					return;
 				}
 
-				if (_canvasSizeInBlocks != value)
+				if (_imageSizeInBlocks != value)
 				{
-					_canvasSizeInBlocks = value;
-
 					// The Image must be able to accommodate one block before and one block after the set of visible blocks.
-					var newImageSizeInBlocks = value.Inflate(2);
+					//var newImageSizeInBlocks = value.Inflate(2);
 
-					Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid Updating the ImageSizeInBlocks from: {ImageSizeInBlocks} to: {newImageSizeInBlocks}.");
-					ImageSizeInBlocks = newImageSizeInBlocks;
+					//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid Updating the ImageSizeInBlocks from: {ImageSizeInBlocks} to: {newImageSizeInBlocks}.");
+					_imageSizeInBlocks = value;
 				}
 			}
 		}
-
-		// Each time a drawing operation is performed this is checked to see if the current canvas need to be resized.
-		// NOTE: Every drawing operation should begin with a call to ClearDisplay or RedrawSections.
-		private SizeInt ImageSizeInBlocks { get; set; }
 
 		public long NumberOfCountValSwitches { get; private set; }
 
@@ -243,6 +277,8 @@ namespace MSetExplorer
 
 		public void DrawSections(IList<MapSection> mapSections)
 		{
+			var anyDrawnOnLastRow = false;
+
 			//var lastSectionWasIncluded = false;
 			foreach (var mapSection in mapSections)
 			{
@@ -257,6 +293,9 @@ namespace MSetExplorer
 						if (_colorMap != null)
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+
+							if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
+							
 							var loc = invertedBlockPos.Scale(_blockSize);
 
 							LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
@@ -282,6 +321,8 @@ namespace MSetExplorer
 					//}
 				}
 			}
+
+			if (!anyDrawnOnLastRow) Debug.WriteLine($"No blocks were drawn on the last row for DrawSections: {mapSections.FirstOrDefault()?.JobNumber}.");
 
 			//return lastSectionWasIncluded;
 		}
@@ -332,6 +373,8 @@ namespace MSetExplorer
 				}
 			}
 
+			var anyDrawnOnLastRow = false;
+
 			var sectionsDisposed = new List<MapSection>();
 
 			foreach (var mapSection in _mapSections)
@@ -345,6 +388,9 @@ namespace MSetExplorer
 						if (_colorMap != null)
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+
+							if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
+
 							var loc = invertedBlockPos.Scale(_blockSize);
 
 							LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
@@ -366,6 +412,8 @@ namespace MSetExplorer
 					}
 				}
 			}
+
+			if (!anyDrawnOnLastRow) Debug.WriteLine($"No blocks were drawn on the last row for ReDraw:{_mapSections.FirstOrDefault()?.JobNumber}.");
 
 			foreach (var ms in sectionsDisposed)
 			{

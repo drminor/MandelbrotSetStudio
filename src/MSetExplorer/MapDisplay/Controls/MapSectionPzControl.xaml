@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:MapSectionDisplayViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="1100" d:DesignWidth="1100"             
-             x:Name="Mdc">
+             x:Name="Mdc" Background="White">
 
     <UserControl.Resources>
 

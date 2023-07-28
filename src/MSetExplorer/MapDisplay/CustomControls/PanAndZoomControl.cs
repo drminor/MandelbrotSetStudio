@@ -1,5 +1,4 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -377,7 +376,6 @@ namespace MSetExplorer
 												)
 					);
 
-
 		/// <summary>
 		/// Event raised when the 'ContentScale' property has changed value.
 		/// </summary>
@@ -431,7 +429,6 @@ namespace MSetExplorer
 			// TODO: CheckEvent
 			//c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
 
-			//c.ViewportSizeOffsetAndScale = new ScaledImageViewInfo(c.ContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
 			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize, c.UnscaledViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
 			c.ViewportChanged?.Invoke(c, sivi);
 		}
@@ -443,17 +440,7 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl c = (PanAndZoomControl)d;
 			var bVal = (double)baseValue;
-			//double value = (double)baseValue;
 			var value = Math.Min(Math.Max(bVal, c.MinContentScale), c.MaxContentScale);
-
-			//if (value != bVal)
-			//{
-			//	Debug.WriteLine($"ContentScale is being coerced from {bVal} to {value}.");
-			//}
-			//else
-			//{
-			//	Debug.WriteLine("....*******.........");
-			//}
 
 			return value;
 		}
@@ -696,53 +683,6 @@ namespace MSetExplorer
 			}
 		}
 
-		/// <summary>
-		/// Done! -- Update the viewport size from the specified size.
-		/// </summary>
-		private void UpdateViewportSize_Original(Size newSize)
-		{
-			//if (viewport == newSize)
-			//{
-			//	//
-			//	// The viewport is already the specified size.
-			//	//
-			//	return;
-			//}
-
-			//viewport = newSize;
-
-			////
-			//// Update the viewport size in content coordiates.
-			////
-			//UpdateContentViewportSize();
-
-			////
-			//// Initialise the content zoom focus point.
-			////
-			//UpdateContentZoomFocusX();
-			//UpdateContentZoomFocusY();
-
-			////
-			//// Reset the viewport zoom focus to the center of the viewport.
-			////
-			//ResetViewportZoomFocus();
-
-			////
-			//// Update content offset from itself when the size of the viewport changes.
-			//// This ensures that the content offset remains properly clamped to its valid range.
-			////
-			//this.ContentOffsetX = this.ContentOffsetX;
-			//this.ContentOffsetY = this.ContentOffsetY;
-
-			//if (scrollOwner != null)
-			//{
-			//	//
-			//	// Tell that owning ScrollViewer that scrollbar data has changed.
-			//	//
-			//	scrollOwner.InvalidateScrollInfo();
-			//}
-		}
-
 		private void UpdateContentViewportSize()
 		{
 			if (_contentScaler == null)
@@ -780,21 +720,6 @@ namespace MSetExplorer
 			SetHorizontalScrollBarVisibility(_maxContentOffset.Width > 0);
 
 			UpdateTranslation();
-		}
-
-		/// <summary>
-		/// DONE! -- Update the size of the viewport in content coordinates after the viewport size or 'ContentScale' has changed.
-		/// </summary>
-		private void UpdateContentViewportSize_Original()
-		{
-			//ContentViewportWidth = ViewportWidth / ContentScale;
-			//ContentViewportHeight = ViewportHeight / ContentScale;
-
-			//constrainedContentViewportWidth = Math.Min(ContentViewportWidth, unScaledExtent.Width);
-			//constrainedContentViewportHeight = Math.Min(ContentViewportHeight, unScaledExtent.Height);
-
-			//UpdateTranslationX();
-			//UpdateTranslationY();
 		}
 
 		private string FmtSizeDblDp4(SizeDbl a)
@@ -868,14 +793,11 @@ namespace MSetExplorer
 
 				var clipSize = new SizeDbl(clipWidth, clipHeight);
 
+				// NOTE: _constrainedContentViewportSize = UnscaledExtent.Min(ContentViewportSize);
+
 				Debug.Assert(clipSize == _constrainedContentViewportSize, "ClipSize vs ConstrainedContentViewportSize mismatch.");
 
 				var translationAndClipSize = new RectangleDbl(new PointDbl(offsetX, offsetY), clipSize);
-
-				//RectangleDbl? contentClip = offsetX > 0 || offsetY > 0 
-				//	? new RectangleDbl(new PointDbl(offsetX, offsetY), clipSize) 
-				//	: null;
-
 
 				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl is setting the ContentScaler's {nameof(IContentScaler.TranslationAndClipSize)} to {RectangleDbl.FormatNully(translationAndClipSize)}.");
 
@@ -889,50 +811,6 @@ namespace MSetExplorer
 					_disableViewportChangedEvents = false;
 				}
 			}
-		}
-
-		/// <summary>
-		/// TODO! -- Update the X coordinate of the translation transformation.
-		/// </summary>
-		private void UpdateTranslationX()
-		{
-			//if (this.contentOffsetTransform != null)
-			//{
-			//	double scaledContentWidth = this.unScaledExtent.Width * this.ContentScale;
-			//	if (scaledContentWidth < this.ViewportWidth)
-			//	{
-			//		//
-			//		// When the content can fit entirely within the viewport, center it.
-			//		//
-			//		this.contentOffsetTransform.X = (this.ContentViewportWidth - this.unScaledExtent.Width) / 2;
-			//	}
-			//	else
-			//	{
-			//		this.contentOffsetTransform.X = -this.ContentOffsetX;
-			//	}
-			//}
-		}
-
-		/// <summary>
-		/// TODO! -- Update the Y coordinate of the translation transformation.
-		/// </summary>
-		private void UpdateTranslationY()
-		{
-			//if (this.contentOffsetTransform != null)
-			//{
-			//	double scaledContentHeight = this.unScaledExtent.Height * this.ContentScale;
-			//	if (scaledContentHeight < this.ViewportHeight)
-			//	{
-			//		//
-			//		// When the content can fit entirely within the viewport, center it.
-			//		//
-			//		this.contentOffsetTransform.Y = (this.ContentViewportHeight - this.unScaledExtent.Height) / 2;
-			//	}
-			//	else
-			//	{
-			//		this.contentOffsetTransform.Y = -this.ContentOffsetY;
-			//	}
-			//}
 		}
 
 		private bool UpdateScale(double newContentScale)
@@ -968,22 +846,6 @@ namespace MSetExplorer
 			}
 
 			return result;
-		}
-
-		/// <summary>
-		/// DONE! -- Update the X coordinate of the zoom focus point in content coordinates.
-		/// </summary>
-		private void UpdateContentZoomFocusX()
-		{
-			//ContentZoomFocusX = ContentOffsetX + (constrainedContentViewportWidth / 2);
-		}
-
-		/// <summary>
-		/// DONE! -- Update the Y coordinate of the zoom focus point in content coordinates.
-		/// </summary>
-		private void UpdateContentZoomFocusY()
-		{
-			//ContentZoomFocusY = ContentOffsetY + (constrainedContentViewportHeight / 2);
 		}
 
 		private void UpdateContentZoomFocus()
@@ -1024,36 +886,6 @@ namespace MSetExplorer
 				_disableContentFocusSync = false;
 			}
 		}
-
-		/*
-            try
-            {
-                // 
-                // Disable content focus syncronization.  We are about to update content offset whilst zooming
-                // to ensure that the viewport is focused on our desired content focus point.  Setting this
-                // to 'true' stops the automatic update of the content focus when content offset changes.
-                //
-                c.disableContentFocusSync = true;
-
-                //
-                // Whilst zooming in or out keep the content offset up-to-date so that the viewport is always
-                // focused on the content focus point (and also so that the content focus is locked to the 
-                // viewport focus point - this is how the google maps style zooming works).
-                //
-                double viewportOffsetX = c.ViewportZoomFocusX - (c.ViewportWidth / 2);
-                double viewportOffsetY = c.ViewportZoomFocusY - (c.ViewportHeight / 2);
-
-                double contentOffsetX = viewportOffsetX / c.ContentScale;
-                double contentOffsetY = viewportOffsetY / c.ContentScale;
-
-                c.ContentOffsetX = (c.ContentZoomFocusX - (c.ContentViewportWidth / 2)) - contentOffsetX;
-                c.ContentOffsetY = (c.ContentZoomFocusY - (c.ContentViewportHeight / 2)) - contentOffsetY;
-            }
-            finally
-            {
-                c.disableContentFocusSync = false;
-            }		
-		*/
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void InvalidateScrollInfo()
@@ -1363,15 +1195,6 @@ namespace MSetExplorer
 
 		}
 
-		//void IZoomInfo.SetScale(double contentScale)
-		//{
-		//	var currentValue = ContentScale;
-
-		//	ContentScale = contentScale;
-
-		//	Debug.WriteLine($"The PanAndZoom Control is updating the ContentScale from {currentValue} to {contentScale} as SetScale is being called.");
-		//}
-
 		#endregion
 
 		#region IContentScaler Support
@@ -1380,17 +1203,6 @@ namespace MSetExplorer
 
 		private void ContentScaler_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
-			//if (!_disableViewportChangedEvents)
-			//{
-			//	Debug.WriteLine("\n========== The PanAndZoomControl is handling the ContentScaler's ViewportSizeChanged.");
-
-			//	UpdateViewportSize(e.Item2);
-			//}
-			//else
-			//{
-			//	Debug.WriteLineIf(_useDetailedDebug, $"Ingoring the ContentScaler's ViewportSizeChanged.");
-			//}
-
 			UpdateViewportSize(e.Item2);
 		}
 

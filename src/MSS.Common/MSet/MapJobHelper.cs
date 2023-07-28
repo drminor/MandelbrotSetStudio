@@ -319,7 +319,9 @@ namespace MSS.Common
 			var adjPos = RNormalizer.Normalize(newPosition, coords.Size, out var adjMapSize);
 			var newCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
 
-			if (_useDetailedDebug) ReportCoordsDiff(coords, newCoords, "for a new display size");
+			//if (_useDetailedDebug) ReportCoordsDiff(coords, newCoords, "for a new display size");
+
+			ReportCoordsDiff(coords, newCoords, "for a new display size (ScaleConstant).");
 
 			//var localMapBlockOffset = GetLocalMapBlockOffset(mapBlockOffset, subdivision);
 			var newSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
@@ -331,6 +333,27 @@ namespace MSS.Common
 
 			return result;
 		}
+
+		public static SizeInt GetSizeOfLastBlock(MapAreaInfo mapAreaInfo)
+		{
+			var result = GetSizeOfLastBlock(mapAreaInfo.CanvasSize, new VectorDbl(mapAreaInfo.CanvasControlOffset));
+			return result;
+		}
+
+		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
+		{
+			var blockSize = RMapConstants.BLOCK_SIZE;
+			var extent = canvasSize.Round();
+
+			var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
+
+			var extentSanFirstBlock = extent.Sub(sizeOfFirstBlock);
+
+			_ = extentSanFirstBlock.DivRem(blockSize, out var remainder);
+
+			return remainder;
+		}
+
 
 		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
 		{
@@ -443,6 +466,10 @@ namespace MSS.Common
 
 			return offsetInSamplePoints;
 		}
+
+
+
+
 
 		#endregion
 	}

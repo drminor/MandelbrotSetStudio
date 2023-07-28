@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -28,6 +29,7 @@ namespace MSetExplorer
 
 		private SizeDbl _contentScale;
 		private RectangleDbl _translationAndClipSize;
+		private bool _useClip = true;
 
 		private bool _useDetailedDebug = true;
 
@@ -63,80 +65,6 @@ namespace MSetExplorer
 			_canvas.RenderTransform = _canvasRenderTransform;
 
 			_contentScale = new SizeDbl(1, 1);
-
-			//MouseEnter += BitmapGridControl_MouseEnter;
-			//MouseLeave += BitmapGridControl_MouseLeave;
-
-			//_canvas.SizeChanged += Canvas_SizeChanged;
-		}
-
-		private SizeDbl _savedTranslation = new SizeDbl();
-		private Geometry? _savedClip;
-
-		//private SizeDbl _savedCanvasSize = new SizeDbl(10, 10);
-		//private SizeDbl _savedContentScale = new SizeDbl(1);
-		//private Point _savedRenderTransformOrigin = new Point();
-
-		private void BitmapGridControl_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-		{
-			//if (_clipT != null)
-			//{
-			//	_canvas.ClipToBounds = false;
-			//	_canvas.Clip = _clipT;
-			//}
-			//else
-			//{
-			//	_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
-			//}
-
-			Canvas.Clip = _savedClip;
-
-			_canvasTranslateTransform.X = _savedTranslation.Width;
-			_canvasTranslateTransform.Y = _savedTranslation.Height;
-			
-
-			//Canvas.Width = _savedCanvasSize.Width;
-			//Canvas.Height = _savedCanvasSize.Height;
-
-			//_canvas.RenderTransformOrigin = _savedRenderTransformOrigin;
-
-			//_canvasScaleTransform.ScaleX = _savedContentScale.Width;
-			//_canvasScaleTransform.ScaleY = _savedContentScale.Height;
-
-		}
-
-		private void BitmapGridControl_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-		{
-			//_canvas.ClipToBounds = false;
-
-			_savedClip = _canvas.Clip;
-			_canvas.Clip = null;
-
-			_savedTranslation = new SizeDbl(_canvasTranslateTransform.X, _canvasTranslateTransform.Y);
-			_canvasTranslateTransform.X = 0;
-			_canvasTranslateTransform.Y = 0;
-
-			//_savedCanvasSize = new SizeDbl(Canvas.ActualWidth, Canvas.ActualHeight);
-			//_savedContentScale = new SizeDbl(_canvasScaleTransform.ScaleX, _canvasScaleTransform.ScaleY);
-
-			//_savedRenderTransformOrigin = _canvas.RenderTransformOrigin;
-
-			//_canvas.RenderTransformOrigin = new Point(0, 0);
-			//_canvasScaleTransform.ScaleX = 1;
-			//_canvasScaleTransform.ScaleY = 1;
-
-			//Canvas.Width = ActualWidth;
-			//Canvas.Height = ActualHeight;
-		}
-
-		#endregion
-
-		#region Event Handlers
-
-		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			//Debug.WriteLine($"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
-			//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
 		}
 
 		#endregion
@@ -154,20 +82,9 @@ namespace MSetExplorer
 			get => _canvas;
 			set
 			{
-				//_canvas.SizeChanged -= Canvas_SizeChanged;
 				_canvas = value;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
-
-				//_canvas.SizeChanged += Canvas_SizeChanged;		// TODO: Unregister this event handler on dispose.
-
-				//var sz = ViewportSize;
-				//if (sz.Width < 5 || sz.Height < 5)
-				//{
-				//	sz = new SizeDbl(ActualWidth, ActualHeight);
-				//}
-
-				//SetTheCanvasSize(sz, ContentScale);
 			}
 		}
 
@@ -193,13 +110,9 @@ namespace MSetExplorer
 			{
 				if (_image != value)
 				{
-					//_image.SizeChanged -= Image_SizeChanged;
 					_image = value;
-					//_image.SizeChanged += Image_SizeChanged;
-
 					_image.Source = BitmapGridImageSource;
-
-					UpdateImageOffset(ImageOffset);
+					_ = UpdateImageOffset(ImageOffset);
 
 					CheckThatImageIsAChildOfCanvas(Image, Canvas);
 				}
@@ -322,7 +235,6 @@ namespace MSetExplorer
 			set
 			{
 				_contentScale = value;
-				//SetTheCanvasScaleAndSize(ViewportSize, _contentScale);
 				SetTheCanvasScaleAndSize(LogicalViewportSize, _contentScale);
 			}
 		}
@@ -336,12 +248,6 @@ namespace MSetExplorer
 				{
 					var previousVal = _translationAndClipSize;
 					_translationAndClipSize = value;
-
-					//var baseScale = ContentScalerHelper.GetBaseScale(_contentScale.Width);
-
-					//LogicalViewportSize = value.Size.Scale(baseScale);
-					//Canvas.Width = LogicalViewportSize.Width;
-					//Canvas.Height = LogicalViewportSize.Height;
 
 					LogicalViewportSize = ClipAndOffset(previousVal, value);
 				}
@@ -422,10 +328,6 @@ namespace MSetExplorer
 				canvas.Height = finalSize.Height;
 			}
 
-			//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
-
-			//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
-
 			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: Is setting the ViewportSizeInternal property to {childSize}.");
 
 			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
@@ -484,10 +386,7 @@ namespace MSetExplorer
 
 		private void SetTheCanvasScaleAndSize(SizeDbl logicalViewportSize, SizeDbl contentScale)
 		{
-			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale.Width);
-			var baseScale = ContentScalerHelper.GetBaseScaleFromBaseFactor(baseFactor);
-
-			//var newCanvasSize = viewportSize.Divide(relativeScale);
+			var (_, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale.Width);
 
 			var newCanvasSize = logicalViewportSize; //.Scale(baseScale);
 
@@ -497,25 +396,11 @@ namespace MSetExplorer
 				var previousScale = _canvasScaleTransform.ScaleX;
 				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is handling SetTheCanvasScaleAndSize. Setting the Canvas Size from {previousCanvasSize} to {newCanvasSize}. Scale from: {previousScale} to {relativeScale}.");
 
-				if (relativeScale < previousScale)
-				{
-					// Canvas is getting larger, set the scale and then the size to avoid having the content grow too large
+				Canvas.Width = newCanvasSize.Width;
+				Canvas.Height = newCanvasSize.Height;
 
-					_canvasScaleTransform.ScaleX = relativeScale;
-					_canvasScaleTransform.ScaleY = relativeScale;
-
-					Canvas.Width = newCanvasSize.Width;
-					Canvas.Height = newCanvasSize.Height;
-				}
-				else
-				{
-					// Canvas is getting smaller, set the canvas size first
-					Canvas.Width = newCanvasSize.Width;
-					Canvas.Height = newCanvasSize.Height;
-
-					_canvasScaleTransform.ScaleX = relativeScale;
-					_canvasScaleTransform.ScaleY = relativeScale;
-				}
+				_canvasScaleTransform.ScaleX = relativeScale;
+				_canvasScaleTransform.ScaleY = relativeScale;
 			}
 			else
 			{
@@ -524,102 +409,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void SetTheCanvasSize(SizeDbl viewportSize, SizeDbl contentScale)
-		//{
-		//	var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale.Width);
-		//	//var baseScale = ContentScalerHelper.GetBaseScaleFromBaseFactor(baseFactor);
-
-		//	//Debug.Assert(_lastKnownRelativeScale == _canvasScaleTransform.ScaleX, "LastKnownRelativeScale is out of sync.");
-		//	//Debug.Assert(relativeScale == _lastKnownRelativeScale, "The relativeScale calculated from what is presumably the same ContentScale used to calculate the LastKnownRelativeScale does not match the LastKnownRelativeScale.");
-
-		//	var newCanvasSize = viewportSize.Divide(relativeScale);
-
-		//	if (newCanvasSize.Width > 5 && newCanvasSize.Height > 5)
-		//	{
-		//		var previousCanvasSize = new SizeDbl(Canvas.ActualWidth, Canvas.ActualHeight);
-		//		Debug.WriteLineIf(_useDetailedDebug, $"Setting the Canvas Size from {previousCanvasSize} to {newCanvasSize}.");
-
-		//		Canvas.Width = newCanvasSize.Width;
-		//		Canvas.Height = newCanvasSize.Height;
-		//	}
-
-		//	_lastKnownBaseFactor = baseFactor;
-		//	_lastKnownRelativeScale = relativeScale;
-		//}
-
-		//private void SetTheCanvasScale(SizeDbl previousContentScale, SizeDbl newContentScale)
-		//{
-		//	var contentScaleX = newContentScale.Width;
-		//	var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScaleX);
-
-		//	//Debug.Assert(_lastKnownRelativeScale == _canvasScaleTransform.ScaleX, "LastKnownRelativeScale is out of sync.");
-
-		//	Debug.WriteLineIf(_useDetailedDebug, $"\nThe BitmapGridControl's Canvas ContentScale is being updated from {previousContentScale} to {newContentScale}. " +
-		//		$"RelativeScale from {_lastKnownRelativeScale} to {relativeScale}. " +
-		//		$"BaseFactor from {_lastKnownBaseFactor} to {baseFactor}." +
-		//		$"Canvas Clip: {GetClipBoundsStr()}");
-
-		//	//_canvas.RenderTransformOrigin = new Point(0, ActualHeight);
-
-		//	_canvasScaleTransform.ScaleX = relativeScale;
-		//	_canvasScaleTransform.ScaleY = relativeScale;
-
-		//	_lastKnownBaseFactor = baseFactor;
-		//	_lastKnownRelativeScale = relativeScale;
-		//}
-
-		//private void ClipAndOffsetOld(RectangleDbl? previousValue, RectangleDbl? newValue)
-		//{
-		//	Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's {nameof(TranslationAndClipSize)} is being updated " +
-		//		$"from {RectangleDbl.FormatNully(previousValue)} to {RectangleDbl.FormatNully(newValue)}." +
-		//		$"The CanvasScale is {new SizeDbl(_canvasScaleTransform.ScaleX, _canvasScaleTransform.ScaleY)}.");
-
-		//	if (newValue != null)
-		//	{
-		//		var verticalAdj = _canvas.ActualHeight - ViewportSize.Height;
-		//		//var verticalAdj = 0;
-
-		//		var contentScaleX = ContentScale.Width;
-		//		var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScaleX);
-
-		//		var cSize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
-		//		var acSize = cSize.Scale(relativeScale);
-
-		//		var verticalAdjComp = acSize.Height - ViewportSize.Height;
-
-		//		Debug.WriteLine($"At ClipAndOffset: Canvas is {verticalAdj} taller than the control. After compensation: it is only: {verticalAdjComp} taller.");
-
-		//		var vpRat = newValue.Value.Width / newValue.Value.Height;
-		//		var csRat = _canvas.ActualWidth / _canvas.ActualHeight;
-
-		//		Debug.WriteLine($"At ClipAndOffset: The ViewportSize has aspect ratio of {vpRat}. The Canvas has an aspect ratio of {csRat}");
-
-		//		//var offset = newValue.Value.Position.Max(0);
-		//		//var size = newValue.Value.Size;
-
-		//		var x = newValue.Value.Scale(1 / relativeScale);
-		//		var offset = x.Position.Max(0);
-		//		var size = x.Size;
-
-		//		_canvasTranslateTransform.X = offset.X;
-		//		_canvasTranslateTransform.Y = offset.Y;
-
-		//		var clipOrigin = new Point(0, 0);
-		//		//var clipOrigin = new Point(0, 0);
-
-		//		Image.SetValue(Canvas.LeftProperty, offset.X - ImageOffset.X);
-		//		Image.SetValue(Canvas.TopProperty, offset.Y - ImageOffset.Y);
-
-		//		Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(size)));
-		//	}
-		//	else
-		//	{
-		//		_canvasTranslateTransform.X = 0;
-		//		_canvasTranslateTransform.Y = 0;
-		//		Canvas.Clip = null;
-		//	}
-		//}
-
 		private SizeDbl ClipAndOffset(RectangleDbl previousValue, RectangleDbl newValue)
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's {nameof(TranslationAndClipSize)} is being updated " +
@@ -627,21 +416,10 @@ namespace MSetExplorer
 			//	$"The CanvasScale is {new SizeDbl(_canvasScaleTransform.ScaleX, _canvasScaleTransform.ScaleY)}.");
 
 			// Compensate for the fact that this implementation has alredy reduced the content by a factor of BaseScale.
-			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(ContentScale.Width);
-
-			//var baseScale = ContentScalerHelper.GetBaseScale(ContentScale.Width);
-			var baseScale = ContentScalerHelper.GetBaseScaleFromBaseFactor(baseFactor);
-
-			//var pos = newValue.Position.Scale(ContentScale.Width);
-			//var logicalViewportSize = newValue.Size.Scale(baseScale);
-
-			//var scaledArea = newValue.Scale(baseScale);
-			//var pos = scaledArea.Position;
-			//var logicalViewportSize = scaledArea.Size;
+			var baseScale = ContentScalerHelper.GetBaseScale(ContentScale.Width);
 
 			var offset = newValue.Position;
-			//var pos = newValue.Position.Scale(baseScale);
-			var pos = newValue.Position.Scale(ContentScale.Width).Scale(baseScale);
+			var pos = newValue.Position.Scale(ContentScale.Width).Scale(baseScale); // ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
 
 			var logicalViewportSize = newValue.Size.Scale(baseScale);
 
@@ -651,20 +429,20 @@ namespace MSetExplorer
 			var previousTranslation = new SizeDbl(_canvasTranslateTransform.X, _canvasTranslateTransform.Y);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is handling ClipAndOffset. Setting the Canvas Size from {previousCanvasSize} to {logicalViewportSize}. Translation from: {previousTranslation} to {offset}.");
-			//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's {nameof(TranslationAndClipSize)} is being set. Pos: {pos}, Size: {logicalViewportSize}.");
 
 			Canvas.Width = logicalViewportSize.Width;
 			Canvas.Height = logicalViewportSize.Height;
 
-			//var offsetA = offset.Max(0);
+			if (_useClip)
+			{
+				// Translate using the unscaled value
+				_canvasTranslateTransform.X = offset.X;
+				_canvasTranslateTransform.Y = offset.Y;
 
-			// Translate using the unscaled value
-			_canvasTranslateTransform.X = offset.X;
-			_canvasTranslateTransform.Y = offset.Y;
-
-			// Clip using the Scaled value.
-			var clipOrigin = new Point(pos.X, pos.Y);
-			Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(logicalViewportSize)));
+				// Clip using the Scaled value.
+				var clipOrigin = new Point(pos.X, pos.Y);
+				Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(logicalViewportSize)));
+			}
 
 			return logicalViewportSize;
 		}
@@ -701,28 +479,26 @@ namespace MSetExplorer
 			// Move the image, up by this complimentary amount, relative to the start of the canvas 128 - Offset -- so that the last pixel row is at canvas position = map size,
 			// and the first pixel shown is some # of pixel rows into the image.
 
-			// TODO: Calculate the ImageOffset.Y using the CanvasSize, ContentSize and ImageSize
+			VectorDbl previousValue = new VectorDbl((double)Image.GetValue(Canvas.LeftProperty), (double)Image.GetValue(Canvas.TopProperty));
 
-			//var adjustedNewValue = new VectorDbl(-1 * newValue.X, newValue.Y - 128);
+			// newValue.Y is the # of pixels of the first block to skip.
+
+			var canvasSize = new SizeDbl(Canvas.ActualWidth, Canvas.ActualHeight);
+
+			var sizeOfLastBlock = MapJobHelper.GetSizeOfLastBlock(canvasSize, newValue);
+
 			var adjustedNewValue = new VectorDbl
 				(
 					-1 * newValue.X,
-					-256 + (newValue.Y == 0 ? 0 : -1 * (128 - newValue.Y))
+					sizeOfLastBlock.Height == 0 ? 0 : -1 * (128 - sizeOfLastBlock.Height)
 				);
-
-			//var adjustedNewValue = newValue.Invert();
-
-			// TODO: NOTE: This assumed that the size of the canvas, rounded up to the nearest whole block matches the size of the image, rounded up to the nearest whole block.
-			// It is possible that the canvas size is larger,
-
-			VectorDbl previousValue = new VectorDbl((double)Image.GetValue(Canvas.LeftProperty), (double)Image.GetValue(Canvas.TopProperty));
 
 			if (ScreenTypeHelper.IsVectorDblChanged(adjustedNewValue, previousValue))
 			{
 				Image.SetValue(Canvas.LeftProperty, adjustedNewValue.X);
 				Image.SetValue(Canvas.TopProperty, adjustedNewValue.Y);
 
-				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ImageOffset is being set from {previousValue} to {adjustedNewValue}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ImageOffset is being set from {previousValue} to {adjustedNewValue}. raw: {newValue}");
 
 				return true;
 			}
@@ -731,6 +507,12 @@ namespace MSetExplorer
 				return false;
 			}
 		}
+
+		//private void PositionImageVertically(Image image, Canvas canvas, VectorDbl imageOffset)
+		//{
+		//	var imageCanvasTop = image.Height - canvas.Height + (128 - imageOffset.Y);
+		//	image.SetValue(Canvas.TopProperty, imageCanvasTop);
+		//}
 
 		private VectorDbl GetTempImageOffset(VectorDbl originalOffset, SizeDbl originalSize, SizeDbl newSize)
 		{
