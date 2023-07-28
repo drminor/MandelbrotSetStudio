@@ -118,7 +118,7 @@ namespace MSetExplorer
 
 		private void ContentOffsetYChanged(object? sender, EventArgs e)
 		{
-			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContentViewportSize);
+			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContrainedViewportSize);
 		}
 
 		#endregion

@@ -372,7 +372,7 @@ namespace MSetExplorer
 												ContentScale_PropertyChanged, 
 												ContentScale_Coerce,
 												false,
-												UpdateSourceTrigger.Explicit
+												UpdateSourceTrigger.PropertyChanged
 												)
 					);
 

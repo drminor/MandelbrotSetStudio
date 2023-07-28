@@ -554,7 +554,7 @@ namespace MSetExplorer
 				var mapAreaSubset = _boundedMapArea.GetView(_theirDisplayPosition);
 				var jobType = _boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
-				//Debug.Assert(contentViewportSize == _boundedMapArea.ContentViewportSize, $"MoveTo is being called with a ContentViewportSize {contentViewportSize} different than {_boundedMapArea.ContentViewportSize}, the one being used by the BoundedMapArea to determine which MapSections are neeeded.");
+				Debug.Assert(contentViewportSize == _boundedMapArea.ContentViewportSize, $"MoveTo is being called with a ContentViewportSize {contentViewportSize} different than {_boundedMapArea.ContentViewportSize}, the one being used by the BoundedMapArea to determine which MapSections are neeeded.");
 
 				ReportMove(_boundedMapArea, contentOffset);
 
@@ -737,6 +737,9 @@ namespace MSetExplorer
 			// This is the same as the ContentViewportSize, but scaled down by the BaseScale of 1, 0.5, 0.25, 0.125, etc., depending on how 'Zoomed Out' we are.
 			// The BitmapGrid's LogicalViewportSize is synched with this ViewportSize.
 
+			Debug.Assert(contentScale == _displayZoom, "The DisplayZoom does not equal the new ContentScale on the call to LoadNewView.");
+
+			//_displayZoom = contentScale;
 			var (baseFactor, _) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
 
 			boundedMapArea.UpdateSizeAndScale(contentViewportSize, baseFactor);
