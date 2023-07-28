@@ -179,7 +179,7 @@ namespace MSS.Common
 			{
 				var offsetInSamplePoints = positionV.Divide(nrmSamplePointDelta);
 				var blockSize = mapAreaInfoV2.Subdivision.BlockSize;
-				mapBlockOffset = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+				mapBlockOffset = RMapHelper.GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
 			}
 
 			var binaryPrecision = Math.Abs(nrmSamplePointDelta.Exponent);
@@ -343,13 +343,12 @@ namespace MSS.Common
 		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
 		{
 			var blockSize = RMapConstants.BLOCK_SIZE;
-			var extent = canvasSize.Round();
-
 			var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
 
+			var extent = canvasSize.Round();
 			var extentSanFirstBlock = extent.Sub(sizeOfFirstBlock);
 
-			_ = extentSanFirstBlock.DivRem(blockSize, out var remainder);
+			_ = RMapHelper.GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
 
 			return remainder;
 		}
@@ -452,7 +451,7 @@ namespace MSS.Common
 			var distance = new RVector(mapPosition);
 			var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta/*, out newPosition*/);
 
-			var result = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+			var result = RMapHelper.GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
 
 			return result;
 		}

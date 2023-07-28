@@ -146,12 +146,12 @@ namespace MSS.Common
 
 			var offsetInSamplePoints = rPointAndDelta.Position.Divide(rPointAndDelta.SamplePointDelta);
 
-			var result = GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+			var result = GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
 
 			return result;
 		}
 
-		public static BigVector GetOffsetAndRemainder(BigVector offsetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)
+		public static BigVector GetOffsetInBlockSizeUnits(BigVector offsetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
 			var blocksX = BigInteger.DivRem(offsetInSamplePoints.X, blockSize.Width, out var remainderX);
 			var blocksY = BigInteger.DivRem(offsetInSamplePoints.Y, blockSize.Height, out var remainderY);
@@ -173,6 +173,29 @@ namespace MSS.Common
 
 			var offsetInBlocks = new BigVector(blocksX, blocksY);
 			canvasControlOffset = new VectorInt(remainderX, remainderY);
+
+			return offsetInBlocks;
+		}
+
+		public static SizeInt GetSizeInBlockSizeUnits(SizeInt extentInSamplePoints, SizeInt blockSize, out SizeInt remainder)
+		{
+			var blocksX = Math.DivRem(extentInSamplePoints.Width, blockSize.Width, out var remainderX);
+			var blocksY = Math.DivRem(extentInSamplePoints.Height, blockSize.Height, out var remainderY);
+
+			if (remainderX < 0)
+			{
+				blocksX--;
+				remainderX += blockSize.Width;
+			}
+
+			if (remainderY < 0)
+			{
+				blocksY--;
+				remainderY += blockSize.Height;
+			}
+
+			var offsetInBlocks = new SizeInt(blocksX, blocksY);
+			remainder = new SizeInt(remainderX, remainderY);
 
 			return offsetInBlocks;
 		}

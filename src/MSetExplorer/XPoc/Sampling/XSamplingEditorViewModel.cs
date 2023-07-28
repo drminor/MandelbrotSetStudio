@@ -452,7 +452,7 @@ namespace MSetExplorer.XPoc
 			var distance = new RVector(mapPosition);
 			var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta/*, out newPosition*/);
 
-			var result = RMapHelper.GetOffsetAndRemainder(offsetInSamplePoints, blockSize, out canvasControlOffset);
+			var result = RMapHelper.GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
 
 			return result;
 		}
