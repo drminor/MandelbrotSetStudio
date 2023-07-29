@@ -44,7 +44,7 @@ namespace MSetExplorer
 		ScrollBarVisibility _originalVerticalScrollBarVisibility;
 		ScrollBarVisibility _originalHorizontalScrollBarVisibility;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -189,37 +189,31 @@ namespace MSetExplorer
 		/// </summary>
 		protected override Size MeasureOverride(Size availableSize)
 		{
+			var dsBefore = DesiredSize;
 			Size childSize = base.MeasureOverride(availableSize);
+			var dsBetween = DesiredSize;
 
 			ContentBeingZoomed?.Measure(availableSize);
 
-			//UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(availableSize));
+			//double width = availableSize.Width;
+			//double height = availableSize.Height;
 
-			double width = availableSize.Width;
-			double height = availableSize.Height;
+			//if (double.IsInfinity(width))
+			//{
+			//	width = childSize.Width;
+			//}
 
-			if (double.IsInfinity(width))
-			{
-				width = childSize.Width;
-			}
+			//if (double.IsInfinity(height))
+			//{
+			//	height = childSize.Height;
+			//}
 
-			if (double.IsInfinity(height))
-			{
-				height = childSize.Height;
-			}
+			//var result = new Size(width, height);
 
-			var result = new Size(width, height);
+			var result = childSize;
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
-
-			// TODO: Figure out when its best to call UpdateViewportSize.
-			// ANSWER: Don't call Update during Measure, only during Arrange.
-			//UpdateViewportSize(childSize);
-			//UpdateViewportSize(result);
-
-			//UpdateTranslationX();
-			//UpdateTranslationY();
-			//UpdateTranslation();
+			Debug.WriteLine($"PanAndZoom Measure. Previous DesiredSize {dsBefore}. Mid DesiredSize: {dsBetween}. Available: {availableSize}. Base returns {childSize}, NewDesiredSize = {DesiredSize}. Using {result}.");
 
 			return result;
 		}
@@ -233,11 +227,12 @@ namespace MSetExplorer
 
 			if (ContentBeingZoomed != null)
 			{
+				Debug.WriteLine($"The PanAndZoomControl is calling ContentBeingZoomed.Arrange({finalSize})");
 				ContentBeingZoomed.Arrange(new Rect(finalSize));
 
 				if (childSize != finalSize)
 				{
-					Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize} vs. {finalSize}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize} vs. {finalSize}.");
 				}
 				
 				//UpdateViewportSize(ScreenTypeHelper.ConvertToSizeDbl(childSize));
@@ -307,6 +302,9 @@ namespace MSetExplorer
 				c._disableContentOffsetChangeEvents = true;
 
 				c.UpdateContentViewportSize();
+				c.ContentZoomFocus = c.GetContentCenter();
+
+				//c.UpdateContentZoomFocus();
 				c.InvalidateScrollInfo();
 			}
 			finally
@@ -325,8 +323,11 @@ namespace MSetExplorer
 		public void ResetExtentWithPositionAndScale(SizeDbl unscaledExtent, SizeDbl unscaledViewportSize, VectorDbl contentOffset, double contentScale, double minContentScale, double maxContentScale)
 		{
 			var contentViewportSize = unscaledViewportSize.Divide(contentScale);
-			var constrainedViewportSize = unscaledExtent.Min(contentViewportSize);
+			//var constrainedViewportSize = unscaledExtent.Min(contentViewportSize);
 
+			_constrainedContentViewportSize = unscaledExtent.Min(contentViewportSize);
+
+			// Set ours to zero to signal that all changes are prepatory
 			UnscaledExtent = new SizeDbl();
 
 			if (_contentScaler != null)
@@ -343,20 +344,30 @@ namespace MSetExplorer
 				}
 			}
 
-			_maxContentOffset = unscaledExtent.Sub(constrainedViewportSize).Max(0);
+			// Use the new extent to determine offsets.
+			//_maxContentOffset = unscaledExtent.Sub(constrainedViewportSize).Max(0);
+			_maxContentOffset = unscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
 
+			// Use the same logic as the Coerce OffsetX / OffsetY 
 			var adjustedContentOffset = new VectorDbl(
 				Math.Min(Math.Max(contentOffset.X, 0.0), _maxContentOffset.Width),
 				Math.Min(Math.Max(contentOffset.Y, 0.0), _maxContentOffset.Height)
 				);
 
+
+			// Set the properties without executing the 'OnChange' logic.
 			ContentOffsetX = adjustedContentOffset.X;
 			ContentOffsetY = adjustedContentOffset.Y;
 
 			MinContentScale = minContentScale;
 			MaxContentScale = maxContentScale;
-
 			ContentScale = contentScale;
+
+			//UpdateContentZoomFocus(); // Added 7/28/2023
+			ContentZoomFocus = GetContentCenter();
+
+
+			// Update the Zoom Scroll Bar control values
 			ZoomOwner?.InvalidateScaleContentInfo();
 		}
 
@@ -387,23 +398,13 @@ namespace MSetExplorer
 			var newValue = (double)e.NewValue;
 
 			//Debug.WriteLineIf(c._useDetailedDebug, $"PanAndZoomControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
-			Debug.WriteLine($"PanAndZoomControl: ContentScale is changing from {oldValue} to {newValue}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"PanAndZoomControl: ContentScale is changing from {oldValue} to {newValue}.");
 
-			if (!c.UpdateScale(newValue))
-			{
-				// The new value is the same as the both the ScaleX and ScaleY value on the _contentScaleTransform property.
-
-				Debug.WriteLine("On ContentScale_PropertyChanged, the content's ScaleTransform was not updated. The existing value is equal to the new value.");
-
-				// TODO: Check This:
-
-				// Don't stop here, but continue.
-				//return;
-			}
+			c.UpdateScale(newValue);
 
 			if (c.UnscaledExtent.IsNearZero())
 			{
-				Debug.WriteLine("On ContentScale_PropertyChanged, the UnscaledExtent is Zero, the ContentScale has been updated, however no futher processing will be done.");
+				Debug.WriteLineIf(c._useDetailedDebug, "On ContentScale_PropertyChanged, the UnscaledExtent is Zero, the ContentScale has been updated, however no futher processing will be done.");
 				return;
 			}
 
@@ -416,6 +417,9 @@ namespace MSetExplorer
 				if (c._enableContentOffsetUpdateFromScale)
 				{
 					c.UpdateContentOffsetsFromScale();
+					//c.UpdateContentZoomFocus();
+					c.ContentZoomFocus = c.GetContentCenter();
+
 				}
 			}
 			finally
@@ -509,7 +513,9 @@ namespace MSetExplorer
 			if (!c._disableContentFocusSync)
 			{
 				// Don't update the ZoomFocus if zooming is in progress.
-				c.UpdateContentZoomFocus();
+				//c.UpdateContentZoomFocus();
+				c.ContentZoomFocus = c.GetContentCenter();
+
 			}
 
 			if (!c._disableContentOffsetChangeEvents)
@@ -581,7 +587,8 @@ namespace MSetExplorer
 			if (!c._disableContentFocusSync)
 			{
 				// Don't update the ZoomFocus if zooming is in progress.
-				c.UpdateContentZoomFocus();
+				//c.UpdateContentZoomFocus();
+				c.ContentZoomFocus = c.GetContentCenter();
 			}
 
 			if (!c._disableContentOffsetChangeEvents)
@@ -611,7 +618,7 @@ namespace MSetExplorer
 				value = Math.Min(Math.Max(value, minOffsetY), maxOffsetY);
 			}
 
-			Debug.WriteLine($"CoerceOffsetY got: {baseValue} and returned {value}. The maximum is {c._maxContentOffset.Height}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CoerceOffsetY got: {baseValue} and returned {value}. The maximum is {c._maxContentOffset.Height}.");
 
 			return value;
 		}
@@ -649,7 +656,8 @@ namespace MSetExplorer
 			UpdateContentViewportSize();
 
 			// Initialise the content zoom focus point.
-			UpdateContentZoomFocus();
+			//UpdateContentZoomFocus();
+			ContentZoomFocus = GetContentCenter();
 
 			// Reset the viewport zoom focus to the center of the viewport.
 			ResetViewportZoomFocus();
@@ -823,7 +831,7 @@ namespace MSetExplorer
 
 				if (ScreenTypeHelper.IsDoubleChanged(newContentScale, previousValue, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
 				{
-					Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale from: {previousValue} to {newContentScale}. Update was successful.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale from: {previousValue} to {newContentScale}. Update was successful.");
 
 					_disableViewportChangedEvents = true;
 					try
@@ -836,23 +844,40 @@ namespace MSetExplorer
 						_disableViewportChangedEvents = false;
 					}
 
-
 					result = true;
 				}
 				else
 				{
-					Debug.WriteLine($"The PanAndZoom control is setting the ContentScaler's ContentScale. Update was NOT made. PreviousValue: {previousValue}, NewValue: {newContentScale}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale. Update was NOT made. PreviousValue: {previousValue}, NewValue: {newContentScale}.");
 				}
 			}
 
 			return result;
 		}
 
+		private bool IsScaleChanged(double newContentScale)
+		{
+			if (_contentScaler == null)
+			{
+				return false;
+			}
+
+			var previousValue = _contentScaler.ContentScale.Width;
+			var result = ScreenTypeHelper.IsDoubleChanged(newContentScale, previousValue, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF);
+			return result;
+		}
+
 		private void UpdateContentZoomFocus()
 		{
 			var contentOffset = new PointDbl(ContentOffsetX, ContentOffsetY);
-
 			ContentZoomFocus = contentOffset.Translate(_constrainedContentViewportSize.Divide(2));
+		}
+
+		private PointDbl GetContentCenter()
+		{
+			var contentOffset = new PointDbl(ContentOffsetX, ContentOffsetY);
+			var result = contentOffset.Translate(_constrainedContentViewportSize.Divide(2));
+			return result;
 		}
 
 		// For this implementation the ViewportZoomFocus is always at the center
@@ -871,15 +896,19 @@ namespace MSetExplorer
 			{
 				_disableContentFocusSync = true;
 
-				var viewportOffset = ViewportZoomFocus.Sub(UnscaledViewportSize.Divide(2));
-				var contentOffset1 = viewportOffset.Divide(ContentScale);
+				//var viewportOffset = ViewportZoomFocus.Sub(UnscaledViewportSize.Divide(2));
+				//var contentOffset1 = viewportOffset.Divide(ContentScale);
 
-				var contentOffset2 = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)).Diff(contentOffset1);
+				var newContentCenter = GetContentCenter();
+				var contentOffset2 = newContentCenter.Diff(ContentZoomFocus);
+				//var contentOffset2 = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)).Diff(contentOffset1);
 
-				Debug.WriteLine($"WARNING: ContentOffsets are being updated after updating the scale. NewValue: {contentOffset2}.");
+				//Debug.WriteLineIf(_useDetailedDebug, $"Updating ContentOffsetsFromScale. viewportOffset: {viewportOffset}, contentOFfset1: {contentOffset1}, NewValue: {contentOffset2}. ");
+				//Debug.WriteLine($"Updating ContentOffsetsFromScale. viewportOffset: {viewportOffset.ToString("F2")}, contentOFfset1: {contentOffset1.ToString("F2")}, NewValue: {contentOffset2.ToString("F2")}. ");
+				Debug.WriteLine($"Updating ContentOffsetsFromScale. NewValue: {contentOffset2.ToString("F2")}. ");
 
-				ContentOffsetX = contentOffset2.X;
-				ContentOffsetY = contentOffset2.Y;
+				ContentOffsetX = ContentOffset.X + contentOffset2.X;
+				ContentOffsetY = ContentOffset.Y + contentOffset2.Y;
 			}
 			finally
 			{
@@ -984,25 +1013,25 @@ namespace MSetExplorer
 
 		public void PageUp()
 		{
-			Debug.WriteLine("\nUser is Paging Up.");
+			Debug.WriteLineIf(_useDetailedDebug, "\nUser is Paging Up.");
 			ContentOffsetY -= ContentViewportSize.Height;
 		}
 
 		public void PageDown()
 		{
-			Debug.WriteLine("\nUser is Paging Down.");
+			Debug.WriteLineIf(_useDetailedDebug, "\nUser is Paging Down.");
 			ContentOffsetY += ContentViewportSize.Height;
 		}
 
 		public void PageLeft()
 		{
-			Debug.WriteLine("\nUser is Paging Left.");
+			Debug.WriteLineIf(_useDetailedDebug, "\nUser is Paging Left.");
 			ContentOffsetX -= ContentViewportSize.Width;
 		}
 
 		public void PageRight()
 		{
-			Debug.WriteLine("\nUser is Paging Right.");
+			Debug.WriteLineIf(_useDetailedDebug, "\nUser is Paging Right.");
 			ContentOffsetX += ContentViewportSize.Width;
 		}
 

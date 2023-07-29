@@ -319,9 +319,7 @@ namespace MSS.Common
 			var adjPos = RNormalizer.Normalize(newPosition, coords.Size, out var adjMapSize);
 			var newCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
 
-			//if (_useDetailedDebug) ReportCoordsDiff(coords, newCoords, "for a new display size");
-
-			ReportCoordsDiff(coords, newCoords, "for a new display size (ScaleConstant).");
+			if (_useDetailedDebug) ReportCoordsDiff(coords, newCoords, "for a new display size (ScaleConstant).");
 
 			//var localMapBlockOffset = GetLocalMapBlockOffset(mapBlockOffset, subdivision);
 			var newSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);

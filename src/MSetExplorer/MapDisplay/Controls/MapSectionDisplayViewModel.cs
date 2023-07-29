@@ -42,7 +42,7 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -173,7 +173,7 @@ namespace MSetExplorer
 						{
 							if (CurrentAreaColorAndCalcSettings != null)
 							{
-								Debug.WriteLine("\n\t\t====== As the ViewportSize is updated, the MapSectionDisplayViewModel is calling ReuseAndLoad.");
+								Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== As the ViewportSize is updated, the MapSectionDisplayViewModel is calling ReuseAndLoad.");
 
 								var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
 								newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
@@ -382,7 +382,7 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
-				Debug.WriteLine($"\n========== A new Job is being submitted, unbounded.");
+				Debug.WriteLineIf(_useDetailedDebug, $"\n========== A new Job is being submitted, unbounded.");
 
 				CheckViewPortSize();
 
@@ -422,7 +422,7 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
-				Debug.WriteLine($"\n========== A new Job is being submitted: Size: {posterSize}, Display Position: {displayPosition}, Zoom: {displayZoom}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"\n========== A new Job is being submitted: Size: {posterSize}, Display Position: {displayPosition}, Zoom: {displayZoom}.");
 
 				CheckViewPortSize();
 
@@ -443,13 +443,13 @@ namespace MSetExplorer
 
 				_theirDisplayPosition = _boundedMapArea.GetScaledDisplayPosition(displayPosition, out var unInvertedY);
 
-				Debug.WriteLine("\n\t\t====== Raising the DisplaySettingsInitialized Event.");
+				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== Raising the DisplaySettingsInitialized Event.");
 				DisplaySettingsInitialized?.Invoke(this, new DisplaySettingsInitializedEventArgs(posterSize, _theirDisplayPosition, _displayZoom));
 
 				CurrentAreaColorAndCalcSettings = newValue;
 
 				// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
-				Debug.WriteLine("\n\t\t====== Setting the Unscaled Extent to complete the process of submitting the job.");
+				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== Setting the Unscaled Extent to complete the process of submitting the job.");
 				UnscaledExtent = _boundedMapArea.PosterSize;
 			}
 		}
@@ -480,7 +480,7 @@ namespace MSetExplorer
 						throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
 					}
 
-					Debug.WriteLine($"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}. ContentScale: {contentScale}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}. ContentScale: {contentScale}.");
 
 					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, contentScale);
 				}
@@ -546,7 +546,7 @@ namespace MSetExplorer
 					throw new InvalidOperationException("Cannot call MoveTo, if the CurrentAreaColorAndCalcSettings is null.");
 				}
 
-				Debug.WriteLine("\n==========  Executing MoveTo.");
+				Debug.WriteLineIf(_useDetailedDebug, "\n==========  Executing MoveTo.");
 
 				_theirDisplayPosition = contentOffset;
 
@@ -558,9 +558,9 @@ namespace MSetExplorer
 
 				ReportMove(_boundedMapArea, contentOffset);
 
-				//newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, out var lastSectionWasIncluded);
+				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, out var lastSectionWasIncluded);
 				
-				newJobNumber = DiscardAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, out var lastSectionWasIncluded);
+				//newJobNumber = DiscardAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, out var lastSectionWasIncluded);
 
 
 				if (newJobNumber.HasValue && lastSectionWasIncluded)
@@ -749,21 +749,21 @@ namespace MSetExplorer
 			var mapAreaSubset = boundedMapArea.GetView(_theirDisplayPosition);
 			var jobType = boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
 
+			ReportUpdateSizeAndPos(boundedMapArea, contentViewportSize, contentOffset);
+
 			// Keep our ViewportSize property in sync.
 			_viewportSize = mapAreaSubset.CanvasSize;
 
-			ReportUpdateSizeAndPos(boundedMapArea, contentViewportSize, contentOffset);
+			if (boundedMapArea.BaseFactor == currentBaseFactor)
+			{
+				newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
+			}
+			else
+			{
+				newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
+			}
 
-			//if (boundedMapArea.BaseFactor == currentBaseFactor)
-			//{
-			//	newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
-			//}
-			//else
-			//{
-			//	newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
-			//}
-
-			newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
+			//newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
 
 			if (newJobNumber.HasValue && lastSectionWasIncluded)
 			{
@@ -782,12 +782,12 @@ namespace MSetExplorer
 				var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewportSize);
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
-					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
+					Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
 					newJobNumber = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 				else
 				{
-					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
+					Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
 					newJobNumber = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 			}
@@ -885,11 +885,11 @@ namespace MSetExplorer
 						if (numberCleared != numberRequestedToClear)
 						{
 							var diff = numberRequestedToClear - numberCleared;
-							Debug.WriteLine($"{diff} MapSections were not cleared out of a total {numberRequestedToClear} requested.");
+							Debug.WriteLineIf(_useDetailedDebug, $"{diff} MapSections were not cleared out of a total {numberRequestedToClear} requested.");
 						}
 						else
 						{
-							Debug.WriteLine($"{numberCleared} MapSections were cleared.");
+							Debug.WriteLineIf(_useDetailedDebug, $"{numberCleared} MapSections were cleared.");
 						}
 					}
 
@@ -956,7 +956,7 @@ namespace MSetExplorer
 				stopWatch.Restart();
 				_bitmapGrid.ClearDisplay();
 				var msToClearDisplay = stopWatch.ElapsedMilliseconds;
-				Debug.WriteLine($"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
+				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
 			}
 		}
 
@@ -1123,7 +1123,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportMove(BoundedMapArea boundedMapArea, VectorDbl contentOffset/*, SizeDbl contentViewportSize*/)
 		{
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
@@ -1141,6 +1141,10 @@ namespace MSetExplorer
 		[Conditional("DEBUG2")]
 		private void ReportUpdateSizeAndPos(BoundedMapArea boundedMapArea, SizeDbl viewportSize, VectorDbl contentOffset/*, double contentScale, double baseFactor*/)
 		{
+
+			// TODO: Update ReportUpdateSizeAndPos to report on what changed, compared to the LastMapAreaInfo.
+
+
 			var scaledDispPos = boundedMapArea.GetScaledDisplayPosition(contentOffset, out var unInvertedY);
 
 			var x = scaledDispPos.X;

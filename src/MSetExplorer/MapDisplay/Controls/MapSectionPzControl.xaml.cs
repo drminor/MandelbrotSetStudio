@@ -18,6 +18,8 @@ namespace MSetExplorer
 
 		private IMapDisplayViewModel _vm;
 
+		private bool _useDetailedDebug = false;
+
 		#endregion
 
 		#region Constructor
@@ -36,7 +38,7 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				Debug.WriteLine("The DataContext is null as the MapSectionDisplayControl is being loaded.");
+				Debug.WriteLineIf(_useDetailedDebug, "The DataContext is null as the MapSectionDisplayControl is being loaded.");
 				return;
 			}
 			else
@@ -52,7 +54,7 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetYChanged;
 
-				Debug.WriteLine("The MapSectionPzControl is now loaded");
+				Debug.WriteLineIf(_useDetailedDebug, "The MapSectionPzControl is now loaded");
 			}
 		}
 
@@ -98,17 +100,17 @@ namespace MSetExplorer
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
-			Debug.WriteLine("\n========== The MapSectionPzControl is handling the PanAndZoom control's ViewportChanged event.");
+			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ViewportChanged event.");
 
 			//CheckForStaleContentValues(e);
 
 			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(e.ContentScale);
-			Debug.WriteLine($"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} / Unscaled: {e.UnscaledViewportSize}, " +
+			Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} / Unscaled: {e.UnscaledViewportSize}, " +
 				$"Offset:{e.ContentOffset}, Scale:{e.ContentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 
-			Debug.WriteLine($"========== The MapSectionPzControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
+			Debug.WriteLineIf(_useDetailedDebug, $"========== The MapSectionPzControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
 		}
 
 		private void ContentOffsetXChanged(object? sender, EventArgs e)

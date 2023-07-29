@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Types;
 using PngImageLib;
 using System;
 using System.Diagnostics;
@@ -69,6 +70,46 @@ namespace ImageBuilder
 
 			return result;
 		}
+
+		//public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
+		//{
+		//	var blockSize = RMapConstants.BLOCK_SIZE;
+		//	var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
+
+		//	var extent = canvasSize.Round();
+		//	var extentSanFirstBlock = extent.Sub(sizeOfFirstBlock);
+
+		//	_ = RMapHelper.GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
+
+		//	return remainder;
+		//}
+
+
+		//// 128 - sizeOfLastBlock.Height
+
+		//public static SizeInt GetSizeInBlockSizeUnits(SizeInt extentInSamplePoints, SizeInt blockSize, out SizeInt remainder)
+		//{
+		//	var blocksX = Math.DivRem(extentInSamplePoints.Width, blockSize.Width, out var remainderX);
+		//	var blocksY = Math.DivRem(extentInSamplePoints.Height, blockSize.Height, out var remainderY);
+
+		//	if (remainderX < 0)
+		//	{
+		//		blocksX--;
+		//		remainderX += blockSize.Width;
+		//	}
+
+		//	if (remainderY < 0)
+		//	{
+		//		blocksY--;
+		//		remainderY += blockSize.Height;
+		//	}
+
+		//	var offsetInBlocks = new SizeInt(blocksX, blocksY);
+		//	remainder = new SizeInt(remainderX, remainderY);
+
+		//	return offsetInBlocks;
+		//}
+
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ushort[]? GetOneLineFromCountsBlock(ushort[]? counts, int lPtr, int stride)

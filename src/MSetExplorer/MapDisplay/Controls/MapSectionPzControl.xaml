@@ -64,6 +64,7 @@
                 CanContentScroll="True"
                 VerticalScrollBarVisibility="Hidden"
                 HorizontalScrollBarVisibility="Hidden"
+                IsDeferredScrollingEnabled="True"
                 >
 
                 <!--<local:PanAndZoomControl

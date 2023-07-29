@@ -182,12 +182,12 @@ namespace MSetExplorer
 
 				if (imageSizeInBlocks != ImageSizeInBlocks)
 				{
-					Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
 					ImageSizeInBlocks = imageSizeInBlocks;
 				}
 				else
 				{
-					Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks remains the same.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks remains the same.");
 				}
 
 				_logicalViewportSize = value;
@@ -203,12 +203,12 @@ namespace MSetExplorer
 
 				if (imageSizeInBlocks != ImageSizeInBlocks)
 				{
-					Debug.WriteLine($"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
 					ImageSizeInBlocks = imageSizeInBlocks;
 				}
 				else
 				{
-					Debug.WriteLine($"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks remains the same.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks remains the same.");
 				}
 
 				_canvasControlOffset = value;
@@ -279,7 +279,6 @@ namespace MSetExplorer
 		{
 			var anyDrawnOnLastRow = false;
 
-			//var lastSectionWasIncluded = false;
 			foreach (var mapSection in mapSections)
 			{
 				if (mapSection.MapSectionVectors != null)
@@ -314,17 +313,11 @@ namespace MSetExplorer
 					{
 						_disposeMapSection(mapSection);
 					}
-
-					//if (mapSection.IsLastSection)
-					//{
-					//	lastSectionWasIncluded = true;
-					//}
 				}
 			}
 
-			if (!anyDrawnOnLastRow) Debug.WriteLine($"No blocks were drawn on the last row for DrawSections: {mapSections.FirstOrDefault()?.JobNumber}.");
-
-			//return lastSectionWasIncluded;
+			if (mapSections.Count > 0 && !anyDrawnOnLastRow)
+				Debug.WriteLine($"No blocks were drawn on the last row for DrawSections: {mapSections.FirstOrDefault()?.JobNumber}.");
 		}
 
 		public int ClearSections(IList<MapSection> mapSections)
@@ -373,7 +366,7 @@ namespace MSetExplorer
 				}
 			}
 
-			var anyDrawnOnLastRow = false;
+			//var anyDrawnOnLastRow = false;
 
 			var sectionsDisposed = new List<MapSection>();
 
@@ -389,7 +382,7 @@ namespace MSetExplorer
 						{
 							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 
-							if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
+							//if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
 
 							var loc = invertedBlockPos.Scale(_blockSize);
 
@@ -413,7 +406,8 @@ namespace MSetExplorer
 				}
 			}
 
-			if (!anyDrawnOnLastRow) Debug.WriteLine($"No blocks were drawn on the last row for ReDraw:{_mapSections.FirstOrDefault()?.JobNumber}.");
+			//if (_mapSections.Count > 0 && !anyDrawnOnLastRow)
+			//	Debug.WriteLine($"No blocks were drawn on the last row for ReDraw:{_mapSections.FirstOrDefault()?.JobNumber}.");
 
 			foreach (var ms in sectionsDisposed)
 			{

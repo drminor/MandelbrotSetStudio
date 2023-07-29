@@ -73,7 +73,7 @@ namespace MSS.Common
 		private static void ReportSamplePointDeltaScaling(RSize original, double factor, RValue rReciprocal, RSize result)
 		{
 			var rReciprocalDiagStr = rReciprocal.ToString(includeDecimalOutput: true);
-			Debug.WriteLine($"GetNewSamplePointDelta scaled {original} by {factor} ({rReciprocalDiagStr}) and got {result}.");
+			//Debug.WriteLine($"GetNewSamplePointDelta scaled {original} by {factor} ({rReciprocalDiagStr}) and got {result}.");
 		}
 
 		public static int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)

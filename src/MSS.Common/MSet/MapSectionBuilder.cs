@@ -174,11 +174,11 @@ namespace MSS.Common
 
 				if (_currentLimbCount == adjustedLimbCount)
 				{
-					Debug.WriteLine($"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount remains the same at {adjustedLimbCount}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount remains the same at {adjustedLimbCount}.");
 				}
 				else
 				{
-					Debug.WriteLine($"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount is being updated to {adjustedLimbCount}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount is being updated to {adjustedLimbCount}.");
 				}
 
 				_currentLimbCount = adjustedLimbCount;
@@ -206,7 +206,7 @@ namespace MSS.Common
 			//Debug.WriteLineIf(_useDetailedDebug, $"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}.");
 
 			var ts = DateTime.Now.ToLongTimeString();
-			Debug.WriteLine($"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}. At ts={ts}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}. At ts={ts}.");
 
 			if (mapExtentInBlocks.NumberOfCells > 400)
 			{

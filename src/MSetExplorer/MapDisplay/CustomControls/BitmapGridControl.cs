@@ -119,51 +119,51 @@ namespace MSetExplorer
 			}
 		}
 
-		//private SizeDbl ViewportSizeInternalOld
-		//{
-		//	get => _viewportSizeInternal;
-		//	set
-		//	{
-		//		if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
-		//		{
-		//			var previousValue = _viewportSizeInternal;
-		//			_viewportSizeInternal = value;
+		private SizeDbl ViewportSizeInternalNew
+		{
+			get => _viewportSizeInternal;
+			set
+			{
+				if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
+				{
+					var previousValue = _viewportSizeInternal;
+					_viewportSizeInternal = value;
 
-		//			//Debug.WriteLine($"BitmapGridControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
+					//Debug.WriteLine($"BitmapGridControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
 
-		//			var newViewportSize = value;
+					var newViewportSize = value;
 
-		//			if (previousValue.Width < 25 || previousValue.Height < 25)
-		//			{
-		//				// Update the 'real' value immediately
-		//				Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
-		//				ViewportSize = newViewportSize;
-		//			}
-		//			else
-		//			{
-		//				// Update the screen immediately, while we are 'holding' back the update.
-		//				//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
-		//				var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
-		//				_ = UpdateImageOffset(tempOffset);
+					if (previousValue.Width < 25 || previousValue.Height < 25)
+					{
+						// Update the 'real' value immediately
+						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
+						ViewportSize = newViewportSize;
+					}
+					else
+					{
+						// Update the screen immediately, while we are 'holding' back the update.
+						//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
+						var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
+						_ = UpdateImageOffset(tempOffset);
 
-		//				// Delay the 'real' update until no futher updates in the last 150ms.
-		//				_viewPortSizeDispatcher.Debounce(
-		//					interval: 150,
-		//					action: parm =>
-		//					{
-		//						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
-		//						ViewportSize = newViewportSize;
-		//					},
-		//					param: null
-		//				);
-		//			}
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLineIf(_useDetailedDebug, $"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
-		//		}
-		//	}
-		//}
+						// Delay the 'real' update until no futher updates in the last 150ms.
+						_viewPortSizeDispatcher.Debounce(
+							interval: 150,
+							action: parm =>
+							{
+								Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
+								ViewportSize = newViewportSize;
+							},
+							param: null
+						);
+					}
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
+				}
+			}
+		}
 
 		private SizeDbl ViewportSizeInternal
 		{
@@ -216,18 +216,18 @@ namespace MSetExplorer
 			}
 		}
 
-		public VectorDbl ImagePositionYInv
-		{
-			get
-			{
-				var result = new VectorDbl(
-					(double)Image.GetValue(Canvas.LeftProperty),
-					(double)Image.GetValue(Canvas.TopProperty)
-				);
+		//public VectorDbl ImagePositionYInv
+		//{
+		//	get
+		//	{
+		//		var result = new VectorDbl(
+		//			(double)Image.GetValue(Canvas.LeftProperty),
+		//			(double)Image.GetValue(Canvas.TopProperty)
+		//		);
 
-				return result;
-			}
-		}
+		//		return result;
+		//	}
+		//}
 
 		public SizeDbl ContentScale
 		{
@@ -235,7 +235,8 @@ namespace MSetExplorer
 			set
 			{
 				_contentScale = value;
-				SetTheCanvasScaleAndSize(LogicalViewportSize, _contentScale);
+				//SetTheCanvasScaleAndSize(LogicalViewportSize, _contentScale);
+				SetTheCanvasScale(_contentScale);
 			}
 		}
 
@@ -302,7 +303,6 @@ namespace MSetExplorer
 		/// </summary>
 		protected override Size ArrangeOverride(Size finalSize)
 		{
-			//var finalSize = ForceSize(finalSizeRaw);
 			Size childSize = base.ArrangeOverride(finalSize);
 
 			if (childSize != finalSize)
@@ -312,40 +312,30 @@ namespace MSetExplorer
 
 			//UpdateViewportSize(childSize);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl is about to call _ourContent.Arrange({finalSize}). The canvas size is {new Size(Canvas.Width, Canvas.Height)}, actual canvas size: {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
 			_ourContent.Arrange(new Rect(finalSize));
 
-			var canvas = Canvas;
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl has called _ourContent.Arrange({finalSize}). The canvas size is {new Size(Canvas.Width, Canvas.Height)}, actual canvas size: {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
-			if (canvas.Width != finalSize.Width)
-			{
-				canvas.Width = finalSize.Width;
-			}
+			//var canvas = Canvas;
 
-			if (canvas.Height != finalSize.Height)
-			{
-				canvas.Height = finalSize.Height;
-			}
+			//if (canvas.Width != finalSize.Width)
+			//{
+			//	canvas.Width = finalSize.Width;
+			//}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: Is setting the ViewportSizeInternal property to {childSize}.");
+			//if (canvas.Height != finalSize.Height)
+			//{
+			//	canvas.Height = finalSize.Height;
+			//}
+
+			//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: Is setting the ViewportSizeInternal property to {childSize}.");
 
 			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
 
 			return finalSize;
 		}
-
-		//private Size ForceSize(Size finalSize)
-		//{
-		//	if (finalSize.Width > 1000 && finalSize.Width < 1040 && finalSize.Height > 1000 && finalSize.Height < 1040)
-		//	{
-		//		return new Size(1024, 1024);
-		//	}
-		//	else
-		//	{
-		//		return finalSize;
-		//	}
-		//}
 
 		public override void OnApplyTemplate()
 		{
@@ -394,11 +384,26 @@ namespace MSetExplorer
 			{
 				var previousCanvasSize = new SizeDbl(Canvas.ActualWidth, Canvas.ActualHeight);
 				var previousScale = _canvasScaleTransform.ScaleX;
-				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is handling SetTheCanvasScaleAndSize. Setting the Canvas Size from {previousCanvasSize} to {newCanvasSize}. Scale from: {previousScale} to {relativeScale}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is handling SetTheCanvasScaleAndSize. Setting the Canvas Size from {previousCanvasSize.ToString("F2")} to {newCanvasSize.ToString("F2")}. Scale from: {previousScale.ToString("F4")} to {relativeScale.ToString("F4")}.");
 
 				Canvas.Width = newCanvasSize.Width;
 				Canvas.Height = newCanvasSize.Height;
 
+				_canvasScaleTransform.ScaleX = relativeScale;
+				_canvasScaleTransform.ScaleY = relativeScale;
+			}
+			else
+			{
+				_canvasScaleTransform.ScaleX = 1;
+				_canvasScaleTransform.ScaleY = 1;
+			}
+		}
+
+		private void SetTheCanvasScale(SizeDbl contentScale)
+		{
+			if (LogicalViewportSize.Width > 5 && LogicalViewportSize.Height > 5)
+			{
+				var (_, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale.Width);
 				_canvasScaleTransform.ScaleX = relativeScale;
 				_canvasScaleTransform.ScaleY = relativeScale;
 			}
@@ -428,7 +433,7 @@ namespace MSetExplorer
 			var previousCanvasSize = new SizeDbl(Canvas.ActualWidth, Canvas.ActualHeight);
 			var previousTranslation = new SizeDbl(_canvasTranslateTransform.X, _canvasTranslateTransform.Y);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is handling ClipAndOffset. Setting the Canvas Size from {previousCanvasSize} to {logicalViewportSize}. Translation from: {previousTranslation} to {offset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is handling ClipAndOffset. Setting the Canvas Size from {previousCanvasSize.ToString("F2")} to {logicalViewportSize.ToString("F2")}. Translation from: {previousTranslation.ToString("F2")} to {offset.ToString("F2")}.");
 
 			Canvas.Width = logicalViewportSize.Width;
 			Canvas.Height = logicalViewportSize.Height;
@@ -498,7 +503,8 @@ namespace MSetExplorer
 				Image.SetValue(Canvas.LeftProperty, adjustedNewValue.X);
 				Image.SetValue(Canvas.TopProperty, adjustedNewValue.Y);
 
-				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ImageOffset is being set from {previousValue} to {adjustedNewValue}. raw: {newValue}");
+				Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's ImageOffset is being set from x: {previousValue.X.ToString("F2")} to {adjustedNewValue.X.ToString("F2")}({newValue.X.ToString("F2")})" +
+					$"y: {previousValue.Y.ToString("F2")} to {adjustedNewValue.Y.ToString("F2")}({newValue.Y.ToString("F2")})");
 
 				return true;
 			}
