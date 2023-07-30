@@ -18,7 +18,7 @@ namespace MSetExplorer
 
 		private IMapDisplayViewModel _vm;
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		#endregion
 

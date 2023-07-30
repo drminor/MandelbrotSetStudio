@@ -42,7 +42,7 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -338,13 +338,13 @@ namespace MSetExplorer
 			get => _displayZoom;
 			set
 			{
-				var previousValue = _displayZoom;
+				//var previousValue = _displayZoom;
 
 				if (ScreenTypeHelper.IsDoubleChanged(value, _displayZoom, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
 				{
 					_displayZoom = value;
 
-					Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+					//Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
 					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
 				}
 			}

@@ -424,8 +424,16 @@ namespace MSetExplorer
 			var baseScale = ContentScalerHelper.GetBaseScale(ContentScale.Width);
 
 			var offset = newValue.Position;
+
+			// The Position is in physical pixels. We need to convert to Content Units
+			//
+			// Physcial pixels * Scale = logical display size.
+			// Then since our content is 2, 4, 8 times smaller, we need to compensate by multiplying by the
+			// BaseScale of 0.5, 0.25, 0.125, etc.
 			var pos = newValue.Position.Scale(ContentScale.Width).Scale(baseScale); // ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
 
+			// The Size is in Logical Display Units
+			// We need to compensate by multiplying by the BaseScale to match the actual size of our image.
 			var logicalViewportSize = newValue.Size.Scale(baseScale);
 
 			Debug.Assert(offset.X >= 0 && offset.Y >= 0, "ClipAndOffset is receiving a negative position.");
@@ -497,6 +505,11 @@ namespace MSetExplorer
 					-1 * newValue.X,
 					sizeOfLastBlock.Height == 0 ? 0 : -1 * (128 - sizeOfLastBlock.Height)
 				);
+
+			if (adjustedNewValue.Y > 0)
+			{
+				Debug.WriteLine("WARNING: The ImageOffset Y value is positive.");
+			}
 
 			if (ScreenTypeHelper.IsVectorDblChanged(adjustedNewValue, previousValue))
 			{

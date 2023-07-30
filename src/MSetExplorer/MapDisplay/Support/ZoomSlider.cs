@@ -13,7 +13,7 @@ namespace MSetExplorer
 
 		private bool _disableScrollValueSync = false;   // If true, do update the _zoomedControl's Scale property.
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -36,9 +36,9 @@ namespace MSetExplorer
 		{
 			if (_zoomedControl.CanZoom && !_disableScrollValueSync)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, "\n========== The user is setting the scale.");
+				//Debug.WriteLineIf(_useDetailedDebug, "\n========== The user is setting the scale.");
 
-				Debug.WriteLineIf(_useDetailedDebug, "The ZoomSlider is updating the PanAndZoomControl's Scale.");
+				Debug.WriteLineIf(_useDetailedDebug, $"\n========== The ZoomSlider is updating the PanAndZoomControl's ScrollBar Value: {_scrollbar.Value}.");
 				_zoomedControl.Scale = _scrollbar.Value;
 			}
 		}
@@ -88,10 +88,9 @@ namespace MSetExplorer
 					//var in10Parts = recip / 20;
 					//var inverse10Parts = 1 / in10Parts;
 
-					_scrollbar.SmallChange = 0.05; // _zoomedControl.MinScale / 2;
+					_scrollbar.SmallChange = 0.005; // _zoomedControl.MinScale / 2;
 					_scrollbar.LargeChange = 0.20; // _zoomedControl.MinScale * 2; // _scrollbar.Minimum * 8;
 
-					//(BaseFactor, RelativeValue) = GetBaseFactorAndRelativeScale(_zoomedControl.Scale);
 					_scrollbar.Value = _zoomedControl.Scale;
 				}
 				finally
@@ -102,7 +101,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
 
 		#region IDisposable Support
 

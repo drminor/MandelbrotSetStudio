@@ -153,7 +153,12 @@ namespace MSS.Types
 
 		public static string FormatNully(RectangleDbl? a)
 		{
-			return a.HasValue ? a.Value.ToString() ?? "RectangleDbl /wo ToString Override.": "null";
+			return a.HasValue ? a.Value.ToString() ?? "RectangleDbl without a custom ToString Override.": "null";
+		}
+
+		public static string FormatNully(RectangleDbl? a, string? format)
+		{
+			return a.HasValue ? a.Value.ToString(format) ?? "RectangleDbl without a custom ToString Override." : "null";
 		}
 
 		public override bool Equals(object? obj)

@@ -23,11 +23,14 @@ namespace MSetExplorer
 		#region Private Fields
 
 		public static readonly double DefaultContentScale = 1.0;
-		public static readonly double DefaultMinContentScale = 0.015625;
+		public static readonly double DefaultMinContentScale = 0.001953125;
 		public static readonly double DefaultMaxContentScale = 1.0;
 
 		private ScrollViewer? _scrollOwner;
 		private ZoomSlider? _zoomOwner;
+
+		private bool _canHorizontallyScroll;
+		private bool _canVerticallyScroll;
 
 		private SizeDbl _unscaledViewportSize;
 
@@ -41,10 +44,7 @@ namespace MSetExplorer
 		private SizeDbl _constrainedContentViewportSize = new SizeDbl();
 		private SizeDbl _maxContentOffset = new SizeDbl();
 
-		ScrollBarVisibility _originalVerticalScrollBarVisibility;
-		ScrollBarVisibility _originalHorizontalScrollBarVisibility;
-
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -70,9 +70,6 @@ namespace MSetExplorer
 			ContentViewportSize = new SizeDbl();
 
 			IsMouseWheelScrollingEnabled = false;
-
-			_originalVerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
-			_originalHorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
 		}
 
 		#endregion
@@ -398,7 +395,7 @@ namespace MSetExplorer
 			var newValue = (double)e.NewValue;
 
 			//Debug.WriteLineIf(c._useDetailedDebug, $"PanAndZoomControl: ContentScale is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
-			Debug.WriteLineIf(c._useDetailedDebug, $"PanAndZoomControl: ContentScale is changing from {oldValue} to {newValue}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"PanAndZoomControl: ContentScale is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
 
 			c.UpdateScale(newValue);
 
@@ -408,18 +405,16 @@ namespace MSetExplorer
 				return;
 			}
 
+			c._disableContentOffsetChangeEvents = true;
+
 			try
 			{
-				c._disableContentOffsetChangeEvents = true;
-
 				c.UpdateContentViewportSize();
 
 				if (c._enableContentOffsetUpdateFromScale)
 				{
 					c.UpdateContentOffsetsFromScale();
-					//c.UpdateContentZoomFocus();
 					c.ContentZoomFocus = c.GetContentCenter();
-
 				}
 			}
 			finally
@@ -541,11 +536,10 @@ namespace MSetExplorer
 			if (!c.UnscaledExtent.IsNearZero())
 			{
 				double maxOffsetX = c._maxContentOffset.Width;
-				double v1 = value >= 0 ? value : 0;
-				value = Math.Min(v1, maxOffsetX);
-			}
+				value = Math.Min(Math.Max(value, 0.0), maxOffsetX);
 
-			Debug.WriteLineIf(c._useDetailedDebug, $"CoerceOffsetX got: {baseValue} and returned {value}. The maximum is {c._maxContentOffset.Width}.");
+				Debug.WriteLineIf(c._useDetailedDebug, $"CoerceOffsetX got: {((double)baseValue).ToString("F2")} and returned {value.ToString("F2")}. The maximum is {maxOffsetX.ToString("F2")}.");
+			}
 
 			return value;
 		}
@@ -613,12 +607,11 @@ namespace MSetExplorer
 
 			if (!c.UnscaledExtent.IsNearZero())
 			{
-				double minOffsetY = 0.0;
 				double maxOffsetY = c._maxContentOffset.Height;
-				value = Math.Min(Math.Max(value, minOffsetY), maxOffsetY);
-			}
+				value = Math.Min(Math.Max(value, 0.0), maxOffsetY);
 
-			Debug.WriteLineIf(c._useDetailedDebug, $"CoerceOffsetY got: {baseValue} and returned {value}. The maximum is {c._maxContentOffset.Height}.");
+				Debug.WriteLineIf(c._useDetailedDebug, $"CoerceOffsetY got: {((double)baseValue).ToString("F2")} and returned {value.ToString("F2")}. The maximum is {maxOffsetY.ToString("F2")}.");
+			}
 
 			return value;
 		}
@@ -644,6 +637,11 @@ namespace MSetExplorer
 
 		private void UpdateViewportSize(SizeDbl newValue)
 		{
+			if (UnscaledExtent.IsNearZero())
+			{
+				return;
+			}
+
 			if (UnscaledViewportSize == newValue )
 			{
 				return;
@@ -719,8 +717,8 @@ namespace MSetExplorer
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {FmtSizeDblDp4(ContentViewportSize)}, UnscaledViewportSize: {FmtSizeDblDp4(UnscaledViewportSize)}, ConstrainedViewportSize: {FmtSizeDblDp4(_constrainedContentViewportSize)}, ContentScale: {ContentScale:n8}. MaxContentOffset: {_maxContentOffset:n8}");
 
-			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n4}, UnscaledViewportSize-X: {UnscaledViewportSize.Width:n4}, ConstrainedViewportSize-X: {_constrainedContentViewportSize.Width:n4}, ContentScale: {ContentScale:n8}. MaxContentOffset-X: {_maxContentOffset.Width:n4}");
-			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-Y: {ContentViewportSize.Height:n4}, UnscaledViewportSize-Y: {UnscaledViewportSize.Height:n4}, ConstrainedViewportSize-Y: {_constrainedContentViewportSize.Height:n4}, ContentScale: {ContentScale:n8}. MaxContentOffset-Y: {_maxContentOffset.Height:n4}");
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n1}, UnscaledVpSize-X: {UnscaledViewportSize.Width:n1}, ConstrainedVpSize-X: {_constrainedContentViewportSize.Width:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-X: {_maxContentOffset.Width:n1}");
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-Y: {ContentViewportSize.Height:n1}, UnscaledVpSize-Y: {UnscaledViewportSize.Height:n1}, ConstrainedVpSize-Y: {_constrainedContentViewportSize.Height:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-Y: {_maxContentOffset.Height:n1}");
 
 			//PanAndZoomControl: UpdateContentViewportSize: w: 1874.3454526918686, h: 1852.6863496829849, UnscaledViewportSize: w: 1125, h: 1112, ConstrainedViewportSize: w: 1874.3454526918686, h: 1852.6863496829849, ContentScale: 0.600209528283228.MaxContentOffset: w: 173.65454730813144, h: 195.31365031701512
 
@@ -807,7 +805,7 @@ namespace MSetExplorer
 
 				var translationAndClipSize = new RectangleDbl(new PointDbl(offsetX, offsetY), clipSize);
 
-				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl is setting the ContentScaler's {nameof(IContentScaler.TranslationAndClipSize)} to {RectangleDbl.FormatNully(translationAndClipSize)}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl is setting the ContentScaler's {nameof(IContentScaler.TranslationAndClipSize)} to {RectangleDbl.FormatNully(translationAndClipSize, "F2")}.");
 
 				_disableViewportChangedEvents = true;
 				try
@@ -831,7 +829,7 @@ namespace MSetExplorer
 
 				if (ScreenTypeHelper.IsDoubleChanged(newContentScale, previousValue, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale from: {previousValue} to {newContentScale}. Update was successful.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale from: {previousValue.ToString("F2")} to {newContentScale.ToString("F2")}. Update was successful.");
 
 					_disableViewportChangedEvents = true;
 					try
@@ -848,7 +846,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale. Update was NOT made. PreviousValue: {previousValue}, NewValue: {newContentScale}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale. Update was NOT made. PreviousValue: {previousValue.ToString("F2")}, NewValue: {newContentScale.ToString("F2")}.");
 				}
 			}
 
@@ -896,19 +894,19 @@ namespace MSetExplorer
 			{
 				_disableContentFocusSync = true;
 
-				//var viewportOffset = ViewportZoomFocus.Sub(UnscaledViewportSize.Divide(2));
-				//var contentOffset1 = viewportOffset.Divide(ContentScale);
-
 				var newContentCenter = GetContentCenter();
-				var contentOffset2 = newContentCenter.Diff(ContentZoomFocus);
-				//var contentOffset2 = ContentZoomFocus.Sub(ContentViewportSize.Divide(2)).Diff(contentOffset1);
+				var adjustmentVector = ContentZoomFocus.Diff(newContentCenter);
 
 				//Debug.WriteLineIf(_useDetailedDebug, $"Updating ContentOffsetsFromScale. viewportOffset: {viewportOffset}, contentOFfset1: {contentOffset1}, NewValue: {contentOffset2}. ");
 				//Debug.WriteLine($"Updating ContentOffsetsFromScale. viewportOffset: {viewportOffset.ToString("F2")}, contentOFfset1: {contentOffset1.ToString("F2")}, NewValue: {contentOffset2.ToString("F2")}. ");
-				Debug.WriteLine($"Updating ContentOffsetsFromScale. NewValue: {contentOffset2.ToString("F2")}. ");
 
-				ContentOffsetX = ContentOffset.X + contentOffset2.X;
-				ContentOffsetY = ContentOffset.Y + contentOffset2.Y;
+				var currentVal = new PointDbl(ContentOffset.X, ContentOffset.Y);
+				var newVal = currentVal.Translate(adjustmentVector);
+
+				Debug.WriteLine($"Updating ContentOffsetsFromScale. Current: {currentVal}, Adjustment: {adjustmentVector.ToString("F2")}, Result: {newVal.ToString("F2")}.");
+
+				ContentOffsetX = newVal.X;
+				ContentOffsetY = newVal.Y;
 			}
 			finally
 			{
@@ -943,16 +941,8 @@ namespace MSetExplorer
 		public ScrollViewer ScrollOwner
 		{
 			get => _scrollOwner ?? (_scrollOwner = new ScrollViewer());
-			set
-			{
-				_scrollOwner = value;
-				_originalVerticalScrollBarVisibility = _scrollOwner.VerticalScrollBarVisibility;
-				_originalHorizontalScrollBarVisibility = _scrollOwner.HorizontalScrollBarVisibility;
-			}
+			set => _scrollOwner = value;
 		}
-
-		private bool _canHorizontallyScroll;
-		private bool _canVerticallyScroll;
 
 		public bool CanHorizontallyScroll
 		{
@@ -1184,7 +1174,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region IContentScaleInfo Support
+		#region IZoomInfo Support
 
 		public ZoomSlider? ZoomOwner
 		{

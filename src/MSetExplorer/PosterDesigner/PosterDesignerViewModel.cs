@@ -165,6 +165,12 @@ namespace MSetExplorer
 
 		private void SubmitMapDisplayJob()
 		{
+
+			if (MapDisplayViewModel.ViewportSize.Width < 2 || MapDisplayViewModel.ViewportSize.Height < 2)
+			{
+				Debug.WriteLine("ViewPortSize is zero.");
+			}
+
 			var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
 
 			MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
@@ -177,13 +183,14 @@ namespace MSetExplorer
 				var currentjob = currentPoster.CurrentJob;
 				if (currentjob != null)
 				{
-					UpdateTheMapCoordsView(currentjob);
 					var posterSize = currentPoster.PosterSize;
 
 					var displayPosition = currentPoster.DisplayPosition;
 					var displayZoom = currentPoster.DisplayZoom;
 
 					MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize, displayPosition, displayZoom);
+
+					UpdateTheMapCoordsView(currentjob);
 				}
 			}
 		}

@@ -412,7 +412,7 @@ namespace MSetExplorer
 
 			var poster = (Poster)JobOwnerHelper.CreateCopy(currentPoster, name, description, _projectAdapter, _mapSectionAdapter);
 
-			if (JobOwnerHelper.SavePoster(currentPoster, _projectAdapter))
+			if (JobOwnerHelper.SavePoster(poster, _projectAdapter))
 			{
 				CurrentPoster = poster;
 				errorText = null;

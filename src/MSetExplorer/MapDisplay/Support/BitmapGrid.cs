@@ -41,7 +41,7 @@ namespace MSetExplorer
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
