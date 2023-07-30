@@ -332,24 +332,32 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetSizeOfLastBlock(MapAreaInfo mapAreaInfo)
-		{
-			var result = GetSizeOfLastBlock(mapAreaInfo.CanvasSize, new VectorDbl(mapAreaInfo.CanvasControlOffset));
-			return result;
-		}
+		//public static SizeInt GetSizeOfLastBlock(MapAreaInfo mapAreaInfo)
+		//{
+		//	//var result = GetSizeOfLastBlock(mapAreaInfo.CanvasSize, new VectorDbl(mapAreaInfo.CanvasControlOffset));
+		//	//return result;
 
-		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
-		{
-			var blockSize = RMapConstants.BLOCK_SIZE;
-			var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
+		//	_ = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
 
-			var extent = canvasSize.Round();
-			var extentSanFirstBlock = extent.Sub(sizeOfFirstBlock);
+		//	return sizeOfLastBlock;
 
-			_ = RMapHelper.GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
 
-			return remainder;
-		}
+		//}
+
+		//public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
+		//{
+		//	//var blockSize = RMapConstants.BLOCK_SIZE;
+		//	//var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
+
+		//	//var extent = canvasSize.Round();
+		//	//var extentSanFirstBlock = extent.Sub(sizeOfFirstBlock);
+
+		//	//_ = RMapHelper.GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
+
+		//	_ = RMapHelper.GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset.Round(), RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
+
+		//	return sizeOfLastBlock;
+		//}
 
 
 		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
@@ -435,7 +443,7 @@ namespace MSS.Common
 			Debug.WriteLine($"While getting the MapAreaInfo {desc}, the coordinates were adjusted by diffW: {diffW}, diffP: {diffP}.");
 		}
 
-		private BigVector GetMapBlockOffset(RPoint mapPosition, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset/*, out RPoint newPosition*/)
+		private BigVector GetMapBlockOffset(RPoint mapPosition, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
 		{
 			// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
 			// The screen origin = left, bottom. Map origin = left, bottom.
@@ -447,14 +455,14 @@ namespace MSS.Common
 			}
 
 			var distance = new RVector(mapPosition);
-			var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta/*, out newPosition*/);
+			var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta);
 
 			var result = RMapHelper.GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
 
 			return result;
 		}
 
-		private BigVector GetNumberOfSamplePoints(RVector distance, RSize samplePointDelta/*, out RPoint newPosition*/)
+		private BigVector GetNumberOfSamplePoints(RVector distance, RSize samplePointDelta)
 		{
 			var nrmDistance = RNormalizer.Normalize(distance, samplePointDelta, out var nrmSamplePointDelta);
 
@@ -463,10 +471,6 @@ namespace MSS.Common
 
 			return offsetInSamplePoints;
 		}
-
-
-
-
 
 		#endregion
 	}

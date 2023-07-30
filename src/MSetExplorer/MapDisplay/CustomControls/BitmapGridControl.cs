@@ -204,6 +204,7 @@ namespace MSetExplorer
 			set => SetCurrentValue(BitmapGridImageSourceProperty, value);
 		}
 
+		// TODO: Change ImageOffset to have type VectorInt (not VectorDbl)
 		public VectorDbl ImageOffset
 		{
 			get => (VectorDbl)GetValue(ImageOffsetProperty);
@@ -496,9 +497,7 @@ namespace MSetExplorer
 
 			// newValue.Y is the # of pixels of the first block to skip.
 
-			var canvasSize = new SizeDbl(Canvas.ActualWidth, Canvas.ActualHeight);
-
-			var sizeOfLastBlock = MapJobHelper.GetSizeOfLastBlock(canvasSize, newValue);
+			var sizeOfLastBlock = RMapHelper.GetSizeOfLastBlock(LogicalViewportSize, newValue);
 
 			var adjustedNewValue = new VectorDbl
 				(

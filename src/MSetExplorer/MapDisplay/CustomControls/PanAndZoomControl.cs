@@ -294,6 +294,11 @@ namespace MSetExplorer
 
 			PanAndZoomControl c = (PanAndZoomControl)o;
 
+			if (c.UnscaledViewportSize.IsNearZero())
+			{
+				throw new InvalidOperationException("The UnscaledViewportSize is Zero while setting the UnscaledExtent.");
+			}
+
 			try
 			{
 				c._disableContentOffsetChangeEvents = true;

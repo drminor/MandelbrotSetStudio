@@ -298,6 +298,7 @@ namespace MSetExplorer
 			}
 		}
 
+		// TODO: Change ImageOffset to have type VectorInt (not VectorDbl)
 		public VectorDbl ImageOffset
 		{
 			get => _imageOffset;
@@ -312,6 +313,8 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		public SizeDbl LogicalViewportSize => _bitmapGrid.LogicalViewportSize;
 
 		#endregion
 

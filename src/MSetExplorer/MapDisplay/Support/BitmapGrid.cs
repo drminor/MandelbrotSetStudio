@@ -606,10 +606,20 @@ namespace MSetExplorer
 				Debug.WriteLine($"Creating a HUGE Bitmap. Size is {imageSizeInBlocks} / ({size}).");
 			}
 
-			var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
-			//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
+			try
+			{
+				var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
+				//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
 
-			return result;
+				return result;
+			} 
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got exception: {e} while attempting to create the bitmap. Creating place holder bitmap with size = 10.");
+
+				var result = new WriteableBitmap(10, 10, 96, 96, PixelFormats.Pbgra32, null);
+				return result;
+			}
 		}
 
 		#endregion

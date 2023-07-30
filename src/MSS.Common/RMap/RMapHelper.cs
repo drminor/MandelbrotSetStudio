@@ -7,23 +7,6 @@ using System.Numerics;
 
 namespace MSS.Common
 {
-
-	/*
-			Scale			Exp   Base Scale	Relative Scale
-	---------------------------------------------------------------		
-		>	0.5			|	0	|	1	|	x / 1
-		>	0.25		|	1	|	2	|	x / 0.5
-		>	0.125		|	2	|	4	|	x / 0.25
-		>	0.0625		|	3	|   8	|	x / 0.125
-		>	0.03125		|	4	|  16	|	x / 0.0625
-		>	0.015625	|	5	|  32	|	x / 0.03125
-		>	0.0078125	|	6	|  64	|	x / 0.015625
-		>   0.00390625  |   7	| 128	|	x / 0.0078125 	
-
-		else throw
-		 
-	*/
-
 	public static class RMapHelper
 	{
 		#region MapAreaInfo Support
@@ -93,41 +76,82 @@ namespace MSS.Common
 			return binaryPrecision;
 		}
 
-
 		#endregion
 
 		#region Get Extents in Blocks
 
-		public static SizeInt GetCanvasSizeInWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
+		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			var result = canvasSize.Divide(blockSize).Truncate();
+			//Debug.Assert(canvasControlOffset.X >= 0 && canvasControlOffset.Y >= 0, "Using a canvasControlOffset with a negative w or h when getting the MapExtent in blocks.");
 
-			if (keepSquare)
-			{
-				result = result.GetSquare();
-			}
+			//var totalSize = canvasSize.Add(canvasControlOffset);
+			//var result = GetMapExtentInBlocks(totalSize, blockSize);
 
+			var result = GetMapExtentInBlocks(canvasSize, canvasControlOffset, blockSize, out _, out _);
 			return result;
 		}
 
-		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
+		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize, out SizeInt sizeOfFirstBlock, out SizeInt sizeOfLastBlock)
 		{
 			Debug.Assert(canvasControlOffset.X >= 0 && canvasControlOffset.Y >= 0, "Using a canvasControlOffset with a negative w or h when getting the MapExtent in blocks.");
 
-			var totalSize = canvasSize.Add(canvasControlOffset);
-			var result = GetMapExtentInBlocks(totalSize, blockSize);
+			sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
+
+			var extentSanFirstBlock = canvasSize.Sub(sizeOfFirstBlock);
+
+			var sizeInBlocks = GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out sizeOfLastBlock);
+
+			// Include the first block
+			sizeInBlocks = sizeInBlocks.Inflate(1);
+
+			// Include the last block, if any
+			var result = sizeInBlocks.Add(
+				new VectorInt
+					(
+						sizeOfLastBlock.Width > 0 ? 1 : 0,
+						sizeOfLastBlock.Height > 0 ? 1 : 0
+					)
+				);
 
 			return result;
 		}
 
-		private static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
+		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
 		{
-			var rawResult = canvasSize.DivRem(blockSize, out var remainder);
-			var extra = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
-			var result = rawResult.Add(extra);
+			//var blockSize = RMapConstants.BLOCK_SIZE;
+			//var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
 
-			return result;
+			//var extent = canvasSize.Round();
+			//var extentSanFirstBlock = extent.Sub(sizeOfFirstBlock);
+
+			//_ = RMapHelper.GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
+
+			_ = GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset.Round(), RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
+
+			return sizeOfLastBlock;
 		}
+
+
+		//private static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
+		//{
+		//	var rawResult = canvasSize.DivRem(blockSize, out var remainder);
+		//	var extra = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
+		//	var result = rawResult.Add(extra);
+
+		//	return result;
+		//}
+
+		//public static SizeInt GetCanvasSizeInWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
+		//{
+		//	var result = canvasSize.Divide(blockSize).Truncate();
+
+		//	if (keepSquare)
+		//	{
+		//		result = result.GetSquare();
+		//	}
+
+		//	return result;
+		//}
 
 		#endregion
 
@@ -145,6 +169,9 @@ namespace MSS.Common
 			}
 
 			var offsetInSamplePoints = rPointAndDelta.Position.Divide(rPointAndDelta.SamplePointDelta);
+
+			var chkPos = rPointAndDelta.SamplePointDelta.Scale(offsetInSamplePoints);
+			Debug.Assert(new RPoint(chkPos) == rPointAndDelta.Position, "rPointAndDelta Position non an integer multiple of Sample Point Delta.");
 
 			var result = GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
 
@@ -289,7 +316,6 @@ namespace MSS.Common
 			return result;
 		}
 
-
 		//public static double CalculatePitch(SizeDbl displaySize, int pitchTarget)
 		//{
 		//	// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
@@ -320,7 +346,6 @@ namespace MSS.Common
 
 		//	return result;
 		//}
-
 
 		/// <summary>
 		/// Returns the value of ContentScale, aka Zoom required to have the content fill the screen.
@@ -353,8 +378,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-
 
 		#endregion
 

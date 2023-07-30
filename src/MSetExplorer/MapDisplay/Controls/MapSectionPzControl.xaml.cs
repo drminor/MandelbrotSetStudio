@@ -45,7 +45,8 @@ namespace MSetExplorer
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
 
-				// Start off with a ViewportSize using a BaseScale = 1.
+				var ourSize = new SizeDbl(ActualWidth, ActualHeight);
+				PanAndZoomControl1.UnscaledViewportSize = ourSize;
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 
 				_vm.DisplaySettingsInitialized += _vm_DisplaySettingsInitialzed;
@@ -102,13 +103,13 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ViewportChanged event.");
 
-			//CheckForStaleContentValues(e);
-
 			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(e.ContentScale);
 			Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} / Unscaled: {e.UnscaledViewportSize}, " +
 				$"Offset:{e.ContentOffset}, Scale:{e.ContentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
 
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
+
+			CheckForOutofSyncLogicalVpSize(BitmapGridControl1.LogicalViewportSize, _vm.LogicalViewportSize);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"========== The MapSectionPzControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
 		}
@@ -139,6 +140,20 @@ namespace MSetExplorer
 					$"PanAndZoomControl's ContentScale: {contentScaleFromPanAndZoomControl}, BitmapGridControl's ContentScale: {contentScaleFromBitmapGridControl}.");
 			}
 		}
+
+		[Conditional("DEBUG")]
+		private void CheckForOutofSyncLogicalVpSize(SizeDbl viewPortsizeBitmapGridControl, SizeDbl viewportSizeVM)
+		{
+			// TODO: As we are using a BaseScale, it might be the case where these are supposed to be different
+
+			//Debug.Assert(!ScreenTypeHelper.IsDoubleChanged(contentScaleFromPanAndZoomControl, contentScaleFromBitmapGridControl, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF), "The ContentScale from the PanAndZoom control is not the same as the ContentScale from the BitmapGrid control.");
+			if (ScreenTypeHelper.IsSizeDblChanged(viewPortsizeBitmapGridControl, viewportSizeVM))
+			{
+				Debug.WriteLine($"The LogicalViewportSize from the BitmapGridControl is not the same as the value from the MapSectionDisplayViewModel. " +
+					$"BitmapGridControl's value: {viewPortsizeBitmapGridControl}, MapSectionDisplayViewModel's value: {viewportSizeVM}.");
+			}
+		}
+
 
 		#endregion
 	}
