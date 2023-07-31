@@ -44,7 +44,7 @@ namespace MSetExplorer
 		private SizeDbl _constrainedContentViewportSize = new SizeDbl();
 		private SizeDbl _maxContentOffset = new SizeDbl();
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -322,10 +322,10 @@ namespace MSetExplorer
 		}
 
 		//e.UnscaledExtent, unscaledViewportSize
-		public void ResetExtentWithPositionAndScale(SizeDbl unscaledExtent, SizeDbl unscaledViewportSize, VectorDbl contentOffset, double contentScale, double minContentScale, double maxContentScale)
+		public void ResetExtentWithPositionAndScale(SizeDbl unscaledExtent/*, SizeDbl unscaledViewportSize*/, VectorDbl contentOffset, double contentScale, double minContentScale, double maxContentScale)
 		{
-			var contentViewportSize = unscaledViewportSize.Divide(contentScale);
-			//var constrainedViewportSize = unscaledExtent.Min(contentViewportSize);
+			//var contentViewportSize = unscaledViewportSize.Divide(contentScale);
+			var contentViewportSize = UnscaledViewportSize.Divide(contentScale);
 
 			_constrainedContentViewportSize = unscaledExtent.Min(contentViewportSize);
 
@@ -337,7 +337,6 @@ namespace MSetExplorer
 				_disableViewportChangedEvents = true;
 				try
 				{
-					//_contentScaler.TranslationAndClipSize = new RectangleDbl(new PointDbl(0, 0), constrainedViewportSize);
 					_contentScaler.TranslationAndClipSize = new RectangleDbl(new PointDbl(0, 0), UnscaledViewportSize);
 				}
 				finally
@@ -347,7 +346,6 @@ namespace MSetExplorer
 			}
 
 			// Use the new extent to determine offsets.
-			//_maxContentOffset = unscaledExtent.Sub(constrainedViewportSize).Max(0);
 			_maxContentOffset = unscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
 
 			// Use the same logic as the Coerce OffsetX / OffsetY 

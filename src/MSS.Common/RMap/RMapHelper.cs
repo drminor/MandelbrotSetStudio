@@ -82,11 +82,6 @@ namespace MSS.Common
 
 		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			//Debug.Assert(canvasControlOffset.X >= 0 && canvasControlOffset.Y >= 0, "Using a canvasControlOffset with a negative w or h when getting the MapExtent in blocks.");
-
-			//var totalSize = canvasSize.Add(canvasControlOffset);
-			//var result = GetMapExtentInBlocks(totalSize, blockSize);
-
 			var result = GetMapExtentInBlocks(canvasSize, canvasControlOffset, blockSize, out _, out _);
 			return result;
 		}
@@ -118,19 +113,10 @@ namespace MSS.Common
 
 		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
 		{
-			//var blockSize = RMapConstants.BLOCK_SIZE;
-			//var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
-
-			//var extent = canvasSize.Round();
-			//var extentSanFirstBlock = extent.Sub(sizeOfFirstBlock);
-
-			//_ = RMapHelper.GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
-
 			_ = GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset.Round(), RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
 
 			return sizeOfLastBlock;
 		}
-
 
 		//private static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
 		//{

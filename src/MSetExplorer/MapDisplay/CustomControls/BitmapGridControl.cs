@@ -31,7 +31,7 @@ namespace MSetExplorer
 		private RectangleDbl _translationAndClipSize;
 		private bool _useClip = true;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 

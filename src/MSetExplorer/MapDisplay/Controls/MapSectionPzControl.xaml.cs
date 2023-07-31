@@ -81,11 +81,6 @@ namespace MSetExplorer
 			var maxContentScale = _vm.MaximumDisplayZoom;
 			var unscaledViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 
-			if (unscaledViewportSize.IsNearZero() || unscaledViewportSize.IsNAN())
-			{
-				unscaledViewportSize = new SizeDbl(ActualWidth, ActualHeight);
-			}
-
 			var minContentScale = RMapHelper.GetMinDisplayZoom(e.UnscaledExtent, unscaledViewportSize, POSTER_DISPLAY_MARGIN, maxContentScale);
 
 			if (minContentScale <= 0)
@@ -93,10 +88,11 @@ namespace MSetExplorer
 				minContentScale = 0.0001;	
 			}
 
-			_vm.MinimumDisplayZoom = minContentScale;
-			_vm.DisplayZoom = Math.Min(Math.Max(e.ContentScale, _vm.MinimumDisplayZoom), _vm.MaximumDisplayZoom);
+			//_vm.MinimumDisplayZoom = minContentScale;
+			//_vm.DisplayZoom = Math.Min(Math.Max(e.ContentScale, _vm.MinimumDisplayZoom), _vm.MaximumDisplayZoom);
 
-			PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, unscaledViewportSize, e.ContentOffset, _vm.DisplayZoom, minContentScale, maxContentScale);
+			//PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, unscaledViewportSize, e.ContentOffset, _vm.DisplayZoom, minContentScale, maxContentScale);
+			PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent/*, unscaledViewportSize*/, e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
 		}
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
@@ -127,19 +123,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Diagnostics
-
-		[Conditional("DEBUG")]
-		private void CheckForOutofSyncScaleFactor(double contentScaleFromPanAndZoomControl, double contentScaleFromBitmapGridControl)
-		{
-			// TODO: As we are using a BaseScale, it might be the case where these are supposed to be different
-
-			//Debug.Assert(!ScreenTypeHelper.IsDoubleChanged(contentScaleFromPanAndZoomControl, contentScaleFromBitmapGridControl, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF), "The ContentScale from the PanAndZoom control is not the same as the ContentScale from the BitmapGrid control.");
-			if (ScreenTypeHelper.IsDoubleChanged(contentScaleFromPanAndZoomControl, contentScaleFromBitmapGridControl, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
-			{
-				Debug.WriteLine($"The ContentScale from the PanAndZoom control is not the same as the ContentScale from the BitmapGrid control. " +
-					$"PanAndZoomControl's ContentScale: {contentScaleFromPanAndZoomControl}, BitmapGridControl's ContentScale: {contentScaleFromBitmapGridControl}.");
-			}
-		}
 
 		[Conditional("DEBUG")]
 		private void CheckForOutofSyncLogicalVpSize(SizeDbl viewPortsizeBitmapGridControl, SizeDbl viewportSizeVM)

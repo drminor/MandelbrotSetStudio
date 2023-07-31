@@ -285,8 +285,7 @@ namespace MSS.Common
 
 		#region GetMapAreaInfo Methods - V1
 
-		// Convert the screen coordinates given by screenArea into map coordinates,
-		// then move these map coordiates by the x and y distances specified in the current MapPosition.
+		// Convert the screen coordinates given by screenArea into map coordinates, then translate by the x and y distances specified in the current MapPosition.
 		public RRectangle GetMapCoords(RectangleInt screenArea, RPoint mapPosition, RSize samplePointDelta)
 		{
 			// Convert to map coordinates.
@@ -331,34 +330,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-		//public static SizeInt GetSizeOfLastBlock(MapAreaInfo mapAreaInfo)
-		//{
-		//	//var result = GetSizeOfLastBlock(mapAreaInfo.CanvasSize, new VectorDbl(mapAreaInfo.CanvasControlOffset));
-		//	//return result;
-
-		//	_ = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
-
-		//	return sizeOfLastBlock;
-
-
-		//}
-
-		//public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
-		//{
-		//	//var blockSize = RMapConstants.BLOCK_SIZE;
-		//	//var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
-
-		//	//var extent = canvasSize.Round();
-		//	//var extentSanFirstBlock = extent.Sub(sizeOfFirstBlock);
-
-		//	//_ = RMapHelper.GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
-
-		//	_ = RMapHelper.GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset.Round(), RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
-
-		//	return sizeOfLastBlock;
-		//}
-
 
 		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
 		{

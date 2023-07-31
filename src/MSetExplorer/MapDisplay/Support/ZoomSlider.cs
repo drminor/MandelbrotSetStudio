@@ -88,7 +88,7 @@ namespace MSetExplorer
 					//var in10Parts = recip / 20;
 					//var inverse10Parts = 1 / in10Parts;
 
-					_scrollbar.SmallChange = 0.005; // _zoomedControl.MinScale / 2;
+					_scrollbar.SmallChange = 0.01; // _zoomedControl.MinScale / 2;
 					_scrollbar.LargeChange = 0.20; // _zoomedControl.MinScale * 2; // _scrollbar.Minimum * 8;
 
 					_scrollbar.Value = _zoomedControl.Scale;

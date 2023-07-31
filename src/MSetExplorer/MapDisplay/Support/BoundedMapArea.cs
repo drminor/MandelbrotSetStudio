@@ -14,7 +14,7 @@ namespace MSetExplorer
 		private double _baseScale;
 		private MapAreaInfo _scaledMapAreaInfo;
 
-		//private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = false;
 
 		#region Constructor
 
@@ -34,8 +34,6 @@ namespace MSetExplorer
 			_scaledMapAreaInfo = GetMapAreaWithSizeForScale(_mapAreaInfo, PosterSize, BaseScale);
 		}
 
-		//Debug.Assert(!ScreenTypeHelper.IsSizeDblChanged(MapAreaInfoWithSize.CanvasSize, posterSize), $"Since the scale factor = 1, the MapAreaInfoV1.CanvasSize should equal the PosterSize. Compare: {MapAreaInfoWithSize.CanvasSize} with {posterSize}.");
-
 		#endregion
 
 		#region Public Properties
@@ -43,8 +41,6 @@ namespace MSetExplorer
 		public SizeDbl PosterSize { get; init; }
 
 		public SizeDbl ContentViewportSize { get; private set; }
-
-		//public SizeDbl UnscaledViewportSize { get; private set; }	
 
 		public MapAreaInfo MapAreaInfoWithSize { get; init; }
 
@@ -155,7 +151,7 @@ namespace MSetExplorer
 			//		$"From MapAreaInfo with CanvasSize: {mapAreaInfoWithSize.CanvasSize}, BlockOffset: {mapAreaInfoWithSize.MapBlockOffset}, spd: {mapAreaInfoWithSize.SamplePointDelta.Width}.");
 
 
-			Debug.WriteLine($"\nGetting Updated MapAreaInfo for newPos: {newScreenArea.Position.ToString("F2")}, newSize: {newScreenArea.Size.ToString("F2")}. " +
+			Debug.WriteLineIf(_useDetailedDebug, $"\nGetting Updated MapAreaInfo for newPos: {newScreenArea.Position.ToString("F2")}, newSize: {newScreenArea.Size.ToString("F2")}. " +
 					$"Result: CanvasSize: {mapAreaInfoV1.CanvasSize.ToString("F2")}, BlockOffset: {mapAreaInfoV1.MapBlockOffset}, CanvasControlOffset: {mapAreaInfoV1.CanvasControlOffset}, spd: {mapAreaInfoV1.SamplePointDelta.Width}." +
 					$"From MapAreaInfo with CanvasSize: {mapAreaInfoWithSize.CanvasSize.ToString("F2")}, BlockOffset: {mapAreaInfoWithSize.MapBlockOffset}, CanvasControlOffset: {mapAreaInfoWithSize.CanvasControlOffset}, spd: {mapAreaInfoWithSize.SamplePointDelta.Width}.");
 

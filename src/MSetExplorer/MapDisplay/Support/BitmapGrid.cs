@@ -1,6 +1,5 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -41,7 +40,7 @@ namespace MSetExplorer
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
