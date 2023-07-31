@@ -164,7 +164,7 @@ namespace MSetExplorer
 						Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is having its ViewportSize set to {value}. Previously it was {_viewportSize}. The VM is updating the _bitmapGrid.Viewport Size.");
 
 						_viewportSize = value;
-						//_bitmapGrid.LogicalViewportSize = value; // ReuseAndLoad is now setting the _bitmapGrid's LogicalViewportSize.
+						_bitmapGrid.LogicalViewportSize = value; // ReuseAndLoad is now setting the _bitmapGrid's LogicalViewportSize.
 
 						int? newJobNumber = null;
 						bool lastSectionWasIncluded = false;

@@ -31,7 +31,7 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				Debug.WriteLine("The DataContext is null as the obProgress Control is being loaded.");
+				Debug.WriteLine("The DataContext is null as the JobProgress Control is being loaded.");
 				return;
 			}
 			else

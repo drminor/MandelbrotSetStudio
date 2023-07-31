@@ -25,7 +25,7 @@ namespace MSetExplorer
 		private readonly SizeInt _blockSize;
 
 		private SizeDbl _displaySize;
-		private MapAreaInfo2? _mapAreaInfo;
+		//private MapAreaInfo2? _mapAreaInfo;
 
 		private int _pitch;
 		private Size _defaultSelectionSize;
@@ -50,7 +50,7 @@ namespace MSetExplorer
 			_canvas = canvas;
 			_displaySize = displaySize;
 			_blockSize = blockSize;
-			_mapAreaInfo = null;
+			//_mapAreaInfo = null;
 
 			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
 
@@ -144,12 +144,12 @@ namespace MSetExplorer
 			}
 		}
 
-		// TODO: Only for diagnostics
-		public MapAreaInfo2? MapAreaInfo
-		{
-			get => _mapAreaInfo;
-			set => _mapAreaInfo = value;
-		}
+		//// TODO: Only for diagnostics
+		//public MapAreaInfo2? MapAreaInfo
+		//{
+		//	get => _mapAreaInfo;
+		//	set => _mapAreaInfo = value;
+		//}
 
 		public RectangleDbl Area
 		{
@@ -515,7 +515,6 @@ namespace MSetExplorer
 
 					var (zoomPoint, factor) = GetAreaSelectedParams(area, displaySize);
 					var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, area, displaySize, isPreview: false);
-					ReportFactorsVsSamplePointResolution(MapAreaInfo, eventArgs);
 
 					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}.");
 
@@ -767,47 +766,6 @@ namespace MSetExplorer
 			return (zoomPoint, factor);
 		}
 
-		[Conditional("DEBUG2")]
-		private void CheckSelectedCenterPosition(PointDbl selectionCenter)
-		{
-			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
-
-			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter, threshold:0.001))
-			{
-				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
-			}
-		}
-
-		[Conditional("DEBUG2")]
-		private void ReportFactorsVsSamplePointResolution(MapAreaInfo2? mapAreaInfo, AreaSelectedEventArgs e)
-		{
-			if (mapAreaInfo == null) return;
-
-			Debug.WriteLine("\nReporting various factors vs SamplePointDeltas.");
-
-			var pointAndDelta = mapAreaInfo.PositionAndDelta;
-			var reciprocal = 1 / e.Factor;
-			var rK = (int)Math.Round(reciprocal * 1024);
-
-			Debug.WriteLine($"Current SPD: {pointAndDelta.SamplePointDelta}. Starting with a rk of {rK}.");
-
-			var st = Math.Max(rK - 20, 1);
-
-			for (var i = 0; i < 41; i++)
-			{
-				var sFactor = 1 / ((double)st / 1024);
-				var rReciprocal = new RValue(st++, -10);
-
-				var rawResult = pointAndDelta.ScaleDelta(rReciprocal);
-				var result = Reducer.Reduce(rawResult);
-
-				Debug.WriteLine($"{i,3}: \trk: {st,4}\traw-W: {rawResult.SamplePointDelta.Width,10}\tfinal-W: {result.SamplePointDelta.Width,10}\tfinal-H: {result.SamplePointDelta.Height,10}\tfactor: {sFactor}.");
-			}
-
-			//var newPd = RMapHelper.GetNewSamplePointDelta(mapAreaInfo.PositionAndDelta, e.Factor);
-			//Debug.WriteLine($"The new SPD is {newPd.SamplePointDelta}.");
-		}
-
 		// Position the current end of the drag line
 		private void SetDragPosition(Point controlPos)
 		{
@@ -998,6 +956,17 @@ namespace MSetExplorer
 		#endregion
 
 		#region Diag
+
+		[Conditional("DEBUG2")]
+		private void CheckSelectedCenterPosition(PointDbl selectionCenter)
+		{
+			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
+
+			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter, threshold: 0.001))
+			{
+				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
+			}
+		}
 
 		//private void ReportPosition(Point posYInverted)
 		//{

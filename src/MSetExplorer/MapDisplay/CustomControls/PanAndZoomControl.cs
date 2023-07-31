@@ -259,7 +259,15 @@ namespace MSetExplorer
 					}
 
 					_contentScaler.ContentScale = new SizeDbl(ContentScale, ContentScale);
-					UpdateTranslation();
+
+					//if (UnscaledViewportSize.IsNearZero())
+					//{
+					//	var ourSize = new SizeDbl(Width, Height);
+					//	Debug.WriteLine($"WARNING: The UnscaledViewportSize is Zero while setting the UnscaledExtent. Setting it to our size: {ourSize}.");
+					//	UnscaledViewportSize = ourSize;
+					//}
+
+					//UpdateTranslation();
 
 					_contentScaler.ViewportSizeChanged += ContentScaler_ViewportSizeChanged;
 				}
@@ -294,9 +302,11 @@ namespace MSetExplorer
 
 			PanAndZoomControl c = (PanAndZoomControl)o;
 
-			if (c.UnscaledViewportSize.IsNearZero())
+			if (c.UnscaledViewportSize.IsNAN() | c.UnscaledViewportSize.IsNearZero())
 			{
-				throw new InvalidOperationException("The UnscaledViewportSize is Zero while setting the UnscaledExtent.");
+				var ourSize = new SizeDbl(c.ActualWidth, c.ActualHeight);
+				Debug.WriteLine($"WARNING: The UnscaledViewportSize is Zero while setting the UnscaledExtent. Setting it to our size: {ourSize}.");
+				c.UnscaledViewportSize = ourSize;
 			}
 
 			try

@@ -45,7 +45,9 @@ namespace MSetExplorer
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
 
-				var ourSize = new SizeDbl(ActualWidth, ActualHeight);
+				BitmapGridControl1.UseScaling = true;
+				var ourSize = BitmapGridControl1.ViewportSize;
+
 				PanAndZoomControl1.UnscaledViewportSize = ourSize;
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 

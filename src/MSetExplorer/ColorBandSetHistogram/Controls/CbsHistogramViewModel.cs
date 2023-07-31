@@ -40,8 +40,6 @@ namespace MSetExplorer
 		private SizeDbl _containerSize;
 		private SizeInt _canvasSize;
 
-
-
 		private ImageSource _imageSource;
 		private VectorDbl _imageOffset;
 
@@ -59,11 +57,11 @@ namespace MSetExplorer
 		private double[] _theXValues;
 
 
-	#endregion
+		#endregion
 
-	#region Constructor
+		#region Constructor
 
-	public CbsHistogramViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
+		public CbsHistogramViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
 		{
 			//_synchronizationContext = SynchronizationContext.Current;
 

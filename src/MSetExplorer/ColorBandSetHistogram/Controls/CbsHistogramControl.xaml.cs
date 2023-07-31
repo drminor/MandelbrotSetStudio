@@ -60,6 +60,9 @@ namespace MSetExplorer
 			{
 				_vm = (CbsHistogramViewModel)DataContext;
 
+				var ourSize = HistogramDisplayControl1.ViewportSize;
+
+				PanAndZoomControl1.UnscaledViewportSize = ourSize;
 				_vm.UpdateViewportSize(PanAndZoomControl1.UnscaledViewportSize);
 
 				PanAndZoomControl1.MaxContentScale = 10;
