@@ -9,6 +9,10 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct VectorInt : IEquatable<VectorInt>, IEqualityComparer<VectorInt>
 	{
+		private static VectorInt _zeroSingleton = new VectorInt(0 ,0);
+
+		public static VectorInt Zero => _zeroSingleton;
+
 		public VectorInt(int x, int y)
 		{
 			X = x;

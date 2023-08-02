@@ -117,8 +117,8 @@ namespace MSetExplorer
 			//	LoadNewProject();
 			//}
 
-			//LoadNewProject();
-			OpenProjectFromAppRequest(new string[] {"Art3"});
+			LoadNewProject();
+			//OpenProjectFromAppRequest(new string[] {"Art3"});
 		}
 
 		private void ExplorerWindow_Closing(object? sender, CancelEventArgs e)

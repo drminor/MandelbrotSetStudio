@@ -332,9 +332,8 @@ namespace MSetExplorer
 		}
 
 		//e.UnscaledExtent, unscaledViewportSize
-		public void ResetExtentWithPositionAndScale(SizeDbl unscaledExtent/*, SizeDbl unscaledViewportSize*/, VectorDbl contentOffset, double contentScale, double minContentScale, double maxContentScale)
+		public double ResetExtentWithPositionAndScale(SizeDbl unscaledExtent, VectorDbl contentOffset, double contentScale, double minContentScale, double maxContentScale)
 		{
-			//var contentViewportSize = unscaledViewportSize.Divide(contentScale);
 			var contentViewportSize = UnscaledViewportSize.Divide(contentScale);
 
 			_constrainedContentViewportSize = unscaledExtent.Min(contentViewportSize);
@@ -379,6 +378,8 @@ namespace MSetExplorer
 
 			// Update the Zoom Scroll Bar control values
 			ZoomOwner?.InvalidateScaleContentInfo();
+
+			return ContentScale;
 		}
 
 		#endregion

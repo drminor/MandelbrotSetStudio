@@ -100,7 +100,6 @@ namespace MSetExplorer
 		// MoveTo
 		private void MoveToCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			// TODO: OJ -- Need the TransformType to find Alternate Display Jobs
 			if (e.Parameter is ObjectId jobId)
 			{
 				if (_vm.TryGetJob(jobId, out var job))
@@ -179,7 +178,6 @@ namespace MSetExplorer
 		// Show Details
 		private void ShowDetailsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			// TODO: OJ -- Need the TransformType to find Alternate Display Jobs
 			if (e.Parameter is ObjectId jobId)
 			{
 				var details = _vm.GetDetails(jobId) + "\n\nCopy To Clipboard?";

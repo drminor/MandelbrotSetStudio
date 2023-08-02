@@ -25,7 +25,6 @@ namespace MSetExplorer
 		private readonly SizeInt _blockSize;
 
 		private SizeDbl _displaySize;
-		//private MapAreaInfo2? _mapAreaInfo;
 
 		private int _pitch;
 		private Size _defaultSelectionSize;
@@ -50,7 +49,6 @@ namespace MSetExplorer
 			_canvas = canvas;
 			_displaySize = displaySize;
 			_blockSize = blockSize;
-			//_mapAreaInfo = null;
 
 			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
 
@@ -143,13 +141,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//// TODO: Only for diagnostics
-		//public MapAreaInfo2? MapAreaInfo
-		//{
-		//	get => _mapAreaInfo;
-		//	set => _mapAreaInfo = value;
-		//}
 
 		public RectangleDbl Area
 		{
@@ -298,33 +289,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
-
-		//// TODO: Update the SelectionRectangle with dependency properties
-		//// so that the current PositionAndDelta and DisplaySize can be bound.
-
-		//private void MapDisplayViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		//{
-		//	if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
-		//	{
-		//		_enabled = _mapDisplayViewModel.CurrentAreaColorAndCalcSettings != null;
-
-		//		if (IsEnabled)
-		//		{
-		//			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
-
-		//			_selectedArea.Width = _defaultSelectionSize.Width;
-		//			_selectedArea.Height = _defaultSelectionSize.Height;
-		//		}
-		//	}
-
-		//	if (e.PropertyName == nameof(IMapDisplayViewModel.CanvasSize))
-		//	{
-		//		(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_mapDisplayViewModel.CanvasSize, PITCH_TARGET);
-
-		//		_selectedArea.Width = _defaultSelectionSize.Width;
-		//		_selectedArea.Height = _defaultSelectionSize.Height;
-		//	}
-		//}
 
 		private void SelectedArea_KeyUp(object sender, KeyEventArgs e)
 		{

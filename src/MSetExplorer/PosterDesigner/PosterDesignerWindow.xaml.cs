@@ -745,7 +745,6 @@ namespace MSetExplorer
 
 			var curPoster = _vm.PosterViewModel.CurrentPoster;
 
-			// TODO: Convert UnscaledExtent to SizeDbl on MapDisplayViewModel.
 			var posterSize = _vm.MapDisplayViewModel.UnscaledExtent;
 
 			if (! (curPoster != null && !posterSize.IsNAN()) )

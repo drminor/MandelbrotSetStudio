@@ -94,26 +94,60 @@ namespace MSS.Common
 
 			var extentSanFirstBlock = canvasSize.Sub(sizeOfFirstBlock);
 
-			var sizeInBlocks = GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out sizeOfLastBlock);
+			var sizeInBlocks = GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
 
 			// Include the first block
 			sizeInBlocks = sizeInBlocks.Inflate(1);
 
-			// Include the last block, if any
-			var result = sizeInBlocks.Add(
-				new VectorInt
-					(
-						sizeOfLastBlock.Width > 0 ? 1 : 0,
-						sizeOfLastBlock.Height > 0 ? 1 : 0
-					)
-				);
+			int extendAmountX;
+			int extendAmountY;
+
+			int sizeOfLastBlockX;
+			int sizeOfLastBlockY;
+
+			if (remainder.Width > 0)
+			{
+				extendAmountX = 1;
+				sizeOfLastBlockX = remainder.Width;
+			}
+			else
+			{
+				// The width of the last block is the full blockSize
+				extendAmountX = 0;
+				sizeOfLastBlockX = blockSize.Width;
+			}
+
+			if (remainder.Height > 0)
+			{
+				extendAmountY = 1;
+				sizeOfLastBlockY = remainder.Height;
+			}
+			else
+			{
+				// The width of the last block is the full blockSize
+				extendAmountY = 0;
+				sizeOfLastBlockY = blockSize.Height;
+			}
+
+			//// Include the last block, if any
+			//var result = sizeInBlocks.Add(
+			//	new VectorInt
+			//		(
+			//			sizeOfLastBlock.Width > 0 ? 1 : 0,
+			//			sizeOfLastBlock.Height > 0 ? 1 : 0
+			//		)
+			//	);
+
+			sizeOfLastBlock = new SizeInt(sizeOfLastBlockX, sizeOfLastBlockY);
+
+			var result = new SizeInt(sizeInBlocks.Width + extendAmountX, sizeInBlocks.Height + extendAmountY);
 
 			return result;
 		}
 
-		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorDbl canvasControlOffset)
+		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorInt canvasControlOffset)
 		{
-			_ = GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset.Round(), RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
+			_ = GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset, RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
 
 			return sizeOfLastBlock;
 		}
@@ -157,7 +191,7 @@ namespace MSS.Common
 			var offsetInSamplePoints = rPointAndDelta.Position.Divide(rPointAndDelta.SamplePointDelta);
 
 			var chkPos = rPointAndDelta.SamplePointDelta.Scale(offsetInSamplePoints);
-			Debug.Assert(new RPoint(chkPos) == rPointAndDelta.Position, "rPointAndDelta Position non an integer multiple of Sample Point Delta.");
+			//Debug.Assert(new RPoint(chkPos) == rPointAndDelta.Position, "rPointAndDelta Position non an integer multiple of Sample Point Delta.");
 
 			var result = GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
 
@@ -197,13 +231,13 @@ namespace MSS.Common
 
 			if (remainderX < 0)
 			{
-				blocksX--;
+				//blocksX--;
 				remainderX += blockSize.Width;
 			}
 
 			if (remainderY < 0)
 			{
-				blocksY--;
+				//blocksY--;
 				remainderY += blockSize.Height;
 			}
 

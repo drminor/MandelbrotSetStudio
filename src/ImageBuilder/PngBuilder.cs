@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,6 +15,8 @@ namespace ImageBuilder
 {
 	public class PngBuilder : IImageBuilder
 	{
+		#region Private Fields
+
 		//private const double VALUE_FACTOR = 10000;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
@@ -21,6 +24,10 @@ namespace ImageBuilder
 
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection?>? _currentResponses;
+
+		#endregion
+
+		#region Constructor
 
 		public PngBuilder(IMapLoaderManager mapLoaderManager)
 		{
@@ -31,9 +38,18 @@ namespace ImageBuilder
 			_currentResponses = null;
 		}
 
+		#endregion
+
+		#region Public Properties
+
 		public long NumberOfCountValSwitches { get; private set; }
 
-		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct)
+		#endregion
+
+		#region Public Methods
+
+		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, 
+			Action<double> statusCallBack, CancellationToken ct)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -53,57 +69,35 @@ namespace ImageBuilder
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
-				var numberOfWholeBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize);
-				var w = numberOfWholeBlocks.Width;
-				var h = numberOfWholeBlocks.Height;
+				var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
+				var h = extentInBlocks.Height;
 
-				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {numberOfWholeBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
+				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {extentInBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
 
-				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
+				var segmentLengths = BitmapHelper.GetSegmentLengths(extentInBlocks.Width, sizeOfFirstBlock.Width, sizeOfLastBlock.Width, blockSize.Width);
+
+				for (var blockPtr = h - 1; blockPtr >= 0 && !ct.IsCancellationRequested; blockPtr--)
 				{
-					var blockIndexY = blockPtrY - (h / 2);
-					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtrY, blockIndexY, w, mapCalcSettings, mapAreaInfo.Precision);
+					var blockIndexY = blockPtr - (h / 2);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtr, blockIndexY, 
+						extentInBlocks.Width, mapCalcSettings, mapAreaInfo.Precision);
 
-					//var checkCnt = blocksForThisRow.Count;
-					//Debug.Assert(checkCnt == w);
+					Debug.Assert(blocksForThisRow.Count == extentInBlocks.Width);
 
-					var numberOfLines = BitmapHelper.GetNumberOfLines(blockPtrY, imageSize.Height, h, blockSize.Height, canvasControlOffset.Y, out var linesTopSkip);
-					var startingLinePtr = blockSize.Height - 1 - linesTopSkip;
-					var endingLinePtr = startingLinePtr - (numberOfLines - 1);
+					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
-					for (var linePtr = startingLinePtr; linePtr >= endingLinePtr; linePtr--)
-					{
-						var iLine = pngImage.ImageLine;
-						var destPixPtr = 0;
+					// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
+					// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
+					// But the screen coordinates increase from the top of the display to be bottom.
+					// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
 
-						for (var blockPtrX = 0; blockPtrX < w; blockPtrX++)
-						{
-							var mapSection = blocksForThisRow[blockPtrX];
-							var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSize.Width);
-							//var escVelsForThisLine = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
-							var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
+					var invert = !blocksForThisRow[0]?.IsInverted ?? false; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
 
-							var lineLength = BitmapHelper.GetSegmentLength(blockPtrX, imageSize.Width, w, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
+					var (startingLinePtr, numberOfLines, lineIncrement) = BitmapHelper.GetNumberOfLines(blockPtr, invert, extentInBlocks.Height, sizeOfFirstBlock.Height, sizeOfLastBlock.Height, blockSize.Height);
 
-							try
-							{
-								BitmapHelper.FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
-								destPixPtr += lineLength;
-							}
-							catch (Exception e)
-							{
-								if (!ct.IsCancellationRequested)
-								{
-									Debug.WriteLine($"FillPngImageLineSegment encountered an exception: {e}.");
-									throw;
-								}
-							}
-						}
+					BuildARow(pngImage, blockPtr, invert, startingLinePtr, numberOfLines, lineIncrement, extentInBlocks.Width, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
-						pngImage.WriteLine(iLine);
-					}
-
-					var percentageCompleted = (h - blockPtrY) / (double)h;
+					var percentageCompleted = (h - blockPtr) / (double)h;
 					statusCallBack(100 * percentageCompleted);
 				}
 			}
@@ -111,6 +105,7 @@ namespace ImageBuilder
 			{
 				if (!ct.IsCancellationRequested)
 				{
+					await Task.Delay(10);
 					Debug.WriteLine($"PngBuilder encountered an exception: {e}.");
 					throw;
 				}
@@ -130,51 +125,169 @@ namespace ImageBuilder
 			return true;
 		}
 
-		//private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int linesToSkip)
+		#endregion
+
+		#region Private Methods
+
+		private void BuildARow(PngImage pngImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, int extentInBlocksWidth, 
+			IDictionary<int, MapSection?> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
+		{
+			var linePtr = startingPtr;
+			for (var cntr = 0; cntr < numberOfLines; cntr++)
+			{
+				var iLine = pngImage.ImageLine;
+				var destPixPtr = 0;
+
+				for (var blockPtrX = 0; blockPtrX < extentInBlocksWidth; blockPtrX++)
+				{
+					var mapSection = blocksForThisRow[blockPtrX];
+					var invertThisBlock = !mapSection?.IsInverted ?? false;
+
+					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a differnt value of isInverted as does the block at 0, {blockPtrY}.");
+
+					var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
+
+					//var escVelsForThisLine = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
+					var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
+
+					//var lineLength = BitmapHelper.GetSegmentLength(blockPtrX, imageSize.Width, numberOfWholeBlocks.Width, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
+					var lineLength = segmentLengths[blockPtrX].Item1;
+					var samplesToSkip = segmentLengths[blockPtrX].Item2;
+
+					try
+					{
+						BitmapHelper.FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
+						destPixPtr += lineLength;
+					}
+					catch (Exception e)
+					{
+						if (!ct.IsCancellationRequested)
+						{
+							Debug.WriteLine($"FillPngImageLineSegment encountered an exception: {e}.");
+							throw;
+						}
+					}
+				}
+
+				pngImage.WriteLine(iLine);
+
+				linePtr += increment;
+			}
+		}
+
+		///// <summary>
+		///// 
+		///// </summary>
+		///// <param name="blockPtr">Which row is being processed.</param>
+		///// <param name="invert">True if the Counts Array should be accessed from high to low index values, i.e., from top to bottom. The index into Counts increase from left to right, and from bottom to top.</param>
+		///// <param name="extentInBlocksY"></param>
+		///// <param name="heightOfFirstBlock"></param>
+		///// <param name="heightOfLastBlock"></param>
+		///// <param name="blockHeight"></param>
+		///// <returns></returns>
+		//private (int startingPtr, int endingPtr, int increment) GetNumberOfLines(int blockPtr, bool invert, int extentInBlocksY, int heightOfFirstBlock, int heightOfLastBlock, int blockHeight)
 		//{
+		//	//var numberOfLines = BitmapHelper.GetNumberOfLines(blockPtrY, imageSize.Height, h, blockSize.Height, canvasControlOffset.Y, out var linesTopSkip);
+
+		//	int startingLinePtr;
 		//	int numberOfLines;
 
-		//	if (blockPtrY == 0)
+		//	if (invert)
 		//	{
-		//		linesToSkip = canvasControlOffsetY;
-		//		numberOfLines = blockHeight - canvasControlOffsetY;
-		//	}
-		//	else if (blockPtrY == numberOfWholeBlocksY - 1)
-		//	{
-		//		numberOfLines = canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
-		//		linesToSkip = blockHeight - numberOfLines;
+		//		// Invert = true is the normal case. Since in the vertical, Map Coordinates are opposite of screen coordinates.
+		//		// The first row from counts is at the bottom of the image.
+		//		// The last row from counts is at the top of the image.
 
+		//		// The startingLinePtr starts big and is reduced by numberOfLines
+
+		//		if (blockPtr == 0)
+		//		{
+		//			// This is the block with the smallest Map Coordinate and the largest Y screen coordinate (aka the first block)
+
+		//			startingLinePtr = blockHeight - 1; //(heightOfFirstBlock ranges from 1 to 128, startingLinePtr ranges from 127 to 0)
+		//			numberOfLines = heightOfFirstBlock;
+		//		}
+		//		else if (blockPtr == extentInBlocksY - 1)
+		//		{
+		//			// This is the block with the largest Map Coordinate and the smallest Y screen coordinate, (aka the last block)
+
+		//			startingLinePtr = heightOfLastBlock - 1;
+		//			numberOfLines = heightOfLastBlock;
+		//		}
+		//		else
+		//		{
+		//			startingLinePtr = blockHeight - 1;
+		//			numberOfLines = blockHeight;
+		//		}
 		//	}
 		//	else
 		//	{
-		//		linesToSkip = 0;
-		//		numberOfLines = blockHeight;
+		//		// We are displaying a map section originally generated for an area with a positive Y values, in an area with negative Y values.
+		//		// The content of any given block have either all postive or all negative Y values.
+		//		// The content of these blocks must not be reversed
+
+		//		// The first row from counts is at the top of the image.
+		//		// The last row from counts is at the bottom of the image.
+
+		//		// The startingLinePtr starts small and is increased by numberOfLines
+
+		//		if (blockPtr == 0)
+		//		{
+		//			// This is the block with the smallest Map Coordinate and the largest Y screen coordinate (aka the first block)
+
+		//			startingLinePtr = 0;
+		//			numberOfLines = heightOfFirstBlock;
+		//		}
+		//		else if (blockPtr == extentInBlocksY - 1)
+		//		{
+		//			// This is the block with the largest Map Coordinate and the smallest Y screen coordinate, (aka the last block)
+
+		//			startingLinePtr = blockHeight - heightOfLastBlock;
+		//			numberOfLines = heightOfLastBlock;
+		//		}
+		//		else
+		//		{
+		//			startingLinePtr = 0;
+		//			numberOfLines = blockHeight;
+		//		}
 		//	}
 
-		//	return numberOfLines;
+
+		//	var lineIncrement = invert ? -1 : 1;
+
+		//	return (startingLinePtr, numberOfLines, lineIncrement);
 		//}
 
-		//private int GetSegmentLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
+		//// GetSegmentLengths
+		//private ValueTuple<int, int>[] GetSegmentLengths(int numberOfWholeBlocksX, int widthOfFirstBlock, int widthOfLastBlock, int blockWidth)
 		//{
-		//	int result;
+		//	var segmentLengths = new ValueTuple<int, int>[numberOfWholeBlocksX];
 
-		//	if (blockPtrX == 0)
+		//	for (var blockPtrX = 0; blockPtrX < numberOfWholeBlocksX; blockPtrX++)
 		//	{
-		//		samplesToSkip = canvasControlOffsetX;
-		//		result = blockWidth - canvasControlOffsetX;
-		//	}
-		//	else if (blockPtrX == numberOfWholeBlocksX - 1)
-		//	{
-		//		samplesToSkip = 0;
-		//		result = canvasControlOffsetX + imageWidth - (blockWidth * (numberOfWholeBlocksX - 1));
-		//	}
-		//	else
-		//	{
-		//		samplesToSkip = 0;
-		//		result = blockWidth;
+		//		int lineLength;
+		//		int samplesToSkip;
+
+		//		if (blockPtrX == 0)
+		//		{
+		//			samplesToSkip = blockWidth - widthOfFirstBlock;
+		//			lineLength = widthOfFirstBlock;
+		//		}
+		//		else if (blockPtrX == numberOfWholeBlocksX - 1)
+		//		{
+		//			samplesToSkip = 0;
+		//			lineLength = widthOfLastBlock; 
+		//		}
+		//		else
+		//		{
+		//			samplesToSkip = 0;
+		//			lineLength = blockWidth;
+		//		}
+
+		//		segmentLengths[blockPtrX] = new ValueTuple<int, int>(lineLength, samplesToSkip);
 		//	}
 
-		//	return result;
+		//	return segmentLengths;
 		//}
 
 		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, OwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, BigVector mapBlockOffset, int rowPtr, int blockIndexY, int stride, MapCalcSettings mapCalcSettings, int precision)
@@ -235,112 +348,7 @@ namespace ImageBuilder
 			}
 		}
 
-		//private ushort[]? GetOneLineFromCountsBlock(ushort[]? counts, int lPtr, int stride)
-		//{
-		//	if (counts == null)
-		//	{
-		//		return null;
-		//	}
-		//	else
-		//	{
-		//		var result = new ushort[stride];
-
-		//		Array.Copy(counts, lPtr * stride, result, 0, stride);
-		//		return result;
-		//	}
-		//}
-
-		//private void FillPngImageLineSegment(ImageLine iLine, int pixPtr, ushort[]? counts, ushort[]? escapeVelocities, int lineLength, int samplesToSkip, ColorMap colorMap)
-		//{
-		//	if (counts == null || escapeVelocities == null)
-		//	{
-		//		FillPngImageLineSegmentWithWhite(iLine, pixPtr, lineLength);
-		//		return;
-		//	}
-
-		//	var cComps = new byte[4];
-		//	var dest = new Span<byte>(cComps);
-
-		//	var previousCountVal = counts[0];
-
-		//	for (var xPtr = 0; xPtr < lineLength; xPtr++)
-		//	{
-		//		var countVal = counts[xPtr + samplesToSkip];
-
-		//		if (countVal != previousCountVal)
-		//		{
-		//			NumberOfCountValSwitches++;
-		//			previousCountVal = countVal;
-		//		}
-
-		//		var escapeVelocity = colorMap.UseEscapeVelocities ? escapeVelocities[xPtr + samplesToSkip] / VALUE_FACTOR : 0;
-
-		//		if (escapeVelocity > 1.0)
-		//		{
-		//			Debug.WriteLine($"The Escape Velocity is greater that 1.0");
-		//		}
-
-		//		colorMap.PlaceColor(countVal, escapeVelocity, dest);
-
-		//		ImageLineHelper.SetPixel(iLine, pixPtr++, cComps[2], cComps[1], cComps[0]);
-		//	}
-		//}
-
-		//private void FillPngImageLineSegmentWithWhite(ImageLine iLine, int pixPtr, int len)
-		//{
-		//	for (var xPtr = 0; xPtr < len; xPtr++)
-		//	{
-		//		ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
-		//	}
-		//}
-		/*
-		private int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int numberOfLinesToSkip)
-		{
-			int result;
-
-			if (blockPtrY == 0)
-			{
-				numberOfLinesToSkip = 0;
-				result = blockHeight - canvasControlOffsetY;
-			}
-			else if (blockPtrY == numberOfWholeBlocksY - 1)
-			{
-				numberOfLinesToSkip = blockHeight - canvasControlOffsetY;
-				result = canvasControlOffsetY;
-			}
-			else
-			{
-				numberOfLinesToSkip = 0;
-				result = blockHeight;
-			}
-
-			return result;
-		}
-
-		private int GetLineLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
-		{
-			int result;
-
-			if (blockPtrX == 0)
-			{
-				samplesToSkip = canvasControlOffsetX;
-				result = blockWidth - canvasControlOffsetX;
-			}
-			else if (blockPtrX == numberOfWholeBlocksX - 1)
-			{
-				samplesToSkip = 0;
-				result = canvasControlOffsetX + imageWidth - (blockWidth * (numberOfWholeBlocksX - 1));
-			}
-			else
-			{
-				samplesToSkip = 0;
-				result = blockWidth;
-			}
-
-			return result;
-		}
-		*/
-
+		#endregion
 	}
 }
 

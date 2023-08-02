@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -204,12 +205,12 @@ namespace MSetExplorer
 		}
 
 		// TODO: Change ImageOffset to have type VectorInt (not VectorDbl)
-		public VectorDbl ImageOffset
+		public VectorInt ImageOffset
 		{
-			get => (VectorDbl)GetValue(ImageOffsetProperty);
+			get => (VectorInt)GetValue(ImageOffsetProperty);
 			set
 			{
-				if (ScreenTypeHelper.IsVectorDblChanged(ImageOffset, value))
+				if (value != ImageOffset)
 				{
 					SetCurrentValue(ImageOffsetProperty, value);
 				}
@@ -314,6 +315,28 @@ namespace MSetExplorer
 			_ourContent.Arrange(new Rect(finalSize));
 
 			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl has called _ourContent.Arrange({finalSize}). The canvas size is {new Size(Canvas.Width, Canvas.Height)}, actual canvas size: {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+
+			//if (!_useScaling)
+			//{
+			//	LogicalViewportSize = newValue; // new SizeDbl(c.ActualWidth, c.ActualHeight);
+			//	Canvas.Width = LogicalViewportSize.Width;
+			//	Canvas.Height = LogicalViewportSize.Height;
+			//}
+
+			if (!_useScaling)
+			{ 
+				var canvas = Canvas;
+
+				if (canvas.Width != finalSize.Width)
+				{
+					canvas.Width = finalSize.Width;
+				}
+
+				if (canvas.Height != finalSize.Height)
+				{
+					canvas.Height = finalSize.Height;
+				}
+			}
 
 			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
 
@@ -441,7 +464,7 @@ namespace MSetExplorer
 
 		#region Image and Image Offset
 
-		private bool UpdateImageOffset(VectorDbl newValue)
+		private bool UpdateImageOffset(VectorInt newValue)
 		{
 			//var newValue = rawValue.Scale(_scaleTransform.ScaleX);
 			//Debug.WriteLine($"Updating ImageOffset: raw: {rawValue}, scaled: {newValue}. ContentPresenterOffset: {ContentPresenterOffset}. ImageScaleTransform: {_scaleTransform.ScaleX}.");
@@ -521,13 +544,14 @@ namespace MSetExplorer
 
 			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The BitmapGridControl's ViewportSize is being updated from {previousValue} to {newValue}.");
 
-			if (!c._useScaling)
-			{
-				c.LogicalViewportSize = newValue; // new SizeDbl(c.ActualWidth, c.ActualHeight);
-				c.Canvas.Width = c.LogicalViewportSize.Width;
-				c.Canvas.Height = c.LogicalViewportSize.Height;
-			}
+			//if (!c._useScaling)
+			//{
+			//	c.LogicalViewportSize = newValue; // new SizeDbl(c.ActualWidth, c.ActualHeight);
+			//	c.Canvas.Width = c.LogicalViewportSize.Width;
+			//	c.Canvas.Height = c.LogicalViewportSize.Height;
+			//}
 
+			c.LogicalViewportSize = newValue;
 			c.ViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
 		}
 
@@ -556,14 +580,14 @@ namespace MSetExplorer
 		#region ImageOffset Dependency Property
 
 		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
-					"ImageOffset", typeof(VectorDbl), typeof(BitmapGridControl),
-					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
+					"ImageOffset", typeof(VectorInt), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(VectorInt.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
 
 		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			BitmapGridControl c = (BitmapGridControl)o;
-			//var previousValue = (VectorDbl)e.OldValue;
-			var newValue = (VectorDbl)e.NewValue;
+			//var previousValue = (VectorInt)e.OldValue;
+			var newValue = (VectorInt)e.NewValue;
 
 			_ = c.UpdateImageOffset(newValue);
 		}
@@ -588,15 +612,6 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG")]
-		private void CompareCanvasAndControlHeights()
-		{
-			if (Math.Abs(Canvas.ActualHeight - ActualHeight) > 5)
-			{
-				Debug.WriteLine($"WARNING: The Canvas Height : {Canvas.ActualHeight} does not match the BitmapGridControl's height: {ActualHeight}.");
-			}
-		}
-
-		[Conditional("DEBUG")]
 		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)
 		{
 			foreach (var v in canvas.Children)
@@ -608,23 +623,6 @@ namespace MSetExplorer
 			}
 
 			throw new InvalidOperationException("The image is not a child of the canvas.");
-		}
-
-
-		[Conditional("DEBUG")]
-		private void CheckNewCanvasSize(SizeDbl canvasSize, double relativeScale)
-		{
-			// The Canvas Size (which is equal to the contentViewportSize reduced by the BaseScale Factor)
-			// should equal the ViewportSize when it is expanded by the RelativeScale
-
-			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
-			var viewportSizeExpanded = viewportSize.Scale(1 / relativeScale);
-
-			// TODO: Take into account the scrollbar widths.
-			if (ScreenTypeHelper.IsSizeDblChanged(canvasSize, viewportSizeExpanded, threshold: 0.0001))
-			{
-				Debug.WriteLine("WARNING: The new CanvasSize is not equal to the Control's ActualSize  * 1 / relativeScale.");
-			}
 		}
 
 		#endregion

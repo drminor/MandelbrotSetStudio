@@ -331,7 +331,6 @@ namespace MSetExplorer.XPoc
 			UpdateSelectionCoords();
 		}
 
-		// TODO: Update GetSubdivision to use a SizeDbl
 		private void UpdateSelectionCoords()
 		{
 			var screenMapAreaInfo = MapAreaInfoViewModelCanS.MapAreaInfo;
@@ -355,7 +354,6 @@ namespace MSetExplorer.XPoc
 			UpdateSelectionCoordsNrm();
 		}
 
-		// TODO: Update GetSubdivision to use a SizeDbl
 		private void UpdateSelectionCoordsNrm()
 		{
 			//var screenMapAreaInfo = MapAreaInfoViewModelCanS.MapAreaInfo;

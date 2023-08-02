@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -90,11 +91,7 @@ namespace MSetExplorer
 				minContentScale = 0.0001;	
 			}
 
-			//_vm.MinimumDisplayZoom = minContentScale;
-			//_vm.DisplayZoom = Math.Min(Math.Max(e.ContentScale, _vm.MinimumDisplayZoom), _vm.MaximumDisplayZoom);
-
-			//PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, unscaledViewportSize, e.ContentOffset, _vm.DisplayZoom, minContentScale, maxContentScale);
-			PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent/*, unscaledViewportSize*/, e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
+			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
 		}
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
@@ -114,12 +111,14 @@ namespace MSetExplorer
 
 		private void ContentOffsetXChanged(object? sender, EventArgs e)
 		{
-			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContrainedViewportSize);
+			CheckForOutofSyncContentVpSize(PanAndZoomControl1.ContrainedViewportSize, _vm.ContentViewportSize);
+			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
 		}
 
 		private void ContentOffsetYChanged(object? sender, EventArgs e)
 		{
-			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset, PanAndZoomControl1.ContrainedViewportSize);
+			CheckForOutofSyncContentVpSize(PanAndZoomControl1.ContrainedViewportSize, _vm.ContentViewportSize);
+			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
 		}
 
 		#endregion
@@ -127,18 +126,29 @@ namespace MSetExplorer
 		#region Diagnostics
 
 		[Conditional("DEBUG")]
-		private void CheckForOutofSyncLogicalVpSize(SizeDbl viewPortsizeBitmapGridControl, SizeDbl viewportSizeVM)
+		private void CheckForOutofSyncLogicalVpSize(SizeDbl viewPortsizeBitmapGridControl, SizeDbl viewportSizeVm)
 		{
-			// TODO: As we are using a BaseScale, it might be the case where these are supposed to be different
-
-			//Debug.Assert(!ScreenTypeHelper.IsDoubleChanged(contentScaleFromPanAndZoomControl, contentScaleFromBitmapGridControl, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF), "The ContentScale from the PanAndZoom control is not the same as the ContentScale from the BitmapGrid control.");
-			if (ScreenTypeHelper.IsSizeDblChanged(viewPortsizeBitmapGridControl, viewportSizeVM))
+			if (ScreenTypeHelper.IsSizeDblChanged(viewPortsizeBitmapGridControl, viewportSizeVm))
 			{
 				Debug.WriteLine($"The LogicalViewportSize from the BitmapGridControl is not the same as the value from the MapSectionDisplayViewModel. " +
-					$"BitmapGridControl's value: {viewPortsizeBitmapGridControl}, MapSectionDisplayViewModel's value: {viewportSizeVM}.");
+					$"BitmapGridControl's value: {viewPortsizeBitmapGridControl}, MapSectionDisplayViewModel's value: {viewportSizeVm}.");
 			}
 		}
 
+		[Conditional("DEBUG")]
+		private void CheckForOutofSyncContentVpSize(SizeDbl contentVpSizeFromPz, SizeDbl? contentVpSizeVm)
+		{
+			if (contentVpSizeVm == null)
+			{
+				throw new InvalidOperationException("The VM's ContentViewPortsize is null on call to MoveTo");
+			}
+
+			if (ScreenTypeHelper.IsSizeDblChanged(contentVpSizeFromPz, contentVpSizeVm.Value))
+			{
+				Debug.WriteLine($"The ContentViewportSize from the PanAndZoomControl is not the same as the value from the MapSectionDisplayViewModel. " +
+					$"PanAndZoomControl's value: {contentVpSizeFromPz}, MapSectionDisplayViewModel's value: {contentVpSizeVm}.");
+			}
+		}
 
 		#endregion
 	}

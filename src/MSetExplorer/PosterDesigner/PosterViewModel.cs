@@ -1,14 +1,11 @@
-﻿using MongoDB.Bson;
-using MSetRepo;
+﻿using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace MSetExplorer
 {
@@ -521,9 +518,6 @@ namespace MSetExplorer
 			{
 				throw new InvalidOperationException("Adding a job to the poster should set the value of the PosterViewModel's CurrentPoster's CurrentJob.");
 			}
-
-			// TODO: Do we need to raise this OnPropertyChanged event -- or is the CurrentPoster_PropertyChanged Event Handler handling the update.
-			//CurrentPoster.CurrentJob = job;
 		}
 
 		#endregion

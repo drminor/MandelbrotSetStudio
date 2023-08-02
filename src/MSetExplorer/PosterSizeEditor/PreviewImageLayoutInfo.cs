@@ -141,8 +141,6 @@ namespace MSetExplorer
 
 		private void TranslateNewAndOrigImages(PointDbl boundingImagePos, ref PointDbl originalImagePos, ref PointDbl newImagePos)
 		{
-			// TODO: Take into account position of the originalImagePos
-
 			double oPosX;
 			double nPosX;
 			if (newImagePos.X <= originalImagePos.X)
