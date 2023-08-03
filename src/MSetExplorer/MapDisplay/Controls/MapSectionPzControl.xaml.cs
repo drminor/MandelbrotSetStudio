@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace MSetExplorer
 {
@@ -16,6 +17,8 @@ namespace MSetExplorer
 
 		private const double POSTER_DISPLAY_MARGIN = 20;
 
+		private DebounceDispatcher _viewPortSizeDispatcher;
+		private DebounceDispatcher _contentScaleDispatcher;
 		private IMapDisplayViewModel _vm;
 
 		private bool _useDetailedDebug = true;
@@ -26,6 +29,16 @@ namespace MSetExplorer
 
 		public MapSectionPzControl()
 		{
+			_viewPortSizeDispatcher = new DebounceDispatcher
+			{
+				Priority = DispatcherPriority.Render
+			};
+
+			_contentScaleDispatcher = new DebounceDispatcher
+			{
+				Priority = DispatcherPriority.Render
+			};
+
 			_vm = (IMapDisplayViewModel)DataContext;
 
 			Loaded += MapSectionPzControl_Loaded;
@@ -97,6 +110,18 @@ namespace MSetExplorer
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
+			_viewPortSizeDispatcher.Throttle(
+				interval: 200,
+				action: parm =>
+				{
+					ViewportChangedThrottled(e);
+				},
+				param: null
+			);
+		}
+
+		private void ViewportChangedThrottled(ScaledImageViewInfo e)
+		{
 			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ViewportChanged event.");
 			ReportViewportChanged(e);
 
@@ -107,6 +132,18 @@ namespace MSetExplorer
 		}
 
 		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
+		{
+			_contentScaleDispatcher.Throttle(
+				interval: 200,
+				action: parm =>
+				{
+					ContentScaleChangedThrottled(e);
+				},
+				param: null
+			);
+		}
+
+		private void ContentScaleChangedThrottled(ScaledImageViewInfo e)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ContentScaleChanged event.");
 			ReportViewportChanged(e);

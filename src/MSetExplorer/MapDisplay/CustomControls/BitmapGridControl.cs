@@ -181,7 +181,7 @@ namespace MSetExplorer
 					var previousValue = _viewportSizeInternal;
 					_viewportSizeInternal = value;
 
-					Debug.WriteLine($"BitmapGridControl: Viewport is changing from {previousValue} to {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl: Viewport is changing from {previousValue} to {value}.");
 
 					ViewportSize = value;
 				}
@@ -265,7 +265,7 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(value, _logicalViewportSize))
 				{
-					Debug.WriteLine($"The BitmapGridControl is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}.");
 					_logicalViewportSize = value;
 				}
 			}

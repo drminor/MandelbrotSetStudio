@@ -241,7 +241,7 @@ namespace MSetExplorer
 			var result = childSize;
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoom Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
-			Debug.WriteLine($"PanAndZoom Measure. Previous DesiredSize {dsBefore}. Mid DesiredSize: {dsBetween}. Available: {availableSize}. Base returns {childSize}, NewDesiredSize = {DesiredSize}. Using {result}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoom Measure. Previous DesiredSize {dsBefore}. Mid DesiredSize: {dsBetween}. Available: {availableSize}. Base returns {childSize}, NewDesiredSize = {DesiredSize}. Using {result}.");
 
 			return result;
 		}
@@ -255,7 +255,7 @@ namespace MSetExplorer
 
 			if (ContentBeingZoomed != null)
 			{
-				Debug.WriteLine($"The PanAndZoomControl is calling ContentBeingZoomed.Arrange({finalSize})");
+				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is calling ContentBeingZoomed.Arrange({finalSize})");
 				ContentBeingZoomed.Arrange(new Rect(finalSize));
 
 				if (childSize != finalSize)
