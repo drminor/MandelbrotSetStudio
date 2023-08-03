@@ -70,9 +70,11 @@ namespace MSetExplorer
 
 				PanAndZoomControl1.ZoomOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
-				PanAndZoomControl1.ViewportChanged += PanAndZoomControl1_ViewportChanged;
-				PanAndZoomControl1.ContentOffsetXChanged += PanAndZoomControl1_ContentOffsetXChanged;
-				PanAndZoomControl1.ContentOffsetYChanged += PanAndZoomControl1_ContentOffsetYChanged;
+				PanAndZoomControl1.ViewportChanged += ViewportChanged;
+				PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
+
+				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetChanged;
+				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetChanged;
 
 				//_outline = BuildOutline(HistogramDisplayControl1.Canvas);
 
@@ -84,26 +86,29 @@ namespace MSetExplorer
 		{
 			PanAndZoomControl1.ZoomOwner = null;
 
-			PanAndZoomControl1.ViewportChanged -= PanAndZoomControl1_ViewportChanged;
-			PanAndZoomControl1.ContentOffsetXChanged -= PanAndZoomControl1_ContentOffsetXChanged;
-			PanAndZoomControl1.ContentOffsetYChanged -= PanAndZoomControl1_ContentOffsetYChanged;
+			PanAndZoomControl1.ViewportChanged -= ViewportChanged;
+			PanAndZoomControl1.ContentScaleChanged -= ContentScaleChanged;
+
+			PanAndZoomControl1.ContentOffsetXChanged -= ContentOffsetChanged;
+			PanAndZoomControl1.ContentOffsetYChanged -= ContentOffsetChanged;
 		}
 
 		#endregion
 
 		#region Event Handlers
 
-		private void PanAndZoomControl1_ViewportChanged(object? sender, ScaledImageViewInfo e)
+		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
 		{
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 		}
 
-		private void PanAndZoomControl1_ContentOffsetXChanged(object? sender, EventArgs e)
+		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
-			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
+			// TODO: Handle those cases where the scale does not change for the CbsHistogramControl
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 		}
 
-		private void PanAndZoomControl1_ContentOffsetYChanged(object? sender, EventArgs e)
+		private void ContentOffsetChanged(object? sender, EventArgs e)
 		{
 			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
 		}

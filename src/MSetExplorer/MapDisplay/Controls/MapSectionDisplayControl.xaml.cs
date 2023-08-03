@@ -53,7 +53,6 @@ namespace MSetExplorer
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
 				BitmapGridControl1.UseScaling = false;
-				//BitmapGridControl1.ViewportSizeChanged += BitmapGridControl1_ViewportSizeChanged;
 
 				_selectionRectangle = new SelectionRectangle(BitmapGridControl1.Canvas, _vm.ViewportSize, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
@@ -66,7 +65,6 @@ namespace MSetExplorer
 		private void MapSectionDisplayControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			_vm.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
-			//BitmapGridControl1.ViewportSizeChanged -= BitmapGridControl1_ViewportSizeChanged;
 
 			if (!(_selectionRectangle is null))
 			{
@@ -112,16 +110,8 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings))
 			{
 				_selectionRectangle.IsEnabled = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo != null;
-
-				//// Just for Diagnostics
-				//_selectionRectangle.MapAreaInfo = _vm.CurrentAreaColorAndCalcSettings?.MapAreaInfo;
 			}
 		}
-
-		//private void BitmapGridControl1_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
-		//{
-		//	BitmapGridControl1.TranslationAndClipSize = new RectangleDbl(new PointDbl(), e.Item2);
-		//}
 
 		private void SelectionRectangle_AreaSelected(object? sender, AreaSelectedEventArgs e)
 		{

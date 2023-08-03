@@ -204,7 +204,6 @@ namespace MSetExplorer
 			set => SetCurrentValue(BitmapGridImageSourceProperty, value);
 		}
 
-		// TODO: Change ImageOffset to have type VectorInt (not VectorDbl)
 		public VectorInt ImageOffset
 		{
 			get => (VectorInt)GetValue(ImageOffsetProperty);

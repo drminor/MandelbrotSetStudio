@@ -18,7 +18,7 @@ namespace MSetExplorer
 	/// 
 	/// </remarks>
 
-	public partial class PanAndZoomControl : ContentControl, IScrollInfo, IZoomInfo, IDisposable
+	public class PanAndZoomControl : ContentControl, IScrollInfo, IZoomInfo, IDisposable
 	{
 		#region Private Fields
 
@@ -77,12 +77,10 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<ScaledImageViewInfo>? ViewportChanged;
+		public event EventHandler<ScaledImageViewInfo>? ContentScaleChanged;
 
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
-
-		public event EventHandler<ScaledImageViewInfo>? ContentScaleChanged;
-		//public event EventHandler? ScrollbarVisibilityChanged;
 
 		#endregion
 
@@ -355,10 +353,8 @@ namespace MSetExplorer
 				c._disableContentOffsetChangeEvents = false;
 			}
 
-			// TODO: CheckEvent
-			//c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
 
-			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize/*, c.UnscaledViewportSize*/, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale/*, c._contentScaler?.TranslationAndClipSize*/);
+			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
 			c.ContentScaleChanged?.Invoke(c, sivi);
 		}
 
@@ -419,11 +415,7 @@ namespace MSetExplorer
 			c.ZoomOwner?.ContentScaleWasUpdated(c.ContentScale);
 			c.InvalidateScrollInfo();
 
-			// TODO: CheckEvent
-			//c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
-
-			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize/*, c.UnscaledViewportSize*/, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale/*, c._contentScaler?.TranslationAndClipSize*/);
-
+			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale);
 			c.ContentScaleChanged?.Invoke(c, sivi);
 		}
 
@@ -648,9 +640,6 @@ namespace MSetExplorer
 			// Initialise the content zoom focus point.
 			UpdateContentZoomFocus();
 
-			//// Reset the viewport zoom focus to the center of the viewport.
-			//ResetViewportZoomFocus();
-
 			try
 			{
 				_disableContentOffsetChangeEvents = true;
@@ -671,7 +660,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is raising the ViewportChanged event as the ViewportSize is updated from {previousValue} to {newValue}. The _disableViewportChangedEvents guard has not been set.");
 
-				var sivi = new ScaledImageViewInfo(_constrainedContentViewportSize/*, UnscaledViewportSize*/, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale/*, _contentScaler?.TranslationAndClipSize*/);
+				var sivi = new ScaledImageViewInfo(_constrainedContentViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale);
 				ViewportChanged?.Invoke(this, sivi);
 			}
 			else
@@ -845,13 +834,6 @@ namespace MSetExplorer
 			var result = contentOffset.Translate(_constrainedContentViewportSize.Divide(2));
 			return result;
 		}
-
-		//// For this implementation the ViewportZoomFocus is always at the center
-		//// so we don't need to keep track of this value.
-		//private void ResetViewportZoomFocus()
-		//{
-		//	ViewportZoomFocus = new PointDbl(UnscaledViewportSize.Divide(2));
-		//}
 
 		private void UpdateContentOffsetsFromScale()
 		{

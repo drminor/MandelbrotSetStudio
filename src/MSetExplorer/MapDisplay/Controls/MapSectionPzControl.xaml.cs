@@ -4,7 +4,6 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -56,8 +55,8 @@ namespace MSetExplorer
 				PanAndZoomControl1.ViewportChanged += ViewportChanged;
 				PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
 
-				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetXChanged;
-				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetYChanged;
+				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetChanged;
+				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetChanged;
 
 				Debug.WriteLineIf(_useDetailedDebug, "The MapSectionPzControl is now loaded");
 			}
@@ -70,8 +69,8 @@ namespace MSetExplorer
 			PanAndZoomControl1.ViewportChanged -= ViewportChanged;
 			PanAndZoomControl1.ContentScaleChanged -= ContentScaleChanged;
 
-			PanAndZoomControl1.ContentOffsetXChanged -= ContentOffsetXChanged;
-			PanAndZoomControl1.ContentOffsetYChanged -= ContentOffsetYChanged;
+			PanAndZoomControl1.ContentOffsetXChanged -= ContentOffsetChanged;
+			PanAndZoomControl1.ContentOffsetYChanged -= ContentOffsetChanged;
 
 			PanAndZoomControl1.Dispose();
 			PanAndZoomControl1.ZoomOwner = null;
@@ -98,8 +97,6 @@ namespace MSetExplorer
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
-			// TODO: Update how the ViewportChanged event is handled -- since it will never include an updated ContentScale.
-
 			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ViewportChanged event.");
 			ReportViewportChanged(e);
 
@@ -112,7 +109,6 @@ namespace MSetExplorer
 		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ContentScaleChanged event.");
-
 			ReportViewportChanged(e);
 
 			_vm.UpdateViewportSizePosAndScale(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
@@ -121,13 +117,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"========== The MapSectionPzControl is returning from UpdatingViewportSizePosAndScale. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
 		}
 
-		private void ContentOffsetXChanged(object? sender, EventArgs e)
-		{
-			CheckForOutofSyncContentVpSize(PanAndZoomControl1.ContrainedViewportSize, _vm.ContentViewportSize);
-			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
-		}
-
-		private void ContentOffsetYChanged(object? sender, EventArgs e)
+		private void ContentOffsetChanged(object? sender, EventArgs e)
 		{
 			CheckForOutofSyncContentVpSize(PanAndZoomControl1.ContrainedViewportSize, _vm.ContentViewportSize);
 			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
