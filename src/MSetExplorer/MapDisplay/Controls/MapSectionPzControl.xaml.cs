@@ -54,6 +54,7 @@ namespace MSetExplorer
 
 				_vm.DisplaySettingsInitialized += _vm_DisplaySettingsInitialzed;
 				PanAndZoomControl1.ViewportChanged += ViewportChanged;
+				PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
 
 				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetXChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetYChanged;
@@ -67,6 +68,7 @@ namespace MSetExplorer
 			_vm.DisplaySettingsInitialized -= _vm_DisplaySettingsInitialzed;
 
 			PanAndZoomControl1.ViewportChanged -= ViewportChanged;
+			PanAndZoomControl1.ContentScaleChanged -= ContentScaleChanged;
 
 			PanAndZoomControl1.ContentOffsetXChanged -= ContentOffsetXChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= ContentOffsetYChanged;
@@ -96,17 +98,27 @@ namespace MSetExplorer
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
+			// TODO: Update how the ViewportChanged event is handled -- since it will never include an updated ContentScale.
+
 			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ViewportChanged event.");
+			ReportViewportChanged(e);
 
-			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(e.ContentScale);
-			Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} / Unscaled: {e.UnscaledViewportSize}, " +
-				$"Offset:{e.ContentOffset}, Scale:{e.ContentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
-
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
-
+			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset);
 			CheckForOutofSyncLogicalVpSize(BitmapGridControl1.LogicalViewportSize, _vm.LogicalViewportSize);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"========== The MapSectionPzControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
+		}
+
+		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ContentScaleChanged event.");
+
+			ReportViewportChanged(e);
+
+			_vm.UpdateViewportSizePosAndScale(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
+			CheckForOutofSyncLogicalVpSize(BitmapGridControl1.LogicalViewportSize, _vm.LogicalViewportSize);
+
+			Debug.WriteLineIf(_useDetailedDebug, $"========== The MapSectionPzControl is returning from UpdatingViewportSizePosAndScale. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
 		}
 
 		private void ContentOffsetXChanged(object? sender, EventArgs e)
@@ -148,6 +160,13 @@ namespace MSetExplorer
 				Debug.WriteLine($"The ContentViewportSize from the PanAndZoomControl is not the same as the value from the MapSectionDisplayViewModel. " +
 					$"PanAndZoomControl's value: {contentVpSizeFromPz}, MapSectionDisplayViewModel's value: {contentVpSizeVm}.");
 			}
+		}
+
+		private void ReportViewportChanged(ScaledImageViewInfo e)
+		{
+			var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(e.ContentScale);
+			Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionPzControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} " + //  / Unscaled: {e.UnscaledViewportSize},
+				$"Offset:{e.ContentOffset}, Scale:{e.ContentScale}. BaseFactor: {baseFactor}, RelativeScale: {relativeScale}.");
 		}
 
 		#endregion

@@ -30,7 +30,7 @@ namespace MSetExplorer
 
 		private SizeDbl _contentScale;
 		private RectangleDbl _translationAndClipSize;
-		private bool _useScaling = true;
+		private bool _useScaling;
 
 		private bool _useDetailedDebug = false;
 
@@ -55,7 +55,7 @@ namespace MSetExplorer
 			_image = new Image();
 
 
-			_useScaling = true;
+			_useScaling = false;
 			_translationAndClipSize = new RectangleDbl();
 
 			_viewportSizeInternal = new SizeDbl();
@@ -224,7 +224,14 @@ namespace MSetExplorer
 			{
 				_contentScale = value;
 
-				if (!_useScaling) Debug.Assert(value == new SizeDbl(1, 1), "Setting the ContentScale to a value other than 1, when UseScaling is set to false.");
+				if (!UseScaling)
+				{
+					if (value.Width != 1 | value.Height != 1)
+					{
+						Debug.WriteLine("WARNING: The ContentScale is being set but UseScaling is set to false.");
+						//Debug.Assert(value == new SizeDbl(1, 1), "Setting the ContentScale to a value other than 1, when UseScaling is set to false.");
+					}
+				}
 
 				SetTheCanvasScale(_contentScale);
 			}
@@ -237,9 +244,9 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsRectangleDblChanged(_translationAndClipSize, value))
 				{
-					if (_useScaling)
+					if (!UseScaling)
 					{
-						Debug.WriteLine("WARNING: The TranslationAndClipSize is being set but the UseScaling is set to false.");
+						Debug.WriteLine("WARNING: The TranslationAndClipSize is being set but UseScaling is set to false.");
 					}
 
 					var previousVal = _translationAndClipSize;
@@ -316,14 +323,7 @@ namespace MSetExplorer
 
 			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl has called _ourContent.Arrange({finalSize}). The canvas size is {new Size(Canvas.Width, Canvas.Height)}, actual canvas size: {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
-			//if (!_useScaling)
-			//{
-			//	LogicalViewportSize = newValue; // new SizeDbl(c.ActualWidth, c.ActualHeight);
-			//	Canvas.Width = LogicalViewportSize.Width;
-			//	Canvas.Height = LogicalViewportSize.Height;
-			//}
-
-			if (!_useScaling)
+			if (!UseScaling)
 			{ 
 				var canvas = Canvas;
 
@@ -401,40 +401,39 @@ namespace MSetExplorer
 			//	$"from {RectangleDbl.FormatNully(previousValue)} to {RectangleDbl.FormatNully(newValue)}." +
 			//	$"The CanvasScale is {new SizeDbl(_canvasScaleTransform.ScaleX, _canvasScaleTransform.ScaleY)}.");
 
-			// Compensate for the fact that this implementation has alredy reduced the content by a factor of BaseScale.
-			var baseScale = ContentScalerHelper.GetBaseScale(ContentScale.Width);
-
-			var offset = newValue.Position;
-
-			// The Position is in physical pixels. We need to convert to Content Units
-			//
-			// Physcial pixels * Scale = logical display size.
-			// Then since our content is 2, 4, 8 times smaller, we need to compensate by multiplying by the
-			// BaseScale of 0.5, 0.25, 0.125, etc.
-			var pos = newValue.Position.Scale(ContentScale.Width).Scale(baseScale); // ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
-
-			// The Size is in Logical Display Units
-			// We need to compensate by multiplying by the BaseScale to match the actual size of our image.
-			var logicalViewportSize = newValue.Size.Scale(baseScale);
-
-			Debug.Assert(offset.X >= 0 && offset.Y >= 0, "ClipAndOffset is receiving a negative position.");
-
+			Debug.Assert(newValue.X1 >= 0 && newValue.Y1 >= 0, "ClipAndOffset is receiving a negative position.");
 			var previousCanvasSize = new SizeDbl(Canvas.ActualWidth, Canvas.ActualHeight);
 			var previousTranslation = new SizeDbl(_canvasTranslateTransform.X, _canvasTranslateTransform.Y);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is handling ClipAndOffset. Setting the Canvas Size from {previousCanvasSize.ToString("F2")} to {logicalViewportSize.ToString("F2")}. Translation from: {previousTranslation.ToString("F2")} to {offset.ToString("F2")}.");
+			// Compensate for the fact that this implementation has alredy reduced the content by a factor of BaseScale.
+			var baseScale = ContentScalerHelper.GetBaseScale(ContentScale.Width);
+
+			// The Position is in physical pixels. We need to convert to Content Units
+			// The Size is already in Logical Display Units, it only needs to be scaled by BaseScale.
+
+			// Physcial pixels * Scale = logical display size.
+			var scaledPosition = newValue.Position.Scale(ContentScale.Width);
+
+			// Since our content is 2, 4, 8 times smaller, we need to compensate by multiplying by the 
+			// BaseScale of 0.5, 0.25, 0.125, etc.
+
+			var logicalPosition = scaledPosition.Scale(baseScale);
+			var logicalViewportSize = newValue.Size.Scale(baseScale);
+
+			Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl is handling ClipAndOffset. Setting the Canvas Size from {previousCanvasSize.ToString("F2")} to {logicalViewportSize.ToString("F2")}. " +
+				$"Translation from: {previousTranslation.ToString("F2")} to {newValue.Position.ToString("F2")}. ");
 
 			Canvas.Width = logicalViewportSize.Width;
 			Canvas.Height = logicalViewportSize.Height;
 
-			if (_useScaling)
+			if (UseScaling)
 			{
 				// Translate using the unscaled value
-				_canvasTranslateTransform.X = offset.X;
-				_canvasTranslateTransform.Y = offset.Y;
+				_canvasTranslateTransform.X = newValue.Position.X;
+				_canvasTranslateTransform.Y = newValue.Position.Y;
 
-				// Clip using the Scaled value.
-				var clipOrigin = new Point(pos.X, pos.Y);
+				// Clip using the scaled value.
+				var clipOrigin = new Point(logicalPosition.X, logicalPosition.Y);
 				Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(logicalViewportSize)));
 			}
 			else
@@ -543,13 +542,6 @@ namespace MSetExplorer
 			}
 
 			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The BitmapGridControl's ViewportSize is being updated from {previousValue} to {newValue}.");
-
-			//if (!c._useScaling)
-			//{
-			//	c.LogicalViewportSize = newValue; // new SizeDbl(c.ActualWidth, c.ActualHeight);
-			//	c.Canvas.Width = c.LogicalViewportSize.Width;
-			//	c.Canvas.Height = c.LogicalViewportSize.Height;
-			//}
 
 			c.LogicalViewportSize = newValue;
 			c.ViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));

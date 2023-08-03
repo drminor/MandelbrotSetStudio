@@ -81,7 +81,7 @@ namespace MSetExplorer
 		public event EventHandler? ContentOffsetXChanged;
 		public event EventHandler? ContentOffsetYChanged;
 
-		//public event EventHandler? ContentScaleChanged;
+		public event EventHandler<ScaledImageViewInfo>? ContentScaleChanged;
 		//public event EventHandler? ScrollbarVisibilityChanged;
 
 		#endregion
@@ -141,7 +141,7 @@ namespace MSetExplorer
 
 		public PointDbl ContentZoomFocus { get; set; }
 
-		public PointDbl ViewportZoomFocus { get; set; }
+		//public PointDbl ViewportZoomFocus { get; set; }
 
 		public double ContentOffsetX
 		{
@@ -157,25 +157,58 @@ namespace MSetExplorer
 
 		public VectorDbl ContentOffset => new VectorDbl((double)GetValue(ContentOffsetXProperty), (double)GetValue(ContentOffsetYProperty));
 
-		//public double ContentPositionX
-		//{
-		//	get => (double)GetValue(ContentPositionXProperty);
-		//	set => SetCurrentValue(ContentPositionXProperty, value);
-		//}
-
-		//public double ContentPositionY
-		//{
-		//	get => (double)GetValue(ContentPositionYProperty);
-		//	set => SetCurrentValue(ContentPositionYProperty, value);
-		//}
-
-		//public ScaledImageViewInfo ViewportSizeOffsetAndScale
-		//{
-		//	get => (ScaledImageViewInfo)GetValue(ViewportSizeOffsetAndScaleProperty);
-		//	set => SetCurrentValue(ViewportSizeOffsetAndScaleProperty, value);
-		//}
-
 		public bool IsMouseWheelScrollingEnabled { get; set; }
+
+		#endregion
+
+		#region Public Methods
+
+		public double ResetExtentWithPositionAndScale(SizeDbl unscaledExtent, VectorDbl contentOffset, double contentScale, double minContentScale, double maxContentScale)
+		{
+			var contentViewportSize = UnscaledViewportSize.Divide(contentScale);
+
+			_constrainedContentViewportSize = unscaledExtent.Min(contentViewportSize);
+
+			// Set ours to zero to signal that all changes are prepatory
+			UnscaledExtent = new SizeDbl();
+
+			if (_contentScaler != null)
+			{
+				_disableViewportChangedEvents = true;
+				try
+				{
+					_contentScaler.TranslationAndClipSize = new RectangleDbl(new PointDbl(0, 0), UnscaledViewportSize);
+				}
+				finally
+				{
+					_disableViewportChangedEvents = false;
+				}
+			}
+
+			// Use the new extent to determine offsets.
+			_maxContentOffset = unscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
+
+			// Use the same logic as the Coerce OffsetX / OffsetY 
+			var adjustedContentOffset = new VectorDbl(
+				Math.Min(Math.Max(contentOffset.X, 0.0), _maxContentOffset.Width),
+				Math.Min(Math.Max(contentOffset.Y, 0.0), _maxContentOffset.Height)
+				);
+
+			// Set the properties without executing the 'OnChange' logic.
+			ContentOffsetX = adjustedContentOffset.X;
+			ContentOffsetY = adjustedContentOffset.Y;
+
+			MinContentScale = minContentScale;
+			MaxContentScale = maxContentScale;
+			ContentScale = contentScale;
+
+			UpdateContentZoomFocus();
+
+			// Update the Zoom Scroll Bar control values
+			ZoomOwner?.InvalidateScaleContentInfo();
+
+			return ContentScale;
+		}
 
 		#endregion
 
@@ -314,9 +347,7 @@ namespace MSetExplorer
 				c._disableContentOffsetChangeEvents = true;
 
 				c.UpdateContentViewportSize();
-				c.ContentZoomFocus = c.GetContentCenter();
-
-				//c.UpdateContentZoomFocus();
+				c.UpdateContentZoomFocus();
 				c.InvalidateScrollInfo();
 			}
 			finally
@@ -327,59 +358,8 @@ namespace MSetExplorer
 			// TODO: CheckEvent
 			//c.ScrollbarVisibilityChanged?.Invoke(c, new EventArgs());
 
-			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize, c.UnscaledViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
-			c.ViewportChanged?.Invoke(c, sivi);
-		}
-
-		//e.UnscaledExtent, unscaledViewportSize
-		public double ResetExtentWithPositionAndScale(SizeDbl unscaledExtent, VectorDbl contentOffset, double contentScale, double minContentScale, double maxContentScale)
-		{
-			var contentViewportSize = UnscaledViewportSize.Divide(contentScale);
-
-			_constrainedContentViewportSize = unscaledExtent.Min(contentViewportSize);
-
-			// Set ours to zero to signal that all changes are prepatory
-			UnscaledExtent = new SizeDbl();
-
-			if (_contentScaler != null)
-			{
-				_disableViewportChangedEvents = true;
-				try
-				{
-					_contentScaler.TranslationAndClipSize = new RectangleDbl(new PointDbl(0, 0), UnscaledViewportSize);
-				}
-				finally
-				{
-					_disableViewportChangedEvents = false;
-				}
-			}
-
-			// Use the new extent to determine offsets.
-			_maxContentOffset = unscaledExtent.Sub(_constrainedContentViewportSize).Max(0);
-
-			// Use the same logic as the Coerce OffsetX / OffsetY 
-			var adjustedContentOffset = new VectorDbl(
-				Math.Min(Math.Max(contentOffset.X, 0.0), _maxContentOffset.Width),
-				Math.Min(Math.Max(contentOffset.Y, 0.0), _maxContentOffset.Height)
-				);
-
-
-			// Set the properties without executing the 'OnChange' logic.
-			ContentOffsetX = adjustedContentOffset.X;
-			ContentOffsetY = adjustedContentOffset.Y;
-
-			MinContentScale = minContentScale;
-			MaxContentScale = maxContentScale;
-			ContentScale = contentScale;
-
-			//UpdateContentZoomFocus(); // Added 7/28/2023
-			ContentZoomFocus = GetContentCenter();
-
-
-			// Update the Zoom Scroll Bar control values
-			ZoomOwner?.InvalidateScaleContentInfo();
-
-			return ContentScale;
+			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize/*, c.UnscaledViewportSize*/, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale/*, c._contentScaler?.TranslationAndClipSize*/);
+			c.ContentScaleChanged?.Invoke(c, sivi);
 		}
 
 		#endregion
@@ -428,7 +408,7 @@ namespace MSetExplorer
 				if (c._enableContentOffsetUpdateFromScale)
 				{
 					c.UpdateContentOffsetsFromScale();
-					c.ContentZoomFocus = c.GetContentCenter();
+					c.UpdateContentZoomFocus();
 				}
 			}
 			finally
@@ -442,8 +422,9 @@ namespace MSetExplorer
 			// TODO: CheckEvent
 			//c.ContentScaleChanged?.Invoke(c, EventArgs.Empty);
 
-			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize, c.UnscaledViewportSize, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale, c._contentScaler?.TranslationAndClipSize);
-			c.ViewportChanged?.Invoke(c, sivi);
+			var sivi = new ScaledImageViewInfo(c._constrainedContentViewportSize/*, c.UnscaledViewportSize*/, new VectorDbl(c.ContentOffsetX, c.ContentOffsetY), c.ContentScale/*, c._contentScaler?.TranslationAndClipSize*/);
+
+			c.ContentScaleChanged?.Invoke(c, sivi);
 		}
 
 		/// <summary>
@@ -522,9 +503,7 @@ namespace MSetExplorer
 			if (!c._disableContentFocusSync)
 			{
 				// Don't update the ZoomFocus if zooming is in progress.
-				//c.UpdateContentZoomFocus();
-				c.ContentZoomFocus = c.GetContentCenter();
-
+				c.UpdateContentZoomFocus();
 			}
 
 			if (!c._disableContentOffsetChangeEvents)
@@ -595,8 +574,7 @@ namespace MSetExplorer
 			if (!c._disableContentFocusSync)
 			{
 				// Don't update the ZoomFocus if zooming is in progress.
-				//c.UpdateContentZoomFocus();
-				c.ContentZoomFocus = c.GetContentCenter();
+				c.UpdateContentZoomFocus();
 			}
 
 			if (!c._disableContentOffsetChangeEvents)
@@ -668,11 +646,10 @@ namespace MSetExplorer
 			UpdateContentViewportSize();
 
 			// Initialise the content zoom focus point.
-			//UpdateContentZoomFocus();
-			ContentZoomFocus = GetContentCenter();
+			UpdateContentZoomFocus();
 
-			// Reset the viewport zoom focus to the center of the viewport.
-			ResetViewportZoomFocus();
+			//// Reset the viewport zoom focus to the center of the viewport.
+			//ResetViewportZoomFocus();
 
 			try
 			{
@@ -694,7 +671,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoomControl is raising the ViewportChanged event as the ViewportSize is updated from {previousValue} to {newValue}. The _disableViewportChangedEvents guard has not been set.");
 
-				var sivi = new ScaledImageViewInfo(_constrainedContentViewportSize, UnscaledViewportSize, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale, _contentScaler?.TranslationAndClipSize);
+				var sivi = new ScaledImageViewInfo(_constrainedContentViewportSize/*, UnscaledViewportSize*/, new VectorDbl(ContentOffsetX, ContentOffsetY), ContentScale/*, _contentScaler?.TranslationAndClipSize*/);
 				ViewportChanged?.Invoke(this, sivi);
 			}
 			else
@@ -742,16 +719,6 @@ namespace MSetExplorer
 			UpdateTranslation();
 		}
 
-		private string FmtSizeDblDp4(SizeDbl a)
-		{
-			return $"w: {a.Width:n4}, h:{a.Height:n4}"; 
-		}
-
-		private string FmtSizeDblDp8(SizeDbl a)
-		{
-			return $"w: {a.Width:n8}, h:{a.Height:n8}";
-		}
-
 		/// <summary>
 		/// Provide the Offset in unscaled pixels using the actual display size.
 		/// Provide the Clip Size in scaled pixels
@@ -776,17 +743,17 @@ namespace MSetExplorer
 				if (scaledExtent.Width < UnscaledViewportSize.Width)
 				{
 					// When the content can fit entirely within the viewport, center it.
-					//resultWidth = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
-
-					offsetX = (UnscaledViewportSize.Width - scaledExtent.Width) / 2;
-					//clipWidth = scaledExtent.Width;
 
 					//offsetX = (ContentViewportSize.Width - UnscaledExtent.Width) / 2;
+					offsetX = (UnscaledViewportSize.Width - scaledExtent.Width) / 2;
+
+					//clipWidth = scaledExtent.Width;
 					clipWidth = UnscaledExtent.Width;
 				}
 				else
 				{
 					offsetX = 0;
+
 					//clipWidth = UnscaledViewportSize.Width;
 					clipWidth = ContentViewportSize.Width;
 				}
@@ -796,17 +763,17 @@ namespace MSetExplorer
 				if (scaledExtent.Height < UnscaledViewportSize.Height)
 				{
 					// When the content can fit entirely within the viewport, center it.
-					//resultHeight = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
-
-					offsetY = (UnscaledViewportSize.Height - scaledExtent.Height) / 2;
-					//clipHeight = scaledExtent.Height;
 
 					//offsetY = (ContentViewportSize.Height - UnscaledExtent.Height) / 2;
+					offsetY = (UnscaledViewportSize.Height - scaledExtent.Height) / 2;
+
+					//clipHeight = scaledExtent.Height;
 					clipHeight = UnscaledExtent.Height;
 				}
 				else
 				{
 					offsetY = 0;
+
 					//clipHeight = UnscaledViewportSize.Height;
 					clipHeight = ContentViewportSize.Height;
 				}
@@ -814,9 +781,9 @@ namespace MSetExplorer
 				var clipSize = new SizeDbl(clipWidth, clipHeight);
 
 				// NOTE: _constrainedContentViewportSize = UnscaledExtent.Min(ContentViewportSize);
-
 				Debug.Assert(clipSize == _constrainedContentViewportSize, "ClipSize vs ConstrainedContentViewportSize mismatch.");
 
+				// NOTE: Using unscaled values for the Offsets and scaled values for the clip size // TODO: Consider using unscaled value for the clip size as well.
 				var translationAndClipSize = new RectangleDbl(new PointDbl(offsetX, offsetY), clipSize);
 
 				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl is setting the ContentScaler's {nameof(IContentScaler.TranslationAndClipSize)} to {RectangleDbl.FormatNully(translationAndClipSize, "F2")}.");
@@ -867,22 +834,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool IsScaleChanged(double newContentScale)
-		{
-			if (_contentScaler == null)
-			{
-				return false;
-			}
-
-			var previousValue = _contentScaler.ContentScale.Width;
-			var result = ScreenTypeHelper.IsDoubleChanged(newContentScale, previousValue, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF);
-			return result;
-		}
-
 		private void UpdateContentZoomFocus()
 		{
-			var contentOffset = new PointDbl(ContentOffsetX, ContentOffsetY);
-			ContentZoomFocus = contentOffset.Translate(_constrainedContentViewportSize.Divide(2));
+			ContentZoomFocus = GetContentCenter();
 		}
 
 		private PointDbl GetContentCenter()
@@ -892,15 +846,12 @@ namespace MSetExplorer
 			return result;
 		}
 
-		// For this implementation the ViewportZoomFocus is always at the center
-		// so we don't need to keep track of this value.
-		private void ResetViewportZoomFocus()
-		{
-			//ViewportZoomFocusX = ViewportWidth / 2;
-			//ViewportZoomFocusY = ViewportHeight / 2;
-
-			ViewportZoomFocus = new PointDbl(UnscaledViewportSize.Divide(2));
-		}
+		//// For this implementation the ViewportZoomFocus is always at the center
+		//// so we don't need to keep track of this value.
+		//private void ResetViewportZoomFocus()
+		//{
+		//	ViewportZoomFocus = new PointDbl(UnscaledViewportSize.Divide(2));
+		//}
 
 		private void UpdateContentOffsetsFromScale()
 		{
@@ -1257,6 +1208,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
 	}
 }

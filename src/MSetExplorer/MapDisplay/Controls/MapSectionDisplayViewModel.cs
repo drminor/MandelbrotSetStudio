@@ -382,7 +382,7 @@ namespace MSetExplorer
 		/// <param name="contentScale">The number of pixels used to show one sample point of the current Map.</param>
 		/// <returns></returns>
 		/// <exception cref="InvalidOperationException"></exception>
-		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
+		public int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
 			int? newJobNumber;
 
@@ -401,7 +401,33 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(_useDetailedDebug, $"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}. ContentScale: {contentScale}.");
 
-					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, contentScale);
+					newJobNumber = LoadNewScaledView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, contentScale);
+				}
+			}
+
+			return newJobNumber;
+		}
+
+		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset)
+		{
+			int? newJobNumber;
+
+			lock (_paintLocker)
+			{
+				if (CurrentAreaColorAndCalcSettings == null)
+				{
+					newJobNumber = null;
+				}
+				else
+				{
+					if (_boundedMapArea == null)
+					{
+						throw new InvalidOperationException("The BoundedMapArea is null on call to UpdateViewportSizeAndPos.");
+					}
+
+					Debug.WriteLineIf(_useDetailedDebug, $"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}.");
+
+					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset);
 				}
 			}
 
@@ -574,7 +600,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
+		private int? LoadNewScaledView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
 			int? newJobNumber;
 			bool lastSectionWasIncluded;
@@ -621,6 +647,37 @@ namespace MSetExplorer
 			}
 
 			//newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
+
+			if (newJobNumber.HasValue && lastSectionWasIncluded)
+			{
+				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+			}
+
+			return newJobNumber;
+		}
+
+		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset)
+		{
+			int? newJobNumber;
+			bool lastSectionWasIncluded;
+
+			var currentBaseFactor = boundedMapArea.BaseFactor;
+
+			// Get the coordinates for the current view, i.e., the ContentViewportSize
+
+			boundedMapArea.UpdateSize(contentViewportSize);
+
+			_theirDisplayPosition = contentOffset;
+
+			var mapAreaSubset = boundedMapArea.GetView(_theirDisplayPosition);
+			var jobType = boundedMapArea.BaseFactor == 0 ? JobType.FullScale : JobType.ReducedScale;
+
+			ReportUpdateSizeAndPos(boundedMapArea, contentViewportSize, contentOffset);
+
+			// Keep our ViewportSize property in sync.
+			_viewportSize = mapAreaSubset.CanvasSize;
+
+			newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
 
 			if (newJobNumber.HasValue && lastSectionWasIncluded)
 			{

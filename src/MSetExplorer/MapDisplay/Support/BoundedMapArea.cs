@@ -60,7 +60,13 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		// New Size and Position
+		// New Size
+		public void UpdateSize(SizeDbl contentViewportSize)
+		{
+			ContentViewportSize = contentViewportSize;
+		}
+
+		// New Size and Scale
 		public void UpdateSizeAndScale(SizeDbl contentViewportSize, double baseFactor)
 		{
 			ContentViewportSize = contentViewportSize;
@@ -70,7 +76,7 @@ namespace MSetExplorer
 			_scaledMapAreaInfo = GetMapAreaWithSizeForScale(_mapAreaInfo, PosterSize, BaseScale);
 		}
 
-		// New position, same size
+		// New position, same size and scale
 		public MapAreaInfo GetView(VectorDbl newDisplayPosition)
 		{
 			// -- Scale the Position and Size together.
