@@ -171,73 +171,12 @@ namespace MSetExplorer
 
 				_thePlot = _wpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
 
-				_wpfPlot1.Plot.Title("Hi There, I'm initialized.");
+				//_wpfPlot1.Plot.Title("Hi There, I'm initialized.");
 				_wpfPlot1.Plot.XLabel("XLabel");
 				_wpfPlot1.Plot.YLabel("YLabel");
 
 				_wpfPlot1.Refresh();
 			}
-		}
-
-		private void DisplayPlot(HPlotSeriesData seriesData)
-		{
-			if (WpfPlot1 == null)
-			{
-				return;
-			}
-
-			//WpfPlot1.Plot.Clear();
-
-			if (seriesData.IsZero())
-			{
-				return;
-			}
-
-			if (_thePlot == null)
-			{
-				_thePlot = WpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
-
-				WpfPlot1.Plot.Title("Hi There, I'm initialized.");
-				WpfPlot1.Plot.XLabel("XLabel");
-				WpfPlot1.Plot.YLabel("YLabel");
-
-				_thePlotExtent = seriesData.DataX.Length;
-
-				WpfPlot1.Refresh();
-			}
-			else
-			{
-				if (seriesData.DataX.Length == _thePlotExtent)
-				{
-					_thePlot.UpdateY(seriesData.DataY);
-					WpfPlot1.Refresh();
-				}
-				else
-				{
-					Debug.WriteLine($"The Series has {seriesData.DataX.Length}, not updating.");
-				}
-
-			}
-		}
-
-		private HPlotSeriesData BuildTestSeries()
-		{
-			double[] dataX = new double[] { 1, 2, 3, 4, 5 };
-			double[] dataY = new double[] { 1, 4, 9, 16, 25 };
-
-			var result = new HPlotSeriesData(dataX, dataY);
-
-			return result;
-		}
-
-		private HPlotSeriesData BuildTestSeries2()
-		{
-			double[] dataX = new double[] { 1, 2, 3, 4, 5 };
-			double[] dataY = new double[] { 1, 14, 29, 16, 5 };
-
-			var result = new HPlotSeriesData(dataX, dataY);
-
-			return result;
 		}
 
 		public Canvas Canvas
@@ -404,6 +343,87 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Private Methods - Content
+
+		private void DisplayPlot(HPlotSeriesData seriesData)
+		{
+			if (WpfPlot1 == null)
+			{
+				return;
+			}
+
+			//WpfPlot1.Plot.Clear();
+
+			if (seriesData.IsZero())
+			{
+				return;
+			}
+
+			if (_thePlot == null)
+			{
+				_thePlot = WpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
+
+				//WpfPlot1.Plot.Title("Hi There, I'm initialized.");
+
+				//WpfPlot1.Plot.Frame(visible: true, color: System.Drawing.SystemColors.HotTrack, left: true, right: false, bottom: true, top: false);
+
+				WpfPlot1.Plot.XLabel("XLabel");
+				WpfPlot1.Plot.YLabel("YLabel");
+
+				WpfPlot1.Plot.AxisScale();
+
+				_thePlotExtent = seriesData.DataX.Length;
+
+				WpfPlot1.Refresh();
+			}
+			else
+			{
+				if (seriesData.DataX.Length == _thePlotExtent)
+				{
+					_thePlot.UpdateY(seriesData.DataY);
+				}
+				else
+				{
+					WpfPlot1.Plot.Clear();
+
+					_thePlot = WpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
+
+					WpfPlot1.Plot.XLabel("XLabel");
+					WpfPlot1.Plot.YLabel("YLabel");
+
+					WpfPlot1.Plot.AxisScale();
+
+					_thePlotExtent = seriesData.DataX.Length;
+
+					//Debug.WriteLine($"The Series has {seriesData.DataX.Length}, not updating.");
+				}
+
+				WpfPlot1.Refresh();
+			}
+		}
+
+		//private HPlotSeriesData BuildTestSeries()
+		//{
+		//	double[] dataX = new double[] { 1, 2, 3, 4, 5 };
+		//	double[] dataY = new double[] { 1, 4, 9, 16, 25 };
+
+		//	var result = new HPlotSeriesData(dataX, dataY);
+
+		//	return result;
+		//}
+
+		//private HPlotSeriesData BuildTestSeries2()
+		//{
+		//	double[] dataX = new double[] { 1, 2, 3, 4, 5 };
+		//	double[] dataY = new double[] { 1, 14, 29, 16, 5 };
+
+		//	var result = new HPlotSeriesData(dataX, dataY);
+
+		//	return result;
+		//}
+
+		#endregion
+
 		#region Private Methods - Control
 
 		/// <summary>
@@ -415,7 +435,7 @@ namespace MSetExplorer
 
 			_ourContent.Measure(availableSize);
 
-			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
+			//ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
 
 			double width = availableSize.Width;
 			double height = availableSize.Height;
@@ -461,7 +481,7 @@ namespace MSetExplorer
 
 			if (canvas.ActualHeight != finalSize.Height)
 			{
-				canvas.Height = finalSize.Height;
+				canvas.Height = 40; //finalSize.Height;
 			}
 
 			Debug.WriteLineIf(_useDetailedDebug, $"HistogramDisplayControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
@@ -505,12 +525,6 @@ namespace MSetExplorer
 
 			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
 		}
-
-		#endregion
-
-		#region Private Methods - Plot
-
-
 
 		#endregion
 
@@ -636,6 +650,7 @@ namespace MSetExplorer
 		private static void SeriesData_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
 			var c = (HistogramPlotCustomControl)o;
+
 			//var previousValue = (HPlotSeriesData)e.OldValue;
 			var newValue = (HPlotSeriesData)e.NewValue;
 

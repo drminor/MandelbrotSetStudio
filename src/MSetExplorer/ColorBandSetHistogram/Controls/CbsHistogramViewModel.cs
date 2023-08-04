@@ -8,6 +8,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -66,12 +67,7 @@ namespace MSetExplorer
 			//_synchronizationContext = SynchronizationContext.Current;
 
 			_thePlotExtent = 400;
-			_theXValues = new double[_thePlotExtent];
-
-			for (int i = 0; i < _thePlotExtent; i++)
-			{
-				_theXValues[i] = i;
-			}
+			_theXValues = BuildXVals(_thePlotExtent);
 
 			_paintLocker = new object();
 
@@ -194,6 +190,38 @@ namespace MSetExplorer
 			}
 		}
 
+		public int PlotExtent
+		{
+			get
+			{
+				return _thePlotExtent;
+			}
+			
+			set
+			{
+				if (value != _thePlotExtent)
+				{
+					_thePlotExtent = value;
+
+					_theXValues = BuildXVals(_thePlotExtent);
+
+				}
+			}
+		}
+
+
+		private double[] BuildXVals(int extent)
+		{
+			var result = new double[extent];
+
+			for (int i = 0; i < extent; i++)
+			{
+				result[i] = i;
+			}
+
+			return result;
+		}
+
 		#endregion
 
 		#region Public Properties - Control
@@ -203,10 +231,29 @@ namespace MSetExplorer
 		public SizeDbl ViewportSize
 		{
 			get => _viewportSize;
-			private set
+			set
 			{
-				_viewportSize = value;
-				OnPropertyChanged(nameof(ICbsHistogramViewModel.ViewportSize));
+
+				if (!value.IsNAN() && value != _viewportSize)
+				{
+					if (value.Width <= 2 || value.Height <= 2)
+					{
+						Debug.WriteLine($"WARNING: CbsHistogramViewModel is having its ViewportSize set to {value}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
+					}
+					else
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {value}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
+
+						_viewportSize = value;
+						ContainerSize = value;
+
+						OnPropertyChanged(nameof(ICbsHistogramViewModel.ViewportSize));
+					}
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {value}.The current value is aleady: {_viewportSize}, not updating the ContainerSize.");
+				}
 			}
 		}
 
@@ -245,7 +292,7 @@ namespace MSetExplorer
 						//SeriesData = BuildTestSeries();
 
 						DrawColorBands();
-						DrawHistogram();
+						//DrawHistogram();
 					}
 					else
 					{
@@ -392,9 +439,9 @@ namespace MSetExplorer
 		{
 			SeriesData = BuildSeriesData();
 			//SeriesData = BuildTestSeries();
+			DrawColorBands();
 
-
-			DrawHistogram();
+			//DrawHistogram();
 		}
 
 		public KeyValuePair<int, int>[] GetKeyValuePairsForBand(int startingIndex, int endingIndex, bool includeCatchAll)
@@ -423,28 +470,6 @@ namespace MSetExplorer
 
 			var offset = new VectorDbl(contentOffset.X * _scaleTransform.ScaleX, 0);
 			ImageOffset = offset;
-
-			return null;
-		}
-
-		public int? UpdateViewportSize(SizeDbl newValue)
-		{
-			if (!newValue.IsNAN() && newValue != _viewportSize)
-			{
-				if (newValue.Width <= 2 || newValue.Height <= 2)
-				{
-					Debug.WriteLine($"WARNING: CbsHistogramViewModel is having its ViewportSize set to {newValue}, which is very small. Update was aborted. The ViewportSize remains: {_viewportSize}.");
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {newValue}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
-					ContainerSize = newValue;
-				}
-			}
-			else
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {newValue}.The current value is aleady: {_viewportSize}, not updating the ContainerSize.");
-			}
 
 			return null;
 		}
@@ -502,7 +527,8 @@ namespace MSetExplorer
 				SeriesData = BuildSeriesData();
 				//SeriesData = BuildTestSeries();
 
-				DrawHistogram();
+				//DrawHistogram();
+				DrawColorBands();
 			}
 		}
 
@@ -561,13 +587,16 @@ namespace MSetExplorer
 			{
 				if (values.Length != _thePlotExtent)
 				{	
-					// TODO: Uncomment this Debug statment for the CbsHistogramViewModel
-					// Debug.WriteLine($"WARNING: Building Series Data for the CbsHistogram only found {values.Length} entries, which is less than the Plot Extent: {_thePlotExtent}.");
+					Debug.WriteLine($"WARNING: Building Series Data for the CbsHistogram only found {values.Length} entries, which is less than the Plot Extent: {_thePlotExtent}.");
 				}
 
-				var extent = Math.Min(values.Length, _thePlotExtent - 50);
+				//var extent = Math.Max(Math.Min(values.Length, _thePlotExtent - 50), 0);
 
-				for (var hPtr = 0; hPtr < extent; hPtr++)
+				PlotExtent = values.Length;
+
+				dataY = new double[values.Length];
+
+				for (var hPtr = 0; hPtr < values.Length; hPtr++)
 				{
 					dataY[hPtr] = values[hPtr];
 				}
@@ -577,7 +606,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-
 
 		private HPlotSeriesData BuildTestSeries()
 		{
@@ -619,77 +647,77 @@ namespace MSetExplorer
 		//}
 
 
-		private int _histElevation = 2;
-		private int _histDispHeight = 165;
+		//private int _histElevation = 2;
+		//private int _histDispHeight = 165;
 
-		private int _cbElevation = 195;
-		private int _cbHeight = 35;
+		private int _cbElevation = 2; //195;
+		private int _cbHeight = 38;
 
-		private void DrawHistogram()
-		{
-			ClearHistogramItems();
+		//private void DrawHistogram()
+		//{
+		//	ClearHistogramItems();
 
-			var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
-			var endingIndex = _colorBandSet[EndPtr].Cutoff;
-			var highCutoff = _colorBandSet.HighCutoff;
+		//	var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
+		//	var endingIndex = _colorBandSet[EndPtr].Cutoff;
+		//	var highCutoff = _colorBandSet.HighCutoff;
 
-			//var rn = 1 + endingIndex - startingIndex;
-			//if (Math.Abs(LogicalDisplaySize.Width - rn) > 20)
-			//{
-			//	Debug.WriteLineIf(_useDetailedDebug, $"The range of indexes does not match the Logical Display Width. Range: {endingIndex - startingIndex}, Width: {LogicalDisplaySize.Width}.");
-			//	return;
-			//}
+		//	//var rn = 1 + endingIndex - startingIndex;
+		//	//if (Math.Abs(LogicalDisplaySize.Width - rn) > 20)
+		//	//{
+		//	//	Debug.WriteLineIf(_useDetailedDebug, $"The range of indexes does not match the Logical Display Width. Range: {endingIndex - startingIndex}, Width: {LogicalDisplaySize.Width}.");
+		//	//	return;
+		//	//}
 
-			//LogicalDisplaySize = new SizeInt(rn + 10, _canvasSize.Height);
+		//	//LogicalDisplaySize = new SizeInt(rn + 10, _canvasSize.Height);
 
-			var w = (int) Math.Round(UnscaledExtent.Width);
+		//	var w = (int) Math.Round(UnscaledExtent.Width);
 
-			DrawHistogramBorder(w, _histDispHeight);
+		//	DrawHistogramBorder(w, _histDispHeight);
 
-			var hEntries = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
+		//	var hEntries = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
 
-			if (hEntries.Length < 1)
-			{
-				Debug.WriteLine($"WARNING: The Histogram is empty. (DrawHistogram)");
-				return;
-			}
+		//	if (hEntries.Length < 1)
+		//	{
+		//		Debug.WriteLine($"WARNING: The Histogram is empty. (DrawHistogram)");
+		//		return;
+		//	}
 
-			var maxV = hEntries.Max(x => x.Value) + 5; // Add 5 to reduce the height of each line.
-			var vScaleFactor = _histDispHeight / (double)maxV;
+		//	var maxV = hEntries.Max(x => x.Value) + 5; // Add 5 to reduce the height of each line.
+		//	var vScaleFactor = _histDispHeight / (double)maxV;
 
-			var geometryGroup = new GeometryGroup();
+		//	var geometryGroup = new GeometryGroup();
 
-			foreach (var hEntry in hEntries)
-			{
-				var x = 1 + hEntry.Key - startingIndex;
-				var height = hEntry.Value * vScaleFactor;
-				geometryGroup.Children.Add(BuildHLine(x, height));
-			}
+		//	foreach (var hEntry in hEntries)
+		//	{
+		//		var x = 1 + hEntry.Key - startingIndex;
+		//		var height = hEntry.Value * vScaleFactor;
+		//		geometryGroup.Children.Add(BuildHLine(x, height));
+		//	}
 
-			var hTestEntry = hEntries[^1];
+		//	var hTestEntry = hEntries[^1];
 
-			var lineGroupDrawing = new GeometryDrawing(Brushes.IndianRed, new Pen(Brushes.DarkRed, 0.75), geometryGroup);
+		//	var lineGroupDrawing = new GeometryDrawing(Brushes.IndianRed, new Pen(Brushes.DarkRed, 0.75), geometryGroup);
 
-			_historgramItems.Add(lineGroupDrawing);
-			_drawingGroup.Children.Add(lineGroupDrawing);
-		}
+		//	_historgramItems.Add(lineGroupDrawing);
+		//	_drawingGroup.Children.Add(lineGroupDrawing);
+		//}
 
-		private LineGeometry BuildHLine(int x, double height)
-		{
-			//var result = new LineGeometry(new Point(x, _histDispHeight + _histElevation), new Point(x, _histDispHeight - height + _histElevation));
+		//private LineGeometry BuildHLine(int x, double height)
+		//{
+		//	//var result = new LineGeometry(new Point(x, _histDispHeight + _histElevation), new Point(x, _histDispHeight - height + _histElevation));
 
-			//var lineTop = _histDispHeight + _histElevation - height;
-			//var result = new LineGeometry(new Point(x, lineTop), new Point(x, lineTop + height));
+		//	//var lineTop = _histDispHeight + _histElevation - height;
+		//	//var result = new LineGeometry(new Point(x, lineTop), new Point(x, lineTop + height));
 
-			// Top of the display is when y = 0, y increases as you move from top to bottom
-			var lineBottom = 1 + _histDispHeight + _histElevation;
-			var lineTop = lineBottom - height;
+		//	// Top of the display is when y = 0, y increases as you move from top to bottom
+		//	var lineBottom = 1 + _histDispHeight + _histElevation;
+		//	var lineTop = lineBottom - height;
 
-			var result = new LineGeometry(new Point(x, lineBottom), new Point(x, lineTop));
+		//	var result = new LineGeometry(new Point(x, lineBottom), new Point(x, lineTop));
 
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private int? GetUnscaledWidth()
 		{
@@ -709,7 +737,6 @@ namespace MSetExplorer
 			var result = _colorBandSet.HighCutoff;
 			return result;
 		}
-
 
 		//private GeometryDrawing DrawHistogramBorder(int width, int height)
 		//{
@@ -754,6 +781,7 @@ namespace MSetExplorer
 		private void DrawColorBands()
 		{
 			RemoveColorBandRectangles();
+
 			if (_colorBandSet.Count < 2)
 			{
 				return;
@@ -769,6 +797,7 @@ namespace MSetExplorer
 
 				var area = new RectangleDbl(new PointDbl(curOffset, _cbElevation), new SizeDbl(lastWidth, _cbHeight));
 				var r = DrawingHelper.BuildRectangle(area, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
+				
 				_colorBandRectangles.Add(r);
 				_drawingGroup.Children.Add(r);
 

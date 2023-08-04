@@ -25,7 +25,7 @@ namespace MSetExplorer
 		SizeInt CanvasSize { get; set; }		
 
 		SizeDbl UnscaledExtent { get; }         // PosterSize
-		SizeDbl ViewportSize { get; }			// ContainerSize
+		SizeDbl ViewportSize { get; set; }			// ContainerSize
 		VectorDbl DisplayPosition { get; }
 
 		double DisplayZoom { get; }
@@ -36,7 +36,7 @@ namespace MSetExplorer
 
 		IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff);
 
-		int? UpdateViewportSize(SizeDbl viewportSize);
+		//int? UpdateViewportSize(SizeDbl viewportSize);
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
 		int? MoveTo(VectorDbl displayPosition);

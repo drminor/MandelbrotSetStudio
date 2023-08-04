@@ -83,7 +83,7 @@
                                         <ScottPlot:WpfPlot x:Name="WpfPlot1"/>
                                     </Border>
 
-                                    <Canvas Grid.Row="1" x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+                                    <Canvas Grid.Row="1" x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="AliceBlue">
                                         <Image x:Name="MainImage" />
                                     </Canvas>
                                     

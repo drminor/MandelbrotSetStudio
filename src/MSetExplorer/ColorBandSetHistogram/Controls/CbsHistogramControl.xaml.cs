@@ -40,15 +40,6 @@ namespace MSetExplorer
 			InitializeComponent();
 		}
 
-		private void CbsHistogramControl_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			if (_vm != null)
-			{
-				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.CanvasSize}, ViewPort: {_vm.ViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
-			}
-		}
-
 		private void CbsHistogramControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
@@ -63,7 +54,9 @@ namespace MSetExplorer
 				var ourSize = HistogramDisplayControl1.ViewportSize;
 
 				PanAndZoomControl1.UnscaledViewportSize = ourSize;
-				_vm.UpdateViewportSize(PanAndZoomControl1.UnscaledViewportSize);
+				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
+
+				//_vm.UpdateViewportSize(PanAndZoomControl1.UnscaledViewportSize);
 
 				PanAndZoomControl1.MaxContentScale = 10;
 				PanAndZoomControl1.MinContentScale = 1;
@@ -111,6 +104,15 @@ namespace MSetExplorer
 		private void ContentOffsetChanged(object? sender, EventArgs e)
 		{
 			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
+		}
+
+		private void CbsHistogramControl_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			if (_vm != null)
+			{
+				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.CanvasSize}, ViewPort: {_vm.ViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
+			}
 		}
 
 		#endregion
