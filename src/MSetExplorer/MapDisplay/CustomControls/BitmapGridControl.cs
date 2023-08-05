@@ -30,6 +30,9 @@ namespace MSetExplorer
 
 		private SizeDbl _contentScale;
 		private RectangleDbl _translationAndClipSize;
+
+		private SizeDbl _logicalViewportSize;
+
 		private bool _useScaling;
 
 		private bool _useDetailedDebug = false;
@@ -54,10 +57,6 @@ namespace MSetExplorer
 			_canvas = new Canvas();
 			_image = new Image();
 
-
-			_useScaling = false;
-			_translationAndClipSize = new RectangleDbl();
-
 			_viewportSizeInternal = new SizeDbl();
 
 			_canvasScaleTransform = new ScaleTransform();
@@ -70,6 +69,13 @@ namespace MSetExplorer
 			_canvas.RenderTransform = _canvasRenderTransform;
 
 			_contentScale = new SizeDbl(1, 1);
+			_translationAndClipSize = new RectangleDbl();
+
+			//_viewportSize = new SizeDbl();
+			//_contentViewportSize = SizeDbl.NaN;
+			_logicalViewportSize = new SizeDbl();
+
+			_useScaling = false;
 		}
 
 		#endregion
@@ -256,8 +262,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeDbl _logicalViewportSize;
-
 		public SizeDbl LogicalViewportSize
 		{
 			get => _logicalViewportSize;
@@ -326,12 +330,12 @@ namespace MSetExplorer
 			{ 
 				var canvas = Canvas;
 
-				if (canvas.Width != finalSize.Width)
+				if (canvas.ActualWidth != finalSize.Width)
 				{
 					canvas.Width = finalSize.Width;
 				}
 
-				if (canvas.Height != finalSize.Height)
+				if (canvas.ActualHeight != finalSize.Height)
 				{
 					canvas.Height = finalSize.Height;
 				}
@@ -373,6 +377,69 @@ namespace MSetExplorer
 			}
 
 			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
+		}
+
+		#endregion
+
+		#region ViewportSize Dependency Property (Unscaled, aka Device Pixels)
+
+		public static readonly DependencyProperty ViewportSizeProperty = DependencyProperty.Register(
+					"ViewportSize", typeof(SizeDbl), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(SizeDbl.Zero, FrameworkPropertyMetadataOptions.None, ViewportSize_PropertyChanged));
+
+		private static void ViewportSize_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			var c = (BitmapGridControl)o;
+
+			var previousValue = (SizeDbl)e.OldValue;
+			var newValue = (SizeDbl)e.NewValue;
+
+			if (newValue.Width == 0 && newValue.Height == 0)
+			{
+				return;
+			}
+
+			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The BitmapGridControl's ViewportSize is being updated from {previousValue} to {newValue}.");
+
+			c.LogicalViewportSize = newValue;
+			c.ViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
+		}
+
+		#endregion
+
+		#region BitmapGridImageSource Dependency Property
+
+		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
+					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, BitmapGridImageSource_PropertyChanged));
+
+		private static void BitmapGridImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			var c = (BitmapGridControl)o;
+			var previousValue = (ImageSource)e.OldValue;
+			var value = (ImageSource)e.NewValue;
+
+			if (value != previousValue)
+			{
+				c.Image.Source = value;
+			}
+		}
+
+		#endregion
+
+		#region ImageOffset Dependency Property
+
+		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
+					"ImageOffset", typeof(VectorInt), typeof(BitmapGridControl),
+					new FrameworkPropertyMetadata(VectorInt.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
+
+		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			BitmapGridControl c = (BitmapGridControl)o;
+			//var previousValue = (VectorInt)e.OldValue;
+			var newValue = (VectorInt)e.NewValue;
+
+			_ = c.UpdateImageOffset(newValue);
 		}
 
 		#endregion
@@ -519,69 +586,6 @@ namespace MSetExplorer
 
 		//	return result;
 		//}
-
-		#endregion
-
-		#region ViewportSize Dependency Property (Unscaled, aka Device Pixels)
-
-		public static readonly DependencyProperty ViewportSizeProperty = DependencyProperty.Register(
-					"ViewportSize", typeof(SizeDbl), typeof(BitmapGridControl),
-					new FrameworkPropertyMetadata(SizeDbl.Zero, FrameworkPropertyMetadataOptions.None, ViewportSize_PropertyChanged));
-
-		private static void ViewportSize_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			var c = (BitmapGridControl)o;
-
-			var previousValue = (SizeDbl)e.OldValue;
-			var newValue = (SizeDbl)e.NewValue;
-
-			if (newValue.Width == 0 && newValue.Height == 0)
-			{
-				return;
-			}
-
-			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The BitmapGridControl's ViewportSize is being updated from {previousValue} to {newValue}.");
-
-			c.LogicalViewportSize = newValue;
-			c.ViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
-		}
-
-		#endregion
-
-		#region BitmapGridImageSource Dependency Property
-
-		public static readonly DependencyProperty BitmapGridImageSourceProperty = DependencyProperty.Register(
-					"BitmapGridImageSource", typeof(ImageSource), typeof(BitmapGridControl),
-					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, BitmapGridImageSource_PropertyChanged));
-
-		private static void BitmapGridImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			var c = (BitmapGridControl)o;
-			var previousValue = (ImageSource)e.OldValue;
-			var value = (ImageSource)e.NewValue;
-
-			if (value != previousValue)
-			{
-				c.Image.Source = value;
-			}
-		}
-
-		#endregion
-
-		#region ImageOffset Dependency Property
-
-		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
-					"ImageOffset", typeof(VectorInt), typeof(BitmapGridControl),
-					new FrameworkPropertyMetadata(VectorInt.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
-
-		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			BitmapGridControl c = (BitmapGridControl)o;
-			//var previousValue = (VectorInt)e.OldValue;
-			var newValue = (VectorInt)e.NewValue;
-
-			_ = c.UpdateImageOffset(newValue);
-		}
 
 		#endregion
 

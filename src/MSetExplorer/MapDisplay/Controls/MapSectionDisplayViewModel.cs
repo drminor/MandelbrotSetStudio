@@ -76,7 +76,7 @@ namespace MSetExplorer
 
 			_theirDisplayPosition = new VectorDbl(double.NaN, double.NaN);
 
-			_minimumDisplayZoom = 0.015625; // 0.0625;
+			_minimumDisplayZoom = RMapConstants.DEFAULT_MINIMUM_DISPLAY_ZOOM; // 0.015625; // 0.0625;
 			_maximumDisplayZoom = 1.0;
 			_displayZoom = 1;
 		}
@@ -228,9 +228,17 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl LogicalViewportSize => _bitmapGrid.LogicalViewportSize;
-
+		/// <summary>
+		/// Same as the PanAndZoomControl's ConstrainedViewportSize
+		/// </summary>
 		public SizeDbl? ContentViewportSize => _boundedMapArea?.ContentViewportSize;
+
+		/// <summary>
+		/// Same as the PanAndZoomControl's ConstrainedViewportSize * BaseScale
+		/// This is the CanvasSize of the current view.
+		/// This is the same as our ViewportSize property.
+		/// </summary>
+		public SizeDbl LogicalViewportSize => _bitmapGrid.LogicalViewportSize;
 
 		#endregion
 
@@ -625,7 +633,7 @@ namespace MSetExplorer
 			//_displayZoom = contentScale;
 			var (baseFactor, _) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
 
-			boundedMapArea.UpdateSizeAndScale(contentViewportSize, baseFactor);
+			boundedMapArea.SetSizeAndScale(contentViewportSize, baseFactor);
 
 			_theirDisplayPosition = contentOffset;
 
@@ -665,7 +673,7 @@ namespace MSetExplorer
 
 			// Get the coordinates for the current view, i.e., the ContentViewportSize
 
-			boundedMapArea.UpdateSize(contentViewportSize);
+			boundedMapArea.SetSize(contentViewportSize);
 
 			_theirDisplayPosition = contentOffset;
 
@@ -674,7 +682,13 @@ namespace MSetExplorer
 
 			ReportUpdateSizeAndPos(boundedMapArea, contentViewportSize, contentOffset);
 
-			// Keep our ViewportSize property in sync.
+			// Note the CanvasSize the ConstrainedViewportSize (provided to this method from the PanAndZoomControl in the contentViewportSize argument.)
+			// Multiplied by the BaseScale
+
+			// As the ViewportSize property is set, it sets the BitmapGrid's LogicalViewportSize.
+
+			// Were setting the ViewportSize backing value here 
+			// because ReuseAndLoad is going to set the BitmapGrid's LogicalViewportSize from the mapAreaSubset.CanvasSize.
 			_viewportSize = mapAreaSubset.CanvasSize;
 
 			newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);

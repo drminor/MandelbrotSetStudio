@@ -61,13 +61,13 @@ namespace MSetExplorer
 		#region Public Methods
 
 		// New Size
-		public void UpdateSize(SizeDbl contentViewportSize)
+		public void SetSize(SizeDbl contentViewportSize)
 		{
 			ContentViewportSize = contentViewportSize;
 		}
 
 		// New Size and Scale
-		public void UpdateSizeAndScale(SizeDbl contentViewportSize, double baseFactor)
+		public void SetSizeAndScale(SizeDbl contentViewportSize, double baseFactor)
 		{
 			ContentViewportSize = contentViewportSize;
 			BaseFactor = baseFactor;

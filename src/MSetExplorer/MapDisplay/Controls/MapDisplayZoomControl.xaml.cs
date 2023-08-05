@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSS.Types;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -20,7 +21,7 @@ namespace MSetExplorer
 
 		private void MapDisplayZoomControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			var minimumScale = 0.015625; // 0.0625;
+			var minimumScale = RMapConstants.DEFAULT_MINIMUM_DISPLAY_ZOOM; // 0.015625; // 0.0625;
 			SetScrollBarSettings(scrollBar1, minimumScale);
 			textBlock1.Text = scrollBar1.Value.ToString("F3");
 

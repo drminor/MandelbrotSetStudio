@@ -31,19 +31,20 @@ namespace MSetExplorer
 		private Canvas _canvas;
 		private Image _image;
 
-		private SizeDbl _viewportSizeInternal;
-		private SizeDbl _viewportSize;
-		private SizeDbl _contentViewportSize;
+		//private SizeDbl _viewportSizeInternal;
 
 		private TranslateTransform _canvasTranslateTransform;
 		private ScaleTransform _canvasScaleTransform;
 		private TransformGroup _canvasRenderTransform;
 
-		private RectangleGeometry? _canvasClip;
 		private SizeDbl _contentScale;
-		private RectangleDbl _scaledContentArea;
+		private RectangleDbl _translationAndClipSize;
+		private SizeDbl _logicalViewportSize;
 
-		private bool _useDetailedDebug = false;
+		private SizeDbl _viewportSize;
+		private SizeDbl _contentViewportSize;
+
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -76,12 +77,9 @@ namespace MSetExplorer
 
 			_canvas = new Canvas();
 			_image = new Image();
-			_image.SizeChanged += Image_SizeChanged;
+			//_image.SizeChanged += Image_SizeChanged;
 
-			_viewportSizeInternal = new SizeDbl();
-			_viewportSize = new SizeDbl();
-			_contentViewportSize = SizeDbl.NaN;
-
+			//_viewportSizeInternal = new SizeDbl();
 
 			_canvasTranslateTransform = new TranslateTransform();
 			_canvasScaleTransform = new ScaleTransform();
@@ -92,10 +90,12 @@ namespace MSetExplorer
 
 			_canvas.RenderTransform = _canvasRenderTransform;
 
-			_canvasClip = null;
-
 			_contentScale = new SizeDbl(1);
-			_scaledContentArea = new RectangleDbl();
+			_translationAndClipSize = new RectangleDbl();
+
+			_viewportSize = new SizeDbl();
+			_contentViewportSize = SizeDbl.NaN;
+			_logicalViewportSize = new SizeDbl();
 
 			//MouseEnter += HistogramDisplayControl_MouseEnter;
 			//MouseLeave += HistogramDisplayControl_MouseLeave;
@@ -130,13 +130,13 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			//Debug.WriteLine($"The HistogramDisplayControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
+		//private void Image_SizeChanged(object sender, SizeChangedEventArgs e)
+		//{
+		//	//Debug.WriteLine($"The HistogramDisplayControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}, Setting the ImageOffset to {ImageOffset}.");
+		//	Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's Image Size has changed. New size: {new SizeDbl(Image.ActualWidth, Image.ActualHeight)}.");
 
-			UpdateImageOffset(ImageOffset);
-		}
+		//	UpdateImageOffset(ImageOffset);
+		//}
 
 		#endregion
 
@@ -186,7 +186,6 @@ namespace MSetExplorer
 			{
 				_canvas = value;
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
-				_canvas.Clip = _canvasClip;
 				_canvas.RenderTransform = _canvasRenderTransform;
 			}
 		}
@@ -198,14 +197,12 @@ namespace MSetExplorer
 			{
 				if (_image != value)
 				{
-					_image.SizeChanged -= Image_SizeChanged;
+					//_image.SizeChanged -= Image_SizeChanged;
 					_image = value;
-					_image.SizeChanged += Image_SizeChanged;
+					//_image.SizeChanged += Image_SizeChanged;
 
 					_image.Source = HistogramImageSource;
-
 					_image.SetValue(Panel.ZIndexProperty, 20);
-
 					UpdateImageOffset(ImageOffset);
 
 					CheckThatImageIsAChildOfCanvas(Image, Canvas);
@@ -213,51 +210,51 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeDbl ViewportSizeInternal
-		{
-			get => _viewportSizeInternal;
-			set
-			{
-				if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
-				{
-					var previousValue = _viewportSizeInternal;
-					_viewportSizeInternal = value;
+		//private SizeDbl ViewportSizeInternal
+		//{
+		//	get => _viewportSizeInternal;
+		//	set
+		//	{
+		//		if (value.Width > 1 && value.Height > 1 && _viewportSizeInternal != value)
+		//		{
+		//			var previousValue = _viewportSizeInternal;
+		//			_viewportSizeInternal = value;
 
-					//Debug.WriteLine($"HistogramDisplayControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
+		//			//Debug.WriteLine($"HistogramDisplayControl: Viewport is changing: Old size: {previousValue}, new size: {_viewPort}.");
 
-					var newViewportSize = value;
+		//			var newViewportSize = value;
 
-					if (previousValue.Width < 25 || previousValue.Height < 25)
-					{
-						// Update the 'real' value immediately
-						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
-						ViewportSize = newViewportSize;
-					}
-					else
-					{
-						// Update the screen immediately, while we are 'holding' back the update.
-						//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
-						var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
-						_ = UpdateImageOffset(tempOffset);
+		//			if (previousValue.Width < 25 || previousValue.Height < 25)
+		//			{
+		//				// Update the 'real' value immediately
+		//				Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize immediately. Previous Size: {previousValue}, New Size: {value}.");
+		//				ViewportSize = newViewportSize;
+		//			}
+		//			else
+		//			{
+		//				// Update the screen immediately, while we are 'holding' back the update.
+		//				//Debug.WriteLine($"CCO_Int: {value.Invert()}.");
+		//				var tempOffset = GetTempImageOffset(ImageOffset, ViewportSize, newViewportSize);
+		//				_ = UpdateImageOffset(tempOffset);
 
-						// Delay the 'real' update until no futher updates in the last 150ms.
-						_viewPortSizeDispatcher.Debounce(
-							interval: 150,
-							action: parm =>
-							{
-								Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
-								ViewportSize = newViewportSize;
-							},
-							param: null
-						);
-					}
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
-				}
-			}
-		}
+		//				// Delay the 'real' update until no futher updates in the last 150ms.
+		//				_viewPortSizeDispatcher.Debounce(
+		//					interval: 150,
+		//					action: parm =>
+		//					{
+		//						Debug.WriteLineIf(_useDetailedDebug, $"Updating the ViewportSize after debounce. Previous Size: {ViewportSize}, New Size: {newViewportSize}.");
+		//						ViewportSize = newViewportSize;
+		//					},
+		//					param: null
+		//				);
+		//			}
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLineIf(_useDetailedDebug, $"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
+		//		}
+		//	}
+		//}
 
 		public SizeDbl ViewportSize
 		{
@@ -266,18 +263,18 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsSizeDblChanged(ViewportSize, value))
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramDisplayControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl is having its ViewportSize updated to {value}, the current value is {_viewportSize}; will raise the ViewportSizeChanged event.");
 
 					var previousValue = ViewportSize;
 					_viewportSize = value;
 
-					Debug.Assert(_viewportSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
+					//Debug.Assert(_viewportSizeInternal.Diff(value).IsNearZero(), "The container size has been updated since the Debouncer fired.");
 
 					ViewportSizeChanged?.Invoke(this, (previousValue, value));
 				}
 				else
 				{
-					Debug.WriteLine($"The HistogramDisplayControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+					Debug.WriteLine($"The HistogramPlotCustomControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
 				}
 			}
 		}
@@ -321,24 +318,188 @@ namespace MSetExplorer
 
 		public RectangleDbl TranslationAndClipSize
 		{
-			get => _scaledContentArea; 
+			get => _translationAndClipSize; 
 			set
 			{
-				var previousVal = _scaledContentArea;
-				_scaledContentArea = value;
+				var previousVal = _translationAndClipSize;
+				_translationAndClipSize = value;
+
+				LogicalViewportSize = value.Size;
 
 				ClipAndOffset(previousVal, value);
 			}
 		}
 
-		public RectangleGeometry? CanvasClip
+		public SizeDbl LogicalViewportSize
 		{
-			get => _canvasClip;
+			get => _logicalViewportSize;
 			set
 			{
-				_canvasClip = value;
-				_canvas.Clip = value;
+				if (ScreenTypeHelper.IsSizeDblChanged(value, _logicalViewportSize))
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}.");
+					_logicalViewportSize = value;
+				}
 			}
+		}
+
+		#endregion
+
+		#region Private Methods - Control
+
+		/// <summary>
+		/// Measure the control and it's children.
+		/// </summary>
+		protected override Size MeasureOverride(Size availableSize)
+		{
+			Size childSize = base.MeasureOverride(availableSize);
+
+			_ourContent.Measure(availableSize);
+
+			//ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
+
+			double width = availableSize.Width;
+			double height = availableSize.Height;
+
+			if (double.IsInfinity(width))
+			{
+				width = childSize.Width;
+			}
+
+			if (double.IsInfinity(height))
+			{
+				height = childSize.Height;
+			}
+
+			var result = new Size(width, height);
+
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGripControl Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
+
+			return result;
+		}
+
+		/// <summary>
+		/// Arrange the control and it's children.
+		/// </summary>
+		protected override Size ArrangeOverride(Size finalSize)
+		{
+			Size childSize = base.ArrangeOverride(finalSize);
+
+			if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
+
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotCustomControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+
+			_ourContent.Arrange(new Rect(finalSize));
+
+			var canvas = Canvas;
+
+			if (canvas.ActualWidth != finalSize.Width)
+			{
+				canvas.Width = finalSize.Width;
+			}
+
+			if (canvas.ActualHeight != finalSize.Height)
+			{
+				canvas.Height = 40; //finalSize.Height;
+			}
+
+			ViewportSize = ScreenTypeHelper.ConvertToSizeDbl(childSize);
+
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotCustomControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
+
+			return finalSize;
+		}
+
+		public override void OnApplyTemplate()
+		{
+			base.OnApplyTemplate();
+
+			Content = Template.FindName("PART_Content", this) as FrameworkElement;
+
+			if (Content != null)
+			{
+				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
+				(WpfPlot1, Canvas, Image) = BuildContentModel(_ourContent);
+			}
+			else
+			{
+				throw new InvalidOperationException("Did not find the HistogramDisplayControl_Content template.");
+			}
+		}
+
+		private (WpfPlot, Canvas, Image) BuildContentModel(FrameworkElement content)
+		{
+			if (content is ContentPresenter cp)
+			{
+				if (cp.Content is Grid gr)
+				{
+					if (gr.Children[0] is Border br && gr.Children[1] is Canvas ca)
+					{
+						if (br.Child is WpfPlot wp && ca.Children[0] is Image im)
+						{
+							return (wp, ca, im);
+						}
+
+					}
+				}
+			}
+
+			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
+		}
+
+		#endregion
+
+		#region SeriesData Dependency Property
+
+		public static readonly DependencyProperty SeriesDataProperty = DependencyProperty.Register(
+					"SeriesData", typeof(HPlotSeriesData), typeof(HistogramPlotCustomControl),
+					new FrameworkPropertyMetadata(HPlotSeriesData.Zero, FrameworkPropertyMetadataOptions.None, SeriesData_PropertyChanged));
+
+		private static void SeriesData_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			var c = (HistogramPlotCustomControl)o;
+
+			//var previousValue = (HPlotSeriesData)e.OldValue;
+			var newValue = (HPlotSeriesData)e.NewValue;
+
+			c.DisplayPlot(newValue);
+		}
+
+		#endregion
+
+		#region HistogramImageSource Dependency Property
+
+		public static readonly DependencyProperty HistogramImageSourceProperty = DependencyProperty.Register(
+					"HistogramImageSource", typeof(ImageSource), typeof(HistogramPlotCustomControl),
+					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, HistogramImageSource_PropertyChanged));
+
+		private static void HistogramImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			var c = (HistogramPlotCustomControl)o;
+			var previousValue = (ImageSource)e.OldValue;
+			var value = (ImageSource)e.NewValue;
+
+			if (value != previousValue)
+			{
+				c.Image.Source = value;
+			}
+		}
+
+		#endregion
+
+		#region ImageOffset Dependency Property
+
+		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
+					"ImageOffset", typeof(VectorDbl), typeof(HistogramPlotCustomControl),
+					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
+
+		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			var c = (HistogramPlotCustomControl)o;
+			//var previousValue = (VectorDbl)e.OldValue;
+			var newValue = (VectorDbl)e.NewValue;
+
+			_ = c.UpdateImageOffset(newValue);
 		}
 
 		#endregion
@@ -424,130 +585,26 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods - Control
-
-		/// <summary>
-		/// Measure the control and it's children.
-		/// </summary>
-		protected override Size MeasureOverride(Size availableSize)
-		{
-			Size childSize = base.MeasureOverride(availableSize);
-
-			_ourContent.Measure(availableSize);
-
-			//ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(availableSize);
-
-			double width = availableSize.Width;
-			double height = availableSize.Height;
-
-			if (double.IsInfinity(width))
-			{
-				width = childSize.Width;
-			}
-
-			if (double.IsInfinity(height))
-			{
-				height = childSize.Height;
-			}
-
-			var result = new Size(width, height);
-
-			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGripControl Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
-
-			return result;
-		}
-
-		/// <summary>
-		/// Arrange the control and it's children.
-		/// </summary>
-		protected override Size ArrangeOverride(Size finalSize)
-		{
-			Size childSize = base.ArrangeOverride(finalSize);
-
-			if (childSize != finalSize) Debug.WriteLine($"WARNING: The result from ArrangeOverride does not match the input to ArrangeOverride. {childSize}, vs. {finalSize}.");
-
-			ViewportSizeInternal = ScreenTypeHelper.ConvertToSizeDbl(childSize);
-
-			Debug.WriteLineIf(_useDetailedDebug, $"HistogramDisplayControl - Before Arrange{finalSize}. Base returns {childSize}. The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
-
-			_ourContent.Arrange(new Rect(finalSize));
-
-			var canvas = Canvas;
-
-			if (canvas.ActualWidth != finalSize.Width)
-			{
-				canvas.Width = finalSize.Width;
-			}
-
-			if (canvas.ActualHeight != finalSize.Height)
-			{
-				canvas.Height = 40; //finalSize.Height;
-			}
-
-			Debug.WriteLineIf(_useDetailedDebug, $"HistogramDisplayControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
-
-			return finalSize;
-		}
-
-		public override void OnApplyTemplate()
-		{
-			base.OnApplyTemplate();
-
-			Content = Template.FindName("PART_Content", this) as FrameworkElement;
-
-			if (Content != null)
-			{
-				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
-				(WpfPlot1, Canvas, Image) = BuildContentModel(_ourContent);
-			}
-			else
-			{
-				throw new InvalidOperationException("Did not find the HistogramDisplayControl_Content template.");
-			}
-		}
-
-		private (WpfPlot, Canvas, Image) BuildContentModel(FrameworkElement content)
-		{
-			if (content is ContentPresenter cp)
-			{
-				if (cp.Content is Grid gr)
-				{
-					if (gr.Children[0] is Border br && gr.Children[1] is Canvas ca)
-					{
-						if (br.Child is WpfPlot wp && ca.Children[0] is Image im)
-						{
-							return (wp, ca, im);
-						}
-
-					}
-				}
-			}
-
-			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
-		}
-
-		#endregion
-
 		#region Private Methods - Canvas
 
-		private void SetTheCanvasSize(SizeDbl contentViewportSize, SizeDbl contentScale)
-		{
-			var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
-			var newCanvasSize = viewportSize.Divide(contentScale);
+		//private void SetTheCanvasSize(SizeDbl contentViewportSize, SizeDbl contentScale)
+		//{
+		//	var viewportSize = new SizeDbl(ActualWidth, ActualHeight);
+		//	var newCanvasSize = viewportSize.Divide(contentScale);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
+		//	Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's ContentViewportSize is being set to {contentViewportSize} from {_contentViewportSize}. Setting the Canvas Size to {newCanvasSize}.");
 
-			Canvas.Width = newCanvasSize.Width;
-			Canvas.Height = newCanvasSize.Height;
-		}
+		//	Canvas.Width = newCanvasSize.Width;
+		//	Canvas.Height = newCanvasSize.Height;
+		//}
 
 		private void SetTheCanvasScale(SizeDbl contentScale)
 		{
-			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}.");
+			//var currentScaleX = _canvasScaleTransform.ScaleX;
+			//Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}.");
 
-			_canvasScaleTransform.ScaleX = contentScale.Width;
-			_canvasScaleTransform.ScaleY = contentScale.Height;
+			//_canvasScaleTransform.ScaleX = contentScale.Width;
+			//_canvasScaleTransform.ScaleY = contentScale.Height;
 		}
 
 		private void ClipAndOffset(RectangleDbl? previousValue, RectangleDbl? newValue)
@@ -555,18 +612,22 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's {nameof(TranslationAndClipSize)} is being set to {newValue} from {previousValue}.");
 
 			if (newValue != null)
-			{ 
+			{
 				_canvasTranslateTransform.X = newValue.Value.Position.X;
 				_canvasTranslateTransform.Y = newValue.Value.Position.Y;
-				CanvasClip = new RectangleGeometry(new Rect(ScreenTypeHelper.ConvertToSize(newValue.Value.Size)));
+				_canvas.Clip  = new RectangleGeometry(new Rect(ScreenTypeHelper.ConvertToSize(newValue.Value.Size)));
 			}
 			else
 			{
 				_canvasTranslateTransform.X = 0;
 				_canvasTranslateTransform.Y = 0;
-				CanvasClip = null;
+				_canvas.Clip = null;
 			}
 		}
+
+		#endregion
+
+		#region Image and Image Offset
 
 		private bool UpdateImageOffset(VectorDbl rawValue)
 		{
@@ -609,6 +670,10 @@ namespace MSetExplorer
 			return result;
 		}
 
+		#endregion
+
+		#region Diagnostics
+
 		[Conditional("DEBUG2")]
 		private void CompareCanvasAndControlHeights()
 		{
@@ -640,61 +705,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		#region SeriesData Dependency Property
-
-		public static readonly DependencyProperty SeriesDataProperty = DependencyProperty.Register(
-					"SeriesData", typeof(HPlotSeriesData), typeof(HistogramPlotCustomControl),
-					new FrameworkPropertyMetadata(HPlotSeriesData.Zero, FrameworkPropertyMetadataOptions.None, SeriesData_PropertyChanged));
-
-		private static void SeriesData_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			var c = (HistogramPlotCustomControl)o;
-
-			//var previousValue = (HPlotSeriesData)e.OldValue;
-			var newValue = (HPlotSeriesData)e.NewValue;
-
-			c.DisplayPlot(newValue);
-		}
-
-		#endregion
-
-		#region HistogramImageSource Dependency Property
-
-		public static readonly DependencyProperty HistogramImageSourceProperty = DependencyProperty.Register(
-					"HistogramImageSource", typeof(ImageSource), typeof(HistogramPlotCustomControl),
-					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, HistogramImageSource_PropertyChanged));
-
-		private static void HistogramImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			var c = (HistogramPlotCustomControl)o;
-			var previousValue = (ImageSource)e.OldValue;
-			var value = (ImageSource)e.NewValue;
-
-			if (value != previousValue)
-			{
-				c.Image.Source = value;
-			}
-		}
-
-		#endregion
-
-		#region ImageOffset Dependency Property
-
-		public static readonly DependencyProperty ImageOffsetProperty = DependencyProperty.Register(
-					"ImageOffset", typeof(VectorDbl), typeof(HistogramPlotCustomControl),
-					new FrameworkPropertyMetadata(VectorDbl.Zero, FrameworkPropertyMetadataOptions.None, ImageOffset_PropertyChanged));
-
-		private static void ImageOffset_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		{
-			var c = (HistogramPlotCustomControl)o;
-			//var previousValue = (VectorDbl)e.OldValue;
-			var newValue = (VectorDbl)e.NewValue;
-
-			_ = c.UpdateImageOffset(newValue);
-		}
-
-		#endregion
-
 	}
 }

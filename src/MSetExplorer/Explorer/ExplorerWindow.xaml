@@ -216,7 +216,7 @@
         </Grid>
 
         <!-- Histogram -->
-        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" x:Name="botRow" BorderThickness="1" HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Visible">
+        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="1" x:Name="botRow" BorderThickness="1" HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Visible">
             <!--<local:ColorBandSetHistogramControl x:Name="cbsh1"/>-->
             <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
             <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->

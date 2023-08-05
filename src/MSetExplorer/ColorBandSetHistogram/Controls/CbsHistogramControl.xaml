@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:CbsHistogramViewModel}"
              mc:Ignorable="d" 
-             d:DesignHeight="240" d:DesignWidth="1044">
+             d:DesignHeight="240" d:DesignWidth="626">
     <Grid>
         <Border BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid>
@@ -29,9 +29,9 @@
 
                         <local:PanAndZoomControl
                             x:Name="PanAndZoomControl1"
-                            UnscaledExtent="{Binding UnscaledExtent}"
-                            ContentScale="{Binding DisplayZoom}"
-                            MinContentScale="{Binding MinimumDisplayZoom}" 
+                            UnscaledExtent="{Binding UnscaledExtent, Mode=OneWay}"
+                            ContentScale="{Binding DisplayZoom, Mode=TwoWay}"
+                            MinContentScale="{Binding MinimumDisplayZoom, Mode=TwoWay}" 
                             >
 
                             <local:HistogramPlotCustomControl

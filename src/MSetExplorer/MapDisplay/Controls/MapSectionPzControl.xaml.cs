@@ -108,6 +108,7 @@ namespace MSetExplorer
 			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
 		}
 
+		// User changing the display Size
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
 			_viewPortSizeDispatcher.Throttle(
@@ -125,12 +126,17 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ViewportChanged event.");
 			ReportViewportChanged(e);
 
+			// NOTE: e.ContentViewportSize is the PanAndZoom's ConstrainedViewportSize.
+			// NOTE: VM's LogicalViewportSize = e.ContentViewportSize * BaseScale
+			
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset);
+			
 			CheckForOutofSyncLogicalVpSize(BitmapGridControl1.LogicalViewportSize, _vm.LogicalViewportSize);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"========== The MapSectionPzControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
 		}
 
+		// User Zooming In/Out
 		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
 		{
 			_contentScaleDispatcher.Throttle(
@@ -154,6 +160,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"========== The MapSectionPzControl is returning from UpdatingViewportSizePosAndScale. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");
 		}
 
+		// User using the scroll bars to reposition the view..
 		private void ContentOffsetChanged(object? sender, EventArgs e)
 		{
 			CheckForOutofSyncContentVpSize(PanAndZoomControl1.ContrainedViewportSize, _vm.ContentViewportSize);
@@ -164,6 +171,11 @@ namespace MSetExplorer
 
 		#region Diagnostics
 
+		/// <summary>
+		/// Compares the BitmapGrid's LogicalViewportSize with the VM's LogicalViewportSize.
+		/// </summary>
+		/// <param name="viewPortsizeBitmapGridControl"></param>
+		/// <param name="viewportSizeVm"></param>
 		[Conditional("DEBUG")]
 		private void CheckForOutofSyncLogicalVpSize(SizeDbl viewPortsizeBitmapGridControl, SizeDbl viewportSizeVm)
 		{
@@ -174,6 +186,12 @@ namespace MSetExplorer
 			}
 		}
 
+		/// <summary>
+		/// Compares the PanAndZoomControl's ConstrainedViewportSize with the VM's ContentViewportSize.
+		/// </summary>
+		/// <param name="contentVpSizeFromPz"></param>
+		/// <param name="contentVpSizeVm"></param>
+		/// <exception cref="InvalidOperationException"></exception>
 		[Conditional("DEBUG")]
 		private void CheckForOutofSyncContentVpSize(SizeDbl contentVpSizeFromPz, SizeDbl? contentVpSizeVm)
 		{
