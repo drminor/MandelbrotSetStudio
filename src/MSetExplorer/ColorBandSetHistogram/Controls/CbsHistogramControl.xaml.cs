@@ -111,13 +111,15 @@ namespace MSetExplorer
 			var maxContentScale = extentAtMaxZoom / unscaledViewportWidth;
 			_vm.MaximumDisplayZoom = maxContentScale;
 
-			var minScale = unscaledViewportWidth / unscaledExtentWidth;
-			var minContentScale = Math.Min(minScale, maxContentScale);
+			var minContentScale = unscaledViewportWidth / unscaledExtentWidth;
 
-			if (minContentScale <= 0)
-			{
-				minContentScale = RMapConstants.DEFAULT_MINIMUM_DISPLAY_ZOOM;
-			}
+			//var minContentScale = Math.Min(minScale, maxContentScale);
+			//if (minContentScale <= 0)
+			//{
+			//	minContentScale = RMapConstants.DEFAULT_MINIMUM_DISPLAY_ZOOM;
+			//}
+
+			Debug.Assert(minContentScale / maxContentScale > 0.01, "The ratio between the Min and Max scales is suprisingly small.");
 
 			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
 		}
@@ -125,7 +127,7 @@ namespace MSetExplorer
 
 		public static double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewportSize, double margin, double maximumZoom)
 		{
-			// Calculate the Zoom level at which the poster fills the screen, leaving a 20 pixel border.
+			// Calculate the Zoom level at which the poster fills the screen, leaving a pixel border of size margin.
 
 			var framedViewPort = viewportSize.Sub(new SizeDbl(margin));
 			var minScale = framedViewPort.Divide(extent);

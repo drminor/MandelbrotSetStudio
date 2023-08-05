@@ -15,7 +15,7 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private const double POSTER_DISPLAY_MARGIN = 20;
+		private const double POSTER_DISPLAY_MARGIN = 10;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 		private DebounceDispatcher _contentScaleDispatcher;

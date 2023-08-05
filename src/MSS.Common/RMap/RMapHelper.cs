@@ -367,6 +367,7 @@ namespace MSS.Common
 		//	return result;
 		//}
 
+
 		/// <summary>
 		/// Returns the value of ContentScale, aka Zoom required to have the content fill the screen.
 		/// </summary>
@@ -374,24 +375,12 @@ namespace MSS.Common
 		/// <param name="viewportSize">Size of the display in device pixels</param>
 		/// <param name="margin">The number of pixels of blank space on each side.</param>
 		/// <param name="maximumZoom">The largest value that is allowed to be returned</param>
-		/// <returns><The ContentScale to use to have the entire content be displayed on screen./returns>
-		public static double GetMinDisplayZoom2(SizeDbl extent, SizeDbl viewportSize, VectorDbl margin, double maximumZoom)
-		{
-			// Calculate the Zoom level at which the poster fills the screen, leaving a 10 pixel border, on all sides.
-
-			var framedViewPort = viewportSize.Deflate(margin.Scale(2));
-
-			var result = RMapHelper.GetSmallestScaleFactor(extent, framedViewPort);
-			result = Math.Min(result, maximumZoom);
-
-			return result;
-		}
-
+		/// <returns>The scale to use to have the entire content be displayed on screen./returns>
 		public static double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewportSize, double margin, double maximumZoom)
 		{
-			// Calculate the Zoom level at which the poster fills the screen, leaving a 20 pixel border.
+			// Calculate the Zoom level at which the poster fills the screen, leaving a border with the specified margin.
 
-			var framedViewPort = viewportSize.Sub(new SizeDbl(margin));
+			var framedViewPort = viewportSize.Sub(new SizeDbl(margin * 2));
 			var minScale = framedViewPort.Divide(extent);
 			var result = Math.Min(minScale.Width, minScale.Height);
 			result = Math.Min(result, maximumZoom);

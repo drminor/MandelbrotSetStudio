@@ -16,6 +16,7 @@ namespace MSetExplorer
 		#region Private Fields 
 
 		private readonly static bool CLIP_IMAGE_BLOCKS = false;
+		private readonly static int COLOR_BAND_HEIGHT = 40;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 
@@ -44,7 +45,7 @@ namespace MSetExplorer
 		private SizeDbl _viewportSize;
 		private SizeDbl _contentViewportSize;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -162,7 +163,7 @@ namespace MSetExplorer
 
 				var seriesData = SeriesData;
 
-				if (seriesData.IsZero())
+				if (seriesData.IsEmpty())
 				{
 					return;
 				}
@@ -311,7 +312,7 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
-					SetTheCanvasScale(_contentScale);
+					//SetTheCanvasScale(_contentScale);
 				}
 			}
 		}
@@ -326,7 +327,7 @@ namespace MSetExplorer
 
 				LogicalViewportSize = value.Size;
 
-				ClipAndOffset(previousVal, value);
+				//ClipAndOffset(previousVal, value);
 			}
 		}
 
@@ -400,7 +401,7 @@ namespace MSetExplorer
 
 			if (canvas.ActualHeight != finalSize.Height)
 			{
-				canvas.Height = 40; //finalSize.Height;
+				canvas.Height = COLOR_BAND_HEIGHT; //finalSize.Height;
 			}
 
 			ViewportSize = ScreenTypeHelper.ConvertToSizeDbl(childSize);
@@ -453,7 +454,7 @@ namespace MSetExplorer
 
 		public static readonly DependencyProperty SeriesDataProperty = DependencyProperty.Register(
 					"SeriesData", typeof(HPlotSeriesData), typeof(HistogramPlotCustomControl),
-					new FrameworkPropertyMetadata(HPlotSeriesData.Zero, FrameworkPropertyMetadataOptions.None, SeriesData_PropertyChanged));
+					new FrameworkPropertyMetadata(HPlotSeriesData.Empty, FrameworkPropertyMetadataOptions.None, SeriesData_PropertyChanged));
 
 		private static void SeriesData_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{
@@ -515,7 +516,7 @@ namespace MSetExplorer
 
 			//WpfPlot1.Plot.Clear();
 
-			if (seriesData.IsZero())
+			if (seriesData.IsEmpty())
 			{
 				return;
 			}
@@ -600,11 +601,11 @@ namespace MSetExplorer
 
 		private void SetTheCanvasScale(SizeDbl contentScale)
 		{
-			//var currentScaleX = _canvasScaleTransform.ScaleX;
-			//Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}.");
+			var currentScaleX = _canvasScaleTransform.ScaleX;
+			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}.");
 
-			//_canvasScaleTransform.ScaleX = contentScale.Width;
-			//_canvasScaleTransform.ScaleY = contentScale.Height;
+			_canvasScaleTransform.ScaleX = contentScale.Width;
+			_canvasScaleTransform.ScaleY = contentScale.Height;
 		}
 
 		private void ClipAndOffset(RectangleDbl? previousValue, RectangleDbl? newValue)

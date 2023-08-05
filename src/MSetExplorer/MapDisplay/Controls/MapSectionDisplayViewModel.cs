@@ -382,6 +382,7 @@ namespace MSetExplorer
 		}
 
 		/// <summary>
+		/// User is chaning the Zoom level (Zoom Control Scroll bar or Mouse wheel.)
 		/// Updates the ImageSource (i.e., the Bitmap) with Counts, Escape Velocities, etc., for the specified contentOffset (aka Display Position.)
 		/// NOTE: This may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId.
 		/// </summary>
@@ -416,6 +417,7 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
+		// User is changing the size of the app / control
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset)
 		{
 			int? newJobNumber;
@@ -442,6 +444,7 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
+		// User is Panning or using the horizontal scroll bar.
 		public int? MoveTo(VectorDbl contentOffset)
 		{
 			int? newJobNumber;

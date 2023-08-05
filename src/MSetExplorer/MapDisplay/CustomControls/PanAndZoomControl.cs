@@ -844,13 +844,10 @@ namespace MSetExplorer
 				var newContentCenter = GetContentCenter();
 				var adjustmentVector = ContentZoomFocus.Diff(newContentCenter);
 
-				//Debug.WriteLineIf(_useDetailedDebug, $"Updating ContentOffsetsFromScale. viewportOffset: {viewportOffset}, contentOFfset1: {contentOffset1}, NewValue: {contentOffset2}. ");
-				//Debug.WriteLine($"Updating ContentOffsetsFromScale. viewportOffset: {viewportOffset.ToString("F2")}, contentOFfset1: {contentOffset1.ToString("F2")}, NewValue: {contentOffset2.ToString("F2")}. ");
-
 				var currentVal = new PointDbl(ContentOffset.X, ContentOffset.Y);
 				var newVal = currentVal.Translate(adjustmentVector);
 
-				Debug.WriteLine($"Updating ContentOffsetsFromScale. Current: {currentVal}, Adjustment: {adjustmentVector.ToString("F2")}, Result: {newVal.ToString("F2")}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Updating ContentOffsetsFromScale. Current: {currentVal}, Adjustment: {adjustmentVector.ToString("F2")}, Result: {newVal.ToString("F2")}.");
 
 				ContentOffsetX = newVal.X;
 				ContentOffsetY = newVal.Y;

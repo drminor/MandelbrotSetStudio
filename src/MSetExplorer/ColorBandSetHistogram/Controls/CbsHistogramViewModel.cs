@@ -9,18 +9,18 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public class CbsHistogramViewModel : ViewModelBase, ICbsHistogramViewModel
+	public class CbsHistogramViewModel : ViewModelBase, ICbsHistogramViewModel, IEquatable<CbsHistogramViewModel?>
 	{
 		#region Private Fields
 
-		private const int _cbElevation = 2; //195;
-		private const int _cbHeight = 38;
+		private const int CB_ELEVATION = 2; // Distance from the top of the Grid Row containing the Color Band Rectangles and the top of each Color Band Rectangle
+		private const int CB_HEIGHT = 38;	// Height of each Color Band Rectangle
 
 		//private readonly SynchronizationContext? _synchronizationContext;
 		private readonly object _paintLocker;
 
 		private readonly DrawingGroup _drawingGroup;
-		private readonly ScaleTransform _scaleTransform;
+		//private readonly ScaleTransform _scaleTransform;
 		//private readonly GeometryDrawing _foundationRectangle;
 
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
@@ -32,16 +32,13 @@ namespace MSetExplorer
 
 		private readonly IList<GeometryDrawing> _colorBandRectangles;
 
-		private readonly IList<GeometryDrawing> _historgramItems;
 		private HPlotSeriesData _seriesData;
 
 		private SizeDbl _unscaledExtent;
 
 		private SizeDbl _contentViewportSize;
 
-
 		private SizeDbl _viewportSize;
-		private SizeDbl _containerSize;
 		private SizeInt _canvasSize;
 
 		private ImageSource _imageSource;
@@ -55,11 +52,6 @@ namespace MSetExplorer
 
 		private bool _useDetailedDebug = true;
 
-		private int _thePlotExtent;
-
-		private double[] _theXValues;
-
-
 		#endregion
 
 		#region Constructor
@@ -67,9 +59,6 @@ namespace MSetExplorer
 		public CbsHistogramViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
 		{
 			//_synchronizationContext = SynchronizationContext.Current;
-
-			_thePlotExtent = 400;
-			_theXValues = BuildXVals(_thePlotExtent);
 
 			_paintLocker = new object();
 
@@ -79,12 +68,11 @@ namespace MSetExplorer
 			_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 			_colorBandRectangles = new List<GeometryDrawing>();
 
-			_historgramItems = new List<GeometryDrawing>();
-			_seriesData = HPlotSeriesData.Zero;
+			_seriesData = HPlotSeriesData.Empty;
 
 			_drawingGroup = new DrawingGroup();
-			_scaleTransform = new ScaleTransform();
-			_drawingGroup.Transform = _scaleTransform;
+			//_scaleTransform = new ScaleTransform();
+			//_drawingGroup.Transform = _scaleTransform;
 
 			_unscaledExtent = new SizeDbl();
 
@@ -92,8 +80,7 @@ namespace MSetExplorer
 
 			_viewportSize = new SizeDbl();
 
-			ContainerSize = new SizeDbl(500, 300);
-			_canvasSize = new SizeInt();
+			_canvasSize = new SizeInt(500, 300);
 
 			_imageSource = new DrawingImage(_drawingGroup);
 			_imageOffset = new VectorDbl();
@@ -107,8 +94,7 @@ namespace MSetExplorer
 			//_foundationRectangle = BuildFoundationRectangle(_unscaledExtent);
 			//_drawingGroup.Children.Add(_foundationRectangle);
 
-
-			_mapSectionHistogramProcessor.PercentageBandsUpdated += PercentageBandsUpdated;
+			//_mapSectionHistogramProcessor.PercentageBandsUpdated += PercentageBandsUpdated;
 			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
 		}
 
@@ -119,7 +105,6 @@ namespace MSetExplorer
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
 		#endregion
-
 
 		#region Public Properties - Content
 
@@ -137,23 +122,17 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetHistogram Display is processing a new ColorBandSet. Id = {value.Id}.");
 
 					_colorBandSet = value;
-					StartPtr = 0;
-					EndPtr = _colorBandSet.Count - 1;
+
 					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 
-					var unscaledWidth = GetUnscaledWidth() ?? 0;
+					var unscaledWidth = GetExtent(out var endPtr);
+					StartPtr = 0;
+					EndPtr = endPtr;
 
-					if (unscaledWidth > 100)
+					if (unscaledWidth > 10)
 					{
-						//UnscaledExtent = new SizeDbl(unscaledWidth.Value, _canvasSize.Height);
-						//DrawColorBands();
-
 						ResetView(unscaledWidth, DisplayPosition, DisplayZoom);
 					}
-					//else
-					//{
-					//	UnscaledExtent = new SizeDbl(_canvasSize);
-					//}
 				}
 			}
 		}
@@ -221,21 +200,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int PlotExtent
-		{
-			get => _thePlotExtent;
-			
-			set
-			{
-				if (value != _thePlotExtent)
-				{
-					_thePlotExtent = value;
-
-					_theXValues = BuildXVals(_thePlotExtent);
-
-				}
-			}
-		}
+		public int PlotExtent => SeriesData.Length;
 
 		#endregion
 
@@ -248,7 +213,6 @@ namespace MSetExplorer
 			get => _viewportSize;
 			set
 			{
-
 				if (!value.IsNAN() && value != _viewportSize)
 				{
 					if (value.Width <= 2 || value.Height <= 2)
@@ -260,7 +224,7 @@ namespace MSetExplorer
 						Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {value}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
 
 						_viewportSize = value;
-						ContainerSize = value;
+						CanvasSize = _viewportSize.Round();
 
 						OnPropertyChanged(nameof(ICbsHistogramViewModel.ViewportSize));
 					}
@@ -269,19 +233,6 @@ namespace MSetExplorer
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {value}.The current value is aleady: {_viewportSize}, not updating the ContainerSize.");
 				}
-			}
-		}
-
-		public SizeDbl ContainerSize
-		{
-			get => _containerSize;
-			set
-			{
-				_containerSize = value;
-
-				Debug.WriteLineIf(_useDetailedDebug, $"The container size is now {value}.");
-
-				CanvasSize = ContainerSize.Round();
 			}
 		}
 
@@ -295,25 +246,7 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's Canvas Size is now {value}.");
 					_canvasSize = value;
 
-					//UnscaledExtent = new SizeDbl(CanvasSize.Scale(DisplayZoom));
-					//UnscaledExtent = new SizeDbl(_canvasSize);
-
-					RefreshHistogramDisplay();
-
-					//var unscaledWidth = GetUnscaledWidth();
-
-					//if (unscaledWidth.HasValue)
-					//{
-					//	UnscaledExtent = new SizeDbl(unscaledWidth.Value, _canvasSize.Height);
-
-					//	//SeriesData = BuildSeriesData();
-					//	//DrawColorBands();
-					//	RefreshHistogramDisplay();
-					//}
-					//else
-					//{
-					//	UnscaledExtent = new SizeDbl(_canvasSize);
-					//}
+					//RefreshDisplay();
 
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CanvasSize));
 				}
@@ -325,7 +258,7 @@ namespace MSetExplorer
 			get => _seriesData;
 			set
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's Series is being set. There are {value.DataX.Length} entries.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's Series is being set. There are {value.LongLength} entries.");
 				_seriesData = value;
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.SeriesData));
 			}
@@ -370,7 +303,7 @@ namespace MSetExplorer
 				{
 					_unscaledExtent = value;
 
-					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetHistogram's UnscaledExtent is being set to {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"\nThe ColorBandSetHistogram's UnscaledExtent is being set to {value}.");
 
 					//UpdateFoundationRectangle(_foundationRectangle, value);
 
@@ -394,8 +327,7 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsDoubleChanged(value, _displayZoom, 0.00001))
 				{
-					//_scaleTransform.ScaleX = _displayZoom;
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayZoom is being updated from {_displayZoom} to {value}.");
+					//Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayZoom is being updated from {_displayZoom} to {value}.");
 					
 					_displayZoom = value;
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.DisplayZoom));
@@ -408,7 +340,7 @@ namespace MSetExplorer
 			get => _minimumDisplayZoom;
 			set
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's MinimumDisplayZoom is being updated from {_minimumDisplayZoom} to {value}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"\nThe CbsHistogramViewModel's MinimumDisplayZoom is being updated from {_minimumDisplayZoom} to {value}.");
 
 				_minimumDisplayZoom = value;
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.MinimumDisplayZoom));
@@ -420,7 +352,7 @@ namespace MSetExplorer
 			get => _maximumDisplayZoom;
 			set
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's MaximumDisplayZoom is being updated from {_maximumDisplayZoom} to {value}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"\nThe CbsHistogramViewModel's MaximumDisplayZoom is being updated from {_maximumDisplayZoom} to {value}.");
 
 				_maximumDisplayZoom = value;
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.MaximumDisplayZoom));
@@ -431,43 +363,46 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void RefreshHistogramDisplay()
+		public void RefreshDisplay()
 		{
-			SeriesData = BuildSeriesData();
-			DrawColorBands();
+			lock (_paintLocker)
+			{
+				BuildSeriesData(SeriesData, _mapSectionHistogramProcessor.Histogram.Values);
+				DrawColorBands();
+			}
+
+			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's SerieData is being updated There are {SeriesData.LongLength} entries.");
+
+			SeriesData = new HPlotSeriesData(SeriesData);
+
+			//OnPropertyChanged(nameof(ICbsHistogramViewModel.SeriesData));
 		}
 
 		public int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
-			// TODO: Do somthing with the contentScale argument.
-			Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSizePosAndScale set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
 
-			Debug.Assert(contentScale == _displayZoom, "The DisplayZoom does not equal the new ContentScale on the call to UpdateViewportSizePosAndScale.");
+			//_displayZoom uses a binding to stay curent with contentScale;	
+			Debug.Assert(_displayZoom == contentScale, "The DisplayZoom does not equal the new ContentScale on the call to UpdateViewportSizePosAndScale.");
 
-			_contentViewportSize = contentViewportSize;
-			_displayPosition = contentOffset;
+			ViewportSize = contentViewportSize;
+			DisplayPosition = contentOffset;
 
-			//_displayZoom = contentScale;	
-
-			//ViewportSize = contentViewportSize;
-
-			//var offset = new VectorDbl(contentOffset.X * _scaleTransform.ScaleX, 0);
-			//ImageOffset = offset;
+			var offset = new VectorDbl(DisplayPosition.X/* * _displayZoom*/, 0);
+			ImageOffset = offset;
 
 			return null;
 		}
 
 		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}.");
 
-			//ViewportSize = contentViewportSize;
+			ViewportSize = contentViewportSize;
+			DisplayPosition = contentOffset;
 
-			_contentViewportSize = contentViewportSize;
-			_displayPosition = contentOffset;
-
-			//var offset = new VectorDbl(contentOffset.X * _scaleTransform.ScaleX, 0);
-			//ImageOffset = offset;
+			var offset = new VectorDbl(DisplayPosition.X/* * _displayZoom*/, 0);
+			ImageOffset = offset;
 
 			return null;
 		}
@@ -480,11 +415,9 @@ namespace MSetExplorer
 			}
 
 			//Debug.WriteLineIf(_useDetailedDebug, "\n==========  Executing MoveTo.");
-
 			Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is moving to position:{displayPosition}.");
 
-			var offset = new VectorDbl(displayPosition.X * _scaleTransform.ScaleX, 0);
-			//var offset = new VectorDbl(displayPosition.X, 0);
+			var offset = new VectorDbl(displayPosition.X/* * _displayZoom*/, 0);
 			ImageOffset = offset;
 
 			return null;
@@ -494,7 +427,8 @@ namespace MSetExplorer
 		{
 			lock (_paintLocker)
 			{
-				//_bitmapGrid.ClearDisplay();
+				SeriesData.Clear();
+				DrawColorBands();
 			}
 		}
 
@@ -518,60 +452,61 @@ namespace MSetExplorer
 
 		private void HistogramUpdated(object? sender, HistogramUpdateType e)
 		{
-			if (e == HistogramUpdateType.Clear)
-			{
-				ClearHistogramItems();
-			}
-			else if (e == HistogramUpdateType.Refresh)
-			{
-				//SeriesData = BuildSeriesData();
-				//DrawColorBands();
-				RefreshHistogramDisplay();
-			}
-		}
+			// TODO: Consider handling BlockAdd and BlockRemoves
 
-		private void PercentageBandsUpdated(object? sender, PercentageBand[] e)
-		{
-			UpdatePercentages();
+			switch (e)
+			{
+				case HistogramUpdateType.BlockAdded:
+					//Debug.WriteLine($"Not handling HistogramUpdated. The update type is {e}.");
+					break;
+				case HistogramUpdateType.BlockRemoved:
+					//Debug.WriteLine($"Not handling HistogramUpdated. The update type is {e}.");
+					break;
+				case HistogramUpdateType.Clear:
+					{
+						lock (_paintLocker)
+						{
+							SeriesData.Clear();
+						}
+						break;
+					}
+				case HistogramUpdateType.Refresh:
+					{
+						RefreshDisplay();
+						break;
+					}
+				default:
+					break;
+			}
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private HPlotSeriesData BuildSeriesData()
+		private void BuildSeriesData(HPlotSeriesData hPlotSeriesData, int[] values)
 		{
-			double[] dataY;
-
-			int[] values = _mapSectionHistogramProcessor.Histogram.Values;
+			var longLength = values.LongLength;
 			
-			if (values.Length < 1)
+			if (longLength < 1)
 			{
 				Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
-				dataY = new double[PlotExtent];
+
+				hPlotSeriesData.Clear();
+				return;
+			}
+
+			var existingLength = hPlotSeriesData.LongLength;
+			hPlotSeriesData.SetYValues(values, out var bufferWasPreserved);
+
+			if (!bufferWasPreserved)
+			{
+				Debug.WriteLine($"WARNING: Allocating new buffer to hold the Y Values. New length: {longLength}, existing length:{existingLength}.");
 			}
 			else
 			{
-				if (values.Length != PlotExtent)
-				{	
-					Debug.WriteLine($"WARNING: Allocating new buffer to hold the Y Values. New length: {values.Length}, existing length:{PlotExtent}.");
-				}
-
-				//var extent = Math.Max(Math.Min(values.Length, _thePlotExtent - 50), 0);
-
-				PlotExtent = values.Length;
-
-				dataY = new double[values.Length];
-
-				for (var hPtr = 0; hPtr < values.Length; hPtr++)
-				{
-					dataY[hPtr] = values[hPtr];
-				}
+				Debug.WriteLine($"Updating SeriesData. Using existing buffer. Length:{longLength}.");
 			}
-
-			var result = new HPlotSeriesData(_theXValues, dataY);
-
-			return result;
 		}
 
 		private void DrawColorBands()
@@ -591,7 +526,7 @@ namespace MSetExplorer
 				var colorBand = _colorBandSet[i];
 				lastWidth = colorBand.BucketWidth;
 
-				var area = new RectangleDbl(new PointDbl(curOffset, _cbElevation), new SizeDbl(lastWidth, _cbHeight));
+				var area = new RectangleDbl(new PointDbl(curOffset, CB_ELEVATION), new SizeDbl(lastWidth, CB_HEIGHT));
 				var r = DrawingHelper.BuildRectangle(area, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
 				
 				_colorBandRectangles.Add(r);
@@ -601,39 +536,10 @@ namespace MSetExplorer
 			}
 		}
 
-		private void UpdatePercentages()
+		private int GetExtent(out int endPtr)
 		{
-
-		}
-
-		private double[] BuildXVals(int extent)
-		{
-			var result = new double[extent];
-
-			for (int i = 0; i < extent; i++)
-			{
-				result[i] = i;
-			}
-
-			return result;
-		}
-
-		private int? GetUnscaledWidth()
-		{
-			if (_colorBandSet.Count < 2)
-			{
-				return null;
-			}
-
-			//var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
-			//var endingIndex = _colorBandSet[EndPtr].Cutoff;
-
-			////var result = 1 + endingIndex - startingIndex;
-
-			//var highCWidth = _colorBandSet.HighCutoff - _colorBandSet[EndPtr].Cutoff;
-			//var result = highCWidth + endingIndex - startingIndex;
-
-			var result = _colorBandSet.HighCutoff;
+			var result = _colorBandSet.Count < 2 ? 0 : _colorBandSet.HighCutoff;
+			endPtr = _colorBandSet.Count < 2 ? 0 : _colorBandSet.Count - 1;
 			return result;
 		}
 
@@ -647,14 +553,44 @@ namespace MSetExplorer
 			_colorBandRectangles.Clear();
 		}
 
-		private void ClearHistogramItems()
-		{
-			foreach (var geometryDrawing in _historgramItems)
-			{
-				_drawingGroup.Children.Remove(geometryDrawing);
-			}
+		#endregion
 
-			_historgramItems.Clear();
+		#region IEquatable Support
+
+		bool IEquatable<ICbsHistogramViewModel?>.Equals(ICbsHistogramViewModel? other)
+		{
+			var result = other is CbsHistogramViewModel vm && vm == this;
+			return result;
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as CbsHistogramViewModel);
+		}
+
+		public bool Equals(CbsHistogramViewModel? other)
+		{
+			return other is not null &&
+				   EqualityComparer<ColorBandSet>.Default.Equals(ColorBandSet, other.ColorBandSet) &&
+				   PlotExtent == other.PlotExtent &&
+				   ViewportSize.Equals(other.ViewportSize) &&
+				   UnscaledExtent.Equals(other.UnscaledExtent) &&
+				   ContentViewportSize.Equals(other.ContentViewportSize);
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(ColorBandSet, PlotExtent, ViewportSize, UnscaledExtent, ContentViewportSize);
+		}
+
+		public static bool operator ==(CbsHistogramViewModel? left, CbsHistogramViewModel? right)
+		{
+			return EqualityComparer<CbsHistogramViewModel>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(CbsHistogramViewModel? left, CbsHistogramViewModel? right)
+		{
+			return !(left == right);
 		}
 
 		#endregion
