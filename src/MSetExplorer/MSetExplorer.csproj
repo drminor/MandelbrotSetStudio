@@ -15,11 +15,15 @@
 
 
   <ItemGroup>
+    <Compile Remove="ColorBandSetHistogram\CustomControls\HistogramBitmapControl.cs" />
+    <Compile Remove="ColorBandSetHistogram\CustomControls\HistogramPlotCustomControl.cs" />
     <Compile Remove="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
 
   <ItemGroup>
+    <None Include="ColorBandSetHistogram\CustomControls\HistogramBitmapControl.cs" />
+    <None Include="ColorBandSetHistogram\CustomControls\HistogramPlotCustomControl.cs" />
     <None Include="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 

@@ -1,9 +1,7 @@
-﻿using MongoDB.Driver.Core.Operations;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
-namespace MSetExplorer.ColorBandSetHistogram.Support
+namespace MSetExplorer
 {
 	public class HPlotSeriesData : IEquatable<HPlotSeriesData?>
 	{

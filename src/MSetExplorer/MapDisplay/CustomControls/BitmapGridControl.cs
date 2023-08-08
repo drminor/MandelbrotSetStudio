@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -376,7 +375,7 @@ namespace MSetExplorer
 				}
 			}
 
-			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
+			throw new InvalidOperationException("Cannot find a child image element of the BitmapGridControls's Content, or the Content is not a Canvas element.");
 		}
 
 		#endregion
@@ -499,7 +498,7 @@ namespace MSetExplorer
 				_canvasTranslateTransform.Y = newValue.Position.Y;
 
 				// Clip using the scaled value.
-				var clipOrigin = new Point(logicalPosition.X, logicalPosition.Y);
+				var clipOrigin = new Point(Math.Max(logicalPosition.X, 0), Math.Max(logicalPosition.Y, 0));
 				Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(logicalViewportSize)));
 			}
 			else

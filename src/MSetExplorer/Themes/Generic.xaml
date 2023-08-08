@@ -2,7 +2,6 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ScottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"                           
                     xmlns:local="clr-namespace:MSetExplorer">
-
     
     <Style TargetType="{x:Type local:PanAndZoomControl}">
         <Setter Property="Template">
@@ -43,28 +42,7 @@
         </Setter>
     </Style>
 
-
-    <Style TargetType="{x:Type local:HistogramBitmapControl}">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type local:HistogramBitmapControl}">
-                    <Border BorderThickness="0" BorderBrush="DarkSlateBlue">
-
-                        <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <ContentPresenter.Content>
-                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
-                                    <Image x:Name="MainImage" />
-                                </Canvas>
-                            </ContentPresenter.Content>
-                        </ContentPresenter>
-
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style TargetType="{x:Type local:HistogramPlotCustomControl}">
+    <!--<Style TargetType="{x:Type local:HistogramPlotCustomControl}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:HistogramPlotCustomControl}">
@@ -83,7 +61,7 @@
                                         <ScottPlot:WpfPlot x:Name="WpfPlot1"/>
                                     </Border>
 
-                                    <Canvas Grid.Row="1" x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="AliceBlue">
+                                    <Canvas Grid.Row="1" x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="SeaGreen">
                                         <Image x:Name="MainImage" />
                                     </Canvas>
                                     
@@ -95,6 +73,45 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>-->
+
+    <Style TargetType="{x:Type local:HistogramPlotControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:HistogramPlotControl}">
+                    <Border BorderThickness="0" BorderBrush="DarkCyan">
+
+                        <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ContentPresenter.Content>
+                                <ScottPlot:WpfPlot x:Name="WpfPlot1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Turquoise"/>
+                            </ContentPresenter.Content>
+                        </ContentPresenter>
+
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>    
+    
+    <Style TargetType="{x:Type local:HistogramColorBandControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:HistogramColorBandControl}">
+                    <Border BorderThickness="0" BorderBrush="DarkSlateBlue">
+
+                        <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ContentPresenter.Content>
+                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="DeepSkyBlue">
+                                    <Image x:Name="MainImage" />
+                                </Canvas>
+                            </ContentPresenter.Content>
+                        </ContentPresenter>
+
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
+
 
 </ResourceDictionary>

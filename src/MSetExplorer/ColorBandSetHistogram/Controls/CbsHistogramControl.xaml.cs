@@ -1,14 +1,10 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Drawing.Printing;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using System.Xml.Linq;
 
 namespace MSetExplorer
 {
@@ -57,10 +53,11 @@ namespace MSetExplorer
 			{
 				_vm = (CbsHistogramViewModel)DataContext;
 
-				var ourSize = HistogramDisplayControl1.ViewportSize;
+				var ourSize = HistogramColorBandControl1.ViewportSize;
 
 				PanAndZoomControl1.UnscaledViewportSize = ourSize;
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
+				_vm.ContentViewportSize = _vm.ViewportSize;						// Starting with ContentScale = 1 
 
 				//PanAndZoomControl1.MaxContentScale = 10;
 				//PanAndZoomControl1.MinContentScale = 1;
@@ -145,7 +142,7 @@ namespace MSetExplorer
 			ReportViewportChanged(e);
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {HistogramDisplayControl1.ImageOffset}\n");
+			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {HistogramColorBandControl1.ImageOffset}\n");
 		}
 
 		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
@@ -155,7 +152,7 @@ namespace MSetExplorer
 
 			_vm.UpdateViewportSizePosAndScale(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizePosAndScale. The ImageOffset is {HistogramDisplayControl1.ImageOffset}\n");
+			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizePosAndScale. The ImageOffset is {HistogramColorBandControl1.ImageOffset}\n");
 		}
 
 		private void ContentOffsetChanged(object? sender, EventArgs e)
@@ -169,7 +166,7 @@ namespace MSetExplorer
 			if (_vm != null)
 			{
 				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.CanvasSize}, ViewPort: {_vm.ViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.ViewportSize}, ContentViewPort: {_vm.ContentViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
 			}
 		}
 

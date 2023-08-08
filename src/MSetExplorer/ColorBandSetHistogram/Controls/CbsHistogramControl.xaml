@@ -3,28 +3,43 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:ScottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"                           
              xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:CbsHistogramViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="240" d:DesignWidth="626">
     <Grid>
         <Border BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="200"/>
+                    <RowDefinition Height="40"/>
+                </Grid.RowDefinitions>
+                
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" BorderThickness="0.75, 0.75, 0, 0.75" BorderBrush="Black">
+                <Border Grid.RowSpan="2" Grid.Column="0" BorderThickness="0.75, 0.75, 0, 0.75" BorderBrush="Black">
                     <local:CbshZoomControl x:Name="cbshZoom1"/>
                 </Border>
 
-                <Border Grid.Column="2" BorderThickness="0.75" BorderBrush="Black">
+                <Border Grid.Row="0" Grid.Column="1" BorderThickness="0.75, 0.75, 0.75, 0" BorderBrush="Black">
+                    <local:HistogramPlotControl
+                        x:Name="HistogramPlotControl1"
+                        SeriesData="{Binding SeriesData, Mode=OneWay}"
+                        ContentViewportSize="{Binding ContentViewportSize, Mode=OneWay}"
+                        DisplayPosition="{Binding DisplayPosition, Mode=OneWay}"
+                    />
+                </Border>
+                
+                <Border Grid.Row="1" Grid.Column="1" BorderThickness="0.75" BorderBrush="Black">
                     
                     <ScrollViewer
                         x:Name="ScrollViewer1"
                         CanContentScroll="True"
                         VerticalScrollBarVisibility="Disabled"
-                        HorizontalScrollBarVisibility="Visible"
+                        HorizontalScrollBarVisibility="Hidden"
                         >
 
                         <local:PanAndZoomControl
@@ -34,9 +49,8 @@
                             MinContentScale="{Binding MinimumDisplayZoom, Mode=TwoWay}" 
                             >
 
-                            <local:HistogramPlotCustomControl
-                                x:Name="HistogramDisplayControl1"
-                                SeriesData="{Binding SeriesData, Mode=OneWay}"
+                            <local:HistogramColorBandControl
+                                x:Name="HistogramColorBandControl1"
                                 HistogramImageSource="{Binding ImageSource, Mode=OneWay}"
                                 ImageOffset="{Binding ImageOffset, Mode=OneWay}"
                             />
@@ -50,3 +64,15 @@
         
     </Grid>
 </UserControl>
+    
+    <!-- 
+        
+        <local:HistogramPlotCustomControl
+            x:Name="HistogramDisplayControl1"
+            SeriesData="{Binding SeriesData, Mode=OneWay}"
+            HistogramImageSource="{Binding ImageSource, Mode=OneWay}"
+            ImageOffset="{Binding ImageOffset, Mode=OneWay}"
+        />        
+        
+        
+        -->

@@ -382,7 +382,7 @@ namespace MSetExplorer
 		}
 
 		/// <summary>
-		/// User is chaning the Zoom level (Zoom Control Scroll bar or Mouse wheel.)
+		/// User is changing the Zoom level (Zoom Control Scroll bar or Mouse wheel.)
 		/// Updates the ImageSource (i.e., the Bitmap) with Counts, Escape Velocities, etc., for the specified contentOffset (aka Display Position.)
 		/// NOTE: This may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId.
 		/// </summary>

@@ -741,7 +741,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					offsetX = 0;
+					offsetX = -1 * ContentOffsetX;
 
 					//clipWidth = UnscaledViewportSize.Width;
 					clipWidth = ContentViewportSize.Width;
@@ -761,7 +761,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					offsetY = 0;
+					offsetY = -1 * ContentOffsetY;
 
 					//clipHeight = UnscaledViewportSize.Height;
 					clipHeight = ContentViewportSize.Height;

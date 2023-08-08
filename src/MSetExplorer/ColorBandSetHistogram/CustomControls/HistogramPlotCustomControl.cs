@@ -1,7 +1,5 @@
-﻿using MSetExplorer.ColorBandSetHistogram.Support;
-using MSS.Types;
+﻿using MSS.Types;
 using ScottPlot;
-
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -26,9 +24,6 @@ namespace MSetExplorer
 		private ScottPlot.Plottable.ScatterPlot? _thePlot;
 		private int _thePlotExtent;
 
-		private int[] _theXValues;
-
-
 		private Canvas _canvas;
 		private Image _image;
 
@@ -43,9 +38,9 @@ namespace MSetExplorer
 		private SizeDbl _logicalViewportSize;
 
 		private SizeDbl _viewportSize;
-		private SizeDbl _contentViewportSize;
+		//private SizeDbl _contentViewportSize;
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -69,13 +64,6 @@ namespace MSetExplorer
 			_thePlot = null;
 			_thePlotExtent = 400;
 
-			_theXValues = new int[_thePlotExtent];
-
-			for(int i = 0; i < _thePlotExtent; i++)
-			{
-				_theXValues[i] = i;
-			}
-
 			_canvas = new Canvas();
 			_image = new Image();
 			//_image.SizeChanged += Image_SizeChanged;
@@ -95,7 +83,7 @@ namespace MSetExplorer
 			_translationAndClipSize = new RectangleDbl();
 
 			_viewportSize = new SizeDbl();
-			_contentViewportSize = SizeDbl.NaN;
+			//_contentViewportSize = SizeDbl.NaN;
 			_logicalViewportSize = new SizeDbl();
 
 			//MouseEnter += HistogramDisplayControl_MouseEnter;
@@ -168,13 +156,10 @@ namespace MSetExplorer
 					return;
 				}
 
-				//var seriesData = BuildTestSeries();
+				//_thePlot = _wpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
+				_thePlot = CreateScatterPlot(_wpfPlot1, seriesData);
 
-				_thePlot = _wpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
-
-				//_wpfPlot1.Plot.Title("Hi There, I'm initialized.");
-				_wpfPlot1.Plot.XLabel("XLabel");
-				_wpfPlot1.Plot.YLabel("YLabel");
+				_thePlotExtent = seriesData.DataX.Length;
 
 				_wpfPlot1.Refresh();
 			}
@@ -312,7 +297,7 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
-					//SetTheCanvasScale(_contentScale);
+					SetTheCanvasScale(_contentScale);
 				}
 			}
 		}
@@ -327,7 +312,7 @@ namespace MSetExplorer
 
 				LogicalViewportSize = value.Size;
 
-				//ClipAndOffset(previousVal, value);
+				ClipAndOffset(previousVal, value);
 			}
 		}
 
@@ -445,7 +430,7 @@ namespace MSetExplorer
 				}
 			}
 
-			throw new InvalidOperationException("Cannot find a child image element of the BitmapGrid3's Content, or the Content is not a Canvas element.");
+			throw new InvalidOperationException("Cannot find a child image element of the HistogramPlotCustomControl's Content, or the Content is not a Canvas element.");
 		}
 
 		#endregion
@@ -514,54 +499,96 @@ namespace MSetExplorer
 				return;
 			}
 
-			//WpfPlot1.Plot.Clear();
-
 			if (seriesData.IsEmpty())
 			{
+				//WpfPlot1.Plot.Clear();
 				return;
 			}
 
 			if (_thePlot == null)
 			{
-				_thePlot = WpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
-
-				//WpfPlot1.Plot.Title("Hi There, I'm initialized.");
-
-				//WpfPlot1.Plot.Frame(visible: true, color: System.Drawing.SystemColors.HotTrack, left: true, right: false, bottom: true, top: false);
-
-				WpfPlot1.Plot.XLabel("XLabel");
-				WpfPlot1.Plot.YLabel("YLabel");
-
-				WpfPlot1.Plot.AxisScale();
-
+				_thePlot = CreateScatterPlot(WpfPlot1, seriesData);
 				_thePlotExtent = seriesData.DataX.Length;
-
-				WpfPlot1.Refresh();
 			}
 			else
 			{
 				if (seriesData.DataX.Length == _thePlotExtent)
 				{
+					ClearPlotLimits(WpfPlot1.Plot);
 					_thePlot.UpdateY(seriesData.DataY);
+					Debug.WriteLine($"The Series has {seriesData.DataX.Length}, updating existing Scatter Plot.");
 				}
 				else
 				{
 					WpfPlot1.Plot.Clear();
-
-					_thePlot = WpfPlot1.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
-
-					WpfPlot1.Plot.XLabel("XLabel");
-					WpfPlot1.Plot.YLabel("YLabel");
-
-					WpfPlot1.Plot.AxisScale();
-
+					_thePlot = CreateScatterPlot(WpfPlot1, seriesData);
 					_thePlotExtent = seriesData.DataX.Length;
 
-					//Debug.WriteLine($"The Series has {seriesData.DataX.Length}, not updating.");
+					Debug.WriteLine($"The Series has {seriesData.DataX.Length}, not updating -- creating new Scatter Plot.");
 				}
-
-				WpfPlot1.Refresh();
 			}
+			
+			var startingIndex = ImageOffset.X;
+			var endingIndex = startingIndex + _translationAndClipSize.Size.Width;
+			SetPlotLimits(WpfPlot1, startingIndex, endingIndex);
+
+			WpfPlot1.Refresh();
+		}
+
+		private ScottPlot.Plottable.ScatterPlot CreateScatterPlot(WpfPlot wpfPlot, HPlotSeriesData seriesData)
+		{
+			var result = wpfPlot.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
+			//WpfPlot1.Plot.Title("Hi There, I'm initialized.");
+
+			//WpfPlot1.Plot.Frame(visible: true, color: System.Drawing.SystemColors.HotTrack, left: true, right: false, bottom: true, top: false);
+
+			//WpfPlot1.Plot.XLabel("XLabel");
+			//WpfPlot1.Plot.YLabel("YLabel");
+
+			//WpfPlot1.Plot.AxisScale();
+			return result;
+		}
+
+		private void SetPlotLimits(WpfPlot wpfPlot, double startingIndex, double endingIndex)
+		{
+			var plot = wpfPlot.Plot;
+
+			if (endingIndex - startingIndex > 0)
+			{
+				plot.AxisAutoY();
+				wpfPlot.Refresh();
+
+				var axLimits = plot.GetAxisLimits();
+				Debug.WriteLine($"Setting the XPlot Limits. Start: {startingIndex}, End: {endingIndex}. Current: X1: {axLimits.XMin}, X2: {axLimits.XMax}, Y1: {axLimits.YMin}, Y2: {axLimits.YMax}");
+
+				plot.SetAxisLimitsX(startingIndex, endingIndex);
+				plot.XAxis.SetBoundary(startingIndex - 1000, endingIndex + 1000);
+
+				//var axLimits2 = plot.GetAxisLimits();
+
+				//Debug.WriteLine($"Setting the YPlot Limits. Start: {axLimits2.YMin}, End: {axLimits2.YMax}. Before Setting the Limits for AxisX: Start: {axLimits.YMin}, End: {axLimits.YMax}" +
+				//	$" Current: X1: {axLimits2.XMin}, X2: {axLimits2.XMax}, Y1: {axLimits2.YMin}, Y2: {axLimits2.YMax}");
+
+
+				//plot.SetAxisLimitsY(axLimits2.YMin, axLimits2.YMax);
+				//plot.YAxis.SetBoundary(axLimits2.YMin -10, axLimits2.YMax + 10);
+			}
+			else
+			{
+				Debug.WriteLine($"Setting the Plot Limits, Start = End, Clearing instead of Setting.");
+				plot.SetAxisLimits(AxisLimits.NoLimits);
+			}
+		}
+
+		private void ClearPlotLimits(Plot? plot)
+		{
+			if (plot != null)
+			{
+				Debug.WriteLine($"Clearing the Plot Limits.");
+
+				plot.SetAxisLimits(AxisLimits.NoLimits);
+			}
+
 		}
 
 		//private HPlotSeriesData BuildTestSeries()
@@ -602,33 +629,43 @@ namespace MSetExplorer
 		private void SetTheCanvasScale(SizeDbl contentScale)
 		{
 			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set to {_canvasScaleTransform.ScaleX} from {currentScaleX}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramPlotCustomControl's Image ScaleTransform is being set from {currentScaleX} to {contentScale.Width}.");
 
 			_canvasScaleTransform.ScaleX = contentScale.Width;
-			_canvasScaleTransform.ScaleY = contentScale.Height;
+			//_canvasScaleTransform.ScaleY = contentScale.Height;
 		}
 
 		private void ClipAndOffset(RectangleDbl? previousValue, RectangleDbl? newValue)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's {nameof(TranslationAndClipSize)} is being set to {newValue} from {previousValue}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's {nameof(TranslationAndClipSize)} is being from {previousValue} to {newValue}.");
 
-			if (newValue != null)
+			if (newValue != null && WpfPlot1 != null)
 			{
-				_canvasTranslateTransform.X = newValue.Value.Position.X;
-				_canvasTranslateTransform.Y = newValue.Value.Position.Y;
-				_canvas.Clip  = new RectangleGeometry(new Rect(ScreenTypeHelper.ConvertToSize(newValue.Value.Size)));
+				// Use the newValue.size to limit the Plot's range of X values (Ending Index).
+				var startingIndex = ImageOffset.X;
+				var endingIndex = startingIndex + newValue.Value.Size.Width;
+				SetPlotLimits(WpfPlot1, startingIndex, endingIndex);
 			}
-			else
-			{
-				_canvasTranslateTransform.X = 0;
-				_canvasTranslateTransform.Y = 0;
-				_canvas.Clip = null;
-			}
+
+			//if (newValue != null)
+			//{
+			//	_canvasTranslateTransform.X = newValue.Value.Position.X;
+			//	_canvasTranslateTransform.Y = newValue.Value.Position.Y;
+			//	_canvas.Clip  = new RectangleGeometry(new Rect(ScreenTypeHelper.ConvertToSize(newValue.Value.Size)));
+			//}
+			//else
+			//{
+			//	_canvasTranslateTransform.X = 0;
+			//	_canvasTranslateTransform.Y = 0;
+			//	_canvas.Clip = null;
+			//}
 		}
 
 		#endregion
 
 		#region Image and Image Offset
+
+		// Determines the StartingIndex
 
 		private bool UpdateImageOffset(VectorDbl rawValue)
 		{
@@ -647,12 +684,18 @@ namespace MSetExplorer
 
 			if (currentValue.IsNAN() || ScreenTypeHelper.IsVectorDblChanged(currentValue, invertedValue, threshold: 0.00001))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's ImageOffset is being set to {newValue} from {currentValue}.");
-
-				CompareCanvasAndControlHeights();
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotCustomControl's ImageOffset is being set to {invertedValue} from {currentValue}.");
 
 				Image.SetValue(Canvas.LeftProperty, invertedValue.X);
-				Image.SetValue(Canvas.BottomProperty, invertedValue.Y);
+				//Image.SetValue(Canvas.BottomProperty, invertedValue.Y);
+
+				if (WpfPlot1 != null)
+				{
+					// Use the newValue to limit the Plot's range of X values. (Starting Index)
+					var startingIndex = newValue.X;
+					var endingIndex = startingIndex + _translationAndClipSize.Size.Width;
+					SetPlotLimits(WpfPlot1, startingIndex, endingIndex);
+				}
 
 				return true;
 			}
@@ -674,22 +717,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Diagnostics
-
-		[Conditional("DEBUG2")]
-		private void CompareCanvasAndControlHeights()
-		{
-			// The contentViewportSize when reduced by the BaseScale Factor
-			// should equal the ViewportSize when it is expanded by the RelativeScale
-
-			//var (baseFactor, relativeScale) = ZoomSlider.GetBaseAndRelative(_controlScaleTransform.ScaleX);
-
-			//var canvasHeightScaled = Canvas.ActualHeight * relativeScale;
-
-			if (Math.Abs(Canvas.ActualHeight - ActualHeight) > 0.1)
-			{
-				Debug.WriteLine($"WARNING: The Canvas Height : {Canvas.ActualHeight} does not match the HistogramDisplayControl's height: {ActualHeight}.");
-			}
-		}
 
 		[Conditional("DEBUG2")]
 		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)

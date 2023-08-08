@@ -1,5 +1,4 @@
-﻿using MSetExplorer.ColorBandSetHistogram.Support;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,7 +8,7 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	public class CbsHistogramViewModel : ViewModelBase, ICbsHistogramViewModel, IEquatable<CbsHistogramViewModel?>
+	public class CbsHistogramViewModel : ViewModelBase, ICbsHistogramViewModel
 	{
 		#region Private Fields
 
@@ -34,12 +33,9 @@ namespace MSetExplorer
 
 		private HPlotSeriesData _seriesData;
 
-		private SizeDbl _unscaledExtent;
-
-		private SizeDbl _contentViewportSize;
-
-		private SizeDbl _viewportSize;
-		private SizeInt _canvasSize;
+		private SizeDbl _unscaledExtent;		// Size of entire content at max zoom (i.e, 4 x Target Iterations)
+		private SizeDbl _viewportSize;          // Size of display area in device independent pixels.
+		private SizeDbl _contentViewportSize;	// Size of visible content
 
 		private ImageSource _imageSource;
 		private VectorDbl _imageOffset;
@@ -75,12 +71,9 @@ namespace MSetExplorer
 			//_drawingGroup.Transform = _scaleTransform;
 
 			_unscaledExtent = new SizeDbl();
-
+			_viewportSize = new SizeDbl(500, 300);
 			_contentViewportSize = new SizeDbl();
-
-			_viewportSize = new SizeDbl();
-
-			_canvasSize = new SizeInt(500, 300);
+			
 
 			_imageSource = new DrawingImage(_drawingGroup);
 			_imageOffset = new VectorDbl();
@@ -108,9 +101,9 @@ namespace MSetExplorer
 
 		#region Public Properties - Content
 
-		public int StartPtr { get; set; }
+		public int StartPtr { get; set; }	// Ptr to the first visible Color Band Rectangle
 
-		public int EndPtr { get; set; }
+		public int EndPtr { get; set; }     // Ptr to the last visible Color Band Rectangle
 
 		public ColorBandSet ColorBandSet
 		{
@@ -139,7 +132,7 @@ namespace MSetExplorer
 
 		private void ResetView(double extentWidth, VectorDbl displayPosition, double displayZoom)
 		{
-			var extent = new SizeDbl(extentWidth, _canvasSize.Height);
+			var extent = new SizeDbl(extentWidth, _viewportSize.Height);
 			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event.");
 
 			var initialSettingsF = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
@@ -224,7 +217,6 @@ namespace MSetExplorer
 						Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ViewportSize set to {value}. Previously it was {_viewportSize}. Updating it's ContainerSize.");
 
 						_viewportSize = value;
-						CanvasSize = _viewportSize.Round();
 
 						OnPropertyChanged(nameof(ICbsHistogramViewModel.ViewportSize));
 					}
@@ -236,22 +228,33 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeInt CanvasSize
+		public SizeDbl ContentViewportSize
 		{
-			get => _canvasSize;
+			get => _contentViewportSize;
 			set
 			{
-				if (value != _canvasSize)
+				if (!value.IsNAN() && value != _contentViewportSize)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's Canvas Size is now {value}.");
-					_canvasSize = value;
+					if (value.Width <= 2 || value.Height <= 2)
+					{
+						Debug.WriteLine($"WARNING: CbsHistogramViewModel is having its ContentViewportSize set to {value}, which is very small. Update was aborted. The ContentViewportSize remains: {_contentViewportSize}.");
+					}
+					else
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ContentViewportSize set to {value}. Previously it was {_contentViewportSize}.");
 
-					//RefreshDisplay();
+						_contentViewportSize = value;
 
-					OnPropertyChanged(nameof(ICbsHistogramViewModel.CanvasSize));
+						OnPropertyChanged(nameof(ICbsHistogramViewModel.ContentViewportSize));
+					}
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is having its ContentViewportSize set to {value}.The current value is aleady: {_contentViewportSize}.");
 				}
 			}
 		}
+
 
 		public HPlotSeriesData SeriesData
 		{
@@ -312,12 +315,19 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl ContentViewportSize => _contentViewportSize;
-
 		public VectorDbl DisplayPosition
 		{
 			get => _displayPosition;
-			private set => _displayPosition = value;
+			set
+			{
+				if (ScreenTypeHelper.IsVectorDblChanged(value, DisplayPosition))
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayZoom is being updated from {_displayPosition} to {value}.");
+
+					_displayPosition = value;
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.DisplayPosition));
+				}
+			}
 		}
 
 		public double DisplayZoom
@@ -385,11 +395,11 @@ namespace MSetExplorer
 			//_displayZoom uses a binding to stay curent with contentScale;	
 			Debug.Assert(_displayZoom == contentScale, "The DisplayZoom does not equal the new ContentScale on the call to UpdateViewportSizePosAndScale.");
 
-			ViewportSize = contentViewportSize;
+			ContentViewportSize = contentViewportSize;
 			DisplayPosition = contentOffset;
 
-			var offset = new VectorDbl(DisplayPosition.X/* * _displayZoom*/, 0);
-			ImageOffset = offset;
+			//var offset = new VectorDbl(DisplayPosition.X/* * _displayZoom*/, 0);
+			//ImageOffset = offset;
 
 			return null;
 		}
@@ -398,11 +408,11 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizeAndPos set to size:{contentViewportSize}, offset:{contentOffset}.");
 
-			ViewportSize = contentViewportSize;
+			ContentViewportSize = contentViewportSize;
 			DisplayPosition = contentOffset;
 
-			var offset = new VectorDbl(DisplayPosition.X/* * _displayZoom*/, 0);
-			ImageOffset = offset;
+			//var offset = new VectorDbl(DisplayPosition.X/* * _displayZoom*/, 0);
+			//ImageOffset = offset;
 
 			return null;
 		}
@@ -417,8 +427,9 @@ namespace MSetExplorer
 			//Debug.WriteLineIf(_useDetailedDebug, "\n==========  Executing MoveTo.");
 			Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is moving to position:{displayPosition}.");
 
-			var offset = new VectorDbl(displayPosition.X/* * _displayZoom*/, 0);
-			ImageOffset = offset;
+			//var offset = new VectorDbl(displayPosition.X/* * _displayZoom*/, 0);
+			//ImageOffset = offset;
+			DisplayPosition = displayPosition;
 
 			return null;
 		}
@@ -551,46 +562,6 @@ namespace MSetExplorer
 			}
 
 			_colorBandRectangles.Clear();
-		}
-
-		#endregion
-
-		#region IEquatable Support
-
-		bool IEquatable<ICbsHistogramViewModel?>.Equals(ICbsHistogramViewModel? other)
-		{
-			var result = other is CbsHistogramViewModel vm && vm == this;
-			return result;
-		}
-
-		public override bool Equals(object? obj)
-		{
-			return Equals(obj as CbsHistogramViewModel);
-		}
-
-		public bool Equals(CbsHistogramViewModel? other)
-		{
-			return other is not null &&
-				   EqualityComparer<ColorBandSet>.Default.Equals(ColorBandSet, other.ColorBandSet) &&
-				   PlotExtent == other.PlotExtent &&
-				   ViewportSize.Equals(other.ViewportSize) &&
-				   UnscaledExtent.Equals(other.UnscaledExtent) &&
-				   ContentViewportSize.Equals(other.ContentViewportSize);
-		}
-
-		public override int GetHashCode()
-		{
-			return HashCode.Combine(ColorBandSet, PlotExtent, ViewportSize, UnscaledExtent, ContentViewportSize);
-		}
-
-		public static bool operator ==(CbsHistogramViewModel? left, CbsHistogramViewModel? right)
-		{
-			return EqualityComparer<CbsHistogramViewModel>.Default.Equals(left, right);
-		}
-
-		public static bool operator !=(CbsHistogramViewModel? left, CbsHistogramViewModel? right)
-		{
-			return !(left == right);
 		}
 
 		#endregion
