@@ -681,9 +681,11 @@ namespace MSetExplorer
 				Debug.WriteLine($"WARNING: Not using the current value for ContentScale.");
 			}
 
-			// The ContentViewportSize is the size of the content is it filled the entire viewport.
+			// The ContentViewportSize is the size of the content at the current scale assuming that there is enough content at the current scale to fill up the entire viewport.
 			// The _constrainedContentViewportSize may be smaller, if the entire viewport is not needed to display the content at the current scale.
 			ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
+			//ContentScale = UnscaledViewportSize / ContentViewportSize
+			//UnscaledViewportSize = ContentViewportSize * ContentScale
 
 			// The position of the (scaled) Content View cannot be any larger than the (unscaled) extent
 

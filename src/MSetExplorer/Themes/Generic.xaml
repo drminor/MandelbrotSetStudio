@@ -42,39 +42,6 @@
         </Setter>
     </Style>
 
-    <!--<Style TargetType="{x:Type local:HistogramPlotCustomControl}">
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type local:HistogramPlotCustomControl}">
-                    <Border BorderThickness="0" BorderBrush="DarkSlateBlue">
-
-                        <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <ContentPresenter.Content>
-                                <Grid>
-                                    
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="200"/>
-                                        <RowDefinition Height="40"/>
-                                    </Grid.RowDefinitions>
-
-                                    <Border Grid.Row="0" BorderThickness="0.75" BorderBrush="Black">
-                                        <ScottPlot:WpfPlot x:Name="WpfPlot1"/>
-                                    </Border>
-
-                                    <Canvas Grid.Row="1" x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="SeaGreen">
-                                        <Image x:Name="MainImage" />
-                                    </Canvas>
-                                    
-                                </Grid>
-                            </ContentPresenter.Content>
-                        </ContentPresenter>
-
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>-->
-
     <Style TargetType="{x:Type local:HistogramPlotControl}">
         <Setter Property="Template">
             <Setter.Value>
@@ -101,7 +68,7 @@
 
                         <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <ContentPresenter.Content>
-                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="DeepSkyBlue">
+                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="DeepSkyBlue">
                                     <Image x:Name="MainImage" />
                                 </Canvas>
                             </ContentPresenter.Content>

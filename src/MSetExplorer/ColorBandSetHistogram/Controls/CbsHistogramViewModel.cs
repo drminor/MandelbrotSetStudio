@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -12,15 +13,12 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private const int CB_ELEVATION = 2; // Distance from the top of the Grid Row containing the Color Band Rectangles and the top of each Color Band Rectangle
-		private const int CB_HEIGHT = 38;	// Height of each Color Band Rectangle
+		private const int CB_ELEVATION = 0; // Distance from the top of the Grid Row containing the Color Band Rectangles and the top of each Color Band Rectangle
+		private const int CB_HEIGHT = 58;	// Height of each Color Band Rectangle
 
-		//private readonly SynchronizationContext? _synchronizationContext;
 		private readonly object _paintLocker;
 
 		private readonly DrawingGroup _drawingGroup;
-		//private readonly ScaleTransform _scaleTransform;
-		//private readonly GeometryDrawing _foundationRectangle;
 
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
 
@@ -38,13 +36,14 @@ namespace MSetExplorer
 		private SizeDbl _contentViewportSize;	// Size of visible content
 
 		private ImageSource _imageSource;
-		private VectorDbl _imageOffset;
 
 		private VectorDbl _displayPosition;
 
 		private double _displayZoom;
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
+
+		private ScrollBarVisibility _horizontalScrollBarVisibility;
 
 		private bool _useDetailedDebug = true;
 
@@ -54,8 +53,6 @@ namespace MSetExplorer
 
 		public CbsHistogramViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
 		{
-			//_synchronizationContext = SynchronizationContext.Current;
-
 			_paintLocker = new object();
 
 			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
@@ -67,16 +64,12 @@ namespace MSetExplorer
 			_seriesData = HPlotSeriesData.Empty;
 
 			_drawingGroup = new DrawingGroup();
-			//_scaleTransform = new ScaleTransform();
-			//_drawingGroup.Transform = _scaleTransform;
 
 			_unscaledExtent = new SizeDbl();
 			_viewportSize = new SizeDbl(500, 300);
 			_contentViewportSize = new SizeDbl();
-			
 
 			_imageSource = new DrawingImage(_drawingGroup);
-			_imageOffset = new VectorDbl();
 
 			_displayPosition = new VectorDbl();
 
@@ -84,10 +77,8 @@ namespace MSetExplorer
 			_maximumDisplayZoom = 4.0;
 			_displayZoom = 1;
 
-			//_foundationRectangle = BuildFoundationRectangle(_unscaledExtent);
-			//_drawingGroup.Children.Add(_foundationRectangle);
+			HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
 
-			//_mapSectionHistogramProcessor.PercentageBandsUpdated += PercentageBandsUpdated;
 			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
 		}
 
@@ -128,26 +119,6 @@ namespace MSetExplorer
 					}
 				}
 			}
-		}
-
-		private void ResetView(double extentWidth, VectorDbl displayPosition, double displayZoom)
-		{
-			var extent = new SizeDbl(extentWidth, _viewportSize.Height);
-			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event.");
-
-			var initialSettingsF = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
-
-			// Override the position
-			var positionZero = new VectorDbl();
-			// Override the zoom setting
-			var zoomUnity = 1d;
-			var initialSettings = new DisplaySettingsInitializedEventArgs(extent, positionZero, zoomUnity);
-
-			DisplaySettingsInitialized?.Invoke(this, initialSettings);
-
-			// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
-			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is setting the Unscaled Extent to complete the process of initializing the Histogram Display.");
-			UnscaledExtent = extent;
 		}
 
 		public ListCollectionView ColorBandsView
@@ -193,7 +164,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int PlotExtent => SeriesData.Length;
+		//public int PlotExtent => SeriesData.Length;
 
 		#endregion
 
@@ -255,7 +226,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		public HPlotSeriesData SeriesData
 		{
 			get => _seriesData;
@@ -275,21 +245,6 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's ImageSource is being set to value: {value}.");
 				_imageSource = value;
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ImageSource));
-			}
-		}
-
-		public VectorDbl ImageOffset
-		{
-			get => _imageOffset;
-			set
-			{
-				if (ScreenTypeHelper.IsVectorDblChanged(_imageOffset, value, 0.00001))
-				{
-					//Debug.Assert(value.X >= 0 && value.Y >= 0, "The Bitmap Grid's CanvasControlOffset property is being set to a negative value.");
-					_imageOffset = value;
-
-					OnPropertyChanged(nameof(ICbsHistogramViewModel.ImageOffset));
-				}
 			}
 		}
 
@@ -322,7 +277,7 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsVectorDblChanged(value, DisplayPosition))
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayZoom is being updated from {_displayPosition} to {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayPosition is being updated from {_displayPosition} to {value}.");
 
 					_displayPosition = value;
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.DisplayPosition));
@@ -337,7 +292,7 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsDoubleChanged(value, _displayZoom, 0.00001))
 				{
-					//Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayZoom is being updated from {_displayZoom} to {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayZoom is being updated from {_displayZoom} to {value}.");
 					
 					_displayZoom = value;
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.DisplayZoom));
@@ -366,6 +321,16 @@ namespace MSetExplorer
 
 				_maximumDisplayZoom = value;
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.MaximumDisplayZoom));
+			}
+		}
+
+		public ScrollBarVisibility HorizontalScrollBarVisibility
+		{
+			get => _horizontalScrollBarVisibility;
+			set
+			{
+				_horizontalScrollBarVisibility = value;
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.HorizontalScrollBarVisibility));
 			}
 		}
 
@@ -398,8 +363,7 @@ namespace MSetExplorer
 			ContentViewportSize = contentViewportSize;
 			DisplayPosition = contentOffset;
 
-			//var offset = new VectorDbl(DisplayPosition.X/* * _displayZoom*/, 0);
-			//ImageOffset = offset;
+			DrawColorBands();
 
 			return null;
 		}
@@ -411,9 +375,6 @@ namespace MSetExplorer
 			ContentViewportSize = contentViewportSize;
 			DisplayPosition = contentOffset;
 
-			//var offset = new VectorDbl(DisplayPosition.X/* * _displayZoom*/, 0);
-			//ImageOffset = offset;
-
 			return null;
 		}
 
@@ -424,11 +385,8 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot call MoveTo, if the UnscaledExtent is zero.");
 			}
 
-			//Debug.WriteLineIf(_useDetailedDebug, "\n==========  Executing MoveTo.");
 			Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel is moving to position:{displayPosition}.");
 
-			//var offset = new VectorDbl(displayPosition.X/* * _displayZoom*/, 0);
-			//ImageOffset = offset;
 			DisplayPosition = displayPosition;
 
 			return null;
@@ -529,21 +487,28 @@ namespace MSetExplorer
 				return;
 			}
 
+			var scaleSize = new SizeDbl(DisplayZoom, 1);
+
 			var curOffset = 0;
-			int lastWidth;
+			int bandWidth;
 
 			for (var i = StartPtr; i <= EndPtr; i++)
 			{
 				var colorBand = _colorBandSet[i];
-				lastWidth = colorBand.BucketWidth;
 
-				var area = new RectangleDbl(new PointDbl(curOffset, CB_ELEVATION), new SizeDbl(lastWidth, CB_HEIGHT));
-				var r = DrawingHelper.BuildRectangle(area, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
+				bandWidth = i == EndPtr ? colorBand.BucketWidth : colorBand.BucketWidth + 1;
+
+				bandWidth -= 1; // Leave a gap
+
+				var area = new RectangleDbl(new PointDbl(curOffset, CB_ELEVATION), new SizeDbl(bandWidth, CB_HEIGHT));
+				var scaledArea = area.Scale(scaleSize);
+
+				var r = DrawingHelper.BuildRectangle(scaledArea, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
 				
 				_colorBandRectangles.Add(r);
 				_drawingGroup.Children.Add(r);
 
-				curOffset += lastWidth;
+				curOffset += bandWidth + 1; // Cover the gap.
 			}
 		}
 
@@ -562,6 +527,26 @@ namespace MSetExplorer
 			}
 
 			_colorBandRectangles.Clear();
+		}
+
+		private void ResetView(double extentWidth, VectorDbl displayPosition, double displayZoom)
+		{
+			var extent = new SizeDbl(extentWidth, _viewportSize.Height);
+			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event.");
+
+			var initialSettingsF = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
+
+			// Override the position
+			var positionZero = new VectorDbl();
+			// Override the zoom setting
+			var zoomUnity = 1d;
+			var initialSettings = new DisplaySettingsInitializedEventArgs(extent, positionZero, zoomUnity);
+
+			DisplaySettingsInitialized?.Invoke(this, initialSettings);
+
+			// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
+			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is setting the Unscaled Extent to complete the process of initializing the Histogram Display.");
+			UnscaledExtent = extent;
 		}
 
 		#endregion

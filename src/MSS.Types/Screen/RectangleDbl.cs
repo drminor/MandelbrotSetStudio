@@ -62,11 +62,11 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		//public RectangleDbl Scale(SizeDbl factor)
-		//{
-		//	RectangleDbl result = new(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height);
-		//	return result;
-		//}
+		public RectangleDbl Scale(SizeDbl factor)
+		{
+			RectangleDbl result = new(X1 * factor.Width, X2 * factor.Width, Y1 * factor.Height, Y2 * factor.Height);
+			return result;
+		}
 
 		public RectangleDbl Translate(PointDbl amount)
 		{

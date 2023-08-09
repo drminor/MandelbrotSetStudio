@@ -302,7 +302,7 @@ namespace MSetExplorer
 
 			var result = new Size(width, height);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGripControl Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl Measure. Available: {availableSize}. Base returns {childSize}, using {result}.");
 
 			return result;
 		}
@@ -401,7 +401,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The BitmapGridControl's ViewportSize is being updated from {previousValue} to {newValue}.");
 
 			c.LogicalViewportSize = newValue;
-			c.ViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
+			c.ViewportSizeChanged?.Invoke(c, new (previousValue, newValue));
 		}
 
 		#endregion
@@ -460,13 +460,21 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeDbl ClipAndOffset(RectangleDbl previousValue, RectangleDbl newValue)
+		private SizeDbl ClipAndOffset(RectangleDbl previousValue, RectangleDbl rawValue)
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's {nameof(TranslationAndClipSize)} is being updated " +
 			//	$"from {RectangleDbl.FormatNully(previousValue)} to {RectangleDbl.FormatNully(newValue)}." +
 			//	$"The CanvasScale is {new SizeDbl(_canvasScaleTransform.ScaleX, _canvasScaleTransform.ScaleY)}.");
 
-			Debug.Assert(newValue.X1 >= 0 && newValue.Y1 >= 0, "ClipAndOffset is receiving a negative position.");
+			//Debug.Assert(newValue.X1 >= 0 && newValue.Y1 >= 0, "ClipAndOffset is receiving a negative position.");
+
+			var newValue = new RectangleDbl(
+				new PointDbl(
+					Math.Max(rawValue.X1, 0), 
+					Math.Max(rawValue.Y1, 0)),
+				rawValue.Size
+				);
+
 			var previousCanvasSize = new SizeDbl(Canvas.ActualWidth, Canvas.ActualHeight);
 			var previousTranslation = new SizeDbl(_canvasTranslateTransform.X, _canvasTranslateTransform.Y);
 

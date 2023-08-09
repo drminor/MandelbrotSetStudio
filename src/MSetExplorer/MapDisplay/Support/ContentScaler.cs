@@ -36,7 +36,9 @@ namespace MSetExplorer
 
 		private void ContentPresenter_SizeChanged(object sender, System.Windows.SizeChangedEventArgs e)
 		{
-			ViewportSizeChanged?.Invoke(this, new ValueTuple<SizeDbl, SizeDbl>(ScreenTypeHelper.ConvertToSizeDbl(e.PreviousSize), ScreenTypeHelper.ConvertToSizeDbl(e.NewSize)));
+			var previousSize = ScreenTypeHelper.ConvertToSizeDbl(e.PreviousSize);
+			var newSize = ScreenTypeHelper.ConvertToSizeDbl(e.NewSize);
+			ViewportSizeChanged?.Invoke(this, new (previousSize, newSize));
 		}
 
 		// Although we are implementing the interface, we are not actually doing anything.

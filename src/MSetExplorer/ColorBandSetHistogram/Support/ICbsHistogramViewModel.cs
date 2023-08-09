@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -20,7 +21,7 @@ namespace MSetExplorer
 
 		HPlotSeriesData SeriesData { get; }
 		ImageSource ImageSource { get; }			// The Color Band Rectangles as a Bitmap.
-		VectorDbl ImageOffset { get; }				// Used to position the Color Band Rectangles Bitmap on the Canvas
+		//VectorDbl ImageOffset { get; }				// Used to position the Color Band Rectangles Bitmap on the Canvas
 
 		SizeDbl UnscaledExtent { get; }				// Size of entire content at max zoom (i.e, 4 x Target Iterations)
 		SizeDbl ViewportSize { get; set; }			// Size of display area in device independent pixels.
@@ -32,11 +33,9 @@ namespace MSetExplorer
 		double MinimumDisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; set; }
 
+		ScrollBarVisibility HorizontalScrollBarVisibility { get; set; }
+		
 		void RefreshDisplay();
-
-		//KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll);
-		//IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff);
-		//int? UpdateViewportSize(SizeDbl viewportSize);
 
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset);
 		int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);

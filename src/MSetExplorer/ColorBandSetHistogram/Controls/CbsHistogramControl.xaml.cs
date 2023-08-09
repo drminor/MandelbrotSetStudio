@@ -3,8 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -15,12 +13,9 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		//private bool DRAW_OUTLINE = false;
-		//private Rectangle _outline;
 		private ICbsHistogramViewModel _vm;
 
 		private readonly bool _useDetailedDebug;
-
 
 		#endregion
 
@@ -31,7 +26,6 @@ namespace MSetExplorer
 			_useDetailedDebug = false;
 
 			_vm = (CbsHistogramViewModel)DataContext;
-			//_outline = new Rectangle();
 
 			Loaded += CbsHistogramControl_Loaded;
 			Unloaded += CbsHistogramControl_Unloaded;
@@ -59,9 +53,6 @@ namespace MSetExplorer
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 				_vm.ContentViewportSize = _vm.ViewportSize;						// Starting with ContentScale = 1 
 
-				//PanAndZoomControl1.MaxContentScale = 10;
-				//PanAndZoomControl1.MinContentScale = 1;
-
 				PanAndZoomControl1.ZoomOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
 				_vm.DisplaySettingsInitialized += _vm_DisplaySettingsInitialzed;
@@ -72,7 +63,9 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetChanged;
 
-				//_outline = BuildOutline(HistogramDisplayControl1.Canvas);
+				HistogramPlotControl1.ViewportOffsetXChanged += HistogramPlotControl1_ViewportOffsetXChanged;
+				HistogramPlotControl1.ViewportWidthChanged += HistogramPlotControl1_ViewportWidthChanged;
+
 
 				Debug.WriteLine("The CbsHistogramControl is now loaded.");
 			}
@@ -88,6 +81,9 @@ namespace MSetExplorer
 			PanAndZoomControl1.ContentOffsetXChanged -= ContentOffsetChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= ContentOffsetChanged;
 
+			HistogramPlotControl1.ViewportOffsetXChanged -= HistogramPlotControl1_ViewportOffsetXChanged;
+			HistogramPlotControl1.ViewportWidthChanged -= HistogramPlotControl1_ViewportWidthChanged;
+
 			PanAndZoomControl1.Dispose();
 			PanAndZoomControl1.ZoomOwner = null;
 		}
@@ -98,42 +94,33 @@ namespace MSetExplorer
 
 		private void _vm_DisplaySettingsInitialzed(object? sender, DisplaySettingsInitializedEventArgs e)
 		{
-			//var maxContentScale = _vm.MaximumDisplayZoom;
-			//var contentViewportSize = UnscaledViewportSize.Divide(contentScale);
+			// NOTE: 	ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
+			//			ContentScale = UnscaledViewportSize / ContentViewportSize
+			//			UnscaledViewportSize = ContentViewportSize * ContentScale
 
 			var unscaledViewportWidth = PanAndZoomControl1.UnscaledViewportSize.Width;
 			var unscaledExtentWidth = e.UnscaledExtent.Width;
 
-			var extentAtMaxZoom = unscaledExtentWidth * RMapConstants.DEFAULT_CBS_HIST_DISPLAY_SCALE_FACTOR; // * 4;
-			var maxContentScale = extentAtMaxZoom / unscaledViewportWidth;
-			_vm.MaximumDisplayZoom = maxContentScale;
+			//var extentAtMaxZoom = unscaledExtentWidth * RMapConstants.DEFAULT_CBS_HIST_DISPLAY_SCALE_FACTOR; // * 4;
 
 			var minContentScale = unscaledViewportWidth / unscaledExtentWidth;
+			var maxContentScale = minContentScale * 4;
 
-			//var minContentScale = Math.Min(minScale, maxContentScale);
-			//if (minContentScale <= 0)
-			//{
-			//	minContentScale = RMapConstants.DEFAULT_MINIMUM_DISPLAY_ZOOM;
-			//}
+			_vm.MaximumDisplayZoom = maxContentScale;
+			var contentScale = minContentScale;
 
-			Debug.Assert(minContentScale / maxContentScale > 0.01, "The ratio between the Min and Max scales is suprisingly small.");
 
-			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
+			//Debug.Assert(minContentScale == maxContentScale / 4.0, "Check this.");
+
+			//Debug.Assert(minContentScale / maxContentScale > 0.01, "The ratio between the Min and Max scales is suprisingly small.");
+
+			Debug.WriteLine($"");
+
+			Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
+				$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}. Ratio of min over max: {minContentScale / maxContentScale}");
+
+			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, contentScale, minContentScale, maxContentScale);
 		}
-
-
-		public static double GetMinDisplayZoom(SizeDbl extent, SizeDbl viewportSize, double margin, double maximumZoom)
-		{
-			// Calculate the Zoom level at which the poster fills the screen, leaving a pixel border of size margin.
-
-			var framedViewPort = viewportSize.Sub(new SizeDbl(margin));
-			var minScale = framedViewPort.Divide(extent);
-			var result = Math.Min(minScale.Width, minScale.Height);
-			result = Math.Min(result, maximumZoom);
-
-			return result;
-		}
-
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
@@ -142,7 +129,7 @@ namespace MSetExplorer
 			ReportViewportChanged(e);
 			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizeAndPos. The ImageOffset is {HistogramColorBandControl1.ImageOffset}\n");
+			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizeAndPos.\n");
 		}
 
 		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
@@ -152,12 +139,64 @@ namespace MSetExplorer
 
 			_vm.UpdateViewportSizePosAndScale(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizePosAndScale. The ImageOffset is {HistogramColorBandControl1.ImageOffset}\n");
+			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizePosAndScale.\n");
 		}
 
 		private void ContentOffsetChanged(object? sender, EventArgs e)
 		{
 			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
+		}
+
+		private void HistogramPlotControl1_ViewportWidthChanged(object? sender, (double, double) e)
+		{
+			var previousValue = e.Item1;
+			var newValue = e.Item2;
+
+			Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportWidthChanged event. DisplayZoom: {_vm.DisplayZoom}. The ColorBandControl's Width is being updated from {previousValue} to {newValue}.");
+
+			PositionAndSizeTheColorBandControl(PlotAreaBorder.ActualWidth, HistogramPlotControl1.ViewportOffsetX, newValue);
+		}
+
+		private void HistogramPlotControl1_ViewportOffsetXChanged(object? sender, (double, double) e)
+		{
+			var previousValue = e.Item1;
+			var newValue = e.Item2;
+
+			Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportOffsetXChanged event. The ColorBandControl's OffsetX is being updated from {previousValue} to {newValue}.");
+
+			PositionAndSizeTheColorBandControl(PlotAreaBorder.ActualWidth, newValue, HistogramPlotControl1.ViewportWidth);
+		}
+
+		private void PositionAndSizeTheColorBandControl(double column2Width, double viewportOffsetX, double viewportWidth)
+		{
+			if (double.IsNaN(column2Width) | double.IsNaN(viewportOffsetX) | double.IsNaN(viewportWidth))
+			{
+				return;
+			}
+
+			var leftMargin = viewportOffsetX;
+
+			var rightMargin = column2Width - (viewportWidth + leftMargin);
+
+			if (rightMargin < 0)
+			{
+				Debug.WriteLine($"The Right Margin was calculated to be < 0. Setting to 0. LeftMargin: {leftMargin}, ViewportWidth: {viewportWidth}, Control Width: {column2Width}.");
+				rightMargin = 0;
+			}
+
+			Debug.WriteLine($"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
+
+			ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 2);
+		}
+
+		#endregion
+
+		#region Diagnostics
+
+		private void ReportViewportChanged(ScaledImageViewInfo e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} " + //  / Unscaled: {e.UnscaledViewportSize},
+				$"Offset:{e.ContentOffset}, Scale:{e.ContentScale}.");
 		}
 
 		// Just for diagnostics
@@ -168,101 +207,6 @@ namespace MSetExplorer
 				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
 				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.ViewportSize}, ContentViewPort: {_vm.ContentViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
 			}
-		}
-
-		#endregion
-
-		#region Private Methods
-
-		private void ShowOutline(RectangleDbl scaledDisplayArea)
-		{
-			//if (DRAW_OUTLINE)
-			//{
-			//	// Position the outline rectangle.
-			//	_outline.SetValue(Canvas.LeftProperty, scaledDisplayArea.X1);
-			//	_outline.SetValue(Canvas.BottomProperty, scaledDisplayArea.Y1);
-
-			//	_outline.Width = scaledDisplayArea.Width;
-			//	_outline.Height = scaledDisplayArea.Height;
-			//	_outline.Visibility = Visibility.Visible;
-			//}
-		}
-
-		//private void HideOutline()
-		//{
-		//	if (DRAW_OUTLINE)
-		//	{
-		//		_outline.Visibility = Visibility.Hidden;
-		//	}
-		//}
-
-		private Rectangle BuildOutline(Canvas canvas)
-		{
-			var result = new Rectangle()
-			{
-				Width = 1,
-				Height = 1,
-				Fill = Brushes.Transparent,
-				Stroke = new SolidColorBrush(Colors.DarkSeaGreen),  //BuildDrawingBrush(), // 
-				StrokeThickness = 2,
-				Visibility = Visibility.Hidden,
-				Focusable = false
-			};
-
-			_ = canvas.Children.Add(result);
-			result.SetValue(Panel.ZIndexProperty, 10);
-
-			return result;
-		}
-
-		private DrawingBrush BuildDrawingBrush()
-		{
-			var db = new DrawingBrush();
-			db.Viewport = new Rect(0, 0, 20, 20);
-			db.ViewboxUnits = BrushMappingMode.Absolute;
-			db.TileMode = TileMode.Tile;
-
-			//db.Drawing = new DrawingGroup();
-
-			var geometryDrawing = new GeometryDrawing();
-			geometryDrawing.Brush = new SolidColorBrush(Colors.Green);
-
-			var geometryGroup = new GeometryGroup();
-			geometryGroup.Children.Add(new RectangleGeometry(new Rect(0, 0, 50, 50)));
-			geometryGroup.Children.Add(new RectangleGeometry(new Rect(50, 50, 50, 50)));
-
-			geometryDrawing.Geometry = geometryGroup;
-
-			db.Drawing = geometryDrawing;
-
-			return db;
-		}
-
-		/*		< DrawingBrush Viewport = "0,0,20,20" ViewportUnits = "Absolute" TileMode = "Tile" >
-					< DrawingBrush.Drawing >
-						< DrawingGroup >
-							< GeometryDrawing Brush = "Black" >
-								< GeometryDrawing.Geometry >
-									< GeometryGroup >
-										< RectangleGeometry Rect = "0,0,50,50" />
-										< RectangleGeometry Rect = "50,50,50,50" />
-									</ GeometryGroup >
-								</ GeometryDrawing.Geometry >
-							</ GeometryDrawing >
-						</ DrawingGroup >
-					</ DrawingBrush.Drawing >
-				</ DrawingBrush >
-
-		*/
-
-		#endregion
-
-		#region Diagnostics
-
-		private void ReportViewportChanged(ScaledImageViewInfo e)
-		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is UpdatingViewportSizeAndPos. ViewportSize: Scaled:{e.ContentViewportSize} " + //  / Unscaled: {e.UnscaledViewportSize},
-				$"Offset:{e.ContentOffset}, Scale:{e.ContentScale}.");
 		}
 
 		#endregion
