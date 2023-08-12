@@ -507,7 +507,8 @@ namespace MSetExplorer
 
 				// Clip using the scaled value.
 				var clipOrigin = new Point(Math.Max(logicalPosition.X, 0), Math.Max(logicalPosition.Y, 0));
-				Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, ScreenTypeHelper.ConvertToSize(logicalViewportSize)));
+				var clipSize = ScreenTypeHelper.ConvertToSize(logicalViewportSize);
+				Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, clipSize));
 			}
 			else
 			{

@@ -175,6 +175,7 @@ namespace MSetExplorer
 				_disableViewportChangedEvents = true;
 				try
 				{
+					_contentScaler.ContentScale = new SizeDbl(contentScale);
 					_contentScaler.TranslationAndClipSize = new RectangleDbl(new PointDbl(0, 0), UnscaledViewportSize);
 				}
 				finally
@@ -774,7 +775,8 @@ namespace MSetExplorer
 				// NOTE: _constrainedContentViewportSize = UnscaledExtent.Min(ContentViewportSize);
 				Debug.Assert(clipSize == _constrainedContentViewportSize, "ClipSize vs ConstrainedContentViewportSize mismatch.");
 
-				// NOTE: Using unscaled values for the Offsets and scaled values for the clip size // TODO: Consider using unscaled value for the clip size as well.
+				// NOTE: Using unscaled values for the Offsets and scaled values for the clip size.
+				// TODO: Consider using unscaled value for the clip size as well.
 				var translationAndClipSize = new RectangleDbl(new PointDbl(offsetX, offsetY), clipSize);
 
 				Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl is setting the ContentScaler's {nameof(IContentScaler.TranslationAndClipSize)} to {RectangleDbl.FormatNully(translationAndClipSize, "F2")}.");

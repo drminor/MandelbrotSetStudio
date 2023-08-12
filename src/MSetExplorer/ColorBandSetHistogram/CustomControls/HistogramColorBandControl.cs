@@ -146,7 +146,6 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
-					//SetTheCanvasScale(_contentScale);
 				}
 			}
 		}
@@ -159,8 +158,7 @@ namespace MSetExplorer
 				var previousVal = _translationAndClipSize;
 				_translationAndClipSize = value;
 
-				LogicalViewportSize = value.Size;
-
+				//LogicalViewportSize = ClipAndOffset(previousVal, value);
 				ClipAndOffset(previousVal, value);
 			}
 		}
@@ -300,48 +298,57 @@ namespace MSetExplorer
 
 		#region Private Methods - Canvas
 
-		private void SetTheCanvasScale(SizeDbl contentScale)
+		private void ClipAndOffsetOld(RectangleDbl previousValue, RectangleDbl newValue)
 		{
-			var currentScaleX = _canvasScaleTransform.ScaleX;
-			Debug.WriteLineIf(_useDetailedDebug, $"\n\nThe HistogramColorBandControl's Image ScaleTransform is being set from {currentScaleX} to {contentScale.Width}.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl's {nameof(TranslationAndClipSize)} is being set from {previousValue} to {newValue}.");
 
-			_canvasScaleTransform.ScaleX = contentScale.Width;
-			//_canvasScaleTransform.ScaleY = contentScale.Height;
+			//_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
+			//_canvasTranslateTransform.Y = newValue.Position.Y;
+
+			//SizeDbl logicalViewportSize;
+
+			//if (newValue.Position.X > 0)
+			//{
+			//	// Physcial pixels * Scale = logical display size.
+			//	//var scaledPosition = newValue.Value.Position.Scale(ContentScale.Width);
+
+			//	var logicalPosition = newValue.Position.Scale(ContentScale);
+			//	logicalViewportSize = newValue.Size.Scale(ContentScale);
+
+			//	//_canvas.Clip = new RectangleGeometry(new Rect(new Size(newValue.Value.Size.Width, _canvas.ActualHeight)));
+
+			//	var clipOrigin = new Point(Math.Max(logicalPosition.X, 0), Math.Max(logicalPosition.Y, 0));
+			//	var clipSize = ScreenTypeHelper.ConvertToSize(logicalViewportSize);
+			//	Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, clipSize));
+			//}
+			//else
+			//{
+			//	// When negative, the size is already scaled.
+			//	Canvas.Clip = null;
+			//	logicalViewportSize = newValue.Size;
+			//}
+
+			ReportTranslationTransformX(previousValue, newValue);
+			_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
+			//var logicalViewportSize = newValue.Size;
+
+			//return logicalViewportSize;
 		}
 
-		private void ClipAndOffset(RectangleDbl? previousValue, RectangleDbl? newValue)
+		private void ClipAndOffset(RectangleDbl previousValue, RectangleDbl newValue)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl's {nameof(TranslationAndClipSize)} is being set from {previousValue} to {newValue}.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl's {nameof(TranslationAndClipSize)} is being set from {previousValue} to {newValue}.");
 
-			if (newValue != null)
-			{
+			ReportTranslationTransformX(previousValue, newValue);
+			_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
+		}
 
-
-				_canvasTranslateTransform.X = newValue.Value.Position.X * ContentScale.Width;
-				//_canvasTranslateTransform.Y = newValue.Value.Position.Y;
-
-				if (newValue.Value.Position.X > 0)
-				{
-					// Physcial pixels * Scale = logical display size.
-					var scaledPosition = newValue.Value.Position.Scale(ContentScale.Width);
-
-					//_canvas.Clip = new RectangleGeometry(new Rect(new Size(newValue.Value.Size.Width, _canvas.ActualHeight)));
-
-					var clipOrigin = new Point(Math.Max(scaledPosition.X, 0), Math.Max(scaledPosition.Y, 0));
-					var clipSize = new Size(newValue.Value.Size.Width, _canvas.ActualHeight);
-					Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, clipSize));
-				}
-				else
-				{
-					_canvas.Clip = null;
-				}
-			}
-			else
-			{
-				_canvasTranslateTransform.X = 0;
-				_canvasTranslateTransform.Y = 0;
-				_canvas.Clip = null;
-			}
+		[Conditional("DEBUG")]
+		private void ReportTranslationTransformX(RectangleDbl previousValue, RectangleDbl newValue)
+		{
+			var previousXValue = previousValue.Position.X * ContentScale.Width;
+			var newXValue = newValue.Position.X* ContentScale.Width;
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl's CanvasTranslationTransform is being set from {previousXValue} to {newXValue}.");
 		}
 
 		#endregion

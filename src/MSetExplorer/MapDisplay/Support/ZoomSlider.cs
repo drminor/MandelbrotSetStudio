@@ -11,9 +11,9 @@ namespace MSetExplorer
 		private readonly ScrollBar _scrollbar;
 		private readonly IZoomInfo _zoomedControl;
 
-		private bool _disableScrollValueSync = false;   // If true, do update the _zoomedControl's Scale property.
+		private bool _disableScrollValueSync = false;   // If true, don't update the _zoomedControl's Scale property.
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -41,6 +41,18 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"\n========== The ZoomSlider is updating the PanAndZoomControl's ScrollBar Value: {_scrollbar.Value}.");
 				_zoomedControl.Scale = _scrollbar.Value;
 			}
+			else
+			{
+				if (!_zoomedControl.CanZoom)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"\n========== The ZoomSlider is NOT updating the PanAndZoomControl's ScrollBar Value: {_scrollbar.Value} Can Zoom = false.");
+				}
+				else
+				{
+					Debug.Assert(_disableScrollValueSync, "ScrollValueSync - mismatch.");
+					Debug.WriteLineIf(_useDetailedDebug, $"\n========== The ZoomSlider is NOT updating the PanAndZoomControl's ScrollBar Value: {_scrollbar.Value} ScrollValueSync is disabled.");
+				}
+			}
 		}
 
 		#endregion
@@ -53,6 +65,12 @@ namespace MSetExplorer
 			{
 				Debug.Assert(contentScale >= _scrollbar.Minimum && contentScale <= _scrollbar.Maximum, $"ContentScaleWasUpdated was called with value: {contentScale} which is not within the range: {_scrollbar.Minimum} and {_scrollbar.Maximum}.");
 
+				if (_disableScrollValueSync)
+				{
+					// Disallow re-entry -- added on 8/9/2023
+					return;
+				}
+
 				_disableScrollValueSync = true;
 				try
 				{
@@ -63,12 +81,17 @@ namespace MSetExplorer
 					_disableScrollValueSync = false;
 				}
 			}
+			else
+			{
+				Debug.WriteLine($"ZoomSlider: Not updating the ScrollBar value, it is already {contentScale}.");
+			}
 		}
 
 		public void InvalidateScaleContentInfo()
 		{
 			if (_disableScrollValueSync)
 			{
+				Debug.WriteLine($"ZoomSlider: Skipping InvalidatScaleContentInfo -- Disable ScrollValue Sync is true.");
 				return;
 			}
 
@@ -78,7 +101,9 @@ namespace MSetExplorer
 
 				try
 				{
-					Debug.WriteLineIf(_useDetailedDebug, "The ZoomSlider is handling the InvalidateScaleContentInfo.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The ZoomSlider: InvalidateScaleContentInfo. Resetting Min from {_scrollbar.Minimum} to {_zoomedControl.MinScale}. Max from {_scrollbar.Maximum} to {_zoomedControl.MaxScale} " +
+						$"Small Change from {_scrollbar.SmallChange} to 0.01, Large Change from {_scrollbar.LargeChange} to 0.20, ScrollBar Value from {_scrollbar.Value} to {_zoomedControl.Scale}.");
+
 					_scrollbar.Value = _scrollbar.Maximum;
 
 					_scrollbar.Minimum = _zoomedControl.MinScale;

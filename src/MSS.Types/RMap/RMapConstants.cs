@@ -25,7 +25,6 @@ namespace MSS.Types
 
 		public const double DEFAULT_POSTER_DISPLAY_ZOOM = 0.01; // Default to full screen view
 		public const double DEFAULT_MINIMUM_DISPLAY_ZOOM = 0.015625; // TODO: Consider setting the Default Minimum Display Zoom to 0.001953125
-		public const double DEFAULT_CBS_HIST_DISPLAY_SCALE_FACTOR = 4;
 
 		public const double POSTER_DISPLAY_ZOOM_MIN_DIFF = 0.0001; // The minimum amount by which two DisplayZoom values must differ in order to considered a 'real' update.
 

@@ -23,7 +23,7 @@ namespace MSetExplorer
 
 		//private int _thePlotExtent;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -66,7 +66,7 @@ namespace MSetExplorer
 			{
 				if (_wpfPlot1 != null)
 				{
-					_wpfPlot1.SizeChanged += WpfPlot1_SizeChanged;
+					_wpfPlot1.SizeChanged -= WpfPlot1_SizeChanged;
 				}
 
 				_wpfPlot1 = value;
@@ -82,7 +82,7 @@ namespace MSetExplorer
 
 				if (seriesData.IsEmpty())
 				{
-					return;
+					seriesData = new HPlotSeriesData(10);
 				}
 
 				_thePlot = CreateScatterPlot(_wpfPlot1, seriesData);
@@ -159,7 +159,21 @@ namespace MSetExplorer
 			}
 		}
 
+		public double PlotWidth => WpfPlot1?.Plot.Width ?? 0f;
+
 		#endregion
+
+		#region Public Methods
+
+		//public double GetPlotViewportWidth()
+		//{
+
+		//}
+
+
+
+		#endregion
+
 
 		#region Private Methods - Control
 
@@ -352,7 +366,7 @@ namespace MSetExplorer
 					Debug.WriteLine($"The Series has {seriesData.DataX.Length}, not updating -- creating new Scatter Plot.");
 				}
 			}
-			
+
 			SetPlotLimits(wpfPlot, DisplayPosition.X, ContentViewportSize.Width);
 			UpdateViewportPixelOffsetAndWidth(wpfPlot.Plot.XAxis.Dims);
 
@@ -460,16 +474,14 @@ namespace MSetExplorer
 					$"NOTE: ControlSize: {controlSize}. The FigureWidth: {figureWidth}, Margin Right {marginRight}");
 
 
-
-				ViewportOffsetX = viewportOffsetX;
 				ViewportWidth = viewportWidth;
+				ViewportOffsetX = viewportOffsetX;
 			}
 			else
 			{
 				Debug.WriteLine($"HistogramPlotControl.WpfPlot1_SizeChanged: Cannot set the ViewportOffset and Width, the yAxisDimensions.HasBeenSet = false.");
 			}
 		}
-
 
 		#endregion
 

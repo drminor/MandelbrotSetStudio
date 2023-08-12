@@ -97,9 +97,6 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine("The Explorer Window is handling ContentRendered");
 
-
-
-
 			//LoadNewProject();
 			//ShowMapCoordsEditor();
 			//ShowCoordsEditor();

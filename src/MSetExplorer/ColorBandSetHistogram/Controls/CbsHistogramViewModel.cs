@@ -45,7 +45,7 @@ namespace MSetExplorer
 
 		private ScrollBarVisibility _horizontalScrollBarVisibility;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -109,7 +109,7 @@ namespace MSetExplorer
 
 					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 
-					var unscaledWidth = GetExtent(out var endPtr);
+					var unscaledWidth = GetExtent(_colorBandSet, out var endPtr);
 					StartPtr = 0;
 					EndPtr = endPtr;
 
@@ -435,7 +435,7 @@ namespace MSetExplorer
 					{
 						lock (_paintLocker)
 						{
-							SeriesData.Clear();
+							SeriesData.ClearYValues();
 						}
 						break;
 					}
@@ -489,6 +489,8 @@ namespace MSetExplorer
 
 			var scaleSize = new SizeDbl(DisplayZoom, 1);
 
+			Debug.WriteLine($"The scale is {scaleSize} on DrawColorBands.");
+
 			var curOffset = 0;
 			int bandWidth;
 
@@ -512,10 +514,10 @@ namespace MSetExplorer
 			}
 		}
 
-		private int GetExtent(out int endPtr)
+		private int GetExtent(ColorBandSet colorBandSet, out int endPtr)
 		{
-			var result = _colorBandSet.Count < 2 ? 0 : _colorBandSet.HighCutoff;
-			endPtr = _colorBandSet.Count < 2 ? 0 : _colorBandSet.Count - 1;
+			var result = colorBandSet.Count < 2 ? 0 : colorBandSet.HighCutoff;
+			endPtr = colorBandSet.Count < 2 ? 0 : colorBandSet.Count - 1;
 			return result;
 		}
 
@@ -531,6 +533,8 @@ namespace MSetExplorer
 
 		private void ResetView(double extentWidth, VectorDbl displayPosition, double displayZoom)
 		{
+			UnscaledExtent = new SizeDbl();
+
 			var extent = new SizeDbl(extentWidth, _viewportSize.Height);
 			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event.");
 

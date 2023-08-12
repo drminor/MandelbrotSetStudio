@@ -81,6 +81,14 @@ namespace MSetExplorer
 			_valueId = Guid.NewGuid();
 		}
 
+		public void ClearYValues()
+		{
+			for(var i = 0; i < LongLength; i++)
+			{
+				DataY[i] = 0;	
+			}
+		}
+
 		#endregion
 
 		#region Private Methods
