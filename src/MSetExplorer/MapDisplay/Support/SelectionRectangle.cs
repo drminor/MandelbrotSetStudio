@@ -50,7 +50,7 @@ namespace MSetExplorer
 			_displaySize = displaySize;
 			_blockSize = blockSize;
 
-			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
+			(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_displaySize, PITCH_TARGET);
 
 			_selectedArea = BuildSelectionRectangle(_canvas);
 			SelectedPosition = new Point();
@@ -123,7 +123,7 @@ namespace MSetExplorer
 
 		public bool IsEnabled { get; set; }
 
-		// Same as ContentViewportSize - i.e., logical size or canvas size, and not the size of the container
+		// Same as ContentViewportSize - i.e., logical size or canvas size, not the size of the container
 		public SizeDbl DisplaySize
 		{
 			get => _displaySize;
@@ -134,7 +134,11 @@ namespace MSetExplorer
 
 				if (!_displaySize.IsNAN() & !_displaySize.IsNearZero())
 				{
-					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(DisplaySize, PITCH_TARGET);
+					(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_displaySize, PITCH_TARGET);
+
+					//var selection = Expand(SelectedPosition, _defaultSelectionSize, 0);
+					//_defaultSelectionSize.Width = selection.Width;
+					//_defaultSelectionSize.Height = selection.Height;
 
 					_selectedArea.Width = _defaultSelectionSize.Width;
 					_selectedArea.Height = _defaultSelectionSize.Height;

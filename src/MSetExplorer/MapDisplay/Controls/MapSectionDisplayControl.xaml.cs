@@ -33,6 +33,7 @@ namespace MSetExplorer
 
 			Loaded += MapSectionDisplayControl_Loaded;
 			Unloaded += MapSectionDisplayControl_Unloaded;
+
 			InitializeComponent();
 		}
 
@@ -130,6 +131,11 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		public void UpdateDisplaySize(SizeDbl newValue)
+		{
+			_selectionRectangle.DisplaySize = newValue;
+		}
 
 		#region Diagnostics
 

@@ -116,6 +116,9 @@ namespace MSetExplorer
 
 			LoadNewProject();
 			//OpenProjectFromAppRequest(new string[] {"Art3"});
+
+			mapDisplay1.UpdateDisplaySize(_vm.MapDisplayViewModel.ViewportSize);
+
 		}
 
 		private void ExplorerWindow_Closing(object? sender, CancelEventArgs e)
