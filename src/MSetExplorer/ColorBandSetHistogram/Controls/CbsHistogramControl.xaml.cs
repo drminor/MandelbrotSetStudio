@@ -1,9 +1,9 @@
 ﻿using MSS.Types;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -30,6 +30,8 @@ namespace MSetExplorer
 
 			Loaded += CbsHistogramControl_Loaded;
 			Unloaded += CbsHistogramControl_Unloaded;
+
+			
 
 			// Just for diagnostics
 			SizeChanged += CbsHistogramControl_SizeChanged;
@@ -60,6 +62,7 @@ namespace MSetExplorer
 				PanAndZoomControl1.ZoomOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
 				_vm.DisplaySettingsInitialized += _vm_DisplaySettingsInitialzed;
+				_vm.PropertyChanged += CbsHistogramControl_PropertyChanged;
 
 				PanAndZoomControl1.ViewportChanged += ViewportChanged;
 				PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
@@ -70,7 +73,6 @@ namespace MSetExplorer
 				HistogramPlotControl1.ViewportOffsetXChanged += HistogramPlotControl1_ViewportOffsetXChanged;
 				HistogramPlotControl1.ViewportWidthChanged += HistogramPlotControl1_ViewportWidthChanged;
 
-
 				Debug.WriteLine("The CbsHistogramControl is now loaded.");
 			}
 		}
@@ -78,6 +80,7 @@ namespace MSetExplorer
 		private void CbsHistogramControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			_vm.DisplaySettingsInitialized -= _vm_DisplaySettingsInitialzed;
+			_vm.PropertyChanged -= CbsHistogramControl_PropertyChanged;
 
 			PanAndZoomControl1.ViewportChanged -= ViewportChanged;
 			PanAndZoomControl1.ContentScaleChanged -= ContentScaleChanged;
@@ -173,6 +176,18 @@ namespace MSetExplorer
 			PlaceTheColorBandControl(newValue, HistogramPlotControl1.ViewportWidth);
 		}
 
+		private void CbsHistogramControl_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ICbsHistogramViewModel.ColorBandsView))
+			{
+				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
+			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
 		private void PlaceTheColorBandControl(double viewportOffsetX, double viewportWidth)
 		{
 			var column2Width = PlotAreaBorder.ActualWidth;
@@ -190,7 +205,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"The CbsHistogramControl found the Right Margin to be {rightMargin}, setting this to zero instead. LeftMargin: {leftMargin}, ViewportWidth: {viewportWidth}, Control Width: {column2Width}.");
 				rightMargin = 0;
 			}
-			
+
 			Debug.WriteLine($"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
 			ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 2);
 		}

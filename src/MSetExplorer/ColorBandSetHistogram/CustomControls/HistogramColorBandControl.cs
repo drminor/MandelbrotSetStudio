@@ -1,8 +1,10 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -11,15 +13,20 @@ namespace MSetExplorer
 	{
 		#region Private Fields 
 
-		private readonly static bool CLIP_IMAGE_BLOCKS = false;
-		//private readonly static int COLOR_BAND_HEIGHT = 40;
+		private const int CB_ELEVATION = 0; // Distance from the top of the Grid Row containing the Color Band Rectangles and the top of each Color Band Rectangle
+		private const int CB_HEIGHT = 58;   // Height of each Color Band Rectangle
 
-		//private DebounceDispatcher _viewPortSizeDispatcher;
+		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 
 		private FrameworkElement _ourContent;
-
 		private Canvas _canvas;
 		private Image _image;
+
+		private ListCollectionView? _colorBandsView;
+
+		private ImageSource _drawingimageSource;
+		private readonly DrawingGroup _drawingGroup;
+		private readonly IList<GeometryDrawing> _colorBandRectangles;
 
 		private TranslateTransform _canvasTranslateTransform;
 		private ScaleTransform _canvasScaleTransform;
@@ -27,11 +34,10 @@ namespace MSetExplorer
 
 		private SizeDbl _contentScale;
 		private RectangleDbl _translationAndClipSize;
-		private SizeDbl _logicalViewportSize;
 
 		private SizeDbl _viewportSize;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -44,15 +50,15 @@ namespace MSetExplorer
 
 		public HistogramColorBandControl()
 		{
-			//_viewPortSizeDispatcher = new DebounceDispatcher
-			//{
-			//	Priority = DispatcherPriority.Render
-			//};
-
 			_ourContent = new FrameworkElement();
-
 			_canvas = new Canvas();
 			_image = new Image();
+
+			_canvas.MouseWheel += MouseWheelHandler;
+
+			_colorBandRectangles = new List<GeometryDrawing>();
+			_drawingGroup = new DrawingGroup();
+			_drawingimageSource = new DrawingImage(_drawingGroup);
 
 			_canvasTranslateTransform = new TranslateTransform();
 			_canvasScaleTransform = new ScaleTransform();
@@ -67,9 +73,8 @@ namespace MSetExplorer
 			_translationAndClipSize = new RectangleDbl();
 
 			_viewportSize = new SizeDbl();
-			_logicalViewportSize = new SizeDbl();
-
 		}
+
 		#endregion
 
 		#region Events
@@ -80,12 +85,26 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public ListCollectionView? ColorBandsView
+		{
+			get => _colorBandsView;
+
+			set
+			{
+				_colorBandsView = value;
+				DrawColorBands(_colorBandsView);
+			}
+		}
+
 		public Canvas Canvas
 		{
 			get => _canvas;
 			set
 			{
+				_canvas.MouseWheel -= MouseWheelHandler;
 				_canvas = value;
+				_canvas.MouseWheel += MouseWheelHandler;
+
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
 			}
@@ -99,12 +118,10 @@ namespace MSetExplorer
 				if (_image != value)
 				{
 					_image = value;
+					_image.Source = _drawingimageSource;
 
-					_image.Source = HistogramImageSource;
+					//_image.Source = HistogramImageSource;
 					_image.SetValue(Panel.ZIndexProperty, 20);
-
-					// TODO: Uncomment Me.
-					//UpdateImageOffset(ImageOffset);
 
 					CheckThatImageIsAChildOfCanvas(Image, Canvas);
 				}
@@ -132,11 +149,11 @@ namespace MSetExplorer
 			}
 		}
 
-		public ImageSource HistogramImageSource
-		{
-			get => (ImageSource)GetValue(HistogramImageSourceProperty);
-			set => SetCurrentValue(HistogramImageSourceProperty, value);
-		}
+		//public ImageSource HistogramImageSource
+		//{
+		//	get => (ImageSource)GetValue(HistogramImageSourceProperty);
+		//	set => SetCurrentValue(HistogramImageSourceProperty, value);
+		//}
 
 		public SizeDbl ContentScale
 		{
@@ -146,6 +163,7 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
+					DrawColorBands(ColorBandsView);
 				}
 			}
 		}
@@ -163,18 +181,18 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl LogicalViewportSize
-		{
-			get => _logicalViewportSize;
-			set
-			{
-				if (ScreenTypeHelper.IsSizeDblChanged(value, _logicalViewportSize))
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}.");
-					_logicalViewportSize = value;
-				}
-			}
-		}
+		//public SizeDbl LogicalViewportSize
+		//{
+		//	get => _logicalViewportSize;
+		//	set
+		//	{
+		//		if (ScreenTypeHelper.IsSizeDblChanged(value, _logicalViewportSize))
+		//		{
+		//			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}.");
+		//			_logicalViewportSize = value;
+		//		}
+		//	}
+		//}
 
 		#endregion
 
@@ -278,62 +296,130 @@ namespace MSetExplorer
 
 		#region HistogramImageSource Dependency Property
 
-		public static readonly DependencyProperty HistogramImageSourceProperty = DependencyProperty.Register(
-					"HistogramImageSource", typeof(ImageSource), typeof(HistogramColorBandControl),
-					new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, HistogramImageSource_PropertyChanged));
+		//public static readonly DependencyProperty HistogramImageSourceProperty = DependencyProperty.Register(
+		//			"HistogramImageSource", typeof(ImageSource), typeof(HistogramColorBandControl),
+		//			new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, HistogramImageSource_PropertyChanged));
 
-		private static void HistogramImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		//private static void HistogramImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		//{
+		//	//var c = (HistogramColorBandControl)o;
+		//	//var previousValue = (ImageSource)e.OldValue;
+		//	//var value = (ImageSource)e.NewValue;
+
+		//	//if (value != previousValue)
+		//	//{
+		//	//	c.Image.Source = value;
+		//	//}
+		//}
+
+		#endregion
+
+		#region Event Handlers
+		private void MouseWheelHandler(object sender, System.Windows.Input.MouseWheelEventArgs e)
 		{
-			var c = (HistogramColorBandControl)o;
-			var previousValue = (ImageSource)e.OldValue;
-			var value = (ImageSource)e.NewValue;
-
-			if (value != previousValue)
+			if (e.Delta < 0)
 			{
-				c.Image.Source = value;
+				UpdateColorBandWidth(9, -5);
+			}
+			else
+			{
+				UpdateColorBandWidth(9, 5);
 			}
 		}
 
 		#endregion
 
-		#region Private Methods - Canvas
+		#region Private Methods - ColorBandSet View
 
-		private void ClipAndOffsetOld(RectangleDbl previousValue, RectangleDbl newValue)
+		private void DrawColorBands(ListCollectionView? listCollectionView)
 		{
-			//Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl's {nameof(TranslationAndClipSize)} is being set from {previousValue} to {newValue}.");
+			RemoveColorBandRectangles();
 
-			//_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
-			//_canvasTranslateTransform.Y = newValue.Position.Y;
+			if (listCollectionView == null || listCollectionView.Count < 2)
+			{
+				return;
+			}
 
-			//SizeDbl logicalViewportSize;
+			var scaleSize = new SizeDbl(ContentScale.Width, 1);
 
-			//if (newValue.Position.X > 0)
-			//{
-			//	// Physcial pixels * Scale = logical display size.
-			//	//var scaledPosition = newValue.Value.Position.Scale(ContentScale.Width);
+			Debug.WriteLine($"The scale is {scaleSize} on DrawColorBands.");
 
-			//	var logicalPosition = newValue.Position.Scale(ContentScale);
-			//	logicalViewportSize = newValue.Size.Scale(ContentScale);
+			var curOffset = 0;
+			int bandWidth;
 
-			//	//_canvas.Clip = new RectangleGeometry(new Rect(new Size(newValue.Value.Size.Width, _canvas.ActualHeight)));
+			var endPtr = listCollectionView.Count - 1;
 
-			//	var clipOrigin = new Point(Math.Max(logicalPosition.X, 0), Math.Max(logicalPosition.Y, 0));
-			//	var clipSize = ScreenTypeHelper.ConvertToSize(logicalViewportSize);
-			//	Canvas.Clip = new RectangleGeometry(new Rect(clipOrigin, clipSize));
-			//}
-			//else
-			//{
-			//	// When negative, the size is already scaled.
-			//	Canvas.Clip = null;
-			//	logicalViewportSize = newValue.Size;
-			//}
+			for (var i = 0; i <= endPtr; i++)
+			{
+				var colorBand = (ColorBand) listCollectionView.GetItemAt(i);
 
-			ReportTranslationTransformX(previousValue, newValue);
-			_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
-			//var logicalViewportSize = newValue.Size;
+				bandWidth = i == endPtr ? colorBand.BucketWidth : colorBand.BucketWidth + 1;
 
-			//return logicalViewportSize;
+				bandWidth -= 1; // Leave a gap
+
+				var area = new RectangleDbl(new PointDbl(curOffset, CB_ELEVATION), new SizeDbl(bandWidth, CB_HEIGHT));
+				var scaledArea = area.Scale(scaleSize);
+
+				var r = DrawingHelper.BuildRectangle(scaledArea, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
+
+				_colorBandRectangles.Add(r);
+
+				_drawingGroup.Children.Add(r);
+
+				curOffset += bandWidth + 1; // Cover the gap.
+			}
 		}
+
+		//private int GetExtent(ColorBandSet colorBandSet, out int endPtr)
+		//{
+		//	var result = colorBandSet.Count < 2 ? 0 : colorBandSet.HighCutoff;
+		//	endPtr = colorBandSet.Count < 2 ? 0 : colorBandSet.Count - 1;
+		//	return result;
+		//}
+
+		private void RemoveColorBandRectangles()
+		{
+			foreach (var colorBandRectangle in _colorBandRectangles)
+			{
+				_drawingGroup.Children.Remove(colorBandRectangle);
+			}
+
+			_colorBandRectangles.Clear();
+		}
+
+		private void UpdateColorBandWidth(int colorBandIndex, double newValue)
+		{
+			if (colorBandIndex > 0)
+			{
+				var cbLeft = _colorBandRectangles[colorBandIndex - 1].Geometry as RectangleGeometry;
+				var cbRight = _colorBandRectangles[colorBandIndex].Geometry as RectangleGeometry;
+
+				if (cbLeft != null && cbRight != null)
+				{
+					if (newValue < 0)
+					{
+						var currentRect = cbLeft.Rect;
+						cbLeft.Rect = new Rect(currentRect.Location, new Size(currentRect.Width - 1, currentRect.Height));
+
+						currentRect = cbRight.Rect;
+						cbRight.Rect = new Rect(currentRect.Location, new Size(currentRect.Width + 1, currentRect.Height));
+					}
+					else
+					{
+						var currentRect = cbLeft.Rect;
+						cbLeft.Rect = new Rect(currentRect.Location, new Size(currentRect.Width + 1, currentRect.Height));
+
+						currentRect = cbRight.Rect;
+						cbRight.Rect = new Rect(currentRect.Location, new Size(currentRect.Width - 1, currentRect.Height));
+					}
+				}
+			}
+		}
+
+
+		#endregion
+
+		#region Private Methods - Canvas
 
 		private void ClipAndOffset(RectangleDbl previousValue, RectangleDbl newValue)
 		{
@@ -343,7 +429,7 @@ namespace MSetExplorer
 			_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportTranslationTransformX(RectangleDbl previousValue, RectangleDbl newValue)
 		{
 			var previousXValue = previousValue.Position.X * ContentScale.Width;

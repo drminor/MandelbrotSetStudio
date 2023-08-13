@@ -51,7 +51,6 @@
 
                             <local:HistogramColorBandControl
                                 x:Name="HistogramColorBandControl1"
-                                HistogramImageSource="{Binding ImageSource, Mode=OneWay}"
                             />
 
                         </local:PanAndZoomControl>
@@ -72,6 +71,10 @@
             HistogramImageSource="{Binding ImageSource, Mode=OneWay}"
             ImageOffset="{Binding ImageOffset, Mode=OneWay}"
         />        
+
+        <local:HistogramColorBandControl
+            x:Name="HistogramColorBandControl1"
+            HistogramImageSource="{Binding ImageSource, Mode=OneWay}"
+        />
         
-        
-        -->
+    -->

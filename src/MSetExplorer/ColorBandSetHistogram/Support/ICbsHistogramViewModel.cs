@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System;
+using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -16,11 +17,11 @@ namespace MSetExplorer
 		ListCollectionView ColorBandsView { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
 
-		int StartPtr { get; set; }					// Ptr to the first visible Color Band Rectangle
-		int EndPtr { get; set; }					// Ptr to the last visible Color Band Rectangle
+		//int StartPtr { get; set; }					// Ptr to the first visible Color Band Rectangle
+		//int EndPtr { get; set; }					// Ptr to the last visible Color Band Rectangle
 
 		HPlotSeriesData SeriesData { get; }
-		ImageSource ImageSource { get; }			// The Color Band Rectangles as a Bitmap.
+		//ImageSource ImageSource { get; }			// The Color Band Rectangles as a Bitmap.
 		//VectorDbl ImageOffset { get; }				// Used to position the Color Band Rectangles Bitmap on the Canvas
 
 		SizeDbl UnscaledExtent { get; }				// Size of entire content at max zoom (i.e, 4 x Target Iterations)
@@ -41,5 +42,9 @@ namespace MSetExplorer
 		int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
 		int? MoveTo(VectorDbl displayPosition);
+
+		//void UpdateColorBandWidth(int colorBandIndex, double newValue);
+
+		public event PropertyChangedEventHandler? PropertyChanged;
 	}
 }

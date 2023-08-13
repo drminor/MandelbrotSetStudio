@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -18,8 +19,6 @@ namespace MSetExplorer
 
 		private readonly object _paintLocker;
 
-		private readonly DrawingGroup _drawingGroup;
-
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
 
 		private ColorBandSet _colorBandSet;
@@ -27,15 +26,16 @@ namespace MSetExplorer
 
 		private ColorBand? _currentColorBand;
 
-		private readonly IList<GeometryDrawing> _colorBandRectangles;
-
 		private HPlotSeriesData _seriesData;
+
+		private readonly DrawingGroup _drawingGroup;
+		private readonly IList<GeometryDrawing> _colorBandRectangles;
 
 		private SizeDbl _unscaledExtent;		// Size of entire content at max zoom (i.e, 4 x Target Iterations)
 		private SizeDbl _viewportSize;          // Size of display area in device independent pixels.
 		private SizeDbl _contentViewportSize;	// Size of visible content
 
-		private ImageSource _imageSource;
+		//private ImageSource _imageSource;
 
 		private VectorDbl _displayPosition;
 
@@ -59,17 +59,17 @@ namespace MSetExplorer
 
 			_colorBandSet = new ColorBandSet();
 			_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
-			_colorBandRectangles = new List<GeometryDrawing>();
 
 			_seriesData = HPlotSeriesData.Empty;
 
 			_drawingGroup = new DrawingGroup();
+			_colorBandRectangles = new List<GeometryDrawing>();
 
 			_unscaledExtent = new SizeDbl();
 			_viewportSize = new SizeDbl(500, 300);
 			_contentViewportSize = new SizeDbl();
 
-			_imageSource = new DrawingImage(_drawingGroup);
+			//_imageSource = new DrawingImage(_drawingGroup);
 
 			_displayPosition = new VectorDbl();
 
@@ -92,9 +92,8 @@ namespace MSetExplorer
 
 		#region Public Properties - Content
 
-		public int StartPtr { get; set; }	// Ptr to the first visible Color Band Rectangle
-
-		public int EndPtr { get; set; }     // Ptr to the last visible Color Band Rectangle
+		//public int StartPtr { get; set; }	// Ptr to the first visible Color Band Rectangle
+		//public int EndPtr { get; set; }     // Ptr to the last visible Color Band Rectangle
 
 		public ColorBandSet ColorBandSet
 		{
@@ -109,9 +108,7 @@ namespace MSetExplorer
 
 					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 
-					var unscaledWidth = GetExtent(_colorBandSet, out var endPtr);
-					StartPtr = 0;
-					EndPtr = endPtr;
+					var unscaledWidth = GetExtent(_colorBandSet);
 
 					if (unscaledWidth > 10)
 					{
@@ -237,17 +234,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public ImageSource ImageSource
-		{
-			get => _imageSource;
-			set
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's ImageSource is being set to value: {value}.");
-				_imageSource = value;
-				OnPropertyChanged(nameof(ICbsHistogramViewModel.ImageSource));
-			}
-		}
-
 		#endregion
 
 		#region Public Properties - Scroll
@@ -343,11 +329,11 @@ namespace MSetExplorer
 			lock (_paintLocker)
 			{
 				BuildSeriesData(SeriesData, _mapSectionHistogramProcessor.Histogram.Values);
-				DrawColorBands();
 			}
 
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's SerieData is being updated There are {SeriesData.LongLength} entries.");
 
+			// TODO: Implement some way to have the HistogramPlotControl be notfied of an update without creating a new instance.
 			SeriesData = new HPlotSeriesData(SeriesData);
 
 			//OnPropertyChanged(nameof(ICbsHistogramViewModel.SeriesData));
@@ -362,8 +348,6 @@ namespace MSetExplorer
 
 			ContentViewportSize = contentViewportSize;
 			DisplayPosition = contentOffset;
-
-			DrawColorBands();
 
 			return null;
 		}
@@ -397,7 +381,6 @@ namespace MSetExplorer
 			lock (_paintLocker)
 			{
 				SeriesData.Clear();
-				DrawColorBands();
 			}
 		}
 
@@ -436,6 +419,7 @@ namespace MSetExplorer
 						lock (_paintLocker)
 						{
 							SeriesData.ClearYValues();
+							SeriesData = new HPlotSeriesData(SeriesData);
 						}
 						break;
 					}
@@ -478,57 +462,11 @@ namespace MSetExplorer
 			}
 		}
 
-		private void DrawColorBands()
-		{
-			RemoveColorBandRectangles();
-
-			if (_colorBandSet.Count < 2)
-			{
-				return;
-			}
-
-			var scaleSize = new SizeDbl(DisplayZoom, 1);
-
-			Debug.WriteLine($"The scale is {scaleSize} on DrawColorBands.");
-
-			var curOffset = 0;
-			int bandWidth;
-
-			for (var i = StartPtr; i <= EndPtr; i++)
-			{
-				var colorBand = _colorBandSet[i];
-
-				bandWidth = i == EndPtr ? colorBand.BucketWidth : colorBand.BucketWidth + 1;
-
-				bandWidth -= 1; // Leave a gap
-
-				var area = new RectangleDbl(new PointDbl(curOffset, CB_ELEVATION), new SizeDbl(bandWidth, CB_HEIGHT));
-				var scaledArea = area.Scale(scaleSize);
-
-				var r = DrawingHelper.BuildRectangle(scaledArea, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
-				
-				_colorBandRectangles.Add(r);
-				_drawingGroup.Children.Add(r);
-
-				curOffset += bandWidth + 1; // Cover the gap.
-			}
-		}
-
-		private int GetExtent(ColorBandSet colorBandSet, out int endPtr)
+		private int GetExtent(ColorBandSet colorBandSet/*, out int endPtr*/)
 		{
 			var result = colorBandSet.Count < 2 ? 0 : colorBandSet.HighCutoff;
-			endPtr = colorBandSet.Count < 2 ? 0 : colorBandSet.Count - 1;
+			//endPtr = colorBandSet.Count < 2 ? 0 : colorBandSet.Count - 1;
 			return result;
-		}
-
-		private void RemoveColorBandRectangles()
-		{
-			foreach (var colorBandRectangle in _colorBandRectangles)
-			{
-				_drawingGroup.Children.Remove(colorBandRectangle);
-			}
-
-			_colorBandRectangles.Clear();
 		}
 
 		private void ResetView(double extentWidth, VectorDbl displayPosition, double displayZoom)

@@ -21,8 +21,6 @@ namespace MSetExplorer
 		private double _viewportOffsetX;
 		private double _viewportWidth;
 
-		//private int _thePlotExtent;
-
 		private bool _useDetailedDebug = false;
 
 		#endregion
@@ -40,7 +38,6 @@ namespace MSetExplorer
 
 			_wpfPlot1 = null;
 			_thePlot = null;
-			//_thePlotExtent = 400;
 
 			_viewportOffsetX = 0;
 			_viewportWidth = 0;
@@ -86,7 +83,6 @@ namespace MSetExplorer
 				}
 
 				_thePlot = CreateScatterPlot(_wpfPlot1, seriesData);
-				//_thePlotExtent = seriesData.DataX.Length;
 
 				_wpfPlot1.Refresh();
 				var xAxisDimensions = _wpfPlot1.Plot.XAxis.Dims;
@@ -162,18 +158,6 @@ namespace MSetExplorer
 		public double PlotWidth => WpfPlot1?.Plot.Width ?? 0f;
 
 		#endregion
-
-		#region Public Methods
-
-		//public double GetPlotViewportWidth()
-		//{
-
-		//}
-
-
-
-		#endregion
-
 
 		#region Private Methods - Control
 
@@ -347,7 +331,6 @@ namespace MSetExplorer
 			if (_thePlot == null)
 			{
 				_thePlot = CreateScatterPlot(wpfPlot, seriesData);
-				//_thePlotExtent = seriesData.DataX.Length;
 			}
 			else
 			{
@@ -361,7 +344,6 @@ namespace MSetExplorer
 				{
 					wpfPlot.Plot.Clear();
 					_thePlot = CreateScatterPlot(wpfPlot, seriesData);
-					//_thePlotExtent = seriesData.DataX.Length;
 
 					Debug.WriteLine($"The Series has {seriesData.DataX.Length}, not updating -- creating new Scatter Plot.");
 				}
