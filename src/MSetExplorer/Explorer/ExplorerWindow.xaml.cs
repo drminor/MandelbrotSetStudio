@@ -53,23 +53,7 @@ namespace MSetExplorer
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 
 			_vm.MapCoordsIsVisible = mnuItem_CoordsWindow.IsChecked;
-		}
 
-		private void ExplorerWindow_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			var explorerSize = new SizeDbl(ActualWidth, ActualHeight);
-			Debug.WriteLine($"The ExplorerWindow is now {explorerSize}:");
-		}
-
-		private void ExplorerWindow_Unloaded(object sender, RoutedEventArgs e)
-		{
-			Loaded -= ExplorerWindow_Loaded;
-			ContentRendered -= ExplorerWindow_ContentRendered;
-			Closing -= ExplorerWindow_Closing;
-			Unloaded -= ExplorerWindow_Unloaded;
-
-			_vm.ProjectViewModel.PropertyChanged -= ProjectViewModel_PropertyChanged;
-			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
 		}
 
 		private void ExplorerWindow_Loaded(object sender, RoutedEventArgs e)
@@ -84,6 +68,7 @@ namespace MSetExplorer
 				//_vm = (IExplorerViewModel)DataContext;
 				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
+				_vm.CbshDisplayViewModel.ColorBandWidthChanged += CbshDisplayViewModel_ColorBandWidthChanged;
 
 				// Position the Window near the left top.
 				Left = 20;
@@ -91,6 +76,18 @@ namespace MSetExplorer
 
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
+		}
+		
+		private void ExplorerWindow_Unloaded(object sender, RoutedEventArgs e)
+		{
+			Loaded -= ExplorerWindow_Loaded;
+			ContentRendered -= ExplorerWindow_ContentRendered;
+			Closing -= ExplorerWindow_Closing;
+			Unloaded -= ExplorerWindow_Unloaded;
+
+			_vm.ProjectViewModel.PropertyChanged -= ProjectViewModel_PropertyChanged;
+			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
+			_vm.CbshDisplayViewModel.ColorBandWidthChanged -= CbshDisplayViewModel_ColorBandWidthChanged;
 		}
 
 		private void ExplorerWindow_ContentRendered(object? sender, EventArgs e)
@@ -118,7 +115,12 @@ namespace MSetExplorer
 			//OpenProjectFromAppRequest(new string[] {"Art3"});
 
 			mapDisplay1.UpdateDisplaySize(_vm.MapDisplayViewModel.ViewportSize);
+		}
 
+		private void ExplorerWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			var explorerSize = new SizeDbl(ActualWidth, ActualHeight);
+			Debug.WriteLine($"The ExplorerWindow is now {explorerSize}:");
 		}
 
 		private void ExplorerWindow_Closing(object? sender, CancelEventArgs e)
@@ -180,6 +182,22 @@ namespace MSetExplorer
 			{
 				CommandManager.InvalidateRequerySuggested();
 			}
+		}
+
+		private void CbshDisplayViewModel_ColorBandWidthChanged(object? sender, (int, int) e)
+		{
+			var colorBandIndex = e.Item1;
+			var newValue = e.Item2;
+
+			if (_vm.ColorBandSetViewModel.ColorBandSet != null)
+			{
+				if (_vm.ColorBandSetViewModel.TryUpdateCutoff(colorBandIndex, newValue))
+				{
+					return;
+				}
+			}
+
+			Debug.WriteLine($"Could not update the VM's ColorBandSetViewModel's ColorBand at index: {colorBandIndex} with newValue: {newValue}.");
 		}
 
 		#endregion

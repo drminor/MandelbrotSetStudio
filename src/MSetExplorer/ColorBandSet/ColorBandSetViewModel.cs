@@ -454,6 +454,35 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public bool TryUpdateCutoff(int colorBandIndex, int newValue)
+		{
+			if (colorBandIndex <= 0 | colorBandIndex >= _currentColorBandSet.Count)
+			{
+				return false;
+			}
+
+			var cb = _currentColorBandSet[colorBandIndex];
+
+			cb.Cutoff = newValue;
+
+			if (TryGetSuccessor(_currentColorBandSet, cb, out var colorBand))
+			{
+				colorBand.PreviousCutoff = cb.Cutoff;
+			}
+			
+			UpdatePercentages();
+
+			PushCopyOfCurrent();
+			IsDirty = true;
+
+			if (UseRealTimePreview)
+			{
+				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+			}
+
+			return true;
+		}
+
 		public bool TryInsertNewItem(out int index)
 		{
 			if (ColorBandsView.CurrentItem is ColorBand curItem)

@@ -3,7 +3,6 @@ using System;
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -12,6 +11,7 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
+		event EventHandler<ValueTuple<int, int>>? ColorBandWidthChanged;
 
 		ColorBandSet ColorBandSet { get; set; }
 		ListCollectionView ColorBandsView { get; set; }
@@ -36,7 +36,7 @@ namespace MSetExplorer
 
 		ScrollBarVisibility HorizontalScrollBarVisibility { get; set; }
 		
-		void RefreshDisplay();
+		bool RefreshDisplay();
 
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset);
 		int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
@@ -44,6 +44,7 @@ namespace MSetExplorer
 		int? MoveTo(VectorDbl displayPosition);
 
 		//void UpdateColorBandWidth(int colorBandIndex, double newValue);
+		void UpdateColorBandWidth(int colorBandIndex, int newValue);
 
 		public event PropertyChangedEventHandler? PropertyChanged;
 	}

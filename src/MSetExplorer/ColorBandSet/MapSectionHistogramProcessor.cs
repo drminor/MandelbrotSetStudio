@@ -218,7 +218,7 @@ namespace MSetExplorer
 								HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
 								break;
 							default:
-								Debug.WriteLine("WARNING: Unrecognized HistogramRequestType, using BucketsUpdated.");
+								Debug.WriteLine("WARNING: Unrecognized HistogramRequestType, using HistogramRequestType.Refresh.");
 								HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
 								break;
 						}

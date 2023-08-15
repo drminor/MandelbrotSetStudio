@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -80,6 +81,7 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
+		public event EventHandler<ValueTuple<int, int>>? ColorBandWidthChanged;
 
 		#endregion
 
@@ -315,15 +317,38 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
 		private void MouseWheelHandler(object sender, System.Windows.Input.MouseWheelEventArgs e)
 		{
-			if (e.Delta < 0)
+			if (ColorBandsView == null) return;
+
+			var p = e.GetPosition(this);
+
+			var origin = -1 * _canvasTranslateTransform.X;
+			var pixelOffset = origin + p.X;
+			var pixelOffsetScaled = pixelOffset / ContentScale.Width;
+
+			var cbIndex = FindColorBand(ColorBandsView, pixelOffsetScaled);
+			Debug.WriteLine($"Pos: {p.X}, Origin: {origin}, Origin+Pos: {pixelOffset} Origin+Pos-Scaled: {pixelOffsetScaled}. cbIndex: {cbIndex}.");
+
+			if (cbIndex != -1)
 			{
-				UpdateColorBandWidth(9, -5);
-			}
-			else
-			{
-				UpdateColorBandWidth(9, 5);
+				var cb = (ColorBand)ColorBandsView.GetItemAt(cbIndex);
+
+				if (e.Delta < 0)
+				{
+					if (UpdateColorBandWidth(cbIndex, -1))
+					{
+						ColorBandWidthChanged?.Invoke(this, new(cbIndex, cb.Cutoff - 1));
+					}
+				}
+				else
+				{
+					if (UpdateColorBandWidth(cbIndex, 1))
+					{
+						ColorBandWidthChanged?.Invoke(this, new(cbIndex, cb.Cutoff + 1));
+					}
+				}
 			}
 		}
 
@@ -355,19 +380,54 @@ namespace MSetExplorer
 
 				bandWidth = i == endPtr ? colorBand.BucketWidth : colorBand.BucketWidth + 1;
 
-				bandWidth -= 1; // Leave a gap
+				//bandWidth -= 1; // Leave a gap
 
 				var area = new RectangleDbl(new PointDbl(curOffset, CB_ELEVATION), new SizeDbl(bandWidth, CB_HEIGHT));
 				var scaledArea = area.Scale(scaleSize);
+				var scaledAreaWithGap = new RectangleDbl(scaledArea.Position, new SizeDbl(scaledArea.Size.Width - 1, scaledArea.Size.Height));
 
-				var r = DrawingHelper.BuildRectangle(scaledArea, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
+				GeometryDrawing r = DrawingHelper.BuildRectangle(scaledAreaWithGap, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
 
 				_colorBandRectangles.Add(r);
 
 				_drawingGroup.Children.Add(r);
 
-				curOffset += bandWidth + 1; // Cover the gap.
+				curOffset += bandWidth; // + 1; // Cover the gap.
 			}
+		}
+
+		private int FindColorBand(ListCollectionView? listCollectionView, double pixelOffset)
+		{
+			var result = -1;
+
+			if (listCollectionView == null || listCollectionView.Count < 2)
+			{
+				return result;
+			}
+
+			var prevOffset = 0;
+			var curOffset = 0;
+
+			var endPtr = listCollectionView.Count - 1;
+
+			for (var i = 0; i <= endPtr; i++)
+			{
+				var colorBand = (ColorBand)listCollectionView.GetItemAt(i);
+				var bandWidth = i == endPtr ? colorBand.BucketWidth : colorBand.BucketWidth + 1;
+				curOffset += bandWidth;
+
+				if (curOffset >= pixelOffset)
+				{
+					var cd = curOffset - pixelOffset;
+					var pd = pixelOffset - prevOffset;
+
+					result = pd > cd ? i - 1 : i; 
+
+					return result;
+				}
+			}
+
+			return endPtr;
 		}
 
 		//private int GetExtent(ColorBandSet colorBandSet, out int endPtr)
@@ -387,8 +447,10 @@ namespace MSetExplorer
 			_colorBandRectangles.Clear();
 		}
 
-		private void UpdateColorBandWidth(int colorBandIndex, double newValue)
+		private bool UpdateColorBandWidth(int colorBandIndex, int newValue)
 		{
+			var updated = false;
+
 			if (colorBandIndex > 0)
 			{
 				var cbLeft = _colorBandRectangles[colorBandIndex - 1].Geometry as RectangleGeometry;
@@ -398,24 +460,51 @@ namespace MSetExplorer
 				{
 					if (newValue < 0)
 					{
-						var currentRect = cbLeft.Rect;
-						cbLeft.Rect = new Rect(currentRect.Location, new Size(currentRect.Width - 1, currentRect.Height));
-
-						currentRect = cbRight.Rect;
-						cbRight.Rect = new Rect(currentRect.Location, new Size(currentRect.Width + 1, currentRect.Height));
+						if (cbLeft.Rect.Width > 1)
+						{
+							cbLeft.Rect = Shorten(cbLeft.Rect);
+							cbRight.Rect = MoveRectLeft(cbRight.Rect);
+							updated = true;
+						}
 					}
 					else
 					{
-						var currentRect = cbLeft.Rect;
-						cbLeft.Rect = new Rect(currentRect.Location, new Size(currentRect.Width + 1, currentRect.Height));
-
-						currentRect = cbRight.Rect;
-						cbRight.Rect = new Rect(currentRect.Location, new Size(currentRect.Width - 1, currentRect.Height));
+						if (cbRight.Rect.Width > 1)
+						{
+							cbLeft.Rect = Lengthen(cbLeft.Rect);
+							cbRight.Rect = MoveRectRight(cbRight.Rect);
+							updated = true;
+						}
 					}
 				}
 			}
+
+			return updated;
 		}
 
+		Rect Shorten(Rect r)
+		{
+			var result = new Rect(r.Location, new Size(r.Width - 1, r.Height));
+			return result;
+		}
+
+		Rect MoveRectLeft(Rect r)
+		{
+			var result = new Rect(new Point(r.X - 1, r.Y), new Size(r.Width + 1, r.Height));
+			return result;
+		}
+
+		Rect Lengthen(Rect r)
+		{
+			var result = new Rect(r.Location, new Size(r.Width + 1, r.Height));
+			return result;
+		}
+
+		Rect MoveRectRight(Rect r)
+		{
+			var result = new Rect(new Point(r.X + 1, r.Y), new Size(r.Width - 1, r.Height));
+			return result;
+		}
 
 		#endregion
 

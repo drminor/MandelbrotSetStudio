@@ -161,7 +161,12 @@ namespace MSetExplorer
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
 		{
 			ColorBandSetViewModel.RefreshPercentages();
-			CbshDisplayViewModel.RefreshDisplay();
+			var histogramDataWasEmpty = CbshDisplayViewModel.RefreshDisplay();
+
+			if (histogramDataWasEmpty)
+			{
+				Debug.WriteLine("CbsHistogramViewModel: WARNING: Values are all zero on call to RefreshData -- on DisplayJobCompleted.");
+			}
 		}
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
@@ -220,6 +225,7 @@ namespace MSetExplorer
 				ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 
+			var ff = this.ColorBandSetViewModel;
 			CbshDisplayViewModel.ColorBandSet = colorBandSet;
 		}
 

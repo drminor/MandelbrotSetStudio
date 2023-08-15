@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Driver;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -7,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -329,7 +331,8 @@ namespace MSetExplorer
 
 					if (newJobNumber.HasValue && lastSectionWasIncluded)
 					{
-						DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+						RaiseDisplayJobCompletedOnBackground(newJobNumber.Value);
+						//DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
 					}
 				}
 				else
@@ -339,6 +342,22 @@ namespace MSetExplorer
 			}
 
 			return newJobNumber;
+		}
+
+		private void RaiseDisplayJobCompletedOnBackground(int newJobNumber)
+		{
+			ThreadPool.QueueUserWorkItem(
+			x =>
+			{
+				try
+				{
+					DisplayJobCompleted?.Invoke(this, newJobNumber);
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"Received error {e} from the ThreadPool QueueWorkItem DisplayJobCompleted");
+                }
+			});
 		}
 
 		public void SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)

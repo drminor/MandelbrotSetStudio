@@ -73,6 +73,15 @@ namespace MSetExplorer
 					return;
 				}
 
+				//_wpfPlot1.Configuration.Zoom = false;
+				//_wpfPlot1.Configuration.Pan = false;
+				//_wpfPlot1.Configuration.LeftClickDragPan = false;
+				_wpfPlot1.Configuration.RightClickDragZoom = false;
+				//_wpfPlot1.Configuration.ScrollWheelZoom = false;
+				_wpfPlot1.Configuration.MiddleClickDragZoom = false;
+				_wpfPlot1.Configuration.AltLeftClickDragZoom = false;
+				_wpfPlot1.Configuration.LockHorizontalAxis = true;
+
 				_wpfPlot1.SizeChanged += WpfPlot1_SizeChanged;
 
 				var seriesData = SeriesData;

@@ -73,6 +73,8 @@ namespace MSetExplorer
 				HistogramPlotControl1.ViewportOffsetXChanged += HistogramPlotControl1_ViewportOffsetXChanged;
 				HistogramPlotControl1.ViewportWidthChanged += HistogramPlotControl1_ViewportWidthChanged;
 
+				HistogramColorBandControl1.ColorBandWidthChanged += HistogramColorBandControl1_ColorBandWidthChanged;
+
 				Debug.WriteLine("The CbsHistogramControl is now loaded.");
 			}
 		}
@@ -90,6 +92,9 @@ namespace MSetExplorer
 
 			HistogramPlotControl1.ViewportOffsetXChanged -= HistogramPlotControl1_ViewportOffsetXChanged;
 			HistogramPlotControl1.ViewportWidthChanged -= HistogramPlotControl1_ViewportWidthChanged;
+
+			HistogramColorBandControl1.ColorBandWidthChanged -= HistogramColorBandControl1_ColorBandWidthChanged;
+
 
 			PanAndZoomControl1.Dispose();
 			PanAndZoomControl1.ZoomOwner = null;
@@ -182,6 +187,11 @@ namespace MSetExplorer
 			{
 				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
 			}
+		}
+
+		private void HistogramColorBandControl1_ColorBandWidthChanged(object? sender, (int, int) e)
+		{
+			_vm.UpdateColorBandWidth(e.Item1, e.Item2);
 		}
 
 		#endregion

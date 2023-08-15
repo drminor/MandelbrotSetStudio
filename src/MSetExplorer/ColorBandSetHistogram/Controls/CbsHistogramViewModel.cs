@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows;
+using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -13,9 +13,6 @@ namespace MSetExplorer
 	public class CbsHistogramViewModel : ViewModelBase, ICbsHistogramViewModel
 	{
 		#region Private Fields
-
-		private const int CB_ELEVATION = 0; // Distance from the top of the Grid Row containing the Color Band Rectangles and the top of each Color Band Rectangle
-		private const int CB_HEIGHT = 58;	// Height of each Color Band Rectangle
 
 		private readonly object _paintLocker;
 
@@ -28,14 +25,9 @@ namespace MSetExplorer
 
 		private HPlotSeriesData _seriesData;
 
-		private readonly DrawingGroup _drawingGroup;
-		private readonly IList<GeometryDrawing> _colorBandRectangles;
-
 		private SizeDbl _unscaledExtent;		// Size of entire content at max zoom (i.e, 4 x Target Iterations)
 		private SizeDbl _viewportSize;          // Size of display area in device independent pixels.
 		private SizeDbl _contentViewportSize;	// Size of visible content
-
-		//private ImageSource _imageSource;
 
 		private VectorDbl _displayPosition;
 
@@ -62,14 +54,9 @@ namespace MSetExplorer
 
 			_seriesData = HPlotSeriesData.Empty;
 
-			_drawingGroup = new DrawingGroup();
-			_colorBandRectangles = new List<GeometryDrawing>();
-
 			_unscaledExtent = new SizeDbl();
 			_viewportSize = new SizeDbl(500, 300);
 			_contentViewportSize = new SizeDbl();
-
-			//_imageSource = new DrawingImage(_drawingGroup);
 
 			_displayPosition = new VectorDbl();
 
@@ -87,13 +74,11 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
+		public event EventHandler<ValueTuple<int, int>>? ColorBandWidthChanged;
 
 		#endregion
 
 		#region Public Properties - Content
-
-		//public int StartPtr { get; set; }	// Ptr to the first visible Color Band Rectangle
-		//public int EndPtr { get; set; }     // Ptr to the last visible Color Band Rectangle
 
 		public ColorBandSet ColorBandSet
 		{
@@ -324,11 +309,18 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void RefreshDisplay()
+		public bool RefreshDisplay()
 		{
+			bool result;
+
 			lock (_paintLocker)
 			{
-				BuildSeriesData(SeriesData, _mapSectionHistogramProcessor.Histogram.Values);
+				var values = _mapSectionHistogramProcessor.Histogram.Values;
+
+				var anyNonzero = values.Any(x => x > 0);
+				result = !anyNonzero;
+
+				BuildSeriesData(SeriesData, values);
 			}
 
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's SerieData is being updated There are {SeriesData.LongLength} entries.");
@@ -337,6 +329,8 @@ namespace MSetExplorer
 			SeriesData = new HPlotSeriesData(SeriesData);
 
 			//OnPropertyChanged(nameof(ICbsHistogramViewModel.SeriesData));
+
+			return result;
 		}
 
 		public int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
@@ -382,6 +376,19 @@ namespace MSetExplorer
 			{
 				SeriesData.Clear();
 			}
+		}
+
+		public void UpdateColorBandWidth(int colorBandIndex, int newValue)
+		{
+			ColorBandWidthChanged?.Invoke(this, (colorBandIndex, newValue));
+			//if (colorBandIndex > 0)
+			//{
+			//	var cb = ColorBandSet[colorBandIndex];
+
+			//	Debug.WriteLine($"Would update the ColorBand at index: {colorBandIndex} with new value: {newValue}.");
+
+			//	cb.Cutoff = newValue;
+			//}
 		}
 
 		#endregion
