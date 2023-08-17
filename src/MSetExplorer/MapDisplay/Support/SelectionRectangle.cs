@@ -1,6 +1,5 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -81,7 +80,7 @@ namespace MSetExplorer
 				Width = _defaultSelectionSize.Width,
 				Height = _defaultSelectionSize.Height,
 				Fill = Brushes.Transparent,
-				Stroke = BuildDrawingBrush(),
+				Stroke = DrawingHelper.BuildSelectionDrawingBrush(),
 				StrokeThickness = 4,
 				Visibility = Visibility.Hidden,
 				Focusable = true
@@ -98,7 +97,7 @@ namespace MSetExplorer
 			var result = new Line()
 			{
 				Fill = Brushes.Transparent,
-				Stroke = BuildDrawingBrush(),
+				Stroke = DrawingHelper.BuildSelectionDrawingBrush(),
 				StrokeThickness = 4,
 				Visibility = Visibility.Hidden,
 				Focusable = true
@@ -980,50 +979,43 @@ namespace MSetExplorer
 
 		#region Drawing Support
 
-		private DrawingBrush BuildDrawingBrush()
-		{
-			var aDrawingGroup = new DrawingGroup();
+		//private DrawingBrush BuildDrawingBrush()
+		//{
+		//	var aDrawingGroup = new DrawingGroup();
 
-			var inc = 2;
-			var x = 0;
-			var y = 0;
+		//	var inc = 2;
+		//	var x = 0;
+		//	var y = 0;
 
-			aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White));
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White));
 
-			x = 0;
-			y += inc;
-			aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White)); x += inc;
-			aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black));
+		//	x = 0;
+		//	y += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.White)); x += inc;
+		//	aDrawingGroup.Children.Add(BuildDot(x, y, 2, Brushes.Black));
 
-			var result = new DrawingBrush(aDrawingGroup)
-			{
-				TileMode = TileMode.Tile,
-				ViewportUnits = BrushMappingMode.Absolute,
-				Viewport = new Rect(0, 0, inc * 2, inc * 2)
-			};
+		//	var result = new DrawingBrush(aDrawingGroup)
+		//	{
+		//		TileMode = TileMode.Tile,
+		//		ViewportUnits = BrushMappingMode.Absolute,
+		//		Viewport = new Rect(0, 0, inc * 2, inc * 2)
+		//	};
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		private GeometryDrawing BuildDot(int x, int y, int size, SolidColorBrush brush)
-		{
-			var result = new GeometryDrawing(
-				brush,
-				new Pen(brush, 0),
-				new RectangleGeometry(new Rect(new Point(x, y), new Size(size, size)))
-			);
+		//private GeometryDrawing BuildDot(int x, int y, int size, SolidColorBrush brush)
+		//{
+		//	var result = new GeometryDrawing(
+		//		brush,
+		//		new Pen(brush, 0),
+		//		new RectangleGeometry(new Rect(new Point(x, y), new Size(size, size)))
+		//	);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
-	}
-
-	internal enum DragState
-	{
-		None,
-		Begun,
-		InProcess
 	}
 }

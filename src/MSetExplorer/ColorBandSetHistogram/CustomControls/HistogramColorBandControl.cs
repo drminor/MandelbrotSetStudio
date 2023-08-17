@@ -28,6 +28,7 @@ namespace MSetExplorer
 		private ImageSource _drawingimageSource;
 		private readonly DrawingGroup _drawingGroup;
 		private readonly IList<GeometryDrawing> _colorBandRectangles;
+		private GeometryDrawing? _colorBandDividerLine;
 
 		private TranslateTransform _canvasTranslateTransform;
 		private ScaleTransform _canvasScaleTransform;
@@ -55,9 +56,15 @@ namespace MSetExplorer
 			_canvas = new Canvas();
 			_image = new Image();
 
-			_canvas.MouseWheel += MouseWheelHandler;
+			
+
+			_canvas.MouseWheel += HandleMouseWheel;
+			_canvas.MouseMove += HandleMouseMove;
+			_canvas.MouseEnter += Handle_MouseEnter;
+			_canvas.MouseLeave += Handle_MouseLeave;
 
 			_colorBandRectangles = new List<GeometryDrawing>();
+			_colorBandDividerLine = null;
 			_drawingGroup = new DrawingGroup();
 			_drawingimageSource = new DrawingImage(_drawingGroup);
 
@@ -103,9 +110,9 @@ namespace MSetExplorer
 			get => _canvas;
 			set
 			{
-				_canvas.MouseWheel -= MouseWheelHandler;
+				_canvas.MouseWheel -= HandleMouseWheel;
 				_canvas = value;
-				_canvas.MouseWheel += MouseWheelHandler;
+				_canvas.MouseWheel += HandleMouseWheel;
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
@@ -121,8 +128,6 @@ namespace MSetExplorer
 				{
 					_image = value;
 					_image.Source = _drawingimageSource;
-
-					//_image.Source = HistogramImageSource;
 					_image.SetValue(Panel.ZIndexProperty, 20);
 
 					CheckThatImageIsAChildOfCanvas(Image, Canvas);
@@ -151,12 +156,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public ImageSource HistogramImageSource
-		//{
-		//	get => (ImageSource)GetValue(HistogramImageSourceProperty);
-		//	set => SetCurrentValue(HistogramImageSourceProperty, value);
-		//}
-
 		public SizeDbl ContentScale
 		{
 			get => _contentScale;
@@ -182,19 +181,6 @@ namespace MSetExplorer
 				ClipAndOffset(previousVal, value);
 			}
 		}
-
-		//public SizeDbl LogicalViewportSize
-		//{
-		//	get => _logicalViewportSize;
-		//	set
-		//	{
-		//		if (ScreenTypeHelper.IsSizeDblChanged(value, _logicalViewportSize))
-		//		{
-		//			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}.");
-		//			_logicalViewportSize = value;
-		//		}
-		//	}
-		//}
 
 		#endregion
 
@@ -296,29 +282,79 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region HistogramImageSource Dependency Property
-
-		//public static readonly DependencyProperty HistogramImageSourceProperty = DependencyProperty.Register(
-		//			"HistogramImageSource", typeof(ImageSource), typeof(HistogramColorBandControl),
-		//			new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, HistogramImageSource_PropertyChanged));
-
-		//private static void HistogramImageSource_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		//{
-		//	//var c = (HistogramColorBandControl)o;
-		//	//var previousValue = (ImageSource)e.OldValue;
-		//	//var value = (ImageSource)e.NewValue;
-
-		//	//if (value != previousValue)
-		//	//{
-		//	//	c.Image.Source = value;
-		//	//}
-		//}
-
-		#endregion
-
 		#region Event Handlers
 
-		private void MouseWheelHandler(object sender, System.Windows.Input.MouseWheelEventArgs e)
+		private void Handle_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+		{
+			if (_colorBandDividerLine != null)
+			{
+				_colorBandDividerLine = null;
+			}
+		}
+
+		private void Handle_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+		{
+			if (ColorBandsView == null) return;
+
+			var p = e.GetPosition(this);
+
+			var origin = -1 * _canvasTranslateTransform.X;
+			var pixelOffset = origin + p.X;
+			var pixelOffsetScaled = pixelOffset / ContentScale.Width;
+
+			var cbIndex = FindColorBand(ColorBandsView, pixelOffsetScaled);
+			Debug.WriteLine($"Pos: {p.X}, Origin: {origin}, Origin+Pos: {pixelOffset} Origin+Pos-Scaled: {pixelOffsetScaled}. cbIndex: {cbIndex}.");
+
+			if (cbIndex != -1)
+			{
+				var cb = (ColorBand)ColorBandsView.GetItemAt(cbIndex);
+				var xPos = cb.PreviousCutoff;
+
+				if (xPos.HasValue)
+				{
+					var area = new RectangleDbl(new PointDbl(xPos.Value, CB_ELEVATION), new SizeDbl(2, CB_HEIGHT));
+					var cbDividerLine = DrawingHelper.BuildRectangle(area, Colors.DarkOrange, Colors.Black);
+					_drawingGroup.Children.Add(cbDividerLine);
+				}
+
+			}
+		}
+
+
+		private void HandleMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+		{
+			if (_colorBandDividerLine == null)
+			{
+				return;
+			}
+
+			if (ColorBandsView == null) return;
+
+			var p = e.GetPosition(this);
+
+			var origin = -1 * _canvasTranslateTransform.X;
+			var pixelOffset = origin + p.X;
+			var pixelOffsetScaled = pixelOffset / ContentScale.Width;
+
+			var cbIndex = FindColorBand(ColorBandsView, pixelOffsetScaled);
+			Debug.WriteLine($"Pos: {p.X}, Origin: {origin}, Origin+Pos: {pixelOffset} Origin+Pos-Scaled: {pixelOffsetScaled}. cbIndex: {cbIndex}.");
+
+			if (cbIndex != -1)
+			{
+				var cb = (ColorBand)ColorBandsView.GetItemAt(cbIndex);
+				var xPos = cb.PreviousCutoff;
+
+				if (xPos.HasValue)
+				{
+					var area = new RectangleDbl(new PointDbl(xPos.Value, CB_ELEVATION), new SizeDbl(2, CB_HEIGHT));
+					var cbDividerLine = DrawingHelper.BuildRectangle(area, Colors.DarkOrange, Colors.Black);
+					_drawingGroup.Children.Add(cbDividerLine);
+				}
+
+			}
+		}
+
+		private void HandleMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
 		{
 			if (ColorBandsView == null) return;
 
