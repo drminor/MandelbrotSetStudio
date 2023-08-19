@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -7,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -41,6 +43,7 @@ namespace MSetExplorer
 		private SizeDbl _viewportSize;
 
 		private bool _mouseIsEntered;
+		private List<Shape> _hitList;
 
 		private bool _useDetailedDebug = false;
 
@@ -64,6 +67,8 @@ namespace MSetExplorer
 			_canvas.MouseEnter += Handle_MouseEnter;
 			_canvas.MouseLeave += Handle_MouseLeave;
 
+			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDownB;
+
 
 			_colorBandRectangles = new List<GeometryDrawing>();
 			_selectionLines = new List<CbsSelectionLine>();
@@ -85,6 +90,7 @@ namespace MSetExplorer
 
 			_viewportSize = new SizeDbl();
 			_mouseIsEntered = false;
+			_hitList = new List<Shape>();
 		}
 
 		#endregion
@@ -122,11 +128,18 @@ namespace MSetExplorer
 				//_canvas.MouseMove -= HandleMouseMove;
 				_canvas.MouseEnter -= Handle_MouseEnter;
 				_canvas.MouseLeave -= Handle_MouseLeave;
+
+				_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDownB;
+
 				_canvas = value;
+
 				//_canvas.MouseWheel += HandleMouseWheel;
 				//_canvas.MouseMove += HandleMouseMove;
 				_canvas.MouseEnter += Handle_MouseEnter;
 				_canvas.MouseLeave += Handle_MouseLeave;
+
+				_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDownB;
+
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
@@ -411,6 +424,89 @@ namespace MSetExplorer
 						ColorBandWidthChanged?.Invoke(this, new(cbIndex, cb.Cutoff + 1));
 					}
 				}
+			}
+		}
+
+
+		private void Handle_PreviewMouseLeftButtonDownA(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			var cPos = e.GetPosition(Canvas);
+			var tPos = e.GetPosition(this);
+
+			var htResult = VisualTreeHelper.HitTest(Canvas, cPos);
+
+			if (htResult.VisualHit is Line l)
+			{
+				Debug.WriteLine("Got a hit.");
+				l.X2 -= 1;
+				l.X1 -= 1;
+			}
+		}
+
+		private void Handle_PreviewMouseLeftButtonDownB(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			_hitList.Clear();
+
+			Point HitPoint = e.GetPosition(Canvas);
+
+			var hitArea = new EllipseGeometry(HitPoint, 2.0, 2.0);
+
+			//This line will call a call back method HitTestCallBack
+			VisualTreeHelper.HitTest(Canvas, null, HitTestCallBack, new GeometryHitTestParameters(hitArea));
+
+			foreach (Shape item in _hitList)
+			{
+				if (item is Line l)
+				{
+					var adjustedPos = l.X1 / ContentScale.Width;
+					Debug.WriteLine($"Got a hit for line at position: {l.X1} / {adjustedPos}.");
+				}
+			}
+
+		}
+
+		private HitTestResultBehavior HitTestCallBack(HitTestResult result)
+		{
+			if (result is GeometryHitTestResult ghtr)
+			{
+				var intersectionDetail = ghtr.IntersectionDetail;
+
+				if (intersectionDetail == IntersectionDetail.FullyContains)
+				{
+					if (result.VisualHit is Shape s)
+					{
+						_hitList.Add(s);
+					}
+					return HitTestResultBehavior.Continue;
+				}
+				else if (intersectionDetail == IntersectionDetail.Intersects)
+				{
+					if (result.VisualHit is Shape ss)
+					{
+						_hitList.Add(ss);
+					}
+					return HitTestResultBehavior.Continue;
+				}
+				else if (intersectionDetail == IntersectionDetail.FullyInside)
+				{
+					if (result.VisualHit is Shape ss)
+					{
+						_hitList.Add(ss);
+					}
+					return HitTestResultBehavior.Continue;
+				}
+				else if (intersectionDetail == IntersectionDetail.NotCalculated)
+				{
+					return HitTestResultBehavior.Continue;
+				}
+				else
+				{
+					return HitTestResultBehavior.Stop;
+				}
+			}
+			else
+			{
+				return HitTestResultBehavior.Stop;
 			}
 		}
 

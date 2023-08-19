@@ -479,7 +479,8 @@ namespace MSetExplorer
 			{
 				if (!df.TryConvertToInt(out var offset))
 				{
-					throw new ArgumentException("Cannot convert the result of subtracting the current MapBlockOffset from this MapSection's BlockOffset.");
+					throw new ArgumentException($"Cannot convert the result of subtracting the current MapBlockOffset from this MapSection's BlockOffset. " +
+						$"MapBlockOffset: {mapBlockOffset} This section's Job Offset: {mapSection.JobMapBlockOffset}.");
 				}
 
 				result = mapSection.ScreenPosition.Translate(offset);

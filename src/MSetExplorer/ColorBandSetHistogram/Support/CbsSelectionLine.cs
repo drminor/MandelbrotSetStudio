@@ -45,6 +45,7 @@ namespace MSetExplorer
 
 
 			_dragLine.KeyUp += DragLine_KeyUp;
+			_dragLine.MouseRightButtonDown += _dragLine_MouseRightButtonDown;
 
 			//MouseLeftButtonUp += HandleMouseLeftButtonUp;
 			//MouseLeftButtonDown += HandleMouseLeftButtonDown;
@@ -56,6 +57,11 @@ namespace MSetExplorer
 			//MouseLeave += HandleMouseLeave;
 
 			//Focusable = true;
+		}
+
+		private void _dragLine_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+		{
+			Debug.WriteLine($"The CbsSelectionLine at position: {SelectionLinePosition} got a MouseRightButtonDown event.");
 		}
 
 		private Line BuildDragLine()

@@ -1036,49 +1036,51 @@ namespace MSetExplorer
 
 			if (ContentBeingZoomed.IsAncestorOf(visual))
 			{
-				// Commented this code out on 8/19/2023 -- The HistogramColorBandControl was resetting the display position as the ScrollViewer was calling this method. 
+				Rect transformedRect = visual.TransformToAncestor(ContentBeingZoomed).TransformBounds(rectangle);
+				Rect viewportRect = new Rect(new Point(ContentOffsetX, ContentOffsetY), ScreenTypeHelper.ConvertToSize(ContentViewportSize));
 
+				if (!transformedRect.Contains(viewportRect))
+				{
+					double horizOffset = 0;
+					double vertOffset = 0;
 
-				//Rect transformedRect = visual.TransformToAncestor(ContentBeingZoomed).TransformBounds(rectangle);
-				//Rect viewportRect = new Rect(new Point(ContentOffsetX, ContentOffsetY), ScreenTypeHelper.ConvertToSize(ContentViewportSize));
+					if (transformedRect.Left < viewportRect.Left)
+					{
+						//
+						// Want to move viewport left.
+						//
+						horizOffset = transformedRect.Left - viewportRect.Left;
+					}
+					else if (transformedRect.Right > viewportRect.Right)
+					{
+						//
+						// Want to move viewport right.
+						//
+						horizOffset = transformedRect.Right - viewportRect.Right;
+					}
 
-				//if (!transformedRect.Contains(viewportRect))
-				//{
-				//	double horizOffset = 0;
-				//	double vertOffset = 0;
+					if (transformedRect.Top < viewportRect.Top)
+					{
+						//
+						// Want to move viewport up.
+						//
+						vertOffset = transformedRect.Top - viewportRect.Top;
+					}
+					else if (transformedRect.Bottom > viewportRect.Bottom)
+					{
+						//
+						// Want to move viewport down.
+						//
+						vertOffset = transformedRect.Bottom - viewportRect.Bottom;
+					}
 
-				//	if (transformedRect.Left < viewportRect.Left)
-				//	{
-				//		//
-				//		// Want to move viewport left.
-				//		//
-				//		horizOffset = transformedRect.Left - viewportRect.Left;
-				//	}
-				//	else if (transformedRect.Right > viewportRect.Right)
-				//	{
-				//		//
-				//		// Want to move viewport right.
-				//		//
-				//		horizOffset = transformedRect.Right - viewportRect.Right;
-				//	}
+					// Commented this code out on 8/19/2023 -- The HistogramColorBandControl was resetting the display position as the ScrollViewer was calling this method. 
 
-				//	if (transformedRect.Top < viewportRect.Top)
-				//	{
-				//		//
-				//		// Want to move viewport up.
-				//		//
-				//		vertOffset = transformedRect.Top - viewportRect.Top;
-				//	}
-				//	else if (transformedRect.Bottom > viewportRect.Bottom)
-				//	{
-				//		//
-				//		// Want to move viewport down.
-				//		//
-				//		vertOffset = transformedRect.Bottom - viewportRect.Bottom;
-				//	}
+					var snapToPoint = new Point(ContentOffsetX + horizOffset, ContentOffsetY + vertOffset);
+					//SnapContentOffsetTo(snapToPoint);
 
-					//SnapContentOffsetTo(new Point(ContentOffsetX + horizOffset, ContentOffsetY + vertOffset));
-				//}
+					Debug.WriteLine($"WARNING: Not snapping to Offset {snapToPoint} as MakeVisible is being called.");
+				}
 			}
 
 			return rectangle;
