@@ -1036,47 +1036,51 @@ namespace MSetExplorer
 
 			if (ContentBeingZoomed.IsAncestorOf(visual))
 			{
-				Rect transformedRect = visual.TransformToAncestor(ContentBeingZoomed).TransformBounds(rectangle);
-				Rect viewportRect = new Rect(new Point(ContentOffsetX, ContentOffsetY), ScreenTypeHelper.ConvertToSize(ContentViewportSize));
+				// Commented this code out on 8/19/2023 -- The HistogramColorBandControl was resetting the display position as the ScrollViewer was calling this method. 
 
-				if (!transformedRect.Contains(viewportRect))
-				{
-					double horizOffset = 0;
-					double vertOffset = 0;
 
-					if (transformedRect.Left < viewportRect.Left)
-					{
-						//
-						// Want to move viewport left.
-						//
-						horizOffset = transformedRect.Left - viewportRect.Left;
-					}
-					else if (transformedRect.Right > viewportRect.Right)
-					{
-						//
-						// Want to move viewport right.
-						//
-						horizOffset = transformedRect.Right - viewportRect.Right;
-					}
+				//Rect transformedRect = visual.TransformToAncestor(ContentBeingZoomed).TransformBounds(rectangle);
+				//Rect viewportRect = new Rect(new Point(ContentOffsetX, ContentOffsetY), ScreenTypeHelper.ConvertToSize(ContentViewportSize));
 
-					if (transformedRect.Top < viewportRect.Top)
-					{
-						//
-						// Want to move viewport up.
-						//
-						vertOffset = transformedRect.Top - viewportRect.Top;
-					}
-					else if (transformedRect.Bottom > viewportRect.Bottom)
-					{
-						//
-						// Want to move viewport down.
-						//
-						vertOffset = transformedRect.Bottom - viewportRect.Bottom;
-					}
+				//if (!transformedRect.Contains(viewportRect))
+				//{
+				//	double horizOffset = 0;
+				//	double vertOffset = 0;
 
-					SnapContentOffsetTo(new Point(ContentOffsetX + horizOffset, ContentOffsetY + vertOffset));
-				}
+				//	if (transformedRect.Left < viewportRect.Left)
+				//	{
+				//		//
+				//		// Want to move viewport left.
+				//		//
+				//		horizOffset = transformedRect.Left - viewportRect.Left;
+				//	}
+				//	else if (transformedRect.Right > viewportRect.Right)
+				//	{
+				//		//
+				//		// Want to move viewport right.
+				//		//
+				//		horizOffset = transformedRect.Right - viewportRect.Right;
+				//	}
+
+				//	if (transformedRect.Top < viewportRect.Top)
+				//	{
+				//		//
+				//		// Want to move viewport up.
+				//		//
+				//		vertOffset = transformedRect.Top - viewportRect.Top;
+				//	}
+				//	else if (transformedRect.Bottom > viewportRect.Bottom)
+				//	{
+				//		//
+				//		// Want to move viewport down.
+				//		//
+				//		vertOffset = transformedRect.Bottom - viewportRect.Bottom;
+				//	}
+
+					//SnapContentOffsetTo(new Point(ContentOffsetX + horizOffset, ContentOffsetY + vertOffset));
+				//}
 			}
+
 			return rectangle;
 		}
 

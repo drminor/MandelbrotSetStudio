@@ -28,7 +28,8 @@ namespace MSetExplorer
 		private ImageSource _drawingimageSource;
 		private readonly DrawingGroup _drawingGroup;
 		private readonly IList<GeometryDrawing> _colorBandRectangles;
-		private GeometryDrawing? _colorBandDividerLine;
+
+		private readonly IList<CbsSelectionLine> _selectionLines;
 
 		private TranslateTransform _canvasTranslateTransform;
 		private ScaleTransform _canvasScaleTransform;
@@ -38,6 +39,8 @@ namespace MSetExplorer
 		private RectangleDbl _translationAndClipSize;
 
 		private SizeDbl _viewportSize;
+
+		private bool _mouseIsEntered;
 
 		private bool _useDetailedDebug = false;
 
@@ -56,15 +59,15 @@ namespace MSetExplorer
 			_canvas = new Canvas();
 			_image = new Image();
 
-			
-
-			_canvas.MouseWheel += HandleMouseWheel;
-			_canvas.MouseMove += HandleMouseMove;
+			//_canvas.MouseWheel += HandleMouseWheel;
+			//_canvas.MouseMove += HandleMouseMove;
 			_canvas.MouseEnter += Handle_MouseEnter;
 			_canvas.MouseLeave += Handle_MouseLeave;
 
+
 			_colorBandRectangles = new List<GeometryDrawing>();
-			_colorBandDividerLine = null;
+			_selectionLines = new List<CbsSelectionLine>();
+
 			_drawingGroup = new DrawingGroup();
 			_drawingimageSource = new DrawingImage(_drawingGroup);
 
@@ -81,6 +84,7 @@ namespace MSetExplorer
 			_translationAndClipSize = new RectangleDbl();
 
 			_viewportSize = new SizeDbl();
+			_mouseIsEntered = false;
 		}
 
 		#endregion
@@ -102,6 +106,10 @@ namespace MSetExplorer
 			{
 				_colorBandsView = value;
 				DrawColorBands(_colorBandsView);
+				if (_mouseIsEntered)
+				{
+					DrawSelectionLines(_colorBandRectangles);
+				}
 			}
 		}
 
@@ -110,9 +118,15 @@ namespace MSetExplorer
 			get => _canvas;
 			set
 			{
-				_canvas.MouseWheel -= HandleMouseWheel;
+				//_canvas.MouseWheel -= HandleMouseWheel;
+				//_canvas.MouseMove -= HandleMouseMove;
+				_canvas.MouseEnter -= Handle_MouseEnter;
+				_canvas.MouseLeave -= Handle_MouseLeave;
 				_canvas = value;
-				_canvas.MouseWheel += HandleMouseWheel;
+				//_canvas.MouseWheel += HandleMouseWheel;
+				//_canvas.MouseMove += HandleMouseMove;
+				_canvas.MouseEnter += Handle_MouseEnter;
+				_canvas.MouseLeave += Handle_MouseLeave;
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
@@ -164,7 +178,18 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
+
+					var extent = GetExtent(ColorBandsView);
+
+					var scaledExtent = extent * ContentScale.Width;
+
+					Canvas.Width = scaledExtent;
+
 					DrawColorBands(ColorBandsView);
+					if (_mouseIsEntered)
+					{
+						DrawSelectionLines(_colorBandRectangles);
+					}
 				}
 			}
 		}
@@ -286,48 +311,49 @@ namespace MSetExplorer
 
 		private void Handle_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
 		{
-			if (_colorBandDividerLine != null)
-			{
-				_colorBandDividerLine = null;
-			}
+			//if (_colorBandDividerLine != null)
+			//{
+			//	_colorBandDividerLine = null;
+			//}
+
+			RemoveSelectionLines();
+			_mouseIsEntered = false;
 		}
 
 		private void Handle_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
 		{
 			if (ColorBandsView == null) return;
 
-			var p = e.GetPosition(this);
+			//var p = e.GetPosition(this);
 
-			var origin = -1 * _canvasTranslateTransform.X;
-			var pixelOffset = origin + p.X;
-			var pixelOffsetScaled = pixelOffset / ContentScale.Width;
+			//var origin = -1 * _canvasTranslateTransform.X;
+			//var pixelOffset = origin + p.X;
+			//var pixelOffsetScaled = pixelOffset / ContentScale.Width;
 
-			var cbIndex = FindColorBand(ColorBandsView, pixelOffsetScaled);
-			Debug.WriteLine($"Pos: {p.X}, Origin: {origin}, Origin+Pos: {pixelOffset} Origin+Pos-Scaled: {pixelOffsetScaled}. cbIndex: {cbIndex}.");
+			//var cbIndex = FindColorBand(ColorBandsView, pixelOffsetScaled);
+			//Debug.WriteLine($"Pos: {p.X}, Origin: {origin}, Origin+Pos: {pixelOffset} Origin+Pos-Scaled: {pixelOffsetScaled}. cbIndex: {cbIndex}.");
 
-			if (cbIndex != -1)
-			{
-				var cb = (ColorBand)ColorBandsView.GetItemAt(cbIndex);
-				var xPos = cb.PreviousCutoff;
+			//if (cbIndex != -1)
+			//{
+			//	var cb = (ColorBand)ColorBandsView.GetItemAt(cbIndex);
+			//	var xPos = cb.PreviousCutoff;
 
-				if (xPos.HasValue)
-				{
-					var area = new RectangleDbl(new PointDbl(xPos.Value, CB_ELEVATION), new SizeDbl(2, CB_HEIGHT));
-					var cbDividerLine = DrawingHelper.BuildRectangle(area, Colors.DarkOrange, Colors.Black);
-					_drawingGroup.Children.Add(cbDividerLine);
-				}
+			//	if (xPos.HasValue)
+			//	{
+			//		var area = new RectangleDbl(new PointDbl(xPos.Value, CB_ELEVATION), new SizeDbl(2, CB_HEIGHT));
+			//		var cbDividerLine = DrawingHelper.BuildRectangle(area, Colors.DarkOrange, Colors.Black);
+			//		_drawingGroup.Children.Add(cbDividerLine);
+			//	}
 
-			}
+			//}
+
+			//DrawColorBands(ColorBandsView);
+			DrawSelectionLines(_colorBandRectangles);
+			_mouseIsEntered = true;
 		}
-
 
 		private void HandleMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
 		{
-			if (_colorBandDividerLine == null)
-			{
-				return;
-			}
-
 			if (ColorBandsView == null) return;
 
 			var p = e.GetPosition(this);
@@ -395,6 +421,7 @@ namespace MSetExplorer
 		private void DrawColorBands(ListCollectionView? listCollectionView)
 		{
 			RemoveColorBandRectangles();
+			RemoveSelectionLines();
 
 			if (listCollectionView == null || listCollectionView.Count < 2)
 			{
@@ -423,12 +450,27 @@ namespace MSetExplorer
 				var scaledAreaWithGap = new RectangleDbl(scaledArea.Position, new SizeDbl(scaledArea.Size.Width - 1, scaledArea.Size.Height));
 
 				GeometryDrawing r = DrawingHelper.BuildRectangle(scaledAreaWithGap, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
-
 				_colorBandRectangles.Add(r);
-
 				_drawingGroup.Children.Add(r);
 
 				curOffset += bandWidth; // + 1; // Cover the gap.
+			}
+		}
+
+		private void DrawSelectionLines(IList<GeometryDrawing> colorBandRectangles)
+		{
+			foreach(var colorBandRectangle in colorBandRectangles)
+			{
+				var g = colorBandRectangle.Geometry as RectangleGeometry;
+
+				if (g != null)
+				{
+					var x1 =  g.Rect.Left;
+
+					var sl = new CbsSelectionLine();
+					sl.Setup(_canvas, CB_ELEVATION, CB_HEIGHT, x1);
+					_selectionLines.Add(sl);
+				}
 			}
 		}
 
@@ -466,12 +508,31 @@ namespace MSetExplorer
 			return endPtr;
 		}
 
-		//private int GetExtent(ColorBandSet colorBandSet, out int endPtr)
-		//{
-		//	var result = colorBandSet.Count < 2 ? 0 : colorBandSet.HighCutoff;
-		//	endPtr = colorBandSet.Count < 2 ? 0 : colorBandSet.Count - 1;
-		//	return result;
-		//}
+		private int GetExtent(ListCollectionView? listCollectionView)
+		{
+			if (listCollectionView == null)
+			{
+				return 0;
+			}
+
+			var cnt = listCollectionView.Count;
+
+			if (cnt < 2)
+			{
+				return 0;
+			}
+
+			var d = listCollectionView.GetItemAt(cnt - 1) as ColorBand;
+
+			if (d != null)
+			{
+				return d.Cutoff;
+			}
+			else
+			{
+				return 0;
+			}
+		}
 
 		private void RemoveColorBandRectangles()
 		{
@@ -481,6 +542,17 @@ namespace MSetExplorer
 			}
 
 			_colorBandRectangles.Clear();
+		}
+
+		private void RemoveSelectionLines()
+		{
+			foreach (var selectionLine in _selectionLines)
+			{
+				selectionLine.TearDown();
+				//_canvas.Children.Remove(selectionLine);
+			}
+
+			_selectionLines.Clear();
 		}
 
 		private bool UpdateColorBandWidth(int colorBandIndex, int newValue)
