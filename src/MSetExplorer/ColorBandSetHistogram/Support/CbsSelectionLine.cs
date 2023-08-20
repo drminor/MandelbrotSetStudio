@@ -1,12 +1,13 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
+using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -14,17 +15,13 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		//private const int DRAG_TRIGGER_DIST = 3;
-
 		private Canvas _canvas;
+		private int _colorBandIndex;
+		private double _originalXPosition;
+		private ColorBandWidthUpdater _colorBandWidthUpdater;
 
 		private readonly Line _dragLine;
 		private DragState _dragState;
-
-		//private Point _dragAnchor;
-		//private bool _haveMouseDown;
-
-		//private readonly VisualCollection _children;
 
 		private double _selectionLinePosition;
 		private int _cbElevation;
@@ -34,44 +31,50 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsSelectionLine()
+		public CbsSelectionLine(Canvas canvas, int elevation, int height, int colorBandIndex, double xPosition, ColorBandWidthUpdater colorBandWidthUpdater)
 		{
-			_canvas = new Canvas();
-			_dragLine = BuildDragLine();
-			//_children = new VisualCollection(this);
-			//_children.Add(_dragLine);
+			//_canvas = null;
+			//_colorBandWidthUpdater = null;
+			//_dragLine = BuildDragLine();
+			//_dragState = DragState.None;
+
+			//SelectionLinePosition = 0;
+			//CbElevation = 0;
+			//CbHeight = 0;
+
+
+			_canvas = canvas;
+			_colorBandIndex = colorBandIndex;
+			_originalXPosition = xPosition;
+			_colorBandWidthUpdater = colorBandWidthUpdater;
+
+			//SelectionLinePosition = xPosition;
+
+			_cbElevation = elevation;
+			_cbHeight = height;
+			_selectionLinePosition = xPosition;
+			_dragLine = BuildDragLine(elevation, height, xPosition);
 
 			_dragState = DragState.None;
 
-
+			_canvas.Children.Add(_dragLine);
+			_dragLine.SetValue(Panel.ZIndexProperty, 30);
+			//_dragLine.Visibility = Visibility.Visible;
 			_dragLine.KeyUp += DragLine_KeyUp;
-			_dragLine.MouseRightButtonDown += _dragLine_MouseRightButtonDown;
-
-			//MouseLeftButtonUp += HandleMouseLeftButtonUp;
-			//MouseLeftButtonDown += HandleMouseLeftButtonDown;
-
-			//MouseWheel += HandleMouseWheel;
-			//MouseMove += HandleMouseMove;
-
-			//MouseEnter += HandleMouseEnter;
-			//MouseLeave += HandleMouseLeave;
-
-			//Focusable = true;
 		}
 
-		private void _dragLine_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			Debug.WriteLine($"The CbsSelectionLine at position: {SelectionLinePosition} got a MouseRightButtonDown event.");
-		}
-
-		private Line BuildDragLine()
+		private Line BuildDragLine(int elevation, int height, double xPosition)
 		{
 			var result = new Line()
 			{
 				Fill = Brushes.Transparent, // new SolidColorBrush(Colors.Green),
 				Stroke = DrawingHelper.BuildSelectionDrawingBrush(), // new SolidColorBrush(Colors.Purple),
 				StrokeThickness = 2,
-				Visibility = Visibility.Hidden,
+				Y1 = elevation,
+				Y2 = height,
+				X1 = xPosition,
+				X2 = xPosition,
+				//Visibility = Visibility.Hidden,
 				Focusable = true
 			};
 
@@ -93,74 +96,93 @@ namespace MSetExplorer
 		public double SelectionLinePosition
 		{
 			get => _selectionLinePosition;
-			set => _selectionLinePosition = value;
-		}
-
-		public int CbHeight
-		{
-			get => _cbHeight;
-			set => _cbHeight = value;
+			set
+			{
+				if (value != _selectionLinePosition)
+				{
+					_selectionLinePosition = value;
+					_dragLine.X1 = value;
+					_dragLine.X2 = value;
+				}
+			}
 		}
 
 		public int CbElevation
 		{
 			get => _cbElevation;
-			set => _cbElevation = value;
+			set
+			{
+				if (value != _cbElevation)
+				{
+					_cbElevation = value;
+					_dragLine.Y1 = value;
+					_dragLine.Y2 = CbElevation + CbHeight;
+				}
+			}
+		}
+
+		public int CbHeight
+		{
+			get => _cbHeight;
+			set
+			{
+				if (value != _cbHeight)
+				{
+					_cbHeight = value;
+					_dragLine.Y2 = CbElevation + CbHeight;
+				}
+			}
 		}
 
 		#endregion
 
 		#region Public Methods
 
-		public void Setup(Canvas canvas, int elevation, int height, double xPos)
-		{
-			_canvas = canvas;
-			CbElevation = elevation;
-			CbHeight = height;
-
-			_dragLine.Y1 = elevation;
-			_dragLine.Y2 = elevation + height;
+		//public void Setup(Canvas canvas, int elevation, int height, double xPosition, ColorBandWidthUpdater colorBandWidthUpdater)
+		//{
+		//	_canvas = canvas;
+		//	_colorBandWidthUpdater = colorBandWidthUpdater;
+		//	CbElevation = elevation;
+		//	CbHeight = height;
 			
-			SelectionLinePosition = xPos;
-			_dragLine.X1 = SelectionLinePosition;
-			_dragLine.X2 = SelectionLinePosition;
+		//	SelectionLinePosition = xPosition;
 
-			_canvas.Children.Add(_dragLine);
+		//	_canvas.Children.Add(_dragLine);
 
-			//_dragLine.SetValue(Canvas.LeftProperty, SelectionLinePosition);
-			//_dragLine.SetValue(Canvas.TopProperty, 0d);
-			//_dragLine.Stroke = new SolidColorBrush(Colors.Purple);
-			//_dragLine.StrokeThickness = 2;
-			//_dragLine.Width = 4;
-			//_dragLine.Height = CbHeight;
+		//	//_dragLine.SetValue(Canvas.LeftProperty, SelectionLinePosition);
+		//	//_dragLine.SetValue(Canvas.TopProperty, 0d);
+		//	//_dragLine.Stroke = new SolidColorBrush(Colors.Purple);
+		//	//_dragLine.StrokeThickness = 2;
+		//	//_dragLine.Width = 4;
+		//	//_dragLine.Height = CbHeight;
 
-			_dragLine.SetValue(Panel.ZIndexProperty, 10);
-
-			DragState = DragState.Begun;
-		}
+		//	_dragLine.SetValue(Panel.ZIndexProperty, 30);
+		//	_dragLine.Visibility = Visibility.Visible;
+		//}
 
 		public void TearDown()
 		{
 			try
 			{
-				_canvas.Children.Remove(_dragLine);
-				//_mapDisplayViewModel.PropertyChanged -= MapDisplayViewModel_PropertyChanged;
+				if (DragState != DragState.None)
+				{
+					DragState = DragState.None;
+				}
 
-				//MouseLeftButtonUp -= HandleMouseLeftButtonUp;
-				//MouseLeftButtonDown -= HandleMouseLeftButtonDown;
-
-				//MouseWheel -= HandleMouseWheel;
-				//MouseMove -= HandleMouseMove;
-
-				//MouseEnter -= HandleMouseEnter;
-				//MouseLeave -= HandleMouseLeave;
-
-				//_canvas = null;
+				if (_canvas != null)
+				{
+					_canvas.Children.Remove(_dragLine);
+				}
 			}
 			catch
 			{
 				Debug.WriteLine("SelectionRectangle encountered an exception in TearDown.");
 			}
+		}
+
+		public void StartDrag()
+		{
+			DragState = DragState.Begun;
 		}
 
 		#endregion
@@ -174,21 +196,42 @@ namespace MSetExplorer
 			{
 				if (_dragState != value)
 				{
-					if (value == DragState.None)
+					switch (value)
 					{
-						_dragLine.Visibility = Visibility.Hidden;
-					}
-					else if (value == DragState.Begun)
-					{
-						_dragLine.Visibility = Visibility.Visible;
-						_dragLine.Focus();
-					}
-					else
-					{
-						_dragLine.Visibility = Visibility.Visible;
+						case DragState.None:
 
-						// TODO: Check This -- is this needed?>
-						_dragLine.Focus();
+							if (_canvas != null)
+							{
+								_canvas.MouseMove -= HandleMouseMove;
+								_canvas.MouseLeftButtonUp -= HandleMouseLeftButtonUp;
+								_canvas.MouseLeave -= HandleMouseLeave;
+							}
+							break;
+
+						case DragState.Begun:
+
+							if (_canvas != null)
+							{
+								_dragLine.Visibility = Visibility.Visible;
+
+								if (!_dragLine.Focus())
+								{
+									Debug.WriteLine("WARNING: The SelectionLine did not receive the focus as the DragState was set to Begun.");
+								}
+
+								_canvas.MouseMove += HandleMouseMove;
+								_canvas.MouseLeftButtonUp += HandleMouseLeftButtonUp;
+								_canvas.MouseLeave += HandleMouseLeave;
+							}
+							break;
+
+						case DragState.InProcess:
+							// TODO: Check This -- is this needed?>
+							_dragLine.Focus();
+							break;
+
+						default:
+							break;
 					}
 
 					_dragState = value;
@@ -198,158 +241,53 @@ namespace MSetExplorer
 
 		#endregion
 
-
 		#region Event Handlers
 
 		private void DragLine_KeyUp(object sender, KeyEventArgs e)
 		{
 			if (DragState == DragState.None)
 			{
-				//Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- not in drag.");
+				Debug.WriteLine($"The {e.Key} was pressed on the DragLine not in drag.");
 				return;
 			}
 
 			if (e.Key == Key.Escape)
 			{
-				//Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- preview -- cancelling drag.");
-				DragState = DragState.None;
-
-				SelectionLineMoved?.Invoke(this, CbsSelectionLineMovedEventArgs.CreateCancelPreviewInstance());
+				Debug.WriteLine($"The {e.Key} was pressed on the DragLine -- cancelling drag.");
+				CancelDrag();
 			}
-		}
-
-		private void HandleMouseWheel(object sender, MouseWheelEventArgs e)
-		{
-			//if (!Selecting)
-			//{
-			//	return;
-			//}
-
-			////Debug.WriteLine("The canvas received a MouseWheel event.");
-
-			//var controlPos = e.GetPosition(relativeTo: _canvas);
-			//var posYInverted = new Point(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-
-			//var cSize = SelectedSize;
-
-			//Rect selection;
-
-			//if (e.Delta < 0)
-			//{
-			//	// Reverse roll, zooms out.
-			//	//selection = Expand(SelectedPosition, SelectedSize, PITCH_TARGET);
-			//	selection = Expand(SelectedPosition, SelectedSize, _pitch);
-			//}
-			//else if (e.Delta > 0 && cSize.Width >= _pitch * 4 && cSize.Height >= _pitch * 4)
-			//{
-			//	// Forward roll, zooms in.
-			//	//selection = Expand(SelectedPosition, SelectedSize, -1 * PITCH_TARGET);
-			//	selection = Expand(SelectedPosition, SelectedSize, -1 * _pitch);
-			//}
-			//else
-			//{
-			//	//Debug.WriteLine("MouseWheel, but no change.");
-			//	return;
-			//}
-
-			//var selectedPositionWasUpdated = MoveAndSize(selection.Location, selection.Size);
-
-			//if (selectedPositionWasUpdated)
-			//{
-			//	SelectedCenterPosition = posYInverted;
-			//}
-
-			//e.Handled = true;
-		}
-
-		private void HandleMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		{
-			//_haveMouseDown = true;
-
-			//if (DragState == DragState.None)
-			//{
-			//	_dragAnchor = e.GetPosition(relativeTo: this);
-			//}
 		}
 
 		private void HandleMouseMove(object sender, MouseEventArgs e)
 		{
-			//HandleDragMove(e);
+			if (e.LeftButton == MouseButtonState.Pressed)
+			{
+				var pos = e.GetPosition(relativeTo: _canvas);
+
+				if (_colorBandWidthUpdater.Invoke(_colorBandIndex, _originalXPosition, pos.X))
+				{
+					SelectionLinePosition = pos.X;
+				}
+			}
+			else
+			{
+				CancelDrag();
+			}
 		}
 
-		//private void HandleSelectionMove(MouseEventArgs e)
+		//private void HandleMouseRightButtonDown(object sender, MouseButtonEventArgs e)
 		//{
-		//	var controlPos = e.GetPosition(relativeTo: this);
-
-		//	// Invert the y coordinate.
-		//	var posYInverted = new Point(controlPos.X, ActualHeight - controlPos.Y);
-		//	Move(posYInverted);
-		//}
-
-		//private void HandleDragMove(MouseEventArgs e)
-		//{
-		//	if (!IsEnabled)
-		//	{
-		//		return;
-		//	}
-
-		//	if (DragState == DragState.None)
-		//	{
-		//		if (_haveMouseDown && e.LeftButton == MouseButtonState.Pressed)
-		//		{
-		//			var controlPos = e.GetPosition(relativeTo: this);
-		//			var dist = _dragAnchor - controlPos;
-
-		//			if (Math.Abs(dist.Length) > DRAG_TRIGGER_DIST)
-		//			{
-		//				_dragLine.X1 = _dragAnchor.X;
-		//				_dragLine.Y1 = _dragAnchor.Y;
-		//				_dragLine.X2 = _dragAnchor.X;
-		//				_dragLine.Y2 = _dragAnchor.Y;
-
-		//				DragState = DragState.Begun;
-		//				_haveMouseDown = false;
-		//				_dragLine.Focus();
-		//			}
-		//		}
-		//	}
-		//	else
-		//	{
-		//		var controlPos = e.GetPosition(relativeTo: this);
-		//		SetDragPosition(controlPos);
-		//	}
+		//	Debug.WriteLine($"The CbsSelectionLine at position: {SelectionLinePosition} got a MouseRightButtonDown event.");
 		//}
 
 		private void HandleMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			//if (!IsEnabled)
-			//{
-			//	//Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event -- we are disabled.");
-			//	return;
-			//}
+			Debug.WriteLine($"The CbsSelectionLine is getting a MouseLeftButtonUp event. IsFocused = {_canvas?.IsFocused ?? false}. DragState = {DragState}.");
 
-			////Debug.WriteLine($"Section Rectangle is getting a MouseLeftButtonUp event. IsFocused = {_canvas.IsFocused}. Have a mouse down event = {_haveMouseDown}, DragState = {DragState}, Selecting = {Selecting}");
-
-			//if (DragState != DragState.None)
-			//{
-			//	HandleDragLine(e);
-			//}
-		}
-
-		private void HandleDragLine(MouseButtonEventArgs e)
-		{
-			//var controlPos = e.GetPosition(relativeTo: _canvas);
-
-			//if (DragState == DragState.Begun)
-			//{
-			//	DragState = DragState.InProcess;
-			//}
-			//else
-			//{
-			//	DragState = DragState.None;
-			//	var offset = GetDragOffset(DragLineTerminus);
-			//	SelectionLineMoved?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset, isPreview: false));
-			//}
+			if (DragState != DragState.None)
+			{
+				CompleteDrag();
+			}
 		}
 
 		private void HandleMouseLeave(object sender, MouseEventArgs e)
@@ -395,131 +333,23 @@ namespace MSetExplorer
 			//}
 		}
 
-		private void Activate(Point position)
-		{
-			//Selecting = true;
-			//Move(position);
-
-			//if (!_selectedArea.Focus())
-			//{
-			//	Debug.WriteLine("WARNING: Activate did not move the focus to the SelectedRectangle");
-			//}
-		}
-
 		#endregion
 
 		#region Private Methods
 
-		private double StopSelecting()
+		private void CompleteDrag()
 		{
-			return 0d;
+			SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(_colorBandIndex, SelectionLinePosition, isPreview: false));
+
+			DragState = DragState.None;
 		}
 
-		// Return the distance from the DragAnchor to the new mouse position.
-		//private VectorInt GetDragOffset(Point controlPos)
-		//{
-		//	var startP = new PointDbl(_dragAnchor.X, ActualHeight - _dragAnchor.Y);
-		//	var endP = new PointDbl(controlPos.X, ActualHeight - controlPos.Y);
-		//	var vectorDbl = endP.Diff(startP);
-		//	var result = vectorDbl.Round();
-
-		//	return result;
-		//}
-
-		// Reposition the Selection Rectangle, keeping it's current size.
-		private void Move(Point posYInverted)
+		private void CancelDrag()
 		{
-			////Debug.WriteLine($"Moving the sel rec to {position}, free form.");
-			////ReportPosition(posYInverted);
+			DragState = DragState.None;
 
-			//var x = DoubleHelper.RoundOff(posYInverted.X - (_selectedArea.Width / 2), _pitch);
-			//var y = DoubleHelper.RoundOff(posYInverted.Y - (_selectedArea.Height / 2), _pitch);
-
-			//if (x < 0)
-			//{
-			//	x = 0;
-			//}
-
-			//if (x + _selectedArea.Width > _canvas.ActualWidth)
-			//{
-			//	x = _canvas.ActualWidth - _selectedArea.Width;
-			//}
-
-			//if (y < 0)
-			//{
-			//	y = 0;
-			//}
-
-			//if (y + _selectedArea.Height > _canvas.ActualHeight)
-			//{
-			//	y = _canvas.ActualHeight - _selectedArea.Height;
-			//}
-
-			//var cLeft = (double)_selectedArea.GetValue(Canvas.LeftProperty);
-			//var cBot = (double)_selectedArea.GetValue(Canvas.BottomProperty);
-
-			//if (double.IsNaN(cLeft) || Math.Abs(x - cLeft) > 0.01 || double.IsNaN(cBot) || Math.Abs(y - cBot) > 0.01)
-			//{
-			//	SelectedCenterPosition = posYInverted;
-			//	SelectedPosition = new Point(x, y);
-
-			//	var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
-			//	var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
-			//	var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
-
-			//	//Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
-
-			//	AreaSelected?.Invoke(this, eventArgs);
-			//}
+			SelectionLineMoved?.Invoke(this, CbsSelectionLineMovedEventArgs.CreateCancelPreviewInstance(_colorBandIndex));
 		}
-
-
-		// Position the current end of the drag line
-		private void SetDragPosition(Point controlPos)
-		{
-			//var dist = controlPos - _dragAnchor;
-
-			//// Horizontal
-			//var x = DoubleHelper.RoundOff(dist.X, _pitch);
-
-			//x = _dragAnchor.X + x;
-
-			//if (x < 0)
-			//{
-			//	x += _pitch;
-			//}
-
-			//if (x > _canvas.ActualWidth)
-			//{
-			//	x -= _pitch;
-			//}
-
-			//// Vertical
-			//var y = DoubleHelper.RoundOff(dist.Y, _pitch);
-			//y = _dragAnchor.Y + y;
-
-			//if (y < 0)
-			//{
-			//	y += _pitch;
-			//}
-
-			//if (y > _canvas.ActualWidth)
-			//{
-			//	y -= _pitch;
-			//}
-
-			//var dragLineTerminus = DragLineTerminus;
-			//var newDlt = new Point(x, y);
-
-			//if ( (dragLineTerminus - newDlt).LengthSquared > 0.05 )
-			//{
-			//	DragLineTerminus = newDlt;
-
-			//	var offset = GetDragOffset(DragLineTerminus);
-			//	SelectionLineMoved?.Invoke(this, new ImageDraggedEventArgs(TransformType.Pan, offset, isPreview: true));
-			//}
-		}
-
 
 
 		//private void SetMousePosition(Point posYInverted)
@@ -541,44 +371,6 @@ namespace MSetExplorer
 		//	var relativePoint = generalTransform.Transform(new Point(0, 0));
 
 		//	return relativePoint;
-		//}
-
-		//// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
-		//// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
-		//private Point ConvertToScreenCoords(Point posYInverted)
-		//{
-		//	var pointDbl = new PointDbl(posYInverted.X, posYInverted.Y);
-		//	var screenPos = ConvertToScreenCoords(pointDbl);
-		//	var result = new Point(screenPos.X, screenPos.Y);
-
-		//	return result;
-		//}
-
-		//// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
-		//// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
-		//private PointDbl ConvertToScreenCoords(PointDbl posYInverted)
-		//{
-		//	var result = posYInverted.Translate(CanvasControlOffset);
-
-		//	return result;
-		//}
-
-		//private Point ConvertToCanvasCoords(Point posYInverted)
-		//{
-		//	var pointDbl = new PointDbl(posYInverted.X, posYInverted.Y);
-		//	var screenPos = ConvertToCanvasCoords(pointDbl);
-		//	var result = new Point(screenPos.X, screenPos.Y);
-
-		//	return result;
-		//}
-
-		//// The Image Blocks Group may have it origin shifted down and to the left from the canvas's origin.
-		//// Convert the point relative to the canvas' origin to coordinates relative to the Image Blocks
-		//private PointDbl ConvertToCanvasCoords(PointDbl posYInverted)
-		//{
-		//	var result = posYInverted.Translate(CanvasControlOffset.Scale(-1d));
-
-		//	return result;
 		//}
 
 		#endregion

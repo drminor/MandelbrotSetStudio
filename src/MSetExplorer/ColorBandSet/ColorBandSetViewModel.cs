@@ -454,7 +454,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public bool TryUpdateCutoff(int colorBandIndex, int newValue)
+		public bool TryUpdateCutoff(int colorBandIndex, int newCutoff)
 		{
 			if (colorBandIndex <= 0 | colorBandIndex >= _currentColorBandSet.Count)
 			{
@@ -463,7 +463,7 @@ namespace MSetExplorer
 
 			var cb = _currentColorBandSet[colorBandIndex];
 
-			cb.Cutoff = newValue;
+			cb.Cutoff = newCutoff;
 
 			if (TryGetSuccessor(_currentColorBandSet, cb, out var colorBand))
 			{

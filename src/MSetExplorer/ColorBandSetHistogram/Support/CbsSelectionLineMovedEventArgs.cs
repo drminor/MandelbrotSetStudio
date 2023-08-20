@@ -1,24 +1,25 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 
 namespace MSetExplorer
 {
 	public class CbsSelectionLineMovedEventArgs : EventArgs
 	{
-		public VectorInt DragOffset { get; init; }
+		public int ColorBandIndex { get; init; }
+		public double NewXPosition { get; init; }
 
 		public bool IsPreview { get; init; }
 		public bool IsPreviewBeingCancelled { get; init; }
 
-		public CbsSelectionLineMovedEventArgs(VectorInt dragOffset, bool isPreview)
+		public CbsSelectionLineMovedEventArgs(int colorBandIndex, double newXPosition, bool isPreview)
 		{
-			DragOffset = dragOffset;
+			ColorBandIndex = colorBandIndex;
+			NewXPosition = newXPosition;
 			IsPreview = isPreview;
 		}
 
-		public static CbsSelectionLineMovedEventArgs CreateCancelPreviewInstance()
+		public static CbsSelectionLineMovedEventArgs CreateCancelPreviewInstance(int colorBandIndex)
 		{
-			var result = new CbsSelectionLineMovedEventArgs(new VectorInt(), isPreview: true)
+			var result = new CbsSelectionLineMovedEventArgs(colorBandIndex, -1, isPreview: true)
 			{
 				IsPreviewBeingCancelled = true
 			};

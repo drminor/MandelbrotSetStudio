@@ -378,9 +378,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public void UpdateColorBandWidth(int colorBandIndex, int newValue)
+		public void UpdateColorBandWidth(int colorBandIndex, int newCutoff)
 		{
-			ColorBandWidthChanged?.Invoke(this, (colorBandIndex, newValue));
+			ColorBandWidthChanged?.Invoke(this, (colorBandIndex, newCutoff));
 			//if (colorBandIndex > 0)
 			//{
 			//	var cb = ColorBandSet[colorBandIndex];

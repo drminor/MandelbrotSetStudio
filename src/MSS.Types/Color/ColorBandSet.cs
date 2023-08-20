@@ -48,7 +48,8 @@ namespace MSS.Types
 			OnFile = false;
 		}
 
-		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) : base(FixBands(colorBands))
+		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
+			: base(FixBands(colorBands))
 		{
 			//Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
 
@@ -398,6 +399,8 @@ namespace MSS.Types
 					cb.SuccessorStartColor = colorBands[i + 1].StartColor;
 					prevCutoff = cb.Cutoff;
 
+					Debug.Assert(cb.BucketWidth >= 0, "The bucket width is negative while creating the ColorBandSet.");
+
 					if (cb.BlendStyle == ColorBandBlendStyle.None)
 					{
 						cb.EndColor = cb.StartColor;
@@ -424,6 +427,9 @@ namespace MSS.Types
 				var minCutoff = colorBands[0].StartingCutoff;
 
 				var totalRange = 1 + maxCutoff - minCutoff;
+
+				var bucketWidths = string.Join("; ", result.Select(x => x.BucketWidth.ToString()).ToArray());
+				Debug.WriteLine($"Bucket Widths: {bucketWidths}.");
 			}
 
 			return result;

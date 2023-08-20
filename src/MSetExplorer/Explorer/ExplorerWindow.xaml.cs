@@ -187,17 +187,17 @@ namespace MSetExplorer
 		private void CbshDisplayViewModel_ColorBandWidthChanged(object? sender, (int, int) e)
 		{
 			var colorBandIndex = e.Item1;
-			var newValue = e.Item2;
+			var newCutoff = e.Item2;
 
 			if (_vm.ColorBandSetViewModel.ColorBandSet != null)
 			{
-				if (_vm.ColorBandSetViewModel.TryUpdateCutoff(colorBandIndex, newValue))
+				if (_vm.ColorBandSetViewModel.TryUpdateCutoff(colorBandIndex, newCutoff))
 				{
 					return;
 				}
 			}
 
-			Debug.WriteLine($"Could not update the VM's ColorBandSetViewModel's ColorBand at index: {colorBandIndex} with newValue: {newValue}.");
+			Debug.WriteLine($"Could not update the VM's ColorBandSetViewModel's ColorBand at index: {colorBandIndex} with newValue: {newCutoff}.");
 		}
 
 		#endregion
