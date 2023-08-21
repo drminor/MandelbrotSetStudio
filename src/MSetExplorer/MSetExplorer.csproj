@@ -15,11 +15,13 @@
 
 
   <ItemGroup>
+    <Compile Remove="ColorBandSetHistogram\Support\CbsSelectionLineFirstDraft.cs" />
     <Compile Remove="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
 
   <ItemGroup>
+    <None Include="ColorBandSetHistogram\Support\CbsSelectionLineFirstDraft.cs" />
     <None Include="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 

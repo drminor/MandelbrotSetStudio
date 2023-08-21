@@ -1,13 +1,9 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Diagnostics;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -16,7 +12,6 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private Canvas _canvas;
-		private int _colorBandIndex;
 		private double _originalXPosition;
 		private ColorBandWidthUpdater _colorBandWidthUpdater;
 
@@ -33,22 +28,10 @@ namespace MSetExplorer
 
 		public CbsSelectionLine(Canvas canvas, int elevation, int height, int colorBandIndex, double xPosition, ColorBandWidthUpdater colorBandWidthUpdater)
 		{
-			//_canvas = null;
-			//_colorBandWidthUpdater = null;
-			//_dragLine = BuildDragLine();
-			//_dragState = DragState.None;
-
-			//SelectionLinePosition = 0;
-			//CbElevation = 0;
-			//CbHeight = 0;
-
-
 			_canvas = canvas;
-			_colorBandIndex = colorBandIndex;
+			ColorBandIndex = colorBandIndex;
 			_originalXPosition = xPosition;
 			_colorBandWidthUpdater = colorBandWidthUpdater;
-
-			//SelectionLinePosition = xPosition;
 
 			_cbElevation = elevation;
 			_cbHeight = height;
@@ -59,8 +42,7 @@ namespace MSetExplorer
 
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
-			//_dragLine.Visibility = Visibility.Visible;
-			_dragLine.KeyUp += DragLine_KeyUp;
+			//_dragLine.KeyUp += DragLine_KeyUp;
 		}
 
 		private Line BuildDragLine(int elevation, int height, double xPosition)
@@ -74,11 +56,8 @@ namespace MSetExplorer
 				Y2 = height,
 				X1 = xPosition,
 				X2 = xPosition,
-				//Visibility = Visibility.Hidden,
 				Focusable = true
 			};
-
-			//result.SetValue(Panel.ZIndexProperty, 50);
 
 			return result;
 		}
@@ -92,6 +71,8 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+		public int ColorBandIndex { get; init; }
 
 		public double SelectionLinePosition
 		{
@@ -138,28 +119,6 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		//public void Setup(Canvas canvas, int elevation, int height, double xPosition, ColorBandWidthUpdater colorBandWidthUpdater)
-		//{
-		//	_canvas = canvas;
-		//	_colorBandWidthUpdater = colorBandWidthUpdater;
-		//	CbElevation = elevation;
-		//	CbHeight = height;
-			
-		//	SelectionLinePosition = xPosition;
-
-		//	_canvas.Children.Add(_dragLine);
-
-		//	//_dragLine.SetValue(Canvas.LeftProperty, SelectionLinePosition);
-		//	//_dragLine.SetValue(Canvas.TopProperty, 0d);
-		//	//_dragLine.Stroke = new SolidColorBrush(Colors.Purple);
-		//	//_dragLine.StrokeThickness = 2;
-		//	//_dragLine.Width = 4;
-		//	//_dragLine.Height = CbHeight;
-
-		//	_dragLine.SetValue(Panel.ZIndexProperty, 30);
-		//	_dragLine.Visibility = Visibility.Visible;
-		//}
-
 		public void TearDown()
 		{
 			try
@@ -182,7 +141,17 @@ namespace MSetExplorer
 
 		public void StartDrag()
 		{
-			DragState = DragState.Begun;
+			DragState = DragState.InProcess;
+		}
+
+		public void CancelDrag(bool raiseCancelEvent)
+		{
+			DragState = DragState.None;
+
+			if (raiseCancelEvent)
+			{
+				SelectionLineMoved?.Invoke(this, CbsSelectionLineMovedEventArgs.CreateCancelPreviewInstance(ColorBandIndex));
+			}
 		}
 
 		#endregion
@@ -204,30 +173,33 @@ namespace MSetExplorer
 							{
 								_canvas.MouseMove -= HandleMouseMove;
 								_canvas.MouseLeftButtonUp -= HandleMouseLeftButtonUp;
-								_canvas.MouseLeave -= HandleMouseLeave;
-							}
-							break;
-
-						case DragState.Begun:
-
-							if (_canvas != null)
-							{
-								_dragLine.Visibility = Visibility.Visible;
-
-								if (!_dragLine.Focus())
-								{
-									Debug.WriteLine("WARNING: The SelectionLine did not receive the focus as the DragState was set to Begun.");
-								}
-
-								_canvas.MouseMove += HandleMouseMove;
-								_canvas.MouseLeftButtonUp += HandleMouseLeftButtonUp;
-								_canvas.MouseLeave += HandleMouseLeave;
+								//_canvas.PreviewKeyUp -= Handle_PreviewKeyUp;
 							}
 							break;
 
 						case DragState.InProcess:
-							// TODO: Check This -- is this needed?>
-							_dragLine.Focus();
+
+							if (_canvas != null)
+							{
+								//if (!_dragLine.Focus())
+								//{
+								//	Debug.WriteLine("WARNING: The SelectionLine did not receive the focus as the DragState was set to Begun.");
+								//}
+
+								//var uiElement = Keyboard.Focus(_canvas);
+
+								//if (uiElement == null)
+								//{
+								//	Debug.WriteLine("WARNING: The Canvas did not receive the focus as the DragState was set to Begun.");
+								//}
+
+								_canvas.MouseMove += HandleMouseMove;
+								_canvas.MouseLeftButtonUp += HandleMouseLeftButtonUp;
+								//_canvas.PreviewKeyUp += Handle_PreviewKeyUp;
+							}
+							break;
+
+						case DragState.Begun:
 							break;
 
 						default:
@@ -239,46 +211,49 @@ namespace MSetExplorer
 			}
 		}
 
+		//private void Handle_PreviewKeyUp(object sender, KeyEventArgs e)
+		//{
+		//	if (DragState == DragState.None)
+		//	{
+		//		Debug.WriteLine($"The {e.Key} was pressed on the Canvas not in drag.");
+		//		e.Handled = true;
+		//		return;
+		//	}
+
+		//	if (e.Key == Key.Escape)
+		//	{
+		//		Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- cancelling drag.");
+		//		CancelDrag(raiseCancelEvent: true);
+		//		e.Handled = true;
+		//	}
+		//}
+
 		#endregion
 
 		#region Event Handlers
 
-		private void DragLine_KeyUp(object sender, KeyEventArgs e)
+		private void HandleMouseMove(object sender, MouseEventArgs e)
 		{
-			if (DragState == DragState.None)
+			if (Keyboard.IsKeyDown(Key.Escape))
 			{
-				Debug.WriteLine($"The {e.Key} was pressed on the DragLine not in drag.");
+				CancelDrag(raiseCancelEvent: true);
 				return;
 			}
 
-			if (e.Key == Key.Escape)
-			{
-				Debug.WriteLine($"The {e.Key} was pressed on the DragLine -- cancelling drag.");
-				CancelDrag();
-			}
-		}
-
-		private void HandleMouseMove(object sender, MouseEventArgs e)
-		{
 			if (e.LeftButton == MouseButtonState.Pressed)
 			{
 				var pos = e.GetPosition(relativeTo: _canvas);
 
-				if (_colorBandWidthUpdater.Invoke(_colorBandIndex, _originalXPosition, pos.X))
+				if (_colorBandWidthUpdater.Invoke(ColorBandIndex, _originalXPosition, pos.X))
 				{
 					SelectionLinePosition = pos.X;
 				}
 			}
 			else
 			{
-				CancelDrag();
+				CancelDrag(raiseCancelEvent: true);
 			}
 		}
-
-		//private void HandleMouseRightButtonDown(object sender, MouseButtonEventArgs e)
-		//{
-		//	Debug.WriteLine($"The CbsSelectionLine at position: {SelectionLinePosition} got a MouseRightButtonDown event.");
-		//}
 
 		private void HandleMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
@@ -290,67 +265,16 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleMouseLeave(object sender, MouseEventArgs e)
-		{
-			////_haveMouseDown = false;
-			//if (Selecting)
-			//{
-			//	_selectedArea.Visibility = Visibility.Hidden;
-			//}
-
-			//else if (DragState == DragState.Begun)
-			//{
-			//	DragState = DragState.None;
-			//	_dragLine.Visibility = Visibility.Hidden;
-			//}
-
-			//else if (DragState == DragState.InProcess)
-			//{
-			//	_dragLine.Visibility = Visibility.Hidden;
-			//}
-		}
-
-		private void HandleMouseEnter(object sender, MouseEventArgs e)
-		{
-			//if (Selecting)
-			//{
-			//	_selectedArea.Visibility = Visibility.Visible;
-
-			//	if (!_selectedArea.Focus())
-			//	{
-			//		Debug.WriteLine("WARNING: Canvas Enter did not move the focus to the SelectedRectangle.");
-			//	}
-			//}
-			
-			//else if (DragState != DragState.None)
-			//{
-			//	_dragLine.Visibility = Visibility.Visible;
-
-			//	if (!_dragLine.Focus())
-			//	{
-			//		Debug.WriteLine("WARNING: Canvas Enter did not move the focus to the DragLine.");
-			//	}
-			//}
-		}
-
 		#endregion
 
 		#region Private Methods
 
 		private void CompleteDrag()
 		{
-			SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(_colorBandIndex, SelectionLinePosition, isPreview: false));
+			SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, SelectionLinePosition, isPreview: false));
 
 			DragState = DragState.None;
 		}
-
-		private void CancelDrag()
-		{
-			DragState = DragState.None;
-
-			SelectionLineMoved?.Invoke(this, CbsSelectionLineMovedEventArgs.CreateCancelPreviewInstance(_colorBandIndex));
-		}
-
 
 		//private void SetMousePosition(Point posYInverted)
 		//{
