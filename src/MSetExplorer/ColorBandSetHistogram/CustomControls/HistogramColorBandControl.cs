@@ -67,9 +67,7 @@ namespace MSetExplorer
 
 			_canvas.MouseEnter += Handle_MouseEnter;
 			_canvas.MouseLeave += Handle_MouseLeave;
-
 			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
-
 
 			_colorBandRectangles = new List<GeometryDrawing>();
 			_colorBandRectanglesOriginal = new List<RectangleGeometry>();
@@ -213,7 +211,6 @@ namespace MSetExplorer
 				var previousVal = _translationAndClipSize;
 				_translationAndClipSize = value;
 
-				//LogicalViewportSize = ClipAndOffset(previousVal, value);
 				ClipAndOffset(previousVal, value);
 			}
 		}
@@ -399,14 +396,12 @@ namespace MSetExplorer
 			{
 				HilightColorBandRectangle(colorBandIndex, Colors.Black, 200);
 
-				//var colorBandCutoff = GetCountValFromXPosition(e.NewXPosition);
 				var colorBandCutoff = e.NewXPosition / ContentScale.Width;
 
+				// TODO: Have the caller provide a callback Func to avoid using multiple events, etc.
 				// This is handled by the CbshDisplayViewModel_ColorBandWidthChanged method on the ExplorerWindow class
 				Debug.WriteLine($"About to raise the ColorBandCutoffChanged event. ColorBandIndex: {colorBandIndex}. NewXPosition: {e.NewXPosition}, CanvasTranslation: {_canvasTranslateTransform.X}, ScaleContent: {ContentScale.Width}. ColorBandCutoff: {colorBandCutoff}.");
 
-				// Use the ColorBandIndex -- Not the previous index.
-				//ColorBandWidthChanged?.Invoke(this, new(colorBandIndex - 1, (int)Math.Round(colorBandCutoff)));
 				ColorBandCutoffChanged?.Invoke(this, new(colorBandIndex, (int)Math.Round(colorBandCutoff)));
 
 				//Debug.WriteLine($"Here we will raise the ColorBandWidthChanged event. ColorBandIndex: {colorBandIndex}. ColorBandCutoff: {colorBandCutoff}.");
@@ -495,16 +490,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private double GetCountValFromXPosition(double xPosition)
-		//{
-		//	//Debug.Assert(_canvasTranslateTransform.X <= 0, "The CanvasTranslateTransform is positive.");
-		//	//var origin = _canvasTranslateTransform.X;
-		//	var pixelOffset = xPosition; // origin + xPosition;
-		//	var pixelOffsetScaled = pixelOffset / ContentScale.Width;
-
-		//	return pixelOffsetScaled;
-		//}
-
 		private void CopyColorBandRectanglesOriginal(IList<GeometryDrawing> source, IList<RectangleGeometry> dest)
 		{
 			dest.Clear();
@@ -520,18 +505,11 @@ namespace MSetExplorer
 
 		private void RestoreColorBandRectangles(int colorBandIndex)
 		{
-			//var cbLeft = _colorBandRectangles[colorBandIndex - 1].Geometry as RectangleGeometry;
-			//var cbRight = _colorBandRectangles[colorBandIndex].Geometry as RectangleGeometry;
-
 			var cbLeft = _colorBandRectangles[colorBandIndex].Geometry as RectangleGeometry;
 			var cbRight = _colorBandRectangles[colorBandIndex + 1].Geometry as RectangleGeometry;
 
-
 			if (cbLeft != null && cbRight != null)
 			{
-				//var cbLeftOriginal = _colorBandRectanglesOriginal[colorBandIndex - 1];
-				//var cbRightOriginal = _colorBandRectanglesOriginal[colorBandIndex];
-
 				var cbLeftOriginal = _colorBandRectanglesOriginal[colorBandIndex];
 				var cbRightOriginal = _colorBandRectanglesOriginal[colorBandIndex + 1];
 
@@ -539,9 +517,6 @@ namespace MSetExplorer
 				{
 					throw new InvalidOperationException("Found cbLeft and cbRight, but could not find cbLeftOriginal or cbRightOrigianl.");
 				}
-
-				//_colorBandRectangles[colorBandIndex - 1].Geometry = cbLeftOriginal;
-				//_colorBandRectangles[colorBandIndex].Geometry = cbRightOriginal;
 
 				_colorBandRectangles[colorBandIndex].Geometry = cbLeftOriginal;
 				_colorBandRectangles[colorBandIndex + 1].Geometry = cbRightOriginal;
@@ -572,8 +547,6 @@ namespace MSetExplorer
 			for (var i = 0; i <= endPtr; i++)
 			{
 				var colorBand = (ColorBand) listCollectionView.GetItemAt(i);
-
-				//var bandWidth = i == endPtr ? colorBand.BucketWidth : colorBand.BucketWidth + 1;
 				var bandWidth = colorBand.BucketWidth;
 				
 				if (i < endPtr)
@@ -589,7 +562,7 @@ namespace MSetExplorer
 				// Reduce the width by a single pixel to 'high-light' the boundary.
 				if (scaledArea.Width > 2)
 				{
-					var scaledAreaWithGap = Shorten(scaledArea, 1);
+					var scaledAreaWithGap = DrawingHelper.Shorten(scaledArea, 1);
 					cbr = DrawingHelper.BuildRectangle(scaledAreaWithGap, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
 				}
 				else
@@ -607,7 +580,7 @@ namespace MSetExplorer
 		private void HilightColorBandRectangle(int colorBandIndex, Color penColor, int interval)
 		{
 			var cbr = _colorBandRectangles[colorBandIndex];
-			cbr.Pen = new Pen(new SolidColorBrush(penColor), 0.75);
+			cbr.Pen = new Pen(new SolidColorBrush(penColor), 1.25);
 
 			var timer = new DispatcherTimer(
 				TimeSpan.FromMilliseconds(interval), 
@@ -621,7 +594,6 @@ namespace MSetExplorer
 			timer.Start();
 		}
 
-
 		private void DrawSelectionLines(IList<GeometryDrawing> colorBandRectangles)
 		{
 			RemoveSelectionLines();
@@ -633,9 +605,12 @@ namespace MSetExplorer
 
 				if (g != null)
 				{
-					//var xPosition =  g.Rect.Left;
-					// Don't use the Starting Cutoff, use the Cutoff
+					// This corresponds to the ColorBands Cutoff
 					var xPosition = g.Rect.Right;
+					if (g.Rect.Width > 2)
+					{
+						xPosition += 1;
+					}
 
 					var sl = new CbsSelectionLine(_canvas, CB_ELEVATION, CB_HEIGHT, colorBandIndex, xPosition, UpdateColorBandWidth);
 					_selectionLines.Add(sl);
@@ -699,17 +674,11 @@ namespace MSetExplorer
 
 			var updated = false;
 
-			//var cbLeft = _colorBandRectangles[colorBandIndex - 1].Geometry as RectangleGeometry;
-			//var cbRight = _colorBandRectangles[colorBandIndex].Geometry as RectangleGeometry;
-
 			var cbLeft = _colorBandRectangles[colorBandIndex].Geometry as RectangleGeometry;
 			var cbRight = _colorBandRectangles[colorBandIndex + 1].Geometry as RectangleGeometry;
 
 			if (cbLeft != null && cbRight != null)
 			{
-				//var cbLeftOriginal = _colorBandRectanglesOriginal[colorBandIndex - 1];
-				//var cbRightOriginal = _colorBandRectanglesOriginal[colorBandIndex];
-
 				var cbLeftOriginal = _colorBandRectanglesOriginal[colorBandIndex];
 				var cbRightOriginal = _colorBandRectanglesOriginal[colorBandIndex + 1];
 
@@ -725,8 +694,8 @@ namespace MSetExplorer
 					amount = amount * -1;
 					if (cbLeftOriginal.Rect.Width > amount && cbRightOriginal.Rect.X > amount)
 					{
-						cbLeft.Rect = Shorten(cbLeftOriginal.Rect, amount);
-						cbRight.Rect = MoveRectLeft(cbRightOriginal.Rect, amount);
+						cbLeft.Rect = DrawingHelper.Shorten(cbLeftOriginal.Rect, amount);
+						cbRight.Rect = DrawingHelper.MoveRectLeft(cbRightOriginal.Rect, amount);
 						updated = true;
 					}
 				}
@@ -734,44 +703,14 @@ namespace MSetExplorer
 				{
 					if (cbRightOriginal.Rect.Width > amount)
 					{
-						cbLeft.Rect = Lengthen(cbLeftOriginal.Rect, amount);
-						cbRight.Rect = MoveRectRight(cbRightOriginal.Rect, amount);
+						cbLeft.Rect = DrawingHelper.Lengthen(cbLeftOriginal.Rect, amount);
+						cbRight.Rect = DrawingHelper.MoveRectRight(cbRightOriginal.Rect, amount);
 						updated = true;
 					}
 				}
 			}
 
 			return updated;
-		}
-
-		Rect Shorten(Rect r, double amount)
-		{
-			var result = new Rect(r.Location, new Size(r.Width - amount, r.Height));
-			return result;
-		}
-
-		Rect MoveRectLeft(Rect r, double amount)
-		{
-			var result = new Rect(new Point(r.X - amount, r.Y), new Size(r.Width + amount, r.Height));
-			return result;
-		}
-
-		Rect Lengthen(Rect r, double amount)
-		{
-			var result = new Rect(r.Location, new Size(r.Width + amount, r.Height));
-			return result;
-		}
-
-		Rect MoveRectRight(Rect r, double amount)
-		{
-			var result = new Rect(new Point(r.X + amount, r.Y), new Size(r.Width - amount, r.Height));
-			return result;
-		}
-
-		RectangleDbl Shorten(RectangleDbl rd, double amount)
-		{
-			var result = new RectangleDbl(rd.Position, new SizeDbl(rd.Width - amount, rd.Height));
-			return result;
 		}
 
 		//private int FindColorBand(ListCollectionView? listCollectionView, double pixelOffset)

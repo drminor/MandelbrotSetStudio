@@ -123,6 +123,38 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Rect and RectanbleDbl Sizing / Shifting 
 
+		public static Rect Shorten(Rect r, double amount)
+		{
+			var result = new Rect(r.Location, new Size(r.Width - amount, r.Height));
+			return result;
+		}
+
+		public static Rect MoveRectLeft(Rect r, double amount)
+		{
+			var result = new Rect(new Point(r.X - amount, r.Y), new Size(r.Width + amount, r.Height));
+			return result;
+		}
+
+		public static Rect Lengthen(Rect r, double amount)
+		{
+			var result = new Rect(r.Location, new Size(r.Width + amount, r.Height));
+			return result;
+		}
+
+		public static Rect MoveRectRight(Rect r, double amount)
+		{
+			var result = new Rect(new Point(r.X + amount, r.Y), new Size(r.Width - amount, r.Height));
+			return result;
+		}
+
+		public static RectangleDbl Shorten(RectangleDbl rd, double amount)
+		{
+			var result = new RectangleDbl(rd.Position, new SizeDbl(rd.Width - amount, rd.Height));
+			return result;
+		}
+
+		#endregion
 	}
 }

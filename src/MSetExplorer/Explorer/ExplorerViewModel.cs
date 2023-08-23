@@ -225,7 +225,6 @@ namespace MSetExplorer
 				ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 
-			var ff = this.ColorBandSetViewModel;
 			CbsHistogramViewModel.ColorBandSet = colorBandSet;
 		}
 

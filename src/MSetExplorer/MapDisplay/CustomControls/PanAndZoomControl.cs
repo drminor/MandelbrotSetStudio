@@ -1148,26 +1148,6 @@ namespace MSetExplorer
 
 		public double MaxScale => MaxContentScale;
 
-		public void SetScaleOld(double contentScale)
-		{
-			var currentValue = ContentScale;
-
-			var transformScaleBefore = _contentScaler?.ContentScale ?? new SizeDbl();
-
-			ContentScale = contentScale;
-			var transformScaleAfter = _contentScaler?.ContentScale ?? new SizeDbl();
-
-			if (ScreenTypeHelper.IsSizeDblChanged(transformScaleAfter, transformScaleBefore))
-			{
-				Debug.WriteLine($"The PanAndZoom Control is updating the ContentScale from {currentValue} to {contentScale} as SetScale is being called.");
-			}
-			else
-			{
-				Debug.WriteLine($"WARNING: The PanAndZoom Control is updating the ContentScale from {currentValue} to {contentScale} as SetScale is being called, however the actual display control's scale did not change.");
-			}
-
-		}
-
 		#endregion
 
 		#region IContentScaler Support
