@@ -13,7 +13,7 @@ namespace MSetExplorer
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
 
-		ICbsHistogramViewModel CbshDisplayViewModel { get; }
+		ICbsHistogramViewModel CbsHistogramViewModel { get; }
 
 		ViewModelFactory ViewModelFactory { get; }
 

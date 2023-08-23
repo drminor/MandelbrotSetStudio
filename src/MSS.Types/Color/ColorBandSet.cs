@@ -430,6 +430,9 @@ namespace MSS.Types
 
 				var bucketWidths = string.Join("; ", result.Select(x => x.BucketWidth.ToString()).ToArray());
 				Debug.WriteLine($"Bucket Widths: {bucketWidths}.");
+
+				var cutoffs = string.Join("; ", result.Select(x => x.Cutoff.ToString()).ToArray());
+				Debug.WriteLine($"Cutoffs: {cutoffs}.");
 			}
 
 			return result;

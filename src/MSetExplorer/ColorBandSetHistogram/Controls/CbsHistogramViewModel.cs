@@ -1,12 +1,10 @@
 ﻿using MSS.Types;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -19,7 +17,7 @@ namespace MSetExplorer
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
 
 		private ColorBandSet _colorBandSet;
-		private ListCollectionView _colorBandsView;
+		private ListCollectionView? _colorBandsView;
 
 		private ColorBand? _currentColorBand;
 
@@ -74,7 +72,7 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
-		public event EventHandler<ValueTuple<int, int>>? ColorBandWidthChanged;
+		public event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
 
 		#endregion
 
@@ -87,11 +85,11 @@ namespace MSetExplorer
 			{
 				if (value != _colorBandSet)
 				{
+					ColorBandsView = null;
+
 					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetHistogram Display is processing a new ColorBandSet. Id = {value.Id}.");
 
 					_colorBandSet = value;
-
-					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 
 					var unscaledWidth = GetExtent(_colorBandSet);
 
@@ -99,11 +97,13 @@ namespace MSetExplorer
 					{
 						ResetView(unscaledWidth, DisplayPosition, DisplayZoom);
 					}
+
+					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 				}
 			}
 		}
 
-		public ListCollectionView ColorBandsView
+		public ListCollectionView? ColorBandsView
 		{
 			get => _colorBandsView;
 
@@ -378,17 +378,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public void UpdateColorBandWidth(int colorBandIndex, int newCutoff)
+		public void UpdateColorBandCutoff(int colorBandIndex, int newCutoff)
 		{
-			ColorBandWidthChanged?.Invoke(this, (colorBandIndex, newCutoff));
-			//if (colorBandIndex > 0)
-			//{
-			//	var cb = ColorBandSet[colorBandIndex];
-
-			//	Debug.WriteLine($"Would update the ColorBand at index: {colorBandIndex} with new value: {newValue}.");
-
-			//	cb.Cutoff = newValue;
-			//}
+			ColorBandCutoffChanged?.Invoke(this, (colorBandIndex, newCutoff));
 		}
 
 		#endregion
@@ -401,12 +393,15 @@ namespace MSetExplorer
 
 		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
 		{
-			if (ColorBandSet != null)
+			if (ColorBandsView != null)
 			{
-				ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
-			}
+				if (ColorBandSet != null)
+				{
+					ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
+				}
 
-			CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
+				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
+			}
 		}
 
 		private void HistogramUpdated(object? sender, HistogramUpdateType e)

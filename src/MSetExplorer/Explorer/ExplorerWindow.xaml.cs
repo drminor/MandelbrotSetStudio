@@ -49,7 +49,7 @@ namespace MSetExplorer
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 
 			//cbsPlotControl1.DataContext = _vm.CbshDisplayViewModel;
-			cbsHistogram1.DataContext = _vm.CbshDisplayViewModel;
+			cbsHistogram1.DataContext = _vm.CbsHistogramViewModel;
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 
 			_vm.MapCoordsIsVisible = mnuItem_CoordsWindow.IsChecked;
@@ -68,7 +68,7 @@ namespace MSetExplorer
 				//_vm = (IExplorerViewModel)DataContext;
 				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
 				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
-				_vm.CbshDisplayViewModel.ColorBandWidthChanged += CbshDisplayViewModel_ColorBandWidthChanged;
+				_vm.CbsHistogramViewModel.ColorBandCutoffChanged += CbshDisplayViewModel_ColorBandCutoffChanged;
 
 				// Position the Window near the left top.
 				Left = 20;
@@ -87,7 +87,7 @@ namespace MSetExplorer
 
 			_vm.ProjectViewModel.PropertyChanged -= ProjectViewModel_PropertyChanged;
 			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
-			_vm.CbshDisplayViewModel.ColorBandWidthChanged -= CbshDisplayViewModel_ColorBandWidthChanged;
+			_vm.CbsHistogramViewModel.ColorBandCutoffChanged -= CbshDisplayViewModel_ColorBandCutoffChanged;
 		}
 
 		private void ExplorerWindow_ContentRendered(object? sender, EventArgs e)
@@ -184,20 +184,23 @@ namespace MSetExplorer
 			}
 		}
 
-		private void CbshDisplayViewModel_ColorBandWidthChanged(object? sender, (int, int) e)
+		private void CbshDisplayViewModel_ColorBandCutoffChanged(object? sender, (int, int) e)
 		{
 			var colorBandIndex = e.Item1;
 			var newCutoff = e.Item2;
 
 			if (_vm.ColorBandSetViewModel.ColorBandSet != null)
 			{
-				if (_vm.ColorBandSetViewModel.TryUpdateCutoff(colorBandIndex, newCutoff))
+				try
 				{
-					return;
+					_vm.ColorBandSetViewModel.UpdateCutoff(colorBandIndex, newCutoff);
+				}
+				catch
+				{
+					//Debug.WriteLine($"Could not update the VM's ColorBandSetViewModel's ColorBand at index: {colorBandIndex} with newValue: {newCutoff}.");
+					throw;
 				}
 			}
-
-			Debug.WriteLine($"Could not update the VM's ColorBandSetViewModel's ColorBand at index: {colorBandIndex} with newValue: {newCutoff}.");
 		}
 
 		#endregion

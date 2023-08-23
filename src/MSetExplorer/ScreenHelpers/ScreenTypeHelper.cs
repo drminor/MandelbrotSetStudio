@@ -84,6 +84,18 @@ namespace MSetExplorer
 			return new RectangleDbl(rect.Left, rect.Right, rect.Top, rect.Bottom);
 		}
 
+		public static bool IsDoubleNearZero(double a, double threshold = 0.001)
+		{
+			if (double.IsNaN(a))
+			{
+				return false;
+			}
+
+			var result = Math.Abs(a) <= threshold;
+
+			return result;
+		}
+
 		public static bool IsDoubleChanged(double a, double b, double threshold = 0.001)
 		{
 			var aIsNAN = double.IsNaN(a);

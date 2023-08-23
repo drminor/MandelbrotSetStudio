@@ -14,7 +14,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
-			ICbsHistogramViewModel cbshDisplayViewModel, IJobTreeViewModel jobTreeViewModel,
+			ICbsHistogramViewModel cbsHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 			/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */ViewModelFactory viewModelFactory)
 		{
 			//_mapJobHelper = mapJobHelper;
@@ -41,7 +41,7 @@ namespace MSetExplorer
 			ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
 			ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
-			CbshDisplayViewModel = cbshDisplayViewModel;
+			CbsHistogramViewModel = cbsHistogramViewModel;
 		}
 
 		#endregion
@@ -57,8 +57,7 @@ namespace MSetExplorer
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
-		//public ColorBandSetHistogramViewModel ColorBandSetHistogramViewModel { get; }
-		public ICbsHistogramViewModel CbshDisplayViewModel { get; }
+		public ICbsHistogramViewModel CbsHistogramViewModel { get; }
 
 		public ViewModelFactory ViewModelFactory { get; init;}
 
@@ -129,7 +128,7 @@ namespace MSetExplorer
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
 		{
 			ColorBandSetViewModel.RefreshPercentages();
-			CbshDisplayViewModel.RefreshDisplay();
+			CbsHistogramViewModel.RefreshDisplay();
 		}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)

@@ -1,6 +1,4 @@
-﻿using MSS.Types.MSet;
-using MSS.Types;
-using System;
+﻿using System;
 using System.ComponentModel;
 
 namespace MSetExplorer
@@ -16,7 +14,7 @@ namespace MSetExplorer
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }
 
-		ICbsHistogramViewModel CbshDisplayViewModel { get; }
+		ICbsHistogramViewModel CbsHistogramViewModel { get; }
 
 		ViewModelFactory ViewModelFactory { get; }
 

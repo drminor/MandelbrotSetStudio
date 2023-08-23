@@ -12,12 +12,12 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private Canvas _canvas;
-		private double _originalXPosition;
 		private ColorBandWidthUpdater _colorBandWidthUpdater;
 
 		private readonly Line _dragLine;
 		private DragState _dragState;
 
+		private double _originalXPosition;
 		private double _selectionLinePosition;
 		private int _cbElevation;
 		private int _cbHeight;
@@ -31,18 +31,17 @@ namespace MSetExplorer
 			_canvas = canvas;
 			ColorBandIndex = colorBandIndex;
 			_originalXPosition = xPosition;
+			_selectionLinePosition = xPosition;
 			_colorBandWidthUpdater = colorBandWidthUpdater;
 
 			_cbElevation = elevation;
 			_cbHeight = height;
-			_selectionLinePosition = xPosition;
 			_dragLine = BuildDragLine(elevation, height, xPosition);
 
 			_dragState = DragState.None;
 
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
-			//_dragLine.KeyUp += DragLine_KeyUp;
 		}
 
 		private Line BuildDragLine(int elevation, int height, double xPosition)
@@ -173,7 +172,6 @@ namespace MSetExplorer
 							{
 								_canvas.MouseMove -= HandleMouseMove;
 								_canvas.MouseLeftButtonUp -= HandleMouseLeftButtonUp;
-								//_canvas.PreviewKeyUp -= Handle_PreviewKeyUp;
 							}
 							break;
 
@@ -181,21 +179,9 @@ namespace MSetExplorer
 
 							if (_canvas != null)
 							{
-								//if (!_dragLine.Focus())
-								//{
-								//	Debug.WriteLine("WARNING: The SelectionLine did not receive the focus as the DragState was set to Begun.");
-								//}
-
-								//var uiElement = Keyboard.Focus(_canvas);
-
-								//if (uiElement == null)
-								//{
-								//	Debug.WriteLine("WARNING: The Canvas did not receive the focus as the DragState was set to Begun.");
-								//}
-
 								_canvas.MouseMove += HandleMouseMove;
 								_canvas.MouseLeftButtonUp += HandleMouseLeftButtonUp;
-								//_canvas.PreviewKeyUp += Handle_PreviewKeyUp;
+								//var re = Keyboard.KeyUpEvent.AddOwner(typeof(CbsSelectionLine));
 							}
 							break;
 
@@ -211,23 +197,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void Handle_PreviewKeyUp(object sender, KeyEventArgs e)
-		//{
-		//	if (DragState == DragState.None)
-		//	{
-		//		Debug.WriteLine($"The {e.Key} was pressed on the Canvas not in drag.");
-		//		e.Handled = true;
-		//		return;
-		//	}
-
-		//	if (e.Key == Key.Escape)
-		//	{
-		//		Debug.WriteLine($"The {e.Key} was pressed on the Canvas -- cancelling drag.");
-		//		CancelDrag(raiseCancelEvent: true);
-		//		e.Handled = true;
-		//	}
-		//}
-
 		#endregion
 
 		#region Event Handlers
@@ -240,28 +209,38 @@ namespace MSetExplorer
 				return;
 			}
 
-			if (e.LeftButton == MouseButtonState.Pressed)
+			if (e.LeftButton != MouseButtonState.Pressed)
 			{
-				var pos = e.GetPosition(relativeTo: _canvas);
-
-				if (_colorBandWidthUpdater.Invoke(ColorBandIndex, _originalXPosition, pos.X))
-				{
-					SelectionLinePosition = pos.X;
-				}
-			}
-			else
-			{
+				// The user lifted the left mouse button while the mouse was not on the canvas.
 				CancelDrag(raiseCancelEvent: true);
+				return;
+			}
+
+			var pos = e.GetPosition(relativeTo: _canvas);
+
+			if (_colorBandWidthUpdater.Invoke(ColorBandIndex, _originalXPosition, pos.X))
+			{
+				Debug.WriteLine($"The XPos is {pos.X}. The original position is {_originalXPosition}.");
+				SelectionLinePosition = pos.X;
 			}
 		}
 
 		private void HandleMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
-			Debug.WriteLine($"The CbsSelectionLine is getting a MouseLeftButtonUp event. IsFocused = {_canvas?.IsFocused ?? false}. DragState = {DragState}.");
-
 			if (DragState != DragState.None)
 			{
-				CompleteDrag();
+				if (Keyboard.IsKeyDown(Key.Escape))
+				{
+					Debug.WriteLine($"The CbsSelectionLine is getting a MouseLeftButtonUp event. The Escape Key is Pressed, cancelling.");
+					CancelDrag(raiseCancelEvent: true);
+				}
+				else
+				{
+					var pos = e.GetPosition(relativeTo: _canvas);
+
+					Debug.WriteLine($"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag operation. The last XPos is {SelectionLinePosition}. The XPos is {pos.X}. The original position is {_originalXPosition}.");
+					CompleteDrag();
+				}
 			}
 		}
 

@@ -454,11 +454,16 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public bool TryUpdateCutoff(int colorBandIndex, int newCutoff)
+		public bool UpdateCutoff(int colorBandIndex, int newCutoff)
 		{
-			if (colorBandIndex <= 0 | colorBandIndex >= _currentColorBandSet.Count)
+			if (colorBandIndex < 0 | colorBandIndex > _currentColorBandSet.Count - 1)
 			{
-				return false;
+				throw new ArgumentOutOfRangeException(nameof(colorBandIndex), $"Cannot update the Cutoff for ColorBand at index: {colorBandIndex}. That value is out of range.");
+			}
+
+			if (colorBandIndex == _currentColorBandSet.Count - 1)
+			{
+				Debug.WriteLine("WARNING: TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
 			}
 
 			var cb = _currentColorBandSet[colorBandIndex];
@@ -469,7 +474,7 @@ namespace MSetExplorer
 			{
 				colorBand.PreviousCutoff = cb.Cutoff;
 			}
-			
+
 			UpdatePercentages();
 
 			PushCopyOfCurrent();
@@ -869,7 +874,7 @@ namespace MSetExplorer
 			return t.ToArray();
 		}
 
-		private bool TryGetPredeccessor(IList<ColorBand> colorBands, ColorBand cb, [MaybeNullWhen(false)] out ColorBand colorBand)
+		private bool TryGetPredeccessor(IList<ColorBand> colorBands, ColorBand cb, [NotNullWhen(true)] out ColorBand? colorBand)
 		{
 			colorBand = GetPredeccessor(colorBands, cb);
 			return !(colorBand is null);
@@ -882,7 +887,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool TryGetSuccessor(IList<ColorBand> colorBands, ColorBand cb, [MaybeNullWhen(false)] out ColorBand colorBand)
+		private bool TryGetSuccessor(IList<ColorBand> colorBands, ColorBand cb, [NotNullWhen(true)] out ColorBand? colorBand)
 		{
 			colorBand = GetSuccessor(colorBands, cb);
 			return !(colorBand is null);

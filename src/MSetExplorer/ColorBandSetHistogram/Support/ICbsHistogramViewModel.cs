@@ -11,10 +11,10 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
-		event EventHandler<ValueTuple<int, int>>? ColorBandWidthChanged;
+		event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
 
 		ColorBandSet ColorBandSet { get; set; }
-		ListCollectionView ColorBandsView { get; set; }
+		ListCollectionView? ColorBandsView { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
 
 		//int StartPtr { get; set; }					// Ptr to the first visible Color Band Rectangle
@@ -44,7 +44,7 @@ namespace MSetExplorer
 		int? MoveTo(VectorDbl displayPosition);
 
 		//void UpdateColorBandWidth(int colorBandIndex, double newValue);
-		void UpdateColorBandWidth(int colorBandIndex, int newValue);
+		void UpdateColorBandCutoff(int colorBandIndex, int newValue);
 
 		public event PropertyChangedEventHandler? PropertyChanged;
 	}

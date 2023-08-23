@@ -58,13 +58,12 @@ namespace MSetExplorer
 			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
 			var colorBandSetViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections, mapSectionHistogramProcessor);
 
-			// ColorBand Histogram ViewModel
-			//var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
-			var cbshDisplayViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);	
+			// ColorBandSet Histogram ViewModel
+			var cbsHistogramViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);	
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
-			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, cbshDisplayViewModel, jobTreeViewModel,
+			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, cbsHistogramViewModel, jobTreeViewModel,
 				//_mapLoaderManager, _mapJobHelper,
 				_viewModelFactory);
 
@@ -84,14 +83,12 @@ namespace MSetExplorer
 			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram);
 			var colorBandSetViewModel = new ColorBandSetViewModel(mapDisplayViewModel.MapSections, mapSectionHistogramProcessor);
 
-			// ColorBand Histogram ViewModel
-			//var colorBandSetHistogramViewModel = new ColorBandSetHistogramViewModel(mapSectionHistogramProcessor);
-			var cbshDisplayViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);
-
+			// ColorBandSet Histogram ViewModel
+			var cbsHistogramViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandSetViewModel, cbshDisplayViewModel, jobTreeViewModel,
+			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandSetViewModel, cbsHistogramViewModel, jobTreeViewModel,
 				//_mapLoaderManager, _mapJobHelper,
 				_viewModelFactory);
 
