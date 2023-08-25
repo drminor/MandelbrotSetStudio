@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		private ControlXPositionAndWidth _viewportOffsetAndWidth;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -41,19 +41,11 @@ namespace MSetExplorer
 
 			_wpfPlot1 = null;
 			_thePlot = null;
-
-			//_viewportOffsetX = 0;
-			//_viewportWidth = 0;
 		}
 
 		#endregion
 
 		#region Events
-
-		//public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ContentViewportSizeChanged;
-
-		//public event EventHandler<ValueTuple<double, double>>? ViewportOffsetXChanged;
-		//public event EventHandler<ValueTuple<double, double>>? ViewportWidthChanged;
 
 		public event EventHandler<ValueTuple<ControlXPositionAndWidth, ControlXPositionAndWidth>>? ViewportOffsetAndWidthChanged;
 
@@ -114,40 +106,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public double ViewportOffsetX
-		//{
-		//	get => _viewportOffsetX;
-			
-		//	set
-		//	{
-		//		if (ScreenTypeHelper.IsDoubleChanged(value, _viewportOffsetX))
-		//		{
-		//			var previousValue = _viewportOffsetX;
-		//			_viewportOffsetX = value;
-
-		//			ViewportOffsetXChanged?.Invoke(this, new ValueTuple<double, double>(previousValue, value));
-		//		}
-		//	}
-		//}
-
-		//public double ViewportWidth
-		//{
-		//	get => _viewportWidth;
-
-		//	set
-		//	{
-		//		if (ScreenTypeHelper.IsDoubleChanged(value, _viewportWidth))
-		//		{
-		//			var previousValue = _viewportWidth;
-		//			_viewportWidth = value;
-
-		//			Debug.WriteLine($"HistogramPlotControl is updating the ViewportWidth from {previousValue} to {value}.");
-
-		//			ViewportWidthChanged?.Invoke(this, new ValueTuple<double, double>(previousValue, value));
-		//		}
-		//	}
-		//}
 
 		public ControlXPositionAndWidth ViewportOffsetAndWidth
 		{
@@ -324,7 +282,6 @@ namespace MSetExplorer
 			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The HistogramPlotControl's ContentViewportSize is being updated from {previousValue} to {newValue}.");
 
 			c.UpdatePlotDataWidth(previousValue.Width, newValue.Width);
-			//c.ContentViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
 		}
 
 		#endregion
@@ -489,10 +446,6 @@ namespace MSetExplorer
 
 				Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged. Preparing to set the ViewportOffsetX and Width: X:{viewportOffsetX}, W: {viewportWidth}. " +
 					$"NOTE: ControlSize: {controlSize}. The FigureWidth: {figureWidth}, Margin Right {marginRight}");
-
-
-				//ViewportOffsetX = viewportOffsetX;
-				//ViewportWidth = viewportWidth;
 
 				ViewportOffsetAndWidth = new ControlXPositionAndWidth(viewportOffsetX, viewportWidth);
 			}

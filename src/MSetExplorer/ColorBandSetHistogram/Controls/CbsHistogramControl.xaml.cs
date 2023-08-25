@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		public CbsHistogramControl()
 		{
-			_useDetailedDebug = true;
+			_useDetailedDebug = false;
 
 			_vm = (CbsHistogramViewModel)DataContext;
 

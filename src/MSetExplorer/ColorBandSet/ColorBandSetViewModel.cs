@@ -43,6 +43,8 @@ namespace MSetExplorer
 		private bool _isDirty;
 		private readonly object _histLock;
 
+		private bool _useDetailedDebug = false;
+
 		#region Constructor
 
 		public ColorBandSetViewModel(ObservableCollection<MapSection> mapSections, IMapSectionHistogramProcessor mapSectionHistogramProcessor)
@@ -121,12 +123,12 @@ namespace MSetExplorer
 			//Debug.WriteLine($"ColorBandViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.Id}, New = {value?.Id}");
 			if (value == null)
 			{
-				Debug.WriteLine("ColorBandViewModel is clearing its collection. (non-null => null.)");
+				Debug.WriteLineIf(_useDetailedDebug, "ColorBandViewModel is clearing its collection. (non-null => null.)");
 			}
 			else
 			{
 				var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
-				Debug.WriteLine($"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
 			}
 
 			lock (_histLock)
@@ -166,7 +168,7 @@ namespace MSetExplorer
 				if (value != _useEscapeVelocities)
 				{
 					var strState = value ? "On" : "Off";
-					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the use of EscapeVelocities.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the use of EscapeVelocities.");
 					_useEscapeVelocities = value;
 					OnPropertyChanged(nameof(UseEscapeVelocities));
 				}
@@ -181,7 +183,7 @@ namespace MSetExplorer
 				if (value != _useRealTimePreview)
 				{
 					var strState = value ? "On" : "Off";
-					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the use of RealTimePreview. IsDirty = {IsDirty}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the use of RealTimePreview. IsDirty = {IsDirty}.");
 					_useRealTimePreview = value;
 
 					if (IsDirty)
@@ -203,7 +205,7 @@ namespace MSetExplorer
 				if (value != _highlightSelectedBand)
 				{
 					var strState = value ? "On" : "Off";
-					Debug.WriteLine($"The ColorBandSetViewModel is turning {strState} the High Lighting the Selected Color Band.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the High Lighting the Selected Color Band.");
 					_highlightSelectedBand = value;
 
 					OnPropertyChanged(nameof(HighlightSelectedBand));
@@ -710,7 +712,7 @@ namespace MSetExplorer
 
 			var newIndex = currentSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
 			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-			Debug.WriteLine($"Removed item at former index: {index}. The new index is: {newIndex}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Removed item at former index: {index}. The new index is: {newIndex}.");
 
 			return true;
 		}

@@ -22,6 +22,8 @@ namespace MSetExplorer
 		private int _cbElevation;
 		private int _cbHeight;
 
+		private bool _useDetailedDebug = false;
+
 		#endregion
 
 		#region Constructor
@@ -220,7 +222,7 @@ namespace MSetExplorer
 
 			if (_colorBandWidthUpdater.Invoke(ColorBandIndex, _originalXPosition, pos.X))
 			{
-				Debug.WriteLine($"The XPos is {pos.X}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The XPos is {pos.X}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = pos.X;
 			}
 		}
@@ -231,14 +233,14 @@ namespace MSetExplorer
 			{
 				if (Keyboard.IsKeyDown(Key.Escape))
 				{
-					Debug.WriteLine($"The CbsSelectionLine is getting a MouseLeftButtonUp event. The Escape Key is Pressed, cancelling.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. The Escape Key is Pressed, cancelling.");
 					CancelDrag(raiseCancelEvent: true);
 				}
 				else
 				{
 					var pos = e.GetPosition(relativeTo: _canvas);
 
-					Debug.WriteLine($"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag operation. The last XPos is {SelectionLinePosition}. The XPos is {pos.X}. The original position is {_originalXPosition}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag operation. The last XPos is {SelectionLinePosition}. The XPos is {pos.X}. The original position is {_originalXPosition}.");
 					CompleteDrag();
 				}
 			}
