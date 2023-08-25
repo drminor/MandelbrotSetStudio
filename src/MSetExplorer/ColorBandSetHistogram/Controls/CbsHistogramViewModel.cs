@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 		private ScrollBarVisibility _horizontalScrollBarVisibility;
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -473,24 +473,46 @@ namespace MSetExplorer
 
 		private void ResetView(double extentWidth, VectorDbl displayPosition, double displayZoom)
 		{
-			UnscaledExtent = new SizeDbl();
+			if (ScreenTypeHelper.IsDoubleChanged(extentWidth, UnscaledExtent.Width))
+			{
+				// The ExtentWidth is changing -- reset the position and scale.
+				UnscaledExtent = new SizeDbl();
 
-			var extent = new SizeDbl(extentWidth, _viewportSize.Height);
-			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event.");
+				var extent = new SizeDbl(extentWidth, _viewportSize.Height);
+				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event and resetting the Position and Scale.");
 
-			var initialSettingsF = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
+				var initialSettingsF = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
 
-			// Override the position
-			var positionZero = new VectorDbl();
-			// Override the zoom setting
-			var zoomUnity = 1d;
-			var initialSettings = new DisplaySettingsInitializedEventArgs(extent, positionZero, zoomUnity);
+				// Override the position
+				var positionZero = new VectorDbl();
+				// Override the zoom setting
+				var zoomUnity = 1d;
+				var initialSettings = new DisplaySettingsInitializedEventArgs(extent, positionZero, zoomUnity);
 
-			DisplaySettingsInitialized?.Invoke(this, initialSettings);
+				DisplaySettingsInitialized?.Invoke(this, initialSettings);
 
-			// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
-			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is setting the Unscaled Extent to complete the process of initializing the Histogram Display.");
-			UnscaledExtent = extent;
+				// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
+				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is setting the Unscaled Extent to complete the process of initializing the Histogram Display.");
+				UnscaledExtent = extent;
+			}
+			else
+			{
+				Debug.WriteLine("The CbsHistogramViewModel is skipping ResetView: the current and new extent (i.e., Target Iterations) are the same.");
+
+				UnscaledExtent = new SizeDbl();
+
+				var extent = new SizeDbl(extentWidth, _viewportSize.Height);
+				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event and keeping the Position and Scale.");
+
+				var initialSettings = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
+
+				DisplaySettingsInitialized?.Invoke(this, initialSettings);
+
+				// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
+				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is setting the Unscaled Extent to complete the process of initializing the Histogram Display.");
+				UnscaledExtent = extent;
+
+			}
 		}
 
 		#endregion

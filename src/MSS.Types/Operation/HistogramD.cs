@@ -5,6 +5,11 @@ using System.Linq;
 
 namespace MSS.Types
 {
+	/// <summary>
+	/// Dictionary based Histogram
+	/// Used by the ColorBandSetViewModel to hold data for 'TopValues', i.e., 
+	/// Occurrances for the CountValue = TargetIterations.
+	/// </summary>
 	public class HistogramD
 	{
 		#region Constructor

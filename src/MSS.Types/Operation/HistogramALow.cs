@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace MSS.Types
 {
+	/// <summary>
+	/// Array based Histogram used to hold data for a single MapSection
+	/// </summary>
 	public class HistogramALow : IHistogram
 	{
 		private int[] _values;

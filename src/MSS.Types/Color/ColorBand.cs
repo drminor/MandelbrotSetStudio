@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace MSS.Types
 {
@@ -116,6 +117,11 @@ namespace MSS.Types
 			{
 				if (value != _previousCutoff)
 				{
+					if (value == 91)
+					{
+						Debug.WriteLine("Setting PreviousCutoff to 91.");
+					}
+
 					var origVal = _previousCutoff;
 					_previousCutoff = value;
 					OnPropertyChanged();

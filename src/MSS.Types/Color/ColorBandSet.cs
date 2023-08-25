@@ -13,11 +13,9 @@ namespace MSS.Types
 {
 	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet?>, INotifyPropertyChanged, ICloneable
 	{
-		#region Static Members
+		#region Private Fields
 
 		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
-
-		#endregion
 
 		private ObjectId? _parentId;
 		private ObjectId _projectId;
@@ -26,6 +24,8 @@ namespace MSS.Types
 		private readonly Stack<ReservedColorBand> _reservedColorBands;
 
 		private DateTime _lastSavedUtc;
+
+		#endregion
 
 		#region Constructor
 
@@ -263,7 +263,7 @@ namespace MSS.Types
 		{
 			if (index < 0 || index > Count - 2)
 			{
-				throw new ArgumentException("Index must be between 0 and Count - 2, inclusive when deleting a cutoff.");
+				throw new ArgumentException($"DeleteCutoff. Index must be between 0 and {Count - 1}, inclusive.");
 			}
 
 			PullOffsetsDown(index); // Last Band is popped from the list and added to the reserves.
@@ -279,7 +279,7 @@ namespace MSS.Types
 		{
 			if (index < 0 || index > Count - 2)
 			{
-				throw new ArgumentException("Index must be between 0 and Count - 2, inclusive when deleting a cutoff.");
+				throw new ArgumentException($"DeleteColor. Index must be between 0 and {Count - 1}, inclusive.");
 			}
 
 			PullColorsDown(index); // A band is pulled from the reserves and placed at the end.
@@ -391,6 +391,7 @@ namespace MSS.Types
 				result = new List<ColorBand>(colorBands);
 
 				int? prevCutoff = null;
+				int startingCutoff = 0;
 
 				for (var i = 0; i < colorBands.Count - 1; i++)
 				{
@@ -399,7 +400,9 @@ namespace MSS.Types
 					cb.SuccessorStartColor = colorBands[i + 1].StartColor;
 					prevCutoff = cb.Cutoff;
 
-					Debug.Assert(cb.BucketWidth >= 0, "The bucket width is negative while creating the ColorBandSet.");
+					var bucketWidth = cb.Cutoff - startingCutoff;
+					Debug.Assert(bucketWidth >= 0, "The bucket width is negative while creating the ColorBandSet.");
+					startingCutoff = cb.Cutoff + 1;
 
 					if (cb.BlendStyle == ColorBandBlendStyle.None)
 					{
@@ -428,14 +431,22 @@ namespace MSS.Types
 
 				var totalRange = 1 + maxCutoff - minCutoff;
 
-				var bucketWidths = string.Join("; ", result.Select(x => x.BucketWidth.ToString()).ToArray());
-				Debug.WriteLine($"Bucket Widths: {bucketWidths}.");
-
-				var cutoffs = string.Join("; ", result.Select(x => x.Cutoff.ToString()).ToArray());
-				Debug.WriteLine($"Cutoffs: {cutoffs}.");
+				ReportBucketWidthsAndCutoffs(result);
 			}
 
 			return result;
+		}
+
+		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands)
+		{
+			var bucketWidths = string.Join("; ", colorBands.Select(x => x.BucketWidth.ToString()).ToArray());
+			Debug.WriteLine($"Bucket Widths: {bucketWidths}.");
+
+			var cutoffs = string.Join("; ", colorBands.Select(x => x.Cutoff.ToString()).ToArray());
+			Debug.WriteLine($"Cutoffs: {cutoffs}.");
+
+			var startingCutoffs = string.Join("; ", colorBands.Select(x => x.StartingCutoff.ToString()).ToArray());
+			Debug.WriteLine($"Starting Cutoffs: {startingCutoffs}.");
 		}
 
 		private void PullColorsDown(int index)

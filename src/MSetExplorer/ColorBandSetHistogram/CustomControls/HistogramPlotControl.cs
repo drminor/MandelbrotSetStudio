@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer;
+using MSS.Types;
 using ScottPlot;
 using ScottPlot.Plottable;
 using ScottPlot.Renderable;
@@ -18,10 +19,12 @@ namespace MSetExplorer
 		private WpfPlot? _wpfPlot1;
 		private ScatterPlot? _thePlot;
 
-		private double _viewportOffsetX;
-		private double _viewportWidth;
+		//private double _viewportOffsetX;
+		//private double _viewportWidth;
 
-		private bool _useDetailedDebug = false;
+		private ControlXPositionAndWidth _viewportOffsetAndWidth;
+
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -39,18 +42,20 @@ namespace MSetExplorer
 			_wpfPlot1 = null;
 			_thePlot = null;
 
-			_viewportOffsetX = 0;
-			_viewportWidth = 0;
+			//_viewportOffsetX = 0;
+			//_viewportWidth = 0;
 		}
 
 		#endregion
 
 		#region Events
 
-		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ContentViewportSizeChanged;
+		//public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ContentViewportSizeChanged;
 
-		public event EventHandler<ValueTuple<double, double>>? ViewportOffsetXChanged;
-		public event EventHandler<ValueTuple<double, double>>? ViewportWidthChanged;
+		//public event EventHandler<ValueTuple<double, double>>? ViewportOffsetXChanged;
+		//public event EventHandler<ValueTuple<double, double>>? ViewportWidthChanged;
+
+		public event EventHandler<ValueTuple<ControlXPositionAndWidth, ControlXPositionAndWidth>>? ViewportOffsetAndWidthChanged;
 
 		#endregion
 
@@ -84,58 +89,79 @@ namespace MSetExplorer
 
 				_wpfPlot1.SizeChanged += WpfPlot1_SizeChanged;
 
-				var seriesData = SeriesData;
-
-				if (seriesData.IsEmpty())
-				{
-					seriesData = new HPlotSeriesData(10);
-				}
+				// Create some data -- so that we can create a plot -- so that we update the Viewport Pixel Offset.
+				var seriesData = new HPlotSeriesData(10);
 
 				_thePlot = CreateScatterPlot(_wpfPlot1, seriesData);
 
 				_wpfPlot1.Refresh();
 				var xAxisDimensions = _wpfPlot1.Plot.XAxis.Dims;
 				UpdateViewportPixelOffsetAndWidth(xAxisDimensions);
+
+				// Remove the plot -- to keep the display clean until we receive some actual data.
+				_wpfPlot1.Plot.Remove(_thePlot);
 			}
 		}
 
 		private void WpfPlot1_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			if (_wpfPlot1 != null)
+			if (_wpfPlot1!= null)
 			{
-				var xAxisDimensions = _wpfPlot1.Plot.XAxis.Dims;
-				UpdateViewportPixelOffsetAndWidth(xAxisDimensions);
-			}
-		}
-
-		public double ViewportOffsetX
-		{
-			get => _viewportOffsetX;
-			
-			set
-			{
-				if (ScreenTypeHelper.IsDoubleChanged(value, _viewportOffsetX))
+				if (!SeriesData.IsEmpty())
 				{
-					var previousValue = _viewportOffsetX;
-					_viewportOffsetX = value;
-
-					ViewportOffsetXChanged?.Invoke(this, new ValueTuple<double, double>(previousValue, value));
+					var xAxisDimensions = _wpfPlot1.Plot.XAxis.Dims;
+					UpdateViewportPixelOffsetAndWidth(xAxisDimensions);
 				}
 			}
 		}
 
-		public double ViewportWidth
-		{
-			get => _viewportWidth;
+		//public double ViewportOffsetX
+		//{
+		//	get => _viewportOffsetX;
+			
+		//	set
+		//	{
+		//		if (ScreenTypeHelper.IsDoubleChanged(value, _viewportOffsetX))
+		//		{
+		//			var previousValue = _viewportOffsetX;
+		//			_viewportOffsetX = value;
 
+		//			ViewportOffsetXChanged?.Invoke(this, new ValueTuple<double, double>(previousValue, value));
+		//		}
+		//	}
+		//}
+
+		//public double ViewportWidth
+		//{
+		//	get => _viewportWidth;
+
+		//	set
+		//	{
+		//		if (ScreenTypeHelper.IsDoubleChanged(value, _viewportWidth))
+		//		{
+		//			var previousValue = _viewportWidth;
+		//			_viewportWidth = value;
+
+		//			Debug.WriteLine($"HistogramPlotControl is updating the ViewportWidth from {previousValue} to {value}.");
+
+		//			ViewportWidthChanged?.Invoke(this, new ValueTuple<double, double>(previousValue, value));
+		//		}
+		//	}
+		//}
+
+		public ControlXPositionAndWidth ViewportOffsetAndWidth
+		{
+			get => _viewportOffsetAndWidth;
 			set
 			{
-				if (ScreenTypeHelper.IsDoubleChanged(value, _viewportWidth))
+				if (value != _viewportOffsetAndWidth)
 				{
-					var previousValue = _viewportWidth;
-					_viewportWidth = value;
+					var previousValue = _viewportOffsetAndWidth;
+					_viewportOffsetAndWidth = value;
 
-					ViewportWidthChanged?.Invoke(this, new ValueTuple<double, double>(previousValue, value));
+					Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl is updating the ViewportWidth from {previousValue} to {value}.");
+
+					ViewportOffsetAndWidthChanged?.Invoke(this, new (previousValue, value));
 				}
 			}
 		}
@@ -298,7 +324,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The HistogramPlotControl's ContentViewportSize is being updated from {previousValue} to {newValue}.");
 
 			c.UpdatePlotDataWidth(previousValue.Width, newValue.Width);
-			c.ContentViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
+			//c.ContentViewportSizeChanged?.Invoke(c, new ValueTuple<SizeDbl, SizeDbl>(previousValue, newValue));
 		}
 
 		#endregion
@@ -347,14 +373,14 @@ namespace MSetExplorer
 				{
 					ClearPlotLimits(wpfPlot.Plot);
 					_thePlot.UpdateY(seriesData.DataY);
-					Debug.WriteLine($"The Series has {seriesData.DataX.Length}, updating existing Scatter Plot.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The Series has {seriesData.DataX.Length}, updating existing Scatter Plot.");
 				}
 				else
 				{
 					wpfPlot.Plot.Clear();
 					_thePlot = CreateScatterPlot(wpfPlot, seriesData);
 
-					Debug.WriteLine($"The Series has {seriesData.DataX.Length}, not updating -- creating new Scatter Plot.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The Series has {seriesData.DataX.Length}, not updating -- creating new Scatter Plot.");
 				}
 			}
 
@@ -382,7 +408,7 @@ namespace MSetExplorer
 				wpfPlot.Refresh();
 
 				var axLimits = plot.GetAxisLimits();
-				Debug.WriteLine($"Setting the XPlot Limits. Start: {startingIndex}, End: {endingIndex}. Current: X1: {axLimits.XMin}, X2: {axLimits.XMax}, Y1: {axLimits.YMin}, Y2: {axLimits.YMax}");
+				Debug.WriteLineIf(_useDetailedDebug, $"Setting the XPlot Limits. Start: {startingIndex}, End: {endingIndex}. Current: X1: {axLimits.XMin}, X2: {axLimits.XMax}, Y1: {axLimits.YMin}, Y2: {axLimits.YMax}");
 
 				plot.SetAxisLimitsX(startingIndex, endingIndex);
 				plot.XAxis.SetBoundary(startingIndex - 1000, endingIndex + 1000);
@@ -398,7 +424,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine($"Setting the Plot Limits, Start = End, Clearing instead of Setting.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Setting the Plot Limits, Start = End, Clearing instead of Setting.");
 				plot.SetAxisLimits(AxisLimits.NoLimits);
 			}
 		}
@@ -407,7 +433,7 @@ namespace MSetExplorer
 		{
 			if (plot != null)
 			{
-				Debug.WriteLine($"Clearing the Plot Limits.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Clearing the Plot Limits.");
 
 				plot.SetAxisLimits(AxisLimits.NoLimits);
 			}
@@ -461,16 +487,18 @@ namespace MSetExplorer
 
 				var controlSize = new SizeDbl(ActualWidth, ActualHeight);
 
-				Debug.WriteLine($"HistogramPlotControl.WpfPlot1_SizeChanged. Preparing to set the ViewportOffsetX and Width: X:{viewportOffsetX}, W: {viewportWidth}. " +
+				Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged. Preparing to set the ViewportOffsetX and Width: X:{viewportOffsetX}, W: {viewportWidth}. " +
 					$"NOTE: ControlSize: {controlSize}. The FigureWidth: {figureWidth}, Margin Right {marginRight}");
 
 
-				ViewportWidth = viewportWidth;
-				ViewportOffsetX = viewportOffsetX;
+				//ViewportOffsetX = viewportOffsetX;
+				//ViewportWidth = viewportWidth;
+
+				ViewportOffsetAndWidth = new ControlXPositionAndWidth(viewportOffsetX, viewportWidth);
 			}
 			else
 			{
-				Debug.WriteLine($"HistogramPlotControl.WpfPlot1_SizeChanged: Cannot set the ViewportOffset and Width, the yAxisDimensions.HasBeenSet = false.");
+				Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged: Cannot set the ViewportOffset and Width, the yAxisDimensions.HasBeenSet = false.");
 			}
 		}
 

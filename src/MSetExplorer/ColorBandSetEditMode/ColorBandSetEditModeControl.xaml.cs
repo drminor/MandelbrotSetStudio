@@ -12,7 +12,7 @@ namespace MSetExplorer
 
 		public ColorBandSetEditModeControl()
 		{
-			ColorBandSetEditMode = ColorBandSetEditMode.Offsets;
+			ColorBandSetEditMode = ColorBandSetEditMode.Bands;
 
 			Loaded += ColorBandSetEditModeControl_Loaded;
 			InitializeComponent();
@@ -20,7 +20,7 @@ namespace MSetExplorer
 
 		private void ColorBandSetEditModeControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			rdoBtnOffset.IsChecked = true;
+			rdoBtnBands.IsChecked = true;
 		}
 
 		#endregion
@@ -54,7 +54,7 @@ namespace MSetExplorer
 			{
 				PropertyChangedCallback = OnEditModeChanged,
 				BindsTwoWayByDefault = true,
-				DefaultValue = ColorBandSetEditMode.Offsets
+				DefaultValue = ColorBandSetEditMode.Bands
 			});
 
 		public ColorBandSetEditMode ColorBandSetEditMode

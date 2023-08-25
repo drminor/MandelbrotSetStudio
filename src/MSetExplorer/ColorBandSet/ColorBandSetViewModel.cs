@@ -1,7 +1,5 @@
 ﻿using MongoDB.Bson;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -58,7 +56,7 @@ namespace MSetExplorer
 
 			_rowHeight = 60;
 			_itemWidth = 180;
-			_editMode = ColorBandSetEditMode.Offsets;
+			_editMode = ColorBandSetEditMode.Bands;
 
 			_colorBandSet = null;
 
@@ -347,9 +345,9 @@ namespace MSetExplorer
 				}
 				else if (e.PropertyName == nameof(ColorBand.Cutoff))
 				{
-					if (TryGetSuccessor(_currentColorBandSet, cb, out var colorBand))
+					if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
 					{
-						colorBand.PreviousCutoff = cb.Cutoff;
+						successorColorBand.PreviousCutoff = cb.Cutoff;
 					}
 
 					foundUpdate = true;
@@ -366,9 +364,9 @@ namespace MSetExplorer
 					{
 						if (cb.BlendStyle == ColorBandBlendStyle.Next)
 						{
-							if (TryGetSuccessor(_currentColorBandSet, cb, out var colorBand))
+							if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
 							{
-								colorBand.StartColor = cb.EndColor;
+								successorColorBand.StartColor = cb.EndColor;
 							}
 						}
 
@@ -378,7 +376,7 @@ namespace MSetExplorer
 
 				if (foundUpdate)
 				{
-					PushCopyOfCurrent();
+					PushCurrentColorBandOnToHistoryCollection();
 					IsDirty = true;
 
 					if (UseRealTimePreview)
@@ -466,24 +464,36 @@ namespace MSetExplorer
 				Debug.WriteLine("WARNING: TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
 			}
 
-			var cb = _currentColorBandSet[colorBandIndex];
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
-			cb.Cutoff = newCutoff;
+			//var cb = _currentColorBandSet[colorBandIndex];
+			//cb.Cutoff = newCutoff;
 
-			if (TryGetSuccessor(_currentColorBandSet, cb, out var colorBand))
-			{
-				colorBand.PreviousCutoff = cb.Cutoff;
-			}
+			CurrentColorBand = _currentColorBandSet[colorBandIndex];
+			CurrentColorBand.Cutoff = newCutoff;
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+
+			//if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+			//{
+			//	successorColorBand.PreviousCutoff = cb.Cutoff;
+			//}
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
 			UpdatePercentages();
 
-			PushCopyOfCurrent();
+			PushCurrentColorBandOnToHistoryCollection();
 			IsDirty = true;
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
 			if (UseRealTimePreview)
 			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: false));
 			}
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
 			return true;
 		}
@@ -510,7 +520,7 @@ namespace MSetExplorer
 
 				if (result)
 				{
-					PushCopyOfCurrent();
+					PushCurrentColorBandOnToHistoryCollection();
 					IsDirty = true;
 					UpdatePercentages();
 
@@ -620,7 +630,7 @@ namespace MSetExplorer
 
 				if (result)
 				{
-					PushCopyOfCurrent();
+					PushCurrentColorBandOnToHistoryCollection();
 					IsDirty = true;
 					UpdatePercentages();
 
@@ -811,7 +821,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void PushCopyOfCurrent()
+		private void PushCurrentColorBandOnToHistoryCollection()
 		{
 			_colorBandSetHistoryCollection.Push(_currentColorBandSet.CreateNewCopy());
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));

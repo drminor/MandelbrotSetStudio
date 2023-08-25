@@ -68,7 +68,7 @@
 
                         <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <ContentPresenter.Content>
-                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="DeepSkyBlue">
+                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="Transparent">
                                     <Image x:Name="MainImage" />
                                 </Canvas>
                             </ContentPresenter.Content>

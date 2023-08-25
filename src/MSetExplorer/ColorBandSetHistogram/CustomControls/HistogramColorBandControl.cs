@@ -113,10 +113,12 @@ namespace MSetExplorer
 			{
 				_colorBandsView = value;
 
+				Debug.WriteLine($"The HistogramColorBandControl is calling DrawColorBands on ColorBandsView update.");
+
 				DrawColorBands(_colorBandsView);
 				if (_mouseIsEntered)
 				{
-					Debug.WriteLine($"The HistogramColorBandControl, because the mouse is on the canvas, is calling DrawSelectionLines on ColorBandsView update.");
+					Debug.WriteLine($"The HistogramColorBandControl is calling DrawSelectionLines on ColorBandsView update. (Have Mouse)");
 
 					DrawSelectionLines(_colorBandRectangles);
 				}
@@ -193,10 +195,13 @@ namespace MSetExplorer
 					var scaledExtent = extent * ContentScale.Width;
 					Canvas.Width = scaledExtent;
 
+					Debug.WriteLine($"The HistogramColorBandControl is calling DrawColorBands on ContentScale update.");
+
 					DrawColorBands(ColorBandsView);
 					if (_mouseIsEntered)
 					{
-						Debug.WriteLine($"The HistogramColorBandControl, because the mouse is on the canvas, is calling DrawSelectionLines on ContentScale update.");
+						Debug.WriteLine($"The HistogramColorBandControl is calling DrawSelectionLines on ContentScale update. (Have Mouse)");
+						
 						DrawSelectionLines(_colorBandRectangles);
 					}
 				}
@@ -336,6 +341,8 @@ namespace MSetExplorer
 		{
 			if (ColorBandsView == null) return;
 
+			Debug.WriteLine($"The HistogramColorBandControl is calling DrawSelectionLines on Handle_MouseEnter.");
+
 			DrawSelectionLines(_colorBandRectangles);
 			_mouseIsEntered = true;
 		}
@@ -388,9 +395,6 @@ namespace MSetExplorer
 				Debug.WriteLine($"The HistogramColorBandControl is handling the CbsSelectionLineMoved Event. The CbsSelectionMove is being cancelled.");
 
 				RestoreColorBandRectangles(colorBandIndex);
-
-				RemoveSelectionLines();
-				DrawSelectionLines(_colorBandRectangles);
 			}
 			else
 			{
@@ -402,10 +406,19 @@ namespace MSetExplorer
 				// This is handled by the CbshDisplayViewModel_ColorBandWidthChanged method on the ExplorerWindow class
 				Debug.WriteLine($"About to raise the ColorBandCutoffChanged event. ColorBandIndex: {colorBandIndex}. NewXPosition: {e.NewXPosition}, CanvasTranslation: {_canvasTranslateTransform.X}, ScaleContent: {ContentScale.Width}. ColorBandCutoff: {colorBandCutoff}.");
 
-				ColorBandCutoffChanged?.Invoke(this, new(colorBandIndex, (int)Math.Round(colorBandCutoff)));
+				var roundedColorBandCutoff = (int)Math.Round(colorBandCutoff);
+
+				if (roundedColorBandCutoff == 0)
+				{
+					Debug.WriteLine($"WARNING: Setting the Cutoff to zero for ColorBandIndex: {colorBandIndex}.");
+				}
+
+				ColorBandCutoffChanged?.Invoke(this, new(colorBandIndex, roundedColorBandCutoff));
 
 				//Debug.WriteLine($"Here we will raise the ColorBandWidthChanged event. ColorBandIndex: {colorBandIndex}. ColorBandCutoff: {colorBandCutoff}.");
 			}
+
+			//DrawSelectionLines(_colorBandRectangles);
 		}
 
 		#endregion
@@ -570,6 +583,14 @@ namespace MSetExplorer
 					cbr = DrawingHelper.BuildRectangle(scaledArea, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
 				}
 
+				if (cbr.Geometry is RectangleGeometry rg)
+				{
+					if (rg.Rect.Right == 0)
+					{
+						Debug.WriteLine("Creating a rectangle with right = 0.");
+					}
+				}
+
 				_colorBandRectangles.Add(cbr);
 				_drawingGroup.Children.Add(cbr);
 
@@ -579,19 +600,19 @@ namespace MSetExplorer
 
 		private void HilightColorBandRectangle(int colorBandIndex, Color penColor, int interval)
 		{
-			var cbr = _colorBandRectangles[colorBandIndex];
-			cbr.Pen = new Pen(new SolidColorBrush(penColor), 1.25);
+			//var cbr = _colorBandRectangles[colorBandIndex];
+			//cbr.Pen = new Pen(new SolidColorBrush(penColor), 1.25);
 
-			var timer = new DispatcherTimer(
-				TimeSpan.FromMilliseconds(interval), 
-				DispatcherPriority.Normal, 
-				(s, e) =>
-				{
-					cbr.Pen = new Pen(Brushes.Transparent, 0);
-				}, 
-				Dispatcher);
+			//var timer = new DispatcherTimer(
+			//	TimeSpan.FromMilliseconds(interval), 
+			//	DispatcherPriority.Normal, 
+			//	(s, e) =>
+			//	{
+			//		cbr.Pen = new Pen(Brushes.Transparent, 0);
+			//	}, 
+			//	Dispatcher);
 
-			timer.Start();
+			//timer.Start();
 		}
 
 		private void DrawSelectionLines(IList<GeometryDrawing> colorBandRectangles)
@@ -610,6 +631,11 @@ namespace MSetExplorer
 					if (g.Rect.Width > 2)
 					{
 						xPosition += 1;
+					}
+
+					if (xPosition < 2)
+					{
+						Debug.WriteLine($"DrawSelectionLines found an xPosition with a value < 2.");
 					}
 
 					var sl = new CbsSelectionLine(_canvas, CB_ELEVATION, CB_HEIGHT, colorBandIndex, xPosition, UpdateColorBandWidth);

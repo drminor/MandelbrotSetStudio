@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace MSS.Types
 {
+	/// <summary>
+	/// Array based Histogram. Used by the MapSection Histogram Processor
+	/// </summary>
 	public class HistogramA : IHistogram
 	{
 		private int[] _values;

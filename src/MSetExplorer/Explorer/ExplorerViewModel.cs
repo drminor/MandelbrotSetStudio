@@ -117,7 +117,7 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(IProjectViewModel.CurrentColorBandSet))
 			{
 				ColorBandSetViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
-				CbsHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
+				//CbsHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 
 				if (ProjectViewModel.CurrentProject != null)
 				{

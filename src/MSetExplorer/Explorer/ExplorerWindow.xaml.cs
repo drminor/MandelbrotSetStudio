@@ -111,7 +111,7 @@ namespace MSetExplorer
 			//	LoadNewProject();
 			//}
 
-			LoadNewProject();
+			//LoadNewProject();
 			//OpenProjectFromAppRequest(new string[] {"Art3"});
 
 			mapDisplay1.UpdateDisplaySize(_vm.MapDisplayViewModel.ViewportSize);
@@ -273,7 +273,7 @@ namespace MSetExplorer
 			mnuItem_JobTreeWindow.IsChecked = show;
 
 			colFarRight.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-			Width = show ? 1885 : 1475;
+			Width = show ? 1879 : 1475;
 		}
 
 		// Show Hide Job Tree
@@ -281,7 +281,7 @@ namespace MSetExplorer
 		{
 			var showHistogramControl = mnuItem_HistogramWindow.IsChecked;
 			botRow.Visibility = showHistogramControl ? Visibility.Visible : Visibility.Collapsed;
-			Height = showHistogramControl ? 1340 : 1100;
+			Height = showHistogramControl ? 1323 : 1100;
 		}
 
 		private void ToggleJobTreeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)

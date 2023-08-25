@@ -57,7 +57,8 @@ namespace MSetExplorer
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 				_vm.ContentViewportSize = _vm.ViewportSize;
 
-				PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetX, HistogramPlotControl1.ViewportWidth);
+				//PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetX, HistogramPlotControl1.ViewportWidth);
+				PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetAndWidth);
 
 				PanAndZoomControl1.ZoomOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
@@ -70,8 +71,9 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetChanged;
 
-				HistogramPlotControl1.ViewportOffsetXChanged += HistogramPlotControl1_ViewportOffsetXChanged;
-				HistogramPlotControl1.ViewportWidthChanged += HistogramPlotControl1_ViewportWidthChanged;
+				//HistogramPlotControl1.ViewportOffsetXChanged += HistogramPlotControl1_ViewportOffsetXChanged;
+				//HistogramPlotControl1.ViewportWidthChanged += HistogramPlotControl1_ViewportWidthChanged;
+				HistogramPlotControl1.ViewportOffsetAndWidthChanged += HistogramPlotControl1_ViewportOffsetAndWidthChanged;
 
 				HistogramColorBandControl1.ColorBandCutoffChanged += HistogramColorBandControl1_ColorBandCutoffChanged;
 
@@ -90,8 +92,10 @@ namespace MSetExplorer
 			PanAndZoomControl1.ContentOffsetXChanged -= ContentOffsetChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= ContentOffsetChanged;
 
-			HistogramPlotControl1.ViewportOffsetXChanged -= HistogramPlotControl1_ViewportOffsetXChanged;
-			HistogramPlotControl1.ViewportWidthChanged -= HistogramPlotControl1_ViewportWidthChanged;
+			//HistogramPlotControl1.ViewportOffsetXChanged -= HistogramPlotControl1_ViewportOffsetXChanged;
+			//HistogramPlotControl1.ViewportWidthChanged -= HistogramPlotControl1_ViewportWidthChanged;
+			HistogramPlotControl1.ViewportOffsetAndWidthChanged -= HistogramPlotControl1_ViewportOffsetAndWidthChanged;
+
 
 			HistogramColorBandControl1.ColorBandCutoffChanged -= HistogramColorBandControl1_ColorBandCutoffChanged;
 
@@ -160,24 +164,34 @@ namespace MSetExplorer
 			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
 		}
 
-		private void HistogramPlotControl1_ViewportWidthChanged(object? sender, (double, double) e)
-		{
-			var previousValue = e.Item1;
-			var newValue = e.Item2;
+		//private void HistogramPlotControl1_ViewportWidthChanged(object? sender, (double, double) e)
+		//{
+		//	var previousValue = e.Item1;
+		//	var newValue = e.Item2;
 
-			Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportWidthChanged event. DisplayZoom: {_vm.DisplayZoom}. The ColorBandControl's Width is being updated from {previousValue} to {newValue}.");
+		//	Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportWidthChanged event. DisplayZoom: {_vm.DisplayZoom}. The ColorBandControl's Width is being updated from {previousValue} to {newValue}.");
 
-			PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetX, newValue);
-		}
+		//	PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetX, newValue);
+		//}
 
-		private void HistogramPlotControl1_ViewportOffsetXChanged(object? sender, (double, double) e)
+		//private void HistogramPlotControl1_ViewportOffsetXChanged(object? sender, (double, double) e)
+		//{
+		//	var previousValue = e.Item1;
+		//	var newValue = e.Item2;
+
+		//	Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportOffsetXChanged event. The ColorBandControl's OffsetX is being updated from {previousValue} to {newValue}.");
+
+		//	PlaceTheColorBandControl(newValue, HistogramPlotControl1.ViewportWidth);
+		//}
+
+		private void HistogramPlotControl1_ViewportOffsetAndWidthChanged(object? sender, (ControlXPositionAndWidth, ControlXPositionAndWidth) e)
 		{
 			var previousValue = e.Item1;
 			var newValue = e.Item2;
 
 			Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportOffsetXChanged event. The ColorBandControl's OffsetX is being updated from {previousValue} to {newValue}.");
 
-			PlaceTheColorBandControl(newValue, HistogramPlotControl1.ViewportWidth);
+			PlaceTheColorBandControl(newValue);
 		}
 
 		private void CbsHistogramControl_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -197,9 +211,34 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void PlaceTheColorBandControl(double viewportOffsetX, double viewportWidth)
+		//private void PlaceTheColorBandControl(double viewportOffsetX, double viewportWidth)
+		//{
+		//	var column2Width = PlotAreaBorder.ActualWidth;
+
+		//	if (double.IsNaN(column2Width) || double.IsNaN(viewportOffsetX) || double.IsNaN(viewportWidth) || viewportWidth < 100)
+		//	{
+		//		return;
+		//	}
+
+		//	var leftMargin = viewportOffsetX;
+		//	var rightMargin = column2Width - (viewportWidth + leftMargin);
+
+		//	if (rightMargin < 0)
+		//	{
+		//		Debug.WriteLine($"The CbsHistogramControl found the Right Margin to be {rightMargin}, setting this to zero instead. LeftMargin: {leftMargin}, ViewportWidth: {viewportWidth}, Control Width: {column2Width}.");
+		//		rightMargin = 0;
+		//	}
+
+		//	Debug.WriteLine($"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
+		//	ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 2);
+		//}
+
+		private void PlaceTheColorBandControl(ControlXPositionAndWidth controlXPositionAndWidth)
 		{
 			var column2Width = PlotAreaBorder.ActualWidth;
+
+			var viewportOffsetX = controlXPositionAndWidth.XPosition;
+			var viewportWidth = controlXPositionAndWidth.Width;
 
 			if (double.IsNaN(column2Width) || double.IsNaN(viewportOffsetX) || double.IsNaN(viewportWidth) || viewportWidth < 100)
 			{
