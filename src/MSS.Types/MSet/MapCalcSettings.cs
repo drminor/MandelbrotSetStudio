@@ -17,11 +17,12 @@ namespace MSS.Types.MSet
 		public MapCalcSettings(int targetIterations) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities: false, saveTheZValues: false)
 		{ }
 
+		// Only used for POC and Tests
 		public MapCalcSettings(int targetIterations, int threshold) : this(targetIterations, threshold, useEscapeVelocities: false, saveTheZValues: false)
 		{ }
 
-		public MapCalcSettings(int targetIterations, bool useEscapeVelocities, bool saveTheZValues) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities, saveTheZValues)
-		{ }
+		//public MapCalcSettings(int targetIterations, bool useEscapeVelocities, bool saveTheZValues) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities, saveTheZValues)
+		//{ }
 
 		public MapCalcSettings(int targetIterations, int threshold, bool useEscapeVelocities, bool saveTheZValues)
 		{

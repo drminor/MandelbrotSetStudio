@@ -36,6 +36,7 @@ namespace MSetGeneratorPrototype
 			CiLimbSet = new Vector256<uint>[LimbCount];
 
 			CountsRowV = new Vector256<int>[VectorsPerRow];
+			//CountsRowV2 = new Vector256<int>[VectorsPerRow];
 
 			RowHasEscaped = new bool[0];
 			RowUsedCalcs = new long[RowCount];
@@ -78,6 +79,7 @@ namespace MSetGeneratorPrototype
 		public Vector256<uint>[] CiLimbSet { get; private set; }
 
 		public Vector256<int>[] CountsRowV { get; private set; }
+		//public Vector256<int>[] CountsRowV2 { get; private set; }
 
 		public bool[] RowHasEscaped { get; init; }
 		public long[] RowUnusedCalcs { get; init; }

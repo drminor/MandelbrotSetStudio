@@ -4,6 +4,7 @@ using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -30,6 +31,10 @@ namespace MSetGeneratorPrototype
 		private Vector256<uint>[] _resultZrs;
 		private Vector256<uint>[] _resultZis;
 
+		private Vector256<uint>[] _resultZrsForEscV;
+		private Vector256<uint>[] _resultZisForEscV;
+
+
 		private readonly Vector256<int> _justOne;
 
 		private const bool USE_DET_DEBUG = false;
@@ -55,6 +60,9 @@ namespace MSetGeneratorPrototype
 			_resultZrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_resultZis = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 
+			_resultZrsForEscV = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_resultZisForEscV = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+
 			_justOne = Vector256.Create(1);
 		}
 
@@ -64,7 +72,8 @@ namespace MSetGeneratorPrototype
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
-			var (currentLimbCount, limbCountForThisRequest) = GetMathAndAllocateTempVars(mapSectionRequest);
+			//var (currentLimbCount, limbCountForThisRequest) = GetMathAndAllocateTempVars(mapSectionRequest);
+			GetMathAndAllocateTempVars(mapSectionRequest);
 
 			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
 			//ReportLimbCountUpdate(coords, currentLimbCount, limbCountForThisRequest, mapSectionRequest.Precision);
@@ -83,6 +92,7 @@ namespace MSetGeneratorPrototype
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 			_iterator.Threshold = (uint)mapCalcSettings.Threshold;
+			_iterator.ThresholdForEscVel = RMapConstants.DEFAULT_NORMALIZED_THRESHOLD; // TODO: Add the ThresholdForEscVel as a property of the MapCalcSettings class.
 			_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
 			_iterator.MathOpCounts.Reset();
 
@@ -319,10 +329,14 @@ namespace MSetGeneratorPrototype
 		private bool GenerateMapCol(int idx, IIterator iterator, IIterationState iterationState)
 		{
 			var hasEscapedFlagsV = Vector256<int>.Zero;
+			var hasEscapedFlagsV2 = Vector256<int>.Zero;
+
 			var doneFlagsV = Vector256<int>.Zero;
+			var doneFlagsV2 = Vector256<int>.Zero;
 
 			var countsV = Vector256<int>.Zero;
 			var resultCountsV = countsV;
+			var resultCountsV2 = countsV;
 
 			iterationState.FillCrLimbSet(idx, _crs);
 			_cis = iterationState.CiLimbSet;
@@ -333,22 +347,56 @@ namespace MSetGeneratorPrototype
 			FP31VecMathHelper.ClearLimbSet(_resultZis);
 
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+			Vector256<int> escapedFlags2Vec = Vector256<int>.Zero;
 
-			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
-			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
-				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref escapedFlags2Vec);
+			countsV = Avx2.Add(countsV, _justOne);
+
+			// Compare the new Counts with the TargetIterations
+			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
+
+			//var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+			// Update the resultCountsV2
+			var compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
+
+			if (compositeIsDone != -1)
+			{
+				// if not all of the items have escaped the large bailout value
+				// then check to see if any items have just now reached the small bailout value.
+				_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV);
+			}
 
 			var baseEscapedFlagsVec = escapedFlagsVec;
+			var baseEscapedFlags2Vec = escapedFlags2Vec;
 
 			while (compositeIsDone != -1)
 			{
-				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
-				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
-				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
-					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref escapedFlags2Vec);
+
+				// Once escaped, always escaped
+				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec);
+				escapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlags2Vec);
+
+				//compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+				countsV = Avx2.Add(countsV, _justOne);
+
+				// Compare the new Counts with the TargetIterations
+				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
+
+				// Update the resultCountsV2
+				compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
+
+				if (compositeIsDone != -1)
+				{
+					// if not all of the items have escaped the large bailout value
+					// then check to see if any items have just now reached the small bailout value.
+					_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV);
+				}
 			}
 
-			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV2, iterationState.UsedCalcs, iterationState.UnusedCalcs);
 
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRowV[idx] = resultCountsV;
@@ -374,11 +422,15 @@ namespace MSetGeneratorPrototype
 
 		private bool UpdateMapCol(int idx, IIterator iterator, ref IIterationState iterationState)
 		{
-			var hasEscapedFlagsV = iterationState.HasEscapedFlagsRowV[idx];
-			var doneFlagsV = iterationState.DoneFlags[idx];
+			var hasEscapedFlagsV = Vector256<int>.Zero;
+			var hasEscapedFlagsV2 = Vector256<int>.Zero;
 
-			var countsV = iterationState.CountsRowV[idx];
+			var doneFlagsV = Vector256<int>.Zero;
+			var doneFlagsV2 = Vector256<int>.Zero;
+
+			var countsV = Vector256<int>.Zero;
 			var resultCountsV = countsV;
+			var resultCountsV2 = countsV;
 
 			iterationState.FillCrLimbSet(idx, _crs);
 			_cis = iterationState.CiLimbSet;
@@ -390,24 +442,57 @@ namespace MSetGeneratorPrototype
 			Array.Copy(_zis, _resultZis, _resultZis.Length);
 
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+			Vector256<int> escapedFlags2Vec = Vector256<int>.Zero;
 
-			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
-			var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
-				_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref escapedFlags2Vec);
+			countsV = Avx2.Add(countsV, _justOne);
+
+			// Compare the new Counts with the TargetIterations
+			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
+
+			//var compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+			// Update the resultCountsV2
+			var compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
+
+			if (compositeIsDone != -1)
+			{
+				// if not all of the items have escaped the large bailout value
+				// then check to see if any items have just now reached the small bailout value.
+				_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV);
+			}
 
 			var baseEscapedFlagsVec = escapedFlagsVec;
+			var baseEscapedFlags2Vec = escapedFlags2Vec;
 
 			while (compositeIsDone != -1)
 			{
-				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref escapedFlags2Vec);
 
-				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
+				// Once escaped, always escaped
+				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec);
+				escapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlags2Vec);
 
-				compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, 
-					_zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+				//compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+				countsV = Avx2.Add(countsV, _justOne);
+
+				// Compare the new Counts with the TargetIterations
+				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
+
+				// Update the resultCountsV2
+				compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
+
+				if (compositeIsDone != -1)
+				{
+					// if not all of the items have escaped the large bailout value
+					// then check to see if any items have just now reached the small bailout value.
+					_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV);
+				}
 			}
 
-			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV2, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+
 
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlagsV;
 			iterationState.CountsRowV[idx] = resultCountsV;
@@ -420,20 +505,87 @@ namespace MSetGeneratorPrototype
 			return compositeAllEscaped == -1;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int UpdateCounts(Vector256<int> escapedFlagsVec, 
-			ref Vector256<int> countsV, ref Vector256<int> resultCountsV,
-			Vector256<uint>[] zRs, Vector256<uint>[] resultZRs, 
-			Vector256<uint>[] zIs, Vector256<uint>[] resultZIs,
-			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
+		private bool GenerateMapColNoZ(int idx, IIterator iterator, IIterationState iterationState)
 		{
+			var hasEscapedFlagsV = Vector256<int>.Zero;
+			var hasEscapedFlagsV2 = Vector256<int>.Zero;
+
+			var doneFlagsV = Vector256<int>.Zero;
+			var doneFlagsV2 = Vector256<int>.Zero;
+
+			var countsV = Vector256<int>.Zero;
+			var resultCountsV = countsV;
+			var resultCountsV2 = countsV;
+
+			iterationState.FillCrLimbSet(idx, _crs);
+			_cis = iterationState.CiLimbSet;
+
+			FP31VecMathHelper.ClearLimbSet(_zrs);
+			FP31VecMathHelper.ClearLimbSet(_zis);
+
+			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+			Vector256<int> escapedFlags2Vec = Vector256<int>.Zero;
+
+			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref escapedFlags2Vec);
 			countsV = Avx2.Add(countsV, _justOne);
 
+			// Compare the new Counts with the TargetIterations
+			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
+
+			// Update the resultCountsV2
+			var compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
+
+			if (compositeIsDone != -1)
+			{
+				// if not all of the items have escaped the large bailout value
+				// then check to see if any items have just now reached the small bailout value.
+				_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
+			}
+
+			//var compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, escapedFlags2Vec, ref countsV, ref resultCountsV, ref resultCountsV2, ref hasEscapedFlagsV, ref doneFlagsV, ref hasEscapedFlagsV2, ref doneFlagsV2, iterationState.TargetIterationsVector);
+
+			var baseEscapedFlagsVec = escapedFlagsVec;
+			var baseEscapedFlags2Vec = escapedFlags2Vec;
+
+			while (compositeIsDone != -1)
+			{
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref escapedFlags2Vec);
+
+				// Once escaped, always escaped
+				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec);
+				escapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlags2Vec);
+
+				//compositeIsDone = UpdateCounts(escapedFlagsVec, ref countsV, ref resultCountsV, _zrs, _resultZrs, _zis, _resultZis, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+
+				countsV = Avx2.Add(countsV, _justOne);
+
+				// Compare the new Counts with the TargetIterations
+				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
+
+				// Update the resultCountsV2
+				compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
+
+				if (compositeIsDone != -1)
+				{
+					// if not all of the items have escaped the large bailout value
+					// then check to see if any items have just now reached the small bailout value.
+					_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
+				}
+			}
+
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV2, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+
+			iterationState.CountsRowV[idx] = resultCountsV;
+
+			return false;
+		}
+
+		private int SaveCountsForDoneItems(Vector256<int> escapedFlagsVec, Vector256<int> targetReachedCompVec, 
+			Vector256<int> countsV, ref Vector256<int> resultCountsV,
+			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV)
+		{
 			// Apply the new escapedFlags, only if the doneFlags is false for each vector position
 			hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
-
-			// Compare the new Counts with the TargetIterations
-			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
 
 			var prevDoneFlagsV = doneFlagsV;
 
@@ -441,7 +593,34 @@ namespace MSetGeneratorPrototype
 			doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
 
 			var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
+			var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
+			if (compositeIsDone != prevCompositeIsDone)
+			{
+				var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
 
+				// Save the current count 
+				resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+			}
+
+			return compositeIsDone;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private int SaveCountsForDoneItems(Vector256<int> escapedFlagsVec, Vector256<int> targetReachedCompVec,
+			Vector256<int> countsV, ref Vector256<int> resultCountsV,
+			Vector256<uint>[] zRs, Vector256<uint>[] zIs,
+			Vector256<uint>[] resultZRs, Vector256<uint>[] resultZIs,
+			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV)
+		{
+			// Apply the new escapedFlags, only if the doneFlags is false for each vector position
+			hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
+
+			var prevDoneFlagsV = doneFlagsV;
+
+			// If escaped or reached the target iterations, we're done 
+			doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
+
+			var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
 			var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
 			if (compositeIsDone != prevCompositeIsDone)
 			{
@@ -463,77 +642,117 @@ namespace MSetGeneratorPrototype
 			return compositeIsDone;
 		}
 
-		private bool GenerateMapColNoZ(int idx, IIterator iterator, IIterationState iterationState)
-		{
-			var hasEscapedFlagsV = Vector256<int>.Zero;
-			var doneFlagsV = Vector256<int>.Zero;
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//private int UpdateCounts(Vector256<int> escapedFlagsVec,
+		//	ref Vector256<int> countsV, ref Vector256<int> resultCountsV,
+		//	Vector256<uint>[] zRs, Vector256<uint>[] resultZRs,
+		//	Vector256<uint>[] zIs, Vector256<uint>[] resultZIs,
+		//	ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
+		//{
+		//	countsV = Avx2.Add(countsV, _justOne);
 
-			var countsV = Vector256<int>.Zero;
-			var resultCountsV = countsV;
+		//	// Apply the new escapedFlags, only if the doneFlags is false for each vector position
+		//	hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
 
-			iterationState.FillCrLimbSet(idx, _crs);
-			_cis = iterationState.CiLimbSet;
+		//	// Compare the new Counts with the TargetIterations
+		//	var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
 
-			FP31VecMathHelper.ClearLimbSet(_zrs);
-			FP31VecMathHelper.ClearLimbSet(_zis);
+		//	var prevDoneFlagsV = doneFlagsV;
 
-			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+		//	// If escaped or reached the target iterations, we're done 
+		//	doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
 
-			iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
-			var compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
+		//	var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
 
-			var baseEscapedFlagsVec = escapedFlagsVec;
+		//	var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
+		//	if (compositeIsDone != prevCompositeIsDone)
+		//	{
+		//		var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
 
-			while (compositeIsDone != -1)
-			{
-				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref doneFlagsV);
-				escapedFlagsVec = Avx2.Or(baseEscapedFlagsVec, escapedFlagsVec); // Once escaped, always escaped
-				compositeIsDone = UpdateCountsNoZ(escapedFlagsVec, ref countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV, iterationState.TargetIterationsVector);
-			}
+		//		// Save the current count 
+		//		resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
 
-			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+		//		// Save the current ZValues.
+		//		for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
+		//		{
+		//			resultZRs[limbPtr] = Avx2.BlendVariable(zRs[limbPtr].AsInt32(), resultZRs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+		//			resultZIs[limbPtr] = Avx2.BlendVariable(zIs[limbPtr].AsInt32(), resultZIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
+		//		}
 
-			iterationState.CountsRowV[idx] = resultCountsV;
+		//		//ResetWorkingValues(cRs, cIs, zRs, zIs, justNowDone);
+		//	}
 
-			return false;
-		}
+		//	return compositeIsDone;
+		//}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int UpdateCountsNoZ(Vector256<int> escapedFlagsVec,	ref Vector256<int> countsV, ref Vector256<int> resultCountsV,
-			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV, Vector256<int> targetIterationsV)
-		{
-			countsV = Avx2.Add(countsV, _justOne);
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//private int UpdateCountsNoZ(Vector256<int> escapedFlagsVec, Vector256<int> escapedFlags2Vec,
+		//	ref Vector256<int> countsV, ref Vector256<int> resultCountsV, ref Vector256<int> resultCountsV2,
+		//	ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV,
+		//	ref Vector256<int> hasEscapedFlagsV2, ref Vector256<int> doneFlagsV2,
+		//	Vector256<int> targetIterationsV)
+		//{
+		//	countsV = Avx2.Add(countsV, _justOne);
 
-			// Apply the new escapedFlags, only if the doneFlags is false for each vector position
-			hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
+		//	// Apply the new escapedFlags, only if the doneFlags is false for each vector position
+		//	//hasEscapedFlagsV = Avx2.BlendVariable(escapedFlagsVec, hasEscapedFlagsV, doneFlagsV);
+		//	//hasEscapedFlagsV2 = Avx2.BlendVariable(escapedFlags2Vec, hasEscapedFlagsV2, doneFlagsV2);
 
-			// Compare the new Counts with the TargetIterations
-			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
+		//	// Compare the new Counts with the TargetIterations
+		//	var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsV);
 
-			var prevDoneFlagsV = doneFlagsV;
+		//	//var prevDoneFlagsV = doneFlagsV;
 
-			// If escaped or reached the target iterations, we're done 
-			doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
+		//	//// If escaped or reached the target iterations, we're done 
+		//	//doneFlagsV = Avx2.Or(hasEscapedFlagsV, targetReachedCompVec);
 
-			var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
+		//	//var compositeIsDone = Avx2.MoveMask(doneFlagsV.AsByte());
+		//	//var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
+		//	//if (compositeIsDone != prevCompositeIsDone)
+		//	//{
+		//	//	var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
 
-			var prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV.AsByte());
-			if (compositeIsDone != prevCompositeIsDone)
-			{
-				var justNowDone = Avx2.CompareEqual(prevDoneFlagsV, doneFlagsV);
+		//	//	// Save the current count 
+		//	//	resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
+		//	//}
 
-				// Save the current count 
-				resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, justNowDone); // use First if Zero, second if 1
-			}
+		//	//_ = SaveCountsForDoneItems(hasEscapedFlagsV, targetReachedCompVec, countsV, ref resultCountsV, ref doneFlagsV);
 
-			return compositeIsDone;
-		}
+		//	//var prevDoneFlagsV2 = doneFlagsV2;
+
+		//	//// If escaped or reached the target iterations, we're done 
+		//	//doneFlagsV2 = Avx2.Or(hasEscapedFlagsV2, targetReachedCompVec);
+
+		//	//compositeIsDone = Avx2.MoveMask(doneFlagsV2.AsByte());
+		//	//prevCompositeIsDone = Avx2.MoveMask(prevDoneFlagsV2.AsByte());
+		//	//if (compositeIsDone != prevCompositeIsDone)
+		//	//{
+		//	//	var justNowDone = Avx2.CompareEqual(prevDoneFlagsV2, doneFlagsV2);
+
+		//	//	// Save the current count 
+		//	//	resultCountsV2 = Avx2.BlendVariable(countsV, resultCountsV2, justNowDone); // use First if Zero, second if 1
+		//	//}
+
+		//	// Update the resultCountsV2
+		//	var compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, hasEscapedFlagsV2, ref doneFlagsV2);
+
+		//	if (compositeIsDone != -1)
+		//	{
+		//		// if not all of the items have escaped the large bailout value
+		//		// then check to see if any items have just now reached the small bailout value.
+		//		_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, hasEscapedFlagsV, ref doneFlagsV);
+		//	}
+
+		//	return compositeIsDone;
+		//}
 
 		#endregion
 
 		#region Support Methods
 
-		private (int prevLimbCount, int newLimbCount) GetMathAndAllocateTempVars(MapSectionRequest mapSectionRequest)
+		//private (int prevLimbCount, int newLimbCount) GetMathAndAllocateTempVars(MapSectionRequest mapSectionRequest)
+
+		private void GetMathAndAllocateTempVars(MapSectionRequest mapSectionRequest)
 		{
 			if (mapSectionRequest.MapSectionZVectors != null && mapSectionRequest.MapSectionZVectors.LimbCount != mapSectionRequest.LimbCount)
 			{
@@ -572,13 +791,16 @@ namespace MSetGeneratorPrototype
 
 				_resultZrs = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
 				_resultZis = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
+
+				_resultZrsForEscV = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
+				_resultZisForEscV = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
 			}
 			else
 			{
 				Debug.WriteLineIf(USE_DET_DEBUG, $"LimbCount continues to be {currentLimbCount}. {_fp31VecMath.Implementation}");
 			}
 
-			return (currentLimbCount, limbCountForThisRequest);
+			//return (currentLimbCount, limbCountForThisRequest);
 		}
 
 		private IteratorCoords GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)

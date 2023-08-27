@@ -13,6 +13,7 @@ namespace MSS.Types
 
 		public static readonly SizeInt BLOCK_SIZE;
 		public const int DEFAULT_THRESHOLD = 4;
+		public const int DEFAULT_NORMALIZED_THRESHOLD = 22;
 
 		public const byte BITS_BEFORE_BP = 8;
 

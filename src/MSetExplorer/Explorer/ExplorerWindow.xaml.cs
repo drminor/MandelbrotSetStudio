@@ -858,7 +858,7 @@ namespace MSetExplorer
 		private void LoadNewProject()
 		{
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 400);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities: true, saveTheZValues: false);
 
 			LoadNewProject(coords, mapCalcSettings);
 		}
