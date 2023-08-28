@@ -566,6 +566,13 @@ namespace MSS.Common
 
 		#endregion
 
+		//public FP31Val GetFP31Val(bool sign, uint[] limbs)
+		//{
+		//	var precision = Math.Max(RMapConstants.DEFAULT_PRECISION, ApFixedPointFormat.TotalBits);
+		//	var result = FP31ValHelper.CreateFP31Val(sign, limbs, ApFixedPointFormat.TargetExponent, ApFixedPointFormat.BitsBeforeBinaryPoint, precision);
+		//	return result;
+		//}
+
 		#region PERF
 
 		[Conditional("PERF")]

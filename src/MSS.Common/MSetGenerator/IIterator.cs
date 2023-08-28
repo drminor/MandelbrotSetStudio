@@ -12,5 +12,7 @@ namespace MSS.Common
 
 		void Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec, ref Vector256<int> doneFlagsVec);
 		void IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec, ref Vector256<int> DoneFlagsVec);
+
+		Vector256<uint>[] GetSumOfSquares(Vector256<uint>[] zrs, Vector256<uint>[] zis);
 	}
 }

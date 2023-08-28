@@ -50,17 +50,20 @@ namespace MSS.Types
 
 			if (r < 0 || r > 255)
 			{
-				Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
+				//Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
+				r = 50;
 			}
 
 			if (g < 0 || g > 255)
 			{
-				Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
+				//Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
+				g = 50;
 			}
 
 			if (b < 0 || b > 255)
 			{
-				Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
+				//Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
+				b = 50;
 			}
 
 			destination[0] = (byte)b;
@@ -81,17 +84,20 @@ namespace MSS.Types
 
 			if (r < 0 || r > 255)
 			{
-				Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
+				//Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
+				r = 50;
 			}
 
 			if (g < 0 || g > 255)
 			{
-				Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
+				//Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
+				g = 50;
 			}
 
 			if (b < 0 || b > 255)
 			{
-				Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
+				//Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
+				b = 50;
 			}
 
 			//destination[0] = (byte)b;

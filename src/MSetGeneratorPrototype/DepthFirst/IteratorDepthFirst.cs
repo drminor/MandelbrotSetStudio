@@ -22,6 +22,7 @@ namespace MSetGeneratorPrototype
 
 		private Vector256<uint>[] _zRZiSqrs;
 		private Vector256<uint>[] _temp;
+		private Vector256<uint>[] _temp2;
 
 		private Vector256<uint>[] _zRSqrs;
 		private Vector256<uint>[] _zISqrs;
@@ -41,6 +42,7 @@ namespace MSetGeneratorPrototype
 
 			_zRZiSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_temp = FP31VecMathHelper.CreateNewLimbSet(limbCount);
+			_temp2 = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 
 			_zRSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_zISqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
@@ -87,6 +89,18 @@ namespace MSetGeneratorPrototype
 		}
 
 		public MathOpCounts MathOpCounts => _fp31VecMath.MathOpCounts;
+
+		public Vector256<uint>[] GetSumOfSquares(Vector256<uint>[] zrs, Vector256<uint>[] zis)
+		{
+			var result = FP31VecMathHelper.CreateNewLimbSet(_fp31VecMath.LimbCount);
+
+			_fp31VecMath.Square(zrs, _temp);
+			_fp31VecMath.Square(zis, _temp2);
+
+			_fp31VecMath.Add(_temp, _temp2, result);
+
+			return result;
+		}
 
 		#endregion
 

@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.APValues;
 using System.Runtime.Intrinsics;
 
 namespace MSS.Common
@@ -23,5 +24,7 @@ namespace MSS.Common
 
 		//Vector256<uint>[] CreateNewLimbSet();
 		//Vector256<ulong>[] CreateNewLimbSetWide();
+
+		//FP31Val GetFP31Val(bool sign, uint[] limbs);
 	}
 }

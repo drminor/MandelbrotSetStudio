@@ -630,9 +630,7 @@ namespace MSetExplorer
 		{
 			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
 
-			// Currently EscapeVelocities are not supported.
-			//var useEscapeVelocities = colorMap.UseEscapeVelocities;
-			var useEscapeVelocities = false;
+			var useEscapeVelocities = colorMap.UseEscapeVelocities;
 
 			var rowCount = mapSectionVectors.BlockSize.Height;
 			var sourceStride = mapSectionVectors.BlockSize.Width;
@@ -651,32 +649,40 @@ namespace MSetExplorer
 
 			if (useEscapeVelocities)
 			{
-				var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
+				//var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
+				var escapeVelocities = mapSectionVectors.EscapeVelocities;
+
+				if (!escapeVelocities.Any(x => x > 0))
+				{
+					Debug.WriteLine("No EscapeVelocities Found.");
+				}
+
 				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
 				{
-					var diagSum = 0;
+					//var diagSum = 0;
 
 					var resultPtr = resultRowPtr;
 					for (var colPtr = 0; colPtr < sourceStride; colPtr++)
 					{
 						var countVal = counts[sourcePtr];
-						TrackValueSwitches(countVal, ref previousCountVal);
+						//TrackValueSwitches(countVal, ref previousCountVal);
 
 						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
-						CheckEscapeVelocity(escapeVelocity);
+						//CheckEscapeVelocity(escapeVelocity);
 
 						colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+						//colorMap.PlaceColor(countVal, escapeVelocity: 0, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
 
 						resultPtr += BYTES_PER_PIXEL;
 						sourcePtr++;
 
-						diagSum += countVal;
+						//diagSum += countVal;
 					}
 
-					if (diagSum < 10)
-					{
-						Debug.WriteLine("WARINING: Counts are empty.");
-					}
+					//if (diagSum < 10)
+					//{
+					//	Debug.WriteLine("WARINING: Counts are empty.");
+					//}
 				}
 			}
 			else

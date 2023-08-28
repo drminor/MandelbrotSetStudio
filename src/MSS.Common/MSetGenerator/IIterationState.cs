@@ -26,6 +26,8 @@ namespace MSS.Common
 		bool[] RowHasEscaped { get; init; }
 
 		Vector256<int>[] CountsRowV { get; }
+		public ushort[] EscapeVelocities { get; }
+
 		Vector256<int>[] HasEscapedFlagsRowV { get; }
 		Vector256<int>[] DoneFlags { get; }
 

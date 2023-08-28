@@ -62,6 +62,13 @@ namespace MSS.Types.APValues
 			return result;
 		}
 
+		//public static RValue CreateRValue(bool sign, uint[] partialWordLimbs, ApFixedPointFormat apFixedPointFormat)
+		//{
+		//	var biValue = FromFwUInts(partialWordLimbs, sign);
+		//	var result = new RValue(biValue, apFixedPointFormat.TargetExponent, apFixedPointFormat.TotalBits);
+		//	return result;
+		//}
+
 		public static FP31Val CreateNewZeroFP31Val(ApFixedPointFormat apFixedPointFormat, int precision = RMapConstants.DEFAULT_PRECISION)
 		{
 			var result = new FP31Val(new uint[apFixedPointFormat.LimbCount], apFixedPointFormat.TargetExponent, apFixedPointFormat.BitsBeforeBinaryPoint, precision);
@@ -489,7 +496,7 @@ namespace MSS.Types.APValues
 			var tResult = new List<uint>();
 
 			sign = bi.Sign >= 0;
-			var hi = sign? bi : BigInteger.Negate(bi);
+			var hi = sign ? bi : BigInteger.Negate(bi);
 
 			while (hi > MAX_DIGIT_VALUE)
 			{

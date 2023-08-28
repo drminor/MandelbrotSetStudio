@@ -115,6 +115,17 @@ namespace MSS.Types
 			}
 		}
 
+
+		public void UpdateFromEscapeVelocitiesRow(int rowNumber, ushort[] source)
+		{
+			var startIndex = ValuesPerRow * rowNumber;
+
+			for (var i = 0; i < ValuesPerRow; i++)
+			{
+				EscapeVelocities[startIndex + i] = source[i];
+			}
+		}
+
 		// Vector256<float>
 		public void FillCountsRow(int rowNumber, Vector256<float>[] dest)
 		{

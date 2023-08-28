@@ -335,7 +335,7 @@ namespace MSS.Common
 		}
 
 		/// <summary>
-		/// Calculates the number of decimal digits required to resolve rValue2 from rValue1.
+		/// Calculates the number of binary digits required to resolve rValue2 from rValue1.
 		/// </summary>
 		/// <param name="rValue1"></param>
 		/// <param name="rValue2"></param>

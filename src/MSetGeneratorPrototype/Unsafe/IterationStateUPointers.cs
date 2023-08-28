@@ -48,6 +48,7 @@ namespace MSetGeneratorPrototype
 			UnusedCalcs = new Vector256<int>[VectorsPerRow];
 
 			CountsRowV = new Vector256<int>[VectorsPerRow];
+			EscapeVelocities = new ushort[ValuesPerRow];
 			HasEscapedFlagsRowV = new Vector256<int>[VectorsPerRow];
 
 			RowUsedCalcs = new long[RowCount];
@@ -98,6 +99,7 @@ namespace MSetGeneratorPrototype
 
 		// Row-Level Vars
 		public Vector256<int>[] CountsRowV { get; private set; }
+		public ushort[] EscapeVelocities { get; private set; }
 		public Vector256<int>[] HasEscapedFlagsRowV { get; private set; }
 
 		public long[] RowUnusedCalcs { get; init; }

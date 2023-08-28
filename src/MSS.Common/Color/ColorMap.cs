@@ -126,29 +126,29 @@ namespace MSS.Common
 
 			var stepFactor = (bucketDistance + escapeVelocity) / bucketWidth;
 
-            CheckStepFactor(countVal, cme.Cutoff, botBucketVal, bucketWidth, stepFactor);
+            CheckStepFactor(countVal, cme.Cutoff, botBucketVal, bucketWidth, stepFactor, escapeVelocity);
 
 			return stepFactor;
         }
 
-        [Conditional("DEBUG2")]
-        private void CheckStepFactor(int countVal, int cutoff, int botBucketVal, int bucketWidth, double stepFactor)
+        [Conditional("DEBUG")]
+        private void CheckStepFactor(int countVal, int cutoff, int botBucketVal, int bucketWidth, double stepFactor, double escapeVelocity)
 		{
-            if (countVal > 5 && countVal == cutoff)
-            {
-                //Debug.WriteLine("HereA");
-            }
+            //if (countVal > 5 && countVal == cutoff)
+            //{
+            //    Debug.WriteLine("HereA");
+            //}
 
-            if (countVal > 5 && countVal == botBucketVal)
-            {
-                //Debug.WriteLine("HereB");
-            }
+            //if (countVal > 5 && countVal == botBucketVal)
+            //{
+            //    Debug.WriteLine("HereB");
+            //}
 
             var bucketDistance = countVal - botBucketVal;
 
             if (bucketDistance < 0 || bucketDistance > bucketWidth || stepFactor > 1.0)
             {
-                Debug.WriteLine($"Step Distance is out of range: val: {countVal}, bot: {botBucketVal}, top: {cutoff}, width: {bucketWidth}, stepFactor: {stepFactor}.");
+                Debug.WriteLine($"Step Distance is out of range: val: {countVal}, bot: {botBucketVal}, top: {cutoff}, width: {bucketWidth}, stepFactor: {stepFactor}. Escape Velolocity: {escapeVelocity}");
             }
         }
 

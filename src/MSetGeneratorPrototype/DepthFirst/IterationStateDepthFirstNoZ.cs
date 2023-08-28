@@ -36,7 +36,7 @@ namespace MSetGeneratorPrototype
 			CiLimbSet = new Vector256<uint>[LimbCount];
 
 			CountsRowV = new Vector256<int>[VectorsPerRow];
-			//CountsRowV2 = new Vector256<int>[VectorsPerRow];
+			EscapeVelocities = new ushort[ValuesPerRow];
 
 			RowHasEscaped = new bool[0];
 			RowUsedCalcs = new long[RowCount];
@@ -79,7 +79,7 @@ namespace MSetGeneratorPrototype
 		public Vector256<uint>[] CiLimbSet { get; private set; }
 
 		public Vector256<int>[] CountsRowV { get; private set; }
-		//public Vector256<int>[] CountsRowV2 { get; private set; }
+		public ushort[] EscapeVelocities { get; private set; }
 
 		public bool[] RowHasEscaped { get; init; }
 		public long[] RowUnusedCalcs { get; init; }
@@ -105,6 +105,7 @@ namespace MSetGeneratorPrototype
 				// Update the _mapSectionVectors with the current row properties
 				//MapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
 				MapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				MapSectionVectors.UpdateFromEscapeVelocitiesRow(RowNumber.Value, EscapeVelocities);
 			}
 
 			UpdateUsedAndUnusedCalcs(RowNumber);
