@@ -33,3 +33,6 @@ if iteration < max_iteration then
       Z = Z*Z +C; iter_count ++;    // decrease the size of the error term.
       float modulus = sqrt (ReZ*ReZ + ImZ*ImZ);
       float mu = iter_count - (log (log (modulus)))/ log (2.0);
+
+
+3231931

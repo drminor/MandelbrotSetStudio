@@ -113,6 +113,7 @@ namespace MSetGeneratorPrototype
 			Array.Clear(HasEscapedFlagsRowV);
 			Array.Clear(CountsRowV);
 			Array.Clear(DoneFlags);
+			Array.Clear(EscapeVelocities);
 
 			if (rowNumber < RowCount)
 			{
@@ -169,6 +170,7 @@ namespace MSetGeneratorPrototype
 				{
 					//Array.Clear(HasEscapedFlagsRowV);
 					Array.Clear(CountsRowV);
+					Array.Clear(EscapeVelocities);
 					Array.Clear(DoneFlags);
 
 					_inPlayBackingList.Clear();

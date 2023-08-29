@@ -547,7 +547,7 @@ namespace MSetGeneratorPrototype
 			// Update the resultCountsV2
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
 
-			_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
+			//_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 
 			//if (compositeIsDone != -1)
 			//{
@@ -572,7 +572,7 @@ namespace MSetGeneratorPrototype
 				// Compare the new Counts with the TargetIterations
 				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
-				_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
+				//_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 
 				// Update the resultCountsV2
 				compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
@@ -587,7 +587,7 @@ namespace MSetGeneratorPrototype
 
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV2, iterationState.UsedCalcs, iterationState.UnusedCalcs);
 
-			iterationState.CountsRowV[idx] = resultCountsV;
+			iterationState.CountsRowV[idx] = resultCountsV2;
 
 			var escVels = CalculateEscapeVelocities(_resultZrsForEscV, _resultZisForEscV, targetReachedCompVec);
 			Array.Copy(escVels, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escVels.Length);
@@ -667,6 +667,7 @@ namespace MSetGeneratorPrototype
 			{
 				Debug.WriteLine($"There were {ourCount} out of range events.");
 			}
+
 			return escapeVelocities;
 		}
 

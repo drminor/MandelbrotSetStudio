@@ -38,8 +38,10 @@ namespace MSS.Types
 			EBlue = endColor[2];
 		}
 
-		public void BlendAndPlace(double factor, Span<byte> destination)
+		public int BlendAndPlace(double factor, Span<byte> destination)
 		{
+			var errors = 0;
+
 			var rd = factor * DiffRed + SRed;
 			var gd = factor * DiffGreen + SGreen;
 			var bd = factor * DiffBlue + SBlue;
@@ -52,28 +54,35 @@ namespace MSS.Types
 			{
 				//Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
 				r = 50;
+				errors++;
 			}
 
 			if (g < 0 || g > 255)
 			{
 				//Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
 				g = 50;
+				errors++;
 			}
 
 			if (b < 0 || b > 255)
 			{
 				//Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
 				b = 50;
+				errors++;
 			}
 
 			destination[0] = (byte)b;
 			destination[1] = (byte)g;
 			destination[2] = (byte)r;
 			destination[3] = Opacity;
+
+			return errors;
 		}
 
-		public unsafe void BlendAndPlace(double factor, IntPtr destination)
+		public unsafe int BlendAndPlace(double factor, IntPtr destination)
 		{
+			var errors = 0;
+
 			var rd = factor * DiffRed + SRed;
 			var gd = factor * DiffGreen + SGreen;
 			var bd = factor * DiffBlue + SBlue;
@@ -86,18 +95,21 @@ namespace MSS.Types
 			{
 				//Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
 				r = 50;
+				errors++;
 			}
 
 			if (g < 0 || g > 255)
 			{
 				//Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
 				g = 50;
+				errors++;
 			}
 
 			if (b < 0 || b > 255)
 			{
 				//Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
 				b = 50;
+				errors++;
 			}
 
 			//destination[0] = (byte)b;
@@ -112,6 +124,8 @@ namespace MSS.Types
 
 			var pixelValue = (uint)b + (uint)((byte)g << 8) + (uint)((byte)r << 16) + (uint)(Opacity << 24);
 			*(uint*)destination = pixelValue;
+
+			return errors;
 		}
 
 

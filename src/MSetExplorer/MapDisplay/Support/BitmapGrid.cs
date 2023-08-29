@@ -96,6 +96,11 @@ namespace MSetExplorer
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"The MapDisplay is processing a new ColorMap. Id = {value.Id}.");
 					_colorBandSet = value;
+
+					if (_colorMap != null)
+					{
+						_colorMap.Dispose();
+					}
 					_colorMap = LoadColorMap(value);
 
 					if (_colorMap != null)
@@ -276,6 +281,7 @@ namespace MSetExplorer
 
 		public void DrawSections(IList<MapSection> mapSections)
 		{
+			var errors = 0L;
 			var anyDrawnOnLastRow = false;
 
 			foreach (var mapSection in mapSections)
@@ -296,7 +302,7 @@ namespace MSetExplorer
 							
 							var loc = invertedBlockPos.Scale(_blockSize);
 
-							LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
+							errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
 
 							try
 							{
@@ -313,6 +319,11 @@ namespace MSetExplorer
 						_disposeMapSection(mapSection);
 					}
 				}
+			}
+
+			if (errors > 0)
+			{
+				Debug.WriteLine($"There were {errors} color placement errors while Drawing Sections for {mapSections.FirstOrDefault()?.JobNumber}.");
 			}
 
 			if (mapSections.Count > 0 && !anyDrawnOnLastRow)
@@ -367,6 +378,7 @@ namespace MSetExplorer
 
 			//var anyDrawnOnLastRow = false;
 
+			var errors = 0L;
 			var sectionsDisposed = new List<MapSection>();
 
 			foreach (var mapSection in _mapSections)
@@ -385,7 +397,7 @@ namespace MSetExplorer
 
 							var loc = invertedBlockPos.Scale(_blockSize);
 
-							LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
+							errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
 
 							try
 							{
@@ -403,6 +415,11 @@ namespace MSetExplorer
 						sectionsDisposed.Add(mapSection);
 					}
 				}
+			}
+
+			if (errors > 0)
+			{
+				Debug.WriteLine($"There were {errors} color placement errors while Redrawing Sections for {_mapSections.FirstOrDefault()?.JobNumber}.");
 			}
 
 			//if (_mapSections.Count > 0 && !anyDrawnOnLastRow)
@@ -440,7 +457,12 @@ namespace MSetExplorer
 					var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 					var loc = invertedBlockPos.Scale(_blockSize);
 
-					LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
+					var errors = LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
+
+					if (errors > 0)
+					{
+						Debug.WriteLine($"There were {errors} color placement errors while Drawing Section on the UI thread for {mapSection.JobNumber}.");
+					}
 
 					try
 					{
@@ -626,8 +648,10 @@ namespace MSetExplorer
 
 		#region Pixel Array Support
 
-		private void LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
+		private long LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
 		{
+			var errors = 0L;
+
 			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
 
 			var useEscapeVelocities = colorMap.UseEscapeVelocities;
@@ -670,7 +694,7 @@ namespace MSetExplorer
 						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
 						//CheckEscapeVelocity(escapeVelocity);
 
-						colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+						errors += colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
 						//colorMap.PlaceColor(countVal, escapeVelocity: 0, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
 
 						resultPtr += BYTES_PER_PIXEL;
@@ -701,13 +725,15 @@ namespace MSetExplorer
 						var countVal = counts[sourcePtr];
 						TrackValueSwitches(countVal, ref previousCountVal);
 
-						colorMap.PlaceColor(countVal, escapeVelocity: 0, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+						errors += colorMap.PlaceColor(countVal, escapeVelocity: 0, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
 
 						resultPtr += BYTES_PER_PIXEL;
 						sourcePtr++;
 					}
 				}
 			}
+
+			return errors;
 		}
 
 		[Conditional("DEBUG2")]
