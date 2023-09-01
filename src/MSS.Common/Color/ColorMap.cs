@@ -38,11 +38,11 @@ namespace MSS.Common
             }
 
             _cutoffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
-            _highColorBandIndex = colorBandSet.Count - 1;
-            
             _colorBands = BuildOurColorBands(_colorBandSet);
-		    _highColorBandCutoff = _colorBands[^1].Cutoff;
+			ReportBlendValues(_colorBands);
 
+			_highColorBandIndex = colorBandSet.Count - 1;
+			_highColorBandCutoff = _colorBands[^1].Cutoff;
 		}
 
         private ColorBand[] BuildOurColorBands(ColorBandSet colorBandSet)
@@ -53,8 +53,7 @@ namespace MSS.Common
 			{
 				var sourceCB = colorBandSet[i];
 
-				var colorBand = new ColorBand(sourceCB.Cutoff, sourceCB.StartColor, sourceCB.BlendStyle, sourceCB.ActualEndColor,
-					sourceCB.StartingCutoff, sourceCB.SuccessorStartColor, sourceCB.IsFirst, sourceCB.IsLast, sourceCB.BucketWidth);
+				var colorBand = new ColorBand(sourceCB.Cutoff, sourceCB.StartColor, sourceCB.BlendStyle, sourceCB.ActualEndColor, sourceCB.StartingCutoff, sourceCB.BucketWidth);
 
 				if (colorBand.BlendStyle != ColorBandBlendStyle.None)
 				{
@@ -67,7 +66,17 @@ namespace MSS.Common
             return result;
 		}
 
-        private void ColorBandSet_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        private void ReportBlendValues(ColorBand[] colorBands)
+        {
+			for (var i = 0; i < colorBands.Length; i++)
+			{
+				var blendVals = colorBands[i].BlendVals;
+
+                Debug.WriteLine($"{i}: {blendVals}");
+			}
+		}
+
+		private void ColorBandSet_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(ColorBandSet.SelectedColorBand))
             {
@@ -170,7 +179,7 @@ namespace MSS.Common
             var bucketWidth = cme.BucketWidth;
             bucketWidth += UseEscapeVelocities ? 1 : 0;
 
-			var stepFactor = bucketDistance / bucketWidth;
+            var stepFactor = bucketDistance > 0 ? bucketDistance / bucketWidth : 0;
 
             CheckStepFactor(countVal, cme.Cutoff, cme.StartingCutoff, bucketWidth, stepFactor, escapeVelocity);
 
@@ -178,25 +187,31 @@ namespace MSS.Common
         }
 
         [Conditional("DEBUG")]
-        private void CheckStepFactor(int countVal, int cutoff, int botBucketVal, int bucketWidth, double stepFactor, double escapeVelocity)
+        private void CheckStepFactor(int countVal, int cutoff, int startingCutoff, int bucketWidth, double stepFactor, double escapeVelocity)
 		{
-            //if (countVal > 5 && countVal == cutoff)
-            //{
-            //    Debug.WriteLine("HereA");
-            //}
+            var bucketDistance = countVal + escapeVelocity - startingCutoff;
 
-            //if (countVal > 5 && countVal == botBucketVal)
-            //{
-            //    Debug.WriteLine("HereB");
-            //}
-
-            var bucketDistance = countVal - botBucketVal;
-
-            if (bucketDistance < 0 || bucketDistance > bucketWidth || stepFactor > 1.0)
+            if (bucketDistance < 0)
             {
-                Debug.WriteLine($"Step Distance is out of range: val: {countVal}, bot: {botBucketVal}, top: {cutoff}, width: {bucketWidth}, stepFactor: {stepFactor}. Escape Velolocity: {escapeVelocity}");
+                Debug.WriteLine($"BucketDistance < 0: val: {countVal}, bot: {startingCutoff}, top: {cutoff}, width: {bucketWidth}, stepFactor: {stepFactor}. Escape Velolocity: {escapeVelocity}");
             }
-        }
+
+			if (bucketDistance > bucketWidth)
+			{
+				Debug.WriteLine($"bucketDistance > bucketWidth: val: {countVal}, bot: {startingCutoff}, top: {cutoff}, width: {bucketWidth}, stepFactor: {stepFactor}. Escape Velolocity: {escapeVelocity}");
+			}
+			
+            if (stepFactor > 1.0)
+			{
+				Debug.WriteLine($"StepFactor > 1: val: {countVal}, bot: {startingCutoff}, top: {cutoff}, width: {bucketWidth}, stepFactor: {stepFactor}. Escape Velolocity: {escapeVelocity}");
+			}
+			
+            if (bucketDistance + startingCutoff > (1 + cutoff))
+			{
+				Debug.WriteLine($"bucketDistance + startingCutoff > 1 + endingCutoff: val: {countVal}, bot: {startingCutoff}, top: {cutoff}, width: {bucketWidth}, stepFactor: {stepFactor}. Escape Velolocity: {escapeVelocity}");
+			}
+
+		}
 
         /// <summary>
         /// Returns the ColorBand with the specified Cutoff or if not found,
@@ -386,16 +401,14 @@ namespace MSS.Common
 			#region Constructor
 
 			public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, 
-                int startingCutoff, ColorBandColor? successorStartColor, bool isFirst, bool isLast, int bucketWidth)
+                int startingCutoff, /*ColorBandColor? successorStartColor, bool isFirst, bool isLast, */
+                int bucketWidth)
 			{
 				Cutoff = cutoff;
 				StartColor = startColor;
 			    BlendStyle = blendStyle;
 				EndColor = endColor;
                 StartingCutoff = startingCutoff;
-				SuccessorStartColor = successorStartColor;
-                IsFirst = isFirst;
-                IsLast = IsLast;
                 BucketWidth = bucketWidth;
 			}
 
@@ -406,23 +419,19 @@ namespace MSS.Common
 			public int Cutoff { get; init; }
 
 			public ColorBandColor StartColor { get; init; }
-
 			public ColorBandBlendStyle BlendStyle { get; init; }
-
 			public ColorBandColor EndColor { get; init; }
 
-			public ColorBandColor? SuccessorStartColor { get; init; }
-
 			public int StartingCutoff { get; init; }
-
-			public bool IsFirst { get; init; }
-			public bool IsLast { get; init; }
 			public int BucketWidth { get; init; }
 
 			public BlendVals BlendVals { get; set; }
 
-			#endregion
+			//public ColorBandColor? SuccessorStartColor { get; init; }
+			//public bool IsFirst { get; init; }
+			//public bool IsLast { get; init; }
 
+			#endregion
 
 			public override string? ToString()
 			{

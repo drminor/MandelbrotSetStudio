@@ -316,6 +316,14 @@ namespace MSS.Common
 				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
 			}
 
+			if ( !AreAllZero(carry1) || !AreAllZero(carry2) )
+			{
+				Debug.WriteLine("Overflow on SumThePartials");
+			}
+
+			//FP31VecMathHelper.WarnIfAnyNotZero(carry1, doneFlagsVec);
+			//FP31VecMathHelper.WarnIfAnyNotZero(carry2, doneFlagsVec);
+
 			IncrementAdditionsCount((LimbCount - 1) * 16);
 			IncrementSplitsCount(LimbCount * 16);
 		}
@@ -332,7 +340,7 @@ namespace MSS.Common
 			// Check to see if any of these values are larger than the FP Format.
 			//_ = CheckForOverflow(resultLimbs);
 
-			var sourceIndex = System.Math.Max(source.Lower.Length - LimbCount, 0);
+			var sourceIndex = Math.Max(source.Lower.Length - LimbCount, 0);
 
 			for (int limbPtr = 0; limbPtr < resultLimbs.Length; limbPtr++)
 			{
@@ -423,6 +431,11 @@ namespace MSS.Common
 
 			IncrementAdditionsCount(LimbCount * 8);
 			IncrementSplitsCount(LimbCount * 8);
+
+			if (!AreAllZero(carry))
+			{
+				Debug.WriteLine("Overflow on Add");
+			}
 		}
 
 		//public void AddThenSquare(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
@@ -475,6 +488,11 @@ namespace MSS.Common
 
 			//IncrementNegationsCount(LimbCount * 8);
 			IncrementSplitsCount(LimbCount * 8);
+
+			if (!AreAllZero(carry))
+			{
+				Debug.WriteLine("Overflow on Negate");
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -540,6 +558,25 @@ namespace MSS.Common
 			signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
 			return Avx2.MoveMask(signBitVecs.AsByte());
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private bool AreAllZero(Vector256<ulong> source)
+		{
+			IncrementComparisonsCount(4);
+
+			var cmpVecs = Avx2.CompareEqual(source.AsInt32(), ZERO_VEC);
+			return -1 == Avx2.MoveMask(cmpVecs.AsByte());
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private bool AreAllZero(Vector256<uint> source)
+		{
+			IncrementComparisonsCount(8);
+
+			var cmpVecs = Avx2.CompareEqual(source.AsInt32(), ZERO_VEC);
+			return -1 == Avx2.MoveMask(cmpVecs.AsByte());
+		}
+
 
 		#endregion
 

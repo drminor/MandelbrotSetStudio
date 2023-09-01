@@ -126,6 +126,29 @@ namespace MSS.Common.MSetGenerator
 			return isZeroComp != -1;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void WarnIfAnyNotZero(Vector256<ulong> carry, Vector256<int> mask, string description)
+		{
+			var cIsZeroFlags = Avx2.CompareEqual(carry.AsInt32(), Vector256<int>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
+			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			if (isZeroComp != -1)
+			{
+				Debug.WriteLine($"WARNING: Found one element with a carry while {description}.");
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static bool AnyNotZero(Vector256<ulong> carry, Vector256<int> mask)
+		{
+			var cIsZeroFlags = Avx2.CompareEqual(carry.AsInt32(), Vector256<int>.Zero);
+			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
+			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
+
+			return isZeroComp != -1;
+		}
+
 		public static void CheckReservedBitIsClear(Vector256<uint>[] source, string description)
 		{
 			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)

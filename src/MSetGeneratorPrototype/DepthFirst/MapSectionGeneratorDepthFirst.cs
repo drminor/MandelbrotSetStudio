@@ -6,6 +6,7 @@ using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -547,7 +548,7 @@ namespace MSetGeneratorPrototype
 			// Update the resultCountsV2
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
 
-			//_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
+			_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 
 			//if (compositeIsDone != -1)
 			//{
@@ -572,7 +573,7 @@ namespace MSetGeneratorPrototype
 				// Compare the new Counts with the TargetIterations
 				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
-				//_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
+				_ = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 
 				// Update the resultCountsV2
 				compositeIsDone = SaveCountsForDoneItems(escapedFlags2Vec, targetReachedCompVec, countsV, ref resultCountsV2, _zrs, _zis, _resultZrsForEscV, _resultZisForEscV, ref hasEscapedFlagsV2, ref doneFlagsV2);
@@ -585,6 +586,9 @@ namespace MSetGeneratorPrototype
 				//}
 			}
 
+			//var numberOfAdditionalIterations = 50;
+			//targetReachedCompVec = IterateToReduceEscVelError(iterator, numberOfAdditionalIterations, iterationState.TargetIterationsVector, ref countsV, ref resultCountsV2);
+
 			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV2, iterationState.UsedCalcs, iterationState.UnusedCalcs);
 
 			iterationState.CountsRowV[idx] = resultCountsV2;
@@ -595,6 +599,43 @@ namespace MSetGeneratorPrototype
 			//return false;
 		}
 
+		private Vector256<int> IterateToReduceEscVelError(IIterator iterator, int numberOfAdditionalIterations, Vector256<int> targetIterationsVector,
+			ref Vector256<int> countsV, ref Vector256<int> resultCountsV)
+		{
+			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
+
+			Vector256<int> targetReachedCompVec = Vector256<int>.Zero;
+
+			for (var i = 0; i < numberOfAdditionalIterations; i++)
+			{
+				var compositeIsDone = Avx2.MoveMask(targetReachedCompVec.AsByte());
+
+				if (compositeIsDone == -1)
+				{
+					break;
+				}
+
+				iterator.Iterate(_crs, _cis, _zrs, _zis, ref escapedFlagsVec, ref escapedFlagsVec);
+
+				countsV = Avx2.Add(countsV, _justOne);
+
+				// Compare the new Counts with the TargetIterations
+				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, targetIterationsVector);
+
+				// Save the current count 
+				resultCountsV = Avx2.BlendVariable(countsV, resultCountsV, targetReachedCompVec); // use First if Zero, second if 1
+
+				// Save the current ZValues.
+				for (var limbPtr = 0; limbPtr < _resultZrs.Length; limbPtr++)
+				{
+					_resultZrsForEscV[limbPtr] = Avx2.BlendVariable(_zrs[limbPtr].AsInt32(), _resultZrsForEscV[limbPtr].AsInt32(), targetReachedCompVec).AsUInt32(); // use First if Zero, second if 1
+					_resultZisForEscV[limbPtr] = Avx2.BlendVariable(_zis[limbPtr].AsInt32(), _resultZisForEscV[limbPtr].AsInt32(), targetReachedCompVec).AsUInt32(); // use First if Zero, second if 1
+				}
+			}
+
+			return targetReachedCompVec;
+		}
+
 		private ushort[] CalculateEscapeVelocities(Vector256<uint>[] zRs, Vector256<uint>[] zIs, Vector256<int> targetReachedCompVec)
 		{
 			var ourCount = 0;
@@ -603,13 +644,15 @@ namespace MSetGeneratorPrototype
 			
 			ushort[] escapeVelocities = new ushort[lanes];
 
-			var sumOfSqrs = _iterator.GetSumOfSquares(zRs, zIs);
+			var sumOfSqrs = _iterator.GetModulusSquared(zRs, zIs);
 
 			for (var i = 0; i < lanes; i++)
 			{
 				var doneFlag = targetReachedCompVec.GetElement(i);
 				if (doneFlag != -1)
 				{
+					//var iterCount = counts.GetElement(i);
+
 					var val = new uint[limbCount];
 
 					for (var j = 0; j < limbCount; j++)
@@ -619,25 +662,38 @@ namespace MSetGeneratorPrototype
 
 					var rValue = FP31ValHelper.CreateRValue(sign: true, val, _fp31VecMath.ApFixedPointFormat.TargetExponent, RMapConstants.DEFAULT_PRECISION);
 					var doubles = RValueHelper.ConvertToDoubles(rValue);
+					var dv = doubles.Sum();
 
-					// TODO: For higher LimbCount simply taking the high limb may not be sufficient.
-					var logZn = Math.Log(doubles[0]) / 2; // Divide the Log by 2 instead of taking the Log of the Square Root.
+					//var modulus = Math.Sqrt(dv);
+					//var logZn = Math.Log(modulus);
 
-					var logOfLogZn = Math.Log(logZn);
-					var nu = logOfLogZn / _logOf2;
-					nu /= 2;
+					//var logZn = Math.Log(dv) / 2; // Divide the Log by 2 instead of taking the Log of the Square Root.
+					////var logOfLogZn = Math.Log(logZn / Math.Log(iterCount));
+					//var logOfLogZn = Math.Log(logZn);
+					//var nu_temp = logOfLogZn / _logOf2;
+					//var nu = nu_temp / 2.5;
+					////var nu = nu_temp;
+
+					var nu_temp = Math.Log2(Math.Log(dv));
+					var nu = nu_temp / 3.22;
+
+					//var nu = nu_temp / 2.5;
+					//var nu = nu_temp;
 
 					if (nu < 0 || nu > 1)
 					{
-						//Debug.WriteLine("WARNING: The EscapeVelocity is not in the range: 0..1");
+						var tnu = (ushort)Math.Round(nu * 10000);
+						Debug.WriteLine($"WARNING: The EscapeVelocity: {nu} ({tnu}) is not in the range: 0..1");
 						//throw new InvalidOperationException("The EscapeVelocity is not in the range: 0..2");
 						ourCount++;
 						nu = 0;
 					}
 
 					var d = 1 - nu;
-
 					var e = (ushort)Math.Round(d * 10000);
+
+					//var e = (ushort)Math.Round(nu * 10000);
+
 
 					escapeVelocities[i] = e;
 				}
@@ -648,6 +704,13 @@ namespace MSetGeneratorPrototype
 			}
 
 			/*
+			 
+			  
+			 continuous_index = iterations + 1 - (log(2) / |Zn|) / log (2) 
+
+			i + 1 - (ln (ln |z|)) / ln 2
+			  
+			  
 				log_zn:= log(x * x + y * y) / 2
 
 				nu:= log(log_zn / log(2)) / log(2)
@@ -663,10 +726,10 @@ namespace MSetGeneratorPrototype
 				float mu = iter_count - (log(log(modulus))) / log(2.0);
 			 */
 
-			if (ourCount > 0)
-			{
-				Debug.WriteLine($"There were {ourCount} out of range events.");
-			}
+			//if (ourCount > 0)
+			//{
+			//	Debug.WriteLine($"There were {ourCount} out of range events.");
+			//}
 
 			return escapeVelocities;
 		}
@@ -808,7 +871,6 @@ namespace MSetGeneratorPrototype
 		private void TestRoundTripRValue(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{
 			var mapPosition = mapSectionRequest.MapPosition;
-			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 
 			var rValueX = mapPosition.X;
 			var fp31ValX = FP31ValHelper.CreateFP31Val(mapPosition.X, apFixedPointFormat);

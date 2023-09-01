@@ -128,7 +128,12 @@ namespace MSS.Types
 			return errors;
 		}
 
+		public override string? ToString()
+		{
+			var result = $"BlendVal E,S,D: Red: {ERed}, {SRed}, {DiffRed}\tGreen: {EGreen}, {SGreen}, {DiffGreen}\tBlue: {EBlue}, {SBlue}, {DiffBlue}";
 
+			return result;
+		}
 	}
 
 }

@@ -676,10 +676,10 @@ namespace MSetExplorer
 				//var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
 				var escapeVelocities = mapSectionVectors.EscapeVelocities;
 
-				if (!escapeVelocities.Any(x => x > 0))
-				{
-					Debug.WriteLine("No EscapeVelocities Found.");
-				}
+				//if (!escapeVelocities.Any(x => x > 0))
+				//{
+				//	Debug.WriteLine("No EscapeVelocities Found.");
+				//}
 
 				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
 				{

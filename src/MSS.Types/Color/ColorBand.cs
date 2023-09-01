@@ -205,8 +205,6 @@ namespace MSS.Types
 			return result;
 		}
 
-		public BlendVals BlendVals { get; set; }
-
 		#endregion
 
 		#region Public Methods

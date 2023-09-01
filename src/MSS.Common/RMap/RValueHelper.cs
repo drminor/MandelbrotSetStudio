@@ -174,8 +174,8 @@ namespace MSS.Common
 		// TODO: Move this to the BigIntegerHelper class.
 		public static IList<double> ConvertToDoubles(BigInteger n, int exponent, int chunkSize)
 		{
-			var DIVISOR_LOG = chunkSize;
-			var DIVISOR = new BigInteger(Math.Pow(2, DIVISOR_LOG));
+			var divisorLog = chunkSize;
+			var divisor = new BigInteger(Math.Pow(2, divisorLog));
 
 			var result = new List<double>();
 
@@ -193,12 +193,12 @@ namespace MSS.Common
 			//}
 			else
 			{
-				var hi = BigInteger.DivRem(n, DIVISOR, out var lo);
+				var hi = BigInteger.DivRem(n, divisor, out var lo);
 
 				while (hi != 0)
 				{
 					result.Add((double)lo);
-					hi = BigInteger.DivRem(hi, DIVISOR, out lo);
+					hi = BigInteger.DivRem(hi, divisor, out lo);
 				}
 
 				result.Add((double)lo);
@@ -207,7 +207,7 @@ namespace MSS.Common
 				{
 					checked
 					{
-						result[i] *= Math.Pow(2, exponent + i * DIVISOR_LOG);
+						result[i] *= Math.Pow(2, exponent + (i * divisorLog));
 					}
 				}
 
@@ -324,9 +324,12 @@ namespace MSS.Common
 			var diffNoPrecision = nrmRVal1.Sub(nrmRVal2).Abs();
 
 			var doubles = ConvertToDoubles(diffNoPrecision);
-			var msd = doubles[0];
+			//var msd = doubles[0];
+			//var logB10 = Math.Log10(msd);
 
-			var logB10 = Math.Log10(msd);
+			var val = doubles.Sum();
+			var logB10 = Math.Log10(val);
+
 			var result = (int)Math.Ceiling(Math.Abs(logB10));
 
 			diff = new RValue(diffNoPrecision.Value, diffNoPrecision.Exponent, result);
@@ -347,16 +350,19 @@ namespace MSS.Common
 			var diffNoPrecision = nrmRVal1.Sub(nrmRVal2).Abs();
 
 			var doubles = ConvertToDoubles(diffNoPrecision);
-			var msd = doubles[0];
+			
+			//var msd = doubles[0];
+			//var logB10 = Math.Log10(msd);
 
-			var logB10 = Math.Log10(msd);
+			var val = doubles.Sum();
+			var logB10 = Math.Log10(val);
+
 			var result = (int)Math.Ceiling(Math.Abs(logB10 * 3.3219));
 
 			decimalPrecision = (int)Math.Ceiling(Math.Abs(logB10));
 
 			return result;
 		}
-
 
 		public static string GetFormattedResolution(RValue rValue)
 		{

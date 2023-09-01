@@ -24,9 +24,12 @@ namespace MSS.Types
             var estimatedCountTotalBits = bitsBeforeBinaryPoint + minimumFractionalBits;
             LimbCount = GetLimbCount(estimatedCountTotalBits);
 
-            NumberOfFractionalBits = LimbCount * EFFECTIVE_BITS_PER_LIMB - BitsBeforeBinaryPoint;
-            TotalBits = BitsBeforeBinaryPoint + NumberOfFractionalBits;
-            TargetExponent = -1 * NumberOfFractionalBits;
+			//NumberOfFractionalBits = LimbCount * EFFECTIVE_BITS_PER_LIMB - BitsBeforeBinaryPoint;
+			//TotalBits = BitsBeforeBinaryPoint + NumberOfFractionalBits;
+
+			TotalBits = LimbCount * EFFECTIVE_BITS_PER_LIMB;
+			NumberOfFractionalBits = TotalBits - BitsBeforeBinaryPoint;
+			TargetExponent = -1 * NumberOfFractionalBits;
 
             CheckFractionalBitsValue(minimumFractionalBits);
         }

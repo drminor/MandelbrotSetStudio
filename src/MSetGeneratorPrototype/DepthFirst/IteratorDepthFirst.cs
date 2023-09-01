@@ -90,7 +90,7 @@ namespace MSetGeneratorPrototype
 
 		public MathOpCounts MathOpCounts => _fp31VecMath.MathOpCounts;
 
-		public Vector256<uint>[] GetSumOfSquares(Vector256<uint>[] zrs, Vector256<uint>[] zis)
+		public Vector256<uint>[] GetModulusSquared(Vector256<uint>[] zrs, Vector256<uint>[] zis)
 		{
 			var result = FP31VecMathHelper.CreateNewLimbSet(_fp31VecMath.LimbCount);
 
