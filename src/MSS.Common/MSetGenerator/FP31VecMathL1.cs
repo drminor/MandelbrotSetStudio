@@ -279,7 +279,7 @@ namespace MSS.Common
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void IsGreaterOrEqThan(Vector256<uint>[] left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
+		public void IsGreaterOrEqThan(Vector256<uint>[] left, Vector256<int> right, ref Vector256<int> escapedFlagsVec)
 		{
 			// TODO: Is masking the Sign Bit really necessary.
 

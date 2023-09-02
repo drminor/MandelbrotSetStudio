@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:MSetExplorer"
+             xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:MapCalcSettingsViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="110" d:DesignWidth="200">
     <Grid>
@@ -22,16 +22,22 @@
                 <!--<RowDefinition Height="*" />-->
             </Grid.RowDefinitions>
 
-            <TextBlock Text="Target Iterations:" Grid.Row="0" Margin="0,5" Height="18" />
+            <TextBlock Text="Target Iterations:" Grid.Row="0" Margin="0,5,0,0" Height="18" />
             <TextBox x:Name="txtTargetIterations" Grid.Row="0" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding TargetIterations, UpdateSourceTrigger=LostFocus}"/>
 
-            <TextBlock Text="Threshold:" Grid.Row="1" Margin="0,5" Height="18" />
+            <TextBlock Text="Threshold:" Grid.Row="1" Margin="0,5,0,0" Height="18" />
             <TextBox x:Name="txtThreshold" Grid.Row="1" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding Threshold}" />
 
             <TextBlock Text="Available Iterations:" Grid.Row="2" Margin="0,5" Height="18" />
-            <TextBox x:Name="txtAvailableIterations" Grid.Row="2" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding TargetIterationsAvailable}"/>            
-            
-            <!--<Button x:Name="Save" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+            <TextBox x:Name="txtAvailableIterations" Grid.Row="2" Grid.Column="1" Margin="3" VerticalAlignment="Center" Text="{Binding TargetIterationsAvailable}"/>
+
+                <WrapPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,5">
+                <CheckBox IsChecked="{Binding SaveTheZValues}" Margin="0,0,2,0"/>
+                <TextBlock Text="Save the Calculation Results" />
+            </WrapPanel>
+
+
+                <!--<Button x:Name="Save" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Top" Margin="3"
                     Width="80" Height="25"

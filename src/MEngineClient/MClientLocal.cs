@@ -37,17 +37,13 @@ namespace MEngineClient
 
 				case MSetGenerationStrategy.DepthFirst:
 					{
-						_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation: false);
+						_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
 						EndPointAddress = "CSharp_DepthFirstGenerator";
 						break;
 					}
 
 				case MSetGenerationStrategy.UnManaged:
-					{
-						_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE, useCImplementation: true);
-						EndPointAddress = "C_Unmanaged";
-						break;
-					}
+					throw new NotSupportedException();
 
 				case MSetGenerationStrategy.SingleLimb:
 					throw new NotSupportedException();

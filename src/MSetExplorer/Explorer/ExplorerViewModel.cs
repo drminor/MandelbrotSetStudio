@@ -204,6 +204,11 @@ namespace MSetExplorer
 			{
 				ColorBandSetViewModel.ApplyChanges(e.TargetIterations);
 			}
+
+			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.SaveTheZValues)
+			{
+				MapDisplayViewModel.SaveTheZValues = e.SaveTheZValues;
+			}
 		}
 
 		private void ColorBandSetViewModel_ColorBandSetUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)

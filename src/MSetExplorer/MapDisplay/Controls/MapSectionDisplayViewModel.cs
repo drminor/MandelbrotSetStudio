@@ -136,6 +136,16 @@ namespace MSetExplorer
 			set => _bitmapGrid.HighlightSelectedColorBand = value;
 		}
 
+		public bool SaveTheZValues
+		{
+			get => _mapLoaderManager.SaveTheZValues;
+			set
+			{
+				_mapLoaderManager.SaveTheZValues = value;
+				OnPropertyChanged(nameof(IMapDisplayViewModel.SaveTheZValues));
+			}
+		}
+
 		public MapAreaInfo? LastMapAreaInfo
 		{
 			get => _latestMapAreaInfo;

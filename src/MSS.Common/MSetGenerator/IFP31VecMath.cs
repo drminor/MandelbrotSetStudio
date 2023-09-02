@@ -18,7 +18,7 @@ namespace MSS.Common
 		void Square(Vector256<uint>[] a, Vector256<uint>[] result);
 
 		Vector256<int> CreateVectorForComparison(uint value);
-		void IsGreaterOrEqThan(Vector256<uint>[] left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec);
+		void IsGreaterOrEqThan(Vector256<uint>[] left, Vector256<int> right, ref Vector256<int> escapedFlagsVec);
 
 		string Implementation { get; }
 

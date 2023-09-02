@@ -1,5 +1,4 @@
-﻿using MongoDB.Driver.Core.Authentication.Libgssapi;
-using MSS.Common.MSetGenerator;
+﻿using MSS.Common.MSetGenerator;
 using MSS.Types;
 using MSS.Types.APValues;
 using System;
@@ -592,7 +591,7 @@ namespace MSS.Common
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void IsGreaterOrEqThan(Vector256<uint>[] left, ref Vector256<int> right, ref Vector256<int> escapedFlagsVec)
+		public void IsGreaterOrEqThan(Vector256<uint>[] left, Vector256<int> right, ref Vector256<int> escapedFlagsVec)
 		{
 			// TODO: Is masking the Sign Bit really necessary.
 			var sansSign = Avx2.And(left[^1], SIGN_BIT_MASK_VEC);

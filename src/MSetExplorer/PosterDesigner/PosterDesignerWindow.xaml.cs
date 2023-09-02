@@ -317,6 +317,8 @@ namespace MSetExplorer
 			{
 				var areaColorAndCalcSettings = _vm.PosterViewModel.CurrentAreaColorAndCalcSettings;
 
+				Debug.WriteLine($"The PosterDesignerWindow is StartingImageCreation. SaveTheZValues = {areaColorAndCalcSettings.MapCalcSettings.SaveTheZValues}.");
+
 				_createImageProgressWindow = StartImageCreation(imageFilePath, areaColorAndCalcSettings, curPoster.PosterSize);
 
 				_createImageProgressWindow.Show();

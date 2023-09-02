@@ -27,6 +27,7 @@ namespace MSetExplorer
 				{
 					_mapCalcSettings = value;
 					OnPropertyChanged(nameof(TargetIterations));
+					OnPropertyChanged(nameof(SaveTheZValues));
 				}
 			}
 		}
@@ -65,6 +66,19 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool SaveTheZValues
+		{
+			get => _mapCalcSettings.SaveTheZValues;
+			set
+			{
+				if (value != _mapCalcSettings.SaveTheZValues)
+				{
+					_mapCalcSettings = MapCalcSettings.UpdateSaveTheZValues(_mapCalcSettings, value); // ADDED: 4/8/2023 -- not tested.
+					TriggerIterationUpdate(value);
+				}
+			}
+		}
+
 		#endregion
 
 		#region Public Methods
@@ -72,6 +86,11 @@ namespace MSetExplorer
 		public void TriggerIterationUpdate(int newValue)
 		{
 			MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, newValue));
+		}
+
+		public void TriggerIterationUpdate(bool newValue)
+		{
+			MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.SaveTheZValues, newValue));
 		}
 
 		#endregion

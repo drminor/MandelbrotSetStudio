@@ -58,6 +58,27 @@ namespace ProjectRepo
 
 		public IMongoDatabase Database => _mongoDatabaseLazy.Value;
 
+		//private void TestIt()
+		//{
+		//	try
+		//	{
+		//		var dbClient = GetClient();
+
+		//		var mongoDatabase = dbClient.GetDatabase(_databaseName);
+
+		//		//var x = new mongodb.GridFSBucket(db);
+
+		//		//var x = new MongoDB.Driver.gr
+
+		//		//return mongoDatabase;
+		//	}
+		//	catch (Exception ex)
+		//	{
+		//		Debug.WriteLine($"Got exception: {ex} during call to GetDb.");
+		//		throw;
+		//	}
+		//}
+
 		private IMongoDatabase GetDb()
 		{
 			try

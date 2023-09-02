@@ -104,7 +104,78 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
-		#region Public Methods
+		#region Public Methods - New
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Vector256<uint>[] IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
+		{
+			if (IncreasingIterations)
+			{
+				_fp31VecMath.Square(zrs, _zRSqrs);
+				_fp31VecMath.Square(zis, _zISqrs);
+
+				var result = Iterate(crs, cis, zrs, zis);
+				return result;
+			}
+			else
+			{
+				try
+				{
+					Array.Copy(crs, zrs, crs.Length);
+					Array.Copy(cis, zis, cis.Length);
+
+					_fp31VecMath.Square(zrs, _zRSqrs);
+					_fp31VecMath.Square(zis, _zISqrs);
+					_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
+
+					//_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, ref escapedFlagsVec);
+
+					return _sumOfSqrs;
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"Iterator received exception: {e}.");
+					throw;
+				}
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Vector256<uint>[] Iterate(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis)
+		{
+			try
+			{
+				// square(z.r + z.i)
+				_fp31VecMath.Add(zrs, zis, _temp);
+				_fp31VecMath.Square(_temp, _zRZiSqrs);
+
+				// z.i = square(z.r + z.i) - zrsqr - zisqr + c.i
+				_fp31VecMath.Sub(_zRZiSqrs, _zRSqrs, zis);
+				_fp31VecMath.Sub(zis, _zISqrs, _temp);
+				_fp31VecMath.Add(_temp, cis, zis);
+
+				// z.r = zrsqr - zisqr + c.r
+				_fp31VecMath.Sub(_zRSqrs, _zISqrs, _temp);
+				_fp31VecMath.Add(_temp, crs, zrs);
+
+				_fp31VecMath.Square(zrs, _zRSqrs);
+				_fp31VecMath.Square(zis, _zISqrs);
+				_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
+
+				//_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, ref escapedFlagsVec);
+
+				return _sumOfSqrs;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Iterator received exception: {e}.");
+				throw;
+			}
+		}
+
+		#endregion
+
+		#region Public Methods - Old
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> escapedFlagsVec)
@@ -127,7 +198,7 @@ namespace MSetGeneratorPrototype
 					_fp31VecMath.Square(zis, _zISqrs);
 					_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-					_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, ref _thresholdVector, ref escapedFlagsVec);
+					_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, ref escapedFlagsVec);
 				}
 				catch (Exception e)
 				{
@@ -159,7 +230,7 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.Square(zis, _zISqrs);
 				_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-				_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, ref _thresholdVector, ref escapedFlagsVec);
+				_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, ref escapedFlagsVec);
 			}
 			catch (Exception e)
 			{
@@ -193,8 +264,8 @@ namespace MSetGeneratorPrototype
 					_fp31VecMath.Square(zis, _zISqrs);
 					_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-					_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, ref _thresholdVector, ref escapedFlagsVec);
-					_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, ref _thresholdVectorForEscVel, ref escapedFlagsLargeBailoutVec);
+					_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, ref escapedFlagsVec);
+					_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVectorForEscVel, ref escapedFlagsLargeBailoutVec);
 				}
 				catch (Exception e)
 				{
@@ -226,9 +297,9 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.Square(zis, _zISqrs);
 				_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs);
 
-				_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, ref _thresholdVector, ref escapedFlagsVec);
+				_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVector, ref escapedFlagsVec);
 
-				_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, ref _thresholdVectorForEscVel, ref escapedFlagsLargeBailoutVec);
+				_fp31VecMath.IsGreaterOrEqThan(_sumOfSqrs, _thresholdVectorForEscVel, ref escapedFlagsLargeBailoutVec);
 
 			}
 			catch (Exception e)

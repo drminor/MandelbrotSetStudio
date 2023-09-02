@@ -554,6 +554,8 @@ namespace MSetExplorer
 
 			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
 			{
+				Debug.WriteLine($"The ExplorerWindow is StartingImageCreation. SaveTheZValues = {areaColorAndCalcSettings.MapCalcSettings.SaveTheZValues}.");
+
 				_createImageProgressWindow = StartImageCreation(imageFilePath, areaColorAndCalcSettings, new SizeDbl(imageSize));
 
 				_createImageProgressWindow.Show();

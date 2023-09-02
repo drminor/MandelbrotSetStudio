@@ -66,6 +66,10 @@ namespace MSS.Types.MSet
 			return new MapCalcSettings(targetIterations, mcs.Threshold, mcs.UseEscapeVelocities, mcs.SaveTheZValues);
 		}
 
+		public static MapCalcSettings UpdateSaveTheZValues(MapCalcSettings mcs, bool saveTheZValues)
+		{
+			return new MapCalcSettings(mcs.TargetIterations, mcs.Threshold, mcs.UseEscapeVelocities, saveTheZValues);
+		}
 
 		#endregion
 

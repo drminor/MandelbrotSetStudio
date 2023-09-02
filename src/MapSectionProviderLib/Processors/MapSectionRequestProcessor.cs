@@ -21,7 +21,6 @@ namespace MapSectionProviderLib
 
 		// TODO: Add a property to the MapSectionRequest to specify whether or not to Save the ZValues.
 
-		private readonly bool SAVE_THE_ZVALUES;
 
 		private const int NUMBER_OF_REQUEST_CONSUMERS = 2;
 		private const int REQUEST_QUEUE_CAPACITY = 50;
@@ -70,7 +69,7 @@ namespace MapSectionProviderLib
 			_useDetailedDebug = false;
 
 			UseRepo = true;
-			SAVE_THE_ZVALUES = false;
+			PersistZValues = false;
 
 			_nextJobId = 0;
 			_mapSectionVectorProvider = mapSectionVectorProvider;
@@ -104,6 +103,8 @@ namespace MapSectionProviderLib
 		#endregion
 
 		#region Public Properties
+
+		public bool PersistZValues { get; set; }
 
 		public bool UseRepo { get; set; }
 
@@ -369,7 +370,7 @@ namespace MapSectionProviderLib
 					request.IncreasingIterations = true;
 					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
-					if (UseRepo && SAVE_THE_ZVALUES)
+					if (UseRepo && PersistZValues)
 					{
 						var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
 						var mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
@@ -415,7 +416,7 @@ namespace MapSectionProviderLib
 			request.MapSectionVectors = mapSectionVectors;
 			request.MapSectionVectors.ResetObject();
 
-			if (UseRepo && SAVE_THE_ZVALUES)
+			if (UseRepo && PersistZValues)
 			{
 				request.MapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
 				request.MapSectionZVectors.ResetObject();
@@ -640,7 +641,7 @@ namespace MapSectionProviderLib
 
 		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
 		{
-			if (!mapSectionResponse.RequestCancelled || SAVE_THE_ZVALUES)
+			if (!mapSectionResponse.RequestCancelled || PersistZValues)
 			{
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
 				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse), ct);
