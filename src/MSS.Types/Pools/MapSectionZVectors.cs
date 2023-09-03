@@ -6,7 +6,7 @@ using System.Runtime.Intrinsics;
 
 namespace MSS.Types
 {
-	public class MapSectionZVectors //: IPoolable
+	public class MapSectionZVectors : IPoolable
 	{
 		private static readonly ArrayPool<byte> _arrayPool = ArrayPool<byte>.Shared;
 
@@ -315,6 +315,20 @@ namespace MSS.Types
 		#endregion
 
 		#region IPoolable Support
+
+		public int ReferenceCount { get; private set; }
+
+		public int IncreaseRefCount()
+		{
+			ReferenceCount++;
+			return ReferenceCount;
+		}
+
+		public int DecreaseRefCount()
+		{
+			ReferenceCount--;
+			return ReferenceCount;
+		}
 
 		public void ResetObject()
 		{

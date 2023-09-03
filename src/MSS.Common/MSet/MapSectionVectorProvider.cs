@@ -69,14 +69,14 @@ namespace MSS.Common
 
 		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
 		{
-			mapSectionRequest.MapSectionVectors = ReturnMapSectionVectors(mapSectionRequest.MapSectionVectors);
-			mapSectionRequest.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionRequest.MapSectionZVectors);
+			_ = mapSectionRequest.MapSectionVectors = ReturnMapSectionVectors(mapSectionRequest.MapSectionVectors);
+			_ =mapSectionRequest.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionRequest.MapSectionZVectors);
 		}
 
 		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
 		{
-			mapSectionResponse.MapSectionVectors = ReturnMapSectionVectors(mapSectionResponse.MapSectionVectors);
-			mapSectionResponse.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
+			_ = mapSectionResponse.MapSectionVectors = ReturnMapSectionVectors(mapSectionResponse.MapSectionVectors);
+			_ = mapSectionResponse.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
 		}
 
 		public MapSectionVectors? ReturnMapSectionVectors(MapSectionVectors? mapSectionVectors)

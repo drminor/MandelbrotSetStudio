@@ -242,9 +242,9 @@ namespace MSetExplorer
 			var curJob = ProjectViewModel.CurrentJob;
 			var curJobId = curJob.Id.ToString();
 
-			var newMapCalcSettings = curJob.MapCalcSettings;
 			var newMapAreaInfo = curJob.MapAreaInfo;
 			var newColorBandSet = ProjectViewModel.CurrentColorBandSet;
+			var newMapCalcSettings = GetUpdatedMapCalcSettings(curJob.MapCalcSettings, MapDisplayViewModel.SaveTheZValues, MapDisplayViewModel.UseEscapeVelocities);
 
 			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
 
@@ -263,6 +263,13 @@ namespace MSetExplorer
 			MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
 
 			UpdateTheMapCoordsView(curJob);
+		}
+
+		private MapCalcSettings GetUpdatedMapCalcSettings(MapCalcSettings current, bool saveTheZValues, bool caculateEscapeVelocities)
+		{
+			var result = new MapCalcSettings(current.TargetIterations, current.Threshold, caculateEscapeVelocities, saveTheZValues); 
+
+			return result;
 		}
 
 		private void UpdateTheMapCoordsView(Job currentJob)

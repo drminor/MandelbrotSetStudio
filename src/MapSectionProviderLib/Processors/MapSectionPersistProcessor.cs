@@ -165,7 +165,7 @@ namespace MapSectionProviderLib
 				{
 					mapSectionResponse.MapSectionId = mapSectionId.ToString();
 
-					if (mapSectionResponse.MapSectionZVectors != null & !mapSectionResponse.AllRowsHaveEscaped)
+					if (mapSectionResponse.MapSectionZVectors != null && !mapSectionResponse.AllRowsHaveEscaped)
 					{
 						_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
 					}

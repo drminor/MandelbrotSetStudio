@@ -78,7 +78,7 @@ namespace MSS.Common
 		#region Square
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Square(Vector256<uint>[] source, Vector256<uint>[] result)
+		public void Square(Vector256<uint>[] source, Vector256<uint>[] result, ref Vector256<int> doneFlags)
 		{
 			// Our multiplication routines don't support 2's compliment,
 			// So we must convert back from two's complement to standard.
@@ -121,7 +121,8 @@ namespace MSS.Common
 				var newValuesVector1 = Avx2.Add(notVector1, _ones);
 
 				var limbValues = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);                // The low 31 bits of the sum is the result.
-				//var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+				var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+				WarnIfAnyNotZero(carry, doneFlags, "ConvertFrom2C");
 
 				var cLimbValues = Avx2.BlendVariable(limbValues, source[0], signBitVecs.AsUInt32());
 
@@ -130,11 +131,6 @@ namespace MSS.Common
 
 				// Take the higher 4 values and set the high halves of each result
 				result0_High_L0 = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
-
-				// TODO: Check the value of _carry for overflow for those _signBitVec values that are zero.
-
-
-				//FP31VecMathHelper.WarnIfAnyCarry(newValuesVector1, signBitVecs, "Negating before Multiplication.");
 
 				IncrementNegationsCount(8);
 			}
@@ -228,7 +224,7 @@ namespace MSS.Common
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
+		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlags)
 		{
 			//CheckReservedBitIsClear(b, "Negating B");
 			//Negate(right, _negationResult);
@@ -238,7 +234,8 @@ namespace MSS.Common
 			var newValuesVector1 = Avx2.Add(notVector1, _ones);
 
 			var negatedRight_L0 = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);
-			//_carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);
+			var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);
+			WarnIfAnyNotZero(carry, doneFlags, "Negate");
 
 			IncrementNegationsCount(8);
 
@@ -248,19 +245,23 @@ namespace MSS.Common
 			var newValuesVector = Avx2.Add(left[0], negatedRight_L0);
 
 			result[0] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                         // The low 31 bits of the sum is the result.
-			//_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);      // The high 31 bits of sum becomes the new carry.
+			carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);      // The high 31 bits of sum becomes the new carry.
+
+			WarnIfAnyNotZero(carry, doneFlags, "Subtract");
 
 			IncrementAdditionsCount(8);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
+		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlags)
 		{
 			// i = 0
 			var newValuesVector = Avx2.Add(left[0], right[0]);
 
 			result[0] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                         // The low 31 bits of the sum is the result.
-			//_carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);      // The high 31 bits of sum becomes the new carry.
+			var carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);      // The high 31 bits of sum becomes the new carry.
+
+			WarnIfAnyNotZero(carry, doneFlags, "Addition");
 
 			IncrementAdditionsCount(16);
 		}
@@ -291,7 +292,21 @@ namespace MSS.Common
 
 		#endregion
 
-		#region PERF
+		#region Diagnostics
+
+		[Conditional("DEBUG")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void WarnIfAnyNotZero(Vector256<uint> source, Vector256<int> mask, string description)
+		{
+			FP31VecMathHelper.WarnIfAnyNotZero(source, mask, description);
+		}
+
+		[Conditional("DEBUG")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void WarnIfAnyNotZero(Vector256<ulong> source, Vector256<int> mask, string description)
+		{
+			FP31VecMathHelper.WarnIfAnyNotZero(source, mask, description);
+		}
 
 		[Conditional("PERF")]
 		private void IncrementMultiplicationsCount(int amount)

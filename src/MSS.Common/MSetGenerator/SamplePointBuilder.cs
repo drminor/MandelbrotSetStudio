@@ -151,10 +151,11 @@ namespace MSS.Common
 
 		public static Vector256<uint>[] BuildSamplePoints(FP31Val startValue, Vector256<uint>[] offsets, FP31VecMath fP31VecMath)
 		{
+			var doneFlags = Vector256<int>.Zero;
+
 			var result = new Vector256<uint>[offsets.Length];
 
 			var limbCount = fP31VecMath.LimbCount;
-			var lanes = Vector256<uint>.Count;
 			var startVec = new Vector256<uint>[limbCount];
 
 			for (var limbPtr = 0; limbPtr < limbCount; limbPtr++)
@@ -176,7 +177,7 @@ namespace MSS.Common
 					offsetVec[i] = offsets[valueOffset + i];
 				}
 
-				fP31VecMath.Add(startVec, offsetVec, resultVec);
+				fP31VecMath.Add(startVec, offsetVec, resultVec, ref doneFlags);
 
 				for (var i = 0; i < limbCount; i++)
 				{

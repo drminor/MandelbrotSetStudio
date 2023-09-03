@@ -127,7 +127,12 @@ namespace MSetExplorer
 		public bool UseEscapeVelocities
 		{
 			get => _bitmapGrid.UseEscapeVelocities;
-			set => _bitmapGrid.UseEscapeVelocities = value;
+			set
+			{
+				_bitmapGrid.UseEscapeVelocities = value;
+				_mapLoaderManager.CalculateEscapeVelocities = value;
+				OnPropertyChanged(nameof(IMapDisplayViewModel.UseEscapeVelocities));
+			}
 		}
 
 		public bool HighlightSelectedColorBand

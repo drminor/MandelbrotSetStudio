@@ -18,7 +18,6 @@ namespace MSS.Types
 		public MapSectionZVectorsPool(SizeInt blockSize, int limbCount, int initialSize = 16, int maxSize = int.MaxValue)
 		{
 			BlockSize = blockSize;
-			//LimbCount = limbCount;
 
 			_stateLock = new object();
 			_pool = new Stack<MapSectionZVectors>(initialSize);
@@ -30,8 +29,6 @@ namespace MSS.Types
 		}
 
 		public SizeInt BlockSize { get; init; }
-		//public int LimbCount { get; init; }
-
 
 		protected void Fill(int amount, int limbCount)
 		{
@@ -66,6 +63,7 @@ namespace MSS.Types
 						result.LimbCount = limbCount;
 					}
 
+					result.IncreaseRefCount();
 					return result;
 				}
 			}
@@ -73,25 +71,41 @@ namespace MSS.Types
 
 		public bool Free(MapSectionZVectors obj)
 		{
-			if (obj == null)
-				return false;
+			bool result;
 
-			lock (_stateLock)
+			if (obj == null)
 			{
-				if (TotalFree < MaxSize)
+				result = false;
+			}
+			else
+			{
+				lock (_stateLock)
 				{
-					//Reset(obj);
-					_pool.Push(obj);
-					MaxPeak = Math.Max(MaxPeak, TotalFree);
-					return true;
-				}
-				else
-				{
-					obj.Dispose();
+					obj.DecreaseRefCount();
+
+					if (obj.ReferenceCount > 0)
+					{
+						result = false;
+					}
+					else
+					{
+						if (TotalFree < MaxSize)
+						{
+							//Reset(obj);
+							_pool.Push(obj);
+							MaxPeak = Math.Max(MaxPeak, TotalFree);
+						}
+						else
+						{
+							obj.Dispose();
+						}
+
+						result = true;
+					}
 				}
 			}
 
-			return false;
+			return result;
 		}
 
 		protected virtual void Reset(MapSectionZVectors obj)
@@ -118,19 +132,19 @@ namespace MSS.Types
 			}
 		}
 
-		public virtual MapSectionZVectors DuplicateFrom(MapSectionZVectors obj)
-		{
-			if (obj == null)
-			{
-				throw new ArgumentException("DuplicateFrom must be supplied a non-null value.");
-			}
+		//public virtual MapSectionZVectors DuplicateFrom(MapSectionZVectors obj)
+		//{
+		//	if (obj == null)
+		//	{
+		//		throw new ArgumentException("DuplicateFrom must be supplied a non-null value.");
+		//	}
 
-			var source = Obtain(obj.LimbCount);
-			obj.CopyTo(source);
-			var result = source;
+		//	var source = Obtain(obj.LimbCount);
+		//	obj.CopyTo(source);
+		//	var result = source;
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public override string ToString()
 		{

@@ -44,7 +44,6 @@ namespace MSS.Common
 
 		private Vector256<uint> _ones;
 
-		//private Vector256<uint> _carry;
 		private Vector256<ulong> _carryVectorsLong1;
 		private Vector256<ulong> _carryVectorsLong2;
 
@@ -55,8 +54,6 @@ namespace MSS.Common
 
 		private int _squareSourceStartIndex;
 		private bool _skipSquareResultLow;
-
-		private const bool USE_DET_DEBUG = false;
 
 		#endregion
 
@@ -75,7 +72,6 @@ namespace MSS.Common
 
 			_ones = Vector256.Create(1u);
 
-			//_carry = Vector256<uint>.Zero;
 			_carryVectorsLong1 = Vector256<ulong>.Zero;
 			_carryVectorsLong2 = Vector256<ulong>.Zero;
 
@@ -122,46 +118,27 @@ namespace MSS.Common
 		#region Multiply and Square
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Square(Vector256<uint>[] a, Vector256<uint>[] result)
+		public void Square(Vector256<uint>[] a, Vector256<uint>[] result, ref Vector256<int> doneFlags)
 		{
 			// Our multiplication routines don't support 2's compliment,
 			// So we must convert back from two's complement to standard.
 
-			// The result of squaring is always positive, so we don't have to convert
-			// back to two's compliment afterwards.
+			// The result of squaring is always positive, so we don't have to
+			// convert back to two's compliment afterwards.
 
 			//FP31VecMathHelper.CheckReservedBitIsClear(a, "Squaring");
 			FP31VecMathHelper.ClearLimbSet(result);
 
-			ConvertFrom2C(a, _squareResult0);
-
-			// Unoptimized
+			ConvertFrom2C(a, _squareResult0, ref doneFlags);
 			SquareInternal(_squareResult0, _squareResult1);
-			SumThePartials(_squareResult1, _squareResult2);
+			SumThePartials(_squareResult1, _squareResult2, ref doneFlags);
 			ShiftAndTrim(_squareResult2, result);
-
-			//// Optimized
-			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
-			//SumThePartials(_squareResult1Lo, _squareResult2Lo);
-			//var optimizedResult = new Vector256<uint>[LimbCount];
-			//ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, optimizedResult);
-
-			//for (var i = 0; i < LimbCount; i++)
-			//{
-			//	var eqFlags = Avx2.CompareEqual(optimizedResult[i], result[i]);
-			//	if (Avx2.MoveMask(eqFlags.AsByte()) != -1)
-			//	{
-			//		Debug.WriteLine("WARNING Optimized != NonOptimized.");
-			//	}
-			//}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void SquareInternal(PairOfVec<uint> source, PairOfVec<ulong> result)
 		{
 			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
-
-			//result.ClearManatissMems();
 
 			var lCntr = 0;
 
@@ -193,108 +170,28 @@ namespace MSS.Common
 				}
 			}
 
-
 			IncrementMultiplicationsCount(lCntr * 2);
 			IncrementAdditionsCount(lCntr * 2);
 			IncrementSplitsCount(lCntr * 2);
-
-		}
-
-		private void SquareInternalOptimized(Vector256<uint>[] source, Vector256<ulong>[] result)
-		{
-			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
-
-			//result.ClearManatissMems();
-
-			for (int j = 0; j < source.Length; j++)
-			{
-				for (int i = j; i < source.Length; i++)
-				{
-					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
-
-					if (resultPtr < _squareSourceStartIndex)
-					{
-						result[resultPtr] = Vector256<ulong>.Zero;
-						result[resultPtr + 1] = Vector256<ulong>.Zero;
-					}
-					else
-					{
-						var productVector = Avx2.Multiply(source[j], source[i]);
-						IncrementMultiplicationsCount(4);
-
-						if (i > j)
-						{
-							//product *= 2;
-							productVector = Avx2.ShiftLeftLogical(productVector, 1);
-						}
-
-						// 0/1; 1/2; 2/3
-
-						if (_skipSquareResultLow & resultPtr == _squareSourceStartIndex)
-						{
-							result[resultPtr] = Vector256<ulong>.Zero;
-							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
-						}
-						else
-						{
-							result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
-							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
-						}
-
-						//MathOpCounts.NumberOfSplits++;
-
-					}
-				}
-			}
 		}
 
 		#endregion
 
 		#region Multiplication Post Processing
 
-		private void SumThePartialOld(PairOfVec<ulong> source, PairOfVec<ulong> result)
-		{
-			// To be used after a multiply operation.
-			// Process the carry portion of each result bin.
-			// This will leave each result bin with a value <= 2^32 for the final digit.
-			// If the MSL produces a carry, throw an exception.
-
-			_carryVectorsLong1 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong1, _carryVectorsLong1);
-			_carryVectorsLong2 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong2, _carryVectorsLong2);
-
-			for (int limbPtr = 0; limbPtr < source.Lower.Length; limbPtr++)
-			{
-				var withCarries1 = Avx2.Add(source.Lower[limbPtr], _carryVectorsLong1);
-				var withCarries2 = Avx2.Add(source.Upper[limbPtr], _carryVectorsLong2);
-
-				result.Lower[limbPtr] = Avx2.And(withCarries1, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
-				result.Upper[limbPtr] = Avx2.And(withCarries2, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
-
-				_carryVectorsLong1 = Avx2.ShiftRightLogical(withCarries1, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
-				_carryVectorsLong2 = Avx2.ShiftRightLogical(withCarries2, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
-
-				// Clear the source so that square internal will not have to make a separate call.
-				source.Lower[limbPtr] = Avx2.Xor(source.Lower[limbPtr], source.Lower[limbPtr]);
-				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
-			}
-
-			IncrementAdditionsCount(LimbCount * 16);
-			IncrementSplitsCount(LimbCount * 16);
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void SumThePartials(PairOfVec<ulong> source, PairOfVec<ulong> result)
+		private void SumThePartials(PairOfVec<ulong> source, PairOfVec<ulong> result, ref Vector256<int> doneFlags)
 		{
 			// To be used after a multiply operation.
 			// Process the carry portion of each result bin.
 			// This will leave each result bin with a value <= 2^32 for the final digit.
 			// If the MSL produces a carry, throw an exception.
 
-			result.Lower[0] = Avx2.And(source.Lower[0], HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
-			result.Upper[0] = Avx2.And(source.Upper[0], HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+			result.Lower[0] = Avx2.And(source.Lower[0], HIGH33_MASK_VEC_L);					// The low 31 bits of the sum is the result.
+			result.Upper[0] = Avx2.And(source.Upper[0], HIGH33_MASK_VEC_L);					// The low 31 bits of the sum is the result.
 
-			var carry1 = Avx2.ShiftRightLogical(source.Lower[0], EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
-			var carry2 = Avx2.ShiftRightLogical(source.Upper[0], EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+			var carry1 = Avx2.ShiftRightLogical(source.Lower[0], EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
+			var carry2 = Avx2.ShiftRightLogical(source.Upper[0], EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
 
 			source.Lower[0] = Avx2.Xor(source.Lower[0], source.Lower[0]);
 			source.Upper[0] = Avx2.Xor(source.Upper[0], source.Upper[0]);
@@ -304,24 +201,19 @@ namespace MSS.Common
 				var withCarries1 = Avx2.Add(source.Lower[limbPtr], carry1);
 				var withCarries2 = Avx2.Add(source.Upper[limbPtr], carry2);
 
-				result.Lower[limbPtr] = Avx2.And(withCarries1, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
-				result.Upper[limbPtr] = Avx2.And(withCarries2, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+				result.Lower[limbPtr] = Avx2.And(withCarries1, HIGH33_MASK_VEC_L);			// The low 31 bits of the sum is the result.
+				result.Upper[limbPtr] = Avx2.And(withCarries2, HIGH33_MASK_VEC_L);			// The low 31 bits of the sum is the result.
 
-				carry1 = Avx2.ShiftRightLogical(withCarries1, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
-				carry2 = Avx2.ShiftRightLogical(withCarries2, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+				carry1 = Avx2.ShiftRightLogical(withCarries1, EFFECTIVE_BITS_PER_LIMB);		// The high 31 bits of sum becomes the new carry.
+				carry2 = Avx2.ShiftRightLogical(withCarries2, EFFECTIVE_BITS_PER_LIMB);		// The high 31 bits of sum becomes the new carry.
 
 				// Clear the source so that square internal will not have to make a separate call.
 				source.Lower[limbPtr] = Avx2.Xor(source.Lower[limbPtr], source.Lower[limbPtr]);
 				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
 			}
 
-			if ( !AreAllZero(carry1) || !AreAllZero(carry2) )
-			{
-				Debug.WriteLine("Overflow on SumThePartials");
-			}
-
-			//FP31VecMathHelper.WarnIfAnyNotZero(carry1, doneFlagsVec);
-			//FP31VecMathHelper.WarnIfAnyNotZero(carry2, doneFlagsVec);
+			WarnIfAnyNotZero(carry1, doneFlags, $"SumThePartialsLower");
+			WarnIfAnyNotZero(carry1, doneFlags, $"SumThePartialsUpper");
 
 			IncrementAdditionsCount((LimbCount - 1) * 16);
 			IncrementSplitsCount(LimbCount * 16);
@@ -387,13 +279,6 @@ namespace MSS.Common
 			return !(negateFailed || addFailed);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
-		{
-			Negate(right, _negationResult);
-			Add(left, _negationResult, result);
-		}
-
 		public bool TryAdd(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec)
 		{
 			var carry = Vector256<uint>.Zero;
@@ -403,7 +288,7 @@ namespace MSS.Common
 				var sumVector = Avx2.Add(left[limbPtr], right[limbPtr]);
 				var newValuesVector = Avx2.Add(sumVector, carry);
 
-				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
+				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);              // The low 31 bits of the sum is the result.
 				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 			}
 
@@ -414,7 +299,14 @@ namespace MSS.Common
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result)
+		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlags)
+		{
+			Negate(right, _negationResult, ref doneFlags);
+			Add(left, _negationResult, result, ref doneFlags);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlags)
 		{
 			var carry = Vector256<uint>.Zero;
 
@@ -424,24 +316,15 @@ namespace MSS.Common
 				var newValuesVector = Avx2.Add(sumVector, carry);
 				//MathOpCounts.NumberOfAdditions += 2;
 
-				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
+				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);              // The low 31 bits of the sum is the result.
 				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 			}
 
 			IncrementAdditionsCount(LimbCount * 8);
 			IncrementSplitsCount(LimbCount * 8);
 
-			if (!AreAllZero(carry))
-			{
-				Debug.WriteLine("Overflow on Add");
-			}
+			WarnIfAnyNotZero(carry, doneFlags, $"Add");
 		}
-
-		//public void AddThenSquare(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
-		//{
-		//	Add(a, b, _additionResult);
-		//	Square(_additionResult, c);
-		//}
 
 		#endregion
 
@@ -470,7 +353,7 @@ namespace MSS.Common
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void Negate(Vector256<uint>[] source, Vector256<uint>[] result)
+		private void Negate(Vector256<uint>[] source, Vector256<uint>[] result, ref Vector256<int> doneFlags)
 		{
 			var carry = _ones;
 
@@ -485,17 +368,14 @@ namespace MSS.Common
 				//MathOpCounts.NumberOfSplits++;
 			}
 
+			WarnIfAnyNotZero(carry, doneFlags, "Negate");
+
 			//IncrementNegationsCount(LimbCount * 8);
 			IncrementSplitsCount(LimbCount * 8);
-
-			if (!AreAllZero(carry))
-			{
-				Debug.WriteLine("Overflow on Negate");
-			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec<uint> result)
+		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec<uint> result, ref Vector256<int> doneFlags)
 		{
 			//CheckReservedBitIsClear(source, "ConvertFrom2C");
 
@@ -527,8 +407,8 @@ namespace MSS.Common
 					var newValuesVector = Avx2.Add(notVector, carry);
 					//MathOpCounts.NumberOfAdditions += 2;
 
-					var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                        // The low 31 bits of the sum is the result.
-					carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
+					var limbValues = Avx2.And(newValuesVector, HIGH33_MASK_VEC);				// The low 31 bits of the sum is the result.
+					carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);	// The high 31 bits of sum becomes the new carry.
 
 					//MathOpCounts.NumberOfSplits++;
 
@@ -541,7 +421,7 @@ namespace MSS.Common
 					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 				}
 
-				FP31VecMathHelper.WarnIfAnyNotZero(carry, _signBitVecs, "Negating for multiplication");
+				WarnIfAnyNotZero(carry, doneFlags, "ConvertFrom2C");
 
 				//IncrementNegationsCount(LimbCount * 16);
 			}
@@ -558,24 +438,23 @@ namespace MSS.Common
 			return Avx2.MoveMask(signBitVecs.AsByte());
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private bool AreAllZero(Vector256<ulong> source)
-		{
-			IncrementComparisonsCount(4);
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//private bool AreAllZero(Vector256<ulong> source)
+		//{
+		//	IncrementComparisonsCount(4);
 
-			var cmpVecs = Avx2.CompareEqual(source.AsInt32(), ZERO_VEC);
-			return -1 == Avx2.MoveMask(cmpVecs.AsByte());
-		}
+		//	var cmpVecs = Avx2.CompareEqual(source.AsInt32(), ZERO_VEC);
+		//	return -1 == Avx2.MoveMask(cmpVecs.AsByte());
+		//}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private bool AreAllZero(Vector256<uint> source)
-		{
-			IncrementComparisonsCount(8);
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//private bool AreAllZero(Vector256<uint> source)
+		//{
+		//	IncrementComparisonsCount(8);
 
-			var cmpVecs = Avx2.CompareEqual(source.AsInt32(), ZERO_VEC);
-			return -1 == Avx2.MoveMask(cmpVecs.AsByte());
-		}
-
+		//	var cmpVecs = Avx2.CompareEqual(source.AsInt32(), ZERO_VEC);
+		//	return -1 == Avx2.MoveMask(cmpVecs.AsByte());
+		//}
 
 		#endregion
 
@@ -602,14 +481,21 @@ namespace MSS.Common
 
 		#endregion
 
-		//public FP31Val GetFP31Val(bool sign, uint[] limbs)
-		//{
-		//	var precision = Math.Max(RMapConstants.DEFAULT_PRECISION, ApFixedPointFormat.TotalBits);
-		//	var result = FP31ValHelper.CreateFP31Val(sign, limbs, ApFixedPointFormat.TargetExponent, ApFixedPointFormat.BitsBeforeBinaryPoint, precision);
-		//	return result;
-		//}
+		#region Diagnostics
 
-		#region PERF
+		[Conditional("DEBUG")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void WarnIfAnyNotZero(Vector256<uint> source, Vector256<int> mask, string description)
+		{
+			FP31VecMathHelper.WarnIfAnyNotZero(source, mask, description);
+		}
+
+		[Conditional("DEBUG")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void WarnIfAnyNotZero(Vector256<ulong> source, Vector256<int> mask, string description)
+		{
+			FP31VecMathHelper.WarnIfAnyNotZero(source, mask, description);
+		}
 
 		[Conditional("PERF")]
 		private void IncrementMultiplicationsCount(int amount)
@@ -646,6 +532,129 @@ namespace MSS.Common
 		{
 			MathOpCounts.NumberOfComparisons += amount;
 		}
+
+		#endregion
+
+		#region Not Used
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void SquareOptimized(Vector256<uint>[] a, Vector256<uint>[] result, ref Vector256<int> doneFlags)
+		{
+			// Our multiplication routines don't support 2's compliment,
+			// So we must convert back from two's complement to standard.
+
+			// The result of squaring is always positive, so we don't have to convert
+			// back to two's compliment afterwards.
+
+			//FP31VecMathHelper.CheckReservedBitIsClear(a, "Squaring");
+			FP31VecMathHelper.ClearLimbSet(result);
+
+			ConvertFrom2C(a, _squareResult0, ref doneFlags);
+
+			// Unoptimized
+			SquareInternal(_squareResult0, _squareResult1);
+			SumThePartials(_squareResult1, _squareResult2, ref doneFlags);
+			ShiftAndTrim(_squareResult2, result);
+
+			//// Optimized
+			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
+			//SumThePartials(_squareResult1Lo, _squareResult2Lo);
+			//var optimizedResult = new Vector256<uint>[LimbCount];
+			//ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, optimizedResult);
+
+			//for (var i = 0; i < LimbCount; i++)
+			//{
+			//	var eqFlags = Avx2.CompareEqual(optimizedResult[i], result[i]);
+			//	if (Avx2.MoveMask(eqFlags.AsByte()) != -1)
+			//	{
+			//		Debug.WriteLine("WARNING Optimized != NonOptimized.");
+			//	}
+			//}
+		}
+
+		private void SquareInternalOptimized(Vector256<uint>[] source, Vector256<ulong>[] result)
+		{
+			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
+
+			//result.ClearManatissMems();
+
+			for (int j = 0; j < source.Length; j++)
+			{
+				for (int i = j; i < source.Length; i++)
+				{
+					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
+
+					if (resultPtr < _squareSourceStartIndex)
+					{
+						result[resultPtr] = Vector256<ulong>.Zero;
+						result[resultPtr + 1] = Vector256<ulong>.Zero;
+					}
+					else
+					{
+						var productVector = Avx2.Multiply(source[j], source[i]);
+						IncrementMultiplicationsCount(4);
+
+						if (i > j)
+						{
+							//product *= 2;
+							productVector = Avx2.ShiftLeftLogical(productVector, 1);
+						}
+
+						// 0/1; 1/2; 2/3
+
+						if (_skipSquareResultLow & resultPtr == _squareSourceStartIndex)
+						{
+							result[resultPtr] = Vector256<ulong>.Zero;
+							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+						}
+						else
+						{
+							result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
+							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+						}
+
+						//MathOpCounts.NumberOfSplits++;
+
+					}
+				}
+			}
+		}
+
+		private void SumThePartialOld(PairOfVec<ulong> source, PairOfVec<ulong> result)
+		{
+			// To be used after a multiply operation.
+			// Process the carry portion of each result bin.
+			// This will leave each result bin with a value <= 2^32 for the final digit.
+			// If the MSL produces a carry, throw an exception.
+
+			_carryVectorsLong1 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong1, _carryVectorsLong1);
+			_carryVectorsLong2 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong2, _carryVectorsLong2);
+
+			for (int limbPtr = 0; limbPtr < source.Lower.Length; limbPtr++)
+			{
+				var withCarries1 = Avx2.Add(source.Lower[limbPtr], _carryVectorsLong1);
+				var withCarries2 = Avx2.Add(source.Upper[limbPtr], _carryVectorsLong2);
+
+				result.Lower[limbPtr] = Avx2.And(withCarries1, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+				result.Upper[limbPtr] = Avx2.And(withCarries2, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+
+				_carryVectorsLong1 = Avx2.ShiftRightLogical(withCarries1, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+				_carryVectorsLong2 = Avx2.ShiftRightLogical(withCarries2, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+
+				// Clear the source so that square internal will not have to make a separate call.
+				source.Lower[limbPtr] = Avx2.Xor(source.Lower[limbPtr], source.Lower[limbPtr]);
+				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
+			}
+
+			IncrementAdditionsCount(LimbCount * 16);
+			IncrementSplitsCount(LimbCount * 16);
+		}
+
+		//public void AddThenSquare(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
+		//{
+		//	Add(a, b, _additionResult);
+		//	Square(_additionResult, c);
+		//}
 
 		#endregion
 	}

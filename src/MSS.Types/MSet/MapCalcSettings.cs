@@ -14,8 +14,8 @@ namespace MSS.Types.MSet
 		public MapCalcSettings() : this(0, 0, false, false)
 		{ }
 
-		public MapCalcSettings(int targetIterations) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities: false, saveTheZValues: false)
-		{ }
+		//public MapCalcSettings(int targetIterations) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities: false, saveTheZValues: false)
+		//{ }
 
 		// Only used for POC and Tests
 		public MapCalcSettings(int targetIterations, int threshold) : this(targetIterations, threshold, useEscapeVelocities: false, saveTheZValues: false)
@@ -69,6 +69,11 @@ namespace MSS.Types.MSet
 		public static MapCalcSettings UpdateSaveTheZValues(MapCalcSettings mcs, bool saveTheZValues)
 		{
 			return new MapCalcSettings(mcs.TargetIterations, mcs.Threshold, mcs.UseEscapeVelocities, saveTheZValues);
+		}
+
+		public static MapCalcSettings UpdateUseEscapeVelocities(MapCalcSettings mcs, bool useEscapeVelocities)
+		{
+			return new MapCalcSettings(mcs.TargetIterations, mcs.Threshold, useEscapeVelocities, mcs.SaveTheZValues);
 		}
 
 		#endregion

@@ -609,8 +609,8 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, jobId);
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+				mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, jobId);
 			}
 
 			return mapSection;
@@ -644,6 +644,7 @@ namespace MapSectionProviderLib
 			if (!mapSectionResponse.RequestCancelled || PersistZValues)
 			{
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+				mapSectionResponse.MapSectionZVectors?.IncreaseRefCount();
 				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse), ct);
 			}
 		}

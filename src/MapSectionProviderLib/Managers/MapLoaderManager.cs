@@ -21,6 +21,8 @@ namespace MapSectionProviderLib
 
 		private readonly Task _removeCompletedRequestsTask;
 
+		private bool _caclulateEscapeVelocities;
+
 		#region Constructor
 
 		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor)
@@ -34,6 +36,8 @@ namespace MapSectionProviderLib
 			_requestsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			_removeCompletedRequestsTask = Task.Run(() => RemoveCompletedRequests(_requests, _requestsLock, _cts.Token), _cts.Token);
+
+			_caclulateEscapeVelocities = false;
 		}
 
 		#endregion
@@ -44,6 +48,12 @@ namespace MapSectionProviderLib
 		{
 			get => _mapSectionRequestProcessor.PersistZValues;
 			set => _mapSectionRequestProcessor.PersistZValues = value;
+		}
+
+		public bool CalculateEscapeVelocities
+		{
+			get => _caclulateEscapeVelocities;
+			set => _caclulateEscapeVelocities = value;
 		}
 
 		public event EventHandler<JobProgressInfo>? RequestAdded;
@@ -68,6 +78,10 @@ namespace MapSectionProviderLib
 		{
 			// TODO: Added 9/1/2023 -- Not Tested.
 			var mapCalcSettingsUpdated = MapCalcSettings.UpdateSaveTheZValues(mapCalcSettings, SaveTheZValues);
+			mapCalcSettingsUpdated = MapCalcSettings.UpdateUseEscapeVelocities(mapCalcSettingsUpdated, CalculateEscapeVelocities);
+
+			Debug.WriteLine($"MapLoaderManager: Creating MapSectionRequest with SaveTheZValues: {SaveTheZValues} and CalculateEscVels: {CalculateEscapeVelocities}.");
+
 
 			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettingsUpdated, emptyMapSections);
 			var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
