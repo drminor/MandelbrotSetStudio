@@ -19,6 +19,8 @@ namespace MEngineDataContracts
 		[OperationContract]
 		MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest, CallContext context = default);
 
+		[OperationContract]
+		MapSectionServiceResponse GenerateMapSectionTest(string dummy, CallContext context = default);
 
 	}
 

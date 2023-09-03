@@ -23,6 +23,22 @@ namespace MEngineClient
 		public string EndPointAddress { get; init; }
 		public bool IsLocal => true;
 
+		public MapSectionServiceResponse GenerateMapSectionTest()
+		{
+			var mEngineService = GetMapSectionService();
+
+			var stopWatch = Stopwatch.StartNew();
+			var mapSectionResponse = mEngineService.GenerateMapSectionTest("dummy");
+
+			stopWatch.Stop();
+
+			var elapsed = stopWatch.Elapsed;
+
+			Debug.WriteLine($"The test call took: {elapsed.TotalMilliseconds}ms.");
+
+			return mapSectionResponse;
+		}
+
 		//public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
 		//{
 		//	var mEngineService = GetMapSectionService();

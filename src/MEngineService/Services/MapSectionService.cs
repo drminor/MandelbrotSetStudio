@@ -1,8 +1,10 @@
 ﻿using MapSectionProviderLib;
 using MEngineDataContracts;
+using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProtoBuf.Grpc;
 using System;
@@ -44,6 +46,31 @@ namespace MEngineService.Services
 			//Console.WriteLine($"The MapSection Persist Processor has started. Server: {MONGO_DB_SERVER}, Port: {MONGO_DB_PORT}.");
 		}
 
+		public MapSectionServiceResponse GenerateMapSectionTest(string dummy, CallContext context = default)
+		{
+			var jobId = ObjectId.GenerateNewId().ToString();
+			var mapSectionId = ObjectId.GenerateNewId().ToString();
+			var subdivisionId = ObjectId.GenerateNewId().ToString();
+
+			var dummyMapSectionServiceRequest = new MapSectionServiceRequest
+			{
+				MapSectionId = mapSectionId,
+				OwnerId = jobId,
+				JobOwnerType = OwnerType.Project,
+				SubdivisionId = subdivisionId,
+				ScreenPosition = new PointInt(),
+				BlockPosition = new BigVectorDto(),
+				Position = new RPointDto(),
+				BlockSize = RMapConstants.BLOCK_SIZE,
+				SamplePointDelta = new RSizeDto(),
+				MapCalcSettings = new MapCalcSettings()
+			};
+
+			var result = new MapSectionServiceResponse(dummyMapSectionServiceRequest);
+
+			return result;
+		}
+
 		public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default)
 		{
 			await Task.Delay(100);
@@ -81,5 +108,6 @@ namespace MEngineService.Services
 		{
 			throw new NotImplementedException();
 		}
+
 	}
 }
