@@ -33,7 +33,7 @@ namespace MSetExplorer
 		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		//private const int MONGO_DB_PORT = 27017;
 
-		private static readonly bool USE_ALL_CORES = false;
+		private static readonly bool USE_ALL_CORES = true;
 
 		private static readonly bool CHECK_CONN_BEFORE_USE = false;
 

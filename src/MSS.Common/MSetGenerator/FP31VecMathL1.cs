@@ -122,7 +122,7 @@ namespace MSS.Common
 
 				var limbValues = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);                // The low 31 bits of the sum is the result.
 				var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
-				WarnIfAnyNotZero(carry, doneFlags, "ConvertFrom2C");
+				//WarnIfAnyNotZero(carry, doneFlags, "ConvertFrom2C");
 
 				var cLimbValues = Avx2.BlendVariable(limbValues, source[0], signBitVecs.AsUInt32());
 
@@ -235,7 +235,7 @@ namespace MSS.Common
 
 			var negatedRight_L0 = Avx2.And(newValuesVector1, HIGH33_MASK_VEC);
 			var carry = Avx2.ShiftRightLogical(newValuesVector1, EFFECTIVE_BITS_PER_LIMB);
-			WarnIfAnyNotZero(carry, doneFlags, "Negate");
+			//WarnIfAnyNotZero(carry, doneFlags, "Negate");
 
 			IncrementNegationsCount(8);
 
@@ -247,7 +247,7 @@ namespace MSS.Common
 			result[0] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                         // The low 31 bits of the sum is the result.
 			carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);      // The high 31 bits of sum becomes the new carry.
 
-			WarnIfAnyNotZero(carry, doneFlags, "Subtract");
+			///WarnIfAnyNotZero(carry, doneFlags, "Subtract");
 
 			IncrementAdditionsCount(8);
 		}
@@ -261,7 +261,7 @@ namespace MSS.Common
 			result[0] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);                         // The low 31 bits of the sum is the result.
 			var carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);      // The high 31 bits of sum becomes the new carry.
 
-			WarnIfAnyNotZero(carry, doneFlags, "Addition");
+			//WarnIfAnyNotZero(carry, doneFlags, "Addition");
 
 			IncrementAdditionsCount(16);
 		}

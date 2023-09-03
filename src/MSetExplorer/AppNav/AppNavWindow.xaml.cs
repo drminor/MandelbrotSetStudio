@@ -1,6 +1,7 @@
 ﻿using MSetExplorer.ScreenHelpers;
 using MSetExplorer.XPoc;
 using MSetExplorer.XPoc.BitmapGridControl;
+using MSetExplorer.XPoc.PerformanceHarness;
 using System;
 using System.Diagnostics;
 using System.Windows;

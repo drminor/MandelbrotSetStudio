@@ -103,10 +103,10 @@ namespace MSetGeneratorPrototype
 			var completed = GeneratorOrUpdateRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();
 
-			if (!allRowsHaveEscaped)
-			{
-				Debug.WriteLine("Some Rows have not reached the bailout radius.");
-			}
+			//if (!allRowsHaveEscaped)
+			//{
+			//	Debug.WriteLine("Some Rows have not reached the bailout radius.");
+			//}
 
 			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;

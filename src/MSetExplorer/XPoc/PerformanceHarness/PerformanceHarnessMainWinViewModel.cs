@@ -33,6 +33,8 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		public MathOpCounts MathOpCounts { get; set; }
 
+		//private bool _receivedTheLastOne;
+
 		#endregion
 
 		#region Constructor
@@ -53,6 +55,8 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			_generationElapsed = string.Empty;
 			_processingElapsed = string.Empty;
 
+			//_receivedTheLastOne = false;
+
 			//MapSectionProcessInfos = new List<MapSectionProcessInfo>();
 			MapSections = new List<MapSection>();
 
@@ -65,6 +69,35 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		#endregion
 
 		#region Public Properties
+
+		private bool _useEscapeVelocities;
+
+		public bool UseEscapeVelocities
+		{
+			get => _useEscapeVelocities;
+			set
+			{
+				if (value != _useEscapeVelocities)
+				{
+					_useEscapeVelocities = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		private bool _saveTheZValues;
+		public bool SaveTheZValues
+		{
+			get => _saveTheZValues;
+			set
+			{
+				if (value != _saveTheZValues)
+				{
+					_saveTheZValues = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		private int _limbCount;
 		public int LimbCount
@@ -198,7 +231,10 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var coords = new RRectangle(0, 4, 0, 4, -1);
 			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, canvasSize);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 1000, threshold:4);
+			var targetIterations = 1000;
+			var threshold = UseEscapeVelocities ? RMapConstants.DEFAULT_NORMALIZED_THRESHOLD : RMapConstants.DEFAULT_THRESHOLD;
+
+			var mapCalcSettings = new MapCalcSettings(targetIterations, threshold, UseEscapeVelocities, SaveTheZValues);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
@@ -252,7 +288,10 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, canvasSize);
 
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, threshold: 4);
+			var targetIterations = 400;
+			var threshold = UseEscapeVelocities ? RMapConstants.DEFAULT_NORMALIZED_THRESHOLD : RMapConstants.DEFAULT_THRESHOLD; 
+
+			var mapCalcSettings = new MapCalcSettings(targetIterations, threshold, UseEscapeVelocities, SaveTheZValues);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
@@ -267,11 +306,18 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		private void RunTest(Job job)
 		{
-			NotifyPropChangedMaxPeek();
-
+			//_receivedTheLastOne = false;
 			//MapSectionProcessInfos.Clear();
+
+			foreach (var ms in MapSections)
+			{
+				_mapSectionVectorProvider.ReturnMapSection(ms);
+			}
+
 			MapSections.Clear();
 			//Timings.Clear();
+
+			NotifyPropChangedMaxPeek();
 
 			var jobId = job.Id.ToString();
 			var ownerType = OwnerType.Project;
@@ -308,7 +354,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			JobProgressInfo = new JobProgressInfo(newJobNumber, "temp", DateTime.Now, mapSectionRequests.Count, numberOfSectionsFetched: 0);
 
-			for (var i = 0; i < 100; i++)
+			for (var i = 0; i < 1000; i++)
 			{
 				Thread.Sleep(100);
 
@@ -317,6 +363,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 					stopwatch.Stop();
 					break;
 				}
+
+				//if (_receivedTheLastOne)
+				//{
+				//	stopwatch.Stop();
+				//	break;
+				//}
+
 				//Debug.WriteLine($"Cnt: {i}. RunBaseLine is sleeping for 100ms.");
 			}
 
@@ -340,6 +393,13 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			{
 				Debug.WriteLine("The JobProgressInfo is null.");
 			}
+
+			foreach (var ms in MapSections)
+			{
+				_mapSectionVectorProvider.ReturnMapSection(ms);
+			}
+
+			MapSections.Clear();
 		}
 
 		//private List<Tuple<long, string>> AddTiming(string desc)
@@ -379,7 +439,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			var diff = stopwatch.Elapsed - mapLoaderOverall;
 
-			var diffS = Math.Round(diff.TotalMilliseconds, 4).ToString();
+			//var diffS = Math.Round(diff.TotalMilliseconds, 4).ToString();
 
 			OverallElapsed = Math.Round(mapLoaderOverall.TotalSeconds , 4).ToString();
 			ProcessingElapsed = Math.Round(sumProcessingDurations / threadCount, 6).ToString();
@@ -474,7 +534,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			if (mapSection.IsLastSection)
 			{
-				//_receviedTheLastOne = true;
+				//_receivedTheLastOne = true;
 				Debug.WriteLine($"{mapSection.JobNumber} is complete. Received {MapSections.Count} map sections.");
 			}
 			else

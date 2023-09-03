@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 using MSetExplorer.XPoc.PerformanceHarness;
 using System.Diagnostics;
 
-namespace MSetExplorer.XPoc
+namespace MSetExplorer.XPoc.PerformanceHarness
 {
     /// <summary>
     /// Interaction logic for PerformanceHarnessMainWindow.xaml

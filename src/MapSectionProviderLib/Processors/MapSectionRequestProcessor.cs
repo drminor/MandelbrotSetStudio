@@ -611,6 +611,7 @@ namespace MapSectionProviderLib
 			{
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
 				mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, jobId);
+				mapSection.MathOpCounts = mapSectionResponse.MathOpCounts;
 			}
 
 			return mapSection;
