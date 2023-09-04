@@ -105,9 +105,7 @@ namespace MEngineService.Services
 			var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
 			mapSectionRequest.MapSectionVectors = mapSectionVectors;
 
-			var stopWatch = Stopwatch.StartNew();
 			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, cts.Token);
-			stopWatch.Stop();
 
 			var mapSectionServiceResponse = new MapSectionServiceResponse()
 			{
@@ -117,7 +115,7 @@ namespace MEngineService.Services
 				RequestCompleted = mapSectionResponse.RequestCompleted,
 				AllRowsHaveEscaped = mapSectionResponse.AllRowsHaveEscaped,
 				RequestCancelled = mapSectionResponse.RequestCancelled,
-				TimeToGenerate = stopWatch.ElapsedMilliseconds,
+				TimeToGenerate = mapSectionRequest.GenerationDuration?.TotalMilliseconds ?? 0,
 				MathOpCounts = mapSectionResponse.MathOpCounts?.Clone(),
 				Counts = mapSectionResponse.MapSectionVectors?.Counts ?? Array.Empty<ushort>(),
 				EscapeVelocities = mapSectionResponse.MapSectionVectors?.EscapeVelocities ?? Array.Empty<ushort>()

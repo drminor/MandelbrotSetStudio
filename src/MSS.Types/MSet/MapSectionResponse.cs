@@ -1,7 +1,4 @@
-﻿using MongoDB.Bson;
-using System.Diagnostics;
-
-namespace MSS.Types.MSet
+﻿namespace MSS.Types.MSet
 {
 	public class MapSectionResponse
 	{
