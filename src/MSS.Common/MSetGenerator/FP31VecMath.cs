@@ -1,5 +1,4 @@
-﻿using MSS.Common.MSetGenerator;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.APValues;
 using System;
 using System.Diagnostics;
@@ -44,16 +43,8 @@ namespace MSS.Common
 
 		private Vector256<uint> _ones;
 
-		private Vector256<ulong> _carryVectorsLong1;
-		private Vector256<ulong> _carryVectorsLong2;
-
-		private Vector256<int> _signBitVecs;
-
 		private byte _shiftAmount;
 		private byte _inverseShiftAmount;
-
-		private int _squareSourceStartIndex;
-		private bool _skipSquareResultLow;
 
 		#endregion
 
@@ -72,34 +63,10 @@ namespace MSS.Common
 
 			_ones = Vector256.Create(1u);
 
-			_carryVectorsLong1 = Vector256<ulong>.Zero;
-			_carryVectorsLong2 = Vector256<ulong>.Zero;
-
-			_signBitVecs = Vector256<int>.Zero;
-
 			_shiftAmount = apFixedPointFormat.BitsBeforeBinaryPoint;
 			_inverseShiftAmount = (byte)(31 - _shiftAmount);
 
-			(_squareSourceStartIndex, _skipSquareResultLow) = CalculateSqrOpParams(LimbCount);
-
 			MathOpCounts = new MathOpCounts();
-		}
-
-		private (int sqrSrcStartIdx, bool skipSqrResLow) CalculateSqrOpParams(int limbCount)
-		{
-			// TODO: Check the CalculateSqrOpParams method 
-			return limbCount switch
-			{
-				0 => (0, false),
-				1 => (0, false),
-				2 => (0, false),
-				3 => (0, true),
-				4 => (1, false),
-				5 => (1, true),
-				6 => (2, false),
-				7 => (2, true),
-				_ => (3, false),
-			};
 		}
 
 		#endregion
@@ -212,8 +179,8 @@ namespace MSS.Common
 				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
 			}
 
-			WarnIfAnyNotZero(carry1, doneFlags, $"SumThePartialsLower");
-			WarnIfAnyNotZero(carry1, doneFlags, $"SumThePartialsUpper");
+			FP31VecMathHelper.WarnIfAnyNotZero(carry1, doneFlags, $"SumThePartialsLower");
+			FP31VecMathHelper.WarnIfAnyNotZero(carry1, doneFlags, $"SumThePartialsUpper");
 
 			IncrementAdditionsCount((LimbCount - 1) * 16);
 			IncrementSplitsCount(LimbCount * 16);
@@ -270,13 +237,11 @@ namespace MSS.Common
 
 		public bool TrySub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec)
 		{
-			//CheckReservedBitIsClear(b, "Negating B");
+			//var negateFailed = TryNegate(right, _negationResult, ref doneFlagsVec);
+			Negate(right, _negationResult);
+			var addSucceeded = TryAdd(left, _negationResult, result, ref doneFlagsVec);
 
-			var negateFailed = TryNegate(right, _negationResult, ref doneFlagsVec);
-
-			var addFailed = TryAdd(left, _negationResult, result, ref doneFlagsVec);
-
-			return !(negateFailed || addFailed);
+			return addSucceeded;
 		}
 
 		public bool TryAdd(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec)
@@ -301,76 +266,57 @@ namespace MSS.Common
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Sub(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlags)
 		{
-			Negate(right, _negationResult, ref doneFlags);
+			Negate(right, _negationResult);
 			Add(left, _negationResult, result, ref doneFlags);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Add(Vector256<uint>[] left, Vector256<uint>[] right, Vector256<uint>[] result, ref Vector256<int> doneFlags)
 		{
+			var newValuesVector = Vector256<uint>.Zero;
 			var carry = Vector256<uint>.Zero;
 
 			for (int limbPtr = 0; limbPtr < left.Length; limbPtr++)
 			{
 				var sumVector = Avx2.Add(left[limbPtr], right[limbPtr]);
-				var newValuesVector = Avx2.Add(sumVector, carry);
-				//MathOpCounts.NumberOfAdditions += 2;
+				newValuesVector = Avx2.Add(sumVector, carry);
 
 				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);              // The low 31 bits of the sum is the result.
 				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);  // The high 31 bits of sum becomes the new carry.
 			}
 
+			FP31VecMathHelper.WarnIfAnyCarryForAddSub(newValuesVector, doneFlags, "Add");
+			//FP31VecMathHelper.WarnIfAnyNotZero(carry, doneFlags, "Add");
+
 			IncrementAdditionsCount(LimbCount * 8);
 			IncrementSplitsCount(LimbCount * 8);
-
-			//WarnIfAnyNotZero(carry, doneFlags, $"Add");
 		}
 
 		#endregion
 
 		#region Two Compliment Support
 
-		private bool TryNegate(Vector256<uint>[] source, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec)
-		{
-			var carry = _ones;
-
-			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
-			{
-				var notVector = Avx2.Xor(source[limbPtr], XOR_BITS_VEC);
-				var newValuesVector = Avx2.Add(notVector, carry);
-				//MathOpCounts.NumberOfAdditions += 2;
-
-				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);
-				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
-				//MathOpCounts.NumberOfSplits++;
-			}
-
-			//IncrementNegationsCount(LimbCount * 8);
-			IncrementSplitsCount(LimbCount * 8);
-
-			var anyCarryFound = FP31VecMathHelper.AnyNotZero(carry, doneFlagsVec);
-			return !anyCarryFound;
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void Negate(Vector256<uint>[] source, Vector256<uint>[] result, ref Vector256<int> doneFlags)
+		private void Negate(Vector256<uint>[] source, Vector256<uint>[] result)
 		{
+			// NOTE: As long as the Reserved bit is clear, the only possibility of getting an overflow is when all limbs are zero and this overflow must be ignored.
+			FP31VecMathHelper.CheckReservedBitIsClear(source, "Negating");
+
 			var carry = _ones;
 
 			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
 			{
 				var notVector = Avx2.Xor(source[limbPtr], XOR_BITS_VEC);
 				var newValuesVector = Avx2.Add(notVector, carry);
-				//MathOpCounts.NumberOfAdditions += 2;
 
 				result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);
 				carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
-				//MathOpCounts.NumberOfSplits++;
 			}
 
-			WarnIfAnyNotZero(carry, doneFlags, "Negate");
+			// Any carry here must be ignored.
+			//WarnIfAnyNotZero(carry, doneFlags, "Negate");
 
-			//IncrementNegationsCount(LimbCount * 8);
+			IncrementNegationsCount(LimbCount * 8);
 			IncrementSplitsCount(LimbCount * 8);
 		}
 
@@ -378,8 +324,10 @@ namespace MSS.Common
 		private void ConvertFrom2C(Vector256<uint>[] source, PairOfVec<uint> result, ref Vector256<int> doneFlags)
 		{
 			//CheckReservedBitIsClear(source, "ConvertFrom2C");
+			//var signBitFlags = GetSignBits(source, ref _signBitVecs);
 
-			var signBitFlags = GetSignBits(source, ref _signBitVecs);
+			var signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
+			var signBitFlags = Avx2.MoveMask(signBitVecs.AsByte());
 
 			if (signBitFlags == -1)
 			{
@@ -412,7 +360,7 @@ namespace MSS.Common
 
 					//MathOpCounts.NumberOfSplits++;
 
-					var cLimbValues = Avx2.BlendVariable(limbValues, source[limbPtr], _signBitVecs.AsUInt32());
+					var cLimbValues = Avx2.BlendVariable(limbValues, source[limbPtr], signBitVecs.AsUInt32());
 
 					// Take the lower 4 values and set the low halves of each result
 					result.Lower[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
@@ -421,40 +369,13 @@ namespace MSS.Common
 					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(cLimbValues, SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
 				}
 
-				WarnIfAnyNotZero(carry, doneFlags, "ConvertFrom2C");
+				FP31VecMathHelper.WarnIfAnyNotZero(carry, doneFlags, "ConvertFrom2C");
 
 				//IncrementNegationsCount(LimbCount * 16);
 			}
 
 			IncrementConversionsCount(LimbCount * 16);
 		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int GetSignBits(Vector256<uint>[] source, ref Vector256<int> signBitVecs)
-		{
-			IncrementComparisonsCount(8);
-
-			signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
-			return Avx2.MoveMask(signBitVecs.AsByte());
-		}
-
-		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		//private bool AreAllZero(Vector256<ulong> source)
-		//{
-		//	IncrementComparisonsCount(4);
-
-		//	var cmpVecs = Avx2.CompareEqual(source.AsInt32(), ZERO_VEC);
-		//	return -1 == Avx2.MoveMask(cmpVecs.AsByte());
-		//}
-
-		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		//private bool AreAllZero(Vector256<uint> source)
-		//{
-		//	IncrementComparisonsCount(8);
-
-		//	var cmpVecs = Avx2.CompareEqual(source.AsInt32(), ZERO_VEC);
-		//	return -1 == Avx2.MoveMask(cmpVecs.AsByte());
-		//}
 
 		#endregion
 
@@ -482,20 +403,6 @@ namespace MSS.Common
 		#endregion
 
 		#region Diagnostics
-
-		[Conditional("DEBUG")]
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void WarnIfAnyNotZero(Vector256<uint> source, Vector256<int> mask, string description)
-		{
-			FP31VecMathHelper.WarnIfAnyNotZero(source, mask, description);
-		}
-
-		[Conditional("DEBUG")]
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void WarnIfAnyNotZero(Vector256<ulong> source, Vector256<int> mask, string description)
-		{
-			FP31VecMathHelper.WarnIfAnyNotZero(source, mask, description);
-		}
 
 		[Conditional("PERF")]
 		private void IncrementMultiplicationsCount(int amount)
@@ -537,123 +444,176 @@ namespace MSS.Common
 
 		#region Not Used
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void SquareOptimized(Vector256<uint>[] a, Vector256<uint>[] result, ref Vector256<int> doneFlags)
-		{
-			// Our multiplication routines don't support 2's compliment,
-			// So we must convert back from two's complement to standard.
+		//private int _squareSourceStartIndex;
+		//private bool _skipSquareResultLow;
 
-			// The result of squaring is always positive, so we don't have to convert
-			// back to two's compliment afterwards.
+		// Copied from the Constructor
+		//(_squareSourceStartIndex, _skipSquareResultLow) = CalculateSqrOpParams(LimbCount);
 
-			//FP31VecMathHelper.CheckReservedBitIsClear(a, "Squaring");
-			FP31VecMathHelper.ClearLimbSet(result);
+		//private (int sqrSrcStartIdx, bool skipSqrResLow) CalculateSqrOpParams(int limbCount)
+		//{
+		//	// TODO: Check the CalculateSqrOpParams method 
+		//	return limbCount switch
+		//	{
+		//		0 => (0, false),
+		//		1 => (0, false),
+		//		2 => (0, false),
+		//		3 => (0, true),
+		//		4 => (1, false),
+		//		5 => (1, true),
+		//		6 => (2, false),
+		//		7 => (2, true),
+		//		_ => (3, false),
+		//	};
+		//}
 
-			ConvertFrom2C(a, _squareResult0, ref doneFlags);
 
-			// Unoptimized
-			SquareInternal(_squareResult0, _squareResult1);
-			SumThePartials(_squareResult1, _squareResult2, ref doneFlags);
-			ShiftAndTrim(_squareResult2, result);
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//public void SquareOptimized(Vector256<uint>[] a, Vector256<uint>[] result, ref Vector256<int> doneFlags)
+		//{
+		//	// Our multiplication routines don't support 2's compliment,
+		//	// So we must convert back from two's complement to standard.
 
-			//// Optimized
-			//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
-			//SumThePartials(_squareResult1Lo, _squareResult2Lo);
-			//var optimizedResult = new Vector256<uint>[LimbCount];
-			//ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, optimizedResult);
+		//	// The result of squaring is always positive, so we don't have to convert
+		//	// back to two's compliment afterwards.
 
-			//for (var i = 0; i < LimbCount; i++)
-			//{
-			//	var eqFlags = Avx2.CompareEqual(optimizedResult[i], result[i]);
-			//	if (Avx2.MoveMask(eqFlags.AsByte()) != -1)
-			//	{
-			//		Debug.WriteLine("WARNING Optimized != NonOptimized.");
-			//	}
-			//}
-		}
+		//	//FP31VecMathHelper.CheckReservedBitIsClear(a, "Squaring");
+		//	FP31VecMathHelper.ClearLimbSet(result);
 
-		private void SquareInternalOptimized(Vector256<uint>[] source, Vector256<ulong>[] result)
-		{
-			// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
+		//	ConvertFrom2C(a, _squareResult0, ref doneFlags);
 
-			//result.ClearManatissMems();
+		//	// Unoptimized
+		//	SquareInternal(_squareResult0, _squareResult1);
+		//	SumThePartials(_squareResult1, _squareResult2, ref doneFlags);
+		//	ShiftAndTrim(_squareResult2, result);
 
-			for (int j = 0; j < source.Length; j++)
-			{
-				for (int i = j; i < source.Length; i++)
-				{
-					var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
+		//	//// Optimized
+		//	//SquareInternalOptimized(_squareResult0Lo, _squareResult1Lo);
+		//	//SumThePartials(_squareResult1Lo, _squareResult2Lo);
+		//	//var optimizedResult = new Vector256<uint>[LimbCount];
+		//	//ShiftAndTrim(_squareResult2Lo, _squareResult2Hi, optimizedResult);
 
-					if (resultPtr < _squareSourceStartIndex)
-					{
-						result[resultPtr] = Vector256<ulong>.Zero;
-						result[resultPtr + 1] = Vector256<ulong>.Zero;
-					}
-					else
-					{
-						var productVector = Avx2.Multiply(source[j], source[i]);
-						IncrementMultiplicationsCount(4);
+		//	//for (var i = 0; i < LimbCount; i++)
+		//	//{
+		//	//	var eqFlags = Avx2.CompareEqual(optimizedResult[i], result[i]);
+		//	//	if (Avx2.MoveMask(eqFlags.AsByte()) != -1)
+		//	//	{
+		//	//		Debug.WriteLine("WARNING Optimized != NonOptimized.");
+		//	//	}
+		//	//}
+		//}
 
-						if (i > j)
-						{
-							//product *= 2;
-							productVector = Avx2.ShiftLeftLogical(productVector, 1);
-						}
+		//private void SquareInternalOptimized(Vector256<uint>[] source, Vector256<ulong>[] result)
+		//{
+		//	// Calculate the partial 32-bit products and accumulate these into 64-bit result 'bins' where each bin can hold the hi (carry) and lo (final digit)
 
-						// 0/1; 1/2; 2/3
+		//	//result.ClearManatissMems();
 
-						if (_skipSquareResultLow & resultPtr == _squareSourceStartIndex)
-						{
-							result[resultPtr] = Vector256<ulong>.Zero;
-							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
-						}
-						else
-						{
-							result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
-							result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
-						}
+		//	for (int j = 0; j < source.Length; j++)
+		//	{
+		//		for (int i = j; i < source.Length; i++)
+		//		{
+		//			var resultPtr = j + i;  // 0+0, 0+1; 1+1, 0, 1, 2
 
-						//MathOpCounts.NumberOfSplits++;
+		//			if (resultPtr < _squareSourceStartIndex)
+		//			{
+		//				result[resultPtr] = Vector256<ulong>.Zero;
+		//				result[resultPtr + 1] = Vector256<ulong>.Zero;
+		//			}
+		//			else
+		//			{
+		//				var productVector = Avx2.Multiply(source[j], source[i]);
+		//				IncrementMultiplicationsCount(4);
 
-					}
-				}
-			}
-		}
+		//				if (i > j)
+		//				{
+		//					//product *= 2;
+		//					productVector = Avx2.ShiftLeftLogical(productVector, 1);
+		//				}
 
-		private void SumThePartialOld(PairOfVec<ulong> source, PairOfVec<ulong> result)
-		{
-			// To be used after a multiply operation.
-			// Process the carry portion of each result bin.
-			// This will leave each result bin with a value <= 2^32 for the final digit.
-			// If the MSL produces a carry, throw an exception.
+		//				// 0/1; 1/2; 2/3
 
-			_carryVectorsLong1 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong1, _carryVectorsLong1);
-			_carryVectorsLong2 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong2, _carryVectorsLong2);
+		//				if (_skipSquareResultLow & resultPtr == _squareSourceStartIndex)
+		//				{
+		//					result[resultPtr] = Vector256<ulong>.Zero;
+		//					result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+		//				}
+		//				else
+		//				{
+		//					result[resultPtr] = Avx2.Add(result[resultPtr], Avx2.And(productVector, HIGH33_MASK_VEC_L));
+		//					result[resultPtr + 1] = Avx2.Add(result[resultPtr + 1], Avx2.ShiftRightLogical(productVector, EFFECTIVE_BITS_PER_LIMB));
+		//				}
 
-			for (int limbPtr = 0; limbPtr < source.Lower.Length; limbPtr++)
-			{
-				var withCarries1 = Avx2.Add(source.Lower[limbPtr], _carryVectorsLong1);
-				var withCarries2 = Avx2.Add(source.Upper[limbPtr], _carryVectorsLong2);
+		//				//MathOpCounts.NumberOfSplits++;
 
-				result.Lower[limbPtr] = Avx2.And(withCarries1, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
-				result.Upper[limbPtr] = Avx2.And(withCarries2, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+		//			}
+		//		}
+		//	}
+		//}
 
-				_carryVectorsLong1 = Avx2.ShiftRightLogical(withCarries1, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
-				_carryVectorsLong2 = Avx2.ShiftRightLogical(withCarries2, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+		//private void SumThePartialOld(PairOfVec<ulong> source, PairOfVec<ulong> result)
+		//{
+		//	// To be used after a multiply operation.
+		//	// Process the carry portion of each result bin.
+		//	// This will leave each result bin with a value <= 2^32 for the final digit.
+		//	// If the MSL produces a carry, throw an exception.
 
-				// Clear the source so that square internal will not have to make a separate call.
-				source.Lower[limbPtr] = Avx2.Xor(source.Lower[limbPtr], source.Lower[limbPtr]);
-				source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
-			}
+		//	_carryVectorsLong1 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong1, _carryVectorsLong1);
+		//	_carryVectorsLong2 = Vector256<ulong>.Zero; //Avx2.Xor(_carryVectorsLong2, _carryVectorsLong2);
 
-			IncrementAdditionsCount(LimbCount * 16);
-			IncrementSplitsCount(LimbCount * 16);
-		}
+		//	for (int limbPtr = 0; limbPtr < source.Lower.Length; limbPtr++)
+		//	{
+		//		var withCarries1 = Avx2.Add(source.Lower[limbPtr], _carryVectorsLong1);
+		//		var withCarries2 = Avx2.Add(source.Upper[limbPtr], _carryVectorsLong2);
+
+		//		result.Lower[limbPtr] = Avx2.And(withCarries1, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+		//		result.Upper[limbPtr] = Avx2.And(withCarries2, HIGH33_MASK_VEC_L);                     // The low 31 bits of the sum is the result.
+
+		//		_carryVectorsLong1 = Avx2.ShiftRightLogical(withCarries1, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+		//		_carryVectorsLong2 = Avx2.ShiftRightLogical(withCarries2, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
+
+		//		// Clear the source so that square internal will not have to make a separate call.
+		//		source.Lower[limbPtr] = Avx2.Xor(source.Lower[limbPtr], source.Lower[limbPtr]);
+		//		source.Upper[limbPtr] = Avx2.Xor(source.Upper[limbPtr], source.Upper[limbPtr]);
+		//	}
+
+		//	IncrementAdditionsCount(LimbCount * 16);
+		//	IncrementSplitsCount(LimbCount * 16);
+		//}
 
 		//public void AddThenSquare(Vector256<uint>[] a, Vector256<uint>[] b, Vector256<uint>[] c)
 		//{
 		//	Add(a, b, _additionResult);
 		//	Square(_additionResult, c);
+		//}
+
+		//private bool TryNegate(Vector256<uint>[] source, Vector256<uint>[] result, ref Vector256<int> doneFlagsVec)
+		//{
+		//	var carry = _ones;
+
+		//	for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+		//	{
+		//		var notVector = Avx2.Xor(source[limbPtr], XOR_BITS_VEC);
+		//		var newValuesVector = Avx2.Add(notVector, carry);
+
+		//		result[limbPtr] = Avx2.And(newValuesVector, HIGH33_MASK_VEC);
+		//		carry = Avx2.ShiftRightLogical(newValuesVector, EFFECTIVE_BITS_PER_LIMB);
+		//	}
+
+		//	IncrementNegationsCount(LimbCount * 8);
+		//	IncrementSplitsCount(LimbCount * 8);
+
+		//	var anyCarryFound = FP31VecMathHelper.AnyNotZero(carry, doneFlagsVec);
+		//	return !anyCarryFound;
+		//}
+
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//private int GetSignBits(Vector256<uint>[] source, ref Vector256<int> signBitVecs)
+		//{
+		//	IncrementComparisonsCount(8);
+
+		//	signBitVecs = Avx2.CompareEqual(Avx2.And(source[LimbCount - 1].AsInt32(), TEST_BIT_30_VEC), ZERO_VEC);
+		//	return Avx2.MoveMask(signBitVecs.AsByte());
 		//}
 
 		#endregion
