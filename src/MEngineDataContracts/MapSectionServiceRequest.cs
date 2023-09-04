@@ -1,8 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
-using System;
-using System.Linq;
 using System.Runtime.Serialization;
 
 namespace MEngineDataContracts
@@ -14,10 +12,10 @@ namespace MEngineDataContracts
 		public string MapSectionId { get; set; }
 
 		[DataMember(Order = 2)]
-		public string OwnerId { get; set; }
+		public string JobId { get; set; }
 
 		[DataMember(Order = 3)]
-		public OwnerType JobOwnerType { get; set; }
+		public OwnerType OwnerType { get; set; }
 
 		[DataMember(Order = 4)]
 		public string SubdivisionId { get; set; }
@@ -29,58 +27,63 @@ namespace MEngineDataContracts
 		public BigVectorDto BlockPosition { get; set; }
 
 		[DataMember(Order = 7)]
-		public RPointDto Position { get; set; }
+		public RPointDto MapPosition { get; set; }
 
 		[DataMember(Order = 8)]
-		public int Precision { get; set; }
-
-		[DataMember(Order = 9)]
 		public SizeInt BlockSize { get; set; }
 
-		[DataMember(Order = 10)]
+		[DataMember(Order = 9)]
 		public RSizeDto SamplePointDelta { get; set; }
 
-		[DataMember(Order = 11)]
+		[DataMember(Order = 10)]
 		public MapCalcSettings MapCalcSettings { get; set; }
+
+		[DataMember(Order = 11)]
+		public int Precision { get; set; }
+
+		[DataMember(Order = 12)]
+		public int LimbCount { get; set; }
+
+		[DataMember(Order = 13)]
+		public bool IncreasingIterations { get; set; }
 
 		//[DataMember(Order = 12)]
 		//public MapSectionVectors MapSectionVectors { get; set; }
 
-		[DataMember(Order = 13)]
-		public double[] ZValues { get; set; }
+		//[DataMember(Order = 13)]
+		//public double[] ZValues { get; set; }
 
-		public bool IsInverted { get; init; }
+		//public bool IsInverted { get; init; }
 
-		public bool Pending { get; set; }
-		public bool Sent { get; set; }
-		public bool FoundInRepo { get; set; }
-		public bool Completed { get; set; }
-		public bool Saved { get; set; }
-		public bool Handled { get; set; }
+		//public bool Pending { get; set; }
+		//public bool Sent { get; set; }
+		//public bool FoundInRepo { get; set; }
+		//public bool Completed { get; set; }
+		//public bool Saved { get; set; }
+		//public bool Handled { get; set; }
 
-		public bool IncreasingIterations { get; set; }
-		
-		public string ClientEndPointAddress { get; set; }
-		public TimeSpan? TimeToCompleteGenRequest { get; set; }
 
-		public DateTime ProcessingStartTime { get; set; }
-		public DateTime? ProcessingEndTime { get; set; }
+		//public string ClientEndPointAddress { get; set; }
+		//public TimeSpan? TimeToCompleteGenRequest { get; set; }
 
-		public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
+		//public DateTime ProcessingStartTime { get; set; }
+		//public DateTime? ProcessingEndTime { get; set; }
 
-		public bool GetIsDone()
-		{
-			//if (MapSectionVectors == null)
-			//{
-			//	return false;
-			//}
+		//public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
 
-			// TODO: Implement GetIsDone on the MapSectionRequest class.
-			//var result = !HasEscapedFlags.Any(x => !x);
-			//return result;
+		//public bool GetIsDone()
+		//{
+		//	//if (MapSectionVectors == null)
+		//	//{
+		//	//	return false;
+		//	//}
 
-			return false;
-		}
+		//	// TODO: Implement GetIsDone on the MapSectionRequest class.
+		//	//var result = !HasEscapedFlags.Any(x => !x);
+		//	//return result;
+
+		//	return false;
+		//}
 
 		public override string ToString()
 		{

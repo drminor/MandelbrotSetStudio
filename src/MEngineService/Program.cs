@@ -8,7 +8,11 @@ namespace MEngineService
 	{
 		public static void Main(string[] args)
 		{
-			CreateHostBuilder(args).Build().Run();
+			//CreateHostBuilder(args).Build().Run();
+
+			var iHost =	CreateHostBuilder(args).Build();
+
+			iHost.Run();
 		}
 
 		// Additional configuration is required to successfully run gRPC on macOS.

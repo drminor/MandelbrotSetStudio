@@ -33,7 +33,10 @@ namespace MSetExplorer
 		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		//private const int MONGO_DB_PORT = 27017;
 
-		private static readonly bool USE_ALL_CORES = false;
+		private const string REMOTE_SERVICE_URL = "http://localhost:5000";
+
+
+		private static readonly bool USE_ALL_CORES = true;
 
 		private static readonly bool CHECK_CONN_BEFORE_USE = false;
 
@@ -487,13 +490,27 @@ namespace MSetExplorer
 
 		private IMEngineClient[] CreateTheMEngineClients(MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
 		{
+			//var result = new List<IMEngineClient>();
+
+			//var localTaskCount = GetLocalTaskCount(useAllCores);
+
+			//for (var i = 0; i < localTaskCount; i++)
+			//{
+			//	result.Add(new MClientLocal(mSetGenerationStrategy));
+			//}
+
+			//return result.ToArray();
+
+			//var result = new IMEngineClient[1] { new MClient(mSetGenerationStrategy, REMOTE_SERVICE_URL) };
+			//return result;
+
 			var result = new List<IMEngineClient>();
 
 			var localTaskCount = GetLocalTaskCount(useAllCores);
 
 			for (var i = 0; i < localTaskCount; i++)
 			{
-				result.Add(new MClientLocal(mSetGenerationStrategy));
+				result.Add(new MClient(mSetGenerationStrategy, REMOTE_SERVICE_URL));
 			}
 
 			return result.ToArray();

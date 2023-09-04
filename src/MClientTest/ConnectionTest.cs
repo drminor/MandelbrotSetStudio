@@ -1,4 +1,5 @@
 using MEngineClient;
+using MSS.Common;
 using System.Diagnostics;
 
 namespace MClientTest
@@ -14,7 +15,7 @@ namespace MClientTest
 		[Fact]
 		public void Connect_Succeeds()
 		{
-			var mClient = new MClient(appUrl);
+			var mClient = new MClient(MSetGenerationStrategy.DepthFirst, appUrl);
 
 			var response = mClient.GenerateMapSectionTest();
 

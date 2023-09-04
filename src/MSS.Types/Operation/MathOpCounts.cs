@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.Serialization;
 
 namespace MSS.Types
 {
+	[DataContract]
 	public class MathOpCounts : ICloneable
 	{
 		#region Public Propeties
 
+		[DataMember(Order = 1)]
 		public long NumberOfMultiplications { get; set; }
 		public long NumberOfAdditions { get; set; }
 		public long NumberOfNegations { get; set; }

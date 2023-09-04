@@ -30,6 +30,8 @@ namespace MapSectionProviderLib
 
 		private bool _stopped;
 
+		private bool _useDetailedDebug = true;
+
 		#endregion
 
 		#region Constructor
@@ -101,7 +103,6 @@ namespace MapSectionProviderLib
 				}
 			}
 		}
-
 
 		public void Stop(bool immediately)
 		{
@@ -226,9 +227,8 @@ namespace MapSectionProviderLib
 						mapSectionResponse.MapSectionZVectors = mszv;
 
 						var msg = $"The MapSectionGeneratorProcessor is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
-
 						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
-						Debug.WriteLine(msg);
+						Debug.WriteLineIf(_useDetailedDebug, msg);
 					}
 					else
 					{
@@ -237,7 +237,16 @@ namespace MapSectionProviderLib
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
 						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						if (!IsJobCancelled(mapSectionGenerateRequest.JobId) && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
+						// Now that the mEngineClient has completed the task, once again check to see if the Job is cancelled.
+						jobIsCancelled = IsJobCancelled(mapSectionGenerateRequest.JobId);
+						//Debug.Assert(!jobIsCancelled, "How is it possible that the job is now cancelled.");
+
+						if (jobIsCancelled)
+						{
+							Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionGeneratorProcessor. Job {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is found to be cancelled after call to Generate MapSection.");
+						}
+
+						if (!jobIsCancelled && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
 						{
 							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
 						}
@@ -282,7 +291,7 @@ namespace MapSectionProviderLib
 
 			if (result)
 			{
-				Debug.WriteLine($"The Job: {jobId} has been cancelled.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The Job: {jobId} has been cancelled.");
 			}
 
 			return result;
