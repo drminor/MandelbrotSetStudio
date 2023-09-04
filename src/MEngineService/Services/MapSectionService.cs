@@ -25,9 +25,9 @@ namespace MEngineService.Services
 
 		//private static readonly IMapSectionAdapter _mapSectionAdapter;
 
-		//private static MapSectionVectorsPool _mapSectionVectorsPool;
-		//private static MapSectionZVectorsPool _mapSectionZVectorsPool;
-		//private static MapSectionVectorProvider _mapSectionVectorProvider;
+		private static MapSectionVectorsPool _mapSectionVectorsPool;
+		private static MapSectionZVectorsPool _mapSectionZVectorsPool;
+		private static MapSectionVectorProvider _mapSectionVectorProvider;
 
 		//private static readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
@@ -48,9 +48,9 @@ namespace MEngineService.Services
 			//var repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, "MandelbrotProjects");
 			//_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
 
-			//_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			//_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			//_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
+			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
 
 			//_mapSectionPersistProcessor = new MapSectionPersistProcessor(_mapSectionAdapter, _mapSectionVectorProvider);
 
@@ -102,12 +102,12 @@ namespace MEngineService.Services
 				req.MapCalcSettings,
 				requestNumber: 0);
 
-			var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
+
+			var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+
 			mapSectionRequest.MapSectionVectors = mapSectionVectors;
 
-			var stopWatch = Stopwatch.StartNew();
 			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, cts.Token);
-			stopWatch.Stop();
 
 			var mapSectionServiceResponse = new MapSectionServiceResponse()
 			{
@@ -117,11 +117,13 @@ namespace MEngineService.Services
 				RequestCompleted = mapSectionResponse.RequestCompleted,
 				AllRowsHaveEscaped = mapSectionResponse.AllRowsHaveEscaped,
 				RequestCancelled = mapSectionResponse.RequestCancelled,
-				TimeToGenerate = stopWatch.ElapsedMilliseconds,
+				TimeToGenerate = mapSectionRequest.GenerationDuration?.TotalMilliseconds ?? 0,
 				MathOpCounts = mapSectionResponse.MathOpCounts?.Clone(),
 				Counts = mapSectionResponse.MapSectionVectors?.Counts ?? Array.Empty<ushort>(),
 				EscapeVelocities = mapSectionResponse.MapSectionVectors?.EscapeVelocities ?? Array.Empty<ushort>()
 			};
+
+			_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
 
 			return mapSectionServiceResponse;
 		}

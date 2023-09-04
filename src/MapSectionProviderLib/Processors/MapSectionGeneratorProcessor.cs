@@ -244,6 +244,9 @@ namespace MapSectionProviderLib
 						if (jobIsCancelled)
 						{
 							Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionGeneratorProcessor. Job {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is found to be cancelled after call to Generate MapSection.");
+							var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
+							mapSectionResponse.MapSectionVectors = msv;
+							mapSectionResponse.MapSectionZVectors = mszv;
 						}
 
 						if (!jobIsCancelled && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
@@ -256,6 +259,9 @@ namespace MapSectionProviderLib
 							Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
 						}
 					}
+
+					Debug.Assert(mapSectionRequest.MapSectionVectors == null, "MapSectionVectors is not Null.");
+					Debug.Assert(mapSectionRequest.MapSectionZVectors == null, "MapSectionZVectors is not Null.");
 
 					mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
 				}

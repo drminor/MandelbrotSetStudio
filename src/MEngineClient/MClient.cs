@@ -1,16 +1,13 @@
 ﻿using Grpc.Net.Client;
 using MEngineDataContracts;
 using MSS.Common;
-using MSS.Types.DataTransferObjects;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using ProtoBuf.Grpc.Client;
 using System;
 using System.Diagnostics;
-using System.Reflection.Emit;
 using System.Threading;
-using System.Threading.Tasks;
-using MSS.Common.DataTransferObjects;
 
 namespace MEngineClient
 {
@@ -107,24 +104,39 @@ namespace MEngineClient
 					Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
 				}
 
-				var isCancelled = ct.IsCancellationRequested;
-				var mapSectionResponse = new MapSectionResponse(req, isCancelled);
+				var isCancelled = ct.IsCancellationRequested | mapSectionServiceResponse.RequestCancelled;
 
-				if (!isCancelled)
+				MapSectionResponse result;
+
+				if (isCancelled)
 				{
-					mapSectionResponse.RequestCompleted = mapSectionServiceResponse.RequestCompleted;
-					req.TimeToCompleteGenRequest = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerate);
-					mapSectionResponse.MathOpCounts = mapSectionServiceResponse.MathOpCounts;
+					result = new MapSectionResponse(req, mapSectionServiceResponse.RequestCompleted, mapSectionServiceResponse.AllRowsHaveEscaped, req.MapSectionVectors, mapSectionZVectors: null, requestCancelled: true);
+					req.MapSectionVectors = null;
+				}
+				else
+				{
+					req.GenerationDuration = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerate);
 
-					var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
+					result = new MapSectionResponse(req, mapSectionServiceResponse.RequestCompleted, mapSectionServiceResponse.AllRowsHaveEscaped, req.MapSectionVectors);
+					req.MapSectionVectors = null;
 
-					Array.Copy(mapSectionServiceResponse.Counts, mapSectionVectors.Counts, mapSectionServiceResponse.Counts.Length);
-					Array.Copy(mapSectionServiceResponse.EscapeVelocities, mapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities.Length);
+					result.MathOpCounts = mapSectionServiceResponse.MathOpCounts.Clone();
 
-					mapSectionResponse.MapSectionVectors = mapSectionVectors;
+					if (result.MapSectionVectors != null )
+					{
+						if (mapSectionServiceResponse.Counts.Length == result.MapSectionVectors.Counts.Length)
+						{
+							Array.Copy(mapSectionServiceResponse.Counts, result.MapSectionVectors.Counts, mapSectionServiceResponse.Counts.Length);
+						}
+
+						if (req.MapCalcSettings.UseEscapeVelocities && mapSectionServiceResponse.EscapeVelocities.Length == result.MapSectionVectors.EscapeVelocities.Length)
+						{
+							Array.Copy(mapSectionServiceResponse.EscapeVelocities, result.MapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities.Length);
+						}
+					}
 				}
 
-				return mapSectionResponse;
+				return result;
 			}
 			catch (Exception e)
 			{
@@ -132,8 +144,6 @@ namespace MEngineClient
 				throw;
 			}
 		}
-
-
 
 		public MapSectionServiceResponse GenerateMapSectionTest()
 		{
