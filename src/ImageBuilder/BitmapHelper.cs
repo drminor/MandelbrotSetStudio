@@ -10,66 +10,6 @@ namespace ImageBuilder
 	{
 		private const double VALUE_FACTOR = 10000;
 
-		//public static int GetNumberOfLines(int blockPtrY, int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY, out int linesToSkip)
-		//{
-		//	int numberOfLines;
-
-		//	if (blockPtrY == 0)
-		//	{
-		//		// This is the block with the largest y coordinate (aka the last block)
-		//		linesToSkip = 0;
-		//		var numberOfLinesForFirstBlock = GetNumberOfLinesForFirstBlock(imageHeight, numberOfWholeBlocksY, blockHeight, canvasControlOffsetY);
-		//		var numberOfLinesSoFar = numberOfLinesForFirstBlock + (blockHeight * (numberOfWholeBlocksY - 2));
-		//		numberOfLines = imageHeight - numberOfLinesSoFar;
-		//	}
-		//	else if (blockPtrY == numberOfWholeBlocksY - 1)
-		//	{
-		//		// This is the block with the smallest y coordinate (aka the first block)
-		//		numberOfLines = GetNumberOfLinesForFirstBlock(imageHeight, numberOfWholeBlocksY, blockHeight, canvasControlOffsetY);
-		//		linesToSkip = blockHeight - numberOfLines; // (Since the pixel lines are accessed from high to low index, this is measured from index = blockHeight - 1)
-		//	}
-		//	else
-		//	{
-		//		linesToSkip = 0;
-		//		numberOfLines = blockHeight;
-		//	}
-
-		//	return numberOfLines;
-
-		//}
-
-		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		//public static int GetNumberOfLinesForFirstBlock(int imageHeight, int numberOfWholeBlocksY, int blockHeight, int canvasControlOffsetY)
-		//{
-		//	return canvasControlOffsetY + imageHeight - (blockHeight * (numberOfWholeBlocksY - 1));
-		//}
-
-		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		//public static int GetSegmentLength(int blockPtrX, int imageWidth, int numberOfWholeBlocksX, int blockWidth, int canvasControlOffsetX, out int samplesToSkip)
-		//{
-		//	// TODO: Build an array of Segment lengths, once and then re-use for each row.
-		//	int result;
-
-		//	if (blockPtrX == 0)
-		//	{
-		//		// TODO: Why does this work for the x-axis, but not the y-axis.
-		//		samplesToSkip = canvasControlOffsetX;
-		//		result = blockWidth - canvasControlOffsetX;
-		//	}
-		//	else if (blockPtrX == numberOfWholeBlocksX - 1)
-		//	{
-		//		samplesToSkip = 0;
-		//		result = canvasControlOffsetX + imageWidth - (blockWidth * (numberOfWholeBlocksX - 1));
-		//	}
-		//	else
-		//	{
-		//		samplesToSkip = 0;
-		//		result = blockWidth;
-		//	}
-
-		//	return result;
-		//}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static ushort[]? GetOneLineFromCountsBlock(ushort[]? counts, int lPtr, int stride)
 		{

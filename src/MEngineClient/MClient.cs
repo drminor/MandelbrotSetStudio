@@ -2,7 +2,6 @@
 using MEngineDataContracts;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
-using MSS.Types;
 using MSS.Types.MSet;
 using ProtoBuf.Grpc.Client;
 using System;
@@ -163,51 +162,6 @@ namespace MEngineClient
 
 			return mapSectionServiceResponse;
 		}
-
-		//public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest)
-		//{
-		//	var mEngineService = GetMapSectionService();
-		//	var reply = await mEngineService.GenerateMapSectionAsync(mapSectionRequest);
-		//	return reply;
-		//}
-
-		#endregion
-
-		#region Depreciated - Service Request / Service Response
-
-		//public async Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest, CancellationToken ct)
-		//{
-		//	var mEngineService = GetMapSectionService();
-		//	mapSectionRequest.ClientEndPointAddress = EndPointAddress;
-
-		//	var stopWatch = Stopwatch.StartNew();
-		//	var mapSectionResponse = await mEngineService.GenerateMapSectionAsync(mapSectionRequest, ct);
-		//	mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
-
-		//	Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
-
-		//	return mapSectionResponse;
-		//}
-
-		//public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest, CancellationToken ct)
-		//{
-		//	if (ct.IsCancellationRequested)
-		//	{
-		//		return new MapSectionServiceResponse(mapSectionRequest)
-		//		{
-		//			RequestCancelled = true
-		//		};
-		//	}
-
-		//	var mEngineService = GetMapSectionService();
-		//	mapSectionRequest.ClientEndPointAddress = EndPointAddress;
-
-		//	var stopWatch = Stopwatch.StartNew();
-		//	var reply = mEngineService.GenerateMapSection(mapSectionRequest);
-		//	mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
-
-		//	return reply;
-		//}
 
 		#endregion
 

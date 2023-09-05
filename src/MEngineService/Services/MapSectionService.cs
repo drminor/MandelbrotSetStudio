@@ -24,12 +24,11 @@ namespace MEngineService.Services
 		//private const int MONGO_DB_PORT = 27017;
 
 		//private static readonly IMapSectionAdapter _mapSectionAdapter;
+		//private static readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
 		private static MapSectionVectorsPool _mapSectionVectorsPool;
 		private static MapSectionZVectorsPool _mapSectionZVectorsPool;
 		private static MapSectionVectorProvider _mapSectionVectorProvider;
-
-		//private static readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
 		private DtoMapper _dtoMapper;
 
