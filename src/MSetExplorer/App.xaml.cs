@@ -33,14 +33,19 @@ namespace MSetExplorer
 		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		//private const int MONGO_DB_PORT = 27017;
 
-		private const string REMOTE_SERVICE_URL = "http://localhost:5000";
+		//private const string REMOTE_SERVICE_URL = "http://localhost:5000";
+		//private const string REMOTE_SERVICE_URL = "http://192.168.2.108:5000";
+		//private const string REMOTE_SERVICE_URL_SECURE = "https://192.168.2.108:5001";
 
+		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
 
 		private static readonly bool USE_ALL_CORES = true;
-
-		private static readonly bool CHECK_CONN_BEFORE_USE = false;
+		private static readonly bool USE_REMOTE_ENGINES = true;
+		private static readonly bool USE_LOCAL_ENGINE = true;
 
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
+
+		private static readonly bool CHECK_CONN_BEFORE_USE = false;
 
 		private static readonly bool DO_SCHEMA_UPDATES = false;
 		private static readonly bool CREATE_COLLECTIONS = false;
@@ -259,7 +264,7 @@ namespace MSetExplorer
 
 			#endregion
 
-			var mEngineClients = CreateTheMEngineClients(GEN_STRATEGY, USE_ALL_CORES);
+			var mEngineClients = CreateTheMEngineClients(USE_ALL_CORES, REMOTE_SERVICE_END_POINTS, useRemoteEngine: USE_REMOTE_ENGINES, useLocalEngine: USE_LOCAL_ENGINE, GEN_STRATEGY);
 			//Debug.WriteLine($"After Create MEngineClients. {currentStopwatch.ElapsedMilliseconds}.");
 
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
@@ -488,7 +493,7 @@ namespace MSetExplorer
 
 		#region MEngine Support
 
-		private IMEngineClient[] CreateTheMEngineClients(MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
+		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, MSetGenerationStrategy mSetGenerationStrategy)
 		{
 			//var result = new List<IMEngineClient>();
 
@@ -510,7 +515,41 @@ namespace MSetExplorer
 
 			for (var i = 0; i < localTaskCount; i++)
 			{
-				result.Add(new MClient(mSetGenerationStrategy, REMOTE_SERVICE_URL));
+				result.Add(new MClient(mSetGenerationStrategy, REMOTE_SERVICE_END_POINTS[0]));
+			}
+
+			return result.ToArray();
+		}
+
+		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, MSetGenerationStrategy mSetGenerationStrategy)
+		{
+			var result = new List<IMEngineClient>();
+
+			var localTaskCount = GetLocalTaskCount(useAllCores);
+
+			if (useLocalEngine)
+			{
+				for (var i = 0; i < localTaskCount; i++)
+				{
+					result.Add(new MClientLocal(mSetGenerationStrategy));
+				}
+
+				Debug.WriteLine($"Using {localTaskCount} local engine instances.");
+			}
+
+			if (useRemoteEngine)
+			{
+				var remoteTaskCount = GetRemoteTaskCount(useAllCores, localTaskCount);
+
+				foreach (string remoteEndPoint in remoteEndPoints)
+				{
+					for (var i = 0; i < remoteTaskCount; i++)
+					{
+						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint));
+					}
+
+					Debug.WriteLine($"Using {remoteTaskCount} instances of remote server at end point: {remoteEndPoint}.");
+				}
 			}
 
 			return result.ToArray();
@@ -533,6 +572,22 @@ namespace MSetExplorer
 			return result;
 		}
 
+		private int GetRemoteTaskCount(bool useAllCores, int localTaskCount)
+		{
+			int result;
+
+			if (useAllCores)
+			{
+				result = (int) Math.Round(((double) localTaskCount) / 2, MidpointRounding.AwayFromZero);
+			}
+			else
+			{
+				result = 1;
+			}
+
+			return result;
+		}
+
 		#region MEngine Constants
 
 		//private const string SERVER_EXE_PATH = @"C:\Users\david\source\repos\MandelbrotSetStudio\src_FGEN\MEngineService\bin\x64\Debug\net6.0\MEngineService.exe";
@@ -544,25 +599,25 @@ namespace MSetExplorer
 
 		#endregion
 
-		private IMEngineClient[] CreateTheMEngineClients(bool useRemoteEngine, bool useLocalEngine, MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
-		{
-			//var mEngineAddresses = useRemoteEngine ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
+		//private IMEngineClient[] CreateTheMEngineClients(bool useRemoteEngine, bool useLocalEngine, MSetGenerationStrategy mSetGenerationStrategy, bool useAllCores)
+		//{
+		//	//var mEngineAddresses = useRemoteEngine ? REMOTE_M_ENGINE_ADDRESSES.ToList() : new List<string>();
 
-			//if (useLocalEngine)
-			//{
-			//	mEngineAddresses.Add(LOCAL_M_ENGINE_ADDRESS);
-			//}
-			var result = new List<IMEngineClient>();
+		//	//if (useLocalEngine)
+		//	//{
+		//	//	mEngineAddresses.Add(LOCAL_M_ENGINE_ADDRESS);
+		//	//}
+		//	var result = new List<IMEngineClient>();
 
-			var localTaskCount = GetLocalTaskCount(useAllCores);
+		//	var localTaskCount = GetLocalTaskCount(useAllCores);
 
-			for (var i = 0; i < localTaskCount; i++)
-			{
-				result.Add(new MClientLocal(mSetGenerationStrategy));
-			}
+		//	for (var i = 0; i < localTaskCount; i++)
+		//	{
+		//		result.Add(new MClientLocal(mSetGenerationStrategy));
+		//	}
 
-			return result.ToArray();
-		}
+		//	return result.ToArray();
+		//}
 
 		//var mEngineClients = ChooseMEngineClientImplementation(CLIENT_IMPLEMENTATION, mEngineAddresses, _repositoryAdapters.MapSectionAdapter);
 

@@ -112,7 +112,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Renormalizing the Mandelbro
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MEngineService", "src\MEngineService\MEngineService.csproj", "{B1DFCCFF-4AAE-4858-A042-164E2EB8B97F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MClientTest", "src\MClientTest\MClientTest.csproj", "{071716CB-B7A5-475E-A0B0-FB54A458F5AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MClientTest", "src\MClientTest\MClientTest.csproj", "{071716CB-B7A5-475E-A0B0-FB54A458F5AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -486,8 +486,8 @@ Global
 		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|ARM64.Build.0 = Release|Any CPU
 		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|Win32.ActiveCfg = Release|Any CPU
 		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|Win32.Build.0 = Release|Any CPU
-		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|x64.ActiveCfg = Release|Any CPU
-		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|x64.Build.0 = Release|Any CPU
+		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|x64.ActiveCfg = Release|x64
+		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|x64.Build.0 = Release|x64
 		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|x86.ActiveCfg = Release|Any CPU
 		{071716CB-B7A5-475E-A0B0-FB54A458F5AF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection

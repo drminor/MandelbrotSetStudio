@@ -120,7 +120,10 @@ namespace MEngineClient
 					result = new MapSectionResponse(req, mapSectionServiceResponse.RequestCompleted, mapSectionServiceResponse.AllRowsHaveEscaped, req.MapSectionVectors);
 					req.MapSectionVectors = null;
 
-					result.MathOpCounts = mapSectionServiceResponse.MathOpCounts.Clone();
+					if (mapSectionServiceResponse.MathOpCounts != null)
+					{
+						result.MathOpCounts = mapSectionServiceResponse.MathOpCounts.Clone();
+					}
 
 					if (result.MapSectionVectors != null )
 					{
