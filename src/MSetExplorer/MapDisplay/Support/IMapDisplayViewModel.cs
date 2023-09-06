@@ -23,7 +23,10 @@ namespace MSetExplorer
 		MapAreaInfo? LastMapAreaInfo { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
-		ColorBand? CurrentColorBand { get; set; }
+		ColorBand? CurrentColorBand { get; }
+		int SelectedColorBandIndex { get; set; }
+
+
 		bool UseEscapeVelocities { get; set; }
 		bool HighlightSelectedColorBand { get; set; }
 		bool SaveTheZValues { get; set; }

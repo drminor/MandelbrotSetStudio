@@ -101,9 +101,22 @@ namespace MSetExplorer
 
 			else if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
 			{
-				if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
+				var cbsvmCbsIsNull = ColorBandSetViewModel.ColorBandSet == null ? string.Empty : "Not";
+
+				//Debug.WriteLine($"PosterDesignerViewModel is handling ColorBandViewModel PropertyChanged-CurrentColorBand. HighLightSelectedColorBand: {MapDisplayViewModel.HighlightSelectedColorBand}, " +
+				//	$"CbsViewModel's ColorBandSet is {cbsvmCbsIsNull} null.");
+
+				Debug.WriteLine($"PosterDesignerViewModel is handling ColorBandViewModel PropertyChanged-CurrentColorBand." +
+					$"CbsViewModel's ColorBandSet is {cbsvmCbsIsNull} null.");
+
+				//if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
+
+				if (ColorBandSetViewModel.ColorBandSet != null)
 				{
-					MapDisplayViewModel.CurrentColorBand = ColorBandSetViewModel.CurrentColorBand;
+					//MapDisplayViewModel.CurrentColorBand = ColorBandSetViewModel.CurrentColorBand;
+
+					var selectedColorBandIndex = ColorBandSetViewModel.ColorBandSet.SelectedColorBandIndex;
+					MapDisplayViewModel.SelectedColorBandIndex = selectedColorBandIndex;
 				}
 			}
 		}

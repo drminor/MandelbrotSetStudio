@@ -31,8 +31,6 @@ namespace MSetExplorer
 			Loaded += CbsHistogramControl_Loaded;
 			Unloaded += CbsHistogramControl_Unloaded;
 
-			
-
 			// Just for diagnostics
 			SizeChanged += CbsHistogramControl_SizeChanged;
 

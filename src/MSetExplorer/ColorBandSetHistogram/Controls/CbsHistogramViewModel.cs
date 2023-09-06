@@ -19,7 +19,7 @@ namespace MSetExplorer
 		private ColorBandSet _colorBandSet;
 		private ListCollectionView? _colorBandsView;
 
-		private ColorBand? _currentColorBand;
+		//private ColorBand? _currentColorBand;
 
 		private HPlotSeriesData _seriesData;
 
@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 		private ScrollBarVisibility _horizontalScrollBarVisibility;
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -87,7 +87,7 @@ namespace MSetExplorer
 				{
 					ColorBandsView = null;
 
-					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetHistogram Display is processing a new ColorBandSet. Id = {value.Id}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is processing a new ColorBandSet. Id = {value.Id}.");
 
 					_colorBandSet = value;
 
@@ -97,8 +97,16 @@ namespace MSetExplorer
 					{
 						ResetView(unscaledWidth, DisplayPosition, DisplayZoom);
 					}
+					else
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
+					}
 
 					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is NOT processing the new ColorBandSet. The Id already = {value.Id}.");
 				}
 			}
 		}
@@ -109,42 +117,43 @@ namespace MSetExplorer
 
 			set
 			{
-				if (_colorBandsView != null)
-				{
-					_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
-				}
+				//if (_colorBandsView != null)
+				//{
+				//	_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
+				//}
 
 				_colorBandsView = value;
 
-				if (_colorBandsView != null)
-				{
-					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
-				}
+				//if (_colorBandsView != null)
+				//{
+				//	_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
+				//}
 
+				// The HistogramColorBandControl is updated as the CbsHistogramControl's code behind page handles this event.
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
 			}
 		}
 
-		public ColorBand? CurrentColorBand
-		{
-			get => _currentColorBand;
-			set
-			{
-				if (_currentColorBand != null)
-				{
-					_currentColorBand.PropertyChanged -= CurrentColorBand_PropertyChanged;
-				}
+		//public ColorBand? CurrentColorBand
+		//{
+		//	get => _currentColorBand;
+		//	set
+		//	{
+		//		//if (_currentColorBand != null)
+		//		//{
+		//		//	_currentColorBand.PropertyChanged -= CurrentColorBand_PropertyChanged;
+		//		//}
 
-				_currentColorBand = value;
+		//		_currentColorBand = value;
 
-				if (_currentColorBand != null)
-				{
-					_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
-				}
+		//		//if (_currentColorBand != null)
+		//		//{
+		//		//	_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
+		//		//}
 
-				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
-			}
-		}
+		//		//OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
+		//	}
+		//}
 
 		//public int PlotExtent => SeriesData.Length;
 
@@ -387,22 +396,22 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-		}
+		//private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		//{
+		//}
 
-		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
-		{
-			if (ColorBandsView != null)
-			{
-				if (ColorBandSet != null)
-				{
-					ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
-				}
+		//private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
+		//{
+		//	if (ColorBandsView != null)
+		//	{
+		//		if (ColorBandSet != null)
+		//		{
+		//			ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
+		//		}
 
-				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
-			}
-		}
+		//		//CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
+		//	}
+		//}
 
 		private void HistogramUpdated(object? sender, HistogramUpdateType e)
 		{

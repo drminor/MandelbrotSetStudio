@@ -16,7 +16,8 @@ namespace MSetExplorer
 		VectorInt CanvasControlOffset { get; set; }
 
 		ColorBandSet ColorBandSet { get; set; }
-		ColorBand? CurrentColorBand { get; set; }
+		ColorBand? CurrentColorBand { get; }
+		int SelectedColorBandIndex { get; set; }
 
 		bool HighlightSelectedColorBand { get; set; }
 

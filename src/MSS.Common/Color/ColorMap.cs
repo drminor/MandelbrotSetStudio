@@ -78,11 +78,16 @@ namespace MSS.Common
 
 		private void ColorBandSet_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ColorBandSet.SelectedColorBand))
-            {
-                _selectedColorBandIndex = _colorBandSet.SelectedColorBandIndex;
-            }
-        }
+			//if (e.PropertyName == nameof(ColorBandSet.SelectedColorBand))
+			//{
+			//    _selectedColorBandIndex = _colorBandSet.SelectedColorBandIndex;
+			//}
+
+			if (e.PropertyName == nameof(ColorBandSet.SelectedColorBandIndex))
+			{
+				_selectedColorBandIndex = _colorBandSet.SelectedColorBandIndex;
+			}
+		}
 
         #endregion
 
@@ -394,7 +399,6 @@ namespace MSS.Common
 		//     }
 
 		#endregion
-
 
 		private class ColorBand
 		{

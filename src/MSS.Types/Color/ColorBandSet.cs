@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -24,6 +25,8 @@ namespace MSS.Types
 		private readonly Stack<ReservedColorBand> _reservedColorBands;
 
 		private DateTime _lastSavedUtc;
+
+		private int _selectedColorBandIndex;
 
 		#endregion
 
@@ -62,7 +65,8 @@ namespace MSS.Types
 			_reservedColorBands = reservedColorBands == null ? new Stack<ReservedColorBand>() : new Stack<ReservedColorBand>(reservedColorBands);
 			ColorBandsSerialNumber = colorBandsSerialNumber;
 
-			SelectedColorBandIndex = 0;
+			_selectedColorBandIndex = 0;
+			//SelectedColorBandIndex = 0;
 
 			_lastSavedUtc = DateTime.UtcNow;
 			LastUpdatedUtc = DateTime.MinValue;
@@ -143,7 +147,30 @@ namespace MSS.Types
 			}
 		}
 
-		public int SelectedColorBandIndex { get; set; } // TODO: The SelectedColorBandIndex property of the ColorBandSet class does not raise OnPropertyChanged
+		public int SelectedColorBandIndex
+		{
+			get => _selectedColorBandIndex;
+			set
+			{
+				if (value != _selectedColorBandIndex)
+				{
+					if (value > Count - 1)
+					{
+						_selectedColorBandIndex = Count - 1;
+					}
+					else if (value < 0)
+					{
+						_selectedColorBandIndex = 0;
+					}
+					else
+					{
+						_selectedColorBandIndex = value;
+
+					}
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public ColorBand? SelectedColorBand
 		{

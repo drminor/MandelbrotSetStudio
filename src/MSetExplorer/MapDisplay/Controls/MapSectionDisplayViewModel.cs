@@ -113,7 +113,14 @@ namespace MSetExplorer
 			get => _bitmapGrid.ColorBandSet;
 			set
 			{
-				_currentAreaColorAndCalcSettings = CurrentAreaColorAndCalcSettings?.UpdateWith(value);
+				if (_currentAreaColorAndCalcSettings != null)
+				{
+					if (_currentAreaColorAndCalcSettings.ColorBandSet != value)
+					{
+						_currentAreaColorAndCalcSettings = _currentAreaColorAndCalcSettings.UpdateWith(value);
+					}
+				}
+
 				_bitmapGrid.ColorBandSet = value;
 			}
 		}
@@ -121,7 +128,13 @@ namespace MSetExplorer
 		public ColorBand? CurrentColorBand
 		{
 			get => _bitmapGrid.CurrentColorBand;
-			set => _bitmapGrid.CurrentColorBand = value;
+			//set => _bitmapGrid.CurrentColorBand = value;
+		}
+
+		public int SelectedColorBandIndex
+		{
+			get => _bitmapGrid.SelectedColorBandIndex;
+			set => _bitmapGrid.SelectedColorBandIndex = value;
 		}
 
 		public bool UseEscapeVelocities

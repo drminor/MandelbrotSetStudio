@@ -135,6 +135,20 @@ namespace MSetExplorer
 			}
 		}
 
+		public int SelectedColorBandIndex
+		{
+			get => ColorBandSet.SelectedColorBandIndex;
+			set
+			{
+				ColorBandSet.SelectedColorBandIndex = value;
+
+				if (HighlightSelectedColorBand && _colorMap != null)
+				{
+					ReDrawSections();
+				}
+			}
+		}
+
 		public bool UseEscapeVelocities
 		{
 			get => _useEscapeVelocities;

@@ -98,7 +98,7 @@ namespace MSetExplorer
 			{
 				if (value != _editMode)
 				{
-					Debug.WriteLine($"The Edit mode is now {value}");
+					Debug.WriteLine($"ColorBandSetViewModel: The Edit mode is now {value}");
 					_editMode = value;
 					OnPropertyChanged();
 				}
@@ -114,21 +114,26 @@ namespace MSetExplorer
 				if (value != _colorBandSet)
 				{
 					UpdateColorBandSet(value);
+					OnPropertyChanged();
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel's ColorBandSet property is being set to the same value already present. The new ColorBandSet has Id: {value?.Id ?? ObjectId.Empty}.");
 				}
 			}
 		}
 
 		private void UpdateColorBandSet(ColorBandSet? value)
 		{
-			//Debug.WriteLine($"ColorBandViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.Id}, New = {value?.Id}");
+			//Debug.WriteLine($"ColorBandSetViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.Id}, New = {value?.Id}");
 			if (value == null)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, "ColorBandViewModel is clearing its collection. (non-null => null.)");
+				Debug.WriteLineIf(_useDetailedDebug, "ColorBandSetViewModel is clearing its collection. (non-null => null.)");
 			}
 			else
 			{
 				var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
-				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
 			}
 
 			lock (_histLock)
@@ -332,7 +337,7 @@ namespace MSetExplorer
 		{
 			if (sender is ColorBand cb)
 			{
-				Debug.WriteLine($"Prop: {e.PropertyName} is changing.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:CurrentColorBand Prop: {e.PropertyName} is changing.");
 
 				var foundUpdate = false;
 
@@ -391,11 +396,11 @@ namespace MSetExplorer
 			{
 				if (sender is ColorBand)
 				{
-					Debug.WriteLine($"The ColorBandSet is null while handling a CurrentColorBand_PropertyChanged event.");
+					Debug.WriteLine($"ColorBandSetViewModel: The ColorBandSet is null while handling a CurrentColorBand_PropertyChanged event.");
 				}
 				else
 				{
-					Debug.WriteLine($"A sender of type {sender?.GetType()} is sending is raising the CurrentColorBand_PropertyChanged event.");
+					Debug.WriteLine($"ColorBandSetViewModel: A sender of type {sender?.GetType()} is raising the CurrentColorBand_PropertyChanged event. EXPECTED: {typeof(ColorBand)}.");
 				}
 			}
 		}
@@ -404,6 +409,8 @@ namespace MSetExplorer
 		{
 			if (ColorBandSet != null)
 			{
+				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the SelectedColorBandIndex from: {ColorBandSet.SelectedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+
 				ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
 			}
 
@@ -463,7 +470,7 @@ namespace MSetExplorer
 
 			if (colorBandIndex == _currentColorBandSet.Count - 1)
 			{
-				Debug.WriteLine("WARNING: TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
+				Debug.WriteLine("WARNING: ColorBandSetViewModel:TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
 			}
 
 			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
@@ -545,7 +552,7 @@ namespace MSetExplorer
 		{
 			if (curItem.Cutoff - curItem.StartingCutoff < 1)
 			{
-				Debug.WriteLine($"InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
 				index = -1;
 				return false;
 			}
@@ -583,7 +590,7 @@ namespace MSetExplorer
 		{
 			if (curItem.Cutoff - curItem.StartingCutoff < 1)
 			{
-				Debug.WriteLine($"InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
 				index = -1;
 				return false;
 			}
@@ -604,7 +611,7 @@ namespace MSetExplorer
 
 			if (!ColorBandsView.MoveCurrentTo(newItem))
 			{
-				Debug.WriteLine("Could not position the view to the new item.");
+				Debug.WriteLine("ColorBandSetViewModel:Could not position the view to the new item.");
 			}
 
 			return true;
@@ -707,12 +714,12 @@ namespace MSetExplorer
 
 			if (!colorBandWasRemoved)
 			{
-				Debug.WriteLine("Could not remove the item.");
+				Debug.WriteLine("ColorBandSetViewModel:Could not remove the item.");
 			}
 
 			var newIndex = currentSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
 			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-			Debug.WriteLineIf(_useDetailedDebug, $"Removed item at former index: {index}. The new index is: {newIndex}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:Removed item at former index: {index}. The new index is: {newIndex}.");
 
 			return true;
 		}
@@ -728,7 +735,7 @@ namespace MSetExplorer
 
 		public void ApplyChanges()
 		{
-			Debug.Assert(IsDirty, "ApplyChanges is being called, but we are not dirty.");
+			Debug.Assert(IsDirty, "ColorBandSetViewModel:ApplyChanges is being called, but we are not dirty.");
 			var newSet = _currentColorBandSet.CreateNewCopy();
 
 			ApplyChangesInt(newSet);

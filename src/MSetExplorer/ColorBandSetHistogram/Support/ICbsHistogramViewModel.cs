@@ -15,7 +15,7 @@ namespace MSetExplorer
 
 		ColorBandSet ColorBandSet { get; set; }
 		ListCollectionView? ColorBandsView { get; set; }
-		ColorBand? CurrentColorBand { get; set; }
+		//ColorBand? CurrentColorBand { get; set; }
 
 		//int StartPtr { get; set; }					// Ptr to the first visible Color Band Rectangle
 		//int EndPtr { get; set; }					// Ptr to the last visible Color Band Rectangle
