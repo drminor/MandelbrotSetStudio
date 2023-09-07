@@ -594,7 +594,8 @@ namespace MSetExplorer
 			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel();
 
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Project, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
+			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Project, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, useEscapeVelocities, areaColorAndCalcSettings.MapCalcSettings);
 
 			var result = new CreateImageProgressWindow()
 			{
@@ -860,7 +861,7 @@ namespace MSetExplorer
 		private void LoadNewProject()
 		{
 			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities: true, saveTheZValues: false);
+			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, RMapConstants.DEFAULT_THRESHOLD, calculateEscapeVelocities: true, saveTheZValues: false);
 
 			LoadNewProject(coords, mapCalcSettings);
 		}

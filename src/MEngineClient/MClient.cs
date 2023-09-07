@@ -131,7 +131,7 @@ namespace MEngineClient
 							Array.Copy(mapSectionServiceResponse.Counts, result.MapSectionVectors.Counts, mapSectionServiceResponse.Counts.Length);
 						}
 
-						if (req.MapCalcSettings.UseEscapeVelocities && mapSectionServiceResponse.EscapeVelocities.Length == result.MapSectionVectors.EscapeVelocities.Length)
+						if (req.MapCalcSettings.CalculateEscapeVelocities && mapSectionServiceResponse.EscapeVelocities.Length == result.MapSectionVectors.EscapeVelocities.Length)
 						{
 							Array.Copy(mapSectionServiceResponse.EscapeVelocities, result.MapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities.Length);
 						}

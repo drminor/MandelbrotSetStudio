@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace MSetExplorer
 {
@@ -138,6 +139,48 @@ namespace MSetExplorer
 					}
 
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
+				}
+			}
+		}
+
+		public bool SaveTheZValues
+		{
+			get => CurrentProject?.CurrentJob.MapCalcSettings.SaveTheZValues ?? false;
+			set
+			{
+				var currentProject = CurrentProject;
+				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+				{
+					if (value == SaveTheZValues)
+					{
+						Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+					}
+
+					var newMapCalcSettings = MapCalcSettings.UpdateSaveTheZValues(currentProject.CurrentJob.MapCalcSettings, value);
+					AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
+
+					OnPropertyChanged(nameof(IProjectViewModel.SaveTheZValues));
+				}
+			}
+		}
+
+		public bool CalculateEscapeVelocities
+		{
+			get => CurrentProject?.CurrentJob.MapCalcSettings.CalculateEscapeVelocities ?? false;
+			set
+			{
+				var currentProject = CurrentProject;
+				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+				{
+					if (value == CalculateEscapeVelocities)
+					{
+						Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+					}
+
+					var newMapCalcSettings = MapCalcSettings.UpdateCalculateEscapeVelocities(currentProject.CurrentJob.MapCalcSettings, value);
+					AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
+
+					OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
 				}
 			}
 		}
@@ -498,6 +541,28 @@ namespace MSetExplorer
 			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+			project.Add(job);
+
+			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
+		}
+
+		private void AddNewMapCalcSettingUpdateJob(Project project, MapCalcSettings mapCalcSettings)
+		{
+			var currentJob = project.CurrentJob;
+
+			// Use the current display size and Map Coordinates
+			var mapAreaInfo = currentJob.MapAreaInfo;
+
+			// This an iteration update with the same screen area
+			var transformType = TransformType.IterationUpdate;
+			var newScreenArea = new RectangleInt();
+
+			var colorBandSetId = currentJob.ColorBandSetId;
+
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+
+			Debug.WriteLine($"Adding Project Job with MapCalcSettings: {mapCalcSettings}. TransformType: {job.TransformType}.");
 
 			project.Add(job);
 

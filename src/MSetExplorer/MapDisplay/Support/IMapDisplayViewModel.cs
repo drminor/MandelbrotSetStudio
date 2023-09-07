@@ -29,7 +29,9 @@ namespace MSetExplorer
 
 		bool UseEscapeVelocities { get; set; }
 		bool HighlightSelectedColorBand { get; set; }
-		bool SaveTheZValues { get; set; }
+
+		//bool CalculateEscapeVelocities { get; set; }
+		//bool SaveTheZValues { get; set; }
 
 		ImageSource ImageSource { get; }
 		VectorInt ImageOffset { get; }

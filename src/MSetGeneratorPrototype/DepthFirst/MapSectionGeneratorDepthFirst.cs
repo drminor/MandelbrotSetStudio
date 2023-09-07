@@ -16,6 +16,9 @@ namespace MSetGeneratorPrototype
 
 		private SamplePointBuilder _samplePointBuilder;
 
+		private Vector256<int> _thresholdVector;
+		private bool _calculateEscapeVelocities;
+
 		private IFP31VecMath _fp31VecMath;
 		private IIterator _iterator;
 
@@ -57,9 +60,6 @@ namespace MSetGeneratorPrototype
 
 		#region Private Properties
 
-		private Vector256<int> ThresholdVector { get; set; }
-
-		private bool UseEscapeVelocities { get; set; }
 
 		#endregion
 
@@ -88,9 +88,9 @@ namespace MSetGeneratorPrototype
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
-			UseEscapeVelocities = mapCalcSettings.UseEscapeVelocities;
+			_calculateEscapeVelocities = mapCalcSettings.CalculateEscapeVelocities;
 
-			ThresholdVector = UseEscapeVelocities ? _fp31VecMath.CreateVectorForComparison(RMapConstants.DEFAULT_NORMALIZED_THRESHOLD) : _fp31VecMath.CreateVectorForComparison((uint)mapCalcSettings.Threshold);
+			_thresholdVector = _calculateEscapeVelocities ? _fp31VecMath.CreateVectorForComparison(RMapConstants.DEFAULT_NORMALIZED_THRESHOLD) : _fp31VecMath.CreateVectorForComparison((uint)mapCalcSettings.Threshold);
 			
 			_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
 			_fp31VecMath.MathOpCounts.Reset();
@@ -307,7 +307,7 @@ namespace MSetGeneratorPrototype
 			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
 			// Update the resultCounts
-			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, ThresholdVector, ref escapedFlagsVec);
+			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 			var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 
@@ -320,7 +320,7 @@ namespace MSetGeneratorPrototype
 				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
 				// Update the resultCountsV2
-				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, ThresholdVector, ref escapedFlagsVec);
+				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
 				escapedFlagsVec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
@@ -333,8 +333,11 @@ namespace MSetGeneratorPrototype
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlags;
 			iterationState.CountsRowV[idx] = resultCounts;
 
-			CalculateEscapeVelocities(sumOfSquares, targetReachedCompVec, escapeVelocities);
-			Array.Copy(escapeVelocities, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escapeVelocities.Length);
+			if (_calculateEscapeVelocities)
+			{
+				CalculateEscapeVelocities(sumOfSquares, targetReachedCompVec, escapeVelocities);
+				Array.Copy(escapeVelocities, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escapeVelocities.Length);
+			}
 
 			iterationState.UpdateZrLimbSet(iterationState.RowNumber!.Value, idx, _resultZrs);
 			iterationState.UpdateZiLimbSet(iterationState.RowNumber!.Value, idx, _resultZis);
@@ -383,7 +386,7 @@ namespace MSetGeneratorPrototype
 			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
 			// Update the resultCounts
-			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, ThresholdVector, ref escapedFlagsVec);
+			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 			var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 
@@ -396,7 +399,7 @@ namespace MSetGeneratorPrototype
 				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
 				// Update the resultCounts
-				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, ThresholdVector, ref escapedFlagsVec);
+				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
 				escapedFlagsVec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
@@ -409,7 +412,7 @@ namespace MSetGeneratorPrototype
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlags;
 			iterationState.CountsRowV[idx] = resultCounts;
 
-			if (UseEscapeVelocities)
+			if (_calculateEscapeVelocities)
 			{
 				CalculateEscapeVelocities(sumOfSquares, targetReachedCompVec, escapeVelocities);
 				Array.Copy(escapeVelocities, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escapeVelocities.Length);
@@ -448,7 +451,7 @@ namespace MSetGeneratorPrototype
 			var targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
 			// Update the resultCounts
-			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, ThresholdVector, ref escapedFlagsVec);
+			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 			var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 
@@ -461,7 +464,7 @@ namespace MSetGeneratorPrototype
 				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
 				// Update the resultCountsV2
-				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, ThresholdVector, ref escapedFlagsVec);
+				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
 				escapedFlagsVec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
@@ -473,7 +476,7 @@ namespace MSetGeneratorPrototype
 
 			iterationState.CountsRowV[idx] = resultCountsV;
 
-			if (UseEscapeVelocities)
+			if (_calculateEscapeVelocities)
 			{
 				CalculateEscapeVelocities(sumOfSquares, targetReachedCompVec, escapeVelocities);
 				Array.Copy(escapeVelocities, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escapeVelocities.Length);

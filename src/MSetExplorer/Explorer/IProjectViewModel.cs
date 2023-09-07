@@ -24,6 +24,9 @@ namespace MSetExplorer
 		ColorBandSet CurrentColorBandSet { get; set; }
 		ColorBandSet? PreviewColorBandSet { get; set; }
 
+		bool SaveTheZValues { get; set; }
+		bool CalculateEscapeVelocities { get; set; }
+
 		// Job Methods
 		bool GoBack(bool skipPanJobs);
 		bool GoForward(bool skipPanJobs);

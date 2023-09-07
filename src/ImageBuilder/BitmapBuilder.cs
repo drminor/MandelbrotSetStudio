@@ -47,7 +47,7 @@ namespace ImageBuilder
 
 		#region Public Methods
 
-		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, CancellationToken ct, Action<double>? statusCallBack = null)
+		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -55,7 +55,7 @@ namespace ImageBuilder
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
 			{
-				UseEscapeVelocities = mapCalcSettings.UseEscapeVelocities
+				UseEscapeVelocities = useEscapeVelocities
 			};
 
 			var imageSize = mapAreaInfo.CanvasSize.Round();

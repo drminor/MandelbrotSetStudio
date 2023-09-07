@@ -358,7 +358,8 @@ namespace MSetExplorer
 			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel();
 
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Poster, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
+			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Poster, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, useEscapeVelocities, areaColorAndCalcSettings.MapCalcSettings);
 
 			var result = new CreateImageProgressWindow()
 			{

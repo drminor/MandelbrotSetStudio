@@ -143,7 +143,7 @@ namespace MSetExplorer
 			set
 			{
 				_bitmapGrid.UseEscapeVelocities = value;
-				_mapLoaderManager.CalculateEscapeVelocities = value;
+				//_mapLoaderManager.CalculateEscapeVelocities = value;
 				OnPropertyChanged(nameof(IMapDisplayViewModel.UseEscapeVelocities));
 			}
 		}
@@ -154,15 +154,33 @@ namespace MSetExplorer
 			set => _bitmapGrid.HighlightSelectedColorBand = value;
 		}
 
-		public bool SaveTheZValues
-		{
-			get => _mapLoaderManager.SaveTheZValues;
-			set
-			{
-				_mapLoaderManager.SaveTheZValues = value;
-				OnPropertyChanged(nameof(IMapDisplayViewModel.SaveTheZValues));
-			}
-		}
+		//private bool _saveTheZValues = false;
+		//public bool SaveTheZValues
+		//{
+		//	get => _saveTheZValues;
+		//	set
+		//	{
+		//		if (value != _saveTheZValues)
+		//		{
+		//			_saveTheZValues = value;
+		//			OnPropertyChanged(nameof(IMapDisplayViewModel.SaveTheZValues));
+		//		}
+		//	}
+		//}
+
+		//private bool _calculateEscapeVelocities = false;
+		//public bool CalculateEscapeVelocities
+		//{
+		//	get => _calculateEscapeVelocities;
+		//	set
+		//	{
+		//		if (value != _calculateEscapeVelocities)
+		//		{
+		//			_calculateEscapeVelocities = value;
+		//			OnPropertyChanged(nameof(IMapDisplayViewModel.CalculateEscapeVelocities));
+		//		}
+		//	}
+		//}
 
 		public MapAreaInfo? LastMapAreaInfo
 		{

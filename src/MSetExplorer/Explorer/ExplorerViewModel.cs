@@ -235,7 +235,8 @@ namespace MSetExplorer
 
 			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.SaveTheZValues)
 			{
-				MapDisplayViewModel.SaveTheZValues = e.SaveTheZValues;
+				//MapDisplayViewModel.SaveTheZValues = e.SaveTheZValues;
+				ProjectViewModel.SaveTheZValues = e.SaveTheZValues;
 			}
 		}
 
@@ -276,9 +277,13 @@ namespace MSetExplorer
 
 			var newMapAreaInfo = curJob.MapAreaInfo;
 			var newColorBandSet = ProjectViewModel.CurrentColorBandSet;
-			var newMapCalcSettings = GetUpdatedMapCalcSettings(curJob.MapCalcSettings, MapDisplayViewModel.SaveTheZValues, MapDisplayViewModel.UseEscapeVelocities);
 
-			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
+			// TODO: Instead of using the MapDisplayViewModel's SaveTheZValues and CalculateEscapeVelocities, update the Current Job's MapCalcSettings
+
+			//var newMapCalcSettings = GetUpdatedMapCalcSettings(curJob.MapCalcSettings, MapDisplayViewModel.SaveTheZValues, MapDisplayViewModel.CalculateEscapeVelocities);
+			//MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
+
+			MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
 
 			var areaColorAndCalcSettings = new AreaColorAndCalcSettings
 				(
@@ -286,7 +291,7 @@ namespace MSetExplorer
 				OwnerType.Project,
 				newMapAreaInfo,
 				newColorBandSet,
-				newMapCalcSettings
+				curJob.MapCalcSettings
 				);
 
 			ColorBandSetViewModel.ColorBandSet = newColorBandSet;

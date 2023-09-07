@@ -30,8 +30,6 @@ namespace MapSectionProviderLib
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
-		private readonly DtoMapper _dtoMapper;
-
 		private readonly MapSectionGeneratorProcessor _mapSectionGeneratorProcessor;
 		private readonly MapSectionResponseProcessor _mapSectionResponseProcessor;
 		private readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
@@ -69,13 +67,12 @@ namespace MapSectionProviderLib
 			_useDetailedDebug = false;
 
 			UseRepo = true;
-			PersistZValues = false;
+			//PersistZValues = false;
 
 			_nextJobId = 0;
 			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapSectionBuilder = new MapSectionBuilder();
-			_dtoMapper = new DtoMapper();
 
 			_mapSectionGeneratorProcessor = mapSectionGeneratorProcessor;
 			_mapSectionResponseProcessor = mapSectionResponseProcessor;
@@ -104,7 +101,7 @@ namespace MapSectionProviderLib
 
 		#region Public Properties
 
-		public bool PersistZValues { get; set; }
+		//public bool PersistZValues { get; set; }
 
 		public bool UseRepo { get; set; }
 
@@ -339,6 +336,7 @@ namespace MapSectionProviderLib
 		private async Task<MapSectionResponse?> FetchOrQueueForGenerationAsync(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, CancellationToken ct)
 		{
 			var request = mapSectionWorkRequest.Request;
+			var persistZValues = request.MapCalcSettings.SaveTheZValues;
 
 			var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 
@@ -370,7 +368,7 @@ namespace MapSectionProviderLib
 					request.IncreasingIterations = true;
 					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
-					if (UseRepo && PersistZValues)
+					if (UseRepo && persistZValues)
 					{
 						var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
 						var mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
@@ -410,13 +408,14 @@ namespace MapSectionProviderLib
 		private void PrepareRequestAndQueue(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionVectors mapSectionVectors)
 		{
 			var request = mapSectionWorkRequest.Request;
+			var persistZValues = request.MapCalcSettings.SaveTheZValues;
 
 			request.MapSectionId = null;
 			//request.IncreasingIterations = false;
 			request.MapSectionVectors = mapSectionVectors;
 			request.MapSectionVectors.ResetObject();
 
-			if (UseRepo && PersistZValues)
+			if (UseRepo && persistZValues)
 			{
 				request.MapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
 				request.MapSectionZVectors.ResetObject();
@@ -642,7 +641,9 @@ namespace MapSectionProviderLib
 
 		private void PersistResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
 		{
-			if (!mapSectionResponse.RequestCancelled || PersistZValues)
+			// Send work to the Persist processor
+			// If the request is not cancelled -- OR -- if SaveTheZValues is 'On'.
+			if (!mapSectionResponse.RequestCancelled || mapSectionRequest.MapCalcSettings.SaveTheZValues)
 			{
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
 				mapSectionResponse.MapSectionZVectors?.IncreaseRefCount();

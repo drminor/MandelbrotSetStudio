@@ -24,11 +24,12 @@ namespace MSS.Types.MSet
 		//public MapCalcSettings(int targetIterations, bool useEscapeVelocities, bool saveTheZValues) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities, saveTheZValues)
 		//{ }
 
-		public MapCalcSettings(int targetIterations, int threshold, bool useEscapeVelocities, bool saveTheZValues)
+		public MapCalcSettings(int targetIterations, int threshold, bool calculateEscapeVelocities, bool saveTheZValues)
 		{
 			TargetIterations = targetIterations;
 			Threshold = threshold;
-			UseEscapeVelocities = useEscapeVelocities;
+			CalculateEscapeVelocities = calculateEscapeVelocities;
+			//UseEscapeVelocities = calculateEscapeVelocities;
 			SaveTheZValues = saveTheZValues;		
 		}
 
@@ -42,10 +43,15 @@ namespace MSS.Types.MSet
 		[DataMember(Order = 2)]
 		public int Threshold { get; set; }
 
-		[DataMember(Order = 3)]
 		[BsonIgnoreIfDefault]
 		[BsonDefaultValue(false)]
 		public bool UseEscapeVelocities { get; set; }
+
+		[DataMember(Order = 3)]
+		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(false)]
+		public bool CalculateEscapeVelocities { get; set; }
+
 
 		[DataMember(Order = 4)]
 		[BsonIgnoreIfDefault]
@@ -63,17 +69,17 @@ namespace MSS.Types.MSet
 
 		public static MapCalcSettings UpdateTargetIterations(MapCalcSettings mcs, int targetIterations)
 		{
-			return new MapCalcSettings(targetIterations, mcs.Threshold, mcs.UseEscapeVelocities, mcs.SaveTheZValues);
+			return new MapCalcSettings(targetIterations, mcs.Threshold, mcs.CalculateEscapeVelocities, mcs.SaveTheZValues);
 		}
 
 		public static MapCalcSettings UpdateSaveTheZValues(MapCalcSettings mcs, bool saveTheZValues)
 		{
-			return new MapCalcSettings(mcs.TargetIterations, mcs.Threshold, mcs.UseEscapeVelocities, saveTheZValues);
+			return new MapCalcSettings(mcs.TargetIterations, mcs.Threshold, mcs.CalculateEscapeVelocities, saveTheZValues);
 		}
 
-		public static MapCalcSettings UpdateUseEscapeVelocities(MapCalcSettings mcs, bool useEscapeVelocities)
+		public static MapCalcSettings UpdateCalculateEscapeVelocities(MapCalcSettings mcs, bool calculateEscapeVelocities)
 		{
-			return new MapCalcSettings(mcs.TargetIterations, mcs.Threshold, useEscapeVelocities, mcs.SaveTheZValues);
+			return new MapCalcSettings(mcs.TargetIterations, mcs.Threshold, calculateEscapeVelocities, mcs.SaveTheZValues);
 		}
 
 		#endregion
@@ -87,13 +93,13 @@ namespace MSS.Types.MSet
 
 		public MapCalcSettings Clone()
 		{
-			var result = new MapCalcSettings(TargetIterations, Threshold, UseEscapeVelocities, SaveTheZValues);
+			var result = new MapCalcSettings(TargetIterations, Threshold, CalculateEscapeVelocities, SaveTheZValues);
 			return result;
 		}
 
 		public override string ToString()
 		{
-			return $"TargetIterations: {TargetIterations}, Threshold: {Threshold}, UseEscapeVelocities: {UseEscapeVelocities}, SaveTheZValues: {SaveTheZValues}.";
+			return $"TargetIterations: {TargetIterations}, Threshold: {Threshold}, CalculateEscapeVelocities: {CalculateEscapeVelocities}, SaveTheZValues: {SaveTheZValues}.";
 		}
 
 		#endregion
@@ -110,7 +116,7 @@ namespace MSS.Types.MSet
 			return !(other is null)
 				&& TargetIterations == other.TargetIterations
 				&& Threshold == other.Threshold
-				&& UseEscapeVelocities == other.UseEscapeVelocities
+				&& CalculateEscapeVelocities == other.CalculateEscapeVelocities
 				&& SaveTheZValues == other.SaveTheZValues;
 		}
 
@@ -138,7 +144,7 @@ namespace MSS.Types.MSet
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(TargetIterations, Threshold, UseEscapeVelocities, SaveTheZValues);
+			return HashCode.Combine(TargetIterations, Threshold, CalculateEscapeVelocities, SaveTheZValues);
 		}
 
 		public static bool operator ==(MapCalcSettings left, MapCalcSettings right)

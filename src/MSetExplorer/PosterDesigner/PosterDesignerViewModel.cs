@@ -154,7 +154,10 @@ namespace MSetExplorer
 
 			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.SaveTheZValues)
 			{
-				MapDisplayViewModel.SaveTheZValues = e.SaveTheZValues;
+				//MapDisplayViewModel.SaveTheZValues = e.SaveTheZValues;
+
+				// TODO: Add the SaveTheZValues property to the PosterViewModel
+				//PosterViewModel.SaveTheZValues = e.SaveTheZValues;
 			}
 		}
 

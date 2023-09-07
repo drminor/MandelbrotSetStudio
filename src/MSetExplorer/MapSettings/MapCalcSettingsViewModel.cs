@@ -40,7 +40,7 @@ namespace MSetExplorer
 				if (value != _mapCalcSettings.TargetIterations)
 				{
 					_mapCalcSettings = MapCalcSettings.UpdateTargetIterations(_mapCalcSettings, value);	// ADDED: 4/8/2023 -- not tested.
-					TriggerIterationUpdate(value);
+					TriggerUpdate(value);
 				}
 			}
 		}
@@ -83,7 +83,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void TriggerIterationUpdate(int newValue)
+		public void TriggerUpdate(int newValue)
 		{
 			MapSettingsUpdateRequested?.Invoke(this, new MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType.TargetIterations, newValue));
 		}
