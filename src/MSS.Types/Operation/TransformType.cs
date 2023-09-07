@@ -4,7 +4,7 @@ namespace MSS.Types
 	public enum TransformType
 	{								// MapSections Updated?			Coordinates Updated		Zoom Updated	
 		Home = 0,					// All new						Yes						Yes
-		NotUsed = 1,		
+		CalcSettingsUpdate = 1,		
 		IterationUpdate = 2,		// Depends						No						No
 		ColorMapUpdate = 3,			// Same							No						No
 		ZoomIn = 4,					// All new						Yes						Yes

@@ -67,7 +67,6 @@ namespace MapSectionProviderLib
 			_useDetailedDebug = false;
 
 			UseRepo = true;
-			//PersistZValues = false;
 
 			_nextJobId = 0;
 			_mapSectionVectorProvider = mapSectionVectorProvider;
@@ -100,8 +99,6 @@ namespace MapSectionProviderLib
 		#endregion
 
 		#region Public Properties
-
-		//public bool PersistZValues { get; set; }
 
 		public bool UseRepo { get; set; }
 

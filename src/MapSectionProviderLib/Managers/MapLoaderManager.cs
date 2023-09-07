@@ -21,7 +21,6 @@ namespace MapSectionProviderLib
 
 		private readonly Task _removeCompletedRequestsTask;
 
-		//private bool _caclulateEscapeVelocities;
 
 		#region Constructor
 
@@ -44,18 +43,6 @@ namespace MapSectionProviderLib
 
 		#region Public Properties
 
-		//public bool SaveTheZValues
-		//{
-		//	get => _mapSectionRequestProcessor.PersistZValues;
-		//	set => _mapSectionRequestProcessor.PersistZValues = value;
-		//}
-
-		//public bool CalculateEscapeVelocities
-		//{
-		//	get => _caclulateEscapeVelocities;
-		//	set => _caclulateEscapeVelocities = value;
-		//}
-
 		public event EventHandler<JobProgressInfo>? RequestAdded;
 
 		public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
@@ -76,12 +63,7 @@ namespace MapSectionProviderLib
 		public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, 
 			out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
 		{
-			// TODO: Added 9/1/2023 -- Not Tested.
-			//var mapCalcSettingsUpdated = MapCalcSettings.UpdateSaveTheZValues(mapCalcSettings, SaveTheZValues);
-			//mapCalcSettingsUpdated = MapCalcSettings.UpdateCalculateEscapeVelocities(mapCalcSettingsUpdated, CalculateEscapeVelocities);
-
 			Debug.WriteLine($"MapLoaderManager: Creating MapSectionRequest with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
-
 
 			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
 			var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);

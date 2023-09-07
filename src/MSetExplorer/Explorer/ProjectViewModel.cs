@@ -555,7 +555,7 @@ namespace MSetExplorer
 			var mapAreaInfo = currentJob.MapAreaInfo;
 
 			// This an iteration update with the same screen area
-			var transformType = TransformType.IterationUpdate;
+			var transformType = TransformType.CalcSettingsUpdate;
 			var newScreenArea = new RectangleInt();
 
 			var colorBandSetId = currentJob.ColorBandSetId;
