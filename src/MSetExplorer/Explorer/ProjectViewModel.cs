@@ -143,44 +143,82 @@ namespace MSetExplorer
 			}
 		}
 
+
+		//public bool SaveTheZValues
+		//{
+		//	get => CurrentProject?.CurrentJob.MapCalcSettings.SaveTheZValues ?? false;
+		//	set
+		//	{
+		//		var currentProject = CurrentProject;
+		//		if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+		//		{
+		//			if (value == SaveTheZValues)
+		//			{
+		//				Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+		//			}
+
+		//			var newMapCalcSettings = MapCalcSettings.UpdateSaveTheZValues(currentProject.CurrentJob.MapCalcSettings, value);
+		//			AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
+
+		//			OnPropertyChanged(nameof(IProjectViewModel.SaveTheZValues));
+		//		}
+		//	}
+		//}
+
+		private bool _saveTheZValues = false;
 		public bool SaveTheZValues
 		{
-			get => CurrentProject?.CurrentJob.MapCalcSettings.SaveTheZValues ?? false;
+			get => _saveTheZValues;
 			set
 			{
-				var currentProject = CurrentProject;
-				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+				if (value != _saveTheZValues)
 				{
-					if (value == SaveTheZValues)
-					{
-						Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
-					}
-
-					var newMapCalcSettings = MapCalcSettings.UpdateSaveTheZValues(currentProject.CurrentJob.MapCalcSettings, value);
-					AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
-
+					_saveTheZValues =value;
 					OnPropertyChanged(nameof(IProjectViewModel.SaveTheZValues));
+				}
+				else
+				{
+					Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
 				}
 			}
 		}
 
+		//public bool CalculateEscapeVelocities
+		//{
+		//	get => CurrentProject?.CurrentJob.MapCalcSettings.CalculateEscapeVelocities ?? false;
+		//	set
+		//	{
+		//		var currentProject = CurrentProject;
+		//		if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+		//		{
+		//			if (value == CalculateEscapeVelocities)
+		//			{
+		//				Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+		//			}
+
+		//			var newMapCalcSettings = MapCalcSettings.UpdateCalculateEscapeVelocities(currentProject.CurrentJob.MapCalcSettings, value);
+		//			AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
+
+		//			OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
+		//		}
+		//	}
+		//}
+
+		private bool _calculateEscapeVelocities = true;
+
 		public bool CalculateEscapeVelocities
 		{
-			get => CurrentProject?.CurrentJob.MapCalcSettings.CalculateEscapeVelocities ?? false;
+			get => _calculateEscapeVelocities;
 			set
 			{
-				var currentProject = CurrentProject;
-				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+				if (value != _calculateEscapeVelocities)
 				{
-					if (value == CalculateEscapeVelocities)
-					{
-						Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
-					}
-
-					var newMapCalcSettings = MapCalcSettings.UpdateCalculateEscapeVelocities(currentProject.CurrentJob.MapCalcSettings, value);
-					AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
-
+					_calculateEscapeVelocities = value;
 					OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
+				}
+				else
+				{
+					Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
 				}
 			}
 		}

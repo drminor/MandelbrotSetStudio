@@ -233,10 +233,16 @@ namespace MSetExplorer
 				ColorBandSetViewModel.ApplyChanges(e.TargetIterations);
 			}
 
+			// Update the SaveTheZValues
 			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.SaveTheZValues)
 			{
-				//MapDisplayViewModel.SaveTheZValues = e.SaveTheZValues;
 				ProjectViewModel.SaveTheZValues = e.SaveTheZValues;
+			}
+
+			// Update the CalculateEscapeVelocities
+			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.CalculateEscapeVelocities)
+			{
+				ProjectViewModel.CalculateEscapeVelocities = e.CalculateEscapeVelocities;
 			}
 		}
 
@@ -278,12 +284,10 @@ namespace MSetExplorer
 			var newMapAreaInfo = curJob.MapAreaInfo;
 			var newColorBandSet = ProjectViewModel.CurrentColorBandSet;
 
-			// TODO: Instead of using the MapDisplayViewModel's SaveTheZValues and CalculateEscapeVelocities, update the Current Job's MapCalcSettings
+			var existingMapCalcSettings = curJob.MapCalcSettings;
+			var newMapCalcSettings = new MapCalcSettings(existingMapCalcSettings.TargetIterations, existingMapCalcSettings.Threshold, ProjectViewModel.CalculateEscapeVelocities, ProjectViewModel.SaveTheZValues);
 
-			//var newMapCalcSettings = GetUpdatedMapCalcSettings(curJob.MapCalcSettings, MapDisplayViewModel.SaveTheZValues, MapDisplayViewModel.CalculateEscapeVelocities);
-			//MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
-
-			MapCalcSettingsViewModel.MapCalcSettings = curJob.MapCalcSettings;
+			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
 
 			var areaColorAndCalcSettings = new AreaColorAndCalcSettings
 				(
@@ -291,7 +295,7 @@ namespace MSetExplorer
 				OwnerType.Project,
 				newMapAreaInfo,
 				newColorBandSet,
-				curJob.MapCalcSettings
+				newMapCalcSettings
 				);
 
 			ColorBandSetViewModel.ColorBandSet = newColorBandSet;
@@ -300,13 +304,6 @@ namespace MSetExplorer
 			MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
 
 			UpdateTheMapCoordsView(curJob);
-		}
-
-		private MapCalcSettings GetUpdatedMapCalcSettings(MapCalcSettings current, bool saveTheZValues, bool caculateEscapeVelocities)
-		{
-			var result = new MapCalcSettings(current.TargetIterations, current.Threshold, caculateEscapeVelocities, saveTheZValues); 
-
-			return result;
 		}
 
 		private void UpdateTheMapCoordsView(Job currentJob)

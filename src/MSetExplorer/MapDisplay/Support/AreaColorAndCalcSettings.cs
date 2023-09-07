@@ -48,7 +48,11 @@ namespace MSetExplorer
 		public AreaColorAndCalcSettings UpdateWith(ColorBandSet colorBandSet)
 		{
 			return new AreaColorAndCalcSettings(JobId, JobOwnerType, MapAreaInfo, colorBandSet, MapCalcSettings);
+		}
 
+		public AreaColorAndCalcSettings UpdateWith(MapCalcSettings mapCalcSettings)
+		{
+			return new AreaColorAndCalcSettings(JobId, JobOwnerType, MapAreaInfo, ColorBandSet, mapCalcSettings);
 		}
 
 	}

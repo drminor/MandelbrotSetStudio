@@ -26,7 +26,7 @@ namespace MSetExplorer
 		void ClearDisplay();
 		void DrawSections(IList<MapSection> mapSections);
 		int ClearSections(IList<MapSection> mapSections);
-		int ReDrawSections();
+		int ReDrawSections(bool reapplyColorMap);
 
 		bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);
 	}

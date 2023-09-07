@@ -277,6 +277,42 @@ namespace MSetExplorer
 			}
 		}
 
+		private bool _saveTheZValues = false;
+		public bool SaveTheZValues
+		{
+			get => _saveTheZValues;
+			set
+			{
+				if (value != _saveTheZValues)
+				{
+					_saveTheZValues = value;
+					OnPropertyChanged(nameof(IPosterViewModel.SaveTheZValues));
+				}
+				else
+				{
+					Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+				}
+			}
+		}
+
+		private bool _calculateEscapeVelocities = true;
+		public bool CalculateEscapeVelocities
+		{
+			get => _calculateEscapeVelocities;
+			set
+			{
+				if (value != _calculateEscapeVelocities)
+				{
+					_calculateEscapeVelocities = value;
+					OnPropertyChanged(nameof(IPosterViewModel.CalculateEscapeVelocities));
+				}
+				else
+				{
+					Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+				}
+			}
+		}
+
 		#endregion
 
 		#region Event Handlers

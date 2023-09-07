@@ -105,7 +105,7 @@ namespace MSetExplorer
 
 					if (_colorMap != null)
 					{
-						ReDrawSections();
+						ReDrawSections(reapplyColorMap: true);
 					}
 				}
 				else
@@ -114,7 +114,7 @@ namespace MSetExplorer
 					{
 						if (_colorMap != null)
 						{
-							ReDrawSections();
+							ReDrawSections(reapplyColorMap: true);
 						}
 					}
 				}
@@ -130,7 +130,7 @@ namespace MSetExplorer
 
 				if (HighlightSelectedColorBand && _colorMap != null)
 				{
-					ReDrawSections();
+					ReDrawSections(reapplyColorMap: true);
 				}
 			}
 		}
@@ -144,7 +144,7 @@ namespace MSetExplorer
 
 				if (HighlightSelectedColorBand && _colorMap != null)
 				{
-					ReDrawSections();
+					ReDrawSections(reapplyColorMap: true);
 				}
 			}
 		}
@@ -163,7 +163,7 @@ namespace MSetExplorer
 					if (_colorMap != null)
 					{
 						_colorMap.UseEscapeVelocities = value;
-						ReDrawSections();
+						ReDrawSections(reapplyColorMap: true);
 					}
 				}
 			}
@@ -183,7 +183,7 @@ namespace MSetExplorer
 					if (_colorMap != null)
 					{
 						_colorMap.HighlightSelectedColorBand = value;
-						ReDrawSections();
+						ReDrawSections(reapplyColorMap: true);
 					}
 				}
 			}
@@ -379,7 +379,7 @@ namespace MSetExplorer
 			return numberCleared;
 		}
 
-		public int ReDrawSections()
+		public int ReDrawSections(bool reapplyColorMap)
 		{
 			if (_colorMap != null)
 			{
@@ -411,7 +411,11 @@ namespace MSetExplorer
 
 							var loc = invertedBlockPos.Scale(_blockSize);
 
-							errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
+							// TODO: Detect if we have good BackBuffer
+							if (reapplyColorMap || mapSection.MapSectionVectors.BackBuffer.Length == 0)
+							{
+								errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
+							}
 
 							try
 							{
@@ -690,10 +694,10 @@ namespace MSetExplorer
 				//var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
 				var escapeVelocities = mapSectionVectors.EscapeVelocities;
 
-				//if (!escapeVelocities.Any(x => x > 0))
-				//{
-				//	Debug.WriteLine("No EscapeVelocities Found.");
-				//}
+				if (!escapeVelocities.Any(x => x > 0))
+				{
+					Debug.WriteLine("No EscapeVelocities Found.");
+				}
 
 				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
 				{

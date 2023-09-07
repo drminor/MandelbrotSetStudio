@@ -26,6 +26,9 @@ namespace MSetExplorer
 		ColorBandSet CurrentColorBandSet { get; set; }
 		ColorBandSet? PreviewColorBandSet { get; set; }
 
+		bool SaveTheZValues { get; set; }
+		bool CalculateEscapeVelocities { get; set; }
+
 		VectorDbl DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }
 

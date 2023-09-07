@@ -61,6 +61,7 @@ namespace MSetExplorer
 
 		private void ColorBandDoubleClick(object sender, RoutedEventArgs e)
 		{
+			MessageBox.Show("Got a dbl click.");
 			//EditColorBand();
 		}
 
@@ -247,58 +248,53 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		//private void UpdateNeighbors(ColorBand selItem, int index)
-		//{
-		//	if (TryGetPredeccessor(index, out var predecessor))
-		//	{
-		//		if (selItem.StartColorUpdated && predecessor != null && predecessor.BlendStyle == ColorBandBlendStyle.Next)
-		//		{
-		//			predecessor.ActualEndColor = selItem.StartColor;
-		//		}
-		//	}
+		private void UpdateNeighbors(ColorBand selItem, int index)
+		{
+			var predecessor = GetPredeccessor(index);
+			var successor = GetSuccessor(index);
 
-		//	if (TryGetSuccessor(index, out var sucessor))
-		//	{
-		//		if (selItem.CutoffUpdated && sucessor != null)
-		//		{
-		//			sucessor.PreviousCutoff = selItem.Cutoff;
-		//		}
-		//	}
-		//}
+			selItem.UpdateWithNeighbors(predecessor, successor);
+		}
 
-		//private bool TryGetPredeccessor(int index, out ColorBand? colorBand)
-		//{
-		//	if (index < 1)
-		//	{
-		//		colorBand = null;
-		//		return false;
-		//	}
-		//	else
-		//	{
-		//		colorBand = (ColorBand)lvColorBands.Items[index - 1];
-		//		return true;
-		//	}
-		//}
+		private ColorBand? GetPredeccessor(int index)
+		{
+			_ = TryGetPredeccessor(index, out var predeccessor);
+			return predeccessor;
+		}
 
-		//private bool TryGetSuccessor(int index, out ColorBand? colorBand)
-		//{
-		//	if (index > lvColorBands.Items.Count - 2)
-		//	{
-		//		colorBand = null;
-		//		return false;
-		//	}
-		//	else
-		//	{
-		//		colorBand = (ColorBand)lvColorBands.Items[index + 1];
-		//		return true;
-		//	}
-		//}
+		private bool TryGetPredeccessor(int index, out ColorBand? colorBand)
+		{
+			if (index < 1)
+			{
+				colorBand = null;
+				return false;
+			}
+			else
+			{
+				colorBand = (ColorBand)lvColorBands.Items[index - 1];
+				return true;
+			}
+		}
 
-		//private ColorBand? GetSuccessor(int index)
-		//{
-		//	_ = TryGetSuccessor(index, out var successor);
-		//	return successor;
-		//}
+		private ColorBand? GetSuccessor(int index)
+		{
+			_ = TryGetSuccessor(index, out var successor);
+			return successor;
+		}
+
+		private bool TryGetSuccessor(int index, out ColorBand? colorBand)
+		{
+			if (index > lvColorBands.Items.Count - 2)
+			{
+				colorBand = null;
+				return false;
+			}
+			else
+			{
+				colorBand = (ColorBand)lvColorBands.Items[index + 1];
+				return true;
+			}
+		}
 
 		#endregion
 	}

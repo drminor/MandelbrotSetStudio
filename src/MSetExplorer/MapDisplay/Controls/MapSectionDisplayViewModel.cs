@@ -196,7 +196,7 @@ namespace MSetExplorer
 								Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== As the ViewportSize is updated, the MapSectionDisplayViewModel is calling ReuseAndLoad.");
 
 								var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
-								newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, out lastSectionWasIncluded);
+								newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, reapplyColorMap: false, out lastSectionWasIncluded);
 							}
 						}
 
@@ -508,7 +508,7 @@ namespace MSetExplorer
 
 				ReportMove(_boundedMapArea, contentOffset);
 
-				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, out var lastSectionWasIncluded);
+				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out var lastSectionWasIncluded);
 
 
 				if (newJobNumber.HasValue && lastSectionWasIncluded)
@@ -561,7 +561,7 @@ namespace MSetExplorer
 						? JobType.FullScale
 						: JobType.ReducedScale;
 
-				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, LastMapAreaInfo, out var lastSectionWasIncluded);
+				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, LastMapAreaInfo, reapplyColorMap: false, out var lastSectionWasIncluded);
 
 				if (newJobNumber.HasValue && lastSectionWasIncluded)
 				{
@@ -687,7 +687,7 @@ namespace MSetExplorer
 
 			if (boundedMapArea.BaseFactor == currentBaseFactor)
 			{
-				newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
+				newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
 			}
 			else
 			{
@@ -731,7 +731,7 @@ namespace MSetExplorer
 			// because ReuseAndLoad is going to set the BitmapGrid's LogicalViewportSize from the mapAreaSubset.CanvasSize.
 			_viewportSize = mapAreaSubset.CanvasSize;
 
-			newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
+			newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
 
 			if (newJobNumber.HasValue && lastSectionWasIncluded)
 			{
@@ -750,8 +750,9 @@ namespace MSetExplorer
 				var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewportSize);
 				if (ShouldAttemptToReuseLoadedSections(previousJob, newJob))
 				{
+					var reapplyColorMap = previousJob == null ? true : ShouldReapplyColorMap(previousJob.ColorBandSet, newJob.ColorBandSet, previousJob.MapCalcSettings, newJob.MapCalcSettings);
 					Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
-					newJobNumber = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
+					newJobNumber = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, reapplyColorMap, out lastSectionWasIncluded);
 				}
 				else
 				{
@@ -769,7 +770,7 @@ namespace MSetExplorer
 			return newJobNumber;
 		}
 
-		private int? ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
+		private int? ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, bool reapplyColorMap, out bool lastSectionWasIncluded)
 		{
 			LastMapAreaInfo = screenAreaInfo;
 
@@ -826,7 +827,7 @@ namespace MSetExplorer
 				ImageOffset = screenAreaInfo.CanvasControlOffset;
 				ColorBandSet = newJob.ColorBandSet;
 
-				var numberOfSectionsReturned = _bitmapGrid.ReDrawSections();
+				var numberOfSectionsReturned = _bitmapGrid.ReDrawSections(reapplyColorMap);
 
 				var numberOfRequestsCancelled = sectionsToCancel.Count;
 				numberOfSectionsReturned += sectionsToRemove.Count - numberOfRequestsCancelled;
@@ -950,6 +951,28 @@ namespace MSetExplorer
 
 			return inSameSubdivision;
 		}
+
+		private bool ShouldReapplyColorMap(ColorBandSet previousColorBandSet, ColorBandSet newColorBandSet, MapCalcSettings previousCalcSettings, MapCalcSettings newCalcSettings)
+		{
+			if (newColorBandSet != previousColorBandSet)
+			{
+				return false;
+			}
+
+			if (newCalcSettings.CalculateEscapeVelocities != previousCalcSettings.CalculateEscapeVelocities)
+			{
+				return false;
+			}
+
+			//if (newCalcSettings.SaveTheZValues != previousCalcSettings.SaveTheZValues)
+			//{
+			//	return false;
+			//}
+
+
+			return false;
+		}
+
 
 		private List<MapSection> GetSectionsToLoadAndRemove(List<MapSection> sectionsToRequest, IList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)
 		{

@@ -1,6 +1,5 @@
 ﻿using MSS.Types;
 using System;
-using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -10,6 +9,7 @@ namespace MSetExplorer
 		public int TargetIterations { get; init; }
 		public int RequestsPerJob { get; init; }
 		public bool SaveTheZValues { get; init; }
+		public bool CalculateEscapeVelocities { get; init; }
 
 		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, int targetIterations)
 		{
@@ -17,12 +17,24 @@ namespace MSetExplorer
 			TargetIterations = targetIterations;
 		}
 
-		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, bool saveTheZValues)
+		public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, bool newValue)
 		{
-			Debug.Assert(mapSettingsUpdateType == MapSettingsUpdateType.SaveTheZValues, "Expecting the MapSettingsUpdateType to be 'SaveTheZValeus'");
+			if (mapSettingsUpdateType == MapSettingsUpdateType.SaveTheZValues)
+			{
+				SaveTheZValues = newValue;
+			}
+			else if (mapSettingsUpdateType == MapSettingsUpdateType.CalculateEscapeVelocities)
+			{
+				CalculateEscapeVelocities = newValue;
+			}
+			else
+			{
+				throw new InvalidOperationException($"A value of {mapSettingsUpdateType} is not valid when the new value is of type bool.");
+			}
+
 			MapSettingsUpdateType = mapSettingsUpdateType;
-			SaveTheZValues = saveTheZValues;
 		}
+
 
 		//public MapSettingsUpdateRequestedEventArgs(MapSettingsUpdateType mapSettingsUpdateType, int requestsPerJob)
 		//{

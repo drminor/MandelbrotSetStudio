@@ -1,5 +1,6 @@
 ﻿using MSS.Common.MSet;
 using MSS.Types;
+using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -152,12 +153,16 @@ namespace MSetExplorer
 				ColorBandSetViewModel.ApplyChanges(e.TargetIterations);
 			}
 
+			// Update the SaveTheZValues
 			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.SaveTheZValues)
 			{
-				//MapDisplayViewModel.SaveTheZValues = e.SaveTheZValues;
+				PosterViewModel.SaveTheZValues = e.SaveTheZValues;
+			}
 
-				// TODO: Add the SaveTheZValues property to the PosterViewModel
-				//PosterViewModel.SaveTheZValues = e.SaveTheZValues;
+			// Update the CalculateEscapeVelocities
+			else if (e.MapSettingsUpdateType == MapSettingsUpdateType.CalculateEscapeVelocities)
+			{
+				PosterViewModel.CalculateEscapeVelocities = e.CalculateEscapeVelocities;
 			}
 		}
 
@@ -185,15 +190,18 @@ namespace MSetExplorer
 
 		private void SubmitMapDisplayJob()
 		{
-
 			if (MapDisplayViewModel.ViewportSize.Width < 2 || MapDisplayViewModel.ViewportSize.Height < 2)
 			{
 				Debug.WriteLine("ViewPortSize is zero.");
 			}
 
 			var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
+			var existingMapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
-			MapCalcSettingsViewModel.MapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
+			var newMapCalcSettings = new MapCalcSettings(existingMapCalcSettings.TargetIterations, existingMapCalcSettings.Threshold, PosterViewModel.CalculateEscapeVelocities, PosterViewModel.SaveTheZValues);
+			var updatedSettings = areaColorAndCalcSettings.UpdateWith(newMapCalcSettings);
+
+			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
 
 			// Update the MapDisplayView model for a new Poster or Poster Job.
 			var currentPoster = PosterViewModel.CurrentPoster;
@@ -208,7 +216,7 @@ namespace MSetExplorer
 					var displayPosition = currentPoster.DisplayPosition;
 					var displayZoom = currentPoster.DisplayZoom;
 
-					MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings, posterSize, displayPosition, displayZoom);
+					MapDisplayViewModel.SubmitJob(updatedSettings, posterSize, displayPosition, displayZoom);
 
 					UpdateTheMapCoordsView(currentjob);
 				}

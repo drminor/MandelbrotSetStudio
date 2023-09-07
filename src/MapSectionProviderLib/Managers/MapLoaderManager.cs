@@ -63,6 +63,9 @@ namespace MapSectionProviderLib
 		public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, 
 			out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
 		{
+			//var calcSettingsUpdated = MapCalcSettings.UpdateCalculateEscapeVelocities(mapCalcSettings, calculateEscapeVelocities: true);
+			//Debug.WriteLine($"MapLoaderManager: Creating MapSectionRequest with SaveTheZValues: {calcSettingsUpdated.SaveTheZValues} and CalculateEscapeVelocities: {calcSettingsUpdated.CalculateEscapeVelocities}.");
+
 			Debug.WriteLine($"MapLoaderManager: Creating MapSectionRequest with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
 
 			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);

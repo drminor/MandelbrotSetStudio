@@ -510,11 +510,11 @@ namespace MSetGeneratorPrototype
 					var dv = doubles.Sum();
 
 					var nu_temp = Math.Log2(Math.Log(dv));
-					var nu = nu_temp / 3.22;
+					var nu = nu_temp / 3.55;
 
 					if (nu < 0 || nu > 1)
 					{
-						var tnu = (ushort)Math.Round(nu * 10000);
+						//var tnu = (ushort)Math.Round(nu * 10000);
 						//Debug.WriteLine($"WARNING: The EscapeVelocity: {nu} ({tnu}) is not in the range: 0..1");
 						ourCount++;
 						nu = 0;
@@ -531,10 +531,10 @@ namespace MSetGeneratorPrototype
 				}
 			}
 
-			//if (ourCount > 0)
-			//{
-			//	Debug.WriteLine($"There were {ourCount} out of range events.");
-			//}
+			if (ourCount > 0)
+			{
+				Debug.WriteLine($"There were {ourCount} out of range events.");
+			}
 		}
 
 		private int SaveCountsForDoneItems(Vector256<int> escapedFlagsVec, Vector256<int> targetReachedCompVec, 
