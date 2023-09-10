@@ -150,7 +150,8 @@ namespace MEngineService.Services
 
 				if (++_sectionCntr % 10 == 0)
 				{
-					Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
+					//Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
+					Console.WriteLine($"The MEngineClient has processed {_sectionCntr} requests.");
 				}
 
 				//mapSectionResponse.IncludeZValues = false;
