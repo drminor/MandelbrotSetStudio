@@ -139,17 +139,14 @@ namespace ImageBuilder
 					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a differnt value of isInverted as does the block at 0, {blockPtrY}.");
 
 					var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
+					//var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
+					var escVelsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.EscapeVelocities, linePtr, blockSizeWidth);
 
-					//var escVelsForThisLine = GetOneLineFromCountsBlock(mapSection?.MapSectionValues?.EscapeVelocities, linePtr, blockSize.Width);
-					var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
-
-					//var lineLength = BitmapHelper.GetSegmentLength(blockPtrX, imageSize.Width, numberOfWholeBlocks.Width, blockSize.Width, canvasControlOffset.X, out var samplesToSkip);
 					var lineLength = segmentLengths[blockPtrX].Item1;
 					var samplesToSkip = segmentLengths[blockPtrX].Item2;
 
 					try
 					{
-						//BitmapHelper.FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
 						BitmapHelper.FillImageLineSegment(result, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
 
 						destPixPtr += lineLength;

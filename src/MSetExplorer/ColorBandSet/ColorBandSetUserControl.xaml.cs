@@ -61,8 +61,8 @@ namespace MSetExplorer
 
 		private void ColorBandDoubleClick(object sender, RoutedEventArgs e)
 		{
-			MessageBox.Show("Got a dbl click.");
-			//EditColorBand();
+			//MessageBox.Show("Got a dbl click.");
+			EditColorBand();
 		}
 
 		private void ShowDetails_Click(object sender, RoutedEventArgs e)
@@ -247,6 +247,27 @@ namespace MSetExplorer
 		//		}
 		//	}
 		//}
+
+		// Will create a new dialog box that will show the starting / ending and blend options
+		private void EditColorBand()
+		{
+			var view = _vm.ColorBandsView;
+
+			if (!view.IsEditingItem && lvColorBands.Items.CurrentItem is ColorBand selItem)
+			{
+				var index = lvColorBands.Items.IndexOf(selItem);
+
+				var predeccessor = GetPredeccessor(index);
+				var sucesssor = GetSuccessor(index);
+
+				var preClr = predeccessor?.EndColor ?? new ColorBandColor("#ff0000");
+				var folClr = sucesssor?.StartColor ?? new ColorBandColor("#00ff00");
+
+				Debug.WriteLine($"Edit Color Band: The Predeccessor's EndColor is {preClr}. The Successor' StartColor is {folClr}.");
+
+				//view.EditItem(selItem);
+			}
+		}
 
 		private void UpdateNeighbors(ColorBand selItem, int index)
 		{

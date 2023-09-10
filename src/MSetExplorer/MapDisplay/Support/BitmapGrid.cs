@@ -387,8 +387,12 @@ namespace MSetExplorer
 				if (RefreshBitmap(bitmapSize, out var bitmap))
 				{
 					Bitmap = bitmap;
+					reapplyColorMap = true;
 				}
 			}
+
+			// Force the reapplication of the color map - always
+			reapplyColorMap = true;
 
 			//var anyDrawnOnLastRow = false;
 
@@ -681,6 +685,8 @@ namespace MSetExplorer
 			var pixelStride = sourceStride * BYTES_PER_PIXEL;
 
 			var backBuffer = mapSectionVectors.BackBuffer;
+
+			Debug.Assert(backBuffer.Length == mapSectionVectors.BlockSize.NumberOfCells * BYTES_PER_PIXEL);
 
 			var counts = mapSectionVectors.Counts;
 			var previousCountVal = counts[0];

@@ -33,11 +33,9 @@ namespace MSetExplorer
 		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		//private const int MONGO_DB_PORT = 27017;
 
-		//private const string REMOTE_SERVICE_URL = "http://localhost:5000";
-		//private const string REMOTE_SERVICE_URL = "http://192.168.2.108:5000";
-		//private const string REMOTE_SERVICE_URL_SECURE = "https://192.168.2.108:5001";
-
-		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
+		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://localhost:5000" };
+		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
+		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
 
 		private static readonly bool USE_ALL_CORES = true;
 		private static readonly bool USE_REMOTE_ENGINES = false;
@@ -66,7 +64,7 @@ namespace MSetExplorer
 
 		private static readonly bool UPDATE_JOB_SUBDIVSION_IDS_FOR_ALL_JobMapSections = false;
 
-		private static readonly DateTime DELETE_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2083-07-01");
+		private static readonly DateTime DROP_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2023-08-15");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_RECENT_JOB_MAP_SECTIONS = false;
 
@@ -161,21 +159,29 @@ namespace MSetExplorer
 
 			if (DROP_MAP_SECTIONS_AND_SUBDIVISIONS)
 			{
-				_repositoryAdapters.MapSectionAdapter.DropMapSectionsAndSubdivisions();
+				Debug.WriteLine("Not dropping All MapSections and Subdivisions.");
+				//_repositoryAdapters.MapSectionAdapter.DropMapSectionsAndSubdivisions();
 			}
 			else
 			{
 				if (DROP_RECENT_MAP_SECTIONS)
 				{
-					var countMapSectionsDeleted =  _repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
-					MessageBox.Show($"Deleted {countMapSectionsDeleted} MapSection records that have been created since {DELETE_MAP_SECTIONS_AFTER_DATE}.");
+					var countMapSectionsDeleted =  _repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DROP_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+					MessageBox.Show($"Deleted {countMapSectionsDeleted} MapSection records that have been created since {DROP_MAP_SECTIONS_AFTER_DATE}.");
 				}
 
 				if (DROP_RECENT_JOB_MAP_SECTIONS)
 				{
-					var countJobMapSectionsDeleted = _repositoryAdapters.MapSectionAdapter.DeleteJobMapSectionsCreatedSince(DELETE_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
-					MessageBox.Show($"Deleted {countJobMapSectionsDeleted} JobMapSection records that have been created since {DELETE_MAP_SECTIONS_AFTER_DATE}.");
+					var countJobMapSectionsDeleted = _repositoryAdapters.MapSectionAdapter.DeleteJobMapSectionsCreatedSince(DROP_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+					MessageBox.Show($"Deleted {countJobMapSectionsDeleted} JobMapSection records that have been created since {DROP_MAP_SECTIONS_AFTER_DATE}.");
 				}
+			}
+
+			if (DROP_MAP_SECTIONS_AND_SUBDIVISIONS | DROP_RECENT_MAP_SECTIONS | DROP_RECENT_JOB_MAP_SECTIONS)
+			{
+				MessageBox.Show("MapSection / JobMapSection Maintenance Completed.");
+				Current.Shutdown();
+				return;
 			}
 
 			if (CREATE_COLLECTIONS)
@@ -534,7 +540,7 @@ namespace MSetExplorer
 					result.Add(new MClientLocal(mSetGenerationStrategy));
 				}
 
-				Debug.WriteLine($"Using {localTaskCount} local engine instances.");
+				Debug.WriteLine($"Using {localTaskCount} local engines.");
 			}
 
 			if (useRemoteEngine)
@@ -548,7 +554,7 @@ namespace MSetExplorer
 						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint));
 					}
 
-					Debug.WriteLine($"Using {remoteTaskCount} instances of remote server at end point: {remoteEndPoint}.");
+					Debug.WriteLine($"Using {remoteTaskCount} engines at {remoteEndPoint}.");
 				}
 			}
 
