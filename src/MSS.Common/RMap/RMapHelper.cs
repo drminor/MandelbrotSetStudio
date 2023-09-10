@@ -145,9 +145,9 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorInt canvasControlOffset)
+		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			_ = GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset, RMapConstants.BLOCK_SIZE, out _, out var sizeOfLastBlock);
+			_ = GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset, blockSize, out _, out var sizeOfLastBlock);
 
 			return sizeOfLastBlock;
 		}

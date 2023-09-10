@@ -69,10 +69,10 @@ namespace MEngineDataContracts
 		public MathOpCounts MathOpCounts { get; init; }
 
 		[DataMember(Order = 9)]
-		public ushort[] Counts { get; init; }
+		public ushort[] Counts { get; set; }
 
 		[DataMember(Order = 10)]
-		public ushort[] EscapeVelocities { get; init; }
+		public ushort[] EscapeVelocities { get; set; }
 
 	}
 }

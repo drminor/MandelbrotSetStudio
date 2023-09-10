@@ -121,71 +121,71 @@ namespace MSS.Common
 					-----------------
 		*/
 
-		public (MapSection dest2, MapSection dest3) SplitLow(MapAreaInfo2 mapAreaInfo, MapAreaInfo2 x2, int jobNumber, MapSection source)
-		{
-			var mapSectionVectors = source.MapSectionVectors ?? throw new ArgumentException("The source MapSection must have a non-null MapSectionVectors.");
+		//public (MapSection dest2, MapSection dest3) SplitLow(MapAreaInfo2 mapAreaInfo, MapAreaInfo2 x2, int jobNumber, MapSection source)
+		//{
+		//	var mapSectionVectors = source.MapSectionVectors ?? throw new ArgumentException("The source MapSection must have a non-null MapSectionVectors.");
 
 
-			var dest2Vecs = ObtainMapSectionVectors();
-			var dest3Vecs = ObtainMapSectionVectors();
+		//	var dest2Vecs = ObtainMapSectionVectors();
+		//	var dest3Vecs = ObtainMapSectionVectors();
 
-			var rowCount = mapSectionVectors.BlockSize.Height;
-			var sourceStride = mapSectionVectors.BlockSize.Width;
-			var halfSourceStride = sourceStride / 2;
-			var doubleResultStride = mapSectionVectors.BlockSize.Width * 2;
+		//	var rowCount = mapSectionVectors.BlockSize.Height;
+		//	var sourceStride = mapSectionVectors.BlockSize.Width;
+		//	var halfSourceStride = sourceStride / 2;
+		//	var doubleResultStride = mapSectionVectors.BlockSize.Width * 2;
 
-			var sourceCounts = mapSectionVectors.Counts;
-			var sourceEscapeVelocities = mapSectionVectors.EscapeVelocities;
+		//	var sourceCounts = mapSectionVectors.Counts;
+		//	var sourceEscapeVelocities = mapSectionVectors.EscapeVelocities;
 
-			var dest2Counts = dest2Vecs.Counts;
-			var dest2EscapeVelocities = dest2Vecs.EscapeVelocities;
+		//	var dest2Counts = dest2Vecs.Counts;
+		//	var dest2EscapeVelocities = dest2Vecs.EscapeVelocities;
 
-			var dest3Counts = dest3Vecs.Counts;
-			var dest3EscapeVelocities = dest2Vecs.EscapeVelocities;
+		//	var dest3Counts = dest3Vecs.Counts;
+		//	var dest3EscapeVelocities = dest2Vecs.EscapeVelocities;
 
-			var resultRowPtr = 0;
-			var sourcePtrUpperBound = rowCount / 2 * sourceStride;
+		//	var resultRowPtr = 0;
+		//	var sourcePtrUpperBound = rowCount / 2 * sourceStride;
 
-			for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += doubleResultStride)
-			{
-				var resultPtr = resultRowPtr;
+		//	for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += doubleResultStride)
+		//	{
+		//		var resultPtr = resultRowPtr;
 
-				for (var colPtr = 0; colPtr < halfSourceStride; colPtr++)
-				{
-					dest2Counts[resultPtr] = sourceCounts[sourcePtr];
-					dest2EscapeVelocities[resultPtr] = sourceEscapeVelocities[sourcePtr];
+		//		for (var colPtr = 0; colPtr < halfSourceStride; colPtr++)
+		//		{
+		//			dest2Counts[resultPtr] = sourceCounts[sourcePtr];
+		//			dest2EscapeVelocities[resultPtr] = sourceEscapeVelocities[sourcePtr];
 
-					resultPtr += 2;
-					sourcePtr += 1;
-				}
+		//			resultPtr += 2;
+		//			sourcePtr += 1;
+		//		}
 
-				resultPtr = resultRowPtr;
+		//		resultPtr = resultRowPtr;
 
-				for (var colPtr = 0; colPtr < halfSourceStride; colPtr++)
-				{
-					dest3Counts[resultPtr] = sourceCounts[sourcePtr];
-					dest3EscapeVelocities[resultPtr] = sourceEscapeVelocities[sourcePtr];
+		//		for (var colPtr = 0; colPtr < halfSourceStride; colPtr++)
+		//		{
+		//			dest3Counts[resultPtr] = sourceCounts[sourcePtr];
+		//			dest3EscapeVelocities[resultPtr] = sourceEscapeVelocities[sourcePtr];
 
-					resultPtr += 2;
-					sourcePtr += 1;
-				}
-			}
-
-
-			//// Block Position, relative to the Subdivision's BaseMapPosition
-			//var localBlockPosition = RMapHelper.ToSubdivisionCoords(source.ScreenPosition, source.JobMapBlockOffset, out var isInverted);
-
-			//var subdivision = mapAreaInfo.Subdivision;
-
-			//// Absolute position in Map Coordinates.
-			//var mapPosition = GetMapPosition(subdivision, localBlockPosition);
+		//			resultPtr += 2;
+		//			sourcePtr += 1;
+		//		}
+		//	}
 
 
-			var dest2 = new MapSection(jobNumber: jobNumber, subdivisionId: "", jobMapBlockPosition: new BigVector(), repoBlockPosition: new BigVector(), isInverted: false, screenPosition: new PointInt(), size: new SizeInt(), targetIterations: source.TargetIterations, isCancelled: false);
-			var dest3 = new MapSection(jobNumber: jobNumber, subdivisionId: "", jobMapBlockPosition: new BigVector(), repoBlockPosition: new BigVector(), isInverted: false, screenPosition: new PointInt(), size: new SizeInt(), targetIterations: source.TargetIterations, isCancelled: false);
+		//	//// Block Position, relative to the Subdivision's BaseMapPosition
+		//	//var localBlockPosition = RMapHelper.ToSubdivisionCoords(source.ScreenPosition, source.JobMapBlockOffset, out var isInverted);
 
-			return (dest2, dest3);
-		}
+		//	//var subdivision = mapAreaInfo.Subdivision;
+
+		//	//// Absolute position in Map Coordinates.
+		//	//var mapPosition = GetMapPosition(subdivision, localBlockPosition);
+
+
+		//	var dest2 = new MapSection(jobNumber: jobNumber, subdivisionId: "", jobMapBlockPosition: new BigVector(), repoBlockPosition: new BigVector(), isInverted: false, screenPosition: new PointInt(), size: new SizeInt(), targetIterations: source.TargetIterations, isCancelled: false);
+		//	var dest3 = new MapSection(jobNumber: jobNumber, subdivisionId: "", jobMapBlockPosition: new BigVector(), repoBlockPosition: new BigVector(), isInverted: false, screenPosition: new PointInt(), size: new SizeInt(), targetIterations: source.TargetIterations, isCancelled: false);
+
+		//	return (dest2, dest3);
+		//}
 
 		#endregion
 	}

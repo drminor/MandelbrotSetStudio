@@ -11,7 +11,32 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public MapSectionVectors(SizeInt blockSize)
+		//public MapSectionVectors(SizeInt blockSize)
+		//{
+		//	BlockSize = blockSize;
+		//	ValueCount = blockSize.NumberOfCells;
+		//	ValuesPerRow = blockSize.Width;
+
+		//	BytesPerRow = ValuesPerRow * VALUE_SIZE;
+		//	TotalByteCount = ValueCount * VALUE_SIZE;
+
+		//	Counts = ArrayPool<ushort>.Shared.Rent(ValueCount);
+		//	EscapeVelocities = ArrayPool<ushort>.Shared.Rent(ValueCount);
+		//	BackBuffer = ArrayPool<byte>.Shared.Rent(ValueCount * 4);
+
+		//	ReferenceCount = 0;
+		//}
+
+		public MapSectionVectors(SizeInt blockSize) 
+			: this(
+				  blockSize, 
+				  ArrayPool<ushort>.Shared.Rent(blockSize.NumberOfCells), 
+				  ArrayPool<ushort>.Shared.Rent(blockSize.NumberOfCells), 
+				  ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * 4)
+				  )
+		{ }
+
+		public MapSectionVectors(SizeInt blockSize, ushort[] counts, ushort[] escapeVelocities, byte[] backBuffer)
 		{
 			BlockSize = blockSize;
 			ValueCount = blockSize.NumberOfCells;
@@ -20,9 +45,9 @@ namespace MSS.Types
 			BytesPerRow = ValuesPerRow * VALUE_SIZE;
 			TotalByteCount = ValueCount * VALUE_SIZE;
 
-			Counts = ArrayPool<ushort>.Shared.Rent(ValueCount);
-			EscapeVelocities = ArrayPool<ushort>.Shared.Rent(ValueCount);
-			BackBuffer = ArrayPool<byte>.Shared.Rent(ValueCount * 4);
+			Counts = counts;
+			EscapeVelocities = escapeVelocities;
+			BackBuffer = backBuffer;
 
 			ReferenceCount = 0;
 		}

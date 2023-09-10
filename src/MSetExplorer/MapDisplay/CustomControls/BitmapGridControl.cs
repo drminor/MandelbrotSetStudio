@@ -14,6 +14,7 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private readonly static bool CLIP_IMAGE_BLOCKS = true;
+		private readonly static SizeInt _blockSize = RMapConstants.BLOCK_SIZE;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 
@@ -557,7 +558,7 @@ namespace MSetExplorer
 
 			// newValue.Y is the # of pixels of the first block to skip.
 
-			var sizeOfLastBlock = RMapHelper.GetSizeOfLastBlock(LogicalViewportSize, newValue);
+			var sizeOfLastBlock = RMapHelper.GetSizeOfLastBlock(LogicalViewportSize, newValue, _blockSize);
 
 			var adjustedNewValue = new VectorDbl
 				(

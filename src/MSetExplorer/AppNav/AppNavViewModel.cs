@@ -11,6 +11,7 @@ namespace MSetExplorer
 {
 	internal class AppNavViewModel
 	{
+		private static readonly SizeInt _blockSize = RMapConstants.BLOCK_SIZE;
 		private static readonly bool _useSimpleJobTree = true;
 
 		private readonly IProjectAdapter _projectAdapter;
@@ -34,15 +35,12 @@ namespace MSetExplorer
 			_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
 			_sharedColorBandSetAdapter = repositoryAdapters.SharedColorBandSetAdapter;
 
-			//var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			//_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor:10, RMapConstants.BLOCK_SIZE);
-
 			_mapJobHelper = mapJobHelper;
 
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor;
 
-			_viewModelFactory = new ViewModelFactory(_projectAdapter, _mapSectionAdapter, _sharedColorBandSetAdapter, _mapLoaderManager);
+			_viewModelFactory = new ViewModelFactory(_projectAdapter, _mapSectionAdapter, _sharedColorBandSetAdapter, _mapLoaderManager, _blockSize);
 		}
 
 		public ExplorerViewModel GetExplorerViewModel()
@@ -51,7 +49,7 @@ namespace MSetExplorer
 			var projectViewModel = new ProjectViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
 
 			// Map Display View Model
-			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionVectorProvider, _mapJobHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionVectorProvider, _mapJobHelper, _blockSize);
 
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
@@ -76,7 +74,7 @@ namespace MSetExplorer
 			var posterViewModel = new PosterViewModel(_projectAdapter, _mapSectionAdapter, _mapJobHelper);
 
 			// Map Display View Model
-			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionVectorProvider, _mapJobHelper, RMapConstants.BLOCK_SIZE);
+			IMapDisplayViewModel mapDisplayViewModel = new MapSectionDisplayViewModel(_mapLoaderManager, _mapSectionVectorProvider, _mapJobHelper, _blockSize);
 
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);

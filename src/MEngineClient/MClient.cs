@@ -59,16 +59,67 @@ namespace MEngineClient
 
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
+
+			var mapSectionServiceRequest = MapTo(mapSectionRequest);
+
 			var stopWatch = Stopwatch.StartNew();
-			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, ct);
+			var mapSectionServiceResponse = GenerateMapSectionInternal(mapSectionServiceRequest, ct);
 			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-			//Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
+			var isCancelled = ct.IsCancellationRequested | mapSectionServiceResponse.RequestCancelled;
+
+			var mapSectionResponse = MapFrom(mapSectionServiceResponse, mapSectionRequest);
+			mapSectionRequest.GenerationDuration = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerate);
+
+			mapSectionResponse.RequestCancelled = isCancelled;
+
+			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
+			mapSectionResponse.MapSectionVectors = msv;
+			mapSectionResponse.MapSectionZVectors = mszv;
+
+			if (mapSectionResponse.MapSectionVectors != null)
+			{
+				if (!isCancelled)
+				{
+					var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+					//mapSectionResponse.MapSectionVectors.Load(mapSectionServiceResponse.Counts, mapSectionServiceResponse.EscapeVelocities);
+
+					if (mapSectionServiceResponse.Counts.Length == mapSectionVectors.Counts.Length)
+					{
+						Array.Copy(mapSectionServiceResponse.Counts, mapSectionVectors.Counts, mapSectionServiceResponse.Counts.Length);
+					}
+
+					if (mapSectionServiceResponse.EscapeVelocities.Length == mapSectionVectors.EscapeVelocities.Length)
+					{
+						Array.Copy(mapSectionServiceResponse.EscapeVelocities, mapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities.Length);
+					}
+				}
+				else
+				{
+					mapSectionResponse.MapSectionVectors.ResetObject();
+				}
+			}
+
+			//if (!isCancelled)
+			//{
+			//	if (mapSectionResponse.MapSectionVectors != null)
+			//	{
+			//		if (mapSectionServiceResponse.Counts.Length == result.MapSectionVectors.Counts.Length)
+			//		{
+			//			Array.Copy(mapSectionServiceResponse.Counts, result.MapSectionVectors.Counts, mapSectionServiceResponse.Counts.Length);
+			//		}
+
+			//		if (req.MapCalcSettings.CalculateEscapeVelocities && mapSectionServiceResponse.EscapeVelocities.Length == result.MapSectionVectors.EscapeVelocities.Length)
+			//		{
+			//			Array.Copy(mapSectionServiceResponse.EscapeVelocities, result.MapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities.Length);
+			//		}
+			//	}
+			//}
 
 			return mapSectionResponse;
 		}
 
-		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest req, CancellationToken ct)
+		private MapSectionResponse GenerateMapSectionInternalOLD(MapSectionRequest req, CancellationToken ct)
 		{
 			var blockPosition = _dtoMapper.MapTo(req.BlockPosition);
 			var mapPosition = _dtoMapper.MapTo(req.MapPosition);
@@ -124,7 +175,7 @@ namespace MEngineClient
 						result.MathOpCounts = mapSectionServiceResponse.MathOpCounts.Clone();
 					}
 
-					if (result.MapSectionVectors != null )
+					if (result.MapSectionVectors != null)
 					{
 						if (mapSectionServiceResponse.Counts.Length == result.MapSectionVectors.Counts.Length)
 						{
@@ -146,6 +197,71 @@ namespace MEngineClient
 				throw;
 			}
 		}
+
+		private MapSectionServiceResponse GenerateMapSectionInternal(MapSectionServiceRequest req, CancellationToken ct)
+		{
+			try
+			{ 
+				var mEngineService = GetMapSectionService();
+
+				var mapSectionServiceResponse = mEngineService.GenerateMapSection(req);
+
+				if (++_sectionCntr % 10 == 0)
+				{
+					Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
+				}
+
+				return mapSectionServiceResponse;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"GenerateMapSectionInternal raised Exception: {e}.");
+				throw;
+			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private MapSectionServiceRequest MapTo(MapSectionRequest req)
+		{
+			var blockPosition = _dtoMapper.MapTo(req.BlockPosition);
+			var mapPosition = _dtoMapper.MapTo(req.MapPosition);
+			var samplePointDelta = _dtoMapper.MapTo(req.SamplePointDelta);
+
+			var mapSectionServiceRequest = new MapSectionServiceRequest()
+			{
+				MapSectionId = req.MapSectionId,
+				JobId = req.JobId,
+				OwnerType = req.OwnerType,
+				SubdivisionId = req.SubdivisionId,
+				ScreenPosition = req.ScreenPosition,
+				BlockPosition = blockPosition,
+				MapPosition = mapPosition,
+				BlockSize = req.BlockSize,
+				SamplePointDelta = samplePointDelta,
+				MapCalcSettings = req.MapCalcSettings,
+				Precision = req.Precision,
+				LimbCount = req.LimbCount,
+				IncreasingIterations = req.IncreasingIterations
+			};
+
+			return mapSectionServiceRequest;
+		}
+
+		private MapSectionResponse MapFrom(MapSectionServiceResponse serviceResponse, MapSectionRequest mapSectionRequest)
+		{
+			var mapSectionResponse = new MapSectionResponse(mapSectionRequest, serviceResponse.RequestCompleted, serviceResponse.AllRowsHaveEscaped);
+
+			mapSectionResponse.MathOpCounts = serviceResponse.MathOpCounts?.Clone();
+
+			return mapSectionResponse;
+		}
+
+		#endregion
+
+		#region Test Support
 
 		public MapSectionServiceResponse GenerateMapSectionTest()
 		{

@@ -487,6 +487,7 @@ namespace MSetGeneratorPrototype
 
 		#region Support Methods
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void CalculateEscapeVelocities(Vector256<uint>[] sumOfSqrs, Vector256<int> targetReachedCompVec, ushort[] escapeVelocities)
 		{
 			Array.Clear(escapeVelocities);
@@ -537,6 +538,7 @@ namespace MSetGeneratorPrototype
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int SaveCountsForDoneItems(Vector256<int> escapedFlagsVec, Vector256<int> targetReachedCompVec, 
 			Vector256<int> countsV, ref Vector256<int> resultCountsV,
 			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV)
@@ -804,6 +806,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("PERF")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, Vector256<int>[] usedCalcs, Vector256<int>[] unusedCalcs)
 		{
 			usedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
@@ -811,6 +814,7 @@ namespace MSetGeneratorPrototype
 		}
 
 		[Conditional("PERF")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void UpdateResponseWithMops(MapSectionResponse mapSectionResponse, IIterationState iterationState, MathOpCounts mathOpCounts)
 		{
 			mapSectionResponse.MathOpCounts = mathOpCounts.Clone();

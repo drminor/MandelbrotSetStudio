@@ -27,15 +27,19 @@ namespace MSetExplorer
 
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
-		public ViewModelFactory(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, SharedColorBandSetAdapter sharedColorBandSetAdapter, IMapLoaderManager mapLoaderManager)
+
+		private readonly SizeInt _blockSize;
+
+		public ViewModelFactory(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, SharedColorBandSetAdapter sharedColorBandSetAdapter, IMapLoaderManager mapLoaderManager, SizeInt blockSize)
 		{
+			_blockSize = blockSize;
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_sharedColorBandSetAdapter = sharedColorBandSetAdapter;
 			_mapLoaderManager = mapLoaderManager;
 
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
+			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, _blockSize);
 		}
 
 		// Project Open/Save
@@ -111,7 +115,7 @@ namespace MSetExplorer
 		public MapJobHelper ProvisionAMapJopHelper()
 		{
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
-			var mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
+			var mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, _blockSize);
 
 			return mapJobHelper;
 		}

@@ -26,9 +26,10 @@ namespace MEngineService.Services
 		//private static readonly IMapSectionAdapter _mapSectionAdapter;
 		//private static readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
-		private static MapSectionVectorsPool _mapSectionVectorsPool;
-		private static MapSectionZVectorsPool _mapSectionZVectorsPool;
-		private static MapSectionVectorProvider _mapSectionVectorProvider;
+		private static readonly SizeInt _blockSize;
+		//private static MapSectionVectorsPool _mapSectionVectorsPool;
+		//private static MapSectionZVectorsPool _mapSectionZVectorsPool;
+		//private static MapSectionVectorProvider _mapSectionVectorProvider;
 
 		private DtoMapper _dtoMapper;
 
@@ -42,14 +43,15 @@ namespace MEngineService.Services
 
 		static MapSectionService()
 		{
+			_blockSize = RMapConstants.BLOCK_SIZE;
 			_sectionCntr = 0;
 
 			//var repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, "MandelbrotProjects");
 			//_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
 
-			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
+			//_mapSectionVectorsPool = new MapSectionVectorsPool(_blockSize, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			//_mapSectionZVectorsPool = new MapSectionZVectorsPool(_blockSize, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			//_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
 
 			//_mapSectionPersistProcessor = new MapSectionPersistProcessor(_mapSectionAdapter, _mapSectionVectorProvider);
 
@@ -64,7 +66,7 @@ namespace MEngineService.Services
 
 			_dtoMapper = new DtoMapper();
 
-			_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
+			_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, _blockSize);
 		}
 
 		#endregion
@@ -84,14 +86,74 @@ namespace MEngineService.Services
 		{
 			var cts = new CancellationTokenSource();
 
+			try
+			{
+				var mapSectionRequest = MapFrom(req);
+
+				var counts = new ushort[_blockSize.NumberOfCells];
+				var escapeVelocities = new ushort[_blockSize.NumberOfCells];
+				var backBuffer = new byte[0];
+				var mapSectionVectors = new MapSectionVectors(_blockSize, counts, escapeVelocities, backBuffer);
+
+				//var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+				//mapSectionVectors.ResetObject();
+
+				mapSectionRequest.MapSectionVectors = mapSectionVectors;
+
+				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, cts.Token);
+
+				var mapSectionServiceResponse = MapTo(mapSectionResponse, req, counts, escapeVelocities, mapSectionRequest.GenerationDuration ?? TimeSpan.Zero);
+
+				//var msv = mapSectionResponse.MapSectionVectors;
+
+				//if (msv != null)
+				//{
+				//	if (msv.Counts.Length > 0)
+				//	{
+				//		mapSectionServiceResponse.Counts = new ushort[msv.Counts.Length];
+				//		Array.Copy(msv.Counts, mapSectionServiceResponse.Counts, msv.Counts.Length);
+				//	}
+				//	else
+				//	{
+				//		mapSectionServiceResponse.Counts = Array.Empty<ushort>();
+				//	}
+
+				//	if (msv.EscapeVelocities.Length > 0)
+				//	{
+				//		mapSectionServiceResponse.EscapeVelocities = new ushort[msv.EscapeVelocities.Length];
+				//		Array.Copy(msv.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities, msv.EscapeVelocities.Length);
+				//	}
+				//	else
+				//	{
+				//		mapSectionServiceResponse.EscapeVelocities = Array.Empty<ushort>();
+				//	}
+				//}
+
+				//_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
+
+				return mapSectionServiceResponse;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"GenerateMapSection raised Exception: {e}.");
+				throw;
+			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private MapSectionRequest MapFrom(MapSectionServiceRequest req)
+		{
 			var blockPosition = _dtoMapper.MapFrom(req.BlockPosition);
 			var mapPosition = _dtoMapper.MapFrom(req.MapPosition);
 			var samplePointDelta = _dtoMapper.MapFrom(req.SamplePointDelta);
 
-			var mapSectionRequest = new MapSectionRequest(JobType.FullScale, req.JobId, req.OwnerType, req.SubdivisionId, req.SubdivisionId, req.ScreenPosition, 
-				screenPositionRelativeToCenter: new VectorInt(), 
+			var mapSectionRequest = new MapSectionRequest(JobType.FullScale, req.JobId, req.OwnerType, req.SubdivisionId, req.SubdivisionId, req.ScreenPosition,
+				screenPositionRelativeToCenter: new VectorInt(),
 				mapBlockOffset: new BigVector(),
-				blockPosition: blockPosition, 
+				blockPosition: blockPosition,
 				mapPosition: mapPosition,
 				isInverted: false,
 				req.Precision,
@@ -101,17 +163,11 @@ namespace MEngineService.Services
 				req.MapCalcSettings,
 				requestNumber: 0);
 
+			return mapSectionRequest;
+		}
 
-			var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-			mapSectionVectors.ResetObject();
-
-			mapSectionRequest.MapSectionVectors = mapSectionVectors;
-
-			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, cts.Token);
-
-			var countsLength = mapSectionResponse.MapSectionVectors?.Counts.Length ?? 0;
-			var escapeVelocitiesLength = mapSectionResponse.MapSectionVectors?.EscapeVelocities.Length ?? 0;
-
+		private MapSectionServiceResponse MapTo(MapSectionResponse mapSectionResponse, MapSectionServiceRequest req, ushort[] counts, ushort[] escapeVelocities, TimeSpan generationDuration)
+		{
 			var mapSectionServiceResponse = new MapSectionServiceResponse()
 			{
 				MapSectionId = req.MapSectionId,
@@ -120,27 +176,14 @@ namespace MEngineService.Services
 				RequestCompleted = mapSectionResponse.RequestCompleted,
 				AllRowsHaveEscaped = mapSectionResponse.AllRowsHaveEscaped,
 				RequestCancelled = mapSectionResponse.RequestCancelled,
-				TimeToGenerate = mapSectionRequest.GenerationDuration?.TotalMilliseconds ?? 0,
+				TimeToGenerate = generationDuration.TotalMilliseconds,
 				MathOpCounts = mapSectionResponse.MathOpCounts?.Clone(),
-				Counts = new ushort[countsLength],
-				EscapeVelocities = new ushort[escapeVelocitiesLength]
+				Counts = counts,
+				EscapeVelocities = escapeVelocities
 			};
-
-			if (mapSectionResponse.MapSectionVectors != null)
-			{
-				Array.Copy(mapSectionResponse.MapSectionVectors.Counts, mapSectionServiceResponse.Counts, countsLength);
-				Array.Copy(mapSectionResponse.MapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities, escapeVelocitiesLength);
-			}
-
-			_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
 
 			return mapSectionServiceResponse;
 		}
-
-
-		#endregion
-
-		#region Private Methods
 
 		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
@@ -184,7 +227,7 @@ namespace MEngineService.Services
 				ScreenPosition = new PointInt(),
 				BlockPosition = new BigVectorDto(),
 				MapPosition = new RPointDto(),
-				BlockSize = RMapConstants.BLOCK_SIZE,
+				BlockSize = _blockSize,
 				SamplePointDelta = new RSizeDto(),
 				MapCalcSettings = new MapCalcSettings(),
 				Precision = RMapConstants.DEFAULT_PRECISION,
@@ -207,7 +250,7 @@ namespace MEngineService.Services
 			//		isInverted: false,
 			//		precision: RMapConstants.DEFAULT_PRECISION,
 			//		limbCount: 1,
-			//		blockSize: RMapConstants.BLOCK_SIZE,
+			//		blockSize: _blockSize,
 			//		new RSize(),
 			//		new MapCalcSettings(),
 			//		requestNumber: 0

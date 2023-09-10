@@ -15,7 +15,7 @@ namespace MSS.Types.MSet
 		public RValue SamplePointDelta { get; init; }
 		public BigVector BaseMapPosition { get; init; }
 
-		public SizeInt BlockSize => RMapConstants.BLOCK_SIZE;
+		//public SizeInt BlockSize => RMapConstants.BLOCK_SIZE;
 
 		public string GetValueAsString()
 		{

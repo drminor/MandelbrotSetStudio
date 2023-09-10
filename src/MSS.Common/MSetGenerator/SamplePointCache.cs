@@ -13,8 +13,8 @@ namespace MSS.Common
 
 		#region Constructors
 
-		public SamplePointCache() : this(RMapConstants.BLOCK_SIZE)
-		{ }
+		//public SamplePointCache() : this(RMapConstants.BLOCK_SIZE)
+		//{ }
 
 		public SamplePointCache(SizeInt blockSize)
 		{
