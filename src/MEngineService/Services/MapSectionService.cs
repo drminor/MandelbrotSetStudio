@@ -82,27 +82,27 @@ namespace MEngineService.Services
 
 		#region Public Methods
 
-		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest req, CallContext context = default)
+		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionServiceRequest, CallContext context = default)
 		{
 			var cts = new CancellationTokenSource();
 
 			try
 			{
-				var mapSectionRequest = MapFrom(req);
+				var mapSectionRequest = MapFrom(mapSectionServiceRequest);
 
-				var counts = new ushort[_blockSize.NumberOfCells];
-				var escapeVelocities = new ushort[_blockSize.NumberOfCells];
-				var backBuffer = new byte[0];
-				var mapSectionVectors = new MapSectionVectors(_blockSize, counts, escapeVelocities, backBuffer);
+				//var counts = new ushort[_blockSize.NumberOfCells];
+				//var escapeVelocities = new ushort[_blockSize.NumberOfCells];
+				//var backBuffer = new byte[0];
+				//var mapSectionVectors = new MapSectionVectors(_blockSize, counts, escapeVelocities, backBuffer);
 
-				//var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-				//mapSectionVectors.ResetObject();
+				////var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+				////mapSectionVectors.ResetObject();
 
-				mapSectionRequest.MapSectionVectors = mapSectionVectors;
+				//mapSectionRequest.MapSectionVectors = mapSectionVectors;
 
 				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, cts.Token);
 
-				var mapSectionServiceResponse = MapTo(mapSectionResponse, req, counts, escapeVelocities, mapSectionRequest.GenerationDuration ?? TimeSpan.Zero);
+				var mapSectionServiceResponse = MapTo(mapSectionResponse, mapSectionServiceRequest/*, counts, escapeVelocities*/, mapSectionRequest.GenerationDuration ?? TimeSpan.Zero);
 
 				//var msv = mapSectionResponse.MapSectionVectors;
 
@@ -163,11 +163,36 @@ namespace MEngineService.Services
 				req.MapCalcSettings,
 				requestNumber: 0);
 
+			var counts = new ushort[_blockSize.NumberOfCells];
+			var currentCounts = req.Counts;
+			if (currentCounts.Length > 0)
+			{
+				Array.Copy(currentCounts, counts, currentCounts.Length);
+			}
+
+			var escapeVelocities = new ushort[_blockSize.NumberOfCells];
+			var currentEscapeVelocities = req.EscapeVelocities;
+			if (currentEscapeVelocities.Length > 0)
+			{
+				Array.Copy(currentEscapeVelocities, escapeVelocities, currentEscapeVelocities.Length);
+			}
+
+			var backBuffer = new byte[0];
+			var mapSectionVectors = new MapSectionVectors(_blockSize, counts, escapeVelocities, backBuffer);
+			mapSectionRequest.MapSectionVectors = mapSectionVectors;
+
 			return mapSectionRequest;
 		}
 
-		private MapSectionServiceResponse MapTo(MapSectionResponse mapSectionResponse, MapSectionServiceRequest req, ushort[] counts, ushort[] escapeVelocities, TimeSpan generationDuration)
+		private MapSectionServiceResponse MapTo(MapSectionResponse mapSectionResponse, MapSectionServiceRequest req/*, ushort[] counts, ushort[] escapeVelocities*/, TimeSpan generationDuration)
 		{
+			var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+
+			if (mapSectionVectors == null)
+			{
+				throw new InvalidOperationException("GenerateMapSection returned a response that has a null value for its MapSectionVectors property.");
+			}
+
 			var mapSectionServiceResponse = new MapSectionServiceResponse()
 			{
 				MapSectionId = req.MapSectionId,
@@ -178,8 +203,8 @@ namespace MEngineService.Services
 				RequestCancelled = mapSectionResponse.RequestCancelled,
 				TimeToGenerate = generationDuration.TotalMilliseconds,
 				MathOpCounts = mapSectionResponse.MathOpCounts?.Clone(),
-				Counts = counts,
-				EscapeVelocities = escapeVelocities
+				Counts = mapSectionVectors.Counts,
+				EscapeVelocities = mapSectionVectors.EscapeVelocities
 			};
 
 			return mapSectionServiceResponse;

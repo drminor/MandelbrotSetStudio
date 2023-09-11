@@ -47,6 +47,12 @@ namespace MEngineDataContracts
 		[DataMember(Order = 13)]
 		public bool IncreasingIterations { get; set; }
 
+		[DataMember(Order = 14)]
+		public ushort[] Counts { get; set; }
+
+		[DataMember(Order = 15)]
+		public ushort[] EscapeVelocities { get; set; }
+
 		//[DataMember(Order = 12)]
 		//public MapSectionVectors MapSectionVectors { get; set; }
 

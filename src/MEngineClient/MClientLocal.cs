@@ -86,16 +86,18 @@ namespace MEngineClient
 				Debug.WriteLine($"The MClientLocal is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.");
 				return new MapSectionResponse(mapSectionRequest, isCancelled: true);
 			}
+			else
+			{
+				mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
-			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
+				var stopWatch = Stopwatch.StartNew();
+				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, ct);
+				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-			var stopWatch = Stopwatch.StartNew();
-			var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, ct);
-			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
+				//Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
 
-			//Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
-
-			return mapSectionResponse;
+				return mapSectionResponse;
+			}
 		}
 
 		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
