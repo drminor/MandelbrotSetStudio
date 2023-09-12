@@ -89,47 +89,8 @@ namespace MEngineService.Services
 			try
 			{
 				var mapSectionRequest = MapFrom(mapSectionServiceRequest);
-
-				//var counts = new ushort[_blockSize.NumberOfCells];
-				//var escapeVelocities = new ushort[_blockSize.NumberOfCells];
-				//var backBuffer = new byte[0];
-				//var mapSectionVectors = new MapSectionVectors(_blockSize, counts, escapeVelocities, backBuffer);
-
-				////var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-				////mapSectionVectors.ResetObject();
-
-				//mapSectionRequest.MapSectionVectors = mapSectionVectors;
-
 				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, cts.Token);
-
 				var mapSectionServiceResponse = MapTo(mapSectionResponse, mapSectionServiceRequest/*, counts, escapeVelocities*/, mapSectionRequest.GenerationDuration ?? TimeSpan.Zero);
-
-				//var msv = mapSectionResponse.MapSectionVectors;
-
-				//if (msv != null)
-				//{
-				//	if (msv.Counts.Length > 0)
-				//	{
-				//		mapSectionServiceResponse.Counts = new ushort[msv.Counts.Length];
-				//		Array.Copy(msv.Counts, mapSectionServiceResponse.Counts, msv.Counts.Length);
-				//	}
-				//	else
-				//	{
-				//		mapSectionServiceResponse.Counts = Array.Empty<ushort>();
-				//	}
-
-				//	if (msv.EscapeVelocities.Length > 0)
-				//	{
-				//		mapSectionServiceResponse.EscapeVelocities = new ushort[msv.EscapeVelocities.Length];
-				//		Array.Copy(msv.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities, msv.EscapeVelocities.Length);
-				//	}
-				//	else
-				//	{
-				//		mapSectionServiceResponse.EscapeVelocities = Array.Empty<ushort>();
-				//	}
-				//}
-
-				//_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
 
 				return mapSectionServiceResponse;
 			}

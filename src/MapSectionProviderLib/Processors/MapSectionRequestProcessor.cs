@@ -365,6 +365,7 @@ namespace MapSectionProviderLib
 					request.IncreasingIterations = true;
 					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
+					// TODO: Add a property to the MapSectionVectors class that tracks whether or not a MapSectionZValuesRecord exists on file. 
 					if (UseRepo && persistZValues)
 					{
 						var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
@@ -380,13 +381,7 @@ namespace MapSectionProviderLib
 						{
 							request.MapSectionZVectors.ResetObject();
 						}
-
-						//request.MapSectionId = mapSectionId.ToString();
 					}
-					//else
-					//{
-					//	request.MapSectionId = mapSectionResponse.MapSectionId;
-					//}
 
 					Debug.WriteLineIf(_useDetailedDebug, $"Requesting the iteration count to be increased for {request.ScreenPosition}.");
 					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
@@ -710,7 +705,6 @@ namespace MapSectionProviderLib
 		}
 
 		#endregion
-
 
 		#region Private Methods - Return Queue
 
