@@ -53,86 +53,24 @@ namespace MEngineDataContracts
 		[DataMember(Order = 15)]
 		public ushort[] EscapeVelocities { get; set; }
 
-		//[DataMember(Order = 12)]
-		//public MapSectionVectors MapSectionVectors { get; set; }
+		[DataMember(Order = 16)]
+		public byte[] Zrs { get; set; }
 
-		//[DataMember(Order = 13)]
-		//public double[] ZValues { get; set; }
+		[DataMember(Order = 17)]
+		public byte[] Zis { get; set; }
 
-		//public bool IsInverted { get; init; }
+		[DataMember(Order = 18)]
+		public byte[] HasEscapedFlags { get; set; }
 
-		//public bool Pending { get; set; }
-		//public bool Sent { get; set; }
-		//public bool FoundInRepo { get; set; }
-		//public bool Completed { get; set; }
-		//public bool Saved { get; set; }
-		//public bool Handled { get; set; }
-
-
-		//public string ClientEndPointAddress { get; set; }
-		//public TimeSpan? TimeToCompleteGenRequest { get; set; }
-
-		//public DateTime ProcessingStartTime { get; set; }
-		//public DateTime? ProcessingEndTime { get; set; }
-
-		//public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
-
-		//public bool GetIsDone()
-		//{
-		//	//if (MapSectionVectors == null)
-		//	//{
-		//	//	return false;
-		//	//}
-
-		//	// TODO: Implement GetIsDone on the MapSectionRequest class.
-		//	//var result = !HasEscapedFlags.Any(x => !x);
-		//	//return result;
-
-		//	return false;
-		//}
+		[DataMember(Order = 19)]
+		public byte[] RowHasEscaped { get; set; }
 
 		public override string ToString()
 		{
 			var bVals = BigIntegerHelper.FromLongsDeprecated(BlockPosition.GetValues());
 			var bp = new BigVector(bVals);
-			return $"S:{SubdivisionId}, BPos:{bp}.";
+			return $"Subdivision Id:{SubdivisionId}, Block Position:{bp}, Screen Position:{ScreenPosition}.";
 		}
-
-		//private const int VALUE_FACTOR = 10000;
-		//public static int[] CombineCountsAndEscapeVelocities(ushort[] counts, ushort[] escapeVelocities)
-		//{
-		//	var result = new int[counts.Length];
-
-		//	for(var i = 0; i < counts.Length; i++)
-		//	{
-		//		result[i] = (counts[i] * VALUE_FACTOR) + escapeVelocities[i];
-		//	}
-
-		//	return result;
-		//}
-
-		//public static ushort[] SplitCountsAndEscapeVelocities(int[] rawCounts, out ushort[] escapeVelocities)
-		//{
-		//	var result = new ushort[rawCounts.Length];
-		//	escapeVelocities = new ushort[rawCounts.Length];
-
-		//	for (var i = 0; i < rawCounts.Length; i++)
-		//	{
-		//		result[i] = (ushort)Math.DivRem(rawCounts[i], VALUE_FACTOR, out var ev);
-		//		escapeVelocities[i] = (ushort)ev;
-		//	}
-
-		//	return result;
-		//}
-
-		//public static void SplitCountsAndEscapeVelocities(int[] rawCounts, Span<ushort> counts, Span<ushort> escapeVelocities)
-		//{
-		//	for (var i = 0; i < rawCounts.Length; i++)
-		//	{
-		//		counts[i] = (ushort)Math.DivRem(rawCounts[i], VALUE_FACTOR, out var ev);
-		//		escapeVelocities[i] = (ushort)ev;
-		//	}
-		//}
 
 	}
 

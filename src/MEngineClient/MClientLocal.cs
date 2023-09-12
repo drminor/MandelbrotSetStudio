@@ -180,6 +180,44 @@ namespace MEngineClient
 		//	//}
 		//}
 
+		// Old Count+EscapeVelocities Logic
+
+		//private const int VALUE_FACTOR = 10000;
+		//public static int[] CombineCountsAndEscapeVelocities(ushort[] counts, ushort[] escapeVelocities)
+		//{
+		//	var result = new int[counts.Length];
+
+		//	for(var i = 0; i < counts.Length; i++)
+		//	{
+		//		result[i] = (counts[i] * VALUE_FACTOR) + escapeVelocities[i];
+		//	}
+
+		//	return result;
+		//}
+
+		//public static ushort[] SplitCountsAndEscapeVelocities(int[] rawCounts, out ushort[] escapeVelocities)
+		//{
+		//	var result = new ushort[rawCounts.Length];
+		//	escapeVelocities = new ushort[rawCounts.Length];
+
+		//	for (var i = 0; i < rawCounts.Length; i++)
+		//	{
+		//		result[i] = (ushort)Math.DivRem(rawCounts[i], VALUE_FACTOR, out var ev);
+		//		escapeVelocities[i] = (ushort)ev;
+		//	}
+
+		//	return result;
+		//}
+
+		//public static void SplitCountsAndEscapeVelocities(int[] rawCounts, Span<ushort> counts, Span<ushort> escapeVelocities)
+		//{
+		//	for (var i = 0; i < rawCounts.Length; i++)
+		//	{
+		//		counts[i] = (ushort)Math.DivRem(rawCounts[i], VALUE_FACTOR, out var ev);
+		//		escapeVelocities[i] = (ushort)ev;
+		//	}
+		//}
+
 		#endregion
 	}
 }

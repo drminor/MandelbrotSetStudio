@@ -11,22 +11,6 @@ namespace MSS.Types
 
 		#region Constructor
 
-		//public MapSectionVectors(SizeInt blockSize)
-		//{
-		//	BlockSize = blockSize;
-		//	ValueCount = blockSize.NumberOfCells;
-		//	ValuesPerRow = blockSize.Width;
-
-		//	BytesPerRow = ValuesPerRow * VALUE_SIZE;
-		//	TotalByteCount = ValueCount * VALUE_SIZE;
-
-		//	Counts = ArrayPool<ushort>.Shared.Rent(ValueCount);
-		//	EscapeVelocities = ArrayPool<ushort>.Shared.Rent(ValueCount);
-		//	BackBuffer = ArrayPool<byte>.Shared.Rent(ValueCount * 4);
-
-		//	ReferenceCount = 0;
-		//}
-
 		public MapSectionVectors(SizeInt blockSize) 
 			: this(
 				  blockSize, 

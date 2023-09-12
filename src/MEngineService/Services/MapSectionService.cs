@@ -10,13 +10,18 @@ using MSS.Types.MSet;
 using ProtoBuf.Grpc;
 using System;
 using System.Diagnostics;
+using System.Runtime.Intrinsics;
 using System.Threading;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MEngineService.Services
 {
 	public class MapSectionService : IMapSectionService
     {
 		#region Private Fields
+
+		private const int VALUE_SIZE = 4;
+
 
 		// TODO: Have the MapSectionService get the MongoDb connection string from the appsettings.json file.
 
@@ -61,8 +66,8 @@ namespace MEngineService.Services
 
 		public MapSectionService()
 		{
-			MSetGenerationStrategy = MSetGenerationStrategy.DepthFirst;
-			EndPointAddress = "CSharp_DepthFirstGenerator";
+			//MSetGenerationStrategy = MSetGenerationStrategy.DepthFirst;
+			//EndPointAddress = "CSharp_DepthFirstGenerator";
 
 			_dtoMapper = new DtoMapper();
 
@@ -73,10 +78,9 @@ namespace MEngineService.Services
 
 		#region Public Properties
 
-		public MSetGenerationStrategy MSetGenerationStrategy { get; init; }
+		//public MSetGenerationStrategy MSetGenerationStrategy { get; init; }
 
-		public string EndPointAddress { get; init; }
-		public bool IsLocal => false;
+		//public string EndPointAddress { get; init; }
 
 		#endregion
 
@@ -124,6 +128,18 @@ namespace MEngineService.Services
 				req.MapCalcSettings,
 				requestNumber: 0);
 
+			var mapSectionVectors = GetVectors(req);
+			mapSectionRequest.MapSectionVectors = mapSectionVectors;
+
+			var mapSectionZVectors = GetZVectors(req);
+			mapSectionRequest.MapSectionZVectors = mapSectionZVectors;
+
+			return mapSectionRequest;
+		}
+
+		private MapSectionVectors GetVectors(MapSectionServiceRequest req)
+		{
+			// Counts
 			var counts = new ushort[_blockSize.NumberOfCells];
 			var currentCounts = req.Counts;
 			if (currentCounts.Length > 0)
@@ -131,6 +147,7 @@ namespace MEngineService.Services
 				Array.Copy(currentCounts, counts, currentCounts.Length);
 			}
 
+			// Escape Velocities
 			var escapeVelocities = new ushort[_blockSize.NumberOfCells];
 			var currentEscapeVelocities = req.EscapeVelocities;
 			if (currentEscapeVelocities.Length > 0)
@@ -138,11 +155,60 @@ namespace MEngineService.Services
 				Array.Copy(currentEscapeVelocities, escapeVelocities, currentEscapeVelocities.Length);
 			}
 
+			// MapSectionVectors
 			var backBuffer = new byte[0];
 			var mapSectionVectors = new MapSectionVectors(_blockSize, counts, escapeVelocities, backBuffer);
-			mapSectionRequest.MapSectionVectors = mapSectionVectors;
 
-			return mapSectionRequest;
+			return mapSectionVectors;
+		}
+
+		private MapSectionZVectors GetZVectors(MapSectionServiceRequest req)
+		{
+			// Layout parameters
+			var valueCount = req.BlockSize.NumberOfCells;
+			var rowCount = req.BlockSize.Height;
+			var totalBytesForFlags = valueCount * VALUE_SIZE;
+			var totalByteCount = totalBytesForFlags * req.LimbCount; // ValueCount * LimbCount * VALUE_SIZE;
+
+			// Reals
+			var zrs = new byte[totalByteCount];
+			var currentZrs = req.Zrs;
+			if (currentZrs.Length > 0)
+			{
+				Array.Copy(currentZrs, zrs, currentZrs.Length);
+			}
+
+			// Imaginary
+			var zis = new byte[totalByteCount];
+			var currentZis = req.Zis;
+			if (currentZis.Length > 0)
+			{
+				Array.Copy(currentZis, zis, currentZis.Length);
+			}
+
+			// Has Escaped Flags
+			var currentHasEscapedFlags = req.HasEscapedFlags;
+			var hasEscapedFlags = currentHasEscapedFlags.Length > 0 ? currentHasEscapedFlags : new byte[totalBytesForFlags];
+
+			// Row Has Escaped
+			var currentRowHasEscaped = req.RowHasEscaped;
+			var rowHasEscaped = currentRowHasEscaped.Length > 0 ? ConvertRowHasEscapedBytes(currentRowHasEscaped) : new bool[rowCount];
+
+			var mapSectionZVectors = new MapSectionZVectors(req.BlockSize, req.LimbCount, zrs, zis, hasEscapedFlags, rowHasEscaped);
+
+			return mapSectionZVectors;
+		}
+
+		private bool[] ConvertRowHasEscapedBytes(byte[] rowHasEscaped)
+		{
+			var result = new bool[rowHasEscaped.Length];
+
+			for (var i = 0; i < rowHasEscaped.Length; i++)
+			{
+				result[i] = rowHasEscaped[i] == 1;
+			}
+
+			return result;
 		}
 
 		private MapSectionServiceResponse MapTo(MapSectionResponse mapSectionResponse, MapSectionServiceRequest req/*, ushort[] counts, ushort[] escapeVelocities*/, TimeSpan generationDuration)
@@ -167,6 +233,16 @@ namespace MEngineService.Services
 				Counts = mapSectionVectors.Counts,
 				EscapeVelocities = mapSectionVectors.EscapeVelocities
 			};
+
+			var mapSectionZVectors = mapSectionResponse.MapSectionZVectors;
+
+			if (mapSectionZVectors != null)
+			{
+				mapSectionServiceResponse.Zrs = mapSectionZVectors.Zrs;
+				mapSectionServiceResponse.Zis = mapSectionZVectors.Zis;
+				mapSectionServiceResponse.HasEscapedFlags = mapSectionZVectors.HasEscapedFlags;
+				mapSectionServiceResponse.RowHasEscaped = mapSectionZVectors.GetBytesForRowHasEscaped();
+			}
 
 			return mapSectionServiceResponse;
 		}

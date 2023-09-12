@@ -14,7 +14,49 @@ namespace MSS.Types
 
 		private const int VALUE_SIZE = 4;
 
+		//public MapSectionZVectors(SizeInt blockSize, int limbCount)
+		//{
+		//	BlockSize = blockSize;
+		//	_limbCount = limbCount;
+
+		//	ValueCount = blockSize.NumberOfCells;
+		//	Lanes = Vector256<uint>.Count;
+		//	ValuesPerRow = blockSize.Width;
+		//	RowCount = blockSize.Height;
+
+		//	VectorsPerRow = ValuesPerRow / Lanes;
+		//	BytesPerRow = ValuesPerRow * VALUE_SIZE;
+		//	TotalBytesForFlags = ValueCount * VALUE_SIZE;
+
+		//	VectorsPerZValueRow = VectorsPerRow * limbCount; // ValuesPerRow * LimbCount / Lanes;
+		//	BytesPerZValueRow = BytesPerRow * limbCount; // ValuesPerRow * LimbCount * VALUE_SIZE;
+		//	TotalByteCount = TotalBytesForFlags * limbCount; // ValueCount * LimbCount * VALUE_SIZE;
+
+		//	Zrs = _arrayPool.Rent(TotalByteCount);
+		//	Zis = _arrayPool.Rent(TotalByteCount);
+
+		//	Array.Clear(Zrs);
+		//	Array.Clear(Zis);
+
+		//	HasEscapedFlags = new byte[TotalBytesForFlags];
+		//	RowHasEscaped = new bool[RowCount];
+		//}
+
 		public MapSectionZVectors(SizeInt blockSize, int limbCount)
+			: this(
+				  blockSize,
+				  limbCount,
+				  _arrayPool.Rent(blockSize.NumberOfCells * VALUE_SIZE * limbCount),
+				  _arrayPool.Rent(blockSize.NumberOfCells * VALUE_SIZE * limbCount),
+				  new byte[blockSize.NumberOfCells * VALUE_SIZE],
+				  new bool[blockSize.Height]
+				  )
+		{
+			Array.Clear(Zrs);
+			Array.Clear(Zis);
+		}
+
+		public MapSectionZVectors(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapedFlags, bool[] rowHasEscaped)
 		{
 			BlockSize = blockSize;
 			_limbCount = limbCount;
@@ -32,14 +74,11 @@ namespace MSS.Types
 			BytesPerZValueRow = BytesPerRow * limbCount; // ValuesPerRow * LimbCount * VALUE_SIZE;
 			TotalByteCount = TotalBytesForFlags * limbCount; // ValueCount * LimbCount * VALUE_SIZE;
 
-			Zrs = _arrayPool.Rent(TotalByteCount);
-			Zis = _arrayPool.Rent(TotalByteCount);
+			Zrs = zrs;
+			Zis = zis;
 
-			Array.Clear(Zrs);
-			Array.Clear(Zis);
-
-			HasEscapedFlags = new byte[TotalBytesForFlags];
-			RowHasEscaped = new bool[RowCount];
+			HasEscapedFlags = hasEscapedFlags;
+			RowHasEscaped = rowHasEscaped;
 		}
 
 		#endregion
@@ -374,8 +413,11 @@ namespace MSS.Types
 				{
 					// Dispose managed state (managed objects)
 
-					_arrayPool.Return(Zrs, clearArray: true);
-					_arrayPool.Return(Zis, clearArray: true);
+					//_arrayPool.Return(Zrs, clearArray: true);
+					//_arrayPool.Return(Zis, clearArray: true);
+
+					_arrayPool.Return(Zrs);
+					_arrayPool.Return(Zis);
 				}
 
 				_disposedValue = true;

@@ -74,5 +74,16 @@ namespace MEngineDataContracts
 		[DataMember(Order = 10)]
 		public ushort[] EscapeVelocities { get; set; }
 
+		[DataMember(Order = 11)]
+		public byte[] Zrs { get; set; }
+
+		[DataMember(Order = 12)]
+		public byte[] Zis { get; set; }
+
+		[DataMember(Order = 13)]
+		public byte[] HasEscapedFlags { get; set; }
+
+		[DataMember(Order = 14)]
+		public byte[] RowHasEscaped { get; set; }
 	}
 }

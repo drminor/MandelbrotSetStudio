@@ -74,7 +74,7 @@
 
 		public MapSectionResponse CreateCopySansVectors()
 		{
-			var result = new MapSectionResponse(MapSectionId/*, JobId, JobOwnerType*/, SubdivisionId/*, OriginalSourceSubdivisionId*/, BlockPosition, MapCalcSettings, 
+			var result = new MapSectionResponse(MapSectionId, SubdivisionId, BlockPosition, MapCalcSettings, 
 				RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
 			return result;
 		}

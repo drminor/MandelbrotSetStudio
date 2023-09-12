@@ -86,10 +86,22 @@ namespace MEngineClient
 					{
 						Array.Copy(mapSectionServiceResponse.EscapeVelocities, mapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities.Length);
 					}
+
+					var mapSectionZVectors = mapSectionResponse.MapSectionZVectors;
+
+					if (mapSectionZVectors != null)
+					{
+						Array.Copy(mapSectionServiceResponse.Zrs, mapSectionZVectors.Zrs, mapSectionServiceResponse.Zrs.Length);
+						Array.Copy(mapSectionServiceResponse.Zis, mapSectionZVectors.Zis, mapSectionServiceResponse.Zis.Length);
+						Array.Copy(mapSectionServiceResponse.HasEscapedFlags, mapSectionZVectors.HasEscapedFlags, mapSectionServiceResponse.HasEscapedFlags.Length);
+
+						mapSectionZVectors.FillRowHasEscaped(mapSectionServiceResponse.RowHasEscaped, mapSectionZVectors.RowHasEscaped);
+					}
 				}
 				else
 				{
 					mapSectionResponse.MapSectionVectors.ResetObject();
+					mapSectionResponse.MapSectionZVectors?.ResetObject();
 				}
 			}
 
@@ -154,6 +166,22 @@ namespace MEngineClient
 
 			mapSectionServiceRequest.Counts = mapSectionVectors.Counts;
 			mapSectionServiceRequest.EscapeVelocities = mapSectionVectors.EscapeVelocities;
+
+			var mapSectionZVectors = req.MapSectionZVectors;
+			if (mapSectionZVectors != null)
+			{
+				mapSectionServiceRequest.Zrs = mapSectionZVectors.Zrs;
+				mapSectionServiceRequest.Zis = mapSectionZVectors.Zis;
+				mapSectionServiceRequest.HasEscapedFlags = mapSectionZVectors.HasEscapedFlags;
+				mapSectionServiceRequest.RowHasEscaped = mapSectionZVectors.GetBytesForRowHasEscaped();
+			}
+			else
+			{
+				mapSectionServiceRequest.Zrs = Array.Empty<byte>();
+				mapSectionServiceRequest.Zis = Array.Empty<byte>();
+				mapSectionServiceRequest.HasEscapedFlags = Array.Empty<byte>();
+				mapSectionServiceRequest.RowHasEscaped = Array.Empty<byte>();
+			}
 
 			return mapSectionServiceRequest;
 		}
