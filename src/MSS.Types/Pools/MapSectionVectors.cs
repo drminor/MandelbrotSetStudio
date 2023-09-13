@@ -67,6 +67,26 @@ namespace MSS.Types
 			}
 		}
 
+		public void LoadCounts(byte[] counts)
+		{
+			var destBackCounts = MemoryMarshal.Cast<ushort, byte>(Counts);
+
+			for (var i = 0; i < counts.Length; i++)
+			{
+				destBackCounts[i] = counts[i];
+			}
+		}
+
+		public void LoadEscapeVelocities(byte[] escapeVelocites)
+		{
+			var destBackEscapeVelocities = MemoryMarshal.Cast<ushort, byte>(EscapeVelocities);
+
+			for (var i = 0; i < escapeVelocites.Length; i++)
+			{
+				destBackEscapeVelocities[i] = escapeVelocites[i];
+			}
+		}
+
 		public byte[] GetSerializedCounts()
 		{
 			var result = new byte[TotalByteCount];

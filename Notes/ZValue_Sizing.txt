@@ -1,0 +1,16 @@
+128 x 128 x 4 bytes for each limb
+
+Zrs = 64K for each limb
+Zis = 64K for each / limb
+
+512 bytes for 1 row for each limb. 
+
+
+Maximum of 128 limbs = 16G
+
+For 10 Limbs = 1.25 M or 320 pages.
+If we process 6 rows per batch. = 61,440 bytes per batch
+
+For 128 Limbs = 16G or 4,096 pages
+
+Each row is 131,072 bytes

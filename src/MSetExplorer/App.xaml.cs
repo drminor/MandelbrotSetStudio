@@ -34,12 +34,12 @@ namespace MSetExplorer
 		//private const int MONGO_DB_PORT = 27017;
 
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://localhost:5000" };
-		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
-		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
+		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
+		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
 
-		private static readonly bool USE_ALL_CORES = false;
+		private static readonly bool USE_ALL_CORES = true;
 		private static readonly bool USE_REMOTE_ENGINES = true;
-		private static readonly bool USE_LOCAL_ENGINE = false;
+		private static readonly bool USE_LOCAL_ENGINE = true;
 
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 
@@ -48,7 +48,6 @@ namespace MSetExplorer
 		private static readonly bool DO_SCHEMA_UPDATES = false;
 		private static readonly bool CREATE_COLLECTIONS = false;
 		private static readonly bool CREATE_COLLECTION_INDEXES = false;
-
 
 		private static readonly bool CREATE_JOB_MAP_SECTION_REPORT = false;
 
@@ -76,13 +75,10 @@ namespace MSetExplorer
 
 		#region Private Properties
 
-		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
-		private readonly MapSectionZVectorsPool _mapSectionZVectorsPool;
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 
 		private RepositoryAdapters? _repositoryAdapters;
 
-		//private readonly MEngineServerManager? _mEngineServerManager;
 		private IMapLoaderManager? _mapLoaderManager;
 
 		private AppNavWindow? _appNavWindow;
@@ -93,17 +89,10 @@ namespace MSetExplorer
 
 		public App()
 		{
+			_mapSectionVectorProvider = CreateMapSectionVectorProvider(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialPoolSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+
 			//_ambientStopWatch = Stopwatch.StartNew();
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-
-			_mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
-
-			//if (START_LOCAL_ENGINE)
-			//{
-			//	_mEngineServerManager = new MEngineServerManager(SERVER_EXE_PATH, LOCAL_M_ENGINE_ADDRESS);
-			//}
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
@@ -127,8 +116,6 @@ namespace MSetExplorer
 				Current.Shutdown();
 				return;
 			}
-
-			//_mEngineServerManager?.Start();
 
 			//Debug.WriteLine($"Before Get Repos. {currentStopwatch.ElapsedMilliseconds}.");
 
@@ -499,34 +486,6 @@ namespace MSetExplorer
 
 		#region MEngine Support
 
-		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, MSetGenerationStrategy mSetGenerationStrategy)
-		{
-			//var result = new List<IMEngineClient>();
-
-			//var localTaskCount = GetLocalTaskCount(useAllCores);
-
-			//for (var i = 0; i < localTaskCount; i++)
-			//{
-			//	result.Add(new MClientLocal(mSetGenerationStrategy));
-			//}
-
-			//return result.ToArray();
-
-			//var result = new IMEngineClient[1] { new MClient(mSetGenerationStrategy, REMOTE_SERVICE_URL) };
-			//return result;
-
-			var result = new List<IMEngineClient>();
-
-			var localTaskCount = GetLocalTaskCount(useAllCores);
-
-			for (var i = 0; i < localTaskCount; i++)
-			{
-				result.Add(new MClient(mSetGenerationStrategy, REMOTE_SERVICE_END_POINTS[0]));
-			}
-
-			return result.ToArray();
-		}
-
 		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, MSetGenerationStrategy mSetGenerationStrategy)
 		{
 			var result = new List<IMEngineClient>();
@@ -670,6 +629,16 @@ namespace MSetExplorer
 			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionVectorProvider, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);
 
 			return mapSectionRequestProcessor;
+		}
+
+		private MapSectionVectorProvider CreateMapSectionVectorProvider(SizeInt blockSize, int defaultLimbCount, int initialPoolSize)
+		{
+			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
+
+			return mapSectionVectorProvider;
+
 		}
 
 		#endregion

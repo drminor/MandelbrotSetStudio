@@ -6,8 +6,8 @@ namespace MSS.Common
 {
 	public interface IIterationState
 	{
-		MapSectionVectors MapSectionVectors { get;  }
-		MapSectionZVectors? MapSectionZVectors { get; }
+		//MapSectionVectors MapSectionVectors { get;  }
+		//MapSectionZVectors? MapSectionZVectors { get; }
 
 		bool HaveZValues { get; }
 		bool IncreasingIterations { get; }

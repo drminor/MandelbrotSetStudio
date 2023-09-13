@@ -47,11 +47,17 @@ namespace MEngineDataContracts
 		[DataMember(Order = 13)]
 		public bool IncreasingIterations { get; set; }
 
+		//[DataMember(Order = 14)]
+		//public ushort[] Counts { get; set; }
+
+		//[DataMember(Order = 15)]
+		//public ushort[] EscapeVelocities { get; set; }
+
 		[DataMember(Order = 14)]
-		public ushort[] Counts { get; set; }
+		public byte[] Counts { get; set; }
 
 		[DataMember(Order = 15)]
-		public ushort[] EscapeVelocities { get; set; }
+		public byte[] EscapeVelocities { get; set; }
 
 		[DataMember(Order = 16)]
 		public byte[] Zrs { get; set; }

@@ -11,6 +11,8 @@ namespace MSetGeneratorPrototype
 	public class IterationStateDepthFirst : IIterationState
 	{
 		private readonly FP31Val[] _samplePointsY;
+
+		private readonly MapSectionVectors _mapSectionVectors;
 		private readonly MapSectionZVectors _mapSectionZVectors;
 
 		private List<int> _inPlayBackingList;
@@ -23,9 +25,8 @@ namespace MSetGeneratorPrototype
 			bool increasingIterations, int targetIterations)
 		{
 			_samplePointsY = samplePointsY;
+			_mapSectionVectors = mapSectionVectors;
 			_mapSectionZVectors = mapSectionZVectors;
-			MapSectionVectors = mapSectionVectors;
-			//MapSectionZVectors = mapSectionZVectors;
 
 			IncreasingIterations = increasingIterations;
 			TargetIterations = targetIterations;
@@ -70,9 +71,6 @@ namespace MSetGeneratorPrototype
 
 		public bool HaveZValues => true;
 
-		public MapSectionVectors MapSectionVectors { get; init; }
-		public MapSectionZVectors? MapSectionZVectors => _mapSectionZVectors;
-
 		public bool IncreasingIterations { get; private set; }
 		public int TargetIterations { get; private set; }	
 		public Vector256<int> TargetIterationsVector { get; private set; }
@@ -115,7 +113,7 @@ namespace MSetGeneratorPrototype
 			{
 				// Update the _mapSectionVectors with the current row properties
 				_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
-				MapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				_mapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
 				//MapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
 				//MapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
 			}
@@ -145,7 +143,7 @@ namespace MSetGeneratorPrototype
 			{
 				// Update the _mapSectionVectors with the current row properties
 				_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
-				MapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				_mapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
 			}
 
 			UpdateUsedAndUnusedCalcs(RowNumber);
@@ -162,7 +160,7 @@ namespace MSetGeneratorPrototype
 					{
 						_mapSectionZVectors.FillHasEscapedFlagsRow(rowNumber, HasEscapedFlagsRowV);
 
-						MapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
+						_mapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
 						RowHasEscaped[rowNumber] = BuildTheInPlayBackingList(HasEscapedFlagsRowV, CountsRowV, _inPlayBackingList, DoneFlags);
 						allSamplesForThisRowAreDone = _inPlayBackingList.Count == 0;
 

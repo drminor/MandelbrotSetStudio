@@ -40,19 +40,6 @@ namespace MEngineDataContracts
 		[DataMember(Order = 3)]
 		public BigVectorDto BlockPosition { get; init; }
 
-		//public bool IncludeZValues { get; set; }
-		//public double[] ZValuesForLocalStorage { get; init; }
-
-		//[DataMember(Order = 7)]
-		//public double[] ZValues
-		//{
-		//	get => IncludeZValues ? ZValuesForLocalStorage : null;
-		//	init
-		//	{
-		//		ZValuesForLocalStorage = value;
-		//	}
-		//}
-
 		[DataMember(Order = 4)]
 		public bool RequestCompleted { get; init; }
 
@@ -68,11 +55,17 @@ namespace MEngineDataContracts
 		[DataMember(Order = 8)]
 		public MathOpCounts MathOpCounts { get; init; }
 
+		//[DataMember(Order = 9)]
+		//public ushort[] Counts { get; set; }
+
+		//[DataMember(Order = 10)]
+		//public ushort[] EscapeVelocities { get; set; }
+
 		[DataMember(Order = 9)]
-		public ushort[] Counts { get; set; }
+		public byte[] Counts { get; set; }
 
 		[DataMember(Order = 10)]
-		public ushort[] EscapeVelocities { get; set; }
+		public byte[] EscapeVelocities { get; set; }
 
 		[DataMember(Order = 11)]
 		public byte[] Zrs { get; set; }
@@ -85,5 +78,7 @@ namespace MEngineDataContracts
 
 		[DataMember(Order = 14)]
 		public byte[] RowHasEscaped { get; set; }
+
+
 	}
 }

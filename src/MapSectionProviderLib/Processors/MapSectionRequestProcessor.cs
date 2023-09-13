@@ -456,6 +456,9 @@ namespace MapSectionProviderLib
 			return false;
 		}
 
+
+		private int _requestCounter = 0;
+
 		private void QueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor)
 		{
 			// Use our CancellationSource when adding work
@@ -483,6 +486,12 @@ namespace MapSectionProviderLib
 
 					var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, QueueGeneratedResponse);
 					mapSectionGeneratorProcessor.AddWork(mapSectionGenerateRequest, ct);
+
+					if (Interlocked.Increment(ref _requestCounter) % 10 == 0)
+					{
+						//Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
+						Console.WriteLine($"The MapSectionRequestProcessor has processed {_requestCounter} requests.");
+					}
 				}
 			}
 			finally

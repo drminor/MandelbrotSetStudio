@@ -6,11 +6,12 @@ namespace MClientTest
 {
 	public class ConnectionTest
 	{
-
 		//"applicationUrl": "http://localhost:5000;https://localhost:5001"
 		//"applicationUrl": "http://192.168.2.106:5000"
 
-		private const string appUrl = "http://localhost:5000";
+		//private const string appUrl = "http://localhost:5000";
+
+		private const string appUrl = "http://192.168.2.100:5000";
 
 		[Fact]
 		public void Connect_Succeeds()

@@ -77,16 +77,27 @@ namespace MEngineClient
 				{
 					var mapSectionVectors = mapSectionResponse.MapSectionVectors;
 
-					if (mapSectionServiceResponse.Counts.Length == mapSectionVectors.Counts.Length)
+					//if (mapSectionServiceResponse.Counts.Length == mapSectionVectors.Counts.Length)
+					//{
+					//	Array.Copy(mapSectionServiceResponse.Counts, mapSectionVectors.Counts, mapSectionServiceResponse.Counts.Length);
+					//}
+
+					//if (mapSectionServiceResponse.EscapeVelocities.Length == mapSectionVectors.EscapeVelocities.Length)
+					//{
+					//	Array.Copy(mapSectionServiceResponse.EscapeVelocities, mapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities.Length);
+					//}
+
+					if (mapSectionServiceResponse.Counts.Length > 0)
 					{
-						Array.Copy(mapSectionServiceResponse.Counts, mapSectionVectors.Counts, mapSectionServiceResponse.Counts.Length);
+						mapSectionVectors.LoadCounts(mapSectionServiceResponse.Counts);
 					}
 
-					if (mapSectionServiceResponse.EscapeVelocities.Length == mapSectionVectors.EscapeVelocities.Length)
+					if (mapSectionServiceResponse.EscapeVelocities.Length > 0)
 					{
-						Array.Copy(mapSectionServiceResponse.EscapeVelocities, mapSectionVectors.EscapeVelocities, mapSectionServiceResponse.EscapeVelocities.Length);
+						mapSectionVectors.LoadEscapeVelocities(mapSectionServiceResponse.EscapeVelocities);
 					}
 
+					// Z Vectors
 					var mapSectionZVectors = mapSectionResponse.MapSectionZVectors;
 
 					if (mapSectionZVectors != null)
@@ -157,15 +168,23 @@ namespace MEngineClient
 				IncreasingIterations = req.IncreasingIterations,
 			};
 
-			var mapSectionVectors = req.MapSectionVectors;
-
-			if (mapSectionVectors == null)
+			if (req.IncreasingIterations)
 			{
-				throw new InvalidOperationException("MClient received a MapSectionRequest with a null value for the MapSectionVectors property.");
-			}
+				var mapSectionVectors = req.MapSectionVectors;
 
-			mapSectionServiceRequest.Counts = mapSectionVectors.Counts;
-			mapSectionServiceRequest.EscapeVelocities = mapSectionVectors.EscapeVelocities;
+				if (mapSectionVectors == null)
+				{
+					throw new InvalidOperationException("MClient received a MapSectionRequest with a null value for the MapSectionVectors property.");
+				}
+
+				mapSectionServiceRequest.Counts = mapSectionVectors.GetSerializedCounts();
+				mapSectionServiceRequest.EscapeVelocities = mapSectionVectors.GetSerializedEscapeVelocities();
+			}
+			//else
+			//{
+			//	mapSectionServiceRequest.Counts = Array.Empty<byte>();
+			//	mapSectionServiceRequest.EscapeVelocities = Array.Empty<byte>();
+			//}
 
 			var mapSectionZVectors = req.MapSectionZVectors;
 			if (mapSectionZVectors != null)

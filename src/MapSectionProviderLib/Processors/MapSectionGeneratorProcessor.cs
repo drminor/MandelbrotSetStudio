@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -232,7 +233,10 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
+						var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
+						var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues" : null;
+
+						Debug.WriteLine($"Generating MapSection for block: {mapSectionRequest.BlockPosition} {sendingVectorsMsg} {haveZValuesMsg}.");
 						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
 						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;

@@ -11,6 +11,8 @@ namespace MSetGeneratorPrototype
 	public class IterationStateUPointers : IIterationState
 	{
 		private readonly FP31Val[] _samplePointsY;
+		private MapSectionVectors _mapSectionVectors;
+		private MapSectionZVectors _mapSectionZVectors;
 
 		private List<int> _inPlayBackingList;
 		private readonly Vector256<int> ALL_BITS_SET;
@@ -23,8 +25,8 @@ namespace MSetGeneratorPrototype
 		{
 
 			_samplePointsY = samplePointsY;
-			MapSectionVectors = mapSectionVectors;
-			MapSectionZVectors = mapSectionZVectors;
+			_mapSectionVectors = mapSectionVectors;
+			_mapSectionZVectors = mapSectionZVectors;
 
 			IncreasingIterations = increasingIterations;
 			TargetIterations = targetIterations;
@@ -41,7 +43,7 @@ namespace MSetGeneratorPrototype
 			CrsRowVArray = new FP31ValArray(samplePointsX);
 			CiLimbSet = new Vector256<uint>[LimbCount];
 
-			RowHasEscaped = MapSectionZVectors.RowHasEscaped;
+			RowHasEscaped = _mapSectionZVectors.RowHasEscaped;
 
 			DoneFlags = new Vector256<int>[VectorsPerRow];
 			UsedCalcs = new Vector256<int>[VectorsPerRow];
@@ -57,9 +59,9 @@ namespace MSetGeneratorPrototype
 			ZrsRowV = new Vector256<uint>[VectorsPerZValueRow];
 			ZisRowV = new Vector256<uint>[VectorsPerZValueRow];
 
-			MapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlagsRowV);
-			MapSectionZVectors.FillZrsRow(0, ZrsRowV);
-			MapSectionZVectors.FillZisRow(0, ZisRowV);
+			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlagsRowV);
+			_mapSectionZVectors.FillZrsRow(0, ZrsRowV);
+			_mapSectionZVectors.FillZisRow(0, ZisRowV);
 
 			InPlayList = Enumerable.Range(0, VectorsPerRow).ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
@@ -73,9 +75,6 @@ namespace MSetGeneratorPrototype
 		#region Public Properties
 
 		public bool HaveZValues => true;
-
-		public MapSectionVectors MapSectionVectors { get; init; } 
-		public MapSectionZVectors MapSectionZVectors { get; init; }
 
 		public bool IncreasingIterations { get; private set; }
 		public int TargetIterations { get; private set; }
@@ -123,10 +122,10 @@ namespace MSetGeneratorPrototype
 			if (RowNumber.HasValue)
 			{
 				// Update the _mapSectionVectors with the current row properties
-				MapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
-				MapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
-				MapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
-				MapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
+				_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
+				_mapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				_mapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
+				_mapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
 			}
 
 			UpdateUsedAndUnusedCalcs(RowNumber);
@@ -153,10 +152,10 @@ namespace MSetGeneratorPrototype
 			if (RowNumber.HasValue)
 			{
 				// Update the _mapSectionVectors with the current row properties
-				MapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
-				MapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
-				MapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
-				MapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
+				_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
+				_mapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				_mapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
+				_mapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
 			}
 
 			UpdateUsedAndUnusedCalcs(RowNumber);
@@ -171,17 +170,17 @@ namespace MSetGeneratorPrototype
 				{
 					if (!RowHasEscaped[rowNumber])
 					{
-						MapSectionZVectors.FillHasEscapedFlagsRow(rowNumber, HasEscapedFlagsRowV);
+						_mapSectionZVectors.FillHasEscapedFlagsRow(rowNumber, HasEscapedFlagsRowV);
 
-						MapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
+						_mapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
 
 						RowHasEscaped[rowNumber] = BuildTheInPlayBackingList(HasEscapedFlagsRowV, CountsRowV, _inPlayBackingList, DoneFlags);
 						allSamplesForThisRowAreDone = _inPlayBackingList.Count == 0;
 
 						if (!allSamplesForThisRowAreDone)
 						{
-							MapSectionZVectors.FillZrsRow(rowNumber, ZrsRowV);
-							MapSectionZVectors.FillZisRow(rowNumber, ZisRowV);
+							_mapSectionZVectors.FillZrsRow(rowNumber, ZrsRowV);
+							_mapSectionZVectors.FillZisRow(rowNumber, ZisRowV);
 						}
 						else
 						{
@@ -303,7 +302,7 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				MapSectionZVectors.FillZrsLimbSet(RowNumber!.Value, vectorIndex, limbSet);
+				_mapSectionZVectors.FillZrsLimbSet(RowNumber!.Value, vectorIndex, limbSet);
 
 				//var vecPtr = vectorIndex * LimbCount;
 
@@ -326,7 +325,7 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
-				MapSectionZVectors.FillZisLimbSet(RowNumber!.Value, vectorIndex, limbSet);
+				_mapSectionZVectors.FillZisLimbSet(RowNumber!.Value, vectorIndex, limbSet);
 				//var vecPtr = vectorIndex * LimbCount;
 
 				//for (var i = 0; i < LimbCount; i++)
@@ -338,7 +337,7 @@ namespace MSetGeneratorPrototype
 
 		public void UpdateZrLimbSet(int rowNumber, int vectorIndex, Vector256<uint>[] limbSet)
 		{
-			MapSectionZVectors.UpdateFromZrsLimbSet(rowNumber, vectorIndex, limbSet);
+			_mapSectionZVectors.UpdateFromZrsLimbSet(rowNumber, vectorIndex, limbSet);
 
 			//var vecPtr = vectorIndex * LimbCount;
 
@@ -350,7 +349,7 @@ namespace MSetGeneratorPrototype
 
 		public void UpdateZiLimbSet(int rowNumber, int vectorIndex, Vector256<uint>[] limbSet)
 		{
-			MapSectionZVectors.UpdateFromZisLimbSet(rowNumber, vectorIndex, limbSet);
+			_mapSectionZVectors.UpdateFromZisLimbSet(rowNumber, vectorIndex, limbSet);
 			//var vecPtr = vectorIndex * LimbCount;
 
 			//for (var i = 0; i < LimbCount; i++)
