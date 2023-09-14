@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
-//using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -17,6 +16,8 @@ namespace MSS.Common
 		void CreateIndexes();
 		void DropMapSections();
 		void DropMapSectionsAndSubdivisions();
+
+		Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, BigVector blockPosition, CancellationToken ct);
 
 		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct);
 		MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors);

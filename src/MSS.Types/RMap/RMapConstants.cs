@@ -22,7 +22,7 @@ namespace MSS.Types
 
 		public const int DEFAULT_PRECISION = 53;
 
-		public const int MAP_SECTION_VALUE_POOL_SIZE = 10;
+		public const int MAP_SECTION_INITIAL_POOL_SIZE = 10;
 
 		public const double DEFAULT_POSTER_DISPLAY_ZOOM = 0.01; // Default to full screen view
 		public const double DEFAULT_MINIMUM_DISPLAY_ZOOM = 0.015625; // TODO: Consider setting the Default Minimum Display Zoom to 0.001953125

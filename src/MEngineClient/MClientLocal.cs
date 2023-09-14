@@ -12,6 +12,7 @@ namespace MEngineClient
 	{
 		private static int _sectionCntr;
 
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionGenerator _generator;
 
 		#region Constructors
@@ -21,11 +22,12 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClientLocal(MSetGenerationStrategy mSetGenerationStrategy)
+		public MClientLocal(MSetGenerationStrategy mSetGenerationStrategy, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			MSetGenerationStrategy = mSetGenerationStrategy;
 			EndPointAddress = "CSharp_DepthFirstGenerator";
 
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
 		}
 

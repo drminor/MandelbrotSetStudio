@@ -3,6 +3,7 @@ using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
+using ProjectRepo.Entities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -337,10 +338,11 @@ namespace MapSectionProviderLib
 
 			var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 
-			var mapSectionResponse = await FetchAsync(request, ct, mapSectionVectors);
+			var mapSectionBytes = await FetchAsync(request, ct, mapSectionVectors);
 
-			if (mapSectionResponse != null)
+			if (mapSectionBytes != null)
 			{
+				var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
 				request.MapSectionId = mapSectionResponse.MapSectionId;
 
 				var requestedIterations = request.MapCalcSettings.TargetIterations;
@@ -395,6 +397,24 @@ namespace MapSectionProviderLib
 				PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
 				return null;
 			}
+		}
+
+		private MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
+		{
+			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
+
+			var result = new MapSectionResponse
+			(
+				mapSectionId: target.Id.ToString(),
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: target.BlockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				requestCompleted: target.Complete,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
+				mapSectionVectors: mapSectionVectors
+			);
+
+			return result;
 		}
 
 		private void PrepareRequestAndQueue(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionVectors mapSectionVectors)
@@ -500,16 +520,26 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionResponse?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
+		private async Task<MapSectionResponse?> FetchAsyncOld(MapSectionRequest mapSectionRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 
-			// TODO_OrigSourceSub -- update
-
+			// TODO: Add property: OriginalSourceSubdivisionId to the MapSectionResponse class.
 			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors, ct);
 			//mapSectionResponse.OriginalSourceSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
 
 			return mapSectionResponse;
+		}
+
+		private async Task<MapSectionBytes?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
+		{
+			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+
+			// TODO: Add property: OriginalSourceSubdivisionId to the MapSectionBytes class.
+			var mapSectionBytes = await _mapSectionAdapter.GetMapSectionBytesAsync(subdivisionId, mapSectionRequest.BlockPosition, ct);
+			//mapSectionBytes.OriginalSourceSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
+
+			return mapSectionBytes;
 		}
 
 		private MapSectionResponse? Fetch(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)

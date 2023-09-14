@@ -17,6 +17,8 @@ namespace MEngineClient
 		private DtoMapper _dtoMapper;
 		private GrpcChannel? _grpcChannel;
 
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
+
 		private static int _sectionCntr;
 
 		#endregion
@@ -28,12 +30,13 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClient(MSetGenerationStrategy mSetGenerationStrategy, string endPointAddress)
+		public MClient(MSetGenerationStrategy mSetGenerationStrategy, string endPointAddress, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			MSetGenerationStrategy = mSetGenerationStrategy;
 			_dtoMapper = new DtoMapper();
 			EndPointAddress = endPointAddress;
 			_grpcChannel = null;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 		}
 
 		#endregion

@@ -306,13 +306,48 @@ namespace MSetRepo
 			var result = new MapSectionResponse
 			(
 				mapSectionId: target.Id.ToString(),
-				//jobId: string.Empty,
 				subdivisionId: target.SubdivisionId.ToString(),
 				blockPosition: blockPosition,
 				mapCalcSettings: target.MapCalcSettings,
 				requestCompleted: target.Complete,
 				allRowsHaveEscaped: target.AllRowsHaveEscaped,
 				mapSectionVectors: mapSectionVectors
+			);
+
+			return result;
+		}
+
+		public MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
+		{
+			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
+
+			var result = new MapSectionResponse
+			(
+				mapSectionId: target.Id.ToString(),
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: target.BlockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				requestCompleted: target.Complete,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
+				mapSectionVectors: mapSectionVectors
+			);
+
+			return result;
+		}
+
+		public MapSectionBytes MapFrom(MapSectionRecord mSR)
+		{
+			var blockPosition = GetBlockPosition(mSR.BlockPosXHi, mSR.BlockPosXLo, mSR.BlockPosYHi, mSR.BlockPosYLo);
+
+			var result = new MapSectionBytes
+			(
+				mSR.DateCreatedUtc, mSR.LastSavedUtc, mSR.LastAccessed, mSR.SubdivisionId,
+				blockPosition,
+				mSR.MapCalcSettings, 
+				mSR.AllRowsHaveEscaped, 
+				mSR.Complete, 
+				mSR.Counts, 
+				mSR.EscapeVelocities
 			);
 
 			return result;

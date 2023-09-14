@@ -89,7 +89,7 @@ namespace MSetExplorer
 
 		public App()
 		{
-			_mapSectionVectorProvider = CreateMapSectionVectorProvider(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialPoolSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			_mapSectionVectorProvider = CreateMapSectionVectorProvider(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.MAP_SECTION_INITIAL_POOL_SIZE);
 
 			//_ambientStopWatch = Stopwatch.StartNew();
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -257,7 +257,8 @@ namespace MSetExplorer
 
 			#endregion
 
-			var mEngineClients = CreateTheMEngineClients(USE_ALL_CORES, REMOTE_SERVICE_END_POINTS, useRemoteEngine: USE_REMOTE_ENGINES, useLocalEngine: USE_LOCAL_ENGINE, GEN_STRATEGY);
+			var mEngineClients = CreateTheMEngineClients(USE_ALL_CORES, REMOTE_SERVICE_END_POINTS, useRemoteEngine: USE_REMOTE_ENGINES, useLocalEngine: USE_LOCAL_ENGINE, 
+				GEN_STRATEGY, _mapSectionVectorProvider);
 			//Debug.WriteLine($"After Create MEngineClients. {currentStopwatch.ElapsedMilliseconds}.");
 
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
@@ -486,7 +487,8 @@ namespace MSetExplorer
 
 		#region MEngine Support
 
-		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, MSetGenerationStrategy mSetGenerationStrategy)
+		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, 
+			MSetGenerationStrategy mSetGenerationStrategy, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			var result = new List<IMEngineClient>();
 
@@ -496,7 +498,7 @@ namespace MSetExplorer
 			{
 				for (var i = 0; i < localTaskCount; i++)
 				{
-					result.Add(new MClientLocal(mSetGenerationStrategy));
+					result.Add(new MClientLocal(mSetGenerationStrategy, mapSectionVectorProvider));
 				}
 
 				Debug.WriteLine($"Using {localTaskCount} local engines.");
@@ -510,7 +512,7 @@ namespace MSetExplorer
 				{
 					for (var i = 0; i < remoteTaskCount; i++)
 					{
-						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint));
+						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint, mapSectionVectorProvider));
 					}
 
 					Debug.WriteLine($"Using {remoteTaskCount} engines at {remoteEndPoint}.");
@@ -633,12 +635,11 @@ namespace MSetExplorer
 
 		private MapSectionVectorProvider CreateMapSectionVectorProvider(SizeInt blockSize, int defaultLimbCount, int initialPoolSize)
 		{
-			var mapSectionVectorsPool = new MapSectionVectorsPool(RMapConstants.BLOCK_SIZE, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			var mapSectionZVectorsPool = new MapSectionZVectorsPool(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
+			var mapSectionVectorsPool = new MapSectionVectorsPool(blockSize, initialPoolSize);
+			var mapSectionZVectorsPool = new MapSectionZVectorsPool(blockSize, defaultLimbCount, initialPoolSize);
 			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
 
 			return mapSectionVectorProvider;
-
 		}
 
 		#endregion
