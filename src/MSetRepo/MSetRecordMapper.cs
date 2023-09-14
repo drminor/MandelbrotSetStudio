@@ -341,6 +341,7 @@ namespace MSetRepo
 
 			var result = new MapSectionBytes
 			(
+				mSR.Id,
 				mSR.DateCreatedUtc, mSR.LastSavedUtc, mSR.LastAccessed, mSR.SubdivisionId,
 				blockPosition,
 				mSR.MapCalcSettings, 

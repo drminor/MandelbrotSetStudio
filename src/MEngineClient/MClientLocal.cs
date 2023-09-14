@@ -69,6 +69,20 @@ namespace MEngineClient
 		{
 			try
 			{
+				if (mapSectionRequest.MapSectionVectors == null)
+				{
+					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+					mapSectionVectors.ResetObject();
+					mapSectionRequest.MapSectionVectors = mapSectionVectors;
+				}
+
+				if (mapSectionRequest.MapCalcSettings.SaveTheZValues && mapSectionRequest.MapSectionZVectors == null)
+				{
+					var mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(mapSectionRequest.LimbCount);
+					mapSectionZVectors.ResetObject();
+					mapSectionRequest.MapSectionZVectors = mapSectionZVectors;
+				}
+
 				var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest, ct);
 
 				if (++_sectionCntr % 10 == 0)

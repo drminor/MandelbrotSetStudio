@@ -18,6 +18,7 @@ namespace MSS.Common
 		void DropMapSectionsAndSubdivisions();
 
 		Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, BigVector blockPosition, CancellationToken ct);
+		MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, BigVector blockPosition);
 
 		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct);
 		MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors);

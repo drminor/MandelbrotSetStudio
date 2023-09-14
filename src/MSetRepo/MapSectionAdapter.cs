@@ -145,7 +145,7 @@ namespace MSetRepo
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"GetMapSectionRecordAsync: While fetching a MapSectionRecord from Subdivision and BlockPosition (Async), got exception: {e}.");
+				Debug.WriteLine($"GetMapSectionBytesAsync: While fetching a MapSectionRecord from Subdivision and BlockPosition (Async), got exception: {e}.");
 				throw;
 			}
 		}
@@ -213,6 +213,32 @@ namespace MSetRepo
 			catch (Exception e)
 			{
 				Debug.WriteLine($"While fetching a MapSectionRecord from a MapSectionId, got exception: {e}.");
+				return null;
+			}
+		}
+
+		public MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, BigVector blockPosition)
+		{
+			try
+			{
+				var blockPositionRecord = _mSetRecordMapper.MapTo(blockPosition);
+
+				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
+				if (mapSectionRecord != null)
+				{
+					var result = _mSetRecordMapper.MapFrom(mapSectionRecord);
+
+					return result;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"GetMapSectionBytes: While fetching a MapSectionRecord from Subdivision and BlockPosition (Async), got exception: {e}.");
+
 				return null;
 			}
 		}

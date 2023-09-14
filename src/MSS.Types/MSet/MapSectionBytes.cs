@@ -7,6 +7,7 @@ namespace MSS.Types
 	public class MapSectionBytes
 	{
 		public MapSectionBytes(
+			ObjectId mapSectionId,
 			DateTime dateCreatedUtc,
 			DateTime lastSavedUtc,
 			DateTime lastAccessed,
@@ -20,6 +21,7 @@ namespace MSS.Types
 			byte[] escapeVelocities
 			)
 		{
+			Id = mapSectionId;
 			DateCreatedUtc = dateCreatedUtc;
 			LastSavedUtc = lastSavedUtc;
 			LastAccessed = lastAccessed;

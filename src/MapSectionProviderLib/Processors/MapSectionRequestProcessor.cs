@@ -124,19 +124,21 @@ namespace MapSectionProviderLib
 					mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 				}
 
-				var mapSectionResponse = Fetch(request, mapSectionVectors);
+				var mapSectionBytes = Fetch(request);
 
-				if (mapSectionResponse != null)
+				if (mapSectionBytes != null)
 				{
 					var requestedIterations = request.MapCalcSettings.TargetIterations;
 
-					if (IsResponseComplete(mapSectionResponse, requestedIterations, out var reason))
+					if (IsResponseComplete(mapSectionBytes, requestedIterations, out var reason))
 					{
 						request.FoundInRepo = true;
 						request.ProcessingEndTime = DateTime.UtcNow;
 
 						//mapSectionResponse.JobId = request.JobId;
 						//mapSectionResponse.JobOwnerType = request.JobOwnerType;
+
+						var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
 
 						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
 						mapSectionVectors = null;
@@ -301,9 +303,8 @@ namespace MapSectionProviderLib
 					{
 						if (!UseRepo)
 						{
-							//await Task.Delay(20);
-							var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
+							//var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+							PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor/*, mapSectionVectors*/);
 						}
 						else
 						{
@@ -336,26 +337,22 @@ namespace MapSectionProviderLib
 			var request = mapSectionWorkRequest.Request;
 			var persistZValues = request.MapCalcSettings.SaveTheZValues;
 
-			var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-
-			var mapSectionBytes = await FetchAsync(request, ct, mapSectionVectors);
+			var mapSectionBytes = await FetchAsync(request, ct);
 
 			if (mapSectionBytes != null)
 			{
-				var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
-				request.MapSectionId = mapSectionResponse.MapSectionId;
-
 				var requestedIterations = request.MapCalcSettings.TargetIterations;
 
-				if (IsResponseComplete(mapSectionResponse, requestedIterations, out var reason))
+				if (IsResponseComplete(mapSectionBytes, requestedIterations, out var reason))
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"Got {request.ScreenPosition} from repo.");
 
 					request.FoundInRepo = true;
 					request.ProcessingEndTime = DateTime.UtcNow;
 
-					//mapSectionResponse.JobId = request.JobId;
-					//mapSectionResponse.JobOwnerType = request.JobOwnerType;
+					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+					var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
+					request.MapSectionId = mapSectionResponse.MapSectionId;
 
 					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
 
@@ -365,24 +362,30 @@ namespace MapSectionProviderLib
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"Requesting the iteration count to be increased for {request.ScreenPosition}. The response was incomplete for reason: {reason}.");
 					request.IncreasingIterations = true;
-					request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
+					//request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
 					// TODO: Add a property to the MapSectionVectors class that tracks whether or not a MapSectionZValuesRecord exists on file. 
 					if (UseRepo && persistZValues)
 					{
-						var mapSectionId = ObjectId.Parse(mapSectionResponse.MapSectionId);
-						var mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
-						request.MapSectionZVectors = mapSectionZVectors;
+						var mapSectionId = mapSectionBytes.Id;
 
 						var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
 						if (zValues != null)
 						{
+							var mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
 							mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
+
+							request.MapSectionZVectors = mapSectionZVectors;
+
+							var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+							mapSectionVectors.Load(mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities);
+							
+							request.MapSectionVectors = mapSectionVectors;
 						}
-						else
-						{
-							request.MapSectionZVectors.ResetObject();
-						}
+						//else
+						//{
+						//	request.MapSectionZVectors.ResetObject();
+						//}
 					}
 
 					Debug.WriteLineIf(_useDetailedDebug, $"Requesting the iteration count to be increased for {request.ScreenPosition}.");
@@ -394,70 +397,48 @@ namespace MapSectionProviderLib
 			else
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"Request for {request.ScreenPosition} not found in the repo: Queuing for generation.");
-				PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor, mapSectionVectors);
+				PrepareRequestAndQueue(mapSectionWorkRequest, mapSectionGeneratorProcessor/*, mapSectionVectors*/);
 				return null;
 			}
 		}
 
-		private MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
-		{
-			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
-
-			var result = new MapSectionResponse
-			(
-				mapSectionId: target.Id.ToString(),
-				subdivisionId: target.SubdivisionId.ToString(),
-				blockPosition: target.BlockPosition,
-				mapCalcSettings: target.MapCalcSettings,
-				requestCompleted: target.Complete,
-				allRowsHaveEscaped: target.AllRowsHaveEscaped,
-				mapSectionVectors: mapSectionVectors
-			);
-
-			return result;
-		}
-
-		private void PrepareRequestAndQueue(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionVectors mapSectionVectors)
+		private void PrepareRequestAndQueue(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor/*, MapSectionVectors mapSectionVectors*/)
 		{
 			var request = mapSectionWorkRequest.Request;
-			var persistZValues = request.MapCalcSettings.SaveTheZValues;
+			//var persistZValues = request.MapCalcSettings.SaveTheZValues;
 
 			request.MapSectionId = null;
 			//request.IncreasingIterations = false;
-			request.MapSectionVectors = mapSectionVectors;
-			request.MapSectionVectors.ResetObject();
+			//request.MapSectionVectors = mapSectionVectors;
+			//request.MapSectionVectors.ResetObject();
 
-			if (UseRepo && persistZValues)
-			{
-				request.MapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
-				request.MapSectionZVectors.ResetObject();
-			}
+			//if (UseRepo && persistZValues)
+			//{
+			//	request.MapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
+			//	request.MapSectionZVectors.ResetObject();
+			//}
 
-			if (request.ScreenPosition.IsZero())
-			{
-				var note = request.MapSectionZVectors == null ? "Not Saving the ZValues." : "LimbCount = { request.MapSectionZVectors.LimbCount}.";
-				Debug.WriteLineIf(_useDetailedDebug, $"Requesting {request.ScreenPosition} to be generated. {note}.");
-			}
+			ReportQueueForGeneration(request.ScreenPosition, request.MapCalcSettings.SaveTheZValues, request.LimbCount);
 
 			QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor);
 		}
 
-		private bool IsResponseComplete(MapSectionResponse mapSectionResponse, int requestedIterations, [MaybeNullWhen(true)] out string reason)
+		private bool IsResponseComplete(MapSectionBytes mapSectionBytes, int requestedIterations, [NotNullWhen(false)] out string? reason)
 		{
-			if (mapSectionResponse.MapSectionVectors == null)
-			{
-				throw new InvalidOperationException("A MapSectionRecords was found in the repo with a null MapSectionVectors.");
-			}
+			//if (mapSectionResponse.MapSectionVectors == null)
+			//{
+			//	throw new InvalidOperationException("A MapSectionRecords was found in the repo with a null MapSectionVectors.");
+			//}
 
 			// TODO: Update the mapSectionResponse to include details about which rows are complete. This is required for those cases where the Generator was given a CancellationToken that got cancelled.
 
-			if (!mapSectionResponse.RequestCompleted)
+			if (!mapSectionBytes.Complete)
 			{
 				reason = "The response is not complete. Processing was interrupted during generation or during the last target iteration increase.";
 				return false;
 			}
 
-			var fetchedTargetIterations = mapSectionResponse.MapCalcSettings?.TargetIterations ?? 0;
+			var fetchedTargetIterations = mapSectionBytes.MapCalcSettings?.TargetIterations ?? 0;
 
 			if (fetchedTargetIterations >= requestedIterations)
 			{
@@ -466,7 +447,7 @@ namespace MapSectionProviderLib
 				return true;
 			}
 
-			if (mapSectionResponse.AllRowsHaveEscaped)
+			if (mapSectionBytes.AllRowsHaveEscaped)
 			{
 				reason = null;
 				return true;
@@ -475,7 +456,6 @@ namespace MapSectionProviderLib
 			reason = $"IterationCountOnFile: {fetchedTargetIterations} is < requested {requestedIterations} and AllRowsHaveEscaped = false.";
 			return false;
 		}
-
 
 		private int _requestCounter = 0;
 
@@ -531,7 +511,7 @@ namespace MapSectionProviderLib
 			return mapSectionResponse;
 		}
 
-		private async Task<MapSectionBytes?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
+		private async Task<MapSectionBytes?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 
@@ -542,13 +522,18 @@ namespace MapSectionProviderLib
 			return mapSectionBytes;
 		}
 
-		private MapSectionResponse? Fetch(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
+		private MapSectionResponse? FetchOld(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-
-			// TODO_OrigSourceSub -- update
-
 			var mapSectionResponse = _mapSectionAdapter.GetMapSection(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors);
+
+			return mapSectionResponse;
+		}
+
+		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest)
+		{
+			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+			var mapSectionResponse = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.BlockPosition);
 
 			return mapSectionResponse;
 		}
@@ -726,12 +711,40 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
+		private MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
+		{
+			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
+
+			var result = new MapSectionResponse
+			(
+				mapSectionId: target.Id.ToString(),
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: target.BlockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				requestCompleted: target.Complete,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
+				mapSectionVectors: mapSectionVectors
+			);
+
+			return result;
+		}
+
 		[Conditional("DEBUG2")]
 		private void WasPrimaryRequestFound(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> pendingRequests)
 		{
 			if (!RequestExists(mapSectionWorkRequest.Request, pendingRequests))
 			{
 				Debug.WriteLine("WARNING: The primary request was not included in the list of pending requests.");
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportQueueForGeneration(PointInt screenPosition, bool saveTheZValues, int limbCount)
+		{
+			if (screenPosition.IsZero())
+			{
+				var note = saveTheZValues ? $"Saving the ZValues. LimbCount = {limbCount}." : "Not Saving the ZValues.";
+				Debug.WriteLineIf(_useDetailedDebug, $"Requesting {screenPosition} to be generated. {note}.");
 			}
 		}
 
