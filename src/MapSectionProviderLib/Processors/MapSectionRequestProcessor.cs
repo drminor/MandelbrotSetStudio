@@ -119,10 +119,10 @@ namespace MapSectionProviderLib
 
 			foreach (var request in mapSectionRequests)
 			{
-				if (mapSectionVectors == null)
-				{
-					mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-				}
+				//if (mapSectionVectors == null)
+				//{
+				//	mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+				//}
 
 				var mapSectionBytes = Fetch(request);
 
@@ -135,10 +135,9 @@ namespace MapSectionProviderLib
 						request.FoundInRepo = true;
 						request.ProcessingEndTime = DateTime.UtcNow;
 
-						//mapSectionResponse.JobId = request.JobId;
-						//mapSectionResponse.JobOwnerType = request.JobOwnerType;
-
-						var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
+						var backBuffer = new byte[request.BlockSize.NumberOfCells * 4];
+						var mapSectionVectors2 = new MapSectionVectors2(request.BlockSize, mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities, backBuffer);
+						var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors2);
 
 						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
 						mapSectionVectors = null;
@@ -312,10 +311,19 @@ namespace MapSectionProviderLib
 
 							if (mapSectionResponse != null)
 							{
-								var mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, mapSectionWorkRequest.JobId);
+								MapSection mapSection; 
+								if (mapSectionResponse.MapSectionVectors != null)
+								{
+									mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, mapSectionWorkRequest.JobId);
+								}
+								else
+								{
+									mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors2, mapSectionWorkRequest.JobId);
+								}
 
 								mapSectionWorkRequest.Response = mapSection;
 								_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
+
 							}
 						}
 					}
@@ -362,12 +370,14 @@ namespace MapSectionProviderLib
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"Requesting the iteration count to be increased for {request.ScreenPosition}. The response was incomplete for reason: {reason}.");
 					request.IncreasingIterations = true;
+
 					//request.MapSectionVectors = mapSectionResponse.MapSectionVectors;
 
 					// TODO: Add a property to the MapSectionVectors class that tracks whether or not a MapSectionZValuesRecord exists on file. 
 					if (UseRepo && persistZValues)
 					{
 						var mapSectionId = mapSectionBytes.Id;
+						request.MapSectionId = mapSectionId.ToString();
 
 						var zValues = await FetchTheZValuesAsync(mapSectionId, ct);
 						if (zValues != null)
@@ -377,10 +387,12 @@ namespace MapSectionProviderLib
 
 							request.MapSectionZVectors = mapSectionZVectors;
 
-							var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-							mapSectionVectors.Load(mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities);
-							
-							request.MapSectionVectors = mapSectionVectors;
+							//var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+							//mapSectionVectors.Load(mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities);
+							//request.MapSectionVectors = mapSectionVectors;
+
+							var mapSectionVectors2 = new MapSectionVectors2(request.BlockSize, mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities, Array.Empty<byte>());
+							request.MapSectionVectors2 = mapSectionVectors2;
 						}
 						//else
 						//{
@@ -624,8 +636,8 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-				mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, jobId);
+				mapSectionResponse.MapSectionVectors2?.IncreaseRefCount();
+				mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors2, jobId);
 				mapSection.MathOpCounts = mapSectionResponse.MathOpCounts;
 			}
 
@@ -643,6 +655,26 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
+				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId);
+			}
+
+			return mapSectionResult;
+		}
+
+		private MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors2? mapSectionVectors2, int jobId)
+		{
+			MapSection mapSectionResult;
+
+			if (mapSectionVectors2 == null)
+			{
+				Debug.WriteLine($"WARNING: Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors2 is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
+				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobId, isCancelled: false);
+			}
+			else
+			{
+				var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
+				mapSectionVectors.Load(mapSectionVectors2.Counts, mapSectionVectors2.EscapeVelocities);
+
 				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId);
 			}
 
@@ -707,6 +739,24 @@ namespace MapSectionProviderLib
 			{
 				result = _cancelledJobIds.Contains(jobId);
 			}
+
+			return result;
+		}
+
+		private MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors2 mapSectionVectors2)
+		{
+			//mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
+
+			var result = new MapSectionResponse
+			(
+				mapSectionId: target.Id.ToString(),
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: target.BlockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				requestCompleted: target.Complete,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
+				mapSectionVectors2: mapSectionVectors2
+			);
 
 			return result;
 		}

@@ -28,6 +28,18 @@ namespace ProjectRepo
 
 		#endregion
 
+		public async Task<bool> RecordExistsAsync(ObjectId mapSectionId, CancellationToken ct)
+		{
+			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("MapSectionId", mapSectionId);
+
+			var mapSectionRecord = await Collection.FindAsync(filter, options: null, ct);
+
+			var result = mapSectionRecord.Any(ct);
+
+			return result;
+
+		}
+
 		public async Task<MapSectionZValuesRecord?> GetBySectionIdAsync(ObjectId mapSectionId, CancellationToken ct)
 		{
 			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("MapSectionId", mapSectionId);

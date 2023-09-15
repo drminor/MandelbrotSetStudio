@@ -75,7 +75,7 @@ namespace MSetGeneratorPrototype
 			var coords = GetCoordinates(mapSectionRequest, _fp31VecMath.ApFixedPointFormat);
 			//ReportLimbCountUpdate(coords, currentLimbCount, limbCountForThisRequest, mapSectionRequest.Precision);
 
-			var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
+			var (mapSectionVectors2, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
 			//if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
 			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
@@ -96,8 +96,8 @@ namespace MSetGeneratorPrototype
 			_fp31VecMath.MathOpCounts.Reset();
 
 			IIterationState iterationState = mapSectionZVectors == null
-				? new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors, mapCalcSettings.TargetIterations)
-				: new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
+				? new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors2, mapCalcSettings.TargetIterations)
+				: new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors2, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
 
 			var completed = GeneratorOrUpdateRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
 			stopwatch.Stop();
@@ -107,7 +107,7 @@ namespace MSetGeneratorPrototype
 			//	Debug.WriteLine("Some Rows have not reached the bailout radius.");
 			//}
 
-			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors, mapSectionZVectors);
+			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors);
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 			
 			UpdateResponseWithMops(result, iterationState, _fp31VecMath.MathOpCounts);
@@ -697,10 +697,10 @@ namespace MSetGeneratorPrototype
 
 		}
 
-		private (MapSectionVectors, MapSectionZVectors?) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
+		private (MapSectionVectors2, MapSectionZVectors?) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
 		{
-			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
-			if (msv == null) throw new ArgumentException("The MapSectionVectors is null.");
+			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
+			if (msv == null) throw new ArgumentException("The MapSectionVectors2 is null.");
 			//if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
 
 			return (msv, mszv);

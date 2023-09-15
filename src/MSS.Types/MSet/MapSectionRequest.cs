@@ -89,7 +89,10 @@ namespace MSS.Types.MSet
 
 		public int Precision { get; set; }
 		public int LimbCount { get; set; }
+
 		public MapSectionVectors? MapSectionVectors { get; set; }
+		public MapSectionVectors2? MapSectionVectors2 { get; set; }
+
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
 
 		public string? ClientEndPointAddress { get; set; }
@@ -125,5 +128,18 @@ namespace MSS.Types.MSet
 			return (msv, mszv);
 
 		}
+
+		public (MapSectionVectors2? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut2()
+		{
+			var msv = MapSectionVectors2;
+			var mszv = MapSectionZVectors;
+
+			MapSectionVectors2 = null;
+			MapSectionZVectors = null;
+
+			return (msv, mszv);
+
+		}
+
 	}
 }

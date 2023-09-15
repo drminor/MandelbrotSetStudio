@@ -34,6 +34,24 @@
 				  )
 		{ }
 
+		public MapSectionResponse(MapSectionRequest mapSectionRequest,
+			bool requestCompleted,
+			bool allRowsHaveEscaped,
+			MapSectionVectors2? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
+			: this(
+				  mapSectionRequest.MapSectionId,
+				  mapSectionRequest.SubdivisionId,
+				  blockPosition: mapSectionRequest.BlockPosition,
+				  mapSectionRequest.MapCalcSettings,
+				  requestCompleted,
+				  allRowsHaveEscaped,
+				  mapSectionVectors,
+				  mapSectionZVectors,
+				  requestCancelled
+				  )
+		{ }
+
+
 		public MapSectionResponse(
 			string? mapSectionId, 
 			string subdivisionId,
@@ -55,6 +73,27 @@
 			MapSectionZVectors = mapSectionZVectors;
 		}
 
+		public MapSectionResponse(
+			string? mapSectionId,
+			string subdivisionId,
+			BigVector blockPosition,
+			MapCalcSettings mapCalcSettings,
+			bool requestCompleted,
+			bool allRowsHaveEscaped,
+			MapSectionVectors2? mapSectionVectors2 = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
+		{
+			MapSectionId = mapSectionId;
+			SubdivisionId = subdivisionId;
+			BlockPosition = blockPosition;
+			MapCalcSettings = mapCalcSettings;
+			RequestCompleted = requestCompleted;
+			AllRowsHaveEscaped = allRowsHaveEscaped;
+			RequestCancelled = requestCancelled;
+
+			MapSectionVectors2 = mapSectionVectors2;
+			MapSectionZVectors = mapSectionZVectors;
+		}
+
 		public string? MapSectionId { get; set; }
 		public string SubdivisionId { get; init; }
 
@@ -68,6 +107,7 @@
 		public MathOpCounts? MathOpCounts { get; set; }
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
+		public MapSectionVectors2? MapSectionVectors2 { get; set; }
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
 
 		public bool RecordOnFile => !string.IsNullOrEmpty(MapSectionId);

@@ -105,9 +105,9 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						if (mapSectionResponse.MapSectionVectors != null)
+						if (mapSectionResponse.MapSectionVectors2 != null)
 						{
-							await PersistTheCountsAndZValuesAsync(mapSectionRequest, mapSectionResponse);
+							await PersistTheCountsAndZValuesAsync(mapSectionRequest, mapSectionResponse, ct);
 						}
 						else
 						{
@@ -130,7 +130,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task PersistTheCountsAndZValuesAsync(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		private async Task PersistTheCountsAndZValuesAsync(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
 		{
 			if (mapSectionResponse.RecordOnFile)
 			{
@@ -167,7 +167,18 @@ namespace MapSectionProviderLib
 
 					if (mapSectionResponse.MapSectionZVectors != null && !mapSectionResponse.AllRowsHaveEscaped)
 					{
-						_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
+						var zValuesRecordOnFile = await _mapSectionAdapter.DoesMapSectionZValuesExistAsync(mapSectionId.Value, ct);
+
+						if (zValuesRecordOnFile)
+						{
+							Debug.WriteLine($"WARNING: Found a ZValuesRecord for MapSectionId: {mapSectionId.Value} when the MapSectionResponse's RecordOnFile property = false.");
+							_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId.Value);
+						}
+						else
+						{
+							_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
+						}
+
 					}
 
 					_ = await SaveJobMapSection(mapSectionRequest, mapSectionResponse);

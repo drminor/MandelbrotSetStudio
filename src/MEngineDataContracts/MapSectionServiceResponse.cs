@@ -50,7 +50,7 @@ namespace MEngineDataContracts
 		public bool RequestCancelled { get; init; }
 
 		[DataMember(Order = 7)]
-		public double TimeToGenerate { get; init; }
+		public double TimeToGenerateMs { get; init; }
 
 		[DataMember(Order = 8)]
 		public MathOpCounts MathOpCounts { get; init; }

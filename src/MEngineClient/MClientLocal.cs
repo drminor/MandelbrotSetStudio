@@ -69,11 +69,17 @@ namespace MEngineClient
 		{
 			try
 			{
-				if (mapSectionRequest.MapSectionVectors == null)
+				//if (mapSectionRequest.MapSectionVectors == null)
+				//{
+				//	var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+				//	mapSectionVectors.ResetObject();
+				//	mapSectionRequest.MapSectionVectors = mapSectionVectors;
+				//}
+
+				if (mapSectionRequest.MapSectionVectors2 == null)
 				{
-					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-					mapSectionVectors.ResetObject();
-					mapSectionRequest.MapSectionVectors = mapSectionVectors;
+					var mapSectionVectors2 = new MapSectionVectors2(RMapConstants.BLOCK_SIZE);
+					mapSectionRequest.MapSectionVectors2 = mapSectionVectors2;
 				}
 
 				if (mapSectionRequest.MapCalcSettings.SaveTheZValues && mapSectionRequest.MapSectionZVectors == null)
@@ -90,13 +96,11 @@ namespace MEngineClient
 					Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
 				}
 
-				//mapSectionResponse.IncludeZValues = false;
-
 				return mapSectionResponse;
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"GenerateMapSectionInternal raised Exception: {e}.");
+				Debug.WriteLine($"MClientLocal: GenerateMapSectionInternal raised Exception: {e}.");
 				throw;
 			}
 		}

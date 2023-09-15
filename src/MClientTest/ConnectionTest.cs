@@ -17,26 +17,26 @@ namespace MClientTest
 		[Fact]
 		public void Connect_Succeeds()
 		{
-			var mapSectionVectorProvider = CreateMapSectionVectorProvider();
+			//var mapSectionVectorProvider = CreateMapSectionVectorProvider();
 
-			var mClient = new MClient(MSetGenerationStrategy.DepthFirst, appUrl, mapSectionVectorProvider);
+			var mClient = new MClient(MSetGenerationStrategy.DepthFirst, appUrl);
 
 			var response = mClient.GenerateMapSectionTest();
 
 			Debug.WriteLine($"Got a response. The MapSectionId is {response.MapSectionId}.");
 		}
 
-		private MapSectionVectorProvider CreateMapSectionVectorProvider()
-		{
-			var blockSize = new SizeInt(128);
-			var defaultLimbCount = 2;
-			var initialPoolSize = 10;
+		//private MapSectionVectorProvider CreateMapSectionVectorProvider()
+		//{
+		//	var blockSize = new SizeInt(128);
+		//	var defaultLimbCount = 2;
+		//	var initialPoolSize = 10;
 
-			var mapSectionVectorsPool = new MapSectionVectorsPool(blockSize, initialPoolSize);
-			var mapSectionZVectorsPool = new MapSectionZVectorsPool(blockSize, defaultLimbCount, initialPoolSize);
-			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
+		//	var mapSectionVectorsPool = new MapSectionVectorsPool(blockSize, initialPoolSize);
+		//	var mapSectionZVectorsPool = new MapSectionZVectorsPool(blockSize, defaultLimbCount, initialPoolSize);
+		//	var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
 
-			return mapSectionVectorProvider;
-		}
+		//	return mapSectionVectorProvider;
+		//}
 	}
 }

@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace MSS.Types
 {
-	public class RPoint : IBigRatShape, IEquatable<RPoint>, IEqualityComparer<RPoint>
+	public class RPoint : IBigRatShape, IEquatable<RPoint?>, IEqualityComparer<RPoint>
 	{
 		private static RPoint ZeroSingleton = new RPoint();
 
@@ -160,12 +160,12 @@ namespace MSS.Types
 			return obj.GetHashCode();
 		}
 
-		public static bool operator ==(RPoint p1, RPoint p2)
+		public static bool operator ==(RPoint? p1, RPoint? p2)
 		{
 			return EqualityComparer<RPoint>.Default.Equals(p1, p2);
 		}
 
-		public static bool operator !=(RPoint p1, RPoint p2)
+		public static bool operator !=(RPoint? p1, RPoint? p2)
 		{
 			return !(p1 == p2);
 		}

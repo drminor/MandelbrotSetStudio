@@ -348,6 +348,13 @@ namespace MSetRepo
 
 		#region MapSection ZValues
 
+		public async Task<bool> DoesMapSectionZValuesExistAsync(ObjectId mapSectionId, CancellationToken ct)
+		{
+			var result = await _mapSectionZValuesReaderWriter.RecordExistsAsync(mapSectionId, ct);
+
+			return result;
+		}
+
 		public async Task<ZValues?> GetMapSectionZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
 		{
 			var result = await _mapSectionZValuesReaderWriter.GetBySectionIdAsync(mapSectionId, ct);

@@ -674,7 +674,8 @@ namespace MSetExplorer
 		{
 			var errors = 0L;
 
-			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
+			// TODO: Do we still need reference counting here?
+			//Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
 
 			var useEscapeVelocities = colorMap.UseEscapeVelocities;
 

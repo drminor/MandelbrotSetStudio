@@ -223,8 +223,8 @@ namespace MapSectionProviderLib
 					if (jobIsCancelled || cts.IsCancellationRequested)
 					{
 						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
-						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
-						mapSectionResponse.MapSectionVectors = msv;
+						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
+						mapSectionResponse.MapSectionVectors2 = msv;
 						mapSectionResponse.MapSectionZVectors = mszv;
 
 						var msg = $"The MapSectionGeneratorProcessor is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
@@ -236,7 +236,7 @@ namespace MapSectionProviderLib
 						var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
 						var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues" : null;
 
-						Debug.WriteLine($"Generating MapSection for block: {mapSectionRequest.BlockPosition} {sendingVectorsMsg} {haveZValuesMsg}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"Generating MapSection for block: {mapSectionRequest.BlockPosition} {sendingVectorsMsg} {haveZValuesMsg}.");
 						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
 						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
@@ -248,12 +248,12 @@ namespace MapSectionProviderLib
 						if (jobIsCancelled)
 						{
 							Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionGeneratorProcessor. Job {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is found to be cancelled after call to Generate MapSection.");
-							var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
-							mapSectionResponse.MapSectionVectors = msv;
+							var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
+							mapSectionResponse.MapSectionVectors2 = msv;
 							mapSectionResponse.MapSectionZVectors = mszv;
 						}
 
-						if (!jobIsCancelled && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
+						if (!jobIsCancelled && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors2 == null)
 						{
 							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
 						}
@@ -265,6 +265,7 @@ namespace MapSectionProviderLib
 					}
 
 					Debug.Assert(mapSectionRequest.MapSectionVectors == null, "MapSectionVectors is not Null.");
+					Debug.Assert(mapSectionRequest.MapSectionVectors2 == null, "MapSectionVectors2 is not Null.");
 					Debug.Assert(mapSectionRequest.MapSectionZVectors == null, "MapSectionZVectors is not Null.");
 
 					mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);

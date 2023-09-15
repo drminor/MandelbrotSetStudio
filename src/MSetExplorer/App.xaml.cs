@@ -512,7 +512,7 @@ namespace MSetExplorer
 				{
 					for (var i = 0; i < remoteTaskCount; i++)
 					{
-						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint, mapSectionVectorProvider));
+						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint));
 					}
 
 					Debug.WriteLine($"Using {remoteTaskCount} engines at {remoteEndPoint}.");

@@ -22,26 +22,20 @@ namespace MEngineService.Services
     {
 		#region Private Fields
 
+		private static int _sectionCntr;
+
 		private const int VALUE_SIZE = 4;
 
-
 		// TODO: Have the MapSectionService get the MongoDb connection string from the appsettings.json file.
-
 		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		//private const int MONGO_DB_PORT = 27017;
 
 		//private static readonly IMapSectionAdapter _mapSectionAdapter;
 		//private static readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
 
-		private static readonly SizeInt _blockSize;
-		//private static MapSectionVectorsPool _mapSectionVectorsPool;
-		//private static MapSectionZVectorsPool _mapSectionZVectorsPool;
-		//private static MapSectionVectorProvider _mapSectionVectorProvider;
-
 		private DtoMapper _dtoMapper;
-
-		private static int _sectionCntr;
-
+		private readonly SizeInt _blockSize;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionGenerator _generator;
 
 		#endregion
@@ -50,30 +44,25 @@ namespace MEngineService.Services
 
 		static MapSectionService()
 		{
-			_blockSize = RMapConstants.BLOCK_SIZE;
 			_sectionCntr = 0;
-
-			//var repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, "MandelbrotProjects");
-			//_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
-
-			//_mapSectionVectorsPool = new MapSectionVectorsPool(_blockSize, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			//_mapSectionZVectorsPool = new MapSectionZVectorsPool(_blockSize, RMapConstants.DEFAULT_LIMB_COUNT, initialSize: RMapConstants.MAP_SECTION_VALUE_POOL_SIZE);
-			//_mapSectionVectorProvider = new MapSectionVectorProvider(_mapSectionVectorsPool, _mapSectionZVectorsPool);
-
-			//_mapSectionPersistProcessor = new MapSectionPersistProcessor(_mapSectionAdapter, _mapSectionVectorProvider);
-
-			//_sectionCntr = 0;
-			//Console.WriteLine($"The MapSection Persist Processor has started. Server: {MONGO_DB_SERVER}, Port: {MONGO_DB_PORT}.");
 		}
 
 		public MapSectionService()
 		{
-			//MSetGenerationStrategy = MSetGenerationStrategy.DepthFirst;
-			//EndPointAddress = "CSharp_DepthFirstGenerator";
+			_blockSize = RMapConstants.BLOCK_SIZE;
+
+			var defaultLimbCount = RMapConstants.DEFAULT_LIMB_COUNT;
+			var initialPoolSize = RMapConstants.MAP_SECTION_INITIAL_POOL_SIZE;
 
 			_dtoMapper = new DtoMapper();
+			_mapSectionVectorProvider = CreateMapSectionVectorProvider(_blockSize, defaultLimbCount, initialPoolSize);
+			_generator = new MapSectionGeneratorDepthFirst(defaultLimbCount, _blockSize);
 
-			_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, _blockSize);
+			//var repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, "MandelbrotProjects");
+			//_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
+			//_mapSectionPersistProcessor = new MapSectionPersistProcessor(_mapSectionAdapter, _mapSectionVectorProvider);
+
+			//Console.WriteLine($"The MapSection Persist Processor has started. Server: {MONGO_DB_SERVER}, Port: {MONGO_DB_PORT}.");
 		}
 
 		#endregion
@@ -95,14 +84,18 @@ namespace MEngineService.Services
 			try
 			{
 				var mapSectionRequest = MapFrom(mapSectionServiceRequest);
+
+				var stopWatch = Stopwatch.StartNew();
 				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, cts.Token);
-				var mapSectionServiceResponse = MapTo(mapSectionResponse, mapSectionServiceRequest/*, counts, escapeVelocities*/, mapSectionRequest.GenerationDuration ?? TimeSpan.Zero);
+				stopWatch.Stop();
+
+				var mapSectionServiceResponse = MapTo(mapSectionResponse, mapSectionServiceRequest, stopWatch.Elapsed);
 
 				return mapSectionServiceResponse;
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"GenerateMapSection raised Exception: {e}.");
+				Debug.WriteLine($"MapSectionService: GenerateMapSection raised Exception: {e}.");
 				throw;
 			}
 		}
@@ -130,63 +123,50 @@ namespace MEngineService.Services
 				req.MapCalcSettings,
 				requestNumber: 0);
 
-			var mapSectionVectors = GetVectors(req);
-			mapSectionRequest.MapSectionVectors = mapSectionVectors;
+			var mapSectionVectors2 = GetVectors2(req);
+			mapSectionRequest.MapSectionVectors2 = mapSectionVectors2;
 
-			if (req.Zrs.Length > 0)
-			{
-				var mapSectionZVectors = GetZVectors(req);
-				mapSectionRequest.MapSectionZVectors = mapSectionZVectors;
-			}
-			else
-			{
-				if (req.MapCalcSettings.SaveTheZValues)
-				{
-					mapSectionRequest.MapSectionZVectors = new MapSectionZVectors(req.BlockSize, req.LimbCount);
-				}
-			}
+			var mapSectionZVectors = GetZVectors(req);
+			mapSectionRequest.MapSectionZVectors = mapSectionZVectors;
+
+			//if (req.Zrs.Length > 0)
+			//{
+			//	var mapSectionZVectors = GetZVectors(req);
+			//	mapSectionRequest.MapSectionZVectors = mapSectionZVectors;
+			//}
+			//else
+			//{
+			//	if (req.MapCalcSettings.SaveTheZValues)
+			//	{
+			//		mapSectionRequest.MapSectionZVectors = new MapSectionZVectors(req.BlockSize, req.LimbCount);
+			//	}
+			//}
 
 			return mapSectionRequest;
 		}
 
-		private MapSectionVectors GetVectors(MapSectionServiceRequest req)
+
+
+		private MapSectionVectors2? GetVectors2(MapSectionServiceRequest req)
 		{
-			// Counts
-			//ushort[] counts;
-
-			ushort[] counts;
-
-			if (req.Counts != null && req.Counts.Length > 0)
+			if (req.Counts == null || req.Counts.Length == 0)
 			{
-				counts = GetUShortsFromBytes(req.Counts, _blockSize); ;
-			}
-			else
-			{
-				counts = new ushort[_blockSize.NumberOfCells];
+				return null;
 			}
 
-			// Escape Velocities
-			ushort[] escapeVelocities;
-
-			if (req.EscapeVelocities != null && req.EscapeVelocities.Length > 0)
-			{
-				escapeVelocities = GetUShortsFromBytes(req.EscapeVelocities, _blockSize);
-			}
-			else
-			{
-				escapeVelocities = new ushort[_blockSize.NumberOfCells];
-			}
-
-			// MapSectionVectors
-			// ushort[]
 			var backBuffer = new byte[0];
-			var mapSectionVectors = new MapSectionVectors(_blockSize, counts, escapeVelocities, backBuffer);
+			var mapSectionVectors2 = new MapSectionVectors2(_blockSize, req.Counts, req.EscapeVelocities, backBuffer);
 
-			return mapSectionVectors;
+			return mapSectionVectors2;
 		}
 
-		private MapSectionZVectors GetZVectors(MapSectionServiceRequest req)
+		private MapSectionZVectors? GetZVectors(MapSectionServiceRequest req)
 		{
+			if (req.Zrs == null || req.Zrs.Length == 0)
+			{
+				return null;
+			}
+
 			// Layout parameters
 			var valueCount = req.BlockSize.NumberOfCells;
 			var rowCount = req.BlockSize.Height;
@@ -203,32 +183,18 @@ namespace MEngineService.Services
 			return mapSectionZVectors;
 		}
 
-		private ushort[] GetUShortsFromBytes(byte[] bytes, SizeInt blockSize) 
-		{
-			var result = new ushort[blockSize.NumberOfCells];
-
-			var destBackEscapeVelocities = MemoryMarshal.Cast<ushort, byte>(result);
-
-			for (var i = 0; i < bytes.Length; i++)
-			{
-				destBackEscapeVelocities[i] = bytes[i];
-			}
-
-			return result;
-		}
-
 		private bool[] GetBoolsFromBytes(byte[] rowHasEscaped)
 		{
 			return rowHasEscaped.Select(x => x == 1).ToArray();
 		}
 
-		private MapSectionServiceResponse MapTo(MapSectionResponse mapSectionResponse, MapSectionServiceRequest req/*, ushort[] counts, ushort[] escapeVelocities*/, TimeSpan generationDuration)
+		private MapSectionServiceResponse MapTo(MapSectionResponse mapSectionResponse, MapSectionServiceRequest req, TimeSpan generationDuration)
 		{
-			var mapSectionVectors = mapSectionResponse.MapSectionVectors;
+			var mapSectionVectors2 = mapSectionResponse.MapSectionVectors2;
 
-			if (mapSectionVectors == null)
+			if (mapSectionVectors2 == null)
 			{
-				throw new InvalidOperationException("GenerateMapSection returned a response that has a null value for its MapSectionVectors property.");
+				throw new InvalidOperationException("GenerateMapSection returned a response that has a null value for its MapSectionVectors2 property.");
 			}
 
 			var mapSectionServiceResponse = new MapSectionServiceResponse()
@@ -239,10 +205,11 @@ namespace MEngineService.Services
 				RequestCompleted = mapSectionResponse.RequestCompleted,
 				AllRowsHaveEscaped = mapSectionResponse.AllRowsHaveEscaped,
 				RequestCancelled = mapSectionResponse.RequestCancelled,
-				TimeToGenerate = generationDuration.TotalMilliseconds,
+				TimeToGenerateMs = generationDuration.TotalMilliseconds,
 				MathOpCounts = mapSectionResponse.MathOpCounts?.Clone(),
-				Counts = mapSectionVectors.GetSerializedCounts(),
-				EscapeVelocities = mapSectionVectors.GetSerializedEscapeVelocities()
+
+				Counts = mapSectionVectors2.Counts,
+				EscapeVelocities = mapSectionVectors2.EscapeVelocities
 			};
 
 			var mapSectionZVectors = mapSectionResponse.MapSectionZVectors;
@@ -269,15 +236,33 @@ namespace MEngineService.Services
 		{
 			try
 			{
+				//if (mapSectionRequest.MapSectionVectors == null)
+				//{
+				//	var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+				//	mapSectionVectors.ResetObject();
+				//	mapSectionRequest.MapSectionVectors = mapSectionVectors;
+				//}
+
+				if (mapSectionRequest.MapSectionVectors2 == null)
+				{
+					var mapSectionVectors2 = new MapSectionVectors2(RMapConstants.BLOCK_SIZE);
+					mapSectionRequest.MapSectionVectors2 = mapSectionVectors2;
+				}
+
+				if (mapSectionRequest.MapCalcSettings.SaveTheZValues && mapSectionRequest.MapSectionZVectors == null)
+				{
+					var mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(mapSectionRequest.LimbCount);
+					mapSectionZVectors.ResetObject();
+					mapSectionRequest.MapSectionZVectors = mapSectionZVectors;
+				}
+
 				var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest, ct);
 
 				if (++_sectionCntr % 10 == 0)
 				{
 					//Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
-					Console.WriteLine($"The MEngineClient has processed {_sectionCntr} requests.");
+					Console.WriteLine($"MapSectionService: The Map Section Generator has processed {_sectionCntr} requests.");
 				}
-
-				//mapSectionResponse.IncludeZValues = false;
 
 				return mapSectionResponse;
 			}
@@ -287,6 +272,57 @@ namespace MEngineService.Services
 				throw;
 			}
 		}
+
+		private MapSectionVectorProvider CreateMapSectionVectorProvider(SizeInt blockSize, int defaultLimbCount, int initialPoolSize)
+		{
+			var mapSectionVectorsPool = new MapSectionVectorsPool(blockSize, initialPoolSize);
+			var mapSectionZVectorsPool = new MapSectionZVectorsPool(blockSize, defaultLimbCount, initialPoolSize);
+			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
+
+			return mapSectionVectorProvider;
+		}
+
+		//private MapSectionVectors? GetVectors(MapSectionServiceRequest req)
+		//{
+		//	if (req.Counts == null || req.Counts.Length == 0)
+		//	{
+		//		return null;
+		//	}
+
+		//	// Counts
+		//	var counts = GetUShortsFromBytes(req.Counts, _blockSize);
+
+		//	// Escape Velocities
+		//	ushort[] escapeVelocities;
+
+		//	if (req.EscapeVelocities != null && req.EscapeVelocities.Length > 0)
+		//	{
+		//		escapeVelocities = GetUShortsFromBytes(req.EscapeVelocities, _blockSize);
+		//	}
+		//	else
+		//	{
+		//		escapeVelocities = new ushort[_blockSize.NumberOfCells];
+		//	}
+
+		//	var backBuffer = new byte[0];
+		//	var mapSectionVectors = new MapSectionVectors(_blockSize, counts, escapeVelocities, backBuffer);
+
+		//	return mapSectionVectors;
+		//}
+
+		//private ushort[] GetUShortsFromBytes(byte[] bytes, SizeInt blockSize) 
+		//{
+		//	var result = new ushort[blockSize.NumberOfCells];
+
+		//	var destBackEscapeVelocities = MemoryMarshal.Cast<ushort, byte>(result);
+
+		//	for (var i = 0; i < bytes.Length; i++)
+		//	{
+		//		destBackEscapeVelocities[i] = bytes[i];
+		//	}
+
+		//	return result;
+		//}
 
 		#endregion
 

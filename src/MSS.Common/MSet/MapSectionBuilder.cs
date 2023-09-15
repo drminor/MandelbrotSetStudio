@@ -234,6 +234,7 @@ namespace MSS.Common
 			return result;
 		}
 
+		// TODO: Implement a version of CreateMapSection that takes a MapSectionVectors2 instead of a MapSectionVectors
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, int jobNumber)
 		{
 			var repoBlockPosition = mapSectionRequest.BlockPosition;

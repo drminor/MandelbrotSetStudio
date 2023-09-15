@@ -263,36 +263,65 @@ namespace MSetRepo
 
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			// TODO: Create a new type: LongVector to hold the RepoBlockPosition, instead of using a pair of longs as does the BigVector
+			MapSectionRecord result;
 
-			if (source.MapSectionVectors == null)
-			{
-				throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
-			}
+			// TODO: Create a new type: LongVector to hold the RepoBlockPosition, instead of using a pair of longs as does the BigVector
 
 			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
 
-			var result = new MapSectionRecord
-				(
-				DateCreatedUtc: DateTime.UtcNow,
-				SubdivisionId: new ObjectId(source.SubdivisionId),
-
-				BlockPosXHi: blockPositionDto.X[0],
-				BlockPosXLo: blockPositionDto.X[1],
-				BlockPosYHi: blockPositionDto.Y[0],
-				BlockPosYLo: blockPositionDto.Y[1],
-
-				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
-
-				Counts: source.MapSectionVectors.GetSerializedCounts(),
-				EscapeVelocities: source.MapSectionVectors.GetSerializedEscapeVelocities(),
-				AllRowsHaveEscaped: source.AllRowsHaveEscaped
-				)
+			if (source.MapSectionVectors == null)
 			{
-				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
-				Complete = source.RequestCompleted,
-				LastAccessed = DateTime.UtcNow,
-			};
+				if (source.MapSectionVectors2 == null)
+				{
+					throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
+				}
+
+				result = new MapSectionRecord
+					(
+					DateCreatedUtc: DateTime.UtcNow,
+					SubdivisionId: new ObjectId(source.SubdivisionId),
+
+					BlockPosXHi: blockPositionDto.X[0],
+					BlockPosXLo: blockPositionDto.X[1],
+					BlockPosYHi: blockPositionDto.Y[0],
+					BlockPosYLo: blockPositionDto.Y[1],
+
+					MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
+
+					Counts: source.MapSectionVectors2.Counts,
+					EscapeVelocities: source.MapSectionVectors2.EscapeVelocities,
+					AllRowsHaveEscaped: source.AllRowsHaveEscaped
+					)
+				{
+					Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
+					Complete = source.RequestCompleted,
+					LastAccessed = DateTime.UtcNow,
+				};
+			}
+			else
+			{
+				result = new MapSectionRecord
+					(
+					DateCreatedUtc: DateTime.UtcNow,
+					SubdivisionId: new ObjectId(source.SubdivisionId),
+
+					BlockPosXHi: blockPositionDto.X[0],
+					BlockPosXLo: blockPositionDto.X[1],
+					BlockPosYHi: blockPositionDto.Y[0],
+					BlockPosYLo: blockPositionDto.Y[1],
+
+					MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
+
+					Counts: source.MapSectionVectors.GetSerializedCounts(),
+					EscapeVelocities: source.MapSectionVectors.GetSerializedEscapeVelocities(),
+					AllRowsHaveEscaped: source.AllRowsHaveEscaped
+					)
+				{
+					Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
+					Complete = source.RequestCompleted,
+					LastAccessed = DateTime.UtcNow,
+				};
+			}
 
 			return result;
 		}
@@ -341,7 +370,7 @@ namespace MSetRepo
 
 			var result = new MapSectionBytes
 			(
-				mSR.Id,
+				mapSectionId: mSR.Id,
 				mSR.DateCreatedUtc, mSR.LastSavedUtc, mSR.LastAccessed, mSR.SubdivisionId,
 				blockPosition,
 				mSR.MapCalcSettings, 
