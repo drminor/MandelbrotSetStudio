@@ -530,8 +530,8 @@ namespace MSetRepo
 			foreach (var jobId in jobIds)
 			{
 				Debug.WriteLine($"Removing MapSections and JobMapSections for job: {jobId}.");
-				var singleResult = DeleteMapSectionsForJobInternal(jobId, out var numberJobMapSectionsDeleted);
-				Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {singleResult} MapSections.");
+				var singleResult = DeleteMapSectionsForJobInternal(jobId, out var numberJobMapSectionsDeleted, out var numberOfZValueRecordsDeleted);
+				Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords, {singleResult} MapSections and {numberOfZValueRecordsDeleted} MapSectionZValueRecords.");
 
 				if (singleResult.HasValue)
 				{
@@ -546,10 +546,8 @@ namespace MSetRepo
 		{
 			Debug.WriteLine($"Removing MapSections and JobMapSections for Job: {jobId}.");
 
-			var result = DeleteMapSectionsForJobInternal(jobId, out var numberJobMapSectionsDeleted);
-
-			Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords and {result} MapSections.");
-
+			var result = DeleteMapSectionsForJobInternal(jobId, out var numberJobMapSectionsDeleted, out var numberOfZValueRecordsDeleted);
+			Debug.WriteLine($"Removed {numberJobMapSectionsDeleted} JobMapSectionRecords, {result} MapSections and {numberOfZValueRecordsDeleted} MapSectionZValueRecords.");
 			return result;
 		}
 
@@ -564,7 +562,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		private long? DeleteMapSectionsForJobInternal(ObjectId jobId, out long? numberJobMapSectionsDeleted)
+		private long? DeleteMapSectionsForJobInternal(ObjectId jobId, out long? numberJobMapSectionsDeleted, out long? numberOfZValueRecordsDeleted)
 		{
 			var mapSectionIds = _jobMapSectionReaderWriter.GetMapSectionIdsByJobId(jobId);
 
@@ -574,6 +572,8 @@ namespace MSetRepo
 			var mapSectionsNotReferenced = mapSectionIds.Where(x => !foundMapSectionRefs.Contains(x)).ToList();
 
 			var numberDeleted = _mapSectionReaderWriter.Delete(mapSectionsNotReferenced);
+
+			numberOfZValueRecordsDeleted = _mapSectionZValuesReaderWriter.Delete(mapSectionsNotReferenced);
 
 			return numberDeleted;
 		}

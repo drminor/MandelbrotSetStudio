@@ -58,11 +58,6 @@ namespace MSetGeneratorPrototype
 
 		#endregion
 
-		#region Private Properties
-
-
-		#endregion
-
 		#region Generate MapSection
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
@@ -88,56 +83,68 @@ namespace MSetGeneratorPrototype
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
-			_calculateEscapeVelocities = mapCalcSettings.CalculateEscapeVelocities;
+
+			//_calculateEscapeVelocities = mapCalcSettings.CalculateEscapeVelocities;
+			_calculateEscapeVelocities = mapSectionRequest.IncreasingIterations ? false : mapCalcSettings.CalculateEscapeVelocities;
+			_thresholdVector = GetThresholdVector(mapCalcSettings);
 
 			_thresholdVector = _calculateEscapeVelocities ? _fp31VecMath.CreateVectorForComparison(RMapConstants.DEFAULT_NORMALIZED_THRESHOLD) : _fp31VecMath.CreateVectorForComparison((uint)mapCalcSettings.Threshold);
-			
-			_iterator.IncreasingIterations = mapSectionRequest.IncreasingIterations;
 			_fp31VecMath.MathOpCounts.Reset();
 
-			IIterationState iterationState = mapSectionZVectors == null
-				? new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors2, mapCalcSettings.TargetIterations)
-				: new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors2, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
+			bool sectionCompleted;
+			bool allRowsHaveEscaped;
 
-			var completed = GeneratorOrUpdateRows(_iterator, iterationState, ct, out var allRowsHaveEscaped);
+			if (mapCalcSettings.SaveTheZValues)
+			{
+				if (mapSectionZVectors == null) throw new InvalidOperationException("The MapSectionZValues is null, however the MapCalcSettings.SaveTheZValues is true.");
+				var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors2, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
+
+				sectionCompleted = mapSectionRequest.IncreasingIterations
+					? UpdateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped)
+					: GenerateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped);
+
+				RollUpNumberOfCalcs(_fp31VecMath.MathOpCounts, iterationState);
+			}
+			else
+			{
+				var iterationState = new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors2, mapCalcSettings.TargetIterations);
+				sectionCompleted = GenerateMapSectionRowsNoZ(_iterator, iterationState, ct, out allRowsHaveEscaped);
+				RollUpNumberOfCalcs(_fp31VecMath.MathOpCounts, iterationState);
+			}
+
 			stopwatch.Stop();
-
-			//if (!allRowsHaveEscaped)
-			//{
-			//	Debug.WriteLine("Some Rows have not reached the bailout radius.");
-			//}
-
-			var result = new MapSectionResponse(mapSectionRequest, completed, allRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors);
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
+
+			var result = new MapSectionResponse(mapSectionRequest, sectionCompleted, allRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors);
+			result.MathOpCounts = _fp31VecMath.MathOpCounts.Clone();
 			
-			UpdateResponseWithMops(result, iterationState, _fp31VecMath.MathOpCounts);
 			//ReportResults(coords, mapSectionRequest, result, ct);
 
 			return result;
 		}
 
-		private bool GeneratorOrUpdateRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
-		{
-			bool completed;
+		//private bool GenerateOrUpdateRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		//{
+		//	bool completed;
 
-			if (!iterationState.HaveZValues)
-			{
-				completed = GenerateMapSectionRowsNoZ(iterator, iterationState, ct, out allRowsHaveEscaped);
-			}
-			else
-			{
-				if (_iterator.IncreasingIterations)
-				{
-					completed = UpdateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
-				}
-				else
-				{
-					completed = GenerateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
-				}
-			}
+		//	if (!iterationState.HaveZValues)
+		//	{
+		//		completed = GenerateMapSectionRowsNoZ(iterator, iterationState, ct, out allRowsHaveEscaped);
+		//	}
+		//	else
+		//	{
+		//		if (_iterator.IncreasingIterations)
+		//		{
+		//			completed = UpdateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
+		//		}
+		//		else
+		//		{
+		//			completed = GenerateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
+		//		}
+		//	}
 
-			return completed;
-		}
+		//	return completed;
+		//}
 
 		private bool GenerateMapSectionRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
@@ -288,7 +295,6 @@ namespace MSetGeneratorPrototype
 
 			var countsV = Vector256<int>.Zero;
 			var resultCounts = countsV;
-			var escapeVelocities = new ushort[Vector256<int>.Count];
 
 			iterationState.FillCrLimbSet(idx, _crs);
 			_cis = iterationState.CiLimbSet;
@@ -332,15 +338,15 @@ namespace MSetGeneratorPrototype
 
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlags;
 			iterationState.CountsRowV[idx] = resultCounts;
+			iterationState.UpdateZrLimbSet(iterationState.RowNumber!.Value, idx, _resultZrs);
+			iterationState.UpdateZiLimbSet(iterationState.RowNumber!.Value, idx, _resultZis);
 
 			if (_calculateEscapeVelocities)
 			{
+				var escapeVelocities = new ushort[Vector256<int>.Count];
 				CalculateEscapeVelocities(sumOfSquares, targetReachedCompVec, escapeVelocities);
 				Array.Copy(escapeVelocities, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escapeVelocities.Length);
 			}
-
-			iterationState.UpdateZrLimbSet(iterationState.RowNumber!.Value, idx, _resultZrs);
-			iterationState.UpdateZiLimbSet(iterationState.RowNumber!.Value, idx, _resultZis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlags.AsByte());
 
@@ -360,13 +366,12 @@ namespace MSetGeneratorPrototype
 
 		private bool UpdateMapCol(int idx, IIterator iterator, ref IIterationState iterationState)
 		{
-			var hasEscapedFlags = Vector256<int>.Zero;
+			var hasEscapedFlags = iterationState.HasEscapedFlagsRowV[idx];
 
 			var doneFlags = Vector256<int>.Zero;
 
-			var countsV = Vector256<int>.Zero;
+			var countsV = iterationState.CountsRowV[idx];
 			var resultCounts = countsV;
-			var escapeVelocities = new ushort[Vector256<int>.Count];
 
 			iterationState.FillCrLimbSet(idx, _crs);
 			_cis = iterationState.CiLimbSet;
@@ -379,7 +384,7 @@ namespace MSetGeneratorPrototype
 
 			Vector256<int> escapedFlagsVec = Vector256<int>.Zero;
 
-			var sumOfSquares = iterator.IterateFirstRound(_crs, _cis, _zrs, _zis, ref doneFlags);
+			var sumOfSquares = iterator.IterateFirstRoundForIncreasingIterations(_crs, _cis, _zrs, _zis, ref doneFlags);
 			countsV = Avx2.Add(countsV, _justOne);
 
 			// Compare the new Counts with the TargetIterations
@@ -411,15 +416,15 @@ namespace MSetGeneratorPrototype
 
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlags;
 			iterationState.CountsRowV[idx] = resultCounts;
+			iterationState.UpdateZrLimbSet(iterationState.RowNumber!.Value, idx, _resultZrs);
+			iterationState.UpdateZiLimbSet(iterationState.RowNumber!.Value, idx, _resultZis);
 
 			if (_calculateEscapeVelocities)
 			{
+				var escapeVelocities = new ushort[Vector256<int>.Count];
 				CalculateEscapeVelocities(sumOfSquares, targetReachedCompVec, escapeVelocities);
 				Array.Copy(escapeVelocities, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escapeVelocities.Length);
 			}
-
-			iterationState.UpdateZrLimbSet(iterationState.RowNumber!.Value, idx, _resultZrs);
-			iterationState.UpdateZiLimbSet(iterationState.RowNumber!.Value, idx, _resultZis);
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlags.AsByte());
 
@@ -434,7 +439,6 @@ namespace MSetGeneratorPrototype
 
 			var countsV = Vector256<int>.Zero;
 			var resultCountsV = countsV;
-			var escapeVelocities = new ushort[Vector256<int>.Count];
 
 			iterationState.FillCrLimbSet(idx, _crs);
 			_cis = iterationState.CiLimbSet;
@@ -478,6 +482,7 @@ namespace MSetGeneratorPrototype
 
 			if (_calculateEscapeVelocities)
 			{
+				var escapeVelocities = new ushort[Vector256<int>.Count];
 				CalculateEscapeVelocities(sumOfSquares, targetReachedCompVec, escapeVelocities);
 				Array.Copy(escapeVelocities, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escapeVelocities.Length);
 			}
@@ -636,9 +641,6 @@ namespace MSetGeneratorPrototype
 
 				_resultZrs = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
 				_resultZis = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
-
-				//_resultZrsForEscV = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
-				//_resultZisForEscV = FP31VecMathHelper.CreateNewLimbSet(limbCountForThisRequest);
 			}
 			else
 			{
@@ -661,6 +663,12 @@ namespace MSetGeneratorPrototype
 			var screenPos = mapSectionRequest.ScreenPosition;
 
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
+		}
+
+		private Vector256<int> GetThresholdVector(MapCalcSettings mapCalcSettings)
+		{
+			var result = mapCalcSettings.CalculateEscapeVelocities ? _fp31VecMath.CreateVectorForComparison(RMapConstants.DEFAULT_NORMALIZED_THRESHOLD) : _fp31VecMath.CreateVectorForComparison((uint)mapCalcSettings.Threshold);
+			return result;
 		}
 
 		#endregion
@@ -815,11 +823,18 @@ namespace MSetGeneratorPrototype
 
 		[Conditional("PERF")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void UpdateResponseWithMops(MapSectionResponse mapSectionResponse, IIterationState iterationState, MathOpCounts mathOpCounts)
+		private void RollUpNumberOfCalcs(MathOpCounts mathOpCounts, IIterationState iterationState)
 		{
-			mapSectionResponse.MathOpCounts = mathOpCounts.Clone();
-			mapSectionResponse.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+			mathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
+
+		//[Conditional("PERF")]
+		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		//private void UpdateResponseWithMops(MapSectionResponse mapSectionResponse, IIterationState iterationState, MathOpCounts mathOpCounts)
+		//{
+		//	mapSectionResponse.MathOpCounts = mathOpCounts.Clone();
+		//	mapSectionResponse.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+		//}
 
 		//[Conditional("DIAG")]
 		//private void ResetWorkingValues(Vector256<uint>[] cRs, Vector256<uint>[] cIs, Vector256<uint>[] zRs, Vector256<uint>[] zIs, Vector256<int> justNowDone)

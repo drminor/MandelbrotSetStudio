@@ -37,7 +37,6 @@ namespace ProjectRepo
 			var result = mapSectionRecord.Any(ct);
 
 			return result;
-
 		}
 
 		public async Task<MapSectionZValuesRecord?> GetBySectionIdAsync(ObjectId mapSectionId, CancellationToken ct)

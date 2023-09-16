@@ -49,7 +49,7 @@ namespace MSetGeneratorPrototype
 
 		#region Public Properties
 
-		public bool IncreasingIterations { get; set; }
+		//public bool IncreasingIterations { get; set; }
 
 		//public MathOpCounts MathOpCounts => _fp31VecMath.MathOpCounts;
 
@@ -60,33 +60,32 @@ namespace MSetGeneratorPrototype
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector256<uint>[] IterateFirstRound(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> doneFlags)
 		{
-			if (IncreasingIterations)
+			try
 			{
+				Array.Copy(crs, zrs, crs.Length);
+				Array.Copy(cis, zis, cis.Length);
+
 				_fp31VecMath.Square(zrs, _zRSqrs, ref doneFlags);
 				_fp31VecMath.Square(zis, _zISqrs, ref doneFlags);
+				_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, ref doneFlags);
 
-				var result = Iterate(crs, cis, zrs, zis, ref doneFlags);
-				return result;
+				return _sumOfSqrs;
 			}
-			else
+			catch (Exception e)
 			{
-				try
-				{
-					Array.Copy(crs, zrs, crs.Length);
-					Array.Copy(cis, zis, cis.Length);
-
-					_fp31VecMath.Square(zrs, _zRSqrs, ref doneFlags);
-					_fp31VecMath.Square(zis, _zISqrs, ref doneFlags);
-					_fp31VecMath.Add(_zRSqrs, _zISqrs, _sumOfSqrs, ref doneFlags);
-
-					return _sumOfSqrs;
-				}
-				catch (Exception e)
-				{
-					Debug.WriteLine($"Iterator received exception: {e}.");
-					throw;
-				}
+				Debug.WriteLine($"Iterator received exception: {e}.");
+				throw;
 			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Vector256<uint>[] IterateFirstRoundForIncreasingIterations(Vector256<uint>[] crs, Vector256<uint>[] cis, Vector256<uint>[] zrs, Vector256<uint>[] zis, ref Vector256<int> doneFlags)
+		{
+			_fp31VecMath.Square(zrs, _zRSqrs, ref doneFlags);
+			_fp31VecMath.Square(zis, _zISqrs, ref doneFlags);
+
+			var result = Iterate(crs, cis, zrs, zis, ref doneFlags);
+			return result;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

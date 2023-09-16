@@ -134,6 +134,7 @@ namespace MSetGeneratorPrototype
 				// Update the _mapSectionVectors with the current row properties
 				//MapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
 				_mapSectionVectors2.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				_mapSectionVectors2.UpdateFromEscapeVelocitiesRow(RowNumber.Value, EscapeVelocities);
 			}
 
 			UpdateUsedAndUnusedCalcs(RowNumber);

@@ -124,6 +124,7 @@ namespace MSetGeneratorPrototype
 
 			Array.Clear(HasEscapedFlagsRowV);
 			Array.Clear(CountsRowV);
+			Array.Clear(EscapeVelocities);
 			Array.Clear(DoneFlags);
 
 			if (rowNumber < RowCount)
@@ -146,6 +147,7 @@ namespace MSetGeneratorPrototype
 				// Update the _mapSectionVectors with the current row properties
 				_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
 				_mapSectionVectors2.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				_mapSectionVectors2.UpdateFromEscapeVelocitiesRow(RowNumber.Value, EscapeVelocities);
 			}
 
 			UpdateUsedAndUnusedCalcs(RowNumber);
@@ -181,6 +183,7 @@ namespace MSetGeneratorPrototype
 				{
 					Array.Clear(HasEscapedFlagsRowV);
 					Array.Clear(CountsRowV);
+					Array.Clear(EscapeVelocities);
 					Array.Clear(DoneFlags);
 
 					_inPlayBackingList.Clear();
