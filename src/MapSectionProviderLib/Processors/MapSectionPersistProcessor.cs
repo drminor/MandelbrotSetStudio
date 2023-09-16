@@ -24,6 +24,8 @@ namespace MapSectionProviderLib
 
 		private readonly object _queueLock = new();
 
+		private readonly bool _useDetailedDebug = false;
+
 		#region Constructor
 
 		public MapSectionPersistProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionVectorProvider mapSectionVectorProvider)
@@ -135,7 +137,7 @@ namespace MapSectionProviderLib
 			if (mapSectionResponse.RecordOnFile)
 			{
 				var mapSectionId = new ObjectId(mapSectionResponse.MapSectionId!);
-				Debug.WriteLine($"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Updating Z Values for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 
 				_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
 

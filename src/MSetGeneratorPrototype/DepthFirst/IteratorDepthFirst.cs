@@ -1,5 +1,4 @@
 ﻿using MSS.Common;
-using MSS.Types;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
@@ -14,7 +13,6 @@ namespace MSetGeneratorPrototype
 
 		private Vector256<uint>[] _zRZiSqrs;
 		private Vector256<uint>[] _temp;
-		private Vector256<uint>[] _temp2;
 
 		private Vector256<uint>[] _zRSqrs;
 		private Vector256<uint>[] _zISqrs;
@@ -31,27 +29,11 @@ namespace MSetGeneratorPrototype
 
 			_zRZiSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_temp = FP31VecMathHelper.CreateNewLimbSet(limbCount);
-			_temp2 = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 
 			_zRSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_zISqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
 			_sumOfSqrs = FP31VecMathHelper.CreateNewLimbSet(limbCount);
-
-			//FP31VecMathHelper.ClearLimbSet(_zRZiSqrs);
-			//FP31VecMathHelper.ClearLimbSet(_temp);
-			//FP31VecMathHelper.ClearLimbSet(_zRSqrs);
-			//FP31VecMathHelper.ClearLimbSet(_zISqrs);
-			//FP31VecMathHelper.ClearLimbSet(_sumOfSqrs);
-
 		}
-
-		#endregion
-
-		#region Public Properties
-
-		//public bool IncreasingIterations { get; set; }
-
-		//public MathOpCounts MathOpCounts => _fp31VecMath.MathOpCounts;
 
 		#endregion
 

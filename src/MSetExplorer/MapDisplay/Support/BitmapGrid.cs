@@ -701,7 +701,7 @@ namespace MSetExplorer
 				//var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
 				var escapeVelocities = mapSectionVectors.EscapeVelocities;
 
-				if (!escapeVelocities.Any(x => x > 0))
+				if (_useDetailedDebug && !escapeVelocities.Any(x => x > 0))
 				{
 					Debug.WriteLine("No EscapeVelocities Found.");
 				}

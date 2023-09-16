@@ -34,12 +34,12 @@ namespace MSetExplorer
 		//private const int MONGO_DB_PORT = 27017;
 
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://localhost:5000" };
-		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
-		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
+		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
+		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
 
 		private static readonly bool USE_ALL_CORES = true;
-		private static readonly bool USE_REMOTE_ENGINES = false;
-		private static readonly bool USE_LOCAL_ENGINE = true;
+		private static readonly bool USE_REMOTE_ENGINES = true;
+		private static readonly bool USE_LOCAL_ENGINE = false;
 
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 

@@ -31,7 +31,7 @@ namespace MapSectionProviderLib
 
 		private bool _stopped;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 

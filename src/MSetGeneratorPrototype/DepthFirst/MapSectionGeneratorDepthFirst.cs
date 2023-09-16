@@ -123,29 +123,6 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-		//private bool GenerateOrUpdateRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
-		//{
-		//	bool completed;
-
-		//	if (!iterationState.HaveZValues)
-		//	{
-		//		completed = GenerateMapSectionRowsNoZ(iterator, iterationState, ct, out allRowsHaveEscaped);
-		//	}
-		//	else
-		//	{
-		//		if (_iterator.IncreasingIterations)
-		//		{
-		//			completed = UpdateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
-		//		}
-		//		else
-		//		{
-		//			completed = GenerateMapSectionRows(iterator, iterationState, ct, out allRowsHaveEscaped);
-		//		}
-		//	}
-
-		//	return completed;
-		//}
-
 		private bool GenerateMapSectionRows(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
 		{
 			bool completed = true;
@@ -493,57 +470,6 @@ namespace MSetGeneratorPrototype
 		#region Support Methods
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void CalculateEscapeVelocities(Vector256<uint>[] sumOfSqrs, Vector256<int> targetReachedCompVec, ushort[] escapeVelocities)
-		{
-			Array.Clear(escapeVelocities);
-			var ourCount = 0;
-			var limbCount = _fp31VecMath.LimbCount;
-
-			for (var i = 0; i < escapeVelocities.Length; i++)
-			{
-				var doneFlag = targetReachedCompVec.GetElement(i);
-				if (doneFlag != -1)
-				{
-					var val = new uint[limbCount];
-
-					for (var j = 0; j < limbCount; j++)
-					{
-						val[j] = sumOfSqrs[j].GetElement(i);
-					}
-
-					var rValue = FP31ValHelper.CreateRValue(sign: true, val, _fp31VecMath.ApFixedPointFormat.TargetExponent, RMapConstants.DEFAULT_PRECISION);
-					var doubles = RValueHelper.ConvertToDoubles(rValue);
-					var dv = doubles.Sum();
-
-					var nu_temp = Math.Log2(Math.Log(dv));
-					var nu = nu_temp / 3.55;
-
-					if (nu < 0 || nu > 1)
-					{
-						//var tnu = (ushort)Math.Round(nu * 10000);
-						//Debug.WriteLine($"WARNING: The EscapeVelocity: {nu} ({tnu}) is not in the range: 0..1");
-						ourCount++;
-						nu = 0;
-					}
-
-					var d = 1 - nu;
-					var e = (ushort)Math.Round(d * 10000);
-
-					escapeVelocities[i] = e;
-				}
-				else
-				{
-					escapeVelocities[i] = 0;
-				}
-			}
-
-			if (ourCount > 0)
-			{
-				Debug.WriteLine($"There were {ourCount} out of range events.");
-			}
-		}
-
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private int SaveCountsForDoneItems(Vector256<int> escapedFlagsVec, Vector256<int> targetReachedCompVec, 
 			Vector256<int> countsV, ref Vector256<int> resultCountsV,
 			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV)
@@ -604,6 +530,57 @@ namespace MSetGeneratorPrototype
 			}
 
 			return compositeIsDone;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void CalculateEscapeVelocities(Vector256<uint>[] sumOfSqrs, Vector256<int> targetReachedCompVec, ushort[] escapeVelocities)
+		{
+			Array.Clear(escapeVelocities);
+			var ourCount = 0;
+			var limbCount = _fp31VecMath.LimbCount;
+
+			for (var i = 0; i < escapeVelocities.Length; i++)
+			{
+				var doneFlag = targetReachedCompVec.GetElement(i);
+				if (doneFlag != -1)
+				{
+					var val = new uint[limbCount];
+
+					for (var j = 0; j < limbCount; j++)
+					{
+						val[j] = sumOfSqrs[j].GetElement(i);
+					}
+
+					var rValue = FP31ValHelper.CreateRValue(sign: true, val, _fp31VecMath.ApFixedPointFormat.TargetExponent, RMapConstants.DEFAULT_PRECISION);
+					var doubles = RValueHelper.ConvertToDoubles(rValue);
+					var dv = doubles.Sum();
+
+					var nu_temp = Math.Log2(Math.Log(dv));
+					var nu = nu_temp / 3.55;
+
+					if (nu < 0 || nu > 1)
+					{
+						//var tnu = (ushort)Math.Round(nu * 10000);
+						//Debug.WriteLine($"WARNING: The EscapeVelocity: {nu} ({tnu}) is not in the range: 0..1");
+						ourCount++;
+						nu = 0;
+					}
+
+					var d = 1 - nu;
+					var e = (ushort)Math.Round(d * 10000);
+
+					escapeVelocities[i] = e;
+				}
+				else
+				{
+					escapeVelocities[i] = 0;
+				}
+			}
+
+			if (ourCount > 0)
+			{
+				Debug.WriteLine($"There were {ourCount} out of range events.");
+			}
 		}
 
 		//private (int prevLimbCount, int newLimbCount) GetMathAndAllocateTempVars(MapSectionRequest mapSectionRequest)
@@ -827,14 +804,6 @@ namespace MSetGeneratorPrototype
 		{
 			mathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
 		}
-
-		//[Conditional("PERF")]
-		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		//private void UpdateResponseWithMops(MapSectionResponse mapSectionResponse, IIterationState iterationState, MathOpCounts mathOpCounts)
-		//{
-		//	mapSectionResponse.MathOpCounts = mathOpCounts.Clone();
-		//	mapSectionResponse.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
-		//}
 
 		//[Conditional("DIAG")]
 		//private void ResetWorkingValues(Vector256<uint>[] cRs, Vector256<uint>[] cIs, Vector256<uint>[] zRs, Vector256<uint>[] zIs, Vector256<int> justNowDone)
