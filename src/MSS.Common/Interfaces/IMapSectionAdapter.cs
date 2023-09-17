@@ -20,9 +20,9 @@ namespace MSS.Common
 		Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, BigVector blockPosition, CancellationToken ct);
 		MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, BigVector blockPosition);
 
-		Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct);
-		MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors);
-		MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors);
+		//Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct);
+		//MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors);
+		//MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors);
 
 		ObjectId? GetMapSectionId(ObjectId subdivisionId, BigVector blockPosition);
 

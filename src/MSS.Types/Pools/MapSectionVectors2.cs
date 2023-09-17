@@ -8,7 +8,6 @@ namespace MSS.Types
 	public class MapSectionVectors2 : IPoolable
 	{
 		private const int VALUE_SIZE = 2;
-		private const int BYTES_PER_PIXEL = 4;
 
 		#region Constructor
 
@@ -16,12 +15,11 @@ namespace MSS.Types
 			: this(
 				  blockSize, 
 				  ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * VALUE_SIZE), 
-				  ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * VALUE_SIZE), 
-				  ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * BYTES_PER_PIXEL)
+				  ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * VALUE_SIZE) 
 				  )
 		{ }
 
-		public MapSectionVectors2(SizeInt blockSize, byte[] counts, byte[] escapeVelocities, byte[] backBuffer)
+		public MapSectionVectors2(SizeInt blockSize, byte[] counts, byte[] escapeVelocities)
 		{
 			BlockSize = blockSize;
 			ValueCount = blockSize.NumberOfCells;
@@ -32,7 +30,6 @@ namespace MSS.Types
 
 			Counts = counts;
 			EscapeVelocities = escapeVelocities;
-			BackBuffer = backBuffer;
 
 			ReferenceCount = 0;
 		}
@@ -50,7 +47,6 @@ namespace MSS.Types
 
 		public byte[] Counts { get; set; }
 		public byte[] EscapeVelocities { get; set; }
-		public byte[] BackBuffer { get; init; }
 
 		#endregion
 
@@ -166,6 +162,28 @@ namespace MSS.Types
 			}
 		}
 
+		// Integer
+		public void FillCountsRow(int rowNumber, int[] dest)
+		{
+			var startIndex = ValuesPerRow * rowNumber;
+
+			for (var i = 0; i < ValuesPerRow; i++)
+			{
+				dest[i] = Counts[startIndex + i];
+			}
+		}
+
+		public void UpdateFromCountsRow(int rowNumber, int[] source)
+		{
+			// TODO: Fix UpdateFromCountsRow -- IterationStateSingleLimb uses this
+			//var startIndex = ValuesPerRow * rowNumber;
+
+			//for (var i = 0; i < ValuesPerRow; i++)
+			//{
+			//	Counts[startIndex + i] = (ushort)source[i];
+			//}
+		}
+
 		//// Byte
 		//public void FillCountsRow(int rowNumber, byte[] dest)
 		//{
@@ -255,8 +273,6 @@ namespace MSS.Types
 
 					ArrayPool<byte>.Shared.Return(Counts, clearArray: false);
 					ArrayPool<byte>.Shared.Return(EscapeVelocities, clearArray: false);
-					ArrayPool<byte>.Shared.Return(BackBuffer, clearArray: false);
-
 				}
 
 				_disposedValue = true;

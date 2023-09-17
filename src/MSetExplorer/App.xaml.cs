@@ -635,7 +635,7 @@ namespace MSetExplorer
 
 		private MapSectionVectorProvider CreateMapSectionVectorProvider(SizeInt blockSize, int defaultLimbCount, int initialPoolSize)
 		{
-			var mapSectionVectorsPool = new MapSectionVectorsPool(blockSize, initialPoolSize);
+			var mapSectionVectorsPool = new MapSectionVectorsPool2(blockSize, initialPoolSize);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(blockSize, defaultLimbCount, initialPoolSize);
 			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
 

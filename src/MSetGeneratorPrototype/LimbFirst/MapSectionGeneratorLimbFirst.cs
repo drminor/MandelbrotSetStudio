@@ -47,7 +47,7 @@ namespace MSetGeneratorPrototype
 			{
 				var stopwatch = Stopwatch.StartNew();
 
-				var (mapSectionVectors, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _fp31VectorsMath.LimbCount);
+				var (mapSectionVectors2, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest, _fp31VectorsMath.LimbCount);
 
 				var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 				_iterator.Threshold = (uint)mapCalcSettings.Threshold;
@@ -55,13 +55,13 @@ namespace MSetGeneratorPrototype
 				_iterator.MathOpCounts.Reset();
 
 				var targetIterationsVector = Vector256.Create(mapCalcSettings.TargetIterations);
-				var iterationState = new IterationStateLimbFirst(mapSectionVectors, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
+				var iterationState = new IterationStateLimbFirst(mapSectionVectors2, mapSectionZVectors, mapSectionRequest.IncreasingIterations, targetIterationsVector);
 
 				//ReportCoords(coords, _fp31VectorsMath.LimbCount, mapSectionRequest.Precision);
 				var completed = GenerateMapSectionRows(_iterator, iterationState, coords, mapCalcSettings, ct);
 				//Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
 
-				result = new MapSectionResponse(mapSectionRequest, requestCompleted: completed, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
+				result = new MapSectionResponse(mapSectionRequest, requestCompleted: completed, allRowsHaveEscaped: false, mapSectionVectors2, mapSectionZVectors);
 
 				stopwatch.Stop();
 				mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
@@ -221,10 +221,10 @@ namespace MSetGeneratorPrototype
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
 		}
 
-		private (MapSectionVectors, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest, int limbCount)
+		private (MapSectionVectors2, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest, int limbCount)
 		{
-			var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
-			mapSectionRequest.MapSectionVectors = null;
+			var mapSectionVectors2 = mapSectionRequest.MapSectionVectors2 ?? throw new ArgumentNullException("The MapSectionVectors is null.");
+			mapSectionRequest.MapSectionVectors2 = null;
 
 			//if (mapSectionRequest.IncreasingIterations && mapSectionRequest.MapSectionZVectors == null) 
 			//{
@@ -234,7 +234,7 @@ namespace MSetGeneratorPrototype
 			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? throw new ArgumentNullException("The MapSectionVectors is null."); //new MapSectionZVectors(mapSectionRequest.BlockSize, limbCount);
 			mapSectionRequest.MapSectionZVectors = null;
 
-			return (mapSectionVectors, mapSectionZVectors);
+			return (mapSectionVectors2, mapSectionZVectors);
 		}
 
 		private void FillZValues(MapSectionZVectors mapSectionZVectors, int rowNumber, FP31Vectors zrVectors, FP31Vectors ziVectors)

@@ -134,8 +134,7 @@ namespace MEngineClient
 					mapSectionVectors2 = new MapSectionVectors2(
 						mapSectionRequest.BlockSize,
 						mapSectionServiceResponse.Counts,
-						mapSectionServiceResponse.EscapeVelocities,
-						new byte[0]
+						mapSectionServiceResponse.EscapeVelocities
 						);
 
 					mapSectionResponse.MapSectionVectors2 = mapSectionVectors2;

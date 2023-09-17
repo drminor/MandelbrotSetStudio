@@ -202,21 +202,31 @@ namespace MapSectionProviderLib
 				var request = requestResponsePair.Item1;
 				var response = requestResponsePair.Item2;
 
+				//	if (response.MapSectionVectors != null)
+				//	{
+				//		var mapSection = _mapSectionBuilder.CreateMapSection(request, response.MapSectionVectors, jobNumber);
+				//		result.Add(mapSection);
+				//	}
+				//	else
+				//	{
+				//		if (response.MapSectionVectors2 != null)
+				//		{
+				//			var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
+				//			mapSectionVectors.Load(response.MapSectionVectors2.Counts, response.MapSectionVectors2.EscapeVelocities);
+
+				//			var mapSection = _mapSectionBuilder.CreateMapSection(request, mapSectionVectors, jobNumber);
+				//			result.Add(mapSection);
+				//		}
+				//	}
+				//}
+
 				if (response.MapSectionVectors != null)
 				{
+					//var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
+					//mapSectionVectors.Load(response.MapSectionVectors2.Counts, response.MapSectionVectors2.EscapeVelocities);
+
 					var mapSection = _mapSectionBuilder.CreateMapSection(request, response.MapSectionVectors, jobNumber);
 					result.Add(mapSection);
-				}
-				else
-				{
-					if (response.MapSectionVectors2 != null)
-					{
-						var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
-						mapSectionVectors.Load(response.MapSectionVectors2.Counts, response.MapSectionVectors2.EscapeVelocities);
-
-						var mapSection = _mapSectionBuilder.CreateMapSection(request, mapSectionVectors, jobNumber);
-						result.Add(mapSection);
-					}
 				}
 			}
 

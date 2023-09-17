@@ -177,15 +177,15 @@ namespace MSetGeneratorPrototype
 
 		#region Support Methods
 
-		private (MapSectionVectors, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
+		private (MapSectionVectors2, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
 		{
-			var mapSectionVectors = mapSectionRequest.MapSectionVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
-			mapSectionRequest.MapSectionVectors = null;
+			var mapSectionVectors2 = mapSectionRequest.MapSectionVectors2 ?? throw new ArgumentNullException("The MapSectionVectors is null.");
+			mapSectionRequest.MapSectionVectors2 = null;
 
 			var mapSectionZVectors = mapSectionRequest.MapSectionZVectors ?? throw new ArgumentNullException("The MapSectionVectors is null.");
 			mapSectionRequest.MapSectionZVectors = null;
 
-			return (mapSectionVectors, mapSectionZVectors);
+			return (mapSectionVectors2, mapSectionZVectors);
 		}
 
 		private bool[] CompressHasEscapedFlags(int[] hasEscapedFlags)

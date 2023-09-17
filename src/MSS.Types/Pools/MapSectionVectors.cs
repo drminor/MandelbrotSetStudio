@@ -180,7 +180,6 @@ namespace MSS.Types
 			}
 		}
 
-
 		// Integer
 		public void FillCountsRow(int rowNumber, int[] dest)
 		{

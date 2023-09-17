@@ -20,9 +20,6 @@ namespace MapSectionProviderLib
 	{
 		#region Private Properties
 
-		// TODO: Add a property to the MapSectionRequest to specify whether or not to Save the ZValues.
-
-
 		private const int NUMBER_OF_REQUEST_CONSUMERS = 2;
 		private const int REQUEST_QUEUE_CAPACITY = 50;
 		private const int RETURN_QUEUE_CAPACITY = 200;
@@ -115,7 +112,7 @@ namespace MapSectionProviderLib
 			jobNumber = GetNextRequestId();
 			var result = new List<Tuple<MapSectionRequest, MapSectionResponse>>();
 
-			MapSectionVectors? mapSectionVectors = null;
+			//MapSectionVectors? mapSectionVectors = null;
 
 			foreach (var request in mapSectionRequests)
 			{
@@ -135,19 +132,22 @@ namespace MapSectionProviderLib
 						request.FoundInRepo = true;
 						request.ProcessingEndTime = DateTime.UtcNow;
 
-						var backBuffer = new byte[request.BlockSize.NumberOfCells * 4];
-						var mapSectionVectors2 = new MapSectionVectors2(request.BlockSize, mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities, backBuffer);
-						var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors2);
+
+						var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+						mapSectionVectors.IncreaseRefCount();
+						var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
+
+						//var backBuffer = new byte[request.BlockSize.NumberOfCells * 4];
+						//var mapSectionVectors2 = new MapSectionVectors2(request.BlockSize, mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities, backBuffer);
+						//mapSectionResponse.MapSectionVectors2 = mapSectionVectors2;
 
 						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
-						mapSectionVectors = null;
+						//mapSectionVectors = null;
 
 						PersistJobMapSectionRecord(request, mapSectionResponse, ct);
 					}
 				}
 			}
-
-			_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
 
 			return result;
 		}
@@ -309,17 +309,21 @@ namespace MapSectionProviderLib
 						{
 							var mapSectionResponse = await FetchOrQueueForGenerationAsync(mapSectionWorkRequest, mapSectionGeneratorProcessor, ct);
 
-							if (mapSectionResponse != null)
+							var mapSectionVectors = mapSectionResponse?.MapSectionVectors;
+
+							if (mapSectionVectors != null)
 							{
-								MapSection mapSection; 
-								if (mapSectionResponse.MapSectionVectors != null)
-								{
-									mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, mapSectionWorkRequest.JobId);
-								}
-								else
-								{
-									mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors2, mapSectionWorkRequest.JobId);
-								}
+								//MapSection mapSection; 
+								//if (mapSectionResponse.MapSectionVectors != null)
+								//{
+								//	mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors, mapSectionWorkRequest.JobId);
+								//}
+								//else
+								//{
+								//	mapSection = CreateMapSection(mapSectionRequest, mapSectionResponse.MapSectionVectors2, mapSectionWorkRequest.JobId);
+								//}
+
+								var mapSection = CreateMapSection(mapSectionRequest, mapSectionVectors, mapSectionWorkRequest.JobId);
 
 								mapSectionWorkRequest.Response = mapSection;
 								_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
@@ -359,7 +363,16 @@ namespace MapSectionProviderLib
 					request.ProcessingEndTime = DateTime.UtcNow;
 
 					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+					mapSectionVectors.IncreaseRefCount();
 					var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
+
+					//var backBuffer = new byte[request.BlockSize.NumberOfCells * 4];
+					//var mapSectionVectors2 = new MapSectionVectors2(request.BlockSize, mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities, backBuffer);
+					//var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors2);
+
+					//var mapSectionVectors2 = _mapSectionVectorProvider.ObtainMapSectionVectors2();
+					//var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors2);
+
 					request.MapSectionId = mapSectionResponse.MapSectionId;
 
 					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
@@ -391,8 +404,16 @@ namespace MapSectionProviderLib
 							//mapSectionVectors.Load(mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities);
 							//request.MapSectionVectors = mapSectionVectors;
 
-							var mapSectionVectors2 = new MapSectionVectors2(request.BlockSize, mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities, Array.Empty<byte>());
+							var mapSectionVectors2 = new MapSectionVectors2(request.BlockSize, mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities);
 							request.MapSectionVectors2 = mapSectionVectors2;
+
+							//var mapSectionVectors2 = _mapSectionVectorProvider.ObtainMapSectionVectors2();
+
+							//mapSectionVectors2.Counts = mapSectionBytes.Counts;
+							//mapSectionVectors2.EscapeVelocities = mapSectionBytes.EscapeVelocities;
+
+							//Array.Copy(mapSectionBytes.Counts, mapSectionVectors2.Counts, mapSectionBytes.Counts.Length);
+							//Array.Copy(mapSectionBytes.EscapeVelocities, mapSectionVectors2.EscapeVelocities, mapSectionBytes.EscapeVelocities.Length);
 						}
 						//else
 						//{
@@ -512,16 +533,16 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionResponse?> FetchAsyncOld(MapSectionRequest mapSectionRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
-		{
-			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+		//private async Task<MapSectionResponse?> FetchAsyncOld(MapSectionRequest mapSectionRequest, CancellationToken ct, MapSectionVectors mapSectionVectors)
+		//{
+		//	var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 
-			// TODO: Add property: OriginalSourceSubdivisionId to the MapSectionResponse class.
-			var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors, ct);
-			//mapSectionResponse.OriginalSourceSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
+		//	// TODO: Add property: OriginalSourceSubdivisionId to the MapSectionResponse class.
+		//	var mapSectionResponse = await _mapSectionAdapter.GetMapSectionAsync(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors, ct);
+		//	//mapSectionResponse.OriginalSourceSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
 
-			return mapSectionResponse;
-		}
+		//	return mapSectionResponse;
+		//}
 
 		private async Task<MapSectionBytes?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
@@ -534,20 +555,20 @@ namespace MapSectionProviderLib
 			return mapSectionBytes;
 		}
 
-		private MapSectionResponse? FetchOld(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
-		{
-			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-			var mapSectionResponse = _mapSectionAdapter.GetMapSection(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors);
+		//private MapSectionResponse? FetchOld(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
+		//{
+		//	var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+		//	var mapSectionResponse = _mapSectionAdapter.GetMapSection(subdivisionId, mapSectionRequest.BlockPosition, mapSectionVectors);
 
-			return mapSectionResponse;
-		}
+		//	return mapSectionResponse;
+		//}
 
 		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-			var mapSectionResponse = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.BlockPosition);
+			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.BlockPosition);
 
-			return mapSectionResponse;
+			return mapSectionBytes;
 		}
 
 		private async Task<ZValues?> FetchTheZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
@@ -672,7 +693,10 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
+				//var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
+				var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+				mapSectionVectors.IncreaseRefCount();
+
 				mapSectionVectors.Load(mapSectionVectors2.Counts, mapSectionVectors2.EscapeVelocities);
 
 				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobId);
@@ -693,7 +717,12 @@ namespace MapSectionProviderLib
 			// If the request is not cancelled -- OR -- if SaveTheZValues is 'On'.
 			if (!mapSectionResponse.RequestCancelled || mapSectionRequest.MapCalcSettings.SaveTheZValues)
 			{
-				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
+				var zRefCnt = mapSectionResponse.MapSectionZVectors?.ReferenceCount ?? 0;
+				Debug.Assert(zRefCnt == 0 || zRefCnt == 1, "PersistResponse: The MapSectionZVectors Reference Count should be either 0 or 1.");
+
+				Debug.Assert(mapSectionResponse.MapSectionVectors == null, "PersistResponse: The MapSectionVectors should be null.");
+
+				mapSectionResponse.MapSectionVectors2?.IncreaseRefCount();
 				mapSectionResponse.MapSectionZVectors?.IncreaseRefCount();
 				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse), ct);
 			}
@@ -739,24 +768,6 @@ namespace MapSectionProviderLib
 			{
 				result = _cancelledJobIds.Contains(jobId);
 			}
-
-			return result;
-		}
-
-		private MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors2 mapSectionVectors2)
-		{
-			//mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
-
-			var result = new MapSectionResponse
-			(
-				mapSectionId: target.Id.ToString(),
-				subdivisionId: target.SubdivisionId.ToString(),
-				blockPosition: target.BlockPosition,
-				mapCalcSettings: target.MapCalcSettings,
-				requestCompleted: target.Complete,
-				allRowsHaveEscaped: target.AllRowsHaveEscaped,
-				mapSectionVectors2: mapSectionVectors2
-			);
 
 			return result;
 		}

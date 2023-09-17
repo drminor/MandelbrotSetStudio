@@ -418,9 +418,9 @@ namespace MSetGeneratorPrototype
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);
 		}
 
-		private (MapSectionVectors, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
+		private (MapSectionVectors2, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
 		{
-			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
+			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
 			if (msv == null) throw new ArgumentException("The MapSectionVectors is null.");
 			if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
 

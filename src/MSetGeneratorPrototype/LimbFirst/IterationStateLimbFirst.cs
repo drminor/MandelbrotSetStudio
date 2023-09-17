@@ -6,16 +6,16 @@ namespace MSetGeneratorPrototype
 {
 	public ref struct IterationStateLimbFirst
 	{
-		private readonly MapSectionVectors _mapSectionVectors;
+		private readonly MapSectionVectors2 _mapSectionVectors2;
 		private readonly MapSectionZVectors _mapSectionZVectors;
 
 		private List<int> _inPlayBackingList;
 
 		#region Constructor
 
-		public IterationStateLimbFirst(MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors, bool updatingIterationCount, Vector256<int> targetIterationsVector)
+		public IterationStateLimbFirst(MapSectionVectors2 mapSectionVectors2, MapSectionZVectors mapSectionZVectors, bool updatingIterationCount, Vector256<int> targetIterationsVector)
 		{
-			_mapSectionVectors = mapSectionVectors;
+			_mapSectionVectors2 = mapSectionVectors2;
 			_mapSectionZVectors = mapSectionZVectors;
 
 			UpdatingIterationsCount = updatingIterationCount;
@@ -25,14 +25,14 @@ namespace MSetGeneratorPrototype
 			LimbCount = mapSectionZVectors.LimbCount;
 			RowCount = mapSectionZVectors.BlockSize.Height;
 
-			ValuesPerRow = mapSectionVectors.ValuesPerRow;
+			ValuesPerRow = mapSectionVectors2.ValuesPerRow;
 			VectorsPerRow = mapSectionZVectors.VectorsPerZValueRow;
 			VectorsPerFlagRow = mapSectionZVectors.VectorsPerRow;
 
 			RowNumber = -1;
 
 			CountsRow = new Vector256<int>[VectorsPerFlagRow];
-			mapSectionVectors.FillCountsRow(0, CountsRow);
+			mapSectionVectors2.FillCountsRow(0, CountsRow);
 
 			RowHasEscaped = _mapSectionZVectors.RowHasEscaped;
 			RowUsedCalcs = new long[RowCount];
@@ -58,7 +58,7 @@ namespace MSetGeneratorPrototype
 		public bool UpdatingIterationsCount { get; private set; }
 		public Vector256<int> TargetIterationsVector { get; private set; }
 
-		public SizeInt BlockSize => _mapSectionVectors.BlockSize;
+		public SizeInt BlockSize => _mapSectionVectors2.BlockSize;
 		public int ValueCount { get; init; }
 		public int LimbCount { get; init; }
 		public int RowCount { get; init; }
@@ -101,7 +101,7 @@ namespace MSetGeneratorPrototype
 			_mapSectionZVectors.FillHasEscapedFlagsRow(RowNumber, HasEscapedFlags);
 
 			// Get the counts
-			_mapSectionVectors.FillCountsRow(RowNumber, CountsRow);
+			_mapSectionVectors2.FillCountsRow(RowNumber, CountsRow);
 
 			Array.Clear(DoneFlags, 0, DoneFlags.Length);
 			Array.Clear(UnusedCalcs, 0, UnusedCalcs.Length);
@@ -124,7 +124,7 @@ namespace MSetGeneratorPrototype
 
 		public void UpdateTheCountsSource(int rowNumber)
 		{
-			_mapSectionVectors.UpdateFromCountsRow(rowNumber, CountsRow);
+			_mapSectionVectors2.UpdateFromCountsRow(rowNumber, CountsRow);
 		}
 
 		public long GetTotalUnusedCalcs()

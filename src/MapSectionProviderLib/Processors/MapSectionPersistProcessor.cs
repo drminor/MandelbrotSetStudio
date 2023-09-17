@@ -103,6 +103,7 @@ namespace MapSectionProviderLib
 
 					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{
+						Debug.Assert(mapSectionResponse.MapSectionVectors2 == null & mapSectionResponse.MapSectionZVectors == null, "MapSectionResponse should not have any Vectors here.");
 						_ = await SaveJobMapSection(mapSectionRequest, mapSectionResponse);
 					}
 					else
@@ -115,9 +116,9 @@ namespace MapSectionProviderLib
 						{
 							Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
 						}
-					}
 
-					_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
+						_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
+					}
 				}
 				catch (OperationCanceledException)
 				{

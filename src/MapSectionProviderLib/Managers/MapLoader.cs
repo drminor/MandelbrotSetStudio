@@ -203,7 +203,7 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					//Debug.WriteLine("Not calling the callback, the mapSectionResult is empty.");
+					Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.JobId}; Screen Position: {mapSectionRequest.ScreenPosition}.");
 				}
 
 				mapSectionRequest.Handled = true;

@@ -263,106 +263,100 @@ namespace MSetRepo
 
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
+			if (source.MapSectionVectors2 == null)
+			{
+				throw new InvalidOperationException("The MapSectionResponse::MapSectionVectors is null.");
+			}
+
 			MapSectionRecord result;
 
 			// TODO: Create a new type: LongVector to hold the RepoBlockPosition, instead of using a pair of longs as does the BigVector
-
 			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
 
-			if (source.MapSectionVectors == null)
+			result = new MapSectionRecord
+				(
+				DateCreatedUtc: DateTime.UtcNow,
+				SubdivisionId: new ObjectId(source.SubdivisionId),
+
+				BlockPosXHi: blockPositionDto.X[0],
+				BlockPosXLo: blockPositionDto.X[1],
+				BlockPosYHi: blockPositionDto.Y[0],
+				BlockPosYLo: blockPositionDto.Y[1],
+
+				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
+
+				//	Counts: new byte[source.MapSectionVectors2.Counts.Length],
+				//	EscapeVelocities: new byte[source.MapSectionVectors2.EscapeVelocities.Length],
+
+				Counts: source.MapSectionVectors2.Counts,
+				EscapeVelocities: source.MapSectionVectors2.EscapeVelocities,
+
+				AllRowsHaveEscaped: source.AllRowsHaveEscaped
+				)
 			{
-				if (source.MapSectionVectors2 == null)
-				{
-					throw new InvalidOperationException("The MapSectionRespone has a null MapSectionVectors.");
-				}
+				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
+				Complete = source.RequestCompleted,
+				LastAccessed = DateTime.UtcNow,
+			};
 
-				result = new MapSectionRecord
-					(
-					DateCreatedUtc: DateTime.UtcNow,
-					SubdivisionId: new ObjectId(source.SubdivisionId),
-
-					BlockPosXHi: blockPositionDto.X[0],
-					BlockPosXLo: blockPositionDto.X[1],
-					BlockPosYHi: blockPositionDto.Y[0],
-					BlockPosYLo: blockPositionDto.Y[1],
-
-					MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
-
-					Counts: source.MapSectionVectors2.Counts,
-					EscapeVelocities: source.MapSectionVectors2.EscapeVelocities,
-					AllRowsHaveEscaped: source.AllRowsHaveEscaped
-					)
-				{
-					Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
-					Complete = source.RequestCompleted,
-					LastAccessed = DateTime.UtcNow,
-				};
-			}
-			else
-			{
-				result = new MapSectionRecord
-					(
-					DateCreatedUtc: DateTime.UtcNow,
-					SubdivisionId: new ObjectId(source.SubdivisionId),
-
-					BlockPosXHi: blockPositionDto.X[0],
-					BlockPosXLo: blockPositionDto.X[1],
-					BlockPosYHi: blockPositionDto.Y[0],
-					BlockPosYLo: blockPositionDto.Y[1],
-
-					MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
-
-					Counts: source.MapSectionVectors.GetSerializedCounts(),
-					EscapeVelocities: source.MapSectionVectors.GetSerializedEscapeVelocities(),
-					AllRowsHaveEscaped: source.AllRowsHaveEscaped
-					)
-				{
-					Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
-					Complete = source.RequestCompleted,
-					LastAccessed = DateTime.UtcNow,
-				};
-			}
+			//Array.Copy(source.MapSectionVectors2.Counts, result.Counts, result.Counts.Length);
+			//Array.Copy(source.MapSectionVectors2.EscapeVelocities, result.EscapeVelocities, result.EscapeVelocities.Length);
 
 			return result;
 		}
 
-		public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors)
-		{
-			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
+		//public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors)
+		//{
+		//	var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
-			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
+		//	mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
 
-			var result = new MapSectionResponse
-			(
-				mapSectionId: target.Id.ToString(),
-				subdivisionId: target.SubdivisionId.ToString(),
-				blockPosition: blockPosition,
-				mapCalcSettings: target.MapCalcSettings,
-				requestCompleted: target.Complete,
-				allRowsHaveEscaped: target.AllRowsHaveEscaped,
-				mapSectionVectors: mapSectionVectors
-			);
+		//	var result = new MapSectionResponse
+		//	(
+		//		mapSectionId: target.Id.ToString(),
+		//		subdivisionId: target.SubdivisionId.ToString(),
+		//		blockPosition: blockPosition,
+		//		mapCalcSettings: target.MapCalcSettings,
+		//		requestCompleted: target.Complete,
+		//		allRowsHaveEscaped: target.AllRowsHaveEscaped,
+		//		mapSectionVectors: mapSectionVectors
+		//	);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
-		{
-			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
+		//public MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
+		//{
+		//	mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
 
-			var result = new MapSectionResponse
-			(
-				mapSectionId: target.Id.ToString(),
-				subdivisionId: target.SubdivisionId.ToString(),
-				blockPosition: target.BlockPosition,
-				mapCalcSettings: target.MapCalcSettings,
-				requestCompleted: target.Complete,
-				allRowsHaveEscaped: target.AllRowsHaveEscaped,
-				mapSectionVectors: mapSectionVectors
-			);
+		//	var result = new MapSectionResponse
+		//	(
+		//		mapSectionId: target.Id.ToString(),
+		//		subdivisionId: target.SubdivisionId.ToString(),
+		//		blockPosition: target.BlockPosition,
+		//		mapCalcSettings: target.MapCalcSettings,
+		//		requestCompleted: target.Complete,
+		//		allRowsHaveEscaped: target.AllRowsHaveEscaped,
+		//		mapSectionVectors: mapSectionVectors
+		//	);
 
-			return result;
-		}
+		//	return result;
+		//}
+
+		//private MapSectionResponse MapFrom(MapSectionBytes target)
+		//{
+		//	var result = new MapSectionResponse
+		//	(
+		//		mapSectionId: target.Id.ToString(),
+		//		subdivisionId: target.SubdivisionId.ToString(),
+		//		blockPosition: target.BlockPosition,
+		//		mapCalcSettings: target.MapCalcSettings,
+		//		requestCompleted: target.Complete,
+		//		allRowsHaveEscaped: target.AllRowsHaveEscaped
+		//	);
+
+		//	return result;
+		//}
 
 		public MapSectionBytes MapFrom(MapSectionRecord mSR)
 		{

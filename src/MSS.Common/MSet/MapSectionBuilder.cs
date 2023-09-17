@@ -79,7 +79,7 @@ namespace MSS.Common
 				var mapSectionRequest = CreateRequest(jobType, screenPosition, screenPositionRelativeToCenter, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, 
 					mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, requestNumber++);
 
-				mapSectionRequest.MapSectionVectors = mapSection.MapSectionVectors;
+				//mapSectionRequest.MapSectionVectors = mapSection.MapSectionVectors;
 
 				result.Add(mapSectionRequest);
 			}
@@ -234,7 +234,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		// TODO: Implement a version of CreateMapSection that takes a MapSectionVectors2 instead of a MapSectionVectors
+
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, int jobNumber)
 		{
 			var repoBlockPosition = mapSectionRequest.BlockPosition;

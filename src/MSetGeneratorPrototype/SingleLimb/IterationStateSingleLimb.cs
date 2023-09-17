@@ -7,26 +7,26 @@ namespace MSetGeneratorPrototype
 	{
 		//private readonly double[] _samplePointsX;
 		private readonly double[] _samplePointsY;
-		private readonly MapSectionVectors _mapSectionVectors;
+		private readonly MapSectionVectors2 _mapSectionVectors2;
 		private readonly MapSectionZVectors _mapSectionZVectors;
 
 		private List<int> _inPlayBackingList;
 
 		#region Constructor
 
-		public IterationStateSingleLimb(double[] samplePointsX, double[] samplePointsY, MapSectionVectors mapSectionVectors, MapSectionZVectors mapSectionZVectors,
+		public IterationStateSingleLimb(double[] samplePointsX, double[] samplePointsY, MapSectionVectors2 mapSectionVectors2, MapSectionZVectors mapSectionZVectors,
 			bool increasingIterations, int targetIterations)
 		{
 			//_samplePointsX = samplePointsX;
 			_samplePointsY = samplePointsY;
-			_mapSectionVectors = mapSectionVectors;
+			_mapSectionVectors2 = mapSectionVectors2;
 			_mapSectionZVectors = mapSectionZVectors;
 
 			IncreasingIterations = increasingIterations;
 			TargetIterations = targetIterations;
 
 			ValueCount = mapSectionZVectors.ValueCount;
-			ValuesPerRow = mapSectionVectors.ValuesPerRow;
+			ValuesPerRow = mapSectionVectors2.ValuesPerRow;
 
 			RowNumber = null;
 
@@ -36,7 +36,7 @@ namespace MSetGeneratorPrototype
 			CountsRowV = new int[ValuesPerRow];
 
 			// No rows have escaped -- not supporting IncreasingIterations.
-			RowHasEscaped = new bool[mapSectionVectors.BlockSize.Height]; // _mapSectionZVectors.GetRowHasEscaped();
+			RowHasEscaped = new bool[mapSectionVectors2.BlockSize.Height]; // _mapSectionZVectors.GetRowHasEscaped();
 
 			HasEscapedFlagsRowV = new bool[ValuesPerRow];
 			ZrsRowV = new double[ValuesPerRow];
@@ -62,7 +62,7 @@ namespace MSetGeneratorPrototype
 		public bool IncreasingIterations { get; private set; }
 		public int TargetIterations { get; private set; }
 
-		public SizeInt BlockSize => _mapSectionVectors.BlockSize;
+		public SizeInt BlockSize => _mapSectionVectors2.BlockSize;
 		public int ValueCount { get; init; }
 		public int ValuesPerRow { get; init; }
 
@@ -98,7 +98,7 @@ namespace MSetGeneratorPrototype
 			{
 				// Update the _mapSectionVectors with the current row properties
 				_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV.Cast<int>().ToArray());
-				_mapSectionVectors.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
+				_mapSectionVectors2.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
 				//_mapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
 				//_mapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
 			}
@@ -139,7 +139,7 @@ namespace MSetGeneratorPrototype
 					HasEscapedFlagsRowV = temp.Cast<bool>().ToArray();
 
 					//CountsRow = _mapSectionVectors.GetCountsRow(rowNumber);
-					_mapSectionVectors.FillCountsRow(rowNumber, CountsRowV);
+					_mapSectionVectors2.FillCountsRow(rowNumber, CountsRowV);
 
 					Array.Clear(DoneFlags, 0, DoneFlags.Length);
 

@@ -11,28 +11,28 @@
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted: false,
 				  allRowsHaveEscaped: false,
-				  mapSectionVectors: null,
+				  mapSectionVectors2: null,
 				  mapSectionZVectors: null,
 				  requestCancelled: isCancelled
 				  )
 		{ }
 
-		public MapSectionResponse(MapSectionRequest mapSectionRequest, 
-			bool requestCompleted,
-			bool allRowsHaveEscaped, 
-			MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
-			: this(
-				  mapSectionRequest.MapSectionId, 
-				  mapSectionRequest.SubdivisionId,
-				  blockPosition: mapSectionRequest.BlockPosition,
-				  mapSectionRequest.MapCalcSettings,
-				  requestCompleted,
-				  allRowsHaveEscaped, 
-				  mapSectionVectors, 
-				  mapSectionZVectors,
-				  requestCancelled
-				  )
-		{ }
+		//public MapSectionResponse(MapSectionRequest mapSectionRequest, 
+		//	bool requestCompleted,
+		//	bool allRowsHaveEscaped, 
+		//	MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
+		//	: this(
+		//		  mapSectionRequest.MapSectionId, 
+		//		  mapSectionRequest.SubdivisionId,
+		//		  blockPosition: mapSectionRequest.BlockPosition,
+		//		  mapSectionRequest.MapCalcSettings,
+		//		  requestCompleted,
+		//		  allRowsHaveEscaped, 
+		//		  mapSectionVectors, 
+		//		  mapSectionZVectors,
+		//		  requestCancelled
+		//		  )
+		//{ }
 
 		public MapSectionResponse(MapSectionRequest mapSectionRequest,
 			bool requestCompleted,
@@ -53,12 +53,12 @@
 
 
 		public MapSectionResponse(
-			string? mapSectionId, 
+			string? mapSectionId,
 			string subdivisionId,
 			BigVector blockPosition,
 			MapCalcSettings mapCalcSettings,
 			bool requestCompleted,
-			bool allRowsHaveEscaped, 
+			bool allRowsHaveEscaped,
 			MapSectionVectors? mapSectionVectors = null, MapSectionZVectors? mapSectionZVectors = null, bool requestCancelled = false)
 		{
 			MapSectionId = mapSectionId;
@@ -68,8 +68,9 @@
 			RequestCompleted = requestCompleted;
 			AllRowsHaveEscaped = allRowsHaveEscaped;
 			RequestCancelled = requestCancelled;
-			
+
 			MapSectionVectors = mapSectionVectors;
+			MapSectionVectors2 = null;
 			MapSectionZVectors = mapSectionZVectors;
 		}
 
@@ -90,6 +91,7 @@
 			AllRowsHaveEscaped = allRowsHaveEscaped;
 			RequestCancelled = requestCancelled;
 
+			MapSectionVectors = null;
 			MapSectionVectors2 = mapSectionVectors2;
 			MapSectionZVectors = mapSectionZVectors;
 		}
@@ -115,7 +117,7 @@
 		public MapSectionResponse CreateCopySansVectors()
 		{
 			var result = new MapSectionResponse(MapSectionId, SubdivisionId, BlockPosition, MapCalcSettings, 
-				RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
+				RequestCompleted, AllRowsHaveEscaped, mapSectionVectors2: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
 			return result;
 		}
 

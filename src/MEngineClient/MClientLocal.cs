@@ -79,6 +79,7 @@ namespace MEngineClient
 				if (mapSectionRequest.MapSectionVectors2 == null)
 				{
 					var mapSectionVectors2 = new MapSectionVectors2(RMapConstants.BLOCK_SIZE);
+					mapSectionVectors2.IncreaseRefCount();
 					mapSectionRequest.MapSectionVectors2 = mapSectionVectors2;
 				}
 

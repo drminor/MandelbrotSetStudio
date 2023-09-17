@@ -1,7 +1,6 @@
 ﻿using MEngineDataContracts;
 using MongoDB.Bson;
 using MSetGeneratorPrototype;
-using MSetRepo;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
 using MSS.Types;
@@ -11,10 +10,7 @@ using ProtoBuf.Grpc;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
 using System.Threading;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MEngineService.Services
 {
@@ -154,8 +150,7 @@ namespace MEngineService.Services
 				return null;
 			}
 
-			var backBuffer = new byte[0];
-			var mapSectionVectors2 = new MapSectionVectors2(_blockSize, req.Counts, req.EscapeVelocities, backBuffer);
+			var mapSectionVectors2 = new MapSectionVectors2(_blockSize, req.Counts, req.EscapeVelocities);
 
 			return mapSectionVectors2;
 		}
@@ -246,6 +241,7 @@ namespace MEngineService.Services
 				if (mapSectionRequest.MapSectionVectors2 == null)
 				{
 					var mapSectionVectors2 = new MapSectionVectors2(RMapConstants.BLOCK_SIZE);
+					mapSectionVectors2.IncreaseRefCount();
 					mapSectionRequest.MapSectionVectors2 = mapSectionVectors2;
 				}
 
@@ -275,7 +271,7 @@ namespace MEngineService.Services
 
 		private MapSectionVectorProvider CreateMapSectionVectorProvider(SizeInt blockSize, int defaultLimbCount, int initialPoolSize)
 		{
-			var mapSectionVectorsPool = new MapSectionVectorsPool(blockSize, initialPoolSize);
+			var mapSectionVectorsPool = new MapSectionVectorsPool2(blockSize, initialPoolSize);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(blockSize, defaultLimbCount, initialPoolSize);
 			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
 

@@ -90,7 +90,7 @@ namespace MSS.Types.MSet
 		public int Precision { get; set; }
 		public int LimbCount { get; set; }
 
-		public MapSectionVectors? MapSectionVectors { get; set; }
+		//public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionVectors2? MapSectionVectors2 { get; set; }
 
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
@@ -117,17 +117,16 @@ namespace MSS.Types.MSet
 			return $"Id: {MapSectionId}, S:{SubdivisionId}, ScrPos:{ScreenPosition}.";
 		}
 
-		public (MapSectionVectors? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut()
-		{
-			var msv = MapSectionVectors;
-			var mszv = MapSectionZVectors;
+		//public (MapSectionVectors? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut()
+		//{
+		//	var msv = MapSectionVectors;
+		//	var mszv = MapSectionZVectors;
 
-			MapSectionVectors = null;
-			MapSectionZVectors = null;
+		//	MapSectionVectors = null;
+		//	MapSectionZVectors = null;
 
-			return (msv, mszv);
-
-		}
+		//	return (msv, mszv);
+		//}
 
 		public (MapSectionVectors2? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut2()
 		{
