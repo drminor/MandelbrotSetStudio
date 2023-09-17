@@ -103,7 +103,7 @@ namespace MapSectionProviderLib
 
 					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{
-						Debug.Assert(mapSectionResponse.MapSectionVectors2 == null & mapSectionResponse.MapSectionZVectors == null, "MapSectionResponse should not have any Vectors here.");
+						Debug.Assert(mapSectionResponse.AllVectorPropertiesAreNull, "MapSectionPersistProcessor: MapSectionResponse should not have any non-null Vector properties upon OnlyInsertJobMapSectionRecord.");
 						_ = await SaveJobMapSection(mapSectionRequest, mapSectionResponse);
 					}
 					else

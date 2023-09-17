@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
 namespace MSS.Types
 {
-	public class MapSectionVectors2 : IPoolable
+	public class MapSectionVectors2 //: IPoolable
 	{
 		private const int VALUE_SIZE = 2;
+		private readonly bool _arrayPoolWasUsed = false;
 
 		#region Constructor
 
@@ -17,7 +19,9 @@ namespace MSS.Types
 				  ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * VALUE_SIZE), 
 				  ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * VALUE_SIZE) 
 				  )
-		{ }
+		{
+			_arrayPoolWasUsed = true;
+		}
 
 		public MapSectionVectors2(SizeInt blockSize, byte[] counts, byte[] escapeVelocities)
 		{
@@ -31,7 +35,7 @@ namespace MSS.Types
 			Counts = counts;
 			EscapeVelocities = escapeVelocities;
 
-			ReferenceCount = 0;
+			//ReferenceCount = 0;
 		}
 
 		#endregion
@@ -47,70 +51,6 @@ namespace MSS.Types
 
 		public byte[] Counts { get; set; }
 		public byte[] EscapeVelocities { get; set; }
-
-		#endregion
-
-		#region Block Level Methods
-
-		//public void Load(byte[] counts, byte[] escapeVelocites)
-		//{
-		//	var destBackCounts = MemoryMarshal.Cast<ushort, byte>(Counts);
-		//	var destBackEscapeVelocities = MemoryMarshal.Cast<ushort, byte>(EscapeVelocities);
-
-		//	for (var i = 0; i < counts.Length; i++)
-		//	{
-		//		destBackCounts[i] = counts[i];
-		//		destBackEscapeVelocities[i] = escapeVelocites[i];
-		//	}
-		//}
-
-		//public void LoadCounts(byte[] counts)
-		//{
-		//	var destBackCounts = MemoryMarshal.Cast<ushort, byte>(Counts);
-
-		//	for (var i = 0; i < counts.Length; i++)
-		//	{
-		//		destBackCounts[i] = counts[i];
-		//	}
-		//}
-
-		//public void LoadEscapeVelocities(byte[] escapeVelocites)
-		//{
-		//	var destBackEscapeVelocities = MemoryMarshal.Cast<ushort, byte>(EscapeVelocities);
-
-		//	for (var i = 0; i < escapeVelocites.Length; i++)
-		//	{
-		//		destBackEscapeVelocities[i] = escapeVelocites[i];
-		//	}
-		//}
-
-		//public byte[] GetSerializedCounts()
-		//{
-		//	var result = new byte[TotalByteCount];
-
-		//	var destSource = MemoryMarshal.Cast<ushort, byte>(Counts);
-
-		//	for (var i = 0; i < result.Length; i++)
-		//	{
-		//		result[i] = destSource[i];
-		//	}
-
-		//	return result;
-		//}
-
-		//public byte[] GetSerializedEscapeVelocities()
-		//{
-		//	var result = new byte[TotalByteCount];
-
-		//	var destSource = MemoryMarshal.Cast<ushort, byte>(EscapeVelocities);
-
-		//	for (var i = 0; i < result.Length; i++)
-		//	{
-		//		result[i] = destSource[i];
-		//	}
-
-		//	return result;
-		//}
 
 		#endregion
 
@@ -209,24 +149,23 @@ namespace MSS.Types
 		//	}
 		//}
 
-
 		#endregion
 
 		#region IPoolable Support
 
-		public int ReferenceCount { get; private set; }
+		//public int ReferenceCount { get; private set; }
 
-		public int IncreaseRefCount()
-		{
-			ReferenceCount++;
-			return ReferenceCount;
-		}
+		//public int IncreaseRefCount()
+		//{
+		//	ReferenceCount++;
+		//	return ReferenceCount;
+		//}
 
-		public int DecreaseRefCount()
-		{
-			ReferenceCount--;
-			return ReferenceCount;
-		}
+		//public int DecreaseRefCount()
+		//{
+		//	ReferenceCount--;
+		//	return ReferenceCount;
+		//}
 
 		public void ResetObject()
 		{
@@ -266,13 +205,18 @@ namespace MSS.Types
 				{
 					// Dispose managed state (managed objects)
 
-					//if (!FromRepo)
-					//{
-					//	ArrayPool<ushort>.Shared.Return(Counts, clearArray: true);
-					//}
-
-					ArrayPool<byte>.Shared.Return(Counts, clearArray: false);
-					ArrayPool<byte>.Shared.Return(EscapeVelocities, clearArray: false);
+					if (_arrayPoolWasUsed)
+					{
+						try
+						{
+							ArrayPool<byte>.Shared.Return(Counts, clearArray: false);
+							ArrayPool<byte>.Shared.Return(EscapeVelocities, clearArray: false);
+						}
+						catch (Exception e)
+						{
+							Debug.WriteLine($"Got Exception: {e} while disposing the MapSectionVectors2.");
+						}
+					}
 				}
 
 				_disposedValue = true;

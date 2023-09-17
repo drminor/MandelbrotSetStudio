@@ -55,6 +55,12 @@ namespace MEngineClient
 			{
 				mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
+				if (mapSectionRequest.ScreenPosition.X == 0 && mapSectionRequest.ScreenPosition.Y == 0)
+				{
+					Debug.WriteLine($"MClientLocal::GenerateMapSection::ScreenPos = 0,0: ZVecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionZVectorsLeased} Vecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectorsLeased}; " +
+						$"Vecs2 Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectors2Leased}. Number MapSection returns refused: {_mapSectionVectorProvider.NumberOfRefusedMapSectionReturns}.");
+				}
+
 				var stopWatch = Stopwatch.StartNew();
 				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, ct);
 				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
@@ -79,7 +85,6 @@ namespace MEngineClient
 				if (mapSectionRequest.MapSectionVectors2 == null)
 				{
 					var mapSectionVectors2 = new MapSectionVectors2(RMapConstants.BLOCK_SIZE);
-					mapSectionVectors2.IncreaseRefCount();
 					mapSectionRequest.MapSectionVectors2 = mapSectionVectors2;
 				}
 

@@ -114,6 +114,8 @@
 
 		public bool RecordOnFile => !string.IsNullOrEmpty(MapSectionId);
 
+		public bool AllVectorPropertiesAreNull => !(MapSectionVectors != null || MapSectionVectors2 != null || MapSectionZVectors != null);
+
 		public MapSectionResponse CreateCopySansVectors()
 		{
 			var result = new MapSectionResponse(MapSectionId, SubdivisionId, BlockPosition, MapCalcSettings, 

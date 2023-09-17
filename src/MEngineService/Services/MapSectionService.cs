@@ -241,7 +241,6 @@ namespace MEngineService.Services
 				if (mapSectionRequest.MapSectionVectors2 == null)
 				{
 					var mapSectionVectors2 = new MapSectionVectors2(RMapConstants.BLOCK_SIZE);
-					mapSectionVectors2.IncreaseRefCount();
 					mapSectionRequest.MapSectionVectors2 = mapSectionVectors2;
 				}
 
@@ -271,7 +270,7 @@ namespace MEngineService.Services
 
 		private MapSectionVectorProvider CreateMapSectionVectorProvider(SizeInt blockSize, int defaultLimbCount, int initialPoolSize)
 		{
-			var mapSectionVectorsPool = new MapSectionVectorsPool2(blockSize, initialPoolSize);
+			var mapSectionVectorsPool = new MapSectionVectorsPool(blockSize, initialPoolSize);
 			var mapSectionZVectorsPool = new MapSectionZVectorsPool(blockSize, defaultLimbCount, initialPoolSize);
 			var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
 
