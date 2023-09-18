@@ -19,6 +19,7 @@ namespace MEngineClient
 
 		private DtoMapper _dtoMapper;
 		private GrpcChannel? _grpcChannel;
+		private IMapSectionService? _mapSectionService; 
 
 		private string? _jobId;
 		private RPoint? _mapPosition;
@@ -164,10 +165,9 @@ namespace MEngineClient
 		private MapSectionServiceResponse GenerateMapSectionInternal(MapSectionServiceRequest req, CancellationToken ct)
 		{
 			try
-			{ 
-				var mEngineService = GetMapSectionService();
-
-				var mapSectionServiceResponse = mEngineService.GenerateMapSection(req);
+			{
+				var mapSectionService = MapSectionService;
+				var mapSectionServiceResponse = mapSectionService.GenerateMapSection(req);
 
 				if (++_sectionCntr % 10 == 0)
 				{
@@ -278,10 +278,10 @@ namespace MEngineClient
 
 		public MapSectionServiceResponse GenerateMapSectionTest()
 		{
-			var mEngineService = GetMapSectionService();
+			var mapSectionService = MapSectionService;
 
 			var stopWatch = Stopwatch.StartNew();
-			var mapSectionServiceResponse = mEngineService.GenerateMapSectionTest("dummy");
+			var mapSectionServiceResponse = mapSectionService.GenerateMapSectionTest("dummy");
 
 			stopWatch.Stop();
 
@@ -296,8 +296,22 @@ namespace MEngineClient
 
 		#region Service and Channel Support
 
+		private IMapSectionService MapSectionService
+		{
+			get
+			{
+				if (_mapSectionService == null)
+				{
+					_mapSectionService = GetMapSectionService();
+				}
+
+				return _mapSectionService;
+			}
+		}
+
 		private IMapSectionService GetMapSectionService()
 		{
+
 			try
 			{
 				var client = Channel.CreateGrpcService<IMapSectionService>();

@@ -44,6 +44,10 @@ namespace ProjectRepo.Entities
 
 		public DateTime LastSavedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }
+
+		[BsonIgnore]
+		[BsonDefaultValue(true)]
+		public bool RequestWasCompleted => Complete;	// TODO: Rename Complete: RequestWasCompleted -- and remove this convenience property.
 	}
 
 }

@@ -15,8 +15,8 @@ namespace MSS.Types
 			BigVector blockPosition,
 
 			MapCalcSettings mapCalcSettings,
+			bool requestWasCompleted,
 			bool allRowsHaveEscaped,
-			bool isComplete,
 			byte[] counts,
 			byte[] escapeVelocities
 			)
@@ -31,7 +31,7 @@ namespace MSS.Types
 
 			MapCalcSettings = mapCalcSettings;
 			AllRowsHaveEscaped = allRowsHaveEscaped;
-			Complete = isComplete;
+			RequestWasCompleted = requestWasCompleted;
 			Counts = counts;
 			EscapeVelocities = escapeVelocities;
 		}
@@ -55,7 +55,7 @@ namespace MSS.Types
 
 		public SizeInt BlockSize { get; init; }
 
-		public bool Complete { get; init; }
+		public bool RequestWasCompleted { get; init; }
 
 		#endregion
 	}

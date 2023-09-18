@@ -317,7 +317,7 @@ namespace MSetRepo
 
 		public async Task<long?> DeleteZValuesAync(ObjectId mapSectionId)
 		{
-			var result = await _mapSectionReaderWriter.DeleteAsync(mapSectionId);
+			var result = await _mapSectionZValuesReaderWriter.DeleteAsync(mapSectionId);
 
 			return result;
 		}

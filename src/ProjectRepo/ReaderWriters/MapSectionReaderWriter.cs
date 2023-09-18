@@ -169,6 +169,8 @@ namespace ProjectRepo
 			var updateDefinition = Builders<MapSectionRecord>.Update
 				.Set(u => u.Counts, mapSectionRecord.Counts)
 				.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+				.Set(u => u.AllRowsHaveEscaped, mapSectionRecord.AllRowsHaveEscaped)
+				.Set(u => u.Complete, mapSectionRecord.Complete)
 				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			if (requestCompleted)

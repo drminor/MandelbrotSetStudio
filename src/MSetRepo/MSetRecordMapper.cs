@@ -365,13 +365,13 @@ namespace MSetRepo
 			var result = new MapSectionBytes
 			(
 				mapSectionId: mSR.Id,
-				mSR.DateCreatedUtc, mSR.LastSavedUtc, mSR.LastAccessed, mSR.SubdivisionId,
-				blockPosition,
-				mSR.MapCalcSettings, 
-				mSR.AllRowsHaveEscaped, 
-				mSR.Complete, 
-				mSR.Counts, 
-				mSR.EscapeVelocities
+				dateCreatedUtc: mSR.DateCreatedUtc, lastSavedUtc: mSR.LastSavedUtc, lastAccessed: mSR.LastAccessed, subdivisionId: mSR.SubdivisionId,
+				blockPosition: blockPosition,
+				mapCalcSettings: mSR.MapCalcSettings,
+				requestWasCompleted: mSR.RequestWasCompleted,
+				allRowsHaveEscaped: mSR.AllRowsHaveEscaped,
+				counts: mSR.Counts,
+				escapeVelocities: mSR.EscapeVelocities
 			);
 
 			return result;
