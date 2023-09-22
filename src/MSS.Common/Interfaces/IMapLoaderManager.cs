@@ -14,6 +14,8 @@ namespace MSS.Common
 		//bool SaveTheZValues { get; set; }
 		//bool CalculateEscapeVelocities { get; set; }
 
+		int GetNextJobNumber();
+
 		List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
 			IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration);
 

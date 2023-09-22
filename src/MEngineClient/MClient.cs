@@ -7,6 +7,7 @@ using MSS.Types.MSet;
 using ProtoBuf.Grpc.Client;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 
 namespace MEngineClient
@@ -19,11 +20,14 @@ namespace MEngineClient
 
 		private DtoMapper _dtoMapper;
 		private GrpcChannel? _grpcChannel;
-		private IMapSectionService? _mapSectionService; 
+		private IMapSectionService? _mapSectionService;
 
-		private string? _jobId;
-		private RPoint? _mapPosition;
-		private CancellationTokenSource? _cts;
+		private int? _jobNumber;
+		private int? _requestNumber;
+
+		private object _cancellationLock = new object();
+
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -34,22 +38,26 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClient(MSetGenerationStrategy mSetGenerationStrategy, string endPointAddress)
+		public MClient(MSetGenerationStrategy mSetGenerationStrategy, string endPointAddress, int clientNumber)
 		{
 			_dtoMapper = new DtoMapper();
 
 			MSetGenerationStrategy = mSetGenerationStrategy;
 			EndPointAddress = endPointAddress;
+			ClientNumber = clientNumber;
 
 			_grpcChannel = null;
+			_mapSectionService = null;
+			_jobNumber = null;
+			_requestNumber = null;
 		}
 
 		#endregion
 
 		#region Public Properties
 
+		public int ClientNumber {get; init;}
 		public MSetGenerationStrategy MSetGenerationStrategy { get; init; }
-
 		public string EndPointAddress { get; init; }
 		public bool IsLocal => true;
 
@@ -57,14 +65,30 @@ namespace MEngineClient
 
 		#region Public Methods
 
-		public bool CancelGeneration(string jobId, RPoint mapPosition)
+		public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
-			if (_cts != null && _jobId != null && _mapPosition != null)
+			if (_jobNumber != null && _requestNumber != null)
 			{
-				if (_jobId == jobId && _mapPosition == mapPosition)
+				var jobNumber = mapSectionRequest.MapLoaderJobNumber;
+				var requestNumber = mapSectionRequest.RequestNumber;
+
+				if (jobNumber == _jobNumber && requestNumber == _requestNumber)
 				{
-					_cts.Cancel();
-					return true;
+					var mapSectionService = MapSectionService;
+					//var mapSectionService = GetMapSectionService();
+
+					var cancelRequest = new CancelRequest
+					{
+						MapLoaderJobNumber = jobNumber,
+						RequestNumber = requestNumber
+					};
+
+
+					lock (_cancellationLock)
+					{
+						var result = mapSectionService.CancelGeneration(cancelRequest);
+						return result.RequestWasCancelled;
+					}
 				}
 				else
 				{
@@ -79,84 +103,33 @@ namespace MEngineClient
 		{
 			if (ct.IsCancellationRequested)
 			{
-				Debug.WriteLine($"The MClient is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.");
+				mapSectionRequest.Cancelled = true;
+				Debug.WriteLineIf(_useDetailedDebug, $"MClient. Request: JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is cancelled.");
 				return new MapSectionResponse(mapSectionRequest, isCancelled: true);
 			}
 
-			_cts = new CancellationTokenSource();
-
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
-			_jobId = mapSectionRequest.JobId;
-			_mapPosition = mapSectionRequest.MapPosition;
+			_jobNumber = mapSectionRequest.MapLoaderJobNumber;
+			_requestNumber = mapSectionRequest.RequestNumber;
 
 			var mapSectionServiceRequest = MapTo(mapSectionRequest);
 
 			var stopWatch = Stopwatch.StartNew();
 			var mapSectionServiceResponse = GenerateMapSectionInternal(mapSectionServiceRequest, ct);
-			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
+			stopWatch.Stop();
 
-			var isCancelled = ct.IsCancellationRequested | mapSectionServiceResponse.RequestCancelled;
+			_jobNumber = null;
+			_requestNumber = null;
 
 			var mapSectionResponse = MapFrom(mapSectionServiceResponse, mapSectionRequest);
+
+			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 			mapSectionRequest.GenerationDuration = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerateMs);
-			mapSectionResponse.RequestCancelled = isCancelled;
 
-			if (!isCancelled)
+			if (ct.IsCancellationRequested)
 			{
-				//var mapSectionVectors = mapSectionResponse.MapSectionVectors;
-
-				//if (mapSectionServiceResponse.Counts.Length > 0)
-				//{
-				//	mapSectionVectors.LoadCounts(mapSectionServiceResponse.Counts);
-				//}
-
-				//if (mapSectionServiceResponse.EscapeVelocities.Length > 0)
-				//{
-				//	mapSectionVectors.LoadEscapeVelocities(mapSectionServiceResponse.EscapeVelocities);
-				//}
-
-				var mapSectionVectors2 = mapSectionResponse.MapSectionVectors2;
-
-				if (mapSectionVectors2 != null)
-				{
-					if (mapSectionServiceResponse.Counts.Length > 0)
-					{
-						mapSectionVectors2.Counts = mapSectionServiceResponse.Counts;
-					}
-
-					if (mapSectionServiceResponse.EscapeVelocities.Length > 0)
-					{
-						mapSectionVectors2.EscapeVelocities = mapSectionServiceResponse.EscapeVelocities;
-					}
-				}
-				else
-				{
-					mapSectionVectors2 = new MapSectionVectors2(
-						mapSectionRequest.BlockSize,
-						mapSectionServiceResponse.Counts,
-						mapSectionServiceResponse.EscapeVelocities
-						);
-
-					mapSectionResponse.MapSectionVectors2 = mapSectionVectors2;
-				}
-
-				// Z Vectors
-				var mapSectionZVectors = mapSectionResponse.MapSectionZVectors;
-
-				if (mapSectionZVectors != null)
-				{
-					Array.Copy(mapSectionServiceResponse.Zrs, mapSectionZVectors.Zrs, mapSectionServiceResponse.Zrs.Length);
-					Array.Copy(mapSectionServiceResponse.Zis, mapSectionZVectors.Zis, mapSectionServiceResponse.Zis.Length);
-					Array.Copy(mapSectionServiceResponse.HasEscapedFlags, mapSectionZVectors.HasEscapedFlags, mapSectionServiceResponse.HasEscapedFlags.Length);
-
-					mapSectionZVectors.FillRowHasEscaped(mapSectionServiceResponse.RowHasEscaped, mapSectionZVectors.RowHasEscaped);
-				}
-			}
-			else
-			{
-				mapSectionResponse.MapSectionVectors2?.ResetObject();
-				mapSectionResponse.MapSectionZVectors?.ResetObject();
+				mapSectionRequest.Cancelled = true;
 			}
 
 			return mapSectionResponse;
@@ -167,7 +140,19 @@ namespace MEngineClient
 			try
 			{
 				var mapSectionService = MapSectionService;
+
+				var registration = ct.Register(CancelGeneration, req);
+
+				Debug.WriteLineIf(_useDetailedDebug, $"MEngineClient #{ClientNumber} is starting the call to Generate MapSection: {req.ScreenPosition}.");
 				var mapSectionServiceResponse = mapSectionService.GenerateMapSection(req);
+				Debug.WriteLineIf(_useDetailedDebug, $"MEngineClient #{ClientNumber} is completing the call to Generate MapSection: {req.ScreenPosition}. Request is Cancelled = {ct.IsCancellationRequested}.");
+
+				registration.Unregister();
+
+				if (ct.IsCancellationRequested)
+				{
+					mapSectionServiceResponse.RequestCancelled = true;
+				}
 
 				if (++_sectionCntr % 10 == 0)
 				{
@@ -180,6 +165,26 @@ namespace MEngineClient
 			{
 				Debug.WriteLine($"GenerateMapSectionInternal raised Exception: {e}.");
 				throw;
+			}
+		}
+
+		private void CancelGeneration(object? state, CancellationToken ct)
+		{
+			if (state is MapSectionServiceRequest req)
+			{
+				var cancelRequest = new CancelRequest
+				{
+					MapLoaderJobNumber = req.MapLoaderJobNumber,
+					RequestNumber = req.RequestNumber
+				};
+
+				var mapSectionService = MapSectionService;
+				_ = mapSectionService.CancelGeneration(cancelRequest);
+			}
+			else
+			{
+				var stateType = state == null ? "null" : state.GetType().ToString();
+				Debug.WriteLine($"WARNING: MClient: CancelGeneration Callback was given a state with type: {stateType} different than {typeof(MapSectionServiceRequest)}.");
 			}
 		}
 
@@ -208,49 +213,38 @@ namespace MEngineClient
 				Precision = req.Precision,
 				LimbCount = req.LimbCount,
 				IncreasingIterations = req.IncreasingIterations,
+				MapLoaderJobNumber = req.MapLoaderJobNumber,
+				RequestNumber = req.RequestNumber
 			};
 
-			if (req.IncreasingIterations)
+			var mapSectionVectors2 = req.MapSectionVectors2;
+
+			if (req.IncreasingIterations && mapSectionVectors2 != null)
 			{
-				//var mapSectionVectors = req.MapSectionVectors;
+				mapSectionServiceRequest.Counts = mapSectionVectors2.Counts;
+				mapSectionServiceRequest.EscapeVelocities = mapSectionVectors2.EscapeVelocities;
 
-				//if (mapSectionVectors == null)
-				//{
-				//	throw new InvalidOperationException("MClient received a MapSectionRequest with a null value for the MapSectionVectors property.");
-				//}
-
-				//mapSectionServiceRequest.Counts = mapSectionVectors.GetSerializedCounts();
-				//mapSectionServiceRequest.EscapeVelocities = mapSectionVectors.GetSerializedEscapeVelocities();
-
-				var mapSectionVectors2 = req.MapSectionVectors2;
-
-				if (mapSectionVectors2 != null)
+				var mapSectionZVectors = req.MapSectionZVectors;
+				if (mapSectionZVectors != null)
 				{
-					mapSectionServiceRequest.Counts = mapSectionVectors2.Counts;
-					mapSectionServiceRequest.EscapeVelocities = mapSectionVectors2.EscapeVelocities;
+					mapSectionServiceRequest.Zrs = mapSectionZVectors.Zrs;
+					mapSectionServiceRequest.Zis = mapSectionZVectors.Zis;
+					mapSectionServiceRequest.HasEscapedFlags = mapSectionZVectors.HasEscapedFlags;
+					mapSectionServiceRequest.RowHasEscaped = mapSectionZVectors.GetBytesForRowHasEscaped();
 				}
 				else
 				{
-					mapSectionServiceRequest.Counts = Array.Empty<byte>();
-					mapSectionServiceRequest.EscapeVelocities = Array.Empty<byte>();
+					mapSectionServiceRequest.Zrs = Array.Empty<byte>();
+					mapSectionServiceRequest.Zis = Array.Empty<byte>();
+					mapSectionServiceRequest.HasEscapedFlags = Array.Empty<byte>();
+					mapSectionServiceRequest.RowHasEscaped = Array.Empty<byte>();
 				}
 			}
 			else
 			{
 				mapSectionServiceRequest.Counts = Array.Empty<byte>();
 				mapSectionServiceRequest.EscapeVelocities = Array.Empty<byte>();
-			}
 
-			var mapSectionZVectors = req.MapSectionZVectors;
-			if (mapSectionZVectors != null)
-			{
-				mapSectionServiceRequest.Zrs = mapSectionZVectors.Zrs;
-				mapSectionServiceRequest.Zis = mapSectionZVectors.Zis;
-				mapSectionServiceRequest.HasEscapedFlags = mapSectionZVectors.HasEscapedFlags;
-				mapSectionServiceRequest.RowHasEscaped = mapSectionZVectors.GetBytesForRowHasEscaped();
-			}
-			else
-			{
 				mapSectionServiceRequest.Zrs = Array.Empty<byte>();
 				mapSectionServiceRequest.Zis = Array.Empty<byte>();
 				mapSectionServiceRequest.HasEscapedFlags = Array.Empty<byte>();
@@ -260,16 +254,60 @@ namespace MEngineClient
 			return mapSectionServiceRequest;
 		}
 
-		private MapSectionResponse MapFrom(MapSectionServiceResponse serviceResponse, MapSectionRequest mapSectionRequest)
+		private MapSectionResponse MapFrom(MapSectionServiceResponse res, MapSectionRequest mapSectionRequest)
 		{
-			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
+			var (mapSectionVectors2, mapSectionZVectors) = mapSectionRequest.TransferMapVectorsOut2();
 
-			var mapSectionResponse = new MapSectionResponse(mapSectionRequest, serviceResponse.RequestCompleted, serviceResponse.AllRowsHaveEscaped, 
-				msv, mszv, serviceResponse.RequestCancelled);
+			if (!res.RequestCancelled)
+			{
+				if (mapSectionVectors2 != null)
+				{
+					if (res.Counts.Length > 0)
+					{
+						mapSectionVectors2.Counts = res.Counts;
+					}
 
-			mapSectionResponse.MathOpCounts = serviceResponse.MathOpCounts?.Clone();
+					if (res.EscapeVelocities.Length > 0)
+					{
+						mapSectionVectors2.EscapeVelocities = res.EscapeVelocities;
+					}
+				}
+				else
+				{
+					mapSectionVectors2 = new MapSectionVectors2(mapSectionRequest.BlockSize, res.Counts, res.EscapeVelocities);
+				}
 
-			return mapSectionResponse;
+				if (mapSectionZVectors != null)
+				{
+					Array.Copy(res.Zrs, mapSectionZVectors.Zrs, res.Zrs.Length);
+					Array.Copy(res.Zis, mapSectionZVectors.Zis, res.Zis.Length);
+					Array.Copy(res.HasEscapedFlags, mapSectionZVectors.HasEscapedFlags, res.HasEscapedFlags.Length);
+
+					mapSectionZVectors.FillRowHasEscaped(res.RowHasEscaped, mapSectionZVectors.RowHasEscaped);
+				}
+				else
+				{
+					if (mapSectionRequest.MapCalcSettings.SaveTheZValues)
+					{
+						mapSectionZVectors = new MapSectionZVectors(mapSectionRequest.BlockSize, mapSectionRequest.LimbCount, res.Zrs, res.Zis, res.HasEscapedFlags, GetBoolsFromBytes(res.RowHasEscaped));
+					}
+				}
+			}
+			else
+			{
+				mapSectionVectors2?.ResetObject();
+				mapSectionZVectors?.ResetObject();
+			}
+
+			var result = new MapSectionResponse(mapSectionRequest, res.RequestCompleted, res.AllRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors, res.RequestCancelled);
+			result.MathOpCounts = res.MathOpCounts?.Clone();
+
+			return result;
+		}
+
+		private bool[] GetBoolsFromBytes(byte[] rowHasEscaped)
+		{
+			return rowHasEscaped.Select(x => x == 1).ToArray();
 		}
 
 		#endregion
@@ -311,7 +349,6 @@ namespace MEngineClient
 
 		private IMapSectionService GetMapSectionService()
 		{
-
 			try
 			{
 				var client = Channel.CreateGrpcService<IMapSectionService>();
@@ -319,7 +356,7 @@ namespace MEngineClient
 			}
 			catch (Exception e)
 			{
-				Debug.WriteLine($"Got exc: {e.GetType()}:{e.Message}");
+				Debug.WriteLine($"While Creating the GrpcService<IMapSectionService>, received exception: {e.GetType()}:{e.Message}");
 				throw;
 			}
 		}

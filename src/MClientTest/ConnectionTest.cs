@@ -19,7 +19,7 @@ namespace MClientTest
 		{
 			//var mapSectionVectorProvider = CreateMapSectionVectorProvider();
 
-			var mClient = new MClient(MSetGenerationStrategy.DepthFirst, appUrl);
+			var mClient = new MClient(MSetGenerationStrategy.DepthFirst, appUrl, clientNumber:0);
 
 			var response = mClient.GenerateMapSectionTest();
 

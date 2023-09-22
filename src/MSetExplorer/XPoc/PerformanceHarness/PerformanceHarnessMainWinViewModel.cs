@@ -35,6 +35,8 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		//private bool _receivedTheLastOne;
 
+		private int _nextMapLoaderJobNumber = 0;
+
 		#endregion
 
 		#region Constructor
@@ -239,7 +241,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
-			RunTest(job);
+			RunTest(job, _nextMapLoaderJobNumber++);
 		}
 
 		//public void RunDenseLC2()
@@ -296,7 +298,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
-			RunTest(job);
+			RunTest(job, _nextMapLoaderJobNumber++);
 		}
 
 
@@ -304,7 +306,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		#region Private Methods
 
-		private void RunTest(Job job)
+		private void RunTest(Job job, int mapLoaderJobNumber)
 		{
 			//_receivedTheLastOne = false;
 			//MapSectionProcessInfos.Clear();
@@ -338,7 +340,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 
 
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobType, jobId, ownerType, oldAreaInfo, job.MapCalcSettings);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobType, jobId, ownerType, oldAreaInfo, job.MapCalcSettings, mapLoaderJobNumber);
 			//AddTiming("CreateSectionRequest");
 
 			LimbCount = mapSectionRequests[0].LimbCount;

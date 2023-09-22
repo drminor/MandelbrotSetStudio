@@ -188,12 +188,14 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
 		{
+			Debug.WriteLine("ExplorerViewModel is handling MapDisplayViewModel-DisplayJobCompleted");
+
 			ColorBandSetViewModel.RefreshPercentages();
 			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
 
 			if (histogramDataWasEmpty)
 			{
-				Debug.WriteLine("CbsHistogramViewModel: WARNING: Values are all zero on call to RefreshData -- on DisplayJobCompleted.");
+				Debug.WriteLine("ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
 			}
 		}
 

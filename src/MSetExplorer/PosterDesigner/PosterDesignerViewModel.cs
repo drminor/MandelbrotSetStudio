@@ -8,6 +8,8 @@ namespace MSetExplorer
 {
 	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
+		private bool _disposedValue;
+
 		//private readonly MapJobHelper _mapJobHelper;
 		//private readonly IMapLoaderManager _mapLoaderManager;
 		//private readonly ViewModelFactory _viewModelFactory;
@@ -232,6 +234,40 @@ namespace MSetExplorer
 				MapCoordsViewModel.JobId = currentJob.Id.ToString();
 				MapCoordsViewModel.CurrentMapAreaInfo = oldAreaInfo;
 			}
+		}
+
+		#endregion
+
+		#region IDisposable Support
+
+		private bool disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+
+					MapDisplayViewModel.DisplayJobCompleted -= MapDisplayViewModel_DisplayJobCompleted;
+
+					MapCalcSettingsViewModel.MapSettingsUpdateRequested -= MapCalcSettingsViewModel_MapSettingsUpdateRequested;
+					ColorBandSetViewModel.PropertyChanged -= ColorBandViewModel_PropertyChanged;
+					ColorBandSetViewModel.ColorBandSetUpdateRequested -= ColorBandSetViewModel_ColorBandSetUpdateRequested;
+
+					MapDisplayViewModel.Dispose();
+					ColorBandSetViewModel.Dispose();
+				}
+
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			Dispose(disposing: true);
+			System.GC.SuppressFinalize(this);
 		}
 
 		#endregion

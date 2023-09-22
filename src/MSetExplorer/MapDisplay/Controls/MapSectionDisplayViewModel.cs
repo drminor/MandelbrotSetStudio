@@ -44,7 +44,7 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private bool _useDetailedDebug = false;
+		private bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -629,7 +629,9 @@ namespace MSetExplorer
 
 		private void GetAndPlacePixelsWrapper(MapSection mapSection)
 		{
-			if (mapSection.MapSectionVectors != null)
+			var sectionIsCurrent = ActiveJobNumbers.Contains(mapSection.JobNumber);
+
+			if (sectionIsCurrent && mapSection.MapSectionVectors != null)
 			{
 				lock (_paintLocker)
 				{
@@ -817,7 +819,10 @@ namespace MSetExplorer
 					}
 				}
 
-				_mapLoaderManager.CancelRequests(sectionsToCancel);
+				if (sectionsToCancel.Count > 0)
+				{
+					_mapLoaderManager.CancelRequests(sectionsToCancel);
+				}
 
 				// Let our Bitmap Grid know about the change in View size.
 				_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
@@ -925,7 +930,8 @@ namespace MSetExplorer
 				stopWatch.Restart();
 				_bitmapGrid.ClearDisplay();
 				var msToClearDisplay = stopWatch.ElapsedMilliseconds;
-				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
+				//Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
+				Debug.WriteLine($"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
 			}
 		}
 

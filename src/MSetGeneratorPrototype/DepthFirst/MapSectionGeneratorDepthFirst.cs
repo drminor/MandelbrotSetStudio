@@ -115,7 +115,7 @@ namespace MSetGeneratorPrototype
 			stopwatch.Stop();
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 
-			var result = new MapSectionResponse(mapSectionRequest, sectionCompleted, allRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors);
+			var result = new MapSectionResponse(mapSectionRequest, sectionCompleted, allRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors, requestCancelled: ct.IsCancellationRequested);
 			result.MathOpCounts = _fp31VecMath.MathOpCounts.Clone();
 			
 			//ReportResults(coords, mapSectionRequest, result, ct);

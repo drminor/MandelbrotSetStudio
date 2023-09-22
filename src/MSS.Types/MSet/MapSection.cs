@@ -16,6 +16,7 @@ namespace MSS.Types
 		public MapSection()
 			: this(
 				  jobNumber: -1,
+				  requestNumber: -1,
 				  mapSectionVectors: null,
 				  subdivisionId: string.Empty,
 				  jobMapBlockPosition: new BigVector(),
@@ -29,7 +30,8 @@ namespace MSS.Types
 		{ }
 
 		// Used when the Request was cancelled or the MapSectionsVectors was empty. 
-		public MapSection(int jobNumber, 
+		public MapSection(int jobNumber,
+			int requestNumber,
 			string subdivisionId,
 			BigVector jobMapBlockPosition,
 			BigVector repoBlockPosition, 
@@ -39,7 +41,8 @@ namespace MSS.Types
 			int targetIterations, 
 			bool isCancelled)
 			: this(
-				  jobNumber, 
+				  jobNumber,
+				  requestNumber,
 				  mapSectionVectors: null, 
 				  subdivisionId,
 				  jobMapBlockPosition,
@@ -53,10 +56,11 @@ namespace MSS.Types
 			RequestCancelled = isCancelled;
 		}
 
-		public MapSection(int jobNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, BigVector jobMapBlockPosition,
+		public MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, BigVector jobMapBlockPosition,
 			BigVector repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobNumber = jobNumber;
+			RequestNumber = requestNumber;
 			MapSectionVectors = mapSectionVectors;
 			SubdivisionId = subdivisionId;
 			JobMapBlockOffset = jobMapBlockPosition;
@@ -75,7 +79,8 @@ namespace MSS.Types
 
 		#region Public Properties
 
-		public int JobNumber { get; init; }
+		public int JobNumber { get; set; }
+		public int RequestNumber { get; set; }
 		public MapSectionVectors? MapSectionVectors { get; set; }
 
 		public string SubdivisionId { get; init; }

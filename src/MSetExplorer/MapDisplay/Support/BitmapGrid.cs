@@ -459,13 +459,10 @@ namespace MSetExplorer
 
 		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors)
 		{
-			var result = Bitmap.Dispatcher.Invoke(DrawSectionOnUiThread, new object[] { mapSection, mapSectionVectors });
+			//var result = Bitmap.Dispatcher.Invoke(DrawSectionOnUiThread, new object[] { mapSection, mapSectionVectors });
 
-			return (bool)result;
-		}
+			//return (bool)result;
 
-		private bool DrawSectionOnUiThread(MapSection mapSection, MapSectionVectors mapSectionVectors)
-		{
 			var wasAdded = false;
 			var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
@@ -504,6 +501,47 @@ namespace MSetExplorer
 
 			return wasAdded;
 		}
+
+		//private bool DrawSectionOnUiThread(MapSection mapSection, MapSectionVectors mapSectionVectors)
+		//{
+		//	var wasAdded = false;
+		//	var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
+
+		//	if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, "GetAndPlacePixels"))
+		//	{
+		//		_mapSections.Add(mapSection);
+		//		wasAdded = true;
+
+		//		if (_colorMap != null)
+		//		{
+		//			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+		//			var loc = invertedBlockPos.Scale(_blockSize);
+
+		//			var errors = LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
+
+		//			if (errors > 0)
+		//			{
+		//				Debug.WriteLine($"There were {errors} color placement errors while Drawing Section on the UI thread for {mapSection.JobNumber}.");
+		//			}
+
+		//			try
+		//			{
+		//				Bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
+		//			}
+		//			catch (Exception e)
+		//			{
+		//				Debug.WriteLine($"GetAndPlacePixels got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+		//			}
+		//		}
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"GetAndPlacePixels is not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
+		//		_disposeMapSection(mapSection);
+		//	}
+
+		//	return wasAdded;
+		//}
 
 		#endregion
 

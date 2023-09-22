@@ -293,13 +293,15 @@ namespace ImageBuilder
 			var jobType = JobType.Image;
 			var requests = new List<MapSectionRequest>();
 
+
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
 				var key = new PointInt(colPtr, rowPtr);
 
 				var blockIndexX = colPtr - (stride / 2);
 				var screenPositionRelativeToCenter = new VectorInt(blockIndexX, blockIndexY);
-				var mapSectionRequest = _mapSectionBuilder.CreateRequest(jobType, key, screenPositionRelativeToCenter, mapBlockOffset, precision, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId, mapCalcSettings, colPtr);
+				var mapSectionRequest = _mapSectionBuilder.CreateRequest(jobType, key, screenPositionRelativeToCenter, mapBlockOffset, precision, jobId.ToString(), ownerType, subdivision, 
+					originalSourceSubdivisionId, mapCalcSettings, mapLoaderJobNumber: -1, requestNumber: colPtr);
 				requests.Add(mapSectionRequest);
 			}
 

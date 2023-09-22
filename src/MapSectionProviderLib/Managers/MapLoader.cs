@@ -72,6 +72,10 @@ namespace MapSectionProviderLib
 			}
 
 			_mapSectionRequests = mapSectionRequests;
+			foreach(var mapSectionRequest in mapSectionRequests)
+			{
+				mapSectionRequest.MapLoaderJobNumber = JobNumber;
+			}
 
 			_stopwatch.Start();
 			_ = Task.Run(SubmitSectionRequests);
@@ -101,10 +105,17 @@ namespace MapSectionProviderLib
 
 		public void CancelRequest(MapSection mapSection)
 		{
-			MapSectionRequest? req = _mapSectionRequests?.FirstOrDefault(x => x.ScreenPosition == mapSection.ScreenPosition);
+			MapSectionRequest? req = _mapSectionRequests?.FirstOrDefault(x => x.RequestNumber == mapSection.RequestNumber);
 
 			if (req != null)
 			{
+				if (req.TimeToCompleteGenRequest.HasValue)
+				{
+					Debug.WriteLine("WARNING: Cancelling a request that has already been completed.");
+				}
+
+				Debug.WriteLine($"Cancelling Generation Request: {JobNumber}/{mapSection.RequestNumber}.");
+
 				req.CancellationTokenSource.Cancel();
 			}
 		}

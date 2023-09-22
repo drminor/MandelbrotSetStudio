@@ -71,11 +71,17 @@ namespace MEngineDataContracts
 		[DataMember(Order = 19)]
 		public byte[] RowHasEscaped { get; set; }
 
+		[DataMember(Order = 20)]
+		public int MapLoaderJobNumber { get; set; }
+
+		[DataMember(Order = 21)]
+		public int RequestNumber { get; set; }
+
 		public override string ToString()
 		{
 			var bVals = BigIntegerHelper.FromLongsDeprecated(BlockPosition.GetValues());
 			var bp = new BigVector(bVals);
-			return $"Subdivision Id:{SubdivisionId}, Block Position:{bp}, Screen Position:{ScreenPosition}.";
+			return $"JobId: {JobId}, JobNo: {MapLoaderJobNumber}, ReqNo: {RequestNumber} Subdivision Id:{SubdivisionId}, Block Position:{bp}, Screen Position:{ScreenPosition}.";
 		}
 
 	}

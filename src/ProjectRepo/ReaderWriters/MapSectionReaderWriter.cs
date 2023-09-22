@@ -8,6 +8,7 @@ using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -179,6 +180,30 @@ namespace ProjectRepo
 			}
 
 			var result = await Collection.UpdateOneAsync(filter, updateDefinition);
+
+			return result?.ModifiedCount;
+		}
+
+
+		public long? UpdateCountValues(MapSectionRecord mapSectionRecord, bool requestCompleted)
+		{
+			var filter = Builders<MapSectionRecord>.Filter.Eq("_id", mapSectionRecord.Id);
+
+			var updateDefinition = Builders<MapSectionRecord>.Update
+				.Set(u => u.Counts, mapSectionRecord.Counts)
+				.Set(u => u.EscapeVelocities, mapSectionRecord.EscapeVelocities)
+				.Set(u => u.AllRowsHaveEscaped, mapSectionRecord.AllRowsHaveEscaped)
+				.Set(u => u.Complete, mapSectionRecord.Complete)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+
+			if (requestCompleted)
+			{
+				updateDefinition = updateDefinition.Set(u => u.MapCalcSettings.TargetIterations, mapSectionRecord.MapCalcSettings.TargetIterations);
+			}
+
+			//updateDefinition.AddToSet(new FieldDefinition<MapSectionRecord>())
+
+			var result = Collection.UpdateOne(filter, updateDefinition);
 
 			return result?.ModifiedCount;
 		}

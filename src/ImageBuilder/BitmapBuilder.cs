@@ -178,7 +178,9 @@ namespace ImageBuilder
 
 				var blockIndexX = colPtr - (stride / 2);
 				var screenPositionRelativeToCenter = new VectorInt(blockIndexX, blockIndexY);
-				var mapSectionRequest = _mapSectionBuilder.CreateRequest(jobType, key, screenPositionRelativeToCenter, mapBlockOffset, precision, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId, mapCalcSettings, colPtr);
+				var mapSectionRequest = _mapSectionBuilder.CreateRequest(jobType, key, screenPositionRelativeToCenter, mapBlockOffset, precision, jobId.ToString(), ownerType, subdivision, 
+					originalSourceSubdivisionId, mapCalcSettings, mapLoaderJobNumber: -1, requestNumber: colPtr);
+
 				requests.Add(mapSectionRequest);
 			}
 
@@ -186,7 +188,6 @@ namespace ImageBuilder
 
 			try
 			{
-				//_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
 				var mapSectionResponses = _mapLoaderManager.Push(requests, MapSectionReady, out var newJobNumber, out var _);
 				_currentJobNumber = newJobNumber;
 

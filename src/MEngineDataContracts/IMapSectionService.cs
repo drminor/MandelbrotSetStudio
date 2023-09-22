@@ -12,6 +12,9 @@ namespace MEngineDataContracts
 		[OperationContract]
 		MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest, CallContext context = default);
 
+		[OperationContract]
+		CancelResponse CancelGeneration(CancelRequest cancelRequest, CallContext context = default);
+
 		//[OperationContract]
 		//MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CallContext context = default);
 

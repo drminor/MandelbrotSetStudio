@@ -1,8 +1,9 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 
 namespace MSetExplorer
 {
-	public interface IPosterDesignerViewModel : INotifyPropertyChanged
+	public interface IPosterDesignerViewModel : INotifyPropertyChanged, IDisposable
 	{
 		IPosterViewModel PosterViewModel { get; }
 		IJobTreeViewModel JobTreeViewModel { get; }

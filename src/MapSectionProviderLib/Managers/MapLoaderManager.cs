@@ -53,6 +53,8 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
+		public int GetNextJobNumber() => _mapSectionRequestProcessor.GetNextRequestId();
+
 		//public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber)
 		//{
 		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
@@ -63,10 +65,7 @@ namespace MapSectionProviderLib
 		public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, 
 			out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
 		{
-			//var calcSettingsUpdated = MapCalcSettings.UpdateCalculateEscapeVelocities(mapCalcSettings, calculateEscapeVelocities: true);
-			//Debug.WriteLine($"MapLoaderManager: Creating MapSectionRequest with SaveTheZValues: {calcSettingsUpdated.SaveTheZValues} and CalculateEscapeVelocities: {calcSettingsUpdated.CalculateEscapeVelocities}.");
-
-			Debug.WriteLine($"MapLoaderManager: Creating MapSectionRequest with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
+			Debug.WriteLine($"MapLoaderManager: Creating MapSections with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
 
 			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
 			var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
@@ -75,8 +74,13 @@ namespace MapSectionProviderLib
 
 			foreach(var mapSectionRequest in pendingGeneration)
 			{
-				var mapSectionPending = emptyMapSections[mapSectionRequest.RequestNumber];
-				mapSectionsPendingGeneration.Add(mapSectionPending);
+				var mapSectionPending = emptyMapSections.FirstOrDefault(x => x.RequestNumber == mapSectionRequest.RequestNumber);
+
+				if (mapSectionPending != null)
+				{
+					mapSectionPending.JobNumber = jobNumber;
+					mapSectionsPendingGeneration.Add(mapSectionPending);
+				}
 			}
 
 			return result;
@@ -89,14 +93,9 @@ namespace MapSectionProviderLib
 			if (result.Count != mapSectionRequests.Count)
 			{
 				var requestsNotFound = mapSectionRequests.Where(x => !x.FoundInRepo).ToList();
+				CheckNewRequestsForCancellation(requestsNotFound);
 
 				var mapLoader = new MapLoader(jobNumber, callback, _mapSectionRequestProcessor);
-
-				if (requestsNotFound.Any(x => x.CancellationTokenSource.IsCancellationRequested))
-				{
-					Debug.WriteLine("The MapLoaderManager found at least one MapSectionRequest that has been cancelled, but not yet pushed.");
-				}
-
 
 				DoWithWriteLock(() =>
 				{
@@ -118,6 +117,15 @@ namespace MapSectionProviderLib
 			RequestAdded?.Invoke(this, new JobProgressInfo(jobNumber, "temp", DateTime.Now, mapSectionRequests.Count, result.Count));
 
 			return result;
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckNewRequestsForCancellation(List<MapSectionRequest> requestsNotFound)
+		{
+			if (requestsNotFound.Any(x => x.CancellationTokenSource.IsCancellationRequested))
+			{
+				Debug.WriteLine("MapLoaderManager: At least one MapSectionRequest is Cancelled.");
+			}
 		}
 
 		public Task? GetTaskForJob(int jobNumber)
@@ -202,29 +210,8 @@ namespace MapSectionProviderLib
 				var request = requestResponsePair.Item1;
 				var response = requestResponsePair.Item2;
 
-				//	if (response.MapSectionVectors != null)
-				//	{
-				//		var mapSection = _mapSectionBuilder.CreateMapSection(request, response.MapSectionVectors, jobNumber);
-				//		result.Add(mapSection);
-				//	}
-				//	else
-				//	{
-				//		if (response.MapSectionVectors2 != null)
-				//		{
-				//			var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
-				//			mapSectionVectors.Load(response.MapSectionVectors2.Counts, response.MapSectionVectors2.EscapeVelocities);
-
-				//			var mapSection = _mapSectionBuilder.CreateMapSection(request, mapSectionVectors, jobNumber);
-				//			result.Add(mapSection);
-				//		}
-				//	}
-				//}
-
 				if (response.MapSectionVectors != null)
 				{
-					//var mapSectionVectors = new MapSectionVectors(RMapConstants.BLOCK_SIZE);
-					//mapSectionVectors.Load(response.MapSectionVectors2.Counts, response.MapSectionVectors2.EscapeVelocities);
-
 					var mapSection = _mapSectionBuilder.CreateMapSection(request, response.MapSectionVectors, jobNumber);
 					result.Add(mapSection);
 				}
@@ -271,11 +258,15 @@ namespace MapSectionProviderLib
 		{
 			foreach (var section in sectionsToCancel)
 			{
-				var job = _requests.FirstOrDefault(x => x.JobNumber == section.JobNumber);
+				var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == section.JobNumber);
 
-				if (job != null)
+				if (genMapRequestInfo != null)
 				{
-					job.MapLoader.CancelRequest(section);
+					genMapRequestInfo.MapLoader.CancelRequest(section);
+				}
+				else
+				{
+					Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {section.JobNumber}.");
 				}
 			}
 		}
@@ -441,7 +432,7 @@ namespace MapSectionProviderLib
 		private class GenMapRequestInfo //: IDisposable
 		{
 			private readonly CancellationToken _ct;
-			private readonly Task? _onCompletedTask;
+			//private readonly Task? _onCompletedTask;
 
 			#region Constructor
 
@@ -455,11 +446,12 @@ namespace MapSectionProviderLib
 				if (task.IsCompleted)
 				{
 					TaskCompletedDate = DateTime.UtcNow;
-					_onCompletedTask = null;
+					//_onCompletedTask = null;
 				}
 				else
 				{
-					_onCompletedTask = task.ContinueWith(TaskCompleted, _ct);
+					//_onCompletedTask = task.ContinueWith(TaskCompleted, _ct);
+					_ = task.ContinueWith(TaskCompleted, _ct);
 				}
 
 				MapLoader.SectionLoaded += MapLoader_SectionLoaded;

@@ -77,6 +77,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		// TODO: Keep track of the current request's cancellation token and cancel it as well as the job's token.
 		public void CancelJob(int jobId)
 		{
 			lock (_jobsStatusLock)
@@ -215,12 +216,11 @@ namespace MapSectionProviderLib
 
 					// The original request is in the Request's Request property.
 					var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
-					var cts = mapSectionRequest.CancellationTokenSource;
 
 					MapSectionResponse mapSectionResponse;
 					var jobIsCancelled = IsJobCancelled(mapSectionGenerateRequest.JobId);
 
-					if (jobIsCancelled || cts.IsCancellationRequested)
+					if (jobIsCancelled || mapSectionRequest.CancellationTokenSource.IsCancellationRequested)
 					{
 						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
 						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
@@ -233,27 +233,37 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
-						var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues" : null;
+						//var registration = mapSectionRequest.CancellationTokenSource.Token.Register(CancelGeneration, new Tuple<IMEngineClient, MapSectionRequest>(mEngineClient, mapSectionRequest));
 
-						Debug.WriteLineIf(_useDetailedDebug, $"Generating MapSection for block: {mapSectionRequest.BlockPosition} {sendingVectorsMsg} {haveZValuesMsg}.");
+						var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
+						var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues." : null;
+
+						Debug.WriteLineIf(_useDetailedDebug, $"Generating MapSection for Request: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}. BlockPos: {mapSectionRequest.BlockPosition}. {sendingVectorsMsg} {haveZValuesMsg}");
 						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
+
+						//registration.Unregister();
+
 						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-						// Now that the mEngineClient has completed the task, once again check to see if the Job is cancelled.
-						jobIsCancelled = IsJobCancelled(mapSectionGenerateRequest.JobId);
-						//Debug.Assert(!jobIsCancelled, "How is it possible that the job is now cancelled.");
+						//// Now that the mEngineClient has completed the task, once again check to see if the Job is cancelled.
+						//jobIsCancelled = IsJobCancelled(mapSectionGenerateRequest.JobId);
+						////Debug.Assert(!jobIsCancelled, "How is it possible that the job is now cancelled.");
 
-						if (jobIsCancelled)
-						{
-							Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionGeneratorProcessor. Job {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is found to be cancelled after call to Generate MapSection.");
-							var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
-							mapSectionResponse.MapSectionVectors2 = msv;
-							mapSectionResponse.MapSectionZVectors = mszv;
-						}
+						//if (jobIsCancelled)
+						//{
+						//	Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionGeneratorProcessor. Job {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is found to be cancelled after call to Generate MapSection.");
+						//	var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
+						//	mapSectionResponse.MapSectionVectors2 = msv;
+						//	mapSectionResponse.MapSectionZVectors = mszv;
+						//}
 
-						if (!jobIsCancelled && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors2 == null)
+						//if (!jobIsCancelled && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors2 == null)
+						//{
+						//	Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
+						//}
+
+						if (mapSectionResponse.MapSectionVectors2 == null)
 						{
 							Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
 						}
@@ -282,6 +292,25 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		//private void CancelGeneration(object? state, CancellationToken ct)
+		//{
+		//	if (state is Tuple<IMEngineClient, MapSectionRequest> cState)
+		//	{
+		//		var mEngineClient = cState.Item1;
+		//		var mapSectionRequest = cState.Item2;
+
+		//		if (!mapSectionRequest.Cancelled)
+		//		{
+		//			mEngineClient.CancelGeneration(mapSectionRequest, ct);
+		//		}
+		//	}
+		//	else
+		//	{
+		//		var stateType = state == null ? "null" : state.GetType().ToString();
+		//		Debug.WriteLine($"WARNING: MapSectionGeneratorProcessor: CancelGeneration Callback was given a state with type: {stateType} different than {typeof(Tuple<IMEngineClient, MapSectionRequest>)}.");
+		//	}
+		//}
+
 		private bool IsJobCancelled(int jobId)
 		{
 			bool result;
@@ -302,7 +331,7 @@ namespace MapSectionProviderLib
 
 			if (result)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The Job: {jobId} has been cancelled.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The Job: {jobId} is cancelled.");
 			}
 
 			return result;

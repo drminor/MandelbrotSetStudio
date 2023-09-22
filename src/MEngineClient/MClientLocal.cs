@@ -15,6 +15,8 @@ namespace MEngineClient
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionGenerator _generator;
 
+		private readonly bool _useDetailedDebug = false;
+
 		#region Constructors
 
 		static MClientLocal()
@@ -22,21 +24,22 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClientLocal(MSetGenerationStrategy mSetGenerationStrategy, MapSectionVectorProvider mapSectionVectorProvider)
+		public MClientLocal(MSetGenerationStrategy mSetGenerationStrategy, MapSectionVectorProvider mapSectionVectorProvider, int clientNumber)
 		{
 			MSetGenerationStrategy = mSetGenerationStrategy;
 			EndPointAddress = "CSharp_DepthFirstGenerator";
 
 			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_generator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
+			ClientNumber = clientNumber;	
 		}
 
 		#endregion
 
 		#region Public Properties
 
+		public int ClientNumber { get; init; }
 		public MSetGenerationStrategy MSetGenerationStrategy { get; init; }
-
 		public string EndPointAddress { get; init; }
 		public bool IsLocal => true;
 
@@ -48,14 +51,14 @@ namespace MEngineClient
 		{
 			if (ct.IsCancellationRequested)
 			{
-				Debug.WriteLine($"The MClientLocal is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.");
+				Debug.WriteLine($"MClientLocal JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is cancelled.");
 				return new MapSectionResponse(mapSectionRequest, isCancelled: true);
 			}
 			else
 			{
 				mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
-				if (mapSectionRequest.ScreenPosition.X == 0 && mapSectionRequest.ScreenPosition.Y == 0)
+				if (_useDetailedDebug && mapSectionRequest.ScreenPosition.X == 0 && mapSectionRequest.ScreenPosition.Y == 0)
 				{
 					Debug.WriteLine($"MClientLocal::GenerateMapSection::ScreenPos = 0,0: ZVecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionZVectorsLeased} Vecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectorsLeased}; " +
 						$"Vecs2 Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectors2Leased}. Number MapSection returns refused: {_mapSectionVectorProvider.NumberOfRefusedMapSectionReturns}.");
@@ -65,23 +68,20 @@ namespace MEngineClient
 				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, ct);
 				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-				//Debug.Assert(mapSectionResponse.ZValues == null && mapSectionResponse.ZValuesForLocalStorage == null, "The MapSectionResponse includes ZValues.");
-
 				return mapSectionResponse;
 			}
+		}
+
+
+		public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		{
+			return true;
 		}
 
 		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			try
 			{
-				//if (mapSectionRequest.MapSectionVectors == null)
-				//{
-				//	var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-				//	mapSectionVectors.ResetObject();
-				//	mapSectionRequest.MapSectionVectors = mapSectionVectors;
-				//}
-
 				if (mapSectionRequest.MapSectionVectors2 == null)
 				{
 					var mapSectionVectors2 = new MapSectionVectors2(RMapConstants.BLOCK_SIZE);
@@ -95,11 +95,13 @@ namespace MEngineClient
 					mapSectionRequest.MapSectionZVectors = mapSectionZVectors;
 				}
 
+				Debug.WriteLineIf(_useDetailedDebug, $"MClientLocal #{ClientNumber} is starting the call to Generate MapSection: {mapSectionRequest.ScreenPosition}.");
 				var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest, ct);
+				Debug.WriteLineIf(_useDetailedDebug, $"MClientLocal #{ClientNumber} is completing the call to Generate MapSection: {mapSectionRequest.ScreenPosition}. Request is Cancelled = {ct.IsCancellationRequested}.");
 
 				if (++_sectionCntr % 10 == 0)
 				{
-					Debug.WriteLine($"The MEngineClient, {EndPointAddress} has processed {_sectionCntr} requests.");
+					Debug.WriteLine($"MClientLocal #{ClientNumber} has processed {_sectionCntr} requests.");
 				}
 
 				return mapSectionResponse;

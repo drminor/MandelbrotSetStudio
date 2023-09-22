@@ -5,14 +5,15 @@ namespace MSS.Common
 {
 	public interface IMEngineClient
 	{
+		int ClientNumber { get; }
+
 		string EndPointAddress { get; }
 
 		// True if running on the same machine as the Explorer program.
 		bool IsLocal { get; }
 
-		//Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CancellationToken ct);
-
 		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct);
 
+		bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct);
 	}
 }

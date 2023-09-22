@@ -47,7 +47,7 @@ namespace MEngineDataContracts
 		public bool AllRowsHaveEscaped { get; init; }
 
 		[DataMember(Order = 6)]
-		public bool RequestCancelled { get; init; }
+		public bool RequestCancelled { get; set; }
 
 		[DataMember(Order = 7)]
 		public double TimeToGenerateMs { get; init; }

@@ -34,12 +34,12 @@ namespace MSetExplorer
 		//private const int MONGO_DB_PORT = 27017;
 
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://localhost:5000" };
-		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
-		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
+		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
+		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
 
 		private static readonly bool USE_ALL_CORES = true;
 		private static readonly bool USE_REMOTE_ENGINES = true;
-		private static readonly bool USE_LOCAL_ENGINE = true;
+		private static readonly bool USE_LOCAL_ENGINE = false;
 
 		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 
@@ -490,6 +490,7 @@ namespace MSetExplorer
 		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, 
 			MSetGenerationStrategy mSetGenerationStrategy, MapSectionVectorProvider mapSectionVectorProvider)
 		{
+			var clientNumber = 0;
 			var result = new List<IMEngineClient>();
 
 			var localTaskCount = GetLocalTaskCount(useAllCores);
@@ -498,7 +499,7 @@ namespace MSetExplorer
 			{
 				for (var i = 0; i < localTaskCount; i++)
 				{
-					result.Add(new MClientLocal(mSetGenerationStrategy, mapSectionVectorProvider));
+					result.Add(new MClientLocal(mSetGenerationStrategy, mapSectionVectorProvider, clientNumber++));
 				}
 
 				Debug.WriteLine($"Using {localTaskCount} local engines.");
@@ -512,7 +513,7 @@ namespace MSetExplorer
 				{
 					for (var i = 0; i < remoteTaskCount; i++)
 					{
-						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint));
+						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint, clientNumber++));
 					}
 
 					Debug.WriteLine($"Using {remoteTaskCount} engines at {remoteEndPoint}.");

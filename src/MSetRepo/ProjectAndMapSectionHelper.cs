@@ -196,6 +196,8 @@ namespace MSetRepo
 
 			var numberOfRecordsInserted = 0L;
 
+			var mapLoaderJobNumber = 0;
+
 			foreach (var job in jobs)
 			{
 				if (job.JobOwnerType != ownerType)
@@ -203,7 +205,7 @@ namespace MSetRepo
 					Debug.WriteLine($"WARNING: Found a OwnerType mismatch: Expecting {ownerType} but found {job.JobOwnerType}. OwnerId: {ownerId} - Name: {ownerName}.");
 				}
 
-				var mapSectionRequests = GetMapSectionRequests(jobType, job, ownerType, displaySize, mapJobHelper, mapSectionBuilder);
+				var mapSectionRequests = GetMapSectionRequests(jobType, job, ownerType, displaySize, mapJobHelper, mapSectionBuilder, mapLoaderJobNumber++);
 
 				for (var i = 0; i < mapSectionRequests.Count; i++)
 				{
@@ -246,7 +248,7 @@ namespace MSetRepo
 			return numberOfRecordsInserted;
 		}
 
-		private static List<MapSectionRequest> GetMapSectionRequests(JobType jobType, Job job, OwnerType jobOwnerType, SizeDbl displaySize, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionBuilder)
+		private static List<MapSectionRequest> GetMapSectionRequests(JobType jobType, Job job, OwnerType jobOwnerType, SizeDbl displaySize, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionBuilder, int mapLoaderJobNumber)
 		{
 			var jobId = job.Id;
 			var mapAreaInfo = job.MapAreaInfo;
@@ -258,7 +260,7 @@ namespace MSetRepo
 			//var emptyMapSections = mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
 			//var mapSectionRequests = mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
 
-			var mapSectionRequests = mapSectionBuilder.CreateSectionRequests(jobType, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings);
+			var mapSectionRequests = mapSectionBuilder.CreateSectionRequests(jobType, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, mapLoaderJobNumber);
 
 			throw new NotImplementedException("Check the see if CreateSectionRequests is still the same as CreatingEmpty then using them to Create the requests.");
 

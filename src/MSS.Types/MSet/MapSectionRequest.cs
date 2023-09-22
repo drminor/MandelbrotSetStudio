@@ -9,7 +9,7 @@ namespace MSS.Types.MSet
 	{
 		public MapSectionRequest(JobType jobType, string jobId, OwnerType ownerType, string subdivisionId, string originalSourceSubdivisionId,
 			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
-			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int requestNumber)
+			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int mapLoaderJobNumber, int requestNumber)
 		{
 			ObjectId test = new ObjectId(originalSourceSubdivisionId);
 
@@ -17,7 +17,6 @@ namespace MSS.Types.MSet
 			{
 				Debug.WriteLine($"The originalSourceSubdivisionId is blank during MapSectionRequest construction.");
 			}
-
 
 			JobType = jobType;
 			MapSectionId = null;
@@ -36,6 +35,7 @@ namespace MSS.Types.MSet
 			BlockSize = blockSize;
 			SamplePointDelta = samplePointDelta;
 			MapCalcSettings = mapCalcSettings;
+			MapLoaderJobNumber = mapLoaderJobNumber;
 			RequestNumber = requestNumber;
 			CancellationTokenSource = new CancellationTokenSource();
 
@@ -83,9 +83,10 @@ namespace MSS.Types.MSet
 		
 		public RSize SamplePointDelta { get; init; }
 		public MapCalcSettings MapCalcSettings { get; init; }
+		public int MapLoaderJobNumber { get; set; }
 		public int RequestNumber { get; init; }
 
-		public CancellationTokenSource CancellationTokenSource { get; init; }
+		public CancellationTokenSource CancellationTokenSource { get; set; }
 
 		public int Precision { get; set; }
 		public int LimbCount { get; set; }
@@ -104,6 +105,7 @@ namespace MSS.Types.MSet
 		public bool Completed { get; set; }
 		public bool Saved { get; set; }
 		public bool Handled { get; set; }
+		public bool Cancelled { get; set; }
 
 		public DateTime? ProcessingStartTime { get; set; }
 		public DateTime? ProcessingEndTime { get; set; }
