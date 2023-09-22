@@ -2,7 +2,7 @@
 using MSS.Types.MSet;
 using System;
 
-namespace MSS.Types
+namespace MSS.Types.MSet
 {
 	public class MapSectionBytes
 	{

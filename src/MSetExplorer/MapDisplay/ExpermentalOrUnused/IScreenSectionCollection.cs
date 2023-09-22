@@ -1,5 +1,6 @@
 ﻿using MSS.Common.DataTransferObjects;
 using MSS.Types;
+using MSS.Types.MSet;
 
 namespace MSetExplorer.MapDisplay.ExpermentalOrUnused
 {

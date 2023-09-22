@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace MSS.Types
+namespace MSS.Types.MSet
 {
 	public class MapSection : IEquatable<MapSection>, IEqualityComparer<MapSection>//, IDisposable
 	{
