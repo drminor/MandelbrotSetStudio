@@ -24,16 +24,8 @@ namespace MEngineService.Services
 		private const int ESCASPE_VELOCITY_VALUE_SIZE = 2;
 		private const int VALUE_SIZE = 4;
 
-		// TODO: Have the MapSectionService get the MongoDb connection string from the appsettings.json file.
-		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
-		//private const int MONGO_DB_PORT = 27017;
-
-		//private static readonly IMapSectionAdapter _mapSectionAdapter;
-		//private static readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
-
 		private DtoMapper _dtoMapper;
 		private readonly SizeInt _blockSize;
-		//private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionGenerator _generator;
 
 		private readonly Dictionary<string, CancellationTokenSource> _activeServiceRequests;
@@ -54,19 +46,11 @@ namespace MEngineService.Services
 			_blockSize = RMapConstants.BLOCK_SIZE;
 
 			var defaultLimbCount = RMapConstants.DEFAULT_LIMB_COUNT;
-			//var initialPoolSize = RMapConstants.MAP_SECTION_INITIAL_POOL_SIZE;
 
 			_dtoMapper = new DtoMapper();
-			//_mapSectionVectorProvider = CreateMapSectionVectorProvider(_blockSize, defaultLimbCount, initialPoolSize);
 			_generator = new MapSectionGeneratorDepthFirst(defaultLimbCount, _blockSize);
 
 			_activeServiceRequests = new Dictionary<string, CancellationTokenSource>();
-
-			//var repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, "MandelbrotProjects");
-			//_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
-			//_mapSectionPersistProcessor = new MapSectionPersistProcessor(_mapSectionAdapter, _mapSectionVectorProvider);
-
-			//Console.WriteLine($"The MapSection Persist Processor has started. Server: {MONGO_DB_SERVER}, Port: {MONGO_DB_PORT}.");
 		}
 
 		#endregion
@@ -361,6 +345,22 @@ namespace MEngineService.Services
 		#endregion
 
 		#region Public Methods - Old
+
+		// ---- Old Private Properties
+		// TODO: Have the MapSectionService get the MongoDb connection string from the appsettings.json file.
+		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
+		//private const int MONGO_DB_PORT = 27017;
+
+		//private static readonly IMapSectionAdapter _mapSectionAdapter;
+		//private static readonly MapSectionPersistProcessor _mapSectionPersistProcessor;
+		
+		// ---- Old Constructor Code
+		//var repositoryAdapters = new RepositoryAdapters(MONGO_DB_SERVER, MONGO_DB_PORT, "MandelbrotProjects");
+		//_mapSectionAdapter = repositoryAdapters.MapSectionAdapter;
+		//_mapSectionPersistProcessor = new MapSectionPersistProcessor(_mapSectionAdapter, _mapSectionVectorProvider);
+
+		//Console.WriteLine($"The MapSection Persist Processor has started. Server: {MONGO_DB_SERVER}, Port: {MONGO_DB_PORT}.");
+
 
 		//public async Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default)
 		//{

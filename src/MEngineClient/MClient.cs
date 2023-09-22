@@ -310,11 +310,6 @@ namespace MEngineClient
 			return result;
 		}
 
-		private bool[] GetBoolsFromBytes(byte[] rowHasEscaped)
-		{
-			return rowHasEscaped.Select(x => x == 1).ToArray();
-		}
-
 		#endregion
 
 		#region Test Support

@@ -38,7 +38,6 @@ namespace MSetRepo
 			SharedColorBandSetAdapter.CreateCollections();
 		}
 
-
 		public void CreateCollectionIndexes()
 		{
 			MapSectionAdapter.CreateIndexes();

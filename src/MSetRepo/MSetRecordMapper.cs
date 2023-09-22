@@ -17,7 +17,7 @@ namespace MSetRepo
 	///		ColorBandSet, ColorBand
 	///		Job, 
 	///		Subdivision, MapSectionResponse
-	///		RPoint, RSize, RRectangle,
+	///		RPoint, RSize, RRectangle, RPointAndDelta
 	///		PointInt, SizeInt, VectorInt, BigVector,
 	///		ColorBandBlendStyle,
 	///		TransformType,
@@ -25,7 +25,7 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, //IMapper<MapSectionResponse, MapSectionRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, //IMapper<MapSectionResponse, MapSectionRecord>, IMapper<MapSectionBytes, MapSectionRecord>
 		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>, IMapper<RPointAndDelta, RPointAndDeltaRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
@@ -145,35 +145,6 @@ namespace MSetRepo
 			throw new NotImplementedException();
 		}
 
-		//public MapAreaInfo MapFrom(MapAreaInfoRecord target)
-		//{
-		//	var result = new MapAreaInfo(
-		//		coords: _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto),
-		//		canvasSize: MapFrom(target.CanvasSize),
-		//		subdivision: MapFrom(target.SubdivisionRecord),
-		//		precision: target.Precision ?? RMapConstants.DEFAULT_PRECISION,
-		//		mapBlockOffset: MapFrom(target.MapBlockOffset),
-		//		canvasControlOffset: MapFrom(target.CanvasControlOffset)
-		//		);
-
-		//	return result;
-		//}
-
-		//public MapAreaInfoRecord MapTo(MapAreaInfo source)
-		//{
-		//	var result = new MapAreaInfoRecord(
-		//		CoordsRecord: MapTo(source.Coords),
-		//		CanvasSize: MapTo(source.CanvasSize),
-		//		SubdivisionRecord: MapTo(source.Subdivision),
-		//		MapBlockOffset: MapTo(source.MapBlockOffset),
-		//		CanvasControlOffset: MapTo(source.CanvasControlOffset)
-		//		);
-
-		//	result.Precision = source.Precision;
-
-		//	return result;
-		//}
-
 		public MapAreaInfo2 MapFrom(MapAreaInfo2Record target)
 		{
 			var result = new MapAreaInfo2(
@@ -199,8 +170,6 @@ namespace MSetRepo
 
 			return result;
 		}
-
-
 
 		public Poster MapFrom(PosterRecord target)
 		{
@@ -285,9 +254,6 @@ namespace MSetRepo
 
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
 
-				//	Counts: new byte[source.MapSectionVectors2.Counts.Length],
-				//	EscapeVelocities: new byte[source.MapSectionVectors2.EscapeVelocities.Length],
-
 				Counts: source.MapSectionVectors2.Counts,
 				EscapeVelocities: source.MapSectionVectors2.EscapeVelocities,
 
@@ -299,79 +265,41 @@ namespace MSetRepo
 				LastAccessed = DateTime.UtcNow,
 			};
 
-			//Array.Copy(source.MapSectionVectors2.Counts, result.Counts, result.Counts.Length);
-			//Array.Copy(source.MapSectionVectors2.EscapeVelocities, result.EscapeVelocities, result.EscapeVelocities.Length);
+			return result;
+		}
+
+		public MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
+		{
+			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
+
+			var result = new MapSectionResponse
+			(
+				mapSectionId: target.Id.ToString(),
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: target.BlockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				requestCompleted: target.RequestWasCompleted,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
+				mapSectionVectors: mapSectionVectors
+			);
 
 			return result;
 		}
 
-		//public MapSectionResponse MapFrom(MapSectionRecord target, MapSectionVectors mapSectionVectors)
-		//{
-		//	var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
-
-		//	mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
-
-		//	var result = new MapSectionResponse
-		//	(
-		//		mapSectionId: target.Id.ToString(),
-		//		subdivisionId: target.SubdivisionId.ToString(),
-		//		blockPosition: blockPosition,
-		//		mapCalcSettings: target.MapCalcSettings,
-		//		requestCompleted: target.Complete,
-		//		allRowsHaveEscaped: target.AllRowsHaveEscaped,
-		//		mapSectionVectors: mapSectionVectors
-		//	);
-
-		//	return result;
-		//}
-
-		//public MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
-		//{
-		//	mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
-
-		//	var result = new MapSectionResponse
-		//	(
-		//		mapSectionId: target.Id.ToString(),
-		//		subdivisionId: target.SubdivisionId.ToString(),
-		//		blockPosition: target.BlockPosition,
-		//		mapCalcSettings: target.MapCalcSettings,
-		//		requestCompleted: target.Complete,
-		//		allRowsHaveEscaped: target.AllRowsHaveEscaped,
-		//		mapSectionVectors: mapSectionVectors
-		//	);
-
-		//	return result;
-		//}
-
-		//private MapSectionResponse MapFrom(MapSectionBytes target)
-		//{
-		//	var result = new MapSectionResponse
-		//	(
-		//		mapSectionId: target.Id.ToString(),
-		//		subdivisionId: target.SubdivisionId.ToString(),
-		//		blockPosition: target.BlockPosition,
-		//		mapCalcSettings: target.MapCalcSettings,
-		//		requestCompleted: target.Complete,
-		//		allRowsHaveEscaped: target.AllRowsHaveEscaped
-		//	);
-
-		//	return result;
-		//}
-
-		public MapSectionBytes MapFrom(MapSectionRecord mSR)
+		public MapSectionBytes MapFrom(MapSectionRecord target)
 		{
-			var blockPosition = GetBlockPosition(mSR.BlockPosXHi, mSR.BlockPosXLo, mSR.BlockPosYHi, mSR.BlockPosYLo);
+			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
 
 			var result = new MapSectionBytes
 			(
-				mapSectionId: mSR.Id,
-				dateCreatedUtc: mSR.DateCreatedUtc, lastSavedUtc: mSR.LastSavedUtc, lastAccessed: mSR.LastAccessed, subdivisionId: mSR.SubdivisionId,
+				mapSectionId: target.Id,
+				dateCreatedUtc: target.DateCreatedUtc, lastSavedUtc: target.LastSavedUtc, lastAccessed: target.LastAccessed, subdivisionId: target.SubdivisionId,
 				blockPosition: blockPosition,
-				mapCalcSettings: mSR.MapCalcSettings,
-				requestWasCompleted: mSR.RequestWasCompleted,
-				allRowsHaveEscaped: mSR.AllRowsHaveEscaped,
-				counts: mSR.Counts,
-				escapeVelocities: mSR.EscapeVelocities
+				mapCalcSettings: target.MapCalcSettings,
+				requestWasCompleted: target.RequestWasCompleted,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
+				counts: target.Counts,
+				escapeVelocities: target.EscapeVelocities
 			);
 
 			return result;
@@ -434,8 +362,6 @@ namespace MSetRepo
 			return new VectorDbl(target.X, target.Y);
 		}
 
-
-
 		public BigVectorRecord MapTo(BigVector bigVector)
 		{
 			var bigVectorDto = _dtoMapper.MapTo(bigVector);
@@ -480,12 +406,10 @@ namespace MSetRepo
 			return _dtoMapper.MapFrom(target.Size);
 		}
 
-
-
-		public RVectorRecord MapTo(RVector rSize)
+		public RVectorRecord MapTo(RVector rVector)
 		{
-			var rSizeDto = _dtoMapper.MapTo(rSize);
-			var display = rSize.ToString();
+			var rSizeDto = _dtoMapper.MapTo(rVector);
+			var display = rVector.ToString();
 			var result = new RVectorRecord(display, rSizeDto);
 
 			return result;
@@ -523,7 +447,6 @@ namespace MSetRepo
 		{
 			return _dtoMapper.MapFrom(target.RPointAndDeltaDto);
 		}
-
 
 		#endregion
 	}

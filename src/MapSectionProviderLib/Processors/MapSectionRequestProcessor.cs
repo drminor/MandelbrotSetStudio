@@ -708,6 +708,7 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
+		// Copied from MSetRecordMapper
 		private MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
 		{
 			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
