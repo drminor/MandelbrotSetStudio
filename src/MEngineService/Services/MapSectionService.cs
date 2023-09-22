@@ -214,6 +214,45 @@ namespace MEngineService.Services
 			return mapSectionRequest;
 		}
 
+		private MapSectionVectors2? GetVectors2(MapSectionServiceRequest req)
+		{
+			if (req.Counts == null || req.Counts.Length == 0)
+			{
+				return null;
+			}
+
+			var escapeVelocities = (req.EscapeVelocities == null || req.EscapeVelocities.Length == 0) 
+				? new byte[req.BlockSize.NumberOfCells * ESCASPE_VELOCITY_VALUE_SIZE] 
+				: req.EscapeVelocities;
+
+			var mapSectionVectors2 = new MapSectionVectors2(_blockSize, req.Counts, escapeVelocities);
+
+			return mapSectionVectors2;
+		}
+
+		private MapSectionZVectors? GetZVectors(MapSectionServiceRequest req)
+		{
+			// Layout parameters
+			var valueCount = req.BlockSize.NumberOfCells;
+			var rowCount = req.BlockSize.Height;
+			var totalBytesForFlags = valueCount * VALUE_SIZE;           // ValueCount * VALUE_SIZE
+			var totalByteCount = totalBytesForFlags * req.LimbCount;    // ValueCount * VALUE_SIZE * LimbCount;
+
+			var zrs = req.Zrs.Length > 0 ? req.Zrs : new byte[totalByteCount];
+			var zis = req.Zis.Length > 0 ? req.Zis : new byte[totalByteCount];
+			var hasEscapedFlags = req.HasEscapedFlags.Length > 0 ? req.HasEscapedFlags : new byte[totalBytesForFlags];
+			var rowHasEscaped = req.RowHasEscaped.Length > 0 ? GetBoolsFromBytes(req.RowHasEscaped) : new bool[rowCount];
+
+			var mapSectionZVectors = new MapSectionZVectors(req.BlockSize, req.LimbCount, zrs, zis, hasEscapedFlags, rowHasEscaped);
+
+			return mapSectionZVectors;
+		}
+
+		private bool[] GetBoolsFromBytes(byte[] rowHasEscaped)
+		{
+			return rowHasEscaped.Select(x => x == 1).ToArray();
+		}
+
 		private MapSectionServiceResponse MapTo(MapSectionResponse mapSectionResponse, MapSectionServiceRequest req, TimeSpan generationDuration)
 		{
 			var mapSectionVectors2 = mapSectionResponse.MapSectionVectors2;
@@ -258,62 +297,11 @@ namespace MEngineService.Services
 			return mapSectionServiceResponse;
 		}
 
-		private MapSectionVectors2? GetVectors2(MapSectionServiceRequest req)
-		{
-			if (req.Counts == null || req.Counts.Length == 0)
-			{
-				return null;
-			}
-
-			var escapeVelocities = (req.EscapeVelocities == null || req.EscapeVelocities.Length == 0) ? new byte[req.BlockSize.NumberOfCells * ESCASPE_VELOCITY_VALUE_SIZE] : req.EscapeVelocities;
-
-			var mapSectionVectors2 = new MapSectionVectors2(_blockSize, req.Counts, escapeVelocities);
-
-			return mapSectionVectors2;
-		}
-
-		private MapSectionZVectors? GetZVectors(MapSectionServiceRequest req)
-		{
-			if (req.Zrs == null || req.Zrs.Length == 0)
-			{
-				return null;
-			}
-
-			// Layout parameters
-			var valueCount = req.BlockSize.NumberOfCells;
-			var rowCount = req.BlockSize.Height;
-			var totalBytesForFlags = valueCount * VALUE_SIZE;           // ValueCount * VALUE_SIZE
-			var totalByteCount = totalBytesForFlags * req.LimbCount;    // ValueCount * VALUE_SIZE * LimbCount;
-
-			var zrs = req.Zrs.Length > 0 ? req.Zrs : new byte[totalByteCount];
-			var zis = req.Zis.Length > 0 ? req.Zis : new byte[totalByteCount];
-			var hasEscapedFlags = req.HasEscapedFlags.Length > 0 ? req.HasEscapedFlags : new byte[totalBytesForFlags];
-			var rowHasEscaped = req.RowHasEscaped.Length > 0 ? GetBoolsFromBytes(req.RowHasEscaped) : new bool[rowCount];
-
-			var mapSectionZVectors = new MapSectionZVectors(req.BlockSize, req.LimbCount, zrs, zis, hasEscapedFlags, rowHasEscaped);
-
-			return mapSectionZVectors;
-		}
-
-		private bool[] GetBoolsFromBytes(byte[] rowHasEscaped)
-		{
-			return rowHasEscaped.Select(x => x == 1).ToArray();
-		}
-
 		private string GetKey(int jobNumber, int requestNumber)
 		{
 			var result = $"{jobNumber}/{requestNumber}";
 			return result;
 		}
-
-		//private MapSectionVectorProvider CreateMapSectionVectorProvider(SizeInt blockSize, int defaultLimbCount, int initialPoolSize)
-		//{
-		//	var mapSectionVectorsPool = new MapSectionVectorsPool(blockSize, initialPoolSize);
-		//	var mapSectionZVectorsPool = new MapSectionZVectorsPool(blockSize, defaultLimbCount, initialPoolSize);
-		//	var mapSectionVectorProvider = new MapSectionVectorProvider(mapSectionVectorsPool, mapSectionZVectorsPool);
-
-		//	return mapSectionVectorProvider;
-		//}
 
 		#endregion
 

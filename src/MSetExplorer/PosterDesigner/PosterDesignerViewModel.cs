@@ -8,8 +8,6 @@ namespace MSetExplorer
 {
 	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
-		private bool _disposedValue;
-
 		//private readonly MapJobHelper _mapJobHelper;
 		//private readonly IMapLoaderManager _mapLoaderManager;
 		//private readonly ViewModelFactory _viewModelFactory;

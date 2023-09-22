@@ -499,7 +499,7 @@ namespace MSetExplorer
 			{
 				for (var i = 0; i < localTaskCount; i++)
 				{
-					result.Add(new MClientLocal(mSetGenerationStrategy, mapSectionVectorProvider, clientNumber++));
+					result.Add(new MClientLocal(mSetGenerationStrategy, clientNumber++, mapSectionVectorProvider));
 				}
 
 				Debug.WriteLine($"Using {localTaskCount} local engines.");
@@ -513,7 +513,7 @@ namespace MSetExplorer
 				{
 					for (var i = 0; i < remoteTaskCount; i++)
 					{
-						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint, clientNumber++));
+						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint, clientNumber++, mapSectionVectorProvider));
 					}
 
 					Debug.WriteLine($"Using {remoteTaskCount} engines at {remoteEndPoint}.");

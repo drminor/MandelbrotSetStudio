@@ -24,7 +24,7 @@ namespace MapSectionProviderLib
 
 		private readonly object _queueLock = new();
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#region Constructor
 
@@ -146,10 +146,12 @@ namespace MapSectionProviderLib
 				{
 					if (mapSectionResponse.AllRowsHaveEscaped)
 					{
+						Debug.WriteLineIf(_useDetailedDebug, $"PersistProc: DeleteZValuesAsync for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 						_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId);
 					}
 					else
 					{
+						Debug.WriteLineIf(_useDetailedDebug, $"PersistProc: UpdateZValuesAsync for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 						_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
 					}
 
@@ -175,10 +177,12 @@ namespace MapSectionProviderLib
 						if (zValuesRecordOnFile)
 						{
 							Debug.WriteLine($"WARNING: Found a ZValuesRecord for MapSectionId: {mapSectionId.Value} when the MapSectionResponse's RecordOnFile property = false.");
+							Debug.WriteLineIf(_useDetailedDebug, $"PersistProc: UpdateZValuesAsync for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId.Value);
 						}
 						else
 						{
+							Debug.WriteLineIf(_useDetailedDebug, $"PersistProc: SaveMapSectionZValuesAsync for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 							_ = await _mapSectionAdapter.SaveMapSectionZValuesAsync(mapSectionResponse, mapSectionId.Value);
 						}
 

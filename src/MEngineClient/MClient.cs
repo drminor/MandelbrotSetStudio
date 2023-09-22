@@ -22,6 +22,8 @@ namespace MEngineClient
 		private GrpcChannel? _grpcChannel;
 		private IMapSectionService? _mapSectionService;
 
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
+
 		private int? _jobNumber;
 		private int? _requestNumber;
 
@@ -38,13 +40,14 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClient(MSetGenerationStrategy mSetGenerationStrategy, string endPointAddress, int clientNumber)
+		public MClient(MSetGenerationStrategy mSetGenerationStrategy, string endPointAddress, int clientNumber, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			_dtoMapper = new DtoMapper();
 
 			MSetGenerationStrategy = mSetGenerationStrategy;
 			EndPointAddress = endPointAddress;
 			ClientNumber = clientNumber;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 
 			_grpcChannel = null;
 			_mapSectionService = null;
@@ -64,40 +67,6 @@ namespace MEngineClient
 		#endregion
 
 		#region Public Methods
-
-		public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
-		{
-			if (_jobNumber != null && _requestNumber != null)
-			{
-				var jobNumber = mapSectionRequest.MapLoaderJobNumber;
-				var requestNumber = mapSectionRequest.RequestNumber;
-
-				if (jobNumber == _jobNumber && requestNumber == _requestNumber)
-				{
-					var mapSectionService = MapSectionService;
-					//var mapSectionService = GetMapSectionService();
-
-					var cancelRequest = new CancelRequest
-					{
-						MapLoaderJobNumber = jobNumber,
-						RequestNumber = requestNumber
-					};
-
-
-					lock (_cancellationLock)
-					{
-						var result = mapSectionService.CancelGeneration(cancelRequest);
-						return result.RequestWasCancelled;
-					}
-				}
-				else
-				{
-					return false;
-				}
-			}
-
-			return false;
-		}
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
@@ -134,6 +103,44 @@ namespace MEngineClient
 
 			return mapSectionResponse;
 		}
+
+		public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		{
+			if (_jobNumber != null && _requestNumber != null)
+			{
+				var jobNumber = mapSectionRequest.MapLoaderJobNumber;
+				var requestNumber = mapSectionRequest.RequestNumber;
+
+				if (jobNumber == _jobNumber && requestNumber == _requestNumber)
+				{
+					var mapSectionService = MapSectionService;
+					//var mapSectionService = GetMapSectionService();
+
+					var cancelRequest = new CancelRequest
+					{
+						MapLoaderJobNumber = jobNumber,
+						RequestNumber = requestNumber
+					};
+
+
+					lock (_cancellationLock)
+					{
+						var result = mapSectionService.CancelGeneration(cancelRequest);
+						return result.RequestWasCancelled;
+					}
+				}
+				else
+				{
+					return false;
+				}
+			}
+
+			return false;
+		}
+
+		#endregion
+
+		#region Private Methods
 
 		private MapSectionServiceResponse GenerateMapSectionInternal(MapSectionServiceRequest req, CancellationToken ct)
 		{
@@ -187,10 +194,6 @@ namespace MEngineClient
 				Debug.WriteLine($"WARNING: MClient: CancelGeneration Callback was given a state with type: {stateType} different than {typeof(MapSectionServiceRequest)}.");
 			}
 		}
-
-		#endregion
-
-		#region Private Methods
 
 		private MapSectionServiceRequest MapTo(MapSectionRequest req)
 		{
@@ -277,8 +280,13 @@ namespace MEngineClient
 					mapSectionVectors2 = new MapSectionVectors2(mapSectionRequest.BlockSize, res.Counts, res.EscapeVelocities);
 				}
 
-				if (mapSectionZVectors != null)
+				if (mapSectionRequest.MapCalcSettings.SaveTheZValues)
 				{
+					if (mapSectionZVectors == null)
+					{
+						mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(mapSectionRequest.LimbCount);
+					}
+
 					Array.Copy(res.Zrs, mapSectionZVectors.Zrs, res.Zrs.Length);
 					Array.Copy(res.Zis, mapSectionZVectors.Zis, res.Zis.Length);
 					Array.Copy(res.HasEscapedFlags, mapSectionZVectors.HasEscapedFlags, res.HasEscapedFlags.Length);
@@ -287,10 +295,7 @@ namespace MEngineClient
 				}
 				else
 				{
-					if (mapSectionRequest.MapCalcSettings.SaveTheZValues)
-					{
-						mapSectionZVectors = new MapSectionZVectors(mapSectionRequest.BlockSize, mapSectionRequest.LimbCount, res.Zrs, res.Zis, res.HasEscapedFlags, GetBoolsFromBytes(res.RowHasEscaped));
-					}
+					// Not saving the ZValues, 
 				}
 			}
 			else

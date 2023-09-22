@@ -24,7 +24,7 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClientLocal(MSetGenerationStrategy mSetGenerationStrategy, MapSectionVectorProvider mapSectionVectorProvider, int clientNumber)
+		public MClientLocal(MSetGenerationStrategy mSetGenerationStrategy, int clientNumber, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			MSetGenerationStrategy = mSetGenerationStrategy;
 			EndPointAddress = "CSharp_DepthFirstGenerator";
