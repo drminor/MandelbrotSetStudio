@@ -1,7 +1,9 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
+using MEngineDataContracts;
 using MongoDB.Bson;
 using MSetExplorer.RepositoryManagement;
+using MSetGeneratorPrototype;
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
@@ -33,15 +35,17 @@ namespace MSetExplorer
 		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		//private const int MONGO_DB_PORT = 27017;
 
+		private static readonly string LOCAL_IP_ADDRESS = "192.168.2.100";
+
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://localhost:5000" };
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
 		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
 
 		private static readonly bool USE_ALL_CORES = true;
-		private static readonly bool USE_REMOTE_ENGINES = false;
+		private static readonly bool USE_REMOTE_ENGINES = true;
 		private static readonly bool USE_LOCAL_ENGINE = true;
 
-		private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
+		//private static readonly MSetGenerationStrategy GEN_STRATEGY = MSetGenerationStrategy.DepthFirst;
 
 		private static readonly bool CHECK_CONN_BEFORE_USE = false;
 
@@ -258,7 +262,7 @@ namespace MSetExplorer
 			#endregion
 
 			var mEngineClients = CreateTheMEngineClients(USE_ALL_CORES, REMOTE_SERVICE_END_POINTS, useRemoteEngine: USE_REMOTE_ENGINES, useLocalEngine: USE_LOCAL_ENGINE, 
-				GEN_STRATEGY, _mapSectionVectorProvider);
+				mapSectionGeneratorCreator: CreateMapSectionGenerator, _mapSectionVectorProvider);
 			//Debug.WriteLine($"After Create MEngineClients. {currentStopwatch.ElapsedMilliseconds}.");
 
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
@@ -487,22 +491,30 @@ namespace MSetExplorer
 
 		#region MEngine Support
 
-		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, 
-			MSetGenerationStrategy mSetGenerationStrategy, MapSectionVectorProvider mapSectionVectorProvider)
+		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, Func<IMapSectionGenerator> mapSectionGeneratorCreator, 
+			MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			var clientNumber = 0;
 			var result = new List<IMEngineClient>();
 
+			var localTaskCountAdjustment = 0;
 			var localTaskCount = GetLocalTaskCount(useAllCores);
+
+			if (useRemoteEngine && useLocalEngine && remoteEndPoints[0].Contains(LOCAL_IP_ADDRESS))
+			{
+				localTaskCountAdjustment = localTaskCount / 2;
+			}
 
 			if (useLocalEngine)
 			{
-				for (var i = 0; i < localTaskCount; i++)
+				var adjustedLocalTaskCount = localTaskCount - localTaskCountAdjustment;
+				for (var i = 0; i < adjustedLocalTaskCount; i++)
 				{
-					result.Add(new MClientLocal(mSetGenerationStrategy, clientNumber++, mapSectionVectorProvider));
+					var mapSectionGenerator = mapSectionGeneratorCreator();
+					result.Add(new MClientLocal(clientNumber++, mapSectionGenerator, mapSectionVectorProvider));
 				}
 
-				Debug.WriteLine($"Using {localTaskCount} local engines.");
+				Debug.WriteLine($"Using {adjustedLocalTaskCount} local engines.");
 			}
 
 			if (useRemoteEngine)
@@ -513,7 +525,7 @@ namespace MSetExplorer
 				{
 					for (var i = 0; i < remoteTaskCount; i++)
 					{
-						result.Add(new MClient(mSetGenerationStrategy, remoteEndPoint, clientNumber++, mapSectionVectorProvider));
+						result.Add(new MClient(clientNumber++, remoteEndPoint, mapSectionVectorProvider));
 					}
 
 					Debug.WriteLine($"Using {remoteTaskCount} engines at {remoteEndPoint}.");
@@ -554,6 +566,13 @@ namespace MSetExplorer
 			}
 
 			return result;
+		}
+
+		private IMapSectionGenerator CreateMapSectionGenerator()
+		{
+			var mapGeneratorService = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
+
+			return mapGeneratorService;
 		}
 
 		#region MEngine Constants

@@ -40,14 +40,14 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClient(MSetGenerationStrategy mSetGenerationStrategy, string endPointAddress, int clientNumber, MapSectionVectorProvider mapSectionVectorProvider)
+		public MClient(int clientNumber, string endPointAddress, MapSectionVectorProvider mapSectionVectorProvider)
 		{
-			_dtoMapper = new DtoMapper();
-
-			MSetGenerationStrategy = mSetGenerationStrategy;
-			EndPointAddress = endPointAddress;
 			ClientNumber = clientNumber;
+			EndPointAddress = endPointAddress;
+
 			_mapSectionVectorProvider = mapSectionVectorProvider;
+
+			_dtoMapper = new DtoMapper();
 
 			_grpcChannel = null;
 			_mapSectionService = null;
@@ -60,7 +60,6 @@ namespace MEngineClient
 		#region Public Properties
 
 		public int ClientNumber {get; init;}
-		public MSetGenerationStrategy MSetGenerationStrategy { get; init; }
 		public string EndPointAddress { get; init; }
 		public bool IsLocal => true;
 

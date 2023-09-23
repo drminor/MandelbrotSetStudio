@@ -63,6 +63,12 @@ namespace MapSectionProviderLib
 
 		#endregion
 
+		#region Public Properties
+
+		public int NumberOfRequestsPending => _workQueue.Count;
+
+		#endregion
+
 		#region Public Methods
 
 		internal void AddWork(MapSectionGenerateRequest mapSectionWorkItem, CancellationToken ct)

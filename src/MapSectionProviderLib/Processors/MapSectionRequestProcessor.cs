@@ -110,6 +110,9 @@ namespace MapSectionProviderLib
 
 		public bool UseRepo { get; set; }
 
+		public int NumberOfRequestsPending => _requestQueue.Count;
+		public int NumberOfReturnsPending => _returnQueue.Count;
+
 		#endregion
 
 		#region Public Methods
