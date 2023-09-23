@@ -35,8 +35,6 @@ namespace MapSectionProviderLib
 			_requestsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			_removeCompletedRequestsTask = Task.Run(() => RemoveCompletedRequests(_requests, _requestsLock, _cts.Token), _cts.Token);
-
-			//_caclulateEscapeVelocities = false;
 		}
 
 		#endregion

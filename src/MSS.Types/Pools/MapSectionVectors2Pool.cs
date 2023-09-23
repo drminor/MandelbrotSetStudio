@@ -1,9 +1,9 @@
 ﻿
 namespace MSS.Types
 {
-	public class MapSectionVectorsPool2 : ObjectPool<MapSectionVectors2>
+	public class MapSectionVectors2Pool : ObjectPool<MapSectionVectors2>
 	{
-		public MapSectionVectorsPool2(SizeInt blockSize, int initialSize = 16) : base(initialSize)
+		public MapSectionVectors2Pool(SizeInt blockSize, int initialSize = 16) : base(initialSize)
 		{
 			BlockSize = blockSize;
 			Fill(initialSize);

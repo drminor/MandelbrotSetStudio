@@ -11,14 +11,26 @@ namespace MSS.Types
 
 		[DataMember(Order = 1)]
 		public long NumberOfMultiplications { get; set; }
+
+		[DataMember(Order = 2)]
 		public long NumberOfAdditions { get; set; }
+
+		[DataMember(Order = 3)]
 		public long NumberOfNegations { get; set; }
+
+		[DataMember(Order = 4)]
 		public long NumberOfConversions { get; set; }
 
+		[DataMember(Order = 5)]
 		public long NumberOfSplits { get;  set; }
+
+		[DataMember(Order = 6)]
 		public long NumberOfComparisons { get; set; }
 
+		[DataMember(Order = 7)]
 		public double NumberOfCalcs { get; set; }
+
+		[DataMember(Order = 8)]
 		public double NumberOfUnusedCalcs { get; set; }
 
 		#endregion

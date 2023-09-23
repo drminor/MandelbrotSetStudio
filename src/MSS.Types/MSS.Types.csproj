@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <Compile Remove="APValues\SpanClassExp.cs" />
-    <Compile Remove="Pools\MapSectionVectorsPool2.cs" />
+    <Compile Remove="Pools\MapSectionVectors2Pool.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <None Include="APValues\SpanClassExp.cs" />
-    <None Include="Pools\MapSectionVectorsPool2.cs" />
+    <None Include="Pools\MapSectionVectors2Pool.cs" />
   </ItemGroup>
 
 

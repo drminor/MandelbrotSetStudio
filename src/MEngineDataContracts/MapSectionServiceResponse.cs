@@ -55,12 +55,6 @@ namespace MEngineDataContracts
 		[DataMember(Order = 8)]
 		public MathOpCounts MathOpCounts { get; init; }
 
-		//[DataMember(Order = 9)]
-		//public ushort[] Counts { get; set; }
-
-		//[DataMember(Order = 10)]
-		//public ushort[] EscapeVelocities { get; set; }
-
 		[DataMember(Order = 9)]
 		public byte[] Counts { get; set; }
 
@@ -78,7 +72,6 @@ namespace MEngineDataContracts
 
 		[DataMember(Order = 14)]
 		public byte[] RowHasEscaped { get; set; }
-
 
 	}
 }
