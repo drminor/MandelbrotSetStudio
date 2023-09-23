@@ -209,6 +209,7 @@ namespace MEngineClient
 				SubdivisionId = req.SubdivisionId,
 				ScreenPosition = req.ScreenPosition,
 				BlockPosition = blockPosition,
+				IsInverted = req.IsInverted,
 				MapPosition = mapPosition,
 				BlockSize = req.BlockSize,
 				SamplePointDelta = samplePointDelta,

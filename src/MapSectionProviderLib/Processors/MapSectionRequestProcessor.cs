@@ -575,7 +575,7 @@ namespace MapSectionProviderLib
 						if (workItem != mapSectionWorkRequest)
 						{
 							workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, workItem.JobId);
-							workRequestsToSend.Add(mapSectionWorkRequest);
+							workRequestsToSend.Add(workItem);
 						}
 					}
 				}
@@ -629,8 +629,6 @@ namespace MapSectionProviderLib
 			else
 			{
 				var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-				//mapSectionVectors.IncreaseRefCount();
-
 				mapSectionVectors.Load(mapSectionVectors2.Counts, mapSectionVectors2.EscapeVelocities);
 
 				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobNumber);
@@ -727,7 +725,7 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void AssertPrimaryRequestFound(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> pendingRequests)
 		{
 			var primaryRequestIsFound = RequestExists(mapSectionWorkRequest.Request, pendingRequests);

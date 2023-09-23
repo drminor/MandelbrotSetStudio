@@ -294,9 +294,17 @@ namespace MSetRepo
 
 		public async Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse)
 		{
+			var originalId = mapSectionResponse.MapSectionId;
+			Debug.Assert(originalId == null, "MapSectionId is not null on call to SaveMapSectionAsync.");
+
 			var mapSectionRecord = _mSetRecordMapper.MapTo(mapSectionResponse);
 
 			var mapSectionId = await _mapSectionReaderWriter.InsertAsync(mapSectionRecord);
+
+			if (mapSectionRecord.Id != ObjectId.Empty && mapSectionId != mapSectionRecord.Id)
+			{
+				mapSectionResponse.MapSectionId = mapSectionRecord.Id.ToString();
+			}
 
 			return mapSectionId;
 		}

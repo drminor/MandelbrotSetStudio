@@ -95,6 +95,9 @@ namespace MapSectionProviderLib
 				var requestsNotFound = mapSectionRequests.Where(x => !x.FoundInRepo).ToList();
 				CheckNewRequestsForCancellation(requestsNotFound);
 
+				var oi = requestsNotFound.Count(x => x.IsInverted);
+
+
 				var mapLoader = new MapLoader(jobNumber, callback, _mapSectionRequestProcessor);
 
 				DoWithWriteLock(() =>

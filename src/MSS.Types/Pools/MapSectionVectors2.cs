@@ -9,7 +9,7 @@ namespace MSS.Types
 	public class MapSectionVectors2 //: IPoolable
 	{
 		private const int VALUE_SIZE = 2;
-		private readonly bool _arrayPoolWasUsed = false;
+		//private readonly bool _arrayPoolWasUsed = false;
 
 		#region Constructor
 
@@ -20,7 +20,7 @@ namespace MSS.Types
 				  ArrayPool<byte>.Shared.Rent(blockSize.NumberOfCells * VALUE_SIZE) 
 				  )
 		{
-			_arrayPoolWasUsed = true;
+			//_arrayPoolWasUsed = true;
 		}
 
 		public MapSectionVectors2(SizeInt blockSize, byte[] counts, byte[] escapeVelocities)
@@ -205,18 +205,18 @@ namespace MSS.Types
 				{
 					// Dispose managed state (managed objects)
 
-					if (_arrayPoolWasUsed)
-					{
-						try
-						{
-							ArrayPool<byte>.Shared.Return(Counts, clearArray: false);
-							ArrayPool<byte>.Shared.Return(EscapeVelocities, clearArray: false);
-						}
-						catch (Exception e)
-						{
-							Debug.WriteLine($"Got Exception: {e} while disposing the MapSectionVectors2.");
-						}
-					}
+					//if (_arrayPoolWasUsed)
+					//{
+					//	try
+					//	{
+					//		ArrayPool<byte>.Shared.Return(Counts, clearArray: false);
+					//		ArrayPool<byte>.Shared.Return(EscapeVelocities, clearArray: false);
+					//	}
+					//	catch (Exception e)
+					//	{
+					//		Debug.WriteLine($"Got Exception: {e} while disposing the MapSectionVectors2.");
+					//	}
+					//}
 				}
 
 				_disposedValue = true;
