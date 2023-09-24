@@ -16,6 +16,10 @@ namespace MSS.Types
 		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, BITS_PER_SIGNED_LONG);
 		private static readonly BigInteger MAX_DIGIT_VALUE = LONG_FACTOR - 1;
 
+		//// Integer used to convert BigIntegers to/from array of longs.
+		//private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, 53); //new BigInteger(long.MaxValue); // BigInteger.Add(BigInteger.One, BigInteger.Pow(2, 63));
+		//private static readonly BigInteger MAX_DIGIT_VALUE = LONG_FACTOR - 1;
+
 		// Largest integer that can be represented by a double for which it and all smaller integers can be reduced by 1 without loosing precision.
 		private static readonly BigInteger MAX_DP_INTEGER = BigInteger.Pow(2, 53);
 
@@ -217,17 +221,15 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Convert to Array of Longs
+		#region To Longs -- Exactly two limbs
 
-		// TODO: Use Little-Endian format, instead of Big-Endian format when creating an Array of Longs from a BigInteger
-
-		public static long[][] ToLongs(BigInteger[] values)
+		public static long[][] ToArrayOfLongPairs(BigInteger[] values)
 		{
-			var result = values.Select(v => ToLongs(v)).ToArray();
+			var result = values.Select(v => ToLongPairs(v)).ToArray();
 			return result;
 		}
 
-		public static long[] ToLongsHiLo (BigInteger bi)
+		public static long[] ToLongPairs(BigInteger bi)
 		{
 			var hi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
 
@@ -251,20 +253,74 @@ namespace MSS.Types
 			return result;
 		}
 
-		public static long[] ToLongs(BigInteger bi)
+		#endregion
+
+		#region ToLongs - Minimum of one limb
+
+		public static long[][] ToLongs(BigInteger[] values)
+		{
+			var result = values.Select(v => ToLongs(v)).ToArray();
+			return result;
+		}
+
+		private static long[] ToLongs(BigInteger bi)
 		{
 			var result = new List<long>();
 
 			while (bi > MAX_DIGIT_VALUE)
 			{
 				bi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
-				result.Add((long) lo);
+				result.Add((long)lo);
 			}
 
 			result.Add((long)bi);
 
+			// The old implementation placed the least significant elements at the higher indexes. i.e., Big-Endian
+			result.Reverse();
+
 			return result.ToArray();
 		}
+
+		#endregion
+
+		#region ToLongs - Minimum of two limbs
+
+		public static long[][] ToLongsM2(BigInteger[] values)
+		{
+			var result = values.Select(v => ToLongsM2(v)).ToArray();
+			return result;
+		}
+
+		private static long[] ToLongsM2(BigInteger bi)
+		{
+			var result = new List<long>();
+
+			// The old implementaion always returned 2 elements.
+			if (bi <= MAX_DIGIT_VALUE)
+			{
+				return new long[] { 0, (long)bi };
+			}
+			else
+			{
+				while (bi > MAX_DIGIT_VALUE)
+				{
+					bi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
+					result.Add((long)lo);
+				}
+
+				result.Add((long)bi);
+
+				// The old implementation placed the least significant elements at the higher indexes.
+				// i.e., Big-Endian
+				result.Reverse();
+
+				return result.ToArray();
+			}
+		}
+
+		#endregion
+
+		#region From Longs
 
 		public static BigInteger[] FromLongs(long[][] values)
 		{
@@ -279,7 +335,8 @@ namespace MSS.Types
 				Debug.WriteLine("WARNING: FromLongs is being called with an array of length > 2.");
 			}
 
-			//DtoLongs are in Big - Endian order
+			// DtoLongs are in Big - Endian order
+			// TODO: Update the Dto Types to store the array of longs in Little-Endian order.
 			var result = BigInteger.Zero;
 
 			for (var i = 0; i < values.Length; i++)

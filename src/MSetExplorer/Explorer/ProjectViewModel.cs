@@ -56,6 +56,7 @@ namespace MSetExplorer
 
 					if (_currentProject != null)
 					{
+						CalculateEscapeVelocities = _currentProject.CurrentJob.MapCalcSettings.CalculateEscapeVelocities;
 						_currentProject.PropertyChanged += CurrentProject_PropertyChanged;
 					}
 
@@ -183,45 +184,45 @@ namespace MSetExplorer
 			}
 		}
 
-		//public bool CalculateEscapeVelocities
-		//{
-		//	get => CurrentProject?.CurrentJob.MapCalcSettings.CalculateEscapeVelocities ?? false;
-		//	set
-		//	{
-		//		var currentProject = CurrentProject;
-		//		if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-		//		{
-		//			if (value == CalculateEscapeVelocities)
-		//			{
-		//				Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
-		//			}
-
-		//			var newMapCalcSettings = MapCalcSettings.UpdateCalculateEscapeVelocities(currentProject.CurrentJob.MapCalcSettings, value);
-		//			AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
-
-		//			OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
-		//		}
-		//	}
-		//}
-
-		private bool _calculateEscapeVelocities = true;
-
 		public bool CalculateEscapeVelocities
 		{
-			get => _calculateEscapeVelocities;
+			get => CurrentProject?.CurrentJob.MapCalcSettings.CalculateEscapeVelocities ?? false;
 			set
 			{
-				if (value != _calculateEscapeVelocities)
+				var currentProject = CurrentProject;
+				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
 				{
-					_calculateEscapeVelocities = value;
+					if (value == CalculateEscapeVelocities)
+					{
+						Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+					}
+
+					var newMapCalcSettings = MapCalcSettings.UpdateCalculateEscapeVelocities(currentProject.CurrentJob.MapCalcSettings, value);
+					AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
+
 					OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
-				}
-				else
-				{
-					Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
 				}
 			}
 		}
+
+		//private bool _calculateEscapeVelocities = true;
+
+		//public bool CalculateEscapeVelocities
+		//{
+		//	get => _calculateEscapeVelocities;
+		//	set
+		//	{
+		//		if (value != _calculateEscapeVelocities)
+		//		{
+		//			_calculateEscapeVelocities = value;
+		//			OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+		//		}
+		//	}
+		//}
 
 		#endregion
 
@@ -269,8 +270,10 @@ namespace MSetExplorer
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			CurrentProject = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
-			job.OwnerId = CurrentProject.Id;
+			var project = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
+			job.OwnerId = project.Id;
+
+			CurrentProject = project;
 		}
 
 		public bool ProjectOpen(string projectName)

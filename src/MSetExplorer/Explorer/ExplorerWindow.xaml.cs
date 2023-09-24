@@ -41,6 +41,7 @@ namespace MSetExplorer
 
 			InitializeComponent();
 
+
 			jobProgress1.DataContext = _vm.ViewModelFactory.CreateAJobProgressViewModel();
 			
 			mapDisplay1.DataContext = _vm.MapDisplayViewModel;

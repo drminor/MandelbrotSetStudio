@@ -12,7 +12,7 @@ namespace MSS.Common.DataTransferObjects
 	///		RRectangle
 	///		BigVector
 	/// </summary>
-	public class DtoMapper : IMapper<RPoint, RPointDto>, IMapper<RSize, RSizeDto>, IMapper<RRectangle, RRectangleDto>, IMapper<BigVector, BigVectorDto>/*, IMapper<RVector, RVectorDto>*/
+	public class DtoMapper : IMapper<RPoint, RPointDto>, IMapper<RSize, RSizeDto>, IMapper<RRectangle, RRectangleDto>, IMapper<BigVector, BigVectorDto>, IMapper<RVector, RVectorDto>
 	{
 		public RPointDto MapTo(RPoint source)
 		{

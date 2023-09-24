@@ -53,7 +53,7 @@ namespace MSS.Types.DataTransferObjects
 
 		private void AppendStringVals(long[] vals, StringBuilder sb)
 		{
-			if (vals[1] == 0)
+			if (vals.Length == 1 || vals[1] == 0)
 			{
 				sb.Append(vals[0].ToString(CultureInfo.InvariantCulture));
 			}

@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using MSS.Types.DataTransferObjects;
-using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +30,9 @@ namespace ProjectRepo
 			return subdivisionRecord;
 		}
 
+		// TODO: Update the SamplePointDelta to use ulongs instead of big integers
+		// TODO: Update the SubdivisionReaderWriter, Get method to filter on the first two limbs of X and Y of the baseMapPosition
+		//		causing the method to possibly return more than one record.
 		public IList<SubdivisionRecord> Get(RSizeDto samplePointDelta, BigVectorDto baseMapPosition)
 		{
 			var filter1 = Builders<SubdivisionRecord>.Filter.Eq("SamplePointDelta.Size.Width", samplePointDelta.Width);

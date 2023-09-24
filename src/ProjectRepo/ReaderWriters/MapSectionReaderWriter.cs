@@ -1,14 +1,10 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using MSS.Common.DataTransferObjects;
-using MSS.Types;
-using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,8 +15,6 @@ namespace ProjectRepo
 		#region Constructor and Collection Support
 
 		private const string COLLECTION_NAME = "MapSections";
-
-		private DtoMapper _dtoMapper = new DtoMapper();
 
 		public MapSectionReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
@@ -285,13 +279,13 @@ namespace ProjectRepo
 			}
 		}
 
-		public ObjectId? GetId(ObjectId subdivisionId, BigVectorDto blockPosition)
+		public ObjectId? GetId(ObjectId subdivisionId, MapBlockOffset blockPosition)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X[1]);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y[1]);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.X[0]);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.Y[0]);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.XLo);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.YLo);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
 
 			var bDoc = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5);
 

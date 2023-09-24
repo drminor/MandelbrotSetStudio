@@ -5,7 +5,7 @@ using System.Diagnostics;
 namespace MSS.Types.DataTransferObjects
 {
 	[ProtoContract(SkipConstructor = true)]
-	public class FPValuesDto
+	public class FPValuesDtoNotUsed
 	{
 		[ProtoMember(1)]
 		public byte[] Signs;
@@ -16,14 +16,14 @@ namespace MSS.Types.DataTransferObjects
 		[ProtoMember(3)]
 		public byte[] Exponents;
 
-		public FPValuesDto(byte[] signs, byte[][] valueArrays, byte[] exponents)
+		public FPValuesDtoNotUsed(byte[] signs, byte[][] valueArrays, byte[] exponents)
 		{
 			Signs = signs;
 			ValueArrays = valueArrays;
 			Exponents = exponents;
 		}
 
-		public FPValuesDto(bool[] signs, ulong[][] mantissas, short[] exponents)
+		public FPValuesDtoNotUsed(bool[] signs, ulong[][] mantissas, short[] exponents)
 		{
 			// ValueArrays[0] = Least Significant Limb (Number of 1's)
 			// ValuesArray[1] = Number of 2^64s

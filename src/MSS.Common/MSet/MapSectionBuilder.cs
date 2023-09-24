@@ -315,7 +315,10 @@ namespace MSS.Common
 
 		private MapBlockOffset MapTo(BigVector bigVector)
 		{
-			var mapBlockOffset = new MapBlockOffset(BigIntegerHelper.ToLongsHiLo(bigVector.X), BigIntegerHelper.ToLongsHiLo(bigVector.Y));
+			var x = BigIntegerHelper.ToLongPairs(bigVector.X);
+			var y = BigIntegerHelper.ToLongPairs(bigVector.Y);
+
+			var mapBlockOffset = new MapBlockOffset(x, y);
 			return mapBlockOffset;
 		}
 

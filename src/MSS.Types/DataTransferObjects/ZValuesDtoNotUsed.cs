@@ -5,17 +5,17 @@ using System.Diagnostics;
 namespace MSS.Types.DataTransferObjects
 {
 	[ProtoContract(SkipConstructor = true)]
-	public class ZValuesDto
+	public class ZValuesDtoNotUsed
 	{
 		[ProtoMember(1)]
 		public byte[][] ValuesArray;
 
-		public ZValuesDto(byte[][] valuesArray)
+		public ZValuesDtoNotUsed(byte[][] valuesArray)
 		{
 			ValuesArray = valuesArray;
 		}
 
-		public ZValuesDto(double[] zValues, int numberOfByteArrays = 4)
+		public ZValuesDtoNotUsed(double[] zValues, int numberOfByteArrays = 4)
 		{
 			// ValuesArray[0] = zX High Part
 			// ValuesArray[1] = zX Low Part
