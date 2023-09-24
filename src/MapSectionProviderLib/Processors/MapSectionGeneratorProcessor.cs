@@ -158,60 +158,6 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		//private async Task ProcessTheQueueAsync(IMEngineClient mEngineClient, CancellationToken ct)
-		//{
-		//	while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
-		//	{
-		//		try
-		//		{
-		//			var mapSectionGenerateRequest = _workQueue.Take(ct);
-
-		//			// The original request is in the Request's Request property.
-		//			var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
-		//			var cts = mapSectionRequest.CancellationTokenSource;
-
-		//			MapSectionResponse mapSectionResponse;
-
-		//			if (IsJobCancelled(mapSectionGenerateRequest.JobId, cts))
-		//			{
-		//				mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
-		//				var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
-		//				mapSectionResponse.MapSectionVectors = msv;
-		//				mapSectionResponse.MapSectionZVectors = mszv;
-
-		//			}
-		//			else
-		//			{
-		//				//Debug.WriteLine($"Generating MapSection for block: {blockPosition}.");
-		//				mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
-		//				mapSectionResponse = await mEngineClient.GenerateMapSectionAsync(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
-		//				//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-
-		//				if (!cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors == null)
-		//				{
-		//					Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
-		//				}
-
-		//				if (mapSectionRequest.MapSectionId != null)
-		//				{
-		//					Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
-		//				}
-		//			}
-
-		//			mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
-		//		}
-		//		catch (OperationCanceledException)
-		//		{
-		//			//Debug.WriteLine("The response queue got a OCE.");
-		//		}
-		//		catch (Exception e)
-		//		{
-		//			Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client" }. The exception is {e}.");
-		//			throw;
-		//		}
-		//	}
-		//}
-
 		private void ProcessTheQueue(IMEngineClient mEngineClient, CancellationToken ct)
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
@@ -239,35 +185,12 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
-						//var registration = mapSectionRequest.CancellationTokenSource.Token.Register(CancelGeneration, new Tuple<IMEngineClient, MapSectionRequest>(mEngineClient, mapSectionRequest));
-
 						var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
 						var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues." : null;
 
-						Debug.WriteLineIf(_useDetailedDebug, $"Generating MapSection for Request: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}. BlockPos: {mapSectionRequest.BlockPosition}. {sendingVectorsMsg} {haveZValuesMsg}");
+						Debug.WriteLineIf(_useDetailedDebug, $"Generating MapSection for Request: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}. BlockPos: {mapSectionRequest.RepoBlockPosition}. {sendingVectorsMsg} {haveZValuesMsg}");
 						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
-
-						//registration.Unregister();
-
-						//mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-
-						//// Now that the mEngineClient has completed the task, once again check to see if the Job is cancelled.
-						//jobIsCancelled = IsJobCancelled(mapSectionGenerateRequest.JobId);
-						////Debug.Assert(!jobIsCancelled, "How is it possible that the job is now cancelled.");
-
-						//if (jobIsCancelled)
-						//{
-						//	Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionGeneratorProcessor. Job {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is found to be cancelled after call to Generate MapSection.");
-						//	var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
-						//	mapSectionResponse.MapSectionVectors2 = msv;
-						//	mapSectionResponse.MapSectionZVectors = mszv;
-						//}
-
-						//if (!jobIsCancelled && !cts.Token.IsCancellationRequested && mapSectionResponse.MapSectionVectors2 == null)
-						//{
-						//	Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
-						//}
 
 						if (mapSectionResponse.MapSectionVectors2 == null)
 						{
@@ -280,7 +203,6 @@ namespace MapSectionProviderLib
 						}
 					}
 
-					//Debug.Assert(mapSectionRequest.MapSectionVectors == null, "MapSectionVectors is not Null.");
 					Debug.Assert(mapSectionRequest.MapSectionVectors2 == null, "MapSectionVectors2 is not Null.");
 					Debug.Assert(mapSectionRequest.MapSectionZVectors == null, "MapSectionZVectors is not Null.");
 

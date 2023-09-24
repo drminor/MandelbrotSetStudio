@@ -779,6 +779,7 @@ namespace MSetExplorer
 			var sectionsRequired = _mapSectionBuilder.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
 			var loadedSections = new List<MapSection>(MapSections);
 			
+			// TODO: Adjust the Block Position in the same manner as is done by the Bitmap Grid control.
 			loadedSections.AddRange(_mapSectionsPendingGeneration);
 
 			var sectionsToLoad = GetSectionsToLoadAndRemove(sectionsRequired, loadedSections, out var sectionsToRemove);

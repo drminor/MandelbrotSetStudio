@@ -121,12 +121,10 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, BigVector blockPosition)
+		public MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, MapBlockOffset blockPosition)
 		{
 			try
 			{
-				var blockPositionRecord = _mSetRecordMapper.MapTo(blockPosition);
-
 				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
 				if (mapSectionRecord != null)
 				{
@@ -147,7 +145,7 @@ namespace MSetRepo
 			}
 		}
 
-		public async Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, BigVector blockPosition, CancellationToken ct)
+		public async Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, MapBlockOffset blockPosition, CancellationToken ct)
 		{
 			try
 			{
@@ -270,7 +268,7 @@ namespace MSetRepo
 		//	}
 		//}
 
-		public ObjectId? GetMapSectionId(ObjectId subdivisionId, BigVector blockPosition)
+		public ObjectId? GetMapSectionId(ObjectId subdivisionId, MapBlockOffset blockPosition)
 		{
 			try
 			{

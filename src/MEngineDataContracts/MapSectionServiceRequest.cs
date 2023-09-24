@@ -24,7 +24,7 @@ namespace MEngineDataContracts
 		public PointInt ScreenPosition { get; set; }
 
 		[DataMember(Order = 6)]
-		public BigVectorDto BlockPosition { get; set; }
+		public MapBlockOffset BlockPosition { get; set; }
 
 		[DataMember(Order = 7)]
 		public RPointDto MapPosition { get; set; }
@@ -76,9 +76,7 @@ namespace MEngineDataContracts
 
 		public override string ToString()
 		{
-			var bVals = BigIntegerHelper.FromLongsDeprecated(BlockPosition.GetValues());
-			var bp = new BigVector(bVals);
-			return $"JobId: {JobId}, JobNo: {MapLoaderJobNumber}, ReqNo: {RequestNumber} Subdivision Id:{SubdivisionId}, Block Position:{bp}, Screen Position:{ScreenPosition}.";
+			return $"JobId: {JobId}, JobNo: {MapLoaderJobNumber}, ReqNo: {RequestNumber} Subdivision Id:{SubdivisionId}, Block Position:{BlockPosition}, Screen Position:{ScreenPosition}.";
 		}
 
 	}

@@ -8,7 +8,7 @@ namespace MSS.Types.MSet
 	public class MapSectionRequest
 	{
 		public MapSectionRequest(JobType jobType, string jobId, OwnerType ownerType, string subdivisionId, string originalSourceSubdivisionId,
-			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector mapBlockOffset, BigVector blockPosition, RPoint mapPosition, bool isInverted,
+			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector mapBlockOffset, MapBlockOffset blockPosition, RPoint mapPosition, bool isInverted,
 			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int mapLoaderJobNumber, int requestNumber)
 		{
 			ObjectId test = new ObjectId(originalSourceSubdivisionId);
@@ -26,8 +26,8 @@ namespace MSS.Types.MSet
 			OriginalSourceSubdivisionId = originalSourceSubdivisionId;
 			ScreenPosition = screenPosition;
 			ScreenPositionReleativeToCenter = screenPositionRelativeToCenter;
-			MapBlockOffset = mapBlockOffset;
-			BlockPosition = blockPosition;
+			JobMapBlockOffset = mapBlockOffset;
+			RepoBlockPosition = blockPosition;
 			MapPosition = mapPosition;
 			IsInverted = isInverted;
 			Precision = precision;
@@ -50,34 +50,34 @@ namespace MSS.Types.MSet
 		public string OriginalSourceSubdivisionId { get; init; }
 
 		/// <summary>
-		/// X,Y coords on screen in Block-Size units
+		/// X,Y coords for this MapSection, relative to the Subdivision BaseMapPosition in Block-Size units.
 		/// </summary>
-		public PointInt ScreenPosition { get; init; }
-
-		public VectorInt ScreenPositionReleativeToCenter { get; init; }
-		
-		/// <summary>
-		/// X,Y coords for the Job, relative to Subdivision Base in Block-Size units
-		/// </summary>
-		public BigVector MapBlockOffset { get; init; }
-
-
-		// TODO: Confirm that the ScreenPosition and BlockPostion values are identical, always
-
-		/// <summary>
-		/// X,Y coords for this MapSection, relative to the MapBlockOffset in Block-Size units.
-		/// </summary>
-		public BigVector BlockPosition { get; init; }
-		
-		/// <summary>
-		/// X,Y coords for this MapSection in absolute map coordinates. Equal to the BlockPosition x BlockSize x SamplePointDelta 
-		/// </summary>
-		public RPoint MapPosition { get; init; }
+		//public BigVector RepoBlockPosition { get; init; }
+		public MapBlockOffset RepoBlockPosition { get; init; }
 
 		/// <summary>
 		/// True, if this MapSection has a negative Y coordinate. 
 		/// </summary>
 		public bool IsInverted { get; init; }
+
+		/// <summary>
+		/// X,Y coords for the MapSection located at the lower, left for this Job, relative to the Subdivision BaseMapPosition in Block-Size units
+		/// </summary>
+		public BigVector JobMapBlockOffset { get; init; }
+
+		// TODO: Confirm that the ScreenPosition and the BlockPosition - MapBlockOffset are always identical.
+
+		/// <summary>
+		/// X,Y coords on screen in Block-Size units
+		/// </summary>
+		public PointInt ScreenPosition { get; init; }
+
+		public VectorInt ScreenPositionReleativeToCenter { get; init; }
+
+		/// <summary>
+		/// X,Y coords for this MapSection in absolute map coordinates. Equal to the (BlockPosition + Subdivision.BaseMapPosition) x BlockSize x SamplePointDelta 
+		/// </summary>
+		public RPoint MapPosition { get; init; }
 
 		public SizeInt BlockSize { get; init; }
 		
@@ -91,9 +91,7 @@ namespace MSS.Types.MSet
 		public int Precision { get; set; }
 		public int LimbCount { get; set; }
 
-		//public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionVectors2? MapSectionVectors2 { get; set; }
-
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
 
 		public string? ClientEndPointAddress { get; set; }
@@ -119,17 +117,6 @@ namespace MSS.Types.MSet
 			return $"Id: {MapSectionId}, S:{SubdivisionId}, ScrPos:{ScreenPosition}.";
 		}
 
-		//public (MapSectionVectors? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut()
-		//{
-		//	var msv = MapSectionVectors;
-		//	var mszv = MapSectionZVectors;
-
-		//	MapSectionVectors = null;
-		//	MapSectionZVectors = null;
-
-		//	return (msv, mszv);
-		//}
-
 		public (MapSectionVectors2? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut2()
 		{
 			var msv = MapSectionVectors2;
@@ -139,7 +126,6 @@ namespace MSS.Types.MSet
 			MapSectionZVectors = null;
 
 			return (msv, mszv);
-
 		}
 
 	}

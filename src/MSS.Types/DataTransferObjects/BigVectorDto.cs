@@ -1,6 +1,7 @@
 ﻿using ProtoBuf;
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -18,7 +19,7 @@ namespace MSS.Types.DataTransferObjects
 		public BigVectorDto() : this(new BigInteger[] { 0, 0 })
 		{ }
 
-		public BigVectorDto(BigInteger[] values) : this(BigIntegerHelper.ToLongsDeprecated(values))
+		public BigVectorDto(BigInteger[] values) : this(BigIntegerHelper.ToLongs(values))
 		{ }
 
 		public BigVectorDto(long[][] values)
@@ -36,20 +37,40 @@ namespace MSS.Types.DataTransferObjects
 		{
 			var sb = new StringBuilder();
 
-			_ = sb.Append("X:")
-			.Append(GetString(X))
-			.Append(", Y:")
-			.Append(GetString(Y));
+			sb.Append("X:");
+			AppendStringVals(X, sb);
+
+			sb.Append(", Y:");
+			AppendStringVals(Y, sb);
+
+			//_ = sb.Append("X:")
+			//.Append(GetString(X))
+			//.Append(", Y:")
+			//.Append(GetString(Y));
 
 			return sb.ToString();
 		}
 
-		private string GetString(long[] vals)
+		private void AppendStringVals(long[] vals, StringBuilder sb)
 		{
-			return vals[1] == 0
-				? vals[0].ToString(CultureInfo.InvariantCulture)
-				: vals[1].ToString(CultureInfo.InvariantCulture) + ", " + vals[0].ToString(CultureInfo.InvariantCulture);
+			if (vals[1] == 0)
+			{
+				sb.Append(vals[0].ToString(CultureInfo.InvariantCulture));
+			}
+			else
+			{
+				sb.Append(vals[1].ToString(CultureInfo.InvariantCulture))
+					.Append(", ")
+					.Append(vals[0].ToString(CultureInfo.InvariantCulture));
+			}
 		}
+
+		//private string GetString(long[] vals)
+		//{
+		//	return vals[1] == 0
+		//		? vals[0].ToString(CultureInfo.InvariantCulture)
+		//		: vals[1].ToString(CultureInfo.InvariantCulture) + ", " + vals[0].ToString(CultureInfo.InvariantCulture);
+		//}
 
 		public object Clone()
 		{

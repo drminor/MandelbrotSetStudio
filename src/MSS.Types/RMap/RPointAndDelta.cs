@@ -46,7 +46,7 @@ namespace MSS.Types
 		{
 			Values = new BigInteger[] { x1, x2, y1, y2 };
 			Exponent = exponent;
-			Precision = precision ?? BigIntegerHelper.DEFAULT_PRECISION;
+			Precision = precision ?? RMapConstants.DEFAULT_PRECISION;
 		}
 
 		#endregion

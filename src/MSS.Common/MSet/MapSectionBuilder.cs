@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -17,6 +18,8 @@ namespace MSS.Common
 		private int _currentPrecision;
 		private int _currentLimbCount;
 
+		private readonly DtoMapper _dtoMapper;
+
 		private bool _useDetailedDebug = false;
 
 		#endregion
@@ -27,6 +30,8 @@ namespace MSS.Common
 		{
 			_currentPrecision = -1;
 			_currentLimbCount = 1;
+
+			_dtoMapper = new DtoMapper();
 		}
 
 		#endregion
@@ -122,7 +127,7 @@ namespace MSS.Common
 				screenPosition: screenPosition,
 				screenPositionRelativeToCenter: screenPositionRelativeToCenter,
 				mapBlockOffset: jobMapBlockOffset,
-				blockPosition: localBlockPosition,
+				blockPosition: MapTo(localBlockPosition),
 				mapPosition: mapPosition,
 				isInverted: isInverted,
 				precision: precision,
@@ -223,7 +228,7 @@ namespace MSS.Common
 					jobNumber: mapLoaderJobNumber, 
 					requestNumber: requestNumber++,
 					subdivisionId: subdivisionId, 
-					repoBlockPosition: repoPosition,
+					repoBlockPosition: MapTo(repoPosition),
 					jobMapBlockPosition: mapAreaInfo.MapBlockOffset,
 					isInverted: isInverted,
 					screenPosition: screenPosition, 
@@ -241,12 +246,13 @@ namespace MSS.Common
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, int jobNumber)
 		{
 			Debug.Assert(mapSectionRequest.MapLoaderJobNumber == jobNumber, "MapLoaderJobNumber mismatch.");
-			var repoBlockPosition = mapSectionRequest.BlockPosition;
+			var repoBlockPosition = mapSectionRequest.RepoBlockPosition;
 			var isInverted = mapSectionRequest.IsInverted;
 
-			var mapBlockOffset = mapSectionRequest.MapBlockOffset;
+			var mapBlockOffset = mapSectionRequest.JobMapBlockOffset;
 
-			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
+			var repoPosition = MapFrom(repoBlockPosition);
+			var screenPosition = RMapHelper.ToScreenCoords(repoPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var mapSection = new MapSection(mapSectionRequest.MapLoaderJobNumber, mapSectionRequest.RequestNumber, mapSectionVectors, mapSectionRequest.SubdivisionId, mapBlockOffset, repoBlockPosition, isInverted,
@@ -266,12 +272,13 @@ namespace MSS.Common
 
 		public MapSection CreateEmptyMapSection(MapSectionRequest mapSectionRequest, int jobNumber, bool isCancelled)
 		{
-			var repoBlockPosition = mapSectionRequest.BlockPosition;
+			var repoBlockPosition = mapSectionRequest.RepoBlockPosition;
 			var isInverted = mapSectionRequest.IsInverted;
 
-			var mapBlockOffset = mapSectionRequest.MapBlockOffset;
+			var mapBlockOffset = mapSectionRequest.JobMapBlockOffset;
 
-			var screenPosition = RMapHelper.ToScreenCoords(repoBlockPosition, isInverted, mapBlockOffset);
+			var repoPosition = MapFrom(repoBlockPosition);
+			var screenPosition = RMapHelper.ToScreenCoords(repoPosition, isInverted, mapBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var mapSection = new MapSection(jobNumber, mapSectionRequest.RequestNumber, mapSectionRequest.SubdivisionId, mapBlockOffset, repoBlockPosition, isInverted,
@@ -295,6 +302,21 @@ namespace MSS.Common
 					yield return new PointInt(xBlockPtr, yBlockPtr);
 				}
 			}
+		}
+
+		private BigVector MapFrom(MapBlockOffset mapBlockOffset)
+		{
+			var x = BigIntegerHelper.FromLongs(new long[] { mapBlockOffset.XHi, mapBlockOffset.XLo });
+			var y = BigIntegerHelper.FromLongs(new long[] { mapBlockOffset.YHi, mapBlockOffset.YLo });
+			var result = new BigVector(x, y);
+
+			return result;
+		}
+
+		private MapBlockOffset MapTo(BigVector bigVector)
+		{
+			var mapBlockOffset = new MapBlockOffset(BigIntegerHelper.ToLongsHiLo(bigVector.X), BigIntegerHelper.ToLongsHiLo(bigVector.Y));
+			return mapBlockOffset;
 		}
 
 		#endregion

@@ -77,8 +77,7 @@ namespace MSS.Types.APValues
 
 		public static FP31Val CreateFP31Val(RValue rValue, ApFixedPointFormat apFixedPointFormat)
 		{
-			var fpFormat = apFixedPointFormat;
-			var result = CreateFP31Val(rValue, fpFormat.TargetExponent, fpFormat.LimbCount, fpFormat.BitsBeforeBinaryPoint);
+			var result = CreateFP31Val(rValue, apFixedPointFormat.TargetExponent, apFixedPointFormat.LimbCount, apFixedPointFormat.BitsBeforeBinaryPoint);
 			return result;
 		}
 
@@ -154,7 +153,7 @@ namespace MSS.Types.APValues
 
 			var numberOfBitsInVal = rValue.Value.GetBitLength();
 
-			var magnitude = rValue.Value.GetBitLength() + rValue.Exponent;
+			var magnitude = numberOfBitsInVal + rValue.Exponent;
 
 			bitExpInfo = $"Magnitude:{magnitude} (NumBits:{numberOfBitsInVal}, Exponent:{rValue.Exponent}). Max Magnitude:{maxMagnitude}.";
 			var result = magnitude > maxMagnitude + 1;
@@ -483,15 +482,11 @@ namespace MSS.Types.APValues
 			}
 		}
 
-
 		#endregion
-
-
-
 
 		#region Convert to Full-31Bit-Word Limbs
 
-		public static uint[] ToFwUInts(BigInteger bi, out bool sign)
+		private static uint[] ToFwUInts(BigInteger bi, out bool sign)
 		{
 			var tResult = new List<uint>();
 
@@ -509,7 +504,7 @@ namespace MSS.Types.APValues
 			return tResult.ToArray();
 		}
 
-		public static BigInteger FromFwUInts(uint[] fullWordLimbs, bool sign)
+		private static BigInteger FromFwUInts(uint[] fullWordLimbs, bool sign)
 		{
 			var result = BigInteger.Zero;
 

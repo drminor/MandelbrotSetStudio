@@ -188,7 +188,8 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(nrmSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 			if (_useDetailedDebug) CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
 
-			var result = new MapAreaInfo(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, mapAreaInfoV2.Subdivision.Id);
+			var originalSubdivisionId = mapAreaInfoV2.Subdivision.Id;
+			var result = new MapAreaInfo(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSubdivisionId);
 
 			return result;
 		}

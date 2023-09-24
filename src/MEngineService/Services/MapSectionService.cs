@@ -173,14 +173,13 @@ namespace MEngineService.Services
 
 		private MapSectionRequest MapFrom(MapSectionServiceRequest req)
 		{
-			var blockPosition = _dtoMapper.MapFrom(req.BlockPosition);
 			var mapPosition = _dtoMapper.MapFrom(req.MapPosition);
 			var samplePointDelta = _dtoMapper.MapFrom(req.SamplePointDelta);
 
 			var mapSectionRequest = new MapSectionRequest(JobType.FullScale, req.JobId, req.OwnerType, req.SubdivisionId, req.SubdivisionId, req.ScreenPosition,
 				screenPositionRelativeToCenter: new VectorInt(),
 				mapBlockOffset: new BigVector(),
-				blockPosition: blockPosition,
+				blockPosition: req.BlockPosition,
 				mapPosition: mapPosition,
 				isInverted: req.IsInverted,
 				req.Precision,
@@ -304,7 +303,7 @@ namespace MEngineService.Services
 				OwnerType = OwnerType.Project,
 				SubdivisionId = subdivisionId,
 				ScreenPosition = new PointInt(),
-				BlockPosition = new BigVectorDto(),
+				BlockPosition = new MapBlockOffset(),
 				MapPosition = new RPointDto(),
 				IsInverted = false,
 				BlockSize = _blockSize,

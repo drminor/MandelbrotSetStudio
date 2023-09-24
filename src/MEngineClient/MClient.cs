@@ -196,7 +196,6 @@ namespace MEngineClient
 
 		private MapSectionServiceRequest MapTo(MapSectionRequest req)
 		{
-			var blockPosition = _dtoMapper.MapTo(req.BlockPosition);
 			var mapPosition = _dtoMapper.MapTo(req.MapPosition);
 			var samplePointDelta = _dtoMapper.MapTo(req.SamplePointDelta);
 
@@ -207,7 +206,7 @@ namespace MEngineClient
 				OwnerType = req.OwnerType,
 				SubdivisionId = req.SubdivisionId,
 				ScreenPosition = req.ScreenPosition,
-				BlockPosition = blockPosition,
+				BlockPosition = req.RepoBlockPosition,
 				IsInverted = req.IsInverted,
 				MapPosition = mapPosition,
 				BlockSize = req.BlockSize,

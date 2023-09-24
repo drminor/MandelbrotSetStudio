@@ -60,8 +60,8 @@ namespace MapSectionProviderLib
 		//	return result;
 		//}
 
-		public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, Action<MapSection> callback, 
-			out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
+		public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, 
+			Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
 		{
 			Debug.WriteLine($"MapLoaderManager: Creating MapSections with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
 
@@ -72,6 +72,7 @@ namespace MapSectionProviderLib
 
 			foreach(var mapSectionRequest in pendingGeneration)
 			{
+				//var mapSectionPending = emptyMapSections[mapSectionRequest.RequestNumber];
 				var mapSectionPending = emptyMapSections.FirstOrDefault(x => x.RequestNumber == mapSectionRequest.RequestNumber);
 
 				if (mapSectionPending != null)
@@ -92,9 +93,6 @@ namespace MapSectionProviderLib
 			{
 				var requestsNotFound = mapSectionRequests.Where(x => !x.FoundInRepo).ToList();
 				CheckNewRequestsForCancellation(requestsNotFound);
-
-				var oi = requestsNotFound.Count(x => x.IsInverted);
-
 
 				var mapLoader = new MapLoader(jobNumber, callback, _mapSectionRequestProcessor);
 
@@ -430,114 +428,120 @@ namespace MapSectionProviderLib
 
 		#endregion
 
-		private class GenMapRequestInfo //: IDisposable
+	}
+
+	internal class GenMapRequestInfo //: IDisposable
+	{
+		private readonly CancellationToken _ct;
+		//private readonly Task? _onCompletedTask;
+
+		#region Constructor
+
+		public GenMapRequestInfo(MapLoader mapLoader, Task task, CancellationToken ct)
 		{
-			private readonly CancellationToken _ct;
-			//private readonly Task? _onCompletedTask;
+			MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
+			JobNumber = mapLoader.JobNumber;
 
-			#region Constructor
+			Task = task ?? throw new ArgumentNullException(nameof(task));
+			_ct = ct;
 
-			public GenMapRequestInfo(MapLoader mapLoader, Task task, CancellationToken ct)
-			{
-				_ct = ct;
-				MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
-				Task = task ?? throw new ArgumentNullException(nameof(task));
-				TaskStartedDate = DateTime.UtcNow;
+			TaskStartedDate = DateTime.UtcNow;
 
-				if (task.IsCompleted)
-				{
-					TaskCompletedDate = DateTime.UtcNow;
-					//_onCompletedTask = null;
-				}
-				else
-				{
-					//_onCompletedTask = task.ContinueWith(TaskCompleted, _ct);
-					_ = task.ContinueWith(TaskCompleted, _ct);
-				}
-
-				MapLoader.SectionLoaded += MapLoader_SectionLoaded;
-			}
-
-			#endregion
-
-			#region Public Properties
-
-			public int JobNumber => MapLoader.JobNumber;
-
-			public event EventHandler<MapSectionProcessInfo>? MapSectionLoaded;
-
-			public MapLoader MapLoader { get; init; }
-			public Task Task { get; init; }
-
-			public DateTime TaskStartedDate { get; init; }
-			public DateTime? TaskCompletedDate { get; private set; }
-
-			public TimeSpan TotalExecutionTime => MapLoader.ElaspedTime;
-
-			#endregion
-
-			#region Event Handlers and Private Methods
-
-			private void MapLoader_SectionLoaded(object? sender, MapSectionProcessInfo e)
-			{
-				MapSectionLoaded?.Invoke(this, e);
-			}
-
-			private void TaskCompleted(Task task)
+			if (task.IsCompleted)
 			{
 				TaskCompletedDate = DateTime.UtcNow;
+				//_onCompletedTask = null;
+			}
+			else
+			{
+				//_onCompletedTask = task.ContinueWith(TaskCompleted, _ct);
+				_ = task.ContinueWith(TaskCompleted, _ct);
 			}
 
-			#endregion
-
-			//#region IDisposable Support
-
-			//private bool disposedValue;
-
-			//protected virtual void Dispose(bool disposing)
-			//{
-			//	if (!disposedValue)
-			//	{
-			//		if (disposing)
-			//		{
-			//			// Dispose managed state (managed objects)
-
-			//			//if (Task != null)
-			//			//{
-			//			//	if (Task.IsCompleted)
-			//			//	{
-			//			//		Task.Dispose();
-			//			//	}
-			//			//	else
-			//			//	{
-			//			//		Debug.WriteLine($"The Task is not null and not completed as the GenMapRequestInfo is being disposed.");
-			//			//	}
-			//			//}
-
-			//			//if (_onCompletedTask != null)
-			//			//{
-			//			//	if (_onCompletedTask.IsCompleted)
-			//			//	{
-			//			//		_onCompletedTask.Dispose();
-			//			//	}
-			//			//	else
-			//			//	{
-			//			//		Debug.WriteLine($"The onCompletedTask is not null and not completed as the GenMapRequestInfo is being disposed.");
-			//			//	}
-			//			//}
-			//		}
-
-			//		disposedValue = true;
-			//	}
-			//}
-
-			//public void Dispose()
-			//{
-			//	Dispose(disposing: true);
-			//	GC.SuppressFinalize(this);
-			//}
-
-			//#endregion
+			MapLoader.SectionLoaded += MapLoader_SectionLoaded;
 		}
+
+		#endregion
+
+		#region Public Properties
+
+		public int JobNumber { get; init; }
+
+		public event EventHandler<MapSectionProcessInfo>? MapSectionLoaded;
+
+		public MapLoader MapLoader { get; init; }
+		public Task Task { get; init; }
+
+		public DateTime TaskStartedDate { get; init; }
+		public DateTime? TaskCompletedDate { get; private set; }
+
+		public TimeSpan TotalExecutionTime => MapLoader.ElaspedTime;
+
+		#endregion
+
+		#region Event Handlers and Private Methods
+
+		private void MapLoader_SectionLoaded(object? sender, MapSectionProcessInfo e)
+		{
+			MapSectionLoaded?.Invoke(this, e);
+		}
+
+		private void TaskCompleted(Task task)
+		{
+			TaskCompletedDate = DateTime.UtcNow;
+		}
+
+		#endregion
+
+		//#region IDisposable Support
+
+		//private bool disposedValue;
+
+		//protected virtual void Dispose(bool disposing)
+		//{
+		//	if (!disposedValue)
+		//	{
+		//		if (disposing)
+		//		{
+		//			// Dispose managed state (managed objects)
+
+		//			//if (Task != null)
+		//			//{
+		//			//	if (Task.IsCompleted)
+		//			//	{
+		//			//		Task.Dispose();
+		//			//	}
+		//			//	else
+		//			//	{
+		//			//		Debug.WriteLine($"The Task is not null and not completed as the GenMapRequestInfo is being disposed.");
+		//			//	}
+		//			//}
+
+		//			//if (_onCompletedTask != null)
+		//			//{
+		//			//	if (_onCompletedTask.IsCompleted)
+		//			//	{
+		//			//		_onCompletedTask.Dispose();
+		//			//	}
+		//			//	else
+		//			//	{
+		//			//		Debug.WriteLine($"The onCompletedTask is not null and not completed as the GenMapRequestInfo is being disposed.");
+		//			//	}
+		//			//}
+		//		}
+
+		//		disposedValue = true;
+		//	}
+		//}
+
+		//public void Dispose()
+		//{
+		//	Dispose(disposing: true);
+		//	GC.SuppressFinalize(this);
+		//}
+
+		//#endregion
 	}
+
+
 }

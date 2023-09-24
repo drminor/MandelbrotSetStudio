@@ -1,12 +1,13 @@
 ﻿using MSS.Types.APValues;
 using MSS.Types;
 using System;
+using MSS.Types.MSet;
 
 namespace MSS.Common
 {
 	public class IteratorCoords
 	{
-		public IteratorCoords(BigVector blockPos, PointInt screenPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta)
+		public IteratorCoords(MapBlockOffset blockPos, PointInt screenPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta)
 		{
 			BlockPos = blockPos ?? throw new ArgumentNullException(nameof(blockPos));
 			ScreenPos = screenPos;
@@ -15,7 +16,7 @@ namespace MSS.Common
 			Delta = delta;
 		}
 
-		public BigVector BlockPos { get; init; }
+		public MapBlockOffset BlockPos { get; init; }
 		public PointInt ScreenPos { get; init; }
 		public FP31Val StartingCx { get; init;  }
 		public FP31Val StartingCy { get; init; }

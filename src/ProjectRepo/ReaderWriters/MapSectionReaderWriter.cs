@@ -74,15 +74,13 @@ namespace ProjectRepo
 			}
 		}
 
-		public MapSectionRecord? Get(ObjectId subdivisionId, BigVector blockPosition)
+		public MapSectionRecord? Get(ObjectId subdivisionId, MapBlockOffset blockPosition)
 		{
-			var blockPositionDto = _dtoMapper.MapTo(blockPosition);
-
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPositionDto.X[1]);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPositionDto.Y[1]);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPositionDto.X[0]);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPositionDto.Y[0]);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.XLo);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.YLo);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
 
 
 			var mapSectionRecord = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5, options: null);
@@ -103,15 +101,13 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, BigVector blockPosition, CancellationToken ct)
+		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, MapBlockOffset blockPosition, CancellationToken ct)
 		{
-			var blockPositionDto = _dtoMapper.MapTo(blockPosition);
-
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPositionDto.X[1]);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPositionDto.Y[1]);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPositionDto.X[0]);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPositionDto.Y[0]);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.XLo);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.YLo);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
 
 			var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5, options: null, ct);
 
@@ -135,8 +131,7 @@ namespace ProjectRepo
 		{
 			try
 			{
-				var blockPosDto = GetBlockPos(mapSectionRecord);
-				var blockPos = _dtoMapper.MapFrom(blockPosDto);
+				var blockPos = GetBlockPosition(mapSectionRecord);
 				var id = await GetIdAsync(mapSectionRecord.SubdivisionId, blockPos);
 				if (id != null)
 				{
@@ -254,14 +249,13 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public async Task<ObjectId?> GetIdAsync(ObjectId subdivisionId, BigVector blockPosition)
+		public async Task<ObjectId?> GetIdAsync(ObjectId subdivisionId, MapBlockOffset blockPosition)
 		{
-			var blockPositionDto = _dtoMapper.MapTo(blockPosition);
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPositionDto.X[1]);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPositionDto.Y[1]);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPositionDto.X[0]);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPositionDto.Y[0]);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.XLo);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.YLo);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
 
 			var bDoc = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5);
 
@@ -363,15 +357,22 @@ namespace ProjectRepo
 		}
 
 
-		private BigVectorDto GetBlockPos(MapSectionRecord msr)
-		{
-			var blockPosition = new BigVectorDto(new long[][]
-				{
-					new long[] { msr.BlockPosXHi, msr.BlockPosXLo },
-					new long[] { msr.BlockPosYHi, msr.BlockPosYLo }
-				});
+		//private BigVectorDto GetBlockPos(MapSectionRecord msr)
+		//{
+		//	var blockPosition = new BigVectorDto(new long[][]
+		//		{
+		//			new long[] { msr.BlockPosXHi, msr.BlockPosXLo },
+		//			new long[] { msr.BlockPosYHi, msr.BlockPosYLo }
+		//		});
 
-			return blockPosition;
+		//	return blockPosition;
+		//}
+
+		private MapBlockOffset GetBlockPosition(MapSectionRecord msr)
+		{
+			var result = new MapBlockOffset(msr.BlockPosXHi, msr.BlockPosXLo, msr.BlockPosYHi, msr.BlockPosYLo);
+
+			return result;
 		}
 
 		//public void RemoveEscapeVelsFromMapSectionRecords()

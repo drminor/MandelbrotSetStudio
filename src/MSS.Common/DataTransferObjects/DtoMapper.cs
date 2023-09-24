@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 
 namespace MSS.Common.DataTransferObjects
 {
@@ -21,7 +22,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RPoint MapFrom(RPointDto target)
 		{
-			var bVals = BigIntegerHelper.FromLongsDeprecated(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RPoint(bVals, target.Exponent);
 			return result;
 		}
@@ -34,7 +35,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RSize MapFrom(RSizeDto target)
 		{
-			var bVals = BigIntegerHelper.FromLongsDeprecated(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RSize(bVals, target.Exponent);
 			return result;
 		}
@@ -47,7 +48,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RRectangle MapFrom(RRectangleDto target)
 		{
-			var bVals = BigIntegerHelper.FromLongsDeprecated(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RRectangle(bVals, target.Exponent);
 			return result;
 		}
@@ -60,7 +61,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public RPointAndDelta MapFrom(RPointAndDeltaDto target)
 		{
-			var bVals = BigIntegerHelper.FromLongsDeprecated(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RPointAndDelta(bVals, target.Exponent);
 			return result;
 		}
@@ -73,7 +74,7 @@ namespace MSS.Common.DataTransferObjects
 
 		public BigVector MapFrom(BigVectorDto target)
 		{
-			var bVals = BigIntegerHelper.FromLongsDeprecated(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new BigVector(bVals);
 			return result;
 		}
@@ -86,10 +87,12 @@ namespace MSS.Common.DataTransferObjects
 
 		public RVector MapFrom(RVectorDto target)
 		{
-			var bVals = BigIntegerHelper.FromLongsDeprecated(target.GetValues());
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
 			var result = new RVector(bVals, target.Exponent);
 			return result;
 		}
+
+
 
 	}
 }

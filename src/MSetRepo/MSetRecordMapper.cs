@@ -205,7 +205,7 @@ namespace MSetRepo
 		{
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
 
-			var baseMapPosition = _dtoMapper.MapFrom(target.BaseMapPosition?.BigVector ?? new BigVectorDto()) ;
+			var baseMapPosition = _dtoMapper.MapFrom(target.BaseMapPosition.BigVector);
 
 			var result = new Subdivision(target.Id, samplePointDelta, baseMapPosition, MapFrom(target.BlockSize), target.DateCreatedUtc);
 
@@ -239,18 +239,16 @@ namespace MSetRepo
 
 			MapSectionRecord result;
 
-			// TODO: Create a new type: LongVector to hold the RepoBlockPosition, instead of using a pair of longs as does the BigVector
-			var blockPositionDto = _dtoMapper.MapTo(source.BlockPosition);
 
 			result = new MapSectionRecord
 				(
 				DateCreatedUtc: DateTime.UtcNow,
 				SubdivisionId: new ObjectId(source.SubdivisionId),
 
-				BlockPosXHi: blockPositionDto.X[0],
-				BlockPosXLo: blockPositionDto.X[1],
-				BlockPosYHi: blockPositionDto.Y[0],
-				BlockPosYLo: blockPositionDto.Y[1],
+				BlockPosXHi: source.BlockPosition.XHi,
+				BlockPosXLo: source.BlockPosition.XLo,
+				BlockPosYHi: source.BlockPosition.YHi,
+				BlockPosYLo: source.BlockPosition.YLo,
 
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
 
@@ -305,15 +303,22 @@ namespace MSetRepo
 			return result;
 		}
 
-		private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
-		{
-			var blockPosition = new BigVectorDto(new long[][]
-				{
-					new long[] { blockPosXHi, blockPosXLo }, 
-					new long[] { blockPosYHi, blockPosYLo }
-				});
+		//private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
+		//{
+		//	var blockPosition = new BigVectorDto(new long[][]
+		//		{
+		//			new long[] { blockPosXHi, blockPosXLo }, 
+		//			new long[] { blockPosYHi, blockPosYLo }
+		//		});
 
-			var result = _dtoMapper.MapFrom(blockPosition);
+		//	var result = _dtoMapper.MapFrom(blockPosition);
+
+		//	return result;
+		//}
+
+		private MapBlockOffset GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
+		{
+			var result = new MapBlockOffset(blockPosXHi, blockPosXLo, blockPosYHi, blockPosYLo);
 
 			return result;
 		}

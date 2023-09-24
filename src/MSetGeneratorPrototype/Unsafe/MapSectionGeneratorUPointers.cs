@@ -405,7 +405,7 @@ namespace MSetGeneratorPrototype
 
 		private IteratorCoords GetCoordinates(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{
-			var blockPos = mapSectionRequest.BlockPosition;
+			var blockPos = mapSectionRequest.RepoBlockPosition;
 			var mapPosition = mapSectionRequest.MapPosition;
 			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 

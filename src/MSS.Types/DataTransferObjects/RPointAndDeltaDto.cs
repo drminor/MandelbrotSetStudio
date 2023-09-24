@@ -12,7 +12,7 @@ namespace MSS.Types.DataTransferObjects
 		public RPointAndDeltaDto() : this(new BigInteger[] { 0, 0, 0, 0 }, 0)
 		{ }
 
-		public RPointAndDeltaDto(BigInteger[] values, int exponent) : this(BigIntegerHelper.ToLongsDeprecated(values), exponent)
+		public RPointAndDeltaDto(BigInteger[] values, int exponent) : this(BigIntegerHelper.ToLongs(values), exponent)
 		{ }
 
 		public RPointAndDeltaDto(long[][] values, int exponent) : this(values[0], values[1], values[2], values[3], exponent)

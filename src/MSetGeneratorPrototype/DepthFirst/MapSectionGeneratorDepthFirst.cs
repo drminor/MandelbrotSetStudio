@@ -636,7 +636,7 @@ namespace MSetGeneratorPrototype
 			var startingCy = FP31ValHelper.CreateFP31Val(mapPosition.Y, apFixedPointFormat);
 			var delta = FP31ValHelper.CreateFP31Val(samplePointDelta.Width, apFixedPointFormat);
 
-			var blockPos = mapSectionRequest.BlockPosition;
+			var blockPos = mapSectionRequest.RepoBlockPosition;
 			var screenPos = mapSectionRequest.ScreenPosition;
 
 			return new IteratorCoords(blockPos, screenPos, startingCx, startingCy, delta);

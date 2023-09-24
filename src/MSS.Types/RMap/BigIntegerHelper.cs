@@ -9,16 +9,16 @@ namespace MSS.Types
 {
 	public static class BigIntegerHelper
 	{
-		// Same as RMapConstants.DEFAULT_PRECISION
-		public const int DEFAULT_PRECISION = 55; // Number of significant binary digits 
-
 		private static readonly double NAT_LOG_OF_2 = Math.Log(2);
+
+		private const int BITS_PER_SIGNED_LONG = 63;
+		// Integer used to convert BigIntegers to/from array of longs.
+		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, BITS_PER_SIGNED_LONG);
+		private static readonly BigInteger MAX_DIGIT_VALUE = LONG_FACTOR - 1;
 
 		// Largest integer that can be represented by a double for which it and all smaller integers can be reduced by 1 without loosing precision.
 		private static readonly BigInteger MAX_DP_INTEGER = BigInteger.Pow(2, 53);
 
-		// Integer used to convert BigIntegers to/from array of longs.
-		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, 53); //new BigInteger(long.MaxValue); // BigInteger.Add(BigInteger.One, BigInteger.Pow(2, 63));
 
 		#region Division
 
@@ -221,13 +221,13 @@ namespace MSS.Types
 
 		// TODO: Use Little-Endian format, instead of Big-Endian format when creating an Array of Longs from a BigInteger
 
-		public static long[][] ToLongsDeprecated(BigInteger[] values)
+		public static long[][] ToLongs(BigInteger[] values)
 		{
-			var result = values.Select(v => ToLongsDeprecated(v)).ToArray();
+			var result = values.Select(v => ToLongs(v)).ToArray();
 			return result;
 		}
 
-		public static long[] ToLongsDeprecated(BigInteger bi)
+		public static long[] ToLongsHiLo (BigInteger bi)
 		{
 			var hi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
 
@@ -251,24 +251,34 @@ namespace MSS.Types
 			return result;
 		}
 
-		public static BigInteger[] FromLongsDeprecated(long[][] values)
+		public static long[] ToLongs(BigInteger bi)
 		{
-			var result = values.Select(v => FromLongsDeprecated(v)).ToArray();
+			var result = new List<long>();
+
+			while (bi > MAX_DIGIT_VALUE)
+			{
+				bi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
+				result.Add((long) lo);
+			}
+
+			result.Add((long)bi);
+
+			return result.ToArray();
+		}
+
+		public static BigInteger[] FromLongs(long[][] values)
+		{
+			var result = values.Select(v => FromLongs(v)).ToArray();
 			return result;
 		}
 
-		//public static BigInteger FromLongs(long[] values)
-		//{
-		//	Debug.Assert(values.Length == 2, "FromLongs received array of values whose length is not 2.");
-
-		//	var result = LONG_FACTOR * values[0];
-		//	result += values[1];
-
-		//	return result;
-		//}
-
-		public static BigInteger FromLongsDeprecated(long[] values)
+		public static BigInteger FromLongs(long[] values)
 		{
+			if (values.Length > 2)
+			{
+				Debug.WriteLine("WARNING: FromLongs is being called with an array of length > 2.");
+			}
+
 			//DtoLongs are in Big - Endian order
 			var result = BigInteger.Zero;
 

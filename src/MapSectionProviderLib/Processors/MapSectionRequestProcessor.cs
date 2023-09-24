@@ -361,7 +361,7 @@ namespace MapSectionProviderLib
 
 			if (mapSectionVectors == null)
 			{
-				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
+				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.RepoBlockPosition}.");
 				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobNumber, isCancelled: false);
 			}
 			else
@@ -517,7 +517,7 @@ namespace MapSectionProviderLib
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
 
 			// TODO: Add property: OriginalSourceSubdivisionId to the MapSectionBytes class.
-			var mapSectionBytes = await _mapSectionAdapter.GetMapSectionBytesAsync(subdivisionId, mapSectionRequest.BlockPosition, ct);
+			var mapSectionBytes = await _mapSectionAdapter.GetMapSectionBytesAsync(subdivisionId, mapSectionRequest.RepoBlockPosition, ct);
 			//mapSectionBytes.OriginalSourceSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
 
 			return mapSectionBytes;
@@ -526,7 +526,7 @@ namespace MapSectionProviderLib
 		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.BlockPosition);
+			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.RepoBlockPosition);
 
 			return mapSectionBytes;
 		}
@@ -626,7 +626,7 @@ namespace MapSectionProviderLib
 
 			if (mapSectionVectors2 == null)
 			{
-				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors2 is empty. The request's block position is {mapSectionRequest.BlockPosition}.");
+				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors2 is empty. The request's block position is {mapSectionRequest.RepoBlockPosition}.");
 				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobNumber, isCancelled: false);
 			}
 			else
@@ -669,7 +669,7 @@ namespace MapSectionProviderLib
 		private bool ThereIsAMatchingRequest(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition);
+			var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && x.Request.RepoBlockPosition == mapSectionRequest.RepoBlockPosition);
 
 			return result;
 		}
@@ -678,7 +678,7 @@ namespace MapSectionProviderLib
 		private List<MapSectionWorkRequest> GetPendingRequests(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition).ToList();
+			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && x.Request.RepoBlockPosition == mapSectionRequest.RepoBlockPosition).ToList();
 
 			return result;
 		}
@@ -748,7 +748,7 @@ namespace MapSectionProviderLib
 		private bool RequestExists(MapSectionRequest mapSectionRequest, IEnumerable<MapSectionWorkRequest> workRequests)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && x.Request.BlockPosition == mapSectionRequest.BlockPosition);
+			var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && x.Request.RepoBlockPosition == mapSectionRequest.RepoBlockPosition);
 
 			return result;
 		}

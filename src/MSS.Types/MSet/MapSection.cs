@@ -20,7 +20,7 @@ namespace MSS.Types.MSet
 				  mapSectionVectors: null,
 				  subdivisionId: string.Empty,
 				  jobMapBlockPosition: new BigVector(),
-				  repoBlockPosition: new BigVector(),
+				  repoBlockPosition: new MapBlockOffset(),
 				  isInverted: false,
 				  screenPosition: new PointInt(),
 				  size: new SizeInt(),
@@ -34,7 +34,7 @@ namespace MSS.Types.MSet
 			int requestNumber,
 			string subdivisionId,
 			BigVector jobMapBlockPosition,
-			BigVector repoBlockPosition, 
+			MapBlockOffset repoBlockPosition, 
 			bool isInverted, 
 			PointInt screenPosition, 
 			SizeInt size, 
@@ -57,7 +57,7 @@ namespace MSS.Types.MSet
 		}
 
 		public MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, BigVector jobMapBlockPosition,
-			BigVector repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
+			MapBlockOffset repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobNumber = jobNumber;
 			RequestNumber = requestNumber;
@@ -84,11 +84,14 @@ namespace MSS.Types.MSet
 		public MapSectionVectors? MapSectionVectors { get; set; }
 
 		public string SubdivisionId { get; init; }
-		public BigVector JobMapBlockOffset { get; private set; }	
+		// X,Y coordinates of this section, relative to the Subdivision's Base Map Position in block-size units.
+		public MapBlockOffset RepoBlockPosition { get; init; }
 
-		// X,Y coordinates of this section relative to the Job's MapBlockOffset in block-size units.
-		public BigVector RepoBlockPosition { get; init; }
 		public bool IsInverted { get; init; }
+
+		public BigVector JobMapBlockOffset { get; private set; }
+
+		// X,Y coordinates of this section relative to the JobMapBlockOffset in block-size units.
 		public PointInt ScreenPosition { get; private set; }
 
 		public SizeInt Size { get; init; }
@@ -141,7 +144,7 @@ namespace MSS.Types.MSet
 			return other is MapSection ms
 				&& SubdivisionId == ms.SubdivisionId
 				&& IsInverted == ms.IsInverted
-				&& EqualityComparer<BigVector>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
+				&& EqualityComparer<MapBlockOffset>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
 				//&& TargetIterations == ms.TargetIterations;
 		}
 

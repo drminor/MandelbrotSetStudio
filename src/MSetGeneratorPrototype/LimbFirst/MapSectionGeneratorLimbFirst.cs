@@ -208,7 +208,7 @@ namespace MSetGeneratorPrototype
 			//var mapPosition = dtoMapper.MapFrom(mapSectionRequest.Position);
 			//var samplePointDelta = dtoMapper.MapFrom(mapSectionRequest.SamplePointDelta);
 
-			var blockPos = mapSectionRequest.BlockPosition;
+			var blockPos = mapSectionRequest.RepoBlockPosition;
 			var mapPosition = mapSectionRequest.MapPosition;
 			var samplePointDelta = mapSectionRequest.SamplePointDelta;
 

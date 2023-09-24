@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 using System.Runtime.Serialization;
 
 namespace MEngineDataContracts
@@ -16,7 +17,7 @@ namespace MEngineDataContracts
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition)
 		{ }
 
-		public MapSectionServiceResponse(string mapSectionId, string subdivisionId, BigVectorDto blockPosition)
+		public MapSectionServiceResponse(string mapSectionId, string subdivisionId, MapBlockOffset blockPosition)
 		{
 			MapSectionId = mapSectionId;
 			SubdivisionId = subdivisionId;
@@ -38,7 +39,7 @@ namespace MEngineDataContracts
 		public string SubdivisionId { get; init; }
 
 		[DataMember(Order = 3)]
-		public BigVectorDto BlockPosition { get; init; }
+		public MapBlockOffset BlockPosition { get; init; }
 
 		[DataMember(Order = 4)]
 		public bool RequestCompleted { get; init; }

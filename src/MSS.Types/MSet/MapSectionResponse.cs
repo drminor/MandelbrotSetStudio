@@ -7,7 +7,7 @@
 			: this(
 				  mapSectionRequest.MapSectionId, 
 				  mapSectionRequest.SubdivisionId,
-				  mapSectionRequest.BlockPosition,
+				  mapSectionRequest.RepoBlockPosition,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted: false,
 				  allRowsHaveEscaped: false,
@@ -27,7 +27,7 @@
 			: this(
 				  mapSectionRequest.MapSectionId,
 				  mapSectionRequest.SubdivisionId,
-				  blockPosition: mapSectionRequest.BlockPosition,
+				  blockPosition: mapSectionRequest.RepoBlockPosition,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted,
 				  allRowsHaveEscaped,
@@ -41,7 +41,7 @@
 		public MapSectionResponse(
 			string? mapSectionId,
 			string subdivisionId,
-			BigVector blockPosition,
+			MapBlockOffset blockPosition,
 			MapCalcSettings mapCalcSettings,
 			bool requestCompleted,
 			bool allRowsHaveEscaped,
@@ -66,7 +66,7 @@
 		public string? MapSectionId { get; set; }
 		public string SubdivisionId { get; init; }
 
-		public BigVector BlockPosition { get; init; }
+		public MapBlockOffset BlockPosition { get; init; }
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 		public bool RequestCompleted { get; set; }
