@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <StartupObject>MEngineService.Program</StartupObject>
+    <Platforms>x64</Platforms>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.34.0" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.152" />
+    <PackageReference Include="Serilog" Version="2.11.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
+    <ProjectReference Include="..\MEngineDataContracts\MEngineDataContracts.csproj" />
+    <ProjectReference Include="..\MSetGeneratorPrototype\MSetGeneratorPrototype.csproj" />
+    <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
+    <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Martin-Berube-Square-Animal-Tuna.ico">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+
+
+</Project>

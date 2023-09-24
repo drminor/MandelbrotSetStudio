@@ -9,6 +9,10 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct VectorInt : IEquatable<VectorInt>, IEqualityComparer<VectorInt>
 	{
+		private static VectorInt _zeroSingleton = new VectorInt(0 ,0);
+
+		public static VectorInt Zero => _zeroSingleton;
+
 		public VectorInt(int x, int y)
 		{
 			X = x;
@@ -67,6 +71,19 @@ namespace MSS.Types
 			return new VectorInt(X / dividend.Width, Y / dividend.Height);
 		}
 
+		public VectorInt Scale(double factor)
+		{
+			return new VectorInt((int)Math.Round(X * factor), (int)Math.Round(Y * factor));
+		}
+
+		public RVector Scale(RSize factor)
+		{
+			var result = factor.Scale(this);
+			return new RVector(result);
+		}
+
+		public bool EqualsZero => X == 0 && Y == 0;
+
 		public override string? ToString()
 		{
 			return $"x:{X}, y:{Y}";
@@ -76,7 +93,7 @@ namespace MSS.Types
 
 		public override bool Equals(object? obj)
 		{
-			return obj is VectorInt pi && Equals(pi);
+			return obj is VectorInt vectorInt && Equals(vectorInt);
 		}
 
 		public bool Equals(VectorInt other)

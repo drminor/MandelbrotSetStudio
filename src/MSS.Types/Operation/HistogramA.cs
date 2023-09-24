@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace MSS.Types
 {
+	/// <summary>
+	/// Array based Histogram. Used by the MapSection Histogram Processor
+	/// </summary>
 	public class HistogramA : IHistogram
 	{
 		private int[] _values;
@@ -13,6 +16,7 @@ namespace MSS.Types
 
 		public HistogramA(int size)
 		{
+			IsEmpty = false;
 			_values = new int[size];
 
 			_topValues = new HistogramD();
@@ -59,6 +63,8 @@ namespace MSS.Types
 		public int UpperBound => _values.Length - 1;
 		public int Length => _values.Length;
 
+		public bool IsEmpty { get; set; }
+
 		public long UpperCatchAllValue { get; set; }
 
 		public int this[int index]
@@ -94,6 +100,17 @@ namespace MSS.Types
 			return result;
 		}
 
+		public IEnumerable<KeyValuePair<int, int>> GetKeyValuePairs2()
+		{
+			for (var i = 0; i < _values.Length; i++)
+			{
+				if (_values[i] != 0)
+				{
+					yield return new KeyValuePair<int, int>(i, _values[i]);
+				}
+			}
+		}
+
 		public void Reset()
 		{
 			for (var ptr = 0; ptr < _values.Length; ptr++)
@@ -102,12 +119,14 @@ namespace MSS.Types
 			}
 
 			_topValues.Clear();
+			UpperCatchAllValue = 0;
 		}
 
 		public void Reset(int newSize)
 		{
-			_values = new int[newSize + 1];
+			_values = new int[newSize];
 			_topValues.Clear();
+			UpperCatchAllValue = 0;
 		}
 
 		//public void Set(int[] indexes, int[] amounts)

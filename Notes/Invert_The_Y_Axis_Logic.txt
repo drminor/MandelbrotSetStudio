@@ -1,0 +1,25 @@
+Y = 10
+
+Height = 132
+ViewportHeight = 50
+
+To get InvertedY from Y
+
+	InvertedY = Height - ViewportHeight - Y
+
+To get Y from Inverted Y
+
+Starting with 
+	InvertedY = Height - ViewportHeight - Y
+
+1. Add Y to both sides
+	InvertedY + Y = Height - ViewportHeight
+
+2. Subtract InvertedY from both sides
+	Y = Height - ViewportHeight - InvertedY
+
+
+So...
+To get InvertedY from Y is the same operation as it is
+to get Y from InvertedY
+

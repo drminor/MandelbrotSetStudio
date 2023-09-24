@@ -1,0 +1,38 @@
+Power Rule of Logarithm	logb m^n = n logb m
+
+log (sqrt(a) = log (a^0.5)
+
+0.5 log (a)
+
+
+if iteration < max_iteration then
+        // sqrt of inner term removed using log simplification rules.
+        log_zn:= log(x*x + y*y) / 2
+        nu:= log(log_zn / log(2)) / log(2)
+        // Rearranging the potential function.
+        // Dividing log_zn by log(2) instead of log(N = 1<<8)
+        // because we want the entire palette to range from the
+        // center to radius 2, NOT our bailout radius.
+        iteration:= iteration + 1 - nu
+
+
+
+      int iter_count = 0;
+      float escape_radius = 20.0;
+      complex Z, C;
+      loop (forever) {
+         Z = Z*Z +C;
+         iter_count ++;
+         float modulus = sqrt (ReZ*ReZ + ImZ*ImZ);
+         if (modulus > escape_radius) goto stop;
+         if (iter_count > maxiter) goto stop;
+      }
+   
+   stop:
+      Z = Z*Z +C; iter_count ++;    // a couple of extra iterations helps
+      Z = Z*Z +C; iter_count ++;    // decrease the size of the error term.
+      float modulus = sqrt (ReZ*ReZ + ImZ*ImZ);
+      float mu = iter_count - (log (log (modulus)))/ log (2.0);
+
+
+3231931

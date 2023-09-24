@@ -1,10 +1,14 @@
 ﻿using ProtoBuf;
+using System;
+using System.Globalization;
+using System.Linq;
 using System.Numerics;
+using System.Text;
 
 namespace MSS.Types.DataTransferObjects
 {
 	[ProtoContract(SkipConstructor = true)]
-	public class BigVectorDto
+	public class BigVectorDto : ICloneable
 	{
 		[ProtoMember(1)]
 		public long[] X { get; init; }
@@ -27,6 +31,50 @@ namespace MSS.Types.DataTransferObjects
 		public long[][] GetValues()
 		{
 			return new long[][] { X, Y };
+		}
+
+		public override string? ToString()
+		{
+			var sb = new StringBuilder();
+
+			sb.Append("X:");
+			AppendStringVals(X, sb);
+
+			sb.Append(", Y:");
+			AppendStringVals(Y, sb);
+
+			//_ = sb.Append("X:")
+			//.Append(GetString(X))
+			//.Append(", Y:")
+			//.Append(GetString(Y));
+
+			return sb.ToString();
+		}
+
+		private void AppendStringVals(long[] vals, StringBuilder sb)
+		{
+			if (vals.Length == 1 || vals[1] == 0)
+			{
+				sb.Append(vals[0].ToString(CultureInfo.InvariantCulture));
+			}
+			else
+			{
+				sb.Append(vals[1].ToString(CultureInfo.InvariantCulture))
+					.Append(", ")
+					.Append(vals[0].ToString(CultureInfo.InvariantCulture));
+			}
+		}
+
+		//private string GetString(long[] vals)
+		//{
+		//	return vals[1] == 0
+		//		? vals[0].ToString(CultureInfo.InvariantCulture)
+		//		: vals[1].ToString(CultureInfo.InvariantCulture) + ", " + vals[0].ToString(CultureInfo.InvariantCulture);
+		//}
+
+		public object Clone()
+		{
+			return new BigVectorDto(GetValues());
 		}
 	}
 }

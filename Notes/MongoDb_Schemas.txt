@@ -1,0 +1,163 @@
+
+** ProjectInfo Repository **
+
+Collection
+	ObjectId
+	DateTime DateCreatedUtc
+	String Name
+
+MapRepository
+	ObjectId Id
+	DateTime DateCreatedUtc
+	String Name
+	String MongoDB_Connection_String
+	String DatabaseName
+
+ProjectRef
+	ObjectId Id
+	DateTime DateCreatedUtc
+	String Name
+	ObjectId CollectionId
+	ObjectId MapRespositoryId
+	ObjectId ProjectId
+
+
+** Project Repo **
+
+Project
+	ObjectId Id
+	DateTime DateCreatedUtc
+	String Name
+	String Description
+
+Poster
+	ObjectId Id
+	DateTime DateCreatedUtc
+	String Name
+	String Description
+
+
+Job
+	ObjectId Id
+	DateTime DateCreatedUtc
+	ObjectId ParentJobId
+
+	ObjectId OwnerId
+	JobOwnerType OwnerType			// One of Project | Poster
+	ObjectId SubdivisionId			// Duplicate of the value found in the MapAreaInfo2Record.Subdivision.Id
+	string Label
+
+	int TransformType
+	string TransformTypeString
+
+	MapAreaInfo2Record MapAreaInfo2Record
+
+		RPointAndDelta PositionAndDelta
+			RPoint MapCenter			// Position in SamplePointDelta units of the Center Pixel of the map, Releative to the Subdivision's BaseMapPosition * BlockSize
+			RSize SamplePointDelta		// Same value as is found in the Subdivision record
+		
+		Subdivision Subdivision
+			ObjectId Id
+			DateTime DateCreatedUtc
+			SizeInt BlockSize			// Number of sample points in each MapSection
+			RSize SamplePointDelta		// Distance from one sample point to the next
+			BigVector BaseMapPosition	// Absolute coordinates in SamplePointDelta * BlockSize units. MapSections belonging to this Subdivision use this as a base position
+
+		int Precision
+		BigVector MapBlockOffset		// Position in SamplePointDelta * BlockSize units of the Left, Bottom MapSection, relative to the Subdivision's BaseMapPosition **See Note below
+		VectorInt CanvasControlOffset	// Position in SamplePointDelta units of the Left, Bottom pixel of the Map, relative to the MapBlockOffset. **See Note below.
+
+	PointIntRecord NewAreaPosition		// Point on the Parent's Map for this Job
+	SizeIntRecord NewAreaSize			// Size of the portion of the Parent's Map that corresponds to this Map.
+
+	ObjectId ColorBandSetId				// Used to find the ColorBandSet record -- these are cached in memory.
+	
+	MapCalcSettings MapCalcSettings
+		int TargetIterations
+		int Threshold
+		bool UseEscapeVelocities
+		bool SaveTheZValues
+
+	DateTime LastSavedUtc
+	DateTime LastAccessedUtc
+
+										** Note: The MapAreaInfo field of each job stores the position data in two forms:
+											1. Using the RPointAndDelta format to specify the center pixel.
+											2. Using the MapBlockOffset and CanvasControlOffset to specify the Left, Bottom pixel of the Map
+											The MapBlockOffset and CanvasControlOffset, although stored in the repository, are recalculated 
+											for each Job request based on the current display size.
+
+
+Subdivison
+	ObjectId Id
+	DateTime DateCreatedUtc
+	SizeInt BlockSize					// Number of sample points in each MapSection
+	RSize SamplePointDelta				// Distance from one sample point to the next
+	BigVector BaseMapPosition			// Absolute coordinates in SamplePointDelta * BlockSize units. MapSections belonging to this Subdivision use this as a base position
+
+MapSectionRecord
+	ObjectId Id
+	DateTime DateCreatedUtc
+	ObjectId SubdivisionId		
+	PointInt BlockPosition				// Coordinates in units of SamplePointDelta * BlockSize, relative to the Subdivision's BaseMapPosition
+	PointRecord Position				// Can be calculated from the BlockPosition and the Subdivision's Position -- absolute coordinates on the complex plane.
+	int[] Counts
+	int[] EscapeVelocities
+
+MapSectionZValuesRecord
+	ObjectId Id
+	DateTime DateCreatedUtc
+	MapSectionId						// Id of the MapSection for which these ZValues belong
+	ZValues ZValues
+
+		int LimbCount					// Number of 32 bit words used to represent each Real and Imaginary component of a single value of Z
+
+		byte[] Zrs						// Array of Real components of the Z values in row first order for the block
+		byte[] Zis
+		byte[] HasEscapedFlags
+		byte[] RowsHasEscaped
+
+JobMapSectionRecord
+	ObjectId Id
+
+	ObjectId JobId
+	ObjectId MapSectionId
+	bool IsInverted						// True if the job includes a request for section to produce output below the X-Axis.
+	SizeInt BlockIndex					// BlockIndex of the MapSection relative to the Job's center block.
+	DateTime DateCreatedUtc
+
+	JobOwnerType OwnerType				// Convenience - same as the Job's OwnerType (Either Project or Poster.)
+	ObjectId MapSectionSubdivisionId	// Convenience - same as the MapSection's SubdivisionId
+	ObjectId JobSubdivisionId			// Convenience - same as the Job's SubdivisionId
+
+	--------------------
+	Each Project has 1 or more Jobs
+	Each Poster has 1 or more Jobs
+
+	Each Job belongs to a Subdivision
+	Each Job has a ColorBandSet
+	Each Job has zero or more JobMapSections
+
+	Each MapSection has a Subdivision
+	Each MapSection may have a MapSectionZValues
+
+	Each JobMapSection has a Subdivision
+	Each JobMapSection has a MapSection
+
+	Project			->	Job					(1..*)
+	Poster			->	Job					(1..*)
+
+	Job				->	Subdivision			(1..1)
+	Job				->	ColorBandSet		(1..1)
+
+	MapSection		->	Subdivision			(1..1)
+	MapSection		->	MapSectionZValues	(1..0)
+
+	JobMapSection	-> Subdivision			(1..1)
+	JobMapSection	-> Job					(0..1)
+	JobMapSection	-> MapSection			(1..1)
+
+	
+
+
+

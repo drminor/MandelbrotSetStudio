@@ -3,21 +3,21 @@ using System;
 
 namespace MSetExplorer
 {
-	internal class HistogramWorkRequest
+	public class HistogramWorkRequest
 	{
 		public HistogramWorkRequestType RequestType { get; init; }
 		public int[] Cutoffs { get; init; }
 		public IHistogram? Histogram { get; init; }
 		public Action<PercentageBand[]> WorkAction { get; init; }
 
-		public HistogramWorkRequest(HistogramWorkRequestType requestType, int[] cutOffs, IHistogram? histogram, Action<PercentageBand[]> workAction)
+		public HistogramWorkRequest(HistogramWorkRequestType requestType, int[] cutoffs, IHistogram? histogram, Action<PercentageBand[]> workAction)
 		{
 			RequestType = requestType;
-			Cutoffs = cutOffs;
+			Cutoffs = cutoffs;
 			Histogram = histogram;
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
 
-			if (RequestType != HistogramWorkRequestType.BucketsUpdated && Histogram == null)
+			if (RequestType != HistogramWorkRequestType.Refresh && Histogram == null)
 			{
 				throw new ArgumentException("The Histogram cannot be null, unless the request type is 'Update-Buckets'.");
 			}
@@ -29,11 +29,11 @@ namespace MSetExplorer
 		}
 	}
 
-	internal enum HistogramWorkRequestType
+	public enum HistogramWorkRequestType
 	{
 		Add,
 		Remove,
-		BucketsUpdated
+		Refresh
 	}
 
 }

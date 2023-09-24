@@ -11,6 +11,9 @@ namespace MSS.Types
 		public PointInt(VectorInt vectorInt) : this(vectorInt.X, vectorInt.Y)
 		{ }
 
+		public PointInt(SizeInt sizeInt) : this(sizeInt.Width, sizeInt.Height)
+		{ }
+
 		public PointInt(int[] values) : this(values[0], values[1])
 		{ }
 
@@ -25,6 +28,12 @@ namespace MSS.Types
 
 		[ProtoMember(2)]
 		public int Y { get; set; }
+
+
+		public bool IsZero()
+		{
+			return X == 0 && Y == 0;
+		}
 
 		public PointInt Scale(SizeInt factor)
 		{
@@ -42,6 +51,11 @@ namespace MSS.Types
 		}
 
 		public VectorInt Sub(PointInt amount)
+		{
+			return new VectorInt(X - amount.X, Y - amount.Y);
+		}
+
+		public VectorInt Sub(VectorInt amount)
 		{
 			return new VectorInt(X - amount.X, Y - amount.Y);
 		}
@@ -71,6 +85,11 @@ namespace MSS.Types
 			return new PointInt(X / dividend.Width, Y / dividend.Height);
 		}
 
+		public PointInt Invert()
+		{
+			return new PointInt(X * -1, Y * -1);
+		}
+
 		public override string? ToString()
 		{
 			return $"x:{X}, y:{Y}";
@@ -80,7 +99,7 @@ namespace MSS.Types
 
 		public override bool Equals(object? obj)
 		{
-			return obj is PointInt pi && Equals(pi);
+			return obj is PointInt pointInt && Equals(pointInt);
 		}
 
 		public bool Equals(PointInt other)

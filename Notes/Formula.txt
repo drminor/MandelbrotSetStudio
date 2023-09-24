@@ -22,11 +22,9 @@ l is an integer
 c and z are complex numbers
 set l to 0
 set z to 0
-set c to some point within the region -2, 1 through 1, 1
+set c to some point within the region -2, -1.5 through 1, 1.5
 
 the repeatly calcualte a new z (z') using z as an input
-
-
 
 0: z' = f(z,c) = z2 + c
 1: set z = z'
@@ -35,6 +33,42 @@ the repeatly calcualte a new z (z') using z as an input
 
 Translate l to a color and paint the pixel at c with that color
 
+	z.r = 0;
+	z.i = 0;
+	zrsqr = square(z.r);
+	zisqr = square(z.i);
+
+	while (zrsqr + zisqr <= 4.0)
+	{
+		z.i = z.r * z.i;
+		z.i += z.i; // Multiply by two
+		z.i += c.i;
+		z.r = zrsqr – zisqr + c.r;
+		zrsqr = square(z.r);
+		zisqr = square(z.i);
+	}
+
+Instead of multiplying, use Squaring
+
+	z.r = 0;
+	z.i = 0;
+	zrsqr = square(z.r);
+	zisqr = square(z.i);
+
+	while (zrsqr + zisqr <= 4.0)
+	{
+		z.i = square(z.r + z.i) – zrsqr – zisqr;
+		z.i += c.i;
+
+		z.r = zrsqr – zisqr + c.r;
+
+		zrsqr = square(z.r);
+		zisqr = square(z.i);
+	}
+
+Note: Subtraction is not associative:
+	
+	8 - 3 - 1 = (8 - 3) - 1 = 5 - 1 = 4
+	8 - (3 - 1) = 8 - 2 = 6
 
 
-then count the number of times this can be done before the value of z

@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.DataTransferObjects;
+using MSS.Types.MSet;
 
 namespace MSS.Common.DataTransferObjects
 {
@@ -11,7 +12,7 @@ namespace MSS.Common.DataTransferObjects
 	///		RRectangle
 	///		BigVector
 	/// </summary>
-	public class DtoMapper : IMapper<RPoint, RPointDto>, IMapper<RSize, RSizeDto>, IMapper<RRectangle, RRectangleDto>, IMapper<BigVector, BigVectorDto>/*, IMapper<RVector, RVectorDto>*/
+	public class DtoMapper : IMapper<RPoint, RPointDto>, IMapper<RSize, RSizeDto>, IMapper<RRectangle, RRectangleDto>, IMapper<BigVector, BigVectorDto>, IMapper<RVector, RVectorDto>
 	{
 		public RPointDto MapTo(RPoint source)
 		{
@@ -52,6 +53,19 @@ namespace MSS.Common.DataTransferObjects
 			return result;
 		}
 
+		public RPointAndDeltaDto MapTo(RPointAndDelta source)
+		{
+			var result = new RPointAndDeltaDto(source.Values, source.Exponent);
+			return result;
+		}
+
+		public RPointAndDelta MapFrom(RPointAndDeltaDto target)
+		{
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
+			var result = new RPointAndDelta(bVals, target.Exponent);
+			return result;
+		}
+
 		public BigVectorDto MapTo(BigVector source)
 		{
 			var result = new BigVectorDto(source.Values);
@@ -65,18 +79,20 @@ namespace MSS.Common.DataTransferObjects
 			return result;
 		}
 
-		//public RVectorDto MapTo(RVector source)
-		//{
-		//	var result = new RVectorDto(source.Values, source.Exponent);
-		//	return result;
-		//}
+		public RVectorDto MapTo(RVector source)
+		{
+			var result = new RVectorDto(source.Values, source.Exponent);
+			return result;
+		}
 
-		//public RVector MapFrom(RVectorDto target)
-		//{
-		//	var bVals = BigIntegerHelper.FromLongs(target.GetValues());
-		//	var result = new RVector(bVals, target.Exponent);
-		//	return result;
-		//}
+		public RVector MapFrom(RVectorDto target)
+		{
+			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
+			var result = new RVector(bVals, target.Exponent);
+			return result;
+		}
+
+
 
 	}
 }

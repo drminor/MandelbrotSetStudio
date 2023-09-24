@@ -1,5 +1,7 @@
 ﻿using MSS.Types;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,8 +48,9 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
+			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty) || e.PropertyName == nameof(ColorBandSetViewModel.ColorBandSet))
 			{
+				// TODO: What is the domain or scope of calling InvalidateRequerySuggested on the ColorBandSetUserControl?
 				CommandManager.InvalidateRequerySuggested();
 			}
 		}
@@ -58,25 +61,49 @@ namespace MSetExplorer
 
 		private void ColorBandDoubleClick(object sender, RoutedEventArgs e)
 		{
-			//EditColorBand();
+			//MessageBox.Show("Got a dbl click.");
+			EditColorBand();
 		}
 
 		private void ShowDetails_Click(object sender, RoutedEventArgs e)
 		{
 			string msg;
 
-			var specs = _vm.BeyondTargetSpecs;
-
-			if (specs != null)
+			if (lvColorBands.Items.CurrentItem is ColorBand selItem)
 			{
-				msg = $"Percentage: {specs.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+				var index = lvColorBands.Items.IndexOf(selItem);
+
+				//msg = $"Percentage: {selItem.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+				msg = $"Percentage: {selItem.Percentage}";
+
+				if (index == lvColorBands.Items.Count - 1 && _vm.BeyondTargetSpecs != null)
+				{
+					var specs = _vm.BeyondTargetSpecs;
+					msg += $"\nBeyond Last Info: Percentage: {specs.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+				}
+
+				ReportHistogram(_vm.GetHistogramForColorBand(index));
 			}
 			else
 			{
-				msg = "No Details Available.";
+				msg = "No Current Item.";
 			}
 
 			_ = MessageBox.Show(msg);
+		}
+
+		private void ReportHistogram(IDictionary<int, int> histogram)
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine("Histogram:");
+
+			foreach(KeyValuePair<int, int> kvp in histogram)
+			{
+				sb.AppendLine($"\t{kvp.Key} : {kvp.Value}");
+			}
+
+			Debug.WriteLine(sb.ToString());
 		}
 
 		private void CommitEditOnLostFocus(object sender, DependencyPropertyChangedEventArgs e)
@@ -95,27 +122,29 @@ namespace MSetExplorer
 		// Insert CanExecute
 		private void InsertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = true;
+			e.CanExecute = _vm?.CurrentColorBand != null;
 		}
 
 		// Insert
 		private void InsertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			InsertColorBand();
+			if (_vm.TryInsertNewItem(out var index))
+			{
+				FocusListBoxItem(index);
+			}
 		}
 
 		// Delete CanExecute
 		private void DeleteCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.ColorBandsView.CurrentPosition < _vm?.ColorBandsView.Count - 1;
+			e.CanExecute = _vm?.CurrentColorBand != null; // _vm?.ColorBandsView.CurrentPosition < _vm?.ColorBandsView.Count - 1;
 		}
 
 		// Delete
 		private void DeleteCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.DeleteSelectedItem();
+			_ = _vm.TryDeleteSelectedItem();
 		}
-
 
 		// Revert CanExecute
 		private void RevertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
@@ -144,33 +173,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		private void InsertColorBand()
-		{
-			Debug.WriteLine($"There are {lvColorBands.SelectedItems.Count} selected items. The current pos is {lvColorBands.SelectedIndex}.");
-
-			var view = _vm.ColorBandsView;
-
-			if (!view.IsAddingNew && lvColorBands.Items.CurrentItem is ColorBand selItem)
-			{
-				if (selItem.Cutoff - selItem.StartingCutoff < 1)
-				{
-					_ = MessageBox.Show("No Room to insert here.");
-					return;
-				}
-
-				var index = lvColorBands.Items.IndexOf(selItem);
-				var prevCutoff = selItem.PreviousCutoff ?? 0;
-				var newCutoff = prevCutoff + (selItem.Cutoff - prevCutoff) / 2;
-				var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, selItem.StartColor, selItem.PreviousCutoff, selItem.StartColor, double.NaN);
-				_vm.InsertItem(index, newItem);
-
-				//lvColorBands.Items.Refresh();
-				_ = lvColorBands.Items.MoveCurrentToPosition(index);
-
-				FocusListBoxItem(index);
-			}
-		}
 
 		private void FocusListBoxItem(int index)
 		{
@@ -246,58 +248,74 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		//private void UpdateNeighbors(ColorBand selItem, int index)
-		//{
-		//	if (TryGetPredeccessor(index, out var predecessor))
-		//	{
-		//		if (selItem.StartColorUpdated && predecessor != null && predecessor.BlendStyle == ColorBandBlendStyle.Next)
-		//		{
-		//			predecessor.ActualEndColor = selItem.StartColor;
-		//		}
-		//	}
+		// Will create a new dialog box that will show the starting / ending and blend options
+		private void EditColorBand()
+		{
+			var view = _vm.ColorBandsView;
 
-		//	if (TryGetSuccessor(index, out var sucessor))
-		//	{
-		//		if (selItem.CutoffUpdated && sucessor != null)
-		//		{
-		//			sucessor.PreviousCutoff = selItem.Cutoff;
-		//		}
-		//	}
-		//}
+			if (!view.IsEditingItem && lvColorBands.Items.CurrentItem is ColorBand selItem)
+			{
+				var index = lvColorBands.Items.IndexOf(selItem);
 
-		//private bool TryGetPredeccessor(int index, out ColorBand? colorBand)
-		//{
-		//	if (index < 1)
-		//	{
-		//		colorBand = null;
-		//		return false;
-		//	}
-		//	else
-		//	{
-		//		colorBand = (ColorBand)lvColorBands.Items[index - 1];
-		//		return true;
-		//	}
-		//}
+				var predeccessor = GetPredeccessor(index);
+				var sucesssor = GetSuccessor(index);
 
-		//private bool TryGetSuccessor(int index, out ColorBand? colorBand)
-		//{
-		//	if (index > lvColorBands.Items.Count - 2)
-		//	{
-		//		colorBand = null;
-		//		return false;
-		//	}
-		//	else
-		//	{
-		//		colorBand = (ColorBand)lvColorBands.Items[index + 1];
-		//		return true;
-		//	}
-		//}
+				var preClr = predeccessor?.EndColor ?? new ColorBandColor("#ff0000");
+				var folClr = sucesssor?.StartColor ?? new ColorBandColor("#00ff00");
 
-		//private ColorBand? GetSuccessor(int index)
-		//{
-		//	_ = TryGetSuccessor(index, out var successor);
-		//	return successor;
-		//}
+				Debug.WriteLine($"Edit Color Band: The Predeccessor's EndColor is {preClr}. The Successor' StartColor is {folClr}.");
+
+				//view.EditItem(selItem);
+			}
+		}
+
+		private void UpdateNeighbors(ColorBand selItem, int index)
+		{
+			var predecessor = GetPredeccessor(index);
+			var successor = GetSuccessor(index);
+
+			selItem.UpdateWithNeighbors(predecessor, successor);
+		}
+
+		private ColorBand? GetPredeccessor(int index)
+		{
+			_ = TryGetPredeccessor(index, out var predeccessor);
+			return predeccessor;
+		}
+
+		private bool TryGetPredeccessor(int index, out ColorBand? colorBand)
+		{
+			if (index < 1)
+			{
+				colorBand = null;
+				return false;
+			}
+			else
+			{
+				colorBand = (ColorBand)lvColorBands.Items[index - 1];
+				return true;
+			}
+		}
+
+		private ColorBand? GetSuccessor(int index)
+		{
+			_ = TryGetSuccessor(index, out var successor);
+			return successor;
+		}
+
+		private bool TryGetSuccessor(int index, out ColorBand? colorBand)
+		{
+			if (index > lvColorBands.Items.Count - 2)
+			{
+				colorBand = null;
+				return false;
+			}
+			else
+			{
+				colorBand = (ColorBand)lvColorBands.Items[index + 1];
+				return true;
+			}
+		}
 
 		#endregion
 	}

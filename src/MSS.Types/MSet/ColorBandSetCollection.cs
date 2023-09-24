@@ -21,8 +21,12 @@ namespace MSS.Types.MSet
 		public ColorBandSetCollection(IEnumerable<ColorBandSet> colorBandSets)
 		{
 			_colorsCollection = new Collection<ColorBandSet>(colorBandSets.ToList());
-			_colorsPointer = _colorsCollection.Count - 1;
+			if (_colorsCollection.Count == 0)
+			{
+				_colorsCollection.Add(new ColorBandSet());
+			}
 
+			_colorsPointer = _colorsCollection.Count - 1;
 			_colorsLock = new ReaderWriterLockSlim();
 		}
 
@@ -119,47 +123,6 @@ namespace MSS.Types.MSet
 			{
 				_colorsLock.ExitUpgradeableReadLock();
 			}
-		}
-
-		public void Load(ColorBandSet? colorBandSet)
-		{
-			var colorBandSets = new List<ColorBandSet>();
-
-			if (colorBandSet != null)
-			{
-				colorBandSets.Add(colorBandSet);
-			}
-
-			Load(colorBandSets);
-		}
-		
-		public bool Load(IEnumerable<ColorBandSet> colorBandSets)
-		{
-			var result = true;
-
-			DoWithWriteLock(() =>
-			{
-				_colorsCollection.Clear();
-
-				foreach(var cbs in colorBandSets)
-				{
-					_colorsCollection.Add(cbs);
-				}
-
-				if (_colorsCollection.Count == 0)
-				{
-					_colorsCollection.Add(new ColorBandSet());
-				}
-
-				_colorsPointer = _colorsCollection.Count - 1;
-			});
-
-			//if (!CheckJobStackIntegrity())
-			//{
-			//	Debug.WriteLine("The ColorBandSet Collection is not integral.");
-			//}
-
-			return result;
 		}
 
 		public void Push(ColorBandSet colorBandSet)
@@ -408,6 +371,12 @@ namespace MSS.Types.MSet
 		{
 			colorBandSet = _colorsCollection.FirstOrDefault(x => x.Id == id);
 			return colorBandSet != null;
+		}
+
+		public bool ColorBandSetExists(ObjectId id)
+		{
+			var result = _colorsCollection.Any(x => x.Id == id);
+			return result;
 		}
 
 		private bool CheckCollectionIntegrity()

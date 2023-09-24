@@ -1,15 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Numerics;
 
 namespace MSS.Types
 {
 	public static class Reducer
 	{
-		public static RValue Reduce(RValue rValue)
-		{
-			var val = Reduce(rValue.Value, rValue.Exponent, out var exponent);
-			return new RValue(val, exponent, rValue.Precision);
-		}
+		#region Shapes
 
 		public static RPoint Reduce(RPoint rPoint)
 		{
@@ -35,18 +32,24 @@ namespace MSS.Types
 			return new RRectangle(vals, exponent);
 		}
 
-		public static BigInteger[] Reduce(IBigRatShape bigRatShape, out int newExponent)
+		public static RPointAndDelta Reduce(RPointAndDelta rPointAndDelta)
+		{
+			var vals = Reduce(rPointAndDelta, out var exponent);
+			return new RPointAndDelta(vals, exponent);
+		}
+
+		private static BigInteger[] Reduce(IBigRatShape bigRatShape, out int newExponent)
 		{
 			var result = Reduce(bigRatShape.Values, bigRatShape.Exponent, out newExponent);
 			return result;
 		}
 
-		public static BigInteger[] Reduce(BigInteger[] vals, int exponent, out int newExponent)
+		private static BigInteger[] Reduce(BigInteger[] vals, int exponent, out int newExponent)
 		{
 			var reductionFactor = 0;
 			long divisor = 1;
 
-			while (exponent + reductionFactor < 0 && IsDivisibleBy(vals, divisor * 2))
+			while (exponent + reductionFactor + 1 < 0 && IsDivisibleBy(vals, divisor * 2))
 			{
 				reductionFactor++;
 				divisor *= 2;
@@ -54,28 +57,6 @@ namespace MSS.Types
 
 			newExponent = exponent + reductionFactor;
 			var result = reductionFactor == 0 ? vals : vals.Select(v => v / divisor).ToArray();
-			return result;
-		}
-
-		public static BigInteger Reduce(BigInteger value, int exponent, out int newExponent)
-		{
-			if (value == 0)
-			{
-				newExponent = exponent;
-				return value;
-			}
-
-			var reductionFactor = 0;
-			long divisor = 1;
-
-			while (exponent + reductionFactor < 0 && BigInteger.Remainder(value, divisor * 2) == 0)
-			{
-				reductionFactor++;
-				divisor *= 2;
-			}
-
-			newExponent = exponent + reductionFactor;
-			var result = value / divisor;
 			return result;
 		}
 
@@ -93,5 +74,60 @@ namespace MSS.Types
 			return true;
 		}
 
+		#endregion
+
+		#region RValue
+
+		public static RValue Reduce(RValue rValue)
+		{
+			var val = Reduce(rValue.Value, rValue.Exponent, out var exponent);
+			return new RValue(val, exponent, rValue.Precision);
+		}
+
+		private static BigInteger Reduce(BigInteger value, int exponent, out int newExponent)
+		{
+			if (value == 0)
+			{
+				newExponent = exponent;
+				return value;
+			}
+
+			if (Math.Abs(exponent) > 63)
+			{
+				value = ReduceByLongFactor(value, exponent, out exponent);
+			}
+
+			var reductionFactor = 0;
+			long divisor = 1;
+
+			while (exponent + reductionFactor + 1 < 0 && BigInteger.Remainder(value, divisor * 2) == 0)
+			{
+				reductionFactor++;
+				divisor *= 2;
+			}
+
+			newExponent = exponent + reductionFactor;
+			var result = value / divisor;
+			return result;
+		}
+
+		private static BigInteger ReduceByLongFactor(BigInteger value, int exponent, out int newExponent)
+		{
+			var reductionFactor = 0;
+
+			var remainder = BigInteger.Remainder(value, BigInteger.Pow(2, reductionFactor + 64));
+
+			while (exponent + reductionFactor + 64 < 0 && remainder == 0)
+			{
+				reductionFactor += 64;
+				remainder = BigInteger.Remainder(value, BigInteger.Pow(2, reductionFactor + 64));
+			}
+
+			newExponent = exponent + reductionFactor;
+			var result = value / BigInteger.Pow(2, reductionFactor);
+			return result;
+		}
+
+		#endregion
 	}
 }

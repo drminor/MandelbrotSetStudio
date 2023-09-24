@@ -1,11 +1,14 @@
-﻿using MongoDB.Driver;
-using MSS.Common.MSetRepo;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
+using MSS.Common;
 using System;
 
 namespace ProjectRepo
 {
 	public class MongoDbCollectionBase<T> : IMongoDbCollection<T>
     {
+		private static readonly long BYTES_MB = 1024 * 1024;
+
         private readonly DbProvider _dbProvider;
         private readonly string _collectionName;
 
@@ -17,13 +20,12 @@ namespace ProjectRepo
             _collectionName = collectionName;
 
             _collectionLazy = new Lazy<IMongoCollection<T>>(() => Database.GetCollection<T>(_collectionName), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
-
-			//RegisterMapIfNeeded<BWRectangle>();
-			//RegisterMapIfNeeded<BigIntegerWrapper>();
 		}
 
 		public IMongoDatabase Database => _dbProvider.Database;
         public IMongoCollection<T> Collection => _collectionLazy.Value;
+
+		public IMongoCollection<BsonDocument> BsonDocumentCollection => Database.GetCollection<BsonDocument>(_collectionName);
 
 		public virtual bool CreateCollection()
 		{
@@ -53,6 +55,56 @@ namespace ProjectRepo
 			}
 
 			return null;
+		}
+
+		protected virtual long? GetReturnCount(UpdateResult updateResult)
+		{
+			if (updateResult.IsAcknowledged)
+			{
+				return updateResult.ModifiedCount;
+			}
+
+			return null;
+		}
+
+		public virtual long GetSizeOfCollectionInMB()
+		{
+			var result = 0L;
+
+			// NOTE: Need to add 22 bytes * total number of documents to get the actual size.
+			var sizeOnServer = Collection
+				.Aggregate()
+				.AppendStage<BsonDocument>("{ $group: { _id : null, collectionSize: { $sum: { $bsonSize: '$$ROOT' } } } }")
+				.FirstOrDefault();
+
+			var collectionSize = sizeOnServer["collectionSize"];
+
+			if (collectionSize.IsInt32)
+			{
+				result = collectionSize.AsInt32 / BYTES_MB;
+
+			}
+			else if (collectionSize.IsInt64)
+			{
+				result = collectionSize.AsInt64 / BYTES_MB;
+			}
+			else
+			{
+				result = -1;
+			}
+
+			return result;
+		}
+
+		public virtual int GetSizeOfDocZero()
+		{
+			var documentSizeOnServer = Collection
+				.Aggregate()
+				.AppendStage<BsonDocument>("{ $project : { documentSize : { $bsonSize : '$$ROOT' }, _id : 0 } }")
+				.FirstOrDefault();
+
+			var docSize = documentSizeOnServer["documentSize"].AsInt32;
+			return docSize;
 		}
 
 		#region unused

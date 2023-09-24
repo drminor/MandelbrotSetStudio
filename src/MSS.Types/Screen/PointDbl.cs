@@ -6,7 +6,14 @@ namespace MSS.Types
 {
 	public struct PointDbl : IEquatable<PointDbl>, IEqualityComparer<PointDbl>
 	{
+		private static PointDbl ZeroSingleton = new PointDbl();
+
+		public static PointDbl Zero => ZeroSingleton;
+
 		public PointDbl(PointInt pointInt) : this(pointInt.X, pointInt.Y)
+		{ }
+
+		public PointDbl(VectorDbl vectorDbl) : this(vectorDbl.X, vectorDbl.Y)
 		{ }
 
 		public PointDbl(SizeDbl size) : this(size.Width, size.Height)
@@ -21,39 +28,74 @@ namespace MSS.Types
 		public double X { get; set; }
 		public double Y { get; set; }
 
+		public bool IsNAN()
+		{
+			return double.IsNaN(X) || double.IsNaN(Y);
+		}
+
 		//public PointDbl Scale(PointDbl factor)
 		//{
 		//	return new PointDbl(X * factor.X, Y * factor.Y);
 		//}
 
-		//public PointDbl Translate(PointDbl offset)
-		//{
-		//	return new PointDbl(X + offset.X, Y + offset.Y);
-		//}
+		public PointDbl Translate(VectorDbl offset)
+		{
+			return new PointDbl(X + offset.X, Y + offset.Y);
+		}
 
-		//public PointDbl Translate(SizeDbl offset)
-		//{
-		//	return new PointDbl(X + offset.Width, Y + offset.Height);
-		//}
+		public PointDbl Translate(SizeDbl offset)
+		{
+			return new PointDbl(X + offset.Width, Y + offset.Height);
+		}
 
-		//public PointDbl Scale(SizeInt factor)
-		//{
-		//	return new PointDbl(X * factor.Width, Y * factor.Height);
-		//}
+		public PointDbl Scale(SizeDbl factor)
+		{
+			return new PointDbl(X * factor.Width, Y * factor.Height);
+		}
 
-		//public PointDbl Scale(double factor)
-		//{
-		//	return new PointDbl(X * factor, Y * factor);
-		//}
+		public PointDbl Scale(double factor)
+		{
+			return new PointDbl(X * factor, Y * factor);
+		}
+
+		public PointDbl Invert()
+		{
+			return Scale(-1);
+		}
 
 		//public PointDbl Translate(SizeInt offset)
 		//{
 		//	return new PointDbl(X + offset.Width, Y + offset.Height);
 		//}
 
-		public SizeDbl Diff(PointDbl amount)
+		public VectorDbl Diff(PointDbl amount)
 		{
-			return new SizeDbl(X - amount.X, Y - amount.Y);
+			return new VectorDbl(X - amount.X, Y - amount.Y);
+		}
+
+		public VectorDbl Sub(SizeDbl amount)
+		{
+			return new VectorDbl(X - amount.Width, Y - amount.Height);
+		}
+
+		public PointDbl Min(PointDbl pointB)
+		{
+			return new PointDbl(Math.Min(X, pointB.X), Math.Min(Y, pointB.Y));
+		}
+
+		public PointDbl Max(PointDbl pointB)
+		{
+			return new PointDbl(Math.Max(X, pointB.X), Math.Max(Y, pointB.Y));
+		}
+
+		public PointDbl Max(double amount)
+		{
+			return new PointDbl(Math.Max(X, amount), Math.Max(Y, amount));
+		}
+
+		public bool IsNearZero(double threshold = 0.1)
+		{
+			return Math.Abs(X) < threshold && Math.Abs(Y) < threshold;
 		}
 
 		public PointInt Round()
@@ -72,7 +114,22 @@ namespace MSS.Types
 			return result;
 		}
 
-		#region IEquatable and IEqualityComparer Support
+		public PointDbl Abs()
+		{
+			return new PointDbl(Math.Abs(X), Math.Abs(Y));
+		}
+
+		#region ToString, IEquatable and IEqualityComparer Support
+
+		public override string? ToString()
+		{
+			return $"x:{X}, y:{Y}";
+		}
+
+		public string? ToString(string? format)
+		{
+			return $"x:{X.ToString(format)}, y:{Y.ToString(format)}";
+		}
 
 		public override bool Equals(object? obj)
 		{
@@ -85,9 +142,9 @@ namespace MSS.Types
 				   Y == other.Y;
 		}
 
-		public bool Equals(PointDbl x, PointDbl y)
+		public bool Equals(PointDbl a, PointDbl b)
 		{
-			return x.Equals(y);
+			return a.Equals(b);
 		}
 
 		public override int GetHashCode()
@@ -111,10 +168,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
-		public override string? ToString()
-		{
-			return $"x:{X}, y:{Y}";
-		}
 	}
 }

@@ -1,0 +1,29 @@
+Screen Pos x:3, y:0
+BlockPos: 8,0
+Delta: 4096 / 2^23 (1 / 2^11)
+MapBlockOffset 5,0
+MapPos
+X: 1024/2^11		(4194304/2^23)
+Y: 0/2^11
+
+
+x:1, y:1
+BlockPos: 6,1
+
+Delta: 4096 / 2^23 (1 / 2^11)
+MapBlockOffset: 5,0
+X: 768/2^11
+Y: 128/2^11
+
+cx: 3145728
+cy: 524288 / 2^23
+
+
+Screen Pos: x:1, y:1
+BlockPos: -1, 1
+
+Delta: 1/2^11		(4096/2^23)
+MapBlockOffset -2,0
+MapPos
+X: -128/2^11		(2146959360/2^23)
+Y: 128/2^11			(524288/2^23)

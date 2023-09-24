@@ -19,22 +19,26 @@ qp qpMath::fromLongRational(LONGLONG hi, LONGLONG lo, int exponent)
 {
 	//Test1();
 
-	//qp nHRaw = qp(hi);
-	//qp nL = qp(lo);
-	//double e = std::ldexp(1, exponent);
-	//double factor = std::ldexp(1, 53);
-
-	//qp nH = mulD(nHRaw, factor);
-	//qp n = add(nH, nL);
-	//qp result = mulD(n, e);
-
-	qp nh = qp(std::ldexp(hi, 53));
-	qp nl = qp(lo);
-	qp n = add(nh, nl);
-
-	// TODO: Consider implementing a qp version of ldexp -- implemented by taking ldexp of both the hi and lo components.
+	qp nHRaw = qp(hi);
+	qp nL = qp(lo);
 	double e = std::ldexp(1, exponent);
+	double factor = std::ldexp(1, 53);
+
+	qp nH = mulD(nHRaw, factor);
+	qp n = add(nH, nL);
 	qp result = mulD(n, e);
+
+
+	////qp nh = qp(std::ldexp(hi, 64));
+
+	//double dHi = MAXLONGLONG * hi;
+	//qp nh = qp(dHi);
+	//qp nl = qp(lo);
+	//qp n = add(nh, nl);
+
+	//// TODO: Consider implementing a qp version of ldexp -- implemented by taking ldexp of both the hi and lo components.
+	//double e = std::ldexp(1, exponent);
+	//qp result = mulD(n, e);
 
 	return result;
 }

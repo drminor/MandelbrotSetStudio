@@ -1,0 +1,128 @@
+﻿<UserControl x:Class="MSetExplorer.JobTreeControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mssc="clr-namespace:MSS.Common;assembly=MSS.Common"
+             xmlns:local="clr-namespace:MSetExplorer"
+
+             mc:Ignorable="d" 
+             d:DesignHeight="1000" d:DesignWidth="400">
+    
+    <Grid>
+        <Border BorderThickness="1" BorderBrush="Black" VerticalAlignment="Stretch" x:Name="borderTop">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="400"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="5,1" Orientation="Horizontal">
+                    <TextBlock FontSize="16" Height="22">Job Tree</TextBlock>
+                    <!--<Button Margin="25,0,10,0" Padding="5,0" Click="ButtonShowOriginal_Click" >Original</Button>
+                    <Button Margin="10,0" Padding="5,0" Click="ButtonRollupPans_Click" >Rollup Pans</Button>
+                    <Button Margin="10,0" Padding="5,0" Click="ButtonRollupSingles_Click" >Rollup Singles</Button>-->
+                </StackPanel>
+
+                <TreeView x:Name="trvJobs" Grid.Row="1" Margin="0" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                          Focusable="True" ItemsSource="{Binding JobNodes}">
+
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="{x:Type TreeViewItem}">
+
+                            <Style.Resources>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Cornsilk" Opacity="30"/>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="DarkSlateGray"/>
+                            </Style.Resources>
+
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+
+                            <!--<Setter Property="Background" Value="{Binding ItemColor}"/>-->
+
+                            <!--<Setter Property="FontWeight" Value="Normal" />
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True"> 
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </Trigger>
+                            </Style.Triggers>-->
+
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+
+                    <TreeView.CommandBindings>
+                        <CommandBinding Command="local:JobTreeCommands.MoveTo" CanExecute="MoveToCommand_CanExecute" Executed="MoveToCommand_Executed" />
+                        <CommandBinding Command="local:JobTreeCommands.ActivateBranch" CanExecute="ActivateBranchCommand_CanExecute" Executed="ActivateBranchCommand_Executed" />
+                        <CommandBinding Command="local:JobTreeCommands.Delete" CanExecute="DeleteCommand_CanExecute" Executed="DeleteCommand_Executed"/>
+                        <CommandBinding Command="local:JobTreeCommands.ShowDetails" CanExecute="ShowDetailsCommand_CanExecute" Executed="ShowDetailsCommand_Executed" />
+                    </TreeView.CommandBindings>
+                    
+                    <TreeView.Resources>
+                        <HierarchicalDataTemplate DataType="{x:Type mssc:JobTreeNode}" ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal" Focusable="True" KeyUp="JobTreeItem_KeyUp" Tag="{Binding IdAndParentId}" Background="{Binding ItemColor}" >
+
+                                <!--<TreeView.InputBindings>
+                                    <KeyBinding Command="local:JobTreeCommands.ShowDetails" Key="F3" />
+                                </TreeView.InputBindings>-->
+
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="_Move To" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" />
+                                        <MenuItem Header="Mark As _Active" Command="local:JobTreeCommands.ActivateBranch" CommandParameter="{Binding JobId}" />
+                                        <MenuItem Header="_Delete" Command="local:JobTreeCommands.Delete" CommandParameter="{Binding JobId}" />
+                                        <Separator/>
+                                        <MenuItem Header="_Show Details" Command="local:JobTreeCommands.ShowDetails" CommandParameter="{Binding JobId}" />
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+
+                                <StackPanel.ToolTip>
+                                    <TextBlock Text="{Binding IdAndParentId}"/>
+                                </StackPanel.ToolTip>
+
+                                <!-- Is On Preferred Path Marker -->
+                                <TextBlock Text="{Binding IsOnPreferredPathMarker}" FontFamily="Wingdings" Margin="0,3,0,-6" Opacity="{Binding IsOnPreferredPathMarkerOpacity}" />
+
+                                <!-- Transform -->
+                                <TextBlock Text="{Binding TransformType}" />
+                                
+                                <!-- Zoom -->
+                                <TextBlock Text=" - " Foreground="BlueViolet" />
+                                <TextBlock Text="{Binding Zoom}" Foreground="BlueViolet" />
+                                
+                                <!-- Iterations-->
+                                <TextBlock Text=" / " Foreground="ForestGreen" />
+                                <TextBlock Text="{Binding Iterations}" Foreground="ForestGreen" />
+
+                                <!-- Created -->
+                                <!--<TextBlock Text="   " Foreground="DarkBlue"/>
+                                <TextBlock Text="{Binding Created}" Foreground="DarkBlue" />-->
+
+                                <!-- Id and ParentId -->
+                                <TextBlock Text="   " Foreground="DarkBlue"/>
+                                <TextBlock Text="{Binding IdAndParentId}" Foreground="DarkBlue" />
+                                
+                                <!-- Child Count -->
+                                <!--<TextBlock Text=" [" Foreground="DarkGreen"/>
+                                <TextBlock Text="{Binding Children.Count}" Foreground="DarkGreen" />
+                                <TextBlock Text="]" Foreground="DarkGreen" />-->
+                                
+                                <!-- Path Head Type -->
+                                <TextBlock Margin="2,1,0,1" Text="{Binding PathHeadType}" Foreground="DarkGreen" />
+
+                                <Button Margin="5,0,0,0" Focusable="False" Command="local:JobTreeCommands.MoveTo" CommandParameter="{Binding JobId}" Background="{Binding GoColor}" Content=" Go " />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+
+                    </TreeView.Resources>
+                </TreeView>
+
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

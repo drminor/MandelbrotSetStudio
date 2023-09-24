@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace MSS.Types
 {
 	public static class DoubleHelper
 	{
 		private const long ExponentMask = 0x7FF0000000000000;
+
+        private readonly static double LOG_BASE_TEN_OF_TWO = Math.Log10(2);
 
         public static string ToExactString(double d, out int exponent)
         {
@@ -67,5 +70,39 @@ namespace MSS.Types
             number += (remainder < interval / 2) ? -remainder : (interval - remainder);
             return number;
         }
-    }
+
+		public static double GetNumberOfBinaryDigits(int numberOfDecimalDigits)
+        {
+			var result = numberOfDecimalDigits / LOG_BASE_TEN_OF_TWO;
+
+			return result;
+        }
+
+		public static double GetNumberOfDecimalDigits(int numberOfBinaryDigits)
+		{
+			var result = numberOfBinaryDigits * LOG_BASE_TEN_OF_TWO;
+
+			return result;
+		}
+
+        public static int RoundToZero(double x)
+        {
+			var result = (int)Math.Round(x, MidpointRounding.ToZero);
+            return result;
+		}
+
+		public static int RoundAwayFromZero(double x)
+		{
+			var result = (int)Math.Round(x, MidpointRounding.AwayFromZero);
+			return result;
+		}
+
+		public static int RoundToEven(double x)
+		{
+			var result = (int)Math.Round(x, MidpointRounding.ToEven);
+			return result;
+		}
+
+
+	}
 }

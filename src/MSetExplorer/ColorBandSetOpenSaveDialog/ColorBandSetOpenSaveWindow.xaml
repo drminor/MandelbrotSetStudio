@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer"
         mc:Ignorable="d"
-        Title="Open ColorBandSet" Height="1000" Width="700">
+        Title="Open ColorBandSet" Height="1000" Width="860">
     
     <Grid>
 
@@ -18,12 +18,28 @@
         <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
 
             <ListView Margin="10" Name="lvColorBandSets" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedColorBandSetInfo}">
+
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Setter Property="ToolTip">
+                            <Setter.Value>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Margin="0,1,2,1" >Serial Number:</TextBlock>
+                                    <TextBlock Text="{Binding ColorBandSerialNumber}"/>
+                                </StackPanel>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListView.ItemContainerStyle>
+
                 <ListView.View>
                     <GridView>
                         <!--<GridViewColumn Header="Id" Width="250" DisplayMemberBinding="{Binding SerialNumber}" />-->
-                        <GridViewColumn Header="Name" Width="200" DisplayMemberBinding="{Binding Name}" />
-                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreated}" />
+                        <GridViewColumn Header="Name" Width="130" DisplayMemberBinding="{Binding Name}" />
+                        <GridViewColumn Header="Iterations" Width="90" DisplayMemberBinding="{Binding MaxIterations}" />
                         <GridViewColumn Header="Band Count" Width="90" DisplayMemberBinding="{Binding NumberOfBands}" />
+                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreated}" />
+                        <GridViewColumn Header="Accessed" Width="160" DisplayMemberBinding="{Binding LastAccessed}" />
                         <GridViewColumn Header="Description"  DisplayMemberBinding="{Binding Description}" />
                     </GridView>
                 </ListView.View>

@@ -1,0 +1,81 @@
+0.00000508626302
+0.0052032470703125
+
+
+1/192 =	0.00520833333333
+
+342/65536 =	0.005218505859375		- 1/192 = 0.000010172529375
+341/65536 = 0.0052032470703125	1/192 - 0.0052032470703125 = 0.000005086263
+
+
+5.0862630e-6
+
+
+4 x 4
+display on 1024 x 1024
+each pixel is 1/256 wide (or 1/2^-8)
+
+
+Select a 32 pixel x 32 pixel square gives a region 1/8 x 1/8
+
+32 x 1/256 = 1/8 ;; 1/8 x 4 = 1/2
+
+display on 1024 x 1024, each pixel is 1/8192 (1/2^-13) (1/32 of 1/256 = 1/2^5 x 1/2^8 = 1/2^13
+
+					sample width									extent
+Extent	Extent exponent	exponent		width of 1 sample		width of 32 samples	exponent
+4		2			-8			1/256				1/8				-3
+1/8		-3			-13			1/8192							-8
+1/256		-8			-18			1/262,144			1/8192			-13
+1/8192	-13			-23			1/8,388,608			1/262,144			-18
+1/262,144	-18			-28			1/268,435,456		1/8,388,608			-23
+xx		-23			-33											-28
+xx		-28			-38											-33
+		-33			-43											-38
+		-38			-48											-43
+		-43			-53											-48
+		-48			-58											-53
+
+
+
+	
+-8			1/256	x 1024	= 	4.0		2^2		2	
+-13			1/8192 x 1024	= 	0.125		2^-3		-3
+-18			1/262,144 x 1024	=	0.00390625	2^-8		-8
+23
+28
+33
+38
+
+------------
+
+4 x 4
+display on 768 x 768
+each pixel is 1/192
+
+Select a 24 x 24 pixel square give a region 
+
+24 x 1/192 = 1/8;; 1/8 x 4 = 1/2
+
+sample width exponent of -18 
+1/262,144 x 768 = 
+
+------------
+
+The goal is to 'steer' the selection of regions so that on every 2nd or 3rd selection
+	results in a sample point delta of one of the 'standard' sample point deltas in the 
+	sequence of 1/2^8, 1/2^13, 1/2^18, 1/2^23, etc.
+
+
+
+
+
+
+							4.0 / 768 = 
+	
+
+
+
+
+
+

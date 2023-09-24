@@ -2,36 +2,58 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-  </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="MapLoader\MapSectionHelperNotUsed.cs" />
-  </ItemGroup>
 
   <ItemGroup>
-    <None Include="MapLoader\MapSectionHelperNotUsed.cs" />
+    <Compile Remove="ColorBandSetHistogram\Support\CbsSelectionLineFirstDraft.cs" />
+    <Compile Remove="XPoc\SkiaSharpPOC\SkiaControl.cs" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Include="ColorBandSetHistogram\Support\CbsSelectionLineFirstDraft.cs" />
+    <None Include="XPoc\SkiaSharpPOC\SkiaControl.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="PixiEditor.ColorPicker" Version="3.2.0" />
+    <PackageReference Include="ScottPlot.WPF" Version="4.1.64" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="7.0.0" />
   </ItemGroup>
 
 
   <ItemGroup>
+    <ProjectReference Include="..\ImageBuilder\ImageBuilder.csproj" />
+    <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
     <ProjectReference Include="..\MSetRepo\MSetRepo.csproj" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

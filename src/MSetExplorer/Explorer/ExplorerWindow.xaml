@@ -1,0 +1,227 @@
+﻿<Window x:Class="MSetExplorer.ExplorerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
+        xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:ExplorerViewModel}"
+        
+        
+        mc:Ignorable="d"
+        Title="Explorer Window" Width="1879" Height="1323">
+    <Window.CommandBindings>
+        <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.EditCoords" CanExecute="EditCoordsCommand_CanExecute" Executed="EditCoordsCommand_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.CreateImage" CanExecute="CreateImageCommand_CanExecute" Executed="CreateImageCommand_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.JobGoBack" CanExecute="GoBack_CanExecute" Executed="GoBack_Executed" />
+        <CommandBinding Command="local:CustomCommands.JobGoForward" CanExecute="GoForward_CanExecute" Executed="GoForward_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.PanLeft" CanExecute="Pan_CanExecute" Executed="PanLeft_Executed" />
+        <CommandBinding Command="local:CustomCommands.PanUp" CanExecute="Pan_CanExecute" Executed="PanUp_Executed" />
+        <CommandBinding Command="local:CustomCommands.PanRight" CanExecute="Pan_CanExecute" Executed="PanRight_Executed" />
+        <CommandBinding Command="local:CustomCommands.PanDown" CanExecute="Pan_CanExecute" Executed="PanDown_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.ZoomOut12" CanExecute="ZoomOut_CanExecute" Executed="ZoomOut12_Executed" />
+        <CommandBinding Command="local:CustomCommands.ZoomOut25" CanExecute="ZoomOut_CanExecute" Executed="ZoomOut25_Executed" />
+        <CommandBinding Command="local:CustomCommands.ZoomOut50" CanExecute="ZoomOut_CanExecute" Executed="ZoomOut50_Executed" />
+        <CommandBinding Command="local:CustomCommands.ZoomOut100" CanExecute="ZoomOut_CanExecute" Executed="ZoomOut100_Executed" />
+        <CommandBinding Command="local:CustomCommands.ZoomOutCustom" CanExecute="ZoomOut_CanExecute" Executed="ZoomOutCustom_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.ColorsOpen" CanExecute="ColorsOpenCommand_CanExecute" Executed="ColorsOpenCommand_Executed" />
+        <!--<CommandBinding Command="local:CustomCommands.ColorsSave" CanExecute="ColorsSaveCommand_CanExecute" Executed="ColorsSaveCommand_Executed" />-->
+        <CommandBinding Command="local:CustomCommands.ColorsSaveAs" CanExecute="ColorsSaveAsCommand_CanExecute" Executed="ColorsSaveAsCommand_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.ToggleJobTree" CanExecute="ToggleJobTreeCommand_CanExecute" Executed="ToggleJobTreeCommand_Executed" />
+
+
+    </Window.CommandBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Menu -->
+        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="20">
+
+            <MenuItem Header="_Project">
+                <MenuItem Header="_New" Click="NewButton_Click"/>
+                <MenuItem Header="_Open" Click="OpenButton_Click"/>
+                <MenuItem Header="_Save" Command="local:CustomCommands.ProjectSave" />
+                <MenuItem Header="Save _As" Command="local:CustomCommands.ProjectSaveAs" />
+
+                <Separator/>
+                <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.EditCoords"/>
+
+                <Separator/>
+                <MenuItem Header="Create P_oster" Click="CreatePosterButton_Click"/>
+                <MenuItem Header="C_reate Image" Command="local:CustomCommands.CreateImage" />
+
+                <Separator/>
+                <MenuItem Header="_Close And Return" Click="CloseAndReturnButton_Click" />
+                <MenuItem Header="_Exit Program" Click="ExitButton_Click" />
+            </MenuItem>
+
+            <MenuItem Header="_Colors">
+                <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
+                <!--<MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />-->
+                <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
+                <Separator/>
+                <MenuItem Header="_Use EscapeVelocities" IsCheckable="True" x:Name="mnuItem_UseEscapeVelocities" Checked="UseEscapeVelocities_Checked" Unchecked="UseEscapeVelocities_Unchecked" IsChecked="True"/>
+                <MenuItem Header="Use _RealTimePreview" IsCheckable="True" x:Name="mnuItem_UseRealTimePreview" Checked="UseRealTimePreview_Checked" Unchecked="UseRealTimePreview_Unchecked" IsChecked="False"/>
+                <MenuItem Header="Highlight Selected Band" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Unchecked" IsChecked="False"/>
+            </MenuItem>
+
+            <MenuItem Header="_Windows">
+                <MenuItem Header="Pan Buttons" IsCheckable="True"/>
+                <MenuItem Header="Nav Buttons" IsCheckable="True"/>
+                <MenuItem Header="Screen Size Buttons" IsCheckable="True"/>
+                <Separator/>
+                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_Checked"/>
+                <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
+                <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
+                <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Checked" IsChecked="False"/>
+                <MenuItem Header="Histogram" x:Name="mnuItem_HistogramWindow" IsCheckable="True" Checked="Histogram_Checked" Unchecked="Histogram_Checked" IsChecked="False"/>
+            </MenuItem>
+
+            <MenuItem Header="_Map">
+                <MenuItem Header="Move _Back" Command="local:CustomCommands.JobGoBack" />
+                <MenuItem Header="Move _Forward" Command="local:CustomCommands.JobGoForward" />
+                <Separator/>
+                <MenuItem Header="Pan _Left" Command="local:CustomCommands.PanLeft" />
+                <MenuItem Header="Pan _Up" Command="local:CustomCommands.PanUp" />
+                <MenuItem Header="Pan _Right" Command="local:CustomCommands.PanRight" />
+                <MenuItem Header="Pan _Down" Command="local:CustomCommands.PanDown" />
+                <Separator/>
+                <MenuItem Header="Zoom Out">
+                    <MenuItem Header="12%" Command="local:CustomCommands.ZoomOut12" />
+                    <MenuItem Header="25%" Command="local:CustomCommands.ZoomOut25" />
+                    <MenuItem Header="50%" Command="local:CustomCommands.ZoomOut50" />
+                    <MenuItem Header="100%" Command="local:CustomCommands.ZoomOut100" />
+                    <MenuItem Header="Custom" Command="local:CustomCommands.ZoomOutCustom" />
+                </MenuItem>
+            </MenuItem>
+
+        </Menu>
+        
+        <!-- Pan Buttons, Back/Forward, Display Size -->
+        <Border Grid.Row="1" Grid.Column="0" BorderThickness="0.75" BorderBrush="Black" Margin="5" x:Name="colLeftBorder">
+            <Grid x:Name="colLeft" Visibility="Visible">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecPanButtons">
+                    <Button Name="btnGoLeft" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanLeft">Left</Button>
+                    <Button Name="btnGoUp" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanUp">Up</Button>
+                    <Button Name="btnGoRight" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanRight">Right</Button>
+                    <Button Name="btnGoDown" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.PanDown">Down</Button>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecNavButtons">
+                    <Button Name="btnGoBack" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoBack">Go Back</Button>
+                    <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
+                </StackPanel>
+
+                <local:JobProgressControl Grid.Row="2" Margin="5" Visibility="Collapsed" x:Name="jobProgress1"/>
+
+                <StackPanel Grid.Row="3" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
+                    <Grid Margin="5,0" x:Name="grdTop">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="40" />
+                            <ColumnDefinition Width="40" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <!--<RowDefinition Height="*" />-->
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="W:" Grid.Row="0" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
+                        <TextBox x:Name="txtW" Grid.Row="0" Grid.Column="1"  Grid.RowSpan="2" Margin="3,10" Text="{Binding ElementName=mapDisplay1, Path=ActualWidth, StringFormat=F2, Mode=OneWay}"/>
+                        <Button Grid.Row="0" Grid.Column="2" Margin="2" Click="W_Up_Button_Click">U</Button>
+                        <Button Grid.Row="1" Grid.Column="2" Margin="2" Click="W_Down_Button_Click">D</Button>
+
+                        <TextBlock Text="H:" Grid.Row="2" Grid.RowSpan="2" Margin="0,7,0,3" Height="21" HorizontalAlignment="Center" />
+                        <TextBox x:Name="txtH" Grid.Row="2" Grid.RowSpan="2" Grid.Column="1" Margin="3,10" Text="{Binding ElementName=mapDisplay1, Path=ActualWidth, StringFormat=F2, Mode=OneWay}" />
+                        <Button Grid.Row="2" Grid.Column="2" Margin="2" Click="H_Up_Button_Click">U</Button>
+                        <Button Grid.Row="3" Grid.Column="2" Margin="2" Click="H_Down_Button_Click">D</Button>
+
+                    </Grid>
+                </StackPanel>
+
+            </Grid>
+
+        </Border>
+
+        <!-- Map Display -->
+        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Black" x:Name="colCenter" Margin="0,5">
+            <local:MapSectionDisplayControl x:Name="mapDisplay1"></local:MapSectionDisplayControl>
+        </Border>
+
+        <Grid Grid.Row="1" Grid.Column="2" x:Name="colRight" Visibility="Visible">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="dispSecMapCoords" Visibility="Collapsed">
+                <local:MapCoordsControl x:Name="mapCoordsView1" Focusable="True"/>
+            </Border>
+
+            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0" x:Name="dispSecMapCalcSettings" Visibility="Collapsed">
+                <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
+            </Border>
+
+            <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" x:Name="dispSecColorBandSets">
+                <local:ColorBandSetUserControl x:Name="colorBandView1" Focusable="True" ></local:ColorBandSetUserControl>
+            </Border>
+
+        </Grid>
+
+        <!-- Job Tree -->
+        <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
+            <Border  Margin="0,5,5,5" >
+                <local:JobTreeControl x:Name="jobTree1"  ></local:JobTreeControl>
+            </Border>
+            
+        </Grid>
+
+        <!-- Histogram -->
+        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="1" x:Name="botRow" BorderThickness="1" HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Visible">
+            <!--<local:ColorBandSetHistogramControl x:Name="cbsh1"/>-->
+            <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
+            <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
+            <local:CbsHistogramControl x:Name="cbsHistogram1"/>
+
+        </Border>
+
+    </Grid>
+</Window>

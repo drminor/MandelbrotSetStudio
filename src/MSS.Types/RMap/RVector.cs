@@ -6,11 +6,17 @@ namespace MSS.Types
 {
 	public class RVector : IBigRatShape, IEquatable<RVector>, IEqualityComparer<RVector>
 	{
-		public BigInteger[] Values { get; init; }
+		public static readonly RVector Zero = new RVector();
 
-		public int Exponent { get; init; }
+		#region Constructors
 
 		public RVector() : this(0, 0, 0)
+		{ }
+
+		public RVector(RPoint rPoint) : this(rPoint.Values, rPoint.Exponent)
+		{ }
+
+		public RVector(RSize rSize) : this(rSize.Values, rSize.Exponent)
 		{ }
 
 		public RVector(BigVector bigVector) : this(bigVector.Values, 0)
@@ -29,12 +35,70 @@ namespace MSS.Types
 			Exponent = exponent;
 		}
 
+		#endregion
+
+		#region Public Properties
+
+		public BigInteger[] Values { get; init; }
+
+		public int Exponent { get; init; }
+
 		public BigInteger XNumerator => Values[0];
 
 		public BigInteger YNumerator => Values[1];
 
 		public RValue X => new(XNumerator, Exponent);
 		public RValue Y => new(YNumerator, Exponent);
+
+		#endregion
+
+		#region Public Methods
+
+		public RVector Diff(RVector amount)
+		{
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot take the Difference using an RVector with Exponent: {amount.Exponent}, this RVector has exponent: {Exponent}.")
+				: new RVector(XNumerator - amount.XNumerator, YNumerator - amount.YNumerator, Exponent);
+		}
+
+		public BigVector Divide(RSize amount)
+		{
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot Divide an RVector with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
+				: new BigVector(XNumerator / amount.WidthNumerator, YNumerator / amount.HeightNumerator);
+		}
+
+		public RVector Scale(RSize amount)
+		{
+			var result = new RVector(XNumerator * amount.WidthNumerator, YNumerator * amount.HeightNumerator, Exponent + amount.Exponent);
+			return result;
+		}
+
+		public bool IsZero()
+		{
+			return XNumerator == 0 && YNumerator == 0;
+		}
+
+		#endregion
+
+		#region ToString and ICloneable
+
+		public override string ToString()
+		{
+			return ToString(reduce: true);
+		}
+
+		public string ToString(bool reduce)
+		{
+			if (reduce)
+			{
+				return BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
+			}
+			else
+			{
+				return BigIntegerHelper.GetDisplay(this);
+			}
+		}
 
 		object ICloneable.Clone()
 		{
@@ -46,24 +110,7 @@ namespace MSS.Types
 			return Reducer.Reduce(this);
 		}
 
-		public BigVector Divide(RSize amount)
-		{
-			return amount.Exponent != Exponent
-				? throw new InvalidOperationException($"Cannot InvScale a RSize with Exponent: {Exponent} using an RSize with Exponent: {amount.Exponent}.")
-				: new BigVector(XNumerator / amount.WidthNumerator, YNumerator / amount.HeightNumerator);
-		}
-
-		public RVector Scale(RSize amount)
-		{
-			var result = new RVector(XNumerator * amount.WidthNumerator, YNumerator * amount.HeightNumerator, Exponent + amount.Exponent);
-			return result;
-		}
-
-		public override string ToString()
-		{
-			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
-			return result;
-		}
+		#endregion
 
 		#region IEqualityComparer / IEquatable Support
 
@@ -86,7 +133,15 @@ namespace MSS.Types
 
 		public bool Equals(RVector? other)
 		{
-			return !(other is null) && XNumerator.Equals(other.XNumerator) && YNumerator.Equals(other.YNumerator);
+			if (other is null)
+			{
+				return false;
+			}
+
+			var reducedOther = Reducer.Reduce(other);
+			var reduced = Reducer.Reduce(this);
+
+			return reduced.XNumerator == reducedOther.XNumerator && reduced.YNumerator == reducedOther.YNumerator;
 		}
 
 		public override int GetHashCode()
@@ -110,6 +165,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
 	}
 }

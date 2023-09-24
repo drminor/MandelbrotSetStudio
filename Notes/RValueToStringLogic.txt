@@ -1,3 +1,14 @@
+----- Start NOTE
+printf(“%1.8e\n”, d); // Round-trippable float, always with an exponent
+printf(“%.9g\n”, d); // Round-trippable float, shortest possible
+
+printf(“%1.16e\n”, d); // Round-trippable double, always with an exponent
+
+printf(“%.17g\n”, d); // Round-trippable double, shortest possible
+
+---- END NOTE
+
+
 3319902519497732691915975
 
 9971763694748293507533177

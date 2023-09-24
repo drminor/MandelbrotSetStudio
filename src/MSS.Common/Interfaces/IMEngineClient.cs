@@ -1,12 +1,19 @@
-﻿using MEngineDataContracts;
-using System.Threading.Tasks;
+﻿using MSS.Types.MSet;
+using System.Threading;
 
-namespace MEngineClient
+namespace MSS.Common
 {
 	public interface IMEngineClient
 	{
-		Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest);
+		int ClientNumber { get; }
 
-		ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest);
+		string EndPointAddress { get; }
+
+		// True if running on the same machine as the Explorer program.
+		bool IsLocal { get; }
+
+		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct);
+
+		bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct);
 	}
 }

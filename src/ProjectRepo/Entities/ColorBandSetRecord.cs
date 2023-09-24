@@ -16,11 +16,12 @@ namespace ProjectRepo.Entities
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
-		public DateTime DateCreated => Id.CreationTime;
+		public ReservedColorBandRecord[]? ReservedColorBandRecords { get; set; }
 
-		public bool Onfile => Id != ObjectId.Empty;
+		public Guid ColorBandsSerialNumber { get; set; } = Guid.NewGuid();
 
-		//public DateTime LastSaved { get; set; }
+		public DateTime DateCreatedUtc { get; set; }
+		public DateTime LastAccessed { get; set; }
 	}
 
 }

@@ -1,0 +1,16 @@
+Job Details:
+X1: -0.9279625415802001953125	Y1: 0.31056976318359375
+X2: -0.9279549121856689453125	Y2: 0.310577392578125
+	TransformType: Pan
+	Id: 63f40c37f8338ff71c25538d
+	ParentId: 63f40c2af8338ff71c25532a ParentNodeId: 63f2e542f07cf2527a0b9b48
+	Childern: 0
+	Real Child Jobs: 0
+	Disp Alternates: 0
+	On Preferred Path: False
+	Is Branch Head: False
+	Has Real Siblings: False
+	IsDirty: False
+
+
+Copy To Clipboard?

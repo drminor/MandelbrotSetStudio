@@ -9,6 +9,10 @@ namespace MSS.Types
 	[ProtoContract(SkipConstructor = true)]
 	public struct SizeInt : IEquatable<SizeInt>, IEqualityComparer<SizeInt>
 	{
+		private static SizeInt ZeroSingleton = new SizeInt();
+
+		public static SizeInt Zero => ZeroSingleton;
+
 		// Square from single value
 		public SizeInt(int extent) : this(extent, extent)
 		{ }
@@ -22,6 +26,18 @@ namespace MSS.Types
 			Height = height;
 		}
 
+		public SizeInt(VectorInt vectorInt) : this(vectorInt.X, vectorInt.Y)
+		{ }
+
+		public SizeInt(SizeDbl sizeDbl) : this(sizeDbl.Width, sizeDbl.Height)
+		{ }
+
+		public SizeInt(double width, double height)
+		{
+			Width = (int) Math.Round(width, MidpointRounding.ToEven);
+			Height = (int)Math.Round(height, MidpointRounding.ToEven);
+		}
+
 		[ProtoMember(1)]
 		public int Width { get; set; }
 
@@ -30,16 +46,13 @@ namespace MSS.Types
 
 		public int NumberOfCells => Width * Height;
 
+		public double AspectRatio => Height == 0 ? 1 : Width / (double)Height;
+
 		private static int ConvertToInt(BigInteger n)
 		{
-			if (n < int.MaxValue && n > int.MinValue)
-			{
-				return (int)n;
-			}
-			else
-			{
-				throw new ArgumentException($"The BigInteger:{n} cannot be converted into an integer.");
-			}
+			return n < int.MaxValue && n > int.MinValue
+				? (int)n
+                :              throw new ArgumentException($"The BigInteger:{n} cannot be converted into an integer.");
 		}
 
 		#region Public Methods
@@ -47,6 +60,11 @@ namespace MSS.Types
 		public SizeInt Inflate(SizeInt amount)
 		{
 			return new SizeInt(Width + amount.Width, Height + amount.Height);
+		}
+
+		public SizeInt Add(VectorInt amount)
+		{
+			return new SizeInt(Width + amount.X, Height + amount.Y);
 		}
 
 		//public SizeInt Deflate(SizeInt amount)
@@ -69,10 +87,10 @@ namespace MSS.Types
 			return new SizeInt(Width * factor, Height * factor);
 		}
 
-		//public SizeInt Scale(double factor)
-		//{
-		//	return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
-		//}
+		public SizeInt Scale(double factor)
+		{
+			return new SizeInt((int)Math.Round(Width * factor), (int)Math.Round(Height * factor));
+		}
 
 		public SizeDbl Divide(SizeInt dividend)
 		{
@@ -94,20 +112,25 @@ namespace MSS.Types
 			return result;
 		}
 
-		//public SizeInt DivRem(SizeInt dividend, out SizeInt remainder)
-		//{
-		//	var blocksH = Math.DivRem(Width, dividend.Width, out var remainderH);
-		//	var blocksV = Math.DivRem(Height, dividend.Height, out var remainderV);
+		public SizeInt DivRem(SizeInt dividend, out SizeInt remainder)
+		{
+			var w = Math.DivRem(Width, dividend.Width, out var remainderW);
+			var h = Math.DivRem(Height, dividend.Height, out var remainderH);
 
-		//	remainder = new SizeInt(remainderH, remainderV);
-		//	var result = new SizeInt(blocksH, blocksV);
+			remainder = new SizeInt(remainderW, remainderH);
+			var result = new SizeInt(w, h);
 
-		//	return result;
-		//}
+			return result;
+		}
 
 		public SizeInt Mod(VectorInt dividend)
 		{
 			return new SizeInt(Width % dividend.X, Height % dividend.Y);
+		}
+
+		public SizeInt Mod(SizeInt dividend)
+		{
+			return new SizeInt(Width % dividend.Width, Height % dividend.Height);
 		}
 
 		//public SizeInt Abs()
@@ -127,12 +150,19 @@ namespace MSS.Types
 			return result;
 		}
 
-		public override string? ToString()
+
+		public SizeInt Sub(VectorInt amount)
 		{
-			return $"w:{Width}, h:{Height}";
+			var result = new SizeInt(Width - amount.X, Height - amount.Y);
+			return result;
 		}
 
 		#endregion
+
+		public override string ToString()
+		{
+			return $"w:{Width}, h:{Height}";
+		}
 
 		#region IEquatable and IEqualityComparer Support
 

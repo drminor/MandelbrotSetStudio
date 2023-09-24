@@ -1,27 +1,31 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types.MSet;
 using System;
 
 namespace ProjectRepo.Entities
 {
 	public record JobRecord(
 		ObjectId? ParentJobId,
-		bool IsPreferredChild,
-		ObjectId ProjectId,
-		ObjectId SubDivisionId,
-		string? Label,
-		int TransformType,			// TODO: Change the JobRecord's TransformType (enum) from an int to a string.
 
+		ObjectId OwnerId,
+		OwnerType JobOwnerType,	// TODO_schema: Rename JobOwnerType -> OwnerType
+
+		ObjectId SubDivisionId,     // TODO_schema: Delete the JobRecord.SubdivisionId
+		string Label,
+		int TransformType,
+
+		MapAreaInfo2Record MapAreaInfo2Record,
+		string TransformTypeString,
 
 		PointIntRecord NewAreaPosition,
 		SizeIntRecord NewAreaSize,
 
-		MSetInfoRecord MSetInfo,
 		ObjectId ColorBandSetId,
+		MapCalcSettings MapCalcSettings,
 
-		SizeIntRecord CanvasSizeInBlocks,
-		BigVectorRecord MapBlockOffset,
-		VectorIntRecord CanvasControlOffset
+		DateTime LastSavedUtc,
+		DateTime LastAccessedUtc
 		)
 	{
 		[BsonId]
@@ -30,20 +34,11 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreated => Id.CreationTime;
 
-		public bool Onfile => Id != ObjectId.Empty;
+		public DateTime DateCreatedUtc { get; set; }	// TODO_schema: Add DateCreatedUtc to JobRecord
+		public DateTime? LastSaved { get; set; }		// TODO_schema: Remove the LastSaved from all Jobs on file.
 
-		public DateTime LastSaved { get; set; }
+		public IterationUpdateRecord[]? IterationUpdates { get; set; }
+		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
 	}
-
-	public record JobModel1
-	(
-		DateTime DateCreated,
-		int TransformType,
-		ObjectId SubDivisionId,
-		int MapCoordExponent
-	)
-	{ }
-
-
 
 }

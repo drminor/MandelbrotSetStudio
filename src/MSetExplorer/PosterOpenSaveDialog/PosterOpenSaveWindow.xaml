@@ -1,0 +1,64 @@
+﻿<Window x:Class="MSetExplorer.PosterOpenSaveWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:PosterOpenSaveViewModel}"
+        mc:Ignorable="d"
+        Title="Open Poster" Height="1000" Width="930">
+    <Grid>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
+
+            <ListView Margin="10" Name="lvPosters" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedPoster}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Name" Width="250" DisplayMemberBinding="{Binding Name}" />
+                        <GridViewColumn Header="Size" Width="110" DisplayMemberBinding="{Binding Size}" />
+                        <GridViewColumn Header="Bytes" Width="100" DisplayMemberBinding="{Binding Bytes, StringFormat=n0}" />
+                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreatedUtc}" />
+                        <GridViewColumn Header="Updated" Width="190" DisplayMemberBinding="{Binding LastSavedUtc}" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+        </Border>
+
+        <Border x:Name="borderTop" Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
+            <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="170" Height="22"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                    <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Description:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtDescription" Text="{Binding SelectedDescription}" Width="500" Height="22"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Save</Button>
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Cancel</Button>
+                <Button Name="btnDelete" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="40,10, 10, 10" Click="DeleteButton_Click">_Delete</Button>
+
+                <Button Name="btnViewJobs" HorizontalAlignment="Center" Width="110" FontSize="16" Margin="10" Click="ViewJobsButton_Click">_View Jobs</Button>
+                <Button Name="btnTrimMapSectionsHeavy" HorizontalAlignment="Center" Width="160" FontSize="16" Margin="10" Click="TrimMapSectionsHeavyButton_Click">Delete Map Sections</Button>
+                <Button Name="btnTrimMapSections" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="10" Click="TrimMapSectionsHeavyButton_Click">Trim Map Sections</Button>
+            </StackPanel>
+
+        </Border>
+
+    </Grid>
+</Window>

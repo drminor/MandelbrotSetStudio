@@ -5,7 +5,7 @@ namespace MSS.Types
 	{
 		TargetIterations,
 		IterationsPerRequest,
-		Coordinates,
-		NewProject
+		SaveTheZValues,
+		CalculateEscapeVelocities
 	}
 }

@@ -1,9 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
 namespace MSS.Types
 {
+	/// <summary>
+	/// Dictionary based Histogram
+	/// Used by the ColorBandSetViewModel to hold data for 'TopValues', i.e., 
+	/// Occurrances for the CountValue = TargetIterations.
+	/// </summary>
 	public class HistogramD
 	{
 		#region Constructor
@@ -38,26 +44,40 @@ namespace MSS.Types
 
 		public void Increment(int value)
 		{
-			if (Entries.TryGetValue(value, out var currentOccurrances))
+			try
 			{
-				Entries[value] = currentOccurrances + 1;
+				if (Entries.TryGetValue(value, out var currentOccurrances))
+				{
+					Entries[value] = currentOccurrances + 1;
+				}
+				else
+				{
+					Entries.Add(value, 1);
+				}
 			}
-			else
+			catch (Exception e)
 			{
-				Entries.Add(value, 1);
+				Debug.WriteLine($"Got exception: {e} while Incrementing HistogramD.");
 			}
 		}
 
 		public void Decrement(int value)
 		{
-			if (Entries.TryGetValue(value, out var currentOccurrances))
+			try
 			{
-				Entries[value] = currentOccurrances - 1;
+				if (Entries.TryGetValue(value, out var currentOccurrances))
+				{
+					Entries[value] = currentOccurrances - 1;
+				}
+				else
+				{
+					Debug.WriteLine($"WARNING: Decrementing a value that does not (yet) exist.");
+					Entries.Add(value, -1);
+				}
 			}
-			else
+			catch (Exception e)
 			{
-				Debug.WriteLine($"WARNING: Decrementing a value that does not (yet) exist.");
-				Entries.Add(value, -1);
+				Debug.WriteLine($"Got exception: {e} while Decrementing HistogramD.");	
 			}
 		}
 

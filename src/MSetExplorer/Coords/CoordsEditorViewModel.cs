@@ -1,57 +1,40 @@
-﻿using MSetRepo;
-using MSS.Common;
+﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using System.Windows;
 
 namespace MSetExplorer
 {
 	public class CoordsEditorViewModel : ViewModelBase
 	{
-		private const string MONGO_DB_CONN_STRING = "mongodb://localhost:27017";
-
 		private const int _numDigitsForDisplayExtent = 4;
 
-		private readonly SizeInt _displaySize;
-		private readonly SizeInt _blockSize;
+		private readonly SizeDbl _displaySize;
 
 		private RRectangle _coords;
 		private bool _coordsAreDirty;
-		private long _zoom;
-
-
+		private string _zoom;
 
 		#region Constructor
 
-		public CoordsEditorViewModel(RRectangle coords, SizeInt displaySize, bool allowEdits) : this(new SingleCoordEditorViewModel[] {
-			new SingleCoordEditorViewModel(coords.Left), new SingleCoordEditorViewModel(coords.Right),
-			new SingleCoordEditorViewModel(coords.Bottom), new SingleCoordEditorViewModel(coords.Top) }, displaySize, allowEdits)
-		{ }
-
-		public CoordsEditorViewModel(string x1, string x2, string y1, string y2, SizeInt displaySize, bool allowEdits) : this(new SingleCoordEditorViewModel[] { 
-			new SingleCoordEditorViewModel(x1), new SingleCoordEditorViewModel(x2),
-			new SingleCoordEditorViewModel(y1), new SingleCoordEditorViewModel(y2) }, displaySize, allowEdits)
-		{ }
-
-		private CoordsEditorViewModel(SingleCoordEditorViewModel[] vms, SizeInt displaySize, bool allowEdits)
+		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfoV2, SizeDbl displaySize, bool allowEdits)
 		{
-			StartingX = vms[0];
-			EndingX = vms[1];
-			StartingY = vms[2];
-			EndingY = vms[3];
+			var mapAreaInfo = mapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, _displaySize);
+			_coords = mapAreaInfo.Coords;
+
+			StartingX = new SingleCoordEditorViewModel(_coords.Left);
+			EndingX = new SingleCoordEditorViewModel(_coords.Right);
+
+			StartingY = new SingleCoordEditorViewModel(_coords.Bottom);
+			EndingY= new SingleCoordEditorViewModel(_coords.Top);
 
 			_displaySize = displaySize;
 			EditsAllowed = allowEdits;
-			_blockSize = RMapConstants.BLOCK_SIZE;
 
-			_coords = GetCoords(vms);
 			MapCoordsDetail1 = new MapCoordsDetailViewModel(_coords);
+			_zoom = RValueHelper.GetFormattedResolution(_coords.Width);
 
-			_zoom = RValueHelper.GetResolution(_coords.Width);
-
-			var projectAdapter = MSetRepoHelper.GetProjectAdapter(MONGO_DB_CONN_STRING);
-
-			var jobAreaInfo = MapJobHelper.GetJobAreaInfo(_coords, _displaySize, _blockSize, projectAdapter);
-			MapCoordsDetail2 = new MapCoordsDetailViewModel(jobAreaInfo);
+			MapCoordsDetail2 = new MapCoordsDetailViewModel(mapAreaInfo);
 		}
 
 		#endregion
@@ -86,7 +69,7 @@ namespace MSetExplorer
 		public SingleCoordEditorViewModel EndingY { get; init; }
 
 
-		public long Zoom
+		public string Zoom
 		{
 			get => _zoom;
 			set
@@ -114,7 +97,7 @@ namespace MSetExplorer
 
 					CoordsAreDirty = true;
 
-					Zoom = RValueHelper.GetResolution(_coords.Width);
+					Zoom = RValueHelper.GetFormattedResolution(_coords.Width);
 
 					OnPropertyChanged();
 				}
@@ -161,8 +144,8 @@ namespace MSetExplorer
 			//var height = RValueHelper.ConvertToString(diffY, useSciNotationForLengthsGe: 6);
 
 			precisionY += _numDigitsForDisplayExtent;
-			var newY1Sme = StartingY.SignManExp.ReducePrecisionTo(precisionY);
-			var newY2Sme = EndingY.SignManExp.ReducePrecisionTo(precisionY);
+			var newY1Sme = startingY.SignManExp.ReducePrecisionTo(precisionY);
+			var newY2Sme = endingY.SignManExp.ReducePrecisionTo(precisionY);
 
 			var result = RValueHelper.BuildRRectangle(new SignManExp[] { newX1Sme, newX2Sme,	newY1Sme, newY2Sme });
 

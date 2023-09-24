@@ -4,9 +4,10 @@ using System;
 
 namespace ProjectRepo.Entities
 {
-	public record ProjectRecord(string Name, 
+	public record ProjectRecord(
+		string Name, 
 		string? Description, 
-		ObjectId CurrentJobId, 
+		ObjectId CurrentJobId,
 		DateTime LastSavedUtc
 		)
 	{
@@ -15,11 +16,9 @@ namespace ProjectRepo.Entities
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
 		public DateTime DateCreated => Id.CreationTime;
+		public DateTime DateCreatedUtc { get; set; }    // TODO_schema: Add DateCreatedUtc to ProjectRecord
 
-		public bool Onfile => Id != ObjectId.Empty;
 
-		public DateTime LastSaved { get; set; }
-
-		public ObjectId CurrentColorBandSetId { get; init; } = ObjectId.Empty;
+		public DateTime LastAccessedUtc { get; set; }
 	}
 }

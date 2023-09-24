@@ -1,0 +1,65 @@
+
+ulong = 64
+2 ulongs = 128
+
+Fixed Point with 8.120 format
+
+Split each ulong into a pair of uints
+
+LSL ---> MSL
+
+32	32	32	32
+
+32	32 	32	24.8
+
+			ff ff ff.ff
+128-8	96-8	64-8	32-8
+2^120	2^88	2^56	x 2^-24
+
+			1 = 1/2^24
+			
+			all 1's = (2^32 / 2^24) - 1 = 2^8 - 1 = 255
+
+ff ff ff ff = 2^32 - 1
+
+2^32 - 1 / 2^8
+
+4,294,967,295 (32 1's)
+
+16,777,215	(24 1'2)
+
+
+--------
+
+
+Fixed Point 8:23, 8:55, 8:97, 8:110 -- in correct
+
+Fixed Point: 8:23, 8:54, 8:85, 8:116 -- correct
+
+Using litle-endian, lsb is at the beginning and positional value increases as the memory address increases.
+
+Low Addresss	--> 		High Address
+
+for the most signficant limb:
+		first 23 bits are after the binary point
+		next 8 bits hold a value ranging from -128 to 127
+		bit 32 is reserved for overflow detection
+
+for all limbs before the most significant limb:
+	first 31 bits are used to store additional bits after the binary point
+	bit 32 is reserved for overflow
+
+there is only one sign bit, at bit position 31 of the MSL.
+
+
+
+
+
+8:110
+
+	31	31	31	31
+	31	31	31	23:8
+
+	all 1's = -63
+	7fffffff	7fffffff	7fffffff	7fffffff
+

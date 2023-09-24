@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Types
@@ -9,16 +10,18 @@ namespace MSS.Types
 		public RectangleInt(PointInt point, SizeInt size) : this(point.X, point.X + size.Width, point.Y, point.Y + size.Height)
 		{ }
 
+		public RectangleInt(int[] vals) : this(vals[0], vals[1], vals[2], vals[3])
+		{ }
+
 		public RectangleInt(int x1, int x2, int y1, int y2)
 		{
 			X1 = x1;
 			X2 = x2;
 			Y1 = y1;
 			Y2 = y2;
-		}
 
-		public RectangleInt(int[] vals) : this(vals[0], vals[1], vals[2], vals[3])
-		{ }
+			Validate();
+		}
 
 		public int X1 { get; init; }
 		public int X2 { get; init; }
@@ -44,11 +47,11 @@ namespace MSS.Types
 		//	return result;
 		//}
 
-		//public RectangleInt Translate(PointInt amount)
-		//{
-		//	RectangleInt result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
-		//	return result;
-		//}
+		public RectangleInt Translate(VectorInt amount)
+		{
+			RectangleInt result = new(X1 + amount.X, X2 + amount.X, Y1 + amount.Y, Y2 + amount.Y);
+			return result;
+		}
 
 		//public RectangleInt Translate(SizeInt amount)
 		//{
@@ -56,9 +59,39 @@ namespace MSS.Types
 		//	return result;
 		//}
 
+		public RectangleInt Expand(SizeInt amount)
+		{
+			var newPos = new PointInt(Position.Sub(new VectorInt(amount.Width / 2, amount.Height / 2)));
+			var newSize = Size.Inflate(amount);
+			var result = new RectangleInt(newPos, newSize);
+
+			return result;
+		}
+
+		public VectorInt GetCenter()
+		{
+			var half = new VectorInt(Width / 2, Height / 2);
+			var center = Point.Translate(half);
+			return new VectorInt(center);
+		}
+
 		public override string? ToString()
 		{
 			return $"pos:{Position}, size:{Size}";
+		}
+
+		[Conditional("DEBUG2")]
+		private void Validate()
+		{
+			if (X1 > X2)
+			{
+				throw new ArgumentException($"The beginning X must be less than or equal to the ending X.");
+			}
+
+			if (Y1 > Y2)
+			{
+				throw new ArgumentException($"The beginning Y must be less than or equal to the ending Y.");
+			}
 		}
 
 		#region IEquality and IEqualityComparer Implementation

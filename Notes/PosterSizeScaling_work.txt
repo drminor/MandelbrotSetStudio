@@ -1,0 +1,31 @@
+
+given the original poster size = 1024 x 1024
+
+and the new poster size of 1280 x 1024, offset 128,0
+
+and a container size of 600 x 500
+
+600 / 1280 = 0.46875 (1/x = 2.13)
+vs 
+500 / 1024 = 0.48828125 (1/x = 2.048)
+
+using 0.46875,
+gives 600 x 480 for the scaled, new size
+
+using 0.48828125
+gives 625 x 500
+
+
+So we have 600 x 480 for the new size, scaled.
+And 480 x 480 for the original size scaled
+ 
+and offset 60,0
+
+60 = (600 - 480) / 2
+60 = 0.46875 * (1280 - 1024) / 2
+
+ 
+
+
+
+

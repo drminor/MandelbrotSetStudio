@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x64</Platforms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\cpp_src\HpMSetGenerator\HpMSetGenerator.vcxproj" />
+    <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
+    <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,90 @@
+
+
+Adding a two numbers whose values are stored in an array of ulongs, using two's complement...
+
+
+
+
+In the case of overflow in the limbs before the most significan limb we need to take the carry out
+and add it to the next limb up.
+
+For example, using 3 limbs, each having a 3-bit value... 
+
+If we agree that the first two limbs store the integer portion and the third, the fraction,
+then the base 2^3 "places" starting from the left,
+	store the number of 1/8 from 0 to 7
+	store the number of 1's from 0 to 7
+	store the number of 8's from -4 to 3.
+
+The largest value is 3 * 2^3 + 7 + 7/8	 31 7/8
+The smallest value is -4 * 2^3.			-32
+
+The number -0.25 would be -1, 0, 3/4
+The number 2.5 would 0, 2, 1/2
+
+The value: -4, 0, 1/8 is one step above the smallest value and should be the two's complement of the largest value.
+ 
+ 2C(3, 7, 7) = 2C(011, 111, 111) = 100, 000, 001 = -4, 0, 1
+
+ 3 * 2^8 + 7 + 7/8 = 24 + 7 + 7/8 = 31 7/8
+
+ -4 * 2^8 = -32
+
+ 
+ 2C(-2, 3, 3 = 2C(110, 011, 011) = 001 100 101 = 1, 4, 5
+
+  -2, 3, 3 = 
+ -2 * 2^3 + 3 + 3/8 =
+ -16 + 3 + 3/8  =
+ -12, 5/8
+
+
+ 1, 4, 5
+ 1 * 2^3 + 4 + 5/8 = 
+ 8 + 4 + 5/8 = 
+ 12 5/8
+
+
+
+
+		msl		    	lsl
+l-carry		1	    1		 
+carry	 001	 011	 011					1	1
+lh		 0000	 0001	 0011					0,  1,  3
+rh	+	 0001	 0010	 0001					1,  2,  1
+	________________
+		 0011	 0100	 0100					2,  ?,  ?
+
+result	  011	  100	  100					2,  0,  0
+
+
+		msl		    	lsl
+l-carry	   11	   11		 
+carry	 000	 011	 011					3	3
+lh		 0000	 0001	 0011					0,  1,  3
+rh	+	 0000	 0010	 0011					0,  2,  3
+	________________
+		 0011	 0110	 0110					3,  ?,  ?
+
+result	  011	  100	  100					3,  0,  0
+
+
+		msl		    	lsl
+l-carry	   	   		 
+carry	 000	 000	 000					0	0
+lh		 0000	 0001	 0011					0,  1,  1
+rh	+	 0000	 0010	 1100					0,  2, -2
+	________________
+		 0000	 0011	 1111					0,  ?,  ?
+
+result	  000	  011	  111					0,  3,  -1
+
+
+NOTE: Although the limbs and the bits that comprise the limbs, are being presented with the msl/msb to the left, 
+keeping the standard way that numerical values and math operations are presented, suggests that the most 
+significant limb values are at index 0 of an array.
+
+This project however uses little-endianess as does the intel, x86, x64 processors to arrange bit within a in-memory numerical value.
+
+As the address into the data structure increases so does the weight of the coefficient. Also casting down is trivial. For example,
+a ulong can be cast as a uint simply by changing the size of the variable, both the ulong and uint share the first 32 bits.

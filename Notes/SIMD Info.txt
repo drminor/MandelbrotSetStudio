@@ -1,0 +1,39 @@
+				
+				var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC).WithUpper(Vector128<uint>.Zero);
+				var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC).WithLower(Vector128<uint>.Zero);
+				resultLimbs[limbPtr] = Avx2.Or(low128, high128);
+				
+				//var low128 = Avx2.PermuteVar8x32(wideResultLow.AsUInt32(), SHUFFLE_PACK_LOW_VEC);
+				//var high128 = Avx2.PermuteVar8x32(wideResultHigh.AsUInt32(), SHUFFLE_PACK_HIGH_VEC);
+				//resultLimbs[limbPtr] = Avx2.InsertVector128(high128, Avx2.ExtractVector128(low128, 0), 0);
+
+				/*
+												Latency			Throughput
+					_mm256_permutevar8x32_epi32 3				1
+
+					_mm256_extracti128_si256	3				1
+					_mm256_inserti128_si256		3				1
+
+					_mm256_or_si256				1				0.33
+
+				*/
+
+
+					//result.Lower[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(cLimbValues, 0)).AsUInt32();
+					//resultHi[limbPtr] = Avx2.ConvertToVector256Int64(Avx2.ExtractVector128(Avx2.And(source[limbPtr], HIGH33_MASK_VEC), 1)).AsUInt32();
+
+					result.Lower[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_LOW_VEC), HIGH33_MASK_VEC);
+
+					// Take the higher 4 values and set the high halves of each result
+					result.Upper[limbPtr] = Avx2.And(Avx2.PermuteVar8x32(source[limbPtr], SHUFFLE_EXP_HIGH_VEC), HIGH33_MASK_VEC);
+
+
+
+					/*
+													Latency			Throughput
+						_mm256_permutevar8x32_epi32 3				1
+
+						_mm256_cvtepu32_epi64		3				1
+						_mm256_extracti128_si256	3				1
+
+					*/

@@ -1,6 +1,5 @@
 ﻿using ProtoBuf.Grpc;
 using System.ServiceModel;
-using System.Threading.Tasks;
 
 namespace MEngineDataContracts
 {
@@ -8,11 +7,24 @@ namespace MEngineDataContracts
     public interface IMapSectionService
     {
 		[OperationContract]
-		Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default);
+		MapSectionServiceResponse GenerateMapSectionTest(string dummy, CallContext context = default);
 
 		[OperationContract]
-		ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest, CallContext context = default);
+		MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionRequest, CallContext context = default);
 
+		[OperationContract]
+		CancelResponse CancelGeneration(CancelRequest cancelRequest, CallContext context = default);
+
+		//[OperationContract]
+		//MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CallContext context = default);
+
+		//[OperationContract]
+		//Task<MapSectionResponse> GenerateMapSectionAsync(MapSectionRequest mapSectionRequest, CallContext context = default);
+
+		//[OperationContract]
+		//ValueTask<MapSectionResponse> GenerateMapSectionAsyncR(MapSectionRequest mapSectionRequest, CallContext context = default);
+
+		//[OperationContract]
+		//Task<MapSectionServiceResponse> GenerateMapSectionAsync(MapSectionServiceRequest mapSectionRequest, CallContext context = default);
 	}
-
 }

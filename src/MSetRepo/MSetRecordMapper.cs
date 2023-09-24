@@ -1,7 +1,7 @@
-﻿using MEngineDataContracts;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MSS.Common;
 using MSS.Common.DataTransferObjects;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.DataTransferObjects;
 using MSS.Types.MSet;
@@ -15,9 +15,9 @@ namespace MSetRepo
 	/// Maps 
 	///		Project, 
 	///		ColorBandSet, ColorBand
-	///		Job, MSetInfo, 
+	///		Job, 
 	///		Subdivision, MapSectionResponse
-	///		RPoint, RSize, RRectangle,
+	///		RPoint, RSize, RRectangle, RPointAndDelta
 	///		PointInt, SizeInt, VectorInt, BigVector,
 	///		ColorBandBlendStyle,
 	///		TransformType,
@@ -25,9 +25,8 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		//IMapper<MSetInfo, MSetInfoRecord>,
-		IMapper<Subdivision, SubdivisionRecord>, IMapper<MapSectionResponse, MapSectionRecord>,
-		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, //IMapper<MapSectionResponse, MapSectionRecord>, IMapper<MapSectionBytes, MapSectionRecord>
+		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>, IMapper<RPointAndDelta, RPointAndDeltaRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
@@ -36,6 +35,8 @@ namespace MSetRepo
 		{
 			_dtoMapper = dtoMapper;
 		}
+		
+		#region Public Methods
 		
 		public Project MapFrom(ProjectRecord target)
 		{
@@ -46,7 +47,8 @@ namespace MSetRepo
 		{
 			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc)
 			{
-				Id = source.Id
+				Id = source.Id,
+				LastAccessedUtc = source.LastAccessedUtc
 			};
 
 			return result;
@@ -58,6 +60,8 @@ namespace MSetRepo
 			{ 
 				Id = source.Id, 
 				//LastSaved = source.LastSavedUtc
+				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray(),
+				ColorBandsSerialNumber = source.ColorBandsSerialNumber
 			};
 
 			return result;
@@ -65,8 +69,12 @@ namespace MSetRepo
 
 		public ColorBandSet MapFrom(ColorBandSetRecord target)
 		{
-			var result = new ColorBandSet(target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, target.ColorBandRecords.Select(x => MapFrom(x)).ToList());
-			return result;
+			return new ColorBandSet(
+				target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, 
+				target.ColorBandRecords.Select(x => MapFrom(x)).ToList(), 
+				target.ReservedColorBandRecords?.Select(x => MapFrom(x)),
+				target.ColorBandsSerialNumber
+				);
 		}
 
 		public ColorBandRecord MapTo(ColorBand source)
@@ -79,6 +87,16 @@ namespace MSetRepo
 			return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor);
 		}
 
+		public ReservedColorBandRecord MapTo(ReservedColorBand source)
+		{
+			return new ReservedColorBandRecord(source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor());
+		}
+
+		public ReservedColorBand MapFrom(ReservedColorBandRecord target)
+		{
+			return new ReservedColorBand(target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor);
+		}
+
 		public ColorBandBlendStyle MapFromBlendStyle(string blendStyle)
 		{
 			return Enum.Parse<ColorBandBlendStyle>(blendStyle);
@@ -89,33 +107,34 @@ namespace MSetRepo
 			return Enum.Parse<TransformType>(transformType.ToString(System.Globalization.CultureInfo.InvariantCulture));
 		}
 
-
 		public JobRecord MapTo(Job source)
 		{
-
-			var coords = MapTo(source.Coords);
-			var mSetInfoRecord = new MSetInfoRecord(coords, source.MapCalcSettings);
-
-
 			var result = new JobRecord(
-				source.ParentJobId,
-				source.IsPreferredChild,
-				source.ProjectId,
-				source.Subdivision.Id,
-				source.Label,
+				ParentJobId: source.ParentJobId,
+				OwnerId: source.OwnerId,
+				JobOwnerType: source.JobOwnerType,
+				SubDivisionId: source.Subdivision.Id,
+				Label: source.Label,
 
-				(int)source.TransformType,
-				MapTo(source.NewArea?.Position ?? new PointInt()),
-				MapTo(source.NewArea?.Size ?? new SizeInt()), 
-				mSetInfoRecord,
-				source.ColorBandSetId,
-				MapTo(source.CanvasSizeInBlocks),
-				MapTo(source.MapBlockOffset),
-				MapTo(source.CanvasControlOffset)
+				TransformType: (int)source.TransformType,
+
+				MapAreaInfo2Record: MapTo(source.MapAreaInfo),
+				TransformTypeString: Enum.GetName(source.TransformType) ?? "unknown",
+				
+
+				NewAreaPosition: MapTo(source.NewArea?.Position ?? new PointInt()),
+				NewAreaSize: MapTo(source.NewArea?.Size ?? new SizeInt()), 
+				ColorBandSetId: source.ColorBandSetId,
+				MapCalcSettings: source.MapCalcSettings,
+				LastSavedUtc: source.LastSavedUtc,
+				LastAccessedUtc: source.LastAccessedUtc
+				
 				)
 			{
 				Id = source.Id,
-				LastSaved = source.LastSavedUtc
+				DateCreatedUtc = source.DateCreated,
+				IterationUpdates = source.IterationUpdates,
+				ColorMapUpdates = source.ColorMapUpdates,
 			};
 
 			return result;
@@ -126,81 +145,187 @@ namespace MSetRepo
 			throw new NotImplementedException();
 		}
 
-		//public MSetInfo MapFrom(MSetInfoRecord target)
-		//{
-		//	var coords = _dtoMapper.MapFrom(target.CoordsRecord.CoordsDto);
-		//	var result = new MSetInfo(coords, target.MapCalcSettings);
+		public MapAreaInfo2 MapFrom(MapAreaInfo2Record target)
+		{
+			var result = new MapAreaInfo2(
+				rPointAndDelta: _dtoMapper.MapFrom(target.RPointAndDeltaRecord.RPointAndDeltaDto),
+				subdivision: MapFrom(target.SubdivisionRecord),
+				precision: target.Precsion,
+				mapBlockOffset: MapFrom(target.MapBlockOffset),
+				canvasControlOffset: MapFrom(target.CanvasControlOffset)
+				);
 
-		//	return result;
-		//}
+			return result;
+		}
 
-		//public MSetInfoRecord MapTo(MSetInfo source)
-		//{
-		//	var coords = MapTo(source.Coords);
-		//	var result = new MSetInfoRecord(coords, source.MapCalcSettings);
+		public MapAreaInfo2Record MapTo(MapAreaInfo2 source)
+		{
+			var result = new MapAreaInfo2Record(
+				RPointAndDeltaRecord: MapTo(source.PositionAndDelta),
+				SubdivisionRecord: MapTo(source.Subdivision),
+				MapBlockOffset: MapTo(source.MapBlockOffset),
+				CanvasControlOffset: MapTo(source.CanvasControlOffset),
+				Precsion: source.Precision
+				);
 
-		//	return result;
-		//}
+			return result;
+		}
+
+		public Poster MapFrom(PosterRecord target)
+		{
+			throw new NotImplementedException();
+		}
+
+		public PosterRecord MapTo(Poster source)
+		{
+			// TODO: Update all PosterRecords to use double instead of int for the Width and Height
+
+			var posterSizeRounded = source.PosterSize.Round(MidpointRounding.AwayFromZero);
+
+			var result = new PosterRecord(
+				Name: source.Name,
+				Description: source.Description,
+				SourceJobId: source.SourceJobId,
+				CurrentJobId: source.CurrentJobId,
+				DisplayPosition: MapTo(source.DisplayPosition),
+				DisplayZoom: source.DisplayZoom,
+				DateCreatedUtc: source.DateCreatedUtc,
+				LastSavedUtc: source.LastSavedUtc,
+				LastAccessedUtc: source.LastAccessedUtc)
+			{
+				Id = source.Id,
+				Width = posterSizeRounded.Width,
+				Height = posterSizeRounded.Height
+			};
+
+			return result;
+		}
 
 		public Subdivision MapFrom(SubdivisionRecord target)
 		{
 			var samplePointDelta = _dtoMapper.MapFrom(target.SamplePointDelta.Size);
-			var result = new Subdivision(target.Id, samplePointDelta, MapFrom(target.BlockSize));
+
+			var baseMapPosition = _dtoMapper.MapFrom(target.BaseMapPosition.BigVector);
+
+			var result = new Subdivision(target.Id, samplePointDelta, baseMapPosition, MapFrom(target.BlockSize), target.DateCreatedUtc);
 
 			return result;
 		}
 
 		public SubdivisionRecord MapTo(Subdivision source)
 		{
+			var baseMapPosition = MapTo(source.BaseMapPosition);
 			var samplePointDelta = MapTo(source.SamplePointDelta);
-			var result = new SubdivisionRecord(samplePointDelta, MapTo(source.BlockSize));
+
+			var result = new SubdivisionRecord(baseMapPosition, samplePointDelta, MapTo(source.BlockSize))
+			{
+				Id = source.Id,
+				DateCreatedUtc = source.DateCreatedUtc
+			};
 
 			return result;
 		}
 
+		#endregion
+
+		#region Public Methods - MapSection
+
 		public MapSectionRecord MapTo(MapSectionResponse source)
 		{
-			var result = new MapSectionRecord
+			if (source.MapSectionVectors2 == null)
+			{
+				throw new InvalidOperationException("The MapSectionResponse::MapSectionVectors is null.");
+			}
+
+			MapSectionRecord result;
+
+
+			result = new MapSectionRecord
 				(
 				DateCreatedUtc: DateTime.UtcNow,
 				SubdivisionId: new ObjectId(source.SubdivisionId),
-				BlockPosXHi: source.BlockPosition.X[0],
-				BlockPosXLo: source.BlockPosition.X[1],
-				BlockPosYHi: source.BlockPosition.Y[0],
-				BlockPosYLo: source.BlockPosition.Y[1],
-				source.MapCalcSettings,
-				source.Counts,
-				source.DoneFlags,
-				source.ZValues
+
+				BlockPosXHi: source.BlockPosition.XHi,
+				BlockPosXLo: source.BlockPosition.XLo,
+				BlockPosYHi: source.BlockPosition.YHi,
+				BlockPosYLo: source.BlockPosition.YLo,
+
+				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
+
+				Counts: source.MapSectionVectors2.Counts,
+				EscapeVelocities: source.MapSectionVectors2.EscapeVelocities,
+
+				AllRowsHaveEscaped: source.AllRowsHaveEscaped
 				)
 			{
+				Id = source.MapSectionId is null ? ObjectId.GenerateNewId() : new ObjectId(source.MapSectionId),
+				Complete = source.RequestCompleted,
 				LastAccessed = DateTime.UtcNow,
 			};
 
 			return result;
 		}
 
-		public MapSectionResponse MapFrom(MapSectionRecord target)
+		public MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
 		{
-			var x = new long[][] { new long[] { 0, 0 }, new long[]{ 0, 0 } };
-
-			var blockPosition = new BigVectorDto(new long[][] { new long[] { target.BlockPosXHi, target.BlockPosXLo }, new long[] { target.BlockPosYHi, target.BlockPosYLo } });
+			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
 
 			var result = new MapSectionResponse
-			{
-				MapSectionId = target.Id.ToString(),
-				SubdivisionId = target.SubdivisionId.ToString(),
-				BlockPosition = blockPosition,
-				MapCalcSettings = target.MapCalcSettings,
-				Counts = target.Counts,
-				DoneFlags = target.DoneFlags,
-				ZValues = target.ZValues
-			};
+			(
+				mapSectionId: target.Id.ToString(),
+				subdivisionId: target.SubdivisionId.ToString(),
+				blockPosition: target.BlockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				requestCompleted: target.RequestWasCompleted,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
+				mapSectionVectors: mapSectionVectors
+			);
 
 			return result;
 		}
 
-		#region IMapper<Shape, ShapeRecord> Support
+		public MapSectionBytes MapFrom(MapSectionRecord target)
+		{
+			var blockPosition = GetBlockPosition(target.BlockPosXHi, target.BlockPosXLo, target.BlockPosYHi, target.BlockPosYLo);
+
+			var result = new MapSectionBytes
+			(
+				mapSectionId: target.Id,
+				dateCreatedUtc: target.DateCreatedUtc, lastSavedUtc: target.LastSavedUtc, lastAccessed: target.LastAccessed, subdivisionId: target.SubdivisionId,
+				blockPosition: blockPosition,
+				mapCalcSettings: target.MapCalcSettings,
+				requestWasCompleted: target.RequestWasCompleted,
+				allRowsHaveEscaped: target.AllRowsHaveEscaped,
+				counts: target.Counts,
+				escapeVelocities: target.EscapeVelocities
+			);
+
+			return result;
+		}
+
+		//private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
+		//{
+		//	var blockPosition = new BigVectorDto(new long[][]
+		//		{
+		//			new long[] { blockPosXHi, blockPosXLo }, 
+		//			new long[] { blockPosYHi, blockPosYLo }
+		//		});
+
+		//	var result = _dtoMapper.MapFrom(blockPosition);
+
+		//	return result;
+		//}
+
+		private MapBlockOffset GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
+		{
+			var result = new MapBlockOffset(blockPosXHi, blockPosXLo, blockPosYHi, blockPosYLo);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Public Methods - PointInt, SizeInt, RPoint, etc.
 
 		public PointIntRecord MapTo(PointInt source)
 		{
@@ -230,6 +355,16 @@ namespace MSetRepo
 		public VectorInt MapFrom(VectorIntRecord target)
 		{
 			return new VectorInt(target.X, target.Y);
+		}
+
+		public VectorDblRecord MapTo(VectorDbl source)
+		{
+			return new VectorDblRecord(source.X, source.Y);
+		}
+
+		public VectorDbl MapFrom(VectorDblRecord target)
+		{
+			return new VectorDbl(target.X, target.Y);
 		}
 
 		public BigVectorRecord MapTo(BigVector bigVector)
@@ -276,6 +411,20 @@ namespace MSetRepo
 			return _dtoMapper.MapFrom(target.Size);
 		}
 
+		public RVectorRecord MapTo(RVector rVector)
+		{
+			var rSizeDto = _dtoMapper.MapTo(rVector);
+			var display = rVector.ToString();
+			var result = new RVectorRecord(display, rSizeDto);
+
+			return result;
+		}
+
+		public RVector MapFrom(RVectorRecord target)
+		{
+			return _dtoMapper.MapFrom(target.Vector);
+		}
+
 		public RRectangleRecord MapTo(RRectangle rRectangle)
 		{
 			var rRectangleDto = _dtoMapper.MapTo(rRectangle);
@@ -288,6 +437,20 @@ namespace MSetRepo
 		public RRectangle MapFrom(RRectangleRecord target)
 		{
 			return _dtoMapper.MapFrom(target.CoordsDto);
+		}
+
+		public RPointAndDeltaRecord MapTo(RPointAndDelta source)
+		{
+			var rPointAndDeltaDto = _dtoMapper.MapTo(source);
+			var display = source.ToString();
+			var result = new RPointAndDeltaRecord(display, rPointAndDeltaDto);
+
+			return result;
+		}
+
+		public RPointAndDelta MapFrom(RPointAndDeltaRecord target)
+		{
+			return _dtoMapper.MapFrom(target.RPointAndDeltaDto);
 		}
 
 		#endregion

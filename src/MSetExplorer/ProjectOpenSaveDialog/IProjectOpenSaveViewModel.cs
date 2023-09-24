@@ -1,4 +1,4 @@
-﻿using MSS.Types.MSet;
+﻿using MSS.Common;
 using System.Collections.ObjectModel;
 
 namespace MSetExplorer
@@ -16,6 +16,6 @@ namespace MSetExplorer
 		bool UserIsSettingTheName { get; set; }
 
 		bool IsNameTaken(string? name);
-		void DeleteSelected();
+		bool DeleteSelected(out long numberOfMapSectionsDeleted);
 	}
 }

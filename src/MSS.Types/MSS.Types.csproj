@@ -1,23 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="BigIntegerExtensions.cs" />
-    <Compile Remove="MSet\MSetInfo.cs" />
+    <Compile Remove="APValues\SpanClassExp.cs" />
+    <Compile Remove="Pools\MapSectionVectors2Pool.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="MSet\MSetInfo.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="MongoDB.Bson" Version="2.13.2" />
+    <PackageReference Include="MongoDB.Driver" Version="2.18.0" />
     <PackageReference Include="protobuf-net.Grpc" Version="1.0.152" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="APValues\SpanClassExp.cs" />
+    <None Include="Pools\MapSectionVectors2Pool.cs" />
+  </ItemGroup>
+
 
 </Project>

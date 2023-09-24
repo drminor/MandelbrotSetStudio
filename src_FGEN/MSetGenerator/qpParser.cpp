@@ -591,7 +591,7 @@ std::string qpParser::to_string(double hi, double lo, std::streamsize precision,
 				off = 1;
 			}
 
-			int d = static_cast<int>(precision) + off;
+			int d = (static_cast<int>(precision)) + off;
 
 			int d_with_extra = d;
 
@@ -676,7 +676,8 @@ std::string qpParser::to_string(double hi, double lo, std::streamsize precision,
 				//			}
 
 			// default
-			char* t = new char[d + 1];
+			int pp = d + 1;
+			char* t = new char[pp];
 			to_digits(t, e, d, hi, lo);
 			s += t[0];
 			if (precision > 0) s += '.';
@@ -684,7 +685,7 @@ std::string qpParser::to_string(double hi, double lo, std::streamsize precision,
 			//for (i = 1; i <= precision; i++)
 			//	s += t[i];
 
-			for (i = 1; i <= precision && i <= d; i++)
+			for (i = 1; i <= precision && i < pp; i++)
 				s += t[i];
 
 			delete[] t;

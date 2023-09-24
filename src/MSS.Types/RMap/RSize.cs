@@ -33,34 +33,52 @@ namespace MSS.Types
 		public RValue Width => new(WidthNumerator, Exponent);
 		public RValue Height => new(HeightNumerator, Exponent);
 
-		object ICloneable.Clone()
-		{
-			return Clone();
-		}
-
-		public RSize Clone()
-		{
-			return Reducer.Reduce(this);
-		}
 
 		public RSize Scale(SizeInt factor)
 		{
 			return new RSize(WidthNumerator * factor.Width, HeightNumerator * factor.Height, Exponent);
 		}
 
-		//public RSize Scale(PointInt factor)
-		//{
-		//	return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
-		//}
+		public RSize Scale(PointInt factor)
+		{
+			return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
+		}
+
+		public RSize Scale(VectorInt factor)
+		{
+			return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
+		}
 
 		public RVector Scale(BigVector factor)
 		{
 			return new RVector(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
 		}
 
-		public RSize DivideBy2()
+		public RSize ScaleByHalf()
 		{
 			return new RSize(Values[0], Values[1], Exponent - 1);
+		}
+
+		public RSize DivideBy2()
+		{
+			return new RSize(Values[0] / 2, Values[1] / 2, Exponent);
+		}
+
+		public RSize Invert()
+		{
+			return new RSize(Values[0] * -1, Values[1] * -1, Exponent);
+		}
+
+		/// <summary>
+		/// Returns the distance from this point to the given point.
+		/// </summary>
+		/// <param name="amount"></param>
+		/// <returns></returns>
+		public RSize Diff(RSize amount)
+		{
+			return amount.Exponent != Exponent
+				? throw new InvalidOperationException($"Cannot find the diff from a RSize with Exponent: {Exponent} using a RSize with Exponent: {amount.Exponent}.")
+				: new RSize(WidthNumerator - amount.WidthNumerator, HeightNumerator - amount.HeightNumerator, amount.Exponent);
 		}
 
 		//// TODO rewite RSize.Scale(SizeDbl)
@@ -116,13 +134,34 @@ namespace MSS.Types
 		//	return new RSize(w, h, Exponent);
 		//}
 
+		#region ToString / ICloneable / IEqualityComparer / IEquatable Support
+
 		public override string ToString()
 		{
-			var result = BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
-			return result;
+			return ToString(reduce: true);
 		}
 
-		#region IEqualityComparer / IEquatable Support
+		public string ToString(bool reduce)
+		{
+			if (reduce)
+			{
+				return BigIntegerHelper.GetDisplay(Reducer.Reduce(this));
+			}
+			else
+			{
+				return BigIntegerHelper.GetDisplay(this);
+			}
+		}
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public RSize Clone()
+		{
+			return Reducer.Reduce(this);
+		}
 
 		public bool Equals(RSize? a, RSize? b)
 		{
@@ -167,6 +206,5 @@ namespace MSS.Types
 		}
 
 		#endregion
-
 	}
 }
