@@ -117,7 +117,7 @@ namespace MapSectionProviderLib
 						{
 							var mapSectionId = await PersistTheCountValuesAsync(mapSectionRequest, mapSectionResponse, ct);
 
-							if (mapSectionId.HasValue && mapSectionRequest.MapCalcSettings.SaveTheZValues)
+							if (mapSectionId.HasValue && mapSectionRequest.MapCalcSettings.SaveTheZValues) // TODO: Consider not including the ZVectors if AllRowsHaveEscaped.
 							{
 								if (mapSectionResponse.MapSectionZVectors != null)
 								{
@@ -125,7 +125,17 @@ namespace MapSectionProviderLib
 								}
 								else
 								{
-									Debug.WriteLine("WARNING: The MapSectionZValues is null, but the SaveTheZValues is true.");
+									Debug.WriteLine("WARNING: MapSectionPersistProcessor: The MapSectionZValues is null, but the SaveTheZValues setting is true.");
+
+									if (mapSectionResponse.AllRowsHaveEscaped)
+									{
+										var zValuesRecordOnFile = await _mapSectionAdapter.DoesMapSectionZValuesExistAsync(mapSectionId.Value, ct);
+
+										if (zValuesRecordOnFile)
+										{
+											_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId.Value);
+										}
+									}
 								}
 							}
 						}

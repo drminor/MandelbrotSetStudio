@@ -203,8 +203,8 @@ namespace MapSectionProviderLib
 						}
 					}
 
-					Debug.Assert(mapSectionRequest.MapSectionVectors2 == null, "MapSectionVectors2 is not Null.");
-					Debug.Assert(mapSectionRequest.MapSectionZVectors == null, "MapSectionZVectors is not Null.");
+					Debug.Assert(mapSectionRequest.MapSectionVectors2 == null, "MapSectionVectors2 should be Null.");
+					Debug.Assert(mapSectionRequest.MapSectionZVectors == null, "MapSectionZVectors should be Null.");
 
 					mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
 				}

@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -659,9 +660,31 @@ namespace MapSectionProviderLib
 
 				Debug.Assert(mapSectionResponse.MapSectionVectors == null, "PersistResponse: The MapSectionVectors should be null.");
 
+				if (mapSectionRequest.MapCalcSettings.SaveTheZValues)
+				{
+					if (mapSectionResponse.MapSectionZVectors == null)
+					{
+						Debug.WriteLine("WARNING:MapSectionRequestProcessor.The MapSectionZValues is null, but the SaveTheZValues setting is true.");
+					}
+					else
+					{
+						Debug.WriteLine("MapSectionRequestProcessor.The MapSectionZValues are not null.");
+					}
+				}
+
+				// TODO: What is causing the MapSectionVectors to be returned early? The below is a hack until we can determine root cause.
+				// Create a copy including the MapSectionVectors2 and ZVectors.
+				var cpy = mapSectionResponse.CreateCopySansVectors();
+				cpy.MapSectionVectors2 = mapSectionResponse.MapSectionVectors2;
+				cpy.MapSectionZVectors = mapSectionResponse.MapSectionZVectors;
+
+				// Remove the ZVectors from the main response to prevent it from being returned to the pool before it can be saved to disk.
+				mapSectionResponse.MapSectionZVectors = null;
+
 				//mapSectionResponse.MapSectionVectors2?.IncreaseRefCount();
-				mapSectionResponse.MapSectionZVectors?.IncreaseRefCount();
-				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, mapSectionResponse), ct);
+				//mapSectionResponse.MapSectionZVectors?.IncreaseRefCount();
+
+				_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, cpy), ct);
 			}
 		}
 
