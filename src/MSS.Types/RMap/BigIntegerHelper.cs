@@ -544,7 +544,39 @@ namespace MSS.Types
 			return precision;
 		}
 
-		#endregion
+		public static double GetRatio(BigInteger dividend, int divisor)
+		{
+			if (divisor == 0)
+			{
+				throw new DivideByZeroException();
+			}
 
+			if (dividend == 0)
+			{
+				return 0;
+			}
+
+			double result;
+
+			if (SafeCastToDouble(dividend))
+			{
+				var workingDividend = ConvertToDouble(dividend);
+				result = workingDividend / divisor;
+			}
+			else
+			{
+				var hiAndLo = ToLongsM2(dividend);
+
+				checked
+				{
+					result = hiAndLo[0] / divisor * Math.Pow(2, 53);
+					result += hiAndLo[1] / divisor;
+				}
+			}
+
+			return result;
+		}
+
+		#endregion
 	}
 }

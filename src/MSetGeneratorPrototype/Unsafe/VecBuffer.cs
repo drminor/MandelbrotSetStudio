@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 //using Unsafe = System.Runtime.CompilerServices.Unsafe;
 
-///<remarks>
+///<remarks>  Attribution
 /// Work copied from SnowflakePowered/vcdiff
 /// https://github.com/SnowflakePowered/vcdiff/blob/master/LICENSE
 ///</remarks>

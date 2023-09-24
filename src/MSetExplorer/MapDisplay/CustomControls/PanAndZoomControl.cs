@@ -10,13 +10,15 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	/// <remarks>
+	/// <remarks> Attribution
 	/// 
 	/// This code is based on the CodeProject: A WPF Custom Control for Zooming and Panning
 	/// https://www.codeproject.com/Articles/85603/A-WPF-custom-control-for-zooming-and-panning
 	/// Written by Ashley Davis
 	/// 
 	/// </remarks>
+
+	/// <permission cref=""></permission>
 
 	public class PanAndZoomControl : ContentControl, IScrollInfo, IZoomInfo, IDisposable
 	{

@@ -19,7 +19,7 @@ namespace MSS.Types.DataTransferObjects
 		public BigVectorDto() : this(new BigInteger[] { 0, 0 })
 		{ }
 
-		public BigVectorDto(BigInteger[] values) : this(BigIntegerHelper.ToLongs(values))
+		public BigVectorDto(BigInteger[] values) : this(BigIntegerHelper.ToLongsM2(values))
 		{ }
 
 		public BigVectorDto(long[][] values)
