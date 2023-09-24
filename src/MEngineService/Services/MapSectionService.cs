@@ -262,7 +262,7 @@ namespace MEngineService.Services
 
 			var mapSectionZVectors = mapSectionResponse.MapSectionZVectors;
 
-			if (mapSectionZVectors != null)
+			if (mapSectionZVectors != null && !mapSectionResponse.AllRowsHaveEscaped)
 			{
 				mapSectionServiceResponse.Zrs = mapSectionZVectors.Zrs;
 				mapSectionServiceResponse.Zis = mapSectionZVectors.Zis;

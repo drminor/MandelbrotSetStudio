@@ -220,27 +220,17 @@ namespace MEngineClient
 			};
 
 			var mapSectionVectors2 = req.MapSectionVectors2;
+			var mapSectionZVectors = req.MapSectionZVectors;
 
-			if (req.IncreasingIterations && mapSectionVectors2 != null)
+			if (req.IncreasingIterations && mapSectionVectors2 != null && mapSectionZVectors != null)
 			{
 				mapSectionServiceRequest.Counts = mapSectionVectors2.Counts;
 				mapSectionServiceRequest.EscapeVelocities = mapSectionVectors2.EscapeVelocities;
 
-				var mapSectionZVectors = req.MapSectionZVectors;
-				if (mapSectionZVectors != null)
-				{
-					mapSectionServiceRequest.Zrs = mapSectionZVectors.Zrs;
-					mapSectionServiceRequest.Zis = mapSectionZVectors.Zis;
-					mapSectionServiceRequest.HasEscapedFlags = mapSectionZVectors.HasEscapedFlags;
-					mapSectionServiceRequest.RowHasEscaped = mapSectionZVectors.GetBytesForRowHasEscaped();
-				}
-				else
-				{
-					mapSectionServiceRequest.Zrs = Array.Empty<byte>();
-					mapSectionServiceRequest.Zis = Array.Empty<byte>();
-					mapSectionServiceRequest.HasEscapedFlags = Array.Empty<byte>();
-					mapSectionServiceRequest.RowHasEscaped = Array.Empty<byte>();
-				}
+				mapSectionServiceRequest.Zrs = mapSectionZVectors.Zrs;
+				mapSectionServiceRequest.Zis = mapSectionZVectors.Zis;
+				mapSectionServiceRequest.HasEscapedFlags = mapSectionZVectors.HasEscapedFlags;
+				mapSectionServiceRequest.RowHasEscaped = mapSectionZVectors.GetBytesForRowHasEscaped();
 			}
 			else
 			{
@@ -279,7 +269,7 @@ namespace MEngineClient
 					mapSectionVectors2 = new MapSectionVectors2(mapSectionRequest.BlockSize, res.Counts, res.EscapeVelocities);
 				}
 
-				if (mapSectionRequest.MapCalcSettings.SaveTheZValues)
+				if (mapSectionRequest.MapCalcSettings.SaveTheZValues && !res.AllRowsHaveEscaped)
 				{
 					if (mapSectionZVectors == null)
 					{
@@ -294,7 +284,10 @@ namespace MEngineClient
 				}
 				else
 				{
-					// Not saving the ZValues, 
+					if (mapSectionZVectors != null)
+					{
+						_mapSectionVectorProvider.ReturnMapSectionZVectors(mapSectionZVectors);
+					}
 				}
 			}
 			else

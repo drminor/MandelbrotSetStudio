@@ -67,6 +67,12 @@ namespace MEngineClient
 				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, ct);
 				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
+				if (mapSectionResponse.AllRowsHaveEscaped && mapSectionResponse.MapSectionZVectors != null)
+				{
+					_mapSectionVectorProvider.ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
+					mapSectionResponse.MapSectionZVectors = null;
+				}
+
 				return mapSectionResponse;
 			}
 		}

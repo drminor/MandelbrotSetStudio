@@ -115,29 +115,7 @@ namespace MapSectionProviderLib
 					{
 						if (mapSectionResponse.MapSectionVectors2 != null)
 						{
-							var mapSectionId = await PersistTheCountValuesAsync(mapSectionRequest, mapSectionResponse, ct);
-
-							if (mapSectionId.HasValue && mapSectionRequest.MapCalcSettings.SaveTheZValues) // TODO: Consider not including the ZVectors if AllRowsHaveEscaped.
-							{
-								if (mapSectionResponse.MapSectionZVectors != null)
-								{
-									await PersistTheZValuesAsync(mapSectionId.Value, mapSectionResponse, ct);
-								}
-								else
-								{
-									Debug.WriteLine("WARNING: MapSectionPersistProcessor: The MapSectionZValues is null, but the SaveTheZValues setting is true.");
-
-									if (mapSectionResponse.AllRowsHaveEscaped)
-									{
-										var zValuesRecordOnFile = await _mapSectionAdapter.DoesMapSectionZValuesExistAsync(mapSectionId.Value, ct);
-
-										if (zValuesRecordOnFile)
-										{
-											_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId.Value);
-										}
-									}
-								}
-							}
+							await PersistTheCountAndZValuesAsync(mapSectionRequest, mapSectionResponse, ct);
 						}
 						else
 						{
@@ -156,6 +134,38 @@ namespace MapSectionProviderLib
 					Debug.WriteLine($"The persist queue got an exception: {e}.");
 					Console.WriteLine($"\n\nWARNING:The persist queue got an exception: {e}.\n\n");
 					//throw;
+				}
+			}
+		}
+
+		private async Task PersistTheCountAndZValuesAsync(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
+		{
+			var mapSectionId = await PersistTheCountValuesAsync(mapSectionRequest, mapSectionResponse, ct);
+
+			if (mapSectionId.HasValue)
+			{
+				if (mapSectionResponse.AllRowsHaveEscaped)
+				{
+					var zValuesRecordOnFile = await _mapSectionAdapter.DoesMapSectionZValuesExistAsync(mapSectionId.Value, ct);
+
+					if (zValuesRecordOnFile)
+					{
+						_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId.Value);
+					}
+				}
+				else
+				{
+					if (mapSectionResponse.MapSectionZVectors != null)
+					{
+						await PersistTheZValuesAsync(mapSectionId.Value, mapSectionResponse, ct);
+					}
+					else
+					{
+						if (mapSectionRequest.MapCalcSettings.SaveTheZValues)
+						{
+							Debug.WriteLine("WARNING: MapSectionPersistProcessor: The MapSectionZValues is null, but the SaveTheZValues setting is true.");
+						}
+					}
 				}
 			}
 		}
@@ -214,18 +224,8 @@ namespace MapSectionProviderLib
 
 			if (zValuesRecordOnFile)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Updating Z Values for {mapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-
-				if (mapSectionResponse.AllRowsHaveEscaped)
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"PersistProc: DeleteZValuesAsync for {mapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-					_ = await _mapSectionAdapter.DeleteZValuesAync(mapSectionId);
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"PersistProc: UpdateZValuesAsync for {mapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
-					_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
-				}
+				Debug.WriteLineIf(_useDetailedDebug, $"PersistProc: UpdateZValuesAsync for {mapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
+				_ = await _mapSectionAdapter.UpdateZValuesAync(mapSectionResponse, mapSectionId);
 			}
 			else
 			{

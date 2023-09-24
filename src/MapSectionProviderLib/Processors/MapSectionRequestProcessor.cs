@@ -1,17 +1,13 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
-using ProjectRepo.Entities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -516,10 +512,7 @@ namespace MapSectionProviderLib
 		private async Task<MapSectionBytes?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-
-			// TODO: Add property: OriginalSourceSubdivisionId to the MapSectionBytes class.
 			var mapSectionBytes = await _mapSectionAdapter.GetMapSectionBytesAsync(subdivisionId, mapSectionRequest.RepoBlockPosition, ct);
-			//mapSectionBytes.OriginalSourceSubdivisionId = mapSectionRequest.OriginalSourceSubdivisionId;
 
 			return mapSectionBytes;
 		}
@@ -660,7 +653,7 @@ namespace MapSectionProviderLib
 
 				Debug.Assert(mapSectionResponse.MapSectionVectors == null, "PersistResponse: The MapSectionVectors should be null.");
 
-				if (mapSectionRequest.MapCalcSettings.SaveTheZValues)
+				if (mapSectionRequest.MapCalcSettings.SaveTheZValues && !mapSectionResponse.AllRowsHaveEscaped)
 				{
 					if (mapSectionResponse.MapSectionZVectors == null)
 					{

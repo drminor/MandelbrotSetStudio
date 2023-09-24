@@ -38,8 +38,8 @@ namespace MSetExplorer
 		private static readonly string LOCAL_IP_ADDRESS = "192.168.2.100";
 
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://localhost:5000" };
-		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
-		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
+		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.108:5000" };
+		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.100:5000" };
 
 		private static readonly bool USE_ALL_CORES = true;
 		private static readonly bool USE_REMOTE_ENGINES = true;
@@ -499,38 +499,43 @@ namespace MSetExplorer
 
 			var localTaskCountAdjustment = 0;
 			var localTaskCount = GetLocalTaskCount(useAllCores);
+			var remoteTaskCount = GetRemoteTaskCount(useAllCores, localTaskCount);
 
 			if (useRemoteEngine && useLocalEngine && remoteEndPoints[0].Contains(LOCAL_IP_ADDRESS))
 			{
 				localTaskCountAdjustment = localTaskCount / 2;
 			}
 
+			var localClientCount = localTaskCount - localTaskCountAdjustment;
+
 			if (useLocalEngine)
 			{
-				var adjustedLocalTaskCount = localTaskCount - localTaskCountAdjustment;
-				for (var i = 0; i < adjustedLocalTaskCount; i++)
+				for (var i = 0; i < localClientCount; i++)
 				{
 					var mapSectionGenerator = mapSectionGeneratorCreator();
 					result.Add(new MClientLocal(clientNumber++, mapSectionGenerator, mapSectionVectorProvider));
 				}
 
-				Debug.WriteLine($"Using {adjustedLocalTaskCount} local engines.");
+				//Debug.WriteLine($"Using {localClientCount} local engines.");
 			}
+
+			var remoteClientCount = 0;
 
 			if (useRemoteEngine)
 			{
-				var remoteTaskCount = GetRemoteTaskCount(useAllCores, localTaskCount);
-
 				foreach (string remoteEndPoint in remoteEndPoints)
 				{
 					for (var i = 0; i < remoteTaskCount; i++)
 					{
 						result.Add(new MClient(clientNumber++, remoteEndPoint, mapSectionVectorProvider));
+						remoteClientCount++;
 					}
 
-					Debug.WriteLine($"Using {remoteTaskCount} engines at {remoteEndPoint}.");
+					//Debug.WriteLine($"Using {remoteTaskCount} engines at {remoteEndPoint}.");
 				}
 			}
+
+			Debug.WriteLine($"Using {localClientCount} local and {remoteClientCount} remote MEngine Clients.");
 
 			return result.ToArray();
 		}
