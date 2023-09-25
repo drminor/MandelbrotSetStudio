@@ -174,100 +174,6 @@ namespace MSetRepo
 			}
 		}
 
-		//public async Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct)
-		//{
-		//	try
-		//	{
-		//		var mapSectionRecord = await _mapSectionReaderWriter.GetAsync(subdivisionId, blockPosition, ct);
-		//		if (mapSectionRecord != null)
-		//		{
-		//			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
-
-		//			return mapSectionResponse;
-		//		}
-		//		else
-		//		{
-		//			return null;
-		//		}
-		//	}
-		//	catch (OperationCanceledException)
-		//	{
-		//		// Ignore
-		//		return null;
-		//	}
-		//	//catch (Exception e)
-		//	//{
-		//	//	Debug.WriteLine($"While fetching a MapSectionRecord from Subdivision and BlockPosition (Async), got exception: {e}.");
-
-		//	//	var id = await _mapSectionReaderWriter.GetIdAsync(subdivisionId, blockPosition);
-		//	//	if (id != null)
-		//	//	{
-		//	//		_mapSectionReaderWriter.Delete(id.Value);
-		//	//	}
-		//	//	else
-		//	//	{
-		//	//		throw new InvalidOperationException("Cannot delete the bad MapSectionRecord.");
-		//	//	}
-
-		//	//	return null;
-		//	//}
-		//	catch (Exception e)
-		//	{
-		//		Debug.WriteLine($"GetMapSectionAsync: While fetching a MapSectionRecord from Subdivision and BlockPosition (Async), got exception: {e}.");
-		//		throw;
-		//	}
-		//}
-
-		//public MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors)
-		//{
-		//	try
-		//	{
-		//		var mapSectionRecord = _mapSectionReaderWriter.Get(mapSectionId);
-		//		if (mapSectionRecord != null)
-		//		{
-		//			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
-
-		//			return mapSectionResponse;
-		//		}
-		//		else
-		//		{
-		//			return null;
-		//		}
-		//	}
-		//	catch (Exception e)
-		//	{
-		//		Debug.WriteLine($"While fetching a MapSectionRecord from a MapSectionId, got exception: {e}.");
-		//		return null;
-		//	}
-		//}
-
-		//public MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors)
-		//{
-		//	try
-		//	{
-		//		var blockPositionRecord = _mSetRecordMapper.MapTo(blockPosition);
-
-		//		var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
-		//		if (mapSectionRecord != null)
-		//		{
-		//			var mapSectionResponse = _mSetRecordMapper.MapFrom(mapSectionRecord, mapSectionVectors);
-
-		//			return mapSectionResponse;
-		//		}
-		//		else
-		//		{
-		//			//Debug.WriteLine($"MapSectionNotFound. SubdivisionId: {subdivisionId}, BlockPosition: {blockPosition}.");
-		//			return null;
-		//		}
-		//	}
-		//	catch (Exception e)
-		//	{
-		//		Debug.WriteLine($"While fetching a MapSectionRecord from Subdivision and BlockPosition (synchronous), got exception: {e}.");
-
-		//		return null;
-		//	}
-		//}
-
 		public ObjectId? GetMapSectionId(ObjectId subdivisionId, MapBlockOffset blockPosition)
 		{
 			try
@@ -416,7 +322,6 @@ namespace MSetRepo
 
 			return result;
 		}
-
 
 		#endregion
 
@@ -612,34 +517,6 @@ namespace MSetRepo
 
 			return numberDeleted;
 		}
-
-		//private long? DeleteMapSectionsForJobInternal(ObjectId jobId, JobOwnerType jobOwnerType, out long? numberJobMapSectionsDeleted)
-		//{
-		//	var mapSectionIds = _jobMapSectionReaderWriter.GetMapSectionIdsByOwnerId(jobId, jobOwnerType);
-		//	numberJobMapSectionsDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, jobOwnerType);
-
-		//	var foundMapSectionRefs = _jobMapSectionReaderWriter.GetJobMapSectionIds(mapSectionIds);
-
-		//	var result = 0L;
-		//	foreach (var mapSectionId in mapSectionIds)
-		//	{
-
-		//		if (!_jobMapSectionReaderWriter.DoesJobMapSectionRecordExist(mapSectionId))
-		//		{
-		//			var numberDeleted = _mapSectionReaderWriter.Delete(mapSectionId);
-		//			result += numberDeleted ?? 0;
-		//		}
-		//	}
-
-		//	var numberOfNotFoundRefs = mapSectionIds.Count(x => !foundMapSectionRefs.Contains(x));
-
-		//	if (numberOfNotFoundRefs != result)
-		//	{
-		//		Debug.WriteLine("The new DeleteMapSectionsForJob method is not finding the same number of JobMapSection Records.");
-		//	}
-
-		//	return result;
-		//}
 		
 		public long? DeleteJobMapSectionsCreatedSince(DateTime dateCreatedUtc, bool overrideRecentGuard = false)
 		{
@@ -700,42 +577,6 @@ namespace MSetRepo
 
 			return headLine + sb.ToString();
 		}
-
-		//public List<Tuple<string, long?>> DeleteJobMapSectionsWithMissingJob(JobOwnerType jobOwnerType)
-		//{
-		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
-
-		//	var jobIds = jobReaderWriter.GetAllJobIds();
-
-		//	var dict = new SortedDictionary<ObjectId, int>();
-
-		//	foreach(var jobId in jobIds)
-		//	{
-		//		dict.Add(jobId, 0);
-		//	}
-
-		//	var jobIdsNotFound = new List<ObjectId>();
-
-		//	var msJobIds = _jobMapSectionReaderWriter.GetDistinctJobIdsFromJobMapSections(jobOwnerType);
-
-		//	foreach (var jobId in msJobIds)
-		//	{
-		//		if (!dict.TryGetValue(jobId, out _))
-		//		{
-		//			jobIdsNotFound.Add(jobId);
-		//		}
-		//	}
-
-		//	var result = new List<Tuple<string, long?>>();
-
-		//	foreach(var jobId in jobIdsNotFound)
-		//	{
-		//		var numberDeleted = _jobMapSectionReaderWriter.DeleteJobMapSections(jobId, jobOwnerType);
-		//		result.Add(new Tuple<string, long?>(jobId.ToString(), numberDeleted));
-		//	}
-
-		//	return result;
-		//}
 
 		public IEnumerable<JobMapSectionRecord> GetAllJobMapSections()
 		{

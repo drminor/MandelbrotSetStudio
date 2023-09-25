@@ -655,6 +655,7 @@ namespace MSetExplorer
 			int? newJobNumber;
 			bool lastSectionWasIncluded;
 
+			// TODO: Compare the currrent and new SubdivisionIds. If different, use DiscardAndLoad
 			var currentBaseFactor = boundedMapArea.BaseFactor;
 
 			// Get the coordinates for the current view, i.e., the ContentViewportSize

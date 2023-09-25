@@ -20,18 +20,10 @@ namespace MSS.Common
 		Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, MapBlockOffset blockPosition, CancellationToken ct);
 		MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, MapBlockOffset blockPosition);
 
-		//Task<MapSectionResponse?> GetMapSectionAsync(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors, CancellationToken ct);
-		//MapSectionResponse? GetMapSection(ObjectId mapSectionId, MapSectionVectors mapSectionVectors);
-		//MapSectionResponse? GetMapSection(ObjectId subdivisionId, BigVector blockPosition, MapSectionVectors mapSectionVectors);
-
 		ObjectId? GetMapSectionId(ObjectId subdivisionId, MapBlockOffset blockPosition);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);
-
-		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted);
-		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, bool isInverted, JobOwnerType jobOwnerType, JobType jobType);
-		//Task<ObjectId?> SaveJobMapSectionAsync(MapSectionResponse mapSectionResponse, string jobIdStr, JobType jobType, SizeInt blockIndex, bool isInverted, OwnerType ownerType, string jobSubdivionIdStr);
 
 		Task<ObjectId?> SaveJobMapSectionAsync(JobType jobType, ObjectId jobId, ObjectId mapSectionId, SizeInt blockIndex, bool isInverted, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, OwnerType ownerType);
 
@@ -46,9 +38,7 @@ namespace MSS.Common
 
 		IList<ObjectId> GetMapSectionIds(ObjectId jobId);
 		
-		//bool InsertIfNotFoundJobMapSection(ObjectId mapSectionId, ObjectId subdivisionId, ObjectId originalSourceSubdivisionId, ObjectId jobId, JobOwnerType jobOwnerType, bool isInverted, bool refIsHard, out ObjectId jobMapSectionId);
 		bool InsertIfNotFoundJobMapSection(JobType jobType, ObjectId jobId, ObjectId mapSectionId, SizeInt blockIndex, bool isInverted, ObjectId mapSectionSubdivisionId, ObjectId jobSubdivisionId, OwnerType ownerType, out ObjectId jobMapSectionId);
-
 
 		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetMapSectionAndSubdivisionIdsForAllJobMapSections();
 		IEnumerable<ValueTuple<ObjectId, ObjectId, ObjectId, ObjectId>> GetJobAndSubdivisionIdsForAllJobMapSections();
