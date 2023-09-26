@@ -220,7 +220,7 @@ namespace MSetRepo
 					}
 					else
 					{
-						var blockPosition = mapSectionRequest.RepoBlockPosition;
+						var blockPosition = mapSectionRequest.SectionBlockOffset;
 						var mapSectionId = mapSectionAdapter.GetMapSectionId(subdivisionId, blockPosition);
 
 						if (mapSectionId != null)

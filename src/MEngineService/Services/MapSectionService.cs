@@ -178,8 +178,8 @@ namespace MEngineService.Services
 
 			var mapSectionRequest = new MapSectionRequest(JobType.FullScale, req.JobId, req.OwnerType, req.SubdivisionId, req.SubdivisionId, req.ScreenPosition,
 				screenPositionRelativeToCenter: new VectorInt(),
-				mapBlockOffset: new BigVector(),
-				blockPosition: req.BlockPosition,
+				jobBlockOffset: new BigVector(),
+				sectionBlockOffset: req.BlockPosition,
 				mapPosition: mapPosition,
 				isInverted: req.IsInverted,
 				req.Precision,

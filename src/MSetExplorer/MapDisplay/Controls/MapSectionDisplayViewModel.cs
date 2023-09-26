@@ -1115,7 +1115,7 @@ namespace MSetExplorer
 
 			foreach (var existingReq in existingRequests)
 			{
-				var alreadyPresent = newRequests.Where(newReq => newReq.SubdivisionId == existingReq.SubdivisionId && newReq.RepoBlockPosition == existingReq.RepoBlockPosition);
+				var alreadyPresent = newRequests.Where(newReq => newReq.SubdivisionId == existingReq.SubdivisionId && newReq.SectionBlockOffset == existingReq.SectionBlockOffset);
 				var foundCnt = alreadyPresent.Count();
 
 				if (foundCnt == 0)
@@ -1189,7 +1189,7 @@ namespace MSetExplorer
 
 		private bool RemovePendingRequest(MapSection mapSection)
 		{
-			var request = _requestsPendingGeneration.Find(x => x.SubdivisionId == mapSection.SubdivisionId && x.RepoBlockPosition == mapSection.RepoBlockPosition);
+			var request = _requestsPendingGeneration.Find(x => x.SubdivisionId == mapSection.SubdivisionId && x.SectionBlockOffset == mapSection.RepoBlockPosition);
 
 			if (request != null)
 			{
@@ -1204,7 +1204,7 @@ namespace MSetExplorer
 
 		private bool RemoveMapSection(MapSectionRequest mapSectionRequest)
 		{
-			var section = MapSections.FirstOrDefault(x => x.SubdivisionId == mapSectionRequest.SubdivisionId && x.RepoBlockPosition == mapSectionRequest.RepoBlockPosition);
+			var section = MapSections.FirstOrDefault(x => x.SubdivisionId == mapSectionRequest.SubdivisionId && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
 
 			if (section != null)
 			{

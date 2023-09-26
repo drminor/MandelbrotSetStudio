@@ -251,51 +251,41 @@ namespace MSS.Common
 
 		#region Screen To Subdivision Translation
 
-		public static BigVector ToSubdivisionCoords(PointInt screenPosition, BigVector mapBlockOffset, out bool isInverted)
+		public static BigVector ToSubdivisionCoords(PointInt screenPosition, BigVector jobBlockOffset, out bool isInverted)
 		{
-			var repoPos = mapBlockOffset.Tranlate(screenPosition);
+			var sectionBlockOffset = jobBlockOffset.Tranlate(screenPosition);
 
 			BigVector result;
-			if (repoPos.Y < 0)
+			if (sectionBlockOffset.Y < 0)
 			{
 				isInverted = true;
-				result = new BigVector(repoPos.X, (repoPos.Y * -1) - 1);
+				result = new BigVector(sectionBlockOffset.X, (sectionBlockOffset.Y * -1) - 1);
 			}
 			else
 			{
 				isInverted = false;
-				result = repoPos;
+				result = sectionBlockOffset;
 			}
 
 			return result;
 		}
 
-		public static PointInt ToScreenCoords(BigVector repoPosition, bool inverted, BigVector mapBlockOffset)
+		public static PointInt ToScreenCoords(BigVector sectionBlockOffset, bool inverted, BigVector jobBlockOffset)
 		{
 			BigVector posT;
 
 			if (inverted)
 			{
-				posT = new BigVector(repoPosition.X, (repoPosition.Y + 1) * -1);
+				posT = new BigVector(sectionBlockOffset.X, (sectionBlockOffset.Y + 1) * -1);
 			}
 			else
 			{
-				posT = repoPosition;
+				posT = sectionBlockOffset;
 			}
 
-			var screenOffsetRat = posT.Diff(mapBlockOffset);
+			var screenOffset = posT.Diff(jobBlockOffset);
 
-			//if (BigIntegerHelper.TryConvertToInt(screenOffsetRat.Values, out var values))
-			//{
-			//	var result = new PointInt(values);
-			//	return result;
-			//}
-			//else
-			//{
-			//	throw new InvalidOperationException($"Cannot convert the ScreenCoords to integers.");
-			//}
-
-			if (screenOffsetRat.TryConvertToInt(out var result))
+			if (screenOffset.TryConvertToInt(out var result))
 			{
 				return new PointInt(result);
 			}

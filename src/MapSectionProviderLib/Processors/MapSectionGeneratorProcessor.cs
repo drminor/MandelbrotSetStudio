@@ -187,7 +187,7 @@ namespace MapSectionProviderLib
 						var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
 						var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues." : null;
 
-						Debug.WriteLineIf(_useDetailedDebug, $"Generating MapSection for Request: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}. BlockPos: {mapSectionRequest.RepoBlockPosition}. {sendingVectorsMsg} {haveZValuesMsg}");
+						Debug.WriteLineIf(_useDetailedDebug, $"Generating MapSection for Request: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}. BlockPos: {mapSectionRequest.SectionBlockOffset}. {sendingVectorsMsg} {haveZValuesMsg}");
 						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
 

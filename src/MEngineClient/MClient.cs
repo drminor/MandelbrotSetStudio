@@ -206,7 +206,7 @@ namespace MEngineClient
 				OwnerType = req.OwnerType,
 				SubdivisionId = req.SubdivisionId,
 				ScreenPosition = req.ScreenPosition,
-				BlockPosition = req.RepoBlockPosition,
+				BlockPosition = req.SectionBlockOffset,
 				IsInverted = req.IsInverted,
 				MapPosition = mapPosition,
 				BlockSize = req.BlockSize,

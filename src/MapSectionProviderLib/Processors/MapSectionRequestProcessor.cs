@@ -358,7 +358,7 @@ namespace MapSectionProviderLib
 
 			if (mapSectionVectors == null)
 			{
-				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.RepoBlockPosition}.");
+				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.SectionBlockOffset}.");
 				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobNumber, isCancelled: false);
 			}
 			else
@@ -512,7 +512,7 @@ namespace MapSectionProviderLib
 		private async Task<MapSectionBytes?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-			var mapSectionBytes = await _mapSectionAdapter.GetMapSectionBytesAsync(subdivisionId, mapSectionRequest.RepoBlockPosition, ct);
+			var mapSectionBytes = await _mapSectionAdapter.GetMapSectionBytesAsync(subdivisionId, mapSectionRequest.SectionBlockOffset, ct);
 
 			return mapSectionBytes;
 		}
@@ -520,7 +520,7 @@ namespace MapSectionProviderLib
 		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
-			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.RepoBlockPosition);
+			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.SectionBlockOffset);
 
 			return mapSectionBytes;
 		}
@@ -620,7 +620,7 @@ namespace MapSectionProviderLib
 
 			if (mapSectionVectors2 == null)
 			{
-				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors2 is empty. The request's block position is {mapSectionRequest.RepoBlockPosition}.");
+				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors2 is empty. The request's block position is {mapSectionRequest.SectionBlockOffset}.");
 				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobNumber, isCancelled: false);
 			}
 			else
@@ -685,7 +685,7 @@ namespace MapSectionProviderLib
 		private bool ThereIsAMatchingRequest(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && x.Request.RepoBlockPosition == mapSectionRequest.RepoBlockPosition);
+			var result = _pendingRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == subdivisionId && x.Request.SectionBlockOffset == mapSectionRequest.SectionBlockOffset);
 
 			return result;
 		}
@@ -694,7 +694,7 @@ namespace MapSectionProviderLib
 		private List<MapSectionWorkRequest> GetPendingRequests(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && x.Request.RepoBlockPosition == mapSectionRequest.RepoBlockPosition).ToList();
+			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && x.Request.SectionBlockOffset == mapSectionRequest.SectionBlockOffset).ToList();
 
 			return result;
 		}
@@ -764,7 +764,7 @@ namespace MapSectionProviderLib
 		private bool RequestExists(MapSectionRequest mapSectionRequest, IEnumerable<MapSectionWorkRequest> workRequests)
 		{
 			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && x.Request.RepoBlockPosition == mapSectionRequest.RepoBlockPosition);
+			var result = workRequests.Any(x => x.Request.SubdivisionId == subdivisionId && x.Request.SectionBlockOffset == mapSectionRequest.SectionBlockOffset);
 
 			return result;
 		}

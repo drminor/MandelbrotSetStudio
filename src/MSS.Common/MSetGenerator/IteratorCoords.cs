@@ -7,9 +7,9 @@ namespace MSS.Common
 {
 	public class IteratorCoords
 	{
-		public IteratorCoords(MapBlockOffset blockPos, PointInt screenPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta)
+		public IteratorCoords(MapBlockOffset sectionBlockOffset, PointInt screenPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta)
 		{
-			BlockPos = blockPos ?? throw new ArgumentNullException(nameof(blockPos));
+			BlockPos = sectionBlockOffset ?? throw new ArgumentNullException(nameof(sectionBlockOffset));
 			ScreenPos = screenPos;
 			StartingCx = startingCx;
 			StartingCy = startingCy;

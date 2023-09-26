@@ -8,7 +8,7 @@ namespace MSS.Types.MSet
 	public class MapSectionRequest
 	{
 		public MapSectionRequest(JobType jobType, string jobId, OwnerType ownerType, string subdivisionId, string originalSourceSubdivisionId,
-			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector mapBlockOffset, MapBlockOffset blockPosition, RPoint mapPosition, bool isInverted,
+			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector jobBlockOffset, MapBlockOffset sectionBlockOffset, RPoint mapPosition, bool isInverted,
 			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int mapLoaderJobNumber, int requestNumber)
 		{
 			ObjectId test = new ObjectId(originalSourceSubdivisionId);
@@ -26,8 +26,8 @@ namespace MSS.Types.MSet
 			OriginalSourceSubdivisionId = originalSourceSubdivisionId;
 			ScreenPosition = screenPosition;
 			ScreenPositionReleativeToCenter = screenPositionRelativeToCenter;
-			JobMapBlockOffset = mapBlockOffset;
-			RepoBlockPosition = blockPosition;
+			JobBlockOffset = jobBlockOffset;
+			SectionBlockOffset = sectionBlockOffset;
 			MapPosition = mapPosition;
 			IsInverted = isInverted;
 			Precision = precision;
@@ -53,7 +53,7 @@ namespace MSS.Types.MSet
 		/// X,Y coords for this MapSection, relative to the Subdivision BaseMapPosition in Block-Size units.
 		/// </summary>
 		//public BigVector RepoBlockPosition { get; init; }
-		public MapBlockOffset RepoBlockPosition { get; init; }
+		public MapBlockOffset SectionBlockOffset { get; init; }
 
 		/// <summary>
 		/// True, if this MapSection has a negative Y coordinate. 
@@ -63,7 +63,7 @@ namespace MSS.Types.MSet
 		/// <summary>
 		/// X,Y coords for the MapSection located at the lower, left for this Job, relative to the Subdivision BaseMapPosition in Block-Size units
 		/// </summary>
-		public BigVector JobMapBlockOffset { get; init; }
+		public BigVector JobBlockOffset { get; init; }
 
 		// TODO: Confirm that the ScreenPosition and the BlockPosition - MapBlockOffset are always identical.
 

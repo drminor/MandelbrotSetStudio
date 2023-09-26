@@ -7,7 +7,7 @@
 			: this(
 				  mapSectionRequest.MapSectionId, 
 				  mapSectionRequest.SubdivisionId,
-				  mapSectionRequest.RepoBlockPosition,
+				  mapSectionRequest.SectionBlockOffset,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted: false,
 				  allRowsHaveEscaped: false,
@@ -27,7 +27,7 @@
 			: this(
 				  mapSectionRequest.MapSectionId,
 				  mapSectionRequest.SubdivisionId,
-				  blockPosition: mapSectionRequest.RepoBlockPosition,
+				  blockPosition: mapSectionRequest.SectionBlockOffset,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted,
 				  allRowsHaveEscaped,

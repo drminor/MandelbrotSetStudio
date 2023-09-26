@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Numerics;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -23,6 +24,8 @@ namespace MSS.Types.MSet
 		[DataMember(Order = 4)]
 		public long YLo;
 
+		#region Constructors
+
 		public MapBlockOffset() : this(0, 0, 0, 0) { }
 
 		public MapBlockOffset(long xHi, long xLo, long yHi, long yLo)
@@ -42,6 +45,22 @@ namespace MSS.Types.MSet
 			YHi = y[0];
 			YLo = y[1];
 		}
+
+		#endregion
+
+		#region Public Methods
+
+		public (BigInteger x, BigInteger y) GetBigIntegers()
+		{
+			var x = BigIntegerHelper.FromLongs(new long[] { XHi, XLo });
+			var y = BigIntegerHelper.FromLongs(new long[] { YHi, YLo });
+
+			return (x, y);
+		}
+
+		#endregion
+
+		#region To String 
 
 		public override string? ToString()
 		{
@@ -69,6 +88,8 @@ namespace MSS.Types.MSet
 					.Append(lo.ToString(CultureInfo.InvariantCulture));
 			}
 		}
+
+		#endregion
 
 		#region IEquatable / IEqualityComparer Support
 

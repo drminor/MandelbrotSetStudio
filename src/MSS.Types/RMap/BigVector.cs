@@ -131,6 +131,13 @@ namespace MSS.Types
 			}
 		}
 
+		public (long[] x, long[] y) GetLongPairs()
+		{
+			var x = BigIntegerHelper.ToLongPairs(Values[0]);
+			var y = BigIntegerHelper.ToLongPairs(Values[1]);
+
+			return (x, y);
+		}
 
 		#endregion
 
