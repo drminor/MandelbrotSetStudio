@@ -22,7 +22,7 @@ namespace MSetExplorer
 		private const int BYTES_PER_PIXEL = 4;
 
 		private readonly SizeInt _blockSize;
-		private readonly Action<MapSection> _disposeMapSection;
+		//private readonly Action<MapSection> _disposeMapSection;
 		private readonly Action<WriteableBitmap> _onBitmapUpdate;
 
 		private readonly ObservableCollection<MapSection> _mapSections;
@@ -47,13 +47,13 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public BitmapGrid(ObservableCollection<MapSection> mapSections, SizeDbl viewPortSize, Action<MapSection> disposeMapSection, Action<WriteableBitmap> onBitmapUpdate, SizeInt blockSize)
+		public BitmapGrid(ObservableCollection<MapSection> mapSections, SizeDbl viewPortSize/*, Action<MapSection> disposeMapSection*/, Action<WriteableBitmap> onBitmapUpdate, SizeInt blockSize)
 		{
 			_mapSections = mapSections;
 			_logicalViewportSize = viewPortSize;
 			_canvasControlOffset = new VectorInt();
 
-			_disposeMapSection = disposeMapSection;
+			//_disposeMapSection = disposeMapSection;
 			_onBitmapUpdate = onBitmapUpdate;
 			_blockSize = blockSize;
 
@@ -307,7 +307,7 @@ namespace MSetExplorer
 
 					if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "Draw", warnOnFail: true))
 					{
-						_mapSections.Add(mapSection);
+						//_mapSections.Add(mapSection);
 
 						if (_colorMap != null)
 						{
@@ -329,10 +329,10 @@ namespace MSetExplorer
 							}
 						}
 					}
-					else
-					{
-						_disposeMapSection(mapSection);
-					}
+					//else
+					//{
+					//	_disposeMapSection(mapSection);
+					//}
 				}
 			}
 
@@ -434,7 +434,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						_disposeMapSection(mapSection);
+						//_disposeMapSection(mapSection);
 						sectionsNotDrawn.Add(mapSection);
 					}
 				}
@@ -448,10 +448,10 @@ namespace MSetExplorer
 			//if (_mapSections.Count > 0 && !anyDrawnOnLastRow)
 			//	Debug.WriteLine($"No blocks were drawn on the last row for ReDraw:{_mapSections.FirstOrDefault()?.JobNumber}.");
 
-			foreach (var ms in sectionsNotDrawn)
-			{
-				_mapSections.Remove(ms);
-			}
+			//foreach (var ms in sectionsNotDrawn)
+			//{
+			//	_mapSections.Remove(ms);
+			//}
 
 			ReportPercentMapSectionsWithUpdatedScrPos();
 
@@ -460,16 +460,12 @@ namespace MSetExplorer
 
 		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors)
 		{
-			//var result = Bitmap.Dispatcher.Invoke(DrawSectionOnUiThread, new object[] { mapSection, mapSectionVectors });
-
-			//return (bool)result;
-
 			var wasAdded = false;
 			var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
 			if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "GetAndPlacePixels"))
 			{
-				_mapSections.Add(mapSection);
+				//_mapSections.Add(mapSection);
 				wasAdded = true;
 
 				if (_colorMap != null)
@@ -497,52 +493,11 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"GetAndPlacePixels is not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
-				_disposeMapSection(mapSection);
+				//_disposeMapSection(mapSection);
 			}
 
 			return wasAdded;
 		}
-
-		//private bool DrawSectionOnUiThread(MapSection mapSection, MapSectionVectors mapSectionVectors)
-		//{
-		//	var wasAdded = false;
-		//	var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
-
-		//	if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, "GetAndPlacePixels"))
-		//	{
-		//		_mapSections.Add(mapSection);
-		//		wasAdded = true;
-
-		//		if (_colorMap != null)
-		//		{
-		//			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-		//			var loc = invertedBlockPos.Scale(_blockSize);
-
-		//			var errors = LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
-
-		//			if (errors > 0)
-		//			{
-		//				Debug.WriteLine($"There were {errors} color placement errors while Drawing Section on the UI thread for {mapSection.JobNumber}.");
-		//			}
-
-		//			try
-		//			{
-		//				Bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
-		//			}
-		//			catch (Exception e)
-		//			{
-		//				Debug.WriteLine($"GetAndPlacePixels got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
-		//			}
-		//		}
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine($"GetAndPlacePixels is not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
-		//		_disposeMapSection(mapSection);
-		//	}
-
-		//	return wasAdded;
-		//}
 
 		#endregion
 

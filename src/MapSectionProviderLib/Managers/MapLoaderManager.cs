@@ -12,6 +12,8 @@ namespace MapSectionProviderLib
 {
 	public class MapLoaderManager : IMapLoaderManager
 	{
+		#region Private Properties
+
 		private readonly CancellationTokenSource _cts;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
@@ -21,6 +23,7 @@ namespace MapSectionProviderLib
 
 		private readonly Task _removeCompletedRequestsTask;
 
+		#endregion
 
 		#region Constructor
 
@@ -53,38 +56,6 @@ namespace MapSectionProviderLib
 
 		public int GetNextJobNumber() => _mapSectionRequestProcessor.GetNextRequestId();
 
-		//public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber)
-		//{
-		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
-		//	var result = Push(mapSectionRequests, callback, out jobNumber);
-		//	return result;
-		//}
-
-		//public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, 
-		//	Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
-		//{
-		//	Debug.WriteLine($"MapLoaderManager: Creating MapSections with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
-
-		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
-		//	var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
-
-		//	mapSectionsPendingGeneration = new List<MapSection>();
-
-		//	foreach(var mapSectionRequest in pendingGeneration)
-		//	{
-		//		//var mapSectionPending = emptyMapSections[mapSectionRequest.RequestNumber];
-		//		var mapSectionPending = emptyMapSections.FirstOrDefault(x => x.RequestNumber == mapSectionRequest.RequestNumber);
-
-		//		if (mapSectionPending != null)
-		//		{
-		//			mapSectionPending.JobNumber = jobNumber;
-		//			mapSectionsPendingGeneration.Add(mapSectionPending);
-		//		}
-		//	}
-
-		//	return result;
-		//}
-
 		public List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber, out List<MapSectionRequest> pendingGeneration)
 		{
 			var result = FetchResponses(mapSectionRequests, out jobNumber);
@@ -116,15 +87,6 @@ namespace MapSectionProviderLib
 			RequestAdded?.Invoke(this, new JobProgressInfo(jobNumber, "temp", DateTime.Now, mapSectionRequests.Count, result.Count));
 
 			return result;
-		}
-
-		[Conditional("DEBUG")]
-		private void CheckNewRequestsForCancellation(List<MapSectionRequest> requestsNotFound)
-		{
-			if (requestsNotFound.Any(x => x.CancellationTokenSource.IsCancellationRequested))
-			{
-				Debug.WriteLine("MapLoaderManager: At least one MapSectionRequest is Cancelled.");
-			}
 		}
 
 		public Task? GetTaskForJob(int jobNumber)
@@ -166,7 +128,6 @@ namespace MapSectionProviderLib
 			});
 
 			return result;
-
 		}
 
 		public void StopJob(int jobNumber)
@@ -185,22 +146,6 @@ namespace MapSectionProviderLib
 			});
 
 		}
-
-		//public void CancelRequests(IList<MapSection> sectionsToCancel)
-		//{
-		//	DoWithWriteLock(() =>
-		//	{
-		//		CancelRequestsInternal(sectionsToCancel);
-		//	});
-		//}
-
-		//public void CancelRequests(IList<MapSectionRequest> requestsToCancel)
-		//{
-		//	DoWithWriteLock(() =>
-		//	{
-		//		CancelRequestsInternal(requestsToCancel);
-		//	});
-		//}
 
 		#endregion
 
@@ -260,40 +205,6 @@ namespace MapSectionProviderLib
 				request.MapLoader.Stop();
 			}
 		}
-
-		//private void CancelRequestsInternal(IList<MapSection> sectionsToCancel)
-		//{
-		//	foreach (var section in sectionsToCancel)
-		//	{
-		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == section.JobNumber);
-
-		//		if (genMapRequestInfo != null)
-		//		{
-		//			genMapRequestInfo.MapLoader.CancelRequest(section);
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {section.JobNumber}.");
-		//		}
-		//	}
-		//}
-
-		//private void CancelRequestsInternal(IList<MapSectionRequest> requestsToCancel)
-		//{
-		//	foreach (var request in requestsToCancel)
-		//	{
-		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == request.MapLoaderJobNumber);
-
-		//		if (genMapRequestInfo != null)
-		//		{
-		//			genMapRequestInfo.MapLoader.CancelRequest(request);
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {request.MapLoaderJobNumber}.");
-		//		}
-		//	}
-		//}
 
 		private void RemoveCompletedRequests(List<GenMapRequestInfo> requestInfos, ReaderWriterLockSlim requestsLock, CancellationToken ct)
 		{
@@ -376,6 +287,15 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		[Conditional("DEBUG")]
+		private void CheckNewRequestsForCancellation(List<MapSectionRequest> requestsNotFound)
+		{
+			if (requestsNotFound.Any(x => x.CancellationTokenSource.IsCancellationRequested))
+			{
+				Debug.WriteLine("MapLoaderManager: At least one MapSectionRequest is Cancelled.");
+			}
+		}
+
 		#endregion
 
 		#region Lock Helpers
@@ -453,6 +373,91 @@ namespace MapSectionProviderLib
 
 		#endregion
 
+		#region Old code
+
+		//public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber)
+		//{
+		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
+		//	var result = Push(mapSectionRequests, callback, out jobNumber);
+		//	return result;
+		//}
+
+		//public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, 
+		//	Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
+		//{
+		//	Debug.WriteLine($"MapLoaderManager: Creating MapSections with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
+
+		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
+		//	var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
+
+		//	mapSectionsPendingGeneration = new List<MapSection>();
+
+		//	foreach(var mapSectionRequest in pendingGeneration)
+		//	{
+		//		//var mapSectionPending = emptyMapSections[mapSectionRequest.RequestNumber];
+		//		var mapSectionPending = emptyMapSections.FirstOrDefault(x => x.RequestNumber == mapSectionRequest.RequestNumber);
+
+		//		if (mapSectionPending != null)
+		//		{
+		//			mapSectionPending.JobNumber = jobNumber;
+		//			mapSectionsPendingGeneration.Add(mapSectionPending);
+		//		}
+		//	}
+
+		//	return result;
+		//}
+
+		//public void CancelRequests(IList<MapSection> sectionsToCancel)
+		//{
+		//	DoWithWriteLock(() =>
+		//	{
+		//		CancelRequestsInternal(sectionsToCancel);
+		//	});
+		//}
+
+		//public void CancelRequests(IList<MapSectionRequest> requestsToCancel)
+		//{
+		//	DoWithWriteLock(() =>
+		//	{
+		//		CancelRequestsInternal(requestsToCancel);
+		//	});
+		//}
+
+		//private void CancelRequestsInternal(IList<MapSection> sectionsToCancel)
+		//{
+		//	foreach (var section in sectionsToCancel)
+		//	{
+		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == section.JobNumber);
+
+		//		if (genMapRequestInfo != null)
+		//		{
+		//			genMapRequestInfo.MapLoader.CancelRequest(section);
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {section.JobNumber}.");
+		//		}
+		//	}
+		//}
+
+		//private void CancelRequestsInternal(IList<MapSectionRequest> requestsToCancel)
+		//{
+		//	foreach (var request in requestsToCancel)
+		//	{
+		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == request.MapLoaderJobNumber);
+
+		//		if (genMapRequestInfo != null)
+		//		{
+		//			genMapRequestInfo.MapLoader.CancelRequest(request);
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {request.MapLoaderJobNumber}.");
+		//		}
+		//	}
+		//}
+
+		#endregion
 	}
 
 	internal class GenMapRequestInfo //: IDisposable
@@ -567,6 +572,4 @@ namespace MapSectionProviderLib
 
 		//#endregion
 	}
-
-
 }

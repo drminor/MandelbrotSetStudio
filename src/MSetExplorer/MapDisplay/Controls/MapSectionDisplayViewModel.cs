@@ -29,10 +29,7 @@ namespace MSetExplorer
 		private BoundedMapArea? _boundedMapArea;
 
 		private List<MapSectionRequest> _currentMapSectionRequests { get; set; }
-
-		//private List<MapSection> _mapSectionsPendingGeneration { get; init; }
 		private List<MapSectionRequest> _requestsPendingGeneration { get; init; }	
-
 
 		private MapAreaInfo? _latestMapAreaInfo;
 
@@ -70,11 +67,10 @@ namespace MSetExplorer
 			MapSections = new ObservableCollection<MapSection>();
 
 			_currentMapSectionRequests = new List<MapSectionRequest>();
-			//_mapSectionsPendingGeneration = new List<MapSection>();
 			_requestsPendingGeneration = new List<MapSectionRequest>();
 			_latestMapAreaInfo = null;
 
-			_bitmapGrid = new BitmapGrid(MapSections, new SizeDbl(128), DisposeMapSection, OnBitmapUpdate, blockSize);
+			_bitmapGrid = new BitmapGrid(MapSections, new SizeDbl(128)/*, DisposeMapSection*/, OnBitmapUpdate, blockSize);
 
 			ActiveJobNumbers = new List<int>();
 			_currentAreaColorAndCalcSettings = null;
@@ -662,7 +658,7 @@ namespace MSetExplorer
 				lock (_paintLocker)
 				{
 					_bitmapGrid.GetAndPlacePixels(mapSection, mapSection.MapSectionVectors);
-					//_mapSectionsPendingGeneration.Remove(mapSection);
+					MapSections.Add(mapSection);
 					RemovePendingRequest(mapSection);
 				}
 			}
@@ -787,12 +783,6 @@ namespace MSetExplorer
 		{
 			LastMapAreaInfo = screenAreaInfo;
 
-
-			//var sectionsRequired = _mapSectionBuilder.CreateEmptyMapSections(screenAreaInfo, newJob.MapCalcSettings);
-			//var loadedSections = new List<MapSection>(MapSections);
-			//loadedSections.AddRange(_mapSectionsPendingGeneration); // X
-			//var sectionsToLoad = GetSectionsToLoadAndRemove(sectionsRequired, loadedSections, out var sectionsToRemove);
-
 			var mapLoaderJobNumber = -1;
 			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, mapLoaderJobNumber);
 			
@@ -801,7 +791,6 @@ namespace MSetExplorer
 
 			int? result;
 
-			//if (sectionsToLoad.Count == 0 && sectionsToRemove.Count == 0)
 			if (newRequests.Count == 0 && requestsNoLongerNeeded.Count == 0)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, "ReuseAndLoad is performing a 'simple' update.");
@@ -819,28 +808,6 @@ namespace MSetExplorer
 			}
 			else
 			{
-				//var sectionsToCancel = new List<MapSection>();
-
-				//foreach (var section in sectionsToRemove)
-				//{
-				//	if (_mapSectionsPendingGeneration.Contains(section)) // X
-				//	{
-				//		_mapSectionsPendingGeneration.Remove(section); // X
-				//		sectionsToCancel.Add(section);
-				//	}
-				//	else
-				//	{
-				//		MapSections.Remove(section);
-				//		_mapSectionVectorProvider.ReturnMapSection(section);
-				//		//sectionsToClear.Add(section);
-				//	}
-				//}
-
-				//if (sectionsToCancel.Count > 0)
-				//{
-				//	_mapLoaderManager.CancelRequests(sectionsToCancel);
-				//}
-
 				var requestsToCancel = new List<MapSectionRequest>();
 				var numberOfSectionsRemoved = 0;
 				var numberOfRequestsNotFound = 0;
@@ -891,48 +858,27 @@ namespace MSetExplorer
 					Debug.WriteLine($"WARNING: The BitmapGrid found {numberOfSectionsNotDrawn} sections that were outside the bounds of the current display.");
 				}
 
-				//numberOfSectionsNotDrawn += requestsNoLongerNeeded.Count - requestsToCancel.Count;
-
 				ReportReuseAndLoadedSections(newRequests, requestsToCancel, MapSections, numberOfSectionsRemoved, numberOfSectionsNotDrawn);
 
-
 				if (newRequests.Count > 0)
-				//if (sectionsToLoad.Count > 0)
 				{
-					//var newMapSections = _mapLoaderManager.Push(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, sectionsToLoad, MapSectionReady, out var newJobNumber, out var mapSectionsPendingGeneration);
 					var newMapSections = _mapLoaderManager.Push(newRequests, MapSectionReady, out var newJobNumber, out var mapRequestsPendingGeneration);
 
 					Debug.WriteLineIf(_useDetailedDebug, $"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated.");
 
-					//_mapSectionsPendingGeneration.AddRange(mapSectionsPendingGeneration); // X
 					_requestsPendingGeneration.AddRange(mapRequestsPendingGeneration);
 
+					foreach(var mapSection in newMapSections)
+					{
+						MapSections.Add(mapSection);
+					}
+
 					_bitmapGrid.DrawSections(newMapSections);
-
-					//if (CLEAR_MAP_SECTIONS_PENDING_GENERATION)
-					//{
-					//	// Clear all sections for which we are waiting to receive a MapSection.
-					//	var numberCleared = _bitmapGrid.ClearSections(_mapSectionsPendingGeneration); // X
-					//	var numberRequestedToClear = _mapSectionsPendingGeneration.Count; // X
-
-					//	if (numberCleared != numberRequestedToClear)
-					//	{
-					//		var diff = numberRequestedToClear - numberCleared;
-					//		Debug.WriteLineIf(_useDetailedDebug, $"{diff} MapSections were not cleared out of a total {numberRequestedToClear} requested.");
-					//	}
-					//	else
-					//	{
-					//		Debug.WriteLineIf(_useDetailedDebug, $"{numberCleared} MapSections were cleared.");
-					//	}
-					//}
-
 
 					if (CLEAR_MAP_SECTIONS_PENDING_GENERATION)
 					{
 						// Clear all sections for which we are waiting to receive a MapSection.
-
 						var mapSectionsToClear = new List<MapSection>();
-
 						foreach(var request in _requestsPendingGeneration)
 						{
 							mapSectionsToClear.Add(_mapSectionBuilder.CreateEmptyMapSection(request, jobNumber: -1, isCancelled: false));
@@ -966,18 +912,6 @@ namespace MSetExplorer
 			}
 
 			return result;
-		}
-
-		[Conditional("DEBUG")]
-		private void ReportReuseAndLoadedSections(List<MapSectionRequest> newRequests, List<MapSectionRequest> requestsToCancel, IList<MapSection> mapSections, int numberOfsectionsRemoved, int numberOfSectionsNotDrawn)
-		{
-			Debug.WriteLineIf(_useDetailedDebug, $"Reusing Loaded Sections. " +
-				$"Requesting {newRequests.Count} new sections, " +
-				$"Cancelling {requestsToCancel.Count} pending requests, " +
-				$"returned {numberOfsectionsRemoved} sections. " +
-				$"{numberOfSectionsNotDrawn} sections were not drawn! " +
-				$"Keeping {MapSections.Count} sections. " +
-				$"The MapSection Pool has: {_mapSectionVectorProvider.MapSectionsVectorsInPool} sections. ");
 		}
 
 		private void CancelRequests(List<MapSectionRequest> mapSectionRequests)
@@ -1026,6 +960,11 @@ namespace MSetExplorer
 
 			ColorBandSet = newJob.ColorBandSet;
 
+			foreach (var mapSection in newMapSections)
+			{
+				MapSections.Add(mapSection);
+			}
+
 			_bitmapGrid.DrawSections(newMapSections);
 			lastSectionWasIncluded = mapRequestsPendingGeneration.Count == 0;
 
@@ -1040,7 +979,6 @@ namespace MSetExplorer
 
 			_mapLoaderManager.StopJobs(ActiveJobNumbers);
 			ActiveJobNumbers.Clear();
-			//_mapSectionsPendingGeneration.Clear();
 			_requestsPendingGeneration.Clear();
 
 			var msToStopJobs = stopWatch.ElapsedMilliseconds;
@@ -1103,7 +1041,6 @@ namespace MSetExplorer
 			//	return false;
 			//}
 
-
 			return false;
 		}
 
@@ -1131,33 +1068,6 @@ namespace MSetExplorer
 					{
 						result.Remove(newRequst);
 					}
-				}
-			}
-
-			return result;
-		}
-
-		private List<MapSection> GetSectionsToLoadAndRemove(List<MapSection> sectionsToRequest, IList<MapSection> sectionsPresent, out List<MapSection> sectionsToRemove)
-		{
-			var result = new List<MapSection>(sectionsToRequest);
-
-			sectionsToRemove = new List<MapSection>();
-
-			foreach (var ms in sectionsPresent)
-			{
-				var alreadyPresent = sectionsToRequest.Any(reqSection => reqSection == ms && reqSection.TargetIterations == ms.TargetIterations);
-
-				if (alreadyPresent)
-				{
-					// We already have it, remove it from the list of sectionsToRequest.
-					result.Remove(ms);
-				}
-
-				if (!alreadyPresent)
-				{
-					// The section from the current list could not be matched in the list of sectionsToRequest
-					// we will not be needing this section any longer
-					sectionsToRemove.Add(ms);
 				}
 			}
 
@@ -1221,20 +1131,20 @@ namespace MSetExplorer
 
 		}
 
-		private void DisposeMapSection(MapSection mapSection)
-		{
-			//var refCount = mapSection.MapSectionVectors?.ReferenceCount ?? 0;
+		//private void DisposeMapSection(MapSection mapSection)
+		//{
+		//	//var refCount = mapSection.MapSectionVectors?.ReferenceCount ?? 0;
 
-			// The MapSection may have refCount > 1; the MapSectionPersistProcessor may not have completed its work, 
-			// But when the MapSectionPersistProcessor doe complete its work, it will Dispose and at that point the refCount will be only 1.
-			//if (refCount > 1)
-			//{
-			//	Debug.WriteLine("WARNING: MapSectionDisplayViewModel is Disposing a MapSection whose reference count > 1.");
-			//}
+		//	// The MapSection may have refCount > 1; the MapSectionPersistProcessor may not have completed its work, 
+		//	// But when the MapSectionPersistProcessor doe complete its work, it will Dispose and at that point the refCount will be only 1.
+		//	//if (refCount > 1)
+		//	//{
+		//	//	Debug.WriteLine("WARNING: MapSectionDisplayViewModel is Disposing a MapSection whose reference count > 1.");
+		//	//}
 
-			// TODO: Confirm that we should not return MapSections found by the BitmapGrid class to be outside of the display area
-			//_mapSectionVectorProvider.ReturnMapSection(mapSection);
-		}
+		//	// TODO: Confirm that we should not return MapSections found by the BitmapGrid class to be outside of the display area
+		//	//_mapSectionVectorProvider.ReturnMapSection(mapSection);
+		//}
 
 		private void OnBitmapUpdate(WriteableBitmap bitmap)
 		{
@@ -1351,6 +1261,18 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {viewportSize}. BaseScaleFactor: {boundedMapArea.BaseScale}.");
 
+		}
+
+		[Conditional("DEBUG2")]
+		private void ReportReuseAndLoadedSections(List<MapSectionRequest> newRequests, List<MapSectionRequest> requestsToCancel, IList<MapSection> mapSections, int numberOfsectionsRemoved, int numberOfSectionsNotDrawn)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"Reusing Loaded Sections. " +
+				$"Requesting {newRequests.Count} new sections, " +
+				$"Cancelling {requestsToCancel.Count} pending requests, " +
+				$"returned {numberOfsectionsRemoved} sections. " +
+				$"{numberOfSectionsNotDrawn} sections were not drawn! " +
+				$"Keeping {MapSections.Count} sections. " +
+				$"The MapSection Pool has: {_mapSectionVectorProvider.MapSectionsVectorsInPool} sections. ");
 		}
 
 		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseFactor, double relativeScale) 

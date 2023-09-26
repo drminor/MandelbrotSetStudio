@@ -256,15 +256,9 @@ namespace MSetRepo
 
 			var mapAreaInfoV1 = mapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
 
-
-			//var emptyMapSections = mapSectionBuilder.CreateEmptyMapSections(mapAreaInfoV1, mapCalcSettings);
-			//var mapSectionRequests = mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, emptyMapSections);
-
 			var mapSectionRequests = mapSectionBuilder.CreateSectionRequests(jobType, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, mapLoaderJobNumber);
 
-			throw new NotImplementedException("Check the see if CreateSectionRequests is still the same as CreatingEmpty then using them to Create the requests.");
-
-			//return mapSectionRequests;
+			return mapSectionRequests;
 		}
 
 		#endregion

@@ -24,8 +24,8 @@ namespace MEngineClient
 
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 
-		private int? _jobNumber;
-		private int? _requestNumber;
+		//private int? _jobNumber;
+		//private int? _requestNumber;
 
 		private object _cancellationLock = new object();
 
@@ -51,8 +51,9 @@ namespace MEngineClient
 
 			_grpcChannel = null;
 			_mapSectionService = null;
-			_jobNumber = null;
-			_requestNumber = null;
+
+			//_jobNumber = null;
+			//_requestNumber = null;
 		}
 
 		#endregion
@@ -78,8 +79,8 @@ namespace MEngineClient
 
 			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
-			_jobNumber = mapSectionRequest.MapLoaderJobNumber;
-			_requestNumber = mapSectionRequest.RequestNumber;
+			//_jobNumber = mapSectionRequest.MapLoaderJobNumber;
+			//_requestNumber = mapSectionRequest.RequestNumber;
 
 			var mapSectionServiceRequest = MapTo(mapSectionRequest);
 
@@ -87,8 +88,8 @@ namespace MEngineClient
 			var mapSectionServiceResponse = GenerateMapSectionInternal(mapSectionServiceRequest, ct);
 			stopWatch.Stop();
 
-			_jobNumber = null;
-			_requestNumber = null;
+			//_jobNumber = null;
+			//_requestNumber = null;
 
 			var mapSectionResponse = MapFrom(mapSectionServiceResponse, mapSectionRequest);
 
