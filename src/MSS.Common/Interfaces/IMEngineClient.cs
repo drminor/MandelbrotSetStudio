@@ -14,6 +14,6 @@ namespace MSS.Common
 
 		MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct);
 
-		bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct);
+		//bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct);
 	}
 }

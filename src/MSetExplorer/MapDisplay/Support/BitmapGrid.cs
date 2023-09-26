@@ -286,12 +286,12 @@ namespace MSetExplorer
 				ClearBitmap(Bitmap);
 			}
 
-			foreach (var ms in _mapSections)
-			{
-				_disposeMapSection(ms);
-			}
+			//foreach (var ms in _mapSections)
+			//{
+			//	_disposeMapSection(ms);
+			//}
 
-			_mapSections.Clear();
+			//_mapSections.Clear();
 		}
 
 		public void DrawSections(IList<MapSection> mapSections)
@@ -305,7 +305,7 @@ namespace MSetExplorer
 				{
 					var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-					if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, "Draw", warnOnFail: true))
+					if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "Draw", warnOnFail: true))
 					{
 						_mapSections.Add(mapSection);
 
@@ -357,7 +357,7 @@ namespace MSetExplorer
 			{
 				var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-				if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, "Clear", warnOnFail: true))
+				if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "Clear", warnOnFail: true))
 				{
 					var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 					var loc = invertedBlockPos.Scale(_blockSize);
@@ -398,7 +398,7 @@ namespace MSetExplorer
 			//var anyDrawnOnLastRow = false;
 
 			var errors = 0L;
-			var sectionsDisposed = new List<MapSection>();
+			var sectionsNotDrawn = new List<MapSection>();
 
 			foreach (var mapSection in _mapSections)
 			{
@@ -406,7 +406,7 @@ namespace MSetExplorer
 				{
 					var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-					if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, "ReDraw", warnOnFail: true))
+					if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "ReDraw", warnOnFail: true))
 					{
 						if (_colorMap != null)
 						{
@@ -435,7 +435,7 @@ namespace MSetExplorer
 					else
 					{
 						_disposeMapSection(mapSection);
-						sectionsDisposed.Add(mapSection);
+						sectionsNotDrawn.Add(mapSection);
 					}
 				}
 			}
@@ -448,14 +448,14 @@ namespace MSetExplorer
 			//if (_mapSections.Count > 0 && !anyDrawnOnLastRow)
 			//	Debug.WriteLine($"No blocks were drawn on the last row for ReDraw:{_mapSections.FirstOrDefault()?.JobNumber}.");
 
-			foreach (var ms in sectionsDisposed)
+			foreach (var ms in sectionsNotDrawn)
 			{
 				_mapSections.Remove(ms);
 			}
 
 			ReportPercentMapSectionsWithUpdatedScrPos();
 
-			return sectionsDisposed.Count;
+			return sectionsNotDrawn.Count;
 		}
 
 		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors)
@@ -467,7 +467,7 @@ namespace MSetExplorer
 			var wasAdded = false;
 			var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-			if (IsBLockVisible(mapSection, blockPosition, ImageSizeInBlocks, "GetAndPlacePixels"))
+			if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "GetAndPlacePixels"))
 			{
 				_mapSections.Add(mapSection);
 				wasAdded = true;
@@ -575,11 +575,11 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool IsBLockVisible(MapSection mapSection, PointInt blockPosition, SizeInt imageSizeInBlocks, string desc, bool warnOnFail = false)
+		private bool IsBLockVisible(int jobNumber, PointInt blockPosition, SizeInt imageSizeInBlocks, string desc, bool warnOnFail = false)
 		{
 			if (blockPosition.X < 0 || blockPosition.Y < 0)
 			{
-				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition} is negative.");
+				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {jobNumber}. BlockPosition: {blockPosition} is negative.");
 				return false;
 			}
 
@@ -587,7 +587,7 @@ namespace MSetExplorer
 
 			if (blockPosition.X >= imageSizeInBlocks.Width || blockPosition.Y >= imageSizeInBlocks.Height)
 			{
-				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {imageSizeInBlocks}.");
+				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {jobNumber}. BlockPosition: {blockPosition}, ImageSize: {imageSizeInBlocks}.");
 				return false;
 			}
 

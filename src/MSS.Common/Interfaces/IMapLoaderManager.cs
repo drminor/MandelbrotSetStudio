@@ -16,8 +16,8 @@ namespace MSS.Common
 
 		int GetNextJobNumber();
 
-		List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
-			IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration);
+		//List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
+		//	IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration);
 
 		List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber, out List<MapSectionRequest> pendingGeneration);
 
@@ -27,7 +27,10 @@ namespace MSS.Common
 
 		void StopJob(int jobNumber);
 		void StopJobs(List<int> jobNumbers);
-		void CancelRequests(IList<MapSection> sectionsToCancel);
+		//void CancelRequests(IList<MapSection> sectionsToCancel);
+
+		//void CancelRequests(IList<MapSectionRequest> requestsToCancel);
+
 
 
 		//long NumberOfCountValSwitches { get; }

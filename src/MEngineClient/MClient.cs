@@ -103,39 +103,39 @@ namespace MEngineClient
 			return mapSectionResponse;
 		}
 
-		public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
-		{
-			if (_jobNumber != null && _requestNumber != null)
-			{
-				var jobNumber = mapSectionRequest.MapLoaderJobNumber;
-				var requestNumber = mapSectionRequest.RequestNumber;
+		//public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		//{
+		//	if (_jobNumber != null && _requestNumber != null)
+		//	{
+		//		var jobNumber = mapSectionRequest.MapLoaderJobNumber;
+		//		var requestNumber = mapSectionRequest.RequestNumber;
 
-				if (jobNumber == _jobNumber && requestNumber == _requestNumber)
-				{
-					var mapSectionService = MapSectionService;
-					//var mapSectionService = GetMapSectionService();
+		//		if (jobNumber == _jobNumber && requestNumber == _requestNumber)
+		//		{
+		//			var mapSectionService = MapSectionService;
+		//			//var mapSectionService = GetMapSectionService();
 
-					var cancelRequest = new CancelRequest
-					{
-						MapLoaderJobNumber = jobNumber,
-						RequestNumber = requestNumber
-					};
+		//			var cancelRequest = new CancelRequest
+		//			{
+		//				MapLoaderJobNumber = jobNumber,
+		//				RequestNumber = requestNumber
+		//			};
 
 
-					lock (_cancellationLock)
-					{
-						var result = mapSectionService.CancelGeneration(cancelRequest);
-						return result.RequestWasCancelled;
-					}
-				}
-				else
-				{
-					return false;
-				}
-			}
+		//			lock (_cancellationLock)
+		//			{
+		//				var result = mapSectionService.CancelGeneration(cancelRequest);
+		//				return result.RequestWasCancelled;
+		//			}
+		//		}
+		//		else
+		//		{
+		//			return false;
+		//		}
+		//	}
 
-			return false;
-		}
+		//	return false;
+		//}
 
 		#endregion
 

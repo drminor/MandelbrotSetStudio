@@ -60,30 +60,30 @@ namespace MapSectionProviderLib
 		//	return result;
 		//}
 
-		public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, 
-			Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
-		{
-			Debug.WriteLine($"MapLoaderManager: Creating MapSections with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
+		//public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, 
+		//	Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
+		//{
+		//	Debug.WriteLine($"MapLoaderManager: Creating MapSections with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
 
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
-			var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
+		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
+		//	var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
 
-			mapSectionsPendingGeneration = new List<MapSection>();
+		//	mapSectionsPendingGeneration = new List<MapSection>();
 
-			foreach(var mapSectionRequest in pendingGeneration)
-			{
-				//var mapSectionPending = emptyMapSections[mapSectionRequest.RequestNumber];
-				var mapSectionPending = emptyMapSections.FirstOrDefault(x => x.RequestNumber == mapSectionRequest.RequestNumber);
+		//	foreach(var mapSectionRequest in pendingGeneration)
+		//	{
+		//		//var mapSectionPending = emptyMapSections[mapSectionRequest.RequestNumber];
+		//		var mapSectionPending = emptyMapSections.FirstOrDefault(x => x.RequestNumber == mapSectionRequest.RequestNumber);
 
-				if (mapSectionPending != null)
-				{
-					mapSectionPending.JobNumber = jobNumber;
-					mapSectionsPendingGeneration.Add(mapSectionPending);
-				}
-			}
+		//		if (mapSectionPending != null)
+		//		{
+		//			mapSectionPending.JobNumber = jobNumber;
+		//			mapSectionsPendingGeneration.Add(mapSectionPending);
+		//		}
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber, out List<MapSectionRequest> pendingGeneration)
 		{
@@ -186,13 +186,21 @@ namespace MapSectionProviderLib
 
 		}
 
-		public void CancelRequests(IList<MapSection> sectionsToCancel)
-		{
-			DoWithWriteLock(() =>
-			{
-				CancelRequestsInternal(sectionsToCancel);
-			});
-		}
+		//public void CancelRequests(IList<MapSection> sectionsToCancel)
+		//{
+		//	DoWithWriteLock(() =>
+		//	{
+		//		CancelRequestsInternal(sectionsToCancel);
+		//	});
+		//}
+
+		//public void CancelRequests(IList<MapSectionRequest> requestsToCancel)
+		//{
+		//	DoWithWriteLock(() =>
+		//	{
+		//		CancelRequestsInternal(requestsToCancel);
+		//	});
+		//}
 
 		#endregion
 
@@ -253,22 +261,39 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private void CancelRequestsInternal(IList<MapSection> sectionsToCancel)
-		{
-			foreach (var section in sectionsToCancel)
-			{
-				var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == section.JobNumber);
+		//private void CancelRequestsInternal(IList<MapSection> sectionsToCancel)
+		//{
+		//	foreach (var section in sectionsToCancel)
+		//	{
+		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == section.JobNumber);
 
-				if (genMapRequestInfo != null)
-				{
-					genMapRequestInfo.MapLoader.CancelRequest(section);
-				}
-				else
-				{
-					Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {section.JobNumber}.");
-				}
-			}
-		}
+		//		if (genMapRequestInfo != null)
+		//		{
+		//			genMapRequestInfo.MapLoader.CancelRequest(section);
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {section.JobNumber}.");
+		//		}
+		//	}
+		//}
+
+		//private void CancelRequestsInternal(IList<MapSectionRequest> requestsToCancel)
+		//{
+		//	foreach (var request in requestsToCancel)
+		//	{
+		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == request.MapLoaderJobNumber);
+
+		//		if (genMapRequestInfo != null)
+		//		{
+		//			genMapRequestInfo.MapLoader.CancelRequest(request);
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {request.MapLoaderJobNumber}.");
+		//		}
+		//	}
+		//}
 
 		private void RemoveCompletedRequests(List<GenMapRequestInfo> requestInfos, ReaderWriterLockSlim requestsLock, CancellationToken ct)
 		{

@@ -18,8 +18,6 @@ namespace MSS.Common
 		private int _currentPrecision;
 		private int _currentLimbCount;
 
-		private readonly DtoMapper _dtoMapper;
-
 		private bool _useDetailedDebug = false;
 
 		#endregion
@@ -30,8 +28,6 @@ namespace MSS.Common
 		{
 			_currentPrecision = -1;
 			_currentLimbCount = 1;
-
-			_dtoMapper = new DtoMapper();
 		}
 
 		#endregion
@@ -63,36 +59,36 @@ namespace MSS.Common
 			return result;
 		}
 
-		public List<MapSectionRequest> CreateSectionRequestsFromMapSections(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, 
-			IList<MapSection> emptyMapSections)
-		{
-			var result = new List<MapSectionRequest>();
+		//public List<MapSectionRequest> CreateSectionRequestsFromMapSections(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, 
+		//	IList<MapSection> emptyMapSections)
+		//{
+		//	var result = new List<MapSectionRequest>();
 
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-			Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests. The map extent is {mapExtentInBlocks}.");
+		//	var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
+		//	Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests. The map extent is {mapExtentInBlocks}.");
 
 
-			Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
+		//	Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests from the given list of {emptyMapSections.Count} empty MapSections.");
 
-			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
+		//	var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
 
-			foreach (var mapSection in emptyMapSections)
-			{
-				var screenPosition = mapSection.ScreenPosition;
-				var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
+		//	foreach (var mapSection in emptyMapSections)
+		//	{
+		//		var screenPosition = mapSection.ScreenPosition;
+		//		var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
 
-				var mapSectionRequest = CreateRequest(jobType, screenPosition, screenPositionRelativeToCenter, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, 
-					mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, mapLoaderJobNumber: -1, mapSection.RequestNumber);
+		//		var mapSectionRequest = CreateRequest(jobType, screenPosition, screenPositionRelativeToCenter, mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, jobId, jobOwnerType, 
+		//			mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, mapLoaderJobNumber: -1, mapSection.RequestNumber);
 
-				result.Add(mapSectionRequest);
-			}
+		//		result.Add(mapSectionRequest);
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 
-		#region Create Single MapSectionRequest
+		#region Create A Single MapSectionRequest
 
 		/// <summary>
 		/// Calculate the map position of the section being requested 
@@ -192,56 +188,64 @@ namespace MSS.Common
 			return _currentLimbCount;	
 		}
 
+		private MapBlockOffset MapTo(BigVector bigVector)
+		{
+			var x = BigIntegerHelper.ToLongPairs(bigVector.X);
+			var y = BigIntegerHelper.ToLongPairs(bigVector.Y);
+
+			var mapBlockOffset = new MapBlockOffset(x, y);
+			return mapBlockOffset;
+		}
+
 		#endregion
 
 		#region Create MapSections
 
-		public List<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
-		{
-			var result = new List<MapSection>();
+		//public List<MapSection> CreateEmptyMapSections(MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		//{
+		//	var result = new List<MapSection>();
 
-			var subdivisionId = mapAreaInfo.Subdivision.Id.ToString();
-			var blockSize = mapAreaInfo.Subdivision.BlockSize;
-			var targetIterations = mapCalcSettings.TargetIterations;
+		//	var subdivisionId = mapAreaInfo.Subdivision.Id.ToString();
+		//	var blockSize = mapAreaInfo.Subdivision.BlockSize;
+		//	var targetIterations = mapCalcSettings.TargetIterations;
 
-			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-			//Debug.WriteLineIf(_useDetailedDebug, $"Creating empty MapSections. Returned: {mapExtentInBlocks}, For Size: {mapAreaInfo.CanvasSize} and Offset: {mapAreaInfo.CanvasControlOffset}.");
+		//	var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
+		//	//Debug.WriteLineIf(_useDetailedDebug, $"Creating empty MapSections. Returned: {mapExtentInBlocks}, For Size: {mapAreaInfo.CanvasSize} and Offset: {mapAreaInfo.CanvasControlOffset}.");
 
-			//Debug.WriteLineIf(_useDetailedDebug, $"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}.");
+		//	//Debug.WriteLineIf(_useDetailedDebug, $"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}.");
 
-			var ts = DateTime.Now.ToLongTimeString();
-			Debug.WriteLineIf(_useDetailedDebug, $"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}. At ts={ts}.");
+		//	var ts = DateTime.Now.ToLongTimeString();
+		//	Debug.WriteLineIf(_useDetailedDebug, $"Creating {mapExtentInBlocks} empty MapSections. For CanvasSize: {mapAreaInfo.CanvasSize} and SamplePointDelta: {mapAreaInfo.SamplePointDelta}. At ts={ts}.");
 
-			if (mapExtentInBlocks.NumberOfCells > 400)
-			{
-				Debug.WriteLine($"About to request {mapExtentInBlocks.NumberOfCells} map sections!!");
-			}
+		//	if (mapExtentInBlocks.NumberOfCells > 400)
+		//	{
+		//		Debug.WriteLine($"About to request {mapExtentInBlocks.NumberOfCells} map sections!!");
+		//	}
 
-			var mapLoaderJobNumber = -1;
-			var requestNumber = 0;
+		//	var mapLoaderJobNumber = -1;
+		//	var requestNumber = 0;
 
-			foreach (var screenPosition in Points(mapExtentInBlocks))
-			{
-				var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapAreaInfo.MapBlockOffset, out var isInverted);
+		//	foreach (var screenPosition in Points(mapExtentInBlocks))
+		//	{
+		//		var repoPosition = RMapHelper.ToSubdivisionCoords(screenPosition, mapAreaInfo.MapBlockOffset, out var isInverted);
 
-				var mapSection = new MapSection(
-					jobNumber: mapLoaderJobNumber, 
-					requestNumber: requestNumber++,
-					subdivisionId: subdivisionId, 
-					repoBlockPosition: MapTo(repoPosition),
-					jobMapBlockPosition: mapAreaInfo.MapBlockOffset,
-					isInverted: isInverted,
-					screenPosition: screenPosition, 
-					size: blockSize, 
-					targetIterations: targetIterations,
-					isCancelled: false);
+		//		var mapSection = new MapSection(
+		//			jobNumber: mapLoaderJobNumber, 
+		//			requestNumber: requestNumber++,
+		//			subdivisionId: subdivisionId, 
+		//			repoBlockPosition: MapTo(repoPosition),
+		//			jobMapBlockPosition: mapAreaInfo.MapBlockOffset,
+		//			isInverted: isInverted,
+		//			screenPosition: screenPosition, 
+		//			size: blockSize, 
+		//			targetIterations: targetIterations,
+		//			isCancelled: false);
 
-				result.Add(mapSection);
-			}
+		//		result.Add(mapSection);
+		//	}
 
-			return result;
-		}
-
+		//	return result;
+		//}
 
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors, int jobNumber)
 		{
@@ -256,18 +260,11 @@ namespace MSS.Common
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
 			var mapSection = new MapSection(mapSectionRequest.MapLoaderJobNumber, mapSectionRequest.RequestNumber, mapSectionVectors, mapSectionRequest.SubdivisionId, mapBlockOffset, repoBlockPosition, isInverted,
-				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, BuildHistogram);
+				screenPosition, mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, histogramBuilder: BuildHistogram);
 
 			UpdateMapSectionWithProcInfo(mapSection, mapSectionRequest);
 
 			return mapSection;
-		}
-
-		[Conditional("PERF")]
-		private void UpdateMapSectionWithProcInfo(MapSection mapSection, MapSectionRequest mapSectionRequest)
-		{
-			mapSection.MapSectionProcessInfo = new MapSectionProcessInfo(mapSectionRequest.MapLoaderJobNumber, mapSectionRequest.FoundInRepo, mapSectionRequest.RequestNumber, isLastSection: false, requestDuration: mapSectionRequest.TimeToCompleteGenRequest,
-				processingDuration: mapSectionRequest.ProcessingDuration, generationDuration: mapSectionRequest.GenerationDuration);
 		}
 
 		public MapSection CreateEmptyMapSection(MapSectionRequest mapSectionRequest, int jobNumber, bool isCancelled)
@@ -313,16 +310,13 @@ namespace MSS.Common
 			return result;
 		}
 
-		private MapBlockOffset MapTo(BigVector bigVector)
+		[Conditional("PERF")]
+		private void UpdateMapSectionWithProcInfo(MapSection mapSection, MapSectionRequest mapSectionRequest)
 		{
-			var x = BigIntegerHelper.ToLongPairs(bigVector.X);
-			var y = BigIntegerHelper.ToLongPairs(bigVector.Y);
-
-			var mapBlockOffset = new MapBlockOffset(x, y);
-			return mapBlockOffset;
+			mapSection.MapSectionProcessInfo = new MapSectionProcessInfo(mapSectionRequest.MapLoaderJobNumber, mapSectionRequest.FoundInRepo, mapSectionRequest.RequestNumber, isLastSection: false, requestDuration: mapSectionRequest.TimeToCompleteGenRequest,
+				processingDuration: mapSectionRequest.ProcessingDuration, generationDuration: mapSectionRequest.GenerationDuration);
 		}
-
+		
 		#endregion
-
 	}
 }

@@ -103,22 +103,39 @@ namespace MapSectionProviderLib
 			_mapSectionRequestProcessor.MarkJobAsComplete(JobNumber);
 		}
 
-		public void CancelRequest(MapSection mapSection)
-		{
-			MapSectionRequest? req = _mapSectionRequests?.FirstOrDefault(x => x.RequestNumber == mapSection.RequestNumber);
+		//public void CancelRequest(MapSection mapSection)
+		//{
+		//	MapSectionRequest? req = _mapSectionRequests?.FirstOrDefault(x => x.RequestNumber == mapSection.RequestNumber);
 
-			if (req != null)
-			{
-				if (req.TimeToCompleteGenRequest.HasValue)
-				{
-					Debug.WriteLine("WARNING: Cancelling a request that has already been completed.");
-				}
+		//	if (req != null)
+		//	{
+		//		if (req.TimeToCompleteGenRequest.HasValue)
+		//		{
+		//			Debug.WriteLine("WARNING: Cancelling a request that has already been completed.");
+		//		}
 
-				Debug.WriteLine($"Cancelling Generation Request: {JobNumber}/{mapSection.RequestNumber}.");
+		//		Debug.WriteLine($"Cancelling Generation Request: {JobNumber}/{mapSection.RequestNumber}.");
 
-				req.CancellationTokenSource.Cancel();
-			}
-		}
+		//		req.CancellationTokenSource.Cancel();
+		//	}
+		//}
+
+		//public void CancelRequest(MapSectionRequest mapSectionRequest)
+		//{
+		//	MapSectionRequest? req = _mapSectionRequests?.FirstOrDefault(x => x.RequestNumber == mapSectionRequest.RequestNumber);
+
+		//	if (req != null)
+		//	{
+		//		if (req.TimeToCompleteGenRequest.HasValue)
+		//		{
+		//			Debug.WriteLine("WARNING: Cancelling a request that has already been completed.");
+		//		}
+
+		//		Debug.WriteLine($"Cancelling Generation Request: {JobNumber}/{mapSectionRequest.RequestNumber}.");
+
+		//		req.CancellationTokenSource.Cancel();
+		//	}
+		//}
 
 		#endregion
 

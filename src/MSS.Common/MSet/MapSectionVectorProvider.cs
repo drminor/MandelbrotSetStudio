@@ -59,7 +59,6 @@ namespace MSS.Common
 				Debug.WriteLine("CHECK THIS, Returning a MapSectionRequest that has a non-null MapSectionZVectors instance.");
 			}
 
-
 			//_ = mapSectionRequest.MapSectionVectors2 = ReturnMapSectionVectors2(mapSectionRequest.MapSectionVectors2);
 			_ = mapSectionRequest.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionRequest.MapSectionZVectors);
 		}
@@ -73,11 +72,6 @@ namespace MSS.Common
 
 		public void ReturnMapSection(MapSection mapSection)
 		{
-			if (mapSection.MapSectionVectors == null)
-			{
-				return;
-			}
-
 			mapSection.MapSectionVectors = ReturnMapSectionVectors(mapSection.MapSectionVectors);
 			if (mapSection.MapSectionVectors != null)
 			{
