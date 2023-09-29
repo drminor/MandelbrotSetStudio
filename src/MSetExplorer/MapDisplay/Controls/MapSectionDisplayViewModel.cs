@@ -46,7 +46,9 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
+
+		private int _reentrencyCounter;
 
 		#endregion
 
@@ -84,6 +86,8 @@ namespace MSetExplorer
 			_minimumDisplayZoom = RMapConstants.DEFAULT_MINIMUM_DISPLAY_ZOOM; // 0.015625; // 0.0625;
 			_maximumDisplayZoom = 1.0;
 			_displayZoom = 1;
+
+			_reentrencyCounter = 0;
 		}
 
 		#endregion
@@ -646,14 +650,26 @@ namespace MSetExplorer
 
 		private void MapSectionReady(MapSection mapSection)
 		{
-			_bitmapGrid.Dispatcher.Invoke(GetAndPlacePixelsWrapper, new object[] { mapSection });
+			if (mapSection.MapSectionVectors != null)
+			{
+				_bitmapGrid.Dispatcher.Invoke(GetAndPlacePixelsWrapper, new object[] { mapSection });
+			}
+			else
+			{
+				Debug.WriteLine("MapSectionDisplayViewModel. MapSectionReady received an Empty MapSection.");
+			}
 		}
 
 		private void GetAndPlacePixelsWrapper(MapSection mapSection)
 		{
+			if (mapSection.MapSectionVectors == null)
+			{
+				throw new InvalidOperationException("The MapSectionVectors should not be null here.");
+			}
+
 			var sectionIsCurrent = ActiveJobNumbers.Contains(mapSection.JobNumber);
 
-			if (sectionIsCurrent && mapSection.MapSectionVectors != null)
+			if (ActiveJobNumbers.Contains(mapSection.JobNumber))
 			{
 				lock (_paintLocker)
 				{
@@ -661,6 +677,10 @@ namespace MSetExplorer
 					MapSections.Add(mapSection);
 					RemovePendingRequest(mapSection);
 				}
+			}
+			else
+			{
+				Debug.WriteLine($"GetAndPlacePixelsWrapper not drawing section: Its JobNumber: {mapSection.JobNumber} is not in the list of Active Job Numbers: {string.Join("; ", ActiveJobNumbers)}.");
 			}
 
 			if (mapSection.IsLastSection)
@@ -862,9 +882,16 @@ namespace MSetExplorer
 
 				if (newRequests.Count > 0)
 				{
-					var newMapSections = _mapLoaderManager.Push(newRequests, MapSectionReady, out var newJobNumber, out var mapRequestsPendingGeneration);
+					// *************
+					// Submit the new requests.
 
-					Debug.WriteLineIf(_useDetailedDebug, $"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated.");
+					Interlocked.Increment(ref _reentrencyCounter);
+					var newMapSections = _mapLoaderManager.Push(newRequests, MapSectionReady, out var newJobNumber, out var mapRequestsPendingGeneration);
+					AddJobNumber(newJobNumber);
+
+					//Debug.WriteLineIf(_useDetailedDebug, $"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated.");
+					Debug.WriteLine($"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated. ReentrencyCounter: {_reentrencyCounter}");
+					Interlocked.Decrement(ref _reentrencyCounter);
 
 					_requestsPendingGeneration.AddRange(mapRequestsPendingGeneration);
 
@@ -901,8 +928,6 @@ namespace MSetExplorer
 					lastSectionWasIncluded = mapRequestsPendingGeneration.Count == 0;
 
 					result = newJobNumber;
-
-					AddJobNumber(newJobNumber);
 				}
 				else
 				{
@@ -950,7 +975,15 @@ namespace MSetExplorer
 
 			var mapLoaderJobNumber = -1;
 			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, mapLoaderJobNumber);
+
+			Interlocked.Increment(ref _reentrencyCounter);
 			var newMapSections = _mapLoaderManager.Push(_currentMapSectionRequests, MapSectionReady, out var newJobNumber, out var mapRequestsPendingGeneration);
+			AddJobNumber(newJobNumber);
+
+			//Debug.WriteLineIf(_useDetailedDebug, $"DiscardAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated.");
+			Debug.WriteLine($"DiscardAndLoad: Display: {_currentMapSectionRequests.Count} sections;  {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated. ReentrencyCounter: {_reentrencyCounter}");
+
+			Interlocked.Decrement(ref _reentrencyCounter);
 
 			_requestsPendingGeneration.AddRange(mapRequestsPendingGeneration);
 
@@ -967,8 +1000,6 @@ namespace MSetExplorer
 
 			_bitmapGrid.DrawSections(newMapSections);
 			lastSectionWasIncluded = mapRequestsPendingGeneration.Count == 0;
-
-			AddJobNumber(newJobNumber);
 
 			return newJobNumber;
 		}

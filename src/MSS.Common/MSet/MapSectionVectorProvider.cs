@@ -88,6 +88,7 @@ namespace MSS.Common
 		public MapSectionVectors ObtainMapSectionVectors()
 		{
 			var result = _mapSectionVectorsPool.Obtain();
+			result.ResetObject();
 			NumberOfMapSectionVectorsLeased++;
 
 			//Debug.WriteLine($"Just obtained a MSVectors. Currently: {_mapSectionVectorsPool.TotalFree} available; {_mapSectionVectorsPool.MaxPeak} max allocated.");

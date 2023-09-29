@@ -9,38 +9,12 @@ namespace MSS.Types
 	public class MapSectionZVectors : IPoolable
 	{
 		private static readonly ArrayPool<byte> _arrayPool = ArrayPool<byte>.Shared;
+		private const int VALUE_SIZE = 4;
+
+		private bool _arraysAreRented;
 
 		#region Constructor
 
-		private const int VALUE_SIZE = 4;
-
-		//public MapSectionZVectors(SizeInt blockSize, int limbCount)
-		//{
-		//	BlockSize = blockSize;
-		//	_limbCount = limbCount;
-
-		//	ValueCount = blockSize.NumberOfCells;
-		//	Lanes = Vector256<uint>.Count;
-		//	ValuesPerRow = blockSize.Width;
-		//	RowCount = blockSize.Height;
-
-		//	VectorsPerRow = ValuesPerRow / Lanes;
-		//	BytesPerRow = ValuesPerRow * VALUE_SIZE;
-		//	TotalBytesForFlags = ValueCount * VALUE_SIZE;
-
-		//	VectorsPerZValueRow = VectorsPerRow * limbCount; // ValuesPerRow * LimbCount / Lanes;
-		//	BytesPerZValueRow = BytesPerRow * limbCount; // ValuesPerRow * LimbCount * VALUE_SIZE;
-		//	TotalByteCount = TotalBytesForFlags * limbCount; // ValueCount * LimbCount * VALUE_SIZE;
-
-		//	Zrs = _arrayPool.Rent(TotalByteCount);
-		//	Zis = _arrayPool.Rent(TotalByteCount);
-
-		//	Array.Clear(Zrs);
-		//	Array.Clear(Zis);
-
-		//	HasEscapedFlags = new byte[TotalBytesForFlags];
-		//	RowHasEscaped = new bool[RowCount];
-		//}
 
 		public MapSectionZVectors(SizeInt blockSize, int limbCount)
 			: this(
@@ -54,6 +28,8 @@ namespace MSS.Types
 		{
 			Array.Clear(Zrs);
 			Array.Clear(Zis);
+
+			_arraysAreRented = true;
 		}
 
 		public MapSectionZVectors(SizeInt blockSize, int limbCount, byte[] zrs, byte[] zis, byte[] hasEscapedFlags, bool[] rowHasEscaped)
@@ -99,9 +75,13 @@ namespace MSS.Types
 					BytesPerZValueRow = ValuesPerRow * value * VALUE_SIZE;
 					TotalByteCount = ValueCount * value * VALUE_SIZE;
 
-					_arrayPool.Return(Zrs);
-					_arrayPool.Return(Zis);
+					if (_arraysAreRented)
+					{
+						_arrayPool.Return(Zrs);
+						_arrayPool.Return(Zis);
+					}
 
+					_arraysAreRented = true;
 					Zrs = _arrayPool.Rent(TotalByteCount);
 					Zis = _arrayPool.Rent(TotalByteCount);
 
@@ -416,8 +396,11 @@ namespace MSS.Types
 					//_arrayPool.Return(Zrs, clearArray: true);
 					//_arrayPool.Return(Zis, clearArray: true);
 
-					_arrayPool.Return(Zrs);
-					_arrayPool.Return(Zis);
+					if (_arraysAreRented)
+					{
+						_arrayPool.Return(Zrs);
+						_arrayPool.Return(Zis);
+					}
 				}
 
 				_disposedValue = true;

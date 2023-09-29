@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using MapSectionProviderLib.Support;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -14,12 +15,14 @@ namespace MapSectionProviderLib
 	{
 		#region Private Properties
 
-		private const int QUEUE_CAPACITY = 500;
+		private const int QUEUE_CAPACITY = 50;
 
 		//private readonly IMEngineClient[] _mEngineClients;
 
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<MapSectionGenerateRequest> _workQueue;
+
+		//private readonly BlockingCollection<MapSectionGenerateRequest> _workQueue;
+		private readonly MapSectionProducerConsumerQueue<MapSectionGenerateRequest> _workQueue;
 
 		private readonly IList<Task> _workQueueProcessors;
 
@@ -41,7 +44,10 @@ namespace MapSectionProviderLib
 			_stopped = false;
 
 			_cts = new CancellationTokenSource();
-			_workQueue = new BlockingCollection<MapSectionGenerateRequest>(QUEUE_CAPACITY);
+
+			//_workQueue = new BlockingCollection<MapSectionGenerateRequest>(QUEUE_CAPACITY);
+			_workQueue = new MapSectionProducerConsumerQueue<MapSectionGenerateRequest>(new JobQueuesG<MapSectionGenerateRequest>(), QUEUE_CAPACITY);
+
 			_jobs = new Dictionary<int, CancellationTokenSource>();
 
 			_workQueueProcessors = CreateTheQueueProcessors(mEngineClients);

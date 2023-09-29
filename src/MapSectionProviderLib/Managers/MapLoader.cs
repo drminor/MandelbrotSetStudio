@@ -190,18 +190,20 @@ namespace MapSectionProviderLib
 			//	MathOpCounts.Update(mapSectionResponse.MathOpCounts);
 			//}
 
-			if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
-			{
-				/****** UN COMMENT ME TO Report on generation duration. *********/
+			/****************************************************
+			// UN COMMENT ME TO Report on generation duration.
+			//if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
+			//{
 				//var allEscaped = mapSectionResponse?.AllRowsHaveEscaped == true ? "DONE" : null;
 				//Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. {allEscaped}");
-				/****************************************************************/
-			}
+			//}
+			****************************************************/
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
 
 			if (_sectionsCompleted >= _mapSectionRequests?.Count || (_isStopping && _sectionsCompleted >= _sectionsRequested))
 			{
+				// This is the last section -- call the callback if the MapSection is Empty or Not
 				_stopwatch.Stop();
 
 				mapSection.IsLastSection = true;
@@ -223,6 +225,8 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
+				// Call the callback, only if the MapSection is not Empty.
+
 				if (!mapSection.IsEmpty)
 				{
 					mapSection.IsLastSection = false;

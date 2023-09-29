@@ -5,7 +5,7 @@ using System;
 
 namespace MapSectionProviderLib
 {
-	internal class WorkItem<T, U>
+	internal class WorkItem<T, U> : IWorkRequest
 	{
 		public int JobId { get; init; }
 		public T Request { get; init; }
@@ -53,10 +53,10 @@ namespace MapSectionProviderLib
 		{ }
 	}
 
-	internal class MapSectionPersistRequest 
+	internal class MapSectionPersistRequest : WorkItem<MapSectionRequest, MapSectionResponse>
 	{
-		public MapSectionRequest Request { get; init; }
-		public MapSectionResponse Response { get; init; }
+		//public MapSectionRequest Request { get; init; }
+		public new MapSectionResponse Response { get; init; }
 		public bool OnlyInsertJobMapSectionRecord { get; init; }
 
 		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response)
@@ -64,11 +64,22 @@ namespace MapSectionProviderLib
 		{ }
 
 		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response, bool onlyInsertJobMapSectionRecord)
+			: base(request.MapLoaderJobNumber, request, DuA)
 		{
 			Request = request ?? throw new ArgumentNullException(nameof(request));
 			Response = response ?? throw new ArgumentNullException(nameof(response));
 			OnlyInsertJobMapSectionRecord = onlyInsertJobMapSectionRecord;
 		}
 
+		private static void DuA(MapSectionRequest request, MapSectionResponse response)
+		{
+
+		}
+
+	}
+
+	public interface IWorkRequest
+	{
+		public int JobId { get; init; }
 	}
 }

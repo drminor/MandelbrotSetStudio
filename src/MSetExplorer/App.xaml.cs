@@ -575,9 +575,9 @@ namespace MSetExplorer
 
 		private IMapSectionGenerator CreateMapSectionGenerator()
 		{
-			var mapGeneratorService = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
+			var mapSectionGenerator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
 
-			return mapGeneratorService;
+			return mapSectionGenerator;
 		}
 
 		#region MEngine Constants

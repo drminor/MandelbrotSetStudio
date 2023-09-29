@@ -2,7 +2,6 @@
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
-using ProjectRepo.Entities;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -101,6 +100,11 @@ namespace MapSectionProviderLib
 
 					var mapSectionRequest = mapSectionPersistRequest.Request;
 					var mapSectionResponse = mapSectionPersistRequest.Response;
+
+					//if (mapSectionResponse == null)
+					//{
+					//	throw new InvalidOperationException("The MapSectionPersist Processor received an empty MapSectionResponse.");
+					//}
 
 					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{

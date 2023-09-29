@@ -208,7 +208,7 @@ namespace MapSectionProviderLib
 
 		private void RemoveCompletedRequests(List<GenMapRequestInfo> requestInfos, ReaderWriterLockSlim requestsLock, CancellationToken ct)
 		{
-			var timeToWait = TimeSpan.FromSeconds(40);
+			var timeToWait = TimeSpan.FromSeconds(140);
 			var timeToWarn = TimeSpan.FromMinutes(3);
 
 			var countToWarn = 0;

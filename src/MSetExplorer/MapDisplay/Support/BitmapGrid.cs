@@ -475,6 +475,7 @@ namespace MSetExplorer
 
 					var errors = LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
 
+
 					if (errors > 0)
 					{
 						Debug.WriteLine($"There were {errors} color placement errors while Drawing Section on the UI thread for {mapSection.JobNumber}.");
@@ -483,6 +484,7 @@ namespace MSetExplorer
 					try
 					{
 						Bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
+						//Debug.WriteLine($"GetAndPlacePixels is drawing MapSection: {mapSection.ToString(blockPosition)}({mapSection.RequestNumber}).");
 					}
 					catch (Exception e)
 					{
@@ -492,7 +494,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine($"GetAndPlacePixels is not drawing MapSection: {mapSection.ToString(blockPosition)}, it's off the map.");
+				Debug.WriteLine($"GetAndPlacePixels is not drawing MapSection: {mapSection.ToString(blockPosition)}({mapSection.RequestNumber}), it's off the map.");
 				//_disposeMapSection(mapSection);
 			}
 

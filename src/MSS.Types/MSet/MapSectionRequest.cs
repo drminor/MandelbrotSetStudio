@@ -7,6 +7,10 @@ namespace MSS.Types.MSet
 {
 	public class MapSectionRequest
 	{
+		public MapSectionRequest() : this(JobType.FullScale, "", OwnerType.Project, "", "", new PointInt(), new VectorInt(), new BigVector(), new MapBlockOffset(), 
+			new RPoint(), isInverted: false, precision: 0, limbCount: 0, new SizeInt(), new RSize(), new MapCalcSettings(), mapLoaderJobNumber: 0, requestNumber: 0)
+		{ }
+
 		public MapSectionRequest(JobType jobType, string jobId, OwnerType ownerType, string subdivisionId, string originalSourceSubdivisionId,
 			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector jobBlockOffset, MapBlockOffset sectionBlockOffset, RPoint mapPosition, bool isInverted,
 			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int mapLoaderJobNumber, int requestNumber)
