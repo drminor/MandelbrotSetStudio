@@ -53,9 +53,9 @@ namespace MapSectionProviderLib
 		private readonly BlockingCollection<MapSectionGenerateRequest> _returnQueue;
 		private readonly Task _returnQueueProcess;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
-		private readonly bool _combineRequests = false;
+		private readonly bool _combineRequests = true;
 
 		#endregion
 
@@ -394,7 +394,7 @@ namespace MapSectionProviderLib
 
 				if (DoesTheResponseSatisfyTheRequest(mapSectionBytes, requestedIterations, out var reason))
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"Got {request.ScreenPosition} from repo.");
+					//Debug.WriteLineIf(_useDetailedDebug, $"Got {request.ScreenPosition} from repo.");
 
 					request.FoundInRepo = true;
 					request.ProcessingEndTime = DateTime.UtcNow;
@@ -579,8 +579,9 @@ namespace MapSectionProviderLib
 
 					if (_combineRequests)
 					{
-						var requestsForSameSection = GetPendingRequests(mapSectionWorkRequest.Request);
-						ConfirmPrimaryRequestFound(mapSectionWorkRequest, requestsForSameSection);
+						ConfirmPrimaryRequestFound(mapSectionWorkRequest, _pendingRequests);
+						var requestsForSameSection = GetMatchingRequests(mapSectionWorkRequest, _pendingRequests);
+
 
 						//Debug.WriteLineIf(_useDetailedDebug, $"Handling generated response, the count is {pendingRequests.Count} for request: {mapSectionWorkRequest.Request}");
 
@@ -590,49 +591,63 @@ namespace MapSectionProviderLib
 
 							if (mapSectionWorkRequest.Response.RequestCancelled)
 							{
+								// The 'primary' request that these Pending requests were waiting for was cancelled.
 								// Update one of the pending items to not pending, and add this request to the list of items to be generated. 
-								var foundAPendingItem = false;
+								var pendingItemPromotedToPrimary = false;
 
 								foreach (var workItem in requestsForSameSection)
 								{
-									if (workItem != mapSectionWorkRequest)
+									if (workItem.Request.Cancelled || workItem.Request.CancellationTokenSource.IsCancellationRequested)
 									{
-										if (workItem.Request.Cancelled || workItem.Request.CancellationTokenSource.IsCancellationRequested)
-										{
-											workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, workItem.JobId);
-											workRequestsToSend.Add(workItem);
-											_pendingRequests.Remove(workItem);
-										}
-										else
-										{
-											if (!foundAPendingItem)
-											{
-												workItem.Request.Pending = false;
+										Debug.WriteLine($"The Primary Request was cancelled and this pending request was also cancelled: {workItem}.");
 
-												SendToGenerator(workItem, _mapSectionGeneratorProcessor, -1, ct);
-												foundAPendingItem = true;
-											}
-										}
+										workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, workItem.JobId);
+										workRequestsToSend.Add(workItem);
+										_pendingRequests.Remove(workItem);
 									}
 									else
 									{
-										_pendingRequests.Remove(workItem);
+										if (!pendingItemPromotedToPrimary)
+										{
+											Debug.WriteLine($"The Primary Request was cancelled, promoting workItem: {workItem} from Pending to Primary.");
+
+											Debug.Assert(workItem.Request.Pending, "Each WorkItem in the list of PendingRequests (other than the original request) should have Pending = true.");
+											workItem.Request.Pending = false;
+
+											SendToGenerator(workItem, _mapSectionGeneratorProcessor, -1, ct);
+											pendingItemPromotedToPrimary = true;
+										}
+										else
+										{
+
+										}
 									}
+								}
+
+								if (!pendingItemPromotedToPrimary)
+								{
+									Debug.WriteLine($"The Primary Request was cancelled and no workItem was promoted to primary.");
 								}
 							}
 							else
 							{
 								foreach (var workItem in requestsForSameSection)
 								{
-									if (workItem != mapSectionWorkRequest)
-									{
-										workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, workItem.JobId);
-										workRequestsToSend.Add(workItem);
-									}
-
+									workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, workItem.JobId);
+									workRequestsToSend.Add(workItem);
 									_pendingRequests.Remove(workItem);
 								}
 							}
+
+							//// Process each pending item, regardless of whether the original request is cancelled.
+							//foreach (var workItem in requestsForSameSection)
+							//{
+							//	workItem.Response = BuildMapSection(workItem.Request, mapSectionResponse, workItem.JobId);
+							//	workRequestsToSend.Add(workItem);
+							//	_pendingRequests.Remove(workItem);
+							//}
+
+
 						}
 					}
 				}
@@ -751,11 +766,11 @@ namespace MapSectionProviderLib
 		}
 
 		// Find all matching requests.
-		private List<MapSectionWorkRequest> GetPendingRequests(MapSectionRequest mapSectionRequest)
+		private List<MapSectionWorkRequest> GetMatchingRequests(MapSectionWorkRequest mapSectionWorkRequest, List<MapSectionWorkRequest> workRequests)
 		{
-			var subdivisionId = mapSectionRequest.SubdivisionId;
-			var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
-			var result = _pendingRequests.Where(x => x.Request.SubdivisionId == subdivisionId && x.Request.SectionBlockOffset == sectionBlockOffset).ToList();
+			var subdivisionId = mapSectionWorkRequest.Request.SubdivisionId;
+			var sectionBlockOffset = mapSectionWorkRequest.Request.SectionBlockOffset;
+			var result = workRequests.Where(x => x.Request.SubdivisionId == subdivisionId && x.Request.SectionBlockOffset == sectionBlockOffset && x != mapSectionWorkRequest).ToList();
 
 			return result;
 		}
@@ -806,7 +821,7 @@ namespace MapSectionProviderLib
 		}
 
 		[Conditional("DEBUG")]
-		private void ConfirmPrimaryRequestFound(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> workRequests)
+		private void ConfirmPrimaryRequestFoundLoose(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> workRequests)
 		{
 			var mapSectionRequest = mapSectionWorkRequest.Request;
 			var matchingRequest = workRequests.FirstOrDefault(x => (!x.Request.Pending) && x.Request.SubdivisionId == mapSectionRequest.SubdivisionId && x.Request.SectionBlockOffset == mapSectionRequest.SectionBlockOffset);
@@ -825,17 +840,25 @@ namespace MapSectionProviderLib
 
 					if (hasReferenceEquality)
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"Primary Request found and it is the same object.");
+						Debug.WriteLine($"Primary Request found and it is the same object.");
 					}
 					else
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"Primary Request found with same SubdivisionId and SectionOffset but it is not the same object.");
+						Debug.WriteLine($"Primary Request found with same SubdivisionId and SectionOffset but it is not the same object.");
 					}
 
 				}
 			}
 
 			//Debug.Assert(primaryRequestIsFound, "The primary request was not included in the list of pending requests.");
+		}
+
+		[Conditional("DEBUG")]
+		private void ConfirmPrimaryRequestFound(MapSectionWorkRequest mapSectionWorkRequest, IList<MapSectionWorkRequest> workRequests)
+		{
+			var doesContain = workRequests.Any(x => x.Request == mapSectionWorkRequest.Request);
+
+			Debug.Assert(doesContain, "does contain should be true here.");
 		}
 
 		//[Conditional("DEBUG")]
@@ -848,12 +871,12 @@ namespace MapSectionProviderLib
 		//	}
 		//}
 
-		private bool RequestExists(MapSectionRequest mapSectionRequest, IEnumerable<MapSectionWorkRequest> workRequests)
-		{
-			var result = workRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == mapSectionRequest.SubdivisionId && x.Request.SectionBlockOffset == mapSectionRequest.SectionBlockOffset);
+		//private bool RequestExists(MapSectionRequest mapSectionRequest, IEnumerable<MapSectionWorkRequest> workRequests)
+		//{
+		//	var result = workRequests.Any(x => (!x.Request.Pending) && x.Request.SubdivisionId == mapSectionRequest.SubdivisionId && x.Request.SectionBlockOffset == mapSectionRequest.SectionBlockOffset);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 

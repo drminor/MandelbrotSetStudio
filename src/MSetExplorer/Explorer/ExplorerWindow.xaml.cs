@@ -547,7 +547,9 @@ namespace MSetExplorer
 
 			// TODO: Provide UI to specify the size of the new Image file.
 			//var imageSize = curProject.CurrentJob.CanvasSize.Scale(4);
-			var imageSize = new SizeInt(4096);
+			//var imageSize = new SizeInt(4096);
+
+			var imageSize = _vm.MapDisplayViewModel.ViewportSize.Round();
 
 			var areaColorAndCalcSettings = GetAreaColorAndCalcSettings();
 
@@ -555,6 +557,9 @@ namespace MSetExplorer
 
 			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
 			{
+				// Pan our image so that the new image is close but not identical
+				Pan(PanDirection.Left, PanAmountQualifer.Regular, SHIFT_AMOUNT);
+
 				Debug.WriteLine($"The ExplorerWindow is StartingImageCreation. SaveTheZValues = {areaColorAndCalcSettings.MapCalcSettings.SaveTheZValues}.");
 
 				_createImageProgressWindow = StartImageCreation(imageFilePath, areaColorAndCalcSettings, new SizeDbl(imageSize));

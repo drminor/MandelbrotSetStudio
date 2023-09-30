@@ -30,6 +30,13 @@ namespace MapSectionProviderLib
 		//{
 		//	WorkAction(Request, Response, JobId);
 		//}
+
+		public override string ToString()
+		{
+			return Response == null
+				? $"WorkItem: {JobId} for request: {Request} /w null response"
+				: $"WorkItem: {JobId} for request: {Request} and response: {Response}";
+		}
 	}
 
 	internal class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSection>

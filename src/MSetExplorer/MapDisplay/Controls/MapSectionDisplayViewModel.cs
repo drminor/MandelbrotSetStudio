@@ -50,6 +50,8 @@ namespace MSetExplorer
 
 		private int _reentrencyCounter;
 
+		//private bool _useCombinedRequests = true;
+
 		#endregion
 
 		#region Constructor
@@ -805,8 +807,23 @@ namespace MSetExplorer
 
 			var mapLoaderJobNumber = -1;
 			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, mapLoaderJobNumber);
-			
+
+			//List<MapSectionRequest> newRequests;
+			//List<MapSectionRequest> requestsNoLongerNeeded;
+
+			//if (_useCombinedRequests)
+			//{
+			//	newRequests = GetRequestsToLoadAndRemoveUseCombinedReqs(allRequestsForNewJob, _currentMapSectionRequests, out requestsNoLongerNeeded);
+			//}
+			//else
+			//{
+			//	newRequests = GetRequestsToLoadAndRemove(allRequestsForNewJob, _currentMapSectionRequests, out requestsNoLongerNeeded);
+			//}
+
+			// The MapDisplayViewModel always compares requests using the IsInverted property.
 			var newRequests = GetRequestsToLoadAndRemove(allRequestsForNewJob, _currentMapSectionRequests, out var requestsNoLongerNeeded);
+
+
 			_currentMapSectionRequests = allRequestsForNewJob;
 
 			int? result;
@@ -834,10 +851,13 @@ namespace MSetExplorer
 
 				foreach (var request in requestsNoLongerNeeded)
 				{
-					if (_requestsPendingGeneration.Contains(request)) // X
+					// TODO: Implement IEquatable<MapSectionRequst>
+					var msr = FindMsr(request, _requestsPendingGeneration);
+
+					if (msr != null)
 					{
-						_requestsPendingGeneration.Remove(request); // X
-						requestsToCancel.Add(request);
+						_requestsPendingGeneration.Remove(msr);
+						requestsToCancel.Add(msr);
 					}
 					else
 					{
@@ -882,16 +902,16 @@ namespace MSetExplorer
 
 				if (newRequests.Count > 0)
 				{
-					// *************
-					// Submit the new requests.
 
+					// ***** Submit the new requests. *****
 					Interlocked.Increment(ref _reentrencyCounter);
 					var newMapSections = _mapLoaderManager.Push(newRequests, MapSectionReady, out var newJobNumber, out var mapRequestsPendingGeneration);
+					Interlocked.Decrement(ref _reentrencyCounter);
+
 					AddJobNumber(newJobNumber);
 
 					//Debug.WriteLineIf(_useDetailedDebug, $"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated.");
 					Debug.WriteLine($"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated. ReentrencyCounter: {_reentrencyCounter}");
-					Interlocked.Decrement(ref _reentrencyCounter);
 
 					_requestsPendingGeneration.AddRange(mapRequestsPendingGeneration);
 
@@ -908,6 +928,7 @@ namespace MSetExplorer
 						var mapSectionsToClear = new List<MapSection>();
 						foreach(var request in _requestsPendingGeneration)
 						{
+							// TODO: Confirm that _requestsPendingGeneration contain the correct request -- considering the value of IsInverted.
 							mapSectionsToClear.Add(_mapSectionBuilder.CreateEmptyMapSection(request, jobNumber: -1, isCancelled: false));
 						}
 
@@ -1083,7 +1104,7 @@ namespace MSetExplorer
 
 			foreach (var existingReq in existingRequests)
 			{
-				var alreadyPresent = newRequests.Where(newReq => newReq.SubdivisionId == existingReq.SubdivisionId && newReq.SectionBlockOffset == existingReq.SectionBlockOffset);
+				var alreadyPresent = newRequests.Where(x => x.SubdivisionId == existingReq.SubdivisionId && x.SectionBlockOffset == existingReq.SectionBlockOffset && x.IsInverted == existingReq.IsInverted);
 				var foundCnt = alreadyPresent.Count();
 
 				if (foundCnt == 0)
@@ -1094,16 +1115,47 @@ namespace MSetExplorer
 				}
 				else
 				{
-					// This existing request matches one of the new requests, we can remove all matching requests from the list of new requests.
-					foreach(var newRequst in alreadyPresent)
-					{
-						result.Remove(newRequst);
-					}
+					Debug.Assert(foundCnt == 1, "foundCnt should be 1 here.");
+					result.Remove(alreadyPresent.First());
 				}
 			}
 
 			return result;
 		}
+
+		//private List<MapSectionRequest> GetRequestsToLoadAndRemoveUseCombinedReqs(List<MapSectionRequest> newRequests, List<MapSectionRequest> existingRequests, out List<MapSectionRequest> requestsNoLongerNeeded)
+		//{
+		//	var result = new List<MapSectionRequest>(newRequests);
+
+		//	requestsNoLongerNeeded = new List<MapSectionRequest>();
+
+		//	foreach (var existingReq in existingRequests)
+		//	{
+		//		var alreadyPresent = newRequests.Where(x => x.SubdivisionId == existingReq.SubdivisionId && x.SectionBlockOffset == existingReq.SectionBlockOffset/* && x.IsInverted == existingReq.IsInverted*/);
+		//		var foundCnt = alreadyPresent.Count();
+
+		//		if (foundCnt == 0)
+		//		{
+		//			// The existing request could not be matched to any new request.
+		//			// We will not be needing this request any longer
+		//			requestsNoLongerNeeded.Add(existingReq);
+		//		}
+		//		else
+		//		{
+		//			//Debug.Assert(foundCnt == 1, "foundCnt should be 1 here.");
+		//			//result.Remove(alreadyPresent.First());
+
+		//			// This existing request matches one of the new requests, we can remove all matching requests from the list of new requests.
+		//			foreach (var newRequst in alreadyPresent)
+		//			{
+		//				result.Remove(newRequst);
+		//			}
+		//		}
+		//	}
+
+		//	return result;
+		//}
+
 
 		private MapAreaInfo GetScreenAreaInfo(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
@@ -1160,6 +1212,13 @@ namespace MSetExplorer
 				return false;
 			}
 
+		}
+
+		private MapSectionRequest? FindMsr(MapSectionRequest msr, List<MapSectionRequest> mapSectionRequests)
+		{
+			var request = mapSectionRequests.Find(x => x.SubdivisionId == msr.SubdivisionId && x.SectionBlockOffset == msr.SectionBlockOffset);
+
+			return request;
 		}
 
 		//private void DisposeMapSection(MapSection mapSection)
