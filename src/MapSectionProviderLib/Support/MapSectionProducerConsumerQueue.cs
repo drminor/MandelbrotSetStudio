@@ -5,13 +5,15 @@ using System.Threading;
 
 namespace MapSectionProviderLib.Support
 {
-    internal class MapSectionProducerConsumerQueue<T> : IDisposable
-    {
-        private readonly BlockingCollection<KeyValuePair<int, T>> _bc;
+    internal class MapSectionProducerConsumerQueue<T> : IDisposable where T : IWorkRequest
+	{
+        private readonly JobQueuesG<T> _imp;
+        private readonly BlockingCollection<T> _bc;
 
-        public MapSectionProducerConsumerQueue(IProducerConsumerCollection<KeyValuePair<int, T>> imp, int boundedCapacity)
+        public MapSectionProducerConsumerQueue(JobQueuesG<T> imp, int boundedCapacity)
         {
-            _bc = new BlockingCollection<KeyValuePair<int, T>>(imp, boundedCapacity);
+            _imp = imp;
+            _bc = new BlockingCollection<T>(_imp, boundedCapacity);
         }
 
         #region Public Properties
@@ -22,36 +24,61 @@ namespace MapSectionProviderLib.Support
 
         public int Count => _bc.Count;
 
-        #endregion
+		#endregion
 
-        #region Public Methods - Standard Blocking Collection
+		//#region Public Methods - Extended
 
-        public void Add(T item)
+		//public void Add(int jobNumber, List<T> items)
+		//{
+  //          CreateJobListIfNew(jobNumber);
+
+  //          foreach(var item in items)
+  //          {
+		//		_bc.Add(item);
+		//	}
+		//}
+
+		//#endregion
+
+		#region Public Methods - Standard Blocking Collection
+
+		public void Add(T item)
         {
-            var itemWrapper = new KeyValuePair<int, T>(0, item);
-            _bc.Add(itemWrapper);
+            //CreateJobListIfNew(item.JobId);
+			_bc.Add(item);
         }
 
 		public void Add(T item, CancellationToken ct)
 		{
-			var itemWrapper = new KeyValuePair<int, T>(0, item);
-			_bc.Add(itemWrapper, ct);
+			_bc.Add(item, ct);
 		}
 
 		public T Take(CancellationToken ct)
         {
-            var item = _bc.Take(ct);
-
-            return item.Value;
+            return _bc.Take(ct);
         }
 
         public void CompleteAdding() => _bc.CompleteAdding();
 
-        #endregion
+		#endregion
 
-        #region IDisposable Support
+		//#region Private Methods
 
-        public void Dispose()
+  //      private void CreateJobListIfNew(int jobNumber)
+  //      {
+  //          if (!_imp.JobNumbers.Contains(jobNumber))
+  //          {
+  //              _imp.JobNumbers.Add(jobNumber);
+  //              _imp.JobLists.Add(new KeyValuePair<int, List<T>>(jobNumber, new List<T>()));
+  //          }
+  //      }
+
+		//#endregion
+
+
+		#region IDisposable Support
+
+		public void Dispose()
         {
             ((IDisposable)_bc).Dispose();
         }

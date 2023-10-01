@@ -805,8 +805,7 @@ namespace MSetExplorer
 		{
 			LastMapAreaInfo = screenAreaInfo;
 
-			var mapLoaderJobNumber = -1;
-			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, mapLoaderJobNumber);
+			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
 			//List<MapSectionRequest> newRequests;
 			//List<MapSectionRequest> requestsNoLongerNeeded;
@@ -994,8 +993,7 @@ namespace MSetExplorer
 			//_mapSectionsPendingGeneration.AddRange(mapSectionsPendingGeneration);
 			//Debug.WriteLineIf(_useDetailedDebug, $"DiscardAndLoad: {newMapSections.Count} were found in the repo, {mapSectionsPendingGeneration.Count} are being generated.");
 
-			var mapLoaderJobNumber = -1;
-			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings, mapLoaderJobNumber);
+			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
 			Interlocked.Increment(ref _reentrencyCounter);
 			var newMapSections = _mapLoaderManager.Push(_currentMapSectionRequests, MapSectionReady, out var newJobNumber, out var mapRequestsPendingGeneration);
@@ -1104,7 +1102,8 @@ namespace MSetExplorer
 
 			foreach (var existingReq in existingRequests)
 			{
-				var alreadyPresent = newRequests.Where(x => x.SubdivisionId == existingReq.SubdivisionId && x.SectionBlockOffset == existingReq.SectionBlockOffset && x.IsInverted == existingReq.IsInverted);
+				//var alreadyPresent = newRequests.Where(x => x.SubdivisionId == existingReq.SubdivisionId && x.SectionBlockOffset == existingReq.SectionBlockOffset && x.IsInverted == existingReq.IsInverted);
+				var alreadyPresent = newRequests.Where(x => x.IsInverted == existingReq.IsInverted && x.SectionBlockOffset == existingReq.SectionBlockOffset);
 				var foundCnt = alreadyPresent.Count();
 
 				if (foundCnt == 0)
@@ -1115,6 +1114,24 @@ namespace MSetExplorer
 				}
 				else
 				{
+					//var foundRequests = alreadyPresent.ToArray();
+					//for (var i = 0; i < foundRequests.Length; i++)
+					//{
+					//	var foundReq = foundRequests[i];
+
+					//	// foundReq is a new request.
+
+					//	if (foundReq.IsInverted == existingReq.IsInverted)
+					//	{
+					//		var mirrorOfFound = foundReq.Mirror;
+					//		if (mirrorOfFound != null)
+					//		{
+								
+					//		}
+					//	}
+					//}
+
+
 					Debug.Assert(foundCnt == 1, "foundCnt should be 1 here.");
 					result.Remove(alreadyPresent.First());
 				}

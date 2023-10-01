@@ -4,6 +4,7 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MSS.Common
 {
@@ -33,7 +34,7 @@ namespace MSS.Common
 
 		#region Create MapSectionRequests
 
-		public List<MapSectionRequest> CreateSectionRequests(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, int mapLoaderJobNumber)
+		public List<MapSectionRequest> CreateSectionRequests(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, int mapLoaderJobNumber = -1)
 		{
 			var result = new List<MapSectionRequest>();
 
@@ -43,15 +44,45 @@ namespace MSS.Common
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
 			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
 
+			var limbCount = GetLimbCount(precision);
+
+			var msrJob = new MsrJob(mapLoaderJobNumber: -1, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset, 
+				precision, limbCount, mapCalcSettings);
+
 			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
 
+			bool firstSectionIsInverted = false;
 			var requestNumber = 0;
+
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
 				var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
 
-				var mapSectionRequest = CreateRequest(jobType, screenPosition, screenPositionRelativeToCenter, mapAreaInfo.MapBlockOffset, precision, jobId, jobOwnerType, 
-					mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapCalcSettings, mapLoaderJobNumber, requestNumber++);
+				var mapSectionRequest = CreateRequest(msrJob, requestNumber++, screenPosition, screenPositionRelativeToCenter);
+
+				if(requestNumber == 1)
+				{
+					firstSectionIsInverted = mapSectionRequest.IsInverted;
+				}
+				else
+				{
+					if (mapSectionRequest.IsInverted != firstSectionIsInverted)
+					{
+						var mirror = result.FirstOrDefault(x => x.SectionBlockOffset.Equals(mapSectionRequest.SectionBlockOffset));
+						if (mirror != null)
+						{
+							//mapSectionRequest.MirrorRequestNumber = mirror.RequestNumber;
+							mapSectionRequest.Mirror = mirror;
+
+							//mirror.MirrorRequestNumber = requestNumber;
+							mirror.Mirror = mapSectionRequest;
+
+							// Do not add this mapSectionRequest to the result since it is included as a mirror.
+							continue;
+						}
+					}
+				}
+
 				result.Add(mapSectionRequest);
 			}
 
@@ -74,38 +105,23 @@ namespace MSS.Common
 		/// <param name="subdivision"></param>
 		/// <param name="mapCalcSettings"></param>
 		/// <returns></returns>
-		public MapSectionRequest CreateRequest(JobType jobType, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector jobBlockOffset, int precision, string jobId, OwnerType ownerType, 
-			Subdivision subdivision, ObjectId originalSourceSubdivisionId, MapCalcSettings mapCalcSettings, int mapLoaderJobNumber, int requestNumber)
+		public MapSectionRequest CreateRequest(MsrJob msrJob, int requestNumber, PointInt screenPosition, VectorInt screenPositionRelativeToCenter)
 		{
 			// Block Position, relative to the Subdivision's BaseMapPosition
-			var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, jobBlockOffset, out var isInverted);
+			var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, msrJob.JobBlockOffset, out var isInverted);
 
 			// Absolute position in Map Coordinates.
-			var mapPosition = GetMapPosition(subdivision, sectionBlockOffset);
-
-			var limbCount = GetLimbCount(precision);
+			var mapPosition = GetMapPosition(msrJob.Subdivision, sectionBlockOffset);
 
 			var mapSectionRequest = new MapSectionRequest
 			(
-				jobType: jobType,
-				jobId: jobId,
-				ownerType: ownerType,
-				subdivisionId: subdivision.Id.ToString(),
-				originalSourceSubdivisionId: originalSourceSubdivisionId.ToString(),
+				msrJob: msrJob,
+				requestNumber: requestNumber,
 				screenPosition: screenPosition,
 				screenPositionRelativeToCenter: screenPositionRelativeToCenter,
-				jobBlockOffset: jobBlockOffset,
 				sectionBlockOffset: MapTo(sectionBlockOffset),
 				mapPosition: mapPosition,
-				isInverted: isInverted,
-				precision: precision,
-				limbCount: limbCount,
-				blockSize: subdivision.BlockSize,
-				samplePointDelta: subdivision.SamplePointDelta,
-				mapCalcSettings: mapCalcSettings,
-				mapLoaderJobNumber: mapLoaderJobNumber,
-				requestNumber: requestNumber
-			);
+				isInverted: isInverted);
 
 			return mapSectionRequest;
 		}
@@ -134,7 +150,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		private int GetLimbCount(int precision)
+		public int GetLimbCount(int precision)
 		{
 			if (precision != _currentPrecision)
 			{

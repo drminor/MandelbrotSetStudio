@@ -41,6 +41,12 @@ namespace MapSectionProviderLib
 
 	internal class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSection>
 	{
+		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSection> workAction, MapSection mapSection)
+			: this(jobId, request, workAction)
+		{
+			Response = mapSection;
+		}
+
 		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSection> workAction)
 			: base(jobId, request, workAction)
 		{
@@ -71,18 +77,12 @@ namespace MapSectionProviderLib
 		{ }
 
 		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response, bool onlyInsertJobMapSectionRecord)
-			: base(request.MapLoaderJobNumber, request, DuA)
+			: base(request.MapLoaderJobNumber, request, (request, response) => { })
 		{
 			Request = request ?? throw new ArgumentNullException(nameof(request));
 			Response = response ?? throw new ArgumentNullException(nameof(response));
 			OnlyInsertJobMapSectionRecord = onlyInsertJobMapSectionRecord;
 		}
-
-		private static void DuA(MapSectionRequest request, MapSectionResponse response)
-		{
-
-		}
-
 	}
 
 	public interface IWorkRequest

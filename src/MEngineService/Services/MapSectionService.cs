@@ -176,25 +176,42 @@ namespace MEngineService.Services
 			var mapPosition = _dtoMapper.MapFrom(req.MapPosition);
 			var samplePointDelta = _dtoMapper.MapFrom(req.SamplePointDelta);
 
-			var mapSectionRequest = new MapSectionRequest(JobType.FullScale, req.JobId, req.OwnerType, req.SubdivisionId, req.SubdivisionId, req.ScreenPosition,
+			var mapSectionRequest = new MapSectionRequest(
+				msrJob: GetMsrJob(req),
+				requestNumber: req.RequestNumber, 
+				screenPosition: req.ScreenPosition,
 				screenPositionRelativeToCenter: new VectorInt(),
-				jobBlockOffset: new BigVector(),
 				sectionBlockOffset: req.BlockPosition,
 				mapPosition: mapPosition,
-				isInverted: req.IsInverted,
-				req.Precision,
-				req.LimbCount,
-				req.BlockSize,
-				samplePointDelta: samplePointDelta,
-				req.MapCalcSettings,
-				mapLoaderJobNumber: req.MapLoaderJobNumber,
-				requestNumber: req.RequestNumber);
+				isInverted: req.IsInverted
+			);
 
 			mapSectionRequest.MapLoaderJobNumber = req.MapLoaderJobNumber;
 			mapSectionRequest.MapSectionVectors2 = GetVectors2(req);
 			mapSectionRequest.MapSectionZVectors = GetZVectors(req);
 
 			return mapSectionRequest;
+		}
+
+		private MsrJob GetMsrJob(MapSectionServiceRequest req)
+		{
+			var samplePointDelta = _dtoMapper.MapFrom(req.SamplePointDelta);
+			var subdivision = new Subdivision(samplePointDelta, new BigVector());
+
+			var result = new MsrJob(
+				req.MapLoaderJobNumber, 
+				JobType.FullScale, 
+				req.JobId, 
+				req.OwnerType, 
+				subdivision,
+				originalSourceSubdivisionId: "",
+				jobBlockOffset: new BigVector(), 
+				req.Precision, 
+				req.LimbCount, 
+				req.MapCalcSettings
+				);
+
+			return result;
 		}
 
 		private MapSectionVectors2? GetVectors2(MapSectionServiceRequest req)

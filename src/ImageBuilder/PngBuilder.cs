@@ -291,8 +291,10 @@ namespace ImageBuilder
 		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, OwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, BigVector mapBlockOffset, int rowPtr, int blockIndexY, int stride, MapCalcSettings mapCalcSettings, int precision)
 		{
 			var jobType = JobType.Image;
-			var requests = new List<MapSectionRequest>();
+			var limbCount = _mapSectionBuilder.GetLimbCount(precision);
+			var msrJob = new MsrJob(mapLoaderJobNumber: -1, jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision: precision, limbCount, mapCalcSettings);
 
+			var requests = new List<MapSectionRequest>();
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
 			{
@@ -300,8 +302,8 @@ namespace ImageBuilder
 
 				var blockIndexX = colPtr - (stride / 2);
 				var screenPositionRelativeToCenter = new VectorInt(blockIndexX, blockIndexY);
-				var mapSectionRequest = _mapSectionBuilder.CreateRequest(jobType, key, screenPositionRelativeToCenter, mapBlockOffset, precision, jobId.ToString(), ownerType, subdivision, 
-					originalSourceSubdivisionId, mapCalcSettings, mapLoaderJobNumber: -1, requestNumber: colPtr);
+				var mapSectionRequest = _mapSectionBuilder.CreateRequest(msrJob, requestNumber: colPtr, screenPosition: key, screenPositionRelativeToCenter: screenPositionRelativeToCenter);
+
 				requests.Add(mapSectionRequest);
 			}
 

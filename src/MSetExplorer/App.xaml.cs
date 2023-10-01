@@ -1,6 +1,5 @@
 ﻿using MapSectionProviderLib;
 using MEngineClient;
-using MEngineDataContracts;
 using MongoDB.Bson;
 using MSetExplorer.RepositoryManagement;
 using MSetGeneratorPrototype;

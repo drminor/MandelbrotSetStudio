@@ -1,75 +1,48 @@
-﻿using MongoDB.Bson;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Threading;
 
 namespace MSS.Types.MSet
 {
 	public class MapSectionRequest
 	{
-		public MapSectionRequest() : this(JobType.FullScale, "", OwnerType.Project, "", "", new PointInt(), new VectorInt(), new BigVector(), new MapBlockOffset(), 
-			new RPoint(), isInverted: false, precision: 0, limbCount: 0, new SizeInt(), new RSize(), new MapCalcSettings(), mapLoaderJobNumber: 0, requestNumber: 0)
+		public MapSectionRequest(MsrJob msrJob) : this(msrJob, requestNumber: 0, screenPosition: new PointInt(), screenPositionRelativeToCenter: new VectorInt(),
+			sectionBlockOffset: new MapBlockOffset(), mapPosition: new RPoint(), isInverted: false)
 		{ }
 
-		public MapSectionRequest(JobType jobType, string jobId, OwnerType ownerType, string subdivisionId, string originalSourceSubdivisionId,
-			PointInt screenPosition, VectorInt screenPositionRelativeToCenter, BigVector jobBlockOffset, MapBlockOffset sectionBlockOffset, RPoint mapPosition, bool isInverted,
-			int precision, int limbCount, SizeInt blockSize, RSize samplePointDelta, MapCalcSettings mapCalcSettings, int mapLoaderJobNumber, int requestNumber)
+		public MapSectionRequest(MsrJob msrJob, int requestNumber, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, MapBlockOffset sectionBlockOffset, RPoint mapPosition, bool isInverted)
 		{
-			ObjectId test = new ObjectId(originalSourceSubdivisionId);
+			MsrJob = msrJob ?? throw new ArgumentNullException(nameof(MsrJob), "All MapSectionRequest must reference a MsrJob.");
 
-			if (test == ObjectId.Empty)
-			{
-				Debug.WriteLine($"The originalSourceSubdivisionId is blank during MapSectionRequest construction.");
-			}
-
-			JobType = jobType;
+			RequestNumber = requestNumber;
+			Mirror = null;
+			
 			MapSectionId = null;
-			JobId = jobId;
-			OwnerType = ownerType;
-			SubdivisionId = subdivisionId;
-			OriginalSourceSubdivisionId = originalSourceSubdivisionId;
+
 			ScreenPosition = screenPosition;
 			ScreenPositionReleativeToCenter = screenPositionRelativeToCenter;
-			JobBlockOffset = jobBlockOffset;
+
 			SectionBlockOffset = sectionBlockOffset;
 			MapPosition = mapPosition;
 			IsInverted = isInverted;
-			Precision = precision;
-			LimbCount = limbCount;
-			BlockSize = blockSize;
-			SamplePointDelta = samplePointDelta;
-			MapCalcSettings = mapCalcSettings;
-			MapLoaderJobNumber = mapLoaderJobNumber;
-			RequestNumber = requestNumber;
-			CancellationTokenSource = new CancellationTokenSource();
 
+			CancellationTokenSource = new CancellationTokenSource();
 			ProcessingStartTime = DateTime.UtcNow;
 		}
 
-		public JobType JobType { get; init; }
+		public MsrJob MsrJob { get; init; }
+
+		public int MapLoaderJobNumber { get; set; }
+		public int RequestNumber { get; init; }
+
 		public string? MapSectionId { get; set; }
-		public string JobId { get; init; }
-		public OwnerType OwnerType { get; init; }
-		public string SubdivisionId { get; init; }
-		public string OriginalSourceSubdivisionId { get; init; }
 
-		/// <summary>
-		/// X,Y coords for this MapSection, relative to the Subdivision BaseMapPosition in Block-Size units.
-		/// </summary>
-		//public BigVector RepoBlockPosition { get; init; }
-		public MapBlockOffset SectionBlockOffset { get; init; }
+		public MapSectionRequest? Mirror { get; set; }
 
-		/// <summary>
-		/// True, if this MapSection has a negative Y coordinate. 
-		/// </summary>
-		public bool IsInverted { get; init; }
-
-		/// <summary>
-		/// X,Y coords for the MapSection located at the lower, left for this Job, relative to the Subdivision BaseMapPosition in Block-Size units
-		/// </summary>
-		public BigVector JobBlockOffset { get; init; }
-
-		// TODO: Confirm that the ScreenPosition and the BlockPosition - MapBlockOffset are always identical.
+		public JobType JobType => MsrJob.JobType;
+		public string JobId => MsrJob.JobId;
+		public OwnerType OwnerType => MsrJob.OwnerType;
+		public string SubdivisionId => MsrJob.Subdivision.Id.ToString();
+		public string OriginalSourceSubdivisionId => MsrJob.OriginalSourceSubdivisionId;
 
 		/// <summary>
 		/// X,Y coords on screen in Block-Size units
@@ -79,21 +52,34 @@ namespace MSS.Types.MSet
 		public VectorInt ScreenPositionReleativeToCenter { get; init; }
 
 		/// <summary>
+		/// X,Y coords for the MapSection located at the lower, left for this Job, relative to the Subdivision BaseMapPosition in Block-Size units
+		/// </summary>
+		public BigVector JobBlockOffset => MsrJob.JobBlockOffset;
+
+		/// <summary>
+		/// X,Y coords for this MapSection, relative to the Subdivision BaseMapPosition in Block-Size units.
+		/// </summary>
+		//public BigVector RepoBlockPosition { get; init; }
+		public MapBlockOffset SectionBlockOffset { get; init; }
+
+		/// <summary>
 		/// X,Y coords for this MapSection in absolute map coordinates. Equal to the (BlockPosition + Subdivision.BaseMapPosition) x BlockSize x SamplePointDelta 
 		/// </summary>
 		public RPoint MapPosition { get; init; }
 
-		public SizeInt BlockSize { get; init; }
-		
-		public RSize SamplePointDelta { get; init; }
-		public MapCalcSettings MapCalcSettings { get; init; }
-		public int MapLoaderJobNumber { get; set; }
-		public int RequestNumber { get; init; }
+		/// <summary>
+		/// True, if this MapSection has a negative Y coordinate. 
+		/// </summary>
+		public bool IsInverted { get; init; }
+
+		public int Precision => MsrJob.Precision;
+		public int LimbCount => MsrJob.LimbCount;
+		public SizeInt BlockSize => MsrJob.BlockSize;
+
+		public RSize SamplePointDelta => MsrJob.SamplePointDelta;
+		public MapCalcSettings MapCalcSettings => MsrJob.MapCalcSettings;
 
 		public CancellationTokenSource CancellationTokenSource { get; set; }
-
-		public int Precision { get; set; }
-		public int LimbCount { get; set; }
 
 		public MapSectionVectors2? MapSectionVectors2 { get; set; }
 		public MapSectionZVectors? MapSectionZVectors { get; set; }

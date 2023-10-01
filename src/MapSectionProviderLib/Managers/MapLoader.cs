@@ -244,15 +244,15 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private void ReportStats()
-		{
-			var numberOfPendingRequests = _mapSectionRequestProcessor.GetNumberOfPendingRequests(JobNumber);
-			var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
-			var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
+		//private void ReportStats()
+		//{
+		//	var numberOfPendingRequests = _mapSectionRequestProcessor.GetNumberOfPendingRequests(JobNumber);
+		//	var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
+		//	var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
 
-			Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections in {_stopwatch.Elapsed}. " +
-				$"There are {numberOfPendingRequests}/{notHandled}/{notSent} requests still pending, not handled, not sent.");
-		}
+		//	Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections in {_stopwatch.Elapsed}. " +
+		//		$"There are {numberOfPendingRequests}/{notHandled}/{notSent} requests still pending, not handled, not sent.");
+		//}
 
 		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr, bool isLastSection)
 		{

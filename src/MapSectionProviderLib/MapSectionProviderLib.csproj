@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Support\TestJobQueues.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Support\TestJobQueues.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
     <ProjectReference Include="..\ProjectRepo\ProjectRepo.csproj" />
   </ItemGroup>
