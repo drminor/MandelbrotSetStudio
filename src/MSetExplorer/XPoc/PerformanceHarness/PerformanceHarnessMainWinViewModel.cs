@@ -340,12 +340,12 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 
 
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobType, jobId, ownerType, oldAreaInfo, job.MapCalcSettings, mapLoaderJobNumber);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, jobId, ownerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			LimbCount = mapSectionRequests[0].LimbCount;
 
-			var newJobNumber = _mapSectionRequestProcessor.GetNextRequestId();
+			var newJobNumber = _mapSectionRequestProcessor.GetNextJobNumber();
 
 			var mapLoader = new MapLoader(newJobNumber, MapSectionReady, _mapSectionRequestProcessor);
 			//AddTiming("Construct MapLoader");

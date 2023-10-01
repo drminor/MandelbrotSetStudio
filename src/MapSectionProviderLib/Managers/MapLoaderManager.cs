@@ -54,18 +54,18 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public int GetNextJobNumber() => _mapSectionRequestProcessor.GetNextRequestId();
+		public int GetNextJobNumber() => _mapSectionRequestProcessor.GetNextJobNumber();
 
-		public List<MapSection> Push(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out int jobNumber, out List<MapSectionRequest> pendingGeneration)
+		public List<MapSection> Push(int mapLoaderJobNumber, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration)
 		{
-			var result = FetchResponses(mapSectionRequests, out jobNumber);
+			var result = FetchResponses(mapSectionRequests);
 
 			if (result.Count != mapSectionRequests.Count)
 			{
 				var requestsNotFound = mapSectionRequests.Where(x => !x.FoundInRepo).ToList();
 				CheckNewRequestsForCancellation(requestsNotFound);
 
-				var mapLoader = new MapLoader(jobNumber, callback, _mapSectionRequestProcessor);
+				var mapLoader = new MapLoader(mapLoaderJobNumber, callback, _mapSectionRequestProcessor);
 
 				DoWithWriteLock(() =>
 				{
@@ -84,7 +84,7 @@ namespace MapSectionProviderLib
 				pendingGeneration = new List<MapSectionRequest>();
 			}
 
-			RequestAdded?.Invoke(this, new JobProgressInfo(jobNumber, "temp", DateTime.Now, mapSectionRequests.Count, result.Count));
+			RequestAdded?.Invoke(this, new JobProgressInfo(mapLoaderJobNumber, "temp", DateTime.Now, mapSectionRequests.Count, result.Count));
 
 			return result;
 		}
@@ -151,11 +151,11 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private List<MapSection> FetchResponses(List<MapSectionRequest> mapSectionRequests, out int jobNumber)
+		private List<MapSection> FetchResponses(List<MapSectionRequest> mapSectionRequests)
 		{
 			var result = new List<MapSection>();
 
-			var requestResponsePairs = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests, out jobNumber);
+			var requestResponsePairs = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests);
 
 			foreach (var requestResponsePair in requestResponsePairs)
 			{
@@ -164,7 +164,7 @@ namespace MapSectionProviderLib
 
 				if (response.MapSectionVectors != null)
 				{
-					var mapSection = _mapSectionBuilder.CreateMapSection(request, response.MapSectionVectors, jobNumber);
+					var mapSection = _mapSectionBuilder.CreateMapSection(request, response.MapSectionVectors);
 					result.Add(mapSection);
 				}
 			}

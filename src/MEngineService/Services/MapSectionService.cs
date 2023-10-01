@@ -174,7 +174,6 @@ namespace MEngineService.Services
 		private MapSectionRequest MapFrom(MapSectionServiceRequest req)
 		{
 			var mapPosition = _dtoMapper.MapFrom(req.MapPosition);
-			var samplePointDelta = _dtoMapper.MapFrom(req.SamplePointDelta);
 
 			var mapSectionRequest = new MapSectionRequest(
 				msrJob: GetMsrJob(req),
@@ -186,7 +185,6 @@ namespace MEngineService.Services
 				isInverted: req.IsInverted
 			);
 
-			mapSectionRequest.MapLoaderJobNumber = req.MapLoaderJobNumber;
 			mapSectionRequest.MapSectionVectors2 = GetVectors2(req);
 			mapSectionRequest.MapSectionZVectors = GetZVectors(req);
 
@@ -208,7 +206,8 @@ namespace MEngineService.Services
 				jobBlockOffset: new BigVector(), 
 				req.Precision, 
 				req.LimbCount, 
-				req.MapCalcSettings
+				req.MapCalcSettings,
+				crossesXZero: false			// TODO: Provide a real value for crossesXZero  
 				);
 
 			return result;

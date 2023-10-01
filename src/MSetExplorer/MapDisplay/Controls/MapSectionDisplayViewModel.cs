@@ -805,7 +805,8 @@ namespace MSetExplorer
 		{
 			LastMapAreaInfo = screenAreaInfo;
 
-			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
+			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
+			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
 			//List<MapSectionRequest> newRequests;
 			//List<MapSectionRequest> requestsNoLongerNeeded;
@@ -904,10 +905,10 @@ namespace MSetExplorer
 
 					// ***** Submit the new requests. *****
 					Interlocked.Increment(ref _reentrencyCounter);
-					var newMapSections = _mapLoaderManager.Push(newRequests, MapSectionReady, out var newJobNumber, out var mapRequestsPendingGeneration);
+					var newMapSections = _mapLoaderManager.Push(mapLoaderJobNumber, newRequests, MapSectionReady, out var mapRequestsPendingGeneration);
 					Interlocked.Decrement(ref _reentrencyCounter);
 
-					AddJobNumber(newJobNumber);
+					AddJobNumber(mapLoaderJobNumber);
 
 					//Debug.WriteLineIf(_useDetailedDebug, $"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated.");
 					Debug.WriteLine($"ReuseAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated. ReentrencyCounter: {_reentrencyCounter}");
@@ -928,7 +929,7 @@ namespace MSetExplorer
 						foreach(var request in _requestsPendingGeneration)
 						{
 							// TODO: Confirm that _requestsPendingGeneration contain the correct request -- considering the value of IsInverted.
-							mapSectionsToClear.Add(_mapSectionBuilder.CreateEmptyMapSection(request, jobNumber: -1, isCancelled: false));
+							mapSectionsToClear.Add(_mapSectionBuilder.CreateEmptyMapSection(request, isCancelled: false));
 						}
 
 						var numberCleared = _bitmapGrid.ClearSections(mapSectionsToClear);
@@ -947,7 +948,7 @@ namespace MSetExplorer
 
 					lastSectionWasIncluded = mapRequestsPendingGeneration.Count == 0;
 
-					result = newJobNumber;
+					result = mapLoaderJobNumber;
 				}
 				else
 				{
@@ -993,11 +994,12 @@ namespace MSetExplorer
 			//_mapSectionsPendingGeneration.AddRange(mapSectionsPendingGeneration);
 			//Debug.WriteLineIf(_useDetailedDebug, $"DiscardAndLoad: {newMapSections.Count} were found in the repo, {mapSectionsPendingGeneration.Count} are being generated.");
 
-			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
+			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
+			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
 			Interlocked.Increment(ref _reentrencyCounter);
-			var newMapSections = _mapLoaderManager.Push(_currentMapSectionRequests, MapSectionReady, out var newJobNumber, out var mapRequestsPendingGeneration);
-			AddJobNumber(newJobNumber);
+			var newMapSections = _mapLoaderManager.Push(mapLoaderJobNumber, _currentMapSectionRequests, MapSectionReady, out var mapRequestsPendingGeneration);
+			AddJobNumber(mapLoaderJobNumber);
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"DiscardAndLoad: {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated.");
 			Debug.WriteLine($"DiscardAndLoad: Display: {_currentMapSectionRequests.Count} sections;  {newMapSections.Count} were found in the repo, {mapRequestsPendingGeneration.Count} are being generated. ReentrencyCounter: {_reentrencyCounter}");
@@ -1020,7 +1022,7 @@ namespace MSetExplorer
 			_bitmapGrid.DrawSections(newMapSections);
 			lastSectionWasIncluded = mapRequestsPendingGeneration.Count == 0;
 
-			return newJobNumber;
+			return mapLoaderJobNumber;
 		}
 
 		private void StopCurrentJobs(bool clearDisplay)

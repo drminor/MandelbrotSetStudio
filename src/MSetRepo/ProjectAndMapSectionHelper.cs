@@ -256,7 +256,7 @@ namespace MSetRepo
 
 			var mapAreaInfoV1 = mapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
 
-			var mapSectionRequests = mapSectionBuilder.CreateSectionRequests(jobType, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings, mapLoaderJobNumber);
+			var mapSectionRequests = mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, jobId.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings);
 
 			return mapSectionRequests;
 		}

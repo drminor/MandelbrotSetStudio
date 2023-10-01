@@ -8,11 +8,11 @@ namespace MSS.Types.MSet
 	public class MsrJob
 	{
 		public MsrJob() : this(mapLoaderJobNumber: 0, jobType: JobType.FullScale, jobId: "", ownerType: OwnerType.Project, subdivision: new Subdivision(), originalSourceSubdivisionId: "",
-			jobBlockOffset: new BigVector(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings())
+			jobBlockOffset: new BigVector(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings(), crossesXZero: false)
 		{ }
 
 		public MsrJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType ownerType, Subdivision subdivision, string originalSourceSubdivisionId, 
-			BigVector jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings)
+			BigVector jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings, bool crossesXZero)
 		{
 			ObjectId test = new ObjectId(originalSourceSubdivisionId);
 
@@ -32,7 +32,7 @@ namespace MSS.Types.MSet
 			Precision = precision;
 			LimbCount = limbCount;
 			MapCalcSettings = mapCalcSettings;
-			CrossesYZero = false;
+			CrossesYZero = crossesXZero;
 
 			CancellationTokenSource = new CancellationTokenSource();
 		}

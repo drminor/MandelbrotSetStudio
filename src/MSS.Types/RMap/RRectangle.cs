@@ -98,6 +98,8 @@ namespace MSS.Types
 		public RValue Height => new(HeightNumerator, Exponent);
 		public RSize Size => new(WidthNumerator, HeightNumerator, Exponent);
 
+		public bool CrossesXZero => Values[2].Sign != Values[3].Sign && Values[2].Sign != 0 && Values[3].Sign != 0;
+
 
 		//public RRectangle Scale(RPoint factor)
 		//{

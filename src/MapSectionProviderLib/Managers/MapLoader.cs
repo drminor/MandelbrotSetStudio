@@ -72,10 +72,6 @@ namespace MapSectionProviderLib
 			}
 
 			_mapSectionRequests = mapSectionRequests;
-			foreach(var mapSectionRequest in mapSectionRequests)
-			{
-				mapSectionRequest.MapLoaderJobNumber = JobNumber;
-			}
 
 			_stopwatch.Start();
 			_ = Task.Run(SubmitSectionRequests);
@@ -165,7 +161,7 @@ namespace MapSectionProviderLib
 				if (!mapSectionRequest.CancellationTokenSource.IsCancellationRequested)
 				{
 					mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
-					_mapSectionRequestProcessor.AddWork(JobNumber, mapSectionRequest, HandleResponse);
+					_mapSectionRequestProcessor.AddWork(mapSectionRequest, HandleResponse);
 					mapSectionRequest.Sent = true;
 
 					_ = Interlocked.Increment(ref _sectionsRequested);

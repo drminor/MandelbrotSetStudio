@@ -19,7 +19,7 @@ namespace MapSectionProviderLib
 		#region Private Properties
 
 		private const int NUMBER_OF_REQUEST_CONSUMERS = 1;
-		private const int REQUEST_QUEUE_CAPACITY = 5;
+		private const int REQUEST_QUEUE_CAPACITY = 200;
 		private const int RETURN_QUEUE_CAPACITY = 200;
 
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
@@ -120,12 +120,11 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public List<Tuple<MapSectionRequest, MapSectionResponse>> FetchResponses(List<MapSectionRequest> mapSectionRequests, out int jobNumber)
+		public List<Tuple<MapSectionRequest, MapSectionResponse>> FetchResponses(List<MapSectionRequest> mapSectionRequests)
 		{
 			var cts = new CancellationTokenSource();
 			var ct = cts.Token;
 
-			jobNumber = GetNextRequestId();
 			var result = new List<Tuple<MapSectionRequest, MapSectionResponse>>();
 
 			foreach (var request in mapSectionRequests)
@@ -134,13 +133,6 @@ namespace MapSectionProviderLib
 				{
 					// This request mirrors a prior request and has already been handled.
 					continue;
-				}
-
-				request.MapLoaderJobNumber = jobNumber;
-
-				if (request.Mirror != null)
-				{
-					request.Mirror.MapLoaderJobNumber = jobNumber;
 				}
 
 				var mapSectionBytes = Fetch(request);
@@ -180,9 +172,9 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		public void AddWork(int jobNumber, MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSection> responseHandler)
+		public void AddWork(MapSectionRequest mapSectionRequest, Action<MapSectionRequest, MapSection> responseHandler)
 		{
-			var mapSectionWorkItem = new MapSectionWorkRequest(jobNumber, mapSectionRequest, responseHandler);
+			var mapSectionWorkItem = new MapSectionWorkRequest(mapSectionRequest.MapLoaderJobNumber, mapSectionRequest, responseHandler);
 
 			if (!_requestQueue.IsAddingCompleted)
 			{
@@ -281,7 +273,7 @@ namespace MapSectionProviderLib
 			catch { }
 		}
 
-		public int GetNextRequestId()
+		public int GetNextJobNumber()
 		{
 			lock (_cancelledJobsLock)
 			{
@@ -311,7 +303,7 @@ namespace MapSectionProviderLib
 						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
 						Debug.WriteLineIf(_useDetailedDebug, msg);
 
-						mapSectionWorkRequest.Response = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, mapSectionWorkRequest.JobId, isCancelled: true);
+						mapSectionWorkRequest.Response = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, isCancelled: true);
 						AddToResponseProcessorQueue(mapSectionWorkRequest, ct);
 					}
 					else
@@ -373,18 +365,18 @@ namespace MapSectionProviderLib
 
 		}
 
-		private MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors? mapSectionVectors, int jobNumber)
+		private MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors? mapSectionVectors)
 		{
 			MapSection mapSectionResult;
 
 			if (mapSectionVectors == null)
 			{
 				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors is empty. The request's block position is {mapSectionRequest.SectionBlockOffset}.");
-				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobNumber, isCancelled: false);
+				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, isCancelled: false);
 			}
 			else
 			{
-				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobNumber);
+				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors);
 			}
 
 			return mapSectionResult;
@@ -416,7 +408,7 @@ namespace MapSectionProviderLib
 
 					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
 
-					var mapSection1 = CreateMapSection(request, mapSectionVectors, mapSectionWorkRequest.JobId);
+					var mapSection1 = CreateMapSection(request, mapSectionVectors);
 
 					MapSection? mapSection2;
 
@@ -431,7 +423,7 @@ namespace MapSectionProviderLib
 
 						PersistJobMapSectionRecord(mirror, mapSectionResponse, ct);
 
-						mapSection2 = CreateMapSection(mirror, mapSectionVectors, mapSectionWorkRequest.JobId);
+						mapSection2 = CreateMapSection(mirror, mapSectionVectors);
 					}
 					else
 					{
@@ -569,7 +561,7 @@ namespace MapSectionProviderLib
 			}
 
 			// TODO: Use a single MapSectionVectors -- currently we are getting a new one from the pool for each.
-			mapSectionWorkRequest.Response = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse, mapSectionWorkRequest.JobId);
+			mapSectionWorkRequest.Response = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse);
 			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 
 			var mirror = mapSectionWorkRequest.Request.Mirror;
@@ -581,7 +573,7 @@ namespace MapSectionProviderLib
 				Debug.Assert(mirror.MapLoaderJobNumber == mapSectionWorkRequest.Request.MapLoaderJobNumber, "mm1");
 
 				mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-				var mapSectionForMirror = BuildMapSection(mirror, mapSectionResponse, mapSectionWorkRequest.JobId);
+				var mapSectionForMirror = BuildMapSection(mirror, mapSectionResponse);
 				var copyForMirror = new MapSectionWorkRequest(mapSectionWorkRequest.JobId, mirror, mapSectionWorkRequest.WorkAction, mapSectionForMirror);
 				_mapSectionResponseProcessor.AddWork(copyForMirror, ct);
 			}
@@ -589,38 +581,38 @@ namespace MapSectionProviderLib
 			_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
 		}
 
-		private MapSection BuildMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, int jobNumber)
+		private MapSection BuildMapSection(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
 			MapSection mapSection;
 
 			if (mapSectionResponse.RequestCancelled)
 			{
-				mapSection = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobNumber, isCancelled: true);
+				mapSection = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, isCancelled: true);
 			}
 			else
 			{
-				mapSection = CreateMapSectionFromBytes(mapSectionRequest, mapSectionResponse.MapSectionVectors2, jobNumber);
+				mapSection = CreateMapSectionFromBytes(mapSectionRequest, mapSectionResponse.MapSectionVectors2);
 				mapSection.MathOpCounts = mapSectionResponse.MathOpCounts;
 			}
 
 			return mapSection;
 		}
 
-		private MapSection CreateMapSectionFromBytes(MapSectionRequest mapSectionRequest, MapSectionVectors2? mapSectionVectors2, int jobNumber)
+		private MapSection CreateMapSectionFromBytes(MapSectionRequest mapSectionRequest, MapSectionVectors2? mapSectionVectors2)
 		{
 			MapSection mapSectionResult;
 
 			if (mapSectionVectors2 == null)
 			{
 				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. Cannot create a mapSectionResult from the mapSectionResponse, the MapSectionVectors2 is empty. The request's block position is {mapSectionRequest.SectionBlockOffset}.");
-				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, jobNumber, isCancelled: false);
+				mapSectionResult = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, isCancelled: false);
 			}
 			else
 			{
 				var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 				mapSectionVectors.Load(mapSectionVectors2.Counts, mapSectionVectors2.EscapeVelocities);
 
-				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors, jobNumber);
+				mapSectionResult = _mapSectionBuilder.CreateMapSection(mapSectionRequest, mapSectionVectors);
 			}
 
 			return mapSectionResult;
@@ -926,7 +918,7 @@ namespace MapSectionProviderLib
 						PersistResponse(mapSectionWorkRequest.Request, mapSectionResponse, ct);
 					}
 
-					mapSectionWorkRequest.Response = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse, mapSectionWorkRequest.JobId);
+					mapSectionWorkRequest.Response = BuildMapSection(mapSectionWorkRequest.Request, mapSectionResponse);
 					workRequestsToSend.Add(mapSectionWorkRequest);
 
 					//if (_combineRequests)

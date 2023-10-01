@@ -291,8 +291,9 @@ namespace ImageBuilder
 		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, OwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, BigVector mapBlockOffset, int rowPtr, int blockIndexY, int stride, MapCalcSettings mapCalcSettings, int precision)
 		{
 			var jobType = JobType.Image;
+			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
 			var limbCount = _mapSectionBuilder.GetLimbCount(precision);
-			var msrJob = new MsrJob(mapLoaderJobNumber: -1, jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision: precision, limbCount, mapCalcSettings);
+			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision: precision, limbCount, mapCalcSettings, crossesXZero: false);
 
 			var requests = new List<MapSectionRequest>();
 
@@ -308,8 +309,8 @@ namespace ImageBuilder
 			}
 
 			//_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
-			var mapSectionResponses = _mapLoaderManager.Push(requests, MapSectionReady, out var newJobNumber, out var _);
-			_currentJobNumber = newJobNumber;
+			var mapSectionResponses = _mapLoaderManager.Push(mapLoaderJobNumber, requests, MapSectionReady, out var _);
+			_currentJobNumber = mapLoaderJobNumber;
 
 			_currentResponses = new Dictionary<int, MapSection?>();
 

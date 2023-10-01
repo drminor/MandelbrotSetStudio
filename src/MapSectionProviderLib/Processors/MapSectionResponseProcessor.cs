@@ -108,6 +108,12 @@ namespace MapSectionProviderLib
 					var mapSectionWorkRequest = _workQueue.Take(ct);
 
 					mapSectionWorkRequest.Request.Completed = true;
+
+					if (mapSectionWorkRequest.Request.Mirror != null)
+					{
+						mapSectionWorkRequest.Request.Mirror.Completed = true;
+					}
+
 					var mapSectionResponse = mapSectionWorkRequest.Response;
 
 					if (mapSectionResponse != null)

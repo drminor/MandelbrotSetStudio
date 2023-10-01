@@ -31,7 +31,7 @@ namespace MSS.Types.MSet
 
 		public MsrJob MsrJob { get; init; }
 
-		public int MapLoaderJobNumber { get; set; }
+		public int MapLoaderJobNumber => MsrJob.MapLoaderJobNumber;
 		public int RequestNumber { get; init; }
 
 		public string? MapSectionId { get; set; }
