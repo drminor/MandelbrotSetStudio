@@ -313,7 +313,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			foreach (var ms in MapSections)
 			{
-				_mapSectionVectorProvider.ReturnMapSection(ms);
+				_mapSectionVectorProvider.ReturnToPool(ms);
 			}
 
 			MapSections.Clear();
@@ -398,7 +398,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			foreach (var ms in MapSections)
 			{
-				_mapSectionVectorProvider.ReturnMapSection(ms);
+				_mapSectionVectorProvider.ReturnToPool(ms);
 			}
 
 			MapSections.Clear();

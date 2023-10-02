@@ -84,6 +84,8 @@ namespace MSS.Types.MSet
 		public MapSectionVectors? MapSectionVectors { get; set; }
 
 		public string SubdivisionId { get; init; }
+
+		// TODO: Rename property RepoBlockPosition in class MapSection: SectionBlockOffset
 		// X,Y coordinates of this section, relative to the Subdivision's Base Map Position in block-size units.
 		public MapBlockOffset RepoBlockPosition { get; init; }
 

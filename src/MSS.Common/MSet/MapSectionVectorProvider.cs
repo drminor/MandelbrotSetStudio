@@ -47,7 +47,7 @@ namespace MSS.Common
 
 		#region Request / Response / MapSection
 
-		public void ReturnMapSectionRequest(MapSectionRequest mapSectionRequest)
+		public void ReturnToPool(MapSectionRequest mapSectionRequest)
 		{
 			if (mapSectionRequest.MapSectionVectors2 != null)
 			{
@@ -63,14 +63,14 @@ namespace MSS.Common
 			_ = mapSectionRequest.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionRequest.MapSectionZVectors);
 		}
 
-		public void ReturnMapSectionResponse(MapSectionResponse mapSectionResponse)
+		public void ReturnToPool(MapSectionResponse mapSectionResponse)
 		{
 			_ = mapSectionResponse.MapSectionVectors = ReturnMapSectionVectors(mapSectionResponse.MapSectionVectors);
 			//_ = mapSectionResponse.MapSectionVectors2 = ReturnMapSectionVectors2(mapSectionResponse.MapSectionVectors2);
 			_ = mapSectionResponse.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
 		}
 
-		public void ReturnMapSection(MapSection mapSection)
+		public void ReturnToPool(MapSection mapSection)
 		{
 			mapSection.MapSectionVectors = ReturnMapSectionVectors(mapSection.MapSectionVectors);
 			if (mapSection.MapSectionVectors != null)

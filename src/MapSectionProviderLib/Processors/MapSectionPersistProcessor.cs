@@ -126,7 +126,7 @@ namespace MapSectionProviderLib
 							Debug.WriteLine($"The MapSectionPersist Processor received an empty MapSectionResponse.");
 						}
 
-						_mapSectionVectorProvider.ReturnMapSectionResponse(mapSectionResponse);
+						_mapSectionVectorProvider.ReturnToPool(mapSectionResponse);
 					}
 				}
 				catch (OperationCanceledException)

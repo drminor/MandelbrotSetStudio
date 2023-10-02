@@ -601,7 +601,7 @@ namespace MSetExplorer
 
 				foreach (var mapSection in MapSections)
 				{
-					_mapSectionVectorProvider.ReturnMapSection(mapSection);
+					_mapSectionVectorProvider.ReturnToPool(mapSection);
 				}
 
 				MapSections.Clear();
@@ -1042,7 +1042,7 @@ namespace MSetExplorer
 
 				foreach (var mapSection in MapSections)
 				{
-					_mapSectionVectorProvider.ReturnMapSection(mapSection);
+					_mapSectionVectorProvider.ReturnToPool(mapSection);
 				}
 
 				MapSections.Clear();
@@ -1096,6 +1096,7 @@ namespace MSetExplorer
 			return false;
 		}
 
+		// TODO: NEXT Update GetRequestsToLoadAndRemove to include the Mirror Requests in the comparisons.
 		private List<MapSectionRequest> GetRequestsToLoadAndRemove(List<MapSectionRequest> newRequests, List<MapSectionRequest> existingRequests, out List<MapSectionRequest> requestsNoLongerNeeded)
 		{
 			var result = new List<MapSectionRequest>(newRequests);
@@ -1216,12 +1217,12 @@ namespace MSetExplorer
 
 		private bool RemoveMapSection(MapSectionRequest mapSectionRequest)
 		{
-			var section = MapSections.FirstOrDefault(x => x.SubdivisionId == mapSectionRequest.SubdivisionId && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
+			var mapSection = MapSections.FirstOrDefault(x => x.SubdivisionId == mapSectionRequest.SubdivisionId && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
 
-			if (section != null)
+			if (mapSection != null)
 			{
-				var result = MapSections.Remove(section);
-				_mapSectionVectorProvider.ReturnMapSection(section);
+				var result = MapSections.Remove(mapSection);
+				_mapSectionVectorProvider.ReturnToPool(mapSection);
 				//sectionsToClear.Add(request);
 
 				return result;
