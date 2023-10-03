@@ -87,6 +87,61 @@ namespace MSS.Common
 			return result;
 		}
 
+		/* Compare this logic from above with the logic within the BitmapGrid to determine if a section is in bounds.
+
+		The logic above uses 
+			a rectangle in MapCoordinates,
+			to get the size of the area to cover in whole blocks
+		then
+			calculates the database address of each block
+
+
+		The logic in the BitmapGrid
+			takes the map coordinates of each block,
+			compares it to the map coordinates of the block in the lower, left
+			and calculates the screen coordinates, relative to that 'anchor' block
+		then
+			determines if the block's lower-left is > upper-right of the display
+			or if the block's upper-right is > 0.
+		
+
+		var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
+
+		
+		  
+		// New position, same size and scale
+		public MapAreaInfo GetView(VectorDbl newDisplayPosition)
+		{
+			// -- Scale the Position and Size together.
+			var invertedY = GetInvertedYPos(newDisplayPosition.Y);
+			var displayPositionWithInverseY = new VectorDbl(newDisplayPosition.X, invertedY);
+			var newScreenArea = new RectangleDbl(displayPositionWithInverseY, ContentViewportSize);
+			var scaledNewScreenArea = newScreenArea.Scale(BaseScale);
+
+			var result = GetUpdatedMapAreaInfo(scaledNewScreenArea, _scaledMapAreaInfo);
+
+			return result;
+		}
+
+		private MapAreaInfo GetUpdatedMapAreaInfo(RectangleDbl newScreenArea, MapAreaInfo mapAreaInfoWithSize)
+		{
+			var newCoords = _mapJobHelper.GetMapCoords(newScreenArea.Round(), mapAreaInfoWithSize.MapPosition, mapAreaInfoWithSize.SamplePointDelta);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, mapAreaInfoWithSize.Subdivision, mapAreaInfoWithSize.OriginalSourceSubdivisionId, newScreenArea.Size);
+
+			//Debug.WriteLineIf(_useDetailedDebug, $"Getting Updated MapAreaInfo for newPos: {newScreenArea.Position}, newSize: {newScreenArea.Size}. " +
+			//		$"Result: BlockOffset {mapAreaInfoV1.MapBlockOffset}, spd: {mapAreaInfoV1.SamplePointDelta.Width} , CanvasControlOffset: {mapAreaInfoV1.CanvasControlOffset} " +				
+			//		$"From MapAreaInfo with CanvasSize: {mapAreaInfoWithSize.CanvasSize}, BlockOffset: {mapAreaInfoWithSize.MapBlockOffset}, spd: {mapAreaInfoWithSize.SamplePointDelta.Width}.");
+
+
+			Debug.WriteLineIf(_useDetailedDebug, $"\nGetting Updated MapAreaInfo for newPos: {newScreenArea.Position.ToString("F2")}, newSize: {newScreenArea.Size.ToString("F2")}. " +
+					$"Result: CanvasSize: {mapAreaInfoV1.CanvasSize.ToString("F2")}, BlockOffset: {mapAreaInfoV1.MapBlockOffset}, CanvasControlOffset: {mapAreaInfoV1.CanvasControlOffset}, spd: {mapAreaInfoV1.SamplePointDelta.Width}." +
+					$"From MapAreaInfo with CanvasSize: {mapAreaInfoWithSize.CanvasSize.ToString("F2")}, BlockOffset: {mapAreaInfoWithSize.MapBlockOffset}, CanvasControlOffset: {mapAreaInfoWithSize.CanvasControlOffset}, spd: {mapAreaInfoWithSize.SamplePointDelta.Width}.");
+
+			return mapAreaInfoV1;
+		}
+
+		*/
+
 		#endregion
 
 		#region Create A Single MapSectionRequest

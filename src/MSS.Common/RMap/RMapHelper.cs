@@ -92,9 +92,9 @@ namespace MSS.Common
 
 			sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
 
-			var extentSanFirstBlock = canvasSize.Sub(sizeOfFirstBlock);
+			var extentSansFirstBlock = canvasSize.Sub(sizeOfFirstBlock);
 
-			var sizeInBlocks = GetSizeInBlockSizeUnits(extentSanFirstBlock, blockSize, out var remainder);
+			var sizeInBlocks = GetSizeInBlockSizeUnits(extentSansFirstBlock, blockSize, out var remainder);
 
 			// Include the first block
 			sizeInBlocks = sizeInBlocks.Inflate(1);

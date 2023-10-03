@@ -510,11 +510,37 @@ namespace MSetExplorer
 
 		#region Private Methods
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="mapSection"></param>
+		/// <param name="mapBlockOffset">The block offset for the block at the lower, left-hand side of the map</param>
+		/// <returns></returns>
+		/// <exception cref="ArgumentException"></exception>
 		private PointInt GetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset)
 		{
 			PointInt result;
 
-			var df = mapSection.JobMapBlockOffset.Diff(mapBlockOffset);
+			var rawDf = mapSection.JobMapBlockOffset.Diff(mapBlockOffset);
+
+			BigVector df;
+
+			var secJobMapBlockOffset = mapSection.JobMapBlockOffset;
+
+			if (secJobMapBlockOffset.Y < 0 && mapBlockOffset.Y >= 0)
+			{
+				// Moving from isInverted to NOT isInverted
+				df = new BigVector(rawDf.X, rawDf.Y - 1);
+			}
+			else if (secJobMapBlockOffset.Y >= 0 && mapBlockOffset.Y < 0)
+			{
+				// Moving from NOT isInverted to isInverted
+				df = new BigVector(rawDf.X, rawDf.Y + 1);
+			}
+			else
+			{
+				df = rawDf;
+			}
 
 			if (df.IsZero())
 			{
