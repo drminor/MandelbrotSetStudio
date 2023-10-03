@@ -40,7 +40,9 @@ namespace MSetGeneratorPrototype
 
 			if (ShouldSkipThisSection(skipPositiveBlocks, skipLowDetailBlocks, screenPosition, mapPosition))
 			{
-				result = new MapSectionResponse(mapSectionRequest);
+				//result = new MapSectionResponse(mapSectionRequest);
+				mapSectionRequest.Cancelled = true;
+				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 			}
 			else
 			{

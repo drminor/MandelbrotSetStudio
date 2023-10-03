@@ -6,7 +6,7 @@
 			bool isCancelled = false)
 			: this(
 				  mapSectionRequest.MapSectionId, 
-				  mapSectionRequest.SubdivisionId,
+				  mapSectionRequest.Subdivision.Id.ToString(),
 				  mapSectionRequest.SectionBlockOffset,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted: false,
@@ -26,7 +26,7 @@
 			bool requestCancelled = false)
 			: this(
 				  mapSectionRequest.MapSectionId,
-				  mapSectionRequest.SubdivisionId,
+				  mapSectionRequest.Subdivision.Id.ToString(),
 				  blockPosition: mapSectionRequest.SectionBlockOffset,
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted,
@@ -88,6 +88,17 @@
 			var result = new MapSectionResponse(MapSectionId, SubdivisionId, BlockPosition, MapCalcSettings, 
 				RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionVectors2: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
 			return result;
+		}
+
+		public static MapSectionResponse CreateCancelledResponseWithVectors(MapSectionRequest request)
+		{
+			var mapSectionResponse = new MapSectionResponse(request, isCancelled: true);
+			
+			var (msv, mszv) = request.TransferMapVectorsOut2();
+			mapSectionResponse.MapSectionVectors2 = msv;
+			mapSectionResponse.MapSectionZVectors = mszv;
+
+			return mapSectionResponse;
 		}
 
 	}

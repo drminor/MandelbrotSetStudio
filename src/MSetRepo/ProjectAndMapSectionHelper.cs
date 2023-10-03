@@ -210,7 +210,7 @@ namespace MSetRepo
 				for (var i = 0; i < mapSectionRequests.Count; i++)
 				{
 					var mapSectionRequest = mapSectionRequests[i];
-					var subdivisionId = new ObjectId(mapSectionRequest.SubdivisionId);
+					var subdivisionId = new ObjectId(mapSectionRequest.Subdivision.Id.ToString());
 					var originalSourceSubdivisionId = new ObjectId(mapSectionRequest.OriginalSourceSubdivisionId);
 
 					if (originalSourceSubdivisionId != subdivisionId)

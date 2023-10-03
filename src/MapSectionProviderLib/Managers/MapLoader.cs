@@ -148,7 +148,7 @@ namespace MapSectionProviderLib
 			{
 				if (_isStopping)
 				{
-					if (_sectionsCompleted == _sectionsRequested && _tcs?.Task.IsCompleted == false)
+					if (_sectionsCompleted >= _sectionsRequested && _tcs?.Task.IsCompleted == false)
 					{
 						Debug.WriteLine($"The MapLoader is stopping and the completed cnt = requested cnt = {_sectionsCompleted}.");
 						_tcs.SetResult();
@@ -231,7 +231,7 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.JobId}; Screen Position: {mapSectionRequest.ScreenPosition}.");
+					Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}; Comp/Total: ({_sectionsCompleted}{_mapSectionRequests?.Count ?? 0} Screen Position: {mapSectionRequest.ScreenPosition}.");
 				}
 
 				mapSectionRequest.Handled = true;

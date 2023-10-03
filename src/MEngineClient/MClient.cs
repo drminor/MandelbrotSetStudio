@@ -70,38 +70,44 @@ namespace MEngineClient
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
+			MapSectionResponse result;
+
 			if (ct.IsCancellationRequested)
 			{
 				mapSectionRequest.Cancelled = true;
 				Debug.WriteLineIf(_useDetailedDebug, $"MClient. Request: JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is cancelled.");
-				return new MapSectionResponse(mapSectionRequest, isCancelled: true);
+
+				//return new MapSectionResponse(mapSectionRequest, isCancelled: true);
+				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 			}
-
-			mapSectionRequest.ClientEndPointAddress = EndPointAddress;
-
-			//_jobNumber = mapSectionRequest.MapLoaderJobNumber;
-			//_requestNumber = mapSectionRequest.RequestNumber;
-
-			var mapSectionServiceRequest = MapTo(mapSectionRequest);
-
-			var stopWatch = Stopwatch.StartNew();
-			var mapSectionServiceResponse = GenerateMapSectionInternal(mapSectionServiceRequest, ct);
-			stopWatch.Stop();
-
-			//_jobNumber = null;
-			//_requestNumber = null;
-
-			var mapSectionResponse = MapFrom(mapSectionServiceResponse, mapSectionRequest);
-
-			mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
-			mapSectionRequest.GenerationDuration = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerateMs);
-
-			if (ct.IsCancellationRequested)
+			else
 			{
-				mapSectionRequest.Cancelled = true;
+				mapSectionRequest.ClientEndPointAddress = EndPointAddress;
+
+				//_jobNumber = mapSectionRequest.MapLoaderJobNumber;
+				//_requestNumber = mapSectionRequest.RequestNumber;
+
+				var mapSectionServiceRequest = MapTo(mapSectionRequest);
+
+				var stopWatch = Stopwatch.StartNew();
+				var mapSectionServiceResponse = GenerateMapSectionInternal(mapSectionServiceRequest, ct);
+				stopWatch.Stop();
+
+				//_jobNumber = null;
+				//_requestNumber = null;
+
+				result = MapFrom(mapSectionServiceResponse, mapSectionRequest);
+
+				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
+				mapSectionRequest.GenerationDuration = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerateMs);
+
+				if (ct.IsCancellationRequested)
+				{
+					mapSectionRequest.Cancelled = true;
+				}
 			}
 
-			return mapSectionResponse;
+			return result;
 		}
 
 		//public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
@@ -205,7 +211,7 @@ namespace MEngineClient
 				MapSectionId = req.MapSectionId,
 				JobId = req.JobId,
 				OwnerType = req.OwnerType,
-				SubdivisionId = req.SubdivisionId,
+				SubdivisionId = req.Subdivision.Id.ToString(),
 				ScreenPosition = req.ScreenPosition,
 				BlockPosition = req.SectionBlockOffset,
 				IsInverted = req.IsInverted,

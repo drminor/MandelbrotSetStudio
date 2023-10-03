@@ -48,10 +48,14 @@ namespace MEngineClient
 
 		public MapSectionResponse GenerateMapSection(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
+			MapSectionResponse result;
+
 			if (ct.IsCancellationRequested)
 			{
+				mapSectionRequest.Cancelled = true;
 				Debug.WriteLine($"MClientLocal JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is cancelled.");
-				return new MapSectionResponse(mapSectionRequest, isCancelled: true);
+				//return new MapSectionResponse(mapSectionRequest, isCancelled: true);
+				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 			}
 			else
 			{
@@ -64,19 +68,18 @@ namespace MEngineClient
 				}
 
 				var stopWatch = Stopwatch.StartNew();
-				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, ct);
+				result = GenerateMapSectionInternal(mapSectionRequest, ct);
 				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 
-				if (mapSectionResponse.AllRowsHaveEscaped && mapSectionResponse.MapSectionZVectors != null)
+				if (result.AllRowsHaveEscaped && result.MapSectionZVectors != null)
 				{
-					_mapSectionVectorProvider.ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
-					mapSectionResponse.MapSectionZVectors = null;
+					_mapSectionVectorProvider.ReturnMapSectionZVectors(result.MapSectionZVectors);
+					result.MapSectionZVectors = null;
 				}
-
-				return mapSectionResponse;
 			}
-		}
 
+			return result;
+		}
 
 		public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{

@@ -303,36 +303,33 @@ namespace MSetExplorer
 			{
 				if (mapSection.MapSectionVectors != null)
 				{
-					var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
+					//var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-					if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "Draw", warnOnFail: true))
-					{
-						//_mapSections.Add(mapSection);
-
-						if (_colorMap != null)
-						{
-							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-
-							if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
-							
-							var loc = invertedBlockPos.Scale(_blockSize);
-
-							errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
-
-							try
-							{
-								Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
-							}
-							catch (Exception e)
-							{
-								Debug.WriteLine($"DrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
-							}
-						}
-					}
-					//else
+					//if (IsBLockVisible(blockPosition, ImageSizeInBlocks/*, mapSection.JobNumber, "DrawSections", warnOnFail: true*/))
 					//{
-					//	_disposeMapSection(mapSection);
+					//	if (_colorMap != null)
+					//	{
+					//		var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+
+					//		if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
+
+					//		var loc = invertedBlockPos.Scale(_blockSize);
+
+					//		errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
+
+					//		try
+					//		{
+					//			Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
+					//		}
+					//		catch (Exception e)
+					//		{
+					//			Debug.WriteLine($"DrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+					//		}
+					//	}
 					//}
+
+					DrawOneSection(mapSection, mapSection.MapSectionVectors, "DrawSections");
+
 				}
 			}
 
@@ -357,7 +354,7 @@ namespace MSetExplorer
 			{
 				var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-				if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "Clear", warnOnFail: true))
+				if (IsBLockVisible(blockPosition, ImageSizeInBlocks/*, mapSection.JobNumber, "DrawSections", warnOnFail: true*/))
 				{
 					var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 					var loc = invertedBlockPos.Scale(_blockSize);
@@ -382,6 +379,7 @@ namespace MSetExplorer
 
 		public int ReDrawSections(bool reapplyColorMap)
 		{
+			// TODO: Implement option to not reapply the ColorMap as the BitmapGrid is redrawing sections.
 			if (_colorMap != null)
 			{
 				var bitmapSize = new SizeDbl(_bitmap.Width, _bitmap.Height);
@@ -398,45 +396,53 @@ namespace MSetExplorer
 			//var anyDrawnOnLastRow = false;
 
 			var errors = 0L;
-			var sectionsNotDrawn = new List<MapSection>();
+			//var sectionsNotDrawn = new List<MapSection>();
+			var numberSectionsNotDrawn = 0;
 
 			foreach (var mapSection in _mapSections)
 			{
 				if (mapSection.MapSectionVectors != null)
 				{
-					var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
+					//var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-					if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "ReDraw", warnOnFail: true))
+					//if (IsBLockVisible(blockPosition, ImageSizeInBlocks/*, mapSection.JobNumber, "DrawSections", warnOnFail: true*/))
+					//{
+					//	if (_colorMap != null)
+					//	{
+					//		var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+
+					//		//if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
+
+					//		var loc = invertedBlockPos.Scale(_blockSize);
+
+					//		// TODO: Detect if we have good BackBuffer
+					//		if (reapplyColorMap || mapSection.MapSectionVectors.BackBuffer.Length == 0)
+					//		{
+					//			errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
+					//		}
+
+					//		try
+					//		{
+					//			Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
+					//		}
+					//		catch (Exception e)
+					//		{
+					//			Debug.WriteLine($"ReDrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+					//		}
+					//	}
+					//}
+					//else
+					//{
+					//	//_disposeMapSection(mapSection);
+					//	sectionsNotDrawn.Add(mapSection);
+					//}
+
+					if (!DrawOneSection(mapSection, mapSection.MapSectionVectors, "RedrawSections"))
 					{
-						if (_colorMap != null)
-						{
-							var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-
-							//if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
-
-							var loc = invertedBlockPos.Scale(_blockSize);
-
-							// TODO: Detect if we have good BackBuffer
-							if (reapplyColorMap || mapSection.MapSectionVectors.BackBuffer.Length == 0)
-							{
-								errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
-							}
-
-							try
-							{
-								Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
-							}
-							catch (Exception e)
-							{
-								Debug.WriteLine($"ReDrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
-							}
-						}
+						numberSectionsNotDrawn++;
 					}
-					else
-					{
-						//_disposeMapSection(mapSection);
-						sectionsNotDrawn.Add(mapSection);
-					}
+
+
 				}
 			}
 
@@ -455,15 +461,15 @@ namespace MSetExplorer
 
 			ReportPercentMapSectionsWithUpdatedScrPos();
 
-			return sectionsNotDrawn.Count;
+			return numberSectionsNotDrawn;
 		}
 
-		public bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors)
+		public bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description)
 		{
 			var wasAdded = false;
 			var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 
-			if (IsBLockVisible(mapSection.JobNumber, blockPosition, ImageSizeInBlocks, "GetAndPlacePixels"))
+			if (IsBLockVisible(blockPosition, ImageSizeInBlocks/*, mapSection.JobNumber, "GetAndPlacePixels"*/))
 			{
 				//_mapSections.Add(mapSection);
 				wasAdded = true;
@@ -474,7 +480,6 @@ namespace MSetExplorer
 					var loc = invertedBlockPos.Scale(_blockSize);
 
 					var errors = LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
-
 
 					if (errors > 0)
 					{
@@ -532,19 +537,19 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool IsBLockVisible(int jobNumber, PointInt blockPosition, SizeInt imageSizeInBlocks, string desc, bool warnOnFail = false)
+		private bool IsBLockVisible(PointInt blockPosition, SizeInt imageSizeInBlocks/*, int jobNumber, string desc, bool warnOnFail = false*/)
 		{
 			if (blockPosition.X < 0 || blockPosition.Y < 0)
 			{
-				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {jobNumber}. BlockPosition: {blockPosition} is negative.");
+				//if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {jobNumber}. BlockPosition: {blockPosition} is negative.");
 				return false;
 			}
 
-			CheckBitmapSize(Bitmap, imageSizeInBlocks, desc);
+			//CheckBitmapSize(Bitmap, imageSizeInBlocks, desc);
 
 			if (blockPosition.X >= imageSizeInBlocks.Width || blockPosition.Y >= imageSizeInBlocks.Height)
 			{
-				if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {jobNumber}. BlockPosition: {blockPosition}, ImageSize: {imageSizeInBlocks}.");
+				//if (warnOnFail) Debug.WriteLine($"WARNING: IsBlockVisible = false for MapSection with JobNumber: {jobNumber}. BlockPosition: {blockPosition}, ImageSize: {imageSizeInBlocks}.");
 				return false;
 			}
 

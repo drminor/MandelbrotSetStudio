@@ -15,7 +15,7 @@ namespace MapSectionProviderLib
 	{
 		#region Private Properties
 
-		private const int QUEUE_CAPACITY = 50;
+		private const int QUEUE_CAPACITY = 250;
 
 		//private readonly IMEngineClient[] _mEngineClients;
 
@@ -177,12 +177,9 @@ namespace MapSectionProviderLib
 					MapSectionResponse mapSectionResponse;
 					var jobIsCancelled = IsJobCancelled(mapSectionGenerateRequest.JobId);
 
-					if (jobIsCancelled || mapSectionRequest.CancellationTokenSource.IsCancellationRequested)
+					if (jobIsCancelled || mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
 					{
-						mapSectionResponse = new MapSectionResponse(mapSectionRequest, isCancelled: true);
-						var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
-						mapSectionResponse.MapSectionVectors2 = msv;
-						mapSectionResponse.MapSectionZVectors = mszv;
+						mapSectionResponse = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 
 						var msg = $"The MapSectionGeneratorProcessor is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
 						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";

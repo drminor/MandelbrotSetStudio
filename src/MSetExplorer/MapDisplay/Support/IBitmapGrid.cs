@@ -29,6 +29,6 @@ namespace MSetExplorer
 		int ClearSections(IList<MapSection> mapSections);
 		int ReDrawSections(bool reapplyColorMap);
 
-		bool GetAndPlacePixels(MapSection mapSection, MapSectionVectors mapSectionVectors);
+		bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description);
 	}
 }

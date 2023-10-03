@@ -38,10 +38,16 @@ namespace MSS.Types.MSet
 
 		public MapSectionRequest? Mirror { get; set; }
 
+		public bool RequestOrMirrorIsInPlay => !Cancelled || (Mirror != null && !Mirror.Cancelled);
+		public bool NeitherRequestNorMirrorIsInPlay => !RequestOrMirrorIsInPlay;
+
 		public JobType JobType => MsrJob.JobType;
 		public string JobId => MsrJob.JobId;
 		public OwnerType OwnerType => MsrJob.OwnerType;
-		public string SubdivisionId => MsrJob.Subdivision.Id.ToString();
+
+		public Subdivision Subdivision => MsrJob.Subdivision;
+
+		//public string SubdivisionId => MsrJob.Subdivision.Id.ToString();
 		public string OriginalSourceSubdivisionId => MsrJob.OriginalSourceSubdivisionId;
 
 		/// <summary>
@@ -104,7 +110,7 @@ namespace MSS.Types.MSet
 
 		public override string ToString()
 		{
-			return $"Id: {MapSectionId}, S:{SubdivisionId}, ScrPos:{ScreenPosition}.";
+			return $"Id: {MapSectionId}, S:{Subdivision.Id}, ScrPos:{ScreenPosition}.";
 		}
 
 		public (MapSectionVectors2? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut2()
