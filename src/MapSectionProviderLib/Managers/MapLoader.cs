@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +12,8 @@ namespace MapSectionProviderLib
 {
 	public class MapLoader
 	{
+		#region Private Fields
+
 		private readonly Action<MapSection> _callback;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
@@ -24,6 +27,11 @@ namespace MapSectionProviderLib
 		private TaskCompletionSource? _tcs;
 
 		private Stopwatch _stopwatch;
+
+		//private int[] _requestNumbers;
+		//private int[] _responseNumbers;
+
+		#endregion
 
 		#region Constructor
 
@@ -42,6 +50,9 @@ namespace MapSectionProviderLib
 
 			_stopwatch = new Stopwatch();
 			_stopwatch.Stop();
+
+			//_requestNumbers = new int[2000];
+			//_responseNumbers = new int[2000];
 
 			AllocateMathCounts();
 		}
@@ -86,11 +97,13 @@ namespace MapSectionProviderLib
 			foreach (var mapSectionRequest in mapSectionRequests)
 			{
 				_sectionsSubmitted++;
+				//_requestNumbers[mapSectionRequest.RequestNumber]++;
 
 				if (mapSectionRequest.Mirror != null)
 				{
 					numberOfPairs++;
 					_sectionsSubmitted++;
+					//_requestNumbers[mapSectionRequest.Mirror.RequestNumber]++;
 				}
 				//_sectionsSubmitted += mapSectionRequest.Mirror != null ? 2 : 1;
 			}
@@ -208,15 +221,26 @@ namespace MapSectionProviderLib
 			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MapLoader's HandleResponse is being called from the Response Processor.");
 
 			UpdateMathCounts(mapSection);
-			mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-			ReportGeneration(mapSectionRequest, mapSection);
-
-			_ = Interlocked.Increment(ref _sectionsCompleted);
 
 			if (mapSectionRequest.Mirror != null)
 			{
-				_ = Interlocked.Increment(ref _sectionsCompleted);
+				mapSectionRequest.Mirror.ProcessingEndTime = DateTime.UtcNow;
 			}
+			else
+			{
+				mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
+			}
+
+			ReportGeneration(mapSectionRequest, mapSection);
+
+			_ = Interlocked.Increment(ref _sectionsCompleted);
+			//_responseNumbers[mapSectionRequest.RequestNumber]++;
+
+			//if (mapSectionRequest.Mirror != null)
+			//{
+			//	_ = Interlocked.Increment(ref _sectionsCompleted);
+			//	_responseNumbers[mapSectionRequest.Mirror.RequestNumber]++;
+			//}
 
 			//if (_sectionsCompleted + 5 > _sectionsRequested && !(_sectionsCompleted >= _mapSectionRequests?.Count))
 			//{
@@ -233,7 +257,10 @@ namespace MapSectionProviderLib
 					_tcs.SetResult();
 				}
 
+				// Performance 
 				ReportMathCounts(MathOpCounts);
+
+				// Debug Job Details
 				ReportStats();
 			}
 			else
@@ -284,13 +311,13 @@ namespace MapSectionProviderLib
 				JobNumber,
 				msr.FoundInRepo,
 				_sectionsCompleted,
-				isLastSection
-,
+				isLastSection,
 				msr.TimeToCompleteGenRequest,
 				msr.ProcessingDuration,
-				msr.GenerationDuration              //,
-													//msr.MathOpCounts
+				msr.GenerationDuration
+				//, msr.MathOpCounts
 				);
+
 			return result;
 		}
 
@@ -324,6 +351,28 @@ namespace MapSectionProviderLib
 
 			Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections in {_stopwatch.Elapsed}. " +
 				$"There are {numberOfPendingRequests} / {numberWaitingToBeGen} / {notHandled} / {notSent} requests still pending / not yet generated / not handled / not sent.");
+
+			//Debug.WriteLine("Request / Response Tallies\n");
+			//Debug.WriteLine(BuildReqResNumberTabulation(_requestNumbers, _responseNumbers, 90));
+		}
+
+		private string BuildReqResNumberTabulation(int[] requestNumbers, int[] responseNumbers, int size = 90)
+		{
+			var sb = new StringBuilder();
+
+			for (var i = 0; i < size; i++)
+			{
+				var reqNumberOccurances = requestNumbers[i];
+				var resNumberOccurances = responseNumbers[i];
+
+				sb.Append(i).Append("\t");
+				sb.Append(reqNumberOccurances).Append("\t");
+				sb.Append(resNumberOccurances).Append("\t");
+
+				sb.Append("\n");
+			}
+
+			return sb.ToString();
 		}
 
 		#endregion

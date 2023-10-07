@@ -42,7 +42,7 @@ namespace MSetExplorer
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -203,7 +203,8 @@ namespace MSetExplorer
 
 				if (imageSizeInBlocks != ImageSizeInBlocks)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
 					ImageSizeInBlocks = imageSizeInBlocks;
 				}
 				else
@@ -224,7 +225,8 @@ namespace MSetExplorer
 
 				if (imageSizeInBlocks != ImageSizeInBlocks)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					Debug.WriteLine($"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
 					ImageSizeInBlocks = imageSizeInBlocks;
 				}
 				else
@@ -530,7 +532,8 @@ namespace MSetExplorer
 
 			if (bitmapSize.Width != imageSize.Width || bitmapSize.Height != imageSize.Height)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
+				//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
+				Debug.WriteLine($"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
 
 				bitmap = CreateBitmap(ImageSizeInBlocks);
 				return true;

@@ -909,6 +909,9 @@ namespace MSetExplorer
 				if (newRequests.Count > 0)
 				{
 					// ***** Submit the new requests. *****
+					var newRequestsReport =  _mapSectionBuilder.GetCountRequestsReport(newRequests);
+					Debug.WriteLine(newRequestsReport);
+
 					lastSectionWasIncluded = SubmitMSRequests(mapLoaderJobNumber, newRequests);
 
 					if (CLEAR_MAP_SECTIONS_PENDING_GENERATION)

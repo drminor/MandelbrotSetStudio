@@ -122,7 +122,7 @@ namespace MSS.Common
 			// Each pair was created from a single. The number of singles is the number in the original set for which a pair was not created.
 			var numberOfSingles = totalPoints - (numberOfPairs * 2);
 
-			ReportCreateMapSectionRequests(totalPoints, numberOfSingles, numberOfPairs);
+			ReportCreateMapSectionRequests(totalPoints, numberOfSingles, numberOfPairs, result);
 
 			return result;
 		}
@@ -130,23 +130,60 @@ namespace MSS.Common
 		//CreateSectionRequests visited 81 and produced -27 single requests and 36 requests with a mirror. Missing 36 requests.
 
 		[Conditional("DEBUG")]
-		private void ReportCreateMapSectionRequests(int numberOfSections, int numberOfSingles, int numberOfPairs)
+		private void ReportCreateMapSectionRequests(int numberOfSections, int numberOfSingles, int numberOfPairs, List<MapSectionRequest> mapSectionRequests)
 		{
 			 
 			var diff = numberOfSections - ((2 * numberOfPairs) + numberOfSingles);
 
 			if (diff > 0)
 			{
-				Debug.WriteLine($"CreateSectionRequests visited {numberOfSections} and produced {numberOfSingles} single requests and {numberOfPairs} requests with a mirror. Missing {diff} requests.");
+				Debug.WriteLine($"CreateSectionRequests processed {numberOfSections} points and produced {numberOfPairs} pairs and {numberOfSingles} singles. Missing {diff} requests.");
 			}
 			else if (diff < 0)
 			{
-				Debug.WriteLine($"CreateSectionRequests visited {numberOfSections} and produced {numberOfSingles} single requests and {numberOfPairs} requests with a mirror. Found {diff} extra requests.");
+				Debug.WriteLine($"CreateSectionRequests processed {numberOfSections} points and produced {numberOfPairs} pairs and {numberOfSingles} singles. Found {diff} extra requests.");
 			}
 			else
 			{
-				Debug.WriteLine($"CreateSectionRequests visited {numberOfSections} and produced {numberOfSingles} single requests and {numberOfPairs} requests with a mirror, as expected.");
+				Debug.WriteLine($"CreateSectionRequests processed {numberOfSections} points and produced {numberOfPairs} pairs and {numberOfSingles} singles. As expected.");
 			}
+
+			var countRequestsReport = GetCountRequestsReport(mapSectionRequests);
+			Debug.WriteLine(countRequestsReport);
+		}
+
+		public string GetCountRequestsReport(List<MapSectionRequest> mapSectionRequests)
+		{
+			var (s, p) = CountRequests(mapSectionRequests);
+			var t = p * 2 + s;
+			var result = $"Created {p} request pairs and {s} single requests, for a total of {p * 2} + {s} = {t}.";
+
+			return result;
+		}
+
+		public (int singles, int pairs) CountRequests(List<MapSectionRequest> result)
+		{
+			//var total = 0;
+			var pairs = 0;
+			var singles = 0;
+
+			for(var i = 0; i < result.Count; i++)
+			{
+				var ms = result[i];
+
+				if (ms.Mirror != null)
+				{
+					//total += 2;
+					pairs += 1;
+				}
+				else
+				{
+					//total += 1;
+					singles += 1;
+				}
+			}
+
+			return (singles, pairs);
 		}
 
 		/* Compare this logic from above with the logic within the BitmapGrid to determine if a section is in bounds.

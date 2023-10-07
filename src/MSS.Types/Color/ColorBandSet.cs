@@ -28,7 +28,7 @@ namespace MSS.Types
 
 		private int _selectedColorBandIndex;
 
-		private readonly bool _useDetailedDebug;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

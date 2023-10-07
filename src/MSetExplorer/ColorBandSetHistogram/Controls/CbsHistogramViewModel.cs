@@ -450,9 +450,9 @@ namespace MSetExplorer
 
 		private void BuildSeriesData(HPlotSeriesData hPlotSeriesData, int[] values)
 		{
-			var longLength = values.LongLength;
+			var newLength = values.LongLength;
 			
-			if (longLength < 1)
+			if (newLength < 1)
 			{
 				Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
 
@@ -460,17 +460,11 @@ namespace MSetExplorer
 				return;
 			}
 
+
 			var existingLength = hPlotSeriesData.LongLength;
 			hPlotSeriesData.SetYValues(values, out var bufferWasPreserved);
 
-			if (!bufferWasPreserved)
-			{
-				Debug.WriteLine($"WARNING: Allocating new buffer to hold the Y Values. New length: {longLength}, existing length:{existingLength}.");
-			}
-			else
-			{
-				Debug.WriteLine($"Updating SeriesData. Using existing buffer. Length:{longLength}.");
-			}
+			ReportSeriesBufferAllocation(existingLength, newLength, bufferWasPreserved);
 		}
 
 		private int GetExtent(ColorBandSet colorBandSet/*, out int endPtr*/)
@@ -522,6 +516,24 @@ namespace MSetExplorer
 				UnscaledExtent = extent;
 
 			}
+		}
+
+		#endregion
+
+		#region Diagnostics
+
+		[Conditional("DEBUG2")]
+		private void ReportSeriesBufferAllocation(long existingLength, long newLength, bool bufferWasPreserved)
+		{
+			if (!bufferWasPreserved)
+			{
+				Debug.WriteLine($"WARNING: Allocating new buffer to hold the Y Values. New length:{newLength}, existing length:{existingLength}.");
+			}
+			else
+			{
+				Debug.WriteLine($"Updating SeriesData. Using existing buffer. Length:{newLength}.");
+			}
+
 		}
 
 		#endregion
