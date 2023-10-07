@@ -81,7 +81,6 @@ namespace MapSectionProviderLib
 			_isStopped = false;
 		}
 
-
 		private (Task[] processors, int[] counters) CreateTheRequestQueueProcessors()
 		{
 			var requestQueueProcessors = new Task[NUMBER_OF_REQUEST_CONSUMERS];
@@ -131,6 +130,9 @@ namespace MapSectionProviderLib
 		public bool UseRepo { get; set; }
 
 		public int NumberOfRequestsPending => _requestQueue.Count;
+
+		public int NumberOfSectionsPendingGeneration => _mapSectionGeneratorProcessor.NumberOfRequestsPending;
+
 		//public int NumberOfReturnsPending => _returnQueue?.Count ?? 0;
 
 		#endregion

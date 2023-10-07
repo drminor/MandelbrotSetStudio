@@ -28,6 +28,8 @@ namespace MSS.Types
 
 		private int _selectedColorBandIndex;
 
+		private readonly bool _useDetailedDebug;
+
 		#endregion
 
 		#region Constructor
@@ -54,7 +56,7 @@ namespace MSS.Types
 		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
 			: base(FixBands(colorBands))
 		{
-			//Debug.WriteLine($"Constructing ColorBandSet with id: {id}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Constructing ColorBandSet with id: {id}.");
 
 			Id = id;
 			_parentId = parentId;
@@ -464,6 +466,7 @@ namespace MSS.Types
 			return result;
 		}
 
+		[Conditional("DEBUG2")]
 		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands)
 		{
 			var bucketWidths = string.Join("; ", colorBands.Select(x => x.BucketWidth.ToString()).ToArray());
@@ -576,7 +579,7 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet Clone()
 		{
-			Debug.WriteLine($"Cloning ColorBandSet with Id: {Id}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Cloning ColorBandSet with Id: {Id}.");
 
 			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{

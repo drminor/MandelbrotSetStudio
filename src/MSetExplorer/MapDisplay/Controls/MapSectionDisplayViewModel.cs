@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using MSetGeneratorPrototype;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
@@ -651,22 +650,6 @@ namespace MSetExplorer
 
 		private void MapSectionReady(MapSection mapSection)
 		{
-			//if (mapSection.MapSectionVectors != null)
-			//{
-			//	_bitmapGrid.Dispatcher.Invoke(GetAndPlacePixelsWrapper, new object[] { mapSection });
-			//}
-			//else
-			//{
-			//	Debug.WriteLine("MapSectionDisplayViewModel. MapSectionReady received an Empty MapSection.");
-
-			//	if (mapSection.IsLastSection)
-			//	{
-			//		RaiseDisplayJobCompletedOnBackground(mapSection.JobNumber);
-			//	}
-			//}
-
-			//_bitmapGrid.Dispatcher.Invoke(GetAndPlacePixelsWrapper, new object[] { mapSection });
-
 			var mapSectionShouldBeUsed = false;
 
 			lock (_paintLocker)
@@ -689,8 +672,6 @@ namespace MSetExplorer
 					if (!mapSection.RequestCancelled)
 					{
 						_bitmapGrid.Dispatcher.Invoke(GetAndPlacePixelsWrapper, new object[] { mapSection });
-						//_bitmapGrid.DrawOneSection(mapSection, mapSection.MapSectionVectors, "DrawOneAsync");
-						//MapSections.Add(mapSection);
 					}
 					else
 					{
@@ -710,45 +691,11 @@ namespace MSetExplorer
 
 		private void GetAndPlacePixelsWrapper(MapSection mapSection)
 		{
-			//lock (_paintLocker)
-			//{
-			//	if (ActiveJobNumbers.Contains(mapSection.JobNumber))
-			//	{
-			//		if (mapSection.MapSectionVectors != null)
-			//		{
-			//			if (!mapSection.RequestCancelled)
-			//			{
-			//				_bitmapGrid.DrawOneSection(mapSection, mapSection.MapSectionVectors, "DrawOneAsync");
-			//				MapSections.Add(mapSection);
-			//			}
-			//			else
-			//			{
-			//				Debug.WriteLine("MapSectionDisplayViewModel. MapSectionReady received a Cancelled MapSection.");
-			//			}
-			//		}
-			//		else
-			//		{
-			//			Debug.WriteLine("MapSectionDisplayViewModel. MapSectionReady received an Empty MapSection.");
-			//		}
-
-			//		RemovePendingRequest(mapSection);
-			//	}
-			//	else
-			//	{
-			//		Debug.WriteLine($"GetAndPlacePixelsWrapper not drawing section: Its JobNumber: {mapSection.JobNumber} is not in the list of Active Job Numbers: {string.Join("; ", ActiveJobNumbers)}.");
-			//	}
-			//}
-
-			//if (mapSection.IsLastSection)
-			//{
-			//	DisplayJobCompleted?.Invoke(this, mapSection.JobNumber);
-			//}
-
 			lock (_paintLocker)
 			{
 				if (mapSection.MapSectionVectors == null)
 				{
-					Debug.WriteLine("The MapSectionVectors is null here, but in the caller it was not null!");
+					Debug.WriteLine("WARNING. Not Drawing Section. The MapSectionVectors is null here, but in the caller it was not null!");
 				}
 				else
 				{
@@ -857,12 +804,14 @@ namespace MSetExplorer
 				{
 					var reapplyColorMap = previousJob == null ? true : ShouldReapplyColorMap(previousJob.ColorBandSet, newJob.ColorBandSet, previousJob.MapCalcSettings, newJob.MapCalcSettings);
 					
-					Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
+					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
+					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
 					newJobNumber = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, reapplyColorMap, out lastSectionWasIncluded);
 				}
 				else
 				{
-					Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
+					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
+					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
 					newJobNumber = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 			}
@@ -878,21 +827,26 @@ namespace MSetExplorer
 
 		private int? ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, bool reapplyColorMap, out bool lastSectionWasIncluded)
 		{
-			SizeInt? prevMapExtentInBlocks = LastMapAreaInfo == null ? null : RMapHelper.GetMapExtentInBlocks(LastMapAreaInfo.CanvasSize.Round(), LastMapAreaInfo.CanvasControlOffset, LastMapAreaInfo.Subdivision.BlockSize);
+			//SizeInt? prevMapExtentInBlocks = LastMapAreaInfo == null ? null : RMapHelper.GetMapExtentInBlocks(LastMapAreaInfo.CanvasSize.Round(), LastMapAreaInfo.CanvasControlOffset, LastMapAreaInfo.Subdivision.BlockSize);
+			var prevMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 
 			LastMapAreaInfo = screenAreaInfo;
-
-			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
-			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
-
-			var newRequests = GetRequestsToLoadAndRemove(allRequestsForNewJob, _currentMapSectionRequests, out var requestsNoLongerNeeded);
-			_currentMapSectionRequests = allRequestsForNewJob;
 
 			// Let our Bitmap Grid know about the change in View size.
 			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
 			_bitmapGrid.LogicalViewportSize = screenAreaInfo.CanvasSize;
 			_bitmapGrid.CanvasControlOffset = screenAreaInfo.CanvasControlOffset;
 
+			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
+			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
+			var msrJob = _mapSectionBuilder.CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
+
+			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(msrJob, newMapExtentInBlocks);
+
+			var newRequests = GetRequestsToLoadAndRemove(allRequestsForNewJob, _currentMapSectionRequests, out var requestsNoLongerNeeded);
+			_currentMapSectionRequests = allRequestsForNewJob;
+
+			// TODO: The ImageOffset and ColorBandSet -- may need to be called after the call to _bitMapGrid.RedrawSections
 			ImageOffset = screenAreaInfo.CanvasControlOffset;
 			ColorBandSet = newJob.ColorBandSet;
 
@@ -928,20 +882,18 @@ namespace MSetExplorer
 						Debug.WriteLine($"WARNING: The BitmapGrid found {numberOfSectionsNotDrawn} sections whose visibility has changed since the method: GetSectionsNoVisible was called.");
 					}
 
-					var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(screenAreaInfo.CanvasSize.Round(), screenAreaInfo.CanvasControlOffset, screenAreaInfo.Subdivision.BlockSize);
-
-					if (prevMapExtentInBlocks != null && mapExtentInBlocks != prevMapExtentInBlocks)
+					if (prevMapExtentInBlocks != newMapExtentInBlocks)
 					{
-						Debug.WriteLine($"MapExtent is changing from: {prevMapExtentInBlocks} to {mapExtentInBlocks}.");
+						Debug.WriteLine($"MapExtent is changing from: {prevMapExtentInBlocks} to {newMapExtentInBlocks}.");
 					}
 
 					ReportReuseAndLoadedSections(newRequests.Count, numberOfRequestsCancelled, MapSections.Count, requestsToRemove.Count, numberOfSectionsRemovedViaReq, sectionsNotVisible.Count, numberOfSectionsRemovedNotVis);
 
-					if (MapSections.Count > 70)
-					{
-						var x = GetMapSectionDetailsOnePerLine(MapSections);
-						Debug.WriteLine(x);
-					}
+					//if (MapSections.Count > 70)
+					//{
+					//	var x = GetMapSectionDetailsOnePerLine(MapSections);
+					//	Debug.WriteLine(x);
+					//}
 				} 
 				else
 				{
@@ -978,17 +930,18 @@ namespace MSetExplorer
 
 		private int? DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
 		{
+			// Let our Bitmap Grid know about the change in View size.
+			// These must be set before we call clear screen.
+			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
+			_bitmapGrid.LogicalViewportSize = screenAreaInfo.CanvasSize;
+			_bitmapGrid.CanvasControlOffset = screenAreaInfo.CanvasControlOffset;
+			
 			StopCurrentJobs(clearDisplay: true);
 
 			LastMapAreaInfo = screenAreaInfo;
 
 			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
 			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
-
-			// Let our Bitmap Grid know about the change in View size.
-			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
-			_bitmapGrid.LogicalViewportSize = screenAreaInfo.CanvasSize;
-			_bitmapGrid.CanvasControlOffset = screenAreaInfo.CanvasControlOffset;
 
 			ImageOffset = screenAreaInfo.CanvasControlOffset;
 			ColorBandSet = newJob.ColorBandSet;
@@ -1047,28 +1000,20 @@ namespace MSetExplorer
 			var numberRemoved = 0;
 			foreach (var ms in mapSectionsToClear)
 			{
-				if (MapSections.Remove(ms))
+				var theRealMs = MapSections.FirstOrDefault(x => x.IsInverted == ms.IsInverted && x.RepoBlockPosition == ms.RepoBlockPosition);
+
+				if (theRealMs != null)
 				{
-					numberRemoved++;
+					if (MapSections.Remove(theRealMs))
+					{
+						numberRemoved++;
+					}
+
+					_mapSectionVectorProvider.ReturnToPool(theRealMs);
 				}
-
-				_mapSectionVectorProvider.ReturnToPool(ms);
 			}
 
-			var numberRequestedToClear = _requestsPendingGeneration.Count;
-
-			if (numberCleared != numberRequestedToClear || numberRemoved != numberRequestedToClear)
-			{
-				var diff = numberRequestedToClear - numberCleared;
-				Debug.WriteLineIf(_useDetailedDebug, $"{diff} MapSections were not cleared out of a total {numberRequestedToClear} requested.");
-
-				diff = numberRequestedToClear - numberRemoved;
-				Debug.WriteLineIf(_useDetailedDebug, $"{diff} MapSections were not removed out of a total {numberRequestedToClear} requested.");
-			}
-			else
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"{numberCleared} MapSections were cleared and removed.");
-			}
+			ReportClearMapSections(numberCleared, numberRemoved);
 		}
 
 		private void StopCurrentJobs(bool clearDisplay)
@@ -1094,8 +1039,7 @@ namespace MSetExplorer
 				MapSections.Clear();
 
 				var msToClearDisplay = stopWatch.ElapsedMilliseconds;
-				//Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
-				Debug.WriteLine($"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
+				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
 			}
 		}
 
@@ -1107,6 +1051,7 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, MapAreaInfo? previousAreaInfo, AreaColorAndCalcSettings newJob, MapAreaInfo newAreaInfo)
 		{
+			// TODO: Try this without requiring the previousAreaInfo to be non-null.
 			if (MapSections.Count == 0 || previousJob is null || previousAreaInfo is null)
 			{
 				return false;
@@ -1117,37 +1062,24 @@ namespace MSetExplorer
 				return false;
 			}
 
-			var inSameSubdivision = newAreaInfo.Subdivision.Id == newAreaInfo.Subdivision.Id;
+			//var inSameSubdivision = newAreaInfo.Subdivision.Id == newAreaInfo.Subdivision.Id;
+			var inSameSubdivision = newJob.MapAreaInfo.Subdivision.Id == previousJob.MapAreaInfo.Subdivision.Id;
+
 			if (!inSameSubdivision)
 			{
 				return false;
 			}
 
-			if (newAreaInfo.CanvasSize != previousAreaInfo.CanvasSize)
+			var curImageSize = _bitmapGrid.ImageSizeInBlocks;
+			var newImageSize = _bitmapGrid.CalculateImageSize(newAreaInfo.CanvasSize, newAreaInfo.CanvasControlOffset);
+
+			if (newImageSize.Width > curImageSize.Width || newImageSize.Height > curImageSize.Height)
 			{
 				return false;
 			}
 
 			return true;
 		}
-
-		private bool ShouldAttemptToReuseLoadedSections(MapAreaInfo? previousJob, MapAreaInfo newJob)
-		{
-			if (MapSections.Count == 0 || previousJob is null)
-			{
-				return false;
-			}
-
-			//if (newJob.s .MapCalcSettings.TargetIterations != previousJob.MapCalcSettings.TargetIterations)
-			//{
-			//	return false;
-			//}
-
-			var inSameSubdivision = newJob.Subdivision.Id == previousJob.Subdivision.Id;
-
-			return inSameSubdivision;
-		}
-
 
 		private bool ShouldReapplyColorMap(ColorBandSet previousColorBandSet, ColorBandSet newColorBandSet, MapCalcSettings previousCalcSettings, MapCalcSettings newCalcSettings)
 		{
@@ -1415,7 +1347,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		private MapSection? FindMapSection(MapSectionRequest mapSectionRequest)
 		{
 			return MapSections.FirstOrDefault(x => x.IsInverted == mapSectionRequest.IsInverted && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
@@ -1575,6 +1506,8 @@ namespace MSetExplorer
 			var requestsToRemoveNotFound = numberOfSectionsToRemove - numberOfSectionsRemovedViaReq;
 			var hiddenSectionsNotFound = numberOfSectionsNotVisible - numberOfSectionsRemovedNotVis;
 
+			Debug.WriteLine(string.Empty); // Insert a blank line in the on-screen output.
+
 			Debug.WriteLine($"Reusing Loaded Sections. "
 				+ $"Requesting {numberRequested} new sections, "
 				+ $"Cancelling {numberOfRequestsCancelled} pending requests, "
@@ -1586,6 +1519,28 @@ namespace MSetExplorer
 				+ $"Keeping {numberOfMapSections} sections. "
 				+ $"The MapSection Pool has: {_mapSectionVectorProvider.MapSectionsVectorsInPool} sections. "); ;
 			//}
+
+			Debug.WriteLine(string.Empty); // Insert a blank line in the on-screen output.
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportClearMapSections(int numberCleared, int numberRemoved)
+		{
+			// TODO: Move this logic to a conditonal method.
+			var numberRequestedToClear = _requestsPendingGeneration.Count;
+
+			if (numberCleared != numberRequestedToClear || numberRemoved != numberRequestedToClear)
+			{
+				var diff = numberRequestedToClear - numberCleared;
+				Debug.WriteLineIf(_useDetailedDebug, $"{diff} MapSections were not cleared out of a total {numberRequestedToClear} requested.");
+
+				diff = numberRequestedToClear - numberRemoved;
+				Debug.WriteLineIf(_useDetailedDebug, $"{diff} MapSections were not removed out of a total {numberRequestedToClear} requested.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"{numberCleared} MapSections were cleared and removed.");
+			}
 		}
 
 		private string GetMapSectionDetailsOnePerLine(IList<MapSection> mapSections)
@@ -1594,24 +1549,19 @@ namespace MSetExplorer
 
 			for (var i = 0; i < mapSections.Count; i++)
 			{
+				var section = mapSections[i];
+
 				if (i > 0)
 				{
-					sb.Append("\n\r");
+					sb.Append("\n");
 				}
 
-				var section = mapSections[i];
-				sb.Append(i)
-				.Append("\t")
-				.Append(section.ScreenPosition.X)
-				.Append("\t")
-				.Append(section.ScreenPosition.Y)
-				.Append("\t")
-				.Append(section.JobNumber)
-				.Append("\t")
-				.Append(section.RepoBlockPosition.XLo)
-				.Append("\t")
-				.Append(section.RepoBlockPosition.YLo)
-				.Append("\t");
+				sb.Append(i).Append("\t")
+				.Append(section.ScreenPosition.X).Append("\t")
+				.Append(section.ScreenPosition.Y).Append("\t")
+				.Append(section.JobNumber).Append("\t")
+				.Append(section.RepoBlockPosition.XLo).Append("\t")
+				.Append(section.RepoBlockPosition.YLo).Append("\t");
 
 				if (section.IsInverted)
 				{

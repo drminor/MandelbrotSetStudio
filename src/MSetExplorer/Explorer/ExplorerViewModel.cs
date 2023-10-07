@@ -16,6 +16,8 @@ namespace MSetExplorer
 		private double _dispWidth;
 		private double _dispHeight;
 
+		private readonly bool _useDetailedDebug = false;
+
 		#region Constructor
 
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
@@ -104,14 +106,14 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(IProjectViewModel.CurrentProject))
 			{
-				Debug.WriteLine($"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentProject.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentProject.");
 				JobTreeViewModel.CurrentProject = ProjectViewModel.CurrentProject;
 			}
 
 			// Update the MSet Info and Map Display with the new Job
 			if (e.PropertyName == nameof(IProjectViewModel.CurrentJob))
 			{
-				Debug.WriteLine($"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentJob.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentJob.");
 				SubmitMapDisplayJob();
 			}
 
@@ -120,20 +122,20 @@ namespace MSetExplorer
 			{
 				//Debug.WriteLine($"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentColorBandSet. The Project's CurrentColorBandSet has Id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 
-				Debug.WriteLine($"Just before setting the ColorBandSetViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the ColorBandSetViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 				ColorBandSetViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 
-				Debug.WriteLine($"Just before setting the CbsHistogramViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the CbsHistogramViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 				CbsHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 
 				if (ProjectViewModel.CurrentProject != null)
 				{
-					Debug.WriteLine($"Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 					MapDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 				}
 				else
 				{
-					Debug.WriteLine($"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentColorBandSet. Not updating the MapDisplayViewModel's ColorBandSet -- The CurrentProject is Null.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentColorBandSet. Not updating the MapDisplayViewModel's ColorBandSet -- The CurrentProject is Null.");
 				}
 			}
 		}
@@ -142,13 +144,13 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(ColorBandSetViewModel.UseEscapeVelocities))
 			{
-				Debug.WriteLine($"ExplorerViewModel is handling ColorBandViewModel PropertyChanged-UseEscapeVelocities.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ColorBandViewModel PropertyChanged-UseEscapeVelocities.");
 				MapDisplayViewModel.UseEscapeVelocities = ColorBandSetViewModel.UseEscapeVelocities;
 			}
 
 			if (e.PropertyName == nameof(ColorBandSetViewModel.HighlightSelectedBand))
 			{
-				Debug.WriteLine($"ExplorerViewModel is handling ColorBandViewModel PropertyChanged-HighlightSelectedColorBand.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ColorBandViewModel PropertyChanged-HighlightSelectedColorBand.");
 				MapDisplayViewModel.HighlightSelectedColorBand = ColorBandSetViewModel.HighlightSelectedBand;
 			}
 
@@ -157,10 +159,10 @@ namespace MSetExplorer
 				var cbsvmCbsIsNull = ColorBandSetViewModel.ColorBandSet == null ? string.Empty : "Not";
 				var projectVMCurrentProjectIsNull = ProjectViewModel.CurrentProject != null ? string.Empty : "Not";
 
-				//Debug.WriteLine($"ExplorerViewModel is handling ColorBandViewModel PropertyChanged-CurrentColorBand. HighLightSelectedColorBand: {MapDisplayViewModel.HighlightSelectedColorBand}, " +
+				//Debug.WriteLineIf(_useDetailedDebug$"ExplorerViewModel is handling ColorBandViewModel PropertyChanged-CurrentColorBand. HighLightSelectedColorBand: {MapDisplayViewModel.HighlightSelectedColorBand}, " +
 				//	$"CbsViewModel's ColorBandSet is {cbsvmCbsIsNull} null. The ProjectViewModel's CurrentProject is {projectVMCurrentProjectIsNull} null.");
 
-				Debug.WriteLine($"ExplorerViewModel is handling ColorBandViewModel PropertyChanged-CurrentColorBand." +
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ColorBandViewModel PropertyChanged-CurrentColorBand." +
 					$"CbsViewModel's ColorBandSet is {cbsvmCbsIsNull} null. The ProjectViewModel's CurrentProject is {projectVMCurrentProjectIsNull} null.");
 
 				//if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null && ProjectViewModel.CurrentProject != null)
@@ -188,14 +190,14 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
 		{
-			Debug.WriteLine($"ExplorerViewModel is handling MapDisplayViewModel-DisplayJobCompleted for Job: {e}");
+			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-DisplayJobCompleted for Job: {e}");
 
 			ColorBandSetViewModel.RefreshPercentages();
 			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
 
 			if (histogramDataWasEmpty)
 			{
-				Debug.WriteLine("ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
+				Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
 			}
 		}
 
@@ -252,24 +254,24 @@ namespace MSetExplorer
 		{
 			var colorBandSet = e.ColorBandSet;
 
-			Debug.WriteLine($"ExplorerViewModel is handling 'ColorBandSetViewModel_ColorBandSetUpdateRequested' with Id = {colorBandSet.Id}. (IsPreview:{e.IsPreview}).");
+			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling 'ColorBandSetViewModel_ColorBandSetUpdateRequested' with Id = {colorBandSet.Id}. (IsPreview:{e.IsPreview}).");
 
 			if (e.IsPreview)
 			{
-				Debug.WriteLine($"ExplorerViewModel is setting the ProjectViewModel's PreviewColorBandSet to a new value having Id = {colorBandSet.Id}");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's PreviewColorBandSet to a new value having Id = {colorBandSet.Id}");
 
 				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
 				ProjectViewModel.PreviewColorBandSet = colorBandSet;
 			}
 			else
 			{
-				Debug.WriteLine($"ExplorerViewModel is setting the ProjectViewModel's CurrentColorBandSet to a new value having Id = {colorBandSet.Id}");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's CurrentColorBandSet to a new value having Id = {colorBandSet.Id}");
 
 				//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
 				ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 
-			Debug.WriteLine($"ExplorerViewModel is setting the CbsHistogramViewModel's ColorBandSet to a new value having Id = {colorBandSet.Id}");
+			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the CbsHistogramViewModel's ColorBandSet to a new value having Id = {colorBandSet.Id}");
 
 			CbsHistogramViewModel.ColorBandSet = colorBandSet;
 		}

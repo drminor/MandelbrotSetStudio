@@ -16,7 +16,7 @@ namespace MSetExplorer
 
 		private ICbsHistogramViewModel _vm;
 
-		private readonly bool _useDetailedDebug;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -24,8 +24,6 @@ namespace MSetExplorer
 
 		public CbsHistogramControl()
 		{
-			_useDetailedDebug = false;
-
 			_vm = (CbsHistogramViewModel)DataContext;
 
 			Loaded += CbsHistogramControl_Loaded;
@@ -131,7 +129,7 @@ namespace MSetExplorer
 			//Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
 			//	$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}.");
 
-			Debug.WriteLine($"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
+			Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
 				$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}.");
 
 			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, contentScale, minContentScale, maxContentScale);
@@ -187,7 +185,7 @@ namespace MSetExplorer
 			var previousValue = e.Item1;
 			var newValue = e.Item2;
 
-			Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportOffsetXChanged event. The ColorBandControl's OffsetX is being updated from {previousValue} to {newValue}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is handling the HistogramPlotControl's ViewportOffsetXChanged event. The ColorBandControl's OffsetX is being updated from {previousValue} to {newValue}.");
 
 			PlaceTheColorBandControl(newValue);
 		}
@@ -248,11 +246,11 @@ namespace MSetExplorer
 
 			if (rightMargin < 0)
 			{
-				Debug.WriteLine($"The CbsHistogramControl found the Right Margin to be {rightMargin}, setting this to zero instead. LeftMargin: {leftMargin}, ViewportWidth: {viewportWidth}, Control Width: {column2Width}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl found the Right Margin to be {rightMargin}, setting this to zero instead. LeftMargin: {leftMargin}, ViewportWidth: {viewportWidth}, Control Width: {column2Width}.");
 				rightMargin = 0;
 			}
 
-			Debug.WriteLine($"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
 			ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 2);
 		}
 

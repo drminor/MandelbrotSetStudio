@@ -15,6 +15,7 @@ namespace MSetExplorer
 		BigVector MapBlockOffset { get; set; }
 		SizeDbl LogicalViewportSize { get; set; }
 		VectorInt CanvasControlOffset { get; set; }
+		SizeInt ImageSizeInBlocks { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
 		ColorBand? CurrentColorBand { get; }

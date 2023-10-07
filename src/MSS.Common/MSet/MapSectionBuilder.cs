@@ -41,28 +41,33 @@ namespace MSS.Common
 
 		public List<MapSectionRequest> CreateSectionRequests(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
+			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings);
+
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-
-			//Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests. The map extent is {mapExtentInBlocks}.");
-
-			Debug.WriteLine($"Creating section requests. CS: {mapAreaInfo.CanvasSize.Round()}, CCO: {mapAreaInfo.CanvasControlOffset}, produces MapExtentInBlocks: {mapExtentInBlocks}.");
-
-			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
-
-			var limbCount = GetLimbCount(precision);
-
-			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset, 
-				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
+			Debug.WriteLine($"Creating section requests. CanvasSize: {mapAreaInfo.CanvasSize.Round()}, CanvasControlOffset: {mapAreaInfo.CanvasControlOffset}, produces MapExtentInBlocks: {mapExtentInBlocks}.");
 
 			var result = CreateSectionRequests(msrJob, mapExtentInBlocks);
 
 			return result;
 		}
 
+		public MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		{
+			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
+			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
+
+			var limbCount = GetLimbCount(precision);
+
+			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
+				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
+
+			return msrJob;
+		}
+
 		public List<MapSectionRequest> CreateSectionRequests(MsrJob msrJob, SizeInt mapExtentInBlocks)
 		{
 			var result = new List<MapSectionRequest>();
+			var numberOfPairs = 0;
 
 			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
 
@@ -87,9 +92,11 @@ namespace MSS.Common
 							var mirror = result.FirstOrDefault(x => x.SectionBlockOffset.Equals(mapSectionRequest.SectionBlockOffset));
 							if (mirror != null)
 							{
-								mapSectionRequest.Mirror = mirror;
+								//mapSectionRequest.Mirror = mirror;
 
 								mirror.Mirror = mapSectionRequest;
+
+								numberOfPairs++;
 
 								// Do not add this mapSectionRequest to the result since it is included as a mirror.
 								continue;
@@ -110,7 +117,36 @@ namespace MSS.Common
 				}
 			}
 
+			var totalPoints = mapExtentInBlocks.NumberOfCells;
+
+			// Each pair was created from a single. The number of singles is the number in the original set for which a pair was not created.
+			var numberOfSingles = totalPoints - (numberOfPairs * 2);
+
+			ReportCreateMapSectionRequests(totalPoints, numberOfSingles, numberOfPairs);
+
 			return result;
+		}
+
+		//CreateSectionRequests visited 81 and produced -27 single requests and 36 requests with a mirror. Missing 36 requests.
+
+		[Conditional("DEBUG")]
+		private void ReportCreateMapSectionRequests(int numberOfSections, int numberOfSingles, int numberOfPairs)
+		{
+			 
+			var diff = numberOfSections - ((2 * numberOfPairs) + numberOfSingles);
+
+			if (diff > 0)
+			{
+				Debug.WriteLine($"CreateSectionRequests visited {numberOfSections} and produced {numberOfSingles} single requests and {numberOfPairs} requests with a mirror. Missing {diff} requests.");
+			}
+			else if (diff < 0)
+			{
+				Debug.WriteLine($"CreateSectionRequests visited {numberOfSections} and produced {numberOfSingles} single requests and {numberOfPairs} requests with a mirror. Found {diff} extra requests.");
+			}
+			else
+			{
+				Debug.WriteLine($"CreateSectionRequests visited {numberOfSections} and produced {numberOfSingles} single requests and {numberOfPairs} requests with a mirror, as expected.");
+			}
 		}
 
 		/* Compare this logic from above with the logic within the BitmapGrid to determine if a section is in bounds.

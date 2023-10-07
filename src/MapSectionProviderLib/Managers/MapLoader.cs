@@ -32,7 +32,6 @@ namespace MapSectionProviderLib
 			JobNumber = jobNumber;
 			_callback = callback;
 			_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
-			//JobNumber = _mapSectionRequestProcessor.GetNextRequestId();
 
 			_mapSectionRequests = null;
 			_isStopping = false;
@@ -41,21 +40,25 @@ namespace MapSectionProviderLib
 			_sectionsCompleted = 0;
 			_tcs = null;
 
-			//MathOpCounts = new MathOpCounts();
-
 			_stopwatch = new Stopwatch();
 			_stopwatch.Stop();
+
+			AllocateMathCounts();
 		}
 
 		#endregion
 
-		#region Public Properties
+		#region Events
 
 		// Instead of having other windows subscribe to the MapLoader's SectionLoaded event,
 		// have those other windows subscribe to an event provided by the class to which the callback method belongs.
 		public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		//public MathOpCounts MathOpCounts { get; private set; }
+		#endregion
+
+		#region Public Properties
+
+		public MathOpCounts? MathOpCounts { get; private set; }
 
 		public int JobNumber { get; init; }
 
@@ -78,9 +81,18 @@ namespace MapSectionProviderLib
 
 			_mapSectionRequests = mapSectionRequests;
 
-			foreach(var mapSectionRequest in mapSectionRequests)
+			var numberOfPairs = 0;
+
+			foreach (var mapSectionRequest in mapSectionRequests)
 			{
-				_sectionsSubmitted += mapSectionRequest.Mirror != null ? 2 : 1;
+				_sectionsSubmitted++;
+
+				if (mapSectionRequest.Mirror != null)
+				{
+					numberOfPairs++;
+					_sectionsSubmitted++;
+				}
+				//_sectionsSubmitted += mapSectionRequest.Mirror != null ? 2 : 1;
 			}
 
 			_stopwatch.Start();
@@ -154,7 +166,7 @@ namespace MapSectionProviderLib
 				return;
 			}
 
-			foreach(var mapSectionRequest in _mapSectionRequests)
+			foreach (var mapSectionRequest in _mapSectionRequests)
 			{
 				if (_isStopping)
 				{
@@ -171,8 +183,6 @@ namespace MapSectionProviderLib
 				if (!mapSectionRequest.CancellationTokenSource.IsCancellationRequested)
 				{
 					mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
-					_mapSectionRequestProcessor.AddWork(mapSectionRequest, HandleResponse);
-					mapSectionRequest.Sent = true;
 
 					_ = Interlocked.Increment(ref _sectionsRequested);
 
@@ -180,6 +190,9 @@ namespace MapSectionProviderLib
 					{
 						_ = Interlocked.Increment(ref _sectionsRequested);
 					}
+
+					_mapSectionRequestProcessor.AddWork(mapSectionRequest, HandleResponse);
+					mapSectionRequest.Sent = true;
 				}
 				else
 				{
@@ -194,21 +207,9 @@ namespace MapSectionProviderLib
 		{
 			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MapLoader's HandleResponse is being called from the Response Processor.");
 
+			UpdateMathCounts(mapSection);
 			mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-
-			//if (mapSectionResponse?.MathOpCounts != null)
-			//{
-			//	MathOpCounts.Update(mapSectionResponse.MathOpCounts);
-			//}
-
-			/****************************************************
-			// UN COMMENT ME TO Report on generation duration.
-			//if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
-			//{
-				//var allEscaped = mapSectionResponse?.AllRowsHaveEscaped == true ? "DONE" : null;
-				//Debug.WriteLine($"MapSection for {mapSectionResult.BlockPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. {allEscaped}");
-			//}
-			****************************************************/
+			ReportGeneration(mapSectionRequest, mapSection);
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
 
@@ -217,64 +218,64 @@ namespace MapSectionProviderLib
 				_ = Interlocked.Increment(ref _sectionsCompleted);
 			}
 
-			if (_sectionsCompleted >= _mapSectionRequests?.Count || (_isStopping && _sectionsCompleted >= _sectionsRequested))
+			//if (_sectionsCompleted + 5 > _sectionsRequested && !(_sectionsCompleted >= _mapSectionRequests?.Count))
+			//{
+			//	Debug.WriteLine($"WARNING: Need to compare the numberOfMapSectionRequests {_mapSectionRequests?.Count ?? 0} with the number of [actual] sectionsRequested {_sectionsRequested}.");
+			//}
+
+			if (_sectionsCompleted >= _sectionsSubmitted || (_isStopping && _sectionsCompleted >= _sectionsRequested))
 			{
-
-				//if (_sectionsCompleted + 5 > _sectionsRequested && !(_sectionsCompleted >= _mapSectionRequests?.Count))
-				//{
-				//	Debug.WriteLine($"WARNING: Need to compare the numberOfMapSectionRequests {_mapSectionRequests?.Count ?? 0} with the number of [actual] sectionsRequested {_sectionsRequested}.");
-				//}
-
-				// This is the last section -- call the callback if the MapSection is Empty or Not
 				_stopwatch.Stop();
-
-				mapSection.IsLastSection = true;
-				_callback(mapSection);
-
-				if (!mapSection.IsEmpty)
-				{
-					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: true));
-				}
-
-				mapSectionRequest.Handled = true;
+				HandleLastResponse(mapSectionRequest, mapSection);
 
 				if (_tcs?.Task.IsCompleted == false)
 				{
 					_tcs.SetResult();
 				}
 
-				//ReportStats();
+				ReportMathCounts(MathOpCounts);
+				ReportStats();
 			}
 			else
 			{
-				// Call the callback, only if the MapSection is not Empty.
-
-				if (!mapSection.IsEmpty)
-				{
-					mapSection.IsLastSection = false;
-					_callback(mapSection);
-					SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: false));
-				}
-				else
-				{
-					Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}; Comp/Total: ({_sectionsCompleted}/{_mapSectionRequests?.Count ?? 0}) Screen Position: {mapSectionRequest.ScreenPosition}.");
-				}
-
-				mapSectionRequest.Handled = true;
-
-				//Debug.WriteLine($"Job completed: Totals: {MathOpCounts}");
+				HandleResponseInternal(mapSectionRequest, mapSection);
 			}
 		}
 
-		//private void ReportStats()
-		//{
-		//	var numberOfPendingRequests = _mapSectionRequestProcessor.GetNumberOfPendingRequests(JobNumber);
-		//	var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
-		//	var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
+		private void HandleResponseInternal(MapSectionRequest mapSectionRequest, MapSection mapSection)
+		{
+			mapSection.IsLastSection = false;
 
-		//	Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections in {_stopwatch.Elapsed}. " +
-		//		$"There are {numberOfPendingRequests}/{notHandled}/{notSent} requests still pending, not handled, not sent.");
-		//}
+			// Call the callback, only if the MapSection is not Empty.
+			if (!mapSection.IsEmpty)
+			{
+				_callback(mapSection);
+				SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: false));
+			}
+			else
+			{
+				Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}, " +
+					$"Comp/Total: ({_sectionsCompleted}/{_mapSectionRequests?.Count ?? 0})," +
+					$" Screen Position: {mapSectionRequest.ScreenPosition}.");
+			}
+
+			mapSectionRequest.Handled = true;
+		}
+
+		private void HandleLastResponse(MapSectionRequest mapSectionRequest, MapSection mapSection)
+		{
+			mapSection.IsLastSection = true;
+
+			// This is the last section -- call the callback if the MapSection is Empty or Not
+			_callback(mapSection);
+
+			if (!mapSection.IsEmpty)
+			{
+				SectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: true));
+			}
+
+			mapSectionRequest.Handled = true;
+		}
 
 		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr, bool isLastSection)
 		{
@@ -294,5 +295,66 @@ namespace MapSectionProviderLib
 		}
 
 		#endregion
+
+		#region Diagnostics
+
+		[Conditional("DEBUG2")]
+		private void ReportGeneration(MapSectionRequest mapSectionRequest, MapSection mapSection)
+		{
+			if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
+			{
+				// TODO: All the property 'AllRowsEscaped' to the MapSection class.
+				//var allEscaped = mapSectionResponse?.AllRowsHaveEscaped == true ? "DONE" : null;
+				var allEscaped = "Undetermined.";
+
+				var isEmpty = mapSection.IsEmpty;
+				var msgPrefix = isEmpty ? string.Empty : "The empty ";
+				Debug.WriteLine($"MapSection at screen position: {mapSectionRequest.ScreenPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. All Points Escaped: {allEscaped}");
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportStats()
+		{
+			var numberOfPendingRequests = _mapSectionRequestProcessor.NumberOfRequestsPending;
+			var numberWaitingToBeGen = _mapSectionRequestProcessor.NumberOfSectionsPendingGeneration;
+
+			var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
+			var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
+
+			Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections in {_stopwatch.Elapsed}. " +
+				$"There are {numberOfPendingRequests} / {numberWaitingToBeGen} / {notHandled} / {notSent} requests still pending / not yet generated / not handled / not sent.");
+		}
+
+		#endregion
+
+		#region Performance / Metrics
+
+		[Conditional("PERF")]
+		private void AllocateMathCounts()
+		{
+			MathOpCounts = new MathOpCounts();
+		}
+
+		[Conditional("PERF")]
+		private void UpdateMathCounts(MapSection mapSection)
+		{
+			if (MathOpCounts != null && mapSection?.MathOpCounts != null)
+			{
+				MathOpCounts.Update(mapSection.MathOpCounts);
+			}
+		}
+
+		[Conditional("PERF")]
+		private void ReportMathCounts(MathOpCounts? mathOpCounts)
+		{
+			if (mathOpCounts != null)
+			{
+				Debug.WriteLine($"Job completed: Totals: {mathOpCounts}");
+			}
+		}
+
+		#endregion
 	}
+
 }
