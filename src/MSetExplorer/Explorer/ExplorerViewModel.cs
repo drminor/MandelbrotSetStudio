@@ -188,7 +188,7 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
 		{
-			Debug.WriteLine("ExplorerViewModel is handling MapDisplayViewModel-DisplayJobCompleted");
+			Debug.WriteLine($"ExplorerViewModel is handling MapDisplayViewModel-DisplayJobCompleted for Job: {e}");
 
 			ColorBandSetViewModel.RefreshPercentages();
 			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();

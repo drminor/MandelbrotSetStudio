@@ -33,6 +33,8 @@ namespace MSS.Common
 		Task<long?> UpdateZValuesAync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId);
 		Task<long?> DeleteZValuesAync(ObjectId mapSectionId);
 
+		ZValues? GetMapSectionZValues(ObjectId mapSectionId);
+
 		bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [NotNullWhen(true)] out Subdivision? subdivision);
 		Subdivision InsertSubdivision(Subdivision subdivision);
 

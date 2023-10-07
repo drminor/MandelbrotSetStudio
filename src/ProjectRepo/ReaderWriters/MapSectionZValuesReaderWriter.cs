@@ -61,6 +61,28 @@ namespace ProjectRepo
 			}
 		}
 
+		public MapSectionZValuesRecord? GetBySectionId(ObjectId mapSectionId)
+		{
+			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("MapSectionId", mapSectionId);
+
+			var mapSectionRecord = Collection.Find(filter);
+
+			var itemsFound = mapSectionRecord.ToList();
+
+			if (itemsFound.Count > 0)
+			{
+				var result = itemsFound[0];
+				result.LastAccessedUtc = DateTime.UtcNow;
+				return result;
+			}
+			else
+			{
+				// Log: MapSection Not Found
+				//Debug.WriteLine("The MapSectionZValues record could not be found using the MapSectionId.");
+				return default;
+			}
+		}
+
 		public async Task<MapSectionZValuesRecord?> GetAsync(ObjectId mapSectionZValuesId, CancellationToken ct)
 		{
 			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("_id", mapSectionZValuesId);

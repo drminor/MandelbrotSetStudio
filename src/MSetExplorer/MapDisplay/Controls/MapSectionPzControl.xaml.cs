@@ -21,7 +21,7 @@ namespace MSetExplorer
 		private DebounceDispatcher _contentScaleDispatcher;
 		private IMapDisplayViewModel _vm;
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 

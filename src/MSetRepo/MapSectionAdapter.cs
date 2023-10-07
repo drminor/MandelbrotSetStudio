@@ -274,6 +274,13 @@ namespace MSetRepo
 			return result?.ZValues;
 		}
 
+		public ZValues? GetMapSectionZValues(ObjectId mapSectionId)
+		{
+			var result = _mapSectionZValuesReaderWriter.GetBySectionId(mapSectionId);
+
+			return result?.ZValues;
+		}
+
 		public async Task<ObjectId?> SaveMapSectionZValuesAsync(MapSectionResponse mapSectionResponse, ObjectId mapSectionId)
 		{
 			var mapSectionZValuesRecord = GetZValues(mapSectionResponse, mapSectionId);

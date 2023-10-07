@@ -13,7 +13,7 @@ namespace MSetExplorer
 
 		private bool _disableScrollValueSync = false;   // If true, don't update the _zoomedControl's Scale property.
 
-		private bool _useDetailedDebug = true;
+		private bool _useDetailedDebug = false;
 
 		#endregion
 

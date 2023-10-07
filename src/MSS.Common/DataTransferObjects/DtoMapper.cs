@@ -92,7 +92,20 @@ namespace MSS.Common.DataTransferObjects
 			return result;
 		}
 
+		public MapBlockOffset Convert(BigVector bigVector)
+		{
+			var (x, y) = bigVector.GetLongPairs();
+			var mapBlockOffset = new MapBlockOffset(x, y);
+			return mapBlockOffset;
+		}
 
+		public BigVector MapFrom(MapBlockOffset mapBlockOffset)
+		{
+			var (x, y) = mapBlockOffset.GetBigIntegers();
+			var result = new BigVector(x, y);
+
+			return result;
+		}
 
 	}
 }

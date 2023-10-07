@@ -128,9 +128,14 @@ namespace MSS.Types.MSet
 
 		public string ToString(PointInt adjustedPosition)
 		{
+			//return IsInverted
+			//	? $"MapSection: AdjBlockPos: {adjustedPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition} (Inverted)."
+			//	: $"MapSection: AdjBlockPos: {adjustedPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition}.";
+
 			return IsInverted
-				? $"MapSection: AdjBlockPos: {adjustedPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition} (Inverted)."
-				: $"MapSection: AdjBlockPos: {adjustedPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition}.";
+				? $"MapSection: AdjBlockPos: {adjustedPosition}, (J/R:{JobNumber}/{RequestNumber}, MapPosition: {RepoBlockPosition} (Inverted from {ScreenPosition})."
+				: $"MapSection: AdjBlockPos: {adjustedPosition}, (J/R:{JobNumber}/{RequestNumber}, MapPosition: {RepoBlockPosition}.";
+
 		}
 
 

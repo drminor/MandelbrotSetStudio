@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -15,6 +16,8 @@ namespace MSS.Common
 		private const int PRECSION_PADDING = 4;
 		private const int MIN_LIMB_COUNT = 1;
 
+		private DtoMapper _dtoMapper;
+
 		private int _currentPrecision;
 		private int _currentLimbCount;
 
@@ -26,6 +29,8 @@ namespace MSS.Common
 
 		public MapSectionBuilder()
 		{
+			_dtoMapper = new DtoMapper();
+			
 			_currentPrecision = -1;
 			_currentLimbCount = 1;
 		}
@@ -36,10 +41,11 @@ namespace MSS.Common
 
 		public List<MapSectionRequest> CreateSectionRequests(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
-			var result = new List<MapSectionRequest>();
-
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-			Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests. The map extent is {mapExtentInBlocks}.");
+
+			//Debug.WriteLineIf(_useDetailedDebug, $"Creating section requests. The map extent is {mapExtentInBlocks}.");
+
+			Debug.WriteLine($"Creating section requests. CS: {mapAreaInfo.CanvasSize.Round()}, CCO: {mapAreaInfo.CanvasControlOffset}, produces MapExtentInBlocks: {mapExtentInBlocks}.");
 
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
 			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
@@ -49,39 +55,59 @@ namespace MSS.Common
 			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset, 
 				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
 
+			var result = CreateSectionRequests(msrJob, mapExtentInBlocks);
+
+			return result;
+		}
+
+		public List<MapSectionRequest> CreateSectionRequests(MsrJob msrJob, SizeInt mapExtentInBlocks)
+		{
+			var result = new List<MapSectionRequest>();
+
 			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
 
-			bool firstSectionIsInverted = false;
 			var requestNumber = 0;
 
-			foreach (var screenPosition in Points(mapExtentInBlocks))
+			if (msrJob.CrossesYZero)
 			{
-				var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
-
-				var mapSectionRequest = CreateRequest(msrJob, requestNumber++, screenPosition, screenPositionRelativeToCenter);
-
-				if(requestNumber == 1)
+				bool firstSectionIsInverted = false;
+				foreach (var screenPosition in Points(mapExtentInBlocks))
 				{
-					firstSectionIsInverted = mapSectionRequest.IsInverted;
-				}
-				else
-				{
-					if (mapSectionRequest.IsInverted != firstSectionIsInverted)
+					var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
+					var mapSectionRequest = CreateRequest(msrJob, requestNumber++, screenPosition, screenPositionRelativeToCenter);
+
+					if (requestNumber == 1)
 					{
-						var mirror = result.FirstOrDefault(x => x.SectionBlockOffset.Equals(mapSectionRequest.SectionBlockOffset));
-						if (mirror != null)
+						firstSectionIsInverted = mapSectionRequest.IsInverted;
+					}
+					else
+					{
+						if (mapSectionRequest.IsInverted != firstSectionIsInverted)
 						{
-							mapSectionRequest.Mirror = mirror;
+							var mirror = result.FirstOrDefault(x => x.SectionBlockOffset.Equals(mapSectionRequest.SectionBlockOffset));
+							if (mirror != null)
+							{
+								mapSectionRequest.Mirror = mirror;
 
-							mirror.Mirror = mapSectionRequest;
+								mirror.Mirror = mapSectionRequest;
 
-							// Do not add this mapSectionRequest to the result since it is included as a mirror.
-							continue;
+								// Do not add this mapSectionRequest to the result since it is included as a mirror.
+								continue;
+							}
 						}
 					}
-				}
 
-				result.Add(mapSectionRequest);
+					result.Add(mapSectionRequest);
+				}
+			}
+			else
+			{
+				foreach (var screenPosition in Points(mapExtentInBlocks))
+				{
+					var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
+					var mapSectionRequest = CreateRequest(msrJob, requestNumber++, screenPosition, screenPositionRelativeToCenter);
+					result.Add(mapSectionRequest);
+				}
 			}
 
 			return result;
@@ -172,7 +198,7 @@ namespace MSS.Common
 				requestNumber: requestNumber,
 				screenPosition: screenPosition,
 				screenPositionRelativeToCenter: screenPositionRelativeToCenter,
-				sectionBlockOffset: MapTo(sectionBlockOffset),
+				sectionBlockOffset: _dtoMapper.Convert(sectionBlockOffset),
 				mapPosition: mapPosition,
 				isInverted: isInverted);
 
@@ -228,13 +254,6 @@ namespace MSS.Common
 			return _currentLimbCount;	
 		}
 
-		private MapBlockOffset MapTo(BigVector bigVector)
-		{
-			var (x, y) = bigVector.GetLongPairs();
-			var mapBlockOffset = new MapBlockOffset(x, y);
-			return mapBlockOffset;
-		}
-
 		#endregion
 
 		#region Create MapSections
@@ -246,7 +265,7 @@ namespace MSS.Common
 
 			var jobBlockOffset = mapSectionRequest.JobBlockOffset;
 
-			var sectionBlockOffset = MapFrom(repoBlockPosition);
+			var sectionBlockOffset = _dtoMapper.MapFrom(repoBlockPosition);
 			var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
@@ -265,7 +284,7 @@ namespace MSS.Common
 
 			var jobBlockOffset = mapSectionRequest.JobBlockOffset;
 
-			var sectionBlockOffset = MapFrom(repoBlockPosition);
+			var sectionBlockOffset = _dtoMapper.MapFrom(repoBlockPosition);
 			var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
 			//Debug.WriteLine($"Creating MapSection for response: {repoBlockPosition} for ScreenBlkPos: {screenPosition} Inverted = {isInverted}.");
 
@@ -290,14 +309,6 @@ namespace MSS.Common
 					yield return new PointInt(xBlockPtr, yBlockPtr);
 				}
 			}
-		}
-
-		private BigVector MapFrom(MapBlockOffset mapBlockOffset)
-		{
-			var (x, y) = mapBlockOffset.GetBigIntegers();
-			var result = new BigVector(x, y);
-
-			return result;
 		}
 
 		[Conditional("PERF")]

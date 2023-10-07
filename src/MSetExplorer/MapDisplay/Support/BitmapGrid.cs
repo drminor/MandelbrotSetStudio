@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -22,10 +23,10 @@ namespace MSetExplorer
 		private const int BYTES_PER_PIXEL = 4;
 
 		private readonly SizeInt _blockSize;
-		//private readonly Action<MapSection> _disposeMapSection;
-		private readonly Action<WriteableBitmap> _onBitmapUpdate;
-
+		private readonly DtoMapper _dtoMapper;
 		private readonly ObservableCollection<MapSection> _mapSections;
+
+		private readonly Action<WriteableBitmap> _onBitmapUpdate;
 
 		private Int32Rect _blockRect { get; init; }
 
@@ -41,19 +42,20 @@ namespace MSetExplorer
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
 		#region Constructor
 
-		public BitmapGrid(ObservableCollection<MapSection> mapSections, SizeDbl viewPortSize/*, Action<MapSection> disposeMapSection*/, Action<WriteableBitmap> onBitmapUpdate, SizeInt blockSize)
+		public BitmapGrid(ObservableCollection<MapSection> mapSections, SizeDbl viewPortSize, Action<WriteableBitmap> onBitmapUpdate, SizeInt blockSize)
 		{
+			_dtoMapper = new DtoMapper();
+
 			_mapSections = mapSections;
 			_logicalViewportSize = viewPortSize;
 			_canvasControlOffset = new VectorInt();
 
-			//_disposeMapSection = disposeMapSection;
 			_onBitmapUpdate = onBitmapUpdate;
 			_blockSize = blockSize;
 
@@ -234,14 +236,10 @@ namespace MSetExplorer
 			}
 		}
 
-		private SizeInt CalculateImageSize(SizeDbl logicalViewportSize, VectorInt canvasControlOffset)
+		public SizeInt CalculateImageSize(SizeDbl logicalViewportSize, VectorInt canvasControlOffset)
 		{
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(logicalViewportSize.Round(), canvasControlOffset, _blockSize);
-
-			//var adjMapExtentInBlocks = mapExtentInBlocks.Inflate(1);
-			var adjMapExtentInBlocks = mapExtentInBlocks;
-
-			return adjMapExtentInBlocks;
+			return mapExtentInBlocks;
 		}
 
 		// Each time a drawing operation is performed this is checked to see if the current canvas need to be resized.
@@ -256,7 +254,7 @@ namespace MSetExplorer
 					return;
 				}
 
-				if (_imageSizeInBlocks != value)
+				if (value != _imageSizeInBlocks)
 				{
 					// The Image must be able to accommodate one block before and one block after the set of visible blocks.
 					//var newImageSizeInBlocks = value.Inflate(2);
@@ -393,90 +391,57 @@ namespace MSetExplorer
 			// Force the reapplication of the color map - always
 			reapplyColorMap = true;
 
-			//var anyDrawnOnLastRow = false;
-
-			var errors = 0L;
-			//var sectionsNotDrawn = new List<MapSection>();
 			var numberSectionsNotDrawn = 0;
 
 			foreach (var mapSection in _mapSections)
 			{
 				if (mapSection.MapSectionVectors != null)
 				{
-					//var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
-
-					//if (IsBLockVisible(blockPosition, ImageSizeInBlocks/*, mapSection.JobNumber, "DrawSections", warnOnFail: true*/))
-					//{
-					//	if (_colorMap != null)
-					//	{
-					//		var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-
-					//		//if (invertedBlockPos.Y == 0) anyDrawnOnLastRow = true;
-
-					//		var loc = invertedBlockPos.Scale(_blockSize);
-
-					//		// TODO: Detect if we have good BackBuffer
-					//		if (reapplyColorMap || mapSection.MapSectionVectors.BackBuffer.Length == 0)
-					//		{
-					//			errors += LoadPixelArray(mapSection.MapSectionVectors, _colorMap, !mapSection.IsInverted);
-					//		}
-
-					//		try
-					//		{
-					//			Bitmap.WritePixels(_blockRect, mapSection.MapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
-					//		}
-					//		catch (Exception e)
-					//		{
-					//			Debug.WriteLine($"ReDrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
-					//		}
-					//	}
-					//}
-					//else
-					//{
-					//	//_disposeMapSection(mapSection);
-					//	sectionsNotDrawn.Add(mapSection);
-					//}
-
 					if (!DrawOneSection(mapSection, mapSection.MapSectionVectors, "RedrawSections"))
 					{
 						numberSectionsNotDrawn++;
 					}
-
-
 				}
 			}
-
-			if (errors > 0)
-			{
-				Debug.WriteLine($"There were {errors} color placement errors while Redrawing Sections for {_mapSections.FirstOrDefault()?.JobNumber}.");
-			}
-
-			//if (_mapSections.Count > 0 && !anyDrawnOnLastRow)
-			//	Debug.WriteLine($"No blocks were drawn on the last row for ReDraw:{_mapSections.FirstOrDefault()?.JobNumber}.");
-
-			//foreach (var ms in sectionsNotDrawn)
-			//{
-			//	_mapSections.Remove(ms);
-			//}
 
 			ReportPercentMapSectionsWithUpdatedScrPos();
 
 			return numberSectionsNotDrawn;
 		}
 
+		public List<MapSection> GetSectionsNotVisible()
+		{
+			var sectionsNotVisible = new List<MapSection>();
+
+			foreach (var mapSection in _mapSections)
+			{
+				var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
+				var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+	
+				if (!IsBLockVisible(invertedBlockPos, ImageSizeInBlocks))
+				{
+					sectionsNotVisible.Add(mapSection);
+				}
+			}
+
+			return sectionsNotVisible;
+		}
+
 		public bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description)
 		{
+			CheckBitmapSize(Bitmap, ImageSizeInBlocks, description);
+
 			var wasAdded = false;
 			var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
+			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 
-			if (IsBLockVisible(blockPosition, ImageSizeInBlocks/*, mapSection.JobNumber, "GetAndPlacePixels"*/))
+			if (IsBLockVisible(invertedBlockPos, ImageSizeInBlocks/*, mapSection.JobNumber, "GetAndPlacePixels"*/))
 			{
-				//_mapSections.Add(mapSection);
 				wasAdded = true;
 
 				if (_colorMap != null)
 				{
-					var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+					//var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 					var loc = invertedBlockPos.Scale(_blockSize);
 
 					var errors = LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
@@ -489,18 +454,18 @@ namespace MSetExplorer
 					try
 					{
 						Bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
+						
 						//Debug.WriteLine($"GetAndPlacePixels is drawing MapSection: {mapSection.ToString(blockPosition)}({mapSection.RequestNumber}).");
 					}
 					catch (Exception e)
 					{
-						Debug.WriteLine($"GetAndPlacePixels got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+						Debug.WriteLine($"DrawOneSection-{description} got exception: {e.Message}. {mapSection.ToString(invertedBlockPos)}, ImageSize:{ImageSizeInBlocks}.");
 					}
 				}
 			}
 			else
 			{
-				Debug.WriteLine($"GetAndPlacePixels is not drawing MapSection: {mapSection.ToString(blockPosition)}({mapSection.RequestNumber}), it's off the map.");
-				//_disposeMapSection(mapSection);
+				Debug.WriteLine($"DrawOneSection-{description} is not drawing MapSection: {mapSection.ToString(invertedBlockPos)}, ImageSize:{ImageSizeInBlocks}, it's off the map.");
 			}
 
 			return wasAdded;
@@ -514,53 +479,66 @@ namespace MSetExplorer
 		/// 
 		/// </summary>
 		/// <param name="mapSection"></param>
-		/// <param name="mapBlockOffset">The block offset for the block at the lower, left-hand side of the map</param>
+		/// <param name="jobMapBlockOffset">The block offset for the block at the lower, left-hand side of the map</param>
 		/// <returns></returns>
 		/// <exception cref="ArgumentException"></exception>
-		private PointInt GetAdjustedBlockPositon(MapSection mapSection, BigVector mapBlockOffset)
+		private PointInt GetAdjustedBlockPositon(MapSection mapSection, BigVector jobMapBlockOffset)
 		{
-			PointInt result;
+			PointInt screenPosition;
 
-			var rawDf = mapSection.JobMapBlockOffset.Diff(mapBlockOffset);
+			//var rawDf = mapSection.JobMapBlockOffset.Diff(jobMapBlockOffset);
 
-			BigVector df;
+			//BigVector df;
 
-			var secJobMapBlockOffset = mapSection.JobMapBlockOffset;
+			//var secJobMapBlockOffset = mapSection.JobMapBlockOffset;
 
-			if (secJobMapBlockOffset.Y < 0 && mapBlockOffset.Y >= 0)
-			{
-				// Moving from isInverted to NOT isInverted
-				df = new BigVector(rawDf.X, rawDf.Y - 1);
-			}
-			else if (secJobMapBlockOffset.Y >= 0 && mapBlockOffset.Y < 0)
-			{
-				// Moving from NOT isInverted to isInverted
-				df = new BigVector(rawDf.X, rawDf.Y + 1);
-			}
-			else
-			{
-				df = rawDf;
-			}
+			//if (secJobMapBlockOffset.Y < 0 && jobMapBlockOffset.Y >= 0)
+			//{
+			//	// Moving from isInverted to NOT isInverted
+			//	df = new BigVector(rawDf.X, rawDf.Y - 1);
+			//}
+			//else if (secJobMapBlockOffset.Y >= 0 && jobMapBlockOffset.Y < 0)
+			//{
+			//	// Moving from NOT isInverted to isInverted
+			//	df = new BigVector(rawDf.X, rawDf.Y + 1);
+			//}
+			//else
+			//{
+			//	df = rawDf;
+			//}
+
+			var df = mapSection.JobMapBlockOffset.Diff(jobMapBlockOffset);
 
 			if (df.IsZero())
 			{
-				result = mapSection.ScreenPosition;
+				screenPosition = mapSection.ScreenPosition;
 			}
 			else
 			{
 				if (!df.TryConvertToInt(out var offset))
 				{
-					throw new ArgumentException($"Cannot convert the result of subtracting the current MapBlockOffset from this MapSection's BlockOffset. " +
-						$"MapBlockOffset: {mapBlockOffset} This section's Job Offset: {mapSection.JobMapBlockOffset}.");
+					throw new ArgumentException($"Cannot convert the result of subtracting the JobMapBlockOffset for the current display from the JobMapBlockOffset that was used to create this MapSection. " +
+						$"Current JobMapBlockOffset: {jobMapBlockOffset} This section's JobMapBlockOffset: {mapSection.JobMapBlockOffset}.");
 				}
 
-				result = mapSection.ScreenPosition.Translate(offset);
+				screenPosition = mapSection.ScreenPosition.Translate(offset);
 
 				// Update the mapSection's JobMapBlockOffset and ScreenPosition to avoid this transalation again.
-				mapSection.UpdateJobMapBlockOffsetAndPos(mapBlockOffset, result);
+				mapSection.UpdateJobMapBlockOffsetAndPos(jobMapBlockOffset, screenPosition);
+				CheckScreenPos(mapSection);
 			}
 
-			return result;
+			return screenPosition;
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckScreenPos(MapSection mapSection)
+		{
+			var bigVectorBlockOffset = RMapHelper.ToSubdivisionCoords(mapSection.ScreenPosition, mapSection.JobMapBlockOffset, out var isInverted);
+			var sectionBlockOffset = _dtoMapper.Convert(bigVectorBlockOffset);
+
+			Debug.Assert(sectionBlockOffset == mapSection.RepoBlockPosition && isInverted == mapSection.IsInverted, "Screen Position does not agree with the JobMapBlockOffset / SectionBlockOffset.");
+			Debug.Assert(isInverted == mapSection.IsInverted, "IsInverted does not agree with the JobMapBlockOffset / SectionBlockOffset.");
 		}
 
 		private bool IsBLockVisible(PointInt blockPosition, SizeInt imageSizeInBlocks/*, int jobNumber, string desc, bool warnOnFail = false*/)

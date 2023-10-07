@@ -15,6 +15,9 @@ namespace MapSectionProviderLib
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
 		private IList<MapSectionRequest>? _mapSectionRequests;
+
+		private int _sectionsSubmitted;
+
 		private bool _isStopping;
 		private int _sectionsRequested;
 		private int _sectionsCompleted;
@@ -33,6 +36,7 @@ namespace MapSectionProviderLib
 
 			_mapSectionRequests = null;
 			_isStopping = false;
+			_sectionsSubmitted = 0;
 			_sectionsRequested = 0;
 			_sectionsCompleted = 0;
 			_tcs = null;
@@ -57,6 +61,7 @@ namespace MapSectionProviderLib
 
 		public TimeSpan ElaspedTime => _stopwatch.Elapsed;
 
+		public int SectionsSubmitted => _sectionsSubmitted;
 		public int SectionsRequested => _sectionsRequested;
 		public int SectionsCompleted => _sectionsCompleted;
 
@@ -72,6 +77,11 @@ namespace MapSectionProviderLib
 			}
 
 			_mapSectionRequests = mapSectionRequests;
+
+			foreach(var mapSectionRequest in mapSectionRequests)
+			{
+				_sectionsSubmitted += mapSectionRequest.Mirror != null ? 2 : 1;
+			}
 
 			_stopwatch.Start();
 			_ = Task.Run(SubmitSectionRequests);
@@ -165,6 +175,11 @@ namespace MapSectionProviderLib
 					mapSectionRequest.Sent = true;
 
 					_ = Interlocked.Increment(ref _sectionsRequested);
+
+					if (mapSectionRequest.Mirror != null)
+					{
+						_ = Interlocked.Increment(ref _sectionsRequested);
+					}
 				}
 				else
 				{
@@ -197,8 +212,19 @@ namespace MapSectionProviderLib
 
 			_ = Interlocked.Increment(ref _sectionsCompleted);
 
+			if (mapSectionRequest.Mirror != null)
+			{
+				_ = Interlocked.Increment(ref _sectionsCompleted);
+			}
+
 			if (_sectionsCompleted >= _mapSectionRequests?.Count || (_isStopping && _sectionsCompleted >= _sectionsRequested))
 			{
+
+				//if (_sectionsCompleted + 5 > _sectionsRequested && !(_sectionsCompleted >= _mapSectionRequests?.Count))
+				//{
+				//	Debug.WriteLine($"WARNING: Need to compare the numberOfMapSectionRequests {_mapSectionRequests?.Count ?? 0} with the number of [actual] sectionsRequested {_sectionsRequested}.");
+				//}
+
 				// This is the last section -- call the callback if the MapSection is Empty or Not
 				_stopwatch.Stop();
 
@@ -231,7 +257,7 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}; Comp/Total: ({_sectionsCompleted}{_mapSectionRequests?.Count ?? 0} Screen Position: {mapSectionRequest.ScreenPosition}.");
+					Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}; Comp/Total: ({_sectionsCompleted}/{_mapSectionRequests?.Count ?? 0}) Screen Position: {mapSectionRequest.ScreenPosition}.");
 				}
 
 				mapSectionRequest.Handled = true;

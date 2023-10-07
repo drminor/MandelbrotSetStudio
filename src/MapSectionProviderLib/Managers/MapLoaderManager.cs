@@ -77,6 +77,8 @@ namespace MapSectionProviderLib
 					genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
 				});
 
+
+				// TODO: Since mapLoader.Start may update the list of request that are pending, have mapLoader return the updated list.
 				pendingGeneration = requestsNotFound;
 			}
 			else

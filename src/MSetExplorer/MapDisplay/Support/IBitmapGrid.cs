@@ -28,7 +28,10 @@ namespace MSetExplorer
 		void DrawSections(IList<MapSection> mapSections);
 		int ClearSections(IList<MapSection> mapSections);
 		int ReDrawSections(bool reapplyColorMap);
-
 		bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description);
+
+		SizeInt CalculateImageSize(SizeDbl logicalViewportSize, VectorInt canvasControlOffset);
+		List<MapSection> GetSectionsNotVisible();
+
 	}
 }

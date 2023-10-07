@@ -3,7 +3,6 @@ using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -60,7 +59,11 @@ namespace MapSectionProviderLib
 
 			foreach(var client in clients)
 			{
-				workQueueProcessors.Add(Task.Run(() => ProcessTheQueue(client, _cts.Token)));
+				var tsk = Task.Run(() => ProcessTheQueue(client, _cts.Token));
+				workQueueProcessors.Add(tsk);
+
+				//var processQueueTask = Task.Factory.StartNew(ProcessTheQueue, client, _cts.Token, TaskCreationOptions.LongRunning, scheduler: TaskScheduler.Default);
+				//workQueueProcessors.Add(processQueueTask);
 			}
 
 			return workQueueProcessors;
@@ -176,21 +179,14 @@ namespace MapSectionProviderLib
 
 					MapSectionResponse mapSectionResponse;
 					var jobIsCancelled = IsJobCancelled(mapSectionGenerateRequest.JobId);
+					ReportProcesssARequest(mapSectionRequest, jobIsCancelled);
 
 					if (jobIsCancelled || mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
 					{
 						mapSectionResponse = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
-
-						var msg = $"The MapSectionGeneratorProcessor is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
-						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
-						Debug.WriteLineIf(_useDetailedDebug, msg);
 					}
 					else
 					{
-						var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
-						var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues." : null;
-
-						Debug.WriteLineIf(_useDetailedDebug, $"Generating MapSection for Request: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}. BlockPos: {mapSectionRequest.SectionBlockOffset}. {sendingVectorsMsg} {haveZValuesMsg}");
 						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
 
@@ -218,6 +214,29 @@ namespace MapSectionProviderLib
 				{
 					Debug.WriteLine($"ERROR: The response queue got an exception. The current client has address: {mEngineClient?.EndPointAddress ?? "No Current Client"}. The exception is {e}.");
 					throw;
+				}
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportProcesssARequest(MapSectionRequest mapSectionRequest, bool jobIsCancelled)
+		{
+			if (_useDetailedDebug)
+			{
+				if (jobIsCancelled || mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
+				{
+					var msg = $"The MapSectionGeneratorProcessor is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
+					msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
+					Debug.WriteLine(msg);
+				}
+				else
+				{
+					var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
+					var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues." : null;
+
+					Debug.WriteLine($"Generating MapSection for Request: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}. " +
+						$"BlockPos: {mapSectionRequest.SectionBlockOffset}. {sendingVectorsMsg} {haveZValuesMsg}");
+
 				}
 			}
 		}

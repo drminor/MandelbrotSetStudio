@@ -18,7 +18,6 @@ namespace MapSectionProviderLib
 
 		private const int NUMBER_OF_REQUEST_CONSUMERS = 1;
 		private const int REQUEST_QUEUE_CAPACITY = 200;
-		private const int RETURN_QUEUE_CAPACITY = 200;
 
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
@@ -33,31 +32,24 @@ namespace MapSectionProviderLib
 
 		private readonly Action<MapSectionWorkRequest, MapSectionResponse> _generatorWorkRequestWorkAction;
 
-
 		private readonly Task[] _requestQueueProcessors;
 		private readonly int[] _requestCounters;
 
-		private readonly object _cancelledJobsLock = new();
-
-		//private readonly ReaderWriterLockSlim _requestsLock;
-
+		private readonly object _cancelledJobsLock;
 		private readonly List<int> _cancelledJobIds;
-		//private readonly List<MapSectionWorkRequest> _pendingRequests;
 
 		private int _nextJobId;
 		private bool disposedValue;
 
 		private bool _isStopped;
 
-		private readonly bool _useTheReturnQueue = false;
+		//private const int RETURN_QUEUE_CAPACITY = 200;
+		//private readonly bool _useTheReturnQueue = false;
+		//private readonly CancellationTokenSource? _returnQueueCts;
+		//private readonly BlockingCollection<MapSectionGenerateRequest>? _returnQueue;
+		//private readonly Task? _returnQueueProcess;
 
-		private readonly CancellationTokenSource? _returnQueueCts;
-		private readonly BlockingCollection<MapSectionGenerateRequest>? _returnQueue;
-		private readonly Task? _returnQueueProcess;
-
-		private readonly bool _useDetailedDebug = true;
-
-		//private readonly bool _combineRequests = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -66,8 +58,6 @@ namespace MapSectionProviderLib
 		public MapSectionRequestProcessor(IMapSectionAdapter mapSectionAdapter, MapSectionVectorProvider mapSectionVectorProvider,
 			MapSectionGeneratorProcessor mapSectionGeneratorProcessor, MapSectionResponseProcessor mapSectionResponseProcessor, MapSectionPersistProcessor mapSectionPersistProcessor)
 		{
-			_isStopped = false;
-
 			UseRepo = true;
 
 			_nextJobId = 0;
@@ -79,16 +69,23 @@ namespace MapSectionProviderLib
 			_mapSectionResponseProcessor = mapSectionResponseProcessor;
 			_mapSectionPersistProcessor = mapSectionPersistProcessor;
 
-			_requestQueueCts = new CancellationTokenSource();
-
-			_requestQueue = new BlockingCollection<MapSectionWorkRequest>(REQUEST_QUEUE_CAPACITY);
-
-			//_pendingRequests = new List<MapSectionWorkRequest>();
-			//_requestsLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
+			_cancelledJobsLock = new object();
 			_cancelledJobIds = new List<int>();
 
-			_requestQueueProcessors = new Task[NUMBER_OF_REQUEST_CONSUMERS];
-			_requestCounters = new int[NUMBER_OF_REQUEST_CONSUMERS];
+			_requestQueueCts = new CancellationTokenSource();
+			_requestQueue = new BlockingCollection<MapSectionWorkRequest>(REQUEST_QUEUE_CAPACITY);
+
+			_generatorWorkRequestWorkAction = HandleGeneratedResponse;
+			(_requestQueueProcessors, _requestCounters) =  CreateTheRequestQueueProcessors();
+
+			_isStopped = false;
+		}
+
+
+		private (Task[] processors, int[] counters) CreateTheRequestQueueProcessors()
+		{
+			var requestQueueProcessors = new Task[NUMBER_OF_REQUEST_CONSUMERS];
+			var requestCounters = new int[NUMBER_OF_REQUEST_CONSUMERS];
 
 			//for (var processorIndex = 0; processorIndex < _requestQueueProcessors.Length; processorIndex++)
 			//{
@@ -96,28 +93,35 @@ namespace MapSectionProviderLib
 			//	_requestQueueProcessors[processorIndex] = Task.Run(async () => await ProcessTheRequestQueueAsync(_mapSectionGeneratorProcessor, processorIndex, _requestQueueCts.Token));
 			//}
 
-			_requestCounters[0] = 0;
-			_requestQueueProcessors[0] = Task.Run(async () => await ProcessTheRequestQueueAsync(_mapSectionGeneratorProcessor, 0, _requestQueueCts.Token));
-
+			requestCounters[0] = 0;
+			requestQueueProcessors[0] = Task.Run(async () => await ProcessTheRequestQueueAsync(_mapSectionGeneratorProcessor, 0, _requestQueueCts.Token));
 			//_requestCounters[1] = 0;
 			//_requestQueueProcessors[1] = Task.Run(async () => await ProcessTheRequestQueueAsync(_mapSectionGeneratorProcessor, 1, _requestQueueCts.Token));
 
-			if (_useTheReturnQueue)
-			{
-				_generatorWorkRequestWorkAction = QueueGeneratedResponse;
+			//requestCounters[0] = 0;
+			//requestQueueProcessors[0] = Task.Run(() => ProcessTheRequestQueue(_mapSectionGeneratorProcessor, 0, _requestQueueCts.Token));
 
-				_returnQueueCts = new CancellationTokenSource();
-				_returnQueue = new BlockingCollection<MapSectionGenerateRequest>(RETURN_QUEUE_CAPACITY);
-				_returnQueueProcess = Task.Run(() => ProcessTheReturnQueue(_returnQueue, _returnQueueCts.Token));
-			}
-			else
-			{
-				_generatorWorkRequestWorkAction = HandleGeneratedResponse;
+			return (requestQueueProcessors, requestCounters);
+		}
 
-				_returnQueueCts = null;
-				_returnQueue = null;
-				_returnQueueProcess = null;
-			}
+		private void CreateTheReturnQueues()
+		{
+			//if (_useTheReturnQueue)
+			//{
+			//	_generatorWorkRequestWorkAction = QueueGeneratedResponse;
+
+			//	_returnQueueCts = new CancellationTokenSource();
+			//	_returnQueue = new BlockingCollection<MapSectionGenerateRequest>(RETURN_QUEUE_CAPACITY);
+			//	_returnQueueProcess = Task.Run(() => ProcessTheReturnQueue(_returnQueue, _returnQueueCts.Token));
+			//}
+			//else
+			//{
+			//	_generatorWorkRequestWorkAction = HandleGeneratedResponse;
+
+			//	_returnQueueCts = null;
+			//	_returnQueue = null;
+			//	_returnQueueProcess = null;
+			//}
 		}
 
 		#endregion
@@ -127,7 +131,7 @@ namespace MapSectionProviderLib
 		public bool UseRepo { get; set; }
 
 		public int NumberOfRequestsPending => _requestQueue.Count;
-		public int NumberOfReturnsPending => _returnQueue?.Count ?? 0;
+		//public int NumberOfReturnsPending => _returnQueue?.Count ?? 0;
 
 		#endregion
 
@@ -235,8 +239,8 @@ namespace MapSectionProviderLib
 				{
 					_requestQueueCts.Cancel();
 
-					if (_returnQueueCts != null) 
-						_returnQueueCts.Cancel();
+					//if (_returnQueueCts != null) 
+					//	_returnQueueCts.Cancel();
 				}
 				else
 				{
@@ -245,13 +249,13 @@ namespace MapSectionProviderLib
 						_requestQueue.CompleteAdding();
 					}
 
-					if (_returnQueue != null)
-					{
-						if (!_returnQueue.IsCompleted && !_returnQueue.IsAddingCompleted)
-						{
-							_returnQueue.CompleteAdding();
-						}
-					}
+					//if (_returnQueue != null)
+					//{
+					//	if (!_returnQueue.IsCompleted && !_returnQueue.IsAddingCompleted)
+					//	{
+					//		_returnQueue.CompleteAdding();
+					//	}
+					//}
 				}
 
 				_isStopped = true;
@@ -273,21 +277,21 @@ namespace MapSectionProviderLib
 			}
 			catch { }
 
-			if (_returnQueueProcess != null)
-			{
-				try
-				{
-					if (_returnQueueProcess.Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
-					{
-						Debug.WriteLine($"The MapSectionRequestProcesssor's ReturnQueueProcessor Task has completed.");
-					}
-					else
-					{
-						Debug.WriteLine($"WARNING: The MapSectionRequestProcesssor's ReturnQueueProcessor Task did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
-					}
-				}
-				catch { }
-			}
+			//if (_returnQueueProcess != null)
+			//{
+			//	try
+			//	{
+			//		if (_returnQueueProcess.Wait(RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS * 1000))
+			//		{
+			//			Debug.WriteLine($"The MapSectionRequestProcesssor's ReturnQueueProcessor Task has completed.");
+			//		}
+			//		else
+			//		{
+			//			Debug.WriteLine($"WARNING: The MapSectionRequestProcesssor's ReturnQueueProcessor Task did not complete after waiting for {RMapConstants.MAP_SECTION_PROCESSOR_STOP_TIMEOUT_SECONDS} seconds.");
+			//		}
+			//	}
+			//	catch { }
+			//}
 		}
 
 		public int GetNextJobNumber()
@@ -302,7 +306,7 @@ namespace MapSectionProviderLib
 
 		#endregion
 
-		#region Private Methods
+		#region Private Methods Asychronous
 
 		private async Task ProcessTheRequestQueueAsync(MapSectionGeneratorProcessor mapSectionGeneratorProcessor, int queueProcessorIndex, CancellationToken ct)
 		{
@@ -390,11 +394,6 @@ namespace MapSectionProviderLib
 					throw;
 				}
 			}
-		}
-
-		private void AddToResponseProcessorQueue(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
-		{
-			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 		}
 
 		private async Task<Tuple<MapSection, MapSection?>?> FetchOrQueueForGenerationAsync(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, int queueProcessorIndex, CancellationToken ct)
@@ -486,6 +485,221 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		private async Task<MapSectionBytes?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		{
+			var subdivisionId = mapSectionRequest.Subdivision.Id;
+			var mapSectionBytes = await _mapSectionAdapter.GetMapSectionBytesAsync(subdivisionId, mapSectionRequest.SectionBlockOffset, ct);
+
+			return mapSectionBytes;
+		}
+
+		private async Task<ZValues?> FetchTheZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
+		{
+			var result = await _mapSectionAdapter.GetMapSectionZValuesAsync(mapSectionId, ct);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Private Methods Syncrhonous
+
+		private void ProcessTheRequestQueue(MapSectionGeneratorProcessor mapSectionGeneratorProcessor, int queueProcessorIndex, CancellationToken ct)
+		{
+			while (!ct.IsCancellationRequested && !_requestQueue.IsCompleted)
+			{
+				try
+				{
+					var mapSectionWorkRequest = _requestQueue.Take(ct);
+					var mapSectionRequest = mapSectionWorkRequest.Request;
+
+					var jobIsCancelled = IsJobCancelled(mapSectionWorkRequest.JobId);
+
+					if (jobIsCancelled || mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
+					{
+						var msg = $"MapSectionRequestProcessor: QueueProcessor:{queueProcessorIndex} is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
+						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
+						Debug.WriteLineIf(_useDetailedDebug, msg);
+
+						mapSectionWorkRequest.Response = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, isCancelled: true);
+						AddToResponseProcessorQueue(mapSectionWorkRequest, ct);
+
+						var mirror = mapSectionWorkRequest.Request.Mirror;
+
+						if (mirror != null)
+						{
+							var mapSectionForMirror = _mapSectionBuilder.CreateEmptyMapSection(mirror, isCancelled: true);
+							var mapSectionRequestForMirror = new MapSectionWorkRequest(mapSectionWorkRequest.JobId, mirror, mapSectionWorkRequest.WorkAction, mapSectionForMirror);
+							AddToResponseProcessorQueue(mapSectionRequestForMirror, ct);
+						}
+					}
+					else
+					{
+						if (mapSectionWorkRequest.Request.Cancelled)
+						{
+							mapSectionWorkRequest.Response = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, isCancelled: true);
+							AddToResponseProcessorQueue(mapSectionWorkRequest, ct);
+						}
+						else
+						{
+							var mirror = mapSectionWorkRequest.Request.Mirror;
+
+							if (mirror != null && mirror.Cancelled)
+							{
+								var mapSectionForMirror = _mapSectionBuilder.CreateEmptyMapSection(mirror, isCancelled: true);
+								var mapSectionRequestForMirror = new MapSectionWorkRequest(mapSectionWorkRequest.JobId, mirror, mapSectionWorkRequest.WorkAction, mapSectionForMirror);
+								AddToResponseProcessorQueue(mapSectionRequestForMirror, ct);
+							}
+						}
+
+						if (!UseRepo)
+						{
+							QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor, queueProcessorIndex);
+						}
+						else
+						{
+							Tuple<MapSection, MapSection?>? mapSectionPair = FetchOrQueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor, queueProcessorIndex, ct);
+
+							if (mapSectionPair != null)
+							{
+								mapSectionWorkRequest.Response = mapSectionPair.Item1;
+								AddToResponseProcessorQueue(mapSectionWorkRequest, ct);
+
+								if (mapSectionPair.Item2 != null)
+								{
+									var mirror = mapSectionWorkRequest.Request.Mirror;
+									if (mirror == null)
+									{
+										throw new InvalidOperationException("Receiving two MapSections, but the request has no mirror.");
+									}
+
+									var mapSectionRequestForMirror = new MapSectionWorkRequest(mapSectionWorkRequest.JobId, mirror, mapSectionWorkRequest.WorkAction, mapSectionPair.Item2);
+									AddToResponseProcessorQueue(mapSectionRequestForMirror, ct);
+								}
+							}
+						}
+					}
+				}
+				catch (OperationCanceledException)
+				{
+					//Debug.WriteLineIf(_useDetailedDebug, "The work queue got a OCE.");
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"MapSectionRequestProcessor: QueueProcessor:{queueProcessorIndex} got an exception: {e}.");
+					throw;
+				}
+			}
+		}
+
+		private Tuple<MapSection, MapSection?>? FetchOrQueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, MapSectionGeneratorProcessor mapSectionGeneratorProcessor, int queueProcessorIndex, CancellationToken ct)
+		{
+			var request = mapSectionWorkRequest.Request;
+			var persistZValues = request.MapCalcSettings.SaveTheZValues;
+
+			var mapSectionBytes = Fetch(request);
+
+			if (mapSectionBytes != null)
+			{
+				var mapSectionId = mapSectionBytes.Id;
+				request.MapSectionId = mapSectionId.ToString();
+
+				var requestedIterations = request.MapCalcSettings.TargetIterations;
+
+				if (DoesTheResponseSatisfyTheRequest(mapSectionBytes, requestedIterations, out var reason))
+				{
+					//Debug.WriteLineIf(_useDetailedDebug, $"Got {request.ScreenPosition} from repo.");
+
+					request.FoundInRepo = true;
+					request.ProcessingEndTime = DateTime.UtcNow;
+
+					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+					var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
+
+					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
+
+					var mapSection1 = CreateMapSection(request, mapSectionVectors);
+
+					MapSection? mapSection2;
+
+					var mirror = request.Mirror;
+					if (mirror != null)
+					{
+						mirror.FoundInRepo = true;
+						mirror.ProcessingEndTime = DateTime.UtcNow;
+
+						PersistJobMapSectionRecord(mirror, mapSectionResponse, ct);
+
+						// Use the same MapSectionVectors as does the first mapSection
+						mapSectionVectors.IncreaseRefCount();
+						mapSection2 = CreateMapSection(mirror, mapSectionVectors);
+					}
+					else
+					{
+						mapSection2 = null;
+					}
+
+					return new Tuple<MapSection, MapSection?>(mapSection1, mapSection2);
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The response was not satisfactory because: {reason}. ({request.ScreenPosition}).");
+
+					// TODO: Add a property to the MapSectionVectors class that tracks whether or not a MapSectionZValuesRecord exists on file. 
+					if (persistZValues)
+					{
+						var zValues = FetchTheZValues(mapSectionId);
+						if (zValues != null)
+						{
+							Debug.WriteLineIf(_useDetailedDebug, $"Requesting the iteration count to be increased for {request.ScreenPosition}.");
+							request.IncreasingIterations = true;
+
+							var mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(request.LimbCount);
+							mapSectionZVectors.Load(zValues.Zrs, zValues.Zis, zValues.HasEscapedFlags, zValues.RowsHasEscaped);
+							request.MapSectionZVectors = mapSectionZVectors;
+
+							var mapSectionVectors2 = new MapSectionVectors2(request.BlockSize, mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities);
+							request.MapSectionVectors2 = mapSectionVectors2;
+						}
+						else
+						{
+							Debug.WriteLineIf(_useDetailedDebug, $"Requesting the MapSection to be generated again for {request.ScreenPosition}.");
+						}
+					}
+
+					QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor, queueProcessorIndex);
+
+					return null;
+				}
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Request for {request.ScreenPosition} not found in the repo: Queuing for generation.");
+
+				QueueForGeneration(mapSectionWorkRequest, mapSectionGeneratorProcessor, queueProcessorIndex);
+				return null;
+			}
+		}
+
+		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest)
+		{
+			var subdivisionId = mapSectionRequest.Subdivision.Id;
+			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.SectionBlockOffset);
+
+			return mapSectionBytes;
+		}
+
+		private ZValues? FetchTheZValues(ObjectId mapSectionId)
+		{
+			var result = _mapSectionAdapter.GetMapSectionZValues(mapSectionId);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Private Methods
+
 		private MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors? mapSectionVectors)
 		{
 			MapSection mapSectionResult;
@@ -554,27 +768,9 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<MapSectionBytes?> FetchAsync(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		private void AddToResponseProcessorQueue(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
 		{
-			var subdivisionId = mapSectionRequest.Subdivision.Id;
-			var mapSectionBytes = await _mapSectionAdapter.GetMapSectionBytesAsync(subdivisionId, mapSectionRequest.SectionBlockOffset, ct);
-
-			return mapSectionBytes;
-		}
-
-		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest)
-		{
-			var subdivisionId = mapSectionRequest.Subdivision.Id;
-			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.SectionBlockOffset);
-
-			return mapSectionBytes;
-		}
-
-		private async Task<ZValues?> FetchTheZValuesAsync(ObjectId mapSectionId, CancellationToken ct)
-		{
-			var result = await _mapSectionAdapter.GetMapSectionZValuesAsync(mapSectionId, ct);
-
-			return result;
+			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 		}
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse)
@@ -739,53 +935,53 @@ namespace MapSectionProviderLib
 
 		#endregion
 
-		#region Private Methods - Return Queue
+		//#region Private Methods - Return Queue
 
-		private void ProcessTheReturnQueue(BlockingCollection<MapSectionGenerateRequest> returnQueue, CancellationToken ct)
-		{
-			while (!ct.IsCancellationRequested && !returnQueue.IsCompleted)
-			{
-				try
-				{
-					var mapSectionGenerateRequest = returnQueue.Take(ct);
+		//private void ProcessTheReturnQueue(BlockingCollection<MapSectionGenerateRequest> returnQueue, CancellationToken ct)
+		//{
+		//	while (!ct.IsCancellationRequested && !returnQueue.IsCompleted)
+		//	{
+		//		try
+		//		{
+		//			var mapSectionGenerateRequest = returnQueue.Take(ct);
 
-					var mapSectionResponse = mapSectionGenerateRequest.Response;
+		//			var mapSectionResponse = mapSectionGenerateRequest.Response;
 
-					if (mapSectionResponse != null)
-					{
-						mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
-					}
-					else
-					{
-						Debug.WriteLine($"WARNING: MapSectionRequestProcessor. The return processor found a MapSectionGenerateRequest with a null Response value.");
-					}
-				}
-				catch (OperationCanceledException)
-				{
-					//Debug.WriteLine("The response queue got a OCE.");
-				}
-				catch (Exception e)
-				{
-					Debug.WriteLine($"MapSectionRequestProcessor. The return queue got an exception: {e}.");
-					throw;
-				}
-			}
-		}
+		//			if (mapSectionResponse != null)
+		//			{
+		//				mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
+		//			}
+		//			else
+		//			{
+		//				Debug.WriteLine($"WARNING: MapSectionRequestProcessor. The return processor found a MapSectionGenerateRequest with a null Response value.");
+		//			}
+		//		}
+		//		catch (OperationCanceledException)
+		//		{
+		//			//Debug.WriteLine("The response queue got a OCE.");
+		//		}
+		//		catch (Exception e)
+		//		{
+		//			Debug.WriteLine($"MapSectionRequestProcessor. The return queue got an exception: {e}.");
+		//			throw;
+		//		}
+		//	}
+		//}
 
-		private void QueueGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse)
-		{
-			if (_returnQueue != null && !_returnQueue.IsAddingCompleted)
-			{
-				var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, HandleGeneratedResponse, mapSectionResponse);
-				_returnQueue.Add(mapSectionGenerateRequest);
-			}
-			else
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionRequestProcessor. Not adding: {mapSectionWorkRequest.Request}, The MapSectionRequestProcessor's ReturnQueue IsAddingComplete has been set.");
-			}
-		}
+		//private void QueueGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse)
+		//{
+		//	if (_returnQueue != null && !_returnQueue.IsAddingCompleted)
+		//	{
+		//		var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest.JobId, mapSectionWorkRequest, HandleGeneratedResponse, mapSectionResponse);
+		//		_returnQueue.Add(mapSectionGenerateRequest);
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLineIf(_useDetailedDebug, $"MapSectionRequestProcessor. Not adding: {mapSectionWorkRequest.Request}, The MapSectionRequestProcessor's ReturnQueue IsAddingComplete has been set.");
+		//	}
+		//}
 
-		#endregion
+		//#endregion
 
 		#region IDisposable Support
 
@@ -808,15 +1004,15 @@ namespace MapSectionProviderLib
 						_requestQueue.Dispose();
 					}
 
-					if (_returnQueueCts != null)
-					{
-						_returnQueueCts.Dispose();
-					}
+					//if (_returnQueueCts != null)
+					//{
+					//	_returnQueueCts.Dispose();
+					//}
 
-					if (_returnQueue != null)
-					{
-						_returnQueue.Dispose();
-					}
+					//if (_returnQueue != null)
+					//{
+					//	_returnQueue.Dispose();
+					//}
 
 
 					if (_mapSectionGeneratorProcessor != null)
