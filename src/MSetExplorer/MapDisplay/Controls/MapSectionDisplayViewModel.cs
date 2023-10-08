@@ -1076,8 +1076,10 @@ namespace MSetExplorer
 			var curImageSize = _bitmapGrid.ImageSizeInBlocks;
 			var newImageSize = _bitmapGrid.CalculateImageSize(newAreaInfo.CanvasSize, newAreaInfo.CanvasControlOffset);
 
-			if (newImageSize.Width > curImageSize.Width || newImageSize.Height > curImageSize.Height)
+			// Wider is ok, Height must match exactly
+			if (newImageSize.Width > curImageSize.Width || newImageSize.Height != curImageSize.Height)
 			{
+				Debug.WriteLine("WARNING: Not using ReuseAndLoad because the ImageSize has changed.");
 				return false;
 			}
 

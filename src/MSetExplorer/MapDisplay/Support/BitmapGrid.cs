@@ -226,7 +226,10 @@ namespace MSetExplorer
 				if (imageSizeInBlocks != ImageSizeInBlocks)
 				{
 					//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
-					Debug.WriteLine($"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					//Debug.WriteLine($"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+
+					Debug.WriteLine($"WARNING: As the CanvasControlOffset is updated from {_canvasControlOffset} to {value}, the ImageSizeInBlocks is being updated from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+
 					ImageSizeInBlocks = imageSizeInBlocks;
 				}
 				else

@@ -76,7 +76,6 @@ namespace ProjectRepo
 			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
 			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
 
-
 			var mapSectionRecord = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5, options: null);
 
 			var itemsFound = mapSectionRecord.ToList();
@@ -172,7 +171,6 @@ namespace ProjectRepo
 
 			return result?.ModifiedCount;
 		}
-
 
 		public long? UpdateCountValues(MapSectionRecord mapSectionRecord, bool requestCompleted)
 		{

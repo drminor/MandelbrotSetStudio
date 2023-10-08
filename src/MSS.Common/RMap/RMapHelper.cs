@@ -270,17 +270,17 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static PointInt ToScreenCoords(BigVector sectionBlockOffset, bool inverted, BigVector jobBlockOffset)
+		public static PointInt ToScreenCoords(BigVector sectionBlockOffsetBigV, bool inverted, BigVector jobBlockOffset)
 		{
 			BigVector posT;
 
 			if (inverted)
 			{
-				posT = new BigVector(sectionBlockOffset.X, (sectionBlockOffset.Y + 1) * -1);
+				posT = new BigVector(sectionBlockOffsetBigV.X, (sectionBlockOffsetBigV.Y + 1) * -1);
 			}
 			else
 			{
-				posT = sectionBlockOffset;
+				posT = sectionBlockOffsetBigV;
 			}
 
 			var screenOffset = posT.Diff(jobBlockOffset);
