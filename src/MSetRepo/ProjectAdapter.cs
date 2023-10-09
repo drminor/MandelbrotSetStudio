@@ -632,20 +632,20 @@ namespace MSetRepo
 			return result;
 		}
 
-		private double GetIterationsForJob(ColorBandSet colorBandSet, Job job)
-		{
-			var targetIterations = job.MapCalcSettings.TargetIterations;
-			var highCutoff = colorBandSet.HighCutoff;
+		//private double GetIterationsForJob(ColorBandSet colorBandSet, Job job)
+		//{
+		//	var targetIterations = job.MapCalcSettings.TargetIterations;
+		//	var highCutoff = colorBandSet.HighCutoff;
 
-			var mapSectionHelper = new MapSectionBuilder();
+		//	var mapSectionHelper = new MapSectionBuilder();
 
-			//var mapSectionRequests = mapSectionHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
-			// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.
-			//var averageTargetIterations = mapSectionRequests.Average(x => x.MapCalcSettings.TargetIterations);
-			var averageTargetIterations = job.MapCalcSettings.TargetIterations;
+		//	//var mapSectionRequests = mapSectionHelper.CreateSectionRequests(job.Id.ToString(), JobOwnerType.Project, job.MapAreaInfo, job.MapCalcSettings);
+		//	// TODO: Retrieve each MapSection record from the database and use the value of the Target Iterations, actually computed.
+		//	//var averageTargetIterations = mapSectionRequests.Average(x => x.MapCalcSettings.TargetIterations);
+		//	var averageTargetIterations = job.MapCalcSettings.TargetIterations;
 
-			return averageTargetIterations;
-		}
+		//	return averageTargetIterations;
+		//}
 
 		private ColorBandSet GetUpdatedCbsWithTargetIteration(ColorBandSet colorBandSet, int targetIterations, IEnumerable<ColorBandSet> cacheValues, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{

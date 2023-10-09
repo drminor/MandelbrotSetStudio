@@ -1,5 +1,5 @@
 ﻿using MSS.Common;
-using MSS.Common.DataTransferObjects;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -125,14 +125,7 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		//private GenMapRequestInfo CreateNewGenMapRequestInfo(int mapLoaderJobNumber, List<MapSectionRequest> requestsNotFound, Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor, CancellationToken ct)
-		//{
-		//	var mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
-		//	var startTask = mapLoader.Start(requestsNotFound);
-		//	var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, ct);
 
-		//	return genMapRequestInfo;
-		//}
 
 		public Task? GetTaskForJob(int jobNumber)
 		{
@@ -530,7 +523,8 @@ namespace MapSectionProviderLib
 		#endregion
 	}
 
-	internal class GenMapRequestInfo //: IDisposable
+	internal class GenMapRequestInfo 
+	//: IDisposable
 	{
 		private readonly CancellationToken _ct;
 		//private readonly Task? _onCompletedTask;
@@ -549,7 +543,7 @@ namespace MapSectionProviderLib
 
 		//public GenMapRequestInfo(MapLoader mapLoader, Task task, CancellationToken ct)
 		public GenMapRequestInfo(int mapLoaderJobNumber, Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor,
-			List<MapSectionRequest> requestsNotFound, CancellationToken ct) 
+			List<MapSectionRequest> requestsNotFound, CancellationToken ct)
 		{
 			_mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
 			Task = _mapLoader.Start(requestsNotFound);
@@ -626,6 +620,16 @@ namespace MapSectionProviderLib
 		}
 
 		#endregion
+
+
+		//private GenMapRequestInfo CreateNewGenMapRequestInfo(int mapLoaderJobNumber, List<MapSectionRequest> requestsNotFound, Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor, CancellationToken ct)
+		//{
+		//	var mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
+		//	var startTask = mapLoader.Start(requestsNotFound);
+		//	var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, ct);
+
+		//	return genMapRequestInfo;
+		//}
 
 		//#region IDisposable Support
 

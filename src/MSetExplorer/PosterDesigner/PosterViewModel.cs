@@ -17,7 +17,6 @@ namespace MSetExplorer
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private Poster? _currentPoster;
 
@@ -37,7 +36,6 @@ namespace MSetExplorer
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;
-			_mapSectionBuilder = new MapSectionBuilder();
 
 			_currentPoster = null;
 			_areaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;

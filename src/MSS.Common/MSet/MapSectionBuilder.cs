@@ -1,4 +1,4 @@
-﻿using MSS.Common.DataTransferObjects;
+﻿using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -8,20 +8,9 @@ using System.Linq;
 
 namespace MSS.Common
 {
-	//using MsrPosition = Tuple<PointInt, VectorLong, bool>;
-
 	public class MapSectionBuilder
 	{
 		#region Private Fields
-
-		//private const int PRECSION_PADDING = 4;
-		//private const int MIN_LIMB_COUNT = 1;
-
-		//private int _currentPrecision;
-		//private int _currentLimbCount;
-
-		//private DtoMapper _dtoMapper;
-		//private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -29,40 +18,11 @@ namespace MSS.Common
 
 		public MapSectionBuilder()
 		{
-			//_dtoMapper = new DtoMapper();
-			
-			//_currentPrecision = -1;
-			//_currentLimbCount = 1;
 		}
 
 		#endregion
 
 		#region Create MapSectionRequests
-
-		//public List<MapSectionRequest> CreateSectionRequests(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
-		//{
-		//	var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings);
-
-		//	var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfo.CanvasSize.Round(), mapAreaInfo.CanvasControlOffset, mapAreaInfo.Subdivision.BlockSize);
-		//	Debug.WriteLine($"Creating section requests. CanvasSize: {mapAreaInfo.CanvasSize.Round()}, CanvasControlOffset: {mapAreaInfo.CanvasControlOffset}, produces MapExtentInBlocks: {mapExtentInBlocks}.");
-
-		//	var result = CreateSectionRequests(msrJob, mapExtentInBlocks);
-
-		//	return result;
-		//}
-
-		//public MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
-		//{
-		//	// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-		//	var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
-
-		//	var limbCount = GetLimbCount(precision);
-
-		//	var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
-		//		precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
-
-		//	return msrJob;
-		//}
 
 		public List<MapSectionRequest> CreateSectionRequests(MsrJob msrJob, SizeInt mapExtentInBlocks)
 		{
@@ -342,31 +302,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-		//public int GetLimbCount(int precision)
-		//{
-		//	if (precision != _currentPrecision)
-		//	{
-		//		var adjustedPrecision = precision + PRECSION_PADDING;
-		//		var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
-
-		//		var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, MIN_LIMB_COUNT);
-
-		//		if (_currentLimbCount == adjustedLimbCount)
-		//		{
-		//			Debug.WriteLineIf(_useDetailedDebug, $"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount remains the same at {adjustedLimbCount}.");
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLineIf(_useDetailedDebug, $"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount is being updated to {adjustedLimbCount}.");
-		//		}
-
-		//		_currentLimbCount = adjustedLimbCount;
-		//		_currentPrecision = precision;
-		//	}
-
-		//	return _currentLimbCount;	
-		//}
 
 		#endregion
 
