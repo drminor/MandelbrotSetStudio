@@ -834,8 +834,7 @@ namespace MSetExplorer
 			_bitmapGrid.CanvasControlOffset = screenAreaInfo.CanvasControlOffset;
 
 			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
-			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
-			var msrJob = _mapSectionBuilder.CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
+			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
 			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(msrJob, newMapExtentInBlocks);
 
@@ -904,7 +903,7 @@ namespace MSetExplorer
 					var newRequestsReport = _mapSectionBuilder.GetCountRequestsReport(newRequests);
 					Debug.WriteLine(newRequestsReport);
 
-					lastSectionWasIncluded = SubmitMSRequests(mapLoaderJobNumber, newRequests, out var mapRequestsPendingGenration);
+					lastSectionWasIncluded = SubmitMSRequests(msrJob, newRequests, out var mapRequestsPendingGenration);
 					_requestsPendingGeneration.AddRange(mapRequestsPendingGenration);
 					ClearMapSections(_requestsPendingGeneration);
 				}
@@ -914,7 +913,7 @@ namespace MSetExplorer
 				}
 			}
 
-			return mapLoaderJobNumber;
+			return msrJob.MapLoaderJobNumber;
 		}
 
 		private int? DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
@@ -929,12 +928,8 @@ namespace MSetExplorer
 
 			LastMapAreaInfo = screenAreaInfo;
 
-			//var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
-			//_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
-
 			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
-			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
-			var msrJob = _mapSectionBuilder.CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
+			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
 			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, newMapExtentInBlocks);
 
@@ -944,7 +939,7 @@ namespace MSetExplorer
 			if (_currentMapSectionRequests != null)
 			{
 				// ***** Submit the new requests. *****
-				lastSectionWasIncluded = SubmitMSRequests(mapLoaderJobNumber, _currentMapSectionRequests, out var requestsPendingGeneration);
+				lastSectionWasIncluded = SubmitMSRequests(msrJob, _currentMapSectionRequests, out var requestsPendingGeneration);
 				_requestsPendingGeneration.AddRange(requestsPendingGeneration);
 			}
 			else
@@ -952,14 +947,14 @@ namespace MSetExplorer
 				lastSectionWasIncluded = false;
 			}
 
-			return mapLoaderJobNumber;
+			return msrJob.MapLoaderJobNumber;
 		}
 
-		private bool SubmitMSRequests(int mapLoaderJobNumber, List<MapSectionRequest> newRequests, out List<MapSectionRequest> mapRequestsPendingGeneration, [CallerMemberName] string? callerMemberName = null)
+		private bool SubmitMSRequests(MsrJob msrJob, List<MapSectionRequest> newRequests, out List<MapSectionRequest> mapRequestsPendingGeneration, [CallerMemberName] string? callerMemberName = null)
 		{
-			AddJobNumber(mapLoaderJobNumber);
+			AddJobNumber(msrJob.MapLoaderJobNumber);
 
-			var newMapSections = _mapLoaderManager.Push(mapLoaderJobNumber, newRequests, MapSectionReady, out mapRequestsPendingGeneration);
+			var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, out mapRequestsPendingGeneration);
 
 			//AddJobNumber(mapLoaderJobNumber);
 

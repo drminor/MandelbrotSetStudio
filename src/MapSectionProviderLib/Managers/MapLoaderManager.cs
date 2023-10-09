@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -12,7 +13,7 @@ namespace MapSectionProviderLib
 {
 	public class MapLoaderManager : IMapLoaderManager
 	{
-		#region Private Properties
+		#region Private Fields
 
 		private readonly CancellationTokenSource _cts;
 		private readonly MapSectionBuilder _mapSectionBuilder;
@@ -22,6 +23,14 @@ namespace MapSectionProviderLib
 		private readonly ReaderWriterLockSlim _requestsLock;
 
 		private readonly Task _removeCompletedRequestsTask;
+
+		private const int PRECSION_PADDING = 4;
+		private const int MIN_LIMB_COUNT = 1;
+
+		private int _currentPrecision;
+		private int _currentLimbCount;
+
+		private bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -56,8 +65,33 @@ namespace MapSectionProviderLib
 
 		public int GetNextJobNumber() => _mapSectionRequestProcessor.GetNextJobNumber();
 
-		public List<MapSection> Push(int mapLoaderJobNumber, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration)
+		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
+			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
+			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
+
+			var limbCount = GetLimbCount(precision);
+
+			var mapLoaderJobNumber = GetNextJobNumber();
+
+			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
+				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
+
+			return msrJob;
+		}
+
+		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId, VectorLong mapBlockOffset, int precision, MapCalcSettings mapCalcSettings, bool crossesXZero)
+		{
+			var limbCount = GetLimbCount(precision);
+			var mapLoaderJobNumber = GetNextJobNumber();
+			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, subdivision, originalSourceSubdivisionId, mapBlockOffset,	precision, limbCount, mapCalcSettings, crossesXZero);
+
+			return msrJob;
+		}
+
+		public List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration)
+		{
+			var mapLoaderJobNumber = msrJob.MapLoaderJobNumber;
 			var result = FetchResponses(mapSectionRequests);
 
 			if (result.Count != mapSectionRequests.Count)
@@ -65,20 +99,20 @@ namespace MapSectionProviderLib
 				var requestsNotFound = mapSectionRequests.Where(x => !x.FoundInRepo).ToList();
 				CheckNewRequestsForCancellation(requestsNotFound);
 
-				var mapLoader = new MapLoader(mapLoaderJobNumber, callback, _mapSectionRequestProcessor);
+				_requestsLock.EnterWriteLock();
 
-				DoWithWriteLock(() =>
+				try
 				{
-					var startTask = mapLoader.Start(requestsNotFound);
-
-					var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, _cts.Token);
+					//	CreateNewGenMapRequestInfo(mapLoaderJobNumber, requestsNotFound, callback, _mapSectionRequestProcessor, _cts.Token);
+					var genMapRequestInfo = new GenMapRequestInfo(mapLoaderJobNumber, callback, _mapSectionRequestProcessor, requestsNotFound, _cts.Token);
 					_requests.Add(genMapRequestInfo);
-
 					genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
-				});
+				}
+				finally
+				{
+					_requestsLock.ExitWriteLock();
+				}
 
-
-				// TODO: Since mapLoader.Start may update the list of request that are pending, have mapLoader return the updated list.
 				pendingGeneration = requestsNotFound;
 			}
 			else
@@ -90,6 +124,15 @@ namespace MapSectionProviderLib
 
 			return result;
 		}
+
+		//private GenMapRequestInfo CreateNewGenMapRequestInfo(int mapLoaderJobNumber, List<MapSectionRequest> requestsNotFound, Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor, CancellationToken ct)
+		//{
+		//	var mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
+		//	var startTask = mapLoader.Start(requestsNotFound);
+		//	var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, ct);
+
+		//	return genMapRequestInfo;
+		//}
 
 		public Task? GetTaskForJob(int jobNumber)
 		{
@@ -117,11 +160,11 @@ namespace MapSectionProviderLib
 		{
 			var result = DoWithReadLock(() =>
 			{
-				var ml = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.MapLoader;
-				if (ml != null)
+				var request = _requests.FirstOrDefault(x => x.JobNumber == jobNumber);
+
+				if (request != null)
 				{
-					var p = ml.SectionsRequested - ml.SectionsCompleted;
-					return p;
+					return request.GetNumberOfRequestsPending();
 				}
 				else
 				{
@@ -147,6 +190,31 @@ namespace MapSectionProviderLib
 				StopCurrentJobsInternal(jobNumbers);
 			});
 
+		}
+
+		public int GetLimbCount(int precision)
+		{
+			if (precision != _currentPrecision)
+			{
+				var adjustedPrecision = precision + PRECSION_PADDING;
+				var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
+
+				var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, MIN_LIMB_COUNT);
+
+				if (_currentLimbCount == adjustedLimbCount)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount remains the same at {adjustedLimbCount}.");
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount is being updated to {adjustedLimbCount}.");
+				}
+
+				_currentLimbCount = adjustedLimbCount;
+				_currentPrecision = precision;
+			}
+
+			return _currentLimbCount;
 		}
 
 		#endregion
@@ -194,7 +262,7 @@ namespace MapSectionProviderLib
 
 			if (request != null)
 			{
-				request.MapLoader.Stop();
+				request.Stop();
 			}
 		}
 
@@ -204,7 +272,7 @@ namespace MapSectionProviderLib
 
 			foreach(var request in requestsToStop)
 			{
-				request.MapLoader.Stop();
+				request.Stop();
 			}
 		}
 
@@ -254,7 +322,7 @@ namespace MapSectionProviderLib
 							{
 								foreach(var requestInfo in requestInfosToBeDisposed)
 								{
-									requestInfo.MapLoader.MarkJobAsComplete();
+									requestInfo.MarkJobAsComplete();
 									_requests.Remove(requestInfo);
 									//requestInfo.Dispose();
 								}
@@ -467,19 +535,32 @@ namespace MapSectionProviderLib
 		private readonly CancellationToken _ct;
 		//private readonly Task? _onCompletedTask;
 
+		private MapLoader _mapLoader;
+
+
 		#region Constructor
 
-		public GenMapRequestInfo(MapLoader mapLoader, Task task, CancellationToken ct)
-		{
-			MapLoader = mapLoader ?? throw new ArgumentNullException(nameof(mapLoader));
-			JobNumber = mapLoader.JobNumber;
+		/*
+			var mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
+			var startTask = mapLoader.Start(requestsNotFound);
+			var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, ct);
 
-			Task = task ?? throw new ArgumentNullException(nameof(task));
+		*/
+
+		//public GenMapRequestInfo(MapLoader mapLoader, Task task, CancellationToken ct)
+		public GenMapRequestInfo(int mapLoaderJobNumber, Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor,
+			List<MapSectionRequest> requestsNotFound, CancellationToken ct) 
+		{
+			_mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
+			Task = _mapLoader.Start(requestsNotFound);
+
+			JobNumber = _mapLoader.JobNumber;
+
 			_ct = ct;
 
 			TaskStartedDate = DateTime.UtcNow;
 
-			if (task.IsCompleted)
+			if (Task.IsCompleted)
 			{
 				TaskCompletedDate = DateTime.UtcNow;
 				//_onCompletedTask = null;
@@ -487,10 +568,10 @@ namespace MapSectionProviderLib
 			else
 			{
 				//_onCompletedTask = task.ContinueWith(TaskCompleted, _ct);
-				_ = task.ContinueWith(TaskCompleted, _ct);
+				_ = Task.ContinueWith(TaskCompleted, _ct);
 			}
 
-			MapLoader.SectionLoaded += MapLoader_SectionLoaded;
+			_mapLoader.SectionLoaded += MapLoader_SectionLoaded;
 		}
 
 		#endregion
@@ -501,13 +582,34 @@ namespace MapSectionProviderLib
 
 		public event EventHandler<MapSectionProcessInfo>? MapSectionLoaded;
 
-		public MapLoader MapLoader { get; init; }
 		public Task Task { get; init; }
 
 		public DateTime TaskStartedDate { get; init; }
 		public DateTime? TaskCompletedDate { get; private set; }
 
-		public TimeSpan TotalExecutionTime => MapLoader.ElaspedTime;
+		public TimeSpan TotalExecutionTime => _mapLoader.ElaspedTime;
+
+		#endregion
+
+
+		#region Public Methods
+
+		public void MarkJobAsComplete()
+		{
+			_mapLoader.MarkJobAsComplete();
+		}
+
+		public void Stop()
+		{
+			_mapLoader.Stop();
+		}
+
+		public int GetNumberOfRequestsPending()
+		{
+			var result = _mapLoader.SectionsRequested - _mapLoader.SectionsCompleted;
+
+			return result;
+		}
 
 		#endregion
 

@@ -13,7 +13,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 {
 	internal class PerformanceHarnessMainWinViewModel : ViewModelBase
 	{
-		#region Private Properties
+		#region Private Fields
 
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 
@@ -338,9 +338,12 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 			//createImageProgressViewModel.CreateImage(imageFilePath, jobId, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
 
+			//var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, jobId, ownerType, oldAreaInfo, job.MapCalcSettings);
 
+			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, job.Id.ToString(), ownerType, oldAreaInfo, job.MapCalcSettings);
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(oldAreaInfo.CanvasSize.Round(), oldAreaInfo.CanvasControlOffset, oldAreaInfo.Subdivision.BlockSize);
+			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, mapExtentInBlocks);
 
-			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, jobId, ownerType, oldAreaInfo, job.MapCalcSettings);
 			//AddTiming("CreateSectionRequest");
 
 			LimbCount = mapSectionRequests[0].LimbCount;
@@ -549,6 +552,59 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		{
 			_mapSectionRequestProcessor.UseRepo = true;
 		}
+
+
+		private static List<MapSectionRequest> GetMapSectionRequests(JobType jobType, Job job, OwnerType jobOwnerType, SizeDbl displaySize, MapJobHelper mapJobHelper, MapSectionBuilder mapSectionBuilder, int mapLoaderJobNumber)
+		{
+			var mapAreaInfo = job.MapAreaInfo;
+			var mapCalcSettings = job.MapCalcSettings;
+
+			var mapAreaInfoV1 = mapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
+
+			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, job.Id.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings);
+
+			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfoV1.CanvasSize.Round(), mapAreaInfoV1.CanvasControlOffset, mapAreaInfoV1.Subdivision.BlockSize);
+
+			var mapSectionRequests = mapSectionBuilder.CreateSectionRequests(msrJob, mapExtentInBlocks);
+
+			return mapSectionRequests;
+		}
+
+		private static MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		{
+			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
+			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
+
+			var limbCount = GetLimbCount(precision);
+
+			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
+				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
+
+			return msrJob;
+		}
+
+		private const int PRECSION_PADDING = 4;
+		private const int MIN_LIMB_COUNT = 1;
+
+		private static int GetLimbCount(int precision)
+		{
+			var adjustedPrecision = precision + 2;
+			var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
+
+			var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, 2);
+
+			return adjustedLimbCount;
+		}
+
+
+
+
+
+
+
+
+
+
 
 		private MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
 		{

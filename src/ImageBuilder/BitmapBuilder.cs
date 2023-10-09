@@ -170,9 +170,12 @@ namespace ImageBuilder
 		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, OwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, VectorLong mapBlockOffset, int rowPtr, int blockIndexY, int stride, MapCalcSettings mapCalcSettings, int precision)
 		{
 			var jobType = JobType.SizeEditorPreview;
-			var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
-			var limbCount = _mapSectionBuilder.GetLimbCount(precision);
-			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision: precision, limbCount, mapCalcSettings, crossesXZero: false);
+
+			//var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
+			//var limbCount = _mapLoaderManager.GetLimbCount(precision);
+			//var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision: precision, limbCount, mapCalcSettings, crossesXZero: false);
+
+			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision, mapCalcSettings, crossesXZero: false);
 
 			var requests = new List<MapSectionRequest>();
 
@@ -191,8 +194,8 @@ namespace ImageBuilder
 
 			try
 			{
-				var mapSectionResponses = _mapLoaderManager.Push(mapLoaderJobNumber, requests, MapSectionReady, out var _);
-				_currentJobNumber = mapLoaderJobNumber;
+				var mapSectionResponses = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, out var _);
+				_currentJobNumber = msrJob.MapLoaderJobNumber;
 
 				foreach (var response in mapSectionResponses)
 				{

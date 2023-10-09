@@ -14,12 +14,18 @@ namespace MSS.Common
 		//bool SaveTheZValues { get; set; }
 		//bool CalculateEscapeVelocities { get; set; }
 
-		int GetNextJobNumber();
+		//int GetNextJobNumber();
+
+		int GetLimbCount(int precision);
+
+		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings);
+		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId, VectorLong mapBlockOffset,
+			int precision, MapCalcSettings mapCalcSettings, bool crossesXZero);
 
 		//List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
 		//	IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration);
 
-		List<MapSection> Push(int maploaderJobNumber, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration);
+		List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration);
 
 		Task? GetTaskForJob(int jobNumber);
 		TimeSpan? GetExecutionTimeForJob(int jobNumber);
