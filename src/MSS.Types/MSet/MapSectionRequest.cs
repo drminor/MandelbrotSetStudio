@@ -6,10 +6,10 @@ namespace MSS.Types.MSet
 	public class MapSectionRequest
 	{
 		public MapSectionRequest(MsrJob msrJob) : this(msrJob, requestNumber: 0, screenPosition: new PointInt(), screenPositionRelativeToCenter: new VectorInt(),
-			sectionBlockOffset: new MapBlockOffset(), mapPosition: new RPoint(), isInverted: false)
+			sectionBlockOffset: new VectorLong(), mapPosition: new RPoint(), isInverted: false)
 		{ }
 
-		public MapSectionRequest(MsrJob msrJob, int requestNumber, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, MapBlockOffset sectionBlockOffset, RPoint mapPosition, bool isInverted)
+		public MapSectionRequest(MsrJob msrJob, int requestNumber, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, VectorLong sectionBlockOffset, RPoint mapPosition, bool isInverted)
 		{
 			MsrJob = msrJob ?? throw new ArgumentNullException(nameof(MsrJob), "All MapSectionRequest must reference a MsrJob.");
 
@@ -60,13 +60,13 @@ namespace MSS.Types.MSet
 		/// <summary>
 		/// X,Y coords for the MapSection located at the lower, left for this Job, relative to the Subdivision BaseMapPosition in Block-Size units
 		/// </summary>
-		public BigVector JobBlockOffset => MsrJob.JobBlockOffset;
+		public VectorLong JobBlockOffset => MsrJob.JobBlockOffset;
 
 		/// <summary>
 		/// X,Y coords for this MapSection, relative to the Subdivision BaseMapPosition in Block-Size units.
 		/// </summary>
 		//public BigVector RepoBlockPosition { get; init; }
-		public MapBlockOffset SectionBlockOffset { get; init; }
+		public VectorLong SectionBlockOffset { get; init; }
 
 		/// <summary>
 		/// X,Y coords for this MapSection in absolute map coordinates. Equal to the (BlockPosition + Subdivision.BaseMapPosition) x BlockSize x SamplePointDelta 

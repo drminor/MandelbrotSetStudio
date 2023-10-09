@@ -65,7 +65,7 @@ namespace MSS.Common
 			if (value.Subdivision.Id == ObjectId.Empty)
 			{
 				var originalUnSavedSubdivision = value.Subdivision;
-				var totalMapBlockOffset = value.MapBlockOffset.Tranlate(originalUnSavedSubdivision.BaseMapPosition);
+				var totalMapBlockOffset = originalUnSavedSubdivision.BaseMapPosition.Translate(value.MapBlockOffset);
 				var newSubdivision = _subdivisonProvider.GetSubdivision(originalUnSavedSubdivision.SamplePointDelta, totalMapBlockOffset, out var localMapBlockOffset);
 				var result = new MapAreaInfo2(value.PositionAndDelta, newSubdivision, value.Precision, localMapBlockOffset, value.CanvasControlOffset);
 
@@ -208,7 +208,9 @@ namespace MSS.Common
 
 			var mapBlockOffset = RMapHelper.GetMapBlockOffset(convertedPd, blockSize, out var canvasControlOffset);
 
-			var result = new MapAreaInfo2(convertedPd, mapAreaInfo.Subdivision, mapAreaInfo.Precision, mapBlockOffset, canvasControlOffset);
+			_ = SubdivisonProvider.GetBaseMapPosition(mapBlockOffset, out var localMapBlockOffset);
+
+			var result = new MapAreaInfo2(convertedPd, mapAreaInfo.Subdivision, mapAreaInfo.Precision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
@@ -314,7 +316,7 @@ namespace MSS.Common
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = GetMapBlockOffset(coords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
 
-			var newPosition = samplePointDelta.Scale(mapBlockOffset.Scale(BlockSize).Tranlate(canvasControlOffset));
+			var newPosition = samplePointDelta.Scale(mapBlockOffset.Scale(BlockSize).Translate(canvasControlOffset));
 
 			var adjPos = RNormalizer.Normalize(newPosition, coords.Size, out var adjMapSize);
 			var newCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
@@ -364,7 +366,7 @@ namespace MSS.Common
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			var mapBlockOffset = GetMapBlockOffset(uCoords.Position, uSpd, BlockSize, out var canvasControlOffset);
 
-			var newPosition = samplePointDelta.Scale(mapBlockOffset.Scale(BlockSize).Tranlate(canvasControlOffset));
+			var newPosition = samplePointDelta.Scale(mapBlockOffset.Scale(BlockSize).Translate(canvasControlOffset));
 
 			var adjPos2 = RNormalizer.Normalize(newPosition, uCoords.Size, out var adjMapSize2);
 			var newCoords = new RRectangle(new RPoint(adjPos2), adjMapSize2);

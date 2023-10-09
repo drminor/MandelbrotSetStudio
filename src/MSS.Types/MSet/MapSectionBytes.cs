@@ -12,7 +12,7 @@ namespace MSS.Types.MSet
 			DateTime lastSavedUtc,
 			DateTime lastAccessed,
 			ObjectId subdivisionId,
-			MapBlockOffset blockPosition,
+			VectorLong blockPosition,
 
 			MapCalcSettings mapCalcSettings,
 			bool requestWasCompleted,
@@ -45,7 +45,7 @@ namespace MSS.Types.MSet
 		public DateTime LastAccessed { get; set; }
 
 		public ObjectId SubdivisionId { get; init; }
-		public MapBlockOffset BlockPosition { get; init; }
+		public VectorLong BlockPosition { get; init; }
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 

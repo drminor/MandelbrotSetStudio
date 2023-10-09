@@ -97,7 +97,7 @@ namespace MSS.Types
 		public static MapAreaInfo2 BuildHomeArea()
 		{
 			var subdivision = new Subdivision(new RSize(new RValue(1, -8)), new BigVector());
-			var mapAreaInfo = new MapAreaInfo2(new RPoint(0, 0, -8), subdivision, DEFAULT_PRECISION, new BigVector(), new VectorInt());
+			var mapAreaInfo = new MapAreaInfo2(new RPoint(0, 0, -8), subdivision, DEFAULT_PRECISION, new VectorLong(), new VectorInt());
 
 			return mapAreaInfo;
 		}

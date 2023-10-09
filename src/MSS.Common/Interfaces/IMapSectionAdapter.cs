@@ -17,10 +17,10 @@ namespace MSS.Common
 		void DropMapSections();
 		void DropMapSectionsAndSubdivisions();
 
-		Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, MapBlockOffset blockPosition, CancellationToken ct);
-		MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, MapBlockOffset blockPosition);
+		Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, VectorLong blockPosition, CancellationToken ct);
+		MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, VectorLong blockPosition);
 
-		ObjectId? GetMapSectionId(ObjectId subdivisionId, MapBlockOffset blockPosition);
+		ObjectId? GetMapSectionId(ObjectId subdivisionId, VectorLong blockPosition);
 
 		Task<ObjectId?> SaveMapSectionAsync(MapSectionResponse mapSectionResponse);
 		Task<long?> UpdateCountValuesAync(MapSectionResponse mapSectionResponse);

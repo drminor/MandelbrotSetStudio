@@ -121,7 +121,7 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, MapBlockOffset blockPosition)
+		public MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, VectorLong blockPosition)
 		{
 			try
 			{
@@ -145,7 +145,7 @@ namespace MSetRepo
 			}
 		}
 
-		public async Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, MapBlockOffset blockPosition, CancellationToken ct)
+		public async Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, VectorLong blockPosition, CancellationToken ct)
 		{
 			try
 			{
@@ -174,7 +174,7 @@ namespace MSetRepo
 			}
 		}
 
-		public ObjectId? GetMapSectionId(ObjectId subdivisionId, MapBlockOffset blockPosition)
+		public ObjectId? GetMapSectionId(ObjectId subdivisionId, VectorLong blockPosition)
 		{
 			try
 			{

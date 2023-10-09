@@ -23,7 +23,7 @@ namespace MSS.Types.MSet
 		public Subdivision Subdivision { get; init; }
 		public int Precision { get; init; }
 
-		public BigVector MapBlockOffset { get; init; }
+		public VectorLong MapBlockOffset { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
 
 		public RPoint MapCenter => PositionAndDelta.Center;
@@ -38,16 +38,16 @@ namespace MSS.Types.MSet
 			PositionAndDelta = new RPointAndDelta();
 			Subdivision = new Subdivision();
 			Precision = 1;
-			MapBlockOffset = new BigVector();
+			MapBlockOffset = new VectorLong();
 			CanvasControlOffset = new VectorInt();
 			IsEmpty = true;
 		}
 
-		public MapAreaInfo2(RPoint mapCenter, Subdivision subdivision, int precision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
+		public MapAreaInfo2(RPoint mapCenter, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset)
 			: this(Combine(mapCenter, subdivision.SamplePointDelta), subdivision, precision, mapBlockOffset, canvasControlOffset)
 		{ }
 
-		public MapAreaInfo2(RPointAndDelta rPointAndDelta, Subdivision subdivision, int precision, BigVector mapBlockOffset, VectorInt canvasControlOffset)
+		public MapAreaInfo2(RPointAndDelta rPointAndDelta, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset)
 		{
 			PositionAndDelta = rPointAndDelta;
 			Subdivision = subdivision;
@@ -106,7 +106,7 @@ namespace MSS.Types.MSet
 				IsEmpty == other.IsEmpty &&
 				EqualityComparer<RPointAndDelta>.Default.Equals(PositionAndDelta, other.PositionAndDelta) &&
 				EqualityComparer<Subdivision>.Default.Equals(Subdivision, other.Subdivision) &&
-				EqualityComparer<BigVector>.Default.Equals(MapBlockOffset, other.MapBlockOffset) &&
+				EqualityComparer<VectorLong>.Default.Equals(MapBlockOffset, other.MapBlockOffset) &&
 				CanvasControlOffset.Equals(other.CanvasControlOffset);
 		}
 

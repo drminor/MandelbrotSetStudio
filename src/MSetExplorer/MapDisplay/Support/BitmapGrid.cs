@@ -66,7 +66,7 @@ namespace MSetExplorer
 			_pixelsToClear = new byte[0];
 			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
 
-			MapBlockOffset = new BigVector();
+			MapBlockOffset = new VectorLong();
 
 			_colorBandSet = new ColorBandSet();
 			_useEscapeVelocities = true;
@@ -192,7 +192,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public BigVector MapBlockOffset { get; set; }
+		public VectorLong MapBlockOffset { get; set; }
 
 		public SizeDbl LogicalViewportSize
 		{
@@ -453,13 +453,13 @@ namespace MSetExplorer
 		/// <param name="jobMapBlockOffset">The block offset for the block at the lower, left-hand side of the map</param>
 		/// <returns></returns>
 		/// <exception cref="ArgumentException"></exception>
-		private PointInt GetAdjustedBlockPositon(MapSection mapSection, BigVector jobMapBlockOffset)
+		private PointInt GetAdjustedBlockPositon(MapSection mapSection, VectorLong jobMapBlockOffset)
 		{
 			PointInt screenPosition;
 
-			var df = mapSection.JobMapBlockOffset.Diff(jobMapBlockOffset);
+			var df = mapSection.JobMapBlockOffset.Sub(jobMapBlockOffset);
 
-			if (df.IsZero())
+			if (df.EqualsZero)
 			{
 				screenPosition = mapSection.ScreenPosition;
 			}
@@ -615,8 +615,8 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void CheckScreenPos(MapSection mapSection)
 		{
-			var bigVectorBlockOffset = RMapHelper.ToSubdivisionCoords(mapSection.ScreenPosition, mapSection.JobMapBlockOffset, out var isInverted);
-			var sectionBlockOffset = _dtoMapper.Convert(bigVectorBlockOffset);
+			var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(mapSection.ScreenPosition, mapSection.JobMapBlockOffset, out var isInverted);
+			//var sectionBlockOffset = _dtoMapper.Convert(bigVectorBlockOffset);
 
 			Debug.Assert(sectionBlockOffset == mapSection.RepoBlockPosition && isInverted == mapSection.IsInverted, "Screen Position does not agree with the JobMapBlockOffset / SectionBlockOffset.");
 			Debug.Assert(isInverted == mapSection.IsInverted, "IsInverted does not agree with the JobMapBlockOffset / SectionBlockOffset.");

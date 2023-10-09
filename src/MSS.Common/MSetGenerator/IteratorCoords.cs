@@ -7,7 +7,7 @@ namespace MSS.Common
 {
 	public class IteratorCoords
 	{
-		public IteratorCoords(MapBlockOffset sectionBlockOffset, PointInt screenPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta)
+		public IteratorCoords(VectorLong sectionBlockOffset, PointInt screenPos, FP31Val startingCx, FP31Val startingCy, FP31Val delta)
 		{
 			BlockPos = sectionBlockOffset ?? throw new ArgumentNullException(nameof(sectionBlockOffset));
 			ScreenPos = screenPos;
@@ -16,7 +16,7 @@ namespace MSS.Common
 			Delta = delta;
 		}
 
-		public MapBlockOffset BlockPos { get; init; }
+		public VectorLong BlockPos { get; init; }
 		public PointInt ScreenPos { get; init; }
 		public FP31Val StartingCx { get; init;  }
 		public FP31Val StartingCy { get; init; }

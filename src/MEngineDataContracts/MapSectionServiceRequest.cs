@@ -24,7 +24,7 @@ namespace MEngineDataContracts
 		public PointInt ScreenPosition { get; set; }
 
 		[DataMember(Order = 6)]
-		public MapBlockOffset BlockPosition { get; set; }
+		public VectorLong BlockPosition { get; set; }
 
 		[DataMember(Order = 7)]
 		public RPointDto MapPosition { get; set; }

@@ -19,7 +19,7 @@ namespace MSS.Types.MSet
 		public Subdivision Subdivision { get; init; }
 		public int Precision { get; init; }
 
-		public BigVector MapBlockOffset { get; init; }
+		public VectorLong MapBlockOffset { get; init; }
 		public VectorInt CanvasControlOffset { get; init; }
 
 		public RPoint MapPosition => Coords.Position;
@@ -35,13 +35,13 @@ namespace MSS.Types.MSet
 			CanvasSize = new SizeDbl();
 			Subdivision = new Subdivision();
 			Precision = 1;
-			MapBlockOffset = new BigVector();
+			MapBlockOffset = new VectorLong();
 			CanvasControlOffset = new VectorInt();
 
 			OriginalSourceSubdivisionId = ObjectId.Empty;
 		}
 
-		public MapAreaInfo(RRectangle coords, SizeDbl canvasSize, Subdivision subdivision, int precision, BigVector mapBlockOffset, VectorInt canvasControlOffset, ObjectId originalSourceSubdivisionId)
+		public MapAreaInfo(RRectangle coords, SizeDbl canvasSize, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset, ObjectId originalSourceSubdivisionId)
 		{
 			if (originalSourceSubdivisionId == ObjectId.Empty)
 			{

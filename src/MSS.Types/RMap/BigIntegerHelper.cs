@@ -12,9 +12,14 @@ namespace MSS.Types
 		private static readonly double NAT_LOG_OF_2 = Math.Log(2);
 
 		private const int BITS_PER_SIGNED_LONG = 63;
+
 		// Integer used to convert BigIntegers to/from array of longs.
 		private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, BITS_PER_SIGNED_LONG);
+		
+		// Maximum positive value able to be stored in a 
 		private static readonly BigInteger MAX_DIGIT_VALUE = LONG_FACTOR - 1;
+
+		private static readonly BigInteger MIN_DIGIT_VALUE = LONG_FACTOR * -1;
 
 		//// Integer used to convert BigIntegers to/from array of longs.
 		//private static readonly BigInteger LONG_FACTOR = BigInteger.Pow(2, 53); //new BigInteger(long.MaxValue); // BigInteger.Add(BigInteger.One, BigInteger.Pow(2, 63));
@@ -238,14 +243,9 @@ namespace MSS.Types
 			//	Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value. The value is {hi}");
 			//}
 
-			if (BigInteger.Abs(hi) > long.MaxValue)
+			if (hi > MAX_DIGIT_VALUE || hi < MIN_DIGIT_VALUE)
 			{
-				throw new ArgumentOutOfRangeException(nameof(bi), "The hi value is larger than an Int64.");
-			}
-
-			if (BigInteger.Abs(lo) > long.MaxValue)
-			{
-				throw new ArgumentOutOfRangeException(nameof(bi), "The lo value is larger than an Int64.");
+				throw new ArgumentOutOfRangeException(nameof(bi), "The big interger cannot fit into a pair of Long values.");
 			}
 
 			var result = new long[] { (long)hi, (long)lo };

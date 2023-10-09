@@ -17,7 +17,7 @@ namespace MEngineDataContracts
 			: this(mapSectionRequest.MapSectionId, mapSectionRequest.SubdivisionId, mapSectionRequest.BlockPosition)
 		{ }
 
-		public MapSectionServiceResponse(string mapSectionId, string subdivisionId, MapBlockOffset blockPosition)
+		public MapSectionServiceResponse(string mapSectionId, string subdivisionId, VectorLong blockPosition)
 		{
 			MapSectionId = mapSectionId;
 			SubdivisionId = subdivisionId;
@@ -39,7 +39,7 @@ namespace MEngineDataContracts
 		public string SubdivisionId { get; init; }
 
 		[DataMember(Order = 3)]
-		public MapBlockOffset BlockPosition { get; init; }
+		public VectorLong BlockPosition { get; init; }
 
 		[DataMember(Order = 4)]
 		public bool RequestCompleted { get; init; }

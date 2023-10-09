@@ -8,11 +8,11 @@ namespace MSS.Types.MSet
 	public class MsrJob
 	{
 		public MsrJob() : this(mapLoaderJobNumber: 0, jobType: JobType.FullScale, jobId: "", ownerType: OwnerType.Project, subdivision: new Subdivision(), originalSourceSubdivisionId: "",
-			jobBlockOffset: new BigVector(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings(), crossesXZero: false)
+			jobBlockOffset: new VectorLong(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings(), crossesXZero: false)
 		{ }
 
 		public MsrJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType ownerType, Subdivision subdivision, string originalSourceSubdivisionId, 
-			BigVector jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings, bool crossesXZero)
+			VectorLong jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings, bool crossesXZero)
 		{
 			ObjectId test = new ObjectId(originalSourceSubdivisionId);
 
@@ -48,7 +48,7 @@ namespace MSS.Types.MSet
 		/// <summary>
 		/// X,Y coords for the MapSection located at the lower, left for this Job, relative to the Subdivision BaseMapPosition in Block-Size units
 		/// </summary>
-		public BigVector JobBlockOffset { get; init; }
+		public VectorLong JobBlockOffset { get; init; }
 
 		public int Precision { get; set; }
 		public int LimbCount { get; set; }

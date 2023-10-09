@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
@@ -9,10 +10,12 @@ namespace MSS.Common.MSet
 	{
 		//private static readonly bool _useDetailedDebug = true;
 
-		private const int TERMINAL_LIMB_COUNT = 2;
-		private const int TERMINAL_SUBDIVISION_POW = TERMINAL_LIMB_COUNT * ApFixedPointFormat.EFFECTIVE_BITS_PER_LIMB;
 
-		private static readonly BigVector TERMINAL_SUBDIV_SIZE = new BigVector(BigInteger.Pow(2, TERMINAL_SUBDIVISION_POW));
+		private const double BITS_PER_SIGNED_LONG = 63;
+
+		private static readonly long LONG_FACTOR = (long)Math.Pow(2, BITS_PER_SIGNED_LONG);
+
+		private static readonly VectorLong TERMINAL_SUBDIV_SIZE = new VectorLong(LONG_FACTOR);
 
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
@@ -23,7 +26,7 @@ namespace MSS.Common.MSet
 
 		// Find an existing subdivision record with the same SamplePointDelta.
 		// If not found, create a new record and persist to the repository.
-		public Subdivision GetSubdivision(RSize samplePointDelta, BigVector mapBlockOffset, out BigVector localMapBlockOffset)
+		public Subdivision GetSubdivision(RSize samplePointDelta, BigVector mapBlockOffset, out VectorLong localMapBlockOffset)
 		{
 			var baseMapPosition = GetBaseMapPosition(mapBlockOffset, out localMapBlockOffset);
 
@@ -36,7 +39,7 @@ namespace MSS.Common.MSet
 			return result;
 		}
 
-		public BigVector GetBaseMapPosition(BigVector mapBlockOffset, out BigVector localMapBlockOffset)
+		public static BigVector GetBaseMapPosition(BigVector mapBlockOffset, out VectorLong localMapBlockOffset)
 		{
 			var quotient = mapBlockOffset.DivRem(TERMINAL_SUBDIV_SIZE, out localMapBlockOffset);
 

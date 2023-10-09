@@ -19,8 +19,8 @@ namespace MSS.Types.MSet
 				  requestNumber: -1,
 				  mapSectionVectors: null,
 				  subdivisionId: string.Empty,
-				  jobMapBlockPosition: new BigVector(),
-				  repoBlockPosition: new MapBlockOffset(),
+				  jobMapBlockPosition: new VectorLong(),
+				  repoBlockPosition: new VectorLong(),
 				  isInverted: false,
 				  screenPosition: new PointInt(),
 				  size: new SizeInt(),
@@ -33,8 +33,8 @@ namespace MSS.Types.MSet
 		public MapSection(int jobNumber,
 			int requestNumber,
 			string subdivisionId,
-			BigVector jobMapBlockPosition,
-			MapBlockOffset repoBlockPosition, 
+			VectorLong jobMapBlockPosition,
+			VectorLong repoBlockPosition, 
 			bool isInverted, 
 			PointInt screenPosition, 
 			SizeInt size, 
@@ -56,8 +56,8 @@ namespace MSS.Types.MSet
 			RequestCancelled = isCancelled;
 		}
 
-		public MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, BigVector jobMapBlockPosition,
-			MapBlockOffset repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
+		public MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, VectorLong jobMapBlockPosition,
+			VectorLong repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobNumber = jobNumber;
 			RequestNumber = requestNumber;
@@ -87,11 +87,11 @@ namespace MSS.Types.MSet
 
 		// TODO: Rename property RepoBlockPosition in class MapSection: SectionBlockOffset
 		// X,Y coordinates of this section, relative to the Subdivision's Base Map Position in block-size units.
-		public MapBlockOffset RepoBlockPosition { get; init; }
+		public VectorLong RepoBlockPosition { get; init; }
 
 		public bool IsInverted { get; init; }
 
-		public BigVector JobMapBlockOffset { get; private set; }
+		public VectorLong JobMapBlockOffset { get; private set; }
 
 		// X,Y coordinates of this section relative to the JobMapBlockOffset in block-size units.
 		public PointInt ScreenPosition { get; private set; }
@@ -112,7 +112,7 @@ namespace MSS.Types.MSet
 
 		#endregion
 
-		public void UpdateJobMapBlockOffsetAndPos(BigVector blockOffset, PointInt screenPos)
+		public void UpdateJobMapBlockOffsetAndPos(VectorLong blockOffset, PointInt screenPos)
 		{
 			JobMapBlockOffset = blockOffset;
 			ScreenPosition = screenPos;
@@ -151,7 +151,7 @@ namespace MSS.Types.MSet
 			return other is MapSection ms
 				&& SubdivisionId == ms.SubdivisionId
 				&& IsInverted == ms.IsInverted
-				&& EqualityComparer<MapBlockOffset>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
+				&& EqualityComparer<VectorLong>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
 				//&& TargetIterations == ms.TargetIterations;
 		}
 

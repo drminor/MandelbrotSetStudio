@@ -126,7 +126,7 @@ namespace MSS.Types.MSet
 
 		public int GetHashCode([DisallowNull] MapBlockOffset? obj)
 		{
-			throw new NotImplementedException();
+			return HashCode.Combine(obj.XHi, obj.XLo, obj.YHi, obj.YLo);
 		}
 
 		public static bool operator ==(MapBlockOffset? left, MapBlockOffset? right)

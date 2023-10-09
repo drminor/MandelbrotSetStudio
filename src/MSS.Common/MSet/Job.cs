@@ -118,7 +118,7 @@ namespace MSS.Common.MSet
 		#region Public Properties
 
 		public Subdivision Subdivision => MapAreaInfo.Subdivision;
-		public BigVector MapBlockOffset => MapAreaInfo.MapBlockOffset;
+		public VectorLong MapBlockOffset => MapAreaInfo.MapBlockOffset;
 		public VectorInt CanvasControlOffset => MapAreaInfo.CanvasControlOffset;
 
 		public bool IsEmpty => MapAreaInfo.IsEmpty;

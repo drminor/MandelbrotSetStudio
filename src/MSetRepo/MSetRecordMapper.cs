@@ -147,11 +147,18 @@ namespace MSetRepo
 
 		public MapAreaInfo2 MapFrom(MapAreaInfo2Record target)
 		{
+			var bv = MapFrom(target.MapBlockOffset);
+
+			if (!bv.TryConvertToLong(out var jobMapBlockOffset))
+			{
+				throw new InvalidOperationException("The MapSectionRecord's BlockPos will not fit into a LongVector.");
+			}
+
 			var result = new MapAreaInfo2(
 				rPointAndDelta: _dtoMapper.MapFrom(target.RPointAndDeltaRecord.RPointAndDeltaDto),
 				subdivision: MapFrom(target.SubdivisionRecord),
 				precision: target.Precsion,
-				mapBlockOffset: MapFrom(target.MapBlockOffset),
+				mapBlockOffset: jobMapBlockOffset,
 				canvasControlOffset: MapFrom(target.CanvasControlOffset)
 				);
 
@@ -163,7 +170,7 @@ namespace MSetRepo
 			var result = new MapAreaInfo2Record(
 				RPointAndDeltaRecord: MapTo(source.PositionAndDelta),
 				SubdivisionRecord: MapTo(source.Subdivision),
-				MapBlockOffset: MapTo(source.MapBlockOffset),
+				MapBlockOffset: MapTo(new BigVector(source.MapBlockOffset.X, source.MapBlockOffset.Y)),
 				CanvasControlOffset: MapTo(source.CanvasControlOffset),
 				Precsion: source.Precision
 				);
@@ -245,10 +252,10 @@ namespace MSetRepo
 				DateCreatedUtc: DateTime.UtcNow,
 				SubdivisionId: new ObjectId(source.SubdivisionId),
 
-				BlockPosXHi: source.BlockPosition.XHi,
-				BlockPosXLo: source.BlockPosition.XLo,
-				BlockPosYHi: source.BlockPosition.YHi,
-				BlockPosYLo: source.BlockPosition.YLo,
+				BlockPosXHi: 0,
+				BlockPosXLo: source.BlockPosition.X,
+				BlockPosYHi: 0,
+				BlockPosYLo: source.BlockPosition.Y,
 
 				MapCalcSettings: source.MapCalcSettings ?? throw new ArgumentNullException(),
 
@@ -303,22 +310,14 @@ namespace MSetRepo
 			return result;
 		}
 
-		//private BigVector GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
-		//{
-		//	var blockPosition = new BigVectorDto(new long[][]
-		//		{
-		//			new long[] { blockPosXHi, blockPosXLo }, 
-		//			new long[] { blockPosYHi, blockPosYLo }
-		//		});
-
-		//	var result = _dtoMapper.MapFrom(blockPosition);
-
-		//	return result;
-		//}
-
-		private MapBlockOffset GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
+		private VectorLong GetBlockPosition(long blockPosXHi, long blockPosXLo, long blockPosYHi, long blockPosYLo)
 		{
-			var result = new MapBlockOffset(blockPosXHi, blockPosXLo, blockPosYHi, blockPosYLo);
+			if (blockPosXHi != 0 || blockPosYHi != 0)
+			{
+				throw new InvalidOperationException("The MapSectionRecord's BlockPos will not fit into a LongVector.");
+			}
+
+			var result = new VectorLong(blockPosXLo, blockPosYLo);
 
 			return result;
 		}

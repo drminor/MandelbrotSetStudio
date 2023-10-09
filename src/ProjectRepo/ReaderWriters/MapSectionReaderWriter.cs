@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MSS.Types;
 using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
@@ -68,13 +69,13 @@ namespace ProjectRepo
 			}
 		}
 
-		public MapSectionRecord? Get(ObjectId subdivisionId, MapBlockOffset blockPosition)
+		public MapSectionRecord? Get(ObjectId subdivisionId, VectorLong blockPosition)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.XLo);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.YLo);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", 0);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", 0);
 
 			var mapSectionRecord = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5, options: null);
 
@@ -94,13 +95,13 @@ namespace ProjectRepo
 			}
 		}
 
-		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, MapBlockOffset blockPosition, CancellationToken ct)
+		public async Task<MapSectionRecord?> GetAsync(ObjectId subdivisionId, VectorLong blockPosition, CancellationToken ct)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.XLo);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.YLo);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", 0);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", 0);
 
 			var mapSectionRecord = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5, options: null, ct);
 
@@ -241,13 +242,13 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult);
 		}
 
-		public async Task<ObjectId?> GetIdAsync(ObjectId subdivisionId, MapBlockOffset blockPosition)
+		public async Task<ObjectId?> GetIdAsync(ObjectId subdivisionId, VectorLong blockPosition)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.XLo);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.YLo);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", 0);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", 0);
 
 			var bDoc = await Collection.FindAsync(filter1 & filter2 & filter3 & filter4 & filter5);
 
@@ -277,13 +278,13 @@ namespace ProjectRepo
 			}
 		}
 
-		public ObjectId? GetId(ObjectId subdivisionId, MapBlockOffset blockPosition)
+		public ObjectId? GetId(ObjectId subdivisionId, VectorLong blockPosition)
 		{
 			var filter1 = Builders<MapSectionRecord>.Filter.Eq("SubdivisionId", subdivisionId);
-			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.XLo);
-			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.YLo);
-			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", blockPosition.XHi);
-			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", blockPosition.YHi);
+			var filter2 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXLo", blockPosition.X);
+			var filter3 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYLo", blockPosition.Y);
+			var filter4 = Builders<MapSectionRecord>.Filter.Eq("BlockPosXHi", 0);
+			var filter5 = Builders<MapSectionRecord>.Filter.Eq("BlockPosYHi", 0);
 
 			var bDoc = Collection.Find(filter1 & filter2 & filter3 & filter4 & filter5);
 
@@ -360,9 +361,13 @@ namespace ProjectRepo
 		//	return blockPosition;
 		//}
 
-		private MapBlockOffset GetBlockPosition(MapSectionRecord msr)
+		private VectorLong GetBlockPosition(MapSectionRecord msr)
 		{
-			var result = new MapBlockOffset(msr.BlockPosXHi, msr.BlockPosXLo, msr.BlockPosYHi, msr.BlockPosYLo);
+			if (msr.BlockPosXHi != 0 || msr.BlockPosYHi != 0)
+			{
+				throw new InvalidOperationException("The MapSectionRecord's BlockPos will not fit into a LongVector.");
+			}
+			var result = new VectorLong(msr.BlockPosXLo, msr.BlockPosYLo);
 
 			return result;
 		}

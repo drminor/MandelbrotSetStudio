@@ -50,6 +50,11 @@ namespace MSS.Types
 			return new BigVector(X * factor.Width, Y * factor.Height);
 		}
 
+		public BigVector Scale(VectorLong factor)
+		{
+			return new BigVector(X * factor.X, Y * factor.Y);
+		}
+
 		public BigVector Scale(BigVector factor)
 		{
 			return new BigVector(X * factor.X, Y * factor.Y);
@@ -75,17 +80,17 @@ namespace MSS.Types
 			return new BigVector(X - vector.X, Y - vector.Y);
 		}
 
-		public BigVector Tranlate(PointInt amount)
+		public BigVector Translate(PointInt amount)
 		{
 			return new BigVector(X + amount.X, Y + amount.Y);
 		}
 
-		public BigVector Tranlate(VectorInt amount)
+		public BigVector Translate(VectorInt amount)
 		{
 			return new BigVector(X + amount.X, Y + amount.Y);
 		}
 
-		public BigVector Tranlate(BigVector amount)
+		public BigVector Translate(VectorLong amount)
 		{
 			return new BigVector(X + amount.X, Y + amount.Y);
 		}
@@ -96,6 +101,17 @@ namespace MSS.Types
 			var blocksV = BigInteger.DivRem(Y, dividend.Height, out var remainderV);
 
 			remainder = new SizeInt(remainderH, remainderV);
+			var result = new BigVector(blocksH, blocksV);
+
+			return result;
+		}
+
+		public BigVector DivRem(VectorLong dividend, out VectorLong remainder)
+		{
+			var blocksH = BigInteger.DivRem(X, dividend.X, out var remainderH);
+			var blocksV = BigInteger.DivRem(Y, dividend.Y, out var remainderV);
+
+			remainder = new VectorLong(remainderH, remainderV);
 			var result = new BigVector(blocksH, blocksV);
 
 			return result;
@@ -127,6 +143,20 @@ namespace MSS.Types
 			else
 			{
 				value = new VectorInt((int)Values[0], (int)Values[1]);
+				return true;
+			}
+		}
+
+		public bool TryConvertToLong(out VectorLong value)
+		{
+			if (Values[0] > long.MaxValue || Values[0] < long.MinValue || Values[1] > long.MaxValue || Values[1] < long.MinValue)
+			{
+				value = new VectorLong();
+				return false;
+			}
+			else
+			{
+				value = new VectorLong((long)Values[0], (int)Values[1]);
 				return true;
 			}
 		}

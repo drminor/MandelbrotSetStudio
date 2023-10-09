@@ -251,15 +251,15 @@ namespace MSS.Common
 
 		#region Screen To Subdivision Translation
 
-		public static BigVector ToSubdivisionCoords(PointInt screenPosition, BigVector jobBlockOffset, out bool isInverted)
+		public static VectorLong ToSubdivisionCoords(PointInt screenPosition, VectorLong jobBlockOffset, out bool isInverted)
 		{
-			var sectionBlockOffset = jobBlockOffset.Tranlate(screenPosition);
+			var sectionBlockOffset = jobBlockOffset.Translate(screenPosition);
 
-			BigVector result;
+			VectorLong result;
 			if (sectionBlockOffset.Y < 0)
 			{
 				isInverted = true;
-				result = new BigVector(sectionBlockOffset.X, (sectionBlockOffset.Y * -1) - 1);
+				result = new VectorLong(sectionBlockOffset.X, (sectionBlockOffset.Y * -1) - 1);
 			}
 			else
 			{
@@ -270,20 +270,20 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static PointInt ToScreenCoords(BigVector sectionBlockOffsetBigV, bool inverted, BigVector jobBlockOffset)
+		public static PointInt ToScreenCoords(VectorLong sectionBlockOffset, bool inverted, VectorLong jobBlockOffset)
 		{
-			BigVector posT;
+			VectorLong posT;
 
 			if (inverted)
 			{
-				posT = new BigVector(sectionBlockOffsetBigV.X, (sectionBlockOffsetBigV.Y + 1) * -1);
+				posT = new VectorLong(sectionBlockOffset.X, (sectionBlockOffset.Y + 1) * -1);
 			}
 			else
 			{
-				posT = sectionBlockOffsetBigV;
+				posT = sectionBlockOffset;
 			}
 
-			var screenOffset = posT.Diff(jobBlockOffset);
+			var screenOffset = posT.Sub(jobBlockOffset);
 
 			if (screenOffset.TryConvertToInt(out var result))
 			{

@@ -41,7 +41,7 @@
 		public MapSectionResponse(
 			string? mapSectionId,
 			string subdivisionId,
-			MapBlockOffset blockPosition,
+			VectorLong blockPosition,
 			MapCalcSettings mapCalcSettings,
 			bool requestCompleted,
 			bool allRowsHaveEscaped,
@@ -66,7 +66,7 @@
 		public string? MapSectionId { get; set; }
 		public string SubdivisionId { get; init; }
 
-		public MapBlockOffset BlockPosition { get; init; }
+		public VectorLong BlockPosition { get; init; }
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 		public bool RequestCompleted { get; set; }

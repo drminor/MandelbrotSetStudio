@@ -49,6 +49,11 @@ namespace MSS.Types
 			return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
 		}
 
+		public RSize Scale(VectorLong factor)
+		{
+			return new RSize(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
+		}
+
 		public RVector Scale(BigVector factor)
 		{
 			return new RVector(WidthNumerator * factor.X, HeightNumerator * factor.Y, Exponent);
