@@ -1,5 +1,4 @@
-﻿using MSS.Common.MSet;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -42,7 +41,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public List<MapSectionRequest> CreateSectionRequestsSameYVals(MsrJob msrJob, SizeInt mapExtentInBlocks)
+		private List<MapSectionRequest> CreateSectionRequestsSameYVals(MsrJob msrJob, SizeInt mapExtentInBlocks)
 		{
 			var result = new List<MapSectionRequest>();
 			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
@@ -58,14 +57,14 @@ namespace MSS.Common
 			return result;
 		}
 
-		public List<MapSectionRequest> CreateSectionRequestsMixedYVals(MsrJob msrJob, SizeInt mapExtentInBlocks)
+		private List<MapSectionRequest> CreateSectionRequestsMixedYVals(MsrJob msrJob, SizeInt mapExtentInBlocks)
 		{
 			var subCoords = GetSubdivisionCoords(msrJob, mapExtentInBlocks);
 
-			var notInvertedSubCoords = subCoords.Select((x, i) => new Tuple<MsrPosition, int>(x, i)).Where(x => !x.Item1.IsInverted).ToArray();
+			var notInvertedSubCoords = subCoords.Where(x => !x.IsInverted).ToArray();
 			var matchedNotInvertedSubCoords = new bool[notInvertedSubCoords.Length];
 
-			var tempCoordPairs = new List<Tuple<MsrPosition, Tuple<MsrPosition, int>?>>();
+			var tempCoordPairs = new List<Tuple<MsrPosition, MsrPosition?>>();
 
 			foreach (var subCoord in subCoords)
 			{
@@ -75,11 +74,11 @@ namespace MSS.Common
 				{
 					var mirror = notInvertedSubCoords[indexOfMiror];
 					matchedNotInvertedSubCoords[indexOfMiror] = true;
-					tempCoordPairs.Add(new Tuple<MsrPosition, Tuple<MsrPosition, int>?>(subCoord, mirror));
+					tempCoordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(subCoord, mirror));
 				}
 				else
 				{
-					tempCoordPairs.Add(new Tuple<MsrPosition, Tuple<MsrPosition, int>?>(subCoord, null));
+					tempCoordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(subCoord, null));
 				}
 			}
 
@@ -91,6 +90,7 @@ namespace MSS.Common
 			for (var requestNumber = 0; requestNumber < tempCoordPairs.Count; requestNumber++)
 			{
 				var primary = tempCoordPairs[requestNumber].Item1;
+				var mirror = tempCoordPairs[requestNumber].Item2;
 
 				if (!primary.IsInverted)
 				{
@@ -117,12 +117,9 @@ namespace MSS.Common
 					var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
 					var mapSectionRequest = CreateRequest(msrJob, requestNumber, screenPosition, screenPositionRelativeToCenter, primary);
 
-					var mirrorAndIndex = tempCoordPairs[requestNumber].Item2;
-
-					if (mirrorAndIndex != null)
+					if (mirror != null)
 					{
-						var mirror = mirrorAndIndex.Item1;
-						var requestNumber2 = mirrorAndIndex.Item2;
+						var requestNumber2 = mirror.RequestNumber;
 						var screenPosition2 = mirror.ScreenPosition;
 						var screenPositionRelativeToCenter2 = screenPosition2.Sub(centerBlockIndex);
 						var mapSectionRequest2 = CreateRequest(msrJob, requestNumber2, screenPosition2, screenPositionRelativeToCenter2, mirror);
@@ -141,20 +138,22 @@ namespace MSS.Common
 		{
 			var result = new List<MsrPosition>();
 
+			var requestNumber = 0;
+
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
 				var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, msrJob.JobBlockOffset, out var isInverted);
-				result.Add(new MsrPosition(screenPosition, sectionBlockOffset, isInverted));
+				result.Add(new MsrPosition(requestNumber++, screenPosition, sectionBlockOffset, isInverted));
 			}
 
 			return result;
 		}
 
-		private int GetIndexOfMirror(MsrPosition primary, Tuple<MsrPosition, int>[] notInvertedSubCoords)
+		private int GetIndexOfMirror(MsrPosition primary, MsrPosition[] notInvertedSubCoords)
 		{
 			for (var i = 0; i < notInvertedSubCoords.Length; i++)
 			{
-				if (notInvertedSubCoords[i].Item1.SectionBlockOffset == primary.SectionBlockOffset)
+				if (notInvertedSubCoords[i].SectionBlockOffset == primary.SectionBlockOffset)
 				{
 					return i;
 				}
@@ -259,7 +258,7 @@ namespace MSS.Common
 			if (reqPos is null)
 			{
 				var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, msrJob.JobBlockOffset, out var isInverted);
-				reqPos = new MsrPosition(screenPosition, sectionBlockOffset, isInverted);
+				reqPos = new MsrPosition(requestNumber, screenPosition, sectionBlockOffset, isInverted);
 			}
 
 			// Absolute position in Map Coordinates.
@@ -445,12 +444,14 @@ namespace MSS.Common
 
 	public class MsrPosition
 	{
+		public int RequestNumber { get; init; }
 		public PointInt ScreenPosition { get; init; }
 		public VectorLong SectionBlockOffset { get; init; }
 		public bool IsInverted { get; init; }
 
-		public MsrPosition(PointInt screenPosition, VectorLong sectionBlockOffset, bool isInverted)
+		public MsrPosition(int requestNumber, PointInt screenPosition, VectorLong sectionBlockOffset, bool isInverted)
 		{
+			RequestNumber = requestNumber;
 			ScreenPosition = screenPosition;
 			SectionBlockOffset = sectionBlockOffset;
 			IsInverted = isInverted;

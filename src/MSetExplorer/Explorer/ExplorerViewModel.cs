@@ -305,7 +305,7 @@ namespace MSetExplorer
 			ColorBandSetViewModel.ColorBandSet = newColorBandSet;
 			CbsHistogramViewModel.ColorBandSet = newColorBandSet;
 
-			MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
+			_ = MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
 
 			UpdateTheMapCoordsView(curJob);
 		}

@@ -23,7 +23,7 @@ namespace ImageBuilder
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private int? _currentJobNumber;
-		private IDictionary<int, MapSection?>? _currentResponses;
+		private IDictionary<int, MapSection?>? _mapSectionsForRow;
 
 		#endregion
 
@@ -35,7 +35,7 @@ namespace ImageBuilder
 			_mapSectionBuilder = new MapSectionBuilder();
 
 			_currentJobNumber = null;
-			_currentResponses = null;
+			_mapSectionsForRow = null;
 		}
 
 		#endregion
@@ -66,23 +66,28 @@ namespace ImageBuilder
 			{
 				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
+				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(),
+					mapBlockOffset, mapAreaInfo.Precision, crossesXZero: false, mapCalcSettings: mapCalcSettings);
+
+
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
-				var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
-				var h = extentInBlocks.Height;
+				var newMapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
+				var stride = newMapExtentInBlocks.Width;
+				var h = newMapExtentInBlocks.Height;
 
-				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {extentInBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
 
-				var segmentLengths = BitmapHelper.GetSegmentLengths(extentInBlocks.Width, sizeOfFirstBlock.Width, sizeOfLastBlock.Width, blockSize.Width);
+				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {newMapExtentInBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
+
+				var segmentLengths = BitmapHelper.GetSegmentLengths(newMapExtentInBlocks.Width, sizeOfFirstBlock.Width, sizeOfLastBlock.Width, blockSize.Width);
 
 				for (var blockPtr = h - 1; blockPtr >= 0 && !ct.IsCancellationRequested; blockPtr--)
 				{
 					var blockIndexY = blockPtr - (h / 2);
-					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtr, blockIndexY, 
-						extentInBlocks.Width, mapCalcSettings, mapAreaInfo.Precision);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(msrJob, blockPtr, blockIndexY, stride);
 
-					Debug.Assert(blocksForThisRow.Count == extentInBlocks.Width);
+					Debug.Assert(blocksForThisRow.Count == newMapExtentInBlocks.Width);
 
 					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
@@ -93,9 +98,9 @@ namespace ImageBuilder
 
 					var invert = !blocksForThisRow[0]?.IsInverted ?? false; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
 
-					var (startingLinePtr, numberOfLines, lineIncrement) = BitmapHelper.GetNumberOfLines(blockPtr, invert, extentInBlocks.Height, sizeOfFirstBlock.Height, sizeOfLastBlock.Height, blockSize.Height);
+					var (startingLinePtr, numberOfLines, lineIncrement) = BitmapHelper.GetNumberOfLines(blockPtr, invert, newMapExtentInBlocks.Height, sizeOfFirstBlock.Height, sizeOfLastBlock.Height, blockSize.Height);
 
-					BuildARow(pngImage, blockPtr, invert, startingLinePtr, numberOfLines, lineIncrement, extentInBlocks.Width, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					BuildARow(pngImage, blockPtr, invert, startingLinePtr, numberOfLines, lineIncrement, newMapExtentInBlocks.Width, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
 					var percentageCompleted = (h - blockPtr) / (double)h;
 					statusCallBack(100 * percentageCompleted);
@@ -172,6 +177,73 @@ namespace ImageBuilder
 				linePtr += increment;
 			}
 		}
+
+
+
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride)
+		{
+			var requests = new List<MapSectionRequest>();
+
+			for (var colPtr = 0; colPtr < stride; colPtr++)
+			{
+				var key = new PointInt(colPtr, rowPtr);
+
+				var blockIndexX = colPtr - (stride / 2);
+				var screenPositionRelativeToCenter = new VectorInt(blockIndexX, blockIndexY);
+				var mapSectionRequest = _mapSectionBuilder.CreateRequest(msrJob, requestNumber: colPtr, screenPosition: key, screenPositionRelativeToCenter: screenPositionRelativeToCenter);
+
+				requests.Add(mapSectionRequest);
+			}
+
+			//_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
+			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, out var _);
+			_currentJobNumber = msrJob.MapLoaderJobNumber;
+
+			_mapSectionsForRow = new Dictionary<int, MapSection?>();
+
+			foreach (var mapSection in mapSections)
+			{
+				_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+			}
+
+			// TODO: Create a wait handle that is signalled when the MsrJob raises its JobComplete Event.
+			//var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
+
+			Task? task = null;
+
+			if (task != null)
+			{
+				try
+				{
+					await task;
+				}
+				catch (OperationCanceledException)
+				{
+
+				}
+			}
+
+			return _mapSectionsForRow ?? new Dictionary<int, MapSection?>();
+		}
+
+		private void MapSectionReady(MapSection mapSection)
+		{
+			if (mapSection.JobNumber == _currentJobNumber)
+			{
+				if (!mapSection.IsEmpty)
+				{
+					_mapSectionsForRow?.Add(mapSection.ScreenPosition.X, mapSection);
+				}
+				else
+				{
+					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. LastSection = {mapSection.IsLastSection}, Job Number: {mapSection.JobNumber}.");
+				}
+			}
+		}
+
+		#endregion
+
+		#region Old Code
 
 		///// <summary>
 		///// 
@@ -287,72 +359,6 @@ namespace ImageBuilder
 
 		//	return segmentLengths;
 		//}
-
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, OwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, VectorLong mapBlockOffset, int rowPtr, int blockIndexY, int stride, MapCalcSettings mapCalcSettings, int precision)
-		{
-			var jobType = JobType.Image;
-			
-			//var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
-			//var limbCount = _mapSectionBuilder.GetLimbCount(precision);
-			//var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision: precision, limbCount, mapCalcSettings, crossesXZero: false);
-
-			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision, mapCalcSettings, crossesXZero: false);
-
-			var requests = new List<MapSectionRequest>();
-
-			for (var colPtr = 0; colPtr < stride; colPtr++)
-			{
-				var key = new PointInt(colPtr, rowPtr);
-
-				var blockIndexX = colPtr - (stride / 2);
-				var screenPositionRelativeToCenter = new VectorInt(blockIndexX, blockIndexY);
-				var mapSectionRequest = _mapSectionBuilder.CreateRequest(msrJob, requestNumber: colPtr, screenPosition: key, screenPositionRelativeToCenter: screenPositionRelativeToCenter);
-
-				requests.Add(mapSectionRequest);
-			}
-
-			//_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
-			var mapSectionResponses = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, out var _);
-			_currentJobNumber = msrJob.MapLoaderJobNumber;
-
-			_currentResponses = new Dictionary<int, MapSection?>();
-
-			foreach (var response in mapSectionResponses)
-			{
-				_currentResponses.Add(response.ScreenPosition.X, response);
-			}
-
-			var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
-
-			if (task != null)
-			{
-				try
-				{
-					await task;
-				}
-				catch (OperationCanceledException)
-				{
-
-				}
-			}
-
-			return _currentResponses ?? new Dictionary<int, MapSection?>();
-		}
-
-		private void MapSectionReady(MapSection mapSection)
-		{
-			if (mapSection.JobNumber == _currentJobNumber)
-			{
-				if (!mapSection.IsEmpty)
-				{
-					_currentResponses?.Add(mapSection.ScreenPosition.X, mapSection);
-				}
-				else
-				{
-					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. LastSection = {mapSection.IsLastSection}, Job Number: {mapSection.JobNumber}.");
-				}
-			}
-		}
 
 		#endregion
 	}

@@ -201,7 +201,8 @@ namespace MSetExplorer
 								Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== As the ViewportSize is updated, the MapSectionDisplayViewModel is calling ReuseAndLoad.");
 
 								var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
-								newJobNumber = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, reapplyColorMap: false, out lastSectionWasIncluded);
+								var msrJob = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, reapplyColorMap: false, out lastSectionWasIncluded);
+								newJobNumber = msrJob.JobNumber;
 							}
 						}
 
@@ -326,11 +327,11 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public int? SubmitJob(AreaColorAndCalcSettings newValue)
+		public MsrJob? SubmitJob(AreaColorAndCalcSettings newValue)
 		{
 			CheckBlockSize(newValue);
 
-			int? newJobNumber;
+			MsrJob? msrJob;
 			var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
@@ -350,21 +351,21 @@ namespace MSetExplorer
 					if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue, isBound: false);
 
 					CurrentAreaColorAndCalcSettings = newValue;
-					newJobNumber = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
+					msrJob = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
 				}
 				else
 				{
-					newJobNumber = null;
+					msrJob = null;
 				}
 			}
 
-			if (newJobNumber.HasValue && lastSectionWasIncluded)
+			if (msrJob != null && lastSectionWasIncluded)
 			{
-				RaiseDisplayJobCompletedOnBackground(newJobNumber.Value);
+				RaiseDisplayJobCompletedOnBackground(msrJob.JobNumber);
 				//DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
 			}
 
-			return newJobNumber;
+			return msrJob;
 		}
 
 		private void RaiseDisplayJobCompletedOnBackground(int newJobNumber)
@@ -433,16 +434,16 @@ namespace MSetExplorer
 		/// <param name="contentScale">The number of pixels used to show one sample point of the current Map.</param>
 		/// <returns></returns>
 		/// <exception cref="InvalidOperationException"></exception>
-		public int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
+		public MsrJob? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
-			int? newJobNumber;
+			MsrJob? msrJob;
 			var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
 			{
 				if (CurrentAreaColorAndCalcSettings == null)
 				{
-					newJobNumber = null;
+					msrJob = null;
 				}
 				else
 				{
@@ -453,29 +454,29 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(_useDetailedDebug, $"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}. ContentScale: {contentScale}.");
 
-					newJobNumber = LoadNewScaledView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, contentScale, out lastSectionWasIncluded);
+					msrJob = LoadNewScaledView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, contentScale, out lastSectionWasIncluded);
 				}
 			}
 
-			if (newJobNumber.HasValue && lastSectionWasIncluded)
+			if (msrJob != null && lastSectionWasIncluded)
 			{
-				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+				DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
 			}
 
-			return newJobNumber;
+			return msrJob;
 		}
 
 		// User is changing the size of the app / control
-		public int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset)
+		public MsrJob? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset)
 		{
-			int? newJobNumber;
+			MsrJob? msrJob;
 			var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
 			{
 				if (CurrentAreaColorAndCalcSettings == null)
 				{
-					newJobNumber = null;
+					msrJob = null;
 				}
 				else
 				{
@@ -486,22 +487,22 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(_useDetailedDebug, $"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}.");
 
-					newJobNumber = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, out lastSectionWasIncluded);
+					msrJob = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, out lastSectionWasIncluded);
 				}
 			}
 
-			if (newJobNumber.HasValue && lastSectionWasIncluded)
+			if (msrJob != null && lastSectionWasIncluded)
 			{
-				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+				DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
 			}
 
-			return newJobNumber;
+			return msrJob;
 		}
 
 		// User is Panning or using the horizontal scroll bar.
-		public int? MoveTo(VectorDbl contentOffset)
+		public MsrJob MoveTo(VectorDbl contentOffset)
 		{
-			int? newJobNumber;
+			MsrJob msrJob;
 			var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
@@ -526,15 +527,15 @@ namespace MSetExplorer
 
 				ReportMove(_boundedMapArea, contentOffset);
 
-				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
+				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
 			}
 
-			if (newJobNumber.HasValue && lastSectionWasIncluded)
+			if (lastSectionWasIncluded)
 			{
-				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+				DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
 			}
 
-			return newJobNumber;
+			return msrJob;
 		}
 
 		public void CancelJob()
@@ -555,9 +556,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public int? RestartJob()
+		public MsrJob? RestartJob()
 		{
-			int? newJobNumber;
+			MsrJob? msrJob;
 			var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
@@ -578,15 +579,15 @@ namespace MSetExplorer
 						? JobType.FullScale
 						: JobType.ReducedScale;
 
-				newJobNumber = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, LastMapAreaInfo, reapplyColorMap: false, out lastSectionWasIncluded);
+				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, LastMapAreaInfo, reapplyColorMap: false, out lastSectionWasIncluded);
 			}
 
-			if (newJobNumber.HasValue && lastSectionWasIncluded)
+			if (msrJob != null && lastSectionWasIncluded)
 			{
-				DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+				DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
 			}
 
-			return newJobNumber;
+			return msrJob;
 		}
 
 		public void ClearDisplay()
@@ -713,10 +714,8 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private int? LoadNewScaledView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale, out bool lastSectionWasIncluded)
+		private MsrJob LoadNewScaledView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale, out bool lastSectionWasIncluded)
 		{
-			int? newJobNumber;
-
 			// TODO: Compare the currrent and new SubdivisionIds. If different, use DiscardAndLoad
 			var currentBaseFactor = boundedMapArea.BaseFactor;
 
@@ -750,22 +749,22 @@ namespace MSetExplorer
 			// Keep our ViewportSize property in sync.
 			_viewportSize = mapAreaSubset.CanvasSize;
 
+			MsrJob msrJob;
+
 			if (boundedMapArea.BaseFactor == currentBaseFactor)
 			{
-				newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
+				msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
 			}
 			else
 			{
-				newJobNumber = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
+				msrJob = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
 			}
 
-			return newJobNumber;
+			return msrJob;
 		}
 
-		private int? LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, out bool lastSectionWasIncluded)
+		private MsrJob LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, out bool lastSectionWasIncluded)
 		{
-			int? newJobNumber;
-
 			// Get the coordinates for the current view, i.e., the ContentViewportSize
 			boundedMapArea.SetSize(contentViewportSize);
 
@@ -785,14 +784,14 @@ namespace MSetExplorer
 			// because ReuseAndLoad is going to set the BitmapGrid's LogicalViewportSize from the mapAreaSubset.CanvasSize.
 			_viewportSize = mapAreaSubset.CanvasSize;
 
-			newJobNumber = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
+			var msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
 
-			return newJobNumber;
+			return msrJob;
 		}
 
-		private int? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob, out bool lastSectionWasIncluded)
+		private MsrJob? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob, out bool lastSectionWasIncluded)
 		{
-			int? newJobNumber;
+			MsrJob? msrJob;
 
 			if (newJob != null && !newJob.IsEmpty)
 			{
@@ -804,26 +803,26 @@ namespace MSetExplorer
 					
 					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
 					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
-					newJobNumber = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, reapplyColorMap, out lastSectionWasIncluded);
+					msrJob = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, reapplyColorMap, out lastSectionWasIncluded);
 				}
 				else
 				{
 					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
 					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
-					newJobNumber = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
+					msrJob = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
 				}
 			}
 			else
 			{
 				StopCurrentJobs(clearDisplay: true);
 				lastSectionWasIncluded = false;
-				newJobNumber = null;
+				msrJob = null;
 			}
 
-			return newJobNumber;
+			return msrJob;
 		}
 
-		private int? ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, bool reapplyColorMap, out bool lastSectionWasIncluded)
+		private MsrJob ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, bool reapplyColorMap, out bool lastSectionWasIncluded)
 		{
 			var prevMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 
@@ -834,9 +833,9 @@ namespace MSetExplorer
 			_bitmapGrid.LogicalViewportSize = screenAreaInfo.CanvasSize;
 			_bitmapGrid.CanvasControlOffset = screenAreaInfo.CanvasControlOffset;
 
-			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
+			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(msrJob, newMapExtentInBlocks);
 
 			var newRequests = GetRequestsToLoadAndRemove(allRequestsForNewJob, _currentMapSectionRequests, out var requestsNoLongerNeeded);
@@ -914,10 +913,10 @@ namespace MSetExplorer
 				}
 			}
 
-			return msrJob.MapLoaderJobNumber;
+			return msrJob;
 		}
 
-		private int? DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
+		private MsrJob DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
 		{
 			// Let our Bitmap Grid know about the change in View size.
 			// These must be set before we call clear screen.
@@ -929,9 +928,9 @@ namespace MSetExplorer
 
 			LastMapAreaInfo = screenAreaInfo;
 
-			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
+			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, newMapExtentInBlocks);
 
 			ImageOffset = screenAreaInfo.CanvasControlOffset;
@@ -948,14 +947,25 @@ namespace MSetExplorer
 				lastSectionWasIncluded = false;
 			}
 
-			return msrJob.MapLoaderJobNumber;
+			return msrJob;
 		}
 
 		private bool SubmitMSRequests(MsrJob msrJob, List<MapSectionRequest> newRequests, out List<MapSectionRequest> mapRequestsPendingGeneration, [CallerMemberName] string? callerMemberName = null)
 		{
 			AddJobNumber(msrJob.MapLoaderJobNumber);
 
+			//var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, out mapRequestsPendingGeneration);
+
+			// This uses the callback property of the MsrJob.
+
+			var (p, s) = _mapSectionBuilder.CountRequests(newRequests);
+			var numberOfMapSectionsRequested = p * 2 + s;
+
+			//msrJob.Start(newRequests, MapSectionReady, numberOfMapSectionsRequested);
+			var ct = msrJob.CancellationTokenSource.Token;	
 			var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, out mapRequestsPendingGeneration);
+
+			//msrJob.UpdateReqPendingCount(mapRequestsPendingGeneration.Count);
 
 			//AddJobNumber(mapLoaderJobNumber);
 

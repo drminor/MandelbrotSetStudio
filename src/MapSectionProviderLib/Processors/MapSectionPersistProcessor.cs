@@ -15,7 +15,7 @@ namespace MapSectionProviderLib
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
-		private const int QUEUE_CAPACITY = 200;
+		private const int QUEUE_CAPACITY = 500;
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<MapSectionPersistRequest> _workQueue;
 
@@ -99,24 +99,23 @@ namespace MapSectionProviderLib
 					var mapSectionPersistRequest = _workQueue.Take(ct);
 
 					var mapSectionRequest = mapSectionPersistRequest.Request;
-					var mapSectionResponse = mapSectionPersistRequest.Response;
-
-					//if (mapSectionResponse == null)
-					//{
-					//	throw new InvalidOperationException("The MapSectionPersist Processor received an empty MapSectionResponse.");
-					//}
 
 					if (mapSectionPersistRequest.OnlyInsertJobMapSectionRecord)
 					{
-						Debug.Assert(mapSectionResponse.AllVectorPropertiesAreNull, "MapSectionPersistProcessor: MapSectionResponse should not have any non-null Vector properties upon OnlyInsertJobMapSectionRecord.");
-
-						var mapSectionIdStr = mapSectionResponse.MapSectionId ?? throw new InvalidOperationException("The Response's MapSectionId is null on call to SaveJobMapSection.");
+						var mapSectionIdStr = mapSectionRequest.MapSectionId ?? throw new InvalidOperationException("The MapSectionRequest's MapSectionId is null on call to SaveJobMapSection.");
 						var mapSectionId = new ObjectId(mapSectionIdStr);
 
-						_ = await SaveJobMapSection(mapSectionId, mapSectionRequest, mapSectionResponse);
+						_ = await SaveJobMapSection(mapSectionId, mapSectionRequest);
 					}
 					else
 					{
+						var mapSectionResponse = mapSectionPersistRequest.Response;
+
+						if (mapSectionResponse == null)
+						{
+							throw new InvalidOperationException("The MapSectionPersist Processor received an empty MapSectionResponse.");
+						}
+
 						if (mapSectionResponse.MapSectionVectors2 != null)
 						{
 							await PersistTheCountAndZValuesAsync(mapSectionRequest, mapSectionResponse, ct);
@@ -191,7 +190,7 @@ namespace MapSectionProviderLib
 
 				// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType) may not be on file.
 				// This will insert one if not already present.
-				_ = await SaveJobMapSection(mapSectionId.Value, mapSectionRequest, mapSectionResponse);
+				_ = await SaveJobMapSection(mapSectionId.Value, mapSectionRequest);
 			}
 			else
 			{
@@ -215,7 +214,7 @@ namespace MapSectionProviderLib
 				if (mapSectionId.HasValue)
 				{
 					mapSectionResponse.MapSectionId = mapSectionId.ToString();
-					_ = await SaveJobMapSection(mapSectionId.Value, mapSectionRequest, mapSectionResponse);
+					_ = await SaveJobMapSection(mapSectionId.Value, mapSectionRequest);
 				}
 			}
 
@@ -241,7 +240,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private Task<ObjectId?> SaveJobMapSection(ObjectId mapSectionId, MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		private Task<ObjectId?> SaveJobMapSection(ObjectId mapSectionId, MapSectionRequest mapSectionRequest)
 		{
 			//var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			//if (string.IsNullOrEmpty(mapSectionIdStr))
@@ -249,7 +248,7 @@ namespace MapSectionProviderLib
 			//	throw new ArgumentNullException(nameof(MapSectionResponse.MapSectionId), "The MapSectionId cannot be null.");
 			//}
 
-			var mapSubdivisionIdStr = mapSectionResponse.SubdivisionId;
+			var mapSubdivisionIdStr = mapSectionRequest.Subdivision.Id.ToString();
 			if (string.IsNullOrEmpty(mapSubdivisionIdStr))
 			{
 				throw new ArgumentNullException(nameof(MapSectionResponse.SubdivisionId), "The SubdivisionId cannot be null.");

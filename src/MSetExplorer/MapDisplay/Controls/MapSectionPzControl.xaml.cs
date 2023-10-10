@@ -129,7 +129,7 @@ namespace MSetExplorer
 			// NOTE: e.ContentViewportSize is the PanAndZoom's ConstrainedViewportSize.
 			// NOTE: VM's LogicalViewportSize = e.ContentViewportSize * BaseScale
 			
-			_vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset);
+			_ = _vm.UpdateViewportSizeAndPos(e.ContentViewportSize, e.ContentOffset);
 			
 			CheckForOutofSyncLogicalVpSize(BitmapGridControl1.LogicalViewportSize, _vm.LogicalViewportSize);
 
@@ -154,7 +154,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, "\n========== The MapSectionPzControl is handling the PanAndZoom control's ContentScaleChanged event.");
 			ReportViewportChanged(e);
 
-			_vm.UpdateViewportSizePosAndScale(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
+			_ = _vm.UpdateViewportSizePosAndScale(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 			CheckForOutofSyncLogicalVpSize(BitmapGridControl1.LogicalViewportSize, _vm.LogicalViewportSize);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"========== The MapSectionPzControl is returning from UpdatingViewportSizePosAndScale. The ImageOffset is {BitmapGridControl1.ImageOffset}\n");

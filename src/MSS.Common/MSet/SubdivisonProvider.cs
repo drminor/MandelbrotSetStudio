@@ -2,14 +2,12 @@
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
 
 namespace MSS.Common.MSet
 {
 	public class SubdivisonProvider
 	{
 		//private static readonly bool _useDetailedDebug = true;
-
 
 		private const double BITS_PER_SIGNED_LONG = 63;
 
@@ -39,10 +37,20 @@ namespace MSS.Common.MSet
 			return result;
 		}
 
+		/// <summary>
+		/// Break the MapBlockOffset into a Base and a local component.
+		/// The Base is the MapBlockOffset rounded to the nearest integer multiple of 2^63
+		/// and the local component is whatever is left over so that
+		/// the local component when added to the Base is equal to the MapBlockOffset
+		/// For example, given a MapBlockOffset of 515 and for this example using 2^3 instead of 2^63
+		/// then the Base is 512 (64 x 2^3) and the local component is 3 (512 + 3 = 515)
+		/// </summary>
+		/// <param name="mapBlockOffset"></param>
+		/// <param name="localMapBlockOffset"></param>
+		/// <returns></returns>
 		public static BigVector GetBaseMapPosition(BigVector mapBlockOffset, out VectorLong localMapBlockOffset)
 		{
 			var quotient = mapBlockOffset.DivRem(TERMINAL_SUBDIV_SIZE, out localMapBlockOffset);
-
 			var result = quotient.Scale(TERMINAL_SUBDIV_SIZE);
 
 			return result;

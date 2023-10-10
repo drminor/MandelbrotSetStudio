@@ -175,7 +175,7 @@ namespace ImageBuilder
 			//var limbCount = _mapLoaderManager.GetLimbCount(precision);
 			//var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision: precision, limbCount, mapCalcSettings, crossesXZero: false);
 
-			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision, mapCalcSettings, crossesXZero: false);
+			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision, crossesXZero: false, mapCalcSettings: mapCalcSettings);
 
 			var requests = new List<MapSectionRequest>();
 
@@ -202,7 +202,9 @@ namespace ImageBuilder
 					_currentResponses.Add(response.ScreenPosition.X, response);
 				}
 
-				var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
+				//var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
+
+				Task? task = null;
 
 				if (task != null)
 				{

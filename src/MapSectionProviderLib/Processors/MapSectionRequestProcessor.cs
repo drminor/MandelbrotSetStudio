@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -139,12 +140,197 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public List<Tuple<MapSectionRequest, MapSectionResponse>> FetchResponses(List<MapSectionRequest> mapSectionRequests)
+		public List<MapSection> SubmitRequests(List<MapSectionRequest> mapSectionRequests, Action<MapSectionRequest, MapSection> callback, CancellationToken ct, out List<MapSectionRequest> pendingGeneration)
 		{
+			var queueProcessorIndex = 0;
+
+			pendingGeneration = new List<MapSectionRequest>();
+			var result = new List<MapSection>();
+			
+
+			foreach(var mapSectionRequest in mapSectionRequests)
+			{
+				try
+				{
+					var jobIsCancelled = mapSectionRequest.MsrJob.IsCancelled;
+
+					if (jobIsCancelled || mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
+					{
+						var msg = $"MapSectionRequestProcessor is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
+						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
+						Debug.WriteLineIf(_useDetailedDebug, msg);
+
+						var mapSection = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, isCancelled: true);
+						result.Add(mapSection);
+
+						var mirror = mapSectionRequest.Mirror;
+
+						if (mirror != null)
+						{
+							var mapSectionForMirror = _mapSectionBuilder.CreateEmptyMapSection(mirror, isCancelled: true);
+							result.Add(mapSectionForMirror);
+						}
+					}
+					else
+					{
+						if (mapSectionRequest.Cancelled)
+						{
+							var mapSection = _mapSectionBuilder.CreateEmptyMapSection(mapSectionRequest, isCancelled: true);
+							result.Add(mapSection);
+						}
+						else
+						{
+							var mirror = mapSectionRequest.Mirror;
+
+							if (mirror != null && mirror.Cancelled)
+							{
+								var mapSectionForMirror = _mapSectionBuilder.CreateEmptyMapSection(mirror, isCancelled: true);
+								result.Add(mapSectionForMirror);
+							}
+						}
+
+						var mapSectionWorkRequest = new MapSectionWorkRequest(mapSectionRequest.MapLoaderJobNumber, mapSectionRequest, callback);
+
+						if (!UseRepo)
+						{
+							QueueForProcessing(mapSectionWorkRequest);
+							pendingGeneration.Add(mapSectionRequest);
+						}
+						else
+						{
+							Tuple<MapSection, MapSection?>? mapSectionPair = FetchOrQueueForProcessing(mapSectionWorkRequest, ct);
+
+							if (mapSectionPair != null)
+							{
+								if (!mapSectionRequest.Cancelled)
+								{
+									result.Add(mapSectionPair.Item1);
+								}
+
+								if (mapSectionPair.Item2 != null)
+								{
+									var mirror = mapSectionRequest.Mirror;
+
+									if (mirror == null)
+									{
+										throw new InvalidOperationException("Receiving two MapSections, but the request has no mirror.");
+									}
+
+									if (!mirror.Cancelled)
+									{
+										result.Add(mapSectionPair.Item2);
+									}
+								}
+							}
+							else
+							{
+								pendingGeneration.Add(mapSectionRequest);
+							}
+						}
+					}
+				}
+				catch (OperationCanceledException)
+				{
+					//Debug.WriteLineIf(_useDetailedDebug, "The work queue got a OCE.");
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"MapSectionRequestProcessor: QueueProcessor:{queueProcessorIndex} got an exception: {e}.");
+					throw;
+				}
+			}
+
+			return result;
+		}
+
+		private Tuple<MapSection, MapSection?>? FetchOrQueueForProcessing(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
+		{
+			var request = mapSectionWorkRequest.Request;
+
+			var mapSectionBytes = Fetch(request);
+
+			if (mapSectionBytes != null)
+			{
+				var mapSectionId = mapSectionBytes.Id;
+				request.MapSectionId = mapSectionId.ToString();
+
+				var requestedIterations = request.MapCalcSettings.TargetIterations;
+
+				// TODO: Update the Logic in FetchOrQueueForProcessing to only get Metadata instead of the actual bytes to determine if the record satifyies the request.
+				if (DoesTheResponseSatisfyTheRequest(mapSectionBytes, requestedIterations, out var reason))
+				{
+					//Debug.WriteLineIf(_useDetailedDebug, $"Got {request.ScreenPosition} from repo.");
+
+					request.FoundInRepo = true;
+					request.ProcessingEndTime = DateTime.UtcNow;
+					PersistJobMapSectionRecord(request, ct);
+
+					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
+
+					var mapSection1 = CreateMapSection(request, mapSectionVectors);
+
+					MapSection? mapSection2;
+
+					var mirror = request.Mirror;
+					if (mirror != null)
+					{
+						mirror.MapSectionId = mapSectionId.ToString();
+						mirror.FoundInRepo = true;
+						mirror.ProcessingEndTime = DateTime.UtcNow;
+
+						PersistJobMapSectionRecord(mirror, ct);
+
+						// Use the same MapSectionVectors as does the first mapSection
+						mapSectionVectors.IncreaseRefCount();
+						mapSection2 = CreateMapSection(mirror, mapSectionVectors);
+					}
+					else
+					{
+						mapSection2 = null;
+					}
+
+					return new Tuple<MapSection, MapSection?>(mapSection1, mapSection2);
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The response was not satisfactory because: {reason}. ({request.ScreenPosition}).");
+					Debug.WriteLine("WARNING: We fetched, but did not use the 64Kb MapSectionBytes object.");
+
+					QueueForProcessing(mapSectionWorkRequest);
+
+					return null;
+				}
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Request for {request.ScreenPosition} not found in the repo: Queuing for generation.");
+
+				QueueForProcessing(mapSectionWorkRequest);
+				return null;
+			}
+		}
+
+		private void QueueForProcessing(MapSectionWorkRequest mapSectionWorkRequest)
+		{
+			if (!_requestQueue.IsAddingCompleted)
+			{
+				_requestQueue.Add(mapSectionWorkRequest);
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionRequestProcessor. Not adding: {mapSectionWorkRequest.Request}, The MapSectionRequestProcessor's RequestQueue IsAddingComplete has been set.");
+			}
+		}
+
+		//Tuple<MapSection, MapSection?>
+		public List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>> FetchResponses(List<MapSectionRequest> mapSectionRequests, out List<MapSectionRequest> notFoundInRepo)
+		{
+			notFoundInRepo = new List<MapSectionRequest>();
+
 			var cts = new CancellationTokenSource();
 			var ct = cts.Token;
 
-			var result = new List<Tuple<MapSectionRequest, MapSectionResponse>>();
+			var result = new List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>>();
 
 			foreach (var request in mapSectionRequests)
 			{
@@ -152,6 +338,7 @@ namespace MapSectionProviderLib
 
 				if (mapSectionBytes != null)
 				{
+					var mapSectionId = mapSectionBytes.Id;
 					var requestedIterations = request.MapCalcSettings.TargetIterations;
 
 					if (DoesTheResponseSatisfyTheRequest(mapSectionBytes, requestedIterations, out _))
@@ -160,25 +347,43 @@ namespace MapSectionProviderLib
 						request.ProcessingEndTime = DateTime.UtcNow;
 
 						var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-						var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
+						mapSectionVectors.Load(mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities);
 
-						result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(request, mapSectionResponse));
+						request.MapSectionId = mapSectionId.ToString();
+						var mapSection1 = CreateMapSection(request, mapSectionVectors);
 
-						PersistJobMapSectionRecord(request, mapSectionResponse, ct);
+						MapSection? mapSection2;
 
 						var mirror = request.Mirror;
 						if (mirror != null)
 						{
+							mirror.MapSectionId = mapSectionId.ToString();
 							mirror.FoundInRepo = true;
 							mirror.ProcessingEndTime = DateTime.UtcNow;
 
-							mapSectionResponse.MapSectionVectors?.IncreaseRefCount();
-							mapSectionResponse.MapSectionZVectors?.IncreaseRefCount();
-							result.Add(new Tuple<MapSectionRequest, MapSectionResponse>(mirror, mapSectionResponse));
+							PersistJobMapSectionRecord(mirror, ct);
 
-							PersistJobMapSectionRecord(mirror, mapSectionResponse, ct);
+							// Use the same MapSectionVectors as does the first mapSection
+							mapSectionVectors.IncreaseRefCount();
+							mapSection2 = CreateMapSection(mirror, mapSectionVectors);
 						}
+						else
+						{
+							mapSection2 = null;
+						}
+
+						var payload = new Tuple<MapSection, MapSection?>(mapSection1, mapSection2);
+						var r = new Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>(request, payload);
+						result.Add(r);
 					}
+					else
+					{
+						notFoundInRepo.Add(request);
+					}
+				}
+				else
+				{
+					notFoundInRepo.Add(request);
 				}
 			}
 
@@ -422,7 +627,7 @@ namespace MapSectionProviderLib
 					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 					var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
 
-					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
+					PersistJobMapSectionRecord(request, ct);
 
 					var mapSection1 = CreateMapSection(request, mapSectionVectors);
 
@@ -434,7 +639,7 @@ namespace MapSectionProviderLib
 						mirror.FoundInRepo = true;
 						mirror.ProcessingEndTime = DateTime.UtcNow;
 						
-						PersistJobMapSectionRecord(mirror, mapSectionResponse, ct);
+						PersistJobMapSectionRecord(mirror, ct);
 
 						// Use the same MapSectionVectors as does the first mapSection
 						mapSectionVectors.IncreaseRefCount();
@@ -616,9 +821,8 @@ namespace MapSectionProviderLib
 					request.ProcessingEndTime = DateTime.UtcNow;
 
 					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
-					var mapSectionResponse = MapFrom(mapSectionBytes, mapSectionVectors);
 
-					PersistJobMapSectionRecord(request, mapSectionResponse, ct);
+					PersistJobMapSectionRecord(request, ct);
 
 					var mapSection1 = CreateMapSection(request, mapSectionVectors);
 
@@ -630,7 +834,7 @@ namespace MapSectionProviderLib
 						mirror.FoundInRepo = true;
 						mirror.ProcessingEndTime = DateTime.UtcNow;
 
-						PersistJobMapSectionRecord(mirror, mapSectionResponse, ct);
+						PersistJobMapSectionRecord(mirror, ct);
 
 						// Use the same MapSectionVectors as does the first mapSection
 						mapSectionVectors.IncreaseRefCount();
@@ -858,10 +1062,10 @@ namespace MapSectionProviderLib
 			return mapSection;
 		}
 
-		private void PersistJobMapSectionRecord(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
+		private void PersistJobMapSectionRecord(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
-			var copyWithNoVectors = mapSectionResponse.CreateCopySansVectors();
-			_mapSectionPersistProcessor.AddWork(new MapSectionPersistRequest(mapSectionRequest, copyWithNoVectors, onlyInsertJobMapSectionRecord: true), ct);
+			var persistRequest = new MapSectionPersistRequest(mapSectionRequest, response: null, onlyInsertJobMapSectionRecord: true);
+			_mapSectionPersistProcessor.AddWork(persistRequest, ct);
 		}
 
 		private void SendToPersistQueue(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
@@ -875,6 +1079,7 @@ namespace MapSectionProviderLib
 		[Conditional("DEBUG")]
 		private void CheckRequestResponseBeforePersist(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
+			Debug.Assert(mapSectionResponse.MapSectionVectors2 != null, "The MapSectionVectors2 should not be null.");
 			Debug.Assert(mapSectionResponse.MapSectionVectors == null, "The MapSectionVectors should be null.");
 
 			if (mapSectionRequest.MapCalcSettings.SaveTheZValues && !mapSectionResponse.AllRowsHaveEscaped)

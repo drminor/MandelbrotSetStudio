@@ -36,12 +36,12 @@ namespace MSetExplorer
 		void RaiseMapViewZoomUpdate(AreaSelectedEventArgs e);
 		void RaiseMapViewPanUpdate(ImageDraggedEventArgs e);
 
-		int? SubmitJob(AreaColorAndCalcSettings newValue);
+		MsrJob? SubmitJob(AreaColorAndCalcSettings newValue);
 		void SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom);
 
 		void CancelJob();
 		void PauseJob();
-		int? RestartJob();
+		MsrJob? RestartJob();
 		void ClearDisplay();
 
 		SizeDbl UnscaledExtent { get; }
@@ -60,9 +60,9 @@ namespace MSetExplorer
 		double MinimumDisplayZoom { get; set; }
 		double MaximumDisplayZoom { get; set; }
 
-		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset);
-		int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
+		MsrJob? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset);
+		MsrJob? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
-		int? MoveTo(VectorDbl contentOffset);
+		MsrJob? MoveTo(VectorDbl contentOffset);
 	}
 }

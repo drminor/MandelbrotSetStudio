@@ -111,6 +111,7 @@ namespace MSS.Types
 			var blocksH = BigInteger.DivRem(X, dividend.X, out var remainderH);
 			var blocksV = BigInteger.DivRem(Y, dividend.Y, out var remainderV);
 
+
 			remainder = new VectorLong(remainderH, remainderV);
 			var result = new BigVector(blocksH, blocksV);
 
@@ -156,7 +157,7 @@ namespace MSS.Types
 			}
 			else
 			{
-				value = new VectorLong((long)Values[0], (int)Values[1]);
+				value = new VectorLong((long)Values[0], (long)Values[1]);
 				return true;
 			}
 		}

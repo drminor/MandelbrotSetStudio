@@ -281,7 +281,7 @@ namespace MSetExplorer
 				else
 				{
 					//_vm.RunCurrentJob();
-					_vm.MapDisplayViewModel.RestartJob();
+					_ = _vm.MapDisplayViewModel.RestartJob();
 				}
 			}
 		}

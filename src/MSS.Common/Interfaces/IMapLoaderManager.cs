@@ -3,6 +3,7 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSS.Common
@@ -12,33 +13,28 @@ namespace MSS.Common
 		event EventHandler<JobProgressInfo>? RequestAdded;
 		event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		//bool SaveTheZValues { get; set; }
-		//bool CalculateEscapeVelocities { get; set; }
-
 		//int GetNextJobNumber();
 
 		int GetLimbCount(int precision);
 
 		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings);
 		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId, VectorLong mapBlockOffset,
-			int precision, MapCalcSettings mapCalcSettings, bool crossesXZero);
+			int precision, bool crossesXZero, MapCalcSettings mapCalcSettings);
 
-		//List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings,
-		//	IList<MapSection> emptyMapSections, Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration);
+		//List<MapSection> PushV1(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration);
 
+		// New version for use with the MapSectionRequestProcessor:: SubmitRequests method.
 		List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration);
 
-		Task? GetTaskForJob(int jobNumber);
+		//Task? GetTaskForJob(int jobNumber);
 		TimeSpan? GetExecutionTimeForJob(int jobNumber);
-		int GetPendingRequests(int jobNumber);
+		//int GetPendingRequests(int jobNumber);
 
 		void StopJob(int jobNumber);
 		void StopJobs(List<int> jobNumbers);
+
 		//void CancelRequests(IList<MapSection> sectionsToCancel);
-
 		//void CancelRequests(IList<MapSectionRequest> requestsToCancel);
-
-
 
 		//long NumberOfCountValSwitches { get; }
 	}

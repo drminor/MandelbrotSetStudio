@@ -69,19 +69,28 @@ namespace MapSectionProviderLib
 	internal class MapSectionPersistRequest : WorkItem<MapSectionRequest, MapSectionResponse>
 	{
 		//public MapSectionRequest Request { get; init; }
-		public new MapSectionResponse Response { get; init; }
+		//public new MapSectionResponse Response { get; init; }
 		public bool OnlyInsertJobMapSectionRecord { get; init; }
 
 		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response)
 			: this(request, response, onlyInsertJobMapSectionRecord: false)
 		{ }
 
-		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response, bool onlyInsertJobMapSectionRecord)
+		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse? response, bool onlyInsertJobMapSectionRecord)
 			: base(request.MapLoaderJobNumber, request, (request, response) => { })
 		{
 			Request = request ?? throw new ArgumentNullException(nameof(request));
-			Response = response ?? throw new ArgumentNullException(nameof(response));
+
 			OnlyInsertJobMapSectionRecord = onlyInsertJobMapSectionRecord;
+
+			if (!onlyInsertJobMapSectionRecord)
+			{
+				Response = response ?? throw new ArgumentNullException(nameof(response));
+			}
+			else
+			{
+				Response = response;
+			}
 		}
 	}
 

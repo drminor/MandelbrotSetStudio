@@ -19,9 +19,9 @@ namespace MapSectionProviderLib
 
 		private IList<MapSectionRequest>? _mapSectionRequests;
 
-		private int _sectionsSubmitted;
-
 		private bool _isStopping;
+
+		private int _sectionsSubmitted;
 		private int _sectionsRequested;
 		private int _sectionsCompleted;
 		private TaskCompletionSource? _tcs;

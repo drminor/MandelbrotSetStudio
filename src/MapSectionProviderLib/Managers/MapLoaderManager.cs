@@ -1,5 +1,4 @@
 ﻿using MSS.Common;
-using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -63,24 +62,26 @@ namespace MapSectionProviderLib
 
 		#region Public Methods
 
-		public int GetNextJobNumber() => _mapSectionRequestProcessor.GetNextJobNumber();
+		private int GetNextJobNumber() => _mapSectionRequestProcessor.GetNextJobNumber();
 
 		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
-			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
+			//// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
+			//var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
+			//var limbCount = GetLimbCount(precision);
+			//var mapLoaderJobNumber = GetNextJobNumber();
 
-			var limbCount = GetLimbCount(precision);
+			//var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
+			//	precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
 
-			var mapLoaderJobNumber = GetNextJobNumber();
-
-			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
-				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
+			var msrJob = CreateMapSectionRequestJob(jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(),
+				mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, mapAreaInfo.Coords.CrossesXZero, mapCalcSettings);
 
 			return msrJob;
 		}
 
-		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId, VectorLong mapBlockOffset, int precision, MapCalcSettings mapCalcSettings, bool crossesXZero)
+		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId,
+			VectorLong mapBlockOffset, int precision, bool crossesXZero, MapCalcSettings mapCalcSettings)
 		{
 			var limbCount = GetLimbCount(precision);
 			var mapLoaderJobNumber = GetNextJobNumber();
@@ -89,14 +90,12 @@ namespace MapSectionProviderLib
 			return msrJob;
 		}
 
-		public List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration)
+		public List<MapSection> PushOld(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration)
 		{
-			var mapLoaderJobNumber = msrJob.MapLoaderJobNumber;
-			var result = FetchResponses(mapSectionRequests);
+			List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>> requestAndMapSectionPairs = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests, out var requestsNotFound);
 
-			if (result.Count != mapSectionRequests.Count)
+			if (requestsNotFound.Count > 0)
 			{
-				var requestsNotFound = mapSectionRequests.Where(x => !x.FoundInRepo).ToList();
 				CheckNewRequestsForCancellation(requestsNotFound);
 
 				_requestsLock.EnterWriteLock();
@@ -104,7 +103,8 @@ namespace MapSectionProviderLib
 				try
 				{
 					//	CreateNewGenMapRequestInfo(mapLoaderJobNumber, requestsNotFound, callback, _mapSectionRequestProcessor, _cts.Token);
-					var genMapRequestInfo = new GenMapRequestInfo(mapLoaderJobNumber, callback, _mapSectionRequestProcessor, requestsNotFound, _cts.Token);
+
+					var genMapRequestInfo = new GenMapRequestInfo(msrJob, callback, _mapSectionRequestProcessor, requestsNotFound, _cts.Token);
 					_requests.Add(genMapRequestInfo);
 					genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
 				}
@@ -120,22 +120,51 @@ namespace MapSectionProviderLib
 				pendingGeneration = new List<MapSectionRequest>();
 			}
 
-			RequestAdded?.Invoke(this, new JobProgressInfo(mapLoaderJobNumber, "temp", DateTime.Now, mapSectionRequests.Count, result.Count));
+			var mapLoaderJobNumber = msrJob.MapLoaderJobNumber;
 
-			return result;
+			var mapSections = GetMapSectionRecsFromResult(requestAndMapSectionPairs);
+
+			RequestAdded?.Invoke(this, new JobProgressInfo(mapLoaderJobNumber, "temp", DateTime.Now, mapSectionRequests.Count, mapSections.Count));
+
+			return mapSections;
 		}
 
+		public List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration)
+		{
+			//var postGenerationCallBack = msrJob.HandleResponse;
+			//var mapSections = _mapSectionRequestProcessor.SubmitRequests(mapSectionRequests, postGenerationCallBack, ct, out pendingGeneration);
 
+			//var mapSections = FetchResponses(mapSectionRequests);
+
+			List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>> requestAndMapSectionPairs = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests, out pendingGeneration);
+
+			var (p, s) = _mapSectionBuilder.CountRequests(pendingGeneration);
+			var numberOfMapSectionsRequested = p * 2 + s;
+
+			msrJob.Start(pendingGeneration, callback, numberOfMapSectionsRequested);
+
+			foreach (var mapSectionRequest in pendingGeneration)
+			{
+				_mapSectionRequestProcessor.AddWork(mapSectionRequest, msrJob.HandleResponse);
+			}
+
+			var mapSections = GetMapSectionRecsFromResult(requestAndMapSectionPairs);
+
+			return mapSections;
+		}
+
+		// TODO: Have the caller create a Task that 'waits' for the JobCompleted Event to be raised.
 
 		public Task? GetTaskForJob(int jobNumber)
 		{
-			var result = DoWithReadLock(() =>
-			{
-				var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.Task;
-				return t;
-			});
+			//var result = DoWithReadLock(() =>
+			//{
+			//	var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.Task;
+			//	return t;
+			//});
 
-			return result;
+			//return result;
+			return null;
 		}
 
 		public TimeSpan? GetExecutionTimeForJob(int jobNumber)
@@ -182,7 +211,6 @@ namespace MapSectionProviderLib
 			{
 				StopCurrentJobsInternal(jobNumbers);
 			});
-
 		}
 
 		public int GetLimbCount(int precision)
@@ -214,25 +242,26 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private List<MapSection> FetchResponses(List<MapSectionRequest> mapSectionRequests)
+		private List<MapSection> GetMapSectionRecsFromResult(List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>> requestAndMapSectionPairs)
 		{
-			var result = new List<MapSection>();
+			var mapSections = new List<MapSection>();
 
-			var requestResponsePairs = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests);
-
-			foreach (var requestResponsePair in requestResponsePairs)
+			foreach (var reqAndMapSectionPair in requestAndMapSectionPairs)
 			{
-				var request = requestResponsePair.Item1;
-				var response = requestResponsePair.Item2;
+				var mapSectionPair = reqAndMapSectionPair.Item2;
 
-				if (response.MapSectionVectors != null)
+				var request = mapSectionPair.Item1;
+				var mirror = mapSectionPair.Item2;
+
+				mapSections.Add(request);
+
+				if (mirror != null)
 				{
-					var mapSection = _mapSectionBuilder.CreateMapSection(request, response.MapSectionVectors);
-					result.Add(mapSection);
+					mapSections.Add(mirror);
 				}
 			}
 
-			return result;
+			return mapSections;
 		}
 
 		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
@@ -435,249 +464,5 @@ namespace MapSectionProviderLib
 		}
 
 		#endregion
-
-		#region Old code
-
-		//public List<MapSection> Push(string ownerId, JobOwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, Action<MapSection> callback, out int jobNumber)
-		//{
-		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(ownerId, jobOwnerType, mapAreaInfo, mapCalcSettings);
-		//	var result = Push(mapSectionRequests, callback, out jobNumber);
-		//	return result;
-		//}
-
-		//public List<MapSection> Push(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings, IList<MapSection> emptyMapSections, 
-		//	Action<MapSection> callback, out int jobNumber, out IList<MapSection> mapSectionsPendingGeneration)
-		//{
-		//	Debug.WriteLine($"MapLoaderManager: Creating MapSections with SaveTheZValues: {mapCalcSettings.SaveTheZValues} and CalculateEscapeVelocities: {mapCalcSettings.CalculateEscapeVelocities}.");
-
-		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequestsFromMapSections(jobType, jobId, jobOwnerType, mapAreaInfo, mapCalcSettings, emptyMapSections);
-		//	var result = Push(mapSectionRequests, callback, out jobNumber, out var pendingGeneration);
-
-		//	mapSectionsPendingGeneration = new List<MapSection>();
-
-		//	foreach(var mapSectionRequest in pendingGeneration)
-		//	{
-		//		//var mapSectionPending = emptyMapSections[mapSectionRequest.RequestNumber];
-		//		var mapSectionPending = emptyMapSections.FirstOrDefault(x => x.RequestNumber == mapSectionRequest.RequestNumber);
-
-		//		if (mapSectionPending != null)
-		//		{
-		//			mapSectionPending.JobNumber = jobNumber;
-		//			mapSectionsPendingGeneration.Add(mapSectionPending);
-		//		}
-		//	}
-
-		//	return result;
-		//}
-
-		//public void CancelRequests(IList<MapSection> sectionsToCancel)
-		//{
-		//	DoWithWriteLock(() =>
-		//	{
-		//		CancelRequestsInternal(sectionsToCancel);
-		//	});
-		//}
-
-		//public void CancelRequests(IList<MapSectionRequest> requestsToCancel)
-		//{
-		//	DoWithWriteLock(() =>
-		//	{
-		//		CancelRequestsInternal(requestsToCancel);
-		//	});
-		//}
-
-		//private void CancelRequestsInternal(IList<MapSection> sectionsToCancel)
-		//{
-		//	foreach (var section in sectionsToCancel)
-		//	{
-		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == section.JobNumber);
-
-		//		if (genMapRequestInfo != null)
-		//		{
-		//			genMapRequestInfo.MapLoader.CancelRequest(section);
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {section.JobNumber}.");
-		//		}
-		//	}
-		//}
-
-		//private void CancelRequestsInternal(IList<MapSectionRequest> requestsToCancel)
-		//{
-		//	foreach (var request in requestsToCancel)
-		//	{
-		//		var genMapRequestInfo = _requests.FirstOrDefault(x => x.JobNumber == request.MapLoaderJobNumber);
-
-		//		if (genMapRequestInfo != null)
-		//		{
-		//			genMapRequestInfo.MapLoader.CancelRequest(request);
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"MapLoaderManager::CancelRequestsInternal. Could not MapLoader Job with JobNumber: {request.MapLoaderJobNumber}.");
-		//		}
-		//	}
-		//}
-
-		#endregion
-	}
-
-	internal class GenMapRequestInfo 
-	//: IDisposable
-	{
-		private readonly CancellationToken _ct;
-		//private readonly Task? _onCompletedTask;
-
-		private MapLoader _mapLoader;
-
-
-		#region Constructor
-
-		/*
-			var mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
-			var startTask = mapLoader.Start(requestsNotFound);
-			var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, ct);
-
-		*/
-
-		//public GenMapRequestInfo(MapLoader mapLoader, Task task, CancellationToken ct)
-		public GenMapRequestInfo(int mapLoaderJobNumber, Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor,
-			List<MapSectionRequest> requestsNotFound, CancellationToken ct)
-		{
-			_mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
-			Task = _mapLoader.Start(requestsNotFound);
-
-			JobNumber = _mapLoader.JobNumber;
-
-			_ct = ct;
-
-			TaskStartedDate = DateTime.UtcNow;
-
-			if (Task.IsCompleted)
-			{
-				TaskCompletedDate = DateTime.UtcNow;
-				//_onCompletedTask = null;
-			}
-			else
-			{
-				//_onCompletedTask = task.ContinueWith(TaskCompleted, _ct);
-				_ = Task.ContinueWith(TaskCompleted, _ct);
-			}
-
-			_mapLoader.SectionLoaded += MapLoader_SectionLoaded;
-		}
-
-		#endregion
-
-		#region Public Properties
-
-		public int JobNumber { get; init; }
-
-		public event EventHandler<MapSectionProcessInfo>? MapSectionLoaded;
-
-		public Task Task { get; init; }
-
-		public DateTime TaskStartedDate { get; init; }
-		public DateTime? TaskCompletedDate { get; private set; }
-
-		public TimeSpan TotalExecutionTime => _mapLoader.ElaspedTime;
-
-		#endregion
-
-
-		#region Public Methods
-
-		public void MarkJobAsComplete()
-		{
-			_mapLoader.MarkJobAsComplete();
-		}
-
-		public void Stop()
-		{
-			_mapLoader.Stop();
-		}
-
-		public int GetNumberOfRequestsPending()
-		{
-			var result = _mapLoader.SectionsRequested - _mapLoader.SectionsCompleted;
-
-			return result;
-		}
-
-		#endregion
-
-		#region Event Handlers and Private Methods
-
-		private void MapLoader_SectionLoaded(object? sender, MapSectionProcessInfo e)
-		{
-			MapSectionLoaded?.Invoke(this, e);
-		}
-
-		private void TaskCompleted(Task task)
-		{
-			TaskCompletedDate = DateTime.UtcNow;
-		}
-
-		#endregion
-
-
-		//private GenMapRequestInfo CreateNewGenMapRequestInfo(int mapLoaderJobNumber, List<MapSectionRequest> requestsNotFound, Action<MapSection> callback, MapSectionRequestProcessor mapSectionRequestProcessor, CancellationToken ct)
-		//{
-		//	var mapLoader = new MapLoader(mapLoaderJobNumber, callback, mapSectionRequestProcessor);
-		//	var startTask = mapLoader.Start(requestsNotFound);
-		//	var genMapRequestInfo = new GenMapRequestInfo(mapLoader, startTask, ct);
-
-		//	return genMapRequestInfo;
-		//}
-
-		//#region IDisposable Support
-
-		//private bool disposedValue;
-
-		//protected virtual void Dispose(bool disposing)
-		//{
-		//	if (!disposedValue)
-		//	{
-		//		if (disposing)
-		//		{
-		//			// Dispose managed state (managed objects)
-
-		//			//if (Task != null)
-		//			//{
-		//			//	if (Task.IsCompleted)
-		//			//	{
-		//			//		Task.Dispose();
-		//			//	}
-		//			//	else
-		//			//	{
-		//			//		Debug.WriteLine($"The Task is not null and not completed as the GenMapRequestInfo is being disposed.");
-		//			//	}
-		//			//}
-
-		//			//if (_onCompletedTask != null)
-		//			//{
-		//			//	if (_onCompletedTask.IsCompleted)
-		//			//	{
-		//			//		_onCompletedTask.Dispose();
-		//			//	}
-		//			//	else
-		//			//	{
-		//			//		Debug.WriteLine($"The onCompletedTask is not null and not completed as the GenMapRequestInfo is being disposed.");
-		//			//	}
-		//			//}
-		//		}
-
-		//		disposedValue = true;
-		//	}
-		//}
-
-		//public void Dispose()
-		//{
-		//	Dispose(disposing: true);
-		//	GC.SuppressFinalize(this);
-		//}
-
-		//#endregion
 	}
 }

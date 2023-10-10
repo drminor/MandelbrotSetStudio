@@ -18,7 +18,6 @@ namespace MSS.Types
 		
 		// Maximum positive value able to be stored in a 
 		private static readonly BigInteger MAX_DIGIT_VALUE = LONG_FACTOR - 1;
-
 		private static readonly BigInteger MIN_DIGIT_VALUE = LONG_FACTOR * -1;
 
 		//// Integer used to convert BigIntegers to/from array of longs.
