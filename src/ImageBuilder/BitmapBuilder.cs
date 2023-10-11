@@ -194,7 +194,7 @@ namespace ImageBuilder
 
 			try
 			{
-				var mapSectionResponses = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, out var _);
+				var mapSectionResponses = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, msrJob.CancellationTokenSource.Token, out var _);
 				_currentJobNumber = msrJob.MapLoaderJobNumber;
 
 				foreach (var response in mapSectionResponses)

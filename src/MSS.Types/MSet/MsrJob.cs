@@ -1,9 +1,6 @@
 ﻿using MongoDB.Bson;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 
 namespace MSS.Types.MSet
@@ -13,20 +10,12 @@ namespace MSS.Types.MSet
 		#region Private Fields
 
 		private Action<MapSection> _callback;
-		//private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-
-		private List<MapSectionRequest>? _mapSectionRequests;
-
-		private bool _isStopping;
 		private bool _isCompleted;
-
-		private int _sectionsSubmitted;
-		private int _sectionsRequested;
-		private int _sectionsCompleted;
-
 		private Stopwatch _stopwatch;
 
 		#endregion
+
+		#region Constructors
 
 		public MsrJob() : this(mapLoaderJobNumber: 0, jobType: JobType.FullScale, jobId: "", ownerType: OwnerType.Project, subdivision: new Subdivision(), originalSourceSubdivisionId: "",
 			jobBlockOffset: new VectorLong(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings(), crossesXZero: false)
@@ -59,32 +48,21 @@ namespace MSS.Types.MSet
 			CancellationTokenSource = new CancellationTokenSource();
 
 			_callback = NoOpCallBack;
-			//_mapSectionRequestProcessor = mapSectionRequestProcessor ?? throw new ArgumentNullException(nameof(mapSectionRequestProcessor));
-
-			_mapSectionRequests = null;
-			_isStopping = false;
 			_isCompleted = false;
-			_sectionsSubmitted = 0;
-			_sectionsRequested = 0;
-			_sectionsCompleted = 0;
 
 			_stopwatch = new Stopwatch();
 			_stopwatch.Stop();
 
 			AllocateMathCounts();
-
-			_mapSectionRequests = null;
-
-			//CancellationTokenSource = new CancellationTokenSource();
 		}
+
+		#endregion
 
 		#region Events
 
-		// Instead of having other windows subscribe to the MapLoader's SectionLoaded event,
-		// have those other windows subscribe to an event provided by the class to which the callback method belongs.
 		public event EventHandler<MapSectionProcessInfo>? MapSectionLoaded;
-		public event EventHandler? JobHasCompleted;
 
+		public event EventHandler? JobHasCompleted;
 
 		#endregion
 
@@ -114,14 +92,7 @@ namespace MSS.Types.MSet
 		public bool CrossesYZero { get; init; }
 
 		public bool IsCancelled { get; set; }
-
 		public CancellationTokenSource CancellationTokenSource { get; set; }
-
-		#endregion
-
-		#region Pubic Properties - Optional
-
-		public List<MapSectionRequest>? MapSectionRequests => _mapSectionRequests;
 
 		public DateTime? ProcessingStartTime { get; set; }
 		public DateTime? ProcessingEndTime { get; set; }
@@ -131,42 +102,54 @@ namespace MSS.Types.MSet
 
 		public MathOpCounts? MathOpCounts { get; private set; }
 
-		public int SectionsSubmitted => _sectionsSubmitted;
-		public int SectionsRequested => _sectionsRequested;
-		public int SectionsCompleted => _sectionsCompleted;
+		public int TotalNumberOfSectionsRequested { get; set; }
+		public int SectionsFoundInRepo { get; set; }
+		public int SectionsGenerated { get; set; }
+		public int SectionsCancelled { get; set; }
+
+		public int SectionsPending => TotalNumberOfSectionsRequested - SectionsFoundInRepo - SectionsGenerated - SectionsCancelled;
 
 		#endregion
 
 		#region Public Methods
 
-		public bool Start(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, int numberOfMapSectionsRequested)
+		public bool Start(int sectionsRequested, Action<MapSection> callback)
 		{
-			_mapSectionRequests = mapSectionRequests;
+			return Start(sectionsRequested, 0, 0, 0, callback);
+		}
+
+		public bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> callback)
+		{
+			TotalNumberOfSectionsRequested = sectionsRequested;
+			SectionsFoundInRepo = sectionsFoundInRepo;
+			SectionsGenerated = sectionsGenerated;
+			SectionsCancelled = sectionsCancelled;
+
 			_callback = callback;
 
-			_sectionsRequested = numberOfMapSectionsRequested;
-			_sectionsSubmitted = numberOfMapSectionsRequested; 
-
-			//if (mapSectionRequests.Count == numberOfsectionsRequested)
-			//{
-			//	_isCompleted = true;
-			//}
+			if (SectionsPending == 0)
+			{
+				MarkJobAsComplete();
+			}
+			else
+			{
+				_stopwatch.Start();
+			}
 
 			return true;
 		}
 
-		//public bool UpdateReqPendingCount(int amount)
-		//{
-		//	_sectionsSubmitted = amount;
-
-		//	var result = AllCompleted();
-
-		//	return result;
-		//}
-
 		public void Cancel()
 		{
-
+			if (IsCancelled)
+			{
+				Debug.WriteLine($"WARNING: Cancelling Job: {MapLoaderJobNumber} that has already been cancelled.");
+			}
+			else
+			{
+				IsCancelled = true;
+				MarkJobAsComplete();
+			}
 		}
 
 		public void MarkJobAsComplete()
@@ -178,65 +161,43 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public int GetNumberOfRequestsPendingSubmittal()
-		{
-			return 0;
-		}
-
-		public int GetNumberOfRequestsPendingGeneration()
-		{
-			return 0;
-		}
-
-		public override string ToString()
-		{
-			return $"Id: {JobId}, JobNumber: {MapLoaderJobNumber}.";
-		}
-
 		public void HandleResponse(MapSectionRequest mapSectionRequest, MapSection mapSection)
 		{
 			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MapLoader's HandleResponse is being called from the Response Processor.");
 
-			UpdateMathCounts(mapSection);
+			Debug.WriteLine($"WARNING: HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber}.");
+
+			var jobIsCancelled = mapSectionRequest.MsrJob.IsCancelled;
+			if (jobIsCancelled || SectionsPending <= 0)
+			{
+				_stopwatch.Stop();
+			}
+
+			mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
 			if (mapSectionRequest.Mirror != null)
 			{
 				mapSectionRequest.Mirror.ProcessingEndTime = DateTime.UtcNow;
 			}
-			else
-			{
-				mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-			}
+
+			UpdateMathCounts(mapSection);
 
 			ReportGeneration(mapSectionRequest, mapSection);
 
-			_ = Interlocked.Increment(ref _sectionsCompleted);
-			//_responseNumbers[mapSectionRequest.RequestNumber]++;
+			SectionsGenerated++;
 
-			//if (mapSectionRequest.Mirror != null)
-			//{
-			//	_ = Interlocked.Increment(ref _sectionsCompleted);
-			//	_responseNumbers[mapSectionRequest.Mirror.RequestNumber]++;
-			//}
-
-			//if (_sectionsCompleted + 5 > _sectionsRequested && !(_sectionsCompleted >= _mapSectionRequests?.Count))
-			//{
-			//	Debug.WriteLine($"WARNING: Need to compare the numberOfMapSectionRequests {_mapSectionRequests?.Count ?? 0} with the number of [actual] sectionsRequested {_sectionsRequested}.");
-			//}
-
-			if (AllCompleted())
+			if (jobIsCancelled || SectionsPending <= 0)
 			{
-				_stopwatch.Stop();
 				HandleLastResponse(mapSectionRequest, mapSection);
 
 				//if (_tcs?.Task.IsCompleted == false) { _tcs.SetResult(); }
-				JobHasCompleted?.Invoke(this, new EventArgs());
+				MarkJobAsComplete();
 
 				// Performance 
 				ReportMathCounts(MathOpCounts);
 
 				// Debug Job Details
-				ReportStats();
+				ReportStats(jobIsCancelled);
 			}
 			else
 			{
@@ -244,10 +205,9 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		private bool AllCompleted()
+		public override string ToString()
 		{
-			var result = _sectionsCompleted >= _sectionsSubmitted || (_isStopping && _sectionsCompleted >= _sectionsRequested);
-			return result;
+			return $"Id: {JobId}, JobNumber: {MapLoaderJobNumber}.";
 		}
 
 		#endregion
@@ -267,8 +227,8 @@ namespace MSS.Types.MSet
 			else
 			{
 				Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}, " +
-					$"Comp/Total: ({_sectionsCompleted}/{_mapSectionRequests?.Count ?? 0})," +
-					$" Screen Position: {mapSectionRequest.ScreenPosition}.");
+					$"Pending/Total: ({SectionsPending}/{TotalNumberOfSectionsRequested}), " +
+					$"Screen Position: {mapSectionRequest.ScreenPosition}.");
 			}
 
 			mapSectionRequest.Handled = true;
@@ -295,7 +255,7 @@ namespace MSS.Types.MSet
 				(
 				JobNumber,
 				msr.FoundInRepo,
-				_sectionsCompleted,
+				msr.Completed ? 1 : 0,
 				isLastSection,
 				msr.TimeToCompleteGenRequest,
 				msr.ProcessingDuration,
@@ -331,39 +291,39 @@ namespace MSS.Types.MSet
 		}
 
 		[Conditional("DEBUG")]
-		private void ReportStats()
+		private void ReportStats(bool jobIsCancelled)
 		{
-			var numberOfPendingRequests = 0; // _mapSectionRequestProcessor.NumberOfRequestsPending;
-			var numberWaitingToBeGen = 0; // _mapSectionRequestProcessor.NumberOfSectionsPendingGeneration;
-
-			var notHandled = _mapSectionRequests?.Count(x => !x.Handled) ?? 0;
-			var notSent = _mapSectionRequests?.Count(x => !x.Sent) ?? 0;
-
-			Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Completed {_sectionsCompleted} sections in {_stopwatch.Elapsed}. " +
-				$"There are {numberOfPendingRequests} / {numberWaitingToBeGen} / {notHandled} / {notSent} requests still pending / not yet generated / not handled / not sent.");
+			if (jobIsCancelled)
+			{
+				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {_stopwatch.Elapsed}. The job was cancelled.");
+			}
+			else
+			{
+				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {_stopwatch.Elapsed}. There are {SectionsPending} sections pending.");
+			}
 
 			//Debug.WriteLine("Request / Response Tallies\n");
 			//Debug.WriteLine(BuildReqResNumberTabulation(_requestNumbers, _responseNumbers, 90));
 		}
 
-		private string BuildReqResNumberTabulation(int[] requestNumbers, int[] responseNumbers, int size = 90)
-		{
-			var sb = new StringBuilder();
+		//private string BuildReqResNumberTabulation(int[] requestNumbers, int[] responseNumbers, int size = 90)
+		//{
+		//	var sb = new StringBuilder();
 
-			for (var i = 0; i < size; i++)
-			{
-				var reqNumberOccurances = requestNumbers[i];
-				var resNumberOccurances = responseNumbers[i];
+		//	for (var i = 0; i < size; i++)
+		//	{
+		//		var reqNumberOccurances = requestNumbers[i];
+		//		var resNumberOccurances = responseNumbers[i];
 
-				sb.Append(i).Append("\t");
-				sb.Append(reqNumberOccurances).Append("\t");
-				sb.Append(resNumberOccurances).Append("\t");
+		//		sb.Append(i).Append("\t");
+		//		sb.Append(reqNumberOccurances).Append("\t");
+		//		sb.Append(resNumberOccurances).Append("\t");
 
-				sb.Append("\n");
-			}
+		//		sb.Append("\n");
+		//	}
 
-			return sb.ToString();
-		}
+		//	return sb.ToString();
+		//}
 
 		#endregion
 

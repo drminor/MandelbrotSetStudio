@@ -1,7 +1,5 @@
-﻿using MSS.Types;
-using MSS.Types.MSet;
+﻿using MSS.Types.MSet;
 using System;
-using System.Collections.Generic;
 
 namespace MSS.Types
 {
@@ -9,7 +7,7 @@ namespace MSS.Types
 	{
 		int JobNumber { get; }
 
-		List<MapSectionRequest>? MapSectionRequests { get; }
+		//List<MapSectionRequest>? MapSectionRequests { get; }
 
 		event EventHandler<MapSectionProcessInfo>? MapSectionLoaded;
 		event EventHandler? JobHasCompleted;
@@ -35,7 +33,6 @@ namespace MSS.Types
 
 		bool IsCancelled { get; set; }
 
-
 		DateTime? ProcessingStartTime { get; set; }
 		DateTime? ProcessingEndTime { get; set;  }
 		TimeSpan ElaspedTime { get; }
@@ -43,18 +40,15 @@ namespace MSS.Types
 
 		MathOpCounts? MathOpCounts { get; }
 
-		int SectionsRequested { get; }
-		int SectionsSubmitted { get; }
-		int SectionsCompleted { get; }
+		int TotalNumberOfSectionsRequested { get; set; }
+		int SectionsFoundInRepo { get; set;  }
+		int SectionsGenerated { get; set; }
+		int SectionsCancelled { get; set; }
 
+		bool Start(int sectionsRequested, Action<MapSection> callback);
 
-
-		int GetNumberOfRequestsPendingSubmittal();
-		int GetNumberOfRequestsPendingGeneration();
-
-
-		bool Start(List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, int numberOfsectionsSubmitted);
-		//bool UpdateReqPendingCount(int amount);
+		bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> callback);
+		
 		void Cancel();
 		void MarkJobAsComplete();
 		

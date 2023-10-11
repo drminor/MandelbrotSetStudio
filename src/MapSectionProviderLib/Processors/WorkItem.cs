@@ -10,14 +10,19 @@ namespace MapSectionProviderLib
 		public int JobId { get; init; }
 		public T Request { get; init; }
 		public U? Response { get; set; }
+		public virtual bool JobIsCancelled { get; protected set; }
 
 		public Action<T, U> WorkAction { get; init; }
 
-		public WorkItem(int jobId, T request, Action<T, U> workAction)
+		public WorkItem(int jobId, T request, Action<T, U> workAction) : this(jobId, request, workAction, jobIsCancelled: false)
+		{ }
+
+		public WorkItem(int jobId, T request, Action<T, U> workAction, bool jobIsCancelled)
 		{
 			JobId = jobId;
 			Request = request ?? throw new ArgumentNullException(nameof(request));
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
+			JobIsCancelled = jobIsCancelled;
 		}
 
 		public void RunWorkAction(U response)
@@ -41,29 +46,41 @@ namespace MapSectionProviderLib
 
 	internal class MapSectionWorkRequest : WorkItem<MapSectionRequest, MapSection>
 	{
-		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSection> workAction, MapSection mapSection)
-			: this(jobId, request, workAction)
+		public MapSectionWorkRequest(MapSectionRequest request, Action<MapSectionRequest, MapSection> workAction, MapSection mapSection)
+			: this(request, workAction)
 		{
 			Response = mapSection;
 		}
 
-		public MapSectionWorkRequest(int jobId, MapSectionRequest request, Action<MapSectionRequest, MapSection> workAction)
-			: base(jobId, request, workAction)
+		public MapSectionWorkRequest(MapSectionRequest request, Action<MapSectionRequest, MapSection> workAction)
+			: base(request.MapLoaderJobNumber, request, workAction)
 		{
+		}
+
+		override public bool JobIsCancelled
+		{
+			get => Request.MsrJob.IsCancelled;
+			//set => Request.MsrJob.IsCancelled = value;
 		}
 	}
 
 	internal class MapSectionGenerateRequest : WorkItem<MapSectionWorkRequest, MapSectionResponse>
 	{
-		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse> workAction, MapSectionResponse mapSectionResponse)
-			: this(jobId, request, workAction)
+		public MapSectionGenerateRequest(MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse> workAction, MapSectionResponse mapSectionResponse)
+			: this(request, workAction)
 		{
 			Response = mapSectionResponse;
 		}
 
-		public MapSectionGenerateRequest(int jobId, MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse> workAction)
-			: base(jobId, request, workAction)
+		public MapSectionGenerateRequest(MapSectionWorkRequest request, Action<MapSectionWorkRequest, MapSectionResponse> workAction)
+			: base(request.Request.MapLoaderJobNumber, request, workAction)
 		{ }
+
+		override public bool JobIsCancelled
+		{
+			get => Request.Request.MsrJob.IsCancelled;
+			//set => Request.Request.MsrJob.IsCancelled = value;
+		}
 	}
 
 	internal class MapSectionPersistRequest : WorkItem<MapSectionRequest, MapSectionResponse>
@@ -92,10 +109,17 @@ namespace MapSectionProviderLib
 				Response = response;
 			}
 		}
+
+		override public bool JobIsCancelled
+		{
+			get => Request.MsrJob.IsCancelled;
+			//set => Request.MsrJob.IsCancelled = value;
+		}
 	}
 
 	public interface IWorkRequest
 	{
 		public int JobId { get; init; }
+		public bool JobIsCancelled { get; }
 	}
 }

@@ -56,6 +56,11 @@ namespace MSS.Types.MSet
 			RequestCancelled = isCancelled;
 		}
 
+		public MapSection(MapSectionRequest req, MapSectionVectors? mapSectionVectors, PointInt screenPosition, Func<ushort[], IHistogram> histogramBuilder) 
+			: this(req.MapLoaderJobNumber, req.RequestNumber, mapSectionVectors, req.Subdivision.Id.ToString(), req.JobBlockOffset, 
+				  req.SectionBlockOffset, req.IsInverted, screenPosition, req.BlockSize, req.MapCalcSettings.TargetIterations, histogramBuilder)
+		{ }
+
 		public MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, VectorLong jobMapBlockPosition,
 			VectorLong repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{

@@ -196,7 +196,7 @@ namespace ImageBuilder
 			}
 
 			//_currentJobNumber = _mapLoaderManager.Push(requests, MapSectionReady);
-			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, out var _);
+			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, msrJob.CancellationTokenSource.Token, out var _);
 			_currentJobNumber = msrJob.MapLoaderJobNumber;
 
 			_mapSectionsForRow = new Dictionary<int, MapSection?>();

@@ -24,7 +24,7 @@ namespace MSS.Common
 		//List<MapSection> PushV1(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration);
 
 		// New version for use with the MapSectionRequestProcessor:: SubmitRequests method.
-		List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration);
+		List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, CancellationToken ct, out List<MapSectionRequest> pendingGeneration);
 
 		//Task? GetTaskForJob(int jobNumber);
 		TimeSpan? GetExecutionTimeForJob(int jobNumber);

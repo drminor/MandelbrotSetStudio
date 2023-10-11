@@ -312,15 +312,10 @@ namespace MSS.Common
 			var isInverted = mapSectionRequest.IsInverted;
 
 			var jobBlockOffset = mapSectionRequest.JobBlockOffset;
-
-			//var sectionBlockOffsetBigV = _dtoMapper.MapFrom(sectionBlockOffset);
 			var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
-			
-			//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
 
-			var mapSection = new MapSection(mapSectionRequest.MapLoaderJobNumber, mapSectionRequest.RequestNumber, mapSectionVectors, 
-				mapSectionRequest.Subdivision.Id.ToString(), jobBlockOffset, sectionBlockOffset, isInverted, screenPosition, 
-				mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, histogramBuilder: BuildHistogram);
+			//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
+			var mapSection = new MapSection(mapSectionRequest, mapSectionVectors, screenPosition, BuildHistogram);
 
 			UpdateMapSectionWithProcInfo(mapSection, mapSectionRequest);
 
@@ -415,6 +410,48 @@ namespace MSS.Common
 			return (singles, pairs);
 		}
 
+		public int GetTotalNumberOfRequests(List<MapSectionRequest> result)
+		{
+			var total = 0;
+
+			for (var i = 0; i < result.Count; i++)
+			{
+				var ms = result[i];
+
+				if (ms.Mirror != null)
+				{
+					total += 2;
+				}
+				else
+				{
+					total += 1;
+				}
+			}
+
+			return total;
+		}
+
+		public int GetNumberOfSectionsCancelled(List<MapSectionRequest> requests)
+		{
+			var result = 0;
+
+			for (var i = 0; i < requests.Count; i++)
+			{
+				var ms = requests[i];
+
+				if (ms.Cancelled)
+				{
+					result += 1;
+				}
+
+				if (ms.Mirror?.Cancelled == true)
+				{
+					result += 1;
+				}
+			}
+
+			return result;
+		}
 
 		//[Conditional("DEBUG")]
 		//private void ReportCreateMapSectionRequests(int numberOfSections, int numberOfSingles, int numberOfPairs, List<MapSectionRequest> mapSectionRequests)

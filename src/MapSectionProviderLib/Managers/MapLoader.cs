@@ -124,15 +124,15 @@ namespace MapSectionProviderLib
 
 			if (!_isStopping && _tcs.Task.Status != TaskStatus.RanToCompletion)
 			{
-				_mapSectionRequestProcessor.CancelJob(JobNumber);
+				//_mapSectionRequestProcessor.CancelJob(JobNumber);
 				_isStopping = true;
 			}
 		}
 
-		public void MarkJobAsComplete()
-		{
-			_mapSectionRequestProcessor.MarkJobAsComplete(JobNumber);
-		}
+		//public void MarkJobAsComplete()
+		//{
+		//	_mapSectionRequestProcessor.MarkJobAsComplete(JobNumber);
+		//}
 
 		//public void CancelRequest(MapSection mapSection)
 		//{

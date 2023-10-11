@@ -15,16 +15,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Support\TestJobQueues.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Support\TestJobQueues.cs" />
+    <Compile Remove="Unused\**" />
+    <EmbeddedResource Remove="Unused\**" />
+    <None Remove="Unused\**" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
     <ProjectReference Include="..\ProjectRepo\ProjectRepo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Unused\" />
   </ItemGroup>
 
 </Project>

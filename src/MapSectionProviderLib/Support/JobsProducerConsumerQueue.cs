@@ -5,12 +5,12 @@ using System.Threading;
 
 namespace MapSectionProviderLib.Support
 {
-    internal class MapSectionProducerConsumerQueue<T> : IDisposable where T : IWorkRequest
+    internal class JobsProducerConsumerQueue<T> : IDisposable where T : IWorkRequest
 	{
-        private readonly JobQueuesG<T> _imp;
+        private readonly JobQueues<T> _imp;
         private readonly BlockingCollection<T> _bc;
 
-        public MapSectionProducerConsumerQueue(JobQueuesG<T> imp, int boundedCapacity)
+        public JobsProducerConsumerQueue(JobQueues<T> imp, int boundedCapacity)
         {
             _imp = imp;
             _bc = new BlockingCollection<T>(_imp, boundedCapacity);
@@ -53,9 +53,33 @@ namespace MapSectionProviderLib.Support
 			_bc.Add(item, ct);
 		}
 
-		public T Take(CancellationToken ct)
+        /// <summary>
+        /// Return all work items belonging to a cancelled job
+        /// and return the first work item belonging to a job not cancelled if one exists.
+        /// </summary>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+		public List<T> Take(CancellationToken ct)
         {
-            return _bc.Take(ct);
+            var result = new List<T>();
+
+            var workItem = _bc.Take(ct);
+
+            result.Add(workItem);
+
+            if (workItem.JobIsCancelled)
+            {
+                while (_bc.TryTake(out workItem))
+                {
+                    result.Add(workItem);
+                    if (!workItem.JobIsCancelled)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return result;
         }
 
         public void CompleteAdding() => _bc.CompleteAdding();

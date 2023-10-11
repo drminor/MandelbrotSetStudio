@@ -74,7 +74,7 @@ namespace MSetExplorer
 
 			_bitmapGrid = new BitmapGrid(MapSections, new SizeDbl(128), OnBitmapUpdate, blockSize);
 
-			ActiveJobNumbers = new List<int>();
+			ActiveJobs = new List<MsrJob>();
 			_currentAreaColorAndCalcSettings = null;
 
 			_unscaledExtent = new SizeDbl();
@@ -225,7 +225,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public List<int> ActiveJobNumbers { get; init; }
+		public List<MsrJob> ActiveJobs { get; init; }
 
 		public ImageSource ImageSource
 		{
@@ -340,7 +340,6 @@ namespace MSetExplorer
 
 				CheckViewPortSize();
 
-
 				// Unbounded
 				_boundedMapArea = null;
 				UnscaledExtent = new SizeDbl();
@@ -366,22 +365,6 @@ namespace MSetExplorer
 			}
 
 			return msrJob;
-		}
-
-		private void RaiseDisplayJobCompletedOnBackground(int newJobNumber)
-		{
-			ThreadPool.QueueUserWorkItem(
-			x =>
-			{
-				try
-				{
-					DisplayJobCompleted?.Invoke(this, newJobNumber);
-				}
-				catch (Exception e)
-				{
-					Debug.WriteLine($"Received error {e} from the ThreadPool QueueWorkItem DisplayJobCompleted");
-                }
-			});
 		}
 
 		public void SubmitJob(AreaColorAndCalcSettings newValue, SizeDbl posterSize, VectorDbl displayPosition, double displayZoom)
@@ -653,14 +636,14 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
-				if (ActiveJobNumbers.Contains(mapSection.JobNumber))
+				if (ActiveJobs.Any(x => x.MapLoaderJobNumber == mapSection.JobNumber))
 				{
 					mapSectionShouldBeUsed = true;
 					RemovePendingRequest(mapSection);
 				}
 				else
 				{
-					Debug.WriteLine($"GetAndPlacePixelsWrapper not drawing section: Its JobNumber: {mapSection.JobNumber} is not in the list of Active Job Numbers: {string.Join("; ", ActiveJobNumbers)}.");
+					Debug.WriteLine($"GetAndPlacePixelsWrapper not drawing section: Its JobNumber: {mapSection.JobNumber} is not in the list of Active Job Numbers: {string.Join("; ", ActiveJobs)}.");
 				}
 			}
 
@@ -670,7 +653,7 @@ namespace MSetExplorer
 				{
 					if (!mapSection.RequestCancelled)
 					{
-						_bitmapGrid.Dispatcher.Invoke(GetAndPlacePixelsWrapper, new object[] { mapSection });
+						_bitmapGrid.Dispatcher.Invoke(DrawOneSectionWrapper, new object[] { mapSection });
 					}
 					else
 					{
@@ -682,13 +665,21 @@ namespace MSetExplorer
 					Debug.WriteLine("MapSectionDisplayViewModel. MapSectionReady received an Empty MapSection.");
 				}
 			}
-			else
+			//else
+			//{
+			//	if (mapSection.IsLastSection)
+			//	{
+			//		RaiseDisplayJobCompletedOnBackground(mapSection.JobNumber);
+			//	}
+			//}
+
+			if (mapSection.IsLastSection)
 			{
-				RaiseDisplayJobCompletedOnBackground(mapSection.JobNumber);
+				DisplayJobCompleted?.Invoke(this, mapSection.JobNumber);
 			}
 		}
 
-		private void GetAndPlacePixelsWrapper(MapSection mapSection)
+		private void DrawOneSectionWrapper(MapSection mapSection)
 		{
 			lock (_paintLocker)
 			{
@@ -703,11 +694,10 @@ namespace MSetExplorer
 				}
 			}
 
-			if (mapSection.IsLastSection)
-			{
-				DisplayJobCompleted?.Invoke(this, mapSection.JobNumber);
-			}
-
+			//if (mapSection.IsLastSection)
+			//{
+			//	DisplayJobCompleted?.Invoke(this, mapSection.JobNumber);
+			//}
 		}
 
 		#endregion
@@ -952,18 +942,12 @@ namespace MSetExplorer
 
 		private bool SubmitMSRequests(MsrJob msrJob, List<MapSectionRequest> newRequests, out List<MapSectionRequest> mapRequestsPendingGeneration, [CallerMemberName] string? callerMemberName = null)
 		{
-			AddJobNumber(msrJob.MapLoaderJobNumber);
-
-			//var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, out mapRequestsPendingGeneration);
+			AddJob(msrJob);
 
 			// This uses the callback property of the MsrJob.
 
-			var (p, s) = _mapSectionBuilder.CountRequests(newRequests);
-			var numberOfMapSectionsRequested = p * 2 + s;
-
 			//msrJob.Start(newRequests, MapSectionReady, numberOfMapSectionsRequested);
-			var ct = msrJob.CancellationTokenSource.Token;	
-			var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, out mapRequestsPendingGeneration);
+			var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, msrJob.CancellationTokenSource.Token, out mapRequestsPendingGeneration);
 
 			//msrJob.UpdateReqPendingCount(mapRequestsPendingGeneration.Count);
 
@@ -1017,8 +1001,14 @@ namespace MSetExplorer
 		{
 			var stopWatch = Stopwatch.StartNew();
 
-			_mapLoaderManager.StopJobs(ActiveJobNumbers);
-			ActiveJobNumbers.Clear();
+			//_mapLoaderManager.StopJobs(ActiveJobNumbers);
+
+			foreach(var msrJob in ActiveJobs)
+			{
+				msrJob.Cancel();
+			}
+
+			ActiveJobs.Clear();
 			_requestsPendingGeneration.Clear();
 
 			var msToStopJobs = stopWatch.ElapsedMilliseconds;
@@ -1040,10 +1030,10 @@ namespace MSetExplorer
 			}
 		}
 
-		private void AddJobNumber(int jobNumber)
+		private void AddJob(MsrJob msrJob)
 		{
-			ActiveJobNumbers.Add(jobNumber);
-			Debug.WriteLineIf(_useDetailedDebug, $"Adding jobNumber: {jobNumber}. There are now {ActiveJobNumbers.Count} active jobs.");
+			ActiveJobs.Add(msrJob);
+			Debug.WriteLineIf(_useDetailedDebug, $"Adding jobNumber: {msrJob.MapLoaderJobNumber}. There are now {ActiveJobs.Count} active jobs.");
 		}
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, MapAreaInfo? previousAreaInfo, AreaColorAndCalcSettings newJob, MapAreaInfo newAreaInfo)
@@ -1384,6 +1374,22 @@ namespace MSetExplorer
 		private void OnBitmapUpdate(WriteableBitmap bitmap)
 		{
 			ImageSource = bitmap;
+		}
+
+		private void RaiseDisplayJobCompletedOnBackground(int newJobNumber)
+		{
+			ThreadPool.QueueUserWorkItem(
+			x =>
+			{
+				try
+				{
+					DisplayJobCompleted?.Invoke(this, newJobNumber);
+				}
+				catch (Exception e)
+				{
+					Debug.WriteLine($"Received error {e} from the ThreadPool QueueWorkItem DisplayJobCompleted");
+				}
+			});
 		}
 
 		#endregion

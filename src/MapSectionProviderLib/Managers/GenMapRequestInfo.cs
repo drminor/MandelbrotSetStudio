@@ -43,7 +43,7 @@ namespace MapSectionProviderLib
 
 			_ = Task.Run(SubmitSectionRequests);
 
-			_msrJob.Start(requestsNotFound, callback, requestsNotFound.Count);
+			_msrJob.Start(requestsNotFound.Count, callback);
 
 			TaskStartedDate = DateTime.UtcNow;
 

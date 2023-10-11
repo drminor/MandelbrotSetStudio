@@ -21,7 +21,7 @@ namespace MapSectionProviderLib
 		private readonly List<GenMapRequestInfo> _requests;
 		private readonly ReaderWriterLockSlim _requestsLock;
 
-		private readonly Task _removeCompletedRequestsTask;
+		//private readonly Task _removeCompletedRequestsTask;
 
 		private const int PRECSION_PADDING = 4;
 		private const int MIN_LIMB_COUNT = 1;
@@ -45,7 +45,7 @@ namespace MapSectionProviderLib
 
 			_requestsLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
-			_removeCompletedRequestsTask = Task.Run(() => RemoveCompletedRequests(_requests, _requestsLock, _cts.Token), _cts.Token);
+			//_removeCompletedRequestsTask = Task.Run(() => RemoveCompletedRequests(_requests, _requestsLock, _cts.Token), _cts.Token);
 		}
 
 		#endregion
@@ -66,14 +66,6 @@ namespace MapSectionProviderLib
 
 		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
-			//// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-			//var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
-			//var limbCount = GetLimbCount(precision);
-			//var mapLoaderJobNumber = GetNextJobNumber();
-
-			//var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
-			//	precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
-
 			var msrJob = CreateMapSectionRequestJob(jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(),
 				mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, mapAreaInfo.Coords.CrossesXZero, mapCalcSettings);
 
@@ -92,7 +84,7 @@ namespace MapSectionProviderLib
 
 		public List<MapSection> PushOld(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration)
 		{
-			List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>> requestAndMapSectionPairs = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests, out var requestsNotFound);
+			List<MapSection> mapSections = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests, out var requestsNotFound);
 
 			if (requestsNotFound.Count > 0)
 			{
@@ -102,8 +94,6 @@ namespace MapSectionProviderLib
 
 				try
 				{
-					//	CreateNewGenMapRequestInfo(mapLoaderJobNumber, requestsNotFound, callback, _mapSectionRequestProcessor, _cts.Token);
-
 					var genMapRequestInfo = new GenMapRequestInfo(msrJob, callback, _mapSectionRequestProcessor, requestsNotFound, _cts.Token);
 					_requests.Add(genMapRequestInfo);
 					genMapRequestInfo.MapSectionLoaded += GenMapRequestInfo_MapSectionLoaded;
@@ -122,95 +112,31 @@ namespace MapSectionProviderLib
 
 			var mapLoaderJobNumber = msrJob.MapLoaderJobNumber;
 
-			var mapSections = GetMapSectionRecsFromResult(requestAndMapSectionPairs);
-
 			RequestAdded?.Invoke(this, new JobProgressInfo(mapLoaderJobNumber, "temp", DateTime.Now, mapSectionRequests.Count, mapSections.Count));
 
 			return mapSections;
 		}
 
-		public List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, out List<MapSectionRequest> pendingGeneration)
+
+
+		public List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, CancellationToken ct, out List<MapSectionRequest> pendingGeneration)
 		{
-			//var postGenerationCallBack = msrJob.HandleResponse;
-			//var mapSections = _mapSectionRequestProcessor.SubmitRequests(mapSectionRequests, postGenerationCallBack, ct, out pendingGeneration);
+			var totalSectionsRequested = _mapSectionBuilder.GetTotalNumberOfRequests(mapSectionRequests);
+			//var sectionsFoundInRepo = 0;
+			//var sectionsGenerated = 0;
+			//var sectionsCancelled = 0;
 
-			//var mapSections = FetchResponses(mapSectionRequests);
+			msrJob.Start(totalSectionsRequested, callback);
 
-			List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>> requestAndMapSectionPairs = _mapSectionRequestProcessor.FetchResponses(mapSectionRequests, out pendingGeneration);
+			List<MapSection> mapSections = _mapSectionRequestProcessor.SubmitRequests(msrJob, mapSectionRequests, msrJob.HandleResponse, ct, out pendingGeneration);
 
-			var (p, s) = _mapSectionBuilder.CountRequests(pendingGeneration);
-			var numberOfMapSectionsRequested = p * 2 + s;
-
-			msrJob.Start(pendingGeneration, callback, numberOfMapSectionsRequested);
-
-			foreach (var mapSectionRequest in pendingGeneration)
+			var sectionsPendingGeneration = _mapSectionBuilder.GetTotalNumberOfRequests(pendingGeneration);
+			if (msrJob.SectionsPending != sectionsPendingGeneration)
 			{
-				_mapSectionRequestProcessor.AddWork(mapSectionRequest, msrJob.HandleResponse);
+				Debug.WriteLine($"The MapSectionRequestProcessor ({sectionsPendingGeneration}) and the MsrJob {msrJob.SectionsPending} disagree on the number of MapSections pending.");
 			}
 
-			var mapSections = GetMapSectionRecsFromResult(requestAndMapSectionPairs);
-
 			return mapSections;
-		}
-
-		// TODO: Have the caller create a Task that 'waits' for the JobCompleted Event to be raised.
-
-		public Task? GetTaskForJob(int jobNumber)
-		{
-			//var result = DoWithReadLock(() =>
-			//{
-			//	var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.Task;
-			//	return t;
-			//});
-
-			//return result;
-			return null;
-		}
-
-		public TimeSpan? GetExecutionTimeForJob(int jobNumber)
-		{
-			var result = DoWithReadLock(() =>
-			{
-				var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.TotalExecutionTime;
-				return t;
-			});
-
-			return result;
-		}
-
-		public int GetPendingRequests(int jobNumber)
-		{
-			var result = DoWithReadLock(() =>
-			{
-				var request = _requests.FirstOrDefault(x => x.JobNumber == jobNumber);
-
-				if (request != null)
-				{
-					return request.GetNumberOfRequestsPending();
-				}
-				else
-				{
-					return 0;
-				}
-			});
-
-			return result;
-		}
-
-		public void StopJob(int jobNumber)
-		{
-			DoWithWriteLock(() => 
-			{
-				StopCurrentJobInternal(jobNumber);
-			});
-		}
-
-		public void StopJobs(List<int> jobNumbers)
-		{
-			DoWithWriteLock(() =>
-			{
-				StopCurrentJobsInternal(jobNumbers);
-			});
 		}
 
 		public int GetLimbCount(int precision)
@@ -242,27 +168,27 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private List<MapSection> GetMapSectionRecsFromResult(List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>> requestAndMapSectionPairs)
-		{
-			var mapSections = new List<MapSection>();
+		//private List<MapSection> GetMapSectionRecsFromResult(List<Tuple<MapSectionRequest, Tuple<MapSection, MapSection?>>> requestAndMapSectionPairs)
+		//{
+		//	var mapSections = new List<MapSection>();
 
-			foreach (var reqAndMapSectionPair in requestAndMapSectionPairs)
-			{
-				var mapSectionPair = reqAndMapSectionPair.Item2;
+		//	foreach (var reqAndMapSectionPair in requestAndMapSectionPairs)
+		//	{
+		//		var mapSectionPair = reqAndMapSectionPair.Item2;
 
-				var request = mapSectionPair.Item1;
-				var mirror = mapSectionPair.Item2;
+		//		var request = mapSectionPair.Item1;
+		//		var mirror = mapSectionPair.Item2;
 
-				mapSections.Add(request);
+		//		mapSections.Add(request);
 
-				if (mirror != null)
-				{
-					mapSections.Add(mirror);
-				}
-			}
+		//		if (mirror != null)
+		//		{
+		//			mapSections.Add(mirror);
+		//		}
+		//	}
 
-			return mapSections;
-		}
+		//	return mapSections;
+		//}
 
 		private void GenMapRequestInfo_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
 		{
@@ -275,107 +201,6 @@ namespace MapSectionProviderLib
 			finally
 			{
 				_requestsLock.ExitReadLock();
-			}
-		}
-
-		private void StopCurrentJobInternal(int jobNumber)
-		{
-			var request = _requests.FirstOrDefault(x => x.JobNumber == jobNumber);
-
-			if (request != null)
-			{
-				request.Stop();
-			}
-		}
-
-		private void StopCurrentJobsInternal(List<int> jobNumbers)
-		{
-			var requestsToStop = _requests.Where(x => jobNumbers.Contains(x.JobNumber));
-
-			foreach(var request in requestsToStop)
-			{
-				request.Stop();
-			}
-		}
-
-		private void RemoveCompletedRequests(List<GenMapRequestInfo> requestInfos, ReaderWriterLockSlim requestsLock, CancellationToken ct)
-		{
-			var timeToWait = TimeSpan.FromSeconds(140);
-			var timeToWarn = TimeSpan.FromMinutes(3);
-
-			var countToWarn = 0;
-
-			try
-			{
-				var requestInfosToBeDisposed = new List<GenMapRequestInfo>();
-
-				while (!ct.IsCancellationRequested)
-				{
-					Thread.Sleep(5 * 1000); // TODO: Can the RemoveCompletedRequests background thread be made avoid calls to Thread.Sleep.
-					 requestsLock.EnterUpgradeableReadLock();
-
-					try
-					{
-						Debug.Assert(requestInfosToBeDisposed.Count == 0, "RequestInfosToBeCleared is not empty.");
-						var now = DateTime.UtcNow;
-
-						foreach(var requestInfo in requestInfos)
-						{
-							var x = now - requestInfo.TaskCompletedDate;
-
-							if (x > timeToWait)
-							{
-								requestInfosToBeDisposed.Add(requestInfo);
-							}
-							else
-							{
-								if (now - requestInfo.TaskStartedDate > timeToWarn)
-								{
-									countToWarn++;
-								}
-							}
-						}
-
-						if (requestInfosToBeDisposed.Count > 0)
-						{
-							requestsLock.EnterWriteLock();
-
-							try
-							{
-								foreach(var requestInfo in requestInfosToBeDisposed)
-								{
-									requestInfo.MarkJobAsComplete();
-									_requests.Remove(requestInfo);
-									//requestInfo.Dispose();
-								}
-							}
-							finally
-							{
-								requestsLock.ExitWriteLock();
-								requestInfosToBeDisposed.Clear();
-							}
-						}
-					}
-					finally
-					{
-						requestsLock.ExitUpgradeableReadLock();
-
-						if (countToWarn > 0)
-						{
-							Debug.WriteLine($"WARNING: There are {countToWarn} MapLoaderRequests running longer than {timeToWarn.TotalMinutes} minutes.");
-							countToWarn = 0;
-						}
-					}
-
-				}
-			}
-			catch (TaskCanceledException)
-			{
-
-			}
-			catch (Exception)
-			{
-				throw;
 			}
 		}
 
@@ -437,20 +262,23 @@ namespace MapSectionProviderLib
 
 					_cts.Cancel();
 
-					if (_removeCompletedRequestsTask.Wait(5 * 1000))
-					{
-						//foreach (var genMapRequestInfo in _requests)
-						//{
-						//	genMapRequestInfo.Dispose();
-						//}
+					//if (_removeCompletedRequestsTask.Wait(5 * 1000))
+					//{
+					//	//foreach (var genMapRequestInfo in _requests)
+					//	//{
+					//	//	genMapRequestInfo.Dispose();
+					//	//}
 
-						_removeCompletedRequestsTask.Dispose();
-						_requestsLock.Dispose();
-					}
-					else
-					{
-						Debug.WriteLine($"The MapLoaderManager's RemoveCompletedRequestTask did not stop.");
-					}
+					//	_removeCompletedRequestsTask.Dispose();
+					//	_requestsLock.Dispose();
+					//}
+					//else
+					//{
+					//	Debug.WriteLine($"The MapLoaderManager's RemoveCompletedRequestTask did not stop.");
+					//}
+
+					_requestsLock.Dispose();
+
 				}
 
 				_disposedValue = true;
@@ -462,6 +290,174 @@ namespace MapSectionProviderLib
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
 		}
+
+		#endregion
+
+		#region Not Used
+
+		// TODO: Have the caller create a Task that 'waits' for the JobCompleted Event to be raised.
+
+		public Task? GetTaskForJob(int jobNumber)
+		{
+			//var result = DoWithReadLock(() =>
+			//{
+			//	var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.Task;
+			//	return t;
+			//});
+
+			//return result;
+			return null;
+		}
+
+		public TimeSpan? GetExecutionTimeForJob(int jobNumber)
+		{
+			var result = DoWithReadLock(() =>
+			{
+				var t = _requests.FirstOrDefault(x => x.JobNumber == jobNumber)?.TotalExecutionTime;
+				return t;
+			});
+
+			return result;
+		}
+
+		public int GetPendingRequests(int jobNumber)
+		{
+			var result = DoWithReadLock(() =>
+			{
+				var request = _requests.FirstOrDefault(x => x.JobNumber == jobNumber);
+
+				if (request != null)
+				{
+					return request.GetNumberOfRequestsPending();
+				}
+				else
+				{
+					return 0;
+				}
+			});
+
+			return result;
+		}
+
+		public void StopJob(int jobNumber)
+		{
+			DoWithWriteLock(() =>
+			{
+				StopCurrentJobInternal(jobNumber);
+			});
+		}
+
+		public void StopJobs(List<int> jobNumbers)
+		{
+			DoWithWriteLock(() =>
+			{
+				StopCurrentJobsInternal(jobNumbers);
+			});
+		}
+
+		private void StopCurrentJobInternal(int jobNumber)
+		{
+			var request = _requests.FirstOrDefault(x => x.JobNumber == jobNumber);
+
+			if (request != null)
+			{
+				request.Stop();
+			}
+		}
+
+		private void StopCurrentJobsInternal(List<int> jobNumbers)
+		{
+			var requestsToStop = _requests.Where(x => jobNumbers.Contains(x.JobNumber));
+
+			foreach (var request in requestsToStop)
+			{
+				request.Stop();
+			}
+		}
+
+		private void RemoveCompletedRequests(List<GenMapRequestInfo> requestInfos, ReaderWriterLockSlim requestsLock, CancellationToken ct)
+		{
+			var timeToWait = TimeSpan.FromSeconds(140);
+			var timeToWarn = TimeSpan.FromMinutes(3);
+
+			var countToWarn = 0;
+
+			try
+			{
+				var requestInfosToBeDisposed = new List<GenMapRequestInfo>();
+
+				while (!ct.IsCancellationRequested)
+				{
+					Thread.Sleep(5 * 1000); // TODO: Can the RemoveCompletedRequests background thread be made avoid calls to Thread.Sleep.
+					requestsLock.EnterUpgradeableReadLock();
+
+					try
+					{
+						Debug.Assert(requestInfosToBeDisposed.Count == 0, "RequestInfosToBeCleared is not empty.");
+						var now = DateTime.UtcNow;
+
+						foreach (var requestInfo in requestInfos)
+						{
+							var x = now - requestInfo.TaskCompletedDate;
+
+							if (x > timeToWait)
+							{
+								requestInfosToBeDisposed.Add(requestInfo);
+							}
+							else
+							{
+								if (now - requestInfo.TaskStartedDate > timeToWarn)
+								{
+									countToWarn++;
+								}
+							}
+						}
+
+						if (requestInfosToBeDisposed.Count > 0)
+						{
+							requestsLock.EnterWriteLock();
+
+							try
+							{
+								foreach (var requestInfo in requestInfosToBeDisposed)
+								{
+									requestInfo.MarkJobAsComplete();
+									_requests.Remove(requestInfo);
+									//requestInfo.Dispose();
+								}
+							}
+							finally
+							{
+								requestsLock.ExitWriteLock();
+								requestInfosToBeDisposed.Clear();
+							}
+						}
+					}
+					finally
+					{
+						requestsLock.ExitUpgradeableReadLock();
+
+						if (countToWarn > 0)
+						{
+							Debug.WriteLine($"WARNING: There are {countToWarn} MapLoaderRequests running longer than {timeToWarn.TotalMinutes} minutes.");
+							countToWarn = 0;
+						}
+					}
+
+				}
+			}
+			catch (TaskCanceledException)
+			{
+
+			}
+			catch (Exception)
+			{
+				throw;
+			}
+		}
+
+
+
 
 		#endregion
 	}
