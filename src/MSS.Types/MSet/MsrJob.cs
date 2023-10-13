@@ -102,6 +102,9 @@ namespace MSS.Types.MSet
 
 		public MathOpCounts? MathOpCounts { get; private set; }
 
+
+		public bool IsComplete { get; private set; }
+
 		public int TotalNumberOfSectionsRequested { get; set; }
 		public int SectionsFoundInRepo { get; set; }
 		public int SectionsGenerated { get; set; }
@@ -165,7 +168,20 @@ namespace MSS.Types.MSet
 		{
 			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MapLoader's HandleResponse is being called from the Response Processor.");
 
-			Debug.WriteLine($"WARNING: HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber}.");
+			if (_isCompleted)
+			{
+				if (IsCancelled)
+				{
+					// Ignore subsequent calls once completed for Cancelled Jobs.
+					// TODO: Need to return to the Pool MapSectionZVectors (and MapSectionVectors2?)
+					return;
+				}
+				else
+				{
+					// We are not cancelled -- this must mean that the counting is off.
+					Debug.WriteLine($"WARNING: HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total:{TotalNumberOfSectionsRequested}, Repo:{SectionsFoundInRepo}, Generated:{SectionsGenerated}, Cancelled:{SectionsCancelled}, Pending: {SectionsPending}.");
+				}
+			}
 
 			var jobIsCancelled = mapSectionRequest.MsrJob.IsCancelled;
 			if (jobIsCancelled || SectionsPending <= 0)

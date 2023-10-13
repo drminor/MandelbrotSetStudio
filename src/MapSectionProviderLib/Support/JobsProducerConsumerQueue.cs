@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 
 namespace MapSectionProviderLib.Support
@@ -76,6 +77,11 @@ namespace MapSectionProviderLib.Support
                     {
                         break;
                     }
+                }
+
+                if (result.Count == 1)
+                {
+                    Debug.WriteLine("JobsProducerConsumerQueue found a cancelled job, with only a single request.");
                 }
             }
 

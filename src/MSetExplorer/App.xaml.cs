@@ -649,7 +649,7 @@ namespace MSetExplorer
 
 		private MapSectionRequestProcessor CreateMapSectionRequestProcessor(IMEngineClient[] mEngineClients, IMapSectionAdapter mapSectionAdapter, MapSectionVectorProvider mapSectionVectorProvider)
 		{
-			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients);
+			var mapSectionGeneratorProcessor = new MapSectionGeneratorProcessor(mEngineClients, mapSectionVectorProvider);
 			var mapSectionResponseProcessor = new MapSectionResponseProcessor();
 			var mapSectionPersistProcessor = new MapSectionPersistProcessor(mapSectionAdapter, mapSectionVectorProvider);
 			var mapSectionRequestProcessor = new MapSectionRequestProcessor(mapSectionAdapter, mapSectionVectorProvider, mapSectionGeneratorProcessor, mapSectionResponseProcessor, mapSectionPersistProcessor);

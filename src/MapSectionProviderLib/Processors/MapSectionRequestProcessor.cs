@@ -149,13 +149,21 @@ namespace MapSectionProviderLib
 					}
 					else
 					{
+						mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 						var mirror = mapSectionRequest.Mirror;
 
-						if (mirror != null && mirror.Cancelled)
+						if (mirror != null)
 						{
-							var mapSectionForMirror = _mapSectionBuilder.CreateEmptyMapSection(mirror, isCancelled: true);
-							result.Add(mapSectionForMirror);
-							msrJob.SectionsCancelled++;
+							if (mirror.Cancelled)
+							{
+								var mapSectionForMirror = _mapSectionBuilder.CreateEmptyMapSection(mirror, isCancelled: true);
+								result.Add(mapSectionForMirror);
+								msrJob.SectionsCancelled++;
+							}
+							else
+							{
+								mirror.ProcessingStartTime = DateTime.UtcNow;
+							}
 						}
 					}
 
@@ -175,6 +183,7 @@ namespace MapSectionProviderLib
 							if (!mapSectionRequest.Cancelled)
 							{
 								result.Add(mapSectionPair.Item1);
+								mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 								msrJob.SectionsFoundInRepo++;
 							}
 
@@ -190,6 +199,7 @@ namespace MapSectionProviderLib
 								if (!mirror.Cancelled)
 								{
 									result.Add(mapSectionPair.Item2);
+									mirror.ProcessingEndTime = DateTime.UtcNow;
 									msrJob.SectionsFoundInRepo++;
 								}
 							}
@@ -293,6 +303,10 @@ namespace MapSectionProviderLib
 		{
 			if (!_requestQueue.IsAddingCompleted)
 			{
+				if (mapSectionWorkRequest.Request.NeitherRequestNorMirrorIsInPlay)
+				{
+					Debug.WriteLine("Queuing for Procesing a Cancelled request.");
+				}
 				_requestQueue.Add(mapSectionWorkRequest);
 			}
 			else
@@ -754,6 +768,11 @@ namespace MapSectionProviderLib
 				throw new ArgumentNullException(nameof(mapSectionWorkRequest), "The mapSectionWorkRequest must be non-null.");
 			}
 
+			if (mapSectionWorkRequest.Request.NeitherRequestNorMirrorIsInPlay)
+			{
+				Debug.WriteLine("Queuing for Generation a Cancelled request.");
+			}
+
 			var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest, _generatorWorkRequestWorkAction);
 			_mapSectionGeneratorProcessor.AddWork(mapSectionGenerateRequest, ct);
 
@@ -770,7 +789,7 @@ namespace MapSectionProviderLib
 			// Use our CancellationSource when adding work
 			var ct = _requestQueueCts.Token;
 
-			Debug.Assert(mapSectionWorkRequest.Request.MapLoaderJobNumber == mapSectionWorkRequest.JobId, "mm1");
+			Debug.Assert(mapSectionWorkRequest.Request.MapLoaderJobNumber == mapSectionWorkRequest.JobNumber, "mm1");
 			Debug.Assert(!mapSectionWorkRequest.Request.Pending, "Pending Items should not be InProcess.");
 
 			if (UseRepo && !mapSectionResponse.RequestCancelled)
@@ -850,6 +869,10 @@ namespace MapSectionProviderLib
 
 		private void SendToResponseQueue(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
 		{
+			if (mapSectionWorkRequest.Request.NeitherRequestNorMirrorIsInPlay)
+			{
+				Debug.WriteLine("Sending to the Response Processor a Cancelled request.");
+			}
 			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, ct);
 		}
 

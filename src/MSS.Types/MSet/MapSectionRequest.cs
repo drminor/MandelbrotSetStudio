@@ -124,5 +124,21 @@ namespace MSS.Types.MSet
 			return (msv, mszv);
 		}
 
+		public bool Cancel()
+		{
+			if (Cancelled)
+				return false;
+
+			Cancelled = true;
+			CancellationTokenSource.Cancel();
+
+			if (MsrJob.TotalNumberOfSectionsRequested > 0)
+			{
+				MsrJob.SectionsCancelled++;
+			}
+
+			return true;
+		}
+
 	}
 }

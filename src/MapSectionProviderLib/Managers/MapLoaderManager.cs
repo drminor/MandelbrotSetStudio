@@ -14,7 +14,7 @@ namespace MapSectionProviderLib
 	{
 		#region Private Fields
 
-		private readonly CancellationTokenSource _cts;
+		private readonly CancellationTokenSource _cts; // Was used to stop the background task: RemoveCompletedRequests
 		private readonly MapSectionBuilder _mapSectionBuilder;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
 
@@ -117,8 +117,6 @@ namespace MapSectionProviderLib
 			return mapSections;
 		}
 
-
-
 		public List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> callback, CancellationToken ct, out List<MapSectionRequest> pendingGeneration)
 		{
 			var totalSectionsRequested = _mapSectionBuilder.GetTotalNumberOfRequests(mapSectionRequests);
@@ -128,6 +126,7 @@ namespace MapSectionProviderLib
 
 			msrJob.Start(totalSectionsRequested, callback);
 
+			msrJob.MapSectionLoaded += MapSectionLoaded;
 			List<MapSection> mapSections = _mapSectionRequestProcessor.SubmitRequests(msrJob, mapSectionRequests, msrJob.HandleResponse, ct, out pendingGeneration);
 
 			var sectionsPendingGeneration = _mapSectionBuilder.GetTotalNumberOfRequests(pendingGeneration);
@@ -136,7 +135,24 @@ namespace MapSectionProviderLib
 				Debug.WriteLine($"The MapSectionRequestProcessor ({sectionsPendingGeneration}) and the MsrJob {msrJob.SectionsPending} disagree on the number of MapSections pending.");
 			}
 
+			var mapLoaderJobNumber = msrJob.MapLoaderJobNumber;
+			RequestAdded?.Invoke(this, new JobProgressInfo(mapLoaderJobNumber, "temp", DateTime.Now, msrJob.TotalNumberOfSectionsRequested, msrJob.SectionsFoundInRepo));
+
 			return mapSections;
+		}
+
+		private void MapSectionLoaded(object? sender, MapSectionProcessInfo e)
+		{
+			_requestsLock.EnterReadLock();
+
+			try
+			{
+				SectionLoaded?.Invoke(this, e);
+			}
+			finally
+			{
+				_requestsLock.ExitReadLock();
+			}
 		}
 
 		public int GetLimbCount(int precision)

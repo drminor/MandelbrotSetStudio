@@ -1009,6 +1009,12 @@ namespace MSetExplorer
 			}
 
 			ActiveJobs.Clear();
+
+			foreach(var request in _requestsPendingGeneration)
+			{
+				CancelRequest(request);
+			}
+
 			_requestsPendingGeneration.Clear();
 
 			var msToStopJobs = stopWatch.ElapsedMilliseconds;
@@ -1185,12 +1191,18 @@ namespace MSetExplorer
 			foreach (var request in requestsNoLongerNeeded)
 			{
 				// TODO: Implement IEquatable<MapSectionRequst>
-				var msr = FindMsr(request, _requestsPendingGeneration);
+				var mapSectionRequest = FindMapSectionRequest(request, _requestsPendingGeneration);
 
-				if (msr != null)
+
+				if (!object.Equals(mapSectionRequest, request))
 				{
-					_requestsPendingGeneration.Remove(msr);
-					CancelRequest(msr);
+					Debug.WriteLine("CancelRequests found a matching request by value -- but is not the exact same object.");
+				}
+
+				if (mapSectionRequest != null)
+				{
+					_requestsPendingGeneration.Remove(mapSectionRequest);
+					CancelRequest(mapSectionRequest);
 				}
 			}
 
@@ -1205,8 +1217,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Cancelling Generation Request: {req.MapLoaderJobNumber}/{req.RequestNumber}.");
 
-				req.Cancelled = true;
-				req.CancellationTokenSource.Cancel();
+				req.Cancel();
 				numberOfRequestsCancelled++;
 			}
 			else
@@ -1215,13 +1226,11 @@ namespace MSetExplorer
 				{
 					if (req.IsInverted)
 					{
-						req.Cancelled = true;
-						req.CancellationTokenSource.Cancel();
+						req.Cancel();
 					}
 					else
 					{
-						req.Mirror.Cancelled = true;
-						req.Mirror.CancellationTokenSource.Cancel();
+						req.Mirror.Cancel();
 					}
 
 					numberOfRequestsCancelled++;
@@ -1230,13 +1239,11 @@ namespace MSetExplorer
 				{
 					if (req.IsInverted)
 					{
-						req.Mirror.Cancelled = true;
-						req.Mirror.CancellationTokenSource.Cancel();
+						req.Mirror.Cancel();
 					}
 					else
 					{
-						req.Cancelled = true;
-						req.CancellationTokenSource.Cancel();
+						req.Cancel();
 					}
 
 					numberOfRequestsCancelled++;
@@ -1244,13 +1251,10 @@ namespace MSetExplorer
 				else
 				{
 					// Cancel the request and the mirror
-					req.Cancelled = true;
-					req.CancellationTokenSource.Cancel();
-					numberOfRequestsCancelled++;
+					req.Cancel();
+					req.Mirror.Cancel();
 
-					req.Mirror.Cancelled = true;
-					req.Mirror.CancellationTokenSource.Cancel();
-					numberOfRequestsCancelled++;
+					numberOfRequestsCancelled += 2;
 				}
 			}
 
@@ -1341,7 +1345,7 @@ namespace MSetExplorer
 			return MapSections.FirstOrDefault(x => x.IsInverted == mapSectionRequest.IsInverted && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
 		}
 
-		private MapSectionRequest? FindMsr(MapSectionRequest msr, List<MapSectionRequest> mapSectionRequests)
+		private MapSectionRequest? FindMapSectionRequest(MapSectionRequest msr, List<MapSectionRequest> mapSectionRequests)
 		{
 			var request = mapSectionRequests.Find(x => x.Subdivision.Id == msr.Subdivision.Id && x.SectionBlockOffset == msr.SectionBlockOffset);
 

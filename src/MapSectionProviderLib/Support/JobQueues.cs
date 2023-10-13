@@ -62,7 +62,7 @@ namespace MapSectionProviderLib.Support
 
 		public bool TryAdd(T request)
 		{
-			var jobNumber = request.JobId;
+			var jobNumber = request.JobNumber;
 
 			lock (_stateLock)
 			{
@@ -130,6 +130,7 @@ namespace MapSectionProviderLib.Support
 
 		private int GetNextJobListIndex(int currentIndex, bool currentJobIsCancelled, List<int> jobNumbers)
 		{
+			// Move to the next Job, unless the currentJobIsCancelled.
 			if (!currentJobIsCancelled)
 			{
 				currentIndex++;
@@ -147,8 +148,14 @@ namespace MapSectionProviderLib.Support
 		{
 			lock (_stateLock)
 			{
-				if (jobNumber != _lastJobNumberForAddition)
+				if (jobNumber == _lastJobNumberForAddition && _lastListForAdd != null)
 				{
+					return _lastListForAdd;
+				}
+				else
+				{
+					_lastJobNumberForAddition = jobNumber;
+
 					if (!_jobNumbers.Contains(jobNumber))
 					{
 						_jobNumbers.Add(jobNumber);
@@ -162,10 +169,8 @@ namespace MapSectionProviderLib.Support
 						_lastListForAdd = kvp.Value;
 					}
 
-					_lastJobNumberForAddition = jobNumber;
+					return _lastListForAdd;
 				}
-
-				return _lastListForAdd!;
 			}
 		}
 

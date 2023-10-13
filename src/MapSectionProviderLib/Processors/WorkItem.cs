@@ -7,19 +7,19 @@ namespace MapSectionProviderLib
 {
 	internal class WorkItem<T, U> : IWorkRequest
 	{
-		public int JobId { get; init; }
+		public int JobNumber { get; init; }
 		public T Request { get; init; }
 		public U? Response { get; set; }
 		public virtual bool JobIsCancelled { get; protected set; }
 
 		public Action<T, U> WorkAction { get; init; }
 
-		public WorkItem(int jobId, T request, Action<T, U> workAction) : this(jobId, request, workAction, jobIsCancelled: false)
+		public WorkItem(int jobNumber, T request, Action<T, U> workAction) : this(jobNumber, request, workAction, jobIsCancelled: false)
 		{ }
 
-		public WorkItem(int jobId, T request, Action<T, U> workAction, bool jobIsCancelled)
+		public WorkItem(int jobNumber, T request, Action<T, U> workAction, bool jobIsCancelled)
 		{
-			JobId = jobId;
+			JobNumber = jobNumber;
 			Request = request ?? throw new ArgumentNullException(nameof(request));
 			WorkAction = workAction ?? throw new ArgumentNullException(nameof(workAction));
 			JobIsCancelled = jobIsCancelled;
@@ -39,8 +39,8 @@ namespace MapSectionProviderLib
 		public override string ToString()
 		{
 			return Response == null
-				? $"WorkItem: {JobId} for request: {Request} /w null response"
-				: $"WorkItem: {JobId} for request: {Request} and response: {Response}";
+				? $"WorkItem: {JobNumber} for request: {Request} /w null response"
+				: $"WorkItem: {JobNumber} for request: {Request} and response: {Response}";
 		}
 	}
 
@@ -119,7 +119,7 @@ namespace MapSectionProviderLib
 
 	public interface IWorkRequest
 	{
-		public int JobId { get; init; }
+		public int JobNumber { get; init; }
 		public bool JobIsCancelled { get; }
 	}
 }

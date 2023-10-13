@@ -72,6 +72,12 @@ namespace MSetGeneratorPrototype
 
 			var (mapSectionVectors2, mapSectionZVectors) = GetMapSectionVectors(mapSectionRequest);
 
+			if (ct.IsCancellationRequested)
+			{
+				var noOpResult = new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors2, mapSectionZVectors, requestCancelled: ct.IsCancellationRequested);
+				return noOpResult;
+			}
+
 			//if (ShouldSkipThisSection(skipPositiveBlocks: false, skipLowDetailBlocks: false, coords))
 			//	return new MapSectionResponse(mapSectionRequest, requestCompleted: false, allRowsHaveEscaped: false, mapSectionVectors, mapSectionZVectors);
 
@@ -116,7 +122,7 @@ namespace MSetGeneratorPrototype
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 
 			var result = new MapSectionResponse(mapSectionRequest, sectionCompleted, allRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors, requestCancelled: ct.IsCancellationRequested);
-			result.MathOpCounts = _fp31VecMath.MathOpCounts.Clone();
+			UpdateResultsWithMathOpCalcs(result);
 			
 			//ReportResults(coords, mapSectionRequest, result, ct);
 
@@ -648,6 +654,16 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
+
+		private (MapSectionVectors2, MapSectionZVectors?) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
+		{
+			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
+			if (msv == null) throw new ArgumentException("The MapSectionVectors2 is null.");
+			//if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
+
+			return (msv, mszv);
+		}
+
 		#endregion
 
 		#region Diagnostic Methods
@@ -680,15 +696,6 @@ namespace MSetGeneratorPrototype
 				}
 			}
 
-		}
-
-		private (MapSectionVectors2, MapSectionZVectors?) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
-		{
-			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
-			if (msv == null) throw new ArgumentException("The MapSectionVectors2 is null.");
-			//if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
-
-			return (msv, mszv);
 		}
 
 		private void ReportLimbCountUpdate(IteratorCoords coords, int currentLimbCount, int limbCountForThisRequest, int precision)
@@ -790,21 +797,6 @@ namespace MSetGeneratorPrototype
 			return true;
 		}
 
-		[Conditional("PERF")]
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, Vector256<int>[] usedCalcs, Vector256<int>[] unusedCalcs)
-		{
-			usedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
-			unusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);
-		}
-
-		[Conditional("PERF")]
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void RollUpNumberOfCalcs(MathOpCounts mathOpCounts, IIterationState iterationState)
-		{
-			mathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
-		}
-
 		//[Conditional("DIAG")]
 		//private void ResetWorkingValues(Vector256<uint>[] cRs, Vector256<uint>[] cIs, Vector256<uint>[] zRs, Vector256<uint>[] zIs, Vector256<int> justNowDone)
 		//{
@@ -819,6 +811,32 @@ namespace MSetGeneratorPrototype
 		//		zIs[limbPtr] = Avx2.BlendVariable(Vector256<int>.Zero, zIs[limbPtr].AsInt32(), justNowDone).AsUInt32(); // use First if Zero, second if 1
 		//	}
 		//}
+
+		#endregion
+
+		#region Perf
+
+		[Conditional("PERF")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void UpdateResultsWithMathOpCalcs(MapSectionResponse mapSectionResponse)
+		{
+			mapSectionResponse.MathOpCounts = _fp31VecMath.MathOpCounts.Clone();
+		}
+
+		[Conditional("PERF")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, Vector256<int>[] usedCalcs, Vector256<int>[] unusedCalcs)
+		{
+			usedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
+			unusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);
+		}
+
+		[Conditional("PERF")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void RollUpNumberOfCalcs(MathOpCounts mathOpCounts, IIterationState iterationState)
+		{
+			mathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+		}
 
 		#endregion
 

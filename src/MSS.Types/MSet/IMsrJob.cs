@@ -40,6 +40,8 @@ namespace MSS.Types
 
 		MathOpCounts? MathOpCounts { get; }
 
+		bool IsComplete { get; }
+
 		int TotalNumberOfSectionsRequested { get; set; }
 		int SectionsFoundInRepo { get; set;  }
 		int SectionsGenerated { get; set; }
