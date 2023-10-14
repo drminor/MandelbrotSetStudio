@@ -11,7 +11,7 @@ namespace MSS.Common
 		//event EventHandler<JobProgressInfo>? RequestAdded;
 		//event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
-		event EventHandler<MsrJob>? RequestAdded2;
+		event EventHandler<MsrJob>? RequestAdded;
 
 		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings);
 		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId, VectorLong mapBlockOffset,

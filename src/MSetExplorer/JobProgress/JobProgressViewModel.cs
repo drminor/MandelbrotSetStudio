@@ -32,25 +32,12 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void MapLoaderManager_RequestAdded(object? sender, JobProgressInfo e)
+		private void MapLoaderManager_RequestAdded(object? sender, MsrJob e)
 		{
 			_synchronizationContext?.Post((o) => HandleRequstAdded(e), null);
 		}
 
-		private void MapLoaderManager_RequestAdded2(object? sender, MsrJob e)
-		{
-			_synchronizationContext?.Post((o) => HandleRequstAdded2(e), null);
-		}
-
-		private void HandleRequstAdded(JobProgressInfo jobProgressInfo)
-		{
-			CurrentJobProgressInfo = jobProgressInfo;
-			CurrentJobProgressInfo.DateCreatedUtc = DateTime.UtcNow;
-
-			OnPropertyChanged(nameof(TotalSections));
-		}
-
-		private void HandleRequstAdded2(MsrJob msrJob)
+		private void HandleRequstAdded(MsrJob msrJob)
 		{
 			msrJob.MapSectionLoaded += MsrJob_MapSectionLoaded;
 			msrJob.JobHasCompleted += MsrJob_JobHasCompleted;
@@ -66,16 +53,23 @@ namespace MSetExplorer
 			{
 				msrJob.JobHasCompleted -= MsrJob_JobHasCompleted;
 				msrJob.MapSectionLoaded -= MsrJob_MapSectionLoaded;
+
+				var totalExecutionTime = msrJob.TotalExecutionTime;
+				Report(totalExecutionTime);
+
+				OnPropertyChanged(nameof(RunTime));
+				OnPropertyChanged(nameof(EstimatedTimeRemaining));
+
+				OnPropertyChanged(nameof(FetchedCount));
+				OnPropertyChanged(nameof(GeneratedCount));
+
+				OnPropertyChanged(nameof(PercentComplete));
+
+				MapSectionProcessInfos.Clear();
 			}
 		}
 
 		private void MsrJob_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
-		{
-			//Debug.WriteLine($"Got a RequestCompleted event. JobNumber: {e.JobNumber}, Number Completed: {e.RequestsCompleted}.");
-			_synchronizationContext?.Post((o) => HandleMapSectionLoaded(e), null);
-		}
-
-		private void MapLoaderManager_SectionLoaded(object? sender, MapSectionProcessInfo e)
 		{
 			//Debug.WriteLine($"Got a RequestCompleted event. JobNumber: {e.JobNumber}, Number Completed: {e.RequestsCompleted}.");
 			_synchronizationContext?.Post((o) => HandleMapSectionLoaded(e), null);
@@ -96,22 +90,6 @@ namespace MSetExplorer
 					CurrentJobProgressInfo.GeneratedCount += 1;
 				}
 			}
-
-			// TODO: Subscribe to the JobIsCompleteEvent
-			//if (mapSectionProcessInfo.IsLastSection)
-			//{
-			//	Report(_mapLoaderManager.GetExecutionTimeForJob(mapSectionProcessInfo.JobNumber));
-			//}
-
-			//OnPropertyChanged(nameof(RunTime));
-			//OnPropertyChanged(nameof(EstimatedTimeRemaining));
-
-			//OnPropertyChanged(nameof(FetchedCount));
-			//OnPropertyChanged(nameof(GeneratedCount));
-
-			//OnPropertyChanged(nameof(PercentComplete));
-
-			////MapSectionProcessInfos.Clear();
 		}
 
 		private void Report(TimeSpan? totalExecutionTime)
@@ -169,15 +147,11 @@ namespace MSetExplorer
 
 					if (_isEnabled)
 					{
-						//_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
-						_mapLoaderManager.RequestAdded2 += MapLoaderManager_RequestAdded2;
-						//_mapLoaderManager.SectionLoaded += MapLoaderManager_SectionLoaded;
+						_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
 					}
 					else
 					{
-						//_mapLoaderManager.RequestAdded -= MapLoaderManager_RequestAdded;
-						_mapLoaderManager.RequestAdded2 -= MapLoaderManager_RequestAdded2;
-						//_mapLoaderManager.SectionLoaded -= MapLoaderManager_SectionLoaded;
+						_mapLoaderManager.RequestAdded -= MapLoaderManager_RequestAdded;
 					}
 				}
 			}
