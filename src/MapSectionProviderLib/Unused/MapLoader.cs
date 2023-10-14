@@ -309,9 +309,12 @@ namespace MapSectionProviderLib
 			var result = new MapSectionProcessInfo
 				(
 				JobNumber,
+				msr.RequestNumber,
 				msr.FoundInRepo,
-				_sectionsCompleted,
-				isLastSection,
+				//_sectionsCompleted,
+				//isLastSection,
+				msr.Completed,
+				msr.Cancelled,
 				msr.TimeToCompleteGenRequest,
 				msr.ProcessingDuration,
 				msr.GenerationDuration

@@ -41,10 +41,9 @@ namespace MSetExplorer
 
 			InitializeComponent();
 
-
-			jobProgress1.DataContext = _vm.ViewModelFactory.CreateAJobProgressViewModel();
-			
 			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
+			jobProgress1.DataContext = _vm.JobProgressViewModel;
+
 			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
 			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
@@ -54,7 +53,6 @@ namespace MSetExplorer
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 
 			_vm.MapCoordsIsVisible = mnuItem_CoordsWindow.IsChecked;
-
 		}
 
 		private void ExplorerWindow_Loaded(object sender, RoutedEventArgs e)

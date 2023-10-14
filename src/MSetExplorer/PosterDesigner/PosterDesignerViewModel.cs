@@ -27,9 +27,11 @@ namespace MSetExplorer
 			MapDisplayViewModel = mapDisplayViewModel;
 
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
-			
+
 			//MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
-			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
+
+			//MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
+			MapDisplayViewModel.MapViewUpdateCompleted += MapDisplayViewModel_MapViewUpdateCompleted;
 
 			ViewModelFactory = viewModelFactory;
 
@@ -145,6 +147,25 @@ namespace MSetExplorer
 			CbsHistogramViewModel.RefreshDisplay();
 		}
 
+		private void MapDisplayViewModel_MapViewUpdateCompleted(object? sender, MapViewUpdateCompletedEventArgs e)
+		{
+			ColorBandSetViewModel.RefreshPercentages();
+			CbsHistogramViewModel.RefreshDisplay();
+		}
+
+		//private void MapDisplayViewModel_MapViewUpdateCompleted(object? sender, MapViewUpdateCompletedEventArgs e)
+		//{
+		//	Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}");
+
+		//	ColorBandSetViewModel.RefreshPercentages();
+		//	var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
+
+		//	if (histogramDataWasEmpty)
+		//	{
+		//		Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
+		//	}
+		//}
+
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
 		{
 			// Update the Target Iterations
@@ -248,7 +269,8 @@ namespace MSetExplorer
 				{
 					// Dispose managed state (managed objects)
 
-					MapDisplayViewModel.DisplayJobCompleted -= MapDisplayViewModel_DisplayJobCompleted;
+					//MapDisplayViewModel.DisplayJobCompleted -= MapDisplayViewModel_DisplayJobCompleted;
+					MapDisplayViewModel.MapViewUpdateCompleted -= MapDisplayViewModel_MapViewUpdateCompleted;
 
 					MapCalcSettingsViewModel.MapSettingsUpdateRequested -= MapCalcSettingsViewModel_MapSettingsUpdateRequested;
 					ColorBandSetViewModel.PropertyChanged -= ColorBandViewModel_PropertyChanged;

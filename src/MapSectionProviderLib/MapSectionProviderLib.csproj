@@ -21,6 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Managers\GenMapRequestInfo.cs" />
+    <Compile Remove="Managers\MapLoader.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MSS.Common\MSS.Common.csproj" />
     <ProjectReference Include="..\ProjectRepo\ProjectRepo.csproj" />
   </ItemGroup>

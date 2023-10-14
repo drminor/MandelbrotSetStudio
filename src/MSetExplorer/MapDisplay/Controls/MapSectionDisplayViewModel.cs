@@ -93,7 +93,12 @@ namespace MSetExplorer
 		#region Events
 
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
-		public event EventHandler<int>? DisplayJobCompleted;
+
+		//public event EventHandler<int>? DisplayJobCompleted;
+		public event EventHandler<MapViewUpdateCompletedEventArgs>? MapViewUpdateCompleted;
+
+		//public event EventHandler<JobProgressInfo>? RequestAdded;
+		//public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
@@ -206,10 +211,10 @@ namespace MSetExplorer
 							}
 						}
 
-						if (newJobNumber.HasValue && lastSectionWasIncluded)
-						{
-							DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
-						}
+						//if (newJobNumber.HasValue && lastSectionWasIncluded)
+						//{
+						//	DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+						//}
 
 						OnPropertyChanged(nameof(IMapDisplayViewModel.ViewportSize));
 					}
@@ -358,11 +363,11 @@ namespace MSetExplorer
 				}
 			}
 
-			if (msrJob != null && lastSectionWasIncluded)
-			{
-				RaiseDisplayJobCompletedOnBackground(msrJob.JobNumber);
-				//DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
-			}
+			//if (msrJob != null && lastSectionWasIncluded)
+			//{
+			//	RaiseDisplayJobCompletedOnBackground(msrJob.JobNumber);
+			//	//DisplayJobCompleted?.Invoke(this, newJobNumber.Value);
+			//}
 
 			return msrJob;
 		}
@@ -441,10 +446,10 @@ namespace MSetExplorer
 				}
 			}
 
-			if (msrJob != null && lastSectionWasIncluded)
-			{
-				DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
-			}
+			//if (msrJob != null && lastSectionWasIncluded)
+			//{
+			//	DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
+			//}
 
 			return msrJob;
 		}
@@ -474,10 +479,10 @@ namespace MSetExplorer
 				}
 			}
 
-			if (msrJob != null && lastSectionWasIncluded)
-			{
-				DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
-			}
+			//if (msrJob != null && lastSectionWasIncluded)
+			//{
+			//	DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
+			//}
 
 			return msrJob;
 		}
@@ -513,10 +518,10 @@ namespace MSetExplorer
 				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
 			}
 
-			if (lastSectionWasIncluded)
-			{
-				DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
-			}
+			//if (lastSectionWasIncluded)
+			//{
+			//	DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
+			//}
 
 			return msrJob;
 		}
@@ -565,10 +570,10 @@ namespace MSetExplorer
 				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, LastMapAreaInfo, reapplyColorMap: false, out lastSectionWasIncluded);
 			}
 
-			if (msrJob != null && lastSectionWasIncluded)
-			{
-				DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
-			}
+			//if (msrJob != null && lastSectionWasIncluded)
+			//{
+			//	DisplayJobCompleted?.Invoke(this, msrJob.JobNumber);
+			//}
 
 			return msrJob;
 		}
@@ -630,6 +635,11 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
+		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
+		{
+			RaiseMapViewUpdateCompletedOnBackground(jobNumber, isCancelled);
+		}
+
 		private void MapSectionReady(MapSection mapSection)
 		{
 			var mapSectionShouldBeUsed = false;
@@ -673,10 +683,10 @@ namespace MSetExplorer
 			//	}
 			//}
 
-			if (mapSection.IsLastSection)
-			{
-				DisplayJobCompleted?.Invoke(this, mapSection.JobNumber);
-			}
+			//if (mapSection.IsLastSection)
+			//{
+			//	DisplayJobCompleted?.Invoke(this, mapSection.JobNumber);
+			//}
 		}
 
 		private void DrawOneSectionWrapper(MapSection mapSection)
@@ -947,7 +957,7 @@ namespace MSetExplorer
 			// This uses the callback property of the MsrJob.
 
 			//msrJob.Start(newRequests, MapSectionReady, numberOfMapSectionsRequested);
-			var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, msrJob.CancellationTokenSource.Token, out mapRequestsPendingGeneration);
+			var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, MapViewUpdateIsComplete, msrJob.CancellationTokenSource.Token, out mapRequestsPendingGeneration);
 
 			//msrJob.UpdateReqPendingCount(mapRequestsPendingGeneration.Count);
 
@@ -1135,6 +1145,30 @@ namespace MSetExplorer
 							// The new request is for both regular and inverted.
 							// The exiting request is for either regular or inverted
 
+							//// Cancel the portion of the new request, covered by the existing request
+							//if (existingReq.IsInverted)
+							//{
+							//	if (newReq.IsInverted)
+							//	{
+							//		newReq.Cancelled = true;
+							//	}
+							//	else
+							//	{
+							//		newReq.Mirror.Cancelled = true;
+							//	}
+							//}
+							//else
+							//{
+							//	if (newReq.IsInverted)
+							//	{
+							//		newReq.Mirror.Cancelled = true;
+							//	}
+							//	else
+							//	{
+							//		newReq.Cancelled = true;
+							//	}
+							//}
+
 							// Cancel the existing request -- the new request includes both
 							requestsNoLongerNeeded.Add(existingReq);
 						}
@@ -1193,10 +1227,13 @@ namespace MSetExplorer
 				// TODO: Implement IEquatable<MapSectionRequst>
 				var mapSectionRequest = FindMapSectionRequest(request, _requestsPendingGeneration);
 
-
 				if (!object.Equals(mapSectionRequest, request))
 				{
-					Debug.WriteLine("CancelRequests found a matching request by value -- but is not the exact same object.");
+					//Debug.WriteLine("CancelRequests found a matching request by value -- but is not the exact same object.");
+				}
+				else
+				{
+					Debug.WriteLine("CancelRequests found a matching request by value -- AND it is the exact same object.");
 				}
 
 				if (mapSectionRequest != null)
@@ -1380,14 +1417,30 @@ namespace MSetExplorer
 			ImageSource = bitmap;
 		}
 
-		private void RaiseDisplayJobCompletedOnBackground(int newJobNumber)
+		//private void RaiseDisplayJobCompletedOnBackground(int newJobNumber)
+		//{
+		//	ThreadPool.QueueUserWorkItem(
+		//	x =>
+		//	{
+		//		try
+		//		{
+		//			DisplayJobCompleted?.Invoke(this, newJobNumber);
+		//		}
+		//		catch (Exception e)
+		//		{
+		//			Debug.WriteLine($"Received error {e} from the ThreadPool QueueWorkItem DisplayJobCompleted");
+		//		}
+		//	});
+		//}
+
+		private void RaiseMapViewUpdateCompletedOnBackground(int newJobNumber, bool isCancelled)
 		{
 			ThreadPool.QueueUserWorkItem(
 			x =>
 			{
 				try
 				{
-					DisplayJobCompleted?.Invoke(this, newJobNumber);
+					MapViewUpdateCompleted?.Invoke(this, new MapViewUpdateCompletedEventArgs(newJobNumber, isCancelled));
 				}
 				catch (Exception e)
 				{

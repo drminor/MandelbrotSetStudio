@@ -9,7 +9,8 @@ namespace MSS.Types.MSet
 	{
 		#region Private Fields
 
-		private Action<MapSection> _callback;
+		private Action<MapSection> _mapSectionReadyCallback;
+		private Action<int, bool> _mapViewUpdateCompleteCallback;
 		private bool _isCompleted;
 		private Stopwatch _stopwatch;
 
@@ -28,7 +29,7 @@ namespace MSS.Types.MSet
 
 			if (test == ObjectId.Empty)
 			{
-				Debug.WriteLine($"The originalSourceSubdivisionId is blank during MapSectionRequest construction.");
+				Debug.WriteLine($"MsrJob Constructor: The originalSourceSubdivisionId is blank.");
 			}
 
 			MapLoaderJobNumber = mapLoaderJobNumber;
@@ -47,7 +48,8 @@ namespace MSS.Types.MSet
 			IsCancelled = false;
 			CancellationTokenSource = new CancellationTokenSource();
 
-			_callback = NoOpCallBack;
+			_mapSectionReadyCallback = NoOpMapSectionReadyCallBack;
+			_mapViewUpdateCompleteCallback = NoOpMapViewUpdateCompleteCallBack;
 			_isCompleted = false;
 
 			_stopwatch = new Stopwatch();
@@ -116,19 +118,20 @@ namespace MSS.Types.MSet
 
 		#region Public Methods
 
-		public bool Start(int sectionsRequested, Action<MapSection> callback)
+		public bool Start(int sectionsRequested, int sectionsCancelled, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback)
 		{
-			return Start(sectionsRequested, 0, 0, 0, callback);
+			return Start(sectionsRequested, 0, 0, sectionsCancelled, mapSectionReadyCallback, mapViewUpdateCompleteCallback);
 		}
 
-		public bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> callback)
+		public bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback)
 		{
 			TotalNumberOfSectionsRequested = sectionsRequested;
 			SectionsFoundInRepo = sectionsFoundInRepo;
 			SectionsGenerated = sectionsGenerated;
 			SectionsCancelled = sectionsCancelled;
 
-			_callback = callback;
+			_mapSectionReadyCallback = mapSectionReadyCallback;
+			_mapViewUpdateCompleteCallback = mapViewUpdateCompleteCallback;
 
 			if (SectionsPending == 0)
 			{
@@ -161,6 +164,8 @@ namespace MSS.Types.MSet
 			{
 				_isCompleted = true;
 				JobHasCompleted?.Invoke(this, new EventArgs());
+
+				_mapViewUpdateCompleteCallback(JobNumber, IsCancelled);
 			}
 		}
 
@@ -237,7 +242,7 @@ namespace MSS.Types.MSet
 			// Call the callback, only if the MapSection is not Empty.
 			if (!mapSection.IsEmpty)
 			{
-				_callback(mapSection);
+				_mapSectionReadyCallback(mapSection);
 				MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: false));
 			}
 			else
@@ -255,7 +260,7 @@ namespace MSS.Types.MSet
 			mapSection.IsLastSection = true;
 
 			// This is the last section -- call the callback if the MapSection is Empty or Not
-			_callback(mapSection);
+			_mapSectionReadyCallback(mapSection);
 
 			if (!mapSection.IsEmpty)
 			{
@@ -269,20 +274,25 @@ namespace MSS.Types.MSet
 		{
 			var result = new MapSectionProcessInfo
 				(
-				JobNumber,
+				jobNumber: msr.MapLoaderJobNumber,
+				requestNumber: msr.RequestNumber,
 				msr.FoundInRepo,
-				msr.Completed ? 1 : 0,
-				isLastSection,
+				msr.Completed,
+				msr.Cancelled,
 				msr.TimeToCompleteGenRequest,
 				msr.ProcessingDuration,
 				msr.GenerationDuration
-				//, msr.MathOpCounts
 				);
 
 			return result;
 		}
 
-		private void NoOpCallBack(MapSection mapSection)
+		private void NoOpMapSectionReadyCallBack(MapSection mapSection)
+		{
+			Debug.WriteLine("WARNING. The NoOpCallBack is being called.");
+		}
+
+		private void NoOpMapViewUpdateCompleteCallBack(int jobNumber, bool isCancelled)
 		{
 			Debug.WriteLine("WARNING. The NoOpCallBack is being called.");
 		}

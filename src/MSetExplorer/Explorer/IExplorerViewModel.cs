@@ -9,7 +9,8 @@ namespace MSetExplorer
 		IJobTreeViewModel JobTreeViewModel { get; }
 
 		IMapDisplayViewModel MapDisplayViewModel { get; }
-
+		JobProgressViewModel JobProgressViewModel { get; }
+		
 		MapCoordsViewModel MapCoordsViewModel { get; }
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
 		ColorBandSetViewModel ColorBandSetViewModel { get; }

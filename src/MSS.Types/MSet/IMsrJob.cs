@@ -47,10 +47,14 @@ namespace MSS.Types
 		int SectionsGenerated { get; set; }
 		int SectionsCancelled { get; set; }
 
-		bool Start(int sectionsRequested, Action<MapSection> callback);
+		//bool Start(int sectionsRequested, Action<MapSection> callback);
+		bool Start(int sectionsRequested, int sectionsCancelled, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback);
 
-		bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> callback);
-		
+		//bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> callback);
+		bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback);
+
+
+
 		void Cancel();
 		void MarkJobAsComplete();
 		

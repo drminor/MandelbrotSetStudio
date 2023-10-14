@@ -26,6 +26,13 @@ namespace MSS.Types
 
 		public DateTime DateCreatedUtc { get; set; }
 
+		private bool _isComplete;
+		public bool IsComplete
+		{
+			get => _isComplete;
+			set => _isComplete = value;
+		}
+
 		public int TotalSections { get; init; }
 
 		public TimeSpan RunTime => DateTime.UtcNow - DateCreatedUtc;
@@ -99,8 +106,6 @@ namespace MSS.Types
 				}
 			}
 		}
-
-		public bool IsComplete => (_generatedCount + _fetchedCount) == TotalSections;
 
 	}
 }

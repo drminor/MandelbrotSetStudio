@@ -28,22 +28,27 @@ namespace MSetExplorer
 			//_mapLoaderManager = mapLoaderManager;
 			//_mapJobHelper = mapJobHelper;
 
+			_viewModelFactory = viewModelFactory;
+
 			ProjectViewModel = projectViewModel;
 			ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
 
 			JobTreeViewModel = jobTreeViewModel;
 
+			JobProgressViewModel = _viewModelFactory.CreateAJobProgressViewModel();
+
 			MapDisplayViewModel = mapDisplayViewModel;
 			//MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
-			MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
+			
+			//MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
+			MapDisplayViewModel.MapViewUpdateCompleted += MapDisplayViewModel_MapViewUpdateCompleted;
 
 			DispWidth = MapDisplayViewModel.ViewportSize.Width;
 			DispHeight = MapDisplayViewModel.ViewportSize.Height;
 
-			_viewModelFactory = viewModelFactory;
 
-			MapCoordsViewModel = viewModelFactory.CreateAMapCoordsViewModel();
+			MapCoordsViewModel = _viewModelFactory.CreateAMapCoordsViewModel();
 
 			MapCalcSettingsViewModel = new MapCalcSettingsViewModel();
 			MapCalcSettingsViewModel.MapSettingsUpdateRequested += MapCalcSettingsViewModel_MapSettingsUpdateRequested;
@@ -62,6 +67,8 @@ namespace MSetExplorer
 		public IProjectViewModel ProjectViewModel { get; }
 		public IJobTreeViewModel JobTreeViewModel { get; }
 		public IMapDisplayViewModel MapDisplayViewModel { get; }
+
+		public JobProgressViewModel JobProgressViewModel { get; }
 
 		public MapCoordsViewModel MapCoordsViewModel { get; } 
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
@@ -188,19 +195,6 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
-		{
-			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-DisplayJobCompleted for Job: {e}");
-
-			ColorBandSetViewModel.RefreshPercentages();
-			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
-
-			if (histogramDataWasEmpty)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
-			}
-		}
-
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
 			if (e.IsPreview)
@@ -226,6 +220,32 @@ namespace MSetExplorer
 			{
 				// Zoom or Pan Map Coordinates
 				ProjectViewModel.UpdateMapView(e.TransformType, e.PanAmount, e.Factor, e.CurrentMapAreaInfo);
+			}
+		}
+
+		private void MapDisplayViewModel_MapViewUpdateCompleted(object? sender, MapViewUpdateCompletedEventArgs e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}");
+
+			ColorBandSetViewModel.RefreshPercentages();
+			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
+
+			if (histogramDataWasEmpty)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
+			}
+		}
+
+		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-DisplayJobCompleted for Job: {e}");
+
+			ColorBandSetViewModel.RefreshPercentages();
+			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
+
+			if (histogramDataWasEmpty)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
 			}
 		}
 
@@ -351,7 +371,9 @@ namespace MSetExplorer
 					// Dispose managed state (managed objects)
 
 					MapDisplayViewModel.MapViewUpdateRequested -= MapDisplayViewModel_MapViewUpdateRequested;
-					MapDisplayViewModel.DisplayJobCompleted -= MapDisplayViewModel_DisplayJobCompleted;
+
+					//MapDisplayViewModel.DisplayJobCompleted -= MapDisplayViewModel_DisplayJobCompleted;
+					MapDisplayViewModel.MapViewUpdateCompleted -= MapDisplayViewModel_MapViewUpdateCompleted;
 
 					MapCalcSettingsViewModel.MapSettingsUpdateRequested -= MapCalcSettingsViewModel_MapSettingsUpdateRequested;
 					ColorBandSetViewModel.PropertyChanged -= ColorBandViewModel_PropertyChanged;

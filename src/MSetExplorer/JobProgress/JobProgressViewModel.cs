@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -36,12 +37,42 @@ namespace MSetExplorer
 			_synchronizationContext?.Post((o) => HandleRequstAdded(e), null);
 		}
 
+		private void MapLoaderManager_RequestAdded2(object? sender, MsrJob e)
+		{
+			_synchronizationContext?.Post((o) => HandleRequstAdded2(e), null);
+		}
+
 		private void HandleRequstAdded(JobProgressInfo jobProgressInfo)
 		{
 			CurrentJobProgressInfo = jobProgressInfo;
 			CurrentJobProgressInfo.DateCreatedUtc = DateTime.UtcNow;
 
 			OnPropertyChanged(nameof(TotalSections));
+		}
+
+		private void HandleRequstAdded2(MsrJob msrJob)
+		{
+			msrJob.MapSectionLoaded += MsrJob_MapSectionLoaded;
+			msrJob.JobHasCompleted += MsrJob_JobHasCompleted;
+			CurrentJobProgressInfo = new JobProgressInfo(msrJob.MapLoaderJobNumber, "Temp", msrJob.ProcessingStartTime ?? DateTime.Now, msrJob.TotalNumberOfSectionsRequested, msrJob.SectionsFoundInRepo);
+			CurrentJobProgressInfo.DateCreatedUtc = DateTime.UtcNow;
+
+			OnPropertyChanged(nameof(TotalSections));
+		}
+
+		private void MsrJob_JobHasCompleted(object? sender, EventArgs e)
+		{
+			if (sender is MsrJob msrJob)
+			{
+				msrJob.JobHasCompleted -= MsrJob_JobHasCompleted;
+				msrJob.MapSectionLoaded -= MsrJob_MapSectionLoaded;
+			}
+		}
+
+		private void MsrJob_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
+		{
+			//Debug.WriteLine($"Got a RequestCompleted event. JobNumber: {e.JobNumber}, Number Completed: {e.RequestsCompleted}.");
+			_synchronizationContext?.Post((o) => HandleMapSectionLoaded(e), null);
 		}
 
 		private void MapLoaderManager_SectionLoaded(object? sender, MapSectionProcessInfo e)
@@ -66,10 +97,11 @@ namespace MSetExplorer
 				}
 			}
 
-			if (mapSectionProcessInfo.IsLastSection)
-			{
-				Report(_mapLoaderManager.GetExecutionTimeForJob(mapSectionProcessInfo.JobNumber));
-			}
+			// TODO: Subscribe to the JobIsCompleteEvent
+			//if (mapSectionProcessInfo.IsLastSection)
+			//{
+			//	Report(_mapLoaderManager.GetExecutionTimeForJob(mapSectionProcessInfo.JobNumber));
+			//}
 
 			//OnPropertyChanged(nameof(RunTime));
 			//OnPropertyChanged(nameof(EstimatedTimeRemaining));
@@ -126,7 +158,6 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-
 		public bool IsEnabled
 		{
 			get => _isEnabled;
@@ -138,13 +169,15 @@ namespace MSetExplorer
 
 					if (_isEnabled)
 					{
-						_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
-						_mapLoaderManager.SectionLoaded += MapLoaderManager_SectionLoaded;
+						//_mapLoaderManager.RequestAdded += MapLoaderManager_RequestAdded;
+						_mapLoaderManager.RequestAdded2 += MapLoaderManager_RequestAdded2;
+						//_mapLoaderManager.SectionLoaded += MapLoaderManager_SectionLoaded;
 					}
 					else
 					{
-						_mapLoaderManager.RequestAdded -= MapLoaderManager_RequestAdded;
-						_mapLoaderManager.SectionLoaded -= MapLoaderManager_SectionLoaded;
+						//_mapLoaderManager.RequestAdded -= MapLoaderManager_RequestAdded;
+						_mapLoaderManager.RequestAdded2 -= MapLoaderManager_RequestAdded2;
+						//_mapLoaderManager.SectionLoaded -= MapLoaderManager_SectionLoaded;
 					}
 				}
 			}

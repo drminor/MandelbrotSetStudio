@@ -43,7 +43,7 @@ namespace MapSectionProviderLib
 
 			_ = Task.Run(SubmitSectionRequests);
 
-			_msrJob.Start(requestsNotFound.Count, callback);
+			_msrJob.Start(requestsNotFound.Count, sectionsCancelled:0, callback, NoOpMapViewUpdateCompleteCallBack);
 
 			TaskStartedDate = DateTime.UtcNow;
 
@@ -167,6 +167,10 @@ namespace MapSectionProviderLib
 			return numSectionsRequested;
 		}
 
+		private void NoOpMapViewUpdateCompleteCallBack(int jobNumber, bool isCancelled)
+		{
+			Debug.WriteLine("WARNING. The NoOpCallBack is being called.");
+		}
 
 		#endregion
 

@@ -194,7 +194,7 @@ namespace ImageBuilder
 
 			try
 			{
-				var mapSectionResponses = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, msrJob.CancellationTokenSource.Token, out var _);
+				var mapSectionResponses = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, msrJob.CancellationTokenSource.Token, out var _);
 				_currentJobNumber = msrJob.MapLoaderJobNumber;
 
 				foreach (var response in mapSectionResponses)
@@ -256,6 +256,11 @@ namespace ImageBuilder
 					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. LastSection = {mapSection.IsLastSection}, Job Number: {mapSection.JobNumber}.");
 				}
 			}
+		}
+
+		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
+		{
+			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}."); ;
 		}
 
 		#endregion
