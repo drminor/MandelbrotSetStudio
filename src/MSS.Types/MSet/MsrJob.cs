@@ -14,16 +14,22 @@ namespace MSS.Types.MSet
 		private bool _isCompleted;
 		private Stopwatch _stopwatch;
 
+		private int _sectionsFoundInRepo;
+		private int _sectionsGenerated;
+		private int _sectionsCancelled;
+
+		private bool _isStarted;
+
 		#endregion
 
 		#region Constructors
 
 		public MsrJob() : this(mapLoaderJobNumber: 0, jobType: JobType.FullScale, jobId: "", ownerType: OwnerType.Project, subdivision: new Subdivision(), originalSourceSubdivisionId: "",
-			jobBlockOffset: new VectorLong(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings(), crossesXZero: false)
+			jobBlockOffset: new VectorLong(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings(), crossesYZero: false)
 		{ }
 
 		public MsrJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType ownerType, Subdivision subdivision, string originalSourceSubdivisionId, 
-			VectorLong jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings, bool crossesXZero)
+			VectorLong jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings, bool crossesYZero)
 		{
 			ObjectId test = new ObjectId(originalSourceSubdivisionId);
 
@@ -43,13 +49,19 @@ namespace MSS.Types.MSet
 			Precision = precision;
 			LimbCount = limbCount;
 			MapCalcSettings = mapCalcSettings;
-			CrossesYZero = crossesXZero;
+			CrossesYZero = crossesYZero;
 
 			IsCancelled = false;
 			CancellationTokenSource = new CancellationTokenSource();
 
 			_mapSectionReadyCallback = NoOpMapSectionReadyCallBack;
 			_mapViewUpdateCompleteCallback = NoOpMapViewUpdateCompleteCallBack;
+
+			_sectionsFoundInRepo = 0;
+			_sectionsGenerated = 0;
+			_sectionsCancelled = 0;
+
+			_isStarted = false;
 			_isCompleted = false;
 
 			_stopwatch = new Stopwatch();
@@ -108,9 +120,57 @@ namespace MSS.Types.MSet
 		public bool IsComplete { get; private set; }
 
 		public int TotalNumberOfSectionsRequested { get; set; }
-		public int SectionsFoundInRepo { get; set; }
-		public int SectionsGenerated { get; set; }
-		public int SectionsCancelled { get; set; }
+
+		public int SectionsFoundInRepo
+		{
+			get => _sectionsFoundInRepo;
+
+			set
+			{
+				if (value != _sectionsFoundInRepo)
+				{
+					_sectionsFoundInRepo = value;
+					if (SectionsPending <= 0)
+					{
+						MarkJobAsComplete();
+					}
+				}
+			}
+		}
+	
+		public int SectionsGenerated
+		{
+			get => _sectionsGenerated;
+
+			set
+			{
+				if (value != _sectionsGenerated)
+				{
+					_sectionsGenerated = value;
+					if (SectionsPending <= 0)
+					{
+						MarkJobAsComplete();
+					}
+				}
+			}
+		}
+		
+		public int SectionsCancelled
+		{
+			get => _sectionsCancelled;
+
+			set
+			{
+				if (value != _sectionsCancelled)
+				{
+					_sectionsCancelled = value;
+					if (SectionsPending <= 0)
+					{
+						MarkJobAsComplete();
+					}
+				}
+			}
+		}
 
 		public int SectionsPending => TotalNumberOfSectionsRequested - SectionsFoundInRepo - SectionsGenerated - SectionsCancelled;
 
@@ -125,6 +185,13 @@ namespace MSS.Types.MSet
 
 		public bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback)
 		{
+			if (_isStarted)
+			{
+				throw new InvalidOperationException("Cannot start this MsrJob, it has already been started.");
+			}
+
+			_isStarted = true;
+
 			TotalNumberOfSectionsRequested = sectionsRequested;
 			SectionsFoundInRepo = sectionsFoundInRepo;
 			SectionsGenerated = sectionsGenerated;

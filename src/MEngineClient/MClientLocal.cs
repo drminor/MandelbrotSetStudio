@@ -81,11 +81,6 @@ namespace MEngineClient
 			return result;
 		}
 
-		public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
-		{
-			return true;
-		}
-
 		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
 			try

@@ -19,6 +19,7 @@ namespace ImageBuilder
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
+		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection?>? _currentResponses;
 		private bool _isStopping;
@@ -32,6 +33,7 @@ namespace ImageBuilder
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionBuilder = new MapSectionBuilder();
 
+			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
 			_currentResponses = null;
 			_isStopping = false;
@@ -47,7 +49,8 @@ namespace ImageBuilder
 
 		#region Public Methods
 
-		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null)
+		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
+			CancellationToken ct, Action<double>? statusCallback = null)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
@@ -57,6 +60,8 @@ namespace ImageBuilder
 			{
 				UseEscapeVelocities = useEscapeVelocities
 			};
+
+			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo, mapCalcSettings);				
 
 			var imageSize = mapAreaInfo.CanvasSize.Round();
 
@@ -69,6 +74,7 @@ namespace ImageBuilder
 				//var h = numberOfWholeBlocks.Height;
 
 				var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
+				var stride = extentInBlocks.Width;
 				var h = extentInBlocks.Height;
 
 				Debug.WriteLine($"The BitmapBuilder is processing section requests. The map extent is {extentInBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
@@ -80,8 +86,11 @@ namespace ImageBuilder
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
 					var blockIndexY = blockPtrY - (h / 2);
-					var blocksForThisRow = await GetAllBlocksForRowAsync(jobId, ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId, mapBlockOffset, blockPtrY, blockIndexY, 
-						extentInBlocks.Width, mapCalcSettings, mapAreaInfo.Precision);
+
+					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
+
+					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, stride, ct);
+
 					if (ct.IsCancellationRequested || blocksForThisRow.Count == 0)
 					{
 						return null;
@@ -106,7 +115,7 @@ namespace ImageBuilder
 					destPixPtr = BuildARow(result, destPixPtr, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, extentInBlocks.Width, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
-					statusCallBack?.Invoke(100 * percentageCompleted);
+					statusCallback?.Invoke(100 * percentageCompleted);
 				}
 			}
 			catch (Exception e)
@@ -167,16 +176,8 @@ namespace ImageBuilder
 			return destPixPtr;
 		}
 
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(ObjectId jobId, OwnerType ownerType, Subdivision subdivision, ObjectId originalSourceSubdivisionId, VectorLong mapBlockOffset, int rowPtr, int blockIndexY, int stride, MapCalcSettings mapCalcSettings, int precision)
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
 		{
-			var jobType = JobType.SizeEditorPreview;
-
-			//var mapLoaderJobNumber = _mapLoaderManager.GetNextJobNumber();
-			//var limbCount = _mapLoaderManager.GetLimbCount(precision);
-			//var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision: precision, limbCount, mapCalcSettings, crossesXZero: false);
-
-			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, jobId.ToString(), ownerType, subdivision, originalSourceSubdivisionId.ToString(), mapBlockOffset, precision, crossesXZero: false, mapCalcSettings: mapCalcSettings);
-
 			var requests = new List<MapSectionRequest>();
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
@@ -194,41 +195,22 @@ namespace ImageBuilder
 
 			try
 			{
-				var mapSectionResponses = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, msrJob.CancellationTokenSource.Token, out var _);
+				Debug.WriteLine("Resetting the Async Manual Reset Event.");
+				_blocksForRowAreReady.Reset();
+
+				Debug.WriteLine("Pushing a new request.");
+
+				var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var _);
 				_currentJobNumber = msrJob.MapLoaderJobNumber;
 
-				foreach (var response in mapSectionResponses)
+				foreach (var response in mapSections)
 				{
 					_currentResponses.Add(response.ScreenPosition.X, response);
 				}
 
-				//var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
-
-				Task? task = null;
-
-				if (task != null)
-				{
-					try
-					{
-						await task;
-					}
-					catch (OperationCanceledException)
-					{
-						Debug.WriteLine($"The BitmapBuilder's MapLoader's Task is cancelled.");
-						throw;
-					}
-					catch (Exception e)
-					{
-						Debug.WriteLine($"The BitmapBuilder's MapLoader's Task encountered an exception: {e}.");
-						throw;
-					}
-				}
-				else
-				{
-					// TODO: Add logic to confirm that all of the responses were received.
-					//Debug.WriteLine($"The BitmapBuilder's MapLoader's Task was not found.");
-					//throw new InvalidOperationException("The MapLoaderManger task could be found.");
-				}
+				Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
+				await _blocksForRowAreReady.WaitAsync();
+				Debug.WriteLine($"Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_currentResponses.Count} blocks were created.");
 			}
 			catch
 			{
@@ -260,7 +242,9 @@ namespace ImageBuilder
 
 		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
 		{
-			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}."); ;
+			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
+
+			_blocksForRowAreReady.SetAsync();
 		}
 
 		#endregion

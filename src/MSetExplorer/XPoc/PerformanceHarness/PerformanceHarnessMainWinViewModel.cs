@@ -679,7 +679,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var limbCount = GetLimbCount(precision);
 
 			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
-				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesXZero);
+				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
 
 			return msrJob;
 		}

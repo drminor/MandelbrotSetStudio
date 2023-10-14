@@ -186,7 +186,7 @@ namespace MSetExplorer
 				{
 					try
 					{
-						var pixels = await _bitmapBuilder.BuildAsync(jobId, ownerType, previewMapArea, colorBandSet, _useEscapeVelocitites, mapCalcSettings, _cts.Token);
+						var pixels = await _bitmapBuilder.BuildAsync(jobId, ownerType, previewMapArea, colorBandSet, _useEscapeVelocitites, mapCalcSettings, _cts.Token, statusCallback: null);
 						if (!_cts.IsCancellationRequested)
 						{
 							_synchronizationContext?.Post(o => BitmapCompleted(pixels, o), _cts);

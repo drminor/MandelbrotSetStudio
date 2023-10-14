@@ -47,19 +47,39 @@ namespace MapSectionProviderLib
 		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var msrJob = CreateMapSectionRequestJob(jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(),
-				mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, mapAreaInfo.Coords.CrossesXZero, mapCalcSettings);
+				mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, mapAreaInfo.Coords.CrossesYZero, mapCalcSettings);
 
 			return msrJob;
 		}
 
 		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId,
-			VectorLong mapBlockOffset, int precision, bool crossesXZero, MapCalcSettings mapCalcSettings)
+			VectorLong mapBlockOffset, int precision, bool crossesYZero, MapCalcSettings mapCalcSettings)
 		{
 			var limbCount = GetLimbCount(precision);
 			var mapLoaderJobNumber = GetNextJobNumber();
-			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, subdivision, originalSourceSubdivisionId, mapBlockOffset,	precision, limbCount, mapCalcSettings, crossesXZero);
+			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, subdivision, originalSourceSubdivisionId, mapBlockOffset,	precision, limbCount, mapCalcSettings, crossesYZero);
 
 			return msrJob;
+		}
+
+		public MsrJob CreateNewCopy(MsrJob s)
+		{
+			var result = new MsrJob
+				(
+					mapLoaderJobNumber: GetNextJobNumber(),
+					jobType: s.JobType,
+					jobId: s.JobId,
+					ownerType: s.OwnerType,
+					subdivision: s.Subdivision,
+					originalSourceSubdivisionId: s.OriginalSourceSubdivisionId,
+					jobBlockOffset: s.JobBlockOffset,
+					precision: s.Precision,
+					limbCount: s.LimbCount,
+					mapCalcSettings: s.MapCalcSettings,
+					crossesYZero: s.CrossesYZero
+				);
+
+			return result;
 		}
 
 		public List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback, CancellationToken ct, out List<MapSectionRequest> requestsPendingGeneration)
@@ -70,6 +90,7 @@ namespace MapSectionProviderLib
 
 			List<MapSection> mapSections = _mapSectionRequestProcessor.SubmitRequests(msrJob, mapSectionRequests, msrJob.HandleResponse, ct, out requestsPendingGeneration);
 
+			msrJob.SectionsFoundInRepo = mapSections.Count;
 			CheckPendingGenerationCount(msrJob, requestsPendingGeneration);
 
 			var mapLoaderJobNumber = msrJob.MapLoaderJobNumber;

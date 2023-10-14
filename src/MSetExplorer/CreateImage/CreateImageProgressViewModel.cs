@@ -22,6 +22,7 @@ namespace MSetExplorer
 
 		public CreateImageProgressViewModel(PngBuilder pngBuilder, MapJobHelper mapJobHelper)
 		{
+			Successfull = false;
 			_pngBuilder = pngBuilder;
 			_mapJobHelper = mapJobHelper;
 			_cancellationTokenSource = new CancellationTokenSource();
@@ -34,6 +35,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public bool Successfull { get; private set; }
 		public Progress<double> Progress { get; init; }
 
 		public string? ImageFilePath { get; private set; }
@@ -45,12 +47,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		//public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfoWithSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
-		//{
-		//	ImageFilePath = imageFilePath;
-
-		//	_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-		//}
+		// TODO: CreateImageViewModel. If the task fails, we need to alert the user.
 
 		public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings)
 		{
@@ -58,8 +55,7 @@ namespace MSetExplorer
 
 			var mapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, canvasSize);
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallBack, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
-
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 		}
 
 		public void CancelCreateImage()
@@ -76,6 +72,8 @@ namespace MSetExplorer
 				Thread.Sleep(10 * 1000);
 				File.Delete(ImageFilePath);
 			}
+
+			Successfull = false;
 		}
 
 		public void WaitForImageToComplete()
@@ -83,12 +81,13 @@ namespace MSetExplorer
 			if (_task != null)
 			{
 				_task.Wait();
+				Successfull = _task.Result;
 			}
 		}
 
 		#endregion
 
-		private void StatusCallBack(double value)
+		private void StatusCallback(double value)
 		{
 			((IProgress<double>)Progress).Report(value);
 		}

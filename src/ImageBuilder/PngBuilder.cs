@@ -2,12 +2,10 @@
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
-using PngImageLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,6 +20,7 @@ namespace ImageBuilder
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
+		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection?>? _mapSectionsForRow;
 
@@ -34,6 +33,7 @@ namespace ImageBuilder
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionBuilder = new MapSectionBuilder();
 
+			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
 			_mapSectionsForRow = null;
 		}
@@ -49,9 +49,10 @@ namespace ImageBuilder
 		#region Public Methods
 
 		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
-			Action<double> statusCallBack, CancellationToken ct)
+			Action<double> statusCallback, CancellationToken ct)
 		{
-			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
+			var result = true;
+
 			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
@@ -66,28 +67,38 @@ namespace ImageBuilder
 			{
 				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
-				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(),
-					mapBlockOffset, mapAreaInfo.Precision, crossesXZero: false, mapCalcSettings: mapCalcSettings);
-
+				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo, mapCalcSettings);
 
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
-				var newMapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
-				var stride = newMapExtentInBlocks.Width;
-				var h = newMapExtentInBlocks.Height;
+				var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
+				var stride = extentInBlocks.Width;
+				var h = extentInBlocks.Height;
 
 
-				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {newMapExtentInBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
+				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {extentInBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
 
-				var segmentLengths = BitmapHelper.GetSegmentLengths(newMapExtentInBlocks.Width, sizeOfFirstBlock.Width, sizeOfLastBlock.Width, blockSize.Width);
+				var segmentLengths = BitmapHelper.GetSegmentLengths(extentInBlocks.Width, sizeOfFirstBlock.Width, sizeOfLastBlock.Width, blockSize.Width);
 
-				for (var blockPtr = h - 1; blockPtr >= 0 && !ct.IsCancellationRequested; blockPtr--)
+				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					var blockIndexY = blockPtr - (h / 2);
-					var blocksForThisRow = await GetAllBlocksForRowAsync(msrJob, blockPtr, blockIndexY, stride);
+					var blockIndexY = blockPtrY - (h / 2);
+					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
+					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, stride, ct);
 
-					Debug.Assert(blocksForThisRow.Count == newMapExtentInBlocks.Width);
+					if (msrSubJob.IsCancelled)
+					{
+						result = false;
+						break;
+					}
+
+					if (blocksForThisRow.Count == extentInBlocks.Width)
+					{
+						Debug.WriteLine($"PngBuilder: GetAllBlocks Returned {blocksForThisRow.Count}. Expecting: {extentInBlocks.Width}.");
+					}
+
+					Debug.Assert(blocksForThisRow.Count == extentInBlocks.Width);
 
 					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
@@ -98,12 +109,13 @@ namespace ImageBuilder
 
 					var invert = !blocksForThisRow[0]?.IsInverted ?? false; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
 
-					var (startingLinePtr, numberOfLines, lineIncrement) = BitmapHelper.GetNumberOfLines(blockPtr, invert, newMapExtentInBlocks.Height, sizeOfFirstBlock.Height, sizeOfLastBlock.Height, blockSize.Height);
+					var (startingLinePtr, numberOfLines, lineIncrement) = BitmapHelper.GetNumberOfLines(blockPtrY, invert, extentInBlocks.Height, sizeOfFirstBlock.Height, sizeOfLastBlock.Height, blockSize.Height);
 
-					BuildARow(pngImage, blockPtr, invert, startingLinePtr, numberOfLines, lineIncrement, newMapExtentInBlocks.Width, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					BuildARow(pngImage, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, extentInBlocks.Width, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
-					var percentageCompleted = (h - blockPtr) / (double)h;
-					statusCallBack(100 * percentageCompleted);
+					var percentageCompleted = (h - blockPtrY) / (double)h;
+
+					statusCallback(100 * percentageCompleted);
 				}
 			}
 			catch (Exception e)
@@ -127,7 +139,7 @@ namespace ImageBuilder
 				}
 			}
 
-			return true;
+			return result;
 		}
 
 		#endregion
@@ -178,10 +190,9 @@ namespace ImageBuilder
 			}
 		}
 
-
-
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride)
+		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
 		{
+			msrJob.ProcessingStartTime = DateTime.Now;
 			var requests = new List<MapSectionRequest>();
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)
@@ -195,7 +206,11 @@ namespace ImageBuilder
 				requests.Add(mapSectionRequest);
 			}
 
-			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, msrJob.CancellationTokenSource.Token, out var _);
+			Debug.WriteLine("Resetting the Async Manual Reset Event.");
+			_blocksForRowAreReady.Reset();
+
+			Debug.WriteLine("Pushing a new request.");
+			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
 			_currentJobNumber = msrJob.MapLoaderJobNumber;
 
 			_mapSectionsForRow = new Dictionary<int, MapSection?>();
@@ -205,24 +220,17 @@ namespace ImageBuilder
 				_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
 			}
 
-			// TODO: Create a wait handle that is signalled when the MsrJob raises its JobComplete Event.
-			//var task = _mapLoaderManager.GetTaskForJob(_currentJobNumber.Value);
+			Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
+			await _blocksForRowAreReady.WaitAsync();
 
-			Task? task = null;
-
-			if (task != null)
+			if (msrJob.IsCancelled)
 			{
-				try
-				{
-					await task;
-				}
-				catch (OperationCanceledException)
-				{
-
-				}
+				_mapSectionsForRow.Clear();
 			}
+			
+			Debug.WriteLine($"Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were created.");
 
-			return _mapSectionsForRow ?? new Dictionary<int, MapSection?>();
+			return _mapSectionsForRow;
 		}
 
 		private void MapSectionReady(MapSection mapSection)
@@ -242,7 +250,9 @@ namespace ImageBuilder
 
 		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
 		{
-			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}."); ;
+			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
+
+			_blocksForRowAreReady.SetAsync();
 		}
 
 		#endregion

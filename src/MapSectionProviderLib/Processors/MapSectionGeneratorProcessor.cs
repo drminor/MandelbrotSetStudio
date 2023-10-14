@@ -217,10 +217,23 @@ namespace MapSectionProviderLib
 			if (mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
 			{
 				mapSectionResponse = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
+				mapSectionRequest.MsrJob.SectionsCancelled++;
 			}
 			else
 			{
 				mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
+				if (!mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
+				{
+					if (!mapSectionRequest.Cancelled)
+					{
+						mapSectionRequest.MsrJob.SectionsGenerated++;
+					}
+
+					if (mapSectionRequest.Mirror != null && !mapSectionRequest.Mirror.Cancelled)
+					{
+						mapSectionRequest.Mirror.MsrJob.SectionsGenerated++;
+					}
+				}
 
 				if (mapSectionResponse.MapSectionVectors2 == null)
 				{

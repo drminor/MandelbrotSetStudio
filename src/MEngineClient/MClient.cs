@@ -7,7 +7,6 @@ using MSS.Types.MSet;
 using ProtoBuf.Grpc.Client;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 
 namespace MEngineClient
@@ -23,11 +22,6 @@ namespace MEngineClient
 		private IMapSectionService? _mapSectionService;
 
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
-
-		//private int? _jobNumber;
-		//private int? _requestNumber;
-
-		private object _cancellationLock = new object();
 
 		private bool _useDetailedDebug = false;
 
@@ -51,9 +45,6 @@ namespace MEngineClient
 
 			_grpcChannel = null;
 			_mapSectionService = null;
-
-			//_jobNumber = null;
-			//_requestNumber = null;
 		}
 
 		#endregion
@@ -76,25 +67,17 @@ namespace MEngineClient
 			{
 				mapSectionRequest.Cancelled = true;
 				Debug.WriteLineIf(_useDetailedDebug, $"MClient. Request: JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is cancelled.");
-
-				//return new MapSectionResponse(mapSectionRequest, isCancelled: true);
 				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 			}
 			else
 			{
 				mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
-				//_jobNumber = mapSectionRequest.MapLoaderJobNumber;
-				//_requestNumber = mapSectionRequest.RequestNumber;
-
 				var mapSectionServiceRequest = MapTo(mapSectionRequest);
 
 				var stopWatch = Stopwatch.StartNew();
 				var mapSectionServiceResponse = GenerateMapSectionInternal(mapSectionServiceRequest, ct);
 				stopWatch.Stop();
-
-				//_jobNumber = null;
-				//_requestNumber = null;
 
 				result = MapFrom(mapSectionServiceResponse, mapSectionRequest);
 
@@ -109,40 +92,6 @@ namespace MEngineClient
 
 			return result;
 		}
-
-		//public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
-		//{
-		//	if (_jobNumber != null && _requestNumber != null)
-		//	{
-		//		var jobNumber = mapSectionRequest.MapLoaderJobNumber;
-		//		var requestNumber = mapSectionRequest.RequestNumber;
-
-		//		if (jobNumber == _jobNumber && requestNumber == _requestNumber)
-		//		{
-		//			var mapSectionService = MapSectionService;
-		//			//var mapSectionService = GetMapSectionService();
-
-		//			var cancelRequest = new CancelRequest
-		//			{
-		//				MapLoaderJobNumber = jobNumber,
-		//				RequestNumber = requestNumber
-		//			};
-
-
-		//			lock (_cancellationLock)
-		//			{
-		//				var result = mapSectionService.CancelGeneration(cancelRequest);
-		//				return result.RequestWasCancelled;
-		//			}
-		//		}
-		//		else
-		//		{
-		//			return false;
-		//		}
-		//	}
-
-		//	return false;
-		//}
 
 		#endregion
 
@@ -372,6 +321,53 @@ namespace MEngineClient
 				return _grpcChannel;
 			}
 		}
+
+		#endregion
+
+		#region Old Code
+
+		//// Field Declartions
+		//private int? _jobNumber;
+		//private int? _requestNumber;
+
+		//// Constructor
+		//private object _cancellationLock = new object();
+		//_jobNumber = null;
+		//_requestNumber = null;
+
+		//public bool CancelGeneration(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		//{
+		//	if (_jobNumber != null && _requestNumber != null)
+		//	{
+		//		var jobNumber = mapSectionRequest.MapLoaderJobNumber;
+		//		var requestNumber = mapSectionRequest.RequestNumber;
+
+		//		if (jobNumber == _jobNumber && requestNumber == _requestNumber)
+		//		{
+		//			var mapSectionService = MapSectionService;
+		//			//var mapSectionService = GetMapSectionService();
+
+		//			var cancelRequest = new CancelRequest
+		//			{
+		//				MapLoaderJobNumber = jobNumber,
+		//				RequestNumber = requestNumber
+		//			};
+
+
+		//			lock (_cancellationLock)
+		//			{
+		//				var result = mapSectionService.CancelGeneration(cancelRequest);
+		//				return result.RequestWasCancelled;
+		//			}
+		//		}
+		//		else
+		//		{
+		//			return false;
+		//		}
+		//	}
+
+		//	return false;
+		//}
 
 		#endregion
 	}

@@ -207,7 +207,7 @@ namespace MEngineService.Services
 				req.Precision, 
 				req.LimbCount, 
 				req.MapCalcSettings,
-				crossesXZero: false			// TODO: Provide a real value for crossesXZero  
+				crossesYZero: false			// TODO: Provide a real value for crossesYZero  
 				);
 
 			return result;
