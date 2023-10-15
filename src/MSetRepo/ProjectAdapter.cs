@@ -438,7 +438,7 @@ namespace MSetRepo
 		}
 
 		[Conditional("DEBUG2")]
-		private void CompareMapAreaV1AfterRoundTrip(MapAreaInfo previousValue, MapAreaInfo newValue, MapAreaInfo2 middleValue)
+		private void CompareMapAreaV1AfterRoundTrip(MapPositionSizeAndDelta previousValue, MapPositionSizeAndDelta newValue, MapCenterAndDelta middleValue)
 		{
 			Debug.WriteLine($"MapDisplay is RoundTripping MapAreaInfoV1" +
 				$"\nPrevious Scale: {previousValue.SamplePointDelta.Width}. Pos: {previousValue.Coords}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} Size: {previousValue.CanvasSize} " +
@@ -536,20 +536,20 @@ namespace MSetRepo
 			return job;
 		}
 
-		public (ObjectId, MapAreaInfo2)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
+		public (ObjectId, MapCenterAndDelta)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
 		{
 			try
 			{
 				var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-				var subAndMap = jobReaderWriter.GetSubdivisionIdAndMapAreaInfo(jobId);
+				var subAndMap = jobReaderWriter.GetSubdivisionIdAndMapCenterAndDelta(jobId);
 
 				if (subAndMap.HasValue)
 				{
-					var (subdivisionId, mapAreaInfo2Record) = subAndMap.Value;
-					var mapAreaInfo2 = _mSetRecordMapper.MapFrom(mapAreaInfo2Record);
+					var (subdivisionId, mapCenterAndDeltaRecord) = subAndMap.Value;
+					var mapCenterAndDelta = _mSetRecordMapper.MapFrom(mapCenterAndDeltaRecord);
 
-					return (subdivisionId, mapAreaInfo2);
+					return (subdivisionId, mapCenterAndDelta);
 				}
 				else
 				{
@@ -1069,14 +1069,14 @@ namespace MSetRepo
 
 		public void DoSchemaUpdates()
 		{
-			//UpdateAllJobsWithMapAreaInfo2();
+			//UpdateAllJobsWithMapCenterAndDelta();
 		}
 
-		//public void UpdateAllJobsWithMapAreaInfo2()
+		//public void UpdateAllJobsWithMapCenterAndDelta()
 		//{
 		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-		//	jobReaderWriter.UpdateJobsToUseMapAreaInfo2();
+		//	jobReaderWriter.UpdateJobsToUseMapCenterAndDelta();
 		//}
 
 		//public void RemoveEscapeVels()
@@ -1096,7 +1096,7 @@ namespace MSetRepo
 		//// Update all Job Records to use MapAreaInfo
 		//public long? DoSchemaUpdates()
 		//{
-		//	var numUpdated = UpdateAllJobsToUseMapAreaInfoRec1();
+		//	var numUpdated = UpdateAllJobsToUseMapPostionSizeAndDelta();
 		//	return numUpdated;
 		//}
 
@@ -1196,7 +1196,7 @@ namespace MSetRepo
 
 		#region Old Schema Updates
 
-		//public long UpdateAllJobsToUseMapAreaInfoRec1()
+		//public long UpdateAllJobsToUseMapPositionSizeAndDelta()
 		//{
 		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
@@ -1260,7 +1260,7 @@ namespace MSetRepo
 		//}
 
 
-		//public long UpdateAllJobsToUseMapAreaInfoRec2()
+		//public long UpdateAllJobsToUseMapCenterAndDelta()
 		//{
 		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
 		//	var result = jobReaderWriter.RemoveJobsWithNoProject();

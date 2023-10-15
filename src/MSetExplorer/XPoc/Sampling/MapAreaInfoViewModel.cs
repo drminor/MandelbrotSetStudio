@@ -11,7 +11,7 @@ namespace MSetExplorer.XPoc
 		private readonly SubdivisonProvider _subdivisonProvider;
 
 		private string _sectionTitle;
-		private MapAreaInfo _mapAreaInfo;
+		private MapPositionSizeAndDelta _mapAreaInfo;
 		private RRectangle _coords;
 
 		private long _samplePointDelta;
@@ -29,7 +29,7 @@ namespace MSetExplorer.XPoc
 			_subdivisonProvider = subdivisonProvider;
 
 			_sectionTitle = "Section Title";
-			_mapAreaInfo = new MapAreaInfo();
+			_mapAreaInfo = new MapPositionSizeAndDelta();
 			_coords = new RRectangle();
 		}
 
@@ -43,7 +43,7 @@ namespace MSetExplorer.XPoc
 			set { _sectionTitle = value; OnPropertyChanged(); }
 		}
 
-		public MapAreaInfo MapAreaInfo
+		public MapPositionSizeAndDelta MapAreaInfo
 		{
 			get => _mapAreaInfo;
 			set
@@ -158,7 +158,7 @@ namespace MSetExplorer.XPoc
 
 		#region Public Methods
 
-		public void UpdateMapAreaInfo(MapAreaInfo mapAreaInfo, RRectangle targetCoords)
+		public void UpdateMapAreaInfo(MapPositionSizeAndDelta mapAreaInfo, RRectangle targetCoords)
 		{
 			MapAreaInfo = mapAreaInfo;
 			UpdateDiffs(mapAreaInfo, targetCoords);
@@ -168,7 +168,7 @@ namespace MSetExplorer.XPoc
 
 		#region Private Methods
 
-		private void UpdateDiffs(MapAreaInfo mapAreaInfo, RRectangle targetCoords)
+		private void UpdateDiffs(MapPositionSizeAndDelta mapAreaInfo, RRectangle targetCoords)
 		{
 			if (BigIntegerHelper.TryConvertToDouble(mapAreaInfo.Subdivision.SamplePointDelta.Width, out var sampleWidth))
 			{

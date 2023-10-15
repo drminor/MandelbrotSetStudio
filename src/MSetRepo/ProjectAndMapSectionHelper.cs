@@ -254,7 +254,7 @@ namespace MSetRepo
 			var mapAreaInfo = job.MapAreaInfo;
 			var mapCalcSettings = job.MapCalcSettings;
 
-			var mapAreaInfoV1 = mapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
+			var mapAreaInfoV1 = mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfo, displaySize);
 
 			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, job.Id.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings);
 
@@ -265,7 +265,7 @@ namespace MSetRepo
 			return mapSectionRequests;
 		}
 
-		private static MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		private static MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
 			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);

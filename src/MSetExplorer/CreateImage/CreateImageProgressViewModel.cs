@@ -49,11 +49,11 @@ namespace MSetExplorer
 
 		// TODO: CreateImageViewModel. If the task fails, we need to alert the user.
 
-		public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings)
+		public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapCenterAndDelta mapAreaInfoV2, SizeDbl canvasSize, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings)
 		{
 			ImageFilePath = imageFilePath;
 
-			var mapAreaInfoWithSize = _mapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, canvasSize);
+			var mapAreaInfoWithSize = _mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfoV2, canvasSize);
 
 			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
 		}

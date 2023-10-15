@@ -4,19 +4,10 @@ using System.Text;
 
 namespace MSS.Types.MSet
 {
-
-	/// <remarks>
-	/// Same as the MapAreaInfo class, but this one records the MapCenter instead of a RRectangle
-	/// 
-	/// TODO: Rename the MapAreaInfo2 to MapAreaInfo
-	/// TODO: Rename the MapAreaInfo to MapAreaInfoWithSize
-	/// 
-	/// </remarks>
-
-	public class MapAreaInfo2 : ICloneable, IEquatable<MapAreaInfo2?>
+	public class MapCenterAndDelta : ICloneable, IEquatable<MapCenterAndDelta?>
 	{
-		private static readonly Lazy<MapAreaInfo2> _lazyMapAreaInfo = new Lazy<MapAreaInfo2>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
-		public static readonly MapAreaInfo2 Empty = _lazyMapAreaInfo.Value;
+		private static readonly Lazy<MapCenterAndDelta> _lazyMapAreaInfo = new Lazy<MapCenterAndDelta>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		public static readonly MapCenterAndDelta Empty = _lazyMapAreaInfo.Value;
 
 		public RPointAndDelta PositionAndDelta { get; init; }
 
@@ -33,7 +24,7 @@ namespace MSS.Types.MSet
 
 		#region Constructors
 
-		public MapAreaInfo2()
+		public MapCenterAndDelta()
 		{
 			PositionAndDelta = new RPointAndDelta();
 			Subdivision = new Subdivision();
@@ -43,11 +34,11 @@ namespace MSS.Types.MSet
 			IsEmpty = true;
 		}
 
-		public MapAreaInfo2(RPoint mapCenter, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset)
+		public MapCenterAndDelta(RPoint mapCenter, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset)
 			: this(Combine(mapCenter, subdivision.SamplePointDelta), subdivision, precision, mapBlockOffset, canvasControlOffset)
 		{ }
 
-		public MapAreaInfo2(RPointAndDelta rPointAndDelta, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset)
+		public MapCenterAndDelta(RPointAndDelta rPointAndDelta, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset)
 		{
 			PositionAndDelta = rPointAndDelta;
 			Subdivision = subdivision;
@@ -76,9 +67,9 @@ namespace MSS.Types.MSet
 			return Clone();
 		}
 
-		public MapAreaInfo2 Clone()
+		public MapCenterAndDelta Clone()
 		{
-			return new MapAreaInfo2(PositionAndDelta.Clone(), Subdivision.Clone(), Precision, MapBlockOffset.Clone(), CanvasControlOffset)
+			return new MapCenterAndDelta(PositionAndDelta.Clone(), Subdivision.Clone(), Precision, MapBlockOffset.Clone(), CanvasControlOffset)
 			{
 				IsEmpty = IsEmpty
 			};
@@ -97,10 +88,10 @@ namespace MSS.Types.MSet
 
 		public override bool Equals(object? obj)
 		{
-			return Equals(obj as MapAreaInfo2);
+			return Equals(obj as MapCenterAndDelta);
 		}
 
-		public bool Equals(MapAreaInfo2? other)
+		public bool Equals(MapCenterAndDelta? other)
 		{
 			return other is not null &&
 				IsEmpty == other.IsEmpty &&
@@ -115,12 +106,12 @@ namespace MSS.Types.MSet
 			return HashCode.Combine(PositionAndDelta, Subdivision, MapBlockOffset, CanvasControlOffset, IsEmpty);
 		}
 
-		public static bool operator ==(MapAreaInfo2? left, MapAreaInfo2? right)
+		public static bool operator ==(MapCenterAndDelta? left, MapCenterAndDelta? right)
 		{
-			return EqualityComparer<MapAreaInfo2>.Default.Equals(left, right);
+			return EqualityComparer<MapCenterAndDelta>.Default.Equals(left, right);
 		}
 
-		public static bool operator !=(MapAreaInfo2? left, MapAreaInfo2? right)
+		public static bool operator !=(MapCenterAndDelta? left, MapCenterAndDelta? right)
 		{
 			return !(left == right);
 		}

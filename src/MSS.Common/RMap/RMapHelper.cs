@@ -67,7 +67,7 @@ namespace MSS.Common
 			return binaryPrecision;
 		}
 
-		public static int GetBinaryPrecision(MapAreaInfo mapAreaInfo)
+		public static int GetBinaryPrecision(MapPositionSizeAndDelta mapAreaInfo)
 		{
 			var binaryPrecision = RValueHelper.GetBinaryPrecision(mapAreaInfo.Coords.Right, mapAreaInfo.Coords.Left, out _);
 

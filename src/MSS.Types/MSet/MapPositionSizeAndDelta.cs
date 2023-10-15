@@ -8,10 +8,10 @@ namespace MSS.Types.MSet
 	// TODO: Consider creating a MapAreaInfoNoSub class that not require a registered subdivision but would contain all of the info necessary to register a subdivision.
 	
 	
-	public class MapAreaInfo : ICloneable
+	public class MapPositionSizeAndDelta : ICloneable
 	{
-		private static readonly Lazy<MapAreaInfo> _lazyMapAreaInfo = new Lazy<MapAreaInfo>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
-		public static readonly MapAreaInfo Empty = _lazyMapAreaInfo.Value;
+		private static readonly Lazy<MapPositionSizeAndDelta> _lazyMapAreaInfo = new Lazy<MapPositionSizeAndDelta>(System.Threading.LazyThreadSafetyMode.PublicationOnly);
+		public static readonly MapPositionSizeAndDelta Empty = _lazyMapAreaInfo.Value;
 
 		public RRectangle Coords { get; init; }
 		public SizeDbl CanvasSize { get; init; }
@@ -29,7 +29,7 @@ namespace MSS.Types.MSet
 
 		public bool IsEmpty => Coords == RRectangle.Zero;
 
-		public MapAreaInfo()
+		public MapPositionSizeAndDelta()
 		{
 			Coords = new RRectangle();
 			CanvasSize = new SizeDbl();
@@ -41,7 +41,7 @@ namespace MSS.Types.MSet
 			OriginalSourceSubdivisionId = ObjectId.Empty;
 		}
 
-		public MapAreaInfo(RRectangle coords, SizeDbl canvasSize, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset, ObjectId originalSourceSubdivisionId)
+		public MapPositionSizeAndDelta(RRectangle coords, SizeDbl canvasSize, Subdivision subdivision, int precision, VectorLong mapBlockOffset, VectorInt canvasControlOffset, ObjectId originalSourceSubdivisionId)
 		{
 			if (originalSourceSubdivisionId == ObjectId.Empty)
 			{
@@ -62,9 +62,9 @@ namespace MSS.Types.MSet
 			return Clone();
 		}
 
-		public MapAreaInfo Clone()
+		public MapPositionSizeAndDelta Clone()
 		{
-			return new MapAreaInfo(Coords.Clone(), CanvasSize, Subdivision.Clone(), Precision, MapBlockOffset.Clone(), CanvasControlOffset, OriginalSourceSubdivisionId);
+			return new MapPositionSizeAndDelta(Coords.Clone(), CanvasSize, Subdivision.Clone(), Precision, MapBlockOffset.Clone(), CanvasControlOffset, OriginalSourceSubdivisionId);
 		}
 
 		public override string ToString()

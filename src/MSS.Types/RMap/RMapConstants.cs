@@ -94,10 +94,15 @@ namespace MSS.Types
 		}
 
 
-		public static MapAreaInfo2 BuildHomeArea()
+		public static MapCenterAndDelta BuildHomeArea()
 		{
-			var subdivision = new Subdivision(new RSize(new RValue(1, -8)), new BigVector());
-			var mapAreaInfo = new MapAreaInfo2(new RPoint(0, 0, -8), subdivision, DEFAULT_PRECISION, new VectorLong(), new VectorInt());
+			var samplePointDelta = new RSize(1, 1, -8);
+			var baseMapPosition = new BigVector();
+			var subdivision = new Subdivision(samplePointDelta, baseMapPosition);
+
+			var mapCenter = new RPoint(0, 0, -8);
+
+			var mapAreaInfo = new MapCenterAndDelta(mapCenter, subdivision, DEFAULT_PRECISION, new VectorLong(), new VectorInt());
 
 			return mapAreaInfo;
 		}

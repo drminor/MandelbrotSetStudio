@@ -34,9 +34,9 @@ namespace MSetExplorer
 		bool CanGoBack(bool skipPanJobs);
 		bool CanGoForward(bool skipPanJobs);
 
-		void UpdateMapView(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo);
+		void UpdateMapView(TransformType transformType, VectorInt panAmount, double factor, MapCenterAndDelta? diagnosticAreaInfo);
 
-		MapAreaInfo2 GetUpdatedMapAreaInfo(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2 currentMapAreaInfo);
+		MapCenterAndDelta GetUpdatedMapAreaInfo(TransformType transformType, VectorInt panAmount, double factor, MapCenterAndDelta currentMapAreaInfo);
 
 		// Project Methods
 		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);

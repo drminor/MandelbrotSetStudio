@@ -15,7 +15,7 @@ namespace ProjectRepo.Entities
 		string Label,
 		int TransformType,
 
-		MapAreaInfo2Record MapAreaInfo2Record,
+		MapAreaInfo2Record MapAreaInfo2Record, // TODO_schema: Rename MapAreaInfo2Record MapCenterAndDeltaRecord
 		string TransformTypeString,
 
 		PointIntRecord NewAreaPosition,

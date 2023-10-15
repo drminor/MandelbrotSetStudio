@@ -16,7 +16,7 @@ namespace MSetExplorer
 	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
-	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapAreaInfo2 mapAreaInfo2, SizeDbl canvasSize, bool allowEdits);
+	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapCenterAndDelta mapCenterAndDelta, SizeDbl canvasSize, bool allowEdits);
 
 
 	public class ViewModelFactory
@@ -68,7 +68,7 @@ namespace MSetExplorer
 		}
 
 		// Coords Editor
-		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize, bool allowEdits)
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(MapCenterAndDelta mapAreaInfoV2, SizeDbl canvasSize, bool allowEdits)
 		{
 			var result = new CoordsEditorViewModel(_mapJobHelper, mapAreaInfoV2, canvasSize, allowEdits);
 			return result;
@@ -86,7 +86,7 @@ namespace MSetExplorer
 
 
 		// Poster Size Editor Preview
-		public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, 
+		public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapCenterAndDelta mapAreaInfo, SizeDbl posterSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, 
 			bool useEscapeVelocitites, Color fallbackColor)
 		{
 			var mapJobHelper = ProvisionAMapJopHelper();

@@ -10,7 +10,7 @@ namespace MSetExplorer
 		public VectorInt PanAmount { get; init; }
 		public double Factor { get; init; }
 
-		public MapAreaInfo2 CurrentMapAreaInfo { get; init; }
+		public MapCenterAndDelta CurrentMapAreaInfo { get; init; }
 
 		public RectangleDbl ScreenArea { get; init; }
 		public SizeDbl DisplaySize { get; init; }
@@ -18,7 +18,7 @@ namespace MSetExplorer
 		public bool IsPreview { get; init; }
 		public bool IsPreviewBeingCancelled { get; init; }
 
-		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2 currentMapAreaInfo, bool isPreview)
+		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, MapCenterAndDelta currentMapAreaInfo, bool isPreview)
 		{
 			TransformType = transformType;
 			PanAmount = panAmount;
@@ -31,7 +31,7 @@ namespace MSetExplorer
 			IsPreview = isPreview;
 		}
 
-		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, RectangleDbl screenArea, SizeDbl displaySize, MapAreaInfo2 currentMapAreaInfo, bool isPreview)
+		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, RectangleDbl screenArea, SizeDbl displaySize, MapCenterAndDelta currentMapAreaInfo, bool isPreview)
 		{
 			TransformType = transformType;
 			PanAmount = panAmount;
@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 		public static MapViewUpdateRequestedEventArgs CreateCancelPreviewInstance(TransformType transformType)
 		{
-			var result = new MapViewUpdateRequestedEventArgs(transformType, new VectorInt(), 0.0, new MapAreaInfo2(), isPreview: true)
+			var result = new MapViewUpdateRequestedEventArgs(transformType, new VectorInt(), 0.0, new MapCenterAndDelta(), isPreview: true)
 			{
 				IsPreviewBeingCancelled = true
 			};

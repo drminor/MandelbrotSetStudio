@@ -243,7 +243,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN; // new RRectangle(-4, 4, -4, 4, -1);
 
 			var coords = new RRectangle(0, 4, 0, 4, -1);
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, canvasSize);
+			var mapAreaInfo = _mapJobHelper.GetCenterAndDelta(coords, canvasSize);
 
 			var targetIterations = 1000;
 			var threshold = UseEscapeVelocities ? RMapConstants.DEFAULT_NORMALIZED_THRESHOLD : RMapConstants.DEFAULT_THRESHOLD;
@@ -301,7 +301,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var coords = new RRectangle(x1, x2, y1, y2, exponent, precision: RMapConstants.DEFAULT_PRECISION);
 
 
-			var mapAreaInfo = _mapJobHelper.GetMapAreaInfo(coords, canvasSize);
+			var mapAreaInfo = _mapJobHelper.GetCenterAndDelta(coords, canvasSize);
 
 			var targetIterations = 400;
 			var threshold = UseEscapeVelocities ? RMapConstants.DEFAULT_NORMALIZED_THRESHOLD : RMapConstants.DEFAULT_THRESHOLD; 
@@ -444,7 +444,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var oldAreaInfo = _mapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeDbl(1024));
+			var oldAreaInfo = _mapJobHelper.GetMapPositionSizeAndDelta(job.MapAreaInfo, new SizeDbl(1024));
 			//AddTiming("GetMapAreaInfo");
 
 			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, job.Id.ToString(), ownerType, oldAreaInfo, job.MapCalcSettings);
@@ -660,7 +660,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapAreaInfo = job.MapAreaInfo;
 			var mapCalcSettings = job.MapCalcSettings;
 
-			var mapAreaInfoV1 = mapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
+			var mapAreaInfoV1 = mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfo, displaySize);
 
 			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, job.Id.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings);
 
@@ -671,7 +671,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			return mapSectionRequests;
 		}
 
-		private static MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapAreaInfo mapAreaInfo, MapCalcSettings mapCalcSettings)
+		private static MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
 			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
@@ -697,9 +697,9 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			return adjustedLimbCount;
 		}
 
-		private MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize)
+		private MapPositionSizeAndDelta GetMapPositionSizeAndDelta(MapCenterAndDelta mapCenterAndDelta, SizeDbl imageSize)
 		{
-			var result = _mapJobHelper.GetMapAreaWithSize(mapAreaInfo2, imageSize);
+			var result = _mapJobHelper.GetMapPositionSizeAndDelta(mapCenterAndDelta, imageSize);
 
 			return result;
 		}

@@ -145,7 +145,7 @@ namespace MSetRepo
 			throw new NotImplementedException();
 		}
 
-		public MapAreaInfo2 MapFrom(MapAreaInfo2Record target)
+		public MapCenterAndDelta MapFrom(MapAreaInfo2Record target)
 		{
 			var bv = MapFrom(target.MapBlockOffset);
 
@@ -154,7 +154,7 @@ namespace MSetRepo
 				throw new InvalidOperationException("The MapSectionRecord's BlockPos will not fit into a LongVector.");
 			}
 
-			var result = new MapAreaInfo2(
+			var result = new MapCenterAndDelta(
 				rPointAndDelta: _dtoMapper.MapFrom(target.RPointAndDeltaRecord.RPointAndDeltaDto),
 				subdivision: MapFrom(target.SubdivisionRecord),
 				precision: target.Precsion,
@@ -165,7 +165,7 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapAreaInfo2Record MapTo(MapAreaInfo2 source)
+		public MapAreaInfo2Record MapTo(MapCenterAndDelta source)
 		{
 			var result = new MapAreaInfo2Record(
 				RPointAndDeltaRecord: MapTo(source.PositionAndDelta),

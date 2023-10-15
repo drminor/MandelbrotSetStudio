@@ -39,20 +39,20 @@ namespace MSS.Common
 
 		#region Build Job Methods
 
-		public Job BuildHomeJob(OwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
+		public Job BuildHomeJob(OwnerType jobOwnerType, MapCenterAndDelta mapCenterAndDelta, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
 		{
 			ObjectId? parentJobId = null;
 			ObjectId ownerId = ObjectId.Empty;
 			var transformType = TransformType.Home;
 			RectangleInt? newArea = null;
 
-			var result = BuildJob(parentJobId, ownerId, jobOwnerType, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea);
+			var result = BuildJob(parentJobId, ownerId, jobOwnerType, mapCenterAndDelta, colorBandSetId, mapCalcSettings, transformType, newArea);
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId ownerId, OwnerType jobOwnerType, MapAreaInfo2 mapAreaInfo, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		public Job BuildJob(ObjectId? parentJobId, ObjectId ownerId, OwnerType jobOwnerType, MapCenterAndDelta mapCenterAndDelta, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
-			var mapAreaInfoWithRegisteredSub = RegisterTheSubdivision(mapAreaInfo);
+			var mapAreaInfoWithRegisteredSub = RegisterTheSubdivision(mapCenterAndDelta);
 
 			var jobName = GetJobName(transformType);
 			var job = new Job(ownerId, jobOwnerType, parentJobId, jobName, transformType, newArea, mapAreaInfoWithRegisteredSub, colorBandSetId, mapCalcSettings);
@@ -60,14 +60,14 @@ namespace MSS.Common
 			return job;
 		}
 
-		public MapAreaInfo2 RegisterTheSubdivision(MapAreaInfo2 value)
+		public MapCenterAndDelta RegisterTheSubdivision(MapCenterAndDelta value)
 		{
 			if (value.Subdivision.Id == ObjectId.Empty)
 			{
 				var originalUnSavedSubdivision = value.Subdivision;
 				var totalMapBlockOffset = originalUnSavedSubdivision.BaseMapPosition.Translate(value.MapBlockOffset);
 				var newSubdivision = _subdivisonProvider.GetSubdivision(originalUnSavedSubdivision.SamplePointDelta, totalMapBlockOffset, out var localMapBlockOffset);
-				var result = new MapAreaInfo2(value.PositionAndDelta, newSubdivision, value.Precision, localMapBlockOffset, value.CanvasControlOffset);
+				var result = new MapCenterAndDelta(value.PositionAndDelta, newSubdivision, value.Precision, localMapBlockOffset, value.CanvasControlOffset);
 
 				return result;
 			}
@@ -85,10 +85,10 @@ namespace MSS.Common
 
 		#endregion
 
-		#region GetMapAreaInfo
+		#region Get MapCenterAndDelta
 
 		// Pan
-		public MapAreaInfo2 GetMapAreaInfoPan(MapAreaInfo2 currentArea, VectorInt panAmount)
+		public MapCenterAndDelta GetMapAreaInfoPan(MapCenterAndDelta currentArea, VectorInt panAmount)
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
@@ -100,13 +100,13 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(transPd.SamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 			var binaryPrecision = Math.Abs(transPd.Exponent);
 
-			var result = new MapAreaInfo2(transPd, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+			var result = new MapCenterAndDelta(transPd, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
 
 		// Zoom
-		public MapAreaInfo2 GetMapAreaInfoZoom(MapAreaInfo2 currentArea, double zoomAmount, out double diagReciprocal)
+		public MapCenterAndDelta GetMapAreaInfoZoom(MapCenterAndDelta currentArea, double zoomAmount, out double diagReciprocal)
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
@@ -118,13 +118,13 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(scaledPd.SamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 			var binaryPrecision = Math.Abs(scaledPd.Exponent);
 
-			var result = new MapAreaInfo2(scaledPd, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+			var result = new MapCenterAndDelta(scaledPd, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
 
 		// Pan and Zoom
-		public MapAreaInfo2 GetMapAreaInfoPanThenZoom(MapAreaInfo2 currentArea, VectorInt panAmount, double zoomAmount, out double diagReciprocal)
+		public MapCenterAndDelta GetMapAreaInfoPanThenZoom(MapCenterAndDelta currentArea, VectorInt panAmount, double zoomAmount, out double diagReciprocal)
 		{
 			var blockSize = currentArea.Subdivision.BlockSize;
 
@@ -137,16 +137,16 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(scaledAndTransPd.SamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 			var binaryPrecision = Math.Abs(scaledAndTransPd.Exponent);
 
-			var result = new MapAreaInfo2(scaledAndTransPd, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
+			var result = new MapCenterAndDelta(scaledAndTransPd, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
 
 		#endregion
 
-		#region MapAreaInfo2 Support
+		#region MapCenterAndDelta Support
 
-		public MapAreaInfo GetMapAreaWithSize(MapAreaInfo2 mapAreaInfoV2, SizeDbl canvasSize)
+		public MapPositionSizeAndDelta GetMapPositionSizeAndDelta(MapCenterAndDelta mapAreaInfoV2, SizeDbl canvasSize)
 		{
 			var rPointAndDelta = mapAreaInfoV2.PositionAndDelta;
 
@@ -189,12 +189,12 @@ namespace MSS.Common
 			if (_useDetailedDebug) CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
 
 			var originalSubdivisionId = mapAreaInfoV2.Subdivision.Id;
-			var result = new MapAreaInfo(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSubdivisionId);
+			var result = new MapPositionSizeAndDelta(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSubdivisionId);
 
 			return result;
 		}
 
-		public static MapAreaInfo2 Convert(MapAreaInfo mapAreaInfo)
+		public static MapCenterAndDelta Convert(MapPositionSizeAndDelta mapAreaInfo)
 		{
 			var samplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta;
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
@@ -210,7 +210,7 @@ namespace MSS.Common
 
 			_ = SubdivisonProvider.GetBaseMapPosition(mapBlockOffset, out var localMapBlockOffset);
 
-			var result = new MapAreaInfo2(convertedPd, mapAreaInfo.Subdivision, mapAreaInfo.Precision, localMapBlockOffset, canvasControlOffset);
+			var result = new MapCenterAndDelta(convertedPd, mapAreaInfo.Subdivision, mapAreaInfo.Precision, localMapBlockOffset, canvasControlOffset);
 
 			return result;
 		}
@@ -270,9 +270,9 @@ namespace MSS.Common
 			return result;
 		}
 
-		public MapAreaInfo2 GetMapAreaInfo(RRectangle coords, SizeInt canvasSize)
+		public MapCenterAndDelta GetCenterAndDelta(RRectangle coords, SizeInt canvasSize)
 		{
-			var oldAreaInfo = GetMapAreaInfoV1(coords, canvasSize);
+			var oldAreaInfo = GetMapPositionSizeAndDeltaV1(coords, canvasSize);
 			var mapAreaInfo = Convert(oldAreaInfo);
 			return mapAreaInfo;
 		}
@@ -286,7 +286,7 @@ namespace MSS.Common
 
 		#endregion
 
-		#region GetMapAreaInfo Methods - V1
+		#region GetMapPositionSizeAndDelta Methods
 
 		// Convert the screen coordinates given by screenArea into map coordinates, then translate by the x and y distances specified in the current MapPosition.
 		public RRectangle GetMapCoords(RectangleInt screenArea, RPoint mapPosition, RSize samplePointDelta)
@@ -308,7 +308,7 @@ namespace MSS.Common
 		}
 
 		// Calculate the MapBlockOffset and CanvasControlOffset while keeping the SamplePointDelta, constant.
-		public MapAreaInfo GetMapAreaInfoScaleConstant(RRectangle coords, Subdivision subdivision, ObjectId originalSourceSubdivisionId, SizeDbl canvasSize)
+		public MapPositionSizeAndDelta GetMapAreaInfoScaleConstant(RRectangle coords, Subdivision subdivision, ObjectId originalSourceSubdivisionId, SizeDbl canvasSize)
 		{
 			var samplePointDelta = subdivision.SamplePointDelta;
 			//var updatedCoords = coords.Clone();
@@ -329,7 +329,7 @@ namespace MSS.Common
 
 			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
 
-			var result = new MapAreaInfo(newCoords, canvasSize, newSubdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSourceSubdivisionId);
+			var result = new MapPositionSizeAndDelta(newCoords, canvasSize, newSubdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSourceSubdivisionId);
 
 			return result;
 		}
@@ -344,10 +344,10 @@ namespace MSS.Common
 
 		#endregion
 
-		#region GetMapAreaInfo Methods - V1 - Depreciated
+		#region GetMapPositionSizeAndDelta Methods - V1 - Depreciated
 
 		// Calculate the SamplePointDelta, MapBlockOffset, CanvasControlOffset, using the specified coordinates and display size
-		private MapAreaInfo GetMapAreaInfoV1(RRectangle coords, SizeInt canvasSize)
+		private MapPositionSizeAndDelta GetMapPositionSizeAndDeltaV1(RRectangle coords, SizeInt canvasSize)
 		{
 			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
 			var displaySize = canvasSize;
@@ -377,7 +377,7 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(uSpd, mapBlockOffset, out var localMapBlockOffset);
 
 			var binaryPrecision = RMapHelper.GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
-			var result = new MapAreaInfo(newCoords, new SizeDbl(canvasSize), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, subdivision.Id);
+			var result = new MapPositionSizeAndDelta(newCoords, new SizeDbl(canvasSize), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, subdivision.Id);
 
 			return result;
 		}

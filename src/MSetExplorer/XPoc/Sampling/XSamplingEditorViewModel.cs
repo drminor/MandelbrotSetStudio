@@ -370,7 +370,7 @@ namespace MSetExplorer.XPoc
 		}
 
 
-		private MapAreaInfo GetMapAreaInfo(RRectangle coords, SizeDbl canvasSize, SizeInt blockSize)
+		private MapPositionSizeAndDelta GetMapAreaInfo(RRectangle coords, SizeDbl canvasSize, SizeInt blockSize)
 		{
 			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
 			var displaySize = canvasSize.Round();
@@ -400,7 +400,7 @@ namespace MSetExplorer.XPoc
 
 			var binaryPrecision = GetBinaryPrecision(updatedCoords, samplePointDelta, out var decimalPrecision);
 
-			var result = new MapAreaInfo(updatedCoords, new SizeDbl(displaySize), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, subdivision.Id);
+			var result = new MapPositionSizeAndDelta(updatedCoords, new SizeDbl(displaySize), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, subdivision.Id);
 
 			return result;
 		}

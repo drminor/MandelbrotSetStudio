@@ -140,7 +140,7 @@ namespace MSetExplorer
 		#region Diagnostics
 
 		[Conditional("DEBUG2")]
-		private void ReportFactorsVsSamplePointResolution(MapAreaInfo2? mapAreaInfo, AreaSelectedEventArgs e)
+		private void ReportFactorsVsSamplePointResolution(MapCenterAndDelta? mapAreaInfo, AreaSelectedEventArgs e)
 		{
 			if (mapAreaInfo == null) return;
 

@@ -26,7 +26,7 @@ namespace MSetExplorer
 		ObservableCollection<MapSection> MapSections { get; }
 		
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }
-		MapAreaInfo? LastMapAreaInfo { get; }
+		MapPositionSizeAndDelta? LastMapAreaInfo { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
 		ColorBand? CurrentColorBand { get; }

@@ -24,7 +24,7 @@ namespace MSetExplorer
 		//CreateImageProgressViewModel CreateACreateImageProgressViewModel(/*string imageFilePath, bool useEscapeVelocities*/);
 		//JobProgressViewModel CreateAJobProgressViewModel();
 
-		//MapAreaInfo GetMapAreaWithSizeFat(MapAreaInfo2 mapAreaInfo2, SizeDbl imageSize);
+		//MapAreaInfo GetMapAreaWithSizeFat(MapCenterAndDelta mapCenterAndDelta, SizeDbl imageSize);
 
 	}
 }

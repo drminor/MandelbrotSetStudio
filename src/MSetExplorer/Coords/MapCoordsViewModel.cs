@@ -14,7 +14,7 @@ namespace MSetExplorer
 		private const int _numDigitsForDisplayExtent = 4;
 
 		private string? _jobId;
-		private MapAreaInfo? _currentMapAreaInfo;
+		private MapPositionSizeAndDelta? _currentMapAreaInfo;
 
 		private RRectangle _coords;
 
@@ -84,7 +84,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public MapAreaInfo? CurrentMapAreaInfo
+		public MapPositionSizeAndDelta? CurrentMapAreaInfo
 		{
 			get => _currentMapAreaInfo;
 			set
@@ -306,9 +306,9 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Preview(MapAreaInfo2 mapAreaInfo, SizeDbl displaySize)
+		public void Preview(MapCenterAndDelta mapAreaInfo, SizeDbl displaySize)
 		{
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSize(mapAreaInfo, displaySize);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfo, displaySize);
 
 			UpdateCoords(mapAreaInfoV1);
 		}
@@ -335,7 +335,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private void UpdateCoords(MapAreaInfo? mapAreaInfo)
+		private void UpdateCoords(MapPositionSizeAndDelta? mapAreaInfo)
 		{
 			if (mapAreaInfo != null)
 			{

@@ -49,7 +49,7 @@ namespace ImageBuilder
 
 		#region Public Methods
 
-		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapAreaInfo mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
+		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
 			CancellationToken ct, Action<double>? statusCallback = null)
 		{
 			var mapBlockOffset = mapAreaInfo.MapBlockOffset;

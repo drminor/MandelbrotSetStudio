@@ -139,7 +139,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public MapAreaInfo2 PosterAreaInfo => CurrentPoster?.CurrentJob.MapAreaInfo ?? MapAreaInfo2.Empty;
+		public MapCenterAndDelta PosterAreaInfo => CurrentPoster?.CurrentJob.MapAreaInfo ?? MapCenterAndDelta.Empty;
 
 		public SizeDbl PosterSize
 		{
@@ -368,7 +368,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void PosterAddNewJobAndLoad(Poster poster, MapAreaInfo2? newMapAreaInfo, SizeDbl posterSize)
+		public void PosterAddNewJobAndLoad(Poster poster, MapCenterAndDelta? newMapAreaInfo, SizeDbl posterSize)
 		{
 			if (newMapAreaInfo != null)
 			{
@@ -487,7 +487,7 @@ namespace MSetExplorer
 		/// <param name="currentPosterSize">The original size in screen pixels</param>
 		/// <param name="screenArea">The new size in screen pixels. ScreenTypeHelper.GetNewBoundingArea(OriginalMapArea, BeforeOffset, AfterOffset);</param>
 		/// <returns></returns>
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal)
+		public MapCenterAndDelta GetUpdatedMapAreaInfo(MapCenterAndDelta mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal)
 		{
 			var xFactor = newPosterSize.Width / currentPosterSize.Width;
 			var yFactor = newPosterSize.Height / currentPosterSize.Height;
@@ -512,9 +512,9 @@ namespace MSetExplorer
 			return newMapAreaInfo;
 		}
 
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
+		public MapCenterAndDelta GetUpdatedMapAreaInfo(MapCenterAndDelta mapAreaInfo, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal)
 		{
-			MapAreaInfo2? newMapAreaInfo;
+			MapCenterAndDelta? newMapAreaInfo;
 
 			if (transformType == TransformType.ZoomIn)
 			{
@@ -538,7 +538,7 @@ namespace MSetExplorer
 		}
 
 		// Always called after GetUpdatedMapAreaInfo
-		public void AddNewCoordinateUpdateJob(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize)
+		public void AddNewCoordinateUpdateJob(MapCenterAndDelta newMapAreaInfo, SizeDbl posterSize)
 		{
 			if (CurrentPoster == null)
 			{
@@ -559,7 +559,7 @@ namespace MSetExplorer
 		#region Private Methods
 
 		// Create new Poster Specs using a new MapAreaInfo
-		private Job AddNewCoordinateUpdateJob(Poster poster, MapAreaInfo2 mapAreaInfo)
+		private Job AddNewCoordinateUpdateJob(Poster poster, MapCenterAndDelta mapAreaInfo)
 		{
 			var currentJob = poster.CurrentJob;
 			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");

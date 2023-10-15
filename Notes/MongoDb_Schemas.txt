@@ -44,13 +44,13 @@ Job
 
 	ObjectId OwnerId
 	JobOwnerType OwnerType			// One of Project | Poster
-	ObjectId SubdivisionId			// Duplicate of the value found in the MapAreaInfo2Record.Subdivision.Id
+	ObjectId SubdivisionId			// Duplicate of the value found in the MapCenterAndDeltaRecord.Subdivision.Id
 	string Label
 
 	int TransformType
 	string TransformTypeString
 
-	MapAreaInfo2Record MapAreaInfo2Record
+	MapCenterAndDeltaRecord MapCenterAndDeltaRecord
 
 		RPointAndDelta PositionAndDelta
 			RPoint MapCenter			// Position in SamplePointDelta units of the Center Pixel of the map, Releative to the Subdivision's BaseMapPosition * BlockSize

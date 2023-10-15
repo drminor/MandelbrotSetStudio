@@ -17,9 +17,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfoV2, SizeDbl displaySize, bool allowEdits)
+		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapCenterAndDelta mapAreaInfoV2, SizeDbl displaySize, bool allowEdits)
 		{
-			var mapAreaInfo = mapJobHelper.GetMapAreaWithSize(mapAreaInfoV2, _displaySize);
+			var mapAreaInfo = mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfoV2, _displaySize);
 			_coords = mapAreaInfo.Coords;
 
 			StartingX = new SingleCoordEditorViewModel(_coords.Left);

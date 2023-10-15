@@ -432,7 +432,7 @@ namespace MSetExplorer
 
 		#region Public Methods - Job
 
-		public void UpdateMapView(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2? diagnosticAreaInfo)
+		public void UpdateMapView(TransformType transformType, VectorInt panAmount, double factor, MapCenterAndDelta? diagnosticAreaInfo)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "UpdateMapView received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
@@ -472,7 +472,7 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		public MapAreaInfo2 GetUpdatedMapAreaInfo(TransformType transformType, VectorInt panAmount, double factor, MapAreaInfo2 currentMapAreaInfo)
+		public MapCenterAndDelta GetUpdatedMapAreaInfo(TransformType transformType, VectorInt panAmount, double factor, MapCenterAndDelta currentMapAreaInfo)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "GetUpdatedMapAreaInfo received a TransformType other than ZoomIn, Pan or ZoomOut.");
 
@@ -484,7 +484,7 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG2")]
-		private void CheckProvidedMapAreaInfo(MapAreaInfo2 currentMapAreaInfo)
+		private void CheckProvidedMapAreaInfo(MapCenterAndDelta currentMapAreaInfo)
 		{
 			var currentJob = CurrentProject?.CurrentJob;
 
@@ -533,7 +533,7 @@ namespace MSetExplorer
 			// Calculate the new Map Coordinates 
 			var mapAreaInfo = currentJob.MapAreaInfo;
 
-			MapAreaInfo2 newMapAreaInfo;
+			MapCenterAndDelta newMapAreaInfo;
 
 			if (transformType == TransformType.ZoomIn)
 			{

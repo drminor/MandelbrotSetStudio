@@ -1,6 +1,6 @@
 ﻿namespace ProjectRepo.Entities
 {
-	// TODO_schema: Rename the MapAreaInfo2Record -> MapAreaInfoRecord
+	// TODO_schema: Rename the MapAreaInfo2Record -> MapCenterAndDeltaRecord
 	public record MapAreaInfo2Record(
 		RPointAndDeltaRecord RPointAndDeltaRecord,
 		SubdivisionRecord SubdivisionRecord,

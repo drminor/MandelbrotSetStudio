@@ -26,12 +26,12 @@ namespace MSetExplorer
 
 		private PosterSizeEditorViewModel _vm;
 
-		private MapAreaInfo2 _initialPosterMapAreaInfo;
+		private MapCenterAndDelta _initialPosterMapAreaInfo;
 		private SizeDbl _initialPosterSize;
 
 		#region Constructor
 
-		public PosterSizeEditorDialog(MapAreaInfo2 posterMapAreaInfo, SizeDbl posterSize)
+		public PosterSizeEditorDialog(MapCenterAndDelta posterMapAreaInfo, SizeDbl posterSize)
 		{
 			_initialPosterMapAreaInfo = posterMapAreaInfo.Clone();
 			_initialPosterSize = posterSize;
@@ -163,7 +163,7 @@ namespace MSetExplorer
 
 		public event EventHandler? ApplyChangesRequested;
 
-		public MapAreaInfo2? PosterMapAreaInfo => _vm.PosterMapAreaInfo;
+		public MapCenterAndDelta? PosterMapAreaInfo => _vm.PosterMapAreaInfo;
 
 		public RectangleDbl NewMapArea => _vm.NewMapArea;
 		public SizeDbl NewMapSize => _vm.NewMapSize;
@@ -172,7 +172,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void UpdateWithNewMapInfo(MapAreaInfo2 mapAreaInfo, SizeDbl posterSize)
+		public void UpdateWithNewMapInfo(MapCenterAndDelta mapAreaInfo, SizeDbl posterSize)
 		{
 			var containerSize = _canvas.RenderSize;
 			_vm.UpdateWithNewMapInfo(mapAreaInfo, containerSize, posterSize);

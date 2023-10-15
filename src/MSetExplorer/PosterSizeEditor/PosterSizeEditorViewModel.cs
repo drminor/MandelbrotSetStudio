@@ -61,7 +61,7 @@ namespace MSetExplorer
 			_lazyMapPreviewImageProvider.BitmapHasBeenLoaded += MapPreviewImageProvider_BitmapHasBeenLoaded;
 		}
 
-		public void Initialize(MapAreaInfo2 posterMapAreaInfo, Size containerSize, SizeDbl posterSize)
+		public void Initialize(MapCenterAndDelta posterMapAreaInfo, Size containerSize, SizeDbl posterSize)
 		{
 			_preserveAspectRatio = true;
 			_preserveWidth = true;
@@ -79,7 +79,7 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		public void UpdateWithNewMapInfo(MapAreaInfo2 posterMapAreaInfo, Size containerSize, SizeDbl posterSize)
+		public void UpdateWithNewMapInfo(MapCenterAndDelta posterMapAreaInfo, Size containerSize, SizeDbl posterSize)
 		{
 			ContainerSize = ScreenTypeHelper.ConvertToSizeDbl(containerSize);
 			UpdateWithChangesInternal(posterMapAreaInfo, ContainerSize, posterSize);
@@ -96,7 +96,7 @@ namespace MSetExplorer
 			PerformLayout();
 		}
 
-		private void UpdateWithChangesInternal(MapAreaInfo2 posterMapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
+		private void UpdateWithChangesInternal(MapCenterAndDelta posterMapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
 			PosterMapAreaInfo = posterMapAreaInfo;
 
@@ -539,7 +539,7 @@ namespace MSetExplorer
 
 		public PreviewImageLayoutInfo LayoutInfo => _layoutInfo;
 
-		public MapAreaInfo2? PosterMapAreaInfo { get; private set; }
+		public MapCenterAndDelta? PosterMapAreaInfo { get; private set; }
 
 		public ImageSource PreviewImage
 		{

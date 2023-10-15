@@ -19,7 +19,7 @@ namespace MSS.Types.MSet
 			OnFile = false;
 		}
 
-		public Subdivision(RSize samplePointDelta, BigVector baseMapPositon) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPositon, RMapConstants.BLOCK_SIZE, DateTime.UtcNow)
+		public Subdivision(RSize samplePointDelta, BigVector baseMapPosition) : this(ObjectId.GenerateNewId(), samplePointDelta, baseMapPosition, RMapConstants.BLOCK_SIZE, DateTime.UtcNow)
 		{
 			OnFile = false;
 		}
@@ -31,6 +31,7 @@ namespace MSS.Types.MSet
 			SamplePointDelta = samplePointDelta ?? throw new ArgumentNullException(nameof(samplePointDelta));
 			BaseMapPosition = baseMapPosition ?? throw new ArgumentNullException(nameof(baseMapPosition));
 			OnFile = true;
+			DateCreatedUtc = dateCreatedUtc;
 		}
 
 		public DateTime DateCreated => Id.CreationTime;

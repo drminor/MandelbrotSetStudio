@@ -27,7 +27,7 @@ namespace MSS.Common.MSet
 		{
 			Id = ObjectId.Empty;
 			Label = "Empty";
-			MapAreaInfo = new MapAreaInfo2();
+			MapAreaInfo = new MapCenterAndDelta();
 			ColorBandSetId = ObjectId.Empty;
 			MapCalcSettings = new MapCalcSettings();
 			DateCreatedUtc = DateTime.UtcNow;
@@ -41,7 +41,7 @@ namespace MSS.Common.MSet
 			TransformType transformType,
 			RectangleInt? newArea,
 
-			MapAreaInfo2 mapAreaInfo,
+			MapCenterAndDelta mapAreaInfo,
 
 			ObjectId colorBandSetId,
 			MapCalcSettings mapCalcSettings
@@ -77,7 +77,7 @@ namespace MSS.Common.MSet
 			TransformType transformType,
 			RectangleInt? newArea,
 
-			MapAreaInfo2 mapAreaInfo,
+			MapCenterAndDelta mapAreaInfo,
 
 			ObjectId colorBandSetId,
 			MapCalcSettings mapCalcSettings,
@@ -177,7 +177,7 @@ namespace MSS.Common.MSet
 		
 		public RectangleInt? NewArea { get; init; }
 
-		public MapAreaInfo2 MapAreaInfo { get; init; }
+		public MapCenterAndDelta MapAreaInfo { get; init; }
 
 		public ObjectId ColorBandSetId
 		{

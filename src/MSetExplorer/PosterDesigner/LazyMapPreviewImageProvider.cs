@@ -30,7 +30,7 @@ namespace MSetExplorer
 		private readonly bool _useEscapeVelocitites;
 		private readonly Color _fallbackColor;
 
-		private MapAreaInfo2 _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
+		private MapCenterAndDelta _mapAreaInfo;           // Coords of the source map for which the preview is being generated.
 		private SizeDbl _posterSize;
 		private SizeDbl _containerSize;
 
@@ -45,7 +45,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, ObjectId jobId, OwnerType ownerType, MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
+		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, ObjectId jobId, OwnerType ownerType, MapCenterAndDelta mapAreaInfo, SizeDbl posterSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
 		{
 			_mapJobHelper = mapJobHelper;
 
@@ -87,7 +87,7 @@ namespace MSetExplorer
 
 		public ObjectId JobId { get; set; }
 		public OwnerType OwnerType { get; set; }
-		public MapAreaInfo2 MapAreaInfo => _mapAreaInfo;
+		public MapCenterAndDelta MapAreaInfo => _mapAreaInfo;
 		public SizeDbl ContainerSize => _containerSize;
 		public WriteableBitmap Bitmap { get; set; }
 
@@ -107,7 +107,7 @@ namespace MSetExplorer
 		//	QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 		//}
 
-		public void RequestBitmapGeneration(MapAreaInfo2 mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
+		public void RequestBitmapGeneration(MapCenterAndDelta mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
 			_mapAreaInfo = mapAreaInfo;
 			_posterSize = posterSize;
@@ -139,7 +139,7 @@ namespace MSetExplorer
 		#region Private Methods
 
 		// Calculate the map coordinates needed to display the entire poster content in the Size Editor preview window.
-		private MapAreaInfo GetMapAreaInfoWithSize(MapAreaInfo2 mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
+		private MapPositionSizeAndDelta GetMapAreaInfoWithSize(MapCenterAndDelta mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
 			//var factorW = containerSize.Width / posterSize.Width;
 			//var factorH = containerSize.Height / posterSize.Height;
@@ -164,13 +164,13 @@ namespace MSetExplorer
 			//Debug.WriteLine($"MapPreviewImage provider is getting the new coordinates. DiagReciprocal is {diagReciprocal}, Factor: w:{factorW}, h:{factorH}. ScaleFactor: {scaleFactor}.");
 			//Debug.Assert(Math.Abs(factor - scaleFactor) < 0.01d, "factor and scalefactor are different.");
 
-			var previewMapAreaInfo = _mapJobHelper.GetMapAreaWithSize(newMapAreaInfo, previewImageSize);
+			var previewMapAreaInfo = _mapJobHelper.GetMapPositionSizeAndDelta(newMapAreaInfo, previewImageSize);
 			Debug.WriteLine($"MapPreviewImage provider is getting the new coordinates. DiagReciprocal is {diagReciprocal}, ScaleFactor: {scaleFactor}. Canvas Size: {previewMapAreaInfo.CanvasSize}. Preview Image Size: {previewImageSize}.");
 
 			return previewMapAreaInfo;
 		}
 
-		private void QueueBitmapGeneration(ObjectId jobId, OwnerType ownerType, MapAreaInfo previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		private void QueueBitmapGeneration(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			var previewImageSize = previewMapArea.CanvasSize;
 			Debug.WriteLine($"Creating a preview image with size: {previewMapArea.CanvasSize} and map coords: {previewMapArea.Coords}.");

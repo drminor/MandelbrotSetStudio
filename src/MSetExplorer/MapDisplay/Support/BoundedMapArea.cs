@@ -9,16 +9,16 @@ namespace MSetExplorer
 	internal class BoundedMapArea
 	{
 		private readonly MapJobHelper _mapJobHelper;
-		private readonly MapAreaInfo2 _mapAreaInfo;
+		private readonly MapCenterAndDelta _mapAreaInfo;
 		private double _baseFactor;
 		private double _baseScale;
-		private MapAreaInfo _scaledMapAreaInfo;
+		private MapPositionSizeAndDelta _scaledMapAreaInfo;
 
 		private bool _useDetailedDebug = false;
 
 		#region Constructor
 
-		public BoundedMapArea(MapJobHelper mapJobHelper, MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, SizeDbl viewportSize, double baseFactor = 0)
+		public BoundedMapArea(MapJobHelper mapJobHelper, MapCenterAndDelta mapAreaInfo, SizeDbl posterSize, SizeDbl viewportSize, double baseFactor = 0)
 		{
 			_mapJobHelper = mapJobHelper;
 			_mapAreaInfo = mapAreaInfo;
@@ -42,7 +42,7 @@ namespace MSetExplorer
 
 		public SizeDbl ContentViewportSize { get; private set; }
 
-		public MapAreaInfo MapAreaInfoWithSize { get; init; }
+		public MapPositionSizeAndDelta MapAreaInfoWithSize { get; init; }
 
 		public double BaseFactor
 		{
@@ -77,7 +77,7 @@ namespace MSetExplorer
 		}
 
 		// New position, same size and scale
-		public MapAreaInfo GetView(VectorDbl newDisplayPosition)
+		public MapPositionSizeAndDelta GetView(VectorDbl newDisplayPosition)
 		{
 			// -- Scale the Position and Size together.
 			var invertedY = GetInvertedYPos(newDisplayPosition.Y);
@@ -137,17 +137,17 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private MapAreaInfo GetMapAreaWithSizeForScale(MapAreaInfo2 mapAreaInfo, SizeDbl posterSize, double scale)
+		private MapPositionSizeAndDelta GetMapAreaWithSizeForScale(MapCenterAndDelta mapAreaInfo, SizeDbl posterSize, double scale)
 		{
 			var adjustedMapAreaInfo = _mapJobHelper.GetMapAreaInfoZoom(mapAreaInfo, scale, out var diaReciprocal);
 			var displaySize = posterSize.Scale(scale);
-			var result = _mapJobHelper.GetMapAreaWithSize(adjustedMapAreaInfo, displaySize);
+			var result = _mapJobHelper.GetMapPositionSizeAndDelta(adjustedMapAreaInfo, displaySize);
 			result.OriginalSourceSubdivisionId = mapAreaInfo.Subdivision.Id;
 
 			return result;
 		}
 
-		private MapAreaInfo GetUpdatedMapAreaInfo(RectangleDbl newScreenArea, MapAreaInfo mapAreaInfoWithSize)
+		private MapPositionSizeAndDelta GetUpdatedMapAreaInfo(RectangleDbl newScreenArea, MapPositionSizeAndDelta mapAreaInfoWithSize)
 		{
 			var newCoords = _mapJobHelper.GetMapCoords(newScreenArea.Round(), mapAreaInfoWithSize.MapPosition, mapAreaInfoWithSize.SamplePointDelta);
 			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaInfoScaleConstant(newCoords, mapAreaInfoWithSize.Subdivision, mapAreaInfoWithSize.OriginalSourceSubdivisionId, newScreenArea.Size);

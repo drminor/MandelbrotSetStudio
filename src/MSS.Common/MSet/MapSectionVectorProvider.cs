@@ -197,7 +197,7 @@ namespace MSS.Common
 					-----------------
 		*/
 
-		//public (MapSection dest2, MapSection dest3) SplitLow(MapAreaInfo2 mapAreaInfo, MapAreaInfo2 x2, int jobNumber, MapSection source)
+		//public (MapSection dest2, MapSection dest3) SplitLow(MapCenterAndDelta mapCenterAndDelta, MapCenterAndDelta x2, int jobNumber, MapSection source)
 		//{
 		//	var mapSectionVectors = source.MapSectionVectors ?? throw new ArgumentException("The source MapSection must have a non-null MapSectionVectors.");
 
@@ -251,7 +251,7 @@ namespace MSS.Common
 		//	//// Block Position, relative to the Subdivision's BaseMapPosition
 		//	//var localBlockPosition = RMapHelper.ToSubdivisionCoords(source.ScreenPosition, source.JobMapBlockOffset, out var isInverted);
 
-		//	//var subdivision = mapAreaInfo.Subdivision;
+		//	//var subdivision = mapCenterAndDelta.Subdivision;
 
 		//	//// Absolute position in Map Coordinates.
 		//	//var mapPosition = GetMapPosition(subdivision, localBlockPosition);

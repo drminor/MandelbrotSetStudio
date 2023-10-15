@@ -21,7 +21,7 @@ namespace MSetExplorer
 
 		Job CurrentJob { get; }
 		AreaColorAndCalcSettings CurrentAreaColorAndCalcSettings { get; }
-		MapAreaInfo2 PosterAreaInfo { get; }
+		MapCenterAndDelta PosterAreaInfo { get; }
 
 		ColorBandSet CurrentColorBandSet { get; set; }
 		ColorBandSet? PreviewColorBandSet { get; set; }
@@ -32,14 +32,14 @@ namespace MSetExplorer
 		VectorDbl DisplayPosition { get; set; }
 		double DisplayZoom { get; set; }
 
-		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal);
-		MapAreaInfo2 GetUpdatedMapAreaInfo(MapAreaInfo2 mapAreaInfo, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal);
+		MapCenterAndDelta GetUpdatedMapAreaInfo(MapCenterAndDelta mapAreaInfo, SizeDbl currentPosterSize, SizeDbl newPosterSize, RectangleDbl screenArea, out double diagReciprocal);
+		MapCenterAndDelta GetUpdatedMapAreaInfo(MapCenterAndDelta mapAreaInfo, TransformType transformType, VectorInt panAmount, double factor, out double diagReciprocal);
 
-		void AddNewCoordinateUpdateJob(MapAreaInfo2 newMapAreaInfo, SizeDbl posterSize);
+		void AddNewCoordinateUpdateJob(MapCenterAndDelta newMapAreaInfo, SizeDbl posterSize);
 
 		bool TryGetPoster(string name, [MaybeNullWhen(false)] out Poster poster);
 
-		void PosterAddNewJobAndLoad(Poster poster, MapAreaInfo2? newMapAreaInfo, SizeDbl posterSize);
+		void PosterAddNewJobAndLoad(Poster poster, MapCenterAndDelta? newMapAreaInfo, SizeDbl posterSize);
 		void PosterLoad(Poster poster);
 
 		bool PosterOpen(string name);

@@ -93,7 +93,7 @@ namespace ProjectRepo
 			return itemsFound;
 		}
 
-		public (ObjectId, MapAreaInfo2Record)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
+		public (ObjectId, MapAreaInfo2Record)? GetSubdivisionIdAndMapCenterAndDelta(ObjectId jobId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, MapAreaInfo2Record>(p.SubDivisionId, p.MapAreaInfo2Record));
 			var filter = Builders<JobRecord>.Filter.Eq(f => f.Id, jobId);

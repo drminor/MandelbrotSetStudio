@@ -33,7 +33,7 @@ namespace MSetExplorer
 
 		private List<MapSectionRequest> _requestsPendingGeneration { get; init; }	
 
-		private MapAreaInfo? _latestMapAreaInfo;
+		private MapPositionSizeAndDelta? _latestMapAreaInfo;
 
 		private IBitmapGrid _bitmapGrid;
 		private AreaColorAndCalcSettings? _currentAreaColorAndCalcSettings;
@@ -164,7 +164,7 @@ namespace MSetExplorer
 			set => _bitmapGrid.HighlightSelectedColorBand = value;
 		}
 
-		public MapAreaInfo? LastMapAreaInfo
+		public MapPositionSizeAndDelta? LastMapAreaInfo
 		{
 			get => _latestMapAreaInfo;
 			private set { _latestMapAreaInfo = value; }
@@ -822,7 +822,7 @@ namespace MSetExplorer
 			return msrJob;
 		}
 
-		private MsrJob ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, bool reapplyColorMap, out bool lastSectionWasIncluded)
+		private MsrJob ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo, bool reapplyColorMap, out bool lastSectionWasIncluded)
 		{
 			var prevMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 
@@ -916,7 +916,7 @@ namespace MSetExplorer
 			return msrJob;
 		}
 
-		private MsrJob DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapAreaInfo screenAreaInfo, out bool lastSectionWasIncluded)
+		private MsrJob DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo, out bool lastSectionWasIncluded)
 		{
 			// Let our Bitmap Grid know about the change in View size.
 			// These must be set before we call clear screen.
@@ -1052,7 +1052,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"Adding jobNumber: {msrJob.MapLoaderJobNumber}. There are now {ActiveJobs.Count} active jobs.");
 		}
 
-		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, MapAreaInfo? previousAreaInfo, AreaColorAndCalcSettings newJob, MapAreaInfo newAreaInfo)
+		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, MapPositionSizeAndDelta? previousAreaInfo, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta newAreaInfo)
 		{
 			// TODO: Try this without requiring the previousAreaInfo to be non-null.
 			if (MapSections.Count == 0 || previousJob is null || previousAreaInfo is null)
@@ -1389,21 +1389,21 @@ namespace MSetExplorer
 			return request;
 		}
 
-		private MapAreaInfo GetScreenAreaInfo(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
+		private MapPositionSizeAndDelta GetScreenAreaInfo(MapCenterAndDelta canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
 			if (canvasSize.IsNAN())
 			{
 				throw new InvalidOperationException("canvas size is undefined.");
 			}
 
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(canonicalMapAreaInfo, canvasSize);
 
 			return mapAreaInfoV1;
 		}
 
-		private MapAreaInfo GetScreenAreaInfoWithDiagnostics(MapAreaInfo2 canonicalMapAreaInfo, SizeDbl canvasSize)
+		private MapPositionSizeAndDelta GetScreenAreaInfoWithDiagnostics(MapCenterAndDelta canonicalMapAreaInfo, SizeDbl canvasSize)
 		{
-			var mapAreaInfoV1 = _mapJobHelper.GetMapAreaWithSize(canonicalMapAreaInfo, canvasSize);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(canonicalMapAreaInfo, canvasSize);
 
 			// Just for diagnostics.
 			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
@@ -1453,7 +1453,7 @@ namespace MSetExplorer
 
 		#region Diagnostics
 
-		private void ReportNewMapArea(MapAreaInfo previousValue, MapAreaInfo newValue)
+		private void ReportNewMapArea(MapPositionSizeAndDelta previousValue, MapPositionSizeAndDelta newValue)
 		{
 			Debug.WriteLine($"MapDisplay is handling DisplaySizeUpdate. " +
 				$"Previous Size: {previousValue.CanvasSize}. Pos: {previousValue.Coords.Position}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +
@@ -1463,7 +1463,7 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG2")]
-		private void CompareMapAreaAfterRoundTrip(MapAreaInfo2 previousValue, MapAreaInfo2 newValue, MapAreaInfo middleValue)
+		private void CompareMapAreaAfterRoundTrip(MapCenterAndDelta previousValue, MapCenterAndDelta newValue, MapPositionSizeAndDelta middleValue)
 		{
 			Debug.WriteLine($"MapDisplay is RoundTripping MapAreaInfo" +
 				$"\nPrevious Scale: {previousValue.SamplePointDelta.Width}. Pos: {previousValue.MapCenter}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +

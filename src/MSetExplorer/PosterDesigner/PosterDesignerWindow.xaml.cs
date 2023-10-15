@@ -779,7 +779,7 @@ namespace MSetExplorer
 
 			if (_vm.PosterViewModel.TryGetPoster(posterName, out var poster))
 			{
-				MapAreaInfo2? newPosterMapAreaInfo;
+				MapCenterAndDelta? newPosterMapAreaInfo;
 
 				if (getSizeRequestParameter)
 				{
@@ -807,7 +807,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryGetNewSizeFromUser(Poster poster, [NotNullWhen(true)] out MapAreaInfo2? newPosterMapAreaInfo, out SizeDbl newPosterSize)
+		private bool TryGetNewSizeFromUser(Poster poster, [NotNullWhen(true)] out MapCenterAndDelta? newPosterMapAreaInfo, out SizeDbl newPosterSize)
 		{
 			var curJob = poster.CurrentJob;
 
