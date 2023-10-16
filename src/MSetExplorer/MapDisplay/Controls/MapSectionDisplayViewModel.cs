@@ -822,6 +822,40 @@ namespace MSetExplorer
 			return msrJob;
 		}
 
+		private MsrJob DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo, out bool lastSectionWasIncluded)
+		{
+			// Let our Bitmap Grid know about the change in View size.
+			// These must be set before we call clear screen.
+			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
+			_bitmapGrid.LogicalViewportSize = screenAreaInfo.CanvasSize;
+			_bitmapGrid.CanvasControlOffset = screenAreaInfo.CanvasControlOffset;
+
+			StopCurrentJobs(clearDisplay: true);
+
+			LastMapAreaInfo = screenAreaInfo;
+
+			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
+
+			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
+			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, newMapExtentInBlocks);
+
+			ImageOffset = screenAreaInfo.CanvasControlOffset;
+			ColorBandSet = newJob.ColorBandSet;
+
+			if (_currentMapSectionRequests != null)
+			{
+				// ***** Submit the new requests. *****
+				lastSectionWasIncluded = SubmitMSRequests(msrJob, _currentMapSectionRequests, out var requestsPendingGeneration);
+				_requestsPendingGeneration.AddRange(requestsPendingGeneration);
+			}
+			else
+			{
+				lastSectionWasIncluded = false;
+			}
+
+			return msrJob;
+		}
+
 		private MsrJob ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo, bool reapplyColorMap, out bool lastSectionWasIncluded)
 		{
 			var prevMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
@@ -859,10 +893,10 @@ namespace MSetExplorer
 				// Cancel requests in play that are no longer needed. Remove and dispose MapSections no longer needed
 				if (!_useDetailedDebug)
 				{
-					var requestsToRemove = CancelRequests(requestsNoLongerNeeded);
-					var numberOfRequestsCancelled = requestsNoLongerNeeded.Count - requestsToRemove.Count;
+					var requestsForSectionsToRemove = CancelRequests(requestsNoLongerNeeded, _requestsPendingGeneration);
+					var numberOfRequestsCancelled = requestsNoLongerNeeded.Count - requestsForSectionsToRemove.Count;
 
-					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsToRemove);
+					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsForSectionsToRemove);
 					var numberOfSectionsRemovedViaReq = RemoveSections(sectionsToRemoveViaReqs);
 
 					var numberOfSectionsRemovedNotVis = RemoveSections(sectionsNotVisible);
@@ -878,7 +912,7 @@ namespace MSetExplorer
 						Debug.WriteLine($"MapExtent is changing from: {prevMapExtentInBlocks} to {newMapExtentInBlocks}.");
 					}
 
-					ReportReuseAndLoadedSections(newRequests.Count, numberOfRequestsCancelled, MapSections.Count, requestsToRemove.Count, numberOfSectionsRemovedViaReq, sectionsNotVisible.Count, numberOfSectionsRemovedNotVis);
+					ReportReuseAndLoadedSections(newRequests.Count, numberOfRequestsCancelled, MapSections.Count, requestsForSectionsToRemove.Count, numberOfSectionsRemovedViaReq, sectionsNotVisible.Count, numberOfSectionsRemovedNotVis);
 
 					//if (MapSections.Count > 70)
 					//{
@@ -888,9 +922,9 @@ namespace MSetExplorer
 				} 
 				else
 				{
-					var requestsToRemove = CancelRequests(requestsNoLongerNeeded);
+					var requestsForSectionsToRemove = CancelRequests(requestsNoLongerNeeded, _requestsPendingGeneration);
 
-					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsToRemove);
+					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsForSectionsToRemove);
 					RemoveSections(sectionsToRemoveViaReqs);
 
 					RemoveSections(sectionsNotVisible);
@@ -911,40 +945,6 @@ namespace MSetExplorer
 				{
 					lastSectionWasIncluded = false;
 				}
-			}
-
-			return msrJob;
-		}
-
-		private MsrJob DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo, out bool lastSectionWasIncluded)
-		{
-			// Let our Bitmap Grid know about the change in View size.
-			// These must be set before we call clear screen.
-			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
-			_bitmapGrid.LogicalViewportSize = screenAreaInfo.CanvasSize;
-			_bitmapGrid.CanvasControlOffset = screenAreaInfo.CanvasControlOffset;
-			
-			StopCurrentJobs(clearDisplay: true);
-
-			LastMapAreaInfo = screenAreaInfo;
-
-			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
-
-			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
-			_currentMapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, newMapExtentInBlocks);
-
-			ImageOffset = screenAreaInfo.CanvasControlOffset;
-			ColorBandSet = newJob.ColorBandSet;
-
-			if (_currentMapSectionRequests != null)
-			{
-				// ***** Submit the new requests. *****
-				lastSectionWasIncluded = SubmitMSRequests(msrJob, _currentMapSectionRequests, out var requestsPendingGeneration);
-				_requestsPendingGeneration.AddRange(requestsPendingGeneration);
-			}
-			else
-			{
-				lastSectionWasIncluded = false;
 			}
 
 			return msrJob;
@@ -1175,6 +1175,9 @@ namespace MSetExplorer
 					}
 					else
 					{
+						// If a request's Mirror property is not null, then the request is inverted and the mirror is regualar
+						// TODO: Consider having two properties of a MapRequest -- Regular Details and Inverted Details. Then in those cases where the Mirror is blank, we don't have to detect whether the request is regular or inverted.
+
 						if (existingReq.Mirror != null)
 						{
 							// The exiting request is for both regular and inverted
@@ -1218,14 +1221,14 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private List<MapSectionRequest> CancelRequests(List<MapSectionRequest> requestsNoLongerNeeded)
+		private List<MapSectionRequest> CancelRequests(List<MapSectionRequest> requestsNoLongerNeeded, List<MapSectionRequest> existingRequests)
 		{
 			List<MapSectionRequest> requestsToRemove = new List<MapSectionRequest>();
 
 			foreach (var request in requestsNoLongerNeeded)
 			{
 				// TODO: Implement IEquatable<MapSectionRequst>
-				var mapSectionRequest = FindMapSectionRequest(request, _requestsPendingGeneration);
+				var mapSectionRequest = FindMapSectionRequest(request, existingRequests);
 
 				if (!object.Equals(mapSectionRequest, request))
 				{
@@ -1238,7 +1241,7 @@ namespace MSetExplorer
 
 				if (mapSectionRequest != null)
 				{
-					_requestsPendingGeneration.Remove(mapSectionRequest);
+					existingRequests.Remove(mapSectionRequest);
 					CancelRequest(mapSectionRequest);
 				}
 			}

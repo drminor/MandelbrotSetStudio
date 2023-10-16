@@ -67,12 +67,11 @@ namespace MEngineService.Services
 
 		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionServiceRequest, CallContext context = default)
 		{
-			var key = GetKey(mapSectionServiceRequest.MapLoaderJobNumber, mapSectionServiceRequest.RequestNumber);
 			var cts = new CancellationTokenSource();
 
 			lock (_stateLock)
 			{
-				_activeServiceRequests.Add(key, cts);
+				_activeServiceRequests.Add(mapSectionServiceRequest.RequestId, cts);
 			}
 
 			try
@@ -104,16 +103,12 @@ namespace MEngineService.Services
 
 		public CancelResponse CancelGeneration(CancelRequest cancelRequest, CallContext context = default)
 		{
-			Debug.Assert(cancelRequest.MapLoaderJobNumber != -1, "The Cancel Request's MapLoaderJobNumber is -1.");
-			Debug.Assert(cancelRequest.RequestNumber != -1, "The Cancel Request's RequestNumber is -1.");
-
-			var key = GetKey(cancelRequest.MapLoaderJobNumber, cancelRequest.RequestNumber);
 
 			CancellationTokenSource? cts;
 
 			lock (_stateLock)
 			{
-				if (_activeServiceRequests.TryGetValue(key, out var result))
+				if (_activeServiceRequests.TryGetValue(cancelRequest.RequestId, out var result))
 				{
 					cts = result;
 				}
@@ -177,11 +172,11 @@ namespace MEngineService.Services
 
 			var mapSectionRequest = new MapSectionRequest(
 				msrJob: GetMsrJob(req),
-				requestNumber: req.RequestNumber, 
+				requestNumber: req.RequestNumber,
+				mapPosition: mapPosition,
 				screenPosition: req.ScreenPosition,
 				screenPositionRelativeToCenter: new VectorInt(),
 				sectionBlockOffset: req.BlockPosition,
-				mapPosition: mapPosition,
 				isInverted: req.IsInverted
 			);
 
@@ -296,12 +291,6 @@ namespace MEngineService.Services
 			return mapSectionServiceResponse;
 		}
 
-		private string GetKey(int jobNumber, int requestNumber)
-		{
-			var result = $"{jobNumber}/{requestNumber}";
-			return result;
-		}
-
 		#endregion
 
 		#region Test Support
@@ -329,7 +318,8 @@ namespace MEngineService.Services
 				LimbCount = 1,
 				IncreasingIterations = false,
 				MapLoaderJobNumber = 1,
-				RequestNumber = 1
+				RequestNumber = 1,
+				RequestId = "1/1"
 			};
 
 			//var dummyMapSectionRequest = new MapSectionRequest

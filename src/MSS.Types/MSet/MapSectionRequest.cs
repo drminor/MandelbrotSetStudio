@@ -5,17 +5,18 @@ namespace MSS.Types.MSet
 {
 	public class MapSectionRequest
 	{
-		public MapSectionRequest(MsrJob msrJob) : this(msrJob, requestNumber: 0, screenPosition: new PointInt(), screenPositionRelativeToCenter: new VectorInt(),
-			sectionBlockOffset: new VectorLong(), mapPosition: new RPoint(), isInverted: false)
+		public MapSectionRequest(MsrJob msrJob) : this(msrJob, requestNumber: 0, mapPosition: new RPoint(), screenPosition: new PointInt(),
+			screenPositionRelativeToCenter: new VectorInt(), sectionBlockOffset: new VectorLong(), isInverted: false)
 		{ }
 
-		public MapSectionRequest(MsrJob msrJob, int requestNumber, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, VectorLong sectionBlockOffset, RPoint mapPosition, bool isInverted)
+		public MapSectionRequest(MsrJob msrJob, int requestNumber, RPoint mapPosition, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, VectorLong sectionBlockOffset, bool isInverted)
 		{
 			MsrJob = msrJob ?? throw new ArgumentNullException(nameof(MsrJob), "All MapSectionRequest must reference a MsrJob.");
 
 			RequestNumber = requestNumber;
+			RequestId = MsrJob.MapLoaderJobNumber + "/" + RequestNumber;
+
 			Mirror = null;
-			
 			MapSectionId = null;
 
 			ScreenPosition = screenPosition;
@@ -34,11 +35,13 @@ namespace MSS.Types.MSet
 		public int MapLoaderJobNumber => MsrJob.MapLoaderJobNumber;
 		public int RequestNumber { get; init; }
 
+		public string RequestId { get; init; }
+
 		public string? MapSectionId { get; set; }
 
 		public MapSectionRequest? Mirror { get; set; }
 
-		public bool RequestOrMirrorIsInPlay => !Cancelled || (Mirror != null && !Mirror.Cancelled);
+		public bool RequestOrMirrorIsInPlay => !IsCancelled || (Mirror != null && !Mirror.IsCancelled);
 		public bool NeitherRequestNorMirrorIsInPlay => !RequestOrMirrorIsInPlay;
 
 		public JobType JobType => MsrJob.JobType;
@@ -99,7 +102,7 @@ namespace MSS.Types.MSet
 		public bool Completed { get; set; }
 		public bool Saved { get; set; }
 		public bool Handled { get; set; }
-		public bool Cancelled { get; set; }
+		public bool IsCancelled { get; set; }
 
 		public DateTime? ProcessingStartTime { get; set; }
 		public DateTime? ProcessingEndTime { get; set; }
@@ -126,10 +129,10 @@ namespace MSS.Types.MSet
 
 		public bool Cancel()
 		{
-			if (Cancelled)
+			if (IsCancelled)
 				return false;
 
-			Cancelled = true;
+			IsCancelled = true;
 			CancellationTokenSource.Cancel();
 
 			if (MsrJob.TotalNumberOfSectionsRequested > 0)

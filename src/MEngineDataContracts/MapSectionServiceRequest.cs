@@ -74,9 +74,17 @@ namespace MEngineDataContracts
 		[DataMember(Order = 22)]
 		public int RequestNumber { get; set; }
 
+		[DataMember(Order = 23)]
+		public string RequestId { get; set; }
+
 		public override string ToString()
 		{
-			return $"JobId: {JobId}, JobNo: {MapLoaderJobNumber}, ReqNo: {RequestNumber} Subdivision Id:{SubdivisionId}, Block Position:{BlockPosition}, Screen Position:{ScreenPosition}.";
+			return $"JobId: {JobId}, JobNo/ReqNo: {RequestId} Subdivision Id:{SubdivisionId}, Block Position:{BlockPosition}, Screen Position:{ScreenPosition}.";
+		}
+
+		private string GetKey()
+		{
+			return $"{MapLoaderJobNumber}/{RequestNumber}";
 		}
 
 	}

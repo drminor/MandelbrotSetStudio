@@ -94,6 +94,7 @@ namespace MSS.Common
 
 				if (!primary.IsInverted)
 				{
+					// The main request is regular -- include this item, only if this item is not a mirror of some other (inverted) MapSection.
 					var matched = matchedNotInvertedSubCoords[invertedPtr];
 
 					if (!matched)
@@ -113,10 +114,12 @@ namespace MSS.Common
 				}
 				else
 				{
+					// The main request is inverted.
 					var screenPosition = primary.ScreenPosition;
 					var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
 					var mapSectionRequest = CreateRequest(msrJob, requestNumber, screenPosition, screenPositionRelativeToCenter, primary);
 
+					// Mirrors are always Regular -- i.e., Not Inverted
 					if (mirror != null)
 					{
 						var requestNumber2 = mirror.RequestNumber;
@@ -138,12 +141,15 @@ namespace MSS.Common
 		{
 			var result = new List<MsrPosition>();
 
+			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
+
 			var requestNumber = 0;
 
 			foreach (var screenPosition in Points(mapExtentInBlocks))
 			{
+				var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
 				var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, msrJob.JobBlockOffset, out var isInverted);
-				result.Add(new MsrPosition(requestNumber++, screenPosition, sectionBlockOffset, isInverted));
+				result.Add(new MsrPosition(requestNumber++, screenPosition, screenPositionRelativeToCenter, sectionBlockOffset, isInverted));
 			}
 
 			return result;
@@ -258,7 +264,7 @@ namespace MSS.Common
 			if (reqPos is null)
 			{
 				var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, msrJob.JobBlockOffset, out var isInverted);
-				reqPos = new MsrPosition(requestNumber, screenPosition, sectionBlockOffset, isInverted);
+				reqPos = new MsrPosition(requestNumber, screenPosition, screenPositionRelativeToCenter, sectionBlockOffset, isInverted);
 			}
 
 			// Absolute position in Map Coordinates.
@@ -268,10 +274,11 @@ namespace MSS.Common
 			(
 				msrJob: msrJob,
 				requestNumber: requestNumber,
-				screenPosition: screenPosition,
-				screenPositionRelativeToCenter: screenPositionRelativeToCenter,
-				sectionBlockOffset: reqPos.SectionBlockOffset,
 				mapPosition: mapPosition,
+
+				screenPosition: reqPos.ScreenPosition,
+				screenPositionRelativeToCenter: reqPos.ScreenPositionReleativeToCenter,
+				sectionBlockOffset: reqPos.SectionBlockOffset,
 				isInverted: reqPos.IsInverted);
 
 			return mapSectionRequest;
@@ -300,6 +307,12 @@ namespace MSS.Common
 			var result = new RPoint(mapPosition);
 
 			return result;
+		}
+
+
+		public static string GetMapSectionRequestId(int mapLoaderJobNumber, int mapSectionRequestNumber)
+		{
+			return mapLoaderJobNumber.ToString() + "/" + mapSectionRequestNumber.ToString();
 		}
 
 		#endregion
@@ -367,7 +380,7 @@ namespace MSS.Common
 				mapSectionRequest.RequestNumber, 
 				mapSectionRequest.FoundInRepo, 
 				mapSectionRequest.Completed, 
-				mapSectionRequest.Cancelled, 
+				mapSectionRequest.IsCancelled, 
 				requestDuration: mapSectionRequest.TimeToCompleteGenRequest,
 				processingDuration: mapSectionRequest.ProcessingDuration, 
 				generationDuration: mapSectionRequest.GenerationDuration
@@ -448,12 +461,12 @@ namespace MSS.Common
 			{
 				var ms = requests[i];
 
-				if (ms.Cancelled)
+				if (ms.IsCancelled)
 				{
 					result += 1;
 				}
 
-				if (ms.Mirror?.Cancelled == true)
+				if (ms.Mirror?.IsCancelled == true)
 				{
 					result += 1;
 				}
@@ -486,22 +499,6 @@ namespace MSS.Common
 		//}
 
 		#endregion
-	}
-
-	public class MsrPosition
-	{
-		public int RequestNumber { get; init; }
-		public PointInt ScreenPosition { get; init; }
-		public VectorLong SectionBlockOffset { get; init; }
-		public bool IsInverted { get; init; }
-
-		public MsrPosition(int requestNumber, PointInt screenPosition, VectorLong sectionBlockOffset, bool isInverted)
-		{
-			RequestNumber = requestNumber;
-			ScreenPosition = screenPosition;
-			SectionBlockOffset = sectionBlockOffset;
-			IsInverted = isInverted;
-		}
 	}
 
 }

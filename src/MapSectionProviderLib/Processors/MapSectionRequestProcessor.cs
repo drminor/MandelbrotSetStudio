@@ -127,7 +127,7 @@ namespace MapSectionProviderLib
 
 					if (mapSectionPair != null)
 					{
-						if (!mapSectionRequest.Cancelled)
+						if (!mapSectionRequest.IsCancelled)
 						{
 							mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 							result.Add(mapSectionPair.Item1);
@@ -143,7 +143,7 @@ namespace MapSectionProviderLib
 							//	throw new InvalidOperationException("MapSectionRequestProcessor:SubmitRequestsReceiving two MapSections, but the request has no mirror.");
 							//}
 
-							if (mirror != null && !mirror.Cancelled)
+							if (mirror != null && !mirror.IsCancelled)
 							{
 								mirror.ProcessingStartTime = DateTime.UtcNow;
 								result.Add(mapSectionPair.Item2);
@@ -317,7 +317,7 @@ namespace MapSectionProviderLib
 
 					if (jobIsCancelled || mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
 					{
-						var msg = $"MapSectionRequestProcessor: QueueProcessor:{queueProcessorIndex} is skipping request with JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber}.";
+						var msg = $"MapSectionRequestProcessor: QueueProcessor:{queueProcessorIndex} is skipping request with JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}.";
 						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
 						Debug.WriteLineIf(_useDetailedDebug, msg);
 
@@ -362,7 +362,7 @@ namespace MapSectionProviderLib
 
 							if (mapSectionPair != null)
 							{
-								if (!mapSectionWorkRequest.Request.Cancelled)
+								if (!mapSectionWorkRequest.Request.IsCancelled)
 								{
 									mapSectionWorkRequest.Response = mapSectionPair.Item1;
 									SendToResponseQueue(mapSectionWorkRequest, ct);
@@ -376,7 +376,7 @@ namespace MapSectionProviderLib
 										throw new InvalidOperationException("Receiving two MapSections, but the request has no mirror.");
 									}
 
-									if (!mirror.Cancelled)
+									if (!mirror.IsCancelled)
 									{
 										var mapSectionRequestForMirror = new MapSectionWorkRequest(mirror, mapSectionWorkRequest.WorkAction, mapSectionPair.Item2);
 										SendToResponseQueue(mapSectionRequestForMirror, ct);
@@ -491,7 +491,7 @@ namespace MapSectionProviderLib
 		{
 			MapSection? result;
 
-			if (!request.Cancelled)
+			if (!request.IsCancelled)
 			{
 				request.FoundInRepo = true;
 				request.ProcessingEndTime = DateTime.UtcNow;

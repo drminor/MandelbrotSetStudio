@@ -65,8 +65,8 @@ namespace MEngineClient
 
 			if (ct.IsCancellationRequested)
 			{
-				mapSectionRequest.Cancelled = true;
-				Debug.WriteLineIf(_useDetailedDebug, $"MClient. Request: JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is cancelled.");
+				mapSectionRequest.IsCancelled = true;
+				Debug.WriteLineIf(_useDetailedDebug, $"MClient. Request: JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber} is cancelled.");
 				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 			}
 			else
@@ -86,7 +86,7 @@ namespace MEngineClient
 
 				if (ct.IsCancellationRequested)
 				{
-					mapSectionRequest.Cancelled = true;
+					mapSectionRequest.IsCancelled = true;
 				}
 			}
 
@@ -136,8 +136,7 @@ namespace MEngineClient
 			{
 				var cancelRequest = new CancelRequest
 				{
-					MapLoaderJobNumber = req.MapLoaderJobNumber,
-					RequestNumber = req.RequestNumber
+					RequestId = req.RequestId
 				};
 
 				var mapSectionService = MapSectionService;
@@ -172,7 +171,8 @@ namespace MEngineClient
 				LimbCount = req.LimbCount,
 				IncreasingIterations = req.IncreasingIterations,
 				MapLoaderJobNumber = req.MapLoaderJobNumber,
-				RequestNumber = req.RequestNumber
+				RequestNumber = req.RequestNumber,
+				RequestId = req.RequestId
 			};
 
 			var mapSectionVectors2 = req.MapSectionVectors2;

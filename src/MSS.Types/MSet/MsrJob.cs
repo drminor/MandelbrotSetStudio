@@ -345,7 +345,7 @@ namespace MSS.Types.MSet
 				requestNumber: msr.RequestNumber,
 				msr.FoundInRepo,
 				msr.Completed,
-				msr.Cancelled,
+				msr.IsCancelled,
 				msr.TimeToCompleteGenRequest,
 				msr.ProcessingDuration,
 				msr.GenerationDuration

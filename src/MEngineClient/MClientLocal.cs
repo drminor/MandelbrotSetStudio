@@ -52,8 +52,8 @@ namespace MEngineClient
 
 			if (ct.IsCancellationRequested)
 			{
-				mapSectionRequest.Cancelled = true;
-				Debug.WriteLine($"MClientLocal JobId/Request#: {mapSectionRequest.JobId}/{mapSectionRequest.RequestNumber} is cancelled.");
+				mapSectionRequest.IsCancelled = true;
+				Debug.WriteLine($"MClientLocal JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber} is cancelled.");
 				//return new MapSectionResponse(mapSectionRequest, isCancelled: true);
 				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 			}

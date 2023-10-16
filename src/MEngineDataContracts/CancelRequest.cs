@@ -23,14 +23,12 @@ namespace MEngineDataContracts
 		public PointInt ScreenPosition { get; set; }
 
 		[DataMember(Order = 6)]
-		public int MapLoaderJobNumber { get; set; }
+		public string RequestId { get; set; }
 
-		[DataMember(Order = 7)]
-		public int RequestNumber { get; set; }
 
 		public override string ToString()
 		{
-			return $"Job: {MapLoaderJobNumber}, Req: {RequestNumber}";
+			return $"JobNo/ReqNo: {RequestId}";
 		}
 	}
 
