@@ -896,7 +896,7 @@ namespace MSetExplorer
 					var requestsForSectionsToRemove = CancelRequests(requestsNoLongerNeeded, _requestsPendingGeneration);
 					var numberOfRequestsCancelled = requestsNoLongerNeeded.Count - requestsForSectionsToRemove.Count;
 
-					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsForSectionsToRemove);
+					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsForSectionsToRemove, MapSections);
 					var numberOfSectionsRemovedViaReq = RemoveSections(sectionsToRemoveViaReqs);
 
 					var numberOfSectionsRemovedNotVis = RemoveSections(sectionsNotVisible);
@@ -924,7 +924,7 @@ namespace MSetExplorer
 				{
 					var requestsForSectionsToRemove = CancelRequests(requestsNoLongerNeeded, _requestsPendingGeneration);
 
-					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsForSectionsToRemove);
+					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsForSectionsToRemove, MapSections);
 					RemoveSections(sectionsToRemoveViaReqs);
 
 					RemoveSections(sectionsNotVisible);
@@ -933,12 +933,13 @@ namespace MSetExplorer
 
 				if (newRequests.Count > 0)
 				{
-					// ***** Submit the new requests. *****
 					var newRequestsReport = _mapSectionBuilder.GetCountRequestsReport(newRequests);
 					Debug.WriteLine(newRequestsReport);
 
+					// ***** Submit the new requests. *****
 					lastSectionWasIncluded = SubmitMSRequests(msrJob, newRequests, out var mapRequestsPendingGenration);
 					_requestsPendingGeneration.AddRange(mapRequestsPendingGenration);
+
 					ClearMapSections(_requestsPendingGeneration);
 				}
 				else
@@ -991,7 +992,7 @@ namespace MSetExplorer
 			var numberRemoved = 0;
 			foreach (var ms in mapSectionsToClear)
 			{
-				var theRealMs = MapSections.FirstOrDefault(x => x.IsInverted == ms.IsInverted && x.RepoBlockPosition == ms.RepoBlockPosition);
+				var theRealMs = MapSections.FirstOrDefault(x => x.IsInverted == ms.IsInverted && x.SectionBlockOffset == ms.SectionBlockOffset);
 
 				if (theRealMs != null)
 				{
@@ -1022,7 +1023,7 @@ namespace MSetExplorer
 
 			foreach(var request in _requestsPendingGeneration)
 			{
-				CancelRequest(request);
+				request.Cancel();
 			}
 
 			_requestsPendingGeneration.Clear();
@@ -1106,11 +1107,11 @@ namespace MSetExplorer
 			return false;
 		}
 
-		private List<MapSectionRequest> GetRequestsToLoadAndRemove(List<MapSectionRequest> newRequests, List<MapSectionRequest> existingRequests, out List<MapSectionRequest> requestsNoLongerNeeded)
+		private List<MapSectionRequest> GetRequestsToLoadAndRemove(List<MapSectionRequest> newRequests, List<MapSectionRequest> existingRequests, out List<MsrPosition> requestsNoLongerNeeded)
 		{
 			var result = new List<MapSectionRequest>(newRequests);
 
-			requestsNoLongerNeeded = new List<MapSectionRequest>();
+			requestsNoLongerNeeded = new List<MsrPosition>();
 
 			foreach (var existingReq in existingRequests)
 			{
@@ -1122,7 +1123,14 @@ namespace MSetExplorer
 				{
 					// The existing request could not be matched to any new request.
 					// We will not be needing this request any longer
-					requestsNoLongerNeeded.Add(existingReq);
+					if (existingReq.HasRegular) 
+					{
+						requestsNoLongerNeeded.Add(existingReq.RegularPosition!);
+					}
+					if (existingReq.HasInverted)
+					{
+						requestsNoLongerNeeded.Add(existingReq.InvertedPosition!);
+					}
 				}
 				else
 				{
@@ -1130,10 +1138,10 @@ namespace MSetExplorer
 
 					var newReq = alreadyPresent.First();
 
-					if (newReq.Mirror != null)
+					if (newReq.IsPaired)
 					{
 						// Can only remove the newReq from Result, if the existingReq also has a mirror.
-						if (existingReq.Mirror != null)
+						if (existingReq.IsPaired)
 						{
 							// The existing request is for both regular and inverted.
 							// The new request is also for both regular and inverted,
@@ -1142,8 +1150,8 @@ namespace MSetExplorer
 						}
 						else
 						{
-							// The new request is for both regular and inverted.
 							// The exiting request is for either regular or inverted
+							// The new request is for both regular and inverted.
 
 							//// Cancel the portion of the new request, covered by the existing request
 							//if (existingReq.IsInverted)
@@ -1170,42 +1178,55 @@ namespace MSetExplorer
 							//}
 
 							// Cancel the existing request -- the new request includes both
-							requestsNoLongerNeeded.Add(existingReq);
+							if (existingReq.HasRegular)
+							{
+								requestsNoLongerNeeded.Add(existingReq.RegularPosition!);
+							}
+							else
+							{
+								requestsNoLongerNeeded.Add(existingReq.InvertedPosition!);
+							}
 						}
 					}
 					else
 					{
-						// If a request's Mirror property is not null, then the request is inverted and the mirror is regualar
-						// TODO: Consider having two properties of a MapRequest -- Regular Details and Inverted Details. Then in those cases where the Mirror is blank, we don't have to detect whether the request is regular or inverted.
-
-						if (existingReq.Mirror != null)
+						if (existingReq.IsPaired)
 						{
 							// The exiting request is for both regular and inverted
 							// The new request is for either regular or inverted.
-							if (newReq.IsInverted)
+							if (newReq.HasInverted)
 							{
 								// Cancel the Regular component of the existing request
 								// Do not keep the new request.
-								existingReq.MapSectionId = "CancelOnlyRegular";
+								//existingReq.MapSectionId = "CancelOnlyRegular";
+								requestsNoLongerNeeded.Add(existingReq.RegularPosition!);
+
 							}
 							else
 							{
 								// Cancel the IsInverted component of the existing request
 								// Do not keep the new request.
-								existingReq.MapSectionId = "CancelOnlyInverted";
+								//existingReq.MapSectionId = "CancelOnlyInverted";
+								requestsNoLongerNeeded.Add(existingReq.InvertedPosition!);
 							}
 
-							requestsNoLongerNeeded.Add(existingReq);
 							result.Remove(newReq);
 						}
 						else
 						{
 							// The exiting request is for either regular or inverted
 							// The new request is for either regular or inverted.
-							if (existingReq.IsInverted != newReq.IsInverted)
+							if (existingReq.HasInverted != newReq.HasInverted)
 							{
 								// The existing request is no longer needed.
-								requestsNoLongerNeeded.Add(existingReq);
+								if (existingReq.HasRegular)
+								{
+									requestsNoLongerNeeded.Add(existingReq.RegularPosition!);
+								}
+								else
+								{
+									requestsNoLongerNeeded.Add(existingReq.InvertedPosition!);
+								}
 							}
 							else
 							{
@@ -1213,7 +1234,9 @@ namespace MSetExplorer
 								result.Remove(newReq);
 							}
 						}
+
 					}
+
 
 				}
 			}
@@ -1221,126 +1244,43 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private List<MapSectionRequest> CancelRequests(List<MapSectionRequest> requestsNoLongerNeeded, List<MapSectionRequest> existingRequests)
+		private List<MsrPosition> CancelRequests(List<MsrPosition> requestsNoLongerNeeded, List<MapSectionRequest> existingRequests)
 		{
-			List<MapSectionRequest> requestsToRemove = new List<MapSectionRequest>();
+			List<MsrPosition> sectionsToRemove = new List<MsrPosition>();
 
-			foreach (var request in requestsNoLongerNeeded)
+			foreach (var msrPosition in requestsNoLongerNeeded)
 			{
-				// TODO: Implement IEquatable<MapSectionRequst>
-				var mapSectionRequest = FindMapSectionRequest(request, existingRequests);
-
-				if (!object.Equals(mapSectionRequest, request))
-				{
-					//Debug.WriteLine("CancelRequests found a matching request by value -- but is not the exact same object.");
-				}
-				else
-				{
-					Debug.WriteLine("CancelRequests found a matching request by value -- AND it is the exact same object.");
-				}
+				var mapSectionRequest = FindMapSectionRequest(msrPosition, existingRequests);
 
 				if (mapSectionRequest != null)
 				{
-					existingRequests.Remove(mapSectionRequest);
-					CancelRequest(mapSectionRequest);
-				}
-			}
+					mapSectionRequest.Cancel(msrPosition.IsInverted);
 
-			return requestsToRemove;
-		}
-
-		private int CancelRequest(MapSectionRequest req)
-		{
-			var numberOfRequestsCancelled = 0;
-
-			if (req.Mirror == null)
-			{
-				Debug.WriteLine($"Cancelling Generation Request: {req.MapLoaderJobNumber}/{req.RequestNumber}.");
-
-				req.Cancel();
-				numberOfRequestsCancelled++;
-			}
-			else
-			{
-				if (req.MapSectionId == "CancelOnlyInverted")
-				{
-					if (req.IsInverted)
+					if (mapSectionRequest.NeitherRegularOrInvertedRequestIsInPlay)
 					{
-						req.Cancel();
+						existingRequests.Remove(mapSectionRequest);
 					}
-					else
-					{
-						req.Mirror.Cancel();
-					}
-
-					numberOfRequestsCancelled++;
-				}
-				else if (req.MapSectionId == "CancelOnlyRegular")
-				{
-					if (req.IsInverted)
-					{
-						req.Mirror.Cancel();
-					}
-					else
-					{
-						req.Cancel();
-					}
-
-					numberOfRequestsCancelled++;
 				}
 				else
 				{
-					// Cancel the request and the mirror
-					req.Cancel();
-					req.Mirror.Cancel();
-
-					numberOfRequestsCancelled += 2;
+					// No Pending Request, so lets try to find an existing section to remove.
+					sectionsToRemove.Add(msrPosition);
 				}
 			}
 
-			return numberOfRequestsCancelled;
+			return sectionsToRemove;
 		}
 
-		private List<MapSection> FindSectionsToRemoveFromRequests(List<MapSectionRequest> mapSectionRequests)
+		private List<MapSection> FindSectionsToRemoveFromRequests(List<MsrPosition> mapSectionRequests, IList<MapSection> listOfSectionsToSearch)
 		{
 			List<MapSection> result = new List<MapSection>();
 
-			foreach (var request in mapSectionRequests)
+			foreach (var msrPosition in mapSectionRequests)
 			{
-				if (request.Mirror == null)
+				var mapSection = FindMapSection(msrPosition, listOfSectionsToSearch);
+				if (mapSection != null)
 				{
-					var section = FindMapSection(request);
-					if (section != null) { result.Add(section); }
-				}
-				else
-				{
-					// Only Remove the IsInverted or Regular based on the request.
-
-					if (request.MapSectionId == "CancelOnlyInverted")
-					{
-						var requestToRemove = request.IsInverted ? request : request.Mirror;
-						var section = FindMapSection(requestToRemove);
-						if (section != null) { result.Add(section); }
-					}
-					else if (request.MapSectionId == "CancelOnlyRegular")
-					{
-						var requestToRemove = request.IsInverted ? request.Mirror : request;
-						var section = FindMapSection(requestToRemove);
-						if (section != null) { result.Add(section); }
-					}
-					else
-					{
-						//result.Add(FindMapSection(request));
-						var section = FindMapSection(request);
-						if (section != null) { result.Add(section); }
-
-
-						//result.Add(FindMapSection(request.Mirror));
-						section = FindMapSection(request);
-						if (section != null) { result.Add(section); }
-					}
-
-					request.MapSectionId = ObjectId.GenerateNewId().ToString();
+					result.Add(mapSection);
 				}
 			}
 
@@ -1364,10 +1304,11 @@ namespace MSetExplorer
 			return numberOfMapSectionsRemoved;
 		}
 
+		// TODO: Fix Me. Need to include IsInverted when matching.
 		private bool RemovePendingRequest(MapSection mapSection)
 		{
 			var subId = new ObjectId(mapSection.SubdivisionId);
-			var request = _requestsPendingGeneration.Find(x => x.Subdivision.Id == subId && x.SectionBlockOffset == mapSection.RepoBlockPosition);
+			var request = _requestsPendingGeneration.Find(x => x.Subdivision.Id == subId && x.SectionBlockOffset == mapSection.SectionBlockOffset);
 
 			if (request != null)
 			{
@@ -1380,16 +1321,30 @@ namespace MSetExplorer
 			}
 		}
 
-		private MapSection? FindMapSection(MapSectionRequest mapSectionRequest)
+		private MapSection? FindMapSection(MsrPosition msrPosition, IList<MapSection> mapSections)
 		{
-			return MapSections.FirstOrDefault(x => x.IsInverted == mapSectionRequest.IsInverted && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
+			return mapSections.FirstOrDefault(x => x.IsInverted == msrPosition.IsInverted && x.SectionBlockOffset == msrPosition.SectionBlockOffset);
 		}
 
-		private MapSectionRequest? FindMapSectionRequest(MapSectionRequest msr, List<MapSectionRequest> mapSectionRequests)
+		private List<MapSection> FindMapSections(MapSectionRequest mapSectionRequest)
 		{
-			var request = mapSectionRequests.Find(x => x.Subdivision.Id == msr.Subdivision.Id && x.SectionBlockOffset == msr.SectionBlockOffset);
+			return MapSections.Where(x => x.SectionBlockOffset == mapSectionRequest.SectionBlockOffset).ToList();
+		}
 
-			return request;
+		private MapSectionRequest? FindMapSectionRequest(MsrPosition msr, List<MapSectionRequest> mapSectionRequests)
+		{
+			MapSectionRequest? result;
+
+			if (msr.IsInverted)
+			{
+				result = mapSectionRequests.Find(x => x.HasInverted && x.SectionBlockOffset == msr.SectionBlockOffset);
+			}
+			else
+			{
+				result = mapSectionRequests.Find(x => (x.HasRegular) && x.SectionBlockOffset == msr.SectionBlockOffset);
+			}
+
+			return result;
 		}
 
 		private MapPositionSizeAndDelta GetScreenAreaInfo(MapCenterAndDelta canonicalMapAreaInfo, SizeDbl canvasSize)
@@ -1625,8 +1580,8 @@ namespace MSetExplorer
 				.Append(section.ScreenPosition.X).Append("\t")
 				.Append(section.ScreenPosition.Y).Append("\t")
 				.Append(section.JobNumber).Append("\t")
-				.Append(section.RepoBlockPosition.X).Append("\t")
-				.Append(section.RepoBlockPosition.Y).Append("\t");
+				.Append(section.SectionBlockOffset.X).Append("\t")
+				.Append(section.SectionBlockOffset.Y).Append("\t");
 
 				if (section.IsInverted)
 				{
@@ -1782,9 +1737,10 @@ namespace MSetExplorer
 
 			foreach (var request in mapSectionRequests)
 			{
-				if (request.Mirror == null)
+				if (request.RegularPosition != null && request.InvertedPosition != null)
 				{
-					_ = RemoveMapSection(request);
+					_ = RemoveMapSection(request, isInverted:true);
+					_ = RemoveMapSection(request, isInverted: false);
 				}
 				else
 				{
@@ -1792,18 +1748,18 @@ namespace MSetExplorer
 
 					if (request.MapSectionId == "CancelOnlyInverted")
 					{
-						var requestToRemove = request.IsInverted ? request : request.Mirror;
-						_ = RemoveMapSection(requestToRemove);
+						//var requestToRemove = request.IsInverted ? request : request.Mirror;
+						_ = RemoveMapSection(request, isInverted:true);
 					}
 					else if (request.MapSectionId == "CancelOnlyRegular")
 					{
-						var requestToRemove = request.IsInverted ? request.Mirror : request;
-						_ = RemoveMapSection(requestToRemove);
+						//var requestToRemove = request.IsInverted ? request.Mirror : request;
+						_ = RemoveMapSection(request, isInverted: false);
 					}
 					else
 					{
-						_ = RemoveMapSection(request);
-						_ = RemoveMapSection(request.Mirror);
+						_ = RemoveMapSection(request, isInverted: true);
+						_ = RemoveMapSection(request, isInverted: false);
 					}
 
 					request.MapSectionId = ObjectId.GenerateNewId().ToString();
@@ -1813,12 +1769,12 @@ namespace MSetExplorer
 			return numberOfMapSectionsRemoved;
 		}
 
-		private bool RemoveMapSection(MapSectionRequest mapSectionRequest)
+		private bool RemoveMapSection(MapSectionRequest mapSectionRequest, bool isInverted)
 		{
 			//var subStrId = mapSectionRequest.Subdivision.Id.ToString();
 			//var mapSection = MapSections.FirstOrDefault(x => x.SubdivisionId == subStrId && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
 
-			var mapSection = MapSections.FirstOrDefault(x => x.IsInverted == mapSectionRequest.IsInverted && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
+			var mapSection = MapSections.FirstOrDefault(x => x.IsInverted == isInverted && x.SectionBlockOffset == mapSectionRequest.SectionBlockOffset);
 
 			if (mapSection != null)
 			{

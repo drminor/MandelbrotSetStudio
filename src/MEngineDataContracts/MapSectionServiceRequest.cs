@@ -29,7 +29,7 @@ namespace MEngineDataContracts
 		[DataMember(Order = 7)]
 		public RPointDto MapPosition { get; set; }
 
-		[DataMember(Order = 8)]
+		//[DataMember(Order = 8)]
 		public bool IsInverted { get; set; }
 
 		[DataMember(Order = 9)]

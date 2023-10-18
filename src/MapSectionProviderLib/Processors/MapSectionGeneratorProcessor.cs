@@ -165,6 +165,16 @@ namespace MapSectionProviderLib
 
 							var mapSectionResponse = HandleMapSectionRequest(mapSectionWorkRequest.Request, mEngineClient);
 							mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
+
+							var mapSectionRequest = mapSectionWorkRequest.Request;
+							if ( mapSectionRequest.RegularOrInvertedRequestIsInPlay)
+							{
+								if (!mapSectionRequest.IsCancelled)
+								{
+									mapSectionRequest.MsrJob.SectionsGenerated++;
+								}
+							}
+
 						}
 					}
 				}
@@ -214,31 +224,28 @@ namespace MapSectionProviderLib
 			MapSectionResponse mapSectionResponse;
 			ReportProcesssARequest(mapSectionRequest, jobIsCancelled:false);
 
-			if (mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
+			if (mapSectionRequest.NeitherRegularOrInvertedRequestIsInPlay)
 			{
 				mapSectionResponse = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 				mapSectionRequest.MsrJob.SectionsCancelled++;
 
-				if (mapSectionRequest.Mirror != null && mapSectionRequest.Mirror.IsCancelled)
-				{
-					mapSectionRequest.Mirror.MsrJob.SectionsCancelled++;
-				}
+				// TODO: FixMe!
+				//if (mapSectionRequest.Mirror != null && mapSectionRequest.Mirror.IsCancelled)
+				//{
+				//	mapSectionRequest.Mirror.MsrJob.SectionsCancelled++;
+				//}
 			}
 			else
 			{
 				mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
-				if (!mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
-				{
-					if (!mapSectionRequest.IsCancelled)
-					{
-						mapSectionRequest.MsrJob.SectionsGenerated++;
-					}
 
-					if (mapSectionRequest.Mirror != null && !mapSectionRequest.Mirror.IsCancelled)
-					{
-						mapSectionRequest.Mirror.MsrJob.SectionsGenerated++;
-					}
-				}
+				//if (mapSectionRequest.RegularOrInvertedRequestIsInPlay)
+				//{
+				//	if (!mapSectionRequest.IsCancelled)
+				//	{
+				//		mapSectionRequest.MsrJob.SectionsGenerated++;
+				//	}
+				//}
 
 				if (mapSectionResponse.MapSectionVectors2 == null)
 				{
@@ -325,7 +332,7 @@ namespace MapSectionProviderLib
 		{
 			if (_useDetailedDebug)
 			{
-				if (jobIsCancelled || mapSectionRequest.NeitherRequestNorMirrorIsInPlay)
+				if (jobIsCancelled || mapSectionRequest.NeitherRegularOrInvertedRequestIsInPlay)
 				{
 					var msg = $"The MapSectionGeneratorProcessor is skipping request with JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}.";
 					msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";

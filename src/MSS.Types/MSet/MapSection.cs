@@ -56,9 +56,9 @@ namespace MSS.Types.MSet
 			RequestCancelled = isCancelled;
 		}
 
-		public MapSection(MapSectionRequest req, MapSectionVectors? mapSectionVectors, PointInt screenPosition, Func<ushort[], IHistogram> histogramBuilder) 
+		public MapSection(MapSectionRequest req, MapSectionVectors? mapSectionVectors, bool isInverted, PointInt screenPosition, Func<ushort[], IHistogram> histogramBuilder) 
 			: this(req.MapLoaderJobNumber, req.RequestNumber, mapSectionVectors, req.Subdivision.Id.ToString(), req.JobBlockOffset, 
-				  req.SectionBlockOffset, req.IsInverted, screenPosition, req.BlockSize, req.MapCalcSettings.TargetIterations, histogramBuilder)
+				  req.SectionBlockOffset, isInverted, screenPosition, req.BlockSize, req.MapCalcSettings.TargetIterations, histogramBuilder)
 		{ }
 
 		public MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, VectorLong jobMapBlockPosition,
@@ -69,7 +69,7 @@ namespace MSS.Types.MSet
 			MapSectionVectors = mapSectionVectors;
 			SubdivisionId = subdivisionId;
 			JobMapBlockOffset = jobMapBlockPosition;
-			RepoBlockPosition = repoBlockPosition;
+			SectionBlockOffset = repoBlockPosition;
 			IsInverted = isInverted;
 			ScreenPosition = screenPosition;
 			Size = size;
@@ -92,7 +92,7 @@ namespace MSS.Types.MSet
 
 		// TODO: Rename property RepoBlockPosition in class MapSection: SectionBlockOffset
 		// X,Y coordinates of this section, relative to the Subdivision's Base Map Position in block-size units.
-		public VectorLong RepoBlockPosition { get; init; }
+		public VectorLong SectionBlockOffset { get; init; }
 
 		public bool IsInverted { get; init; }
 
@@ -127,8 +127,8 @@ namespace MSS.Types.MSet
 		public override string? ToString()
 		{
 			return IsInverted
-				? $"MapSection: {ScreenPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition} (Inverted)."
-				: $"MapSection: {ScreenPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition}.";
+				? $"MapSection: {ScreenPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {SectionBlockOffset} (Inverted)."
+				: $"MapSection: {ScreenPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {SectionBlockOffset}.";
 		}
 
 		public string ToString(PointInt adjustedPosition)
@@ -138,8 +138,8 @@ namespace MSS.Types.MSet
 			//	: $"MapSection: AdjBlockPos: {adjustedPosition}, JobNumber: {JobNumber}, Subdiv: {SubdivisionId}: MapPosition: {RepoBlockPosition}.";
 
 			return IsInverted
-				? $"MapSection: AdjBlockPos: {adjustedPosition}, (J/R:{JobNumber}/{RequestNumber}, MapPosition: {RepoBlockPosition} (Inverted from {ScreenPosition})."
-				: $"MapSection: AdjBlockPos: {adjustedPosition}, (J/R:{JobNumber}/{RequestNumber}, MapPosition: {RepoBlockPosition}.";
+				? $"MapSection: AdjBlockPos: {adjustedPosition}, (J/R:{JobNumber}/{RequestNumber}, MapPosition: {SectionBlockOffset} (Inverted from {ScreenPosition})."
+				: $"MapSection: AdjBlockPos: {adjustedPosition}, (J/R:{JobNumber}/{RequestNumber}, MapPosition: {SectionBlockOffset}.";
 
 		}
 
@@ -156,7 +156,7 @@ namespace MSS.Types.MSet
 			return other is MapSection ms
 				&& SubdivisionId == ms.SubdivisionId
 				&& IsInverted == ms.IsInverted
-				&& EqualityComparer<VectorLong>.Default.Equals(RepoBlockPosition, ms.RepoBlockPosition);
+				&& EqualityComparer<VectorLong>.Default.Equals(SectionBlockOffset, ms.SectionBlockOffset);
 				//&& TargetIterations == ms.TargetIterations;
 		}
 
@@ -179,7 +179,7 @@ namespace MSS.Types.MSet
 
 		public override int GetHashCode()
 		{
-			return HashCode.Combine(SubdivisionId, IsInverted, RepoBlockPosition);
+			return HashCode.Combine(SubdivisionId, IsInverted, SectionBlockOffset);
 		}
 
 		public static bool operator ==(MapSection? left, MapSection? right)

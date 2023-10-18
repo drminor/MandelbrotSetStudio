@@ -59,49 +59,68 @@ namespace MSS.Common
 
 		private List<MapSectionRequest> CreateSectionRequestsMixedYVals(MsrJob msrJob, SizeInt mapExtentInBlocks)
 		{
+			// All positions being requested
 			var subCoords = GetSubdivisionCoords(msrJob, mapExtentInBlocks);
 
-			var notInvertedSubCoords = subCoords.Where(x => !x.IsInverted).ToArray();
-			var matchedNotInvertedSubCoords = new bool[notInvertedSubCoords.Length];
+			// Collect all of the non-inverted requests
+			var regularPositions = subCoords.Where(x => !x.IsInverted).ToArray();
+			var matchedRegularPositions = new bool[regularPositions.Length];
 
-			var tempCoordPairs = new List<Tuple<MsrPosition, MsrPosition?>>();
+			// Prepare the result
+			//		The first item in each Tuple is the item from the list being processed
+			//		The second item in each Tuple is the matched item, if extant.
+			var coordPairs = new List<Tuple<MsrPosition, MsrPosition?>>();
 
 			foreach (var subCoord in subCoords)
 			{
-				var indexOfMiror = subCoord.IsInverted ? GetIndexOfMirror(subCoord, notInvertedSubCoords) : -1;
+				// If this item is Inverted, find the corresponding non-inverted item, if extant
+				var indexOfRegular = subCoord.IsInverted ? GetIndexOfMirror(subCoord, regularPositions) : -1;
 
-				if (indexOfMiror != -1)
+				if (indexOfRegular != -1)
 				{
-					var mirror = notInvertedSubCoords[indexOfMiror];
-					matchedNotInvertedSubCoords[indexOfMiror] = true;
-					tempCoordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(subCoord, mirror));
+					// subCoord is Inverted and we found the matching non-inverted item
+					var mirror = regularPositions[indexOfRegular];
+					
+					// Keep track of which non-inverted items are part of a pair
+					matchedRegularPositions[indexOfRegular] = true;
+
+					coordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(subCoord, mirror));
 				}
 				else
 				{
-					tempCoordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(subCoord, null));
+					// subCoord is Inverted and we have no match,
+					// or subCoord is non-Inverted.
+					coordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(subCoord, null));
 				}
 			}
 
+			// Prepare the result list of MapSectionRequests. Each request 
+			// will be for a single non-inverted, a single inverted, 
+			// or a pair with the non-inverted specified in the first argument and 
+			// the inverted item specified as the second argument.
 			var result = new List<MapSectionRequest>();
 			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
 
+			// Keep track of how many pairs have been processed
 			var invertedPtr = 0;
 
-			for (var requestNumber = 0; requestNumber < tempCoordPairs.Count; requestNumber++)
+			// Iterate over the temp result
+			for (var coordPairPtr = 0; coordPairPtr < coordPairs.Count; coordPairPtr++)
 			{
-				var primary = tempCoordPairs[requestNumber].Item1;
-				var mirror = tempCoordPairs[requestNumber].Item2;
+				var primary = coordPairs[coordPairPtr].Item1;
+				var mirror = coordPairs[coordPairPtr].Item2;
+
+				MapSectionRequest mapSectionRequest;
 
 				if (!primary.IsInverted)
 				{
 					// The main request is regular -- include this item, only if this item is not a mirror of some other (inverted) MapSection.
-					var matched = matchedNotInvertedSubCoords[invertedPtr];
+					var matched = matchedRegularPositions[invertedPtr];
 
 					if (!matched)
 					{
-						var screenPosition = primary.ScreenPosition;
-						var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
-						var mapSectionRequest = CreateRequest(msrJob, requestNumber, screenPosition, screenPositionRelativeToCenter, primary);
+						// Single request for a non-inverted item.
+						mapSectionRequest = CreateRequest(msrJob, primary);
 						result.Add(mapSectionRequest);
 					}
 					else
@@ -109,25 +128,21 @@ namespace MSS.Common
 						// Not adding this item, it is being used as Mirror for some other item.
 					}
 
-					// Advance the invertedPtr so that the next time we find a primary that is Inverted, we will be pointing to the next elements from the matchedInvertedSubCoords array.
+					// Advance the invertedPtr so that the next time we find a pair, we will be pointing to the next matchedRegularPosition ptr.
 					invertedPtr++;
 				}
 				else
 				{
-					// The main request is inverted.
-					var screenPosition = primary.ScreenPosition;
-					var screenPositionRelativeToCenter = screenPosition.Sub(centerBlockIndex);
-					var mapSectionRequest = CreateRequest(msrJob, requestNumber, screenPosition, screenPositionRelativeToCenter, primary);
-
-					// Mirrors are always Regular -- i.e., Not Inverted
+					// The primary request is inverted.
 					if (mirror != null)
 					{
-						var requestNumber2 = mirror.RequestNumber;
-						var screenPosition2 = mirror.ScreenPosition;
-						var screenPositionRelativeToCenter2 = screenPosition2.Sub(centerBlockIndex);
-						var mapSectionRequest2 = CreateRequest(msrJob, requestNumber2, screenPosition2, screenPositionRelativeToCenter2, mirror);
-
-						mapSectionRequest.Mirror = mapSectionRequest2;
+						// We have a matching non-inverted item, forming a pair of requests for the same MapSection
+						mapSectionRequest = CreateRequest(msrJob, mirror, primary);
+					}
+					else
+					{
+						// Single request for an inverted item.
+						mapSectionRequest = CreateRequest(msrJob, primary);
 					}
 
 					result.Add(mapSectionRequest);
@@ -166,25 +181,6 @@ namespace MSS.Common
 			}
 
 			return -1;
-		}
-
-		private MsrPosition? GetMirror(MsrPosition primary, MsrPosition[] notInvertedSubCoords, bool[] matched)
-		{
-			if (primary.IsInverted)
-			{
-				for (var i = 0; i < notInvertedSubCoords.Length; i++)
-				{
-					// TODO: Consider only comparing those that have not yet been matched.
-					if (notInvertedSubCoords[i].SectionBlockOffset == primary.SectionBlockOffset)
-					{
-						Debug.Assert(!matched[i], $"Item at index position: i, is being matched more than once.");
-						matched[i] = true;
-						return notInvertedSubCoords[i];
-					}
-				}
-			}
-
-			return null;
 		}
 
 		/* Compare this logic from above with the logic within the BitmapGrid to determine if a section is in bounds.
@@ -246,40 +242,32 @@ namespace MSS.Common
 
 		#region Create A Single MapSectionRequest
 
-		/// <summary>
-		/// Calculate the map position of the section being requested 
-		/// and prepare a MapSectionRequest
-		/// </summary>
-		/// <param name="screenPosition"></param>
-		/// <param name="jobBlockOffset"></param>
-		/// <param name="precision"></param>
-		/// <param name="jobId"></param>
-		/// <param name="ownerType"></param>
-		/// <param name="subdivision"></param>
-		/// <param name="mapCalcSettings"></param>
-		/// <returns></returns>
-		public MapSectionRequest CreateRequest(MsrJob msrJob, int requestNumber, PointInt screenPosition, VectorInt screenPositionRelativeToCenter, MsrPosition? reqPos = null)
+		public MapSectionRequest CreateRequest(MsrJob msrJob, MsrPosition requestPosition)
 		{
-			// Block Position, relative to the Subdivision's BaseMapPosition
-			if (reqPos is null)
-			{
-				var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, msrJob.JobBlockOffset, out var isInverted);
-				reqPos = new MsrPosition(requestNumber, screenPosition, screenPositionRelativeToCenter, sectionBlockOffset, isInverted);
-			}
+			var mapPosition = GetMapPosition(msrJob.Subdivision, requestPosition.SectionBlockOffset);
 
-			// Absolute position in Map Coordinates.
-			var mapPosition = GetMapPosition(msrJob.Subdivision, reqPos.SectionBlockOffset);
+			var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, requestPosition);
 
-			var mapSectionRequest = new MapSectionRequest
-			(
-				msrJob: msrJob,
-				requestNumber: requestNumber,
-				mapPosition: mapPosition,
+			return mapSectionRequest;
+		}
 
-				screenPosition: reqPos.ScreenPosition,
-				screenPositionRelativeToCenter: reqPos.ScreenPositionReleativeToCenter,
-				sectionBlockOffset: reqPos.SectionBlockOffset,
-				isInverted: reqPos.IsInverted);
+		public MapSectionRequest CreateRequest(MsrJob msrJob, MsrPosition regularPosition, MsrPosition invertedPosition)
+		{
+			var mapPosition = GetMapPosition(msrJob.Subdivision, regularPosition.SectionBlockOffset);
+
+			var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, regularPosition, invertedPosition);
+
+			return mapSectionRequest;
+		}
+
+		public MapSectionRequest CreateRequest(MsrJob msrJob, int requestNumber, PointInt screenPosition, VectorInt screenPositionRelativeToCenter)
+		{
+			var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, msrJob.JobBlockOffset, out var isInverted);
+			var requestPosition = new MsrPosition(requestNumber, screenPosition, screenPositionRelativeToCenter, sectionBlockOffset, isInverted);
+
+			var mapPosition = GetMapPosition(msrJob.Subdivision, requestPosition.SectionBlockOffset);
+
+			var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, requestPosition);
 
 			return mapSectionRequest;
 		}
@@ -319,16 +307,16 @@ namespace MSS.Common
 
 		#region Create MapSections
 
-		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, MapSectionVectors mapSectionVectors)
+		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, bool isInverted, MapSectionVectors mapSectionVectors)
 		{
 			var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
-			var isInverted = mapSectionRequest.IsInverted;
+			//var isInverted = mapSectionRequest.IsInverted;
 
 			var jobBlockOffset = mapSectionRequest.JobBlockOffset;
 			var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
 
 			//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
-			var mapSection = new MapSection(mapSectionRequest, mapSectionVectors, screenPosition, BuildHistogram);
+			var mapSection = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
 
 			UpdateMapSectionWithProcInfo(mapSection, mapSectionRequest);
 
@@ -417,7 +405,7 @@ namespace MSS.Common
 			{
 				var ms = result[i];
 
-				if (ms.Mirror != null)
+				if (ms.RegularPosition != null && ms.InvertedPosition != null)
 				{
 					//total += 2;
 					pairs += 1;
@@ -440,7 +428,7 @@ namespace MSS.Common
 			{
 				var ms = result[i];
 
-				if (ms.Mirror != null)
+				if (ms.RegularPosition != null && ms.InvertedPosition != null)
 				{
 					total += 2;
 				}
@@ -461,12 +449,12 @@ namespace MSS.Common
 			{
 				var ms = requests[i];
 
-				if (ms.IsCancelled)
+				if (ms.RegularPosition?.IsCancelled == true)
 				{
 					result += 1;
 				}
 
-				if (ms.Mirror?.IsCancelled == true)
+				if (ms.InvertedPosition?.IsCancelled == true)
 				{
 					result += 1;
 				}

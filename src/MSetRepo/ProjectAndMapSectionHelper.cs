@@ -229,14 +229,26 @@ namespace MSetRepo
 							Debug.WriteLine($"");
 							//var subdivision = subdivisonProvider.GetSubdivision(mapSectionRequest.SamplePointDelta, mapSectionRequest.MapBlockOffset, out var localMapBlockOffset);
 
-							var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
+							if (mapSectionRequest.RegularPosition != null)
+							{
+								var blockIndex = new SizeInt(mapSectionRequest.RegularPosition.ScreenPositionReleativeToCenter);
 
-							var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(JobType.FullScale, job.Id, mapSectionId.Value, blockIndex, mapSectionRequest.IsInverted, subdivisionId,
-								originalSourceSubdivisionId, ownerType, out var jobMapSectionId);
+								var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(JobType.FullScale, job.Id, mapSectionId.Value, blockIndex, isInverted: false, subdivisionId,
+									originalSourceSubdivisionId, ownerType, out var jobMapSectionId);
 
-							numberOfRecordsInserted += inserted ? 1 : 0;
+								numberOfRecordsInserted += inserted ? 1 : 0;
 
-							//numberOfRecordsInserted++;
+							}
+
+							if (mapSectionRequest.InvertedPosition != null)
+							{
+								var blockIndex = new SizeInt(mapSectionRequest.InvertedPosition.ScreenPositionReleativeToCenter);
+
+								var inserted = mapSectionAdapter.InsertIfNotFoundJobMapSection(JobType.FullScale, job.Id, mapSectionId.Value, blockIndex, isInverted: true, subdivisionId,
+									originalSourceSubdivisionId, ownerType, out var jobMapSectionId);
+
+								numberOfRecordsInserted += inserted ? 1 : 0;
+							}
 						}
 						else
 						{

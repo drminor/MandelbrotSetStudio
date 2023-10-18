@@ -52,7 +52,6 @@ namespace MEngineClient
 
 			if (ct.IsCancellationRequested)
 			{
-				mapSectionRequest.IsCancelled = true;
 				Debug.WriteLine($"MClientLocal JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber} is cancelled.");
 				//return new MapSectionResponse(mapSectionRequest, isCancelled: true);
 				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
@@ -61,7 +60,9 @@ namespace MEngineClient
 			{
 				mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
-				if (/*_useDetailedDebug && */mapSectionRequest.ScreenPosition.X == 0 && mapSectionRequest.ScreenPosition.Y == 0)
+				var scrPos = mapSectionRequest.ScreenPosition;
+
+				if (/*_useDetailedDebug && */scrPos.X == 0 && scrPos.Y == 0)
 				{
 					Debug.WriteLine($"MClientLocal #{ClientNumber}. GenerateMapSection: ScreenPos = 0,0: ZVecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionZVectorsLeased} Vecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectorsLeased}; " +
 						$"Vecs2 Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectors2Leased}. Number MapSection returns refused: {_mapSectionVectorProvider.NumberOfRefusedMapSectionReturns}.");
@@ -100,7 +101,7 @@ namespace MEngineClient
 
 				Debug.WriteLineIf(_useDetailedDebug, $"MClientLocal #{ClientNumber} is starting the call to Generate MapSection: {mapSectionRequest.ScreenPosition}.");
 				var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest, ct);
-				Debug.WriteLineIf(_useDetailedDebug, $"MClientLocal #{ClientNumber} is completing the call to Generate MapSection: {mapSectionRequest.ScreenPosition}. Request is Cancelled = {ct.IsCancellationRequested}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"MClientLocal #{ClientNumber} is completing the call to Generate MapSection: {mapSectionRequest.ScreenPosition}.");
 
 				if (++_sectionCntr % 10 == 0)
 				{

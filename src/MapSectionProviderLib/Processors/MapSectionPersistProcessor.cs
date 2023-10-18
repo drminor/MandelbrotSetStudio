@@ -90,6 +90,7 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
+		// TODO: Consider replacing all Asnyc methods with synchronous methods for the MapSectionPersistProcessor
 		private async Task ProcessTheQueueAsync(CancellationToken ct)
 		{
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
@@ -105,7 +106,7 @@ namespace MapSectionProviderLib
 						var mapSectionIdStr = mapSectionRequest.MapSectionId ?? throw new InvalidOperationException("The MapSectionRequest's MapSectionId is null on call to SaveJobMapSection.");
 						var mapSectionId = new ObjectId(mapSectionIdStr);
 
-						_ = await SaveJobMapSection(mapSectionId, mapSectionRequest);
+						await SaveJobMapSection(mapSectionId, mapSectionRequest);
 					}
 					else
 					{
@@ -190,7 +191,7 @@ namespace MapSectionProviderLib
 
 				// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType) may not be on file.
 				// This will insert one if not already present.
-				_ = await SaveJobMapSection(mapSectionId.Value, mapSectionRequest);
+				await SaveJobMapSection(mapSectionId.Value, mapSectionRequest);
 			}
 			else
 			{
@@ -214,7 +215,7 @@ namespace MapSectionProviderLib
 				if (mapSectionId.HasValue)
 				{
 					mapSectionResponse.MapSectionId = mapSectionId.ToString();
-					_ = await SaveJobMapSection(mapSectionId.Value, mapSectionRequest);
+					await SaveJobMapSection(mapSectionId.Value, mapSectionRequest);
 				}
 			}
 
@@ -240,7 +241,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private Task<ObjectId?> SaveJobMapSection(ObjectId mapSectionId, MapSectionRequest mapSectionRequest)
+		private Task SaveJobMapSection(ObjectId mapSectionId, MapSectionRequest mapSectionRequest)
 		{
 			//var mapSectionIdStr = mapSectionResponse.MapSectionId;
 			//if (string.IsNullOrEmpty(mapSectionIdStr))
@@ -266,13 +267,20 @@ namespace MapSectionProviderLib
 				throw new ArgumentNullException(nameof(mapSectionRequest.JobId), "The OwnerId cannot be null.");
 			}
 
-			var blockIndex = new SizeInt(mapSectionRequest.ScreenPositionReleativeToCenter);
+			Task<ObjectId?> result;
 
-			//var result = _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionRequest.JobType, new ObjectId(jobIdStr), new ObjectId(mapSectionIdStr), blockIndex, mapSectionRequest.IsInverted, new ObjectId(mapSubdivisionIdStr), new ObjectId(jobSubdivisionIdStr), mapSectionRequest.OwnerType);
-			var result = _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionRequest.JobType, new ObjectId(jobIdStr), mapSectionId, blockIndex, mapSectionRequest.IsInverted, new ObjectId(mapSubdivisionIdStr), new ObjectId(jobSubdivisionIdStr), mapSectionRequest.OwnerType);
+			if (mapSectionRequest.RegularPosition != null)
+			{
+				var blockIndex = new SizeInt(mapSectionRequest.RegularPosition.ScreenPositionReleativeToCenter);
+				result = _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionRequest.JobType, new ObjectId(jobIdStr), mapSectionId, blockIndex, isInverted: false, new ObjectId(mapSubdivisionIdStr), new ObjectId(jobSubdivisionIdStr), mapSectionRequest.OwnerType);
+			}
+			else
+			{
+				var blockIndex = new SizeInt(mapSectionRequest.InvertedPosition!.ScreenPositionReleativeToCenter);
+				result = _mapSectionAdapter.SaveJobMapSectionAsync(mapSectionRequest.JobType, new ObjectId(jobIdStr), mapSectionId, blockIndex, isInverted: true, new ObjectId(mapSubdivisionIdStr), new ObjectId(jobSubdivisionIdStr), mapSectionRequest.OwnerType);
+			}
 
 			return result;
-
 		}
 
 		private void CheckMapSectionId(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)

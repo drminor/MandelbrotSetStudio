@@ -618,7 +618,7 @@ namespace MSetExplorer
 			var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(mapSection.ScreenPosition, mapSection.JobMapBlockOffset, out var isInverted);
 			//var sectionBlockOffset = _dtoMapper.Convert(bigVectorBlockOffset);
 
-			Debug.Assert(sectionBlockOffset == mapSection.RepoBlockPosition && isInverted == mapSection.IsInverted, "Screen Position does not agree with the JobMapBlockOffset / SectionBlockOffset.");
+			Debug.Assert(sectionBlockOffset == mapSection.SectionBlockOffset && isInverted == mapSection.IsInverted, "Screen Position does not agree with the JobMapBlockOffset / SectionBlockOffset.");
 			Debug.Assert(isInverted == mapSection.IsInverted, "IsInverted does not agree with the JobMapBlockOffset / SectionBlockOffset.");
 		}
 

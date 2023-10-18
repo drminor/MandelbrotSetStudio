@@ -65,7 +65,6 @@ namespace MEngineClient
 
 			if (ct.IsCancellationRequested)
 			{
-				mapSectionRequest.IsCancelled = true;
 				Debug.WriteLineIf(_useDetailedDebug, $"MClient. Request: JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber} is cancelled.");
 				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 			}
@@ -84,10 +83,11 @@ namespace MEngineClient
 				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 				mapSectionRequest.GenerationDuration = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerateMs);
 
-				if (ct.IsCancellationRequested)
-				{
-					mapSectionRequest.IsCancelled = true;
-				}
+				// If this ct is cancelled, the MapSection is already cancelled.
+				//if (ct.IsCancellationRequested)
+				//{
+				//	mapSectionRequest.IsCancelled = true;
+				//}
 			}
 
 			return result;

@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace MSS.Types.MSet
 {
-	public class MsrJob : IMsrJob
+	public class MsrJob : IMsrJob, IMapLoader, IMsrJobNew
 	{
 		#region Private Fields
 
@@ -28,7 +28,7 @@ namespace MSS.Types.MSet
 			jobBlockOffset: new VectorLong(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings(), crossesYZero: false)
 		{ }
 
-		public MsrJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType ownerType, Subdivision subdivision, string originalSourceSubdivisionId, 
+		public MsrJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType ownerType, Subdivision subdivision, string originalSourceSubdivisionId,
 			VectorLong jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings, bool crossesYZero)
 		{
 			ObjectId test = new ObjectId(originalSourceSubdivisionId);
@@ -39,7 +39,7 @@ namespace MSS.Types.MSet
 			}
 
 			MapLoaderJobNumber = mapLoaderJobNumber;
-			
+
 			JobType = jobType;
 			JobId = jobId;
 			OwnerType = ownerType;
@@ -137,7 +137,7 @@ namespace MSS.Types.MSet
 				}
 			}
 		}
-	
+
 		public int SectionsGenerated
 		{
 			get => _sectionsGenerated;
@@ -154,7 +154,7 @@ namespace MSS.Types.MSet
 				}
 			}
 		}
-		
+
 		public int SectionsCancelled
 		{
 			get => _sectionsCancelled;
@@ -250,8 +250,11 @@ namespace MSS.Types.MSet
 				}
 				else
 				{
-					// We are not cancelled -- this must mean that the counting is off.
-					Debug.WriteLine($"WARNING: HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total:{TotalNumberOfSectionsRequested}, Repo:{SectionsFoundInRepo}, Generated:{SectionsGenerated}, Cancelled:{SectionsCancelled}, Pending: {SectionsPending}.");
+					if (SectionsPending < 0)
+					{
+						// We are not cancelled -- this must mean that the counting is off.
+						Debug.WriteLine($"WARNING: HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total:{TotalNumberOfSectionsRequested}, Found:{SectionsFoundInRepo}, Generated:{SectionsGenerated}, Cancelled:{SectionsCancelled}, Pending: {SectionsPending}.");
+					}
 				}
 			}
 
@@ -263,22 +266,21 @@ namespace MSS.Types.MSet
 
 			mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
 
-			if (mapSectionRequest.Mirror != null)
-			{
-				mapSectionRequest.Mirror.ProcessingEndTime = DateTime.UtcNow;
-			}
+			//if (mapSectionRequest.Mirror != null)
+			//{
+			//	mapSectionRequest.Mirror.ProcessingEndTime = DateTime.UtcNow;
+			//}
 
 			UpdateMathCounts(mapSection);
 
 			ReportGeneration(mapSectionRequest, mapSection);
 
-			SectionsGenerated++;
+			//SectionsGenerated++; // The MapSectionGeneratorProcessor is updating the [number of] SectionsGenerated property.
 
 			if (jobIsCancelled || SectionsPending <= 0)
 			{
 				HandleLastResponse(mapSectionRequest, mapSection);
 
-				//if (_tcs?.Task.IsCompleted == false) { _tcs.SetResult(); }
 				MarkJobAsComplete();
 
 				// Performance 
@@ -316,7 +318,7 @@ namespace MSS.Types.MSet
 			{
 				Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}, " +
 					$"Pending/Total: ({SectionsPending}/{TotalNumberOfSectionsRequested}), " +
-					$"Screen Position: {mapSectionRequest.ScreenPosition}.");
+					$"Screen Position: Fix Me.");
 			}
 
 			mapSectionRequest.Handled = true;
@@ -379,7 +381,7 @@ namespace MSS.Types.MSet
 
 				var isEmpty = mapSection.IsEmpty;
 				var msgPrefix = isEmpty ? string.Empty : "The empty ";
-				Debug.WriteLine($"MapSection at screen position: {mapSectionRequest.ScreenPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. All Points Escaped: {allEscaped}");
+				Debug.WriteLine($"MapSection at screen position: FixMe, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. All Points Escaped: {allEscaped}");
 			}
 		}
 

@@ -67,20 +67,19 @@ namespace MEngineService.Services
 
 		public MapSectionServiceResponse GenerateMapSection(MapSectionServiceRequest mapSectionServiceRequest, CallContext context = default)
 		{
-			var cts = new CancellationTokenSource();
-
-			lock (_stateLock)
-			{
-				_activeServiceRequests.Add(mapSectionServiceRequest.RequestId, cts);
-			}
-
 			try
 			{
 				var mapSectionRequest = MapFrom(mapSectionServiceRequest);
-				mapSectionRequest.CancellationTokenSource = cts;
+
+				lock (_stateLock)
+				{
+					_activeServiceRequests.Add(mapSectionServiceRequest.RequestId, mapSectionRequest.CancellationTokenSource);
+				}
+
+				//mapSectionRequest.CancellationTokenSource = cts;
 
 				var stopWatch = Stopwatch.StartNew();
-				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest, cts.Token);
+				var mapSectionResponse = GenerateMapSectionInternal(mapSectionRequest);
 				stopWatch.Stop();
 
 				var mapSectionServiceResponse = MapTo(mapSectionResponse, mapSectionServiceRequest, stopWatch.Elapsed);
@@ -134,7 +133,7 @@ namespace MEngineService.Services
 
 		#region Private Methods
 
-		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
+		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest)
 		{
 			try
 			{
@@ -149,7 +148,7 @@ namespace MEngineService.Services
 					mapSectionRequest.MapSectionZVectors = new MapSectionZVectors(mapSectionRequest.BlockSize, mapSectionRequest.LimbCount);
 				}
 
-				var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest, ct);
+				var mapSectionResponse = _generator.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
 
 				if (++_sectionCntr % 10 == 0)
 				{
@@ -172,12 +171,8 @@ namespace MEngineService.Services
 
 			var mapSectionRequest = new MapSectionRequest(
 				msrJob: GetMsrJob(req),
-				requestNumber: req.RequestNumber,
 				mapPosition: mapPosition,
-				screenPosition: req.ScreenPosition,
-				screenPositionRelativeToCenter: new VectorInt(),
-				sectionBlockOffset: req.BlockPosition,
-				isInverted: req.IsInverted
+				msrPosition: GetMsrPosition(req)
 			);
 
 			mapSectionRequest.MapSectionVectors2 = GetVectors2(req);
@@ -203,6 +198,19 @@ namespace MEngineService.Services
 				req.LimbCount, 
 				req.MapCalcSettings,
 				crossesYZero: false			// TODO: Provide a real value for crossesYZero  
+				);
+
+			return result;
+		}
+
+		private MsrPosition GetMsrPosition(MapSectionServiceRequest req)
+		{
+			var result = new MsrPosition(
+				requestNumber: req.RequestNumber, 
+				screenPosition: req.ScreenPosition, 
+				screenPositionReleativeToCenter: new VectorInt(),
+				sectionBlockOffset: req.BlockPosition,
+				isInverted: req.IsInverted
 				);
 
 			return result;
