@@ -16,7 +16,7 @@ namespace MSetExplorer
 		private readonly static bool CLIP_IMAGE_BLOCKS = true;
 		private readonly static SizeInt _blockSize = RMapConstants.BLOCK_SIZE;
 
-		private DebounceDispatcher _viewPortSizeDispatcher;
+		//private DebounceDispatcher _viewPortSizeDispatcher;
 
 		private FrameworkElement _ourContent;
 		private Canvas _canvas;
@@ -33,9 +33,9 @@ namespace MSetExplorer
 
 		private SizeDbl _logicalViewportSize;
 
-		private bool _useScaling;
+		private ScalingMode _scalingMode;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -48,10 +48,10 @@ namespace MSetExplorer
 
 		public BitmapGridControl()
 		{
-			_viewPortSizeDispatcher = new DebounceDispatcher
-			{
-				Priority = DispatcherPriority.Render
-			};
+			//_viewPortSizeDispatcher = new DebounceDispatcher
+			//{
+			//	Priority = DispatcherPriority.Render
+			//};
 
 			_ourContent = new FrameworkElement();
 			_canvas = new Canvas();
@@ -75,7 +75,7 @@ namespace MSetExplorer
 			//_contentViewportSize = SizeDbl.NaN;
 			_logicalViewportSize = new SizeDbl();
 
-			_useScaling = false;
+			_scalingMode = ScalingMode.DontUseScaling;
 		}
 
 		#endregion
@@ -89,12 +89,15 @@ namespace MSetExplorer
 		#region Public Properties
 
 		// TODO: Make the BitmapGridControl's UseScaling property a Dependency Property.
-		public bool UseScaling
+		internal ScalingMode ScalingMode
 		{
-			get => _useScaling;
+			get => _scalingMode;
 			set
 			{
-				_useScaling = value;
+				if (value != _scalingMode)
+				{
+					_scalingMode = value;
+				}
 			}
 		}
 
@@ -176,6 +179,8 @@ namespace MSetExplorer
 			get => _viewportSizeInternal;
 			set
 			{
+				// TODO: Debounce changes for the BitmapGridControl's ViewPortSize property.
+
 				if (value == _viewportSizeInternal)
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"Skipping the update of the ViewportSize, the new value {value} is the same as the old value. {ViewportSizeInternal}.");
@@ -229,16 +234,23 @@ namespace MSetExplorer
 			{
 				_contentScale = value;
 
-				if (!UseScaling)
+				if (ScalingMode == ScalingMode.DontUseScaling)
 				{
 					if (value.Width != 1 | value.Height != 1)
 					{
-						Debug.WriteLine("WARNING: The ContentScale is being set but UseScaling is set to false.");
+						Debug.WriteLine("WARNING: The ContentScale is being set but UseScaling is set to Disable.");
 						//Debug.Assert(value == new SizeDbl(1, 1), "Setting the ContentScale to a value other than 1, when UseScaling is set to false.");
 					}
 				}
 
-				SetTheCanvasScale(_contentScale);
+				if (ScalingMode == ScalingMode.Diagnostic)
+				{
+					SetTheCanvasScaleDiagnostic(_contentScale);
+				}
+				else
+				{
+					SetTheCanvasScale(_contentScale);
+				}
 			}
 		}
 
@@ -249,7 +261,7 @@ namespace MSetExplorer
 			{
 				if (ScreenTypeHelper.IsRectangleDblChanged(_translationAndClipSize, value))
 				{
-					if (!UseScaling)
+					if (ScalingMode == ScalingMode.DontUseScaling)
 					{
 						Debug.WriteLine("WARNING: The TranslationAndClipSize is being set but UseScaling is set to false.");
 					}
@@ -326,8 +338,8 @@ namespace MSetExplorer
 
 			Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl has called _ourContent.Arrange({finalSize}). The canvas size is {new Size(Canvas.Width, Canvas.Height)}, actual canvas size: {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
 
-			if (!UseScaling)
-			{ 
+			if (ScalingMode != ScalingMode.UseScaling)
+			{
 				var canvas = Canvas;
 
 				if (canvas.ActualWidth != finalSize.Width)
@@ -461,6 +473,20 @@ namespace MSetExplorer
 			}
 		}
 
+		private void SetTheCanvasScaleDiagnostic(SizeDbl contentScale)
+		{
+			if (LogicalViewportSize.Width > 5 && LogicalViewportSize.Height > 5)
+			{
+				_canvasScaleTransform.ScaleX = contentScale.Width;
+				_canvasScaleTransform.ScaleY = contentScale.Width;
+			}
+			else
+			{
+				_canvasScaleTransform.ScaleX = 1;
+				_canvasScaleTransform.ScaleY = 1;
+			}
+		}
+
 		private SizeDbl ClipAndOffset(RectangleDbl previousValue, RectangleDbl rawValue)
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGridControl's {nameof(TranslationAndClipSize)} is being updated " +
@@ -500,7 +526,7 @@ namespace MSetExplorer
 			Canvas.Width = logicalViewportSize.Width;
 			Canvas.Height = logicalViewportSize.Height;
 
-			if (UseScaling)
+			if (ScalingMode == ScalingMode.UseScaling || ScalingMode == ScalingMode.Diagnostic)
 			{
 				// Translate using the unscaled value
 				_canvasTranslateTransform.X = newValue.Position.X;
@@ -631,4 +657,12 @@ namespace MSetExplorer
 
 		#endregion
 	}
+
+	internal enum ScalingMode
+	{
+		DontUseScaling,
+		UseScaling,
+		Diagnostic
+	}
+
 }

@@ -254,6 +254,7 @@ namespace MSS.Types.MSet
 					{
 						// We are not cancelled -- this must mean that the counting is off.
 						Debug.WriteLine($"WARNING: HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total:{TotalNumberOfSectionsRequested}, Found:{SectionsFoundInRepo}, Generated:{SectionsGenerated}, Cancelled:{SectionsCancelled}, Pending: {SectionsPending}.");
+						//return;
 					}
 				}
 			}

@@ -22,7 +22,7 @@ namespace MSetExplorer
 		private int _cbElevation;
 		private int _cbHeight;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

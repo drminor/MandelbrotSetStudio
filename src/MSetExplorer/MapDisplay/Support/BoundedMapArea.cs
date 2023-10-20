@@ -14,7 +14,7 @@ namespace MSetExplorer
 		private double _baseScale;
 		private MapPositionSizeAndDelta _scaledMapAreaInfo;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#region Constructor
 

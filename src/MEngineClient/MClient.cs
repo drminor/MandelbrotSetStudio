@@ -23,7 +23,7 @@ namespace MEngineClient
 
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

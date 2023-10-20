@@ -1,7 +1,6 @@
 ﻿using MSS.Common;
 using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace MSS.Types.MSet
@@ -64,9 +63,9 @@ namespace MSS.Types.MSet
 
 			ScreenPosition = msrPosition.ScreenPosition;
 			ScreenPositionReleativeToCenter = msrPosition.ScreenPositionReleativeToCenter;
+			SectionBlockOffset = msrPosition.SectionBlockOffset;
 			IsInverted = msrPosition.IsInverted;
 
-			SectionBlockOffset = msrPosition.SectionBlockOffset;
 			MapPosition = mapPosition;
 
 			CancellationTokenSource = new CancellationTokenSource();
@@ -81,6 +80,7 @@ namespace MSS.Types.MSet
 
 			RegularPosition = regularPosition;
 			InvertedPosition = invertedPosition;
+			Debug.Assert(regularPosition.SectionBlockOffset == invertedPosition.SectionBlockOffset, "The RegularPosition's SectionBlockOffset is not the same as the InvertedPosition's SectionBlockOffset.");
 
 			RequestNumber = regularPosition.RequestNumber;
 			RequestId = MsrJob.MapLoaderJobNumber + "/" + RequestNumber;
@@ -94,10 +94,9 @@ namespace MSS.Types.MSet
 
 			ScreenPosition = regularPosition.ScreenPosition;
 			ScreenPositionReleativeToCenter = regularPosition.ScreenPositionReleativeToCenter;
-			IsInverted = regularPosition.IsInverted;
-
-			Debug.Assert(regularPosition.SectionBlockOffset == invertedPosition.SectionBlockOffset, "The RegularPosition's SectionBlockOffset is not the same as the InvertedPosition's SectionBlockOffset.");
 			SectionBlockOffset = regularPosition.SectionBlockOffset;
+			IsInverted = false;
+
 			MapPosition = mapPosition;
 
 			CancellationTokenSource = new CancellationTokenSource();
@@ -263,13 +262,13 @@ namespace MSS.Types.MSet
 
 			if (RegularPosition != null)
 			{
-				RegularPosition.Cts.Cancel();
+				RegularPosition.Cancel();
 				numberOfRequestsCancelled++;
 			}
 
 			if (InvertedPosition != null)
 			{
-				InvertedPosition.Cts.Cancel();
+				InvertedPosition.Cancel();
 				numberOfRequestsCancelled++;
 			}
 
@@ -282,13 +281,13 @@ namespace MSS.Types.MSet
 			{
 				if (InvertedPosition == null) throw new NullReferenceException();
 				if (InvertedPosition.IsCancelled) return false;
-				InvertedPosition.Cts.Cancel();
+				InvertedPosition.Cancel();
 			}
 			else
 			{
 				if (RegularPosition == null) throw new NullReferenceException();
 				if (RegularPosition.IsCancelled) return false;
-				RegularPosition.Cts.Cancel();
+				RegularPosition.Cancel();
 			}
 
 			if (MsrJob.TotalNumberOfSectionsRequested > 0)

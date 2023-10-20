@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace MSS.Types
@@ -169,10 +170,18 @@ namespace MSS.Types
 
 		private int Increment(int index)
 		{
-			var aI = index - _lowBound;
-			_values[aI] = _values[aI] + 1;
+			try
+			{
+				var aI = index - _lowBound;
+				_values[aI] = _values[aI] + 1;
 
-			return _values[aI];
+				return _values[aI];
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"HistogramALow got exception {e} while Incrementing.");
+				return 0;
+			}
 		}
 
 		//public int Decrement(int index)

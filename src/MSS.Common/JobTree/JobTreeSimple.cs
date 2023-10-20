@@ -16,7 +16,7 @@ namespace MSS.Common
 	{
 		#region Constructor
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		public JobTreeSimple(List<Job> jobs, bool checkHomeJob) : base(jobs, checkHomeJob)
 		{ }

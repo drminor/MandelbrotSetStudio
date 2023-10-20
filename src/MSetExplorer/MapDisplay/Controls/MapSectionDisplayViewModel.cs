@@ -48,7 +48,7 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -197,7 +197,7 @@ namespace MSetExplorer
 						_bitmapGrid.LogicalViewportSize = value; // ReuseAndLoad is now setting the _bitmapGrid's LogicalViewportSize.
 
 						int? newJobNumber = null;
-						bool lastSectionWasIncluded = false;
+						//bool lastSectionWasIncluded = false;
 
 						lock (_paintLocker)
 						{
@@ -206,7 +206,7 @@ namespace MSetExplorer
 								Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== As the ViewportSize is updated, the MapSectionDisplayViewModel is calling ReuseAndLoad.");
 
 								var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
-								var msrJob = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, reapplyColorMap: false, out lastSectionWasIncluded);
+								var msrJob = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, reapplyColorMap: false/*, out lastSectionWasIncluded*/);
 								newJobNumber = msrJob.JobNumber;
 							}
 						}
@@ -337,7 +337,7 @@ namespace MSetExplorer
 			CheckBlockSize(newValue);
 
 			MsrJob? msrJob;
-			var lastSectionWasIncluded = false;
+			//var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
 			{
@@ -355,7 +355,7 @@ namespace MSetExplorer
 					if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue, isBound: false);
 
 					CurrentAreaColorAndCalcSettings = newValue;
-					msrJob = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings, out lastSectionWasIncluded);
+					msrJob = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings/*, out lastSectionWasIncluded*/);
 				}
 				else
 				{
@@ -425,7 +425,7 @@ namespace MSetExplorer
 		public MsrJob? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
 			MsrJob? msrJob;
-			var lastSectionWasIncluded = false;
+			//var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
 			{
@@ -442,7 +442,7 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(_useDetailedDebug, $"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}. ContentScale: {contentScale}.");
 
-					msrJob = LoadNewScaledView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, contentScale, out lastSectionWasIncluded);
+					msrJob = LoadNewScaledView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, contentScale/*, out lastSectionWasIncluded*/);
 				}
 			}
 
@@ -458,7 +458,7 @@ namespace MSetExplorer
 		public MsrJob? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset)
 		{
 			MsrJob? msrJob;
-			var lastSectionWasIncluded = false;
+			//var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
 			{
@@ -475,7 +475,7 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(_useDetailedDebug, $"UpdateViewportSizeAndPos is calling LoadNewView. ContentViewportSize: {contentViewportSize}.");
 
-					msrJob = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset, out lastSectionWasIncluded);
+					msrJob = LoadNewView(CurrentAreaColorAndCalcSettings, _boundedMapArea, contentViewportSize, contentOffset/*, out lastSectionWasIncluded*/);
 				}
 			}
 
@@ -491,7 +491,7 @@ namespace MSetExplorer
 		public MsrJob MoveTo(VectorDbl contentOffset)
 		{
 			MsrJob msrJob;
-			var lastSectionWasIncluded = false;
+			//var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
 			{
@@ -515,7 +515,7 @@ namespace MSetExplorer
 
 				ReportMove(_boundedMapArea, contentOffset);
 
-				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
+				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false/*, out lastSectionWasIncluded*/);
 			}
 
 			//if (lastSectionWasIncluded)
@@ -547,7 +547,7 @@ namespace MSetExplorer
 		public MsrJob? RestartJob()
 		{
 			MsrJob? msrJob;
-			var lastSectionWasIncluded = false;
+			//var lastSectionWasIncluded = false;
 
 			lock (_paintLocker)
 			{
@@ -567,7 +567,7 @@ namespace MSetExplorer
 						? JobType.FullScale
 						: JobType.ReducedScale;
 
-				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, LastMapAreaInfo, reapplyColorMap: false, out lastSectionWasIncluded);
+				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, LastMapAreaInfo, reapplyColorMap: false/*, out lastSectionWasIncluded*/);
 			}
 
 			//if (msrJob != null && lastSectionWasIncluded)
@@ -714,7 +714,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private MsrJob LoadNewScaledView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale, out bool lastSectionWasIncluded)
+		private MsrJob LoadNewScaledView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale/*, out bool lastSectionWasIncluded*/)
 		{
 			// TODO: Compare the currrent and new SubdivisionIds. If different, use DiscardAndLoad
 			var currentBaseFactor = boundedMapArea.BaseFactor;
@@ -753,17 +753,17 @@ namespace MSetExplorer
 
 			if (boundedMapArea.BaseFactor == currentBaseFactor)
 			{
-				msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
+				msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false/*, out lastSectionWasIncluded*/);
 			}
 			else
 			{
-				msrJob = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, out lastSectionWasIncluded);
+				msrJob = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset/*, out lastSectionWasIncluded*/);
 			}
 
 			return msrJob;
 		}
 
-		private MsrJob LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset, out bool lastSectionWasIncluded)
+		private MsrJob LoadNewView(AreaColorAndCalcSettings areaColorAndCalcSettings, BoundedMapArea boundedMapArea, SizeDbl contentViewportSize, VectorDbl contentOffset/*, out bool lastSectionWasIncluded*/)
 		{
 			// Get the coordinates for the current view, i.e., the ContentViewportSize
 			boundedMapArea.SetSize(contentViewportSize);
@@ -784,12 +784,12 @@ namespace MSetExplorer
 			// because ReuseAndLoad is going to set the BitmapGrid's LogicalViewportSize from the mapAreaSubset.CanvasSize.
 			_viewportSize = mapAreaSubset.CanvasSize;
 
-			var msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false, out lastSectionWasIncluded);
+			var msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false/*, out lastSectionWasIncluded*/);
 
 			return msrJob;
 		}
 
-		private MsrJob? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob, out bool lastSectionWasIncluded)
+		private MsrJob? HandleCurrentJobChanged(AreaColorAndCalcSettings? previousJob, AreaColorAndCalcSettings? newJob/*, out bool lastSectionWasIncluded*/)
 		{
 			MsrJob? msrJob;
 
@@ -803,26 +803,26 @@ namespace MSetExplorer
 					
 					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
 					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
-					msrJob = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, reapplyColorMap, out lastSectionWasIncluded);
+					msrJob = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, reapplyColorMap/*, out lastSectionWasIncluded*/);
 				}
 				else
 				{
 					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
 					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
-					msrJob = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo, out lastSectionWasIncluded);
+					msrJob = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo/*, out lastSectionWasIncluded*/);
 				}
 			}
 			else
 			{
 				StopCurrentJobs(clearDisplay: true);
-				lastSectionWasIncluded = false;
+				//lastSectionWasIncluded = false;
 				msrJob = null;
 			}
 
 			return msrJob;
 		}
 
-		private MsrJob DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo, out bool lastSectionWasIncluded)
+		private MsrJob DiscardAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo/*, out bool lastSectionWasIncluded*/)
 		{
 			// Let our Bitmap Grid know about the change in View size.
 			// These must be set before we call clear screen.
@@ -845,18 +845,19 @@ namespace MSetExplorer
 			if (_currentMapSectionRequests != null)
 			{
 				// ***** Submit the new requests. *****
-				lastSectionWasIncluded = SubmitMSRequests(msrJob, _currentMapSectionRequests, out var requestsPendingGeneration);
+				//lastSectionWasIncluded = SubmitMSRequests(msrJob, _currentMapSectionRequests, out var requestsPendingGeneration);
+				var requestsPendingGeneration = SubmitMSRequests(msrJob, _currentMapSectionRequests);
 				_requestsPendingGeneration.AddRange(requestsPendingGeneration);
 			}
-			else
-			{
-				lastSectionWasIncluded = false;
-			}
+			//else
+			//{
+			//	lastSectionWasIncluded = false;
+			//}
 
 			return msrJob;
 		}
 
-		private MsrJob ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo, bool reapplyColorMap, out bool lastSectionWasIncluded)
+		private MsrJob ReuseAndLoad(JobType jobType, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta screenAreaInfo, bool reapplyColorMap/*, out bool lastSectionWasIncluded*/)
 		{
 			var prevMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 
@@ -864,13 +865,15 @@ namespace MSetExplorer
 
 			// Let our Bitmap Grid know about the change in View size.
 			_bitmapGrid.MapBlockOffset = screenAreaInfo.MapBlockOffset;
-			_bitmapGrid.LogicalViewportSize = screenAreaInfo.CanvasSize;
+ 			_bitmapGrid.LogicalViewportSize = screenAreaInfo.CanvasSize;
 			_bitmapGrid.CanvasControlOffset = screenAreaInfo.CanvasControlOffset;
 
 			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(jobType, newJob.JobId, newJob.JobOwnerType, screenAreaInfo, newJob.MapCalcSettings);
 
 			var newMapExtentInBlocks = _bitmapGrid.ImageSizeInBlocks;
 			var allRequestsForNewJob = _mapSectionBuilder.CreateSectionRequests(msrJob, newMapExtentInBlocks);
+
+			CheckSubdivisions(allRequestsForNewJob, _currentMapSectionRequests);
 
 			var newRequests = GetRequestsToLoadAndRemove(allRequestsForNewJob, _currentMapSectionRequests, out var requestsNoLongerNeeded);
 			_currentMapSectionRequests = allRequestsForNewJob;
@@ -885,21 +888,37 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, "ReuseAndLoad is performing a 'simple' update.");
 
-				RemoveSections(sectionsNotVisible);
-				lastSectionWasIncluded = false;
+				RemoveSections(sectionsNotVisible, MapSections);
+				//lastSectionWasIncluded = false;
 			}
 			else
 			{
 				// Cancel requests in play that are no longer needed. Remove and dispose MapSections no longer needed
-				if (!_useDetailedDebug)
+				if (_useDetailedDebug)
 				{
 					var requestsForSectionsToRemove = CancelRequests(requestsNoLongerNeeded, _requestsPendingGeneration);
 					var numberOfRequestsCancelled = requestsNoLongerNeeded.Count - requestsForSectionsToRemove.Count;
 
 					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsForSectionsToRemove, MapSections);
-					var numberOfSectionsRemovedViaReq = RemoveSections(sectionsToRemoveViaReqs);
+					var numberOfSectionsRemovedViaReq = RemoveSections(sectionsToRemoveViaReqs, MapSections);
 
-					var numberOfSectionsRemovedNotVis = RemoveSections(sectionsNotVisible);
+					// Temporary -- try to locate all MapSections -- not just the ones for which there is no Pending Request
+					//var numberOfSectionsRemovedViaReq = RemoveSectionsDryTest(sectionsToRemoveViaReqs, MapSections);
+					//var sectionsToRemoveViaReqsTest = FindSectionsToRemoveFromRequests(requestsNoLongerNeeded, MapSections);
+					//var numberOfSectionsRemovedViaReqTest = RemoveSections(sectionsToRemoveViaReqsTest, MapSections);
+
+					int numberOfSectionsRemovedNotVis;
+
+					if (AreMapSectionsTheSame(sectionsNotVisible, sectionsToRemoveViaReqs))
+					{
+						numberOfSectionsRemovedNotVis = sectionsNotVisible.Count;
+						//numberOfSectionsRemovedNotVis = RemoveSections(sectionsNotVisible, MapSections);
+					}
+					else
+					{
+						numberOfSectionsRemovedNotVis = RemoveSections(sectionsNotVisible, MapSections);
+					}
+
 					var numberOfSectionsNotDrawn = _bitmapGrid.ReDrawSections(reapplyColorMap);
 
 					if (numberOfSectionsNotDrawn > 0)
@@ -912,7 +931,8 @@ namespace MSetExplorer
 						Debug.WriteLine($"MapExtent is changing from: {prevMapExtentInBlocks} to {newMapExtentInBlocks}.");
 					}
 
-					ReportReuseAndLoadedSections(newRequests.Count, numberOfRequestsCancelled, MapSections.Count, requestsForSectionsToRemove.Count, numberOfSectionsRemovedViaReq, sectionsNotVisible.Count, numberOfSectionsRemovedNotVis);
+					ReportReuseAndLoadedSections(newRequests.Count, numberOfRequestsCancelled, MapSections.Count, requestsForSectionsToRemove.Count, numberOfSectionsRemovedViaReq, /*numberOfSectionsRemovedViaReqTest, */
+						sectionsNotVisible.Count, numberOfSectionsRemovedNotVis);
 
 					//if (MapSections.Count > 70)
 					//{
@@ -923,11 +943,15 @@ namespace MSetExplorer
 				else
 				{
 					var requestsForSectionsToRemove = CancelRequests(requestsNoLongerNeeded, _requestsPendingGeneration);
-
 					var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsForSectionsToRemove, MapSections);
-					RemoveSections(sectionsToRemoveViaReqs);
 
-					RemoveSections(sectionsNotVisible);
+					//// Temporary -- try to locate all MapSections -- not just the ones for which there is no Pending Request
+					//_ = CancelRequests(requestsNoLongerNeeded, _requestsPendingGeneration);
+					//var sectionsToRemoveViaReqs = FindSectionsToRemoveFromRequests(requestsNoLongerNeeded, MapSections);
+
+					RemoveSections(sectionsToRemoveViaReqs, MapSections);
+
+					RemoveSections(sectionsNotVisible, MapSections);
 					_bitmapGrid.ReDrawSections(reapplyColorMap);
 				}
 
@@ -937,28 +961,45 @@ namespace MSetExplorer
 					Debug.WriteLine(newRequestsReport);
 
 					// ***** Submit the new requests. *****
-					lastSectionWasIncluded = SubmitMSRequests(msrJob, newRequests, out var mapRequestsPendingGenration);
+					//lastSectionWasIncluded = SubmitMSRequests(msrJob, newRequests, out var mapRequestsPendingGenration);
+					var mapRequestsPendingGenration = SubmitMSRequests(msrJob, newRequests);
 					_requestsPendingGeneration.AddRange(mapRequestsPendingGenration);
 
 					ClearMapSections(_requestsPendingGeneration);
 				}
-				else
-				{
-					lastSectionWasIncluded = false;
-				}
+				//else
+				//{
+				//	lastSectionWasIncluded = false;
+				//}
 			}
 
 			return msrJob;
 		}
 
-		private bool SubmitMSRequests(MsrJob msrJob, List<MapSectionRequest> newRequests, out List<MapSectionRequest> mapRequestsPendingGeneration, [CallerMemberName] string? callerMemberName = null)
+		[Conditional("DEBUG")]
+		private void CheckSubdivisions(List<MapSectionRequest> newRequests, List<MapSectionRequest> existingRequests)
+		{
+			if (newRequests.Count == 0)
+			{
+				return;
+			}
+
+			var subdivisionId = newRequests.First().Subdivision.Id;
+
+			var foundDiffSubInNew = newRequests.Any(x => x.Subdivision.Id != subdivisionId);
+			var foundDiffSubInExisting = existingRequests.Any(x => x.Subdivision.Id != subdivisionId);
+
+			Debug.Assert(!(foundDiffSubInNew || foundDiffSubInExisting), "All SubdivisionIds should be the same here.");
+		}
+
+		private List<MapSectionRequest> SubmitMSRequests(MsrJob msrJob, List<MapSectionRequest> newRequests, [CallerMemberName] string? callerMemberName = null)
 		{
 			AddJob(msrJob);
 
 			// This uses the callback property of the MsrJob.
 
 			//msrJob.Start(newRequests, MapSectionReady, numberOfMapSectionsRequested);
-			var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, MapViewUpdateIsComplete, msrJob.CancellationTokenSource.Token, out mapRequestsPendingGeneration);
+			var newMapSections = _mapLoaderManager.Push(msrJob, newRequests, MapSectionReady, MapViewUpdateIsComplete, msrJob.CancellationTokenSource.Token, out var mapRequestsPendingGeneration);
 
 			//msrJob.UpdateReqPendingCount(mapRequestsPendingGeneration.Count);
 
@@ -973,9 +1014,9 @@ namespace MSetExplorer
 
 			_bitmapGrid.DrawSections(newMapSections);
 
-			var lastSectionWasIncluded = mapRequestsPendingGeneration.Count == 0;
+			//var lastSectionWasIncluded = mapRequestsPendingGeneration.Count == 0;
 
-			return lastSectionWasIncluded;
+			return mapRequestsPendingGeneration;
 		}
 
 		private void ClearMapSections(List<MapSectionRequest> requestsPendingGeneration)
@@ -984,7 +1025,8 @@ namespace MSetExplorer
 			var mapSectionsToClear = new List<MapSection>();
 			foreach (var request in requestsPendingGeneration)
 			{
-				mapSectionsToClear.Add(_mapSectionBuilder.CreateEmptyMapSection(request, isCancelled: false));
+				var mapSecs = _mapSectionBuilder.CreateEmptyMapSections(request, isCancelled: false);
+				mapSectionsToClear.AddRange(mapSecs);
 			}
 
 			var numberCleared = _bitmapGrid.ClearSections(mapSectionsToClear);
@@ -999,9 +1041,13 @@ namespace MSetExplorer
 					if (MapSections.Remove(theRealMs))
 					{
 						numberRemoved++;
+						_mapSectionVectorProvider.ReturnToPool(theRealMs);
+					}
+					else
+					{
+						Debug.WriteLineIf(_useDetailedDebug, "Could not find a MapSection matching a pending request.");
 					}
 
-					_mapSectionVectorProvider.ReturnToPool(theRealMs);
 				}
 			}
 
@@ -1287,24 +1333,38 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private int RemoveSections(List<MapSection> mapSectionsToRemove)
+		private int RemoveSections(List<MapSection> mapSectionsToRemove, IList<MapSection> listOfSections)
 		{
 			var numberOfMapSectionsRemoved = 0;
 
 			foreach (var mapSection in mapSectionsToRemove)
 			{
-				if (MapSections.Remove(mapSection))
+				if (listOfSections.Remove(mapSection))
 				{
 					numberOfMapSectionsRemoved++;
+					_mapSectionVectorProvider.ReturnToPool(mapSection);
 				}
-
-				_mapSectionVectorProvider.ReturnToPool(mapSection);
 			}
 
 			return numberOfMapSectionsRemoved;
 		}
 
-		// TODO: Fix Me. Need to include IsInverted when matching.
+		private int RemoveSectionsDryTest(List<MapSection> mapSectionsToRemove, IList<MapSection> listOfSections)
+		{
+			var numberOfMapSectionsRemoved = 0;
+
+			foreach (var mapSection in mapSectionsToRemove)
+			{
+				if (listOfSections.Contains(mapSection))
+				{
+					numberOfMapSectionsRemoved++;
+					//_mapSectionVectorProvider.ReturnToPool(mapSection);
+				}
+			}
+
+			return numberOfMapSectionsRemoved;
+		}
+
 		private bool RemovePendingRequest(MapSection mapSection)
 		{
 			var subId = new ObjectId(mapSection.SubdivisionId);
@@ -1517,8 +1577,8 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG")]
-		private void ReportReuseAndLoadedSections(int numberRequested, int numberOfRequestsCancelled, int numberOfMapSections, int numberOfSectionsToRemove, int numberOfSectionsRemovedViaReq, 
-			int numberOfSectionsNotVisible, int numberOfSectionsRemovedNotVis/*, int numberOfSectionsNotDrawn*/)
+		private void ReportReuseAndLoadedSections(int numberRequested, int numberOfRequestsCancelled, int numberOfMapSections, int numberOfSectionsToRemove, int numberOfSectionsRemovedViaReq, /*int numberOfSectionsRemovedViaReqTest,*/
+			int numberOfSectionsNotVisible, int numberOfSectionsRemovedNotVis)
 		{
 			//if (_useDetailedDebug)
 			//{
@@ -1532,6 +1592,7 @@ namespace MSetExplorer
 				+ $"Requesting {numberRequested} new sections, "
 				+ $"Cancelling {numberOfRequestsCancelled} pending requests, "
 				+ $"returned {numberOfSectionsRemovedViaReq} unneeded sections, "
+				//+ $"compare with number returned {numberOfSectionsRemovedViaReqTest} unneeded sections using all, "
 				+ $"returned {numberOfSectionsRemovedNotVis} sections off the map, "
 				+ (requestsToRemoveNotFound > 0 ? $"{requestsToRemoveNotFound} sectionRequests to remove a MapSection not found, " : string.Empty)
 				+ (hiddenSectionsNotFound > 0 ? $"{hiddenSectionsNotFound} sections off the map to be removed but not found " : string.Empty)
@@ -1590,6 +1651,19 @@ namespace MSetExplorer
 			}
 
 			return sb.ToString();
+		}
+
+		private bool AreMapSectionsTheSame(List<MapSection> list1, List<MapSection> list2)
+		{
+			foreach (var ms in list1)
+			{
+				if (!list2.Contains(ms))
+				{
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		//private void CheckContentScale(SizeDbl unscaledExtent, SizeDbl contentViewportSize, double contentScale, double baseFactor, double relativeScale) 
@@ -1725,97 +1799,6 @@ namespace MSetExplorer
 
 		//	var displayPosition = _boundedMapArea.GetUnScaledDisplayPosition(ScaledDisplayPositionYInverted.Value.Item1, ScaledDisplayPositionYInverted.Value.Item2, out var unInvertedY);
 		//	return displayPosition;
-		//}
-
-		#endregion
-
-		#region Not Used
-
-		private int UseRequestsToRemoveSections(List<MapSectionRequest> mapSectionRequests)
-		{
-			var numberOfMapSectionsRemoved = 0;
-
-			foreach (var request in mapSectionRequests)
-			{
-				if (request.RegularPosition != null && request.InvertedPosition != null)
-				{
-					_ = RemoveMapSection(request, isInverted:true);
-					_ = RemoveMapSection(request, isInverted: false);
-				}
-				else
-				{
-					// Only Remove the IsInverted or Regular based on the request.
-
-					if (request.MapSectionId == "CancelOnlyInverted")
-					{
-						//var requestToRemove = request.IsInverted ? request : request.Mirror;
-						_ = RemoveMapSection(request, isInverted:true);
-					}
-					else if (request.MapSectionId == "CancelOnlyRegular")
-					{
-						//var requestToRemove = request.IsInverted ? request.Mirror : request;
-						_ = RemoveMapSection(request, isInverted: false);
-					}
-					else
-					{
-						_ = RemoveMapSection(request, isInverted: true);
-						_ = RemoveMapSection(request, isInverted: false);
-					}
-
-					request.MapSectionId = ObjectId.GenerateNewId().ToString();
-				}
-			}
-
-			return numberOfMapSectionsRemoved;
-		}
-
-		private bool RemoveMapSection(MapSectionRequest mapSectionRequest, bool isInverted)
-		{
-			//var subStrId = mapSectionRequest.Subdivision.Id.ToString();
-			//var mapSection = MapSections.FirstOrDefault(x => x.SubdivisionId == subStrId && x.RepoBlockPosition == mapSectionRequest.SectionBlockOffset);
-
-			var mapSection = MapSections.FirstOrDefault(x => x.IsInverted == isInverted && x.SectionBlockOffset == mapSectionRequest.SectionBlockOffset);
-
-			if (mapSection != null)
-			{
-				var result = MapSections.Remove(mapSection);
-				_mapSectionVectorProvider.ReturnToPool(mapSection);
-
-				return result;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		//private int CancelRequests(List<MapSectionRequest> mapSectionRequests)
-		//{
-		//	var numberOfRequestsCancelled = 0;
-
-		//	foreach(var req in mapSectionRequests)
-		//	{
-		//		numberOfRequestsCancelled += CancelRequest(req);
-
-		//		req.MapSectionId = ObjectId.GenerateNewId().ToString();
-		//	}
-
-		//	return numberOfRequestsCancelled;
-		//}
-
-		//private void DisposeMapSection(MapSection mapSection)
-		//{
-		//	//var refCount = mapSection.MapSectionVectors?.ReferenceCount ?? 0;
-
-		//	// The MapSection may have refCount > 1; the MapSectionPersistProcessor may not have completed its work, 
-		//	// But when the MapSectionPersistProcessor doe complete its work, it will Dispose and at that point the refCount will be only 1.
-		//	//if (refCount > 1)
-		//	//{
-		//	//	Debug.WriteLine("WARNING: MapSectionDisplayViewModel is Disposing a MapSection whose reference count > 1.");
-		//	//}
-
-		//	// TODO: Confirm that we should not return MapSections found by the BitmapGrid class to be outside of the display area
-		//	//_mapSectionVectorProvider.ReturnMapSection(mapSection);
 		//}
 
 		#endregion

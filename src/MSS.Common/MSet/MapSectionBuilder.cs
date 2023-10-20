@@ -94,9 +94,9 @@ namespace MSS.Common
 				}
 			}
 
-			// Prepare the result list of MapSectionRequests. Each request 
-			// will be for a single non-inverted, a single inverted, 
-			// or a pair with the non-inverted specified in the first argument and 
+			// Prepare the result list of MapSectionRequests.
+			// Each request will be for a single non-inverted or for a single inverted, or for a pair
+			// In the case of a pair, the non-inverted specified in the first argument and 
 			// the inverted item specified as the second argument.
 			var result = new List<MapSectionRequest>();
 			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
@@ -244,10 +244,11 @@ namespace MSS.Common
 
 		public MapSectionRequest CreateRequest(MsrJob msrJob, MsrPosition requestPosition)
 		{
-			var mapPosition = GetMapPosition(msrJob.Subdivision, requestPosition.SectionBlockOffset);
+			//var mapPosition = GetMapPosition(msrJob.Subdivision, requestPosition.SectionBlockOffset);
 
-			var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, requestPosition);
+			//var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, requestPosition);
 
+			var mapSectionRequest = CreateRequest(msrJob, requestPosition.RequestNumber, requestPosition.ScreenPosition, requestPosition.ScreenPositionReleativeToCenter);
 			return mapSectionRequest;
 		}
 
@@ -309,8 +310,50 @@ namespace MSS.Common
 
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, bool isInverted, MapSectionVectors mapSectionVectors)
 		{
+			//MapSection result;
+
+			//var jobBlockOffset = mapSectionRequest.JobBlockOffset;
+			//var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
+			//var isInvertedD = mapSectionRequest.IsInverted;
+
+			//var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInvertedD, jobBlockOffset);
+			//result = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
+
+			////if (isInverted)
+			////{
+			////	var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
+			////	var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
+
+			////	//var screenPosition = mapSectionRequest.InvertedPosition!.ScreenPosition;
+
+			////	//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
+			////	result = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
+
+			////}
+			////else
+			////{
+			////	//var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
+			////	var screenPosition = mapSectionRequest.RegularPosition!.ScreenPosition;
+
+			////	//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
+			////	result = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
+			////}
+
+			////var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
+			//////var isInverted = mapSectionRequest.IsInverted;
+
+			////var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
+
+			//////Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
+			////var mapSection = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
+
+			//UpdateMapSectionWithProcInfo(result, mapSectionRequest);
+
+
+
+
 			var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
-			//var isInverted = mapSectionRequest.IsInverted;
+			//var isInvertedD = mapSectionRequest.IsInverted;
 
 			var jobBlockOffset = mapSectionRequest.JobBlockOffset;
 			var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
@@ -323,20 +366,60 @@ namespace MSS.Common
 			return mapSection;
 		}
 
-		public MapSection CreateEmptyMapSection(MapSectionRequest mapSectionRequest, bool isCancelled)
+		public List<MapSection> CreateEmptyMapSections(MapSectionRequest mapSectionRequest, bool isCancelled)
+		{
+			var result = new List<MapSection>();
+
+			if (mapSectionRequest.IsPaired)
+			{
+				//result = new List<MapSection>
+				//{ 
+				//	//CreateEmptyMapSection(mapSectionRequest, isInverted: false, mapSectionRequest.RegularPosition!.IsCancelled),
+				//	//CreateEmptyMapSection(mapSectionRequest, isInverted: true, mapSectionRequest.InvertedPosition!.IsCancelled),
+
+				//	CreateEmptyMapSection(mapSectionRequest, isInverted: false, isCancelled),
+				//	CreateEmptyMapSection(mapSectionRequest, isInverted: true, isCancelled),
+				//};
+
+				var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: false, isCancelled);
+				result.Add(ms);
+
+				ms = CreateEmptyMapSection(mapSectionRequest, isInverted: true, isCancelled);
+				result.Add(ms);
+			}
+			else if(mapSectionRequest.RegularPosition != null)
+			{
+				//var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: false, mapSectionRequest.RegularPosition.IsCancelled);
+				var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: false, isCancelled);
+				result.Add(ms);
+			}
+			else if(mapSectionRequest.InvertedPosition != null)
+			{
+				//var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: true, mapSectionRequest.InvertedPosition.IsCancelled);
+				var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: true, isCancelled);
+				result.Add(ms);
+			}
+			else
+			{
+				throw new InvalidOperationException("The MapSectionRequest has neither a Regular or Inverted Position.");
+			}
+
+			return result;
+		}
+
+		public MapSection CreateEmptyMapSection(MapSectionRequest mapSectionRequest, bool isInverted, bool isCancelled)
 		{
 			var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
-			var isInverted = mapSectionRequest.IsInverted;
-
 			var jobBlockOffset = mapSectionRequest.JobBlockOffset;
 
-			//var sectionBlockOffsetBigV = _dtoMapper.MapFrom(sectionBlockPosition);
 			var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
 
 			//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
 
-			var mapSection = new MapSection(mapSectionRequest.MapLoaderJobNumber, mapSectionRequest.RequestNumber, 
-				mapSectionRequest.Subdivision.Id.ToString(), jobBlockOffset, sectionBlockOffset, isInverted, screenPosition, 
+			var requestNumber = isInverted ? mapSectionRequest.InvertedPosition!.RequestNumber : mapSectionRequest.RegularPosition!.RequestNumber;
+
+			var mapSection = new MapSection(mapSectionRequest.MapLoaderJobNumber, requestNumber,
+				mapSectionRequest.Subdivision.Id.ToString(), jobBlockOffset, sectionBlockOffset, isInverted, screenPosition,
 				mapSectionRequest.BlockSize, mapSectionRequest.MapCalcSettings.TargetIterations, isCancelled);
 
 			return mapSection;

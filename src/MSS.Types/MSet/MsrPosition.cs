@@ -29,6 +29,19 @@ namespace MSS.Common
 		}
 
 		public bool IsCancelled => Cts.IsCancellationRequested;
+
+		public bool Cancel()
+		{
+			if (Cts.IsCancellationRequested)
+			{
+				return false;
+			}
+			else
+			{
+				Cts.Cancel();
+				return true;
+			}
+		}
 	}
 
 }

@@ -21,7 +21,7 @@ namespace MSetExplorer
 		private DebounceDispatcher _contentScaleDispatcher;
 		private IMapDisplayViewModel _vm;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -58,7 +58,7 @@ namespace MSetExplorer
 			{
 				_vm = (IMapDisplayViewModel)DataContext;
 
-				BitmapGridControl1.UseScaling = true;
+				BitmapGridControl1.ScalingMode = ScalingMode.UseScaling;
 				var ourSize = BitmapGridControl1.ViewportSize;
 
 				PanAndZoomControl1.UnscaledViewportSize = ourSize;

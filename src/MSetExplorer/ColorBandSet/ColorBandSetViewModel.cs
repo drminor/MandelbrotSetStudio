@@ -44,7 +44,7 @@ namespace MSetExplorer
 		private bool _isDirty;
 		private readonly object _histLock;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#region Constructor
 

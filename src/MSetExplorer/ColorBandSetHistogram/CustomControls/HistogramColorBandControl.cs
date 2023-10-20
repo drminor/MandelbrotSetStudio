@@ -48,7 +48,7 @@ namespace MSetExplorer
 		private List<Shape> _hitList;
 		private int? _colorBandIndexInDrag;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

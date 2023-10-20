@@ -474,8 +474,8 @@ namespace MSetExplorer
 				screenPosition = mapSection.ScreenPosition.Translate(offset);
 
 				// Update the mapSection's JobMapBlockOffset and ScreenPosition to avoid this transalation again.
-				mapSection.UpdateJobMapBlockOffsetAndPos(jobMapBlockOffset, screenPosition);
-				CheckScreenPos(mapSection);
+				//mapSection.UpdateJobMapBlockOffsetAndPos(jobMapBlockOffset, screenPosition);
+				//CheckScreenPos(mapSection);
 			}
 
 			return screenPosition;

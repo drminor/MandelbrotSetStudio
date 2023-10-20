@@ -16,6 +16,8 @@ namespace MSetExplorer
 
 		//private readonly static bool SHOW_BORDER = false;
 
+		private readonly static bool DOUBLE_DISPLAY_SIZE_FOR_DIAGNOSTICS  = false;
+
 		private IMapDisplayViewModel _vm;
 
 		private SelectionRectangle _selectionRectangle;
@@ -49,11 +51,19 @@ namespace MSetExplorer
 				_vm = (IMapDisplayViewModel)DataContext;
 
 				var ourSize = new SizeDbl(ActualWidth, ActualHeight);
-				_vm.ViewportSize = ourSize;
+
+				if (DOUBLE_DISPLAY_SIZE_FOR_DIAGNOSTICS)
+				{
+					BitmapGridControl1.ScalingMode = ScalingMode.Diagnostic;
+					_vm.ViewportSize = ourSize.Scale(2);
+				}
+				else
+				{
+					_vm.ViewportSize = ourSize;
+					BitmapGridControl1.ScalingMode = ScalingMode.DontUseScaling;
+				}
 
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
-
-				BitmapGridControl1.UseScaling = false;
 
 				_selectionRectangle = new SelectionRectangle(BitmapGridControl1.Canvas, _vm.ViewportSize, _vm.BlockSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;

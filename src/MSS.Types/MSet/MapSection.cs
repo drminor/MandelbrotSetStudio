@@ -20,7 +20,7 @@ namespace MSS.Types.MSet
 				  mapSectionVectors: null,
 				  subdivisionId: string.Empty,
 				  jobMapBlockPosition: new VectorLong(),
-				  repoBlockPosition: new VectorLong(),
+				  sectionBlockPosition: new VectorLong(),
 				  isInverted: false,
 				  screenPosition: new PointInt(),
 				  size: new SizeInt(),
@@ -34,7 +34,7 @@ namespace MSS.Types.MSet
 			int requestNumber,
 			string subdivisionId,
 			VectorLong jobMapBlockPosition,
-			VectorLong repoBlockPosition, 
+			VectorLong sectionBlockOffset, 
 			bool isInverted, 
 			PointInt screenPosition, 
 			SizeInt size, 
@@ -46,7 +46,7 @@ namespace MSS.Types.MSet
 				  mapSectionVectors: null, 
 				  subdivisionId,
 				  jobMapBlockPosition,
-				  repoBlockPosition, 
+				  sectionBlockOffset, 
 				  isInverted, 
 				  screenPosition, 
 				  size, 
@@ -62,14 +62,14 @@ namespace MSS.Types.MSet
 		{ }
 
 		public MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, VectorLong jobMapBlockPosition,
-			VectorLong repoBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
+			VectorLong sectionBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobNumber = jobNumber;
 			RequestNumber = requestNumber;
 			MapSectionVectors = mapSectionVectors;
 			SubdivisionId = subdivisionId;
 			JobMapBlockOffset = jobMapBlockPosition;
-			SectionBlockOffset = repoBlockPosition;
+			SectionBlockOffset = sectionBlockPosition;
 			IsInverted = isInverted;
 			ScreenPosition = screenPosition;
 			Size = size;

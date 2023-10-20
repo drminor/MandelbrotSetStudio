@@ -21,7 +21,7 @@ namespace MapSectionProviderLib
 		private int _currentPrecision;
 		private int _currentLimbCount;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

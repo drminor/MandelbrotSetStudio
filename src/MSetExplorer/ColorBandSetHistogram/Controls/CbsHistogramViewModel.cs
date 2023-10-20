@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 		private ScrollBarVisibility _horizontalScrollBarVisibility;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

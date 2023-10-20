@@ -26,7 +26,7 @@ namespace MapSectionProviderLib
 		private readonly object _jobsStatusLock = new();
 		private bool disposedValue;
 
-		private bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -141,7 +141,7 @@ namespace MapSectionProviderLib
 
 					if (mapSectionGenerateRequests.Count > 1)
 					{
-						Debug.WriteLine($"MapSectionGeneratorProcessor's WorkQueue is returning {mapSectionGenerateRequests.Count} items for Job: {mapSectionGenerateRequests[0].JobNumber}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"MapSectionGeneratorProcessor's WorkQueue is returning {mapSectionGenerateRequests.Count} items for Job: {mapSectionGenerateRequests[0].JobNumber}.");
 
 						mapSectionGenerateRequest = GetGenerateRequest(mapSectionGenerateRequests);
 					}
@@ -152,7 +152,7 @@ namespace MapSectionProviderLib
 
 					if (mapSectionGenerateRequest != null)
 					{
-						if (mapSectionGenerateRequest.JobIsCancelled)
+						if (mapSectionGenerateRequest.JobIsCancelled || mapSectionGenerateRequest.Request.Request.NeitherRegularOrInvertedRequestIsInPlay)
 						{
 							if (mapSectionGenerateRequest.Response != null)
 							{
@@ -161,20 +161,17 @@ namespace MapSectionProviderLib
 						}
 						else
 						{
-							var mapSectionWorkRequest = mapSectionGenerateRequest.Request;
+							var mapSectionRequest = mapSectionGenerateRequest.Request.Request;
 
-							var mapSectionResponse = HandleMapSectionRequest(mapSectionWorkRequest.Request, mEngineClient);
+							ReportProcesssARequest(mapSectionRequest, jobIsCancelled: false);
+
+							var mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
+
+							CheckResponse(mapSectionRequest, mapSectionResponse);
 							mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
 
-							var mapSectionRequest = mapSectionWorkRequest.Request;
-							if ( mapSectionRequest.RegularOrInvertedRequestIsInPlay)
-							{
-								if (!mapSectionRequest.IsCancelled)
-								{
-									mapSectionRequest.MsrJob.SectionsGenerated++;
-								}
-							}
-
+							// Update the [numberOf] SectionsGenerated only after the next handler has handled the request.
+							UpdateTheJobsSectionsGeneratedCount(mapSectionRequest);
 						}
 					}
 				}
@@ -212,120 +209,25 @@ namespace MapSectionProviderLib
 				requestPtr++;
 			}
 
-			Debug.WriteLine($"Skipped {requestPtr} requests for Job: {jobNumber}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Skipped {requestPtr} requests for Job: {jobNumber}.");
 
 			var result = requestPtr < mapSectionGenerateRequests.Count ? mapSectionGenerateRequests[requestPtr] : null;
 
 			return result;
 		}
 
-		private MapSectionResponse HandleMapSectionRequest(MapSectionRequest mapSectionRequest, IMEngineClient mEngineClient)
+		private void UpdateTheJobsSectionsGeneratedCount(MapSectionRequest mapSectionRequest)
 		{
-			MapSectionResponse mapSectionResponse;
-			ReportProcesssARequest(mapSectionRequest, jobIsCancelled:false);
-
-			if (mapSectionRequest.NeitherRegularOrInvertedRequestIsInPlay)
+			if (mapSectionRequest.RegularPosition != null && !mapSectionRequest.RegularPosition.IsCancelled)
 			{
-				mapSectionResponse = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
-				mapSectionRequest.MsrJob.SectionsCancelled++;
-
-				// TODO: FixMe!
-				//if (mapSectionRequest.Mirror != null && mapSectionRequest.Mirror.IsCancelled)
-				//{
-				//	mapSectionRequest.Mirror.MsrJob.SectionsCancelled++;
-				//}
-			}
-			else
-			{
-				mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
-
-				//if (mapSectionRequest.RegularOrInvertedRequestIsInPlay)
-				//{
-				//	if (!mapSectionRequest.IsCancelled)
-				//	{
-				//		mapSectionRequest.MsrJob.SectionsGenerated++;
-				//	}
-				//}
-
-				if (mapSectionResponse.MapSectionVectors2 == null)
-				{
-					Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
-				}
-
-				if (mapSectionRequest.MapSectionId != null)
-				{
-					Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
-				}
+				mapSectionRequest.MsrJob.SectionsGenerated++;
 			}
 
-			Debug.Assert(mapSectionRequest.MapSectionVectors2 == null, "MapSectionVectors2 should be Null.");
-			Debug.Assert(mapSectionRequest.MapSectionZVectors == null, "MapSectionZVectors should be Null.");
-
-			return mapSectionResponse;
+			if (mapSectionRequest.InvertedPosition != null && !mapSectionRequest.InvertedPosition.IsCancelled)
+			{
+				mapSectionRequest.MsrJob.SectionsGenerated++;
+			}
 		}
-
-		//private MapSectionResponse HandleItemJobIsCancelled(MapSectionRequest mapSectionRequest, IMEngineClient mEngineClient)
-		//{
-		//	// The original request is in the Request's Request property.
-
-		//	ReportProcesssARequest(mapSectionRequest, jobIsCancelled: true);
-
-		//	var mapSectionResponse = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
-
-		//	Debug.Assert(mapSectionRequest.MapSectionVectors2 == null, "MapSectionVectors2 should be Null.");
-		//	Debug.Assert(mapSectionRequest.MapSectionZVectors == null, "MapSectionZVectors should be Null.");
-
-		//	return mapSectionResponse;
-		//}
-
-		//// Handle the first item -- it's job has been cancelled
-		//var mapSectionResponse = HandleItemJobIsCancelled(mapSectionWorkRequest.Request, mEngineClient);
-		//msGenerateRequest.RunWorkAction(mapSectionResponse);
-
-		//var currentJobNumber = mapSectionWorkRequest.Request.MapLoaderJobNumber;
-		//var requestPtr = 1;
-
-		//var skipAmount = 0;
-		//// Skip over requests from this same cancelled job
-		//while (requestPtr < mapSectionGenerateRequests.Count && mapSectionGenerateRequests[requestPtr].Request.Request.MapLoaderJobNumber == currentJobNumber)
-		//{
-		//	requestPtr++;
-		//	skipAmount++;
-		//}
-
-		//Debug.WriteLine($"Skipped {skipAmount} requests for Job: {currentJobNumber}.");
-
-		//while (requestPtr < mapSectionGenerateRequests.Count)
-		//{
-		//	// This request is for a different job than the previous request.
-		//	msGenerateRequest = mapSectionGenerateRequests[requestPtr];
-		//	mapSectionWorkRequest = msGenerateRequest.Request;
-
-		//	if (mapSectionWorkRequest.Request.MsrJob.IsCancelled)
-		//	{
-		//		mapSectionResponse = HandleItemJobIsCancelled(mapSectionWorkRequest.Request, mEngineClient);
-		//		msGenerateRequest.RunWorkAction(mapSectionResponse);
-		//	}
-		//	else
-		//	{
-		//		mapSectionResponse = HandleItemJobNotCancelled(mapSectionWorkRequest.Request, mEngineClient);
-		//		msGenerateRequest.RunWorkAction(mapSectionResponse);
-		//	}
-
-		//	currentJobNumber = mapSectionWorkRequest.Request.MapLoaderJobNumber;
-		//	requestPtr++;
-
-		//	skipAmount = 0;
-		//	// Skip over requests from this same cancelled job
-		//	while (requestPtr < mapSectionGenerateRequests.Count && mapSectionGenerateRequests[requestPtr].Request.Request.MapLoaderJobNumber == currentJobNumber)
-		//	{
-		//		requestPtr++;
-		//		skipAmount++;
-		//	}
-
-		//	Debug.WriteLine($"Skipped {skipAmount} requests for Job: {currentJobNumber}.");
-		//}
-
 
 		[Conditional("DEBUG")]
 		private void ReportProcesssARequest(MapSectionRequest mapSectionRequest, bool jobIsCancelled)
@@ -348,6 +250,23 @@ namespace MapSectionProviderLib
 
 				}
 			}
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
+		{
+			if (mapSectionResponse.MapSectionVectors2 == null)
+			{
+				Debug.WriteLine($"WARNING: The MapSectionGenerator Processor received an empty MapSectionResponse.");
+			}
+
+			if (mapSectionRequest.MapSectionId != null)
+			{
+				Debug.Assert(mapSectionResponse.MapSectionId == mapSectionRequest.MapSectionId, "The MapSectionResponse has an ID different from the request.");
+			}
+
+			Debug.Assert(mapSectionRequest.MapSectionVectors2 == null, "MapSectionVectors2 should be Null.");
+			Debug.Assert(mapSectionRequest.MapSectionZVectors == null, "MapSectionZVectors should be Null.");
 		}
 
 		#endregion
