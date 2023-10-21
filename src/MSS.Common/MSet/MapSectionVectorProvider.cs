@@ -65,9 +65,9 @@ namespace MSS.Common
 
 		public void ReturnToPool(MapSectionResponse mapSectionResponse)
 		{
-			_ = mapSectionResponse.MapSectionVectors = ReturnMapSectionVectors(mapSectionResponse.MapSectionVectors);
+			mapSectionResponse.MapSectionVectors = ReturnMapSectionVectors(mapSectionResponse.MapSectionVectors);
 			//_ = mapSectionResponse.MapSectionVectors2 = ReturnMapSectionVectors2(mapSectionResponse.MapSectionVectors2);
-			_ = mapSectionResponse.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
+			mapSectionResponse.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
 		}
 
 		public void ReturnToPool(MapSection mapSection)

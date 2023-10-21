@@ -31,9 +31,7 @@ namespace MSS.Types.MSet
 		public MsrJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType ownerType, Subdivision subdivision, string originalSourceSubdivisionId,
 			VectorLong jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings, bool crossesYZero)
 		{
-			ObjectId test = new ObjectId(originalSourceSubdivisionId);
-
-			if (test == ObjectId.Empty)
+			if (originalSourceSubdivisionId == string.Empty)
 			{
 				Debug.WriteLine($"MsrJob Constructor: The originalSourceSubdivisionId is blank.");
 			}
@@ -216,7 +214,7 @@ namespace MSS.Types.MSet
 		{
 			if (IsCancelled)
 			{
-				Debug.WriteLine($"WARNING: Cancelling Job: {MapLoaderJobNumber} that has already been cancelled.");
+				Debug.WriteLine($"WARNING: MsrJob: Cancelling Job: {MapLoaderJobNumber} that has already been cancelled.");
 			}
 			else
 			{
@@ -238,7 +236,7 @@ namespace MSS.Types.MSet
 
 		public void HandleResponse(MapSectionRequest mapSectionRequest, MapSection mapSection)
 		{
-			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MapLoader's HandleResponse is being called from the Response Processor.");
+			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MsrJobs's HandleResponse is being called from the Response Processor.");
 
 			if (_isCompleted)
 			{
@@ -253,7 +251,7 @@ namespace MSS.Types.MSet
 					if (SectionsPending < 0)
 					{
 						// We are not cancelled -- this must mean that the counting is off.
-						Debug.WriteLine($"WARNING: HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total:{TotalNumberOfSectionsRequested}, Found:{SectionsFoundInRepo}, Generated:{SectionsGenerated}, Cancelled:{SectionsCancelled}, Pending: {SectionsPending}.");
+						Debug.WriteLine($"WARNING: MsrJob::HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total:{TotalNumberOfSectionsRequested}, Found:{SectionsFoundInRepo}, Generated:{SectionsGenerated}, Cancelled:{SectionsCancelled}, Pending: {SectionsPending}.");
 						//return;
 					}
 				}
@@ -317,9 +315,9 @@ namespace MSS.Types.MSet
 			}
 			else
 			{
-				Debug.WriteLine($"Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}, " +
+				Debug.WriteLine($"MsrJob: Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}, " +
 					$"Pending/Total: ({SectionsPending}/{TotalNumberOfSectionsRequested}), " +
-					$"Screen Position: Fix Me.");
+					$"Screen Position: {mapSection.ScreenPosition}.");
 			}
 
 			mapSectionRequest.Handled = true;
@@ -359,12 +357,12 @@ namespace MSS.Types.MSet
 
 		private void NoOpMapSectionReadyCallBack(MapSection mapSection)
 		{
-			Debug.WriteLine("WARNING. The NoOpCallBack is being called.");
+			Debug.WriteLine("WARNING. MsrJob. The NoOpCallBack is being called.");
 		}
 
 		private void NoOpMapViewUpdateCompleteCallBack(int jobNumber, bool isCancelled)
 		{
-			Debug.WriteLine("WARNING. The NoOpCallBack is being called.");
+			Debug.WriteLine("WARNING. MsrJob. The NoOpCallBack is being called.");
 		}
 
 		#endregion
@@ -382,7 +380,7 @@ namespace MSS.Types.MSet
 
 				var isEmpty = mapSection.IsEmpty;
 				var msgPrefix = isEmpty ? string.Empty : "The empty ";
-				Debug.WriteLine($"MapSection at screen position: FixMe, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. All Points Escaped: {allEscaped}");
+				Debug.WriteLine($"MsrJob: The MapSection at screen position: {mapSection.ScreenPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. All Points Escaped: {allEscaped}");
 			}
 		}
 
@@ -391,11 +389,11 @@ namespace MSS.Types.MSet
 		{
 			if (jobIsCancelled)
 			{
-				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {_stopwatch.Elapsed}. The job was cancelled.");
+				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {_stopwatch.Elapsed}. The job was cancelled.");
 			}
 			else
 			{
-				Debug.WriteLine($"MapLoader is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {_stopwatch.Elapsed}. There are {SectionsPending} sections pending.");
+				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {_stopwatch.Elapsed}. There are {SectionsPending} sections pending.");
 			}
 
 			//Debug.WriteLine("Request / Response Tallies\n");

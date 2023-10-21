@@ -48,7 +48,7 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

@@ -23,7 +23,7 @@ namespace MSetExplorer
 		AreaColorAndCalcSettings _areaColorAndCalcSettings;
 		private ColorBandSet? _previewColorBandSet;
 
-		private readonly bool _useDetailedDebug;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -31,8 +31,6 @@ namespace MSetExplorer
 
 		public PosterViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
 		{
-			_useDetailedDebug = true;
-
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_mapJobHelper = mapJobHelper;

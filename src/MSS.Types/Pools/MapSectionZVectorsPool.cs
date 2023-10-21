@@ -51,21 +51,23 @@ namespace MSS.Types
 		{
 			lock (_stateLock)
 			{
+				MapSectionZVectors result;
+
 				if (TotalFree == 0)
 				{
-					return NewObject(limbCount);
+					result = NewObject(limbCount);
 				}
 				else
 				{
-					var result = _pool.Pop();
+					result = _pool.Pop();
 					if (result.LimbCount != limbCount)
 					{
 						result.LimbCount = limbCount;
 					}
-
-					result.IncreaseRefCount();
-					return result;
 				}
+
+				result.IncreaseRefCount();
+				return result;
 			}
 		}
 

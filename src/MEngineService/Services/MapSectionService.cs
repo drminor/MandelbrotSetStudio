@@ -192,12 +192,12 @@ namespace MEngineService.Services
 				req.JobId, 
 				req.OwnerType, 
 				subdivision,
-				originalSourceSubdivisionId: "",
-				jobBlockOffset: new VectorLong(), 
+				originalSourceSubdivisionId: subdivision.Id.ToString(),
+				jobBlockOffset: new VectorLong(),	// The IMapSectionGenerator does not use this field. 
 				req.Precision, 
 				req.LimbCount, 
 				req.MapCalcSettings,
-				crossesYZero: false			// TODO: Provide a real value for crossesYZero  
+				crossesYZero: false					// The IMapSectionGenerator does not use this field.
 				);
 
 			return result;
@@ -208,7 +208,7 @@ namespace MEngineService.Services
 			var result = new MsrPosition(
 				requestNumber: req.RequestNumber, 
 				screenPosition: req.ScreenPosition, 
-				screenPositionReleativeToCenter: new VectorInt(),
+				screenPositionReleativeToCenter: new VectorInt(),   // The IMapSectionGenerator does not use this field.
 				sectionBlockOffset: req.BlockPosition,
 				isInverted: req.IsInverted
 				);

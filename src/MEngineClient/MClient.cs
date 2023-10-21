@@ -72,6 +72,11 @@ namespace MEngineClient
 			{
 				mapSectionRequest.ClientEndPointAddress = EndPointAddress;
 
+				if (mapSectionRequest.MapSectionZVectors != null)
+				{
+					Debug.Assert(mapSectionRequest.MapSectionZVectors.ReferenceCount == 1, "The MapSectionZVectors Reference Count should be one here.");
+				}
+
 				var mapSectionServiceRequest = MapTo(mapSectionRequest);
 
 				var stopWatch = Stopwatch.StartNew();
@@ -243,6 +248,7 @@ namespace MEngineClient
 					if (mapSectionZVectors != null)
 					{
 						_mapSectionVectorProvider.ReturnMapSectionZVectors(mapSectionZVectors);
+						mapSectionZVectors = null;
 					}
 				}
 			}

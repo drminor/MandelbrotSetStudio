@@ -75,6 +75,9 @@ namespace MEngineClient
 				if (result.AllRowsHaveEscaped && result.MapSectionZVectors != null)
 				{
 					_mapSectionVectorProvider.ReturnMapSectionZVectors(result.MapSectionZVectors);
+
+					Debug.Assert(result.MapSectionZVectors.ReferenceCount == 0, "The Ref Count is not zero after returning the MapSectionZVectors.");
+
 					result.MapSectionZVectors = null;
 				}
 			}
