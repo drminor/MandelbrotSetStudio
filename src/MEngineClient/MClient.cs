@@ -87,12 +87,6 @@ namespace MEngineClient
 
 				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 				mapSectionRequest.GenerationDuration = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerateMs);
-
-				// If this ct is cancelled, the MapSection is already cancelled.
-				//if (ct.IsCancellationRequested)
-				//{
-				//	mapSectionRequest.IsCancelled = true;
-				//}
 			}
 
 			return result;

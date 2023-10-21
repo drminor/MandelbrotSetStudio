@@ -15,6 +15,7 @@ using System.Threading;
 
 namespace MEngineService.Services
 {
+	// TODO: Consider persisting the ZValues using a channel different than the one used to send/receive the Map Count Values.
 	public class MapSectionService : IMapSectionService
     {
 		#region Private Fields
