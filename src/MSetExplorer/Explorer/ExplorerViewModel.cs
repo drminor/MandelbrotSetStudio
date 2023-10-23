@@ -38,15 +38,11 @@ namespace MSetExplorer
 			JobProgressViewModel = _viewModelFactory.CreateAJobProgressViewModel();
 
 			MapDisplayViewModel = mapDisplayViewModel;
-			//MapDisplayViewModel.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 			MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
-			
-			//MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 			MapDisplayViewModel.MapViewUpdateCompleted += MapDisplayViewModel_MapViewUpdateCompleted;
 
 			DispWidth = MapDisplayViewModel.ViewportSize.Width;
 			DispHeight = MapDisplayViewModel.ViewportSize.Height;
-
 
 			MapCoordsViewModel = _viewModelFactory.CreateAMapCoordsViewModel();
 

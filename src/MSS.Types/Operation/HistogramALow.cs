@@ -50,6 +50,8 @@ namespace MSS.Types
 				var low = values.Min();
 				var high = values.Max();
 
+				// TODO: Consider using ArrayPool<int>.Shared
+
 				_values = new int[1 + high - low];
 				_lowBound = low;
 

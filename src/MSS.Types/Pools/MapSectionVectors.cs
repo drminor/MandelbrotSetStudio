@@ -226,7 +226,6 @@ namespace MSS.Types
 			}
 		}
 
-
 		#endregion
 
 		#region IPoolable Support

@@ -1,5 +1,4 @@
 ﻿using MSS.Common;
-using MSS.Common.DataTransferObjects;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -23,7 +22,6 @@ namespace MSetExplorer
 		private const int BYTES_PER_PIXEL = 4;
 
 		private readonly SizeInt _blockSize;
-		private readonly DtoMapper _dtoMapper;
 		private readonly ObservableCollection<MapSection> _mapSections;
 
 		private readonly Action<WriteableBitmap> _onBitmapUpdate;
@@ -50,8 +48,6 @@ namespace MSetExplorer
 
 		public BitmapGrid(ObservableCollection<MapSection> mapSections, SizeDbl viewPortSize, Action<WriteableBitmap> onBitmapUpdate, SizeInt blockSize)
 		{
-			_dtoMapper = new DtoMapper();
-
 			_mapSections = mapSections;
 			_logicalViewportSize = viewPortSize;
 			_canvasControlOffset = new VectorInt();
@@ -314,7 +310,7 @@ namespace MSetExplorer
 			//}
 		}
 
-		public int ClearSections(IList<MapSection> mapSections)
+		public int ClearSections(List<Tuple<int, PointInt, VectorLong>> jobAndScreenPositions)
 		{
 			var numberCleared = 0;
 
@@ -322,13 +318,17 @@ namespace MSetExplorer
 			var zeros = GetClearBytes(blockRowPixelCount * BYTES_PER_PIXEL);
 			var sourceStride = Bitmap.PixelWidth * BYTES_PER_PIXEL;
 
-			foreach (var mapSection in mapSections)
+			foreach (var jobAndScreenPosition in jobAndScreenPositions)
 			{
-				var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
+				var jobNumber = jobAndScreenPosition.Item1;
+				var screenPosition = jobAndScreenPosition.Item2;
+				var jobMapBlockOffsetForSection = jobAndScreenPosition.Item3;
 
-				if (IsBLockVisible(blockPosition, ImageSizeInBlocks/*, mapSection.JobNumber, "DrawSections", warnOnFail: true*/))
+				var blockPosition = GetAdjustedBlockPositon(screenPosition, jobMapBlockOffsetForSection, MapBlockOffset);
+				var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+
+				if (IsBLockVisible(invertedBlockPos, ImageSizeInBlocks))
 				{
-					var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 					var loc = invertedBlockPos.Scale(_blockSize);
 
 					try
@@ -338,7 +338,7 @@ namespace MSetExplorer
 					}
 					catch (Exception e)
 					{
-						Debug.WriteLine($"DrawSections got exception: {e.Message}. JobNumber: {mapSection.JobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
+						Debug.WriteLine($"DrawSections got exception: {e.Message}. JobNumber: {jobNumber}. BlockPosition: {blockPosition}, ImageSize: {ImageSizeInBlocks}.");
 					}
 				}
 			}
@@ -388,7 +388,7 @@ namespace MSetExplorer
 			var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
 			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 
-			if (IsBLockVisible(invertedBlockPos, ImageSizeInBlocks/*, mapSection.JobNumber, "GetAndPlacePixels"*/))
+			if (IsBLockVisible(invertedBlockPos, ImageSizeInBlocks))
 			{
 				wasAdded = true;
 
@@ -474,11 +474,35 @@ namespace MSetExplorer
 				screenPosition = mapSection.ScreenPosition.Translate(offset);
 
 				// Update the mapSection's JobMapBlockOffset and ScreenPosition to avoid this transalation again.
-				//mapSection.UpdateJobMapBlockOffsetAndPos(jobMapBlockOffset, screenPosition);
-				//CheckScreenPos(mapSection);
+				mapSection.UpdateJobMapBlockOffsetAndPos(jobMapBlockOffset, screenPosition);
+				CheckScreenPos(mapSection);
 			}
 
 			return screenPosition;
+		}
+
+		private PointInt GetAdjustedBlockPositon(PointInt screenPosition, VectorLong jobMapBlockOffsetForSection, VectorLong jobMapBlockOffset)
+		{
+			PointInt result;
+
+			var df = jobMapBlockOffsetForSection.Sub(jobMapBlockOffset);
+
+			if (df.EqualsZero)
+			{
+				result = screenPosition;
+			}
+			else
+			{
+				if (!df.TryConvertToInt(out var offset))
+				{
+					throw new ArgumentException($"Cannot convert the result of subtracting the JobMapBlockOffset for the current display from the JobMapBlockOffset that was used to create this MapSection. " +
+						$"Current JobMapBlockOffset: {jobMapBlockOffset} This section's JobMapBlockOffset: {jobMapBlockOffsetForSection}.");
+				}
+
+				result = screenPosition.Translate(offset);
+			}
+
+			return result;
 		}
 
 		private bool IsBLockVisible(PointInt blockPosition, SizeInt imageSizeInBlocks/*, int jobNumber, string desc, bool warnOnFail = false*/)
@@ -612,7 +636,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckScreenPos(MapSection mapSection)
 		{
 			var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(mapSection.ScreenPosition, mapSection.JobMapBlockOffset, out var isInverted);

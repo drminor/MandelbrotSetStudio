@@ -372,15 +372,6 @@ namespace MSS.Common
 
 			if (mapSectionRequest.IsPaired)
 			{
-				//result = new List<MapSection>
-				//{ 
-				//	//CreateEmptyMapSection(mapSectionRequest, isInverted: false, mapSectionRequest.RegularPosition!.IsCancelled),
-				//	//CreateEmptyMapSection(mapSectionRequest, isInverted: true, mapSectionRequest.InvertedPosition!.IsCancelled),
-
-				//	CreateEmptyMapSection(mapSectionRequest, isInverted: false, isCancelled),
-				//	CreateEmptyMapSection(mapSectionRequest, isInverted: true, isCancelled),
-				//};
-
 				var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: false, isCancelled);
 				result.Add(ms);
 
@@ -389,13 +380,11 @@ namespace MSS.Common
 			}
 			else if(mapSectionRequest.RegularPosition != null)
 			{
-				//var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: false, mapSectionRequest.RegularPosition.IsCancelled);
 				var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: false, isCancelled);
 				result.Add(ms);
 			}
 			else if(mapSectionRequest.InvertedPosition != null)
 			{
-				//var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: true, mapSectionRequest.InvertedPosition.IsCancelled);
 				var ms = CreateEmptyMapSection(mapSectionRequest, isInverted: true, isCancelled);
 				result.Add(ms);
 			}

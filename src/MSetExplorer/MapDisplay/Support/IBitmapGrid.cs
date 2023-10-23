@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -27,7 +28,10 @@ namespace MSetExplorer
 
 		void ClearDisplay();
 		void DrawSections(IList<MapSection> mapSections);
-		int ClearSections(IList<MapSection> mapSections);
+
+		//int ClearSections(IList<MapSection> mapSections);
+		int ClearSections(List<Tuple<int, PointInt, VectorLong>> jobAndScreenPositions);
+
 		int ReDrawSections(bool reapplyColorMap);
 		bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description);
 
