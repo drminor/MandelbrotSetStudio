@@ -1438,7 +1438,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportNewRequests(List<MapSectionRequest> newRequests)
 		{
 			var newRequestsReport = _mapSectionBuilder.GetCountRequestsReport(newRequests);

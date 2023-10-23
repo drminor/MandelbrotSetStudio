@@ -36,7 +36,7 @@ namespace MSS.Common
 				result = CreateSectionRequestsSameYVals(msrJob, mapExtentInBlocks);
 			}
 
-			ReportCreateMapSectionRequests(result);
+			//ReportCreateMapSectionRequests(result);
 
 			return result;
 		}
@@ -399,12 +399,12 @@ namespace MSS.Common
 
 		#region Diagnostics
 
-		[Conditional("DEBUG")]
-		private void ReportCreateMapSectionRequests(List<MapSectionRequest> mapSectionRequests)
-		{
-			var countRequestsReport = GetCountRequestsReport(mapSectionRequests);
-			Debug.WriteLine(countRequestsReport);
-		}
+		//[Conditional("DEBUG")]
+		//private void ReportCreateMapSectionRequests(List<MapSectionRequest> mapSectionRequests)
+		//{
+		//	var countRequestsReport = GetCountRequestsReport(mapSectionRequests);
+		//	Debug.WriteLine(countRequestsReport);
+		//}
 
 		public string GetCountRequestsReport(List<MapSectionRequest> mapSectionRequests)
 		{

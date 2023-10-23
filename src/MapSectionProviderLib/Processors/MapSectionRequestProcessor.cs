@@ -40,7 +40,7 @@ namespace MapSectionProviderLib
 
 		private bool _isStopped;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

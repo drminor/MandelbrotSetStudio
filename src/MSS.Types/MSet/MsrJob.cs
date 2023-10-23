@@ -383,7 +383,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportStats(bool jobIsCancelled)
 		{
 			if (jobIsCancelled)

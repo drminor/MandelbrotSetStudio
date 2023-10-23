@@ -43,7 +43,7 @@ namespace MSetExplorer
 
 		private readonly bool _useDetailedDebug = false;
 
-		private int noSkippedFillBackbufferOps = 0;
+		//private int noSkippedFillBackbufferOps = 0;
 
 		#endregion
 
@@ -389,7 +389,7 @@ namespace MSetExplorer
 				}
 			}
 
-			noSkippedFillBackbufferOps = 0;
+			//noSkippedFillBackbufferOps = 0;
 			var numberSectionsNotDrawn = 0;
 
 			foreach (var mapSection in _mapSections)
@@ -405,7 +405,7 @@ namespace MSetExplorer
 
 			ReportPercentMapSectionsWithUpdatedScrPos();
 
-			Debug.WriteLine($"ReDraw skipped: {noSkippedFillBackbufferOps} fill BackBuffer operations.");
+			//Debug.WriteLine($"ReDraw skipped: {noSkippedFillBackbufferOps} fill BackBuffer operations.");
 
 			return numberSectionsNotDrawn;
 		}
@@ -436,10 +436,10 @@ namespace MSetExplorer
 							Debug.WriteLine($"There were {errors} color placement errors while Drawing Section on the UI thread for {mapSection.JobNumber}.");
 						}
 					}
-					else
-					{
-						noSkippedFillBackbufferOps++;
-					}
+					//else
+					//{
+					//	noSkippedFillBackbufferOps++;
+					//}
 
 					try
 					{

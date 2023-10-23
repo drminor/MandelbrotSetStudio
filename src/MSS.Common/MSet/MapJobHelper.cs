@@ -15,7 +15,7 @@ namespace MSS.Common
 
 		private readonly SubdivisonProvider _subdivisonProvider;
 
-		private readonly bool _useDetailedDebug = false;
+		//private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -159,10 +159,7 @@ namespace MSS.Common
 			// Calculate the total number of sample points from the origin to the lower, left corner of the map's coordinates and the Subdivision origin (i.e., BaseMapBlockOffset.)
 			var adjCoords = RNormalizer.Normalize(coords, rPointAndDelta.SamplePointDelta, out var nrmSamplePointDelta);
 
-			if (nrmSamplePointDelta.Exponent != rPointAndDelta.Exponent)
-			{
-				Debug.WriteLine($"INFO: GetMapAreaWithSizeFat is not using the existing subdivision.");
-			}
+			ReportUsingDifferentSubdivision(nrmSamplePointDelta, rPointAndDelta);
 
 			var positionV = new RVector(adjCoords.Position);
 
@@ -186,7 +183,7 @@ namespace MSS.Common
 
 			// Find or create a subdivision record in the database.
 			var subdivision = _subdivisonProvider.GetSubdivision(nrmSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			if (_useDetailedDebug) CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
+			CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
 
 			var originalSubdivisionId = mapAreaInfoV2.Subdivision.Id;
 			var result = new MapPositionSizeAndDelta(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSubdivisionId);
@@ -277,13 +274,6 @@ namespace MSS.Common
 			return mapAreaInfo;
 		}
 
-		[Conditional("DEBUG2")]
-		private void CheckSubdivisionConsistency(Subdivision original, Subdivision result, int normalizedPositionExponent, int normalizedSpdExponent)
-		{
-			Debug.WriteLine($"While calculating the MapAreaWithSize. Original SubdivisionId: {original.Id}, Result SubdivisionId: {result.Id}. " +
-				$"Exponents (Original-0, Position-1, SPD-2, Result-3): {original.SamplePointDelta.Exponent}, {normalizedPositionExponent}, {normalizedSpdExponent}, {result.SamplePointDelta.Exponent}.");
-		}
-
 		#endregion
 
 		#region GetMapPositionSizeAndDelta Methods
@@ -321,7 +311,7 @@ namespace MSS.Common
 			var adjPos = RNormalizer.Normalize(newPosition, coords.Size, out var adjMapSize);
 			var newCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
 
-			if (_useDetailedDebug) ReportCoordsDiff(coords, newCoords, "for a new display size (ScaleConstant).");
+			ReportCoordsDiff(coords, newCoords, "for a new display size (ScaleConstant).");
 
 			//var localMapBlockOffset = GetLocalMapBlockOffset(mapBlockOffset, subdivision);
 			var newSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
@@ -354,7 +344,7 @@ namespace MSS.Common
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var samplePointDelta = GetSamplePointDelta(coords, displaySize, ToleranceFactor, out var wToHRatio);
-			if (_useDetailedDebug) ReportSamplePointRatios(coords, displaySize, wToHRatio);
+			ReportSamplePointRatios(coords, displaySize, wToHRatio);
 
 			// The samplePointDelta may require the coordinates to be adjusted.
 			var mapSize = samplePointDelta.Scale(displaySize);
@@ -371,7 +361,7 @@ namespace MSS.Common
 			var adjPos2 = RNormalizer.Normalize(newPosition, uCoords.Size, out var adjMapSize2);
 			var newCoords = new RRectangle(new RPoint(adjPos2), adjMapSize2);
 
-			if (_useDetailedDebug) ReportCoordsDiff(coords, newCoords, "for a new Job");
+			ReportCoordsDiff(coords, newCoords, "for a new Job");
 
 			// Get a subdivision record from the database.
 			var subdivision = _subdivisonProvider.GetSubdivision(uSpd, mapBlockOffset, out var localMapBlockOffset);
@@ -395,26 +385,6 @@ namespace MSS.Common
 			wToHRatio = nH.DivideLimitedPrecision(nV);
 
 			return result;
-		}
-
-		private void ReportSamplePointRatios(RRectangle coords, SizeInt displaySize, double samplePointWToHRatio)
-		{
-			var coordsWToHRatio = coords.Height.DivideLimitedPrecision(coords.Width);
-			var canvasSizeWToHRatio = displaySize.Height / (double)displaySize.Width;
-			Debug.WriteLine($"While calculating the SamplePointDelta, we got wToHRatio: {samplePointWToHRatio}, coordsWToHRatio: {coordsWToHRatio} and displayWToHRatio: {canvasSizeWToHRatio}.");
-		}
-
-		private void ReportCoordsDiff(RRectangle coords, RRectangle newCoords, string desc)
-		{
-			var pos = coords.Position;
-			var newPos = newCoords.Position;
-			var nrmPos = RNormalizer.Normalize(pos, newPos, out var nrmNewPos);
-			var nrmSize = RNormalizer.Normalize(coords.Size, newCoords.Size, out var nrmNewSize);
-
-			var diffW = nrmSize.Width.Sub(nrmNewSize.Width);
-			var diffP = nrmPos.Diff(nrmNewPos);
-
-			Debug.WriteLine($"While getting the MapAreaInfo {desc}, the coordinates were adjusted by diffW: {diffW}, diffP: {diffP}.");
 		}
 
 		private BigVector GetMapBlockOffset(RPoint mapPosition, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
@@ -445,6 +415,49 @@ namespace MSS.Common
 
 			return offsetInSamplePoints;
 		}
+
+		#endregion
+
+		#region Diagnostics
+
+		[Conditional("DEBUG2")]
+		private void ReportUsingDifferentSubdivision(RSize nrmSamplePointDelta, RPointAndDelta rPointAndDelta)
+		{
+			if (nrmSamplePointDelta.Exponent != rPointAndDelta.Exponent)
+			{
+				Debug.WriteLine($"INFO: GetMapAreaWithSizeFat is not using the existing subdivision.");
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckSubdivisionConsistency(Subdivision original, Subdivision result, int normalizedPositionExponent, int normalizedSpdExponent)
+		{
+			Debug.WriteLine($"While calculating the MapAreaWithSize. Original SubdivisionId: {original.Id}, Result SubdivisionId: {result.Id}. " +
+				$"Exponents (Original-0, Position-1, SPD-2, Result-3): {original.SamplePointDelta.Exponent}, {normalizedPositionExponent}, {normalizedSpdExponent}, {result.SamplePointDelta.Exponent}.");
+		}
+
+		[Conditional("DEBUG2")]
+		private void ReportSamplePointRatios(RRectangle coords, SizeInt displaySize, double samplePointWToHRatio)
+		{
+			var coordsWToHRatio = coords.Height.DivideLimitedPrecision(coords.Width);
+			var canvasSizeWToHRatio = displaySize.Height / (double)displaySize.Width;
+			Debug.WriteLine($"While calculating the SamplePointDelta, we got wToHRatio: {samplePointWToHRatio}, coordsWToHRatio: {coordsWToHRatio} and displayWToHRatio: {canvasSizeWToHRatio}.");
+		}
+
+		[Conditional("DEBUG2")]
+		private void ReportCoordsDiff(RRectangle coords, RRectangle newCoords, string desc)
+		{
+			var pos = coords.Position;
+			var newPos = newCoords.Position;
+			var nrmPos = RNormalizer.Normalize(pos, newPos, out var nrmNewPos);
+			var nrmSize = RNormalizer.Normalize(coords.Size, newCoords.Size, out var nrmNewSize);
+
+			var diffW = nrmSize.Width.Sub(nrmNewSize.Width);
+			var diffP = nrmPos.Diff(nrmNewPos);
+
+			Debug.WriteLine($"While getting the MapAreaInfo {desc}, the coordinates were adjusted by diffW: {diffW}, diffP: {diffP}.");
+		}
+
 
 		#endregion
 	}
