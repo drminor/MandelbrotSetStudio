@@ -43,6 +43,8 @@ namespace MSetExplorer
 
 		private readonly bool _useDetailedDebug = false;
 
+		private int noSkippedFillBackbufferOps = 0;
+
 		#endregion
 
 		#region Constructor
@@ -377,7 +379,6 @@ namespace MSetExplorer
 
 		public int ReDrawSections(bool reapplyColorMap)
 		{
-			// TODO: Implement option to not reapply the ColorMap as the BitmapGrid is redrawing sections.
 			if (_colorMap != null)
 			{
 				var bitmapSize = new SizeDbl(_bitmap.Width, _bitmap.Height);
@@ -385,20 +386,17 @@ namespace MSetExplorer
 				if (RefreshBitmap(bitmapSize, CanvasSizeInBlocks, out var bitmap))
 				{
 					Bitmap = bitmap;
-					//reapplyColorMap = true;
 				}
 			}
 
-			// Force the reapplication of the color map - always
-			//reapplyColorMap = true;
-
+			noSkippedFillBackbufferOps = 0;
 			var numberSectionsNotDrawn = 0;
 
 			foreach (var mapSection in _mapSections)
 			{
 				if (mapSection.MapSectionVectors != null)
 				{
-					if (!DrawOneSection(mapSection, mapSection.MapSectionVectors, "RedrawSections"))
+					if (!DrawOneSection(mapSection, mapSection.MapSectionVectors, "RedrawSections", reapplyColorMap))
 					{
 						numberSectionsNotDrawn++;
 					}
@@ -407,10 +405,12 @@ namespace MSetExplorer
 
 			ReportPercentMapSectionsWithUpdatedScrPos();
 
+			Debug.WriteLine($"ReDraw skipped: {noSkippedFillBackbufferOps} fill BackBuffer operations.");
+
 			return numberSectionsNotDrawn;
 		}
 
-		public bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description)
+		public bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description, bool reapplyColorMap = true)
 		{
 			//CheckBitmapSize(Bitmap, ImageSizeInBlocks, description);
 
@@ -427,11 +427,18 @@ namespace MSetExplorer
 					//var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 					var loc = invertedBlockPos.Scale(_blockSize);
 
-					var errors = LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
-
-					if (errors > 0)
+					if (reapplyColorMap || !mapSectionVectors.BackBufferIsLoaded)
 					{
-						Debug.WriteLine($"There were {errors} color placement errors while Drawing Section on the UI thread for {mapSection.JobNumber}.");
+						var errors = LoadPixelArray(mapSectionVectors, _colorMap, !mapSection.IsInverted);
+
+						if (errors > 0)
+						{
+							Debug.WriteLine($"There were {errors} color placement errors while Drawing Section on the UI thread for {mapSection.JobNumber}.");
+						}
+					}
+					else
+					{
+						noSkippedFillBackbufferOps++;
 					}
 
 					try
@@ -778,6 +785,8 @@ namespace MSetExplorer
 					}
 				}
 			}
+
+			mapSectionVectors.BackBufferIsLoaded = true;
 
 			return errors;
 		}

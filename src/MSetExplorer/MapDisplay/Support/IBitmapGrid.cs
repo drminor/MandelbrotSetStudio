@@ -34,7 +34,9 @@ namespace MSetExplorer
 		int ClearSections(List<Tuple<int, PointInt, VectorLong>> jobAndScreenPositions);
 
 		int ReDrawSections(bool reapplyColorMap);
-		bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description);
+
+		//bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description);
+		bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description, bool reapplyColorMap = true);
 
 		SizeInt CalculateImageSize(SizeDbl logicalViewportSize, VectorInt canvasControlOffset);
 		List<MapSection> GetSectionsNotVisible();

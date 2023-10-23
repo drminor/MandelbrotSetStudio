@@ -32,6 +32,7 @@ namespace MSS.Types
 			Counts = counts;
 			EscapeVelocities = escapeVelocities;
 			BackBuffer = backBuffer;
+			BackBufferIsLoaded = false;
 
 			ReferenceCount = 0;
 		}
@@ -50,6 +51,7 @@ namespace MSS.Types
 		public ushort[] Counts { get; init; }
 		public ushort[] EscapeVelocities { get; init; }
 		public byte[] BackBuffer { get; init; }
+		public bool BackBufferIsLoaded { get; set; }
 
 		#endregion
 
@@ -143,7 +145,6 @@ namespace MSS.Types
 				Counts[startIndex + i] = (ushort)sourceBack[i];
 			}
 		}
-
 
 		public void UpdateFromEscapeVelocitiesRow(int rowNumber, ushort[] source)
 		{
@@ -248,6 +249,8 @@ namespace MSS.Types
 		{
 			Array.Clear(Counts);
 			Array.Clear(EscapeVelocities);
+			//Array.Clear(BackBuffer);
+			BackBufferIsLoaded = false;
 		}
 
 		//void IPoolable.CopyTo(object obj)
