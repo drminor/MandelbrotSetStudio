@@ -31,6 +31,7 @@ namespace MSetExplorer
 		private SizeDbl _logicalViewportSize;
 		private VectorInt _canvasControlOffset;
 		private SizeInt _imageSizeInBlocks;
+		private SizeInt _canvasSizeInBlocks;
 
 		private ColorBandSet _colorBandSet;
 		private ColorMap? _colorMap;
@@ -56,8 +57,10 @@ namespace MSetExplorer
 			_blockSize = blockSize;
 
 			ImageSizeInBlocks = CalculateImageSize(_logicalViewportSize, _canvasControlOffset);
+			CanvasSizeInBlocks = CalculateCanvasSize(_logicalViewportSize);
 
-			_bitmap = CreateBitmap(ImageSizeInBlocks);
+			//_bitmap = CreateBitmap(ImageSizeInBlocks);
+			_bitmap = CreateBitmap(CanvasSizeInBlocks);
 
 			_pixelsToClear = new byte[0];
 			_blockRect = new Int32Rect(0, 0, _blockSize.Width, _blockSize.Height);
@@ -208,6 +211,8 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks remains the same.");
 				}
 
+				CanvasSizeInBlocks = CalculateCanvasSize(_logicalViewportSize);
+
 				_logicalViewportSize = value;
 			}
 		}
@@ -243,6 +248,12 @@ namespace MSetExplorer
 			return mapExtentInBlocks;
 		}
 
+		public SizeInt CalculateCanvasSize(SizeDbl logicalViewportSize)
+		{
+			var mapExtentInBlocks = RMapHelper.GetMaximumMapExtentInBlocks(logicalViewportSize.Round(), _blockSize);
+			return mapExtentInBlocks;
+		}
+
 		// Each time a drawing operation is performed this is checked to see if the current canvas need to be resized.
 		// NOTE: Every drawing operation should begin with a call to ClearDisplay or RedrawSections.
 		public SizeInt ImageSizeInBlocks
@@ -266,6 +277,23 @@ namespace MSetExplorer
 			}
 		}
 
+		public SizeInt CanvasSizeInBlocks
+		{
+			get => _canvasSizeInBlocks;
+			set
+			{
+				if (value.Width < 0 || value.Height < 0)
+				{
+					return;
+				}
+
+				if (value != _canvasSizeInBlocks)
+				{
+					_canvasSizeInBlocks = value;
+				}
+			}
+		}
+
 		public long NumberOfCountValSwitches { get; private set; }
 
 		#endregion
@@ -275,9 +303,10 @@ namespace MSetExplorer
 		public void ClearDisplay()
 		{
 			var bitmapSize = new SizeDbl(_bitmap.Width, _bitmap.Height);
-			if (RefreshBitmap(bitmapSize, out var bitmap))
+
+			if (RefreshBitmap(bitmapSize, CanvasSizeInBlocks, out var bitmap))
 			{
-				//Debug.WriteLine("WARNING: Creating a new bitmap, just to clear the display.");
+				Debug.WriteLine("WARNING: Creating a new bitmap, just to clear the display.");
 				Bitmap = bitmap;
 			}
 			else
@@ -325,10 +354,10 @@ namespace MSetExplorer
 				var jobMapBlockOffsetForSection = jobAndScreenPosition.Item3;
 
 				var blockPosition = GetAdjustedBlockPositon(screenPosition, jobMapBlockOffsetForSection, MapBlockOffset);
-				var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 
-				if (IsBLockVisible(invertedBlockPos, ImageSizeInBlocks))
+				if (IsBLockVisible(blockPosition, ImageSizeInBlocks))
 				{
+					var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 					var loc = invertedBlockPos.Scale(_blockSize);
 
 					try
@@ -352,7 +381,8 @@ namespace MSetExplorer
 			if (_colorMap != null)
 			{
 				var bitmapSize = new SizeDbl(_bitmap.Width, _bitmap.Height);
-				if (RefreshBitmap(bitmapSize, out var bitmap))
+
+				if (RefreshBitmap(bitmapSize, CanvasSizeInBlocks, out var bitmap))
 				{
 					Bitmap = bitmap;
 					//reapplyColorMap = true;
@@ -382,14 +412,14 @@ namespace MSetExplorer
 
 		public bool DrawOneSection(MapSection mapSection, MapSectionVectors mapSectionVectors, string description)
 		{
-			CheckBitmapSize(Bitmap, ImageSizeInBlocks, description);
+			//CheckBitmapSize(Bitmap, ImageSizeInBlocks, description);
 
 			var wasAdded = false;
 			var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
-			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 
-			if (IsBLockVisible(invertedBlockPos, ImageSizeInBlocks))
+			if (IsBLockVisible(blockPosition, ImageSizeInBlocks))
 			{
+				var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 				wasAdded = true;
 
 				if (_colorMap != null)
@@ -418,6 +448,7 @@ namespace MSetExplorer
 			}
 			else
 			{
+				var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 				Debug.WriteLine($"DrawOneSection-{description} is not drawing MapSection: {mapSection.ToString(invertedBlockPos)}, ImageSize:{ImageSizeInBlocks}, it's off the map.");
 			}
 
@@ -431,9 +462,8 @@ namespace MSetExplorer
 			foreach (var mapSection in _mapSections)
 			{
 				var blockPosition = GetAdjustedBlockPositon(mapSection, MapBlockOffset);
-				var invertedBlockPos = GetInvertedBlockPos(blockPosition);
 
-				if (!IsBLockVisible(invertedBlockPos, ImageSizeInBlocks))
+				if (!IsBLockVisible(blockPosition, ImageSizeInBlocks))
 				{
 					sectionsNotVisible.Add(mapSection);
 				}
@@ -526,8 +556,8 @@ namespace MSetExplorer
 
 		private PointInt GetInvertedBlockPos(PointInt blockPosition)
 		{
-			//var maxYPtr = MapExtentInBlocks.Height - 1;
-			var maxYPtr = ImageSizeInBlocks.Height - 1;
+			CheckCanvasSize(Bitmap, CanvasSizeInBlocks, "GetInvertedBlockPosition");
+			var maxYPtr = CanvasSizeInBlocks.Height - (CanvasSizeInBlocks.Height - (ImageSizeInBlocks.Height - 1));
 			var result = new PointInt(blockPosition.X, maxYPtr - blockPosition.Y);
 
 			return result;
@@ -553,21 +583,20 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool RefreshBitmap(SizeDbl bitmapSize, [NotNullWhen(true)] out WriteableBitmap? bitmap)
+		private bool RefreshBitmap(SizeDbl bitmapSize, SizeInt canvasSizeInBlocks, [NotNullWhen(true)] out WriteableBitmap? bitmap)
 		{
-			var imageSize = ImageSizeInBlocks.Scale(_blockSize);
+			var canvasSize = canvasSizeInBlocks.Scale(_blockSize);
 
-			if (bitmapSize.Width != imageSize.Width || bitmapSize.Height != imageSize.Height)
+			if (bitmapSize.Width != canvasSize.Width || bitmapSize.Height != canvasSize.Height)
 			{
-				//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
-				Debug.WriteLine($"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != ImageSize: Creating new bitmap with size: {imageSize}.");
+				Debug.WriteLine($"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} != CanvasSize: Creating new bitmap with size: {canvasSize}.");
 
-				bitmap = CreateBitmap(ImageSizeInBlocks);
+				bitmap = CreateBitmap(canvasSizeInBlocks);
 				return true;
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} = ImageSize. Not creating a new bitmap.");
+				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid RefreshBitmap is being called. BitmapSize {bitmapSize} = CanvasSize. Not creating a new bitmap.");
 				bitmap = null;
 				return false;
 			}
@@ -627,10 +656,22 @@ namespace MSetExplorer
 		[Conditional("DEBUG2")]
 		private void CheckBitmapSize(WriteableBitmap bitmap, SizeInt imageSizeInBlocks, string desc)
 		{
-			var imageSize = ImageSizeInBlocks.Scale(_blockSize);
+			var imageSize = imageSizeInBlocks.Scale(_blockSize);
 			var bitmapSize = new SizeInt(bitmap.PixelWidth, bitmap.PixelHeight);
 
 			if (bitmapSize != imageSize)
+			{
+				Debug.WriteLine($"ImageSizeInBlocks != Bitmap Size. On {desc}.");
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckCanvasSize(WriteableBitmap bitmap, SizeInt canvasSizeInBlocks, string desc)
+		{
+			var canvasSize = canvasSizeInBlocks.Scale(_blockSize);
+			var bitmapSize = new SizeInt(bitmap.PixelWidth, bitmap.PixelHeight);
+
+			if (bitmapSize != canvasSize)
 			{
 				Debug.WriteLine($"ImageSizeInBlocks != Bitmap Size. On {desc}.");
 			}

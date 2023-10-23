@@ -919,42 +919,6 @@ namespace MSetExplorer
 			return mapRequestsPendingGeneration;
 		}
 
-		private void ClearMapSectionsOld(List<MapSectionRequest> requestsPendingGeneration)
-		{
-			// TODO: Consider avoiding the creation of an Empty MapSection -- instead call BitmapGrid with a list of ScreenPositions, already adjusted with its JobMapBlockOffset.
-			// Clear all sections for which we are waiting to receive a MapSection.
-			var mapSectionsToClear = new List<MapSection>();
-			foreach (var request in requestsPendingGeneration)
-			{
-				var mapSecs = _mapSectionBuilder.CreateEmptyMapSections(request, isCancelled: false);
-				mapSectionsToClear.AddRange(mapSecs);
-			}
-
-			var numberCleared = 0; // _bitmapGrid.ClearSections(mapSectionsToClear);
-
-			var numberRemoved = 0;
-			foreach (var ms in mapSectionsToClear)
-			{
-				var theRealMs = MapSections.FirstOrDefault(x => x.IsInverted == ms.IsInverted && x.SectionBlockOffset == ms.SectionBlockOffset);
-
-				if (theRealMs != null)
-				{
-					if (MapSections.Remove(theRealMs))
-					{
-						numberRemoved++;
-						_mapSectionVectorProvider.ReturnToPool(theRealMs);
-					}
-					else
-					{
-						Debug.WriteLineIf(_useDetailedDebug, "Could not find a MapSection matching a pending request.");
-					}
-
-				}
-			}
-
-			ReportClearMapSections(numberCleared, numberRemoved);
-		}
-
 		private void ClearMapSections(List<MapSectionRequest> requestsPendingGeneration)
 		{
 			// Clear all sections for which we are waiting to receive a MapSection.
@@ -1079,15 +1043,25 @@ namespace MSetExplorer
 				return false;
 			}
 
-			var curImageSize = _bitmapGrid.ImageSizeInBlocks;
-			var newImageSize = _bitmapGrid.CalculateImageSize(newAreaInfo.CanvasSize, newAreaInfo.CanvasControlOffset);
+			//// TODO: Remove the ImageSize and CanvasSize checks in the ShouldAttemptToReuseLoadedSections method.
+			//var curImageSize = _bitmapGrid.ImageSizeInBlocks;
+			//var newImageSize = _bitmapGrid.CalculateImageSize(newAreaInfo.CanvasSize, newAreaInfo.CanvasControlOffset);
 
-			// Wider is ok, Height must match exactly
-			if (newImageSize.Width > curImageSize.Width || newImageSize.Height != curImageSize.Height)
-			{
-				Debug.WriteLine("WARNING: Not using ReuseAndLoad because the ImageSize has changed.");
-				return false;
-			}
+			////if (newImageSize.Width > curImageSize.Width || newImageSize.Height != curImageSize.Height)
+			//if (newImageSize.Height != curImageSize.Height)
+			//{
+			//	Debug.WriteLine("WARNING: Using ReuseAndLoad even though the ImageSize has changed.");
+			//	return true;
+			//}
+
+			//var curCanvasSize = _bitmapGrid.CanvasSizeInBlocks;
+			//var newCanvasSize = _bitmapGrid.CalculateCanvasSize(newAreaInfo.CanvasSize);
+
+			//if (newCanvasSize != curCanvasSize)
+			//{
+			//	Debug.WriteLine("WARNING: Not using ReuseAndLoad because the CanvasSize has changed. THIS SHOULD NEVER HAPPEN.");
+			//	return false;
+			//}
 
 			return true;
 		}

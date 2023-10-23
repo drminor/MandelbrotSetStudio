@@ -17,6 +17,7 @@ namespace MSetExplorer
 		SizeDbl LogicalViewportSize { get; set; }
 		VectorInt CanvasControlOffset { get; set; }
 		SizeInt ImageSizeInBlocks { get; }
+		SizeInt CanvasSizeInBlocks { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
 		ColorBand? CurrentColorBand { get; }
@@ -37,6 +38,8 @@ namespace MSetExplorer
 
 		SizeInt CalculateImageSize(SizeDbl logicalViewportSize, VectorInt canvasControlOffset);
 		List<MapSection> GetSectionsNotVisible();
+
+		SizeInt CalculateCanvasSize(SizeDbl logicalViewportSize);
 
 	}
 }

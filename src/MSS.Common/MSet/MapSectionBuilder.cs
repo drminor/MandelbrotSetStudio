@@ -242,20 +242,18 @@ namespace MSS.Common
 
 		#region Create A Single MapSectionRequest
 
-		public MapSectionRequest CreateRequest(MsrJob msrJob, MsrPosition requestPosition)
+		private MapSectionRequest CreateRequest(MsrJob msrJob, MsrPosition requestPosition)
 		{
-			//var mapPosition = GetMapPosition(msrJob.Subdivision, requestPosition.SectionBlockOffset);
+			var mapPosition = GetMapPosition(msrJob.Subdivision, requestPosition.SectionBlockOffset);
+			var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, requestPosition);
+			//var mapSectionRequest = CreateRequest(msrJob, requestPosition.RequestNumber, requestPosition.ScreenPosition, requestPosition.ScreenPositionReleativeToCenter);
 
-			//var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, requestPosition);
-
-			var mapSectionRequest = CreateRequest(msrJob, requestPosition.RequestNumber, requestPosition.ScreenPosition, requestPosition.ScreenPositionReleativeToCenter);
 			return mapSectionRequest;
 		}
 
-		public MapSectionRequest CreateRequest(MsrJob msrJob, MsrPosition regularPosition, MsrPosition invertedPosition)
+		private MapSectionRequest CreateRequest(MsrJob msrJob, MsrPosition regularPosition, MsrPosition invertedPosition)
 		{
 			var mapPosition = GetMapPosition(msrJob.Subdivision, regularPosition.SectionBlockOffset);
-
 			var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, regularPosition, invertedPosition);
 
 			return mapSectionRequest;
@@ -264,10 +262,9 @@ namespace MSS.Common
 		public MapSectionRequest CreateRequest(MsrJob msrJob, int requestNumber, PointInt screenPosition, VectorInt screenPositionRelativeToCenter)
 		{
 			var sectionBlockOffset = RMapHelper.ToSubdivisionCoords(screenPosition, msrJob.JobBlockOffset, out var isInverted);
+
 			var requestPosition = new MsrPosition(requestNumber, screenPosition, screenPositionRelativeToCenter, sectionBlockOffset, isInverted);
-
 			var mapPosition = GetMapPosition(msrJob.Subdivision, requestPosition.SectionBlockOffset);
-
 			var mapSectionRequest = new MapSectionRequest(msrJob, mapPosition, requestPosition);
 
 			return mapSectionRequest;
@@ -298,62 +295,13 @@ namespace MSS.Common
 			return result;
 		}
 
-
-		public static string GetMapSectionRequestId(int mapLoaderJobNumber, int mapSectionRequestNumber)
-		{
-			return mapLoaderJobNumber.ToString() + "/" + mapSectionRequestNumber.ToString();
-		}
-
 		#endregion
 
 		#region Create MapSections
 
 		public MapSection CreateMapSection(MapSectionRequest mapSectionRequest, bool isInverted, MapSectionVectors mapSectionVectors)
 		{
-			//MapSection result;
-
-			//var jobBlockOffset = mapSectionRequest.JobBlockOffset;
-			//var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
-			//var isInvertedD = mapSectionRequest.IsInverted;
-
-			//var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInvertedD, jobBlockOffset);
-			//result = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
-
-			////if (isInverted)
-			////{
-			////	var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
-			////	var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
-
-			////	//var screenPosition = mapSectionRequest.InvertedPosition!.ScreenPosition;
-
-			////	//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
-			////	result = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
-
-			////}
-			////else
-			////{
-			////	//var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
-			////	var screenPosition = mapSectionRequest.RegularPosition!.ScreenPosition;
-
-			////	//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
-			////	result = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
-			////}
-
-			////var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
-			//////var isInverted = mapSectionRequest.IsInverted;
-
-			////var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
-
-			//////Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
-			////var mapSection = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
-
-			//UpdateMapSectionWithProcInfo(result, mapSectionRequest);
-
-
-
-
 			var sectionBlockOffset = mapSectionRequest.SectionBlockOffset;
-			//var isInvertedD = mapSectionRequest.IsInverted;
 
 			var jobBlockOffset = mapSectionRequest.JobBlockOffset;
 			var screenPosition = RMapHelper.ToScreenCoords(sectionBlockOffset, isInverted, jobBlockOffset);
@@ -467,7 +415,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public (int singles, int pairs) CountRequests(List<MapSectionRequest> result)
+		private (int singles, int pairs) CountRequests(List<MapSectionRequest> result)
 		{
 			//var total = 0;
 			var pairs = 0;
@@ -534,29 +482,6 @@ namespace MSS.Common
 
 			return result;
 		}
-
-		//[Conditional("DEBUG")]
-		//private void ReportCreateMapSectionRequests(int numberOfSections, int numberOfSingles, int numberOfPairs, List<MapSectionRequest> mapSectionRequests)
-		//{
-
-		//	var diff = numberOfSections - ((2 * numberOfPairs) + numberOfSingles);
-
-		//	if (diff > 0)
-		//	{
-		//		Debug.WriteLine($"CreateSectionRequests processed {numberOfSections} points and produced {numberOfPairs} pairs and {numberOfSingles} singles. Missing {diff} requests.");
-		//	}
-		//	else if (diff < 0)
-		//	{
-		//		Debug.WriteLine($"CreateSectionRequests processed {numberOfSections} points and produced {numberOfPairs} pairs and {numberOfSingles} singles. Found {diff} extra requests.");
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine($"CreateSectionRequests processed {numberOfSections} points and produced {numberOfPairs} pairs and {numberOfSingles} singles. As expected.");
-		//	}
-
-		//	var countRequestsReport = GetCountRequestsReport(mapSectionRequests);
-		//	Debug.WriteLine(countRequestsReport);
-		//}
 
 		#endregion
 	}

@@ -1,5 +1,4 @@
-﻿using MongoDB.Bson;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Threading;
 
@@ -311,7 +310,7 @@ namespace MSS.Types.MSet
 			if (!mapSection.IsEmpty)
 			{
 				_mapSectionReadyCallback(mapSection);
-				MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: false));
+				MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
 			}
 			else
 			{
@@ -332,13 +331,13 @@ namespace MSS.Types.MSet
 
 			if (!mapSection.IsEmpty)
 			{
-				MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest, isLastSection: true));
+				MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
 			}
 
 			mapSectionRequest.Handled = true;
 		}
 
-		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr, bool isLastSection)
+		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
 		{
 			var result = new MapSectionProcessInfo
 				(

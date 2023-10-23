@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MSS.Types
 {
@@ -93,6 +94,9 @@ namespace MSS.Types
 				lock (_stateLock)
 				{
 					obj.DecreaseRefCount();
+
+					Debug.Assert(obj.ReferenceCount >= 0, "The ReferenceCount should never be less than zero.");
+
 
 					if (obj.ReferenceCount > 0)
 					{

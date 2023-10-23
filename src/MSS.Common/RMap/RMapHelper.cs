@@ -152,14 +152,16 @@ namespace MSS.Common
 			return sizeOfLastBlock;
 		}
 
-		//private static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
-		//{
-		//	var rawResult = canvasSize.DivRem(blockSize, out var remainder);
-		//	var extra = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
-		//	var result = rawResult.Add(extra);
+		public static SizeInt GetMaximumMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
+		{
+			var rawResult = canvasSize.DivRem(blockSize, out var remainder);
+			var extra = new VectorInt(remainder.Width > 0 ? 1 : 0, remainder.Height > 0 ? 1 : 0);
+			var result = rawResult.Add(extra);
 
-		//	return result;
-		//}
+			var maxResult = result.Inflate(1);
+
+			return maxResult;
+		}
 
 		//public static SizeInt GetCanvasSizeInWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
 		//{
