@@ -448,6 +448,8 @@ namespace MSS.Common
 			{
 				var ms = result[i];
 
+				Debug.Assert(ms.RegularPosition != null | ms.InvertedPosition != null, "No MapSectionRequest should ever have both the Regular and Inverted Positions be null.");
+
 				if (ms.RegularPosition != null && ms.InvertedPosition != null)
 				{
 					total += 2;

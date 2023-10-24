@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
@@ -56,12 +57,12 @@ namespace MSS.Types.MSet
 			RequestCancelled = isCancelled;
 		}
 
-		public MapSection(MapSectionRequest req, MapSectionVectors? mapSectionVectors, bool isInverted, PointInt screenPosition, Func<ushort[], IHistogram> histogramBuilder) 
+		public MapSection(MapSectionRequest req, MapSectionVectors mapSectionVectors, bool isInverted, PointInt screenPosition, Func<ushort[], IHistogram> histogramBuilder) 
 			: this(req.MapLoaderJobNumber, req.RequestNumber, mapSectionVectors, req.Subdivision.Id.ToString(), req.JobBlockOffset, 
 				  req.SectionBlockOffset, isInverted, screenPosition, req.BlockSize, req.MapCalcSettings.TargetIterations, histogramBuilder)
 		{ }
 
-		public MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, VectorLong jobMapBlockPosition,
+		private MapSection(int jobNumber, int requestNumber, MapSectionVectors? mapSectionVectors, string subdivisionId, VectorLong jobMapBlockPosition,
 			VectorLong sectionBlockPosition, bool isInverted, PointInt screenPosition, SizeInt size, int targetIterations, Func<ushort[], IHistogram> histogramBuilder)
 		{
 			JobNumber = jobNumber;
@@ -107,9 +108,10 @@ namespace MSS.Types.MSet
 		public IHistogram Histogram => _histogram.Value;
 
 		public bool RequestCancelled { get; set; }
+
 		public bool IsEmpty => MapSectionVectors == null;
 
-		public bool IsLastSection { get; set; }
+		//public bool IsLastSection { get; set; }
 		public MapSectionProcessInfo? MapSectionProcessInfo { get; set; }
 		public MathOpCounts? MathOpCounts { get; set; }
 

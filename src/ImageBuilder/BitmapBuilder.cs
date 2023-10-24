@@ -235,7 +235,7 @@ namespace ImageBuilder
 				}
 				else
 				{
-					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. LastSection = {mapSection.IsLastSection}, Job Number: {mapSection.JobNumber}.");
+					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. Job Number: {mapSection.JobNumber}.");
 				}
 			}
 		}

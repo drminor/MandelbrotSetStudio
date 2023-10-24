@@ -49,7 +49,7 @@ namespace MapSectionProviderLib
 
 			foreach(var client in clients)
 			{
-				var tsk = Task.Run(() => ProcessTheQueue(client, _cts.Token));
+				var tsk = Task.Run(() => ProcessTheQueue(client));
 				workQueueProcessors.Add(tsk);
 
 				//var processQueueTask = Task.Factory.StartNew(ProcessTheQueue, client, _cts.Token, TaskCreationOptions.LongRunning, scheduler: TaskScheduler.Default);
@@ -127,15 +127,15 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private void ProcessTheQueue(IMEngineClient mEngineClient, CancellationToken ct)
+		private void ProcessTheQueue(IMEngineClient mEngineClient)
 		{
-			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			while (!_cts.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
-					var mapSectionGenerateRequests = _workQueue.Take(ct);
+					var mapSectionGenerateRequests = _workQueue.Take(_cts.Token);
 
-					if (ct.IsCancellationRequested) break;
+					if (_cts.IsCancellationRequested) break;
 
 					MapSectionGenerateRequest? mapSectionGenerateRequest;
 

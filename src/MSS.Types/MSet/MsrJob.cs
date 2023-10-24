@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace MSS.Types.MSet
 {
-	public class MsrJob : IMsrJob, IMapLoader, IMsrJobNew
+	public class MsrJob
 	{
 		#region Private Fields
 
@@ -17,7 +17,6 @@ namespace MSS.Types.MSet
 		private int _sectionsGenerated;
 		private int _sectionsCancelled;
 
-		private bool _isStarted;
 
 		#endregion
 
@@ -58,11 +57,10 @@ namespace MSS.Types.MSet
 			_sectionsGenerated = 0;
 			_sectionsCancelled = 0;
 
-			_isStarted = false;
+			IsStarted = false;
 			_isCompleted = false;
 
 			_stopwatch = new Stopwatch();
-			_stopwatch.Stop();
 
 			AllocateMathCounts();
 		}
@@ -71,7 +69,7 @@ namespace MSS.Types.MSet
 
 		#region Events
 
-		public event EventHandler<MapSectionProcessInfo>? MapSectionLoaded;
+		public event EventHandler<MapSectionRequest>? MapSectionLoaded;
 
 		public event EventHandler? JobHasCompleted;
 
@@ -102,17 +100,17 @@ namespace MSS.Types.MSet
 		public MapCalcSettings MapCalcSettings { get; init; }
 		public bool CrossesYZero { get; init; }
 
+		public bool IsStarted { get; private set; } 
 		public bool IsCancelled { get; set; }
 		public CancellationTokenSource CancellationTokenSource { get; set; }
 
 		public DateTime? ProcessingStartTime { get; set; }
 		public DateTime? ProcessingEndTime { get; set; }
 
-		public TimeSpan ElaspedTime => _stopwatch.Elapsed;
+		public TimeSpan ElaspedTime { get; private set; }
 		public TimeSpan TotalExecutionTime { get; set; }
 
 		public MathOpCounts? MathOpCounts { get; private set; }
-
 
 		public bool IsComplete { get; private set; }
 
@@ -177,21 +175,18 @@ namespace MSS.Types.MSet
 
 		public bool Start(int sectionsRequested, int sectionsCancelled, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback)
 		{
-			return Start(sectionsRequested, 0, 0, sectionsCancelled, mapSectionReadyCallback, mapViewUpdateCompleteCallback);
-		}
+			//return Start(sectionsRequested, 0, 0, sectionsCancelled, mapSectionReadyCallback, mapViewUpdateCompleteCallback);
 
-		public bool Start(int sectionsRequested, int sectionsFoundInRepo, int sectionsGenerated, int sectionsCancelled, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback)
-		{
-			if (_isStarted)
+			if (IsStarted)
 			{
 				throw new InvalidOperationException("Cannot start this MsrJob, it has already been started.");
 			}
 
-			_isStarted = true;
+			IsStarted = true;
 
 			TotalNumberOfSectionsRequested = sectionsRequested;
-			SectionsFoundInRepo = sectionsFoundInRepo;
-			SectionsGenerated = sectionsGenerated;
+			SectionsFoundInRepo = 0;
+			SectionsGenerated = 0;
 			SectionsCancelled = sectionsCancelled;
 
 			_mapSectionReadyCallback = mapSectionReadyCallback;
@@ -218,7 +213,7 @@ namespace MSS.Types.MSet
 			else
 			{
 				IsCancelled = true;
-				MarkJobAsComplete();
+				//MarkJobAsComplete();
 			}
 		}
 
@@ -227,9 +222,20 @@ namespace MSS.Types.MSet
 			if (!_isCompleted)
 			{
 				_isCompleted = true;
+				_stopwatch.Stop();
+				ElaspedTime = _stopwatch.Elapsed;
+
 				JobHasCompleted?.Invoke(this, new EventArgs());
 
 				_mapViewUpdateCompleteCallback(JobNumber, IsCancelled);
+
+				ReportMathCounts(MathOpCounts);
+
+				//Debug.WriteLine($"MsrJob. MarkJobIsComplete for Job: {MapLoaderJobNumber} Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
+			}
+			else
+			{
+				Debug.WriteLine($"WARNING!!: MsrJob. MarkJobIsComplete is being called after after IsComplete is set for Job: {MapLoaderJobNumber} Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
 			}
 		}
 
@@ -237,60 +243,22 @@ namespace MSS.Types.MSet
 		{
 			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MsrJobs's HandleResponse is being called from the Response Processor.");
 
-			if (_isCompleted)
-			{
-				if (IsCancelled)
-				{
-					// Ignore subsequent calls once completed for Cancelled Jobs.
-					// TODO: Need to return to the Pool MapSectionZVectors (and MapSectionVectors2?)
-					return;
-				}
-				else
-				{
-					if (SectionsPending < 0)
-					{
-						// We are not cancelled -- this must mean that the counting is off.
-						Debug.WriteLine($"WARNING: MsrJob::HandleResponse still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total:{TotalNumberOfSectionsRequested}, Found:{SectionsFoundInRepo}, Generated:{SectionsGenerated}, Cancelled:{SectionsCancelled}, Pending: {SectionsPending}.");
-						//return;
-					}
-				}
-			}
-
-			var jobIsCancelled = mapSectionRequest.MsrJob.IsCancelled;
-			if (jobIsCancelled || SectionsPending <= 0)
-			{
-				_stopwatch.Stop();
-			}
-
 			mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-
-			//if (mapSectionRequest.Mirror != null)
-			//{
-			//	mapSectionRequest.Mirror.ProcessingEndTime = DateTime.UtcNow;
-			//}
-
 			UpdateMathCounts(mapSection);
-
 			ReportGeneration(mapSectionRequest, mapSection);
 
-			//SectionsGenerated++; // The MapSectionGeneratorProcessor is updating the [number of] SectionsGenerated property.
-
-			if (jobIsCancelled || SectionsPending <= 0)
+			if (SectionsPending < 0)
 			{
-				HandleLastResponse(mapSectionRequest, mapSection);
-
-				MarkJobAsComplete();
-
-				// Performance 
-				ReportMathCounts(MathOpCounts);
-
-				// Debug Job Details
-				ReportStats(jobIsCancelled);
+				Debug.WriteLine($"WARNING!!: MsrJob. HandleResponse is still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
 			}
-			else
+
+			if (SectionsPending <= 0)
 			{
-				HandleResponseInternal(mapSectionRequest, mapSection);
+				ReportStats();
 			}
+
+			_mapSectionReadyCallback(mapSection);
+			MapSectionLoaded?.Invoke(this, mapSectionRequest);
 		}
 
 		public override string ToString()
@@ -302,57 +270,57 @@ namespace MSS.Types.MSet
 
 		#region Private Methods
 
-		private void HandleResponseInternal(MapSectionRequest mapSectionRequest, MapSection mapSection)
-		{
-			mapSection.IsLastSection = false;
+		//private void HandleResponseInternal(MapSectionRequest mapSectionRequest, MapSection mapSection)
+		//{
+		//	mapSection.IsLastSection = false;
 
-			// Call the callback, only if the MapSection is not Empty.
-			if (!mapSection.IsEmpty)
-			{
-				_mapSectionReadyCallback(mapSection);
-				MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
-			}
-			else
-			{
-				Debug.WriteLine($"MsrJob: Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}, " +
-					$"Pending/Total: ({SectionsPending}/{TotalNumberOfSectionsRequested}), " +
-					$"Screen Position: {mapSection.ScreenPosition}.");
-			}
+		//	// Call the callback, only if the MapSection is not Empty.
+		//	if (!mapSection.IsEmpty)
+		//	{
+		//		_mapSectionReadyCallback(mapSection);
+		//		MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine($"MsrJob: Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}, " +
+		//			$"Pending/Total: ({SectionsPending}/{TotalNumberOfSectionsRequested}), " +
+		//			$"Screen Position: {mapSection.ScreenPosition}.");
+		//	}
 
-			mapSectionRequest.Handled = true;
-		}
+		//	mapSectionRequest.Handled = true;
+		//}
 
-		private void HandleLastResponse(MapSectionRequest mapSectionRequest, MapSection mapSection)
-		{
-			mapSection.IsLastSection = true;
+		//private void HandleLastResponse(MapSectionRequest mapSectionRequest, MapSection mapSection)
+		//{
+		//	mapSection.IsLastSection = true;
 
-			// This is the last section -- call the callback if the MapSection is Empty or Not
-			_mapSectionReadyCallback(mapSection);
+		//	// This is the last section -- call the callback if the MapSection is Empty or Not
+		//	_mapSectionReadyCallback(mapSection);
 
-			if (!mapSection.IsEmpty)
-			{
-				MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
-			}
+		//	if (!mapSection.IsEmpty)
+		//	{
+		//		MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
+		//	}
 
-			mapSectionRequest.Handled = true;
-		}
+		//	mapSectionRequest.Handled = true;
+		//}
 
-		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
-		{
-			var result = new MapSectionProcessInfo
-				(
-				jobNumber: msr.MapLoaderJobNumber,
-				requestNumber: msr.RequestNumber,
-				msr.FoundInRepo,
-				msr.Completed,
-				msr.IsCancelled,
-				msr.TimeToCompleteGenRequest,
-				msr.ProcessingDuration,
-				msr.GenerationDuration
-				);
+		//private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
+		//{
+		//	var result = new MapSectionProcessInfo
+		//		(
+		//		jobNumber: msr.MapLoaderJobNumber,
+		//		requestNumber: msr.RequestNumber,
+		//		msr.FoundInRepo,
+		//		msr.Completed,
+		//		msr.IsCancelled,
+		//		msr.TimeToCompleteGenRequest,
+		//		msr.ProcessingDuration,
+		//		msr.GenerationDuration
+		//		);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private void NoOpMapSectionReadyCallBack(MapSection mapSection)
 		{
@@ -373,26 +341,22 @@ namespace MSS.Types.MSet
 		{
 			if (mapSectionRequest.ClientEndPointAddress != null && mapSectionRequest.TimeToCompleteGenRequest != null)
 			{
-				// TODO: All the property 'AllRowsEscaped' to the MapSection class.
-				//var allEscaped = mapSectionResponse?.AllRowsHaveEscaped == true ? "DONE" : null;
-				var allEscaped = "Undetermined.";
-
-				var isEmpty = mapSection.IsEmpty;
-				var msgPrefix = isEmpty ? string.Empty : "The empty ";
-				Debug.WriteLine($"MsrJob: The MapSection at screen position: {mapSection.ScreenPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. All Points Escaped: {allEscaped}");
+				var allEscaped = mapSectionRequest.AllRowsHaveEscaped == true ? "DONE" : null;
+				Debug.WriteLine($"MsrJob: The MapSection at screen position: {mapSection.ScreenPosition}, using client: {mapSectionRequest.ClientEndPointAddress}, " +
+					$"took: {mapSectionRequest.TimeToCompleteGenRequest.Value.TotalSeconds}. All Points Escaped: {allEscaped}");
 			}
 		}
 
-		[Conditional("DEBUG2")]
-		private void ReportStats(bool jobIsCancelled)
+		[Conditional("DEBUG")]
+		private void ReportStats()
 		{
-			if (jobIsCancelled)
+			if (IsCancelled)
 			{
-				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {_stopwatch.Elapsed}. The job was cancelled.");
+				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {ElaspedTime}. The job was cancelled.");
 			}
 			else
 			{
-				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {_stopwatch.Elapsed}. There are {SectionsPending} sections pending.");
+				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {ElaspedTime}. There are {SectionsPending} sections pending.");
 			}
 
 			//Debug.WriteLine("Request / Response Tallies\n");

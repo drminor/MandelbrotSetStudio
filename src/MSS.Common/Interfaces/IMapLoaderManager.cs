@@ -12,8 +12,8 @@ namespace MSS.Common
 
 		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings);
 
-		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId, VectorLong mapBlockOffset,
-			int precision, bool crossesYZero, MapCalcSettings mapCalcSettings);
+		//MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId, VectorLong mapBlockOffset,
+		//	int precision, bool crossesYZero, MapCalcSettings mapCalcSettings);
 
 		MsrJob CreateNewCopy(MsrJob s);
 

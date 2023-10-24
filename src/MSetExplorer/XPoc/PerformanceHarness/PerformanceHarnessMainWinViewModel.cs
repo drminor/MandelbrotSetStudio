@@ -525,15 +525,15 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			}
 
-			if (mapSection.IsLastSection)
-			{
-				//_receivedTheLastOne = true;
-				Debug.WriteLine($"{mapSection.JobNumber} is complete. Received {MapSections.Count} map sections.");
-			}
-			else
-			{
-				//Debug.WriteLine($"Got a mapSection.");
-			}
+			//if (mapSection.IsLastSection)
+			//{
+			//	//_receivedTheLastOne = true;
+			//	Debug.WriteLine($"{mapSection.JobNumber} is complete. Received {MapSections.Count} map sections.");
+			//}
+			//else
+			//{
+			//	//Debug.WriteLine($"Got a mapSection.");
+			//}
 		}
 
 		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)

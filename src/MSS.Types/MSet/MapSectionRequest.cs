@@ -58,7 +58,6 @@ namespace MSS.Types.MSet
 			RequestNumber = msrPosition.RequestNumber;
 			RequestId = MsrJob.MapLoaderJobNumber + "/" + RequestNumber;
 
-			//Mirror = null;
 			MapSectionId = null;
 
 			ScreenPosition = msrPosition.ScreenPosition;
@@ -85,12 +84,7 @@ namespace MSS.Types.MSet
 			RequestNumber = regularPosition.RequestNumber;
 			RequestId = MsrJob.MapLoaderJobNumber + "/" + RequestNumber;
 
-			//Mirror = null;
 			MapSectionId = null;
-
-			//ScreenPosition = screenPosition;
-			//ScreenPositionReleativeToCenter = screenPositionRelativeToCenter;
-			//IsInverted = isInverted;
 
 			ScreenPosition = regularPosition.ScreenPosition;
 			ScreenPositionReleativeToCenter = regularPosition.ScreenPositionReleativeToCenter;
@@ -111,8 +105,6 @@ namespace MSS.Types.MSet
 		public string RequestId { get; init; }
 
 		public string? MapSectionId { get; set; }
-
-		//public MapSectionRequest? Mirror { get; set; }
 
 		public MsrPosition?	RegularPosition { get; init; }
 		public MsrPosition? InvertedPosition { get; init; }
@@ -182,11 +174,15 @@ namespace MSS.Types.MSet
 		public bool Completed { get; set; }
 		public bool Saved { get; set; }
 		public bool Handled { get; set; }
+
 		public bool IsCancelled
 		{
 			get
 			{
+				Debug.Assert(RegularPosition != null | InvertedPosition != null, "No MapSectionRequest should ever have both the Regular and Inverted Positions be null.");
+
 				bool result;
+
 
 				if (IsPaired)
 				{
@@ -198,14 +194,9 @@ namespace MSS.Types.MSet
 					{
 						result = RegularPosition.IsCancelled;
 					}
-					else if (InvertedPosition != null)
-					{
-						result = InvertedPosition.IsCancelled;
-					}
 					else
 					{
-						Debug.WriteLine($"WARINING: Both the ReguarlPosition and the InvertedPosition are both NULL for MapSectionRequest: {this}.");
-						result = true;
+						result = InvertedPosition!.IsCancelled;
 					}
 				}
 
@@ -227,6 +218,9 @@ namespace MSS.Types.MSet
 		public TimeSpan? TimeToCompleteGenRequest { get; set; }
 		public TimeSpan? ProcessingDuration => ProcessingEndTime.HasValue ? ProcessingEndTime - ProcessingStartTime : null;
 		public TimeSpan? GenerationDuration { get; set; }
+
+		public bool AllRowsHaveEscaped { get; set; }
+		public bool RequestWasCompleted { get; set; }
 
 		public override string ToString()
 		{
@@ -256,23 +250,33 @@ namespace MSS.Types.MSet
 			return (msv, mszv);
 		}
 
-		public int Cancel()
+		public void Cancel()
 		{
-			var numberOfRequestsCancelled = 0;
-
 			if (RegularPosition != null)
 			{
-				RegularPosition.Cancel();
-				numberOfRequestsCancelled++;
+				if (!RegularPosition.IsCancelled)
+				{
+					RegularPosition.Cancel();
+
+					if (MsrJob.IsStarted)
+					{
+						MsrJob.SectionsCancelled++;
+					}
+				}
 			}
 
 			if (InvertedPosition != null)
 			{
-				InvertedPosition.Cancel();
-				numberOfRequestsCancelled++;
-			}
+				if (!InvertedPosition.IsCancelled)
+				{
+					InvertedPosition.Cancel();
 
-			return numberOfRequestsCancelled;
+					if (MsrJob.IsStarted)
+					{
+						MsrJob.SectionsCancelled++;
+					}
+				}
+			}
 		}
 
 		public bool Cancel(bool isInverted)
@@ -280,19 +284,25 @@ namespace MSS.Types.MSet
 			if (isInverted)
 			{
 				if (InvertedPosition == null) throw new NullReferenceException();
+				
 				if (InvertedPosition.IsCancelled) return false;
 				InvertedPosition.Cancel();
+				if (MsrJob.IsStarted)
+				{
+					MsrJob.SectionsCancelled++;
+				}
 			}
 			else
 			{
 				if (RegularPosition == null) throw new NullReferenceException();
+				
 				if (RegularPosition.IsCancelled) return false;
 				RegularPosition.Cancel();
-			}
 
-			if (MsrJob.TotalNumberOfSectionsRequested > 0)
-			{
-				MsrJob.SectionsCancelled++;
+				if (MsrJob.IsStarted)
+				{
+					MsrJob.SectionsCancelled++;
+				}
 			}
 
 			return true;

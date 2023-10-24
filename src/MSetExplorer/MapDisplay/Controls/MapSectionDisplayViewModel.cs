@@ -601,10 +601,10 @@ namespace MSetExplorer
 
 			lock (_paintLocker)
 			{
-				if (ActiveJobs.Any(x => x.MapLoaderJobNumber == mapSection.JobNumber))
+				if (IsJobActive(mapSection.JobNumber))
 				{
 					mapSectionShouldBeUsed = true;
-					RemovePendingRequest(mapSection);
+					RemovePendingRequest(mapSection); // TODO: Don't remove it until its been added to the MapSections
 				}
 				else
 				{
@@ -627,7 +627,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine("MapSectionDisplayViewModel. MapSectionReady received an Empty MapSection.");
+					Debug.WriteLine("WARNING!!: MapSectionDisplayViewModel. MapSectionReady received an Empty MapSection.");
 				}
 			}
 		}
@@ -644,6 +644,7 @@ namespace MSetExplorer
 				{
 					_bitmapGrid.DrawOneSection(mapSection, mapSection.MapSectionVectors, "DrawOneAsync");
 					MapSections.Add(mapSection);
+					//RemovePendingRequest(mapSection); // TODO: Remove it here.
 				}
 			}
 		}
@@ -667,6 +668,19 @@ namespace MSetExplorer
 					Debug.WriteLine($"Received error {e} from the ThreadPool QueueWorkItem DisplayJobCompleted");
 				}
 			});
+		}
+
+		private bool IsJobActive(int jobNumber)
+		{
+			for (var i = ActiveJobs.Count - 1; i >= 0; i--)
+			{
+				if (jobNumber == ActiveJobs[i].MapLoaderJobNumber)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		#endregion
@@ -1301,11 +1315,6 @@ namespace MSetExplorer
 		private MapSection? FindMapSection(MsrPosition msrPosition, IList<MapSection> mapSections)
 		{
 			return mapSections.FirstOrDefault(x => x.IsInverted == msrPosition.IsInverted && x.SectionBlockOffset == msrPosition.SectionBlockOffset);
-		}
-
-		private List<MapSection> FindMapSections(MapSectionRequest mapSectionRequest)
-		{
-			return MapSections.Where(x => x.SectionBlockOffset == mapSectionRequest.SectionBlockOffset).ToList();
 		}
 
 		private MapSectionRequest? FindMapSectionRequest(MsrPosition msr, List<MapSectionRequest> mapSectionRequests)

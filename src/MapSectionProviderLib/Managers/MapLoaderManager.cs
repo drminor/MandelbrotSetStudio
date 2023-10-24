@@ -46,18 +46,11 @@ namespace MapSectionProviderLib
 
 		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
-			var msrJob = CreateMapSectionRequestJob(jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(),
-				mapAreaInfo.MapBlockOffset, mapAreaInfo.Precision, mapAreaInfo.Coords.CrossesYZero, mapCalcSettings);
-
-			return msrJob;
-		}
-
-		public MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, Subdivision subdivision, string originalSourceSubdivisionId,
-			VectorLong mapBlockOffset, int precision, bool crossesYZero, MapCalcSettings mapCalcSettings)
-		{
+			var precision = mapAreaInfo.Precision;
 			var limbCount = GetLimbCount(precision);
 			var mapLoaderJobNumber = GetNextJobNumber();
-			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, subdivision, originalSourceSubdivisionId, mapBlockOffset,	precision, limbCount, mapCalcSettings, crossesYZero);
+			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset, 
+				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
 
 			return msrJob;
 		}

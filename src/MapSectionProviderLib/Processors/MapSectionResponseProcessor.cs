@@ -29,7 +29,7 @@ namespace MapSectionProviderLib
 			_workQueue = new BlockingCollection<MapSectionWorkRequest>(QUEUE_CAPACITY);
 			//_cancelledJobIds = new List<int>();
 
-			_workQueueProcessor = Task.Run(() => { ProcessTheQueue(_cts.Token); });
+			_workQueueProcessor = Task.Run(() => { ProcessTheQueue(); });
 		}
 
 		#endregion
@@ -99,13 +99,15 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private void ProcessTheQueue(CancellationToken ct)
+		private void ProcessTheQueue()
 		{
-			while(!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			while(!_cts.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
-					var mapSectionWorkRequest = _workQueue.Take(ct);
+					var mapSectionWorkRequest = _workQueue.Take(_cts.Token);
+
+					if (_cts.IsCancellationRequested) break;
 
 					mapSectionWorkRequest.Request.Completed = true;
 

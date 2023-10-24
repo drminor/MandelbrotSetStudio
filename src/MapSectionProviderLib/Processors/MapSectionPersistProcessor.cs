@@ -35,7 +35,7 @@ namespace MapSectionProviderLib
 			_cts = new CancellationTokenSource();
 
 			_workQueue = new BlockingCollection<MapSectionPersistRequest>(QUEUE_CAPACITY);
-			_workQueueProcessor = Task.Run(async () => await ProcessTheQueueAsync(_cts.Token));
+			_workQueueProcessor = Task.Run(async () => await ProcessTheQueueAsync());
 		}
 
 		#endregion
@@ -91,13 +91,15 @@ namespace MapSectionProviderLib
 		#region Private Methods
 
 		// TODO: Consider replacing all Asnyc methods with synchronous methods for the MapSectionPersistProcessor
-		private async Task ProcessTheQueueAsync(CancellationToken ct)
+		private async Task ProcessTheQueueAsync()
 		{
-			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
+			while (!_cts.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
-					var mapSectionPersistRequest = _workQueue.Take(ct);
+					var mapSectionPersistRequest = _workQueue.Take(_cts.Token);
+					
+					if (_cts.IsCancellationRequested) break;
 
 					var mapSectionRequest = mapSectionPersistRequest.Request;
 
@@ -119,7 +121,7 @@ namespace MapSectionProviderLib
 
 						if (mapSectionResponse.MapSectionVectors2 != null)
 						{
-							await PersistTheCountAndZValuesAsync(mapSectionRequest, mapSectionResponse, ct);
+							await PersistTheCountAndZValuesAsync(mapSectionRequest, mapSectionResponse);
 						}
 						else
 						{
@@ -142,15 +144,15 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task PersistTheCountAndZValuesAsync(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
+		private async Task PersistTheCountAndZValuesAsync(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
-			var mapSectionId = await PersistTheCountValuesAsync(mapSectionRequest, mapSectionResponse, ct);
+			var mapSectionId = await PersistTheCountValuesAsync(mapSectionRequest, mapSectionResponse);
 
 			if (mapSectionId.HasValue)
 			{
 				if (mapSectionResponse.AllRowsHaveEscaped)
 				{
-					var zValuesRecordOnFile = await _mapSectionAdapter.DoesMapSectionZValuesExistAsync(mapSectionId.Value, ct);
+					var zValuesRecordOnFile = await _mapSectionAdapter.DoesMapSectionZValuesExistAsync(mapSectionId.Value, _cts.Token);
 
 					if (zValuesRecordOnFile)
 					{
@@ -161,7 +163,7 @@ namespace MapSectionProviderLib
 				{
 					if (mapSectionResponse.MapSectionZVectors != null)
 					{
-						await PersistTheZValuesAsync(mapSectionId.Value, mapSectionResponse, ct);
+						await PersistTheZValuesAsync(mapSectionId.Value, mapSectionResponse);
 					}
 					else
 					{
@@ -174,7 +176,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private async Task<ObjectId?> PersistTheCountValuesAsync(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse, CancellationToken ct)
+		private async Task<ObjectId?> PersistTheCountValuesAsync(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
 			CheckMapSectionId(mapSectionRequest, mapSectionResponse);
 
@@ -222,9 +224,9 @@ namespace MapSectionProviderLib
 			return mapSectionId;
 		}
 
-		private async Task PersistTheZValuesAsync(ObjectId mapSectionId, MapSectionResponse mapSectionResponse, CancellationToken ct)
+		private async Task PersistTheZValuesAsync(ObjectId mapSectionId, MapSectionResponse mapSectionResponse)
 		{
-			var zValuesRecordOnFile = await _mapSectionAdapter.DoesMapSectionZValuesExistAsync(mapSectionId, ct);
+			var zValuesRecordOnFile = await _mapSectionAdapter.DoesMapSectionZValuesExistAsync(mapSectionId, _cts.Token);
 
 			if (zValuesRecordOnFile)
 			{

@@ -69,14 +69,16 @@ namespace MSetExplorer
 			}
 		}
 
-		private void MsrJob_MapSectionLoaded(object? sender, MapSectionProcessInfo e)
+		private void MsrJob_MapSectionLoaded(object? sender, MapSectionRequest e)
 		{
 			//Debug.WriteLine($"Got a RequestCompleted event. JobNumber: {e.JobNumber}, Number Completed: {e.RequestsCompleted}.");
 			_synchronizationContext?.Post((o) => HandleMapSectionLoaded(e), null);
 		}
 
-		private void HandleMapSectionLoaded(MapSectionProcessInfo mapSectionProcessInfo)
+		private void HandleMapSectionLoaded(MapSectionRequest mapSectionRequest)
 		{
+			var mapSectionProcessInfo = CreateMSProcInfo(mapSectionRequest);
+
 			MapSectionProcessInfos.Add(mapSectionProcessInfo);
 
 			if (CurrentJobProgressInfo.JobNumber == mapSectionProcessInfo.JobNumber)
@@ -90,6 +92,23 @@ namespace MSetExplorer
 					CurrentJobProgressInfo.GeneratedCount += 1;
 				}
 			}
+		}
+
+		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
+		{
+			var result = new MapSectionProcessInfo
+				(
+				jobNumber: msr.MapLoaderJobNumber,
+				requestNumber: msr.RequestNumber,
+				msr.FoundInRepo,
+				msr.Completed,
+				msr.IsCancelled,
+				msr.TimeToCompleteGenRequest,
+				msr.ProcessingDuration,
+				msr.GenerationDuration
+				);
+
+			return result;
 		}
 
 		private void Report(TimeSpan? totalExecutionTime)
