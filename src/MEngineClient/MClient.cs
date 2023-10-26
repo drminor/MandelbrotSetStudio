@@ -84,6 +84,8 @@ namespace MEngineClient
 				stopWatch.Stop();
 
 				result = MapFrom(mapSectionServiceResponse, mapSectionRequest);
+				mapSectionRequest.MathOpCounts = mapSectionServiceResponse.MathOpCounts?.Clone();
+
 
 				mapSectionRequest.TimeToCompleteGenRequest = stopWatch.Elapsed;
 				mapSectionRequest.GenerationDuration = TimeSpan.FromMilliseconds(mapSectionServiceResponse.TimeToGenerateMs);
@@ -201,41 +203,41 @@ namespace MEngineClient
 			return mapSectionServiceRequest;
 		}
 
-		private MapSectionResponse MapFrom(MapSectionServiceResponse res, MapSectionRequest mapSectionRequest)
+		private MapSectionResponse MapFrom(MapSectionServiceResponse serviceResponse, MapSectionRequest mapSectionRequest)
 		{
 			var (mapSectionVectors2, mapSectionZVectors) = mapSectionRequest.TransferMapVectorsOut2();
 
-			if (!res.RequestCancelled)
+			if (!serviceResponse.RequestCancelled)
 			{
 				if (mapSectionVectors2 != null)
 				{
-					if (res.Counts.Length > 0)
+					if (serviceResponse.Counts.Length > 0)
 					{
-						mapSectionVectors2.Counts = res.Counts;
+						mapSectionVectors2.Counts = serviceResponse.Counts;
 					}
 
-					if (res.EscapeVelocities.Length > 0)
+					if (serviceResponse.EscapeVelocities.Length > 0)
 					{
-						mapSectionVectors2.EscapeVelocities = res.EscapeVelocities;
+						mapSectionVectors2.EscapeVelocities = serviceResponse.EscapeVelocities;
 					}
 				}
 				else
 				{
-					mapSectionVectors2 = new MapSectionVectors2(mapSectionRequest.BlockSize, res.Counts, res.EscapeVelocities);
+					mapSectionVectors2 = new MapSectionVectors2(mapSectionRequest.BlockSize, serviceResponse.Counts, serviceResponse.EscapeVelocities);
 				}
 
-				if (mapSectionRequest.MapCalcSettings.SaveTheZValues && !res.AllRowsHaveEscaped)
+				if (mapSectionRequest.MapCalcSettings.SaveTheZValues && !serviceResponse.AllRowsHaveEscaped)
 				{
 					if (mapSectionZVectors == null)
 					{
 						mapSectionZVectors = _mapSectionVectorProvider.ObtainMapSectionZVectors(mapSectionRequest.LimbCount);
 					}
 
-					Array.Copy(res.Zrs, mapSectionZVectors.Zrs, res.Zrs.Length);
-					Array.Copy(res.Zis, mapSectionZVectors.Zis, res.Zis.Length);
-					Array.Copy(res.HasEscapedFlags, mapSectionZVectors.HasEscapedFlags, res.HasEscapedFlags.Length);
+					Array.Copy(serviceResponse.Zrs, mapSectionZVectors.Zrs, serviceResponse.Zrs.Length);
+					Array.Copy(serviceResponse.Zis, mapSectionZVectors.Zis, serviceResponse.Zis.Length);
+					Array.Copy(serviceResponse.HasEscapedFlags, mapSectionZVectors.HasEscapedFlags, serviceResponse.HasEscapedFlags.Length);
 
-					mapSectionZVectors.FillRowHasEscaped(res.RowHasEscaped, mapSectionZVectors.RowHasEscaped);
+					mapSectionZVectors.FillRowHasEscaped(serviceResponse.RowHasEscaped, mapSectionZVectors.RowHasEscaped);
 				}
 				else
 				{
@@ -252,8 +254,8 @@ namespace MEngineClient
 				mapSectionZVectors?.ResetObject();
 			}
 
-			var result = new MapSectionResponse(mapSectionRequest, res.RequestCompleted, res.AllRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors, res.RequestCancelled);
-			result.MathOpCounts = res.MathOpCounts?.Clone();
+			var result = new MapSectionResponse(mapSectionRequest, serviceResponse.RequestCompleted, serviceResponse.AllRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors, serviceResponse.RequestCancelled);
+			//result.MathOpCounts = serviceResponse.MathOpCounts?.Clone();
 
 			return result;
 		}

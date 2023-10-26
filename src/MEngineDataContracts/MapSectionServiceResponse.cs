@@ -54,7 +54,7 @@ namespace MEngineDataContracts
 		public double TimeToGenerateMs { get; init; }
 
 		[DataMember(Order = 8)]
-		public MathOpCounts MathOpCounts { get; init; }
+		public MathOpCounts MathOpCounts { get; set; }
 
 		[DataMember(Order = 9)]
 		public byte[] Counts { get; set; }

@@ -40,7 +40,7 @@ namespace MapSectionProviderLib
 
 		private bool _isStopped;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -248,6 +248,7 @@ namespace MapSectionProviderLib
 
 					var mapSectionVectors = _mapSectionVectorProvider.ObtainMapSectionVectors();
 					mapSectionVectors.Load(mapSectionBytes.Counts, mapSectionBytes.EscapeVelocities);
+
 					var result = CreateTheMapSections(mapSectionVectors, request);
 					PersistJobMapSectionRecord(request);
 
@@ -281,7 +282,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"FetchOrQueueForProcessing Request for {request.ScreenPosition} not found in the repo: Queuing for generation.");
+				//Debug.WriteLineIf(_useDetailedDebug, $"FetchOrQueueForProcessing Request for {request.ScreenPosition} not found in the repo: Queuing for generation.");
 
 				QueueForProcessing(mapSectionWorkRequest);
 				return null;
@@ -420,6 +421,34 @@ namespace MapSectionProviderLib
 			}
 		}
 
+		private Tuple<MapSection?, MapSection?>? CreateTheMapSections(MapSectionVectors mapSectionVectors, MapSectionRequest request)
+		{
+			MapSection? mapSection1;
+			MapSection? mapSection2;
+
+			if (request.RegularPosition != null && !request.RegularPosition.IsCancelled)
+			{
+				mapSectionVectors.IncreaseRefCount();
+				mapSection1 = _mapSectionBuilder.CreateMapSection(request, isInverted: false, mapSectionVectors);
+			}
+			else
+			{
+				mapSection1 = null;
+			}
+
+			if (request.InvertedPosition != null && !request.InvertedPosition.IsCancelled)
+			{
+				mapSectionVectors.IncreaseRefCount();
+				mapSection2 = _mapSectionBuilder.CreateMapSection(request, isInverted: true, mapSectionVectors);
+			}
+			else
+			{
+				mapSection2 = null;
+			}
+
+			return new Tuple<MapSection?, MapSection?>(mapSection1, mapSection2);
+		}
+
 		private void UpdateMsrJobWithResultCounts(Tuple<MapSection?, MapSection?>? result, MapSectionRequest request)
 		{
 			var sectionsFoundInRepo = 0;
@@ -461,35 +490,6 @@ namespace MapSectionProviderLib
 
 			request.MsrJob.SectionsFoundInRepo += sectionsFoundInRepo;
 			request.MsrJob.SectionsCancelled += sectionsCancelled;
-		}
-
-		private Tuple<MapSection?, MapSection?>? CreateTheMapSections(MapSectionVectors mapSectionVectors, MapSectionRequest request)
-		{
-			MapSection? mapSection1;
-			MapSection? mapSection2;
-
-			if (request.RegularPosition != null && !request.RegularPosition.IsCancelled)
-			{
-				mapSectionVectors.IncreaseRefCount();
-				mapSection1 = _mapSectionBuilder.CreateMapSection(request, isInverted: false, mapSectionVectors);
-
-			}
-			else
-			{
-				mapSection1 = null;
-			}
-
-			if (request.InvertedPosition != null && !request.InvertedPosition.IsCancelled)
-			{
-				mapSectionVectors.IncreaseRefCount();
-				mapSection2 = _mapSectionBuilder.CreateMapSection(request, isInverted: true, mapSectionVectors);
-			}
-			else
-			{
-				mapSection2 = null;
-			}
-
-			return new Tuple<MapSection?, MapSection?>(mapSection1, mapSection2);
 		}
 
 		private void UpdateWithZValues(MapSectionRequest request)
@@ -600,6 +600,7 @@ namespace MapSectionProviderLib
 
 		private void HandleGeneratedResponse(MapSectionWorkRequest mapSectionWorkRequest, MapSectionResponse mapSectionResponse)
 		{
+			// NOTE: This is code is executed by multiple threads concurrently.
 			Debug.Assert(mapSectionWorkRequest.Request.MapLoaderJobNumber == mapSectionWorkRequest.JobNumber, "mm1");
 			Debug.Assert(!mapSectionWorkRequest.Request.Pending, "Pending Items should not be InProcess.");
 
@@ -653,7 +654,7 @@ namespace MapSectionProviderLib
 			{
 				Debug.WriteLine("Sending to the Response Processor a Cancelled request.");
 			}
-			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, _cts.Token);
+			_mapSectionResponseProcessor.AddWork(mapSectionWorkRequest, _cts.Token); // This will result in the MsrJob's HandleResponse method being called.
 		}
 
 		private void QueueForPersistence(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)

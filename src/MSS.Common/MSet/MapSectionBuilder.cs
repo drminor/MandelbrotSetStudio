@@ -60,10 +60,10 @@ namespace MSS.Common
 		private List<MapSectionRequest> CreateSectionRequestsMixedYVals(MsrJob msrJob, SizeInt mapExtentInBlocks)
 		{
 			// All positions being requested
-			var subCoords = GetSubdivisionCoords(msrJob, mapExtentInBlocks);
+			var msrPositions = GetSubdivisionCoords(msrJob, mapExtentInBlocks);
 
 			// Collect all of the non-inverted requests
-			var regularPositions = subCoords.Where(x => !x.IsInverted).ToArray();
+			var regularPositions = msrPositions.Where(x => !x.IsInverted).ToArray();
 			var matchedRegularPositions = new bool[regularPositions.Length];
 
 			// Prepare the result
@@ -71,32 +71,38 @@ namespace MSS.Common
 			//		The second item in each Tuple is the matched item, if extant.
 			var coordPairs = new List<Tuple<MsrPosition, MsrPosition?>>();
 
-			foreach (var subCoord in subCoords)
+			foreach (var msrPos in msrPositions)
 			{
-				// If this item is Inverted, find the corresponding non-inverted item, if extant
-				var indexOfRegular = subCoord.IsInverted ? GetIndexOfMirror(subCoord, regularPositions) : -1;
-
-				if (indexOfRegular != -1)
+				if (msrPos.IsInverted)
 				{
-					// subCoord is Inverted and we found the matching non-inverted item
-					var mirror = regularPositions[indexOfRegular];
-					
-					// Keep track of which non-inverted items are part of a pair
-					matchedRegularPositions[indexOfRegular] = true;
+					var indexOfRegular = GetIndexOfMirror(msrPos, regularPositions);
 
-					coordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(subCoord, mirror));
+					if (indexOfRegular != -1)
+					{
+						// The msrPos is inverted and we found the matching non-inverted item
+						var matchingRegularPos = regularPositions[indexOfRegular];
+
+						// Keep track of which non-inverted items are part of a pair
+						matchedRegularPositions[indexOfRegular] = true;
+
+						coordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(msrPos, matchingRegularPos));
+					}
+					else
+					{
+						// There is no corresponding regular position for this inverted item
+						coordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(msrPos, null));
+					}
 				}
 				else
 				{
-					// subCoord is Inverted and we have no match,
-					// or subCoord is non-Inverted.
-					coordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(subCoord, null));
+					// subCoord is non-Inverted, i.e., regular
+					coordPairs.Add(new Tuple<MsrPosition, MsrPosition?>(msrPos, null));
 				}
 			}
 
 			// Prepare the result list of MapSectionRequests.
-			// Each request will be for a single non-inverted or for a single inverted, or for a pair
-			// In the case of a pair, the non-inverted specified in the first argument and 
+			// Each request will be for a single non-inverted, a single inverted, or for a pair
+			// In the case of a pair, the non-inverted item is specified first argument and 
 			// the inverted item specified as the second argument.
 			var result = new List<MapSectionRequest>();
 			var centerBlockIndex = new PointInt(mapExtentInBlocks.DivInt(new SizeInt(2)));
@@ -107,25 +113,25 @@ namespace MSS.Common
 			// Iterate over the temp result
 			for (var coordPairPtr = 0; coordPairPtr < coordPairs.Count; coordPairPtr++)
 			{
-				var primary = coordPairs[coordPairPtr].Item1;
-				var mirror = coordPairs[coordPairPtr].Item2;
+				var msrPos = coordPairs[coordPairPtr].Item1;
+				var matchingRegularPos = coordPairs[coordPairPtr].Item2;
 
 				MapSectionRequest mapSectionRequest;
 
-				if (!primary.IsInverted)
+				if (!msrPos.IsInverted)
 				{
 					// The main request is regular -- include this item, only if this item is not a mirror of some other (inverted) MapSection.
-					var matched = matchedRegularPositions[invertedPtr];
+					var doesMsrPosHaveAMatch = matchedRegularPositions[invertedPtr];
 
-					if (!matched)
+					if (!doesMsrPosHaveAMatch)
 					{
 						// Single request for a non-inverted item.
-						mapSectionRequest = CreateRequest(msrJob, primary);
+						mapSectionRequest = CreateRequest(msrJob, msrPos);
 						result.Add(mapSectionRequest);
 					}
 					else
 					{
-						// Not adding this item, it is being used as Mirror for some other item.
+						// Not adding this regular item, it is being used as Mirror for some other item.
 					}
 
 					// Advance the invertedPtr so that the next time we find a pair, we will be pointing to the next matchedRegularPosition ptr.
@@ -134,15 +140,15 @@ namespace MSS.Common
 				else
 				{
 					// The primary request is inverted.
-					if (mirror != null)
+					if (matchingRegularPos != null)
 					{
 						// We have a matching non-inverted item, forming a pair of requests for the same MapSection
-						mapSectionRequest = CreateRequest(msrJob, mirror, primary);
+						mapSectionRequest = CreateRequest(msrJob, matchingRegularPos, msrPos);
 					}
 					else
 					{
 						// Single request for an inverted item.
-						mapSectionRequest = CreateRequest(msrJob, primary);
+						mapSectionRequest = CreateRequest(msrJob, msrPos);
 					}
 
 					result.Add(mapSectionRequest);
@@ -309,7 +315,7 @@ namespace MSS.Common
 			//Debug.WriteLine($"Creating MapSection: SectionBlockOffset: {sectionBlockPosition}, ScreenBlkPos: {screenPosition}, Inverted = {isInverted}.");
 			var mapSection = new MapSection(mapSectionRequest, mapSectionVectors, isInverted, screenPosition, BuildHistogram);
 
-			UpdateMapSectionWithProcInfo(mapSection, mapSectionRequest);
+			//UpdateMapSectionWithProcInfo(mapSection, mapSectionRequest);
 
 			return mapSection;
 		}
@@ -379,21 +385,21 @@ namespace MSS.Common
 			}
 		}
 
-		[Conditional("PERF")]
-		private void UpdateMapSectionWithProcInfo(MapSection mapSection, MapSectionRequest mapSectionRequest)
-		{
-			mapSection.MapSectionProcessInfo = new MapSectionProcessInfo
-				(
-				mapSectionRequest.MapLoaderJobNumber, 
-				mapSectionRequest.RequestNumber, 
-				mapSectionRequest.FoundInRepo, 
-				mapSectionRequest.Completed, 
-				mapSectionRequest.IsCancelled, 
-				requestDuration: mapSectionRequest.TimeToCompleteGenRequest,
-				processingDuration: mapSectionRequest.ProcessingDuration, 
-				generationDuration: mapSectionRequest.GenerationDuration
-				);
-		}
+		//[Conditional("PERF")]
+		//private void UpdateMapSectionWithProcInfo(MapSection mapSection, MapSectionRequest mapSectionRequest)
+		//{
+		//	mapSection.MapSectionProcessInfo = new MapSectionProcessInfo
+		//		(
+		//		mapSectionRequest.MapLoaderJobNumber, 
+		//		mapSectionRequest.RequestNumber, 
+		//		mapSectionRequest.FoundInRepo, 
+		//		mapSectionRequest.Completed, 
+		//		mapSectionRequest.IsCancelled, 
+		//		requestDuration: mapSectionRequest.TimeToCompleteGenRequest,
+		//		processingDuration: mapSectionRequest.ProcessingDuration, 
+		//		generationDuration: mapSectionRequest.GenerationDuration
+		//		);
+		//}
 
 		#endregion
 

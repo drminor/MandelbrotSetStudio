@@ -109,23 +109,24 @@ namespace MapSectionProviderLib
 
 					if (_cts.IsCancellationRequested) break;
 
-					mapSectionWorkRequest.Request.Completed = true;
-
 					var mapSectionResponse = mapSectionWorkRequest.Response;
 
 					if (mapSectionResponse != null)
 					{
-						mapSectionWorkRequest.RunWorkAction(mapSectionResponse);
-						if (!mapSectionWorkRequest.Request.ProcessingEndTime.HasValue)
-						{
-							mapSectionWorkRequest.Request.ProcessingEndTime = DateTime.UtcNow;
-						}
+						mapSectionWorkRequest.RunWorkAction(mapSectionResponse);  // The MapSectionWorkRequest's WorkAction is calling the MsrJob's HandleResponse method being called.
 					}
 					else
 					{
 						// TODO: Create a new class: mapSectionWorkResponse
 						Debug.WriteLine($"WARNING: The response processor found a MapSectionWorkRequest with a null Response value.");
 					}
+
+					if (!mapSectionWorkRequest.Request.ProcessingEndTime.HasValue)
+					{
+						mapSectionWorkRequest.Request.ProcessingEndTime = DateTime.UtcNow;
+					}
+
+					mapSectionWorkRequest.Request.Completed = true;
 				}
 				catch (OperationCanceledException)
 				{

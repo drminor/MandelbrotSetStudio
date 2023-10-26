@@ -73,7 +73,7 @@
 		public bool AllRowsHaveEscaped { get; set; }
 		public bool RequestCancelled { get; set; }
 		
-		public MathOpCounts? MathOpCounts { get; set; }
+		//public MathOpCounts? MathOpCounts { get; set; }
 
 		public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionVectors2? MapSectionVectors2 { get; set; }

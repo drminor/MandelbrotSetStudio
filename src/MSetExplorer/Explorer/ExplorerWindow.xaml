@@ -140,8 +140,6 @@
                     <Button Name="btnGoForward" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10,5" Command="local:CustomCommands.JobGoForward">Go Forward</Button>
                 </StackPanel>
 
-                <local:JobProgressControl Grid.Row="2" Margin="5" Visibility="Collapsed" x:Name="jobProgress1"/>
-
                 <StackPanel Grid.Row="3" HorizontalAlignment="Left" Orientation="Vertical" Margin="0,50" x:Name="dispSecScreenSizeButtons">
                     <Grid Margin="5,0" x:Name="grdTop">
                         <Grid.ColumnDefinitions>
@@ -208,10 +206,26 @@
 
         <!-- Job Tree -->
         <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
-            <Border  Margin="0,5,5,5" >
-                <local:JobTreeControl x:Name="jobTree1"  ></local:JobTreeControl>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="350"/>
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,5,5,5" x:Name="dispSecJobTree" Visibility="Visible">
+                <local:JobTreeControl x:Name="jobTree1"></local:JobTreeControl>
             </Border>
-            
+
+            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0" x:Name="dispSecJobProgress" Visibility="Visible">
+                <local:JobProgressControl x:Name="jobProgress1"></local:JobProgressControl>
+            </Border>
+
+
+            <!-- <local:JobProgressControl Grid.Row="2" Margin="5" Visibility="Collapsed" x:Name="jobProgress1"/> -->
         </Grid>
 
         <!-- Histogram -->

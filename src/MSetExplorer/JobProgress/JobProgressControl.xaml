@@ -4,14 +4,19 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
-             mc:Ignorable="d" Width="220" Height="235">
+             d:DataContext="{d:DesignInstance Type=local:JobProgressViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="250" d:DesignWidth="220"
+             >
 
+    <!--   Width="220" Height="235" -->
+    
     <Grid>
         <Border x:Name="borderTop" BorderThickness="0.5" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="80"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="150"/>
                 </Grid.RowDefinitions>
 
                 <Border Grid.Row="0" BorderThickness="0.5,0.5,0.5,0.5" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -46,7 +51,7 @@
                 <ListView Grid.Row="1" Name="lvJobProgressEntries" IsSynchronizedWithCurrentItem="True">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="Id" Width="40" DisplayMemberBinding="{Binding JobAndReqNum}" />
+                            <GridViewColumn Header="Id" Width="40" DisplayMemberBinding="{Binding RequestId}" />
                             <GridViewColumn Header="Seconds" Width="65" DisplayMemberBinding="{Binding RequestDurationSeconds, StringFormat={}{0:n3} }" />
                             <GridViewColumn Header="Generated" Width="62" DisplayMemberBinding="{Binding Generated}">
                                 <GridViewColumn.CellTemplate>

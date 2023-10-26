@@ -84,6 +84,7 @@ namespace MEngineService.Services
 				stopWatch.Stop();
 
 				var mapSectionServiceResponse = MapTo(mapSectionResponse, mapSectionServiceRequest, stopWatch.Elapsed);
+				mapSectionServiceResponse.MathOpCounts = mapSectionRequest.MathOpCounts?.Clone();
 
 				return mapSectionServiceResponse;
 			}
@@ -274,7 +275,7 @@ namespace MEngineService.Services
 				AllRowsHaveEscaped = mapSectionResponse.AllRowsHaveEscaped,
 				RequestCancelled = mapSectionResponse.RequestCancelled,
 				TimeToGenerateMs = generationDuration.TotalMilliseconds,
-				MathOpCounts = mapSectionResponse.MathOpCounts?.Clone(),
+				//MathOpCounts = mapSectionResponse.MathOpCounts?.Clone(),
 
 				Counts = mapSectionVectors2.Counts,
 				EscapeVelocities = mapSectionVectors2.EscapeVelocities

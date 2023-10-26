@@ -189,6 +189,7 @@ namespace MapSectionProviderLib
 				mapSectionId = new ObjectId(mapSectionIdStr);
 				Debug.WriteLineIf(_useDetailedDebug, $"Updating Count Values for {mapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 
+				// TODO: Consider creating and using a syncrhonous version of the UpdateCountValuesAsync method.
 				_ = await _mapSectionAdapter.UpdateCountValuesAync(mapSectionResponse);
 
 				// A JobMapSectionRecord (identified by the triplet of mapSectionId, ownerId and jobOwnerType) may not be on file.
@@ -200,6 +201,7 @@ namespace MapSectionProviderLib
 				// INSERT
 				//Debug.WriteLine($"Creating MapSection for {mapSectionResponse.MapSectionId}, bp: {mapSectionResponse.BlockPosition}.");
 
+				// TODO: Consider creating and using a syncrhonous version of the SaveMapSectionAsync method.
 				mapSectionId = await _mapSectionAdapter.SaveMapSectionAsync(mapSectionResponse);
 
 				// Experimental

@@ -352,11 +352,13 @@ namespace MSS.Types.MSet
 		{
 			if (IsCancelled)
 			{
-				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {ElaspedTime}. The job was cancelled.");
+				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {ElaspedTime}. The job was cancelled. There are {SectionsPending} sections pending. " +
+					$"Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}");
 			}
 			else
 			{
-				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {ElaspedTime}. There are {SectionsPending} sections pending.");
+				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {ElaspedTime}. There are {SectionsPending} sections pending. " +
+					$"Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}");
 			}
 
 			//Debug.WriteLine("Request / Response Tallies\n");

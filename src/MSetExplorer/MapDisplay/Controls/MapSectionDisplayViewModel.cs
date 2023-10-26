@@ -47,7 +47,7 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -774,8 +774,9 @@ namespace MSetExplorer
 
 				if (ShouldAttemptToReuseLoadedSections(previousJob, LastMapAreaInfo, newJob, screenAreaInfo))
 				{
-					var reapplyColorMap = previousJob == null ? true : ShouldReapplyColorMap(previousJob.ColorBandSet, newJob.ColorBandSet, previousJob.MapCalcSettings, newJob.MapCalcSettings);
-					
+					//var reapplyColorMap = previousJob == null ? true : ShouldReapplyColorMap(previousJob.ColorBandSet, newJob.ColorBandSet, previousJob.MapCalcSettings, newJob.MapCalcSettings);
+					var reapplyColorMap = ShouldReapplyColorMap(previousJob, LastMapAreaInfo, newJob, screenAreaInfo);
+
 					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
 					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
 					msrJob = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, reapplyColorMap);
@@ -790,7 +791,6 @@ namespace MSetExplorer
 			else
 			{
 				StopCurrentJobs(clearDisplay: true);
-				//lastSectionWasIncluded = false;
 				msrJob = null;
 			}
 
@@ -1057,30 +1057,56 @@ namespace MSetExplorer
 				return false;
 			}
 
-			//// TODO: Remove the ImageSize and CanvasSize checks in the ShouldAttemptToReuseLoadedSections method.
-			//var curImageSize = _bitmapGrid.ImageSizeInBlocks;
-			//var newImageSize = _bitmapGrid.CalculateImageSize(newAreaInfo.CanvasSize, newAreaInfo.CanvasControlOffset);
+			// TODO: Remove the ImageSize and CanvasSize checks in the ShouldAttemptToReuseLoadedSections method.
+			var curImageSize = _bitmapGrid.ImageSizeInBlocks;
+			var newImageSize = _bitmapGrid.CalculateImageSize(newAreaInfo.CanvasSize, newAreaInfo.CanvasControlOffset);
 
-			////if (newImageSize.Width > curImageSize.Width || newImageSize.Height != curImageSize.Height)
-			//if (newImageSize.Height != curImageSize.Height)
-			//{
-			//	Debug.WriteLine("WARNING: Using ReuseAndLoad even though the ImageSize has changed.");
-			//	return true;
-			//}
+			//if (newImageSize.Width > curImageSize.Width || newImageSize.Height != curImageSize.Height)
+			if (newImageSize.Height != curImageSize.Height)
+			{
+				//Debug.WriteLine("WARNING: Using ReuseAndLoad even though the ImageSize has changed.");
+				return false;
+			}
 
-			//var curCanvasSize = _bitmapGrid.CanvasSizeInBlocks;
-			//var newCanvasSize = _bitmapGrid.CalculateCanvasSize(newAreaInfo.CanvasSize);
+			var curCanvasSize = _bitmapGrid.CanvasSizeInBlocks;
+			var newCanvasSize = _bitmapGrid.CalculateCanvasSize(newAreaInfo.CanvasSize);
 
-			//if (newCanvasSize != curCanvasSize)
-			//{
-			//	Debug.WriteLine("WARNING: Not using ReuseAndLoad because the CanvasSize has changed. THIS SHOULD NEVER HAPPEN.");
-			//	return false;
-			//}
+			if (newCanvasSize != curCanvasSize)
+			{
+				Debug.WriteLine("WARNING: Not using ReuseAndLoad because the CanvasSize has changed. THIS SHOULD NEVER HAPPEN.");
+				return false;
+			}
 
 			return true;
 		}
 
-		private bool ShouldReapplyColorMap(ColorBandSet previousColorBandSet, ColorBandSet newColorBandSet, MapCalcSettings previousCalcSettings, MapCalcSettings newCalcSettings)
+		private bool ShouldReapplyColorMap(AreaColorAndCalcSettings? previousJob, MapPositionSizeAndDelta? previousAreaInfo, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta newAreaInfo)
+		{
+			if (previousJob == null || previousAreaInfo == null)
+			{
+				return true;
+			}
+
+			if (previousAreaInfo.Coords.CrossesYZero || newAreaInfo.Coords.CrossesYZero)
+			{
+				return true;
+			}
+
+			if (newJob.ColorBandSet != previousJob.ColorBandSet)
+			{
+				return true;
+			}
+
+			if (newJob.MapCalcSettings.CalculateEscapeVelocities != previousJob.MapCalcSettings.CalculateEscapeVelocities)
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+
+		private bool ShouldReapplyColorMapOld(ColorBandSet previousColorBandSet, ColorBandSet newColorBandSet, MapCalcSettings previousCalcSettings, MapCalcSettings newCalcSettings)
 		{
 			if (newColorBandSet != previousColorBandSet)
 			{
@@ -1419,7 +1445,7 @@ namespace MSetExplorer
 
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void ReportSubmitJobDetails(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings? newValue, bool isBound)
 		{
 			var currentJobId = previousValue?.JobId ?? ObjectId.Empty.ToString();
@@ -1447,7 +1473,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void ReportNewRequests(List<MapSectionRequest> newRequests)
 		{
 			var newRequestsReport = _mapSectionBuilder.GetCountRequestsReport(newRequests);

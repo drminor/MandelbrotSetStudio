@@ -168,7 +168,7 @@ namespace MapSectionProviderLib
 							var mapSectionResponse = mEngineClient.GenerateMapSection(mapSectionRequest, mapSectionRequest.CancellationTokenSource.Token);
 
 							CheckResponse(mapSectionRequest, mapSectionResponse);
-							mapSectionGenerateRequest.RunWorkAction(mapSectionResponse);
+							mapSectionGenerateRequest.RunWorkAction(mapSectionResponse); // The WorkAction is simply calling the MapSectionRequestProcessor's HandleGeneratedResponse method.
 
 							// Update the [numberOf] SectionsGenerated only after the next handler has handled the request.
 							UpdateTheJobsSectionsGeneratedCount(mapSectionRequest);

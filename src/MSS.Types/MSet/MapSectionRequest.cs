@@ -222,6 +222,8 @@ namespace MSS.Types.MSet
 		public bool AllRowsHaveEscaped { get; set; }
 		public bool RequestWasCompleted { get; set; }
 
+		public MathOpCounts? MathOpCounts { get; set; }
+
 		public override string ToString()
 		{
 			if (IsPaired)

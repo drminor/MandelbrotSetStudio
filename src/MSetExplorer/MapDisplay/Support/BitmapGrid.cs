@@ -1,6 +1,7 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using ScottPlot.Statistics;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,6 +9,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -41,7 +43,7 @@ namespace MSetExplorer
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		//private int noSkippedFillBackbufferOps = 0;
 
@@ -204,14 +206,13 @@ namespace MSetExplorer
 
 				if (imageSizeInBlocks != ImageSizeInBlocks)
 				{
-					//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
 					Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
 					ImageSizeInBlocks = imageSizeInBlocks;
 				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks remains the same.");
-				}
+				//else
+				//{
+				//	Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks remains the same.");
+				//}
 
 				CanvasSizeInBlocks = CalculateCanvasSize(_logicalViewportSize);
 
@@ -228,17 +229,14 @@ namespace MSetExplorer
 
 				if (imageSizeInBlocks != ImageSizeInBlocks)
 				{
-					//Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
-					//Debug.WriteLine($"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
-
 					Debug.WriteLine($"WARNING: As the CanvasControlOffset is updated from {_canvasControlOffset} to {value}, the ImageSizeInBlocks is being updated from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
 
 					ImageSizeInBlocks = imageSizeInBlocks;
 				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks remains the same.");
-				}
+				//else
+				//{
+				//	Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its CanvasControlOffset updated from {_canvasControlOffset} to {value}. ImageSizeInBlocks remains the same.");
+				//}
 
 				_canvasControlOffset = value;
 			}
@@ -273,7 +271,7 @@ namespace MSetExplorer
 					// The Image must be able to accommodate one block before and one block after the set of visible blocks.
 					//var newImageSizeInBlocks = value.Inflate(2);
 
-					//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid Updating the ImageSizeInBlocks from: {ImageSizeInBlocks} to: {newImageSizeInBlocks}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid Updating the ImageSizeInBlocks from: {_imageSizeInBlocks} to: {value}.");
 					_imageSizeInBlocks = value;
 				}
 			}
@@ -291,6 +289,7 @@ namespace MSetExplorer
 
 				if (value != _canvasSizeInBlocks)
 				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid. Updating the CanvasSizeInBlocks from {_canvasSizeInBlocks} to {value}.");
 					_canvasSizeInBlocks = value;
 				}
 			}
@@ -443,9 +442,8 @@ namespace MSetExplorer
 
 					try
 					{
-						Bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
-						
 						//Debug.WriteLine($"GetAndPlacePixels is drawing MapSection: {mapSection.ToString(blockPosition)}({mapSection.RequestNumber}).");
+						Bitmap.WritePixels(_blockRect, mapSectionVectors.BackBuffer, _blockRect.Width * BYTES_PER_PIXEL, loc.X, loc.Y);
 					}
 					catch (Exception e)
 					{
@@ -455,11 +453,17 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-				Debug.WriteLine($"DrawOneSection-{description} is not drawing MapSection: {mapSection.ToString(invertedBlockPos)}, ImageSize:{ImageSizeInBlocks}, it's off the map.");
+				ReportMapSectionNotVisible(blockPosition, mapSection, description);
 			}
 
 			return wasAdded;
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportMapSectionNotVisible(PointInt blockPosition, MapSection mapSection, string description)
+		{
+			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+			Debug.WriteLine($"DrawOneSection-{description} is not drawing MapSection: {mapSection.ToString(invertedBlockPos)}, ImageSize:{ImageSizeInBlocks}, it's off the map.");
 		}
 
 		public List<MapSection> GetSectionsNotVisible()
@@ -660,7 +664,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void CheckBitmapSize(WriteableBitmap bitmap, SizeInt imageSizeInBlocks, string desc)
 		{
 			var imageSize = imageSizeInBlocks.Scale(_blockSize);

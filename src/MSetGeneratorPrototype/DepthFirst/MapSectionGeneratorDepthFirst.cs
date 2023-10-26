@@ -122,7 +122,7 @@ namespace MSetGeneratorPrototype
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
 
 			var result = new MapSectionResponse(mapSectionRequest, sectionCompleted, allRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors, requestCancelled: ct.IsCancellationRequested);
-			UpdateResultsWithMathOpCalcs(result);
+			UpdateResultsWithMathOpCalcs(mapSectionRequest);
 			
 			//ReportResults(coords, mapSectionRequest, result, ct);
 
@@ -755,7 +755,7 @@ namespace MSetGeneratorPrototype
 			var s1 = coords.GetStartingCxStringVal();
 			var s2 = coords.GetStartingCyStringVal();
 
-			Debug.WriteLine($"{s1}, {s2}: {result.MathOpCounts}");
+			Debug.WriteLine($"{s1}, {s2}: {request.MathOpCounts}");
 
 			if (ct.IsCancellationRequested)
 			{
@@ -818,9 +818,9 @@ namespace MSetGeneratorPrototype
 
 		[Conditional("PERF")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void UpdateResultsWithMathOpCalcs(MapSectionResponse mapSectionResponse)
+		private void UpdateResultsWithMathOpCalcs(MapSectionRequest mapSectionRequest)
 		{
-			mapSectionResponse.MathOpCounts = _fp31VecMath.MathOpCounts.Clone();
+			mapSectionRequest.MathOpCounts = _fp31VecMath.MathOpCounts.Clone();
 		}
 
 		[Conditional("PERF")]

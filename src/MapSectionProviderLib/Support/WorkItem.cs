@@ -60,7 +60,6 @@ namespace MapSectionProviderLib
 		override public bool JobIsCancelled
 		{
 			get => Request.MsrJob.IsCancelled;
-			//set => Request.MsrJob.IsCancelled = value;
 		}
 	}
 
@@ -79,14 +78,11 @@ namespace MapSectionProviderLib
 		override public bool JobIsCancelled
 		{
 			get => Request.Request.MsrJob.IsCancelled;
-			//set => Request.Request.MsrJob.IsCancelled = value;
 		}
 	}
 
 	internal class MapSectionPersistRequest : WorkItem<MapSectionRequest, MapSectionResponse>
 	{
-		//public MapSectionRequest Request { get; init; }
-		//public new MapSectionResponse Response { get; init; }
 		public bool OnlyInsertJobMapSectionRecord { get; init; }
 
 		public MapSectionPersistRequest(MapSectionRequest request, MapSectionResponse response)
@@ -113,7 +109,6 @@ namespace MapSectionProviderLib
 		override public bool JobIsCancelled
 		{
 			get => Request.MsrJob.IsCancelled;
-			//set => Request.MsrJob.IsCancelled = value;
 		}
 	}
 

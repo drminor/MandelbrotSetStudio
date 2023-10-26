@@ -34,13 +34,14 @@ namespace MSetExplorer
 
 		private void MapLoaderManager_RequestAdded(object? sender, MsrJob e)
 		{
-			_synchronizationContext?.Post((o) => HandleRequstAdded(e), null);
+			_synchronizationContext?.Post((o) => HandleRequestAdded(e), null);
 		}
 
-		private void HandleRequstAdded(MsrJob msrJob)
+		private void HandleRequestAdded(MsrJob msrJob)
 		{
 			msrJob.MapSectionLoaded += MsrJob_MapSectionLoaded;
 			msrJob.JobHasCompleted += MsrJob_JobHasCompleted;
+
 			CurrentJobProgressInfo = new JobProgressInfo(msrJob.MapLoaderJobNumber, "Temp", msrJob.ProcessingStartTime ?? DateTime.Now, msrJob.TotalNumberOfSectionsRequested, msrJob.SectionsFoundInRepo);
 			CurrentJobProgressInfo.DateCreatedUtc = DateTime.UtcNow;
 
@@ -51,22 +52,27 @@ namespace MSetExplorer
 		{
 			if (sender is MsrJob msrJob)
 			{
-				msrJob.JobHasCompleted -= MsrJob_JobHasCompleted;
-				msrJob.MapSectionLoaded -= MsrJob_MapSectionLoaded;
-
-				var totalExecutionTime = msrJob.TotalExecutionTime;
-				Report(totalExecutionTime);
-
-				OnPropertyChanged(nameof(RunTime));
-				OnPropertyChanged(nameof(EstimatedTimeRemaining));
-
-				OnPropertyChanged(nameof(FetchedCount));
-				OnPropertyChanged(nameof(GeneratedCount));
-
-				OnPropertyChanged(nameof(PercentComplete));
-
-				MapSectionProcessInfos.Clear();
+				_synchronizationContext?.Post((o) => HandleJobHasCompleted(msrJob), null);
 			}
+		}
+
+		private void HandleJobHasCompleted(MsrJob msrJob)
+		{
+			msrJob.JobHasCompleted -= MsrJob_JobHasCompleted;
+			msrJob.MapSectionLoaded -= MsrJob_MapSectionLoaded;
+
+			var totalExecutionTime = msrJob.TotalExecutionTime;
+			Report(totalExecutionTime);
+
+			OnPropertyChanged(nameof(RunTime));
+			OnPropertyChanged(nameof(EstimatedTimeRemaining));
+
+			OnPropertyChanged(nameof(FetchedCount));
+			OnPropertyChanged(nameof(GeneratedCount));
+
+			OnPropertyChanged(nameof(PercentComplete));
+
+			MapSectionProcessInfos.Clear();
 		}
 
 		private void MsrJob_MapSectionLoaded(object? sender, MapSectionRequest e)
@@ -100,12 +106,13 @@ namespace MSetExplorer
 				(
 				jobNumber: msr.MapLoaderJobNumber,
 				requestNumber: msr.RequestNumber,
-				msr.FoundInRepo,
-				msr.Completed,
-				msr.IsCancelled,
-				msr.TimeToCompleteGenRequest,
-				msr.ProcessingDuration,
-				msr.GenerationDuration
+				foundInRepo: msr.FoundInRepo,
+				requestWasCompleted: msr.RequestWasCompleted,
+				requestWasCancelled: msr.IsCancelled,
+				requestDuration: msr.TimeToCompleteGenRequest,
+				processingDuration: msr.ProcessingDuration,
+				generationDuration: msr.GenerationDuration,
+				mathOpCounts: msr.MathOpCounts
 				);
 
 			return result;
