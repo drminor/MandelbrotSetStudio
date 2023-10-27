@@ -192,7 +192,6 @@ namespace ImageBuilder
 
 		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
 		{
-			msrJob.ProcessingStartTime = DateTime.Now;
 			var requests = new List<MapSectionRequest>();
 
 			for (var colPtr = 0; colPtr < stride; colPtr++)

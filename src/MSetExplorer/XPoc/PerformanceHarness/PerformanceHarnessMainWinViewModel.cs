@@ -452,7 +452,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, mapExtentInBlocks);
 			//AddTiming("CreateSectionRequest");
 
-			JobProgressInfo = new JobProgressInfo(msrJob.MapLoaderJobNumber, "Temp", DateTime.Now, msrJob.SectionsRequested, msrJob.SectionsFoundInRepo);
+			JobProgressInfo = new JobProgressInfo(msrJob.MapLoaderJobNumber, DateTime.UtcNow, msrJob.SectionsRequested, msrJob.SectionsFoundInRepo);
 
 			List<MapSection> mapSections = _mapLoaderManager.Push(msrJob, mapSectionRequests, MapSectionReady, MapViewUpdateIsComplete, _cts.Token, out var requestsPendingGenerations);
 

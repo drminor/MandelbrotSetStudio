@@ -1,11 +1,13 @@
-﻿using MSS.Common;
+﻿using MongoDB.Driver.Linq;
+using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
-using System.Timers;
 
 namespace MSetExplorer
 {
@@ -23,12 +25,11 @@ namespace MSetExplorer
 			Debug.WriteLine("The JobProgressViewModel is being loaded.");
 			_synchronizationContext = SynchronizationContext.Current;
 			_mapLoaderManager = mapLoaderManager;
-			
-			_currentJobProgressInfo = new JobProgressInfo(0, "temp", DateTime.UtcNow, 0, 0);
-			
-			MapSectionProcessInfos = new ObservableCollection<MapSectionProcessInfo>();
-
+			_currentJobProgressInfo = new JobProgressInfo();
 			_isEnabled = false;
+
+			MapSectionProcessInfos = new ObservableCollection<MapSectionProcessInfo>();
+			IterationsPerSecond = 0;
 		}
 
 		#endregion
@@ -72,17 +73,11 @@ namespace MSetExplorer
 		}
 
 		public int TotalSections => CurrentJobProgressInfo.TotalSections;
-
 		public int CancelledCount => CurrentJobProgressInfo.CancelledCount;
-
 		public int FetchedCount => CurrentJobProgressInfo.FetchedCount;
-
 		public int GeneratedCount => CurrentJobProgressInfo.GeneratedCount;
-
 		public double PercentComplete => CurrentJobProgressInfo.PercentComplete;
-
 		public TimeSpan RunTime => CurrentJobProgressInfo.RunTime;
-
 		public TimeSpan EstimatedTimeRemaining => CurrentJobProgressInfo.EstimatedTimeRemaining;
 
 		public int IterationsPerSecond { get; set; }
@@ -106,13 +101,10 @@ namespace MSetExplorer
 		{
 			if (sender is MsrJob msrJob)
 			{
-				//_synchronizationContext?.Post((o) => HandleJobHasCompleted(msrJob), null);
-
 				if (msrJob.MapLoaderJobNumber == CurrentJobProgressInfo.JobNumber)
 				{
 					CurrentJobProgressInfo.IsComplete = true;
 				}
-
 			}
 		}
 
@@ -128,8 +120,7 @@ namespace MSetExplorer
 			MapSectionProcessInfos.Clear();
 			IterationsPerSecond = 0;
 
-			CurrentJobProgressInfo = new JobProgressInfo(msrJob.MapLoaderJobNumber, "Temp", msrJob.ProcessingStartTime ?? DateTime.Now, msrJob.SectionsRequested, msrJob.SectionsFoundInRepo);
-			CurrentJobProgressInfo.DateCreatedUtc = DateTime.UtcNow;
+			CurrentJobProgressInfo = new JobProgressInfo(msrJob.MapLoaderJobNumber, msrJob.ProcessingStartTime ?? DateTime.UtcNow, msrJob.SectionsRequested, msrJob.SectionsFoundInRepo);
 
 			OnPropertyChanged(nameof(TotalSections));
 
@@ -184,19 +175,7 @@ namespace MSetExplorer
 			msrJob.JobHasCompleted -= MsrJob_JobHasCompleted;
 			msrJob.MapSectionLoaded -= MsrJob_MapSectionLoaded;
 
-			//var totalExecutionTime = msrJob.TotalExecutionTime;
-			var totalExecutionTime = RunTime;
-			Report(totalExecutionTime);
-
-			//MapSectionProcessInfos.Clear();
-		}
-
-		private void HandleJobHasCompleted(MsrJob msrJob)
-		{
-			if (msrJob.MapLoaderJobNumber == CurrentJobProgressInfo.JobNumber)
-			{
-				CurrentJobProgressInfo.IsComplete = true;
-			}
+			ReportProcessTimeAndMathOpDetails();
 		}
 
 		private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
@@ -218,58 +197,49 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG")]
-		private void Report(TimeSpan totalExecutionTime)
+		private void ReportProcessTimeAndMathOpDetails()
 		{
-			var mops = new MathOpCounts();
-			//var sumProcessingDurations = new TimeSpan();
-			var sumGenerationDurations = new TimeSpan();
-			var haveMops = false;
-
-
-			foreach (var x in MapSectionProcessInfos)
-			{
-				if (x.JobNumber == CurrentJobProgressInfo.JobNumber)
-				{
-					if (x.MathOpCounts != null)
-					{
-						mops.Update(x.MathOpCounts);
-						haveMops = true;
-					}
-
-					//if (x.ProcessingDuration.HasValue)
-					//{
-					//	sumProcessingDurations += x.ProcessingDuration.Value;
-					//}
-
-					if (x.GenerationDuration.HasValue)
-					{
-						sumGenerationDurations += x.GenerationDuration.Value;
-					}
-				}
-			}
-
+			var totalExecutionTime = RunTime;
 			var sectionsGenerated = CurrentJobProgressInfo.GeneratedCount;
 			var numberOfProcessors = 5;
 
 			var averageProcessTimePerSection = totalExecutionTime * numberOfProcessors / sectionsGenerated;
-			Debug.WriteLine($"Generated {sectionsGenerated} sections in {totalExecutionTime}. Average Processing Time / Section: {averageProcessTimePerSection}; Calculation Time: {sumGenerationDurations / numberOfProcessors}.");
+			var totalGenerationDuration = MapSectionProcessInfos.Where(x => x.JobNumber == CurrentJobProgressInfo.JobNumber).Sum(x => x.GenerationDuration?.TotalSeconds);
+			var calculationTime = totalGenerationDuration / numberOfProcessors;
 
-			var multiplications = mops.NumberOfMultiplications;
-			var calcs = (long)mops.NumberOfCalcs;
-			var unusedCalcs = (long)mops.NumberOfUnusedCalcs;
+			Debug.WriteLine($"Generated {sectionsGenerated} sections in {totalExecutionTime}. Average Processing Time / Section: {averageProcessTimePerSection}; Calculation Time: {calculationTime}.");
 
-			Debug.WriteLine($"Performed: {multiplications:N0} multiplications. Iterations: {calcs:N0}; Discarded Iterations: {unusedCalcs:N0}.");
-
-			if (haveMops)
+			if (AccumulateMops(out var mops))
 			{
+				var multiplications = mops.NumberOfMultiplications;
+				var calcs = (long)mops.NumberOfCalcs;
+				var unusedCalcs = (long)mops.NumberOfUnusedCalcs;
+
+				Debug.WriteLine($"Performed: {multiplications:N0} multiplications. Iterations: {calcs:N0}; Discarded Iterations: {unusedCalcs:N0}.");
+
 				IterationsPerSecond = (int)(calcs / totalExecutionTime.TotalSeconds);
 				OnPropertyChanged(nameof(IterationsPerSecond));
 			}
+		}
 
-			//var processingElapsed = (long)Math.Round(sumProcessingDurations * 1000);
-			//var generationElapsed = (long)Math.Round(sumGenerationDurations * 1000);
+		private bool AccumulateMops([NotNullWhen(true)] out MathOpCounts? mathOpCounts)
+		{
+			var itemsWithMops = MapSectionProcessInfos.Where(x => x.JobNumber == CurrentJobProgressInfo.JobNumber && x.MathOpCounts != null);
 
-			//Debug.WriteLine($"Total Processing Time: {sumProcessingDurations}; Time to generate: {sumGenerationDurations}; Multiplications: {multiplications}; Iterations: {calcs}; Discarded Iterations: {unusedCalcs}.");
+			if (!itemsWithMops.Any())
+			{
+				mathOpCounts = null;
+				return false;
+			}
+
+			mathOpCounts = new MathOpCounts();
+
+			foreach (var x in itemsWithMops)
+			{
+				mathOpCounts.Update(x.MathOpCounts!);
+			}
+
+			return true;
 		}
 
 		#endregion

@@ -62,8 +62,6 @@ namespace MSS.Types.MSet
 			_isCompleted = false;
 
 			_stopwatch = new Stopwatch();
-
-			//AllocateMathCounts();
 		}
 
 		#endregion
@@ -105,13 +103,11 @@ namespace MSS.Types.MSet
 		public bool IsCancelled { get; set; }
 		public CancellationTokenSource CancellationTokenSource { get; set; }
 
-		public DateTime? ProcessingStartTime { get; set; }
-		public DateTime? ProcessingEndTime { get; set; }
+		public DateTime? ProcessingStartTime { get; private set; }
+		public DateTime? ProcessingEndTime { get; private set; }
 
 		public TimeSpan ElaspedTime { get; private set; }
-		public TimeSpan TotalExecutionTime { get; set; }
-
-		//public MathOpCounts? MathOpCounts { get; private set; }
+		public TimeSpan TotalProcessingTime => ProcessingStartTime.HasValue && ProcessingEndTime.HasValue ? ProcessingEndTime.Value - ProcessingStartTime.Value : TimeSpan.Zero;
 
 		public bool IsComplete { get; private set; }
 
@@ -148,6 +144,8 @@ namespace MSS.Types.MSet
 				_mapSectionReadyCallback = mapSectionReadyCallback;
 				_mapViewUpdateCompleteCallback = mapViewUpdateCompleteCallback;
 
+				ProcessingStartTime = DateTime.UtcNow;
+
 				if (SectionsPending == 0)
 				{
 					MarkJobAsComplete();
@@ -183,7 +181,6 @@ namespace MSS.Types.MSet
 			lock (_stateLock)
 			{
 				mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-				//UpdateMathCounts(mapSection);
 				ReportGeneration(mapSectionRequest, mapSection);
 
 				if (SectionsPending < 0)
@@ -262,14 +259,11 @@ namespace MSS.Types.MSet
 				_isCompleted = true;
 				_stopwatch.Stop();
 				ElaspedTime = _stopwatch.Elapsed;
+				ProcessingEndTime = DateTime.UtcNow;
 
 				JobHasCompleted?.Invoke(this, new EventArgs());
 
 				_mapViewUpdateCompleteCallback(JobNumber, IsCancelled);
-
-				//ReportMathCounts(MathOpCounts);
-
-				//Debug.WriteLine($"MsrJob. MarkJobIsComplete for Job: {MapLoaderJobNumber} Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
 			}
 			else
 			{
@@ -337,40 +331,6 @@ namespace MSS.Types.MSet
 		//	}
 
 		//	return sb.ToString();
-		//}
-
-		#endregion
-
-		#region Performance / Metrics
-
-		//[Conditional("PERF")]
-		//private void AllocateMathCounts()
-		//{
-		//	MathOpCounts = new MathOpCounts();
-		//}
-
-		//[Conditional("PERF")]
-		//private void UpdateMathCounts(MapSection mapSection)
-		//{
-		//	lock (_stateLock)
-		//	{
-		//		if (MathOpCounts != null && mapSection?.MathOpCounts != null)
-		//		{
-		//			MathOpCounts.Update(mapSection.MathOpCounts);
-		//		}
-		//	}
-		//}
-
-		//[Conditional("PERF")]
-		//private void ReportMathCounts(MathOpCounts? mathOpCounts)
-		//{
-		//	lock (_stateLock)
-		//	{
-		//		if (mathOpCounts != null)
-		//		{
-		//			Debug.WriteLine($"Job completed: Totals: {mathOpCounts}");
-		//		}
-		//	}
 		//}
 
 		#endregion
