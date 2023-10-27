@@ -206,7 +206,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckIsCancelledResult(bool isCancelled, bool neitherRegularOrInvertedRequestIsInPlay)
 		{
 			Debug.Assert(isCancelled == neitherRegularOrInvertedRequestIsInPlay, "MapSectionRequest: IsCancelled has a value different from the NeitherRegularOrInvertedRequestIsInPlay property.");
@@ -256,27 +256,17 @@ namespace MSS.Types.MSet
 		{
 			if (RegularPosition != null)
 			{
-				if (!RegularPosition.IsCancelled)
+				if (RegularPosition.Cancel())
 				{
-					RegularPosition.Cancel();
-
-					if (MsrJob.IsStarted)
-					{
-						MsrJob.SectionsCancelled++;
-					}
+					MsrJob.IncrementSectionsCancelled();
 				}
 			}
 
 			if (InvertedPosition != null)
 			{
-				if (!InvertedPosition.IsCancelled)
+				if (InvertedPosition.Cancel())
 				{
-					InvertedPosition.Cancel();
-
-					if (MsrJob.IsStarted)
-					{
-						MsrJob.SectionsCancelled++;
-					}
+					MsrJob.IncrementSectionsCancelled();
 				}
 			}
 		}
@@ -285,29 +275,32 @@ namespace MSS.Types.MSet
 		{
 			if (isInverted)
 			{
-				if (InvertedPosition == null) throw new NullReferenceException();
-				
-				if (InvertedPosition.IsCancelled) return false;
-				InvertedPosition.Cancel();
-				if (MsrJob.IsStarted)
+				if (InvertedPosition == null) throw new NullReferenceException("InvertedPosition was null on call to Cancel(isInverted = true).");
+
+				if (InvertedPosition.Cancel())
 				{
-					MsrJob.SectionsCancelled++;
+					MsrJob.IncrementSectionsCancelled();
+					return true;
+				}
+				else
+				{
+					return false;
 				}
 			}
 			else
 			{
-				if (RegularPosition == null) throw new NullReferenceException();
-				
-				if (RegularPosition.IsCancelled) return false;
-				RegularPosition.Cancel();
+				if (RegularPosition == null) throw new NullReferenceException("RegularPosition was null on call to Cancel(isInverted = false).");
 
-				if (MsrJob.IsStarted)
+				if (RegularPosition.Cancel())
 				{
-					MsrJob.SectionsCancelled++;
+					MsrJob.IncrementSectionsCancelled();
+					return true;
+				}
+				else
+				{
+					return false;
 				}
 			}
-
-			return true;
 		}
 
 	}

@@ -170,8 +170,8 @@ namespace MapSectionProviderLib
 							CheckResponse(mapSectionRequest, mapSectionResponse);
 							mapSectionGenerateRequest.RunWorkAction(mapSectionResponse); // The WorkAction is simply calling the MapSectionRequestProcessor's HandleGeneratedResponse method.
 
-							// Update the [numberOf] SectionsGenerated only after the next handler has handled the request.
-							UpdateTheJobsSectionsGeneratedCount(mapSectionRequest);
+							//// Update the [numberOf] SectionsGenerated only after the next handler has handled the request.
+							//UpdateTheJobsSectionsGeneratedCount(mapSectionRequest);
 						}
 					}
 				}
@@ -216,20 +216,20 @@ namespace MapSectionProviderLib
 			return result;
 		}
 
-		private void UpdateTheJobsSectionsGeneratedCount(MapSectionRequest mapSectionRequest)
-		{
-			if (mapSectionRequest.RegularPosition != null && !mapSectionRequest.RegularPosition.IsCancelled)
-			{
-				mapSectionRequest.MsrJob.SectionsGenerated++;
-			}
+		//private void UpdateTheJobsSectionsGeneratedCount(MapSectionRequest mapSectionRequest)
+		//{
+		//	if (mapSectionRequest.RegularPosition != null && !mapSectionRequest.RegularPosition.IsCancelled)
+		//	{
+		//		mapSectionRequest.MsrJob.IncrementSectionsGenerated();
+		//	}
 
-			if (mapSectionRequest.InvertedPosition != null && !mapSectionRequest.InvertedPosition.IsCancelled)
-			{
-				mapSectionRequest.MsrJob.SectionsGenerated++;
-			}
-		}
+		//	if (mapSectionRequest.InvertedPosition != null && !mapSectionRequest.InvertedPosition.IsCancelled)
+		//	{
+		//		mapSectionRequest.MsrJob.IncrementSectionsGenerated();
+		//	}
+		//}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportProcesssARequest(MapSectionRequest mapSectionRequest, bool jobIsCancelled)
 		{
 			if (_useDetailedDebug)
@@ -252,7 +252,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckResponse(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
 			if (mapSectionResponse.MapSectionVectors2 == null)

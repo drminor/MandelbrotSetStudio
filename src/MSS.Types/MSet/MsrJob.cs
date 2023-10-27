@@ -17,6 +17,7 @@ namespace MSS.Types.MSet
 		private int _sectionsGenerated;
 		private int _sectionsCancelled;
 
+		private readonly object _stateLock = new object();
 
 		#endregion
 
@@ -53,16 +54,16 @@ namespace MSS.Types.MSet
 			_mapSectionReadyCallback = NoOpMapSectionReadyCallBack;
 			_mapViewUpdateCompleteCallback = NoOpMapViewUpdateCompleteCallBack;
 
+			_sectionsCancelled = 0;
 			_sectionsFoundInRepo = 0;
 			_sectionsGenerated = 0;
-			_sectionsCancelled = 0;
 
 			IsStarted = false;
 			_isCompleted = false;
 
 			_stopwatch = new Stopwatch();
 
-			AllocateMathCounts();
+			//AllocateMathCounts();
 		}
 
 		#endregion
@@ -110,64 +111,19 @@ namespace MSS.Types.MSet
 		public TimeSpan ElaspedTime { get; private set; }
 		public TimeSpan TotalExecutionTime { get; set; }
 
-		public MathOpCounts? MathOpCounts { get; private set; }
+		//public MathOpCounts? MathOpCounts { get; private set; }
 
 		public bool IsComplete { get; private set; }
 
-		public int TotalNumberOfSectionsRequested { get; set; }
+		public int SectionsRequested { get; private set; }
 
-		public int SectionsFoundInRepo
-		{
-			get => _sectionsFoundInRepo;
+		public int SectionsCancelled => _sectionsCancelled;
 
-			set
-			{
-				if (value != _sectionsFoundInRepo)
-				{
-					_sectionsFoundInRepo = value;
-					if (SectionsPending <= 0)
-					{
-						MarkJobAsComplete();
-					}
-				}
-			}
-		}
+		public int SectionsFoundInRepo => _sectionsFoundInRepo;
 
-		public int SectionsGenerated
-		{
-			get => _sectionsGenerated;
+		public int SectionsGenerated => _sectionsGenerated;
 
-			set
-			{
-				if (value != _sectionsGenerated)
-				{
-					_sectionsGenerated = value;
-					if (SectionsPending <= 0)
-					{
-						MarkJobAsComplete();
-					}
-				}
-			}
-		}
-
-		public int SectionsCancelled
-		{
-			get => _sectionsCancelled;
-
-			set
-			{
-				if (value != _sectionsCancelled)
-				{
-					_sectionsCancelled = value;
-					if (SectionsPending <= 0)
-					{
-						MarkJobAsComplete();
-					}
-				}
-			}
-		}
-
-		public int SectionsPending => TotalNumberOfSectionsRequested - SectionsFoundInRepo - SectionsGenerated - SectionsCancelled;
+		public int SectionsPending => SectionsRequested - _sectionsCancelled - _sectionsFoundInRepo - _sectionsGenerated;
 
 		#endregion
 
@@ -175,67 +131,48 @@ namespace MSS.Types.MSet
 
 		public bool Start(int sectionsRequested, int sectionsCancelled, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback)
 		{
-			//return Start(sectionsRequested, 0, 0, sectionsCancelled, mapSectionReadyCallback, mapViewUpdateCompleteCallback);
-
-			if (IsStarted)
+			lock (_stateLock)
 			{
-				throw new InvalidOperationException("Cannot start this MsrJob, it has already been started.");
+				if (IsStarted)
+				{
+					throw new InvalidOperationException("Cannot start this MsrJob, it has already been started.");
+				}
+
+				IsStarted = true;
+
+				SectionsRequested = sectionsRequested;
+				_sectionsCancelled = sectionsCancelled;
+				_sectionsFoundInRepo = 0;
+				_sectionsGenerated = 0;
+
+				_mapSectionReadyCallback = mapSectionReadyCallback;
+				_mapViewUpdateCompleteCallback = mapViewUpdateCompleteCallback;
+
+				if (SectionsPending == 0)
+				{
+					MarkJobAsComplete();
+				}
+				else
+				{
+					_stopwatch.Start();
+				}
+
+				return true;
 			}
-
-			IsStarted = true;
-
-			TotalNumberOfSectionsRequested = sectionsRequested;
-			SectionsFoundInRepo = 0;
-			SectionsGenerated = 0;
-			SectionsCancelled = sectionsCancelled;
-
-			_mapSectionReadyCallback = mapSectionReadyCallback;
-			_mapViewUpdateCompleteCallback = mapViewUpdateCompleteCallback;
-
-			if (SectionsPending == 0)
-			{
-				MarkJobAsComplete();
-			}
-			else
-			{
-				_stopwatch.Start();
-			}
-
-			return true;
 		}
 
 		public void Cancel()
 		{
-			if (IsCancelled)
+			lock (_stateLock)
 			{
-				Debug.WriteLine($"WARNING: MsrJob: Cancelling Job: {MapLoaderJobNumber} that has already been cancelled.");
-			}
-			else
-			{
-				IsCancelled = true;
-				//MarkJobAsComplete();
-			}
-		}
-
-		public void MarkJobAsComplete()
-		{
-			if (!_isCompleted)
-			{
-				_isCompleted = true;
-				_stopwatch.Stop();
-				ElaspedTime = _stopwatch.Elapsed;
-
-				JobHasCompleted?.Invoke(this, new EventArgs());
-
-				_mapViewUpdateCompleteCallback(JobNumber, IsCancelled);
-
-				ReportMathCounts(MathOpCounts);
-
-				//Debug.WriteLine($"MsrJob. MarkJobIsComplete for Job: {MapLoaderJobNumber} Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
-			}
-			else
-			{
-				Debug.WriteLine($"WARNING!!: MsrJob. MarkJobIsComplete is being called after after IsComplete is set for Job: {MapLoaderJobNumber} Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
+				if (IsCancelled)
+				{
+					Debug.WriteLine($"WARNING: MsrJob: Cancelling Job: {MapLoaderJobNumber} that has already been cancelled.");
+				}
+				else
+				{
+					IsCancelled = true;
+				}
 			}
 		}
 
@@ -243,22 +180,70 @@ namespace MSS.Types.MSet
 		{
 			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MsrJobs's HandleResponse is being called from the Response Processor.");
 
-			mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
-			UpdateMathCounts(mapSection);
-			ReportGeneration(mapSectionRequest, mapSection);
-
-			if (SectionsPending < 0)
+			lock (_stateLock)
 			{
-				Debug.WriteLine($"WARNING!!: MsrJob. HandleResponse is still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
-			}
+				mapSectionRequest.ProcessingEndTime = DateTime.UtcNow;
+				//UpdateMathCounts(mapSection);
+				ReportGeneration(mapSectionRequest, mapSection);
 
-			if (SectionsPending <= 0)
-			{
-				ReportStats();
+				if (SectionsPending < 0)
+				{
+					Debug.WriteLine($"WARNING!!: MsrJob. HandleResponse is still being called after IsComplete is set for Job: {MapLoaderJobNumber} Total Requested: {SectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
+				}
+
+				if (SectionsPending <= 0)
+				{
+					ReportStats();
+				}
 			}
 
 			_mapSectionReadyCallback(mapSection);
 			MapSectionLoaded?.Invoke(this, mapSectionRequest);
+		}
+
+		public int IncrementSectionsCancelled(int amount = 1)
+		{
+			lock (_stateLock)
+			{
+				_sectionsCancelled += amount;
+
+				if (SectionsPending <= 0)
+				{
+					MarkJobAsComplete();
+				}
+
+				return _sectionsCancelled;
+			}
+		}
+
+		public int IncrementSectionsFound(int amount = 1)
+		{
+			lock (_stateLock)
+			{
+				_sectionsFoundInRepo += amount;
+
+				if (SectionsPending <= 0)
+				{
+					MarkJobAsComplete();
+				}
+
+				return _sectionsFoundInRepo;
+			}
+		}
+
+		public int IncrementSectionsGenerated(int amount = 1)
+		{
+			lock (_stateLock)
+			{
+				_sectionsGenerated += amount;
+
+				if (SectionsPending <= 0)
+				{
+					MarkJobAsComplete();
+				}
+
+				return _sectionsGenerated;
+			}
 		}
 
 		public override string ToString()
@@ -270,57 +255,27 @@ namespace MSS.Types.MSet
 
 		#region Private Methods
 
-		//private void HandleResponseInternal(MapSectionRequest mapSectionRequest, MapSection mapSection)
-		//{
-		//	mapSection.IsLastSection = false;
+		private void MarkJobAsComplete()
+		{
+			if (!_isCompleted)
+			{
+				_isCompleted = true;
+				_stopwatch.Stop();
+				ElaspedTime = _stopwatch.Elapsed;
 
-		//	// Call the callback, only if the MapSection is not Empty.
-		//	if (!mapSection.IsEmpty)
-		//	{
-		//		_mapSectionReadyCallback(mapSection);
-		//		MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine($"MsrJob: Not calling the callback, the mapSection is empty. JobId: {mapSectionRequest.MapLoaderJobNumber}, " +
-		//			$"Pending/Total: ({SectionsPending}/{TotalNumberOfSectionsRequested}), " +
-		//			$"Screen Position: {mapSection.ScreenPosition}.");
-		//	}
+				JobHasCompleted?.Invoke(this, new EventArgs());
 
-		//	mapSectionRequest.Handled = true;
-		//}
+				_mapViewUpdateCompleteCallback(JobNumber, IsCancelled);
 
-		//private void HandleLastResponse(MapSectionRequest mapSectionRequest, MapSection mapSection)
-		//{
-		//	mapSection.IsLastSection = true;
+				//ReportMathCounts(MathOpCounts);
 
-		//	// This is the last section -- call the callback if the MapSection is Empty or Not
-		//	_mapSectionReadyCallback(mapSection);
-
-		//	if (!mapSection.IsEmpty)
-		//	{
-		//		MapSectionLoaded?.Invoke(this, CreateMSProcInfo(mapSectionRequest));
-		//	}
-
-		//	mapSectionRequest.Handled = true;
-		//}
-
-		//private MapSectionProcessInfo CreateMSProcInfo(MapSectionRequest msr)
-		//{
-		//	var result = new MapSectionProcessInfo
-		//		(
-		//		jobNumber: msr.MapLoaderJobNumber,
-		//		requestNumber: msr.RequestNumber,
-		//		msr.FoundInRepo,
-		//		msr.Completed,
-		//		msr.IsCancelled,
-		//		msr.TimeToCompleteGenRequest,
-		//		msr.ProcessingDuration,
-		//		msr.GenerationDuration
-		//		);
-
-		//	return result;
-		//}
+				//Debug.WriteLine($"MsrJob. MarkJobIsComplete for Job: {MapLoaderJobNumber} Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
+			}
+			else
+			{
+				Debug.WriteLine($"WARNING!!: MsrJob. MarkJobIsComplete is being called after after IsComplete is set for Job: {MapLoaderJobNumber} Total Requested: {SectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}, Pending: {SectionsPending}.");
+			}
+		}
 
 		private void NoOpMapSectionReadyCallBack(MapSection mapSection)
 		{
@@ -347,18 +302,18 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportStats()
 		{
 			if (IsCancelled)
 			{
 				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {ElaspedTime}. The job was cancelled. There are {SectionsPending} sections pending. " +
-					$"Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}");
+					$"Total Requested: {SectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}");
 			}
 			else
 			{
 				Debug.WriteLine($"MsrJob is done with Job: {JobNumber}. Generated {SectionsGenerated} sections in {ElaspedTime}. There are {SectionsPending} sections pending. " +
-					$"Total Requested: {TotalNumberOfSectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}");
+					$"Total Requested: {SectionsRequested}, Found: {SectionsFoundInRepo}, Generated: {SectionsGenerated}, Cancelled: {SectionsCancelled}");
 			}
 
 			//Debug.WriteLine("Request / Response Tallies\n");
@@ -388,29 +343,35 @@ namespace MSS.Types.MSet
 
 		#region Performance / Metrics
 
-		[Conditional("PERF")]
-		private void AllocateMathCounts()
-		{
-			MathOpCounts = new MathOpCounts();
-		}
+		//[Conditional("PERF")]
+		//private void AllocateMathCounts()
+		//{
+		//	MathOpCounts = new MathOpCounts();
+		//}
 
-		[Conditional("PERF")]
-		private void UpdateMathCounts(MapSection mapSection)
-		{
-			if (MathOpCounts != null && mapSection?.MathOpCounts != null)
-			{
-				MathOpCounts.Update(mapSection.MathOpCounts);
-			}
-		}
+		//[Conditional("PERF")]
+		//private void UpdateMathCounts(MapSection mapSection)
+		//{
+		//	lock (_stateLock)
+		//	{
+		//		if (MathOpCounts != null && mapSection?.MathOpCounts != null)
+		//		{
+		//			MathOpCounts.Update(mapSection.MathOpCounts);
+		//		}
+		//	}
+		//}
 
-		[Conditional("PERF")]
-		private void ReportMathCounts(MathOpCounts? mathOpCounts)
-		{
-			if (mathOpCounts != null)
-			{
-				Debug.WriteLine($"Job completed: Totals: {mathOpCounts}");
-			}
-		}
+		//[Conditional("PERF")]
+		//private void ReportMathCounts(MathOpCounts? mathOpCounts)
+		//{
+		//	lock (_stateLock)
+		//	{
+		//		if (mathOpCounts != null)
+		//		{
+		//			Debug.WriteLine($"Job completed: Totals: {mathOpCounts}");
+		//		}
+		//	}
+		//}
 
 		#endregion
 	}

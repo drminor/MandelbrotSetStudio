@@ -138,7 +138,8 @@ namespace ImageBuilder
 			IDictionary<int, MapSection?> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
 		{
 			var linePtr = startingPtr;
-			for (var cntr = 0; cntr < numberOfLines; cntr++)
+
+			for (var cntr = 0; cntr < numberOfLines && !ct.IsCancellationRequested; cntr++)
 			{
 				for (var blockPtrX = 0; blockPtrX < extentInBlocksWidth; blockPtrX++)
 				{
@@ -203,14 +204,19 @@ namespace ImageBuilder
 				var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var _);
 				_currentJobNumber = msrJob.MapLoaderJobNumber;
 
-				foreach (var response in mapSections)
+				foreach (var mapSection in mapSections)
 				{
-					_currentResponses.Add(response.ScreenPosition.X, response);
+					_currentResponses.Add(mapSection.ScreenPosition.X, mapSection);
 				}
 
 				Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
 				await _blocksForRowAreReady.WaitAsync();
 				Debug.WriteLine($"Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_currentResponses.Count} blocks were created.");
+
+				if (ct.IsCancellationRequested || msrJob.IsCancelled)
+				{
+					_currentResponses.Clear();
+				}
 			}
 			catch
 			{

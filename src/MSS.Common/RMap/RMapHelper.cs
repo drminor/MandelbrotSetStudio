@@ -52,7 +52,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private static void ReportSamplePointDeltaScaling(RSize original, double factor, RValue rReciprocal, RSize result)
 		{
 			var rReciprocalDiagStr = rReciprocal.ToString(includeDecimalOutput: true);

@@ -626,7 +626,7 @@ namespace MSetExplorer
 
 		#region Diagnostics
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckViewportSize(SizeDbl previousValue, SizeDbl newValue)
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"BitmapGridControl - After Arrange: The canvas size is {new Size(Canvas.Width, Canvas.Height)} / {new Size(Canvas.ActualWidth, Canvas.ActualHeight)}.");
@@ -641,7 +641,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)
 		{
 			foreach (var v in canvas.Children)

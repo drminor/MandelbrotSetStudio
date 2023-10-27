@@ -3,6 +3,9 @@ using System.Threading.Tasks;
 
 namespace MSS.Types
 {
+	// TODO: Add support for using a cancellation token.
+	// See: https://github.com/StephenCleary/AsyncEx/blob/master/src/Nito.AsyncEx.Coordination/AsyncManualResetEvent.cs
+
 	public class AsyncManualResetEvent
 	{
 		private volatile TaskCompletionSource<bool> m_tcs;

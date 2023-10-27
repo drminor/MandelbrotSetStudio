@@ -2,6 +2,7 @@
 using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
+using System.Threading;
 
 namespace MSS.Types
 {
@@ -34,7 +35,7 @@ namespace MSS.Types
 			BackBuffer = backBuffer;
 			BackBufferIsLoaded = false;
 
-			ReferenceCount = 0;
+			_referenceCount = 0;
 		}
 
 		#endregion
@@ -231,18 +232,17 @@ namespace MSS.Types
 
 		#region IPoolable Support
 
-		public int ReferenceCount { get; private set; }
+		private int _referenceCount;
+		public int ReferenceCount => _referenceCount;
 
 		public int IncreaseRefCount()
 		{
-			ReferenceCount++;
-			return ReferenceCount;
+			return Interlocked.Increment(ref _referenceCount);
 		}
 
 		public int DecreaseRefCount()
 		{
-			ReferenceCount--;
-			return ReferenceCount;
+			return Interlocked.Decrement(ref _referenceCount);
 		}
 
 		public void ResetObject()

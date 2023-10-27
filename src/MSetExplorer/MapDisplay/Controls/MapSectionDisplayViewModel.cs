@@ -47,7 +47,7 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -1437,7 +1437,7 @@ namespace MSetExplorer
 			Debug.Assert(!(foundDiffSubInNew || foundDiffSubInExisting), "All SubdivisionIds should be the same here.");
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckSectionsNotVisible(IBitmapGrid bitmapGrid)
 		{
 			var sectionsNotVisible = _bitmapGrid.GetSectionsNotVisible();
@@ -1445,7 +1445,7 @@ namespace MSetExplorer
 
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportSubmitJobDetails(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings? newValue, bool isBound)
 		{
 			var currentJobId = previousValue?.JobId ?? ObjectId.Empty.ToString();
@@ -1473,7 +1473,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportNewRequests(List<MapSectionRequest> newRequests)
 		{
 			var newRequestsReport = _mapSectionBuilder.GetCountRequestsReport(newRequests);
@@ -1535,7 +1535,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportReuseAndLoadedSections(int numberRequested, int numberOfRequestsCancelled, int numberOfMapSections, int numberOfSectionsToRemove, int numberOfSectionsRemovedViaReq, /*int numberOfSectionsRemovedViaReqTest,*/
 			int numberOfSectionsNotVisible, int numberOfSectionsRemovedNotVis)
 		{
@@ -1563,7 +1563,7 @@ namespace MSetExplorer
 			Debug.WriteLine(string.Empty); // Insert a blank line in the on-screen output.
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportClearMapSections(int numberCleared, int numberRemoved)
 		{
 			// TODO: Move this logic to a conditonal method.

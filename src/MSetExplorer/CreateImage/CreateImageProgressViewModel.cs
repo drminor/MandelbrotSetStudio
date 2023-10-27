@@ -15,7 +15,7 @@ namespace MSetExplorer
 	{
 		private readonly PngBuilder _pngBuilder;
 		private readonly MapJobHelper _mapJobHelper;
-		private CancellationTokenSource _cancellationTokenSource;
+		private CancellationTokenSource _cts;
 		private Task<bool>?_task;
 
 		#region Constructor
@@ -25,7 +25,7 @@ namespace MSetExplorer
 			Successfull = false;
 			_pngBuilder = pngBuilder;
 			_mapJobHelper = mapJobHelper;
-			_cancellationTokenSource = new CancellationTokenSource();
+			_cts = new CancellationTokenSource();
 			_task = null;
 
 			Progress = new Progress<double>();
@@ -55,12 +55,12 @@ namespace MSetExplorer
 
 			var mapAreaInfoWithSize = _mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfoV2, canvasSize);
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cancellationTokenSource.Token), _cancellationTokenSource.Token);
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cts.Token), _cts.Token);
 		}
 
 		public void CancelCreateImage()
 		{
-			_cancellationTokenSource.Cancel();
+			_cts.Cancel();
 
 			if (_task != null)
 			{

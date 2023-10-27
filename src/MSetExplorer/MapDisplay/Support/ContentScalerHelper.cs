@@ -148,7 +148,7 @@ namespace MSetExplorer
 
 		#region Diagnostics
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private static void CheckScreenToRelativeScaleFactor(double screenToRelativeScaleFactor, double contentScale)
 		{
 			var (_, relativeScale) = GetBaseFactorAndRelativeScale(contentScale);
@@ -157,7 +157,7 @@ namespace MSetExplorer
 			Debug.Assert(!ScreenTypeHelper.IsDoubleChanged(screenToRelativeScaleFactor, chkRelativeScale, 0.000001), "ScreenToRelativeScaleFactor maybe incorrect.");
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private static void CheckNewGetBaseFactorAndRelativeScale(double contentScale, double baseFactor, double relativeScale)
 		{
 			var (bf, rs) = GetBaseFactorAndRelativeScaleAlt(contentScale);

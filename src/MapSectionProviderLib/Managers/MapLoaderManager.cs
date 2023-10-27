@@ -21,7 +21,7 @@ namespace MapSectionProviderLib
 		private int _currentPrecision;
 		private int _currentLimbCount;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -83,7 +83,7 @@ namespace MapSectionProviderLib
 
 			List<MapSection> mapSections = _mapSectionRequestProcessor.SubmitRequests(msrJob, mapSectionRequests, msrJob.HandleResponse, ct, out requestsPendingGeneration);
 
-			msrJob.SectionsFoundInRepo = mapSections.Count;
+			//msrJob.IncrementSectionsFound(mapSections.Count);
 			CheckPendingGenerationCount(msrJob, requestsPendingGeneration);
 
 			var mapLoaderJobNumber = msrJob.MapLoaderJobNumber;
@@ -123,7 +123,7 @@ namespace MapSectionProviderLib
 			return _currentLimbCount;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckPendingGenerationCount(MsrJob msrJob, List<MapSectionRequest> pendingGeneration)
 		{
 			var sectionsPendingGeneration = _mapSectionBuilder.GetTotalNumberOfRequests(pendingGeneration);

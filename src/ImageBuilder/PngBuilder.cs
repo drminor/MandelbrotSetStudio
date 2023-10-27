@@ -150,7 +150,7 @@ namespace ImageBuilder
 			IDictionary<int, MapSection?> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
 		{
 			var linePtr = startingPtr;
-			for (var cntr = 0; cntr < numberOfLines; cntr++)
+			for (var cntr = 0; cntr < numberOfLines && !ct.IsCancellationRequested; cntr++)
 			{
 				var iLine = pngImage.ImageLine;
 				var destPixPtr = 0;
@@ -160,7 +160,7 @@ namespace ImageBuilder
 					var mapSection = blocksForThisRow[blockPtrX];
 					var invertThisBlock = !mapSection?.IsInverted ?? false;
 
-					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a differnt value of isInverted as does the block at 0, {blockPtrY}.");
+					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
 
 					var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
 					var escVelsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.EscapeVelocities, linePtr, blockSizeWidth);
@@ -223,7 +223,7 @@ namespace ImageBuilder
 			Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
 			await _blocksForRowAreReady.WaitAsync();
 
-			if (msrJob.IsCancelled)
+			if (ct.IsCancellationRequested || msrJob.IsCancelled)
 			{
 				_mapSectionsForRow.Clear();
 			}

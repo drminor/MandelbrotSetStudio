@@ -43,7 +43,7 @@ namespace MSetExplorer
 		private WriteableBitmap _bitmap;
 		private byte[] _pixelsToClear;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		//private int noSkippedFillBackbufferOps = 0;
 
@@ -459,7 +459,7 @@ namespace MSetExplorer
 			return wasAdded;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportMapSectionNotVisible(PointInt blockPosition, MapSection mapSection, string description)
 		{
 			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
@@ -664,7 +664,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckBitmapSize(WriteableBitmap bitmap, SizeInt imageSizeInBlocks, string desc)
 		{
 			var imageSize = imageSizeInBlocks.Scale(_blockSize);

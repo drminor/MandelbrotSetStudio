@@ -385,22 +385,6 @@ namespace MSS.Common
 			}
 		}
 
-		//[Conditional("PERF")]
-		//private void UpdateMapSectionWithProcInfo(MapSection mapSection, MapSectionRequest mapSectionRequest)
-		//{
-		//	mapSection.MapSectionProcessInfo = new MapSectionProcessInfo
-		//		(
-		//		mapSectionRequest.MapLoaderJobNumber, 
-		//		mapSectionRequest.RequestNumber, 
-		//		mapSectionRequest.FoundInRepo, 
-		//		mapSectionRequest.Completed, 
-		//		mapSectionRequest.IsCancelled, 
-		//		requestDuration: mapSectionRequest.TimeToCompleteGenRequest,
-		//		processingDuration: mapSectionRequest.ProcessingDuration, 
-		//		generationDuration: mapSectionRequest.GenerationDuration
-		//		);
-		//}
-
 		#endregion
 
 		#region Diagnostics

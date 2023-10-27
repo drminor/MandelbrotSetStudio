@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace MSS.Types
 {
 	public class JobProgressInfo 
 	{
+		private int _cancelledCount;
 		private int _fetchedCount;
 		private int _generatedCount;
 
@@ -13,10 +13,12 @@ namespace MSS.Types
 			JobNumber = jobNumber;
 			Label = label;
 			DateCreatedUtc = dateCreatedUtc;
-			TotalSections = totalSections;
-			_fetchedCount = numberOfSectionsFetched;
-			_generatedCount = -1;
 
+			TotalSections = totalSections;
+			_cancelledCount = 0;
+			_fetchedCount = numberOfSectionsFetched;
+			
+			_generatedCount = -1;
 			GeneratedCount = 0;
 		}
 
@@ -34,6 +36,7 @@ namespace MSS.Types
 		}
 
 		public int TotalSections { get; init; }
+		public int SectionsReceived => _cancelledCount + _fetchedCount + _generatedCount;
 
 		public TimeSpan RunTime => DateTime.UtcNow - DateCreatedUtc;
 
@@ -57,6 +60,23 @@ namespace MSS.Types
 
 		public double PercentComplete { get; set; }
 
+		public int CancelledCount
+		{
+			get => _cancelledCount;
+			set
+			{
+				if (value != _cancelledCount)
+				{
+					_cancelledCount = value;
+					if (TotalSections > 0)
+					{
+						PercentComplete = 100 * SectionsReceived / (double)TotalSections;
+						//Debug.WriteLine($"G: {GeneratedCount}, F: {FetchedCount}, PC: {PercentComplete}, TS: {TotalSections}.");
+					}
+				}
+			}
+		}
+
 		public int FetchedCount
 		{
 			get => _fetchedCount;
@@ -67,7 +87,7 @@ namespace MSS.Types
 					_fetchedCount = value;
 					if (TotalSections > 0)
 					{
-						PercentComplete = 100 * (_generatedCount + _fetchedCount) / TotalSections;
+						PercentComplete = 100 * SectionsReceived / (double)TotalSections;
 						//Debug.WriteLine($"G: {GeneratedCount}, F: {FetchedCount}, PC: {PercentComplete}, TS: {TotalSections}.");
 					}
 				}
@@ -85,7 +105,7 @@ namespace MSS.Types
 
 					if (TotalSections > 0)
 					{
-						PercentComplete = 100 * (_generatedCount + _fetchedCount) / TotalSections;
+						PercentComplete = 100 * SectionsReceived / (double)TotalSections;
 					}
 				}
 			}

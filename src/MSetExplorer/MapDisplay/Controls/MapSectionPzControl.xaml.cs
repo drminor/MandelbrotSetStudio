@@ -176,7 +176,7 @@ namespace MSetExplorer
 		/// </summary>
 		/// <param name="viewPortsizeBitmapGridControl"></param>
 		/// <param name="viewportSizeVm"></param>
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckForOutofSyncLogicalVpSize(SizeDbl viewPortsizeBitmapGridControl, SizeDbl viewportSizeVm)
 		{
 			if (ScreenTypeHelper.IsSizeDblChanged(viewPortsizeBitmapGridControl, viewportSizeVm))
@@ -192,7 +192,7 @@ namespace MSetExplorer
 		/// <param name="contentVpSizeFromPz"></param>
 		/// <param name="contentVpSizeVm"></param>
 		/// <exception cref="InvalidOperationException"></exception>
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckForOutofSyncContentVpSize(SizeDbl contentVpSizeFromPz, SizeDbl? contentVpSizeVm)
 		{
 			if (contentVpSizeVm == null)

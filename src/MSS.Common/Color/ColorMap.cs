@@ -191,7 +191,7 @@ namespace MSS.Common
 			return stepFactor;
         }
 
-        [Conditional("DEBUG")]
+        [Conditional("DEBUG2")]
         private void CheckStepFactor(int countVal, int cutoff, int startingCutoff, int bucketWidth, double stepFactor, double escapeVelocity)
 		{
             var bucketDistance = countVal + escapeVelocity - startingCutoff;

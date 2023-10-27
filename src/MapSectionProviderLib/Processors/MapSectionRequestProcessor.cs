@@ -40,7 +40,7 @@ namespace MapSectionProviderLib
 
 		private bool _isStopped;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -134,12 +134,14 @@ namespace MapSectionProviderLib
 					{
 						if (mapSectionPair.Item1 != null && !mapSectionPair.Item1.RequestCancelled) 
 						{
+							mapSectionRequest.MsrJob.IncrementSectionsFound();
 							mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 							result.Add(mapSectionPair.Item1);
 						}
 
 						if (mapSectionPair.Item2 != null && !mapSectionPair.Item2.RequestCancelled)
 						{
+							mapSectionRequest.MsrJob.IncrementSectionsFound();
 							mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 							result.Add(mapSectionPair.Item2);
 						}
@@ -323,6 +325,7 @@ namespace MapSectionProviderLib
 							{
 								if (mapSectionPair.Item1 != null && !mapSectionPair.Item1.RequestCancelled)
 								{
+									mapSectionRequest.MsrJob.IncrementSectionsFound();
 									mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 									mapSectionWorkRequest.Response = mapSectionPair.Item1;
 									QueueTheResponse(mapSectionWorkRequest);
@@ -330,6 +333,7 @@ namespace MapSectionProviderLib
 
 								if (mapSectionPair.Item2 != null && !mapSectionPair.Item2.RequestCancelled)
 								{
+									mapSectionRequest.MsrJob.IncrementSectionsFound();
 									mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 									var mapSectionRequestForInverted = new MapSectionWorkRequest(mapSectionRequest, mapSectionWorkRequest.WorkAction, mapSectionPair.Item2);
 									QueueTheResponse(mapSectionRequestForInverted);
@@ -387,7 +391,7 @@ namespace MapSectionProviderLib
 
 						var result = CreateTheMapSections(mapSectionVectors, request);
 
-						UpdateMsrJobWithResultCounts(result, request);
+						//UpdateMsrJobWithResultCounts(result, request);
 
 						PersistJobMapSectionRecord(request);
 						_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
@@ -449,48 +453,48 @@ namespace MapSectionProviderLib
 			return new Tuple<MapSection?, MapSection?>(mapSection1, mapSection2);
 		}
 
-		private void UpdateMsrJobWithResultCounts(Tuple<MapSection?, MapSection?>? result, MapSectionRequest request)
-		{
-			var sectionsFoundInRepo = 0;
-			var sectionsCancelled = 0;
+		//private void UpdateMsrJobWithResultCounts(Tuple<MapSection?, MapSection?>? result, MapSectionRequest request)
+		//{
+		//	var sectionsFoundInRepo = 0;
+		//	var sectionsCancelled = 0;
 
-			if (result != null)
-			{
-				if (result.Item1 != null)
-				{
-					sectionsFoundInRepo++;
-				}
-				else
-				{
-					if (request.RegularPosition != null)
-						sectionsCancelled++;
-				}
+		//	if (result != null)
+		//	{
+		//		if (result.Item1 != null)
+		//		{
+		//			sectionsFoundInRepo++;
+		//		}
+		//		else
+		//		{
+		//			if (request.RegularPosition != null)
+		//				sectionsCancelled++;
+		//		}
 
-				if (result.Item2 != null)
-				{
-					sectionsFoundInRepo++;
-				}
-				else
-				{
-					if (request.InvertedPosition != null)
-						sectionsCancelled++;
-				}
-			}
-			else
-			{
-				if (request.IsPaired)
-				{
-					sectionsCancelled += 2;
-				}
-				else
-				{
-					sectionsCancelled++;
-				}
-			}
+		//		if (result.Item2 != null)
+		//		{
+		//			sectionsFoundInRepo++;
+		//		}
+		//		else
+		//		{
+		//			if (request.InvertedPosition != null)
+		//				sectionsCancelled++;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		if (request.IsPaired)
+		//		{
+		//			sectionsCancelled += 2;
+		//		}
+		//		else
+		//		{
+		//			sectionsCancelled++;
+		//		}
+		//	}
 
-			request.MsrJob.SectionsFoundInRepo += sectionsFoundInRepo;
-			request.MsrJob.SectionsCancelled += sectionsCancelled;
-		}
+		//	request.MsrJob.IncrementSectionsFound(sectionsFoundInRepo);
+		//	request.MsrJob.IncrementSectionsCancelled(sectionsCancelled);
+		//}
 
 		private void UpdateWithZValues(MapSectionRequest request)
 		{
@@ -632,12 +636,14 @@ namespace MapSectionProviderLib
 			{
 				if (mapSections.Item1 != null)
 				{
+					mapSectionRequest.MsrJob.IncrementSectionsGenerated();
 					mapSectionWorkRequest.Response = mapSections.Item1;
 					QueueTheResponse(mapSectionWorkRequest);
 				}
 
 				if (mapSections.Item2 != null)
 				{
+					mapSectionRequest.MsrJob.IncrementSectionsGenerated();
 					var mapSectionRequestForInverted = new MapSectionWorkRequest(mapSectionRequest, mapSectionWorkRequest.WorkAction, mapSections.Item2);
 					QueueTheResponse(mapSectionRequestForInverted);
 				}
@@ -674,7 +680,7 @@ namespace MapSectionProviderLib
 
 		#region Diagnostics
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckRequestResponseBeforePersist(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
 			Debug.Assert(mapSectionResponse.MapSectionVectors2 != null, "The MapSectionVectors2 should not be null.");
