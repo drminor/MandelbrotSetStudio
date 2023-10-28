@@ -337,7 +337,7 @@ namespace MSS.Common
 		#region GetMapPositionSizeAndDelta Methods - V1 - Depreciated
 
 		// Calculate the SamplePointDelta, MapBlockOffset, CanvasControlOffset, using the specified coordinates and display size
-		private MapPositionSizeAndDelta GetMapPositionSizeAndDeltaV1(RRectangle coords, SizeInt canvasSize)
+		public MapPositionSizeAndDelta GetMapPositionSizeAndDeltaV1(RRectangle coords, SizeInt canvasSize)
 		{
 			// Use the exact canvas size -- do not adjust based on aspect ratio of the newArea.
 			var displaySize = canvasSize;

@@ -1,18 +1,17 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
 using MSetExplorer.ScreenHelpers;
+using MSS.Common;
+using MSS.Common.MSet;
+using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
-using System.Diagnostics.CodeAnalysis;
-using MSS.Types.MSet;
-using MSS.Common;
-using MSS.Common.MSet;
-using System.Linq;
-using System.IO;
-using MongoDB.Bson;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -864,16 +863,21 @@ namespace MSetExplorer
 
 		private void LoadNewProject()
 		{
-			var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
 			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, RMapConstants.DEFAULT_THRESHOLD, calculateEscapeVelocities: true, saveTheZValues: false);
 
-			LoadNewProject(coords, mapCalcSettings);
+			//var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
+			var mapAreaInfo = RMapConstants.BuildHomeArea();
+
+			//var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+			//_vm.ProjectViewModel.ProjectStartNew(mapAreaInfo, colorBandSet, mapCalcSettings);
+
+			LoadNewProject(mapAreaInfo, mapCalcSettings);
 		}
 
-		private void LoadNewProject(RRectangle coords, MapCalcSettings mapCalcSettings)
+		private void LoadNewProject(MapCenterAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			_vm.ProjectViewModel.ProjectStartNew(coords, colorBandSet, mapCalcSettings);
+			_vm.ProjectViewModel.ProjectStartNew(mapAreaInfo, colorBandSet, mapCalcSettings);
 		}
 
 		private SaveResult ProjectSaveChanges()
@@ -1079,8 +1083,6 @@ namespace MSetExplorer
 			var curJob = _vm.ProjectViewModel.CurrentJob;
 			if (!curJob.IsEmpty)
 			{
-				//coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(curJob.Coords, _vm.ProjectViewModel.CanvasSize, allowEdits: true);
-
 				var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 
 				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(curJob.MapAreaInfo, displaySize, allowEdits: true);
@@ -1088,21 +1090,32 @@ namespace MSetExplorer
 			}
 			else
 			{
+				var displaySize = _vm.MapDisplayViewModel.ViewportSize;
+
 				//var x1 = "-0.477036968733327014028268226139546";
 				//var x2 = "-0.477036964892343354414420540166062";
 				//var y1 = "0.535575821681765930306959274776606";
 				//var y2 = "0.535575824239325800205884281044245";
 
-				////var x1 = "-0.4770369687333";
-				////var x2 = "-0.4770369648923";
-				////var y1 = "0.5355758216817";
-				////var y2 = "0.5355758242393";
+				//var x1 = "-0.4770369687333";
+				//var x2 = "-0.4770369648923";
+				//var y1 = "0.5355758216817";
+				//var y2 = "0.5355758242393";
 
-				//var coords = new RRectangle(x1, x2, y1, y2);
-				//coordsEditorViewModel = _vm.CreateACoordsEditorViewModel(coords, _vm.ProjectViewModel.CanvasSize, allowEdits: false);
-				//mapCalcSettings = new MapCalcSettings(targetIterations: 700, requestsPerJob: 100);
+				//var x1 = "-0.81976318359375";
+				//var x2 = "-0.78863525390625";
+				//var y1 = "0.1584930419921875";
+				//var y2 = "0.1891632080078125";
 
-				return;
+				var x1 = "-0.7595138884311722904385533";
+				var x2 = "-0.75951388005302078454406";
+				var y1 = "0.08547031274046901216934202";
+				var y2 = "0.08547032099541240768303396";
+
+
+				var coords = RValueHelper.BuildRRectangle(new string[] { x1, x2, y1, y2 });
+				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(coords, displaySize, allowEdits: true);
+				mapCalcSettings = RMapConstants.BuildMapCalcSettings();
 			}
 
 			var coordsEditorWindow = new CoordsEditorWindow()
@@ -1114,26 +1127,26 @@ namespace MSetExplorer
 			{
 				if (!curJob.IsEmpty)
 				{
-					//var saveResult = ProjectSaveChanges();
-					//if (saveResult == SaveResult.ChangesSaved)
-					//{
-					//	_ = MessageBox.Show("Changes Saved");
-					//}
-					//else if (saveResult == SaveResult.NotSavingChanges)
-					//{
-					//	_ = _vm.ProjectViewModel.DeleteMapSectionsSinceLastSave();
-					//}
-					//else if (saveResult == SaveResult.SaveCancelled)
-					//{
-					//	// user cancelled.
-					//	return;
-					//}
+					var saveResult = ProjectSaveChanges();
+					if (saveResult == SaveResult.ChangesSaved)
+					{
+						_ = MessageBox.Show("Changes Saved");
+					}
+					else if (saveResult == SaveResult.NotSavingChanges)
+					{
+						_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
+					}
+					else if (saveResult == SaveResult.SaveCancelled)
+					{
+						// user cancelled.
+						return;
+					}
 
 					return;
 				}
 
-				var newCoords = coordsEditorViewModel.Coords;
-				LoadNewProject(newCoords, mapCalcSettings);
+				var mapAreaInfoV2 = coordsEditorViewModel.GetMapCenterAndDelta();
+				LoadNewProject(mapAreaInfoV2, mapCalcSettings);
 			}
 		}
 

@@ -1,6 +1,5 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 
@@ -16,8 +15,8 @@ namespace MSetExplorer
 		private string? _numerator;
 		private int _exponent;
 
-		private long _long1;
-		private long _long2;
+		//private long _long1;
+		//private long _long2;
 
 		private string _valueName;
 
@@ -34,8 +33,8 @@ namespace MSetExplorer
 			SignManExp = new SignManExp();
 			_numerator = null;
 			_exponent = 0;
-			_long1 = 0;
-			_long2 = 0;
+			//_long1 = 0;
+			//_long2 = 0;
 
 			_valueName = "XX";
 
@@ -60,8 +59,8 @@ namespace MSetExplorer
 					OnPropertyChanged(nameof(Exponent));
 					OnPropertyChanged(nameof(StringValOut));
 
-					OnPropertyChanged(nameof(Long1));
-					OnPropertyChanged(nameof(Long2));
+					//OnPropertyChanged(nameof(Long1));
+					//OnPropertyChanged(nameof(Long2));
 				}
 			}
 		}
@@ -128,31 +127,31 @@ namespace MSetExplorer
 			}
 		}
 
-		public long Long1
-		{
-			get => _long1;
-			set
-			{
-				if (value != _long1)
-				{
-					_long1 = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public long Long1
+		//{
+		//	get => _long1;
+		//	set
+		//	{
+		//		if (value != _long1)
+		//		{
+		//			_long1 = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
-		public long Long2
-		{
-			get => _long2;
-			set
-			{
-				if (value != _long2)
-				{
-					_long2 = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public long Long2
+		//{
+		//	get => _long2;
+		//	set
+		//	{
+		//		if (value != _long2)
+		//		{
+		//			_long2 = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		public string? StringValOut
 		{
@@ -195,9 +194,9 @@ namespace MSetExplorer
 			_numerator = _rValue.Value.ToString(CultureInfo.InvariantCulture);
 			_exponent = _rValue.Exponent;
 
-			var longVals = BigIntegerHelper.ToLongPairs(_rValue.Value);
-			_long1 = longVals[0];
-			_long2 = longVals[1];
+			//var longVals = BigIntegerHelper.ToLongPairs(_rValue.Value);
+			//_long1 = longVals[0];
+			//_long2 = longVals[1];
 
 			_stringValOut = RValueHelper.ConvertToString(_rValue);
 

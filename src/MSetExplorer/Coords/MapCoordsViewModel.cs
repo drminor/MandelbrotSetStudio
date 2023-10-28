@@ -323,10 +323,10 @@ namespace MSetExplorer
 			var sb = new StringBuilder();
 
 			sb.AppendLine($"Job: {JobId}");
-			sb.AppendLine(X1);
-			sb.AppendLine(X2);
-			sb.AppendLine(Y1);
-			sb.AppendLine(Y2);
+			sb.Append("var x1 = \"").Append(X1).AppendLine("\";");
+			sb.Append("var x2 = \"").Append(X2).AppendLine("\";");
+			sb.Append("var y1 = \"").Append(Y1).AppendLine("\";");
+			sb.Append("var y2 = \"").Append(Y2).AppendLine("\";");
 
 			return sb.ToString();
 		}

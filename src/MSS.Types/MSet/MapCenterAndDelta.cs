@@ -60,7 +60,18 @@ namespace MSS.Types.MSet
 
 		#endregion
 
-		#region ICloneable Support 
+		#region ICloneable and ToString Support 
+
+		public override string ToString()
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine($"Center: {MapCenter}, Delta: {SamplePointDelta.WidthNumerator} / {SamplePointDelta.Exponent} (Subdivision: Pos:{Subdivision.Position}, Delta: {Subdivision.SamplePointDelta.WidthNumerator} / {Subdivision.SamplePointDelta.Exponent}.)");
+			sb.AppendLine($"MapBlockOffset: X:{MapBlockOffset.X}, Y:{MapBlockOffset.Y}");
+			sb.AppendLine($"CanvasControlOffset: {CanvasControlOffset}");
+
+			return sb.ToString();
+		}
 
 		object ICloneable.Clone()
 		{
@@ -75,16 +86,7 @@ namespace MSS.Types.MSet
 			};
 		}
 
-		public override string ToString()
-		{
-			var sb = new StringBuilder();
 
-			sb.AppendLine($"Center: {MapCenter}, Delta: {SamplePointDelta.WidthNumerator} / {SamplePointDelta.Exponent} (Subdivision: Pos:{Subdivision.Position}, Delta: {Subdivision.SamplePointDelta.WidthNumerator} / {Subdivision.SamplePointDelta.Exponent}.)");
-			sb.AppendLine($"MapBlockOffset: X:{MapBlockOffset.X}, Y:{MapBlockOffset.Y}");
-			sb.AppendLine($"CanvasControlOffset: {CanvasControlOffset}");
-
-			return sb.ToString();
-		}
 
 		public override bool Equals(object? obj)
 		{

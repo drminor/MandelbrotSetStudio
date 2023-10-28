@@ -258,23 +258,40 @@ namespace MSetExplorer
 
 		#region Public Methods -- Project
 
-		public void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		public void ProjectStartNew(MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			if (mapCalcSettings.TargetIterations != colorBandSet.HighCutoff)
 			{
 				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At ProjectStartNew.");
 			}
 
-			var mapAreaInfo = RMapConstants.BuildHomeArea();
-
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
-			Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			Debug.WriteLine($"Starting Job with new coords: {mapAreaInfo}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			var project = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
 			job.OwnerId = project.Id;
 
 			CurrentProject = project;
 		}
+		
+		//public void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		//{
+		//	if (mapCalcSettings.TargetIterations != colorBandSet.HighCutoff)
+		//	{
+		//		Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At ProjectStartNew.");
+		//	}
+
+		//	var mapAreaInfo = RMapConstants.BuildHomeArea();
+
+		//	var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+		//	Debug.WriteLine($"Starting Job with new coords: {coords}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+		//	var project = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
+		//	job.OwnerId = project.Id;
+
+		//	CurrentProject = project;
+		//}
+
 
 		public bool ProjectOpen(string projectName)
 		{

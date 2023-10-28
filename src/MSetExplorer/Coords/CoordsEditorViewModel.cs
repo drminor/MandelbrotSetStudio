@@ -1,7 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
-using System.Windows;
 
 namespace MSetExplorer
 {
@@ -9,7 +8,7 @@ namespace MSetExplorer
 	{
 		private const int _numDigitsForDisplayExtent = 4;
 
-		private readonly SizeDbl _displaySize;
+		private MapJobHelper _mapJobHelper;
 
 		private RRectangle _coords;
 		private bool _coordsAreDirty;
@@ -18,17 +17,26 @@ namespace MSetExplorer
 		#region Constructor
 
 		public CoordsEditorViewModel(MapJobHelper mapJobHelper, MapCenterAndDelta mapAreaInfoV2, SizeDbl displaySize, bool allowEdits)
+			: this(mapJobHelper, mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfoV2, displaySize), allowEdits)
+		{ }
+
+		public CoordsEditorViewModel(MapJobHelper mapJobHelper, RRectangle coords, SizeDbl displaySize, bool allowEdits)
+			: this(mapJobHelper, mapJobHelper.GetMapPositionSizeAndDeltaV1(coords, displaySize.Round()), allowEdits)
+		{ }
+
+		private CoordsEditorViewModel(MapJobHelper mapJobHelper, MapPositionSizeAndDelta mapAreaInfo, bool allowEdits)
 		{
-			var mapAreaInfo = mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfoV2, _displaySize);
+			_mapJobHelper = mapJobHelper;
+
+			DisplaySize = mapAreaInfo.CanvasSize;
 			_coords = mapAreaInfo.Coords;
 
 			StartingX = new SingleCoordEditorViewModel(_coords.Left);
 			EndingX = new SingleCoordEditorViewModel(_coords.Right);
 
 			StartingY = new SingleCoordEditorViewModel(_coords.Bottom);
-			EndingY= new SingleCoordEditorViewModel(_coords.Top);
+			EndingY = new SingleCoordEditorViewModel(_coords.Top);
 
-			_displaySize = displaySize;
 			EditsAllowed = allowEdits;
 
 			MapCoordsDetail1 = new MapCoordsDetailViewModel(_coords);
@@ -62,6 +70,8 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public bool EditsAllowed { get; init; }
+
+		public SizeDbl DisplaySize { get; init; }
 
 		public SingleCoordEditorViewModel StartingX { get; init; }
 		public SingleCoordEditorViewModel EndingX { get; init; }
@@ -121,6 +131,14 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public MapCenterAndDelta GetMapCenterAndDelta()
+		{
+			var coords = MapCoordsDetail1.Coords;
+			var mapAreaInfo = _mapJobHelper.GetCenterAndDelta(coords, DisplaySize.Round());
+
+			return mapAreaInfo;
+		}
 
 		#endregion
 

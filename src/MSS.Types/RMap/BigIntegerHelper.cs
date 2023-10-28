@@ -266,7 +266,7 @@ namespace MSS.Types
 		{
 			var result = new List<long>();
 
-			while (bi > MAX_DIGIT_VALUE)
+			while (bi > MAX_DIGIT_VALUE || bi < MIN_DIGIT_VALUE)
 			{
 				bi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
 				result.Add((long)lo);
@@ -295,13 +295,13 @@ namespace MSS.Types
 			var result = new List<long>();
 
 			// The old implementaion always returned 2 elements.
-			if (bi <= MAX_DIGIT_VALUE)
+			if (bi <= MAX_DIGIT_VALUE && bi >= MIN_DIGIT_VALUE)
 			{
 				return new long[] { 0, (long)bi };
 			}
 			else
 			{
-				while (bi > MAX_DIGIT_VALUE)
+				while (bi > MAX_DIGIT_VALUE || bi < MIN_DIGIT_VALUE)
 				{
 					bi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
 					result.Add((long)lo);

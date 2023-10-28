@@ -39,7 +39,8 @@ namespace MSetExplorer
 		MapCenterAndDelta GetUpdatedMapAreaInfo(TransformType transformType, VectorInt panAmount, double factor, MapCenterAndDelta currentMapAreaInfo);
 
 		// Project Methods
-		void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
+		//void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
+		void ProjectStartNew(MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
 
 		bool ProjectOpen(string name);
 		bool ProjectSave();

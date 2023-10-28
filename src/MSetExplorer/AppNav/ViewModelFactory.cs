@@ -74,6 +74,13 @@ namespace MSetExplorer
 			return result;
 		}
 
+		// Coords Editor
+		public CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeDbl canvasSize, bool allowEdits)
+		{
+			var result = new CoordsEditorViewModel(_mapJobHelper, coords, canvasSize, allowEdits);
+			return result;
+		}
+
 		// Create Image Progress 
 		public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
 		{
