@@ -191,7 +191,7 @@
             </Grid.ColumnDefinitions>
 
             <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="dispSecMapCoords" Visibility="Collapsed">
-                <local:MapCoordsControl x:Name="mapCoordsView1" Focusable="True"/>
+                <local:MapCoordsControl x:Name="mapCoordsView1" Width="290" Focusable="True"/>
             </Border>
 
             <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0" x:Name="dispSecMapCalcSettings" Visibility="Collapsed">

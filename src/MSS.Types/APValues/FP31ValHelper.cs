@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,7 +13,7 @@ namespace MSS.Types.APValues
 		#region Private Members
 
 		//private const int BITS_PER_LIMB = 32;
-		private const int EFFECTIVE_BITS_PER_LIMB = 31;
+		public const int EFFECTIVE_BITS_PER_LIMB = 31;
 
 		private static readonly uint MAX_DIGIT_VALUE = (uint)(Math.Pow(2, EFFECTIVE_BITS_PER_LIMB) - 1);
 
@@ -33,8 +32,9 @@ namespace MSS.Types.APValues
 		private const ulong HIGH33_CLEAR_L = LOW31_BITS_SET_L;			// bits 63 - 31 are reset.
 
 		private const uint TEST_BIT_31 = 0x80000000;					// bit 31 is set.
-		private const uint TEST_BIT_30 = 0x40000000;	                // bit 30 is set.
-
+		private const uint TEST_BIT_30 = 0x40000000;                    // bit 30 is set.
+		
+		public const uint RESERVED_BIT_MASK = 0x80000000;
 
 		private const uint MOST_NEG_VAL = 0x40000000;					// This negative number causes an overflow when negated.
 		//private const ulong MOST_NEG_VAL_REPLACMENT = 0x40000001;		// Most negative value + 1.
@@ -193,7 +193,6 @@ namespace MSS.Types.APValues
 
 			return result;
 		}
-
 
 		#endregion
 
@@ -484,7 +483,21 @@ namespace MSS.Types.APValues
 
 		#endregion
 
-		#region Convert to Full-31Bit-Word Limbs
+		#region Full 31Bit Limb Support
+
+		public static int GetLimbCount(double precision)
+		{
+			var result = GetLimbCount(RMapConstants.BITS_BEFORE_BP + (int)precision);
+			return result;
+		}
+
+		public static int GetLimbCount(int totalNumberOfBits)
+		{
+			var dResult = totalNumberOfBits / (double)EFFECTIVE_BITS_PER_LIMB;
+			var limbCount = (int)Math.Ceiling(dResult);
+
+			return limbCount;
+		}
 
 		private static uint[] ToFwUInts(BigInteger bi, out bool sign)
 		{

@@ -1,4 +1,5 @@
 using MEngineClient;
+using MEngineDataContracts;
 using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;

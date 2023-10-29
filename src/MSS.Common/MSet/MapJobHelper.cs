@@ -318,13 +318,14 @@ namespace MSS.Common
 			Debug.Assert(newSubdivision == subdivision, "GetMapAreaInfo for CanvasSize Update is producing a new Subdivision");
 
 			var binaryPrecision = GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
+			var binaryPrecisionRounded = (int)binaryPrecision;
 
-			var result = new MapPositionSizeAndDelta(newCoords, canvasSize, newSubdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSourceSubdivisionId);
+			var result = new MapPositionSizeAndDelta(newCoords, canvasSize, newSubdivision, binaryPrecisionRounded, localMapBlockOffset, canvasControlOffset, originalSourceSubdivisionId);
 
 			return result;
 		}
 
-		public int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
+		public double GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out double decimalPrecision)
 		{
 			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
 			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
@@ -367,7 +368,9 @@ namespace MSS.Common
 			var subdivision = _subdivisonProvider.GetSubdivision(uSpd, mapBlockOffset, out var localMapBlockOffset);
 
 			var binaryPrecision = RMapHelper.GetBinaryPrecision(newCoords, subdivision.SamplePointDelta, out _);
-			var result = new MapPositionSizeAndDelta(newCoords, new SizeDbl(canvasSize), subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, subdivision.Id);
+			var binaryPrecisionRounded = (int)binaryPrecision;
+
+			var result = new MapPositionSizeAndDelta(newCoords, new SizeDbl(canvasSize), subdivision, binaryPrecisionRounded, localMapBlockOffset, canvasControlOffset, subdivision.Id);
 
 			return result;
 		}

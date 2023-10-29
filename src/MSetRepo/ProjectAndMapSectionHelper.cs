@@ -280,12 +280,14 @@ namespace MSetRepo
 		private static MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-			var precision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
+			var binaryPrecision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
 
-			var limbCount = GetLimbCount(precision);
+			var limbCount = GetLimbCount(binaryPrecision);
+
+			var binaryPrecisionRounded = (int)binaryPrecision;
 
 			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
-				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
+				binaryPrecisionRounded, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
 
 			return msrJob;
 		}
@@ -293,10 +295,10 @@ namespace MSetRepo
 		private const int PRECSION_PADDING = 4;
 		private const int MIN_LIMB_COUNT = 1;
 
-		private static int GetLimbCount(int precision)
+		private static int GetLimbCount(double precision)
 		{
 			var adjustedPrecision = precision + 2;
-			var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
+			var apFixedPointFormat = new ApFixedPointFormat(precision: adjustedPrecision);
 
 			var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, 2);
 

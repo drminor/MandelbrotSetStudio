@@ -11,20 +11,7 @@ namespace MSS.Common
 	{
 		#region Private Fields
 
-		private const int EFFECTIVE_BITS_PER_LIMB = 31;
-
-		private const uint RESERVED_BIT_MASK = 0x80000000;
-		private static readonly Vector256<uint> RESERVED_BIT_MASK_VEC = Vector256.Create(RESERVED_BIT_MASK);
-
-		private const uint LOW31_BITS_SET = 0x7FFFFFFF; // bits 0 - 30 are set.
-		private static readonly Vector256<uint> HIGH33_MASK_VEC = Vector256.Create(LOW31_BITS_SET);
-
-		private const uint TEST_BIT_30 = 0x40000000; // bit 30 is set.
-		private static readonly Vector256<uint> TEST_BIT_30_VEC = Vector256.Create(TEST_BIT_30);
-
-		private const uint TEST_BIT_31 = 0x80000000; // bit 30 is set.
-		private static readonly Vector256<uint> TEST_BIT_31_VEC = Vector256.Create(TEST_BIT_31);
-
+		private static readonly Vector256<uint> RESERVED_BIT_MASK_VEC = Vector256.Create(FP31ValHelper.RESERVED_BIT_MASK);
 		private static readonly Vector256<int> THREE = Vector256.Create(3);
 
 		#endregion
@@ -70,7 +57,7 @@ namespace MSS.Common
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void WarnIfAnyCarry(Vector256<uint> source, Vector256<int> mask, string description)
 		{
-			var carry = Avx2.ShiftRightLogical(source, EFFECTIVE_BITS_PER_LIMB).AsInt32();
+			var carry = Avx2.ShiftRightLogical(source, FP31ValHelper.EFFECTIVE_BITS_PER_LIMB).AsInt32();
 			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<int>.Zero);
 			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
 			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
@@ -114,7 +101,7 @@ namespace MSS.Common
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void WarnIfAnyCarryForAddSub(Vector256<uint> source, Vector256<int> mask, string description)
 		{
-			var carryA = Avx2.ShiftRightLogical(source, EFFECTIVE_BITS_PER_LIMB - 1).AsInt32();
+			var carryA = Avx2.ShiftRightLogical(source, FP31ValHelper.EFFECTIVE_BITS_PER_LIMB - 1).AsInt32();
 			var cIsZeroFlagsA = Avx2.CompareEqual(carryA, Vector256<int>.Zero);
 			var cIsThreeFlags = Avx2.CompareEqual(carryA, THREE);
 
@@ -129,7 +116,7 @@ namespace MSS.Common
 			//}
 
 			// Now that we have the Negation logic fixed, we can go back to simple overflow detection.
-			var carry = Avx2.ShiftRightLogical(source, EFFECTIVE_BITS_PER_LIMB);
+			var carry = Avx2.ShiftRightLogical(source, FP31ValHelper.EFFECTIVE_BITS_PER_LIMB);
 			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<uint>.Zero);
 			var cIsZeroFlags2 = Avx2.BlendVariable(cIsZeroFlags, Vector256<uint>.AllBitsSet, mask.AsUInt32());
 			var isZeroComp = Avx2.MoveMask(cIsZeroFlags2.AsByte());
@@ -144,7 +131,7 @@ namespace MSS.Common
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool AnyCarryFound(Vector256<uint> source, Vector256<int> mask)
 		{
-			var carry = Avx2.ShiftRightLogical(source, EFFECTIVE_BITS_PER_LIMB).AsInt32();
+			var carry = Avx2.ShiftRightLogical(source, FP31ValHelper.EFFECTIVE_BITS_PER_LIMB).AsInt32();
 			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<int>.Zero);
 			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
 			var isZeroComp = Avx2.MoveMask(cIsZeroFlags.AsByte());
@@ -155,7 +142,7 @@ namespace MSS.Common
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void ThrowIfAnyCarry(Vector256<uint> source, Vector256<int> mask, string description)
 		{
-			var carry = Avx2.ShiftRightLogical(source, EFFECTIVE_BITS_PER_LIMB).AsInt32();
+			var carry = Avx2.ShiftRightLogical(source, FP31ValHelper.EFFECTIVE_BITS_PER_LIMB).AsInt32();
 			var cIsZeroFlags = Avx2.CompareEqual(carry, Vector256<int>.Zero);
 			cIsZeroFlags = Avx2.BlendVariable(cIsZeroFlags, Vector256<int>.AllBitsSet, mask);
 
@@ -201,20 +188,6 @@ namespace MSS.Common
 			return isZeroComp != -1;
 		}
 
-		[Conditional("DEBUG2")]
-		public static void CheckReservedBitIsClear(Vector256<uint>[] source, string description)
-		{
-			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
-			{
-				var justReservedBit = Avx2.And(source[limbPtr], RESERVED_BIT_MASK_VEC);
-				var cFlags = Avx2.CompareEqual(justReservedBit, Vector256<uint>.Zero);
-				var cComposite = Avx2.MoveMask(cFlags.AsByte());
-				if (cComposite != -1)
-				{
-					throw new InvalidOperationException($"While {description}, found a limb with bit-31 set.");
-				}
-			}
-		}
 
 		//public static Vector256<uint> ExtendSignBit(Vector256<uint> source)
 		//{
@@ -223,7 +196,7 @@ namespace MSS.Common
 		//	var setReserveBit = Avx2.Or(source, TEST_BIT_31_VEC);
 
 		//	var result = Avx2.BlendVariable(setReserveBit, zeroOutReserve, signBitIsResetVecs); // if signBitIsReset, set the result to zeroOutTheReserveBit, otherwise turn on the reserveBit
-			
+
 		//	return result;
 		//}
 
@@ -266,9 +239,20 @@ namespace MSS.Common
 		//	}
 		//}
 
-		#endregion
-
-		#region Reporting
+		[Conditional("DEBUG2")]
+		public static void CheckReservedBitIsClear(Vector256<uint>[] source, string description)
+		{
+			for (int limbPtr = 0; limbPtr < source.Length; limbPtr++)
+			{
+				var justReservedBit = Avx2.And(source[limbPtr], RESERVED_BIT_MASK_VEC);
+				var cFlags = Avx2.CompareEqual(justReservedBit, Vector256<uint>.Zero);
+				var cComposite = Avx2.MoveMask(cFlags.AsByte());
+				if (cComposite != -1)
+				{
+					throw new InvalidOperationException($"While {description}, found a limb with bit-31 set.");
+				}
+			}
+		}
 
 		[Conditional("DEBUG2")]
 		public static void ReportForAddition(int step, Vector256<uint> left, Vector256<uint> right, Vector256<uint> carry, Vector256<uint> nv, Vector256<uint> lo, Vector256<uint> newCarry)

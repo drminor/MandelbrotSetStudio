@@ -57,6 +57,7 @@ namespace MSetExplorer
 					if (_currentProject != null)
 					{
 						CalculateEscapeVelocities = _currentProject.CurrentJob.MapCalcSettings.CalculateEscapeVelocities;
+						SaveTheZValues = _currentProject.CurrentJob.MapCalcSettings.SaveTheZValues;
 						_currentProject.PropertyChanged += CurrentProject_PropertyChanged;
 					}
 
@@ -166,20 +167,29 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		private bool _saveTheZValues = false;
+		//private bool _saveTheZValues = false;
+
 		public bool SaveTheZValues
 		{
-			get => _saveTheZValues;
+			get => CurrentProject?.CurrentJob.MapCalcSettings.SaveTheZValues ?? false;
 			set
 			{
-				if (value != _saveTheZValues)
+				var currentProject = CurrentProject;
+				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
 				{
-					_saveTheZValues =value;
-					OnPropertyChanged(nameof(IProjectViewModel.SaveTheZValues));
-				}
-				else
-				{
-					Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+					var curValue = currentProject.CurrentJob.MapCalcSettings.SaveTheZValues;
+					if (value != curValue)
+					{
+						currentProject.CurrentJob.MapCalcSettings.SaveTheZValues = value;
+						currentProject.CurrentJob.LastUpdatedUtc = DateTime.UtcNow;
+						currentProject.MarkAsDirty();
+
+						OnPropertyChanged(nameof(IProjectViewModel.SaveTheZValues));
+					}
+					else
+					{
+						Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+					}
 				}
 			}
 		}
@@ -192,15 +202,17 @@ namespace MSetExplorer
 				var currentProject = CurrentProject;
 				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
 				{
-					if (value == CalculateEscapeVelocities)
+					if (value != CalculateEscapeVelocities)
+					{
+						var newMapCalcSettings = MapCalcSettings.UpdateCalculateEscapeVelocities(currentProject.CurrentJob.MapCalcSettings, value);
+						AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
+
+						OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
+					}
+					else
 					{
 						Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
 					}
-
-					var newMapCalcSettings = MapCalcSettings.UpdateCalculateEscapeVelocities(currentProject.CurrentJob.MapCalcSettings, value);
-					AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
-
-					OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
 				}
 			}
 		}
@@ -248,6 +260,12 @@ namespace MSetExplorer
 
 			else if (e.PropertyName == nameof(Project.CurrentJob))
 			{
+				if (CurrentJob != null)
+				{
+					CalculateEscapeVelocities = CurrentJob.MapCalcSettings.CalculateEscapeVelocities;
+					SaveTheZValues = CurrentJob.MapCalcSettings.SaveTheZValues;
+				}
+
 				//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
 				//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 				OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));

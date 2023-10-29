@@ -309,6 +309,8 @@ namespace MSS.Common
 
 		#region Precision
 
+		// TODO: Consider making the 'precision' property a double instead of an integer.
+
 		// Each decimal digits is equal to ≈ 3.3219 binary digits. (53 log10(2) ≈ 15.955).
 
 		/// <summary>
@@ -344,7 +346,7 @@ namespace MSS.Common
 		/// <param name="rValue2"></param>
 		/// <param name="diff">The absolute difference between rValue1 and rValue2</param>
 		/// <returns>Number of decimal digits</returns>
-		public static int GetBinaryPrecision(RValue rValue1, RValue rValue2, out int decimalPrecision)
+		public static double GetBinaryPrecision(RValue rValue1, RValue rValue2, out double decimalPrecision)
 		{
 			var nrmRVal1 = RNormalizer.Normalize(rValue1, rValue2, out var nrmRVal2);
 			var diffNoPrecision = nrmRVal1.Sub(nrmRVal2).Abs();
@@ -357,9 +359,9 @@ namespace MSS.Common
 			var val = doubles.Sum();
 			var logB10 = Math.Log10(val);
 
-			var result = (int)Math.Ceiling(Math.Abs(logB10 * 3.3219));
+			var result = Math.Ceiling(Math.Abs(logB10 * 3.3219));
 
-			decimalPrecision = (int)Math.Ceiling(Math.Abs(logB10));
+			decimalPrecision = Math.Ceiling(Math.Abs(logB10));
 
 			return result;
 		}

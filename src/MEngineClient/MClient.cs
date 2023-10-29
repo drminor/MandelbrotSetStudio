@@ -65,17 +65,13 @@ namespace MEngineClient
 
 			if (ct.IsCancellationRequested)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"MClient. Request: JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber} is cancelled.");
+				Debug.WriteLineIf(_useDetailedDebug, $"MClient. RequestId: {mapSectionRequest.RequestId} is cancelled.");
 				result = MapSectionResponse.CreateCancelledResponseWithVectors(mapSectionRequest);
 			}
 			else
 			{
 				mapSectionRequest.ClientEndPointAddress = EndPointAddress;
-
-				if (mapSectionRequest.MapSectionZVectors != null)
-				{
-					Debug.Assert(mapSectionRequest.MapSectionZVectors.ReferenceCount == 1, "The MapSectionZVectors Reference Count should be one here.");
-				}
+				CheckMapSectionZVectorsRefCount(mapSectionRequest);
 
 				var mapSectionServiceRequest = MapTo(mapSectionRequest);
 
@@ -255,9 +251,21 @@ namespace MEngineClient
 			}
 
 			var result = new MapSectionResponse(mapSectionRequest, serviceResponse.RequestCompleted, serviceResponse.AllRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors, serviceResponse.RequestCancelled);
-			//result.MathOpCounts = serviceResponse.MathOpCounts?.Clone();
 
 			return result;
+		}
+
+		#endregion
+
+		#region Diagnostics
+
+		[Conditional("DEBUG2")]
+		private void CheckMapSectionZVectorsRefCount(MapSectionRequest mapSectionRequest)
+		{
+			if (mapSectionRequest.MapSectionZVectors != null)
+			{
+				Debug.Assert(mapSectionRequest.MapSectionZVectors.ReferenceCount == 1, "The MapSectionZVectors Reference Count should be one here.");
+			}
 		}
 
 		#endregion

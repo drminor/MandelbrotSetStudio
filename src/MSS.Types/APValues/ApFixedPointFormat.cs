@@ -1,5 +1,5 @@
-﻿using System;
-using System.Diagnostics;
+﻿using MSS.Types.APValues;
+using System;
 
 namespace MSS.Types
 {
@@ -7,27 +7,24 @@ namespace MSS.Types
     {
         // NOTE: Currently we are using the same default settting of 8 BITS_BEFORE_BP, 
         // for implementations that use unsigned values and signed values.
-        // This means that effectively signed values have 1/2 the range of unsigned value.
+        // This means that signed values have 1/2 the range of unsigned value.
 
-        public const int EFFECTIVE_BITS_PER_LIMB = 31;
+        //public const int EFFECTIVE_BITS_PER_LIMB = 31;
 
-        public ApFixedPointFormat(int limbCount) : this(RMapConstants.BITS_BEFORE_BP, limbCount * EFFECTIVE_BITS_PER_LIMB - RMapConstants.BITS_BEFORE_BP)
+        public ApFixedPointFormat(int limbCount) : this(RMapConstants.BITS_BEFORE_BP, limbCount * FP31ValHelper.EFFECTIVE_BITS_PER_LIMB - RMapConstants.BITS_BEFORE_BP)
         { }
 
-        //public ApFixedPointFormat(double precision) : this(RMapConstants.BITS_BEFORE_BP, (int) precision)
-        //{ }
+        public ApFixedPointFormat(double precision) : this(RMapConstants.BITS_BEFORE_BP, (int)precision)
+        { }
 
         public ApFixedPointFormat(byte bitsBeforeBinaryPoint, int minimumFractionalBits)
         {
             BitsBeforeBinaryPoint = bitsBeforeBinaryPoint;
 
             var estimatedCountTotalBits = bitsBeforeBinaryPoint + minimumFractionalBits;
-            LimbCount = GetLimbCount(estimatedCountTotalBits);
+            LimbCount = FP31ValHelper.GetLimbCount(estimatedCountTotalBits);
 
-			//NumberOfFractionalBits = LimbCount * EFFECTIVE_BITS_PER_LIMB - BitsBeforeBinaryPoint;
-			//TotalBits = BitsBeforeBinaryPoint + NumberOfFractionalBits;
-
-			TotalBits = LimbCount * EFFECTIVE_BITS_PER_LIMB;
+			TotalBits = LimbCount * FP31ValHelper.EFFECTIVE_BITS_PER_LIMB;
 			NumberOfFractionalBits = TotalBits - BitsBeforeBinaryPoint;
 			TargetExponent = -1 * NumberOfFractionalBits;
 
@@ -45,13 +42,13 @@ namespace MSS.Types
             return $"fmt:{BitsBeforeBinaryPoint}:{NumberOfFractionalBits}(Limbs:{LimbCount})";
         }
 
-        private int GetLimbCount(int totalNumberOfBits)
-        {
-            var dResult = totalNumberOfBits / (double)EFFECTIVE_BITS_PER_LIMB;
-            var limbCount = (int)Math.Ceiling(dResult);
+        //private int GetLimbCount(int totalNumberOfBits)
+        //{
+        //    var dResult = totalNumberOfBits / (double)EFFECTIVE_BITS_PER_LIMB;
+        //    var limbCount = (int)Math.Ceiling(dResult);
 
-            return limbCount;
-        }
+        //    return limbCount;
+        //}
 
         private void CheckFractionalBitsValue(int minimumFractionalBits)
         {

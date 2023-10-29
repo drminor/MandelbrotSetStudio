@@ -49,6 +49,7 @@ namespace MapSectionProviderLib
 			var precision = mapAreaInfo.Precision;
 			var limbCount = GetLimbCount(precision);
 			var mapLoaderJobNumber = GetNextJobNumber();
+
 			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset, 
 				precision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
 
@@ -103,7 +104,7 @@ namespace MapSectionProviderLib
 			if (precision != _currentPrecision)
 			{
 				var adjustedPrecision = precision + PRECSION_PADDING;
-				var apFixedPointFormat = new ApFixedPointFormat(RMapConstants.BITS_BEFORE_BP, minimumFractionalBits: adjustedPrecision);
+				var apFixedPointFormat = new ApFixedPointFormat(precision: adjustedPrecision);
 
 				var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, MIN_LIMB_COUNT);
 

@@ -863,20 +863,15 @@ namespace MSetExplorer
 
 		private void LoadNewProject()
 		{
-			var mapCalcSettings = new MapCalcSettings(targetIterations: 400, RMapConstants.DEFAULT_THRESHOLD, calculateEscapeVelocities: true, saveTheZValues: false);
-
-			//var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN;
+			var mapCalcSettings = RMapConstants.BuildMapCalcSettings();
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			var mapAreaInfo = RMapConstants.BuildHomeArea();
 
-			//var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
-			//_vm.ProjectViewModel.ProjectStartNew(mapAreaInfo, colorBandSet, mapCalcSettings);
-
-			LoadNewProject(mapAreaInfo, mapCalcSettings);
+			LoadNewProject(mapAreaInfo, colorBandSet, mapCalcSettings);
 		}
 
-		private void LoadNewProject(MapCenterAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
+		private void LoadNewProject(MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			_vm.ProjectViewModel.ProjectStartNew(mapAreaInfo, colorBandSet, mapCalcSettings);
 		}
 
@@ -1078,6 +1073,7 @@ namespace MSetExplorer
 		private void ShowCoordsEditor()
 		{
 			CoordsEditorViewModel coordsEditorViewModel;
+			ColorBandSet colorBandSet;
 			MapCalcSettings mapCalcSettings;
 
 			var curJob = _vm.ProjectViewModel.CurrentJob;
@@ -1086,6 +1082,7 @@ namespace MSetExplorer
 				var displaySize = _vm.MapDisplayViewModel.ViewportSize;
 
 				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(curJob.MapAreaInfo, displaySize, allowEdits: true);
+				colorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
 				mapCalcSettings = curJob.MapCalcSettings;
 			}
 			else
@@ -1116,6 +1113,7 @@ namespace MSetExplorer
 				var coords = RValueHelper.BuildRRectangle(new string[] { x1, x2, y1, y2 });
 				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(coords, displaySize, allowEdits: true);
 				mapCalcSettings = RMapConstants.BuildMapCalcSettings();
+				colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
 			}
 
 			var coordsEditorWindow = new CoordsEditorWindow()
@@ -1146,7 +1144,7 @@ namespace MSetExplorer
 				}
 
 				var mapAreaInfoV2 = coordsEditorViewModel.GetMapCenterAndDelta();
-				LoadNewProject(mapAreaInfoV2, mapCalcSettings);
+				LoadNewProject(mapAreaInfoV2, colorBandSet, mapCalcSettings);
 			}
 		}
 

@@ -28,6 +28,7 @@ namespace MSetExplorer
 					_mapCalcSettings = value;
 					OnPropertyChanged(nameof(TargetIterations));
 					OnPropertyChanged(nameof(SaveTheZValues));
+					OnPropertyChanged(nameof(Threshold));
 				}
 			}
 		}

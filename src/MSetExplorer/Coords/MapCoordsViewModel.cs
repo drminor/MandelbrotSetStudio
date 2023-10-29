@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Types;
+using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System.Globalization;
 using System.Text;
@@ -35,6 +36,7 @@ namespace MSetExplorer
 
 		private string _samplePointDelta;
 		private int _samplePointDeltaExp;
+		private int _limbCount;
 
 		private string _zoom;
 
@@ -302,6 +304,19 @@ namespace MSetExplorer
 			}
 		}
 
+		public int LimbCount
+		{
+			get => _limbCount;
+			set
+			{
+				if (value != _limbCount)
+				{
+					_limbCount = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#endregion
 
 		#region Public Methods
@@ -364,6 +379,9 @@ namespace MSetExplorer
 
 				SamplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
 				SamplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
+
+				var binaryPrecision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
+				LimbCount = FP31ValHelper.GetLimbCount(binaryPrecision);
 
 				Zoom = RValueHelper.GetFormattedResolution(mapAreaInfo.Coords.Width);
 			}

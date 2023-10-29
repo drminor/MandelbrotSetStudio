@@ -59,7 +59,7 @@ namespace MSS.Common
 			//Debug.WriteLine($"GetNewSamplePointDelta scaled {original} by {factor} ({rReciprocalDiagStr}) and got {result}.");
 		}
 
-		public static int GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out int decimalPrecision)
+		public static double GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out double decimalPrecision)
 		{
 			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
 			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
@@ -67,7 +67,7 @@ namespace MSS.Common
 			return binaryPrecision;
 		}
 
-		public static int GetBinaryPrecision(MapPositionSizeAndDelta mapAreaInfo)
+		public static double GetBinaryPrecision(MapPositionSizeAndDelta mapAreaInfo)
 		{
 			var binaryPrecision = RValueHelper.GetBinaryPrecision(mapAreaInfo.Coords.Right, mapAreaInfo.Coords.Left, out _);
 
