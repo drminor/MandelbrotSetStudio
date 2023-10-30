@@ -8,7 +8,7 @@
         
         
         mc:Ignorable="d"
-        Title="Explorer Window" Width="1879" Height="1323">
+        Title="Explorer Window" Width="1879" Height="1326">
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
@@ -178,7 +178,7 @@
             <local:MapSectionDisplayControl x:Name="mapDisplay1"></local:MapSectionDisplayControl>
         </Border>
 
-        <Grid Grid.Row="1" Grid.Column="2" x:Name="colRight" Visibility="Visible">
+        <Grid Grid.Row="1" Grid.RowSpan="2" Grid.Column="2" x:Name="colRight" Visibility="Visible">
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -205,7 +205,7 @@
         </Grid>
 
         <!-- Job Tree -->
-        <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
+        <Grid Grid.Row="1" Grid.RowSpan="2" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -216,11 +216,11 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,5,5,5" x:Name="dispSecJobTree" Visibility="Visible">
+            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,5,5,0" x:Name="dispSecJobTree" Visibility="Visible">
                 <local:JobTreeControl x:Name="jobTree1"></local:JobTreeControl>
             </Border>
 
-            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0" x:Name="dispSecJobProgress" Visibility="Visible">
+            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,5,5,5" x:Name="dispSecJobProgress" Visibility="Visible">
                 <local:JobProgressControl x:Name="jobProgress1"></local:JobProgressControl>
             </Border>
 

@@ -14,6 +14,9 @@ namespace MSetGeneratorPrototype
 	{
 		#region Private Properties
 
+		// TODO: Add support for calculating the Escape Velocities even when the iteration Target is being increased.
+		private readonly static bool FORCE_CALCULATE_ESC_VELS_OFF = true;
+
 		private SamplePointBuilder _samplePointBuilder;
 
 		private Vector256<int> _thresholdVector;
@@ -89,34 +92,45 @@ namespace MSetGeneratorPrototype
 			//ReportSamplePoints(coords, samplePointOffsets, samplePointsX, samplePointsY);
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
+			var increasingIterations = mapSectionRequest.IncreasingIterations;
+			
+			if (FORCE_CALCULATE_ESC_VELS_OFF && increasingIterations)
+			{
+				_calculateEscapeVelocities = false;
+			}
+			else
+			{
+				_calculateEscapeVelocities = mapCalcSettings.CalculateEscapeVelocities;
+			}
 
-			//_calculateEscapeVelocities = mapCalcSettings.CalculateEscapeVelocities;
-			_calculateEscapeVelocities = mapSectionRequest.IncreasingIterations ? false : mapCalcSettings.CalculateEscapeVelocities;
-			_thresholdVector = GetThresholdVector(mapCalcSettings);
+			_thresholdVector = _calculateEscapeVelocities 
+				? _fp31VecMath.CreateVectorForComparison(RMapConstants.DEFAULT_NORMALIZED_THRESHOLD) 
+				: _fp31VecMath.CreateVectorForComparison((uint)mapCalcSettings.Threshold);
 
-			_thresholdVector = _calculateEscapeVelocities ? _fp31VecMath.CreateVectorForComparison(RMapConstants.DEFAULT_NORMALIZED_THRESHOLD) : _fp31VecMath.CreateVectorForComparison((uint)mapCalcSettings.Threshold);
 			_fp31VecMath.MathOpCounts.Reset();
 
 			bool sectionCompleted;
 			bool allRowsHaveEscaped;
 
+			IIterationState iterationState;
+
 			if (mapCalcSettings.SaveTheZValues)
 			{
 				if (mapSectionZVectors == null) throw new InvalidOperationException("The MapSectionZValues is null, however the MapCalcSettings.SaveTheZValues is true.");
-				var iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors2, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
 
-				sectionCompleted = mapSectionRequest.IncreasingIterations
+				iterationState = new IterationStateDepthFirst(samplePointsX, samplePointsY, mapSectionVectors2, mapSectionZVectors, mapSectionRequest.IncreasingIterations, mapCalcSettings.TargetIterations);
+
+				sectionCompleted = increasingIterations
 					? UpdateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped)
 					: GenerateMapSectionRows(_iterator, iterationState, ct, out allRowsHaveEscaped);
-
-				RollUpNumberOfCalcs(_fp31VecMath.MathOpCounts, iterationState);
 			}
 			else
 			{
-				var iterationState = new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors2, mapCalcSettings.TargetIterations);
+				iterationState = new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors2, mapCalcSettings.TargetIterations);
 				sectionCompleted = GenerateMapSectionRowsNoZ(_iterator, iterationState, ct, out allRowsHaveEscaped);
-				RollUpNumberOfCalcs(_fp31VecMath.MathOpCounts, iterationState);
 			}
+
+			RollUpNumberOfCalcs(_fp31VecMath.MathOpCounts, iterationState);
 
 			stopwatch.Stop();
 			mapSectionRequest.GenerationDuration = stopwatch.Elapsed;
@@ -312,7 +326,7 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
-				escapedFlagsVec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
+				baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
 
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 			}
@@ -332,17 +346,7 @@ namespace MSetGeneratorPrototype
 			}
 
 			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlags.AsByte());
-
-			if (compositeAllEscaped == -1)
-			{
-				for(var i = 0; i < 8; i++)
-				{
-					if (resultCounts.GetElement(i) >= iterationState.TargetIterations)
-					{
-						Debug.WriteLine("Check All Escaped. It looks like some have reached the target iteration count.");
-					}
-				}
-			}
+			CheckAllEscaped(compositeAllEscaped, resultCounts, iterationState.TargetIterations);
 
 			return compositeAllEscaped == -1;
 		}
@@ -390,7 +394,7 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
-				escapedFlagsVec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
+				baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
 
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 			}
@@ -454,7 +458,7 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
-				escapedFlagsVec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
+				baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
 
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 			}
@@ -654,19 +658,32 @@ namespace MSetGeneratorPrototype
 			return result;
 		}
 
-
 		private (MapSectionVectors2, MapSectionZVectors?) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
 		{
-			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
-			if (msv == null) throw new ArgumentException("The MapSectionVectors2 is null.");
-			//if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
+			var (mapSectionVectors2, mapSectionZVectors) = mapSectionRequest.TransferMapVectorsOut();
+			if (mapSectionVectors2 == null) throw new ArgumentException("The MapSectionVectors2 is null.");
 
-			return (msv, mszv);
+			return (mapSectionVectors2, mapSectionZVectors);
 		}
 
 		#endregion
 
 		#region Diagnostic Methods
+
+		[Conditional("DEBUG2")]
+		private void CheckAllEscaped(int compositeAllEscaped, Vector256<int> resultCounts, int targetIterations)
+		{
+			if (compositeAllEscaped == -1)
+			{
+				for (var i = 0; i < 8; i++)
+				{
+					if (resultCounts.GetElement(i) >= targetIterations)
+					{
+						Debug.WriteLine("Check All Escaped. It looks like some have reached the target iteration count.");
+					}
+				}
+			}
+		}
 
 		private void TestRoundTripRValue(MapSectionRequest mapSectionRequest, ApFixedPointFormat apFixedPointFormat)
 		{

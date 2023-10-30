@@ -241,7 +241,7 @@ namespace MSS.Types.MSet
 			}
 		}
 
-		public (MapSectionVectors2? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut2()
+		public (MapSectionVectors2? mapSectionVectors, MapSectionZVectors? mapSectionZVectors) TransferMapVectorsOut()
 		{
 			var msv = MapSectionVectors2;
 			var mszv = MapSectionZVectors;

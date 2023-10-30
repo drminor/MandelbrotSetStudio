@@ -18,7 +18,7 @@ namespace MSetExplorer.XPoc
 
 		public XSamplingEditorWindow(AppNavRequestResponse appNavRequestResponse)
 		{
-			_vm = _vm = (XSamplingEditorViewModel)DataContext;
+			_vm = (XSamplingEditorViewModel)DataContext;
 			AppNavRequestResponse = appNavRequestResponse;
 
 			Loaded += XSamplingEditorWindow_Loaded;

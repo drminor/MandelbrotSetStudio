@@ -128,9 +128,16 @@ namespace MSetExplorer
 
 		private void DeleteButton_Click(object sender, RoutedEventArgs e)
 		{
-			_ = _vm.DeleteSelected(out var numberOfMapSectionsDeleted)
-				? MessageBox.Show($"Project deleted. {numberOfMapSectionsDeleted} map sections were deleted.")
-				: MessageBox.Show("Could not delete this Project.");
+			var selectedName = _vm.SelectedName;
+
+			var res = MessageBox.Show($"Delete project {selectedName}?", "Delete Project", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
+
+			if (res == MessageBoxResult.Yes)
+			{
+				_ = _vm.DeleteSelected(out var numberOfMapSectionsDeleted)
+					? MessageBox.Show($"The project: {selectedName} has been deleted. {numberOfMapSectionsDeleted} map sections were deleted.")
+					: MessageBox.Show("Could not delete this Project.");
+			}
 		}
 
 		private void TakeSelection()

@@ -420,7 +420,7 @@ namespace MSetGeneratorPrototype
 
 		private (MapSectionVectors2, MapSectionZVectors) GetMapSectionVectors(MapSectionRequest mapSectionRequest)
 		{
-			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut2();
+			var (msv, mszv) = mapSectionRequest.TransferMapVectorsOut();
 			if (msv == null) throw new ArgumentException("The MapSectionVectors is null.");
 			if (mszv == null) throw new ArgumentException("The MapSetionZVectors is null.");
 

@@ -25,18 +25,6 @@ namespace MSetExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ShowTopNav {
-            get {
-                return ((bool)(this["ShowTopNav"]));
-            }
-            set {
-                this["ShowTopNav"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Explorer")]
         public string LastWindowName {
             get {
@@ -107,6 +95,18 @@ namespace MSetExplorer.Properties {
         public string MongoDbNamex {
             get {
                 return ((string)(this["MongoDbNamex"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ShowTopNav {
+            get {
+                return ((bool)(this["ShowTopNav"]));
+            }
+            set {
+                this["ShowTopNav"] = value;
             }
         }
     }

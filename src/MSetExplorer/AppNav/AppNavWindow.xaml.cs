@@ -94,7 +94,12 @@ namespace MSetExplorer
 
 		private void SampleTestButton_Click(object sender, RoutedEventArgs e)
 		{
-			GoToSampleTest();
+			GoToXSamplingEditor();
+		}
+
+		private void SamplePointDeltaTestButton_Click(object sender, RoutedEventArgs e)
+		{
+			GoToSamplePointDeltaTest();
 		}
 
 		private void ShowSystemColorsButton_Click(object sender, RoutedEventArgs e)
@@ -186,7 +191,7 @@ namespace MSetExplorer
 			_ = performanceHarnessMainWindow.Focus();
 		}
 
-		private void GoToSampleTest(AppNavRequestResponse? appNavRequestResponse = null)
+		private void GoToXSamplingEditor(AppNavRequestResponse? appNavRequestResponse = null)
 		{
 			Hide();
 
@@ -203,6 +208,26 @@ namespace MSetExplorer
 			xSamplingEditorWindow.Owner = Application.Current.MainWindow;
 			xSamplingEditorWindow.Show();
 			_ = xSamplingEditorWindow.Focus();
+		}
+
+		private void GoToSamplePointDeltaTest(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			Hide();
+
+			var samplePointDeltaTestVm = _vm.GetPointDeltaTestViewModel();
+
+			var samplePointDeltaTestWindow = new SamplePointDeltaTestWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest())
+			{
+				DataContext = samplePointDeltaTestVm
+			};
+
+			_lastWindow = samplePointDeltaTestWindow;
+			_lastWindow.Name = "samplePointDelta";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			samplePointDeltaTestWindow.Owner = Application.Current.MainWindow;
+			samplePointDeltaTestWindow.Show();
+			_ = samplePointDeltaTestWindow.Focus();
 		}
 
 		private void GoToBitmapGridTestWindow(AppNavRequestResponse? appNavRequestResponse = null)
@@ -252,11 +277,14 @@ namespace MSetExplorer
 
 		private Action<AppNavRequestResponse?> GetRoute(string lastWindowName)
 		{
+			// NOTE: When adding a new Window class, don't forget to make it implement: IHaveAppNavRequestResponse
+
 			switch (lastWindowName)
 			{
 				case "Explorer": return GoToExplorer;
 				case "Designer": return GoToDesigner;
-				case "xSampling": return GoToSampleTest;
+				case "xSampling": return GoToXSamplingEditor;
+				case "samplePointDelta": return GoToSamplePointDeltaTest;
 				case "SysColors": return GoToSystemColors;
 				case "PerformanceHarness": return GoToPerformanceHarnessMainWindow;
 				case "BitmapGridTestWindow": return GoToBitmapGridTestWindow;

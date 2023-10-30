@@ -201,7 +201,7 @@ namespace MEngineClient
 
 		private MapSectionResponse MapFrom(MapSectionServiceResponse serviceResponse, MapSectionRequest mapSectionRequest)
 		{
-			var (mapSectionVectors2, mapSectionZVectors) = mapSectionRequest.TransferMapVectorsOut2();
+			var (mapSectionVectors2, mapSectionZVectors) = mapSectionRequest.TransferMapVectorsOut();
 
 			if (!serviceResponse.RequestCancelled)
 			{

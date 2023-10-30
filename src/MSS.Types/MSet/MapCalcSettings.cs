@@ -14,22 +14,11 @@ namespace MSS.Types.MSet
 		public MapCalcSettings() : this(0, 0, false, false)
 		{ }
 
-		//public MapCalcSettings(int targetIterations) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities: false, saveTheZValues: false)
-		//{ }
-
-		//// Only used for POC and Tests
-		//public MapCalcSettings(int targetIterations, int threshold) : this(targetIterations, threshold, useEscapeVelocities: false, saveTheZValues: false)
-		//{ }
-
-		//public MapCalcSettings(int targetIterations, bool useEscapeVelocities, bool saveTheZValues) : this(targetIterations, RMapConstants.DEFAULT_THRESHOLD, useEscapeVelocities, saveTheZValues)
-		//{ }
-
 		public MapCalcSettings(int targetIterations, int threshold, bool calculateEscapeVelocities, bool saveTheZValues)
 		{
 			TargetIterations = targetIterations;
 			Threshold = threshold;
 			CalculateEscapeVelocities = calculateEscapeVelocities;
-			//UseEscapeVelocities = calculateEscapeVelocities;
 			SaveTheZValues = saveTheZValues;		
 		}
 
@@ -43,15 +32,15 @@ namespace MSS.Types.MSet
 		[DataMember(Order = 2)]
 		public int Threshold { get; set; }
 
+		// TODO: Remove the UseEscapeVelocities on the MapCalcSettings class.
 		[BsonIgnoreIfDefault]
 		[BsonDefaultValue(false)]
-		public bool UseEscapeVelocities { get; set; }
+		public bool UseEscapeVelocities { get; set; } 
 
 		[DataMember(Order = 3)]
 		[BsonIgnoreIfDefault]
 		[BsonDefaultValue(false)]
 		public bool CalculateEscapeVelocities { get; set; }
-
 
 		[DataMember(Order = 4)]
 		[BsonIgnoreIfDefault]

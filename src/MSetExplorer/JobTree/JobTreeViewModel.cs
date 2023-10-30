@@ -181,6 +181,8 @@ namespace MSetExplorer
 				.AppendLine($"Job Details:{nt}")
 				.AppendLine($"X1: {coordVals[0]}\tY1: {coordVals[2]}")
 				.AppendLine($"X2: {coordVals[1]}\tY2: {coordVals[3]}")
+				.AppendLine()
+				.AppendLine($"Sample Point Delta: {job.Subdivision.SamplePointDelta.WidthNumerator:N0} {job.Subdivision.SamplePointDelta.Exponent}")
 
 				.AppendLine($"\tTransformType: {job.TransformType}")
 				.AppendLine($"\tId: {job.Id}")

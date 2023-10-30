@@ -18,7 +18,7 @@ namespace MSetExplorer
 
 		private const int PITCH_TARGET = 16;
 		private const int DRAG_TRIGGER_DIST = 3;
-		private const int DEFAULT_SELECTION_SIZE_FACTOR = 8; // Amount to multiply actual pitch by to get the default side length of the selection rectangle.
+		private const int DEFAULT_SELECTION_SIZE_FACTOR = 4; // Amount to multiply actual pitch by to get the default side length of the selection rectangle.
 
 		private readonly Canvas _canvas;
 		private readonly SizeInt _blockSize;
@@ -348,7 +348,7 @@ namespace MSetExplorer
 				//selection = Expand(SelectedPosition, SelectedSize, PITCH_TARGET);
 				selection = Expand(SelectedPosition, SelectedSize, _pitch);
 			}
-			else if (e.Delta > 0 && cSize.Width >= _pitch * 4 && cSize.Height >= _pitch * 4)
+			else if (e.Delta > 0 && cSize.Width >= _pitch * 2 && cSize.Height >= _pitch * 2)
 			{
 				// Forward roll, zooms in.
 				//selection = Expand(SelectedPosition, SelectedSize, -1 * PITCH_TARGET);
@@ -481,11 +481,11 @@ namespace MSetExplorer
 					var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
 
 					var (zoomPoint, factor) = GetAreaSelectedParams(area, displaySize);
-					var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, area, displaySize, isPreview: false);
+					var areaSelectedEventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, area, displaySize, isPreview: false);
 
 					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}.");
 
-					AreaSelected?.Invoke(this, eventArgs);
+					AreaSelected?.Invoke(this, areaSelectedEventArgs);
 				}
 				else
 				{
@@ -655,11 +655,11 @@ namespace MSetExplorer
 
 				var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
 				var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
-				var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
+				var areaSelectedEventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
 
 				//Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
 
-				AreaSelected?.Invoke(this, eventArgs);
+				AreaSelected?.Invoke(this, areaSelectedEventArgs);
 			}
 		}
 
@@ -700,11 +700,11 @@ namespace MSetExplorer
 
 				var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
 				var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
-				var eventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
+				var areaSelectedEventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
 
 				//Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
 
-				AreaSelected?.Invoke(this, eventArgs);
+				AreaSelected?.Invoke(this, areaSelectedEventArgs);
 			}
 
 			return selectedPositionWasUpdated;

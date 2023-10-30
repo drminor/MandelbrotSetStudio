@@ -136,9 +136,14 @@ namespace MSetExplorer
 		{
 			var selectedName = _vm.SelectedName;
 
-			_ = _vm.DeleteSelected(out var numberOfMapSectionsDeleted)
+			var res = MessageBox.Show($"Delete poster {selectedName}?", "Delete Poster", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
+
+			if (res == MessageBoxResult.Yes)
+			{
+				_ = _vm.DeleteSelected(out var numberOfMapSectionsDeleted)
 				? MessageBox.Show($"The poster: {selectedName} has been deleted. {numberOfMapSectionsDeleted} map sections were deleted.")
 				: MessageBox.Show($"Could not delete the selected poster: {selectedName}.");
+			}
 		}
 
 		private void ViewJobsButton_Click(object sender, RoutedEventArgs e)

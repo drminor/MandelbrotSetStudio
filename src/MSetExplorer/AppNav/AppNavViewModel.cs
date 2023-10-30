@@ -11,6 +11,8 @@ namespace MSetExplorer
 {
 	internal class AppNavViewModel
 	{
+		#region Private Fields
+
 		private static readonly SizeInt _blockSize = RMapConstants.BLOCK_SIZE;
 		private static readonly bool _useSimpleJobTree = true;
 
@@ -28,6 +30,10 @@ namespace MSetExplorer
 
 		private readonly ViewModelFactory _viewModelFactory;
 
+		#endregion
+
+		#region Constructor
+
 		public AppNavViewModel(MapSectionVectorProvider mapSectionVectorProvider, RepositoryAdapters repositoryAdapters, IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			_mapSectionVectorProvider = mapSectionVectorProvider;
@@ -42,6 +48,10 @@ namespace MSetExplorer
 
 			_viewModelFactory = new ViewModelFactory(_projectAdapter, _mapSectionAdapter, _sharedColorBandSetAdapter, _mapLoaderManager, _blockSize);
 		}
+
+		#endregion
+
+		#region Public Methods
 
 		public ExplorerViewModel GetExplorerViewModel()
 		{
@@ -100,6 +110,12 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public SamplePointDeltaTestViewModel GetPointDeltaTestViewModel()
+		{
+			var result = new SamplePointDeltaTestViewModel();
+			return result;
+		}
+
 		public PerformanceHarnessMainWinViewModel GetPerformanceHarnessMainWinViewModel()
 		{
 			// Project ViewModel
@@ -138,6 +154,8 @@ namespace MSetExplorer
 		//		throw new InvalidOperationException("Either the _projectAdapter is not an instance of a ProjectAdapter or the _mapSectionAdapter is not an instance of a MapSectionAdapter.");
 		//	}
 		//}
+
+		#endregion
 
 	}
 }

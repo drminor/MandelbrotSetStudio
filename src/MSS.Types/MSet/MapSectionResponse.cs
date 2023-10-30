@@ -11,7 +11,7 @@
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted: false,
 				  allRowsHaveEscaped: false,
-				  mapSectionVectors: null,
+				  //mapSectionVectors: null,
 				  mapSectionVectors2: null,
 				  mapSectionZVectors: null,
 				  requestCancelled: isCancelled
@@ -31,7 +31,7 @@
 				  mapSectionRequest.MapCalcSettings,
 				  requestCompleted,
 				  allRowsHaveEscaped,
-				  mapSectionVectors: null,
+				  //mapSectionVectors: null,
 				  mapSectionVectors2: mapSectionVectors2,
 				  mapSectionZVectors,
 				  requestCancelled
@@ -45,7 +45,7 @@
 			MapCalcSettings mapCalcSettings,
 			bool requestCompleted,
 			bool allRowsHaveEscaped,
-			MapSectionVectors? mapSectionVectors = null,
+			//MapSectionVectors? mapSectionVectors = null,
 			MapSectionVectors2? mapSectionVectors2 = null,
 			MapSectionZVectors? mapSectionZVectors = null, 
 			bool requestCancelled = false)
@@ -58,7 +58,7 @@
 			AllRowsHaveEscaped = allRowsHaveEscaped;
 			RequestCancelled = requestCancelled;
 
-			MapSectionVectors = mapSectionVectors;
+			//MapSectionVectors = mapSectionVectors;
 			MapSectionVectors2 = mapSectionVectors2;
 			MapSectionZVectors = mapSectionZVectors;
 		}
@@ -75,28 +75,22 @@
 		
 		//public MathOpCounts? MathOpCounts { get; set; }
 
-		public MapSectionVectors? MapSectionVectors { get; set; }
+		//public MapSectionVectors? MapSectionVectors { get; set; }
 		public MapSectionVectors2? MapSectionVectors2 { get; set; }
 		public MapSectionZVectors? MapSectionZVectors { get; set; }
 
 		public bool RecordOnFile => !string.IsNullOrEmpty(MapSectionId);
 
-		public bool AllVectorPropertiesAreNull => !(MapSectionVectors != null || MapSectionVectors2 != null || MapSectionZVectors != null);
-
-		public MapSectionResponse CreateCopySansVectors()
-		{
-			var result = new MapSectionResponse(MapSectionId, SubdivisionId, BlockPosition, MapCalcSettings, 
-				RequestCompleted, AllRowsHaveEscaped, mapSectionVectors: null, mapSectionVectors2: null, mapSectionZVectors: null, requestCancelled: RequestCancelled);
-			return result;
-		}
+		public bool AllVectorPropertiesAreNull => !(/*MapSectionVectors != null || */MapSectionVectors2 != null || MapSectionZVectors != null);
 
 		public static MapSectionResponse CreateCancelledResponseWithVectors(MapSectionRequest request)
 		{
 			var mapSectionResponse = new MapSectionResponse(request, isCancelled: true);
 			
-			var (msv, mszv) = request.TransferMapVectorsOut2();
-			mapSectionResponse.MapSectionVectors2 = msv;
-			mapSectionResponse.MapSectionZVectors = mszv;
+			var (mapSectionVectors2, mapSectionZVectors) = request.TransferMapVectorsOut();
+
+			mapSectionResponse.MapSectionVectors2 = mapSectionVectors2;
+			mapSectionResponse.MapSectionZVectors = mapSectionZVectors;
 
 			return mapSectionResponse;
 		}

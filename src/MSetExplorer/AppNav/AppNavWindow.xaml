@@ -23,6 +23,7 @@
             <MenuItem Header="_Other">
                 <MenuItem Header="_BitmapGridTestWindow" Click="ShowBitmapGridTestWindow_Click"/>
                 <MenuItem Header="_SampleTest" Click="SampleTestButton_Click"/>
+                <MenuItem Header="SampleP_ointDelta" Click="SamplePointDeltaTestButton_Click"/>
                 <MenuItem Header="Show System _Colors" Click="ShowSystemColorsButton_Click"/>
                 <MenuItem Header="_Performance Tests" Click="ShowPerformanceHarnessMainWin_Click"/>
                 <MenuItem Header="_Model Storage" Click="ModelStorage_Click"/>

@@ -47,25 +47,25 @@ namespace MSS.Common
 
 		#region Request / Response / MapSection
 
-		public void ReturnToPool(MapSectionRequest mapSectionRequest)
-		{
-			if (mapSectionRequest.MapSectionVectors2 != null)
-			{
-				Debug.WriteLine("CHECK THIS, Returning a MapSectionRequest that has a non-null MapSectionVectors2 instance.");
-			}
+		//public void ReturnToPool(MapSectionRequest mapSectionRequest)
+		//{
+		//	if (mapSectionRequest.MapSectionVectors2 != null)
+		//	{
+		//		Debug.WriteLine("CHECK THIS, Returning a MapSectionRequest that has a non-null MapSectionVectors2 instance.");
+		//	}
 
-			if (mapSectionRequest.MapSectionZVectors != null)
-			{
-				Debug.WriteLine("CHECK THIS, Returning a MapSectionRequest that has a non-null MapSectionZVectors instance.");
-			}
+		//	if (mapSectionRequest.MapSectionZVectors != null)
+		//	{
+		//		Debug.WriteLine("CHECK THIS, Returning a MapSectionRequest that has a non-null MapSectionZVectors instance.");
+		//	}
 
-			//_ = mapSectionRequest.MapSectionVectors2 = ReturnMapSectionVectors2(mapSectionRequest.MapSectionVectors2);
-			_ = mapSectionRequest.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionRequest.MapSectionZVectors);
-		}
+		//	//_ = mapSectionRequest.MapSectionVectors2 = ReturnMapSectionVectors2(mapSectionRequest.MapSectionVectors2);
+		//	_ = mapSectionRequest.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionRequest.MapSectionZVectors);
+		//}
 
 		public void ReturnToPool(MapSectionResponse mapSectionResponse)
 		{
-			mapSectionResponse.MapSectionVectors = ReturnMapSectionVectors(mapSectionResponse.MapSectionVectors);
+			//mapSectionResponse.MapSectionVectors = ReturnMapSectionVectors(mapSectionResponse.MapSectionVectors);
 			//_ = mapSectionResponse.MapSectionVectors2 = ReturnMapSectionVectors2(mapSectionResponse.MapSectionVectors2);
 			mapSectionResponse.MapSectionZVectors = ReturnMapSectionZVectors(mapSectionResponse.MapSectionZVectors);
 		}

@@ -273,23 +273,23 @@ namespace MSetRepo
 			return result;
 		}
 
-		public MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
-		{
-			mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
+		//public MapSectionResponse MapFrom(MapSectionBytes target, MapSectionVectors mapSectionVectors)
+		//{
+		//	mapSectionVectors.Load(target.Counts, target.EscapeVelocities);
 
-			var result = new MapSectionResponse
-			(
-				mapSectionId: target.Id.ToString(),
-				subdivisionId: target.SubdivisionId.ToString(),
-				blockPosition: target.BlockPosition,
-				mapCalcSettings: target.MapCalcSettings,
-				requestCompleted: target.RequestWasCompleted,
-				allRowsHaveEscaped: target.AllRowsHaveEscaped,
-				mapSectionVectors: mapSectionVectors
-			);
+		//	var result = new MapSectionResponse
+		//	(
+		//		mapSectionId: target.Id.ToString(),
+		//		subdivisionId: target.SubdivisionId.ToString(),
+		//		blockPosition: target.BlockPosition,
+		//		mapCalcSettings: target.MapCalcSettings,
+		//		requestCompleted: target.RequestWasCompleted,
+		//		allRowsHaveEscaped: target.AllRowsHaveEscaped,
+		//		mapSectionVectors: mapSectionVectors
+		//	);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public MapSectionBytes MapFrom(MapSectionRecord target)
 		{

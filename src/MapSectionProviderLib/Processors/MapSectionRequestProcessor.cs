@@ -499,7 +499,9 @@ namespace MapSectionProviderLib
 		private void UpdateWithZValues(MapSectionRequest request)
 		{
 			var mapSectionId = ObjectId.Parse(request.MapSectionId);
+			
 			var zValues = FetchTheZValues(mapSectionId);
+
 			if (zValues != null)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"Requesting the iteration count to be increased for {request.ScreenPosition}.");
@@ -684,7 +686,7 @@ namespace MapSectionProviderLib
 		private void CheckRequestResponseBeforePersist(MapSectionRequest mapSectionRequest, MapSectionResponse mapSectionResponse)
 		{
 			Debug.Assert(mapSectionResponse.MapSectionVectors2 != null, "The MapSectionVectors2 should not be null.");
-			Debug.Assert(mapSectionResponse.MapSectionVectors == null, "The MapSectionVectors should be null.");
+			//Debug.Assert(mapSectionResponse.MapSectionVectors == null, "The MapSectionVectors should be null.");
 
 			if (mapSectionRequest.MapCalcSettings.SaveTheZValues && !mapSectionResponse.AllRowsHaveEscaped)
 			{
