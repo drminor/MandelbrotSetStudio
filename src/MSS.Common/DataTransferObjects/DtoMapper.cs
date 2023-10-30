@@ -11,7 +11,7 @@ namespace MSS.Common.DataTransferObjects
 	///		RRectangle
 	///		BigVector
 	/// </summary>
-	public class DtoMapper : IMapper<RPoint, RPointDto>, IMapper<RSize, RSizeDto>, IMapper<RRectangle, RRectangleDto>, IMapper<BigVector, BigVectorDto>, IMapper<RVector, RVectorDto>
+	public class DtoMapper : IMapper<RPoint, RPointDto>, IMapper<RSize, RSizeDto>/*, IMapper<RRectangle, RRectangleDto>*/, IMapper<BigVector, BigVectorDto>/*, IMapper<RVector, RVectorDto>*/
 	{
 		public RPointDto MapTo(RPoint source)
 		{
@@ -39,18 +39,18 @@ namespace MSS.Common.DataTransferObjects
 			return result;
 		}
 
-		public RRectangleDto MapTo(RRectangle source)
-		{
-			var result = new RRectangleDto(source.Values, source.Exponent);
-			return result;
-		}
+		//public RRectangleDto MapTo(RRectangle source)
+		//{
+		//	var result = new RRectangleDto(source.Values, source.Exponent);
+		//	return result;
+		//}
 
-		public RRectangle MapFrom(RRectangleDto target)
-		{
-			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
-			var result = new RRectangle(bVals, target.Exponent);
-			return result;
-		}
+		//public RRectangle MapFrom(RRectangleDto target)
+		//{
+		//	var bVals = BigIntegerHelper.FromLongs(target.GetValues());
+		//	var result = new RRectangle(bVals, target.Exponent);
+		//	return result;
+		//}
 
 		public RPointAndDeltaDto MapTo(RPointAndDelta source)
 		{
@@ -78,18 +78,18 @@ namespace MSS.Common.DataTransferObjects
 			return result;
 		}
 
-		public RVectorDto MapTo(RVector source)
-		{
-			var result = new RVectorDto(source.Values, source.Exponent);
-			return result;
-		}
+		//public RVectorDto MapTo(RVector source)
+		//{
+		//	var result = new RVectorDto(source.Values, source.Exponent);
+		//	return result;
+		//}
 
-		public RVector MapFrom(RVectorDto target)
-		{
-			var bVals = BigIntegerHelper.FromLongs(target.GetValues());
-			var result = new RVector(bVals, target.Exponent);
-			return result;
-		}
+		//public RVector MapFrom(RVectorDto target)
+		//{
+		//	var bVals = BigIntegerHelper.FromLongs(target.GetValues());
+		//	var result = new RVector(bVals, target.Exponent);
+		//	return result;
+		//}
 
 		//public MapBlockOffset Convert(BigVector sectionBlockOffsetBigV)
 		//{

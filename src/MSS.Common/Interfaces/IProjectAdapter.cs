@@ -66,7 +66,7 @@ namespace MSS.Common
 		int DeleteUnusedColorBandSets();
 
 		ObjectId? GetSubdivisionId(ObjectId jobId);
-		(ObjectId, MapCenterAndDelta)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId);
+		//(ObjectId, MapCenterAndDelta)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId);
 
 		IEnumerable<ValueTuple<ObjectId, ObjectId, OwnerType>> GetJobAndOwnerIdsWithJobOwnerType();
 

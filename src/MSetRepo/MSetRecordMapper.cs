@@ -25,8 +25,8 @@ namespace MSetRepo
 	public class MSetRecordMapper : IMapper<Project, ProjectRecord>, 
 		IMapper<ColorBandSet, ColorBandSetRecord>, IMapper<ColorBand, ColorBandRecord>,
 		IMapper<Job, JobRecord>, 
-		IMapper<Subdivision, SubdivisionRecord>, //IMapper<MapSectionResponse, MapSectionRecord>, IMapper<MapSectionBytes, MapSectionRecord>
-		IMapper<RPoint, RPointRecord>, IMapper<RSize, RSizeRecord>, IMapper<RRectangle, RRectangleRecord>, IMapper<RPointAndDelta, RPointAndDeltaRecord>,
+		IMapper<Subdivision, SubdivisionRecord>, //IMapper<MapSectionResponse, MapSectionRecord>, IMapper<MapSectionBytes, MapSectionRecord>, IMapper<RPoint, RPointRecord>,
+		IMapper<RSize, RSizeRecord>/*, IMapper<RRectangle, RRectangleRecord>*/, IMapper<RPointAndDelta, RPointAndDeltaRecord>,
 		IMapper<PointInt, PointIntRecord>, IMapper<SizeInt, SizeIntRecord>, IMapper<VectorInt, VectorIntRecord>, IMapper<BigVector, BigVectorRecord>
 	{
 		private readonly DtoMapper _dtoMapper;
@@ -382,19 +382,19 @@ namespace MSetRepo
 			return result;
 		}
 
-		public RPointRecord MapTo(RPoint rPoint)
-		{
-			var rPointDto = _dtoMapper.MapTo(rPoint);
-			var display = rPoint.ToString();
-			var result = new RPointRecord(display, rPointDto);
+		//public RPointRecord MapTo(RPoint rPoint)
+		//{
+		//	var rPointDto = _dtoMapper.MapTo(rPoint);
+		//	var display = rPoint.ToString();
+		//	var result = new RPointRecord(display, rPointDto);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public RPoint MapFrom(RPointRecord target)
-		{
-			return _dtoMapper.MapFrom(target.PointDto);
-		}
+		//public RPoint MapFrom(RPointRecord target)
+		//{
+		//	return _dtoMapper.MapFrom(target.PointDto);
+		//}
 
 		public RSizeRecord MapTo(RSize rSize)
 		{
@@ -410,33 +410,33 @@ namespace MSetRepo
 			return _dtoMapper.MapFrom(target.Size);
 		}
 
-		public RVectorRecord MapTo(RVector rVector)
-		{
-			var rSizeDto = _dtoMapper.MapTo(rVector);
-			var display = rVector.ToString();
-			var result = new RVectorRecord(display, rSizeDto);
+		//public RVectorRecord MapTo(RVector rVector)
+		//{
+		//	var rSizeDto = _dtoMapper.MapTo(rVector);
+		//	var display = rVector.ToString();
+		//	var result = new RVectorRecord(display, rSizeDto);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public RVector MapFrom(RVectorRecord target)
-		{
-			return _dtoMapper.MapFrom(target.Vector);
-		}
+		//public RVector MapFrom(RVectorRecord target)
+		//{
+		//	return _dtoMapper.MapFrom(target.Vector);
+		//}
 
-		public RRectangleRecord MapTo(RRectangle rRectangle)
-		{
-			var rRectangleDto = _dtoMapper.MapTo(rRectangle);
-			var display = rRectangle.ToString();
-			var result = new RRectangleRecord(display, rRectangleDto);
+		//public RRectangleRecord MapTo(RRectangle rRectangle)
+		//{
+		//	var rRectangleDto = _dtoMapper.MapTo(rRectangle);
+		//	var display = rRectangle.ToString();
+		//	var result = new RRectangleRecord(display, rRectangleDto);
 
-			return result;
-		}
+		//	return result;
+		//}
 
-		public RRectangle MapFrom(RRectangleRecord target)
-		{
-			return _dtoMapper.MapFrom(target.CoordsDto);
-		}
+		//public RRectangle MapFrom(RRectangleRecord target)
+		//{
+		//	return _dtoMapper.MapFrom(target.CoordsDto);
+		//}
 
 		public RPointAndDeltaRecord MapTo(RPointAndDelta source)
 		{

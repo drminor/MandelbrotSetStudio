@@ -329,10 +329,10 @@ namespace MSS.Types
 
 		public static BigInteger FromLongs(long[] values)
 		{
-			if (values.Length > 2)
-			{
-				Debug.WriteLine("WARNING: FromLongs is being called with an array of length > 2.");
-			}
+			//if (values.Length > 2)
+			//{
+			//	Debug.WriteLine("WARNING: FromLongs is being called with an array of length > 2.");
+			//}
 
 			// DtoLongs are in Big - Endian order
 			// TODO: Update the Dto Types to store the array of longs in Little-Endian order.

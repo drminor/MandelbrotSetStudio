@@ -536,32 +536,32 @@ namespace MSetRepo
 			return job;
 		}
 
-		public (ObjectId, MapCenterAndDelta)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
-		{
-			try
-			{
-				var jobReaderWriter = new JobReaderWriter(_dbProvider);
+		//public (ObjectId, MapCenterAndDelta)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
+		//{
+		//	try
+		//	{
+		//		var jobReaderWriter = new JobReaderWriter(_dbProvider);
 
-				var subAndMap = jobReaderWriter.GetSubdivisionIdAndMapCenterAndDelta(jobId);
+		//		var subAndMap = jobReaderWriter.GetSubdivisionIdAndMapCenterAndDelta(jobId);
 
-				if (subAndMap.HasValue)
-				{
-					var (subdivisionId, mapCenterAndDeltaRecord) = subAndMap.Value;
-					var mapCenterAndDelta = _mSetRecordMapper.MapFrom(mapCenterAndDeltaRecord);
+		//		if (subAndMap.HasValue)
+		//		{
+		//			var (subdivisionId, mapCenterAndDeltaRecord) = subAndMap.Value;
+		//			var mapCenterAndDelta = _mSetRecordMapper.MapFrom(mapCenterAndDeltaRecord);
 
-					return (subdivisionId, mapCenterAndDelta);
-				}
-				else
-				{
-					return null;
-				}
-			}
-			catch (Exception e)
-			{
-				Debug.WriteLine($"While GetSubdivisionId from a JobId, got exception: {e}.");
-				return null;
-			}
-		}
+		//			return (subdivisionId, mapCenterAndDelta);
+		//		}
+		//		else
+		//		{
+		//			return null;
+		//		}
+		//	}
+		//	catch (Exception e)
+		//	{
+		//		Debug.WriteLine($"While GetSubdivisionId from a JobId, got exception: {e}.");
+		//		return null;
+		//	}
+		//}
 
 		public ObjectId? GetSubdivisionId(ObjectId jobId)
 		{
