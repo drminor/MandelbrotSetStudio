@@ -21,7 +21,7 @@ namespace MSS.Common
 			return transPd;
 		}
 
-		public static RPointAndDelta GetNewSamplePointDelta(RPointAndDelta pointAndDelta, double zoomAmount, out double diagReciprocal)
+		public static RPointAndDelta GetNewSamplePointDelta(RPointAndDelta rPpointAndDelta, double zoomAmount, out double diagReciprocal)
 		{
 			// Factor = number of new pixels each existing pixel will be replaced with.
 
@@ -41,22 +41,22 @@ namespace MSS.Common
 
 			// Multiply the SamplePointDelta by 1/factor, adjusting the exponent as necessary.
 			// as the exponent is futher decreased, the numerators of the X and Y values are increased to compensate.
-			var rawResult = pointAndDelta.ScaleDelta(rReciprocal);
+			var rawResult = rPpointAndDelta.ScaleDelta(rReciprocal);
 
 			// Divide all numerators by the greatest power 2 that all three numerators (X, Y and scale) have in common,
 			// and reduce the denominator to compensate.
 			var result = Reducer.Reduce(rawResult);
 
-			ReportSamplePointDeltaScaling(pointAndDelta.SamplePointDelta, zoomAmount, rReciprocal, result.SamplePointDelta);
+			ReportSamplePointDeltaScaling(rPpointAndDelta.SamplePointDelta, zoomAmount, rReciprocal, result.SamplePointDelta);
 
 			return result;
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private static void ReportSamplePointDeltaScaling(RSize original, double factor, RValue rReciprocal, RSize result)
 		{
 			var rReciprocalDiagStr = rReciprocal.ToString(includeDecimalOutput: true);
-			//Debug.WriteLine($"GetNewSamplePointDelta scaled {original} by {factor} ({rReciprocalDiagStr}) and got {result}.");
+			Debug.WriteLine($"GetNewSamplePointDelta scaled {original} by {factor} ({rReciprocalDiagStr}) and got {result}.");
 		}
 
 		public static double GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out double decimalPrecision)
@@ -129,15 +129,6 @@ namespace MSS.Common
 				sizeOfLastBlockY = blockSize.Height;
 			}
 
-			//// Include the last block, if any
-			//var result = sizeInBlocks.Add(
-			//	new VectorInt
-			//		(
-			//			sizeOfLastBlock.Width > 0 ? 1 : 0,
-			//			sizeOfLastBlock.Height > 0 ? 1 : 0
-			//		)
-			//	);
-
 			sizeOfLastBlock = new SizeInt(sizeOfLastBlockX, sizeOfLastBlockY);
 
 			var result = new SizeInt(sizeInBlocks.Width + extendAmountX, sizeInBlocks.Height + extendAmountY);
@@ -163,18 +154,6 @@ namespace MSS.Common
 			return maxResult;
 		}
 
-		//public static SizeInt GetCanvasSizeInWholeBlocks(SizeDbl canvasSize, SizeInt blockSize, bool keepSquare)
-		//{
-		//	var result = canvasSize.Divide(blockSize).Truncate();
-
-		//	if (keepSquare)
-		//	{
-		//		result = result.GetSquare();
-		//	}
-
-		//	return result;
-		//}
-
 		#endregion
 
 		#region Get MapBlockOffset Methods
@@ -192,12 +171,18 @@ namespace MSS.Common
 
 			var offsetInSamplePoints = rPointAndDelta.Position.Divide(rPointAndDelta.SamplePointDelta);
 
-			var chkPos = rPointAndDelta.SamplePointDelta.Scale(offsetInSamplePoints);
-			//Debug.Assert(new RPoint(chkPos) == rPointAndDelta.Position, "rPointAndDelta Position non an integer multiple of Sample Point Delta.");
+			CheckPosition(rPointAndDelta, offsetInSamplePoints);
 
 			var result = GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
 
 			return result;
+		}
+
+		[Conditional("DEBUG2")]
+		private static void CheckPosition(RPointAndDelta rPointAndDelta, BigVector offsetInSamplePoints)
+		{
+			var chkPos = rPointAndDelta.SamplePointDelta.Scale(offsetInSamplePoints);
+			Debug.Assert(new RPoint(chkPos) == rPointAndDelta.Position, "rPointAndDelta Position non an integer multiple of Sample Point Delta.");
 		}
 
 		public static BigVector GetOffsetInBlockSizeUnits(BigVector offsetInSamplePoints, SizeInt blockSize, out VectorInt canvasControlOffset)

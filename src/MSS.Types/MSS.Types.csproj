@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <Compile Remove="APValues\SpanClassExp.cs" />
+    <Compile Remove="DataTransferObjects\RRectangleDto.cs" />
+    <Compile Remove="DataTransferObjects\RVectorDto.cs" />
     <Compile Remove="Pools\MapSectionVectors2Pool.cs" />
   </ItemGroup>
 
@@ -19,6 +21,8 @@
 
   <ItemGroup>
     <None Include="APValues\SpanClassExp.cs" />
+    <None Include="DataTransferObjects\RRectangleDto.cs" />
+    <None Include="DataTransferObjects\RVectorDto.cs" />
     <None Include="Pools\MapSectionVectors2Pool.cs" />
   </ItemGroup>
 

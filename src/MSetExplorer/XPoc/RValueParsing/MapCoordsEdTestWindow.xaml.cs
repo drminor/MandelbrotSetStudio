@@ -8,7 +8,7 @@ namespace MSetExplorer.XPoc
 	/// </summary>
 	public partial class MapCoordsEdTestWindow : Window
 	{
-		private MapCoordsEdTestViewModel? _vm;
+		//private MapCoordsEdTestViewModel? _vm;
 
 		#region Constructor
 
@@ -27,9 +27,9 @@ namespace MSetExplorer.XPoc
 			}
 			else
 			{
-				_vm = (MapCoordsEdTestViewModel)DataContext;
+				//_vm = (MapCoordsEdTestViewModel)DataContext;
 
-				_vm.PropertyChanged += ViewModel_PropertyChanged;
+				//_vm.PropertyChanged += ViewModel_PropertyChanged;
 
 				Debug.WriteLine("The MapCoordsEditor Window is now loaded");
 			}
@@ -37,10 +37,10 @@ namespace MSetExplorer.XPoc
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(MapCoordsEdTestViewModel.StringVal))
-			{
+			//if (e.PropertyName == nameof(MapCoordsEdTestViewModel.StringVal))
+			//{
 
-			}
+			//}
 		}
 
 		#endregion

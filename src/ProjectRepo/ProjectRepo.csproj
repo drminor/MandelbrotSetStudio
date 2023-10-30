@@ -7,6 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="SupportEntities\RPointRecord.cs" />
+    <Compile Remove="SupportEntities\RRectangleRecord.cs" />
+    <Compile Remove="SupportEntities\RVectorRecord.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="SupportEntities\RPointRecord.cs" />
+    <None Include="SupportEntities\RRectangleRecord.cs" />
+    <None Include="SupportEntities\RVectorRecord.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="2.18.0" />
   </ItemGroup>
 

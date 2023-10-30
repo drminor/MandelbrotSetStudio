@@ -1143,7 +1143,7 @@ namespace MSetExplorer
 					return;
 				}
 
-				var mapAreaInfoV2 = coordsEditorViewModel.GetMapCenterAndDelta();
+				var mapAreaInfoV2 = coordsEditorViewModel.GetMapCenterAndDeltaDepreciated();
 				LoadNewProject(mapAreaInfoV2, colorBandSet, mapCalcSettings);
 			}
 		}

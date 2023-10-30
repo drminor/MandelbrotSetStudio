@@ -243,7 +243,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			//var coords = RMapConstants.ENTIRE_SET_RECTANGLE_EVEN; // new RRectangle(-4, 4, -4, 4, -1);
 
 			var coords = new RRectangle(0, 4, 0, 4, -1);
-			var mapAreaInfo = _mapJobHelper.GetCenterAndDelta(coords, canvasSize);
+			var mapAreaInfo = _mapJobHelper.GetCenterAndDeltaDeprectiated(coords, canvasSize);
 
 			var targetIterations = 1000;
 			var threshold = UseEscapeVelocities ? RMapConstants.DEFAULT_NORMALIZED_THRESHOLD : RMapConstants.DEFAULT_THRESHOLD;
@@ -301,7 +301,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var coords = new RRectangle(x1, x2, y1, y2, exponent, precision: RMapConstants.DEFAULT_PRECISION);
 
 
-			var mapAreaInfo = _mapJobHelper.GetCenterAndDelta(coords, canvasSize);
+			var mapAreaInfo = _mapJobHelper.GetCenterAndDeltaDeprectiated(coords, canvasSize);
 
 			var targetIterations = 400;
 			var threshold = UseEscapeVelocities ? RMapConstants.DEFAULT_NORMALIZED_THRESHOLD : RMapConstants.DEFAULT_THRESHOLD; 

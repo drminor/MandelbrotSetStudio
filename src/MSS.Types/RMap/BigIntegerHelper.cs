@@ -227,30 +227,30 @@ namespace MSS.Types
 
 		#region To Longs -- Exactly two limbs
 
-		public static long[][] ToArrayOfLongPairs(BigInteger[] values)
-		{
-			var result = values.Select(v => ToLongPairs(v)).ToArray();
-			return result;
-		}
+		//public static long[][] ToArrayOfLongPairs(BigInteger[] values)
+		//{
+		//	var result = values.Select(v => ToLongPairs(v)).ToArray();
+		//	return result;
+		//}
 
-		public static long[] ToLongPairs(BigInteger bi)
-		{
-			var hi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
+		//public static long[] ToLongPairs(BigInteger bi)
+		//{
+		//	var hi = BigInteger.DivRem(bi, LONG_FACTOR, out var lo);
 
-			//if (hi > 0)
-			//{
-			//	Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value. The value is {hi}");
-			//}
+		//	//if (hi > 0)
+		//	//{
+		//	//	Debug.WriteLine($"Got a Hi value when converting a IBigRatShape value. The value is {hi}");
+		//	//}
 
-			if (hi > MAX_DIGIT_VALUE || hi < MIN_DIGIT_VALUE)
-			{
-				throw new ArgumentOutOfRangeException(nameof(bi), "The big interger cannot fit into a pair of Long values.");
-			}
+		//	if (hi > MAX_DIGIT_VALUE || hi < MIN_DIGIT_VALUE)
+		//	{
+		//		throw new ArgumentOutOfRangeException(nameof(bi), "The big interger cannot fit into a pair of Long values.");
+		//	}
 
-			var result = new long[] { (long)hi, (long)lo };
+		//	var result = new long[] { (long)hi, (long)lo };
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 
@@ -287,6 +287,9 @@ namespace MSS.Types
 		public static long[][] ToLongsM2(BigInteger[] values)
 		{
 			var result = values.Select(v => ToLongsM2(v)).ToArray();
+
+			//// Begin using 'plain ole' ToLongs on 10/30/2023
+			//var result = values.Select(v => ToLongs(v)).ToArray();
 			return result;
 		}
 
@@ -543,38 +546,38 @@ namespace MSS.Types
 			return precision;
 		}
 
-		public static double GetRatio(BigInteger dividend, int divisor)
-		{
-			if (divisor == 0)
-			{
-				throw new DivideByZeroException();
-			}
+		//public static double GetRatio(BigInteger dividend, int divisor)
+		//{
+		//	if (divisor == 0)
+		//	{
+		//		throw new DivideByZeroException();
+		//	}
 
-			if (dividend == 0)
-			{
-				return 0;
-			}
+		//	if (dividend == 0)
+		//	{
+		//		return 0;
+		//	}
 
-			double result;
+		//	double result;
 
-			if (SafeCastToDouble(dividend))
-			{
-				var workingDividend = ConvertToDouble(dividend);
-				result = workingDividend / divisor;
-			}
-			else
-			{
-				var hiAndLo = ToLongsM2(dividend);
+		//	if (SafeCastToDouble(dividend))
+		//	{
+		//		var workingDividend = ConvertToDouble(dividend);
+		//		result = workingDividend / divisor;
+		//	}
+		//	else
+		//	{
+		//		var hiAndLo = ToLongsM2(dividend);
 
-				checked
-				{
-					result = hiAndLo[0] / divisor * Math.Pow(2, 53);
-					result += hiAndLo[1] / divisor;
-				}
-			}
+		//		checked
+		//		{
+		//			result = hiAndLo[0] / divisor * Math.Pow(2, 53);
+		//			result += hiAndLo[1] / divisor;
+		//		}
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 	}

@@ -21,7 +21,7 @@ namespace MSetExplorer
 		{ }
 
 		public CoordsEditorViewModel(MapJobHelper mapJobHelper, RRectangle coords, SizeDbl displaySize, bool allowEdits)
-			: this(mapJobHelper, mapJobHelper.GetMapPositionSizeAndDeltaV1(coords, displaySize.Round()), allowEdits)
+			: this(mapJobHelper, mapJobHelper.GetMapPositionSizeAndDeltaDepreciated(coords, displaySize.Round()), allowEdits)
 		{ }
 
 		private CoordsEditorViewModel(MapJobHelper mapJobHelper, MapPositionSizeAndDelta mapAreaInfo, bool allowEdits)
@@ -132,10 +132,10 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public MapCenterAndDelta GetMapCenterAndDelta()
+		public MapCenterAndDelta GetMapCenterAndDeltaDepreciated()
 		{
 			var coords = MapCoordsDetail1.Coords;
-			var mapAreaInfo = _mapJobHelper.GetCenterAndDelta(coords, DisplaySize.Round());
+			var mapAreaInfo = _mapJobHelper.GetCenterAndDeltaDeprectiated(coords, DisplaySize.Round());
 
 			return mapAreaInfo;
 		}
