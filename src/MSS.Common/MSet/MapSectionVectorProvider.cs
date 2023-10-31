@@ -1,15 +1,11 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
-using System;
-using System.Diagnostics;
 
 namespace MSS.Common
 {
 	public class MapSectionVectorProvider
 	{
 		#region Private Properties
-
-		private const int MIN_LIMB_COUNT = 1;
 
 		private readonly MapSectionVectorsPool _mapSectionVectorsPool;
 		//private readonly MapSectionVectorsPool2 _mapSectionVectorsPool2;
@@ -152,8 +148,7 @@ namespace MSS.Common
 
 		public MapSectionZVectors ObtainMapSectionZVectors(int limbCount)
 		{
-			var adjustedLimbCount = Math.Max(limbCount, MIN_LIMB_COUNT);
-			var result = _mapSectionZVectorsPool.Obtain(adjustedLimbCount);
+			var result = _mapSectionZVectorsPool.Obtain(limbCount);
 
 			NumberOfMapSectionZVectorsLeased++;
 

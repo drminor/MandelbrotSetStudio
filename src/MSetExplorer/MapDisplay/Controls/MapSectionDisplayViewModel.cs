@@ -345,7 +345,7 @@ namespace MSetExplorer
 					if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue, isBound: false);
 
 					CurrentAreaColorAndCalcSettings = newValue;
-					msrJob = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings/*, out lastSectionWasIncluded*/);
+					msrJob = HandleCurrentJobChanged(previousValue, CurrentAreaColorAndCalcSettings);
 				}
 				else
 				{
@@ -770,7 +770,7 @@ namespace MSetExplorer
 			{
 				var screenAreaInfo = GetScreenAreaInfo(newJob.MapAreaInfo, ViewportSize);
 
-				ReportNewMapArea(LastMapAreaInfo, screenAreaInfo);
+				ReportNewMapArea(LastMapAreaInfo, screenAreaInfo, ViewportSize);
 
 				if (ShouldAttemptToReuseLoadedSections(previousJob, LastMapAreaInfo, newJob, screenAreaInfo))
 				{
@@ -1359,25 +1359,25 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private MapPositionSizeAndDelta GetScreenAreaInfo(MapCenterAndDelta canonicalMapAreaInfo, SizeDbl canvasSize)
+		private MapPositionSizeAndDelta GetScreenAreaInfo(MapCenterAndDelta mapAreaInfo, SizeDbl canvasSize)
 		{
 			if (canvasSize.IsNAN())
 			{
 				throw new InvalidOperationException("canvas size is undefined.");
 			}
 
-			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(canonicalMapAreaInfo, canvasSize);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfo, canvasSize);
 
 			return mapAreaInfoV1;
 		}
 
-		private MapPositionSizeAndDelta GetScreenAreaInfoWithDiagnostics(MapCenterAndDelta canonicalMapAreaInfo, SizeDbl canvasSize)
+		private MapPositionSizeAndDelta GetScreenAreaInfoWithDiagnostics(MapCenterAndDelta mapAreaInfo, SizeDbl canvasSize)
 		{
-			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(canonicalMapAreaInfo, canvasSize);
+			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfo, canvasSize);
 
 			// Just for diagnostics.
 			var mapAreaInfoV2 = MapJobHelper.Convert(mapAreaInfoV1);
-			CompareMapAreaAfterRoundTrip(canonicalMapAreaInfo, mapAreaInfoV2, mapAreaInfoV1);
+			CompareMapAreaAfterRoundTrip(mapAreaInfo, mapAreaInfoV2, mapAreaInfoV1);
 
 			return mapAreaInfoV1;
 		}
@@ -1518,14 +1518,14 @@ namespace MSetExplorer
 			Debug.WriteLine($"Loading new view. Moving to {x}, {y}. Uninverted Y:{unInvertedY}. Poster Size: {posterSize}. ContentViewportSize: {viewportSize}. BaseScaleFactor: {boundedMapArea.BaseScale}.");
 		}
 
-		[Conditional("DEBUG2")]
-		private void ReportNewMapArea(MapPositionSizeAndDelta? previousValue, MapPositionSizeAndDelta newValue)
+		[Conditional("DEBUG")]
+		private void ReportNewMapArea(MapPositionSizeAndDelta? previousValue, MapPositionSizeAndDelta newValue, SizeDbl viewportSize)
 		{
 			if (previousValue != null)
 			{
-				Debug.WriteLine($"MapSectionDisplayViewModel is handling CurrentJobChanged. " +
-					$"Previous Size: {previousValue.CanvasSize}. Pos: {previousValue.Coords.Position}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +
-					$"New Size: {newValue.CanvasSize}. Pos: {newValue.Coords.Position}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset}.");
+				Debug.WriteLine($"MapSectionDisplayViewModel is handling CurrentJobChanged. The viewport Size is {viewportSize} " +
+					$"\nPrevious Size: {previousValue.CanvasSize}. Pos: {previousValue.Coords.Position}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} " +
+					$"\nNew Size: {newValue.CanvasSize}. Pos: {newValue.Coords.Position}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset}.");
 
 				Debug.WriteLine($"UpdateSize is moving the pos from {previousValue.Coords.Position} to {newValue.Coords.Position}.");
 			}

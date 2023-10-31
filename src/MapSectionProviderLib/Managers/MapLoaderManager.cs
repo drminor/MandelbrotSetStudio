@@ -1,5 +1,5 @@
 ﻿using MSS.Common;
-using MSS.Types;
+using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -14,9 +14,6 @@ namespace MapSectionProviderLib
 
 		private readonly MapSectionBuilder _mapSectionBuilder;
 		private readonly MapSectionRequestProcessor _mapSectionRequestProcessor;
-
-		private const int PRECSION_PADDING = 4;
-		private const int MIN_LIMB_COUNT = 1;
 
 		private int _currentPrecision;
 		private int _currentLimbCount;
@@ -103,10 +100,11 @@ namespace MapSectionProviderLib
 		{
 			if (precision != _currentPrecision)
 			{
-				var adjustedPrecision = precision + PRECSION_PADDING;
-				var apFixedPointFormat = new ApFixedPointFormat(precision: adjustedPrecision);
+				//var adjustedPrecision = precision + PRECSION_PADDING;
+				//var limbCount = FP31ValHelper.GetLimbCount(precision: adjustedPrecision);
+				//var adjustedLimbCount = Math.Max(limbCount, MIN_LIMB_COUNT);
 
-				var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, MIN_LIMB_COUNT);
+				var adjustedLimbCount = _mapSectionBuilder.GetLimbCount(precision);
 
 				if (_currentLimbCount == adjustedLimbCount)
 				{

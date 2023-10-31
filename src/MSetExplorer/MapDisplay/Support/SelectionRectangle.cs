@@ -158,6 +158,23 @@ namespace MSetExplorer
 			}
 		}
 
+		public VectorInt ZoomPoint
+		{
+			get
+			{
+				var selectionCenter = Area.GetCenter();
+
+				var startP = new PointDbl(_canvas.ActualWidth / 2, _canvas.ActualHeight / 2);
+				//var endP = new PointDbl(selectionCenter.X, _canvas.ActualHeight - selectionCenter.Y);
+				var endP = new PointDbl(selectionCenter.X, selectionCenter.Y);
+				var vectorDbl = endP.Diff(startP);
+				var result = vectorDbl.Round();
+
+				return result;
+
+			}
+		}
+
 		#endregion
 
 		#region Private Properties
@@ -480,7 +497,21 @@ namespace MSetExplorer
 					var area = StopSelecting();
 					var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
 
-					var (zoomPoint, factor) = GetAreaSelectedParams(area, displaySize);
+					//var (zoomPoint, factor) = GetAreaSelectedParams(area, displaySize);
+
+
+					SelectedCenterPosition = posYInverted;
+					IsTheSameAsTheAreasCenter(posYInverted, area);
+
+
+					//SelectedPosition = new Point(x, y);
+
+					//var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
+
+					var zoomPoint = GetDistanceFromCanvasCenter(area, displaySize);
+					var factor = RMapHelper.GetSmallestScaleFactor(area.Size, displaySize);
+
+
 					var areaSelectedEventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, area, displaySize, isPreview: false);
 
 					Debug.WriteLine($"Raising AreaSelected with position: {zoomPoint} and factor: {factor}.");
@@ -602,14 +633,18 @@ namespace MSetExplorer
 		}
 
 		// Return the distance from the Canvas Center to the new mouse position.
-		private VectorInt GetCenterOffset(PointDbl selectionCenter)
+		private VectorInt GetDistanceFromCanvasCenter(RectangleDbl area, SizeDbl displaySize)
 		{
-			var startP = new PointDbl(_canvas.ActualWidth / 2, _canvas.ActualHeight / 2);
+			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
+
+			var startP = displaySize.Scale(0.5); // new PointDbl(_canvas.ActualWidth / 2, _canvas.ActualHeight / 2);
 
 			//var endP = new PointDbl(selectionCenter.X, _canvas.ActualHeight - selectionCenter.Y);
+
+			var selectionCenter = area.GetCenter();
 			var endP = new PointDbl(selectionCenter.X, selectionCenter.Y);
 
-			var vectorDbl = endP.Diff(startP);
+			var vectorDbl = endP.Sub(startP);
 			
 			var result = vectorDbl.Round();
 
@@ -653,8 +688,15 @@ namespace MSetExplorer
 				SelectedCenterPosition = posYInverted;
 				SelectedPosition = new Point(x, y);
 
+				IsTheSameAsTheAreasCenter(posYInverted, Area);
+
 				var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
-				var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
+
+				//var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
+
+				var zoomPoint = GetDistanceFromCanvasCenter(Area, displaySize);
+				var factor = RMapHelper.GetSmallestScaleFactor(Area.Size, displaySize);
+
 				var areaSelectedEventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
 
 				//Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
@@ -697,9 +739,14 @@ namespace MSetExplorer
 			{
 				// TODO: When invoking the AreaSelected event from the SelectionRectangle class, should we use the DisplaySize property instead of the actual canvas size.
 
+				IsTheSameAsTheAreasCenter(cPos, Area);
 
 				var displaySize = new SizeDbl(_canvas.ActualWidth, _canvas.ActualHeight);
-				var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
+
+				//var (zoomPoint, factor) = GetAreaSelectedParams(Area, displaySize);
+				var zoomPoint = GetDistanceFromCanvasCenter(Area, displaySize);
+				var factor = RMapHelper.GetSmallestScaleFactor(Area.Size, displaySize);
+
 				var areaSelectedEventArgs = new AreaSelectedEventArgs(TransformType.ZoomIn, zoomPoint, factor, Area, displaySize, isPreview: true);
 
 				//Debug.WriteLine($"Raising AreaSelected PREVIEW with position: {zoomPoint} and factor: {factor}");
@@ -714,21 +761,11 @@ namespace MSetExplorer
 		{
 			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
 
-			var selectionCenter = area.GetCenter();
-			var zoomPoint = GetCenterOffset(selectionCenter);
-
-			CheckSelectedCenterPosition(selectionCenter);
-
-			//var xFactor = _canvas.ActualWidth / area.Width;
-			//var yFactor = _canvas.ActualHeight / area.Height;
-			//var factor = Math.Min(xFactor, yFactor);
+			var zoomPoint = GetDistanceFromCanvasCenter(area, displaySize);
 
 			var factor = RMapHelper.GetSmallestScaleFactor(area.Size, displaySize);
 
-			var factor2D = displaySize.Divide(area.Size);
-			var factorCheck = Math.Min(factor2D.Width, factor2D.Height);
-
-			Debug.Assert(factorCheck == factor, "GetSmallestScaleFactor is not the same.");
+			CheckScaleFactor(area, displaySize, factor);
 
 			return (zoomPoint, factor);
 		}
@@ -925,14 +962,25 @@ namespace MSetExplorer
 		#region Diag
 
 		[Conditional("DEBUG2")]
-		private void CheckSelectedCenterPosition(PointDbl selectionCenter)
+		private void IsTheSameAsTheAreasCenter(Point selectedCenterPosition, RectangleDbl area)
 		{
-			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
+			// Double check that our SelectedCenterPosition is equal to the current Area's center.
+			var areaCenter = area.GetCenter();
+			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(selectedCenterPosition);
 
-			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter, threshold: 0.001))
+			if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, areaCenter, threshold: 0.001))
 			{
 				Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
 			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckScaleFactor(RectangleDbl area, SizeDbl displaySize, double factor)
+		{
+			var factor2D = displaySize.Divide(area.Size);
+			var factorCheck = Math.Min(factor2D.Width, factor2D.Height);
+
+			Debug.Assert(factorCheck == factor, "GetSmallestScaleFactor is not the same.");
 		}
 
 		//private void ReportPosition(Point posYInverted)

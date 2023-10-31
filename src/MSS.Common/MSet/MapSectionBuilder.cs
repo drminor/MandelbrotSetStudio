@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,9 @@ namespace MSS.Common
 	public class MapSectionBuilder
 	{
 		#region Private Fields
+
+		private const int PRECSION_PADDING = 4;
+		private const int MIN_LIMB_COUNT = 1;
 
 		#endregion
 
@@ -386,6 +390,15 @@ namespace MSS.Common
 		}
 
 		#endregion
+
+		public int GetLimbCount(double precision)
+		{
+			var adjustedPrecision = precision + PRECSION_PADDING;
+			var limbCount = FP31ValHelper.GetLimbCount(precision: adjustedPrecision);
+			var adjustedLimbCount = Math.Max(limbCount, MIN_LIMB_COUNT);
+
+			return adjustedLimbCount;
+		}
 
 		#region Diagnostics
 

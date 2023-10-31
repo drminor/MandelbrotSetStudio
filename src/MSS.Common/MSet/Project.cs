@@ -34,6 +34,10 @@ namespace MSS.Common.MSet
 
 		#region Constructor
 
+		public Project(string name, string? description, Job job, ColorBandSet colorBandSet)
+			: this(name, description, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id)
+		{ }
+
 		public Project(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, ObjectId currentJobId)
 			: this(
 				  ObjectId.GenerateNewId(), 

@@ -1,6 +1,8 @@
 ﻿using MSS.Common;
 using MSS.Types;
 using System;
+using System.Diagnostics;
+using System.Windows.Controls;
 
 namespace MSetExplorer.XPoc
 {
@@ -37,6 +39,58 @@ namespace MSetExplorer.XPoc
 		}
 
 		#endregion
+
+		private (VectorInt zoomPoint, double factor) GetAreaSelectedParams(RectangleDbl area, SizeDbl displaySize)
+		{
+			Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
+
+			var selectionCenter = area.GetCenter();
+			var zoomPoint = GetCenterOffset(selectionCenter, displaySize);
+
+			//CheckSelectedCenterPosition(selectionCenter);
+
+			var factor = RMapHelper.GetSmallestScaleFactor(area.Size, displaySize);
+
+			CheckScaleFactor(area, displaySize, factor);
+
+			return (zoomPoint, factor);
+		}
+
+		// Return the distance from the Canvas Center to the new mouse position.
+		private VectorInt GetCenterOffset(PointDbl selectionCenter, SizeDbl canvasSize)
+		{
+			var startP = new PointDbl(canvasSize.Width / 2, canvasSize.Height / 2);
+
+			//var endP = new PointDbl(selectionCenter.X, _canvas.ActualHeight - selectionCenter.Y);
+			var endP = new PointDbl(selectionCenter.X, selectionCenter.Y);
+
+			var vectorDbl = endP.Diff(startP);
+
+			var result = vectorDbl.Round();
+
+			return result;
+		}
+
+		//[Conditional("DEBUG2")]
+		//private void CheckSelectedCenterPosition(PointDbl selectionCenter)
+		//{
+		//	var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(SelectedCenterPosition);
+
+		//	if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, selectionCenter, threshold: 0.001))
+		//	{
+		//		Debug.WriteLine("Yes, we can use the Selected Position, instead of calling area.GetCenter().");
+		//	}
+		//}
+
+		[Conditional("DEBUG2")]
+		private void CheckScaleFactor(RectangleDbl area, SizeDbl displaySize, double factor)
+		{
+			var factor2D = displaySize.Divide(area.Size);
+			var factorCheck = Math.Min(factor2D.Width, factor2D.Height);
+
+			Debug.Assert(factorCheck == factor, "GetSmallestScaleFactor is not the same.");
+		}
+
 
 		#region Public Properties
 

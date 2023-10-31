@@ -92,7 +92,7 @@ namespace MSS.Types.MSet
 		public VectorLong JobBlockOffset { get; init; }
 
 		public int Precision { get; set; }
-		public int LimbCount { get; set; }
+		public int LimbCount { get; init; }
 
 		public SizeInt BlockSize => Subdivision.BlockSize;
 		public RSize SamplePointDelta => Subdivision.SamplePointDelta;

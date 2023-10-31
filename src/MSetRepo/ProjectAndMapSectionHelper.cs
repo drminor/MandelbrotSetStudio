@@ -3,12 +3,12 @@ using MongoDB.Driver;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
+using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace MSetRepo
@@ -280,29 +280,15 @@ namespace MSetRepo
 		private static MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
 		{
 			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-			var binaryPrecision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
+			//var binaryPrecision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
 
-			var limbCount = GetLimbCount(binaryPrecision);
-
-			var binaryPrecisionRounded = (int)binaryPrecision;
+			var binaryPrecision = mapAreaInfo.Precision;
+			var limbCount = new MapSectionBuilder().GetLimbCount(binaryPrecision);
 
 			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
-				binaryPrecisionRounded, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
+				binaryPrecision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
 
 			return msrJob;
-		}
-
-		private const int PRECSION_PADDING = 4;
-		private const int MIN_LIMB_COUNT = 1;
-
-		private static int GetLimbCount(double precision)
-		{
-			var adjustedPrecision = precision + 2;
-			var apFixedPointFormat = new ApFixedPointFormat(precision: adjustedPrecision);
-
-			var adjustedLimbCount = Math.Max(apFixedPointFormat.LimbCount, 2);
-
-			return adjustedLimbCount;
 		}
 
 		#endregion

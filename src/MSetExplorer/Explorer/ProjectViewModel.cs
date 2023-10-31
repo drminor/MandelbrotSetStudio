@@ -286,7 +286,7 @@ namespace MSetExplorer
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 			Debug.WriteLine($"Starting Job with new coords: {mapAreaInfo}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			var project = new Project("New", description: null, new List<Job> { job }, new List<ColorBandSet> { colorBandSet }, currentJobId: job.Id);
+			var project = new Project("New", description: null, job, colorBandSet);
 			job.OwnerId = project.Id;
 
 			CurrentProject = project;

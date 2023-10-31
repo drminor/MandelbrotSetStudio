@@ -1,6 +1,5 @@
 ﻿using MSS.Common;
 using MSS.Types;
-using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System.Globalization;
 using System.Text;
@@ -380,8 +379,8 @@ namespace MSetExplorer
 				SamplePointDelta = mapAreaInfo.Subdivision.SamplePointDelta.WidthNumerator.ToString(CultureInfo.InvariantCulture);
 				SamplePointDeltaExp = mapAreaInfo.Subdivision.SamplePointDelta.Exponent;
 
-				var binaryPrecision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
-				LimbCount = FP31ValHelper.GetLimbCount(binaryPrecision);
+				//LimbCount = FP31ValHelper.GetLimbCount(precision: mapAreaInfo.Precision);
+				LimbCount = new MapSectionBuilder().GetLimbCount(precision: mapAreaInfo.Precision);
 
 				Zoom = RValueHelper.GetFormattedResolution(mapAreaInfo.Coords.Width);
 			}
