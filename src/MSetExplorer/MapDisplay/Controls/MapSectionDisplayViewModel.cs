@@ -93,11 +93,7 @@ namespace MSetExplorer
 
 		public event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
 
-		//public event EventHandler<int>? DisplayJobCompleted;
 		public event EventHandler<MapViewUpdateCompletedEventArgs>? MapViewUpdateCompleted;
-
-		//public event EventHandler<JobProgressInfo>? RequestAdded;
-		//public event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 

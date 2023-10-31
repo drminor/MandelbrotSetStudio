@@ -481,32 +481,6 @@ namespace MSetExplorer
 			AddNewCoordinateUpdateJob(currentProject, transformType, panAmount, factor);
 		}
 
-		//public MapAreaInfo2? GetUpdatedMapAreaInfo(TransformType transformType, RectangleInt screenArea, MapAreaInfo2 currentMapAreaInfo)
-		//{
-		//	var currentJob = CurrentJob;
-
-		//	if (currentJob.IsEmpty)
-		//	{
-		//		return null;
-		//	}
-
-		//	if (screenArea == new RectangleInt())
-		//	{
-		//		Debug.WriteLine("GetUpdatedJobInfo was given an empty newArea rectangle.");
-		//		//return MapJobHelper.GetMapAreaInfo(curJob, CanvasSize);
-		//		return currentJob.MapAreaInfo;
-		//	}
-		//	else
-		//	{
-		//		//var mapAreaInfo = BuildMapAreaInfo(currentMapAreaInfo, screenArea);
-		//		//return mapAreaInfo;
-
-		//		var zoomPoint = screenArea.GetCenter();
-		//		var mapAreaInfo = _mapJobHelper.GetMapAreaInfoZoomPoint(currentMapAreaInfo, zoomPoint, 3);
-		//		return mapAreaInfo;
-		//	}
-		//}
-
 		public MapCenterAndDelta GetUpdatedMapAreaInfo(TransformType transformType, VectorInt panAmount, double factor, MapCenterAndDelta currentMapAreaInfo)
 		{
 			Debug.Assert(transformType is TransformType.ZoomIn or TransformType.Pan or TransformType.ZoomOut, "GetUpdatedMapAreaInfo received a TransformType other than ZoomIn, Pan or ZoomOut.");
@@ -529,8 +503,6 @@ namespace MSetExplorer
 
 			Debug.Assert(currentMapAreaInfo.Equals(mapAreaInfo), "The provided MapAreaInfo is not the same as the Current Project's Curernt Job's MapAreaInfo.");
 		}
-
-
 
 		public bool GoBack(bool skipPanJobs)
 		{

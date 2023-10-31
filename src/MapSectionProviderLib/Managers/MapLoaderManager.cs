@@ -1,5 +1,4 @@
 ﻿using MSS.Common;
-using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -24,6 +23,9 @@ namespace MapSectionProviderLib
 
 		#region Constructor
 
+		// TODO: Consider deleting the MapLoaderManager class after moving its logic to the MapSectionRequestProcessor
+		// The RequestAdded event would then be raised by the caller of the Push method for subscribers interested in only that 'clients' jobs.
+		// The MapSectionRequestProcess could also raise a RequestAdded event for subscribers interested in all jobs.
 		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			//_cts = new CancellationTokenSource();
@@ -75,16 +77,14 @@ namespace MapSectionProviderLib
 
 		public List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback, CancellationToken ct, out List<MapSectionRequest> requestsPendingGeneration)
 		{
-			var totalSectionsRequested = _mapSectionBuilder.GetTotalNumberOfRequests(mapSectionRequests);
+			var totalSectionsRequested = _mapSectionBuilder.GetNumberOfRequests(mapSectionRequests);
 			var sectionsCancelled = _mapSectionBuilder.GetNumberOfSectionsCancelled(mapSectionRequests);
 			msrJob.Start(totalSectionsRequested, sectionsCancelled, mapSectionReadyCallback, mapViewUpdateCompleteCallback);
 
 			List<MapSection> mapSections = _mapSectionRequestProcessor.SubmitRequests(msrJob, mapSectionRequests, msrJob.HandleResponse, ct, out requestsPendingGeneration);
 
-			//msrJob.IncrementSectionsFound(mapSections.Count);
 			CheckPendingGenerationCount(msrJob, requestsPendingGeneration);
 
-			var mapLoaderJobNumber = msrJob.MapLoaderJobNumber;
 			RequestAdded?.Invoke(this, msrJob);
 
 			return mapSections;
@@ -125,7 +125,7 @@ namespace MapSectionProviderLib
 		[Conditional("DEBUG2")]
 		private void CheckPendingGenerationCount(MsrJob msrJob, List<MapSectionRequest> pendingGeneration)
 		{
-			var sectionsPendingGeneration = _mapSectionBuilder.GetTotalNumberOfRequests(pendingGeneration);
+			var sectionsPendingGeneration = _mapSectionBuilder.GetNumberOfRequests(pendingGeneration);
 			if (msrJob.SectionsPending != sectionsPendingGeneration)
 			{
 				Debug.WriteLine($"The MapSectionRequestProcessor ({sectionsPendingGeneration}) and the MsrJob {msrJob.SectionsPending} disagree on the number of MapSections pending.");

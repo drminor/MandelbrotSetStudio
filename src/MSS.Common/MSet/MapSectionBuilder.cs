@@ -411,14 +411,14 @@ namespace MSS.Common
 
 		public string GetCountRequestsReport(List<MapSectionRequest> mapSectionRequests)
 		{
-			var (s, p) = CountRequests(mapSectionRequests);
+			var (s, p) = GetNumberOfSinglesAndPairs(mapSectionRequests);
 			var t = p * 2 + s;
 			var result = $"Created {p} request pairs and {s} single requests, for a total of {p * 2} + {s} = {t}.";
 
 			return result;
 		}
 
-		private (int singles, int pairs) CountRequests(List<MapSectionRequest> result)
+		private (int singles, int pairs) GetNumberOfSinglesAndPairs(List<MapSectionRequest> result)
 		{
 			//var total = 0;
 			var pairs = 0;
@@ -443,7 +443,7 @@ namespace MSS.Common
 			return (singles, pairs);
 		}
 
-		public int GetTotalNumberOfRequests(List<MapSectionRequest> result)
+		public int GetNumberOfRequests(List<MapSectionRequest> result)
 		{
 			var total = 0;
 
@@ -451,7 +451,7 @@ namespace MSS.Common
 			{
 				var ms = result[i];
 
-				Debug.Assert(ms.RegularPosition != null | ms.InvertedPosition != null, "No MapSectionRequest should ever have both the Regular and Inverted Positions be null.");
+				Debug.Assert(!(ms.RegularPosition == null && ms.InvertedPosition == null), "No MapSectionRequest should ever have both the Regular and Inverted Positions be null.");
 
 				if (ms.RegularPosition != null && ms.InvertedPosition != null)
 				{
