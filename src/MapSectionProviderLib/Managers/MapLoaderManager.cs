@@ -26,6 +26,8 @@ namespace MapSectionProviderLib
 		// TODO: Consider deleting the MapLoaderManager class after moving its logic to the MapSectionRequestProcessor
 		// The RequestAdded event would then be raised by the caller of the Push method for subscribers interested in only that 'clients' jobs.
 		// The MapSectionRequestProcess could also raise a RequestAdded event for subscribers interested in all jobs.
+		// If we leave the MapLoaderManager intact, consider adding a RequestAdded event to the MapSectionDisplayViewModel so that a 
+		// JobProgress window could be created only for a particular 'client'
 		public MapLoaderManager(MapSectionRequestProcessor mapSectionRequestProcessor)
 		{
 			//_cts = new CancellationTokenSource();
