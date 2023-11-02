@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32901.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PngImageLib", "PngImageLib.csproj", "{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}.Debug|x64.ActiveCfg = Debug|x64
+		{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}.Debug|x64.Build.0 = Debug|x64
+		{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}.Release|x64.ActiveCfg = Release|x64
+		{0F819FCB-5547-46FC-A07C-C09A8D0D13FF}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DEEAFABD-3F07-4C95-9D6B-A804D53BC191}
+	EndGlobalSection
+EndGlobal
