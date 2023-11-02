@@ -2,43 +2,555 @@
 using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Windows.Controls;
+using System.Numerics;
 
 namespace MSetExplorer.XPoc
 {
 	internal class SamplePointDeltaTestViewModel : ViewModelBase
 	{
+		#region Private Fields
+
 		private const double TOLERANCE_FACTOR = 10;
 
 		private readonly SizeInt _blockSize;
 
 		private SizeInt _screenSize;
-		private SizeDbl _selectionSize;
-
 		private SizeInt _screenSizeNrm;
+
+		private double _selectionWidthPercentage;
+		private double _zoomFactor;
+		private double _zoomFactorNrm;
+
+		private int _selectionWidthPerNumerator;
+		private int _selectionWidthPerDenominator;
+
+
+		private long _currentSpdNumerator;
+		private int _currentSpdExponent;
+
+		private long _resultantSpdNumerator;
+		private int _resultantSpdExponent;
+
+
+		private SizeDbl _selectionSize;
 		private SizeDbl _selectionSizeNrm;
 
+		//private RRectangle _coords;
+		//private int _exponent;
 
-		private RRectangle _coords;
-		private int _exponent;
+		#endregion
 
 		#region Constructor
 
 		public SamplePointDeltaTestViewModel()
 		{
-
 			_blockSize = RMapConstants.BLOCK_SIZE;
 
 			_screenSize = new SizeInt(1024);
 			_selectionSize = new SizeDbl(16);
 
-			_coords = new RRectangle();
+			_selectionWidthPerNumerator = 16;
+			_selectionWidthPerDenominator = 128;
 
-			_exponent = -1;
-			Exponent = 0;
+			_selectionWidthPercentage = 12.5;
+
+			_zoomFactor = 16;
+			_zoomFactorNrm = 16;
+
+			_currentSpdNumerator = 1;
+			_currentSpdExponent = -8;
+
+			_resultantSpdNumerator = 1;
+			_resultantSpdExponent = -12;
+
+			//_coords = new RRectangle();
+
+			//_exponent = -1;
+			//Exponent = 0;
 		}
 
 		#endregion
+
+		#region Public Properties Coords / Exp
+
+		//public RRectangle Coords
+		//{
+		//	get => _coords;
+		//	set
+		//	{
+		//		if (value != _coords)
+		//		{
+		//			_coords = value;
+
+		//			OnPropertyChanged(nameof(Left));
+		//			OnPropertyChanged(nameof(Bottom));
+		//			OnPropertyChanged(nameof(Width));
+		//			OnPropertyChanged(nameof(Height));
+		//			OnPropertyChanged(nameof(Exponent));
+
+		//			UpdateScreenCoords();
+		//		}
+		//	}
+		//}
+
+		//public int Exponent
+		//{
+		//	get => _exponent;
+		//	set
+		//	{
+		//		if (value != _exponent)
+		//		{
+		//			_exponent = Math.Abs(value) * -1;
+		//			Coords = new RRectangle(0, 1, 0, 1, value);
+		//		}
+		//	}
+		//}
+
+		#endregion
+
+		#region Public Properties - MapAreaInfo Canvas
+
+		public int ScreenWidth
+		{
+			get => _screenSize.Width;
+			set => ScreenSize = new SizeInt(value, ScreenHeight);
+		}
+
+		public int ScreenHeight
+		{
+			get => _screenSize.Height;
+			set => ScreenSize = new SizeInt(ScreenWidth, value);
+		}
+
+		public SizeInt ScreenSize
+		{
+			get => _screenSize;
+			set
+			{
+				if (value != _screenSize)
+				{
+					_screenSize = value;
+
+					if (_screenSize.Width == 0 || _screenSize.Height == 0)
+					{
+						return;
+					}
+
+					SelectionSize = GetSelectionSize(ScreenSize, SelectionWidthPercentage, out var newZoomFactor);
+					ZoomFactor = newZoomFactor;
+
+					OnPropertyChanged(nameof(ScreenWidth));
+					OnPropertyChanged(nameof(ScreenHeight));
+				}
+			}
+		}
+
+		public int ScreenWidthNrm
+		{
+			get => _screenSizeNrm.Width;
+			set => ScreenSizeNrm = new SizeInt(value, ScreenHeightNrm);
+		}
+
+		public int ScreenHeightNrm
+		{
+			get => _screenSizeNrm.Height;
+			set => ScreenSizeNrm = new SizeInt(ScreenWidthNrm, value);
+		}
+
+		public SizeInt ScreenSizeNrm
+		{
+			get => _screenSizeNrm;
+			set
+			{
+				if (value != _screenSizeNrm)
+				{
+					_screenSizeNrm = value;
+
+					if (_screenSizeNrm.Width == 0 || _screenSizeNrm.Height == 0)
+					{
+						return;
+					}
+
+					OnPropertyChanged(nameof(ScreenWidthNrm));
+					OnPropertyChanged(nameof(ScreenHeightNrm));
+				}
+			}
+		}
+
+		#endregion
+
+		#region Public Properties Zoom Factor
+
+		public int SelectionWidthPerNumerator
+		{
+			get => _selectionWidthPerNumerator;
+			set
+			{
+				if (value != _selectionWidthPerNumerator)
+				{
+					_selectionWidthPerNumerator = value;
+
+					SelectionWidthPercentage = GetSelectionWidthPercentage(SelectionWidthPerNumerator, SelectionWidthPerDenominator);
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int SelectionWidthPerDenominator
+		{
+			get => _selectionWidthPerDenominator;
+			set
+			{
+				if (value != _selectionWidthPerDenominator)
+				{
+					_selectionWidthPerDenominator = value;
+
+					SelectionWidthPercentage = GetSelectionWidthPercentage(SelectionWidthPerNumerator, SelectionWidthPerDenominator);
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public double SelectionWidthPercentage
+		{
+			get => _selectionWidthPercentage;
+			set
+			{
+				if (value != _selectionWidthPercentage)
+				{
+					_selectionWidthPercentage = value;
+
+					SelectionSize = GetSelectionSize(ScreenSize, SelectionWidthPercentage, out var newZoomFactor);
+					ZoomFactor = newZoomFactor;
+
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public double ZoomFactor
+		{
+			get => _zoomFactor;
+			set
+			{
+				if (value != _zoomFactor)
+				{
+					_zoomFactor = value;
+
+					var (n, e) = GetNewSamplePointDelta(CurrentSpdNumerator, CurrentSpdExponent, ZoomFactor, out double diagReciprocal);
+
+					Debug.WriteLine($"The Reciprocal is {diagReciprocal}.");
+
+					ResultantSpdNumerator = n;
+					ResultantSpdExponent = e;
+
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public double ZoomFactorNrm
+		{
+			get => _zoomFactorNrm;
+			set
+			{
+				if (value != _zoomFactorNrm)
+				{
+					_zoomFactorNrm = value;
+
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
+
+		#region Public Properties - MapAreaInfo Selection
+
+		public double SelectionWidth
+		{
+			get => _selectionSize.Width;
+			set => SelectionSize = new SizeDbl(value, SelectionHeight);
+		}
+
+		public double SelectionHeight
+		{
+			get => _selectionSize.Height;
+			set => SelectionSize = new SizeDbl(SelectionWidth, value);
+		}
+
+		public SizeDbl SelectionSize
+		{
+			get => _selectionSize;
+			set
+			{
+				if (value != _selectionSize)
+				{
+					_selectionSize = value;
+
+					OnPropertyChanged(nameof(SelectionWidth));
+					OnPropertyChanged(nameof(SelectionHeight));
+				}
+			}
+		}
+
+		public double SelectionWidthNrm
+		{
+			get => _selectionSizeNrm.Width;
+			set => SelectionSizeNrm = new SizeDbl(value, SelectionHeightNrm);
+		}
+
+		public double SelectionHeightNrm
+		{
+			get => _selectionSizeNrm.Height;
+			set => SelectionSizeNrm = new SizeDbl(SelectionWidthNrm, value);
+		}
+
+		public SizeDbl SelectionSizeNrm
+		{
+			get => _selectionSizeNrm;
+			set
+			{
+				if (value != _selectionSizeNrm)
+				{
+					_selectionSizeNrm = value;
+
+					OnPropertyChanged(nameof(SelectionWidthNrm));
+					OnPropertyChanged(nameof(SelectionHeightNrm));
+				}
+			}
+		}
+
+		#endregion
+
+		#region Public Properties Sample Point Deltas
+
+		public long CurrentSpdNumerator
+		{
+			get => _currentSpdNumerator;
+			set
+			{
+				if (value != _currentSpdNumerator)
+				{
+					_currentSpdNumerator = value;
+
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int CurrentSpdExponent
+		{
+			get => _currentSpdExponent;
+			set
+			{
+				if (value != _currentSpdExponent)
+				{
+					_currentSpdExponent = value;
+
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public long ResultantSpdNumerator
+		{
+			get => _resultantSpdNumerator;
+			set
+			{
+				if (value != _resultantSpdNumerator)
+				{
+					_resultantSpdNumerator = value;
+
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public int ResultantSpdExponent
+		{
+			get => _resultantSpdExponent;
+			set
+			{
+				if (value != _resultantSpdExponent)
+				{
+					_resultantSpdExponent = value;
+
+					OnPropertyChanged();
+				}
+			}
+		}
+		#endregion
+
+		#region The Coords Component Properties
+
+		//public long Left
+		//{
+		//	get => (long)_coords.Left.Value;
+		//	set
+		//	{
+		//		if (value != Left)
+		//		{
+		//			_coords.Values[0] = value;
+		//			OnPropertyChanged();
+		//			OnPropertyChanged(nameof(Width));
+		//		}
+		//	}
+		//}
+
+		//public long Right
+		//{
+		//	get => (long)_coords.Right.Value;
+		//	set
+		//	{
+		//		if (value != Right)
+		//		{
+		//			_coords.Values[1] = value;
+		//			OnPropertyChanged();
+		//			OnPropertyChanged(nameof(Width));
+		//		}
+		//	}
+		//}
+
+		//public long Bottom
+		//{
+		//	get => (long)_coords.Bottom.Value;
+		//	set
+		//	{
+		//		if (value != Bottom)
+		//		{
+		//			_coords.Values[2] = value;
+		//			OnPropertyChanged();
+		//			OnPropertyChanged(nameof(Height));
+		//		}
+		//	}
+		//}
+
+		//public long Top
+		//{
+		//	get => (long)_coords.Top.Value;
+		//	set
+		//	{
+		//		if (value != Top)
+		//		{
+		//			_coords.Values[3] = value;
+		//			OnPropertyChanged();
+		//			OnPropertyChanged(nameof(Height));
+		//		}
+		//	}
+		//}
+
+		//public int Precision
+		//{
+		//	get => _coords.Precision;
+		//	set
+		//	{
+		//		if (value != _coords.Precision)
+		//		{
+		//			_coords.Precision = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
+
+		//public long Width
+		//{
+		//	get => (long)_coords.Width.Value;
+		//	set { }
+		//}
+
+		//public long Height
+		//{
+		//	get => (long)_coords.Height.Value;
+		//	set { }
+		//}
+
+		#endregion
+
+		#region Private Methods
+
+		private double GetSelectionWidthPercentage(double n, double d)
+		{
+			return 100 * n / d;
+		}
+
+		private SizeDbl GetSelectionSize(SizeInt screenSize, double selectionWidthPercentage, out double zoomFactor)
+		{
+			// 128 / 16 = 8
+			// screen width / selection width = scale factor
+
+			// selection width = screen width / scale factor
+
+			var selectionSizeWidth = GetSelectionSizeWidth(screenSize, selectionWidthPercentage);
+			var result = new SizeDbl(selectionSizeWidth);
+
+			zoomFactor = ScreenWidth / selectionSizeWidth;
+
+			return result;
+		}
+
+		private double GetSelectionSizeWidth(SizeInt screenSize, double selectionWidthPercentage)
+		{
+			if (selectionWidthPercentage == 0)
+			{
+				return 1;
+			}
+
+			var result = screenSize.Width * selectionWidthPercentage / 100;
+
+			return result;
+		}
+
+		private (long numerator, int exponent) GetNewSamplePointDelta(long numerator, int exponent, double factor, out double diagReciprocal)
+		{
+			RValue curSamplePointDelta;
+
+			if (numerator == -1)
+			{
+				curSamplePointDelta = new RValue(1, 1);
+			}
+			else
+			{
+				curSamplePointDelta = new RValue(numerator, exponent);
+			}
+
+			var newSamplePointDelta = GetNewSamplePointDelta(curSamplePointDelta, ZoomFactor, out diagReciprocal);
+
+			var resultNumerator = ConvertToLong(newSamplePointDelta.Value);
+			var resultExponent = newSamplePointDelta.Exponent;
+
+			return (resultNumerator, resultExponent);
+		}
+
+		private long ConvertToLong(BigInteger n)
+		{
+			if (n < long.MaxValue && n > long.MinValue)
+			{
+				return (long)n;
+			}
+			else
+			{
+				return -1;
+			}
+		}
+
+		private RValue GetNewSamplePointDelta(RValue currentSamplePointDelta, double factor, out double diagReciprocal)
+		{
+			//var newMapAreaInfo = _mapJobHelper.GetMapAreaInfoPanThenZoom(currentMapAreaInfo, panAmount, factor, out var diaReciprocal);
+
+			var pos = new RPoint(1, 1, currentSamplePointDelta.Exponent);
+			var curRpointAndDelta = new RPointAndDelta(pos, new RSize(currentSamplePointDelta));
+
+			var scaledPd = RMapHelper.GetNewSamplePointDelta(curRpointAndDelta, factor, out diagReciprocal);
+
+			var result = scaledPd.SamplePointDelta.Width;
+
+			return result;
+		}
+
+		#endregion
+
+		#region Not Used 1
 
 		private (VectorInt zoomPoint, double factor) GetAreaSelectedParams(RectangleDbl area, SizeDbl displaySize)
 		{
@@ -90,271 +602,6 @@ namespace MSetExplorer.XPoc
 
 			Debug.Assert(factorCheck == factor, "GetSmallestScaleFactor is not the same.");
 		}
-
-
-		#region Public Properties
-
-		public RRectangle Coords
-		{
-			get => _coords;
-			set
-			{
-				if (value != _coords)
-				{
-					_coords = value;
-
-					OnPropertyChanged(nameof(Left));
-					OnPropertyChanged(nameof(Bottom));
-					OnPropertyChanged(nameof(Width));
-					OnPropertyChanged(nameof(Height));
-					OnPropertyChanged(nameof(Exponent));
-
-					UpdateScreenCoords();
-				}
-			}
-		}
-
-		public int Exponent
-		{
-			get => _exponent;
-			set
-			{
-				if (value != _exponent)
-				{
-					_exponent = Math.Abs(value) * -1;
-					Coords = new RRectangle(0, 1, 0, 1, value);
-				}
-			}
-		}
-		
-		#endregion
-
-		#region Public Properties - MapAreaInfo Canvas
-
-		public int ScreenWidth
-		{
-			get => _screenSize.Width;
-			set => ScreenSize = new SizeInt(value, ScreenHeight);
-		}
-
-		public int ScreenHeight
-		{
-			get => _screenSize.Height;
-			set => ScreenSize = new SizeInt(ScreenWidth, value);
-		}
-
-		public SizeInt ScreenSize
-		{
-			get => _screenSize;
-			set
-			{
-				if (value != _screenSize)
-				{
-					_screenSize = value;
-
-					if (_screenSize.Width == 0 || _screenSize.Height == 0)
-					{
-						return;
-					}
-
-					UpdateScreenCoords();
-					OnPropertyChanged(nameof(ScreenWidth));
-					OnPropertyChanged(nameof(ScreenHeight));
-				}
-			}
-		}
-
-		public int ScreenWidthNrm
-		{
-			get => _screenSizeNrm.Width;
-			set => ScreenSizeNrm = new SizeInt(value, ScreenHeightNrm);
-		}
-
-		public int ScreenHeightNrm
-		{
-			get => _screenSizeNrm.Height;
-			set => ScreenSizeNrm = new SizeInt(ScreenWidthNrm, value);
-		}
-
-		public SizeInt ScreenSizeNrm
-		{
-			get => _screenSizeNrm;
-			set
-			{
-				if (value != _screenSizeNrm)
-				{
-					_screenSizeNrm = value;
-
-					if (_screenSizeNrm.Width == 0 || _screenSizeNrm.Height == 0)
-					{
-						return;
-					}
-
-					UpdateScreenCoordsNrm();
-					OnPropertyChanged(nameof(ScreenWidthNrm));
-					OnPropertyChanged(nameof(ScreenHeightNrm));
-				}
-			}
-		}
-
-		#endregion
-
-		#region Public Properties - MapAreaInfo Selection
-
-		public double SelectionWidth
-		{
-			get => _selectionSize.Width;
-			set => SelectionSize = new SizeDbl(value, SelectionHeight);
-		}
-
-		public double SelectionHeight
-		{
-			get => _selectionSize.Height;
-			set => SelectionSize = new SizeDbl(SelectionWidth, value);
-		}
-
-		public SizeDbl SelectionSize
-		{
-			get => _selectionSize;
-			set
-			{
-				if (value != _selectionSize)
-				{
-					_selectionSize = value;
-
-					if (_selectionSize.Width == 0 || _selectionSize.Height == 0)
-					{
-						return;
-					}
-
-					UpdateSelectionCoords();
-					OnPropertyChanged(nameof(SelectionWidth));
-					OnPropertyChanged(nameof(SelectionHeight));
-				}
-			}
-		}
-
-		public double SelectionWidthNrm
-		{
-			get => _selectionSizeNrm.Width;
-			set => SelectionSizeNrm = new SizeDbl(value, SelectionHeightNrm);
-		}
-
-		public double SelectionHeightNrm
-		{
-			get => _selectionSizeNrm.Height;
-			set => SelectionSizeNrm = new SizeDbl(SelectionWidthNrm, value);
-		}
-
-		public SizeDbl SelectionSizeNrm
-		{
-			get => _selectionSizeNrm;
-			set
-			{
-				if (value != _selectionSizeNrm)
-				{
-					_selectionSizeNrm = value;
-
-					if (_selectionSizeNrm.Width == 0 || _selectionSizeNrm.Height == 0)
-					{
-						return;
-					}
-
-					UpdateSelectionCoordsNrm();
-					OnPropertyChanged(nameof(SelectionWidthNrm));
-					OnPropertyChanged(nameof(SelectionHeightNrm));
-				}
-			}
-		}
-
-		#endregion
-
-		#region The Coords Component Properties
-
-		public long Left
-		{
-			get => (long)_coords.Left.Value;
-			set
-			{
-				if (value != Left)
-				{
-					_coords.Values[0] = value;
-					OnPropertyChanged();
-					OnPropertyChanged(nameof(Width));
-				}
-			}
-		}
-
-		public long Right
-		{
-			get => (long)_coords.Right.Value;
-			set
-			{
-				if (value != Right)
-				{
-					_coords.Values[1] = value;
-					OnPropertyChanged();
-					OnPropertyChanged(nameof(Width));
-				}
-			}
-		}
-
-		public long Bottom
-		{
-			get => (long)_coords.Bottom.Value;
-			set
-			{
-				if (value != Bottom)
-				{
-					_coords.Values[2] = value;
-					OnPropertyChanged();
-					OnPropertyChanged(nameof(Height));
-				}
-			}
-		}
-
-		public long Top
-		{
-			get => (long)_coords.Top.Value;
-			set
-			{
-				if (value != Top)
-				{
-					_coords.Values[3] = value;
-					OnPropertyChanged();
-					OnPropertyChanged(nameof(Height));
-				}
-			}
-		}
-
-		public int Precision
-		{
-			get => _coords.Precision;
-			set
-			{
-				if (value != _coords.Precision)
-				{
-					_coords.Precision = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public long Width
-		{
-			get => (long)_coords.Width.Value;
-			set { }
-		}
-
-		public long Height
-		{
-			get => (long)_coords.Height.Value;
-			set { }
-		}
-
-		#endregion
-
-		#region Private Methods
 
 		private void UpdateScreenCoords()
 		{

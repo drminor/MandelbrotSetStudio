@@ -5,15 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" xmlns:xpoc="clr-namespace:MSetExplorer.XPoc" d:DataContext="{d:DesignInstance Type=xpoc:SamplePointDeltaTestViewModel}"
         mc:Ignorable="d"
-        Title="SamplePointDeltaTestWindow" Height="450" Width="800">
+        Title="SamplePointDeltaTestWindow" Height="500" Width="550">
     <Grid>
-        
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
-        <Border Grid.Row="0" BorderBrush="Black" BorderThickness="0.75" Margin="5,0">
+
+        <!-- Screen Size -->
+        <Border Grid.Row="0" BorderBrush="Black" BorderThickness="0.75" Margin="5,10,5,0">
             <Grid>
 
                 <Grid.RowDefinitions>
@@ -22,9 +26,97 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0">
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,5,5,0">
+                    <TextBlock Grid.Row="0" Margin="0">Canvas Size</TextBlock>
+                    <TextBlock Grid.Row="0" Margin="220,0,0,0">Normalized Canvas Size</TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidth}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox  Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeight}"/>
+
+                    <TextBlock Width="45" Margin="15,3,3,3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidthNrm}"/>
+
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenHeightNrm}"/>
+
+                </StackPanel>
+
+                <Slider Grid.Row="2" x:Name="sldrCanvasWidth" HorizontalAlignment="Left" Margin="5,0,0,0" Width="500" Height="40" IsSnapToTickEnabled="True"/>
+
+            </Grid>
+        </Border>
+
+        <!-- Zoom Factor -->
+        <Border Grid.Row="1" BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,10,5,0">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+
+                <Grid Grid.Row="0">
+                    <StackPanel Orientation="Vertical">
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock>Numerator:</TextBlock>
+                            <TextBox Width="30" Margin="3,0,25,0" Text="{Binding SelectionWidthPerNumerator}"/>
+                            <Button Width="30" FontSize="9" Click="SelWidthPerNumeratorUpButton_Click" >Up</Button>
+                            <Button Width="30" Margin="3,0,0,0" FontSize="9" Click="SelWidthPerNumeratorDownButton_Click" >Down</Button>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock>Denominator:</TextBlock>
+                            <TextBox Width="30" Margin="3,0,0,0" Text="{Binding SelectionWidthPerDenominator}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                </Grid>
+
+
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
+                    <TextBlock Width="240" Margin="3" FontSize="14" Text="Percentage of Canvas Width, Selected:" />
+                    <TextBox Width="45" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionWidthPercentage}"/>
+                    <TextBlock Margin="0,3,3,3" FontSize="14" Text="%" />
+                </StackPanel>
+
+                <Slider Grid.Row="2" x:Name="sldrSelectionWidthPercentage" HorizontalAlignment="Left" Margin="5,0,0,0" Width="500" Height="40" IsSnapToTickEnabled="False"></Slider>
+
+                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,10,0">
+                    <TextBlock Width="85" Margin="3" FontSize="14" Text="Zoom Factor:" />
+                    <TextBox Width="60" Margin="3" FontSize="14" VerticalAlignment="Center" Text="{Binding ZoomFactor}"/>
+
+                    <TextBlock Width="155" Margin="5,3,3,3" FontSize="14" Text="Zoom Factor Normalized:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidthNrm}"/>
+
+                </StackPanel>
+
+
+            </Grid>
+        </Border>
+
+        <!-- Selection Size -->
+        <Border Grid.Row="2" BorderBrush="Black" BorderThickness="0.75" Margin="5,10,5,0">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,5,5,0">
                     <TextBlock Grid.Row="0" Margin="0">Selection Size</TextBlock>
-                    <TextBlock Grid.Row="0" Margin="260,0,0,0">Normalized Selection Size</TextBlock>
+                    <TextBlock Grid.Row="0" Margin="200,0,0,0">Normalized Selection Size</TextBlock>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
@@ -34,21 +126,51 @@
                     <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
                     <TextBox  Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeight}"/>
 
-                    <TextBlock Width="45" Margin="55,3,3,3" FontSize="14" Text="Width:" />
-                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionWidthNrm}"/>
+                    <TextBlock Width="45" Margin="15,3,3,3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ScreenWidthNrm}"/>
 
                     <TextBlock Width="45" Margin="3" FontSize="14" Text="Height:" />
                     <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding SelectionHeightNrm}"/>
 
                 </StackPanel>
 
-                <Slider Grid.Row="2" x:Name="sldrSelectionWidth" HorizontalAlignment="Left" Margin="5,0,0,0" Width="890" Height="40" IsSnapToTickEnabled="True"></Slider>
+            </Grid>
+        </Border>
+
+        <!-- Sample Point Delta -->
+        <Border Grid.Row="3" BorderBrush="Black" BorderThickness="0.75" Margin="5,10,5,0">
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5,0">
+                    <TextBlock Grid.Row="0" Margin="0">Current Sample Point Delta</TextBlock>
+                    <TextBlock Grid.Row="0" Margin="130,0,0,0">New Sample Point Delta</TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10">
+                    <TextBlock Width="45" Margin="3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding CurrentSpdNumerator}"/>
+
+                    <TextBlock Width="25" Margin="3" FontSize="14" Text="Exp:" />
+                    <TextBox  Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding CurrentSpdExponent}"/>
+
+                    <TextBlock Width="45" Margin="15,3,3,3" FontSize="14" Text="Width:" />
+                    <TextBox Width="60" Margin="3" VerticalAlignment="Center" Text="{Binding ResultantSpdNumerator}"/>
+
+                    <TextBlock Width="25" Margin="3" FontSize="14" Text="Exp:" />
+                    <TextBox Width="30" Margin="3" VerticalAlignment="Center" Text="{Binding ResultantSpdExponent}"/>
+
+                </StackPanel>
 
             </Grid>
         </Border>
 
-
-        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="4" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>

@@ -31,6 +31,68 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MEngineService", "src\MEngi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSS.Types", "src\MSS.Types\MSS.Types.csproj", "{6F713520-959C-4052-B780-EE684F84FBE9}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSetExplorer", "src\MSetExplorer\MSetExplorer.csproj", "{390B329B-B62B-4CE9-AEDD-B5292CA80726}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{D3C5A726-EA62-4032-99F8-F059422CEC86}"
+	ProjectSection(SolutionItems) = preProject
+		Notes\768_Debug_output.txt = Notes\768_Debug_output.txt
+		Notes\AppNavNotes.txt = Notes\AppNavNotes.txt
+		Notes\Avx2_Latenency_ThroughPut.txt = Notes\Avx2_Latenency_ThroughPut.txt
+		Notes\BlockOffsetsForInitialSet.txt = Notes\BlockOffsetsForInitialSet.txt
+		Notes\BuildMapSectionsFrom2x2or4x4set.txt = Notes\BuildMapSectionsFrom2x2or4x4set.txt
+		Notes\Canvas_Coords_Finding_Center.png = Notes\Canvas_Coords_Finding_Center.png
+		Notes\ColorMapFromHistogramData.txt = Notes\ColorMapFromHistogramData.txt
+		Notes\EscapeVelocityLogic.txt = Notes\EscapeVelocityLogic.txt
+		Notes\FixedPoint_8.120_Format.txt = Notes\FixedPoint_8.120_Format.txt
+		Notes\ForceExponent_WorkingNotes.docx = Notes\ForceExponent_WorkingNotes.docx
+		Notes\Formula.txt = Notes\Formula.txt
+		Notes\FP31VecMath Logic.docx = Notes\FP31VecMath Logic.docx
+		Notes\FractionMath_Misc.txt = Notes\FractionMath_Misc.txt
+		Notes\Image_Ram_Resource_Requirements.txt = Notes\Image_Ram_Resource_Requirements.txt
+		Notes\Invert_The_Y_Axis_Logic.txt = Notes\Invert_The_Y_Axis_Logic.txt
+		Notes\Jbarrallo.PDF = Notes\Jbarrallo.PDF
+		Notes\JobNavigationWithShiftKey.txt = Notes\JobNavigationWithShiftKey.txt
+		Notes\JobWithDiagonalLines.txt = Notes\JobWithDiagonalLines.txt
+		Notes\LatticeMultiplication.docx = Notes\LatticeMultiplication.docx
+		Notes\LatticeMultiplication2.docx = Notes\LatticeMultiplication2.docx
+		Notes\LatticeMultiplication3.docx = Notes\LatticeMultiplication3.docx
+		Notes\LatticeMultiplicationIndexGuide.txt = Notes\LatticeMultiplicationIndexGuide.txt
+		Notes\MapDisplayPzControl layout details.docx = Notes\MapDisplayPzControl layout details.docx
+		Notes\MapSectionVectors_LifeCycle.txt = Notes\MapSectionVectors_LifeCycle.txt
+		Notes\MapViewerMapInfoDivisionStrategy.txt = Notes\MapViewerMapInfoDivisionStrategy.txt
+		Notes\MongoDbQuerySyntaxForAndClause.txt = Notes\MongoDbQuerySyntaxForAndClause.txt
+		Notes\MongoDb_Schemas.txt = Notes\MongoDb_Schemas.txt
+		Notes\MultiplicationAlgorythms.txt = Notes\MultiplicationAlgorythms.txt
+		Notes\NaturalLog_Of_Arbitray_Precision_Integer.txt = Notes\NaturalLog_Of_Arbitray_Precision_Integer.txt
+		Notes\Nav_Diag_Feb_15_2022.txt = Notes\Nav_Diag_Feb_15_2022.txt
+		Notes\Normalize_Sample_Math.txt = Notes\Normalize_Sample_Math.txt
+		Notes\PanAndZoomImplementationDetails.txt = Notes\PanAndZoomImplementationDetails.txt
+		Notes\ParseStringToRValue.txt = Notes\ParseStringToRValue.txt
+		Notes\PosterSizeEditor-Diagnostics.txt = Notes\PosterSizeEditor-Diagnostics.txt
+		Notes\PosterSizeScaling_work.txt = Notes\PosterSizeScaling_work.txt
+		Notes\Printing Resolution and Sizes.txt = Notes\Printing Resolution and Sizes.txt
+		Notes\PunchList.txt = Notes\PunchList.txt
+		Notes\RValue Division With Limited Percision.txt = Notes\RValue Division With Limited Percision.txt
+		Notes\RValueToStringLogic.txt = Notes\RValueToStringLogic.txt
+		Notes\SampleCoordValues.txt = Notes\SampleCoordValues.txt
+		Notes\SamplePointDeltaValues-Standardization.txt = Notes\SamplePointDeltaValues-Standardization.txt
+		Notes\ScreenSection Indexing Logic.txt = Notes\ScreenSection Indexing Logic.txt
+		Notes\SelectionRectangleKeyInput.txt = Notes\SelectionRectangleKeyInput.txt
+		Notes\SelectionRectangle_Scaling_Logic.txt = Notes\SelectionRectangle_Scaling_Logic.txt
+		Notes\SIMD Info.txt = Notes\SIMD Info.txt
+		Notes\SingleBlockTestCoords.txt = Notes\SingleBlockTestCoords.txt
+		Notes\SpatialCoordsAndHashes.txt = Notes\SpatialCoordsAndHashes.txt
+		Notes\SpatialDivisionsIn8x8sections.txt = Notes\SpatialDivisionsIn8x8sections.txt
+		Notes\Startup_Timings.txt = Notes\Startup_Timings.txt
+		Notes\TestTree_ScreenShot.png = Notes\TestTree_ScreenShot.png
+		Notes\Top-level regions.txt = Notes\Top-level regions.txt
+		Notes\Two'sComplimentLogic.txt = Notes\Two'sComplimentLogic.txt
+		Notes\Two'sComplimentLogic_MultipleLimbs.txt = Notes\Two'sComplimentLogic_MultipleLimbs.txt
+		Notes\Two'sComplimentLogic_MultipleLimbs2.docx = Notes\Two'sComplimentLogic_MultipleLimbs2.docx
+		Notes\ZoomAndBlockConsiderations.txt = Notes\ZoomAndBlockConsiderations.txt
+		Notes\ZValue_Sizing.txt = Notes\ZValue_Sizing.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -151,6 +213,14 @@ Global
 		{6F713520-959C-4052-B780-EE684F84FBE9}.Release|Any CPU.Build.0 = Release|x64
 		{6F713520-959C-4052-B780-EE684F84FBE9}.Release|x64.ActiveCfg = Release|x64
 		{6F713520-959C-4052-B780-EE684F84FBE9}.Release|x64.Build.0 = Release|x64
+		{390B329B-B62B-4CE9-AEDD-B5292CA80726}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{390B329B-B62B-4CE9-AEDD-B5292CA80726}.Debug|Any CPU.Build.0 = Debug|x64
+		{390B329B-B62B-4CE9-AEDD-B5292CA80726}.Debug|x64.ActiveCfg = Debug|x64
+		{390B329B-B62B-4CE9-AEDD-B5292CA80726}.Debug|x64.Build.0 = Debug|x64
+		{390B329B-B62B-4CE9-AEDD-B5292CA80726}.Release|Any CPU.ActiveCfg = Release|x64
+		{390B329B-B62B-4CE9-AEDD-B5292CA80726}.Release|Any CPU.Build.0 = Release|x64
+		{390B329B-B62B-4CE9-AEDD-B5292CA80726}.Release|x64.ActiveCfg = Release|x64
+		{390B329B-B62B-4CE9-AEDD-B5292CA80726}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
