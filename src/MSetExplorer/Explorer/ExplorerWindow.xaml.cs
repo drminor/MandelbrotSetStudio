@@ -263,7 +263,7 @@ namespace MSetExplorer
 		{
 			var showJobTreeControl = mnuItem_JobTreeWindow.IsChecked;
 			colFarRight.Visibility = showJobTreeControl ? Visibility.Visible : Visibility.Collapsed;
-			Width = showJobTreeControl ? 1885 : 1475;
+			Width = showJobTreeControl ? 1882 : 1475;
 		}
 
 		private void DisplayJobTree(bool show)
@@ -271,7 +271,7 @@ namespace MSetExplorer
 			mnuItem_JobTreeWindow.IsChecked = show;
 
 			colFarRight.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-			Width = show ? 1879 : 1475;
+			Width = show ? 1882 : 1475;
 		}
 
 		// Show Hide Job Tree
@@ -1365,7 +1365,7 @@ namespace MSetExplorer
 			};
 
 			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
-			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
+			var result = RMapHelper.CalculatePitch(displaySize, targetAmount);
 
 			return result;
 		}

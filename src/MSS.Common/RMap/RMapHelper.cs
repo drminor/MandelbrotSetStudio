@@ -52,7 +52,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private static void ReportSamplePointDeltaScaling(RSize original, double factor, RValue rReciprocal, RSize result)
 		{
 			var rReciprocalDiagStr = rReciprocal.ToString(includeDecimalOutput: true);
@@ -282,7 +282,7 @@ namespace MSS.Common
 			}
 		}
 
-		public static int CalculatePitch(SizeInt displaySize, int pitchTarget)
+		public static int CalculatePitch(SizeDbl displaySize, int pitchTarget)
 		{
 			// The Pitch is the narrowest canvas dimension / the value having the closest power of 2 of the value given by the narrowest canvas dimension / 16.
 			int result;

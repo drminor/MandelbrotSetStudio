@@ -8,7 +8,7 @@
         
         
         mc:Ignorable="d"
-        Title="Explorer Window" Width="1879" Height="1326">
+        Title="Explorer Window" Width="1883" Height="1342">
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />

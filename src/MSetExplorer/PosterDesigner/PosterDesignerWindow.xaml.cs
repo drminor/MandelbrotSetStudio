@@ -1059,7 +1059,7 @@ namespace MSetExplorer
 			};
 
 			var displaySize = _vm.MapDisplayViewModel.ViewportSize;
-			var result = RMapHelper.CalculatePitch(displaySize.Round(), targetAmount);
+			var result = RMapHelper.CalculatePitch(displaySize, targetAmount);
 
 			return result;
 		}
