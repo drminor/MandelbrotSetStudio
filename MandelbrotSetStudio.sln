@@ -84,6 +84,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{D3C5A726
 		Notes\SpatialCoordsAndHashes.txt = Notes\SpatialCoordsAndHashes.txt
 		Notes\SpatialDivisionsIn8x8sections.txt = Notes\SpatialDivisionsIn8x8sections.txt
 		Notes\Startup_Timings.txt = Notes\Startup_Timings.txt
+		Notes\SubdivTestCoords.txt = Notes\SubdivTestCoords.txt
 		Notes\TestTree_ScreenShot.png = Notes\TestTree_ScreenShot.png
 		Notes\Top-level regions.txt = Notes\Top-level regions.txt
 		Notes\Two'sComplimentLogic.txt = Notes\Two'sComplimentLogic.txt

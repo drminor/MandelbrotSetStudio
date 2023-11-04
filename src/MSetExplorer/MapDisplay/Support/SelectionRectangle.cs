@@ -22,10 +22,8 @@ namespace MSetExplorer
 
 		private const int PITCH_TARGET = 16;
 		private const int DRAG_TRIGGER_DIST = 3;
-		private const int DEFAULT_SELECTION_SIZE_FACTOR = 4; // Amount to multiply actual pitch by to get the default side length of the selection rectangle.
 
 		private readonly Canvas _canvas;
-		//private readonly SizeInt _blockSize;
 
 		private SizeDbl _displaySize;
 
@@ -56,21 +54,15 @@ namespace MSetExplorer
 			_canvas = canvas;
 			_displaySize = displaySize;
 
-			//_blockSize = blockSize;
-			//(_pitch, _defaultSelectionSize) = CalculatePitchAndDefaultSelectionSize(_displaySize, PITCH_TARGET);
-
 			_pitch = RMapHelper.CalculatePitch(_displaySize, PITCH_TARGET);
 
-
 			_selectedSizeIndex = DEFAULT_SELECTION_SIZE_INDEX;
-			//var displaySize = new SizeDbl(canvas.ActualWidth, canvas.ActualHeight);
 			var percentageOfDisplaySize = Math.Pow(2, -1 * _selectedSizeIndex);
 
 			_defaultSelectionSize = GetSelectionSize(displaySize, percentageOfDisplaySize);
 			_selectedArea = BuildSelectionRectangle(_canvas, _defaultSelectionSize);
 
 			SelectedPosition = new Point();
-			//SelectedCenterPosition = new Point();
 
 			_dragLine = BuildDragLine(_canvas);
 
@@ -160,7 +152,6 @@ namespace MSetExplorer
 					var percentageOfDisplaySize = Math.Pow(2, -1 * _selectedSizeIndex);
 
 					_defaultSelectionSize = GetSelectionSize(_displaySize, percentageOfDisplaySize);
-
 
 					Debug.WriteLineIf(_useDetailedDebug, $"SelectionRectangle is having its DisplaySize updated from: {previousValue} to {value}. The new SelectionSize is {_defaultSelectionSize}.");
 
@@ -259,8 +250,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//private Point SelectedCenterPosition { get; set; }
 
 		private Point SelectedPosition
 		{
@@ -564,14 +553,17 @@ namespace MSetExplorer
 		}
 
 		// Reposition the Selection Rectangle, keeping it's current size.
-		// posYInverted in the center point of the selection rectangle
+		// posYInverted is the lower, left-hand corner of the selection rectangle
 		private void Move(Point posYInverted)
 		{
 			//Debug.WriteLine($"Moving the sel rec to {position}, free form.");
 			//ReportPosition(posYInverted);
 
-			var x = DoubleHelper.RoundOff(posYInverted.X - (_selectedArea.Width / 2), _pitch);
-			var y = DoubleHelper.RoundOff(posYInverted.Y - (_selectedArea.Height / 2), _pitch);
+			//var x = DoubleHelper.RoundOff(posYInverted.X - (_selectedArea.Width / 2), _pitch);
+			//var y = DoubleHelper.RoundOff(posYInverted.Y - (_selectedArea.Height / 2), _pitch);
+
+			var x = posYInverted.X - (_selectedArea.Width / 2);
+			var y = posYInverted.Y - (_selectedArea.Height / 2);
 
 			if (x < 0)
 			{
@@ -592,12 +584,6 @@ namespace MSetExplorer
 			{
 				y = _canvas.ActualHeight - _selectedArea.Height;
 			}
-
-			//var cLeft = (double)_selectedArea.GetValue(Canvas.LeftProperty);
-			//var cBot = (double)_selectedArea.GetValue(Canvas.BottomProperty);
-
-			//var cLeft = SelectedPosition.X;
-			//var cBot = SelectedPosition.Y;
 
 			// x and y are the lower, left-hand point of the selection rectangle
 
@@ -742,7 +728,8 @@ namespace MSetExplorer
 			var dist = controlPos - _dragAnchor;
 
 			// Horizontal
-			var x = DoubleHelper.RoundOff(dist.X, _pitch);
+			//var x = DoubleHelper.RoundOff(dist.X, _pitch);
+			var x = dist.X;
 
 			x = _dragAnchor.X + x;
 
@@ -757,7 +744,9 @@ namespace MSetExplorer
 			}
 
 			// Vertical
-			var y = DoubleHelper.RoundOff(dist.Y, _pitch);
+			//var y = DoubleHelper.RoundOff(dist.Y, _pitch);
+			var y = dist.Y;
+
 			y = _dragAnchor.Y + y;
 
 			if (y < 0)
@@ -795,14 +784,16 @@ namespace MSetExplorer
 
 		private bool TryGetNewSelection(ref int selectedSizeIndex, bool zoomIn, [NotNullWhen(true)] out RectangleDbl? newSelection)
 		{
+			SizeDbl newSize;
+
 			if (zoomIn)
 			{
 				var newSelectionSizeIndex = selectedSizeIndex + 1;
 
 				var percentageOfDisplaySize = Math.Pow(2, -1 * newSelectionSizeIndex);
-				var newSize = GetSelectionSize(DisplaySize, percentageOfDisplaySize);
+				newSize = GetSelectionSize(DisplaySize, percentageOfDisplaySize);
 
-				if (newSize.Width < 4 || newSize.Height < 4)
+				if (newSize.Width <= 8 || newSize.Height <= 8)
 				{
 					// Cannot zoom in any futher.
 					newSelection = null;
@@ -810,9 +801,6 @@ namespace MSetExplorer
 				}
 
 				selectedSizeIndex = newSelectionSizeIndex;
-				var pos = new PointDbl(SelectedPosition.X - newSize.Width / 2, SelectedPosition.Y - newSize.Height / 2);
-				newSelection = new RectangleDbl(pos, newSize);
-				return true;
 			}
 			else
 			{
@@ -826,12 +814,12 @@ namespace MSetExplorer
 				_selectedSizeIndex--;
 
 				var percentageOfDisplaySize = Math.Pow(2, -1 * _selectedSizeIndex);
-				var newSize = GetSelectionSize(DisplaySize, percentageOfDisplaySize);
-				var pos = new PointDbl(SelectedPosition.X - newSize.Width / 2, SelectedPosition.Y - newSize.Height / 2);
-
-				newSelection = new RectangleDbl(pos, newSize);
-				return true;
+				newSize = GetSelectionSize(DisplaySize, percentageOfDisplaySize);
 			}
+
+			var pos = new PointDbl(SelectedPosition.X - newSize.Width / 2, SelectedPosition.Y - newSize.Height / 2);
+			newSelection = new RectangleDbl(pos, newSize);
+			return true;
 		}
 
 		private SizeDbl GetSelectionSize(SizeDbl displaySize, double percentageOfDisplaySize)
@@ -877,178 +865,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Diag
-
-		[Conditional("DEBUG")]
-		private void CheckSelectedPosIsTheSameAsTheAreasCenter(Point selectedCenterPosition, RectangleDbl area)
-		{
-			// Double check that our SelectedCenterPosition is equal to the current Area's center.
-			var areaCenter = area.GetCenter();
-			var selCenterPos = ScreenTypeHelper.ConvertToPointDbl(selectedCenterPosition);
-
-			//if (!ScreenTypeHelper.IsPointDblChanged(selCenterPos, areaCenter, threshold: 0.001))
-			//{
-			//	Debug.WriteLine("Yes, we can use the SelectedCenterPosition, instead of calling area.GetCenter().");
-			//}
-			//else
-			//{
-			//	Debug.WriteLine("The SelectedCenterPosition is NOT the same as Area.GetCenter().");
-			//}
-
-			if (ScreenTypeHelper.IsPointDblChanged(selCenterPos, areaCenter, threshold: 0.001))
-			{
-				Debug.WriteLine("The SelectedCenterPosition is NOT the same as Area.GetCenter().");
-			}
-		}
-
-		[Conditional("DEBUG2")]
-		private void CheckScaleFactor(RectangleDbl area, SizeDbl displaySize, double factor)
-		{
-			var factor2D = displaySize.Divide(area.Size);
-			var factorCheck = Math.Min(factor2D.Width, factor2D.Height);
-
-			Debug.Assert(factorCheck == factor, "GetSmallestScaleFactor is not the same.");
-		}
-
-		#endregion
-
 		#region Not Used
-
-		//private void Canvas_MouseWheel_Old(object sender, MouseWheelEventArgs e)
-		//{
-		//	if (!Selecting)
-		//	{
-		//		return;
-		//	}
-
-		//	//Debug.WriteLine("The canvas received a MouseWheel event.");
-
-		//	//var controlPos = e.GetPosition(relativeTo: _canvas);
-		//	//var posYInverted = new Point(controlPos.X, _canvas.ActualHeight - controlPos.Y);
-
-		//	var cSize = SelectedSize;
-
-		//	Rect selection;
-
-		//	if (e.Delta < 0)
-		//	{
-		//		// Reverse roll, zooms out.
-		//		//selection = Expand(SelectedPosition, SelectedSize, PITCH_TARGET);
-		//		selection = Expand(SelectedPosition, SelectedSize, _pitch);
-		//	}
-		//	else if (e.Delta > 0 && cSize.Width >= _pitch * 2 && cSize.Height >= _pitch * 2)
-		//	{
-		//		// Forward roll, zooms in.
-		//		//selection = Expand(SelectedPosition, SelectedSize, -1 * PITCH_TARGET);
-		//		selection = Expand(SelectedPosition, SelectedSize, -1 * _pitch);
-		//	}
-		//	else
-		//	{
-		//		//Debug.WriteLine("MouseWheel, but no change.");
-		//		return;
-		//	}
-
-		//	_ = MoveAndSize(selection.Location, selection.Size);
-
-		//	e.Handled = true;
-		//}
-
-		//// Take a center point, size and amount to expand
-		//// Return a rectangle
-		//private Rect Expand(Point p, Size s, double amount)
-		//{
-		//	Size newSize;
-		//	if (_canvas.Width >= _canvas.Height)
-		//	{
-		//		var w = s.Width + amount * 2;
-		//		var h = w * (_canvas.ActualHeight / _canvas.ActualWidth);
-		//		newSize = new Size(w, h);
-		//	}
-		//	else
-		//	{
-		//		var h = s.Height + amount * 2;
-		//		var w = h * (_canvas.ActualWidth / _canvas.ActualHeight);
-		//		newSize = new Size(w, h);
-		//	}
-
-		//	var pos = new Point(p.X - newSize.Width / 2, p.Y - newSize.Height / 2);
-
-		//	return new Rect(pos, newSize);
-		//}
-
-		//private (int pitch, Size selctionSize) CalculatePitchAndDefaultSelectionSize(SizeDbl displaySize, int pitchTarget)
-		//{
-		//	//var dispSizeInt = displaySize.Round();
-		//	var pitch = RMapHelper.CalculatePitch(displaySize, pitchTarget);
-		//	var defaultSideLength = RMapHelper.CalculatePitch(displaySize, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
-
-		//	var defaultSelectionSize = GetDefaultSelectionSize(_canvas, defaultSideLength);
-
-		//	Debug.WriteLine($"ScreenSelection Pitch: {pitch}. SelectionSize: {defaultSelectionSize}.");
-
-		//	return (pitch, defaultSelectionSize);
-		//}
-
-		//private (double pitch, Size selctionSize) CalculatePitchAndDefaultSelectionSize(SizeDbl displaySize, int pitchTarget)
-		//{
-		//	double pitch;
-		//	double defaultSideLength;
-
-		//	if (USE_INTEGER_FOR_PITCH)
-		//	{
-		//		var dispSizeInt = displaySize.Round();
-		//		pitch = RMapHelper.CalculatePitch(dispSizeInt, pitchTarget);
-		//		defaultSideLength = RMapHelper.CalculatePitch(dispSizeInt, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
-		//	}
-		//	else
-		//	{
-		//		pitch = RMapHelper.CalculatePitch(displaySize, pitchTarget);
-		//		defaultSideLength = RMapHelper.CalculatePitch(displaySize, pitchTarget * DEFAULT_SELECTION_SIZE_FACTOR);
-		//	}
-
-		//	var defaultSelectionSize = GetDefaultSelectionSize(_canvas, defaultSideLength);
-
-		//	Debug.WriteLine($"ScreenSelection Pitch: {pitch}. SelectionSize: {defaultSelectionSize}.");
-
-		//	return (pitch, defaultSelectionSize);
-		//}
-
-		//private Size GetDefaultSelectionSize(Canvas canvas, double defaultSideLength)
-		//{
-		//	Size result;
-
-		//	var w = canvas.ActualWidth;
-		//	var h = canvas.ActualHeight;
-
-		//	if (double.IsNaN(w) || double.IsNaN(h) || w < 0.1 || h < 0.1)
-		//	{
-		//		return new Size(128, 128);
-		//	}
-
-		//	if (w >= h)
-		//	{
-		//		result = new Size(defaultSideLength, defaultSideLength * (h / w));
-		//	}
-		//	else
-		//	{
-		//		result = new Size(defaultSideLength * (w / h), defaultSideLength);
-		//	}
-
-		//	return result;
-		//}
-
-		//private (VectorInt zoomPoint, double factor) GetAreaSelectedParams(RectangleDbl area, SizeDbl displaySize)
-		//{
-		//	Debug.Assert(area.Width > 0 && area.Height > 0, "Selction Rectangle has a zero or negative value its width or height.");
-
-		//	var zoomPoint = GetDistanceFromCanvasCenter(area, displaySize);
-
-		//	var factor = RMapHelper.GetSmallestScaleFactor(area.Size, displaySize);
-
-		//	CheckScaleFactor(area, displaySize, factor);
-
-		//	return (zoomPoint, factor);
-		//}
 
 		//private void SetMousePosition(Point posYInverted)
 		//{
