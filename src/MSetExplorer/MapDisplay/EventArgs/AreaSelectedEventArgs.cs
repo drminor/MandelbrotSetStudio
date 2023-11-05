@@ -13,14 +13,16 @@ namespace MSetExplorer
 		public RectangleDbl ScreenArea { get; init; }
 		public SizeDbl DisplaySize { get; init; }
 
+		public SizeDbl AdjustedDisplaySize { get; init; }
+
 		public bool IsPreview { get; init; }
 		public bool IsPreviewBeingCancelled { get; init; }
 
-		public AreaSelectedEventArgs(TransformType transformType, VectorInt panAmount, double factor, bool isPreview)
-			: this(transformType, panAmount, factor, new RectangleDbl(), new SizeDbl(), isPreview)
-		{ }
+		//public AreaSelectedEventArgs(TransformType transformType, VectorInt panAmount, double factor, bool isPreview)
+		//	: this(transformType, panAmount, factor, new RectangleDbl(), new SizeDbl(), isPreview)
+		//{ }
 
-		public AreaSelectedEventArgs(TransformType transformType, VectorInt panAmount, double factor, RectangleDbl screenArea, SizeDbl displaySize, bool isPreview)
+		public AreaSelectedEventArgs(TransformType transformType, VectorInt panAmount, double factor, RectangleDbl screenArea, SizeDbl displaySize, SizeDbl adjustedDisplaySize, bool isPreview)
 		{
 			TransformType = transformType;
 
@@ -29,13 +31,14 @@ namespace MSetExplorer
 
 			ScreenArea = screenArea;
 			DisplaySize = displaySize;
+			AdjustedDisplaySize = adjustedDisplaySize;
 
 			IsPreview = isPreview;
 		}
 
 		public static AreaSelectedEventArgs CreateCancelPreviewInstance(TransformType transformType)
 		{
-			var result = new AreaSelectedEventArgs(transformType, new VectorInt(), 0.0, isPreview: true)
+			var result = new AreaSelectedEventArgs(transformType, new VectorInt(), 0.0, new RectangleDbl(), new SizeDbl(), new SizeDbl(), isPreview: true)
 			{
 				IsPreviewBeingCancelled = true
 			};

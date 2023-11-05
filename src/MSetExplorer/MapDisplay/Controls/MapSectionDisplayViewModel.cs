@@ -47,7 +47,7 @@ namespace MSetExplorer
 		private double _minimumDisplayZoom;
 		private double _maximumDisplayZoom;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -59,7 +59,7 @@ namespace MSetExplorer
 			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapJobHelper = mapJobHelper;
 
-			BlockSize = blockSize;
+			//BlockSize = blockSize;
 			_mapSectionBuilder = new MapSectionBuilder();
 
 			_paintLocker = new object();
@@ -171,7 +171,7 @@ namespace MSetExplorer
 
 		public new bool InDesignMode => base.InDesignMode;
 
-		public SizeInt BlockSize { get; init; }
+		//public SizeInt BlockSize { get; init; }
 		
 		/// <summary>
 		/// The size of the display in pixels.
@@ -198,7 +198,8 @@ namespace MSetExplorer
 								Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== As the ViewportSize is updated, the MapSectionDisplayViewModel is calling ReuseAndLoad.");
 
 								var screenAreaInfo = GetScreenAreaInfo(CurrentAreaColorAndCalcSettings.MapAreaInfo, value);
-								var msrJob = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, reapplyColorMap: false);
+								var reApplyColorMap = screenAreaInfo.Coords.CrossesYZero;
+									var msrJob = ReuseAndLoad(JobType.FullScale, CurrentAreaColorAndCalcSettings, screenAreaInfo, reapplyColorMap: reApplyColorMap);
 								_ = msrJob.JobNumber;
 							}
 						}
@@ -321,7 +322,7 @@ namespace MSetExplorer
 
 		public MsrJob? SubmitJob(AreaColorAndCalcSettings newValue)
 		{
-			CheckBlockSize(newValue);
+			//CheckBlockSize(newValue);
 
 			MsrJob? msrJob;
 
@@ -356,7 +357,7 @@ namespace MSetExplorer
 		{
 			// NOTE: SubmitJob may produce a JobRequest using a Subdivision different than the original Subdivision for the given JobId
 
-			CheckBlockSize(newValue);
+			//CheckBlockSize(newValue);
 
 			lock (_paintLocker)
 			{
@@ -365,7 +366,7 @@ namespace MSetExplorer
 				CheckViewPortSize();
 
 				var previousValue = CurrentAreaColorAndCalcSettings;
-				ReportSubmitJobDetails(previousValue, newValue, isBound: true);
+				if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue, isBound: true);
 
 				_displayZoom = displayZoom;
 				var (baseFactor, relativeScale) = ContentScalerHelper.GetBaseFactorAndRelativeScale(displayZoom);
@@ -559,7 +560,7 @@ namespace MSetExplorer
 			{
 				var eventArgs = e.IsPreviewBeingCancelled
 					? MapViewUpdateRequestedEventArgs.CreateCancelPreviewInstance(e.TransformType)
-					: new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, e.PanAmount, e.Factor, e.ScreenArea, e.DisplaySize, CurrentAreaColorAndCalcSettings.MapAreaInfo, e.IsPreview);
+					: new MapViewUpdateRequestedEventArgs(TransformType.ZoomIn, e.PanAmount, e.Factor, e.ScreenArea, e.DisplaySize, e.AdjustedDisplaySize, CurrentAreaColorAndCalcSettings.MapAreaInfo, e.IsPreview);
 
 				MapViewUpdateRequested?.Invoke(this, eventArgs);
 			}
@@ -819,6 +820,10 @@ namespace MSetExplorer
 				var requestsPendingGeneration = SubmitMSRequests(msrJob, _currentMapSectionRequests);
 				_requestsPendingGeneration.AddRange(requestsPendingGeneration);
 			}
+			else
+			{
+				Debug.WriteLine($"Discard and Load: Not submitting MSRequests, the currentMapSectionRequests is null for job number: {msrJob.MapLoaderJobNumber}.");
+			}
 
 			return msrJob;
 		}
@@ -852,12 +857,12 @@ namespace MSetExplorer
 
 			if (newRequests.Count == 0 && requestsNoLongerNeeded.Count == 0)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, "ReuseAndLoad is performing a 'simple' update.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ReuseAndLoad is performing a 'simple' update for job number: {msrJob.MapLoaderJobNumber}.");
 
 				CheckSectionsNotVisible(_bitmapGrid);
 			}
 			else
-			{
+			{ 
 				// Cancel requests in play that are no longer needed. Remove and dispose MapSections no longer needed
 				if (_useDetailedDebug)
 				{
@@ -897,6 +902,11 @@ namespace MSetExplorer
 					// ***** Submit the new requests. *****
 					var mapRequestsPendingGenration = SubmitMSRequests(msrJob, newRequests);
 					_requestsPendingGeneration.AddRange(mapRequestsPendingGenration);
+				}
+				else
+				{
+					Debug.WriteLine($"Reuse and Load: Not submitting MSRequests, there are no new requests for job number: {msrJob.MapLoaderJobNumber}.");
+
 				}
 
 				if (_requestsPendingGeneration.Count > 0)
@@ -1030,7 +1040,7 @@ namespace MSetExplorer
 		private void AddJob(MsrJob msrJob)
 		{
 			ActiveJobs.Add(msrJob);
-			Debug.WriteLineIf(_useDetailedDebug, $"Adding jobNumber: {msrJob.MapLoaderJobNumber}. There are now {ActiveJobs.Count} active jobs.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Adding job number: {msrJob.MapLoaderJobNumber}. There are now {ActiveJobs.Count} active jobs.");
 		}
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, MapPositionSizeAndDelta? previousAreaInfo, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta newAreaInfo)
@@ -1085,6 +1095,7 @@ namespace MSetExplorer
 
 			if (previousAreaInfo.Coords.CrossesYZero || newAreaInfo.Coords.CrossesYZero)
 			{
+				Debug.WriteLine("Reapplying the ColorMap: Either the previous, the new or both maps cross the YZero point.");
 				return true;
 			}
 
@@ -1098,6 +1109,7 @@ namespace MSetExplorer
 				return true;
 			}
 
+			Debug.WriteLine("Not reapplying the ColorMap.");
 			return false;
 		}
 
@@ -1408,14 +1420,14 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("NEVER")]
-		private void CheckBlockSize(AreaColorAndCalcSettings newValue)
-		{
-			if (newValue.MapAreaInfo.Subdivision.BlockSize != BlockSize)
-			{
-				throw new ArgumentException("BlockSize mismatch", nameof(AreaColorAndCalcSettings.MapAreaInfo.Subdivision));
-			}
-		}
+		//[Conditional("NEVER")]
+		//private void CheckBlockSize(AreaColorAndCalcSettings newValue)
+		//{
+		//	if (newValue.MapAreaInfo.Subdivision.BlockSize != BlockSize)
+		//	{
+		//		throw new ArgumentException("BlockSize mismatch", nameof(AreaColorAndCalcSettings.MapAreaInfo.Subdivision));
+		//	}
+		//}
 
 		[Conditional("DEBUG2")]
 		private void CheckSubdivisions(List<MapSectionRequest> newRequests, List<MapSectionRequest> existingRequests)
@@ -1441,7 +1453,7 @@ namespace MSetExplorer
 
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void ReportSubmitJobDetails(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings? newValue, bool isBound)
 		{
 			var currentJobId = previousValue?.JobId ?? ObjectId.Empty.ToString();
@@ -1465,7 +1477,7 @@ namespace MSetExplorer
 				//	Debug.WriteLine($"MapDisplay is handling SumbitJob. Not adjusting the new value's Area. CurrentJobId: {currentJobId}. NewJobId: {newJobId}.");
 				//}
 
-				Debug.WriteLine($"MapDisplay is handling SumbitJob. CurrentJobId: {currentJobId}. NewJobId: {newJobId}.");
+				Debug.WriteLine($"MapDisplay is handling SumbitJob. CurrentJobId: {currentJobId}. NewJobId: {newJobId}. SPD: {newValue.MapAreaInfo.SamplePointDelta.Width}, SubId: {newValue.MapAreaInfo.Subdivision.Id}");
 			}
 		}
 

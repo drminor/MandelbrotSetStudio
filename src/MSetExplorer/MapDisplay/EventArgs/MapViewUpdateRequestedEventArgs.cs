@@ -14,6 +14,7 @@ namespace MSetExplorer
 
 		public RectangleDbl ScreenArea { get; init; }
 		public SizeDbl DisplaySize { get; init; }
+		public SizeDbl AdjustedDisplaySize { get; init; }
 
 		public bool IsPreview { get; init; }
 		public bool IsPreviewBeingCancelled { get; init; }
@@ -31,7 +32,7 @@ namespace MSetExplorer
 			IsPreview = isPreview;
 		}
 
-		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, RectangleDbl screenArea, SizeDbl displaySize, MapCenterAndDelta currentMapAreaInfo, bool isPreview)
+		public MapViewUpdateRequestedEventArgs(TransformType transformType, VectorInt panAmount, double factor, RectangleDbl screenArea, SizeDbl displaySize, SizeDbl adjustedDisplaySize, MapCenterAndDelta currentMapAreaInfo, bool isPreview)
 		{
 			TransformType = transformType;
 			PanAmount = panAmount;
@@ -39,6 +40,7 @@ namespace MSetExplorer
 
 			ScreenArea = screenArea;
 			DisplaySize = displaySize;
+			AdjustedDisplaySize = adjustedDisplaySize;
 
 			CurrentMapAreaInfo = currentMapAreaInfo;
 			IsPreview = isPreview;

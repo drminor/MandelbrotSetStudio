@@ -76,6 +76,29 @@ namespace MSS.Common
 			return binaryPrecision;
 		}
 
+		public static SizeDbl GetDisplaySizeRounded16(SizeDbl displaySize)
+		{
+			double newWidth;
+			double newHeight;
+
+			var w = displaySize.Width;
+			var h = displaySize.Height;
+
+			if (w >= h)
+			{
+				newHeight = DoubleHelper.RoundOff(h, 16);
+				newWidth = newHeight * (w / h);
+			}
+			else
+			{
+				newWidth = DoubleHelper.RoundOff(w, 16);
+				newHeight = newWidth * (h / w);
+			}
+
+			var result = new SizeDbl(newWidth, newHeight);
+			return result;
+		}
+
 		#endregion
 
 		#region Get Extents in Blocks

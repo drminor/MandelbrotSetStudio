@@ -7,6 +7,8 @@ namespace MSS.Types
 {
 	public struct RectangleDbl : IEquatable<RectangleDbl>, IEqualityComparer<RectangleDbl>
 	{
+		#region Constructors
+
 		public RectangleDbl(PointDbl p1, PointDbl p2) : this(p1.X, p2.X, p1.Y, p2.Y)
 		{ }
 
@@ -29,6 +31,10 @@ namespace MSS.Types
 			Validate();
 		}
 
+		#endregion
+
+		#region Public Properties
+
 		public double X1 { get; init; }
 		public double X2 { get; init; }
 		public double Y1 { get; init; }
@@ -41,6 +47,10 @@ namespace MSS.Types
 		public PointDbl Point2 => new PointDbl(X2, Y2);
 		public PointDbl Position => new PointDbl(X1, Y1);
 		public SizeDbl Size => new SizeDbl(Width, Height);
+
+		#endregion
+
+		#region Public Methods
 
 		public PointDbl GetCenter()
 		{
@@ -125,19 +135,7 @@ namespace MSS.Types
 			return this;
 		}
 
-		[Conditional("DEBUG2")]
-		private void Validate()
-		{
-			if (! (X2 >= X1 || double.IsNaN(X1) || double.IsNaN(X2) || double.IsInfinity(X1) || double.IsInfinity(X2)) )
-			{
-				throw new ArgumentException($"The beginning X must be less than or equal to the ending X.");
-			}
-
-			if (! (Y2 >= Y1 || double.IsNaN(Y1) || double.IsNaN(Y2) || double.IsInfinity(Y1) || double.IsInfinity(Y2)) )
-			{
-				throw new ArgumentException($"The beginning Y must be less than or equal to the ending Y.");
-			}
-		}
+		#endregion
 
 		#region ToString, IEquatable and IEqualityComparer Support
 
@@ -197,6 +195,24 @@ namespace MSS.Types
 		public static bool operator !=(RectangleDbl left, RectangleDbl right)
 		{
 			return !(left == right);
+		}
+
+		#endregion
+
+		#region Diagnostics
+
+		[Conditional("DEBUG2")]
+		private void Validate()
+		{
+			if (!(X2 >= X1 || double.IsNaN(X1) || double.IsNaN(X2) || double.IsInfinity(X1) || double.IsInfinity(X2)))
+			{
+				throw new ArgumentException($"The beginning X must be less than or equal to the ending X.");
+			}
+
+			if (!(Y2 >= Y1 || double.IsNaN(Y1) || double.IsNaN(Y2) || double.IsInfinity(Y1) || double.IsInfinity(Y2)))
+			{
+				throw new ArgumentException($"The beginning Y must be less than or equal to the ending Y.");
+			}
 		}
 
 		#endregion

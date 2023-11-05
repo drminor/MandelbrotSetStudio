@@ -22,7 +22,7 @@ namespace MSetExplorer
 
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
-		SizeInt BlockSize { get; }
+		//SizeInt BlockSize { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 		
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }

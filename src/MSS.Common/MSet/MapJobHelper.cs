@@ -15,7 +15,7 @@ namespace MSS.Common
 
 		private readonly SubdivisonProvider _subdivisonProvider;
 
-		//private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -159,7 +159,7 @@ namespace MSS.Common
 			// Calculate the total number of sample points from the origin to the lower, left corner of the map's coordinates and the Subdivision origin (i.e., BaseMapBlockOffset.)
 			var adjCoords = RNormalizer.Normalize(coords, rPointAndDelta.SamplePointDelta, out var nrmSamplePointDelta);
 
-			ReportUsingDifferentSubdivision(nrmSamplePointDelta, rPointAndDelta);
+			if (_useDetailedDebug) ReportUsingDifferentSubdivision(nrmSamplePointDelta, rPointAndDelta);
 
 			var positionV = new RVector(adjCoords.Position);
 
@@ -183,7 +183,7 @@ namespace MSS.Common
 
 			// Find or create a subdivision record in the database.
 			var subdivision = _subdivisonProvider.GetSubdivision(nrmSamplePointDelta, mapBlockOffset, out var localMapBlockOffset);
-			CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
+			if (_useDetailedDebug) CheckSubdivisionConsistency(mapAreaInfoV2.Subdivision, subdivision, nrmMapCenterPoint.Exponent, nrmSamplePointDelta.Exponent);
 
 			var originalSubdivisionId = mapAreaInfoV2.Subdivision.Id;
 			var result = new MapPositionSizeAndDelta(adjCoords, canvasSize, subdivision, binaryPrecision, localMapBlockOffset, canvasControlOffset, originalSubdivisionId);
@@ -314,7 +314,8 @@ namespace MSS.Common
 			var adjPos = RNormalizer.Normalize(newPosition, coords.Size, out var adjMapSize);
 			var newCoords = new RRectangle(new RPoint(adjPos), adjMapSize);
 
-			ReportCoordsDiff(coords, newCoords, "for a new display size (ScaleConstant).");
+			if (_useDetailedDebug)
+				ReportCoordsDiff(coords, newCoords, "for a new display size (ScaleConstant).");
 
 			//var localMapBlockOffset = GetLocalMapBlockOffset(mapBlockOffset, subdivision);
 			var newSubdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
@@ -348,7 +349,9 @@ namespace MSS.Common
 
 			// Using the size of the new map and the map coordinates, calculate the sample point size
 			var samplePointDelta = GetSamplePointDeltaDepreciated(coords, displaySize, ToleranceFactor, out var wToHRatio);
-			ReportSamplePointRatios(coords, displaySize, wToHRatio);
+			
+			if (_useDetailedDebug)
+				ReportSamplePointRatios(coords, displaySize, wToHRatio);
 
 			// The samplePointDelta may require the coordinates to be adjusted.
 			var mapSize = samplePointDelta.Scale(displaySize);
@@ -356,7 +359,6 @@ namespace MSS.Common
 			var adjCoords1 = new RRectangle(adjPos1, adjMapSize1);
 
 			var uCoords = RNormalizer.Normalize(adjCoords1, samplePointDelta, out var uSpd);
-
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
 			//var mapBlockOffset = GetMapBlockOffset(uCoords.Position, uSpd, BlockSize, out var canvasControlOffset);
@@ -369,7 +371,8 @@ namespace MSS.Common
 			var adjPos2 = RNormalizer.Normalize(newPosition, uCoords.Size, out var adjMapSize2);
 			var newCoords = new RRectangle(new RPoint(adjPos2), adjMapSize2);
 
-			ReportCoordsDiff(coords, newCoords, "for a new Job");
+			if (_useDetailedDebug)
+				ReportCoordsDiff(coords, newCoords, "for a new Job");
 
 			// Get a subdivision record from the database.
 			var subdivision = _subdivisonProvider.GetSubdivision(uSpd, mapBlockOffset, out var localMapBlockOffset);
@@ -432,16 +435,16 @@ namespace MSS.Common
 
 		#region Diagnostics
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void ReportUsingDifferentSubdivision(RSize nrmSamplePointDelta, RPointAndDelta rPointAndDelta)
 		{
 			if (nrmSamplePointDelta.Exponent != rPointAndDelta.Exponent)
 			{
-				Debug.WriteLine($"INFO: GetMapAreaWithSizeFat is not using the existing subdivision.");
+				Debug.WriteLine($"INFO: GetMapPositionSizeAndDelta is not using the existing subdivision.");
 			}
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void CheckSubdivisionConsistency(Subdivision original, Subdivision result, int normalizedPositionExponent, int normalizedSpdExponent)
 		{
 			Debug.WriteLine($"While calculating the MapAreaWithSize. Original SubdivisionId: {original.Id}, Result SubdivisionId: {result.Id}. " +
@@ -456,7 +459,7 @@ namespace MSS.Common
 			Debug.WriteLine($"While calculating the SamplePointDelta, we got wToHRatio: {samplePointWToHRatio}, coordsWToHRatio: {coordsWToHRatio} and displayWToHRatio: {canvasSizeWToHRatio}.");
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void ReportCoordsDiff(RRectangle coords, RRectangle newCoords, string desc)
 		{
 			var pos = coords.Position;

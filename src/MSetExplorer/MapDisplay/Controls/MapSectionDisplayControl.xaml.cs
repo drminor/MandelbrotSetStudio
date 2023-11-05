@@ -31,7 +31,7 @@ namespace MSetExplorer
 		{
 			_vm = (IMapDisplayViewModel)DataContext;
 
-			_selectionRectangle = new SelectionRectangle(new Canvas(), new SizeDbl(), RMapConstants.BLOCK_SIZE);
+			_selectionRectangle = new SelectionRectangle(new Canvas(), new SizeDbl());
 
 			Loaded += MapSectionDisplayControl_Loaded;
 			Unloaded += MapSectionDisplayControl_Unloaded;
@@ -65,7 +65,7 @@ namespace MSetExplorer
 
 				_vm.PropertyChanged += MapDisplayViewModel_PropertyChanged;
 
-				_selectionRectangle = new SelectionRectangle(BitmapGridControl1.Canvas, _vm.ViewportSize, _vm.BlockSize);
+				_selectionRectangle = new SelectionRectangle(BitmapGridControl1.Canvas, _vm.ViewportSize);
 				_selectionRectangle.AreaSelected += SelectionRectangle_AreaSelected;
 				_selectionRectangle.ImageDragged += SelectionRectangle_ImageDragged;
 

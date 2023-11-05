@@ -193,6 +193,9 @@ namespace MSetExplorer
 
 		private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
 		{
+			DispWidth = e.AdjustedDisplaySize.Width;
+			DispHeight = e.AdjustedDisplaySize.Height;
+
 			if (e.IsPreview)
 			{
 				if (MapCoordsIsVisible)
