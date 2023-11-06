@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
 using MSS.Types;
-using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
@@ -118,6 +117,37 @@ namespace ProjectRepo
 				// Log: MapSection Not Found
 				//Debug.WriteLine("MapSection Not found.");
 				return default;
+			}
+		}
+
+		public ObjectId Insert(MapSectionRecord mapSectionRecord)
+		{
+			try
+			{
+				var blockPos = GetBlockPosition(mapSectionRecord);
+				var id = GetId(mapSectionRecord.SubdivisionId, blockPos);
+				if (id != null)
+				{
+					Debug.WriteLine($"Not Inserting MapSectionRecord with BlockPos: {blockPos}. A record already exists for this block position with Id: {id}.");
+					return id.Value;
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got exception {e} while Calling GetId on Inserting a MapSectionRecord.");
+				throw;
+			}
+
+			try
+			{
+				mapSectionRecord.LastSavedUtc = DateTime.UtcNow;
+				Collection.InsertOne(mapSectionRecord);
+				return mapSectionRecord.Id;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got exception {e} on Inserting a MapSectionRecord.");
+				throw;
 			}
 		}
 

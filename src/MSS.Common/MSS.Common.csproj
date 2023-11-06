@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MSS.Types\MSS.Types.csproj" />
+    <ProjectReference Include="..\ProjectRepo\ProjectRepo.csproj" />
   </ItemGroup>
 
 </Project>

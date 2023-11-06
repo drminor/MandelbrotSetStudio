@@ -28,6 +28,17 @@ namespace ProjectRepo
 
 		#endregion
 
+		public bool RecordExists(ObjectId mapSectionId, CancellationToken ct)
+		{
+			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("MapSectionId", mapSectionId);
+
+			var mapSectionRecord = Collection.Find(filter, options: null);
+
+			var result = mapSectionRecord.Any(ct);
+
+			return result;
+		}
+
 		public async Task<bool> RecordExistsAsync(ObjectId mapSectionId, CancellationToken ct)
 		{
 			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("MapSectionId", mapSectionId);
@@ -105,6 +116,26 @@ namespace ProjectRepo
 			}
 		}
 
+		public ObjectId Insert(MapSectionZValuesRecord mapSectionZValuesRecord)
+		{
+			//if (mapSectionZValuesRecord.ZValues == null)
+			//{
+			//	Debug.WriteLine("Inserting a MapSectionRecord that has a null ZValue.");
+			//}
+
+			try
+			{
+				mapSectionZValuesRecord.LastSavedUtc = DateTime.UtcNow;
+				Collection.InsertOne(mapSectionZValuesRecord);
+				return mapSectionZValuesRecord.Id;
+			}
+			catch (Exception e)
+			{
+				Debug.WriteLine($"Got exception {e} on Inserting a MapSectionZValuesRecord.");
+				throw;
+			}
+		}
+
 		public async Task<ObjectId> InsertAsync(MapSectionZValuesRecord mapSectionZValuesRecord)
 		{
 			//if (mapSectionZValuesRecord.ZValues == null)
@@ -123,6 +154,21 @@ namespace ProjectRepo
 				Debug.WriteLine($"Got exception {e} on Inserting a MapSectionZValuesRecord.");
 				throw;
 			}
+		}
+
+		public long? UpdateZValuesByMapSectionId(MapSectionZValuesRecord mapSectionRecord, ObjectId mapSectionId)
+		{
+			var filter = Builders<MapSectionZValuesRecord>.Filter.Eq("MapSectionId", mapSectionId);
+
+			UpdateDefinition<MapSectionZValuesRecord> updateDefinition;
+
+			updateDefinition = Builders<MapSectionZValuesRecord>.Update
+				.Set(u => u.ZValues, mapSectionRecord.ZValues)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+
+			var result = Collection.UpdateOne(filter, updateDefinition);
+
+			return result?.ModifiedCount;
 		}
 
 		public async Task<long?> UpdateZValuesByMapSectionIdAync(MapSectionZValuesRecord mapSectionRecord, ObjectId mapSectionId)

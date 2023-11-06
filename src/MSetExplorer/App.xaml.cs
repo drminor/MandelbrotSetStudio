@@ -26,7 +26,7 @@ namespace MSetExplorer
 	{
 		private static readonly bool TEST_STORAGE_MODEL = false;
 
-		private static readonly bool TEST_JOB_DETAILS_DIALOG = false;
+		//private static readonly bool TEST_JOB_DETAILS_DIALOG = false;
 
 		#region Configuration
 
@@ -111,14 +111,14 @@ namespace MSetExplorer
 				Current.Shutdown();
 				return;
 			}
-			else if (TEST_JOB_DETAILS_DIALOG)
-			{
-				TestJobDetailsWindow();
+			//else if (TEST_JOB_DETAILS_DIALOG)
+			//{
+			//	TestJobDetailsWindow();
 
-				MessageBox.Show("Exiting.");
-				Current.Shutdown();
-				return;
-			}
+			//	MessageBox.Show("Exiting.");
+			//	Current.Shutdown();
+			//	return;
+			//}
 
 			//Debug.WriteLine($"Before Get Repos. {currentStopwatch.ElapsedMilliseconds}.");
 
@@ -720,43 +720,43 @@ namespace MSetExplorer
 
 		#region Test JobDetailsDialog
 
-		private void TestJobDetailsWindow()
-		{
-			_repositoryAdapters = GetRepositoryAdaptersFast();
+		//private void TestJobDetailsWindow()
+		//{
+		//	_repositoryAdapters = GetRepositoryAdaptersFast();
 
-			var ownerName = "Poster Art3-13-4";
-			var ownerId = new ObjectId("64913f6d0d20aad9f1a64737"); // Poster Art3-13-4
-			var currentJobId = new ObjectId("649141932b7c6bda0e7ccf81");
-			var ownerCreationDate = DateTime.Parse("2023-06-01 10:40:03");
+		//	var ownerName = "Poster Art3-13-4";
+		//	var ownerId = new ObjectId("64913f6d0d20aad9f1a64737"); // Poster Art3-13-4
+		//	var currentJobId = new ObjectId("649141932b7c6bda0e7ccf81");
+		//	var ownerCreationDate = DateTime.Parse("2023-06-01 10:40:03");
 
-			var posterInfo = new PosterInfo(ownerId, ownerName, description: null, currentJobId, new SizeDbl(1024), bytes: 0, ownerCreationDate, DateTime.MinValue, DateTime.MinValue);
+		//	var posterInfo = new PosterInfo(ownerId, ownerName, description: null, currentJobId, new SizeDbl(1024), bytes: 0, ownerCreationDate, DateTime.MinValue, DateTime.MinValue);
 
 
-			OpenJobDetailsDialog(posterInfo);
-		}
+		//	OpenJobDetailsDialog(posterInfo);
+		//}
 
-		private void OpenJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
-		{
-			var jobDetailsViewModel = CreateAJobDetailsDialog(jobOwnerInfo);
-			var jobDetailsDialog = new JobDetailsWindow
-			{
-				DataContext = jobDetailsViewModel
-			};
+		//private void OpenJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
+		//{
+		//	var jobDetailsViewModel = CreateAJobDetailsDialog(jobOwnerInfo);
+		//	var jobDetailsDialog = new JobDetailsWindow
+		//	{
+		//		DataContext = jobDetailsViewModel
+		//	};
 
-			jobDetailsDialog.ShowDialog();
-		}
+		//	jobDetailsDialog.ShowDialog();
+		//}
 
-		public JobDetailsViewModel CreateAJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
-		{
-			if (_repositoryAdapters == null)
-			{
-				throw new InvalidOperationException("The _repositoryAdapters is null.");
-			}
-			var projectAdapter = _repositoryAdapters.ProjectAdapter;
-			var mapSectionAdapter = _repositoryAdapters.MapSectionAdapter;
+		//public JobDetailsViewModel CreateAJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
+		//{
+		//	if (_repositoryAdapters == null)
+		//	{
+		//		throw new InvalidOperationException("The _repositoryAdapters is null.");
+		//	}
+		//	var projectAdapter = _repositoryAdapters.ProjectAdapter;
+		//	var mapSectionAdapter = _repositoryAdapters.MapSectionAdapter;
 
-			return new JobDetailsViewModel(jobOwnerInfo, projectAdapter, mapSectionAdapter);
-		}
+		//	return new JobDetailsViewModel(jobOwnerInfo, projectAdapter, mapSectionAdapter);
+		//}
 
 		#endregion
 	}

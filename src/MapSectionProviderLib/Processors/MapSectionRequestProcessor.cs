@@ -2,6 +2,7 @@
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
+using ProjectRepo;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -117,6 +118,8 @@ namespace MapSectionProviderLib
 			pendingGeneration = new List<MapSectionRequest>();
 			var result = new List<MapSection>();
 
+			var rdrWriters = _mapSectionAdapter.GetNewMapSectionReaderWriters();
+
 			foreach(var mapSectionRequest in mapSectionRequests)
 			{
 				var mapSectionWorkRequest = new MapSectionWorkRequest(mapSectionRequest, callback);
@@ -128,7 +131,7 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					Tuple<MapSection?, MapSection?>? mapSectionPair = FetchOrQueueForProcessing(mapSectionWorkRequest, ct);
+					Tuple<MapSection?, MapSection?>? mapSectionPair = FetchOrQueueForProcessing(mapSectionWorkRequest, rdrWriters.MapSectionReaderWriter);
 
 					if (mapSectionPair != null)
 					{
@@ -228,11 +231,11 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private Tuple<MapSection?, MapSection?>? FetchOrQueueForProcessing(MapSectionWorkRequest mapSectionWorkRequest, CancellationToken ct)
+		private Tuple<MapSection?, MapSection?>? FetchOrQueueForProcessing(MapSectionWorkRequest mapSectionWorkRequest, MapSectionReaderWriter mapSectionReaderWriter)
 		{
 			var request = mapSectionWorkRequest.Request;
 
-			var mapSectionBytes = Fetch(request);
+			var mapSectionBytes = Fetch(request, mapSectionReaderWriter);
 
 			if (mapSectionBytes != null)
 			{
@@ -319,7 +322,9 @@ namespace MapSectionProviderLib
 						}
 						else
 						{
-							Tuple<MapSection?, MapSection?>? mapSectionPair = FetchOrQueueForGeneration(mapSectionWorkRequest, queueProcessorIndex);
+							var rdrWriters = _mapSectionAdapter.GetNewMapSectionReaderWriters();
+
+							Tuple<MapSection?, MapSection?>? mapSectionPair = FetchOrQueueForGeneration(mapSectionWorkRequest, queueProcessorIndex, rdrWriters.MapSectionReaderWriter);
 
 							if (mapSectionPair != null)
 							{
@@ -354,7 +359,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private Tuple<MapSection?, MapSection?>? FetchOrQueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, int queueProcessorIndex)
+		private Tuple<MapSection?, MapSection?>? FetchOrQueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, int queueProcessorIndex, MapSectionReaderWriter mapSectionReaderWriter)
 		{
 			var request = mapSectionWorkRequest.Request;
 			var persistZValues = request.MapCalcSettings.SaveTheZValues;
@@ -372,7 +377,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				var mapSectionBytes = Fetch(request);
+				var mapSectionBytes = Fetch(request, mapSectionReaderWriter);
 
 				if (mapSectionBytes != null)
 				{
@@ -499,8 +504,10 @@ namespace MapSectionProviderLib
 		private void UpdateWithZValues(MapSectionRequest request)
 		{
 			var mapSectionId = ObjectId.Parse(request.MapSectionId);
-			
-			var zValues = FetchTheZValues(mapSectionId);
+
+			//var zValues = FetchTheZValues(mapSectionId);
+
+			var zValues = _mapSectionAdapter.GetMapSectionZValues(mapSectionId);
 
 			if (zValues != null)
 			{
@@ -520,20 +527,20 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest)
+		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest, MapSectionReaderWriter mapSectionReaderWriter)
 		{
 			var subdivisionId = mapSectionRequest.Subdivision.Id;
-			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.SectionBlockOffset);
+			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.SectionBlockOffset, mapSectionReaderWriter);
 
 			return mapSectionBytes;
 		}
 
-		private ZValues? FetchTheZValues(ObjectId mapSectionId)
-		{
-			var result = _mapSectionAdapter.GetMapSectionZValues(mapSectionId);
+		//private ZValues? FetchTheZValues(ObjectId mapSectionId)
+		//{
+		//	var result = _mapSectionAdapter.GetMapSectionZValues(mapSectionId);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private bool DoesTheResponseSatisfyTheRequest(MapSectionBytes mapSectionBytes, int requestedIterations, [NotNullWhen(false)] out string? reason)
 		{

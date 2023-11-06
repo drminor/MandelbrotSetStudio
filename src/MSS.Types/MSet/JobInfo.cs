@@ -3,7 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace MSS.Common.MSet
+namespace MSS.Types.MSet
 {
 	public class JobInfo : IJobInfo
 	{

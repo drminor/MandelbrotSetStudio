@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
 using System;
 
-namespace MSS.Common
+namespace MSS.Types.MSet
 {
 	public interface IJobInfo
 	{

@@ -78,25 +78,36 @@ namespace MSS.Common
 
 		public static SizeDbl GetDisplaySizeRounded16(SizeDbl displaySize)
 		{
-			double newWidth;
-			double newHeight;
-
-			var w = displaySize.Width;
-			var h = displaySize.Height;
-
-			if (w >= h)
+			if (displaySize.IsNAN())
 			{
-				newHeight = DoubleHelper.RoundOff(h, 16);
-				newWidth = newHeight * (w / h);
+				return SizeDbl.NaN;
+			}
+			else if (displaySize.IsNearZero())
+			{
+				return SizeDbl.Zero;
 			}
 			else
 			{
-				newWidth = DoubleHelper.RoundOff(w, 16);
-				newHeight = newWidth * (h / w);
-			}
+				double newWidth;
+				double newHeight;
 
-			var result = new SizeDbl(newWidth, newHeight);
-			return result;
+				var w = displaySize.Width;
+				var h = displaySize.Height;
+
+				if (w >= h)
+				{
+					newHeight = DoubleHelper.RoundOff(h, 16);
+					newWidth = newHeight * (w / h);
+				}
+				else
+				{
+					newWidth = DoubleHelper.RoundOff(w, 16);
+					newHeight = newWidth * (h / w);
+				}
+
+				var result = new SizeDbl(newWidth, newHeight);
+				return result;
+			}
 		}
 
 		#endregion

@@ -1,6 +1,6 @@
 ﻿using MongoDB.Driver;
 
-namespace MSS.Common
+namespace MSS.Types
 {
 	public interface IMongoDbCollection<T>
 	{
