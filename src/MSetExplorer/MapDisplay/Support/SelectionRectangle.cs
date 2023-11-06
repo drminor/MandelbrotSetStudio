@@ -18,7 +18,6 @@ namespace MSetExplorer
 		//private const int DEFAULT_SELECTION_SIZE_INDEX = 4; // Translates to 1/2^4 or 1/16 or 6.25% of the display size. 64 pixels for a display size of 1024
 		private const int DEFAULT_SELECTION_SIZE_INDEX = 3; // Translates to 1/2^3 or 1/8 or 12.5% of the display size. 128 pixels for a display size of 1024
 
-		private const int PITCH_TARGET = 16;
 		private const int DRAG_TRIGGER_DIST = 3;
 		private const int MINIMUM_SELECTION_EXTENT = 8;
 
@@ -26,7 +25,7 @@ namespace MSetExplorer
 
 		private SizeDbl _displaySize;
 
-		private int _pitch;
+		//private int _pitch;
 		private SizeDbl _adjustedDisplaySize;
 		private SizeDbl _defaultSelectionSize;
 
@@ -53,8 +52,6 @@ namespace MSetExplorer
 
 			_canvas = canvas;
 			_displaySize = displaySize;
-
-			_pitch = RMapHelper.CalculatePitch(_displaySize, PITCH_TARGET);
 
 			_selectedSizeIndex = DEFAULT_SELECTION_SIZE_INDEX;
 			var percentageOfDisplaySize = Math.Pow(2, -1 * _selectedSizeIndex);
@@ -141,20 +138,7 @@ namespace MSetExplorer
 				var previousValue = _displaySize;
 				_displaySize = value;
 
-				if (!_displaySize.IsNAN() & !_displaySize.IsNearZero())
-				{
-					_pitch = RMapHelper.CalculatePitch(_displaySize, PITCH_TARGET);
-					_adjustedDisplaySize = RMapHelper.GetDisplaySizeRounded16(_displaySize);
-
-					//_selectedSizeIndex = DEFAULT_SELECTION_SIZE_INDEX;
-					//var percentageOfDisplaySize = Math.Pow(2, -1 * _selectedSizeIndex);
-					//_defaultSelectionSize = GetSelectionSize(_adjustedDisplaySize, percentageOfDisplaySize);
-				}
-				else
-				{
-					_pitch = PITCH_TARGET;
-					_adjustedDisplaySize = SizeDbl.NaN;
-				}
+				_adjustedDisplaySize = RMapHelper.GetDisplaySizeRounded16(_displaySize);
 
 				_selectedSizeIndex = DEFAULT_SELECTION_SIZE_INDEX;
 				var percentageOfDisplaySize = Math.Pow(2, -1 * _selectedSizeIndex);
@@ -738,36 +722,30 @@ namespace MSetExplorer
 		// Position the current end of the drag line
 		private void SetDragPosition(Point controlPos)
 		{
-			var dist = controlPos - _dragAnchor;
-
 			// Horizontal
-			var x = dist.X;
-
-			x = _dragAnchor.X + x;
+			var x = controlPos.X;
 
 			if (x < 0)
 			{
-				x += _pitch;
+				x = 0;
 			}
 
 			if (x > _canvas.ActualWidth)
 			{
-				x -= _pitch;
+				x = _canvas.ActualWidth;
 			}
 
 			// Vertical
-			var y = dist.Y;
-
-			y = _dragAnchor.Y + y;
+			var y = controlPos.Y;
 
 			if (y < 0)
 			{
-				y += _pitch;
+				y = 0;
 			}
 
-			if (y > _canvas.ActualWidth)
+			if (y > _canvas.ActualHeight)
 			{
-				y -= _pitch;
+				y = _canvas.ActualHeight;
 			}
 
 			var dragLineTerminus = DragLineTerminus;
@@ -827,15 +805,11 @@ namespace MSetExplorer
 				newSelectionSize = GetSelectionSize(_adjustedDisplaySize, percentageOfDisplaySize);
 			}
 
-			//var pos = new PointDbl(SelectedAreaX - result.Width / 2, SelectedAreaYInverted - result.Height / 2);
-			//newSelectionSize = new RectangleDbl(pos, result);
 			return true;
 		}
 
 		private SizeDbl GetSelectionSize(SizeDbl adjustedDisplaySize, double percentageOfDisplaySize)
 		{
-			//SizeDbl result;
-
 			if (adjustedDisplaySize.IsNAN() || adjustedDisplaySize.IsNearZero())
 			{
 				return new SizeDbl(128);
@@ -846,29 +820,7 @@ namespace MSetExplorer
 				return adjustedDisplaySize;
 			}
 
-			//var displaySizeRoundedTo16 = GetDisplaySizeRounded16(displaySize);
-			//var result = displaySizeRoundedTo16.Scale(percentageOfDisplaySize);
-
 			var result = adjustedDisplaySize.Scale(percentageOfDisplaySize);
-
-
-			//var w = displaySize.Width;
-			//var h = displaySize.Height;
-
-			//if (w >= h)
-			//{
-			//	var adjustedHeight = RoundToNearestMulOf16(h);
-			//	var selectedHeight = adjustedHeight * percentageOfDisplaySize;
-			//	var selectedWidth = selectedHeight * (w / h);
-			//	result = new SizeDbl(selectedWidth, selectedHeight);
-			//}
-			//else
-			//{
-			//	var adjustedWidth = RoundToNearestMulOf16(w);
-			//	var selectedWidth = adjustedWidth * percentageOfDisplaySize;
-			//	var selectedHeight = selectedWidth * (h / w);
-			//	result = new SizeDbl(selectedWidth, selectedHeight);
-			//}
 
 			return result;
 		}
