@@ -15,7 +15,7 @@ namespace MSS.Common
 
 		private readonly SubdivisonProvider _subdivisonProvider;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 

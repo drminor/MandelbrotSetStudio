@@ -18,10 +18,9 @@ namespace MSS.Common
 		void DropMapSections();
 		void DropMapSectionsAndSubdivisions();
 
-		public MapSectionReaderWriters GetNewMapSectionReaderWriters();
 
 		Task<MapSectionBytes?> GetMapSectionBytesAsync(ObjectId subdivisionId, VectorLong blockPosition, CancellationToken ct);
-		MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, VectorLong blockPosition, MapSectionReaderWriter mapSectionReaderWriter);
+		MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, VectorLong blockPosition);
 
 		ObjectId? GetMapSectionId(ObjectId subdivisionId, VectorLong blockPosition);
 

@@ -1,8 +1,8 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-using MSS.Common;
 using MSS.Types;
 using System;
+using System.Diagnostics;
 
 namespace ProjectRepo
 {
@@ -15,18 +15,54 @@ namespace ProjectRepo
 
         private Lazy<IMongoCollection<T>> _collectionLazy;
 
-        public MongoDbCollectionBase(DbProvider dbProvider, string collectionName)
+		private readonly bool _useDetailedDebug = false;
+
+		public MongoDbCollectionBase(DbProvider dbProvider, string collectionName)
         {
             _dbProvider = dbProvider;
             _collectionName = collectionName;
 
-            _collectionLazy = new Lazy<IMongoCollection<T>>(() => Database.GetCollection<T>(_collectionName), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+			_collectionLazy = new Lazy<IMongoCollection<T>>(() => GetCollection(_collectionName), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+			//_collection1 = null;
 		}
 
 		public IMongoDatabase Database => _dbProvider.Database;
-        public IMongoCollection<T> Collection => _collectionLazy.Value;
 
-		public IMongoCollection<BsonDocument> BsonDocumentCollection => Database.GetCollection<BsonDocument>(_collectionName);
+		public IMongoCollection<T> Collection => _collectionLazy.Value;
+
+		//private IMongoCollection<T>? _collection1;
+
+		//public IMongoCollection<T> Collection
+		//{
+		//	get
+		//	{
+		//		if (_collection1 == null)
+		//		{
+		//			_collection1 = GetCollection(_collectionName);
+		//		}
+
+		//		return _collection1;
+		//	}
+		//}
+
+
+		public IMongoCollection<BsonDocument> BsonDocumentCollection => GetBsonCollection(_collectionName);
+
+		private IMongoCollection<T> GetCollection(string collectionName)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"MongoDbCollectionBase: About to call GetCollection for {collectionName}.");
+			var result = Database.GetCollection<T>(collectionName);
+			Debug.WriteLineIf(_useDetailedDebug, $"MongoDbCollectionBase: Completed call GetCollection for {collectionName}.");
+			return result;
+		}
+
+		private IMongoCollection<BsonDocument> GetBsonCollection(string collectionName)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"MongoDbCollectionBase: About to call GetBsonCollection for {collectionName}.");
+			var result = Database.GetCollection<BsonDocument>(collectionName);
+			Debug.WriteLineIf(_useDetailedDebug, $"MongoDbCollectionBase: Completed call GetBsonCollection for {collectionName}.");
+			return result;
+		}
 
 		public virtual bool CreateCollection()
 		{

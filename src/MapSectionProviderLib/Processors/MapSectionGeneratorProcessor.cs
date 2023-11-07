@@ -236,7 +236,7 @@ namespace MapSectionProviderLib
 			{
 				if (jobIsCancelled || mapSectionRequest.NeitherRegularOrInvertedRequestIsInPlay)
 				{
-					var msg = $"The MapSectionGeneratorProcessor is skipping request with JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}.";
+					var msg = $"The MapSectionGeneratorProcessor is skipping request with RequestId: {mapSectionRequest.RequestId}.";
 					msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
 					Debug.WriteLine(msg);
 				}
@@ -245,7 +245,7 @@ namespace MapSectionProviderLib
 					var sendingVectorsMsg = mapSectionRequest.IncreasingIterations ? "Sending current counts for iteration update." : string.Empty;
 					var haveZValuesMsg = mapSectionRequest.MapSectionZVectors != null ? "Sending ZValues." : null;
 
-					Debug.WriteLine($"Generating MapSection for Request: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}. " +
+					Debug.WriteLine($"Generating MapSection for RequestId: {mapSectionRequest.RequestId}.. " +
 						$"BlockPos: {mapSectionRequest.SectionBlockOffset}. {sendingVectorsMsg} {haveZValuesMsg}");
 
 				}

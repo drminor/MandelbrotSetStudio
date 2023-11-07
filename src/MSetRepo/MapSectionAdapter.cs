@@ -50,13 +50,6 @@ namespace MSetRepo
 			//});
 		}
 
-		public MapSectionReaderWriters GetNewMapSectionReaderWriters()
-		{
-			var result = new MapSectionReaderWriters(_dbProvider);
-
-			return result;
-		}
-
 		#endregion
 
 		#region Collections
@@ -128,11 +121,11 @@ namespace MSetRepo
 
 		#region MapSection
 
-		public MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, VectorLong blockPosition, MapSectionReaderWriter mapSectionReaderWriter)
+		public MapSectionBytes? GetMapSectionBytes(ObjectId subdivisionId, VectorLong blockPosition)
 		{
 			try
 			{
-				var mapSectionRecord = mapSectionReaderWriter.Get(subdivisionId, blockPosition);
+				var mapSectionRecord = _mapSectionReaderWriter.Get(subdivisionId, blockPosition);
 				if (mapSectionRecord != null)
 				{
 					var result = _mSetRecordMapper.MapFrom(mapSectionRecord);

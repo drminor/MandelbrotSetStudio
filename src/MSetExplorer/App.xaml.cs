@@ -72,7 +72,7 @@ namespace MSetExplorer
 
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
 
-		//private Stopwatch? _ambientStopWatch;
+		private Stopwatch? _ambientStopWatch;
 
 		#endregion
 
@@ -94,13 +94,13 @@ namespace MSetExplorer
 		{
 			_mapSectionVectorProvider = CreateMapSectionVectorProvider(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.MAP_SECTION_INITIAL_POOL_SIZE);
 
-			//_ambientStopWatch = Stopwatch.StartNew();
+			_ambientStopWatch = Stopwatch.StartNew();
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
-			//var currentStopwatch = _ambientStopWatch ?? Stopwatch.StartNew();
+			var currentStopwatch = _ambientStopWatch ?? Stopwatch.StartNew();
 			base.OnStartup(e);
 
 			if (TEST_STORAGE_MODEL)
@@ -138,10 +138,10 @@ namespace MSetExplorer
 			}
 
 			var subdivisionProvider = new SubdivisonProvider(_repositoryAdapters.MapSectionAdapter);
-			//Debug.WriteLine($"After Create SubdivisionProvider. {currentStopwatch.ElapsedMilliseconds}.");
+			Debug.WriteLine($"After Create SubdivisionProvider. {currentStopwatch.ElapsedMilliseconds}.");
 
 			var mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
-			//Debug.WriteLine($"After Create MapJobHelper. {currentStopwatch.ElapsedMilliseconds}.");
+			Debug.WriteLine($"After Create MapJobHelper. {currentStopwatch.ElapsedMilliseconds}.");
 
 			var repositoryIntegrityUtility = new RepoIntegrityUtility(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter, mapJobHelper);
 

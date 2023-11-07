@@ -118,8 +118,6 @@ namespace MapSectionProviderLib
 			pendingGeneration = new List<MapSectionRequest>();
 			var result = new List<MapSection>();
 
-			var rdrWriters = _mapSectionAdapter.GetNewMapSectionReaderWriters();
-
 			foreach(var mapSectionRequest in mapSectionRequests)
 			{
 				var mapSectionWorkRequest = new MapSectionWorkRequest(mapSectionRequest, callback);
@@ -131,7 +129,7 @@ namespace MapSectionProviderLib
 				}
 				else
 				{
-					Tuple<MapSection?, MapSection?>? mapSectionPair = FetchOrQueueForProcessing(mapSectionWorkRequest, rdrWriters.MapSectionReaderWriter);
+					Tuple<MapSection?, MapSection?>? mapSectionPair = FetchOrQueueForProcessing(mapSectionWorkRequest);
 
 					if (mapSectionPair != null)
 					{
@@ -231,11 +229,11 @@ namespace MapSectionProviderLib
 
 		#region Private Methods
 
-		private Tuple<MapSection?, MapSection?>? FetchOrQueueForProcessing(MapSectionWorkRequest mapSectionWorkRequest, MapSectionReaderWriter mapSectionReaderWriter)
+		private Tuple<MapSection?, MapSection?>? FetchOrQueueForProcessing(MapSectionWorkRequest mapSectionWorkRequest)
 		{
 			var request = mapSectionWorkRequest.Request;
 
-			var mapSectionBytes = Fetch(request, mapSectionReaderWriter);
+			var mapSectionBytes = Fetch(request);
 
 			if (mapSectionBytes != null)
 			{
@@ -310,7 +308,7 @@ namespace MapSectionProviderLib
 
 					if (jobIsCancelled || mapSectionRequest.NeitherRegularOrInvertedRequestIsInPlay)
 					{
-						var msg = $"MapSectionRequestProcessor: QueueProcessor:{queueProcessorIndex} is skipping request with JobId/Request#: {mapSectionRequest.MapLoaderJobNumber}/{mapSectionRequest.RequestNumber}.";
+						var msg = $"MapSectionRequestProcessor: QueueProcessor:{queueProcessorIndex} is skipping request with RequestId: {mapSectionRequest.RequestId}.";
 						msg += jobIsCancelled ? " JobIsCancelled" : "MapSectionRequest's Cancellation Token is cancelled.";
 						Debug.WriteLineIf(_useDetailedDebug, msg);
 					}
@@ -322,9 +320,7 @@ namespace MapSectionProviderLib
 						}
 						else
 						{
-							var rdrWriters = _mapSectionAdapter.GetNewMapSectionReaderWriters();
-
-							Tuple<MapSection?, MapSection?>? mapSectionPair = FetchOrQueueForGeneration(mapSectionWorkRequest, queueProcessorIndex, rdrWriters.MapSectionReaderWriter);
+							Tuple<MapSection?, MapSection?>? mapSectionPair = FetchOrQueueForGeneration(mapSectionWorkRequest, queueProcessorIndex);
 
 							if (mapSectionPair != null)
 							{
@@ -359,7 +355,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private Tuple<MapSection?, MapSection?>? FetchOrQueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, int queueProcessorIndex, MapSectionReaderWriter mapSectionReaderWriter)
+		private Tuple<MapSection?, MapSection?>? FetchOrQueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, int queueProcessorIndex)
 		{
 			var request = mapSectionWorkRequest.Request;
 			var persistZValues = request.MapCalcSettings.SaveTheZValues;
@@ -377,7 +373,7 @@ namespace MapSectionProviderLib
 			}
 			else
 			{
-				var mapSectionBytes = Fetch(request, mapSectionReaderWriter);
+				var mapSectionBytes = Fetch(request);
 
 				if (mapSectionBytes != null)
 				{
@@ -527,10 +523,10 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest, MapSectionReaderWriter mapSectionReaderWriter)
+		private MapSectionBytes? Fetch(MapSectionRequest mapSectionRequest)
 		{
 			var subdivisionId = mapSectionRequest.Subdivision.Id;
-			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.SectionBlockOffset, mapSectionReaderWriter);
+			var mapSectionBytes = _mapSectionAdapter.GetMapSectionBytes(subdivisionId, mapSectionRequest.SectionBlockOffset);
 
 			return mapSectionBytes;
 		}

@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace MSS.Common.MSet
@@ -17,10 +18,18 @@ namespace MSS.Common.MSet
 
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
+		private readonly bool _useDetailedDebug = false;
+
+		#region Constructor
+
 		public SubdivisonProvider(IMapSectionAdapter mapSectionAdapter)
 		{
 			_mapSectionAdapter = mapSectionAdapter;
 		}
+
+		#endregion
+
+		#region Public Methods
 
 		// Find an existing subdivision record with the same SamplePointDelta.
 		// If not found, create a new record and persist to the repository.
@@ -28,10 +37,19 @@ namespace MSS.Common.MSet
 		{
 			var baseMapPosition = GetBaseMapPosition(mapBlockOffset, out localMapBlockOffset);
 
+			Debug.WriteLineIf(_useDetailedDebug, "SubdivisionProvider. About to call TryGetSubdivision.");
+
 			if (!_mapSectionAdapter.TryGetSubdivision(samplePointDelta, baseMapPosition, out var result))
 			{
+				Debug.WriteLineIf(_useDetailedDebug, "SubdivisionProvider. About to call InsertSubdivision.");
 				var subdivision = new Subdivision(samplePointDelta, baseMapPosition);
 				result = _mapSectionAdapter.InsertSubdivision(subdivision);
+
+				Debug.WriteLineIf(_useDetailedDebug, "SubdivisionProvider. Completed call InsertSubdivision.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, "SubdivisionProvider. Completed call TryGetSubdivision.");
 			}
 
 			return result;
@@ -58,9 +76,13 @@ namespace MSS.Common.MSet
 
 		public bool TryGetSubdivision(RSize samplePointDelta, BigVector baseMapPosition, [NotNullWhen(true)] out Subdivision? subdivision)
 		{
+			Debug.WriteLineIf(_useDetailedDebug, "SubdivisionProvider. About to call TryGetSubdivision.");
 			var result = _mapSectionAdapter.TryGetSubdivision(samplePointDelta, baseMapPosition, out subdivision);
+			Debug.WriteLineIf(_useDetailedDebug, "SubdivisionProvider. Completed call TryGetSubdivision.");
+
 			return result;
 		}
 
+		#endregion
 	}
 }

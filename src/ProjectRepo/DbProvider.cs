@@ -1,8 +1,7 @@
-﻿using System;
+﻿using MongoDB.Driver;
+using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
-using MongoDB.Driver;
 
 namespace ProjectRepo
 {
@@ -14,6 +13,11 @@ namespace ProjectRepo
 
 		private Lazy<IMongoDatabase> _mongoDatabaseLazy;
 
+		//private MongoClient? _client;
+		//private IMongoDatabase? _database;
+
+		private readonly bool _useDetailedDebug = false;
+
 		public DbProvider(string server, int port, string databaseName)
 		{
 			_server = server;
@@ -21,7 +25,100 @@ namespace ProjectRepo
 			_databaseName = databaseName;
 
 			_mongoDatabaseLazy = new Lazy<IMongoDatabase>(GetDb, System.Threading.LazyThreadSafetyMode.ExecutionAndPublication);
+
+			//_client = null;
+			//_database = null;
 		}
+
+		public IMongoDatabase Database => _mongoDatabaseLazy.Value;
+
+		//public IMongoDatabase Database
+		//{
+		//	get
+		//	{
+		//		if (_database == null)
+		//		{
+		//			_client = GetClient();
+		//			_database = GetDb(_client);
+		//		}
+
+		//		return _database;
+		//	}
+		//}
+
+
+		private IMongoDatabase GetDb(MongoClient mongoClient)
+		{
+			try
+			{
+				//var dbClient = GetClient();
+
+				Debug.WriteLineIf(_useDetailedDebug, $"DbProvider: About to call GetDb for {_databaseName}.");
+
+				var mongoDatabase = mongoClient.GetDatabase(_databaseName);
+				
+				Debug.WriteLineIf(_useDetailedDebug, $"DbProvider: Completed call GetDb for {_databaseName}.");
+
+				return mongoDatabase;
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"Got exception: {ex} during call to GetDb.");
+				throw;
+			}
+		}
+
+		private IMongoDatabase GetDb()
+		{
+			try
+			{
+				var dbClient = GetClient();
+
+				Debug.WriteLineIf(_useDetailedDebug, $"DbProvider: About to call GetDb for {_databaseName}.");
+
+				var mongoDatabase = dbClient.GetDatabase(_databaseName);
+
+				Debug.WriteLineIf(_useDetailedDebug, $"DbProvider: Completed call GetDb for {_databaseName}.");
+
+				return mongoDatabase;
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"Got exception: {ex} during call to GetDb.");
+				throw;
+			}
+		}
+
+		private MongoClient GetClient(TimeSpan? connectTimeout = null)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, "DbProvider: About to call GetClient.");
+			try
+			{
+				var settings = new MongoClientSettings
+				{
+					Server = new MongoServerAddress(_server, _port),
+					//IPv6 = true,
+				};
+
+				if (connectTimeout != null)
+				{
+					settings.ConnectTimeout = connectTimeout.Value;
+				}
+
+				var dbClient = new MongoClient(settings);
+
+				Debug.WriteLineIf(_useDetailedDebug, "DbProvider: Completed call GetClient.");
+
+				return dbClient;
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"Got exception: {ex} during call to GetClient.");
+				throw;
+			}
+		}
+
+		#region Tests
 
 		public bool TestConnection(string databaseName, TimeSpan? connectTimeout = null)
 		{
@@ -56,7 +153,6 @@ namespace ProjectRepo
 			}
 		}
 
-		public IMongoDatabase Database => _mongoDatabaseLazy.Value;
 
 		//private void TestIt()
 		//{
@@ -79,46 +175,6 @@ namespace ProjectRepo
 		//	}
 		//}
 
-		private IMongoDatabase GetDb()
-		{
-			try
-			{
-				var dbClient = GetClient();
-
-				var mongoDatabase = dbClient.GetDatabase(_databaseName);
-				return mongoDatabase;
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine($"Got exception: {ex} during call to GetDb.");
-				throw;
-			}
-		}
-
-		private MongoClient GetClient(TimeSpan? connectTimeout = null)
-		{
-			try
-			{
-				var settings = new MongoClientSettings
-				{
-					Server = new MongoServerAddress(_server, _port),
-					IPv6 = true,
-				};
-
-				if (connectTimeout != null)
-				{
-					settings.ConnectTimeout = connectTimeout.Value;
-				}
-
-				var dbClient = new MongoClient(settings);
-
-				return dbClient;
-			}
-			catch (Exception ex)
-			{
-				Debug.WriteLine($"Got exception: {ex} during call to GetClient.");
-				throw;
-			}
-		}
+		#endregion
 	}
 }
