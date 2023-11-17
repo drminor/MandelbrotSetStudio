@@ -21,7 +21,7 @@ namespace ImageBuilder
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
-		private IDictionary<int, MapSection?>? _currentResponses;
+		private IDictionary<int, MapSection>? _currentResponses;
 		private bool _isStopping;
 
 		#endregion
@@ -73,13 +73,13 @@ namespace ImageBuilder
 				//var w = numberOfWholeBlocks.Width;
 				//var h = numberOfWholeBlocks.Height;
 
-				var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
-				var stride = extentInBlocks.Width;
-				var h = extentInBlocks.Height;
+				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
+				var stride = mapExtent.Width;
+				var h = mapExtent.Height;
 
-				Debug.WriteLine($"The BitmapBuilder is processing section requests. The map extent is {extentInBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
+				Debug.WriteLine($"The BitmapBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
-				var segmentLengths = BitmapHelper.GetSegmentLengths(extentInBlocks.Width, sizeOfFirstBlock.Width, sizeOfLastBlock.Width, blockSize.Width);
+				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
 
 				var destPixPtr = 0;
 
@@ -99,7 +99,7 @@ namespace ImageBuilder
 					//var checkCnt = blocksForThisRow.Count;
 					//Debug.Assert(checkCnt == w);
 
-					Debug.Assert(blocksForThisRow.Count == extentInBlocks.Width);
+					Debug.Assert(blocksForThisRow.Count == stride);
 
 					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
@@ -108,11 +108,11 @@ namespace ImageBuilder
 					// But the screen coordinates increase from the top of the display to be bottom.
 					// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
 
-					var invert = !blocksForThisRow[0]?.IsInverted ?? false; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
+					var invert = !blocksForThisRow[0].IsInverted; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
 
-					var (startingLinePtr, numberOfLines, lineIncrement) = BitmapHelper.GetNumberOfLines(blockPtrY, invert, extentInBlocks.Height, sizeOfFirstBlock.Height, sizeOfLastBlock.Height, blockSize.Height);
+					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
 
-					destPixPtr = BuildARow(result, destPixPtr, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, extentInBlocks.Width, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					destPixPtr = BuildARow(result, destPixPtr, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, stride, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 					statusCallback?.Invoke(100 * percentageCompleted);
@@ -135,7 +135,7 @@ namespace ImageBuilder
 		#region Private Methods
 
 		private int BuildARow(byte[] result, int destPixPtr, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, int extentInBlocksWidth,
-			IDictionary<int, MapSection?> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
+			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
 		{
 			var linePtr = startingPtr;
 
@@ -144,13 +144,16 @@ namespace ImageBuilder
 				for (var blockPtrX = 0; blockPtrX < extentInBlocksWidth; blockPtrX++)
 				{
 					var mapSection = blocksForThisRow[blockPtrX];
-					var invertThisBlock = !mapSection?.IsInverted ?? false;
+					var invertThisBlock = !mapSection.IsInverted;
 
 					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a differnt value of isInverted as does the block at 0, {blockPtrY}.");
 
-					var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
-					//var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
-					var escVelsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.EscapeVelocities, linePtr, blockSizeWidth);
+					//var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
+					////var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
+					//var escVelsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.EscapeVelocities, linePtr, blockSizeWidth);
+
+					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
+					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
 
 					var lineLength = segmentLengths[blockPtrX].Item1;
 					var samplesToSkip = segmentLengths[blockPtrX].Item2;
@@ -177,7 +180,7 @@ namespace ImageBuilder
 			return destPixPtr;
 		}
 
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
+		private async Task<IDictionary<int, MapSection>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
 		{
 			var requests = new List<MapSectionRequest>();
 
@@ -192,7 +195,7 @@ namespace ImageBuilder
 				requests.Add(mapSectionRequest);
 			}
 
-			_currentResponses = new Dictionary<int, MapSection?>();
+			_currentResponses = new Dictionary<int, MapSection>();
 
 			try
 			{

@@ -9,25 +9,25 @@ namespace ImageBuilderWPFTest
 		public void Test1()
 		{
 			var basePath = @"C:\Users\david\Documents";
-			var fileName = "Test1a.jxr";
+			var fileName = "Test1a.wdp";
 			var filePath = Path.Combine(basePath, fileName);
 
-			var jpegXrBuilder = new WmpBuilder();
+			var wmpBuilder = new WmpBuilderPOC();
 
-			jpegXrBuilder.Test1(filePath);
+			wmpBuilder.Test1(filePath);
 		}
 
-		[Fact]
-		public void Test2()
-		{
-			var basePath = @"C:\Users\david\Documents";
-			var fileName = "Test2a.jxr";
-			var filePath = Path.Combine(basePath, fileName);
+		//[Fact]
+		//public void Test2()
+		//{
+		//	var basePath = @"C:\Users\david\Documents";
+		//	var fileName = "Test2a.wdp";
+		//	var filePath = Path.Combine(basePath, fileName);
 
-			var jpegXrBuilder = new WmpBuilder();
+		//	var jpegXrBuilder = new WmpBuilder();
 
-			jpegXrBuilder.Test2(filePath);
+		//	jpegXrBuilder.Test2(filePath);
 
-		}
+		//}
 	}
 }

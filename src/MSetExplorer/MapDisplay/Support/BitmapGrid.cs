@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -17,6 +18,9 @@ namespace MSetExplorer
 	public class BitmapGrid : IBitmapGrid, IDisposable
 	{
 		#region Private Properties
+
+		private readonly static PixelFormat PIXEL_FORMAT = PixelFormats.Pbgra32;
+		private const int DOTS_PER_INCH = 96;
 
 		private const double VALUE_FACTOR = 10000;
 		private const int BYTES_PER_PIXEL = 4;
@@ -212,7 +216,7 @@ namespace MSetExplorer
 				//	Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks remains the same.");
 				//}
 
-				CanvasSizeInBlocks = CalculateCanvasSize(_logicalViewportSize);
+				CanvasSizeInBlocks = CalculateCanvasSize(value);
 
 				_logicalViewportSize = value;
 			}
@@ -252,8 +256,6 @@ namespace MSetExplorer
 			return mapExtentInBlocks;
 		}
 
-		// Each time a drawing operation is performed this is checked to see if the current canvas need to be resized.
-		// NOTE: Every drawing operation should begin with a call to ClearDisplay or RedrawSections.
 		public SizeInt ImageSizeInBlocks
 		{
 			get => _imageSizeInBlocks;
@@ -275,6 +277,8 @@ namespace MSetExplorer
 			}
 		}
 
+		// Each time a drawing operation is performed this is checked to see if the current canvas need to be resized.
+		// NOTE: Every drawing operation should begin with a call to ClearDisplay or RedrawSections.
 		public SizeInt CanvasSizeInBlocks
 		{
 			get => _canvasSizeInBlocks;
@@ -445,7 +449,7 @@ namespace MSetExplorer
 					}
 					catch (Exception e)
 					{
-						Debug.WriteLine($"DrawOneSection-{description} got exception: {e.Message}. {mapSection.ToString(invertedBlockPos)}, ImageSize:{ImageSizeInBlocks}.");
+						Debug.WriteLine($"DrawOneSection-{description} got exception: {e.Message}. {mapSection.ToString(invertedBlockPos)}, CanvasSize:{CanvasSizeInBlocks}, ImageSize:{ImageSizeInBlocks}; BitmapSize: {Bitmap.PixelWidth} x {Bitmap.PixelHeight}.");
 					}
 				}
 			}
@@ -648,7 +652,7 @@ namespace MSetExplorer
 
 			try
 			{
-				var result = new WriteableBitmap(size.Width, size.Height, 96, 96, PixelFormats.Pbgra32, null);
+				var result = new WriteableBitmap(size.Width, size.Height, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
 				//var result = new WriteableBitmap(size.Width, size.Height, 0, 0, PixelFormats.Pbgra32, null);
 
 				return result;
@@ -657,7 +661,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Got exception: {e} while attempting to create the bitmap. Creating place holder bitmap with size = 10.");
 
-				var result = new WriteableBitmap(10, 10, 96, 96, PixelFormats.Pbgra32, null);
+				var result = new WriteableBitmap(10, 10, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
 				return result;
 			}
 		}

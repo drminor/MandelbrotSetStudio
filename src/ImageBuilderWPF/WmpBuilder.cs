@@ -1,170 +1,266 @@
+using MongoDB.Bson;
+using MSS.Common;
+using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Windows.Controls;
-using System.Windows.Media.Imaging;
-using System.Windows.Media;
-using System.Windows;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ImageBuilderWPF
 {
-	public class WmpBuilder
+	public class WmpBuilder : IImageBuilder
 	{
-		public void Test1()
+		#region Private Fields
+
+		//private const double VALUE_FACTOR = 10000;
+
+		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionBuilder _mapSectionBuilder;
+
+		private AsyncManualResetEvent _blocksForRowAreReady;
+		private int? _currentJobNumber;
+		private IDictionary<int, MapSection>? _mapSectionsForRow;
+
+		#endregion
+
+		#region Constructor
+
+		public WmpBuilder(IMapLoaderManager mapLoaderManager)
 		{
-			int width = 128;
-			int height = width;
-			int stride = width / 8;
-			byte[] pixels = new byte[height * stride];
+			_mapLoaderManager = mapLoaderManager;
+			_mapSectionBuilder = new MapSectionBuilder();
 
-			// Try creating a new image with a custom palette.
-			List<Color> colors = new List<Color>();
-			colors.Add(Colors.Red);
-			colors.Add(Colors.Blue);
-			colors.Add(Colors.Green);
-			BitmapPalette myPalette = new BitmapPalette(colors);
-
-			// Creates a new empty image with the pre-defined palette
-
-			BitmapSource image = BitmapSource.Create(
-				width,
-				height,
-				96,
-				96,
-				PixelFormats.Indexed1,
-				myPalette,
-				pixels,
-				stride);
-
-			var basePath = @"C:\Users\david\Documents";
-			var fileName = "empty.tif";
-			var filePath = Path.Combine(basePath, fileName);
-
-
-			FileStream stream = new FileStream(filePath, FileMode.Create);
-
-			TiffBitmapEncoder encoder = new TiffBitmapEncoder();
-
-			TextBlock myTextBlock = new TextBlock();
-			myTextBlock.Text = "Codec Author is: " + encoder.CodecInfo.Author.ToString();
-
-			encoder.Frames.Add(BitmapFrame.Create(image));
-
-			MessageBox.Show(myPalette.Colors.Count.ToString());
-
-			encoder.Save(stream);
+			_blocksForRowAreReady = new AsyncManualResetEvent();
+			_currentJobNumber = null;
+			_mapSectionsForRow = null;
 		}
 
-		public void Wmp8(string filePath)
+		#endregion
+
+		#region Public Properties
+
+		public long NumberOfCountValSwitches { get; private set; }
+
+		#endregion
+
+		#region Public Methods
+
+		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings,
+			Action<double> statusCallback, CancellationToken ct)
 		{
-			const int width = 256;
-			const int height = 256;
-			const int bytesPerPixel = 3;
-			var stride = width * bytesPerPixel;
+			var result = true;
 
-			var imageData = new byte[width * height * bytesPerPixel];
+			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 
-			// create a RGB gradient image
-			for (int y = 0; y < height; y++)
+			var blockSize = mapAreaInfo.Subdivision.BlockSize;
+			var colorMap = new ColorMap(colorBandSet)
 			{
-				for (int x = 0; x < width; x++)
+				UseEscapeVelocities = useEscapeVelocities
+			};
+
+			WmpImage? wmpImage = null;
+
+			try
+			{
+				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+
+				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo, mapCalcSettings);
+
+				var imageSize = mapAreaInfo.CanvasSize.Round();
+				wmpImage = new WmpImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
+
+				//var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
+				//var stride = extentInBlocks.Width;
+				//var h = extentInBlocks.Height;
+
+				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
+				var stride = mapExtent.Width;
+				var h = mapExtent.Height;
+
+				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
+
+				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
+
+				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
-					imageData[(y * width + x) * bytesPerPixel + 0] = (byte)x;           // blue
-					imageData[(y * width + x) * bytesPerPixel + 1] = (byte)y;           // green
-					imageData[(y * width + x) * bytesPerPixel + 2] = (byte)(255 - y);   // red
+					// Get all of the blocks for this row.
+					var blockIndexY = blockPtrY - (h / 2);
+					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
+					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, stride, ct);
+
+					if (msrSubJob.IsCancelled)
+					{
+						result = false;
+						break;
+					}
+
+					if (blocksForThisRow.Count != stride)
+					{
+						Debug.WriteLine($"PngBuilder: GetAllBlocks Returned {blocksForThisRow.Count}. Expecting: {stride}.");
+					}
+
+					Debug.Assert(blocksForThisRow.Count == stride);
+
+					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
+
+					// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
+					// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
+					// But the screen coordinates increase from the top of the display to be bottom.
+					// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
+
+					var invert = !blocksForThisRow[0]?.IsInverted ?? false; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
+
+					// Calculate the number of lines used for this row of blocks
+					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
+
+					// Calculate the pixel values and write them to the image file.
+					BuildARow(wmpImage, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, stride, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+
+					var percentageCompleted = (h - blockPtrY) / (double)h;
+
+					statusCallback(100 * percentageCompleted);
+				}
+			}
+			catch (Exception e)
+			{
+				if (!ct.IsCancellationRequested)
+				{
+					await Task.Delay(10);
+					Debug.WriteLine($"PngBuilder encountered an exception: {e}.");
+					throw;
+				}
+			}
+			finally
+			{
+				if (!ct.IsCancellationRequested)
+				{
+					wmpImage?.End();
+				}
+				else
+				{
+					wmpImage?.Abort();
 				}
 			}
 
-			var writeableBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr24, null);
-
-			var destArea = new Int32Rect(0, 0, width, height);
-			writeableBitmap.WritePixels(destArea, imageData, stride, 0);
-
-			var bitmapFrame = BitmapFrame.Create(writeableBitmap);
-
-			FileStream stream = new FileStream(filePath, FileMode.Create);
-			var encoder = new WmpBitmapEncoder();
-			encoder.ImageQualityLevel = 1.0f;
-
-			encoder.Frames.Add(bitmapFrame);
-
-			encoder.Save(stream);
+			return result;
 		}
 
-		public void Wmp16(string filePath)
+		#endregion
+
+		#region Private Methods
+
+		private void BuildARow(WmpImage pngImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, int extentInBlocksWidth,
+			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
 		{
-			const int width = 256;
-			const int height = 256;
-			const int samplesPerPixel = 3;
-			var stride = width * samplesPerPixel;
-
-			var imageData = new ushort[width * height * samplesPerPixel];
-
-			// create a RGB gradient image
-			for (int y = 0; y < height; y++)
+			var linePtr = startingPtr;
+			for (var cntr = 0; cntr < numberOfLines && !ct.IsCancellationRequested; cntr++)
 			{
-				for (int x = 0; x < width; x++)
+				//var iLine = pngImage.ImageLine;
+				var destPixPtr = 0;
+
+				for (var blockPtrX = 0; blockPtrX < extentInBlocksWidth; blockPtrX++)
 				{
-					imageData[(y * width + x) * samplesPerPixel + 0] = (ushort)(65535 - (y * 256));   // red
-					imageData[(y * width + x) * samplesPerPixel + 1] = (ushort)(y * 256);           // green
-					imageData[(y * width + x) * samplesPerPixel + 2] = (ushort)(x * 256);           // blue
+					var mapSection = blocksForThisRow[blockPtrX];
+					var invertThisBlock = !mapSection.IsInverted;
+
+					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
+
+					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
+					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
+					//var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
+
+					var lineLength = segmentLengths[blockPtrX].Item1;
+					var samplesToSkip = segmentLengths[blockPtrX].Item2;
+
+					try
+					{
+						//BitmapHelper.FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
+						destPixPtr += lineLength;
+					}
+					catch (Exception e)
+					{
+						if (!ct.IsCancellationRequested)
+						{
+							Debug.WriteLine($"FillPngImageLineSegment encountered an exception: {e}.");
+							throw;
+						}
+					}
 				}
+
+				//pngImage.WriteLine(iLine);
+
+				linePtr += increment;
+			}
+		}
+
+		private async Task<IDictionary<int, MapSection>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
+		{
+			var requests = new List<MapSectionRequest>();
+
+			for (var colPtr = 0; colPtr < stride; colPtr++)
+			{
+				var key = new PointInt(colPtr, rowPtr);
+
+				var blockIndexX = colPtr - (stride / 2);
+				var screenPositionRelativeToCenter = new VectorInt(blockIndexX, blockIndexY);
+				var mapSectionRequest = _mapSectionBuilder.CreateRequest(msrJob, requestNumber: colPtr, screenPosition: key, screenPositionRelativeToCenter: screenPositionRelativeToCenter);
+
+				requests.Add(mapSectionRequest);
 			}
 
-			var writeableBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb48, null);
+			Debug.WriteLine("Resetting the Async Manual Reset Event.");
+			_blocksForRowAreReady.Reset();
 
-			var destArea = new Int32Rect(0, 0, width, height);
-			writeableBitmap.WritePixels(destArea, imageData, stride * 2, 0);
+			Debug.WriteLine("Pushing a new request.");
+			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
+			_currentJobNumber = msrJob.MapLoaderJobNumber;
 
-			var bitmapFrame = BitmapFrame.Create(writeableBitmap);
+			var mapSectionsForRow = new Dictionary<int, MapSection>();
 
-			FileStream stream = new FileStream(filePath, FileMode.Create);
-			var encoder = new WmpBitmapEncoder();
-			encoder.ImageQualityLevel = 1.0f;
-
-			encoder.Frames.Add(bitmapFrame);
-
-			encoder.Save(stream);
-		}
-
-		public void Wmp16Huge(string filePath)
-		{
-			const int width = 16384;
-			const int height = 16384;
-			const long samplesPerPixel = 3;
-			var stride = (int)(width * samplesPerPixel);
-
-			long len = height * (long)width * samplesPerPixel;
-
-			//var imageData = Array.CreateInstance(typeof(ushort), new long[] { len});
-
-			var imageData = new ushort[len];
-
-			// create a RGB gradient image
-			for (int y = 0; y < height; y++)
+			foreach (var mapSection in mapSections)
 			{
-				for (int x = 0; x < width; x++)
-				{
-					imageData[(y * width + x) * samplesPerPixel + 0] = (ushort)(65535 - (y * 4));   // red
-					imageData[(y * width + x) * samplesPerPixel + 1] = (ushort)(y * 4);           // green
-					imageData[(y * width + x) * samplesPerPixel + 2] = (ushort)(x * 4);           // blue
-				}
+				mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
 			}
 
-			var writeableBitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb48, null);
+			Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
+			await _blocksForRowAreReady.WaitAsync();
 
-			var destArea = new Int32Rect(0, 0, width, height);
-			writeableBitmap.WritePixels(destArea, imageData, stride * 2, 0);
+			if (ct.IsCancellationRequested || msrJob.IsCancelled)
+			{
+				mapSectionsForRow.Clear();
+			}
 
-			var bitmapFrame = BitmapFrame.Create(writeableBitmap);
+			Debug.WriteLine($"Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {mapSectionsForRow.Count} blocks were created.");
 
-			FileStream stream = new FileStream(filePath, FileMode.Create);
-			var encoder = new WmpBitmapEncoder();
-			encoder.ImageQualityLevel = 1.0f;
-
-			encoder.Frames.Add(bitmapFrame);
-
-			encoder.Save(stream);
+			return mapSectionsForRow;
 		}
+
+		private void MapSectionReady(MapSection mapSection)
+		{
+			if (mapSection.JobNumber == _currentJobNumber)
+			{
+				if (!mapSection.IsEmpty)
+				{
+					_mapSectionsForRow?.Add(mapSection.ScreenPosition.X, mapSection);
+				}
+				else
+				{
+					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. Job Number: {mapSection.JobNumber}.");
+				}
+			}
+		}
+
+		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
+		{
+			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
+
+			_blocksForRowAreReady.SetAsync();
+		}
+
+		#endregion
 	}
+
 }

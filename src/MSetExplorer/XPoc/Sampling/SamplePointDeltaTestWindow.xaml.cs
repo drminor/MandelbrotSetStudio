@@ -126,7 +126,7 @@ namespace MSetExplorer.XPoc
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
-			var wmpBuilder = new WmpBuilder();
+			var wmpBuilder = new WmpBuilderPOC();
 
 			//hdpw.Test1();
 

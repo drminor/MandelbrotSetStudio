@@ -17,6 +17,9 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
+		private readonly static PixelFormat PIXEL_FORMAT = PixelFormats.Pbgra32;
+		private const int DOTS_PER_INCH = 96;
+
 		private const int MS_WAIT_FOR_CANCELLED_TASK_TO_COMPLETE = 500;
 
 		private const double PREVIEW_CONTAINER_SIZE = 1024;
@@ -299,7 +302,8 @@ namespace MSetExplorer
 			var w = size.Width;
 			var h = size.Height;
 
-			var bitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+			//var bitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+			var bitmap = new WriteableBitmap(w, h, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
 			return bitmap;
 		}
 

@@ -304,11 +304,12 @@ namespace MSS.Common
 			//var updatedCoords = coords.Clone();
 
 			// Determine the amount to translate from our coordinates to the subdivision coordinates.
-			//var mapBlockOffset = GetMapBlockOffset(coords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
+			var mapBlockOffset = GetMapBlockOffset(coords.Position, samplePointDelta, BlockSize, out var canvasControlOffset);
 
-			var rPointAndDelta = new RPointAndDelta(coords.Position, samplePointDelta);
+			// This will not work unless we 'normalize' the position and samplePointDelta values.
+			//var rPointAndDelta = new RPointAndDelta(coords.Position, samplePointDelta);
+			//var mapBlockOffset = RMapHelper.GetMapBlockOffset(rPointAndDelta, subdivision.BlockSize, out var canvasControlOffset);
 
-			var mapBlockOffset = RMapHelper.GetMapBlockOffset(rPointAndDelta, subdivision.BlockSize, out var canvasControlOffset);
 			var newPosition = samplePointDelta.Scale(mapBlockOffset.Scale(BlockSize).Translate(canvasControlOffset));
 
 			var adjPos = RNormalizer.Normalize(newPosition, coords.Size, out var adjMapSize);
@@ -401,6 +402,37 @@ namespace MSS.Common
 			return result;
 		}
 
+		private BigVector GetMapBlockOffset(RPoint mapPosition, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
+		{
+			// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
+			// The screen origin = left, bottom. Map origin = left, bottom.
+
+			if (mapPosition.IsZero())
+			{
+				canvasControlOffset = new VectorInt();
+				return new BigVector();
+			}
+
+			var distance = new RVector(mapPosition);
+			var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta);
+
+			var result = RMapHelper.GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
+
+			return result;
+		}
+
+		// Uses BigInteger Division
+		private BigVector GetNumberOfSamplePoints(RVector distance, RSize samplePointDelta)
+		{
+			var nrmDistance = RNormalizer.Normalize(distance, samplePointDelta, out var nrmSamplePointDelta);
+
+			// # of whole sample points between the source and destination origins.
+			var offsetInSamplePoints = nrmDistance.Divide(nrmSamplePointDelta);
+
+			return offsetInSamplePoints;
+		}
+
+
 		//private BigVector GetMapBlockOffset(RPoint mapPosition, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
 		//{
 		//	// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
@@ -420,7 +452,6 @@ namespace MSS.Common
 		//	return result;
 		//}
 
-		//// Uses BigInteger Division
 		//private BigVector GetNumberOfSamplePoints(RVector distance, RSize samplePointDelta)
 		//{
 		//	var nrmDistance = RNormalizer.Normalize(distance, samplePointDelta, out var nrmSamplePointDelta);

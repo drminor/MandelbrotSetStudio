@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace MSS.Types.MSet
 {
@@ -119,12 +120,48 @@ namespace MSS.Types.MSet
 
 		#endregion
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void UpdateJobMapBlockOffsetAndPos(VectorLong blockOffset, PointInt screenPos)
 		{
 			JobMapBlockOffset = blockOffset;
 			ScreenPosition = screenPos;
 			ScreenPosHasBeenUpdated = true;
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public ushort[]? GetOneLineFromCountsBlock(int linePtr)
+		{
+			if (MapSectionVectors == null)
+			{
+				return null;
+			}
+			else
+			{
+				var stride = MapSectionVectors.BlockSize.Width;
+				var result = new ushort[stride];
+
+				Array.Copy(MapSectionVectors.Counts, linePtr * stride, result, 0, stride);
+				return result;
+			}
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public ushort[]? GetOneLineFromEscapeVelocitiesBlock(int linePtr)
+		{
+			if (MapSectionVectors == null)
+			{
+				return null;
+			}
+			else
+			{
+				var stride = MapSectionVectors.BlockSize.Width;
+				var result = new ushort[stride];
+
+				Array.Copy(MapSectionVectors.EscapeVelocities, linePtr * stride, result, 0, stride);
+				return result;
+			}
+		}
+
 
 		public override string? ToString()
 		{

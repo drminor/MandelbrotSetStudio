@@ -7,6 +7,8 @@ using System.Numerics;
 
 namespace MSS.Common
 {
+
+
 	public static class RMapHelper
 	{
 		#region MapAreaInfo Support
@@ -116,15 +118,16 @@ namespace MSS.Common
 
 		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			var result = GetMapExtentInBlocks(canvasSize, canvasControlOffset, blockSize, out _, out _);
-			return result;
+			var mapExtent = GetMapExtent(canvasSize, canvasControlOffset, blockSize);
+
+			return mapExtent.Extent;
 		}
 
-		public static SizeInt GetMapExtentInBlocks(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize, out SizeInt sizeOfFirstBlock, out SizeInt sizeOfLastBlock)
+		public static MapExtent GetMapExtent(SizeInt canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
 			Debug.Assert(canvasControlOffset.X >= 0 && canvasControlOffset.Y >= 0, "Using a canvasControlOffset with a negative w or h when getting the MapExtent in blocks.");
 
-			sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
+			var sizeOfFirstBlock = new SizeInt(blockSize.Width - canvasControlOffset.X, blockSize.Height - canvasControlOffset.Y);
 
 			var extentSansFirstBlock = canvasSize.Sub(sizeOfFirstBlock);
 
@@ -163,18 +166,20 @@ namespace MSS.Common
 				sizeOfLastBlockY = blockSize.Height;
 			}
 
-			sizeOfLastBlock = new SizeInt(sizeOfLastBlockX, sizeOfLastBlockY);
+			var sizeOfLastBlock = new SizeInt(sizeOfLastBlockX, sizeOfLastBlockY);
 
-			var result = new SizeInt(sizeInBlocks.Width + extendAmountX, sizeInBlocks.Height + extendAmountY);
+			var extent = new SizeInt(sizeInBlocks.Width + extendAmountX, sizeInBlocks.Height + extendAmountY);
+
+			var result = new MapExtent(blockSize, extent, sizeOfFirstBlock, sizeOfLastBlock);
 
 			return result;
 		}
 
 		public static SizeInt GetSizeOfLastBlock(SizeDbl canvasSize, VectorInt canvasControlOffset, SizeInt blockSize)
 		{
-			_ = GetMapExtentInBlocks(canvasSize.Round(), canvasControlOffset, blockSize, out _, out var sizeOfLastBlock);
+			var mapExtent = GetMapExtent(canvasSize.Round(), canvasControlOffset, blockSize);
 
-			return sizeOfLastBlock;
+			return mapExtent.SizeOfLastBlock;
 		}
 
 		public static SizeInt GetMaximumMapExtentInBlocks(SizeInt canvasSize, SizeInt blockSize)
@@ -186,6 +191,137 @@ namespace MSS.Common
 			var maxResult = result.Inflate(1);
 
 			return maxResult;
+		}
+
+		#endregion
+
+		#region Sub Block Addressing
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="blockPtr">Which row is being processed.</param>
+		/// <param name="invert">True if the Counts Array should be accessed from high to low index values, i.e., from top to bottom. The index into Counts increase from left to right, and from bottom to top.</param>
+		/// <param name="extentInBlocksY"></param>
+		/// <param name="heightOfFirstBlock"></param>
+		/// <param name="heightOfLastBlock"></param>
+		/// <param name="blockHeight"></param>
+		/// <returns></returns>
+		public static (int startingPtr, int numberOfLines, int increment) GetNumberOfLines(int blockPtr, bool invert, MapExtent mapExtent)
+		{
+			//var numberOfLines = BitmapHelper.GetNumberOfLines(blockPtrY, imageSize.Height, h, blockSize.Height, canvasControlOffset.Y, out var linesTopSkip);
+
+			var blockHeight = mapExtent.BlockSize.Height;
+			var extentInBlocksY = mapExtent.Height;
+			var heightOfFirstBlock = mapExtent.SizeOfFirstBlock.Height;
+			var heightOfLastBlock = mapExtent.SizeOfLastBlock.Height;
+
+			int startingLinePtr;
+			int numberOfLines;
+
+			if (invert)
+			{
+				// Invert = true is the normal case. Since in the vertical, Map Coordinates are opposite of screen coordinates.
+				// The first row from counts is at the bottom of the image.
+				// The last row from counts is at the top of the image.
+
+				// The startingLinePtr starts big and is reduced by numberOfLines
+
+				if (blockPtr == 0)
+				{
+					// This is the block with the smallest Map Coordinate and the largest Y screen coordinate (aka the first block)
+
+					startingLinePtr = blockHeight - 1; //(heightOfFirstBlock ranges from 1 to 128, startingLinePtr ranges from 127 to 0)
+					numberOfLines = heightOfFirstBlock;
+				}
+				else if (blockPtr == extentInBlocksY - 1)
+				{
+					// This is the block with the largest Map Coordinate and the smallest Y screen coordinate, (aka the last block)
+
+					startingLinePtr = heightOfLastBlock - 1;
+					numberOfLines = heightOfLastBlock;
+				}
+				else
+				{
+					startingLinePtr = blockHeight - 1;
+					numberOfLines = blockHeight;
+				}
+			}
+			else
+			{
+				// We are displaying a map section originally generated for an area with a positive Y values, in an area with negative Y values.
+				// The content of any given block have either all postive or all negative Y values.
+				// The content of these blocks must not be reversed
+
+				// The first row from counts is at the top of the image.
+				// The last row from counts is at the bottom of the image.
+
+				// The startingLinePtr starts small and is increased by numberOfLines
+
+				if (blockPtr == 0)
+				{
+					// This is the block with the smallest Map Coordinate and the largest Y screen coordinate (aka the first block)
+
+					startingLinePtr = 0;
+					numberOfLines = heightOfFirstBlock;
+				}
+				else if (blockPtr == extentInBlocksY - 1)
+				{
+					// This is the block with the largest Map Coordinate and the smallest Y screen coordinate, (aka the last block)
+
+					startingLinePtr = blockHeight - heightOfLastBlock;
+					numberOfLines = heightOfLastBlock;
+				}
+				else
+				{
+					startingLinePtr = 0;
+					numberOfLines = blockHeight;
+				}
+			}
+
+
+			var lineIncrement = invert ? -1 : 1;
+
+			return (startingLinePtr, numberOfLines, lineIncrement);
+		}
+
+		// GetSegmentLengths
+		public static ValueTuple<int, int>[] GetSegmentLengths(MapExtent mapExtent)
+		{
+			//int numberOfWholeBlocksX, int widthOfFirstBlock, int widthOfLastBlock, int blockWidth;
+
+			var blockWidth = mapExtent.BlockSize.Width;
+			var numberOfWholeBlocksX = mapExtent.Width;
+			var widthOfFirstBlock = mapExtent.SizeOfFirstBlock.Width;
+			var widthOfLastBlock = mapExtent.SizeOfLastBlock.Width;
+
+			var segmentLengths = new ValueTuple<int, int>[numberOfWholeBlocksX];
+
+			for (var blockPtrX = 0; blockPtrX < numberOfWholeBlocksX; blockPtrX++)
+			{
+				int lineLength;
+				int samplesToSkip;
+
+				if (blockPtrX == 0)
+				{
+					samplesToSkip = blockWidth - widthOfFirstBlock;
+					lineLength = widthOfFirstBlock;
+				}
+				else if (blockPtrX == numberOfWholeBlocksX - 1)
+				{
+					samplesToSkip = 0;
+					lineLength = widthOfLastBlock;
+				}
+				else
+				{
+					samplesToSkip = 0;
+					lineLength = blockWidth;
+				}
+
+				segmentLengths[blockPtrX] = new ValueTuple<int, int>(lineLength, samplesToSkip);
+			}
+
+			return segmentLengths;
 		}
 
 		#endregion

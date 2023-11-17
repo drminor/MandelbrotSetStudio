@@ -22,7 +22,7 @@ namespace ImageBuilder
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
-		private IDictionary<int, MapSection?>? _mapSectionsForRow;
+		private IDictionary<int, MapSection>? _mapSectionsForRow;
 
 		#endregion
 
@@ -72,17 +72,21 @@ namespace ImageBuilder
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
-				var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
-				var stride = extentInBlocks.Width;
-				var h = extentInBlocks.Height;
+				//var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
+				//var stride = extentInBlocks.Width;
+				//var h = extentInBlocks.Height;
 
+				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
+				var stride = mapExtent.Width;
+				var h = mapExtent.Height;
 
-				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {extentInBlocks}. The ColorMap has Id: {colorBandSet.Id}.");
+				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
-				var segmentLengths = BitmapHelper.GetSegmentLengths(extentInBlocks.Width, sizeOfFirstBlock.Width, sizeOfLastBlock.Width, blockSize.Width);
+				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
+					// Get all of the blocks for this row.
 					var blockIndexY = blockPtrY - (h / 2);
 					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
 					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, stride, ct);
@@ -93,12 +97,12 @@ namespace ImageBuilder
 						break;
 					}
 
-					if (blocksForThisRow.Count == extentInBlocks.Width)
+					if (blocksForThisRow.Count != stride)
 					{
-						Debug.WriteLine($"PngBuilder: GetAllBlocks Returned {blocksForThisRow.Count}. Expecting: {extentInBlocks.Width}.");
+						Debug.WriteLine($"PngBuilder: GetAllBlocks Returned {blocksForThisRow.Count}. Expecting: {stride}.");
 					}
 
-					Debug.Assert(blocksForThisRow.Count == extentInBlocks.Width);
+					Debug.Assert(blocksForThisRow.Count == stride);
 
 					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
@@ -109,9 +113,11 @@ namespace ImageBuilder
 
 					var invert = !blocksForThisRow[0]?.IsInverted ?? false; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
 
-					var (startingLinePtr, numberOfLines, lineIncrement) = BitmapHelper.GetNumberOfLines(blockPtrY, invert, extentInBlocks.Height, sizeOfFirstBlock.Height, sizeOfLastBlock.Height, blockSize.Height);
+					// Calculate the number of lines used for this row of blocks
+					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
 
-					BuildARow(pngImage, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, extentInBlocks.Width, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					// Calculate the pixel values and write them to the image file.
+					BuildARow(pngImage, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, stride, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 
@@ -147,7 +153,7 @@ namespace ImageBuilder
 		#region Private Methods
 
 		private void BuildARow(PngImage pngImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, int extentInBlocksWidth, 
-			IDictionary<int, MapSection?> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
+			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
 		{
 			var linePtr = startingPtr;
 			for (var cntr = 0; cntr < numberOfLines && !ct.IsCancellationRequested; cntr++)
@@ -158,12 +164,15 @@ namespace ImageBuilder
 				for (var blockPtrX = 0; blockPtrX < extentInBlocksWidth; blockPtrX++)
 				{
 					var mapSection = blocksForThisRow[blockPtrX];
-					var invertThisBlock = !mapSection?.IsInverted ?? false;
+					var invertThisBlock = !mapSection.IsInverted;
 
 					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
 
-					var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
-					var escVelsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.EscapeVelocities, linePtr, blockSizeWidth);
+					//var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
+					//var escVelsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection.MapSectionVectors?.EscapeVelocities, linePtr, blockSizeWidth);
+
+					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
+					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
 					//var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
 
 					var lineLength = segmentLengths[blockPtrX].Item1;
@@ -190,7 +199,7 @@ namespace ImageBuilder
 			}
 		}
 
-		private async Task<IDictionary<int, MapSection?>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
+		private async Task<IDictionary<int, MapSection>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
 		{
 			var requests = new List<MapSectionRequest>();
 
@@ -212,7 +221,7 @@ namespace ImageBuilder
 			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
 			_currentJobNumber = msrJob.MapLoaderJobNumber;
 
-			_mapSectionsForRow = new Dictionary<int, MapSection?>();
+			_mapSectionsForRow = new Dictionary<int, MapSection>();
 
 			foreach (var mapSection in mapSections)
 			{
