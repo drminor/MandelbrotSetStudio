@@ -1,7 +1,9 @@
-﻿using MSetExplorer.ScreenHelpers;
+﻿using ImageBuilderWPF;
+using MSetExplorer.ScreenHelpers;
 using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 
@@ -124,6 +126,25 @@ namespace MSetExplorer.XPoc
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
+			var wmpBuilder = new WmpBuilder();
+
+			//hdpw.Test1();
+
+			var basePath = @"C:\Users\david\Documents";
+
+			//var fileName = "Test2a.wdp";
+			//var filePath = Path.Combine(basePath, fileName);
+			//wmpBuilder.Wmp8(filePath);
+
+			var fileName = "Test2b.wdp";
+			var filePath = Path.Combine(basePath, fileName);
+			wmpBuilder.Wmp16(filePath);
+
+			//var fileName = "Test2c.wdp";
+			//var filePath = Path.Combine(basePath, fileName);
+			//wmpBuilder.Wmp16Huge(filePath);
+
+
 			AppNavRequestResponse = AppNavRequestResponse.BuildEmptyRequest(OnCloseBehavior.ReturnToTopNav);
 			Close();
 		}

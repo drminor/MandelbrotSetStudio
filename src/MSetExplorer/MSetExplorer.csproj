@@ -41,6 +41,7 @@
 
 
   <ItemGroup>
+    <ProjectReference Include="..\ImageBuilderWPF\ImageBuilderWPF.csproj" />
     <ProjectReference Include="..\ImageBuilder\ImageBuilder.csproj" />
     <ProjectReference Include="..\MapSectionProviderLib\MapSectionProviderLib.csproj" />
     <ProjectReference Include="..\MEngineClient\MEngineClient.csproj" />
