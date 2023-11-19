@@ -55,7 +55,14 @@ namespace MSetExplorer
 
 			var mapAreaInfoWithSize = _mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfoV2, canvasSize);
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cts.Token), _cts.Token);
+			var synchronizationContext = SynchronizationContext.Current;
+
+			if (synchronizationContext == null)
+			{
+				throw new InvalidOperationException("No SynchronizationContext is available.");
+			}
+
+			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cts.Token, synchronizationContext), _cts.Token);
 		}
 
 		public void CancelCreateImage()

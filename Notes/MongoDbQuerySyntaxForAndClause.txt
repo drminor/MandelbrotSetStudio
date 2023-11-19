@@ -7,3 +7,5 @@
 {$and: [{JobId:ObjectId('64a31b895910e974bc4e873d')}, {MapSectionId:ObjectId('64988104325e5aa9299909ac')}, {JobType: {$eq:0}}   ]}
 
 {$and: [{JobId:ObjectId('64a31b895910e974bc4e873d')}, {MapSectionId:ObjectId('64a31b945910e974bc4e873f')}, {JobType: {$eq:0}}   ]}
+
+{"BaseMapPosition.Display": {$gt:"0, 0"}}

@@ -53,7 +53,7 @@ namespace ImageBuilder
 		#region Public Methods
 
 		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
-			Action<double> statusCallback, CancellationToken ct)
+			Action<double> statusCallback, CancellationToken ct, SynchronizationContext _)
 		{
 			var result = true;
 

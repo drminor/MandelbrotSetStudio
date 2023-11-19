@@ -29,7 +29,7 @@ namespace ImageBuilderWPF
 		private int _blocksPerRow;
 		private bool _isStopping;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -58,7 +58,7 @@ namespace ImageBuilderWPF
 		#region Public Methods
 
 		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings,
-			Action<double> statusCallback, CancellationToken ct)
+			Action<double> statusCallback, CancellationToken ct, SynchronizationContext synchronizationContext)
 		{
 			var result = true;
 
@@ -73,13 +73,12 @@ namespace ImageBuilderWPF
 
 			try
 			{
-				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
-
-				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo, mapCalcSettings);
+				var outputStream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
 				var imageSize = mapAreaInfo.CanvasSize.Round();
-				wmpImage = new WmpImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
+				wmpImage = new WmpImage(outputStream, imageFilePath, imageSize.Width, imageSize.Height, synchronizationContext);
 
+				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo, mapCalcSettings);
 				var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
 				_blocksPerRow = mapExtent.Width;
@@ -177,7 +176,7 @@ namespace ImageBuilderWPF
 
 					try
 					{
-						wmpImage.WriteBlock(sourceRect, mapSection.MapSectionVectors.BackBuffer, sourceStride, blockPtrX * 128, blockPtrY * 128);
+						wmpImage.WriteBlock(sourceRect, mapSection.MapSectionVectors, sourceStride, blockPtrX * 128, blockPtrY * 128);
 						mapSection.MapSectionVectors.DecreaseRefCount();
 					}
 					catch (Exception e)
