@@ -66,7 +66,7 @@ namespace MSetExplorer
 
 		private static readonly bool UPDATE_JOB_SUBDIVSION_IDS_FOR_ALL_JobMapSections = false;
 
-		private static readonly DateTime DROP_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2083-09-10");
+		private static readonly DateTime DROP_MAP_SECTIONS_AFTER_DATE = DateTime.Parse("2023-10-10");
 		private static readonly bool DROP_RECENT_MAP_SECTIONS = false;
 		private static readonly bool DROP_RECENT_JOB_MAP_SECTIONS = false;
 

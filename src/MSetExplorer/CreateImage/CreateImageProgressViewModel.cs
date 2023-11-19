@@ -13,14 +13,14 @@ namespace MSetExplorer
 {
 	public class CreateImageProgressViewModel
 	{
-		private readonly PngBuilder _pngBuilder;
+		private readonly IImageBuilder _pngBuilder;
 		private readonly MapJobHelper _mapJobHelper;
 		private CancellationTokenSource _cts;
 		private Task<bool>?_task;
 
 		#region Constructor
 
-		public CreateImageProgressViewModel(PngBuilder pngBuilder, MapJobHelper mapJobHelper)
+		public CreateImageProgressViewModel(IImageBuilder pngBuilder, MapJobHelper mapJobHelper)
 		{
 			Successfull = false;
 			_pngBuilder = pngBuilder;

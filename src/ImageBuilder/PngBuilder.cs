@@ -15,14 +15,15 @@ namespace ImageBuilder
 	{
 		#region Private Fields
 
-		//private const double VALUE_FACTOR = 10000;
-
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection>? _mapSectionsForRow;
+		private int _blocksPerRow;
+
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -36,6 +37,7 @@ namespace ImageBuilder
 			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
 			_mapSectionsForRow = null;
+			_blocksPerRow = -1;
 		}
 
 		#endregion
@@ -72,15 +74,11 @@ namespace ImageBuilder
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
-				//var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
-				//var stride = extentInBlocks.Width;
-				//var h = extentInBlocks.Height;
-
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
-				var stride = mapExtent.Width;
+				_blocksPerRow = mapExtent.Width;
 				var h = mapExtent.Height;
 
-				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The PngBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
 				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
 
@@ -89,20 +87,13 @@ namespace ImageBuilder
 					// Get all of the blocks for this row.
 					var blockIndexY = blockPtrY - (h / 2);
 					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
-					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, stride, ct);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, _blocksPerRow, ct);
 
-					if (msrSubJob.IsCancelled)
+					if (ct.IsCancellationRequested || msrSubJob.IsCancelled || blocksForThisRow.Count == 0)
 					{
 						result = false;
 						break;
 					}
-
-					if (blocksForThisRow.Count != stride)
-					{
-						Debug.WriteLine($"PngBuilder: GetAllBlocks Returned {blocksForThisRow.Count}. Expecting: {stride}.");
-					}
-
-					Debug.Assert(blocksForThisRow.Count == stride);
 
 					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
@@ -117,7 +108,7 @@ namespace ImageBuilder
 					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
 
 					// Calculate the pixel values and write them to the image file.
-					BuildARow(pngImage, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, stride, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					BuildARow(pngImage, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 
@@ -152,7 +143,7 @@ namespace ImageBuilder
 
 		#region Private Methods
 
-		private void BuildARow(PngImage pngImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, int extentInBlocksWidth, 
+		private void BuildARow(PngImage pngImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment,
 			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
 		{
 			var linePtr = startingPtr;
@@ -161,19 +152,15 @@ namespace ImageBuilder
 				var iLine = pngImage.ImageLine;
 				var destPixPtr = 0;
 
-				for (var blockPtrX = 0; blockPtrX < extentInBlocksWidth; blockPtrX++)
+				for (var blockPtrX = 1; blockPtrX < blocksForThisRow.Count - 1; blockPtrX++)
 				{
 					var mapSection = blocksForThisRow[blockPtrX];
 					var invertThisBlock = !mapSection.IsInverted;
 
 					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
 
-					//var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
-					//var escVelsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection.MapSectionVectors?.EscapeVelocities, linePtr, blockSizeWidth);
-
 					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
-					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
-					//var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
+					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr); // TODO: Avoid fetching the EscapeVelocities from the MapSectionVectors if UseEscapeVelocities = false.
 
 					var lineLength = segmentLengths[blockPtrX].Item1;
 					var samplesToSkip = segmentLengths[blockPtrX].Item2;
@@ -214,40 +201,70 @@ namespace ImageBuilder
 				requests.Add(mapSectionRequest);
 			}
 
-			Debug.WriteLine("Resetting the Async Manual Reset Event.");
+			Debug.WriteLineIf(_useDetailedDebug, "Resetting the Async Manual Reset Event.");
 			_blocksForRowAreReady.Reset();
 
-			Debug.WriteLine("Pushing a new request.");
+			_mapSectionsForRow = new Dictionary<int, MapSection>();
+
+			Debug.WriteLineIf(_useDetailedDebug, "Pushing a new request.");
 			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
 			_currentJobNumber = msrJob.MapLoaderJobNumber;
 
-			_mapSectionsForRow = new Dictionary<int, MapSection>();
 
 			foreach (var mapSection in mapSections)
 			{
 				_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
 			}
 
-			Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
-			await _blocksForRowAreReady.WaitAsync();
+			if (_mapSectionsForRow.Count != _blocksPerRow)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
+				await _blocksForRowAreReady.WaitAsync();
+			}
 
 			if (ct.IsCancellationRequested || msrJob.IsCancelled)
 			{
 				_mapSectionsForRow.Clear();
 			}
-			
-			Debug.WriteLine($"Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were created.");
+			//else
+			//{
+			//	if (_mapSectionsForRow.Count != stride)
+			//	{
+			//		var numberRemaining = stride - _mapSectionsForRow.Count;
+			//		Debug.WriteLineIf(_useDetailedDebug, $"Waiting for {numberRemaining} remaining blocks.");
+
+			//		await Task.Delay(1000);
+			//		if (_mapSectionsForRow.Count != stride)
+			//		{
+			//			Debug.WriteLine($"PngBuilder: For Job#: {msrJob.MapLoaderJobNumber} GetAllBlocks only received {_mapSectionsForRow.Count} MapSections. Expecting: {stride}.");
+			//			throw new InvalidOperationException("PngBuilder did not receive all blocks.");
+			//		}
+			//	}
+			//}
+
+			Debug.WriteLineIf(_useDetailedDebug, $"PngBuilder: Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
 
 			return _mapSectionsForRow;
 		}
 
 		private void MapSectionReady(MapSection mapSection)
 		{
+			if (_mapSectionsForRow == null)
+			{
+				return;
+			}
+
 			if (mapSection.JobNumber == _currentJobNumber)
 			{
 				if (!mapSection.IsEmpty)
 				{
-					_mapSectionsForRow?.Add(mapSection.ScreenPosition.X, mapSection);
+					_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+
+					if (_mapSectionsForRow.Count == _blocksPerRow)
+					{
+						// We now have received the full row.
+						_blocksForRowAreReady.SetAsync();
+					}
 				}
 				else
 				{
@@ -258,9 +275,12 @@ namespace ImageBuilder
 
 		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
 		{
-			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
 
-			_blocksForRowAreReady.SetAsync();
+			if (isCancelled)
+			{
+				_blocksForRowAreReady.SetAsync();
+			}
 		}
 
 		#endregion

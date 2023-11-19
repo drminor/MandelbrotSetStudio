@@ -9,6 +9,8 @@ using MongoDB.Bson;
 using ImageBuilder;
 using System.Windows.Media;
 using PngImageLib;
+using ImageBuilderWPF;
+using System.Reflection.PortableExecutable;
 
 namespace MSetExplorer
 {
@@ -82,15 +84,25 @@ namespace MSetExplorer
 		}
 
 		// Create Image Progress 
-		public CreateImageProgressViewModel CreateACreateImageProgressViewModel()
+		public CreateImageProgressViewModel CreateACreateImageProgressViewModel(ImageFileType imageFileType)
 		{
 			var mapJobHelper = ProvisionAMapJopHelper();
 
-			var pngBuilder = new PngBuilder(_mapLoaderManager);
-			var result = new CreateImageProgressViewModel(pngBuilder, mapJobHelper);
+			IImageBuilder imageBuilder;
+
+			if (imageFileType == ImageFileType.PNG)
+			{
+				imageBuilder = new PngBuilder(_mapLoaderManager);
+			}
+			else
+			{
+				imageBuilder = new WmpBuilder(_mapLoaderManager);
+			}
+
+			var result = new CreateImageProgressViewModel(imageBuilder, mapJobHelper);
+			
 			return result;
 		}
-
 
 		// Poster Size Editor Preview
 		public LazyMapPreviewImageProvider GetPreviewImageProvider(ObjectId jobId, MapCenterAndDelta mapAreaInfo, SizeDbl posterSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, 

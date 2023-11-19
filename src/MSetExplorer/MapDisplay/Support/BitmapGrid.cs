@@ -461,13 +461,6 @@ namespace MSetExplorer
 			return wasAdded;
 		}
 
-		[Conditional("DEBUG2")]
-		private void ReportMapSectionNotVisible(PointInt blockPosition, MapSection mapSection, string description)
-		{
-			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
-			Debug.WriteLine($"DrawOneSection-{description} is not drawing MapSection: {mapSection.ToString(invertedBlockPos)}, ImageSize:{ImageSizeInBlocks}, it's off the map.");
-		}
-
 		public List<MapSection> GetSectionsNotVisible()
 		{
 			var sectionsNotVisible = new List<MapSection>();
@@ -667,6 +660,13 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG2")]
+		private void ReportMapSectionNotVisible(PointInt blockPosition, MapSection mapSection, string description)
+		{
+			var invertedBlockPos = GetInvertedBlockPos(blockPosition);
+			Debug.WriteLine($"DrawOneSection-{description} is not drawing MapSection: {mapSection.ToString(invertedBlockPos)}, ImageSize:{ImageSizeInBlocks}, it's off the map.");
+		}
+
+		[Conditional("DEBUG2")]
 		private void CheckBitmapSize(WriteableBitmap bitmap, SizeInt imageSizeInBlocks, string desc)
 		{
 			var imageSize = imageSizeInBlocks.Scale(_blockSize);
@@ -700,24 +700,30 @@ namespace MSetExplorer
 			Debug.Assert(isInverted == mapSection.IsInverted, "IsInverted does not agree with the JobMapBlockOffset / SectionBlockOffset.");
 		}
 
+		[Conditional("DEBUG2")]
+		private void ReportPercentMapSectionsWithUpdatedScrPos()
+		{
+			var numberOfMapSectionsWithUpdatedScrPos = _mapSections.Count(x => x.ScreenPosHasBeenUpdated);
+			var percentWithUpdatedScrPos = 100 * (numberOfMapSectionsWithUpdatedScrPos / (double)_mapSections.Count);
+			Debug.WriteLine($"{percentWithUpdatedScrPos:F3} MapSections have updated Screen Positions.");
+		}
+
 		#endregion
 
 		#region Pixel Array Support
 
 		private long LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
 		{
+			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
+
 			var errors = 0L;
-
-			// TODO: Do we still need reference counting here?
-			//Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
-
 			var useEscapeVelocities = colorMap.UseEscapeVelocities;
 
 			var rowCount = mapSectionVectors.BlockSize.Height;
-			var sourceStride = mapSectionVectors.BlockSize.Width;
-			var maxRowIndex = mapSectionVectors.BlockSize.Height - 1;
+			var colCount = mapSectionVectors.BlockSize.Width;
+			var maxRowIndex = rowCount - 1;
 
-			var pixelStride = sourceStride * BYTES_PER_PIXEL;
+			var pixelStride = colCount * BYTES_PER_PIXEL;
 
 			var backBuffer = mapSectionVectors.BackBuffer;
 
@@ -728,44 +734,31 @@ namespace MSetExplorer
 
 			var resultRowPtr = invert ? maxRowIndex * pixelStride : 0;
 			var resultRowPtrIncrement = invert ? -1 * pixelStride : pixelStride;
-			var sourcePtrUpperBound = rowCount * sourceStride;
+			var sourcePtrUpperBound = rowCount * colCount;
 
 			if (useEscapeVelocities)
 			{
-				//var escapeVelocities = new ushort[counts.Length]; // mapSectionValues.EscapeVelocities;
 				var escapeVelocities = mapSectionVectors.EscapeVelocities;
 
-				if (_useDetailedDebug && !escapeVelocities.Any(x => x > 0))
-				{
-					Debug.WriteLine("No EscapeVelocities Found.");
-				}
+				CheckMissingEscapeVelocities(escapeVelocities);
 
 				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
 				{
-					//var diagSum = 0;
-
 					var resultPtr = resultRowPtr;
-					for (var colPtr = 0; colPtr < sourceStride; colPtr++)
+					for (var colPtr = 0; colPtr < colCount; colPtr++)
 					{
 						var countVal = counts[sourcePtr];
 						//TrackValueSwitches(countVal, ref previousCountVal);
 
 						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
-						//CheckEscapeVelocity(escapeVelocity);
+						CheckEscapeVelocity(escapeVelocity);
 
-						errors += colorMap.PlaceColor(countVal, escapeVelocity, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
-						//colorMap.PlaceColor(countVal, escapeVelocity: 0, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+						var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
+						errors += colorMap.PlaceColor(countVal, escapeVelocity, destination);
 
 						resultPtr += BYTES_PER_PIXEL;
 						sourcePtr++;
-
-						//diagSum += countVal;
 					}
-
-					//if (diagSum < 10)
-					//{
-					//	Debug.WriteLine("WARINING: Counts are empty.");
-					//}
 				}
 			}
 			else
@@ -779,12 +772,13 @@ namespace MSetExplorer
 				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
 				{
 					var resultPtr = resultRowPtr;
-					for (var colPtr = 0; colPtr < sourceStride; colPtr++)
+					for (var colPtr = 0; colPtr < colCount; colPtr++)
 					{
 						var countVal = counts[sourcePtr];
 						TrackValueSwitches(countVal, ref previousCountVal);
 
-						errors += colorMap.PlaceColor(countVal, escapeVelocity: 0, new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL));
+						var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
+						errors += colorMap.PlaceColor(countVal, escapeVelocity: 0, destination);
 
 						resultPtr += BYTES_PER_PIXEL;
 						sourcePtr++;
@@ -795,14 +789,6 @@ namespace MSetExplorer
 			mapSectionVectors.BackBufferIsLoaded = true;
 
 			return errors;
-		}
-
-		[Conditional("DEBUG2")]
-		private void ReportPercentMapSectionsWithUpdatedScrPos()
-		{
-			var numberOfMapSectionsWithUpdatedScrPos = _mapSections.Count(x => x.ScreenPosHasBeenUpdated);
-			var percentWithUpdatedScrPos = 100 * (numberOfMapSectionsWithUpdatedScrPos / (double)_mapSections.Count);
-			Debug.WriteLine($"{percentWithUpdatedScrPos:F3} MapSections have updated Screen Positions.");
 		}
 
 		[Conditional("DEBUG2")]
@@ -821,6 +807,15 @@ namespace MSetExplorer
 			if (escapeVelocity > 1.0)
 			{
 				Debug.WriteLine($"WARNING: The Escape Velocity is greater than 1.0");
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckMissingEscapeVelocities(ushort[] escapeVelocities)
+		{
+			if (!escapeVelocities.Any(x => x > 0))
+			{
+				Debug.WriteLine("No EscapeVelocities Found.");
 			}
 		}
 

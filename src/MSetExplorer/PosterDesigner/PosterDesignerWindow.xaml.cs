@@ -313,13 +313,13 @@ namespace MSetExplorer
 
 			var initialImageFilename = GetImageFilename(curPoster);
 
-			if (TryGetImagePath(initialImageFilename, out var imageFilePath))
+			if (TryGetImagePath(initialImageFilename, out var imageFilePath, out var imageFileType))
 			{
 				var areaColorAndCalcSettings = _vm.PosterViewModel.CurrentAreaColorAndCalcSettings;
 
 				Debug.WriteLine($"The PosterDesignerWindow is StartingImageCreation. SaveTheZValues = {areaColorAndCalcSettings.MapCalcSettings.SaveTheZValues}.");
 
-				_createImageProgressWindow = StartImageCreation(imageFilePath, areaColorAndCalcSettings, curPoster.PosterSize);
+				_createImageProgressWindow = StartImageCreation(imageFilePath, imageFileType.Value, areaColorAndCalcSettings, curPoster.PosterSize);
 
 				_createImageProgressWindow.Show();
 			}
@@ -330,7 +330,7 @@ namespace MSetExplorer
 			return window != null && Application.Current.Windows.Cast<Window>().Any(x => x.GetHashCode() == window.GetHashCode());
 		}
 
-		private bool TryGetImagePath(string initalName, [MaybeNullWhen(false)] out string imageFilePath)
+		private bool TryGetImagePath(string initalName, [NotNullWhen(true)] out string? imageFilePath, [NotNullWhen(true)] out ImageFileType? imageFileType)
 		{
 			var defaultOutputFolderPath = Properties.Settings.Default.DefaultOutputFolderPath;
 			var createImageViewModel = new CreateImageViewModel(defaultOutputFolderPath, initalName);
@@ -342,20 +342,22 @@ namespace MSetExplorer
 			if (createImageDialog.ShowDialog() == true && createImageViewModel.ImageFileName != null)
 			{
 				imageFilePath = Path.Combine(createImageViewModel.FolderPath, createImageViewModel.ImageFileName);
+				imageFileType = createImageViewModel.SelectedImageType == "PNG" ? ImageFileType.PNG : ImageFileType.WMP;
 				return true;
 			}
 			else
 			{
+				imageFileType = null;
 				imageFilePath = null;
 				return false;
 			}
 		}
 
-		private CreateImageProgressWindow StartImageCreation(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
+		private CreateImageProgressWindow StartImageCreation(string imageFilePath, ImageFileType imageFileType, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
 		{
 			var viewModelFactory = _vm.ViewModelFactory;
 
-			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel();
+			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel(imageFileType);
 
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;

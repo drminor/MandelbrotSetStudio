@@ -14,8 +14,6 @@ namespace ImageBuilder
 	{
 		#region Private Fields
 
-		//private const double VALUE_FACTOR = 10000;
-
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
@@ -69,10 +67,6 @@ namespace ImageBuilder
 
 			try
 			{
-				//var numberOfWholeBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize);
-				//var w = numberOfWholeBlocks.Width;
-				//var h = numberOfWholeBlocks.Height;
-
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
 				var stride = mapExtent.Width;
 				var h = mapExtent.Height;
@@ -91,15 +85,17 @@ namespace ImageBuilder
 
 					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, stride, ct);
 
-					if (ct.IsCancellationRequested || blocksForThisRow.Count == 0)
+					if (ct.IsCancellationRequested || msrSubJob.IsCancelled || blocksForThisRow.Count == 0)
 					{
 						return null;
 					}
 
-					//var checkCnt = blocksForThisRow.Count;
-					//Debug.Assert(checkCnt == w);
+					if (blocksForThisRow.Count != stride)
+					{
+						Debug.WriteLine($"BitmapBuilder: GetAllBlocks Returned {blocksForThisRow.Count}. Expecting: {stride}.");
+					}
 
-					Debug.Assert(blocksForThisRow.Count == stride);
+					//Debug.Assert(blocksForThisRow.Count == stride);
 
 					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
@@ -147,10 +143,6 @@ namespace ImageBuilder
 					var invertThisBlock = !mapSection.IsInverted;
 
 					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a differnt value of isInverted as does the block at 0, {blockPtrY}.");
-
-					//var countsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.Counts, linePtr, blockSizeWidth);
-					////var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
-					//var escVelsForThisLine = BitmapHelper.GetOneLineFromCountsBlock(mapSection?.MapSectionVectors?.EscapeVelocities, linePtr, blockSizeWidth);
 
 					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
 					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);

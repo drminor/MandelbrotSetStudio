@@ -1,64 +1,81 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace ImageBuilderWPF
 {
 	public class WmpImage : IDisposable
 	{
-		private readonly Stream OutputStream;
-		//private readonly ImageInfo imi;
-		//private readonly PngWriter png;
-		//private int curRow;
-		private bool weOwnTheStream;
+		#region Private Fields
+
+		private readonly static PixelFormat PIXEL_FORMAT = PixelFormats.Pbgra32;
+		private const int DOTS_PER_INCH = 96;
+
+		private readonly Stream _outputStream;
+		private bool _weOwnTheStream;
 
 		public string Path { get; }
-		//public ImageLine ImageLine { get; }
 
-		public WmpImage(string path, int width, int height) : this(File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read), path, width, height)
+		//private readonly WmpBitmapEncoder _encoder;
+		private readonly WriteableBitmap _bitmap;
+
+		#endregion
+
+		#region Constructors
+
+		public WmpImage(string path, int width, int height) : 
+			this(File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read), path, width, height)
 		{
-			weOwnTheStream = true;
+			_weOwnTheStream = true;
 		}
 
 		public WmpImage(Stream outputStream, string path, int width, int height)
 		{
-			OutputStream = outputStream;
+			_outputStream = outputStream;
+			_weOwnTheStream = false;
 			Path = path;
-			//imi = new ImageInfo(width, height, 8, false); // 8 bits per channel, no alpha 
-			//png = new PngWriter(OutputStream, imi, path);
-			//ImageLine = new ImageLine(imi);
-			//curRow = 0;
-			weOwnTheStream = false;
+
+			_bitmap = new WriteableBitmap(width, height, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
+
+
 		}
 
-		//public void WriteLine(int[] pixelData)
-		//{
-		//    var iLine = new ImageLine(imi);
-		//    for(var ptr = 0; ptr < pixelData.Length; ptr++)
-		//    {
-		//        ImageLineHelper.SetPixelFromARGB8(iLine, ptr, pixelData[ptr]);
-		//    }
+		#endregion
 
-		//    png.WriteRow(iLine, curRow++);
-		//}
+		#region Public Methods
 
-		//public void WriteLine(ImageLine iline)
-		//{
-		//	png.WriteRow(iline, curRow++);
-		//}
+		public void WriteBlock(Int32Rect sourceRect, byte[] imageData, int sourceStride, int destX, int destY)
+		{
+			//var destArea = new Int32Rect(0, 0, width, height);
+			_bitmap.WritePixels(sourceRect, imageData, sourceStride, destX, destY);
+		}
 
 		public void End()
 		{
-			//png.End();
+			var bitmapFrame = BitmapFrame.Create(_bitmap);
+
+			var encoder = new WmpBitmapEncoder();
+			encoder.ImageQualityLevel = 1.0f;
+
+			encoder.Frames.Add(bitmapFrame);
+			encoder.Save(_outputStream);
+
+			if(_weOwnTheStream)
+			{
+				_outputStream.Flush();
+				_outputStream.Close();
+			}
+
 		}
 
 		public void Abort()
 		{
 			//png.Abort();
 		}
+
+		#endregion
 
 		#region IDisposable Support
 
@@ -68,7 +85,7 @@ namespace ImageBuilderWPF
 		{
 			if (!disposedValue)
 			{
-				if (disposing && weOwnTheStream)
+				if (disposing && _weOwnTheStream)
 				{
 					//png.End();
 				}

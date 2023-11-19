@@ -6,8 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace ImageBuilderWPF
 {
@@ -15,7 +17,8 @@ namespace ImageBuilderWPF
 	{
 		#region Private Fields
 
-		//private const double VALUE_FACTOR = 10000;
+		private const double VALUE_FACTOR = 10000;
+		private const int BYTES_PER_PIXEL = 4;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionBuilder _mapSectionBuilder;
@@ -23,6 +26,9 @@ namespace ImageBuilderWPF
 		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection>? _mapSectionsForRow;
+		private int _blocksPerRow;
+
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -36,6 +42,7 @@ namespace ImageBuilderWPF
 			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
 			_mapSectionsForRow = null;
+			_blocksPerRow = -1;
 		}
 
 		#endregion
@@ -72,37 +79,27 @@ namespace ImageBuilderWPF
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				wmpImage = new WmpImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
-				//var extentInBlocks = RMapHelper.GetMapExtentInBlocks(imageSize, canvasControlOffset, blockSize, out var sizeOfFirstBlock, out var sizeOfLastBlock);
-				//var stride = extentInBlocks.Width;
-				//var h = extentInBlocks.Height;
-
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
-				var stride = mapExtent.Width;
+				_blocksPerRow = mapExtent.Width;
 				var h = mapExtent.Height;
+				var maxBlockYPtr = h - 1;
 
-				Debug.WriteLine($"The PngBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The WmpBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
 				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
 
-				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
+				for (var blockPtrY = h - 2; blockPtrY >= 1 && !ct.IsCancellationRequested; blockPtrY--)
 				{
 					// Get all of the blocks for this row.
 					var blockIndexY = blockPtrY - (h / 2);
 					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
-					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, stride, ct);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, _blocksPerRow, ct);
 
-					if (msrSubJob.IsCancelled)
+					if (ct.IsCancellationRequested || msrSubJob.IsCancelled || blocksForThisRow.Count == 0)
 					{
 						result = false;
 						break;
 					}
-
-					if (blocksForThisRow.Count != stride)
-					{
-						Debug.WriteLine($"PngBuilder: GetAllBlocks Returned {blocksForThisRow.Count}. Expecting: {stride}.");
-					}
-
-					Debug.Assert(blocksForThisRow.Count == stride);
 
 					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
@@ -117,7 +114,8 @@ namespace ImageBuilderWPF
 					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
 
 					// Calculate the pixel values and write them to the image file.
-					BuildARow(wmpImage, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, stride, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					var invertedBlockPtrY = maxBlockYPtr - blockPtrY;
+					BuildARow(wmpImage, invertedBlockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 
@@ -129,7 +127,7 @@ namespace ImageBuilderWPF
 				if (!ct.IsCancellationRequested)
 				{
 					await Task.Delay(10);
-					Debug.WriteLine($"PngBuilder encountered an exception: {e}.");
+					Debug.WriteLine($"WmpBuilder encountered an exception: {e}.");
 					throw;
 				}
 			}
@@ -152,47 +150,44 @@ namespace ImageBuilderWPF
 
 		#region Private Methods
 
-		private void BuildARow(WmpImage pngImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, int extentInBlocksWidth,
+		private void BuildARow(WmpImage wmpImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, 
 			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
 		{
-			var linePtr = startingPtr;
-			for (var cntr = 0; cntr < numberOfLines && !ct.IsCancellationRequested; cntr++)
+			for (var blockPtrX = 1; blockPtrX < blocksForThisRow.Count - 1; blockPtrX++)
 			{
-				//var iLine = pngImage.ImageLine;
-				var destPixPtr = 0;
+				var mapSection = blocksForThisRow[blockPtrX];
+				var invertThisBlock = !mapSection.IsInverted;
 
-				for (var blockPtrX = 0; blockPtrX < extentInBlocksWidth; blockPtrX++)
+				Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
+
+				//var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
+				//var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
+				//var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
+
+				//var lineLength = segmentLengths[blockPtrX].Item1;
+				//var samplesToSkip = segmentLengths[blockPtrX].Item2;
+
+				if (mapSection.MapSectionVectors != null)
 				{
-					var mapSection = blocksForThisRow[blockPtrX];
-					var invertThisBlock = !mapSection.IsInverted;
-
-					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
-
-					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
-					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
-					//var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
-
-					var lineLength = segmentLengths[blockPtrX].Item1;
-					var samplesToSkip = segmentLengths[blockPtrX].Item2;
+					LoadPixelArray(mapSection.MapSectionVectors, colorMap, invertThisBlock);
+					var sourceRect = new Int32Rect(0, 0, 128, 128);
+					var sourceStride = blockSizeWidth * BYTES_PER_PIXEL;
 
 					try
 					{
-						//BitmapHelper.FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
-						destPixPtr += lineLength;
+						wmpImage.WriteBlock(sourceRect, mapSection.MapSectionVectors.BackBuffer, sourceStride, blockPtrX * 128, blockPtrY * 128);
+						mapSection.MapSectionVectors.DecreaseRefCount();
 					}
 					catch (Exception e)
 					{
 						if (!ct.IsCancellationRequested)
 						{
-							Debug.WriteLine($"FillPngImageLineSegment encountered an exception: {e}.");
+							Debug.WriteLine($"Got exception: {e} from wmpImage.WriteBlock.");
 							throw;
 						}
 					}
 				}
 
-				//pngImage.WriteLine(iLine);
-
-				linePtr += increment;
 			}
 		}
 
@@ -211,40 +206,71 @@ namespace ImageBuilderWPF
 				requests.Add(mapSectionRequest);
 			}
 
-			Debug.WriteLine("Resetting the Async Manual Reset Event.");
-			_blocksForRowAreReady.Reset();
 
-			Debug.WriteLine("Pushing a new request.");
+			Debug.WriteLineIf(_useDetailedDebug, "Resetting the Async Manual Reset Event.");
+			_blocksForRowAreReady.Reset();
+			_mapSectionsForRow = new Dictionary<int, MapSection>();
+
+			Debug.WriteLineIf(_useDetailedDebug, "Pushing a new request.");
 			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
 			_currentJobNumber = msrJob.MapLoaderJobNumber;
 
-			var mapSectionsForRow = new Dictionary<int, MapSection>();
-
 			foreach (var mapSection in mapSections)
 			{
-				mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+				_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+				mapSection.MapSectionVectors?.IncreaseRefCount();
 			}
 
-			Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
-			await _blocksForRowAreReady.WaitAsync();
+			if (_mapSectionsForRow.Count != _blocksPerRow)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
+				await _blocksForRowAreReady.WaitAsync();
+			}
 
 			if (ct.IsCancellationRequested || msrJob.IsCancelled)
 			{
-				mapSectionsForRow.Clear();
+				_mapSectionsForRow.Clear();
 			}
+			//else
+			//{
+			//	if (_mapSectionsForRow.Count != stride)
+			//	{
+			//		var numberRemaining = stride - _mapSectionsForRow.Count;
+			//		Debug.WriteLineIf(_useDetailedDebug, $"Waiting for {numberRemaining} remaining blocks.");
 
-			Debug.WriteLine($"Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {mapSectionsForRow.Count} blocks were created.");
+			//		await Task.Delay(1000);
+			//		if (_mapSectionsForRow.Count != stride)
+			//		{
+			//			Debug.WriteLine($"WmpBuilder: For Job#: {msrJob.MapLoaderJobNumber} GetAllBlocks only received {_mapSectionsForRow.Count} MapSections. Expecting: {stride}.");
+			//			throw new InvalidOperationException("WmpBuilder did not receive all blocks.");
+			//		}
+			//	}
+			//}
 
-			return mapSectionsForRow;
+			Debug.WriteLineIf(_useDetailedDebug, $"WmpBuilder: Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
+
+			return _mapSectionsForRow;
 		}
 
 		private void MapSectionReady(MapSection mapSection)
 		{
+			if (_mapSectionsForRow == null)
+			{
+				return;
+			}
+
 			if (mapSection.JobNumber == _currentJobNumber)
 			{
 				if (!mapSection.IsEmpty)
 				{
-					_mapSectionsForRow?.Add(mapSection.ScreenPosition.X, mapSection);
+					_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+					mapSection.MapSectionVectors?.IncreaseRefCount();
+
+					if (_mapSectionsForRow.Count == _blocksPerRow)
+					{
+						// We now have received the full row.
+						_blocksForRowAreReady.SetAsync();
+					}
 				}
 				else
 				{
@@ -255,10 +281,125 @@ namespace ImageBuilderWPF
 
 		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
 		{
-			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
 
-			_blocksForRowAreReady.SetAsync();
+			if (isCancelled)
+			{
+				_blocksForRowAreReady.SetAsync();
+			}
 		}
+
+		#endregion
+
+		#region Pixel Array Support
+
+		private long LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
+		{
+			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
+
+			var errors = 0L;
+			var useEscapeVelocities = colorMap.UseEscapeVelocities;
+
+			var rowCount = mapSectionVectors.BlockSize.Height;
+			var colCount = mapSectionVectors.BlockSize.Width;
+			var maxRowIndex = rowCount - 1;
+
+			var pixelStride = colCount * BYTES_PER_PIXEL;
+
+			var backBuffer = mapSectionVectors.BackBuffer;
+
+			Debug.Assert(backBuffer.Length == mapSectionVectors.BlockSize.NumberOfCells * BYTES_PER_PIXEL);
+
+			var counts = mapSectionVectors.Counts;
+			var previousCountVal = counts[0];
+
+			var resultRowPtr = invert ? maxRowIndex * pixelStride : 0;
+			var resultRowPtrIncrement = invert ? -1 * pixelStride : pixelStride;
+			var sourcePtrUpperBound = rowCount * colCount;
+
+			if (useEscapeVelocities)
+			{
+				var escapeVelocities = mapSectionVectors.EscapeVelocities;
+
+				CheckMissingEscapeVelocities(escapeVelocities);
+
+				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+				{
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < colCount; colPtr++)
+					{
+						var countVal = counts[sourcePtr];
+						//TrackValueSwitches(countVal, ref previousCountVal);
+
+						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
+						CheckEscapeVelocity(escapeVelocity);
+
+						var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
+						errors += colorMap.PlaceColor(countVal, escapeVelocity, destination);
+
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
+					}
+				}
+			}
+			else
+			{
+				// The main for loop on GetPixel Array 
+				// is for each row of pixels (0 -> 128)
+				//		for each pixel in that row (0, -> 128)
+				// each new row advanced the resultRowPtr to the pixel byte address at column 0 of the current row.
+				// if inverted, the first row = 127 * # of bytes / Row (Pixel stride)
+
+				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+				{
+					var resultPtr = resultRowPtr;
+					for (var colPtr = 0; colPtr < colCount; colPtr++)
+					{
+						var countVal = counts[sourcePtr];
+						TrackValueSwitches(countVal, ref previousCountVal);
+
+						var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
+						errors += colorMap.PlaceColor(countVal, escapeVelocity: 0, destination);
+
+						resultPtr += BYTES_PER_PIXEL;
+						sourcePtr++;
+					}
+				}
+			}
+
+			mapSectionVectors.BackBufferIsLoaded = true;
+
+			return errors;
+		}
+
+		[Conditional("DEBUG2")]
+		private void TrackValueSwitches(ushort countVal, ref ushort previousCountVal)
+		{
+			if (countVal != previousCountVal)
+			{
+				NumberOfCountValSwitches++;
+				previousCountVal = countVal;
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckEscapeVelocity(double escapeVelocity)
+		{
+			if (escapeVelocity > 1.0)
+			{
+				Debug.WriteLine($"WARNING: The Escape Velocity is greater than 1.0");
+			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckMissingEscapeVelocities(ushort[] escapeVelocities)
+		{
+			if (!escapeVelocities.Any(x => x > 0))
+			{
+				Debug.WriteLine("No EscapeVelocities Found.");
+			}
+		}
+
 
 		#endregion
 	}

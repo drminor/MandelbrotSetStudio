@@ -10,22 +10,6 @@ namespace ImageBuilder
 	{
 		private const double VALUE_FACTOR = 10000;
 
-		//[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		//public static ushort[]? GetOneLineFromCountsBlock(ushort[]? counts, int lPtr, int stride)
-		//{
-		//	if (counts == null)
-		//	{
-		//		return null;
-		//	}
-		//	else
-		//	{
-		//		var result = new ushort[stride];
-
-		//		Array.Copy(counts, lPtr * stride, result, 0, stride);
-		//		return result;
-		//	}
-		//}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static void FillImageLineSegment(byte[] imageData, int pixPtr, ushort[]? counts, ushort[]? escapeVelocities, int lineLength, int samplesToSkip, ColorMap colorMap)
 		{
@@ -120,9 +104,6 @@ namespace ImageBuilder
 				ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
 			}
 		}
-
-
-
 
 	}
 }

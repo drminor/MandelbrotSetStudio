@@ -2,13 +2,10 @@
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Numerics;
 
 namespace MSS.Common
 {
-
-
 	public static class RMapHelper
 	{
 		#region MapAreaInfo Support
@@ -197,6 +194,45 @@ namespace MSS.Common
 
 		#region Sub Block Addressing
 
+		// GetSegmentLengths
+		public static ValueTuple<int, int>[] GetSegmentLengths(MapExtent mapExtent)
+		{
+			//int numberOfWholeBlocksX, int widthOfFirstBlock, int widthOfLastBlock, int blockWidth;
+
+			var blockWidth = mapExtent.BlockSize.Width;
+			var numberOfWholeBlocksX = mapExtent.Width;
+			var widthOfFirstBlock = mapExtent.SizeOfFirstBlock.Width;
+			var widthOfLastBlock = mapExtent.SizeOfLastBlock.Width;
+
+			var segmentLengths = new ValueTuple<int, int>[numberOfWholeBlocksX];
+
+			for (var blockPtrX = 0; blockPtrX < numberOfWholeBlocksX; blockPtrX++)
+			{
+				int lineLength;
+				int samplesToSkip;
+
+				if (blockPtrX == 0)
+				{
+					samplesToSkip = blockWidth - widthOfFirstBlock;
+					lineLength = widthOfFirstBlock;
+				}
+				else if (blockPtrX == numberOfWholeBlocksX - 1)
+				{
+					samplesToSkip = 0;
+					lineLength = widthOfLastBlock;
+				}
+				else
+				{
+					samplesToSkip = 0;
+					lineLength = blockWidth;
+				}
+
+				segmentLengths[blockPtrX] = new ValueTuple<int, int>(lineLength, samplesToSkip);
+			}
+
+			return segmentLengths;
+		}
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -283,45 +319,6 @@ namespace MSS.Common
 			var lineIncrement = invert ? -1 : 1;
 
 			return (startingLinePtr, numberOfLines, lineIncrement);
-		}
-
-		// GetSegmentLengths
-		public static ValueTuple<int, int>[] GetSegmentLengths(MapExtent mapExtent)
-		{
-			//int numberOfWholeBlocksX, int widthOfFirstBlock, int widthOfLastBlock, int blockWidth;
-
-			var blockWidth = mapExtent.BlockSize.Width;
-			var numberOfWholeBlocksX = mapExtent.Width;
-			var widthOfFirstBlock = mapExtent.SizeOfFirstBlock.Width;
-			var widthOfLastBlock = mapExtent.SizeOfLastBlock.Width;
-
-			var segmentLengths = new ValueTuple<int, int>[numberOfWholeBlocksX];
-
-			for (var blockPtrX = 0; blockPtrX < numberOfWholeBlocksX; blockPtrX++)
-			{
-				int lineLength;
-				int samplesToSkip;
-
-				if (blockPtrX == 0)
-				{
-					samplesToSkip = blockWidth - widthOfFirstBlock;
-					lineLength = widthOfFirstBlock;
-				}
-				else if (blockPtrX == numberOfWholeBlocksX - 1)
-				{
-					samplesToSkip = 0;
-					lineLength = widthOfLastBlock;
-				}
-				else
-				{
-					samplesToSkip = 0;
-					lineLength = blockWidth;
-				}
-
-				segmentLengths[blockPtrX] = new ValueTuple<int, int>(lineLength, samplesToSkip);
-			}
-
-			return segmentLengths;
 		}
 
 		#endregion

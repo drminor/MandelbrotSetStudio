@@ -594,7 +594,7 @@ namespace MSetExplorer
 		private CreateImageProgressWindow StartImageCreation(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
 		{
 			var viewModelFactory = _vm.ViewModelFactory;
-			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel();
+			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel(ImageFileType.PNG);
 
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
