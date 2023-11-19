@@ -27,8 +27,9 @@ namespace ImageBuilderWPF
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection>? _mapSectionsForRow;
 		private int _blocksPerRow;
+		private bool _isStopping;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -43,6 +44,7 @@ namespace ImageBuilderWPF
 			_currentJobNumber = null;
 			_mapSectionsForRow = null;
 			_blocksPerRow = -1;
+			_isStopping = false;
 		}
 
 		#endregion
@@ -60,7 +62,6 @@ namespace ImageBuilderWPF
 		{
 			var result = true;
 
-			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
@@ -79,6 +80,7 @@ namespace ImageBuilderWPF
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				wmpImage = new WmpImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
+				var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
 				_blocksPerRow = mapExtent.Width;
 				var h = mapExtent.Height;
@@ -206,47 +208,42 @@ namespace ImageBuilderWPF
 				requests.Add(mapSectionRequest);
 			}
 
-
 			Debug.WriteLineIf(_useDetailedDebug, "Resetting the Async Manual Reset Event.");
 			_blocksForRowAreReady.Reset();
 			_mapSectionsForRow = new Dictionary<int, MapSection>();
 
-			Debug.WriteLineIf(_useDetailedDebug, "Pushing a new request.");
-			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
-			_currentJobNumber = msrJob.MapLoaderJobNumber;
-
-			foreach (var mapSection in mapSections)
+			try
 			{
-				_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
-				mapSection.MapSectionVectors?.IncreaseRefCount();
+				Debug.WriteLineIf(_useDetailedDebug, "Pushing a new request.");
+				var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
+				_currentJobNumber = msrJob.MapLoaderJobNumber;
+
+				foreach (var mapSection in mapSections)
+				{
+					_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+					mapSection.MapSectionVectors?.IncreaseRefCount();
+				}
+
+				if (_mapSectionsForRow.Count != _blocksPerRow)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
+					await _blocksForRowAreReady.WaitAsync();
+				}
+
+				if (ct.IsCancellationRequested || msrJob.IsCancelled)
+				{
+					_mapSectionsForRow.Clear();
+				}
+			}
+			catch
+			{
+				_isStopping = true;
 			}
 
-			if (_mapSectionsForRow.Count != _blocksPerRow)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
-				await _blocksForRowAreReady.WaitAsync();
-			}
-
-			if (ct.IsCancellationRequested || msrJob.IsCancelled)
+			if (_isStopping)
 			{
 				_mapSectionsForRow.Clear();
 			}
-			//else
-			//{
-			//	if (_mapSectionsForRow.Count != stride)
-			//	{
-			//		var numberRemaining = stride - _mapSectionsForRow.Count;
-			//		Debug.WriteLineIf(_useDetailedDebug, $"Waiting for {numberRemaining} remaining blocks.");
-
-			//		await Task.Delay(1000);
-			//		if (_mapSectionsForRow.Count != stride)
-			//		{
-			//			Debug.WriteLine($"WmpBuilder: For Job#: {msrJob.MapLoaderJobNumber} GetAllBlocks only received {_mapSectionsForRow.Count} MapSections. Expecting: {stride}.");
-			//			throw new InvalidOperationException("WmpBuilder did not receive all blocks.");
-			//		}
-			//	}
-			//}
-
 			Debug.WriteLineIf(_useDetailedDebug, $"WmpBuilder: Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
 
 			return _mapSectionsForRow;
@@ -274,7 +271,7 @@ namespace ImageBuilderWPF
 				}
 				else
 				{
-					Debug.WriteLine($"Bitmap Builder recieved an empty MapSection. Job Number: {mapSection.JobNumber}.");
+					Debug.WriteLine($"WmpBuilder recieved an empty MapSection. Job Number: {mapSection.JobNumber}.");
 				}
 			}
 		}

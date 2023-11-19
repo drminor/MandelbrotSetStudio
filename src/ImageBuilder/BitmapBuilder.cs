@@ -19,8 +19,11 @@ namespace ImageBuilder
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
-		private IDictionary<int, MapSection>? _currentResponses;
+		private IDictionary<int, MapSection>? _mapSectionsForRow;
+		private int _blocksPerRow;
 		private bool _isStopping;
+
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -33,7 +36,8 @@ namespace ImageBuilder
 
 			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
-			_currentResponses = null;
+			_mapSectionsForRow = null;
+			_blocksPerRow = -1;
 			_isStopping = false;
 		}
 
@@ -50,8 +54,6 @@ namespace ImageBuilder
 		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
 			CancellationToken ct, Action<double>? statusCallback = null)
 		{
-			var mapBlockOffset = mapAreaInfo.MapBlockOffset;
-			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
@@ -67,8 +69,9 @@ namespace ImageBuilder
 
 			try
 			{
+				var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
-				var stride = mapExtent.Width;
+				_blocksPerRow = mapExtent.Width;
 				var h = mapExtent.Height;
 
 				Debug.WriteLine($"The BitmapBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
@@ -82,20 +85,12 @@ namespace ImageBuilder
 					var blockIndexY = blockPtrY - (h / 2);
 
 					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
-
-					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, stride, ct);
+					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, _blocksPerRow, ct);
 
 					if (ct.IsCancellationRequested || msrSubJob.IsCancelled || blocksForThisRow.Count == 0)
 					{
 						return null;
 					}
-
-					if (blocksForThisRow.Count != stride)
-					{
-						Debug.WriteLine($"BitmapBuilder: GetAllBlocks Returned {blocksForThisRow.Count}. Expecting: {stride}.");
-					}
-
-					//Debug.Assert(blocksForThisRow.Count == stride);
 
 					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
@@ -108,7 +103,7 @@ namespace ImageBuilder
 
 					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
 
-					destPixPtr = BuildARow(result, destPixPtr, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, stride, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					destPixPtr = BuildARow(result, destPixPtr, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 					statusCallback?.Invoke(100 * percentageCompleted);
@@ -130,14 +125,14 @@ namespace ImageBuilder
 
 		#region Private Methods
 
-		private int BuildARow(byte[] result, int destPixPtr, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, int extentInBlocksWidth,
+		private int BuildARow(byte[] result, int destPixPtr, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment,
 			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
 		{
 			var linePtr = startingPtr;
 
 			for (var cntr = 0; cntr < numberOfLines && !ct.IsCancellationRequested; cntr++)
 			{
-				for (var blockPtrX = 0; blockPtrX < extentInBlocksWidth; blockPtrX++)
+				for (var blockPtrX = 0; blockPtrX < blocksForThisRow.Count; blockPtrX++)
 				{
 					var mapSection = blocksForThisRow[blockPtrX];
 					var invertThisBlock = !mapSection.IsInverted;
@@ -187,30 +182,31 @@ namespace ImageBuilder
 				requests.Add(mapSectionRequest);
 			}
 
-			_currentResponses = new Dictionary<int, MapSection>();
-
+			Debug.WriteLine("Resetting the Async Manual Reset Event.");
+			_blocksForRowAreReady.Reset();
+			_mapSectionsForRow = new Dictionary<int, MapSection>();
+			
 			try
 			{
-				Debug.WriteLine("Resetting the Async Manual Reset Event.");
-				_blocksForRowAreReady.Reset();
-
 				Debug.WriteLine("Pushing a new request.");
-
 				var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var _);
 				_currentJobNumber = msrJob.MapLoaderJobNumber;
 
 				foreach (var mapSection in mapSections)
 				{
-					_currentResponses.Add(mapSection.ScreenPosition.X, mapSection);
+					_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
 				}
 
-				Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
-				await _blocksForRowAreReady.WaitAsync();
-				Debug.WriteLine($"Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_currentResponses.Count} blocks were created.");
+				if (_mapSectionsForRow.Count != _blocksPerRow)
+				{
+					Debug.WriteLine($"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
+					await _blocksForRowAreReady.WaitAsync();
+					Debug.WriteLine($"Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were created.");
+				}
 
 				if (ct.IsCancellationRequested || msrJob.IsCancelled)
 				{
-					_currentResponses.Clear();
+					_mapSectionsForRow.Clear();
 				}
 			}
 			catch
@@ -220,19 +216,31 @@ namespace ImageBuilder
 
 			if (_isStopping)
 			{
-				_currentResponses.Clear();
+				_mapSectionsForRow.Clear();
 			}
 
-			return _currentResponses;
+			return _mapSectionsForRow;
 		}
 
 		private void MapSectionReady(MapSection mapSection)
 		{
-			if (!_isStopping && mapSection.JobNumber == _currentJobNumber)
+			if (_mapSectionsForRow == null)
+			{
+				return;
+			}
+
+			if (mapSection.JobNumber == _currentJobNumber)
 			{
 				if (!mapSection.IsEmpty)
 				{
-					_currentResponses?.Add(mapSection.ScreenPosition.X, mapSection);
+					_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+					mapSection.MapSectionVectors?.IncreaseRefCount();
+
+					if (_mapSectionsForRow.Count == _blocksPerRow)
+					{
+						// We now have received the full row.
+						_blocksForRowAreReady.SetAsync();
+					}
 				}
 				else
 				{
@@ -243,9 +251,12 @@ namespace ImageBuilder
 
 		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
 		{
-			Debug.WriteLine($"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"MapViewUpdateIsComplete callback is being called. JobNumber: {jobNumber}, Cancelled = {isCancelled}.");
 
-			_blocksForRowAreReady.SetAsync();
+			if (isCancelled)
+			{
+				_blocksForRowAreReady.SetAsync();
+			}
 		}
 
 		#endregion

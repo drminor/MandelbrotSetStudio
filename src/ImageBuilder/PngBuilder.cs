@@ -22,6 +22,7 @@ namespace ImageBuilder
 		private int? _currentJobNumber;
 		private IDictionary<int, MapSection>? _mapSectionsForRow;
 		private int _blocksPerRow;
+		private bool _isStopping;
 
 		private readonly bool _useDetailedDebug = true;
 
@@ -38,6 +39,7 @@ namespace ImageBuilder
 			_currentJobNumber = null;
 			_mapSectionsForRow = null;
 			_blocksPerRow = -1;
+			_isStopping = false;
 		}
 
 		#endregion
@@ -54,8 +56,6 @@ namespace ImageBuilder
 			Action<double> statusCallback, CancellationToken ct)
 		{
 			var result = true;
-
-			var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
@@ -74,6 +74,7 @@ namespace ImageBuilder
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
 
+				var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
 				_blocksPerRow = mapExtent.Width;
 				var h = mapExtent.Height;
@@ -203,44 +204,39 @@ namespace ImageBuilder
 
 			Debug.WriteLineIf(_useDetailedDebug, "Resetting the Async Manual Reset Event.");
 			_blocksForRowAreReady.Reset();
-
 			_mapSectionsForRow = new Dictionary<int, MapSection>();
 
-			Debug.WriteLineIf(_useDetailedDebug, "Pushing a new request.");
-			var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
-			_currentJobNumber = msrJob.MapLoaderJobNumber;
-
-
-			foreach (var mapSection in mapSections)
+			try
 			{
-				_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+				Debug.WriteLineIf(_useDetailedDebug, "Pushing a new request.");
+				var mapSections = _mapLoaderManager.Push(msrJob, requests, MapSectionReady, MapViewUpdateIsComplete, ct, out var requestsPendingGeneration);
+				_currentJobNumber = msrJob.MapLoaderJobNumber;
+
+				foreach (var mapSection in mapSections)
+				{
+					_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+				}
+
+				if (_mapSectionsForRow.Count != _blocksPerRow)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
+					await _blocksForRowAreReady.WaitAsync();
+				}
+
+				if (ct.IsCancellationRequested || msrJob.IsCancelled)
+				{
+					_mapSectionsForRow.Clear();
+				}
+			}
+			catch
+			{
+				_isStopping = true;
 			}
 
-			if (_mapSectionsForRow.Count != _blocksPerRow)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Beginning to Wait for the blocks. Job#: {msrJob.MapLoaderJobNumber}");
-				await _blocksForRowAreReady.WaitAsync();
-			}
-
-			if (ct.IsCancellationRequested || msrJob.IsCancelled)
+			if (_isStopping)
 			{
 				_mapSectionsForRow.Clear();
 			}
-			//else
-			//{
-			//	if (_mapSectionsForRow.Count != stride)
-			//	{
-			//		var numberRemaining = stride - _mapSectionsForRow.Count;
-			//		Debug.WriteLineIf(_useDetailedDebug, $"Waiting for {numberRemaining} remaining blocks.");
-
-			//		await Task.Delay(1000);
-			//		if (_mapSectionsForRow.Count != stride)
-			//		{
-			//			Debug.WriteLine($"PngBuilder: For Job#: {msrJob.MapLoaderJobNumber} GetAllBlocks only received {_mapSectionsForRow.Count} MapSections. Expecting: {stride}.");
-			//			throw new InvalidOperationException("PngBuilder did not receive all blocks.");
-			//		}
-			//	}
-			//}
 
 			Debug.WriteLineIf(_useDetailedDebug, $"PngBuilder: Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
 
