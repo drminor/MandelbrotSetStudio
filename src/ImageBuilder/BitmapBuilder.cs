@@ -15,6 +15,7 @@ namespace ImageBuilder
 		#region Private Fields
 
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
@@ -29,9 +30,10 @@ namespace ImageBuilder
 
 		#region Constructor
 
-		public BitmapBuilder(IMapLoaderManager mapLoaderManager)
+		public BitmapBuilder(IMapLoaderManager mapLoaderManager, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			_mapLoaderManager = mapLoaderManager;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapSectionBuilder = new MapSectionBuilder();
 
 			_blocksForRowAreReady = new AsyncManualResetEvent();
@@ -159,6 +161,10 @@ namespace ImageBuilder
 							throw;
 						}
 					}
+					finally
+					{
+						_mapSectionVectorProvider.ReturnToPool(mapSection);
+					}
 				}
 
 				linePtr += increment;
@@ -234,7 +240,7 @@ namespace ImageBuilder
 				if (!mapSection.IsEmpty)
 				{
 					_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
-					mapSection.MapSectionVectors?.IncreaseRefCount();
+					//mapSection.MapSectionVectors?.IncreaseRefCount();
 
 					if (_mapSectionsForRow.Count == _blocksPerRow)
 					{

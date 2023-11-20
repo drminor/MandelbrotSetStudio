@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using System;
 using System.IO;
 using System.Threading;
@@ -16,6 +17,7 @@ namespace ImageBuilderWPF
 		private const int DOTS_PER_INCH = 96;
 
 		private readonly SynchronizationContext _synchronizationContext;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 
 		private readonly Stream _outputStream;
 		private bool _weOwnTheStream;
@@ -28,15 +30,16 @@ namespace ImageBuilderWPF
 
 		#region Constructors
 
-		public WmpImage(string path, int width, int height, SynchronizationContext synchronizationContext) : 
-			this(File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read), path, width, height, synchronizationContext)
+		public WmpImage(string path, int width, int height, SynchronizationContext synchronizationContext, MapSectionVectorProvider mapSectionVectorProvider) : 
+			this(File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read), path, width, height, synchronizationContext, mapSectionVectorProvider)
 		{
 			_weOwnTheStream = true;
 		}
 
-		public WmpImage(Stream outputStream, string path, int width, int height, SynchronizationContext synchronizationContext)
+		public WmpImage(Stream outputStream, string path, int width, int height, SynchronizationContext synchronizationContext, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			_synchronizationContext = synchronizationContext;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 
 			_outputStream = outputStream;
 			_weOwnTheStream = false;
@@ -63,7 +66,12 @@ namespace ImageBuilderWPF
 
 		public void Abort()
 		{
-			//png.Abort();
+			if (_weOwnTheStream)
+			{
+				_outputStream.Flush();
+				_outputStream.Close();
+				_outputStream.Dispose();
+			}
 		}
 
 		#endregion
@@ -74,6 +82,7 @@ namespace ImageBuilderWPF
 		{
 			_bitmap.WritePixels(sourceRect, mapSectionVectors.BackBuffer, sourceStride, destX, destY);
 			mapSectionVectors.DecreaseRefCount();
+			_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
 		}
 
 		private void CreateBitmap(int width, int height)
@@ -95,6 +104,7 @@ namespace ImageBuilderWPF
 			{
 				_outputStream.Flush();
 				_outputStream.Close();
+				_outputStream.Dispose();
 			}
 		}
 

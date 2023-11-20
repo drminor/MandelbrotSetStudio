@@ -16,6 +16,7 @@ namespace ImageBuilder
 		#region Private Fields
 
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
@@ -30,9 +31,10 @@ namespace ImageBuilder
 
 		#region Constructor
 
-		public PngBuilder(IMapLoaderManager mapLoaderManager)
+		public PngBuilder(IMapLoaderManager mapLoaderManager, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			_mapLoaderManager = mapLoaderManager;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapSectionBuilder = new MapSectionBuilder();
 
 			_blocksForRowAreReady = new AsyncManualResetEvent();
@@ -52,7 +54,7 @@ namespace ImageBuilder
 
 		#region Public Methods
 
-		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
+		public async Task<bool> BuildAsync(string imageFilePath, string jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
 			Action<double> statusCallback, CancellationToken ct, SynchronizationContext _)
 		{
 			var result = true;
@@ -69,7 +71,7 @@ namespace ImageBuilder
 			{
 				var stream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
-				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo, mapCalcSettings);
+				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);
 
 				var imageSize = mapAreaInfo.CanvasSize.Round();
 				pngImage = new PngImage(stream, imageFilePath, imageSize.Width, imageSize.Height);
@@ -178,6 +180,10 @@ namespace ImageBuilder
 							Debug.WriteLine($"FillPngImageLineSegment encountered an exception: {e}.");
 							throw;
 						}
+					}
+					finally
+					{
+						_mapSectionVectorProvider.ReturnToPool(mapSection);
 					}
 				}
 

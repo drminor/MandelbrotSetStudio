@@ -1,5 +1,5 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.IO;
 
 namespace MSetExplorer
 {
@@ -13,9 +13,10 @@ namespace MSetExplorer
 		{
 			ImageTypes = new[] { "PNG", "WMP" };
 			_folderPath = folderPath;
-			_imageFileName = initialName;
+
 			_selectedImageType = "PNG";
 
+			_imageFileName = GetImageFilename(initialName, SelectedImageType);
 		}
 
 		#region Public Properties
@@ -48,11 +49,25 @@ namespace MSetExplorer
 			set
 			{
 				_selectedImageType = value;
+				ImageFileName = GetImageFilename(ImageFileName, SelectedImageType);
 				OnPropertyChanged();
 			}
 		}
 
 		#endregion
 
+		private string? GetImageFilename(string? filename, string imageFileType)
+		{
+			if (imageFileType == null)
+			{
+				return null;
+			}
+			else
+			{
+				var ext = imageFileType == "PNG" ? "png" : "wdp";
+				var result = Path.ChangeExtension(filename, ext);
+				return result;
+			}
+		}
 	}
 }

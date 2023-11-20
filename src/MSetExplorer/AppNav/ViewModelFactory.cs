@@ -29,16 +29,19 @@ namespace MSetExplorer
 
 		private readonly MapJobHelper _mapJobHelper;
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 
 		private readonly SizeInt _blockSize;
 
-		public ViewModelFactory(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, SharedColorBandSetAdapter sharedColorBandSetAdapter, IMapLoaderManager mapLoaderManager, SizeInt blockSize)
+		public ViewModelFactory(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, SharedColorBandSetAdapter sharedColorBandSetAdapter, IMapLoaderManager mapLoaderManager, 
+			MapSectionVectorProvider mapSectionVectorProvider, SizeInt blockSize)
 		{
 			_blockSize = blockSize;
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
 			_sharedColorBandSetAdapter = sharedColorBandSetAdapter;
 			_mapLoaderManager = mapLoaderManager;
+			_mapSectionVectorProvider = mapSectionVectorProvider;
 
 			var subdivisionProvider = new SubdivisonProvider(_mapSectionAdapter);
 			_mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, _blockSize);
@@ -92,11 +95,11 @@ namespace MSetExplorer
 
 			if (imageFileType == ImageFileType.PNG)
 			{
-				imageBuilder = new PngBuilder(_mapLoaderManager);
+				imageBuilder = new PngBuilder(_mapLoaderManager, _mapSectionVectorProvider);
 			}
 			else
 			{
-				imageBuilder = new WmpBuilder(_mapLoaderManager);
+				imageBuilder = new WmpBuilder(_mapLoaderManager, _mapSectionVectorProvider);
 			}
 
 			var result = new CreateImageProgressViewModel(imageBuilder, mapJobHelper);
@@ -110,7 +113,7 @@ namespace MSetExplorer
 		{
 			var mapJobHelper = ProvisionAMapJopHelper();
 
-			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager);
+			var bitmapBuilder = new BitmapBuilder(_mapLoaderManager, _mapSectionVectorProvider);
 			var result = new LazyMapPreviewImageProvider(mapJobHelper, bitmapBuilder, jobId, OwnerType.Poster, mapAreaInfo, posterSize, colorBandSet, mapCalcSettings, useEscapeVelocitites, fallbackColor);
 			return result;
 		}

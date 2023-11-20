@@ -13,17 +13,17 @@ namespace MSetExplorer
 {
 	public class CreateImageProgressViewModel
 	{
-		private readonly IImageBuilder _pngBuilder;
+		private readonly IImageBuilder _imageBuilder;
 		private readonly MapJobHelper _mapJobHelper;
 		private CancellationTokenSource _cts;
 		private Task<bool>?_task;
 
 		#region Constructor
 
-		public CreateImageProgressViewModel(IImageBuilder pngBuilder, MapJobHelper mapJobHelper)
+		public CreateImageProgressViewModel(IImageBuilder imageBuilder, MapJobHelper mapJobHelper)
 		{
 			Successfull = false;
-			_pngBuilder = pngBuilder;
+			_imageBuilder = imageBuilder;
 			_mapJobHelper = mapJobHelper;
 			_cts = new CancellationTokenSource();
 			_task = null;
@@ -41,7 +41,7 @@ namespace MSetExplorer
 		public string? ImageFilePath { get; private set; }
 		public Poster? Poster { get; private set; }
 
-		public long NumberOfCountValSwitches => _pngBuilder.NumberOfCountValSwitches;
+		public long NumberOfCountValSwitches => _imageBuilder.NumberOfCountValSwitches;
 
 		#endregion
 
@@ -49,11 +49,11 @@ namespace MSetExplorer
 
 		// TODO: CreateImageViewModel. If the task fails, we need to alert the user.
 
-		public void CreateImage(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapCenterAndDelta mapAreaInfoV2, SizeDbl canvasSize, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings)
+		public void CreateImage(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl canvasSize, bool useEscapeVelocities)
 		{
 			ImageFilePath = imageFilePath;
 
-			var mapAreaInfoWithSize = _mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfoV2, canvasSize);
+			var mapAreaInfoWithSize = _mapJobHelper.GetMapPositionSizeAndDelta(areaColorAndCalcSettings.MapAreaInfo, canvasSize);
 
 			var synchronizationContext = SynchronizationContext.Current;
 
@@ -62,7 +62,12 @@ namespace MSetExplorer
 				throw new InvalidOperationException("No SynchronizationContext is available.");
 			}
 
-			_task = Task.Run(() => _pngBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cts.Token, synchronizationContext), _cts.Token);
+			var jobId = areaColorAndCalcSettings.JobId;
+			var ownerType = areaColorAndCalcSettings.JobOwnerType;
+			var colorBandSet = areaColorAndCalcSettings.ColorBandSet;
+			var mapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
+
+			_task = Task.Run(() => _imageBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cts.Token, synchronizationContext), _cts.Token);
 		}
 
 		public void CancelCreateImage()

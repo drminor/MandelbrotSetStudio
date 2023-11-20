@@ -1,8 +1,6 @@
-﻿using MSS.Types;
-using MSS.Types.MSet;
-using System;
+﻿using System;
 
-namespace MSetExplorer
+namespace MSS.Types.MSet
 {
 	public class AreaColorAndCalcSettings : ICloneable
 	{

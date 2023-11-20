@@ -361,7 +361,7 @@ namespace MSetExplorer
 
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
-			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Poster, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, useEscapeVelocities, areaColorAndCalcSettings.MapCalcSettings);
+			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize, useEscapeVelocities);
 
 			var result = new CreateImageProgressWindow()
 			{
@@ -373,7 +373,7 @@ namespace MSetExplorer
 
 		private string GetImageFilename(Poster poster)
 		{
-			var result = $"{poster.Name}_{poster.SizeAsString}_v4.png";
+			var result = $"{poster.Name}_{poster.SizeAsString}_v4";
 			return result;
 		}
 

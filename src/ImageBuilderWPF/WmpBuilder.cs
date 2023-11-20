@@ -21,6 +21,7 @@ namespace ImageBuilderWPF
 		private const int BYTES_PER_PIXEL = 4;
 
 		private readonly IMapLoaderManager _mapLoaderManager;
+		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionBuilder _mapSectionBuilder;
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
@@ -35,10 +36,10 @@ namespace ImageBuilderWPF
 
 		#region Constructor
 
-		public WmpBuilder(IMapLoaderManager mapLoaderManager)
+		public WmpBuilder(IMapLoaderManager mapLoaderManager, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			_mapLoaderManager = mapLoaderManager;
-			_mapSectionBuilder = new MapSectionBuilder();
+			_mapSectionVectorProvider = mapSectionVectorProvider; _mapSectionBuilder = new MapSectionBuilder();
 
 			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
@@ -57,11 +58,10 @@ namespace ImageBuilderWPF
 
 		#region Public Methods
 
-		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings,
+		public async Task<bool> BuildAsync(string imageFilePath, string jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings,
 			Action<double> statusCallback, CancellationToken ct, SynchronizationContext synchronizationContext)
 		{
 			var result = true;
-
 
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
@@ -71,14 +71,15 @@ namespace ImageBuilderWPF
 
 			WmpImage? wmpImage = null;
 
+			//var outputStream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+			var imageSize = mapAreaInfo.CanvasSize.Round();
+			wmpImage = new WmpImage(imageFilePath, imageSize.Width, imageSize.Height, synchronizationContext, _mapSectionVectorProvider);
+
 			try
 			{
-				var outputStream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 
-				var imageSize = mapAreaInfo.CanvasSize.Round();
-				wmpImage = new WmpImage(outputStream, imageFilePath, imageSize.Width, imageSize.Height, synchronizationContext);
 
-				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo, mapCalcSettings);
+				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);
 				var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
 				_blocksPerRow = mapExtent.Width;
@@ -177,7 +178,7 @@ namespace ImageBuilderWPF
 					try
 					{
 						wmpImage.WriteBlock(sourceRect, mapSection.MapSectionVectors, sourceStride, blockPtrX * 128, blockPtrY * 128);
-						mapSection.MapSectionVectors.DecreaseRefCount();
+						//mapSection.MapSectionVectors.DecreaseRefCount();
 					}
 					catch (Exception e)
 					{
@@ -242,6 +243,7 @@ namespace ImageBuilderWPF
 			if (_isStopping)
 			{
 				_mapSectionsForRow.Clear();
+				// TODO: Return each MapSection to the pool
 			}
 			Debug.WriteLineIf(_useDetailedDebug, $"WmpBuilder: Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
 

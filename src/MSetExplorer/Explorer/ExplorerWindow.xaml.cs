@@ -598,7 +598,7 @@ namespace MSetExplorer
 
 			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
-			createImageProgressViewModel.CreateImage(imageFilePath, jobId, OwnerType.Project, areaColorAndCalcSettings.MapAreaInfo, imageSize, areaColorAndCalcSettings.ColorBandSet, useEscapeVelocities, areaColorAndCalcSettings.MapCalcSettings);
+			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize, useEscapeVelocities);
 
 			var result = new CreateImageProgressWindow()
 			{
