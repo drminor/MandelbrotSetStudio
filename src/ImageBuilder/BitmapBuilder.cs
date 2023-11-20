@@ -107,6 +107,11 @@ namespace ImageBuilder
 
 					destPixPtr = BuildARow(result, destPixPtr, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
+					foreach(var ms in blocksForThisRow.Values)
+					{
+						_mapSectionVectorProvider.ReturnToPool(ms);
+					}
+
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 					statusCallback?.Invoke(100 * percentageCompleted);
 				}
@@ -150,7 +155,6 @@ namespace ImageBuilder
 					try
 					{
 						BitmapHelper.FillImageLineSegment(result, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
-
 						destPixPtr += lineLength;
 					}
 					catch (Exception e)
@@ -160,10 +164,6 @@ namespace ImageBuilder
 							Debug.WriteLine($"FillPngImageLineSegment encountered an exception: {e}.");
 							throw;
 						}
-					}
-					finally
-					{
-						_mapSectionVectorProvider.ReturnToPool(mapSection);
 					}
 				}
 
@@ -201,6 +201,7 @@ namespace ImageBuilder
 				foreach (var mapSection in mapSections)
 				{
 					_mapSectionsForRow.Add(mapSection.ScreenPosition.X, mapSection);
+					//mapSection.MapSectionVectors?.IncreaseRefCount();
 				}
 
 				if (_mapSectionsForRow.Count != _blocksPerRow)
@@ -212,6 +213,10 @@ namespace ImageBuilder
 
 				if (ct.IsCancellationRequested || msrJob.IsCancelled)
 				{
+					foreach (var ms in _mapSectionsForRow.Values)
+					{
+						_mapSectionVectorProvider.ReturnToPool(ms);
+					}
 					_mapSectionsForRow.Clear();
 				}
 			}

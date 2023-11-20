@@ -231,6 +231,10 @@ namespace ImageBuilder
 
 				if (ct.IsCancellationRequested || msrJob.IsCancelled)
 				{
+					foreach (var ms in _mapSectionsForRow.Values)
+					{
+						_mapSectionVectorProvider.ReturnToPool(ms);
+					}
 					_mapSectionsForRow.Clear();
 				}
 			}
