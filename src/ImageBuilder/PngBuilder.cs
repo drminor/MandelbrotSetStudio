@@ -83,7 +83,7 @@ namespace ImageBuilder
 
 				Debug.WriteLineIf(_useDetailedDebug, $"The PngBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
-				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
+				var segmentLengths = RMapHelper.GetHorizontalIntraBlockOffsets(mapExtent);
 
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
 				{
@@ -144,7 +144,7 @@ namespace ImageBuilder
 			bool drawInverted = GetDrawInverted(blocksForThisRow[0]);
 
 			// Calculate the number of lines used for this row of blocks
-			var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, drawInverted, mapExtent);
+			var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetVerticalIntraBlockOffsets(blockPtrY, drawInverted, mapExtent);
 
 			var linePtr = startingLinePtr;
 			for (var cntr = 0; cntr < numberOfLines && !ct.IsCancellationRequested; cntr++)
@@ -162,8 +162,7 @@ namespace ImageBuilder
 					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
 					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr); // TODO: Avoid fetching the EscapeVelocities from the MapSectionVectors if UseEscapeVelocities = false.
 
-					var lineLength = segmentLengths[blockPtrX].Item1;
-					var samplesToSkip = segmentLengths[blockPtrX].Item2;
+					var (samplesToSkip, lineLength) = segmentLengths[blockPtrX];
 
 					try
 					{

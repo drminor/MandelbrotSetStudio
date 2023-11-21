@@ -195,7 +195,7 @@ namespace MSS.Common
 		#region Sub Block Addressing
 
 		// GetSegmentLengths
-		public static ValueTuple<int, int>[] GetSegmentLengths(MapExtent mapExtent)
+		public static ValueTuple<int, int>[] GetHorizontalIntraBlockOffsets(MapExtent mapExtent)
 		{
 			//int numberOfWholeBlocksX, int widthOfFirstBlock, int widthOfLastBlock, int blockWidth;
 
@@ -227,26 +227,23 @@ namespace MSS.Common
 					lineLength = blockWidth;
 				}
 
-				segmentLengths[blockPtrX] = new ValueTuple<int, int>(lineLength, samplesToSkip);
+				//segmentLengths[blockPtrX] = new ValueTuple<int, int>(lineLength, samplesToSkip);
+
+				segmentLengths[blockPtrX] = (samplesToSkip, lineLength);
 			}
 
 			return segmentLengths;
 		}
 
 		/// <summary>
-		/// 
+		/// Used to address sub sections of the Counts or EscapeVelocities arrays
 		/// </summary>
-		/// <param name="blockPtr">Which row is being processed.</param>
-		/// <param name="invert">True if the Counts Array should be accessed from high to low index values, i.e., from top to bottom. The index into Counts increase from left to right, and from bottom to top.</param>
-		/// <param name="extentInBlocksY"></param>
-		/// <param name="heightOfFirstBlock"></param>
-		/// <param name="heightOfLastBlock"></param>
-		/// <param name="blockHeight"></param>
+		/// <param name="blockPtrY"></param>
+		/// <param name="invert"></param>
+		/// <param name="mapExtent"></param>
 		/// <returns></returns>
-		public static (int startingPtr, int numberOfLines, int increment) GetNumberOfLines(int blockPtr, bool invert, MapExtent mapExtent)
+		public static (int startingPtr, int numberOfLines, int increment) GetVerticalIntraBlockOffsets(int blockPtrY, bool invert, MapExtent mapExtent)
 		{
-			//var numberOfLines = BitmapHelper.GetNumberOfLines(blockPtrY, imageSize.Height, h, blockSize.Height, canvasControlOffset.Y, out var linesTopSkip);
-
 			var blockHeight = mapExtent.BlockSize.Height;
 			var extentInBlocksY = mapExtent.Height;
 			var heightOfFirstBlock = mapExtent.SizeOfFirstBlock.Height;
@@ -263,14 +260,14 @@ namespace MSS.Common
 
 				// The startingLinePtr starts big and is reduced by numberOfLines
 
-				if (blockPtr == 0)
+				if (blockPtrY == 0)
 				{
 					// This is the block with the smallest Map Coordinate and the largest Y screen coordinate (aka the first block)
 
 					startingLinePtr = blockHeight - 1; //(heightOfFirstBlock ranges from 1 to 128, startingLinePtr ranges from 127 to 0)
 					numberOfLines = heightOfFirstBlock;
 				}
-				else if (blockPtr == extentInBlocksY - 1)
+				else if (blockPtrY == extentInBlocksY - 1)
 				{
 					// This is the block with the largest Map Coordinate and the smallest Y screen coordinate, (aka the last block)
 
@@ -294,14 +291,14 @@ namespace MSS.Common
 
 				// The startingLinePtr starts small and is increased by numberOfLines
 
-				if (blockPtr == 0)
+				if (blockPtrY == 0)
 				{
 					// This is the block with the smallest Map Coordinate and the largest Y screen coordinate (aka the first block)
 
 					startingLinePtr = 0;
 					numberOfLines = heightOfFirstBlock;
 				}
-				else if (blockPtr == extentInBlocksY - 1)
+				else if (blockPtrY == extentInBlocksY - 1)
 				{
 					// This is the block with the largest Map Coordinate and the smallest Y screen coordinate, (aka the last block)
 
@@ -319,6 +316,46 @@ namespace MSS.Common
 			var lineIncrement = invert ? -1 : 1;
 
 			return (startingLinePtr, numberOfLines, lineIncrement);
+		}
+
+		/// <summary>
+		/// Used to address sub sections of a Bitmap's BackBuffer
+		/// </summary>
+		/// <param name="blockPtrY"></param>
+		/// <param name="invert"></param>
+		/// <param name="mapExtent"></param>
+		/// <returns></returns>
+		public static (int startingPtr, int numberOfLines) GetVerticalPixelBufferOffsets(int blockPtrY, MapExtent mapExtent)
+		{
+			var blockHeight = mapExtent.BlockSize.Height;
+			var extentInBlocksY = mapExtent.Height;
+			var heightOfFirstBlock = mapExtent.SizeOfFirstBlock.Height;
+			var heightOfLastBlock = mapExtent.SizeOfLastBlock.Height;
+
+			int startingLinePtr;
+			int numberOfLines;
+
+			if (blockPtrY == 0)
+			{
+				// This is the block with the smallest Map Coordinate and the largest Y screen coordinate (aka the first block)
+
+				startingLinePtr = 0;
+				numberOfLines = heightOfFirstBlock;
+			}
+			else if (blockPtrY == extentInBlocksY - 1)
+			{
+				// This is the block with the largest Map Coordinate and the smallest Y screen coordinate, (aka the last block)
+
+				startingLinePtr = blockHeight - heightOfLastBlock;
+				numberOfLines = heightOfLastBlock;
+			}
+			else
+			{
+				startingLinePtr = 0;
+				numberOfLines = blockHeight;
+			}
+
+			return (startingLinePtr, numberOfLines);
 		}
 
 		#endregion

@@ -78,7 +78,7 @@ namespace ImageBuilder
 
 				Debug.WriteLine($"The BitmapBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
-				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
+				var segmentLengths = RMapHelper.GetHorizontalIntraBlockOffsets(mapExtent);
 
 				var destPixPtr = 0;
 
@@ -103,7 +103,7 @@ namespace ImageBuilder
 
 					var invert = !blocksForThisRow[0].IsInverted; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
 
-					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
+					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetVerticalIntraBlockOffsets(blockPtrY, invert, mapExtent);
 
 					destPixPtr = BuildARow(result, destPixPtr, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
 
@@ -149,8 +149,7 @@ namespace ImageBuilder
 					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
 					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
 
-					var lineLength = segmentLengths[blockPtrX].Item1;
-					var samplesToSkip = segmentLengths[blockPtrX].Item2;
+					var (samplesToSkip, lineLength) = segmentLengths[blockPtrX];
 
 					try
 					{

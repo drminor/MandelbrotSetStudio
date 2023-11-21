@@ -1,4 +1,5 @@
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -21,6 +22,7 @@ namespace ImageBuilderWPF
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionBuilder _mapSectionBuilder;
+		private readonly BitmapBufferLoader _bitmapBufferLoader;
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
@@ -37,7 +39,9 @@ namespace ImageBuilderWPF
 		public WmpBuilder(IMapLoaderManager mapLoaderManager, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			_mapLoaderManager = mapLoaderManager;
-			_mapSectionVectorProvider = mapSectionVectorProvider; _mapSectionBuilder = new MapSectionBuilder();
+			_mapSectionVectorProvider = mapSectionVectorProvider;
+			_mapSectionBuilder = new MapSectionBuilder();
+			_bitmapBufferLoader = new BitmapBufferLoader();
 
 			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
@@ -82,11 +86,10 @@ namespace ImageBuilderWPF
 
 				Debug.WriteLineIf(_useDetailedDebug, $"The WmpBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
-				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
+				var segmentLengths = RMapHelper.GetHorizontalIntraBlockOffsets(mapExtent);
 
 				// Process rows using the map coordinates, from the highest Y coordinate to the lowest coordinate.
 				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
-				//for (var blockPtrY = h - 2; blockPtrY >= 1 && !ct.IsCancellationRequested; blockPtrY--)
 				{
 					// Get all of the blocks for this row.
 					// Each row must use a fresh MsrJob.
@@ -139,42 +142,21 @@ namespace ImageBuilderWPF
 		private void BuildARow(WmpImage wmpImage, int blockPtrY, IDictionary<int, MapSection> blocksForThisRow, ColorMap colorMap, ValueTuple<int, int>[] segmentLengths, MapExtent mapExtent, CancellationToken ct)
 		{
 			// Blocks with a negative Y map coordinate are drawn up-side, down.
-			bool drawInverted = GetDrawInverted(blocksForThisRow[0]);
+			//bool drawInverted = GetDrawInverted(blocksForThisRow[0]);
+
 			var widthOfFirstBlock = mapExtent.SizeOfFirstBlock.Width;
 			var heightOfLastBlock = mapExtent.SizeOfLastBlock.Height;
 
+			// The destination Y location is measured from the top of the image -- opposite of the map coordinate which is measured from the bottom of the image.
 			var maxBlockYPtr = mapExtent.Height - 1;
 			var invertedBlockPtrY = maxBlockYPtr - blockPtrY;
-
-			//var yLoc = blockPtrY == 0 ? invertedBlockPtrY * 128 : invertedBlockPtrY * 128 + mapExtent.BlockSize.Height - startingLinePtr;
 			var yLoc = invertedBlockPtrY == 0 ? 0 : heightOfLastBlock + ((invertedBlockPtrY - 1) * 128);
 
 			// Calculate the number of lines used for this row of blocks
-			var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, drawInverted, mapExtent);
+			var (startingLinePtr, numberOfLines) = RMapHelper.GetVerticalPixelBufferOffsets(blockPtrY, mapExtent);
 
-			//int sourceYStartLoc;
+			Debug.WriteLineIf(_useDetailedDebug, $"BlockYPtr: {blockPtrY}, InvertedBlockYPtr: {invertedBlockPtrY}, yLoc: {yLoc}, startingLinePtr: {startingLinePtr}, NumberOfLines: {numberOfLines}.");
 
-			//if (invertedBlockPtrY == 0)
-			//{
-			//	// This is the first block
-			//	sourceYStartLoc = drawInverted ? mapExtent.BlockSize.Height - numberOfLines : 0;
-			//}
-			//else if (blockPtrY == 0)
-			//{
-			//	// This is the last block
-			//	sourceYStartLoc = drawInverted ? 0 : mapExtent.BlockSize.Height - numberOfLines;
-			//}
-			//else
-			//{
-			//	sourceYStartLoc = 0;
-			//}
-
-			var sourceYStartLoc = drawInverted ? mapExtent.BlockSize.Height - (startingLinePtr + 1) : startingLinePtr;
-
-			Debug.WriteLine($"BlockYPtr: {blockPtrY}, InvertedBlockYPtr: {invertedBlockPtrY}, yLoc: {yLoc}, SourceYStartLoc: {sourceYStartLoc}, NumberOfLines: {numberOfLines}, startingLinePtr: {startingLinePtr}.");
-
-
-			//for (var blockPtrX = 0; blockPtrX < blocksForThisRow.Count; blockPtrX++)
 			for (var blockPtrX = 1; blockPtrX < blocksForThisRow.Count - 1; blockPtrX++)
 			{
 				var mapSection = blocksForThisRow[blockPtrX];
@@ -182,14 +164,12 @@ namespace ImageBuilderWPF
 				if (mapSection.MapSectionVectors == null)
 					continue;
 
-				var invertThisBlock = !mapSection.IsInverted;
-				Debug.Assert(invertThisBlock == drawInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
-				LoadPixelArray(mapSection.MapSectionVectors, colorMap, invertThisBlock);
+				//Debug.Assert(!mapSection.IsInverted == drawInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
+				_bitmapBufferLoader.LoadPixelArray(mapSection, colorMap);
 
-				var lineLength = segmentLengths[blockPtrX].Item1;
-				var samplesToSkip = segmentLengths[blockPtrX].Item2;
+				var (samplesToSkip, lineLength) = segmentLengths[blockPtrX];
+				var sourceRect = new Int32Rect(samplesToSkip, startingLinePtr, lineLength, numberOfLines);
 
-				var sourceRect = new Int32Rect(samplesToSkip, sourceYStartLoc, lineLength, numberOfLines);
 				var sourceStride = mapExtent.BlockSize.Width * BYTES_PER_PIXEL;
 
 				var xLoc = blockPtrX == 0 ? 0 : widthOfFirstBlock + ((blockPtrX - 1) * 128);
@@ -198,18 +178,18 @@ namespace ImageBuilderWPF
 			}
 		}
 
-		private bool GetDrawInverted(MapSection mapSection)
-		{
-			// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
+		//private bool GetDrawInverted(MapSection mapSection)
+		//{
+		//	// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
 
-			// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
-			// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
-			// But the screen coordinates increase from the top of the display to be bottom.
-			// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
+		//	// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
+		//	// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
+		//	// But the screen coordinates increase from the top of the display to be bottom.
+		//	// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
 
-			var result = !mapSection.IsInverted; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
-			return result;
-		}
+		//	var result = !mapSection.IsInverted; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
+		//	return result;
+		//}
 
 		private async Task<IDictionary<int, MapSection>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
 		{
@@ -315,117 +295,117 @@ namespace ImageBuilderWPF
 
 		#endregion
 
-		#region Pixel Array Support
+		//#region Pixel Array Support
 
-		private long LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool drawInverted)
-		{
-			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
+		//private long LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool drawInverted)
+		//{
+		//	Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
 
-			var errors = 0L;
-			var useEscapeVelocities = colorMap.UseEscapeVelocities;
+		//	var errors = 0L;
+		//	var useEscapeVelocities = colorMap.UseEscapeVelocities;
 
-			var rowCount = mapSectionVectors.BlockSize.Height;
-			var colCount = mapSectionVectors.BlockSize.Width;
-			var maxRowIndex = rowCount - 1;
+		//	var rowCount = mapSectionVectors.BlockSize.Height;
+		//	var colCount = mapSectionVectors.BlockSize.Width;
+		//	var maxRowIndex = rowCount - 1;
 
-			var pixelStride = colCount * BYTES_PER_PIXEL;
+		//	var pixelStride = colCount * BYTES_PER_PIXEL;
 
-			var backBuffer = mapSectionVectors.BackBuffer;
+		//	var backBuffer = mapSectionVectors.BackBuffer;
 
-			Debug.Assert(backBuffer.Length == mapSectionVectors.BlockSize.NumberOfCells * BYTES_PER_PIXEL);
+		//	Debug.Assert(backBuffer.Length == mapSectionVectors.BlockSize.NumberOfCells * BYTES_PER_PIXEL);
 
-			var counts = mapSectionVectors.Counts;
-			var previousCountVal = counts[0];
+		//	var counts = mapSectionVectors.Counts;
+		//	var previousCountVal = counts[0];
 
-			var resultRowPtr = drawInverted ? maxRowIndex * pixelStride : 0;
-			var resultRowPtrIncrement = drawInverted ? -1 * pixelStride : pixelStride;
-			var sourcePtrUpperBound = rowCount * colCount;
+		//	var resultRowPtr = drawInverted ? maxRowIndex * pixelStride : 0;
+		//	var resultRowPtrIncrement = drawInverted ? -1 * pixelStride : pixelStride;
+		//	var sourcePtrUpperBound = rowCount * colCount;
 
-			if (useEscapeVelocities)
-			{
-				var escapeVelocities = mapSectionVectors.EscapeVelocities;
+		//	if (useEscapeVelocities)
+		//	{
+		//		var escapeVelocities = mapSectionVectors.EscapeVelocities;
 
-				CheckMissingEscapeVelocities(escapeVelocities);
+		//		CheckMissingEscapeVelocities(escapeVelocities);
 
-				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
-				{
-					var resultPtr = resultRowPtr;
-					for (var colPtr = 0; colPtr < colCount; colPtr++)
-					{
-						var countVal = counts[sourcePtr];
-						//TrackValueSwitches(countVal, ref previousCountVal);
+		//		for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+		//		{
+		//			var resultPtr = resultRowPtr;
+		//			for (var colPtr = 0; colPtr < colCount; colPtr++)
+		//			{
+		//				var countVal = counts[sourcePtr];
+		//				//TrackValueSwitches(countVal, ref previousCountVal);
 
-						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
-						CheckEscapeVelocity(escapeVelocity);
+		//				var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
+		//				CheckEscapeVelocity(escapeVelocity);
 
-						var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
-						errors += colorMap.PlaceColor(countVal, escapeVelocity, destination);
+		//				var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
+		//				errors += colorMap.PlaceColor(countVal, escapeVelocity, destination);
 
-						resultPtr += BYTES_PER_PIXEL;
-						sourcePtr++;
-					}
-				}
-			}
-			else
-			{
-				// The main for loop on GetPixel Array 
-				// is for each row of pixels (0 -> 128)
-				//		for each pixel in that row (0, -> 128)
-				// each new row advanced the resultRowPtr to the pixel byte address at column 0 of the current row.
-				// if inverted, the first row = 127 * # of bytes / Row (Pixel stride)
+		//				resultPtr += BYTES_PER_PIXEL;
+		//				sourcePtr++;
+		//			}
+		//		}
+		//	}
+		//	else
+		//	{
+		//		// The main for loop on GetPixel Array 
+		//		// is for each row of pixels (0 -> 128)
+		//		//		for each pixel in that row (0, -> 128)
+		//		// each new row advanced the resultRowPtr to the pixel byte address at column 0 of the current row.
+		//		// if inverted, the first row = 127 * # of bytes / Row (Pixel stride)
 
-				for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
-				{
-					var resultPtr = resultRowPtr;
-					for (var colPtr = 0; colPtr < colCount; colPtr++)
-					{
-						var countVal = counts[sourcePtr];
-						TrackValueSwitches(countVal, ref previousCountVal);
+		//		for (var sourcePtr = 0; sourcePtr < sourcePtrUpperBound; resultRowPtr += resultRowPtrIncrement)
+		//		{
+		//			var resultPtr = resultRowPtr;
+		//			for (var colPtr = 0; colPtr < colCount; colPtr++)
+		//			{
+		//				var countVal = counts[sourcePtr];
+		//				TrackValueSwitches(countVal, ref previousCountVal);
 
-						var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
-						errors += colorMap.PlaceColor(countVal, escapeVelocity: 0, destination);
+		//				var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
+		//				errors += colorMap.PlaceColor(countVal, escapeVelocity: 0, destination);
 
-						resultPtr += BYTES_PER_PIXEL;
-						sourcePtr++;
-					}
-				}
-			}
+		//				resultPtr += BYTES_PER_PIXEL;
+		//				sourcePtr++;
+		//			}
+		//		}
+		//	}
 
-			mapSectionVectors.BackBufferIsLoaded = true;
+		//	mapSectionVectors.BackBufferIsLoaded = true;
 
-			return errors;
-		}
+		//	return errors;
+		//}
 
-		[Conditional("DEBUG2")]
-		private void TrackValueSwitches(ushort countVal, ref ushort previousCountVal)
-		{
-			if (countVal != previousCountVal)
-			{
-				NumberOfCountValSwitches++;
-				previousCountVal = countVal;
-			}
-		}
+		//[Conditional("DEBUG2")]
+		//private void TrackValueSwitches(ushort countVal, ref ushort previousCountVal)
+		//{
+		//	if (countVal != previousCountVal)
+		//	{
+		//		NumberOfCountValSwitches++;
+		//		previousCountVal = countVal;
+		//	}
+		//}
 
-		[Conditional("DEBUG2")]
-		private void CheckEscapeVelocity(double escapeVelocity)
-		{
-			if (escapeVelocity > 1.0)
-			{
-				Debug.WriteLine($"WARNING: The Escape Velocity is greater than 1.0");
-			}
-		}
+		//[Conditional("DEBUG2")]
+		//private void CheckEscapeVelocity(double escapeVelocity)
+		//{
+		//	if (escapeVelocity > 1.0)
+		//	{
+		//		Debug.WriteLine($"WARNING: The Escape Velocity is greater than 1.0");
+		//	}
+		//}
 
-		[Conditional("DEBUG2")]
-		private void CheckMissingEscapeVelocities(ushort[] escapeVelocities)
-		{
-			if (!escapeVelocities.Any(x => x > 0))
-			{
-				Debug.WriteLine("No EscapeVelocities Found.");
-			}
-		}
+		//[Conditional("DEBUG2")]
+		//private void CheckMissingEscapeVelocities(ushort[] escapeVelocities)
+		//{
+		//	if (!escapeVelocities.Any(x => x > 0))
+		//	{
+		//		Debug.WriteLine("No EscapeVelocities Found.");
+		//	}
+		//}
 
 
-		#endregion
+		//#endregion
 	}
 
 }
