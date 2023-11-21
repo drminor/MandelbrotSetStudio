@@ -98,20 +98,12 @@ namespace ImageBuilder
 						break;
 					}
 
-					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
+					BuildARow(pngImage, blockPtrY, blocksForThisRow, colorMap, segmentLengths, mapExtent, ct);
 
-					// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
-					// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
-					// But the screen coordinates increase from the top of the display to be bottom.
-					// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
-
-					var invert = !blocksForThisRow[0]?.IsInverted ?? false; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
-
-					// Calculate the number of lines used for this row of blocks
-					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
-
-					// Calculate the pixel values and write them to the image file.
-					BuildARow(pngImage, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					foreach (var ms in blocksForThisRow.Values)
+					{
+						_mapSectionVectorProvider.ReturnToPool(ms);
+					}
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 
@@ -146,10 +138,15 @@ namespace ImageBuilder
 
 		#region Private Methods
 
-		private void BuildARow(PngImage pngImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment,
-			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
+		private void BuildARow(PngImage pngImage, int blockPtrY, IDictionary<int, MapSection> blocksForThisRow, ColorMap colorMap, ValueTuple<int, int>[] segmentLengths, MapExtent mapExtent, CancellationToken ct)
 		{
-			var linePtr = startingPtr;
+			// Blocks with a negative Y map coordinate are drawn up-side, down.
+			bool drawInverted = GetDrawInverted(blocksForThisRow[0]);
+
+			// Calculate the number of lines used for this row of blocks
+			var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, drawInverted, mapExtent);
+
+			var linePtr = startingLinePtr;
 			for (var cntr = 0; cntr < numberOfLines && !ct.IsCancellationRequested; cntr++)
 			{
 				var iLine = pngImage.ImageLine;
@@ -160,7 +157,7 @@ namespace ImageBuilder
 					var mapSection = blocksForThisRow[blockPtrX];
 					var invertThisBlock = !mapSection.IsInverted;
 
-					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
+					Debug.Assert(invertThisBlock == drawInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
 
 					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
 					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr); // TODO: Avoid fetching the EscapeVelocities from the MapSectionVectors if UseEscapeVelocities = false.
@@ -181,16 +178,25 @@ namespace ImageBuilder
 							throw;
 						}
 					}
-					finally
-					{
-						_mapSectionVectorProvider.ReturnToPool(mapSection);
-					}
 				}
 
 				pngImage.WriteLine(iLine);
 
-				linePtr += increment;
+				linePtr += lineIncrement;
 			}
+		}
+
+		private bool GetDrawInverted(MapSection mapSection)
+		{
+			// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
+
+			// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
+			// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
+			// But the screen coordinates increase from the top of the display to be bottom.
+			// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
+
+			var result = !mapSection.IsInverted; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
+			return result;
 		}
 
 		private async Task<IDictionary<int, MapSection>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)

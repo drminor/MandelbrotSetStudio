@@ -1,11 +1,9 @@
-using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -69,32 +67,31 @@ namespace ImageBuilderWPF
 				UseEscapeVelocities = useEscapeVelocities
 			};
 
-			WmpImage? wmpImage = null;
-
 			//var outputStream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 			var imageSize = mapAreaInfo.CanvasSize.Round();
-			wmpImage = new WmpImage(imageFilePath, imageSize.Width, imageSize.Height, synchronizationContext, _mapSectionVectorProvider);
+			var wmpImage = new WmpImage(imageFilePath, imageSize.Width, imageSize.Height, synchronizationContext, _mapSectionVectorProvider);
 
 			try
 			{
-
-
 				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);
+				
 				var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
 				_blocksPerRow = mapExtent.Width;
 				var h = mapExtent.Height;
-				var maxBlockYPtr = h - 1;
 
 				Debug.WriteLineIf(_useDetailedDebug, $"The WmpBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
 				var segmentLengths = RMapHelper.GetSegmentLengths(mapExtent);
 
-				for (var blockPtrY = h - 2; blockPtrY >= 1 && !ct.IsCancellationRequested; blockPtrY--)
+				// Process rows using the map coordinates, from the highest Y coordinate to the lowest coordinate.
+				for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
+				//for (var blockPtrY = h - 2; blockPtrY >= 1 && !ct.IsCancellationRequested; blockPtrY--)
 				{
 					// Get all of the blocks for this row.
+					// Each row must use a fresh MsrJob.
+					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob);
 					var blockIndexY = blockPtrY - (h / 2);
-					var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob); // Each row must use a fresh MsrJob.
 					var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, _blocksPerRow, ct);
 
 					if (ct.IsCancellationRequested || msrSubJob.IsCancelled || blocksForThisRow.Count == 0)
@@ -103,21 +100,8 @@ namespace ImageBuilderWPF
 						break;
 					}
 
-					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
-
-					// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
-					// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
-					// But the screen coordinates increase from the top of the display to be bottom.
-					// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
-
-					var invert = !blocksForThisRow[0]?.IsInverted ?? false; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
-
-					// Calculate the number of lines used for this row of blocks
-					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, invert, mapExtent);
-
 					// Calculate the pixel values and write them to the image file.
-					var invertedBlockPtrY = maxBlockYPtr - blockPtrY;
-					BuildARow(wmpImage, invertedBlockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					BuildARow(wmpImage, blockPtrY, blocksForThisRow, colorMap, segmentLengths, mapExtent, ct);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 
@@ -152,45 +136,79 @@ namespace ImageBuilderWPF
 
 		#region Private Methods
 
-		private void BuildARow(WmpImage wmpImage, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment, 
-			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
+		private void BuildARow(WmpImage wmpImage, int blockPtrY, IDictionary<int, MapSection> blocksForThisRow, ColorMap colorMap, ValueTuple<int, int>[] segmentLengths, MapExtent mapExtent, CancellationToken ct)
 		{
+			// Blocks with a negative Y map coordinate are drawn up-side, down.
+			bool drawInverted = GetDrawInverted(blocksForThisRow[0]);
+			var widthOfFirstBlock = mapExtent.SizeOfFirstBlock.Width;
+			var heightOfLastBlock = mapExtent.SizeOfLastBlock.Height;
+
+			var maxBlockYPtr = mapExtent.Height - 1;
+			var invertedBlockPtrY = maxBlockYPtr - blockPtrY;
+
+			//var yLoc = blockPtrY == 0 ? invertedBlockPtrY * 128 : invertedBlockPtrY * 128 + mapExtent.BlockSize.Height - startingLinePtr;
+			var yLoc = invertedBlockPtrY == 0 ? 0 : heightOfLastBlock + ((invertedBlockPtrY - 1) * 128);
+
+			// Calculate the number of lines used for this row of blocks
+			var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetNumberOfLines(blockPtrY, drawInverted, mapExtent);
+
+			//int sourceYStartLoc;
+
+			//if (invertedBlockPtrY == 0)
+			//{
+			//	// This is the first block
+			//	sourceYStartLoc = drawInverted ? mapExtent.BlockSize.Height - numberOfLines : 0;
+			//}
+			//else if (blockPtrY == 0)
+			//{
+			//	// This is the last block
+			//	sourceYStartLoc = drawInverted ? 0 : mapExtent.BlockSize.Height - numberOfLines;
+			//}
+			//else
+			//{
+			//	sourceYStartLoc = 0;
+			//}
+
+			var sourceYStartLoc = drawInverted ? mapExtent.BlockSize.Height - (startingLinePtr + 1) : startingLinePtr;
+
+			Debug.WriteLine($"BlockYPtr: {blockPtrY}, InvertedBlockYPtr: {invertedBlockPtrY}, yLoc: {yLoc}, SourceYStartLoc: {sourceYStartLoc}, NumberOfLines: {numberOfLines}, startingLinePtr: {startingLinePtr}.");
+
+
+			//for (var blockPtrX = 0; blockPtrX < blocksForThisRow.Count; blockPtrX++)
 			for (var blockPtrX = 1; blockPtrX < blocksForThisRow.Count - 1; blockPtrX++)
 			{
 				var mapSection = blocksForThisRow[blockPtrX];
+
+				if (mapSection.MapSectionVectors == null)
+					continue;
+
 				var invertThisBlock = !mapSection.IsInverted;
+				Debug.Assert(invertThisBlock == drawInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
+				LoadPixelArray(mapSection.MapSectionVectors, colorMap, invertThisBlock);
 
-				Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a different value of isInverted as does the block at 0, {blockPtrY}.");
+				var lineLength = segmentLengths[blockPtrX].Item1;
+				var samplesToSkip = segmentLengths[blockPtrX].Item2;
 
-				//var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
-				//var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
-				//var escVelsForThisLine = new ushort[countsForThisLine?.Length ?? 0];
+				var sourceRect = new Int32Rect(samplesToSkip, sourceYStartLoc, lineLength, numberOfLines);
+				var sourceStride = mapExtent.BlockSize.Width * BYTES_PER_PIXEL;
 
-				//var lineLength = segmentLengths[blockPtrX].Item1;
-				//var samplesToSkip = segmentLengths[blockPtrX].Item2;
+				var xLoc = blockPtrX == 0 ? 0 : widthOfFirstBlock + ((blockPtrX - 1) * 128);
 
-				if (mapSection.MapSectionVectors != null)
-				{
-					LoadPixelArray(mapSection.MapSectionVectors, colorMap, invertThisBlock);
-					var sourceRect = new Int32Rect(0, 0, 128, 128);
-					var sourceStride = blockSizeWidth * BYTES_PER_PIXEL;
-
-					try
-					{
-						wmpImage.WriteBlock(sourceRect, mapSection.MapSectionVectors, sourceStride, blockPtrX * 128, blockPtrY * 128);
-						//mapSection.MapSectionVectors.DecreaseRefCount();
-					}
-					catch (Exception e)
-					{
-						if (!ct.IsCancellationRequested)
-						{
-							Debug.WriteLine($"Got exception: {e} from wmpImage.WriteBlock.");
-							throw;
-						}
-					}
-				}
-
+				wmpImage.WriteBlock(sourceRect, mapSection.MapSectionVectors, sourceStride, xLoc, yLoc);
 			}
+		}
+
+		private bool GetDrawInverted(MapSection mapSection)
+		{
+			// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
+
+			// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
+			// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
+			// But the screen coordinates increase from the top of the display to be bottom.
+			// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
+
+			var result = !mapSection.IsInverted; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
+			return result;
 		}
 
 		private async Task<IDictionary<int, MapSection>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
@@ -246,9 +264,13 @@ namespace ImageBuilderWPF
 
 			if (_isStopping)
 			{
+				foreach (var ms in _mapSectionsForRow.Values)
+				{
+					_mapSectionVectorProvider.ReturnToPool(ms);
+				}
 				_mapSectionsForRow.Clear();
-				// TODO: Return each MapSection to the pool
 			}
+
 			Debug.WriteLineIf(_useDetailedDebug, $"WmpBuilder: Completed Waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
 
 			return _mapSectionsForRow;
@@ -295,7 +317,7 @@ namespace ImageBuilderWPF
 
 		#region Pixel Array Support
 
-		private long LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool invert)
+		private long LoadPixelArray(MapSectionVectors mapSectionVectors, ColorMap colorMap, bool drawInverted)
 		{
 			Debug.Assert(mapSectionVectors.ReferenceCount > 0, "Getting the Pixel Array from a MapSectionVectors whose RefCount is < 1.");
 
@@ -315,8 +337,8 @@ namespace ImageBuilderWPF
 			var counts = mapSectionVectors.Counts;
 			var previousCountVal = counts[0];
 
-			var resultRowPtr = invert ? maxRowIndex * pixelStride : 0;
-			var resultRowPtrIncrement = invert ? -1 * pixelStride : pixelStride;
+			var resultRowPtr = drawInverted ? maxRowIndex * pixelStride : 0;
+			var resultRowPtrIncrement = drawInverted ? -1 * pixelStride : pixelStride;
 			var sourcePtrUpperBound = rowCount * colCount;
 
 			if (useEscapeVelocities)
