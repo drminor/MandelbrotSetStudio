@@ -546,7 +546,7 @@ namespace MSetExplorer
 			if (useAllCores)
 			{
 				var numberOfLogicalProc = Environment.ProcessorCount;
-				result = numberOfLogicalProc - 1;
+				result = numberOfLogicalProc; // - 1;
 			}
 			else
 			{

@@ -1,12 +1,17 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using MSS.Common;
+using System.Runtime.CompilerServices;
 using PngImageLib;
 
 namespace ImageBuilder
 {
     public sealed class PngImage : IDisposable
     {
-        private readonly Stream OutputStream;
+		private const double VALUE_FACTOR = 10000;
+
+		private readonly Stream OutputStream;
         private readonly ImageInfo imi;
         private readonly PngWriter png;
         private int curRow;
@@ -31,17 +36,6 @@ namespace ImageBuilder
             weOwnTheStream = false;
         }
 
-        //public void WriteLine(int[] pixelData)
-        //{
-        //    var iLine = new ImageLine(imi);
-        //    for(var ptr = 0; ptr < pixelData.Length; ptr++)
-        //    {
-        //        ImageLineHelper.SetPixelFromARGB8(iLine, ptr, pixelData[ptr]);
-        //    }
-
-        //    png.WriteRow(iLine, curRow++);
-        //}
-
         public void WriteLine(ImageLine iline)
         {
             png.WriteRow(iline, curRow++);
@@ -57,9 +51,56 @@ namespace ImageBuilder
             png.Abort();
         }
 
-        #region IDisposable Support
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void FillPngImageLineSegment(ImageLine iLine, int pixPtr, ushort[]? counts, ushort[]? escapeVelocities, int lineLength, int samplesToSkip, ColorMap colorMap)
+		{
+			if (counts == null || escapeVelocities == null)
+			{
+				FillPngImageLineSegmentWithWhite(iLine, pixPtr, lineLength);
+				return;
+			}
 
-        private bool disposedValue; // To detect redundant calls
+			var cComps = new byte[4];
+			var dest = new Span<byte>(cComps);
+
+			var previousCountVal = counts[0];
+
+			for (var xPtr = 0; xPtr < lineLength; xPtr++)
+			{
+				var countVal = counts[xPtr + samplesToSkip];
+
+				if (countVal != previousCountVal)
+				{
+					//NumberOfCountValSwitches++;
+					previousCountVal = countVal;
+				}
+
+				var escapeVelocity = colorMap.UseEscapeVelocities ? escapeVelocities[xPtr + samplesToSkip] / VALUE_FACTOR : 0;
+
+				if (escapeVelocity > 1.0)
+				{
+					Debug.WriteLine($"The Escape Velocity is greater that 1.0");
+				}
+
+				colorMap.PlaceColor(countVal, escapeVelocity, dest);
+
+				ImageLineHelper.SetPixel(iLine, pixPtr++, cComps[2], cComps[1], cComps[0]);
+			}
+		}
+
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void FillPngImageLineSegmentWithWhite(ImageLine iLine, int pixPtr, int len)
+		{
+			for (var xPtr = 0; xPtr < len; xPtr++)
+			{
+				ImageLineHelper.SetPixel(iLine, pixPtr++, 255, 255, 255);
+			}
+		}
+
+		#region IDisposable Support
+
+		private bool disposedValue; // To detect redundant calls
 
         private void Dispose(bool disposing)
         {

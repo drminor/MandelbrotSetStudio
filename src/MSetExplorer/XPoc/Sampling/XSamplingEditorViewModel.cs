@@ -398,7 +398,7 @@ namespace MSetExplorer.XPoc
 
 			var subdivision = _subdivisonProvider.GetSubdivision(samplePointDelta, mapBlockOffset, out var localMapBlockOffset);
 
-			var binaryPrecision = GetBinaryPrecision(updatedCoords, samplePointDelta, out var decimalPrecision);
+			var binaryPrecision = GetBinaryPrecision(updatedCoords, samplePointDelta);
 			var binaryPrecisionRounded = (int)binaryPrecision;
 			var result = new MapPositionSizeAndDelta(updatedCoords, new SizeDbl(displaySize), subdivision, binaryPrecisionRounded, localMapBlockOffset, canvasControlOffset, subdivision.Id);
 
@@ -424,9 +424,9 @@ namespace MSetExplorer.XPoc
 			return result;
 		}
 
-		public double GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out double decimalPrecision)
+		public double GetBinaryPrecision(RRectangle coords, RSize samplePointDelta)
 		{
-			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
+			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left);
 			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
 
 			return binaryPrecision;

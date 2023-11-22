@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -25,7 +26,7 @@ namespace ImageBuilder
 		private int _blocksPerRow;
 		private bool _isStopping;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -166,7 +167,7 @@ namespace ImageBuilder
 
 					try
 					{
-						BitmapHelper.FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
+						PngImage.FillPngImageLineSegment(iLine, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
 						destPixPtr += lineLength;
 					}
 					catch (Exception e)

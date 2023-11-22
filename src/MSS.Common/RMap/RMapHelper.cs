@@ -58,22 +58,14 @@ namespace MSS.Common
 			Debug.WriteLine($"GetNewSamplePointDelta scaled {original} by {factor} ({rReciprocalDiagStr}) and got {result}.");
 		}
 
-		public static double GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out double decimalPrecision)
-		{
-			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
-			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
+		//public static double GetBinaryPrecision(MapPositionSizeAndDelta mapAreaInfo)
+		//{
+		//	var binaryPrecision = RValueHelper.GetBinaryPrecision(mapAreaInfo.Coords.Right, mapAreaInfo.Coords.Left, out _);
 
-			return binaryPrecision;
-		}
+		//	binaryPrecision = Math.Max(binaryPrecision, Math.Abs(mapAreaInfo.Subdivision.SamplePointDelta.Exponent));
 
-		public static double GetBinaryPrecision(MapPositionSizeAndDelta mapAreaInfo)
-		{
-			var binaryPrecision = RValueHelper.GetBinaryPrecision(mapAreaInfo.Coords.Right, mapAreaInfo.Coords.Left, out _);
-
-			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(mapAreaInfo.Subdivision.SamplePointDelta.Exponent));
-
-			return binaryPrecision;
-		}
+		//	return binaryPrecision;
+		//}
 
 		public static SizeDbl GetDisplaySizeRounded16(SizeDbl displaySize)
 		{

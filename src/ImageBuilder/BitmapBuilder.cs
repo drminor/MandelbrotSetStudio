@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
@@ -17,6 +18,7 @@ namespace ImageBuilder
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionBuilder _mapSectionBuilder;
+		private readonly BitmapHelper _bitmapHelper;
 
 		private AsyncManualResetEvent _blocksForRowAreReady;
 		private int? _currentJobNumber;
@@ -35,6 +37,7 @@ namespace ImageBuilder
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapSectionBuilder = new MapSectionBuilder();
+            _bitmapHelper = new BitmapHelper();
 
 			_blocksForRowAreReady = new AsyncManualResetEvent();
 			_currentJobNumber = null;
@@ -105,7 +108,7 @@ namespace ImageBuilder
 
 					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetVerticalIntraBlockOffsets(blockPtrY, invert, mapExtent);
 
-					destPixPtr = BuildARow(result, destPixPtr, blockPtrY, invert, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, blockSize.Width, ct);
+					destPixPtr = BuildARow(result, destPixPtr, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, ct);
 
 					foreach(var ms in blocksForThisRow.Values)
 					{
@@ -132,8 +135,8 @@ namespace ImageBuilder
 
 		#region Private Methods
 
-		private int BuildARow(byte[] result, int destPixPtr, int blockPtrY, bool isInverted, int startingPtr, int numberOfLines, int increment,
-			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, int blockSizeWidth, CancellationToken ct)
+		private int BuildARow(byte[] result, int destPixPtr, int startingPtr, int numberOfLines, int increment,
+			IDictionary<int, MapSection> blocksForThisRow, ValueTuple<int, int>[] segmentLengths, ColorMap colorMap, CancellationToken ct)
 		{
 			var linePtr = startingPtr;
 
@@ -142,18 +145,12 @@ namespace ImageBuilder
 				for (var blockPtrX = 0; blockPtrX < blocksForThisRow.Count; blockPtrX++)
 				{
 					var mapSection = blocksForThisRow[blockPtrX];
-					var invertThisBlock = !mapSection.IsInverted;
-
-					Debug.Assert(invertThisBlock == isInverted, $"The block at {blockPtrX}, {blockPtrY} has a differnt value of isInverted as does the block at 0, {blockPtrY}.");
-
-					var countsForThisLine = mapSection.GetOneLineFromCountsBlock(linePtr);
-					var escVelsForThisLine = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
 
 					var (samplesToSkip, lineLength) = segmentLengths[blockPtrX];
 
 					try
 					{
-						BitmapHelper.FillImageLineSegment(result, destPixPtr, countsForThisLine, escVelsForThisLine, lineLength, samplesToSkip, colorMap);
+						_ = _bitmapHelper.FillImageLineSegment(mapSection, colorMap, result, destPixPtr, linePtr, lineLength, samplesToSkip);
 						destPixPtr += lineLength;
 					}
 					catch (Exception e)

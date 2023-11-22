@@ -3,10 +3,11 @@ using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace MSS.Common.MSet
 {
-	public class BitmapBufferLoader
+	public class BitmapHelper
 	{
 		private const double VALUE_FACTOR = 10000;
 		private const int BYTES_PER_PIXEL = 4;
@@ -19,7 +20,7 @@ namespace MSS.Common.MSet
 
 		#region Public Methods
 
-		public long LoadPixelArray(MapSection mapSection, ColorMap colorMap)
+		public long LoadPixelArray(MapSection mapSection, ColorMap colorMap, byte[] imageData)
 		{
 			bool drawInverted = !mapSection.IsInverted;
 
@@ -38,9 +39,9 @@ namespace MSS.Common.MSet
 
 			var pixelStride = colCount * BYTES_PER_PIXEL;
 
-			var backBuffer = mapSectionVectors.BackBuffer;
+			//var backBuffer = mapSectionVectors.BackBuffer;
 
-			Debug.Assert(backBuffer.Length == mapSectionVectors.BlockSize.NumberOfCells * BYTES_PER_PIXEL);
+			Debug.Assert(imageData.Length == mapSectionVectors.BlockSize.NumberOfCells * BYTES_PER_PIXEL);
 
 			var counts = mapSectionVectors.Counts;
 			var previousCountVal = counts[0];
@@ -66,7 +67,7 @@ namespace MSS.Common.MSet
 						var escapeVelocity = escapeVelocities[sourcePtr] / VALUE_FACTOR;
 						CheckEscapeVelocity(escapeVelocity);
 
-						var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
+						var destination = new Span<byte>(imageData, resultPtr, BYTES_PER_PIXEL);
 						errors += colorMap.PlaceColor(countVal, escapeVelocity, destination);
 
 						resultPtr += BYTES_PER_PIXEL;
@@ -90,7 +91,7 @@ namespace MSS.Common.MSet
 						var countVal = counts[sourcePtr];
 						TrackValueSwitches(countVal, ref previousCountVal);
 
-						var destination = new Span<byte>(backBuffer, resultPtr, BYTES_PER_PIXEL);
+						var destination = new Span<byte>(imageData, resultPtr, BYTES_PER_PIXEL);
 						errors += colorMap.PlaceColor(countVal, escapeVelocity: 0, destination);
 
 						resultPtr += BYTES_PER_PIXEL;
@@ -99,9 +100,65 @@ namespace MSS.Common.MSet
 				}
 			}
 
-			mapSectionVectors.BackBufferIsLoaded = true;
+			//mapSectionVectors.BackBufferIsLoaded = true;
 
 			return errors;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public long FillImageLineSegment(MapSection mapSection, ColorMap colorMap, byte[] imageData, int pixPtr, int linePtr, int lineLength, int samplesToSkip)
+		{
+			var errors = 0L;
+
+			var counts = mapSection.GetOneLineFromCountsBlock(linePtr);
+			var escapeVelocities = mapSection.GetOneLineFromEscapeVelocitiesBlock(linePtr);
+
+			if (counts == null || escapeVelocities == null)
+			{
+				FillImageLineSegmentWithWhite(imageData, pixPtr, lineLength);
+				return errors;
+			}
+
+			var previousCountVal = counts[0];
+
+			for (var xPtr = 0; xPtr < lineLength; xPtr++)
+			{
+				var countVal = counts[xPtr + samplesToSkip];
+
+				if (countVal != previousCountVal)
+				{
+					//NumberOfCountValSwitches++;
+					previousCountVal = countVal;
+				}
+
+				var escapeVelocity = colorMap.UseEscapeVelocities ? escapeVelocities[xPtr + samplesToSkip] / VALUE_FACTOR : 0;
+
+				if (escapeVelocity > 1.0)
+				{
+					Debug.WriteLine($"The Escape Velocity is greater that 1.0");
+				}
+
+				var offset = pixPtr++ * 4;
+				var dest = new Span<byte>(imageData, offset, 4);
+
+				errors += colorMap.PlaceColor(countVal, escapeVelocity, dest);
+			}
+
+			return errors;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static void FillImageLineSegmentWithWhite(Span<byte> imageLine, int pixPtr, int len)
+		{
+			for (var xPtr = 0; xPtr < len; xPtr++)
+			{
+				var offset = pixPtr++ * 4;
+
+				imageLine[offset] = 255;
+				imageLine[offset + 1] = 255;
+				imageLine[offset + 2] = 255;
+				imageLine[offset + 3] = 255;
+			}
 		}
 
 		#endregion

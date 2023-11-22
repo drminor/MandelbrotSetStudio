@@ -100,6 +100,8 @@ namespace MSS.Types
 
 		public bool CrossesYZero => Values[2].Sign != Values[3].Sign && Values[2].Sign != 0 && Values[3].Sign != 0;
 
+		public bool CrossesXZero => Values[0].Sign != Values[1].Sign && Values[0].Sign != 0 && Values[1].Sign != 0;
+
 
 		//public RRectangle Scale(RPoint factor)
 		//{

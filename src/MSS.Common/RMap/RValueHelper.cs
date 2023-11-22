@@ -346,7 +346,7 @@ namespace MSS.Common
 		/// <param name="rValue2"></param>
 		/// <param name="diff">The absolute difference between rValue1 and rValue2</param>
 		/// <returns>Number of decimal digits</returns>
-		public static double GetBinaryPrecision(RValue rValue1, RValue rValue2, out double decimalPrecision)
+		public static double GetBinaryPrecision(RValue rValue1, RValue rValue2)
 		{
 			var nrmRVal1 = RNormalizer.Normalize(rValue1, rValue2, out var nrmRVal2);
 			var diffNoPrecision = nrmRVal1.Sub(nrmRVal2).Abs();
@@ -361,7 +361,15 @@ namespace MSS.Common
 
 			var result = Math.Ceiling(Math.Abs(logB10 * 3.3219));
 
-			decimalPrecision = Math.Ceiling(Math.Abs(logB10));
+			return result;
+		}
+
+		public static double GetBinaryPrecision(RValue rValue1)
+		{
+			var doubles = ConvertToDoubles(rValue1);
+			var val = doubles.Sum();
+			var logB10 = Math.Log10(val);
+			var result = Math.Ceiling(Math.Abs(logB10 * 3.3219));
 
 			return result;
 		}

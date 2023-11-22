@@ -704,14 +704,6 @@ namespace MSetExplorer.XPoc
 			return result;
 		}
 
-		public double GetBinaryPrecision(RRectangle coords, RSize samplePointDelta, out double decimalPrecision)
-		{
-			var binaryPrecision = RValueHelper.GetBinaryPrecision(coords.Right, coords.Left, out decimalPrecision);
-			binaryPrecision = Math.Max(binaryPrecision, Math.Abs(samplePointDelta.Exponent));
-
-			return binaryPrecision;
-		}
-
 		#endregion
 
 		#region Get MapBlockOffset Methods 
