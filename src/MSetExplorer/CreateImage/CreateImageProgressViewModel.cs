@@ -55,19 +55,19 @@ namespace MSetExplorer
 
 			var mapAreaInfoWithSize = _mapJobHelper.GetMapPositionSizeAndDelta(areaColorAndCalcSettings.MapAreaInfo, canvasSize);
 
-			var synchronizationContext = SynchronizationContext.Current;
+			//var synchronizationContext = SynchronizationContext.Current;
 
-			if (synchronizationContext == null)
-			{
-				throw new InvalidOperationException("No SynchronizationContext is available.");
-			}
+			//if (synchronizationContext == null)
+			//{
+			//	throw new InvalidOperationException("No SynchronizationContext is available.");
+			//}
 
 			var jobId = areaColorAndCalcSettings.JobId;
 			var ownerType = areaColorAndCalcSettings.JobOwnerType;
 			var colorBandSet = areaColorAndCalcSettings.ColorBandSet;
 			var mapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
-			_task = Task.Run(() => _imageBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, useEscapeVelocities, mapCalcSettings, StatusCallback, _cts.Token, synchronizationContext), _cts.Token);
+			_task = Task.Run(() => _imageBuilder.BuildAsync(imageFilePath, jobId, ownerType, mapAreaInfoWithSize, colorBandSet, mapCalcSettings, useEscapeVelocities, _cts.Token/*, _synchronizationContext*/, StatusCallback), _cts.Token);
 		}
 
 		public void CancelCreateImage()

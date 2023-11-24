@@ -1,4 +1,5 @@
 ﻿using ImageBuilder;
+using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
@@ -17,16 +18,19 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
+		private const int BYTES_PER_PIXEL = 4;
+
 		private readonly static PixelFormat PIXEL_FORMAT = PixelFormats.Pbgra32;
 		private const int DOTS_PER_INCH = 96;
+
 
 		private const int MS_WAIT_FOR_CANCELLED_TASK_TO_COMPLETE = 500;
 
 		private const double PREVIEW_CONTAINER_SIZE = 1024;
 
 		private MapJobHelper _mapJobHelper;
-		private readonly SynchronizationContext? _synchronizationContext;
-		private readonly BitmapBuilder _bitmapBuilder;
+		private SynchronizationContext? _synchronizationContext;
+		private readonly IBitmapBuilder _bitmapBuilder;
 
 		private readonly ColorBandSet _colorBandSet;
 		private readonly MapCalcSettings _mapCalcSettings;
@@ -48,25 +52,25 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(MapJobHelper mapJobHelper, BitmapBuilder bitmapBuilder, ObjectId jobId, OwnerType ownerType, MapCenterAndDelta mapAreaInfo, SizeDbl posterSize, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities, Color fallbackColor)
+		public LazyMapPreviewImageProvider(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize, bool useEscapeVelocities, Color fallbackColor, MapJobHelper mapJobHelper, IBitmapBuilder bitmapBuilder)
 		{
 			_mapJobHelper = mapJobHelper;
 
 			_synchronizationContext = SynchronizationContext.Current;
 			_bitmapBuilder = bitmapBuilder;
 
-			_colorBandSet = colorBandSet;
-			_mapCalcSettings = mapCalcSettings;
+			_colorBandSet = areaColorAndCalcSettings.ColorBandSet;
+			_mapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 			_useEscapeVelocitites = useEscapeVelocities;
 			_fallbackColor = fallbackColor;
 
 			_cts = new CancellationTokenSource();
 			_currentBitmapBuilderTask = null;
 
-			JobId = jobId;
-			OwnerType = ownerType;
+			JobId = areaColorAndCalcSettings.JobId;
+			OwnerType = areaColorAndCalcSettings.JobOwnerType;
 
-			_mapAreaInfo = mapAreaInfo;
+			_mapAreaInfo = areaColorAndCalcSettings.MapAreaInfo;
 			_posterSize = posterSize;
 
 			var containerSize = new SizeDbl(PREVIEW_CONTAINER_SIZE);
@@ -75,7 +79,10 @@ namespace MSetExplorer
 			Bitmap = CreateBitmap(previewMapAreaInfo.CanvasSize.Round());
 			FillBitmapWithColor(_fallbackColor, Bitmap);
 
-			QueueBitmapGeneration(JobId, ownerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
+			if (_synchronizationContext != null)
+			{
+				QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings, _synchronizationContext);
+			}
 		}
 
 		#endregion
@@ -112,6 +119,18 @@ namespace MSetExplorer
 
 		public void RequestBitmapGeneration(MapCenterAndDelta mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
+			if (_synchronizationContext == null)
+			{
+				if (SynchronizationContext.Current == null)
+				{
+					throw new InvalidOperationException("Request BitmapGeneration. The LazyMapPreviewImageProvider has no SynchronizationContext.");
+				}
+				else
+				{
+					_synchronizationContext = SynchronizationContext.Current;
+				}
+			}
+
 			_mapAreaInfo = mapAreaInfo;
 			_posterSize = posterSize;
 
@@ -119,7 +138,7 @@ namespace MSetExplorer
 
 			Bitmap = CreateBitmap(previewMapAreaInfo.CanvasSize.Round());
 			FillBitmapWithColor(_fallbackColor, Bitmap);
-			QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
+			QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings, _synchronizationContext);
 		}
 
 		public void CancelBitmapGeneration()
@@ -173,7 +192,7 @@ namespace MSetExplorer
 			return previewMapAreaInfo;
 		}
 
-		private void QueueBitmapGeneration(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		private void QueueBitmapGeneration(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta previewMapArea, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, SynchronizationContext synchronizationContext)
 		{
 			var previewImageSize = previewMapArea.CanvasSize;
 			Debug.WriteLine($"Creating a preview image with size: {previewMapArea.CanvasSize} and map coords: {previewMapArea.Coords}.");
@@ -189,7 +208,8 @@ namespace MSetExplorer
 				{
 					try
 					{
-						var pixels = await _bitmapBuilder.BuildAsync(jobId, ownerType, previewMapArea, colorBandSet, _useEscapeVelocitites, mapCalcSettings, _cts.Token, statusCallback: null);
+						var pixels = await _bitmapBuilder.BuildAsync(jobId, ownerType, previewMapArea, colorBandSet, mapCalcSettings, _useEscapeVelocitites, _cts.Token, synchronizationContext, statusCallback: null);
+
 						if (!_cts.IsCancellationRequested)
 						{
 							_synchronizationContext?.Post(o => BitmapCompleted(pixels, o), _cts);
@@ -261,7 +281,7 @@ namespace MSetExplorer
 			var h = (int)Math.Round(bitmap.Height);
 
 			var rect = new Int32Rect(0, 0, w, h);
-			var stride = 4 * w;
+			var stride = BYTES_PER_PIXEL * w;
 			bitmap.WritePixels(rect, pixels, stride, 0);
 		}
 
@@ -270,7 +290,7 @@ namespace MSetExplorer
 			var width = (int) Math.Round(bitmap.Width);
 
 			var pixels = CreateOneRowWithColor(color, width);
-			var stride = width * 4;
+			var stride = width * BYTES_PER_PIXEL;
 
 			var rect = new Int32Rect(0, 0, width, 1);
 
@@ -283,11 +303,11 @@ namespace MSetExplorer
 
 		private byte[] CreateOneRowWithColor(Color color, int rowLength)
 		{
-			var pixels = new byte[rowLength * 4];
+			var pixels = new byte[rowLength * BYTES_PER_PIXEL];
 
 			for (var i = 0; i < rowLength; i++)
 			{
-				var offSet = i * 4;
+				var offSet = i * BYTES_PER_PIXEL;
 				pixels[offSet] = color.B;
 				pixels[offSet + 1] = color.G;
 				pixels[offSet + 2] = color.R;

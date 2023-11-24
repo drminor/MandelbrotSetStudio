@@ -11,7 +11,12 @@ namespace MSS.Common
 	{
 		long NumberOfCountValSwitches { get; }
 
-		Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, 
-			MapCalcSettings mapCalcSettings, CancellationToken ct, Action<double>? statusCallBack = null);
+		Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
+			bool useEscapeVelocities, CancellationToken ct, SynchronizationContext synchronizationContext, Action<double>? statusCallback = null);
+
+
+		//Task FillAsync(WriteableBitmap writeableBitmap, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, 
+		//	bool useEscapeVelocities, CancellationToken ct, SynchronizationContext synchronizationContext);
+
 	}
 }

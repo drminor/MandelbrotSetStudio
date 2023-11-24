@@ -605,7 +605,7 @@ namespace MSetGeneratorPrototype
 			var currentBlockSize = _samplePointBuilder.BlockSize;
 			var blockSizeForThisRequest = mapSectionRequest.BlockSize;
 
-			if (currentBlockSize != blockSizeForThisRequest)
+			if (blockSizeForThisRequest != currentBlockSize)
 			{
 				_samplePointBuilder.Dispose();
 				_samplePointBuilder = new SamplePointBuilder(new SamplePointCache(blockSizeForThisRequest));

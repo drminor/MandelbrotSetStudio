@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 
 namespace MSS.Types.MSet
 {
@@ -8,10 +9,10 @@ namespace MSS.Types.MSet
 		public static readonly AreaColorAndCalcSettings Empty = _lazyAreaColorAndCalcSettings.Value;
 
 		public AreaColorAndCalcSettings()
-			: this(string.Empty, OwnerType.Project, MapCenterAndDelta.Empty, new ColorBandSet(), new MapCalcSettings())
+			: this(ObjectId.Empty, OwnerType.Project, MapCenterAndDelta.Empty, new ColorBandSet(), new MapCalcSettings())
 		{ }
 
-		public AreaColorAndCalcSettings(string jobId, OwnerType jobOwnerType, MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		public AreaColorAndCalcSettings(ObjectId jobId, OwnerType jobOwnerType, MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			JobId = jobId;
 			JobOwnerType = jobOwnerType;
@@ -20,7 +21,7 @@ namespace MSS.Types.MSet
 			MapCalcSettings = mapCalcSettings;
 		}
 
-		public string JobId { get; init; }
+		public ObjectId JobId { get; init; }
 		public OwnerType JobOwnerType { get; init; }
 		public MapCenterAndDelta MapAreaInfo { get; init; }
 		public ColorBandSet ColorBandSet { get; init; }

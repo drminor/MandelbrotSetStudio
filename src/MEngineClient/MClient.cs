@@ -96,17 +96,15 @@ namespace MEngineClient
 
 		private MapSectionServiceResponse GenerateMapSectionInternal(MapSectionServiceRequest req, CancellationToken ct)
 		{
+			var ctsRegistration = ct.Register(CancelGeneration, req);
+
 			try
 			{
 				var mapSectionService = MapSectionService;
 
-				var registration = ct.Register(CancelGeneration, req);
-
 				Debug.WriteLineIf(_useDetailedDebug, $"MEngineClient #{ClientNumber} is starting the call to Generate MapSection: {req.ScreenPosition}.");
 				var mapSectionServiceResponse = mapSectionService.GenerateMapSection(req);
 				Debug.WriteLineIf(_useDetailedDebug, $"MEngineClient #{ClientNumber} is completing the call to Generate MapSection: {req.ScreenPosition}. Request is Cancelled = {ct.IsCancellationRequested}.");
-
-				registration.Unregister();
 
 				if (ct.IsCancellationRequested)
 				{
@@ -125,6 +123,10 @@ namespace MEngineClient
 				Debug.WriteLine($"GenerateMapSectionInternal raised Exception: {e}.");
 				throw;
 			}
+			finally
+			{
+				ctsRegistration.Unregister();
+			}
 		}
 
 		private void CancelGeneration(object? state, CancellationToken ct)
@@ -136,8 +138,8 @@ namespace MEngineClient
 					RequestId = req.RequestId
 				};
 
-				var mapSectionService = MapSectionService;
-				_ = mapSectionService.CancelGeneration(cancelRequest);
+				// Send a Cancel request to the remote end-point.
+				_ = MapSectionService.CancelGeneration(cancelRequest);
 			}
 			else
 			{

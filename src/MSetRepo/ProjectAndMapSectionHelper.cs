@@ -268,27 +268,13 @@ namespace MSetRepo
 
 			var mapAreaInfoV1 = mapJobHelper.GetMapPositionSizeAndDelta(mapAreaInfo, displaySize);
 
-			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, job.Id.ToString(), jobOwnerType, mapAreaInfoV1, mapCalcSettings);
+			var msrJob = mapSectionBuilder.CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, job.Id, jobOwnerType, mapAreaInfoV1, mapCalcSettings);
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfoV1.CanvasSize.Round(), mapAreaInfoV1.CanvasControlOffset, mapAreaInfoV1.Subdivision.BlockSize);
 
 			var mapSectionRequests = mapSectionBuilder.CreateSectionRequests(msrJob, mapExtentInBlocks);
 
 			return mapSectionRequests;
-		}
-
-		private static MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
-		{
-			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-			//var binaryPrecision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
-
-			var binaryPrecision = mapAreaInfo.Precision;
-			var limbCount = new MapSectionBuilder().GetLimbCount(binaryPrecision);
-
-			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
-				binaryPrecision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
-
-			return msrJob;
 		}
 
 		#endregion

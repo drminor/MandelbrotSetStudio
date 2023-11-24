@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Threading;
@@ -10,7 +11,7 @@ namespace MSS.Common
 	{
 		long NumberOfCountValSwitches { get; }
 
-		Task<bool> BuildAsync(string imageFilePath, string jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, 
-			MapCalcSettings mapCalcSettings, Action<double> statusCallBack, CancellationToken ct, SynchronizationContext synchronizationContext);
+		Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
+			bool useEscapeVelocities, CancellationToken ct/*, SynchronizationContext synchronizationContext*/, Action<double> statusCallBack);
 	}
 }

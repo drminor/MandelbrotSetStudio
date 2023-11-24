@@ -86,6 +86,8 @@ namespace MEngineClient
 
 		private MapSectionResponse GenerateMapSectionInternal(MapSectionRequest mapSectionRequest, CancellationToken ct)
 		{
+			var ctsRegistration = mapSectionRequest.MsrJob.CancellationTokenSource.Token.Register(() => mapSectionRequest.CancellationTokenSource.Cancel());
+
 			try
 			{
 				if (mapSectionRequest.MapSectionVectors2 == null)
@@ -116,6 +118,10 @@ namespace MEngineClient
 			{
 				Debug.WriteLine($"MClientLocal: GenerateMapSectionInternal raised Exception: {e}.");
 				throw;
+			}
+			finally
+			{
+				ctsRegistration.Unregister();
 			}
 		}
 

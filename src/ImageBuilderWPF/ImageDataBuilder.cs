@@ -6,18 +6,16 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
 namespace ImageBuilderWPF
 {
-	public class WmpBuilder : IImageBuilder
+	public class ImageDataBuilder : IBitmapBuilder
 	{
 		#region Private Fields
 
-		private readonly SynchronizationContext _synchronizationContext;
 		private readonly IMapLoaderManager _mapLoaderManager;
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
 		private readonly MapSectionBuilder _mapSectionBuilder;
@@ -35,10 +33,8 @@ namespace ImageBuilderWPF
 
 		#region Constructor
 
-		public WmpBuilder(IMapLoaderManager mapLoaderManager, MapSectionVectorProvider mapSectionVectorProvider)
+		public ImageDataBuilder(IMapLoaderManager mapLoaderManager, MapSectionVectorProvider mapSectionVectorProvider)
 		{
-			_synchronizationContext = SynchronizationContext.Current ?? throw new InvalidOperationException("No SynchronizationContext is available.");
-
 			_mapLoaderManager = mapLoaderManager;
 			_mapSectionVectorProvider = mapSectionVectorProvider;
 			_mapSectionBuilder = new MapSectionBuilder();
@@ -61,31 +57,29 @@ namespace ImageBuilderWPF
 
 		#region Public Methods
 
-		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities,
-			CancellationToken ct/*, SynchronizationContext synchronizationContext*/, Action<double> statusCallback)
+		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities,
+			CancellationToken ct, SynchronizationContext synchronizationContext, Action<double>? statusCallback = null)
 		{
-			var result = true;
-
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
 			{
 				UseEscapeVelocities = useEscapeVelocities
 			};
 
-			//var outputStream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);
+
 			var imageSize = mapAreaInfo.CanvasSize.Round();
-			var wmpImage = new WmpImage(imageFilePath, imageSize.Width, imageSize.Height, _synchronizationContext, _mapSectionVectorProvider);
+
+			var imageDataBuffer = new ImageData(imageSize.Width, imageSize.Height, synchronizationContext, _mapSectionVectorProvider);
 
 			try
 			{
-				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);
-				
 				var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
 				_blocksPerRow = mapExtent.Width;
 				var h = mapExtent.Height;
 
-				Debug.WriteLineIf(_useDetailedDebug, $"The WmpBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The ImageDataBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
 
 				var segmentLengths = RMapHelper.GetHorizontalIntraBlockOffsets(mapExtent);
 
@@ -100,18 +94,17 @@ namespace ImageBuilderWPF
 
 					if (ct.IsCancellationRequested || msrSubJob.IsCancelled || blocksForThisRow.Count == 0)
 					{
-						result = false;
-						break;
+						return null;
 					}
 
 					// Calculate the pixel values and write them to the image file.
-					BuildARow(wmpImage, blockPtrY, blocksForThisRow, colorMap, segmentLengths, mapExtent, ct);
+					BuildARow(imageDataBuffer, blockPtrY, blocksForThisRow, colorMap, segmentLengths, mapExtent, ct);
 
 					ReportRowCompletion(blockPtrY, mapExtent);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 
-					statusCallback(100 * percentageCompleted);
+					statusCallback?.Invoke(100 * percentageCompleted);
 				}
 			}
 			catch (Exception e)
@@ -127,14 +120,21 @@ namespace ImageBuilderWPF
 			{
 				if (!ct.IsCancellationRequested)
 				{
-					wmpImage?.End();
+					imageDataBuffer?.End();
 				}
 				else
 				{
-					wmpImage?.Abort();
+					imageDataBuffer?.Abort();
 				}
 
 				_mapSectionsForRow?.Clear();
+			}
+
+			var result = new byte[imageDataBuffer.PixelBufferSize];
+
+			if (imageDataBuffer.PixelBufferSize > 1000)
+			{
+				synchronizationContext.Send((o) => { imageDataBuffer.FillPixelBuffer(result); }, null);
 			}
 
 			return result;
@@ -144,7 +144,7 @@ namespace ImageBuilderWPF
 
 		#region Private Methods
 
-		private void BuildARow(WmpImage wmpImage, int blockPtrY, IDictionary<int, MapSection> blocksForThisRow, ColorMap colorMap, ValueTuple<int, int>[] segmentLengths, MapExtent mapExtent, CancellationToken ct)
+		private void BuildARow(ImageData imageDataBuffer, int blockPtrY, IDictionary<int, MapSection> blocksForThisRow, ColorMap colorMap, ValueTuple<int, int>[] segmentLengths, MapExtent mapExtent, CancellationToken ct)
 		{
 			// Blocks with a negative Y map coordinate are drawn up-side, down.
 			//bool drawInverted = GetDrawInverted(blocksForThisRow[0]);
@@ -179,7 +179,7 @@ namespace ImageBuilderWPF
 
 				var xLoc = blockPtrX == 0 ? 0 : widthOfFirstBlock + ((blockPtrX - 1) * 128);
 
-				wmpImage.WriteBlock(sourceRect, mapSection.MapSectionVectors, mapSection.MapSectionVectors.BackBuffer, xLoc, yLoc);
+				imageDataBuffer.WriteBlock(sourceRect, mapSection.MapSectionVectors, mapSection.MapSectionVectors.BackBuffer, xLoc, yLoc);
 			}
 		}
 
@@ -237,12 +237,12 @@ namespace ImageBuilderWPF
 
 			if (_isStopping)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"WmpBuilder: Is stopping Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ImageDataBuilder: Is stopping Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
 				CancelJobAndReturnMapSections(msrJob);
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"WmpBuilder: Completed waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ImageDataBuilder: Completed waiting for the blocks. Job#: {msrJob.MapLoaderJobNumber}. {_mapSectionsForRow.Count} blocks were received.");
 			}
 
 			return _mapSectionsForRow;
@@ -270,7 +270,7 @@ namespace ImageBuilderWPF
 				}
 				else
 				{
-					Debug.WriteLine($"WmpBuilder recieved an empty MapSection. Job Number: {mapSection.JobNumber}.");
+					Debug.WriteLine($"ImageDataBuilder recieved an empty MapSection. Job Number: {mapSection.JobNumber}.");
 				}
 			}
 			else

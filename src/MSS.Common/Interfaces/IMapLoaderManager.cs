@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -10,12 +11,11 @@ namespace MSS.Common
 	{
 		event EventHandler<MsrJob>? RequestAdded;
 
-		MsrJob CreateMapSectionRequestJob(JobType jobType, string jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings);
+		MsrJob CreateMapSectionRequestJob(JobType jobType, ObjectId jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings);
 
 		MsrJob CreateNewCopy(MsrJob s);
 
 		List<MapSection> Push(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSection> mapSectionReadyCallback, Action<int, bool> mapViewUpdateCompleteCallback, CancellationToken ct, out List<MapSectionRequest> requestsPendingGeneration);
 
-		//long NumberOfCountValSwitches { get; }
 	}
 }

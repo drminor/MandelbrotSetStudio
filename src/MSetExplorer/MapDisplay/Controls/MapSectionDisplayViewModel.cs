@@ -1456,7 +1456,7 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void ReportSubmitJobDetails(AreaColorAndCalcSettings? previousValue, AreaColorAndCalcSettings? newValue, bool isBound)
 		{
-			var currentJobId = previousValue?.JobId ?? ObjectId.Empty.ToString();
+			var currentJobId = previousValue?.JobId ?? ObjectId.Empty;
 			var forClause = isBound ? "with bounds" : "without bounds";
 
 			if (newValue == null)

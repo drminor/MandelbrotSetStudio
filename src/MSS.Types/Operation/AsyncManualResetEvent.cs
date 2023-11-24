@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Runtime.ExceptionServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSS.Types
@@ -45,23 +47,54 @@ namespace MSS.Types
 			}
 		}
 
-		//private bool TFunc(object? state)
+		/// <summary>
+		/// Asynchronously waits for this event to be set or for the wait to be canceled.
+		/// </summary>
+		/// <param name="cancellationToken">The cancellation token used to cancel the wait. If this token is already canceled, this method will first check whether the event is set.</param>
+		public Task WaitAsync(CancellationToken cancellationToken)
+		{
+			var waitTask = WaitAsync();
+			if (waitTask.IsCompleted)
+				return waitTask;
+			return waitTask.WaitAsync(cancellationToken);
+		}
+
+		///// <summary>
+		///// Synchronously waits for this event to be set. This method may block the calling thread.
+		///// </summary>
+		//public void Wait()
 		//{
-		//	var ourTcs = state as TaskCompletionSource<bool>;
+		//	var x = WaitAsync();
+		//	x.GetAwaiter().GetResult();
+		//}
 
-		//	ourTcs!.TrySetResult(true);
+		///// <summary>
+		///// Synchronously waits for this event to be set. This method may block the calling thread.
+		///// </summary>
+		///// <param name="cancellationToken">The cancellation token used to cancel the wait. If this token is already canceled, this method will first check whether the event is set.</param>
+		//public void Wait(CancellationToken cancellationToken)
+		//{
+		//	var ret = WaitAsync(CancellationToken.None);
+		//	if (ret.IsCompleted)
+		//		return;
 
-		//	return true;
+		//	try
+		//	{
+		//		ret.Wait(cancellationToken);
+		//	}
+		//	catch (AggregateException ex)
+		//	{
+		//		throw PrepareForRethrow(ex.InnerException!);
+		//	}
+		//}
 
-		//	//if (state is TaskCompletionSource<bool> tcsBool)
-		//	//{
-		//	//	tcsBool.TrySetResult(true);
-		//	//	return true;
-		//	//}
-		//	//else
-		//	//{
-		//	//	return false;
-		//	//}
+		//public static Exception PrepareForRethrow(Exception exception)
+		//{
+		//	ExceptionDispatchInfo.Capture(exception).Throw();
+
+		//	// The code cannot ever get here. We just return a value to work around a badly-designed API (ExceptionDispatchInfo.Throw):
+		//	//  https://connect.microsoft.com/VisualStudio/feedback/details/689516/exceptiondispatchinfo-api-modifications (http://www.webcitation.org/6XQ7RoJmO)
+		//	return exception;
 		//}
 	}
 }

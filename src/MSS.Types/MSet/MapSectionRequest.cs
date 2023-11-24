@@ -119,7 +119,7 @@ namespace MSS.Types.MSet
 		public bool NeitherRegularOrInvertedRequestIsInPlay => !RegularOrInvertedRequestIsInPlay;
 
 		public JobType JobType => MsrJob.JobType;
-		public string JobId => MsrJob.JobId;
+		public string JobId => MsrJob.JobId.ToString();
 		public OwnerType OwnerType => MsrJob.OwnerType;
 
 		public Subdivision Subdivision => MsrJob.Subdivision;

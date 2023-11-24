@@ -185,13 +185,14 @@ namespace MEngineService.Services
 
 		private MsrJob GetMsrJob(MapSectionServiceRequest req)
 		{
+			var jobId = new ObjectId(req.JobId);
 			var samplePointDelta = _dtoMapper.MapFrom(req.SamplePointDelta);
 			var subdivision = new Subdivision(samplePointDelta, new BigVector());
 
 			var result = new MsrJob(
 				req.MapLoaderJobNumber, 
 				JobType.FullScale, 
-				req.JobId, 
+				jobId, 
 				req.OwnerType, 
 				subdivision,
 				originalSourceSubdivisionId: subdivision.Id.ToString(),

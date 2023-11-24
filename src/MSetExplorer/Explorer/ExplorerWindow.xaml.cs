@@ -596,7 +596,7 @@ namespace MSetExplorer
 			var viewModelFactory = _vm.ViewModelFactory;
 			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel(ImageFileType.PNG);
 
-			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
+			var jobId = areaColorAndCalcSettings.JobId;
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize, useEscapeVelocities);
 
@@ -611,7 +611,7 @@ namespace MSetExplorer
 		private AreaColorAndCalcSettings GetAreaColorAndCalcSettings()
 		{
 			var curJob = _vm.ProjectViewModel.CurrentJob;
-			var curJobId = curJob.Id.ToString();
+			var curJobId = curJob.Id;
 
 			var newMapCalcSettings = curJob.MapCalcSettings;
 			var newMapAreaInfo = curJob.MapAreaInfo;

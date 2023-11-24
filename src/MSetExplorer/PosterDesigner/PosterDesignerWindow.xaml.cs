@@ -359,7 +359,6 @@ namespace MSetExplorer
 
 			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel(imageFileType);
 
-			var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize, useEscapeVelocities);
 
@@ -819,8 +818,10 @@ namespace MSetExplorer
 			var currentPosterSize = poster.PosterSize;
 			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
 
-			var viewModelFactory = _vm.ViewModelFactory;
-			var lazyMapPreviewImageProvider = viewModelFactory.GetPreviewImageProvider(curJob.Id, mapAreaInfo, poster.PosterSize, poster.CurrentColorBandSet, curJob.MapCalcSettings, useEscapeVelocities, FALL_BACK_COLOR);
+			var areaColorAndCalcSettings = new AreaColorAndCalcSettings(curJob.Id, OwnerType.Poster, mapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings);
+
+			var lazyMapPreviewImageProvider = _vm.ViewModelFactory.GetPreviewImageProvider(areaColorAndCalcSettings, poster.PosterSize, useEscapeVelocities, FALL_BACK_COLOR);
+
 			var posterSizeEditorViewModel = new PosterSizeEditorViewModel(lazyMapPreviewImageProvider);
 
 			var posterSizeEditorDialog = new PosterSizeEditorDialog(curJob.MapAreaInfo, currentPosterSize)

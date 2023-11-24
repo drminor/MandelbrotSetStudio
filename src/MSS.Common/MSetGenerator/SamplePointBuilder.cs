@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.APValues;
 using System;
+using System.Diagnostics;
 using System.Runtime.Intrinsics;
 
 namespace MSS.Common
@@ -8,6 +9,8 @@ namespace MSS.Common
 	public class SamplePointBuilder : IDisposable
 	{
 		private readonly SamplePointCache _samplePointCache;
+
+		private readonly bool _useDetailedDebug = false;
 
 		public SamplePointBuilder(SamplePointCache samplePointCache)
 		{
@@ -19,11 +22,18 @@ namespace MSS.Common
 
 		public (FP31Val[] samplePointX, FP31Val[] samplePointY) BuildSamplePoints(IteratorCoords iteratorCoords)
 		{
+			var sw = Stopwatch.StartNew();
 			var samplePointOffsets = _samplePointCache.GetSamplePointOffsets(iteratorCoords.Delta);
 			var fP31ScalarMath = _samplePointCache.GetScalarMath(iteratorCoords.Delta.LimbCount);
 
+			var buildSamplePointOffsetsDuration = sw.Elapsed;
+
 			var samplePointsX = BuildSamplePoints(iteratorCoords.StartingCx, samplePointOffsets, fP31ScalarMath);
 			var samplePointsY = BuildSamplePoints(iteratorCoords.StartingCy, samplePointOffsets, fP31ScalarMath);
+
+			var buildSamplePointsDuration = sw.Elapsed;
+
+			Debug.WriteLineIf(_useDetailedDebug, $"Build SamplePointOffset took: {buildSamplePointOffsetsDuration}. Build SamplePoints took: {buildSamplePointsDuration}.");
 
 			return (samplePointsX, samplePointsY);
 		}

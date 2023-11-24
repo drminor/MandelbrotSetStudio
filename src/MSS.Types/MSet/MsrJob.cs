@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 using System.Diagnostics;
 using System.Threading;
 
@@ -23,11 +24,11 @@ namespace MSS.Types.MSet
 
 		#region Constructors
 
-		public MsrJob() : this(mapLoaderJobNumber: 0, jobType: JobType.FullScale, jobId: "", ownerType: OwnerType.Project, subdivision: new Subdivision(), originalSourceSubdivisionId: "",
+		public MsrJob() : this(mapLoaderJobNumber: 0, jobType: JobType.FullScale, jobId: ObjectId.Empty, ownerType: OwnerType.Project, subdivision: new Subdivision(), originalSourceSubdivisionId: "",
 			jobBlockOffset: new VectorLong(), precision: 0, limbCount: 0, mapCalcSettings: new MapCalcSettings(), crossesYZero: false)
 		{ }
 
-		public MsrJob(int mapLoaderJobNumber, JobType jobType, string jobId, OwnerType ownerType, Subdivision subdivision, string originalSourceSubdivisionId,
+		public MsrJob(int mapLoaderJobNumber, JobType jobType, ObjectId jobId, OwnerType ownerType, Subdivision subdivision, string originalSourceSubdivisionId,
 			VectorLong jobBlockOffset, int precision, int limbCount, MapCalcSettings mapCalcSettings, bool crossesYZero)
 		{
 			if (originalSourceSubdivisionId == string.Empty)
@@ -81,7 +82,7 @@ namespace MSS.Types.MSet
 		public int JobNumber => MapLoaderJobNumber;
 
 		public JobType JobType { get; init; }
-		public string JobId { get; init; }
+		public ObjectId JobId { get; init; }
 		public OwnerType OwnerType { get; init; }
 		public Subdivision Subdivision { get; init; }
 		public string OriginalSourceSubdivisionId { get; init; }

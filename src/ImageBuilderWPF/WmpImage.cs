@@ -13,6 +13,8 @@ namespace ImageBuilderWPF
 	{
 		#region Private Fields
 
+		private const int BYTES_PER_PIXEL = 4;
+
 		private readonly static PixelFormat PIXEL_FORMAT = PixelFormats.Pbgra32;
 		private const int DOTS_PER_INCH = 96;
 
@@ -24,7 +26,7 @@ namespace ImageBuilderWPF
 
 		public string Path { get; }
 
-		private WriteableBitmap _bitmap;
+		private WriteableBitmap? _bitmap;
 
 		#endregion
 
@@ -45,23 +47,52 @@ namespace ImageBuilderWPF
 			_weOwnTheStream = false;
 			Path = path;
 
-			_bitmap = new WriteableBitmap(1, 1, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
+			//_bitmap = new WriteableBitmap(1, 1, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
 
-			_synchronizationContext.Post((o) => CreateBitmap(width, height), null);
+			_synchronizationContext.Post((o) => {
+				_bitmap = CreateBitmap(width, height);
+			},
+			null);
 		}
+
+		/*
+
+			var cc = SynchronizationContext.Current;
+			if (synchronizationContext == cc)
+			{
+				_bitmap = new WriteableBitmap(width, height, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
+			}
+			else
+			{
+				_bitmap = new WriteableBitmap(1, 1, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
+
+				_synchronizationContext.Post((o) =>
+				{ _bitmap = CreateBitmap(width, height); },
+				null);
+			}
+
+
+
+		*/
 
 		#endregion
 
 		#region Public Methods
 
-		public void WriteBlock(Int32Rect sourceRect, MapSectionVectors mapSectionVectors, int sourceStride, int destX, int destY)
+		public void WriteBlock(Int32Rect sourceRect, MapSectionVectors mapSectionVectors, byte[] imageBuffer, int destX, int destY)
 		{
-			_synchronizationContext.Post((o) => WriteBlockInternal(sourceRect, mapSectionVectors, sourceStride, destX, destY), null);
+			var sourceStride = mapSectionVectors.BlockSize.Width * BYTES_PER_PIXEL;
+			_synchronizationContext.Post((o) => WriteBlockInternal(sourceRect, mapSectionVectors, imageBuffer, sourceStride, destX, destY), null);
 		}
 
 		public void End()
 		{
-			_synchronizationContext.Post((o) => SaveBitmap(), null);
+			if (_bitmap == null)
+			{
+				throw new InvalidOperationException("WmpImage: Cannot call End when the bitmap is null.");
+			}
+
+			_synchronizationContext.Post((o) => SaveBitmap(_bitmap), null);
 		}
 
 		public void Abort()
@@ -72,27 +103,31 @@ namespace ImageBuilderWPF
 				_outputStream.Close();
 				_outputStream.Dispose();
 			}
+
+			_bitmap = null;
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private void WriteBlockInternal(Int32Rect sourceRect, MapSectionVectors mapSectionVectors, int sourceStride, int destX, int destY)
+		private void WriteBlockInternal(Int32Rect sourceRect, MapSectionVectors mapSectionVectors, byte[] imageBuffer, int sourceStride, int destX, int destY)
 		{
-			_bitmap.WritePixels(sourceRect, mapSectionVectors.BackBuffer, sourceStride, destX, destY);
+			_bitmap?.WritePixels(sourceRect, imageBuffer, sourceStride, destX, destY);
+
 			mapSectionVectors.DecreaseRefCount();
 			_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
 		}
 
-		private void CreateBitmap(int width, int height)
+		private WriteableBitmap CreateBitmap(int width, int height)
 		{
-			_bitmap = new WriteableBitmap(width, height, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
+			var result = new WriteableBitmap(width, height, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
+			return result;
 		}
 
-		private void SaveBitmap()
+		private void SaveBitmap(WriteableBitmap bitmap)
 		{
-			var bitmapFrame = BitmapFrame.Create(_bitmap);
+			var bitmapFrame = BitmapFrame.Create(bitmap);
 
 			var encoder = new WmpBitmapEncoder();
 			encoder.ImageQualityLevel = 1.0f;
@@ -109,6 +144,7 @@ namespace ImageBuilderWPF
 		}
 
 		#endregion
+
 		#region IDisposable Support
 
 		private bool disposedValue; // To detect redundant calls
@@ -117,9 +153,9 @@ namespace ImageBuilderWPF
 		{
 			if (!disposedValue)
 			{
-				if (disposing && _weOwnTheStream)
+				if (disposing)
 				{
-					//png.End();
+					Abort();
 				}
 
 				disposedValue = true;

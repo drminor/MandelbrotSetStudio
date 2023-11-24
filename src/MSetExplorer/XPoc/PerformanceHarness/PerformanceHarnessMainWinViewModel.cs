@@ -1,10 +1,8 @@
 ﻿using MapSectionProviderLib;
-using MSetRepo;
 //using MSetRepo.Storage;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
-using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -321,109 +319,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 		#region Private Methods
 
-		//private void RunTestOld(Job job, int mapLoaderJobNumber)
-		//{
-		//	//_receivedTheLastOne = false;
-		//	//MapSectionProcessInfos.Clear();
-
-		//	foreach (var ms in MapSections)
-		//	{
-		//		_mapSectionVectorProvider.ReturnToPool(ms);
-		//	}
-
-		//	MapSections.Clear();
-		//	//Timings.Clear();
-
-		//	NotifyPropChangedMaxPeek();
-
-		//	var jobId = job.Id.ToString();
-		//	var ownerType = OwnerType.Project;
-		//	var jobType = JobType.FullScale;
-
-		//	var stopwatch = Stopwatch.StartNew();
-		//	//_stopwatch1.Restart();
-		//	//AddTiming("Start");
-
-
-		//	//AddTiming("GetMapAreaInfo");
-
-		//	var oldAreaInfo = _mapJobHelper.GetMapAreaWithSize(job.MapAreaInfo, new SizeDbl(1024));
-
-		//	//var mapAreaInfoWithSize = GetMapAreaWithSizeFat(areaColorAndCalcSettings, imageSize);
-		//	//var jobId = new ObjectId(areaColorAndCalcSettings.JobId);
-		//	//createImageProgressViewModel.CreateImage(imageFilePath, jobId, mapAreaInfoWithSize, areaColorAndCalcSettings.ColorBandSet, areaColorAndCalcSettings.MapCalcSettings);
-
-		//	//var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(mapLoaderJobNumber, jobType, jobId, ownerType, oldAreaInfo, job.MapCalcSettings);
-
-		//	var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, job.Id.ToString(), ownerType, oldAreaInfo, job.MapCalcSettings);
-		//	var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(oldAreaInfo.CanvasSize.Round(), oldAreaInfo.CanvasControlOffset, oldAreaInfo.Subdivision.BlockSize);
-		//	var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, mapExtentInBlocks);
-
-		//	//AddTiming("CreateSectionRequest");
-
-		//	LimbCount = mapSectionRequests[0].LimbCount;
-
-		//	// TODO: Update the PerformanceViewModel to use the MapLoaderManager instead of the MapLoader.
-			
-		//	var newJobNumber = _mapSectionRequestProcessor.GetNextJobNumber();
-
-		//	var mapLoader = new MapLoader(newJobNumber, MapSectionReady, _mapSectionRequestProcessor);
-		//	//AddTiming("Construct MapLoader");
-		//	//mapLoader.SectionLoaded += MapLoader_SectionLoaded;
-
-		//	var startTask = mapLoader.Start(mapSectionRequests);
-		//	//AddTiming("Start MapLoader");
-
-		//	JobProgressInfo = new JobProgressInfo(newJobNumber, "temp", DateTime.Now, mapSectionRequests.Count, numberOfSectionsFetched: 0);
-
-		//	for (var i = 0; i < 1000; i++)
-		//	{
-		//		Thread.Sleep(100);
-
-		//		if (startTask.IsCompleted)
-		//		{
-		//			stopwatch.Stop();
-		//			break;
-		//		}
-
-		//		//if (_receivedTheLastOne)
-		//		//{
-		//		//	stopwatch.Stop();
-		//		//	break;
-		//		//}
-
-		//		//Debug.WriteLine($"Cnt: {i}. RunBaseLine is sleeping for 100ms.");
-		//	}
-
-		//	//AddTiming("MapLoader Completed");
-
-		//	if (JobProgressInfo != null)
-		//	{
-		//		Debug.WriteLine($"Fetched: {JobProgressInfo.FetchedCount}, Generated: {JobProgressInfo.GeneratedCount}. MapLoader Overall Time: {mapLoader.ElaspedTime}.");
-
-		//		//var prevTm = 0L;
-
-		//		//foreach(var tm in Timings)
-		//		//{
-		//		//	Debug.WriteLine($"{tm.Item2}:{tm.Item1}\t{tm.Item1 - prevTm}");
-		//		//	prevTm = tm.Item1;
-		//		//}
-
-		//		UpdateUi(stopwatch, JobProgressInfo, mapLoader.ElaspedTime);
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine("The JobProgressInfo is null.");
-		//	}
-
-		//	foreach (var ms in MapSections)
-		//	{
-		//		_mapSectionVectorProvider.ReturnToPool(ms);
-		//	}
-
-		//	MapSections.Clear();
-		//}
-
 		private MsrJob RunTest(Job job, int mapLoaderJobNumber)
 		{
 			//_receivedTheLastOne = false;
@@ -439,10 +334,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			NotifyPropChangedMaxPeek();
 
-			//var jobId = job.Id.ToString();
-			//var ownerType = OwnerType.Project;
-			//var jobType = JobType.FullScale;
-
 			//var stopwatch = Stopwatch.StartNew();
 			_stopwatch1.Restart();
 			//AddTiming("Start");
@@ -450,7 +341,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(job.MapAreaInfo, new SizeDbl(1024));
 			//AddTiming("GetMapAreaInfo");
 
-			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, job, mapAreaInfoV1);
+			var msrJob = new MapSectionBuilder().CreateMapSectionRequestJob(mapLoaderJobNumber, job, mapAreaInfoV1);
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfoV1.CanvasSize.Round(), mapAreaInfoV1.CanvasControlOffset, mapAreaInfoV1.Subdivision.BlockSize);
 			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, mapExtentInBlocks);
@@ -528,16 +419,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 				}
 
 			}
-
-			//if (mapSection.IsLastSection)
-			//{
-			//	//_receivedTheLastOne = true;
-			//	Debug.WriteLine($"{mapSection.JobNumber} is complete. Received {MapSections.Count} map sections.");
-			//}
-			//else
-			//{
-			//	//Debug.WriteLine($"Got a mapSection.");
-			//}
 		}
 
 		private void MapViewUpdateIsComplete(int jobNumber, bool isCancelled)
@@ -638,25 +519,6 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 		public void ResetMapSectionRequestProcessor()
 		{
 			_mapSectionRequestProcessor.UseRepo = true;
-		}
-
-		private MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, Job job, MapPositionSizeAndDelta mapAreaInfoV1)
-		{
-			var jobId = job.Id.ToString();
-			var ownerType = OwnerType.Project;
-			var jobType = JobType.FullScale;
-
-
-			// TODO: Calling GetBinaryPrecision is temporary until we can update all Job records with a 'good' value for precision.
-			//var binaryPrecision = RMapHelper.GetBinaryPrecision(mapAreaInfo);
-
-			var binaryPrecision = job.MapAreaInfo.Precision;
-			var limbCount = _mapSectionBuilder.GetLimbCount(binaryPrecision);
-
-			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, ownerType, mapAreaInfoV1.Subdivision, mapAreaInfoV1.OriginalSourceSubdivisionId.ToString(), mapAreaInfoV1.MapBlockOffset,
-				binaryPrecision, limbCount, job.MapCalcSettings, mapAreaInfoV1.Coords.CrossesYZero);
-
-			return msrJob;
 		}
 
 		//private List<Tuple<long, string>> AddTiming(string desc)

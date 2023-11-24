@@ -302,7 +302,7 @@ namespace MSetExplorer
 		private void SubmitMapDisplayJob()
 		{
 			var curJob = ProjectViewModel.CurrentJob;
-			var curJobId = curJob.Id.ToString();
+			var curJobId = curJob.Id;
 
 			var newMapAreaInfo = curJob.MapAreaInfo;
 			var newColorBandSet = ProjectViewModel.CurrentColorBandSet;

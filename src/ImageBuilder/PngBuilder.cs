@@ -55,8 +55,8 @@ namespace ImageBuilder
 
 		#region Public Methods
 
-		public async Task<bool> BuildAsync(string imageFilePath, string jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
-			Action<double> statusCallback, CancellationToken ct, SynchronizationContext _)
+		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities,
+			CancellationToken ct/*, SynchronizationContext _*/, Action<double> statusCallback)
 		{
 			var result = true;
 

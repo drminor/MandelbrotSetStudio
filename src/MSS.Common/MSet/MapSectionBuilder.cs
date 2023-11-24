@@ -1,4 +1,6 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Common.MSet;
+using MSS.Types;
 using MSS.Types.APValues;
 using MSS.Types.MSet;
 using System;
@@ -15,12 +17,100 @@ namespace MSS.Common
 		private const int PRECSION_PADDING = 4;
 		private const int MIN_LIMB_COUNT = 1;
 
+		private int _currentPrecision;
+		private int _currentLimbCount;
+
+		private readonly bool _useDetailedDebug = false;
+
 		#endregion
 
 		#region Constructor
 
 		public MapSectionBuilder()
 		{
+			_currentPrecision = -1;
+			_currentLimbCount = -1;
+		}
+
+		#endregion
+
+		#region Create MsrJob
+
+		public MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, Job job, MapPositionSizeAndDelta mapAreaInfoV1)
+		{
+			var jobType = JobType.FullScale;
+			var jobId = job.Id;
+			var ownerType = OwnerType.Project;
+
+			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, jobId, ownerType, mapAreaInfoV1, job.MapCalcSettings);
+
+			return msrJob;
+		}
+
+		public MsrJob CreateNewCopy(MsrJob s, int mapLoaderJobNumber)
+		{
+			var result = new MsrJob
+				(
+					mapLoaderJobNumber: mapLoaderJobNumber,
+					jobType: s.JobType,
+					jobId: s.JobId,
+					ownerType: s.OwnerType,
+					subdivision: s.Subdivision,
+					originalSourceSubdivisionId: s.OriginalSourceSubdivisionId,
+					jobBlockOffset: s.JobBlockOffset,
+					precision: s.Precision,
+					limbCount: s.LimbCount,
+					mapCalcSettings: s.MapCalcSettings,
+					crossesYZero: s.CrossesYZero
+				);
+
+			return result;
+		}
+
+		public MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, JobType jobType, ObjectId jobId, OwnerType jobOwnerType, MapPositionSizeAndDelta mapAreaInfo, MapCalcSettings mapCalcSettings)
+		{
+			var binaryPrecision = mapAreaInfo.Precision;
+			var limbCount = GetCachedLimbCount(binaryPrecision);
+
+			var msrJob = new MsrJob(mapLoaderJobNumber, jobType, jobId, jobOwnerType, mapAreaInfo.Subdivision, mapAreaInfo.OriginalSourceSubdivisionId.ToString(), mapAreaInfo.MapBlockOffset,
+				binaryPrecision, limbCount, mapCalcSettings, mapAreaInfo.Coords.CrossesYZero);
+
+			return msrJob;
+		}
+
+		private int GetCachedLimbCount(int precision)
+		{
+			if (precision != _currentPrecision)
+			{
+				//var adjustedPrecision = precision + PRECSION_PADDING;
+				//var limbCount = FP31ValHelper.GetLimbCount(precision: adjustedPrecision);
+				//var adjustedLimbCount = Math.Max(limbCount, MIN_LIMB_COUNT);
+
+				var adjustedLimbCount = GetLimbCount(precision);
+
+				if (_currentLimbCount == adjustedLimbCount)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount remains the same at {adjustedLimbCount}.");
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"Calculating the LimbCount. CurrentPrecision = {_currentPrecision}, new precision = {precision}. LimbCount is being updated to {adjustedLimbCount}.");
+				}
+
+				_currentLimbCount = adjustedLimbCount;
+				_currentPrecision = precision;
+			}
+
+			return _currentLimbCount;
+		}
+
+		public int GetLimbCount(double precision)
+		{
+			var adjustedPrecision = precision + PRECSION_PADDING;
+			var limbCount = FP31ValHelper.GetLimbCount(precision: adjustedPrecision);
+			var adjustedLimbCount = Math.Max(limbCount, MIN_LIMB_COUNT);
+
+			return adjustedLimbCount;
 		}
 
 		#endregion
@@ -390,18 +480,6 @@ namespace MSS.Common
 		}
 
 		#endregion
-
-		public int GetLimbCount(double precision)
-		{
-			var adjustedPrecision = precision + PRECSION_PADDING;
-			var limbCount = FP31ValHelper.GetLimbCount(precision: adjustedPrecision);
-			var adjustedLimbCount = Math.Max(limbCount, MIN_LIMB_COUNT);
-
-			return adjustedLimbCount;
-		}
-
-
-
 
 		#region Diagnostics
 

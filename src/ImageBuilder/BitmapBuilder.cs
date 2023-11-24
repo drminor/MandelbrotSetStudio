@@ -56,17 +56,16 @@ namespace ImageBuilder
 
 		#region Public Methods
 
-		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, bool useEscapeVelocities, MapCalcSettings mapCalcSettings, 
-			CancellationToken ct, Action<double>? statusCallback = null)
+		public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities,
+			CancellationToken ct, SynchronizationContext _, Action<double>? statusCallback = null)
 		{
-
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
 			var colorMap = new ColorMap(colorBandSet)
 			{
 				UseEscapeVelocities = useEscapeVelocities
 			};
 
-			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId.ToString(), ownerType, mapAreaInfo, mapCalcSettings);				
+			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);				
 
 			var imageSize = mapAreaInfo.CanvasSize.Round();
 
@@ -97,16 +96,9 @@ namespace ImageBuilder
 						return null;
 					}
 
-					// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
+					var drawInverted = GetDrawInverted(blocksForThisRow[0]);
 
-					// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
-					// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
-					// But the screen coordinates increase from the top of the display to be bottom.
-					// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
-
-					var invert = !blocksForThisRow[0].IsInverted; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
-
-					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetVerticalIntraBlockOffsets(blockPtrY, invert, mapExtent);
+					var (startingLinePtr, numberOfLines, lineIncrement) = RMapHelper.GetVerticalIntraBlockOffsets(blockPtrY, drawInverted, mapExtent);
 
 					destPixPtr = BuildARow(result, destPixPtr, startingLinePtr, numberOfLines, lineIncrement, blocksForThisRow, segmentLengths, colorMap, ct);
 
@@ -167,6 +159,19 @@ namespace ImageBuilder
 			}
 
 			return destPixPtr;
+		}
+
+		private bool GetDrawInverted(MapSection mapSection)
+		{
+			// An Inverted MapSection should be processed from first to last instead of as we do normally from last to first.
+
+			// MapSection.IsInverted indicates that the MapSection was generated using postive y coordinates, but in this case, the mirror image is being displayed.
+			// Normally we must process the contents of the MapSection from last Y to first Y because the Map coordinates increase from the bottom of the display to the top of the display
+			// But the screen coordinates increase from the top of the display to be bottom.
+			// We set the invert flag to indicate that the contents should be processed from last y to first y to compensate for the Map/Screen direction difference.
+
+			var result = !mapSection.IsInverted; // Invert the coordinates if the MapSection is not Inverted. Do not invert if the MapSection is inverted.
+			return result;
 		}
 
 		private async Task<IDictionary<int, MapSection>> GetAllBlocksForRowAsync(MsrJob msrJob, int rowPtr, int blockIndexY, int stride, CancellationToken ct)
