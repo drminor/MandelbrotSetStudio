@@ -70,5 +70,7 @@ namespace MSetExplorer
 		MsrJob? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
 		MsrJob? MoveTo(VectorDbl contentOffset);
+
+		void ReportObjectPoolDetails();
 	}
 }

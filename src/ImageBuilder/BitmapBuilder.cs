@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace ImageBuilder
 {
-	public class BitmapBuilder : IBitmapBuilder
+	public class BitmapBuilder //: IBitmapBuilder
 	{
 		#region Private Fields
 

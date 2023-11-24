@@ -1,4 +1,5 @@
 ﻿using ImageBuilder;
+using ImageBuilderWPF;
 using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using MSS.Common;
@@ -29,8 +30,8 @@ namespace MSetExplorer
 		private const double PREVIEW_CONTAINER_SIZE = 1024;
 
 		private MapJobHelper _mapJobHelper;
-		private SynchronizationContext? _synchronizationContext;
-		private readonly IBitmapBuilder _bitmapBuilder;
+		private SynchronizationContext _synchronizationContext;
+		private readonly IImageBuilderWPF _bitmapBuilder;
 
 		private readonly ColorBandSet _colorBandSet;
 		private readonly MapCalcSettings _mapCalcSettings;
@@ -52,11 +53,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public LazyMapPreviewImageProvider(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize, bool useEscapeVelocities, Color fallbackColor, MapJobHelper mapJobHelper, IBitmapBuilder bitmapBuilder)
+		public LazyMapPreviewImageProvider(AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl posterSize, bool useEscapeVelocities, Color fallbackColor, MapJobHelper mapJobHelper, IImageBuilderWPF bitmapBuilder)
 		{
 			_mapJobHelper = mapJobHelper;
 
-			_synchronizationContext = SynchronizationContext.Current;
+			_synchronizationContext = SynchronizationContext.Current ?? throw new InvalidOperationException("No SynchronizationContext is available.");
 			_bitmapBuilder = bitmapBuilder;
 
 			_colorBandSet = areaColorAndCalcSettings.ColorBandSet;
@@ -79,10 +80,7 @@ namespace MSetExplorer
 			Bitmap = CreateBitmap(previewMapAreaInfo.CanvasSize.Round());
 			FillBitmapWithColor(_fallbackColor, Bitmap);
 
-			if (_synchronizationContext != null)
-			{
-				QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings, _synchronizationContext);
-			}
+			QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings, _synchronizationContext);
 		}
 
 		#endregion
@@ -204,15 +202,20 @@ namespace MSetExplorer
 
 			_cts = new CancellationTokenSource();
 
+			var imageSize = previewMapArea.CanvasSize.Round();
+			var imageSourceWriter = new ImageSourceWriter(Bitmap, _synchronizationContext);
+
+
 			_currentBitmapBuilderTask = Task.Run(async () =>
 				{
 					try
 					{
-						var pixels = await _bitmapBuilder.BuildAsync(jobId, ownerType, previewMapArea, colorBandSet, mapCalcSettings, _useEscapeVelocitites, _cts.Token, synchronizationContext, statusCallback: null);
+						//var pixels = await _bitmapBuilder.FillAsync(imageSourceWriter, jobId, ownerType, previewMapArea, colorBandSet, mapCalcSettings, _useEscapeVelocitites, _cts.Token, statusCallback: null);
+						var wasSuccessful = await _bitmapBuilder.FillAsync(imageSourceWriter, jobId, ownerType, previewMapArea, colorBandSet, mapCalcSettings, _useEscapeVelocitites, _cts.Token, statusCallback: null);
 
 						if (!_cts.IsCancellationRequested)
 						{
-							_synchronizationContext?.Post(o => BitmapCompleted(pixels, o), _cts);
+							_synchronizationContext?.Post(o => BitmapCompleted(wasSuccessful, o), _cts);
 						}
 					}
 					catch (AggregateException agEx)
@@ -258,15 +261,28 @@ namespace MSetExplorer
 			Debug.WriteLine($"Canceling the CurrentBitmapGeneration Task took: {stopWatch.ElapsedMilliseconds}ms.");
 		}
 
-		private void BitmapCompleted(byte[]? pixels, object? state)
+		//private void BitmapCompleted(byte[]? pixels, object? state)
+		//{
+		//	if (state != null && state is CancellationTokenSource cts && !cts.IsCancellationRequested)
+		//	{
+		//		if (pixels != null)
+		//		{
+		//			WritePixels(pixels, Bitmap);
+		//		}
+		//		else
+		//		{
+		//			FillBitmapWithColor(Colors.LightCoral, Bitmap);
+		//		}
+
+		//		BitmapHasBeenLoaded?.Invoke(this, EventArgs.Empty);
+		//	}
+		//}
+
+		private void BitmapCompleted(bool wasSuccessful, object? state)
 		{
 			if (state != null && state is CancellationTokenSource cts && !cts.IsCancellationRequested)
 			{
-				if (pixels != null)
-				{
-					WritePixels(pixels, Bitmap);
-				}
-				else
+				if (!wasSuccessful)
 				{
 					FillBitmapWithColor(Colors.LightCoral, Bitmap);
 				}

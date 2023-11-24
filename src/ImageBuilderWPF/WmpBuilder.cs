@@ -13,7 +13,7 @@ using System.Windows;
 
 namespace ImageBuilderWPF
 {
-	public class WmpBuilder : IImageBuilder
+	public class WmpBuilder : IImageBuilder, IImageBuilderWPF
 	{
 		#region Private Fields
 
@@ -62,8 +62,21 @@ namespace ImageBuilderWPF
 		#region Public Methods
 
 		public async Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities,
-			CancellationToken ct/*, SynchronizationContext synchronizationContext*/, Action<double> statusCallback)
+			CancellationToken ct, Action<double> statusCallback)
 		{
+			var imageSize = mapAreaInfo.CanvasSize.Round();
+			var wmpImageWriter = new WmpImageWriter(imageFilePath, imageSize.Width, imageSize.Height, _synchronizationContext);
+
+			var result = await FillAsync(wmpImageWriter, jobId, ownerType, mapAreaInfo, colorBandSet, mapCalcSettings, useEscapeVelocities, ct, statusCallback);
+
+			return result;
+		}
+
+		public async Task<bool> FillAsync(IImageWriter imageWriter, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities,
+			CancellationToken ct, Action<double>? statusCallback)
+		{
+			imageWriter.ReturnMapSectionVectors = ReturnMapSectionVectors;
+
 			var result = true;
 
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
@@ -74,12 +87,11 @@ namespace ImageBuilderWPF
 
 			//var outputStream = File.Open(imageFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
 			var imageSize = mapAreaInfo.CanvasSize.Round();
-			var wmpImage = new WmpImage(imageFilePath, imageSize.Width, imageSize.Height, _synchronizationContext, _mapSectionVectorProvider);
 
 			try
 			{
 				var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);
-				
+
 				var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
 				var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
 				_blocksPerRow = mapExtent.Width;
@@ -105,13 +117,13 @@ namespace ImageBuilderWPF
 					}
 
 					// Calculate the pixel values and write them to the image file.
-					BuildARow(wmpImage, blockPtrY, blocksForThisRow, colorMap, segmentLengths, mapExtent, ct);
+					BuildARow(imageWriter, blockPtrY, blocksForThisRow, colorMap, segmentLengths, mapExtent, ct);
 
 					ReportRowCompletion(blockPtrY, mapExtent);
 
 					var percentageCompleted = (h - blockPtrY) / (double)h;
 
-					statusCallback(100 * percentageCompleted);
+					statusCallback?.Invoke(100 * percentageCompleted);
 				}
 			}
 			catch (Exception e)
@@ -127,13 +139,10 @@ namespace ImageBuilderWPF
 			{
 				if (!ct.IsCancellationRequested)
 				{
-					wmpImage?.End();
-				}
-				else
-				{
-					wmpImage?.Abort();
+					imageWriter?.Save();
 				}
 
+				imageWriter?.Close();
 				_mapSectionsForRow?.Clear();
 			}
 
@@ -144,7 +153,7 @@ namespace ImageBuilderWPF
 
 		#region Private Methods
 
-		private void BuildARow(WmpImage wmpImage, int blockPtrY, IDictionary<int, MapSection> blocksForThisRow, ColorMap colorMap, ValueTuple<int, int>[] segmentLengths, MapExtent mapExtent, CancellationToken ct)
+		private void BuildARow(IImageWriter wmpImage, int blockPtrY, IDictionary<int, MapSection> blocksForThisRow, ColorMap colorMap, ValueTuple<int, int>[] segmentLengths, MapExtent mapExtent, CancellationToken ct)
 		{
 			// Blocks with a negative Y map coordinate are drawn up-side, down.
 			//bool drawInverted = GetDrawInverted(blocksForThisRow[0]);
@@ -319,6 +328,12 @@ namespace ImageBuilderWPF
 
 				_mapSectionsForRow.Clear();
 			}
+		}
+
+		private void ReturnMapSectionVectors(MapSectionVectors mapSectionVectors)
+		{
+			mapSectionVectors.DecreaseRefCount();
+			_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
 		}
 
 		#endregion

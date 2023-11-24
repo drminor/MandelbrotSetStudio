@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using Microsoft.Extensions.Logging.Abstractions;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.IO;
@@ -9,7 +10,7 @@ using System.Windows.Media.Imaging;
 
 namespace ImageBuilderWPF
 {
-	public class WmpImage : IDisposable
+	public class WmpImageWriter : IImageWriter
 	{
 		#region Private Fields
 
@@ -19,12 +20,11 @@ namespace ImageBuilderWPF
 		private const int DOTS_PER_INCH = 96;
 
 		private readonly SynchronizationContext _synchronizationContext;
-		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
+		private Action<MapSectionVectors> _returnMapSectionVectorsAction;
+
 
 		private readonly Stream _outputStream;
 		private bool _weOwnTheStream;
-
-		public string Path { get; }
 
 		private WriteableBitmap? _bitmap;
 
@@ -32,48 +32,37 @@ namespace ImageBuilderWPF
 
 		#region Constructors
 
-		public WmpImage(string path, int width, int height, SynchronizationContext synchronizationContext, MapSectionVectorProvider mapSectionVectorProvider) : 
-			this(File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read), path, width, height, synchronizationContext, mapSectionVectorProvider)
+		public WmpImageWriter(string path, int width, int height, SynchronizationContext synchronizationContext) :
+			this(File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read), width, height, synchronizationContext)
 		{
 			_weOwnTheStream = true;
 		}
 
-		public WmpImage(Stream outputStream, string path, int width, int height, SynchronizationContext synchronizationContext, MapSectionVectorProvider mapSectionVectorProvider)
+		#region Public Properties
+
+		public int BytesPerPixel => BYTES_PER_PIXEL;
+
+		public Action<MapSectionVectors> ReturnMapSectionVectors { set => _returnMapSectionVectorsAction = value; }
+
+		#endregion
+		
+		public WmpImageWriter(Stream outputStream, int width, int height, SynchronizationContext synchronizationContext)
 		{
 			_synchronizationContext = synchronizationContext;
-			_mapSectionVectorProvider = mapSectionVectorProvider;
 
 			_outputStream = outputStream;
 			_weOwnTheStream = false;
-			Path = path;
 
-			//_bitmap = new WriteableBitmap(1, 1, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
+			_bitmap = null;
 
-			_synchronizationContext.Post((o) => {
+			_synchronizationContext.Post((o) =>
+			{
 				_bitmap = CreateBitmap(width, height);
 			},
 			null);
+
+			_returnMapSectionVectorsAction = PlaceHolderAction;
 		}
-
-		/*
-
-			var cc = SynchronizationContext.Current;
-			if (synchronizationContext == cc)
-			{
-				_bitmap = new WriteableBitmap(width, height, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
-			}
-			else
-			{
-				_bitmap = new WriteableBitmap(1, 1, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
-
-				_synchronizationContext.Post((o) =>
-				{ _bitmap = CreateBitmap(width, height); },
-				null);
-			}
-
-
-
-		*/
 
 		#endregion
 
@@ -85,7 +74,7 @@ namespace ImageBuilderWPF
 			_synchronizationContext.Post((o) => WriteBlockInternal(sourceRect, mapSectionVectors, imageBuffer, sourceStride, destX, destY), null);
 		}
 
-		public void End()
+		public void Save()
 		{
 			if (_bitmap == null)
 			{
@@ -95,7 +84,7 @@ namespace ImageBuilderWPF
 			_synchronizationContext.Post((o) => SaveBitmap(_bitmap), null);
 		}
 
-		public void Abort()
+		public void Close()
 		{
 			if (_weOwnTheStream)
 			{
@@ -114,9 +103,7 @@ namespace ImageBuilderWPF
 		private void WriteBlockInternal(Int32Rect sourceRect, MapSectionVectors mapSectionVectors, byte[] imageBuffer, int sourceStride, int destX, int destY)
 		{
 			_bitmap?.WritePixels(sourceRect, imageBuffer, sourceStride, destX, destY);
-
-			mapSectionVectors.DecreaseRefCount();
-			_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
+			_returnMapSectionVectorsAction(mapSectionVectors);
 		}
 
 		private WriteableBitmap CreateBitmap(int width, int height)
@@ -134,13 +121,11 @@ namespace ImageBuilderWPF
 
 			encoder.Frames.Add(bitmapFrame);
 			encoder.Save(_outputStream);
+		}
 
-			if (_weOwnTheStream)
-			{
-				_outputStream.Flush();
-				_outputStream.Close();
-				_outputStream.Dispose();
-			}
+		private void PlaceHolderAction(MapSectionVectors mapSectionVectors)
+		{
+			throw new InvalidOperationException("Calling the PlaceHolderAction");
 		}
 
 		#endregion
@@ -155,7 +140,7 @@ namespace ImageBuilderWPF
 			{
 				if (disposing)
 				{
-					Abort();
+					Close();
 				}
 
 				disposedValue = true;

@@ -232,6 +232,8 @@ namespace MSetExplorer
 				return;
 			}
 
+			_vm.MapDisplayViewModel.ClearDisplay();
+
 			_vm.ProjectViewModel.ProjectClose();
 			AppNavRequestResponse.OnCloseBehavior = onCloseBehavior;
 			Close();

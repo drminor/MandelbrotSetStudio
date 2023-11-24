@@ -242,6 +242,10 @@ namespace MSetExplorer
 					UpdateTheMapCoordsView(currentjob);
 				}
 			}
+			else
+			{
+				MapDisplayViewModel.CancelJob();
+			}
 		}
 
 		private void UpdateTheMapCoordsView(Job currentJob)

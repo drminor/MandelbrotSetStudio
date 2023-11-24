@@ -91,6 +91,9 @@ namespace MSetExplorer
 		{
 			var mapJobHelper = ProvisionAMapJopHelper();
 
+			// TODO: Start using IImageBuilderWPF.
+			// TODO: Support additional Image File Types.
+			
 			IImageBuilder imageBuilder;
 
 			if (imageFileType == ImageFileType.PNG)
@@ -113,7 +116,7 @@ namespace MSetExplorer
 			var mapJobHelper = ProvisionAMapJopHelper();
 
 			//var bitmapBuilder = new BitmapBuilder(_mapLoaderManager, _mapSectionVectorProvider);
-			var imageDataBuilder = new ImageDataBuilder(_mapLoaderManager, _mapSectionVectorProvider);
+			var imageDataBuilder = new ImageSourceBuilder(_mapLoaderManager, _mapSectionVectorProvider);
 
 			var result = new LazyMapPreviewImageProvider(areaColorAndCalcSettings, posterSize, useEscapeVelocitites, fallbackColor, mapJobHelper, imageDataBuilder);
 			return result;

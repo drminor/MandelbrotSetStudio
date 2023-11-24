@@ -548,6 +548,22 @@ namespace MSetExplorer
 
 				MapSections.Clear();
 			}
+
+			ReportObjectPoolDetails();
+		}
+
+		public void ReportObjectPoolDetails()
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine();
+			sb.AppendLine($"Vecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectorsLeased} / Available: {_mapSectionVectorProvider.MapSectionsVectorsInPool}.");
+			sb.AppendLine($"Vecs2 Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectors2Leased}.");
+			sb.AppendLine($"ZVecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionZVectorsLeased} / Available: {_mapSectionVectorProvider.MapSectionsZVectorsInPool}.");
+			sb.AppendLine($"Refused Vec Returns: {_mapSectionVectorProvider.NumberOfRefusedMapSectionReturns}.");
+			sb.AppendLine($"Max Vecs: {_mapSectionVectorProvider.MaxPeakSectionVectors} / Max ZVecs: {_mapSectionVectorProvider.MaxPeakSectionZVectors}.");
+
+			Debug.Write(sb.ToString());
 		}
 
 		#endregion
@@ -1034,6 +1050,8 @@ namespace MSetExplorer
 
 				var msToClearDisplay = stopWatch.ElapsedMilliseconds;
 				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
+
+				ReportObjectPoolDetails();
 			}
 		}
 

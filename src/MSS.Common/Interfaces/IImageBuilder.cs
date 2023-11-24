@@ -12,6 +12,6 @@ namespace MSS.Common
 		long NumberOfCountValSwitches { get; }
 
 		Task<bool> BuildAsync(string imageFilePath, ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings,
-			bool useEscapeVelocities, CancellationToken ct/*, SynchronizationContext synchronizationContext*/, Action<double> statusCallBack);
+			bool useEscapeVelocities, CancellationToken ct, Action<double> statusCallBack);
 	}
 }

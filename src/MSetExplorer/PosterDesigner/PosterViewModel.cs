@@ -66,16 +66,25 @@ namespace MSetExplorer
 
 					if (_currentPoster != null)
 					{
-						if (CurrentPoster != null && !CurrentPoster.CurrentJob.IsEmpty)
+						var currentJob = _currentPoster.CurrentJob;
+
+						if (!currentJob.IsEmpty)
 						{
-							var currentJob = CurrentPoster.CurrentJob;
 							Debug.WriteLineIf(_useDetailedDebug, "The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentPoster is being updated.");
 
 							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id, OwnerType.Poster, currentJob.MapAreaInfo, CurrentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
 							CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 						}
+						else
+						{
+							CurrentAreaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
+						}
 
 						_currentPoster.PropertyChanged += CurrentPoster_PropertyChanged;
+					}
+					else
+					{
+						CurrentAreaColorAndCalcSettings = AreaColorAndCalcSettings.Empty;
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentPoster));
@@ -266,7 +275,11 @@ namespace MSetExplorer
 			{
 				if (value != _areaColorAndCalcSettings)
 				{
-					Debug.Assert(value.JobOwnerType == OwnerType.Poster, "The PosterViewModel is receiving a CurrentAreaColorAndCalcSetting that has an OwnerType other than 'Poster'.");
+					if (!value.IsEmpty)
+					{
+						Debug.Assert(value.JobOwnerType == OwnerType.Poster, "The PosterViewModel is receiving a CurrentAreaColorAndCalcSetting that has an OwnerType other than 'Poster'.");
+					}
+
 					_areaColorAndCalcSettings = value;
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings));
 				}
