@@ -504,6 +504,9 @@ namespace MSetExplorer
 		{
 			lock (_paintLocker)
 			{
+				// Update the list of current requests to reflect that we are cancelling each pending request.
+				RemoveCurrentRequests(_requestsPendingGeneration);
+
 				StopCurrentJobs(clearDisplay: false);
 			}
 		}
@@ -1350,6 +1353,19 @@ namespace MSetExplorer
 			else
 			{
 				return false;
+			}
+		}
+
+		private void RemoveCurrentRequests(List<MapSectionRequest> requestsToRemove)
+		{
+			foreach (var request in requestsToRemove)
+			{
+				var curReq = _currentMapSectionRequests.FirstOrDefault(x => x.SectionBlockOffset == request.SectionBlockOffset);
+
+				if (curReq != null)
+				{
+					_currentMapSectionRequests.Remove(curReq);
+				}
 			}
 		}
 

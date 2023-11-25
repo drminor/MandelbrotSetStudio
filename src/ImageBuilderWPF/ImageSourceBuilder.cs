@@ -332,7 +332,7 @@ namespace ImageBuilderWPF
 
 		#region Diagnostics
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportRowCompletion(int blockPtrY, MapExtent mapExtent)
 		{
 			var maxBlockPtrY = mapExtent.Height - 1;
