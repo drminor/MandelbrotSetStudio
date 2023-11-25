@@ -1,9 +1,7 @@
-﻿using MSS.Common;
-using MSS.Types;
+﻿using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Diagnostics;
-//using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -124,7 +122,7 @@ namespace MSetExplorer
 				Width = clip.Width,
 				Height = clip.Height,
 				Fill = Brushes.Transparent,
-				Stroke = Brushes.Red,
+				Stroke = Brushes.MidnightBlue,
 				StrokeThickness = 0.5
 			};
 

@@ -43,22 +43,26 @@ namespace MSetExplorer
 
 		public PosterSizeEditorViewModel(LazyMapPreviewImageProvider lazyMapPreviewImageProvider)
 		{
-			_lazyMapPreviewImageProvider = lazyMapPreviewImageProvider;
-			_scaleTransform = new ScaleTransform();
+			_layoutInfo = new PreviewImageLayoutInfo();
 
+			_scaleTransform = new ScaleTransform();
 			_drawingGroup = new DrawingGroup
 			{
 				Transform = _scaleTransform
 			};
 
-			_previewImageDrawing = new ImageDrawing();
+			var previewBitmap = lazyMapPreviewImageProvider.Bitmap;
+			var previewImageSize = new Size(previewBitmap.Width, previewBitmap.Height);
+			_previewImageDrawing = new ImageDrawing(previewBitmap, new Rect(previewImageSize));
+
+			_drawingGroup.Children.Add(_previewImageDrawing);
 			_previewImage = new DrawingImage(_drawingGroup);
-			_layoutInfo = new PreviewImageLayoutInfo();
 
 			// Load Placeholder preview image (until the real preview is generated.)
-			LoadPreviewImage(_lazyMapPreviewImageProvider.Bitmap);
+			//LoadPreviewImage(_lazyMapPreviewImageProvider.Bitmap);
 
-			_lazyMapPreviewImageProvider.BitmapHasBeenLoaded += MapPreviewImageProvider_BitmapHasBeenLoaded;
+			_lazyMapPreviewImageProvider = lazyMapPreviewImageProvider;
+			//_lazyMapPreviewImageProvider.BitmapHasBeenLoaded += MapPreviewImageProvider_BitmapHasBeenLoaded;
 		}
 
 		public void Initialize(MapCenterAndDelta posterMapAreaInfo, Size containerSize, SizeDbl posterSize)
@@ -100,10 +104,10 @@ namespace MSetExplorer
 		{
 			PosterMapAreaInfo = posterMapAreaInfo;
 
-			//_lazyMapPreviewImageProvider.MapAreaInfo = posterMapAreaInfo;
-			_lazyMapPreviewImageProvider.RequestBitmapGeneration(posterMapAreaInfo, containerSize, posterSize);
+			var previewImage = _lazyMapPreviewImageProvider.RequestBitmapGeneration(posterMapAreaInfo, containerSize, posterSize);
+			LoadPreviewImage(previewImage);
 
-			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
+			//var previewImage = _lazyMapPreviewImageProvider.Bitmap;
 			var previewImageSize = new SizeDbl(previewImage.Width, previewImage.Height);
 
 			_layoutInfo = new PreviewImageLayoutInfo(posterSize, previewImageSize, containerSize);
@@ -122,11 +126,11 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(OriginalAspectRatio));
 		}
 
-		private void MapPreviewImageProvider_BitmapHasBeenLoaded(object? sender, EventArgs e)
-		{
-			var previewImage = _lazyMapPreviewImageProvider.Bitmap;
-			LoadPreviewImage(previewImage);
-		}
+		//private void MapPreviewImageProvider_BitmapHasBeenLoaded(object? sender, EventArgs e)
+		//{
+		//	var previewImage = _lazyMapPreviewImageProvider.Bitmap;
+		//	LoadPreviewImage(previewImage);
+		//}
 
 		private void LoadPreviewImage(WriteableBitmap previewImage)
 		{
@@ -139,7 +143,7 @@ namespace MSetExplorer
 
 			PreviewImage = new DrawingImage(_drawingGroup);
 		}
-		
+
 		//private ImageDrawing CreateImageDrawing(ImageSource previewImage)
 		//{
 		//	var rect = new Rect(new Size(previewImage.Width, previewImage.Height));
@@ -736,7 +740,6 @@ namespace MSetExplorer
 
 		private SizeDbl HandleBeforeXUpdate(double previous, int val)
 		{
-
 			var scaledSize = _currentSize.Scale(_scaleFactorCurrentToOriginal);
 			var delta = val - previous;
 			var width = scaledSize.Width + delta;
@@ -800,7 +803,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-
 
 		private PointDbl GetOffsetsForNewWidth_NotUsed(SizeDbl previousSize, SizeDbl size, PointDbl beforeOffsets, PointDbl afterOffsets, out PointDbl newAfterOffsets)
 		{

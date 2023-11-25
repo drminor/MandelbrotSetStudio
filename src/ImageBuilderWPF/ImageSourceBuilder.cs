@@ -122,97 +122,18 @@ namespace ImageBuilderWPF
 			{
 				if (!ct.IsCancellationRequested)
 				{
-					imageWriter?.Save();
+					imageWriter?.SaveAndClose();
+				}
+				else
+				{
+					imageWriter?.Close();
 				}
 
-				imageWriter?.Close();
 				_mapSectionsForRow?.Clear();
 			}
 
 			return result;
 		}
-
-		//public async Task<byte[]?> BuildAsync(ObjectId jobId, OwnerType ownerType, MapPositionSizeAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings, bool useEscapeVelocities,
-		//	CancellationToken ct, SynchronizationContext synchronizationContext, Action<double>? statusCallback = null)
-		//{
-		//	var blockSize = mapAreaInfo.Subdivision.BlockSize;
-		//	var colorMap = new ColorMap(colorBandSet)
-		//	{
-		//		UseEscapeVelocities = useEscapeVelocities
-		//	};
-
-		//	var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);
-
-		//	var imageSize = mapAreaInfo.CanvasSize.Round();
-
-		//	var imageDataBuffer = new ImageSourceWriter(imageSize.Width, imageSize.Height, synchronizationContext);
-
-		//	try
-		//	{
-		//		var canvasControlOffset = mapAreaInfo.CanvasControlOffset;
-		//		var mapExtent = RMapHelper.GetMapExtent(imageSize, canvasControlOffset, blockSize);
-		//		_blocksPerRow = mapExtent.Width;
-		//		var h = mapExtent.Height;
-
-		//		Debug.WriteLineIf(_useDetailedDebug, $"The ImageDataBuilder is processing section requests. The map extent is {mapExtent.Extent}. The ColorMap has Id: {colorBandSet.Id}.");
-
-		//		var segmentLengths = RMapHelper.GetHorizontalIntraBlockOffsets(mapExtent);
-
-		//		// Process rows using the map coordinates, from the highest Y coordinate to the lowest coordinate.
-		//		for (var blockPtrY = h - 1; blockPtrY >= 0 && !ct.IsCancellationRequested; blockPtrY--)
-		//		{
-		//			// Get all of the blocks for this row.
-		//			// Each row must use a fresh MsrJob.
-		//			var msrSubJob = _mapLoaderManager.CreateNewCopy(msrJob);
-		//			var blockIndexY = blockPtrY - (h / 2);
-		//			var blocksForThisRow = await GetAllBlocksForRowAsync(msrSubJob, blockPtrY, blockIndexY, _blocksPerRow, ct);
-
-		//			if (ct.IsCancellationRequested || msrSubJob.IsCancelled || blocksForThisRow.Count == 0)
-		//			{
-		//				return null;
-		//			}
-
-		//			// Calculate the pixel values and write them to the image file.
-		//			BuildARow(imageDataBuffer, blockPtrY, blocksForThisRow, colorMap, segmentLengths, mapExtent, ct);
-
-		//			ReportRowCompletion(blockPtrY, mapExtent);
-
-		//			var percentageCompleted = (h - blockPtrY) / (double)h;
-
-		//			statusCallback?.Invoke(100 * percentageCompleted);
-		//		}
-		//	}
-		//	catch (Exception e)
-		//	{
-		//		if (!ct.IsCancellationRequested)
-		//		{
-		//			await Task.Delay(10);
-		//			Debug.WriteLine($"WmpBuilder encountered an exception: {e}.");
-		//			throw;
-		//		}
-		//	}
-		//	finally
-		//	{
-		//		if (!ct.IsCancellationRequested)
-		//		{
-		//			imageDataBuffer?.Save();
-		//		}
-
-		//		imageDataBuffer?.Close();
-
-		//		_mapSectionsForRow?.Clear();
-		//	}
-
-		//	var result = new byte[0];
-		//	//var result = new byte[imageDataBuffer.PixelBufferSize];
-
-		//	//if (imageDataBuffer.PixelBufferSize > 1000)
-		//	//{
-		//	//	synchronizationContext.Send((o) => { imageDataBuffer.FillPixelBuffer(result); }, null);
-		//	//}
-
-		//	return result;
-		//}
 
 		#endregion
 
@@ -236,7 +157,7 @@ namespace ImageBuilderWPF
 
 			Debug.WriteLineIf(_useDetailedDebug, $"BlockYPtr: {blockPtrY}, InvertedBlockYPtr: {invertedBlockPtrY}, yLoc: {yLoc}, startingLinePtr: {startingLinePtr}, NumberOfLines: {numberOfLines}.");
 
-			for (var blockPtrX = 1; blockPtrX < blocksForThisRow.Count - 1; blockPtrX++)
+			for (var blockPtrX = 0; blockPtrX < blocksForThisRow.Count; blockPtrX++)
 			{
 				var mapSection = blocksForThisRow[blockPtrX];
 
@@ -398,6 +319,12 @@ namespace ImageBuilderWPF
 		private void ReturnMapSectionVectors(MapSectionVectors mapSectionVectors)
 		{
 			mapSectionVectors.DecreaseRefCount();
+
+			if (mapSectionVectors.ReferenceCount > 1)
+			{
+				Debug.WriteLine("WARNING: About to return a MapSectionVector whose ReferenceCount > 1.");
+			}
+
 			_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
 		}
 

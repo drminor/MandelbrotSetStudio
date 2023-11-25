@@ -139,10 +139,13 @@ namespace ImageBuilderWPF
 			{
 				if (!ct.IsCancellationRequested)
 				{
-					imageWriter?.Save();
+					imageWriter?.SaveAndClose();
+				}
+				else
+				{
+					imageWriter?.Close();
 				}
 
-				imageWriter?.Close();
 				_mapSectionsForRow?.Clear();
 			}
 
@@ -171,7 +174,7 @@ namespace ImageBuilderWPF
 
 			Debug.WriteLineIf(_useDetailedDebug, $"BlockYPtr: {blockPtrY}, InvertedBlockYPtr: {invertedBlockPtrY}, yLoc: {yLoc}, startingLinePtr: {startingLinePtr}, NumberOfLines: {numberOfLines}.");
 
-			for (var blockPtrX = 1; blockPtrX < blocksForThisRow.Count - 1; blockPtrX++)
+			for (var blockPtrX = 0; blockPtrX < blocksForThisRow.Count; blockPtrX++)
 			{
 				var mapSection = blocksForThisRow[blockPtrX];
 

@@ -483,7 +483,8 @@ namespace MSetExplorer
 
 				ReportMove(_boundedMapArea, contentOffset);
 
-				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false);
+				var reApplyColorMap = mapAreaSubset.Coords.CrossesYZero;
+				msrJob = ReuseAndLoad(jobType, CurrentAreaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: reApplyColorMap);
 			}
 
 			return msrJob;
@@ -549,21 +550,7 @@ namespace MSetExplorer
 				MapSections.Clear();
 			}
 
-			ReportObjectPoolDetails();
-		}
-
-		public void ReportObjectPoolDetails()
-		{
-			var sb = new StringBuilder();
-
-			sb.AppendLine();
-			sb.AppendLine($"Vecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectorsLeased} / Available: {_mapSectionVectorProvider.MapSectionsVectorsInPool}.");
-			sb.AppendLine($"Vecs2 Leased: {_mapSectionVectorProvider.NumberOfMapSectionVectors2Leased}.");
-			sb.AppendLine($"ZVecs Leased: {_mapSectionVectorProvider.NumberOfMapSectionZVectorsLeased} / Available: {_mapSectionVectorProvider.MapSectionsZVectorsInPool}.");
-			sb.AppendLine($"Refused Vec Returns: {_mapSectionVectorProvider.NumberOfRefusedMapSectionReturns}.");
-			sb.AppendLine($"Max Vecs: {_mapSectionVectorProvider.MaxPeakSectionVectors} / Max ZVecs: {_mapSectionVectorProvider.MaxPeakSectionZVectors}.");
-
-			Debug.Write(sb.ToString());
+			_mapSectionVectorProvider.ReportObjectPoolDetails();
 		}
 
 		#endregion
@@ -739,7 +726,8 @@ namespace MSetExplorer
 
 			if (boundedMapArea.BaseFactor == currentBaseFactor)
 			{
-				msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false);
+				var reApplyColorMap = mapAreaSubset.Coords.CrossesYZero;
+				msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: reApplyColorMap);
 			}
 			else
 			{
@@ -770,7 +758,8 @@ namespace MSetExplorer
 			// because ReuseAndLoad is going to set the BitmapGrid's LogicalViewportSize from the mapAreaSubset.CanvasSize.
 			_viewportSize = mapAreaSubset.CanvasSize;
 
-			var msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: false);
+			var reApplyColorMap = mapAreaSubset.Coords.CrossesYZero;
+			var msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: reApplyColorMap);
 
 			return msrJob;
 		}
@@ -1051,7 +1040,7 @@ namespace MSetExplorer
 				var msToClearDisplay = stopWatch.ElapsedMilliseconds;
 				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel took:{msToStopJobs}ms to Stop the Jobs and took {msToClearDisplay}ms to Clear the display.");
 
-				ReportObjectPoolDetails();
+				_mapSectionVectorProvider.ReportObjectPoolDetails();
 			}
 		}
 

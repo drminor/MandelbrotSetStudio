@@ -440,6 +440,7 @@ namespace MSetExplorer
 			// Create a copy of the current job, commit it to the repo and get the new job with the updated Id on file.
 			var newCopy = curJob.CreateNewCopy();
 			newCopy.JobOwnerType = OwnerType.Poster;
+			newCopy.TransformType = TransformType.Home;
 			var newJobId = _projectAdapter.InsertJob(newCopy);
 			var job = _projectAdapter.GetJob(newJobId);
 

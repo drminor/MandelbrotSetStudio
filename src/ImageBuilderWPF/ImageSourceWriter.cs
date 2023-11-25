@@ -18,6 +18,8 @@ namespace ImageBuilderWPF
 
 		private WriteableBitmap? _bitmap;
 
+		private int _numberOfWritesPending;
+
 		#endregion
 
 		#region Constructors
@@ -27,6 +29,7 @@ namespace ImageBuilderWPF
 			_bitmap = writeableBitmap;
 			_synchronizationContext = synchronizationContext;
 			_returnMapSectionVectorsAction = PlaceHolderAction;
+			_numberOfWritesPending = 0;
 		}
 
 		#endregion
@@ -43,6 +46,7 @@ namespace ImageBuilderWPF
 
 		public void WriteBlock(Int32Rect sourceRect, MapSectionVectors mapSectionVectors, byte[] imageBuffer, int destX, int destY)
 		{
+			Interlocked.Increment(ref _numberOfWritesPending);
 			var sourceStride = mapSectionVectors.BlockSize.Width * BYTES_PER_PIXEL;
 			_synchronizationContext.Post((o) => WriteBlockInternal(sourceRect, mapSectionVectors, imageBuffer, sourceStride, destX, destY), null);
 		}
@@ -51,9 +55,16 @@ namespace ImageBuilderWPF
 		{
 		}
 
+		public void SaveAndClose()
+		{
+			Close();
+		}
+
 		public void Close()
 		{
-			_bitmap = null;
+			_synchronizationContext.Post((o) => WaitForWritesToComplete(), null);
+			
+			//_bitmap = null;
 		}
 
 		#endregion
@@ -63,10 +74,14 @@ namespace ImageBuilderWPF
 		private void WriteBlockInternal(Int32Rect sourceRect, MapSectionVectors mapSectionVectors, byte[] imageBuffer, int sourceStride, int destX, int destY)
 		{
 			_bitmap?.WritePixels(sourceRect, imageBuffer, sourceStride, destX, destY);
+			Interlocked.Decrement(ref _numberOfWritesPending);
 
 			_returnMapSectionVectorsAction(mapSectionVectors);
-			//mapSectionVectors.DecreaseRefCount();
-			//_mapSectionVectorProvider.ReturnMapSectionVectors(mapSectionVectors);
+		}
+
+		private void WaitForWritesToComplete()
+		{
+			//SpinWait.SpinUntil(() => _numberOfWritesPending < 1);
 		}
 
 		private void PlaceHolderAction(MapSectionVectors mapSectionVectors)

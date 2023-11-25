@@ -127,10 +127,17 @@ namespace MSetExplorer
 			if (saveResult == SaveResult.ChangesSaved)
 			{
 				//_ = MessageBox.Show("Changes Saved");
+
+				//_vm.MapDisplayViewModel.ClearDisplay();
+				_vm.ProjectViewModel.ProjectClose();
+
 			}
 			else if (saveResult == SaveResult.NotSavingChanges)
 			{
 				_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
+
+				//_vm.MapDisplayViewModel.ClearDisplay();
+				_vm.ProjectViewModel.ProjectClose();
 			}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
@@ -232,9 +239,9 @@ namespace MSetExplorer
 				return;
 			}
 
-			_vm.MapDisplayViewModel.ClearDisplay();
-
+			//_vm.MapDisplayViewModel.ClearDisplay();
 			_vm.ProjectViewModel.ProjectClose();
+
 			AppNavRequestResponse.OnCloseBehavior = onCloseBehavior;
 			Close();
 		}
@@ -375,6 +382,9 @@ namespace MSetExplorer
 				return;
 			}
 
+			//_vm.MapDisplayViewModel.ClearDisplay();
+			_vm.ProjectViewModel.ProjectClose();
+
 			LoadNewProject();
 		}
 
@@ -386,10 +396,10 @@ namespace MSetExplorer
 			{
 				//_ = MessageBox.Show("Changes Saved");
 			}
-			else if (saveResult == SaveResult.NotSavingChanges)
-			{
-				_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
-			}
+			//else if (saveResult == SaveResult.NotSavingChanges)
+			//{
+			//	_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
+			//}
 			else if (saveResult == SaveResult.SaveCancelled)
 			{
 				// user cancelled.
@@ -401,6 +411,21 @@ namespace MSetExplorer
 			{
 				if (selectedName != null)
 				{
+					if (_vm.ProjectViewModel.CurrentProject != null)
+					{
+						Debug.WriteLine($"Closing the current project. Name: {_vm.ProjectViewModel.CurrentProjectName}.");
+
+						if (saveResult == SaveResult.NotSavingChanges)
+						{
+							Debug.WriteLine("User chose not save changes... Deleting MapSections for unsaved Jobs.");
+
+							_ = _vm.ProjectViewModel.DeleteMapSectionsForUnsavedJobs();
+						}
+
+						//_vm.MapDisplayViewModel.ClearDisplay();
+						_vm.ProjectViewModel.ProjectClose();
+					}
+
 					Debug.WriteLine($"Opening project with name: {selectedName}.");
 					_ = _vm.ProjectViewModel.ProjectOpen(selectedName);
 				}
@@ -502,6 +527,7 @@ namespace MSetExplorer
 
 					if (_vm.ProjectViewModel.TryCreatePoster(name, description, tentativePosterSize, out var newPoster))
 					{
+						//_vm.MapDisplayViewModel.ClearDisplay();
 						_vm.ProjectViewModel.ProjectClose();
 
 						AppNavRequestResponse.OnCloseBehavior = OnCloseBehavior.ReturnToTopNav;
@@ -1144,6 +1170,9 @@ namespace MSetExplorer
 
 					return;
 				}
+
+				//_vm.MapDisplayViewModel.ClearDisplay();
+				_vm.ProjectViewModel.ProjectClose();
 
 				var mapAreaInfoV2 = coordsEditorViewModel.GetMapCenterAndDeltaDepreciated();
 				LoadNewProject(mapAreaInfoV2, colorBandSet, mapCalcSettings);

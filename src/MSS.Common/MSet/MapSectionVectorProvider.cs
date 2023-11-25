@@ -1,5 +1,7 @@
 ﻿using MSS.Types;
 using MSS.Types.MSet;
+using System.Diagnostics;
+using System.Text;
 
 namespace MSS.Common
 {
@@ -177,6 +179,20 @@ namespace MSS.Common
 		//}
 
 		#endregion
+
+		public void ReportObjectPoolDetails()
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine();
+			sb.AppendLine($"Vecs Leased: {NumberOfMapSectionVectorsLeased} / Available: {MapSectionsVectorsInPool}.");
+			sb.AppendLine($"Vecs2 Leased: {NumberOfMapSectionVectors2Leased}.");
+			sb.AppendLine($"ZVecs Leased: {NumberOfMapSectionZVectorsLeased} / Available: {MapSectionsZVectorsInPool}.");
+			sb.AppendLine($"Refused Vec Returns: {NumberOfRefusedMapSectionReturns}.");
+			sb.AppendLine($"Max Vecs: {MaxPeakSectionVectors} / Max ZVecs: {MaxPeakSectionZVectors}.");
+
+			Debug.Write(sb.ToString());
+		}
 
 		#region Merge and Split Methods
 

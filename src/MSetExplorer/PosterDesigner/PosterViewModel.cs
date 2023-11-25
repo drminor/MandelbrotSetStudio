@@ -72,7 +72,7 @@ namespace MSetExplorer
 						{
 							Debug.WriteLineIf(_useDetailedDebug, "The PosterViewModel is setting its CurrentAreaColorAndCalcSettings as its value of CurrentPoster is being updated.");
 
-							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id, OwnerType.Poster, currentJob.MapAreaInfo, CurrentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
+							var areaColorAndCalcSettings = new AreaColorAndCalcSettings(currentJob.Id, OwnerType.Poster, currentJob.MapAreaInfo, _currentPoster.CurrentColorBandSet, currentJob.MapCalcSettings.Clone());
 							CurrentAreaColorAndCalcSettings = areaColorAndCalcSettings;
 						}
 						else

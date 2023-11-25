@@ -8,8 +8,10 @@ namespace ImageBuilderWPF
 	{
 		public Action<MapSectionVectors> ReturnMapSectionVectors { set; }
 
-		void Close();
 		void Save();
+		void SaveAndClose();
+		void Close();
+
 		void WriteBlock(Int32Rect sourceRect, MapSectionVectors mapSectionVectors, byte[] imageBuffer, int destX, int destY);
 	}
 }

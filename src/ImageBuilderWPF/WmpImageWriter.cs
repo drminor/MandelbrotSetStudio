@@ -84,6 +84,16 @@ namespace ImageBuilderWPF
 			_synchronizationContext.Post((o) => SaveBitmap(_bitmap), null);
 		}
 
+		public void SaveAndClose()
+		{
+			if (_bitmap == null)
+			{
+				throw new InvalidOperationException("WmpImage: Cannot call End when the bitmap is null.");
+			}
+
+			_synchronizationContext.Post((o) => SaveBitmapAndClose(_bitmap), null);
+		}
+
 		public void Close()
 		{
 			if (_weOwnTheStream)
@@ -121,6 +131,19 @@ namespace ImageBuilderWPF
 
 			encoder.Frames.Add(bitmapFrame);
 			encoder.Save(_outputStream);
+		}
+
+		private void SaveBitmapAndClose(WriteableBitmap bitmap)
+		{
+			var bitmapFrame = BitmapFrame.Create(bitmap);
+
+			var encoder = new WmpBitmapEncoder();
+			encoder.ImageQualityLevel = 1.0f;
+
+			encoder.Frames.Add(bitmapFrame);
+			encoder.Save(_outputStream);
+
+			Close();
 		}
 
 		private void PlaceHolderAction(MapSectionVectors mapSectionVectors)

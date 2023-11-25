@@ -71,6 +71,5 @@ namespace MSetExplorer
 
 		MsrJob? MoveTo(VectorDbl contentOffset);
 
-		void ReportObjectPoolDetails();
 	}
 }

@@ -1,6 +1,4 @@
-﻿using ImageBuilder;
-using ImageBuilderWPF;
-using Microsoft.Extensions.Logging.Abstractions;
+﻿using ImageBuilderWPF;
 using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
@@ -15,7 +13,7 @@ using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
-	public class LazyMapPreviewImageProvider 
+	public class LazyMapPreviewImageProvider : IDisposable
 	{
 		#region Private Fields
 
@@ -80,7 +78,7 @@ namespace MSetExplorer
 			Bitmap = CreateBitmap(previewMapAreaInfo.CanvasSize.Round());
 			FillBitmapWithColor(_fallbackColor, Bitmap);
 
-			QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings, _synchronizationContext);
+			//QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings, _synchronizationContext);
 		}
 
 		#endregion
@@ -115,13 +113,13 @@ namespace MSetExplorer
 		//	QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings);
 		//}
 
-		public void RequestBitmapGeneration(MapCenterAndDelta mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
+		public WriteableBitmap RequestBitmapGeneration(MapCenterAndDelta mapAreaInfo, SizeDbl containerSize, SizeDbl posterSize)
 		{
 			if (_synchronizationContext == null)
 			{
 				if (SynchronizationContext.Current == null)
 				{
-					throw new InvalidOperationException("Request BitmapGeneration. The LazyMapPreviewImageProvider has no SynchronizationContext.");
+					throw new InvalidOperationException("Request BitmapGeneration. The LazyMapPreviewImageProvider has no Synchronization Context.");
 				}
 				else
 				{
@@ -135,8 +133,10 @@ namespace MSetExplorer
 			var previewMapAreaInfo = GetMapAreaInfoWithSize(mapAreaInfo, containerSize, _posterSize);
 
 			Bitmap = CreateBitmap(previewMapAreaInfo.CanvasSize.Round());
-			FillBitmapWithColor(_fallbackColor, Bitmap);
+			//FillBitmapWithColor(_fallbackColor, Bitmap);
 			QueueBitmapGeneration(JobId, OwnerType, previewMapAreaInfo, _colorBandSet, _mapCalcSettings, _synchronizationContext);
+
+			return Bitmap;
 		}
 
 		public void CancelBitmapGeneration()
@@ -338,7 +338,6 @@ namespace MSetExplorer
 			var w = size.Width;
 			var h = size.Height;
 
-			//var bitmap = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
 			var bitmap = new WriteableBitmap(w, h, DOTS_PER_INCH, DOTS_PER_INCH, PIXEL_FORMAT, null);
 			return bitmap;
 		}
@@ -350,6 +349,34 @@ namespace MSetExplorer
 
 		//	return previewSize;
 		//}
+
+		#endregion
+
+		#region IDisposable
+
+		private bool _disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!_disposedValue)
+			{
+				if (disposing)
+				{
+					// TODO: dispose managed state (managed objects)
+				}
+
+				// TODO: set large fields to null
+				_disposedValue = true;
+			}
+		}
+
+
+		public void Dispose()
+		{
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
+		}
 
 		#endregion
 	}
