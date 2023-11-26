@@ -459,36 +459,6 @@ namespace MSS.Common
 			return offsetInSamplePoints;
 		}
 
-
-		//private BigVector GetMapBlockOffset(RPoint mapPosition, RSize samplePointDelta, SizeInt blockSize, out VectorInt canvasControlOffset)
-		//{
-		//	// Determine the number of blocks we must add to our screen coordinates to retrieve a block from the respository.
-		//	// The screen origin = left, bottom. Map origin = left, bottom.
-
-		//	if (mapPosition.IsZero())
-		//	{
-		//		canvasControlOffset = new VectorInt();
-		//		return new BigVector();
-		//	}
-
-		//	var distance = new RVector(mapPosition);
-		//	var offsetInSamplePoints = GetNumberOfSamplePoints(distance, samplePointDelta);
-
-		//	var result = RMapHelper.GetOffsetInBlockSizeUnits(offsetInSamplePoints, blockSize, out canvasControlOffset);
-
-		//	return result;
-		//}
-
-		//private BigVector GetNumberOfSamplePoints(RVector distance, RSize samplePointDelta)
-		//{
-		//	var nrmDistance = RNormalizer.Normalize(distance, samplePointDelta, out var nrmSamplePointDelta);
-
-		//	// # of whole sample points between the source and destination origins.
-		//	var offsetInSamplePoints = nrmDistance.Divide(nrmSamplePointDelta);
-
-		//	return offsetInSamplePoints;
-		//}
-
 		#endregion
 
 		#region Diagnostics

@@ -41,7 +41,7 @@ namespace MSetExplorer
 		{
 			//Debug.WriteLine($"There have been {_vm.NumberOfCountValSwitches}.");
 
-			Debug.WriteLine($"CreateImage ProgressChanged: {e}");
+			//Debug.WriteLine($"CreateImage ProgressChanged: {e}");
 
 			progressBar1.Value = e;
 			if (Math.Abs(e - 100) < 1)
@@ -67,6 +67,8 @@ namespace MSetExplorer
 			if ((btnCancel.Content as string) != "Close")
 			{
 				_vm.CancelCreateImage();
+
+				// TODO: Consider signaling that the operation is complete without making the user press yet another button.
 				_ = MessageBox.Show("The operation has been cancelled.");
 			}
 			else

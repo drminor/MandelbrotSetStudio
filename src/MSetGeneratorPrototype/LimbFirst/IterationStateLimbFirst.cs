@@ -38,6 +38,9 @@ namespace MSetGeneratorPrototype
 			RowUsedCalcs = new long[RowCount];
 			RowUnusedCalcs = new long[RowCount];
 
+			RowIterationsFull = new long[RowCount];
+			RowIterationsPartial = new long[RowCount];
+
 			HasEscapedFlags = new Vector256<int>[_mapSectionZVectors.ValuesPerRow];
 			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlags);
 			
@@ -73,6 +76,9 @@ namespace MSetGeneratorPrototype
 		public Span<bool> RowHasEscaped { get; init; }
 		public long[] RowUnusedCalcs { get; init; }
 		public long[] RowUsedCalcs { get; init; }
+
+		public long[] RowIterationsFull { get; init; }
+		public long[] RowIterationsPartial { get; init; }
 
 		public Vector256<int>[] HasEscapedFlags { get; private set; }
 

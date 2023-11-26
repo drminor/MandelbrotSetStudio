@@ -215,7 +215,13 @@ namespace MSetExplorer
 				var calcs = (long)mops.NumberOfCalcs;
 				var unusedCalcs = (long)mops.NumberOfUnusedCalcs;
 
-				Debug.WriteLine($"Performed: {multiplications:N0} multiplications. Iterations: {calcs:N0}; Discarded Iterations: {unusedCalcs:N0}.");
+				var iterationsFull =  mops.NumberOfIterationsFull;
+				var iterationsPartial = mops.NumberOfIterationsPartial;
+
+				Debug.WriteLine($"Performed: {multiplications:N0} multiplications. Calcs: {calcs:N0}; Discarded Calcs: {unusedCalcs:N0}.");
+
+				Debug.WriteLine($"Performed: Iterations Full: {iterationsFull:N0}; Partial: {iterationsPartial:N0}.");
+
 
 				IterationsPerSecond = (int)(calcs / totalExecutionTime.TotalSeconds);
 				OnPropertyChanged(nameof(IterationsPerSecond));

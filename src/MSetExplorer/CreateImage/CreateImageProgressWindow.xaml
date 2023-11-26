@@ -3,17 +3,27 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:MSetExplorer"
+        xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:CreateImageProgressViewModel}"
         mc:Ignorable="d"
-        Title="Creating Image..." Height="180" Width="520">
+        Title="Creating Image..." Height="210" Width="520">
     <Grid>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
+        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0">
+
+            <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
+                <TextBlock Margin="0,5,0,5" FontSize="16" Text="{Binding ImageFilename, Mode=OneTime}" VerticalAlignment="Top" HorizontalAlignment="Center" />
+            </StackPanel>
+
+        </Border>
+
+
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Vertical">
 
@@ -24,7 +34,7 @@
 
         </Border>
 
-        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnMinimize" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="MinimizeButton_Click" IsDefault="True" >Minimize</Button>

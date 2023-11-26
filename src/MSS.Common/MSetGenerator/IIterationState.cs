@@ -37,6 +37,12 @@ namespace MSS.Common
 		Vector256<int>[] UsedCalcs { get; }
 		Vector256<int>[] UnusedCalcs { get; }
 
+		int[] IterationsFull { get; }
+		int[] IterationsPartial { get; }
+
+		long[] RowIterationsFull { get; }
+		long[] RowIterationsPartial { get; }
+
 		long[] RowUsedCalcs { get; init; }
 		long[] RowUnusedCalcs { get; init; }
 

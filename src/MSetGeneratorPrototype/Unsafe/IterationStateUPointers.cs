@@ -43,31 +43,37 @@ namespace MSetGeneratorPrototype
 			CrsRowVArray = new FP31ValArray(samplePointsX);
 			CiLimbSet = new Vector256<uint>[LimbCount];
 
+			CountsRowV = new Vector256<int>[VectorsPerRow];
+			EscapeVelocities = new ushort[ValuesPerRow];
+
 			RowHasEscaped = _mapSectionZVectors.RowHasEscaped;
+			RowUsedCalcs = new long[RowCount];
+			RowUnusedCalcs = new long[RowCount];
+
+			RowIterationsFull = new long[RowCount];
+			RowIterationsPartial = new long[RowCount];
+
+			HasEscapedFlagsRowV = new Vector256<int>[VectorsPerRow];
+			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlagsRowV);
 
 			DoneFlags = new Vector256<int>[VectorsPerRow];
 			UsedCalcs = new Vector256<int>[VectorsPerRow];
 			UnusedCalcs = new Vector256<int>[VectorsPerRow];
 
-			CountsRowV = new Vector256<int>[VectorsPerRow];
-			EscapeVelocities = new ushort[ValuesPerRow];
-			HasEscapedFlagsRowV = new Vector256<int>[VectorsPerRow];
-
-			RowUsedCalcs = new long[RowCount];
-			RowUnusedCalcs = new long[RowCount];
-
-			ZrsRowV = new Vector256<uint>[VectorsPerZValueRow];
-			ZisRowV = new Vector256<uint>[VectorsPerZValueRow];
-
-			_mapSectionZVectors.FillHasEscapedFlagsRow(0, HasEscapedFlagsRowV);
-			_mapSectionZVectors.FillZrsRow(0, ZrsRowV);
-			_mapSectionZVectors.FillZisRow(0, ZisRowV);
+			IterationsFull = new int[VectorsPerRow];
+			IterationsPartial = new int[VectorsPerRow];
 
 			InPlayList = Enumerable.Range(0, VectorsPerRow).ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
 
 			_inPlayBackingList = InPlayList.ToList();
 			ALL_BITS_SET = Vector256<int>.AllBitsSet;
+
+			ZrsRowV = new Vector256<uint>[VectorsPerZValueRow];
+			ZisRowV = new Vector256<uint>[VectorsPerZValueRow];
+
+			_mapSectionZVectors.FillZrsRow(0, ZrsRowV);
+			_mapSectionZVectors.FillZisRow(0, ZisRowV);
 		}
 
 		#endregion
@@ -97,6 +103,10 @@ namespace MSetGeneratorPrototype
 		public Vector256<int>[] UnusedCalcs { get; private set; }
 
 		// Row-Level Vars
+
+		public FP31ValArray CrsRowVArray { get; private set; }
+		public Vector256<uint>[] CiLimbSet { get; private set; }
+
 		public Vector256<int>[] CountsRowV { get; private set; }
 		public ushort[] EscapeVelocities { get; private set; }
 		public Vector256<int>[] HasEscapedFlagsRowV { get; private set; }
@@ -104,14 +114,17 @@ namespace MSetGeneratorPrototype
 		public long[] RowUnusedCalcs { get; init; }
 		public long[] RowUsedCalcs { get; init; }
 
+		public long[] RowIterationsFull { get; init; }
+		public long[] RowIterationsPartial { get; init; }
+
 		public int[] InPlayList { get; private set; }
 		public int[] InPlayListNarrow { get; private set; }
 
-		public FP31ValArray CrsRowVArray { get; private set; }
-		public Vector256<uint>[] CiLimbSet { get; private set; }
-
 		public Vector256<uint>[] ZrsRowV { get; private set; }
 		public Vector256<uint>[] ZisRowV { get; private set; }
+
+		public int[] IterationsFull { get; private set; }
+		public int[] IterationsPartial { get; private set; }
 
 		#endregion
 

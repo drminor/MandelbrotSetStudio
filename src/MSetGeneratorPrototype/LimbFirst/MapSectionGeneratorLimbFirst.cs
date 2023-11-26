@@ -78,7 +78,7 @@ namespace MSetGeneratorPrototype
 		private void UpdateResponseWithMops(MapSectionRequest mapSectionRequest, IteratorLimbFirst iterator, IterationStateLimbFirst iterationState)
 		{
 			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
-			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs, iterationState.RowIterationsFull, iterationState.RowIterationsPartial);
 		}
 
 		// Generate MapSection

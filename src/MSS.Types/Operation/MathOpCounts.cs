@@ -33,6 +33,12 @@ namespace MSS.Types
 		[DataMember(Order = 8)]
 		public double NumberOfUnusedCalcs { get; set; }
 
+		[DataMember(Order = 9)]
+		public long NumberOfIterationsFull { get; set; }
+
+		[DataMember(Order = 10)]
+		public long NumberOfIterationsPartial{ get; set; }
+
 		#endregion
 
 		#region Pubic Methods
@@ -49,6 +55,9 @@ namespace MSS.Types
 
 			NumberOfCalcs += mathOpCounts.NumberOfCalcs;
 			NumberOfUnusedCalcs += mathOpCounts.NumberOfUnusedCalcs;
+
+			NumberOfIterationsFull += mathOpCounts.NumberOfIterationsFull;
+			NumberOfIterationsPartial += mathOpCounts.NumberOfIterationsPartial;
 		}
 
 		public void Reset()
@@ -63,9 +72,12 @@ namespace MSS.Types
 
 			NumberOfCalcs = 0;
 			NumberOfUnusedCalcs = 0;
+
+			NumberOfIterationsFull = 0;
+			NumberOfIterationsPartial = 0;
 		}
 
-		public void RollUpNumberOfCalcs(long[] usedCalcRowValues, long[] unusedCalcRowValues)
+		public void RollUpNumberOfCalcs(long[] usedCalcRowValues, long[] unusedCalcRowValues, long[] iterationsPerformedFull, long[] iterationsPerformedPartial)
 		{
 			//var used = usedCalcRowValues.Sum();
 			//var unused = unusedCalcRowValues.Sum();
@@ -77,8 +89,10 @@ namespace MSS.Types
 
 			NumberOfCalcs += usedCalcRowValues.Sum();
 			NumberOfUnusedCalcs += unusedCalcRowValues.Sum();
-		}
 
+			NumberOfIterationsFull += iterationsPerformedFull.Sum();
+			NumberOfIterationsPartial += iterationsPerformedPartial.Sum();
+		}
 
 		#endregion
 
@@ -87,7 +101,9 @@ namespace MSS.Types
 		public override string ToString()
 		{
 			var result = $"Splits: {NumberOfSplits:N0}\tCarries: {NumberOfNegations:N0}\tGrtrThanOps: {NumberOfComparisons:N0}" +
-				$"\tAdditions: {NumberOfAdditions:N0}\tMultiplications: {NumberOfMultiplications:N0}\tNegations: {NumberOfConversions:N0}\tUnusedCalcs: {NumberOfUnusedCalcs:N0}";
+				$"\tAdditions: {NumberOfAdditions:N0}\tMultiplications: {NumberOfMultiplications:N0}\tNegations: {NumberOfConversions:N0}\tUnusedCalcs: {NumberOfUnusedCalcs:N0}" +
+				$"\n\tCalcs: {NumberOfCalcs:N0}\tUnusedCalcs: {NumberOfUnusedCalcs}" +
+				$"\tIterationsFull: {NumberOfIterationsFull:N0}\tIterationsPartial: {NumberOfIterationsPartial}";
 
 			return result;
 		}

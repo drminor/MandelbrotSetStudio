@@ -528,7 +528,7 @@ namespace MSetGeneratorPrototype
 		private void UpdateResponseWithMops(MapSectionRequest mapSectionRequest, IteratorUPointers iterator, IterationStateUPointers iterationState)
 		{
 			mapSectionRequest.MathOpCounts = iterator.MathOpCounts.Clone();
-			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+			mapSectionRequest.MathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs, iterationState.RowIterationsFull, iterationState.RowIterationsPartial);
 		}
 
 		private void ClearLimbSet(Vector256<uint>[] limbSet)

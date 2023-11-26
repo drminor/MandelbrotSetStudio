@@ -286,6 +286,9 @@ namespace MSetGeneratorPrototype
 
 		private bool GenerateMapCol(int idx, IIterator iterator, IIterationState iterationState)
 		{
+			var fullIterationsPerformed = 0;
+			var partialIterationsPerformed = 0;
+
 			var hasEscapedFlags = Vector256<int>.Zero;
 
 			var doneFlags = Vector256<int>.Zero;
@@ -311,11 +314,13 @@ namespace MSetGeneratorPrototype
 
 			// Update the resultCounts
 			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-			var baseEscapedFlags2Vec = escapedFlagsVec;
+			//var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 
 			while (compositeIsDone != -1)
 			{
+				if (compositeIsDone == 0) fullIterationsPerformed++; else partialIterationsPerformed++;
+				
 				sumOfSquares = iterator.Iterate(_crs, _cis, _zrs, _zis, ref doneFlags);
 				countsV = Avx2.Add(countsV, _justOne);
 
@@ -326,12 +331,12 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
-				baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
+				//baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
 
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 			}
 
-			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCounts, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCounts, fullIterationsPerformed, partialIterationsPerformed, iterationState.UsedCalcs, iterationState.UnusedCalcs, iterationState.IterationsFull, iterationState.IterationsPartial);
 
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlags;
 			iterationState.CountsRowV[idx] = resultCounts;
@@ -353,6 +358,9 @@ namespace MSetGeneratorPrototype
 
 		private bool UpdateMapCol(int idx, IIterator iterator, ref IIterationState iterationState)
 		{
+			var fullIterationsPerformed = 0;
+			var partialIterationsPerformed = 0;
+
 			var hasEscapedFlags = iterationState.HasEscapedFlagsRowV[idx];
 
 			var doneFlags = Vector256<int>.Zero;
@@ -379,11 +387,13 @@ namespace MSetGeneratorPrototype
 
 			// Update the resultCounts
 			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-			var baseEscapedFlags2Vec = escapedFlagsVec;
+			//var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 
 			while (compositeIsDone != -1)
 			{
+				if (compositeIsDone == 0) fullIterationsPerformed++; else partialIterationsPerformed++;
+
 				sumOfSquares = iterator.Iterate(_crs, _cis, _zrs, _zis, ref doneFlags);
 				countsV = Avx2.Add(countsV, _justOne);
 
@@ -394,12 +404,12 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
-				baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
+				//baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
 
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 			}
 
-			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCounts, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCounts, fullIterationsPerformed, partialIterationsPerformed, iterationState.UsedCalcs, iterationState.UnusedCalcs, iterationState.IterationsFull, iterationState.IterationsPartial);
 
 			iterationState.HasEscapedFlagsRowV[idx] = hasEscapedFlags;
 			iterationState.CountsRowV[idx] = resultCounts;
@@ -420,6 +430,9 @@ namespace MSetGeneratorPrototype
 
 		private void GenerateMapColNoZ(int idx, IIterator iterator, IIterationState iterationState)
 		{
+			var fullIterationsPerformed = 0;
+			var partialIterationsPerformed = 0;
+
 			var hasEscapedFlagsV = Vector256<int>.Zero;
 
 			var doneFlagsV = Vector256<int>.Zero;
@@ -443,11 +456,13 @@ namespace MSetGeneratorPrototype
 
 			// Update the resultCounts
 			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-			var baseEscapedFlags2Vec = escapedFlagsVec;
+			//var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 
 			while (compositeIsDone != -1)
 			{
+				if (compositeIsDone == 0) fullIterationsPerformed++; else partialIterationsPerformed++;
+
 				sumOfSquares = iterator.Iterate(_crs, _cis, _zrs, _zis, ref doneFlagsV);
 				countsV = Avx2.Add(countsV, _justOne);
 
@@ -458,12 +473,12 @@ namespace MSetGeneratorPrototype
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
 
 				// Once escaped, always escaped
-				baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
+				//baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
 
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 			}
 
-			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, iterationState.UsedCalcs, iterationState.UnusedCalcs);
+			TallyUsedAndUnusedCalcs(idx, iterationState.CountsRowV[idx], countsV, resultCountsV, fullIterationsPerformed, partialIterationsPerformed, iterationState.UsedCalcs, iterationState.UnusedCalcs, iterationState.IterationsFull, iterationState.IterationsPartial);
 
 			iterationState.CountsRowV[idx] = resultCountsV;
 
@@ -842,17 +857,20 @@ namespace MSetGeneratorPrototype
 
 		[Conditional("PERF")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, Vector256<int>[] usedCalcs, Vector256<int>[] unusedCalcs)
+		private void TallyUsedAndUnusedCalcs(int idx, Vector256<int> originalCountsV, Vector256<int> newCountsV, Vector256<int> resultCountsV, int fullIterationsPerformed, int partialIterationsPerformed, Vector256<int>[] usedCalcs, Vector256<int>[] unusedCalcs, int[] iterationsFull, int[] iterationsPartial)
 		{
 			usedCalcs[idx] = Avx2.Subtract(resultCountsV, originalCountsV);
 			unusedCalcs[idx] = Avx2.Subtract(newCountsV, resultCountsV);
+
+			iterationsFull[idx] += fullIterationsPerformed;
+			iterationsPartial[idx] += partialIterationsPerformed;
 		}
 
 		[Conditional("PERF")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void RollUpNumberOfCalcs(MathOpCounts mathOpCounts, IIterationState iterationState)
 		{
-			mathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs);
+			mathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs, iterationState.RowIterationsFull, iterationState.RowIterationsPartial);
 		}
 
 		#endregion

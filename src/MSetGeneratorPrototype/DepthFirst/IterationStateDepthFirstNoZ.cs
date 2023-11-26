@@ -14,6 +14,7 @@ namespace MSetGeneratorPrototype
 		private readonly MapSectionVectors2 _mapSectionVectors2;
 
 		private List<int> _inPlayBackingList;
+
 		#region Constructor
 
 		public IterationStateDepthFirstNoZ(FP31Val[] samplePointsX, FP31Val[] samplePointsY,
@@ -43,11 +44,17 @@ namespace MSetGeneratorPrototype
 			RowUsedCalcs = new long[RowCount];
 			RowUnusedCalcs = new long[RowCount];
 
+			RowIterationsFull = new long[RowCount];
+			RowIterationsPartial = new long[RowCount];
+
 			HasEscapedFlagsRowV = new Vector256<int>[0];
 
 			DoneFlags = new Vector256<int>[VectorsPerRow];
 			UsedCalcs = new Vector256<int>[VectorsPerRow];
 			UnusedCalcs = new Vector256<int>[VectorsPerRow];
+
+			IterationsFull = new int[VectorsPerRow];
+			IterationsPartial = new int[VectorsPerRow];
 
 			InPlayList = Enumerable.Range(0, VectorsPerRow).ToArray();
 			InPlayListNarrow = BuildNarowInPlayList(InPlayList);
@@ -84,11 +91,17 @@ namespace MSetGeneratorPrototype
 		public long[] RowUnusedCalcs { get; init; }
 		public long[] RowUsedCalcs { get; init; }
 
+		public long[] RowIterationsFull { get; init; }
+		public long[] RowIterationsPartial { get; init; }
+
 		public Vector256<int>[] HasEscapedFlagsRowV { get; private set; }
 
 		public Vector256<int>[] DoneFlags { get; private set; }
 		public Vector256<int>[] UsedCalcs { get; private set; }
 		public Vector256<int>[] UnusedCalcs { get; private set; }
+
+		public int[] IterationsFull { get; private set; }
+		public int[] IterationsPartial { get; private set; }
 
 		public int[] InPlayList { get; private set; }
 		public int[] InPlayListNarrow { get; private set; }
@@ -309,10 +322,15 @@ namespace MSetGeneratorPrototype
 			{
 				RowUsedCalcs[rowNumber.Value] = GetUsedCalcs(UsedCalcs, UnusedCalcs, out var unusedCalcs);
 				RowUnusedCalcs[rowNumber.Value] = unusedCalcs;
+
+				RowIterationsFull[rowNumber.Value] += IterationsFull.Sum();
+				RowIterationsPartial[rowNumber.Value] += IterationsPartial.Sum();
 			}
 
 			Array.Clear(UnusedCalcs);
 			Array.Clear(UsedCalcs);
+			Array.Clear(IterationsFull);
+			Array.Clear(IterationsPartial);
 		}
 
 		private long GetUsedCalcs(Vector256<int>[] usedCalcsV, Vector256<int>[] unusedCalcsV, out long unusedCalcs)

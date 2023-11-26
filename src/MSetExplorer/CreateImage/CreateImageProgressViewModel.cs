@@ -11,12 +11,16 @@ using System.Threading.Tasks;
 
 namespace MSetExplorer
 {
-	public class CreateImageProgressViewModel
+	public class CreateImageProgressViewModel : ViewModelBase
 	{
 		private readonly IImageBuilder _imageBuilder;
 		private readonly MapJobHelper _mapJobHelper;
 		private CancellationTokenSource _cts;
 		private Task<bool>?_task;
+
+		private string? _imageFilePath;
+		private string? _imageFileName;
+
 
 		#region Constructor
 
@@ -28,6 +32,9 @@ namespace MSetExplorer
 			_cts = new CancellationTokenSource();
 			_task = null;
 
+			_imageFilePath = null;
+			_imageFileName = null;
+
 			Progress = new Progress<double>();
 		}
 
@@ -37,8 +44,27 @@ namespace MSetExplorer
 
 		public bool Successfull { get; private set; }
 		public Progress<double> Progress { get; init; }
+		
+		public string? ImageFilePath
+		{
+			get => _imageFilePath;
+			set
+			{
+				_imageFilePath = value;
+				OnPropertyChanged();
+			}
+		}
+		
+		public string? ImageFilename
+		{
+			get => _imageFileName;
+			set
+			{
+				_imageFileName = value;
+				OnPropertyChanged();
+			}
+		}
 
-		public string? ImageFilePath { get; private set; }
 		public Poster? Poster { get; private set; }
 
 		public long NumberOfCountValSwitches => _imageBuilder.NumberOfCountValSwitches;
@@ -52,6 +78,7 @@ namespace MSetExplorer
 		public void CreateImage(string imageFilePath, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl canvasSize, bool useEscapeVelocities)
 		{
 			ImageFilePath = imageFilePath;
+			ImageFilename = Path.GetFileName(ImageFilePath);
 
 			var mapAreaInfoWithSize = _mapJobHelper.GetMapPositionSizeAndDelta(areaColorAndCalcSettings.MapAreaInfo, canvasSize);
 
