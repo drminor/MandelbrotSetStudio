@@ -1,7 +1,10 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -19,31 +22,49 @@ namespace MSetExplorer
 		private readonly object _processingEnabledLock = new();
 
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<HistogramWorkRequest> _workQueue;
+		private readonly BlockingCollection<HistogramBlockRequest> _workQueue;
 
 		private readonly Task _workQueueProcessor;
 
 		private readonly TimeSpan _waitDuration;
 
+		private readonly ObservableCollection<MapSection> _mapSections;
+
+		private readonly HistogramD _topValues;
+		//private double _averageMapSectionTargetIteration;
+
+
+
 		private bool disposedValue;
 
 		#region Constructor
 
-		public MapSectionHistogramProcessor(IHistogram histogram)
+		public MapSectionHistogramProcessor(IHistogram histogram, ObservableCollection<MapSection> mapSections)
 		{
+			_mapSections = mapSections;
 			_histogram = histogram;
 			_cts = new CancellationTokenSource();
-			_workQueue = new BlockingCollection<HistogramWorkRequest>(QUEUE_CAPACITY);
+			_workQueue = new BlockingCollection<HistogramBlockRequest>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
 			_waitDuration = TimeSpan.FromMilliseconds(100);
+
+			_topValues = new HistogramD();
+			//_averageMapSectionTargetIteration = 0;
+
+			_mapSections.CollectionChanged += MapSections_CollectionChanged; 
 		}
+
+
+		#endregion
+
+		#region Public Events
+
+		public event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
+		public event EventHandler<HistogramUpdateType>? HistogramUpdated;
 
 		#endregion
 
 		#region Public Properties
-
-		public event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
-		public event EventHandler<HistogramUpdateType>? HistogramUpdated;
 
 		public IHistogram Histogram => _histogram;
 
@@ -73,7 +94,7 @@ namespace MSetExplorer
 
 		//public double GetAverageTopValue() => _histogram.GetAverageMaxIndex();
 
-		public void AddWork(HistogramWorkRequest histogramWorkRequest)
+		public void AddWork(HistogramBlockRequest histogramWorkRequest)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
@@ -126,12 +147,16 @@ namespace MSetExplorer
 		public void Reset()
 		{
 			_histogram.Reset();
+			_topValues.Clear();
+
 			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
 		}
 
 		public void Reset(int newSize)
 		{
 			_histogram.Reset(newSize);
+			_topValues.Clear();
+
 			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
 		}
 
@@ -163,25 +188,25 @@ namespace MSetExplorer
 		{
 			var ct = _cts.Token;
 
-			HistogramWorkRequest? lastWorkRequest = null;
-
 			while (!ct.IsCancellationRequested && !_workQueue.IsCompleted)
 			{
 				try
 				{
-					while (_workQueue.TryTake(out var currentWorkRequest, _waitDuration.Milliseconds, ct))
+					// Block waiting for new work.
+					HistogramBlockRequest? workRequest = _workQueue.Take(ct);
+					DoWorkRequest(workRequest);
+
+					// Process the queue as long as new items are available.
+					while (_workQueue.TryTake(out workRequest, _waitDuration.Milliseconds, ct))
 					{
-						lastWorkRequest = DoWorkRequest(currentWorkRequest);
+						DoWorkRequest(workRequest);
 					}
 
-					if (lastWorkRequest != null)
-					{
-						CalculateAndPostPercentages(lastWorkRequest);
-					}
-
-					var currentWorkRequest1 = _workQueue.Take(ct);
-					lastWorkRequest = DoWorkRequest(currentWorkRequest1);
+					// No new items availble in the last _waitDuration.Milliseconds,
+					// raise the Refresh event to let our subscribers know that the Histogram has been updated.
+					HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
 				}
+
 				catch (OperationCanceledException)
 				{
 					//Debug.WriteLine("The response queue got a OCE.");
@@ -194,46 +219,75 @@ namespace MSetExplorer
 			}
 		}
 
-		private HistogramWorkRequest? DoWorkRequest(HistogramWorkRequest histogramWorkRequest)
+		private bool DoWorkRequest(HistogramBlockRequest histogramWorkRequest)
 		{
-			HistogramWorkRequest? result;
+			bool result;
 
 			lock (_processingEnabledLock)
 			{
-				if (_processingEnabled)
+				if (_processingEnabled && histogramWorkRequest.Histogram != null)
 				{
-					if (histogramWorkRequest.Histogram != null)
-					{
-						switch (histogramWorkRequest.RequestType)
-						{
-							case HistogramWorkRequestType.Add:
-								_histogram.Add(histogramWorkRequest.Histogram);
-								HistogramUpdated?.Invoke(this, HistogramUpdateType.BlockAdded);
-								break;
-							case HistogramWorkRequestType.Remove:
-								_histogram.Remove(histogramWorkRequest.Histogram);
-								HistogramUpdated?.Invoke(this, HistogramUpdateType.BlockRemoved);
-								break;
-							case HistogramWorkRequestType.Refresh:
-								HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
-								break;
-							default:
-								Debug.WriteLine("WARNING: Unrecognized HistogramRequestType, using HistogramRequestType.Refresh.");
-								HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
-								break;
-						}
-					}
+					result = true;
 
-					result = histogramWorkRequest;
+					if (histogramWorkRequest.RequestType == HistogramBlockRequestType.Add)
+					{
+						_histogram.Add(histogramWorkRequest.Histogram);
+					}
+					else if (histogramWorkRequest.RequestType == HistogramBlockRequestType.Remove)
+					{
+						_histogram.Remove(histogramWorkRequest.Histogram);
+					}
+					else
+					{
+						throw new InvalidOperationException($"The {histogramWorkRequest.RequestType} is not recognized or is not supported.");
+					}
 				}
 				else
 				{
-					result = null;
+					result = false;
 				}
 			}
 
 			return result;
 		}
+
+		private void MapSections_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			//if (_colorBandSet != null && _colorBandSet.Count == 0)
+			//{
+			//	return;
+			//}
+
+			if (e.Action == NotifyCollectionChangedAction.Reset)
+			{
+				//	Reset
+				//_histogram.Reset();
+				Reset();
+			}
+			else if (e.Action == NotifyCollectionChangedAction.Add)
+			{
+				// Add items
+				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
+				foreach (var mapSection in mapSections)
+				{
+					AddWork(new HistogramBlockRequest(HistogramBlockRequestType.Add, mapSection.Histogram));
+					_topValues.Increment(mapSection.TargetIterations);
+				}
+			}
+			else if (e.Action == NotifyCollectionChangedAction.Remove)
+			{
+				// Remove items
+				var mapSections = e.OldItems?.Cast<MapSection>() ?? new List<MapSection>();
+				foreach (var mapSection in mapSections)
+				{
+					AddWork(new HistogramBlockRequest(HistogramBlockRequestType.Remove, mapSection.Histogram));
+					_topValues.Decrement(mapSection.TargetIterations);
+				}
+			}
+
+			//Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
+		}
+
 
 		private void CalculateAndPostPercentages(HistogramWorkRequest histogramWorkRequest)
 		{
@@ -312,6 +366,8 @@ namespace MSetExplorer
 
 			return bucketCnts;
 		}
+
+
 
 		#endregion
 

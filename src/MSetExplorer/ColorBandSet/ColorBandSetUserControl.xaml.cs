@@ -43,6 +43,8 @@ namespace MSetExplorer
 				//_vm.ItemWidth = lvColorBands.ActualWidth - 5;
 
 				//Debug.WriteLine("The ColorBandSetUserControl is now loaded");
+
+				
 			}
 		}
 

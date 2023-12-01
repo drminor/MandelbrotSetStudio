@@ -58,6 +58,7 @@ namespace MSetExplorer
 			mapSectionPzControl1.Loaded += MapSectionPzControl1_Loaded;
 
 			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
+
 			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
 		}
@@ -184,6 +185,25 @@ namespace MSetExplorer
 		{
 			var showCalcSettings = mnuItem_CalcWindow.IsChecked;
 			dispSecMapCalcSettings.Visibility = showCalcSettings ? Visibility.Visible : Visibility.Collapsed;
+		}
+
+		// Show Hide Color Band Editor
+		private void ColorBandEditorWindow_Checked(object sender, RoutedEventArgs e)
+		{
+			// TODO: Create a Command for this
+			// TOOD: Bind the DispSecColorBandSets border control's Visibility to the ColorBandSetViewModel
+
+
+			if (dispSecColorBandSets != null)
+			{
+				var showColorBandEditor = mnuItem_ColorBandWindow.IsChecked;
+				var cbsVisState = showColorBandEditor ? Visibility.Visible : Visibility.Collapsed;
+
+				_vm.ColorBandSetViewModel.WindowVisibility = cbsVisState;
+
+				dispSecColorBandSets.Visibility = cbsVisState;
+
+			}
 		}
 
 		#endregion

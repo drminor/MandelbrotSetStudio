@@ -28,9 +28,6 @@ namespace MSetExplorer
 
 			PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
 
-			//MapDisplayViewModel.MapViewUpdateRequested += MapDisplayViewModel_MapViewUpdateRequested;
-
-			//MapDisplayViewModel.DisplayJobCompleted += MapDisplayViewModel_DisplayJobCompleted;
 			MapDisplayViewModel.MapViewUpdateCompleted += MapDisplayViewModel_MapViewUpdateCompleted;
 
 			ViewModelFactory = viewModelFactory;
@@ -124,47 +121,11 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void MapDisplayViewModel_MapViewUpdateRequested(object? sender, MapViewUpdateRequestedEventArgs e)
-		//{
-		//	if (e.IsPreview)
-		//	{
-		//		// Calculate new Coords for preview
-
-		//		//var newMapAreaInfo = PosterViewModel.GetUpdatedMapAreaInfo(e.CurrentMapAreaInfo, e.TransformType, e.PanAmount, e.Factor, out var diagReciprocal);
-		//		//MapCoordsViewModel.Preview(newMapAreaInfo);
-		//	}
-		//	else
-		//	{
-		//		// Zoom or Pan Map Coordinates
-		//		var newMapAreaInfo = PosterViewModel.GetUpdatedMapAreaInfo(e.CurrentMapAreaInfo, e.TransformType, e.PanAmount, e.Factor, out var diagReciprocal);
-		//		PosterViewModel.UpdateMapSpecs(newMapAreaInfo);
-		//	}
-		//}
-
-		private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
-		{
-			ColorBandSetViewModel.RefreshPercentages();
-			CbsHistogramViewModel.RefreshDisplay();
-		}
-
 		private void MapDisplayViewModel_MapViewUpdateCompleted(object? sender, MapViewUpdateCompletedEventArgs e)
 		{
 			ColorBandSetViewModel.RefreshPercentages();
 			CbsHistogramViewModel.RefreshDisplay();
 		}
-
-		//private void MapDisplayViewModel_MapViewUpdateCompleted(object? sender, MapViewUpdateCompletedEventArgs e)
-		//{
-		//	Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}");
-
-		//	ColorBandSetViewModel.RefreshPercentages();
-		//	var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
-
-		//	if (histogramDataWasEmpty)
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
-		//	}
-		//}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
 		{

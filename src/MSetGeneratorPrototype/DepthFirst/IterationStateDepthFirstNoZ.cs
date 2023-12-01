@@ -115,14 +115,12 @@ namespace MSetGeneratorPrototype
 			if (RowNumber.HasValue)
 			{
 				// Update the _mapSectionVectors with the current row properties
-				//MapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
 				_mapSectionVectors2.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
 				_mapSectionVectors2.UpdateFromEscapeVelocitiesRow(RowNumber.Value, EscapeVelocities);
 			}
 
 			UpdateUsedAndUnusedCalcs(RowNumber);
 
-			Array.Clear(HasEscapedFlagsRowV);
 			Array.Clear(CountsRowV);
 			Array.Clear(DoneFlags);
 			Array.Clear(EscapeVelocities);
@@ -145,7 +143,6 @@ namespace MSetGeneratorPrototype
 			if (RowNumber.HasValue)
 			{
 				// Update the _mapSectionVectors with the current row properties
-				//MapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
 				_mapSectionVectors2.UpdateFromCountsRow(RowNumber.Value, CountsRowV);
 
 				// TODO: Avoid calling UpdateFromEscapeVelocitiesRow if we are not Calculating the EscapeVelocities.
@@ -164,8 +161,6 @@ namespace MSetGeneratorPrototype
 				{
 					if (!RowHasEscaped[rowNumber])
 					{
-						//MapSectionZVectors.FillHasEscapedFlagsRow(rowNumber, HasEscapedFlagsRowV);
-
 						_mapSectionVectors2.FillCountsRow(rowNumber, CountsRowV);
 						RowHasEscaped[rowNumber] = BuildTheInPlayBackingList(CountsRowV, _inPlayBackingList, DoneFlags);
 						allSamplesForThisRowAreDone = _inPlayBackingList.Count == 0;
@@ -183,7 +178,6 @@ namespace MSetGeneratorPrototype
 				rowNumber++;
 				if (rowNumber < RowCount)
 				{
-					//Array.Clear(HasEscapedFlagsRowV);
 					Array.Clear(CountsRowV);
 					Array.Clear(EscapeVelocities);
 					Array.Clear(DoneFlags);

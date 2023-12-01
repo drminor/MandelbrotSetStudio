@@ -78,7 +78,7 @@
                 <Separator/>
                 <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_Checked"/>
                 <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
-                <MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>
+                <MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="{Binding ColorBandSetViewModel.IsEnabled}"/>
             </MenuItem>
 
             <MenuItem Header="_Map">
@@ -146,7 +146,7 @@
                 <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
             </Border>
 
-            <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" x:Name="dispSecColorBandSets">
+            <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" x:Name="dispSecColorBandSets" Visibility="{Binding ColorBandSetViewModel.WindowVisibility}" >
                 <local:ColorBandSetUserControl x:Name="colorBandView1" Focusable="True" ></local:ColorBandSetUserControl>
             </Border>
 

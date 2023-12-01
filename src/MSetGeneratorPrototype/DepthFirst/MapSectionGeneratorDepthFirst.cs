@@ -93,7 +93,7 @@ namespace MSetGeneratorPrototype
 
 			var mapCalcSettings = mapSectionRequest.MapCalcSettings;
 			var increasingIterations = mapSectionRequest.IncreasingIterations;
-			
+
 			if (FORCE_CALCULATE_ESC_VELS_OFF && increasingIterations)
 			{
 				_calculateEscapeVelocities = false;
@@ -103,8 +103,8 @@ namespace MSetGeneratorPrototype
 				_calculateEscapeVelocities = mapCalcSettings.CalculateEscapeVelocities;
 			}
 
-			_thresholdVector = _calculateEscapeVelocities 
-				? _fp31VecMath.CreateVectorForComparison(RMapConstants.DEFAULT_NORMALIZED_THRESHOLD) 
+			_thresholdVector = _calculateEscapeVelocities
+				? _fp31VecMath.CreateVectorForComparison(RMapConstants.DEFAULT_NORMALIZED_THRESHOLD)
 				: _fp31VecMath.CreateVectorForComparison((uint)mapCalcSettings.Threshold);
 
 			_fp31VecMath.MathOpCounts.Reset();
@@ -137,7 +137,7 @@ namespace MSetGeneratorPrototype
 
 			var result = new MapSectionResponse(mapSectionRequest, sectionCompleted, allRowsHaveEscaped, mapSectionVectors2, mapSectionZVectors, requestCancelled: ct.IsCancellationRequested);
 			UpdateResultsWithMathOpCalcs(mapSectionRequest);
-			
+
 			//ReportResults(coords, mapSectionRequest, result, ct);
 
 			return result;
@@ -155,7 +155,7 @@ namespace MSetGeneratorPrototype
 
 			allRowsHaveEscaped = true;
 
-			for(var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
+			for (var rowNumber = 0; rowNumber < iterationState.RowCount; rowNumber++)
 			{
 				iterationState.SetRowNumber(rowNumber);
 
@@ -319,8 +319,8 @@ namespace MSetGeneratorPrototype
 
 			while (compositeIsDone != -1)
 			{
-				if (compositeIsDone == 0) fullIterationsPerformed++; else partialIterationsPerformed++;
-				
+				TallyIterations(compositeIsDone, ref fullIterationsPerformed, ref partialIterationsPerformed);
+
 				sumOfSquares = iterator.Iterate(_crs, _cis, _zrs, _zis, ref doneFlags);
 				countsV = Avx2.Add(countsV, _justOne);
 
@@ -392,7 +392,7 @@ namespace MSetGeneratorPrototype
 
 			while (compositeIsDone != -1)
 			{
-				if (compositeIsDone == 0) fullIterationsPerformed++; else partialIterationsPerformed++;
+				TallyIterations(compositeIsDone, ref fullIterationsPerformed, ref partialIterationsPerformed);
 
 				sumOfSquares = iterator.Iterate(_crs, _cis, _zrs, _zis, ref doneFlags);
 				countsV = Avx2.Add(countsV, _justOne);
@@ -461,7 +461,7 @@ namespace MSetGeneratorPrototype
 
 			while (compositeIsDone != -1)
 			{
-				if (compositeIsDone == 0) fullIterationsPerformed++; else partialIterationsPerformed++;
+				TallyIterations(compositeIsDone, ref fullIterationsPerformed, ref partialIterationsPerformed);
 
 				sumOfSquares = iterator.Iterate(_crs, _cis, _zrs, _zis, ref doneFlagsV);
 				countsV = Avx2.Add(countsV, _justOne);
@@ -495,7 +495,7 @@ namespace MSetGeneratorPrototype
 		#region Support Methods
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private int SaveCountsForDoneItems(Vector256<int> escapedFlagsVec, Vector256<int> targetReachedCompVec, 
+		private int SaveCountsForDoneItems(Vector256<int> escapedFlagsVec, Vector256<int> targetReachedCompVec,
 			Vector256<int> countsV, ref Vector256<int> resultCountsV,
 			ref Vector256<int> hasEscapedFlagsV, ref Vector256<int> doneFlagsV)
 		{
@@ -772,7 +772,7 @@ namespace MSetGeneratorPrototype
 
 			for (var i = 0; i < 32; i++)
 			{
-				var value = fP31Vals[i];	
+				var value = fP31Vals[i];
 				Debug.WriteLine($"{FP31ValHelper.GetDiagDisplay(i.ToString(), value.Mantissa)} {value.Exponent}.");
 			}
 
@@ -871,6 +871,20 @@ namespace MSetGeneratorPrototype
 		private void RollUpNumberOfCalcs(MathOpCounts mathOpCounts, IIterationState iterationState)
 		{
 			mathOpCounts.RollUpNumberOfCalcs(iterationState.RowUsedCalcs, iterationState.RowUnusedCalcs, iterationState.RowIterationsFull, iterationState.RowIterationsPartial);
+		}
+
+		[Conditional("PERF")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private void TallyIterations(int compositeIsDone, ref int fullIterationsPerformed, ref int partialIterationsPerformed)
+		{
+			if (compositeIsDone == 0)
+			{
+				fullIterationsPerformed++;
+			}
+			else
+			{
+				partialIterationsPerformed++;
+			}
 		}
 
 		#endregion

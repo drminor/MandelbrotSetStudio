@@ -36,4 +36,23 @@ namespace MSetExplorer
 		Refresh
 	}
 
+	public class HistogramBlockRequest
+	{
+		public HistogramBlockRequestType RequestType { get; init; }
+		public IHistogram Histogram { get; init; }
+
+		public HistogramBlockRequest(HistogramBlockRequestType requestType, IHistogram histogram)
+		{
+			RequestType = requestType;
+			Histogram = histogram;
+
+		}
+	}
+
+	public enum HistogramBlockRequestType
+	{
+		Add,
+		Remove
+	}
+
 }

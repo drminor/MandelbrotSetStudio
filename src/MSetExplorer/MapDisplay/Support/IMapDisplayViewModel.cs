@@ -55,11 +55,6 @@ namespace MSetExplorer
 		SizeDbl LogicalViewportSize { get; }
 		SizeDbl? ContentViewportSize { get; }
 
-		//ValueTuple<VectorDbl, double>? ScaledDisplayPositionYInverted { get; set; }
-		//VectorDbl GetCurrentDisplayPosition();
-		//double DisplayPositionX { get; set; }
-		//double DisplayPositionY { get; set; }
-
 		VectorDbl DisplayPosition { get; }
 
 		double DisplayZoom { get; set; }

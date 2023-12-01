@@ -13,13 +13,17 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class AppNavWindow : Window
 	{
+		private bool _cbsWinIsVisible;
+
 		private AppNavViewModel _vm;
 		private Window? _lastWindow;
+
 
 		#region Constructor
 
 		public AppNavWindow()
 		{
+			_cbsWinIsVisible = false;
 			_lastWindow = null;
 
 			_vm = (AppNavViewModel)DataContext;
@@ -161,6 +165,8 @@ namespace MSetExplorer
 			Hide();
 
 			var posterDesignerViewModel = _vm.GetPosterDesignerViewModel();
+			posterDesignerViewModel.ColorBandSetViewModel.IsEnabled = _cbsWinIsVisible;
+
 			var designerWindow = new PosterDesignerWindow(posterDesignerViewModel, appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
 
 			_lastWindow = designerWindow;
@@ -307,6 +313,16 @@ namespace MSetExplorer
 			else
 			{
 				CloseOrShow(GetOnCloseBehavior(Properties.Settings.Default.ShowTopNav));
+			}
+
+			if (_lastWindow is PosterDesignerWindow pdw)
+			{
+				var xx = pdw.DataContext as PosterDesignerViewModel;
+
+				if (xx != null)
+				{
+					_cbsWinIsVisible = xx.ColorBandSetViewModel.IsEnabled;
+				}
 			}
 		}
 

@@ -127,8 +127,6 @@ namespace MSetGeneratorPrototype
 				_mapSectionVectors2.UpdateFromEscapeVelocitiesRow(RowNumber.Value, EscapeVelocities);
 
 				_mapSectionZVectors.UpdateFromHasEscapedFlagsRow(RowNumber.Value, HasEscapedFlagsRowV);
-				//MapSectionZVectors.UpdateFromZrsRow(RowNumber.Value, ZrsRowV);
-				//MapSectionZVectors.UpdateFromZisRow(RowNumber.Value, ZisRowV);
 			}
 
 			UpdateUsedAndUnusedCalcs(RowNumber);

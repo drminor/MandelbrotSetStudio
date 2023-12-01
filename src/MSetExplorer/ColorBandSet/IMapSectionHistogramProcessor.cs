@@ -12,7 +12,7 @@ namespace MSetExplorer
 		event EventHandler<HistogramUpdateType>? HistogramUpdated;
 		event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
 
-		void AddWork(HistogramWorkRequest histogramWorkRequest);
+		void AddWork(HistogramBlockRequest histogramWorkRequest);
 		void Dispose();
 		KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll);
 		void LoadHistogram(IEnumerable<IHistogram> histograms);
