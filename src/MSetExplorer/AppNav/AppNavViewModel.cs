@@ -64,7 +64,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
 			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram, mapDisplayViewModel.MapSections);
-			var colorBandSetViewModel = new ColorBandSetViewModel(/*mapDisplayViewModel.MapSections,*/ mapSectionHistogramProcessor);
+			var colorBandSetViewModel = new ColorBandSetViewModel(mapSectionHistogramProcessor);
 
 			// ColorBandSet Histogram ViewModel
 			var cbsHistogramViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);	
@@ -73,7 +73,7 @@ namespace MSetExplorer
 
 			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, colorBandSetViewModel, cbsHistogramViewModel, jobTreeViewModel,
 				//_mapLoaderManager, _mapJobHelper,
-				_viewModelFactory);
+				mapSectionHistogramProcessor, _viewModelFactory);
 
 			return result;
 		}
@@ -89,7 +89,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
 			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram, mapDisplayViewModel.MapSections);
-			var colorBandSetViewModel = new ColorBandSetViewModel(/*mapDisplayViewModel.MapSections, */mapSectionHistogramProcessor);
+			var colorBandSetViewModel = new ColorBandSetViewModel(mapSectionHistogramProcessor);
 
 			// ColorBandSet Histogram ViewModel
 			var cbsHistogramViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);
@@ -98,7 +98,7 @@ namespace MSetExplorer
 
 			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandSetViewModel, cbsHistogramViewModel, jobTreeViewModel,
 				//_mapLoaderManager, _mapJobHelper,
-				_viewModelFactory);
+				mapSectionHistogramProcessor, _viewModelFactory);
 
 			return result;
 		}

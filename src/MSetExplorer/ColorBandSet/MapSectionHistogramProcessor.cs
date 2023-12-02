@@ -14,26 +14,23 @@ namespace MSetExplorer
 {
 	internal class MapSectionHistogramProcessor : IDisposable, IMapSectionHistogramProcessor
 	{
-		private readonly IHistogram _histogram;
-
 		private const int QUEUE_CAPACITY = 200;
+		private const int WAIT_FOR_MAPSECTION_INTERVAL_MS = 500;
+
+		private readonly IHistogram _histogram;
+		private readonly ObservableCollection<MapSection> _mapSections;
 
 		private bool _processingEnabled;
-		private readonly object _processingEnabledLock = new();
+		private readonly object _processingEnabledLock;
 
 		private readonly CancellationTokenSource _cts;
 		private readonly BlockingCollection<HistogramBlockRequest> _workQueue;
 
 		private readonly Task _workQueueProcessor;
-
 		private readonly TimeSpan _waitDuration;
-
-		private readonly ObservableCollection<MapSection> _mapSections;
 
 		private readonly HistogramD _topValues;
 		//private double _averageMapSectionTargetIteration;
-
-
 
 		private bool disposedValue;
 
@@ -41,12 +38,15 @@ namespace MSetExplorer
 
 		public MapSectionHistogramProcessor(IHistogram histogram, ObservableCollection<MapSection> mapSections)
 		{
-			_mapSections = mapSections;
 			_histogram = histogram;
+			_mapSections = mapSections;
+
+			_processingEnabled = true;
+			_processingEnabledLock = new object();
 			_cts = new CancellationTokenSource();
 			_workQueue = new BlockingCollection<HistogramBlockRequest>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
-			_waitDuration = TimeSpan.FromMilliseconds(100);
+			_waitDuration = TimeSpan.FromMilliseconds(WAIT_FOR_MAPSECTION_INTERVAL_MS);
 
 			_topValues = new HistogramD();
 			//_averageMapSectionTargetIteration = 0;
@@ -54,12 +54,10 @@ namespace MSetExplorer
 			_mapSections.CollectionChanged += MapSections_CollectionChanged; 
 		}
 
-
 		#endregion
 
 		#region Public Events
 
-		public event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
 		public event EventHandler<HistogramUpdateType>? HistogramUpdated;
 
 		#endregion
@@ -88,11 +86,22 @@ namespace MSetExplorer
 			}
 		}
 
+		//public double AverageMapSectionTargetIteration
+		//{
+		//	get => _averageMapSectionTargetIteration;
+		//	private set
+		//	{
+		//		if (value != _averageMapSectionTargetIteration)
+		//		{
+		//			_averageMapSectionTargetIteration = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
+
 		#endregion
 
 		#region Public Methods
-
-		//public double GetAverageTopValue() => _histogram.GetAverageMaxIndex();
 
 		public void AddWork(HistogramBlockRequest histogramWorkRequest)
 		{
@@ -180,6 +189,23 @@ namespace MSetExplorer
 			return result;
 		}
 
+		//public double GetAverageTopValue() => _histogram.GetAverageMaxIndex();
+
+		// TODO: Have the MapSectionHistogramProcessor Cache the value of AverageMapSectionTargetIteration.
+		public double GetAverageMapSectionTargetIteration()
+		{
+			_topValues.Clear();
+
+			foreach(var ms in _mapSections)
+			{
+				_topValues.Increment(ms.TargetIterations);
+			}
+
+			var result = _topValues.GetAverage();
+
+			return result;
+		}
+
 		#endregion
 
 		#region Private Methods
@@ -194,17 +220,22 @@ namespace MSetExplorer
 				{
 					// Block waiting for new work.
 					HistogramBlockRequest? workRequest = _workQueue.Take(ct);
-					DoWorkRequest(workRequest);
+					var haveWork = HandleRequest(workRequest);
 
 					// Process the queue as long as new items are available.
 					while (_workQueue.TryTake(out workRequest, _waitDuration.Milliseconds, ct))
 					{
-						DoWorkRequest(workRequest);
+						haveWork |= HandleRequest(workRequest);
 					}
 
 					// No new items availble in the last _waitDuration.Milliseconds,
-					// raise the Refresh event to let our subscribers know that the Histogram has been updated.
-					HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
+
+					if (haveWork)
+					{
+						// Raise the Refresh event to let our subscribers know that the Histogram has been updated.
+						HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
+						haveWork = false;
+					}
 				}
 
 				catch (OperationCanceledException)
@@ -219,7 +250,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool DoWorkRequest(HistogramBlockRequest histogramWorkRequest)
+		private bool HandleRequest(HistogramBlockRequest histogramWorkRequest)
 		{
 			bool result;
 
@@ -271,7 +302,7 @@ namespace MSetExplorer
 				foreach (var mapSection in mapSections)
 				{
 					AddWork(new HistogramBlockRequest(HistogramBlockRequestType.Add, mapSection.Histogram));
-					_topValues.Increment(mapSection.TargetIterations);
+					//_topValues.Increment(mapSection.TargetIterations);
 				}
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
@@ -281,93 +312,12 @@ namespace MSetExplorer
 				foreach (var mapSection in mapSections)
 				{
 					AddWork(new HistogramBlockRequest(HistogramBlockRequestType.Remove, mapSection.Histogram));
-					_topValues.Decrement(mapSection.TargetIterations);
+					//_topValues.Decrement(mapSection.TargetIterations);
 				}
 			}
 
 			//Debug.WriteLine($"There are {Histogram[Histogram.UpperBound - 1]} points that reached the target iterations.");
 		}
-
-
-		private void CalculateAndPostPercentages(HistogramWorkRequest histogramWorkRequest)
-		{
-			lock (_processingEnabledLock)
-			{
-				if (_processingEnabled)
-				{
-					var newPercentages = BuildNewPercentages(histogramWorkRequest.Cutoffs, _histogram);
-					histogramWorkRequest.RunWorkAction(newPercentages);
-					PercentageBandsUpdated?.Invoke(this, newPercentages);
-				}
-			}
-		}
-
-		private PercentageBand[] BuildNewPercentages(int[] cutoffs, IHistogram histogram)
-		{
-			var pbList = cutoffs.Select(x => new PercentageBand(x)).ToList();
-			pbList.Add(new PercentageBand(int.MaxValue));
-
-			var bucketCnts = pbList.ToArray();
-
-			var curBucketPtr = 0;
-			var curBucketCut = cutoffs[curBucketPtr];
-
-			long runningSum = 0;
-
-			var kvps = histogram.GetKeyValuePairs();
-
-			var i = 0;
-
-			for (; i < kvps.Length && curBucketPtr < bucketCnts.Length; i++)
-			{
-				var idx = kvps[i].Key;
-				var amount = kvps[i].Value;
-
-				while (curBucketPtr < bucketCnts.Length && idx > curBucketCut)
-				{
-					curBucketPtr++;
-					curBucketCut = bucketCnts[curBucketPtr].Cutoff;
-				}
-
-				runningSum += amount;
-
-				if (idx == curBucketCut)
-				{
-					bucketCnts[curBucketPtr].ExactCount = amount;
-				}
-
-				bucketCnts[curBucketPtr].Count += amount;
-				bucketCnts[curBucketPtr].RunningSum = runningSum;
-			}
-
-			for (; i < kvps.Length; i++)
-			{
-				var amount = kvps[i].Value;
-				runningSum += amount;
-
-				bucketCnts[^1].Count += amount;
-				bucketCnts[^1].RunningSum = runningSum;
-			}
-
-			runningSum += histogram.UpperCatchAllValue;
-			bucketCnts[^1].Count += histogram.UpperCatchAllValue;
-			bucketCnts[^1].RunningSum = runningSum;
-
-			// For now, include all of the cnts above the target in the last bucket.
-			bucketCnts[^2].Count += bucketCnts[^1].Count;
-
-			//var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
-			var total = (double)runningSum;
-
-			foreach (var pb in bucketCnts)
-			{
-				pb.Percentage = Math.Round(100 * (pb.Count / total), 2);
-			}
-
-			return bucketCnts;
-		}
-
-
 
 		#endregion
 

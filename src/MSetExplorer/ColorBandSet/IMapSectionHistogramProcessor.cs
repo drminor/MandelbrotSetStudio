@@ -10,20 +10,20 @@ namespace MSetExplorer
 		bool ProcessingEnabled { get; set; }
 
 		event EventHandler<HistogramUpdateType>? HistogramUpdated;
-		event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
+		//event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
 
 		void AddWork(HistogramBlockRequest histogramWorkRequest);
 		void Dispose();
-		KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll);
 		void LoadHistogram(IEnumerable<IHistogram> histograms);
 		void Reset();
 		void Reset(int newSize);
 		void Stop(bool immediately);
 
+		KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll);
 		IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff);
 
+		public double GetAverageMapSectionTargetIteration();
 	}
-
 
 	public enum HistogramUpdateType
 	{

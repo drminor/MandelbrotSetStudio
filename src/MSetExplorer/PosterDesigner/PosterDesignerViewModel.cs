@@ -12,17 +12,22 @@ namespace MSetExplorer
 		//private readonly IMapLoaderManager _mapLoaderManager;
 		//private readonly ViewModelFactory _viewModelFactory;
 
+		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
+
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ICbsHistogramViewModel cbsHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
-			/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */ViewModelFactory viewModelFactory)
+						/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */
+			IMapSectionHistogramProcessor mapSectionHistogramProcessor, ViewModelFactory viewModelFactory)
 		{
 			//_mapJobHelper = mapJobHelper;
 			//_mapLoaderManager = mapLoaderManager;
 
 			PosterViewModel = posterViewModel;
 			JobTreeViewModel = jobTreeViewModel;
+
+			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
 
 			MapDisplayViewModel = mapDisplayViewModel;
 
@@ -125,6 +130,8 @@ namespace MSetExplorer
 		{
 			ColorBandSetViewModel.RefreshPercentages();
 			CbsHistogramViewModel.RefreshDisplay();
+
+			MapCalcSettingsViewModel.TargetIterationsAvailable = _mapSectionHistogramProcessor.GetAverageMapSectionTargetIteration();
 		}
 
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)

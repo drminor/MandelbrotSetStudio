@@ -42,17 +42,17 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public void Increment(int value)
+		public void Increment(int key)
 		{
 			try
 			{
-				if (Entries.TryGetValue(value, out var currentOccurrances))
+				if (Entries.TryGetValue(key, out var currentOccurrances))
 				{
-					Entries[value] = currentOccurrances + 1;
+					Entries[key] = currentOccurrances + 1;
 				}
 				else
 				{
-					Entries.Add(value, 1);
+					Entries.Add(key, 1);
 				}
 			}
 			catch (Exception e)
@@ -61,18 +61,18 @@ namespace MSS.Types
 			}
 		}
 
-		public void Decrement(int value)
+		public void Decrement(int key)
 		{
 			try
 			{
-				if (Entries.TryGetValue(value, out var currentOccurrances))
+				if (Entries.TryGetValue(key, out var currentOccurrances))
 				{
-					Entries[value] = currentOccurrances - 1;
+					Entries[key] = currentOccurrances - 1;
 				}
 				else
 				{
-					Debug.WriteLine($"WARNING: Decrementing a value that does not (yet) exist.");
-					Entries.Add(value, -1);
+					Debug.WriteLine($"WARNING: Decrementing the number of occurrances for a key that does not (yet) exist.");
+					Entries.Add(key, -1);
 				}
 			}
 			catch (Exception e)
@@ -83,16 +83,22 @@ namespace MSS.Types
 
 		public double GetAverage()
 		{
-			var cnt = Entries.Count;
-
-			if (cnt == 0)
+			if (Entries.Count == 0)
 			{
 				return 0;
 			}
 			else
 			{
-				var total = Entries.Keys.Sum();
-				var result = ((double)total) / cnt;
+				var cnt = 0;
+				var total = 0.0;
+
+				foreach(var entry in Entries)
+				{
+					cnt += entry.Value;
+					total += entry.Value * entry.Key;
+				}
+
+				var result = total / cnt;
 				return result;
 			}
 		}

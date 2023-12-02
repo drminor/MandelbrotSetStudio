@@ -10,6 +10,7 @@ namespace MSetExplorer
 	{
 		//private readonly IMapLoaderManager _mapLoaderManager;
 		//private readonly MapJobHelper _mapJobHelper;
+		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
 
 		private readonly ViewModelFactory _viewModelFactory;
 
@@ -22,7 +23,8 @@ namespace MSetExplorer
 
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel, ColorBandSetViewModel colorBandViewModel,
 			ICbsHistogramViewModel cbsHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
-			/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */ViewModelFactory viewModelFactory)
+			/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */
+			IMapSectionHistogramProcessor mapSectionHistogramProcessor, ViewModelFactory viewModelFactory)
 		{
 
 			//_mapLoaderManager = mapLoaderManager;
@@ -34,6 +36,8 @@ namespace MSetExplorer
 			ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
 
 			JobTreeViewModel = jobTreeViewModel;
+
+			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
 
 			JobProgressViewModel = _viewModelFactory.CreateAJobProgressViewModel();
 
@@ -233,6 +237,8 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
 			}
+
+			MapCalcSettingsViewModel.TargetIterationsAvailable = _mapSectionHistogramProcessor.GetAverageMapSectionTargetIteration();
 		}
 
 		//private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
