@@ -135,11 +135,6 @@ namespace MSetExplorer
 
 		private void ColorBandSetViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			//if (e.PropertyName == nameof(ColorBandSetViewModel.AverageMapSectionTargetIteration))
-			//{
-			//	_vm.MapCalcSettingsViewModel.TargetIterationsAvailable = _vm.ColorBandSetViewModel.AverageMapSectionTargetIteration;
-			//}
-
 			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
 			{
 				CommandManager.InvalidateRequerySuggested();

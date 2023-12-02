@@ -14,7 +14,7 @@ using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class ColorBandSetViewModel : INotifyPropertyChanged, IDisposable, IUndoRedoViewModel
+	public class ColorBandSetViewModel : INotifyPropertyChanged, IDisposable, IUndoRedoViewModel, IColorBandSetViewModel
 	{
 		#region Private Fields
 
@@ -24,7 +24,7 @@ namespace MSetExplorer
 		private double _itemWidth;
 		private ColorBandSetEditMode _editMode;
 
-		private ColorBandSet? _colorBandSet;	// The value assigned to this model
+		private ColorBandSet? _colorBandSet;    // The value assigned to this model
 		private bool _useEscapeVelocities;
 		private bool _useRealTimePreview;
 		private bool _highlightSelectedBand;
@@ -61,7 +61,7 @@ namespace MSetExplorer
 
 			_colorBandSet = null;
 
-			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() } );
+			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
 			_colorBandsView = BuildColorBandsView(null);
 
@@ -145,7 +145,6 @@ namespace MSetExplorer
 
 				if (IsEnabled)
 				{
-					//_topValues.Clear();
 					_mapSectionHistogramProcessor.ProcessingEnabled = false;
 				}
 
@@ -168,9 +167,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					//_histogram.Reset();
 					_mapSectionHistogramProcessor.Reset();
-					//AverageMapSectionTargetIteration = 0;
 				}
 			}
 
@@ -337,11 +334,11 @@ namespace MSetExplorer
 		public int CurrentIndex
 		{
 			get => _colorBandSetHistoryCollection.CurrentIndex;
-			set	{ } 
+			set { }
 		}
 
 		public bool CanGoBack => _colorBandSetHistoryCollection.CurrentIndex > 0;
-		public bool CanGoForward =>  _colorBandSetHistoryCollection.CurrentIndex < _colorBandSetHistoryCollection.Count - 1;
+		public bool CanGoForward => _colorBandSetHistoryCollection.CurrentIndex < _colorBandSetHistoryCollection.Count - 1;
 
 		public bool GoBack()
 		{

@@ -49,7 +49,6 @@ namespace MSetExplorer
 			_waitDuration = TimeSpan.FromMilliseconds(WAIT_FOR_MAPSECTION_INTERVAL_MS);
 
 			_topValues = new HistogramD();
-			//_averageMapSectionTargetIteration = 0;
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged; 
 		}
@@ -85,19 +84,6 @@ namespace MSetExplorer
 
 			}
 		}
-
-		//public double AverageMapSectionTargetIteration
-		//{
-		//	get => _averageMapSectionTargetIteration;
-		//	private set
-		//	{
-		//		if (value != _averageMapSectionTargetIteration)
-		//		{
-		//			_averageMapSectionTargetIteration = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
 
 		#endregion
 

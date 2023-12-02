@@ -241,19 +241,6 @@ namespace MSetExplorer
 			MapCalcSettingsViewModel.TargetIterationsAvailable = _mapSectionHistogramProcessor.GetAverageMapSectionTargetIteration();
 		}
 
-		//private void MapDisplayViewModel_DisplayJobCompleted(object? sender, int e)
-		//{
-		//	Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-DisplayJobCompleted for Job: {e}");
-
-		//	ColorBandSetViewModel.RefreshPercentages();
-		//	var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
-
-		//	if (histogramDataWasEmpty)
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
-		//	}
-		//}
-
 		private void MapCalcSettingsViewModel_MapSettingsUpdateRequested(object? sender, MapSettingsUpdateRequestedEventArgs e)
 		{
 			// Update the Target Iterations

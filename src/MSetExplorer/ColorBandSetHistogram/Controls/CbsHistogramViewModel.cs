@@ -1,8 +1,12 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -17,9 +21,22 @@ namespace MSetExplorer
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
 
 		private ColorBandSet _colorBandSet;
-		private ListCollectionView? _colorBandsView;
+		private bool _useEscapeVelocities;
+		private bool _useRealTimePreview;
+		private bool _highlightSelectedBand;
 
-		//private ColorBand? _currentColorBand;
+		private readonly ColorBandSetHistoryCollection _colorBandSetHistoryCollection;
+
+		private ColorBandSet _currentColorBandSet; // The value which is currently being edited.
+
+		private ListCollectionView? _colorBandsView;
+		private ColorBand? _currentColorBand;
+
+		private bool _isDirty;
+		private readonly object _histLock;
+
+		private bool _isEnabled;
+		private Visibility _windowVisibility;
 
 		private HPlotSeriesData _seriesData;
 
@@ -48,7 +65,19 @@ namespace MSetExplorer
 			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
 
 			_colorBandSet = new ColorBandSet();
-			_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
+
+			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
+			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
+
+			//_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
+			_colorBandsView = BuildColorBandsView(null);
+
+			_isDirty = false;
+			_histLock = new object();
+			BeyondTargetSpecs = null;
+
+			_isEnabled = true;
+			_windowVisibility = Visibility.Visible;
 
 			_seriesData = HPlotSeriesData.Empty;
 
@@ -69,7 +98,9 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Events
+		#region Public Events
+
+		public event EventHandler<ColorBandSetUpdateRequestedEventArgs>? ColorBandSetUpdateRequested;
 
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 		public event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
@@ -111,49 +142,158 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool UseEscapeVelocities
+		{
+			get => _useEscapeVelocities;
+			set
+			{
+				if (value != _useEscapeVelocities)
+				{
+					var strState = value ? "On" : "Off";
+					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the use of EscapeVelocities.");
+					_useEscapeVelocities = value;
+					OnPropertyChanged(nameof(UseEscapeVelocities));
+				}
+			}
+		}
+
+		public bool UseRealTimePreview
+		{
+			get => _useRealTimePreview;
+			set
+			{
+				if (value != _useRealTimePreview)
+				{
+					var strState = value ? "On" : "Off";
+					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the use of RealTimePreview. IsDirty = {IsDirty}.");
+					_useRealTimePreview = value;
+
+					if (IsDirty)
+					{
+						var colorBandSet = _useRealTimePreview ? _currentColorBandSet : _colorBandSetHistoryCollection[0];
+						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(colorBandSet, isPreview: true));
+					}
+
+					OnPropertyChanged(nameof(UseRealTimePreview));
+				}
+			}
+		}
+
+		public bool HighlightSelectedBand
+		{
+			get => _highlightSelectedBand;
+			set
+			{
+				if (value != _highlightSelectedBand)
+				{
+					var strState = value ? "On" : "Off";
+					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the High Lighting the Selected Color Band.");
+					_highlightSelectedBand = value;
+
+					OnPropertyChanged(nameof(HighlightSelectedBand));
+				}
+			}
+		}
+
 		public ListCollectionView? ColorBandsView
 		{
 			get => _colorBandsView;
 
 			set
 			{
-				//if (_colorBandsView != null)
-				//{
-				//	_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
-				//}
+				if (_colorBandsView != null)
+				{
+					_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
+				}
 
 				_colorBandsView = value;
 
-				//if (_colorBandsView != null)
-				//{
-				//	_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
-				//}
+				if (_colorBandsView != null)
+				{
+					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
+				}
 
 				// The HistogramColorBandControl is updated as the CbsHistogramControl's code behind page handles this event.
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
 			}
 		}
 
-		//public ColorBand? CurrentColorBand
-		//{
-		//	get => _currentColorBand;
-		//	set
-		//	{
-		//		//if (_currentColorBand != null)
-		//		//{
-		//		//	_currentColorBand.PropertyChanged -= CurrentColorBand_PropertyChanged;
-		//		//}
+		public ColorBand? CurrentColorBand
+		{
+			get => _currentColorBand;
+			set
+			{
+				if (_currentColorBand != null)
+				{
+					_currentColorBand.PropertyChanged -= CurrentColorBand_PropertyChanged;
+				}
 
-		//		_currentColorBand = value;
+				_currentColorBand = value;
 
-		//		//if (_currentColorBand != null)
-		//		//{
-		//		//	_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
-		//		//}
+				if (_currentColorBand != null)
+				{
+					_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
+				}
 
-		//		//OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
-		//	}
-		//}
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
+			}
+		}
+
+		public PercentageBand? BeyondTargetSpecs { get; private set; }
+
+		public bool IsDirty
+		{
+			get => _isDirty;
+
+			private set
+			{
+				if (value != _isDirty)
+				{
+					_isDirty = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsEnabled
+		{
+			get => _isEnabled;
+			set
+			{
+				if (value != _isEnabled)
+				{
+					_isEnabled = value;
+
+					// TODO: Subscribe / Unsubscribe Histogram Updates here.
+					if (_isEnabled)
+					{
+						//_mapSections.CollectionChanged += MapSections_CollectionChanged;
+					}
+					else
+					{
+						//_mapSections.CollectionChanged -= MapSections_CollectionChanged;
+					}
+
+					WindowVisibility = _isEnabled ? Visibility.Visible : Visibility.Collapsed;
+
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public Visibility WindowVisibility
+		{
+			get => _windowVisibility;
+			set
+			{
+				if (value != _windowVisibility)
+				{
+					_windowVisibility = value;
+					IsEnabled = _windowVisibility == Visibility.Visible ? true : false;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		//public int PlotExtent => SeriesData.Length;
 
@@ -394,24 +534,133 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region UndoRedoPile Properties / Methods
+
+		public int CurrentIndex
+		{
+			get => _colorBandSetHistoryCollection.CurrentIndex;
+			set { }
+		}
+
+		public bool CanGoBack => _colorBandSetHistoryCollection.CurrentIndex > 0;
+		public bool CanGoForward => _colorBandSetHistoryCollection.CurrentIndex < _colorBandSetHistoryCollection.Count - 1;
+
+		public bool GoBack()
+		{
+			if (_colorBandSetHistoryCollection.MoveCurrentTo(_colorBandSetHistoryCollection.CurrentIndex - 1))
+			{
+				BuildViewAndRaisePropertyChangeEvents();
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public bool GoForward()
+		{
+			if (_colorBandSetHistoryCollection.MoveCurrentTo(_colorBandSetHistoryCollection.CurrentIndex + 1))
+			{
+				BuildViewAndRaisePropertyChangeEvents();
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		#endregion
+
 		#region Event Handlers
 
-		//private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		//{
-		//}
+		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is ColorBand cb)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:CurrentColorBand Prop: {e.PropertyName} is changing.");
 
-		//private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
-		//{
-		//	if (ColorBandsView != null)
-		//	{
-		//		if (ColorBandSet != null)
-		//		{
-		//			ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
-		//		}
+				var foundUpdate = false;
 
-		//		//CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
-		//	}
-		//}
+				if (e.PropertyName == nameof(ColorBand.StartColor))
+				{
+					if (TryGetPredeccessor(_currentColorBandSet, cb, out var colorBand))
+					{
+						colorBand.SuccessorStartColor = cb.StartColor;
+					}
+
+					foundUpdate = true;
+				}
+				else if (e.PropertyName == nameof(ColorBand.Cutoff))
+				{
+					if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+					{
+						successorColorBand.PreviousCutoff = cb.Cutoff;
+					}
+
+					foundUpdate = true;
+					UpdatePercentages();
+				}
+				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+				{
+					//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+					foundUpdate = true;
+				}
+				else
+				{
+					if (e.PropertyName == nameof(ColorBand.EndColor))
+					{
+						if (cb.BlendStyle == ColorBandBlendStyle.Next)
+						{
+							if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+							{
+								successorColorBand.StartColor = cb.EndColor;
+							}
+						}
+
+						foundUpdate = true;
+					}
+				}
+
+				if (foundUpdate)
+				{
+					PushCurrentColorBandOnToHistoryCollection();
+					IsDirty = true;
+
+					if (UseRealTimePreview)
+					{
+						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+					}
+				}
+			}
+			else
+			{
+				if (sender is ColorBand)
+				{
+					Debug.WriteLine($"ColorBandSetViewModel: The ColorBandSet is null while handling a CurrentColorBand_PropertyChanged event.");
+				}
+				else
+				{
+					Debug.WriteLine($"ColorBandSetViewModel: A sender of type {sender?.GetType()} is raising the CurrentColorBand_PropertyChanged event. EXPECTED: {typeof(ColorBand)}.");
+				}
+			}
+		}
+
+		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
+		{
+			if (ColorBandsView != null)
+			{
+				if (ColorBandSet != null)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the SelectedColorBandIndex from: {ColorBandSet.SelectedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+
+					ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
+				}
+
+				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
+			}
+		}
 
 		private void HistogramUpdated(object? sender, HistogramUpdateType e)
 		{
@@ -446,7 +695,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods
+		#region Private Methods - Series Data
 
 		private void BuildSeriesData(HPlotSeriesData hPlotSeriesData, int[] values)
 		{
@@ -519,6 +768,177 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+
+		#region Private Methods - ColorBandsView
+
+		private void BuildViewAndRaisePropertyChangeEvents(int? selectedIndex = null)
+		{
+			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
+
+			ColorBandsView = BuildColorBandsView(_currentColorBandSet);
+
+			_ = selectedIndex.HasValue ? ColorBandsView.MoveCurrentToPosition(selectedIndex.Value) : ColorBandsView.MoveCurrentToFirst();
+
+			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
+			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
+			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
+		}
+
+		private ListCollectionView BuildColorBandsView(ObservableCollection<ColorBand>? colorBands)
+		{
+			if (colorBands == null)
+			{
+				colorBands = new ObservableCollection<ColorBand>();
+			}
+
+			var result = (ListCollectionView)CollectionViewSource.GetDefaultView(colorBands);
+			//result.SortDescriptions.Add(new SortDescription("Cutoff", ListSortDirection.Ascending));
+
+			return result;
+		}
+
+		private void PushCurrentColorBandOnToHistoryCollection()
+		{
+			//_colorBandSetHistoryCollection.Push(_currentColorBandSet.CreateNewCopy());
+			//OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
+			//OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
+			//OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
+		}
+
+		private bool TryGetPredeccessor(IList<ColorBand> colorBands, ColorBand cb, [NotNullWhen(true)] out ColorBand? colorBand)
+		{
+			colorBand = GetPredeccessor(colorBands, cb);
+			return !(colorBand is null);
+		}
+
+		private ColorBand? GetPredeccessor(IList<ColorBand> colorBands, ColorBand cb)
+		{
+			var index = colorBands.IndexOf(cb);
+			var result = index < 1 ? null : colorBands[index - 1];
+			return result;
+		}
+
+		private bool TryGetSuccessor(IList<ColorBand> colorBands, ColorBand cb, [NotNullWhen(true)] out ColorBand? colorBand)
+		{
+			colorBand = GetSuccessor(colorBands, cb);
+			return !(colorBand is null);
+		}
+
+		private ColorBand? GetSuccessor(IList<ColorBand> colorBands, ColorBand cb)
+		{
+			var index = colorBands.IndexOf(cb);
+			var result = index > colorBands.Count - 2 ? null : colorBands[index + 1];
+			return result;
+		}
+
+		#endregion
+
+		#region Private Methods - Percentages
+
+		private void UpdatePercentages()
+		{
+			var cutoffs = GetCutoffs();
+			var newPercentages = BuildNewPercentages(cutoffs, _mapSectionHistogramProcessor.Histogram);
+			ApplyNewPercentages(newPercentages);
+		}
+
+		private PercentageBand[] BuildNewPercentages(int[] cutoffs, IHistogram histogram)
+		{
+			var pbList = cutoffs.Select(x => new PercentageBand(x)).ToList();
+			pbList.Add(new PercentageBand(int.MaxValue));
+
+			var bucketCnts = pbList.ToArray();
+
+			var curBucketPtr = 0;
+			var curBucketCut = cutoffs[curBucketPtr];
+
+			long runningSum = 0;
+
+			var kvps = histogram.GetKeyValuePairs();
+
+			var i = 0;
+
+			for (; i < kvps.Length && curBucketPtr < bucketCnts.Length; i++)
+			{
+				var idx = kvps[i].Key;
+				var amount = kvps[i].Value;
+
+				while (curBucketPtr < bucketCnts.Length && idx > curBucketCut)
+				{
+					curBucketPtr++;
+					curBucketCut = bucketCnts[curBucketPtr].Cutoff;
+				}
+
+				runningSum += amount;
+
+				if (idx == curBucketCut)
+				{
+					bucketCnts[curBucketPtr].ExactCount = amount;
+				}
+
+				bucketCnts[curBucketPtr].Count += amount;
+				bucketCnts[curBucketPtr].RunningSum = runningSum;
+			}
+
+			for (; i < kvps.Length; i++)
+			{
+				var amount = kvps[i].Value;
+				runningSum += amount;
+
+				bucketCnts[^1].Count += amount;
+				bucketCnts[^1].RunningSum = runningSum;
+			}
+
+			runningSum += histogram.UpperCatchAllValue;
+			bucketCnts[^1].Count += histogram.UpperCatchAllValue;
+			bucketCnts[^1].RunningSum = runningSum;
+
+			// For now, include all of the cnts above the target in the last bucket.
+			bucketCnts[^2].Count += bucketCnts[^1].Count;
+
+			//var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
+			var total = (double)runningSum;
+
+			foreach (var pb in bucketCnts)
+			{
+				pb.Percentage = Math.Round(100 * (pb.Count / total), 2);
+			}
+
+			return bucketCnts;
+		}
+
+		private void ApplyNewPercentages(PercentageBand[] newPercentages)
+		{
+			lock (_histLock)
+			{
+				if (_currentColorBandSet.UpdatePercentages(newPercentages))
+				{
+					BeyondTargetSpecs = newPercentages[^1];
+					//Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
+				}
+				else
+				{
+					BeyondTargetSpecs = null;
+				}
+			}
+		}
+
+		private int[] GetCutoffs()
+		{
+			IEnumerable<int>? cutoffs;
+
+			lock (_histLock)
+			{
+				cutoffs = _currentColorBandSet.Select(x => x.Cutoff);
+			}
+
+			return cutoffs.ToArray();
+		}
+
+		#endregion
+
+
 
 		#region Diagnostics
 

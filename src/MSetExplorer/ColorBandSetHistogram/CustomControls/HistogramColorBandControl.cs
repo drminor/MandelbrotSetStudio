@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
@@ -92,9 +93,29 @@ namespace MSetExplorer
 			_mouseIsEntered = false;
 			_hitList = new List<Shape>();
 			_colorBandIndexInDrag = null;
+
+			
 		}
 
 		#endregion
+
+
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			if (e.Key == Key.Left)
+			{
+				
+			}
+			else if(e.Key == Key.Right)
+			{
+
+			}
+			else
+			{
+				base.OnKeyDown(e);
+			}
+		}
+
 
 		#region Events
 
