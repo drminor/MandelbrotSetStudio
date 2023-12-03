@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,24 +13,25 @@ using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class CbsHistogramViewModel : ViewModelBase, ICbsHistogramViewModel
+	public class CbsHistogramViewModel : ViewModelBase, ICbsHistogramViewModel, IDisposable
 	{
 		#region Private Fields
 
 		private readonly object _paintLocker;
 
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
+		private ColorBandSetEditMode _editMode;
 
-		private ColorBandSet _colorBandSet;
+		private ColorBandSet _colorBandSet;			// The value assigned to this model
 		private bool _useEscapeVelocities;
 		private bool _useRealTimePreview;
 		private bool _highlightSelectedBand;
 
 		private readonly ColorBandSetHistoryCollection _colorBandSetHistoryCollection;
 
-		private ColorBandSet _currentColorBandSet; // The value which is currently being edited.
+		private ColorBandSet _currentColorBandSet;	// The value which is currently being edited.
 
-		private ListCollectionView? _colorBandsView;
+		private ListCollectionView _colorBandsView;
 		private ColorBand? _currentColorBand;
 
 		private bool _isDirty;
@@ -38,11 +40,19 @@ namespace MSetExplorer
 		private bool _isEnabled;
 		private Visibility _windowVisibility;
 
+
+		private readonly bool _useDetailedDebug = true;
+
+		#endregion
+
+		#region Private Fields - Ploting
+
+		// Used by the HistogramColorBandControl
 		private HPlotSeriesData _seriesData;
 
-		private SizeDbl _unscaledExtent;		// Size of entire content at max zoom (i.e, 4 x Target Iterations)
-		private SizeDbl _viewportSize;          // Size of display area in device independent pixels.
-		private SizeDbl _contentViewportSize;	// Size of visible content
+		private SizeDbl _unscaledExtent;            // Size of entire content at max zoom (i.e, 4 x Target Iterations)
+		private SizeDbl _viewportSize;              // Size of display area in device independent pixels.
+		private SizeDbl _contentViewportSize;       // Size of visible content
 
 		private VectorDbl _displayPosition;
 
@@ -51,8 +61,6 @@ namespace MSetExplorer
 		private double _maximumDisplayZoom;
 
 		private ScrollBarVisibility _horizontalScrollBarVisibility;
-
-		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -63,14 +71,17 @@ namespace MSetExplorer
 			_paintLocker = new object();
 
 			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
+			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
 
 			_colorBandSet = new ColorBandSet();
+			_editMode = ColorBandSetEditMode.Bands;
 
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
 
 			//_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 			_colorBandsView = BuildColorBandsView(null);
+			_currentColorBand = null;
 
 			_isDirty = false;
 			_histLock = new object();
@@ -79,6 +90,7 @@ namespace MSetExplorer
 			_isEnabled = true;
 			_windowVisibility = Visibility.Visible;
 
+			// Plotting
 			_seriesData = HPlotSeriesData.Empty;
 
 			_unscaledExtent = new SizeDbl();
@@ -92,8 +104,6 @@ namespace MSetExplorer
 			_displayZoom = 1;
 
 			HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
-
-			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
 		}
 
 		#endregion
@@ -102,12 +112,28 @@ namespace MSetExplorer
 
 		public event EventHandler<ColorBandSetUpdateRequestedEventArgs>? ColorBandSetUpdateRequested;
 
+
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
-		public event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
+
+		//public event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
 
 		#endregion
 
 		#region Public Properties - Content
+
+		public ColorBandSetEditMode EditMode
+		{
+			get => _editMode;
+			set
+			{
+				if (value != _editMode)
+				{
+					Debug.WriteLine($"ColorBandSetViewModel: The Edit mode is now {value}");
+					_editMode = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		public ColorBandSet ColorBandSet
 		{
@@ -116,7 +142,7 @@ namespace MSetExplorer
 			{
 				if (value != _colorBandSet)
 				{
-					ColorBandsView = null;
+					ColorBandsView = BuildColorBandsView(null);
 
 					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is processing a new ColorBandSet. Id = {value.Id}.");
 
@@ -133,6 +159,8 @@ namespace MSetExplorer
 						Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
 					}
 
+					UpdateColorBandSet(value);
+
 					ColorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 				}
 				else
@@ -140,6 +168,47 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is NOT processing the new ColorBandSet. The Id already = {value.Id}.");
 				}
 			}
+		}
+
+		private void UpdateColorBandSet(ColorBandSet value)
+		{
+			Debug.WriteLine($"ColorBandSetViewModel is having is ColorBandSet updated. Current = {_colorBandSet?.Id}, New = {value.Id}");
+			//if (value == null)
+			//{
+			//	Debug.WriteLineIf(_useDetailedDebug, "ColorBandSetViewModel is clearing its collection. (non-null => null.)");
+			//}
+			//else
+			//{
+			//	var upDesc = _colorBandSet == null ? "(null => non-null.)" : "(non-null => non-null.)";
+			//	Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel is updating its collection. {upDesc}. The new ColorBandSet has Id: {value.Id}.");
+			//}
+
+			lock (_histLock)
+			{
+				//if (IsEnabled)
+				//{
+				//	_mapSectionHistogramProcessor.ProcessingEnabled = false;
+				//}
+
+				_colorBandSet = value;
+				_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
+
+				//if (value != null)
+				//{
+					if (IsEnabled)
+					{
+						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
+						UpdatePercentages();
+					}
+				//}
+				//else
+				//{
+				//	_mapSectionHistogramProcessor.Reset();
+				//}
+			}
+
+			IsDirty = false;
+			BuildViewAndRaisePropertyChangeEvents();
 		}
 
 		public bool UseEscapeVelocities
@@ -195,23 +264,23 @@ namespace MSetExplorer
 			}
 		}
 
-		public ListCollectionView? ColorBandsView
+		public ListCollectionView ColorBandsView
 		{
 			get => _colorBandsView;
 
 			set
 			{
-				if (_colorBandsView != null)
-				{
+				//if (_colorBandsView != null)
+				//{
 					_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
-				}
+				//}
 
 				_colorBandsView = value;
 
-				if (_colorBandsView != null)
-				{
+				//if (_colorBandsView != null)
+				//{
 					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
-				}
+				//}
 
 				// The HistogramColorBandControl is updated as the CbsHistogramControl's code behind page handles this event.
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
@@ -458,6 +527,306 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+
+
+		public bool TryInsertNewItem(out int index)
+		{
+			if (ColorBandsView.CurrentItem is ColorBand curItem)
+			{
+				bool result;
+				switch (EditMode)
+				{
+					case ColorBandSetEditMode.Offsets:
+						result = TryInsertOffset(curItem, out index);
+						break;
+					case ColorBandSetEditMode.Colors:
+						result = TryInsertColor(curItem, out index);
+						break;
+					case ColorBandSetEditMode.Bands:
+						result = TryInsertColorBand(curItem, out index);
+						break;
+					default:
+						throw new InvalidOperationException($"{EditMode} is not recognized.");
+				}
+
+				if (result)
+				{
+					PushCurrentColorBandOnToHistoryCollection();
+					IsDirty = true;
+					UpdatePercentages();
+
+					if (UseRealTimePreview)
+					{
+						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+					}
+				}
+
+				return result;
+			}
+			else
+			{
+				index = -1;
+				return false;
+			}
+		}
+
+		private bool TryInsertOffset(ColorBand curItem, out int index)
+		{
+			if (curItem.Cutoff - curItem.StartingCutoff < 1)
+			{
+				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+				index = -1;
+				return false;
+			}
+
+			var prevCutoff = curItem.PreviousCutoff ?? 0;
+			var newCutoff = prevCutoff + (curItem.Cutoff - prevCutoff) / 2;
+
+			var currentSet = _currentColorBandSet;
+			index = currentSet.IndexOf(curItem);
+
+			CurrentColorBand = null;
+			_currentColorBandSet.InsertCutoff(index, newCutoff);
+			ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(curItem);
+
+			return true;
+		}
+
+		private bool TryInsertColor(ColorBand curItem, out int index)
+		{
+			var currentSet = _currentColorBandSet;
+			index = currentSet.IndexOf(curItem);
+
+			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, curItem.StartColor);
+
+			CurrentColorBand = null;
+			_currentColorBandSet.InsertColor(index, colorBand);
+			ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(curItem);
+
+			return true;
+		}
+
+		private bool TryInsertColorBand(ColorBand curItem, out int index)
+		{
+			if (curItem.Cutoff - curItem.StartingCutoff < 1)
+			{
+				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+				index = -1;
+				return false;
+			}
+
+			var prevCutoff = curItem.PreviousCutoff ?? 0;
+			var newCutoff = prevCutoff + (curItem.Cutoff - prevCutoff) / 2;
+			var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, curItem.StartColor, curItem.PreviousCutoff, curItem.StartColor, double.NaN);
+
+			var currentSet = _currentColorBandSet;
+			index = currentSet.IndexOf(curItem);
+
+			//Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+
+			lock (_histLock)
+			{
+				_currentColorBandSet.Insert(index, newItem);
+			}
+
+			if (!ColorBandsView.MoveCurrentTo(newItem))
+			{
+				Debug.WriteLine("ColorBandSetViewModel:Could not position the view to the new item.");
+			}
+
+			return true;
+		}
+
+		public bool TryDeleteSelectedItem()
+		{
+			if (ColorBandsView.CurrentItem is ColorBand curItem)
+			{
+				bool result;
+				switch (EditMode)
+				{
+					case ColorBandSetEditMode.Offsets:
+						result = TryDeleteOffset(curItem);
+						break;
+					case ColorBandSetEditMode.Colors:
+						result = TryDeleteColor(curItem);
+						break;
+					case ColorBandSetEditMode.Bands:
+						result = TryDeleteColorBand(curItem);
+						break;
+					default:
+						throw new InvalidOperationException($"{EditMode} is not recognized.");
+				}
+
+				if (result)
+				{
+					PushCurrentColorBandOnToHistoryCollection();
+					IsDirty = true;
+					UpdatePercentages();
+
+					if (UseRealTimePreview)
+					{
+						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+					}
+				}
+
+				return result;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		private bool TryDeleteOffset(ColorBand curItem)
+		{
+			var currentSet = _currentColorBandSet;
+			var index = currentSet.IndexOf(curItem);
+
+			if (index > currentSet.Count - 2)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			CurrentColorBand = null;
+			_currentColorBandSet.DeleteCutoff(index);
+			ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(curItem);
+
+			return true;
+		}
+
+		private bool TryDeleteColor(ColorBand curItem)
+		{
+			var currentSet = _currentColorBandSet;
+			var index = currentSet.IndexOf(curItem);
+
+			if (index > currentSet.Count - 2)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			CurrentColorBand = null;
+			_currentColorBandSet.DeleteColor(index);
+			ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(curItem);
+
+			return true;
+		}
+
+		private bool TryDeleteColorBand(ColorBand curItem)
+		{
+			var currentSet = _currentColorBandSet;
+			var index = currentSet.IndexOf(curItem);
+
+			if (index >= currentSet.Count - 1)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			bool colorBandWasRemoved;
+			lock (_histLock)
+			{
+				colorBandWasRemoved = currentSet.Remove(curItem);
+			}
+
+			if (!colorBandWasRemoved)
+			{
+				Debug.WriteLine("ColorBandSetViewModel:Could not remove the item.");
+			}
+
+			var newIndex = currentSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
+			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:Removed item at former index: {index}. The new index is: {newIndex}.");
+
+			return true;
+		}
+
+		public void ApplyChanges(int newTargetIterations)
+		{
+			if (newTargetIterations != _currentColorBandSet.HighCutoff)
+			{
+				var newSet = ColorBandSetHelper.AdjustTargetIterations(_currentColorBandSet, newTargetIterations);
+				ApplyChangesInt(newSet);
+			}
+		}
+
+		public void ApplyChanges()
+		{
+			Debug.Assert(IsDirty, "ColorBandSetViewModel:ApplyChanges is being called, but we are not dirty.");
+			var newSet = _currentColorBandSet.CreateNewCopy();
+
+			ApplyChangesInt(newSet);
+		}
+
+		private void ApplyChangesInt(ColorBandSet newSet)
+		{
+			Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}. The old Id is {ColorBandSet?.Id ?? ObjectId.Empty}");
+
+			_colorBandSet = newSet;
+
+			var curPos = ColorBandsView.CurrentPosition;
+
+			// Clear all existing items from history and add the new set.
+			_colorBandSetHistoryCollection.Load(_colorBandSet);
+
+			BuildViewAndRaisePropertyChangeEvents(curPos);
+			IsDirty = false;
+
+			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_colorBandSet, isPreview: false));
+		}
+
+		public void RevertChanges()
+		{
+			// Remove all but the first entry from the History Collection
+			_colorBandSetHistoryCollection.Trim(0);
+
+			var curPos = ColorBandsView.CurrentPosition;
+			BuildViewAndRaisePropertyChangeEvents(curPos);
+			IsDirty = false;
+
+			UpdatePercentages();
+
+			if (UseRealTimePreview)
+			{
+				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+			}
+		}
+
+		public IDictionary<int, int> GetHistogramForColorBand(int index)
+		{
+			var currentColorBand = CurrentColorBand;
+
+			if (currentColorBand == null)
+			{
+				return new Dictionary<int, int>();
+			}
+			else
+			{
+				var previousCutoff = currentColorBand.PreviousCutoff ?? 0;
+				var cutoff = currentColorBand.Cutoff;
+
+				//var kvpsForBand = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
+				var kvpsForBand = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff, includeCatchAll: true);
+
+				return new Dictionary<int, int>(kvpsForBand);
+			}
+		}
+
+		public void RefreshPercentages()
+		{
+			UpdatePercentages();
+		}
+
+		#endregion
+
+
+		#region Public Methods - Plotting
+
 		public bool RefreshDisplay()
 		{
 			bool result;
@@ -527,9 +896,55 @@ namespace MSetExplorer
 			}
 		}
 
+		//public void UpdateColorBandCutoff(int colorBandIndex, int newCutoff)
+		//{
+		//	ColorBandCutoffChanged?.Invoke(this, (colorBandIndex, newCutoff));
+		//}
+
 		public void UpdateColorBandCutoff(int colorBandIndex, int newCutoff)
 		{
-			ColorBandCutoffChanged?.Invoke(this, (colorBandIndex, newCutoff));
+			if (colorBandIndex < 0 | colorBandIndex > _currentColorBandSet.Count - 1)
+			{
+				throw new ArgumentOutOfRangeException(nameof(colorBandIndex), $"Cannot update the Cutoff for ColorBand at index: {colorBandIndex}. That value is out of range.");
+			}
+
+			if (colorBandIndex == _currentColorBandSet.Count - 1)
+			{
+				Debug.WriteLine("WARNING: ColorBandSetViewModel:TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
+			}
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+
+			//var cb = _currentColorBandSet[colorBandIndex];
+			//cb.Cutoff = newCutoff;
+
+			CurrentColorBand = _currentColorBandSet[colorBandIndex];
+			CurrentColorBand.Cutoff = newCutoff;
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+
+			//if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+			//{
+			//	successorColorBand.PreviousCutoff = cb.Cutoff;
+			//}
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+
+			UpdatePercentages();
+
+			PushCurrentColorBandOnToHistoryCollection();
+			IsDirty = true;
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+
+			if (UseRealTimePreview)
+			{
+				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: false));
+			}
+
+			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+
+			//return true;
 		}
 
 		#endregion
@@ -800,10 +1215,10 @@ namespace MSetExplorer
 
 		private void PushCurrentColorBandOnToHistoryCollection()
 		{
-			//_colorBandSetHistoryCollection.Push(_currentColorBandSet.CreateNewCopy());
-			//OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
-			//OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
-			//OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
+			_colorBandSetHistoryCollection.Push(_currentColorBandSet.CreateNewCopy());
+			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
+			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
+			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
 		}
 
 		private bool TryGetPredeccessor(IList<ColorBand> colorBands, ColorBand cb, [NotNullWhen(true)] out ColorBand? colorBand)
@@ -938,8 +1353,6 @@ namespace MSetExplorer
 
 		#endregion
 
-
-
 		#region Diagnostics
 
 		[Conditional("DEBUG2")]
@@ -954,6 +1367,33 @@ namespace MSetExplorer
 				Debug.WriteLine($"Updating SeriesData. Using existing buffer. Length:{newLength}.");
 			}
 
+		}
+
+		#endregion
+
+		#region IDisposable Support
+
+		private bool disposedValue;
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposedValue)
+			{
+				if (disposing)
+				{
+					// Dispose managed state (managed objects)
+
+					_mapSectionHistogramProcessor.Dispose();
+				}
+
+				disposedValue = true;
+			}
+		}
+
+		public void Dispose()
+		{
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
 		}
 
 		#endregion

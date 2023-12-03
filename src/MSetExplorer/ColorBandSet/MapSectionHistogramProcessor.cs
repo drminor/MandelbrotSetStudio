@@ -29,7 +29,7 @@ namespace MSetExplorer
 		private readonly Task _workQueueProcessor;
 		private readonly TimeSpan _waitDuration;
 
-		private readonly HistogramD _topValues;
+		//private readonly HistogramD _topValues;
 		//private double _averageMapSectionTargetIteration;
 
 		private bool disposedValue;
@@ -48,7 +48,7 @@ namespace MSetExplorer
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
 			_waitDuration = TimeSpan.FromMilliseconds(WAIT_FOR_MAPSECTION_INTERVAL_MS);
 
-			_topValues = new HistogramD();
+			//_topValues = new HistogramD();
 
 			_mapSections.CollectionChanged += MapSections_CollectionChanged; 
 		}
@@ -126,31 +126,43 @@ namespace MSetExplorer
 			{ }
 		}
 
-		public void LoadHistogram(IEnumerable<IHistogram> histograms)
-		{
-			foreach (var histogram in histograms)
-			{
-				if (histogram.IsEmpty)
-					continue;	
+		//public void LoadHistogram(IEnumerable<IHistogram> histograms)
+		//{
+		//	foreach (var histogram in histograms)
+		//	{
+		//		if (histogram.IsEmpty)
+		//			continue;	
 
-				_histogram.Add(histogram);
-			}
+		//		_histogram.Add(histogram);
+		//	}
 
-			HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
-		}
+		//	HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
+		//}
 
 		public void Reset()
 		{
 			_histogram.Reset();
-			_topValues.Clear();
+			//_topValues.Clear();
 
 			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
 		}
 
 		public void Reset(int newSize)
 		{
+			_processingEnabled = false;
+
 			_histogram.Reset(newSize);
-			_topValues.Clear();
+			//_topValues.Clear();
+
+			foreach(var mapsection in _mapSections)
+			{
+				if (!mapsection.Histogram.IsEmpty)
+				{
+					_histogram.Add(mapsection.Histogram);
+				}
+			}
+
+			_processingEnabled = true;
 
 			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
 		}
@@ -180,14 +192,15 @@ namespace MSetExplorer
 		// TODO: Have the MapSectionHistogramProcessor Cache the value of AverageMapSectionTargetIteration.
 		public double GetAverageMapSectionTargetIteration()
 		{
-			_topValues.Clear();
+			// _topValues.Clear();
+			var topValues = new HistogramD();
 
 			foreach(var ms in _mapSections)
 			{
-				_topValues.Increment(ms.TargetIterations);
+				topValues.Increment(ms.TargetIterations);
 			}
 
-			var result = _topValues.GetAverage();
+			var result = topValues.GetAverage();
 
 			return result;
 		}

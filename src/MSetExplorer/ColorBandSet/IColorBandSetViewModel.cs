@@ -38,10 +38,11 @@ namespace MSetExplorer
 		void RefreshPercentages();
 
 		bool TryInsertNewItem(out int index);
-		bool UpdateCutoff(int colorBandIndex, int newCutoff);
 		bool TryDeleteSelectedItem();
 
 		IDictionary<int, int> GetHistogramForColorBand(int index);
+
+		//bool UpdateCutoff(int colorBandIndex, int newCutoff);
 
 
 	}

@@ -2,8 +2,11 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace MSetExplorer
 {
@@ -205,6 +208,64 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Command Binding Handlers
+
+		// Insert CanExecute
+		private void InsertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.CurrentColorBand != null;
+		}
+
+		// Insert
+		private void InsertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			//if (_vm.TryInsertNewItem(out var index))
+			//{
+			//	FocusListBoxItem(index);
+			//}
+
+			_ = _vm.TryInsertNewItem(out var index);
+		}
+
+		// Delete CanExecute
+		private void DeleteCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.CurrentColorBand != null; // _vm?.ColorBandsView.CurrentPosition < _vm?.ColorBandsView.Count - 1;
+		}
+
+		// Delete
+		private void DeleteCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_ = _vm.TryDeleteSelectedItem();
+		}
+
+		// Revert CanExecute
+		private void RevertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.IsDirty ?? false;
+		}
+
+		// Revert
+		private void RevertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_vm.RevertChanges();
+		}
+
+		// Apply CanExecute
+		private void ApplyCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.IsDirty ?? false;
+		}
+
+		// Apply
+		private void ApplyCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			_vm.ApplyChanges();
+		}
+
+		#endregion
+
+
 		#region Private Methods
 
 		//private void PlaceTheColorBandControl(double viewportOffsetX, double viewportWidth)
@@ -253,6 +314,21 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
 			ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 2);
 		}
+
+		//private void FocusListBoxItem(int index)
+		//{
+		//	if (index != -1)
+		//	{
+		//		_ = Dispatcher.Invoke(DispatcherPriority.Loaded, (ThreadStart)delegate ()
+		//		{
+		//			var wasFocused = false;
+		//			if (lvColorBands.ItemContainerGenerator.ContainerFromIndex(index) is IInputElement container)
+		//			{
+		//				wasFocused = container.Focus();
+		//			}
+		//		});
+		//	}
+		//}
 
 		#endregion
 

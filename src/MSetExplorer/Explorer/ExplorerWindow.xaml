@@ -187,7 +187,7 @@
             <local:MapSectionDisplayControl x:Name="mapDisplay1"></local:MapSectionDisplayControl>
         </Border>
 
-        <Grid Grid.Row="1" Grid.RowSpan="2" Grid.Column="2" x:Name="colRight" Visibility="Visible">
+        <Grid Grid.Row="1" Grid.RowSpan="1" Grid.Column="2" x:Name="colRight" Visibility="Visible">
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -207,9 +207,9 @@
                 <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
             </Border>
 
-            <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" x:Name="dispSecColorBandSets">
+            <!--<Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" x:Name="dispSecColorBandSets">
                 <local:ColorBandSetUserControl x:Name="colorBandView1" Focusable="True" ></local:ColorBandSetUserControl>
-            </Border>
+            </Border>-->
 
         </Grid>
 
@@ -238,7 +238,7 @@
         </Grid>
 
         <!-- Histogram -->
-        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="1" x:Name="botRow" BorderThickness="1" HorizontalAlignment="Stretch" Height="240" Margin="5,0,5,5" Visibility="Visible">
+        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="240" Margin="0,0,5,5" Visibility="Visible">
             <!--<local:ColorBandSetHistogramControl x:Name="cbsh1"/>-->
             <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
             <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->

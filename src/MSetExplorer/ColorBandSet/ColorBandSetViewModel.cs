@@ -64,6 +64,7 @@ namespace MSetExplorer
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
 			_colorBandsView = BuildColorBandsView(null);
+			_currentColorBand = null;
 
 			_isDirty = false;
 			_histLock = new object();
@@ -142,11 +143,10 @@ namespace MSetExplorer
 
 			lock (_histLock)
 			{
-
-				if (IsEnabled)
-				{
-					_mapSectionHistogramProcessor.ProcessingEnabled = false;
-				}
+				//if (IsEnabled)
+				//{
+				//	_mapSectionHistogramProcessor.ProcessingEnabled = false;
+				//}
 
 				_colorBandSet = value;
 				_colorBandSetHistoryCollection.Load(value?.CreateNewCopy());
@@ -155,13 +155,7 @@ namespace MSetExplorer
 				{
 					if (IsEnabled)
 					{
-						// TODO: Make Reset disable processing, ColorBandSetViewModel
 						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
-
-						// TODO: Make LoadHistogram enable processing, ColorBandSetViewModel
-						//_mapSectionHistogramProcessor.LoadHistogram(_mapSections.Select(x => x.Histogram));
-						_mapSectionHistogramProcessor.ProcessingEnabled = true;
-
 						UpdatePercentages();
 					}
 				}
@@ -234,17 +228,17 @@ namespace MSetExplorer
 
 			set
 			{
-				if (_colorBandsView != null)
-				{
+				//if (_colorBandsView != null)
+				//{
 					_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
-				}
+				//}
 
 				_colorBandsView = value;
 
-				if (_colorBandsView != null)
-				{
+				//if (_colorBandsView != null)
+				//{
 					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
-				}
+				//}
 
 				OnPropertyChanged();
 			}
@@ -466,51 +460,51 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public bool UpdateCutoff(int colorBandIndex, int newCutoff)
-		{
-			if (colorBandIndex < 0 | colorBandIndex > _currentColorBandSet.Count - 1)
-			{
-				throw new ArgumentOutOfRangeException(nameof(colorBandIndex), $"Cannot update the Cutoff for ColorBand at index: {colorBandIndex}. That value is out of range.");
-			}
+		//public bool UpdateCutoff(int colorBandIndex, int newCutoff)
+		//{
+		//	if (colorBandIndex < 0 | colorBandIndex > _currentColorBandSet.Count - 1)
+		//	{
+		//		throw new ArgumentOutOfRangeException(nameof(colorBandIndex), $"Cannot update the Cutoff for ColorBand at index: {colorBandIndex}. That value is out of range.");
+		//	}
 
-			if (colorBandIndex == _currentColorBandSet.Count - 1)
-			{
-				Debug.WriteLine("WARNING: ColorBandSetViewModel:TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
-			}
+		//	if (colorBandIndex == _currentColorBandSet.Count - 1)
+		//	{
+		//		Debug.WriteLine("WARNING: ColorBandSetViewModel:TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
+		//	}
 
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+		//	//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
-			//var cb = _currentColorBandSet[colorBandIndex];
-			//cb.Cutoff = newCutoff;
+		//	//var cb = _currentColorBandSet[colorBandIndex];
+		//	//cb.Cutoff = newCutoff;
 
-			CurrentColorBand = _currentColorBandSet[colorBandIndex];
-			CurrentColorBand.Cutoff = newCutoff;
+		//	CurrentColorBand = _currentColorBandSet[colorBandIndex];
+		//	CurrentColorBand.Cutoff = newCutoff;
 
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+		//	//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
-			//if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
-			//{
-			//	successorColorBand.PreviousCutoff = cb.Cutoff;
-			//}
+		//	//if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+		//	//{
+		//	//	successorColorBand.PreviousCutoff = cb.Cutoff;
+		//	//}
 
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+		//	//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
-			UpdatePercentages();
+		//	UpdatePercentages();
 
-			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
+		//	PushCurrentColorBandOnToHistoryCollection();
+		//	IsDirty = true;
 
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+		//	//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: false));
-			}
+		//	if (UseRealTimePreview)
+		//	{
+		//		ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: false));
+		//	}
 
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
+		//	//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
 
-			return true;
-		}
+		//	return true;
+		//}
 
 		public bool TryInsertNewItem(out int index)
 		{

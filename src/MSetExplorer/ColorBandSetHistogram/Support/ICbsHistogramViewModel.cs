@@ -1,24 +1,49 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public interface ICbsHistogramViewModel
+	public interface ICbsHistogramViewModel : INotifyPropertyChanged, IDisposable
 	{
 		bool InDesignMode { get; }
 
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
-		event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
+		event EventHandler<ColorBandSetUpdateRequestedEventArgs>? ColorBandSetUpdateRequested;
+
+		//event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
 
 		ColorBandSet ColorBandSet { get; set; }
-		ListCollectionView? ColorBandsView { get; set; }
+		ListCollectionView ColorBandsView { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
 
-		//int StartPtr { get; set; }					// Ptr to the first visible Color Band Rectangle
-		//int EndPtr { get; set; }					// Ptr to the last visible Color Band Rectangle
+		PercentageBand? BeyondTargetSpecs { get; }
+
+		bool IsDirty { get; }
+		bool IsEnabled { get; set; }
+
+		bool HighlightSelectedBand { get; set; }
+		bool UseEscapeVelocities { get; set; }
+		bool UseRealTimePreview { get; set; }
+
+		Visibility WindowVisibility { get; set; }
+
+		ColorBandSetEditMode EditMode { get; set; }
+
+		void ApplyChanges();
+		void ApplyChanges(int newTargetIterations);
+		void RevertChanges();
+		void RefreshPercentages();
+
+		bool TryInsertNewItem(out int index);
+		bool TryDeleteSelectedItem();
+
+		IDictionary<int, int> GetHistogramForColorBand(int index);
+
 
 		HPlotSeriesData SeriesData { get; }
 		//ImageSource ImageSource { get; }			// The Color Band Rectangles as a Bitmap.
@@ -46,6 +71,6 @@ namespace MSetExplorer
 		//void UpdateColorBandWidth(int colorBandIndex, double newValue);
 		void UpdateColorBandCutoff(int colorBandIndex, int newValue);
 
-		public event PropertyChangedEventHandler? PropertyChanged;
+		//public event PropertyChangedEventHandler? PropertyChanged;
 	}
 }

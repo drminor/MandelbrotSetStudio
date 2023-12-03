@@ -6,7 +6,17 @@
              xmlns:ScottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"                           
              xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:CbsHistogramViewModel}"
              mc:Ignorable="d" 
-             d:DesignHeight="242" d:DesignWidth="626">
+             d:DesignHeight="242" d:DesignWidth="1290">
+
+    <UserControl.CommandBindings>
+        <CommandBinding Command="local:ColorBandSetCommands.Revert" CanExecute="RevertCommand_CanExecute" Executed="RevertCommand_Executed" />
+        <CommandBinding Command="local:ColorBandSetCommands.Apply" CanExecute="ApplyCommand_CanExecute" Executed="ApplyCommand_Executed" />
+
+        <CommandBinding Command="local:ColorBandSetCommands.Insert" CanExecute="InsertCommand_CanExecute" Executed="InsertCommand_Executed" />
+        <CommandBinding Command="local:ColorBandSetCommands.Delete" CanExecute="DeleteCommand_CanExecute" Executed="DeleteCommand_Executed" />
+
+    </UserControl.CommandBindings>
+
     <Grid>
         <Border BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid>
@@ -18,9 +28,10 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="290"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.RowSpan="2" Grid.Column="0" BorderThickness="0, 0, 0.75, 0" BorderBrush="Black" VerticalAlignment="Stretch">
+                <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" BorderThickness="0, 0, 0.75, 0" BorderBrush="Black" VerticalAlignment="Stretch">
                     <local:CbshZoomControl x:Name="cbshZoom1"/>
                 </Border>
 
@@ -56,6 +67,31 @@
                         </local:PanAndZoomControl>
                     </ScrollViewer>
 
+                </Border>
+
+                <Border x:Name="ColorBandDetail" Grid.Row="0" Grid.RowSpan="2"  Grid.Column="2" BorderThickness="0.75, 0, 0, 0" BorderBrush="Black">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="180"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" BorderThickness="0, 0.75, 0, 0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,60,0,0">
+                            <local:ColorBandUserControl x:Name="clrBandDetail" Margin="0,10, 0, 0" />
+                        </Border>
+
+                        <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
+
+                            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
+                                <Button Name="btnRevert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Revert">Revert</Button>
+                                <Button Name="btnInsert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Insert">Insert</Button>
+                                <Button Name="btnDelete" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Delete">Delete</Button>
+                                <Button Name="btnApply" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Apply">Apply</Button>
+                            </StackPanel>
+
+                        </Border>
+                        
+                    </Grid>
                 </Border>
             </Grid>
         </Border>

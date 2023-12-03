@@ -43,12 +43,11 @@ namespace MSetExplorer
 			mapDisplay1.DataContext = _vm.MapDisplayViewModel;
 			jobProgress1.DataContext = _vm.JobProgressViewModel;
 
-			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
+			//colorBandView1.DataContext = _vm.ColorBandSetViewModel;
+			cbsHistogram1.DataContext = _vm.CbsHistogramViewModel;
+
 			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
-
-			//cbsPlotControl1.DataContext = _vm.CbshDisplayViewModel;
-			cbsHistogram1.DataContext = _vm.CbsHistogramViewModel;
 			jobTree1.DataContext = _vm.JobTreeViewModel;
 
 			_vm.MapCoordsIsVisible = mnuItem_CoordsWindow.IsChecked;
@@ -63,10 +62,11 @@ namespace MSetExplorer
 			}
 			else
 			{
-				//_vm = (IExplorerViewModel)DataContext;
 				_vm.ProjectViewModel.PropertyChanged += ProjectViewModel_PropertyChanged;
-				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
-				_vm.CbsHistogramViewModel.ColorBandCutoffChanged += CbshDisplayViewModel_ColorBandCutoffChanged;
+			
+				//_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
+				_vm.CbsHistogramViewModel.PropertyChanged += CbsHistogramViewModel_PropertyChanged;
+				//_vm.CbsHistogramViewModel.ColorBandCutoffChanged += CbshDisplayViewModel_ColorBandCutoffChanged;
 
 				// Position the Window near the left top.
 				Left = 20;
@@ -75,7 +75,7 @@ namespace MSetExplorer
 				Debug.WriteLine("The Explorer Window is now loaded");
 			}
 		}
-		
+
 		private void ExplorerWindow_Unloaded(object sender, RoutedEventArgs e)
 		{
 			Loaded -= ExplorerWindow_Loaded;
@@ -84,8 +84,10 @@ namespace MSetExplorer
 			Unloaded -= ExplorerWindow_Unloaded;
 
 			_vm.ProjectViewModel.PropertyChanged -= ProjectViewModel_PropertyChanged;
-			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
-			_vm.CbsHistogramViewModel.ColorBandCutoffChanged -= CbshDisplayViewModel_ColorBandCutoffChanged;
+
+			//_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
+			_vm.CbsHistogramViewModel.PropertyChanged -= CbsHistogramViewModel_PropertyChanged;
+			//_vm.CbsHistogramViewModel.ColorBandCutoffChanged -= CbshDisplayViewModel_ColorBandCutoffChanged;
 		}
 
 		private void ExplorerWindow_ContentRendered(object? sender, EventArgs e)
@@ -184,24 +186,32 @@ namespace MSetExplorer
 			}
 		}
 
-		private void CbshDisplayViewModel_ColorBandCutoffChanged(object? sender, (int, int) e)
+		private void CbsHistogramViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			var colorBandIndex = e.Item1;
-			var newCutoff = e.Item2;
-
-			if (_vm.ColorBandSetViewModel.ColorBandSet != null)
+			if (e.PropertyName == nameof(CbsHistogramViewModel.IsDirty))
 			{
-				try
-				{
-					_vm.ColorBandSetViewModel.UpdateCutoff(colorBandIndex, newCutoff);
-				}
-				catch
-				{
-					//Debug.WriteLine($"Could not update the VM's ColorBandSetViewModel's ColorBand at index: {colorBandIndex} with newValue: {newCutoff}.");
-					throw;
-				}
+				CommandManager.InvalidateRequerySuggested();
 			}
 		}
+
+		//private void CbshDisplayViewModel_ColorBandCutoffChanged(object? sender, (int, int) e)
+		//{
+		//	var colorBandIndex = e.Item1;
+		//	var newCutoff = e.Item2;
+
+		//	if (_vm.ColorBandSetViewModel.ColorBandSet != null)
+		//	{
+		//		try
+		//		{
+		//			_vm.ColorBandSetViewModel.UpdateCutoff(colorBandIndex, newCutoff);
+		//		}
+		//		catch
+		//		{
+		//			//Debug.WriteLine($"Could not update the VM's ColorBandSetViewModel's ColorBand at index: {colorBandIndex} with newValue: {newCutoff}.");
+		//			throw;
+		//		}
+		//	}
+		//}
 
 		#endregion
 
@@ -620,7 +630,7 @@ namespace MSetExplorer
 			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel(ImageFileType.PNG);
 
 			var jobId = areaColorAndCalcSettings.JobId;
-			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+			var useEscapeVelocities = _vm.CbsHistogramViewModel.UseEscapeVelocities;
 			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize, useEscapeVelocities);
 
 			var result = new CreateImageProgressWindow()
@@ -714,7 +724,7 @@ namespace MSetExplorer
 			var useEscVelocities = mnuItem_UseEscapeVelocities.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseEscapeVelocities = useEscVelocities;
+				_vm.CbsHistogramViewModel.UseEscapeVelocities = useEscVelocities;
 			}
 		}
 
@@ -723,7 +733,7 @@ namespace MSetExplorer
 			var useEscVelocities = mnuItem_UseEscapeVelocities.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseEscapeVelocities = useEscVelocities;
+				_vm.CbsHistogramViewModel.UseEscapeVelocities = useEscVelocities;
 			}
 		}
 
@@ -733,7 +743,7 @@ namespace MSetExplorer
 			var useRealTimePreview = mnuItem_UseRealTimePreview.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseRealTimePreview = useRealTimePreview;
+				_vm.CbsHistogramViewModel.UseRealTimePreview = useRealTimePreview;
 			}
 		}
 
@@ -742,7 +752,7 @@ namespace MSetExplorer
 			var useRealTimePreview = mnuItem_UseRealTimePreview.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseRealTimePreview = useRealTimePreview;
+				_vm.CbsHistogramViewModel.UseRealTimePreview = useRealTimePreview;
 			}
 		}
 
@@ -752,7 +762,7 @@ namespace MSetExplorer
 			var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.HighlightSelectedBand = highlightSelectedCb;
+				_vm.CbsHistogramViewModel.HighlightSelectedBand = highlightSelectedCb;
 			}
 		}
 
@@ -761,7 +771,7 @@ namespace MSetExplorer
 			var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.HighlightSelectedBand = highlightSelectedCb;
+				_vm.CbsHistogramViewModel.HighlightSelectedBand = highlightSelectedCb;
 			}
 		}
 
@@ -1267,14 +1277,14 @@ namespace MSetExplorer
 		{
 			bool? result;
 
-			if (_vm.ColorBandSetViewModel.IsDirty)
+			if (_vm.CbsHistogramViewModel.IsDirty)
 			{
 				var defaultResult = MessageBoxResult.Yes;
 				var res = MessageBox.Show("Save edits made in the ColorBand Editor?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
 
 				if (res == MessageBoxResult.Yes)
 				{
-					_vm.ColorBandSetViewModel.ApplyChanges();
+					_vm.CbsHistogramViewModel.ApplyChanges();
 					result = true;
 				}
 				else

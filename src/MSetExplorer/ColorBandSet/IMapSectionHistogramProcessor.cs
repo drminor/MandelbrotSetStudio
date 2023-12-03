@@ -10,14 +10,15 @@ namespace MSetExplorer
 		bool ProcessingEnabled { get; set; }
 
 		event EventHandler<HistogramUpdateType>? HistogramUpdated;
-		//event EventHandler<PercentageBand[]>? PercentageBandsUpdated;
 
 		void AddWork(HistogramBlockRequest histogramWorkRequest);
-		void Dispose();
-		void LoadHistogram(IEnumerable<IHistogram> histograms);
 		void Reset();
 		void Reset(int newSize);
 		void Stop(bool immediately);
+		void Dispose();
+
+		//void LoadHistogram(IEnumerable<IHistogram> histograms);
+
 
 		KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll);
 		IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff);
