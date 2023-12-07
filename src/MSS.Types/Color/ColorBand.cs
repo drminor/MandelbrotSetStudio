@@ -47,6 +47,16 @@ namespace MSS.Types
 			_actualEndColor = GetActualEndColor();
 		}
 
+		private static ColorBand _emptySingleton => new ColorBand();
+
+		public static ColorBand Empty
+		{
+			get
+			{
+				return _emptySingleton;
+			}
+		}
+
 		#endregion
 
 		#region Public Properties

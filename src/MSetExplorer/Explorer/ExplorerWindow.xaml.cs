@@ -258,6 +258,8 @@ namespace MSetExplorer
 		// Show Hide Coords Window
 		private void CoordsWindow_Checked(object sender, RoutedEventArgs e)
 		{
+			if (dispSecMapCoords == null) return;
+
 			var showCoord = mnuItem_CoordsWindow.IsChecked;
 			dispSecMapCoords.Visibility = showCoord ? Visibility.Visible : Visibility.Collapsed;
 
@@ -268,6 +270,8 @@ namespace MSetExplorer
 		// Show Hide CalcSettings Window
 		private void CalcSettingsWindow_Checked(object sender, RoutedEventArgs e)
 		{
+			if (dispSecMapCalcSettings == null) return;
+
 			var showCalcSettings = mnuItem_CalcWindow.IsChecked;
 			dispSecMapCalcSettings.Visibility = showCalcSettings ? Visibility.Visible : Visibility.Collapsed;
 		}
@@ -1467,5 +1471,6 @@ namespace MSetExplorer
 		#endregion
 
 		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
+
 	}
 }

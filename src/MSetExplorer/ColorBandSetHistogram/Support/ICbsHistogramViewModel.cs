@@ -20,6 +20,8 @@ namespace MSetExplorer
 		ColorBandSet ColorBandSet { get; set; }
 		ListCollectionView ColorBandsView { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
+		int CurrentColorBandIndex { get; }
+		int ColorBandsCount { get; }
 
 		PercentageBand? BeyondTargetSpecs { get; }
 

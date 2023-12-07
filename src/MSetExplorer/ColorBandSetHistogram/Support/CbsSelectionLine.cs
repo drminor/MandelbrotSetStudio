@@ -12,9 +12,16 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private Canvas _canvas;
-		private ColorBandWidthUpdater _colorBandWidthUpdater;
 
 		private readonly Line _dragLine;
+
+		private readonly RectangleGeometry _left;
+		private readonly RectangleGeometry _right;
+
+		private readonly RectangleGeometry _originalLeftGeometry;
+		private readonly RectangleGeometry _originalRightGeometry;
+
+
 		private DragState _dragState;
 
 		private double _originalXPosition;
@@ -28,13 +35,18 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsSelectionLine(Canvas canvas, int elevation, int height, int colorBandIndex, double xPosition, ColorBandWidthUpdater colorBandWidthUpdater)
+		public CbsSelectionLine(Canvas canvas, int elevation, int height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right)
 		{
 			_canvas = canvas;
 			ColorBandIndex = colorBandIndex;
 			_originalXPosition = xPosition;
 			_selectionLinePosition = xPosition;
-			_colorBandWidthUpdater = colorBandWidthUpdater;
+
+			_left = left;
+			_right = right;
+
+			_originalLeftGeometry = new RectangleGeometry(_left.Rect);
+			_originalRightGeometry = new RectangleGeometry(_right.Rect);
 
 			_cbElevation = elevation;
 			_cbHeight = height;
@@ -54,7 +66,7 @@ namespace MSetExplorer
 				Stroke = DrawingHelper.BuildSelectionDrawingBrush(), // new SolidColorBrush(Colors.Purple),
 				StrokeThickness = 2,
 				Y1 = elevation,
-				Y2 = height,
+				Y2 = elevation + height,
 				X1 = xPosition,
 				X2 = xPosition,
 				Focusable = true
@@ -120,6 +132,32 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public bool UpdatePosition(double newPosition)
+		{
+			var amount = newPosition - _originalXPosition;
+
+			if (ScreenTypeHelper.IsDoubleNearZero(amount))
+			{
+				return false;
+			}
+
+			if (UpdateColorBandWidth(amount))
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The new position is {newPosition}. The original position is {_originalXPosition}.");
+				SelectionLinePosition = newPosition;
+
+				_originalXPosition = newPosition;
+				_originalLeftGeometry.Rect = _left.Rect;
+				_originalRightGeometry.Rect = _right.Rect;
+
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 		public void TearDown()
 		{
 			try
@@ -136,7 +174,39 @@ namespace MSetExplorer
 			}
 			catch
 			{
-				Debug.WriteLine("SelectionRectangle encountered an exception in TearDown.");
+				Debug.WriteLine("CbsSelectionLine encountered an exception in TearDown.");
+			}
+		}
+
+		public void Hide()
+		{
+			try
+			{
+				if (_canvas != null)
+				{
+					_dragLine.Stroke.Opacity = 0;
+					//_canvas.Children.Remove(_dragLine);
+				}
+			}
+			catch
+			{
+				Debug.WriteLine("CbsSelectionLine encountered an exception in Hide.");
+			}
+		}
+
+		public void Show()
+		{
+			try
+			{
+				if (_canvas != null)
+				{
+					_dragLine.Stroke.Opacity = 1;
+					//_canvas.Children.Remove(_dragLine);
+				}
+			}
+			catch
+			{
+				Debug.WriteLine("CbsSelectionLine encountered an exception in Show.");
 			}
 		}
 
@@ -220,7 +290,9 @@ namespace MSetExplorer
 
 			var pos = e.GetPosition(relativeTo: _canvas);
 
-			if (_colorBandWidthUpdater.Invoke(ColorBandIndex, _originalXPosition, pos.X))
+			var amount = pos.X - _originalXPosition;
+
+			if (UpdateColorBandWidth(amount))
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The XPos is {pos.X}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = pos.X;
@@ -250,11 +322,52 @@ namespace MSetExplorer
 
 		#region Private Methods
 
+		private const int MIN_SEL_DISTANCE = 15;
+
 		private void CompleteDrag()
 		{
-			SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, SelectionLinePosition, isPreview: false));
+			var distance = Math.Abs(SelectionLinePosition - _originalXPosition);
+
+			if (distance > MIN_SEL_DISTANCE)
+			{
+				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, SelectionLinePosition, isPreview: false));
+			}
+			else
+			{
+				//var reverseAmount = _originalXPosition - SelectionLinePosition;
+				//UpdateColorBandWidth(reverseAmount);
+				SelectionLinePosition = _originalXPosition;
+				CancelDrag(raiseCancelEvent: true);
+			}
 
 			DragState = DragState.None;
+		}
+
+		private bool UpdateColorBandWidth(double amount)
+		{
+			var updated = false;
+
+			if (amount < 0)
+			{
+				amount = amount * -1;
+				if (_originalLeftGeometry.Rect.Width > amount && _originalRightGeometry.Rect.X > amount)
+				{
+					_left.Rect = DrawingHelper.Shorten(_originalLeftGeometry.Rect, amount);
+					_right.Rect = DrawingHelper.MoveRectLeft(_originalRightGeometry.Rect, amount);
+					updated = true;
+				}
+			}
+			else
+			{
+				if (_originalRightGeometry.Rect.Width > amount)
+				{
+					_left.Rect = DrawingHelper.Lengthen(_originalLeftGeometry.Rect, amount);
+					_right.Rect = DrawingHelper.MoveRectRight(_originalRightGeometry.Rect, amount);
+					updated = true;
+				}
+			}
+
+			return updated;
 		}
 
 		//private void SetMousePosition(Point posYInverted)
@@ -314,12 +427,12 @@ namespace MSetExplorer
 		//{
 		//	var position = e.GetPosition(relativeTo: _canvas);
 
-		//	Debug.WriteLine($"The SelectionRectangle is getting a Mouse Left Button Down at {position}.");
+		//	Debug.WriteLine($"The CbsSelectionLine is getting a Mouse Left Button Down at {position}.");
 		//}
 
 		//private void SelectedArea_MouseWheel(object sender, MouseWheelEventArgs e)
 		//{
-		//	Debug.WriteLine("The SelectionRectangle received a MouseWheel event.");
+		//	Debug.WriteLine("The CbsSelectionLine received a MouseWheel event.");
 		//}
 
 		#endregion

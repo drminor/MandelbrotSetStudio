@@ -16,6 +16,11 @@ namespace MSetExplorer
 
 		#region Constructor
 
+		//static TwoColorPanelControl()
+		//{
+		//	DefaultStyleKeyProperty.OverrideMetadata(typeof(TwoColorPanelControl), new FrameworkPropertyMetadata(typeof(TwoColorPanelControl)));
+		//}
+
 		public TwoColorPanelControl()
 		{
 			_canvas = new Canvas();

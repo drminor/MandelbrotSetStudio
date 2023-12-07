@@ -52,17 +52,17 @@ namespace MSetExplorer
 				// Starting with ContentScale = 1.
 				// The (logical) ViewportSize on the VM is the same size as the UnscaledViewportSize on the PanAndZoom control. 
 				var ourSize = HistogramColorBandControl1.ViewportSize;
+				
 				PanAndZoomControl1.UnscaledViewportSize = ourSize;
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 				_vm.ContentViewportSize = _vm.ViewportSize;
 
-				//PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetX, HistogramPlotControl1.ViewportWidth);
 				PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetAndWidth);
 
 				PanAndZoomControl1.ZoomOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);
 
-				_vm.DisplaySettingsInitialized += _vm_DisplaySettingsInitialzed;
-				_vm.PropertyChanged += CbsHistogramControl_PropertyChanged;
+				_vm.DisplaySettingsInitialized += Vm_DisplaySettingsInitialzed;
+				_vm.PropertyChanged += Vm_PropertyChanged;
 
 				PanAndZoomControl1.ViewportChanged += ViewportChanged;
 				PanAndZoomControl1.ContentScaleChanged += ContentScaleChanged;
@@ -70,11 +70,7 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetXChanged += ContentOffsetChanged;
 				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetChanged;
 
-				//HistogramPlotControl1.ViewportOffsetXChanged += HistogramPlotControl1_ViewportOffsetXChanged;
-				//HistogramPlotControl1.ViewportWidthChanged += HistogramPlotControl1_ViewportWidthChanged;
 				HistogramPlotControl1.ViewportOffsetAndWidthChanged += HistogramPlotControl1_ViewportOffsetAndWidthChanged;
-
-				HistogramColorBandControl1.ColorBandCutoffChanged += HistogramColorBandControl1_ColorBandCutoffChanged;
 
 				Debug.WriteLine("The CbsHistogramControl is now loaded.");
 			}
@@ -82,8 +78,8 @@ namespace MSetExplorer
 
 		private void CbsHistogramControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			_vm.DisplaySettingsInitialized -= _vm_DisplaySettingsInitialzed;
-			_vm.PropertyChanged -= CbsHistogramControl_PropertyChanged;
+			_vm.DisplaySettingsInitialized -= Vm_DisplaySettingsInitialzed;
+			_vm.PropertyChanged -= Vm_PropertyChanged;
 
 			PanAndZoomControl1.ViewportChanged -= ViewportChanged;
 			PanAndZoomControl1.ContentScaleChanged -= ContentScaleChanged;
@@ -91,12 +87,7 @@ namespace MSetExplorer
 			PanAndZoomControl1.ContentOffsetXChanged -= ContentOffsetChanged;
 			PanAndZoomControl1.ContentOffsetYChanged -= ContentOffsetChanged;
 
-			//HistogramPlotControl1.ViewportOffsetXChanged -= HistogramPlotControl1_ViewportOffsetXChanged;
-			//HistogramPlotControl1.ViewportWidthChanged -= HistogramPlotControl1_ViewportWidthChanged;
 			HistogramPlotControl1.ViewportOffsetAndWidthChanged -= HistogramPlotControl1_ViewportOffsetAndWidthChanged;
-
-
-			HistogramColorBandControl1.ColorBandCutoffChanged -= HistogramColorBandControl1_ColorBandCutoffChanged;
 
 			PanAndZoomControl1.Dispose();
 			PanAndZoomControl1.ZoomOwner = null;
@@ -106,11 +97,14 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void _vm_DisplaySettingsInitialzed(object? sender, DisplaySettingsInitializedEventArgs e)
+		private void Vm_DisplaySettingsInitialzed(object? sender, DisplaySettingsInitializedEventArgs e)
 		{
-			// NOTE: 	ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
-			//			ContentScale = UnscaledViewportSize / ContentViewportSize
-			//			UnscaledViewportSize = ContentViewportSize * ContentScale
+			// NOTE:
+			//	1. ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
+			//	
+			//	2. ContentScale = UnscaledViewportSize / ContentViewportSize
+			//
+			//	3. UnscaledViewportSize = ContentViewportSize * ContentScale
 
 			//var unscaledViewportWidth = PanAndZoomControl1.UnscaledViewportSize.Width;
 
@@ -163,26 +157,6 @@ namespace MSetExplorer
 			_ = _vm.MoveTo(PanAndZoomControl1.ContentOffset);
 		}
 
-		//private void HistogramPlotControl1_ViewportWidthChanged(object? sender, (double, double) e)
-		//{
-		//	var previousValue = e.Item1;
-		//	var newValue = e.Item2;
-
-		//	Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportWidthChanged event. DisplayZoom: {_vm.DisplayZoom}. The ColorBandControl's Width is being updated from {previousValue} to {newValue}.");
-
-		//	PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetX, newValue);
-		//}
-
-		//private void HistogramPlotControl1_ViewportOffsetXChanged(object? sender, (double, double) e)
-		//{
-		//	var previousValue = e.Item1;
-		//	var newValue = e.Item2;
-
-		//	Debug.WriteLine($"The CbsHistogramControl is handling the HistogramPlotControl's ViewportOffsetXChanged event. The ColorBandControl's OffsetX is being updated from {previousValue} to {newValue}.");
-
-		//	PlaceTheColorBandControl(newValue, HistogramPlotControl1.ViewportWidth);
-		//}
-
 		private void HistogramPlotControl1_ViewportOffsetAndWidthChanged(object? sender, (ControlXPositionAndWidth, ControlXPositionAndWidth) e)
 		{
 			var previousValue = e.Item1;
@@ -193,17 +167,12 @@ namespace MSetExplorer
 			PlaceTheColorBandControl(newValue);
 		}
 
-		private void CbsHistogramControl_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(ICbsHistogramViewModel.ColorBandsView))
 			{
 				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
 			}
-		}
-
-		private void HistogramColorBandControl1_ColorBandCutoffChanged(object? sender, (int, int) e)
-		{
-			_vm.UpdateColorBandCutoff(e.Item1, e.Item2);
 		}
 
 		#endregion
@@ -225,6 +194,8 @@ namespace MSetExplorer
 			//}
 
 			_ = _vm.TryInsertNewItem(out var index);
+
+			Debug.WriteLine($"Will set the HistogramColorBandControl to move to the new item at index: {index}.");
 		}
 
 		// Delete CanExecute
@@ -265,30 +236,7 @@ namespace MSetExplorer
 
 		#endregion
 
-
 		#region Private Methods
-
-		//private void PlaceTheColorBandControl(double viewportOffsetX, double viewportWidth)
-		//{
-		//	var column2Width = PlotAreaBorder.ActualWidth;
-
-		//	if (double.IsNaN(column2Width) || double.IsNaN(viewportOffsetX) || double.IsNaN(viewportWidth) || viewportWidth < 100)
-		//	{
-		//		return;
-		//	}
-
-		//	var leftMargin = viewportOffsetX;
-		//	var rightMargin = column2Width - (viewportWidth + leftMargin);
-
-		//	if (rightMargin < 0)
-		//	{
-		//		Debug.WriteLine($"The CbsHistogramControl found the Right Margin to be {rightMargin}, setting this to zero instead. LeftMargin: {leftMargin}, ViewportWidth: {viewportWidth}, Control Width: {column2Width}.");
-		//		rightMargin = 0;
-		//	}
-
-		//	Debug.WriteLine($"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
-		//	ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 2);
-		//}
 
 		private void PlaceTheColorBandControl(ControlXPositionAndWidth controlXPositionAndWidth)
 		{
@@ -314,21 +262,6 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
 			ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 2);
 		}
-
-		//private void FocusListBoxItem(int index)
-		//{
-		//	if (index != -1)
-		//	{
-		//		_ = Dispatcher.Invoke(DispatcherPriority.Loaded, (ThreadStart)delegate ()
-		//		{
-		//			var wasFocused = false;
-		//			if (lvColorBands.ItemContainerGenerator.ContainerFromIndex(index) is IInputElement container)
-		//			{
-		//				wasFocused = container.Focus();
-		//			}
-		//		});
-		//	}
-		//}
 
 		#endregion
 

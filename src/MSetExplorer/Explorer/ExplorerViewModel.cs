@@ -294,32 +294,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void ColorBandSetViewModel_ColorBandSetUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)
-		//{
-		//	var colorBandSet = e.ColorBandSet;
-
-		//	Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling 'ColorBandSetViewModel_ColorBandSetUpdateRequested' with Id = {colorBandSet.Id}. (IsPreview:{e.IsPreview}).");
-
-		//	if (e.IsPreview)
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's PreviewColorBandSet to a new value having Id = {colorBandSet.Id}");
-
-		//		//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
-		//		ProjectViewModel.PreviewColorBandSet = colorBandSet;
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's CurrentColorBandSet to a new value having Id = {colorBandSet.Id}");
-
-		//		//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
-		//		ProjectViewModel.CurrentColorBandSet = colorBandSet;
-		//	}
-
-		//	Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the CbsHistogramViewModel's ColorBandSet to a new value having Id = {colorBandSet.Id}");
-
-		//	CbsHistogramViewModel.ColorBandSet = colorBandSet;
-		//}
-
 		private void CbsHistogramViewModel_ColorBandSetUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)
 		{
 			var colorBandSet = e.ColorBandSet;
@@ -337,8 +311,8 @@ namespace MSetExplorer
 				ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the CbsHistogramViewModel's ColorBandSet to a new value having Id = {colorBandSet.Id}");
-			CbsHistogramViewModel.ColorBandSet = colorBandSet;
+			//Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the CbsHistogramViewModel's ColorBandSet to a new value having Id = {colorBandSet.Id}");
+			//CbsHistogramViewModel.ColorBandSet = colorBandSet;
 		}
 
 

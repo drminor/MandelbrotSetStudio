@@ -8,7 +8,7 @@
         
         
         mc:Ignorable="d"
-        Title="Explorer Window" Width="1883" Height="1342">
+        Title="Explorer Window" Width="1883" Height="1344">
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
@@ -88,8 +88,8 @@
                 <MenuItem Header="Nav Buttons" IsCheckable="True"/>
                 <MenuItem Header="Screen Size Buttons" IsCheckable="True"/>
                 <Separator/>
-                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_Checked"/>
-                <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
+                <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="True" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_Checked"/>
+                <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="True" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
                 <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
                 <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Checked" IsChecked="False"/>
                 <MenuItem Header="Histogram" x:Name="mnuItem_HistogramWindow" IsCheckable="True" Checked="Histogram_Checked" Unchecked="Histogram_Checked" IsChecked="False"/>
@@ -199,11 +199,11 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" x:Name="dispSecMapCoords" Visibility="Collapsed">
+            <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0" x:Name="dispSecMapCoords" Visibility="Visible">
                 <local:MapCoordsControl x:Name="mapCoordsView1" Width="290" Focusable="True"/>
             </Border>
 
-            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0" x:Name="dispSecMapCalcSettings" Visibility="Collapsed">
+            <Border Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,0" x:Name="dispSecMapCalcSettings" Visibility="Visible">
                 <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
             </Border>
 
@@ -214,7 +214,7 @@
         </Grid>
 
         <!-- Job Tree -->
-        <Grid Grid.Row="1" Grid.RowSpan="2" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
+        <Grid Grid.Row="1" Grid.RowSpan="1" Grid.Column="3" x:Name="colFarRight" Visibility="Visible">
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -238,7 +238,7 @@
         </Grid>
 
         <!-- Histogram -->
-        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="240" Margin="0,0,5,5" Visibility="Visible">
+        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="242" Margin="0,0,5,5" Visibility="Visible">
             <!--<local:ColorBandSetHistogramControl x:Name="cbsh1"/>-->
             <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
             <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->

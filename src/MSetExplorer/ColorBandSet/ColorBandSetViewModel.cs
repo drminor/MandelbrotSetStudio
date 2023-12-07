@@ -3,6 +3,7 @@ using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -235,6 +236,7 @@ namespace MSetExplorer
 
 				_colorBandsView = value;
 
+
 				//if (_colorBandsView != null)
 				//{
 					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
@@ -242,6 +244,11 @@ namespace MSetExplorer
 
 				OnPropertyChanged();
 			}
+		}
+
+		private void X_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			throw new NotImplementedException();
 		}
 
 		public ColorBand? CurrentColorBand
