@@ -12,17 +12,10 @@ namespace MSetExplorer
 		bool InDesignMode { get; }
 
 		event EventHandler<MapViewUpdateRequestedEventArgs>? MapViewUpdateRequested;
-		
-		//event EventHandler<int>? DisplayJobCompleted;
 		event EventHandler<MapViewUpdateCompletedEventArgs>? MapViewUpdateCompleted;
-
-
-		//event EventHandler<JobProgressInfo>? RequestAdded;
-		//event EventHandler<MapSectionProcessInfo>? SectionLoaded;
 
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
-		//SizeInt BlockSize { get; }
 		ObservableCollection<MapSection> MapSections { get; }
 		
 		AreaColorAndCalcSettings? CurrentAreaColorAndCalcSettings { get; }

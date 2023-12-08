@@ -131,9 +131,6 @@ namespace MSetExplorer
 			{
 				//Debug.WriteLine($"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentColorBandSet. The Project's CurrentColorBandSet has Id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 
-				Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the ColorBandSetViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
-				CbsHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
-
 				Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the CbsHistogramViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 				CbsHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 

@@ -1024,21 +1024,6 @@ namespace MSetExplorer
 					if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
 					{
 						successorColorBand.PreviousCutoff = cb.Cutoff;
-
-						//if (!UseRealTimePreview)
-						//{
-						//	//var width = successorColorBand.Cutoff - cb.Cutoff;
-						//	var idx = GetColorBandIndex(_currentColorBandSet, cb);
-
-						//	if (idx != -1)
-						//	{
-						//		ColorBandCutoffChanged?.Invoke(this, new ValueTuple<int, int>(idx, cb.Cutoff));
-						//	}
-						//}
-					}
-					else
-					{
-						// TODO: Handle case when there is no successor.
 					}
 
 					foundUpdate = true;
@@ -1049,26 +1034,33 @@ namespace MSetExplorer
 					//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
 					foundUpdate = true;
 				}
+				else if (e.PropertyName == nameof(ColorBand.EndColor))
+				{
+					if (cb.BlendStyle == ColorBandBlendStyle.Next)
+					{
+						if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+						{
+							successorColorBand.StartColor = cb.EndColor;
+						}
+					}
+
+					foundUpdate = true;
+				}
 				else
 				{
-					if (e.PropertyName == nameof(ColorBand.EndColor))
+					if (e.PropertyName == nameof(ColorBand.IsInEditMode))
 					{
-						if (cb.BlendStyle == ColorBandBlendStyle.Next)
-						{
-							if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
-							{
-								successorColorBand.StartColor = cb.EndColor;
-							}
-						}
-
-						foundUpdate = true;
+						foundUpdate = cb.EditIsBeingCompleted;
 					}
 				}
 
 				if (foundUpdate)
 				{
-					PushCurrentColorBandOnToHistoryCollection();
-					IsDirty = true;
+					if (!cb.IsInEditMode)
+					{
+						PushCurrentColorBandOnToHistoryCollection();
+						IsDirty = true;
+					}
 
 					if (UseRealTimePreview)
 					{

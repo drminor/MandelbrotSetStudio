@@ -244,6 +244,7 @@ namespace MSS.Types
 		public void BeginEdit()
 		{
 			_copy = Clone();
+			EditIsBeingCompleted = false;
 			IsInEditMode = true;
 		}
 
@@ -264,11 +265,15 @@ namespace MSS.Types
 				throw new InvalidOperationException("_copy is null on Cancel Edit.");
 			}
 
+			_copy = null;
+			EditIsBeingCompleted = false;
 			IsInEditMode = false;
 		}
 
 		public void EndEdit()
 		{
+			_copy = null;
+			EditIsBeingCompleted = true;
 			IsInEditMode = false;
 		}
 
@@ -284,6 +289,8 @@ namespace MSS.Types
 				}
 			}
 		}
+
+		public bool EditIsBeingCompleted { get; private set; }
 
 		#endregion
 

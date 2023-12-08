@@ -29,7 +29,7 @@ namespace MSetExplorer
 		private int _cbElevation;
 		private int _cbHeight;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -215,14 +215,17 @@ namespace MSetExplorer
 			DragState = DragState.InProcess;
 		}
 
-		public void CancelDrag(bool raiseCancelEvent)
+		public void CancelDrag()
 		{
 			DragState = DragState.None;
 
-			if (raiseCancelEvent)
-			{
-				SelectionLineMoved?.Invoke(this, CbsSelectionLineMovedEventArgs.CreateCancelPreviewInstance(ColorBandIndex));
-			}
+			//var reverseAmount = _originalXPosition - SelectionLinePosition;
+			//UpdateColorBandWidth(reverseAmount);
+			UpdateColorBandWidth(0);
+
+			SelectionLinePosition = _originalXPosition;
+
+			SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalXPosition, CbsSelectionLineDragOperation.Cancel));
 		}
 
 		#endregion
@@ -277,14 +280,14 @@ namespace MSetExplorer
 		{
 			if (Keyboard.IsKeyDown(Key.Escape))
 			{
-				CancelDrag(raiseCancelEvent: true);
+				CancelDrag();
 				return;
 			}
 
 			if (e.LeftButton != MouseButtonState.Pressed)
 			{
 				// The user lifted the left mouse button while the mouse was not on the canvas.
-				CancelDrag(raiseCancelEvent: true);
+				CancelDrag();
 				return;
 			}
 
@@ -296,6 +299,8 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The XPos is {pos.X}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = pos.X;
+
+				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, pos.X, CbsSelectionLineDragOperation.Move));
 			}
 		}
 
@@ -306,7 +311,7 @@ namespace MSetExplorer
 				if (Keyboard.IsKeyDown(Key.Escape))
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. The Escape Key is Pressed, cancelling.");
-					CancelDrag(raiseCancelEvent: true);
+					CancelDrag();
 				}
 				else
 				{
@@ -330,14 +335,11 @@ namespace MSetExplorer
 
 			if (distance > MIN_SEL_DISTANCE)
 			{
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, SelectionLinePosition, isPreview: false));
+				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, SelectionLinePosition, CbsSelectionLineDragOperation.Complete));
 			}
 			else
 			{
-				//var reverseAmount = _originalXPosition - SelectionLinePosition;
-				//UpdateColorBandWidth(reverseAmount);
-				SelectionLinePosition = _originalXPosition;
-				CancelDrag(raiseCancelEvent: true);
+				CancelDrag();
 			}
 
 			DragState = DragState.None;

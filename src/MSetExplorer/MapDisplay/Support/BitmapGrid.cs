@@ -8,7 +8,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -668,6 +667,10 @@ namespace MSetExplorer
 				return result;
 			}
 		}
+
+		#endregion
+
+		#region Diagnostics
 
 		[Conditional("DEBUG2")]
 		private void ReportMapSectionNotVisible(PointInt blockPosition, MapSection mapSection, string description)

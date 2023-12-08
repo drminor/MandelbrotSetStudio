@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
@@ -31,7 +32,7 @@ namespace MSetExplorer
 		private ImageSource _drawingimageSource;
 		private readonly DrawingGroup _drawingGroup;
 		private readonly IList<GeometryDrawing> _colorBandRectangles;
-		private readonly IList<RectangleGeometry> _colorBandRectanglesOriginal;
+		//private readonly IList<RectangleGeometry> _colorBandRectanglesOriginal;
 
 		private readonly IList<CbsSelectionLine> _selectionLines;
 
@@ -46,7 +47,7 @@ namespace MSetExplorer
 
 		private bool _mouseIsEntered;
 		private List<Shape> _hitList;
-		private int? _colorBandIndexInDrag;
+		private CbsSelectionLine? _selectionLineBeingDragged;
 
 		private readonly bool _useDetailedDebug = true;
 
@@ -61,6 +62,8 @@ namespace MSetExplorer
 
 		public HistogramColorBandControl()
 		{
+			_selectionLineBeingDragged = null;
+
 			_ourContent = new FrameworkElement();
 			_canvas = new Canvas();
 			_image = new Image();
@@ -70,7 +73,7 @@ namespace MSetExplorer
 			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
 
 			_colorBandRectangles = new List<GeometryDrawing>();
-			_colorBandRectanglesOriginal = new List<RectangleGeometry>();
+			//_colorBandRectanglesOriginal = new List<RectangleGeometry>();
 			_selectionLines = new List<CbsSelectionLine>();
 
 			_drawingGroup = new DrawingGroup();
@@ -91,7 +94,6 @@ namespace MSetExplorer
 			_viewportSize = new SizeDbl();
 			_mouseIsEntered = false;
 			_hitList = new List<Shape>();
-			_colorBandIndexInDrag = null;
 		}
 
 		#endregion
@@ -149,6 +151,12 @@ namespace MSetExplorer
 					DrawSelectionLines(_colorBandRectangles);
 				}
 			}
+		}
+
+		public ColorBand CurrentColorBand
+		{
+			get => (ColorBand)GetValue(CurrentColorBandProperty);
+			set => SetCurrentValue(CurrentColorBandProperty, value);
 		}
 
 		public Canvas Canvas
@@ -245,12 +253,6 @@ namespace MSetExplorer
 
 				ClipAndOffset(previousVal, value);
 			}
-		}
-
-		public ColorBand CurrentColorBand
-		{
-			get => (ColorBand)GetValue(CurrentColorBandProperty);
-			set => SetCurrentValue(CurrentColorBandProperty, value);
 		}
 
 		#endregion
@@ -357,13 +359,14 @@ namespace MSetExplorer
 
 		private void Handle_MouseLeave(object sender, MouseEventArgs e)
 		{
-			if (_colorBandIndexInDrag != null)
+			if (_selectionLineBeingDragged != null)
 			{
-				var cbsSelectionLine = _selectionLines[_colorBandIndexInDrag.Value];
+				//var cbsSelectionLine = _selectionLines[_selectionLineBeingDragged.Value];
+				//cbsSelectionLine.CancelDrag(raiseCancelEvent: false);
+				//RestoreColorBandRectangles(_selectionLineBeingDragged.Value);
 
-				cbsSelectionLine.CancelDrag(raiseCancelEvent: false);
-				RestoreColorBandRectangles(_colorBandIndexInDrag.Value);
-				_colorBandIndexInDrag = null;
+				_selectionLineBeingDragged.CancelDrag();
+				_selectionLineBeingDragged = null;
 			}
 
 			HideSelectionLines();
@@ -396,24 +399,22 @@ namespace MSetExplorer
 				return;
 			
 			var hitPoint = e.GetPosition(Canvas);
-			var cbsSelectionLine = GetSelectionLine(hitPoint, _selectionLines, out var selectionLineIndex);
-
-			if (cbsSelectionLine != null && selectionLineIndex != null)
+			if (TryGetSelectionLine(hitPoint, _selectionLines, out var cbsSelectionLine, out var selectionLineIndex))
 			{
 				var testColorBand = cbsView.GetItemAt(selectionLineIndex.Value);
 				if (testColorBand is ColorBand cb)
 				{
 					cbsView.MoveCurrentTo(cb);
 
-					CopyColorBandRectanglesOriginal(_colorBandRectangles, _colorBandRectanglesOriginal);
+					Debug.WriteLine($"Starting Drag. ColorBandIndex = {selectionLineIndex}. ContentScale: {ContentScale}. PosX: {hitPoint.X}. Original X: {cbsSelectionLine.SelectionLinePosition}.");
+
+					_selectionLineBeingDragged = cbsSelectionLine;
 					cbsSelectionLine.SelectionLineMoved += HandleSelectionLineMoved;
 
-					_colorBandIndexInDrag = cbsSelectionLine.ColorBandIndex;
+					//CopyColorBandRectanglesOriginal(_colorBandRectangles, _colorBandRectanglesOriginal);
+					//HilightColorBandRectangle(cbsSelectionLine.ColorBandIndex, Colors.Black, 200);
 
-					HilightColorBandRectangle(cbsSelectionLine.ColorBandIndex, Colors.Black, 200);
-
-					Debug.WriteLine($"Starting Drag. ColorBandIndex = {_colorBandIndexInDrag.Value}. ContentScale: {ContentScale}. PosX: {hitPoint.X}. Original X: {cbsSelectionLine.SelectionLinePosition}.");
-
+					cb.BeginEdit();
 					cbsSelectionLine.StartDrag();
 				}
 				else
@@ -423,9 +424,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var cbr = GetColorBandRectangle(hitPoint, _colorBandRectangles, out var cbrIndex);
-
-				if (cbr != null && cbrIndex != null)
+				if (TryGetColorBandRectangle(hitPoint, _colorBandRectangles, out var colorBandRectagle, out var cbrIndex))
 				{
 					var testColorBand = cbsView.GetItemAt(cbrIndex.Value);
 					if (testColorBand is ColorBand cb)
@@ -442,53 +441,65 @@ namespace MSetExplorer
 
 		private void HandleSelectionLineMoved(object? sender, CbsSelectionLineMovedEventArgs e)
 		{
-			_colorBandIndexInDrag = null;
-
 			if (sender is CbsSelectionLine selectionLine)
 			{
-				selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
-			}
+				switch (e.Operation)
+				{
+					case CbsSelectionLineDragOperation.Move:
+						UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
+						break;
 
-			if (ColorBandsView == null)
-			{
-				Debug.WriteLine($"The ColorBandsView is null as The HistogramColorBandControl is handling the CbsSelectionLineMoved Event.");
-				return;
-			}
+					case CbsSelectionLineDragOperation.Complete:
+						selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
+						_selectionLineBeingDragged = null;
 
-			var colorBandIndex = e.ColorBandIndex;
+						// Complete the edit and then update the cutoff to have a new History entry created.
+						CurrentColorBand.EndEdit();
+						UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
 
-			if (colorBandIndex == -1)
-			{
-				Debug.WriteLine($"The cbIndex = -1 as The HistogramColorBandControl is handling the CbsSelectionLineMoved Event.");
-				return;
-			}
+						break;
 
-			if (e.IsPreviewBeingCancelled)
-			{
-				Debug.WriteLine($"The HistogramColorBandControl is handling the CbsSelectionLineMoved Event. The CbsSelectionMove is being cancelled.");
+					case CbsSelectionLineDragOperation.Cancel:
+						selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
+						_selectionLineBeingDragged = null;
 
-				RestoreColorBandRectangles(colorBandIndex);
+						UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
+
+						// Cancel the edit after updating the cutoff to avoid a new History entry from being created.
+						CurrentColorBand.CancelEdit();
+						break;
+
+					default:
+						throw new InvalidOperationException($"The {e.Operation} CbsSelectionLineDragOperation is not supported.");
+				}
 			}
 			else
 			{
-				HilightColorBandRectangle(colorBandIndex, Colors.Black, 200);
-
-				var colorBandCutoff = e.NewXPosition / ContentScale.Width;
-
-				var roundedColorBandCutoff = (int)Math.Round(colorBandCutoff);
-
-				if (roundedColorBandCutoff == 0)
-				{
-					Debug.WriteLine($"WARNING: Setting the Cutoff to zero for ColorBandIndex: {colorBandIndex}.");
-				}
-
-				var currentColorBand = CurrentColorBand;
-
-				if (currentColorBand != null)
-				{
-					currentColorBand.Cutoff = roundedColorBandCutoff;
-				}
+				throw new InvalidOperationException("The HandleSelectionLineMoved event is being raised by some class other than CbsSelectionLine.");
 			}
+
+		}
+
+		private void UpdateCutoff(int colorBandIndex, double newXPosition)
+		{
+			HilightColorBandRectangle(colorBandIndex, Colors.Black, 200);
+
+			var colorBandCutoff = newXPosition / ContentScale.Width;
+
+			var roundedColorBandCutoff = (int)Math.Round(colorBandCutoff);
+
+			if (roundedColorBandCutoff == 0)
+			{
+				Debug.WriteLine($"WARNING: Setting the Cutoff to zero for ColorBandIndex: {colorBandIndex}.");
+			}
+
+			var currentColorBand = CurrentColorBand;
+
+			if (currentColorBand != null)
+			{
+				currentColorBand.Cutoff = roundedColorBandCutoff;
+			}
+
 		}
 
 		private void ColorBands_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -496,13 +507,87 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl::ColorBands_CollectionChanged. Action: {e.Action}, New Starting Index: {e.NewStartingIndex}, Old Starting Index: {e.OldStartingIndex}");
 		}
 
+		private void ColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is ColorBand cb)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl:CurrentColorBand Prop: {e.PropertyName} is changing.");
+
+				//var foundUpdate = false;
+
+				if (e.PropertyName == nameof(ColorBand.StartColor))
+				{
+					//foundUpdate = true;
+				}
+				else if (e.PropertyName == nameof(ColorBand.Cutoff))
+				{
+					//foundUpdate = true;
+
+					if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
+					{
+						UpdateColorBandCutoff(index.Value, CurrentColorBand.Cutoff);
+					}
+				}
+				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+				{
+					//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+					//foundUpdate = true;
+				}
+				else
+				{
+					if (e.PropertyName == nameof(ColorBand.EndColor))
+					{
+						//foundUpdate = true;
+					}
+				}
+			}
+			else
+			{
+				Debug.WriteLine($"HistogramColorBandControl: A sender of type {sender?.GetType()} is raising the CurrentColorBand_PropertyChanged event. EXPECTED: {typeof(ColorBand)}.");
+
+			}
+		}
+
+		#endregion
+
+		#region ColorBand Support
+
+		private bool UpdateColorBandCutoff(int colorBandIndex, int newCutoff)
+		{
+			if (colorBandIndex < 0 || colorBandIndex > _colorBandRectangles.Count - 2)
+			{
+				throw new InvalidOperationException($"DrawColorBands. The ColorBandIndex must be between 0 and {_colorBandRectangles.Count - 1}, inclusive.");
+			}
+
+			var selectionLine = _selectionLines[colorBandIndex];
+
+			var updated = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
+
+			return updated;
+		}
+
+		private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)
+		{
+			//var colorBandsList = colorbandsView as IList<ColorBand>;
+			if (colorbandsView == null)
+			{
+				index = null;
+				return false;
+			}
+			else
+			{
+				index = colorbandsView.IndexOf(cb);
+				return true;
+			}
+		}
+
 		#endregion
 
 		#region Selection Line Support
 
-		private CbsSelectionLine? GetSelectionLine(Point hitPoint, IList<CbsSelectionLine> cbsSelectionLines, [NotNullWhen(true)] out int? selectionLineIndex)
+		private bool TryGetSelectionLine(Point hitPoint, IList<CbsSelectionLine> cbsSelectionLines, [NotNullWhen(true)] out CbsSelectionLine? cbsSelectionLine, [NotNullWhen(true)] out int? selectionLineIndex)
 		{
-			CbsSelectionLine? result = null;
+			cbsSelectionLine = null;
 			selectionLineIndex = null;
 
 			var lineAtHitPoint = GetLineUnderMouse(hitPoint);
@@ -519,12 +604,14 @@ namespace MSetExplorer
 					{
 						Debug.Assert(cbsLine.ColorBandIndex == cbsLinePtr, "CbsLine.ColorBandIndex Mismatch.");
 						selectionLineIndex = cbsLinePtr;
-						result = cbsLine;
+						cbsSelectionLine = cbsLine;
+
+						return true;
 					}
 				}
 			}
 
-			return result;
+			return false;
 		}
 
 		private Line? GetLineUnderMouse(Point hitPoint)
@@ -586,8 +673,10 @@ namespace MSetExplorer
 
 		#region ColorBandRectangle Support
 
-		private GeometryDrawing? GetColorBandRectangle(Point hitPoint, IList<GeometryDrawing> colorBandRectangles, [NotNullWhen(true)] out int? colorBandRectangleIndex)
+		private bool TryGetColorBandRectangle(Point hitPoint, IList<GeometryDrawing> colorBandRectangles, [NotNullWhen(true)] out GeometryDrawing? colorBandRectangle, [NotNullWhen(true)] out int? colorBandRectangleIndex)
 		{
+			colorBandRectangle = null;
+			colorBandRectangleIndex = null;
 
 			for (var i = 0; i < colorBandRectangles.Count; i++)
 			{
@@ -596,153 +685,46 @@ namespace MSetExplorer
 				if (cbr.Geometry.FillContains(hitPoint))
 				{
 					colorBandRectangleIndex = i;
-					return cbr;
+					colorBandRectangle = cbr;
+					return true;
 				}
 			}
 
-			colorBandRectangleIndex = null;
-			return null;
+			return false;
 		}
 
-		//private GeometryDrawing? GetColorBandRectangle2(Point hitPoint, IList<GeometryDrawing> colorBandRectangles, [NotNullWhen(true)] out int? colorBandRectangleIndex)
+		//private void CopyColorBandRectanglesOriginal(IList<GeometryDrawing> source, IList<RectangleGeometry> dest)
 		//{
-		//	if (ColorBandsView == null)
+		//	dest.Clear();
+
+		//	foreach (var cbr in source)
 		//	{
-		//		colorBandRectangleIndex = null;
-		//		return null;
-		//	}
-
-		//	var posX = hitPoint.X / ContentScale.Width;
-
-		//	_ = FindColorBand(ColorBandsView, posX, out colorBandRectangleIndex);
-
-		//	if (colorBandRectangleIndex == null)
-		//	{
-		//		return null;
-		//	}
-
-		//	var cbr = _colorBandRectangles[colorBandRectangleIndex.Value];
-
-		//	return cbr;
-		//}
-
-		//private GeometryDrawing? GetColorBandRectangle_OLD(Point hitPoint, IList<GeometryDrawing> colorBandRectangles, [NotNullWhen(true)] out int? colorBandRectangleIndex)
-		//{
-		//	GeometryDrawing? result = null;
-		//	colorBandRectangleIndex = null;
-
-		//	var rectangleAtHitPoint = GetRectangleUnderMouse(hitPoint);
-
-		//	if (rectangleAtHitPoint != null)
-		//	{
-		//		for (var cbrPtr = 0; cbrPtr < colorBandRectangles.Count; cbrPtr++)
+		//		if (cbr.Geometry is RectangleGeometry rg)
 		//		{
-		//			var colorBandRectangle = colorBandRectangles[cbrPtr];
-
-		//			if (colorBandRectangle.Geometry is RectangleGeometry rg)
-		//			{
-		//				var diffX = rg.Rect.Left - rectangleAtHitPoint.RenderedGeometry.Bounds.Left;
-
-		//				if (ScreenTypeHelper.IsDoubleNearZero(diffX))
-		//				{
-		//					colorBandRectangleIndex = cbrPtr;
-		//					result = colorBandRectangle;
-		//				}
-		//			}
+		//			dest.Add(new RectangleGeometry(rg.Rect));
 		//		}
 		//	}
-
-		//	return result;
 		//}
 
-		//private Rectangle? GetRectangleUnderMouse(Point hitPoint)
+		//private void RestoreColorBandRectangles(int colorBandIndex)
 		//{
-		//	_hitList.Clear();
+		//	var cbLeft = _colorBandRectangles[colorBandIndex].Geometry as RectangleGeometry;
+		//	var cbRight = _colorBandRectangles[colorBandIndex + 1].Geometry as RectangleGeometry;
 
-		//	var hitArea = new EllipseGeometry(hitPoint, 2.0, 2.0);
-		//	VisualTreeHelper.HitTest(Canvas, null, HitTestCallBack2, new GeometryHitTestParameters(hitArea));
-
-		//	foreach (Shape item in _hitList)
+		//	if (cbLeft != null && cbRight != null)
 		//	{
-		//		if (item is Rectangle rectangle)
+		//		var cbLeftOriginal = _colorBandRectanglesOriginal[colorBandIndex];
+		//		var cbRightOriginal = _colorBandRectanglesOriginal[colorBandIndex + 1];
+
+		//		if (cbLeftOriginal == null | cbRightOriginal == null)
 		//		{
-		//			var pos = rectangle.RenderedGeometry.Bounds.Left;
-		//			var adjustedPos = pos / ContentScale.Width;
-		//			Debug.WriteLine($"Got a hit for rectangle at position: {pos} / {adjustedPos}.");
-
-		//			return rectangle;
+		//			throw new InvalidOperationException("Found cbLeft and cbRight, but could not find cbLeftOriginal or cbRightOrigianl.");
 		//		}
-		//	}
 
-		//	return null;
-		//}
-
-		//private HitTestResultBehavior HitTestCallBack2(HitTestResult result)
-		//{
-		//	if (result is GeometryHitTestResult hitTestResult)
-		//	{
-		//		switch (hitTestResult.IntersectionDetail)
-		//		{
-		//			case IntersectionDetail.NotCalculated:
-		//				return HitTestResultBehavior.Stop;
-
-		//			case IntersectionDetail.Empty:
-		//				return HitTestResultBehavior.Stop;
-
-		//			case IntersectionDetail.FullyInside:
-		//				if (result.VisualHit is Shape s) _hitList.Add(s);
-		//				return HitTestResultBehavior.Continue;
-
-		//			case IntersectionDetail.FullyContains:
-		//				if (result.VisualHit is Shape ss) _hitList.Add(ss);
-		//				return HitTestResultBehavior.Continue;
-
-		//			case IntersectionDetail.Intersects:
-		//				if (result.VisualHit is Shape sss) _hitList.Add(sss);
-		//				return HitTestResultBehavior.Continue;
-
-		//			default:
-		//				return HitTestResultBehavior.Stop;
-		//		}
-		//	}
-		//	else
-		//	{
-		//		return HitTestResultBehavior.Stop;
+		//		_colorBandRectangles[colorBandIndex].Geometry = cbLeftOriginal;
+		//		_colorBandRectangles[colorBandIndex + 1].Geometry = cbRightOriginal;
 		//	}
 		//}
-
-		private void CopyColorBandRectanglesOriginal(IList<GeometryDrawing> source, IList<RectangleGeometry> dest)
-		{
-			dest.Clear();
-
-			foreach (var cbr in source)
-			{
-				if (cbr.Geometry is RectangleGeometry rg)
-				{
-					dest.Add(new RectangleGeometry(rg.Rect));
-				}
-			}
-		}
-
-		private void RestoreColorBandRectangles(int colorBandIndex)
-		{
-			var cbLeft = _colorBandRectangles[colorBandIndex].Geometry as RectangleGeometry;
-			var cbRight = _colorBandRectangles[colorBandIndex + 1].Geometry as RectangleGeometry;
-
-			if (cbLeft != null && cbRight != null)
-			{
-				var cbLeftOriginal = _colorBandRectanglesOriginal[colorBandIndex];
-				var cbRightOriginal = _colorBandRectanglesOriginal[colorBandIndex + 1];
-
-				if (cbLeftOriginal == null | cbRightOriginal == null)
-				{
-					throw new InvalidOperationException("Found cbLeft and cbRight, but could not find cbLeftOriginal or cbRightOrigianl.");
-				}
-
-				_colorBandRectangles[colorBandIndex].Geometry = cbLeftOriginal;
-				_colorBandRectangles[colorBandIndex + 1].Geometry = cbRightOriginal;
-			}
-		}
 
 		private void HilightColorBandRectangle(int colorBandIndex, Color penColor, int interval)
 		{
@@ -763,7 +745,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods - ColorBandSet View
+		#region ColorBandSet View Support
 
 		private void DrawColorBands(ListCollectionView? listCollectionView)
 		{
@@ -850,7 +832,7 @@ namespace MSetExplorer
 				}
 
 
-				var sl = new CbsSelectionLine(_canvas, CB_ELEVATION, CB_HEIGHT, colorBandIndex, xPosition, gLeft, gRight/*, UpdateColorBandWidth*/);
+				var sl = new CbsSelectionLine(_canvas, CB_ELEVATION, CB_HEIGHT, colorBandIndex, xPosition, gLeft, gRight);
 				_selectionLines.Add(sl);
 			}
 		}
@@ -918,40 +900,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private ColorBand? FindColorBand(ListCollectionView? listCollectionView, double pixelOffset, out int? colorBandIndex)
-		{
-			ColorBand? result = null;
-			colorBandIndex = null;
-
-			if (listCollectionView == null || listCollectionView.Count < 2)
-			{
-				return result;
-			}
-
-			var prevOffset = 0;
-			var curOffset = 0;
-
-			var endPtr = listCollectionView.Count - 1;
-
-			for (var i = 0; i <= endPtr; i++)
-			{
-				var colorBand = (ColorBand)listCollectionView.GetItemAt(i);
-				var bandWidth = i == endPtr ? colorBand.BucketWidth : colorBand.BucketWidth + 1;
-				curOffset += bandWidth;
-
-				if (curOffset >= pixelOffset)
-				{
-					var cd = curOffset - pixelOffset;
-					var pd = pixelOffset - prevOffset;
-
-					colorBandIndex = pd > cd ? i - 1 : i;
-					result = colorBand;
-				}
-			}
-
-			return result;
-		}
-
 		#endregion
 
 		#region Private Methods - Canvas
@@ -986,77 +934,6 @@ namespace MSetExplorer
 			if (newColorBand != null)
 			{
 				newColorBand.PropertyChanged += c.ColorBand_PropertyChanged;
-			}
-		}
-
-		private void ColorBand_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (sender is ColorBand cb)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl:CurrentColorBand Prop: {e.PropertyName} is changing.");
-
-				//var foundUpdate = false;
-
-				if (e.PropertyName == nameof(ColorBand.StartColor))
-				{
-					//foundUpdate = true;
-				}
-				else if (e.PropertyName == nameof(ColorBand.Cutoff))
-				{
-					//foundUpdate = true;
-
-					//if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
-					//{
-					//	UpdateColorBandCutoff(index.Value, CurrentColorBand.Cutoff);
-					//}
-				}
-				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
-				{
-					//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
-					//foundUpdate = true;
-				}
-				else
-				{
-					if (e.PropertyName == nameof(ColorBand.EndColor))
-					{
-						//foundUpdate = true;
-					}
-				}
-			}
-			else
-			{
-				Debug.WriteLine($"HistogramColorBandControl: A sender of type {sender?.GetType()} is raising the CurrentColorBand_PropertyChanged event. EXPECTED: {typeof(ColorBand)}.");
-
-			}
-		}
-
-		private bool UpdateColorBandCutoff(int colorBandIndex, int newCutoff)
-		{
-			if (colorBandIndex < 0 || colorBandIndex > _colorBandRectangles.Count - 2)
-			{
-				throw new InvalidOperationException($"DrawColorBands. The ColorBandIndex must be between 0 and {_colorBandRectangles.Count - 1}, inclusive.");
-			}
-
-			var selectionLine = _selectionLines[colorBandIndex];
-
-			var updated = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
-
-			return updated;
-		}
-
-
-		private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)
-		{
-			var colorBandsList = colorbandsView as IList<ColorBand>;
-			if (colorBandsList == null)
-			{
-				index = null;
-				return false;
-			}
-			else
-			{
-				index = colorBandsList.IndexOf(cb);
-				return true;
 			}
 		}
 

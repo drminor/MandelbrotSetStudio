@@ -6,26 +6,28 @@ namespace MSetExplorer
 	{
 		public int ColorBandIndex { get; init; }
 		public double NewXPosition { get; init; }
+		public CbsSelectionLineDragOperation Operation { get; init; }
 
-		public bool IsPreview { get; init; }
-		public bool IsPreviewBeingCancelled { get; init; }
-
-		public CbsSelectionLineMovedEventArgs(int colorBandIndex, double newXPosition, bool isPreview)
+		public CbsSelectionLineMovedEventArgs(int colorBandIndex, double newXPosition, CbsSelectionLineDragOperation operation)
 		{
+			Operation = operation;
 			ColorBandIndex = colorBandIndex;
 			NewXPosition = newXPosition;
-			IsPreview = isPreview;
 		}
 
-		public static CbsSelectionLineMovedEventArgs CreateCancelPreviewInstance(int colorBandIndex)
-		{
-			var result = new CbsSelectionLineMovedEventArgs(colorBandIndex, -1, isPreview: true)
-			{
-				IsPreviewBeingCancelled = true
-			};
+		//public static CbsSelectionLineMovedEventArgs CreateCancelDragInstance(int colorBandIndex)
+		//{
+		//	var result = new CbsSelectionLineMovedEventArgs(colorBandIndex, -1, operation: CbsSelectionLineDragOperation.Cancel);
 
-			return result;
-		}
+		//	return result;
+		//}
+	}
+
+	public enum CbsSelectionLineDragOperation
+	{
+		Move = 0,
+		Complete = 1,
+		Cancel = 2
 	}
 
 }
