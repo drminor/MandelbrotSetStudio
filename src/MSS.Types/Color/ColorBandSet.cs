@@ -535,7 +535,7 @@ namespace MSS.Types
 		#region Clone Support
 
 		/// <summary>
-		/// Identical clone, but with a new "Serial Number" and record id.
+		/// Creates a copy with a new Id using the existing serial number.
 		/// </summary>
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
@@ -551,7 +551,7 @@ namespace MSS.Types
 		}
 
 		/// <summary>
-		/// Receives a new targetIterations, but keeps the same "Serial Number."
+		/// Creates a copy with a new Id, the specified targetIterations and keeps the existing "Serial Number."
 		/// </summary>
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy(int targetIterations)

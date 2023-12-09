@@ -126,6 +126,8 @@ namespace MSetExplorer
 					}
 				}
 
+				Debug.WriteLine($"MapSectionDisplayViewModel is updating the ColorBandSet. The Id is being updated from {_bitmapGrid.ColorBandSet.Id} to {value.Id}.");
+
 				_bitmapGrid.ColorBandSet = value;
 			}
 		}

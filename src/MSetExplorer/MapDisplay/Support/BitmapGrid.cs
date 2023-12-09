@@ -126,10 +126,12 @@ namespace MSetExplorer
 				{
 					if (HighlightSelectedColorBand && value.SelectedColorBand != _colorBandSet.SelectedColorBand)
 					{
-						if (_colorMap != null)
-						{
-							ReDrawSections(reapplyColorMap: true);
-						}
+						//if (_colorMap != null)
+						//{
+						//	ReDrawSections(reapplyColorMap: true);
+						//}
+
+						CurrentColorBand = value.SelectedColorBand;
 					}
 				}
 			}

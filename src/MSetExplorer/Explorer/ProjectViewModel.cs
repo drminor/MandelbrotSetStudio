@@ -145,6 +145,8 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool ColorBandSetIsPreview => _previewColorBandSet != null;
+
 
 		//public bool SaveTheZValues
 		//{

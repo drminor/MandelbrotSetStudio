@@ -160,7 +160,6 @@ namespace MSetExplorer
 
 					lock (_histLock)
 					{
-						//_colorBandSet = value;
 						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
 
 						if (IsEnabled)
@@ -211,6 +210,8 @@ namespace MSetExplorer
 					if (IsDirty)
 					{
 						var colorBandSet = _useRealTimePreview ? _currentColorBandSet : _colorBandSetHistoryCollection[0];
+
+						colorBandSet = colorBandSet.CreateNewCopy();
 						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(colorBandSet, isPreview: true));
 					}
 
@@ -241,10 +242,7 @@ namespace MSetExplorer
 
 			set
 			{
-				//if (_colorBandsView != null)
-				//{
-					_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
-				//}
+				_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
 
 				_colorBandsView = value;
 				var testItem = _colorBandsView.CurrentItem;
@@ -264,12 +262,8 @@ namespace MSetExplorer
 					}
 				}
 
-				//if (_colorBandsView != null)
-				//{
-					_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
-				//}
+				_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
 
-				// The HistogramColorBandControl is updated as the CbsHistogramControl's code behind page handles this event.
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandIndex));
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsCount));
@@ -766,7 +760,6 @@ namespace MSetExplorer
 
 			_colorBandSet = newSet;
 
-
 			// Clear all existing items from history and add the new set.
 			_colorBandSetHistoryCollection.Load(_colorBandSet);
 
@@ -784,9 +777,7 @@ namespace MSetExplorer
 			// Remove all but the first entry from the History Collection
 			_colorBandSetHistoryCollection.Trim(0);
 
-			//var curPos = ColorBandsView.CurrentPosition;
 			var curPos = CurrentColorBandIndex;
-
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
 
 			IsDirty = false;
@@ -959,76 +950,87 @@ namespace MSetExplorer
 
 		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (sender is ColorBand cb)
+			ColorBand cb;
+
+			if (sender is ColorBand)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:CurrentColorBand Prop: {e.PropertyName} is changing.");
-
-				var foundUpdate = false;
-
-				// StartColor is being updated.
-				if (e.PropertyName == nameof(ColorBand.StartColor))
-				{
-					if (TryGetPredeccessor(_currentColorBandSet, cb, out var colorBand))
-					{
-						colorBand.SuccessorStartColor = cb.StartColor;
-					}
-
-					foundUpdate = true;
-				}
-
-				// Cutoff is being updated
-				else if (e.PropertyName == nameof(ColorBand.Cutoff))
-				{
-					if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
-					{
-						successorColorBand.PreviousCutoff = cb.Cutoff;
-					}
-
-					foundUpdate = true;
-					UpdatePercentages();
-				}
-
-				// BlendStyle is being updated
-				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
-				{
-					//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
-					foundUpdate = true;
-				}
-				else
-				{
-					// EndColor is being updated
-					if (e.PropertyName == nameof(ColorBand.EndColor))
-					{
-						if (cb.BlendStyle == ColorBandBlendStyle.Next)
-						{
-							if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
-							{
-								successorColorBand.StartColor = cb.EndColor;
-							}
-						}
-
-						foundUpdate = true;
-					}
-				}
-
-				if (foundUpdate)
-				{
-					if (!cb.IsInEditMode)
-					{
-						PushCurrentColorBandOnToHistoryCollection();
-						IsDirty = true;
-					}
-
-					if (UseRealTimePreview)
-					{
-						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-					}
-				}
+				cb = (ColorBand)sender;
 			}
 			else
 			{
 				Debug.WriteLine($"ColorBandSetViewModel: A sender of type {sender?.GetType()} is raising the CurrentColorBand_PropertyChanged event. EXPECTED: {typeof(ColorBand)}.");
+				return;
 			}
+
+			bool foundUpdate;
+
+			// StartColor is being updated.
+			if (e.PropertyName == nameof(ColorBand.StartColor))
+			{
+				if (TryGetPredeccessor(_currentColorBandSet, cb, out var colorBand))
+				{
+					colorBand.SuccessorStartColor = cb.StartColor;
+				}
+
+				foundUpdate = true;
+			}
+
+			// Cutoff is being updated
+			else if (e.PropertyName == nameof(ColorBand.Cutoff))
+			{
+				if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+				{
+					successorColorBand.PreviousCutoff = cb.Cutoff;
+				}
+
+				foundUpdate = true;
+				UpdatePercentages();
+			}
+
+			// BlendStyle is being updated
+			else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+			{
+				//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+				foundUpdate = true;
+			}
+
+			// EndColor is being updated
+			else if (e.PropertyName == nameof(ColorBand.EndColor))
+			{
+				if (cb.BlendStyle == ColorBandBlendStyle.Next)
+				{
+					if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+					{
+						successorColorBand.StartColor = cb.EndColor;
+					}
+				}
+
+				foundUpdate = true;
+			}
+			else
+			{
+				// Some other property is being updated.
+				foundUpdate = false;
+			}
+
+			if (foundUpdate)
+			{
+				// Don't include each property change when the Current ColorBand is being edited.
+				if (!cb.IsInEditMode)
+				{
+					PushCurrentColorBandOnToHistoryCollection();
+					IsDirty = true;
+				}
+
+				if (UseRealTimePreview)
+				{
+					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
+
+					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
+				}
+			}
+
 		}
 
 		private void CurrentColorBand_EditEnded(object? sender, EventArgs e)
