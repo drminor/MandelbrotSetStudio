@@ -7,6 +7,8 @@ namespace MSS.Types
 {
 	public class ColorBand : INotifyPropertyChanged, IEditableObject, ICloneable
 	{
+		#region Private Fields
+
 		private int _cutoff;
 		private ColorBandColor _startColor;
 		private ColorBandBlendStyle _blendStyle;
@@ -19,8 +21,10 @@ namespace MSS.Types
 
 		private double _percentage;
 
-		private ColorBand? _copy;
+		//private ColorBand? _copy;
 		private bool _isInEditMode;
+
+		#endregion
 
 		#region Constructor
 
@@ -47,15 +51,19 @@ namespace MSS.Types
 			_actualEndColor = GetActualEndColor();
 		}
 
+		// Create a single instance for all to use.
+		//private static ColorBand _emptySingleton = new ColorBand();
+
+		// Create a new intance on each reference
 		private static ColorBand _emptySingleton => new ColorBand();
 
-		public static ColorBand Empty
-		{
-			get
-			{
-				return _emptySingleton;
-			}
-		}
+		public static ColorBand Empty => _emptySingleton;
+
+		#endregion
+
+		#region Events
+
+		public event EventHandler? EditEnded;
 
 		#endregion
 
@@ -198,6 +206,10 @@ namespace MSS.Types
 			}
 		}
 
+		#endregion
+
+		#region Private Methods
+
 		private ColorBandColor GetActualEndColor()
 		{
 			var result = BlendStyle == ColorBandBlendStyle.Next
@@ -237,44 +249,47 @@ namespace MSS.Types
 			return result;
 		}
 
+		public override string? ToString()
+		{
+			return $"Starting Cutoff: {StartingCutoff}, Ending Cutoff: {Cutoff}, Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}, End: {EndColor.GetCssColor()}, Actual End: {ActualEndColor}";
+		}
+
 		#endregion
 
 		#region IEditable Object Support
 
 		public void BeginEdit()
 		{
-			_copy = Clone();
-			EditIsBeingCompleted = false;
+			//_copy = Clone();
 			IsInEditMode = true;
 		}
 
 		public void CancelEdit()
 		{
-			if (_copy != null)
-			{
-				Cutoff = _copy.Cutoff;
-				StartColor = _copy.StartColor;
-				BlendStyle = _copy.BlendStyle;
-				EndColor = _copy.EndColor;
-				PreviousCutoff = _copy.PreviousCutoff;
-				_successorStartColor = _copy._successorStartColor;
-				Percentage = _copy.Percentage;
-			}
-			else
-			{
-				throw new InvalidOperationException("_copy is null on Cancel Edit.");
-			}
+			//if (_copy != null)
+			//{
+			//	Cutoff = _copy.Cutoff;
+			//	StartColor = _copy.StartColor;
+			//	BlendStyle = _copy.BlendStyle;
+			//	EndColor = _copy.EndColor;
+			//	PreviousCutoff = _copy.PreviousCutoff;
+			//	_successorStartColor = _copy._successorStartColor;
+			//	Percentage = _copy.Percentage;
+			//}
+			//else
+			//{
+			//	throw new InvalidOperationException("_copy is null on Cancel Edit.");
+			//}
 
-			_copy = null;
-			EditIsBeingCompleted = false;
+			//_copy = null;
 			IsInEditMode = false;
 		}
 
 		public void EndEdit()
 		{
-			_copy = null;
-			EditIsBeingCompleted = true;
+			//_copy = null;
 			IsInEditMode = false;
+			EditEnded?.Invoke(this, EventArgs.Empty);
 		}
 
 		public bool IsInEditMode
@@ -290,14 +305,7 @@ namespace MSS.Types
 			}
 		}
 
-		public bool EditIsBeingCompleted { get; private set; }
-
 		#endregion
-
-		public override string? ToString()
-		{
-			return $"Starting Cutoff: {StartingCutoff}, Ending Cutoff: {Cutoff}, Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}, End: {EndColor.GetCssColor()}, Actual End: {ActualEndColor}";
-		}
 
 		#region NotifyPropertyChanged Support
 
@@ -310,5 +318,4 @@ namespace MSS.Types
 
 		#endregion
 	}
-
 }

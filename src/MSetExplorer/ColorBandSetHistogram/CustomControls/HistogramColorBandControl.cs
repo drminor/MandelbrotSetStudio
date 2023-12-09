@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -415,6 +416,17 @@ namespace MSetExplorer
 					//HilightColorBandRectangle(cbsSelectionLine.ColorBandIndex, Colors.Black, 200);
 
 					cb.BeginEdit();
+
+					// Report the Values of the ColorBandRectangles in play
+					if (TryGetColorBandIndex(ColorBandsView, cb, out var currentColorBandIndex))
+					{
+						var cbrReport = GetColorBandRectanglesReport(currentColorBandIndex.Value);
+						Debug.WriteLine(cbrReport);
+					}
+
+					/*****							*****							
+					 **   	Start the Drag Operation   **
+					 *****							*****/
 					cbsSelectionLine.StartDrag();
 				}
 				else
@@ -439,6 +451,29 @@ namespace MSetExplorer
 			}
 		}
 
+		private string GetColorBandRectanglesReport(int currentColorBandIndex)
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine($"ColorBandRectangles for positions: {currentColorBandIndex} and {currentColorBandIndex + 1}.");
+
+			var rectLeft = _colorBandRectangles[currentColorBandIndex];
+
+			if (rectLeft.Geometry is RectangleGeometry rd)
+			{
+				sb.AppendLine($"cbLeft: {rd.Rect}");
+			}
+
+			var rectRight = _colorBandRectangles[currentColorBandIndex + 1];
+
+			if (rectRight.Geometry is RectangleGeometry rd2)
+			{
+				sb.AppendLine($"cbRight: {rd2.Rect}");
+			}
+
+			return sb.ToString();
+		}
+
 		private void HandleSelectionLineMoved(object? sender, CbsSelectionLineMovedEventArgs e)
 		{
 			if (sender is CbsSelectionLine selectionLine)
@@ -453,9 +488,9 @@ namespace MSetExplorer
 						selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
 						_selectionLineBeingDragged = null;
 
-						// Complete the edit and then update the cutoff to have a new History entry created.
-						CurrentColorBand.EndEdit();
+						Debug.WriteLine("Completing the SelectionBand Drag Operation.");
 						UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
+						CurrentColorBand.EndEdit();
 
 						break;
 
@@ -464,8 +499,6 @@ namespace MSetExplorer
 						_selectionLineBeingDragged = null;
 
 						UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
-
-						// Cancel the edit after updating the cutoff to avoid a new History entry from being created.
 						CurrentColorBand.CancelEdit();
 						break;
 
@@ -523,9 +556,12 @@ namespace MSetExplorer
 				{
 					//foundUpdate = true;
 
-					if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
+					if (_selectionLineBeingDragged == null)
 					{
-						UpdateColorBandCutoff(index.Value, CurrentColorBand.Cutoff);
+						if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
+						{
+							UpdateSelectionLinePosition(index.Value, CurrentColorBand.Cutoff);
+						}
 					}
 				}
 				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
@@ -544,7 +580,19 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"HistogramColorBandControl: A sender of type {sender?.GetType()} is raising the CurrentColorBand_PropertyChanged event. EXPECTED: {typeof(ColorBand)}.");
+			}
+		}
 
+		private void ColorBand_EditEnded(object? sender, EventArgs e)
+		{
+			if (sender is ColorBand cb)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl:CurrentColorBand is raising the EditEndedEvent.");
+
+				if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
+				{
+					UpdateSelectionLinePosition(index.Value, cb.Cutoff);
+				}
 			}
 		}
 
@@ -552,7 +600,7 @@ namespace MSetExplorer
 
 		#region ColorBand Support
 
-		private bool UpdateColorBandCutoff(int colorBandIndex, int newCutoff)
+		private bool UpdateSelectionLinePosition(int colorBandIndex, int newCutoff)
 		{
 			if (colorBandIndex < 0 || colorBandIndex > _colorBandRectangles.Count - 2)
 			{
@@ -934,8 +982,11 @@ namespace MSetExplorer
 			if (newColorBand != null)
 			{
 				newColorBand.PropertyChanged += c.ColorBand_PropertyChanged;
+				newColorBand.EditEnded += c.ColorBand_EditEnded;
 			}
 		}
+
+
 
 		#endregion
 

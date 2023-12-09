@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Text;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Windows.Devices.Geolocation;
 
 namespace MSetExplorer
 {
@@ -134,6 +136,12 @@ namespace MSetExplorer
 
 		public bool UpdatePosition(double newPosition)
 		{
+			if (DragState == DragState.Begun || DragState == DragState.InProcess)
+			{
+				// The HandleMouseMove eventHandler is managing the SelectionLine positions.
+				return false;
+			}
+
 			var amount = newPosition - _originalXPosition;
 
 			if (ScreenTypeHelper.IsDoubleNearZero(amount))
@@ -146,14 +154,15 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"The new position is {newPosition}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = newPosition;
 
-				_originalXPosition = newPosition;
-				_originalLeftGeometry.Rect = _left.Rect;
-				_originalRightGeometry.Rect = _right.Rect;
+				//_originalXPosition = newPosition;
+				//_originalLeftGeometry.Rect = _left.Rect;
+				//_originalRightGeometry.Rect = _right.Rect;
 
 				return true;
 			}
 			else
 			{
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine::UpdatePosition. The call to UpdateColorBandWidth returned false. The new position is {newPosition}. The original position is {_originalXPosition}.");
 				return false;
 			}
 		}
@@ -212,15 +221,30 @@ namespace MSetExplorer
 
 		public void StartDrag()
 		{
+			_originalXPosition = SelectionLinePosition;
+			_originalLeftGeometry.Rect = _left.Rect;
+			_originalRightGeometry.Rect = _right.Rect;
+
 			DragState = DragState.InProcess;
+
+			Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {BuildGeometriesReport()}.");
+		}
+
+		private string BuildGeometriesReport()
+		{
+			var sb = new StringBuilder();
+			sb.AppendLine($"Left: {_left.Rect}");
+			sb.AppendLine($"Right: {_right.Rect}");
+			sb.AppendLine($"Left Original: {_originalLeftGeometry.Rect}");
+			sb.AppendLine($"Right Original: {_originalRightGeometry.Rect}");
+
+			return sb.ToString();
 		}
 
 		public void CancelDrag()
 		{
 			DragState = DragState.None;
 
-			//var reverseAmount = _originalXPosition - SelectionLinePosition;
-			//UpdateColorBandWidth(reverseAmount);
 			UpdateColorBandWidth(0);
 
 			SelectionLinePosition = _originalXPosition;
@@ -297,7 +321,7 @@ namespace MSetExplorer
 
 			if (UpdateColorBandWidth(amount))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The XPos is {pos.X}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"After call to UpdateColorBandWidth, The XPos is {pos.X}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = pos.X;
 
 				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, pos.X, CbsSelectionLineDragOperation.Move));
@@ -347,6 +371,8 @@ namespace MSetExplorer
 
 		private bool UpdateColorBandWidth(double amount)
 		{
+			//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine[{ColorBandIndex}] is having its ColorBandWidth updated by amount: {amount}.");
+			
 			var updated = false;
 
 			if (amount < 0)

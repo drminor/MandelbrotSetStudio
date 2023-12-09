@@ -286,6 +286,7 @@ namespace MSetExplorer
 					if (_currentColorBand != null)
 					{
 						_currentColorBand.PropertyChanged -= CurrentColorBand_PropertyChanged;
+						_currentColorBand.EditEnded -= CurrentColorBand_EditEnded;
 					}
 
 					_currentColorBand = value;
@@ -293,6 +294,7 @@ namespace MSetExplorer
 					if (_currentColorBand != null)
 					{
 						_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
+						_currentColorBand.EditEnded += CurrentColorBand_EditEnded;
 					}
 
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
@@ -764,10 +766,12 @@ namespace MSetExplorer
 
 			_colorBandSet = newSet;
 
-			var curPos = ColorBandsView.CurrentPosition;
 
 			// Clear all existing items from history and add the new set.
 			_colorBandSetHistoryCollection.Load(_colorBandSet);
+
+			//var curPos = ColorBandsView.CurrentPosition;
+			var curPos = CurrentColorBandIndex;
 
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
 			IsDirty = false;
@@ -780,8 +784,11 @@ namespace MSetExplorer
 			// Remove all but the first entry from the History Collection
 			_colorBandSetHistoryCollection.Trim(0);
 
-			var curPos = ColorBandsView.CurrentPosition;
+			//var curPos = ColorBandsView.CurrentPosition;
+			var curPos = CurrentColorBandIndex;
+
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
+
 			IsDirty = false;
 
 			UpdatePercentages();
@@ -890,75 +897,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public void UpdateColorBandCutoff_OLD(int colorBandIndex, int newCutoff)
-		{
-			if (colorBandIndex < 0 | colorBandIndex > _currentColorBandSet.Count - 1)
-			{
-				throw new ArgumentOutOfRangeException(nameof(colorBandIndex), $"Cannot update the Cutoff for ColorBand at index: {colorBandIndex}. That value is out of range.");
-			}
-
-			if (colorBandIndex == _currentColorBandSet.Count - 1)
-			{
-				Debug.WriteLine("WARNING: ColorBandSetViewModel:TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
-			}
-
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
-
-			CurrentColorBand = _currentColorBandSet[colorBandIndex];
-			CurrentColorBand.Cutoff = newCutoff;
-
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
-
-			//if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
-			//{
-			//	successorColorBand.PreviousCutoff = cb.Cutoff;
-			//}
-
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
-
-			UpdatePercentages();
-
-			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
-
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
-
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: false));
-			}
-
-			//ColorBandSet.ReportBucketWidthsAndCutoffs(_currentColorBandSet);
-
-			//return true;
-		}
-
-		public void UpdateColorBandCutoff(int colorBandIndex, int newCutoff)
-		{
-			//if (colorBandIndex < 0 | colorBandIndex > _currentColorBandSet.Count - 1)
-			//{
-			//	throw new ArgumentOutOfRangeException(nameof(colorBandIndex), $"Cannot update the Cutoff for ColorBand at index: {colorBandIndex}. That value is out of range.");
-			//}
-
-			//if (colorBandIndex == _currentColorBandSet.Count - 1)
-			//{
-			//	Debug.WriteLine("WARNING: ColorBandSetViewModel:TryUpdateCutoff is updating the ColorBandSet's High Cutoff.");
-			//}
-
-			//CurrentColorBand = _currentColorBandSet[colorBandIndex];
-			//CurrentColorBand.Cutoff = newCutoff;
-
-			//UpdatePercentages();
-
-			//PushCurrentColorBandOnToHistoryCollection();
-			//IsDirty = true;
-
-			//if (UseRealTimePreview)
-			//{
-			//	ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: false));
-			//}
-		}
-
 		#endregion
 
 		#region UndoRedoPile Properties / Methods
@@ -976,7 +914,8 @@ namespace MSetExplorer
 		{
 			if (_colorBandSetHistoryCollection.MoveCurrentTo(_colorBandSetHistoryCollection.CurrentIndex - 1))
 			{
-				UpdateViewAndRaisePropertyChangeEvents();
+				var curPos = CurrentColorBandIndex;
+				UpdateViewAndRaisePropertyChangeEvents(curPos);
 				return true;
 			}
 			else
@@ -989,7 +928,8 @@ namespace MSetExplorer
 		{
 			if (_colorBandSetHistoryCollection.MoveCurrentTo(_colorBandSetHistoryCollection.CurrentIndex + 1))
 			{
-				UpdateViewAndRaisePropertyChangeEvents();
+				var curPos = CurrentColorBandIndex;
+				UpdateViewAndRaisePropertyChangeEvents(curPos);
 				return true;
 			}
 			else
@@ -1002,6 +942,21 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
+		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
+		{
+			if (ColorBandsView != null)
+			{
+				if (ColorBandSet != null)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the SelectedColorBandIndex from: {ColorBandSet.SelectedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+
+					ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
+				}
+
+				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
+			}
+		}
+
 		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (sender is ColorBand cb)
@@ -1010,6 +965,7 @@ namespace MSetExplorer
 
 				var foundUpdate = false;
 
+				// StartColor is being updated.
 				if (e.PropertyName == nameof(ColorBand.StartColor))
 				{
 					if (TryGetPredeccessor(_currentColorBandSet, cb, out var colorBand))
@@ -1019,6 +975,8 @@ namespace MSetExplorer
 
 					foundUpdate = true;
 				}
+
+				// Cutoff is being updated
 				else if (e.PropertyName == nameof(ColorBand.Cutoff))
 				{
 					if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
@@ -1029,28 +987,27 @@ namespace MSetExplorer
 					foundUpdate = true;
 					UpdatePercentages();
 				}
+
+				// BlendStyle is being updated
 				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
 				{
 					//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
 					foundUpdate = true;
 				}
-				else if (e.PropertyName == nameof(ColorBand.EndColor))
-				{
-					if (cb.BlendStyle == ColorBandBlendStyle.Next)
-					{
-						if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
-						{
-							successorColorBand.StartColor = cb.EndColor;
-						}
-					}
-
-					foundUpdate = true;
-				}
 				else
 				{
-					if (e.PropertyName == nameof(ColorBand.IsInEditMode))
+					// EndColor is being updated
+					if (e.PropertyName == nameof(ColorBand.EndColor))
 					{
-						foundUpdate = cb.EditIsBeingCompleted;
+						if (cb.BlendStyle == ColorBandBlendStyle.Next)
+						{
+							if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+							{
+								successorColorBand.StartColor = cb.EndColor;
+							}
+						}
+
+						foundUpdate = true;
 					}
 				}
 
@@ -1074,19 +1031,10 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
+		private void CurrentColorBand_EditEnded(object? sender, EventArgs e)
 		{
-			if (ColorBandsView != null)
-			{
-				if (ColorBandSet != null)
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the SelectedColorBandIndex from: {ColorBandSet.SelectedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
-
-					ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
-				}
-
-				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
-			}
+			PushCurrentColorBandOnToHistoryCollection();
+			IsDirty = true;
 		}
 
 		private void HistogramUpdated(object? sender, HistogramUpdateType e)

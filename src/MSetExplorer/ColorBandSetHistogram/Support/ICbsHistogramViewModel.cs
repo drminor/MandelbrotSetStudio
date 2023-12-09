@@ -71,7 +71,7 @@ namespace MSetExplorer
 		int? MoveTo(VectorDbl displayPosition);
 
 		//void UpdateColorBandWidth(int colorBandIndex, double newValue);
-		void UpdateColorBandCutoff(int colorBandIndex, int newValue);
+		//void UpdateColorBandCutoff(int colorBandIndex, int newValue);
 
 		//public event PropertyChangedEventHandler? PropertyChanged;
 	}
