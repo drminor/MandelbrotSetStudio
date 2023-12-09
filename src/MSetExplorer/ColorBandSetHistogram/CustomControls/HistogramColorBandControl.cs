@@ -33,7 +33,6 @@ namespace MSetExplorer
 		private ImageSource _drawingimageSource;
 		private readonly DrawingGroup _drawingGroup;
 		private readonly IList<GeometryDrawing> _colorBandRectangles;
-		//private readonly IList<RectangleGeometry> _colorBandRectanglesOriginal;
 
 		private readonly IList<CbsSelectionLine> _selectionLines;
 
@@ -74,7 +73,6 @@ namespace MSetExplorer
 			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
 
 			_colorBandRectangles = new List<GeometryDrawing>();
-			//_colorBandRectanglesOriginal = new List<RectangleGeometry>();
 			_selectionLines = new List<CbsSelectionLine>();
 
 			_drawingGroup = new DrawingGroup();
@@ -362,10 +360,6 @@ namespace MSetExplorer
 		{
 			if (_selectionLineBeingDragged != null)
 			{
-				//var cbsSelectionLine = _selectionLines[_selectionLineBeingDragged.Value];
-				//cbsSelectionLine.CancelDrag(raiseCancelEvent: false);
-				//RestoreColorBandRectangles(_selectionLineBeingDragged.Value);
-
 				_selectionLineBeingDragged.CancelDrag();
 				_selectionLineBeingDragged = null;
 			}
@@ -412,7 +406,6 @@ namespace MSetExplorer
 					_selectionLineBeingDragged = cbsSelectionLine;
 					cbsSelectionLine.SelectionLineMoved += HandleSelectionLineMoved;
 
-					//CopyColorBandRectanglesOriginal(_colorBandRectangles, _colorBandRectanglesOriginal);
 					//HilightColorBandRectangle(cbsSelectionLine.ColorBandIndex, Colors.Black, 200);
 
 					cb.BeginEdit();
@@ -451,29 +444,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private string GetColorBandRectanglesReport(int currentColorBandIndex)
-		{
-			var sb = new StringBuilder();
-
-			sb.AppendLine($"ColorBandRectangles for positions: {currentColorBandIndex} and {currentColorBandIndex + 1}.");
-
-			var rectLeft = _colorBandRectangles[currentColorBandIndex];
-
-			if (rectLeft.Geometry is RectangleGeometry rd)
-			{
-				sb.AppendLine($"cbLeft: {rd.Rect}");
-			}
-
-			var rectRight = _colorBandRectangles[currentColorBandIndex + 1];
-
-			if (rectRight.Geometry is RectangleGeometry rd2)
-			{
-				sb.AppendLine($"cbRight: {rd2.Rect}");
-			}
-
-			return sb.ToString();
-		}
-
 		private void HandleSelectionLineMoved(object? sender, CbsSelectionLineMovedEventArgs e)
 		{
 			if (sender is CbsSelectionLine selectionLine)
@@ -510,7 +480,6 @@ namespace MSetExplorer
 			{
 				throw new InvalidOperationException("The HandleSelectionLineMoved event is being raised by some class other than CbsSelectionLine.");
 			}
-
 		}
 
 		private void UpdateCutoff(int colorBandIndex, double newXPosition)
@@ -532,7 +501,6 @@ namespace MSetExplorer
 			{
 				currentColorBand.Cutoff = roundedColorBandCutoff;
 			}
-
 		}
 
 		private void ColorBands_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -986,11 +954,32 @@ namespace MSetExplorer
 			}
 		}
 
-
-
 		#endregion
 
 		#region Diagnostics
+
+		private string GetColorBandRectanglesReport(int currentColorBandIndex)
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine($"ColorBandRectangles for positions: {currentColorBandIndex} and {currentColorBandIndex + 1}.");
+
+			var rectLeft = _colorBandRectangles[currentColorBandIndex];
+
+			if (rectLeft.Geometry is RectangleGeometry rd)
+			{
+				sb.AppendLine($"cbLeft: {rd.Rect}");
+			}
+
+			var rectRight = _colorBandRectangles[currentColorBandIndex + 1];
+
+			if (rectRight.Geometry is RectangleGeometry rd2)
+			{
+				sb.AppendLine($"cbRight: {rd2.Rect}");
+			}
+
+			return sb.ToString();
+		}
 
 		[Conditional("DEBUG2")]
 		private void ReportTranslationTransformX(RectangleDbl previousValue, RectangleDbl newValue)

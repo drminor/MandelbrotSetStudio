@@ -266,6 +266,7 @@ namespace MSetExplorer
 
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandIndex));
+				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandNumber));
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsCount));
 			}
 		}
@@ -293,11 +294,13 @@ namespace MSetExplorer
 
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandIndex));
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandNumber));
 				}
 			}
 		}
 
 		public int CurrentColorBandIndex => ColorBandsView.CurrentPosition;
+		public int CurrentColorBandNumber => ColorBandsView.CurrentPosition + 1;
 
 		public int ColorBandsCount => ColorBandsView.Count;
 
@@ -519,6 +522,21 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public bool TryMoveCurrentColorBandToNext()
+		{
+			if (CurrentColorBandIndex > ColorBandsCount - 2) return false;
+			var result = _colorBandsView.MoveCurrentToNext();
+			return result;
+		}
+
+		public bool TryMoveCurrentColorBandToPrevious()
+		{
+			if (CurrentColorBandIndex < 1) return false;
+
+			var result = _colorBandsView.MoveCurrentToPrevious();
+			return result;
+		}
 
 		public bool TryInsertNewItem(out int index)
 		{

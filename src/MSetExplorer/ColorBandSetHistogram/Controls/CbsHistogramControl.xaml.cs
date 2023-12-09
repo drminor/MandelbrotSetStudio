@@ -284,5 +284,15 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private void MoveLeftButton_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.TryMoveCurrentColorBandToPrevious();
+		}
+
+		private void MoveRightButton_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.TryMoveCurrentColorBandToNext();
+		}
 	}
 }

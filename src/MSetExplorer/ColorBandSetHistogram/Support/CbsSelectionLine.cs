@@ -227,18 +227,7 @@ namespace MSetExplorer
 
 			DragState = DragState.InProcess;
 
-			Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {BuildGeometriesReport()}.");
-		}
-
-		private string BuildGeometriesReport()
-		{
-			var sb = new StringBuilder();
-			sb.AppendLine($"Left: {_left.Rect}");
-			sb.AppendLine($"Right: {_right.Rect}");
-			sb.AppendLine($"Left Original: {_originalLeftGeometry.Rect}");
-			sb.AppendLine($"Right Original: {_originalRightGeometry.Rect}");
-
-			return sb.ToString();
+			//Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {BuildGeometriesReport()}.");
 		}
 
 		public void CancelDrag()
@@ -351,7 +340,7 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private const int MIN_SEL_DISTANCE = 15;
+		private const double MIN_SEL_DISTANCE = 0.49;
 
 		private void CompleteDrag()
 		{
@@ -422,6 +411,17 @@ namespace MSetExplorer
 		#endregion
 
 		#region Diag
+
+		private string BuildGeometriesReport()
+		{
+			var sb = new StringBuilder();
+			sb.AppendLine($"Left: {_left.Rect}");
+			sb.AppendLine($"Right: {_right.Rect}");
+			sb.AppendLine($"Left Original: {_originalLeftGeometry.Rect}");
+			sb.AppendLine($"Right Original: {_originalRightGeometry.Rect}");
+
+			return sb.ToString();
+		}
 
 		//private void ReportPosition(Point posYInverted)
 		//{

@@ -21,6 +21,7 @@ namespace MSetExplorer
 		ListCollectionView ColorBandsView { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
 		int CurrentColorBandIndex { get; }
+		int CurrentColorBandNumber { get; }
 		int ColorBandsCount { get; }
 
 		PercentageBand? BeyondTargetSpecs { get; }
@@ -40,6 +41,9 @@ namespace MSetExplorer
 		void ApplyChanges(int newTargetIterations);
 		void RevertChanges();
 		void RefreshPercentages();
+
+		bool TryMoveCurrentColorBandToNext();
+		bool TryMoveCurrentColorBandToPrevious();
 
 		bool TryInsertNewItem(out int index);
 		bool TryDeleteSelectedItem();
