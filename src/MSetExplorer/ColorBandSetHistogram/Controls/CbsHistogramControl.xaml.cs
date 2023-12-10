@@ -2,11 +2,9 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Threading;
 
 namespace MSetExplorer
 {
@@ -71,6 +69,9 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetChanged;
 
 				HistogramPlotControl1.ViewportOffsetAndWidthChanged += HistogramPlotControl1_ViewportOffsetAndWidthChanged;
+
+				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
+				HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
 
 				Debug.WriteLine("The CbsHistogramControl is now loaded.");
 			}
@@ -172,6 +173,10 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(ICbsHistogramViewModel.ColorBandsView))
 			{
 				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
+			}
+			else if (e.PropertyName == nameof(ICbsHistogramViewModel.UseRealTimePreview))
+			{
+				HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
 			}
 		}
 

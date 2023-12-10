@@ -12,6 +12,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace MSetExplorer
 {
@@ -23,6 +24,9 @@ namespace MSetExplorer
 		private const int CB_HEIGHT = 58;   // Height of each Color Band Rectangle
 
 		private readonly static bool CLIP_IMAGE_BLOCKS = false;
+		private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
+
+		private DebounceDispatcher _selectionLineMovedDispatcher;
 
 		private FrameworkElement _ourContent;
 		private Canvas _canvas;
@@ -62,6 +66,11 @@ namespace MSetExplorer
 
 		public HistogramColorBandControl()
 		{
+			_selectionLineMovedDispatcher = new DebounceDispatcher
+			{
+				Priority = DispatcherPriority.Render
+			};
+
 			_selectionLineBeingDragged = null;
 
 			_ourContent = new FrameworkElement();
@@ -157,6 +166,8 @@ namespace MSetExplorer
 			get => (ColorBand)GetValue(CurrentColorBandProperty);
 			set => SetCurrentValue(CurrentColorBandProperty, value);
 		}
+
+		public bool UseRealTimePreview { get; set; }
 
 		public Canvas Canvas
 		{
@@ -446,60 +457,64 @@ namespace MSetExplorer
 
 		private void HandleSelectionLineMoved(object? sender, CbsSelectionLineMovedEventArgs e)
 		{
-			if (sender is CbsSelectionLine selectionLine)
-			{
-				switch (e.Operation)
-				{
-					case CbsSelectionLineDragOperation.Move:
-						UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
-						break;
-
-					case CbsSelectionLineDragOperation.Complete:
-						selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
-						_selectionLineBeingDragged = null;
-
-						Debug.WriteLine("Completing the SelectionBand Drag Operation.");
-						UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
-						CurrentColorBand.EndEdit();
-
-						break;
-
-					case CbsSelectionLineDragOperation.Cancel:
-						selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
-						_selectionLineBeingDragged = null;
-
-						UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
-						CurrentColorBand.CancelEdit();
-						break;
-
-					default:
-						throw new InvalidOperationException($"The {e.Operation} CbsSelectionLineDragOperation is not supported.");
-				}
-			}
-			else
+			if (!(sender is CbsSelectionLine selectionLine))
 			{
 				throw new InvalidOperationException("The HandleSelectionLineMoved event is being raised by some class other than CbsSelectionLine.");
+			}
+
+			switch (e.Operation)
+			{
+				case CbsSelectionLineDragOperation.Move:
+					UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
+					break;
+
+				case CbsSelectionLineDragOperation.Complete:
+					selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
+					_selectionLineBeingDragged = null;
+
+					Debug.WriteLine("Completing the SelectionBand Drag Operation.");
+					UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
+					CurrentColorBand.EndEdit();
+
+					break;
+
+				case CbsSelectionLineDragOperation.Cancel:
+					selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
+					_selectionLineBeingDragged = null;
+
+					UpdateCutoff(e.ColorBandIndex, e.NewXPosition);
+					CurrentColorBand.CancelEdit();
+					break;
+
+				default:
+					throw new InvalidOperationException($"The {e.Operation} CbsSelectionLineDragOperation is not supported.");
 			}
 		}
 
 		private void UpdateCutoff(int colorBandIndex, double newXPosition)
 		{
-			HilightColorBandRectangle(colorBandIndex, Colors.Black, 200);
+			var newCutoff = (int)Math.Round(newXPosition / ContentScale.Width);
 
-			var colorBandCutoff = newXPosition / ContentScale.Width;
-
-			var roundedColorBandCutoff = (int)Math.Round(colorBandCutoff);
-
-			if (roundedColorBandCutoff == 0)
+			if (newCutoff == 0)
 			{
 				Debug.WriteLine($"WARNING: Setting the Cutoff to zero for ColorBandIndex: {colorBandIndex}.");
 			}
 
-			var currentColorBand = CurrentColorBand;
+			var ccb = CurrentColorBand;
 
-			if (currentColorBand != null)
+			if (ccb != null)
 			{
-				currentColorBand.Cutoff = roundedColorBandCutoff;
+				if (UseRealTimePreview)
+				{
+					_selectionLineMovedDispatcher.Throttle(
+						interval: SELECTION_LINE_UPDATE_THROTTLE_INTERVAL,
+						action: parm => { ccb.Cutoff = newCutoff; },
+						param: null);
+				}
+				else
+				{
+					ccb.Cutoff = newCutoff;
+				}
 			}
 		}
 

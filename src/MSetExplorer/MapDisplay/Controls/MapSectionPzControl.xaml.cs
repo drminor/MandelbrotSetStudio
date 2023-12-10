@@ -16,6 +16,8 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private const double POSTER_DISPLAY_MARGIN = 10;
+		private const int VIEWPORT_CHANGED_THROTTLE_INTERVAL = 200;
+		private const int CONTENT_SCALE_CHANGED_THROTTLE_INTERVAL = 200;
 
 		private DebounceDispatcher _viewPortSizeDispatcher;
 		private DebounceDispatcher _contentScaleDispatcher;
@@ -112,7 +114,7 @@ namespace MSetExplorer
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
 		{
 			_viewPortSizeDispatcher.Throttle(
-				interval: 200,
+				interval: VIEWPORT_CHANGED_THROTTLE_INTERVAL,
 				action: parm =>
 				{
 					ViewportChangedThrottled(e);
@@ -140,7 +142,7 @@ namespace MSetExplorer
 		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
 		{
 			_contentScaleDispatcher.Throttle(
-				interval: 200,
+				interval: CONTENT_SCALE_CHANGED_THROTTLE_INTERVAL,
 				action: parm =>
 				{
 					ContentScaleChangedThrottled(e);
