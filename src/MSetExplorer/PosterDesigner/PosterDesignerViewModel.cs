@@ -129,7 +129,7 @@ namespace MSetExplorer
 		private void MapDisplayViewModel_MapViewUpdateCompleted(object? sender, MapViewUpdateCompletedEventArgs e)
 		{
 			ColorBandSetViewModel.RefreshPercentages();
-			CbsHistogramViewModel.RefreshDisplay();
+			_ = CbsHistogramViewModel.RefreshDisplay();
 
 			MapCalcSettingsViewModel.TargetIterationsAvailable = _mapSectionHistogramProcessor.GetAverageMapSectionTargetIteration();
 		}

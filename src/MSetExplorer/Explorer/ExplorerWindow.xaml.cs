@@ -292,11 +292,12 @@ namespace MSetExplorer
 			Width = show ? 1882 : 1475;
 		}
 
-		// Show Hide Job Tree
+		// Show Hide Color Band Histogram component
 		private void Histogram_Checked(object sender, RoutedEventArgs e)
 		{
 			var showHistogramControl = mnuItem_HistogramWindow.IsChecked;
 			botRow.Visibility = showHistogramControl ? Visibility.Visible : Visibility.Collapsed;
+			_vm.CbsHistogramViewModel.IsEnabled = showHistogramControl;
 			Height = showHistogramControl ? 1323 : 1100;
 		}
 

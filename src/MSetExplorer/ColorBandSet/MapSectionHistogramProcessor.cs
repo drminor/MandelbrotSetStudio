@@ -164,7 +164,7 @@ namespace MSetExplorer
 
 			_processingEnabled = true;
 
-			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
+			HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
 		}
 
 		// TODO: Handle Long to Int conversion for GetKeyValuePairsForBand.

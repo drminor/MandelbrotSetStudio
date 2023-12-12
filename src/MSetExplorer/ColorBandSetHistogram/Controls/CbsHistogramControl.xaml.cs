@@ -17,7 +17,7 @@ namespace MSetExplorer
 
 		private ICbsHistogramViewModel _vm;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -116,6 +116,7 @@ namespace MSetExplorer
 			// Instead of using the unscaledViewportWidth, use the physical view port width - to find the ContentScale corresponding to filling the entire display.
 			//var minContentScale = unscaledViewportWidth / unscaledExtentWidth;
 			var minContentScale = viewPortWidth / unscaledExtentWidth;
+			//var minContentScale = 2;
 
 			var maxContentScale = minContentScale * 4;
 
@@ -127,7 +128,7 @@ namespace MSetExplorer
 			//Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
 			//	$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}.");
 
-			Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
+			Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. ViewPortWidth: {viewPortWidth}, Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
 				$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}.");
 
 			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, contentScale, minContentScale, maxContentScale);
@@ -170,10 +171,13 @@ namespace MSetExplorer
 
 		private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			// ColorBandsView
 			if (e.PropertyName == nameof(ICbsHistogramViewModel.ColorBandsView))
 			{
 				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
 			}
+
+			// UseRealTimePreview
 			else if (e.PropertyName == nameof(ICbsHistogramViewModel.UseRealTimePreview))
 			{
 				HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;

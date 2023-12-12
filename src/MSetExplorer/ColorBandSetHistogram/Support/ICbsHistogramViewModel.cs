@@ -33,7 +33,7 @@ namespace MSetExplorer
 		bool UseEscapeVelocities { get; set; }
 		bool UseRealTimePreview { get; set; }
 
-		Visibility WindowVisibility { get; set; }
+		//Visibility WindowVisibility { get; set; }
 
 		ColorBandSetEditMode EditMode { get; set; }
 

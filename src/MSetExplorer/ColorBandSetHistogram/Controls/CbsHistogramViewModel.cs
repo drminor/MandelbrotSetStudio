@@ -38,7 +38,7 @@ namespace MSetExplorer
 		private readonly object _histLock;
 
 		private bool _isEnabled;
-		private Visibility _windowVisibility;
+		//private Visibility _windowVisibility;
 
 
 		private readonly bool _useDetailedDebug = true;
@@ -88,7 +88,7 @@ namespace MSetExplorer
 			BeyondTargetSpecs = null;
 
 			_isEnabled = true;
-			_windowVisibility = Visibility.Visible;
+			//_windowVisibility = Visibility.Visible;
 
 			// Plotting
 			_seriesData = HPlotSeriesData.Empty;
@@ -138,7 +138,7 @@ namespace MSetExplorer
 			set
 			{
 				if (value != _colorBandSet)
-				{
+				{ 
 					// Temporarily set the view using a empty ColorBandSet.
 					// Presumably the call to ResetView requires that the ColorBandsView have some value.
 					ColorBandsView = BuildColorBandsView(null);
@@ -147,32 +147,32 @@ namespace MSetExplorer
 
 					_colorBandSet = value;
 
-					var unscaledWidth = GetExtent(_colorBandSet);
-
-					if (unscaledWidth > 10)
+					if (IsEnabled)
 					{
-						ResetView(unscaledWidth, DisplayPosition, DisplayZoom);
-					}
-					else
-					{
-						Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
-					}
+						var unscaledWidth = GetExtent(_colorBandSet);
 
-					lock (_histLock)
-					{
-						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
-
-						if (IsEnabled)
+						if (unscaledWidth > 10)
 						{
+							ResetView(unscaledWidth, DisplayPosition, DisplayZoom);
+						}
+						else
+						{
+							Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
+						}
+
+						lock (_histLock)
+						{
+							_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
+
 							_mapSectionHistogramProcessor.Reset(value.HighCutoff);
 							UpdatePercentages();
 						}
+
+						IsDirty = false;
+
+						// This sets the ColorBandsView
+						UpdateViewAndRaisePropertyChangeEvents();
 					}
-
-					IsDirty = false;
-
-					// This sets the ColorBandsView
-					UpdateViewAndRaisePropertyChangeEvents();
 				}
 				else
 				{
@@ -320,6 +320,7 @@ namespace MSetExplorer
 			}
 		}
 
+		// TODO: As the CbsHistogramViewModel is enabled, refresh the view.
 		public bool IsEnabled
 		{
 			get => _isEnabled;
@@ -329,36 +330,34 @@ namespace MSetExplorer
 				{
 					_isEnabled = value;
 
-					// TODO: Subscribe / Unsubscribe Histogram Updates here.
 					if (_isEnabled)
 					{
-						//_mapSections.CollectionChanged += MapSections_CollectionChanged;
-					}
-					else
-					{
-						//_mapSections.CollectionChanged -= MapSections_CollectionChanged;
-					}
+						var histogramDataWasEmpty = RefreshDisplay();
 
-					WindowVisibility = _isEnabled ? Visibility.Visible : Visibility.Collapsed;
+						if (histogramDataWasEmpty)
+						{
+							Debug.WriteLineIf(_useDetailedDebug, "WARNING: Setting CbsHistogramViewModel:IsEnabled = true. Values are all zero on call to CbsHistogramViewModel.RefreshData.");
+						}
+					}
 
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public Visibility WindowVisibility
-		{
-			get => _windowVisibility;
-			set
-			{
-				if (value != _windowVisibility)
-				{
-					_windowVisibility = value;
-					IsEnabled = _windowVisibility == Visibility.Visible ? true : false;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public Visibility WindowVisibility
+		//{
+		//	get => _windowVisibility;
+		//	set
+		//	{
+		//		if (value != _windowVisibility)
+		//		{
+		//			_windowVisibility = value;
+		//			IsEnabled = _windowVisibility == Visibility.Visible ? true : false;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		//public int PlotExtent => SeriesData.Length;
 
@@ -757,15 +756,33 @@ namespace MSetExplorer
 
 		public void ApplyChanges(int newTargetIterations)
 		{
+			if (!IsEnabled) return;
+
 			if (newTargetIterations != _currentColorBandSet.HighCutoff)
 			{
 				var newSet = ColorBandSetHelper.AdjustTargetIterations(_currentColorBandSet, newTargetIterations);
+
+				var unscaledWidth = GetExtent(newSet);
+
+				if (unscaledWidth > 10)
+				{
+					ResetView(unscaledWidth, DisplayPosition, DisplayZoom);
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel::ApplyChanges is not resetting the view -- the new iterations target <= 10.");
+				}
+
+				_mapSectionHistogramProcessor.Reset(newSet.HighCutoff);
+
 				ApplyChangesInt(newSet);
 			}
 		}
 
 		public void ApplyChanges()
 		{
+			if (!IsEnabled) return;
+
 			Debug.Assert(IsDirty, "ColorBandSetViewModel:ApplyChanges is being called, but we are not dirty.");
 			var newSet = _currentColorBandSet.CreateNewCopy();
 
@@ -781,10 +798,9 @@ namespace MSetExplorer
 			// Clear all existing items from history and add the new set.
 			_colorBandSetHistoryCollection.Load(_colorBandSet);
 
-			//var curPos = ColorBandsView.CurrentPosition;
 			var curPos = CurrentColorBandIndex;
-
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
+
 			IsDirty = false;
 
 			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_colorBandSet, isPreview: false));
@@ -853,10 +869,7 @@ namespace MSetExplorer
 
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's SerieData is being updated There are {SeriesData.LongLength} entries.");
 
-			// TODO: Implement some way to have the HistogramPlotControl be notfied of an update without creating a new instance.
 			SeriesData = new HPlotSeriesData(SeriesData);
-
-			//OnPropertyChanged(nameof(ICbsHistogramViewModel.SeriesData));
 
 			return result;
 		}
@@ -1080,7 +1093,7 @@ namespace MSetExplorer
 					}
 				case HistogramUpdateType.Refresh:
 					{
-						RefreshDisplay();
+						_ = RefreshDisplay();
 						break;
 					}
 				default:
@@ -1111,10 +1124,9 @@ namespace MSetExplorer
 			ReportSeriesBufferAllocation(existingLength, newLength, bufferWasPreserved);
 		}
 
-		private int GetExtent(ColorBandSet colorBandSet/*, out int endPtr*/)
+		private int GetExtent(ColorBandSet colorBandSet)
 		{
 			var result = colorBandSet.Count < 2 ? 0 : colorBandSet.HighCutoff;
-			//endPtr = colorBandSet.Count < 2 ? 0 : colorBandSet.Count - 1;
 			return result;
 		}
 
@@ -1132,8 +1144,10 @@ namespace MSetExplorer
 
 				// Override the position
 				var positionZero = new VectorDbl();
+
 				// Override the zoom setting
 				var zoomUnity = 1d;
+
 				var initialSettings = new DisplaySettingsInitializedEventArgs(extent, positionZero, zoomUnity);
 
 				DisplaySettingsInitialized?.Invoke(this, initialSettings);
@@ -1345,7 +1359,7 @@ namespace MSetExplorer
 
 		#region Diagnostics
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void ReportSeriesBufferAllocation(long existingLength, long newLength, bool bufferWasPreserved)
 		{
 			if (!bufferWasPreserved)

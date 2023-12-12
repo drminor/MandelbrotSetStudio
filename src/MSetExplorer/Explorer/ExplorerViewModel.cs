@@ -130,29 +130,14 @@ namespace MSetExplorer
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
 			else if (e.PropertyName == nameof(IProjectViewModel.CurrentColorBandSet))
 			{
-				//Debug.WriteLine($"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentColorBandSet. The Project's CurrentColorBandSet has Id: {ProjectViewModel.CurrentColorBandSet.Id}.");
-
-				//Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the CbsHistogramViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
-				//CbsHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
-
-				//if (ProjectViewModel.CurrentProject != null)
-				//{
-				//	Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
-				//	MapDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
-				//}
-				//else
-				//{
-				//	Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentColorBandSet. Not updating the MapDisplayViewModel's ColorBandSet -- The CurrentProject is Null.");
-				//}
-
 				// Don't update the ColorBandSetHistogram's ViewModel, if this is a preview.
 				if (!ProjectViewModel.ColorBandSetIsPreview)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the CbsHistogramViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel. Just before setting the CbsHistogramViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 					CbsHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 				}
 
-				Debug.WriteLineIf(_useDetailedDebug, $"Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel. Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 				MapDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 			}
 		}
@@ -309,7 +294,6 @@ namespace MSetExplorer
 				newMapCalcSettings
 				);
 
-			CbsHistogramViewModel.ColorBandSet = newColorBandSet;
 			CbsHistogramViewModel.ColorBandSet = newColorBandSet;
 
 			_ = MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
