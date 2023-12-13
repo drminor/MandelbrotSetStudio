@@ -165,7 +165,7 @@ namespace MSetExplorer
 			Hide();
 
 			var posterDesignerViewModel = _vm.GetPosterDesignerViewModel();
-			posterDesignerViewModel.ColorBandSetViewModel.IsEnabled = _cbsWinIsVisible;
+			posterDesignerViewModel.CbsHistogramViewModel.IsEnabled = _cbsWinIsVisible;
 
 			var designerWindow = new PosterDesignerWindow(posterDesignerViewModel, appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
 
@@ -317,11 +317,11 @@ namespace MSetExplorer
 
 			if (_lastWindow is PosterDesignerWindow pdw)
 			{
-				var xx = pdw.DataContext as PosterDesignerViewModel;
+				var pdwViewModel = pdw.DataContext as PosterDesignerViewModel;
 
-				if (xx != null)
+				if (pdwViewModel != null)
 				{
-					_cbsWinIsVisible = xx.ColorBandSetViewModel.IsEnabled;
+					_cbsWinIsVisible = pdwViewModel.CbsHistogramViewModel.IsEnabled;
 				}
 			}
 		}

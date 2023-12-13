@@ -93,7 +93,7 @@ namespace MSetExplorer
 			// The displayArea's position (aka offset) is in device pixels.
 			// The displayArea's size (aka extent) is also in device pixels
 
-			// If the amount of screen realstate required to display the entire content is < the physical ViewPortSize,
+			// If the amount of screen realstate required to display the entire content is < the physical ViewportSize,
 			// then displayArea is in physical coordinates.
 			//var scaledDisplayArea = displayArea.Scale(screenToRelativeScaleFactor);
 			var scaledDisplayArea = displayArea.Scale(1 / relativeScale);

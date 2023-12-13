@@ -96,7 +96,7 @@ namespace MSetExplorer
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, colorBandSetViewModel, cbsHistogramViewModel, jobTreeViewModel,
+			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel/*, colorBandSetViewModel*/, cbsHistogramViewModel, jobTreeViewModel,
 				//_mapLoaderManager, _mapJobHelper,
 				mapSectionHistogramProcessor, _viewModelFactory);
 

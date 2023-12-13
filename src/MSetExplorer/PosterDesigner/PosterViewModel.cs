@@ -226,6 +226,8 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool ColorBandSetIsPreview => _previewColorBandSet != null;
+
 		public VectorDbl DisplayPosition
 		{
 			get => CurrentPoster?.DisplayPosition ?? new VectorDbl();

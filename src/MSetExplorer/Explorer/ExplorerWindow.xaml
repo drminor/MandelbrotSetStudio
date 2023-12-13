@@ -9,6 +9,7 @@
         
         mc:Ignorable="d"
         Title="Explorer Window" Width="1883" Height="1344">
+    
     <Window.CommandBindings>
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
@@ -92,7 +93,7 @@
                 <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="True" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
                 <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="True"/>-->
                 <MenuItem Header="Job Tree" x:Name="mnuItem_JobTreeWindow" IsCheckable="True" Checked="JobTree_Checked" Unchecked="JobTree_Checked" IsChecked="False"/>
-                <MenuItem Header="Histogram" x:Name="mnuItem_HistogramWindow" IsCheckable="True" Checked="Histogram_Checked" Unchecked="Histogram_Checked" IsChecked="False"/>
+                <MenuItem Header="Histogram" x:Name="mnuItem_HistogramWindow" IsCheckable="True" Checked="Histogram_Checked" Unchecked="Histogram_Checked" IsChecked="True"/>
             </MenuItem>
 
             <MenuItem Header="_Map">
@@ -187,6 +188,7 @@
             <local:MapSectionDisplayControl x:Name="mapDisplay1"></local:MapSectionDisplayControl>
         </Border>
 
+        <!-- Coords, Calc, etc. -->
         <Grid Grid.Row="1" Grid.RowSpan="1" Grid.Column="2" x:Name="colRight" Visibility="Visible">
 
             <Grid.RowDefinitions>
@@ -239,9 +241,7 @@
 
         <!-- Histogram -->
         <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="242" Margin="0,0,5,5" Visibility="Visible">
-            <!--<local:ColorBandSetHistogramControl x:Name="cbsh1"/>-->
-            <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
-            <!--<local:ColorBandSetPlotControl x:Name="cbsPlotControl1"/>-->
+
             <local:CbsHistogramControl x:Name="cbsHistogram1"/>
 
         </Border>

@@ -37,6 +37,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -78,7 +79,8 @@
                 <Separator/>
                 <MenuItem Header="Coordinates" x:Name="mnuItem_CoordsWindow" IsCheckable="True" IsChecked="False" Checked="CoordsWindow_Checked" Unchecked="CoordsWindow_Checked"/>
                 <MenuItem Header="Calculation" x:Name="mnuItem_CalcWindow" IsCheckable="True" IsChecked="False" Checked="CalcSettingsWindow_Checked" Unchecked="CalcSettingsWindow_Checked"/>
-                <MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="{Binding ColorBandSetViewModel.IsEnabled}"/>
+                <!--<MenuItem Header="Color Band Editor" x:Name="mnuItem_ColorBandWindow" IsCheckable="True" IsChecked="{Binding ColorBandSetViewModel.IsEnabled}"/>-->
+                <MenuItem Header="Histogram" x:Name="mnuItem_HistogramWindow" IsCheckable="True" Checked="Histogram_Checked" Unchecked="Histogram_Checked" IsChecked="False"/>
             </MenuItem>
 
             <MenuItem Header="_Map">
@@ -126,7 +128,7 @@
             <local:MapSectionPzControl x:Name="mapSectionPzControl1"></local:MapSectionPzControl>
         </Grid>
 
-        <!-- Coords, Calc and Colors -->
+        <!-- Coords, Calc, etc. -->
         <Grid Grid.Row="1" Grid.Column="2" x:Name="colRight">
 
             <Grid.RowDefinitions>
@@ -146,20 +148,24 @@
                 <local:MapCalcSettingsControl x:Name="mapCalcSettingsView1" Focusable="True"/>
             </Border>
 
-            <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" x:Name="dispSecColorBandSets" Visibility="{Binding ColorBandSetViewModel.WindowVisibility}" >
+            <!--<Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5" x:Name="dispSecColorBandSets" Visibility="{Binding ColorBandSetViewModel.WindowVisibility}" >
                 <local:ColorBandSetUserControl x:Name="colorBandView1" Focusable="True" ></local:ColorBandSetUserControl>
-            </Border>
+            </Border>-->
 
         </Grid>
 
-        <!-- To Do: Job Tree -->
-        
-        <!-- Histogram -->
+        <!-- Job Tree -->
         <Grid Grid.Row="1" Grid.Column="3" x:Name="colFarRight" Visibility="Collapsed">
             <Border  Margin="0,5,5,5" >
                 <local:JobTreeControl x:Name="jobTree1"></local:JobTreeControl>
             </Border>
         </Grid>
 
+        <!-- Histogram -->
+        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="242" Margin="0,0,5,5" Visibility="Collapsed">
+
+            <local:CbsHistogramControl x:Name="cbsHistogram1"/>
+
+        </Border>
     </Grid>
 </Window>

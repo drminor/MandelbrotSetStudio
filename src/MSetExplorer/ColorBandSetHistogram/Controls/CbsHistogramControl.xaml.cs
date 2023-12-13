@@ -128,7 +128,7 @@ namespace MSetExplorer
 			//Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
 			//	$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}.");
 
-			Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. ViewPortWidth: {viewPortWidth}, Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
+			Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. ViewportWidth: {viewPortWidth}, Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
 				$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}.");
 
 			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, contentScale, minContentScale, maxContentScale);
@@ -288,7 +288,7 @@ namespace MSetExplorer
 			if (_vm != null)
 			{
 				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.ViewportSize}, ContentViewPort: {_vm.ContentViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.ViewportSize}, ContentViewport: {_vm.ContentViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
 			}
 		}
 

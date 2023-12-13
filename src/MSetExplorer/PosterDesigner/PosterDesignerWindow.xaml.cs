@@ -57,7 +57,8 @@ namespace MSetExplorer
 			mapSectionPzControl1.DataContext = _vm.MapDisplayViewModel;
 			mapSectionPzControl1.Loaded += MapSectionPzControl1_Loaded;
 
-			colorBandView1.DataContext = _vm.ColorBandSetViewModel;
+			//colorBandView1.DataContext = _vm.CbsHistogramViewModel;
+			cbsHistogram1.DataContext = _vm.CbsHistogramViewModel;
 
 			mapCalcSettingsView1.DataContext = _vm.MapCalcSettingsViewModel;
 			mapCoordsView1.DataContext = _vm.MapCoordsViewModel;
@@ -73,7 +74,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm.PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
-				_vm.ColorBandSetViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
+				_vm.CbsHistogramViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
 
 				Debug.WriteLine("The PosterDesigner Window is now loaded");
 			}
@@ -105,7 +106,7 @@ namespace MSetExplorer
 			Unloaded -= PosterDesignerWindow_Unloaded;
 
 			_vm.PosterViewModel.PropertyChanged -= PosterViewModel_PropertyChanged;
-			_vm.ColorBandSetViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
+			_vm.CbsHistogramViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
 
 		}
 
@@ -182,23 +183,32 @@ namespace MSetExplorer
 			dispSecMapCalcSettings.Visibility = showCalcSettings ? Visibility.Visible : Visibility.Collapsed;
 		}
 
-		// Show Hide Color Band Editor
-		private void ColorBandEditorWindow_Checked(object sender, RoutedEventArgs e)
+		//// Show Hide Color Band Editor
+		//private void ColorBandEditorWindow_Checked(object sender, RoutedEventArgs e)
+		//{
+		//	// TODO: Create a Command for this
+		//	// TOOD: Bind the DispSecColorBandSets border control's Visibility to the ColorBandSetViewModel
+
+
+		//	if (dispSecColorBandSets != null)
+		//	{
+		//		var showColorBandEditor = mnuItem_ColorBandWindow.IsChecked;
+		//		var cbsVisState = showColorBandEditor ? Visibility.Visible : Visibility.Collapsed;
+
+		//		_vm.ColorBandSetViewModel.WindowVisibility = cbsVisState;
+
+		//		dispSecColorBandSets.Visibility = cbsVisState;
+
+		//	}
+		//}
+
+		// Show Hide Color Band Histogram component
+		private void Histogram_Checked(object sender, RoutedEventArgs e)
 		{
-			// TODO: Create a Command for this
-			// TOOD: Bind the DispSecColorBandSets border control's Visibility to the ColorBandSetViewModel
-
-
-			if (dispSecColorBandSets != null)
-			{
-				var showColorBandEditor = mnuItem_ColorBandWindow.IsChecked;
-				var cbsVisState = showColorBandEditor ? Visibility.Visible : Visibility.Collapsed;
-
-				_vm.ColorBandSetViewModel.WindowVisibility = cbsVisState;
-
-				dispSecColorBandSets.Visibility = cbsVisState;
-
-			}
+			var showHistogramControl = mnuItem_HistogramWindow.IsChecked;
+			botRow.Visibility = showHistogramControl ? Visibility.Visible : Visibility.Collapsed;
+			_vm.CbsHistogramViewModel.IsEnabled = showHistogramControl;
+			Height = showHistogramControl ? 1323 : 1097;
 		}
 
 		#endregion
@@ -376,7 +386,7 @@ namespace MSetExplorer
 
 			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel(imageFileType);
 
-			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+			var useEscapeVelocities = _vm.CbsHistogramViewModel.UseEscapeVelocities;
 			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize, useEscapeVelocities);
 
 			var result = new CreateImageProgressWindow()
@@ -478,7 +488,7 @@ namespace MSetExplorer
 			var useEscVelocities = mnuItem_UseEscapeVelocities.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseEscapeVelocities = useEscVelocities;
+				_vm.CbsHistogramViewModel.UseEscapeVelocities = useEscVelocities;
 			}
 		}
 
@@ -487,7 +497,7 @@ namespace MSetExplorer
 			var useEscVelocities = mnuItem_UseEscapeVelocities.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseEscapeVelocities = useEscVelocities;
+				_vm.CbsHistogramViewModel.UseEscapeVelocities = useEscVelocities;
 			}
 		}
 
@@ -497,7 +507,7 @@ namespace MSetExplorer
 			var useRealTimePreview = mnuItem_UseRealTimePreview.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseRealTimePreview = useRealTimePreview;
+				_vm.CbsHistogramViewModel.UseRealTimePreview = useRealTimePreview;
 			}
 		}
 
@@ -506,7 +516,7 @@ namespace MSetExplorer
 			var useRealTimePreview = mnuItem_UseRealTimePreview.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.UseRealTimePreview = useRealTimePreview;
+				_vm.CbsHistogramViewModel.UseRealTimePreview = useRealTimePreview;
 			}
 		}
 
@@ -516,7 +526,7 @@ namespace MSetExplorer
 			var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.HighlightSelectedBand = highlightSelectedCb;
+				_vm.CbsHistogramViewModel.HighlightSelectedBand = highlightSelectedCb;
 			}
 		}
 
@@ -525,7 +535,7 @@ namespace MSetExplorer
 			var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
 			if (_vm != null)
 			{
-				_vm.ColorBandSetViewModel.HighlightSelectedBand = highlightSelectedCb;
+				_vm.CbsHistogramViewModel.HighlightSelectedBand = highlightSelectedCb;
 			}
 		}
 
@@ -833,7 +843,7 @@ namespace MSetExplorer
 
 			var mapAreaInfo = curJob.MapAreaInfo;
 			var currentPosterSize = poster.PosterSize;
-			var useEscapeVelocities = _vm.ColorBandSetViewModel.UseEscapeVelocities;
+			var useEscapeVelocities = _vm.CbsHistogramViewModel.UseEscapeVelocities;
 
 			var areaColorAndCalcSettings = new AreaColorAndCalcSettings(curJob.Id, OwnerType.Poster, mapAreaInfo, poster.CurrentColorBandSet, curJob.MapCalcSettings);
 
@@ -952,14 +962,14 @@ namespace MSetExplorer
 		{
 			bool? result;
 
-			if (_vm.ColorBandSetViewModel.IsDirty)
+			if (_vm.CbsHistogramViewModel.IsDirty)
 			{
 				var defaultResult = MessageBoxResult.Yes;
 				var res = MessageBox.Show("Save edits made in the ColorBand Editor?", "Changes Made", MessageBoxButton.YesNoCancel, MessageBoxImage.Hand, defaultResult, MessageBoxOptions.None);
 
 				if (res == MessageBoxResult.Yes)
 				{
-					_vm.ColorBandSetViewModel.ApplyChanges();
+					_vm.CbsHistogramViewModel.ApplyChanges();
 					result = true;
 				}
 				else

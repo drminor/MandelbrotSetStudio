@@ -332,7 +332,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"\n========== A new Job is being submitted, unbounded.");
 
-				CheckViewPortSize();
+				CheckViewportSize();
 
 				// Unbounded
 				_boundedMapArea = null;
@@ -365,7 +365,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"\n========== A new Job is being submitted: Size: {posterSize}, Display Position: {displayPosition}, Zoom: {displayZoom}.");
 
-				CheckViewPortSize();
+				CheckViewportSize();
 
 				var previousValue = CurrentAreaColorAndCalcSettings;
 				if (_useDetailedDebug) ReportSubmitJobDetails(previousValue, newValue, isBound: true);
@@ -1434,7 +1434,7 @@ namespace MSetExplorer
 		}
 
 		[Conditional("DEBUG2")]
-		private void CheckViewPortSize()
+		private void CheckViewportSize()
 		{
 			if (_useDetailedDebug)
 				Debug.WriteLine($"At checkVPSize: ViewportSize: {ViewportSize}, DisplayZoom: {DisplayZoom}, MinZoom: {MinimumDisplayZoom}.");
@@ -1663,11 +1663,11 @@ namespace MSetExplorer
 		//	Debug.Assert(UnscaledExtent == BoundedMapArea?.PosterSize, "UnscaledExtent is out of sync.");
 
 		//	var sanityContentScale = CalculateContentScale(UnscaledExtent, contentViewportSize);
-		////  var sanityContentScale = contentViewPortSize.Divide(unscaledExtent);
+		////  var sanityContentScale = contentViewportSize.Divide(unscaledExtent);
 
 		//	if (Math.Abs(sanityContentScale.Width - contentScale) > 0.01 && Math.Abs(sanityContentScale.Height - contentScale) > 0.01)
 		//	{
-		//		Debug.WriteLine($"Content Scale is Off. SanityCheck vs Value at UpdateViewPortSize: {sanityContentScale} vs {contentScale}.");
+		//		Debug.WriteLine($"Content Scale is Off. SanityCheck vs Value at UpdateViewportSize: {sanityContentScale} vs {contentScale}.");
 		//		//throw new InvalidOperationException("Content Scale is OFF!!");
 		//	}
 

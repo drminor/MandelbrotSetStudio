@@ -199,7 +199,7 @@ namespace MSetExplorer
 		{
 			if (contentVpSizeVm == null)
 			{
-				throw new InvalidOperationException("The VM's ContentViewPortsize is null on call to MoveTo");
+				throw new InvalidOperationException("The VM's ContentViewportsize is null on call to MoveTo");
 			}
 
 			if (ScreenTypeHelper.IsSizeDblChanged(contentVpSizeFromPz, contentVpSizeVm.Value))

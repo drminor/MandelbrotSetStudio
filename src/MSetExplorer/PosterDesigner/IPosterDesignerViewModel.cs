@@ -12,7 +12,7 @@ namespace MSetExplorer
 
 		MapCoordsViewModel MapCoordsViewModel { get; }
 		MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
-		ColorBandSetViewModel ColorBandSetViewModel { get; }
+		//ColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		ICbsHistogramViewModel CbsHistogramViewModel { get; }
 

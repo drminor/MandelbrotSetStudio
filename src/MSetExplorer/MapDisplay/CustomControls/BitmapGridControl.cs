@@ -179,7 +179,7 @@ namespace MSetExplorer
 			get => _viewportSizeInternal;
 			set
 			{
-				// TODO: Debounce changes for the BitmapGridControl's ViewPortSize property.
+				// TODO: Debounce changes for the BitmapGridControl's ViewportSize property.
 
 				if (value == _viewportSizeInternal)
 				{

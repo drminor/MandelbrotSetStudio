@@ -12,7 +12,7 @@ namespace MSetExplorer
 	{
 		private readonly ContentPresenter _contentPresenter;
 
-		private SizeDbl _contentViewPortSize;
+		private SizeDbl _contentViewportSize;
 
 		private TranslateTransform _canvasTranslateTransform;
 		private ScaleTransform _canvasScaleTransform;
@@ -46,8 +46,8 @@ namespace MSetExplorer
 		// executes its ArrangeOverride method.
 		public SizeDbl ContentViewportSize
 		{
-			get => _contentViewPortSize;
-			set => _contentViewPortSize = value;
+			get => _contentViewportSize;
+			set => _contentViewportSize = value;
 		}
 
 		public SizeDbl ContentScale { get; set; }
