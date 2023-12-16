@@ -451,7 +451,7 @@ namespace MSetExplorer
 					$"NOTE: ControlSize: {controlSize}. The FigureWidth: {figureWidth}, Margin Right {marginRight}");
 
 				var pxPerUnit = axisDimensions.PxPerUnit;
-				Debug.WriteLine($"****HistogramPlotControl.WpfPlot1_SizeChanged. PixlesPerUnit: {pxPerUnit}.");
+				//Debug.WriteLine($"****HistogramPlotControl.WpfPlot1_SizeChanged. PixlesPerUnit: {pxPerUnit}.");
 
 
 				ViewportOffsetAndWidth = new ControlXPositionAndWidth(viewportOffsetX, viewportWidth);

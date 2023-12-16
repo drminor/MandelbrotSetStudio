@@ -22,6 +22,8 @@ namespace MSetExplorer
 
 		private ColorBandSet? _previewColorBandSet;
 
+		private readonly bool _useDetailedDebug = false;
+
 		#region Constructor
 
 		public ProjectViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, MapJobHelper mapJobHelper)
@@ -97,7 +99,7 @@ namespace MSetExplorer
 
 					if (value == CurrentColorBandSet)
 					{
-						Debug.WriteLine($"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
+						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
 					}
 
 					var targetIterations = value.HighCutoff;
@@ -105,7 +107,7 @@ namespace MSetExplorer
 
 					if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
 					{
-						Debug.WriteLine($"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 
 						currentProject.Add(value);
 						//var newMapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
@@ -114,7 +116,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						Debug.WriteLine($"ProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 						currentProject.CurrentColorBandSet = value;
 					}
 
@@ -190,7 +192,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
 					}
 				}
 			}
@@ -213,7 +215,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
 					}
 				}
 			}
@@ -256,7 +258,7 @@ namespace MSetExplorer
 
 			else if (e.PropertyName == nameof(Project.CurrentColorBandSet))
 			{
-				Debug.WriteLine("The ProjectViewModel is raising PropertyChanged: IProjectViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
+				Debug.WriteLineIf(_useDetailedDebug, "The ProjectViewModel is raising PropertyChanged: IProjectViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
 				OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
 			}
 
@@ -286,7 +288,7 @@ namespace MSetExplorer
 			}
 
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
-			Debug.WriteLine($"Starting Job with new coords: {mapAreaInfo}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			Debug.WriteLine($"Starting Job with new coords: {mapAreaInfo}TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			var project = new Project("New", description: null, job, colorBandSet);
 			job.OwnerId = project.Id;

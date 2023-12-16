@@ -216,7 +216,7 @@ namespace MSetExplorer
 
 				if (imageSizeInBlocks != ImageSizeInBlocks)
 				{
-					Debug.WriteLine($"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The BitmapGrid is having its LogicalViewportSize updated from {_logicalViewportSize} to {value}. ImageSizeInBlocks from: {ImageSizeInBlocks} to {imageSizeInBlocks}.");
 					ImageSizeInBlocks = imageSizeInBlocks;
 				}
 				//else

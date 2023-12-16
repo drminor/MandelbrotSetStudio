@@ -29,7 +29,7 @@ namespace MSetExplorer
 		private readonly Task _workQueueProcessor;
 		private readonly TimeSpan _waitDuration;
 
-		private long _numberOfSectionsProcessed;
+		//private long _numberOfSectionsProcessed;
 
 		private bool disposedValue;
 
@@ -47,7 +47,7 @@ namespace MSetExplorer
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
 			_waitDuration = TimeSpan.FromMilliseconds(WAIT_FOR_MAPSECTION_INTERVAL_MS);
 
-			_numberOfSectionsProcessed = 0;
+			//_numberOfSectionsProcessed = 0;
 			_mapSections.CollectionChanged += MapSections_CollectionChanged; 
 		}
 
@@ -61,7 +61,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public long NumberOfSectionsProcessed => _numberOfSectionsProcessed;
+		public long NumberOfSectionsProcessed { get; set; }
 
 		public IHistogram Histogram => _histogram;
 
@@ -80,10 +80,6 @@ namespace MSetExplorer
 				lock (_processingEnabledLock)
 				{
 					_processingEnabled = value;
-					if (value)
-					{
-						_numberOfSectionsProcessed = 0;
-					}
 				}
 
 			}
@@ -253,12 +249,12 @@ namespace MSetExplorer
 					if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Add)
 					{
 						_histogram.Add(histogramWorkRequest.Histogram);
-						_numberOfSectionsProcessed++;
+						NumberOfSectionsProcessed++;
 					}
 					else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Remove)
 					{
 						_histogram.Remove(histogramWorkRequest.Histogram);
-						_numberOfSectionsProcessed++;
+						//NumberOfSectionsProcessed++;
 					}
 					else
 					{

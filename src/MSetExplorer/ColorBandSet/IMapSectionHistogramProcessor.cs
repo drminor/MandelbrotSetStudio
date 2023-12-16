@@ -8,7 +8,7 @@ namespace MSetExplorer
 	{
 		IHistogram Histogram { get; }
 		bool ProcessingEnabled { get; set; }
-		long NumberOfSectionsProcessed { get; }
+		long NumberOfSectionsProcessed { get; set; }
 
 		event EventHandler<HistogramUpdateType>? HistogramUpdated;
 

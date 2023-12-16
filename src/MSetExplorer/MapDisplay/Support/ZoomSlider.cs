@@ -71,6 +71,8 @@ namespace MSetExplorer
 					return;
 				}
 
+				Debug.WriteLine($"ZoomSlider: Updating the ScrollBar value from: {_scrollbar.Value} to: {contentScale}.");
+
 				_disableScrollValueSync = true;
 				try
 				{

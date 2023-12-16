@@ -126,7 +126,7 @@ namespace MSetExplorer
 					}
 				}
 
-				Debug.WriteLine($"MapSectionDisplayViewModel is updating the ColorBandSet. The Id is being updated from {_bitmapGrid.ColorBandSet.Id} to {value.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"MapSectionDisplayViewModel is updating the ColorBandSet. The Id is being updated from {_bitmapGrid.ColorBandSet.Id} to {value.Id}.");
 
 				_bitmapGrid.ColorBandSet = value;
 			}
@@ -895,7 +895,7 @@ namespace MSetExplorer
 
 					if (prevMapExtentInBlocks != newMapExtentInBlocks)
 					{
-						Debug.WriteLine($"MapExtent is changing from: {prevMapExtentInBlocks} to {newMapExtentInBlocks}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"MapExtent is changing from: {prevMapExtentInBlocks} to {newMapExtentInBlocks}.");
 					}
 
 					ReportReuseAndLoadedSections(newRequests.Count, numberOfRequestsCancelled, MapSections.Count, requestsForSectionsToRemove.Count, numberOfSectionsRemovedViaReq, 

@@ -330,7 +330,7 @@ namespace MSetExplorer
 
 					if (_isEnabled)
 					{
-						//ResetDisplay();
+						_mapSectionHistogramProcessor.NumberOfSectionsProcessed = 0;
 						ClearDisplay();
 					}
 
@@ -874,9 +874,8 @@ namespace MSetExplorer
 
 		public int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
-
-			Debug.WriteLine($"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to scale:{contentScale}, size:{contentViewportSize.Width}, offset:{contentOffset.X}.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to scale:{contentScale}, size:{contentViewportSize.Width}, offset:{contentOffset.X}.");
 
 
 			//_displayZoom uses a binding to stay curent with contentScale;	

@@ -838,7 +838,7 @@ namespace MSetExplorer
 
 			var scaleSize = new SizeDbl(ContentScale.Width, 1);
 
-			Debug.WriteLine($"****The scale is {scaleSize} on DrawColorBands.");
+			//Debug.WriteLine($"****The scale is {scaleSize} on DrawColorBands.");
 
 			var curOffset = 0;
 
