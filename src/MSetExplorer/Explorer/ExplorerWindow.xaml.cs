@@ -697,6 +697,13 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
+				var targetIterations1 = _vm.ProjectViewModel.CurrentColorBandSet.HighCutoff;
+
+				var targetIterations2 = _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations;
+
+				Debug.Assert(targetIterations1 == targetIterations2, "TargetInterations Mismatch.");
+
+
 				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
 				_vm.ProjectViewModel.CurrentColorBandSet = adjustedCbs;
 			}

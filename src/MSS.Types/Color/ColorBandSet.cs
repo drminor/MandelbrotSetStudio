@@ -457,7 +457,7 @@ namespace MSS.Types
 					lastCb.EndColor = lastCb.StartColor;
 				}
 
-				lastCb.Cutoff = lastCb.Cutoff + 2;
+				lastCb.Cutoff = lastCb.Cutoff; // + 2; // Force the inclusion of the counts above the target iterations as a 'real' color band.
 
 				var totalWidth = result.Sum(x => x.BucketWidth);
 				var maxCutoff = lastCb.Cutoff;

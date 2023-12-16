@@ -110,8 +110,7 @@ namespace MSetExplorer
 						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 
 						currentProject.Add(value);
-						//var newMapCalcSettings = new MapCalcSettings(targetIterations, currentJob.MapCalcSettings.RequestsPerJob);
-						//LoadMap(currentProject, currentJob, currentJob.Coords, value.Id, newMapCalcSettings, TransformType.IterationUpdate, null);
+
 						AddNewIterationUpdateJob(currentProject, value);
 					}
 					else
@@ -593,7 +592,7 @@ namespace MSetExplorer
 
 			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
 
-			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+			Debug.WriteLine($"Adding Project Job with new target iterations: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			project.Add(job);
 

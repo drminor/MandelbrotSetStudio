@@ -9,6 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -877,7 +878,6 @@ namespace MSetExplorer
 			//Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
 			Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to scale:{contentScale}, size:{contentViewportSize.Width}, offset:{contentOffset.X}.");
 
-
 			//_displayZoom uses a binding to stay curent with contentScale;	
 			Debug.Assert(_displayZoom == contentScale, "The DisplayZoom does not equal the new ContentScale on the call to UpdateViewportSizePosAndScale.");
 
@@ -1177,6 +1177,8 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event and keeping the Position and Scale.");
 				initialSettings = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
 			}
+
+			UnscaledExtent = new SizeDbl(); // This will ensure that we process the update when this is set after raising the DisplaySettingsInitialized event.
 
 			DisplaySettingsInitialized?.Invoke(this, initialSettings);
 

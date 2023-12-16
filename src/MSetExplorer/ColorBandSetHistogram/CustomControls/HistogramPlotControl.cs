@@ -450,7 +450,7 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged. Preparing to set the ViewportOffsetX and Width: X:{viewportOffsetX}, W: {viewportWidth}. " +
 					$"NOTE: ControlSize: {controlSize}. The FigureWidth: {figureWidth}, Margin Right {marginRight}");
 
-				var pxPerUnit = axisDimensions.PxPerUnit;
+				//var pxPerUnit = axisDimensions.PxPerUnit;
 				//Debug.WriteLine($"****HistogramPlotControl.WpfPlot1_SizeChanged. PixlesPerUnit: {pxPerUnit}.");
 
 
