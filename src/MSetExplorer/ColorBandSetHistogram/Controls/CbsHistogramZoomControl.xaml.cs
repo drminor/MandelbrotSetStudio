@@ -23,7 +23,16 @@ namespace MSetExplorer
 			var maximumScale = 4;
 			SetScrollBarSettings(scrollBar1, maximumScale);
 
+			textBlock1.Text = scrollBar1.Value.ToString("F3");
+
+			scrollBar1.ValueChanged += ScrollBar1_ValueChanged;
+
 			Debug.WriteLine("The CbshZoom Control is now loaded.");
+		}
+
+		private void ScrollBar1_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			textBlock1.Text = e.NewValue.ToString("F3");
 		}
 
 		private void SetScrollBarSettings(ScrollBar sb, double maximumScale)

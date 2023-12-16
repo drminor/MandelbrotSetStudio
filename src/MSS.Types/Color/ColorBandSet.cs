@@ -204,6 +204,10 @@ namespace MSS.Types
 						{
 							SelectedColorBandIndex = IndexOf(colorBandWithMatchingCutoff);
 						}
+						else
+						{
+							SelectedColorBandIndex = 0;
+						}
 					}
 					else
 					{
@@ -452,6 +456,8 @@ namespace MSS.Types
 				{
 					lastCb.EndColor = lastCb.StartColor;
 				}
+
+				lastCb.Cutoff = lastCb.Cutoff + 2;
 
 				var totalWidth = result.Sum(x => x.BucketWidth);
 				var maxCutoff = lastCb.Cutoff;

@@ -180,6 +180,7 @@ namespace MSS.Common
 
 		#endregion
 
+		[Conditional("DEBUG2")]
 		public void ReportObjectPoolDetails()
 		{
 			var sb = new StringBuilder();

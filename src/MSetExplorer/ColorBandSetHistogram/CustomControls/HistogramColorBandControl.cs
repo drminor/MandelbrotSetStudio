@@ -5,6 +5,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -51,9 +53,13 @@ namespace MSetExplorer
 
 		private bool _mouseIsEntered;
 		private List<Shape> _hitList;
+
+		private readonly Pen _cbrPenBlack;
+		private readonly Pen _cbrPenTransparent;
+
 		private CbsSelectionLine? _selectionLineBeingDragged;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -102,6 +108,9 @@ namespace MSetExplorer
 			_viewportSize = new SizeDbl();
 			_mouseIsEntered = false;
 			_hitList = new List<Shape>();
+
+			_cbrPenBlack = new Pen(new SolidColorBrush(Colors.DarkCyan), 1.25);
+			_cbrPenTransparent = new Pen(new SolidColorBrush(Colors.Transparent), 1.25);
 		}
 
 		#endregion
@@ -149,18 +158,16 @@ namespace MSetExplorer
 				}
 
 				var extent = GetExtent(ColorBandsView);
-				//Debug.WriteLine($"HistogramColorBandControl is calculating the Extent on ColorBandsViewUpdate. Extent is {extent}.");
-
 				var scaledExtent = extent * ContentScale.Width;
 
 				if (ScreenTypeHelper.IsDoubleChanged(scaledExtent, Canvas.Width))
 				{
-					Debug.WriteLine($"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width is being updated from: {Canvas.Width} to {scaledExtent} and redrawing the ColorBands on ColorBandsView update.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width is being updated from: {Canvas.Width} to {scaledExtent} and redrawing the ColorBands on ColorBandsView update.");
 					Canvas.Width = scaledExtent;
 				}
 				else
 				{
-					Debug.WriteLine($"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width remains the same at {Canvas.Width}. The extent is {extent}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width remains the same at {Canvas.Width}. The extent is {extent}.");
 				}
 
 				RemoveSelectionLines();
@@ -168,7 +175,7 @@ namespace MSetExplorer
 
 				if (_mouseIsEntered)
 				{
-					Debug.WriteLine($"The HistogramColorBandControl is calling DrawSelectionLines on ColorBandsView update. (Have Mouse)");
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on ColorBandsView update. (Have Mouse)");
 
 					DrawSelectionLines(_colorBandRectangles);
 				}
@@ -235,7 +242,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
 				}
 			}
 		}
@@ -253,14 +260,13 @@ namespace MSetExplorer
 					var scaledExtent = extent * ContentScale.Width;
 					Canvas.Width = scaledExtent;
 
-					Debug.WriteLine($"The HistogramColorBandControl is calling DrawColorBands on ContentScale update. The Extent is {extent}.");
-
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawColorBands on ContentScale update. The Extent is {extent}.");
 					RemoveSelectionLines();
 					DrawColorBands(ColorBandsView);
+
 					if (_mouseIsEntered)
 					{
-						Debug.WriteLine($"The HistogramColorBandControl is calling DrawSelectionLines on ContentScale update. (Have Mouse)");
-						
+						Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on ContentScale update. (Have Mouse)");
 						DrawSelectionLines(_colorBandRectangles);
 					}
 				}
@@ -397,7 +403,7 @@ namespace MSetExplorer
 		{
 			if (ColorBandsView == null) return;
 
-			Debug.WriteLine($"The HistogramColorBandControl is calling DrawSelectionLines on Handle_MouseEnter.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on Handle_MouseEnter.");
 
 			if (_selectionLines.Count == 0)
 			{
@@ -475,7 +481,7 @@ namespace MSetExplorer
 					selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
 					_selectionLineBeingDragged = null;
 
-					Debug.WriteLine("Completing the SelectionBand Drag Operation.");
+					Debug.WriteLineIf(_useDetailedDebug, "Completing the SelectionBand Drag Operation.");
 					UpdateCutoff(ccb, e.NewXPosition, e.Operation);
 
 					break;
@@ -495,13 +501,13 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
 		{
-			if (ColorBandsView == null)
-				return;
+			//if (ColorBandsView == null)
+			//	return;
 
-			if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
-			{
-				Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
-			}
+			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
+			//{
+			//	Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
+			//}
 		}
 
 		private void UpdateCutoff(ColorBand currentColorBand, double newXPosition, CbsSelectionLineDragOperation operation)
@@ -596,7 +602,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine($"HistogramColorBandControl: A sender of type {sender?.GetType()} is raising the CurrentColorBand_PropertyChanged event. EXPECTED: {typeof(ColorBand)}.");
+				Debug.WriteLine($"WARNING. HistogramColorBandControl: A sender of type {sender?.GetType()} is raising the CurrentColorBand_PropertyChanged event. EXPECTED: {typeof(ColorBand)}.");
 			}
 		}
 
@@ -639,9 +645,29 @@ namespace MSetExplorer
 				index = null;
 				return false;
 			}
+
+			index = colorbandsView.IndexOf(cb);
+
+			if (index < 0)
+			{
+				var t = colorbandsView.SourceCollection.Cast<ColorBand>();
+
+				var cbWithMatchingOffset = t.FirstOrDefault(x => x.Cutoff == cb.Cutoff);
+
+				if (cbWithMatchingOffset != null)
+				{
+					index = colorbandsView.IndexOf(cbWithMatchingOffset);
+					Debug.WriteLine($"The ColorBandsView does not contain the ColorBand: {cb}, but found an item with a matching offset: {cbWithMatchingOffset} at index: {index}.");
+
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
 			else
 			{
-				index = colorbandsView.IndexOf(cb);
 				return true;
 			}
 		}
@@ -758,10 +784,10 @@ namespace MSetExplorer
 			return false;
 		}
 
-		private void HilightColorBandRectangle(int colorBandIndex, Color penColor, int interval)
+		private void HilightColorBandRectangle(int colorBandIndex, Color penColor/*, int interval*/)
 		{
-			//var cbRectangle = _colorBandRectangles[colorBandIndex];
-			//cbRectangle.Pen = new Pen(new SolidColorBrush(penColor), 1.25);
+			var cbRectangle = _colorBandRectangles[colorBandIndex];
+			cbRectangle.Pen = new Pen(new SolidColorBrush(penColor), 1.25);
 
 			//var timer = new DispatcherTimer(
 			//	TimeSpan.FromMilliseconds(interval), 
@@ -773,6 +799,28 @@ namespace MSetExplorer
 			//	Dispatcher);
 
 			//timer.Start();
+		}
+
+		private void HilightColorBandRectangle(ColorBand cb, bool on)
+		{
+			if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
+			{
+				if (index.Value < 0 || index.Value > _colorBandRectangles.Count - 1)
+				{
+					Debug.WriteLine($"Cannot Highlight the ColorBandRectangle at index: {index}, it is out of range: {_colorBandRectangles.Count}.");
+					return;
+				}
+
+				var cbr = _colorBandRectangles[index.Value];
+				if (on)
+				{
+					cbr.Pen = _cbrPenBlack;
+				}
+				else
+				{
+					cbr.Pen = _cbrPenTransparent;
+				}
+			}
 		}
 
 		#endregion
@@ -790,7 +838,7 @@ namespace MSetExplorer
 
 			var scaleSize = new SizeDbl(ContentScale.Width, 1);
 
-			Debug.WriteLine($"The scale is {scaleSize} on DrawColorBands.");
+			Debug.WriteLine($"****The scale is {scaleSize} on DrawColorBands.");
 
 			var curOffset = 0;
 
@@ -976,6 +1024,7 @@ namespace MSetExplorer
 			if (oldColorBand != null)
 			{
 				oldColorBand.PropertyChanged -= c.ColorBand_PropertyChanged;
+				c.HilightColorBandRectangle(oldColorBand, on: false);
 			}
 
 			var newColorBand = (ColorBand)e.NewValue;
@@ -984,6 +1033,7 @@ namespace MSetExplorer
 			{
 				newColorBand.PropertyChanged += c.ColorBand_PropertyChanged;
 				newColorBand.EditEnded += c.ColorBand_EditEnded;
+				c.HilightColorBandRectangle(newColorBand, on: true);
 			}
 		}
 
@@ -1020,7 +1070,7 @@ namespace MSetExplorer
 		{
 			var previousXValue = previousValue.Position.X * ContentScale.Width;
 			var newXValue = newValue.Position.X * ContentScale.Width;
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl's CanvasTranslationTransform is being set from {previousXValue} to {newXValue}.");
+			Debug.WriteLine(_useDetailedDebug, $"The HistogramColorBandControl's CanvasTranslationTransform is being set from {previousXValue} to {newXValue}.");
 		}
 
 		[Conditional("DEBUG2")]

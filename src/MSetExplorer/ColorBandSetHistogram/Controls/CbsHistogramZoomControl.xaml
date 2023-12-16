@@ -7,16 +7,20 @@
              mc:Ignorable="d" d:Height="240" >
     <Grid>
 
-        <DockPanel>
-            <!--<Button Click="ButtonSetMinZoom_Click" >Min</Button>-->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <TextBlock DockPanel.Dock="Top" Margin="5,5,5,0">Zoom</TextBlock>
-            <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="5,10" x:Name="dispSecZoom">
-                <!--<TextBlock x:Name="txtblkZoomValue" Margin="5,95,2,0" >10</TextBlock>-->
-                <ScrollBar x:Name="scrollBar1" Orientation="Vertical" Minimum="1" Maximum="4" Value="1"/>
-            </StackPanel>
-            <!--<Button Click="ButtonSetMaxZoom_Click">Max</Button>-->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        </DockPanel>
+                <TextBlock Grid.Row="0" Margin="5,0" HorizontalAlignment="Center">Zoom</TextBlock>
+                
+                <StackPanel Grid.Row="1" HorizontalAlignment="Left" Orientation="Horizontal" VerticalAlignment="Stretch" Margin="5,0,5,5" x:Name="dispSecZoom">
+            <TextBlock x:Name="textBlock1" VerticalAlignment="Center" >0.015625</TextBlock>
+                    <ScrollBar x:Name="scrollBar1" Margin="5,0,0,0" Orientation="Vertical" Minimum="1" Maximum="4" Value="1"/>
+                </StackPanel>
     </Grid>
 </UserControl>

@@ -17,6 +17,9 @@ namespace MSetExplorer
 
 		//event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
 
+		//double ScaleFixFactor { get; set; }
+		ColorBandSetEditMode EditMode { get; set; }
+
 		ColorBandSet ColorBandSet { get; set; }
 		ListCollectionView ColorBandsView { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
@@ -34,8 +37,6 @@ namespace MSetExplorer
 		bool UseRealTimePreview { get; set; }
 
 		//Visibility WindowVisibility { get; set; }
-
-		ColorBandSetEditMode EditMode { get; set; }
 
 		void ApplyChanges();
 		void ApplyChanges(int newTargetIterations);

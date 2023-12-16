@@ -8,17 +8,15 @@ namespace MSetExplorer
 	{
 		IHistogram Histogram { get; }
 		bool ProcessingEnabled { get; set; }
+		long NumberOfSectionsProcessed { get; }
 
 		event EventHandler<HistogramUpdateType>? HistogramUpdated;
 
-		void AddWork(HistogramBlockRequest histogramWorkRequest);
+		void AddWork(HistogramWorkRequest histogramWorkRequest);
 		void Reset();
 		void Reset(int newSize);
 		void Stop(bool immediately);
 		void Dispose();
-
-		//void LoadHistogram(IEnumerable<IHistogram> histograms);
-
 
 		KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll);
 		IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff);

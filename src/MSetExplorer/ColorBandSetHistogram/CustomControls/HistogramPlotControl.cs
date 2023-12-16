@@ -150,6 +150,8 @@ namespace MSetExplorer
 
 		public double PlotWidth => WpfPlot1?.Plot.Width ?? 0f;
 
+		public double PlotDataWidth => WpfPlot1?.Plot.XAxis.Dims.DataSizePx ?? 0f;
+
 		#endregion
 
 		#region Private Methods - Control
@@ -316,7 +318,8 @@ namespace MSetExplorer
 
 			if (seriesData.IsEmpty())
 			{
-				//WpfPlot1.Plot.Clear();
+				wpfPlot.Plot.Clear();
+				_thePlot = null;
 				return;
 			}
 
@@ -446,6 +449,10 @@ namespace MSetExplorer
 
 				Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged. Preparing to set the ViewportOffsetX and Width: X:{viewportOffsetX}, W: {viewportWidth}. " +
 					$"NOTE: ControlSize: {controlSize}. The FigureWidth: {figureWidth}, Margin Right {marginRight}");
+
+				var pxPerUnit = axisDimensions.PxPerUnit;
+				Debug.WriteLine($"****HistogramPlotControl.WpfPlot1_SizeChanged. PixlesPerUnit: {pxPerUnit}.");
+
 
 				ViewportOffsetAndWidth = new ControlXPositionAndWidth(viewportOffsetX, viewportWidth);
 			}

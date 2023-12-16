@@ -179,7 +179,7 @@ namespace MSetExplorer
 
 					if (value == CurrentColorBandSet)
 					{
-						Debug.WriteLine($"PosterViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
+						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
 					}
 
 					var targetIterations = value.HighCutoff;
@@ -195,7 +195,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						Debug.WriteLine($"PosterViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 						currentPoster.CurrentColorBandSet = value;
 					}
 
@@ -301,7 +301,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
 				}
 			}
 		}
@@ -319,7 +319,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
 				}
 			}
 		}

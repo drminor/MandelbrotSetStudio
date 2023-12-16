@@ -107,7 +107,7 @@ namespace MSetExplorer
 				minContentScale = 0.0001;	
 			}
 
-			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
+			_ = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, e.ContentScale, minContentScale, maxContentScale);
 		}
 
 		// User changing the display Size

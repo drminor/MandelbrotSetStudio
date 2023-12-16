@@ -17,7 +17,7 @@ namespace MSetExplorer
 
 		private ICbsHistogramViewModel _vm;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -102,36 +102,21 @@ namespace MSetExplorer
 		{
 			// NOTE:
 			//	1. ContentViewportSize = UnscaledViewportSize.Divide(ContentScale);
-			//	
 			//	2. ContentScale = UnscaledViewportSize / ContentViewportSize
-			//
 			//	3. UnscaledViewportSize = ContentViewportSize * ContentScale
 
-			//var unscaledViewportWidth = PanAndZoomControl1.UnscaledViewportSize.Width;
-
-			var viewPortWidth = HistogramPlotControl1.PlotWidth;
-
+			var viewPortWidth = HistogramPlotControl1.PlotDataWidth - 25;
 			var unscaledExtentWidth = e.UnscaledExtent.Width;
-
-			// Instead of using the unscaledViewportWidth, use the physical view port width - to find the ContentScale corresponding to filling the entire display.
-			//var minContentScale = unscaledViewportWidth / unscaledExtentWidth;
 			var minContentScale = viewPortWidth / unscaledExtentWidth;
-			//var minContentScale = 2;
+			var contentScale = minContentScale;
 
-			var maxContentScale = minContentScale * 4;
-
+			var maxContentScale = 10;
 			_vm.MaximumDisplayZoom = maxContentScale;
-			var contentScale = minContentScale; // + 1;
-
-			Debug.WriteLine($"");
-
-			//Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
-			//	$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}.");
 
 			Debug.WriteLineIf(_useDetailedDebug, $"\n ========== The CbsHistogramControl is handling VM.DisplaySettingsInitialzed. ViewportWidth: {viewPortWidth}, Extent: {e.UnscaledExtent}, Offset: {e.ContentOffset}, " +
 				$"Scale: {contentScale}, MinScale: {minContentScale}, MaxScale: {maxContentScale}.");
 
-			_vm.DisplayZoom = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, contentScale, minContentScale, maxContentScale);
+			_ = PanAndZoomControl1.ResetExtentWithPositionAndScale(e.UnscaledExtent, e.ContentOffset, contentScale, minContentScale, maxContentScale);
 		}
 
 		private void ViewportChanged(object? sender, ScaledImageViewInfo e)
@@ -250,16 +235,17 @@ namespace MSetExplorer
 		private void PlaceTheColorBandControl(ControlXPositionAndWidth controlXPositionAndWidth)
 		{
 			var column2Width = PlotAreaBorder.ActualWidth;
+			var borderWidth = PlotAreaBorder.BorderThickness.Left;
 
 			var viewportOffsetX = controlXPositionAndWidth.XPosition;
 			var viewportWidth = controlXPositionAndWidth.Width;
 
-			if (double.IsNaN(column2Width) || double.IsNaN(viewportOffsetX) || double.IsNaN(viewportWidth) || viewportWidth < 100)
+			if (double.IsNaN(borderWidth) || double.IsNaN(column2Width) || double.IsNaN(viewportOffsetX) || double.IsNaN(viewportWidth) || viewportWidth < 100)
 			{
 				return;
 			}
 
-			var leftMargin = viewportOffsetX;
+			var leftMargin = viewportOffsetX + borderWidth;
 			var rightMargin = column2Width - (viewportWidth + leftMargin);
 
 			if (rightMargin < 0)

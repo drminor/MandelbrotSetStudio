@@ -150,6 +150,8 @@ namespace MSetExplorer
 				//}
 
 				_colorBandSet = value;
+
+
 				_colorBandSetHistoryCollection.Load(value?.CreateNewCopy());
 
 				if (value != null)

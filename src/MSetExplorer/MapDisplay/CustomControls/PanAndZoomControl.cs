@@ -805,7 +805,11 @@ namespace MSetExplorer
 
 				if (ScreenTypeHelper.IsDoubleChanged(newContentScale, previousValue, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale from: {previousValue.ToString("F2")} to {newContentScale.ToString("F2")}. Update was successful.");
+					//Debug.WriteLineIf(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale from: {previousValue.ToString("F2")} to {newContentScale.ToString("F2")}. Update was successful.");
+
+					Debug.WriteLine(_useDetailedDebug, $"The PanAndZoom control is setting the ContentScaler's ContentScale from: {previousValue.ToString("F2")} to {newContentScale.ToString("F2")}. Update was successful." +
+						$"ExtentWidth: {ExtentWidth}, ViewportWidth: {ViewportWidth}, UnscaledExtentWidth: {UnscaledExtent.Width}, ContentScale: {ContentScale}.");
+
 
 					_disableViewportChangedEvents = true;
 					try
@@ -924,7 +928,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public double ExtentWidth => Math.Max(UnscaledExtent.Width, ViewportWidth) * ContentScale;
+		//public double ExtentWidth => Math.Max(UnscaledExtent.Width, ViewportWidth) * ContentScale;
+
+		public double ExtentWidth => UnscaledExtent.Width * ContentScale;
 
 		public double ExtentHeight => Math.Max(UnscaledExtent.Height, ViewportHeight) * ContentScale;
 

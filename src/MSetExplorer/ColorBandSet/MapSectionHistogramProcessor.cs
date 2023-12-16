@@ -24,13 +24,12 @@ namespace MSetExplorer
 		private readonly object _processingEnabledLock;
 
 		private readonly CancellationTokenSource _cts;
-		private readonly BlockingCollection<HistogramBlockRequest> _workQueue;
+		private readonly BlockingCollection<HistogramWorkRequest> _workQueue;
 
 		private readonly Task _workQueueProcessor;
 		private readonly TimeSpan _waitDuration;
 
-		//private readonly HistogramD _topValues;
-		//private double _averageMapSectionTargetIteration;
+		private long _numberOfSectionsProcessed;
 
 		private bool disposedValue;
 
@@ -44,12 +43,11 @@ namespace MSetExplorer
 			_processingEnabled = true;
 			_processingEnabledLock = new object();
 			_cts = new CancellationTokenSource();
-			_workQueue = new BlockingCollection<HistogramBlockRequest>(QUEUE_CAPACITY);
+			_workQueue = new BlockingCollection<HistogramWorkRequest>(QUEUE_CAPACITY);
 			_workQueueProcessor = Task.Run(ProcessTheQueue);
 			_waitDuration = TimeSpan.FromMilliseconds(WAIT_FOR_MAPSECTION_INTERVAL_MS);
 
-			//_topValues = new HistogramD();
-
+			_numberOfSectionsProcessed = 0;
 			_mapSections.CollectionChanged += MapSections_CollectionChanged; 
 		}
 
@@ -62,6 +60,8 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+		public long NumberOfSectionsProcessed => _numberOfSectionsProcessed;
 
 		public IHistogram Histogram => _histogram;
 
@@ -80,6 +80,10 @@ namespace MSetExplorer
 				lock (_processingEnabledLock)
 				{
 					_processingEnabled = value;
+					if (value)
+					{
+						_numberOfSectionsProcessed = 0;
+					}
 				}
 
 			}
@@ -89,7 +93,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void AddWork(HistogramBlockRequest histogramWorkRequest)
+		public void AddWork(HistogramWorkRequest histogramWorkRequest)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
@@ -126,48 +130,38 @@ namespace MSetExplorer
 			{ }
 		}
 
-		//public void LoadHistogram(IEnumerable<IHistogram> histograms)
-		//{
-		//	foreach (var histogram in histograms)
-		//	{
-		//		if (histogram.IsEmpty)
-		//			continue;	
-
-		//		_histogram.Add(histogram);
-		//	}
-
-		//	HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
-		//}
-
 		public void Reset()
 		{
 			_histogram.Reset();
-			//_topValues.Clear();
-
 			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
 		}
 
 		public void Reset(int newSize)
 		{
-			_processingEnabled = false;
-
-			_histogram.Reset(newSize);
-			//_topValues.Clear();
-
-			foreach(var mapsection in _mapSections)
+			var originalProcessingEnabledValue = ProcessingEnabled;
+			try
 			{
-				if (!mapsection.Histogram.IsEmpty)
+				ProcessingEnabled = false;
+
+				//_histogram.Reset(newSize + 2);
+				_histogram.Reset(newSize);
+
+				foreach (var mapsection in _mapSections)
 				{
-					_histogram.Add(mapsection.Histogram);
+					if (!mapsection.Histogram.IsEmpty)
+					{
+						_histogram.Add(mapsection.Histogram);
+					}
 				}
 			}
-
-			_processingEnabled = true;
+			finally
+			{
+				ProcessingEnabled = originalProcessingEnabledValue;
+			}
 
 			HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
 		}
 
-		// TODO: Handle Long to Int conversion for GetKeyValuePairsForBand.
 		public KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll)
 		{
 			var result = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff).ToList();
@@ -187,12 +181,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//public double GetAverageTopValue() => _histogram.GetAverageMaxIndex();
-
 		// TODO: Have the MapSectionHistogramProcessor Cache the value of AverageMapSectionTargetIteration.
 		public double GetAverageMapSectionTargetIteration()
 		{
-			// _topValues.Clear();
 			var topValues = new HistogramD();
 
 			foreach(var ms in _mapSections)
@@ -218,7 +209,7 @@ namespace MSetExplorer
 				try
 				{
 					// Block waiting for new work.
-					HistogramBlockRequest? workRequest = _workQueue.Take(ct);
+					HistogramWorkRequest? workRequest = _workQueue.Take(ct);
 					var haveWork = HandleRequest(workRequest);
 
 					// Process the queue as long as new items are available.
@@ -249,23 +240,25 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool HandleRequest(HistogramBlockRequest histogramWorkRequest)
+		private bool HandleRequest(HistogramWorkRequest histogramWorkRequest)
 		{
 			bool result;
 
 			lock (_processingEnabledLock)
 			{
-				if (_processingEnabled && histogramWorkRequest.Histogram != null)
+				if (ProcessingEnabled && histogramWorkRequest.Histogram != null)
 				{
 					result = true;
 
-					if (histogramWorkRequest.RequestType == HistogramBlockRequestType.Add)
+					if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Add)
 					{
 						_histogram.Add(histogramWorkRequest.Histogram);
+						_numberOfSectionsProcessed++;
 					}
-					else if (histogramWorkRequest.RequestType == HistogramBlockRequestType.Remove)
+					else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Remove)
 					{
 						_histogram.Remove(histogramWorkRequest.Histogram);
+						_numberOfSectionsProcessed++;
 					}
 					else
 					{
@@ -283,15 +276,9 @@ namespace MSetExplorer
 
 		private void MapSections_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
-			//if (_colorBandSet != null && _colorBandSet.Count == 0)
-			//{
-			//	return;
-			//}
-
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{
 				//	Reset
-				//_histogram.Reset();
 				Reset();
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Add)
@@ -300,8 +287,7 @@ namespace MSetExplorer
 				var mapSections = e.NewItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					AddWork(new HistogramBlockRequest(HistogramBlockRequestType.Add, mapSection.Histogram));
-					//_topValues.Increment(mapSection.TargetIterations);
+					AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Add, mapSection.Histogram));
 				}
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
@@ -310,8 +296,7 @@ namespace MSetExplorer
 				var mapSections = e.OldItems?.Cast<MapSection>() ?? new List<MapSection>();
 				foreach (var mapSection in mapSections)
 				{
-					AddWork(new HistogramBlockRequest(HistogramBlockRequestType.Remove, mapSection.Histogram));
-					//_topValues.Decrement(mapSection.TargetIterations);
+					AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Remove, mapSection.Histogram));
 				}
 			}
 

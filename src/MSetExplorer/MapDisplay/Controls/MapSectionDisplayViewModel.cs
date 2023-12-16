@@ -290,10 +290,14 @@ namespace MSetExplorer
 
 				if (ScreenTypeHelper.IsDoubleChanged(value, _displayZoom, RMapConstants.POSTER_DISPLAY_ZOOM_MIN_DIFF))
 				{
-					_displayZoom = value;
+					Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated from {_displayZoom} to {value}.");
 
-					//Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated to {DisplayZoom}, the previous value is {previousValue}.");
+					_displayZoom = value;
 					OnPropertyChanged(nameof(IMapDisplayViewModel.DisplayZoom));
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The MapSectionViewModel's DisplayZoom is being updated to it's current value: {value}. No Change.");
 				}
 			}
 		}
@@ -784,14 +788,14 @@ namespace MSetExplorer
 					//var reapplyColorMap = previousJob == null ? true : ShouldReapplyColorMap(previousJob.ColorBandSet, newJob.ColorBandSet, previousJob.MapCalcSettings, newJob.MapCalcSettings);
 					var reapplyColorMap = ShouldReapplyColorMap(previousJob, LastMapAreaInfo, newJob, screenAreaInfo);
 
-					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
-					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
+					Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
+					//Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling ReuseAndLoad.");
 					msrJob = ReuseAndLoad(JobType.FullScale, newJob, screenAreaInfo, reapplyColorMap);
 				}
 				else
 				{
-					//Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
-					Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
+					Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
+					//Debug.WriteLine("\n\t\t====== HandleCurrentJobChanged is calling DiscardAndLoad.");
 					msrJob = DiscardAndLoad(JobType.FullScale, newJob, screenAreaInfo);
 				}
 			}
@@ -1107,7 +1111,7 @@ namespace MSetExplorer
 
 			if (previousAreaInfo.Coords.CrossesYZero || newAreaInfo.Coords.CrossesYZero)
 			{
-				Debug.WriteLine("Reapplying the ColorMap: Either the previous, the new or both maps cross the YZero point.");
+				Debug.WriteLineIf(_useDetailedDebug, "Reapplying the ColorMap: Either the previous, the new or both maps cross the YZero point.");
 				return true;
 			}
 
@@ -1121,7 +1125,7 @@ namespace MSetExplorer
 				return true;
 			}
 
-			Debug.WriteLine("Not reapplying the ColorMap.");
+			Debug.WriteLineIf(_useDetailedDebug, "Not reapplying the ColorMap.");
 			return false;
 		}
 

@@ -7,7 +7,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -41,7 +40,7 @@ namespace MSetExplorer
 		//private Visibility _windowVisibility;
 
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -79,7 +78,6 @@ namespace MSetExplorer
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
 
-			//_colorBandsView = (ListCollectionView)CollectionViewSource.GetDefaultView(_colorBandSet);
 			_colorBandsView = BuildColorBandsView(null);
 			_currentColorBand = null;
 
@@ -127,7 +125,7 @@ namespace MSetExplorer
 				{
 					Debug.WriteLine($"ColorBandSetViewModel: The Edit mode is now {value}");
 					_editMode = value;
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.EditMode));
 				}
 			}
 		}
@@ -147,32 +145,31 @@ namespace MSetExplorer
 
 					_colorBandSet = value;
 
-					if (IsEnabled)
+					//if (!IsEnabled) return;
+
+					var unscaledWidth = GetExtent(_colorBandSet);
+
+					if (unscaledWidth > 10)
 					{
-						var unscaledWidth = GetExtent(_colorBandSet);
-
-						if (unscaledWidth > 10)
-						{
-							ResetView(unscaledWidth, DisplayPosition, DisplayZoom);
-						}
-						else
-						{
-							Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
-						}
-
-						lock (_histLock)
-						{
-							_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
-
-							_mapSectionHistogramProcessor.Reset(value.HighCutoff);
-							UpdatePercentages();
-						}
-
-						IsDirty = false;
-
-						// This sets the ColorBandsView
-						UpdateViewAndRaisePropertyChangeEvents();
+						ResetView(unscaledWidth, DisplayPosition, DisplayZoom);
 					}
+					else
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
+					}
+
+					lock (_histLock)
+					{
+						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
+
+						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
+						UpdatePercentages();
+					}
+
+					IsDirty = false;
+
+					// This sets the ColorBandsView
+					UpdateViewAndRaisePropertyChangeEvents();
 				}
 				else
 				{
@@ -191,7 +188,7 @@ namespace MSetExplorer
 					var strState = value ? "On" : "Off";
 					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the use of EscapeVelocities.");
 					_useEscapeVelocities = value;
-					OnPropertyChanged(nameof(UseEscapeVelocities));
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.UseEscapeVelocities));
 				}
 			}
 		}
@@ -215,7 +212,7 @@ namespace MSetExplorer
 						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(colorBandSet, isPreview: true));
 					}
 
-					OnPropertyChanged(nameof(UseRealTimePreview));
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.UseRealTimePreview));
 				}
 			}
 		}
@@ -315,12 +312,11 @@ namespace MSetExplorer
 				if (value != _isDirty)
 				{
 					_isDirty = value;
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.IsDirty));
 				}
 			}
 		}
 
-		// TODO: As the CbsHistogramViewModel is enabled, refresh the view.
 		public bool IsEnabled
 		{
 			get => _isEnabled;
@@ -330,17 +326,15 @@ namespace MSetExplorer
 				{
 					_isEnabled = value;
 
+					_mapSectionHistogramProcessor.ProcessingEnabled = value;
+
 					if (_isEnabled)
 					{
-						var histogramDataWasEmpty = RefreshDisplay();
-
-						if (histogramDataWasEmpty)
-						{
-							Debug.WriteLineIf(_useDetailedDebug, "WARNING: Setting CbsHistogramViewModel:IsEnabled = true. Values are all zero on call to CbsHistogramViewModel.RefreshData.");
-						}
+						//ResetDisplay();
+						ClearDisplay();
 					}
 
-					OnPropertyChanged();
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.IsEnabled));
 				}
 			}
 		}
@@ -480,6 +474,10 @@ namespace MSetExplorer
 					
 					_displayZoom = value;
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.DisplayZoom));
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayZoom is being updated to it's current value: {value}. No Change.");
 				}
 			}
 		}
@@ -756,7 +754,7 @@ namespace MSetExplorer
 
 		public void ApplyChanges(int newTargetIterations)
 		{
-			if (!IsEnabled) return;
+			//if (!IsEnabled) return;
 
 			if (newTargetIterations != _currentColorBandSet.HighCutoff)
 			{
@@ -781,7 +779,7 @@ namespace MSetExplorer
 
 		public void ApplyChanges()
 		{
-			if (!IsEnabled) return;
+			//if (!IsEnabled) return;
 
 			Debug.Assert(IsDirty, "ColorBandSetViewModel:ApplyChanges is being called, but we are not dirty.");
 			var newSet = _currentColorBandSet.CreateNewCopy();
@@ -878,6 +876,9 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to size:{contentViewportSize}, offset:{contentOffset}, scale:{contentScale}.");
 
+			Debug.WriteLine($"\nCbsHistogramViewModel is having its ViewportSizePosAndScale set to scale:{contentScale}, size:{contentViewportSize.Width}, offset:{contentOffset.X}.");
+
+
 			//_displayZoom uses a binding to stay curent with contentScale;	
 			Debug.Assert(_displayZoom == contentScale, "The DisplayZoom does not equal the new ContentScale on the call to UpdateViewportSizePosAndScale.");
 
@@ -916,6 +917,7 @@ namespace MSetExplorer
 			lock (_paintLocker)
 			{
 				SeriesData.Clear();
+				SeriesData = new HPlotSeriesData(SeriesData);
 			}
 		}
 
@@ -976,6 +978,32 @@ namespace MSetExplorer
 				}
 
 				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
+			}
+		}
+
+		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
+		{
+			//if (ColorBandsView == null)
+			//	return;
+
+			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
+			//{
+			//	Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
+			//}
+		}
+
+		private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)
+		{
+			//var colorBandsList = colorbandsView as IList<ColorBand>;
+			if (colorbandsView == null)
+			{
+				index = null;
+				return false;
+			}
+			else
+			{
+				index = colorbandsView.IndexOf(cb);
+				return true;
 			}
 		}
 
@@ -1117,7 +1145,6 @@ namespace MSetExplorer
 				return;
 			}
 
-
 			var existingLength = hPlotSeriesData.LongLength;
 			hPlotSeriesData.SetYValues(values, out var bufferWasPreserved);
 
@@ -1132,48 +1159,31 @@ namespace MSetExplorer
 
 		private void ResetView(double extentWidth, VectorDbl displayPosition, double displayZoom)
 		{
+			var extent = new SizeDbl(extentWidth, _viewportSize.Height);
+
+			DisplaySettingsInitializedEventArgs initialSettings;
+
 			if (ScreenTypeHelper.IsDoubleChanged(extentWidth, UnscaledExtent.Width))
 			{
-				// The ExtentWidth is changing -- reset the position and scale.
-				UnscaledExtent = new SizeDbl();
-
-				var extent = new SizeDbl(extentWidth, _viewportSize.Height);
 				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event and resetting the Position and Scale.");
 
-				//var initialSettingsF = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
-
-				// Override the position
+				// The ExtentWidth is changing -- reset the position and scale.
 				var positionZero = new VectorDbl();
-
-				// Override the zoom setting
 				var zoomUnity = 1d;
 
-				var initialSettings = new DisplaySettingsInitializedEventArgs(extent, positionZero, zoomUnity);
-
-				DisplaySettingsInitialized?.Invoke(this, initialSettings);
-
-				// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
-				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is setting the Unscaled Extent to complete the process of initializing the Histogram Display.");
-				UnscaledExtent = extent;
+				initialSettings = new DisplaySettingsInitializedEventArgs(extent, positionZero, zoomUnity);
 			}
 			else
 			{
-				Debug.WriteLine("The CbsHistogramViewModel is skipping ResetView: the current and new extent (i.e., Target Iterations) are the same.");
-
-				UnscaledExtent = new SizeDbl();
-
-				var extent = new SizeDbl(extentWidth, _viewportSize.Height);
 				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is raising the DisplaySettingsInitialized Event and keeping the Position and Scale.");
-
-				var initialSettings = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
-
-				DisplaySettingsInitialized?.Invoke(this, initialSettings);
-
-				// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
-				Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is setting the Unscaled Extent to complete the process of initializing the Histogram Display.");
-				UnscaledExtent = extent;
-
+				initialSettings = new DisplaySettingsInitializedEventArgs(extent, displayPosition, displayZoom);
 			}
+
+			DisplaySettingsInitialized?.Invoke(this, initialSettings);
+
+			// Trigger a ViewportChanged event on the PanAndZoomControl -- this will result in our UpdateViewportSizeAndPos method being called.
+			Debug.WriteLineIf(_useDetailedDebug, "\n\t\t====== CbsHistogramViewModel is setting the Unscaled Extent to complete the process of initializing the Histogram Display.");
+			UnscaledExtent = extent;
 		}
 
 		#endregion
@@ -1244,12 +1254,36 @@ namespace MSetExplorer
 			return result;
 		}
 
-
 		private int GetColorBandIndex(IList<ColorBand> colorBands, ColorBand cb)
 		{
 			var index = colorBands.IndexOf(cb);
 			return index;
 		}
+
+		//private void ResetDisplay()
+		//{
+		//	SeriesData = new HPlotSeriesData(HPlotSeriesData.Empty);
+
+		//	//var newSet = _colorBandSet.CreateNewCopy();
+
+		//	var unscaledWidth = GetExtent(ColorBandSet);
+
+		//	if (unscaledWidth > 10)
+		//	{
+		//		ResetView(unscaledWidth, new VectorDbl(), 1.0);
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel::ResetDisplay is not resetting the view -- the new iterations target <= 10.");
+		//	}
+
+		//	_mapSectionHistogramProcessor.Reset(ColorBandSet.HighCutoff); // This will trigger a call to RefreshDisplay
+
+
+		//	//ApplyChangesInt(newSet);
+
+		//	//ResetView(unscaledWidth, new VectorDbl(), 1.0);
+		//}
 
 		#endregion
 
@@ -1321,7 +1355,7 @@ namespace MSetExplorer
 
 			foreach (var pb in bucketCnts)
 			{
-				pb.Percentage = Math.Round(100 * (pb.Count / total), 2);
+				pb.Percentage = Math.Round(100 * (pb.Count / total), digits: 2);
 			}
 
 			return bucketCnts;
@@ -1334,7 +1368,9 @@ namespace MSetExplorer
 				if (_currentColorBandSet.UpdatePercentages(newPercentages))
 				{
 					BeyondTargetSpecs = newPercentages[^1];
-					//Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");
+					var numberReachedTargetIteration = BeyondTargetSpecs.Count;
+					var total = BeyondTargetSpecs.RunningSum;
+					Debug.WriteLine($"CBS received new percentages. Top Count: {numberReachedTargetIteration}, Total: {total}.");
 				}
 				else
 				{
@@ -1359,7 +1395,7 @@ namespace MSetExplorer
 
 		#region Diagnostics
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void ReportSeriesBufferAllocation(long existingLength, long newLength, bool bufferWasPreserved)
 		{
 			if (!bufferWasPreserved)
