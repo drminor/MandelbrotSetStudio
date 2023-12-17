@@ -64,20 +64,6 @@ namespace MSetExplorer
 			_rectangle.SetValue(Canvas.LeftProperty, RectangleGeometry.Rect.Left);
 			_rectangle.SetValue(Canvas.TopProperty, RectangleGeometry.Rect.Top);
 			_rectangle.SetValue(Panel.ZIndexProperty, 20);
-
-
-			//var area = new RectangleDbl(new PointDbl(xPosition, elevation), new SizeDbl(width, height));
-			//var scaledArea = area.Scale(scaleSize);
-
-			//_rectangle = BuildRectangle(scaledArea, startColor, endColor);
-
-			//_canvas.Children.Add(_rectangle);
-			//_rectangle.SetValue(Canvas.LeftProperty, scaledArea.X1);
-			//_rectangle.SetValue(Canvas.TopProperty, scaledArea.Y1);
-			//_rectangle.SetValue(Panel.ZIndexProperty, 20);
-
-			//RectangleGeometry = BuildRectangleGeometry(scaledArea);
-
 		}
 
 		#endregion
@@ -94,6 +80,12 @@ namespace MSetExplorer
 		{
 			get => _rectangle.Stroke;
 			set => _rectangle.Stroke = value;
+		}
+
+		public double StrokeThickness
+		{
+			get => _rectangle.StrokeThickness;
+			set => _rectangle.StrokeThickness = value;
 		}
 
 		//public int ColorBandIndex { get; init; }
@@ -249,38 +241,6 @@ namespace MSetExplorer
 				Focusable = true,
 				Width = area.Rect.Width,
 				Height = area.Rect.Height,
-				IsHitTestVisible = true,
-			};
-
-			return result;
-		}
-
-		private RectangleGeometry BuildRectangleGeometryO(RectangleDbl scaledArea)
-		{
-			var scaledAreaWithGap = scaledArea.Width > 2 ? DrawingHelper.Shorten(scaledArea, 1) : scaledArea;
-
-			var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(scaledAreaWithGap));
-
-			if (cbRectangle.Rect.Right == 0)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, "Creating a rectangle with right = 0.");
-			}
-
-			return cbRectangle;
-		}
-
-		private Rectangle BuildRectangleO(RectangleDbl scaledArea, ColorBandColor startColor, ColorBandColor endColor)
-		{
-			var widthWithGap = scaledArea.Width > 2 ? scaledArea.Width - 1 : scaledArea.Width;
-
-			var result = new Rectangle()
-			{
-				Fill = DrawingHelper.BuildBrush(startColor, endColor, true),
-				Stroke = Brushes.Transparent,
-				StrokeThickness = 0,
-				Focusable = true,
-				Width = widthWithGap,
-				Height = scaledArea.Height,
 				IsHitTestVisible = true,
 			};
 
