@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -205,24 +204,24 @@ namespace MSetExplorer
 			}
 		}
 
-		public Image Image
-		{
-			get => _image;
-			set
-			{
-				//if (_image != value)
-				//{
-				//	_image = value;
-				//	_image.Source = _drawingimageSource;
-				//	_image.SetValue(Panel.ZIndexProperty, 20);
+		//public Image Image
+		//{
+		//	get => _image;
+		//	set
+		//	{
+		//		if (_image != value)
+		//		{
+		//			_image = value;
+		//			//_image.Source = _drawingimageSource;
+		//			//_image.SetValue(Panel.ZIndexProperty, 20);
 
-				//	CheckThatImageIsAChildOfCanvas(Image, Canvas);
+		//			CheckThatImageIsAChildOfCanvas(Image, Canvas);
 
-				//	//_image.SetValue(Canvas.TopProperty, 15d);
+		//			//_image.SetValue(Canvas.TopProperty, 15d);
 
-				//}
-			}
-		}
+		//		}
+		//	}
+		//}
 
 		public SizeDbl ViewportSize
 		{
@@ -402,7 +401,8 @@ namespace MSetExplorer
 			if (Content != null)
 			{
 				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
-				(Canvas, Image) = BuildContentModel(_ourContent);
+				//(Canvas, Image) = BuildContentModel(_ourContent);
+				Canvas = BuildContentModel(_ourContent);
 			}
 			else
 			{
@@ -410,28 +410,31 @@ namespace MSetExplorer
 			}
 		}
 
-		private (Canvas, Image) BuildContentModel(FrameworkElement content)
+		//private (Canvas, Image) BuildContentModel(FrameworkElement content)
+		//{
+		//	if (content is ContentPresenter cp)
+		//	{
+		//		if (cp.Content is Canvas ca)
+		//		{
+		//			//return ca;
+		//			if (ca.Children[0] is Image im)
+		//			{
+		//				return (ca, im);
+		//			}
+		//		}
+		//	}
+
+		//	throw new InvalidOperationException("Cannot find a child image element of the HistogramColorBandControl's Content, or the Content is not a Canvas element.");
+		//}
+
+		private Canvas BuildContentModel(FrameworkElement content)
 		{
 			if (content is ContentPresenter cp)
 			{
 				if (cp.Content is Canvas ca)
 				{
-					if (ca.Children[0] is Image im)
-					{
-						return (ca, im);
-					}
+					return ca;
 				}
-
-				//if (cp.Content is Border brdr)
-				//{
-				//	if (brdr.Child is Canvas ca)
-				//	{
-				//		if (ca.Children[0] is Image im)
-				//		{
-				//			return (ca, im);
-				//		}
-				//	}
-				//}
 			}
 
 			throw new InvalidOperationException("Cannot find a child image element of the HistogramColorBandControl's Content, or the Content is not a Canvas element.");
@@ -1005,7 +1008,11 @@ namespace MSetExplorer
 					bandWidth += 1;
 				}
 
-				var cbsRectangle = new CbsRectangle(i, curOffset, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, _canvas, CbrElevation, CbrHeight, scaleSize);
+				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
+				var cbsRectangle = new CbsRectangle(i, curOffset, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, CbrElevation, CbrHeight, scaleSize);
+
+				var r = cbsRectangle.Rectangle;
+				var rg = cbsRectangle.RectangleGeometry;
 
 				//_canvas.Children.Add(cbsRectangle.Rectangle);
 
@@ -1203,20 +1210,6 @@ namespace MSetExplorer
 			var previousXValue = previousValue.Position.X * ContentScale.Width;
 			var newXValue = newValue.Position.X * ContentScale.Width;
 			Debug.WriteLine(_useDetailedDebug, $"The HistogramColorBandControl's CanvasTranslationTransform is being set from {previousXValue} to {newXValue}.");
-		}
-
-		[Conditional("DEBUG2")]
-		private void CheckThatImageIsAChildOfCanvas(Image image, Canvas canvas)
-		{
-			foreach (var v in canvas.Children)
-			{
-				if (v == image)
-				{
-					return;
-				}
-			}
-
-			throw new InvalidOperationException("The image is not a child of the canvas.");
 		}
 
 		#endregion

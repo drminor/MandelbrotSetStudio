@@ -70,7 +70,7 @@
                             <ContentPresenter.Content>
                                 <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="Transparent">
                                     
-                                    <Image x:Name="MainImage" />
+                                    <!--<Image x:Name="MainImage" />-->
                                 </Canvas>
                             </ContentPresenter.Content>
                         </ContentPresenter>
