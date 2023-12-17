@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ScottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"                           
                     xmlns:local="clr-namespace:MSetExplorer">
-    
+
     <Style TargetType="{x:Type local:PanAndZoomControl}">
         <Setter Property="Template">
             <Setter.Value>
@@ -20,7 +20,7 @@
                 <SolidColorBrush Color="BlanchedAlmond"/>
             </Setter.Value>
         </Setter>
-    </Style>    
+    </Style>
 
     <Style TargetType="{x:Type local:BitmapGridControl}">
         <Setter Property="Template">
@@ -58,17 +58,18 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-    </Style>    
-    
+    </Style>
+
     <Style TargetType="{x:Type local:HistogramColorBandControl}">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:HistogramColorBandControl}">
-                    <Border BorderThickness="0" BorderBrush="DarkSlateBlue">
+                    <Border BorderThickness="0" BorderBrush="Red">
 
                         <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <ContentPresenter.Content>
-                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Top" Background="Transparent">
+                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="Transparent">
+                                    
                                     <Image x:Name="MainImage" />
                                 </Canvas>
                             </ContentPresenter.Content>

@@ -866,7 +866,7 @@ namespace MSetExplorer
 				BuildSeriesData(SeriesData, values);
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's SerieData is being updated There are {SeriesData.LongLength} entries.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's SerieData is being updated. There are {SeriesData.LongLength} entries.");
 
 			SeriesData = new HPlotSeriesData(SeriesData);
 
@@ -977,32 +977,6 @@ namespace MSetExplorer
 				}
 
 				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
-			}
-		}
-
-		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
-		{
-			//if (ColorBandsView == null)
-			//	return;
-
-			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
-			//{
-			//	Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
-			//}
-		}
-
-		private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)
-		{
-			//var colorBandsList = colorbandsView as IList<ColorBand>;
-			if (colorbandsView == null)
-			{
-				index = null;
-				return false;
-			}
-			else
-			{
-				index = colorbandsView.IndexOf(cb);
-				return true;
 			}
 		}
 
@@ -1255,37 +1229,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private int GetColorBandIndex(IList<ColorBand> colorBands, ColorBand cb)
-		{
-			var index = colorBands.IndexOf(cb);
-			return index;
-		}
-
-		//private void ResetDisplay()
-		//{
-		//	SeriesData = new HPlotSeriesData(HPlotSeriesData.Empty);
-
-		//	//var newSet = _colorBandSet.CreateNewCopy();
-
-		//	var unscaledWidth = GetExtent(ColorBandSet);
-
-		//	if (unscaledWidth > 10)
-		//	{
-		//		ResetView(unscaledWidth, new VectorDbl(), 1.0);
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel::ResetDisplay is not resetting the view -- the new iterations target <= 10.");
-		//	}
-
-		//	_mapSectionHistogramProcessor.Reset(ColorBandSet.HighCutoff); // This will trigger a call to RefreshDisplay
-
-
-		//	//ApplyChangesInt(newSet);
-
-		//	//ResetView(unscaledWidth, new VectorDbl(), 1.0);
-		//}
-
 		#endregion
 
 		#region Private Methods - Percentages
@@ -1440,6 +1383,66 @@ namespace MSetExplorer
 		#endregion
 
 		#region UN USED
+
+		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
+		{
+			//if (ColorBandsView == null)
+			//	return;
+
+			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
+			//{
+			//	Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
+			//}
+		}
+
+		private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)
+		{
+			//var colorBandsList = colorbandsView as IList<ColorBand>;
+			if (colorbandsView == null)
+			{
+				index = null;
+				return false;
+			}
+			else
+			{
+				index = colorbandsView.IndexOf(cb);
+				return true;
+			}
+		}
+
+		private int GetColorBandIndex(IList<ColorBand> colorBands, ColorBand cb)
+		{
+			var index = colorBands.IndexOf(cb);
+			return index;
+		}
+
+		//private void ResetDisplay()
+		//{
+		//	SeriesData = new HPlotSeriesData(HPlotSeriesData.Empty);
+
+		//	//var newSet = _colorBandSet.CreateNewCopy();
+
+		//	var unscaledWidth = GetExtent(ColorBandSet);
+
+		//	if (unscaledWidth > 10)
+		//	{
+		//		ResetView(unscaledWidth, new VectorDbl(), 1.0);
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel::ResetDisplay is not resetting the view -- the new iterations target <= 10.");
+		//	}
+
+		//	_mapSectionHistogramProcessor.Reset(ColorBandSet.HighCutoff); // This will trigger a call to RefreshDisplay
+
+
+		//	//ApplyChangesInt(newSet);
+
+		//	//ResetView(unscaledWidth, new VectorDbl(), 1.0);
+		//}
+
+
+
 
 		//public ScaledImageViewInfo ViewportSizePositionAndScale
 		//{

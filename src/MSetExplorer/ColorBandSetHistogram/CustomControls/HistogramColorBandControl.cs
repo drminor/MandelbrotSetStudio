@@ -22,8 +22,8 @@ namespace MSetExplorer
 	{
 		#region Private Fields 
 
-		private const int CB_ELEVATION = 0; // Distance from the top of the Grid Row containing the Color Band Rectangles and the top of each Color Band Rectangle
-		private const int CB_HEIGHT = 58;   // Height of each Color Band Rectangle
+		private double _cbrElevation = 0; // Starting Y of each Color Band Rectangle
+		private double _cbrHeight = 48;   // Height of each Color Band Rectangle
 
 		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 		private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
@@ -36,9 +36,11 @@ namespace MSetExplorer
 
 		private ListCollectionView? _colorBandsView;
 
-		private ImageSource _drawingimageSource;
-		private readonly DrawingGroup _drawingGroup;
-		private readonly IList<GeometryDrawing> _colorBandRectangles;
+		//private ImageSource _drawingimageSource;
+		//private readonly DrawingGroup _drawingGroup;
+
+		//private readonly IList<GeometryDrawing> _colorBandRectangles;
+		private readonly IList<CbsRectangle> _colorBandRectangles;
 
 		private readonly IList<CbsSelectionLine> _selectionLines;
 
@@ -87,11 +89,17 @@ namespace MSetExplorer
 			_canvas.MouseLeave += Handle_MouseLeave;
 			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
 
-			_colorBandRectangles = new List<GeometryDrawing>();
+			//_colorBandRectangles = new List<GeometryDrawing>();
+			_colorBandRectangles = new List<CbsRectangle>();
+
 			_selectionLines = new List<CbsSelectionLine>();
 
-			_drawingGroup = new DrawingGroup();
-			_drawingimageSource = new DrawingImage(_drawingGroup);
+			//_drawingGroup = new DrawingGroup();
+
+			// Draw an anchor rectangle to make sure the bounding box is not truncated.
+			//_drawingGroup.Children.Add(DrawingHelper.BuildRectangle(new RectangleDbl(0, 1, 0, 1), Colors.Transparent, Colors.Transparent));
+
+			//_drawingimageSource = new DrawingImage(_drawingGroup);
 
 			_canvasTranslateTransform = new TranslateTransform();
 			_canvasScaleTransform = new ScaleTransform();
@@ -114,22 +122,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		protected override void OnKeyDown(KeyEventArgs e)
-		{
-			if (e.Key == Key.Left)
-			{
-				
-			}
-			else if(e.Key == Key.Right)
-			{
-
-			}
-			else
-			{
-				base.OnKeyDown(e);
-			}
-		}
 
 		#region Events
 
@@ -198,12 +190,15 @@ namespace MSetExplorer
 				_canvas.MouseEnter -= Handle_MouseEnter;
 				_canvas.MouseLeave -= Handle_MouseLeave;
 				_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
+				_canvas.SizeChanged -= Handle_SizeChanged;
 
 				_canvas = value;
 
 				_canvas.MouseEnter += Handle_MouseEnter;
 				_canvas.MouseLeave += Handle_MouseLeave;
 				_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
+				_canvas.SizeChanged += Handle_SizeChanged;
+
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
@@ -215,14 +210,17 @@ namespace MSetExplorer
 			get => _image;
 			set
 			{
-				if (_image != value)
-				{
-					_image = value;
-					_image.Source = _drawingimageSource;
-					_image.SetValue(Panel.ZIndexProperty, 20);
+				//if (_image != value)
+				//{
+				//	_image = value;
+				//	_image.Source = _drawingimageSource;
+				//	_image.SetValue(Panel.ZIndexProperty, 20);
 
-					CheckThatImageIsAChildOfCanvas(Image, Canvas);
-				}
+				//	CheckThatImageIsAChildOfCanvas(Image, Canvas);
+
+				//	//_image.SetValue(Canvas.TopProperty, 15d);
+
+				//}
 			}
 		}
 
@@ -282,6 +280,51 @@ namespace MSetExplorer
 				_translationAndClipSize = value;
 
 				ClipAndOffset(previousVal, value);
+			}
+		}
+
+		private bool _isHorizontalScrollBarVisible;
+		public bool IsHorizontalScrollBarVisible
+		{
+			get => _isHorizontalScrollBarVisible;
+			set
+			{
+				if (value != _isHorizontalScrollBarVisible)
+				{
+					_isHorizontalScrollBarVisible = value;
+					(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(ActualHeight, value);
+
+
+					//Image.SetValue(Canvas.TopProperty, CbrElevation);
+				}
+			}
+		}
+
+		private double CbrElevation
+		{
+			get => _cbrElevation;
+			set => _cbrElevation = value;
+		}
+
+		private double CbrHeight
+		{
+			get => _cbrHeight;
+
+			set
+			{
+				if (value != _cbrHeight)
+				{
+					_cbrHeight = value;
+
+					RemoveSelectionLines();
+					DrawColorBands(ColorBandsView);
+
+					if (_mouseIsEntered)
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on ContentScale update. (Have Mouse)");
+						DrawSelectionLines(_colorBandRectangles);
+					}
+				}
 			}
 		}
 
@@ -378,6 +421,17 @@ namespace MSetExplorer
 						return (ca, im);
 					}
 				}
+
+				//if (cp.Content is Border brdr)
+				//{
+				//	if (brdr.Child is Canvas ca)
+				//	{
+				//		if (ca.Children[0] is Image im)
+				//		{
+				//			return (ca, im);
+				//		}
+				//	}
+				//}
 			}
 
 			throw new InvalidOperationException("Cannot find a child image element of the HistogramColorBandControl's Content, or the Content is not a Canvas element.");
@@ -386,6 +440,11 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void Handle_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(e.NewSize.Height, _isHorizontalScrollBarVisible);
+		}
 
 		private void Handle_MouseLeave(object sender, MouseEventArgs e)
 		{
@@ -444,7 +503,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (TryGetColorBandRectangle(hitPoint, _colorBandRectangles, out var colorBandRectagle, out var cbRectangleIndex))
+				if (TryGetColorBandRectangle(hitPoint, _colorBandRectangles, out var cbsRectangle, out var cbRectangleIndex))
 				{
 					var cb = GetColorBandAt(cbsView, cbRectangleIndex.Value);
 					cbsView.MoveCurrentTo(cb);
@@ -619,6 +678,22 @@ namespace MSetExplorer
 			}
 		}
 
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			if (e.Key == Key.Left)
+			{
+
+			}
+			else if (e.Key == Key.Right)
+			{
+
+			}
+			else
+			{
+				base.OnKeyDown(e);
+			}
+		}
+
 		#endregion
 
 		#region ColorBand Support
@@ -764,7 +839,7 @@ namespace MSetExplorer
 
 		#region ColorBandRectangle Support
 
-		private bool TryGetColorBandRectangle(Point hitPoint, IList<GeometryDrawing> colorBandRectangles, [NotNullWhen(true)] out GeometryDrawing? colorBandRectangle, [NotNullWhen(true)] out int? colorBandRectangleIndex)
+		private bool TryGetColorBandRectangle(Point hitPoint, IList<CbsRectangle> colorBandRectangles, [NotNullWhen(true)] out CbsRectangle? colorBandRectangle, [NotNullWhen(true)] out int? colorBandRectangleIndex)
 		{
 			colorBandRectangle = null;
 			colorBandRectangleIndex = null;
@@ -773,7 +848,7 @@ namespace MSetExplorer
 			{
 				var cbRectangle = colorBandRectangles[i];
 
-				if (cbRectangle.Geometry.FillContains(hitPoint))
+				if (cbRectangle.RectangleGeometry.FillContains(hitPoint))
 				{
 					colorBandRectangleIndex = i;
 					colorBandRectangle = cbRectangle;
@@ -784,22 +859,22 @@ namespace MSetExplorer
 			return false;
 		}
 
-		private void HilightColorBandRectangle(int colorBandIndex, Color penColor/*, int interval*/)
-		{
-			var cbRectangle = _colorBandRectangles[colorBandIndex];
-			cbRectangle.Pen = new Pen(new SolidColorBrush(penColor), 1.25);
+		//private void HilightColorBandRectangle(int colorBandIndex, Color penColor/*, int interval*/)
+		//{
+		//	var cbRectangle = _colorBandRectangles[colorBandIndex];
+		//	cbRectangle.Pen = new Pen(new SolidColorBrush(penColor), 1.25);
 
-			//var timer = new DispatcherTimer(
-			//	TimeSpan.FromMilliseconds(interval), 
-			//	DispatcherPriority.Normal, 
-			//	(s, e) =>
-			//	{
-			//		cbRectangle.Pen = new Pen(Brushes.Transparent, 0);
-			//	}, 
-			//	Dispatcher);
+		//	//var timer = new DispatcherTimer(
+		//	//	TimeSpan.FromMilliseconds(interval), 
+		//	//	DispatcherPriority.Normal, 
+		//	//	(s, e) =>
+		//	//	{
+		//	//		cbRectangle.Pen = new Pen(Brushes.Transparent, 0);
+		//	//	}, 
+		//	//	Dispatcher);
 
-			//timer.Start();
-		}
+		//	//timer.Start();
+		//}
 
 		private void HilightColorBandRectangle(ColorBand cb, bool on)
 		{
@@ -814,18 +889,94 @@ namespace MSetExplorer
 				var cbr = _colorBandRectangles[index.Value];
 				if (on)
 				{
-					cbr.Pen = _cbrPenBlack;
+					cbr.Stroke = _cbrPenBlack.Brush;
 				}
 				else
 				{
-					cbr.Pen = _cbrPenTransparent;
+					cbr.Stroke = _cbrPenTransparent.Brush;
 				}
+			}
+		}
+
+		private const int SCROLL_BAR_HEIGHT = 17;
+		private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
+
+		private (double, double) GetCbrElevationAndHeight(double controlHeight, bool isHorizontalScrollBarVisible)
+		{
+			if (isHorizontalScrollBarVisible)
+			{
+				return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SCROLL_BAR_HEIGHT + SELECTION_LINE_SELECTOR_HEIGHT));
+			}
+			else
+			{
+				return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - SELECTION_LINE_SELECTOR_HEIGHT);
 			}
 		}
 
 		#endregion
 
 		#region ColorBandSet View Support
+
+		//private void DrawColorBands(ListCollectionView? listCollectionView)
+		//{
+		//	RemoveColorBandRectangles();
+
+		//	if (listCollectionView == null || listCollectionView.Count < 2)
+		//	{
+		//		return;
+		//	}
+
+		//	var scaleSize = new SizeDbl(ContentScale.Width, 1);
+
+		//	//Debug.WriteLine($"****The scale is {scaleSize} on DrawColorBands.");
+
+		//	var curOffset = 0;
+
+		//	var endPtr = listCollectionView.Count - 1;
+
+		//	for (var i = 0; i <= endPtr; i++)
+		//	{
+		//		var colorBand = (ColorBand) listCollectionView.GetItemAt(i);
+		//		var bandWidth = colorBand.BucketWidth;
+
+		//		if (i < endPtr)
+		//		{
+		//			bandWidth += 1;
+		//		}
+
+
+		//		var area = new RectangleDbl(new PointDbl(curOffset, CbrElevation), new SizeDbl(bandWidth, CbrHeight));
+		//		var scaledArea = area.Scale(scaleSize);
+
+		//		GeometryDrawing cbRectangle;
+
+		//		// Reduce the width by a single pixel to 'high-light' the boundary.
+		//		if (scaledArea.Width > 2)
+		//		{
+		//			var scaledAreaWithGap = DrawingHelper.Shorten(scaledArea, 1);
+		//			cbRectangle = DrawingHelper.BuildRectangle(scaledAreaWithGap, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
+		//		}
+		//		else
+		//		{
+		//			cbRectangle = DrawingHelper.BuildRectangle(scaledArea, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
+		//		}
+
+		//		if (cbRectangle.Geometry is RectangleGeometry rg)
+		//		{
+		//			if (rg.Rect.Right == 0)
+		//			{
+		//				Debug.WriteLine("Creating a rectangle with right = 0.");
+		//			}
+		//		}
+
+		//		//_canvas.Children.Add(cbRectangle);
+
+		//		_colorBandRectangles.Add(cbRectangle);
+		//		_drawingGroup.Children.Add(cbRectangle);
+
+		//		curOffset += bandWidth;
+		//	}
+		//}
 
 		private void DrawColorBands(ListCollectionView? listCollectionView)
 		{
@@ -846,53 +997,33 @@ namespace MSetExplorer
 
 			for (var i = 0; i <= endPtr; i++)
 			{
-				var colorBand = (ColorBand) listCollectionView.GetItemAt(i);
+				var colorBand = (ColorBand)listCollectionView.GetItemAt(i);
 				var bandWidth = colorBand.BucketWidth;
-				
+
 				if (i < endPtr)
 				{
 					bandWidth += 1;
 				}
 
-				var area = new RectangleDbl(new PointDbl(curOffset, CB_ELEVATION), new SizeDbl(bandWidth, CB_HEIGHT));
-				var scaledArea = area.Scale(scaleSize);
+				var cbsRectangle = new CbsRectangle(i, curOffset, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, _canvas, CbrElevation, CbrHeight, scaleSize);
 
-				GeometryDrawing cbRectangle;
+				//_canvas.Children.Add(cbsRectangle.Rectangle);
 
-				// Reduce the width by a single pixel to 'high-light' the boundary.
-				if (scaledArea.Width > 2)
-				{
-					var scaledAreaWithGap = DrawingHelper.Shorten(scaledArea, 1);
-					cbRectangle = DrawingHelper.BuildRectangle(scaledAreaWithGap, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
-				}
-				else
-				{
-					cbRectangle = DrawingHelper.BuildRectangle(scaledArea, colorBand.StartColor, colorBand.ActualEndColor, horizBlend: true);
-				}
-
-				if (cbRectangle.Geometry is RectangleGeometry rg)
-				{
-					if (rg.Rect.Right == 0)
-					{
-						Debug.WriteLine("Creating a rectangle with right = 0.");
-					}
-				}
-
-				_colorBandRectangles.Add(cbRectangle);
-				_drawingGroup.Children.Add(cbRectangle);
+				_colorBandRectangles.Add(cbsRectangle);
+				//_drawingGroup.Children.Add(cbRectangle);
 
 				curOffset += bandWidth;
 			}
 		}
 
-		private void DrawSelectionLines(IList<GeometryDrawing> colorBandRectangles)
+		private void DrawSelectionLines(IList<CbsRectangle> colorBandRectangles)
 		{
 			RemoveSelectionLines();
 
 			for (var colorBandIndex = 0; colorBandIndex < colorBandRectangles.Count - 1; colorBandIndex++) 
 			{
-				var gLeft = colorBandRectangles[colorBandIndex].Geometry as RectangleGeometry;
-				var gRight = colorBandRectangles[colorBandIndex + 1].Geometry as RectangleGeometry;
+				var gLeft = colorBandRectangles[colorBandIndex].RectangleGeometry;
+				var gRight = colorBandRectangles[colorBandIndex + 1].RectangleGeometry;
 
 				if (gLeft == null || gRight == null)
 				{
@@ -911,8 +1042,7 @@ namespace MSetExplorer
 					Debug.WriteLine($"DrawSelectionLines found an xPosition with a value < 2.");
 				}
 
-
-				var sl = new CbsSelectionLine(_canvas, CB_ELEVATION, CB_HEIGHT, colorBandIndex, xPosition, gLeft, gRight);
+				var sl = new CbsSelectionLine(_canvas, CbrElevation, CbrHeight, colorBandIndex, xPosition, gLeft, gRight);
 				_selectionLines.Add(sl);
 			}
 		}
@@ -945,12 +1075,20 @@ namespace MSetExplorer
 
 		private void RemoveColorBandRectangles()
 		{
+			//Debug.WriteLine($"Before remove ColorBandRectangles. The DrawingGroup has {_drawingGroup.Children.Count} children. The height of the drawing group is: {_drawingGroup.Bounds.Height} and the location is: {_drawingGroup.Bounds.Location}");
+
 			foreach (var colorBandRectangle in _colorBandRectangles)
 			{
-				_drawingGroup.Children.Remove(colorBandRectangle);
+				//_drawingGroup.Children.Remove(colorBandRectangle.Rectangle);
+				_canvas.Children.Remove(colorBandRectangle.Rectangle);
 			}
 
+			//_drawingGroup.Children.Clear();
+
 			_colorBandRectangles.Clear();
+
+
+			//Debug.WriteLine($"After remove ColorBandRectangles. The DrawingGroup has {_drawingGroup.Children.Count} children. The height of the drawing group is: {_drawingGroup.Bounds.Height} and the location is: {_drawingGroup.Bounds.Location}");
 		}
 
 		private void RemoveSelectionLines()
@@ -1050,17 +1188,11 @@ namespace MSetExplorer
 
 			var cbRectangleLeft = _colorBandRectangles[currentColorBandIndex];
 
-			if (cbRectangleLeft.Geometry is RectangleGeometry rd)
-			{
-				sb.AppendLine($"cbRectangleLeft: {rd.Rect}");
-			}
+			sb.AppendLine($"cbRectangleLeft: {cbRectangleLeft.RectangleGeometry}");
 
 			var cbRectangleRight = _colorBandRectangles[currentColorBandIndex + 1];
 
-			if (cbRectangleRight.Geometry is RectangleGeometry rd2)
-			{
-				sb.AppendLine($"cbRectangleRight: {rd2.Rect}");
-			}
+			sb.AppendLine($"cbRectangleRight: {cbRectangleRight.RectangleGeometry}");
 
 			Debug.WriteLine(sb);
 		}

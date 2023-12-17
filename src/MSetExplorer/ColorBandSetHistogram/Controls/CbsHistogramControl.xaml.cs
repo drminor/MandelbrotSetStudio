@@ -167,6 +167,11 @@ namespace MSetExplorer
 			{
 				HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
 			}
+
+			else if (e.PropertyName == nameof(ICbsHistogramViewModel.HorizontalScrollBarVisibility))
+			{
+				HistogramColorBandControl1.IsHorizontalScrollBarVisible = _vm.HorizontalScrollBarVisibility == ScrollBarVisibility.Visible;
+			}
 		}
 
 		#endregion

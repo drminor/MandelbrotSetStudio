@@ -5,13 +5,14 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using Windows.Devices.Geolocation;
 
 namespace MSetExplorer
 {
 	internal class CbsSelectionLine
 	{
 		#region Private Fields
+
+		private static readonly Brush _selectionLineBrush = DrawingHelper.BuildSelectionDrawingBrush();
 
 		private Canvas _canvas;
 
@@ -28,8 +29,8 @@ namespace MSetExplorer
 
 		private double _originalXPosition;
 		private double _selectionLinePosition;
-		private int _cbElevation;
-		private int _cbHeight;
+		private double _cbElevation;
+		private double _cbHeight;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -37,7 +38,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsSelectionLine(Canvas canvas, int elevation, int height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right)
+		public CbsSelectionLine(Canvas canvas, double elevation, double height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right)
 		{
 			_canvas = canvas;
 			ColorBandIndex = colorBandIndex;
@@ -60,12 +61,12 @@ namespace MSetExplorer
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 		}
 
-		private Line BuildDragLine(int elevation, int height, double xPosition)
+		private Line BuildDragLine(double elevation, double height, double xPosition)
 		{
 			var result = new Line()
 			{
-				Fill = Brushes.Transparent, // new SolidColorBrush(Colors.Green),
-				Stroke = DrawingHelper.BuildSelectionDrawingBrush(), // new SolidColorBrush(Colors.Purple),
+				Fill = Brushes.Transparent,
+				Stroke = _selectionLineBrush,
 				StrokeThickness = 2,
 				Y1 = elevation,
 				Y2 = elevation + height,
@@ -103,7 +104,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int CbElevation
+		public double CbElevation
 		{
 			get => _cbElevation;
 			set
@@ -117,7 +118,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int CbHeight
+		public double CbHeight
 		{
 			get => _cbHeight;
 			set

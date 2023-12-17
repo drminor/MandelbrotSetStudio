@@ -80,7 +80,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		#region Build Brush For Selction Rectangle
+		#region Build Brush For Selection Rectangle
 
 		public static DrawingBrush BuildSelectionDrawingBrush()
 		{
