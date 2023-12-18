@@ -417,6 +417,12 @@ namespace MSetExplorer
 
 		private void Handle_MouseLeave(object sender, MouseEventArgs e)
 		{
+			if (e.LeftButton == MouseButtonState.Pressed)
+			{
+				// Drag operation is in process.
+				return;
+			}
+
 			if (_selectionLineBeingDragged != null)
 			{
 				_selectionLineBeingDragged.CancelDrag();
@@ -429,7 +435,14 @@ namespace MSetExplorer
 
 		private void Handle_MouseEnter(object sender, MouseEventArgs e)
 		{
-			if (ColorBandsView == null) return;
+			if (ColorBandsView == null) 
+				return;
+
+			if (e.LeftButton == MouseButtonState.Pressed || _selectionLineBeingDragged != null)
+			{
+				// Drag operation is in process.
+				return;
+			}
 
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on Handle_MouseEnter.");
 
@@ -502,7 +515,7 @@ namespace MSetExplorer
 			switch (e.Operation)
 			{
 				case CbsSelectionLineDragOperation.Move:
-					UpdateCutoff(ccb, e.NewXPosition, e.Operation);
+					UpdateCutoff(e);
 					break;
 
 				case CbsSelectionLineDragOperation.Complete:
@@ -510,7 +523,7 @@ namespace MSetExplorer
 					_selectionLineBeingDragged = null;
 
 					Debug.WriteLineIf(_useDetailedDebug, "Completing the SelectionBand Drag Operation.");
-					UpdateCutoff(ccb, e.NewXPosition, e.Operation);
+					UpdateCutoff(e);
 
 					break;
 
@@ -518,7 +531,7 @@ namespace MSetExplorer
 					selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
 					_selectionLineBeingDragged = null;
 
-					UpdateCutoff(ccb, e.NewXPosition, e.Operation);
+					UpdateCutoff(e);
 					break;
 
 				default:
@@ -529,8 +542,15 @@ namespace MSetExplorer
 		[Conditional("DEBUG")]
 		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
 		{
-			//if (ColorBandsView == null)
-			//	return;
+			if (ColorBandsView == null)
+				return;
+
+			var testColorBand = GetColorBandAt(ColorBandsView, colorBandIndex);
+
+			if (testColorBand.Cutoff != currentColorBand.Cutoff)
+			{
+				Debug.WriteLine("Cutoff Mismatch.");
+			}
 
 			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
 			//{
@@ -538,51 +558,57 @@ namespace MSetExplorer
 			//}
 		}
 
-		private void UpdateCutoff(ColorBand currentColorBand, double newXPosition, CbsSelectionLineDragOperation operation)
+		private void UpdateCutoff(CbsSelectionLineMovedEventArgs e)
 		{
-			var newCutoff = (int)Math.Round(newXPosition / ContentScale.Width);
-
 			if (UseRealTimePreview)
 			{
 				_selectionLineMovedDispatcher.Throttle(
 					interval: SELECTION_LINE_UPDATE_THROTTLE_INTERVAL,
 					action: parm => 
 					{
-						UpdateCutoffThrottled(currentColorBand, newXPosition, operation);
+						UpdateCutoffThrottled(e);
 					},
 					param: null);
 			}
 			else
 			{
-				currentColorBand.Cutoff = newCutoff;
-
+				//currentColorBand.Cutoff = newCutoff;
+				UpdateCutoffThrottled(e);
 			}
 		}
 
-		private void UpdateCutoffThrottled(ColorBand currentColorBand, double newXPosition, CbsSelectionLineDragOperation operation)
+		private void UpdateCutoffThrottled(CbsSelectionLineMovedEventArgs e)
 		{
-			var newCutoff = (int)Math.Round(newXPosition / ContentScale.Width);
+			var cbView = ColorBandsView;
 
-			currentColorBand.Cutoff = newCutoff;
+			if (cbView == null)
+				return;
 
-			if (operation == CbsSelectionLineDragOperation.Move)
+			var newCutoff = (int)Math.Round(e.NewXPosition / ContentScale.Width);
+
+			var currentColorBand = GetColorBandAt(cbView, e.ColorBandIndex);
+
+			if (e.Operation == CbsSelectionLineDragOperation.Move)
 			{
 				if (!currentColorBand.IsInEditMode)
 				{
 					currentColorBand.BeginEdit();
+					currentColorBand.Cutoff = newCutoff;
 				}
 			}
-			else if (operation == CbsSelectionLineDragOperation.Complete)
+			else if (e.Operation == CbsSelectionLineDragOperation.Complete)
 			{
+				currentColorBand.Cutoff = newCutoff;
 				currentColorBand.EndEdit();
 			}
-			else if (operation == CbsSelectionLineDragOperation.Cancel)
+			else if (e.Operation == CbsSelectionLineDragOperation.Cancel)
 			{
+				currentColorBand.Cutoff = newCutoff;
 				currentColorBand.CancelEdit();
 			}
 			else
 			{
-				throw new InvalidOperationException($"The {operation} CbsSelectionLineDragOperation is not supported.");
+				throw new InvalidOperationException($"The {e.Operation} CbsSelectionLineDragOperation is not supported.");
 			}
 		}
 
@@ -859,7 +885,7 @@ namespace MSetExplorer
 				if (on)
 				{
 					cbr.Stroke = _cbrPenBlack.Brush;
-					cbr.StrokeThickness = 1.7;
+					cbr.StrokeThickness = 2.5;
 				}
 				else
 				{
@@ -916,7 +942,7 @@ namespace MSetExplorer
 				}
 
 				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
-				var cbsRectangle = new CbsRectangle(i, curOffset, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, CbrElevation, CbrHeight, scaleSize);
+				var cbsRectangle = new CbsRectangle(i, curOffset, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize);
 
 				_colorBandRectangles.Add(cbsRectangle);
 
@@ -987,8 +1013,7 @@ namespace MSetExplorer
 
 			foreach (var colorBandRectangle in _colorBandRectangles)
 			{
-				//_drawingGroup.Children.Remove(colorBandRectangle.Rectangle);
-				_canvas.Children.Remove(colorBandRectangle.Rectangle);
+				colorBandRectangle.TearDown();
 			}
 
 			_colorBandRectangles.Clear();

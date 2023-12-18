@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -155,10 +156,6 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"The new position is {newPosition}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = newPosition;
 
-				//_originalXPosition = newPosition;
-				//_originalLeftGeometry.Rect = _left.Rect;
-				//_originalRightGeometry.Rect = _right.Rect;
-
 				return true;
 			}
 			else
@@ -222,11 +219,14 @@ namespace MSetExplorer
 
 		public void StartDrag()
 		{
-			_originalXPosition = SelectionLinePosition;
-			_originalLeftGeometry.Rect = _left.Rect;
-			_originalRightGeometry.Rect = _right.Rect;
+			if (DragState != DragState.InProcess)
+			{
+				_originalXPosition = SelectionLinePosition;
+				_originalLeftGeometry.Rect = _left.Rect;
+				_originalRightGeometry.Rect = _right.Rect;
 
-			DragState = DragState.InProcess;
+				DragState = DragState.InProcess;
+			}
 
 			//Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {BuildGeometriesReport()}.");
 		}
@@ -235,9 +235,9 @@ namespace MSetExplorer
 		{
 			DragState = DragState.None;
 
-			UpdateColorBandWidth(0);
-
 			SelectionLinePosition = _originalXPosition;
+
+			UpdateColorBandWidth(0);
 
 			SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalXPosition, CbsSelectionLineDragOperation.Cancel));
 		}
@@ -311,10 +311,14 @@ namespace MSetExplorer
 
 			if (UpdateColorBandWidth(amount))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"After call to UpdateColorBandWidth, The XPos is {pos.X}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"After call to UpdateColorBandWidth. The XPos is {pos.X}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = pos.X;
 
 				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, pos.X, CbsSelectionLineDragOperation.Move));
+			}
+			else
+			{
+				Debug.WriteLine($"UpdateColorBandWidth returned false. The XPos is {pos.X}. The original position is {_originalXPosition}.");
 			}
 		}
 
@@ -330,9 +334,17 @@ namespace MSetExplorer
 				else
 				{
 					var pos = e.GetPosition(relativeTo: _canvas);
+					var amount = pos.X - _originalXPosition;
 
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag operation. The last XPos is {SelectionLinePosition}. The XPos is {pos.X}. The original position is {_originalXPosition}.");
-					CompleteDrag();
+					if (UpdateColorBandWidth(amount))
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag operation. The last XPos is {SelectionLinePosition}. The XPos is {pos.X}. The original position is {_originalXPosition}.");
+						CompleteDrag();
+					}
+					else
+					{
+						CancelDrag();
+					}
 				}
 			}
 		}
