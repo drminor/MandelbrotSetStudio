@@ -56,7 +56,7 @@ namespace MSetExplorer
 
 		private CbsSelectionLine? _selectionLineBeingDragged;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -417,42 +417,57 @@ namespace MSetExplorer
 
 		private void Handle_MouseLeave(object sender, MouseEventArgs e)
 		{
-			if (e.LeftButton == MouseButtonState.Pressed)
-			{
-				// Drag operation is in process.
-				return;
-			}
-
 			if (_selectionLineBeingDragged != null)
 			{
-				_selectionLineBeingDragged.CancelDrag();
-				_selectionLineBeingDragged = null;
+				if (e.LeftButton != MouseButtonState.Pressed)
+				{
+					_selectionLineBeingDragged.CancelDrag();
+					_selectionLineBeingDragged = null;
+					HideSelectionLines();
+				}
+				else
+				{
+					// Drag operation is in process.
+					// Do not hide the selection lines.
+				}
+			}
+			else
+			{
+				HideSelectionLines();
 			}
 
-			HideSelectionLines();
 			_mouseIsEntered = false;
 		}
 
 		private void Handle_MouseEnter(object sender, MouseEventArgs e)
 		{
-			if (ColorBandsView == null) 
-				return;
+			//if (ColorBandsView == null) return;
 
-			if (e.LeftButton == MouseButtonState.Pressed || _selectionLineBeingDragged != null)
+			if (_selectionLineBeingDragged != null)
 			{
-				// Drag operation is in process.
-				return;
-			}
-
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on Handle_MouseEnter.");
-
-			if (_selectionLines.Count == 0)
-			{
-				DrawSelectionLines(_colorBandRectangles);
+				if (e.LeftButton != MouseButtonState.Pressed)
+				{
+					_selectionLineBeingDragged.CancelDrag();
+					_selectionLineBeingDragged = null;
+				}
+				else
+				{
+					// Drag operation is in process.
+					// The selection lines should already be visible.
+				}
 			}
 			else
 			{
-				ShowSelectionLines();
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on Handle_MouseEnter.");
+
+				if (_selectionLines.Count == 0)
+				{
+					DrawSelectionLines(_colorBandRectangles);
+				}
+				else
+				{
+					ShowSelectionLines();
+				}
 			}
 
 			_mouseIsEntered = true;
@@ -471,15 +486,13 @@ namespace MSetExplorer
 				var cb = GetColorBandAt(cbsView, cbSelectionLineIndex.Value);
 				cbsView.MoveCurrentTo(cb);
 
-				Debug.WriteLineIf(_useDetailedDebug, $"Starting Drag. ColorBandIndex = {cbSelectionLineIndex}. ContentScale: {ContentScale}. PosX: {hitPoint.X}. Original X: {cbSelectionLine.SelectionLinePosition}.");
-				ReportColorBandRectanglesInPlay(cbSelectionLineIndex.Value);
+				//Debug.WriteLineIf(_useDetailedDebug, $"Starting Drag. ColorBandIndex = {cbSelectionLineIndex}. ContentScale: {ContentScale}. PosX: {hitPoint.X}. Original X: {cbSelectionLine.SelectionLinePosition}.");
+				//ReportColorBandRectanglesInPlay(cbSelectionLineIndex.Value);
 
 				_selectionLineBeingDragged = cbSelectionLine;
 				cbSelectionLine.SelectionLineMoved += HandleSelectionLineMoved;
 
-				//HilightColorBandRectangle(cbsSelectionLine.ColorBandIndex, Colors.Black, 200);
-
-				//cb.BeginEdit();
+				Debug.WriteIf(_useDetailedDebug, $"HistogramColorBandControl. Starting Drag for cbSelectionLine at index: {cbSelectionLineIndex}, Current View Position: {cbsView.CurrentPosition}, ColorBand: {cb}.");
 
 				cbSelectionLine.StartDrag();
 			}
@@ -495,9 +508,22 @@ namespace MSetExplorer
 
 		private void HandleSelectionLineMoved(object? sender, CbsSelectionLineMovedEventArgs e)
 		{
+			if (_selectionLineBeingDragged == null)
+			{
+				Debug.WriteLine("WARNING: _selectionLineBeingDragged is null on HandleSelectionLineMoved.");
+				return;
+			}
+
 			if (!(sender is CbsSelectionLine selectionLine))
 			{
 				throw new InvalidOperationException("The HandleSelectionLineMoved event is being raised by some class other than CbsSelectionLine.");
+			}
+			else
+			{
+				if (sender != _selectionLineBeingDragged)
+				{
+					Debug.WriteLine("WARNING: HandleSelectionLineMoved is being raised by a SelectionLine other than the one that is being dragged.");
+				}
 			}
 
 			if (e.NewXPosition == 0)
@@ -505,33 +531,50 @@ namespace MSetExplorer
 				Debug.WriteLine($"WARNING: Setting the Cutoff to zero for ColorBandIndex: {e.ColorBandIndex}.");
 			}
 
-			var ccb = CurrentColorBand;
 
-			if (ccb == null)
-				return;
 
-			CheckColorBandIndex(e.ColorBandIndex, ccb);
+
+			//var ccb = CurrentColorBand;
+
+			//if (ccb == null)
+			//	return;
+
+			//CheckColorBandIndex(e.ColorBandIndex, ccb);
 
 			switch (e.Operation)
 			{
 				case CbsSelectionLineDragOperation.Move:
-					UpdateCutoff(e);
+					UpdateCutoffThrottled(e);
 					break;
 
 				case CbsSelectionLineDragOperation.Complete:
-					selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
+					_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
+
+					// *** Diag
+					var colorBandToUpdate = GetColorBandAt(ColorBandsView!, e.ColorBandIndex);
+
+					var oPos = _selectionLineBeingDragged!.OriginalSelectionLinePosition;
+					var scaledAmount = e.NewXPosition - oPos;
+					var amount = (int)Math.Round(scaledAmount / ContentScale.Width);
+
+
+					var newCutoff = colorBandToUpdate.Cutoff + amount;
+					var newCutoffOldstyle = (int)Math.Round(e.NewXPosition / ContentScale.Width);
+					// *** End diag
+
 					_selectionLineBeingDragged = null;
 
+
 					Debug.WriteLineIf(_useDetailedDebug, "Completing the SelectionBand Drag Operation.");
-					UpdateCutoff(e);
+					UpdateCutoffThrottled(e);
 
 					break;
 
 				case CbsSelectionLineDragOperation.Cancel:
-					selectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
+					_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
 					_selectionLineBeingDragged = null;
 
-					UpdateCutoff(e);
+					UpdateCutoffThrottled(e);
 					break;
 
 				default:
@@ -539,26 +582,7 @@ namespace MSetExplorer
 			}
 		}
 
-		[Conditional("DEBUG")]
-		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
-		{
-			if (ColorBandsView == null)
-				return;
-
-			var testColorBand = GetColorBandAt(ColorBandsView, colorBandIndex);
-
-			if (testColorBand.Cutoff != currentColorBand.Cutoff)
-			{
-				Debug.WriteLine("Cutoff Mismatch.");
-			}
-
-			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
-			//{
-			//	Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
-			//}
-		}
-
-		private void UpdateCutoff(CbsSelectionLineMovedEventArgs e)
+		private void UpdateCutoffThrottled(CbsSelectionLineMovedEventArgs e)
 		{
 			if (UseRealTimePreview)
 			{
@@ -566,18 +590,18 @@ namespace MSetExplorer
 					interval: SELECTION_LINE_UPDATE_THROTTLE_INTERVAL,
 					action: parm => 
 					{
-						UpdateCutoffThrottled(e);
+						UpdateCutoff(e);
 					},
 					param: null);
 			}
 			else
 			{
 				//currentColorBand.Cutoff = newCutoff;
-				UpdateCutoffThrottled(e);
+				UpdateCutoff(e);
 			}
 		}
 
-		private void UpdateCutoffThrottled(CbsSelectionLineMovedEventArgs e)
+		private void UpdateCutoff(CbsSelectionLineMovedEventArgs e)
 		{
 			var cbView = ColorBandsView;
 
@@ -586,25 +610,29 @@ namespace MSetExplorer
 
 			var newCutoff = (int)Math.Round(e.NewXPosition / ContentScale.Width);
 
-			var currentColorBand = GetColorBandAt(cbView, e.ColorBandIndex);
+			var colorBandToUpdate = GetColorBandAt(cbView, e.ColorBandIndex);
 
 			if (e.Operation == CbsSelectionLineDragOperation.Move)
 			{
-				if (!currentColorBand.IsInEditMode)
+				if (!colorBandToUpdate.IsInEditMode)
 				{
-					currentColorBand.BeginEdit();
-					currentColorBand.Cutoff = newCutoff;
+					colorBandToUpdate.BeginEdit();
 				}
+
+				Debug.WriteIf(_useDetailedDebug, $"HistogramColorBandControl. Updating ColorBand for Move Operation at index: {e.ColorBandIndex} with new Cutoff: {newCutoff}, {colorBandToUpdate}.");
+				colorBandToUpdate.Cutoff = newCutoff;
 			}
 			else if (e.Operation == CbsSelectionLineDragOperation.Complete)
 			{
-				currentColorBand.Cutoff = newCutoff;
-				currentColorBand.EndEdit();
+				Debug.WriteIf(_useDetailedDebug, $"HistogramColorBandControl. Updating ColorBand for Operation=Complete at index: {e.ColorBandIndex} with new Cutoff: {newCutoff}, {colorBandToUpdate}.");
+				colorBandToUpdate.Cutoff = newCutoff;
+				colorBandToUpdate.EndEdit();
 			}
 			else if (e.Operation == CbsSelectionLineDragOperation.Cancel)
 			{
-				currentColorBand.Cutoff = newCutoff;
-				currentColorBand.CancelEdit();
+				Debug.WriteIf(_useDetailedDebug, $"HistogramColorBandControl. Updating ColorBand for Operation=Cancel at index: {e.ColorBandIndex} with new Cutoff: {newCutoff}, {colorBandToUpdate}.");
+				colorBandToUpdate.Cutoff = newCutoff;
+				colorBandToUpdate.CancelEdit();
 			}
 			else
 			{
@@ -637,7 +665,7 @@ namespace MSetExplorer
 					{
 						if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
 						{
-							UpdateSelectionLinePosition(index.Value, CurrentColorBand.Cutoff);
+							UpdateSelectionLinePosition(index.Value, cb.Cutoff);
 						}
 					}
 				}
@@ -664,11 +692,15 @@ namespace MSetExplorer
 		{
 			if (sender is ColorBand cb)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl:CurrentColorBand is raising the EditEndedEvent.");
 
 				if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
 				{
+					Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl. Handling the ColorBand_EditEnded event. Found: {index}, ColorBand: {cb}");
 					UpdateSelectionLinePosition(index.Value, cb.Cutoff);
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl. Handling the ColorBand_EditEnded event. NOT Found: ColorBand: {cb}");
 				}
 			}
 		}
@@ -689,6 +721,25 @@ namespace MSetExplorer
 			}
 		}
 
+		[Conditional("DEBUG")]
+		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
+		{
+			if (ColorBandsView == null)
+				return;
+
+			var testColorBand = GetColorBandAt(ColorBandsView, colorBandIndex);
+
+			if (testColorBand.Cutoff != currentColorBand.Cutoff)
+			{
+				Debug.WriteLine("Cutoff Mismatch.");
+			}
+
+			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
+			//{
+			//	Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
+			//}
+		}
+
 		#endregion
 
 		#region ColorBand Support
@@ -700,8 +751,9 @@ namespace MSetExplorer
 				throw new InvalidOperationException($"DrawColorBands. The ColorBandIndex must be between 0 and {_colorBandRectangles.Count - 1}, inclusive.");
 			}
 
-			var selectionLine = _selectionLines[colorBandIndex];
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl. About to call SelectionLine::UpdatePosition. Index = {colorBandIndex}");
 
+			var selectionLine = _selectionLines[colorBandIndex];
 			var updated = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
 
 			return updated;
@@ -727,7 +779,7 @@ namespace MSetExplorer
 				if (cbWithMatchingOffset != null)
 				{
 					index = colorbandsView.IndexOf(cbWithMatchingOffset);
-					Debug.WriteLine($"The ColorBandsView does not contain the ColorBand: {cb}, but found an item with a matching offset: {cbWithMatchingOffset} at index: {index}.");
+					Debug.WriteLine($"HistogramColorBandControl. The ColorBandsView does not contain the ColorBand: {cb}, but found an item with a matching offset: {cbWithMatchingOffset} at index: {index}.");
 
 					return true;
 				}
@@ -976,7 +1028,7 @@ namespace MSetExplorer
 					Debug.WriteLine($"DrawSelectionLines found an xPosition with a value < 2.");
 				}
 
-				var sl = new CbsSelectionLine(_canvas, CbrElevation, CbrHeight, colorBandIndex, xPosition, gLeft, gRight);
+				var sl = new CbsSelectionLine(_canvas, CbrElevation, CbrHeight, colorBandIndex, xPosition, gLeft, gRight, ContentScale.Width);
 				_selectionLines.Add(sl);
 			}
 		}
@@ -1023,6 +1075,12 @@ namespace MSetExplorer
 
 		private void RemoveSelectionLines()
 		{
+			if (_selectionLineBeingDragged != null)
+			{
+				_selectionLineBeingDragged.CancelDrag();
+				_selectionLineBeingDragged = null;
+			}
+
 			foreach (var selectionLine in _selectionLines)
 			{
 				selectionLine.TearDown();
@@ -1087,6 +1145,10 @@ namespace MSetExplorer
 			HistogramColorBandControl c = (HistogramColorBandControl)o;
 
 			var oldColorBand = (ColorBand?)e.OldValue;
+
+
+			Debug.WriteLineIf(c._useDetailedDebug, $"HistogramColorBandControl. The CurrentColorBandProperty is changing. Old: {oldColorBand}, New: {(ColorBand)e.NewValue}.");
+
 
 			if (oldColorBand != null)
 			{

@@ -545,6 +545,8 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
+			Debug.WriteLine($"About to CreateNewCopy: {this}");
+
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
@@ -561,6 +563,8 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy(int targetIterations)
 		{
+			Debug.WriteLine($"About to CreateNewCopy with update iterations: {targetIterations}: {this}");
+
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, ProjectId, Name, Description, bandsCopy, CreateReservedBandsCopy(), ColorBandsSerialNumber)

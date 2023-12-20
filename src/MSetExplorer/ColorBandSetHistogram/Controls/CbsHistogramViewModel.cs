@@ -792,6 +792,9 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}. The old Id is {ColorBandSet?.Id ?? ObjectId.Empty}");
 
+			//Debug.WriteLine($"The new ColorBandSet: {newSet}");
+			//Debug.WriteLine($"The existing ColorBandSet: {_colorBandSet}");
+
 			_colorBandSet = newSet;
 
 			// Clear all existing items from history and add the new set.
@@ -1067,6 +1070,21 @@ namespace MSetExplorer
 
 		private void CurrentColorBand_EditEnded(object? sender, EventArgs e)
 		{
+			var cbsView = ColorBandsView;
+			if (cbsView == null) throw new InvalidOperationException("The ColorBandsView is NULL.");
+
+			if (sender is ColorBand)
+			{
+				var cb = (ColorBand)sender;
+				var index = cbsView.IndexOf(cb);
+				Debug.WriteLine($"CbsHistogramViewModel is handling EditEnded for {index}.");
+			}
+			else
+			{
+				Debug.WriteLine($"ColorBandSetViewModel: A sender of type {sender?.GetType()} is raising the EditEnded event. EXPECTED: {typeof(ColorBand)}.");
+				return;
+			}
+
 			PushCurrentColorBandOnToHistoryCollection();
 			IsDirty = true;
 		}

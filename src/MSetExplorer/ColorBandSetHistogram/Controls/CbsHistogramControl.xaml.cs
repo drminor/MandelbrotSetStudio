@@ -159,6 +159,8 @@ namespace MSetExplorer
 			// ColorBandsView
 			if (e.PropertyName == nameof(ICbsHistogramViewModel.ColorBandsView))
 			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is updating the HistogramColorBandControl's ColorBandView.");
+
 				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
 			}
 

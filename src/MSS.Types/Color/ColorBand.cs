@@ -261,6 +261,12 @@ namespace MSS.Types
 		public void BeginEdit()
 		{
 			//_copy = Clone();
+
+			if (IsInEditMode)
+			{
+				Debug.WriteLine("WARNING: BeginEdit is being called, but IsInEditMode is already true.");
+			}
+
 			IsInEditMode = true;
 		}
 
@@ -282,12 +288,26 @@ namespace MSS.Types
 			//}
 
 			//_copy = null;
+
+			if (!IsInEditMode)
+			{
+				Debug.WriteLine("WARNING: CancelEdit is being called, but IsInEditMode = false.");
+			}
+
 			IsInEditMode = false;
 		}
 
 		public void EndEdit()
 		{
 			//_copy = null;
+
+			if (!IsInEditMode)
+			{
+				Debug.WriteLine("WARNING: EndEdit is being called, but IsInEditMode = false.");
+			}
+
+			Debug.WriteLine($"EndEdit is being called for ColorBand with StartColor: {StartColor}, Starting Offset: {StartingCutoff}, Ending Offset: {Cutoff}.");
+
 			IsInEditMode = false;
 			EditEnded?.Invoke(this, EventArgs.Empty);
 		}

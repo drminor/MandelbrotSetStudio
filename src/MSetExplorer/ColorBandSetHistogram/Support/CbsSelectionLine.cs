@@ -5,7 +5,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -13,47 +12,52 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
+		private const double MIN_SEL_DISTANCE = 0.49;
 		private static readonly Brush _selectionLineBrush = DrawingHelper.BuildSelectionDrawingBrush();
 
 		private Canvas _canvas;
 
-		private readonly Line _dragLine;
+		private double _cbElevation;
+		private double _cbHeight;
+		private double _selectionLinePosition;
 
 		private readonly RectangleGeometry _left;
 		private readonly RectangleGeometry _right;
 
-		private readonly RectangleGeometry _originalLeftGeometry;
-		private readonly RectangleGeometry _originalRightGeometry;
+		private readonly double _scale;
 
-
+		private readonly Line _dragLine;
 		private DragState _dragState;
 
 		private double _originalXPosition;
-		private double _selectionLinePosition;
-		private double _cbElevation;
-		private double _cbHeight;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly RectangleGeometry _originalLeftGeometry;
+		private readonly RectangleGeometry _originalRightGeometry;
+
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
 		#region Constructor
 
-		public CbsSelectionLine(Canvas canvas, double elevation, double height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right)
+		public CbsSelectionLine(Canvas canvas, double elevation, double height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right, double scale)
 		{
 			_canvas = canvas;
+			_cbElevation = elevation;
+			_cbHeight = height;
+
 			ColorBandIndex = colorBandIndex;
-			_originalXPosition = xPosition;
 			_selectionLinePosition = xPosition;
 
 			_left = left;
 			_right = right;
 
+			_scale = scale;
+
+			_originalXPosition = xPosition;
 			_originalLeftGeometry = new RectangleGeometry(_left.Rect);
 			_originalRightGeometry = new RectangleGeometry(_right.Rect);
 
-			_cbElevation = elevation;
-			_cbHeight = height;
 			_dragLine = BuildDragLine(elevation, height, xPosition);
 
 			_dragState = DragState.None;
@@ -90,6 +94,8 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public int ColorBandIndex { get; init; }
+
+		public double OriginalSelectionLinePosition => _originalXPosition;
 
 		public double SelectionLinePosition
 		{
@@ -153,7 +159,7 @@ namespace MSetExplorer
 
 			if (UpdateColorBandWidth(amount))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The new position is {newPosition}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. The new position is {newPosition}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = newPosition;
 
 				return true;
@@ -228,18 +234,21 @@ namespace MSetExplorer
 				DragState = DragState.InProcess;
 			}
 
-			//Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {BuildGeometriesReport()}.");
+			Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {BuildGeometriesReport()}.");
 		}
 
 		public void CancelDrag()
 		{
 			DragState = DragState.None;
 
-			SelectionLinePosition = _originalXPosition;
+			if (SelectionLinePosition != _originalXPosition)
+			{
+				SelectionLinePosition = _originalXPosition;
 
-			UpdateColorBandWidth(0);
+				UpdateColorBandWidth(0);
 
-			SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalXPosition, CbsSelectionLineDragOperation.Cancel));
+				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalXPosition, CbsSelectionLineDragOperation.Cancel));
+			}
 		}
 
 		#endregion
@@ -270,7 +279,6 @@ namespace MSetExplorer
 							{
 								_canvas.MouseMove += HandleMouseMove;
 								_canvas.MouseLeftButtonUp += HandleMouseLeftButtonUp;
-								//var re = Keyboard.KeyUpEvent.AddOwner(typeof(CbsSelectionLine));
 							}
 							break;
 
@@ -311,14 +319,14 @@ namespace MSetExplorer
 
 			if (UpdateColorBandWidth(amount))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"After call to UpdateColorBandWidth. The XPos is {pos.X}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalXPosition}.");
 				SelectionLinePosition = pos.X;
 
 				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, pos.X, CbsSelectionLineDragOperation.Move));
 			}
 			else
 			{
-				Debug.WriteLine($"UpdateColorBandWidth returned false. The XPos is {pos.X}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned false. The XPos is {pos.X}. The original position is {_originalXPosition}.");
 			}
 		}
 
@@ -333,18 +341,23 @@ namespace MSetExplorer
 				}
 				else
 				{
-					var pos = e.GetPosition(relativeTo: _canvas);
-					var amount = pos.X - _originalXPosition;
+					//// TODO: Only require the mouse to be over the color band control.
 
-					if (UpdateColorBandWidth(amount))
-					{
-						Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag operation. The last XPos is {SelectionLinePosition}. The XPos is {pos.X}. The original position is {_originalXPosition}.");
-						CompleteDrag();
-					}
-					else
-					{
-						CancelDrag();
-					}
+					//var pos = e.GetPosition(relativeTo: _canvas);
+
+					//var amount = pos.X - _originalXPosition;
+
+					//if (UpdateColorBandWidth(amount))
+					//{
+					//	Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag operation. The last XPos is {SelectionLinePosition}. The XPos is {pos.X}. The original position is {_originalXPosition}.");
+					//	CompleteDrag();
+					//}
+					//else
+					//{
+					//	CancelDrag();
+					//}
+
+					CompleteDrag();
 				}
 			}
 		}
@@ -352,8 +365,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
-
-		private const double MIN_SEL_DISTANCE = 0.49;
 
 		private void CompleteDrag()
 		{
@@ -379,20 +390,29 @@ namespace MSetExplorer
 
 			if (amount < 0)
 			{
+
 				amount = amount * -1;
-				if (_originalLeftGeometry.Rect.Width > amount && _originalRightGeometry.Rect.X > amount)
+				if (_originalLeftGeometry.Rect.Width > amount + (2 * _scale) && _originalRightGeometry.Rect.X > amount + (1 * _scale))
 				{
 					_left.Rect = DrawingHelper.Shorten(_originalLeftGeometry.Rect, amount);
 					_right.Rect = DrawingHelper.MoveRectLeft(_originalRightGeometry.Rect, amount);
+
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Shortening the Left ColorBandRectangle by amount: {amount}. Left Width: {_originalLeftGeometry.Rect.Width}, Right Pos: {_originalRightGeometry.Rect.X}" +
+						$"New Left Rectangle Width = {_left.Rect.Width}; New Right Rectangle Position: {_right.Rect.X}");
 					updated = true;
 				}
 			}
 			else
 			{
-				if (_originalRightGeometry.Rect.Width > amount)
+				if (_originalRightGeometry.Rect.Width > amount + (2 * _scale))
 				{
 					_left.Rect = DrawingHelper.Lengthen(_originalLeftGeometry.Rect, amount);
 					_right.Rect = DrawingHelper.MoveRectRight(_originalRightGeometry.Rect, amount);
+
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. Left Width: {_originalLeftGeometry.Rect.Width}, Right Pos: {_originalRightGeometry.Rect.X}" +
+						$"New Left Rectangle Width = {_left.Rect.Width}; New Right Rectangle Position: {_right.Rect.X}");
+
+
 					updated = true;
 				}
 			}
