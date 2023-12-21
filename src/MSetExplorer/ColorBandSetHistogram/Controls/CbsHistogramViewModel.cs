@@ -517,12 +517,29 @@ namespace MSetExplorer
 			}
 		}
 
+		private bool _colorBandUserControlHasErrors;
+
+		public bool ColorBandUserControlHasErrors
+		{
+			get => _colorBandUserControlHasErrors;
+			set
+			{
+				if (value != _colorBandUserControlHasErrors)
+				{
+					_colorBandUserControlHasErrors = value;
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandUserControlHasErrors));
+				}
+			}
+		}
+
 		#endregion
 
 		#region Public Methods
 
 		public bool TryMoveCurrentColorBandToNext()
 		{
+			if (ColorBandUserControlHasErrors) return false;
+
 			if (CurrentColorBandIndex > ColorBandsCount - 2) return false;
 			var result = _colorBandsView.MoveCurrentToNext();
 			return result;
@@ -530,6 +547,8 @@ namespace MSetExplorer
 
 		public bool TryMoveCurrentColorBandToPrevious()
 		{
+			if (ColorBandUserControlHasErrors) return false;
+
 			if (CurrentColorBandIndex < 1) return false;
 
 			var result = _colorBandsView.MoveCurrentToPrevious();
@@ -1014,9 +1033,19 @@ namespace MSetExplorer
 			// Cutoff is being updated
 			else if (e.PropertyName == nameof(ColorBand.Cutoff))
 			{
+				if (cb.BucketWidth < 0)
+				{
+					throw new ArgumentOutOfRangeException("BucketWidth is < 0");
+				}
+
 				if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
 				{
 					successorColorBand.PreviousCutoff = cb.Cutoff;
+
+					if (successorColorBand.BucketWidth < 0)
+					{
+						throw new ArgumentOutOfRangeException("The next ColorBand's BucketWidth is < 0");
+					}
 				}
 
 				foundUpdate = true;

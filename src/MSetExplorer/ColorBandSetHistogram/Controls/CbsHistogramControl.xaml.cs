@@ -236,7 +236,23 @@ namespace MSetExplorer
 		// Apply
 		private void ApplyCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.ApplyChanges();
+			//if (clrBandDetail.HasCutoffError())
+			//{
+			//	return;
+			//}
+			//else
+			//{
+			//	_vm.ApplyChanges();
+			//}
+
+			if (_vm.ColorBandUserControlHasErrors)
+			{
+				return;
+			}
+			else
+			{
+				_vm.ApplyChanges();
+			}
 		}
 
 		#endregion

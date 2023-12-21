@@ -430,19 +430,23 @@ namespace MSS.Types
 					var cb = colorBands[i];
 					cb.PreviousCutoff = prevCutoff;
 					cb.SuccessorStartColor = colorBands[i + 1].StartColor;
-					prevCutoff = cb.Cutoff;
 
 					var bucketWidth = cb.Cutoff - startingCutoff;
 					Debug.Assert(bucketWidth >= 0, "The bucket width is negative while creating the ColorBandSet.");
+
+					prevCutoff = cb.Cutoff;
 					startingCutoff = cb.Cutoff + 1;
 
 					if (cb.BlendStyle == ColorBandBlendStyle.None)
 					{
 						cb.EndColor = cb.StartColor;
 					}
-					else if (cb.BlendStyle == ColorBandBlendStyle.Next)
+					else
 					{
-						cb.EndColor = colorBands[i + 1].StartColor;
+						if (cb.BlendStyle == ColorBandBlendStyle.Next)
+						{
+							cb.EndColor = colorBands[i + 1].StartColor;
+						}
 					}
 				}
 
@@ -457,13 +461,7 @@ namespace MSS.Types
 					lastCb.EndColor = lastCb.StartColor;
 				}
 
-				lastCb.Cutoff = lastCb.Cutoff; // + 2; // Force the inclusion of the counts above the target iterations as a 'real' color band.
-
-				var totalWidth = result.Sum(x => x.BucketWidth);
-				var maxCutoff = lastCb.Cutoff;
-				var minCutoff = colorBands[0].StartingCutoff;
-
-				var totalRange = 1 + maxCutoff - minCutoff;
+				//lastCb.Cutoff = lastCb.Cutoff + 2; // Force the inclusion of the counts above the target iterations as a 'real' color band.
 
 				ReportBucketWidthsAndCutoffs(result);
 			}
@@ -474,6 +472,13 @@ namespace MSS.Types
 		[Conditional("DEBUG2")]
 		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands)
 		{
+			var totalWidth = colorBands.Sum(x => x.BucketWidth);
+			var minCutoff = colorBands[0].StartingCutoff;
+			var maxCutoff = colorBands[^1].Cutoff;
+			var totalRange = 1 + maxCutoff - minCutoff;
+
+			Debug.WriteLine($"Total Width: {totalWidth}, Total Range: {totalRange}, Min Cutoff: {minCutoff}, Max Cutoff: {maxCutoff}.");
+
 			var bucketWidths = string.Join("; ", colorBands.Select(x => x.BucketWidth.ToString()).ToArray());
 			Debug.WriteLine($"Bucket Widths: {bucketWidths}.");
 

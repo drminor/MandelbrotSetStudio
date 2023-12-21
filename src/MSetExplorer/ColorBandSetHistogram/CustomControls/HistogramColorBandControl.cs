@@ -540,17 +540,17 @@ namespace MSetExplorer
 				case CbsSelectionLineDragOperation.Complete:
 					_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
 
-					// *** Diag
-					var colorBandToUpdate = GetColorBandAt(ColorBandsView!, e.ColorBandIndex);
+					//// *** Diag
+					//var colorBandToUpdate = GetColorBandAt(ColorBandsView!, e.ColorBandIndex);
 
-					var oPos = _selectionLineBeingDragged!.OriginalSelectionLinePosition;
-					var scaledAmount = e.NewXPosition - oPos;
-					var amount = (int)Math.Round(scaledAmount / ContentScale.Width);
+					//var oPos = _selectionLineBeingDragged!.OriginalSelectionLinePosition;
+					//var scaledAmount = e.NewXPosition - oPos;
+					//var amount = (int)Math.Round(scaledAmount / ContentScale.Width);
 
 
-					var newCutoff = colorBandToUpdate.Cutoff + amount;
-					var newCutoffOldstyle = (int)Math.Round(e.NewXPosition / ContentScale.Width);
-					// *** End diag
+					//var newCutoff = colorBandToUpdate.Cutoff + amount;
+					//var newCutoffOldstyle = (int)Math.Round(e.NewXPosition / ContentScale.Width);
+					//// *** End diag
 
 					_selectionLineBeingDragged = null;
 
@@ -715,8 +715,13 @@ namespace MSetExplorer
 
 		#region ColorBand Support
 
-		private bool UpdateSelectionLinePosition(int colorBandIndex, int newCutoff)
+		private void UpdateSelectionLinePosition(int colorBandIndex, int newCutoff)
 		{
+			if (_selectionLines.Count == 0)
+			{
+				return; // false;
+			}
+
 			if (colorBandIndex < 0 || colorBandIndex > _colorBandRectangles.Count - 2)
 			{
 				throw new InvalidOperationException($"DrawColorBands. The ColorBandIndex must be between 0 and {_colorBandRectangles.Count - 1}, inclusive.");
@@ -725,9 +730,11 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl. About to call SelectionLine::UpdatePosition. Index = {colorBandIndex}");
 
 			var selectionLine = _selectionLines[colorBandIndex];
-			var updated = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
 
-			return updated;
+			//var updated = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
+			//return updated;
+
+			_ = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
 		}
 
 		private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)

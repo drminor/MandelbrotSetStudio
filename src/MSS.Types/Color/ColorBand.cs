@@ -28,14 +28,16 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public ColorBand() : this(0, ColorBandColor.White, ColorBandBlendStyle.None, ColorBandColor.Black)
+		public ColorBand() 
+			: this(0, ColorBandColor.White, ColorBandBlendStyle.None, ColorBandColor.Black)
 		{ }
 
 		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
 			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
 		{ }
 
-		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor) : this(cutoff, startColor, blendStyle, endColor, null, null, 0)
+		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
+			: this(cutoff, startColor, blendStyle, endColor, null, null, 0)
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, int? previousCutoff, ColorBandColor? successorStartColor, double percentage)
@@ -135,11 +137,6 @@ namespace MSS.Types
 			{
 				if (value != _previousCutoff)
 				{
-					if (value == 91)
-					{
-						Debug.WriteLine("Setting PreviousCutoff to 91.");
-					}
-
 					var origVal = _previousCutoff;
 					_previousCutoff = value;
 					OnPropertyChanged();
@@ -151,6 +148,17 @@ namespace MSS.Types
 					}
 				}
 			}
+		}
+
+
+		private bool CheckPreviousCutoff(int prevCutoff, int cutoff)
+		{
+			var thisColorBandsStartingCutoff = prevCutoff + 1;
+			var diff = cutoff - thisColorBandsStartingCutoff;
+
+			var result = diff >= 0;
+
+			return result;
 		}
 
 		public ColorBandColor? SuccessorStartColor
