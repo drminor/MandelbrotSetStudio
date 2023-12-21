@@ -531,16 +531,6 @@ namespace MSetExplorer
 				Debug.WriteLine($"WARNING: Setting the Cutoff to zero for ColorBandIndex: {e.ColorBandIndex}.");
 			}
 
-
-
-
-			//var ccb = CurrentColorBand;
-
-			//if (ccb == null)
-			//	return;
-
-			//CheckColorBandIndex(e.ColorBandIndex, ccb);
-
 			switch (e.Operation)
 			{
 				case CbsSelectionLineDragOperation.Move:
@@ -719,25 +709,6 @@ namespace MSetExplorer
 			{
 				base.OnKeyDown(e);
 			}
-		}
-
-		[Conditional("DEBUG")]
-		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
-		{
-			if (ColorBandsView == null)
-				return;
-
-			var testColorBand = GetColorBandAt(ColorBandsView, colorBandIndex);
-
-			if (testColorBand.Cutoff != currentColorBand.Cutoff)
-			{
-				Debug.WriteLine("Cutoff Mismatch.");
-			}
-
-			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
-			//{
-			//	Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
-			//}
 		}
 
 		#endregion

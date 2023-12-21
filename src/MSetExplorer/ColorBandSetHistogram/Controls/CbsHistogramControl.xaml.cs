@@ -106,6 +106,10 @@ namespace MSetExplorer
 			//	3. UnscaledViewportSize = ContentViewportSize * ContentScale
 
 			var viewPortWidth = HistogramPlotControl1.PlotDataWidth - 25;
+
+			if (viewPortWidth < 100) viewPortWidth = 100;
+
+
 			var unscaledExtentWidth = e.UnscaledExtent.Width;
 			var minContentScale = viewPortWidth / unscaledExtentWidth;
 			var contentScale = minContentScale;
