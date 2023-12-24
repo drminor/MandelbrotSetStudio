@@ -53,13 +53,17 @@ namespace MSS.Types
 			_actualEndColor = GetActualEndColor();
 		}
 
-		// Create a single instance for all to use.
-		//private static ColorBand _emptySingleton = new ColorBand();
+		private static ColorBand _emptySingleton = new ColorBand();
 
-		// Create a new intance on each reference
-		private static ColorBand _emptySingleton => new ColorBand();
-
+		/// <summary>
+		/// Return the shared, single, empty instance.
+		/// </summary>
 		public static ColorBand Empty => _emptySingleton;
+
+		/// <summary>
+		/// Return a new empty intance
+		/// </summary>
+		public static ColorBand NewEmpty => new ColorBand();
 
 		#endregion
 
@@ -84,6 +88,32 @@ namespace MSS.Types
 			}
 		}
 
+		public int? PreviousCutoff
+		{
+			get => _previousCutoff;
+			set
+			{
+				if (value != _previousCutoff)
+				{
+					var origVal = _previousCutoff;
+					_previousCutoff = value;
+					OnPropertyChanged();
+					OnPropertyChanged(nameof(StartingCutoff));
+
+					if (origVal.HasValue != value.HasValue)
+					{
+						OnPropertyChanged(nameof(IsFirst));
+					}
+				}
+			}
+		}
+
+		public int StartingCutoff => (_previousCutoff ?? -1) + 1;
+
+		public bool IsFirst => !_previousCutoff.HasValue;
+		public bool IsLast => !_successorStartColor.HasValue;
+		public int BucketWidth => Cutoff - StartingCutoff;
+
 		public ColorBandColor StartColor
 		{
 			get => _startColor;
@@ -106,7 +136,6 @@ namespace MSS.Types
 			{
 				if (value != _blendStyle)
 				{
-					var origVal = _blendStyle;
 					_blendStyle = value;
 					OnPropertyChanged();
 
@@ -130,37 +159,6 @@ namespace MSS.Types
 			}
 		}
 
-		public int? PreviousCutoff
-		{
-			get => _previousCutoff;
-			set
-			{
-				if (value != _previousCutoff)
-				{
-					var origVal = _previousCutoff;
-					_previousCutoff = value;
-					OnPropertyChanged();
-					OnPropertyChanged(nameof(StartingCutoff));
-
-					if (origVal.HasValue != value.HasValue)
-					{
-						OnPropertyChanged(nameof(IsFirst));
-					}
-				}
-			}
-		}
-
-
-		private bool CheckPreviousCutoff(int prevCutoff, int cutoff)
-		{
-			var thisColorBandsStartingCutoff = prevCutoff + 1;
-			var diff = cutoff - thisColorBandsStartingCutoff;
-
-			var result = diff >= 0;
-
-			return result;
-		}
-
 		public ColorBandColor? SuccessorStartColor
 		{
 			get => _successorStartColor;
@@ -182,25 +180,6 @@ namespace MSS.Types
 			}
 		}
 
-		public double Percentage
-		{
-			get => _percentage;
-			set
-			{
-				if (value != _percentage)
-				{
-					_percentage = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public int StartingCutoff => (_previousCutoff ?? -1) + 1;
-
-		public bool IsFirst => !_previousCutoff.HasValue;
-		public bool IsLast => !_successorStartColor.HasValue;
-		public int BucketWidth => Cutoff - StartingCutoff;
-
 		public ColorBandColor ActualEndColor
 		{
 			get => _actualEndColor;
@@ -209,6 +188,19 @@ namespace MSS.Types
 				if (value != _actualEndColor)
 				{
 					_actualEndColor = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public double Percentage
+		{
+			get => _percentage;
+			set
+			{
+				if (value != _percentage)
+				{
+					_percentage = value;
 					OnPropertyChanged();
 				}
 			}

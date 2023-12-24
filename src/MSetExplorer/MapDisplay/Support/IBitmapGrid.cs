@@ -21,7 +21,7 @@ namespace MSetExplorer
 
 		ColorBandSet ColorBandSet { get; set; }
 		ColorBand? CurrentColorBand { get; }
-		int SelectedColorBandIndex { get; set; }
+		int CurrentColorBandIndex { get; set; }
 
 		bool HighlightSelectedColorBand { get; set; }
 

@@ -9,7 +9,7 @@
       "nativeDebugging": false,
 
       //"applicationUrl": "http://localhost:5000;https://localhost:5001"
-      "applicationUrl": "http://192.168.2.102:5000"
+      "applicationUrl": "http://192.168.2.106:5000"
 
     }
   }

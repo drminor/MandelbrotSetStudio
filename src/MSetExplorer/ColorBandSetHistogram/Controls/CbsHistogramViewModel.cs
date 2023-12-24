@@ -993,9 +993,9 @@ namespace MSetExplorer
 			{
 				if (ColorBandSet != null)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the SelectedColorBandIndex from: {ColorBandSet.SelectedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the CurrentColorBandIndex from: {ColorBandSet.CurrentColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
 
-					ColorBandSet.SelectedColorBandIndex = ColorBandsView.CurrentPosition;
+					ColorBandSet.CurrentColorBandIndex = ColorBandsView.CurrentPosition;
 				}
 
 				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;

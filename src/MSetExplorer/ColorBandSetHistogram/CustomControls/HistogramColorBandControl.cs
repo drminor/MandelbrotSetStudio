@@ -731,9 +731,6 @@ namespace MSetExplorer
 
 			var selectionLine = _selectionLines[colorBandIndex];
 
-			//var updated = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
-			//return updated;
-
 			_ = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
 		}
 
@@ -1116,7 +1113,7 @@ namespace MSetExplorer
 
 		public static readonly DependencyProperty CurrentColorBandProperty =
 		DependencyProperty.Register("CurrentColorBand", typeof(ColorBand), typeof(HistogramColorBandControl),
-									new FrameworkPropertyMetadata(ColorBand.Empty, CurrentColorBandProperty_Changed));
+									new FrameworkPropertyMetadata(ColorBand.NewEmpty, CurrentColorBandProperty_Changed));
 
 		private static void CurrentColorBandProperty_Changed(DependencyObject o, DependencyPropertyChangedEventArgs e)
 		{

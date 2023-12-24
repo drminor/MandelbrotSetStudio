@@ -124,14 +124,14 @@ namespace MSetExplorer
 				}
 				else
 				{
-					if (HighlightSelectedColorBand && value.SelectedColorBand != _colorBandSet.SelectedColorBand)
+					if (HighlightSelectedColorBand && value.CurrentColorBand != _colorBandSet.CurrentColorBand)
 					{
 						//if (_colorMap != null)
 						//{
 						//	ReDrawSections(reapplyColorMap: true);
 						//}
 
-						CurrentColorBand = value.SelectedColorBand;
+						CurrentColorBand = value.CurrentColorBand;
 					}
 				}
 			}
@@ -139,10 +139,10 @@ namespace MSetExplorer
 
 		public ColorBand? CurrentColorBand
 		{
-			get => _colorBandSet.SelectedColorBand;
+			get => _colorBandSet.CurrentColorBand;
 			set
 			{
-				_colorBandSet.SelectedColorBand = value;
+				_colorBandSet.CurrentColorBand = value;
 
 				if (HighlightSelectedColorBand && _colorMap != null)
 				{
@@ -151,12 +151,12 @@ namespace MSetExplorer
 			}
 		}
 
-		public int SelectedColorBandIndex
+		public int CurrentColorBandIndex
 		{
-			get => ColorBandSet.SelectedColorBandIndex;
+			get => ColorBandSet.CurrentColorBandIndex;
 			set
 			{
-				ColorBandSet.SelectedColorBandIndex = value;
+				ColorBandSet.CurrentColorBandIndex = value;
 
 				if (HighlightSelectedColorBand && _colorMap != null)
 				{

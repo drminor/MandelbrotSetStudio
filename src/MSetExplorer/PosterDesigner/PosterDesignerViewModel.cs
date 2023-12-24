@@ -138,8 +138,8 @@ namespace MSetExplorer
 		//		{
 		//			//MapDisplayViewModel.CurrentColorBand = ColorBandSetViewModel.CurrentColorBand;
 
-		//			var selectedColorBandIndex = ColorBandSetViewModel.ColorBandSet.SelectedColorBandIndex;
-		//			MapDisplayViewModel.SelectedColorBandIndex = selectedColorBandIndex;
+		//			var currentColorBandIndex = ColorBandSetViewModel.ColorBandSet.CurrentColorBandIndex;
+		//			MapDisplayViewModel.CurrentColorBandIndex = currentColorBandIndex;
 		//		}
 		//	}
 		//}
@@ -167,8 +167,8 @@ namespace MSetExplorer
 
 				if (CbsHistogramViewModel.ColorBandSet != null)
 				{
-					var selectedColorBandIndex = CbsHistogramViewModel.ColorBandSet.SelectedColorBandIndex;
-					MapDisplayViewModel.SelectedColorBandIndex = selectedColorBandIndex;
+					var currentColorBandIndex = CbsHistogramViewModel.ColorBandSet.CurrentColorBandIndex;
+					MapDisplayViewModel.CurrentColorBandIndex = currentColorBandIndex;
 				}
 			}
 		}

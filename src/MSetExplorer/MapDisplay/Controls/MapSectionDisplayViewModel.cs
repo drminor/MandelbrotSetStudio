@@ -138,10 +138,10 @@ namespace MSetExplorer
 			//set => _bitmapGrid.CurrentColorBand = value;
 		}
 
-		public int SelectedColorBandIndex
+		public int CurrentColorBandIndex
 		{
-			get => _bitmapGrid.SelectedColorBandIndex;
-			set => _bitmapGrid.SelectedColorBandIndex = value;
+			get => _bitmapGrid.CurrentColorBandIndex;
+			set => _bitmapGrid.CurrentColorBandIndex = value;
 		}
 
 		public bool UseEscapeVelocities

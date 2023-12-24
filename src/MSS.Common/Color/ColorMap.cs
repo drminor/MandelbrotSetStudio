@@ -19,7 +19,7 @@ namespace MSS.Common
         private readonly int _highColorBandCutoff;
         private readonly int _highColorBandIndex;
 
-		private int _selectedColorBandIndex;
+		private int _currentColorBandIndex;
         private bool _disposedValue;
 
 		#endregion
@@ -31,7 +31,7 @@ namespace MSS.Common
 			_colorBandSet = colorBandSet ?? throw new ArgumentNullException(nameof(colorBandSet));
             //Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
-            _selectedColorBandIndex = _colorBandSet.SelectedColorBandIndex;
+            _currentColorBandIndex = _colorBandSet.CurrentColorBandIndex;
             if (_colorBandSet is INotifyPropertyChanged inpc)
             {
                 inpc.PropertyChanged += ColorBandSet_PropertyChanged;
@@ -57,12 +57,12 @@ namespace MSS.Common
         {
 			//if (e.PropertyName == nameof(ColorBandSet.SelectedColorBand))
 			//{
-			//    _selectedColorBandIndex = _colorBandSet.SelectedColorBandIndex;
+			//    _selectedColorBandIndex = _colorBandSet.CurrentColorBandIndex;
 			//}
 
-			if (e.PropertyName == nameof(ColorBandSet.SelectedColorBandIndex))
+			if (e.PropertyName == nameof(ColorBandSet.CurrentColorBandIndex))
 			{
-				_selectedColorBandIndex = _colorBandSet.SelectedColorBandIndex;
+				_currentColorBandIndex = _colorBandSet.CurrentColorBandIndex;
 			}
 		}
 
@@ -96,7 +96,7 @@ namespace MSS.Common
                 errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
             }
 
-            if (HighlightSelectedColorBand && idx != _selectedColorBandIndex)
+            if (HighlightSelectedColorBand && idx != _currentColorBandIndex)
 			{
                 destination[3] = 25; // set the opacity to 25, instead of 255.
 			}

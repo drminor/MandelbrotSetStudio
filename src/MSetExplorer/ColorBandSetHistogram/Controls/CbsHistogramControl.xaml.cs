@@ -180,6 +180,16 @@ namespace MSetExplorer
 			}
 		}
 
+		private void MoveLeftButton_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.TryMoveCurrentColorBandToPrevious();
+		}
+
+		private void MoveRightButton_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.TryMoveCurrentColorBandToNext();
+		}
+
 		#endregion
 
 		#region Command Binding Handlers
@@ -187,7 +197,7 @@ namespace MSetExplorer
 		// Insert CanExecute
 		private void InsertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.CurrentColorBand != null;
+			e.CanExecute = _vm?.CurrentColorBand != null && !_vm.ColorBandUserControlHasErrors;
 		}
 
 		// Insert
@@ -218,33 +228,31 @@ namespace MSetExplorer
 		// Revert CanExecute
 		private void RevertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.IsDirty ?? false;
+			e.CanExecute = _vm != null && _vm.IsDirty && !_vm.ColorBandUserControlHasErrors;
 		}
 
 		// Revert
 		private void RevertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_vm.RevertChanges();
+			if (_vm.ColorBandUserControlHasErrors)
+			{
+				return;
+			}
+			else
+			{
+				_vm.RevertChanges();
+			}
 		}
 
 		// Apply CanExecute
 		private void ApplyCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.IsDirty ?? false;
+			e.CanExecute = _vm != null && _vm.IsDirty && !_vm.ColorBandUserControlHasErrors;
 		}
 
 		// Apply
 		private void ApplyCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			//if (clrBandDetail.HasCutoffError())
-			//{
-			//	return;
-			//}
-			//else
-			//{
-			//	_vm.ApplyChanges();
-			//}
-
 			if (_vm.ColorBandUserControlHasErrors)
 			{
 				return;
@@ -306,15 +314,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		private void MoveLeftButton_Click(object sender, RoutedEventArgs e)
-		{
-			_vm.TryMoveCurrentColorBandToPrevious();
-		}
-
-		private void MoveRightButton_Click(object sender, RoutedEventArgs e)
-		{
-			_vm.TryMoveCurrentColorBandToNext();
-		}
 	}
 }

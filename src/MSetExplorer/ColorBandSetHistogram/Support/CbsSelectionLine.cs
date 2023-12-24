@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Text;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -27,6 +29,9 @@ namespace MSetExplorer
 		private readonly double _scale;
 
 		private readonly Line _dragLine;
+		private readonly Polygon _topArrow;
+		private double _topArrowHalfWidth;
+
 		private DragState _dragState;
 
 		private double _originalXPosition;
@@ -42,9 +47,12 @@ namespace MSetExplorer
 
 		public CbsSelectionLine(Canvas canvas, double elevation, double height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right, double scale)
 		{
+			_dragState = DragState.None;
+
 			_canvas = canvas;
 			_cbElevation = elevation;
 			_cbHeight = height;
+
 
 			ColorBandIndex = colorBandIndex;
 			_selectionLinePosition = xPosition;
@@ -59,11 +67,13 @@ namespace MSetExplorer
 			_originalRightGeometry = new RectangleGeometry(_right.Rect);
 
 			_dragLine = BuildDragLine(elevation, height, xPosition);
-
-			_dragState = DragState.None;
-
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
+
+			_topArrowHalfWidth = (elevation - 2) / 2;
+			_topArrow = BuildTopArrow(elevation, xPosition, _topArrowHalfWidth);
+			_canvas.Children.Add(_topArrow);
+			_topArrow.SetValue(Panel.ZIndexProperty, 30);
 		}
 
 		private Line BuildDragLine(double elevation, double height, double xPosition)
@@ -77,6 +87,27 @@ namespace MSetExplorer
 				Y2 = elevation + height,
 				X1 = xPosition,
 				X2 = xPosition,
+				Focusable = true
+			};
+
+			return result;
+		}
+
+		private Polygon BuildTopArrow(double elevation, double xPosition, double halfWidth)
+		{
+			var points = new PointCollection()
+			{
+				new Point(xPosition, elevation),
+				new Point(xPosition - halfWidth, 0),
+				new Point(xPosition + halfWidth, 0),
+			};
+
+			var result = new Polygon()
+			{
+				Fill = Brushes.Goldenrod,
+				Stroke = Brushes.DarkGray,
+				StrokeThickness = 2,
+				Points = points,
 				Focusable = true
 			};
 
@@ -107,6 +138,15 @@ namespace MSetExplorer
 					_selectionLinePosition = value;
 					_dragLine.X1 = value;
 					_dragLine.X2 = value;
+
+					var points = new PointCollection()
+					{
+						new Point(_selectionLinePosition, CbElevation),
+						new Point(_selectionLinePosition - _topArrowHalfWidth, 0),
+						new Point(_selectionLinePosition + _topArrowHalfWidth, 0),
+					};
+
+					_topArrow.Points = points;
 				}
 			}
 		}
@@ -183,6 +223,7 @@ namespace MSetExplorer
 				if (_canvas != null)
 				{
 					_canvas.Children.Remove(_dragLine);
+					_canvas.Children.Remove(_topArrow);
 				}
 			}
 			catch
@@ -198,7 +239,7 @@ namespace MSetExplorer
 				if (_canvas != null)
 				{
 					_dragLine.Stroke.Opacity = 0;
-					//_canvas.Children.Remove(_dragLine);
+					_topArrow.Visibility = Visibility.Collapsed;
 				}
 			}
 			catch
@@ -214,7 +255,7 @@ namespace MSetExplorer
 				if (_canvas != null)
 				{
 					_dragLine.Stroke.Opacity = 1;
-					//_canvas.Children.Remove(_dragLine);
+					_topArrow.Visibility = Visibility.Visible;
 				}
 			}
 			catch

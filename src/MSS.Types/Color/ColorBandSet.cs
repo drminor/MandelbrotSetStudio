@@ -25,7 +25,7 @@ namespace MSS.Types
 
 		private DateTime _lastSavedUtc;
 
-		private int _selectedColorBandIndex;
+		private int _currentColorBandIndex;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -66,7 +66,7 @@ namespace MSS.Types
 			_reservedColorBands = reservedColorBands == null ? new Stack<ReservedColorBand>() : new Stack<ReservedColorBand>(reservedColorBands);
 			ColorBandsSerialNumber = colorBandsSerialNumber;
 
-			_selectedColorBandIndex = 0;
+			_currentColorBandIndex = 0;
 			//SelectedColorBandIndex = 0;
 
 			_lastSavedUtc = DateTime.UtcNow;
@@ -148,24 +148,24 @@ namespace MSS.Types
 			}
 		}
 
-		public int SelectedColorBandIndex
+		public int CurrentColorBandIndex
 		{
-			get => _selectedColorBandIndex;
+			get => _currentColorBandIndex;
 			set
 			{
-				if (value != _selectedColorBandIndex)
+				if (value != _currentColorBandIndex)
 				{
 					if (value > Count - 1)
 					{
-						_selectedColorBandIndex = Count - 1;
+						_currentColorBandIndex = Count - 1;
 					}
 					else if (value < 0)
 					{
-						_selectedColorBandIndex = 0;
+						_currentColorBandIndex = 0;
 					}
 					else
 					{
-						_selectedColorBandIndex = value;
+						_currentColorBandIndex = value;
 
 					}
 					OnPropertyChanged();
@@ -173,25 +173,25 @@ namespace MSS.Types
 			}
 		}
 
-		public ColorBand? SelectedColorBand
+		public ColorBand? CurrentColorBand
 		{
 			get
 			{
-				if (SelectedColorBandIndex < 0 || SelectedColorBandIndex > Count - 1)
+				if (CurrentColorBandIndex < 0 || CurrentColorBandIndex > Count - 1)
 				{
 					return null;
 				}
 				else
 				{
-					return this[SelectedColorBandIndex];
+					return this[CurrentColorBandIndex];
 				}
 			}
 			set
 			{
-				var previousValue = SelectedColorBandIndex;
+				var previousValue = CurrentColorBandIndex;
 				if (value == null)
 				{
-					SelectedColorBandIndex = -1;
+					CurrentColorBandIndex = -1;
 				}
 				else
 				{
@@ -202,20 +202,20 @@ namespace MSS.Types
 						var colorBandWithMatchingCutoff = this.FirstOrDefault(x => x.Cutoff == value.Cutoff);
 						if (colorBandWithMatchingCutoff != null)
 						{
-							SelectedColorBandIndex = IndexOf(colorBandWithMatchingCutoff);
+							CurrentColorBandIndex = IndexOf(colorBandWithMatchingCutoff);
 						}
 						else
 						{
-							SelectedColorBandIndex = 0;
+							CurrentColorBandIndex = 0;
 						}
 					}
 					else
 					{
-						SelectedColorBandIndex = IndexOf(value);
+						CurrentColorBandIndex = IndexOf(value);
 					}
 				}
 
-				if (SelectedColorBandIndex != previousValue)
+				if (CurrentColorBandIndex != previousValue)
 				{
 					OnPropertyChanged();
 				}

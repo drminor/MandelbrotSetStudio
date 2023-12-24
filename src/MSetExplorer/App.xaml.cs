@@ -34,11 +34,11 @@ namespace MSetExplorer
 		//private const string MONGO_DB_SERVER = "desktop-bau7fe6";
 		//private const int MONGO_DB_PORT = 27017;
 
-		private static readonly string LOCAL_IP_ADDRESS = "192.168.2.100";
+		private static readonly string LOCAL_IP_ADDRESS = "192.168.2.106";
 
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://localhost:5000" };
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.109:5000" };
-		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.106:5000" };
+		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.102:5000" };
 
 		private static readonly bool USE_ALL_CORES = true;
 		private static readonly bool USE_REMOTE_ENGINES = false;
@@ -562,7 +562,8 @@ namespace MSetExplorer
 
 			if (useAllCores)
 			{
-				result = (int) Math.Round(((double) localTaskCount) / 2, MidpointRounding.AwayFromZero);
+				//result = (int) Math.Round(((double) localTaskCount) / 2, MidpointRounding.AwayFromZero);
+				result = 8;
 			}
 			else
 			{

@@ -89,7 +89,7 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
 			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram, mapDisplayViewModel.MapSections);
-			var colorBandSetViewModel = new ColorBandSetViewModel(mapSectionHistogramProcessor);
+			//var colorBandSetViewModel = new ColorBandSetViewModel(mapSectionHistogramProcessor);
 
 			// ColorBandSet Histogram ViewModel
 			var cbsHistogramViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);

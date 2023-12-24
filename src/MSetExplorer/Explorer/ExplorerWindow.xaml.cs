@@ -178,14 +178,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBandSetViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
-			{
-				CommandManager.InvalidateRequerySuggested();
-			}
-		}
-
 		private void CbsHistogramViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(CbsHistogramViewModel.IsDirty))

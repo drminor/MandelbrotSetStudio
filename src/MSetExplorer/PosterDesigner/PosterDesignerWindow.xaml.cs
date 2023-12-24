@@ -74,7 +74,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm.PosterViewModel.PropertyChanged += PosterViewModel_PropertyChanged;
-				_vm.CbsHistogramViewModel.PropertyChanged += ColorBandSetViewModel_PropertyChanged;
+				_vm.CbsHistogramViewModel.PropertyChanged += CbsHistogramViewModel_PropertyChanged;
 
 				Debug.WriteLine("The PosterDesigner Window is now loaded");
 			}
@@ -106,7 +106,7 @@ namespace MSetExplorer
 			Unloaded -= PosterDesignerWindow_Unloaded;
 
 			_vm.PosterViewModel.PropertyChanged -= PosterViewModel_PropertyChanged;
-			_vm.CbsHistogramViewModel.PropertyChanged -= ColorBandSetViewModel_PropertyChanged;
+			_vm.CbsHistogramViewModel.PropertyChanged -= CbsHistogramViewModel_PropertyChanged;
 
 		}
 
@@ -134,9 +134,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBandSetViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		private void CbsHistogramViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(ColorBandSetViewModel.IsDirty))
+			if (e.PropertyName == nameof(CbsHistogramViewModel.IsDirty))
 			{
 				CommandManager.InvalidateRequerySuggested();
 			}
