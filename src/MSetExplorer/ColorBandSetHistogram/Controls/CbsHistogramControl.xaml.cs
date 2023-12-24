@@ -17,7 +17,7 @@ namespace MSetExplorer
 
 		private ICbsHistogramViewModel _vm;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -73,9 +73,14 @@ namespace MSetExplorer
 				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
 				HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
 
+				MouseEnter += HandleMouseEnter;
+				MouseLeave += HandleMouseLeave;
+
 				Debug.WriteLine("The CbsHistogramControl is now loaded.");
 			}
 		}
+
+
 
 		private void CbsHistogramControl_Unloaded(object sender, RoutedEventArgs e)
 		{
@@ -92,6 +97,9 @@ namespace MSetExplorer
 
 			PanAndZoomControl1.Dispose();
 			PanAndZoomControl1.ZoomOwner = null;
+
+			MouseEnter -= HandleMouseEnter;
+			MouseLeave -= HandleMouseLeave;
 		}
 
 		#endregion
@@ -105,10 +113,12 @@ namespace MSetExplorer
 			//	2. ContentScale = UnscaledViewportSize / ContentViewportSize
 			//	3. UnscaledViewportSize = ContentViewportSize * ContentScale
 
-			var viewPortWidth = HistogramPlotControl1.PlotDataWidth - 25;
+			var viewPortWidth = HistogramPlotControl1.PlotDataWidth; // - 25;
 
-			if (viewPortWidth < 100) viewPortWidth = 100;
-
+			if (viewPortWidth < 100)
+			{
+				viewPortWidth = 100;
+			}
 
 			var unscaledExtentWidth = e.UnscaledExtent.Width;
 			var minContentScale = viewPortWidth / unscaledExtentWidth;
@@ -178,6 +188,24 @@ namespace MSetExplorer
 			{
 				HistogramColorBandControl1.IsHorizontalScrollBarVisible = _vm.HorizontalScrollBarVisibility == ScrollBarVisibility.Visible;
 			}
+		}
+
+
+		private void HandleMouseLeave(object sender, MouseEventArgs e)
+		{
+			var imo = IsMouseOver;
+
+			if (imo)
+			{
+				Debug.WriteLine("We got a mouse leave, however IsMouseOver = true.");
+			}
+
+			HistogramColorBandControl1.Handle_MouseLeave(sender, e);
+		}
+
+		private void HandleMouseEnter(object sender, MouseEventArgs e)
+		{
+			HistogramColorBandControl1.Handle_MouseEnter(sender, e);
 		}
 
 		private void MoveLeftButton_Click(object sender, RoutedEventArgs e)
@@ -289,8 +317,12 @@ namespace MSetExplorer
 				rightMargin = 0;
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
-			ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 2);
+			//Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}.");
+
+			Debug.WriteLine($"The CbsHistogramControl is setting the ColorBandControl Border Margins to L:{leftMargin} and R:{rightMargin}. The Column2Width:{column2Width}, the borderWidth: {borderWidth}, viewportOffsetX: {viewportOffsetX}, viewportWidth: {viewportWidth}");
+
+
+			ColorBandAreaBorder.Margin = new Thickness(leftMargin, 0, rightMargin, 5);
 		}
 
 		#endregion

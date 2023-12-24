@@ -208,7 +208,17 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+					//Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+					
+					// BEGIN Temporary Test
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; raising the ViewportSizeChanged event anyway.");
+
+					var previousValue = ViewportSize;
+					_viewportSize = value;
+
+					ViewportSizeChanged?.Invoke(this, (previousValue, value));
+
+					// END Temporary Test
 				}
 			}
 		}
@@ -415,8 +425,10 @@ namespace MSetExplorer
 			(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(e.NewSize.Height, _isHorizontalScrollBarVisible);
 		}
 
-		private void Handle_MouseLeave(object sender, MouseEventArgs e)
+		public void Handle_MouseLeave(object sender, MouseEventArgs e)
 		{
+			if (sender is Canvas) return;
+
 			if (_selectionLineBeingDragged != null)
 			{
 				if (e.LeftButton != MouseButtonState.Pressed)
@@ -439,9 +451,9 @@ namespace MSetExplorer
 			_mouseIsEntered = false;
 		}
 
-		private void Handle_MouseEnter(object sender, MouseEventArgs e)
+		public void Handle_MouseEnter(object sender, MouseEventArgs e)
 		{
-			//if (ColorBandsView == null) return;
+			if (sender is Canvas) return;
 
 			if (_selectionLineBeingDragged != null)
 			{
@@ -954,7 +966,7 @@ namespace MSetExplorer
 
 			//Debug.WriteLine($"****The scale is {scaleSize} on DrawColorBands.");
 
-			var curOffset = 0;
+			//var curOffset = 0;
 
 			var endPtr = listCollectionView.Count - 1;
 
@@ -968,12 +980,16 @@ namespace MSetExplorer
 					bandWidth += 1;
 				}
 
+				var os = colorBand.StartingCutoff - 1;
+
 				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
-				var cbsRectangle = new CbsRectangle(i, curOffset, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize);
+				
+				//var cbsRectangle = new CbsRectangle(i, curOffset, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize);
+				var cbsRectangle = new CbsRectangle(i, os, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize);
 
 				_colorBandRectangles.Add(cbsRectangle);
 
-				curOffset += bandWidth;
+				// += bandWidth;
 			}
 		}
 
@@ -993,10 +1009,10 @@ namespace MSetExplorer
 
 				// This corresponds to the ColorBands Cutoff
 				var xPosition = gLeft.Rect.Right;
-				if (gLeft.Rect.Width > 2)
-				{
-					xPosition += 1;
-				}
+				//if (gLeft.Rect.Width > 2)
+				//{
+				//	xPosition += 1;
+				//}
 
 				if (xPosition < 2)
 				{

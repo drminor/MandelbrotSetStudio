@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:MSetExplorer"
              mc:Ignorable="d" d:Height="240" >
-    <Grid>
+    <Grid Background="Transparent">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

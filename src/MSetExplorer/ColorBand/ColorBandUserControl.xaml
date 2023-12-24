@@ -13,7 +13,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Background="Transparent">
 
         <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
 

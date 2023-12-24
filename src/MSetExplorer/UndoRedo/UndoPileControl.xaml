@@ -13,7 +13,7 @@
 
     </UserControl.CommandBindings>
 
-    <Grid>
+    <Grid Background="Transparent">
 
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Stretch" Orientation="Horizontal">
             <Button Name="btnUndo" HorizontalAlignment="Center" Width="55" Margin="5,0" Command="local:UndoRedoCommands.Undo">Undo</Button>

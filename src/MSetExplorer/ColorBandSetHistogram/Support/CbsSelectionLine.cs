@@ -104,7 +104,7 @@ namespace MSetExplorer
 
 			var result = new Polygon()
 			{
-				Fill = Brushes.Goldenrod,
+				Fill = Brushes.Transparent,
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
 				Points = points,

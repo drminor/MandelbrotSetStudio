@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		private ControlXPositionAndWidth _viewportOffsetAndWidth;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -53,47 +53,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public WpfPlot? WpfPlot1
-		{
-			get => _wpfPlot1;
-			set
-			{
-				if (_wpfPlot1 != null)
-				{
-					_wpfPlot1.SizeChanged -= WpfPlot1_SizeChanged;
-				}
-
-				_wpfPlot1 = value;
-
-				if (_wpfPlot1 == null)
-				{
-					return;
-				}
-
-				//_wpfPlot1.Configuration.Zoom = false;
-				//_wpfPlot1.Configuration.Pan = false;
-				//_wpfPlot1.Configuration.LeftClickDragPan = false;
-				_wpfPlot1.Configuration.RightClickDragZoom = false;
-				//_wpfPlot1.Configuration.ScrollWheelZoom = false;
-				_wpfPlot1.Configuration.MiddleClickDragZoom = false;
-				_wpfPlot1.Configuration.AltLeftClickDragZoom = false;
-				_wpfPlot1.Configuration.LockHorizontalAxis = true;
-
-				_wpfPlot1.SizeChanged += WpfPlot1_SizeChanged;
-
-				// Create some data -- so that we can create a plot -- so that we update the Viewport Pixel Offset.
-				var seriesData = new HPlotSeriesData(10);
-
-				_thePlot = CreateScatterPlot(_wpfPlot1, seriesData);
-
-				_wpfPlot1.Refresh();
-				var xAxisDimensions = _wpfPlot1.Plot.XAxis.Dims;
-				UpdateViewportPixelOffsetAndWidth(xAxisDimensions);
-
-				// Remove the plot -- to keep the display clean until we receive some actual data.
-				_wpfPlot1.Plot.Remove(_thePlot);
-			}
-		}
+		public WpfPlot? WpfPlot1 => _wpfPlot1;
 
 		private void WpfPlot1_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
@@ -222,7 +182,10 @@ namespace MSetExplorer
 			if (Content != null)
 			{
 				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
-				WpfPlot1 = BuildContentModel(_ourContent);
+
+				//WpfPlot1 = BuildContentModel(_ourContent);
+				_wpfPlot1 = BuildContentModel(_ourContent);
+				InitializePlot(_wpfPlot1);
 			}
 			else
 			{
@@ -241,6 +204,35 @@ namespace MSetExplorer
 			}
 
 			throw new InvalidOperationException("Cannot find a child image element of the HistogramPlotControl's Content, or the Content is not a Canvas element.");
+		}
+
+		private void InitializePlot(WpfPlot wpfPlot)
+		{
+			wpfPlot.SizeChanged -= WpfPlot1_SizeChanged;
+
+			//wpfPlot.Configuration.Zoom = false;
+			//wpfPlot.Configuration.Pan = false;
+			//wpfPlot.Configuration.LeftClickDragPan = false;
+			wpfPlot.Configuration.RightClickDragZoom = false;
+			//wpfPlot.Configuration.ScrollWheelZoom = false;
+			wpfPlot.Configuration.MiddleClickDragZoom = false;
+			wpfPlot.Configuration.AltLeftClickDragZoom = false;
+			wpfPlot.Configuration.LockHorizontalAxis = true;
+
+			wpfPlot.SizeChanged += WpfPlot1_SizeChanged;
+
+			// Create some data -- so that we can create a plot -- so that we update the Viewport Pixel Offset.
+			var seriesData = new HPlotSeriesData(10);
+
+			_thePlot = CreateScatterPlot(wpfPlot, seriesData);
+
+			wpfPlot.Refresh();
+			var xAxisDimensions = wpfPlot.Plot.XAxis.Dims;
+			UpdateViewportPixelOffsetAndWidth(xAxisDimensions);
+
+			// Remove the plot -- to keep the display clean until we receive some actual data.
+			wpfPlot.Plot.Remove(_thePlot);
+
 		}
 
 		#endregion
@@ -353,6 +345,17 @@ namespace MSetExplorer
 		private ScatterPlot CreateScatterPlot(WpfPlot wpfPlot, HPlotSeriesData seriesData)
 		{
 			var result = wpfPlot.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
+
+			var padding = new PixelPadding(
+				left: 100,
+				right: 30,
+				bottom: 35,
+				top: 10);
+
+			var x = wpfPlot.Plot;
+
+			x.ManualDataArea(padding);
+
 			return result;
 		}
 
