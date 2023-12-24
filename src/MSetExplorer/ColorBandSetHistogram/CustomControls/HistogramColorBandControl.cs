@@ -204,21 +204,31 @@ namespace MSetExplorer
 					var previousValue = ViewportSize;
 					_viewportSize = value;
 
+					// Recalculate the minimum display zoom and if the current zoom is less, update the display zoom.
+					var extent = GetExtent(ColorBandsView);
+					var minContentScale = _viewportSize.Width / extent;
+
+					if (_contentScale.Width < minContentScale)
+					{
+						_contentScale = new SizeDbl(minContentScale, _contentScale.Height);
+					}
+
+					// TODO: Update the IContentScaler interface to support updating the ContentScale and MinimumContentScale as well as the ViewportSize.
 					ViewportSizeChanged?.Invoke(this, (previousValue, value));
 				}
 				else
 				{
-					//Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
 					
-					// BEGIN Temporary Test
-					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; raising the ViewportSizeChanged event anyway.");
+					//// BEGIN Temporary Test
+					//Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; raising the ViewportSizeChanged event anyway.");
 
-					var previousValue = ViewportSize;
-					_viewportSize = value;
+					//var previousValue = ViewportSize;
+					//_viewportSize = value;
 
-					ViewportSizeChanged?.Invoke(this, (previousValue, value));
+					//ViewportSizeChanged?.Invoke(this, (previousValue, value));
 
-					// END Temporary Test
+					//// END Temporary Test
 				}
 			}
 		}

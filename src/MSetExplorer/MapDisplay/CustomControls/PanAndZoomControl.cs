@@ -1161,7 +1161,18 @@ namespace MSetExplorer
 
 		private void ContentScaler_ViewportSizeChanged(object? sender, (SizeDbl, SizeDbl) e)
 		{
+			// Added logic to adjust the scale as the ViewportSize is made larger than the unscaled extent.
+			if (_contentScaler != null && _contentScaler.ContentScale.Width != ContentScale)
+			{
+				ContentScale = _contentScaler.ContentScale.Width;
+			}
+			//else
+			//{
+			//	UpdateViewportSize(e.Item2);
+			//}
+
 			UpdateViewportSize(e.Item2);
+
 		}
 
 		#endregion
