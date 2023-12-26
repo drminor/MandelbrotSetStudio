@@ -1,8 +1,10 @@
+using Grpc.Net.Client;
 using MEngineClient;
 using MEngineDataContracts;
 using MSS.Common;
 using MSS.Types;
 using System.Diagnostics;
+using System.ServiceModel;
 
 namespace MClientTest
 {
@@ -20,7 +22,8 @@ namespace MClientTest
 		{
 			var mapSectionVectorProvider = CreateMapSectionVectorProvider();
 
-			var mClient = new MClient(clientNumber: 0, appUrl, mapSectionVectorProvider);
+			var grpChannel = GrpcChannel.ForAddress(appUrl);
+			var mClient = new MClient(clientNumber: 0, grpChannel, appUrl, mapSectionVectorProvider);
 
 			var response = mClient.GenerateMapSectionTest();
 

@@ -1,12 +1,11 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace MSS.Common
+namespace MSS.Types
 {
     public class ColorMap : IEquatable<ColorMap?>, IEqualityComparer<ColorMap>, IDisposable
     {

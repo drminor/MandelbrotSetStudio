@@ -278,7 +278,7 @@ namespace MSetExplorer
 				if (value != _isHorizontalScrollBarVisible)
 				{
 					_isHorizontalScrollBarVisible = value;
-					(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(ActualHeight, value);
+					(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(ActualHeight, _isHorizontalScrollBarVisible);
 				}
 			}
 		}
@@ -922,16 +922,17 @@ namespace MSetExplorer
 
 		private const int SCROLL_BAR_HEIGHT = 17;
 		private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
+		private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 2;
 
 		private (double, double) GetCbrElevationAndHeight(double controlHeight, bool isHorizontalScrollBarVisible)
 		{
 			if (isHorizontalScrollBarVisible)
 			{
-				return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SCROLL_BAR_HEIGHT + SELECTION_LINE_SELECTOR_HEIGHT));
+				return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING + SCROLL_BAR_HEIGHT));
 			}
 			else
 			{
-				return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - SELECTION_LINE_SELECTOR_HEIGHT);
+				return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING));
 			}
 		}
 
@@ -988,12 +989,26 @@ namespace MSetExplorer
 				return;
 			}
 
+			if (!shiftKeyPressed && !controlKeyPressed)
+			{
+				foreach(var selCb in _vm.SelectedItems.SelectedColorBands)
+				{
+					if (TryGetColorBandIndex(cbsView, selCb.ColorBand, out var index))
+					{
+						_colorBandRectangles[index.Value].IsSelected = false;
+					}
+				}
+				_vm.SelectedItems.Clear();
+			}
+
 			var colorBand = GetColorBandAt(cbsView, colorBandIndex);
 			var resultantSelType = _vm.SelectedItems.Select(colorBand, ColorBandSelectionType.Band);
 
-			_colorBandRectangles[colorBandIndex].IsSelected = 
-				colorBand.BlendStyle == ColorBandBlendStyle.End && resultantSelType.HasFlag(ColorBandSelectionType.Band) 
-				|| colorBand.BlendStyle != ColorBandBlendStyle.End && resultantSelType.HasFlag(ColorBandSelectionType.Colors);
+			//_colorBandRectangles[colorBandIndex].IsSelected = 
+			//	colorBand.BlendStyle == ColorBandBlendStyle.End && resultantSelType.HasFlag(ColorBandSelectionType.Band) 
+			//	|| colorBand.BlendStyle != ColorBandBlendStyle.End && resultantSelType.HasFlag(ColorBandSelectionType.Colors);
+
+			_colorBandRectangles[colorBandIndex].IsSelected = resultantSelType.HasFlag(ColorBandSelectionType.Color);
 		}
 
 		private void DrawSelectionLines(IList<CbsRectangle> colorBandRectangles)
@@ -1034,6 +1049,19 @@ namespace MSetExplorer
 			if (_vm == null || cbsView == null)
 			{
 				return;
+			}
+
+			if (!shiftKeyPressed && !controlKeyPressed)
+			{
+				foreach (var selCb in _vm.SelectedItems.SelectedColorBands)
+				{
+					if (TryGetColorBandIndex(cbsView, selCb.ColorBand, out var index))
+					{
+						_colorBandRectangles[index.Value].IsSelected = false;
+					}
+				}
+
+				_vm.SelectedItems.Clear();
 			}
 
 			var colorBand = GetColorBandAt(cbsView, colorBandIndex);

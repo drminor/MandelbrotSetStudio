@@ -89,6 +89,19 @@ namespace MSS.Types
 			}
 		}
 
+		/*
+
+		Target = 20
+
+		Cutoffs		5		10		15
+		Start		0		6		11
+		Width		5		4		4		4
+
+					0-5		6-10		11-15	16-20
+
+
+
+		*/
 		public int? PreviousCutoff
 		{
 			get => _previousCutoff;

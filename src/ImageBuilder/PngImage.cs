@@ -4,6 +4,7 @@ using System.IO;
 using MSS.Common;
 using System.Runtime.CompilerServices;
 using PngImageLib;
+using MSS.Types;
 
 namespace ImageBuilder
 {
