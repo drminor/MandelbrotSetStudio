@@ -12,6 +12,10 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
+		private static readonly Pen DEFAULT_PEN = new Pen(new SolidColorBrush(Colors.Transparent), 0);
+		private static readonly Pen IS_CURRENT_PEN = new Pen(new SolidColorBrush(Colors.DarkRed), 1);
+		private static readonly Pen IS_SELECTED_PEN = new Pen(new SolidColorBrush(Colors.DarkCyan), 2.5);
+
 		private RectangleGeometry _geometry;
 		private readonly Shape _rectanglePath;
 
@@ -28,6 +32,9 @@ namespace MSetExplorer
 		private Canvas _canvas;
 		//private SizeDbl _scaleSize;
 
+		private bool _isCurrent;
+		private bool _isSelected;
+
 		private readonly bool _useDetailedDebug = false;
 
 		#endregion
@@ -36,6 +43,9 @@ namespace MSetExplorer
 
 		public CbsRectangle(int colorBandIndex, double xPosition, double yPosition, double width, double height, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas, SizeDbl scaleSize)
 		{
+			_isCurrent = false;
+			_isSelected = false;
+
 			_canvas = canvas;
 			ColorBandIndex = colorBandIndex;
 
@@ -53,10 +63,15 @@ namespace MSetExplorer
 			_geometry = BuildRectangleGeometry(xPosition, yPosition, width, height, scaleSize);
 			_rectanglePath = BuildRectanglePath(_geometry, startColor, endColor, blend);
 
+			_rectanglePath.MouseUp += _rectanglePath_MouseUp;
+
 			_canvas.Children.Add(_rectanglePath);
-			//_rectanglePath.SetValue(Canvas.LeftProperty, _geometry.Rect.Left);
-			//_rectanglePath.SetValue(Canvas.TopProperty, _geometry.Rect.Top);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
+		}
+
+		private void _rectanglePath_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			IsSelected = !IsSelected;
 		}
 
 		#endregion
@@ -66,16 +81,30 @@ namespace MSetExplorer
 		public Shape Rectangle => _rectanglePath; 
 		public RectangleGeometry RectangleGeometry => _geometry;
 
-		public Brush Stroke
+		public bool IsCurrent
 		{
-			get => _rectanglePath.Stroke;
-			set => _rectanglePath.Stroke = value;
+			get => _isCurrent;
+			set
+			{
+				if (value != _isCurrent)
+				{
+					_isCurrent = value;
+					SetRectangleStroke();
+				}
+			}
 		}
 
-		public double StrokeThickness
+		public bool IsSelected
 		{
-			get => _rectanglePath.StrokeThickness;
-			set => _rectanglePath.StrokeThickness = value;
+			get => _isSelected;
+			set
+			{
+				if (value != _isSelected)
+				{
+					_isSelected = value;
+					SetRectangleStroke();
+				}
+			}
 		}
 
 		public int ColorBandIndex { get; init; }
@@ -206,7 +235,7 @@ namespace MSetExplorer
 
 		private RectangleGeometry BuildRectangleGeometry(double xPosition, double elevation, double width, double height, SizeDbl scaleSize)
 		{
-			var area = new RectangleDbl(new PointDbl(xPosition, elevation), new SizeDbl(width, height));
+			var area = new RectangleDbl(new PointDbl(xPosition, elevation + 1), new SizeDbl(width, height - 2));
 			var scaledArea = area.Scale(scaleSize);
 
 			var scaledAreaWithGap = scaledArea.Width > 2 ? DrawingHelper.Shorten(scaledArea, 1) : scaledArea;
@@ -229,11 +258,41 @@ namespace MSetExplorer
 				Stroke = Brushes.Transparent,
 				StrokeThickness = 0,
 				Data = area,
-				Focusable = true,
+				//Focusable = true,
 				IsHitTestVisible = true
 			};
 
 			return result;
+		}
+
+		private void SetRectangleStroke()
+		{
+			if (_isCurrent)
+			{
+				if (_isSelected)
+				{
+					_rectanglePath.Stroke = IS_SELECTED_PEN.Brush;
+					_rectanglePath.StrokeThickness = IS_SELECTED_PEN.Thickness;
+				}
+				else
+				{
+					_rectanglePath.Stroke = IS_CURRENT_PEN.Brush;
+					_rectanglePath.StrokeThickness = IS_CURRENT_PEN.Thickness;
+				}
+			}
+			else
+			{
+				if (_isSelected)
+				{
+					_rectanglePath.Stroke = IS_SELECTED_PEN.Brush;
+					_rectanglePath.StrokeThickness = IS_SELECTED_PEN.Thickness;
+				}
+				else
+				{
+					_rectanglePath.Stroke = DEFAULT_PEN.Brush;
+					_rectanglePath.StrokeThickness = DEFAULT_PEN.Thickness;
+				}
+			}
 		}
 
 		#endregion

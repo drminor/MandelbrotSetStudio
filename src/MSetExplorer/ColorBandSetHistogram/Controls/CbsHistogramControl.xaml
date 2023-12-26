@@ -6,7 +6,8 @@
              xmlns:ScottPlot="clr-namespace:ScottPlot;assembly=ScottPlot.WPF"                           
              xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:CbsHistogramViewModel}"
              mc:Ignorable="d" 
-             d:DesignHeight="255" d:DesignWidth="1290">
+             d:DesignHeight="255" d:DesignWidth="1290"
+             Focusable="True">
 
     <UserControl.CommandBindings>
         <CommandBinding Command="local:ColorBandSetCommands.Revert" CanExecute="RevertCommand_CanExecute" Executed="RevertCommand_Executed" />

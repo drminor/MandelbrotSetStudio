@@ -6,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -39,6 +38,8 @@ namespace MSetExplorer
 		private readonly RectangleGeometry _originalLeftGeometry;
 		private readonly RectangleGeometry _originalRightGeometry;
 
+		private bool _isSelected;
+
 		private readonly bool _useDetailedDebug = true;
 
 		#endregion
@@ -47,6 +48,7 @@ namespace MSetExplorer
 
 		public CbsSelectionLine(Canvas canvas, double elevation, double height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right, double scale)
 		{
+			_isSelected = false;
 			_dragState = DragState.None;
 
 			_canvas = canvas;
@@ -72,6 +74,11 @@ namespace MSetExplorer
 
 			_topArrowHalfWidth = (elevation - 2) / 2;
 			_topArrow = BuildTopArrow(elevation, xPosition, _topArrowHalfWidth);
+
+			//_topArrow.MouseUp += _topArrow_MouseUp;
+			//_topArrow.PreviewKeyDown += TopArrow_PreviewKeyDown;
+
+
 			_canvas.Children.Add(_topArrow);
 			_topArrow.SetValue(Panel.ZIndexProperty, 30);
 		}
@@ -87,7 +94,7 @@ namespace MSetExplorer
 				Y2 = elevation + height,
 				X1 = xPosition,
 				X2 = xPosition,
-				Focusable = true
+				//Focusable = true
 			};
 
 			return result;
@@ -104,14 +111,19 @@ namespace MSetExplorer
 
 			var result = new Polygon()
 			{
-				Fill = Brushes.Transparent,
+				Fill = _isSelected ? Brushes.Goldenrod : Brushes.Transparent,
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
 				Points = points,
-				Focusable = true
+				//Focusable = true
 			};
 
 			return result;
+		}
+		
+		private void _topArrow_MouseUp(object sender, MouseButtonEventArgs e)
+		{
+			IsSelected = !IsSelected;
 		}
 
 		#endregion
@@ -123,6 +135,19 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+		public bool IsSelected
+		{
+			get => _isSelected;
+			set
+			{
+				if (value != _isSelected)
+				{
+					_isSelected = value;
+					SetTopArrowFill();
+				}
+			}
+		}
 
 		public int ColorBandIndex { get; init; }
 
@@ -341,12 +366,6 @@ namespace MSetExplorer
 
 		private void HandleMouseMove(object sender, MouseEventArgs e)
 		{
-			if (Keyboard.IsKeyDown(Key.Escape))
-			{
-				CancelDrag();
-				return;
-			}
-
 			if (e.LeftButton != MouseButtonState.Pressed)
 			{
 				// The user lifted the left mouse button while the mouse was not on the canvas.
@@ -382,22 +401,6 @@ namespace MSetExplorer
 				}
 				else
 				{
-					//// TODO: Only require the mouse to be over the color band control.
-
-					//var pos = e.GetPosition(relativeTo: _canvas);
-
-					//var amount = pos.X - _originalXPosition;
-
-					//if (UpdateColorBandWidth(amount))
-					//{
-					//	Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag operation. The last XPos is {SelectionLinePosition}. The XPos is {pos.X}. The original position is {_originalXPosition}.");
-					//	CompleteDrag();
-					//}
-					//else
-					//{
-					//	CancelDrag();
-					//}
-
 					CompleteDrag();
 				}
 			}
@@ -461,26 +464,10 @@ namespace MSetExplorer
 			return updated;
 		}
 
-		//private void SetMousePosition(Point posYInverted)
-		//{
-		//	var position = new Point(posYInverted.X, _canvas.ActualHeight - posYInverted.Y);
-		//	var canvasPos = GetCanvasPosition();
-		//	var pos = new Point(position.X + canvasPos.X, position.Y + canvasPos.Y);
-
-		//	var source = (HwndSource)PresentationSource.FromVisual(_canvas);
-		//	var hWnd = source.Handle; 
-		//	var _ = Win32.PositionCursor(hWnd, pos);
-
-		//	//Debug.WriteLine($"Activating to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
-		//}
-
-		//private Point GetCanvasPosition()
-		//{
-		//	var generalTransform = _canvas.TransformToAncestor(Application.Current.MainWindow);
-		//	var relativePoint = generalTransform.Transform(new Point(0, 0));
-
-		//	return relativePoint;
-		//}
+		private void SetTopArrowFill()
+		{
+			_topArrow.Fill = _isSelected ? Brushes.LightSlateGray : Brushes.Transparent;
+		}
 
 		#endregion
 
@@ -538,6 +525,30 @@ namespace MSetExplorer
 		//}
 
 		#endregion
-	}
 
+		#region Unused
+
+		//private void SetMousePosition(Point posYInverted)
+		//{
+		//	var position = new Point(posYInverted.X, _canvas.ActualHeight - posYInverted.Y);
+		//	var canvasPos = GetCanvasPosition();
+		//	var pos = new Point(position.X + canvasPos.X, position.Y + canvasPos.Y);
+
+		//	var source = (HwndSource)PresentationSource.FromVisual(_canvas);
+		//	var hWnd = source.Handle; 
+		//	var _ = Win32.PositionCursor(hWnd, pos);
+
+		//	//Debug.WriteLine($"Activating to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
+		//}
+
+		//private Point GetCanvasPosition()
+		//{
+		//	var generalTransform = _canvas.TransformToAncestor(Application.Current.MainWindow);
+		//	var relativePoint = generalTransform.Transform(new Point(0, 0));
+
+		//	return relativePoint;
+		//}
+
+		#endregion
+	}
 }

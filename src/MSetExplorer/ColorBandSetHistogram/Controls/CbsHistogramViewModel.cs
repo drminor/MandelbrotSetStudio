@@ -9,7 +9,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {

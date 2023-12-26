@@ -76,11 +76,11 @@ namespace MSetExplorer
 				MouseEnter += HandleMouseEnter;
 				MouseLeave += HandleMouseLeave;
 
+				Focusable = true;
+
 				Debug.WriteLine("The CbsHistogramControl is now loaded.");
 			}
 		}
-
-
 
 		private void CbsHistogramControl_Unloaded(object sender, RoutedEventArgs e)
 		{
@@ -190,6 +190,9 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Mouse and Keyboard Event Handlers
 
 		private void HandleMouseLeave(object sender, MouseEventArgs e)
 		{
@@ -207,6 +210,10 @@ namespace MSetExplorer
 		{
 			HistogramColorBandControl1.Handle_MouseEnter(sender, e);
 		}
+
+		#endregion
+
+		#region Button Click Event Handlers
 
 		private void MoveLeftButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -346,5 +353,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
 	}
 }

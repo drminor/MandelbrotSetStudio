@@ -29,9 +29,11 @@ namespace MSetExplorer
 
 		private DebounceDispatcher _selectionLineMovedDispatcher;
 
+		private ICbsHistogramViewModel? _vm;
+
 		private FrameworkElement _ourContent;
 		private Canvas _canvas;
-		private Image _image;
+		private Path? _border;
 
 		private ListCollectionView? _colorBandsView;
 
@@ -51,8 +53,8 @@ namespace MSetExplorer
 		private bool _mouseIsEntered;
 		private List<Shape> _hitList;
 
-		private readonly Pen _cbrPenBlack;
-		private readonly Pen _cbrPenTransparent;
+		//private readonly Pen _cbrPenBlack;
+		//private readonly Pen _cbrPenTransparent;
 
 		private CbsSelectionLine? _selectionLineBeingDragged;
 
@@ -78,7 +80,7 @@ namespace MSetExplorer
 
 			_ourContent = new FrameworkElement();
 			_canvas = new Canvas();
-			_image = new Image();
+			_border = null;
 
 			_canvas.MouseEnter += Handle_MouseEnter;
 			_canvas.MouseLeave += Handle_MouseLeave;
@@ -104,8 +106,10 @@ namespace MSetExplorer
 			_mouseIsEntered = false;
 			_hitList = new List<Shape>();
 
-			_cbrPenBlack = new Pen(new SolidColorBrush(Colors.DarkCyan), 1.25);
-			_cbrPenTransparent = new Pen(new SolidColorBrush(Colors.Transparent), 1.25);
+			_border = null;
+
+			Focusable = true;
+			KeyDown += HistogramColorBandControl_KeyDown;
 		}
 
 		#endregion
@@ -177,6 +181,7 @@ namespace MSetExplorer
 				_canvas.MouseEnter -= Handle_MouseEnter;
 				_canvas.MouseLeave -= Handle_MouseLeave;
 				_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
+
 				_canvas.SizeChanged -= Handle_SizeChanged;
 
 				_canvas = value;
@@ -184,8 +189,8 @@ namespace MSetExplorer
 				_canvas.MouseEnter += Handle_MouseEnter;
 				_canvas.MouseLeave += Handle_MouseLeave;
 				_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
-				_canvas.SizeChanged += Handle_SizeChanged;
 
+				_canvas.SizeChanged += Handle_SizeChanged;
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
@@ -219,16 +224,6 @@ namespace MSetExplorer
 				else
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; not raising the ViewportSizeChanged event.");
-					
-					//// BEGIN Temporary Test
-					//Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is having its ViewportSize updated to {value}, the current value is already: {_viewportSize}; raising the ViewportSizeChanged event anyway.");
-
-					//var previousValue = ViewportSize;
-					//_viewportSize = value;
-
-					//ViewportSizeChanged?.Invoke(this, (previousValue, value));
-
-					//// END Temporary Test
 				}
 			}
 		}
@@ -268,6 +263,7 @@ namespace MSetExplorer
 				_translationAndClipSize = value;
 
 				ClipAndOffset(previousVal, value);
+				DrawBorder(value);
 			}
 		}
 
@@ -389,29 +385,14 @@ namespace MSetExplorer
 				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
 				//(Canvas, Image) = BuildContentModel(_ourContent);
 				Canvas = BuildContentModel(_ourContent);
+
+				_vm = (ICbsHistogramViewModel)DataContext;
 			}
 			else
 			{
 				throw new InvalidOperationException("Did not find the HistogramColorBandControl_Content template.");
 			}
 		}
-
-		//private (Canvas, Image) BuildContentModel(FrameworkElement content)
-		//{
-		//	if (content is ContentPresenter cp)
-		//	{
-		//		if (cp.Content is Canvas ca)
-		//		{
-		//			//return ca;
-		//			if (ca.Children[0] is Image im)
-		//			{
-		//				return (ca, im);
-		//			}
-		//		}
-		//	}
-
-		//	throw new InvalidOperationException("Cannot find a child image element of the HistogramColorBandControl's Content, or the Content is not a Canvas element.");
-		//}
 
 		private Canvas BuildContentModel(FrameworkElement content)
 		{
@@ -512,9 +493,11 @@ namespace MSetExplorer
 				//ReportColorBandRectanglesInPlay(cbSelectionLineIndex.Value);
 
 				_selectionLineBeingDragged = cbSelectionLine;
-				cbSelectionLine.SelectionLineMoved += HandleSelectionLineMoved;
+				_selectionLineBeingDragged.SelectionLineMoved += HandleSelectionLineMoved;
 
 				Debug.WriteIf(_useDetailedDebug, $"HistogramColorBandControl. Starting Drag for cbSelectionLine at index: {cbSelectionLineIndex}, Current View Position: {cbsView.CurrentPosition}, ColorBand: {cb}.");
+
+				var xx = Keyboard.Focus(this);
 
 				cbSelectionLine.StartDrag();
 			}
@@ -522,9 +505,21 @@ namespace MSetExplorer
 			{
 				if (TryGetColorBandRectangle(hitPoint, _colorBandRectangles, out var cbsRectangle, out var cbRectangleIndex))
 				{
+					var x = Keyboard.Focus(this);
+
 					var cb = GetColorBandAt(cbsView, cbRectangleIndex.Value);
 					cbsView.MoveCurrentTo(cb);
 				}
+			}
+		}
+
+		private void HistogramColorBandControl_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (_selectionLineBeingDragged != null && e.Key == Key.Escape)
+			{
+				_selectionLineBeingDragged.CancelDrag();
+				_selectionLineBeingDragged = null;
+				e.Handled = true;
 			}
 		}
 
@@ -650,6 +645,8 @@ namespace MSetExplorer
 			{
 				throw new InvalidOperationException($"The {e.Operation} CbsSelectionLineDragOperation is not supported.");
 			}
+
+			var xxt = Focus();
 		}
 
 		private void ColorBands_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -714,22 +711,6 @@ namespace MSetExplorer
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl. Handling the ColorBand_EditEnded event. NOT Found: ColorBand: {cb}");
 				}
-			}
-		}
-
-		protected override void OnKeyDown(KeyEventArgs e)
-		{
-			if (e.Key == Key.Left)
-			{
-
-			}
-			else if (e.Key == Key.Right)
-			{
-
-			}
-			else
-			{
-				base.OnKeyDown(e);
 			}
 		}
 
@@ -829,14 +810,15 @@ namespace MSetExplorer
 			_hitList.Clear();
 
 			var hitArea = new EllipseGeometry(hitPoint, 2.0, 2.0);
-			VisualTreeHelper.HitTest(Canvas, null, HitTestCallBack, new GeometryHitTestParameters(hitArea));
+			var hitTestParams = new GeometryHitTestParameters(hitArea);
+			VisualTreeHelper.HitTest(Canvas, null, HitTestCallBack, hitTestParams);
 
 			foreach (Shape item in _hitList)
 			{
 				if (item is Line line)
 				{
 					var adjustedPos = line.X1 / ContentScale.Width;
-					Debug.WriteLine($"Got a hit for line at position: {line.X1} / {adjustedPos}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Got a hit for line at position: {line.X1} / {adjustedPos}.");
 
 					return line;
 				}
@@ -931,16 +913,8 @@ namespace MSetExplorer
 				}
 
 				var cbr = _colorBandRectangles[index.Value];
-				if (on)
-				{
-					cbr.Stroke = _cbrPenBlack.Brush;
-					cbr.StrokeThickness = 2.5;
-				}
-				else
-				{
-					cbr.Stroke = _cbrPenTransparent.Brush;
-					cbr.StrokeThickness = 0;
-				}
+
+				cbr.IsCurrent = on;
 			}
 		}
 
@@ -1131,6 +1105,33 @@ namespace MSetExplorer
 		{
 			ReportTranslationTransformX(previousValue, newValue);
 			_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
+		}
+
+		private void DrawBorder(RectangleDbl newValue)
+		{
+			if (_border != null)
+			{
+				_canvas.Children.Remove(_border);
+				_border = null;
+			}
+
+			var xPosition = newValue.Position.X * ContentScale.Width;
+			var area = new RectangleDbl(new PointDbl(xPosition, CbrElevation), new SizeDbl(ActualWidth, ActualHeight - CbrElevation));
+
+			var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(area));
+
+			var result = new Path()
+			{
+				Fill = Brushes.Transparent,
+				Stroke = Brushes.DarkGray,
+				StrokeThickness = 2,
+				Data = cbRectangle,
+				Focusable = false,
+				IsHitTestVisible = false
+			};
+
+			_canvas.Children.Add(result);
+			_border = result;
 		}
 
 		#endregion

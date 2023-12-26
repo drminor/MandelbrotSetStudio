@@ -18,7 +18,7 @@ namespace MEngineClient
 		private static int _sectionCntr;
 
 		private DtoMapper _dtoMapper;
-		private GrpcChannel? _grpcChannel;
+		private GrpcChannel _grpcChannel;
 		private IMapSectionService? _mapSectionService;
 
 		private readonly MapSectionVectorProvider _mapSectionVectorProvider;
@@ -34,7 +34,7 @@ namespace MEngineClient
 			_sectionCntr = 0;
 		}
 
-		public MClient(int clientNumber, string endPointAddress, MapSectionVectorProvider mapSectionVectorProvider)
+		public MClient(int clientNumber, GrpcChannel grpcChannel, string endPointAddress, MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			ClientNumber = clientNumber;
 			EndPointAddress = endPointAddress;
@@ -43,7 +43,7 @@ namespace MEngineClient
 
 			_dtoMapper = new DtoMapper();
 
-			_grpcChannel = null;
+			_grpcChannel = grpcChannel;
 			_mapSectionService = null;
 		}
 
@@ -311,26 +311,13 @@ namespace MEngineClient
 		{
 			try
 			{
-				var client = Channel.CreateGrpcService<IMapSectionService>();
+				var client = _grpcChannel.CreateGrpcService<IMapSectionService>();
 				return client;
 			}
 			catch (Exception e)
 			{
 				Debug.WriteLine($"While Creating the GrpcService<IMapSectionService>, received exception: {e.GetType()}:{e.Message}");
 				throw;
-			}
-		}
-
-		private GrpcChannel Channel
-		{
-			get
-			{
-				if (_grpcChannel == null)
-				{
-					_grpcChannel = GrpcChannel.ForAddress(EndPointAddress);
-				}
-
-				return _grpcChannel;
 			}
 		}
 

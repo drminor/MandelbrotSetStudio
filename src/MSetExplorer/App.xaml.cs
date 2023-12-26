@@ -1,4 +1,5 @@
-﻿using MapSectionProviderLib;
+﻿using Grpc.Net.Client;
+using MapSectionProviderLib;
 using MEngineClient;
 using MongoDB.Bson;
 using MSetExplorer.RepositoryManagement;
@@ -14,6 +15,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.ServiceModel;
 using System.ServiceProcess;
 using System.Windows;
 
@@ -39,6 +41,10 @@ namespace MSetExplorer
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://localhost:5000" };
 		//private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.109:5000" };
 		private static readonly string[] REMOTE_SERVICE_END_POINTS = new string[] { "http://192.168.2.102:5000" };
+
+		private const int NUMBER_OF_LOCAL_TASKS = 5;
+		private const int NUMBER_OF_REMOTE_TASKS_FOR_SERVER_102 = 8;
+
 
 		private static readonly bool USE_ALL_CORES = true;
 		private static readonly bool USE_REMOTE_ENGINES = false;
@@ -86,6 +92,8 @@ namespace MSetExplorer
 
 		private AppNavWindow? _appNavWindow;
 
+		private GrpcChannel[] _grpcChannels;
+
 		#endregion
 
 		#region Constructor, Startup and Exit
@@ -93,6 +101,8 @@ namespace MSetExplorer
 		public App()
 		{
 			_mapSectionVectorProvider = CreateMapSectionVectorProvider(RMapConstants.BLOCK_SIZE, RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.MAP_SECTION_INITIAL_POOL_SIZE);
+
+			_grpcChannels = CreateTheGrpcChannels(REMOTE_SERVICE_END_POINTS);
 
 			_ambientStopWatch = Stopwatch.StartNew();
 			Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -260,8 +270,8 @@ namespace MSetExplorer
 
 			#endregion
 
-			var mEngineClients = CreateTheMEngineClients(USE_ALL_CORES, REMOTE_SERVICE_END_POINTS, useRemoteEngine: USE_REMOTE_ENGINES, useLocalEngine: USE_LOCAL_ENGINE, 
-				mapSectionGeneratorCreator: CreateMapSectionGenerator, _mapSectionVectorProvider);
+			var mEngineClients = CreateTheMEngineClients(USE_ALL_CORES, _grpcChannels, REMOTE_SERVICE_END_POINTS, useRemoteEngine: USE_REMOTE_ENGINES, useLocalEngine: USE_LOCAL_ENGINE,
+				mapSectionGeneratorCreator: CreateMapSectionGenerator, mapSectionVectorProvider: _mapSectionVectorProvider);
 			//Debug.WriteLine($"After Create MEngineClients. {currentStopwatch.ElapsedMilliseconds}.");
 
 			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
@@ -490,7 +500,7 @@ namespace MSetExplorer
 
 		#region MEngine Support
 
-		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, Func<IMapSectionGenerator> mapSectionGeneratorCreator, 
+		private IMEngineClient[] CreateTheMEngineClients(bool useAllCores, GrpcChannel[] grpcChannels, string[] remoteEndPoints, bool useRemoteEngine, bool useLocalEngine, Func<IMapSectionGenerator> mapSectionGeneratorCreator,
 			MapSectionVectorProvider mapSectionVectorProvider)
 		{
 			var clientNumber = 0;
@@ -522,11 +532,15 @@ namespace MSetExplorer
 
 			if (useRemoteEngine)
 			{
-				foreach (string remoteEndPoint in remoteEndPoints)
+				//foreach (string remoteEndPoint in remoteEndPoints)
+				for (var remoteEndPointPtr = 0; remoteEndPointPtr < remoteEndPoints.Length; remoteEndPointPtr++) 
 				{
+					var grpChannel = grpcChannels[remoteEndPointPtr];
+					var remoteEndPoint = remoteEndPoints[remoteEndPointPtr];
+
 					for (var i = 0; i < remoteTaskCount; i++)
 					{
-						result.Add(new MClient(clientNumber++, remoteEndPoint, mapSectionVectorProvider));
+						result.Add(new MClient(clientNumber++, grpChannel, remoteEndPoint, mapSectionVectorProvider));
 						remoteClientCount++;
 					}
 
@@ -545,8 +559,9 @@ namespace MSetExplorer
 
 			if (useAllCores)
 			{
-				var numberOfLogicalProc = Environment.ProcessorCount;
-				result = numberOfLogicalProc; // - 1;
+				//var numberOfLogicalProc = Environment.ProcessorCount;
+				//result = numberOfLogicalProc; // - 1;
+				result = NUMBER_OF_LOCAL_TASKS;
 			}
 			else
 			{
@@ -563,7 +578,7 @@ namespace MSetExplorer
 			if (useAllCores)
 			{
 				//result = (int) Math.Round(((double) localTaskCount) / 2, MidpointRounding.AwayFromZero);
-				result = 8;
+				result = NUMBER_OF_REMOTE_TASKS_FOR_SERVER_102;
 			}
 			else
 			{
@@ -578,6 +593,27 @@ namespace MSetExplorer
 			var mapSectionGenerator = new MapSectionGeneratorDepthFirst(RMapConstants.DEFAULT_LIMB_COUNT, RMapConstants.BLOCK_SIZE);
 
 			return mapSectionGenerator;
+		}
+
+		private GrpcChannel[] CreateTheGrpcChannels(string[] remoteEndPoints)
+		{
+			var result = new GrpcChannel[remoteEndPoints.Length];
+
+			//var result = GrpcChannel.ForAddress(EndPointAddress);
+
+			for (var i = 0; i < remoteEndPoints.Length; i++)
+			{
+				result[i] = CreateGrpcChannel(remoteEndPoints[i]);
+			}
+
+			return result;
+		}
+
+		private GrpcChannel CreateGrpcChannel(string endPointAddress)
+		{
+			var result = GrpcChannel.ForAddress(endPointAddress);
+
+			return result;
 		}
 
 		#region MEngine Constants
