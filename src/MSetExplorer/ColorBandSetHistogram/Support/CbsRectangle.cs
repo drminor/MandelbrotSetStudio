@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System.Diagnostics;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
@@ -31,6 +32,7 @@ namespace MSetExplorer
 
 		private Canvas _canvas;
 		//private SizeDbl _scaleSize;
+		private IsSelectedChanged _isSelectedChanged;
 
 		private bool _isCurrent;
 		private bool _isSelected;
@@ -41,7 +43,8 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsRectangle(int colorBandIndex, double xPosition, double yPosition, double width, double height, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas, SizeDbl scaleSize)
+		public CbsRectangle(int colorBandIndex, double xPosition, double yPosition, double width, double height, ColorBandColor startColor, ColorBandColor endColor, bool blend, 
+			Canvas canvas, SizeDbl scaleSize, IsSelectedChanged isSelectedChanged)
 		{
 			_isCurrent = false;
 			_isSelected = false;
@@ -60,6 +63,8 @@ namespace MSetExplorer
 
 			//_scaleSize = scaleSize;
 
+			_isSelectedChanged = isSelectedChanged;
+
 			_geometry = BuildRectangleGeometry(xPosition, yPosition, width, height, scaleSize);
 			_rectanglePath = BuildRectanglePath(_geometry, startColor, endColor, blend);
 
@@ -69,9 +74,14 @@ namespace MSetExplorer
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 		}
 
-		private void _rectanglePath_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		private void _rectanglePath_MouseUp(object sender, MouseButtonEventArgs e)
 		{
-			IsSelected = !IsSelected;
+			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+
+			_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
+
+			//IsSelected = !IsSelected;
 		}
 
 		#endregion

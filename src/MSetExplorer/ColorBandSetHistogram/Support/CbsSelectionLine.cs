@@ -26,6 +26,7 @@ namespace MSetExplorer
 		private readonly RectangleGeometry _right;
 
 		private readonly double _scale;
+		private IsSelectedChanged _isSelectedChanged;
 
 		private readonly Line _dragLine;
 		private readonly Polygon _topArrow;
@@ -46,7 +47,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsSelectionLine(Canvas canvas, double elevation, double height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right, double scale)
+		public CbsSelectionLine(Canvas canvas, double elevation, double height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right, double scale, IsSelectedChanged isSelectedChanged)
 		{
 			_isSelected = false;
 			_dragState = DragState.None;
@@ -63,6 +64,7 @@ namespace MSetExplorer
 			_right = right;
 
 			_scale = scale;
+			_isSelectedChanged = isSelectedChanged;
 
 			_originalXPosition = xPosition;
 			_originalLeftGeometry = new RectangleGeometry(_left.Rect);
@@ -75,9 +77,8 @@ namespace MSetExplorer
 			_topArrowHalfWidth = (elevation - 2) / 2;
 			_topArrow = BuildTopArrow(elevation, xPosition, _topArrowHalfWidth);
 
-			//_topArrow.MouseUp += _topArrow_MouseUp;
+			_topArrow.MouseUp += _topArrow_MouseUp;
 			//_topArrow.PreviewKeyDown += TopArrow_PreviewKeyDown;
-
 
 			_canvas.Children.Add(_topArrow);
 			_topArrow.SetValue(Panel.ZIndexProperty, 30);
@@ -123,7 +124,11 @@ namespace MSetExplorer
 		
 		private void _topArrow_MouseUp(object sender, MouseButtonEventArgs e)
 		{
-			IsSelected = !IsSelected;
+			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+
+			_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
+			//IsSelected = !IsSelected;
 		}
 
 		#endregion

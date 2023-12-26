@@ -73,6 +73,8 @@ namespace MSetExplorer
 			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
 
 			_colorBandSet = new ColorBandSet();
+
+			SelectedItems = new CbsSelectedItems();
 			_editMode = ColorBandSetEditMode.Bands;
 
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
@@ -115,6 +117,8 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties - Content
+
+		public CbsSelectedItems SelectedItems { get; private set; }
 
 		public ColorBandSetEditMode EditMode
 		{

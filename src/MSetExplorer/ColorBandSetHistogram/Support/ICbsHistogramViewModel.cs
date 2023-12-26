@@ -19,6 +19,8 @@ namespace MSetExplorer
 
 		//double ScaleFixFactor { get; set; }
 		ColorBandSetEditMode EditMode { get; set; }
+		CbsSelectedItems SelectedItems { get; }
+
 		bool ColorBandUserControlHasErrors { get; set; }
 
 		ColorBandSet ColorBandSet { get; set; }

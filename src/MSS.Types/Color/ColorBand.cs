@@ -2,10 +2,11 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace MSS.Types
 {
-	public class ColorBand : INotifyPropertyChanged, IEditableObject, ICloneable
+	public class ColorBand : INotifyPropertyChanged, IEditableObject, ICloneable, IEquatable<ColorBand?>
 	{
 		#region Private Fields
 
@@ -334,6 +335,36 @@ namespace MSS.Types
 		protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		#endregion
+
+		#region IEq Support
+
+		public override bool Equals(object? obj)
+		{
+			return Equals(obj as ColorBand);
+		}
+
+		public bool Equals(ColorBand? other)
+		{
+			return other is not null &&
+				   _cutoff == other._cutoff;
+		}
+
+		public override int GetHashCode()
+		{
+			return HashCode.Combine(_cutoff);
+		}
+
+		public static bool operator ==(ColorBand? left, ColorBand? right)
+		{
+			return EqualityComparer<ColorBand>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(ColorBand? left, ColorBand? right)
+		{
+			return !(left == right);
 		}
 
 		#endregion

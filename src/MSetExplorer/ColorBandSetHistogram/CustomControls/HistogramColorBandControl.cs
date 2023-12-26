@@ -17,6 +17,8 @@ using System.Windows.Threading;
 
 namespace MSetExplorer
 {
+	public delegate void IsSelectedChanged(int colorBandIndex, bool newValue, bool shiftKeyPressed, bool controlKeyPressed);
+
 	public class HistogramColorBandControl : ContentControl, IContentScaler
 	{
 		#region Private Fields 
@@ -969,12 +971,29 @@ namespace MSetExplorer
 				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 				
 				//var cbsRectangle = new CbsRectangle(i, curOffset, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize);
-				var cbsRectangle = new CbsRectangle(i, os, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize);
+				var cbsRectangle = new CbsRectangle(i, os, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize, CbRectangleIsSelectedChanged);
 
 				_colorBandRectangles.Add(cbsRectangle);
 
 				// += bandWidth;
 			}
+		}
+
+		private void CbRectangleIsSelectedChanged(int colorBandIndex, bool newIsSelectedValue, bool shiftKeyPressed, bool controlKeyPressed)
+		{
+			var cbsView = ColorBandsView;
+
+			if (_vm == null || cbsView == null)
+			{
+				return;
+			}
+
+			var colorBand = GetColorBandAt(cbsView, colorBandIndex);
+			var resultantSelType = _vm.SelectedItems.Select(colorBand, ColorBandSelectionType.Band);
+
+			_colorBandRectangles[colorBandIndex].IsSelected = 
+				colorBand.BlendStyle == ColorBandBlendStyle.End && resultantSelType.HasFlag(ColorBandSelectionType.Band) 
+				|| colorBand.BlendStyle != ColorBandBlendStyle.End && resultantSelType.HasFlag(ColorBandSelectionType.Colors);
 		}
 
 		private void DrawSelectionLines(IList<CbsRectangle> colorBandRectangles)
@@ -1003,9 +1022,23 @@ namespace MSetExplorer
 					Debug.WriteLine($"DrawSelectionLines found an xPosition with a value < 2.");
 				}
 
-				var sl = new CbsSelectionLine(_canvas, CbrElevation, CbrHeight, colorBandIndex, xPosition, gLeft, gRight, ContentScale.Width);
+				var sl = new CbsSelectionLine(_canvas, CbrElevation, CbrHeight, colorBandIndex, xPosition, gLeft, gRight, ContentScale.Width, OffsetIsSelectedChanged);
 				_selectionLines.Add(sl);
 			}
+		}
+
+		private void OffsetIsSelectedChanged(int colorBandIndex, bool newIsSelectedValue, bool shiftKeyPressed, bool controlKeyPressed)
+		{
+			var cbsView = ColorBandsView;
+
+			if (_vm == null || cbsView == null)
+			{
+				return;
+			}
+
+			var colorBand = GetColorBandAt(cbsView, colorBandIndex);
+			var resultantSelType = _vm.SelectedItems.Select(colorBand, ColorBandSelectionType.Cutoff);
+			_selectionLines[colorBandIndex].IsSelected = resultantSelType.HasFlag(ColorBandSelectionType.Cutoff);
 		}
 
 		private int GetExtent(ListCollectionView? listCollectionView)
