@@ -11,6 +11,9 @@ namespace MSetExplorer
 
 		RectangleDbl TranslationAndClipSize { get; set; }
 
+
+		// TODO: Update the ViewportSizeChanged event to include the Scale and MinScale as well as the ViewportSize.
+
 		event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
 	}
 }

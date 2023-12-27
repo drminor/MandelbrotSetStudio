@@ -1171,8 +1171,8 @@ namespace MSetExplorer
 			//	UpdateViewportSize(e.Item2);
 			//}
 
-			UpdateViewportSize(e.Item2);
-
+			var newValue = e.Item2;
+			UpdateViewportSize(newValue);
 		}
 
 		#endregion

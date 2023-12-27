@@ -89,19 +89,6 @@ namespace MSS.Types
 			}
 		}
 
-		/*
-
-		Target = 20
-
-		Cutoffs		5		10		15
-		Start		0		6		11
-		Width		5		4		4		4
-
-					0-5		6-10		11-15	16-20
-
-
-
-		*/
 		public int? PreviousCutoff
 		{
 			get => _previousCutoff;
@@ -122,11 +109,41 @@ namespace MSS.Types
 			}
 		}
 
-		public int StartingCutoff => (_previousCutoff ?? -1) + 1;
+		//public int StartingCutoff => (_previousCutoff ?? -1) + 1;
+		public int StartingCutoff => (_previousCutoff ?? 0) + 1;	// Updated on 12/26/2023
 
 		public bool IsFirst => !_previousCutoff.HasValue;
 		public bool IsLast => !_successorStartColor.HasValue;
-		public int BucketWidth => Cutoff - StartingCutoff;
+
+		//public int BucketWidth => Cutoff - StartingCutoff;
+		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);	// Updated on 12/26/2023
+
+
+		/* Relationship between Cutoff and StartingCutoff
+
+		Width = StartingCutoff (the minimum count value) subtracted from Cutoff (the maximum count value), using double precision math.
+		
+		Count value matching the Cutoff belongs to that bucket.
+		Count values > Target belong to the last bucket.
+
+		NOTE: If the result of the first iteration > threshold then for that sample point the count is zero.
+
+		Example:
+
+		Target = 20
+
+		Cutoffs		5		10		15		max count value
+		Start		0		5		10		15
+		Width		5		5		5		max count value - 15
+
+					> 0 AND <= 5
+					> 5 AND <= 10
+					> 10 AND <= 15
+					> 15 
+		
+		| ------------------||--------------------|
+		0	1	2	3	4	5	6	7	8	9	10
+		*/
 
 		public ColorBandColor StartColor
 		{

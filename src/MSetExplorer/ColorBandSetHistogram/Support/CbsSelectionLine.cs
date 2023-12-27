@@ -439,9 +439,8 @@ namespace MSetExplorer
 
 			if (amount < 0)
 			{
-
 				amount = amount * -1;
-				if (_originalLeftGeometry.Rect.Width > amount + (2 * _scale) && _originalRightGeometry.Rect.X > amount + (1 * _scale))
+				if (_originalLeftGeometry.Rect.Width > amount + (1 * _scale) && _originalRightGeometry.Rect.X > amount /*+ (1 * _scale)*/)
 				{
 					_left.Rect = DrawingHelper.Shorten(_originalLeftGeometry.Rect, amount);
 					_right.Rect = DrawingHelper.MoveRectLeft(_originalRightGeometry.Rect, amount);
@@ -453,7 +452,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (_originalRightGeometry.Rect.Width > amount + (2 * _scale))
+				if (_originalRightGeometry.Rect.Width > amount + (1 * _scale))
 				{
 					_left.Rect = DrawingHelper.Lengthen(_originalLeftGeometry.Rect, amount);
 					_right.Rect = DrawingHelper.MoveRectRight(_originalRightGeometry.Rect, amount);

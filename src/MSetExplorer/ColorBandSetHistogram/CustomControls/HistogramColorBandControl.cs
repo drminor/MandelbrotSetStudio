@@ -23,11 +23,16 @@ namespace MSetExplorer
 	{
 		#region Private Fields 
 
-		private double _cbrElevation = 0; // Starting Y of each Color Band Rectangle
-		private double _cbrHeight = 48;   // Height of each Color Band Rectangle
+		private const int SCROLL_BAR_HEIGHT = 17;
+		private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
+		private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 2;
 
 		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 		private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
+
+		// Initalize the layout setting to some reasonable values -- as a starting point.
+		private double _cbrElevation = 0; // Starting Y of each Color Band Rectangle
+		private double _cbrHeight = 48;   // Height of each Color Band Rectangle
 
 		private DebounceDispatcher _selectionLineMovedDispatcher;
 
@@ -54,9 +59,6 @@ namespace MSetExplorer
 
 		private bool _mouseIsEntered;
 		private List<Shape> _hitList;
-
-		//private readonly Pen _cbrPenBlack;
-		//private readonly Pen _cbrPenTransparent;
 
 		private CbsSelectionLine? _selectionLineBeingDragged;
 
@@ -304,7 +306,7 @@ namespace MSetExplorer
 
 					if (_mouseIsEntered)
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on ContentScale update. (Have Mouse)");
+						Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on CbrHeight update. (Have Mouse)");
 						DrawSelectionLines(_colorBandRectangles);
 					}
 				}
@@ -415,6 +417,7 @@ namespace MSetExplorer
 
 		private void Handle_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling the SizeChanged event.");
 			(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(e.NewSize.Height, _isHorizontalScrollBarVisible);
 		}
 
@@ -920,10 +923,6 @@ namespace MSetExplorer
 			}
 		}
 
-		private const int SCROLL_BAR_HEIGHT = 17;
-		private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
-		private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 2;
-
 		private (double, double) GetCbrElevationAndHeight(double controlHeight, bool isHorizontalScrollBarVisible)
 		{
 			if (isHorizontalScrollBarVisible)
@@ -953,30 +952,19 @@ namespace MSetExplorer
 
 			//Debug.WriteLine($"****The scale is {scaleSize} on DrawColorBands.");
 
-			//var curOffset = 0;
-
 			var endPtr = listCollectionView.Count - 1;
 
 			for (var i = 0; i <= endPtr; i++)
 			{
 				var colorBand = (ColorBand)listCollectionView.GetItemAt(i);
-				var bandWidth = colorBand.BucketWidth;
 
-				if (i < endPtr)
-				{
-					bandWidth += 1;
-				}
-
-				var os = colorBand.StartingCutoff - 1;
-
+				var xPosition = colorBand.PreviousCutoff ?? 0;
+				var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
 				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 				
-				//var cbsRectangle = new CbsRectangle(i, curOffset, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize);
-				var cbsRectangle = new CbsRectangle(i, os, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize, CbRectangleIsSelectedChanged);
+				var cbsRectangle = new CbsRectangle(i, xPosition, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize, CbRectangleIsSelectedChanged);
 
 				_colorBandRectangles.Add(cbsRectangle);
-
-				// += bandWidth;
 			}
 		}
 
@@ -1004,10 +992,6 @@ namespace MSetExplorer
 			var colorBand = GetColorBandAt(cbsView, colorBandIndex);
 			var resultantSelType = _vm.SelectedItems.Select(colorBand, ColorBandSelectionType.Band);
 
-			//_colorBandRectangles[colorBandIndex].IsSelected = 
-			//	colorBand.BlendStyle == ColorBandBlendStyle.End && resultantSelType.HasFlag(ColorBandSelectionType.Band) 
-			//	|| colorBand.BlendStyle != ColorBandBlendStyle.End && resultantSelType.HasFlag(ColorBandSelectionType.Colors);
-
 			_colorBandRectangles[colorBandIndex].IsSelected = resultantSelType.HasFlag(ColorBandSelectionType.Color);
 		}
 
@@ -1027,10 +1011,6 @@ namespace MSetExplorer
 
 				// This corresponds to the ColorBands Cutoff
 				var xPosition = gLeft.Rect.Right;
-				//if (gLeft.Rect.Width > 2)
-				//{
-				//	xPosition += 1;
-				//}
 
 				if (xPosition < 2)
 				{

@@ -248,9 +248,11 @@ namespace MSetExplorer
 			var area = new RectangleDbl(new PointDbl(xPosition, elevation + 1), new SizeDbl(width, height - 2));
 			var scaledArea = area.Scale(scaleSize);
 
-			var scaledAreaWithGap = scaledArea.Width > 2 ? DrawingHelper.Shorten(scaledArea, 1) : scaledArea;
+			//var scaledAreaWithGap = scaledArea.Width > 2 ? DrawingHelper.Shorten(scaledArea, 1) : scaledArea;
+			//var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(scaledAreaWithGap));
 
-			var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(scaledAreaWithGap));
+			var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(scaledArea));
+
 
 			if (cbRectangle.Rect.Right == 0)
 			{

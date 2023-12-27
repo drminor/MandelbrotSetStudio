@@ -17,6 +17,10 @@ namespace MSetExplorer
 
 		public bool IsEmpty => SelectedColorBands.Count == 0;
 
+		public void Clear()
+		{
+			SelectedColorBands.Clear();
+		}
 
 		public ColorBandSelectionType Select(ColorBand colorBand, ColorBandSelectionType colorBandSelectionType)
 		{
@@ -28,12 +32,31 @@ namespace MSetExplorer
 				SelectedColorBands.Add(selectedItem);
 			}
 
-			selectedItem.IsCutoffSelected = colorBandSelectionType.HasFlag(ColorBandSelectionType.Cutoff);
-			selectedItem.IsColorSelected = colorBandSelectionType.HasFlag(ColorBandSelectionType.Color);
-			selectedItem.IsEndColorSelected = colorBand.BlendStyle == ColorBandBlendStyle.End && colorBandSelectionType.HasFlag(ColorBandSelectionType.EndColor);
+			//selectedItem.IsCutoffSelected = colorBandSelectionType.HasFlag(ColorBandSelectionType.Cutoff);
+			//selectedItem.IsColorSelected = colorBandSelectionType.HasFlag(ColorBandSelectionType.Color);
 
+			if (colorBandSelectionType.HasFlag(ColorBandSelectionType.Cutoff))
+			{
+				selectedItem.IsCutoffSelected = !selectedItem.IsCutoffSelected;
+			}
 
-			return colorBandSelectionType;
+			//selectedItem.IsEndColorSelected = colorBand.BlendStyle == ColorBandBlendStyle.End && colorBandSelectionType.HasFlag(ColorBandSelectionType.EndColor);
+			//return colorBandSelectionType;
+
+			if (colorBandSelectionType.HasFlag(ColorBandSelectionType.Color))
+			{
+				selectedItem.IsColorSelected = !selectedItem.IsColorSelected;
+				//selectedItem.IsEndColorSelected = !selectedItem.IsColorSelected;
+			}
+
+			var result = selectedItem.IsCutoffSelected ? ColorBandSelectionType.Cutoff : ColorBandSelectionType.None;
+
+			if (selectedItem.IsColorSelected)
+			{
+				result |= ColorBandSelectionType.Color; // | ColorBandSelectionType.EndColor;
+			}
+
+			return result;
 		}
 	}
 
@@ -43,8 +66,7 @@ namespace MSetExplorer
 		{
 			ColorBand = colorBand;
 			IsColorSelected = true;
-			IsColorSelected = true;
-			IsEndColorSelected = ColorBand.BlendStyle == ColorBandBlendStyle.End;
+			//IsEndColorSelected = ColorBand.BlendStyle == ColorBandBlendStyle.End;
 		}
 
 		public ColorBand ColorBand { get; set; }
@@ -53,24 +75,21 @@ namespace MSetExplorer
 
 		public bool IsColorSelected { get; set; }
 
-		public bool IsEndColorSelected { get; set; }
+		//public bool IsEndColorSelected { get; set; }
 
-		public bool IsColorBandSelected => IsCutoffSelected 
-			&& IsColorSelected 
-			&& (
-				(ColorBand.BlendStyle == ColorBandBlendStyle.End && IsEndColorSelected)
-				|| ColorBand.BlendStyle != ColorBandBlendStyle.End
-			);
+		public bool IsColorBandSelected => IsCutoffSelected && IsColorSelected;
+			//&& (ColorBand.BlendStyle == ColorBandBlendStyle.End && IsEndColorSelected || ColorBand.BlendStyle != ColorBandBlendStyle.End);
 
 	}
 
 	[Flags]
 	public enum ColorBandSelectionType
 	{
+		None = 0,
 		Cutoff = 1,
 		Color = 2,
-		EndColor = 4,
-		Band = 7,
-		Colors = 6
+		//EndColor = 4,
+		//Colors = 6,
+		Band = 3
 	}
 }
