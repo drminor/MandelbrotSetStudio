@@ -23,16 +23,19 @@ namespace MSetExplorer
 	{
 		#region Private Fields 
 
-		private const int SCROLL_BAR_HEIGHT = 17;
-		private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
-		private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 2;
+		//private const int SCROLL_BAR_HEIGHT = 17;
+		//private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
+		//private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 2;
 
 		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 		private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
 
 		// Initalize the layout setting to some reasonable values -- as a starting point.
-		private double _cbrElevation = 0; // Starting Y of each Color Band Rectangle
-		private double _cbrHeight = 48;   // Height of each Color Band Rectangle
+		//private bool _isHorizontalScrollBarVisible = false;
+		//private double _cbrElevation = 0; // Starting Y of each Color Band Rectangle
+		//private double _cbrHeight = 48;   // Height of each Color Band Rectangle
+
+		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 
 		private DebounceDispatcher _selectionLineMovedDispatcher;
 
@@ -86,6 +89,14 @@ namespace MSetExplorer
 			_canvas = new Canvas();
 			_border = null;
 
+
+			_contentScale = new SizeDbl(1);
+
+			var isHorizontalScrollBarVisible = true;
+			var cbrHeight = 48;
+			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(_contentScale, ActualHeight, isHorizontalScrollBarVisible, cbrElevation: 0, cbrHeight: cbrHeight);
+			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+
 			_canvas.MouseEnter += Handle_MouseEnter;
 			_canvas.MouseLeave += Handle_MouseLeave;
 			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
@@ -103,7 +114,6 @@ namespace MSetExplorer
 
 			_canvas.RenderTransform = _canvasRenderTransform;
 
-			_contentScale = new SizeDbl(1);
 			_translationAndClipSize = new RectangleDbl();
 
 			_viewportSize = new SizeDbl();
@@ -245,6 +255,8 @@ namespace MSetExplorer
 					var scaledExtent = extent * ContentScale.Width;
 					Canvas.Width = scaledExtent;
 
+					_colorBandLayoutViewModel.ContentScale = new SizeDbl(_contentScale.Width, 1);
+
 					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawColorBands on ContentScale update. The Extent is {extent}.");
 					RemoveSelectionLines();
 					DrawColorBands(ColorBandsView);
@@ -271,47 +283,48 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool _isHorizontalScrollBarVisible;
 		public bool IsHorizontalScrollBarVisible
 		{
-			get => _isHorizontalScrollBarVisible;
+			get => _colorBandLayoutViewModel.IsHorizontalScrollBarVisible;
 			set
 			{
-				if (value != _isHorizontalScrollBarVisible)
-				{
-					_isHorizontalScrollBarVisible = value;
-					(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(ActualHeight, _isHorizontalScrollBarVisible);
-				}
+				_colorBandLayoutViewModel.IsHorizontalScrollBarVisible = value;
 			}
 		}
 
-		private double CbrElevation
-		{
-			get => _cbrElevation;
-			set => _cbrElevation = value;
-		}
+		//private double CbrElevation
+		//{
+		//	get => _cbrElevation;
+		//	set
+		//	{
+		//		_cbrElevation = value;
+		//		_colorBandLayoutViewModel.CbrElevation = value;
+		//	}
+		//}
 
-		private double CbrHeight
-		{
-			get => _cbrHeight;
+		//private double CbrHeight
+		//{
+		//	get => _cbrHeight;
 
-			set
-			{
-				if (value != _cbrHeight)
-				{
-					_cbrHeight = value;
+		//	set
+		//	{
+		//		if (value != _cbrHeight)
+		//		{
+		//			_cbrHeight = value;
 
-					RemoveSelectionLines();
-					DrawColorBands(ColorBandsView);
+		//			_colorBandLayoutViewModel.CbrHeight = value;
 
-					if (_mouseIsEntered)
-					{
-						Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on CbrHeight update. (Have Mouse)");
-						DrawSelectionLines(_colorBandRectangles);
-					}
-				}
-			}
-		}
+		//			RemoveSelectionLines();
+		//			DrawColorBands(ColorBandsView);
+
+		//			if (_mouseIsEntered)
+		//			{
+		//				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on CbrHeight update. (Have Mouse)");
+		//				DrawSelectionLines(_colorBandRectangles);
+		//			}
+		//		}
+		//	}
+		//}
 
 		#endregion
 
@@ -418,7 +431,25 @@ namespace MSetExplorer
 		private void Handle_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling the SizeChanged event.");
-			(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(e.NewSize.Height, _isHorizontalScrollBarVisible);
+
+			_colorBandLayoutViewModel.ControlHeight = e.NewSize.Height;
+
+			//(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(e.NewSize.Height, _isHorizontalScrollBarVisible);
+		}
+
+		private void ColorBandLayoutViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ColorBandLayoutViewModel.CbrHeight))
+			{
+				RemoveSelectionLines();
+				DrawColorBands(ColorBandsView);
+
+				if (_mouseIsEntered)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on CbrHeight update. (Have Mouse)");
+					DrawSelectionLines(_colorBandRectangles);
+				}
+			}
 		}
 
 		public void Handle_MouseLeave(object sender, MouseEventArgs e)
@@ -923,17 +954,17 @@ namespace MSetExplorer
 			}
 		}
 
-		private (double, double) GetCbrElevationAndHeight(double controlHeight, bool isHorizontalScrollBarVisible)
-		{
-			if (isHorizontalScrollBarVisible)
-			{
-				return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING + SCROLL_BAR_HEIGHT));
-			}
-			else
-			{
-				return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING));
-			}
-		}
+		//private (double, double) GetCbrElevationAndHeight(double controlHeight, bool isHorizontalScrollBarVisible)
+		//{
+		//	if (isHorizontalScrollBarVisible)
+		//	{
+		//		return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING + SCROLL_BAR_HEIGHT));
+		//	}
+		//	else
+		//	{
+		//		return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING));
+		//	}
+		//}
 
 		#endregion
 
@@ -962,7 +993,8 @@ namespace MSetExplorer
 				var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
 				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 				
-				var cbsRectangle = new CbsRectangle(i, xPosition, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize, CbRectangleIsSelectedChanged);
+				//var cbsRectangle = new CbsRectangle(i, xPosition, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize, CbRectangleIsSelectedChanged);
+				var cbsRectangle = new CbsRectangle(i, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged);
 
 				_colorBandRectangles.Add(cbsRectangle);
 			}
@@ -1017,7 +1049,10 @@ namespace MSetExplorer
 					Debug.WriteLine($"DrawSelectionLines found an xPosition with a value < 2.");
 				}
 
-				var sl = new CbsSelectionLine(_canvas, CbrElevation, CbrHeight, colorBandIndex, xPosition, gLeft, gRight, ContentScale.Width, OffsetIsSelectedChanged);
+				//var sl = new CbsSelectionLine(_canvas, CbrElevation, CbrHeight, colorBandIndex, xPosition, gLeft, gRight, ContentScale.Width, OffsetIsSelectedChanged);
+
+				var sl = new CbsSelectionLine(colorBandIndex, xPosition, gLeft, gRight, _colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged);
+
 				_selectionLines.Add(sl);
 			}
 		}
@@ -1156,8 +1191,9 @@ namespace MSetExplorer
 				_border = null;
 			}
 
+			var cbrElevation = _colorBandLayoutViewModel.CbrElevation;
 			var xPosition = newValue.Position.X * ContentScale.Width;
-			var area = new RectangleDbl(new PointDbl(xPosition, CbrElevation), new SizeDbl(ActualWidth, ActualHeight - CbrElevation));
+			var area = new RectangleDbl(new PointDbl(xPosition, cbrElevation), new SizeDbl(ActualWidth, ActualHeight - cbrElevation));
 
 			var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(area));
 

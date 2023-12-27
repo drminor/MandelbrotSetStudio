@@ -51,7 +51,7 @@
                         x:Name="ScrollViewer1"
                         CanContentScroll="True"
                         VerticalScrollBarVisibility="Disabled"
-                        HorizontalScrollBarVisibility="{Binding HorizontalScrollBarVisibility}"
+                        HorizontalScrollBarVisibility="{Binding HorizontalScrollBarVisibility, Mode=TwoWay}"
                         >
 
                         <local:PanAndZoomControl

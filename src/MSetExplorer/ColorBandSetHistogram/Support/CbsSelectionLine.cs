@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
 namespace MSetExplorer
@@ -16,6 +17,7 @@ namespace MSetExplorer
 		private const double MIN_SEL_DISTANCE = 0.49;
 		private static readonly Brush _selectionLineBrush = DrawingHelper.BuildSelectionDrawingBrush();
 
+		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
 
 		private double _cbElevation;
@@ -47,14 +49,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsSelectionLine(Canvas canvas, double elevation, double height, int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right, double scale, IsSelectedChanged isSelectedChanged)
+		public CbsSelectionLine(int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged)
 		{
 			_isSelected = false;
 			_dragState = DragState.None;
 
 			_canvas = canvas;
-			_cbElevation = elevation;
-			_cbHeight = height;
 
 
 			ColorBandIndex = colorBandIndex;
@@ -63,19 +63,23 @@ namespace MSetExplorer
 			_left = left;
 			_right = right;
 
-			_scale = scale;
+			_colorBandLayoutViewModel = colorBandLayoutViewModel;
+			_cbElevation = _colorBandLayoutViewModel.CbrElevation;
+			_cbHeight = _colorBandLayoutViewModel.CbrHeight;
+
+			_scale = _colorBandLayoutViewModel.ContentScale.Width;
 			_isSelectedChanged = isSelectedChanged;
 
 			_originalXPosition = xPosition;
 			_originalLeftGeometry = new RectangleGeometry(_left.Rect);
 			_originalRightGeometry = new RectangleGeometry(_right.Rect);
 
-			_dragLine = BuildDragLine(elevation, height, xPosition);
+			_dragLine = BuildDragLine(_cbElevation, _cbHeight, xPosition);
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 
-			_topArrowHalfWidth = (elevation - 2) / 2;
-			_topArrow = BuildTopArrow(elevation, xPosition, _topArrowHalfWidth);
+			_topArrowHalfWidth = (_cbElevation - 2) / 2;
+			_topArrow = BuildTopArrow(_cbElevation, xPosition, _topArrowHalfWidth);
 
 			_topArrow.MouseUp += _topArrow_MouseUp;
 			//_topArrow.PreviewKeyDown += TopArrow_PreviewKeyDown;

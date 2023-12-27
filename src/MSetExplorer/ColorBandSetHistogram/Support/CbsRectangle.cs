@@ -30,6 +30,7 @@ namespace MSetExplorer
 		//private ColorBandColor _endColor;
 		//private bool _blend;
 
+		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
 		//private SizeDbl _scaleSize;
 		private IsSelectedChanged _isSelectedChanged;
@@ -43,12 +44,16 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsRectangle(int colorBandIndex, double xPosition, double yPosition, double width, double height, ColorBandColor startColor, ColorBandColor endColor, bool blend, 
-			Canvas canvas, SizeDbl scaleSize, IsSelectedChanged isSelectedChanged)
+		//				var cbsRectangle = new CbsRectangle(i, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged);
+
+
+		public CbsRectangle(int colorBandIndex, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
+			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged)
 		{
 			_isCurrent = false;
 			_isSelected = false;
 
+			_colorBandLayoutViewModel = colorBandLayoutViewModel;
 			_canvas = canvas;
 			ColorBandIndex = colorBandIndex;
 
@@ -65,7 +70,11 @@ namespace MSetExplorer
 
 			_isSelectedChanged = isSelectedChanged;
 
-			_geometry = BuildRectangleGeometry(xPosition, yPosition, width, height, scaleSize);
+			var yPosition = _colorBandLayoutViewModel.CbrElevation;
+			var height = _colorBandLayoutViewModel.CbrHeight;
+			var contentScale = _colorBandLayoutViewModel.ContentScale;
+
+			_geometry = BuildRectangleGeometry(xPosition, yPosition, width, height, contentScale);
 			_rectanglePath = BuildRectanglePath(_geometry, startColor, endColor, blend);
 
 			_rectanglePath.MouseUp += _rectanglePath_MouseUp;
