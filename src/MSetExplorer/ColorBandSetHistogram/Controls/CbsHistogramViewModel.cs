@@ -75,6 +75,8 @@ namespace MSetExplorer
 			_colorBandSet = new ColorBandSet();
 
 			SelectedItems = new CbsSelectedItems();
+			_selectedItemsArray = null;
+
 			_editMode = ColorBandSetEditMode.Bands;
 
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
@@ -119,6 +121,32 @@ namespace MSetExplorer
 		#region Public Properties - Content
 
 		public CbsSelectedItems SelectedItems { get; private set; }
+
+		private SelectedColorBand?[]? _selectedItemsArray;
+
+		public SelectedColorBand?[] SelectedItemsArray
+		{
+			get
+			{
+				if (_selectedItemsArray == null)
+				{
+					_selectedItemsArray = new SelectedColorBand[ColorBandSet.Count];
+
+					for (var i = 0; i < ColorBandSet.Count; i++)
+					{
+						_selectedItemsArray[i] = null;
+					}
+
+				}
+
+				return _selectedItemsArray;
+			}
+
+			private set
+			{
+				_selectedItemsArray = value;
+			}
+		}
 
 		public ColorBandSetEditMode EditMode
 		{
@@ -247,6 +275,7 @@ namespace MSetExplorer
 
 				_colorBandsView = value;
 				var testItem = _colorBandsView.CurrentItem;
+
 				if (testItem is ColorBand cb)
 				{
 					CurrentColorBand = cb;
@@ -538,6 +567,12 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public void ClearSelectedItems()
+		{
+			SelectedItems.Clear();
+			_selectedItemsArray = null;
+		}
 
 		public bool TryMoveCurrentColorBandToNext()
 		{

@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 
 namespace MSetExplorer
@@ -19,16 +18,18 @@ namespace MSetExplorer
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
-
 		private double _cbElevation;
 		private double _cbHeight;
+		private readonly double _scaleX;
+		private IsSelectedChanged _isSelectedChanged;
+
 		private double _selectionLinePosition;
 
 		private readonly RectangleGeometry _left;
 		private readonly RectangleGeometry _right;
 
-		private readonly double _scale;
-		private IsSelectedChanged _isSelectedChanged;
+		private readonly RectangleGeometry _selLeft;
+		private readonly RectangleGeometry _selRight;
 
 		private readonly Line _dragLine;
 		private readonly Polygon _topArrow;
@@ -49,37 +50,40 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsSelectionLine(int colorBandIndex, double xPosition, RectangleGeometry left, RectangleGeometry right, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged)
+		public CbsSelectionLine(int colorBandIndex, bool isSelected, double xPosition, RectangleGeometry left, RectangleGeometry right, RectangleGeometry selLeft, RectangleGeometry selRight, 
+			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged)
 		{
-			_isSelected = false;
+			_isSelected = isSelected;
 			_dragState = DragState.None;
 
-			_canvas = canvas;
-
-
 			ColorBandIndex = colorBandIndex;
+
+			_colorBandLayoutViewModel = colorBandLayoutViewModel;
+			_canvas = canvas;
+			_cbElevation = _colorBandLayoutViewModel.CbrElevation;
+			_cbHeight = _colorBandLayoutViewModel.CbrHeight;
+
+			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
+			_isSelectedChanged = isSelectedChanged;
+
 			_selectionLinePosition = xPosition;
+			_originalXPosition = xPosition;
 
 			_left = left;
 			_right = right;
 
-			_colorBandLayoutViewModel = colorBandLayoutViewModel;
-			_cbElevation = _colorBandLayoutViewModel.CbrElevation;
-			_cbHeight = _colorBandLayoutViewModel.CbrHeight;
-
-			_scale = _colorBandLayoutViewModel.ContentScale.Width;
-			_isSelectedChanged = isSelectedChanged;
-
-			_originalXPosition = xPosition;
 			_originalLeftGeometry = new RectangleGeometry(_left.Rect);
 			_originalRightGeometry = new RectangleGeometry(_right.Rect);
+
+			_selLeft = selLeft;
+			_selRight = selRight;
 
 			_dragLine = BuildDragLine(_cbElevation, _cbHeight, xPosition);
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 
 			_topArrowHalfWidth = (_cbElevation - 2) / 2;
-			_topArrow = BuildTopArrow(_cbElevation, xPosition, _topArrowHalfWidth);
+			_topArrow = BuildTopArrow(_selectionLinePosition);
 
 			_topArrow.MouseUp += _topArrow_MouseUp;
 			//_topArrow.PreviewKeyDown += TopArrow_PreviewKeyDown;
@@ -105,25 +109,30 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Polygon BuildTopArrow(double elevation, double xPosition, double halfWidth)
+		private Polygon BuildTopArrow(double xPosition)
 		{
-			var points = new PointCollection()
-			{
-				new Point(xPosition, elevation),
-				new Point(xPosition - halfWidth, 0),
-				new Point(xPosition + halfWidth, 0),
-			};
-
 			var result = new Polygon()
 			{
-				Fill = _isSelected ? Brushes.Goldenrod : Brushes.Transparent,
+				Fill = _isSelected ? Brushes.Goldenrod : Brushes.GhostWhite,
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
-				Points = points,
+				Points = BuildTopAreaPoints(xPosition),
 				//Focusable = true
 			};
 
 			return result;
+		}
+
+		private PointCollection BuildTopAreaPoints(double xPosition)
+		{
+			var points = new PointCollection()
+			{
+				new Point(xPosition, CbElevation),				// The bottom of the arrow is positioned at the top of the band display
+				new Point(xPosition - _topArrowHalfWidth, 0),	// Top, left is at the top of the control
+				new Point(xPosition + _topArrowHalfWidth, 0),	// Top, right is at the top of the control
+			};
+
+			return points;
 		}
 		
 		private void _topArrow_MouseUp(object sender, MouseButtonEventArgs e)
@@ -173,14 +182,7 @@ namespace MSetExplorer
 					_dragLine.X1 = value;
 					_dragLine.X2 = value;
 
-					var points = new PointCollection()
-					{
-						new Point(_selectionLinePosition, CbElevation),
-						new Point(_selectionLinePosition - _topArrowHalfWidth, 0),
-						new Point(_selectionLinePosition + _topArrowHalfWidth, 0),
-					};
-
-					_topArrow.Points = points;
+					_topArrow.Points = BuildTopAreaPoints(_selectionLinePosition);
 				}
 			}
 		}
@@ -195,6 +197,8 @@ namespace MSetExplorer
 					_cbElevation = value;
 					_dragLine.Y1 = value;
 					_dragLine.Y2 = CbElevation + CbHeight;
+
+					_topArrowHalfWidth = (_cbElevation - 2) / 2;
 				}
 			}
 		}
@@ -444,26 +448,32 @@ namespace MSetExplorer
 			if (amount < 0)
 			{
 				amount = amount * -1;
-				if (_originalLeftGeometry.Rect.Width > amount + (1 * _scale) && _originalRightGeometry.Rect.X > amount /*+ (1 * _scale)*/)
+				if (_originalLeftGeometry.Rect.Width > amount + (1 * _scaleX) && _originalRightGeometry.Rect.X > amount /*+ (1 * _scale)*/)
 				{
 					_left.Rect = DrawingHelper.Shorten(_originalLeftGeometry.Rect, amount);
 					_right.Rect = DrawingHelper.MoveRectLeft(_originalRightGeometry.Rect, amount);
 
+					_selLeft.Rect = DrawingHelper.CopyXAndWidth(_left.Rect, _selLeft.Rect);
+					_selRight.Rect = DrawingHelper.CopyXAndWidth(_right.Rect, _selRight.Rect);
+
 					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Shortening the Left ColorBandRectangle by amount: {amount}. Left Width: {_originalLeftGeometry.Rect.Width}, Right Pos: {_originalRightGeometry.Rect.X}" +
 						$"New Left Rectangle Width = {_left.Rect.Width}; New Right Rectangle Position: {_right.Rect.X}");
+					
 					updated = true;
 				}
 			}
 			else
 			{
-				if (_originalRightGeometry.Rect.Width > amount + (1 * _scale))
+				if (_originalRightGeometry.Rect.Width > amount + (1 * _scaleX))
 				{
 					_left.Rect = DrawingHelper.Lengthen(_originalLeftGeometry.Rect, amount);
 					_right.Rect = DrawingHelper.MoveRectRight(_originalRightGeometry.Rect, amount);
 
+					_selLeft.Rect = DrawingHelper.CopyXAndWidth(_left.Rect, _selLeft.Rect);
+					_selRight.Rect = DrawingHelper.CopyXAndWidth(_right.Rect, _selRight.Rect);
+
 					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. Left Width: {_originalLeftGeometry.Rect.Width}, Right Pos: {_originalRightGeometry.Rect.X}" +
 						$"New Left Rectangle Width = {_left.Rect.Width}; New Right Rectangle Position: {_right.Rect.X}");
-
 
 					updated = true;
 				}

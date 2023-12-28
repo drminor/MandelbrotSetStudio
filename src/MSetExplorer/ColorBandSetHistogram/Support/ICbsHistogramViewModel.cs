@@ -19,7 +19,6 @@ namespace MSetExplorer
 
 		//double ScaleFixFactor { get; set; }
 		ColorBandSetEditMode EditMode { get; set; }
-		CbsSelectedItems SelectedItems { get; }
 
 		bool ColorBandUserControlHasErrors { get; set; }
 
@@ -82,5 +81,9 @@ namespace MSetExplorer
 		//void UpdateColorBandCutoff(int colorBandIndex, int newValue);
 
 		//public event PropertyChangedEventHandler? PropertyChanged;
+
+		CbsSelectedItems SelectedItems { get; }
+		SelectedColorBand?[] SelectedItemsArray { get; }
+		void ClearSelectedItems();
 	}
 }

@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -23,17 +24,8 @@ namespace MSetExplorer
 	{
 		#region Private Fields 
 
-		//private const int SCROLL_BAR_HEIGHT = 17;
-		//private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
-		//private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 2;
-
 		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 		private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
-
-		// Initalize the layout setting to some reasonable values -- as a starting point.
-		//private bool _isHorizontalScrollBarVisible = false;
-		//private double _cbrElevation = 0; // Starting Y of each Color Band Rectangle
-		//private double _cbrHeight = 48;   // Height of each Color Band Rectangle
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 
@@ -89,12 +81,11 @@ namespace MSetExplorer
 			_canvas = new Canvas();
 			_border = null;
 
-
 			_contentScale = new SizeDbl(1);
 
-			var isHorizontalScrollBarVisible = true;
+			//var isHorizontalScrollBarVisible = true;
 			var cbrHeight = 48;
-			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(_contentScale, ActualHeight, isHorizontalScrollBarVisible, cbrElevation: 0, cbrHeight: cbrHeight);
+			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(_contentScale, ActualHeight/*, isHorizontalScrollBarVisible*/, cbrElevation: 0, cbrHeight: cbrHeight);
 			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 
 			_canvas.MouseEnter += Handle_MouseEnter;
@@ -283,14 +274,14 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool IsHorizontalScrollBarVisible
-		{
-			get => _colorBandLayoutViewModel.IsHorizontalScrollBarVisible;
-			set
-			{
-				_colorBandLayoutViewModel.IsHorizontalScrollBarVisible = value;
-			}
-		}
+		//public bool IsHorizontalScrollBarVisible
+		//{
+		//	get => _colorBandLayoutViewModel.IsHorizontalScrollBarVisible;
+		//	set
+		//	{
+		//		_colorBandLayoutViewModel.IsHorizontalScrollBarVisible = value;
+		//	}
+		//}
 
 		//private double CbrElevation
 		//{
@@ -954,18 +945,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private (double, double) GetCbrElevationAndHeight(double controlHeight, bool isHorizontalScrollBarVisible)
-		//{
-		//	if (isHorizontalScrollBarVisible)
-		//	{
-		//		return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING + SCROLL_BAR_HEIGHT));
-		//	}
-		//	else
-		//	{
-		//		return (SELECTION_LINE_SELECTOR_HEIGHT, controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING));
-		//	}
-		//}
-
 		#endregion
 
 		#region ColorBandSet View Support
@@ -985,16 +964,18 @@ namespace MSetExplorer
 
 			var endPtr = listCollectionView.Count - 1;
 
-			for (var i = 0; i <= endPtr; i++)
+			for (var colorBandIndex = 0; colorBandIndex <= endPtr; colorBandIndex++)
 			{
-				var colorBand = (ColorBand)listCollectionView.GetItemAt(i);
+				var colorBand = (ColorBand)listCollectionView.GetItemAt(colorBandIndex);
 
 				var xPosition = colorBand.PreviousCutoff ?? 0;
 				var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
 				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
-				
-				//var cbsRectangle = new CbsRectangle(i, xPosition, CbrElevation, bandWidth, CbrHeight, colorBand.StartColor, colorBand.ActualEndColor, blend, _canvas, scaleSize, CbRectangleIsSelectedChanged);
-				var cbsRectangle = new CbsRectangle(i, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged);
+
+				var isCurrent = colorBandIndex == _vm?.CurrentColorBandIndex;
+				var isSeleced = _vm?.SelectedItemsArray[colorBandIndex]?.IsColorBandSelected ?? false;
+
+				var cbsRectangle = new CbsRectangle(colorBandIndex, isCurrent, isSeleced, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged);
 
 				_colorBandRectangles.Add(cbsRectangle);
 			}
@@ -1009,16 +990,17 @@ namespace MSetExplorer
 				return;
 			}
 
-			if (!shiftKeyPressed && !controlKeyPressed)
+			if (!(shiftKeyPressed || controlKeyPressed))
 			{
-				foreach(var selCb in _vm.SelectedItems.SelectedColorBands)
+				foreach (var selCb in _vm.SelectedItems.SelectedColorBands)
 				{
 					if (TryGetColorBandIndex(cbsView, selCb.ColorBand, out var index))
 					{
 						_colorBandRectangles[index.Value].IsSelected = false;
 					}
 				}
-				_vm.SelectedItems.Clear();
+
+				_vm.ClearSelectedItems();
 			}
 
 			var colorBand = GetColorBandAt(cbsView, colorBandIndex);
@@ -1036,6 +1018,9 @@ namespace MSetExplorer
 				var gLeft = colorBandRectangles[colorBandIndex].RectangleGeometry;
 				var gRight = colorBandRectangles[colorBandIndex + 1].RectangleGeometry;
 
+				var gSelLeft = colorBandRectangles[colorBandIndex].SelRectangleGeometry;
+				var gSelRight = colorBandRectangles[colorBandIndex + 1].SelRectangleGeometry;
+
 				if (gLeft == null || gRight == null)
 				{
 					throw new InvalidOperationException("DrawSelectionLines. Either the left, right or both ColorBandRectangle geometrys are new RectangleGeometrys");
@@ -1049,9 +1034,8 @@ namespace MSetExplorer
 					Debug.WriteLine($"DrawSelectionLines found an xPosition with a value < 2.");
 				}
 
-				//var sl = new CbsSelectionLine(_canvas, CbrElevation, CbrHeight, colorBandIndex, xPosition, gLeft, gRight, ContentScale.Width, OffsetIsSelectedChanged);
-
-				var sl = new CbsSelectionLine(colorBandIndex, xPosition, gLeft, gRight, _colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged);
+				var isSelected = _vm?.SelectedItemsArray[colorBandIndex]?.IsCutoffSelected ?? false;
+				var sl = new CbsSelectionLine(colorBandIndex, isSelected, xPosition, gLeft, gRight, gSelLeft, gSelRight, _colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged);
 
 				_selectionLines.Add(sl);
 			}
@@ -1066,17 +1050,17 @@ namespace MSetExplorer
 				return;
 			}
 
-			if (!shiftKeyPressed && !controlKeyPressed)
+			if (  !(shiftKeyPressed || controlKeyPressed)  )
 			{
 				foreach (var selCb in _vm.SelectedItems.SelectedColorBands)
 				{
 					if (TryGetColorBandIndex(cbsView, selCb.ColorBand, out var index))
 					{
-						_colorBandRectangles[index.Value].IsSelected = false;
+						_selectionLines[index.Value].IsSelected = false;
 					}
 				}
 
-				_vm.SelectedItems.Clear();
+				_vm.ClearSelectedItems();
 			}
 
 			var colorBand = GetColorBandAt(cbsView, colorBandIndex);

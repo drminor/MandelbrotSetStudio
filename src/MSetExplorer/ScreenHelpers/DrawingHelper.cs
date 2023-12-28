@@ -1,6 +1,8 @@
 ﻿using MSS.Types;
+using System.Security.Policy;
 using System.Windows;
 using System.Windows.Media;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -119,8 +121,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-
-
 		#endregion
 
 		#region Rect and RectanbleDbl Sizing / Shifting 
@@ -152,6 +152,12 @@ namespace MSetExplorer
 		public static RectangleDbl Shorten(RectangleDbl rd, double amount)
 		{
 			var result = new RectangleDbl(rd.Position, new SizeDbl(rd.Width - amount, rd.Height));
+			return result;
+		}
+
+		public static Rect CopyXAndWidth(Rect source, Rect target)
+		{
+			var result = new Rect(new Point(source.X, target.Y), new Size(source.Width, target.Height));
 			return result;
 		}
 
