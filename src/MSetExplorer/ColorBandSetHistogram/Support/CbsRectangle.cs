@@ -85,7 +85,7 @@ namespace MSetExplorer
 			_geometry = BuildRectangleGeometry(_selectionLinePosition, _cbElevation, width, _cbHeight, _contentScale);
 			_rectanglePath = BuildRectanglePath(_geometry, startColor, endColor, blend);
 
-			_rectanglePath.MouseUp += _rectanglePath_MouseUp;
+			_rectanglePath.MouseUp += Handle_MouseUp;
 
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
@@ -98,7 +98,7 @@ namespace MSetExplorer
 			_selRectanglePath.SetValue(Panel.ZIndexProperty, 1);
 		}
 
-		private void _rectanglePath_MouseUp(object sender, MouseButtonEventArgs e)
+		private void Handle_MouseUp(object sender, MouseButtonEventArgs e)
 		{
 			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
@@ -305,6 +305,7 @@ namespace MSetExplorer
 				Stroke = isCurrent ? IS_CURRENT_STROKE : DEFAULT_STROKE,
 				StrokeThickness = strokeThickness,
 				Data = area,
+				Focusable=false,
 				IsHitTestVisible = true
 			};
 

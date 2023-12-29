@@ -25,6 +25,13 @@ namespace MSS.Types
 		//private ColorBand? _copy;
 		private bool _isInEditMode;
 
+		private bool _isCurrent;
+
+		private bool _isCutoffSelected;
+		private bool _isColorSelected;
+
+		//private bool _isSelected;
+
 		#endregion
 
 		#region Constructor
@@ -52,7 +59,12 @@ namespace MSS.Types
 			_percentage = percentage;
 
 			_actualEndColor = GetActualEndColor();
-		}
+
+			_isCurrent = false;
+			//_isSelected = false;
+			_isCutoffSelected = false;
+			_isColorSelected = false;
+	}
 
 		private static ColorBand _emptySingleton = new ColorBand();
 
@@ -74,7 +86,7 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Public Properties
+		#region Public Properties - Cutoff
 
 		public int Cutoff
 		{
@@ -116,7 +128,7 @@ namespace MSS.Types
 		public bool IsLast => !_successorStartColor.HasValue;
 
 		//public int BucketWidth => Cutoff - StartingCutoff;
-		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);	// Updated on 12/26/2023
+		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);  // Updated on 12/26/2023
 
 
 		/* Relationship between Cutoff and StartingCutoff
@@ -144,6 +156,10 @@ namespace MSS.Types
 		| ------------------||--------------------|
 		0	1	2	3	4	5	6	7	8	9	10
 		*/
+
+		#endregion
+
+		#region Public Properties - Color
 
 		public ColorBandColor StartColor
 		{
@@ -236,6 +252,64 @@ namespace MSS.Types
 				}
 			}
 		}
+
+		#endregion
+
+		#region Public Properties - Selections
+
+		public bool IsCurrent
+		{
+			get => _isCurrent;
+			set
+			{
+				if (value != _isCurrent)
+				{
+					_isCurrent = value;
+				}
+			}
+		}
+
+		public bool IsSelected
+		{
+			get => _isCutoffSelected || _isColorSelected;
+			set
+			{
+				if (value != IsSelected)
+				{
+					IsCutoffSelected = value;
+					IsColorSelected = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool IsCutoffSelected
+		{
+			get => _isCutoffSelected;
+			set
+			{
+				if (value != _isCutoffSelected)
+				{
+					_isCutoffSelected = value;
+					OnPropertyChanged();
+
+				}
+			}
+		}
+
+		public bool IsColorSelected
+		{
+			get => _isColorSelected;
+			set
+			{
+				if (value != _isColorSelected)
+				{
+					_isColorSelected = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 
 		#endregion
 
@@ -369,7 +443,7 @@ namespace MSS.Types
 
 		#endregion
 
-		#region IEq Support
+		#region IEquatable Support
 
 		public override bool Equals(object? obj)
 		{

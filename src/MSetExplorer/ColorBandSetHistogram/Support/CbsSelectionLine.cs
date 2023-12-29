@@ -113,12 +113,19 @@ namespace MSetExplorer
 		{
 			var result = new Polygon()
 			{
-				Fill = _isSelected ? Brushes.Goldenrod : Brushes.GhostWhite,
+				Fill = GetTopArrowFill(_isSelected),
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
 				Points = BuildTopAreaPoints(xPosition),
 				//Focusable = true
 			};
+
+			return result;
+		}
+
+		private Brush GetTopArrowFill(bool isSelected)
+		{
+			var result = isSelected ? Brushes.LightSlateGray : Brushes.GhostWhite;
 
 			return result;
 		}
@@ -162,7 +169,7 @@ namespace MSetExplorer
 				if (value != _isSelected)
 				{
 					_isSelected = value;
-					SetTopArrowFill();
+					_topArrow.Fill = GetTopArrowFill(_isSelected);
 				}
 			}
 		}
@@ -276,7 +283,9 @@ namespace MSetExplorer
 			{
 				if (_canvas != null)
 				{
-					_dragLine.Stroke.Opacity = 0;
+					//_dragLine.Stroke.Opacity = 0;
+
+					_dragLine.Visibility = Visibility.Collapsed;
 					_topArrow.Visibility = Visibility.Collapsed;
 				}
 			}
@@ -292,7 +301,8 @@ namespace MSetExplorer
 			{
 				if (_canvas != null)
 				{
-					_dragLine.Stroke.Opacity = 1;
+					//_dragLine.Stroke.Opacity = 1;
+					_dragLine.Visibility = Visibility.Visible;
 					_topArrow.Visibility = Visibility.Visible;
 				}
 			}
@@ -417,6 +427,8 @@ namespace MSetExplorer
 					CompleteDrag();
 				}
 			}
+
+			Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. HandleMouseLeftButtonUp The Keyboard focus is now on {Keyboard.FocusedElement}.");
 		}
 
 		#endregion
@@ -480,11 +492,6 @@ namespace MSetExplorer
 			}
 
 			return updated;
-		}
-
-		private void SetTopArrowFill()
-		{
-			_topArrow.Fill = _isSelected ? Brushes.LightSlateGray : Brushes.Transparent;
 		}
 
 		#endregion

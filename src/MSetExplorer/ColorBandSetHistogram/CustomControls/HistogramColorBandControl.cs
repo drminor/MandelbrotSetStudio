@@ -13,6 +13,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
@@ -88,8 +89,6 @@ namespace MSetExplorer
 			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(_contentScale, ActualHeight/*, isHorizontalScrollBarVisible*/, cbrElevation: 0, cbrHeight: cbrHeight);
 			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 
-			_canvas.MouseEnter += Handle_MouseEnter;
-			_canvas.MouseLeave += Handle_MouseLeave;
 			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
 
 			_colorBandRectangles = new List<CbsRectangle>();
@@ -113,8 +112,25 @@ namespace MSetExplorer
 
 			_border = null;
 
+			KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Cycle);
 			Focusable = true;
-			KeyDown += HistogramColorBandControl_KeyDown;
+			IsTabStop = true;
+			IsEnabled = true;
+
+			PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
+
+			MouseEnter += Handle_MouseEnter;
+			MouseLeave += Handle_MouseLeave;
+
+			GotFocus += HistogramColorBandControl_GotFocus;
+
+			LostFocus += HistogramColorBandControl_LostFocus;
+
+			KeyDown += HandleKeyDown;
+			//KeyUp += HistogramColorBandControl_KeyUp;
+
+			PreviewKeyDown += HandlePreviewKeyDown;
+			PreviewKeyUp += Handle_PreviewKeyUp;
 		}
 
 		#endregion
@@ -183,18 +199,8 @@ namespace MSetExplorer
 			get => _canvas;
 			set
 			{
-				_canvas.MouseEnter -= Handle_MouseEnter;
-				_canvas.MouseLeave -= Handle_MouseLeave;
-				_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
-
 				_canvas.SizeChanged -= Handle_SizeChanged;
-
 				_canvas = value;
-
-				_canvas.MouseEnter += Handle_MouseEnter;
-				_canvas.MouseLeave += Handle_MouseLeave;
-				_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
-
 				_canvas.SizeChanged += Handle_SizeChanged;
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
@@ -319,6 +325,62 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Public Methods
+
+		public void ShowSelectionLines(bool leftMouseButtonIsPressed)
+		{
+			if (_selectionLineBeingDragged != null)
+			{
+				if (!leftMouseButtonIsPressed)
+				{
+					_selectionLineBeingDragged.CancelDrag();
+					_selectionLineBeingDragged = null;
+				}
+				else
+				{
+					// Drag operation is in process.
+					// The selection lines should already be visible.
+				}
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on Handle_MouseEnter.");
+
+				if (_selectionLines.Count == 0)
+				{
+					DrawSelectionLines(_colorBandRectangles);
+				}
+				else
+				{
+					ShowSelectionLinesInternal();
+				}
+			}
+		}
+
+		public void HideSelectionLines(bool leftMouseButtonIsPressed)
+		{
+			if (_selectionLineBeingDragged != null)
+			{
+				if (!leftMouseButtonIsPressed)
+				{
+					_selectionLineBeingDragged.CancelDrag();
+					_selectionLineBeingDragged = null;
+					HideSelectionLinesInternal();
+				}
+				else
+				{
+					// Drag operation is in process.
+					// Do not hide the selection lines.
+				}
+			}
+			else
+			{
+				HideSelectionLinesInternal();
+			}
+		}
+
+		#endregion
+
 		#region Private Methods - Control
 
 		/// <summary>
@@ -424,8 +486,6 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling the SizeChanged event.");
 
 			_colorBandLayoutViewModel.ControlHeight = e.NewSize.Height;
-
-			//(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(e.NewSize.Height, _isHorizontalScrollBarVisible);
 		}
 
 		private void ColorBandLayoutViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -443,62 +503,15 @@ namespace MSetExplorer
 			}
 		}
 
-		public void Handle_MouseLeave(object sender, MouseEventArgs e)
+		private void Handle_MouseLeave(object sender, MouseEventArgs e)
 		{
-			if (sender is Canvas) return;
-
-			if (_selectionLineBeingDragged != null)
-			{
-				if (e.LeftButton != MouseButtonState.Pressed)
-				{
-					_selectionLineBeingDragged.CancelDrag();
-					_selectionLineBeingDragged = null;
-					HideSelectionLines();
-				}
-				else
-				{
-					// Drag operation is in process.
-					// Do not hide the selection lines.
-				}
-			}
-			else
-			{
-				HideSelectionLines();
-			}
-
 			_mouseIsEntered = false;
 		}
 
-		public void Handle_MouseEnter(object sender, MouseEventArgs e)
+		private void Handle_MouseEnter(object sender, MouseEventArgs e)
 		{
-			if (sender is Canvas) return;
-
-			if (_selectionLineBeingDragged != null)
-			{
-				if (e.LeftButton != MouseButtonState.Pressed)
-				{
-					_selectionLineBeingDragged.CancelDrag();
-					_selectionLineBeingDragged = null;
-				}
-				else
-				{
-					// Drag operation is in process.
-					// The selection lines should already be visible.
-				}
-			}
-			else
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is calling DrawSelectionLines on Handle_MouseEnter.");
-
-				if (_selectionLines.Count == 0)
-				{
-					DrawSelectionLines(_colorBandRectangles);
-				}
-				else
-				{
-					ShowSelectionLines();
-				}
-			}
+			Focus();
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl on Mouse Enter the Keyboard focus is now on {Keyboard.FocusedElement}.");
 
 			_mouseIsEntered = true;
 		}
@@ -524,30 +537,19 @@ namespace MSetExplorer
 
 				Debug.WriteIf(_useDetailedDebug, $"HistogramColorBandControl. Starting Drag for cbSelectionLine at index: {cbSelectionLineIndex}, Current View Position: {cbsView.CurrentPosition}, ColorBand: {cb}.");
 
-				var xx = Keyboard.Focus(this);
-
 				cbSelectionLine.StartDrag();
 			}
 			else
 			{
 				if (TryGetColorBandRectangle(hitPoint, _colorBandRectangles, out var cbsRectangle, out var cbRectangleIndex))
 				{
-					var x = Keyboard.Focus(this);
-
 					var cb = GetColorBandAt(cbsView, cbRectangleIndex.Value);
 					cbsView.MoveCurrentTo(cb);
 				}
 			}
-		}
 
-		private void HistogramColorBandControl_KeyDown(object sender, KeyEventArgs e)
-		{
-			if (_selectionLineBeingDragged != null && e.Key == Key.Escape)
-			{
-				_selectionLineBeingDragged.CancelDrag();
-				_selectionLineBeingDragged = null;
-				e.Handled = true;
-			}
+			var focusResult = Focus();
+			ReportSetFocus(focusResult);
 		}
 
 		private void HandleSelectionLineMoved(object? sender, CbsSelectionLineMovedEventArgs e)
@@ -583,25 +585,10 @@ namespace MSetExplorer
 
 				case CbsSelectionLineDragOperation.Complete:
 					_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
-
-					//// *** Diag
-					//var colorBandToUpdate = GetColorBandAt(ColorBandsView!, e.ColorBandIndex);
-
-					//var oPos = _selectionLineBeingDragged!.OriginalSelectionLinePosition;
-					//var scaledAmount = e.NewXPosition - oPos;
-					//var amount = (int)Math.Round(scaledAmount / ContentScale.Width);
-
-
-					//var newCutoff = colorBandToUpdate.Cutoff + amount;
-					//var newCutoffOldstyle = (int)Math.Round(e.NewXPosition / ContentScale.Width);
-					//// *** End diag
-
 					_selectionLineBeingDragged = null;
-
 
 					Debug.WriteLineIf(_useDetailedDebug, "Completing the SelectionBand Drag Operation.");
 					UpdateCutoffThrottled(e);
-
 					break;
 
 				case CbsSelectionLineDragOperation.Cancel:
@@ -672,8 +659,6 @@ namespace MSetExplorer
 			{
 				throw new InvalidOperationException($"The {e.Operation} CbsSelectionLineDragOperation is not supported.");
 			}
-
-			var xxt = Focus();
 		}
 
 		private void ColorBands_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -740,6 +725,56 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		#endregion
+
+		#region Keyboard Event Handlers
+
+		private void HandleKeyDown(object sender, KeyEventArgs e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling KeyDown. The Key is {e.Key}. The sender is {sender}.");
+
+			if (_selectionLineBeingDragged != null && e.Key == Key.Escape)
+			{
+				_selectionLineBeingDragged.CancelDrag();
+				_selectionLineBeingDragged = null;
+				//e.Handled = true;
+			}
+		}
+
+		private void HandlePreviewKeyDown(object sender, KeyEventArgs e)
+		{
+		}
+
+		private void Handle_PreviewKeyUp(object sender, KeyEventArgs e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
+
+			if (_selectionLineBeingDragged == null)
+			{
+				if (e.Key == Key.Left)
+				{
+					_vm?.TryMoveCurrentColorBandToPrevious();
+					e.Handled = true;
+				}
+				else if (e.Key == Key.Right)
+				{
+					_vm?.TryMoveCurrentColorBandToNext();
+					e.Handled = true;
+				}
+			}
+		}
+
+		private void HistogramColorBandControl_LostFocus(object sender, RoutedEventArgs e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is losing focus.");
+		}
+
+		private void HistogramColorBandControl_GotFocus(object sender, RoutedEventArgs e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is receiving focus.");
+		}
+
 
 		#endregion
 
@@ -912,30 +947,13 @@ namespace MSetExplorer
 			return false;
 		}
 
-		//private void HilightColorBandRectangle(int colorBandIndex, Color penColor/*, int interval*/)
-		//{
-		//	var cbRectangle = _colorBandRectangles[colorBandIndex];
-		//	cbRectangle.Pen = new Pen(new SolidColorBrush(penColor), 1.25);
-
-		//	//var timer = new DispatcherTimer(
-		//	//	TimeSpan.FromMilliseconds(interval), 
-		//	//	DispatcherPriority.Normal, 
-		//	//	(s, e) =>
-		//	//	{
-		//	//		cbRectangle.Pen = new Pen(Brushes.Transparent, 0);
-		//	//	}, 
-		//	//	Dispatcher);
-
-		//	//timer.Start();
-		//}
-
 		private void HilightColorBandRectangle(ColorBand cb, bool on)
 		{
 			if (TryGetColorBandIndex(ColorBandsView, cb, out var index))
 			{
 				if (index.Value < 0 || index.Value > _colorBandRectangles.Count - 1)
 				{
-					Debug.WriteLine($"Cannot Highlight the ColorBandRectangle at index: {index}, it is out of range: {_colorBandRectangles.Count}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"Cannot Hilight the ColorBandRectangle at index: {index}, it is out of range: {_colorBandRectangles.Count}.");
 					return;
 				}
 
@@ -1007,6 +1025,7 @@ namespace MSetExplorer
 			var resultantSelType = _vm.SelectedItems.Select(colorBand, ColorBandSelectionType.Band);
 
 			_colorBandRectangles[colorBandIndex].IsSelected = resultantSelType.HasFlag(ColorBandSelectionType.Color);
+			//_selectionLines[colorBandIndex].IsSelected = resultantSelType.HasFlag(ColorBandSelectionType.Cutoff);
 		}
 
 		private void DrawSelectionLines(IList<CbsRectangle> colorBandRectangles)
@@ -1124,7 +1143,7 @@ namespace MSetExplorer
 			_selectionLines.Clear();
 		}
 
-		private void HideSelectionLines()
+		private void HideSelectionLinesInternal()
 		{
 			foreach (var selectionLine in _selectionLines)
 			{
@@ -1132,7 +1151,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ShowSelectionLines()
+		private void ShowSelectionLinesInternal()
 		{
 			foreach (var selectionLine in _selectionLines)
 			{
@@ -1257,6 +1276,17 @@ namespace MSetExplorer
 			var previousXValue = previousValue.Position.X * ContentScale.Width;
 			var newXValue = newValue.Position.X * ContentScale.Width;
 			Debug.WriteLine(_useDetailedDebug, $"The HistogramColorBandControl's CanvasTranslationTransform is being set from {previousXValue} to {newXValue}.");
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportSetFocus(bool focusResult)
+		{
+			var elementWithFocus = Keyboard.FocusedElement;
+			var elementWithLogicalFocus = FocusManager.GetFocusedElement(this);
+			var focusScope = FocusManager.GetFocusScope(this);
+
+			Debug.WriteLine($"HistogramColorBandControl. HandlePreviewLeftButtonDown. The Keyboard focus is now on {elementWithFocus}. The focus is at {elementWithLogicalFocus}. FocusScope: {focusScope}. FocusResult: {focusResult}.");
+
 		}
 
 		#endregion

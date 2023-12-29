@@ -42,26 +42,27 @@
                         SeriesData="{Binding SeriesData, Mode=OneWay}"
                         ContentViewportSize="{Binding ContentViewportSize, Mode=OneWay}"
                         DisplayPosition="{Binding DisplayPosition, Mode=OneWay}"
+                        TabIndex="0"
                     />
                 </Border>
 
                 <Border x:Name="ColorBandAreaBorder" Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Peru" Margin="10,0,10,5">
                     
-                    <ScrollViewer
+                    <ScrollViewer Focusable="False"
                         x:Name="ScrollViewer1"
                         CanContentScroll="True"
                         VerticalScrollBarVisibility="Disabled"
                         HorizontalScrollBarVisibility="{Binding HorizontalScrollBarVisibility, Mode=TwoWay}"
                         >
 
-                        <local:PanAndZoomControl
+                        <local:PanAndZoomControl Focusable="False"
                             x:Name="PanAndZoomControl1"
                             UnscaledExtent="{Binding UnscaledExtent, Mode=OneWay}"
                             ContentScale="{Binding DisplayZoom, Mode=TwoWay}"
                             MinContentScale="{Binding MinimumDisplayZoom, Mode=TwoWay}" 
                             >
 
-                            <local:HistogramColorBandControl
+                            <local:HistogramColorBandControl TabIndex="200" Focusable="True"
                                 x:Name="HistogramColorBandControl1"
                                 CurrentColorBand="{Binding CurrentColorBand}"
                             />
@@ -87,22 +88,22 @@
                                 
                                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
                                     <TextBlock Height="21" Margin="5,5,5,0" FontSize="14" Text="Color Band #:" />
-                                    <TextBox Text="{Binding Path=CurrentColorBandNumber, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0,3"/>
+                                    <TextBox Text="{Binding Path=CurrentColorBandNumber, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0,3" TabIndex="3"/>
                                 
                                     <TextBlock Height="21" Margin="5,5,5,0" FontSize="14" Text="of" />
-                                    <TextBox Text="{Binding Path=ColorBandsCount, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0,3"/>
+                                    <TextBox Text="{Binding Path=ColorBandsCount, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0,3" TabIndex="4"/>
                                 
                                     <!--<TextBlock Height="21" Margin="5" FontSize="14" Text="total" />-->
                                 </StackPanel>
 
                                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
-                                    <Button Width="70" Margin="0,0,10,0" Content="&lt; L" Click="MoveLeftButton_Click" />
-                                    <Button Width="70" Content="R &gt;" Click="MoveRightButton_Click" />
+                                    <Button Width="70" Margin="0,0,10,0" Content="&lt; L" Click="MoveLeftButton_Click" TabIndex="5" />
+                                    <Button Width="70" Content="R &gt;" Click="MoveRightButton_Click" TabIndex="6"/>
                                 </StackPanel>
 
                                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
                                     <TextBlock Height="21" Margin="5,0" FontSize="14" Text="Percentage:" />
-                                    <TextBox Text="{Binding Path=CurrentColorBand.Percentage, Mode=OneWay}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,3"/>
+                                    <TextBox Text="{Binding Path=CurrentColorBand.Percentage, Mode=OneWay}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,3" TabIndex="7"/>
                                 </StackPanel>
 
                             </StackPanel>
@@ -110,23 +111,23 @@
                         </Border>
 
                         <Border Grid.Row="1" BorderThickness="0, 0.75, 0, 0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0">
-                            <local:ColorBandUserControl x:Name="clrBandDetail" Margin="0,5,0,0" />
+                            <local:ColorBandUserControl x:Name="clrBandDetail" Margin="0,5,0,0" TabIndex="8"/>
                         </Border>
 
                         <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
 
                             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
-                                <Button Name="btnRevert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Revert">Revert</Button>
-                                <Button Name="btnInsert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Insert">Insert</Button>
-                                <Button Name="btnDelete" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Delete">Delete</Button>
-                                <Button Name="btnApply" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" Command="local:ColorBandSetCommands.Apply">Apply</Button>
+                                <Button Name="btnRevert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" TabIndex="9" Command="local:ColorBandSetCommands.Revert">Revert</Button>
+                                <Button Name="btnInsert" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" TabIndex="10" Command="local:ColorBandSetCommands.Insert">Insert</Button>
+                                <Button Name="btnDelete" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" TabIndex="11" Command="local:ColorBandSetCommands.Delete">Delete</Button>
+                                <Button Name="btnApply" HorizontalAlignment="Center" Width="55" FontSize="14" Height="23" Margin="8,0" TabIndex="12" Command="local:ColorBandSetCommands.Apply">Apply</Button>
                             </StackPanel>
 
                         </Border>
 
                         <Border Grid.Row="3" BorderThickness="0,0.75,0,0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
                             <Border BorderThickness="0" Margin="0,3">
-                                <local:UndoPileControl x:Name="undoRedo1" />
+                                <local:UndoPileControl x:Name="undoRedo1" TabIndex="13"/>
                             </Border>
                         </Border>
 

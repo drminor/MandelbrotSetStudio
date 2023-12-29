@@ -196,19 +196,12 @@ namespace MSetExplorer
 
 		private void HandleMouseLeave(object sender, MouseEventArgs e)
 		{
-			var imo = IsMouseOver;
-
-			if (imo)
-			{
-				Debug.WriteLine("We got a mouse leave, however IsMouseOver = true.");
-			}
-
-			HistogramColorBandControl1.Handle_MouseLeave(sender, e);
+			HistogramColorBandControl1.HideSelectionLines(e.LeftButton == MouseButtonState.Pressed);
 		}
 
 		private void HandleMouseEnter(object sender, MouseEventArgs e)
 		{
-			HistogramColorBandControl1.Handle_MouseEnter(sender, e);
+			HistogramColorBandControl1.ShowSelectionLines(e.LeftButton == MouseButtonState.Pressed);
 		}
 
 		#endregion

@@ -37,8 +37,8 @@ namespace MSetExplorer
 		private readonly object _histLock;
 
 		private bool _isEnabled;
-		//private Visibility _windowVisibility;
 
+		private bool _colorBandUserControlHasErrors;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -90,7 +90,6 @@ namespace MSetExplorer
 			BeyondTargetSpecs = null;
 
 			_isEnabled = true;
-			//_windowVisibility = Visibility.Visible;
 
 			// Plotting
 			_seriesData = HPlotSeriesData.Empty;
@@ -106,6 +105,7 @@ namespace MSetExplorer
 			_displayZoom = 1;
 
 			HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
+
 		}
 
 		#endregion
@@ -548,8 +548,6 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.HorizontalScrollBarVisibility));
 			}
 		}
-
-		private bool _colorBandUserControlHasErrors;
 
 		public bool ColorBandUserControlHasErrors
 		{

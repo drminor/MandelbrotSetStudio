@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		private ControlXPositionAndWidth _viewportOffsetAndWidth;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
