@@ -366,11 +366,13 @@ namespace MSetExplorer
 		public void ShowSelectionLines(bool leftMouseButtonIsPressed)
 		{
 			_cbsListView?.ShowSelectionLines(leftMouseButtonIsPressed);
+			_mouseIsEntered = true;
 		}
 
 		public void HideSelectionLines(bool leftMouseButtonIsPressed)
 		{
 			_cbsListView?.HideSelectionLines(leftMouseButtonIsPressed);
+			_mouseIsEntered = false;
 		}
 
 		#endregion
@@ -504,25 +506,14 @@ namespace MSetExplorer
 
 		private void Handle_MouseLeave(object sender, MouseEventArgs e)
 		{
-			_mouseIsEntered = false;
-
-			if (_cbsListView != null)
-			{
-				_cbsListView.MouseIsEntered = false;
-			}
+			//HideSelectionLines(e.LeftButton == MouseButtonState.Pressed);
 		}
 
 		private void Handle_MouseEnter(object sender, MouseEventArgs e)
 		{
 			Focus();
 			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl on Mouse Enter the Keyboard focus is now on {Keyboard.FocusedElement}.");
-
-			_mouseIsEntered = true;
-
-			if (_cbsListView != null)
-			{
-				_cbsListView.MouseIsEntered = true;
-			}
+			ShowSelectionLines(e.LeftButton == MouseButtonState.Pressed);
 		}
 
 		//private void Handle_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

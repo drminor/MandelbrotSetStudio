@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
+using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -19,6 +20,7 @@ namespace MSetExplorer
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
+		private double _xPosition;
 		private double _cbElevation;
 		private double _cbHeight;
 		private double _scaleX;
@@ -32,7 +34,7 @@ namespace MSetExplorer
 
 		private DragState _dragState;
 
-		private double _originalXPosition;
+		private double _originalSelectionLinePosition;
 
 		//private RectangleGeometry _left;
 		//private RectangleGeometry _right;
@@ -105,16 +107,18 @@ namespace MSetExplorer
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
 			_colorBandLayoutViewModel.PropertyChanged += _colorBandLayoutViewModel_PropertyChanged;
 			_canvas = canvas;
+			_xPosition = xPosition;
+
 			_cbElevation = _colorBandLayoutViewModel.CbrElevation;
 			_cbHeight = _colorBandLayoutViewModel.CbrHeight;
 
 			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
 			_isSelectedChanged = isSelectedChanged;
 
-			_selectionLinePosition = xPosition;
-			_originalXPosition = xPosition;
+			_selectionLinePosition = _xPosition * _scaleX;
+			_originalSelectionLinePosition = _selectionLinePosition;
 
-			_dragLine = BuildDragLine(_cbElevation, _cbHeight, xPosition, isVisible);
+			_dragLine = BuildDragLine(_cbElevation, _cbHeight, _selectionLinePosition, isVisible);
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 
@@ -130,12 +134,10 @@ namespace MSetExplorer
 
 		private void _colorBandLayoutViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "ContentScale)")
+			if (e.PropertyName == "ContentScale")
 			{
-				_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
-
-				// TODO: Use the new value to update the SelectionLinePosition.
-
+				ScaleX = _colorBandLayoutViewModel.ContentScale.Width;
+				_originalSelectionLinePosition = SelectionLinePosition;
 			}
 		}
 
@@ -210,22 +212,35 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public bool IsSelected
+		public int ColorBandIndex { get; set; }
+
+		public double XPosition
 		{
-			get => _isSelected;
+			get => _xPosition;
+
 			set
 			{
-				if (value != _isSelected)
+				if (ScreenTypeHelper.IsDoubleChanged(value, _xPosition))
 				{
-					_isSelected = value;
-					_topArrow.Fill = GetTopArrowFill(_isSelected);
+					_xPosition = value;
+					SelectionLinePosition = _xPosition * _scaleX;
 				}
 			}
 		}
 
-		public int ColorBandIndex { get; set; }
+		public double ScaleX
+		{
+			get => _scaleX;
 
-		public double OriginalSelectionLinePosition => _originalXPosition;
+			set
+			{
+				if (ScreenTypeHelper.IsDoubleChanged(value, _scaleX))
+				{
+					_scaleX = value;
+					SelectionLinePosition = _xPosition * _scaleX;
+				}
+			}
+		}
 
 		public double SelectionLinePosition
 		{
@@ -252,9 +267,9 @@ namespace MSetExplorer
 				{
 					_cbElevation = value;
 					_dragLine.Y1 = value;
-					_dragLine.Y2 = CbElevation + CbHeight;
+					_dragLine.Y2 = value + CbHeight;
 
-					_topArrowHalfWidth = (_cbElevation - 2) / 2;
+					_topArrowHalfWidth = (value - 2) / 2;
 				}
 			}
 		}
@@ -272,9 +287,51 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool IsSelected
+		{
+			get => _isSelected;
+			set
+			{
+				if (value != _isSelected)
+				{
+					_isSelected = value;
+					_topArrow.Fill = GetTopArrowFill(_isSelected);
+				}
+			}
+		}
+
 		#endregion
 
 		#region Public Methods
+
+		//public bool UpdatePosition(double newPosition)
+		//{
+		//	if (DragState == DragState.Begun || DragState == DragState.InProcess)
+		//	{
+		//		// The HandleMouseMove eventHandler is managing the SelectionLine positions.
+		//		return false;
+		//	}
+
+		//	var amount = newPosition - _originalSelectionLinePosition;
+
+		//	if (ScreenTypeHelper.IsDoubleNearZero(amount))
+		//	{
+		//		return false;
+		//	}
+
+		//	if (UpdateColorBandWidth(amount))
+		//	{
+		//		Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. The new position is {newPosition}. The original position is {_originalSelectionLinePosition}.");
+		//		SelectionLinePosition = newPosition;
+
+		//		return true;
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine::UpdatePosition. The call to UpdateColorBandWidth returned false. The new position is {newPosition}. The original position is {_originalSelectionLinePosition}.");
+		//		return false;
+		//	}
+		//}
 
 		public bool UpdatePosition(double newPosition)
 		{
@@ -284,7 +341,7 @@ namespace MSetExplorer
 				return false;
 			}
 
-			var amount = newPosition - _originalXPosition;
+			var amount = newPosition - _originalSelectionLinePosition;
 
 			if (ScreenTypeHelper.IsDoubleNearZero(amount))
 			{
@@ -293,14 +350,14 @@ namespace MSetExplorer
 
 			if (UpdateColorBandWidth(amount))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. The new position is {newPosition}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. The new position is {newPosition}. The original position is {_originalSelectionLinePosition}.");
 				SelectionLinePosition = newPosition;
 
 				return true;
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine::UpdatePosition. The call to UpdateColorBandWidth returned false. The new position is {newPosition}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine::UpdatePosition. The call to UpdateColorBandWidth returned false. The new position is {newPosition}. The original position is {_originalSelectionLinePosition}.");
 				return false;
 			}
 		}
@@ -369,7 +426,7 @@ namespace MSetExplorer
 			}
 
 			_rectangleGeometries = rectangleGeometries; 
-			_originalXPosition = SelectionLinePosition;
+			_originalSelectionLinePosition = SelectionLinePosition;
 
 				DragState = DragState.InProcess;
 
@@ -380,13 +437,13 @@ namespace MSetExplorer
 		{
 			DragState = DragState.None;
 
-			if (SelectionLinePosition != _originalXPosition)
+			if (SelectionLinePosition != _originalSelectionLinePosition)
 			{
-				SelectionLinePosition = _originalXPosition;
+				SelectionLinePosition = _originalSelectionLinePosition;
 
 				UpdateColorBandWidth(0);
 
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalXPosition, CbsSelectionLineDragOperation.Cancel));
+				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalSelectionLinePosition, CbsSelectionLineDragOperation.Cancel));
 			}
 		}
 
@@ -448,18 +505,18 @@ namespace MSetExplorer
 
 			var pos = e.GetPosition(relativeTo: _canvas);
 
-			var amount = pos.X - _originalXPosition;
+			var amount = pos.X - _originalSelectionLinePosition;
 
 			if (UpdateColorBandWidth(amount))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSelectionLinePosition}.");
 				SelectionLinePosition = pos.X;
 
 				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, pos.X, CbsSelectionLineDragOperation.Move));
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned false. The XPos is {pos.X}. The original position is {_originalXPosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned false. The XPos is {pos.X}. The original position is {_originalSelectionLinePosition}.");
 			}
 		}
 
@@ -487,7 +544,7 @@ namespace MSetExplorer
 
 		private void CompleteDrag()
 		{
-			var distance = Math.Abs(SelectionLinePosition - _originalXPosition);
+			var distance = Math.Abs(SelectionLinePosition - _originalSelectionLinePosition);
 
 			if (distance > MIN_SEL_DISTANCE)
 			{

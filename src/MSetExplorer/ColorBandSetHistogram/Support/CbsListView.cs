@@ -51,11 +51,12 @@ namespace MSetExplorer
 
 			_canvas = canvas;
 			_colorBandsView = colorBandsView;
+
 			_colorBandsView.CurrentChanged += _colorBandsView_CurrentChanged;
+			(_colorBandsView as INotifyCollectionChanged).CollectionChanged += ColorBands_CollectionChanged;
+
 			UseRealTimePreview = useRealTimePreview;
 			_mouseIsEntered = mouseIsEntered;
-
-			(_colorBandsView as INotifyCollectionChanged).CollectionChanged += ColorBands_CollectionChanged;
 
 			ListViewItems = new List<CbsListViewItem>();
 
@@ -63,15 +64,9 @@ namespace MSetExplorer
 
 			_hitList = new List<Shape>();
 
-			//RemoveSelectionLines();
 			DrawColorBands(_colorBandsView, showSectionLines: _mouseIsEntered);
 
-			if (_mouseIsEntered)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsListView is calling DrawSelectionLines on ColorBandsView update. (Have Mouse)");
-
-				//DrawSelectionLines(ListViewItems);
-			}
+			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
 		}
 
 		private void _colorBandsView_CurrentChanged(object? sender, EventArgs e)
@@ -120,7 +115,7 @@ namespace MSetExplorer
 		public SizeDbl ContentScale
 		{
 			get => _colorBandLayoutViewModel.ContentScale;
-			set => _colorBandLayoutViewModel.ContentScale = new SizeDbl(value.Width, 1);
+			set => _colorBandLayoutViewModel.ContentScale = value;
 		}
 
 		public double CbrElevation => _colorBandLayoutViewModel.CbrElevation;
@@ -555,7 +550,9 @@ namespace MSetExplorer
 
 			var selectionLine = ListViewItems[colorBandIndex].CbsSelectionLine;
 
-			_ = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
+			//_ = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
+
+			selectionLine.XPosition = newCutoff;
 		}
 
 		private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)
@@ -746,10 +743,6 @@ namespace MSetExplorer
 			{
 				return;
 			}
-
-			var scaleSize = new SizeDbl(ContentScale.Width, 1);
-
-			//Debug.WriteLine($"****The scale is {scaleSize} on DrawColorBands.");
 
 			var endPtr = listCollectionView.Count - 1;
 

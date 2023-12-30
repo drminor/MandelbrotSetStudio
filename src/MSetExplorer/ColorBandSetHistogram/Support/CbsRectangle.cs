@@ -13,10 +13,6 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		//private static readonly Pen DEFAULT_PEN = new Pen(new SolidColorBrush(Colors.Transparent), 1);
-		//private static readonly Pen IS_CURRENT_PEN = new Pen(new SolidColorBrush(Colors.DarkRed), 1);
-		//private static readonly Pen IS_SELECTED_PEN = new Pen(new SolidColorBrush(Colors.DarkCyan), 2.5);
-
 		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.LightGreen);
 		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.LightBlue);
@@ -34,7 +30,7 @@ namespace MSetExplorer
 		private SizeDbl _contentScale;
 		private IsSelectedChanged _isSelectedChanged;
 
-		private double _selectionLinePosition;
+		private double _xPosition;
 		private double _width;
 		//private ColorBandColor _startColor;
 		//private ColorBandColor _endColor;
@@ -48,8 +44,6 @@ namespace MSetExplorer
 
 		private bool _isCurrent;
 		private bool _isSelected;
-
-		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -79,13 +73,13 @@ namespace MSetExplorer
 			//var height = _colorBandLayoutViewModel.CbrHeight;
 			//var contentScale = _colorBandLayoutViewModel.ContentScale;
 
-			_selectionLinePosition = xPosition;
+			_xPosition = xPosition;
 			_width = width;
 			//_startColor = startColor;
 			//_endColor = endColor;
 			//_blend = blend;
 
-			_geometry = BuildRectangleGeometry(_selectionLinePosition, _cbElevation, width, _cbHeight, _contentScale);
+			_geometry = BuildRectangleGeometry(_xPosition, _cbElevation, width, _cbHeight, _contentScale);
 			_rectanglePath = BuildRectanglePath(_geometry, startColor, endColor, blend);
 
 			_rectanglePath.MouseUp += Handle_MouseUp;
@@ -94,7 +88,7 @@ namespace MSetExplorer
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
 			var top = 0;
-			_selGeometry = BuildSelRectangleGeometry(_selectionLinePosition, top, width, _controlHeight, _contentScale);
+			_selGeometry = BuildSelRectangleGeometry(_xPosition, top, width, _controlHeight, _contentScale);
 			_selRectanglePath = BuildSelRectanglePath(_selGeometry, _isCurrent, _isSelected, SEL_RECTANGLE_STROKE_THICKNESS);
 
 			_canvas.Children.Add(_selRectanglePath);
@@ -103,12 +97,11 @@ namespace MSetExplorer
 
 		private void _colorBandLayoutViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "ContentScale)")
+			if (e.PropertyName == "ContentScale")
 			{
 				_contentScale = _colorBandLayoutViewModel.ContentScale;
-				_geometry = BuildRectangleGeometry(_selectionLinePosition, _cbElevation, _width, _cbHeight, _contentScale);
 
-				((Path)_rectanglePath).Data = _geometry;
+				Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
 			}
 		}
 
@@ -126,48 +119,16 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public Shape Rectangle => _rectanglePath; 
-		public RectangleGeometry RectangleGeometry => _geometry;
-
-		public Shape SelRectangle => _selRectanglePath;
-		public RectangleGeometry SelRectangleGeometry => _selGeometry;
-
-		public bool IsCurrent
-		{
-			get => _isCurrent;
-			set
-			{
-				if (value != _isCurrent)
-				{
-					_isCurrent = value;
-					UpdateSelectionBackground();
-				}
-			}
-		}
-
-		public bool IsSelected
-		{
-			get => _isSelected;
-			set
-			{
-				if (value != _isSelected)
-				{
-					_isSelected = value;
-					UpdateSelectionBackground();
-				}
-			}
-		}
-
 		public int ColorBandIndex { get; set; }
 
-		public double SelectionLinePosition
+		public double XPosition
 		{
-			get => _selectionLinePosition;
+			get => _xPosition;
 			set
 			{
-				if (value != _selectionLinePosition)
+				if (value != _xPosition)
 				{
-					_selectionLinePosition = value;
+					_xPosition = value;
 				}
 			}
 		}
@@ -205,10 +166,41 @@ namespace MSetExplorer
 				if (value != _width)
 				{
 					_width = value;
-					Rectangle.Width = _width;
 				}
 			}
 		}
+
+		public bool IsCurrent
+		{
+			get => _isCurrent;
+			set
+			{
+				if (value != _isCurrent)
+				{
+					_isCurrent = value;
+					UpdateSelectionBackground();
+				}
+			}
+		}
+
+		public bool IsSelected
+		{
+			get => _isSelected;
+			set
+			{
+				if (value != _isSelected)
+				{
+					_isSelected = value;
+					UpdateSelectionBackground();
+				}
+			}
+		}
+
+		public Shape Rectangle => _rectanglePath;
+		public RectangleGeometry RectangleGeometry => _geometry;
+
+		public Shape SelRectangle => _selRectanglePath;
+		public RectangleGeometry SelRectangleGeometry => _selGeometry;
 
 		#endregion
 
@@ -230,36 +222,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public void Hide()
-		//{
-		//	try
-		//	{
-		//		if (_canvas != null)
-		//		{
-		//			Rectangle.Fill.Opacity = 0;
-		//		}
-		//	}
-		//	catch
-		//	{
-		//		Debug.WriteLine("CbsSelectionLine encountered an exception in Hide.");
-		//	}
-		//}
-
-		//public void Show()
-		//{
-		//	try
-		//	{
-		//		if (_canvas != null)
-		//		{
-		//			Rectangle.Stroke.Opacity = 1;
-		//		}
-		//	}
-		//	catch
-		//	{
-		//		Debug.WriteLine("CbsSelectionLine encountered an exception in Show.");
-		//	}
-		//}
-
 		#endregion
 
 		#region Event Handlers
@@ -268,21 +230,11 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private RectangleGeometry BuildRectangleGeometry(double xPosition, double elevation, double width, double height, SizeDbl scaleSize)
+		private RectangleGeometry BuildRectangleGeometry(double xPosition, double yPosition, double width, double height, SizeDbl scaleSize)
 		{
-			var area = new RectangleDbl(new PointDbl(xPosition, elevation + 1), new SizeDbl(width, height - 2));
+			var area = new RectangleDbl(new PointDbl(xPosition, yPosition + 1), new SizeDbl(width, height - 2));
 			var scaledArea = area.Scale(scaleSize);
-
-			//var scaledAreaWithGap = scaledArea.Width > 2 ? DrawingHelper.Shorten(scaledArea, 1) : scaledArea;
-			//var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(scaledAreaWithGap));
-
 			var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(scaledArea));
-
-
-			if (cbRectangle.Rect.Right == 0)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, "Creating a rectangle with right = 0.");
-			}
 
 			return cbRectangle;
 		}
@@ -326,35 +278,18 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//private void SetRectangleStroke()
-		//{
-		//	if (_isCurrent)
-		//	{
-		//		if (_isSelected)
-		//		{
-		//			_rectanglePath.Stroke = IS_SELECTED_PEN.Brush;
-		//			_rectanglePath.StrokeThickness = IS_SELECTED_PEN.Thickness;
-		//		}
-		//		else
-		//		{
-		//			_rectanglePath.Stroke = IS_CURRENT_PEN.Brush;
-		//			_rectanglePath.StrokeThickness = IS_CURRENT_PEN.Thickness;
-		//		}
-		//	}
-		//	else
-		//	{
-		//		if (_isSelected)
-		//		{
-		//			_rectanglePath.Stroke = IS_SELECTED_PEN.Brush;
-		//			_rectanglePath.StrokeThickness = IS_SELECTED_PEN.Thickness;
-		//		}
-		//		else
-		//		{
-		//			_rectanglePath.Stroke = DEFAULT_PEN.Brush;
-		//			_rectanglePath.StrokeThickness = DEFAULT_PEN.Thickness;
-		//		}
-		//	}
-		//}
+		private void Resize(double xPosition, double yPosition, double width, double height, SizeDbl scaleSize)
+		{
+			var area = new RectangleDbl(new PointDbl(xPosition, yPosition + 1), new SizeDbl(width, height - 2));
+			var scaledArea = area.Scale(scaleSize);
+
+			_geometry.Rect = ScreenTypeHelper.ConvertToRect(scaledArea);
+
+			area = new RectangleDbl(new PointDbl(xPosition, yPosition), new SizeDbl(width, height));
+			scaledArea = area.Scale(scaleSize);
+
+			_selGeometry.Rect = ScreenTypeHelper.ConvertToRect(scaledArea);
+		}
 
 		private void UpdateSelectionBackground()
 		{

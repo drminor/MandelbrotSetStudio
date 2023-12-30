@@ -20,7 +20,7 @@ namespace MSetExplorer
 
 		public ColorBandLayoutViewModel(SizeDbl contentScale, double controlHeight)
 		{
-			_contentScale = contentScale;
+			_contentScale = new SizeDbl(contentScale.Width, 1);
 			_controlHeight = controlHeight;
 
 			_cbrHeight = GetCbrHeight(controlHeight);
@@ -36,9 +36,9 @@ namespace MSetExplorer
 
 			set
 			{
-				if (value != _contentScale)
+				if (value.Width != _contentScale.Width)
 				{
-					_contentScale = value;
+					_contentScale = new SizeDbl(value.Width, 1);
 					OnPropertyChanged();
 				}
 			}
