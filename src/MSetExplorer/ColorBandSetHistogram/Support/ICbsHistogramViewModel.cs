@@ -82,8 +82,8 @@ namespace MSetExplorer
 
 		//public event PropertyChangedEventHandler? PropertyChanged;
 
-		CbsSelectedItems SelectedItems { get; }
-		SelectedColorBand?[] SelectedItemsArray { get; }
-		void ClearSelectedItems();
+		//CbsListView SelectedItems { get; }
+		//CbsListViewItem?[] SelectedItemsArray { get; }
+		//void ClearSelectedItems();
 	}
 }

@@ -64,6 +64,9 @@ namespace MSetExplorer
 			ColorBandIndex = colorBandIndex;
 
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
+
+			_colorBandLayoutViewModel.PropertyChanged += _colorBandLayoutViewModel_PropertyChanged;
+
 			_canvas = canvas;
 			_controlHeight = _colorBandLayoutViewModel.ControlHeight;
 			_cbElevation = _colorBandLayoutViewModel.CbrElevation;
@@ -77,7 +80,7 @@ namespace MSetExplorer
 			//var contentScale = _colorBandLayoutViewModel.ContentScale;
 
 			_selectionLinePosition = xPosition;
-			//_width = width;
+			_width = width;
 			//_startColor = startColor;
 			//_endColor = endColor;
 			//_blend = blend;
@@ -96,6 +99,17 @@ namespace MSetExplorer
 
 			_canvas.Children.Add(_selRectanglePath);
 			_selRectanglePath.SetValue(Panel.ZIndexProperty, 1);
+		}
+
+		private void _colorBandLayoutViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == "ContentScale)")
+			{
+				_contentScale = _colorBandLayoutViewModel.ContentScale;
+				_geometry = BuildRectangleGeometry(_selectionLinePosition, _cbElevation, _width, _cbHeight, _contentScale);
+
+				((Path)_rectanglePath).Data = _geometry;
+			}
 		}
 
 		private void Handle_MouseUp(object sender, MouseButtonEventArgs e)
@@ -144,7 +158,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public int ColorBandIndex { get; init; }
+		public int ColorBandIndex { get; set; }
 
 		public double SelectionLinePosition
 		{

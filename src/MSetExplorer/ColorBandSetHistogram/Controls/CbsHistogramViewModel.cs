@@ -74,8 +74,8 @@ namespace MSetExplorer
 
 			_colorBandSet = new ColorBandSet();
 
-			SelectedItems = new CbsSelectedItems();
-			_selectedItemsArray = null;
+			//SelectedItems = new CbsListView();
+			//_selectedItemsArray = null;
 
 			_editMode = ColorBandSetEditMode.Bands;
 
@@ -120,33 +120,33 @@ namespace MSetExplorer
 
 		#region Public Properties - Content
 
-		public CbsSelectedItems SelectedItems { get; private set; }
+		//public CbsListView SelectedItems { get; private set; }
 
-		private SelectedColorBand?[]? _selectedItemsArray;
+		//private CbsListViewItem?[]? _selectedItemsArray;
 
-		public SelectedColorBand?[] SelectedItemsArray
-		{
-			get
-			{
-				if (_selectedItemsArray == null)
-				{
-					_selectedItemsArray = new SelectedColorBand[ColorBandSet.Count];
+		//public CbsListViewItem?[] SelectedItemsArray
+		//{
+		//	get
+		//	{
+		//		if (_selectedItemsArray == null)
+		//		{
+		//			_selectedItemsArray = new CbsListViewItem[ColorBandSet.Count];
 
-					for (var i = 0; i < ColorBandSet.Count; i++)
-					{
-						_selectedItemsArray[i] = null;
-					}
+		//			for (var i = 0; i < ColorBandSet.Count; i++)
+		//			{
+		//				_selectedItemsArray[i] = null;
+		//			}
 
-				}
+		//		}
 
-				return _selectedItemsArray;
-			}
+		//		return _selectedItemsArray;
+		//	}
 
-			private set
-			{
-				_selectedItemsArray = value;
-			}
-		}
+		//	private set
+		//	{
+		//		_selectedItemsArray = value;
+		//	}
+		//}
 
 		public ColorBandSetEditMode EditMode
 		{
@@ -566,11 +566,11 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void ClearSelectedItems()
-		{
-			SelectedItems.Clear();
-			_selectedItemsArray = null;
-		}
+		//public void ClearSelectedItems()
+		//{
+		//	SelectedItems.Clear();
+		//	_selectedItemsArray = null;
+		//}
 
 		public bool TryMoveCurrentColorBandToNext()
 		{

@@ -64,13 +64,17 @@
 
                             <local:HistogramColorBandControl TabIndex="200" Focusable="True"
                                 x:Name="HistogramColorBandControl1"
-                                CurrentColorBand="{Binding CurrentColorBand}"
                             />
 
                         </local:PanAndZoomControl>
                     </ScrollViewer>
 
                 </Border>
+
+                <!--<local:HistogramColorBandControl TabIndex="200" Focusable="True"
+                                x:Name="HistogramColorBandControl1"
+                                CurrentColorBand="{Binding CurrentColorBand}"
+                            />-->
 
                 <Border x:Name="ColorBandDetail" Grid.Row="0" Grid.RowSpan="2"  Grid.Column="2" BorderThickness="0.75" BorderBrush="Black" Margin="0,10,10,5">
                     <Grid Background="Transparent">

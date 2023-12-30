@@ -6,28 +6,24 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		//private const int SCROLL_BAR_HEIGHT = 17;
 		private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
 		private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 5;
 		private const double BORDER_THICKNESS = 1.0;
 
 		private SizeDbl _contentScale;
 		private double _controlHeight;
-		//private bool _isHorizontalScrollBarVisible;
-		private double _cbrElevation;
 		private double _cbrHeight;
 
 		#endregion
 
 		#region Constructor
 
-		public ColorBandLayoutViewModel(SizeDbl contentScale, double controlHeight/*, bool isHorizontalScrollBarVisible*/, double cbrElevation, double cbrHeight)
+		public ColorBandLayoutViewModel(SizeDbl contentScale, double controlHeight)
 		{
 			_contentScale = contentScale;
 			_controlHeight = controlHeight;
-			//_isHorizontalScrollBarVisible = isHorizontalScrollBarVisible;
-			_cbrElevation = cbrElevation;
-			_cbrHeight = cbrHeight;
+
+			_cbrHeight = GetCbrHeight(controlHeight);
 		}
 
 		#endregion
@@ -58,37 +54,13 @@ namespace MSetExplorer
 				{
 					_controlHeight = value;
 
-					(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(_controlHeight/*, _isHorizontalScrollBarVisible*/);
+					CbrHeight = GetCbrHeight(_controlHeight);
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		//public bool IsHorizontalScrollBarVisible
-		//{
-		//	get => _isHorizontalScrollBarVisible;
-		//	set
-		//	{
-		//		if (value != _isHorizontalScrollBarVisible)
-		//		{
-		//			_isHorizontalScrollBarVisible = value;
-		//			//(CbrElevation, CbrHeight) = GetCbrElevationAndHeight(_controlHeight/*, _isHorizontalScrollBarVisible*/);
-		//		}
-		//	}
-		//}
-
-		public double CbrElevation
-		{
-			get => _cbrElevation;
-			set
-			{
-				if (value != _cbrElevation)
-				{
-					_cbrElevation = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		public double CbrElevation => SELECTION_LINE_SELECTOR_HEIGHT;
 
 		public double CbrHeight
 		{
@@ -99,7 +71,6 @@ namespace MSetExplorer
 				{
 					_cbrHeight = value;
 					OnPropertyChanged();
-
 				}
 			}
 		}
@@ -108,19 +79,12 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private (double, double) GetCbrElevationAndHeight(double controlHeight/*, bool isHorizontalScrollBarVisible*/)
+		private double GetCbrHeight(double controlHeight)
 		{
-			var elevation = SELECTION_LINE_SELECTOR_HEIGHT;
 			var cbrHeight = controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING);
 
-			//if (isHorizontalScrollBarVisible)
-			//{
-			//	cbrHeight -= SCROLL_BAR_HEIGHT;
-			//}
-
-			return (elevation, cbrHeight);
+			return cbrHeight;
 		}
-
 
 		#endregion
 	}
