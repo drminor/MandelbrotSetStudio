@@ -5,9 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -141,7 +139,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private Line BuildDragLine(double elevation, double height, double xPosition, bool isVisible)
+		private Line BuildDragLine(double elevation, double height, double selectionLinePosition, bool isVisible)
 		{
 			var result = new Line()
 			{
@@ -150,8 +148,8 @@ namespace MSetExplorer
 				StrokeThickness = 2,
 				Y1 = elevation,
 				Y2 = elevation + height,
-				X1 = xPosition,
-				X2 = xPosition,
+				X1 = selectionLinePosition,
+				X2 = selectionLinePosition,
 				//Focusable = true
 				Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed
 			};
@@ -159,14 +157,14 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Polygon BuildTopArrow(double xPosition, bool isVisible)
+		private Polygon BuildTopArrow(double selectionLinePosition, bool isVisible)
 		{
 			var result = new Polygon()
 			{
 				Fill = GetTopArrowFill(_isSelected),
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
-				Points = BuildTopAreaPoints(xPosition),
+				Points = BuildTopAreaPoints(selectionLinePosition),
 				//Focusable = true
 				Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed
 			};
@@ -304,36 +302,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		//public bool UpdatePosition(double newPosition)
-		//{
-		//	if (DragState == DragState.Begun || DragState == DragState.InProcess)
-		//	{
-		//		// The HandleMouseMove eventHandler is managing the SelectionLine positions.
-		//		return false;
-		//	}
-
-		//	var amount = newPosition - _originalSelectionLinePosition;
-
-		//	if (ScreenTypeHelper.IsDoubleNearZero(amount))
-		//	{
-		//		return false;
-		//	}
-
-		//	if (UpdateColorBandWidth(amount))
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. The new position is {newPosition}. The original position is {_originalSelectionLinePosition}.");
-		//		SelectionLinePosition = newPosition;
-
-		//		return true;
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine::UpdatePosition. The call to UpdateColorBandWidth returned false. The new position is {newPosition}. The original position is {_originalSelectionLinePosition}.");
-		//		return false;
-		//	}
-		//}
-
-		public bool UpdatePosition(double newPosition)
+		public bool UpdatePositionNotUsed(double newPosition)
 		{
 			if (DragState == DragState.Begun || DragState == DragState.InProcess)
 			{
@@ -370,6 +339,9 @@ namespace MSetExplorer
 				{
 					DragState = DragState.None;
 				}
+
+				_colorBandLayoutViewModel.PropertyChanged -= _colorBandLayoutViewModel_PropertyChanged;
+				_topArrow.MouseUp -= _topArrow_MouseUp;
 
 				if (_canvas != null)
 				{
@@ -428,7 +400,7 @@ namespace MSetExplorer
 			_rectangleGeometries = rectangleGeometries; 
 			_originalSelectionLinePosition = SelectionLinePosition;
 
-				DragState = DragState.InProcess;
+			DragState = DragState.InProcess;
 
 			Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {rectangleGeometries}.");
 		}
@@ -586,11 +558,12 @@ namespace MSetExplorer
 					left.Rect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
 					right.Rect = DrawingHelper.MoveRectLeft(originalRightGeometry.Rect, amount);
 
-					selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
-					selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
+					//selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
+					//selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
 
-					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Shortening the Left ColorBandRectangle by amount: {amount}. Left Width: {originalLeftGeometry.Rect.Width}, Right Pos: {originalRightGeometry.Rect.X}" +
-						$"New Left Rectangle Width = {left.Rect.Width}; New Right Rectangle Position: {right.Rect.X}");
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Shortening the Left ColorBandRectangle by amount: {amount}. " +
+						$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+						$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
 					
 					updated = true;
 				}
@@ -602,11 +575,12 @@ namespace MSetExplorer
 					left.Rect = DrawingHelper.Lengthen(originalLeftGeometry.Rect, amount);
 					right.Rect = DrawingHelper.MoveRectRight(originalRightGeometry.Rect, amount);
 
-					selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
-					selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
+					//selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
+					//selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
 
-					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. Left Width: {originalLeftGeometry.Rect.Width}, Right Pos: {originalRightGeometry.Rect.X}" +
-						$"New Left Rectangle Width = {left.Rect.Width}; New Right Rectangle Position: {right.Rect.X}");
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
+						$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+						$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
 
 					updated = true;
 				}
@@ -618,18 +592,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Diag
-
-		//private string BuildGeometriesReport()
-		//{
-		//	var sb = new StringBuilder();
-
-		//	sb.AppendLine($"Left: {_left.Rect}");
-		//	sb.AppendLine($"Right: {_right.Rect}");
-		//	sb.AppendLine($"Left Original: {_originalLeftGeometry.Rect}");
-		//	sb.AppendLine($"Right Original: {_originalRightGeometry.Rect}");
-
-		//	return sb.ToString();
-		//}
 
 		//private void ReportPosition(Point posYInverted)
 		//{

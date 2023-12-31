@@ -102,6 +102,18 @@ namespace MSetExplorer
 				_contentScale = _colorBandLayoutViewModel.ContentScale;
 
 				Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
+
+				var top = 0;
+				ResizeSel(_xPosition, top, _width, _controlHeight, _contentScale);
+			}
+			else if (e.PropertyName == "CbrHeight")
+			{
+				_cbHeight = _colorBandLayoutViewModel.CbrHeight;
+
+				Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
+
+				var top = 0;
+				ResizeSel(_xPosition, top, _width, _controlHeight, _contentScale);
 			}
 		}
 
@@ -210,6 +222,9 @@ namespace MSetExplorer
 		{
 			try
 			{
+				_colorBandLayoutViewModel.PropertyChanged -= _colorBandLayoutViewModel_PropertyChanged;
+				_rectanglePath.MouseUp -= Handle_MouseUp;
+
 				if (_canvas != null)
 				{
 					_canvas.Children.Remove(Rectangle);
@@ -239,6 +254,14 @@ namespace MSetExplorer
 			return cbRectangle;
 		}
 
+		private void Resize(double xPosition, double yPosition, double width, double height, SizeDbl scaleSize)
+		{
+			var area = new RectangleDbl(new PointDbl(xPosition, yPosition + 1), new SizeDbl(width, height - 2));
+			var scaledArea = area.Scale(scaleSize);
+
+			_geometry.Rect = ScreenTypeHelper.ConvertToRect(scaledArea);
+		}
+
 		private Shape BuildRectanglePath(RectangleGeometry area, ColorBandColor startColor, ColorBandColor endColor, bool blend)
 		{
 			var result = new Path()
@@ -263,6 +286,14 @@ namespace MSetExplorer
 			return cbRectangle;
 		}
 
+		private void ResizeSel(double xPosition, double yPosition, double width, double height, SizeDbl scaleSize)
+		{
+			var area = new RectangleDbl(new PointDbl(xPosition, yPosition), new SizeDbl(width, height));
+			var scaledArea = area.Scale(scaleSize);
+
+			_selGeometry.Rect = ScreenTypeHelper.ConvertToRect(scaledArea);
+		}
+
 		private Shape BuildSelRectanglePath(RectangleGeometry area, bool isCurrent, bool isSelected, double strokeThickness)
 		{
 			var result = new Path()
@@ -276,19 +307,6 @@ namespace MSetExplorer
 			};
 
 			return result;
-		}
-
-		private void Resize(double xPosition, double yPosition, double width, double height, SizeDbl scaleSize)
-		{
-			var area = new RectangleDbl(new PointDbl(xPosition, yPosition + 1), new SizeDbl(width, height - 2));
-			var scaledArea = area.Scale(scaleSize);
-
-			_geometry.Rect = ScreenTypeHelper.ConvertToRect(scaledArea);
-
-			area = new RectangleDbl(new PointDbl(xPosition, yPosition), new SizeDbl(width, height));
-			scaledArea = area.Scale(scaleSize);
-
-			_selGeometry.Rect = ScreenTypeHelper.ConvertToRect(scaledArea);
 		}
 
 		private void UpdateSelectionBackground()
