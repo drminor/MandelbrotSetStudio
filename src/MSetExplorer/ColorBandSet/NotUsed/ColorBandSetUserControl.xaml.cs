@@ -84,7 +84,7 @@ namespace MSetExplorer
 					msg += $"\nBeyond Last Info: Percentage: {specs.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
 				}
 
-				ReportHistogram(_vm.GetHistogramForColorBand(index));
+				//ReportHistogram(_vm.GetHistogramForColorBand(index));
 			}
 			else
 			{

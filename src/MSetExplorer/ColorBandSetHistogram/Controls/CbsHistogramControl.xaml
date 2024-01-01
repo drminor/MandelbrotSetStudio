@@ -32,7 +32,7 @@
                     <ColumnDefinition Width="295"/>
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" BorderThickness="0, 0, 0.75, 0" BorderBrush="Black" VerticalAlignment="Stretch">
+                <Border x:Name="ZoomSlider" Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" BorderThickness="0, 0, 0.75, 0" BorderBrush="Black" VerticalAlignment="Stretch">
                     <local:CbshZoomControl x:Name="cbshZoom1"/>
                 </Border>
 
@@ -63,18 +63,51 @@
                             >
 
                             <local:HistogramColorBandControl TabIndex="200" Focusable="True"
-                                x:Name="HistogramColorBandControl1"
-                            />
+                                x:Name="HistogramColorBandControl1">
+
+                                <local:HistogramColorBandControl.InputBindings>
+                                    <!--<KeyBinding Command="local:ColorBandSetCommands.Edit" Key="F2" />-->
+                                    <KeyBinding Command="local:ColorBandSetCommands.ShowDetails" Key="F3" />
+
+                                    <!--<KeyBinding Command="local:TransactionCommands.Commit" Key="Enter" />-->
+                                    <!--<KeyBinding Command="local:TransactionCommands.Cancel" Key="Esc"/>-->
+                                </local:HistogramColorBandControl.InputBindings>
+                                
+                                <local:HistogramColorBandControl.CommandBindings>
+                                    <!--<CommandBinding Command="local:ColorBandSetCommands.Edit" Executed="EditButton_Click" />-->
+                                    <CommandBinding Command="local:ColorBandSetCommands.Insert" CanExecute="InsertCommand_CanExecute" Executed="InsertCommand_Executed" />
+                                    <CommandBinding Command="local:ColorBandSetCommands.Delete" CanExecute="DeleteCommand_CanExecute" Executed="DeleteCommand_Executed" />
+
+                                    <CommandBinding Command="local:ColorBandSetCommands.Revert" CanExecute="RevertCommand_CanExecute" Executed="RevertCommand_Executed" />
+                                    <CommandBinding Command="local:ColorBandSetCommands.Apply" CanExecute="ApplyCommand_CanExecute" Executed="ApplyCommand_Executed" />
+
+                                    <CommandBinding Command="local:ColorBandSetCommands.ShowDetails" Executed="ShowDetails_Click" />
+
+                                    <!--<CommandBinding Command="local:TransactionCommands.Commit" Executed="CommitCharacterChanges" />-->
+                                    <!--<CommandBinding Command="local:TransactionCommands.Cancel" Executed="CancelCharacterChanges" />-->
+                                </local:HistogramColorBandControl.CommandBindings>
+                                
+                                <local:HistogramColorBandControl.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="_Insert" Command="local:ColorBandSetCommands.Insert"/>
+                                        <MenuItem Header="_Delete" Command="local:ColorBandSetCommands.Delete"/>
+                                        <Separator/>
+                                        <MenuItem Header="_Revert" Command="local:ColorBandSetCommands.Revert"/>
+                                        <MenuItem Header="_Apply" Command="local:ColorBandSetCommands.Apply"/>
+                                        <Separator/>
+                                        <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
+                                        <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
+                                        <Separator/>
+                                        <MenuItem Header="_Details" Command="local:ColorBandSetCommands.ShowDetails"/>
+                                    </ContextMenu>
+                                </local:HistogramColorBandControl.ContextMenu>
+                                
+                            </local:HistogramColorBandControl>
 
                         </local:PanAndZoomControl>
                     </ScrollViewer>
 
                 </Border>
-
-                <!--<local:HistogramColorBandControl TabIndex="200" Focusable="True"
-                                x:Name="HistogramColorBandControl1"
-                                CurrentColorBand="{Binding CurrentColorBand}"
-                            />-->
 
                 <Border x:Name="ColorBandDetail" Grid.Row="0" Grid.RowSpan="2"  Grid.Column="2" BorderThickness="0.75" BorderBrush="Black" Margin="0,10,10,5">
                     <Grid Background="Transparent">
@@ -90,6 +123,7 @@
 
                             <StackPanel Orientation="Vertical" >
                                 
+                                <!-- Color Band #:[] of [] -->
                                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
                                     <TextBlock Height="21" Margin="5,5,5,0" FontSize="14" Text="Color Band #:" />
                                     <TextBox Text="{Binding Path=CurrentColorBandNumber, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0,3" TabIndex="3"/>
@@ -100,11 +134,13 @@
                                     <!--<TextBlock Height="21" Margin="5" FontSize="14" Text="total" />-->
                                 </StackPanel>
 
+                                <!-- Left / Right -->
                                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
                                     <Button Width="70" Margin="0,0,10,0" Content="&lt; L" Click="MoveLeftButton_Click" TabIndex="5" />
                                     <Button Width="70" Content="R &gt;" Click="MoveRightButton_Click" TabIndex="6"/>
                                 </StackPanel>
 
+                                <!-- Percentage -->
                                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
                                     <TextBlock Height="21" Margin="5,0" FontSize="14" Text="Percentage:" />
                                     <TextBox Text="{Binding Path=CurrentColorBand.Percentage, Mode=OneWay}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,3" TabIndex="7"/>
@@ -114,10 +150,12 @@
 
                         </Border>
 
+                        <!-- Cutoff, Blend Style, Start Color, End Color -->
                         <Border Grid.Row="1" BorderThickness="0, 0.75, 0, 0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0">
                             <local:ColorBandUserControl x:Name="clrBandDetail" Margin="0,5,0,0" TabIndex="8"/>
                         </Border>
 
+                        <!-- Revert, Insert, Delete, Apply -->
                         <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
 
                             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
@@ -129,6 +167,7 @@
 
                         </Border>
 
+                        <!-- Undo / Redo -->
                         <Border Grid.Row="3" BorderThickness="0,0.75,0,0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
                             <Border BorderThickness="0" Margin="0,3">
                                 <local:UndoPileControl x:Name="undoRedo1" TabIndex="13"/>

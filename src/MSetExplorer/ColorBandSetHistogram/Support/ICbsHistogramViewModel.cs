@@ -51,7 +51,7 @@ namespace MSetExplorer
 		bool TryInsertNewItem(out int index);
 		bool TryDeleteSelectedItem();
 
-		IDictionary<int, int> GetHistogramForColorBand(int index);
+		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 
 
 		HPlotSeriesData SeriesData { get; }

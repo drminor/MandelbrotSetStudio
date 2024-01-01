@@ -1,7 +1,9 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -69,6 +71,8 @@ namespace MSetExplorer
 				PanAndZoomControl1.ContentOffsetYChanged += ContentOffsetChanged;
 
 				HistogramPlotControl1.ViewportOffsetAndWidthChanged += HistogramPlotControl1_ViewportOffsetAndWidthChanged;
+
+				HistogramColorBandControl1.ContextMenu.PlacementTarget = this;
 
 				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
 				HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
@@ -290,6 +294,67 @@ namespace MSetExplorer
 				_vm.ApplyChanges();
 			}
 		}
+
+		private void ShowDetails_Click(object sender, RoutedEventArgs e)
+		{
+			string msg;
+			var selItem = GetColorBandAtMousePosition();
+
+			if (selItem != null)
+			{
+				//msg = $"Percentage: {selItem.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+				msg = $"Percentage: {selItem.Percentage}";
+
+				var index = _vm.ColorBandsView.IndexOf(selItem);
+
+				if (index == -1)
+				{
+					throw new InvalidOperationException("The ColorBand found at the current mouse position cannot be found in the ColorBandsView.");
+				}
+
+				if (index == _vm.ColorBandsCount - 1 && _vm.BeyondTargetSpecs != null)
+				{
+					var specs = _vm.BeyondTargetSpecs;
+					msg += $"\nBeyond Last Info: Percentage: {specs.Percentage}, Count: {specs.Count}, Exact Count: {specs.ExactCount}";
+				}
+
+				ReportHistogram(_vm.GetHistogramForColorBand(selItem));
+			}
+			else
+			{
+				msg = "No Current Item.";
+			}
+
+			_ = MessageBox.Show(msg);
+		}
+
+		private ColorBand? GetColorBandAtMousePosition()
+		{
+			var posOfContextMenu = HistogramColorBandControl1.MousePositionWhenContextMenuWasOpened;
+			var result = HistogramColorBandControl1.GetItemUnderMouse(posOfContextMenu);
+
+			if (result == null)
+			{
+				result = _vm.CurrentColorBand;
+			}
+
+			return result;
+		}
+
+		private void ReportHistogram(IDictionary<int, int> histogram)
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine("Histogram:");
+
+			foreach (KeyValuePair<int, int> kvp in histogram)
+			{
+				sb.AppendLine($"\t{kvp.Key} : {kvp.Value}");
+			}
+
+			Debug.WriteLine(sb.ToString());
+		}
+
 
 		#endregion
 

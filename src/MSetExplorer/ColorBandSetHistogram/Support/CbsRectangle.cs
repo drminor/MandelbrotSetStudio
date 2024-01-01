@@ -1,11 +1,11 @@
 ﻿using MSS.Types;
+using System;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
-using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -20,7 +20,7 @@ namespace MSetExplorer
 
 		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Colors.DeepSkyBlue);
 		private static readonly Brush DEFAULT_STROKE = new SolidColorBrush(Colors.Transparent);
-		private const double SEL_RECTANGLE_STROKE_THICKNESS = 3.0;
+		private const double SEL_RECTANGLE_STROKE_THICKNESS = 0; //3.0;
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
@@ -29,6 +29,7 @@ namespace MSetExplorer
 		private double _cbHeight;
 		private SizeDbl _contentScale;
 		private IsSelectedChanged _isSelectedChanged;
+		private Action<int, ColorBandSelectionType> _displayContext;
 
 		private double _xPosition;
 		private double _width;
@@ -50,7 +51,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public CbsRectangle(int colorBandIndex, bool isCurrent, bool isSelected, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
-			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged)
+			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, Action<int, ColorBandSelectionType> displayContext)
 		{
 			_isCurrent = isCurrent;
 			_isSelected = isSelected;
@@ -68,6 +69,7 @@ namespace MSetExplorer
 
 			_contentScale = _colorBandLayoutViewModel.ContentScale;
 			_isSelectedChanged = isSelectedChanged;
+			_displayContext = displayContext;
 
 			//var yPosition = _colorBandLayoutViewModel.CbrElevation;
 			//var height = _colorBandLayoutViewModel.CbrHeight;
@@ -119,12 +121,21 @@ namespace MSetExplorer
 
 		private void Handle_MouseUp(object sender, MouseButtonEventArgs e)
 		{
-			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+			if (e.ChangedButton == MouseButton.Left)
+			{
+				var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+				var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
 
-			_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
-
-			//IsSelected = !IsSelected;
+				_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
+				e.Handled = true;
+			}
+			else
+			{
+				if (e.ChangedButton == MouseButton.Right)
+				{
+					_displayContext(ColorBandIndex, ColorBandSelectionType.Color);
+				}
+			}
 		}
 
 		#endregion
@@ -235,6 +246,12 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine("CbsSelectionLine encountered an exception in TearDown.");
 			}
+		}
+
+		public bool ContainsPoint(Point hitPoint)
+		{
+			var result = SelRectangleGeometry.FillContains(hitPoint);
+			return result;
 		}
 
 		#endregion

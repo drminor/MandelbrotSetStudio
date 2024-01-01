@@ -881,24 +881,14 @@ namespace MSetExplorer
 			}
 		}
 
-		public IDictionary<int, int> GetHistogramForColorBand(int index)
+		public IDictionary<int, int> GetHistogramForColorBand(ColorBand colorBand)
 		{
-			var currentColorBand = CurrentColorBand;
+			var previousCutoff = colorBand.PreviousCutoff ?? 0;
+			var cutoff = colorBand.Cutoff;
 
-			if (currentColorBand == null)
-			{
-				return new Dictionary<int, int>();
-			}
-			else
-			{
-				var previousCutoff = currentColorBand.PreviousCutoff ?? 0;
-				var cutoff = currentColorBand.Cutoff;
+			var kvpsForBand = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff, includeCatchAll: true);
 
-				//var kvpsForBand = _histogram.GetKeyValuePairs().Where(x => x.Key >= previousCutoff && x.Key < cutoff);
-				var kvpsForBand = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff, includeCatchAll: true);
-
-				return new Dictionary<int, int>(kvpsForBand);
-			}
+			return new Dictionary<int, int>(kvpsForBand);
 		}
 
 		public void RefreshPercentages()

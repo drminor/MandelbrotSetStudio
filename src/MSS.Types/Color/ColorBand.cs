@@ -25,12 +25,9 @@ namespace MSS.Types
 		//private ColorBand? _copy;
 		private bool _isInEditMode;
 
-		private bool _isCurrent;
-
+		//private bool _isCurrent;
 		private bool _isCutoffSelected;
 		private bool _isColorSelected;
-
-		//private bool _isSelected;
 
 		#endregion
 
@@ -60,11 +57,10 @@ namespace MSS.Types
 
 			_actualEndColor = GetActualEndColor();
 
-			_isCurrent = false;
-			//_isSelected = false;
+			//_isCurrent = false;
 			_isCutoffSelected = false;
 			_isColorSelected = false;
-	}
+		}
 
 		private static ColorBand _emptySingleton = new ColorBand();
 
@@ -257,17 +253,17 @@ namespace MSS.Types
 
 		#region Public Properties - Selections
 
-		public bool IsCurrent
-		{
-			get => _isCurrent;
-			set
-			{
-				if (value != _isCurrent)
-				{
-					_isCurrent = value;
-				}
-			}
-		}
+		//public bool IsCurrent
+		//{
+		//	get => _isCurrent;
+		//	set
+		//	{
+		//		if (value != _isCurrent)
+		//		{
+		//			_isCurrent = value;
+		//		}
+		//	}
+		//}
 
 		public bool IsSelected
 		{
@@ -309,7 +305,6 @@ namespace MSS.Types
 				}
 			}
 		}
-
 
 		#endregion
 

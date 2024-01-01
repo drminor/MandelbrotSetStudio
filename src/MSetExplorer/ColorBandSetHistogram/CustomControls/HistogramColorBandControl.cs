@@ -10,7 +10,8 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
-	public delegate void IsSelectedChanged(int colorBandIndex, bool newValue, bool shiftKeyPressed, bool controlKeyPressed);
+	internal delegate void IsSelectedChanged(int colorBandIndex, bool newValue, bool shiftKeyPressed, bool controlKeyPressed);
+	internal delegate void ContextMenuDisplayRequest(CbsListViewItem cbsListViewItem, ColorBandSelectionType sourceType);
 
 	public class HistogramColorBandControl : ContentControl, IContentScaler
 	{
@@ -38,6 +39,8 @@ namespace MSetExplorer
 		private bool _useRealTimePreview;
 
 		private bool _mouseIsEntered;
+
+		private ContextMenu? _lastKnownContextMenu;
 
 		private readonly bool _useDetailedDebug = true;
 
@@ -95,17 +98,61 @@ namespace MSetExplorer
 
 			KeyDown += HandleKeyDown;
 			PreviewKeyUp += Handle_PreviewKeyUp;
+
+			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
+
+			_lastKnownContextMenu = null;
+		}
+
+		private void ContextMenu_Closed(object sender, RoutedEventArgs e)
+		{
+			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
+		}
+
+		private void ContextMenu_Opened(object sender, RoutedEventArgs e)
+		{
+			MousePositionWhenContextMenuWasOpened = Mouse.GetPosition(_canvas);
 		}
 
 		#endregion
 
+		protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+		{
+			base.OnPropertyChanged(e);
+
+			if (e.Property == ContextMenuProperty)
+			{
+				if (_lastKnownContextMenu != null)
+				{
+					_lastKnownContextMenu.Opened -= ContextMenu_Opened;
+					_lastKnownContextMenu.Closed -= ContextMenu_Closed;
+				}
+
+				_lastKnownContextMenu = (ContextMenu?) this.GetValue(ContextMenuProperty);
+
+				if (_lastKnownContextMenu != null)
+				{
+					_lastKnownContextMenu.Opened += ContextMenu_Opened;
+					_lastKnownContextMenu.Closed += ContextMenu_Closed;
+				}
+			}
+
+		}
+
+		private void _lastKnownContextMenu_Opened(object sender, RoutedEventArgs e)
+		{
+			throw new NotImplementedException();
+		}
+
 		#region Events
 
-		public event EventHandler<ValueTuple<SizeDbl, SizeDbl>>? ViewportSizeChanged;
+		public event EventHandler<(SizeDbl, SizeDbl)>? ViewportSizeChanged;
 
 		#endregion
 
 		#region Public Properties
+
+		public Point MousePositionWhenContextMenuWasOpened { get; private set; }
 
 		public ListCollectionView? ColorBandsView
 		{
@@ -146,11 +193,10 @@ namespace MSetExplorer
 
 				if (_colorBandsView != null)
 				{
-					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _mouseIsEntered);
+					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _mouseIsEntered, Handle_ContextMenuDisplayRequested);
 				}
 			}
 		}
-
 
 		public bool UseRealTimePreview
 		{
@@ -266,6 +312,46 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public int? GetIndexOfItemUnderMouse(Point hitPoint)
+		{
+			if (double.IsNaN(hitPoint.X) || double.IsNaN(hitPoint.Y))
+			{
+				return null;
+			}
+
+			var x = _cbsListView?.MouseOverItem(hitPoint) ?? null;
+
+			if (x != null)
+			{
+				return x.Value.Item1.CbsRectangle.ColorBandIndex;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		public ColorBand? GetItemUnderMouse(Point hitPoint)
+		{
+			if (double.IsNaN(hitPoint.X) || double.IsNaN(hitPoint.Y))
+			{
+				return null;
+			}
+
+			var lvItemAndSelType = _cbsListView?.MouseOverItem(hitPoint) ?? null;
+
+			if (lvItemAndSelType != null)
+			{
+				var cbsListViewItem = lvItemAndSelType.Value.Item1;
+				return cbsListViewItem.ColorBand;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
 
 		public void ShowSelectionLines(bool leftMouseButtonIsPressed)
 		{
@@ -414,6 +500,12 @@ namespace MSetExplorer
 			//ShowSelectionLines(e.LeftButton == MouseButtonState.Pressed);
 		}
 
+		private void Handle_ContextMenuDisplayRequested(CbsListViewItem sender, ColorBandSelectionType colorBandSelectionType)
+		{
+			ContextMenu.IsOpen = true;
+			//MessageBox.Show($"There will, one day, be a context menu here. Index: {sender.CbsSelectionLine.ColorBandIndex}; Source: {colorBandSelectionType}.");
+		}
+
 		#endregion
 
 		#region Keyboard Event Handlers
@@ -495,29 +587,16 @@ namespace MSetExplorer
 
 		private int GetExtent(ListCollectionView? listCollectionView)
 		{
-			if (listCollectionView == null)
+			if (listCollectionView == null || listCollectionView.Count == 0)
 			{
 				return 0;
 			}
 
-			var cnt = listCollectionView.Count;
+			var result = (listCollectionView.GetItemAt(listCollectionView.Count - 1) as ColorBand)?.Cutoff ?? 0;
 
-			if (cnt < 2)
-			{
-				return 0;
-			}
-
-			var d = listCollectionView.GetItemAt(cnt - 1) as ColorBand;
-
-			if (d != null)
-			{
-				return d.Cutoff;
-			}
-			else
-			{
-				return 0;
-			}
+			return result;
 		}
+		
 		#endregion
 
 		#region Dependency Property Declarations

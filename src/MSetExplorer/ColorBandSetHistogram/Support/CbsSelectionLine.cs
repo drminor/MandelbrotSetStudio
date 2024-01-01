@@ -13,6 +13,7 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
+		private const double SELECTION_LINE_ARROW_WIDTH = 6;
 		private const double MIN_SEL_DISTANCE = 0.49;
 		private static readonly Brush _selectionLineBrush = DrawingHelper.BuildSelectionDrawingBrush();
 
@@ -23,6 +24,7 @@ namespace MSetExplorer
 		private double _cbHeight;
 		private double _scaleX;
 		private IsSelectedChanged _isSelectedChanged;
+		private Action<int, ColorBandSelectionType> _displayContext;
 
 		private double _selectionLinePosition;
 
@@ -34,15 +36,6 @@ namespace MSetExplorer
 
 		private double _originalSelectionLinePosition;
 
-		//private RectangleGeometry _left;
-		//private RectangleGeometry _right;
-
-		//private RectangleGeometry _selLeft;
-		//private RectangleGeometry _selRight;
-
-		//private RectangleGeometry _originalLeftGeometry;
-		//private RectangleGeometry _originalRightGeometry;
-
 		private RectangleGeometries? _rectangleGeometries;
 
 		private bool _isSelected;
@@ -53,49 +46,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		//public CbsSelectionLine(int colorBandIndex, bool isSelected, double xPosition, RectangleGeometry left, RectangleGeometry right, RectangleGeometry selLeft, RectangleGeometry selRight, 
-		//	ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged)
-		//{
-		//	_isSelected = isSelected;
-		//	_dragState = DragState.None;
-
-		//	ColorBandIndex = colorBandIndex;
-
-		//	_colorBandLayoutViewModel = colorBandLayoutViewModel;
-		//	_canvas = canvas;
-		//	_cbElevation = _colorBandLayoutViewModel.CbrElevation;
-		//	_cbHeight = _colorBandLayoutViewModel.CbrHeight;
-
-		//	_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
-		//	_isSelectedChanged = isSelectedChanged;
-
-		//	_selectionLinePosition = xPosition;
-		//	_originalXPosition = xPosition;
-
-		//	_left = left;
-		//	_right = right;
-
-		//	_originalLeftGeometry = new RectangleGeometry(_left.Rect);
-		//	_originalRightGeometry = new RectangleGeometry(_right.Rect);
-
-		//	_selLeft = selLeft;
-		//	_selRight = selRight;
-
-		//	_dragLine = BuildDragLine(_cbElevation, _cbHeight, xPosition);
-		//	_canvas.Children.Add(_dragLine);
-		//	_dragLine.SetValue(Panel.ZIndexProperty, 30);
-
-		//	_topArrowHalfWidth = (_cbElevation - 2) / 2;
-		//	_topArrow = BuildTopArrow(_selectionLinePosition);
-
-		//	_topArrow.MouseUp += _topArrow_MouseUp;
-		//	//_topArrow.PreviewKeyDown += TopArrow_PreviewKeyDown;
-
-		//	_canvas.Children.Add(_topArrow);
-		//	_topArrow.SetValue(Panel.ZIndexProperty, 30);
-		//}
-
-		public CbsSelectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, bool isVisible)
+		public CbsSelectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, bool isVisible, Action<int, ColorBandSelectionType> displayContext)
 		{
 			_isSelected = isSelected;
 			_dragState = DragState.None;
@@ -112,6 +63,7 @@ namespace MSetExplorer
 
 			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
 			_isSelectedChanged = isSelectedChanged;
+			_displayContext = displayContext;
 
 			_selectionLinePosition = _xPosition * _scaleX;
 			_originalSelectionLinePosition = _selectionLinePosition;
@@ -120,10 +72,11 @@ namespace MSetExplorer
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 
-			_topArrowHalfWidth = (_cbElevation - 2) / 2;
+			//_topArrowHalfWidth = (_cbElevation - 2) / 2;
+			_topArrowHalfWidth = SELECTION_LINE_ARROW_WIDTH;
 			_topArrow = BuildTopArrow(_selectionLinePosition, isVisible);
 
-			_topArrow.MouseUp += _topArrow_MouseUp;
+			_topArrow.MouseUp += Handle_MouseUp;
 			//_topArrow.PreviewKeyDown += TopArrow_PreviewKeyDown;
 
 			_canvas.Children.Add(_topArrow);
@@ -174,7 +127,7 @@ namespace MSetExplorer
 
 		private Brush GetTopArrowFill(bool isSelected)
 		{
-			var result = isSelected ? Brushes.LightSlateGray : Brushes.GhostWhite;
+			var result = isSelected ? Brushes.LightSlateGray : Brushes.Transparent;
 
 			return result;
 		}
@@ -185,19 +138,30 @@ namespace MSetExplorer
 			{
 				new Point(xPosition, CbElevation),				// The bottom of the arrow is positioned at the top of the band display
 				new Point(xPosition - _topArrowHalfWidth, 0),	// Top, left is at the top of the control
-				new Point(xPosition + _topArrowHalfWidth, 0),	// Top, right is at the top of the control
+				//new Point(xPosition + _topArrowHalfWidth, 0),	// Top, right is at the top of the control and leaning forward into the next band
+				new Point(xPosition, 0),	// Top, right is at the top of the control
 			};
 
 			return points;
 		}
 		
-		private void _topArrow_MouseUp(object sender, MouseButtonEventArgs e)
+		private void Handle_MouseUp(object sender, MouseButtonEventArgs e)
 		{
-			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+			if (e.ChangedButton == MouseButton.Left)
+			{
+				var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+				var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
 
-			_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
-			//IsSelected = !IsSelected;
+				_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
+				e.Handled = true;
+			}
+			else
+			{
+				if (e.ChangedButton == MouseButton.Right)
+				{
+					_displayContext(ColorBandIndex, ColorBandSelectionType.Cutoff);
+				}
+			}
 		}
 
 		#endregion
@@ -341,7 +305,7 @@ namespace MSetExplorer
 				}
 
 				_colorBandLayoutViewModel.PropertyChanged -= _colorBandLayoutViewModel_PropertyChanged;
-				_topArrow.MouseUp -= _topArrow_MouseUp;
+				_topArrow.MouseUp -= Handle_MouseUp;
 
 				if (_canvas != null)
 				{

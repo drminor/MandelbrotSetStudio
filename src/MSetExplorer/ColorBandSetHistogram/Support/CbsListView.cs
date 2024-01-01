@@ -24,13 +24,13 @@ namespace MSetExplorer
 		private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
 		private DebounceDispatcher _selectionLineMovedDispatcher;
 
+		private ContextMenuDisplayRequest _displayContextMenu;
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
 
 		private ListCollectionView _colorBandsView;
 		private ColorBand? _currentColorBand;
 
-		//private bool _mouseIsEntered;
 		private List<Shape> _hitList;
 
 		private CbsSelectionLine? _selectionLineBeingDragged;
@@ -41,7 +41,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool useRealTimePreview, bool mouseIsEntered)
+		public CbsListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool useRealTimePreview, bool mouseIsEntered, ContextMenuDisplayRequest displayContextMenu)
 		{
 			_selectionLineMovedDispatcher = new DebounceDispatcher
 			{
@@ -54,14 +54,13 @@ namespace MSetExplorer
 			_colorBandsView.CurrentChanged += _colorBandsView_CurrentChanged;
 			(_colorBandsView as INotifyCollectionChanged).CollectionChanged += ColorBands_CollectionChanged;
 
-			UseRealTimePreview = useRealTimePreview;
+			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(contentScale, controlHeight);
 
-			//_mouseIsEntered = mouseIsEntered;
+			UseRealTimePreview = useRealTimePreview;
 			MouseIsEntered = mouseIsEntered;
+			_displayContextMenu = displayContextMenu;
 
 			ListViewItems = new List<CbsListViewItem>();
-
-			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(contentScale, controlHeight);
 
 			_hitList = new List<Shape>();
 
@@ -120,21 +119,27 @@ namespace MSetExplorer
 
 		public bool MouseIsEntered { get; set; }
 
-		//public bool MouseIsEntered
-		//{
-		//	get => _mouseIsEntered;
-		//	set
-		//	{
-		//		if (value != _mouseIsEntered)
-		//		{
-		//			_mouseIsEntered = value;
-		//		}
-		//	}
-		//}
-
 		#endregion
 
 		#region Public Methods
+
+		public (CbsListViewItem, ColorBandSelectionType)? MouseOverItem(Point hitPoint)
+		{
+			if (TryGetSelectionLine(hitPoint, ListViewItems, out var cbsListViewItem, out _))
+			{
+				return (cbsListViewItem, ColorBandSelectionType.Cutoff);
+			}
+			else
+			{
+				if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbsListViewItem, out _))
+				{
+					return (cbsListViewItem, ColorBandSelectionType.Color);
+				}
+			}
+
+			return null;
+		}
+
 
 		public void ShowSelectionLines(bool leftMouseButtonIsPressed)
 		{
@@ -229,41 +234,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSelectionType Select(ColorBand colorBand, ColorBandSelectionType colorBandSelectionType)
-		{
-			//var selectedItem = SelectedColorBands.FirstOrDefault(x => x.ColorBand == colorBand);
-
-			//if (selectedItem == null)
-			//{
-			//	selectedItem = new ColorBandViewItem(colorBand);
-			//	SelectedColorBands.Add(selectedItem);
-			//}
-
-			////selectedItem.IsCutoffSelected = colorBandSelectionType.HasFlag(ColorBandSelectionType.Cutoff);
-			////selectedItem.IsColorSelected = colorBandSelectionType.HasFlag(ColorBandSelectionType.Color);
-
-			//if (colorBandSelectionType.HasFlag(ColorBandSelectionType.Cutoff))
-			//{
-			//	selectedItem.IsCutoffSelected = !selectedItem.IsCutoffSelected;
-			//}
-
-			//if (colorBandSelectionType.HasFlag(ColorBandSelectionType.Color))
-			//{
-			//	selectedItem.IsColorSelected = !selectedItem.IsColorSelected;
-			//}
-
-			//var result = selectedItem.IsCutoffSelected ? ColorBandSelectionType.Cutoff : ColorBandSelectionType.None;
-
-			//if (selectedItem.IsColorSelected)
-			//{
-			//	result |= ColorBandSelectionType.Color; // | ColorBandSelectionType.EndColor;
-			//}
-
-			var result = ColorBandSelectionType.None;
-
-			return result;
-		}
-
 		#endregion
 
 		#region Event Handlers
@@ -290,48 +260,54 @@ namespace MSetExplorer
 				if (colorBandIndex == ListViewItems.Count - 1)
 				{
 					// Cannot change the position of the last Selection Line.
+					return;
 				}
 
-				var cbOld = GetColorBandAt(cbsView, cbSelectionLineIndex.Value);
 				var cb = cbsListViewItem.ColorBand;
 
-				Debug.Assert(cb == cbOld, "ColorBand MisMatch.");
+				//var cbOld = GetColorBandAt(cbsView, cbSelectionLineIndex.Value);
+				//Debug.Assert(cb == cbOld, "ColorBand MisMatch.");
 
 				cbsView.MoveCurrentTo(cb);
 
-				//Debug.WriteLineIf(_useDetailedDebug, $"Starting Drag. ColorBandIndex = {cbSelectionLineIndex}. ContentScale: {ContentScale}. PosX: {hitPoint.X}. Original X: {cbSelectionLine.SelectionLinePosition}.");
-				//ReportColorBandRectanglesInPlay(cbSelectionLineIndex.Value);
-
-				var cbSelectionLine = cbsListViewItem.CbsSelectionLine;
-				_selectionLineBeingDragged = cbSelectionLine;
-				_selectionLineBeingDragged.SelectionLineMoved += HandleSelectionLineMoved;
-
-				Debug.WriteIf(_useDetailedDebug, $"CbsListView. Starting Drag for cbSelectionLine at index: {cbSelectionLineIndex}, Current View Position: {cbsView.CurrentPosition}, ColorBand: {cb}.");
-
-				var gLeft = ListViewItems[colorBandIndex].CbsRectangle.RectangleGeometry;
-				var gRight = ListViewItems[colorBandIndex + 1].CbsRectangle.RectangleGeometry;
-
-				var gSelLeft = ListViewItems[colorBandIndex].CbsRectangle.SelRectangleGeometry;
-				var gSelRight = ListViewItems[colorBandIndex + 1].CbsRectangle.SelRectangleGeometry;
-
-				var rg = new RectangleGeometries(gLeft, gRight, gSelLeft, gSelRight);
-
-				cbSelectionLine.StartDrag(rg);
+				StartDrag(cbsListViewItem);
 			}
 			else
 			{
 				if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbsListViewItem, out var cbRectangleIndex))
 				{
-					var cbOld = GetColorBandAt(cbsView, cbRectangleIndex.Value);
 					var cb = cbsListViewItem.ColorBand;
-					Debug.Assert(cb == cbOld, "ColorBand MisMatch Rectangle.");
+
+					//var cbOld = GetColorBandAt(cbsView, cbRectangleIndex.Value);
+					//Debug.Assert(cb == cbOld, "ColorBand MisMatch Rectangle.");
 
 					cbsView.MoveCurrentTo(cb);
 				}
 			}
+		}
 
-			//var focusResult = Focus();
-			//ReportSetFocus(focusResult);
+		private void StartDrag(CbsListViewItem cbsListViewItem)
+		{
+			//Debug.WriteLineIf(_useDetailedDebug, $"Starting Drag. ColorBandIndex = {cbSelectionLineIndex}. ContentScale: {ContentScale}. PosX: {hitPoint.X}. Original X: {cbSelectionLine.SelectionLinePosition}.");
+			//ReportColorBandRectanglesInPlay(cbSelectionLineIndex.Value);
+
+			var colorBandIndex = cbsListViewItem.CbsSelectionLine.ColorBandIndex;
+			var cbSelectionLine = cbsListViewItem.CbsSelectionLine;
+			_selectionLineBeingDragged = cbSelectionLine;
+			_selectionLineBeingDragged.SelectionLineMoved += HandleSelectionLineMoved;
+
+			//Debug.WriteIf(_useDetailedDebug, $"CbsListView. Starting Drag for cbSelectionLine at index: {cbSelectionLineIndex}, Current View Position: {cbsView.CurrentPosition}, ColorBand: {cb}.");
+			Debug.WriteIf(_useDetailedDebug, $"CbsListView. Starting Drag for cbSelectionLine at index: {colorBandIndex}, ColorBand: {cbsListViewItem.ColorBand}.");
+
+			var gLeft = ListViewItems[colorBandIndex].CbsRectangle.RectangleGeometry;
+			var gRight = ListViewItems[colorBandIndex + 1].CbsRectangle.RectangleGeometry;
+
+			var gSelLeft = ListViewItems[colorBandIndex].CbsRectangle.SelRectangleGeometry;
+			var gSelRight = ListViewItems[colorBandIndex + 1].CbsRectangle.SelRectangleGeometry;
+
+			var rg = new RectangleGeometries(gLeft, gRight, gSelLeft, gSelRight);
+
+			cbSelectionLine.StartDrag(rg);
 		}
 
 		private void HandleSelectionLineMoved(object? sender, CbsSelectionLineMovedEventArgs e)
@@ -482,9 +458,10 @@ namespace MSetExplorer
 
 			var newCutoff = (int)Math.Round(e.NewXPosition / ContentScale.Width);
 
-			var colorBandToUpdateOld = GetColorBandAt(cbView, e.ColorBandIndex);
 			var colorBandToUpdate = ListViewItems[e.ColorBandIndex].ColorBand;
-			Debug.Assert(colorBandToUpdate == colorBandToUpdateOld, "Color Band Mismatch from CbsSelectionLineMovedEventArgs.");
+
+			//var colorBandToUpdateOld = GetColorBandAt(cbView, e.ColorBandIndex);
+			//Debug.Assert(colorBandToUpdate == colorBandToUpdateOld, "Color Band Mismatch from CbsSelectionLineMovedEventArgs.");
 
 			if (e.Operation == CbsSelectionLineDragOperation.Move)
 			{
@@ -694,7 +671,7 @@ namespace MSetExplorer
 			{
 				var cbRectangle = cbsListViewItems[i].CbsRectangle;
 
-				if (cbRectangle.RectangleGeometry.FillContains(hitPoint))
+				if (cbRectangle.ContainsPoint(hitPoint))
 				{
 					colorBandRectangleIndex = i;
 					cbsListViewItem = cbsListViewItems[i];
@@ -746,22 +723,18 @@ namespace MSetExplorer
 				var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
 				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 
-				//var isCurrent = colorBandIndex == _vm?.CurrentColorBandIndex;
 				var isCurrent = colorBandIndex == listCollectionView.CurrentPosition;
-
-				//var isSelected = _vm?.SelectedItemsArray[colorBandIndex]?.IsColorBandSelected ?? false;
 				var isColorBandSelected = false;
-
-				var cbsRectangle = new CbsRectangle(colorBandIndex, isCurrent, isColorBandSelected, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged);
+				var cbsRectangle = new CbsRectangle(colorBandIndex, isCurrent, isColorBandSelected, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, 
+					_colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged, HandleContextMenuDisplayRequested);
 
 				// Build the Selection Line
 				var selectionLinePosition = colorBand.Cutoff;
 
-				//var isSelected = _vm?.SelectedItemsArray[colorBandIndex]?.IsCutoffSelected ?? false;
 				var isCutoffSelected = false;
-
 				var isVisible = showSectionLines;
-				var cbsSelectionLine = new CbsSelectionLine(colorBandIndex, isCutoffSelected, selectionLinePosition, _colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged, isVisible);
+				var cbsSelectionLine = new CbsSelectionLine(colorBandIndex, isCutoffSelected, selectionLinePosition, 
+					_colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged, isVisible, HandleContextMenuDisplayRequested);
 
 				ListViewItems.Add(new CbsListViewItem(colorBand, cbsRectangle, cbsSelectionLine));
 			}
@@ -771,30 +744,36 @@ namespace MSetExplorer
 		{
 			if (!(shiftKeyPressed || controlKeyPressed))
 			{
-				foreach (var cbsListViewItem in ListViewItems)
+				foreach (var lvItem in ListViewItems)
 				{
-					cbsListViewItem.SelectionType = ColorBandSelectionType.None;
+					lvItem.SelectionType = ColorBandSelectionType.None;
 				}
 			}
 
-			var cbsListViewItem1 = ListViewItems[colorBandIndex];
+			var cbsListViewItem = ListViewItems[colorBandIndex];
 
-			cbsListViewItem1.IsColorSelected = newIsSelectedValue;
+			cbsListViewItem.IsColorSelected = newIsSelectedValue;
 		}
 
 		private void OffsetIsSelectedChanged(int colorBandIndex, bool newIsSelectedValue, bool shiftKeyPressed, bool controlKeyPressed)
 		{
 			if (!(shiftKeyPressed || controlKeyPressed))
 			{
-				foreach (var cbsListViewItem in ListViewItems)
+				foreach (var lvItem in ListViewItems)
 				{
-					cbsListViewItem.SelectionType = ColorBandSelectionType.None;
+					lvItem.SelectionType = ColorBandSelectionType.None;
 				}
 			}
 
-			var cbsListViewItem1 = ListViewItems[colorBandIndex];
+			var cbsListViewItem = ListViewItems[colorBandIndex];
 
-			cbsListViewItem1.IsCutoffSelected = newIsSelectedValue;
+			cbsListViewItem.IsCutoffSelected = newIsSelectedValue;
+		}
+
+		private void HandleContextMenuDisplayRequested(int colorBandIndex, ColorBandSelectionType colorBandSelectionType)
+		{
+			var cbsListViewItem = ListViewItems[colorBandIndex];
+			_displayContextMenu(cbsListViewItem, colorBandSelectionType);
 		}
 
 		private void RemoveColorBandRectangles()
@@ -872,8 +851,8 @@ namespace MSetExplorer
 
 	internal class CbsListViewItem
 	{
-		private bool _isCutoffSelected;
-		private bool _isColorSelected;
+		//private bool _isCutoffSelected;
+		//private bool _isColorSelected;
 
 		private ColorBandSelectionType _selectionType;
 
@@ -883,8 +862,8 @@ namespace MSetExplorer
 			CbsRectangle = cbsRectangle;
 			CbsSelectionLine = cbsSelectionLine;
 
-			_isCutoffSelected = false;
-			_isColorSelected = false;
+			//_isCutoffSelected = false;
+			//_isColorSelected = false;
 			_selectionType = 0;
 		}
 
@@ -911,12 +890,12 @@ namespace MSetExplorer
 
 		public bool IsCutoffSelected
 		{
-			get => _isCutoffSelected;
+			get => ColorBand.IsCutoffSelected;
 			set
 			{
-				if (value != _isCutoffSelected)
+				if (value != ColorBand.IsCutoffSelected)
 				{
-					_isCutoffSelected = value;
+					ColorBand.IsCutoffSelected = value;
 
 					CbsSelectionLine.IsSelected = value;
 
@@ -934,12 +913,12 @@ namespace MSetExplorer
 
 		public bool IsColorSelected
 		{
-			get => _isColorSelected;
+			get => ColorBand.IsColorSelected;
 			set
 			{
-				if (value != _isColorSelected)
+				if (value != ColorBand.IsColorSelected)
 				{
-					_isColorSelected = value;
+					ColorBand.IsColorSelected = value;
 
 					CbsRectangle.IsSelected = value;
 
