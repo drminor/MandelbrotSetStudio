@@ -240,9 +240,13 @@ namespace MSetExplorer
 			//	FocusListBoxItem(index);
 			//}
 
-			_ = _vm.TryInsertNewItem(out var index);
+			var selItem = GetColorBandAtMousePosition();
 
-			Debug.WriteLine($"Will set the HistogramColorBandControl to move to the new item at index: {index}.");
+			if (selItem != null)
+			{
+				_ = _vm.TryInsertNewItem(selItem, out var index);
+				Debug.WriteLine($"CbsHistogramControl. The new ColorBand: {selItem} has been inserted at index: {index}.");
+			}
 		}
 
 		// Delete CanExecute
@@ -254,7 +258,12 @@ namespace MSetExplorer
 		// Delete
 		private void DeleteCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			_ = _vm.TryDeleteSelectedItem();
+			var selItem = GetColorBandAtMousePosition();
+
+			if (selItem != null)
+			{
+				_ = _vm.TryDeleteSelectedItem(selItem);
+			}
 		}
 
 		// Revert CanExecute
@@ -338,6 +347,15 @@ namespace MSetExplorer
 				result = _vm.CurrentColorBand;
 			}
 
+			if (result == null)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"GetColorBandAtMousePosition. Could not identify any ColorBand at {posOfContextMenu}.");
+			}
+			else
+			{
+				ConfirmColorBandBelongsToView(result);
+			}
+
 			return result;
 		}
 
@@ -354,7 +372,6 @@ namespace MSetExplorer
 
 			Debug.WriteLine(sb.ToString());
 		}
-
 
 		#endregion
 
@@ -407,6 +424,17 @@ namespace MSetExplorer
 			{
 				var cntrlSize = new SizeDbl(ActualWidth, ActualHeight);
 				Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogram_Control_SizeChanged. Control: {cntrlSize}, Canvas:{_vm.ViewportSize}, ContentViewport: {_vm.ContentViewportSize}, Unscaled: {_vm.UnscaledExtent}.");
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void ConfirmColorBandBelongsToView(ColorBand? colorBand)
+		{
+			var index = _vm.ColorBandsView.IndexOf(colorBand);
+
+			if (index == -1)
+			{
+				Debug.WriteLine($"Could not the ColorBand: {colorBand} in the VM's ColorBandsView.");
 			}
 		}
 

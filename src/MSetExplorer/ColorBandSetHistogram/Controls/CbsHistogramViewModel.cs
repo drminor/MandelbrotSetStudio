@@ -74,9 +74,6 @@ namespace MSetExplorer
 
 			_colorBandSet = new ColorBandSet();
 
-			//SelectedItems = new CbsListView();
-			//_selectedItemsArray = null;
-
 			_editMode = ColorBandSetEditMode.Bands;
 
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
@@ -119,34 +116,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties - Content
-
-		//public CbsListView SelectedItems { get; private set; }
-
-		//private CbsListViewItem?[]? _selectedItemsArray;
-
-		//public CbsListViewItem?[] SelectedItemsArray
-		//{
-		//	get
-		//	{
-		//		if (_selectedItemsArray == null)
-		//		{
-		//			_selectedItemsArray = new CbsListViewItem[ColorBandSet.Count];
-
-		//			for (var i = 0; i < ColorBandSet.Count; i++)
-		//			{
-		//				_selectedItemsArray[i] = null;
-		//			}
-
-		//		}
-
-		//		return _selectedItemsArray;
-		//	}
-
-		//	private set
-		//	{
-		//		_selectedItemsArray = value;
-		//	}
-		//}
 
 		public ColorBandSetEditMode EditMode
 		{
@@ -274,30 +243,40 @@ namespace MSetExplorer
 				_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
 
 				_colorBandsView = value;
-				var testItem = _colorBandsView.CurrentItem;
 
-				if (testItem is ColorBand cb)
-				{
-					CurrentColorBand = cb;
-				}
-				else
-				{
-					if (_colorBandsView.Count > 0 && _colorBandsView.GetItemAt(0) is ColorBand cb2)
-					{
-						CurrentColorBand = cb2;
-					}
-					else
-					{
-						CurrentColorBand = new ColorBand();
-					}
-				}
+				//var testItem = _colorBandsView.CurrentItem;
 
-				_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
+				//if (testItem is ColorBand cb)
+				//{
+				//	CurrentColorBand = cb;
+				//}
+				//else
+				//{
+				//	if (_colorBandsView.Count > 0 && _colorBandsView.GetItemAt(0) is ColorBand cb2)
+				//	{
+				//		CurrentColorBand = cb2;
+				//	}
+				//	else
+				//	{
+				//		CurrentColorBand = new ColorBand();
+				//	}
+				//}
+
+				//_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
+
+				//OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
+				//OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandIndex));
+				//OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandNumber));
+				//OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsCount));
+
+				CurrentColorBand = _colorBandsView.CurrentItem as ColorBand;
 
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandIndex));
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandNumber));
 				OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsCount));
+
+				_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
 			}
 		}
 
@@ -591,102 +570,91 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public bool TryInsertNewItem(out int index)
+		public bool TryInsertNewItem(ColorBand colorBand, out int index)
 		{
-			if (ColorBandsView.CurrentItem is ColorBand curItem)
+			bool result;
+			switch (EditMode)
 			{
-				bool result;
-				switch (EditMode)
-				{
-					case ColorBandSetEditMode.Offsets:
-						result = TryInsertOffset(curItem, out index);
-						break;
-					case ColorBandSetEditMode.Colors:
-						result = TryInsertColor(curItem, out index);
-						break;
-					case ColorBandSetEditMode.Bands:
-						result = TryInsertColorBand(curItem, out index);
-						break;
-					default:
-						throw new InvalidOperationException($"{EditMode} is not recognized.");
-				}
-
-				if (result)
-				{
-					PushCurrentColorBandOnToHistoryCollection();
-					IsDirty = true;
-					UpdatePercentages();
-
-					if (UseRealTimePreview)
-					{
-						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-					}
-				}
-
-				return result;
+				case ColorBandSetEditMode.Offsets:
+					result = TryInsertOffset(colorBand, out index);
+					break;
+				case ColorBandSetEditMode.Colors:
+					result = TryInsertColor(colorBand, out index);
+					break;
+				case ColorBandSetEditMode.Bands:
+					result = TryInsertColorBand(colorBand, out index);
+					break;
+				default:
+					throw new InvalidOperationException($"{EditMode} is not recognized.");
 			}
-			else
+
+			if (result)
 			{
-				index = -1;
-				return false;
+				PushCurrentColorBandOnToHistoryCollection();
+				IsDirty = true;
+				UpdatePercentages();
+
+				if (UseRealTimePreview)
+				{
+					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+				}
 			}
+
+			return result;
 		}
 
-		private bool TryInsertOffset(ColorBand curItem, out int index)
+		private bool TryInsertOffset(ColorBand colorBand, out int index)
 		{
-			if (curItem.Cutoff - curItem.StartingCutoff < 1)
+			if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
 			{
 				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
 				index = -1;
 				return false;
 			}
 
-			var prevCutoff = curItem.PreviousCutoff ?? 0;
-			var newCutoff = prevCutoff + (curItem.Cutoff - prevCutoff) / 2;
+			var prevCutoff = colorBand.PreviousCutoff ?? 0;
+			var newCutoff = prevCutoff + (colorBand.Cutoff - prevCutoff) / 2;
 
-			var currentSet = _currentColorBandSet;
-			index = currentSet.IndexOf(curItem);
+			index = _currentColorBandSet.IndexOf(colorBand);
 
 			CurrentColorBand = null;
 			_currentColorBandSet.InsertCutoff(index, newCutoff);
 			ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(curItem);
+			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;
 		}
 
-		private bool TryInsertColor(ColorBand curItem, out int index)
+		private bool TryInsertColor(ColorBand colorBand, out int index)
 		{
-			var currentSet = _currentColorBandSet;
-			index = currentSet.IndexOf(curItem);
+			index = _currentColorBandSet.IndexOf(colorBand);
 
-			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, curItem.StartColor);
+			var newItem = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor);
 
 			CurrentColorBand = null;
-			_currentColorBandSet.InsertColor(index, colorBand);
+			_currentColorBandSet.InsertColor(index, newItem);
 			ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(curItem);
+			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;
 		}
 
-		private bool TryInsertColorBand(ColorBand curItem, out int index)
+		private bool TryInsertColorBand(ColorBand colorBand, out int index)
 		{
-			if (curItem.Cutoff - curItem.StartingCutoff < 1)
+			if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
 			{
 				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
 				index = -1;
 				return false;
 			}
 
-			var prevCutoff = curItem.PreviousCutoff ?? 0;
-			var newCutoff = prevCutoff + (curItem.Cutoff - prevCutoff) / 2;
-			var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, curItem.StartColor, curItem.PreviousCutoff, curItem.StartColor, double.NaN);
+			var prevCutoff = colorBand.PreviousCutoff ?? 0;
+			var newCutoff = prevCutoff + (colorBand.Cutoff - prevCutoff) / 2;
+			var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor, colorBand.PreviousCutoff, colorBand.StartColor, double.NaN);
 
-			var currentSet = _currentColorBandSet;
-			index = currentSet.IndexOf(curItem);
+			index = _currentColorBandSet.IndexOf(colorBand);
 
-			//Debug.WriteLine($"At InsertItem, the view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:About to Insert item at index: {index}. The new item is: {newItem}.");
 
 			lock (_histLock)
 			{
@@ -701,52 +669,49 @@ namespace MSetExplorer
 			return true;
 		}
 
-		public bool TryDeleteSelectedItem()
+
+
+		public bool TryDeleteSelectedItem(ColorBand colorBand)
 		{
-			if (ColorBandsView.CurrentItem is ColorBand curItem)
+			//var selectedItems = GetSelectedItems(_currentColorBandSet);
+
+			bool result;
+
+			switch (EditMode)
 			{
-				bool result;
-				switch (EditMode)
-				{
-					case ColorBandSetEditMode.Offsets:
-						result = TryDeleteOffset(curItem);
-						break;
-					case ColorBandSetEditMode.Colors:
-						result = TryDeleteColor(curItem);
-						break;
-					case ColorBandSetEditMode.Bands:
-						result = TryDeleteColorBand(curItem);
-						break;
-					default:
-						throw new InvalidOperationException($"{EditMode} is not recognized.");
-				}
-
-				if (result)
-				{
-					PushCurrentColorBandOnToHistoryCollection();
-					IsDirty = true;
-					UpdatePercentages();
-
-					if (UseRealTimePreview)
-					{
-						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-					}
-				}
-
-				return result;
+				case ColorBandSetEditMode.Offsets:
+					result = TryDeleteOffset(colorBand);
+					break;
+				case ColorBandSetEditMode.Colors:
+					result = TryDeleteColor(colorBand);
+					break;
+				case ColorBandSetEditMode.Bands:
+					result = TryDeleteColorBand(colorBand);
+					break;
+				default:
+					throw new InvalidOperationException($"{EditMode} is not recognized.");
 			}
-			else
+
+			if (result)
 			{
-				return false;
+				PushCurrentColorBandOnToHistoryCollection();
+				IsDirty = true;
+				UpdatePercentages();
+
+				if (UseRealTimePreview)
+				{
+					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+				}
 			}
+
+			return result;
 		}
 
-		private bool TryDeleteOffset(ColorBand curItem)
+		private bool TryDeleteOffset(ColorBand colorBand)
 		{
-			var currentSet = _currentColorBandSet;
-			var index = currentSet.IndexOf(curItem);
+			var index = _currentColorBandSet.IndexOf(colorBand);
 
-			if (index > currentSet.Count - 2)
+			if (index > _currentColorBandSet.Count - 2)
 			{
 				// Cannot delete the last entry
 				return false;
@@ -755,17 +720,16 @@ namespace MSetExplorer
 			CurrentColorBand = null;
 			_currentColorBandSet.DeleteCutoff(index);
 			ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(curItem);
+			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;
 		}
 
-		private bool TryDeleteColor(ColorBand curItem)
+		private bool TryDeleteColor(ColorBand colorBand)
 		{
-			var currentSet = _currentColorBandSet;
-			var index = currentSet.IndexOf(curItem);
+			var index = _currentColorBandSet.IndexOf(colorBand);
 
-			if (index > currentSet.Count - 2)
+			if (index > _currentColorBandSet.Count - 2)
 			{
 				// Cannot delete the last entry
 				return false;
@@ -774,17 +738,16 @@ namespace MSetExplorer
 			CurrentColorBand = null;
 			_currentColorBandSet.DeleteColor(index);
 			ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(curItem);
+			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;
 		}
 
-		private bool TryDeleteColorBand(ColorBand curItem)
+		private bool TryDeleteColorBand(ColorBand colorBand)
 		{
-			var currentSet = _currentColorBandSet;
-			var index = currentSet.IndexOf(curItem);
+			var index = _currentColorBandSet.IndexOf(colorBand);
 
-			if (index >= currentSet.Count - 1)
+			if (index >= _currentColorBandSet.Count - 1)
 			{
 				// Cannot delete the last entry
 				return false;
@@ -793,7 +756,7 @@ namespace MSetExplorer
 			bool colorBandWasRemoved;
 			lock (_histLock)
 			{
-				colorBandWasRemoved = currentSet.Remove(curItem);
+				colorBandWasRemoved = _currentColorBandSet.Remove(colorBand);
 			}
 
 			if (!colorBandWasRemoved)
@@ -801,7 +764,7 @@ namespace MSetExplorer
 				Debug.WriteLine("ColorBandSetViewModel:Could not remove the item.");
 			}
 
-			var newIndex = currentSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
+			var newIndex = _currentColorBandSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
 			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:Removed item at former index: {index}. The new index is: {newIndex}.");
 
@@ -1125,20 +1088,7 @@ namespace MSetExplorer
 
 		private void CurrentColorBand_EditEnded(object? sender, EventArgs e)
 		{
-			var cbsView = ColorBandsView;
-			if (cbsView == null) throw new InvalidOperationException("The ColorBandsView is NULL.");
-
-			if (sender is ColorBand)
-			{
-				var cb = (ColorBand)sender;
-				var index = cbsView.IndexOf(cb);
-				Debug.WriteLine($"CbsHistogramViewModel is handling EditEnded for {index}.");
-			}
-			else
-			{
-				Debug.WriteLine($"ColorBandSetViewModel: A sender of type {sender?.GetType()} is raising the EditEnded event. EXPECTED: {typeof(ColorBand)}.");
-				return;
-			}
+			ReportIndexOfSender(sender);
 
 			PushCurrentColorBandOnToHistoryCollection();
 			IsDirty = true;
@@ -1284,6 +1234,7 @@ namespace MSetExplorer
 
 		private ColorBand? GetPredeccessor(IList<ColorBand> colorBands, ColorBand cb)
 		{
+
 			var index = colorBands.IndexOf(cb);
 			var result = index < 1 ? null : colorBands[index - 1];
 			return result;
@@ -1299,6 +1250,12 @@ namespace MSetExplorer
 		{
 			var index = colorBands.IndexOf(cb);
 			var result = index > colorBands.Count - 2 ? null : colorBands[index + 1];
+			return result;
+		}
+
+		private List<ColorBand> GetSelectedItems(IList<ColorBand> colorBands)
+		{
+			var result = colorBands.Where(c => c.IsSelected).ToList();
 			return result;
 		}
 
@@ -1423,8 +1380,60 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Updating SeriesData. Using existing buffer. Length:{newLength}.");
 			}
-
 		}
+
+		[Conditional("DEBUG")]
+		private void ReportIndexOfSender(object? sender)
+		{
+			var index = GetIndexOfSender(sender);
+
+			Debug.WriteLine($"CbsHistogramViewModel is handling EditEnded for {index}.");
+		}
+
+		private int? GetIndexOfSender(object? sender)
+		{
+			if (sender == null)
+			{
+				Debug.WriteLine($"ColorBandSetViewModel: The sender on the call to EditEnded is null.");
+				return null;
+			}
+
+			int? result;
+
+			if (sender is ColorBand cb)
+			{
+				var cbsView = ColorBandsView;
+				if (cbsView == null)
+				{
+					throw new InvalidOperationException("The ColorBandsView is NULL.");
+				}
+
+				var index = cbsView.IndexOf(cb);
+
+				Debug.Assert(index >= 0, "Could not find the ColorBand whose edits are being ended in the ColorBandsView.");
+
+				result = index == -1 ? null : index;
+
+				Debug.WriteLine($"CbsHistogramViewModel is handling EditEnded for {index}.");
+			}
+			else
+			{
+				Debug.WriteLine($"ColorBandSetViewModel: A sender of type {sender?.GetType()} is raising the EditEnded event. EXPECTED: {typeof(ColorBand)}.");
+				result = null;
+			}
+
+			return result;
+		}
+
+		//private HPlotSeriesData BuildTestSeries()
+		//{
+		//	double[] dataX = new double[] { 1, 2, 3, 4, 5 };
+		//	double[] dataY = new double[] { 1, 4, 9, 16, 25 };
+
+		//	var result = new HPlotSeriesData(dataX, dataY);
+
+		//	return result;
+		//}
 
 		#endregion
 
@@ -1452,300 +1461,6 @@ namespace MSetExplorer
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
 		}
-
-		#endregion
-
-		#region UN USED
-
-		private void CheckColorBandIndex(int colorBandIndex, ColorBand currentColorBand)
-		{
-			//if (ColorBandsView == null)
-			//	return;
-
-			//if (TryGetColorBandIndex(ColorBandsView, currentColorBand, out var idx))
-			//{
-			//	Debug.Assert(idx == colorBandIndex, "The colorBandIndex argument does not point to the CurrentColorBand.");
-			//}
-		}
-
-		private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)
-		{
-			//var colorBandsList = colorbandsView as IList<ColorBand>;
-			if (colorbandsView == null)
-			{
-				index = null;
-				return false;
-			}
-			else
-			{
-				index = colorbandsView.IndexOf(cb);
-				return true;
-			}
-		}
-
-		private int GetColorBandIndex(IList<ColorBand> colorBands, ColorBand cb)
-		{
-			var index = colorBands.IndexOf(cb);
-			return index;
-		}
-
-		//private void ResetDisplay()
-		//{
-		//	SeriesData = new HPlotSeriesData(HPlotSeriesData.Empty);
-
-		//	//var newSet = _colorBandSet.CreateNewCopy();
-
-		//	var unscaledWidth = GetExtent(ColorBandSet);
-
-		//	if (unscaledWidth > 10)
-		//	{
-		//		ResetView(unscaledWidth, new VectorDbl(), 1.0);
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel::ResetDisplay is not resetting the view -- the new iterations target <= 10.");
-		//	}
-
-		//	_mapSectionHistogramProcessor.Reset(ColorBandSet.HighCutoff); // This will trigger a call to RefreshDisplay
-
-
-		//	//ApplyChangesInt(newSet);
-
-		//	//ResetView(unscaledWidth, new VectorDbl(), 1.0);
-		//}
-
-
-
-
-		//public ScaledImageViewInfo ViewportSizePositionAndScale
-		//{
-		//	get => _viewportSizePositionAndScale;
-		//	set
-		//	{
-		//		lock (_paintLocker)
-		//		{
-		//			_viewportSize = value.ContentViewportSize;
-		//			var offset = new VectorDbl(value.ContentOffset.X * _scaleTransform.ScaleX, 0);
-		//			ImageOffset = offset;
-		//		}
-		//	}
-		//}
-
-		//private HPlotSeriesData BuildSeriesDataOld()
-		//{
-		//	var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
-		//	var endingIndex = _colorBandSet[EndPtr].Cutoff;
-		//	//var highCutoff = _colorBandSet.HighCutoff;
-
-		//	var hEntries = GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
-
-		//	if (hEntries.Length < 1)
-		//	{
-		//		Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
-		//		return HPlotSeriesData.Zero;
-		//	}
-
-		//	var dataX = new double[hEntries.Length];
-		//	var dataY = new double[hEntries.Length];
-
-		//	var extent = Math.Min(hEntries.Length, PlotExtent);
-
-		//	for (var hPtr = 0; hPtr < extent; hPtr++)
-		//	{
-		//		var hEntry = hEntries[hPtr];
-
-		//		dataX[hPtr] = hEntry.Key;
-		//		dataY[hPtr] = hEntry.Value;
-		//	}
-
-		//	var result = new HPlotSeriesData(dataX, dataY);
-
-		//	return result;
-		//}
-
-		//private KeyValuePair<int, int>[] GetKeyValuePairsForBand(int startingIndex, int endingIndex, bool includeCatchAll)
-		//{
-		//	var hEntries = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true);
-
-		//	return hEntries;
-
-		//}
-
-		//private IEnumerable<KeyValuePair<int, int>> GetKeyValuePairsForBand(int previousCutoff, int cutoff)
-		//{
-		//	return _mapSectionHistogramProcessor.GetKeyValuePairsForBand(previousCutoff, cutoff);
-		//}
-
-		//private int[] GetACopyOfTheValuesArray()
-		//{
-		//	return _mapSectionHistogramProcessor.Histogram.Values;
-		//}
-
-		//private (double[] dataX, double[] dataY) GetPlotData1()
-		//{
-		//	//ClearHistogramItems();
-
-		//	var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
-		//	var endingIndex = _colorBandSet[EndPtr].Cutoff;
-		//	var highCutoff = _colorBandSet.HighCutoff;
-
-		//	var hEntries = GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
-
-		//	if (hEntries.Length < 1)
-		//	{
-		//		Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
-		//		return (new double[0], new double[0]);
-		//	}
-
-		//	var dataX = new double[hEntries.Length];
-		//	var dataY = new double[hEntries.Length];
-
-		//	for (var hPtr = 0; hPtr < hEntries.Length; hPtr++)
-		//	{
-		//		var hEntry = hEntries[hPtr];
-		//		dataX[hPtr] = hEntry.Key;
-		//		dataY[hPtr] = hEntry.Value;
-		//	}
-
-		//	return (dataX, dataY);
-		//}
-
-
-		//private int _histElevation = 2;
-		//private int _histDispHeight = 165;
-
-		//private void DrawHistogram()
-		//{
-		//	ClearHistogramItems();
-
-		//	var startingIndex = _colorBandSet[StartPtr].StartingCutoff;
-		//	var endingIndex = _colorBandSet[EndPtr].Cutoff;
-		//	var highCutoff = _colorBandSet.HighCutoff;
-
-		//	//var rn = 1 + endingIndex - startingIndex;
-		//	//if (Math.Abs(LogicalDisplaySize.Width - rn) > 20)
-		//	//{
-		//	//	Debug.WriteLineIf(_useDetailedDebug, $"The range of indexes does not match the Logical Display Width. Range: {endingIndex - startingIndex}, Width: {LogicalDisplaySize.Width}.");
-		//	//	return;
-		//	//}
-
-		//	//LogicalDisplaySize = new SizeInt(rn + 10, _canvasSize.Height);
-
-		//	var w = (int) Math.Round(UnscaledExtent.Width);
-
-		//	DrawHistogramBorder(w, _histDispHeight);
-
-		//	var hEntries = _mapSectionHistogramProcessor.GetKeyValuePairsForBand(startingIndex, endingIndex, includeCatchAll: true).ToArray();
-
-		//	if (hEntries.Length < 1)
-		//	{
-		//		Debug.WriteLine($"WARNING: The Histogram is empty. (DrawHistogram)");
-		//		return;
-		//	}
-
-		//	var maxV = hEntries.Max(x => x.Value) + 5; // Add 5 to reduce the height of each line.
-		//	var vScaleFactor = _histDispHeight / (double)maxV;
-
-		//	var geometryGroup = new GeometryGroup();
-
-		//	foreach (var hEntry in hEntries)
-		//	{
-		//		var x = 1 + hEntry.Key - startingIndex;
-		//		var height = hEntry.Value * vScaleFactor;
-		//		geometryGroup.Children.Add(BuildHLine(x, height));
-		//	}
-
-		//	var hTestEntry = hEntries[^1];
-
-		//	var lineGroupDrawing = new GeometryDrawing(Brushes.IndianRed, new Pen(Brushes.DarkRed, 0.75), geometryGroup);
-
-		//	_historgramItems.Add(lineGroupDrawing);
-		//	_drawingGroup.Children.Add(lineGroupDrawing);
-		//}
-
-		//private LineGeometry BuildHLine(int x, double height)
-		//{
-		//	//var result = new LineGeometry(new Point(x, _histDispHeight + _histElevation), new Point(x, _histDispHeight - height + _histElevation));
-
-		//	//var lineTop = _histDispHeight + _histElevation - height;
-		//	//var result = new LineGeometry(new Point(x, lineTop), new Point(x, lineTop + height));
-
-		//	// Top of the display is when y = 0, y increases as you move from top to bottom
-		//	var lineBottom = 1 + _histDispHeight + _histElevation;
-		//	var lineTop = lineBottom - height;
-
-		//	var result = new LineGeometry(new Point(x, lineBottom), new Point(x, lineTop));
-
-
-		//	return result;
-		//}
-
-		//private GeometryDrawing DrawHistogramBorder(int width, int height)
-		//{
-		//	Debug.WriteLineIf(_useDetailedDebug, $"Drawing the Histogram Border with width: {width}.");
-
-		//	var borderSize = width > 1 && height > 1 ? new Size(width - 1, height - 1) : new Size(1, 1);
-
-		//	var histogramBorder = new GeometryDrawing
-		//	(
-		//		Brushes.Transparent,
-		//		new Pen(Brushes.DarkGray, 0.5),
-		//		new RectangleGeometry(new Rect(new Point(2, _histElevation), borderSize))
-		//	);
-
-		//	_historgramItems.Add(histogramBorder);
-		//	_drawingGroup.Children.Add(histogramBorder);
-
-		//	return histogramBorder;
-		//}
-
-		//private GeometryDrawing DrawHistogramBorder(int width, int height)
-		//{
-		//	var topLeft = new Point(0, 0);
-		//	var borderSize = width > 1 && height > 1 ? new Size(width + 2, height + 2) : new Size(1, 1);
-
-		//	var histogramBorder = new GeometryDrawing
-		//	(
-		//		Brushes.Transparent,
-		//		new Pen(Brushes.DarkGray, 1),
-		//		new RectangleGeometry(new Rect(topLeft, borderSize))
-		//	);
-
-		//	Debug.WriteLineIf(_useDetailedDebug, $"Drawing the Histogram Border with Size: {borderSize} at pos: {topLeft}.");
-
-
-		//	_historgramItems.Add(histogramBorder);
-		//	_drawingGroup.Children.Add(histogramBorder);
-
-		//	return histogramBorder;
-		//}
-
-		//private GeometryDrawing BuildFoundationRectangle(SizeDbl logicalDisplaySize)
-		//{
-		//	var result = new GeometryDrawing
-		//	(
-		//		Brushes.Transparent,
-		//		new Pen(Brushes.DarkViolet, 3),
-		//		new RectangleGeometry(ScreenTypeHelper.CreateRect(logicalDisplaySize))
-		//	);
-
-		//	return result;
-		//}
-
-		//private void UpdateFoundationRectangle(GeometryDrawing foundationRectangle, SizeDbl logicalDisplaySize)
-		//{
-		//	foundationRectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(logicalDisplaySize));
-		//}
-
-		//private HPlotSeriesData BuildTestSeries()
-		//{
-		//	double[] dataX = new double[] { 1, 2, 3, 4, 5 };
-		//	double[] dataY = new double[] { 1, 4, 9, 16, 25 };
-
-		//	var result = new HPlotSeriesData(dataX, dataY);
-
-		//	return result;
-		//}
 
 		#endregion
 	}

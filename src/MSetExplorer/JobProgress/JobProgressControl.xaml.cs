@@ -96,10 +96,10 @@ namespace MSetExplorer
 
 				if (_collectionView.CurrentPosition > 20)
 				{
-					var curItem = _collectionView.CurrentItem;
-					if (curItem != null)
+					var mapSectionProcessInfo = _collectionView.CurrentItem;
+					if (mapSectionProcessInfo != null)
 					{
-						lvJobProgressEntries.ScrollIntoView(curItem);
+						lvJobProgressEntries.ScrollIntoView(mapSectionProcessInfo);
 					}
 				}
 

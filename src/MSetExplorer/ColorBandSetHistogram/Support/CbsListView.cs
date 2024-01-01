@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -364,6 +365,35 @@ namespace MSetExplorer
 		private void ColorBands_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"CbsListView::ColorBands_CollectionChanged. Action: {e.Action}, New Starting Index: {e.NewStartingIndex}, Old Starting Index: {e.OldStartingIndex}");
+
+			if (e.Action == NotifyCollectionChangedAction.Reset)
+			{
+				//	Reset
+
+				Debug.WriteLine($"CbsListView is Resetting.");
+
+				//Reset();
+			}
+			else if (e.Action == NotifyCollectionChangedAction.Add)
+			{
+				// Add items
+				var bands = e.NewItems?.Cast<ColorBand>() ?? new List<ColorBand>();
+				foreach (var colorBand in bands)
+				{
+					//AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Add, mapSection.Histogram));
+					Debug.WriteLine($"CbsListView is Adding a ColorBand: {colorBand}.");
+				}
+			}
+			else if (e.Action == NotifyCollectionChangedAction.Remove)
+			{
+				// Remove items
+				var bands = e.OldItems?.Cast<ColorBand>() ?? new List<ColorBand>();
+				foreach (var colorBand in bands)
+				{
+					//AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Remove, mapSection.Histogram));
+					Debug.WriteLine($"CbsListView is Removing a ColorBand: {colorBand}");
+				}
+			}
 		}
 
 		private void ColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -511,9 +541,22 @@ namespace MSetExplorer
 
 			if (ScreenTypeHelper.IsDoubleChanged(newCutoff, selectionLine.XPosition))
 			{
-				//selectionLine.XPosition = newCutoff;
+				//Debug.WriteLine($"WARNING: Not setting the new Cutoff for ColorBand: {colorBandIndex}.");
 
-				Debug.WriteLine($"WARNING: Not setting the new Cutoff for ColorBand: {colorBandIndex}.");
+				var cbsRectangleLeft = ListViewItems[colorBandIndex].CbsRectangle;
+				var cbsRectangleRight = ListViewItems[colorBandIndex + 1].CbsRectangle;
+
+				Debug.Assert(cbsRectangleLeft.XPosition + cbsRectangleLeft.Width == selectionLine.XPosition);
+				Debug.Assert(cbsRectangleRight.XPosition == selectionLine.XPosition);
+
+				var diff = newCutoff - selectionLine.XPosition;
+
+				selectionLine.XPosition = newCutoff;
+
+				cbsRectangleLeft.Width += diff;
+
+				cbsRectangleRight.XPosition = newCutoff;
+				cbsRectangleRight.Width -= diff;
 			}
 		}
 

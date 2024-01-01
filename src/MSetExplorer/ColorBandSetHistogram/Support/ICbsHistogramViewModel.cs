@@ -15,9 +15,6 @@ namespace MSetExplorer
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 		event EventHandler<ColorBandSetUpdateRequestedEventArgs>? ColorBandSetUpdateRequested;
 
-		//event EventHandler<ValueTuple<int, int>>? ColorBandCutoffChanged;
-
-		//double ScaleFixFactor { get; set; }
 		ColorBandSetEditMode EditMode { get; set; }
 
 		bool ColorBandUserControlHasErrors { get; set; }
@@ -48,15 +45,13 @@ namespace MSetExplorer
 		bool TryMoveCurrentColorBandToNext();
 		bool TryMoveCurrentColorBandToPrevious();
 
-		bool TryInsertNewItem(out int index);
-		bool TryDeleteSelectedItem();
+		bool TryInsertNewItem(ColorBand colorBand, out int index);
+		bool TryDeleteSelectedItem(ColorBand colorBand);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 
 
 		HPlotSeriesData SeriesData { get; }
-		//ImageSource ImageSource { get; }			// The Color Band Rectangles as a Bitmap.
-		//VectorDbl ImageOffset { get; }				// Used to position the Color Band Rectangles Bitmap on the Canvas
 
 		SizeDbl UnscaledExtent { get; }				// Size of entire content at max zoom (i.e, 4 x Target Iterations)
 		SizeDbl ViewportSize { get; set; }			// Size of display area in device independent pixels.
@@ -77,13 +72,8 @@ namespace MSetExplorer
 
 		int? MoveTo(VectorDbl displayPosition);
 
-		//void UpdateColorBandWidth(int colorBandIndex, double newValue);
-		//void UpdateColorBandCutoff(int colorBandIndex, int newValue);
-
-		//public event PropertyChangedEventHandler? PropertyChanged;
-
 		//CbsListView SelectedItems { get; }
-		//CbsListViewItem?[] SelectedItemsArray { get; }
+
 		//void ClearSelectedItems();
 	}
 }
