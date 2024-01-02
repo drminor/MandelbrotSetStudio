@@ -581,7 +581,7 @@ namespace MSetExplorer
 				IsHitTestVisible = false
 			};
 
-			_canvas.Children.Add(result);
+			//_canvas.Children.Add(result);
 			_border = result;
 		}
 

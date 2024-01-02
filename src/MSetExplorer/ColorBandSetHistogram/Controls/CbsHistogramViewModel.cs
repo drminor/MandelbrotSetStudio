@@ -3,6 +3,7 @@ using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -1192,13 +1193,27 @@ namespace MSetExplorer
 		{
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 
+			var t = ColorBandsView as INotifyCollectionChanged;
+
+			if (t != null)
+			{
+				t.CollectionChanged -= Test_CollectionChanged_Handler;
+			}
+
 			ColorBandsView = BuildColorBandsView(_currentColorBandSet);
+
+			(ColorBandsView as INotifyCollectionChanged).CollectionChanged += Test_CollectionChanged_Handler;
 
 			_ = selectedIndex.HasValue ? ColorBandsView.MoveCurrentToPosition(selectedIndex.Value) : ColorBandsView.MoveCurrentToFirst();
 
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
+		}
+
+		private void Test_CollectionChanged_Handler(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			Debug.WriteLine($"Test Collection Changed. Action is {e.Action}. NewItemsCount: {e.NewItems?.Count ?? -1}. OldItemsCount: {e.OldItems?.Count ?? -1}.");
 		}
 
 		private ListCollectionView BuildColorBandsView(ObservableCollection<ColorBand>? colorBands)

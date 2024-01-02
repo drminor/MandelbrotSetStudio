@@ -61,8 +61,10 @@ namespace MSetExplorer
 			{
 				if (!SeriesData.IsEmpty())
 				{
-					var xAxisDimensions = _wpfPlot1.Plot.XAxis.Dims;
-					UpdateViewportPixelOffsetAndWidth(xAxisDimensions);
+					if (_wpfPlot1.Plot.XAxis.Dims.HasBeenSet)
+					{
+						ViewportOffsetAndWidth = GetViewportPixelOffsetAndWidth(_wpfPlot1.Plot.XAxis.Dims);
+					}
 				}
 			}
 		}
@@ -227,8 +229,11 @@ namespace MSetExplorer
 			_thePlot = CreateScatterPlot(wpfPlot, seriesData);
 
 			wpfPlot.Refresh();
-			var xAxisDimensions = wpfPlot.Plot.XAxis.Dims;
-			UpdateViewportPixelOffsetAndWidth(xAxisDimensions);
+
+			if (wpfPlot.Plot.XAxis.Dims.HasBeenSet)
+			{
+				ViewportOffsetAndWidth = GetViewportPixelOffsetAndWidth(wpfPlot.Plot.XAxis.Dims);
+			}
 
 			// Remove the plot -- to keep the display clean until we receive some actual data.
 			wpfPlot.Plot.Remove(_thePlot);
@@ -275,7 +280,21 @@ namespace MSetExplorer
 
 			Debug.WriteLineIf(c._useDetailedDebug, $"\n\t\t====== The HistogramPlotControl's ContentViewportSize is being updated from {previousValue} to {newValue}.");
 
-			c.UpdatePlotDataWidth(previousValue.Width, newValue.Width);
+			var wpfPlot = c.WpfPlot1;
+
+			if (wpfPlot != null)
+			{
+				var axisDimensions = c.UpdatePlotDataWidth(wpfPlot, previousValue.Width, newValue.Width);
+
+				if (axisDimensions.HasBeenSet)
+				{
+					c.ViewportOffsetAndWidth = c.GetViewportPixelOffsetAndWidth(axisDimensions);
+				}
+				else
+				{
+					Debug.WriteLineIf(c._useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged: Cannot set the ViewportOffset and Width, the AxisDimensions has not been set.");
+				}
+			}
 		}
 
 		#endregion
@@ -337,7 +356,11 @@ namespace MSetExplorer
 			}
 
 			SetPlotLimits(wpfPlot, DisplayPosition.X, ContentViewportSize.Width);
-			UpdateViewportPixelOffsetAndWidth(wpfPlot.Plot.XAxis.Dims);
+
+			if (wpfPlot.Plot.XAxis.Dims.HasBeenSet)
+			{
+				ViewportOffsetAndWidth = GetViewportPixelOffsetAndWidth(wpfPlot.Plot.XAxis.Dims);
+			}
 
 			wpfPlot.Refresh();
 		}
@@ -414,55 +437,48 @@ namespace MSetExplorer
 				SetPlotLimits(wpfPlot, newValue, ContentViewportSize.Width);
 
 				wpfPlot.Refresh();
-				UpdateViewportPixelOffsetAndWidth(wpfPlot.Plot.XAxis.Dims);
+
+				if (wpfPlot.Plot.XAxis.Dims.HasBeenSet)
+				{
+					ViewportOffsetAndWidth = GetViewportPixelOffsetAndWidth(wpfPlot.Plot.XAxis.Dims);
+				}
 			}
 
 			return true;
 		}
 
-		private bool UpdatePlotDataWidth(double previousValue, double newValue)
+		private AxisDimensions UpdatePlotDataWidth(WpfPlot wpfPlot, double previousValue, double newValue)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramPlotControl's PlotViewportSize is being updated from {previousValue} to {newValue}.");
 
-			var wpfPlot = WpfPlot1;
+			// Use the newValue to limit the Plot's range of X values. (Starting Index)
+			SetPlotLimits(wpfPlot, DisplayPosition.X, newValue);
+			wpfPlot.Refresh();
 
-			if (wpfPlot != null)
-			{
-				// Use the newValue to limit the Plot's range of X values. (Starting Index)
-				SetPlotLimits(wpfPlot, DisplayPosition.X, newValue);
-
-				wpfPlot.Refresh();
-				UpdateViewportPixelOffsetAndWidth(wpfPlot.Plot.XAxis.Dims);
-			}
-
-			return true;
+			var result = wpfPlot.Plot.XAxis.Dims;
+			return result;
 		}
 
-		private void UpdateViewportPixelOffsetAndWidth(AxisDimensions axisDimensions)
+		private ControlXPositionAndWidth GetViewportPixelOffsetAndWidth(AxisDimensions axisDimensions)
 		{
-			if (axisDimensions.HasBeenSet)
-			{
-				var viewportOffsetX = axisDimensions.DataOffsetPx;
-				var viewportWidth = axisDimensions.DataSizePx;
+			var viewportOffsetX = axisDimensions.DataOffsetPx;
+			var viewportWidth = axisDimensions.DataSizePx;
 
-				var figureWidth = axisDimensions.FigureSizePx;
-				var marginRight = figureWidth - (viewportWidth + viewportOffsetX);
+			var figureWidth = axisDimensions.FigureSizePx;
+			var marginRight = figureWidth - (viewportWidth + viewportOffsetX);
+			//var marginRight = -5 + figureWidth - (viewportWidth + viewportOffsetX);
 
-				var controlSize = new SizeDbl(ActualWidth, ActualHeight);
+			var controlSize = new SizeDbl(ActualWidth, ActualHeight);
 
-				Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged. Preparing to set the ViewportOffsetX and Width: X:{viewportOffsetX}, W: {viewportWidth}. " +
-					$"NOTE: ControlSize: {controlSize}. The FigureWidth: {figureWidth}, Margin Right {marginRight}");
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged. Preparing to set the ViewportOffsetX and Width: X:{viewportOffsetX}, W: {viewportWidth}. " +
+				$"NOTE: ControlSize: {controlSize}. The FigureWidth: {figureWidth}, Margin Right {marginRight}");
 
-				//var pxPerUnit = axisDimensions.PxPerUnit;
-				//Debug.WriteLine($"****HistogramPlotControl.WpfPlot1_SizeChanged. PixlesPerUnit: {pxPerUnit}.");
+			//var pxPerUnit = axisDimensions.PxPerUnit;
+			//Debug.WriteLine($"****HistogramPlotControl.WpfPlot1_SizeChanged. PixlesPerUnit: {pxPerUnit}.");
 
+			var result = new ControlXPositionAndWidth(viewportOffsetX, viewportWidth);
 
-				ViewportOffsetAndWidth = new ControlXPositionAndWidth(viewportOffsetX, viewportWidth);
-			}
-			else
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"HistogramPlotControl.WpfPlot1_SizeChanged: Cannot set the ViewportOffset and Width, the yAxisDimensions.HasBeenSet = false.");
-			}
+			return result;
 		}
 
 		#endregion

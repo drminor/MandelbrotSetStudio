@@ -519,15 +519,22 @@ namespace MSetExplorer
 				amount = amount * -1;
 				if (originalLeftGeometry.Rect.Width > amount + (1 * _scaleX) && originalRightGeometry.Rect.X > amount /*+ (1 * _scale)*/)
 				{
-					left.Rect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
-					right.Rect = DrawingHelper.MoveRectLeft(originalRightGeometry.Rect, amount);
+					////left.Rect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
 
-					//selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
+					//var lRect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
+					//right.Rect = DrawingHelper.MoveRectLeft(originalRightGeometry.Rect, amount);
+
+					////selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
+					//selLeft.Rect = DrawingHelper.CopyXAndWidth(lRect, selLeft.Rect);
 					//selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
 
-					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Shortening the Left ColorBandRectangle by amount: {amount}. " +
-						$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
-						$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
+					////Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Shortening the Left ColorBandRectangle by amount: {amount}. " +
+					////	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+					////	$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
+
+					//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
+					//	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+					//	$"New Left Width = {lRect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
 					
 					updated = true;
 				}
@@ -536,15 +543,21 @@ namespace MSetExplorer
 			{
 				if (originalRightGeometry.Rect.Width > amount + (1 * _scaleX))
 				{
-					left.Rect = DrawingHelper.Lengthen(originalLeftGeometry.Rect, amount);
-					right.Rect = DrawingHelper.MoveRectRight(originalRightGeometry.Rect, amount);
+					////left.Rect = DrawingHelper.Lengthen(originalLeftGeometry.Rect, amount);
+					//var lRect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
+					//right.Rect = DrawingHelper.MoveRectRight(originalRightGeometry.Rect, amount);
 
-					//selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
+					////selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
+					//selLeft.Rect = DrawingHelper.CopyXAndWidth(lRect, selLeft.Rect);
 					//selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
 
-					Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
-						$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
-						$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
+					////Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
+					////	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+					////	$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
+
+					//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
+					//	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+					//	$"New Left Width = {lRect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
 
 					updated = true;
 				}

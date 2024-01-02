@@ -52,8 +52,8 @@ namespace MSetExplorer
 			_canvas = canvas;
 			_colorBandsView = colorBandsView;
 
-			_colorBandsView.CurrentChanged += _colorBandsView_CurrentChanged;
-			(_colorBandsView as INotifyCollectionChanged).CollectionChanged += ColorBands_CollectionChanged;
+			_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
+			(_colorBandsView as INotifyCollectionChanged).CollectionChanged += ColorBandsView_CollectionChanged;
 
 			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(contentScale, controlHeight);
 
@@ -84,8 +84,8 @@ namespace MSetExplorer
 			{
 				if (_currentColorBand != null)
 				{
-					_currentColorBand.PropertyChanged -= ColorBand_PropertyChanged;
-					_currentColorBand.EditEnded -= ColorBand_EditEnded;
+					//_currentColorBand.PropertyChanged -= ColorBand_PropertyChanged;
+					//_currentColorBand.EditEnded -= ColorBand_EditEnded;
 					HilightColorBandRectangle(_currentColorBand, on: false);
 				}
 
@@ -93,8 +93,8 @@ namespace MSetExplorer
 
 				if (_currentColorBand != null)
 				{
-					_currentColorBand.PropertyChanged += ColorBand_PropertyChanged;
-					_currentColorBand.EditEnded += ColorBand_EditEnded;
+					//_currentColorBand.PropertyChanged += ColorBand_PropertyChanged;
+					//_currentColorBand.EditEnded += ColorBand_EditEnded;
 					HilightColorBandRectangle(_currentColorBand, on: true);
 				}
 			}
@@ -140,7 +140,6 @@ namespace MSetExplorer
 
 			return null;
 		}
-
 
 		public void ShowSelectionLines(bool leftMouseButtonIsPressed)
 		{
@@ -213,14 +212,14 @@ namespace MSetExplorer
 
 		public void TearDown()
 		{
-			_colorBandsView.CurrentChanged -= _colorBandsView_CurrentChanged;
-			(_colorBandsView as INotifyCollectionChanged).CollectionChanged -= ColorBands_CollectionChanged;
+			_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
+			(_colorBandsView as INotifyCollectionChanged).CollectionChanged -= ColorBandsView_CollectionChanged;
 			_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
 
 			if (_currentColorBand != null)
 			{
-				_currentColorBand.PropertyChanged -= ColorBand_PropertyChanged;
-				_currentColorBand.EditEnded -= ColorBand_EditEnded;
+				//_currentColorBand.PropertyChanged -= ColorBand_PropertyChanged;
+				//_currentColorBand.EditEnded -= ColorBand_EditEnded;
 			}
 
 			if (_selectionLineBeingDragged != null)
@@ -228,21 +227,12 @@ namespace MSetExplorer
 				_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
 			}
 
-			foreach (var cbsListViewItem in ListViewItems)
-			{
-				cbsListViewItem.CbsSelectionLine.TearDown();
-				cbsListViewItem.CbsRectangle.TearDown();
-			}
+			ClearListViewItems();
 		}
 
 		#endregion
 
 		#region Event Handlers
-
-		private void _colorBandsView_CurrentChanged(object? sender, EventArgs e)
-		{
-			CurrentColorBand = (ColorBand)_colorBandsView.CurrentItem;
-		}
 
 		private void Handle_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
@@ -362,14 +352,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBands_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
+		{
+			CurrentColorBand = (ColorBand)_colorBandsView.CurrentItem;
+		}
+
+		private void ColorBandsView_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"CbsListView::ColorBands_CollectionChanged. Action: {e.Action}, New Starting Index: {e.NewStartingIndex}, Old Starting Index: {e.OldStartingIndex}");
 
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{
 				//	Reset
-
 				Debug.WriteLine($"CbsListView is Resetting.");
 
 				//Reset();
@@ -380,8 +374,13 @@ namespace MSetExplorer
 				var bands = e.NewItems?.Cast<ColorBand>() ?? new List<ColorBand>();
 				foreach (var colorBand in bands)
 				{
-					//AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Add, mapSection.Histogram));
 					Debug.WriteLine($"CbsListView is Adding a ColorBand: {colorBand}.");
+
+					var idx = e.NewStartingIndex;
+
+					var listViewItem = CreateListViewItem(_colorBandsView, idx, colorBand, showSectionLine: MouseIsEntered);
+
+					ListViewItems.Insert(e.NewStartingIndex, listViewItem);
 				}
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
@@ -390,7 +389,6 @@ namespace MSetExplorer
 				var bands = e.OldItems?.Cast<ColorBand>() ?? new List<ColorBand>();
 				foreach (var colorBand in bands)
 				{
-					//AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Remove, mapSection.Histogram));
 					Debug.WriteLine($"CbsListView is Removing a ColorBand: {colorBand}");
 				}
 			}
@@ -441,19 +439,19 @@ namespace MSetExplorer
 
 		private void ColorBand_EditEnded(object? sender, EventArgs e)
 		{
-			if (sender is ColorBand cb)
-			{
+			//if (sender is ColorBand cb)
+			//{
 
-				if (TryGetColorBandIndex(_colorBandsView, cb, out var index))
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. Handling the ColorBand_EditEnded event. Found: {index}, ColorBand: {cb}");
-					UpdateSelectionLinePosition(index.Value, cb.Cutoff);
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. Handling the ColorBand_EditEnded event. NOT Found: ColorBand: {cb}");
-				}
-			}
+			//	if (TryGetColorBandIndex(_colorBandsView, cb, out var index))
+			//	{
+			//		Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. Handling the ColorBand_EditEnded event. Found: {index}, ColorBand: {cb}");
+			//		UpdateSelectionLinePosition(index.Value, cb.Cutoff);
+			//	}
+			//	else
+			//	{
+			//		Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. Handling the ColorBand_EditEnded event. NOT Found: ColorBand: {cb}");
+			//	}
+			//}
 		}
 
 		#endregion
@@ -749,7 +747,7 @@ namespace MSetExplorer
 
 		private void DrawColorBands(ListCollectionView? listCollectionView, bool showSectionLines)
 		{
-			RemoveColorBandRectangles();
+			ClearListViewItems();
 
 			if (listCollectionView == null || listCollectionView.Count < 2)
 			{
@@ -762,25 +760,54 @@ namespace MSetExplorer
 			{
 				var colorBand = (ColorBand)listCollectionView.GetItemAt(colorBandIndex);
 
-				var xPosition = colorBand.PreviousCutoff ?? 0;
-				var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
-				var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
+				//var xPosition = colorBand.PreviousCutoff ?? 0;
+				//var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
+				//var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 
-				var isCurrent = colorBandIndex == listCollectionView.CurrentPosition;
-				var isColorBandSelected = false;
-				var cbsRectangle = new CbsRectangle(colorBandIndex, isCurrent, isColorBandSelected, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, 
-					_colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged, HandleContextMenuDisplayRequested);
+				//var isCurrent = colorBandIndex == listCollectionView.CurrentPosition;
+				//var isColorBandSelected = false;
+				//var cbsRectangle = new CbsRectangle(colorBandIndex, isCurrent, isColorBandSelected, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, 
+				//	_colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged, HandleContextMenuDisplayRequested);
 
-				// Build the Selection Line
-				var selectionLinePosition = colorBand.Cutoff;
+				//// Build the Selection Line
+				//var selectionLinePosition = colorBand.Cutoff;
 
-				var isCutoffSelected = false;
-				var isVisible = showSectionLines;
-				var cbsSelectionLine = new CbsSelectionLine(colorBandIndex, isCutoffSelected, selectionLinePosition, 
-					_colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged, isVisible, HandleContextMenuDisplayRequested);
+				//var isCutoffSelected = false;
+				//var isVisible = showSectionLines;
+				//var cbsSelectionLine = new CbsSelectionLine(colorBandIndex, isCutoffSelected, selectionLinePosition, 
+				//	_colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged, isVisible, HandleContextMenuDisplayRequested);
 
-				ListViewItems.Add(new CbsListViewItem(colorBand, cbsRectangle, cbsSelectionLine));
+				//var listViewItem = new CbsListViewItem(colorBand, cbsRectangle, cbsSelectionLine);
+
+				var listViewItem = CreateListViewItem(listCollectionView, colorBandIndex, colorBand, showSectionLines);
+				//listViewItem.PropertyChanged += ColorBand_PropertyChanged;
+
+				ListViewItems.Add(listViewItem);
 			}
+		}
+
+		private CbsListViewItem CreateListViewItem(ListCollectionView listCollectionView, int colorBandIndex, ColorBand colorBand, bool showSectionLine)
+		{
+			var xPosition = colorBand.PreviousCutoff ?? 0;
+			var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
+			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
+
+			var isCurrent = colorBandIndex == listCollectionView.CurrentPosition;
+			var isColorBandSelected = false;
+			var cbsRectangle = new CbsRectangle(colorBandIndex, isCurrent, isColorBandSelected, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend,
+				_colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged, HandleContextMenuDisplayRequested);
+
+			// Build the Selection Line
+			var selectionLinePosition = colorBand.Cutoff;
+
+			var isCutoffSelected = false;
+			var isVisible = showSectionLine;
+			var cbsSelectionLine = new CbsSelectionLine(colorBandIndex, isCutoffSelected, selectionLinePosition,
+				_colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged, isVisible, HandleContextMenuDisplayRequested);
+
+			var listViewItem = new CbsListViewItem(colorBand, cbsRectangle, cbsSelectionLine);
+
+			return listViewItem;
 		}
 
 		private void CbRectangleIsSelectedChanged(int colorBandIndex, bool newIsSelectedValue, bool shiftKeyPressed, bool controlKeyPressed)
@@ -819,14 +846,14 @@ namespace MSetExplorer
 			_displayContextMenu(cbsListViewItem, colorBandSelectionType);
 		}
 
-		private void RemoveColorBandRectangles()
+		private void ClearListViewItems()
 		{
 			//Debug.WriteLine($"Before remove ColorBandRectangles. The DrawingGroup has {_drawingGroup.Children.Count} children. The height of the drawing group is: {_drawingGroup.Bounds.Height} and the location is: {_drawingGroup.Bounds.Location}");
 
 			foreach (var listViewItem in ListViewItems)
 			{
-				listViewItem.CbsRectangle.TearDown();
-				listViewItem.CbsSelectionLine.TearDown();
+				//listViewItem.PropertyChanged -= ColorBand_PropertyChanged;
+				listViewItem.TearDown();
 			}
 
 			ListViewItems.Clear();
@@ -892,12 +919,11 @@ namespace MSetExplorer
 		#endregion
 	}
 
-	internal class CbsListViewItem
+	internal class CbsListViewItem : INotifyPropertyChanged
 	{
-		//private bool _isCutoffSelected;
-		//private bool _isColorSelected;
-
 		private ColorBandSelectionType _selectionType;
+
+		#region Constructor
 
 		public CbsListViewItem(ColorBand colorBand, CbsRectangle cbsRectangle, CbsSelectionLine cbsSelectionLine)
 		{
@@ -905,10 +931,21 @@ namespace MSetExplorer
 			CbsRectangle = cbsRectangle;
 			CbsSelectionLine = cbsSelectionLine;
 
-			//_isCutoffSelected = false;
-			//_isColorSelected = false;
 			_selectionType = 0;
+
+			ColorBand.PropertyChanged += ColorBand_PropertyChanged;
 		}
+
+		#endregion
+
+		#region Public Events
+
+		public event PropertyChangedEventHandler? PropertyChanged;
+
+
+		#endregion
+
+		#region Public Properties
 
 		public ColorBand ColorBand { get; init; }
 
@@ -981,6 +1018,53 @@ namespace MSetExplorer
 
 		public bool IsItemSelected => IsCutoffSelected | IsColorSelected;
 
+		#endregion
+
+		#region Event Handlers
+
+		//		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);  // Updated on 12/26/2023
+
+
+		private void ColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			Debug.WriteLine($"CbsListView is handling a ColorBand Property Change.");
+
+			if (sender is ColorBand cb)
+			{
+				if (e.PropertyName == "Cutoff")
+				{
+					// This ColorBand had its Cutoff updated.
+					CbsRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
+				}
+				else
+				{
+					if (e.PropertyName == "PreviousCutoff")
+					{
+						// The ColorBand preceeding this one had its Cutoff updated.
+						// This ColorBand had its PreviousCutoff (aka XPosition) updated.
+						// This ColorBand's Starting Position (aka XPosition) and Width should be updated to accomodate.
+						CbsRectangle.XPosition = cb.PreviousCutoff ?? 0;
+						CbsRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
+					}
+				}
+			}
+
+
+			PropertyChanged?.Invoke(sender, e);
+		}
+
+		#endregion
+
+		#region Public Methods
+
+		public void TearDown()
+		{
+			ColorBand.PropertyChanged -= ColorBand_PropertyChanged;
+			CbsRectangle.TearDown();
+			CbsSelectionLine.TearDown();
+		}
+
+		#endregion
 	}
 
 	[Flags]
