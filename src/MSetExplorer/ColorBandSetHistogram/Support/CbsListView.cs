@@ -22,9 +22,6 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		//private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
-		//private DebounceDispatcher _selectionLineMovedDispatcher;
-
 		private ContextMenuDisplayRequest _displayContextMenu;
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
@@ -44,11 +41,6 @@ namespace MSetExplorer
 
 		public CbsListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool useRealTimePreview, bool mouseIsEntered, ContextMenuDisplayRequest displayContextMenu)
 		{
-			//_selectionLineMovedDispatcher = new DebounceDispatcher
-			//{
-			//	Priority = DispatcherPriority.Render
-			//};
-
 			_canvas = canvas;
 			_colorBandsView = colorBandsView;
 
@@ -84,8 +76,6 @@ namespace MSetExplorer
 			{
 				if (_currentColorBand != null)
 				{
-					//_currentColorBand.PropertyChanged -= ColorBand_PropertyChanged;
-					//_currentColorBand.EditEnded -= ColorBand_EditEnded;
 					HilightColorBandRectangle(_currentColorBand, on: false);
 				}
 
@@ -93,8 +83,6 @@ namespace MSetExplorer
 
 				if (_currentColorBand != null)
 				{
-					//_currentColorBand.PropertyChanged += ColorBand_PropertyChanged;
-					//_currentColorBand.EditEnded += ColorBand_EditEnded;
 					HilightColorBandRectangle(_currentColorBand, on: true);
 				}
 			}
@@ -216,12 +204,6 @@ namespace MSetExplorer
 			(_colorBandsView as INotifyCollectionChanged).CollectionChanged -= ColorBandsView_CollectionChanged;
 			_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
 
-			if (_currentColorBand != null)
-			{
-				//_currentColorBand.PropertyChanged -= ColorBand_PropertyChanged;
-				//_currentColorBand.EditEnded -= ColorBand_EditEnded;
-			}
-
 			if (_selectionLineBeingDragged != null)
 			{
 				_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
@@ -292,13 +274,6 @@ namespace MSetExplorer
 
 			var gLeft = ListViewItems[colorBandIndex].CbsRectangle.RectangleGeometry;
 			var gRight = ListViewItems[colorBandIndex + 1].CbsRectangle.RectangleGeometry;
-
-			//var gSelLeft = ListViewItems[colorBandIndex].CbsRectangle.SelRectangleGeometry;
-			//var gSelRight = ListViewItems[colorBandIndex + 1].CbsRectangle.SelRectangleGeometry;
-
-			//var rg = new RectangleGeometries(gLeft, gRight, gSelLeft, gSelRight);
-
-			//cbSelectionLine.StartDrag(rg);
 
 			cbSelectionLine.StartDrag(gLeft.Rect.Width, gRight.Rect.Width);
 		}
@@ -439,45 +414,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBand_EditEnded(object? sender, EventArgs e)
-		{
-			//if (sender is ColorBand cb)
-			//{
-
-			//	if (TryGetColorBandIndex(_colorBandsView, cb, out var index))
-			//	{
-			//		Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. Handling the ColorBand_EditEnded event. Found: {index}, ColorBand: {cb}");
-			//		UpdateSelectionLinePosition(index.Value, cb.Cutoff);
-			//	}
-			//	else
-			//	{
-			//		Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. Handling the ColorBand_EditEnded event. NOT Found: ColorBand: {cb}");
-			//	}
-			//}
-		}
-
 		#endregion
 
 		#region ColorBand Support
-
-		//private void UpdateCutoffThrottled(CbsSelectionLineMovedEventArgs e)
-		//{
-		//	if (UseRealTimePreview)
-		//	{
-		//		_selectionLineMovedDispatcher.Throttle(
-		//			interval: SELECTION_LINE_UPDATE_THROTTLE_INTERVAL,
-		//			action: parm =>
-		//			{
-		//				UpdateCutoff(e);
-		//			},
-		//			param: null);
-		//	}
-		//	else
-		//	{
-		//		//currentColorBand.Cutoff = newCutoff;
-		//		UpdateCutoff(e);
-		//	}
-		//}
 
 		private void UpdateCutoff(CbsSelectionLineMovedEventArgs e)
 		{
@@ -525,7 +464,7 @@ namespace MSetExplorer
 		{
 			if (ListViewItems.Count == 0)
 			{
-				return; // false;
+				return;
 			}
 
 			if (colorBandIndex < 0 || colorBandIndex > ListViewItems.Count - 2)
@@ -537,12 +476,8 @@ namespace MSetExplorer
 
 			var selectionLine = ListViewItems[colorBandIndex].CbsSelectionLine;
 
-			//_ = selectionLine.UpdatePosition(newCutoff * ContentScale.Width);
-
 			if (ScreenTypeHelper.IsDoubleChanged(newCutoff, selectionLine.XPosition))
 			{
-				//Debug.WriteLine($"WARNING: Not setting the new Cutoff for ColorBand: {colorBandIndex}.");
-
 				var cbsRectangleLeft = ListViewItems[colorBandIndex].CbsRectangle;
 				var cbsRectangleRight = ListViewItems[colorBandIndex + 1].CbsRectangle;
 
@@ -761,28 +696,7 @@ namespace MSetExplorer
 			for (var colorBandIndex = 0; colorBandIndex <= endPtr; colorBandIndex++)
 			{
 				var colorBand = (ColorBand)listCollectionView.GetItemAt(colorBandIndex);
-
-				//var xPosition = colorBand.PreviousCutoff ?? 0;
-				//var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
-				//var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
-
-				//var isCurrent = colorBandIndex == listCollectionView.CurrentPosition;
-				//var isColorBandSelected = false;
-				//var cbsRectangle = new CbsRectangle(colorBandIndex, isCurrent, isColorBandSelected, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, 
-				//	_colorBandLayoutViewModel, _canvas, CbRectangleIsSelectedChanged, HandleContextMenuDisplayRequested);
-
-				//// Build the Selection Line
-				//var selectionLinePosition = colorBand.Cutoff;
-
-				//var isCutoffSelected = false;
-				//var isVisible = showSectionLines;
-				//var cbsSelectionLine = new CbsSelectionLine(colorBandIndex, isCutoffSelected, selectionLinePosition, 
-				//	_colorBandLayoutViewModel, _canvas, OffsetIsSelectedChanged, isVisible, HandleContextMenuDisplayRequested);
-
-				//var listViewItem = new CbsListViewItem(colorBand, cbsRectangle, cbsSelectionLine);
-
 				var listViewItem = CreateListViewItem(listCollectionView, colorBandIndex, colorBand, showSectionLines);
-				//listViewItem.PropertyChanged += ColorBand_PropertyChanged;
 
 				ListViewItems.Add(listViewItem);
 			}
@@ -854,7 +768,6 @@ namespace MSetExplorer
 
 			foreach (var listViewItem in ListViewItems)
 			{
-				//listViewItem.PropertyChanged -= ColorBand_PropertyChanged;
 				listViewItem.TearDown();
 			}
 
@@ -921,7 +834,7 @@ namespace MSetExplorer
 		#endregion
 	}
 
-	internal class CbsListViewItem : INotifyPropertyChanged
+	internal class CbsListViewItem
 	{
 		private ColorBandSelectionType _selectionType;
 
@@ -937,13 +850,6 @@ namespace MSetExplorer
 
 			ColorBand.PropertyChanged += ColorBand_PropertyChanged;
 		}
-
-		#endregion
-
-		#region Public Events
-
-		public event PropertyChangedEventHandler? PropertyChanged;
-
 
 		#endregion
 
@@ -1024,9 +930,6 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		//		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);  // Updated on 12/26/2023
-
-
 		private void ColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			Debug.WriteLine($"CbsListView is handling a ColorBand Property Change.");
@@ -1050,9 +953,6 @@ namespace MSetExplorer
 					}
 				}
 			}
-
-
-			PropertyChanged?.Invoke(sender, e);
 		}
 
 		#endregion

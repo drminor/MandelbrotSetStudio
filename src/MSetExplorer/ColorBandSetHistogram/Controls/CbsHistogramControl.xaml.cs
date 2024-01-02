@@ -236,11 +236,6 @@ namespace MSetExplorer
 		// Insert
 		private void InsertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			//if (_vm.TryInsertNewItem(out var index))
-			//{
-			//	FocusListBoxItem(index);
-			//}
-
 			var selItem = GetColorBandAtMousePosition();
 
 			if (selItem != null)

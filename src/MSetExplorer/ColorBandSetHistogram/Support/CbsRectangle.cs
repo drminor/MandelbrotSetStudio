@@ -104,18 +104,12 @@ namespace MSetExplorer
 				_contentScale = _colorBandLayoutViewModel.ContentScale;
 
 				Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
-
-				//var top = 0;
-				//ResizeSel(_xPosition, top, _width, _controlHeight, _contentScale);
 			}
 			else if (e.PropertyName == "CbrHeight")
 			{
 				_cbHeight = _colorBandLayoutViewModel.CbrHeight;
 
 				Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
-
-				//var top = 0;
-				//ResizeSel(_xPosition, top, _width, _controlHeight, _contentScale);
 			}
 		}
 
@@ -311,14 +305,6 @@ namespace MSetExplorer
 
 			return cbRectangle;
 		}
-
-		//private void ResizeSel(double xPosition, double yPosition, double width, double height, SizeDbl scaleSize)
-		//{
-		//	var area = new RectangleDbl(new PointDbl(xPosition, yPosition), new SizeDbl(width, height));
-		//	var scaledArea = area.Scale(scaleSize);
-
-		//	_selGeometry.Rect = ScreenTypeHelper.ConvertToRect(scaledArea);
-		//}
 
 		private Shape BuildSelRectanglePath(RectangleGeometry area, bool isCurrent, bool isSelected, double strokeThickness)
 		{
