@@ -10,12 +10,16 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Threading;
 
 namespace MSetExplorer
 {
 	public class CbsHistogramViewModel : ViewModelBase, IDisposable, IUndoRedoViewModel, ICbsHistogramViewModel
 	{
 		#region Private Fields
+
+		private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
+		private DebounceDispatcher _selectionLineMovedDispatcher;
 
 		private readonly object _paintLocker;
 
@@ -69,6 +73,11 @@ namespace MSetExplorer
 		public CbsHistogramViewModel(IMapSectionHistogramProcessor mapSectionHistogramProcessor)
 		{
 			_paintLocker = new object();
+
+			_selectionLineMovedDispatcher = new DebounceDispatcher
+			{
+				Priority = DispatcherPriority.Render
+			};
 
 			_mapSectionHistogramProcessor = mapSectionHistogramProcessor;
 			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
@@ -1081,10 +1090,22 @@ namespace MSetExplorer
 				{
 					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
 
-					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
+					//ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
+					RaiseUpdateRequestThrottled(newColorBandSet);
 				}
 			}
 
+		}
+
+		private void RaiseUpdateRequestThrottled(ColorBandSet colorBandSet)
+		{
+			_selectionLineMovedDispatcher.Throttle(
+				interval: SELECTION_LINE_UPDATE_THROTTLE_INTERVAL,
+				action: parm =>
+				{
+					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(colorBandSet, isPreview: true));
+				},
+				param: null);
 		}
 
 		private void CurrentColorBand_EditEnded(object? sender, EventArgs e)

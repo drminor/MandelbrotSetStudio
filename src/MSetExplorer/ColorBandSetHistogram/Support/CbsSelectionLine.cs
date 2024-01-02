@@ -36,7 +36,9 @@ namespace MSetExplorer
 
 		private double _originalSelectionLinePosition;
 
-		private RectangleGeometries? _rectangleGeometries;
+		//private RectangleGeometries? _rectangleGeometries;
+		private double? _leftWidth;
+		private double? _rightWidth;
 
 		private bool _isSelected;
 
@@ -266,35 +268,6 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public bool UpdatePositionNotUsed(double newPosition)
-		{
-			if (DragState == DragState.Begun || DragState == DragState.InProcess)
-			{
-				// The HandleMouseMove eventHandler is managing the SelectionLine positions.
-				return false;
-			}
-
-			var amount = newPosition - _originalSelectionLinePosition;
-
-			if (ScreenTypeHelper.IsDoubleNearZero(amount))
-			{
-				return false;
-			}
-
-			if (UpdateColorBandWidth(amount))
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. The new position is {newPosition}. The original position is {_originalSelectionLinePosition}.");
-				SelectionLinePosition = newPosition;
-
-				return true;
-			}
-			else
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine::UpdatePosition. The call to UpdateColorBandWidth returned false. The new position is {newPosition}. The original position is {_originalSelectionLinePosition}.");
-				return false;
-			}
-		}
-
 		public void TearDown()
 		{
 			try
@@ -354,19 +327,35 @@ namespace MSetExplorer
 			}
 		}
 
-		public void StartDrag(RectangleGeometries rectangleGeometries)
+		//public void StartDrag(RectangleGeometries rectangleGeometries)
+		//{
+		//	if (DragState == DragState.InProcess)
+		//	{
+		//		throw new InvalidOperationException("Cannot start Drag, the DragState = InProcess.");
+		//	}
+
+		//	_rectangleGeometries = rectangleGeometries; 
+		//	_originalSelectionLinePosition = SelectionLinePosition;
+
+		//	DragState = DragState.InProcess;
+
+		//	Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {rectangleGeometries}.");
+		//}
+
+		public void StartDrag(double leftWidth, double rightWidth)
 		{
 			if (DragState == DragState.InProcess)
 			{
 				throw new InvalidOperationException("Cannot start Drag, the DragState = InProcess.");
 			}
 
-			_rectangleGeometries = rectangleGeometries; 
+			_leftWidth = leftWidth;
+			_rightWidth = rightWidth;
 			_originalSelectionLinePosition = SelectionLinePosition;
 
 			DragState = DragState.InProcess;
 
-			Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, the Geometries are: {rectangleGeometries}.");
+			Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, LeftWidth: {_leftWidth}, RightWidth: {_rightWidth}.");
 		}
 
 		public void CancelDrag()
@@ -377,7 +366,7 @@ namespace MSetExplorer
 			{
 				SelectionLinePosition = _originalSelectionLinePosition;
 
-				UpdateColorBandWidth(0);
+				//UpdateColorBandWidth(0);
 
 				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalSelectionLinePosition, CbsSelectionLineDragOperation.Cancel));
 			}
@@ -401,7 +390,9 @@ namespace MSetExplorer
 							if (_canvas != null)
 							{
 								_canvas.MouseMove -= HandleMouseMove;
-								_canvas.MouseLeftButtonUp -= HandleMouseLeftButtonUp;
+								_canvas.PreviewMouseLeftButtonUp -= HandlePreviewMouseLeftButtonUp;
+								_leftWidth = null;
+								_rightWidth = null;
 							}
 							break;
 
@@ -410,7 +401,7 @@ namespace MSetExplorer
 							if (_canvas != null)
 							{
 								_canvas.MouseMove += HandleMouseMove;
-								_canvas.MouseLeftButtonUp += HandleMouseLeftButtonUp;
+								_canvas.PreviewMouseLeftButtonUp += HandlePreviewMouseLeftButtonUp;
 							}
 							break;
 
@@ -443,7 +434,8 @@ namespace MSetExplorer
 
 			var amount = pos.X - _originalSelectionLinePosition;
 
-			if (UpdateColorBandWidth(amount))
+			//if (UpdateColorBandWidth(amount))
+			if (IsNewPositionOk(amount))
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSelectionLinePosition}.");
 				SelectionLinePosition = pos.X;
@@ -456,7 +448,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void HandleMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+		private void HandlePreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
 		{
 			if (DragState != DragState.None)
 			{
@@ -494,77 +486,99 @@ namespace MSetExplorer
 			DragState = DragState.None;
 		}
 
-		private bool UpdateColorBandWidth(double amount)
+		private bool IsNewPositionOk(double amount)
 		{
-			//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine[{ColorBandIndex}] is having its ColorBandWidth updated by amount: {amount}.");
-			
-			if (_rectangleGeometries == null)
+			if ( !(_leftWidth.HasValue && _rightWidth.HasValue)  )
 			{
-				throw new InvalidOperationException("The RectangleGeometries is null.");
+				throw new InvalidOperationException("The LeftWidth or RightWidth is null.");
 			}
 
-			var left = _rectangleGeometries.Left;
-			var right = _rectangleGeometries.Right;
-
-			var selLeft = _rectangleGeometries.SelLeft;
-			var selRight = _rectangleGeometries.SelRight;
-
-			var originalLeftGeometry = _rectangleGeometries.OriginalLeftGeometry;
-			var originalRightGeometry = _rectangleGeometries.OriginalRightGeometry;
-
-			var updated = false;
+			bool result;
 
 			if (amount < 0)
 			{
 				amount = amount * -1;
-				if (originalLeftGeometry.Rect.Width > amount + (1 * _scaleX) && originalRightGeometry.Rect.X > amount /*+ (1 * _scale)*/)
-				{
-					////left.Rect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
-
-					//var lRect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
-					//right.Rect = DrawingHelper.MoveRectLeft(originalRightGeometry.Rect, amount);
-
-					////selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
-					//selLeft.Rect = DrawingHelper.CopyXAndWidth(lRect, selLeft.Rect);
-					//selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
-
-					////Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Shortening the Left ColorBandRectangle by amount: {amount}. " +
-					////	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
-					////	$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
-
-					//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
-					//	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
-					//	$"New Left Width = {lRect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
-					
-					updated = true;
-				}
+				result = _leftWidth > amount + (1 * _scaleX);
 			}
 			else
 			{
-				if (originalRightGeometry.Rect.Width > amount + (1 * _scaleX))
-				{
-					////left.Rect = DrawingHelper.Lengthen(originalLeftGeometry.Rect, amount);
-					//var lRect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
-					//right.Rect = DrawingHelper.MoveRectRight(originalRightGeometry.Rect, amount);
-
-					////selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
-					//selLeft.Rect = DrawingHelper.CopyXAndWidth(lRect, selLeft.Rect);
-					//selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
-
-					////Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
-					////	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
-					////	$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
-
-					//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
-					//	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
-					//	$"New Left Width = {lRect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
-
-					updated = true;
-				}
+				result = _rightWidth > amount + (1 * _scaleX);
 			}
 
-			return updated;
+			return result;
 		}
+
+		//private bool UpdateColorBandWidth(double amount)
+		//{
+		//	//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine[{ColorBandIndex}] is having its ColorBandWidth updated by amount: {amount}.");
+			
+		//	if (_rectangleGeometries == null)
+		//	{
+		//		throw new InvalidOperationException("The RectangleGeometries is null.");
+		//	}
+
+		//	//var left = _rectangleGeometries.Left;
+		//	//var right = _rectangleGeometries.Right;
+
+		//	//var selLeft = _rectangleGeometries.SelLeft;
+		//	//var selRight = _rectangleGeometries.SelRight;
+
+		//	var originalLeftGeometry = _rectangleGeometries.OriginalLeftGeometry;
+		//	var originalRightGeometry = _rectangleGeometries.OriginalRightGeometry;
+
+		//	var updated = false;
+
+		//	if (amount < 0)
+		//	{
+		//		amount = amount * -1;
+		//		if (originalLeftGeometry.Rect.Width > amount + (1 * _scaleX) && originalRightGeometry.Rect.X > amount /*+ (1 * _scale)*/)
+		//		{
+		//			////left.Rect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
+
+		//			//var lRect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
+		//			//right.Rect = DrawingHelper.MoveRectLeft(originalRightGeometry.Rect, amount);
+
+		//			////selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
+		//			//selLeft.Rect = DrawingHelper.CopyXAndWidth(lRect, selLeft.Rect);
+		//			//selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
+
+		//			////Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Shortening the Left ColorBandRectangle by amount: {amount}. " +
+		//			////	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+		//			////	$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
+
+		//			//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
+		//			//	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+		//			//	$"New Left Width = {lRect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
+					
+		//			updated = true;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		if (originalRightGeometry.Rect.Width > amount + (1 * _scaleX))
+		//		{
+		//			////left.Rect = DrawingHelper.Lengthen(originalLeftGeometry.Rect, amount);
+		//			//var lRect = DrawingHelper.Shorten(originalLeftGeometry.Rect, amount);
+		//			//right.Rect = DrawingHelper.MoveRectRight(originalRightGeometry.Rect, amount);
+
+		//			////selLeft.Rect = DrawingHelper.CopyXAndWidth(left.Rect, selLeft.Rect);
+		//			//selLeft.Rect = DrawingHelper.CopyXAndWidth(lRect, selLeft.Rect);
+		//			//selRight.Rect = DrawingHelper.CopyXAndWidth(right.Rect, selRight.Rect);
+
+		//			////Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
+		//			////	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+		//			////	$"New Left Width = {left.Rect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
+
+		//			//Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. Lengthening the Left ColorBandRectangle by amount: {amount}. " +
+		//			//	$"Left Width: {originalLeftGeometry.Rect.Width / _scaleX}, Right Pos: {originalRightGeometry.Rect.X / _scaleX}" +
+		//			//	$"New Left Width = {lRect.Width / _scaleX}; New Right Pos: {right.Rect.X / _scaleX}");
+
+		//			updated = true;
+		//		}
+		//	}
+
+		//	return updated;
+		//}
 
 		#endregion
 

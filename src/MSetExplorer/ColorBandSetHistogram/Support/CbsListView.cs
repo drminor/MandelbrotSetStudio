@@ -22,8 +22,8 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
-		private DebounceDispatcher _selectionLineMovedDispatcher;
+		//private const int SELECTION_LINE_UPDATE_THROTTLE_INTERVAL = 200;
+		//private DebounceDispatcher _selectionLineMovedDispatcher;
 
 		private ContextMenuDisplayRequest _displayContextMenu;
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
@@ -44,10 +44,10 @@ namespace MSetExplorer
 
 		public CbsListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool useRealTimePreview, bool mouseIsEntered, ContextMenuDisplayRequest displayContextMenu)
 		{
-			_selectionLineMovedDispatcher = new DebounceDispatcher
-			{
-				Priority = DispatcherPriority.Render
-			};
+			//_selectionLineMovedDispatcher = new DebounceDispatcher
+			//{
+			//	Priority = DispatcherPriority.Render
+			//};
 
 			_canvas = canvas;
 			_colorBandsView = colorBandsView;
@@ -293,12 +293,14 @@ namespace MSetExplorer
 			var gLeft = ListViewItems[colorBandIndex].CbsRectangle.RectangleGeometry;
 			var gRight = ListViewItems[colorBandIndex + 1].CbsRectangle.RectangleGeometry;
 
-			var gSelLeft = ListViewItems[colorBandIndex].CbsRectangle.SelRectangleGeometry;
-			var gSelRight = ListViewItems[colorBandIndex + 1].CbsRectangle.SelRectangleGeometry;
+			//var gSelLeft = ListViewItems[colorBandIndex].CbsRectangle.SelRectangleGeometry;
+			//var gSelRight = ListViewItems[colorBandIndex + 1].CbsRectangle.SelRectangleGeometry;
 
-			var rg = new RectangleGeometries(gLeft, gRight, gSelLeft, gSelRight);
+			//var rg = new RectangleGeometries(gLeft, gRight, gSelLeft, gSelRight);
 
-			cbSelectionLine.StartDrag(rg);
+			//cbSelectionLine.StartDrag(rg);
+
+			cbSelectionLine.StartDrag(gLeft.Rect.Width, gRight.Rect.Width);
 		}
 
 		private void HandleSelectionLineMoved(object? sender, CbsSelectionLineMovedEventArgs e)
@@ -329,7 +331,7 @@ namespace MSetExplorer
 			switch (e.Operation)
 			{
 				case CbsSelectionLineDragOperation.Move:
-					UpdateCutoffThrottled(e);
+					UpdateCutoff(e);
 					break;
 
 				case CbsSelectionLineDragOperation.Complete:
@@ -337,14 +339,14 @@ namespace MSetExplorer
 					_selectionLineBeingDragged = null;
 
 					Debug.WriteLineIf(_useDetailedDebug, "Completing the SelectionBand Drag Operation.");
-					UpdateCutoffThrottled(e);
+					UpdateCutoff(e);
 					break;
 
 				case CbsSelectionLineDragOperation.Cancel:
 					_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
 					_selectionLineBeingDragged = null;
 
-					UpdateCutoffThrottled(e);
+					UpdateCutoff(e);
 					break;
 
 				default:
@@ -458,24 +460,24 @@ namespace MSetExplorer
 
 		#region ColorBand Support
 
-		private void UpdateCutoffThrottled(CbsSelectionLineMovedEventArgs e)
-		{
-			if (UseRealTimePreview)
-			{
-				_selectionLineMovedDispatcher.Throttle(
-					interval: SELECTION_LINE_UPDATE_THROTTLE_INTERVAL,
-					action: parm =>
-					{
-						UpdateCutoff(e);
-					},
-					param: null);
-			}
-			else
-			{
-				//currentColorBand.Cutoff = newCutoff;
-				UpdateCutoff(e);
-			}
-		}
+		//private void UpdateCutoffThrottled(CbsSelectionLineMovedEventArgs e)
+		//{
+		//	if (UseRealTimePreview)
+		//	{
+		//		_selectionLineMovedDispatcher.Throttle(
+		//			interval: SELECTION_LINE_UPDATE_THROTTLE_INTERVAL,
+		//			action: parm =>
+		//			{
+		//				UpdateCutoff(e);
+		//			},
+		//			param: null);
+		//	}
+		//	else
+		//	{
+		//		//currentColorBand.Cutoff = newCutoff;
+		//		UpdateCutoff(e);
+		//	}
+		//}
 
 		private void UpdateCutoff(CbsSelectionLineMovedEventArgs e)
 		{
