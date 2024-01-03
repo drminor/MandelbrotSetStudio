@@ -755,6 +755,12 @@ namespace MSetExplorer
 
 		private bool TryDeleteColorBand(ColorBand colorBand)
 		{
+			if (_colorBandsView.Count < 2)
+			{
+				// There is only one ColorBand remaining. 
+				return false;
+			}
+
 			var index = _currentColorBandSet.IndexOf(colorBand);
 
 			if (index >= _currentColorBandSet.Count - 1)
@@ -769,7 +775,14 @@ namespace MSetExplorer
 				colorBandWasRemoved = _currentColorBandSet.Remove(colorBand);
 			}
 
-			if (!colorBandWasRemoved)
+			if (colorBandWasRemoved)
+			{
+				if (index > _colorBandsView.Count - 1)
+				{
+					_colorBandsView.MoveCurrentToPosition(Math.Max(0, index - 1));
+				}
+			}
+			else
 			{
 				Debug.WriteLine("ColorBandSetViewModel:Could not remove the item.");
 			}
@@ -1003,12 +1016,9 @@ namespace MSetExplorer
 
 		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			ColorBand cb;
-
-			if (sender is ColorBand)
+			if (sender is ColorBand colorBandToUpdate)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:CurrentColorBand Prop: {e.PropertyName} is changing.");
-				cb = (ColorBand)sender;
 			}
 			else
 			{
@@ -1016,10 +1026,33 @@ namespace MSetExplorer
 				return;
 			}
 
+			var foundUpdate = ProcessColorBandUpdate(colorBandToUpdate, e.PropertyName);
+
+			if (foundUpdate)
+			{
+				// Don't include each property change when the Current ColorBand is being edited.
+				if (!colorBandToUpdate.IsInEditMode)
+				{
+					PushCurrentColorBandOnToHistoryCollection();
+					IsDirty = true;
+				}
+
+				if (UseRealTimePreview)
+				{
+					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
+
+					//ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
+					RaiseUpdateRequestThrottled(newColorBandSet);
+				}
+			}
+		}
+
+		private bool ProcessColorBandUpdate(ColorBand cb, string? propertyName)
+		{
 			bool foundUpdate;
 
 			// StartColor is being updated.
-			if (e.PropertyName == nameof(ColorBand.StartColor))
+			if (propertyName == nameof(ColorBand.StartColor))
 			{
 				if (TryGetPredeccessor(_currentColorBandSet, cb, out var colorBand))
 				{
@@ -1030,7 +1063,7 @@ namespace MSetExplorer
 			}
 
 			// Cutoff is being updated
-			else if (e.PropertyName == nameof(ColorBand.Cutoff))
+			else if (propertyName == nameof(ColorBand.Cutoff))
 			{
 				if (cb.BucketWidth < 0)
 				{
@@ -1052,14 +1085,14 @@ namespace MSetExplorer
 			}
 
 			// BlendStyle is being updated
-			else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+			else if (propertyName == nameof(ColorBand.BlendStyle))
 			{
 				//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
 				foundUpdate = true;
 			}
 
 			// EndColor is being updated
-			else if (e.PropertyName == nameof(ColorBand.EndColor))
+			else if (propertyName == nameof(ColorBand.EndColor))
 			{
 				if (cb.BlendStyle == ColorBandBlendStyle.Next)
 				{
@@ -1077,24 +1110,7 @@ namespace MSetExplorer
 				foundUpdate = false;
 			}
 
-			if (foundUpdate)
-			{
-				// Don't include each property change when the Current ColorBand is being edited.
-				if (!cb.IsInEditMode)
-				{
-					PushCurrentColorBandOnToHistoryCollection();
-					IsDirty = true;
-				}
-
-				if (UseRealTimePreview)
-				{
-					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
-
-					//ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
-					RaiseUpdateRequestThrottled(newColorBandSet);
-				}
-			}
-
+			return foundUpdate;
 		}
 
 		private void RaiseUpdateRequestThrottled(ColorBandSet colorBandSet)

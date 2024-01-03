@@ -28,6 +28,7 @@ namespace MSetExplorer
 
 		private ListCollectionView _colorBandsView;
 		private ColorBand? _currentColorBand;
+		private int _currentColorBandIndex;
 
 		private List<Shape> _hitList;
 
@@ -74,16 +75,35 @@ namespace MSetExplorer
 			get => _currentColorBand;
 			set
 			{
-				if (_currentColorBand != null)
-				{
-					HilightColorBandRectangle(_currentColorBand, on: false);
-				}
+				//if (_currentColorBand != null)
+				//{
+				//	HilightColorBandRectangle(_currentColorBand, on: false);
+				//}
 
 				_currentColorBand = value;
 
-				if (_currentColorBand != null)
+				//if (_currentColorBand != null)
+				//{
+				//	HilightColorBandRectangle(_currentColorBand, on: true);
+				//}
+			}
+		}
+
+		public int CurrentColorBandIndex
+		{
+			get => _currentColorBandIndex;
+			set
+			{
+				if ( !(_colorBandsView.IsCurrentBeforeFirst || _colorBandsView.IsCurrentAfterLast) )
 				{
-					HilightColorBandRectangle(_currentColorBand, on: true);
+					HilightColorBandRectangle(_currentColorBandIndex, newState: false);
+				}
+
+				_currentColorBandIndex = value;
+
+				if (!(_colorBandsView.IsCurrentBeforeFirst || _colorBandsView.IsCurrentAfterLast))
+				{
+					HilightColorBandRectangle(_currentColorBandIndex, newState: true);
 				}
 			}
 		}
@@ -332,6 +352,7 @@ namespace MSetExplorer
 		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
 		{
 			CurrentColorBand = (ColorBand)_colorBandsView.CurrentItem;
+			CurrentColorBandIndex = _colorBandsView.CurrentPosition;
 		}
 
 		private void ColorBandsView_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -341,33 +362,65 @@ namespace MSetExplorer
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{
 				//	Reset
-				Debug.WriteLine($"CbsListView is Resetting.");
-
-				//Reset();
+				Debug.WriteLine($"CbsListView is CollectionChanged: Reset.");
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Add)
 			{
 				// Add items
+
+				Debug.WriteLine($"CbsListView is handling CollectionChanged: Add. There are {e.NewItems?.Count ?? -1} new items.");
+
 				var bands = e.NewItems?.Cast<ColorBand>() ?? new List<ColorBand>();
+				var idx = e.NewStartingIndex;
 				foreach (var colorBand in bands)
 				{
-					Debug.WriteLine($"CbsListView is Adding a ColorBand: {colorBand}.");
-
-					var idx = e.NewStartingIndex;
-
 					var listViewItem = CreateListViewItem(_colorBandsView, idx, colorBand, showSectionLine: MouseIsEntered);
 
-					ListViewItems.Insert(e.NewStartingIndex, listViewItem);
+					ListViewItems.Insert(idx++, listViewItem);
 				}
+
+				idx = e.NewStartingIndex; // Math.Max(e.NewStartingIndex - 1, 0);
+
+				Reindex(idx);
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
 			{
 				// Remove items
+
+				Debug.WriteLine($"CbsListView is handling CollectionChanged: Remove. There are {e.OldItems?.Count ?? -1} old items.");
+
 				var bands = e.OldItems?.Cast<ColorBand>() ?? new List<ColorBand>();
+
+				var si = int.MaxValue;
+
 				foreach (var colorBand in bands)
 				{
 					Debug.WriteLine($"CbsListView is Removing a ColorBand: {colorBand}");
+
+					var lvi = ListViewItems.FirstOrDefault(x => x.ColorBand == colorBand);
+					if (lvi != null)
+					{
+						lvi.TearDown();
+						ListViewItems.Remove(lvi);
+						//if (lvi.ColorBandIndex == CurrentColorBandIndex)
+						//{
+						//	var newIndex = CurrentColorBandIndex - 1;
+						//	_colorBandsView.MoveCurrentTo(Math.Min(0, newIndex));
+						//}
+
+						if (lvi.ColorBandIndex < si) si = lvi.ColorBandIndex;
+					}
 				}
+
+				Reindex(si);
+			}
+		}
+
+		private void Reindex(int startingIndex)
+		{
+			for(var i = startingIndex; i < ListViewItems.Count; i++)
+			{
+				ListViewItems[i].ColorBandIndex = i;
 			}
 		}
 
@@ -377,16 +430,14 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"CbsListView:CurrentColorBand Prop: {e.PropertyName} is changing.");
 
-				//var foundUpdate = false;
 
-				if (e.PropertyName == nameof(ColorBand.StartColor))
-				{
-					//foundUpdate = true;
-				}
-				else if (e.PropertyName == nameof(ColorBand.Cutoff))
-				{
-					//foundUpdate = true;
+				//if (e.PropertyName == nameof(ColorBand.StartColor))
+				//{
+				//
+				//}
 
+				if (e.PropertyName == nameof(ColorBand.Cutoff))
+				{
 					if (_selectionLineBeingDragged == null)
 					{
 						if (TryGetColorBandIndex(_colorBandsView, cb, out var index))
@@ -395,18 +446,15 @@ namespace MSetExplorer
 						}
 					}
 				}
-				else if (e.PropertyName == nameof(ColorBand.BlendStyle))
-				{
-					//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
-					//foundUpdate = true;
-				}
-				else
-				{
-					if (e.PropertyName == nameof(ColorBand.EndColor))
-					{
-						//foundUpdate = true;
-					}
-				}
+				//else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+				//{
+				//}
+				//else
+				//{
+				//	if (e.PropertyName == nameof(ColorBand.EndColor))
+				//	{
+				//	}
+				//}
 			}
 			else
 			{
@@ -662,19 +710,28 @@ namespace MSetExplorer
 			return false;
 		}
 
-		private void HilightColorBandRectangle(ColorBand cb, bool on)
+		//private void HilightColorBandRectangle(ColorBand cb, bool on)
+		//{
+		//	if (TryGetColorBandIndex(_colorBandsView, cb, out var index))
+		//	{
+		//		if (index.Value < 0 || index.Value > ListViewItems.Count - 1)
+		//		{
+		//			Debug.WriteLineIf(_useDetailedDebug, $"Cannot Hilight the ColorBandRectangle at index: {index}, it is out of range: {ListViewItems.Count}.");
+		//			return;
+		//		}
+
+		//		var cbr = ListViewItems[index.Value].CbsRectangle;
+
+		//		cbr.IsCurrent = on;
+		//	}
+		//}
+
+		private void HilightColorBandRectangle(int colorBandIndex, bool newState)
 		{
-			if (TryGetColorBandIndex(_colorBandsView, cb, out var index))
+			if (colorBandIndex >= 0 && colorBandIndex < ListViewItems.Count)
 			{
-				if (index.Value < 0 || index.Value > ListViewItems.Count - 1)
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"Cannot Hilight the ColorBandRectangle at index: {index}, it is out of range: {ListViewItems.Count}.");
-					return;
-				}
-
-				var cbr = ListViewItems[index.Value].CbsRectangle;
-
-				cbr.IsCurrent = on;
+				var cbr = ListViewItems[colorBandIndex].CbsRectangle;
+				cbr.IsCurrent = newState;
 			}
 		}
 
@@ -925,6 +982,16 @@ namespace MSetExplorer
 		public bool IsColorBandSelected => IsCutoffSelected & IsColorSelected;
 
 		public bool IsItemSelected => IsCutoffSelected | IsColorSelected;
+
+		public int ColorBandIndex
+		{
+			get => CbsRectangle.ColorBandIndex;
+			set
+			{
+				CbsRectangle.ColorBandIndex = value;
+				CbsSelectionLine.ColorBandIndex = value;
+			}
+		}
 
 		#endregion
 
