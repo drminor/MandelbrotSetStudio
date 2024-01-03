@@ -255,7 +255,7 @@ namespace MSS.Common.MSet
 
 		public ColorBandSet CurrentColorBandSet
 		{
-			get => _colorBandSets.FirstOrDefault(x => x.Id == CurrentJob.ColorBandSetId) ?? new ColorBandSet();
+			get => _colorBandSets.FirstOrDefault(x => x.Id == CurrentJob.ColorBandSetId) ?? new ColorBandSet(CurrentJob.MapCalcSettings.TargetIterations);
 			set
 			{
 				if (!CurrentJob.IsEmpty)

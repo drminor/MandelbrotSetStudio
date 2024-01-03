@@ -42,7 +42,7 @@ namespace MSS.Types
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
-			: this(cutoff, startColor, blendStyle, endColor, null, null, 0)
+			: this(cutoff, startColor, blendStyle, endColor, null, blendStyle == ColorBandBlendStyle.Next ? endColor : null, 0)
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, int? previousCutoff, ColorBandColor? successorStartColor, double percentage)

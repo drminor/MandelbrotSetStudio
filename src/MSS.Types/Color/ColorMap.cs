@@ -40,11 +40,19 @@ namespace MSS.Types
                 throw new InvalidOperationException("Expecting the ColorBandSet to implement INotifyPropertyChanged.");
             }
 
-            _cutoffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
-            _colorMapEntries = BuildColorMapEntries(_colorBandSet);
+			//_cutoffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
+			//_colorMapEntries = BuildColorMapEntries(_colorBandSet);
+			//ReportBlendValues(_colorMapEntries);
+
+			//_highColorBandIndex = colorBandSet.Count - 1;
+			//_highColorBandCutoff = _colorMapEntries[^1].Cutoff;
+
+			_colorMapEntries = BuildColorMapEntries(_colorBandSet);
 			ReportBlendValues(_colorMapEntries);
 
-			_highColorBandIndex = colorBandSet.Count - 1;
+			_cutoffs = _colorMapEntries.Take(_colorMapEntries.Length - 1).Select(x => x.Cutoff).ToArray();
+
+			_highColorBandIndex = _colorMapEntries.Length - 1;
 			_highColorBandCutoff = _colorMapEntries[^1].Cutoff;
 		}
 
@@ -91,7 +99,12 @@ namespace MSS.Types
             }
             else
             {
-                var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
+				if (idx == _highColorBandIndex && countVal > _highColorBandCutoff)
+				{
+					countVal = _highColorBandCutoff + 1;
+				}
+
+				var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
                 errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
             }
 

@@ -90,10 +90,10 @@ namespace MSS.Types
 
 			var colorBandsSerialNumber = new Guid("{00112233-4455-6677-8899-AABBCCDDEEFF}");
 
-			var highColorCss = "#000000";
-			colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
+			//var highColorCss = "#000000";
+			//colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
 
-			var result = new ColorBandSet(colorBands, colorBandsSerialNumber);
+			var result = new ColorBandSet(colorBands, maxIterations, colorBandsSerialNumber);
 
 			return result;
 		}

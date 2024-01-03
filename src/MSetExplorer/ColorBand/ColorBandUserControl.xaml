@@ -42,7 +42,7 @@
                 <TextBlock Width="65" Margin="5,2,5,5" FontSize="14" Text="End Color:" />
                 <local:ColorBandColorButtonControl Width="60" Height="21" Margin="0,2,0,5"
                                                    
-                    ColorBandColor="{Binding Path=CurrentColorBand.ActualEndColor}" 
+                    ColorBandColor="{Binding Path=CurrentColorBand.EndColor}" 
                     BlendStyle="{Binding Path=CurrentColorBand.BlendStyle}"/>
                                                    
             </StackPanel>

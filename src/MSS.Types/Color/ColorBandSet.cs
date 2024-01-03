@@ -33,27 +33,27 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public ColorBandSet() 
-			: this(colorBands: null)
+		public ColorBandSet()
+			: this(targetIterations: 1000)
 		{ }
 
-		public ColorBandSet(IList<ColorBand>? colorBands) 
-			: this(projectId: ObjectId.Empty, colorBands, Guid.NewGuid())
+		public ColorBandSet(int targetIterations)
+			: this(projectId: ObjectId.Empty, colorBands: null, targetIterations, Guid.NewGuid())
 		{ }
 
-		public ColorBandSet(IList<ColorBand>? colorBands, Guid colorBandsSerialNumber)
-			: this(projectId: ObjectId.Empty, colorBands, colorBandsSerialNumber)
+		public ColorBandSet(IList<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
+			: this(projectId: ObjectId.Empty, colorBands, targetIterations, colorBandsSerialNumber)
 		{ }
 
-		private ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands, Guid colorBandsSerialNumber)
-			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, null, colorBandsSerialNumber)
+		private ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
+			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, targetIterations, null, colorBandsSerialNumber)
 		{
 			LastSavedUtc = DateTime.MinValue;
 			OnFile = false;
 		}
 
-		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
-			: base(FixBands(colorBands))
+		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, int targetIterations, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
+			: base(FixBands(targetIterations, colorBands))
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"Constructing ColorBandSet with id: {id}.");
 
@@ -71,6 +71,8 @@ namespace MSS.Types
 
 			_lastSavedUtc = DateTime.UtcNow;
 			LastUpdatedUtc = DateTime.MinValue;
+
+			TargetIterations = targetIterations;
 			OnFile = true;
 		}
 
@@ -235,6 +237,8 @@ namespace MSS.Types
 
 		public DateTime LastUpdatedUtc { get; private set; }
 
+		public int TargetIterations { get; set; }
+
 		#endregion
 
 		#region Public Methods
@@ -324,7 +328,12 @@ namespace MSS.Types
 		protected override void ClearItems()
 		{
 			base.ClearItems();
-			Add(DEFAULT_HIGH_COLOR_BAND.Clone());
+
+			var firstColorBand = CreateFirstColorBand(TargetIterations);
+			var highColorBand = CreateHighColorBand(firstColorBand, TargetIterations);
+
+			Add(firstColorBand);
+			Add(highColorBand);
 		}
 
 		protected override void InsertItem(int index, ColorBand item)
@@ -335,21 +344,20 @@ namespace MSS.Types
 
 		protected override void RemoveItem(int index)
 		{
+			if (Count <= 2)
+			{
+				// The collection must have at least two items.
+				return;
+			}
+
 			base.RemoveItem(index);
 
-			if (Count == 0)
+			if (index > Count - 1)
 			{
-				Add(DEFAULT_HIGH_COLOR_BAND.Clone());
+				index = Count - 1;
 			}
-			else
-			{
-				if (index > Count - 1)
-				{
-					index = Count - 1;
-				}
 
-				UpdateItemAndNeighbors(index, Items[index]);
-			}
+			UpdateItemAndNeighbors(index, Items[index]);
 		}
 
 		protected override void SetItem(int index, ColorBand item)
@@ -410,62 +418,159 @@ namespace MSS.Types
 			return index >= Count - 1 ? null : Items[index + 1];
 		}
 
-		private static IList<ColorBand> FixBands(IList<ColorBand>? colorBands)
+		private static IList<ColorBand> FixBands(int targetIterations, IList<ColorBand>? colorBands)
 		{
+			if (targetIterations < 1)
+			{
+				throw new ArgumentException("The TargetIterations must be at least 1.");
+			}
+
 			IList<ColorBand> result;
 
 			if (colorBands == null || colorBands.Count == 0)
 			{
-				result = new List<ColorBand> { DEFAULT_HIGH_COLOR_BAND.Clone() };
+				var firstColorBand = CreateFirstColorBand(targetIterations);
+				result = new List<ColorBand> { firstColorBand, CreateHighColorBand(firstColorBand, targetIterations) };
+			}
+			else if (colorBands.Count == 1)
+			{
+				var firstColorBand = colorBands[0].Clone();
+				result = new List<ColorBand> { firstColorBand, CreateHighColorBand(firstColorBand, targetIterations) };
 			}
 			else
 			{
 				result = new List<ColorBand>(colorBands);
+			}
 
-				int? prevCutoff = null;
-				int startingCutoff = 0;
+			int? prevCutoff = null;
+			int startingCutoff = 0;
 
-				for (var i = 0; i < colorBands.Count - 1; i++)
+			for (var i = 0; i < result.Count - 1; i++)
+			{
+				var cb = result[i];
+				cb.PreviousCutoff = prevCutoff;
+				cb.SuccessorStartColor = result[i + 1].StartColor;
+
+				var bucketWidth = cb.Cutoff - startingCutoff;
+				if (bucketWidth < 0)
 				{
-					var cb = colorBands[i];
-					cb.PreviousCutoff = prevCutoff;
-					cb.SuccessorStartColor = colorBands[i + 1].StartColor;
+					throw new InvalidOperationException($"The bucket width for ColorBand: {i} is negative while creating the ColorBandSet.");
+				}
 
-					var bucketWidth = cb.Cutoff - startingCutoff;
-					Debug.Assert(bucketWidth >= 0, "The bucket width is negative while creating the ColorBandSet.");
+				prevCutoff = cb.Cutoff;
+				startingCutoff = cb.Cutoff + 1;
 
-					prevCutoff = cb.Cutoff;
-					startingCutoff = cb.Cutoff + 1;
+				FixBlendStyle(cb, result[i + 1].StartColor);
+			}
 
-					if (cb.BlendStyle == ColorBandBlendStyle.None)
+			// Make sure that the next to last ColorBand's CutOff is < Target Iterations.
+			if (prevCutoff >= targetIterations)
+			{
+				var cbBeforeLast = result[result.Count - 2];
+
+				cbBeforeLast.Cutoff = targetIterations - 1;
+				if (cbBeforeLast.BucketWidth < 0)
+				{
+					throw new InvalidOperationException("Cannot fix the ColorBandSet. The last starting cutoff is too large.");
+				}
+				else
+				{
+					Debug.WriteLine($"WARNING: Setting the next to last ColorBand's Cutoff to {targetIterations - 1}, it was {prevCutoff}. ");
+				}
+				
+				prevCutoff = cbBeforeLast.Cutoff;
+			}
+
+			var lastCb = result[result.Count - 1];
+
+			lastCb.PreviousCutoff = prevCutoff;
+
+			// Make sure that the last ColorBand's Cutoff == Target Iterations
+			if (lastCb.Cutoff < targetIterations)
+			{
+				Debug.WriteLine($"WARNING: The last ColorBand's Cutoff is less than the TargetIterations. Creating a new ColorBand to fill the gap.");
+
+				// Create a new ColorBand to fill the gap.
+				var newLastCb = CreateHighColorBand(lastCb, targetIterations);
+				result.Add(newLastCb);
+
+				lastCb.SuccessorStartColor = newLastCb.StartColor;
+				FixBlendStyle(lastCb, newLastCb.StartColor);
+			}
+			else
+			{
+				if (lastCb.Cutoff > targetIterations)
+				{
+					// Use the targetIterations to set the Cutoff.
+					var previousVal = lastCb.Cutoff;
+					lastCb.Cutoff = targetIterations;
+
+					if (lastCb.BucketWidth < 0)
 					{
-						cb.EndColor = cb.StartColor;
+						throw new InvalidOperationException("Cannot fix the ColorBandSet. The last ColorBand's Cutoff > TargetIterations and the last ColorBand's StartingCutoff is too large.");
 					}
 					else
 					{
-						if (cb.BlendStyle == ColorBandBlendStyle.Next)
-						{
-							cb.EndColor = colorBands[i + 1].StartColor;
-						}
+						Debug.WriteLine($"WARNING: Setting last ColorBand's Cutoff to {targetIterations}, it was {previousVal}. ");
+					}
+				}
+				else
+				{
+					//Debug.Assert(lastCb.BucketWidth >= 0, "The bucket width is negative while creating the ColorBandSet.");
+					if (lastCb.BucketWidth < 0)
+					{
+						throw new InvalidOperationException($"The bucket width for the last ColorBand is negative while creating the ColorBandSet.");
 					}
 				}
 
-				var lastCb = colorBands[colorBands.Count - 1];
-
-				Debug.Assert(lastCb.BlendStyle != ColorBandBlendStyle.Next, "The last item in the list of ColorBands being used to construct a ColorBandSet has its BlendStyle set to 'Next.'");
-
-				lastCb.PreviousCutoff = prevCutoff;
-
-				if (lastCb.BlendStyle == ColorBandBlendStyle.None)
+				// Make sure that the BlendStyle is not equal to Next.
+				if (lastCb.BlendStyle == ColorBandBlendStyle.Next)
 				{
-					lastCb.EndColor = lastCb.StartColor;
+					Debug.WriteLine($"WARNING: Setting the last ColorBand's BlendStyle to 'End', it was 'Next'.");
+					lastCb.BlendStyle = ColorBandBlendStyle.End;
 				}
-
-				//lastCb.Cutoff = lastCb.Cutoff + 2; // Force the inclusion of the counts above the target iterations as a 'real' color band.
-
-				ReportBucketWidthsAndCutoffs(result);
+				else
+				{
+					if (lastCb.BlendStyle == ColorBandBlendStyle.None)
+					{
+						lastCb.EndColor = lastCb.StartColor;
+					}
+				}
 			}
 
+			//lastCb.Cutoff = lastCb.Cutoff + 2; // Force the inclusion of the counts above the target iterations as a 'real' color band.
+
+			ReportBucketWidthsAndCutoffs(result);
+
+			return result;
+		}
+
+		private static void FixBlendStyle(ColorBand cb, ColorBandColor sucessorStartColor)
+		{
+			if (cb.BlendStyle == ColorBandBlendStyle.None)
+			{
+				cb.EndColor = cb.StartColor;
+			}
+			else
+			{
+				if (cb.BlendStyle == ColorBandBlendStyle.Next)
+				{
+					cb.EndColor = sucessorStartColor;
+				}
+			}
+		}
+
+		private static ColorBand CreateHighColorBand(ColorBand previousColorBand, int targetIterations)
+		{
+			var startColor = previousColorBand.ActualEndColor;
+			var	result = new ColorBand(targetIterations, startColor, ColorBandBlendStyle.End, startColor);
+
+			return result;
+		}
+
+		private static ColorBand CreateFirstColorBand(int targetIterations)
+		{
+			var result = new ColorBand(targetIterations - 1, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.Next, new ColorBandColor("#000000"));
 			return result;
 		}
 
@@ -552,7 +657,7 @@ namespace MSS.Types
 		{
 			//Debug.WriteLine($"About to CreateNewCopy: {this}");
 
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -572,7 +677,7 @@ namespace MSS.Types
 
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, ProjectId, Name, Description, bandsCopy, CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, ProjectId, Name, Description, bandsCopy, TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -595,7 +700,7 @@ namespace MSS.Types
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"Cloning ColorBandSet with Id: {Id}.");
 
-			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = LastSavedUtc,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -716,45 +821,5 @@ namespace MSS.Types
 
 		#endregion
 
-		#region Public Methods Not Used
-
-		public void Fix()
-		{
-			if (Items == null || Count == 0)
-			{
-				Insert(0, DEFAULT_HIGH_COLOR_BAND.Clone());
-			}
-			else
-			{
-				int? prevCutoff = null;
-
-				for (var i = 0; i < Count - 1; i++)
-				{
-					var cb = Items[i];
-					cb.PreviousCutoff = prevCutoff;
-					cb.SuccessorStartColor = Items[i + 1].StartColor;
-					prevCutoff = cb.Cutoff;
-
-					if (cb.BlendStyle == ColorBandBlendStyle.None)
-					{
-						cb.EndColor = cb.StartColor;
-					}
-					else if (cb.BlendStyle == ColorBandBlendStyle.Next)
-					{
-						cb.EndColor = Items[i + 1].StartColor;
-					}
-
-				}
-
-				var lastCb = Items[Count - 1];
-				lastCb.PreviousCutoff = prevCutoff;
-				if (lastCb.BlendStyle == ColorBandBlendStyle.None)
-				{
-					lastCb.EndColor = lastCb.StartColor;
-				}
-			}
-		}
-
-		#endregion
 	}
 }

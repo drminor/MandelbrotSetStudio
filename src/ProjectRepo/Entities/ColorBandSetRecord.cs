@@ -22,6 +22,10 @@ namespace ProjectRepo.Entities
 
 		public DateTime DateCreatedUtc { get; set; }
 		public DateTime LastAccessed { get; set; }
+
+		[BsonDefaultValue(0)]
+		[BsonIgnoreIfDefault]
+		public int TargetIterations { get; set; }
 	}
 
 }

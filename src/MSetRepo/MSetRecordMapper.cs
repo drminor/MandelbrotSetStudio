@@ -60,6 +60,7 @@ namespace MSetRepo
 			{ 
 				Id = source.Id, 
 				//LastSaved = source.LastSavedUtc
+				TargetIterations = source.TargetIterations,
 				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray(),
 				ColorBandsSerialNumber = source.ColorBandsSerialNumber
 			};
@@ -71,7 +72,7 @@ namespace MSetRepo
 		{
 			return new ColorBandSet(
 				target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, 
-				target.ColorBandRecords.Select(x => MapFrom(x)).ToList(), 
+				target.ColorBandRecords.Select(x => MapFrom(x)).ToList(), target.TargetIterations,
 				target.ReservedColorBandRecords?.Select(x => MapFrom(x)),
 				target.ColorBandsSerialNumber
 				);
