@@ -35,9 +35,12 @@ namespace MSetExplorer
 			{
 				_vm = (ICbsHistogramViewModel)DataContext;
 
-				Validation.AddErrorHandler(txtCutoff, OnCutoffError);
+				Validation.AddErrorHandler(txtStartCutoff, OnCutoffError);
+				Validation.AddErrorHandler(txtEndCutoff, OnCutoffError);
 
-				txtCutoff.LostFocus += TxtCutoff_LostFocus;
+				txtStartCutoff.LostFocus += TxtStartCutoff_LostFocus;
+				txtEndCutoff.LostFocus += TxtEndCutoff_LostFocus;
+
 
 				Debug.WriteLine("The ColorBand UserControl is now loaded");
 			}
@@ -45,8 +48,11 @@ namespace MSetExplorer
 
 		private void ColorBandUserControl_Unloaded(object sender, System.Windows.RoutedEventArgs e)
 		{
-			Validation.RemoveErrorHandler(txtCutoff, OnCutoffError);
-			txtCutoff.LostFocus -= TxtCutoff_LostFocus;
+			Validation.RemoveErrorHandler(txtStartCutoff, OnCutoffError);
+			Validation.RemoveErrorHandler(txtEndCutoff, OnCutoffError);
+
+			txtStartCutoff.LostFocus -= TxtStartCutoff_LostFocus;
+			txtEndCutoff.LostFocus -= TxtEndCutoff_LostFocus;
 		}
 
 		#endregion
@@ -58,7 +64,12 @@ namespace MSetExplorer
 			_vm.ColorBandUserControlHasErrors = true;
 		}
 
-		private void TxtCutoff_LostFocus(object sender, System.Windows.RoutedEventArgs e)
+		private void TxtStartCutoff_LostFocus(object sender, System.Windows.RoutedEventArgs e)
+		{
+			_vm.ColorBandUserControlHasErrors = HasCutoffError();
+		}
+
+		private void TxtEndCutoff_LostFocus(object sender, System.Windows.RoutedEventArgs e)
 		{
 			_vm.ColorBandUserControlHasErrors = HasCutoffError();
 		}
@@ -69,16 +80,26 @@ namespace MSetExplorer
 
 		public bool HasCutoffError()
 		{
-			var errors = Validation.GetErrors(txtCutoff);
+			var errors1 = Validation.GetErrors(txtEndCutoff);
 
-			var cntr = 0;
-			foreach (var validationError in errors)
+			var cntr1 = 0;
+			foreach (var validationError in errors1)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Validation Error {cntr++}: {validationError.ErrorContent} for binding: {validationError.BindingInError}. Source: exception: {validationError.Exception} or rule: {validationError.RuleInError}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Validation Error {cntr1++}: {validationError.ErrorContent} for binding: {validationError.BindingInError}. Source: exception: {validationError.Exception} or rule: {validationError.RuleInError}.");
 			}
 
-			return errors.Count > 0;
+			var errors2 = Validation.GetErrors(txtStartCutoff);
+
+			var cntr2 = 0;
+			foreach (var validationError in errors2)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Validation Error {cntr2++}: {validationError.ErrorContent} for binding: {validationError.BindingInError}. Source: exception: {validationError.Exception} or rule: {validationError.RuleInError}.");
+			}
+
+			return errors1.Count > 0 || errors2.Count > 0;
 		}
+
+
 
 		#endregion
 

@@ -113,7 +113,7 @@
                     <Grid Background="Transparent">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
-                            <RowDefinition Height="75"/>
+                            <RowDefinition Height="100"/>
                             <RowDefinition Height="33"/>
                             <RowDefinition Height="30"/>
 
@@ -140,11 +140,11 @@
                                     <Button Width="70" Content="R &gt;" Click="MoveRightButton_Click" TabIndex="6"/>
                                 </StackPanel>
 
-                                <!-- Percentage -->
+                                <!-- Percentage 
                                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
                                     <TextBlock Height="21" Margin="5,0" FontSize="14" Text="Percentage:" />
                                     <TextBox Text="{Binding Path=CurrentColorBand.Percentage, Mode=OneWay}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,3" TabIndex="7"/>
-                                </StackPanel>
+                                </StackPanel> -->
 
                             </StackPanel>
 

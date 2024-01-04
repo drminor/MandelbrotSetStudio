@@ -784,14 +784,20 @@ namespace MSetExplorer
 			}
 			else
 			{
-				Debug.WriteLine("ColorBandSetViewModel:Could not remove the item.");
+				Debug.WriteLine("WARNING: ColorBandSetViewModel:Could not remove the item.");
 			}
 
+			ReportRemoveCurrentItem(index);
+
+			return true;
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportRemoveCurrentItem(int index)
+		{
 			var newIndex = _currentColorBandSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
 			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:Removed item at former index: {index}. The new index is: {newIndex}.");
-
-			return true;
 		}
 
 		public void ApplyChanges(int newTargetIterations)
@@ -998,6 +1004,13 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void ColorBandsView_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CollectionChanged. Action is {e.Action}. NewItemsCount: {e.NewItems?.Count ?? -1}. OldItemsCount: {e.OldItems?.Count ?? -1}.");
+
+			OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsCount));
+		}
 
 		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
 		{
@@ -1226,31 +1239,28 @@ namespace MSetExplorer
 
 		#region Private Methods - ColorBandsView
 
-		private void UpdateViewAndRaisePropertyChangeEvents(int? selectedIndex = null)
+		private void UpdateViewAndRaisePropertyChangeEvents(int? currentColorBandIndex = null)
 		{
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 
-			var t = ColorBandsView as INotifyCollectionChanged;
-
-			if (t != null)
-			{
-				t.CollectionChanged -= Test_CollectionChanged_Handler;
-			}
+			if (ColorBandsView is INotifyCollectionChanged t1) t1.CollectionChanged -= ColorBandsView_CollectionChanged;
 
 			ColorBandsView = BuildColorBandsView(_currentColorBandSet);
 
-			(ColorBandsView as INotifyCollectionChanged).CollectionChanged += Test_CollectionChanged_Handler;
+			if (ColorBandsView is INotifyCollectionChanged t2) t2.CollectionChanged += ColorBandsView_CollectionChanged;
 
-			_ = selectedIndex.HasValue ? ColorBandsView.MoveCurrentToPosition(selectedIndex.Value) : ColorBandsView.MoveCurrentToFirst();
+			if (currentColorBandIndex != null)
+			{
+				ColorBandsView.MoveCurrentToPosition(currentColorBandIndex.Value);
+			}
+			else
+			{
+				ColorBandsView.MoveCurrentToFirst();
+			}
 
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
-		}
-
-		private void Test_CollectionChanged_Handler(object? sender, NotifyCollectionChangedEventArgs e)
-		{
-			Debug.WriteLine($"Test Collection Changed. Action is {e.Action}. NewItemsCount: {e.NewItems?.Count ?? -1}. OldItemsCount: {e.OldItems?.Count ?? -1}.");
 		}
 
 		private ListCollectionView BuildColorBandsView(ObservableCollection<ColorBand>? colorBands)

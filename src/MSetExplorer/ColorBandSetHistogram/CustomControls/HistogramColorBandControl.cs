@@ -63,7 +63,7 @@ namespace MSetExplorer
 
 			//var isHorizontalScrollBarVisible = true;
 
-			//_colorBandsView = null; 
+			_colorBandsView = null; 
 			_cbsListView = null;
 
 			_canvasTranslateTransform = new TranslateTransform();
@@ -160,17 +160,7 @@ namespace MSetExplorer
 
 			set
 			{
-				//if (_colorBandsView != null)
-				//{
-				//	(_colorBandsView as INotifyCollectionChanged).CollectionChanged -= ColorBands_CollectionChanged;
-				//}
-
 				_colorBandsView = value;
-
-				//if (_colorBandsView != null)
-				//{
-				//	(_colorBandsView as INotifyCollectionChanged).CollectionChanged += ColorBands_CollectionChanged;
-				//}
 
 				var extent = GetExtent(ColorBandsView);
 				var scaledExtent = extent * ContentScale.Width;
