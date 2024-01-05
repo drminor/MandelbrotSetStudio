@@ -15,8 +15,6 @@ namespace MSS.Types
 	{
 		#region Private Fields
 
-		private static readonly ColorBand DEFAULT_HIGH_COLOR_BAND = new(1000, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.End, new ColorBandColor("#000000"));
-
 		private ObjectId? _parentId;
 		private ObjectId _projectId;
 		private string? _name;
@@ -25,7 +23,7 @@ namespace MSS.Types
 
 		private DateTime _lastSavedUtc;
 
-		private int _currentColorBandIndex;
+		private int _hilightedColorBandIndex;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -66,8 +64,7 @@ namespace MSS.Types
 			_reservedColorBands = reservedColorBands == null ? new Stack<ReservedColorBand>() : new Stack<ReservedColorBand>(reservedColorBands);
 			ColorBandsSerialNumber = colorBandsSerialNumber;
 
-			_currentColorBandIndex = 0;
-			//SelectedColorBandIndex = 0;
+			_hilightedColorBandIndex = 0;
 
 			_lastSavedUtc = DateTime.UtcNow;
 			LastUpdatedUtc = DateTime.MinValue;
@@ -150,79 +147,79 @@ namespace MSS.Types
 			}
 		}
 
-		public int CurrentColorBandIndex
+		public int HilightedColorBandIndex
 		{
-			get => _currentColorBandIndex;
+			get => _hilightedColorBandIndex;
 			set
 			{
-				if (value != _currentColorBandIndex)
+				if (value != _hilightedColorBandIndex)
 				{
 					if (value > Count - 1)
 					{
-						_currentColorBandIndex = Count - 1;
+						_hilightedColorBandIndex = Count - 1;
 					}
 					else if (value < 0)
 					{
-						_currentColorBandIndex = 0;
+						_hilightedColorBandIndex = 0;
 					}
 					else
 					{
-						_currentColorBandIndex = value;
-
+						_hilightedColorBandIndex = value;
 					}
+
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public ColorBand? CurrentColorBand
-		{
-			get
-			{
-				if (CurrentColorBandIndex < 0 || CurrentColorBandIndex > Count - 1)
-				{
-					return null;
-				}
-				else
-				{
-					return this[CurrentColorBandIndex];
-				}
-			}
-			set
-			{
-				var previousValue = CurrentColorBandIndex;
-				if (value == null)
-				{
-					CurrentColorBandIndex = -1;
-				}
-				else
-				{
-					var index = IndexOf(value);
+		//public ColorBand? CurrentColorBand
+		//{
+		//	get
+		//	{
+		//		if (CurrentColorBandIndex < 0 || CurrentColorBandIndex > Count - 1)
+		//		{
+		//			return null;
+		//		}
+		//		else
+		//		{
+		//			return this[CurrentColorBandIndex];
+		//		}
+		//	}
+		//	set
+		//	{
+		//		var previousValue = CurrentColorBandIndex;
+		//		if (value == null)
+		//		{
+		//			CurrentColorBandIndex = -1;
+		//		}
+		//		else
+		//		{
+		//			var index = IndexOf(value);
 
-					if (index == -1)
-					{
-						var colorBandWithMatchingCutoff = this.FirstOrDefault(x => x.Cutoff == value.Cutoff);
-						if (colorBandWithMatchingCutoff != null)
-						{
-							CurrentColorBandIndex = IndexOf(colorBandWithMatchingCutoff);
-						}
-						else
-						{
-							CurrentColorBandIndex = 0;
-						}
-					}
-					else
-					{
-						CurrentColorBandIndex = IndexOf(value);
-					}
-				}
+		//			if (index == -1)
+		//			{
+		//				var colorBandWithMatchingCutoff = this.FirstOrDefault(x => x.Cutoff == value.Cutoff);
+		//				if (colorBandWithMatchingCutoff != null)
+		//				{
+		//					CurrentColorBandIndex = IndexOf(colorBandWithMatchingCutoff);
+		//				}
+		//				else
+		//				{
+		//					CurrentColorBandIndex = 0;
+		//				}
+		//			}
+		//			else
+		//			{
+		//				CurrentColorBandIndex = IndexOf(value);
+		//			}
+		//		}
 
-				if (CurrentColorBandIndex != previousValue)
-				{
-					OnPropertyChanged();
-				}
-			}
-		}
+		//		if (CurrentColorBandIndex != previousValue)
+		//		{
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		public DateTime LastSavedUtc
 		{
@@ -460,13 +457,13 @@ namespace MSS.Types
 				prevCutoff = cb.Cutoff;
 				startingCutoff = cb.Cutoff + 1;
 
-				FixBlendStyle(cb, result[i + 1].StartColor);
+				FixBlendStyle(cb, cb.SuccessorStartColor.Value);
 			}
 
 			// Make sure that the next to last ColorBand's CutOff is < Target Iterations.
 			if (prevCutoff >= targetIterations)
 			{
-				var cbBeforeLast = result[result.Count - 2];
+				var cbBeforeLast = result[^2];
 
 				cbBeforeLast.Cutoff = targetIterations - 1;
 				if (cbBeforeLast.BucketWidth < 0)
@@ -481,7 +478,7 @@ namespace MSS.Types
 				prevCutoff = cbBeforeLast.Cutoff;
 			}
 
-			var lastCb = result[result.Count - 1];
+			var lastCb = result[^1];
 
 			lastCb.PreviousCutoff = prevCutoff;
 
@@ -495,14 +492,14 @@ namespace MSS.Types
 				result.Add(newLastCb);
 
 				lastCb.SuccessorStartColor = newLastCb.StartColor;
-				FixBlendStyle(lastCb, newLastCb.StartColor);
+				FixBlendStyle(lastCb, lastCb.SuccessorStartColor.Value);
 			}
 			else
 			{
 				if (lastCb.Cutoff > targetIterations)
 				{
 					// Use the targetIterations to set the Cutoff.
-					var previousVal = lastCb.Cutoff;
+					var valueBeforeUpdate = lastCb.Cutoff;
 					lastCb.Cutoff = targetIterations;
 
 					if (lastCb.BucketWidth < 0)
@@ -511,7 +508,7 @@ namespace MSS.Types
 					}
 					else
 					{
-						Debug.WriteLine($"WARNING: Setting last ColorBand's Cutoff to {targetIterations}, it was {previousVal}. ");
+						Debug.WriteLine($"WARNING: Setting last ColorBand's Cutoff to {targetIterations}, it was {valueBeforeUpdate}. ");
 					}
 				}
 				else

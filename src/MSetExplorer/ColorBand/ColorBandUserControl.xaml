@@ -20,9 +20,21 @@
             <!-- Starting / Start Color -->
             <StackPanel Orientation="Horizontal">
                 <TextBlock Width="59" Margin="5,5,2,5" FontSize="14" Text="Starting:" />
-                <TextBox x:Name="txtStartCutoff"  Margin="0,5" Text="{Binding Path=CurrentColorBand.PreviousCutoff, Mode=TwoWay, ValidatesOnExceptions=True, NotifyOnValidationError=True}"  Width="60" Height="21" VerticalAlignment="Center"/>
+                <TextBox x:Name="txtStartCutoff"  Margin="0,5"  Width="60" Height="21" VerticalAlignment="Center">
+                    <TextBox.Text>
+                        <Binding Path="CurrentColorBand.PreviousCutoff" Mode="TwoWay" ValidatesOnExceptions="True" NotifyOnValidationError="True">
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
 
-                <TextBlock Width="69" Margin="20,5,2,5" FontSize="14" Text="Start Color:" />
+                <!-- 
+                            <Binding.ValidationRules>
+                                <local:CutoffRangeRule Min="20" Max="130"/>
+                            </Binding.ValidationRules>
+                -->
+                
+                
+                <TextBlock Width="69" Margin="17,5,3,5" FontSize="14" Text="Start Color:" />
                 <local:ColorBandColorButtonControl  Margin="0,5" Width="65" Height="21"
                     ColorBandColor="{Binding Path=CurrentColorBand.StartColor}"/>
             </StackPanel>
@@ -33,7 +45,7 @@
                 <TextBox Height="21" Margin="0,5" Text="{Binding Path=CurrentColorBand.Percentage, Mode=OneWay}" Width="50" VerticalAlignment="Center" TabIndex="7"/>
 
                 <TextBlock Width="77" Margin="8,5,3,5" FontSize="14" Text="Blend Style:" />
-                <ComboBox Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,5,0,5"
+                <ComboBox x:Name="cmbBlendStyle" Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,5,0,5"
                             SelectedIndex="{Binding Path=CurrentColorBand.BlendStyle, Converter={StaticResource BlendStyleToIntConverter}}">
                     <ComboBoxItem IsSelected="True">None</ComboBoxItem>
                     <ComboBoxItem>End</ComboBoxItem>
@@ -46,7 +58,7 @@
                 <TextBlock Width="59" Margin="5,5,2,5" FontSize="14" Text="Ending:" />
                 <TextBox x:Name="txtEndCutoff" Margin="0,5" Text="{Binding Path=CurrentColorBand.Cutoff, Mode=TwoWay, ValidatesOnExceptions=True, NotifyOnValidationError=True}"  Width="60" Height="21" VerticalAlignment="Center"/>
 
-                <TextBlock Width="69" Margin="20,5,2,5" FontSize="14" Text="End Color:" />
+                <TextBlock Width="69" Margin="17,5,3,5" FontSize="14" Text="End Color:" />
                 <local:ColorBandColorButtonControl Margin="0,5" Width="65" Height="21"
                     ColorBandColor="{Binding Path=CurrentColorBand.EndColor}" 
                     BlendStyle="{Binding Path=CurrentColorBand.BlendStyle}"/>

@@ -144,11 +144,43 @@ namespace MSS.Types
 		Start		0		5		10		15
 		Width		5		5		5		max count value - 15
 
+
+		> Previous and <= Cutoff
 					> 0 AND <= 5
 					> 5 AND <= 10
 					> 10 AND <= 15
 					> 15 
 		
+		>= Starting Cutoffand <= Ending Cutoff
+					>= 1 and <= 5
+					>= 6 and <= 10
+					>= 10 and <= 15
+					>= 16
+
+		The previous item's cutoff is this item's Previous Cutoff.
+		This items' Starting Cutoff is = to this item's Previous Cutoff + 1
+
+		For example Cutoffs = 1,  10, 11
+		Previous Cutoffs =    0,  1,  10, 
+		Starting Cutoffs =    1,  2,  11
+
+		Using Starting Cutoffs
+		0 - 0
+		1 - 10
+		11 - 11
+		Bucket Widths = 0, 9, 0
+		The Bucket Width must be >= 0
+
+		Using Previous Cutoffs
+		-1 -> 0	
+		0 -> 10
+		10 -> 11
+
+		Bucket Widths = 1, 10, 1
+		The Bucket Width must be >= 1
+
+
+
 		| ------------------||--------------------|
 		0	1	2	3	4	5	6	7	8	9	10
 		*/

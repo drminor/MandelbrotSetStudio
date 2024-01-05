@@ -132,11 +132,11 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBand? CurrentColorBand
-		{
-			get => _bitmapGrid.CurrentColorBand;
-			//set => _bitmapGrid.CurrentColorBand = value;
-		}
+		//public ColorBand? CurrentColorBand
+		//{
+		//	get => _bitmapGrid.CurrentColorBand;
+		//	//set => _bitmapGrid.CurrentColorBand = value;
+		//}
 
 		public int CurrentColorBandIndex
 		{

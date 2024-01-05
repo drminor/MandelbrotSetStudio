@@ -124,39 +124,34 @@ namespace MSetExplorer
 				}
 				else
 				{
-					if (HighlightSelectedColorBand && value.CurrentColorBand != _colorBandSet.CurrentColorBand)
+					if (value.HilightedColorBandIndex != _colorBandSet.HilightedColorBandIndex)
 					{
-						//if (_colorMap != null)
-						//{
-						//	ReDrawSections(reapplyColorMap: true);
-						//}
-
-						CurrentColorBand = value.CurrentColorBand;
+						_colorBandSet.HilightedColorBandIndex = value.HilightedColorBandIndex;
 					}
 				}
 			}
 		}
 
-		public ColorBand? CurrentColorBand
-		{
-			get => _colorBandSet.CurrentColorBand;
-			set
-			{
-				_colorBandSet.CurrentColorBand = value;
+		//public ColorBand? CurrentColorBand
+		//{
+		//	get => _colorBandSet.CurrentColorBand;
+		//	set
+		//	{
+		//		_colorBandSet.CurrentColorBand = value;
 
-				if (HighlightSelectedColorBand && _colorMap != null)
-				{
-					ReDrawSections(reapplyColorMap: true);
-				}
-			}
-		}
+		//		if (HighlightSelectedColorBand && _colorMap != null)
+		//		{
+		//			ReDrawSections(reapplyColorMap: true);
+		//		}
+		//	}
+		//}
 
 		public int CurrentColorBandIndex
 		{
-			get => ColorBandSet.CurrentColorBandIndex;
+			get => ColorBandSet.HilightedColorBandIndex;
 			set
 			{
-				ColorBandSet.CurrentColorBandIndex = value;
+				ColorBandSet.HilightedColorBandIndex = value;
 
 				if (HighlightSelectedColorBand && _colorMap != null)
 				{

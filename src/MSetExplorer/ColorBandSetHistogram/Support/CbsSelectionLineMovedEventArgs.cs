@@ -5,22 +5,17 @@ namespace MSetExplorer
 	public class CbsSelectionLineMovedEventArgs : EventArgs
 	{
 		public int ColorBandIndex { get; init; }
-		public double NewXPosition { get; init; }
+		public double NewCutoff { get; init; }
+		public bool UpdatingPrevious { get; init; }
 		public CbsSelectionLineDragOperation Operation { get; init; }
 
-		public CbsSelectionLineMovedEventArgs(int colorBandIndex, double newXPosition, CbsSelectionLineDragOperation operation)
+		public CbsSelectionLineMovedEventArgs(int colorBandIndex, double newCutoff, bool updatingPrevious, CbsSelectionLineDragOperation operation)
 		{
-			Operation = operation;
 			ColorBandIndex = colorBandIndex;
-			NewXPosition = newXPosition;
+			NewCutoff = newCutoff;
+			UpdatingPrevious = updatingPrevious;
+			Operation = operation;
 		}
-
-		//public static CbsSelectionLineMovedEventArgs CreateCancelDragInstance(int colorBandIndex)
-		//{
-		//	var result = new CbsSelectionLineMovedEventArgs(colorBandIndex, -1, operation: CbsSelectionLineDragOperation.Cancel);
-
-		//	return result;
-		//}
 	}
 
 	public enum CbsSelectionLineDragOperation

@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using MSS.Types;
+using System.Diagnostics;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace MSetExplorer
 {
@@ -34,6 +36,7 @@ namespace MSetExplorer
 			else
 			{
 				_vm = (ICbsHistogramViewModel)DataContext;
+				_vm.PropertyChanged += ViewModel_PropertyChanged;
 
 				Validation.AddErrorHandler(txtStartCutoff, OnCutoffError);
 				Validation.AddErrorHandler(txtEndCutoff, OnCutoffError);
@@ -41,13 +44,16 @@ namespace MSetExplorer
 				txtStartCutoff.LostFocus += TxtStartCutoff_LostFocus;
 				txtEndCutoff.LostFocus += TxtEndCutoff_LostFocus;
 
-
 				Debug.WriteLine("The ColorBand UserControl is now loaded");
 			}
 		}
 
 		private void ColorBandUserControl_Unloaded(object sender, System.Windows.RoutedEventArgs e)
 		{
+			Loaded -= ColorBandUserControl_Loaded;
+			Unloaded -= ColorBandUserControl_Unloaded;
+
+			_vm.PropertyChanged -= ViewModel_PropertyChanged;
 			Validation.RemoveErrorHandler(txtStartCutoff, OnCutoffError);
 			Validation.RemoveErrorHandler(txtEndCutoff, OnCutoffError);
 
@@ -72,6 +78,14 @@ namespace MSetExplorer
 		private void TxtEndCutoff_LostFocus(object sender, System.Windows.RoutedEventArgs e)
 		{
 			_vm.ColorBandUserControlHasErrors = HasCutoffError();
+		}
+
+		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentColorBand))
+			{
+				SetupForm(_vm.CurrentColorBand);
+			}
 		}
 
 		#endregion
@@ -103,29 +117,63 @@ namespace MSetExplorer
 
 		#endregion
 
-		//#region IDisposable Support
+		#region Private Methods
 
-		//private bool _disposedValue;
+		private void SetupForm(ColorBand? colorBand)
+		{
+			if (colorBand == null)
+			{
+				return;
+			}
 
-		//protected virtual void Dispose(bool disposing)
-		//{
-		//	if (!_disposedValue)
-		//	{
-		//		if (disposing)
-		//		{
-		//			Validation.RemoveErrorHandler(txtCutoff, OnCutoffError);
-		//		}
+			if (colorBand.IsFirst)
+			{
+				txtStartCutoff.IsEnabled = false;
+			}
+			else
+			{
+				txtStartCutoff.IsEnabled = true;
+				
+				if (colorBand.IsLast)
+				{
+					txtEndCutoff.IsEnabled = false;
+				}
+				else
+				{
+					txtEndCutoff.IsEnabled = true;
+				}
+			}
+		}
 
-		//		_disposedValue = true;
-		//	}
-		//}
+		private void SetupBlendStyleComboBox(bool isLast)
+		{
+			if (isLast && cmbBlendStyle.Items.Count == 3)
+			{
+				cmbBlendStyle.Items.Clear();
+				cmbBlendStyle.Items.Add("None");
+				cmbBlendStyle.Items.Add("End");
+			}
 
-		//public void Dispose()
-		//{
-		//	Dispose(disposing: true);
-		//	GC.SuppressFinalize(this);
-		//}
+			if (!isLast && cmbBlendStyle.Items.Count == 2)
+			{
+				cmbBlendStyle.Items.Clear();
+				cmbBlendStyle.Items.Add("None");
+				cmbBlendStyle.Items.Add("End");
+				cmbBlendStyle.Items.Add("Next");
+			}
+		}
 
-		//#endregion
+		private void SetCutoffRangeRule()
+		{
+			Binding binding = BindingOperations.GetBinding(txtEndCutoff, TextBox.TextProperty);
+			binding.ValidationRules.Clear();
+
+			//var x = new CutoffRangeRule();
+			//x.Min = 5;
+			//x.Max = 500;
+			//binding.ValidationRules.Add(x);
+		}
+
+		#endregion
 	}
 }

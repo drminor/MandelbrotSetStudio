@@ -30,7 +30,7 @@ namespace MSS.Types
 			_colorBandSet = colorBandSet ?? throw new ArgumentNullException(nameof(colorBandSet));
             //Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
-            _currentColorBandIndex = _colorBandSet.CurrentColorBandIndex;
+            _currentColorBandIndex = _colorBandSet.HilightedColorBandIndex;
             if (_colorBandSet is INotifyPropertyChanged inpc)
             {
                 inpc.PropertyChanged += ColorBandSet_PropertyChanged;
@@ -67,9 +67,9 @@ namespace MSS.Types
 			//    _selectedColorBandIndex = _colorBandSet.CurrentColorBandIndex;
 			//}
 
-			if (e.PropertyName == nameof(ColorBandSet.CurrentColorBandIndex))
+			if (e.PropertyName == nameof(ColorBandSet.HilightedColorBandIndex))
 			{
-				_currentColorBandIndex = _colorBandSet.CurrentColorBandIndex;
+				_currentColorBandIndex = _colorBandSet.HilightedColorBandIndex;
 			}
 		}
 

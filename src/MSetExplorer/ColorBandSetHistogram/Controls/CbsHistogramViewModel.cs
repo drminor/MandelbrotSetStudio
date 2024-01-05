@@ -11,6 +11,7 @@ using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Threading;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -253,31 +254,6 @@ namespace MSetExplorer
 				_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
 
 				_colorBandsView = value;
-
-				//var testItem = _colorBandsView.CurrentItem;
-
-				//if (testItem is ColorBand cb)
-				//{
-				//	CurrentColorBand = cb;
-				//}
-				//else
-				//{
-				//	if (_colorBandsView.Count > 0 && _colorBandsView.GetItemAt(0) is ColorBand cb2)
-				//	{
-				//		CurrentColorBand = cb2;
-				//	}
-				//	else
-				//	{
-				//		CurrentColorBand = new ColorBand();
-				//	}
-				//}
-
-				//_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
-
-				//OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsView));
-				//OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandIndex));
-				//OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBandNumber));
-				//OnPropertyChanged(nameof(ICbsHistogramViewModel.ColorBandsCount));
 
 				CurrentColorBand = _colorBandsView.CurrentItem as ColorBand;
 
@@ -1018,9 +994,9 @@ namespace MSetExplorer
 			{
 				if (ColorBandSet != null)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the CurrentColorBandIndex from: {ColorBandSet.CurrentColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HilightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
 
-					ColorBandSet.CurrentColorBandIndex = ColorBandsView.CurrentPosition;
+					ColorBandSet.HilightedColorBandIndex = ColorBandsView.CurrentPosition;
 				}
 
 				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
@@ -1067,9 +1043,9 @@ namespace MSetExplorer
 			// StartColor is being updated.
 			if (propertyName == nameof(ColorBand.StartColor))
 			{
-				if (TryGetPredeccessor(_currentColorBandSet, cb, out var colorBand))
+				if (TryGetPredeccessor(_currentColorBandSet, cb, out var predecessorColorBand))
 				{
-					colorBand.SuccessorStartColor = cb.StartColor;
+					predecessorColorBand.SuccessorStartColor = cb.StartColor;
 				}
 
 				foundUpdate = true;
@@ -1085,11 +1061,41 @@ namespace MSetExplorer
 
 				if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
 				{
+					Debug.WriteLine($"Cutoff was updated. CbsHistogramViewModel is updating the PreviousCutoff for ColorBand: {_colorBandsView.IndexOf(cb)}");
 					successorColorBand.PreviousCutoff = cb.Cutoff;
 
 					if (successorColorBand.BucketWidth < 0)
 					{
 						throw new ArgumentOutOfRangeException("The next ColorBand's BucketWidth is < 0");
+					}
+				}
+
+				foundUpdate = true;
+				UpdatePercentages();
+			}
+
+			// Previous Cutoff is being updated
+			else if (propertyName == nameof(ColorBand.PreviousCutoff))
+			{
+				if (cb.BucketWidth < 0)
+				{
+					throw new ArgumentOutOfRangeException("BucketWidth is < 0");
+				}
+
+				if (TryGetPredeccessor(_currentColorBandSet, cb, out var predecessorColorBand))
+				{
+					if (cb.PreviousCutoff == null)
+					{
+						throw new InvalidOperationException("The PreviousCutoff is null, however we are not the first ColorBand.");
+					}
+
+					Debug.WriteLine($"PreviousCutoff was updated. CbsHistogramViewModel is updating the Cutoff for ColorBand: {_colorBandsView.IndexOf(cb)}");
+
+					predecessorColorBand.Cutoff = cb.PreviousCutoff.Value;
+
+					if (predecessorColorBand.BucketWidth < 0)
+					{
+						throw new ArgumentOutOfRangeException("The predecessor ColorBand's BucketWidth is < 0");
 					}
 				}
 
@@ -1107,15 +1113,7 @@ namespace MSetExplorer
 			// EndColor is being updated
 			else if (propertyName == nameof(ColorBand.EndColor))
 			{
-				if (cb.BlendStyle == ColorBandBlendStyle.Next)
-				{
-					if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
-					{
-						successorColorBand.StartColor = cb.EndColor;
-					}
-				}
-
-				foundUpdate = true;
+				foundUpdate = cb.BlendStyle == ColorBandBlendStyle.End;
 			}
 			else
 			{

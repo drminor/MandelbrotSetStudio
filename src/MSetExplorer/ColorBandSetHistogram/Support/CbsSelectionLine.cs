@@ -38,6 +38,7 @@ namespace MSetExplorer
 
 		private double? _leftWidth;
 		private double? _rightWidth;
+		private bool _updatingPrevious;
 
 		private bool _isSelected;
 
@@ -68,6 +69,10 @@ namespace MSetExplorer
 
 			_selectionLinePosition = _xPosition * _scaleX;
 			_originalSelectionLinePosition = _selectionLinePosition;
+
+			_leftWidth = null;
+			_rightWidth = null;
+			_updatingPrevious = false;
 
 			_dragLine = BuildDragLine(_cbElevation, _cbHeight, _selectionLinePosition, isVisible);
 			_canvas.Children.Add(_dragLine);
@@ -326,7 +331,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void StartDrag(double leftWidth, double rightWidth)
+		public void StartDrag(double leftWidth, double rightWidth, bool updatingPrevious)
 		{
 			if (DragState == DragState.InProcess)
 			{
@@ -335,6 +340,7 @@ namespace MSetExplorer
 
 			_leftWidth = leftWidth;
 			_rightWidth = rightWidth;
+			_updatingPrevious = updatingPrevious;
 			_originalSelectionLinePosition = SelectionLinePosition;
 
 			DragState = DragState.InProcess;
@@ -350,7 +356,7 @@ namespace MSetExplorer
 			{
 				SelectionLinePosition = _originalSelectionLinePosition;
 
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalSelectionLinePosition, CbsSelectionLineDragOperation.Cancel));
+				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalSelectionLinePosition, _updatingPrevious, CbsSelectionLineDragOperation.Cancel));
 			}
 		}
 
@@ -421,7 +427,7 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSelectionLinePosition}.");
 				SelectionLinePosition = pos.X;
 
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, pos.X, CbsSelectionLineDragOperation.Move));
+				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbsSelectionLineDragOperation.Move));
 			}
 			else
 			{
@@ -457,7 +463,7 @@ namespace MSetExplorer
 
 			if (distance > MIN_SEL_DISTANCE)
 			{
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, SelectionLinePosition, CbsSelectionLineDragOperation.Complete));
+				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, SelectionLinePosition, _updatingPrevious, CbsSelectionLineDragOperation.Complete));
 			}
 			else
 			{

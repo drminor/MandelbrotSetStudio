@@ -20,7 +20,7 @@ namespace MSetExplorer
 		SizeInt CanvasSizeInBlocks { get; }
 
 		ColorBandSet ColorBandSet { get; set; }
-		ColorBand? CurrentColorBand { get; }
+		//ColorBand? CurrentColorBand { get; }
 		int CurrentColorBandIndex { get; set; }
 
 		bool HighlightSelectedColorBand { get; set; }

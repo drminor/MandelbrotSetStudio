@@ -230,7 +230,30 @@ namespace MSetExplorer
 		// Insert CanExecute
 		private void InsertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.CurrentColorBand != null && !_vm.ColorBandUserControlHasErrors;
+			bool canExecute;
+
+			var vm = _vm;
+
+			var currentColorBand = _vm?.CurrentColorBand;
+
+			if (vm == null || currentColorBand == null || vm.ColorBandUserControlHasErrors)
+			{
+				canExecute = false;
+			}
+			else
+			{
+				if (currentColorBand.IsFirst)
+				{
+					canExecute = false;
+				}
+				else
+				{
+					canExecute = true;
+				}
+			}
+
+			e.CanExecute = canExecute;
+
 		}
 
 		// Insert
@@ -248,7 +271,36 @@ namespace MSetExplorer
 		// Delete CanExecute
 		private void DeleteCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			e.CanExecute = _vm?.CurrentColorBand != null; // _vm?.ColorBandsView.CurrentPosition < _vm?.ColorBandsView.Count - 1;
+			bool canExecute;
+
+			var vm = _vm;
+
+			var currentColorBand = _vm?.CurrentColorBand;
+
+			if (vm == null || currentColorBand == null || vm.ColorBandUserControlHasErrors)
+			{
+				canExecute = false;
+			}
+			else
+			{
+				if (currentColorBand.IsLast)
+				{
+					canExecute = false;
+				}
+				else
+				{
+					if (vm.ColorBandsCount == 2)
+					{
+						canExecute = false;
+					}
+					else
+					{
+						canExecute = true;
+					}
+				}
+			}
+
+			e.CanExecute = canExecute;
 		}
 
 		// Delete

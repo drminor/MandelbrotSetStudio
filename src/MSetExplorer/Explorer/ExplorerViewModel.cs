@@ -166,7 +166,7 @@ namespace MSetExplorer
 
 				if (CbsHistogramViewModel.ColorBandSet != null && ProjectViewModel.CurrentProject != null)
 				{
-					var currentColorBandIndex = CbsHistogramViewModel.ColorBandSet.CurrentColorBandIndex;
+					var currentColorBandIndex = CbsHistogramViewModel.CurrentColorBandIndex;
 					MapDisplayViewModel.CurrentColorBandIndex = currentColorBandIndex;
 				}
 			}

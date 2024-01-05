@@ -70,9 +70,17 @@ namespace MSetRepo
 
 		public ColorBandSet MapFrom(ColorBandSetRecord target)
 		{
+			var colorBands = target.ColorBandRecords.Select(x => MapFrom(x)).ToList();
+			var targetIterations = target.TargetIterations;
+			
+			if (targetIterations == 0)
+			{
+				targetIterations = colorBands[^1].Cutoff;
+			}
+
 			return new ColorBandSet(
 				target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, 
-				target.ColorBandRecords.Select(x => MapFrom(x)).ToList(), target.TargetIterations,
+				colorBands, targetIterations,
 				target.ReservedColorBandRecords?.Select(x => MapFrom(x)),
 				target.ColorBandsSerialNumber
 				);
