@@ -533,6 +533,8 @@ namespace MSS.Types
 						lastCb.EndColor = lastCb.StartColor;
 					}
 				}
+
+				lastCb.SuccessorStartColor = null;
 			}
 
 			//lastCb.Cutoff = lastCb.Cutoff + 2; // Force the inclusion of the counts above the target iterations as a 'real' color band.

@@ -42,7 +42,7 @@ namespace MSetExplorer
 
 		private ContextMenu? _lastKnownContextMenu;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -87,8 +87,30 @@ namespace MSetExplorer
 			IsTabStop = true;
 			IsEnabled = true;
 
+			//MouseEnter += Handle_MouseEnter;
+			//MouseLeave += Handle_MouseLeave;
+
+			//if (_useDetailedDebug)
+			//{
+			//	GotFocus += HistogramColorBandControl_GotFocus;
+			//	LostFocus += HistogramColorBandControl_LostFocus;
+			//}
+
+			//KeyDown += HandleKeyDown;
+			//PreviewKeyUp += Handle_PreviewKeyUp;
+
+			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
+
+			_lastKnownContextMenu = null;
+
+			Loaded += HistogramColorBandControl_Loaded;
+			Unloaded += HistogramColorBandControl_Unloaded;
+		}
+
+		private void HistogramColorBandControl_Loaded(object sender, RoutedEventArgs e)
+		{
 			MouseEnter += Handle_MouseEnter;
-			MouseLeave += Handle_MouseLeave;
+			//MouseLeave += Handle_MouseLeave;
 
 			if (_useDetailedDebug)
 			{
@@ -98,51 +120,27 @@ namespace MSetExplorer
 
 			KeyDown += HandleKeyDown;
 			PreviewKeyUp += Handle_PreviewKeyUp;
-
-			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
-
-			_lastKnownContextMenu = null;
 		}
 
-		private void ContextMenu_Closed(object sender, RoutedEventArgs e)
+		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
-		}
+			MouseEnter -= Handle_MouseEnter;
+			//MouseLeave -= Handle_MouseLeave;
 
-		private void ContextMenu_Opened(object sender, RoutedEventArgs e)
-		{
-			MousePositionWhenContextMenuWasOpened = Mouse.GetPosition(_canvas);
+			if (_useDetailedDebug)
+			{
+				GotFocus -= HistogramColorBandControl_GotFocus;
+				LostFocus -= HistogramColorBandControl_LostFocus;
+			}
+
+			KeyDown -= HandleKeyDown;
+			PreviewKeyUp -= Handle_PreviewKeyUp;
+
+			Loaded -= HistogramColorBandControl_Loaded;
+			Unloaded -= HistogramColorBandControl_Unloaded;
 		}
 
 		#endregion
-
-		protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
-		{
-			base.OnPropertyChanged(e);
-
-			if (e.Property == ContextMenuProperty)
-			{
-				if (_lastKnownContextMenu != null)
-				{
-					_lastKnownContextMenu.Opened -= ContextMenu_Opened;
-					_lastKnownContextMenu.Closed -= ContextMenu_Closed;
-				}
-
-				_lastKnownContextMenu = (ContextMenu?) this.GetValue(ContextMenuProperty);
-
-				if (_lastKnownContextMenu != null)
-				{
-					_lastKnownContextMenu.Opened += ContextMenu_Opened;
-					_lastKnownContextMenu.Closed += ContextMenu_Closed;
-				}
-			}
-
-		}
-
-		private void _lastKnownContextMenu_Opened(object sender, RoutedEventArgs e)
-		{
-			throw new NotImplementedException();
-		}
 
 		#region Events
 
@@ -183,7 +181,7 @@ namespace MSetExplorer
 
 				if (_colorBandsView != null)
 				{
-					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _mouseIsEntered, Handle_ContextMenuDisplayRequested);
+					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _mouseIsEntered, ShowContextMenu);
 				}
 			}
 		}
@@ -342,7 +340,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		public void ShowSelectionLines(bool leftMouseButtonIsPressed)
 		{
 			_cbsListView?.ShowSelectionLines(leftMouseButtonIsPressed);
@@ -469,18 +466,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private void Handle_MouseLeave(object sender, MouseEventArgs e)
-		{
-			//HideSelectionLines(e.LeftButton == MouseButtonState.Pressed);
+		//private void Handle_MouseLeave(object sender, MouseEventArgs e)
+		//{
+		//	//HideSelectionLines(e.LeftButton == MouseButtonState.Pressed);
 
-			if (e.LeftButton != MouseButtonState.Pressed)
-			{
-				if (_cbsListView != null)
-				{
-					_cbsListView.CancelDrag();
-				}
-			}
-		}
+		//	if (e.LeftButton != MouseButtonState.Pressed)
+		//	{
+		//		if (_cbsListView != null)
+		//		{
+		//			_cbsListView.CancelDrag();
+		//		}
+		//	}
+		//}
 
 		private void Handle_MouseEnter(object sender, MouseEventArgs e)
 		{
@@ -488,12 +485,6 @@ namespace MSetExplorer
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl on Mouse Enter the Keyboard focus is now on {Keyboard.FocusedElement}.");
 			//ShowSelectionLines(e.LeftButton == MouseButtonState.Pressed);
-		}
-
-		private void Handle_ContextMenuDisplayRequested(CbsListViewItem sender, ColorBandSelectionType colorBandSelectionType)
-		{
-			ContextMenu.IsOpen = true;
-			//MessageBox.Show($"There will, one day, be a context menu here. Index: {sender.CbsSelectionLine.ColorBandIndex}; Source: {colorBandSelectionType}.");
 		}
 
 		#endregion
@@ -530,6 +521,49 @@ namespace MSetExplorer
 					e.Handled = true;
 				}
 			}
+		}
+
+		#endregion
+
+		#region Context Menu Event Handlers
+
+		private void ShowContextMenu(CbsListViewItem sender, ColorBandSelectionType colorBandSelectionType)
+		{
+			ContextMenu.IsOpen = true;
+			//MessageBox.Show($"There will, one day, be a context menu here. Index: {sender.CbsSelectionLine.ColorBandIndex}; Source: {colorBandSelectionType}.");
+		}
+
+		protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+		{
+			base.OnPropertyChanged(e);
+
+			if (e.Property == ContextMenuProperty)
+			{
+				if (_lastKnownContextMenu != null)
+				{
+					_lastKnownContextMenu.Opened -= ContextMenu_Opened;
+					_lastKnownContextMenu.Closed -= ContextMenu_Closed;
+				}
+
+				_lastKnownContextMenu = (ContextMenu?)this.GetValue(ContextMenuProperty);
+
+				if (_lastKnownContextMenu != null)
+				{
+					_lastKnownContextMenu.Opened += ContextMenu_Opened;
+					_lastKnownContextMenu.Closed += ContextMenu_Closed;
+				}
+			}
+
+		}
+
+		private void ContextMenu_Closed(object sender, RoutedEventArgs e)
+		{
+			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
+		}
+
+		private void ContextMenu_Opened(object sender, RoutedEventArgs e)
+		{
+			MousePositionWhenContextMenuWasOpened = Mouse.GetPosition(_canvas);
 		}
 
 		#endregion

@@ -29,7 +29,7 @@ namespace MSetExplorer
 		private double _cbHeight;
 		private SizeDbl _contentScale;
 		private IsSelectedChanged _isSelectedChanged;
-		private Action<int, ColorBandSelectionType> _displayContext;
+		private Action<int, ColorBandSelectionType> _requestContextMenuShown;
 
 		private double _xPosition;
 		private double _width;
@@ -51,7 +51,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public CbsRectangle(int colorBandIndex, bool isCurrent, bool isSelected, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
-			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, Action<int, ColorBandSelectionType> displayContext)
+			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, Action<int, ColorBandSelectionType> requestContextMenuShown)
 		{
 			_isCurrent = isCurrent;
 			_isSelected = isSelected;
@@ -69,7 +69,7 @@ namespace MSetExplorer
 
 			_contentScale = _colorBandLayoutViewModel.ContentScale;
 			_isSelectedChanged = isSelectedChanged;
-			_displayContext = displayContext;
+			_requestContextMenuShown = requestContextMenuShown;
 
 			//var yPosition = _colorBandLayoutViewModel.CbrElevation;
 			//var height = _colorBandLayoutViewModel.CbrHeight;
@@ -117,6 +117,7 @@ namespace MSetExplorer
 		{
 			if (e.ChangedButton == MouseButton.Left)
 			{
+				Debug.WriteLine($"CbsRectangle. Handling MouseUp.");
 				var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 				var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
 
@@ -127,7 +128,8 @@ namespace MSetExplorer
 			{
 				if (e.ChangedButton == MouseButton.Right)
 				{
-					_displayContext(ColorBandIndex, ColorBandSelectionType.Color);
+					_requestContextMenuShown(ColorBandIndex, ColorBandSelectionType.Color);
+					e.Handled = true;
 				}
 			}
 		}

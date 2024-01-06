@@ -1061,7 +1061,7 @@ namespace MSetExplorer
 
 				if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
 				{
-					Debug.WriteLine($"Cutoff was updated. CbsHistogramViewModel is updating the PreviousCutoff for ColorBand: {_colorBandsView.IndexOf(cb)}");
+					Debug.WriteLineIf(_useDetailedDebug, $"Cutoff was updated. CbsHistogramViewModel is updating the PreviousCutoff for ColorBand: {_colorBandsView.IndexOf(cb)}");
 					successorColorBand.PreviousCutoff = cb.Cutoff;
 
 					if (successorColorBand.BucketWidth < 0)
@@ -1089,7 +1089,7 @@ namespace MSetExplorer
 						throw new InvalidOperationException("The PreviousCutoff is null, however we are not the first ColorBand.");
 					}
 
-					Debug.WriteLine($"PreviousCutoff was updated. CbsHistogramViewModel is updating the Cutoff for ColorBand: {_colorBandsView.IndexOf(cb)}");
+					Debug.WriteLineIf(_useDetailedDebug, $"PreviousCutoff was updated. CbsHistogramViewModel is updating the Cutoff for ColorBand: {_colorBandsView.IndexOf(cb)}");
 
 					predecessorColorBand.Cutoff = cb.PreviousCutoff.Value;
 
@@ -1404,7 +1404,7 @@ namespace MSetExplorer
 					BeyondTargetSpecs = newPercentages[^1];
 					var numberReachedTargetIteration = BeyondTargetSpecs.Count;
 					var total = BeyondTargetSpecs.RunningSum;
-					Debug.WriteLine($"CBS received new percentages. Top Count: {numberReachedTargetIteration}, Total: {total}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"CBS received new percentages. Top Count: {numberReachedTargetIteration}, Total: {total}.");
 				}
 				else
 				{

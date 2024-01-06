@@ -19,7 +19,7 @@ namespace MSetExplorer
 
 		private ICbsHistogramViewModel _vm;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
