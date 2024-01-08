@@ -30,7 +30,6 @@ namespace MSetExplorer
 		private CbsListView? _cbsListView;
 
 		private TranslateTransform _canvasTranslateTransform;
-		//private ScaleTransform _canvasScaleTransform;
 		private TransformGroup _canvasRenderTransform;
 
 		private SizeDbl _contentScale;
@@ -68,11 +67,9 @@ namespace MSetExplorer
 			_cbsListView = null;
 
 			_canvasTranslateTransform = new TranslateTransform();
-			//_canvasScaleTransform = new ScaleTransform();
 
 			_canvasRenderTransform = new TransformGroup();
 			_canvasRenderTransform.Children.Add(_canvasTranslateTransform);
-			//_canvasRenderTransform.Children.Add(_canvasScaleTransform);
 
 			_canvas.RenderTransform = _canvasRenderTransform;
 
@@ -82,11 +79,6 @@ namespace MSetExplorer
 			_parentIsFocused = false;
 
 			_border = null;
-
-			KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Continue);
-			Focusable = true;
-			IsTabStop = false;
-			IsEnabled = true;
 
 			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
 
@@ -681,12 +673,12 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_LostFocus(object sender, RoutedEventArgs e)
 		{
-			Debug.WriteLine($"The HistogramColorBandControl has lost focus.");
+			Debug.WriteLine($"The HistogramColorBandControl has lost focus. ParentIsFocused = {ParentIsFocused}.");
 		}
 
 		private void HistogramColorBandControl_GotFocus(object sender, RoutedEventArgs e)
 		{
-			Debug.WriteLine($"The HistogramColorBandControl is receiving focus.");
+			Debug.WriteLine($"The HistogramColorBandControl is receiving focus. ParentIsFocused = {ParentIsFocused}.");
 		}
 
 		#endregion

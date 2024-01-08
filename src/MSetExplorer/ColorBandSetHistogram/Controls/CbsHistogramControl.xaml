@@ -62,7 +62,7 @@
                             MinContentScale="{Binding MinimumDisplayZoom, Mode=TwoWay}" 
                             >
 
-                            <local:HistogramColorBandControl Focusable="True"
+                            <local:HistogramColorBandControl Focusable="True" IsTabStop="True"
                                 x:Name="HistogramColorBandControl1">
 
                                 <local:HistogramColorBandControl.InputBindings>

@@ -79,9 +79,13 @@ namespace MSetExplorer
 			get => _currentColorBandIndex;
 			set
 			{
+				var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+				var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+
 				if ( !(_colorBandsView.IsCurrentBeforeFirst || _colorBandsView.IsCurrentAfterLast) )
 				{
 					HilightColorBandRectangle(_currentColorBandIndex, newState: false);
+					CbRectangleIsSelectedChanged(_currentColorBandIndex, true, shiftKeyPressed, controlKeyPressed);
 				}
 
 				_currentColorBandIndex = value;
@@ -89,6 +93,7 @@ namespace MSetExplorer
 				if (!(_colorBandsView.IsCurrentBeforeFirst || _colorBandsView.IsCurrentAfterLast))
 				{
 					HilightColorBandRectangle(_currentColorBandIndex, newState: true);
+					CbRectangleIsSelectedChanged(_currentColorBandIndex, true, shiftKeyPressed, controlKeyPressed);
 				}
 			}
 		}
