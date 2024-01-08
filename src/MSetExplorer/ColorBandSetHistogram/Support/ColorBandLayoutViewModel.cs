@@ -14,11 +14,13 @@ namespace MSetExplorer
 		private double _controlHeight;
 		private double _cbrHeight;
 
+		private bool _parentIsFocused;
+
 		#endregion
 
 		#region Constructor
 
-		public ColorBandLayoutViewModel(SizeDbl contentScale, double controlHeight)
+		public ColorBandLayoutViewModel(SizeDbl contentScale, double controlHeight, bool parentIsFocused)
 		{
 			if (contentScale.IsNAN() || contentScale.Width == 0)
 			{
@@ -31,6 +33,7 @@ namespace MSetExplorer
 
 			_controlHeight = controlHeight;
 			_cbrHeight = GetCbrHeight(controlHeight);
+			_parentIsFocused = parentIsFocused;
 		}
 
 		#endregion
@@ -77,6 +80,19 @@ namespace MSetExplorer
 				if (value != _cbrHeight)
 				{
 					_cbrHeight = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public bool ParentIsFocused
+		{
+			get => _parentIsFocused;
+			set
+			{
+				if (value != _parentIsFocused)
+				{
+					_parentIsFocused = value;
 					OnPropertyChanged();
 				}
 			}

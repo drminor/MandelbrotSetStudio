@@ -1523,5 +1523,96 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		#region Unused
+
+		//private void UpdateSelectionLinePosition(int colorBandIndex, int newCutoff)
+		//{
+		//	if (ListViewItems.Count == 0)
+		//	{
+		//		return;
+		//	}
+
+		//	if (colorBandIndex < 0 || colorBandIndex > ListViewItems.Count - 2)
+		//	{
+		//		throw new InvalidOperationException($"CbsListView::UpdateSelectionLinePosition. The ColorBandIndex must be between 0 and {ListViewItems.Count - 1}, inclusive.");
+		//	}
+
+		//	Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. About to call SelectionLine::UpdatePosition. Index = {colorBandIndex}");
+
+		//	var selectionLine = ListViewItems[colorBandIndex].CbsSelectionLine;
+
+		//	if (ScreenTypeHelper.IsDoubleChanged(newCutoff, selectionLine.XPosition))
+		//	{
+		//		var cbsRectangleLeft = ListViewItems[colorBandIndex].CbsRectangle;
+		//		var cbsRectangleRight = ListViewItems[colorBandIndex + 1].CbsRectangle;
+
+		//		Debug.Assert(cbsRectangleLeft.XPosition + cbsRectangleLeft.Width == selectionLine.XPosition);
+		//		Debug.Assert(cbsRectangleRight.XPosition == selectionLine.XPosition);
+
+		//		var diff = newCutoff - selectionLine.XPosition;
+
+		//		selectionLine.XPosition = newCutoff;
+
+		//		cbsRectangleLeft.Width += diff;
+
+		//		cbsRectangleRight.XPosition = newCutoff;
+		//		cbsRectangleRight.Width -= diff;
+		//	}
+		//}
+
+		//private bool TryGetColorBandIndex(ListCollectionView? colorbandsView, ColorBand cb, [NotNullWhen(true)] out int? index)
+		//{
+		//	//var colorBandsList = colorbandsView as IList<ColorBand>;
+		//	if (colorbandsView == null)
+		//	{
+		//		index = null;
+		//		return false;
+		//	}
+
+		//	index = colorbandsView.IndexOf(cb);
+
+		//	if (index < 0)
+		//	{
+		//		var t = colorbandsView.SourceCollection.Cast<ColorBand>();
+
+		//		var cbWithMatchingOffset = t.FirstOrDefault(x => x.Cutoff == cb.Cutoff);
+
+		//		if (cbWithMatchingOffset != null)
+		//		{
+		//			index = colorbandsView.IndexOf(cbWithMatchingOffset);
+		//			Debug.WriteLine($"CbsListView. The ColorBandsView does not contain the ColorBand: {cb}, but found an item with a matching offset: {cbWithMatchingOffset} at index: {index}.");
+
+		//			return true;
+		//		}
+		//		else
+		//		{
+		//			return false;
+		//		}
+		//	}
+		//	else
+		//	{
+		//		return true;
+		//	}
+		//}
+
+		//private ColorBand GetColorBandAt(ListCollectionView cbsView, int index)
+		//{
+		//	try
+		//	{
+		//		var result = (ColorBand)cbsView.GetItemAt(index);
+		//		return result;
+		//	}
+		//	catch (ArgumentOutOfRangeException aore)
+		//	{
+		//		throw new InvalidOperationException($"No item exists at index {index} within the ColorBandsView.", aore);
+		//	}
+		//	catch (InvalidCastException ice)
+		//	{
+		//		throw new InvalidOperationException($"The item at index {index} is not of type ColorBand.", ice);
+		//	}
+		//}
+
+		#endregion
 	}
 }

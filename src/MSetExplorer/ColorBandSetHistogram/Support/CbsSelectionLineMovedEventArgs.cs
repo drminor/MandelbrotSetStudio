@@ -22,7 +22,8 @@ namespace MSetExplorer
 	{
 		Move = 0,
 		Complete = 1,
-		Cancel = 2
+		Cancel = 2,
+		NotStarted = 3
 	}
 
 }

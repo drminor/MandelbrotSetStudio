@@ -35,6 +35,8 @@ namespace MSetExplorer
 			// Just for diagnostics
 			SizeChanged += CbsHistogramControl_SizeChanged;
 
+			Focusable = true;
+
 			InitializeComponent();
 		}
 
@@ -80,7 +82,9 @@ namespace MSetExplorer
 				MouseEnter += HandleMouseEnter;
 				MouseLeave += HandleMouseLeave;
 
-				Focusable = true;
+				GotFocus += CbsHistogramControl_GotFocus;
+				LostFocus += CbsHistogramControl_LostFocus;
+
 
 				Debug.WriteLine("The CbsHistogramControl is now loaded.");
 			}
@@ -104,6 +108,9 @@ namespace MSetExplorer
 
 			MouseEnter -= HandleMouseEnter;
 			MouseLeave -= HandleMouseLeave;
+
+			GotFocus -= CbsHistogramControl_GotFocus;
+			LostFocus -= CbsHistogramControl_LostFocus;
 		}
 
 		#endregion
@@ -199,14 +206,26 @@ namespace MSetExplorer
 
 		#region Mouse and Keyboard Event Handlers
 
-		private void HandleMouseLeave(object sender, MouseEventArgs e)
-		{
-			HistogramColorBandControl1.HideSelectionLines(e.LeftButton == MouseButtonState.Pressed);
-		}
-
 		private void HandleMouseEnter(object sender, MouseEventArgs e)
 		{
-			HistogramColorBandControl1.ShowSelectionLines(e.LeftButton == MouseButtonState.Pressed);
+			//HistogramColorBandControl1.ShowSelectionLines(e.LeftButton == MouseButtonState.Pressed);
+			HistogramColorBandControl1.ParentIsFocused = true;
+		}
+
+		private void HandleMouseLeave(object sender, MouseEventArgs e)
+		{
+			//HistogramColorBandControl1.HideSelectionLines(e.LeftButton == MouseButtonState.Pressed);
+			HistogramColorBandControl1.ParentIsFocused = false;
+		}
+
+		private void CbsHistogramControl_GotFocus(object sender, RoutedEventArgs e)
+		{
+			Debug.WriteLine($"The CbsHistogramControl got focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
+		}
+
+		private void CbsHistogramControl_LostFocus(object sender, RoutedEventArgs e)
+		{
+			Debug.WriteLine($"The CbsHistogramControl lost focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
 		}
 
 		#endregion

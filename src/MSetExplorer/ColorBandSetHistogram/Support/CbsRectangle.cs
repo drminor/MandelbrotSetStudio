@@ -14,11 +14,13 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
-		private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.LightGreen);
+		private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
 		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.LightBlue);
-		private static readonly Brush IS_CURRENT_AND_IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.SeaGreen);
+		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Colors.LightSlateGray);
 
-		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Colors.DeepSkyBlue);
+		private static readonly Brush IS_CURRENT_AND_IS_SELECTED_BACKGROUND = IS_SELECTED_BACKGROUND; // new SolidColorBrush(Colors.SeaGreen);
+
+		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Colors.Blue);
 		private static readonly Brush DEFAULT_STROKE = new SolidColorBrush(Colors.Transparent);
 		private const double SEL_RECTANGLE_STROKE_THICKNESS = 0; //3.0;
 
@@ -45,6 +47,7 @@ namespace MSetExplorer
 
 		private bool _isCurrent;
 		private bool _isSelected;
+		private bool _parentIsFocused;
 
 		#endregion
 
@@ -60,7 +63,7 @@ namespace MSetExplorer
 
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
 
-			_colorBandLayoutViewModel.PropertyChanged += _colorBandLayoutViewModel_PropertyChanged;
+			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 
 			_canvas = canvas;
 			_controlHeight = _colorBandLayoutViewModel.ControlHeight;
@@ -68,12 +71,9 @@ namespace MSetExplorer
 			_cbHeight = _colorBandLayoutViewModel.CbrHeight;
 
 			_contentScale = _colorBandLayoutViewModel.ContentScale;
+			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
 			_isSelectedChanged = isSelectedChanged;
 			_requestContextMenuShown = requestContextMenuShown;
-
-			//var yPosition = _colorBandLayoutViewModel.CbrElevation;
-			//var height = _colorBandLayoutViewModel.CbrHeight;
-			//var contentScale = _colorBandLayoutViewModel.ContentScale;
 
 			_xPosition = xPosition;
 			_width = width;
@@ -91,54 +91,30 @@ namespace MSetExplorer
 
 			var top = 0;
 			_selGeometry = BuildSelRectangleGeometry(_xPosition, top, width, _controlHeight, _contentScale);
-			_selRectanglePath = BuildSelRectanglePath(_selGeometry, _isCurrent, _isSelected, SEL_RECTANGLE_STROKE_THICKNESS);
+			_selRectanglePath = BuildSelRectanglePath(_selGeometry, _isCurrent, _isSelected, _parentIsFocused, SEL_RECTANGLE_STROKE_THICKNESS);
 
 			_canvas.Children.Add(_selRectanglePath);
 			_selRectanglePath.SetValue(Panel.ZIndexProperty, 1);
 		}
 
-		private void _colorBandLayoutViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == "ContentScale")
-			{
-				_contentScale = _colorBandLayoutViewModel.ContentScale;
-
-				Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
-			}
-			else if (e.PropertyName == "CbrHeight")
-			{
-				_cbHeight = _colorBandLayoutViewModel.CbrHeight;
-
-				Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
-			}
-		}
-
-		private void Handle_MouseUp(object sender, MouseButtonEventArgs e)
-		{
-			if (e.ChangedButton == MouseButton.Left)
-			{
-				Debug.WriteLine($"CbsRectangle. Handling MouseUp.");
-				var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-				var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
-
-				_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
-				e.Handled = true;
-			}
-			else
-			{
-				if (e.ChangedButton == MouseButton.Right)
-				{
-					_requestContextMenuShown(ColorBandIndex, ColorBandSelectionType.Color);
-					e.Handled = true;
-				}
-			}
-		}
 
 		#endregion
 
 		#region Public Properties
 
 		public int ColorBandIndex { get; set; }
+
+		public double ControlHeight
+		{
+			get => _controlHeight;
+			set
+			{
+				if (value != _controlHeight)
+				{
+					_controlHeight = value;
+				}
+			}
+		}
 
 		public double XPosition
 		{
@@ -161,19 +137,7 @@ namespace MSetExplorer
 				if (value != _cbElevation)
 				{
 					_cbElevation = value;
-
-				}
-			}
-		}
-
-		public double CbHeight
-		{
-			get => _cbHeight;
-			set
-			{
-				if (value != _cbHeight)
-				{
-					_cbHeight = value;
+					Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
 				}
 			}
 		}
@@ -186,6 +150,33 @@ namespace MSetExplorer
 				if (value != _width)
 				{
 					_width = value;
+					Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
+				}
+			}
+		}
+
+		public double CbHeight
+		{
+			get => _cbHeight;
+			set
+			{
+				if (value != _cbHeight)
+				{
+					_cbHeight = value;
+					Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
+
+				}
+			}
+		}
+
+		public SizeDbl ContentScale
+		{
+			get => _contentScale;
+			set
+			{
+				if (value != _contentScale)
+				{
+					_contentScale = value;
 					Resize(_xPosition, _cbElevation, _width, _cbHeight, _contentScale);
 				}
 			}
@@ -217,6 +208,20 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool ParentIsFocused
+		{
+			get => _parentIsFocused;
+
+			set
+			{
+				if (value != _parentIsFocused)
+				{
+					_parentIsFocused = value;
+					UpdateSelectionBackground();
+				}
+			}
+		}
+
 		public Shape Rectangle => _rectanglePath;
 		public RectangleGeometry RectangleGeometry => _geometry;
 
@@ -231,7 +236,7 @@ namespace MSetExplorer
 		{
 			try
 			{
-				_colorBandLayoutViewModel.PropertyChanged -= _colorBandLayoutViewModel_PropertyChanged;
+				_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
 				_rectanglePath.MouseUp -= Handle_MouseUp;
 
 				if (_canvas != null)
@@ -255,6 +260,47 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void ColorBandLayoutViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ColorBandLayoutViewModel.ContentScale))
+			{
+				ContentScale = _colorBandLayoutViewModel.ContentScale;
+			}
+			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
+			{
+				ControlHeight = _colorBandLayoutViewModel.ControlHeight;
+			}
+			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.CbrHeight))
+			{
+				CbHeight = _colorBandLayoutViewModel.CbrHeight;
+			}
+			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ParentIsFocused))
+			{
+				ParentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
+			}
+		}
+
+		private void Handle_MouseUp(object sender, MouseButtonEventArgs e)
+		{
+			if (e.ChangedButton == MouseButton.Left)
+			{
+				Debug.WriteLine($"CbsRectangle. Handling MouseUp.");
+				var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+				var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+
+				_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
+				e.Handled = true;
+			}
+			else
+			{
+				if (e.ChangedButton == MouseButton.Right)
+				{
+					_requestContextMenuShown(ColorBandIndex, ColorBandSelectionType.Color);
+					e.Handled = true;
+				}
+			}
+		}
 
 		#endregion
 
@@ -308,15 +354,15 @@ namespace MSetExplorer
 			return cbRectangle;
 		}
 
-		private Shape BuildSelRectanglePath(RectangleGeometry area, bool isCurrent, bool isSelected, double strokeThickness)
+		private Shape BuildSelRectanglePath(RectangleGeometry area, bool isCurrent, bool isSelected, bool parentIsFocused, double strokeThickness)
 		{
 			var result = new Path()
 			{
-				Fill = GetSelBackGround(isCurrent, isSelected),
-				Stroke = isCurrent ? IS_CURRENT_STROKE : DEFAULT_STROKE,
+				Fill = GetSelBackGround(isCurrent, isSelected, parentIsFocused),
+				Stroke = GetSelStroke(isCurrent, parentIsFocused),
 				StrokeThickness = strokeThickness,
 				Data = area,
-				Focusable=false,
+				//Focusable=true,
 				IsHitTestVisible = true
 			};
 
@@ -325,23 +371,40 @@ namespace MSetExplorer
 
 		private void UpdateSelectionBackground()
 		{
-			_selRectanglePath.Stroke = _isCurrent ? IS_CURRENT_STROKE : DEFAULT_STROKE;
+			_selRectanglePath.Stroke = GetSelStroke(_isCurrent, _parentIsFocused);
 
-			_selRectanglePath.Fill = GetSelBackGround(_isCurrent, _isSelected);
+			_selRectanglePath.Fill = GetSelBackGround(_isCurrent, _isSelected, _parentIsFocused);
 		}
 
-		private Brush GetSelBackGround(bool isCurrent, bool isSelected)
+		private Brush GetSelBackGround(bool isCurrent, bool isSelected, bool parentIsFocused)
 		{
-			var result = isCurrent
-				? isSelected
-					? IS_CURRENT_AND_IS_SELECTED_BACKGROUND
-					: IS_CURRENT_BACKGROUND
+			var result = parentIsFocused
+				? isCurrent
+					? isSelected
+						? IS_CURRENT_AND_IS_SELECTED_BACKGROUND
+						: IS_CURRENT_BACKGROUND
+					: isSelected
+						? IS_SELECTED_BACKGROUND
+						: DEFAULT_BACKGROUND
 				: isSelected
-					? IS_SELECTED_BACKGROUND
+					? IS_SELECTED_INACTIVE_BACKGROUND
 					: DEFAULT_BACKGROUND;
 
 			return result;
 		}
+
+		private Brush GetSelStroke(bool isCurrent, bool parentIsFocused)
+		{
+			var result = parentIsFocused
+				? DEFAULT_STROKE
+				: isCurrent
+					? IS_CURRENT_STROKE
+					: DEFAULT_STROKE;
+
+			return result;
+		}
+
+
 
 		#endregion
 

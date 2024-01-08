@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,11 +26,11 @@ namespace MSetExplorer
 		private Canvas _canvas;
 		private Path? _border;
 
-		private ListCollectionView? _colorBandsView;
+		private ListCollectionView _colorBandsView;
 		private CbsListView? _cbsListView;
 
 		private TranslateTransform _canvasTranslateTransform;
-		private ScaleTransform _canvasScaleTransform;
+		//private ScaleTransform _canvasScaleTransform;
 		private TransformGroup _canvasRenderTransform;
 
 		private SizeDbl _contentScale;
@@ -38,11 +39,11 @@ namespace MSetExplorer
 		private SizeDbl _viewportSize;
 		private bool _useRealTimePreview;
 
-		private bool _mouseIsEntered;
+		private bool _parentIsFocused;
 
 		private ContextMenu? _lastKnownContextMenu;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -63,41 +64,29 @@ namespace MSetExplorer
 
 			//var isHorizontalScrollBarVisible = true;
 
-			_colorBandsView = null; 
+			_colorBandsView = GetEmptyListCollectionView(); 
 			_cbsListView = null;
 
 			_canvasTranslateTransform = new TranslateTransform();
-			_canvasScaleTransform = new ScaleTransform();
+			//_canvasScaleTransform = new ScaleTransform();
 
 			_canvasRenderTransform = new TransformGroup();
 			_canvasRenderTransform.Children.Add(_canvasTranslateTransform);
-			_canvasRenderTransform.Children.Add(_canvasScaleTransform);
+			//_canvasRenderTransform.Children.Add(_canvasScaleTransform);
 
 			_canvas.RenderTransform = _canvasRenderTransform;
 
 			_translationAndClipSize = new RectangleDbl();
 
 			_viewportSize = new SizeDbl();
-			_mouseIsEntered = false;
+			_parentIsFocused = false;
 
 			_border = null;
 
-			KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Cycle);
+			KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Continue);
 			Focusable = true;
-			IsTabStop = true;
+			IsTabStop = false;
 			IsEnabled = true;
-
-			//MouseEnter += Handle_MouseEnter;
-			//MouseLeave += Handle_MouseLeave;
-
-			//if (_useDetailedDebug)
-			//{
-			//	GotFocus += HistogramColorBandControl_GotFocus;
-			//	LostFocus += HistogramColorBandControl_LostFocus;
-			//}
-
-			//KeyDown += HandleKeyDown;
-			//PreviewKeyUp += Handle_PreviewKeyUp;
 
 			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
 
@@ -109,14 +98,13 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_Loaded(object sender, RoutedEventArgs e)
 		{
+
 			MouseEnter += Handle_MouseEnter;
 			//MouseLeave += Handle_MouseLeave;
 
-			if (_useDetailedDebug)
-			{
-				GotFocus += HistogramColorBandControl_GotFocus;
-				LostFocus += HistogramColorBandControl_LostFocus;
-			}
+
+			GotFocus += HistogramColorBandControl_GotFocus;
+			LostFocus += HistogramColorBandControl_LostFocus;
 
 			KeyDown += HandleKeyDown;
 			PreviewKeyUp += Handle_PreviewKeyUp;
@@ -127,12 +115,9 @@ namespace MSetExplorer
 			MouseEnter -= Handle_MouseEnter;
 			//MouseLeave -= Handle_MouseLeave;
 
-			if (_useDetailedDebug)
-			{
-				GotFocus -= HistogramColorBandControl_GotFocus;
-				LostFocus -= HistogramColorBandControl_LostFocus;
-			}
-
+			GotFocus -= HistogramColorBandControl_GotFocus;
+			LostFocus -= HistogramColorBandControl_LostFocus;
+			
 			KeyDown -= HandleKeyDown;
 			PreviewKeyUp -= Handle_PreviewKeyUp;
 
@@ -152,7 +137,7 @@ namespace MSetExplorer
 
 		public Point MousePositionWhenContextMenuWasOpened { get; private set; }
 
-		public ListCollectionView? ColorBandsView
+		public ListCollectionView ColorBandsView
 		{
 			get => _colorBandsView;
 
@@ -179,9 +164,9 @@ namespace MSetExplorer
 					_cbsListView = null;
 				}
 
-				if (_colorBandsView != null)
+				if (_colorBandsView.Count > 0)
 				{
-					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _mouseIsEntered, ShowContextMenu);
+					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _parentIsFocused, ShowContextMenu);
 				}
 			}
 		}
@@ -297,6 +282,23 @@ namespace MSetExplorer
 		//	}
 		//}
 
+		public bool ParentIsFocused
+		{
+			get => _parentIsFocused;
+
+			set
+			{
+				if (value != _parentIsFocused)
+				{
+					_parentIsFocused = value;
+					if (_cbsListView != null)
+					{
+						_cbsListView.ParentIsFocused = value;
+					}
+				}
+			}
+		}
+
 		#endregion
 
 		#region Public Methods
@@ -308,7 +310,7 @@ namespace MSetExplorer
 				return null;
 			}
 
-			var x = _cbsListView?.MouseOverItem(hitPoint) ?? null;
+			var x = _cbsListView?.ItemAtMousePosition(hitPoint) ?? null;
 
 			if (x != null)
 			{
@@ -327,7 +329,7 @@ namespace MSetExplorer
 				return null;
 			}
 
-			var lvItemAndSelType = _cbsListView?.MouseOverItem(hitPoint) ?? null;
+			var lvItemAndSelType = _cbsListView?.ItemAtMousePosition(hitPoint) ?? null;
 
 			if (lvItemAndSelType != null)
 			{
@@ -340,17 +342,17 @@ namespace MSetExplorer
 			}
 		}
 
-		public void ShowSelectionLines(bool leftMouseButtonIsPressed)
-		{
-			_cbsListView?.ShowSelectionLines(leftMouseButtonIsPressed);
-			_mouseIsEntered = true;
-		}
+		//public void ShowSelectionLines(bool leftMouseButtonIsPressed)
+		//{
+		//	_cbsListView?.ShowSelectionLines(leftMouseButtonIsPressed);
+		//	_mouseIsEntered = true;
+		//}
 
-		public void HideSelectionLines(bool leftMouseButtonIsPressed)
-		{
-			_cbsListView?.HideSelectionLines(leftMouseButtonIsPressed);
-			_mouseIsEntered = false;
-		}
+		//public void HideSelectionLines(bool leftMouseButtonIsPressed)
+		//{
+		//	_cbsListView?.HideSelectionLines(leftMouseButtonIsPressed);
+		//	_mouseIsEntered = false;
+		//}
 
 		#endregion
 
@@ -483,7 +485,7 @@ namespace MSetExplorer
 		{
 			Focus();
 
-			//Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl on Mouse Enter the Keyboard focus is now on {Keyboard.FocusedElement}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl on Mouse Enter the Keyboard focus is now on {Keyboard.FocusedElement}.");
 			//ShowSelectionLines(e.LeftButton == MouseButtonState.Pressed);
 		}
 
@@ -601,7 +603,7 @@ namespace MSetExplorer
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
 				Data = cbRectangle,
-				Focusable = false,
+				//Focusable = false,
 				IsHitTestVisible = false
 			};
 
@@ -621,6 +623,16 @@ namespace MSetExplorer
 			return result;
 		}
 		
+
+		private ListCollectionView GetEmptyListCollectionView()
+		{
+			var newCollection = new ObservableCollection<ColorBand>();
+			var result = (ListCollectionView)CollectionViewSource.GetDefaultView(newCollection);
+
+			return result;
+		}
+
+
 		#endregion
 
 		#region Dependency Property Declarations
@@ -669,7 +681,7 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_LostFocus(object sender, RoutedEventArgs e)
 		{
-			Debug.WriteLine($"The HistogramColorBandControl is losing focus.");
+			Debug.WriteLine($"The HistogramColorBandControl has lost focus.");
 		}
 
 		private void HistogramColorBandControl_GotFocus(object sender, RoutedEventArgs e)
