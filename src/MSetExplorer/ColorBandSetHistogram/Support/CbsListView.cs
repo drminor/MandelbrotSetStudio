@@ -55,6 +55,7 @@ namespace MSetExplorer
 
 			DrawColorBands(_colorBandsView, showSectionLines: ParentIsFocused);
 
+			_canvas.MouseMove += Handle_MouseMove;
 			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
 		}
 
@@ -134,7 +135,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbsListViewItem, out _))
+				if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbsListViewItem))
 				{
 					return (cbsListViewItem, ColorBandSelectionType.Color);
 				}
@@ -167,12 +168,9 @@ namespace MSetExplorer
 		{
 			_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
 			(_colorBandsView as INotifyCollectionChanged).CollectionChanged -= ColorBandsView_CollectionChanged;
-			_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
 
-			if (_selectionLineBeingDragged != null)
-			{
-				_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
-			}
+			_canvas.MouseMove -= Handle_MouseMove;
+			_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
 
 			ClearListViewItems();
 		}
@@ -180,6 +178,89 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private CbsListViewItem? _itemUnderMouse;
+
+		private CbsListViewItem? ItemUnderMouse
+		{
+			get => _itemUnderMouse;
+			set
+			{
+				if (value != _itemUnderMouse)
+				{
+					_itemUnderMouse = value;
+
+					if (SelectionLineUnderMouse != null)
+					{
+						Debug.WriteLine($"The Mouse is now over SelectionLine: {SelectionLineUnderMouse.ColorBandIndex} and Rectangle: {ItemUnderMouse?.ColorBandIndex ?? -1}.");
+					}
+					else
+					{
+						Debug.WriteLine($"The Mouse is now over Rectangle: {ItemUnderMouse?.ColorBandIndex ?? -1}.");
+					}
+
+				}
+			}
+		}
+
+		private CbsListViewItem? _selectionLineUnderMouse;
+
+		private CbsListViewItem? SelectionLineUnderMouse
+		{
+			get => _selectionLineUnderMouse;
+			set
+			{
+				if (value != _selectionLineUnderMouse)
+				{
+					_selectionLineUnderMouse = value;
+					Debug.WriteLine($"The ItemUnderMouse is now: {ItemUnderMouse}.");
+				}
+			}
+		}
+
+
+		private void Handle_MouseMove(object sender, MouseEventArgs e)
+		{
+			if (IsDragSelectionLineInProgress)
+			{
+				Debug.WriteLine("WARNING: CbsListView is receiving a MouseMove event, as a Drag SelectionLine is in progress.");
+				return;
+			}
+
+			var hitPoint = e.GetPosition(_canvas);
+			if (TryGetSelectionLine(hitPoint, ListViewItems, out var cbsListViewItem))
+			{
+				SelectionLineUnderMouse = cbsListViewItem;
+
+				// Positive if the mouse is to the right of the selection line, negative if to the left.
+				var hitPointDistance = hitPoint.X - cbsListViewItem.SelectionLinePosition;
+
+				// True if we will be updating the Current ColorBand's PreviousCutoff value, false if updating the Cutoff
+				bool updatingPrevious = hitPointDistance > 0;
+
+				if (updatingPrevious)
+				{
+					var index = cbsListViewItem.ColorBandIndex;
+					ItemUnderMouse = ListViewItems[index + 1];
+				}
+				else
+				{
+					ItemUnderMouse = cbsListViewItem;
+				}
+
+				//e.Handled = true;
+			}
+			else
+			{
+				if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbsListViewItem))
+				{
+					SelectionLineUnderMouse = null;
+					ItemUnderMouse = cbsListViewItem;
+					//e.Handled = true;
+				}
+			}
+
+		}
 
 		private void Handle_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
@@ -200,7 +281,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbsListViewItem, out var cbRectangleIndex))
+				if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbsListViewItem))
 				{
 					//e.Handled = true;
 
@@ -235,7 +316,6 @@ namespace MSetExplorer
 
 			var cbSelectionLine = cbsListViewItem.CbsSelectionLine;
 			_selectionLineBeingDragged = cbSelectionLine;
-			//_selectionLineBeingDragged.SelectionLineMoved += HandleSelectionLineMoved;
 
 			var prevMsg = updatingPrevious ? "Previous" : "Current";
 			Debug.WriteIf(_useDetailedDebug, $"CbsListView. Starting Drag for cbSelectionLine at index: {colorBandIndex} for {prevMsg}.");
@@ -290,7 +370,6 @@ namespace MSetExplorer
 					break;
 
 				case CbsSelectionLineDragOperation.Complete:
-					//_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
 					_selectionLineBeingDragged = null;
 
 					Debug.WriteLineIf(_useDetailedDebug, "Completing the SelectionBand Drag Operation.");
@@ -298,7 +377,6 @@ namespace MSetExplorer
 					break;
 
 				case CbsSelectionLineDragOperation.Cancel:
-					//_selectionLineBeingDragged.SelectionLineMoved -= HandleSelectionLineMoved;
 					_selectionLineBeingDragged = null;
 
 					UpdateCutoff(e);
@@ -367,14 +445,6 @@ namespace MSetExplorer
 				}
 
 				Reindex(si);
-			}
-		}
-
-		private void Reindex(int startingIndex)
-		{
-			for(var i = startingIndex; i < ListViewItems.Count; i++)
-			{
-				ListViewItems[i].ColorBandIndex = i;
 			}
 		}
 
@@ -573,10 +643,9 @@ namespace MSetExplorer
 
 		#region ColorBandRectangle Support
 
-		private bool TryGetColorBandRectangle(Point hitPoint, IList<CbsListViewItem> cbsListViewItems, [NotNullWhen(true)] out CbsListViewItem? cbsListViewItem, [NotNullWhen(true)] out int? colorBandRectangleIndex)
+		private bool TryGetColorBandRectangle(Point hitPoint, IList<CbsListViewItem> cbsListViewItems, [NotNullWhen(true)] out CbsListViewItem? cbsListViewItem)
 		{
 			cbsListViewItem = null;
-			colorBandRectangleIndex = null;
 
 			for (var i = 0; i < cbsListViewItems.Count; i++)
 			{
@@ -584,7 +653,6 @@ namespace MSetExplorer
 
 				if (cbRectangle.ContainsPoint(hitPoint))
 				{
-					colorBandRectangleIndex = i;
 					cbsListViewItem = cbsListViewItems[i];
 
 					Debug.Assert(cbsListViewItem.CbsRectangle.ColorBandIndex == i, "CbsListViewItems ColorBandIndex Mismatch.");
@@ -696,12 +764,21 @@ namespace MSetExplorer
 
 			foreach (var listViewItem in ListViewItems)
 			{
+				listViewItem.CbsSelectionLine.SelectionLineMoved -= HandleSelectionLineMoved;
 				listViewItem.TearDown();
 			}
 
 			ListViewItems.Clear();
 
 			//Debug.WriteLine($"After remove ColorBandRectangles. The DrawingGroup has {_drawingGroup.Children.Count} children. The height of the drawing group is: {_drawingGroup.Bounds.Height} and the location is: {_drawingGroup.Bounds.Location}");
+		}
+
+		private void Reindex(int startingIndex)
+		{
+			for (var i = startingIndex; i < ListViewItems.Count; i++)
+			{
+				ListViewItems[i].ColorBandIndex = i;
+			}
 		}
 
 		#endregion

@@ -8,7 +8,6 @@ namespace MSetExplorer
 
 		private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
 		private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 5;
-		private const double BORDER_THICKNESS = 1.0;
 
 		private SizeDbl _contentScale;
 		private double _controlHeight;

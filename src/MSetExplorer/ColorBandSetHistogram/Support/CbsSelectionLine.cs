@@ -81,7 +81,7 @@ namespace MSetExplorer
 			_rightWidth = null;
 			_updatingPrevious = false;
 
-			_dragLine = BuildDragLine(_cbElevation, _cbHeight, _selectionLinePosition, _parentIsFocused);
+			_dragLine = BuildDragLine(_cbElevation, _controlHeight, _selectionLinePosition, _parentIsFocused);
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 
@@ -103,12 +103,11 @@ namespace MSetExplorer
 				Fill = Brushes.Transparent,
 				Stroke = parentIsFocused ? ACTIVE_STROKE : DEFAULT_STROKE,
 				StrokeThickness = 2,
-				Y1 = parentIsFocused ? elevation : 0,
-				Y2 = elevation + height,
+				//Y1 = parentIsFocused ? elevation : 0,
+				Y1 = 0,
+				Y2 = height,
 				X1 = selectionLinePosition,
 				X2 = selectionLinePosition,
-				//Focusable = false,
-				//Visibility = isVisible ? Visibility.Visible : Visibility.Hidden
 			};
 
 			return result;
@@ -122,8 +121,8 @@ namespace MSetExplorer
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
 				Points = BuildTopAreaPoints(selectionLinePosition),
-				//Focusable = false,
-				Visibility = parentIsFocused ? Visibility.Visible : Visibility.Hidden
+				//Visibility = parentIsFocused ? Visibility.Visible : Visibility.Hidden
+				Visibility = Visibility.Hidden
 			};
 
 			return result;
@@ -160,7 +159,6 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public int ColorBandIndex { get; set; }
-
 
 		public double ControlHeight
 		{
@@ -227,7 +225,8 @@ namespace MSetExplorer
 				if (value != _cbElevation)
 				{
 					_cbElevation = value;
-					_dragLine.Y1 = ParentIsFocused ? CbElevation : 0;
+					//_dragLine.Y1 = ParentIsFocused ? CbElevation : 0;
+					_dragLine.Y1 = 0;
 
 					_topArrowHalfWidth = (value - 2) / 2;
 				}
@@ -269,9 +268,15 @@ namespace MSetExplorer
 				{
 					_parentIsFocused = value;
 
-					_dragLine.Stroke = _parentIsFocused ? ACTIVE_STROKE : DEFAULT_STROKE;
-					_dragLine.Y1 = _parentIsFocused ? CbElevation : 0;
-					_topArrow.Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden;
+					//_dragLine.Stroke = _parentIsFocused ? ACTIVE_STROKE : DEFAULT_STROKE;
+					//_dragLine.Y1 = _parentIsFocused ? CbElevation : 0;
+					//_topArrow.Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden;
+
+					_dragLine.Stroke = DEFAULT_STROKE;
+					_dragLine.Y1 = 0;
+					_topArrow.Visibility = Visibility.Hidden;
+
+
 				}
 			}
 		}
@@ -412,6 +417,7 @@ namespace MSetExplorer
 		private void HandleMouseMove(object sender, MouseEventArgs e)
 		{
 			var pos = e.GetPosition(relativeTo: _canvas);
+			e.Handled = true;
 
 			var amount = pos.X - _originalSelectionLinePosition;
 

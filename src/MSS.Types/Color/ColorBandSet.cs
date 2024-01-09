@@ -740,6 +740,32 @@ namespace MSS.Types
 			return sb.ToString();
 		}
 
+		public string ToString(int style)
+		{
+			if (style == 1)
+			{
+				var sb = new StringBuilder();
+
+				sb.AppendLine($"Id: {Id}, Serial: {ColorBandsSerialNumber}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
+
+				_ = sb.AppendLine($"Prev\t\tCutoff\t\tWidth");
+				for (var i = 0; i < Count; i++)
+				{
+					var cb = this[i];
+
+					_ = sb.AppendLine($"{cb.PreviousCutoff ?? 0}\t\t{cb.Cutoff}\t\t{cb.BucketWidth}");
+
+				}
+
+				return sb.ToString();
+
+			}
+			else
+			{
+				throw new NotImplementedException("ColorBandSet.ToString(int style) only supports style = 1.");
+			}
+		}
+
 		//public static string GetString(ICollection<ColorBand> colorBands)
 		//{
 		//	var sb = new StringBuilder();

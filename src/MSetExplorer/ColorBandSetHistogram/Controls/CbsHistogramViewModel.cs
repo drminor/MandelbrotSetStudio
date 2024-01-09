@@ -153,7 +153,11 @@ namespace MSetExplorer
 					// Presumably the call to ResetView requires that the ColorBandsView have some value.
 					ColorBandsView = BuildColorBandsView(null);
 
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is processing a new ColorBandSet. Id = {value.Id}.");
+					//Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is processing a new ColorBandSet. Id = {value.Id}.");
+
+					Debug.WriteLine($"The CbsHistogramViewModel is processing a new ColorBandSet.");
+					var diag = value.ToString(style: 1);
+					Debug.WriteLine(diag);
 
 					_colorBandSet = value;
 

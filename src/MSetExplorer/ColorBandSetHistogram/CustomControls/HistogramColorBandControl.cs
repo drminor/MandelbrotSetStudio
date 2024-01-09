@@ -92,23 +92,23 @@ namespace MSetExplorer
 		{
 
 			MouseEnter += Handle_MouseEnter;
-			//MouseLeave += Handle_MouseLeave;
-
-
 			GotFocus += HistogramColorBandControl_GotFocus;
-			LostFocus += HistogramColorBandControl_LostFocus;
+			//LostFocus += HistogramColorBandControl_LostFocus;
 
 			KeyDown += HandleKeyDown;
 			PreviewKeyUp += Handle_PreviewKeyUp;
 		}
 
+		private void HistogramColorBandControl_MouseMove(object sender, MouseEventArgs e)
+		{
+			throw new NotImplementedException();
+		}
+
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			MouseEnter -= Handle_MouseEnter;
-			//MouseLeave -= Handle_MouseLeave;
-
 			GotFocus -= HistogramColorBandControl_GotFocus;
-			LostFocus -= HistogramColorBandControl_LostFocus;
+			//LostFocus -= HistogramColorBandControl_LostFocus;
 			
 			KeyDown -= HandleKeyDown;
 			PreviewKeyUp -= Handle_PreviewKeyUp;
@@ -460,26 +460,27 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void Handle_MouseLeave(object sender, MouseEventArgs e)
-		//{
-		//	//HideSelectionLines(e.LeftButton == MouseButtonState.Pressed);
-
-		//	if (e.LeftButton != MouseButtonState.Pressed)
-		//	{
-		//		if (_cbsListView != null)
-		//		{
-		//			_cbsListView.CancelDrag();
-		//		}
-		//	}
-		//}
-
 		private void Handle_MouseEnter(object sender, MouseEventArgs e)
 		{
 			Focus();
 
 			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl on Mouse Enter the Keyboard focus is now on {Keyboard.FocusedElement}.");
-			//ShowSelectionLines(e.LeftButton == MouseButtonState.Pressed);
 		}
+
+		private void HistogramColorBandControl_GotFocus(object sender, RoutedEventArgs e)
+		{
+			if (!ParentIsFocused)
+			{
+				Debug.WriteLine($"The HistogramColorBandControl is receiving focus. ParentIsFocused was false, setting it to true.");
+				ParentIsFocused = true;
+			}
+		}
+
+		//private void HistogramColorBandControl_LostFocus(object sender, RoutedEventArgs e)
+		//{
+		//	//Debug.WriteLine($"The HistogramColorBandControl has lost focus. Setting ParentIsFocused = false, it was: {ParentIsFocused}.");
+		//	//ParentIsFocused = false;
+		//}
 
 		#endregion
 
@@ -595,7 +596,6 @@ namespace MSetExplorer
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
 				Data = cbRectangle,
-				//Focusable = false,
 				IsHitTestVisible = false
 			};
 
@@ -669,16 +669,6 @@ namespace MSetExplorer
 			var previousXValue = previousValue.Position.X * ContentScale.Width;
 			var newXValue = newValue.Position.X * ContentScale.Width;
 			Debug.WriteLine(_useDetailedDebug, $"The HistogramColorBandControl's CanvasTranslationTransform is being set from {previousXValue} to {newXValue}.");
-		}
-
-		private void HistogramColorBandControl_LostFocus(object sender, RoutedEventArgs e)
-		{
-			Debug.WriteLine($"The HistogramColorBandControl has lost focus. ParentIsFocused = {ParentIsFocused}.");
-		}
-
-		private void HistogramColorBandControl_GotFocus(object sender, RoutedEventArgs e)
-		{
-			Debug.WriteLine($"The HistogramColorBandControl is receiving focus. ParentIsFocused = {ParentIsFocused}.");
 		}
 
 		#endregion

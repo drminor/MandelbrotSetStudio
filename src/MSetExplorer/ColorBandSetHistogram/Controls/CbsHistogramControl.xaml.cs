@@ -228,13 +228,6 @@ namespace MSetExplorer
 			Debug.WriteLine($"The CbsHistogramControl lost focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
 		}
 
-		//private void TextBox_GotFocus(object sender, RoutedEventArgs e)
-		//{
-		//	Debug.WriteLine($"The CbsHistogramControl/Cb#ofTextBox got focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
-
-		//	HistogramColorBandControl1.ParentIsFocused = true;
-		//}
-
 		#endregion
 
 		#region Button Click Event Handlers
