@@ -362,7 +362,7 @@ namespace MSetExplorer
 
 			if (isHighLighted && rect.Width > 7)
 			{
-				result = Rect.Inflate(rect, -2, -1);    // Decrease the width by 4, if the width > 7. Decrease the height by 2
+				result = Rect.Inflate(rect, -3, -1);    // Decrease the width by 4, if the width > 7. Decrease the height by 2
 			}
 			else
 			{
@@ -378,7 +378,7 @@ namespace MSetExplorer
 			var height = layout.ControlHeight;
 			var rect = BuildRect(xPosition, yPosition, width, height, layout.ContentScale);
 
-			var result = rect.Width > 3 ? Rect.Inflate(rect, -1, -1) : rect; // Decrease the width by 2, if the width > 3. Decrease the height by 2
+			var result = rect.Width > 7 ? Rect.Inflate(rect, -2, -1) : Rect.Inflate(rect, 0, -1); // Decrease the width by 2, if the width > 3. Decrease the height by 2
 
 			return result;
 		}

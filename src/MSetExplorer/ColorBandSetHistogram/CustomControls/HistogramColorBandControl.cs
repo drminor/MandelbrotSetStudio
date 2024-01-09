@@ -127,59 +127,6 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public Point MousePositionWhenContextMenuWasOpened { get; private set; }
-
-		public ListCollectionView ColorBandsView
-		{
-			get => _colorBandsView;
-
-			set
-			{
-				_colorBandsView = value;
-
-				var extent = GetExtent(ColorBandsView);
-				var scaledExtent = extent * ContentScale.Width;
-
-				if (ScreenTypeHelper.IsDoubleChanged(scaledExtent, Canvas.Width))
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width is being updated from: {Canvas.Width} to {scaledExtent} and redrawing the ColorBands on ColorBandsView update.");
-					Canvas.Width = scaledExtent;
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width remains the same at {Canvas.Width}. The extent is {extent}.");
-				}
-
-				if (_cbsListView != null)
-				{
-					_cbsListView.TearDown();
-					_cbsListView = null;
-				}
-
-				if (_colorBandsView.Count > 0)
-				{
-					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _parentIsFocused, ShowContextMenu);
-				}
-			}
-		}
-
-		public bool UseRealTimePreview
-		{
-			get => _useRealTimePreview;
-			set
-			{
-				if (value != _useRealTimePreview)
-				{
-					_useRealTimePreview = value;
-
-					if (_cbsListView != null)
-					{
-						_cbsListView.UseRealTimePreview = value;
-					}
-				}
-			}
-		}
-
 		public Canvas Canvas
 		{
 			get => _canvas;
@@ -191,6 +138,8 @@ namespace MSetExplorer
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
+				//_canvas.Background = new SolidColorBrush(Colors.Pink);
+				_canvas.Background = new SolidColorBrush(Colors.Transparent);
 			}
 		}
 
@@ -273,6 +222,59 @@ namespace MSetExplorer
 		//		_colorBandLayoutViewModel.IsHorizontalScrollBarVisible = value;
 		//	}
 		//}
+
+		public ListCollectionView ColorBandsView
+		{
+			get => _colorBandsView;
+
+			set
+			{
+				_colorBandsView = value;
+
+				var extent = GetExtent(ColorBandsView);
+				var scaledExtent = extent * ContentScale.Width;
+
+				if (ScreenTypeHelper.IsDoubleChanged(scaledExtent, Canvas.Width))
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width is being updated from: {Canvas.Width} to {scaledExtent} and redrawing the ColorBands on ColorBandsView update.");
+					Canvas.Width = scaledExtent;
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width remains the same at {Canvas.Width}. The extent is {extent}.");
+				}
+
+				if (_cbsListView != null)
+				{
+					_cbsListView.TearDown();
+					_cbsListView = null;
+				}
+
+				if (_colorBandsView.Count > 0)
+				{
+					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _parentIsFocused, ShowContextMenu);
+				}
+			}
+		}
+
+		public bool UseRealTimePreview
+		{
+			get => _useRealTimePreview;
+			set
+			{
+				if (value != _useRealTimePreview)
+				{
+					_useRealTimePreview = value;
+
+					if (_cbsListView != null)
+					{
+						_cbsListView.UseRealTimePreview = value;
+					}
+				}
+			}
+		}
+		
+		public Point MousePositionWhenContextMenuWasOpened { get; private set; }
 
 		public bool ParentIsFocused
 		{

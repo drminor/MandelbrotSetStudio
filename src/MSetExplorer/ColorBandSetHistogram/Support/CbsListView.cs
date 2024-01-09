@@ -212,7 +212,9 @@ namespace MSetExplorer
 			{
 				if (value != _selectionLineUnderMouse)
 				{
+					if (_selectionLineUnderMouse != null) _selectionLineUnderMouse.CbsSelectionLine.IsUnderMouse = false;
 					_selectionLineUnderMouse = value;
+					if (_selectionLineUnderMouse != null) _selectionLineUnderMouse.CbsSelectionLine.IsUnderMouse = true;
 					Debug.WriteLine($"The ItemUnderMouse is now: {ItemUnderMouse}.");
 				}
 			}

@@ -1,0 +1,25 @@
+When selecting multiple items with the mouse.
+
+Single Item Selected.
+1	---->	2nd item selected via Control
+			Remember the last item selected
+			
+1.1		---> 3rd item selected via Control, toggle isSelected -> true --> false & false --> true.
+			Remember the last item selected.
+			---> #1
+
+1.2		---> Item selected via shift
+			the range is defined as the last item selected, the current item selected and all items in between
+			the last item selected becomes the 'home' item
+			---> #2
+
+2	---->	Range of items selected via shift
+			Remember the 'home' item.
+
+2.1		---> Item selected via Control, toggle isSelected -> true --> false & false --> true.
+			Remember the last item selected.
+			---> #1
+
+
+2.2		---> Item selected via Shift, the home position is selected, the current item is selected and all items in between.
+			---> #2
