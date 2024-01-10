@@ -371,6 +371,28 @@ namespace MSetExplorer
 			}
 		}
 
+
+		// Highlight (only) the Selected Color Band - Alt H
+		private void HighlightSelected_Checked(object sender, RoutedEventArgs e)
+		{
+			var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
+			if (_vm != null)
+			{
+				_vm.HighlightSelectedBand = highlightSelectedCb;
+			}
+		}
+
+		//// High Light (only) the Selected Color Band - Alt H
+		//private void HighlightSelected_Unchecked(object sender, RoutedEventArgs e)
+		//{
+		//	var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
+		//	if (_vm != null)
+		//	{
+		//		_vm.HighlightSelectedBand = highlightSelectedCb;
+		//	}
+		//}
+
+		// Show Details F4
 		private void ShowDetails_Click(object sender, RoutedEventArgs e)
 		{
 			string msg;
@@ -403,6 +425,7 @@ namespace MSetExplorer
 
 			_ = MessageBox.Show(msg);
 		}
+
 
 		private ColorBand? GetColorBandAtMousePosition()
 		{

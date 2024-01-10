@@ -762,7 +762,7 @@ namespace MSetExplorer
 			}
 		}
 
-		// High Light (only) the Selected Color Band
+		// Highlight (only) the Selected Color Band
 		private void HighlightSelected_Checked(object sender, RoutedEventArgs e)
 		{
 			var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;

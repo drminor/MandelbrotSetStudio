@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 		private bool _colorBandUserControlHasErrors;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -86,6 +86,9 @@ namespace MSetExplorer
 			_colorBandSet = new ColorBandSet();
 
 			_editMode = ColorBandSetEditMode.Bands;
+			_useEscapeVelocities = true; 
+			_useRealTimePreview = true;
+			_highlightSelectedBand = false;
 
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
@@ -1530,7 +1533,7 @@ namespace MSetExplorer
 
 		#region Unused
 
-		//private void UpdateSelectionLinePosition(int colorBandIndex, int newCutoff)
+		//private void UpdateSectionLinePosition(int colorBandIndex, int newCutoff)
 		//{
 		//	if (ListViewItems.Count == 0)
 		//	{
@@ -1539,12 +1542,12 @@ namespace MSetExplorer
 
 		//	if (colorBandIndex < 0 || colorBandIndex > ListViewItems.Count - 2)
 		//	{
-		//		throw new InvalidOperationException($"CbsListView::UpdateSelectionLinePosition. The ColorBandIndex must be between 0 and {ListViewItems.Count - 1}, inclusive.");
+		//		throw new InvalidOperationException($"CbsListView::UpdateSectionLinePosition. The ColorBandIndex must be between 0 and {ListViewItems.Count - 1}, inclusive.");
 		//	}
 
-		//	Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. About to call SelectionLine::UpdatePosition. Index = {colorBandIndex}");
+		//	Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. About to call SectionLine::UpdatePosition. Index = {colorBandIndex}");
 
-		//	var selectionLine = ListViewItems[colorBandIndex].CbsSelectionLine;
+		//	var selectionLine = ListViewItems[colorBandIndex].CbsSectionLine;
 
 		//	if (ScreenTypeHelper.IsDoubleChanged(newCutoff, selectionLine.XPosition))
 		//	{

@@ -80,7 +80,7 @@
                 <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
                 <Separator/>
                 <MenuItem Header="_Use EscapeVelocities" IsCheckable="True" x:Name="mnuItem_UseEscapeVelocities" Checked="UseEscapeVelocities_Checked" Unchecked="UseEscapeVelocities_Unchecked" IsChecked="True"/>
-                <MenuItem Header="Use _RealTimePreview" IsCheckable="True" x:Name="mnuItem_UseRealTimePreview" Checked="UseRealTimePreview_Checked" Unchecked="UseRealTimePreview_Unchecked" IsChecked="False"/>
+                <MenuItem Header="Use _RealTimePreview" IsCheckable="True" x:Name="mnuItem_UseRealTimePreview" Checked="UseRealTimePreview_Checked" Unchecked="UseRealTimePreview_Unchecked" IsChecked="True"/>
                 <MenuItem Header="Highlight Selected Band" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Unchecked" IsChecked="False"/>
             </MenuItem>
 

@@ -53,6 +53,8 @@ namespace MSetExplorer
 
 		private bool _isCurrent;
 		private bool _isSelected;
+		private bool _isUnderMouse;
+
 		private bool _parentIsFocused;
 
 		#endregion
@@ -214,6 +216,19 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool IsUnderMouse
+		{
+			get => _isUnderMouse;
+			set
+			{
+				if (value != _isUnderMouse)
+				{
+					_isUnderMouse = value;
+					UpdateSelectionBackground();
+				}
+			}
+		}
+
 		public bool ParentIsFocused
 		{
 			get => _parentIsFocused;
@@ -253,7 +268,7 @@ namespace MSetExplorer
 			}
 			catch
 			{
-				Debug.WriteLine("CbsSelectionLine encountered an exception in TearDown.");
+				Debug.WriteLine("CbsSectionLine encountered an exception in TearDown.");
 			}
 		}
 
@@ -342,7 +357,9 @@ namespace MSetExplorer
 
 		private void Resize(double xPosition, double width, ColorBandLayoutViewModel layout)
 		{
-			var isHighLighted = IsSelected || (ParentIsFocused && IsCurrent);
+			var isCurrent = _isCurrent || _isUnderMouse;
+
+			var isHighLighted = IsSelected || (ParentIsFocused && isCurrent);
 
 			_geometry.Rect = BuildRectangle(xPosition, width, isHighLighted, layout);
 			_selGeometry.Rect = BuildSelRectangle(xPosition, width, layout);
@@ -412,13 +429,15 @@ namespace MSetExplorer
 
 		private void UpdateSelectionBackground()
 		{
-			var isHighLighted = ParentIsFocused && (IsCurrent || IsSelected);
+			var isCurrent = _isCurrent || _isUnderMouse;
+
+			var isHighLighted = ParentIsFocused && (isCurrent || IsUnderMouse || IsSelected);
 
 			_geometry.Rect = BuildRectangle(XPosition, Width, isHighLighted, _colorBandLayoutViewModel);
 
-			_selRectanglePath.Stroke = GetSelStroke(_isCurrent, _isSelected, _parentIsFocused);
+			_selRectanglePath.Stroke = GetSelStroke(isCurrent, _isSelected, _parentIsFocused);
 
-			_selRectanglePath.Fill = GetSelBackGround(_isCurrent, _isSelected, _parentIsFocused);
+			_selRectanglePath.Fill = GetSelBackGround(isCurrent, _isSelected, _parentIsFocused);
 		}
 
 		private Brush GetSelBackGround(bool isCurrent, bool isSelected, bool parentIsFocused)

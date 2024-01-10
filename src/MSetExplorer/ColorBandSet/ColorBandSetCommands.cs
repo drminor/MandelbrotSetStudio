@@ -53,9 +53,21 @@ namespace MSetExplorer
             }
        );
 
-        //public static readonly RoutedUICommand Settings
-        //    = new("Settings", "Settings", typeof(ColorBandSetCommands));
-    }
+		public static readonly RoutedUICommand HighlightSelectedBand = new(
+	        text: "Highlight Selected Band",
+	        name: "HighlightSelectedBand",
+	        ownerType: typeof(ColorBandSetCommands),
+	        inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.H,
+					ModifierKeys.Alt
+				)
+			}
+        );
+
+		//public static readonly RoutedUICommand Settings
+		//    = new("Settings", "Settings", typeof(ColorBandSetCommands));
+	}
 
 
 

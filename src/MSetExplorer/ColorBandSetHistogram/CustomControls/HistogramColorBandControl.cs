@@ -297,24 +297,24 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public int? GetIndexOfItemUnderMouse(Point hitPoint)
-		{
-			if (double.IsNaN(hitPoint.X) || double.IsNaN(hitPoint.Y))
-			{
-				return null;
-			}
+		//public int? GetIndexOfItemUnderMouse(Point hitPoint)
+		//{
+		//	if (double.IsNaN(hitPoint.X) || double.IsNaN(hitPoint.Y))
+		//	{
+		//		return null;
+		//	}
 
-			var x = _cbsListView?.ItemAtMousePosition(hitPoint) ?? null;
+		//	var x = _cbsListView?.ItemAtMousePosition(hitPoint) ?? null;
 
-			if (x != null)
-			{
-				return x.Value.Item1.CbsRectangle.ColorBandIndex;
-			}
-			else
-			{
-				return null;
-			}
-		}
+		//	if (x != null)
+		//	{
+		//		return x.Value.Item1.CbsRectangle.ColorBandIndex;
+		//	}
+		//	else
+		//	{
+		//		return null;
+		//	}
+		//}
 
 		public ColorBand? GetItemUnderMouse(Point hitPoint)
 		{
@@ -336,15 +336,15 @@ namespace MSetExplorer
 			}
 		}
 
-		//public void ShowSelectionLines(bool leftMouseButtonIsPressed)
+		//public void ShowSectionLines(bool leftMouseButtonIsPressed)
 		//{
-		//	_cbsListView?.ShowSelectionLines(leftMouseButtonIsPressed);
+		//	_cbsListView?.ShowSectionLines(leftMouseButtonIsPressed);
 		//	_mouseIsEntered = true;
 		//}
 
-		//public void HideSelectionLines(bool leftMouseButtonIsPressed)
+		//public void HideSectionLines(bool leftMouseButtonIsPressed)
 		//{
-		//	_cbsListView?.HideSelectionLines(leftMouseButtonIsPressed);
+		//	_cbsListView?.HideSectionLines(leftMouseButtonIsPressed);
 		//	_mouseIsEntered = false;
 		//}
 
@@ -505,7 +505,7 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
 
-			if (_cbsListView?.IsDragSelectionLineInProgress != true)
+			if (_cbsListView?.IsDragSectionLineInProgress != true)
 			{
 				if (e.Key == Key.Left)
 				{
@@ -527,7 +527,7 @@ namespace MSetExplorer
 		private void ShowContextMenu(CbsListViewItem sender, ColorBandSelectionType colorBandSelectionType)
 		{
 			ContextMenu.IsOpen = true;
-			//MessageBox.Show($"There will, one day, be a context menu here. Index: {sender.CbsSelectionLine.ColorBandIndex}; Source: {colorBandSelectionType}.");
+			//MessageBox.Show($"There will, one day, be a context menu here. Index: {sender.CbsSectionLine.ColorBandIndex}; Source: {colorBandSelectionType}.");
 		}
 
 		protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)

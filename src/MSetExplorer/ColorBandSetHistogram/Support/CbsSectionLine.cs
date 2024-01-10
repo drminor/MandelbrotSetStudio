@@ -8,7 +8,7 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
-	internal class CbsSelectionLine
+	internal class CbsSectionLine
 	{
 		#region Private Fields
 
@@ -36,7 +36,7 @@ namespace MSetExplorer
 
 		private DragState _dragState;
 
-		private double _originalSelectionLinePosition;
+		private double _originalSectionLinePosition;
 
 		private double? _leftWidth;
 		private double? _rightWidth;
@@ -52,7 +52,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsSelectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, Action<int, ColorBandSelectionType> requestContextMenuShown)
+		public CbsSectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, Action<int, ColorBandSelectionType> requestContextMenuShown)
 		{
 			_isSelected = isSelected;
 			_isUnderMouse = false;
@@ -77,7 +77,7 @@ namespace MSetExplorer
 			_requestContextMenuShown = requestContextMenuShown;
 
 			_selectionLinePosition = _xPosition * _scaleX;
-			_originalSelectionLinePosition = _selectionLinePosition;
+			_originalSectionLinePosition = _selectionLinePosition;
 
 			_leftWidth = null;
 			_rightWidth = null;
@@ -147,8 +147,8 @@ namespace MSetExplorer
 			{
 				new Point(xPosition, layout.CbrElevation),				// The bottom of the arrow is positioned at the top of the band display
 				new Point(xPosition - _topArrowHalfWidth, 0),	// Top, left is at the top of the control
-				//new Point(xPosition + _topArrowHalfWidth, 0),	// Top, right is at the top of the control and leaning forward into the next band
-				new Point(xPosition, 0),	// Top, right is at the top of the control
+				new Point(xPosition + _topArrowHalfWidth, 0),	// Top, right is at the top of the control and leaning forward into the next band
+				//new Point(xPosition, 0),	// Top, right is at the top of the control
 			};
 
 			return points;
@@ -158,7 +158,7 @@ namespace MSetExplorer
 
 		#region Events
 
-		internal event EventHandler<CbsSelectionLineMovedEventArgs>? SelectionLineMoved;
+		internal event EventHandler<CbsSectionLineMovedEventArgs>? SectionLineMoved;
 
 		#endregion
 
@@ -188,7 +188,7 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsDoubleChanged(value, _xPosition))
 				{
 					_xPosition = value;
-					SelectionLinePosition = _xPosition * _scaleX;
+					SectionLinePosition = _xPosition * _scaleX;
 				}
 			}
 		}
@@ -202,12 +202,12 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsDoubleChanged(value, _scaleX))
 				{
 					_scaleX = value;
-					SelectionLinePosition = _xPosition * _scaleX;
+					SectionLinePosition = _xPosition * _scaleX;
 				}
 			}
 		}
 
-		public double SelectionLinePosition
+		public double SectionLinePosition
 		{
 			get => _selectionLinePosition;
 			set
@@ -272,11 +272,12 @@ namespace MSetExplorer
 				if (value != _isUnderMouse)
 				{
 					_isUnderMouse = value;
+
 					_topArrow.Visibility = _isUnderMouse ? Visibility.Visible : Visibility.Hidden;
+					_dragLine.StrokeThickness = _isUnderMouse ? 3.0 : 2.0;
 				}
 			}
 		}
-
 
 		public bool ParentIsFocused
 		{
@@ -294,7 +295,11 @@ namespace MSetExplorer
 
 					_dragLine.Stroke = DEFAULT_STROKE;
 					_dragLine.Y1 = _colorBandLayoutViewModel.CbrElevation; // 0;
-					_topArrow.Visibility = Visibility.Hidden;
+					_topArrow.Visibility = _parentIsFocused
+						?  _isUnderMouse
+							? Visibility.Visible
+							: Visibility.Hidden
+						: Visibility.Hidden;
 
 
 				}
@@ -315,7 +320,7 @@ namespace MSetExplorer
 			_leftWidth = leftWidth;
 			_rightWidth = rightWidth;
 			_updatingPrevious = updatingPrevious;
-			_originalSelectionLinePosition = SelectionLinePosition;
+			_originalSectionLinePosition = SectionLinePosition;
 
 			DragState = DragState.Begun;
 		}
@@ -345,7 +350,7 @@ namespace MSetExplorer
 			}
 			catch
 			{
-				Debug.WriteLine("CbsSelectionLine encountered an exception in TearDown.");
+				Debug.WriteLine("CbsSectionLine encountered an exception in TearDown.");
 			}
 		}
 
@@ -396,7 +401,7 @@ namespace MSetExplorer
 			var result = Mouse.Capture(_canvas);
 			if (result)
 			{
-				Debug.WriteLine($"Beginning to Drag the SelectionLine for ColorBandIndex: {ColorBandIndex}, LeftWidth: {_leftWidth}, RightWidth: {_rightWidth}.");
+				Debug.WriteLine($"Beginning to Drag the SectionLine for ColorBandIndex: {ColorBandIndex}, LeftWidth: {_leftWidth}, RightWidth: {_rightWidth}.");
 				_canvas.LostMouseCapture += Canvas_LostMouseCapture;
 			}
 			else
@@ -422,7 +427,7 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(ColorBandLayoutViewModel.ContentScale))
 			{
 				ScaleX = _colorBandLayoutViewModel.ContentScale.Width;
-				_originalSelectionLinePosition = SelectionLinePosition;
+				_originalSectionLinePosition = SectionLinePosition;
 			}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
 			{
@@ -439,7 +444,7 @@ namespace MSetExplorer
 			var pos = e.GetPosition(relativeTo: _canvas);
 			e.Handled = true;
 
-			var amount = pos.X - _originalSelectionLinePosition;
+			var amount = pos.X - _originalSectionLinePosition;
 
 			if (DragState == DragState.Begun)
 			{
@@ -455,14 +460,14 @@ namespace MSetExplorer
 
 			if (IsNewPositionOk(amount))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSelectionLinePosition}.");
-				SelectionLinePosition = pos.X;
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSectionLinePosition}.");
+				SectionLinePosition = pos.X;
 
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbsSelectionLineDragOperation.Move));
+				SectionLineMoved?.Invoke(this, new CbsSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbsSectionLineDragOperation.Move));
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. UpdateColorBandWidth returned false. The XPos is {pos.X}. The original position is {_originalSelectionLinePosition}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSectionLine. UpdateColorBandWidth returned false. The XPos is {pos.X}. The original position is {_originalSectionLinePosition}.");
 			}
 		}
 
@@ -470,7 +475,7 @@ namespace MSetExplorer
 		{
 			if (DragState == DragState.None)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. HandleMouseLeftButtonUp. Not Handling the DragState is {DragState}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSectionLine. HandleMouseLeftButtonUp. Not Handling the DragState is {DragState}.");
 				return;
 			}
 
@@ -479,19 +484,19 @@ namespace MSetExplorer
 
 			if (!mouseWasOverCanvas)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. The mouse is not over the canvas, cancelling.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsSectionLine is getting a MouseLeftButtonUp event. The mouse is not over the canvas, cancelling.");
 				CancelDragInternal();
 				return;
 			}
 
 			if (Keyboard.IsKeyDown(Key.Escape))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. The Escape Key is Pressed, cancelling.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsSectionLine is getting a MouseLeftButtonUp event. The Escape Key is Pressed, cancelling.");
 				CancelDragInternal();
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsSelectionLine is getting a MouseLeftButtonUp event. Completing the Drag.");
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsSectionLine is getting a MouseLeftButtonUp event. Completing the Drag.");
 				var dragCompleted = CompleteDrag();
 
 				if (dragCompleted)
@@ -500,7 +505,7 @@ namespace MSetExplorer
 				}
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. HandleMouseLeftButtonUp. MouseWasOverCanvas: {mouseWasOverCanvas}. The Keyboard focus is now on {Keyboard.FocusedElement}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"CbsSectionLine. HandleMouseLeftButtonUp. MouseWasOverCanvas: {mouseWasOverCanvas}. The Keyboard focus is now on {Keyboard.FocusedElement}.");
 		}
 
 		private void Handle_TopArrowMouseUp(object sender, MouseButtonEventArgs e)
@@ -525,7 +530,7 @@ namespace MSetExplorer
 
 		private void Canvas_LostMouseCapture(object sender, MouseEventArgs e)
 		{
-			Debug.WriteLine($"WARNING: CbsSelectionLine Lost the MouseCapture. Source: {e.Source}. Sender: {sender}. Original Source: {e.MouseDevice}");
+			Debug.WriteLine($"WARNING: CbsSectionLine Lost the MouseCapture. Source: {e.Source}. Sender: {sender}. Original Source: {e.MouseDevice}");
 			CancelDrag();
 		}
 
@@ -535,11 +540,11 @@ namespace MSetExplorer
 
 		private bool CompleteDrag()
 		{
-			var distance = Math.Abs(SelectionLinePosition - _originalSelectionLinePosition);
+			var distance = Math.Abs(SectionLinePosition - _originalSectionLinePosition);
 
 			if (distance > MIN_SEL_DISTANCE)
 			{
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, SelectionLinePosition, _updatingPrevious, CbsSelectionLineDragOperation.Complete));
+				SectionLineMoved?.Invoke(this, new CbsSectionLineMovedEventArgs(ColorBandIndex, SectionLinePosition, _updatingPrevious, CbsSectionLineDragOperation.Complete));
 				DragState = DragState.None;
 				return true;
 			}
@@ -552,20 +557,20 @@ namespace MSetExplorer
 
 		private void CancelDragInternal()
 		{
-			if (SelectionLinePosition != _originalSelectionLinePosition)
+			if (SectionLinePosition != _originalSectionLinePosition)
 			{
-				SelectionLinePosition = _originalSelectionLinePosition;
+				SectionLinePosition = _originalSectionLinePosition;
 			}
 
 			if (DragState == DragState.InProcess)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. CancelDragInternal. Drag was InProcess, raising SelectionLineMoved with Operation = Cancel.");
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalSelectionLinePosition, _updatingPrevious, CbsSelectionLineDragOperation.Cancel));
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSectionLine. CancelDragInternal. Drag was InProcess, raising SectionLineMoved with Operation = Cancel.");
+				SectionLineMoved?.Invoke(this, new CbsSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbsSectionLineDragOperation.Cancel));
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbsSelectionLine. CancelDragInternal. Drag was only Begun, raising SelectionLineMoved with Operation = NotStarted.");
-				SelectionLineMoved?.Invoke(this, new CbsSelectionLineMovedEventArgs(ColorBandIndex, _originalSelectionLinePosition, _updatingPrevious, CbsSelectionLineDragOperation.NotStarted));
+				Debug.WriteLineIf(_useDetailedDebug, $"CbsSectionLine. CancelDragInternal. Drag was only Begun, raising SectionLineMoved with Operation = NotStarted.");
+				SectionLineMoved?.Invoke(this, new CbsSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbsSectionLineDragOperation.NotStarted));
 			}
 
 			DragState = DragState.None;
@@ -629,12 +634,12 @@ namespace MSetExplorer
 		//{
 		//	var position = e.GetPosition(relativeTo: _canvas);
 
-		//	Debug.WriteLine($"The CbsSelectionLine is getting a Mouse Left Button Down at {position}.");
+		//	Debug.WriteLine($"The CbsSectionLine is getting a Mouse Left Button Down at {position}.");
 		//}
 
 		//private void SelectedArea_MouseWheel(object sender, MouseWheelEventArgs e)
 		//{
-		//	Debug.WriteLine("The CbsSelectionLine received a MouseWheel event.");
+		//	Debug.WriteLine("The CbsSectionLine received a MouseWheel event.");
 		//}
 
 		#endregion

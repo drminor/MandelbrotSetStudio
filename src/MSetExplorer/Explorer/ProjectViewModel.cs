@@ -496,18 +496,6 @@ namespace MSetExplorer
 			return newMapAreaInfo;
 		}
 
-		[Conditional("DEBUG2")]
-		private void CheckProvidedMapAreaInfo(MapCenterAndDelta currentMapAreaInfo)
-		{
-			var currentJob = CurrentProject?.CurrentJob;
-
-			Debug.Assert(currentJob != null && !currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
-
-			var mapAreaInfo = currentJob.MapAreaInfo;
-
-			Debug.Assert(currentMapAreaInfo.Equals(mapAreaInfo), "The provided MapAreaInfo is not the same as the Current Project's Curernt Job's MapAreaInfo.");
-		}
-
 		public bool GoBack(bool skipPanJobs)
 		{
 			var result = CurrentProject?.GoBack(skipPanJobs) ?? false;
@@ -621,6 +609,10 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 		}
 
+		#endregion
+
+		#region Diagnostics
+
 		[Conditional("DEBUG2")]
 		private void CheckCurrentProject(IJobOwner jobOwner)
 		{
@@ -635,6 +627,18 @@ namespace MSetExplorer
 					Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
 				}
 			}
+		}
+
+		[Conditional("DEBUG2")]
+		private void CheckProvidedMapAreaInfo(MapCenterAndDelta currentMapAreaInfo)
+		{
+			var currentJob = CurrentProject?.CurrentJob;
+
+			Debug.Assert(currentJob != null && !currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
+
+			var mapAreaInfo = currentJob.MapAreaInfo;
+
+			Debug.Assert(currentMapAreaInfo.Equals(mapAreaInfo), "The provided MapAreaInfo is not the same as the Current Project's Curernt Job's MapAreaInfo.");
 		}
 
 		#endregion
