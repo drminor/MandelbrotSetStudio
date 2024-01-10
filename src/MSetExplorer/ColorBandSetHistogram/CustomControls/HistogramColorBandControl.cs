@@ -490,10 +490,9 @@ namespace MSetExplorer
 
 		private void HandleKeyDown(object sender, KeyEventArgs e)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling KeyDown. The Key is {e.Key}. The sender is {sender}.");
-
 			if (e.Key == Key.Escape && _cbsListView != null)
 			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling KeyDown. The Key is {e.Key}. The sender is {sender}.");
 				if (_cbsListView.CancelDrag())
 				{
 					e.Handled = true;
@@ -503,17 +502,17 @@ namespace MSetExplorer
 
 		private void Handle_PreviewKeyUp(object sender, KeyEventArgs e)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
-
 			if (_cbsListView?.IsDragSectionLineInProgress != true)
 			{
 				if (e.Key == Key.Left)
 				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
 					_vm?.TryMoveCurrentColorBandToPrevious();
 					e.Handled = true;
 				}
 				else if (e.Key == Key.Right)
 				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
 					_vm?.TryMoveCurrentColorBandToNext();
 					e.Handled = true;
 				}

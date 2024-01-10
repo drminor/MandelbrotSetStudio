@@ -119,7 +119,7 @@ namespace MSetExplorer
 
 		public double CbrElevation => _colorBandLayoutViewModel.CbrElevation;
 
-		public bool IsDragSectionLineInProgress => _sectionLineBeingDragged != null;
+		public bool IsDragSectionLineInProgress => _sectionLineBeingDragged != null && _sectionLineBeingDragged.DragState != DragState.None;
 
 		public bool ParentIsFocused
 		{
@@ -278,7 +278,6 @@ namespace MSetExplorer
 					//e.Handled = true;
 				}
 			}
-
 		}
 
 		private void Handle_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -408,7 +407,10 @@ namespace MSetExplorer
 				}
 			}
 
-
+			if (e.Operation == CbsSectionLineDragOperation.NotStarted)
+			{
+				return;
+			}
 
 			if (_sectionLineBeingDragged.DragState != DragState.InProcess)
 			{

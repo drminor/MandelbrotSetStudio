@@ -1014,7 +1014,7 @@ namespace MSetExplorer
 		{
 			if (sender is ColorBand colorBandToUpdate)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:CurrentColorBand Prop: {e.PropertyName} is changing.");
+				//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:CurrentColorBand Prop: {e.PropertyName} is changing.");
 			}
 			else
 			{
@@ -1039,6 +1039,17 @@ namespace MSetExplorer
 
 					//ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
 					RaiseUpdateRequestThrottled(newColorBandSet);
+				}
+			}
+			else
+			{
+				if (e.PropertyName == nameof(ColorBand.IsColorSelected))
+				{
+					Debug.WriteLine($"IsColorSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsColorSelected}.");
+				}
+				else if (e.PropertyName == nameof(ColorBand.IsCutoffSelected))
+				{
+					Debug.WriteLine($"IsCutoffSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsCutoffSelected}.");
 				}
 			}
 		}
