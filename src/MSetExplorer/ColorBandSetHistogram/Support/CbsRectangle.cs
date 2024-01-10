@@ -1,13 +1,11 @@
 ﻿using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -17,18 +15,18 @@ namespace MSetExplorer
 
 		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
-		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.LightBlue);
-		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Colors.LightSlateGray);
-
-		private static readonly Brush IS_CURRENT_AND_IS_SELECTED_BACKGROUND = IS_SELECTED_BACKGROUND; // new SolidColorBrush(Colors.SeaGreen);
+		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
+		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Colors.LightGray);
 
 		private static readonly Brush DEFAULT_STROKE = new SolidColorBrush(Colors.Transparent);
-		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Colors.DarkBlue);
-		private static readonly Brush IS_SELECTED_STROKE = new SolidColorBrush(Colors.LightBlue);
-		private static readonly Brush IS_CURRENT_AND_IS_SELECTED_STROKE = IS_SELECTED_STROKE; // new SolidColorBrush(Colors.SeaGreen);
+		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Colors.DeepSkyBlue);
+		private static readonly Brush IS_SELECTED_STROKE = new SolidColorBrush(Colors.PowderBlue);
+		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = new SolidColorBrush(Colors.LightGray);
 
+		// For diagnostics
+		//private static readonly Brush IS_CURRENT_AND_IS_SELECTED_BACKGROUND = IS_SELECTED_BACKGROUND; // new SolidColorBrush(Colors.SeaGreen);
+		//private static readonly Brush IS_CURRENT_AND_IS_SELECTED_STROKE = IS_SELECTED_STROKE; // new SolidColorBrush(Colors.SeaGreen);
 
-		private static readonly Brush INACTIVE_STROKE = new SolidColorBrush(Colors.Transparent);
 
 		private const double SEL_RECTANGLE_STROKE_THICKNESS = 2.0;
 
@@ -344,7 +342,7 @@ namespace MSetExplorer
 
 		private void Resize(double xPosition, double width, ColorBandLayoutViewModel layout)
 		{
-			var isHighLighted = ParentIsFocused && (IsCurrent || IsSelected);
+			var isHighLighted = IsSelected || (ParentIsFocused && IsCurrent);
 
 			_geometry.Rect = BuildRectangle(xPosition, width, isHighLighted, layout);
 			_selGeometry.Rect = BuildSelRectangle(xPosition, width, layout);
@@ -356,17 +354,21 @@ namespace MSetExplorer
 			var height = layout.CbrHeight;
 			var rect = BuildRect(xPosition, yPosition, width, height, layout.ContentScale);
 
-			//var result = rect.Width > 7 ? Rect.Inflate(rect, -3, 0) : rect; // Decrease the width by 2, if the width > 3. Decrease the height by 2
-
 			Rect result;
 
 			if (isHighLighted && rect.Width > 7)
 			{
-				result = Rect.Inflate(rect, -3, -1);    // Decrease the width by 4, if the width > 7. Decrease the height by 2
+				// Reduce the height to accomodate the outside border. The outside border is 1 pixel thick.
+				// Reduce the width to accomodate the section line and the selection background rectangle (SelRectangle).
+				// The section line is 2 pixels thick, but we only need to get out of the way of 1/2 this distance.
+				// The SelRectangle has a border of 2 pixels. 1 + 2 = 3. Must do this for the right and left side for a total of 6
+				// 
+				// Decrease the width by 6, if the width > 7. Decrease the height by 2
+				result = Rect.Inflate(rect, -3, -1);    
 			}
 			else
 			{
-				result = Rect.Inflate(rect, 0, -1);     // Decrease the height by 2
+				result = Rect.Inflate(rect, 0, -1);
 			}
 
 			return result;
@@ -378,16 +380,32 @@ namespace MSetExplorer
 			var height = layout.ControlHeight;
 			var rect = BuildRect(xPosition, yPosition, width, height, layout.ContentScale);
 
-			var result = rect.Width > 7 ? Rect.Inflate(rect, -2, -1) : Rect.Inflate(rect, 0, -1); // Decrease the width by 2, if the width > 3. Decrease the height by 2
+			Rect result;
+
+			// The Stroke width increases the size of the rectangle,
+			// subtract 2 pixels on both the left and right so that the border fits between the section lines.
+			//
+			// Decrease the width by 4, if the width > 7, Decrease the height by 2 
+			if (rect.Width > 7)
+			{
+				result = Rect.Inflate(rect, -2, -1);
+			}
+			else
+			{
+				result = Rect.Inflate(rect, 0, -1);
+			}
 
 			return result;
 		}
 
-		private Rect BuildRect(double xPosition, double yPosition, double width, double height, SizeDbl scaleSize)
+		private Rect BuildRect(double xPosition, double yPosition, double width, double height, SizeDbl contentScale)
 		{
-			var area = new RectangleDbl(new PointDbl(xPosition, yPosition), new SizeDbl(width, height));
-			var scaledArea = area.Scale(scaleSize);
-			var result = ScreenTypeHelper.ConvertToRect(scaledArea);
+			//var area = new RectangleDbl(new PointDbl(xPosition, yPosition), new SizeDbl(width, height));
+			//var scaledArea = area.Scale(scaleSize);
+			//var result = ScreenTypeHelper.ConvertToRect(scaledArea);
+
+			var result = new Rect(new Point(xPosition, yPosition), new Size(width, height));
+			result.Scale(contentScale.Width, contentScale.Height);
 
 			return result;
 		}
@@ -409,13 +427,13 @@ namespace MSetExplorer
 
 			if (parentIsFocused)
 			{
-				if (isCurrent)
+				if (isSelected)
 				{
-					result = IsSelected ? IS_CURRENT_AND_IS_SELECTED_BACKGROUND : IS_CURRENT_BACKGROUND;
+					result = IS_SELECTED_BACKGROUND;
 				}
 				else
 				{
-					result = IsSelected ? IS_SELECTED_BACKGROUND : DEFAULT_BACKGROUND;
+					result = isCurrent ? IS_CURRENT_BACKGROUND : DEFAULT_BACKGROUND;
 				}
 			}
 			else
@@ -434,22 +452,25 @@ namespace MSetExplorer
 			{
 				if (isCurrent)
 				{
-					result = IsSelected ? IS_CURRENT_AND_IS_SELECTED_STROKE : IS_CURRENT_STROKE;
+					result = IS_CURRENT_STROKE;
 				}
 				else
 				{
-					result = IsSelected ? IS_SELECTED_STROKE : DEFAULT_STROKE;
+					result = isSelected ? IS_SELECTED_STROKE : DEFAULT_STROKE;
 				}
 			}
 			else
 			{
-				result = INACTIVE_STROKE;
+				result = isSelected ? IS_SELECTED_INACTIVE_STROKE : DEFAULT_STROKE;
 			}
 
 			return result;
 		}
 
 		#endregion
+
+		//var isHighLighted = IsSelected || (ParentIsFocused && IsCurrent);
+
 
 		#region Diag
 
