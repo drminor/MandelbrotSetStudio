@@ -438,7 +438,7 @@ namespace MSetExplorer
 
 		private void NotifySelectionChange()
 		{
-			_isSelectedChangedCallback(ColorBandIndex, ColorBandSelectionType.Color);
+			_isSelectedChangedCallback(ColorBandIndex, ColorBandSelectionType.Band);
 		}
 
 		private void UpdateSelectionBackground()

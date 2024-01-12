@@ -35,7 +35,10 @@ namespace MSetExplorer
 			// Just for diagnostics
 			SizeChanged += CbsHistogramControl_SizeChanged;
 
-			Focusable = true;
+			//Focusable = true;
+
+			//var areWeFocusable = Focusable;
+			//var areWeATabStop = IsTabStop;
 
 			InitializeComponent();
 		}
@@ -54,7 +57,8 @@ namespace MSetExplorer
 				// Starting with ContentScale = 1.
 				// The (logical) ViewportSize on the VM is the same size as the UnscaledViewportSize on the PanAndZoom control. 
 				var ourSize = HistogramColorBandControl1.ViewportSize;
-				
+
+				PanAndZoomControl1.EnableContentOffsetUpdateFromScale = false;
 				PanAndZoomControl1.UnscaledViewportSize = ourSize;
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 				_vm.ContentViewportSize = _vm.ViewportSize;
@@ -157,12 +161,14 @@ namespace MSetExplorer
 
 		private void ContentScaleChanged(object? sender, ScaledImageViewInfo e)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, "\n========== The CbsHistogramControl is handling the PanAndZoom control's ContentScaleChanged event.");
+			//Debug.WriteLineIf(_useDetailedDebug, "\n========== The CbsHistogramControl is handling the PanAndZoom control's ContentScaleChanged event.");
+			Debug.WriteLine("\n========== The CbsHistogramControl is handling the PanAndZoom control's ContentScaleChanged event.");
 			ReportViewportChanged(e);
 
 			_vm.UpdateViewportSizePosAndScale(e.ContentViewportSize, e.ContentOffset, e.ContentScale);
 
-			Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizePosAndScale.\n");
+			//Debug.WriteLineIf(_useDetailedDebug, $"========== The CbsHistogramControl is returning from UpdatingViewportSizePosAndScale.\n");
+			Debug.WriteLine($"========== The CbsHistogramControl is returning from UpdatingViewportSizePosAndScale.\n");
 		}
 
 		private void ContentOffsetChanged(object? sender, EventArgs e)
@@ -182,12 +188,33 @@ namespace MSetExplorer
 
 		private void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			// ColorBandsView
-			if (e.PropertyName == nameof(ICbsHistogramViewModel.ColorBandsView))
+			// IsEnabled
+			if (e.PropertyName == nameof(ICbsHistogramViewModel.IsEnabled))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is updating the HistogramColorBandControl's ColorBandView.");
+				if (_vm.IsEnabled)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is being enabled. Setting the HistogramColorBandControl's ColorBandView.");
+					HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is being disabled. Setting the HistogramColorBandControl's ColorBandView to an empty view.");
+					HistogramColorBandControl1.ColorBandsView = ColorBandSetViewHelper.GetEmptyListCollectionView();
+				}
+			}
 
-				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
+			// ColorBandsView
+			else if (e.PropertyName == nameof(ICbsHistogramViewModel.ColorBandsView))
+			{
+				if (_vm.IsEnabled)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is updating the HistogramColorBandControl's ColorBandView.");
+					HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is NOT updating the HistogramColorBandControl's ColorBandView. The ViewModel's IsEnabled property is false.");
+				}
 			}
 
 			// UseRealTimePreview
@@ -218,12 +245,36 @@ namespace MSetExplorer
 
 		private void CbsHistogramControl_GotFocus(object sender, RoutedEventArgs e)
 		{
+			//Keyboard.Focus(HistogramColorBandControl1);
+			//HistogramColorBandControl1.Focus();
 			HistogramColorBandControl1.ParentIsFocused = true;
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl got focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
 		}
 
 		private void CbsHistogramControl_LostFocus(object sender, RoutedEventArgs e)
 		{
+			var xx = FocusManager.GetFocusedElement(this);
+
+			string xt;
+			if (xx != null)
+			{
+				xt = xx.GetType().ToString();
+			}
+			else
+			{
+				xx = FocusManager.GetFocusedElement(Parent);
+				if (xx != null)
+				{
+					xt = xx.GetType().ToString();
+				}
+				else
+				{
+					xt = "No value";
+				}
+			}
+
+			Debug.WriteLine($"CbsHistogramControl has lost focus. The focus is now on {xt}.");
+
 			HistogramColorBandControl1.ParentIsFocused = false;
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl lost focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
 		}

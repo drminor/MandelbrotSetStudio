@@ -36,7 +36,7 @@ namespace MSetExplorer
 
 		private SizeDbl _unscaledViewportSize;
 
-		private bool _enableContentOffsetUpdateFromScale = true; // true;
+		//private bool _enableContentOffsetUpdateFromScale = true; // true;
 
 		private bool _disableScrollOffsetSync = false;
 		private bool _disableContentFocusSync = false;
@@ -72,6 +72,7 @@ namespace MSetExplorer
 			ContentViewportSize = new SizeDbl();
 
 			IsMouseWheelScrollingEnabled = false;
+			EnableContentOffsetUpdateFromScale = true;
 		}
 
 		#endregion
@@ -158,6 +159,8 @@ namespace MSetExplorer
 		public VectorDbl ContentOffset => new VectorDbl((double)GetValue(ContentOffsetXProperty), (double)GetValue(ContentOffsetYProperty));
 
 		public bool IsMouseWheelScrollingEnabled { get; set; }
+
+		public bool EnableContentOffsetUpdateFromScale { get; set; }
 
 		#endregion
 
@@ -404,10 +407,15 @@ namespace MSetExplorer
 			{
 				c.UpdateContentViewportSize();
 
-				if (c._enableContentOffsetUpdateFromScale)
+				if (c.EnableContentOffsetUpdateFromScale)
 				{
 					c.UpdateContentOffsetsFromScale();
 					c.UpdateContentZoomFocus();
+				}
+				else
+				{
+					c.ContentOffsetX = c.ContentOffsetX;
+					c.ContentOffsetY = c.ContentOffsetY;
 				}
 			}
 			finally
@@ -702,7 +710,9 @@ namespace MSetExplorer
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {FmtSizeDblDp4(ContentViewportSize)}, UnscaledViewportSize: {FmtSizeDblDp4(UnscaledViewportSize)}, ConstrainedViewportSize: {FmtSizeDblDp4(_constrainedContentViewportSize)}, ContentScale: {ContentScale:n8}. MaxContentOffset: {_maxContentOffset:n8}");
 
-			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n1}, UnscaledVpSize-X: {UnscaledViewportSize.Width:n1}, ConstrainedVpSize-X: {_constrainedContentViewportSize.Width:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-X: {_maxContentOffset.Width:n1}");
+			//Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n1}, UnscaledVpSize-X: {UnscaledViewportSize.Width:n1}, ConstrainedVpSize-X: {_constrainedContentViewportSize.Width:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-X: {_maxContentOffset.Width:n1}");
+			Debug.WriteLine($"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n1}, UnscaledVpSize-X: {UnscaledViewportSize.Width:n1}, ConstrainedVpSize-X: {_constrainedContentViewportSize.Width:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-X: {_maxContentOffset.Width:n1}");
+
 			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-Y: {ContentViewportSize.Height:n1}, UnscaledVpSize-Y: {UnscaledViewportSize.Height:n1}, ConstrainedVpSize-Y: {_constrainedContentViewportSize.Height:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-Y: {_maxContentOffset.Height:n1}");
 
 			//PanAndZoomControl: UpdateContentViewportSize: w: 1874.3454526918686, h: 1852.6863496829849, UnscaledViewportSize: w: 1125, h: 1112, ConstrainedViewportSize: w: 1874.3454526918686, h: 1852.6863496829849, ContentScale: 0.600209528283228.MaxContentOffset: w: 173.65454730813144, h: 195.31365031701512
@@ -833,12 +843,15 @@ namespace MSetExplorer
 		private void UpdateContentZoomFocus()
 		{
 			ContentZoomFocus = GetContentCenter();
+			Debug.WriteLine($"Updating the ContentZoomFocus to {ContentZoomFocus}.");
 		}
 
 		private PointDbl GetContentCenter()
 		{
 			var contentOffset = new PointDbl(ContentOffsetX, ContentOffsetY);
-			var result = contentOffset.Translate(_constrainedContentViewportSize.Divide(2));
+			var halfVpSize = _constrainedContentViewportSize.Divide(2);
+			var result = contentOffset.Translate(halfVpSize);
+
 			return result;
 		}
 
@@ -850,11 +863,15 @@ namespace MSetExplorer
 
 				var newContentCenter = GetContentCenter();
 				var adjustmentVector = ContentZoomFocus.Diff(newContentCenter);
+				var xx = adjustmentVector.Divide(ContentScale);
 
 				var currentVal = new PointDbl(ContentOffset.X, ContentOffset.Y);
 				var newVal = currentVal.Translate(adjustmentVector);
+				//var newVal = currentVal.Translate(xx);
 
-				Debug.WriteLineIf(_useDetailedDebug, $"Updating ContentOffsetsFromScale. Current: {currentVal}, Adjustment: {adjustmentVector.ToString("F2")}, Result: {newVal.ToString("F2")}.");
+				//Debug.WriteLineIf(_useDetailedDebug, $"Updating ContentOffsetsFromScale. Current: {currentVal}, Adjustment: {adjustmentVector.ToString("F2")}, Result: {newVal.ToString("F2")}.");
+				//Debug.WriteLine($"Updating ContentOffsetsFromScale. Current: {currentVal}, Adjustment: {adjustmentVector.ToString("F2")}, AdjustmentXX: {xx.ToString("F2")}, Result: {newVal.ToString("F2")}.");
+				Debug.WriteLine($"Updating ContentOffsetsFromScale. Current: {currentVal}, Adjustment: {adjustmentVector.ToString("F2")}, Result: {newVal.ToString("F2")}.");
 
 				ContentOffsetX = newVal.X;
 				ContentOffsetY = newVal.Y;

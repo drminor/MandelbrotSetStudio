@@ -63,7 +63,7 @@ namespace MSetExplorer
 
 			//var isHorizontalScrollBarVisible = true;
 
-			_colorBandsView = GetEmptyListCollectionView(); 
+			_colorBandsView = ColorBandSetViewHelper.GetEmptyListCollectionView();
 			_cbsListView = null;
 
 			_canvasTranslateTransform = new TranslateTransform();
@@ -90,31 +90,23 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			PreviewMouseDown += HistogramColorBandControl_PreviewMouseDown;
+			PreviewMouseDown += Handle_PreviewMouseDown;
 			MouseEnter += Handle_MouseEnter;
-			GotFocus += HistogramColorBandControl_GotFocus;
-			//LostFocus += HistogramColorBandControl_LostFocus;
+			GotFocus += Handle_GotFocus;
+			LostFocus += Handle_LostFocus;
 
 			KeyDown += HandleKeyDown;
 			PreviewKeyDown += Handle_PreviewKeyDown;
 		}
 
-		private void HistogramColorBandControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
-		{
-			if (Keyboard.FocusedElement != this)
-			{
-				Focus();
-			}
-		}
-
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			PreviewMouseDown -= HistogramColorBandControl_PreviewMouseDown;
+			PreviewMouseDown -= Handle_PreviewMouseDown;
 
 			MouseEnter -= Handle_MouseEnter;
-			GotFocus -= HistogramColorBandControl_GotFocus;
-			//LostFocus -= HistogramColorBandControl_LostFocus;
-			
+			GotFocus -= Handle_GotFocus;
+			LostFocus -= Handle_LostFocus;
+
 			KeyDown -= HandleKeyDown;
 			PreviewKeyUp -= Handle_PreviewKeyDown;
 
@@ -455,6 +447,14 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
+		private void Handle_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (Keyboard.FocusedElement != this)
+			{
+				Focus();
+			}
+		}
+
 		private void Handle_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling the SizeChanged event.");
@@ -474,7 +474,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl on Mouse Enter the Keyboard focus is now on {Keyboard.FocusedElement}.");
 		}
 
-		private void HistogramColorBandControl_GotFocus(object sender, RoutedEventArgs e)
+		private void Handle_GotFocus(object sender, RoutedEventArgs e)
 		{
 			if (!ParentIsFocused)
 			{
@@ -483,11 +483,11 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void HistogramColorBandControl_LostFocus(object sender, RoutedEventArgs e)
-		//{
-		//	//Debug.WriteLine($"The HistogramColorBandControl has lost focus. Setting ParentIsFocused = false, it was: {ParentIsFocused}.");
-		//	//ParentIsFocused = false;
-		//}
+		private void Handle_LostFocus(object sender, RoutedEventArgs e)
+		{
+			Debug.WriteLine($"The HistogramColorBandControl has lost focus. Setting ParentIsFocused = false, it was: {ParentIsFocused}.");
+			ParentIsFocused = false;
+		}
 
 		#endregion
 
@@ -634,16 +634,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-		
-
-		private ListCollectionView GetEmptyListCollectionView()
-		{
-			var newCollection = new ObservableCollection<ColorBand>();
-			var result = (ListCollectionView)CollectionViewSource.GetDefaultView(newCollection);
-
-			return result;
-		}
-
 
 		#endregion
 

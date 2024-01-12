@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System;
 
 namespace MSetExplorer
 {
@@ -104,6 +105,8 @@ namespace MSetExplorer
 		private double GetCbrHeight(double controlHeight)
 		{
 			var cbrHeight = controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING);
+
+			cbrHeight = Math.Max(cbrHeight, 0);
 
 			return cbrHeight;
 		}

@@ -16,7 +16,22 @@ namespace MSetExplorer
 		private const double MIN_SEL_DISTANCE = 0.49;
 
 		private static readonly Brush ACTIVE_STROKE = DrawingHelper.BuildSelectionDrawingBrush();
-		private static readonly Brush DEFAULT_STROKE = new SolidColorBrush(Colors.DarkGray);
+		//private static readonly Brush DEFAULT_STROKE = new SolidColorBrush(Colors.DarkGray);
+
+
+
+		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.MediumBlue);
+		//private static readonly Brush IS_SELECTED_STROKE = IS_SELECTED_BACKGROUND;
+
+		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));   // Gray
+		//private static readonly Brush IS_SELECTED_INACTIVE_STROKE = IS_SELECTED_INACTIVE_BACKGROUND;
+
+		private static readonly Brush IS_HOVERED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff)); // Very Light Blue
+		private static readonly Brush IS_HOVERED_STROKE = ACTIVE_STROKE;
+
+		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
+		private static readonly Brush DEFAULT_STROKE = IS_SELECTED_INACTIVE_BACKGROUND;
+
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
@@ -103,7 +118,7 @@ namespace MSetExplorer
 			var result = new Line()
 			{
 				Fill = Brushes.Transparent,
-				Stroke = layout.ParentIsFocused ? ACTIVE_STROKE : DEFAULT_STROKE,
+				Stroke = DEFAULT_STROKE, // layout.ParentIsFocused ? ACTIVE_STROKE : DEFAULT_STROKE,
 				StrokeThickness = 2,
 				//StrokeDashArray = new DoubleCollection { 4, 4 },
 				//Y1 = parentIsFocused ? elevation : 0,
@@ -120,23 +135,23 @@ namespace MSetExplorer
 		{
 			var result = new Polygon()
 			{
-				Fill = GetTopArrowFill(_isSelected),
+				Fill = GetTopArrowFill(_isSelected, _isUnderMouse),
 				Stroke = Brushes.DarkGray,
 				StrokeThickness = 2,
 				Points = BuildTopAreaPoints(selectionLinePosition, layout),
 
-				//Visibility = parentIsFocused ? Visibility.Visible : Visibility.Hidden
+				Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden
 				//Visibility = Visibility.Hidden
 
-				Visibility = _isUnderMouse ? Visibility.Visible : Visibility.Hidden
+				//Visibility = _isUnderMouse ? Visibility.Visible : Visibility.Hidden
 			};
 
 			return result;
 		}
 
-		private Brush GetTopArrowFill(bool isSelected)
+		private Brush GetTopArrowFill(bool isSelected, bool isUnderMouse)
 		{
-			var result = isSelected ? Brushes.IndianRed : Brushes.Transparent;
+			var result = isSelected ? IS_SELECTED_BACKGROUND : isUnderMouse ? IS_HOVERED_BACKGROUND : DEFAULT_BACKGROUND;
 
 			return result;
 		}
@@ -259,7 +274,7 @@ namespace MSetExplorer
 				if (value != _isSelected)
 				{
 					_isSelected = value;
-					_topArrow.Fill = GetTopArrowFill(_isSelected);
+					_topArrow.Fill = GetTopArrowFill(_isSelected, _isUnderMouse);
 				}
 			}
 		}
@@ -273,8 +288,10 @@ namespace MSetExplorer
 				{
 					_isUnderMouse = value;
 
-					_topArrow.Visibility = _isUnderMouse ? Visibility.Visible : Visibility.Hidden;
-					_dragLine.StrokeThickness = _isUnderMouse ? 3.0 : 2.0;
+					//_topArrow.Visibility = _isUnderMouse ? Visibility.Visible : Visibility.Hidden;
+
+					_topArrow.Fill = GetTopArrowFill(_isSelected, _isUnderMouse);
+					_dragLine.Stroke = _isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
 				}
 			}
 		}
@@ -295,11 +312,7 @@ namespace MSetExplorer
 
 					_dragLine.Stroke = DEFAULT_STROKE;
 					_dragLine.Y1 = _colorBandLayoutViewModel.CbrElevation; // 0;
-					_topArrow.Visibility = _parentIsFocused
-						?  _isUnderMouse
-							? Visibility.Visible
-							: Visibility.Hidden
-						: Visibility.Hidden;
+					_topArrow.Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden;
 
 
 				}
@@ -537,7 +550,7 @@ namespace MSetExplorer
 
 		private void NotifySelectionChanged()
 		{
-			_isSelectedChangedCallback(ColorBandIndex, ColorBandSelectionType.Color);
+			_isSelectedChangedCallback(ColorBandIndex, ColorBandSelectionType.Cutoff);
 		}
 
 		private bool CompleteDrag()

@@ -33,7 +33,7 @@
                 </Grid.ColumnDefinitions>
 
                 <Border x:Name="ZoomSlider" Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" BorderThickness="0, 0, 0.75, 0" BorderBrush="Black" VerticalAlignment="Stretch">
-                    <local:CbshZoomControl x:Name="cbshZoom1"/>
+                    <local:CbshZoomControl x:Name="cbshZoom1" IsTabStop="False"/>
                 </Border>
 
                 <Border x:Name="PlotAreaBorder" Grid.Row="0" Grid.Column="1" BorderThickness="0, 0, 0, 0" BorderBrush="Black">

@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using System.Threading;
+﻿using System.Threading;
 
 namespace MSS.Types
 {

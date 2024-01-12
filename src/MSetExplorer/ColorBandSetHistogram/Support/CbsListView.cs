@@ -6,11 +6,13 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Xml.Schema;
 
 namespace MSetExplorer
 {
@@ -34,6 +36,7 @@ namespace MSetExplorer
 
 		private int? _selectedItemsRangeAnchorIndex;
 		private int? _indexOfMostRecentlySelectedItem;
+		private ColorBandSelectionType _mostRecentSelectionTypeUsed;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -58,6 +61,7 @@ namespace MSetExplorer
 
 			_selectedItemsRangeAnchorIndex = null;
 			_indexOfMostRecentlySelectedItem = null;
+			_mostRecentSelectionTypeUsed = ColorBandSelectionType.Band;
 
 			//_hitList = new List<Shape>();
 
@@ -185,9 +189,10 @@ namespace MSetExplorer
 		// User pressed the Left Arrow or Right Arrow key.
 		public void SelectedIndexWasMoved(int newColorBandIndex, int direction)
 		{
+			ItemUnderMouse = null;
+
 			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
-
 
 			if (shiftKeyPressed)
 			{
@@ -201,6 +206,8 @@ namespace MSetExplorer
 
 					// Make the previously visted item the anchor.
 					_selectedItemsRangeAnchorIndex = formerIndex;
+
+					// Select the previously visited item.
 					ListViewItems[formerIndex].SelectionType = ColorBandSelectionType.Band;
 
 					// Select the newly visited item.
@@ -222,7 +229,7 @@ namespace MSetExplorer
 
 						if (_selectedItemsRangeAnchorIndex != null)
 						{
-							SetItemsInSelectedRange(newColorBandIndex, _selectedItemsRangeAnchorIndex.Value);
+							SetItemsInSelectedRange(newColorBandIndex, _selectedItemsRangeAnchorIndex.Value, _mostRecentSelectionTypeUsed);
 						}
 					}
 				}
@@ -250,7 +257,7 @@ namespace MSetExplorer
 			{
 				if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbsListViewItem))
 				{
-					return (cbsListViewItem, ColorBandSelectionType.Color);
+					return (cbsListViewItem, ColorBandSelectionType.Band);
 				}
 			}
 
@@ -637,41 +644,39 @@ namespace MSetExplorer
 			{
 				if (_selectedItemsRangeAnchorIndex == null)
 				{
-					//Debug.Assert(GetSelectedItems().Count == 0, "The SelectedItemsRangeAnchorIndex is null, but there is one or more selected items.");
-
 					_selectedItemsRangeAnchorIndex = _indexOfMostRecentlySelectedItem;
-
-					//ListViewItems[colorBandIndex].SelectionType = ColorBandSelectionType.Band;
 				}
 
 				if (_selectedItemsRangeAnchorIndex != null)
 				{
-					SetItemsInSelectedRange(colorBandIndex, _selectedItemsRangeAnchorIndex.Value);
+					SetItemsInSelectedRange(colorBandIndex, _selectedItemsRangeAnchorIndex.Value, sourceType);
 				}
 			}
 			else if (controlKeyPressed)
 			{
 				var cbsListViewItem = ListViewItems[colorBandIndex];
-				if (sourceType == ColorBandSelectionType.Color)
-				{
-					cbsListViewItem.IsColorSelected = !cbsListViewItem.IsColorSelected;
-				}
-				else
-				{
-					cbsListViewItem.IsCutoffSelected = cbsListViewItem.IsCutoffSelected;
-				}
+
+				_ = Toggle(cbsListViewItem, sourceType);
 
 				_selectedItemsRangeAnchorIndex = null;
 			}
 			else
 			{
-				ResetAllIsSelected();
+				if (GetSelectedItems().Count > 0)
+				{
+					ResetAllIsSelected();
+				}
+
+				var cbsListViewItem = ListViewItems[colorBandIndex];
+
+				Toggle(cbsListViewItem, sourceType);
 			}
 
 			_indexOfMostRecentlySelectedItem = colorBandIndex;
+			_mostRecentSelectionTypeUsed = sourceType;
 		}
 
-		private void SetItemsInSelectedRange(int startIndex, int endIndex)
+		private void SetItemsInSelectedRange(int startIndex, int endIndex, ColorBandSelectionType selectionType)
 		{
 			if (startIndex > endIndex)
 			{
@@ -679,7 +684,7 @@ namespace MSetExplorer
 				{
 					if (i >= endIndex && i <= startIndex)
 					{
-						ListViewItems[i].SelectionType = ColorBandSelectionType.Band;
+						ListViewItems[i].SelectionType = selectionType;
 					}
 					else
 					{
@@ -693,7 +698,7 @@ namespace MSetExplorer
 				{
 					if (i >= startIndex && i <= endIndex)
 					{
-						ListViewItems[i].SelectionType = ColorBandSelectionType.Band;
+						ListViewItems[i].SelectionType = selectionType;
 					}
 					else
 					{
@@ -702,6 +707,42 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		private ColorBandSelectionType Toggle(CbsListViewItem cbsListViewItem, ColorBandSelectionType sourceType)
+		{
+			if (sourceType == ColorBandSelectionType.Band)
+			{
+				cbsListViewItem.IsColorBandSelected = !cbsListViewItem.IsColorBandSelected;
+			}
+			else if (sourceType == ColorBandSelectionType.Cutoff)
+			{
+				cbsListViewItem.IsCutoffSelected = !cbsListViewItem.IsCutoffSelected;
+			}
+			else if (sourceType == ColorBandSelectionType.Color)
+			{
+				cbsListViewItem.IsColorSelected = !cbsListViewItem.IsColorSelected;
+			}
+
+			return cbsListViewItem.SelectionType;
+		}
+
+		//private ColorBandSelectionType SetItemsSelectionType(CbsListViewItem cbsListViewItem, ColorBandSelectionType sourceType)
+		//{
+		//	if (sourceType == ColorBandSelectionType.Band)
+		//	{
+		//		cbsListViewItem.IsColorBandSelected = cbsListViewItem.CbsRectangle.IsSelected;
+		//	}
+		//	else if (sourceType == ColorBandSelectionType.Cutoff)
+		//	{
+		//		cbsListViewItem.IsCutoffSelected = !cbsListViewItem.IsCutoffSelected;
+		//	}
+		//	else if (sourceType == ColorBandSelectionType.Color)
+		//	{
+		//		cbsListViewItem.IsColorSelected = !cbsListViewItem.IsColorSelected;
+		//	}
+
+		//	return cbsListViewItem.SelectionType;
+		//}
 
 		private void HandleContextMenuDisplayRequested(int colorBandIndex, ColorBandSelectionType colorBandSelectionType)
 		{
@@ -1074,7 +1115,15 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool IsColorBandSelected => IsCutoffSelected & IsColorSelected;
+		public bool IsColorBandSelected
+		{
+			get => IsCutoffSelected && IsColorSelected;
+			set
+			{
+				IsCutoffSelected = value;
+				IsColorSelected = value;
+			}
+		}
 
 		public bool IsItemSelected => IsCutoffSelected | IsColorSelected;
 
@@ -1115,6 +1164,9 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+
+
 
 		public void TearDown()
 		{

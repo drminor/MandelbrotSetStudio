@@ -55,10 +55,16 @@ namespace MSetExplorer
 		{
 			var pos =  e.GetPosition(relativeTo: _canvas);
 
-			if (ShowColorPicker(pos, ColorBandColor, out var selectedColor))
+			//if (ShowColorPicker(pos, ColorBandColor, out var selectedColor))
+			//{
+			//	ColorBandColor = selectedColor;
+			//}
+
+			if (ShowColorSpace(pos, ColorBandColor, out var selectedColor))
 			{
 				ColorBandColor = selectedColor;
 			}
+
 		}
 
 		#endregion
@@ -144,6 +150,27 @@ namespace MSetExplorer
 			if (colorPickerDialalog.ShowDialog() == true)
 			{
 				selectedColor = colorPickerDialalog.SelectedColorBandColor;
+				return true;
+			}
+			else
+			{
+				selectedColor = initalColor;
+				return false;
+			}
+		}
+
+		private bool ShowColorSpace(Point pos, ColorBandColor initalColor, out ColorBandColor selectedColor)
+		{
+			var colorSpaceDialalog = new ColorSpaceDialog(initalColor);
+
+			var sp = PointToScreen(pos);
+
+			colorSpaceDialalog.Left = sp.X - colorSpaceDialalog.Width - 225;
+			colorSpaceDialalog.Top = sp.Y - colorSpaceDialalog.Height - 25;
+
+			if (colorSpaceDialalog.ShowDialog() == true)
+			{
+				selectedColor = colorSpaceDialalog.SelectedColorBandColor;
 				return true;
 			}
 			else
