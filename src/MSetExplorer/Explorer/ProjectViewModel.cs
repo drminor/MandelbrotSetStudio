@@ -143,6 +143,10 @@ namespace MSetExplorer
 
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
 				}
+				else
+				{
+					Debug.WriteLine("ProjectViewModel. The PreviewColorBandSet on update has same value.");
+				}
 			}
 		}
 

@@ -25,7 +25,7 @@ namespace MSetExplorer
 		private double _cbElevation;
 		private double _cbHeight;
 		private double _scaleX;
-		private IsSelectedChanged _isSelectedChanged;
+		private IsSelectedChangedCallback _isSelectedChangedCallback;
 		private Action<int, ColorBandSelectionType> _requestContextMenuShown;
 
 		private double _selectionLinePosition;
@@ -46,13 +46,13 @@ namespace MSetExplorer
 		private bool _isUnderMouse;
 		private bool _parentIsFocused;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
 		#region Constructor
 
-		public CbsSectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, Action<int, ColorBandSelectionType> requestContextMenuShown)
+		public CbsSectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSelectionType> requestContextMenuShown)
 		{
 			_isSelected = isSelected;
 			_isUnderMouse = false;
@@ -73,7 +73,7 @@ namespace MSetExplorer
 			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
 			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
 
-			_isSelectedChanged = isSelectedChanged;
+			_isSelectedChangedCallback = isSelectedChangedCallback;
 			_requestContextMenuShown = requestContextMenuShown;
 
 			_selectionLinePosition = _xPosition * _scaleX;
@@ -401,7 +401,7 @@ namespace MSetExplorer
 			var result = Mouse.Capture(_canvas);
 			if (result)
 			{
-				Debug.WriteLine($"Beginning to Drag the SectionLine for ColorBandIndex: {ColorBandIndex}, LeftWidth: {_leftWidth}, RightWidth: {_rightWidth}.");
+				//Debug.WriteLine($"Beginning to Drag the SectionLine for ColorBandIndex: {ColorBandIndex}, LeftWidth: {_leftWidth}, RightWidth: {_rightWidth}.");
 				_canvas.LostMouseCapture += Canvas_LostMouseCapture;
 			}
 			else
@@ -512,10 +512,7 @@ namespace MSetExplorer
 		{
 			if (e.ChangedButton == MouseButton.Left)
 			{
-				var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-				var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
-
-				_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
+				NotifySelectionChanged();
 				e.Handled = true;
 			}
 			else
@@ -537,6 +534,11 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods
+
+		private void NotifySelectionChanged()
+		{
+			_isSelectedChangedCallback(ColorBandIndex, ColorBandSelectionType.Color);
+		}
 
 		private bool CompleteDrag()
 		{
@@ -669,4 +671,4 @@ namespace MSetExplorer
 
 		#endregion
 	}
-	}
+}

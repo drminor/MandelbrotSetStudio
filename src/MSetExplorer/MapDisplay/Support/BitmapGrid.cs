@@ -115,6 +115,9 @@ namespace MSetExplorer
 					{
 						_colorMap.Dispose();
 					}
+
+					_colorBandSet = value;
+
 					_colorMap = LoadColorMap(value);
 
 					if (_colorMap != null)
@@ -129,6 +132,29 @@ namespace MSetExplorer
 						_colorBandSet.HilightedColorBandIndex = value.HilightedColorBandIndex;
 					}
 				}
+			}
+		}
+
+
+		private ColorMap? LoadColorMap(ColorBandSet colorBandSet)
+		{
+			_colorBandSet = colorBandSet;
+
+			if (colorBandSet.Count < 2)
+			{
+				return null;
+			}
+			else
+			{
+				var colorMap = new ColorMap(colorBandSet)
+				{
+					UseEscapeVelocities = _useEscapeVelocities,
+					HighlightSelectedColorBand = _highlightSelectedColorBand
+				};
+
+				Debug.WriteLine($"BitmapGrid is loading a ColorBandSet. The currentColorBandIndex is {colorMap.CurrentColorBandIndex}.");
+
+				return colorMap;
 			}
 		}
 
@@ -574,25 +600,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private ColorMap? LoadColorMap(ColorBandSet colorBandSet)
-		{
-			_colorBandSet = colorBandSet;
 
-			if (colorBandSet.Count < 2)
-			{
-				return null;
-			}
-			else
-			{
-				var colorMap = new ColorMap(colorBandSet)
-				{
-					UseEscapeVelocities = _useEscapeVelocities,
-					HighlightSelectedColorBand = _highlightSelectedColorBand
-				};
-
-				return colorMap;
-			}
-		}
 
 		private bool RefreshBitmap(SizeDbl bitmapSize, SizeInt canvasSizeInBlocks, [NotNullWhen(true)] out WriteableBitmap? bitmap)
 		{

@@ -17,12 +17,11 @@ namespace MSetExplorer
 		private double _dispWidth;
 		private double _dispHeight;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#region Constructor
 
 		public ExplorerViewModel(IProjectViewModel projectViewModel, IMapDisplayViewModel mapDisplayViewModel,
-			//ColorBandSetViewModel colorBandViewModel,
 			ICbsHistogramViewModel cbsHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 			//IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper,
 			IMapSectionHistogramProcessor mapSectionHistogramProcessor, ViewModelFactory viewModelFactory)
@@ -53,10 +52,6 @@ namespace MSetExplorer
 
 			MapCalcSettingsViewModel = new MapCalcSettingsViewModel();
 			MapCalcSettingsViewModel.MapSettingsUpdateRequested += MapCalcSettingsViewModel_MapSettingsUpdateRequested;
-
-			//ColorBandSetViewModel = colorBandViewModel;
-			//ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
-			//ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
 			CbsHistogramViewModel = cbsHistogramViewModel;
 			CbsHistogramViewModel.PropertyChanged += CbsHistogramViewModel_PropertyChanged;

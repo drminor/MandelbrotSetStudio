@@ -11,7 +11,7 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
-	internal delegate void IsSelectedChanged(int colorBandIndex, bool newValue, bool shiftKeyPressed, bool controlKeyPressed);
+	internal delegate void IsSelectedChangedCallback(int colorBandIndex, ColorBandSelectionType sourceType);
 	internal delegate void ContextMenuDisplayRequest(CbsListViewItem cbsListViewItem, ColorBandSelectionType sourceType);
 
 	public class HistogramColorBandControl : ContentControl, IContentScaler
@@ -42,7 +42,7 @@ namespace MSetExplorer
 
 		private ContextMenu? _lastKnownContextMenu;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -90,7 +90,7 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_Loaded(object sender, RoutedEventArgs e)
 		{
-
+			PreviewMouseDown += HistogramColorBandControl_PreviewMouseDown;
 			MouseEnter += Handle_MouseEnter;
 			GotFocus += HistogramColorBandControl_GotFocus;
 			//LostFocus += HistogramColorBandControl_LostFocus;
@@ -99,13 +99,18 @@ namespace MSetExplorer
 			PreviewKeyUp += Handle_PreviewKeyUp;
 		}
 
-		private void HistogramColorBandControl_MouseMove(object sender, MouseEventArgs e)
+		private void HistogramColorBandControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
 		{
-			throw new NotImplementedException();
+			if (Keyboard.FocusedElement != this)
+			{
+				Focus();
+			}
 		}
 
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
+			PreviewMouseDown -= HistogramColorBandControl_PreviewMouseDown;
+
 			MouseEnter -= Handle_MouseEnter;
 			GotFocus -= HistogramColorBandControl_GotFocus;
 			//LostFocus -= HistogramColorBandControl_LostFocus;
@@ -464,7 +469,7 @@ namespace MSetExplorer
 
 		private void Handle_MouseEnter(object sender, MouseEventArgs e)
 		{
-			Focus();
+			//Focus();
 
 			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl on Mouse Enter the Keyboard focus is now on {Keyboard.FocusedElement}.");
 		}
@@ -502,20 +507,34 @@ namespace MSetExplorer
 
 		private void Handle_PreviewKeyUp(object sender, KeyEventArgs e)
 		{
-			if (_cbsListView?.IsDragSectionLineInProgress != true)
+			if (_vm == null || _cbsListView == null || _cbsListView.IsDragSectionLineInProgress)
 			{
-				if (e.Key == Key.Left)
+				return;
+			}
+
+			if (e.Key == Key.Left)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
+				var wasMoved = _vm.TryMoveCurrentColorBandToPrevious();
+
+				if (wasMoved)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
-					_vm?.TryMoveCurrentColorBandToPrevious();
-					e.Handled = true;
+					_cbsListView.SelectedIndexWasMoved(_cbsListView.CurrentColorBandIndex, -1);
 				}
-				else if (e.Key == Key.Right)
+
+				e.Handled = true;
+			}
+			else if (e.Key == Key.Right)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
+				var wasMoved = _vm.TryMoveCurrentColorBandToNext();
+
+				if (wasMoved)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
-					_vm?.TryMoveCurrentColorBandToNext();
-					e.Handled = true;
+					_cbsListView.SelectedIndexWasMoved(_cbsListView.CurrentColorBandIndex, 1);
 				}
+
+				e.Handled = true;
 			}
 		}
 

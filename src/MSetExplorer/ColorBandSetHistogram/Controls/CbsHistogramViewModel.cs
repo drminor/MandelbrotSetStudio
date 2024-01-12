@@ -46,7 +46,7 @@ namespace MSetExplorer
 
 		private bool _colorBandUserControlHasErrors;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -220,7 +220,7 @@ namespace MSetExplorer
 				if (value != _useRealTimePreview)
 				{
 					var strState = value ? "On" : "Off";
-					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the use of RealTimePreview. IsDirty = {IsDirty}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is turning {strState} the use of RealTimePreview. IsDirty = {IsDirty}.");
 					_useRealTimePreview = value;
 
 					if (IsDirty)
@@ -244,7 +244,7 @@ namespace MSetExplorer
 				if (value != _highlightSelectedBand)
 				{
 					var strState = value ? "On" : "Off";
-					Debug.WriteLineIf(_useDetailedDebug, $"The ColorBandSetViewModel is turning {strState} the High Lighting the Selected Color Band.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is turning {strState} the High Lighting the Selected Color Band.");
 					_highlightSelectedBand = value;
 
 					OnPropertyChanged(nameof(HighlightSelectedBand));
@@ -258,6 +258,9 @@ namespace MSetExplorer
 
 			set
 			{
+				var valueIsNew = value != _colorBandsView;
+				Debug.WriteLine($"The CbsHistogramViewModel is getting a new ColorBandsView. ValueINew: {valueIsNew}.");
+
 				_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
 
 				_colorBandsView = value;
@@ -292,6 +295,13 @@ namespace MSetExplorer
 					{
 						_currentColorBand.PropertyChanged += CurrentColorBand_PropertyChanged;
 						_currentColorBand.EditEnded += CurrentColorBand_EditEnded;
+					}
+
+					if (_currentColorBandSet != null)
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HilightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+
+						_currentColorBandSet.HilightedColorBandIndex = ColorBandsView.CurrentPosition;
 					}
 
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
@@ -999,12 +1009,12 @@ namespace MSetExplorer
 		{
 			if (ColorBandsView != null)
 			{
-				if (ColorBandSet != null)
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HilightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+				//if (ColorBandSet != null)
+				//{
+				//	Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HilightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
 
-					ColorBandSet.HilightedColorBandIndex = ColorBandsView.CurrentPosition;
-				}
+				//	ColorBandSet.HilightedColorBandIndex = ColorBandsView.CurrentPosition;
+				//}
 
 				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
 			}
@@ -1261,18 +1271,20 @@ namespace MSetExplorer
 
 			if (ColorBandsView is INotifyCollectionChanged t1) t1.CollectionChanged -= ColorBandsView_CollectionChanged;
 
-			ColorBandsView = BuildColorBandsView(_currentColorBandSet);
-
-			if (ColorBandsView is INotifyCollectionChanged t2) t2.CollectionChanged += ColorBandsView_CollectionChanged;
+			var newView = BuildColorBandsView(_currentColorBandSet);
 
 			if (currentColorBandIndex != null)
 			{
-				ColorBandsView.MoveCurrentToPosition(currentColorBandIndex.Value);
+				newView.MoveCurrentToPosition(currentColorBandIndex.Value);
 			}
 			else
 			{
-				ColorBandsView.MoveCurrentToFirst();
+				newView.MoveCurrentToFirst();
 			}
+
+			ColorBandsView = newView;
+
+			if (ColorBandsView is INotifyCollectionChanged t2) t2.CollectionChanged += ColorBandsView_CollectionChanged;
 
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));

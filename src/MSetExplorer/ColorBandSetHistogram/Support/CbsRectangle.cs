@@ -13,20 +13,24 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
-		private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
-		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
-		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Colors.LightGray);
+		//private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
 
-		private static readonly Brush DEFAULT_STROKE = new SolidColorBrush(Colors.Transparent);
-		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Colors.DeepSkyBlue);
-		private static readonly Brush IS_SELECTED_STROKE = new SolidColorBrush(Colors.PowderBlue);
-		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = new SolidColorBrush(Colors.LightGray);
+		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
+		private static readonly Brush DEFAULT_STROKE = DEFAULT_BACKGROUND;
+
+		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
+		private static readonly Brush IS_SELECTED_STROKE = IS_SELECTED_BACKGROUND;
+
+		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
+		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = IS_SELECTED_INACTIVE_BACKGROUND;
+
+		private static readonly Brush IS_HOVERED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
+		private static readonly Brush IS_HOVERED_STROKE = IS_HOVERED_BACKGROUND;
+
+		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
 
 		// For diagnostics
-		//private static readonly Brush IS_CURRENT_AND_IS_SELECTED_BACKGROUND = IS_SELECTED_BACKGROUND; // new SolidColorBrush(Colors.SeaGreen);
-		//private static readonly Brush IS_CURRENT_AND_IS_SELECTED_STROKE = IS_SELECTED_STROKE; // new SolidColorBrush(Colors.SeaGreen);
-
+		//private static readonly Brush IS_HOVERED_AND_IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.SeaGreen);
 
 		private const double SEL_RECTANGLE_STROKE_THICKNESS = 2.0;
 
@@ -36,7 +40,7 @@ namespace MSetExplorer
 		private double _cbElevation;
 		private double _cbHeight;
 		private SizeDbl _contentScale;
-		private IsSelectedChanged _isSelectedChanged;
+		private IsSelectedChangedCallback _isSelectedChangedCallback;
 		private Action<int, ColorBandSelectionType> _requestContextMenuShown;
 
 		private double _xPosition;
@@ -62,10 +66,11 @@ namespace MSetExplorer
 		#region Constructor
 
 		public CbsRectangle(int colorBandIndex, bool isCurrent, bool isSelected, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
-			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChanged isSelectedChanged, Action<int, ColorBandSelectionType> requestContextMenuShown)
+			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallBack, Action<int, ColorBandSelectionType> requestContextMenuShown)
 		{
 			_isCurrent = isCurrent;
 			_isSelected = isSelected;
+			_isUnderMouse = false;
 
 			ColorBandIndex = colorBandIndex;
 
@@ -80,7 +85,7 @@ namespace MSetExplorer
 
 			_contentScale = _colorBandLayoutViewModel.ContentScale;
 			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
-			_isSelectedChanged = isSelectedChanged;
+			_isSelectedChangedCallback = isSelectedChangedCallBack;
 			_requestContextMenuShown = requestContextMenuShown;
 
 			_xPosition = xPosition;
@@ -99,7 +104,7 @@ namespace MSetExplorer
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
 			_selGeometry = new RectangleGeometry(BuildSelRectangle(_xPosition, width, _colorBandLayoutViewModel));
-			_selRectanglePath = BuildSelRectanglePath(_selGeometry, _isCurrent, _isSelected, _parentIsFocused, SEL_RECTANGLE_STROKE_THICKNESS);
+			_selRectanglePath = BuildSelRectanglePath(_selGeometry, _isCurrent, _isSelected, _isUnderMouse, _parentIsFocused, SEL_RECTANGLE_STROKE_THICKNESS);
 
 			_canvas.Children.Add(_selRectanglePath);
 			_selRectanglePath.SetValue(Panel.ZIndexProperty, 1);
@@ -306,11 +311,8 @@ namespace MSetExplorer
 		{
 			if (e.ChangedButton == MouseButton.Left)
 			{
-				Debug.WriteLine($"CbsRectangle. Handling MouseUp.");
-				var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-				var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
-
-				_isSelectedChanged(ColorBandIndex, !IsSelected, shiftKeyPressed, controlKeyPressed);
+				Debug.WriteLine($"CbsRectangle. Handling MouseUp for Index: {ColorBandIndex}.");
+				NotifySelectionChange();
 				e.Handled = true;
 			}
 			else
@@ -325,7 +327,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Private Methods
+		#region Private Methods - Layout
 
 		private Shape BuildRectanglePath(RectangleGeometry area, ColorBandColor startColor, ColorBandColor endColor, bool blend)
 		{
@@ -341,12 +343,12 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Shape BuildSelRectanglePath(RectangleGeometry area, bool isCurrent, bool isSelected, bool parentIsFocused, double strokeThickness)
+		private Shape BuildSelRectanglePath(RectangleGeometry area, bool isCurrent, bool isSelected, bool isUnderMouse, bool parentIsFocused, double strokeThickness)
 		{
 			var result = new Path()
 			{
-				Fill = GetSelBackGround(isCurrent, isSelected, parentIsFocused),
-				Stroke = GetSelStroke(isCurrent, isSelected, parentIsFocused),
+				Fill = GetSelBackGround(isSelected, isUnderMouse, parentIsFocused),
+				Stroke = GetSelStroke(isCurrent, isSelected, isUnderMouse, parentIsFocused),
 				StrokeThickness = strokeThickness,
 				Data = area,
 				IsHitTestVisible = true
@@ -357,9 +359,9 @@ namespace MSetExplorer
 
 		private void Resize(double xPosition, double width, ColorBandLayoutViewModel layout)
 		{
-			var isCurrent = _isCurrent || _isUnderMouse;
+			//var isCurrent = _isCurrent || _isUnderMouse;
 
-			var isHighLighted = IsSelected || (ParentIsFocused && isCurrent);
+			var isHighLighted = _isSelected || (ParentIsFocused && (_isCurrent || _isUnderMouse));
 
 			_geometry.Rect = BuildRectangle(xPosition, width, isHighLighted, layout);
 			_selGeometry.Rect = BuildSelRectangle(xPosition, width, layout);
@@ -427,20 +429,31 @@ namespace MSetExplorer
 			return result;
 		}
 
+		#endregion
+
+		#region Private Methods - IsCurrent / IsSelected State
+
+		private void NotifySelectionChange()
+		{
+			_isSelectedChangedCallback(ColorBandIndex, ColorBandSelectionType.Color);
+		}
+
 		private void UpdateSelectionBackground()
 		{
-			var isCurrent = _isCurrent || _isUnderMouse;
+			//var isCurrent = _isCurrent || _isUnderMouse;
 
-			var isHighLighted = ParentIsFocused && (isCurrent || IsUnderMouse || IsSelected);
+			var isHighLighted = _isSelected || (ParentIsFocused && (_isCurrent || _isUnderMouse));
 
 			_geometry.Rect = BuildRectangle(XPosition, Width, isHighLighted, _colorBandLayoutViewModel);
 
-			_selRectanglePath.Stroke = GetSelStroke(isCurrent, _isSelected, _parentIsFocused);
+			_selRectanglePath.Stroke = GetSelStroke(_isCurrent, _isSelected, _isUnderMouse, _parentIsFocused);
 
-			_selRectanglePath.Fill = GetSelBackGround(isCurrent, _isSelected, _parentIsFocused);
+			_selRectanglePath.Fill = GetSelBackGround(_isSelected, _isUnderMouse, _parentIsFocused);
+
+			Debug.Assert(isHighLighted == (_selRectanglePath.Stroke != DEFAULT_STROKE), "isHighlighted / SelRectangle's stroke mismatch.");
 		}
 
-		private Brush GetSelBackGround(bool isCurrent, bool isSelected, bool parentIsFocused)
+		private Brush GetSelBackGround(bool isSelected, bool isUnderMouse, bool parentIsFocused)
 		{
 			Brush result;
 
@@ -452,7 +465,14 @@ namespace MSetExplorer
 				}
 				else
 				{
-					result = isCurrent ? IS_CURRENT_BACKGROUND : DEFAULT_BACKGROUND;
+					if (isUnderMouse)
+					{
+						result = IS_HOVERED_BACKGROUND;
+					}
+					else
+					{
+						result = DEFAULT_BACKGROUND;
+					}
 				}
 			}
 			else
@@ -463,7 +483,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Brush GetSelStroke(bool isCurrent, bool isSelected, bool parentIsFocused)
+		private Brush GetSelStroke(bool isCurrent, bool isSelected, bool isUnderMouse, bool parentIsFocused)
 		{
 			Brush result;
 
@@ -475,7 +495,14 @@ namespace MSetExplorer
 				}
 				else
 				{
-					result = isSelected ? IS_SELECTED_STROKE : DEFAULT_STROKE;
+					if (isSelected)
+					{
+						result = IS_SELECTED_STROKE;
+					}
+					else
+					{
+						result = isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
+					}
 				}
 			}
 			else

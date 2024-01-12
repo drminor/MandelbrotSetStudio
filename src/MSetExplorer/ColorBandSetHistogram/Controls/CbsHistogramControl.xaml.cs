@@ -213,19 +213,19 @@ namespace MSetExplorer
 
 		private void HandleMouseLeave(object sender, MouseEventArgs e)
 		{
-			HistogramColorBandControl1.ParentIsFocused = false;
+			//HistogramColorBandControl1.ParentIsFocused = false;
 		}
 
 		private void CbsHistogramControl_GotFocus(object sender, RoutedEventArgs e)
 		{
 			HistogramColorBandControl1.ParentIsFocused = true;
-			Debug.WriteLine($"The CbsHistogramControl got focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl got focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
 		}
 
 		private void CbsHistogramControl_LostFocus(object sender, RoutedEventArgs e)
 		{
 			HistogramColorBandControl1.ParentIsFocused = false;
-			Debug.WriteLine($"The CbsHistogramControl lost focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl lost focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
 		}
 
 		#endregion

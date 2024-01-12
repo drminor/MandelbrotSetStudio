@@ -69,6 +69,7 @@ namespace MSS.Types
 
 			if (e.PropertyName == nameof(ColorBandSet.HilightedColorBandIndex))
 			{
+				Debug.WriteLine($"ColorMap. The CurrentColorBandIndex is being updated from {_currentColorBandIndex} to {_colorBandSet.HilightedColorBandIndex}.");
 				_currentColorBandIndex = _colorBandSet.HilightedColorBandIndex;
 			}
 		}
@@ -80,7 +81,22 @@ namespace MSS.Types
 
 		public bool UseEscapeVelocities { get; set; }
 
-        public bool HighlightSelectedColorBand { get; set; }
+		private bool _highlightSelectedColorBand = false;
+
+        public bool HighlightSelectedColorBand
+		{
+			get => _highlightSelectedColorBand;
+			set
+			{
+				if (value != _highlightSelectedColorBand)
+				{
+					_highlightSelectedColorBand = value;
+					//_currentColorBandIndex = _colorBandSet.HilightedColorBandIndex;
+				}
+			}
+		}
+
+		public int CurrentColorBandIndex => _currentColorBandIndex;
 
 		#endregion
 

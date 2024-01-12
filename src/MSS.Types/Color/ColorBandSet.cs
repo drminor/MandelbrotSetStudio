@@ -656,11 +656,14 @@ namespace MSS.Types
 		{
 			//Debug.WriteLine($"About to CreateNewCopy: {this}");
 
+			var idx = HilightedColorBandIndex;
+
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
-				OnFile = false
+				OnFile = false,
+				HilightedColorBandIndex = idx
 			};
 
 			return result;
@@ -674,13 +677,16 @@ namespace MSS.Types
 		{
 			//Debug.WriteLine($"About to CreateNewCopy with update iterations: {targetIterations}: {this}");
 
+			var idx = HilightedColorBandIndex;
+
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, ProjectId, Name, Description, bandsCopy, targetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
-				OnFile = false
+				OnFile = false,
+				HilightedColorBandIndex = idx
 			};
 
 			return result;
@@ -699,11 +705,13 @@ namespace MSS.Types
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"Cloning ColorBandSet with Id: {Id}.");
 
+			var idx = HilightedColorBandIndex;
 			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = LastSavedUtc,
 				LastUpdatedUtc = LastUpdatedUtc,
-				OnFile = OnFile
+				OnFile = OnFile,
+				HilightedColorBandIndex = idx
 			};
 
 			return result;

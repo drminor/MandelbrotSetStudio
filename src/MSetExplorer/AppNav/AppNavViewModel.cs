@@ -64,14 +64,13 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
 			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram, mapDisplayViewModel.MapSections);
-			//var colorBandSetViewModel = new ColorBandSetViewModel(mapSectionHistogramProcessor);
 
 			// ColorBandSet Histogram ViewModel
 			var cbsHistogramViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);	
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
-			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel/*, colorBandSetViewModel*/, cbsHistogramViewModel, jobTreeViewModel,
+			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, cbsHistogramViewModel, jobTreeViewModel,
 				//_mapLoaderManager, _mapJobHelper,
 				mapSectionHistogramProcessor, _viewModelFactory);
 
@@ -89,14 +88,13 @@ namespace MSetExplorer
 			// ColorBand ViewModel
 			var histogram = new HistogramA(0);
 			var mapSectionHistogramProcessor = new MapSectionHistogramProcessor(histogram, mapDisplayViewModel.MapSections);
-			//var colorBandSetViewModel = new ColorBandSetViewModel(mapSectionHistogramProcessor);
 
 			// ColorBandSet Histogram ViewModel
 			var cbsHistogramViewModel = new CbsHistogramViewModel(mapSectionHistogramProcessor);
 
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
-			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel/*, colorBandSetViewModel*/, cbsHistogramViewModel, jobTreeViewModel,
+			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, cbsHistogramViewModel, jobTreeViewModel,
 				//_mapLoaderManager, _mapJobHelper,
 				mapSectionHistogramProcessor, _viewModelFactory);
 
