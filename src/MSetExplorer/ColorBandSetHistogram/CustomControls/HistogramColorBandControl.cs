@@ -96,7 +96,7 @@ namespace MSetExplorer
 			//LostFocus += HistogramColorBandControl_LostFocus;
 
 			KeyDown += HandleKeyDown;
-			PreviewKeyUp += Handle_PreviewKeyUp;
+			PreviewKeyDown += Handle_PreviewKeyDown;
 		}
 
 		private void HistogramColorBandControl_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -116,7 +116,7 @@ namespace MSetExplorer
 			//LostFocus -= HistogramColorBandControl_LostFocus;
 			
 			KeyDown -= HandleKeyDown;
-			PreviewKeyUp -= Handle_PreviewKeyUp;
+			PreviewKeyUp -= Handle_PreviewKeyDown;
 
 			Loaded -= HistogramColorBandControl_Loaded;
 			Unloaded -= HistogramColorBandControl_Unloaded;
@@ -505,7 +505,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void Handle_PreviewKeyUp(object sender, KeyEventArgs e)
+		private void Handle_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
 			if (_vm == null || _cbsListView == null || _cbsListView.IsDragSectionLineInProgress)
 			{

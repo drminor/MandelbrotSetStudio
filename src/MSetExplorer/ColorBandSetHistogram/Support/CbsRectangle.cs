@@ -18,16 +18,16 @@ namespace MSetExplorer
 		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush DEFAULT_STROKE = DEFAULT_BACKGROUND;
 
-		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
+		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));	// Blue
 		private static readonly Brush IS_SELECTED_STROKE = IS_SELECTED_BACKGROUND;
 
-		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
+		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));	// Gray
 		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = IS_SELECTED_INACTIVE_BACKGROUND;
 
-		private static readonly Brush IS_HOVERED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
+		private static readonly Brush IS_HOVERED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));	// Very Light Blue
 		private static readonly Brush IS_HOVERED_STROKE = IS_HOVERED_BACKGROUND;
 
-		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
+		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff)); // Light Blue
 
 		// For diagnostics
 		//private static readonly Brush IS_HOVERED_AND_IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.SeaGreen);
@@ -94,8 +94,11 @@ namespace MSetExplorer
 			//_endColor = endColor;
 			//_blend = blend;
 
-			var isHighLigted = _parentIsFocused && (_isCurrent || _isSelected);
-			_geometry = new RectangleGeometry(BuildRectangle(_xPosition, width, isHighLigted, _colorBandLayoutViewModel));
+
+			var isHighLighted = _isSelected || (ParentIsFocused && (_isCurrent || _isUnderMouse));
+
+
+			_geometry = new RectangleGeometry(BuildRectangle(_xPosition, width, isHighLighted, _colorBandLayoutViewModel));
 			_rectanglePath = BuildRectanglePath(_geometry, startColor, endColor, blend);
 
 			_rectanglePath.MouseUp += Handle_MouseUp;
@@ -514,9 +517,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		//var isHighLighted = IsSelected || (ParentIsFocused && IsCurrent);
-
 
 		#region Diag
 

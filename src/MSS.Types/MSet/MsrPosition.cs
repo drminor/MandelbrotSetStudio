@@ -1,7 +1,7 @@
 ﻿using MSS.Types;
 using System.Threading;
 
-namespace MSS.Common
+namespace MSS.Types
 {
 	public class MsrPosition
 	{

@@ -32,6 +32,9 @@ namespace MSetExplorer
 		private CbsListViewItem? _sectionLineUnderMouse;
 		private CbsListViewItem? _itemUnderMouse;
 
+		private int? _selectedItemsRangeAnchorIndex;
+		private int? _indexOfMostRecentlySelectedItem;
+
 		private readonly bool _useDetailedDebug = false;
 
 		#endregion
@@ -52,6 +55,9 @@ namespace MSetExplorer
 			_displayContextMenu = displayContextMenu;
 
 			ListViewItems = new List<CbsListViewItem>();
+
+			_selectedItemsRangeAnchorIndex = null;
+			_indexOfMostRecentlySelectedItem = null;
 
 			//_hitList = new List<Shape>();
 
@@ -74,16 +80,23 @@ namespace MSetExplorer
 			get => _currentColorBandIndex;
 			set
 			{
-				if ( !(_colorBandsView.IsCurrentBeforeFirst || _colorBandsView.IsCurrentAfterLast) )
+				//if ( !(_colorBandsView.IsCurrentBeforeFirst || _colorBandsView.IsCurrentAfterLast) )
+				//{
+				//	//UpdateCbsRectangleIsCurrent(_currentColorBandIndex, newState: false);
+				//}
+
+				if (_currentColorBandIndex >= 0 && _currentColorBandIndex < ListViewItems.Count)
 				{
-					UpdateCbsRectangleIsCurrent(_currentColorBandIndex, newState: false);
+					ListViewItems[_currentColorBandIndex].IsCurrent = false;
+
 				}
 
 				_currentColorBandIndex = value;
 
 				if (!(_colorBandsView.IsCurrentBeforeFirst || _colorBandsView.IsCurrentAfterLast))
 				{
-					UpdateCbsRectangleIsCurrent(_currentColorBandIndex, newState: true);
+					//UpdateCbsRectangleIsCurrent(_currentColorBandIndex, newState: true);
+					ListViewItems[_currentColorBandIndex].IsCurrent = true;
 				}
 			}
 		}
@@ -166,9 +179,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		private int? _selectedItemsRangeAnchorIndex = null;
-		private int? _indexOfMostRecentlySelectedItem = null;
 
 		#region Public Methods
 
@@ -328,11 +338,6 @@ namespace MSetExplorer
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. Handling PreviewMouseLeftButtonDown. ContentScale is {ContentScale}.");
 
-			var cbsView = _colorBandsView;
-
-			if (cbsView == null)
-				return;
-
 			var hitPoint = e.GetPosition(_canvas);
 			if (TryGetSectionLine(hitPoint, ListViewItems, out var distance, out var cbsListViewItem) && distance < 4)
 			{
@@ -354,7 +359,7 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. Handling PreviewMouseLeftButtonDown. Moving Current to CbsRectangle: {cbsListViewItem.ColorBandIndex}");
 
-					cbsView.MoveCurrentTo(cb);
+					_colorBandsView.MoveCurrentTo(cb);
 				}
 				else
 				{
@@ -587,9 +592,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			var endPtr = listCollectionView.Count - 1;
-
-			for (var colorBandIndex = 0; colorBandIndex <= endPtr; colorBandIndex++)
+			for (var colorBandIndex = 0; colorBandIndex < listCollectionView.Count; colorBandIndex++)
 			{
 				var colorBand = (ColorBand)listCollectionView.GetItemAt(colorBandIndex);
 				var listViewItem = CreateListViewItem(listCollectionView, colorBandIndex, colorBand, showSectionLines);
@@ -630,18 +633,25 @@ namespace MSetExplorer
 			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
 
-			if (!(shiftKeyPressed || controlKeyPressed))
+			if (shiftKeyPressed)
 			{
-				ResetAllIsSelected();
-				_indexOfMostRecentlySelectedItem = colorBandIndex;
+				if (_selectedItemsRangeAnchorIndex == null)
+				{
+					//Debug.Assert(GetSelectedItems().Count == 0, "The SelectedItemsRangeAnchorIndex is null, but there is one or more selected items.");
 
-				return;
+					_selectedItemsRangeAnchorIndex = _indexOfMostRecentlySelectedItem;
+
+					//ListViewItems[colorBandIndex].SelectionType = ColorBandSelectionType.Band;
+				}
+
+				if (_selectedItemsRangeAnchorIndex != null)
+				{
+					SetItemsInSelectedRange(colorBandIndex, _selectedItemsRangeAnchorIndex.Value);
+				}
 			}
-
-			var cbsListViewItem = ListViewItems[colorBandIndex];
-
-			if (controlKeyPressed)
+			else if (controlKeyPressed)
 			{
+				var cbsListViewItem = ListViewItems[colorBandIndex];
 				if (sourceType == ColorBandSelectionType.Color)
 				{
 					cbsListViewItem.IsColorSelected = !cbsListViewItem.IsColorSelected;
@@ -652,27 +662,13 @@ namespace MSetExplorer
 				}
 
 				_selectedItemsRangeAnchorIndex = null;
-				_indexOfMostRecentlySelectedItem = colorBandIndex;
 			}
 			else
 			{
-				// The shift key was pressed.
-				if (_selectedItemsRangeAnchorIndex == null)
-				{
-					//Debug.Assert(GetSelectedItems().Count == 0, "The SelectedItemsRangeAnchorIndex is null, but there is one or more selected items.");
-					
-					_selectedItemsRangeAnchorIndex = _indexOfMostRecentlySelectedItem;
-
-					//ListViewItems[colorBandIndex].SelectionType = ColorBandSelectionType.Band;
-				}
-
-				if (_selectedItemsRangeAnchorIndex!= null)
-				{
-					SetItemsInSelectedRange(colorBandIndex, _selectedItemsRangeAnchorIndex.Value);
-				}
-
-				_indexOfMostRecentlySelectedItem = colorBandIndex;
+				ResetAllIsSelected();
 			}
+
+			_indexOfMostRecentlySelectedItem = colorBandIndex;
 		}
 
 		private void SetItemsInSelectedRange(int startIndex, int endIndex)
@@ -713,14 +709,14 @@ namespace MSetExplorer
 			_displayContextMenu(cbsListViewItem, colorBandSelectionType);
 		}
 
-		private void UpdateCbsRectangleIsCurrent(int colorBandIndex, bool newState)
-		{
-			if (colorBandIndex >= 0 && colorBandIndex < ListViewItems.Count)
-			{
-				var cbr = ListViewItems[colorBandIndex].CbsRectangle;
-				cbr.IsCurrent = newState;
-			}
-		}
+		//private void UpdateCbsRectangleIsCurrent(int colorBandIndex, bool newState)
+		//{
+		//	if (colorBandIndex >= 0 && colorBandIndex < ListViewItems.Count)
+		//	{
+		//		var cbr = ListViewItems[colorBandIndex].CbsRectangle;
+		//		cbr.IsCurrent = newState;
+		//	}
+		//}
 
 		private void ClearListViewItems()
 		{
@@ -998,7 +994,23 @@ namespace MSetExplorer
 		public CbsRectangle CbsRectangle { get; init; }
 		public CbsSectionLine CbsSectionLine { get; init; }
 
+		public int ColorBandIndex
+		{
+			get => CbsRectangle.ColorBandIndex;
+			set
+			{
+				CbsRectangle.ColorBandIndex = value;
+				CbsSectionLine.ColorBandIndex = value;
+			}
+		}
+
 		public double SectionLinePosition => CbsSectionLine.SectionLinePosition;
+
+		public bool IsCurrent
+		{
+			get => CbsRectangle.IsCurrent;
+			set => CbsRectangle.IsCurrent = value;
+		}
 
 		public ColorBandSelectionType SelectionType
 		{
@@ -1066,15 +1078,6 @@ namespace MSetExplorer
 
 		public bool IsItemSelected => IsCutoffSelected | IsColorSelected;
 
-		public int ColorBandIndex
-		{
-			get => CbsRectangle.ColorBandIndex;
-			set
-			{
-				CbsRectangle.ColorBandIndex = value;
-				CbsSectionLine.ColorBandIndex = value;
-			}
-		}
 
 		#endregion
 
