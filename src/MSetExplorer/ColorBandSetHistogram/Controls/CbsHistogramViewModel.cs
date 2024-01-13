@@ -25,7 +25,7 @@ namespace MSetExplorer
 		private readonly object _paintLocker;
 
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
-		private ColorBandSetEditMode _editMode;
+		private ColorBandSetEditMode _currentCbEditMode;
 
 		private ColorBandSet _colorBandSet;			// The value assigned to this model
 		private bool _useEscapeVelocities;
@@ -85,7 +85,7 @@ namespace MSetExplorer
 
 			_colorBandSet = new ColorBandSet();
 
-			_editMode = ColorBandSetEditMode.Bands;
+			_currentCbEditMode = ColorBandSetEditMode.Bands;
 			_useEscapeVelocities = true; 
 			_useRealTimePreview = true;
 			_highlightSelectedBand = false;
@@ -131,16 +131,64 @@ namespace MSetExplorer
 
 		#region Public Properties - Content
 
-		public ColorBandSetEditMode EditMode
+		public ColorBandSetEditMode CurrentCbEditMode
 		{
-			get => _editMode;
+			get => _currentCbEditMode;
 			set
 			{
-				if (value != _editMode)
+				if (value != _currentCbEditMode)
 				{
 					Debug.WriteLine($"ColorBandSetViewModel: The Edit mode is now {value}");
-					_editMode = value;
-					OnPropertyChanged(nameof(ICbsHistogramViewModel.EditMode));
+					_currentCbEditMode = value;
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentCbEditMode));
+				}
+			}
+		}
+
+		public bool EditingCutoffs
+		{
+			get => _currentCbEditMode.HasFlag(ColorBandSetEditMode.Cutoffs);
+			set
+			{
+				ColorBandSetEditMode newVal;
+
+				if (value)
+				{
+					newVal = CurrentCbEditMode |= ColorBandSetEditMode.Cutoffs;
+				}
+				else
+				{
+					newVal = CurrentCbEditMode &= ~ColorBandSetEditMode.Cutoffs;
+				}
+
+				if (newVal != CurrentCbEditMode)
+				{
+					CurrentCbEditMode = newVal;
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.EditingCutoffs));
+				}
+			}
+		}
+
+		public bool EditingColors
+		{
+			get => _currentCbEditMode.HasFlag(ColorBandSetEditMode.Colors);
+			set
+			{
+				ColorBandSetEditMode newVal;
+
+				if (value)
+				{
+					newVal = CurrentCbEditMode |= ColorBandSetEditMode.Colors;
+				}
+				else
+				{
+					newVal = CurrentCbEditMode &= ~ColorBandSetEditMode.Colors;
+				}
+
+				if (newVal != CurrentCbEditMode)
+				{
+					CurrentCbEditMode = newVal;
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.EditingColors));
 				}
 			}
 		}
@@ -259,7 +307,7 @@ namespace MSetExplorer
 			set
 			{
 				var valueIsNew = value != _colorBandsView;
-				Debug.WriteLine($"The CbsHistogramViewModel is getting a new ColorBandsView. ValueINew: {valueIsNew}.");
+				Debug.WriteLine($"The CbsHistogramViewModel is getting a new ColorBandsView. ValueIsNew is {valueIsNew}.");
 
 				_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
 
@@ -576,10 +624,10 @@ namespace MSetExplorer
 		public bool TryInsertNewItem(ColorBand colorBand, out int index)
 		{
 			bool result;
-			switch (EditMode)
+			switch (CurrentCbEditMode)
 			{
-				case ColorBandSetEditMode.Offsets:
-					result = TryInsertOffset(colorBand, out index);
+				case ColorBandSetEditMode.Cutoffs:
+					result = TryInsertCutoff(colorBand, out index);
 					break;
 				case ColorBandSetEditMode.Colors:
 					result = TryInsertColor(colorBand, out index);
@@ -588,7 +636,7 @@ namespace MSetExplorer
 					result = TryInsertColorBand(colorBand, out index);
 					break;
 				default:
-					throw new InvalidOperationException($"{EditMode} is not recognized.");
+					throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
 			}
 
 			if (result)
@@ -606,7 +654,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool TryInsertOffset(ColorBand colorBand, out int index)
+		private bool TryInsertCutoff(ColorBand colorBand, out int index)
 		{
 			if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
 			{
@@ -680,10 +728,10 @@ namespace MSetExplorer
 
 			bool result;
 
-			switch (EditMode)
+			switch (CurrentCbEditMode)
 			{
-				case ColorBandSetEditMode.Offsets:
-					result = TryDeleteOffset(colorBand);
+				case ColorBandSetEditMode.Cutoffs:
+					result = TryDeleteCutoff(colorBand);
 					break;
 				case ColorBandSetEditMode.Colors:
 					result = TryDeleteColor(colorBand);
@@ -692,7 +740,7 @@ namespace MSetExplorer
 					result = TryDeleteColorBand(colorBand);
 					break;
 				default:
-					throw new InvalidOperationException($"{EditMode} is not recognized.");
+					throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
 			}
 
 			if (result)
@@ -710,7 +758,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool TryDeleteOffset(ColorBand colorBand)
+		private bool TryDeleteCutoff(ColorBand colorBand)
 		{
 			var index = _currentColorBandSet.IndexOf(colorBand);
 

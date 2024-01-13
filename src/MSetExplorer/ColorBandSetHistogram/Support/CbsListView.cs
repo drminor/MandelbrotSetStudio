@@ -3,16 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Security.AccessControl;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Xml.Schema;
 
 namespace MSetExplorer
 {
@@ -21,6 +20,9 @@ namespace MSetExplorer
 		#region Private Fields
 
 		private ContextMenuDisplayRequest _displayContextMenu;
+
+		private Action<ColorBandSetEditMode> _currentCbEditModeChanged;
+
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
 
@@ -36,7 +38,8 @@ namespace MSetExplorer
 
 		private int? _selectedItemsRangeAnchorIndex;
 		private int? _indexOfMostRecentlySelectedItem;
-		private ColorBandSelectionType _mostRecentSelectionTypeUsed;
+
+		private ColorBandSetEditMode _currentCbEditMode;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -44,7 +47,8 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool useRealTimePreview, bool parentIsFocused, ContextMenuDisplayRequest displayContextMenu)
+		public CbsListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool useRealTimePreview, bool parentIsFocused, ColorBandSetEditMode currentCbEditMode, 
+			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged)
 		{
 			_canvas = canvas;
 			_colorBandsView = colorBandsView;
@@ -56,12 +60,13 @@ namespace MSetExplorer
 
 			UseRealTimePreview = useRealTimePreview;
 			_displayContextMenu = displayContextMenu;
+			_currentCbEditModeChanged = currentCbEditModeChanged;
 
 			ListViewItems = new List<CbsListViewItem>();
 
 			_selectedItemsRangeAnchorIndex = null;
 			_indexOfMostRecentlySelectedItem = null;
-			_mostRecentSelectionTypeUsed = ColorBandSelectionType.Band;
+			_currentCbEditMode = currentCbEditMode;
 
 			//_hitList = new List<Shape>();
 
@@ -127,6 +132,21 @@ namespace MSetExplorer
 		{
 			get => _colorBandLayoutViewModel.ParentIsFocused;
 			set => _colorBandLayoutViewModel.ParentIsFocused = value;
+		}
+
+		public ColorBandSetEditMode CurrentCbEditMode
+		{
+			get => _currentCbEditMode;
+			set
+			{
+				if (value != _currentCbEditMode)
+				{
+					_currentCbEditMode = value;
+					_currentCbEditModeChanged(value);
+
+					UpdateCbsListViewWithNewSelectionType(value);
+				}
+			}
 		}
 
 		private CbsListViewItem? ItemUnderMouse
@@ -229,7 +249,7 @@ namespace MSetExplorer
 
 						if (_selectedItemsRangeAnchorIndex != null)
 						{
-							SetItemsInSelectedRange(newColorBandIndex, _selectedItemsRangeAnchorIndex.Value, _mostRecentSelectionTypeUsed);
+							SetItemsInSelectedRange(newColorBandIndex, _selectedItemsRangeAnchorIndex.Value, _currentCbEditMode);
 						}
 					}
 				}
@@ -635,7 +655,7 @@ namespace MSetExplorer
 		}
 
 		// The user has pressed the left mouse-button while over a Rectangle or SectionLine.
-		private void UpdateCbsRectangleIsSelected(int colorBandIndex, ColorBandSelectionType sourceType)
+		private void UpdateCbsRectangleIsSelected(int colorBandIndex, ColorBandSetEditMode colorBandEditMode)
 		{
 			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
@@ -649,14 +669,14 @@ namespace MSetExplorer
 
 				if (_selectedItemsRangeAnchorIndex != null)
 				{
-					SetItemsInSelectedRange(colorBandIndex, _selectedItemsRangeAnchorIndex.Value, sourceType);
+					SetItemsInSelectedRange(colorBandIndex, _selectedItemsRangeAnchorIndex.Value, colorBandEditMode);
 				}
 			}
 			else if (controlKeyPressed)
 			{
 				var cbsListViewItem = ListViewItems[colorBandIndex];
 
-				_ = Toggle(cbsListViewItem, sourceType);
+				_ = Toggle(cbsListViewItem, colorBandEditMode);
 
 				_selectedItemsRangeAnchorIndex = null;
 			}
@@ -669,15 +689,18 @@ namespace MSetExplorer
 
 				var cbsListViewItem = ListViewItems[colorBandIndex];
 
-				Toggle(cbsListViewItem, sourceType);
+				Toggle(cbsListViewItem, colorBandEditMode);
 			}
 
 			_indexOfMostRecentlySelectedItem = colorBandIndex;
-			_mostRecentSelectionTypeUsed = sourceType;
+			CurrentCbEditMode = colorBandEditMode;
 		}
 
-		private void SetItemsInSelectedRange(int startIndex, int endIndex, ColorBandSelectionType selectionType)
+		private void SetItemsInSelectedRange(int startIndex, int endIndex, ColorBandSetEditMode editMode)
 		{
+			var selectionType = ColorBandSetViewHelper.GetFrom(editMode);
+
+
 			if (startIndex > endIndex)
 			{
 				for (var i = 0; i < ListViewItems.Count; i++)
@@ -708,17 +731,17 @@ namespace MSetExplorer
 			}
 		}
 
-		private ColorBandSelectionType Toggle(CbsListViewItem cbsListViewItem, ColorBandSelectionType sourceType)
+		private ColorBandSelectionType Toggle(CbsListViewItem cbsListViewItem, ColorBandSetEditMode editMode)
 		{
-			if (sourceType == ColorBandSelectionType.Band)
+			if (editMode == ColorBandSetEditMode.Bands)
 			{
 				cbsListViewItem.IsColorBandSelected = !cbsListViewItem.IsColorBandSelected;
 			}
-			else if (sourceType == ColorBandSelectionType.Cutoff)
+			else if (editMode == ColorBandSetEditMode.Cutoffs)
 			{
 				cbsListViewItem.IsCutoffSelected = !cbsListViewItem.IsCutoffSelected;
 			}
-			else if (sourceType == ColorBandSelectionType.Color)
+			else if (editMode == ColorBandSetEditMode.Colors)
 			{
 				cbsListViewItem.IsColorSelected = !cbsListViewItem.IsColorSelected;
 			}
@@ -726,28 +749,26 @@ namespace MSetExplorer
 			return cbsListViewItem.SelectionType;
 		}
 
-		//private ColorBandSelectionType SetItemsSelectionType(CbsListViewItem cbsListViewItem, ColorBandSelectionType sourceType)
-		//{
-		//	if (sourceType == ColorBandSelectionType.Band)
-		//	{
-		//		cbsListViewItem.IsColorBandSelected = cbsListViewItem.CbsRectangle.IsSelected;
-		//	}
-		//	else if (sourceType == ColorBandSelectionType.Cutoff)
-		//	{
-		//		cbsListViewItem.IsCutoffSelected = !cbsListViewItem.IsCutoffSelected;
-		//	}
-		//	else if (sourceType == ColorBandSelectionType.Color)
-		//	{
-		//		cbsListViewItem.IsColorSelected = !cbsListViewItem.IsColorSelected;
-		//	}
+		private void UpdateCbsListViewWithNewSelectionType(ColorBandSetEditMode editMode)
+		{
+			var selectionType = ColorBandSetViewHelper.GetFrom(editMode);
 
-		//	return cbsListViewItem.SelectionType;
-		//}
+			for (var i = 0; i < ListViewItems.Count; i++)
+			{
+				var currentSelectionType = ListViewItems[i].SelectionType;
 
-		private void HandleContextMenuDisplayRequested(int colorBandIndex, ColorBandSelectionType colorBandSelectionType)
+				if (currentSelectionType != selectionType)
+				{
+					ListViewItems[i].SelectionType = selectionType;
+				}
+
+			}
+		}
+
+		private void HandleContextMenuDisplayRequested(int colorBandIndex, ColorBandSetEditMode editMode)
 		{
 			var cbsListViewItem = ListViewItems[colorBandIndex];
-			_displayContextMenu(cbsListViewItem, colorBandSelectionType);
+			_displayContextMenu(cbsListViewItem, editMode);
 		}
 
 		//private void UpdateCbsRectangleIsCurrent(int colorBandIndex, bool newState)
@@ -1017,7 +1038,7 @@ namespace MSetExplorer
 		{
 			ColorBand = colorBand;
 			CbsRectangle = cbsRectangle;
-			this.CbsSectionLine = cbsSectionLine;
+			CbsSectionLine = cbsSectionLine;
 
 			_selectionType = 0;
 
@@ -1064,7 +1085,7 @@ namespace MSetExplorer
 					_selectionType = value;
 
 					IsCutoffSelected = _selectionType.HasFlag(ColorBandSelectionType.Cutoff);
-					IsColorSelected = _selectionType.HasFlag(ColorBandSelectionType.Cutoff);
+					IsColorSelected = _selectionType.HasFlag(ColorBandSelectionType.Color);
 				}
 			}
 		}
@@ -1086,7 +1107,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						_selectionType &= ColorBandSelectionType.Color;
+						_selectionType &= ~ColorBandSelectionType.Cutoff;
 					}
 				}
 			}
@@ -1109,7 +1130,7 @@ namespace MSetExplorer
 					}
 					else
 					{
-						_selectionType &= ColorBandSelectionType.Cutoff;
+						_selectionType &= ~ColorBandSelectionType.Color;
 					}
 				}
 			}
@@ -1126,7 +1147,6 @@ namespace MSetExplorer
 		}
 
 		public bool IsItemSelected => IsCutoffSelected | IsColorSelected;
-
 
 		#endregion
 
@@ -1154,8 +1174,10 @@ namespace MSetExplorer
 						// The ColorBand preceeding this one had its Cutoff updated.
 						// This ColorBand had its PreviousCutoff (aka XPosition) updated.
 						// This ColorBand's Starting Position (aka XPosition) and Width should be updated to accomodate.
+						//CbsRectangle.XPosition = cb.PreviousCutoff ?? 0;
+						//CbsRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
+
 						CbsRectangle.XPosition = cb.PreviousCutoff ?? 0;
-						CbsRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
 					}
 				}
 			}
@@ -1164,9 +1186,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
-
-
-
 
 		public void TearDown()
 		{
@@ -1178,12 +1197,5 @@ namespace MSetExplorer
 		#endregion
 	}
 
-	[Flags]
-	public enum ColorBandSelectionType
-	{
-		None = 0,
-		Cutoff = 1,
-		Color = 2,
-		Band = 3
-	}
+
 }

@@ -522,7 +522,7 @@ namespace MSetExplorer
 				bool result;
 				switch (EditMode)
 				{
-					case ColorBandSetEditMode.Offsets:
+					case ColorBandSetEditMode.Cutoffs:
 						result = TryInsertOffset(curItem, out index);
 						break;
 					case ColorBandSetEditMode.Colors:
@@ -632,7 +632,7 @@ namespace MSetExplorer
 				bool result;
 				switch (EditMode)
 				{
-					case ColorBandSetEditMode.Offsets:
+					case ColorBandSetEditMode.Cutoffs:
 						result = TryDeleteOffset(curItem);
 						break;
 					case ColorBandSetEditMode.Colors:

@@ -11,8 +11,8 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
-	internal delegate void IsSelectedChangedCallback(int colorBandIndex, ColorBandSelectionType sourceType);
-	internal delegate void ContextMenuDisplayRequest(CbsListViewItem cbsListViewItem, ColorBandSelectionType sourceType);
+	internal delegate void IsSelectedChangedCallback(int colorBandIndex, ColorBandSetEditMode editMode);
+	internal delegate void ContextMenuDisplayRequest(CbsListViewItem cbsListViewItem, ColorBandSetEditMode editMode);
 
 	public class HistogramColorBandControl : ContentControl, IContentScaler
 	{
@@ -55,6 +55,7 @@ namespace MSetExplorer
 
 		public HistogramColorBandControl()
 		{
+			_vm = null;
 			_ourContent = new FrameworkElement();
 			_canvas = new Canvas();
 			_border = null;
@@ -90,6 +91,13 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_Loaded(object sender, RoutedEventArgs e)
 		{
+			//if (_vm == null)
+			//{
+			//	throw new InvalidOperationException("VM is Null as the HistogramColorBandControl is loaded.");
+			//}
+
+			//_vm.PropertyChanged += ViewModel_PropertyChanged;
+
 			PreviewMouseDown += Handle_PreviewMouseDown;
 			MouseEnter += Handle_MouseEnter;
 			GotFocus += Handle_GotFocus;
@@ -101,6 +109,13 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
+			//if (_vm == null)
+			//{
+			//	throw new InvalidOperationException("VM is Null as the HistogramColorBandControl is unloaded.");
+			//}
+
+			//_vm.PropertyChanged -= ViewModel_PropertyChanged;
+
 			PreviewMouseDown -= Handle_PreviewMouseDown;
 
 			MouseEnter -= Handle_MouseEnter;
@@ -115,6 +130,28 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private ICbsHistogramViewModel? CbsHistogramViewModel
+		{
+			get => _vm;
+			set
+			{
+				if (value != _vm)
+				{
+					if (_vm != null)
+					{
+						_vm.PropertyChanged -= ViewModel_PropertyChanged;
+					}
+
+					_vm = value;
+
+					if (_vm != null)
+					{
+						_vm.PropertyChanged += ViewModel_PropertyChanged;
+					}
+				}
+			}
+		}
 
 		#region Events
 
@@ -249,7 +286,9 @@ namespace MSetExplorer
 
 				if (_colorBandsView.Count > 0)
 				{
-					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _parentIsFocused, ShowContextMenu);
+					var currentCbEditMode = CbsHistogramViewModel?.CurrentCbEditMode ?? ColorBandSetEditMode.Bands;
+
+					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbsListViewEditModeChanged);
 				}
 			}
 		}
@@ -285,6 +324,30 @@ namespace MSetExplorer
 					if (_cbsListView != null)
 					{
 						_cbsListView.ParentIsFocused = value;
+					}
+				}
+			}
+		}
+
+		private ColorBandSetEditMode _currentCbEditMode;
+
+		public ColorBandSetEditMode CurrentCbEditMode
+		{
+			get => _currentCbEditMode;
+			set
+			{
+				if (value != _currentCbEditMode)
+				{
+					_currentCbEditMode = value;
+
+					if (_cbsListView != null)
+					{
+						_cbsListView.CurrentCbEditMode = value;
+					}
+
+					if (CbsHistogramViewModel != null)
+					{
+						CbsHistogramViewModel.CurrentCbEditMode = value;
 					}
 				}
 			}
@@ -422,7 +485,7 @@ namespace MSetExplorer
 				//(Canvas, Image) = BuildContentModel(_ourContent);
 				Canvas = BuildContentModel(_ourContent);
 
-				_vm = (ICbsHistogramViewModel)DataContext;
+				CbsHistogramViewModel = (ICbsHistogramViewModel)DataContext;
 			}
 			else
 			{
@@ -446,6 +509,25 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			//if (_vm != null && _cbsListView != null)
+			//{
+			//	if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentCbEditMode))
+			//	{
+			//		_cbsListView.CurrentCbEditMode = _vm.CurrentCbEditMode;
+			//	}
+			//}
+
+			if (_cbsListView != null && CbsHistogramViewModel != null)
+			{
+				if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentCbEditMode))
+				{
+					_cbsListView.CurrentCbEditMode = CbsHistogramViewModel.CurrentCbEditMode;
+				}
+			}
+		}
 
 		private void Handle_PreviewMouseDown(object sender, MouseButtonEventArgs e)
 		{
@@ -507,7 +589,7 @@ namespace MSetExplorer
 
 		private void Handle_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
-			if (_vm == null || _cbsListView == null || _cbsListView.IsDragSectionLineInProgress)
+			if (CbsHistogramViewModel == null || _cbsListView == null || _cbsListView.IsDragSectionLineInProgress)
 			{
 				return;
 			}
@@ -515,7 +597,7 @@ namespace MSetExplorer
 			if (e.Key == Key.Left)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
-				var wasMoved = _vm.TryMoveCurrentColorBandToPrevious();
+				var wasMoved = CbsHistogramViewModel.TryMoveCurrentColorBandToPrevious();
 
 				if (wasMoved)
 				{
@@ -527,7 +609,7 @@ namespace MSetExplorer
 			else if (e.Key == Key.Right)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling PreviewKeyUp. The Key is {e.Key}. The sender is {sender}.");
-				var wasMoved = _vm.TryMoveCurrentColorBandToNext();
+				var wasMoved = CbsHistogramViewModel.TryMoveCurrentColorBandToNext();
 
 				if (wasMoved)
 				{
@@ -540,13 +622,22 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Context Menu Event Handlers
+		#region CbsListView Callbacks
 
-		private void ShowContextMenu(CbsListViewItem sender, ColorBandSelectionType colorBandSelectionType)
+		private void ShowContextMenu(CbsListViewItem sender, ColorBandSetEditMode editMode)
 		{
 			ContextMenu.IsOpen = true;
 			//MessageBox.Show($"There will, one day, be a context menu here. Index: {sender.CbsSectionLine.ColorBandIndex}; Source: {colorBandSelectionType}.");
 		}
+
+		private void HandleCbsListViewEditModeChanged(ColorBandSetEditMode colorBandSetEditMode)
+		{
+			CurrentCbEditMode = colorBandSetEditMode;
+		}
+
+		#endregion
+
+		#region Context Menu Event Handlers
 
 		protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
 		{

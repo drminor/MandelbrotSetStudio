@@ -15,22 +15,24 @@ namespace MSetExplorer
 		private const double SELECTION_LINE_ARROW_WIDTH = 6;
 		private const double MIN_SEL_DISTANCE = 0.49;
 
-		private static readonly Brush ACTIVE_STROKE = DrawingHelper.BuildSelectionDrawingBrush();
-		//private static readonly Brush DEFAULT_STROKE = new SolidColorBrush(Colors.DarkGray);
+		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
+		private static readonly Brush DARKISH_GRAY_BRUSH = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
+		private static readonly Brush VERY_LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
 
+		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
+		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
+		private static readonly Brush MEDIUM_BLUE_BRUSH = new SolidColorBrush(Colors.MediumBlue);
 
+		private static readonly Brush BLACK_AND_WHITE_CHECKERS_BRUSH = DrawingHelper.BuildSelectionDrawingBrush();
 
-		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.MediumBlue);
-		//private static readonly Brush IS_SELECTED_STROKE = IS_SELECTED_BACKGROUND;
+		private static readonly Brush IS_SELECTED_BACKGROUND = MIDDLIN_BLUE_BRUSH;
 
-		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));   // Gray
-		//private static readonly Brush IS_SELECTED_INACTIVE_STROKE = IS_SELECTED_INACTIVE_BACKGROUND;
+		private static readonly Brush IS_HOVERED_BACKGROUND = VERY_LIGHT_BLUE_BRUSH;
+		private static readonly Brush IS_HOVERED_STROKE = BLACK_AND_WHITE_CHECKERS_BRUSH;
 
-		private static readonly Brush IS_HOVERED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff)); // Very Light Blue
-		private static readonly Brush IS_HOVERED_STROKE = ACTIVE_STROKE;
+		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
-		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
-		private static readonly Brush DEFAULT_STROKE = IS_SELECTED_INACTIVE_BACKGROUND;
+		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.AntiqueWhite);
 
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
@@ -41,7 +43,7 @@ namespace MSetExplorer
 		private double _cbHeight;
 		private double _scaleX;
 		private IsSelectedChangedCallback _isSelectedChangedCallback;
-		private Action<int, ColorBandSelectionType> _requestContextMenuShown;
+		private Action<int, ColorBandSetEditMode> _requestContextMenuShown;
 
 		private double _selectionLinePosition;
 
@@ -67,7 +69,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsSectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSelectionType> requestContextMenuShown)
+		public CbsSectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSetEditMode> requestContextMenuShown)
 		{
 			_isSelected = isSelected;
 			_isUnderMouse = false;
@@ -98,13 +100,13 @@ namespace MSetExplorer
 			_rightWidth = null;
 			_updatingPrevious = false;
 
-			_dragLine = BuildDragLine(_selectionLinePosition, _colorBandLayoutViewModel);
+			_dragLine = BuildDragLine(_selectionLinePosition, _isUnderMouse, _colorBandLayoutViewModel);
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 
 			//_topArrowHalfWidth = (_cbElevation - 2) / 2;
 			_topArrowHalfWidth = SELECTION_LINE_ARROW_WIDTH;
-			_topArrow = BuildTopArrow(_selectionLinePosition, _colorBandLayoutViewModel);
+			_topArrow = BuildTopArrow(_selectionLinePosition, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 
 			_topArrow.MouseUp += Handle_TopArrowMouseUp;
 			//_topArrow.PreviewKeyDown += TopArrow_PreviewKeyDown;
@@ -113,16 +115,14 @@ namespace MSetExplorer
 			_topArrow.SetValue(Panel.ZIndexProperty, 30);
 		}
 
-		private Line BuildDragLine(double selectionLinePosition, ColorBandLayoutViewModel layout)
+		private Line BuildDragLine(double selectionLinePosition, bool isUnderMounse, ColorBandLayoutViewModel layout)
 		{
 			var result = new Line()
 			{
 				Fill = Brushes.Transparent,
-				Stroke = DEFAULT_STROKE, // layout.ParentIsFocused ? ACTIVE_STROKE : DEFAULT_STROKE,
+				Stroke = GetDragLineStroke(isUnderMounse),
 				StrokeThickness = 2,
-				//StrokeDashArray = new DoubleCollection { 4, 4 },
-				//Y1 = parentIsFocused ? elevation : 0,
-				Y1 = layout.CbrElevation, // 0,
+				Y1 = layout.CbrElevation,
 				Y2 = layout.CbrElevation + layout.CbrHeight,
 				X1 = selectionLinePosition,
 				X2 = selectionLinePosition,
@@ -131,24 +131,27 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Polygon BuildTopArrow(double selectionLinePosition, ColorBandLayoutViewModel layout)
+		private Polygon BuildTopArrow(double selectionLinePosition, bool isSelected, bool isUnderMouse, ColorBandLayoutViewModel layout)
 		{
 			var result = new Polygon()
 			{
-				Fill = GetTopArrowFill(_isSelected, _isUnderMouse),
-				Stroke = Brushes.DarkGray,
+				Fill = GetTopArrowFill(isSelected, isUnderMouse),
+				Stroke = DEFAULT_STROKE,
 				StrokeThickness = 2,
 				Points = BuildTopAreaPoints(selectionLinePosition, layout),
 
 				Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden
-				//Visibility = Visibility.Hidden
-
-				//Visibility = _isUnderMouse ? Visibility.Visible : Visibility.Hidden
 			};
 
 			return result;
 		}
 
+		private Brush GetDragLineStroke(bool isUnderMouse)
+		{
+			var result = isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
+			return result;
+
+		}
 		private Brush GetTopArrowFill(bool isSelected, bool isUnderMouse)
 		{
 			var result = isSelected ? IS_SELECTED_BACKGROUND : isUnderMouse ? IS_HOVERED_BACKGROUND : DEFAULT_BACKGROUND;
@@ -189,7 +192,7 @@ namespace MSetExplorer
 				if (value != _controlHeight)
 				{
 					_controlHeight = value;
-					_dragLine.Y2 = CbElevation + CbHeight; // ControlHeight;
+					_dragLine.Y2 = CbElevation + CbHeight;
 				}
 			}
 		}
@@ -246,10 +249,6 @@ namespace MSetExplorer
 				if (value != _cbElevation)
 				{
 					_cbElevation = value;
-					//_dragLine.Y1 = ParentIsFocused ? CbElevation : 0;
-					_dragLine.Y1 = CbElevation; // 0;
-
-					//_topArrowHalfWidth = (value - 2) / 2;
 				}
 			}
 		}
@@ -288,10 +287,8 @@ namespace MSetExplorer
 				{
 					_isUnderMouse = value;
 
-					//_topArrow.Visibility = _isUnderMouse ? Visibility.Visible : Visibility.Hidden;
-
 					_topArrow.Fill = GetTopArrowFill(_isSelected, _isUnderMouse);
-					_dragLine.Stroke = _isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
+					_dragLine.Stroke = GetDragLineStroke(_isUnderMouse);
 				}
 			}
 		}
@@ -305,16 +302,7 @@ namespace MSetExplorer
 				if (value != _parentIsFocused)
 				{
 					_parentIsFocused = value;
-
-					//_dragLine.Stroke = _parentIsFocused ? ACTIVE_STROKE : DEFAULT_STROKE;
-					//_dragLine.Y1 = _parentIsFocused ? CbElevation : 0;
-					//_topArrow.Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden;
-
-					_dragLine.Stroke = DEFAULT_STROKE;
-					_dragLine.Y1 = _colorBandLayoutViewModel.CbrElevation; // 0;
 					_topArrow.Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden;
-
-
 				}
 			}
 		}
@@ -532,7 +520,7 @@ namespace MSetExplorer
 			{
 				if (e.ChangedButton == MouseButton.Right)
 				{
-					_requestContextMenuShown(ColorBandIndex, ColorBandSelectionType.Cutoff);
+					_requestContextMenuShown(ColorBandIndex, ColorBandSetEditMode.Cutoffs);
 					e.Handled = true;
 				}
 			}
@@ -550,7 +538,7 @@ namespace MSetExplorer
 
 		private void NotifySelectionChanged()
 		{
-			_isSelectedChangedCallback(ColorBandIndex, ColorBandSelectionType.Cutoff);
+			_isSelectedChangedCallback(ColorBandIndex, ColorBandSetEditMode.Cutoffs);
 		}
 
 		private bool CompleteDrag()

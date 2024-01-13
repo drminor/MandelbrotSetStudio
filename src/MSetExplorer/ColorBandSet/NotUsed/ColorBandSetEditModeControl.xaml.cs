@@ -29,7 +29,7 @@ namespace MSetExplorer
 
 		private void rdoBtnOffset_Checked(object sender, RoutedEventArgs e)
 		{
-			ColorBandSetEditMode = ColorBandSetEditMode.Offsets;
+			ColorBandSetEditMode = ColorBandSetEditMode.Cutoffs;
 		}
 
 		private void rdoBtnColor_Checked(object sender, RoutedEventArgs e)
@@ -74,7 +74,7 @@ namespace MSetExplorer
 				{
 					switch (newValue)
 					{
-						case ColorBandSetEditMode.Offsets:
+						case ColorBandSetEditMode.Cutoffs:
 							uc.rdoBtnOffset.IsChecked = true;
 							break;
 						case ColorBandSetEditMode.Colors:

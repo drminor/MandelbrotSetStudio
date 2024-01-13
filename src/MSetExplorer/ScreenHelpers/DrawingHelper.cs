@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System.Diagnostics;
 using System.Security.Policy;
 using System.Windows;
 using System.Windows.Media;
@@ -106,6 +107,9 @@ namespace MSetExplorer
 				ViewportUnits = BrushMappingMode.Absolute,
 				Viewport = new Rect(0, 0, inc * 2, inc * 2)
 			};
+
+			var bounds = result.Drawing.Bounds;
+			Debug.WriteLine($"The BlackAndWhiteCheckered Brush has bounds: {bounds}.");
 
 			return result;
 		}

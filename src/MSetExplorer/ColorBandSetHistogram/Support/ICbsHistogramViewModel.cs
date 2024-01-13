@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -15,7 +14,10 @@ namespace MSetExplorer
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 		event EventHandler<ColorBandSetUpdateRequestedEventArgs>? ColorBandSetUpdateRequested;
 
-		ColorBandSetEditMode EditMode { get; set; }
+		ColorBandSetEditMode CurrentCbEditMode { get; set; }
+
+		bool EditingCutoffs { get; set; }
+		bool EditingColors { get; set; }
 
 		bool ColorBandUserControlHasErrors { get; set; }
 

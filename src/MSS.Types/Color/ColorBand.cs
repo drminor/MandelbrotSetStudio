@@ -126,6 +126,8 @@ namespace MSS.Types
 		//public int BucketWidth => Cutoff - StartingCutoff;
 		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);  // Updated on 12/26/2023
 
+		// cutoff = (_previousCutoff ?? 0) + BucketWidth
+
 
 		/* Relationship between Cutoff and StartingCutoff
 

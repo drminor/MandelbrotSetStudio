@@ -299,13 +299,13 @@ namespace MSS.Types
 				throw new ArgumentException($"DeleteCutoff. Index must be between 0 and {Count - 1}, inclusive.");
 			}
 
-			PullOffsetsDown(index); // Last Band is popped from the list and added to the reserves.
+			PullCutoffsDown(index); // Last Band is popped from the list and added to the reserves.
 		}
 
 		public void InsertColor(int index, ColorBand colorBand)
 		{
 			InsertItem(index, colorBand);
-			PullOffsetsDown(index); // Last Band is popped from the list and added to the reserves.
+			PullCutoffsDown(index); // Last Band is popped from the list and added to the reserves.
 		}
 
 		public void DeleteColor(int index)
@@ -615,7 +615,7 @@ namespace MSS.Types
 			targetCbE.SuccessorStartColor = Items[Count - 1].StartColor;
 		}
 
-		private void PullOffsetsDown(int index)
+		private void PullCutoffsDown(int index)
 		{
 			for (var ptr = index; ptr < Count - 2; ptr++)
 			{

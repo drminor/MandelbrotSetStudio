@@ -15,19 +15,26 @@ namespace MSetExplorer
 
 		//private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
 
-		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.Transparent);
-		private static readonly Brush DEFAULT_STROKE = DEFAULT_BACKGROUND;
+		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
+		private static readonly Brush DARKISH_GRAY_BRUSH = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
+		private static readonly Brush VERY_LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
+		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
+		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
 
-		private static readonly Brush IS_SELECTED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));	// Blue
-		private static readonly Brush IS_SELECTED_STROKE = IS_SELECTED_BACKGROUND;
 
-		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));	// Gray
-		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = IS_SELECTED_INACTIVE_BACKGROUND;
+		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
+		private static readonly Brush DEFAULT_STROKE = TRANSPARENT_BRUSH;
 
-		private static readonly Brush IS_HOVERED_BACKGROUND = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));	// Very Light Blue
-		private static readonly Brush IS_HOVERED_STROKE = IS_HOVERED_BACKGROUND;
+		private static readonly Brush IS_SELECTED_BACKGROUND = MIDDLIN_BLUE_BRUSH;
+		private static readonly Brush IS_SELECTED_STROKE = MIDDLIN_BLUE_BRUSH;
 
-		private static readonly Brush IS_CURRENT_STROKE = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff)); // Light Blue
+		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = DARKISH_GRAY_BRUSH;
+		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = DARKISH_GRAY_BRUSH;
+
+		private static readonly Brush IS_HOVERED_BACKGROUND = VERY_LIGHT_BLUE_BRUSH;
+		private static readonly Brush IS_HOVERED_STROKE = VERY_LIGHT_BLUE_BRUSH;
+
+		private static readonly Brush IS_CURRENT_STROKE = LIGHT_BLUE_BRUSH;
 
 		// For diagnostics
 		//private static readonly Brush IS_HOVERED_AND_IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.SeaGreen);
@@ -41,10 +48,12 @@ namespace MSetExplorer
 		private double _cbHeight;
 		private SizeDbl _contentScale;
 		private IsSelectedChangedCallback _isSelectedChangedCallback;
-		private Action<int, ColorBandSelectionType> _requestContextMenuShown;
+		private Action<int, ColorBandSetEditMode> _requestContextMenuShown;
 
 		private double _xPosition;
 		private double _width;
+		private double _cutoff;
+
 		//private ColorBandColor _startColor;
 		//private ColorBandColor _endColor;
 		//private bool _blend;
@@ -66,7 +75,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public CbsRectangle(int colorBandIndex, bool isCurrent, bool isSelected, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
-			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallBack, Action<int, ColorBandSelectionType> requestContextMenuShown)
+			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallBack, Action<int, ColorBandSetEditMode> requestContextMenuShown)
 		{
 			_isCurrent = isCurrent;
 			_isSelected = isSelected;
@@ -90,6 +99,8 @@ namespace MSetExplorer
 
 			_xPosition = xPosition;
 			_width = width;
+			_cutoff = _xPosition + _width;
+
 			//_startColor = startColor;
 			//_endColor = endColor;
 			//_blend = blend;
@@ -140,6 +151,7 @@ namespace MSetExplorer
 				if (value != _xPosition)
 				{
 					_xPosition = value;
+					_width = Cutoff - _xPosition;
 					Resize(_xPosition, Width, _colorBandLayoutViewModel);
 				}
 			}
@@ -167,6 +179,19 @@ namespace MSetExplorer
 				{
 					_width = value;
 					Resize(_xPosition, Width, _colorBandLayoutViewModel);
+				}
+			}
+		}
+
+		public double Cutoff
+		{
+			get => _cutoff;
+			set
+			{
+				if (value != _cutoff)
+				{
+					_cutoff = value;
+					Width = _cutoff - XPosition;
 				}
 			}
 		}
@@ -322,7 +347,7 @@ namespace MSetExplorer
 			{
 				if (e.ChangedButton == MouseButton.Right)
 				{
-					_requestContextMenuShown(ColorBandIndex, ColorBandSelectionType.Color);
+					_requestContextMenuShown(ColorBandIndex, ColorBandSetEditMode.Colors);
 					e.Handled = true;
 				}
 			}
@@ -438,7 +463,7 @@ namespace MSetExplorer
 
 		private void NotifySelectionChange()
 		{
-			_isSelectedChangedCallback(ColorBandIndex, ColorBandSelectionType.Band);
+			_isSelectedChangedCallback(ColorBandIndex, ColorBandSetEditMode.Bands);
 		}
 
 		private void UpdateSelectionBackground()

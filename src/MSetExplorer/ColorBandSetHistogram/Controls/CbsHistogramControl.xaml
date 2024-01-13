@@ -116,12 +116,12 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="100"/>
-                            <RowDefinition Height="33"/>
-                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="35"/>
+                            <RowDefinition Height="32"/>
 
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Stretch" Margin="0">
+                        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="20,0,0,0">
 
                             <StackPanel Orientation="Vertical" >
                                 
@@ -132,14 +132,16 @@
                                 
                                     <TextBlock Height="21" Margin="5,5,5,0" FontSize="14" Text="of" />
                                     <TextBox Text="{Binding Path=ColorBandsCount, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0,3"/>
+                                    <CheckBox x:Name="Cutoffs" Margin="12,5,0,0" IsChecked="{Binding Path=EditingCutoffs, Mode=TwoWay}">Cutoffs</CheckBox>
                                 
                                     <!--<TextBlock Height="21" Margin="5" FontSize="14" Text="total" />-->
                                 </StackPanel>
 
                                 <!-- Left / Right -->
-                                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="10,3,0,3">
                                     <Button Width="70" Margin="0,0,10,0" Content="&lt; L" Click="MoveLeftButton_Click" />
                                     <Button Width="70" Content="R &gt;" Click="MoveRightButton_Click" />
+                                    <CheckBox x:Name="Colors" Margin="29,5,0,0"  IsChecked="{Binding Path=EditingColors, Mode=TwoWay}">Colors</CheckBox>
                                 </StackPanel>
 
                                 <!-- Percentage 
