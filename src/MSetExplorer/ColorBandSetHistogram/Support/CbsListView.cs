@@ -144,7 +144,7 @@ namespace MSetExplorer
 					_currentCbEditMode = value;
 					_currentCbEditModeChanged(value);
 
-					UpdateCbsListViewWithNewSelectionType(value);
+					UpdateListViewItemsWithNewSelectionType(value);
 				}
 			}
 		}
@@ -249,7 +249,7 @@ namespace MSetExplorer
 
 						if (_selectedItemsRangeAnchorIndex != null)
 						{
-							SetItemsInSelectedRange(newColorBandIndex, _selectedItemsRangeAnchorIndex.Value, _currentCbEditMode);
+							SetItemsInSelectedRange(newColorBandIndex, _selectedItemsRangeAnchorIndex.Value, CurrentCbEditMode);
 						}
 					}
 				}
@@ -698,7 +698,7 @@ namespace MSetExplorer
 
 		private void SetItemsInSelectedRange(int startIndex, int endIndex, ColorBandSetEditMode editMode)
 		{
-			var selectionType = ColorBandSetViewHelper.GetFrom(editMode);
+			var selectionType = ColorBandSetViewHelper.GetSelectionType(editMode);
 
 
 			if (startIndex > endIndex)
@@ -749,19 +749,15 @@ namespace MSetExplorer
 			return cbsListViewItem.SelectionType;
 		}
 
-		private void UpdateCbsListViewWithNewSelectionType(ColorBandSetEditMode editMode)
+		private void UpdateListViewItemsWithNewSelectionType(ColorBandSetEditMode editMode)
 		{
-			var selectionType = ColorBandSetViewHelper.GetFrom(editMode);
+			var selectionType = ColorBandSetViewHelper.GetSelectionType(editMode);
 
-			for (var i = 0; i < ListViewItems.Count; i++)
+			var currentlySelected = ListViewItems.Where(x => x.IsItemSelected);
+
+			foreach(var item in currentlySelected)
 			{
-				var currentSelectionType = ListViewItems[i].SelectionType;
-
-				if (currentSelectionType != selectionType)
-				{
-					ListViewItems[i].SelectionType = selectionType;
-				}
-
+				item.SelectionType = selectionType;
 			}
 		}
 

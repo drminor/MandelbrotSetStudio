@@ -15,7 +15,7 @@ namespace MSetExplorer
 		}
 
 
-		public static ColorBandSelectionType GetFrom(ColorBandSetEditMode editMode)
+		public static ColorBandSelectionType GetSelectionType(ColorBandSetEditMode editMode)
 		{
 			var selectionType =
 				editMode == ColorBandSetEditMode.Bands
@@ -28,7 +28,7 @@ namespace MSetExplorer
 			return selectionType;
 		}
 
-		public static ColorBandSetEditMode GetFrom(ColorBandSelectionType selectionType)
+		public static ColorBandSetEditMode GetEditMode(ColorBandSelectionType selectionType)
 		{
 			ColorBandSetEditMode result;
 
@@ -44,6 +44,25 @@ namespace MSetExplorer
 			}
 
 			return result;
+		}
+
+		public static ColorBandSetEditMode GetEditMode(bool isEditingCutoffs, bool isEditingColors)
+		{
+			var selectionType = ColorBandSelectionType.None;
+
+			if (isEditingCutoffs)
+			{
+				selectionType |= ColorBandSelectionType.Cutoff;
+			}
+
+			if (isEditingColors)
+			{
+				selectionType |= ColorBandSelectionType.Color;
+			}
+
+			var editMode = ColorBandSetViewHelper.GetEditMode(selectionType);
+
+			return editMode;
 		}
 
 	}

@@ -138,7 +138,7 @@ namespace MSetExplorer
 			{
 				if (value != _currentCbEditMode)
 				{
-					Debug.WriteLine($"ColorBandSetViewModel: The Edit mode is now {value}");
+					Debug.WriteLine($"CbsHistogramViewModel: The Edit mode is now {value}");
 					_currentCbEditMode = value;
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentCbEditMode));
 				}

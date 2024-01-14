@@ -63,6 +63,10 @@ namespace MSetExplorer
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 				_vm.ContentViewportSize = _vm.ViewportSize;
 
+				var editMode = ColorBandSetViewHelper.GetEditMode(chkBxCutoffs.IsChecked ?? false, chkBxColors.IsChecked ?? false);
+				HistogramColorBandControl1.CurrentCbEditMode = editMode;
+				_vm.CurrentCbEditMode = editMode;
+
 				PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetAndWidth);
 
 				PanAndZoomControl1.ZoomOwner = new ZoomSlider(cbshZoom1.scrollBar1, PanAndZoomControl1);

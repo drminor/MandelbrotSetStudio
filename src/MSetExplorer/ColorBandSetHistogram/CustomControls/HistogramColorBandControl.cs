@@ -172,8 +172,8 @@ namespace MSetExplorer
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
-				//_canvas.Background = new SolidColorBrush(Colors.Pink);
-				_canvas.Background = new SolidColorBrush(Colors.Transparent);
+				_canvas.Background = new SolidColorBrush(Colors.MistyRose);
+				//_canvas.Background = new SolidColorBrush(Colors.Transparent);
 			}
 		}
 
@@ -338,6 +338,8 @@ namespace MSetExplorer
 			{
 				if (value != _currentCbEditMode)
 				{
+					Debug.WriteLine($"HistogramColorBandControl: The CurrentDbEditMode is being updated from: {_currentCbEditMode} to {value}.");
+
 					_currentCbEditMode = value;
 
 					if (_cbsListView != null)

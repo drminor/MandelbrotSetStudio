@@ -9,7 +9,7 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
-	internal class CbsRectangle
+	internal class CbColorBlock
 	{
 		#region Private Fields
 
@@ -74,7 +74,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsRectangle(int colorBandIndex, bool isCurrent, bool isSelected, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
+		public CbColorBlock(int colorBandIndex, bool isCurrent, bool isSelected, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
 			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallBack, Action<int, ColorBandSetEditMode> requestContextMenuShown)
 		{
 			_isCurrent = isCurrent;

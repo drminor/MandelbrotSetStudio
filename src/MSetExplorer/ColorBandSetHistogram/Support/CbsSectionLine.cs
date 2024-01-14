@@ -32,7 +32,7 @@ namespace MSetExplorer
 
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
-		private static readonly Brush DEFAULT_BACKGROUND = new SolidColorBrush(Colors.AntiqueWhite);
+		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH; // new SolidColorBrush(Colors.AntiqueWhite);
 
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
