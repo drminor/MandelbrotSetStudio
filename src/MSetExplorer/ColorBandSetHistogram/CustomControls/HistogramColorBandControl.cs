@@ -12,7 +12,7 @@ using System.Windows.Shapes;
 namespace MSetExplorer
 {
 	internal delegate void IsSelectedChangedCallback(int colorBandIndex, ColorBandSetEditMode editMode);
-	internal delegate void ContextMenuDisplayRequest(CbsListViewItem cbsListViewItem, ColorBandSetEditMode editMode);
+	internal delegate void ContextMenuDisplayRequest(CbListViewItem cbsListViewItem, ColorBandSetEditMode editMode);
 
 	public class HistogramColorBandControl : ContentControl, IContentScaler
 	{
@@ -27,7 +27,7 @@ namespace MSetExplorer
 		private Path? _border;
 
 		private ListCollectionView _colorBandsView;
-		private CbsListView? _cbsListView;
+		private CbListView? _cbListView;
 
 		private TranslateTransform _canvasTranslateTransform;
 		private TransformGroup _canvasRenderTransform;
@@ -65,7 +65,7 @@ namespace MSetExplorer
 			//var isHorizontalScrollBarVisible = true;
 
 			_colorBandsView = ColorBandSetViewHelper.GetEmptyListCollectionView();
-			_cbsListView = null;
+			_cbListView = null;
 
 			_canvasTranslateTransform = new TranslateTransform();
 
@@ -223,9 +223,9 @@ namespace MSetExplorer
 					var scaledExtent = extent * ContentScale.Width;
 					Canvas.Width = scaledExtent;
 
-					if (_cbsListView != null)
+					if (_cbListView != null)
 					{
-						_cbsListView.ContentScale = value;
+						_cbListView.ContentScale = value;
 					}
 				}
 				else
@@ -278,17 +278,17 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling ColorBandsView update. The Canvas Width remains the same at {Canvas.Width}. The extent is {extent}.");
 				}
 
-				if (_cbsListView != null)
+				if (_cbListView != null)
 				{
-					_cbsListView.TearDown();
-					_cbsListView = null;
+					_cbListView.TearDown();
+					_cbListView = null;
 				}
 
 				if (_colorBandsView.Count > 0)
 				{
 					var currentCbEditMode = CbsHistogramViewModel?.CurrentCbEditMode ?? ColorBandSetEditMode.Bands;
 
-					_cbsListView = new CbsListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbsListViewEditModeChanged);
+					_cbListView = new CbListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged);
 				}
 			}
 		}
@@ -302,9 +302,9 @@ namespace MSetExplorer
 				{
 					_useRealTimePreview = value;
 
-					if (_cbsListView != null)
+					if (_cbListView != null)
 					{
-						_cbsListView.UseRealTimePreview = value;
+						_cbListView.UseRealTimePreview = value;
 					}
 				}
 			}
@@ -321,9 +321,9 @@ namespace MSetExplorer
 				if (value != _parentIsFocused)
 				{
 					_parentIsFocused = value;
-					if (_cbsListView != null)
+					if (_cbListView != null)
 					{
-						_cbsListView.ParentIsFocused = value;
+						_cbListView.ParentIsFocused = value;
 					}
 				}
 			}
@@ -342,9 +342,9 @@ namespace MSetExplorer
 
 					_currentCbEditMode = value;
 
-					if (_cbsListView != null)
+					if (_cbListView != null)
 					{
-						_cbsListView.CurrentCbEditMode = value;
+						_cbListView.CurrentCbEditMode = value;
 					}
 
 					if (CbsHistogramViewModel != null)
@@ -366,11 +366,11 @@ namespace MSetExplorer
 		//		return null;
 		//	}
 
-		//	var x = _cbsListView?.ItemAtMousePosition(hitPoint) ?? null;
+		//	var x = _cbListView?.ItemAtMousePosition(hitPoint) ?? null;
 
 		//	if (x != null)
 		//	{
-		//		return x.Value.Item1.CbsRectangle.ColorBandIndex;
+		//		return x.Value.Item1.CbRectangle.ColorBandIndex;
 		//	}
 		//	else
 		//	{
@@ -385,7 +385,7 @@ namespace MSetExplorer
 				return null;
 			}
 
-			var lvItemAndSelType = _cbsListView?.ItemAtMousePosition(hitPoint) ?? null;
+			var lvItemAndSelType = _cbListView?.ItemAtMousePosition(hitPoint) ?? null;
 
 			if (lvItemAndSelType != null)
 			{
@@ -400,13 +400,13 @@ namespace MSetExplorer
 
 		//public void ShowSectionLines(bool leftMouseButtonIsPressed)
 		//{
-		//	_cbsListView?.ShowSectionLines(leftMouseButtonIsPressed);
+		//	_cbListView?.ShowSectionLines(leftMouseButtonIsPressed);
 		//	_mouseIsEntered = true;
 		//}
 
 		//public void HideSectionLines(bool leftMouseButtonIsPressed)
 		//{
-		//	_cbsListView?.HideSectionLines(leftMouseButtonIsPressed);
+		//	_cbListView?.HideSectionLines(leftMouseButtonIsPressed);
 		//	_mouseIsEntered = false;
 		//}
 
@@ -514,19 +514,19 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			//if (_vm != null && _cbsListView != null)
+			//if (_vm != null && _cbListView != null)
 			//{
 			//	if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentCbEditMode))
 			//	{
-			//		_cbsListView.CurrentCbEditMode = _vm.CurrentCbEditMode;
+			//		_cbListView.CurrentCbEditMode = _vm.CurrentCbEditMode;
 			//	}
 			//}
 
-			if (_cbsListView != null && CbsHistogramViewModel != null)
+			if (_cbListView != null && CbsHistogramViewModel != null)
 			{
 				if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentCbEditMode))
 				{
-					_cbsListView.CurrentCbEditMode = CbsHistogramViewModel.CurrentCbEditMode;
+					_cbListView.CurrentCbEditMode = CbsHistogramViewModel.CurrentCbEditMode;
 				}
 			}
 		}
@@ -545,9 +545,9 @@ namespace MSetExplorer
 
 			//_colorBandLayoutViewModel.ControlHeight = e.NewSize.Height;
 
-			if (_cbsListView != null)
+			if (_cbListView != null)
 			{
-				_cbsListView.ControlHeight = e.NewSize.Height;
+				_cbListView.ControlHeight = e.NewSize.Height;
 			}
 		}
 
@@ -579,10 +579,10 @@ namespace MSetExplorer
 
 		private void HandleKeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.Key == Key.Escape && _cbsListView != null)
+			if (e.Key == Key.Escape && _cbListView != null)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling KeyDown. The Key is {e.Key}. The sender is {sender}.");
-				if (_cbsListView.CancelDrag())
+				if (_cbListView.CancelDrag())
 				{
 					e.Handled = true;
 				}
@@ -591,7 +591,7 @@ namespace MSetExplorer
 
 		private void Handle_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
-			if (CbsHistogramViewModel == null || _cbsListView == null || _cbsListView.IsDragSectionLineInProgress)
+			if (CbsHistogramViewModel == null || _cbListView == null || _cbListView.IsDragSectionLineInProgress)
 			{
 				return;
 			}
@@ -603,7 +603,7 @@ namespace MSetExplorer
 
 				if (wasMoved)
 				{
-					_cbsListView.SelectedIndexWasMoved(_cbsListView.CurrentColorBandIndex, -1);
+					_cbListView.SelectedIndexWasMoved(_cbListView.CurrentColorBandIndex, -1);
 				}
 
 				e.Handled = true;
@@ -615,7 +615,7 @@ namespace MSetExplorer
 
 				if (wasMoved)
 				{
-					_cbsListView.SelectedIndexWasMoved(_cbsListView.CurrentColorBandIndex, 1);
+					_cbListView.SelectedIndexWasMoved(_cbListView.CurrentColorBandIndex, 1);
 				}
 
 				e.Handled = true;
@@ -624,15 +624,15 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region CbsListView Callbacks
+		#region CbListView Callbacks
 
-		private void ShowContextMenu(CbsListViewItem sender, ColorBandSetEditMode editMode)
+		private void ShowContextMenu(CbListViewItem sender, ColorBandSetEditMode editMode)
 		{
 			ContextMenu.IsOpen = true;
-			//MessageBox.Show($"There will, one day, be a context menu here. Index: {sender.CbsSectionLine.ColorBandIndex}; Source: {colorBandSelectionType}.");
+			//MessageBox.Show($"There will, one day, be a context menu here. Index: {sender.CbSectionLine.ColorBandIndex}; Source: {colorBandSelectionType}.");
 		}
 
-		private void HandleCbsListViewEditModeChanged(ColorBandSetEditMode colorBandSetEditMode)
+		private void HandleCbListViewEditModeChanged(ColorBandSetEditMode colorBandSetEditMode)
 		{
 			CurrentCbEditMode = colorBandSetEditMode;
 		}
@@ -692,12 +692,12 @@ namespace MSetExplorer
 				_border = null;
 			}
 
-			if (_cbsListView == null)
+			if (_cbListView == null)
 			{
 				return;
 			}
 
-			var cbrElevation = _cbsListView.CbrElevation;
+			var cbrElevation = _cbListView.CbrElevation;
 			var xPosition = newValue.Position.X * ContentScale.Width;
 			var area = new RectangleDbl(new PointDbl(xPosition, cbrElevation), new SizeDbl(ActualWidth, ActualHeight - cbrElevation));
 

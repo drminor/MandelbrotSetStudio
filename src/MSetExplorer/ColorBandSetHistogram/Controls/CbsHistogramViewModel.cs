@@ -1613,29 +1613,29 @@ namespace MSetExplorer
 
 		//	if (colorBandIndex < 0 || colorBandIndex > ListViewItems.Count - 2)
 		//	{
-		//		throw new InvalidOperationException($"CbsListView::UpdateSectionLinePosition. The ColorBandIndex must be between 0 and {ListViewItems.Count - 1}, inclusive.");
+		//		throw new InvalidOperationException($"CbListView::UpdateSectionLinePosition. The ColorBandIndex must be between 0 and {ListViewItems.Count - 1}, inclusive.");
 		//	}
 
-		//	Debug.WriteLineIf(_useDetailedDebug, $"CbsListView. About to call SectionLine::UpdatePosition. Index = {colorBandIndex}");
+		//	Debug.WriteLineIf(_useDetailedDebug, $"CbListView. About to call SectionLine::UpdatePosition. Index = {colorBandIndex}");
 
-		//	var selectionLine = ListViewItems[colorBandIndex].CbsSectionLine;
+		//	var selectionLine = ListViewItems[colorBandIndex].CbSectionLine;
 
 		//	if (ScreenTypeHelper.IsDoubleChanged(newCutoff, selectionLine.XPosition))
 		//	{
-		//		var cbsRectangleLeft = ListViewItems[colorBandIndex].CbsRectangle;
-		//		var cbsRectangleRight = ListViewItems[colorBandIndex + 1].CbsRectangle;
+		//		var cbRectangleLeft = ListViewItems[colorBandIndex].CbRectangle;
+		//		var cbRectangleRight = ListViewItems[colorBandIndex + 1].CbRectangle;
 
-		//		Debug.Assert(cbsRectangleLeft.XPosition + cbsRectangleLeft.Width == selectionLine.XPosition);
-		//		Debug.Assert(cbsRectangleRight.XPosition == selectionLine.XPosition);
+		//		Debug.Assert(cbRectangleLeft.XPosition + cbRectangleLeft.Width == selectionLine.XPosition);
+		//		Debug.Assert(cbRectangleRight.XPosition == selectionLine.XPosition);
 
 		//		var diff = newCutoff - selectionLine.XPosition;
 
 		//		selectionLine.XPosition = newCutoff;
 
-		//		cbsRectangleLeft.Width += diff;
+		//		cbRectangleLeft.Width += diff;
 
-		//		cbsRectangleRight.XPosition = newCutoff;
-		//		cbsRectangleRight.Width -= diff;
+		//		cbRectangleRight.XPosition = newCutoff;
+		//		cbRectangleRight.Width -= diff;
 		//	}
 		//}
 
@@ -1659,7 +1659,7 @@ namespace MSetExplorer
 		//		if (cbWithMatchingOffset != null)
 		//		{
 		//			index = colorbandsView.IndexOf(cbWithMatchingOffset);
-		//			Debug.WriteLine($"CbsListView. The ColorBandsView does not contain the ColorBand: {cb}, but found an item with a matching offset: {cbWithMatchingOffset} at index: {index}.");
+		//			Debug.WriteLine($"CbListView. The ColorBandsView does not contain the ColorBand: {cb}, but found an item with a matching offset: {cbWithMatchingOffset} at index: {index}.");
 
 		//			return true;
 		//		}

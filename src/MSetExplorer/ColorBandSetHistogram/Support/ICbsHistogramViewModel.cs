@@ -74,7 +74,7 @@ namespace MSetExplorer
 
 		int? MoveTo(VectorDbl displayPosition);
 
-		//CbsListView SelectedItems { get; }
+		//CbListView SelectedItems { get; }
 
 		//void ClearSelectedItems();
 	}

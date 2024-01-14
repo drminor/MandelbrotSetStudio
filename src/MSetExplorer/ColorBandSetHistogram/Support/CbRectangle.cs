@@ -9,7 +9,7 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
-	internal class CbsRectangle
+	internal class CbRectangle
 	{
 		#region Private Fields
 
@@ -74,7 +74,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbsRectangle(int colorBandIndex, bool isCurrent, bool isSelected, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
+		public CbRectangle(int colorBandIndex, bool isCurrent, bool isSelected, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
 			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallBack, Action<int, ColorBandSetEditMode> requestContextMenuShown)
 		{
 			_isCurrent = isCurrent;
@@ -128,32 +128,6 @@ namespace MSetExplorer
 
 		public int ColorBandIndex { get; set; }
 
-		public double ControlHeight
-		{
-			get => _controlHeight;
-			set
-			{
-				if (value != _controlHeight)
-				{
-					_controlHeight = value;
-				}
-			}
-		}
-
-		public double XPosition
-		{
-			get => _xPosition;
-			set
-			{
-				if (value != _xPosition)
-				{
-					_xPosition = value;
-					_width = Cutoff - _xPosition;
-					Resize(_xPosition, Width, _colorBandLayoutViewModel);
-				}
-			}
-		}
-
 		public double CbElevation
 		{
 			get => _cbElevation;
@@ -167,28 +141,14 @@ namespace MSetExplorer
 			}
 		}
 
-		public double Width
+		public double ControlHeight
 		{
-			get => _width;
+			get => _controlHeight;
 			set
 			{
-				if (value != _width)
+				if (value != _controlHeight)
 				{
-					_width = value;
-					Resize(_xPosition, Width, _colorBandLayoutViewModel);
-				}
-			}
-		}
-
-		public double Cutoff
-		{
-			get => _cutoff;
-			set
-			{
-				if (value != _cutoff)
-				{
-					_cutoff = value;
-					Width = _cutoff - XPosition;
+					_controlHeight = value;
 				}
 			}
 		}
@@ -202,7 +162,47 @@ namespace MSetExplorer
 				{
 					_cbHeight = value;
 					Resize(_xPosition, Width, _colorBandLayoutViewModel);
+				}
+			}
+		}
 
+		public double XPosition
+		{
+			get => _xPosition;
+			set
+			{
+				if (value != _xPosition)
+				{
+					_xPosition = value;
+					_width = _cutoff - _xPosition;
+					Resize(_xPosition, Width, _colorBandLayoutViewModel);
+				}
+			}
+		}
+
+		//private double Cutoff
+		//{
+		//	get => _cutoff;
+		//	set
+		//	{
+		//		if (value != _cutoff)
+		//		{
+		//			_cutoff = value;
+		//			_width = _cutoff - XPosition;
+		//		}
+		//	}
+		//}
+
+		public double Width
+		{
+			get => _width;
+			set
+			{
+				if (value != _width)
+				{
+					_width = value;
+					_cutoff = _xPosition + _width;
+					Resize(_xPosition, Width, _colorBandLayoutViewModel);
 				}
 			}
 		}
@@ -298,7 +298,7 @@ namespace MSetExplorer
 			}
 			catch
 			{
-				Debug.WriteLine("CbsSectionLine encountered an exception in TearDown.");
+				Debug.WriteLine("CbSectionLine encountered an exception in TearDown.");
 			}
 		}
 
@@ -336,7 +336,7 @@ namespace MSetExplorer
 		{
 			if (e.ChangedButton == MouseButton.Left)
 			{
-				Debug.WriteLine($"CbsRectangle. Handling MouseUp for Index: {ColorBandIndex}.");
+				Debug.WriteLine($"CbRectangle. Handling MouseUp for Index: {ColorBandIndex}.");
 				NotifySelectionChange();
 				e.Handled = true;
 			}

@@ -298,7 +298,7 @@ namespace MSetExplorer
 			}
 			catch
 			{
-				Debug.WriteLine("CbsSectionLine encountered an exception in TearDown.");
+				Debug.WriteLine("CbSectionLine encountered an exception in TearDown.");
 			}
 		}
 
@@ -336,7 +336,7 @@ namespace MSetExplorer
 		{
 			if (e.ChangedButton == MouseButton.Left)
 			{
-				Debug.WriteLine($"CbsRectangle. Handling MouseUp for Index: {ColorBandIndex}.");
+				Debug.WriteLine($"CbRectangle. Handling MouseUp for Index: {ColorBandIndex}.");
 				NotifySelectionChange();
 				e.Handled = true;
 			}
