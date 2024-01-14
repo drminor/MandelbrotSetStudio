@@ -85,7 +85,7 @@ namespace MSetExplorer
 				HistogramColorBandControl1.ContextMenu.PlacementTarget = this;
 
 				HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
-				HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
+				//HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
 
 				MouseEnter += HandleMouseEnter;
 				MouseLeave += HandleMouseLeave;
@@ -221,11 +221,11 @@ namespace MSetExplorer
 				}
 			}
 
-			// UseRealTimePreview
-			else if (e.PropertyName == nameof(ICbsHistogramViewModel.UseRealTimePreview))
-			{
-				HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
-			}
+			//// UseRealTimePreview
+			//else if (e.PropertyName == nameof(ICbsHistogramViewModel.UseRealTimePreview))
+			//{
+			//	HistogramColorBandControl1.UseRealTimePreview = _vm.UseRealTimePreview;
+			//}
 
 			//else if (e.PropertyName == nameof(ICbsHistogramViewModel.HorizontalScrollBarVisibility))
 			//{

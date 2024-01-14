@@ -36,7 +36,7 @@ namespace MSetExplorer
 		private RectangleDbl _translationAndClipSize;
 
 		private SizeDbl _viewportSize;
-		private bool _useRealTimePreview;
+		//private bool _useRealTimePreview;
 
 		private bool _parentIsFocused;
 
@@ -172,8 +172,8 @@ namespace MSetExplorer
 
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
-				_canvas.Background = new SolidColorBrush(Colors.MistyRose);
-				//_canvas.Background = new SolidColorBrush(Colors.Transparent);
+				//_canvas.Background = new SolidColorBrush(Colors.MistyRose);
+				_canvas.Background = new SolidColorBrush(Colors.Transparent);
 			}
 		}
 
@@ -288,27 +288,22 @@ namespace MSetExplorer
 				{
 					var currentCbEditMode = CbsHistogramViewModel?.CurrentCbEditMode ?? ColorBandSetEditMode.Bands;
 
-					_cbListView = new CbListView(_canvas, _colorBandsView, ActualHeight, ContentScale, UseRealTimePreview, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged);
+					_cbListView = new CbListView(_canvas, _colorBandsView, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged);
 				}
 			}
 		}
 
-		public bool UseRealTimePreview
-		{
-			get => _useRealTimePreview;
-			set
-			{
-				if (value != _useRealTimePreview)
-				{
-					_useRealTimePreview = value;
-
-					if (_cbListView != null)
-					{
-						_cbListView.UseRealTimePreview = value;
-					}
-				}
-			}
-		}
+		//public bool UseRealTimePreview
+		//{
+		//	get => _useRealTimePreview;
+		//	set
+		//	{
+		//		if (value != _useRealTimePreview)
+		//		{
+		//			_useRealTimePreview = value;
+		//		}
+		//	}
+		//}
 		
 		public Point MousePositionWhenContextMenuWasOpened { get; private set; }
 

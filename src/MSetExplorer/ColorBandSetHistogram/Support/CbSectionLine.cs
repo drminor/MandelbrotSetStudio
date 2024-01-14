@@ -12,7 +12,8 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private const double SELECTION_LINE_ARROW_WIDTH = 6;
+		private const double STROKE_THICKNESS = 2.0;
+		private const double SELECTION_LINE_ARROW_WIDTH = 7.5;
 		private const double MIN_SEL_DISTANCE = 0.49;
 
 		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
@@ -21,17 +22,17 @@ namespace MSetExplorer
 
 		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
 		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
+		
 		private static readonly Brush MEDIUM_BLUE_BRUSH = new SolidColorBrush(Colors.MediumBlue);
-
 		private static readonly Brush BLACK_AND_WHITE_CHECKERS_BRUSH = DrawingHelper.BuildSelectionDrawingBrush();
 
 		private static readonly Brush IS_SELECTED_BACKGROUND = MIDDLIN_BLUE_BRUSH;
 
 		private static readonly Brush IS_HOVERED_BACKGROUND = VERY_LIGHT_BLUE_BRUSH;
-		private static readonly Brush IS_HOVERED_STROKE = BLACK_AND_WHITE_CHECKERS_BRUSH;
+		//private static readonly Brush IS_HOVERED_STROKE = BLACK_AND_WHITE_CHECKERS_BRUSH;
+		private static readonly Brush IS_HOVERED_STROKE = LIGHT_BLUE_BRUSH;
 
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
-
 		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH; // new SolidColorBrush(Colors.AntiqueWhite);
 
 
@@ -69,9 +70,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbSectionLine(int colorBandIndex, bool isSelected, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSetEditMode> requestContextMenuShown)
+		public CbSectionLine(int colorBandIndex, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSetEditMode> requestContextMenuShown)
 		{
-			_isSelected = isSelected;
+			_isSelected = false;
 			_isUnderMouse = false;
 			_dragState = DragState.None;
 
@@ -84,8 +85,8 @@ namespace MSetExplorer
 			_controlHeight = _colorBandLayoutViewModel.ControlHeight;
 			_xPosition = xPosition;
 
-			_cbElevation = _colorBandLayoutViewModel.CbrElevation;
-			_cbHeight = _colorBandLayoutViewModel.CbrHeight;
+			_cbElevation = _colorBandLayoutViewModel.SectionLinesHeight;
+			_cbHeight = _colorBandLayoutViewModel.BlendRectangelsHeight;
 
 			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
 			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
@@ -115,63 +116,6 @@ namespace MSetExplorer
 			_topArrow.SetValue(Panel.ZIndexProperty, 30);
 		}
 
-		private Line BuildDragLine(double selectionLinePosition, bool isUnderMounse, ColorBandLayoutViewModel layout)
-		{
-			var result = new Line()
-			{
-				Fill = Brushes.Transparent,
-				Stroke = GetDragLineStroke(isUnderMounse),
-				StrokeThickness = 2,
-				Y1 = layout.CbrElevation,
-				Y2 = layout.CbrElevation + layout.CbrHeight,
-				X1 = selectionLinePosition,
-				X2 = selectionLinePosition,
-			};
-
-			return result;
-		}
-
-		private Polygon BuildTopArrow(double selectionLinePosition, bool isSelected, bool isUnderMouse, ColorBandLayoutViewModel layout)
-		{
-			var result = new Polygon()
-			{
-				Fill = GetTopArrowFill(isSelected, isUnderMouse),
-				Stroke = DEFAULT_STROKE,
-				StrokeThickness = 2,
-				Points = BuildTopAreaPoints(selectionLinePosition, layout),
-
-				Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden
-			};
-
-			return result;
-		}
-
-		private Brush GetDragLineStroke(bool isUnderMouse)
-		{
-			var result = isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
-			return result;
-
-		}
-		private Brush GetTopArrowFill(bool isSelected, bool isUnderMouse)
-		{
-			var result = isSelected ? IS_SELECTED_BACKGROUND : isUnderMouse ? IS_HOVERED_BACKGROUND : DEFAULT_BACKGROUND;
-
-			return result;
-		}
-
-		private PointCollection BuildTopAreaPoints(double xPosition, ColorBandLayoutViewModel layout)
-		{
-			var points = new PointCollection()
-			{
-				new Point(xPosition, layout.CbrElevation),				// The bottom of the arrow is positioned at the top of the band display
-				new Point(xPosition - _topArrowHalfWidth, 0),	// Top, left is at the top of the control
-				new Point(xPosition + _topArrowHalfWidth, 0),	// Top, right is at the top of the control and leaning forward into the next band
-				//new Point(xPosition, 0),	// Top, right is at the top of the control
-			};
-
-			return points;
-		}
-
 		#endregion
 
 		#region Events
@@ -184,15 +128,16 @@ namespace MSetExplorer
 
 		public int ColorBandIndex { get; set; }
 
-		public double ControlHeight
+		public double ScaleX
 		{
-			get => _controlHeight;
+			get => _scaleX;
+
 			set
 			{
-				if (value != _controlHeight)
+				if (ScreenTypeHelper.IsDoubleChanged(value, _scaleX))
 				{
-					_controlHeight = value;
-					_dragLine.Y2 = CbElevation + CbHeight;
+					_scaleX = value;
+					SectionLinePosition = _xPosition * _scaleX;
 				}
 			}
 		}
@@ -206,20 +151,6 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsDoubleChanged(value, _xPosition))
 				{
 					_xPosition = value;
-					SectionLinePosition = _xPosition * _scaleX;
-				}
-			}
-		}
-
-		public double ScaleX
-		{
-			get => _scaleX;
-
-			set
-			{
-				if (ScreenTypeHelper.IsDoubleChanged(value, _scaleX))
-				{
-					_scaleX = value;
 					SectionLinePosition = _xPosition * _scaleX;
 				}
 			}
@@ -241,26 +172,15 @@ namespace MSetExplorer
 			}
 		}
 
-		public double CbElevation
+		public double ControlHeight
 		{
-			get => _cbElevation;
+			get => _controlHeight;
 			set
 			{
-				if (value != _cbElevation)
+				if (value != _controlHeight)
 				{
-					_cbElevation = value;
-				}
-			}
-		}
-
-		public double CbHeight
-		{
-			get => _cbHeight;
-			set
-			{
-				if (value != _cbHeight)
-				{
-					_cbHeight = value;
+					_controlHeight = value;
+					Resize(_colorBandLayoutViewModel);
 				}
 			}
 		}
@@ -432,7 +352,7 @@ namespace MSetExplorer
 			}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
 			{
-				ControlHeight = _colorBandLayoutViewModel.ControlHeight;				
+				ControlHeight = _colorBandLayoutViewModel.ControlHeight;
 			}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ParentIsFocused))
 			{
@@ -597,6 +517,83 @@ namespace MSetExplorer
 			{
 				result = _rightWidth > amount + (1 * _scaleX);
 			}
+
+			return result;
+		}
+
+		#endregion
+
+		#region Private Methods - Layout
+
+		private Line BuildDragLine(double selectionLinePosition, bool isUnderMounse, ColorBandLayoutViewModel layout)
+		{
+			var result = new Line()
+			{
+				Fill = Brushes.Transparent,
+				Stroke = GetDragLineStroke(isUnderMounse),
+				StrokeThickness = STROKE_THICKNESS,
+				Y1 = layout.BlendRectangesElevation,
+				Y2 = layout.ColorBlocksElevation + layout.ColorBlocksHeight + layout.BlendRectangelsHeight,
+				X1 = selectionLinePosition,
+				X2 = selectionLinePosition,
+			};
+
+			return result;
+		}
+
+		private Polygon BuildTopArrow(double selectionLinePosition, bool isSelected, bool isUnderMouse, ColorBandLayoutViewModel layout)
+		{
+			var result = new Polygon()
+			{
+				Fill = GetTopArrowFill(isSelected, isUnderMouse),
+				Stroke = GetTopArrowStroke(isUnderMouse),
+				StrokeThickness = STROKE_THICKNESS,
+				Points = BuildTopAreaPoints(selectionLinePosition, layout),
+
+				Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden
+			};
+
+			return result;
+		}
+
+		private PointCollection BuildTopAreaPoints(double xPosition, ColorBandLayoutViewModel layout)
+		{
+			var points = new PointCollection()
+			{
+				new Point(xPosition, layout.SectionLinesHeight),				// The bottom of the arrow is positioned at the top of the band display
+				new Point(xPosition - _topArrowHalfWidth, layout.SectionLinesElevation),	// Top, left is at the top of the control
+				new Point(xPosition + _topArrowHalfWidth, layout.SectionLinesElevation),	// Top, right is at the top of the control and leaning forward into the next band
+				//new Point(xPosition, 0),	// Top, right is at the top of the control
+			};
+
+			return points;
+		}
+
+		private void Resize(ColorBandLayoutViewModel layout)
+		{
+			_dragLine.Y1 = layout.ColorBlocksElevation;
+			_dragLine.Y2 = layout.ColorBlocksElevation + layout.ColorBlocksHeight + layout.BlendRectangelsHeight;
+		}
+
+		#endregion
+
+		#region Private Methods - IsCurrent / IsSelected State
+
+		private Brush GetDragLineStroke(bool isUnderMouse)
+		{
+			var result = DEFAULT_STROKE; // isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
+			return result;
+		}
+
+		private Brush GetTopArrowStroke(bool isUnderMouse)
+		{
+			var result = isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
+			return result;
+		}
+
+		private Brush GetTopArrowFill(bool isSelected, bool isUnderMouse)
+		{
+			var result = isSelected ? IS_SELECTED_BACKGROUND : isUnderMouse ? IS_HOVERED_BACKGROUND : DEFAULT_BACKGROUND;
 
 			return result;
 		}

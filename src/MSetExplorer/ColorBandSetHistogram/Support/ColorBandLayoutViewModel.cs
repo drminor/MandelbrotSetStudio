@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System;
+using System.Security.Policy;
 
 namespace MSetExplorer
 {
@@ -7,12 +8,19 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private const int SELECTION_LINE_SELECTOR_HEIGHT = 15;
-		private const int SELECTOR_HEIGHT_BOTTOM_PADDING = 5;
+		private const int SECTION_LINES_HEIGHT = 15;
+		private const int COLOR_BLOCKS_HEIGHT = 11;
+		private const int IS_CURRENT_INDICATORS_HEIGHT = 3;
 
 		private SizeDbl _contentScale;
+
 		private double _controlHeight;
-		private double _cbrHeight;
+		private double _blendRectanglesHeight;
+
+		private double _selectionLinesElevation;
+		private double _colorBlocksElevation;
+		private double _blendRectangesElevation;
+		private double _isCurrentIndicatorsElevation;
 
 		private bool _parentIsFocused;
 
@@ -32,7 +40,15 @@ namespace MSetExplorer
 			}
 
 			_controlHeight = controlHeight;
-			_cbrHeight = GetCbrHeight(controlHeight);
+			_blendRectanglesHeight = GetBlendRectanglesHeight(controlHeight);
+
+			_selectionLinesElevation = 0;
+			_colorBlocksElevation = _selectionLinesElevation + SECTION_LINES_HEIGHT;
+			_blendRectangesElevation = _colorBlocksElevation + COLOR_BLOCKS_HEIGHT;
+
+
+			_isCurrentIndicatorsElevation = _blendRectangesElevation + BlendRectangelsHeight;
+
 			_parentIsFocused = parentIsFocused;
 		}
 
@@ -64,22 +80,44 @@ namespace MSetExplorer
 				{
 					_controlHeight = value;
 
-					CbrHeight = GetCbrHeight(_controlHeight);
+					BlendRectangelsHeight = GetBlendRectanglesHeight(_controlHeight);
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public double CbrElevation => SELECTION_LINE_SELECTOR_HEIGHT;
+		public double SectionLinesHeight => SECTION_LINES_HEIGHT;
 
-		public double CbrHeight
+		public double ColorBlocksHeight => COLOR_BLOCKS_HEIGHT;
+
+		public double BlendRectangelsHeight
 		{
-			get => _cbrHeight;
+			get => _blendRectanglesHeight;
 			set
 			{
-				if (value != _cbrHeight)
+				if (value != _blendRectanglesHeight)
 				{
-					_cbrHeight = value;
+					_blendRectanglesHeight = value;
+					IsCurrentIndicatorsElevation = _blendRectangesElevation + BlendRectangelsHeight;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public double IsCurrentIndicatorsHeight => IS_CURRENT_INDICATORS_HEIGHT;
+
+		public double SectionLinesElevation => _selectionLinesElevation;
+		public double ColorBlocksElevation => _colorBlocksElevation;
+		public double BlendRectangesElevation => _blendRectangesElevation;
+
+		public double IsCurrentIndicatorsElevation
+		{
+			get => _isCurrentIndicatorsElevation;
+			set
+			{
+				if (value != _isCurrentIndicatorsElevation)
+				{
+					_isCurrentIndicatorsElevation = value;
 					OnPropertyChanged();
 				}
 			}
@@ -102,13 +140,12 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private double GetCbrHeight(double controlHeight)
+		private double GetBlendRectanglesHeight(double controlHeight)
 		{
-			var cbrHeight = controlHeight - (SELECTION_LINE_SELECTOR_HEIGHT + SELECTOR_HEIGHT_BOTTOM_PADDING);
+			var result = controlHeight - (SECTION_LINES_HEIGHT + COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT);
+			result = Math.Max(result, 0);
 
-			cbrHeight = Math.Max(cbrHeight, 0);
-
-			return cbrHeight;
+			return result;
 		}
 
 		#endregion
