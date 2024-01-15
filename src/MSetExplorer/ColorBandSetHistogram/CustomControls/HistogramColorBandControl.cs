@@ -39,6 +39,7 @@ namespace MSetExplorer
 		//private bool _useRealTimePreview;
 
 		private bool _parentIsFocused;
+		private ColorBandSetEditMode _currentCbEditMode;
 
 		private ContextMenu? _lastKnownContextMenu;
 
@@ -78,6 +79,7 @@ namespace MSetExplorer
 
 			_viewportSize = new SizeDbl();
 			_parentIsFocused = false;
+			_currentCbEditMode = ColorBandSetEditMode.Bands;
 
 			_border = null;
 
@@ -323,8 +325,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		private ColorBandSetEditMode _currentCbEditMode;
 
 		public ColorBandSetEditMode CurrentCbEditMode
 		{

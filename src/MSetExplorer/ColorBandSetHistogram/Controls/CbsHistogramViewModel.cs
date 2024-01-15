@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
@@ -141,8 +142,14 @@ namespace MSetExplorer
 					Debug.WriteLine($"CbsHistogramViewModel: The Edit mode is now {value}");
 					_currentCbEditMode = value;
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentCbEditMode));
+					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentCbEditModeAsString));
 				}
 			}
+		}
+
+		public string CurrentCbEditModeAsString
+		{
+			get => _currentCbEditMode.ToString();
 		}
 
 		public bool EditingCutoffs
@@ -154,11 +161,11 @@ namespace MSetExplorer
 
 				if (value)
 				{
-					newVal = CurrentCbEditMode |= ColorBandSetEditMode.Cutoffs;
+					newVal = CurrentCbEditMode | ColorBandSetEditMode.Cutoffs;
 				}
 				else
 				{
-					newVal = CurrentCbEditMode &= ~ColorBandSetEditMode.Cutoffs;
+					newVal = CurrentCbEditMode & ~ColorBandSetEditMode.Cutoffs;
 				}
 
 				if (newVal != CurrentCbEditMode)
@@ -178,11 +185,11 @@ namespace MSetExplorer
 
 				if (value)
 				{
-					newVal = CurrentCbEditMode |= ColorBandSetEditMode.Colors;
+					newVal = CurrentCbEditMode | ColorBandSetEditMode.Colors;
 				}
 				else
 				{
-					newVal = CurrentCbEditMode &= ~ColorBandSetEditMode.Colors;
+					newVal = CurrentCbEditMode & ~ColorBandSetEditMode.Colors;
 				}
 
 				if (newVal != CurrentCbEditMode)

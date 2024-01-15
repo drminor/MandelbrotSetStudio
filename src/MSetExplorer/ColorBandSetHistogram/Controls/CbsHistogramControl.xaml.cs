@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -63,9 +64,10 @@ namespace MSetExplorer
 				_vm.ViewportSize = PanAndZoomControl1.UnscaledViewportSize;
 				_vm.ContentViewportSize = _vm.ViewportSize;
 
-				var editMode = ColorBandSetViewHelper.GetEditMode(chkBxCutoffs.IsChecked ?? false, chkBxColors.IsChecked ?? false);
-				HistogramColorBandControl1.CurrentCbEditMode = editMode;
-				_vm.CurrentCbEditMode = editMode;
+				//var editMode = ColorBandSetViewHelper.GetEditMode(chkBxCutoffs.IsChecked ?? false, chkBxColors.IsChecked ?? false);
+				//HistogramColorBandControl1.CurrentCbEditMode = editMode;
+				//_vm.CurrentCbEditMode = editMode;
+				HistogramColorBandControl1.CurrentCbEditMode = _vm.CurrentCbEditMode;
 
 				PlaceTheColorBandControl(HistogramPlotControl1.ViewportOffsetAndWidth);
 

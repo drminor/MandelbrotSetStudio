@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MSetExplorer
+namespace MSS.Common
 {
 	public interface IMapSectionHistogramProcessor
 	{
@@ -12,7 +12,7 @@ namespace MSetExplorer
 
 		event EventHandler<HistogramUpdateType>? HistogramUpdated;
 
-		void AddWork(HistogramWorkRequest histogramWorkRequest);
+		//void AddWork(HistogramWorkRequest histogramWorkRequest);
 		void Reset();
 		void Reset(int newSize);
 		void Stop(bool immediately);

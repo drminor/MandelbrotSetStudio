@@ -15,6 +15,7 @@ namespace MSetExplorer
 		event EventHandler<ColorBandSetUpdateRequestedEventArgs>? ColorBandSetUpdateRequested;
 
 		ColorBandSetEditMode CurrentCbEditMode { get; set; }
+		string CurrentCbEditModeAsString { get; }
 
 		bool EditingCutoffs { get; set; }
 		bool EditingColors { get; set; }

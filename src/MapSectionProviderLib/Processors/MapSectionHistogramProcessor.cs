@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSS.Common;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Concurrent;
@@ -10,9 +11,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MSetExplorer
+namespace MapSectionProviderLib
 {
-	internal class MapSectionHistogramProcessor : IDisposable, IMapSectionHistogramProcessor
+	public class MapSectionHistogramProcessor : IDisposable, IMapSectionHistogramProcessor
 	{
 		private const int QUEUE_CAPACITY = 200;
 		private const int WAIT_FOR_MAPSECTION_INTERVAL_MS = 500;
@@ -89,7 +90,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void AddWork(HistogramWorkRequest histogramWorkRequest)
+		private void AddWork(HistogramWorkRequest histogramWorkRequest)
 		{
 			if (!_workQueue.IsAddingCompleted)
 			{
@@ -301,6 +302,27 @@ namespace MSetExplorer
 
 		#endregion
 
+
+		private class HistogramWorkRequest
+		{
+			public HistogramWorkRequestType RequestType { get; init; }
+			public IHistogram Histogram { get; init; }
+
+			public HistogramWorkRequest(HistogramWorkRequestType requestType, IHistogram histogram)
+			{
+				RequestType = requestType;
+				Histogram = histogram;
+
+			}
+		}
+
+		private enum HistogramWorkRequestType
+		{
+			Add,
+			Remove
+		}
+
+
 		#region IDisposable Support
 
 		protected virtual void Dispose(bool disposing)
@@ -341,4 +363,6 @@ namespace MSetExplorer
 
 		#endregion
 	}
+
+
 }
