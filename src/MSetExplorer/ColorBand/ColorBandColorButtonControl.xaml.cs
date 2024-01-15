@@ -55,15 +55,15 @@ namespace MSetExplorer
 		{
 			var pos =  e.GetPosition(relativeTo: _canvas);
 
-			//if (ShowColorPicker(pos, ColorBandColor, out var selectedColor))
-			//{
-			//	ColorBandColor = selectedColor;
-			//}
-
-			if (ShowColorSpace(pos, ColorBandColor, out var selectedColor))
+			if (ShowColorPicker(pos, ColorBandColor, out var selectedColor))
 			{
 				ColorBandColor = selectedColor;
 			}
+
+			//if (ShowColorSpace(pos, ColorBandColor, out var selectedColor))
+			//{
+			//	ColorBandColor = selectedColor;
+			//}
 
 		}
 

@@ -62,6 +62,7 @@ namespace MSetExplorer
 			}
 			else
 			{
+				// Vertical blend
 				blendStartPos = new Point(0.5, 0);
 				blendEndPos = new Point(0.5, 1);
 			}

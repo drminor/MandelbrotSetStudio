@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -58,9 +59,9 @@ namespace MSetExplorer
 		private double _width;
 		private double _cutoff;
 
-		//private ColorBandColor _startColor;
-		//private ColorBandColor _endColor;
-		//private bool _blend;
+		private ColorBandColor _startColor;
+		private ColorBandColor _endColor;
+		private bool _blend;
 
 		private RectangleGeometry _geometry;
 		private readonly Shape _rectanglePath;
@@ -68,8 +69,6 @@ namespace MSetExplorer
 		private RectangleGeometry _curGeometry;
 		private readonly Shape _curRectanglePath;
 
-		//private RectangleGeometry _selGeometry;
-		//private readonly Shape _selRectanglePath;
 
 		private bool _isCurrent;
 		private bool _isSelected;
@@ -103,9 +102,9 @@ namespace MSetExplorer
 			_width = width;
 			_cutoff = _xPosition + _width;
 
-			//_startColor = startColor;
-			//_endColor = endColor;
-			//_blend = blend;
+			_startColor = startColor;
+			_endColor = endColor;
+			_blend = blend;
 
 			var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
@@ -119,12 +118,6 @@ namespace MSetExplorer
 			_curRectanglePath = BuildCurRectanglePath(_curGeometry, _isCurrent);
 			_canvas.Children.Add(_curRectanglePath);
 			_curRectanglePath.SetValue(Panel.ZIndexProperty, 1);
-
-			//_selGeometry = new RectangleGeometry(BuildSelRectangle(_xPosition, width, _colorBandLayoutViewModel));
-			//_selRectanglePath = BuildSelRectanglePath(_selGeometry, _isCurrent, _isSelected, _isUnderMouse, _parentIsFocused, DEFAULT_STROKE_THICKNESS);
-			//_canvas.Children.Add(_selRectanglePath);
-			//_selRectanglePath.SetValue(Panel.ZIndexProperty, 1);
-			//_selRectanglePath.Visibility = Visibility.Hidden;
 		}
 
 		#endregion
@@ -133,43 +126,63 @@ namespace MSetExplorer
 
 		public int ColorBandIndex { get; set; }
 
-		//public double CbElevation
-		//{
-		//	get => _cbElevation;
-		//	set
-		//	{
-		//		if (value != _cbElevation)
-		//		{
-		//			_cbElevation = value;
-		//			Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
-		//		}
-		//	}
-		//}
+		public RectangleGeometry RectangleGeometry => _geometry;
 
-		//public double ControlHeight
-		//{
-		//	get => _controlHeight;
-		//	set
-		//	{
-		//		if (value != _controlHeight)
-		//		{
-		//			_controlHeight = value;
-		//		}
-		//	}
-		//}
+		public ColorBandColor StartColor
+		{
+			get => _startColor;
+			set
+			{
+				if (value != _startColor)
+				{
+					_startColor = value;
+					Recolor(_startColor, _endColor, _blend);
+				}
+			}
+		}
 
-		//public double CbHeight
-		//{
-		//	get => _cbHeight;
-		//	set
-		//	{
-		//		if (value != _cbHeight)
-		//		{
-		//			_cbHeight = value;
-		//			Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
-		//		}
-		//	}
-		//}
+		public ColorBandColor EndColor
+		{
+			get => _endColor;
+			set
+			{
+				if (value != _endColor)
+				{
+					_endColor = value;
+					Recolor(_startColor, _endColor, _blend);
+				}
+			}
+		}
+
+		public bool HorizontalBlend
+		{
+			get => _blend;
+			set
+			{
+				if (value != _blend)
+				{
+					_blend = value;
+					Recolor(_startColor, _endColor, _blend);
+				}
+			}
+		}
+
+		#endregion
+
+		#region Public Properies - Layout Width
+
+		public SizeDbl ContentScale
+		{
+			get => _contentScale;
+			set
+			{
+				if (value != _contentScale)
+				{
+					_contentScale = value;
+					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+				}
+			}
+		}
 
 		public double XPosition
 		{
@@ -212,18 +225,9 @@ namespace MSetExplorer
 			}
 		}
 
-		public SizeDbl ContentScale
-		{
-			get => _contentScale;
-			set
-			{
-				if (value != _contentScale)
-				{
-					_contentScale = value;
-					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
-				}
-			}
-		}
+		#endregion
+
+		#region Public Propeties IsCurrent / IsSelected
 
 		public bool IsCurrent
 		{
@@ -278,12 +282,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public Shape Rectangle => _rectanglePath;
-		public RectangleGeometry RectangleGeometry => _geometry;
-
-		//public Shape SelRectangle => _selRectanglePath;
-		//public RectangleGeometry SelRectangleGeometry => _selGeometry;
 
 		#endregion
 
@@ -361,7 +359,7 @@ namespace MSetExplorer
 		{
 			var result = new Path()
 			{
-				Fill = DrawingHelper.BuildBrush(startColor, endColor, blend),
+				Fill = GetBlendedBrush(startColor, endColor, blend),
 				Stroke = Brushes.Transparent,
 				StrokeThickness = 0,
 				Data = area,
@@ -385,20 +383,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//private Shape BuildSelRectanglePath(RectangleGeometry area, bool isCurrent, bool isSelected, bool isUnderMouse, bool parentIsFocused, double strokeThickness)
-		//{
-		//	var result = new Path()
-		//	{
-		//		Fill = GetSelBackGround(isSelected, isUnderMouse, parentIsFocused),
-		//		Stroke = GetSelStroke(/*isCurrent, */isSelected, isUnderMouse, parentIsFocused),
-		//		StrokeThickness = strokeThickness,
-		//		Data = area,
-		//		IsHitTestVisible = true
-		//	};
-
-		//	return result;
-		//}
-
 		private void Resize(double xPosition, double width, bool isSelected, bool isUnderMouse, ColorBandLayoutViewModel layout)
 		{
 			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, layout.ParentIsFocused);
@@ -406,6 +390,11 @@ namespace MSetExplorer
 			_geometry.Rect = BuildRectangle(xPosition, width, isHighLighted, layout);
 			_curGeometry.Rect = BuildCurRectangle(xPosition, width, layout);
 			//_selGeometry.Rect = BuildSelRectangle(xPosition, width, layout);
+		}
+
+		private void Recolor(ColorBandColor startColor, ColorBandColor endColor, bool blend)
+		{
+			_rectanglePath.Fill = GetBlendedBrush(startColor, endColor, blend);
 		}
 
 		private Rect BuildRectangle(double xPosition, double width, bool isHighLighted, ColorBandLayoutViewModel layout)
@@ -444,34 +433,26 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//private Rect BuildSelRectangle(double xPosition, double width, ColorBandLayoutViewModel layout)
-		//{
-		//	var yPosition = 0;
-		//	var height = layout.ControlHeight;
-		//	var rect = BuildRect(xPosition, yPosition, width, height, layout.ContentScale);
-
-		//	Rect result;
-
-		//	// The Stroke width increases the size of the rectangle,
-		//	// subtract 2 pixels on both the left and right so that the border fits between the section lines.
-		//	//
-		//	// Decrease the width by 4, if the width > 7, Decrease the height by 2 
-		//	if (rect.Width > 7)
-		//	{
-		//		result = Rect.Inflate(rect, -2, -1);
-		//	}
-		//	else
-		//	{
-		//		result = Rect.Inflate(rect, 0, -1);
-		//	}
-
-		//	return result;
-		//}
-
 		private Rect BuildRect(double xPosition, double yPosition, double width, double height, SizeDbl contentScale)
 		{
 			var result = new Rect(new Point(xPosition, yPosition), new Size(width, height));
 			result.Scale(contentScale.Width, contentScale.Height);
+
+			return result;
+		}
+
+		private Brush GetBlendedBrush(ColorBandColor startColor, ColorBandColor endColor, bool blend)
+		{
+			Brush result;
+
+			if (blend)
+			{
+				result = DrawingHelper.BuildBrush(startColor, endColor, blend);
+			}
+			else
+			{
+				result = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(startColor));
+			}
 
 			return result;
 		}
@@ -504,66 +485,6 @@ namespace MSetExplorer
 
 			_rectanglePath.Stroke = GetRectangleStroke(isSelected, isUnderMouse, parentIsFocused);
 			_rectanglePath.StrokeThickness = GetRectangleStrokeThickness(isSelected, isUnderMouse, parentIsFocused);
-		}
-
-		private Brush GetSelBackGround(bool isSelected, bool isUnderMouse, bool parentIsFocused)
-		{
-			Brush result;
-
-			if (parentIsFocused)
-			{
-				if (isSelected)
-				{
-					result = IS_SELECTED_BACKGROUND;
-				}
-				else
-				{
-					if (isUnderMouse)
-					{
-						result = IS_HOVERED_BACKGROUND;
-					}
-					else
-					{
-						result = DEFAULT_BACKGROUND;
-					}
-				}
-			}
-			else
-			{
-				result = isSelected ? IS_SELECTED_INACTIVE_BACKGROUND : DEFAULT_BACKGROUND;
-			}
-
-			return result;
-		}
-
-		private Brush GetSelStroke(bool isSelected, bool isUnderMouse, bool parentIsFocused)
-		{
-			Brush result;
-
-			if (parentIsFocused)
-			{
-				//if (isCurrent)
-				//{
-				//	result = IS_CURRENT_STROKE;
-				//}
-				//else
-				//{
-					if (isSelected)
-					{
-						result = IS_SELECTED_STROKE;
-					}
-					else
-					{
-						result = isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
-					}
-				//}
-			}
-			else
-			{
-				result = isSelected ? IS_SELECTED_INACTIVE_STROKE : DEFAULT_STROKE;
-			}
-
-			return result;
 		}
 
 		private Brush GetRectangleStroke(bool isSelected, bool isUnderMouse, bool parentIsFocused)

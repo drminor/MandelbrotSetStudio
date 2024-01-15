@@ -1160,7 +1160,7 @@ namespace MSetExplorer
 			{
 				//Debug.WriteLine($"CbListView is handling a ColorBand {e.PropertyName} Change for CbRectangle at Index: {ColorBandIndex}.");
 
-				if (e.PropertyName == "Cutoff")
+				if (e.PropertyName == nameof(ColorBand.Cutoff))
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"CbListView is handling a ColorBand {e.PropertyName} Change for CbRectangle at Index: {ColorBandIndex}.");
 
@@ -1170,24 +1170,40 @@ namespace MSetExplorer
 					CbRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
 					CbColorBlock.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
 				}
+				else if (e.PropertyName == nameof(ColorBand.PreviousCutoff))
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"CbListView is handling a ColorBand {e.PropertyName} Change for CbRectangle at Index: {ColorBandIndex}.");
+
+					// The ColorBand preceeding this one had its Cutoff updated.
+					// This ColorBand had its PreviousCutoff (aka XPosition) updated.
+					// This ColorBand's Starting Position (aka XPosition) and Width should be updated to accomodate.
+
+					//CbRectangle.XPosition = cb.PreviousCutoff ?? 0;
+					//CbRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
+
+					// This also updates the width
+					CbRectangle.XPosition = cb.PreviousCutoff ?? 0;
+					CbColorBlock.XPosition = cb.PreviousCutoff ?? 0;
+				}
+				else if (e.PropertyName == nameof(ColorBand.StartColor))
+				{
+					CbColorBlock.StartColor = cb.StartColor;
+					CbRectangle.StartColor = cb.StartColor;
+				}
+				else if (e.PropertyName == nameof(ColorBand.ActualEndColor))
+				{
+					CbColorBlock.EndColor = cb.ActualEndColor;
+					CbRectangle.EndColor = cb.ActualEndColor;
+				}
 				else
 				{
-					if (e.PropertyName == "PreviousCutoff")
+					if (e.PropertyName == nameof(ColorBand.BlendStyle))
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"CbListView is handling a ColorBand {e.PropertyName} Change for CbRectangle at Index: {ColorBandIndex}.");
-
-						// The ColorBand preceeding this one had its Cutoff updated.
-						// This ColorBand had its PreviousCutoff (aka XPosition) updated.
-						// This ColorBand's Starting Position (aka XPosition) and Width should be updated to accomodate.
-
-						//CbRectangle.XPosition = cb.PreviousCutoff ?? 0;
-						//CbRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
-
-						// This also updates the width
-						CbRectangle.XPosition = cb.PreviousCutoff ?? 0;
-						CbColorBlock.XPosition = cb.PreviousCutoff ?? 0;
+						CbColorBlock.HorizontalBlend = cb.BlendStyle != ColorBandBlendStyle.None;
+						CbRectangle.HorizontalBlend = CbColorBlock.HorizontalBlend;
 					}
 				}
+
 			}
 		}
 
