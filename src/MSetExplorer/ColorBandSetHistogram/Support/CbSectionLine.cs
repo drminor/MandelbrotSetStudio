@@ -18,19 +18,20 @@ namespace MSetExplorer
 
 		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush DARKISH_GRAY_BRUSH = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
-		private static readonly Brush VERY_LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
+		//private static readonly Brush VERY_LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
 
 		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
-		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
+		//private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
 		
 		private static readonly Brush MEDIUM_BLUE_BRUSH = new SolidColorBrush(Colors.MediumBlue);
-		private static readonly Brush BLACK_AND_WHITE_CHECKERS_BRUSH = DrawingHelper.BuildSelectionDrawingBrush();
+		//private static readonly Brush BLACK_AND_WHITE_CHECKERS_BRUSH = DrawingHelper.BuildSelectionDrawingBrush();
 
 		private static readonly Brush IS_SELECTED_BACKGROUND = MIDDLIN_BLUE_BRUSH;
+		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = DARKISH_GRAY_BRUSH;
 
-		private static readonly Brush IS_HOVERED_BACKGROUND = VERY_LIGHT_BLUE_BRUSH;
+		//private static readonly Brush IS_HOVERED_BACKGROUND = VERY_LIGHT_BLUE_BRUSH;
 		//private static readonly Brush IS_HOVERED_STROKE = BLACK_AND_WHITE_CHECKERS_BRUSH;
-		private static readonly Brush IS_HOVERED_STROKE = LIGHT_BLUE_BRUSH;
+		private static readonly Brush IS_HOVERED_STROKE = MEDIUM_BLUE_BRUSH;
 
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH; // new SolidColorBrush(Colors.AntiqueWhite);
@@ -40,11 +41,7 @@ namespace MSetExplorer
 		private Canvas _canvas;
 		private double _controlHeight;
 		private double _xPosition;
-		private double _cbElevation;
-		private double _cbHeight;
 		private double _scaleX;
-		private IsSelectedChangedCallback _isSelectedChangedCallback;
-		private Action<int, ColorBandSetEditMode> _requestContextMenuShown;
 
 		private double _selectionLinePosition;
 
@@ -70,7 +67,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbSectionLine(int colorBandIndex, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSetEditMode> requestContextMenuShown)
+		public CbSectionLine(int colorBandIndex, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel)
 		{
 			_isSelected = false;
 			_isUnderMouse = false;
@@ -81,18 +78,12 @@ namespace MSetExplorer
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
 			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 			
-			_canvas = canvas;
+			_canvas = colorBandLayoutViewModel.Canvas;
 			_controlHeight = _colorBandLayoutViewModel.ControlHeight;
 			_xPosition = xPosition;
 
-			_cbElevation = _colorBandLayoutViewModel.SectionLinesHeight;
-			_cbHeight = _colorBandLayoutViewModel.BlendRectangelsHeight;
-
 			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
 			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
-
-			_isSelectedChangedCallback = isSelectedChangedCallback;
-			_requestContextMenuShown = requestContextMenuShown;
 
 			_selectionLinePosition = _xPosition * _scaleX;
 			_originalSectionLinePosition = _selectionLinePosition;
@@ -193,7 +184,7 @@ namespace MSetExplorer
 				if (value != _isSelected)
 				{
 					_isSelected = value;
-					_topArrow.Fill = GetTopArrowFill(_isSelected, _isUnderMouse);
+					_topArrow.Fill = GetTopArrowFill(_isSelected, ParentIsFocused);
 				}
 			}
 		}
@@ -207,8 +198,9 @@ namespace MSetExplorer
 				{
 					_isUnderMouse = value;
 
-					_topArrow.Fill = GetTopArrowFill(_isSelected, _isUnderMouse);
-					_dragLine.Stroke = GetDragLineStroke(_isUnderMouse);
+					//_topArrow.Fill = GetTopArrowFill(_isSelected, ParentIsFocused);
+					//_dragLine.Stroke = GetDragLineStroke(_isUnderMouse);
+					_topArrow.Stroke = GetTopArrowStroke(ParentIsFocused, IsUnderMouse);
 				}
 			}
 		}
@@ -222,7 +214,9 @@ namespace MSetExplorer
 				if (value != _parentIsFocused)
 				{
 					_parentIsFocused = value;
-					_topArrow.Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden;
+					//_topArrow.Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden;
+					_topArrow.Fill = GetTopArrowFill(IsSelected, ParentIsFocused);
+					_topArrow.Stroke = GetTopArrowStroke(ParentIsFocused, IsUnderMouse);
 				}
 			}
 		}
@@ -414,19 +408,16 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The CbSectionLine is getting a MouseLeftButtonUp event. The Escape Key is Pressed, cancelling.");
 				CancelDragInternal();
+				return;
 			}
-			else
+
+			var dragCompleted = CompleteDrag();
+
+			if (dragCompleted)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbSectionLine is getting a MouseLeftButtonUp event. Completing the Drag.");
-				var dragCompleted = CompleteDrag();
-
-				if (dragCompleted)
-				{
-					e.Handled = true;
-				}
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbSectionLine is getting a MouseLeftButtonUp event. The Drag is Complet.");
+				e.Handled = true;
 			}
-
-			Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. HandleMouseLeftButtonUp. MouseWasOverCanvas: {mouseWasOverCanvas}. The Keyboard focus is now on {Keyboard.FocusedElement}.");
 		}
 
 		private void Handle_TopArrowMouseUp(object sender, MouseButtonEventArgs e)
@@ -440,7 +431,7 @@ namespace MSetExplorer
 			{
 				if (e.ChangedButton == MouseButton.Right)
 				{
-					_requestContextMenuShown(ColorBandIndex, ColorBandSetEditMode.Cutoffs);
+					_colorBandLayoutViewModel.RequestContextMenuShown(ColorBandIndex, ColorBandSetEditMode.Cutoffs);
 					e.Handled = true;
 				}
 			}
@@ -458,7 +449,7 @@ namespace MSetExplorer
 
 		private void NotifySelectionChanged()
 		{
-			_isSelectedChangedCallback(ColorBandIndex, ColorBandSetEditMode.Cutoffs);
+			_colorBandLayoutViewModel.IsSelectedChangedCallback(ColorBandIndex, ColorBandSetEditMode.Cutoffs);
 		}
 
 		private bool CompleteDrag()
@@ -530,8 +521,8 @@ namespace MSetExplorer
 			var result = new Line()
 			{
 				Fill = Brushes.Transparent,
-				Stroke = GetDragLineStroke(isUnderMounse),
-				StrokeThickness = STROKE_THICKNESS,
+				Stroke = DEFAULT_STROKE,	//GetDragLineStroke(isUnderMounse),
+				StrokeThickness = 1.0,
 				Y1 = layout.BlendRectangesElevation,
 				Y2 = layout.ColorBlocksElevation + layout.ColorBlocksHeight + layout.BlendRectangelsHeight,
 				X1 = selectionLinePosition,
@@ -545,12 +536,12 @@ namespace MSetExplorer
 		{
 			var result = new Polygon()
 			{
-				Fill = GetTopArrowFill(isSelected, isUnderMouse),
-				Stroke = GetTopArrowStroke(isUnderMouse),
+				Fill = GetTopArrowFill(isSelected, layout.ParentIsFocused),
+				Stroke = GetTopArrowStroke(layout.ParentIsFocused, isUnderMouse),
 				StrokeThickness = STROKE_THICKNESS,
-				Points = BuildTopAreaPoints(selectionLinePosition, layout),
+				Points = BuildTopAreaPoints(selectionLinePosition, layout)
 
-				Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden
+				//Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden
 			};
 
 			return result;
@@ -579,21 +570,25 @@ namespace MSetExplorer
 
 		#region Private Methods - IsCurrent / IsSelected State
 
-		private Brush GetDragLineStroke(bool isUnderMouse)
+		//private Brush GetDragLineStroke(bool isUnderMouse)
+		//{
+		//	var result = DEFAULT_STROKE; // isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
+		//	return result;
+		//}
+
+		private Brush GetTopArrowStroke(bool parentIsFocused, bool isUnderMouse)
 		{
-			var result = DEFAULT_STROKE; // isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
+			var result = parentIsFocused && isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
 			return result;
 		}
 
-		private Brush GetTopArrowStroke(bool isUnderMouse)
+		private Brush GetTopArrowFill(bool isSelected, bool parentIsFocused)
 		{
-			var result = isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
-			return result;
-		}
-
-		private Brush GetTopArrowFill(bool isSelected, bool isUnderMouse)
-		{
-			var result = isSelected ? IS_SELECTED_BACKGROUND : isUnderMouse ? IS_HOVERED_BACKGROUND : DEFAULT_BACKGROUND;
+			var result = isSelected 
+				? parentIsFocused
+					? IS_SELECTED_BACKGROUND
+					: IS_SELECTED_INACTIVE_BACKGROUND
+				: DEFAULT_BACKGROUND;
 
 			return result;
 		}

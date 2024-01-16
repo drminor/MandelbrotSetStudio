@@ -17,7 +17,7 @@ namespace MSetExplorer
 
 		//private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
 
-		private const double DEFAULT_STROKE_THICKNESS = 2.0;
+		private const double DEFAULT_STROKE_THICKNESS = 1.0;
 		private const double SELECTED_STROKE_THICKNESS = 2.0;
 
 		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
@@ -31,15 +31,12 @@ namespace MSetExplorer
 
 
 		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
-		private static readonly Brush DEFAULT_STROKE = TRANSPARENT_BRUSH;
+		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
-		private static readonly Brush IS_SELECTED_BACKGROUND = MIDDLIN_BLUE_BRUSH;
-		private static readonly Brush IS_SELECTED_STROKE = MIDDLIN_BLUE_BRUSH;
+		private static readonly Brush IS_SELECTED_STROKE = LIGHT_BLUE_BRUSH;
 
-		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = DARKISH_GRAY_BRUSH;
 		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = DARKISH_GRAY_BRUSH;
 
-		private static readonly Brush IS_HOVERED_BACKGROUND = VERY_LIGHT_BLUE_BRUSH;
 		private static readonly Brush IS_HOVERED_STROKE = VERY_LIGHT_BLUE_BRUSH;
 
 		//private static readonly Brush IS_CURRENT_STROKE = LIGHT_BLUE_BRUSH;
@@ -52,8 +49,6 @@ namespace MSetExplorer
 		private Canvas _canvas;
 
 		private SizeDbl _contentScale;
-		private IsSelectedChangedCallback _isSelectedChangedCallback;
-		private Action<int, ColorBandSetEditMode> _requestContextMenuShown;
 
 		private double _xPosition;
 		private double _width;
@@ -80,8 +75,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbRectangle(int colorBandIndex, bool isCurrent, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
-			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallBack, Action<int, ColorBandSetEditMode> requestContextMenuShown)
+		public CbRectangle(int colorBandIndex, bool isCurrent, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
 		{
 			_isCurrent = isCurrent;
 			_isSelected = false;
@@ -93,10 +87,8 @@ namespace MSetExplorer
 			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 			_contentScale = _colorBandLayoutViewModel.ContentScale;
 			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
-			_isSelectedChangedCallback = isSelectedChangedCallBack;
-			_requestContextMenuShown = requestContextMenuShown;
 
-			_canvas = canvas;
+			_canvas = colorBandLayoutViewModel.Canvas;
 
 			_xPosition = xPosition;
 			_width = width;
@@ -136,7 +128,9 @@ namespace MSetExplorer
 				if (value != _startColor)
 				{
 					_startColor = value;
-					Recolor(_startColor, _endColor, _blend);
+					//Recolor(_startColor, _endColor, _blend);
+					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
+
 				}
 			}
 		}
@@ -149,12 +143,14 @@ namespace MSetExplorer
 				if (value != _endColor)
 				{
 					_endColor = value;
-					Recolor(_startColor, _endColor, _blend);
+					//Recolor(_startColor, _endColor, _blend);
+					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
+
 				}
 			}
 		}
 
-		public bool HorizontalBlend
+		public bool Blend
 		{
 			get => _blend;
 			set
@@ -162,7 +158,9 @@ namespace MSetExplorer
 				if (value != _blend)
 				{
 					_blend = value;
-					Recolor(_startColor, _endColor, _blend);
+					//Recolor(_startColor, _endColor, _blend);
+					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
+
 				}
 			}
 		}
@@ -345,7 +343,7 @@ namespace MSetExplorer
 			{
 				if (e.ChangedButton == MouseButton.Right)
 				{
-					_requestContextMenuShown(ColorBandIndex, ColorBandSetEditMode.Colors);
+					_colorBandLayoutViewModel.RequestContextMenuShown(ColorBandIndex, ColorBandSetEditMode.Bands);
 					e.Handled = true;
 				}
 			}
@@ -392,11 +390,6 @@ namespace MSetExplorer
 			//_selGeometry.Rect = BuildSelRectangle(xPosition, width, layout);
 		}
 
-		private void Recolor(ColorBandColor startColor, ColorBandColor endColor, bool blend)
-		{
-			_rectanglePath.Fill = GetBlendedBrush(startColor, endColor, blend);
-		}
-
 		private Rect BuildRectangle(double xPosition, double width, bool isHighLighted, ColorBandLayoutViewModel layout)
 		{
 			var yPosition = layout.BlendRectangesElevation;
@@ -405,7 +398,7 @@ namespace MSetExplorer
 
 			Rect result;
 
-			if (isHighLighted && rect.Width > 5)
+			if (isHighLighted && rect.Width > 3)
 			{
 				// Reduce the height to accomodate the outside border. The outside border is 1 pixel thick.
 				// Reduce the width to accomodate the section line and the selection background rectangle (SelRectangle).
@@ -414,7 +407,7 @@ namespace MSetExplorer
 				// 
 				// Decrease the width by 4, if the width > 5. Decrease the height by 2
 				//result = Rect.Inflate(rect, -3, -1);
-				result = Rect.Inflate(rect, -2, -1);
+				result = Rect.Inflate(rect, -1, -1);
 			}
 			else
 			{
@@ -463,7 +456,7 @@ namespace MSetExplorer
 
 		private void NotifySelectionChange()
 		{
-			_isSelectedChangedCallback(ColorBandIndex, ColorBandSetEditMode.Bands);
+			_colorBandLayoutViewModel.IsSelectedChangedCallback(ColorBandIndex, ColorBandSetEditMode.Bands);
 		}
 
 		private void UpdateCurBackground(bool isCurrent)
@@ -484,7 +477,7 @@ namespace MSetExplorer
 			//Debug.Assert(isHighLighted == (_selRectanglePath.Stroke != DEFAULT_STROKE), "isHighlighted / SelRectangle's stroke mismatch.");
 
 			_rectanglePath.Stroke = GetRectangleStroke(isSelected, isUnderMouse, parentIsFocused);
-			_rectanglePath.StrokeThickness = GetRectangleStrokeThickness(isSelected, isUnderMouse, parentIsFocused);
+			_rectanglePath.StrokeThickness = GetRectangleStrokeThickness(isHighLighted);
 		}
 
 		private Brush GetRectangleStroke(bool isSelected, bool isUnderMouse, bool parentIsFocused)
@@ -510,32 +503,14 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private double GetRectangleStrokeThickness(bool isSelected, bool isUnderMouse, bool parentIsFocused)
+		private double GetRectangleStrokeThickness(bool isHighlighted)
 		{
-			double result;
-
-			if (parentIsFocused)
-			{
-				if (isSelected)
-				{
-					result = SELECTED_STROKE_THICKNESS;
-				}
-				else
-				{
-					result = isUnderMouse ? SELECTED_STROKE_THICKNESS : 0;
-				}
-			}
-			else
-			{
-				result = isSelected ? SELECTED_STROKE_THICKNESS : 0;
-			}
-
+			var result = isHighlighted ? SELECTED_STROKE_THICKNESS : DEFAULT_STROKE_THICKNESS;
 			return result;
 		}
 
 		private bool GetIsHighlighted(bool isSelected, bool isUnderMouse, bool parentIsFocused)
 		{
-			//var result = _isSelected || (ParentIsFocused && (_isCurrent || _isUnderMouse));
 			var result = isSelected || (parentIsFocused && isUnderMouse);
 
 			return result;

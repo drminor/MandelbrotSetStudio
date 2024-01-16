@@ -246,40 +246,38 @@ namespace MSetExplorer
 
 		private void HandleMouseLeave(object sender, MouseEventArgs e)
 		{
-			//HistogramColorBandControl1.ParentIsFocused = false;
+			HistogramColorBandControl1.ParentIsFocused = false;
 		}
 
 		private void CbsHistogramControl_GotFocus(object sender, RoutedEventArgs e)
 		{
-			//Keyboard.Focus(HistogramColorBandControl1);
-			//HistogramColorBandControl1.Focus();
 			HistogramColorBandControl1.ParentIsFocused = true;
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl got focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
 		}
 
 		private void CbsHistogramControl_LostFocus(object sender, RoutedEventArgs e)
 		{
-			var xx = FocusManager.GetFocusedElement(this);
+			//var xx = FocusManager.GetFocusedElement(this);
 
-			string xt;
-			if (xx != null)
-			{
-				xt = xx.GetType().ToString();
-			}
-			else
-			{
-				xx = FocusManager.GetFocusedElement(Parent);
-				if (xx != null)
-				{
-					xt = xx.GetType().ToString();
-				}
-				else
-				{
-					xt = "No value";
-				}
-			}
+			//string xt;
+			//if (xx != null)
+			//{
+			//	xt = xx.GetType().ToString();
+			//}
+			//else
+			//{
+			//	xx = FocusManager.GetFocusedElement(Parent);
+			//	if (xx != null)
+			//	{
+			//		xt = xx.GetType().ToString();
+			//	}
+			//	else
+			//	{
+			//		xt = "No value";
+			//	}
+			//}
 
-			Debug.WriteLine($"CbsHistogramControl has lost focus. The focus is now on {xt}.");
+			//Debug.WriteLine($"CbsHistogramControl has lost focus. The focus is now on {xt}.");
 
 			HistogramColorBandControl1.ParentIsFocused = false;
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl lost focus. HistogramColorBandControl1.IsParentFocused = {HistogramColorBandControl1.ParentIsFocused}.");
@@ -297,6 +295,16 @@ namespace MSetExplorer
 		private void MoveRightButton_Click(object sender, RoutedEventArgs e)
 		{
 			_vm.TryMoveCurrentColorBandToNext();
+		}
+
+		private void MoveUpButton_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.RetardEditMode();
+		}
+
+		private void MoveDownButton_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.AdvanceEditMode();
 		}
 
 		#endregion
@@ -581,7 +589,7 @@ namespace MSetExplorer
 
 			if (index == -1)
 			{
-				Debug.WriteLine($"Could not the ColorBand: {colorBand} in the VM's ColorBandsView.");
+				Debug.WriteLine($"Could not find the ColorBand: {colorBand} in the ViewModel's ColorBandsView.");
 			}
 		}
 

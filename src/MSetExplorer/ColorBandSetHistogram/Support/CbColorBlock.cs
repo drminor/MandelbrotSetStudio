@@ -48,8 +48,6 @@ namespace MSetExplorer
 		private Canvas _canvas;
 
 		private SizeDbl _contentScale;
-		private IsSelectedChangedCallback _isSelectedChangedCallback;
-		private Action<int, ColorBandSetEditMode> _requestContextMenuShown;
 
 		private double _xPosition;
 		private double _width;
@@ -77,8 +75,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbColorBlock(int colorBandIndex, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend,
-			ColorBandLayoutViewModel colorBandLayoutViewModel, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallBack, Action<int, ColorBandSetEditMode> requestContextMenuShown)
+		public CbColorBlock(int colorBandIndex, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
 		{
 			_isSelected = false;
 			_isUnderMouse = false;
@@ -89,10 +86,8 @@ namespace MSetExplorer
 			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 			_contentScale = _colorBandLayoutViewModel.ContentScale;
 			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
-			_isSelectedChangedCallback = isSelectedChangedCallBack;
-			_requestContextMenuShown = requestContextMenuShown;
 
-			_canvas = canvas;
+			_canvas = _colorBandLayoutViewModel.Canvas;
 			_xPosition = xPosition;
 			_width = width;
 			_cutoff = _xPosition + _width;
@@ -319,7 +314,7 @@ namespace MSetExplorer
 			{
 				if (e.ChangedButton == MouseButton.Right)
 				{
-					_requestContextMenuShown(ColorBandIndex, ColorBandSetEditMode.Colors);
+					_colorBandLayoutViewModel.RequestContextMenuShown(ColorBandIndex, ColorBandSetEditMode.Colors);
 					e.Handled = true;
 				}
 			}
@@ -388,12 +383,6 @@ namespace MSetExplorer
 			_endGeometry.Rect = BuildColorBlockEnd(_geometry.Rect, _startGeometry.Rect);
 		}
 
-		private void Recolor(ColorBandColor startColor, ColorBandColor endColor, bool blend)
-		{
-			_startColorBlockPath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(startColor));
-			_endColorBlockPath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(endColor));
-		}
-
 		private Rect BuildRectangle(double xPosition, double width, bool isHighLighted, ColorBandLayoutViewModel layout)
 		{
 			var yPosition = layout.ColorBlocksElevation;
@@ -402,7 +391,7 @@ namespace MSetExplorer
 
 			Rect result;
 
-			if (isHighLighted && rect.Width > 5)
+			if (isHighLighted && rect.Width > 3)
 			{
 				// Reduce the height to accomodate the outside border. The outside border is 1 pixel thick.
 				// Reduce the width to accomodate the section line and the selection background rectangle (SelRectangle).
@@ -411,7 +400,7 @@ namespace MSetExplorer
 				// 
 				// Decrease the width by 4, if the width > 5. Decrease the height by 2
 				//result = Rect.Inflate(rect, -3, -1);
-				result = Rect.Inflate(rect, -2, -1);
+				result = Rect.Inflate(rect, -1, -1);
 			}
 			else
 			{
@@ -423,8 +412,8 @@ namespace MSetExplorer
 
 		private Rect BuildColorBlockStart(Rect container, ColorBandLayoutViewModel layout)
 		{
-			var yPosition = layout.ColorBlocksElevation + 2;
-			var height = layout.ColorBlocksHeight - 4;
+			var yPosition = layout.ColorBlocksElevation + 3;
+			var height = layout.ColorBlocksHeight - 6;
 
 			var (left, width) = GetBlock1Pos(container.X, container.Width);
 
@@ -448,7 +437,15 @@ namespace MSetExplorer
 			double left;
 			double width;
 
-			if (containerWidth > 27)
+
+			if (containerWidth > 33)
+			{
+				left = containerLeft + 5;
+				var ts = containerWidth - 9;    // 5 before, 2 between and 2 or more after
+				width = ts / 2;                 // Divide remaining between both blocks
+				width = Math.Min(width, 15);    // Each block should be no more than 15 pixels wide
+			}
+			else if (containerWidth > 27)
 			{
 				left = containerLeft + 2;
 				var ts = containerWidth - 6;    // 2 before, 2 between and 2 after
@@ -517,7 +514,7 @@ namespace MSetExplorer
 
 		private void NotifySelectionChange()
 		{
-			_isSelectedChangedCallback(ColorBandIndex, ColorBandSetEditMode.Colors);
+			_colorBandLayoutViewModel.IsSelectedChangedCallback(ColorBandIndex, ColorBandSetEditMode.Colors);
 		}
 
 		private void UpdateSelectionBackground(bool isSelected, bool isUnderMouse, bool parentIsFocused)
@@ -527,7 +524,6 @@ namespace MSetExplorer
 			_geometry.Rect = BuildRectangle(XPosition, Width, isHighLighted, _colorBandLayoutViewModel);
 
 			_rectanglePath.Stroke = GetRectangleStroke(isSelected, isUnderMouse, parentIsFocused);
-			Debug.Assert(isHighLighted == (_rectanglePath.Stroke != DEFAULT_STROKE), "isHighlighted / SelRectangle's stroke mismatch.");
 		}
 
 		private Brush GetRectangleStroke(bool isSelected, bool isUnderMouse, bool parentIsFocused)

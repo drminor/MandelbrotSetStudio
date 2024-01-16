@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Security.Policy;
+using System.Windows.Controls;
 
 namespace MSetExplorer
 {
@@ -8,8 +9,8 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private const int SECTION_LINES_HEIGHT = 15;
-		private const int COLOR_BLOCKS_HEIGHT = 11;
+		private const int SECTION_LINES_HEIGHT = 13;
+		private const int COLOR_BLOCKS_HEIGHT = 15;
 		private const int IS_CURRENT_INDICATORS_HEIGHT = 3;
 
 		private SizeDbl _contentScale;
@@ -28,7 +29,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandLayoutViewModel(SizeDbl contentScale, double controlHeight, bool parentIsFocused)
+		public ColorBandLayoutViewModel(SizeDbl contentScale, double controlHeight, bool parentIsFocused, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSetEditMode> requestContextMenuShown)
 		{
 			if (contentScale.IsNAN() || contentScale.Width == 0)
 			{
@@ -46,15 +47,21 @@ namespace MSetExplorer
 			_colorBlocksElevation = _selectionLinesElevation + SECTION_LINES_HEIGHT;
 			_blendRectangesElevation = _colorBlocksElevation + COLOR_BLOCKS_HEIGHT;
 
-
 			_isCurrentIndicatorsElevation = _blendRectangesElevation + BlendRectangelsHeight;
 
 			_parentIsFocused = parentIsFocused;
+			Canvas = canvas;
+			IsSelectedChangedCallback = isSelectedChangedCallback;
+			RequestContextMenuShown = requestContextMenuShown;
 		}
 
 		#endregion
 
 		#region Public Properties
+
+		public Canvas Canvas { get; init; }
+		public IsSelectedChangedCallback IsSelectedChangedCallback { get; init; }
+		public Action<int, ColorBandSetEditMode> RequestContextMenuShown { get; init; }
 
 		public SizeDbl ContentScale
 		{

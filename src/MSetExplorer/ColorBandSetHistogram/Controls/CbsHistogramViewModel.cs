@@ -609,6 +609,38 @@ namespace MSetExplorer
 		//	_selectedItemsArray = null;
 		//}
 
+		public void AdvanceEditMode()
+		{
+			if (CurrentCbEditMode == ColorBandSetEditMode.Cutoffs)
+			{
+				CurrentCbEditMode = ColorBandSetEditMode.Colors;
+			}
+			else if (CurrentCbEditMode == ColorBandSetEditMode.Colors)
+			{
+				CurrentCbEditMode = ColorBandSetEditMode.Bands;
+			}
+			else
+			{
+				CurrentCbEditMode = ColorBandSetEditMode.Cutoffs;
+			}
+		}
+
+		public void RetardEditMode()
+		{
+			if (CurrentCbEditMode == ColorBandSetEditMode.Cutoffs)
+			{
+				CurrentCbEditMode = ColorBandSetEditMode.Bands;
+			}
+			else if (CurrentCbEditMode == ColorBandSetEditMode.Colors)
+			{
+				CurrentCbEditMode = ColorBandSetEditMode.Cutoffs;
+			}
+			else
+			{
+				CurrentCbEditMode = ColorBandSetEditMode.Colors;
+			}
+		}
+
 		public bool TryMoveCurrentColorBandToNext()
 		{
 			if (ColorBandUserControlHasErrors) return false;
@@ -1108,13 +1140,18 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (e.PropertyName == nameof(ColorBand.IsColorSelected))
+				//if (e.PropertyName == nameof(ColorBand.IsColorSelected))
+				//{
+				//	Debug.WriteLine($"IsColorSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsColorSelected}.");
+				//}
+				//else if (e.PropertyName == nameof(ColorBand.IsCutoffSelected))
+				//{
+				//	Debug.WriteLine($"IsCutoffSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsCutoffSelected}.");
+				//}
+
+				if (e.PropertyName == nameof(ColorBand.IsSelected))
 				{
-					Debug.WriteLine($"IsColorSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsColorSelected}.");
-				}
-				else if (e.PropertyName == nameof(ColorBand.IsCutoffSelected))
-				{
-					Debug.WriteLine($"IsCutoffSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsCutoffSelected}.");
+					Debug.WriteLine($"IsSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsSelected}.");
 				}
 			}
 		}

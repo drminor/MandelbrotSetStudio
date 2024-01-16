@@ -139,11 +139,14 @@
 
                                 <!-- Left / Right -->
                                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="10,3,0,3">
-                                    <Button Width="70" Margin="0,0,10,0" Content="&lt; L" Click="MoveLeftButton_Click" />
-                                    <Button Width="70" Content="R &gt;" Click="MoveRightButton_Click" />
-                                    
+                                    <Button Width="30" Margin="0,0,10,0" Content="&lt; L" Click="MoveLeftButton_Click" />
+                                    <Button Width="30" Margin="0,0,10,0" Content="R &gt;" Click="MoveRightButton_Click" />
+                                    <Button Width="30" Margin="0,0,10,0" Content="Up" Click="MoveUpButton_Click" />
+                                    <Button Width="30" Content="Dn" Click="MoveDownButton_Click" />
+
                                     <!--<CheckBox x:Name="chkBxColors" Margin="29,5,0,0"  IsChecked="{Binding Path=EditingColors, Mode=TwoWay}">Colors</CheckBox>-->
                                     <TextBlock Height="21" Margin="34,0,5,0" FontSize="14" Text="{Binding Path=CurrentCbEditModeAsString, Mode=OneWay}"/>
+                                    
                                 </StackPanel>
 
                                 <!-- Percentage 

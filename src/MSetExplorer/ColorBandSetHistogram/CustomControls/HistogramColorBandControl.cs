@@ -11,7 +11,7 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
-	internal delegate void IsSelectedChangedCallback(int colorBandIndex, ColorBandSetEditMode editMode);
+	public delegate void IsSelectedChangedCallback(int colorBandIndex, ColorBandSetEditMode editMode);
 	internal delegate void ContextMenuDisplayRequest(CbListViewItem cbsListViewItem, ColorBandSetEditMode editMode);
 
 	public class HistogramColorBandControl : ContentControl, IContentScaler
@@ -20,11 +20,11 @@ namespace MSetExplorer
 
 		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 
-		private ICbsHistogramViewModel? _vm;
+		private ICbsHistogramViewModel? _cbsHistogramViewModel;
 
 		private FrameworkElement _ourContent;
 		private Canvas _canvas;
-		private Path? _border;
+		//private Path? _border;
 
 		private ListCollectionView _colorBandsView;
 		private CbListView? _cbListView;
@@ -36,7 +36,6 @@ namespace MSetExplorer
 		private RectangleDbl _translationAndClipSize;
 
 		private SizeDbl _viewportSize;
-		//private bool _useRealTimePreview;
 
 		private bool _parentIsFocused;
 		private ColorBandSetEditMode _currentCbEditMode;
@@ -56,10 +55,10 @@ namespace MSetExplorer
 
 		public HistogramColorBandControl()
 		{
-			_vm = null;
+			_cbsHistogramViewModel = null;
 			_ourContent = new FrameworkElement();
 			_canvas = new Canvas();
-			_border = null;
+			//_border = null;
 
 			_contentScale = new SizeDbl(42, 42);
 
@@ -81,8 +80,6 @@ namespace MSetExplorer
 			_parentIsFocused = false;
 			_currentCbEditMode = ColorBandSetEditMode.Bands;
 
-			_border = null;
-
 			MousePositionWhenContextMenuWasOpened = new Point(double.NaN, double.NaN);
 
 			_lastKnownContextMenu = null;
@@ -93,13 +90,6 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_Loaded(object sender, RoutedEventArgs e)
 		{
-			//if (_vm == null)
-			//{
-			//	throw new InvalidOperationException("VM is Null as the HistogramColorBandControl is loaded.");
-			//}
-
-			//_vm.PropertyChanged += ViewModel_PropertyChanged;
-
 			PreviewMouseDown += Handle_PreviewMouseDown;
 			MouseEnter += Handle_MouseEnter;
 			GotFocus += Handle_GotFocus;
@@ -109,14 +99,13 @@ namespace MSetExplorer
 			PreviewKeyDown += Handle_PreviewKeyDown;
 		}
 
+
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
-			//if (_vm == null)
-			//{
-			//	throw new InvalidOperationException("VM is Null as the HistogramColorBandControl is unloaded.");
-			//}
-
-			//_vm.PropertyChanged -= ViewModel_PropertyChanged;
+			if (_cbsHistogramViewModel != null)
+			{
+				_cbsHistogramViewModel = null;
+			}
 
 			PreviewMouseDown -= Handle_PreviewMouseDown;
 
@@ -135,21 +124,21 @@ namespace MSetExplorer
 
 		private ICbsHistogramViewModel? CbsHistogramViewModel
 		{
-			get => _vm;
+			get => _cbsHistogramViewModel;
 			set
 			{
-				if (value != _vm)
+				if (value != _cbsHistogramViewModel)
 				{
-					if (_vm != null)
+					if (_cbsHistogramViewModel != null)
 					{
-						_vm.PropertyChanged -= ViewModel_PropertyChanged;
+						_cbsHistogramViewModel.PropertyChanged -= ViewModel_PropertyChanged;
 					}
 
-					_vm = value;
+					_cbsHistogramViewModel = value;
 
-					if (_vm != null)
+					if (_cbsHistogramViewModel != null)
 					{
-						_vm.PropertyChanged += ViewModel_PropertyChanged;
+						_cbsHistogramViewModel.PropertyChanged += ViewModel_PropertyChanged;
 					}
 				}
 			}
@@ -246,7 +235,7 @@ namespace MSetExplorer
 				_translationAndClipSize = value;
 
 				ClipAndOffset(previousVal, value);
-				DrawBorder(value);
+				//DrawBorder(value);
 			}
 		}
 
@@ -294,19 +283,7 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public bool UseRealTimePreview
-		//{
-		//	get => _useRealTimePreview;
-		//	set
-		//	{
-		//		if (value != _useRealTimePreview)
-		//		{
-		//			_useRealTimePreview = value;
-		//		}
-		//	}
-		//}
-		
+	
 		public Point MousePositionWhenContextMenuWasOpened { get; private set; }
 
 		public bool ParentIsFocused
@@ -479,7 +456,6 @@ namespace MSetExplorer
 			if (Content != null)
 			{
 				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
-				//(Canvas, Image) = BuildContentModel(_ourContent);
 				Canvas = BuildContentModel(_ourContent);
 
 				CbsHistogramViewModel = (ICbsHistogramViewModel)DataContext;
@@ -509,14 +485,6 @@ namespace MSetExplorer
 
 		private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			//if (_vm != null && _cbListView != null)
-			//{
-			//	if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentCbEditMode))
-			//	{
-			//		_cbListView.CurrentCbEditMode = _vm.CurrentCbEditMode;
-			//	}
-			//}
-
 			if (_cbListView != null && CbsHistogramViewModel != null)
 			{
 				if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentCbEditMode))
@@ -530,7 +498,8 @@ namespace MSetExplorer
 		{
 			if (Keyboard.FocusedElement != this)
 			{
-				Focus();
+				var focusResult = Focus();
+				ReportSetFocus(focusResult);
 			}
 		}
 
@@ -615,6 +584,14 @@ namespace MSetExplorer
 
 				e.Handled = true;
 			}
+			else if (e.Key == Key.Up)
+			{
+				CbsHistogramViewModel.RetardEditMode();
+			}
+			else if (e.Key == Key.Down)
+			{
+				CbsHistogramViewModel.AdvanceEditMode();
+			}
 		}
 
 		#endregion
@@ -679,37 +656,37 @@ namespace MSetExplorer
 			_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
 		}
 
-		private void DrawBorder(RectangleDbl newValue)
-		{
-			if (_border != null)
-			{
-				_canvas.Children.Remove(_border);
-				_border = null;
-			}
+		//private void DrawBorder(RectangleDbl newValue)
+		//{
+		//	if (_border != null)
+		//	{
+		//		_canvas.Children.Remove(_border);
+		//		_border = null;
+		//	}
 
-			if (_cbListView == null)
-			{
-				return;
-			}
+		//	if (_cbListView == null)
+		//	{
+		//		return;
+		//	}
 
-			var cbrElevation = _cbListView.CbrElevation;
-			var xPosition = newValue.Position.X * ContentScale.Width;
-			var area = new RectangleDbl(new PointDbl(xPosition, cbrElevation), new SizeDbl(ActualWidth, ActualHeight - cbrElevation));
+		//	var cbrElevation = _cbListView.CbrElevation;
+		//	var xPosition = newValue.Position.X * ContentScale.Width;
+		//	var area = new RectangleDbl(new PointDbl(xPosition, cbrElevation), new SizeDbl(ActualWidth, ActualHeight - cbrElevation));
 
-			var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(area));
+		//	var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(area));
 
-			var result = new Path()
-			{
-				Fill = Brushes.Transparent,
-				Stroke = Brushes.DarkGray,
-				StrokeThickness = 2,
-				Data = cbRectangle,
-				IsHitTestVisible = false
-			};
+		//	var result = new Path()
+		//	{
+		//		Fill = Brushes.Transparent,
+		//		Stroke = Brushes.DarkGray,
+		//		StrokeThickness = 2,
+		//		Data = cbRectangle,
+		//		IsHitTestVisible = false
+		//	};
 
-			//_canvas.Children.Add(result);
-			_border = result;
-		}
+		//	//_canvas.Children.Add(result);
+		//	_border = result;
+		//}
 
 		private int GetExtent(ListCollectionView? listCollectionView)
 		{
@@ -767,6 +744,23 @@ namespace MSetExplorer
 			var previousXValue = previousValue.Position.X * ContentScale.Width;
 			var newXValue = newValue.Position.X * ContentScale.Width;
 			Debug.WriteLine(_useDetailedDebug, $"The HistogramColorBandControl's CanvasTranslationTransform is being set from {previousXValue} to {newXValue}.");
+		}
+
+		[Conditional("DEBUG2")]
+		private void ReportSetFocus(bool focusResult)
+		{
+			var elementWithFocus = Keyboard.FocusedElement;
+
+			if (elementWithFocus is DependencyObject dp)
+			{
+				var elementWithLogicalFocus = FocusManager.GetFocusedElement(dp);
+				var focusScope = FocusManager.GetFocusScope(dp);
+				Debug.WriteLine($"HistogramColorBandControl. HandlePreviewLeftButtonDown. The Keyboard focus is now on {elementWithFocus}. The focus is at {elementWithLogicalFocus}. FocusScope: {focusScope}. FocusResult: {focusResult}.");
+			}
+			else
+			{
+				Debug.WriteLine($"HistogramColorBandControl. HandlePreviewLeftButtonDown. The Keyboard focus is now on {elementWithFocus}. The element with logical focus cannot be determined. FocusResult: {focusResult}.");
+			}
 		}
 
 		#endregion

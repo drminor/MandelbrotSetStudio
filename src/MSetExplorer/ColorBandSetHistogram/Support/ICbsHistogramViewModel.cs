@@ -48,6 +48,9 @@ namespace MSetExplorer
 		bool TryMoveCurrentColorBandToNext();
 		bool TryMoveCurrentColorBandToPrevious();
 
+		void AdvanceEditMode();
+		void RetardEditMode(); 
+
 		bool TryInsertNewItem(ColorBand colorBand, out int index);
 		bool TryDeleteSelectedItem(ColorBand colorBand);
 

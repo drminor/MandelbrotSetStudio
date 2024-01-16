@@ -25,9 +25,10 @@ namespace MSS.Types
 		//private ColorBand? _copy;
 		private bool _isInEditMode;
 
-		//private bool _isCurrent;
-		private bool _isCutoffSelected;
-		private bool _isColorSelected;
+		private bool _isSelected;
+
+		//private bool _isCutoffSelected;
+		//private bool _isColorSelected;
 
 		#endregion
 
@@ -57,9 +58,10 @@ namespace MSS.Types
 
 			_actualEndColor = GetActualEndColor();
 
-			//_isCurrent = false;
-			_isCutoffSelected = false;
-			_isColorSelected = false;
+			_isSelected = false;
+
+			//_isCutoffSelected = false;
+			//_isColorSelected = false;
 		}
 
 		private static ColorBand _emptySingleton = new ColorBand();
@@ -287,58 +289,59 @@ namespace MSS.Types
 
 		#region Public Properties - Selections
 
-		//public bool IsCurrent
+		public bool IsSelected
+		{
+			get => _isSelected;
+			set
+			{
+				if (value != _isSelected)
+				{
+					_isSelected = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		//public bool IsSelected
 		//{
-		//	get => _isCurrent;
+		//	get => _isCutoffSelected || _isColorSelected;
 		//	set
 		//	{
-		//		if (value != _isCurrent)
+		//		if (value != IsSelected)
 		//		{
-		//			_isCurrent = value;
+		//			IsCutoffSelected = value;
+		//			IsColorSelected = value;
+		//			OnPropertyChanged();
 		//		}
 		//	}
 		//}
 
-		public bool IsSelected
-		{
-			get => _isCutoffSelected || _isColorSelected;
-			set
-			{
-				if (value != IsSelected)
-				{
-					IsCutoffSelected = value;
-					IsColorSelected = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public bool IsCutoffSelected
+		//{
+		//	get => _isCutoffSelected;
+		//	set
+		//	{
+		//		if (value != _isCutoffSelected)
+		//		{
+		//			_isCutoffSelected = value;
+		//			OnPropertyChanged();
 
-		public bool IsCutoffSelected
-		{
-			get => _isCutoffSelected;
-			set
-			{
-				if (value != _isCutoffSelected)
-				{
-					_isCutoffSelected = value;
-					OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
-				}
-			}
-		}
-
-		public bool IsColorSelected
-		{
-			get => _isColorSelected;
-			set
-			{
-				if (value != _isColorSelected)
-				{
-					_isColorSelected = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		//public bool IsColorSelected
+		//{
+		//	get => _isColorSelected;
+		//	set
+		//	{
+		//		if (value != _isColorSelected)
+		//		{
+		//			_isColorSelected = value;
+		//			OnPropertyChanged();
+		//		}
+		//	}
+		//}
 
 		#endregion
 
