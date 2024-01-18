@@ -52,7 +52,7 @@ namespace MSetExplorer
 		void RetardEditMode(); 
 
 		bool TryInsertNewItem(ColorBand colorBand, out int index);
-		bool TryDeleteSelectedItem(ColorBand colorBand);
+		bool TryDeleteItem(ColorBand colorBand);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 

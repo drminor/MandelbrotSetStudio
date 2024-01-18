@@ -394,7 +394,7 @@ namespace MSetExplorer
 
 			if (selItem != null)
 			{
-				_ = _vm.TryDeleteSelectedItem(selItem);
+				_ = _vm.TryDeleteItem(selItem);
 			}
 		}
 

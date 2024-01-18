@@ -99,7 +99,6 @@ namespace MSetExplorer
 			PreviewKeyDown += Handle_PreviewKeyDown;
 		}
 
-
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			if (_cbsHistogramViewModel != null)
@@ -165,6 +164,8 @@ namespace MSetExplorer
 				_canvas.RenderTransform = _canvasRenderTransform;
 				//_canvas.Background = new SolidColorBrush(Colors.MistyRose);
 				_canvas.Background = new SolidColorBrush(Colors.Transparent);
+
+				NameScope.SetNameScope(_canvas, new NameScope());
 			}
 		}
 

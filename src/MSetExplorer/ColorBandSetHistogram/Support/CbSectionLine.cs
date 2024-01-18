@@ -408,6 +408,8 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The CbSectionLine is getting a MouseLeftButtonUp event. The Escape Key is Pressed, cancelling.");
 				CancelDragInternal();
+
+				e.Handled = true;
 				return;
 			}
 
@@ -415,9 +417,10 @@ namespace MSetExplorer
 
 			if (dragCompleted)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbSectionLine is getting a MouseLeftButtonUp event. The Drag is Complet.");
-				e.Handled = true;
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbSectionLine is getting a MouseLeftButtonUp event. The Drag is Complete.");
 			}
+
+			e.Handled = true;
 		}
 
 		private void Handle_TopArrowMouseUp(object sender, MouseButtonEventArgs e)

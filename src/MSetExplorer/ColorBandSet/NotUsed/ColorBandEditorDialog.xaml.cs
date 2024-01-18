@@ -84,5 +84,15 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private void StartColor_CustomMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+
+		}
+
+		private void EndColor_CustomMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+
+		}
 	}
 }

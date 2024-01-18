@@ -1,9 +1,9 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -11,15 +11,21 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using WinRT;
+using System.Windows.Media.Animation;
 
 namespace MSetExplorer
 {
 	internal class CbListView
 	{
 		#region Private Fields
-		
+
+		private Storyboard _myStoryboard1;
+		private Action<int>? _myStoryboardCallback;
+		private int _callbackIndex;
+
 		private Canvas _canvas;
+
+		private int _nextNameSuffix;
 
 		private ListCollectionView _colorBandsView;
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
@@ -50,7 +56,22 @@ namespace MSetExplorer
 		public CbListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool parentIsFocused, ColorBandSetEditMode currentCbEditMode, 
 			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged)
 		{
+			_myStoryboard1 = new Storyboard();
+			_myStoryboardCallback = null;
+			_callbackIndex = 0;
+			_nextNameSuffix = 1;
+
 			_canvas = canvas;
+
+			if (NameScope.GetNameScope(_canvas) == null)
+			{
+				NameScope.SetNameScope(_canvas, new NameScope());
+			}
+			else
+			{
+				CheckNameScope(_canvas, 0);
+			}
+
 			_colorBandsView = colorBandsView;
 
 			_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
@@ -143,6 +164,11 @@ namespace MSetExplorer
 					if (BlendRectangleUnderMouse != null)
 					{
 						BlendRectangleUnderMouse.SetIsRectangleUnderMouse(true, CurrentCbEditMode);
+					}
+
+					if (ColorBlocksUnderMouse != null)
+					{
+						ColorBlocksUnderMouse.SetIsRectangleUnderMouse(true, CurrentCbEditMode);
 					}
 				}
 			}
@@ -331,21 +357,6 @@ namespace MSetExplorer
 
 		public (CbListViewItem, ColorBandSelectionType)? ItemAtMousePosition(Point hitPoint)
 		{
-			//if (TryGetSectionLine(hitPoint, ListViewItems, out var distance, out var cbListViewItem) && Math.Abs(distance.Value) < 4)
-			//{
-			//	return (cbListViewItem, ColorBandSelectionType.Cutoff);
-			//}
-			//else
-			//{
-			//	if (TryGetColorBandRectangle(hitPoint, ListViewItems, out cbListViewItem))
-			//	{
-			//		return (cbListViewItem, ColorBandSelectionType.Band);
-			//	}
-			//}
-
-			//return null;
-
-
 			if (TryGetSectionLineIndex(hitPoint, ListViewItems, out var distance, out var cbListViewItemIndex))
 			{
 				if (Math.Abs(distance) < 6)
@@ -609,7 +620,7 @@ namespace MSetExplorer
 				var idx = e.NewStartingIndex;
 				foreach (var colorBand in bands)
 				{
-					var listViewItem = CreateListViewItem(_colorBandsView, idx, colorBand);
+					var listViewItem = CreateListViewItem(_colorBandsView, idx, colorBand, GetNextNameSuffix());
 					ListViewItems.Insert(idx++, listViewItem);
 				}
 
@@ -620,29 +631,41 @@ namespace MSetExplorer
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
 			{
 				// Remove items
+				Debug.WriteLine($"CbListView is handling CollectionChanged: Remove.");
+				var colorBand = e.OldItems?[0] as ColorBand;
+				CheckOldItems(colorBand, e.OldItems);
 
-				Debug.WriteLine($"CbListView is handling CollectionChanged: Remove. There are {e.OldItems?.Count ?? -1} old items.");
-
-				var bands = e.OldItems?.Cast<ColorBand>() ?? new List<ColorBand>();
-
-				var si = int.MaxValue;
-
-				foreach (var colorBand in bands)
+				var lvi = ListViewItems.FirstOrDefault(x => x.ColorBand == colorBand);
+				if (lvi != null)
 				{
-					Debug.WriteLine($"CbListView is Removing a ColorBand: {colorBand}");
-
-					var lvi = ListViewItems.FirstOrDefault(x => x.ColorBand == colorBand);
-					if (lvi != null)
-					{
-						lvi.TearDown();
-						ListViewItems.Remove(lvi);
-
-						if (lvi.ColorBandIndex < si) si = lvi.ColorBandIndex;
-					}
+					Debug.WriteLine($"CbListView is removing a ColorBand: {colorBand}");
+					AnimateBandDeletion(AfterAnimateDeletion, lvi.ColorBandIndex);
 				}
-
-				Reindex(si);
+				else
+				{
+					Debug.WriteLine($"CbListView cannot find ColorBand: {colorBand} in the ListViewItems.");
+				}
 			}
+		}
+
+		private string GetNextNameSuffix()
+		{
+			var result = _nextNameSuffix++.ToString();
+			return result;
+		}
+
+		private void AfterAnimateDeletion(int index)
+		{
+			Debug.WriteLine("AnimateDeletion StoryBoard has completed.");
+
+			var lvi = ListViewItems[index];
+
+			_canvas.UnregisterName(lvi.CbRectangle.BlendedBandRectangle.Name);
+
+			lvi.TearDown();
+			ListViewItems.Remove(lvi);
+
+			Reindex(lvi.ColorBandIndex);
 		}
 
 		#endregion
@@ -730,13 +753,15 @@ namespace MSetExplorer
 			for (var colorBandIndex = 0; colorBandIndex < listCollectionView.Count; colorBandIndex++)
 			{
 				var colorBand = (ColorBand)listCollectionView.GetItemAt(colorBandIndex);
-				var listViewItem = CreateListViewItem(listCollectionView, colorBandIndex, colorBand);
+				var listViewItem = CreateListViewItem(listCollectionView, colorBandIndex, colorBand, GetNextNameSuffix());
 
 				ListViewItems.Add(listViewItem);
 			}
+
+			CheckNameScope(_canvas, listCollectionView.Count);
 		}
 
-		private CbListViewItem CreateListViewItem(ListCollectionView listCollectionView, int colorBandIndex, ColorBand colorBand)
+		private CbListViewItem CreateListViewItem(ListCollectionView listCollectionView, int colorBandIndex, ColorBand colorBand, string nameSuffix)
 		{
 			// Build the CbRectangle
 			var xPosition = colorBand.PreviousCutoff ?? 0;
@@ -744,7 +769,11 @@ namespace MSetExplorer
 			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 
 			var isCurrent = colorBandIndex == listCollectionView.CurrentPosition;
-			var cbRectangle = new CbRectangle(colorBandIndex, isCurrent, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
+			var cbRectangle = new CbRectangle(colorBandIndex, isCurrent, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, nameSuffix);
+
+			//var x =  NameScope.GetNameScope(cbRectangle.ColorBandLayoutViewModel.Canvas);
+
+			_canvas.RegisterName(cbRectangle.BlendedBandRectangle.Name, cbRectangle.BlendedBandRectangle);
 
 			// Build the Selection Line
 			var selectionLinePosition = colorBand.Cutoff;
@@ -894,10 +923,15 @@ namespace MSetExplorer
 			foreach (var listViewItem in ListViewItems)
 			{
 				listViewItem.CbSectionLine.SectionLineMoved -= HandleSectionLineMoved;
+
+				_canvas.UnregisterName(listViewItem.CbRectangle.BlendedBandRectangle.Name);
+
 				listViewItem.TearDown();
 			}
 
 			ListViewItems.Clear();
+
+			CheckNameScope(_canvas, 0);
 
 			//Debug.WriteLine($"After remove ColorBandRectangles. The DrawingGroup has {_drawingGroup.Children.Count} children. The height of the drawing group is: {_drawingGroup.Bounds.Height} and the location is: {_drawingGroup.Bounds.Location}");
 		}
@@ -968,6 +1002,64 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Animation
+
+		private void AnimateBandDeletion(Action<int> callback, int index)
+		{
+			_myStoryboardCallback = callback;
+			_callbackIndex = index;
+
+			var cbRectangle = ListViewItems[index].CbRectangle;
+			//var nameSuffix = listViewItem.CbRectangle.NameSuffix;
+
+			var curVal = ((RectangleGeometry)cbRectangle.BlendedBandRectangle.Data).Rect.Width;
+
+			if (double.IsNaN(curVal))
+			{
+				Debug.WriteLine("Not animating -- The width is NAN.");
+			}
+
+			var duration = new Duration(TimeSpan.FromSeconds(5));
+
+			var da1 = new DoubleAnimation();
+			da1.From = curVal;
+			da1.To = 1.0;
+			da1.Duration = duration;
+
+			Storyboard.SetTargetName(da1, cbRectangle.BlendedBandRectangle.Name);
+			Storyboard.SetTargetProperty(da1, new PropertyPath("Width"));
+
+			//var da2 = new DoubleAnimation();
+			//da2.From = curVal;
+			//da2.To = 1.0;
+			//da2.Duration = duration;
+
+			//Storyboard.SetTargetName(da2, CbColorBlock.ColorBlocksRectangle.Name);
+			//Storyboard.SetTargetProperty(da2, new PropertyPath("Width"));
+
+			_myStoryboard1.Duration = duration;
+			_myStoryboard1.Children.Add(da1);
+			//myStoryboard1.Children.Add(da2);
+
+			_myStoryboard1.Completed += MyStoryboard1_Completed;
+
+			_myStoryboard1.Begin(cbRectangle.ColorBandLayoutViewModel.Canvas);
+		}
+
+		private void MyStoryboard1_Completed(object? sender, EventArgs e)
+		{
+			_myStoryboard1.Completed -= MyStoryboard1_Completed;
+
+			if (_myStoryboardCallback != null)
+			{
+				_myStoryboardCallback(_callbackIndex);
+			}
+		}
+
+
+
+		#endregion
+
 		#region Diagnostics
 
 		[Conditional("DEGUG2")]
@@ -984,6 +1076,49 @@ namespace MSetExplorer
 			sb.AppendLine($"cbRectangleRight at index {sectionLineIndex + 1}: {cbRectangleRight.RectangleGeometry}");
 
 			Debug.WriteLine(sb);
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportNameScopeDetails(DependencyObject dependencyObject)
+		{
+			var o = dependencyObject.GetValue(NameScope.NameScopeProperty);
+
+			if (o is NameScope ns)
+			{
+				Debug.WriteLine($"CbsListView. The Canvas already has a NameScope with {ns.Count} registered names.");
+			}
+			else
+			{
+				Debug.WriteLine($"CbsListView. The Canvas already has a NameScope but the value is unavailable.");
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckNameScope(DependencyObject dependencyObject, int expectedCount)
+		{
+			var o = dependencyObject.GetValue(NameScope.NameScopeProperty);
+
+			if (o is NameScope ns)
+			{
+				Debug.Assert(ns.Count == expectedCount, $"The NameScope has {ns.Count} items, expected the count to be {expectedCount}.");
+			}
+			else
+			{
+				Debug.WriteLine($"CbsListView. The Canvas already has a NameScope but the value is unavailable.");
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckOldItems(ColorBand? colorBand, IList? oldItems)
+		{
+			if (colorBand is null)
+			{
+				throw new InvalidOperationException("e.OldItems[0] is not a ColorBand!");
+			}
+			else
+			{
+				Debug.Assert((oldItems?.Count ?? 0) == 1, "Received more than 1 old item on Notify Collection Changed -- Remove.");
+			}
 		}
 
 		#endregion

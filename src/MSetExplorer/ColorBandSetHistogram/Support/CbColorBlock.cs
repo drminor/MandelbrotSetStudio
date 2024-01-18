@@ -125,6 +125,9 @@ namespace MSetExplorer
 
 		public RectangleGeometry RectangleGeometry => _geometry;
 
+		public Path ColorBlocksRectangle => (Path)_rectanglePath;
+
+
 		public ColorBandColor StartColor
 		{
 			get => _startColor;
@@ -332,7 +335,8 @@ namespace MSetExplorer
 				Stroke = DEFAULT_STROKE,
 				StrokeThickness = DEFAULT_STROKE_THICKNESS,
 				Data = area,
-				IsHitTestVisible = true
+				IsHitTestVisible = true,
+				Name = "ColorBlocksRectangle"
 			};
 
 			return result;

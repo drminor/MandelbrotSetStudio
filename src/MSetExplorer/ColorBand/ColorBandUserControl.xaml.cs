@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -26,7 +27,7 @@ namespace MSetExplorer
 			InitializeComponent();
 		}
 
-		private void ColorBandUserControl_Loaded(object sender, System.Windows.RoutedEventArgs e)
+		private void ColorBandUserControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
@@ -48,7 +49,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ColorBandUserControl_Unloaded(object sender, System.Windows.RoutedEventArgs e)
+		private void ColorBandUserControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			Loaded -= ColorBandUserControl_Loaded;
 			Unloaded -= ColorBandUserControl_Unloaded;
@@ -70,12 +71,12 @@ namespace MSetExplorer
 			_vm.ColorBandUserControlHasErrors = true;
 		}
 
-		private void TxtStartCutoff_LostFocus(object sender, System.Windows.RoutedEventArgs e)
+		private void TxtStartCutoff_LostFocus(object sender, RoutedEventArgs e)
 		{
 			_vm.ColorBandUserControlHasErrors = HasCutoffError();
 		}
 
-		private void TxtEndCutoff_LostFocus(object sender, System.Windows.RoutedEventArgs e)
+		private void TxtEndCutoff_LostFocus(object sender, RoutedEventArgs e)
 		{
 			_vm.ColorBandUserControlHasErrors = HasCutoffError();
 		}
@@ -85,6 +86,50 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentColorBand))
 			{
 				SetupForm(_vm.CurrentColorBand);
+			}
+		}
+
+		private void StartColor_CustomMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			var cb = _vm?.CurrentColorBand;
+
+			if (cb != null)
+			{
+				var pos = e.GetPosition(relativeTo: cbcButtonControl1.Canvas);
+
+				var startColor = cb.StartColor;
+
+				if (ShowColorPicker(pos, startColor, out var selectedColor))
+				{
+					cbcButtonControl1.ColorBandColor = selectedColor;
+				}
+
+				//if (ShowColorSpace(pos, startColor, out var selectedColor2))
+				//{
+				//	cbcButtonControl1.ColorBandColor = selectedColor2;
+				//}
+			}
+		}
+
+		private void EndColor_CustomMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			var cb = _vm?.CurrentColorBand;
+
+			if (cb != null)
+			{
+				var pos = e.GetPosition(relativeTo: cbcButtonControl1.Canvas);
+
+				var endColor = cb.EndColor;
+
+				if (ShowColorPicker(pos, endColor, out var selectedColor))
+				{
+					cbcButtonControl1.ColorBandColor = selectedColor;
+				}
+
+				//if (ShowColorSpace(pos, endColor, out var selectedColor2))
+				//{
+				//	cbcButtonControl1.ColorBandColor = selectedColor2;
+				//}
 			}
 		}
 
@@ -112,8 +157,6 @@ namespace MSetExplorer
 
 			return errors1.Count > 0 || errors2.Count > 0;
 		}
-
-
 
 		#endregion
 
@@ -172,6 +215,48 @@ namespace MSetExplorer
 			//x.Min = 5;
 			//x.Max = 500;
 			//binding.ValidationRules.Add(x);
+		}
+
+		private bool ShowColorPicker(Point pos, ColorBandColor initalColor, out ColorBandColor selectedColor)
+		{
+			var colorPickerDialalog = new ColorPickerDialog(initalColor);
+
+			var sp = PointToScreen(pos);
+
+			colorPickerDialalog.Left = sp.X - colorPickerDialalog.Width - 225;
+			colorPickerDialalog.Top = sp.Y - colorPickerDialalog.Height - 25;
+
+			if (colorPickerDialalog.ShowDialog() == true)
+			{
+				selectedColor = colorPickerDialalog.SelectedColorBandColor;
+				return true;
+			}
+			else
+			{
+				selectedColor = initalColor;
+				return false;
+			}
+		}
+
+		private bool ShowColorSpace(Point pos, ColorBandColor initalColor, out ColorBandColor selectedColor)
+		{
+			var colorSpaceDialalog = new ColorSpaceDialog(initalColor);
+
+			var sp = PointToScreen(pos);
+
+			colorSpaceDialalog.Left = sp.X - colorSpaceDialalog.Width - 225;
+			colorSpaceDialalog.Top = sp.Y - colorSpaceDialalog.Height - 25;
+
+			if (colorSpaceDialalog.ShowDialog() == true)
+			{
+				selectedColor = colorSpaceDialalog.SelectedColorBandColor;
+				return true;
+			}
+			else
+			{
+				selectedColor = initalColor;
+				return false;
+			}
 		}
 
 		#endregion

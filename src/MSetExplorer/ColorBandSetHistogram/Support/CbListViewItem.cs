@@ -1,11 +1,19 @@
 ﻿using MSS.Types;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Windows.Media.Animation;
+using System.Windows;
+using System;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {
 	internal class CbListViewItem
 	{
+		//private Storyboard myStoryboard1;
+		//private Action<int>? myStoryboardCallback;
+		//private int callbackIndex = 0;
+
 		private ColorBandSelectionType _selectionType;
 
 		private bool _isCutoffSelected;
@@ -18,6 +26,9 @@ namespace MSetExplorer
 
 		public CbListViewItem(ColorBand colorBand, CbRectangle cbRectangle, CbSectionLine cbSectionLine, CbColorBlock cbColorBlock)
 		{
+			//myStoryboard1 = new Storyboard();
+			//myStoryboardCallback = null;
+
 			ColorBand = colorBand;
 			CbSectionLine = cbSectionLine;
 			CbColorBlock = cbColorBlock;
@@ -212,6 +223,55 @@ namespace MSetExplorer
 			}
 		}
 
+		//private void AnimateBandDeletion(Action<int> callback, int index)
+		//{
+		//	myStoryboardCallback = callback;
+		//	callbackIndex = index; 
+
+		//	var curVal = ((RectangleGeometry)CbRectangle.BlendedBandRectangle.Data).Rect.Width;
+
+		//	if (double.IsNaN(curVal))
+		//	{
+		//		Debug.WriteLine("Not animating -- The width is NAN.");
+		//	}
+
+		//	var duration = new Duration(TimeSpan.FromSeconds(5));
+
+		//	var da1 = new DoubleAnimation();
+		//	da1.From = curVal;
+		//	da1.To = 1.0;
+		//	da1.Duration = duration;
+
+		//	Storyboard.SetTargetName(da1, CbRectangle.BlendedBandRectangle.Name);
+		//	Storyboard.SetTargetProperty(da1, new PropertyPath("Width"));
+
+		//	//var da2 = new DoubleAnimation();
+		//	//da2.From = curVal;
+		//	//da2.To = 1.0;
+		//	//da2.Duration = duration;
+
+		//	//Storyboard.SetTargetName(da2, CbColorBlock.ColorBlocksRectangle.Name);
+		//	//Storyboard.SetTargetProperty(da2, new PropertyPath("Width"));
+
+		//	myStoryboard1.Duration = duration;
+		//	myStoryboard1.Children.Add(da1);
+		//	//myStoryboard1.Children.Add(da2);
+
+		//	myStoryboard1.Begin(CbRectangle.ColorBandLayoutViewModel.Canvas);
+
+		//	myStoryboard1.Completed += MyStoryboard1_Completed;
+		//}
+
+		//private void MyStoryboard1_Completed(object? sender, EventArgs e)
+		//{
+		//	myStoryboard1.Completed -= MyStoryboard1_Completed;
+
+		//	if (myStoryboardCallback != null)
+		//	{
+		//		myStoryboardCallback(callbackIndex);
+		//	}
+		//}
+
 		#endregion
 
 		#region Public Methods
@@ -255,6 +315,12 @@ namespace MSetExplorer
 			CbColorBlock.TearDown();
 			CbRectangle.TearDown();
 		}
+
+		//public void AnimateDeletionX(Action<int> callback, int index)
+		//{
+		//	AnimateBandDeletion(callback, index);
+
+		//}
 
 		#endregion
 	}

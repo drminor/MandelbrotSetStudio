@@ -1,7 +1,10 @@
 ﻿using MSS.Types;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
@@ -11,8 +14,11 @@ namespace MSetExplorer
 	public partial class ColorBandColorButtonControl : UserControl
 	{
 		private Canvas _canvas;
-		private readonly DrawingGroup _drawingGroup;
-		private GeometryDrawing _rectangle;
+
+		private readonly RectangleGeometry _geometry;
+		private readonly Shape _rectanglePath;
+
+		public readonly object objectLock = new object();
 
 		#region Constructor
 
@@ -20,27 +26,51 @@ namespace MSetExplorer
 		{
 			_canvas = new Canvas();
 
-			_drawingGroup = new DrawingGroup();
-			_rectangle = BuildRectangle(new SizeDbl(), ColorBandColor.White);
-			_drawingGroup.Children.Add(_rectangle);
-
-			Loaded += ColorPanelControl_Loaded;
+			Loaded += ColorBandColorButtonControl_Loaded;
+			Unloaded += ColorBandColorButtonControl_Unloaded;
 			InitializeComponent();
+
+			_geometry = BuildGeometry(new SizeDbl());
+			_rectanglePath = BuildRectanglePath(_geometry, new ColorBandColor(new byte[] {255, 255, 255}));
+			_rectanglePath.Focusable = true;
 		}
 
-		private void ColorPanelControl_Loaded(object sender, RoutedEventArgs e)
+		private void ColorBandColorButtonControl_Loaded(object sender, RoutedEventArgs e)
 		{
 			_canvas = MainCanvas;
+			_canvas.Children.Add(_rectanglePath);
+			RefreshTheView(new SizeDbl(ActualWidth, ActualHeight));
 
-			var rectImage = new Image { Source = new DrawingImage(_drawingGroup) };
-			_ = _canvas.Children.Add(rectImage);
-			rectImage.Focusable = true;
-
-			RefreshTheView(new SizeDbl(ActualWidth, ActualHeight), ColorBandColor, IsEnabled);
+			_rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(ColorBandColor));
 
 			SizeChanged += ColorPanelControl_SizeChanged;
-			rectImage.MouseUp += RectImage_MouseUp;
 		}
+
+		private void ColorBandColorButtonControl_Unloaded(object sender, RoutedEventArgs e)
+		{
+			SizeChanged -= ColorPanelControl_SizeChanged;
+
+			Loaded -= ColorBandColorButtonControl_Loaded;
+			Unloaded -= ColorBandColorButtonControl_Unloaded;
+		}
+
+		#endregion
+
+		public event MouseButtonEventHandler CustomMouseUp
+		{
+			add { lock (objectLock) { _rectanglePath.MouseUp += value; } }
+			remove { lock (objectLock) { _rectanglePath.MouseUp -= value; } }
+		}
+
+		#region Public Properties
+
+		public ColorBandColor ColorBandColor
+		{
+			get => (ColorBandColor)GetValue(ColorBandColorProperty);
+			set => SetValue(ColorBandColorProperty, value);
+		}
+
+		public Canvas Canvas => _canvas;
 
 		#endregion
 
@@ -48,23 +78,7 @@ namespace MSetExplorer
 
 		private void ColorPanelControl_SizeChanged(object sender, SizeChangedEventArgs e)
 		{
-			RefreshTheView(ScreenTypeHelper.ConvertToSizeDbl(e.NewSize), ColorBandColor, IsEnabled);
-		}
-
-		private void RectImage_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
-		{
-			var pos =  e.GetPosition(relativeTo: _canvas);
-
-			if (ShowColorPicker(pos, ColorBandColor, out var selectedColor))
-			{
-				ColorBandColor = selectedColor;
-			}
-
-			//if (ShowColorSpace(pos, ColorBandColor, out var selectedColor))
-			//{
-			//	ColorBandColor = selectedColor;
-			//}
-
+			RefreshTheView(new SizeDbl(ActualWidth, ActualHeight));
 		}
 
 		#endregion
@@ -77,18 +91,12 @@ namespace MSetExplorer
 			typeof(ColorBandColorButtonControl),
 			new FrameworkPropertyMetadata()
 			{
-				PropertyChangedCallback = OnColorChanged,
+				PropertyChangedCallback = OnStartColorChanged,
 				BindsTwoWayByDefault = true,
 				DefaultValue = ColorBandColor.White
 			});
 
-		public ColorBandColor ColorBandColor
-		{
-			get => (ColorBandColor)GetValue(ColorBandColorProperty);
-			set => SetValue(ColorBandColorProperty, value);
-		}
-
-		private static void OnColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		private static void OnStartColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
 			var oldValue = (ColorBandColor) e.OldValue;
 			var newValue = (ColorBandColor) e.NewValue;
@@ -97,90 +105,16 @@ namespace MSetExplorer
 			{
 				if (d is ColorBandColorButtonControl uc)
 				{
-					uc._rectangle.Brush = uc.BuildBrush(newValue, uc.IsEnabled);
-				}
-			}
-		}
-
-		public static readonly DependencyProperty BlendStyleProperty = DependencyProperty.Register(
-			"BlendStyle",
-			typeof(ColorBandBlendStyle),
-			typeof(ColorBandColorButtonControl),
-			new FrameworkPropertyMetadata()
-			{
-				PropertyChangedCallback = OnBlendStyleChanged,
-				BindsTwoWayByDefault = true,
-				DefaultValue = ColorBandBlendStyle.End
-			});
-
-		public ColorBandBlendStyle BlendStyle
-		{
-			get => (ColorBandBlendStyle)GetValue(BlendStyleProperty);
-			set => SetValue(BlendStyleProperty, value);
-		}
-
-		private static void OnBlendStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-		{
-			var oldValue = (ColorBandBlendStyle)e.OldValue;
-			var newValue = (ColorBandBlendStyle)e.NewValue;
-
-			if (oldValue != newValue)
-			{
-				if (d is ColorBandColorButtonControl uc)
-				{
-					uc.IsEnabled = newValue == ColorBandBlendStyle.End;
-					uc._rectangle.Brush = uc.BuildBrush(uc.ColorBandColor, uc.IsEnabled);
+					uc._rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(newValue));
 				}
 			}
 		}
 
 		#endregion
 
-		#region Private Methods
+		#region Private Methods - Layout
 
-		private bool ShowColorPicker(Point pos, ColorBandColor initalColor, out ColorBandColor selectedColor)
-		{
-			var colorPickerDialalog = new ColorPickerDialog(initalColor);
-
-			var sp = PointToScreen(pos);
-
-			colorPickerDialalog.Left = sp.X - colorPickerDialalog.Width - 225;
-			colorPickerDialalog.Top = sp.Y - colorPickerDialalog.Height - 25;
-
-			if (colorPickerDialalog.ShowDialog() == true)
-			{
-				selectedColor = colorPickerDialalog.SelectedColorBandColor;
-				return true;
-			}
-			else
-			{
-				selectedColor = initalColor;
-				return false;
-			}
-		}
-
-		private bool ShowColorSpace(Point pos, ColorBandColor initalColor, out ColorBandColor selectedColor)
-		{
-			var colorSpaceDialalog = new ColorSpaceDialog(initalColor);
-
-			var sp = PointToScreen(pos);
-
-			colorSpaceDialalog.Left = sp.X - colorSpaceDialalog.Width - 225;
-			colorSpaceDialalog.Top = sp.Y - colorSpaceDialalog.Height - 25;
-
-			if (colorSpaceDialalog.ShowDialog() == true)
-			{
-				selectedColor = colorSpaceDialalog.SelectedColorBandColor;
-				return true;
-			}
-			else
-			{
-				selectedColor = initalColor;
-				return false;
-			}
-		}
-
-		private void RefreshTheView(SizeDbl size, ColorBandColor color, bool isEnabled)
+		private void RefreshTheView(SizeDbl size)
 		{
 			if (size.Width > 5 && size.Height > 5)
 			{
@@ -189,38 +123,36 @@ namespace MSetExplorer
 				_canvas.Width = size.Width;
 				_canvas.Height = size.Height;
 
-				_rectangle.Brush = BuildBrush(color, isEnabled);
-				_rectangle.Geometry = new RectangleGeometry(ScreenTypeHelper.CreateRect(size));
+				_geometry.Rect = new Rect(0, 0, size.Width, size.Height);
+
+				_rectanglePath.Visibility = Visibility.Visible;
 			}
 			else
 			{
-				_rectangle.Brush = Brushes.Transparent;
+				_rectanglePath.Visibility = Visibility.Collapsed;
 			}
 		}
 
-		private GeometryDrawing BuildRectangle(SizeDbl size, ColorBandColor color)
+		private Shape BuildRectanglePath(RectangleGeometry rectangleGeometry, ColorBandColor color)
 		{
-			var result = new GeometryDrawing
-				(
-				BuildBrush(color, isEnabled: true),
-				new Pen(Brushes.Transparent, 0),
-				new RectangleGeometry(ScreenTypeHelper.CreateRect(size))
-				);
+			var result = new Path()
+			{
+				Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(color)),
+				Stroke = Brushes.Transparent,
+				StrokeThickness = 0,
+				Data = rectangleGeometry,
+				Visibility = Visibility.Collapsed
+			};
 
 			return result;
 		}
 
-		private Brush BuildBrush(ColorBandColor color, bool isEnabled)
+		private RectangleGeometry BuildGeometry(SizeDbl size)
 		{
-			var opacity = GetOpacity(isEnabled);
-			var result = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(color, opacity));
+			var rect = new Rect(0, 0, size.Width, size.Height);
 
-			return result;
-		}
-
-		private double GetOpacity(bool isEnabled)
-		{
-			return isEnabled ? 1.0 : 0.3;
+			var rectGeometry = new RectangleGeometry(rect);
+			return rectGeometry;
 		}
 
 		#endregion

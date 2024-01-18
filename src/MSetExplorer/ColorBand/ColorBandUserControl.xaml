@@ -35,8 +35,10 @@
                 
                 
                 <TextBlock Width="69" Margin="17,5,3,5" FontSize="14" Text="Start Color:" />
-                <local:ColorBandColorButtonControl  Margin="0,5" Width="65" Height="21"
-                    ColorBandColor="{Binding Path=CurrentColorBand.StartColor}"/>
+                <local:ColorBandColorButtonControl  Margin="0,5" Width="65" Height="21" x:Name="cbcButtonControl1"
+                    ColorBandColor="{Binding Path=CurrentColorBand.StartColor}"
+                    CustomMouseUp="StartColor_CustomMouseUp"
+                />
             </StackPanel>
 
             <!-- Percentage / Blend Style -->
@@ -59,9 +61,10 @@
                 <TextBox x:Name="txtEndCutoff" Margin="0,5" Text="{Binding Path=CurrentColorBand.Cutoff, Mode=TwoWay, ValidatesOnExceptions=True, NotifyOnValidationError=True}"  Width="60" Height="21" VerticalAlignment="Center"/>
 
                 <TextBlock Width="69" Margin="17,5,3,5" FontSize="14" Text="End Color:" />
-                <local:ColorBandColorButtonControl Margin="0,5" Width="65" Height="21"
-                    ColorBandColor="{Binding Path=CurrentColorBand.EndColor}" 
-                    BlendStyle="{Binding Path=CurrentColorBand.BlendStyle}"/>
+                <local:ColorBandColorButtonControl Margin="0,5" Width="65" Height="21" x:Name="cbcButtonControl2"
+                    ColorBandColor="{Binding Path=CurrentColorBand.ActualEndColor}"
+                    CustomMouseUp="EndColor_CustomMouseUp"
+                />
             </StackPanel>
 
         </StackPanel>

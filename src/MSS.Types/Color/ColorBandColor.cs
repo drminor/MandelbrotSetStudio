@@ -57,7 +57,7 @@ namespace MSS.Types
         /// Array of 3 bytes in RGB order
         /// </summary>
         [BsonIgnore]
-        public byte[] ColorComps { get; init; }
+        public byte[] ColorComps { get; init; } = new byte[3] {255, 255, 255 };
 
         private static string GetCssColor(byte[] cComps)
         {

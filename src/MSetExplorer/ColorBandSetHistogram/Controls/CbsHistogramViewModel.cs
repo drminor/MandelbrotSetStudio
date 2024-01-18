@@ -761,7 +761,7 @@ namespace MSetExplorer
 
 
 
-		public bool TryDeleteSelectedItem(ColorBand colorBand)
+		public bool TryDeleteItem(ColorBand colorBand)
 		{
 			//var selectedItems = GetSelectedItems(_currentColorBandSet);
 

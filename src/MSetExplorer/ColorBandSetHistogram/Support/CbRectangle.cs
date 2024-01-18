@@ -1,10 +1,7 @@
 ﻿using MSS.Types;
-using System;
 using System.Diagnostics;
-using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -75,7 +72,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbRectangle(int colorBandIndex, bool isCurrent, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
+		public CbRectangle(int colorBandIndex, bool isCurrent, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix)
 		{
 			_isCurrent = isCurrent;
 			_isSelected = false;
@@ -83,6 +80,7 @@ namespace MSetExplorer
 
 			ColorBandIndex = colorBandIndex;
 
+			NameSuffix = nameSuffix;
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
 			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 			_contentScale = _colorBandLayoutViewModel.ContentScale;
@@ -116,9 +114,15 @@ namespace MSetExplorer
 
 		#region Public Properties
 
+		public string NameSuffix { get; init; }
+
 		public int ColorBandIndex { get; set; }
 
 		public RectangleGeometry RectangleGeometry => _geometry;
+
+		public Path BlendedBandRectangle => (Path)_rectanglePath;
+
+		public ColorBandLayoutViewModel ColorBandLayoutViewModel => _colorBandLayoutViewModel;
 
 		public ColorBandColor StartColor
 		{
@@ -335,7 +339,7 @@ namespace MSetExplorer
 		{
 			if (e.ChangedButton == MouseButton.Left)
 			{
-				Debug.WriteLine($"CbRectangle. Handling MouseUp for Index: {ColorBandIndex}.");
+				Debug.WriteLine($"CbRectangle. Handling MouseUp for Index: {ColorBandIndex}. IsHandled = {e.Handled}.");
 				NotifySelectionChange();
 				e.Handled = true;
 			}
@@ -363,6 +367,8 @@ namespace MSetExplorer
 				Data = area,
 				IsHitTestVisible = true
 			};
+
+			result.Name = $"BlendedBand{NameSuffix}";
 
 			return result;
 		}
