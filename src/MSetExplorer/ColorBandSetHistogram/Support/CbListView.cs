@@ -15,17 +15,16 @@ using System.Windows.Media.Animation;
 
 namespace MSetExplorer
 {
+
+
 	internal class CbListView
 	{
 		#region Private Fields
 
-		private Storyboard _myStoryboard1;
-		private Action<int>? _myStoryboardCallback;
-		private int _callbackIndex;
+		private StoryboardDetails _bandDeletionAnimation;
+		private int _nextNameSuffix;
 
 		private Canvas _canvas;
-
-		private int _nextNameSuffix;
 
 		private ListCollectionView _colorBandsView;
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
@@ -35,14 +34,10 @@ namespace MSetExplorer
 
 		private int _currentColorBandIndex;
 
-		//private List<Shape> _hitList;
-
 		private CbSectionLine? _sectionLineBeingDragged;
-
 		private CbListViewItem? _sectionLineUnderMouse;
 		private CbListViewItem? _blendRectangleUnderMouse;
 		private CbListViewItem? _colorBlocksUnderMouse;
-
 
 		private int? _selectedItemsRangeAnchorIndex;
 		private int? _indexOfMostRecentlySelectedItem;
@@ -56,11 +51,6 @@ namespace MSetExplorer
 		public CbListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool parentIsFocused, ColorBandSetEditMode currentCbEditMode, 
 			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged)
 		{
-			_myStoryboard1 = new Storyboard();
-			_myStoryboardCallback = null;
-			_callbackIndex = 0;
-			_nextNameSuffix = 1;
-
 			_canvas = canvas;
 
 			if (NameScope.GetNameScope(_canvas) == null)
@@ -71,6 +61,9 @@ namespace MSetExplorer
 			{
 				CheckNameScope(_canvas, 0);
 			}
+
+			_bandDeletionAnimation = new StoryboardDetails(new Storyboard(), _canvas, new DoubleAnimation(), "Width", AfterAnimateDeletion);
+			_bandDeletionAnimation.Duration = new Duration(TimeSpan.FromSeconds(0.5));
 
 			_colorBandsView = colorBandsView;
 
@@ -444,7 +437,7 @@ namespace MSetExplorer
 					SectionLineUnderMouse = null;
 
 					var selIndex = distance > 0 ? cbListViewItemIndex + 1 : cbListViewItemIndex;
-
+						 
 					if (hitPoint.Y >= _colorBandLayoutViewModel.BlendRectangesElevation)
 					{
 						ColorBlocksUnderMouse = null;
@@ -620,7 +613,7 @@ namespace MSetExplorer
 				var idx = e.NewStartingIndex;
 				foreach (var colorBand in bands)
 				{
-					var listViewItem = CreateListViewItem(_colorBandsView, idx, colorBand, GetNextNameSuffix());
+					var listViewItem = CreateListViewItem(idx, colorBand);
 					ListViewItems.Insert(idx++, listViewItem);
 				}
 
@@ -639,7 +632,7 @@ namespace MSetExplorer
 				if (lvi != null)
 				{
 					Debug.WriteLine($"CbListView is removing a ColorBand: {colorBand}");
-					AnimateBandDeletion(AfterAnimateDeletion, lvi.ColorBandIndex);
+					AnimateBandDeletion(lvi.ColorBandIndex);
 				}
 				else
 				{
@@ -648,52 +641,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private string GetNextNameSuffix()
-		{
-			var result = _nextNameSuffix++.ToString();
-			return result;
-		}
-
-		private void AfterAnimateDeletion(int index)
-		{
-			Debug.WriteLine("AnimateDeletion StoryBoard has completed.");
-
-			var lvi = ListViewItems[index];
-
-			_canvas.UnregisterName(lvi.CbRectangle.BlendedBandRectangle.Name);
-
-			lvi.TearDown();
-			ListViewItems.Remove(lvi);
-
-			Reindex(lvi.ColorBandIndex);
-		}
-
 		#endregion
 
 		#region Private Methods
-
-		//private bool TryGetSectionLine(Point hitPoint, List<CbListViewItem> cbListViewItems, [NotNullWhen(true)] out double? distance, [NotNullWhen(true)] out CbListViewItem? cbListViewItem)
-		//{
-		//	cbListViewItem = null;
-
-		//	double smallestDist = int.MaxValue;
-
-		//	for (var cbLinePtr = 0; cbLinePtr < cbListViewItems.Count; cbLinePtr++)
-		//	{
-		//		var cbsLine = cbListViewItems[cbLinePtr].CbSectionLine;
-
-		//		var diffX = Math.Abs(hitPoint.X - cbsLine.SectionLinePosition);
-		//		if (diffX < smallestDist)
-		//		{
-		//			smallestDist = diffX;
-		//			cbListViewItem = cbListViewItems[cbLinePtr];
-		//		}
-		//	}
-
-		//	distance = cbListViewItem == null ? null : hitPoint.X - cbListViewItem.SectionLinePosition;
-
-		//	return cbListViewItem != null;
-		//}
 
 		private bool TryGetSectionLineIndex(Point hitPoint, List<CbListViewItem> cbListViewItems, out double distance, out int listViewItemIndex)
 		{
@@ -721,26 +671,6 @@ namespace MSetExplorer
 			return listViewItemIndex != -1;
 		}
 
-		//private bool TryGetColorBandRectangle(Point hitPoint, IList<CbListViewItem> cbListViewItems, [NotNullWhen(true)] out CbListViewItem? cbListViewItem)
-		//{
-		//	cbListViewItem = null;
-
-		//	for (var i = 0; i < cbListViewItems.Count; i++)
-		//	{
-		//		var cbRectangle = cbListViewItems[i].CbRectangle;
-
-		//		if (cbRectangle.ContainsPoint(hitPoint))
-		//		{
-		//			cbListViewItem = cbListViewItems[i];
-
-		//			Debug.Assert(cbListViewItem.CbRectangle.ColorBandIndex == i, "CbListViewItems ColorBandIndex Mismatch.");
-		//			return true;
-		//		}
-		//	}
-
-		//	return false;
-		//}
-
 		private void DrawColorBands(ListCollectionView? listCollectionView)
 		{
 			ClearListViewItems();
@@ -750,43 +680,59 @@ namespace MSetExplorer
 				return;
 			}
 
+			var lst = listCollectionView.Cast<ColorBand>().ToList();
+
 			for (var colorBandIndex = 0; colorBandIndex < listCollectionView.Count; colorBandIndex++)
 			{
-				var colorBand = (ColorBand)listCollectionView.GetItemAt(colorBandIndex);
-				var listViewItem = CreateListViewItem(listCollectionView, colorBandIndex, colorBand, GetNextNameSuffix());
+				var colorBand = lst[colorBandIndex];
+				var listViewItem = CreateListViewItem(colorBandIndex, colorBand);
 
 				ListViewItems.Add(listViewItem);
 			}
 
+			ListViewItems[listCollectionView.CurrentPosition].IsCurrent = true;
+
 			CheckNameScope(_canvas, listCollectionView.Count);
 		}
 
-		private CbListViewItem CreateListViewItem(ListCollectionView listCollectionView, int colorBandIndex, ColorBand colorBand, string nameSuffix)
+		private CbListViewItem CreateListViewItem(int colorBandIndex, ColorBand colorBand)
 		{
-			// Build the CbRectangle
-			var xPosition = colorBand.PreviousCutoff ?? 0;
-			var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
-			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
-
-			var isCurrent = colorBandIndex == listCollectionView.CurrentPosition;
-			var cbRectangle = new CbRectangle(colorBandIndex, isCurrent, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, nameSuffix);
-
-			//var x =  NameScope.GetNameScope(cbRectangle.ColorBandLayoutViewModel.Canvas);
-
-			_canvas.RegisterName(cbRectangle.BlendedBandRectangle.Name, cbRectangle.BlendedBandRectangle);
-
-			// Build the Selection Line
-			var selectionLinePosition = colorBand.Cutoff;
-			var cbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, _colorBandLayoutViewModel);
-
-			// Build the Color Block
-			var cbColorBlock = new CbColorBlock(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
-
-			var listViewItem = new CbListViewItem(colorBand, cbRectangle, cbSectionLine, cbColorBlock);
+			var listViewItem = new CbListViewItem(colorBandIndex, colorBand, _colorBandLayoutViewModel, GetNextNameSuffix());
 			listViewItem.CbSectionLine.SectionLineMoved += HandleSectionLineMoved;
+
+			//_canvas.RegisterName(listViewItem.CbRectangle.BlendedBandRectangle.Name, listViewItem.CbRectangle.BlendedBandRectangle);
+			_canvas.RegisterName(listViewItem.Name, listViewItem);
 
 			return listViewItem;
 		}
+
+		private string GetNextNameSuffix()
+		{
+			var result = _nextNameSuffix++.ToString();
+			return result;
+		}
+
+		//private CbListViewItem CreateListViewItem(int colorBandIndex, ColorBand colorBand, string nameSuffix)
+		//{
+		//	// Build the CbRectangle
+		//	var xPosition = colorBand.PreviousCutoff ?? 0;
+		//	var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
+		//	var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
+
+		//	var cbRectangle = new CbRectangle(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, nameSuffix);
+
+		//	// Build the Selection Line
+		//	var selectionLinePosition = colorBand.Cutoff;
+		//	var cbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, _colorBandLayoutViewModel);
+
+		//	// Build the Color Block
+		//	var cbColorBlock = new CbColorBlock(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
+
+		//	var listViewItem = new CbListViewItem(colorBand, cbRectangle, cbSectionLine, cbColorBlock);
+		//	listViewItem.CbSectionLine.SectionLineMoved += HandleSectionLineMoved;
+
+		//	return listViewItem;
+		//}
 
 		// The user has pressed the left mouse-button while over a Rectangle or SectionLine.
 		private void ListViewItemSelectedChanged(int colorBandIndex, ColorBandSetEditMode colorBandEditMode)
@@ -918,22 +864,18 @@ namespace MSetExplorer
 
 		private void ClearListViewItems()
 		{
-			//Debug.WriteLine($"Before remove ColorBandRectangles. The DrawingGroup has {_drawingGroup.Children.Count} children. The height of the drawing group is: {_drawingGroup.Bounds.Height} and the location is: {_drawingGroup.Bounds.Location}");
-
 			foreach (var listViewItem in ListViewItems)
 			{
 				listViewItem.CbSectionLine.SectionLineMoved -= HandleSectionLineMoved;
 
-				_canvas.UnregisterName(listViewItem.CbRectangle.BlendedBandRectangle.Name);
+				//_canvas.UnregisterName(listViewItem.CbRectangle.BlendedBandRectangle.Name);
+				_canvas.UnregisterName(listViewItem.Name);
 
 				listViewItem.TearDown();
 			}
 
 			ListViewItems.Clear();
-
 			CheckNameScope(_canvas, 0);
-
-			//Debug.WriteLine($"After remove ColorBandRectangles. The DrawingGroup has {_drawingGroup.Children.Count} children. The height of the drawing group is: {_drawingGroup.Bounds.Height} and the location is: {_drawingGroup.Bounds.Location}");
 		}
 
 		private void Reindex(int startingIndex)
@@ -1004,59 +946,57 @@ namespace MSetExplorer
 
 		#region Animation
 
-		private void AnimateBandDeletion(Action<int> callback, int index)
+		private void AnimateBandDeletion(int index)
 		{
-			_myStoryboardCallback = callback;
-			_callbackIndex = index;
-
-			var cbRectangle = ListViewItems[index].CbRectangle;
-			//var nameSuffix = listViewItem.CbRectangle.NameSuffix;
-
-			var curVal = ((RectangleGeometry)cbRectangle.BlendedBandRectangle.Data).Rect.Width;
+			var lvItem = ListViewItems[index];
+			var curVal = lvItem.Width;
 
 			if (double.IsNaN(curVal))
 			{
 				Debug.WriteLine("Not animating -- The width is NAN.");
 			}
 
-			var duration = new Duration(TimeSpan.FromSeconds(5));
+			var da = (DoubleAnimation)_bandDeletionAnimation.AnimationTimeline;
+			da.From = curVal;
+			da.To = 1.0;
 
-			var da1 = new DoubleAnimation();
-			da1.From = curVal;
-			da1.To = 1.0;
-			da1.Duration = duration;
-
-			Storyboard.SetTargetName(da1, cbRectangle.BlendedBandRectangle.Name);
-			Storyboard.SetTargetProperty(da1, new PropertyPath("Width"));
-
-			//var da2 = new DoubleAnimation();
-			//da2.From = curVal;
-			//da2.To = 1.0;
-			//da2.Duration = duration;
-
-			//Storyboard.SetTargetName(da2, CbColorBlock.ColorBlocksRectangle.Name);
-			//Storyboard.SetTargetProperty(da2, new PropertyPath("Width"));
-
-			_myStoryboard1.Duration = duration;
-			_myStoryboard1.Children.Add(da1);
-			//myStoryboard1.Children.Add(da2);
-
-			_myStoryboard1.Completed += MyStoryboard1_Completed;
-
-			_myStoryboard1.Begin(cbRectangle.ColorBandLayoutViewModel.Canvas);
+			_bandDeletionAnimation.Begin(lvItem.Name, index);
 		}
 
-		private void MyStoryboard1_Completed(object? sender, EventArgs e)
+		private void AfterAnimateDeletion(int index)
 		{
-			_myStoryboard1.Completed -= MyStoryboard1_Completed;
+			Debug.WriteLine("AnimateDeletion StoryBoard has completed.");
 
-			if (_myStoryboardCallback != null)
+			if (index == 0)
 			{
-				_myStoryboardCallback(_callbackIndex);
+				Debug.WriteLine("Handling AfterAnimateDeletion and the index = 0.");
 			}
+
+			var lvi = ListViewItems[index];
+
+			_canvas.UnregisterName(lvi.Name);
+
+			if (index == 0)
+			{
+				var firstLvi = ListViewItems[index + 1];
+				firstLvi.ColorBand.PreviousCutoff = 0;
+			}
+			else
+			{
+				// Set the on screen representation
+				var precedingLvi = ListViewItems[index - 1];
+				precedingLvi.Cutoff = lvi.ColorBand.Cutoff;
+
+				// update the model
+				var precedingColorBand = precedingLvi.ColorBand;
+				precedingColorBand.Cutoff = lvi.ColorBand.Cutoff;
+				//precedingColorBand.SuccessorStartColor = lvi.ColorBand.StartColor;
+			}
+
+			lvi.TearDown();
+			ListViewItems.Remove(lvi);
+			Reindex(lvi.ColorBandIndex);
 		}
-
-
 
 		#endregion
 
@@ -1124,6 +1064,49 @@ namespace MSetExplorer
 		#endregion
 
 		#region Unused HitTest Logic
+
+		//private bool TryGetSectionLine(Point hitPoint, List<CbListViewItem> cbListViewItems, [NotNullWhen(true)] out double? distance, [NotNullWhen(true)] out CbListViewItem? cbListViewItem)
+		//{
+		//	cbListViewItem = null;
+
+		//	double smallestDist = int.MaxValue;
+
+		//	for (var cbLinePtr = 0; cbLinePtr < cbListViewItems.Count; cbLinePtr++)
+		//	{
+		//		var cbsLine = cbListViewItems[cbLinePtr].CbSectionLine;
+
+		//		var diffX = Math.Abs(hitPoint.X - cbsLine.SectionLinePosition);
+		//		if (diffX < smallestDist)
+		//		{
+		//			smallestDist = diffX;
+		//			cbListViewItem = cbListViewItems[cbLinePtr];
+		//		}
+		//	}
+
+		//	distance = cbListViewItem == null ? null : hitPoint.X - cbListViewItem.SectionLinePosition;
+
+		//	return cbListViewItem != null;
+		//}
+
+		//private bool TryGetColorBandRectangle(Point hitPoint, IList<CbListViewItem> cbListViewItems, [NotNullWhen(true)] out CbListViewItem? cbListViewItem)
+		//{
+		//	cbListViewItem = null;
+
+		//	for (var i = 0; i < cbListViewItems.Count; i++)
+		//	{
+		//		var cbRectangle = cbListViewItems[i].CbRectangle;
+
+		//		if (cbRectangle.ContainsPoint(hitPoint))
+		//		{
+		//			cbListViewItem = cbListViewItems[i];
+
+		//			Debug.Assert(cbListViewItem.CbRectangle.ColorBandIndex == i, "CbListViewItems ColorBandIndex Mismatch.");
+		//			return true;
+		//		}
+		//	}
+
+		//	return false;
+		//}
 
 		//private bool TryGetSectionLine(Point hitPoint, List<CbListViewItem> cbListViewItems, [NotNullWhen(true)] out CbListViewItem? cbListViewItem)
 		//{
@@ -1244,5 +1227,79 @@ namespace MSetExplorer
 
 
 		#endregion
+	}
+
+	internal class StoryboardDetails
+	{
+		AnimationTimeline _animationTimeline;
+
+		public Action<int> _completionCallback;
+		private int _callbackIndex;
+
+		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject, AnimationTimeline animationTimeline, string propertyPath, Action<int> completionCallback)
+		{
+			Storyboard = storyboard ?? throw new ArgumentNullException(nameof(storyboard));
+			ContainingObject = containingObject;
+			PropertyPath = propertyPath ?? throw new ArgumentNullException(nameof(propertyPath));
+
+			_animationTimeline = animationTimeline;
+			Storyboard.SetTargetProperty(_animationTimeline, new PropertyPath(PropertyPath));
+			Storyboard.Children.Add(_animationTimeline);
+
+			_completionCallback = completionCallback;
+
+			Storyboard.Completed += Storyboard_Completed;
+		}
+
+		public Storyboard Storyboard { get; init; }
+
+		public FrameworkElement ContainingObject { get; init; }
+
+		public string PropertyPath { get; init; }
+
+		public AnimationTimeline AnimationTimeline
+		{
+			get => _animationTimeline;
+			set
+			{
+				Storyboard.Children.Remove(_animationTimeline);
+				_animationTimeline = value;
+				Storyboard.Children.Add(_animationTimeline);
+
+				_animationTimeline.Duration = Storyboard.Duration;
+				Storyboard.SetTargetProperty(_animationTimeline, new PropertyPath(PropertyPath));
+			}
+		}
+
+		public Duration Duration
+		{
+			get => Storyboard.Duration;
+			set
+			{
+				Storyboard.Duration = value;
+				_animationTimeline.Duration = value;
+			}
+		}
+
+		private void Storyboard_Completed(object? sender, EventArgs e)
+		{
+			if (_completionCallback != null)
+			{
+				_completionCallback(_callbackIndex);
+			}
+		}
+
+		public void Begin(FrameworkElement frameworkElement, int index)
+		{
+			_callbackIndex = index;
+			Storyboard.Begin(frameworkElement);
+		}
+
+		public void Begin(string name, int index)
+		{
+			_callbackIndex = index;
+			Storyboard.SetTargetName(_animationTimeline, name);
+			Storyboard.Begin(ContainingObject);
+		}
 	}
 }

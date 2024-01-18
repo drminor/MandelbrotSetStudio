@@ -336,7 +336,7 @@ namespace MSS.Types
 		protected override void InsertItem(int index, ColorBand item)
 		{
 			base.InsertItem(index, item);
-			UpdateItemAndNeighbors(index, item);
+			//UpdateItemAndNeighbors(index, item);
 		}
 
 		protected override void RemoveItem(int index)
@@ -349,25 +349,25 @@ namespace MSS.Types
 
 			base.RemoveItem(index);
 
-			if (index > Count - 1)
-			{
-				index = Count - 1;
-			}
+			//if (index > Count - 1)
+			//{
+			//	index = Count - 1;
+			//}
 
-			UpdateItemAndNeighbors(index, Items[index]);
+			//UpdateItemAndNeighbors(index, Items[index]);
 		}
 
 		protected override void SetItem(int index, ColorBand item)
 		{
 			base.SetItem(index, item);
-			UpdateItemAndNeighbors(index, item);
+			//UpdateItemAndNeighbors(index, item);
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private void UpdateItemAndNeighbors(int index, ColorBand item)
+		public void UpdateItemAndNeighbors(int index, ColorBand item)
 		{
 			var colorBands = GetItemAndNeighbors(index, item);
 			var prev = GetPreviousItem(index);

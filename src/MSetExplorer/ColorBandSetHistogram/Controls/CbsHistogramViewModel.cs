@@ -47,7 +47,7 @@ namespace MSetExplorer
 
 		private bool _colorBandUserControlHasErrors;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -749,6 +749,7 @@ namespace MSetExplorer
 			lock (_histLock)
 			{
 				_currentColorBandSet.Insert(index, newItem);
+				_currentColorBandSet.UpdateItemAndNeighbors(index, newItem);
 			}
 
 			if (!ColorBandsView.MoveCurrentTo(newItem))
@@ -849,27 +850,51 @@ namespace MSetExplorer
 				return false;
 			}
 
+			if (index == 0)
+			{
+				Debug.WriteLine("Attempting to delete colorband at index = 0.");
+			}
+
 			bool colorBandWasRemoved;
 			lock (_histLock)
 			{
 				colorBandWasRemoved = _currentColorBandSet.Remove(colorBand);
+				//var count = _currentColorBandSet.Count;
+				
+				//if (index > count - 1)
+				//{
+				//	index = count - 1;
+				//}
+				//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
 			}
 
 			if (colorBandWasRemoved)
 			{
-				if (index > _colorBandsView.Count - 1)
-				{
-					_colorBandsView.MoveCurrentToPosition(Math.Max(0, index - 1));
-				}
+				//if (index > _colorBandsView.Count - 1)
+				//{
+				//	_colorBandsView.MoveCurrentToPosition(Math.Max(0, index - 1));
+				//}
 			}
 			else
 			{
 				Debug.WriteLine("WARNING: ColorBandSetViewModel:Could not remove the item.");
 			}
 
-			ReportRemoveCurrentItem(index);
+			//ReportRemoveCurrentItem(index);
 
 			return true;
+		}
+
+		public void CompleteColorBandRemoval(int index)
+		{
+			var count = _currentColorBandSet.Count;
+
+			if (index > count - 1)
+			{
+				index = count - 1;
+			}
+			_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+
 		}
 
 		[Conditional("DEBUG")]

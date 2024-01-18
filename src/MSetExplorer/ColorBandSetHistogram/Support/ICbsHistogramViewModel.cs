@@ -54,6 +54,8 @@ namespace MSetExplorer
 		bool TryInsertNewItem(ColorBand colorBand, out int index);
 		bool TryDeleteItem(ColorBand colorBand);
 
+		void CompleteColorBandRemoval(int index);
+
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 
 

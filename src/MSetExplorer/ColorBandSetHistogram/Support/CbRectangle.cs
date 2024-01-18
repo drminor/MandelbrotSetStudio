@@ -72,9 +72,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbRectangle(int colorBandIndex, bool isCurrent, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix)
+		public CbRectangle(int colorBandIndex, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix)
 		{
-			_isCurrent = isCurrent;
+			_isCurrent = false;
 			_isSelected = false;
 			_isUnderMouse = false;
 
@@ -392,6 +392,10 @@ namespace MSetExplorer
 			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, layout.ParentIsFocused);
 
 			_geometry.Rect = BuildRectangle(xPosition, width, isHighLighted, layout);
+
+			//var rectangleDataAsRectGeometry = (RectangleGeometry)((Path)_rectanglePath).Data;
+			//rectangleDataAsRectGeometry.Rect = _geometry.Rect;
+
 			_curGeometry.Rect = BuildCurRectangle(xPosition, width, layout);
 			//_selGeometry.Rect = BuildSelRectangle(xPosition, width, layout);
 		}

@@ -1,44 +1,49 @@
 ﻿using MSS.Types;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Windows.Media.Animation;
 using System.Windows;
-using System;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	internal class CbListViewItem
+	internal class CbListViewItem : DependencyObject
 	{
-		//private Storyboard myStoryboard1;
-		//private Action<int>? myStoryboardCallback;
-		//private int callbackIndex = 0;
-
 		private ColorBandSelectionType _selectionType;
 
 		private bool _isCutoffSelected;
 		private bool _isColorSelected;
 		private bool _isBandSelected;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#region Constructor
 
-		public CbListViewItem(ColorBand colorBand, CbRectangle cbRectangle, CbSectionLine cbSectionLine, CbColorBlock cbColorBlock)
+		public CbListViewItem(int colorBandIndex, ColorBand colorBand, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix)
 		{
-			//myStoryboard1 = new Storyboard();
-			//myStoryboardCallback = null;
-
+			Name = $"CbListViewItem{nameSuffix}";
 			ColorBand = colorBand;
-			CbSectionLine = cbSectionLine;
-			CbColorBlock = cbColorBlock;
-			CbRectangle = cbRectangle;
+
+			// Build the CbRectangle
+			var xPosition = colorBand.PreviousCutoff ?? 0;
+			var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
+			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
+
+			CbRectangle = new CbRectangle(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, colorBandLayoutViewModel, nameSuffix);
+
+			// Build the Selection Line
+			var selectionLinePosition = colorBand.Cutoff;
+			CbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, colorBandLayoutViewModel);
+
+			// Build the Color Block
+			CbColorBlock = new CbColorBlock(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, colorBandLayoutViewModel);
 
 			_selectionType = 0;
 			_isCutoffSelected = false;
 			_isColorSelected = false;
 			_isBandSelected = false;
 			ColorBand.IsSelected = false;
+
+			PreviousCutoff = xPosition;
+			Width = bandWidth;
 
 			ColorBand.PropertyChanged += ColorBand_PropertyChanged;
 		}
@@ -73,6 +78,10 @@ namespace MSetExplorer
 
 		public bool IsFirst => ColorBand.IsFirst;
 		public bool IsLast => ColorBand.IsLast;
+
+		#endregion
+
+		#region Public Properties - Selection Support
 
 		public ColorBandSelectionType SelectionType
 		{
@@ -168,6 +177,34 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Dependency Property Getters / Setters
+
+		public string Name
+		{
+			get => (string)GetValue(NameProperty);
+			set => SetCurrentValue(NameProperty, value);
+		}
+
+		public double Cutoff
+		{
+			get => (double)GetValue(CutoffProperty);
+			set => SetCurrentValue(CutoffProperty, value);
+		}
+
+		public double PreviousCutoff
+		{
+			get => (double)GetValue(PreviousCutoffProperty);
+			set => SetCurrentValue(PreviousCutoffProperty, value);
+		}
+
+		public double Width
+		{
+			get => (double)GetValue(WidthProperty);
+			set => SetCurrentValue(WidthProperty, value);
+		}
+
+		#endregion
+
 		#region Event Handlers
 
 		private void ColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -178,28 +215,15 @@ namespace MSetExplorer
 
 				if (e.PropertyName == nameof(ColorBand.Cutoff))
 				{
+					// This updates the Cutoff and Width -- to keep the Previous Cutoff the same.
 					Debug.WriteLineIf(_useDetailedDebug, $"CbListView is handling a ColorBand {e.PropertyName} Change for CbRectangle at Index: {ColorBandIndex}.");
-
-					// This ColorBand had its Cutoff updated.
-
-					// This also updates the cutoff
-					CbRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
-					CbColorBlock.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
+					Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
 				}
 				else if (e.PropertyName == nameof(ColorBand.PreviousCutoff))
 				{
+					// This updates the XPosition and Width -- to keep the Cutoff the same.
 					Debug.WriteLineIf(_useDetailedDebug, $"CbListView is handling a ColorBand {e.PropertyName} Change for CbRectangle at Index: {ColorBandIndex}.");
-
-					// The ColorBand preceeding this one had its Cutoff updated.
-					// This ColorBand had its PreviousCutoff (aka XPosition) updated.
-					// This ColorBand's Starting Position (aka XPosition) and Width should be updated to accomodate.
-
-					//CbRectangle.XPosition = cb.PreviousCutoff ?? 0;
-					//CbRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
-
-					// This also updates the width
-					CbRectangle.XPosition = cb.PreviousCutoff ?? 0;
-					CbColorBlock.XPosition = cb.PreviousCutoff ?? 0;
+					PreviousCutoff = cb.PreviousCutoff ?? 0;
 				}
 				else if (e.PropertyName == nameof(ColorBand.StartColor))
 				{
@@ -222,55 +246,6 @@ namespace MSetExplorer
 
 			}
 		}
-
-		//private void AnimateBandDeletion(Action<int> callback, int index)
-		//{
-		//	myStoryboardCallback = callback;
-		//	callbackIndex = index; 
-
-		//	var curVal = ((RectangleGeometry)CbRectangle.BlendedBandRectangle.Data).Rect.Width;
-
-		//	if (double.IsNaN(curVal))
-		//	{
-		//		Debug.WriteLine("Not animating -- The width is NAN.");
-		//	}
-
-		//	var duration = new Duration(TimeSpan.FromSeconds(5));
-
-		//	var da1 = new DoubleAnimation();
-		//	da1.From = curVal;
-		//	da1.To = 1.0;
-		//	da1.Duration = duration;
-
-		//	Storyboard.SetTargetName(da1, CbRectangle.BlendedBandRectangle.Name);
-		//	Storyboard.SetTargetProperty(da1, new PropertyPath("Width"));
-
-		//	//var da2 = new DoubleAnimation();
-		//	//da2.From = curVal;
-		//	//da2.To = 1.0;
-		//	//da2.Duration = duration;
-
-		//	//Storyboard.SetTargetName(da2, CbColorBlock.ColorBlocksRectangle.Name);
-		//	//Storyboard.SetTargetProperty(da2, new PropertyPath("Width"));
-
-		//	myStoryboard1.Duration = duration;
-		//	myStoryboard1.Children.Add(da1);
-		//	//myStoryboard1.Children.Add(da2);
-
-		//	myStoryboard1.Begin(CbRectangle.ColorBandLayoutViewModel.Canvas);
-
-		//	myStoryboard1.Completed += MyStoryboard1_Completed;
-		//}
-
-		//private void MyStoryboard1_Completed(object? sender, EventArgs e)
-		//{
-		//	myStoryboard1.Completed -= MyStoryboard1_Completed;
-
-		//	if (myStoryboardCallback != null)
-		//	{
-		//		myStoryboardCallback(callbackIndex);
-		//	}
-		//}
 
 		#endregion
 
@@ -316,11 +291,95 @@ namespace MSetExplorer
 			CbRectangle.TearDown();
 		}
 
-		//public void AnimateDeletionX(Action<int> callback, int index)
-		//{
-		//	AnimateBandDeletion(callback, index);
+		#endregion
 
-		//}
+		#region Dependency Properties
+
+		#region Name Dependency Property
+
+		public static readonly DependencyProperty NameProperty =
+				FrameworkElement.NameProperty.AddOwner(typeof(CbListViewItem));
+
+		#endregion
+
+		#region Cutoff Dependency Property
+
+		public static readonly DependencyProperty CutoffProperty =
+				DependencyProperty.Register("Cutoff", typeof(double), typeof(CbListViewItem),
+					new FrameworkPropertyMetadata(defaultValue: 0.0, propertyChangedCallback: Cutoff_PropertyChanged)
+				);
+
+		private static void Cutoff_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			CbListViewItem c = (CbListViewItem)o;
+
+			var oldValue = (double)e.OldValue;
+			var newValue = (double)e.NewValue;
+
+			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Cutoff is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Cutoff is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+
+			c.CbSectionLine.XPosition = newValue;
+		}
+
+		#endregion
+
+		#region PreviousCutoff Dependency Property
+
+		public static readonly DependencyProperty PreviousCutoffProperty =
+				DependencyProperty.Register("PreviousCutoff", typeof(double), typeof(CbListViewItem),
+					new FrameworkPropertyMetadata(defaultValue: 0.0, propertyChangedCallback: PreviousCutoff_PropertyChanged)
+				);
+
+		private static void PreviousCutoff_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			CbListViewItem c = (CbListViewItem)o;
+
+			var oldValue = (double)e.OldValue;
+			var newValue = (double)e.NewValue;
+
+			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: PreviousCutOff is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: PreviousCutoff is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+
+			// The ColorBand preceeding this one had its Cutoff updated.
+			// This ColorBand had its PreviousCutoff (aka XPosition) updated.
+			// This ColorBand's Starting Position (aka XPosition) and Width should be updated to accomodate.
+
+			//CbRectangle.XPosition = cb.PreviousCutoff ?? 0;
+			//CbRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
+
+			// This also updates the width
+			c.CbRectangle.XPosition = newValue;
+			c.CbColorBlock.XPosition = newValue;
+		}
+
+		#endregion
+
+		#region Width Dependency Property
+
+		public static readonly DependencyProperty WidthProperty =
+				DependencyProperty.Register("Width", typeof(double), typeof(CbListViewItem),
+					new FrameworkPropertyMetadata(defaultValue: 0.0, propertyChangedCallback: Width_PropertyChanged)
+				);
+
+		private static void Width_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			CbListViewItem c = (CbListViewItem)o;
+
+			var oldValue = (double)e.OldValue;
+			var newValue = (double)e.NewValue;
+
+			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Width is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Width is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+
+			// This ColorBand had its Cutoff updated.
+
+			// This also updates the cutoff
+			c.CbRectangle.Width = newValue;
+			c.CbColorBlock.Width = newValue;
+		}
+
+		#endregion
 
 		#endregion
 	}
