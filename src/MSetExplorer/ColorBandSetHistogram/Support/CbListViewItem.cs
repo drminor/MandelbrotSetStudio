@@ -27,7 +27,7 @@ namespace MSetExplorer
 			var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
 			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 
-			CbRectangle = new CbRectangle(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, colorBandLayoutViewModel, nameSuffix);
+			CbRectangle = new CbRectangle(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, colorBandLayoutViewModel);
 
 			// Build the Selection Line
 			var selectionLinePosition = colorBand.Cutoff;
@@ -44,6 +44,8 @@ namespace MSetExplorer
 
 			PreviousCutoff = xPosition;
 			Width = bandWidth;
+			Cutoff = colorBand.Cutoff;
+			Opacity = 1.0;
 
 			ColorBand.PropertyChanged += ColorBand_PropertyChanged;
 		}
@@ -177,33 +179,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Dependency Property Getters / Setters
 
-		public string Name
-		{
-			get => (string)GetValue(NameProperty);
-			set => SetCurrentValue(NameProperty, value);
-		}
-
-		public double Cutoff
-		{
-			get => (double)GetValue(CutoffProperty);
-			set => SetCurrentValue(CutoffProperty, value);
-		}
-
-		public double PreviousCutoff
-		{
-			get => (double)GetValue(PreviousCutoffProperty);
-			set => SetCurrentValue(PreviousCutoffProperty, value);
-		}
-
-		public double Width
-		{
-			get => (double)GetValue(WidthProperty);
-			set => SetCurrentValue(WidthProperty, value);
-		}
-
-		#endregion
 
 		#region Event Handlers
 
@@ -293,6 +269,40 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Dependency Property Getters / Setters
+
+		public string Name
+		{
+			get => (string)GetValue(NameProperty);
+			set => SetCurrentValue(NameProperty, value);
+		}
+
+		public double Cutoff
+		{
+			get => (double)GetValue(CutoffProperty);
+			set => SetCurrentValue(CutoffProperty, value);
+		}
+
+		public double PreviousCutoff
+		{
+			get => (double)GetValue(PreviousCutoffProperty);
+			set => SetCurrentValue(PreviousCutoffProperty, value);
+		}
+
+		public double Width
+		{
+			get => (double)GetValue(WidthProperty);
+			set => SetCurrentValue(WidthProperty, value);
+		}
+
+		public double Opacity
+		{
+			get => (double)GetValue(OpacityProperty);
+			set => SetCurrentValue(OpacityProperty, value);
+		}
+
+		#endregion
+
 		#region Dependency Properties
 
 		#region Name Dependency Property
@@ -317,7 +327,7 @@ namespace MSetExplorer
 			var newValue = (double)e.NewValue;
 
 			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Cutoff is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
-			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Cutoff is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Cutoff  for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
 
 			c.CbSectionLine.XPosition = newValue;
 		}
@@ -339,7 +349,7 @@ namespace MSetExplorer
 			var newValue = (double)e.NewValue;
 
 			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: PreviousCutOff is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
-			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: PreviousCutoff is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: PreviousCutoff  for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
 
 			// The ColorBand preceeding this one had its Cutoff updated.
 			// This ColorBand had its PreviousCutoff (aka XPosition) updated.
@@ -370,13 +380,37 @@ namespace MSetExplorer
 			var newValue = (double)e.NewValue;
 
 			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Width is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
-			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Width is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Width  for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
 
 			// This ColorBand had its Cutoff updated.
 
 			// This also updates the cutoff
 			c.CbRectangle.Width = newValue;
 			c.CbColorBlock.Width = newValue;
+		}
+
+		#endregion
+
+		#region Opacity Dependency Property
+
+		public static readonly DependencyProperty OpacityProperty =
+				DependencyProperty.Register("Opacity", typeof(double), typeof(CbListViewItem),
+					new FrameworkPropertyMetadata(defaultValue: 1.0, propertyChangedCallback: Opacity_PropertyChanged)
+				);
+
+		private static void Opacity_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			CbListViewItem c = (CbListViewItem)o;
+
+			var oldValue = (double)e.OldValue;
+			var newValue = (double)e.NewValue;
+
+			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Width is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Opacity for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+
+			c.CbSectionLine.Opacity = newValue;
+			c.CbColorBlock.Opacity = newValue;
+			c.CbRectangle.Opacity = newValue;
 		}
 
 		#endregion

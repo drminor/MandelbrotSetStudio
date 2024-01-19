@@ -44,6 +44,7 @@ namespace MSetExplorer
 		private double _scaleX;
 
 		private double _selectionLinePosition;
+		private double _opacity;
 
 		private readonly Line _dragLine;
 		private readonly Polygon _topArrow;
@@ -87,6 +88,7 @@ namespace MSetExplorer
 
 			_selectionLinePosition = _xPosition * _scaleX;
 			_originalSectionLinePosition = _selectionLinePosition;
+			_opacity = 1.0;
 
 			_leftWidth = null;
 			_rightWidth = null;
@@ -172,6 +174,27 @@ namespace MSetExplorer
 				{
 					_controlHeight = value;
 					Resize(_colorBandLayoutViewModel);
+				}
+			}
+		}
+
+		public double Opacity
+		{
+			get => _opacity;
+			set
+			{
+				if (value != _opacity)
+				{
+					_opacity = value;
+
+					_dragLine.Opacity = value;
+					_topArrow.Opacity = value;
+
+					//_dragLine.Fill.Opacity = value;
+					//_dragLine.Stroke.Opacity = value;
+
+					//_topArrow.Fill.Opacity = value;
+					//_topArrow.Stroke.Opacity = value;
 				}
 			}
 		}

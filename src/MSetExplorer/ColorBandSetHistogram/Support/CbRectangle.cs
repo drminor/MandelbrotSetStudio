@@ -54,6 +54,7 @@ namespace MSetExplorer
 		private ColorBandColor _startColor;
 		private ColorBandColor _endColor;
 		private bool _blend;
+		private double _opacity;
 
 		private RectangleGeometry _geometry;
 		private readonly Shape _rectanglePath;
@@ -72,7 +73,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbRectangle(int colorBandIndex, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix)
+		public CbRectangle(int colorBandIndex, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
 		{
 			_isCurrent = false;
 			_isSelected = false;
@@ -80,7 +81,6 @@ namespace MSetExplorer
 
 			ColorBandIndex = colorBandIndex;
 
-			NameSuffix = nameSuffix;
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
 			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 			_contentScale = _colorBandLayoutViewModel.ContentScale;
@@ -95,6 +95,7 @@ namespace MSetExplorer
 			_startColor = startColor;
 			_endColor = endColor;
 			_blend = blend;
+			_opacity = 1.0;
 
 			var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
@@ -113,8 +114,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
-
-		public string NameSuffix { get; init; }
 
 		public int ColorBandIndex { get; set; }
 
@@ -223,6 +222,26 @@ namespace MSetExplorer
 					_width = value;
 					_cutoff = _xPosition + _width;
 					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+				}
+			}
+		}
+
+		public double Opacity
+		{
+			get => _opacity;
+			set
+			{
+				if (value != _opacity)
+				{
+					_opacity = value;
+
+					_curRectanglePath.Opacity = value;
+					_rectanglePath.Opacity = value;
+					//_curRectanglePath.Fill.Opacity = value;
+					//_curRectanglePath.Stroke.Opacity = value;
+
+					//_rectanglePath.Fill.Opacity = value;
+					//_rectanglePath.Stroke.Opacity = value;
 				}
 			}
 		}
@@ -365,10 +384,9 @@ namespace MSetExplorer
 				Stroke = Brushes.Transparent,
 				StrokeThickness = 0,
 				Data = area,
-				IsHitTestVisible = true
+				IsHitTestVisible = true,
+				Opacity = 1.0
 			};
-
-			result.Name = $"BlendedBand{NameSuffix}";
 
 			return result;
 		}
@@ -381,7 +399,8 @@ namespace MSetExplorer
 				Stroke = new SolidColorBrush(Colors.Transparent),
 				StrokeThickness = 0,
 				Data = area,
-				IsHitTestVisible = true
+				IsHitTestVisible = true,
+				Opacity= 1.0
 			};
 
 			return result;

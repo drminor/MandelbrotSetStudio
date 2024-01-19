@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -62,8 +64,8 @@ namespace MSetExplorer
 				CheckNameScope(_canvas, 0);
 			}
 
-			_bandDeletionAnimation = new StoryboardDetails(new Storyboard(), _canvas, new DoubleAnimation(), "Width", AfterAnimateDeletion);
-			_bandDeletionAnimation.Duration = new Duration(TimeSpan.FromSeconds(0.5));
+			_bandDeletionAnimation = new StoryboardDetails(new Storyboard(), _canvas, AfterAnimateDeletion/*, new DoubleAnimation(), "Width"*/);
+			//_bandDeletionAnimation.Duration = new Duration(TimeSpan.FromSeconds(0.5));
 
 			_colorBandsView = colorBandsView;
 
@@ -632,6 +634,9 @@ namespace MSetExplorer
 				if (lvi != null)
 				{
 					Debug.WriteLine($"CbListView is removing a ColorBand: {colorBand}");
+
+					var idx = _colorBandsView.IndexOf(lvi.ColorBand);
+
 					AnimateBandDeletion(lvi.ColorBandIndex);
 				}
 				else
@@ -948,19 +953,46 @@ namespace MSetExplorer
 
 		private void AnimateBandDeletion(int index)
 		{
-			var lvItem = ListViewItems[index];
-			var curVal = lvItem.Width;
+			//_bandDeletionAnimation.Storyboard.Duration = TimeSpan.FromMilliseconds(5000);
 
-			if (double.IsNaN(curVal))
+			_bandDeletionAnimation.Storyboard.Children.Clear();
+
+			var itemBeingRemoved = ListViewItems[index];
+			_bandDeletionAnimation.AddOpacityAnimation(itemBeingRemoved.Name, "Opacity", from: 1, to: 0, TimeSpan.FromMilliseconds(300), TimeSpan.Zero);
+
+			if (index == 0)
 			{
-				Debug.WriteLine("Not animating -- The width is NAN.");
+				var newFirstItem = ListViewItems[index + 1];
+
+				var curVal = newFirstItem.PreviousCutoff;
+				if (double.IsNaN(curVal))
+				{
+					Debug.WriteLine("Not animating -- The PreviousCutoff is NAN.");
+					return;
+				}
+
+				// This updates the XPosition and Width --to keep the Cutoff the same.
+				_bandDeletionAnimation.AddDoubleAnimation(newFirstItem.Name, "PreviousCutoff", from: curVal, to: 0, TimeSpan.FromMilliseconds(300), TimeSpan.FromMilliseconds(400));
+			}
+			else
+			{
+				var widthOfItemBeingRemoved = itemBeingRemoved.Width;
+
+				var preceedingItem = ListViewItems[index - 1];
+				var curVal = preceedingItem.Width;
+				var newVal = curVal + widthOfItemBeingRemoved;
+
+				if (double.IsNaN(curVal) || double.IsNaN(newVal))
+				{
+					Debug.WriteLine("Not animating -- The current or new Width is NAN.");
+					return;
+				}
+
+				// Update the Width and Cutoff of the preceeding band, keeping its PreviousCutoff constant.
+				_bandDeletionAnimation.AddDoubleAnimation(preceedingItem.Name, "Width", from: curVal, to: newVal, TimeSpan.FromMilliseconds(300), TimeSpan.FromMilliseconds(400));
 			}
 
-			var da = (DoubleAnimation)_bandDeletionAnimation.AnimationTimeline;
-			da.From = curVal;
-			da.To = 1.0;
-
-			_bandDeletionAnimation.Begin(lvItem.Name, index);
+			_bandDeletionAnimation.Begin(index);
 		}
 
 		private void AfterAnimateDeletion(int index)
@@ -1231,75 +1263,86 @@ namespace MSetExplorer
 
 	internal class StoryboardDetails
 	{
-		AnimationTimeline _animationTimeline;
-
 		public Action<int> _completionCallback;
 		private int _callbackIndex;
 
-		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject, AnimationTimeline animationTimeline, string propertyPath, Action<int> completionCallback)
+		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject, Action<int> completionCallback/*, AnimationTimeline animationTimeline, string propertyPath*/)
 		{
-			Storyboard = storyboard ?? throw new ArgumentNullException(nameof(storyboard));
-			ContainingObject = containingObject;
-			PropertyPath = propertyPath ?? throw new ArgumentNullException(nameof(propertyPath));
+			if (NameScope.GetNameScope(containingObject) == null)
+			{
+				throw new ArgumentException("The ContainingObject must have a NameScope.");
+			}
 
-			_animationTimeline = animationTimeline;
-			Storyboard.SetTargetProperty(_animationTimeline, new PropertyPath(PropertyPath));
-			Storyboard.Children.Add(_animationTimeline);
+			Storyboard = storyboard;
+			ContainingObject = containingObject;
+
+			//Storyboard.FillBehavior = FillBehavior.Stop;
 
 			_completionCallback = completionCallback;
 
 			Storyboard.Completed += Storyboard_Completed;
 		}
 
-		public Storyboard Storyboard { get; init; }
+		#region Public Properties
 
+		public Storyboard Storyboard { get; init; }
 		public FrameworkElement ContainingObject { get; init; }
 
-		public string PropertyPath { get; init; }
+		//public Duration Duration
+		//{
+		//	get => Storyboard.Duration;
+		//	set
+		//	{
+		//		Storyboard.Duration = value;
+		//		_animationTimeline.Duration = value;
+		//	}
+		//}
 
-		public AnimationTimeline AnimationTimeline
+		#endregion
+
+		#region Public Methods
+
+		public int AddDoubleAnimation(string objectName, string propertyPath, double from, double to, TimeSpan duration, TimeSpan startTime)
 		{
-			get => _animationTimeline;
-			set
-			{
-				Storyboard.Children.Remove(_animationTimeline);
-				_animationTimeline = value;
-				Storyboard.Children.Add(_animationTimeline);
+			var da = new DoubleAnimation(from, to, duration);
+			da.BeginTime = startTime;
+			Storyboard.SetTargetName(da, objectName);
+			Storyboard.SetTargetProperty(da, new PropertyPath(propertyPath));
 
-				_animationTimeline.Duration = Storyboard.Duration;
-				Storyboard.SetTargetProperty(_animationTimeline, new PropertyPath(PropertyPath));
-			}
+			Storyboard.Children.Add(da);
+			return Storyboard.Children.Count;
 		}
 
-		public Duration Duration
+		public int AddOpacityAnimation(string objectName, string propertyPath, double from, double to, TimeSpan duration, TimeSpan startTime)
 		{
-			get => Storyboard.Duration;
-			set
-			{
-				Storyboard.Duration = value;
-				_animationTimeline.Duration = value;
-			}
+			var da = new DoubleAnimation(from, to, duration);
+			Storyboard.SetTargetName(da, objectName);
+			Storyboard.SetTargetProperty(da, new PropertyPath(propertyPath));
+
+			Storyboard.Children.Add(da);
+			return Storyboard.Children.Count;
 		}
+
+		public void Begin(int index)
+		{
+			_callbackIndex = index;
+			Storyboard.Begin(ContainingObject);
+		}
+
+		#endregion
+
+		#region Private Methods
 
 		private void Storyboard_Completed(object? sender, EventArgs e)
 		{
+			//Storyboard.Children.Clear();
+
 			if (_completionCallback != null)
 			{
 				_completionCallback(_callbackIndex);
 			}
 		}
 
-		public void Begin(FrameworkElement frameworkElement, int index)
-		{
-			_callbackIndex = index;
-			Storyboard.Begin(frameworkElement);
-		}
-
-		public void Begin(string name, int index)
-		{
-			_callbackIndex = index;
-			Storyboard.SetTargetName(_animationTimeline, name);
-			Storyboard.Begin(ContainingObject);
-		}
+		#endregion
 	}
 }

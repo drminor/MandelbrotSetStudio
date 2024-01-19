@@ -51,6 +51,7 @@ namespace MSetExplorer
 
 		private double _xPosition;
 		private double _width;
+		private double _opacity;
 		private double _cutoff;
 
 		private ColorBandColor _startColor;
@@ -90,6 +91,7 @@ namespace MSetExplorer
 			_canvas = _colorBandLayoutViewModel.Canvas;
 			_xPosition = xPosition;
 			_width = width;
+			_opacity = 1.0;
 			_cutoff = _xPosition + _width;
 
 			_startColor = startColor;
@@ -126,7 +128,6 @@ namespace MSetExplorer
 		public RectangleGeometry RectangleGeometry => _geometry;
 
 		public Path ColorBlocksRectangle => (Path)_rectanglePath;
-
 
 		public ColorBandColor StartColor
 		{
@@ -168,7 +169,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Properies - Layout Width
+		#region Public Properies - Layout
 
 		public SizeDbl ContentScale
 		{
@@ -207,6 +208,31 @@ namespace MSetExplorer
 					_width = value;
 					_cutoff = _xPosition + _width;
 					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+				}
+			}
+		}
+
+		public double Opacity
+		{
+			get => _opacity;
+			set
+			{
+				if (value != _opacity)
+				{
+					_opacity = value;
+
+					_rectanglePath.Opacity = value;
+					_startColorBlockPath.Opacity = value;
+					_endColorBlockPath.Opacity = value;
+
+					//_rectanglePath.Fill.Opacity = value;
+					//_rectanglePath.Stroke.Opacity = value;
+
+					//_startColorBlockPath.Fill.Opacity = value;
+					//_startColorBlockPath.Stroke.Opacity = value;
+
+					//_endColorBlockPath.Fill.Opacity = value;
+					//_endColorBlockPath.Stroke.Opacity = value;
 				}
 			}
 		}
