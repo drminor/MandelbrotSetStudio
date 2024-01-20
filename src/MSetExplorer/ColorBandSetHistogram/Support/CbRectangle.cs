@@ -46,10 +46,11 @@ namespace MSetExplorer
 		private Canvas _canvas;
 
 		private SizeDbl _contentScale;
+		private Rect _area;
 
 		private double _xPosition;
 		private double _width;
-		private double _cutoff;
+		//private double _cutoff;
 
 		private ColorBandColor _startColor;
 		private ColorBandColor _endColor;
@@ -90,7 +91,9 @@ namespace MSetExplorer
 
 			_xPosition = xPosition;
 			_width = width;
-			_cutoff = _xPosition + _width;
+			//_cutoff = _xPosition + _width;
+
+			_area = new Rect(xPosition, 0, width, _colorBandLayoutViewModel.ControlHeight);
 
 			_startColor = startColor;
 			_endColor = endColor;
@@ -185,6 +188,25 @@ namespace MSetExplorer
 			}
 		}
 
+		public Rect Area
+		{
+			get => _area;
+			set
+			{
+				if (value != _area)
+				{
+					_area = value;
+					//_width = _cutoff - _xPosition;
+
+					_width = _area.Width;
+					_xPosition = _area.X;
+					//_cutoff = _xPosition + _width;
+
+					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+				}
+			}
+		}
+
 		public double XPosition
 		{
 			get => _xPosition;
@@ -193,8 +215,11 @@ namespace MSetExplorer
 				if (value != _xPosition)
 				{
 					_xPosition = value;
-					_width = _cutoff - _xPosition;
-					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					//_width = _cutoff - _xPosition;
+
+					_area = new Rect(value, _area.Y, Width, _area.Height);
+
+					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
 			}
 		}
@@ -207,7 +232,8 @@ namespace MSetExplorer
 		//		if (value != _cutoff)
 		//		{
 		//			_cutoff = value;
-		//			_width = _cutoff - XPosition;
+		//			//_width = _cutoff - XPosition;
+		//			//Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 		//		}
 		//	}
 		//}
@@ -220,8 +246,10 @@ namespace MSetExplorer
 				if (value != _width)
 				{
 					_width = value;
-					_cutoff = _xPosition + _width;
-					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					//_cutoff = _xPosition + _width;
+					_area = new Rect(_area.X, _area.Y, value, _area.Height);
+
+					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
 			}
 		}
@@ -237,11 +265,6 @@ namespace MSetExplorer
 
 					_curRectanglePath.Opacity = value;
 					_rectanglePath.Opacity = value;
-					//_curRectanglePath.Fill.Opacity = value;
-					//_curRectanglePath.Stroke.Opacity = value;
-
-					//_rectanglePath.Fill.Opacity = value;
-					//_rectanglePath.Stroke.Opacity = value;
 				}
 			}
 		}
@@ -412,11 +435,7 @@ namespace MSetExplorer
 
 			_geometry.Rect = BuildRectangle(xPosition, width, isHighLighted, layout);
 
-			//var rectangleDataAsRectGeometry = (RectangleGeometry)((Path)_rectanglePath).Data;
-			//rectangleDataAsRectGeometry.Rect = _geometry.Rect;
-
 			_curGeometry.Rect = BuildCurRectangle(xPosition, width, layout);
-			//_selGeometry.Rect = BuildSelRectangle(xPosition, width, layout);
 		}
 
 		private Rect BuildRectangle(double xPosition, double width, bool isHighLighted, ColorBandLayoutViewModel layout)

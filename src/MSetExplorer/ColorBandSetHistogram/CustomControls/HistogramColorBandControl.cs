@@ -154,12 +154,9 @@ namespace MSetExplorer
 		public Canvas Canvas
 		{
 			get => _canvas;
-			set
+			private set
 			{
-				_canvas.SizeChanged -= Handle_SizeChanged;
 				_canvas = value;
-				_canvas.SizeChanged += Handle_SizeChanged;
-
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
 				//_canvas.Background = new SolidColorBrush(Colors.MistyRose);
@@ -280,8 +277,35 @@ namespace MSetExplorer
 				{
 					var currentCbEditMode = CbsHistogramViewModel?.CurrentCbEditMode ?? ColorBandSetEditMode.Bands;
 
-					_cbListView = new CbListView(_canvas, _colorBandsView, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged);
+					_cbListView = new CbListView(_canvas, _colorBandsView, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged, HandleCbListViewAnimationCompleted);
 				}
+			}
+		}
+
+		private void HandleCbListViewAnimationCompleted(ColorBandSetEditOperation colorBandSetEditOperation, int colorBandIndex)
+		{
+			if (_cbsHistogramViewModel == null)
+			{
+				return;
+			}
+
+			switch (colorBandSetEditOperation)
+			{
+				case ColorBandSetEditOperation.InsertCutoff:
+					break;
+				case ColorBandSetEditOperation.DeleteCutoff:
+					break;
+				case ColorBandSetEditOperation.InsertColor:
+					break;
+				case ColorBandSetEditOperation.DeleteColor:
+					break;
+				case ColorBandSetEditOperation.InsertBand:
+					break;
+				case ColorBandSetEditOperation.DeleteBand:
+					_cbsHistogramViewModel.CompleteColorBandRemoval(colorBandIndex);
+					break;
+				default:
+					break;
 			}
 		}
 	
@@ -332,25 +356,6 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		//public int? GetIndexOfItemUnderMouse(Point hitPoint)
-		//{
-		//	if (double.IsNaN(hitPoint.X) || double.IsNaN(hitPoint.Y))
-		//	{
-		//		return null;
-		//	}
-
-		//	var x = _cbListView?.ItemAtMousePosition(hitPoint) ?? null;
-
-		//	if (x != null)
-		//	{
-		//		return x.Value.Item1.CbRectangle.ColorBandIndex;
-		//	}
-		//	else
-		//	{
-		//		return null;
-		//	}
-		//}
-
 		public ColorBand? GetItemUnderMouse(Point hitPoint)
 		{
 			if (double.IsNaN(hitPoint.X) || double.IsNaN(hitPoint.Y))
@@ -370,18 +375,6 @@ namespace MSetExplorer
 				return null;
 			}
 		}
-
-		//public void ShowSectionLines(bool leftMouseButtonIsPressed)
-		//{
-		//	_cbListView?.ShowSectionLines(leftMouseButtonIsPressed);
-		//	_mouseIsEntered = true;
-		//}
-
-		//public void HideSectionLines(bool leftMouseButtonIsPressed)
-		//{
-		//	_cbListView?.HideSectionLines(leftMouseButtonIsPressed);
-		//	_mouseIsEntered = false;
-		//}
 
 		#endregion
 
@@ -501,18 +494,6 @@ namespace MSetExplorer
 			{
 				var focusResult = Focus();
 				ReportSetFocus(focusResult);
-			}
-		}
-
-		private void Handle_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			Debug.WriteLineIf(_useDetailedDebug, $"The HistogramColorBandControl is handling the SizeChanged event.");
-
-			//_colorBandLayoutViewModel.ControlHeight = e.NewSize.Height;
-
-			if (_cbListView != null)
-			{
-				_cbListView.ControlHeight = e.NewSize.Height;
 			}
 		}
 

@@ -48,11 +48,12 @@ namespace MSetExplorer
 		private Canvas _canvas;
 
 		private SizeDbl _contentScale;
+		private Rect _area;
 
 		private double _xPosition;
 		private double _width;
 		private double _opacity;
-		private double _cutoff;
+		//private double _cutoff;
 
 		private ColorBandColor _startColor;
 		private ColorBandColor _endColor;
@@ -89,10 +90,13 @@ namespace MSetExplorer
 			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
 
 			_canvas = _colorBandLayoutViewModel.Canvas;
+
+			_area = new Rect(xPosition, 0, width, _colorBandLayoutViewModel.ControlHeight);
+
 			_xPosition = xPosition;
 			_width = width;
 			_opacity = 1.0;
-			_cutoff = _xPosition + _width;
+			//_cutoff = _xPosition + _width;
 
 			_startColor = startColor;
 			_endColor = endColor;
@@ -179,7 +183,26 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
-					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+				}
+			}
+		}
+
+		public Rect Area
+		{
+			get => _area;
+			set
+			{
+				if (value != _area)
+				{
+					_area = value;
+					//_width = _cutoff - _xPosition;
+
+					_width = _area.Width;
+					_xPosition = _area.X;
+					//_cutoff = _xPosition + _width;
+
+					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
 			}
 		}
@@ -192,8 +215,11 @@ namespace MSetExplorer
 				if (value != _xPosition)
 				{
 					_xPosition = value;
-					_width = _cutoff - _xPosition;
-					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					//_width = _cutoff - _xPosition;
+
+					_area = new Rect(value, _area.Y, Width, _area.Height);
+
+					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
 			}
 		}
@@ -206,8 +232,10 @@ namespace MSetExplorer
 				if (value != _width)
 				{
 					_width = value;
-					_cutoff = _xPosition + _width;
-					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					//_cutoff = _xPosition + _width;
+
+					_area = new Rect(_area.X, _area.Y, value, _area.Height);
+					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
 			}
 		}
@@ -224,15 +252,6 @@ namespace MSetExplorer
 					_rectanglePath.Opacity = value;
 					_startColorBlockPath.Opacity = value;
 					_endColorBlockPath.Opacity = value;
-
-					//_rectanglePath.Fill.Opacity = value;
-					//_rectanglePath.Stroke.Opacity = value;
-
-					//_startColorBlockPath.Fill.Opacity = value;
-					//_startColorBlockPath.Stroke.Opacity = value;
-
-					//_endColorBlockPath.Fill.Opacity = value;
-					//_endColorBlockPath.Stroke.Opacity = value;
 				}
 			}
 		}

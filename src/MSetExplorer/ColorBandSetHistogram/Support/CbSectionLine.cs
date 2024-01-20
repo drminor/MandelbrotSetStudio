@@ -189,12 +189,6 @@ namespace MSetExplorer
 
 					_dragLine.Opacity = value;
 					_topArrow.Opacity = value;
-
-					//_dragLine.Fill.Opacity = value;
-					//_dragLine.Stroke.Opacity = value;
-
-					//_topArrow.Fill.Opacity = value;
-					//_topArrow.Stroke.Opacity = value;
 				}
 			}
 		}

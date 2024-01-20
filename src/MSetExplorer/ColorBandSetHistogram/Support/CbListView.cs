@@ -1,5 +1,4 @@
 ﻿using MSS.Types;
-using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,19 +10,28 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
-using Windows.UI.WebUI;
+using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
+	internal enum ColorBandSetEditOperation
+	{
+		InsertCutoff,
+		DeleteCutoff,
 
+		InsertColor,
+		DeleteColor,
+
+		InsertBand,
+		DeleteBand
+	}
 
 	internal class CbListView
 	{
 		#region Private Fields
 
-		private StoryboardDetails _bandDeletionAnimation;
+		private StoryboardDetails _storyBoardDetails1;
 		private int _nextNameSuffix;
 
 		private Canvas _canvas;
@@ -33,6 +41,7 @@ namespace MSetExplorer
 		private ColorBandSetEditMode _currentCbEditMode;
 		private ContextMenuDisplayRequest _displayContextMenu;
 		private Action<ColorBandSetEditMode> _currentCbEditModeChanged;
+		private Action<ColorBandSetEditOperation, int> _animationCompleted;
 
 		private int _currentColorBandIndex;
 
@@ -51,7 +60,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public CbListView(Canvas canvas, ListCollectionView colorBandsView, double controlHeight, SizeDbl contentScale, bool parentIsFocused, ColorBandSetEditMode currentCbEditMode, 
-			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged)
+			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged, Action<ColorBandSetEditOperation, int> animationCompleted)
 		{
 			_canvas = canvas;
 
@@ -64,7 +73,7 @@ namespace MSetExplorer
 				CheckNameScope(_canvas, 0);
 			}
 
-			_bandDeletionAnimation = new StoryboardDetails(new Storyboard(), _canvas, AfterAnimateDeletion/*, new DoubleAnimation(), "Width"*/);
+			_storyBoardDetails1 = new StoryboardDetails(new Storyboard(), _canvas);
 			//_bandDeletionAnimation.Duration = new Duration(TimeSpan.FromSeconds(0.5));
 
 			_colorBandsView = colorBandsView;
@@ -77,6 +86,7 @@ namespace MSetExplorer
 			_currentCbEditMode = currentCbEditMode;
 			_displayContextMenu = displayContextMenu;
 			_currentCbEditModeChanged = currentCbEditModeChanged;
+			_animationCompleted = animationCompleted;
 
 			ListViewItems = new List<CbListViewItem>();
 			_currentColorBandIndex = 0;
@@ -91,8 +101,19 @@ namespace MSetExplorer
 
 			DrawColorBands(_colorBandsView);
 
+			_canvas.SizeChanged += Handle_SizeChanged;
 			_canvas.MouseMove += Handle_MouseMove;
 			_canvas.PreviewMouseLeftButtonDown += Handle_PreviewMouseLeftButtonDown;
+		}
+
+		private void Handle_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"CbListView is handling the SizeChanged event.");
+
+			if (e.HeightChanged)
+			{
+				ControlHeight = e.NewSize.Height;
+			}
 		}
 
 		#endregion
@@ -183,16 +204,6 @@ namespace MSetExplorer
 
 					_blendRectangleUnderMouse = value;
 
-					//if (SectionLineUnderMouse == null)
-					//{
-					//	if (_itemUnderMouse != null)
-					//	{
-					//		_itemUnderMouse.CbRectangle.IsUnderMouse = true;
-					//	}
-
-					//	Debug.WriteLine($"The Mouse is now over Rectangle: {ItemUnderMouse?.ColorBandIndex ?? -1}.");
-					//}
-
 					if (_blendRectangleUnderMouse != null)
 					{
 						_blendRectangleUnderMouse.SetIsRectangleUnderMouse(true, ColorBandSetEditMode.Bands);
@@ -215,16 +226,6 @@ namespace MSetExplorer
 					}
 
 					_colorBlocksUnderMouse = value;
-
-					//if (SectionLineUnderMouse == null)
-					//{
-					//	if (_itemUnderMouse != null)
-					//	{
-					//		_itemUnderMouse.CbRectangle.IsUnderMouse = true;
-					//	}
-
-					//	Debug.WriteLine($"The Mouse is now over Rectangle: {ItemUnderMouse?.ColorBandIndex ?? -1}.");
-					//}
 
 					if (_colorBlocksUnderMouse != null)
 					{
@@ -252,15 +253,6 @@ namespace MSetExplorer
 						_sectionLineUnderMouse.SectionLineIsUnderMouse = true;
 						Debug.WriteLine($"The Mouse is now over SectionLine: {_sectionLineUnderMouse.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
 					}
-					//else
-					//{
-					//	if (_itemUnderMouse != null)
-					//	{
-					//		_itemUnderMouse.CbRectangle.IsUnderMouse = true;
-					//		Debug.WriteLine($"The Mouse is now over Rectangle: {_itemUnderMouse.ColorBandIndex}.");
-					//	}
-					//}
-
 				}
 			}
 		}
@@ -406,6 +398,7 @@ namespace MSetExplorer
 			_colorBandsView.CurrentChanged -= ColorBandsView_CurrentChanged;
 			(_colorBandsView as INotifyCollectionChanged).CollectionChanged -= ColorBandsView_CollectionChanged;
 
+			_canvas.SizeChanged -= Handle_SizeChanged;
 			_canvas.MouseMove -= Handle_MouseMove;
 			_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
 
@@ -439,6 +432,12 @@ namespace MSetExplorer
 					SectionLineUnderMouse = null;
 
 					var selIndex = distance > 0 ? cbListViewItemIndex + 1 : cbListViewItemIndex;
+
+					if (selIndex > ListViewItems.Count - 1)
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"CbListView. Handling MouseMove. The HitPoint X coordinate is beyond the canvas. Canvas Length: {_canvas.ActualWidth}, HitPointX: {hitPoint.X}, SelIndex {selIndex}.");
+						selIndex = ListViewItems.Count - 1;
+					}
 						 
 					if (hitPoint.Y >= _colorBandLayoutViewModel.BlendRectangesElevation)
 					{
@@ -474,6 +473,8 @@ namespace MSetExplorer
 				else
 				{
 					var selIndex = distance > 0 ? cbListViewItemIndex + 1 : cbListViewItemIndex;
+					if (selIndex > ListViewItems.Count - 1) selIndex = ListViewItems.Count - 1;
+
 					var cbListViewItem = ListViewItems[selIndex];
 
 					Debug.WriteLineIf(_useDetailedDebug, $"CbListView. Handling PreviewMouseLeftButtonDown. Moving Current to CbRectangle: {cbListViewItem.ColorBandIndex}");
@@ -717,28 +718,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//private CbListViewItem CreateListViewItem(int colorBandIndex, ColorBand colorBand, string nameSuffix)
-		//{
-		//	// Build the CbRectangle
-		//	var xPosition = colorBand.PreviousCutoff ?? 0;
-		//	var bandWidth = colorBand.BucketWidth; // colorBand.Cutoff - xPosition;
-		//	var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
-
-		//	var cbRectangle = new CbRectangle(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, nameSuffix);
-
-		//	// Build the Selection Line
-		//	var selectionLinePosition = colorBand.Cutoff;
-		//	var cbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, _colorBandLayoutViewModel);
-
-		//	// Build the Color Block
-		//	var cbColorBlock = new CbColorBlock(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
-
-		//	var listViewItem = new CbListViewItem(colorBand, cbRectangle, cbSectionLine, cbColorBlock);
-		//	listViewItem.CbSectionLine.SectionLineMoved += HandleSectionLineMoved;
-
-		//	return listViewItem;
-		//}
-
 		// The user has pressed the left mouse-button while over a Rectangle or SectionLine.
 		private void ListViewItemSelectedChanged(int colorBandIndex, ColorBandSetEditMode colorBandEditMode)
 		{
@@ -953,46 +932,34 @@ namespace MSetExplorer
 
 		private void AnimateBandDeletion(int index)
 		{
-			//_bandDeletionAnimation.Storyboard.Duration = TimeSpan.FromMilliseconds(5000);
-
-			_bandDeletionAnimation.Storyboard.Children.Clear();
-
 			var itemBeingRemoved = ListViewItems[index];
-			_bandDeletionAnimation.AddOpacityAnimation(itemBeingRemoved.Name, "Opacity", from: 1, to: 0, TimeSpan.FromMilliseconds(300), TimeSpan.Zero);
+			_storyBoardDetails1.AddOpacityAnimation(itemBeingRemoved.Name, "Opacity", from: 1, to: 0, TimeSpan.FromMilliseconds(500), TimeSpan.Zero);
+
+			var curVal = itemBeingRemoved.Area;
+			var newSize = new Size(curVal.Size.Width * 0.25, curVal.Size.Height * 0.25);
+
+			_storyBoardDetails1.AddReduceSizeAnimation(itemBeingRemoved.Name, "Area", from: curVal, newSize: newSize, duration: TimeSpan.FromMilliseconds(500), beginTime: TimeSpan.Zero);
 
 			if (index == 0)
 			{
 				var newFirstItem = ListViewItems[index + 1];
+				curVal = newFirstItem.Area;
+				var newXPosition = 0;
 
-				var curVal = newFirstItem.PreviousCutoff;
-				if (double.IsNaN(curVal))
-				{
-					Debug.WriteLine("Not animating -- The PreviousCutoff is NAN.");
-					return;
-				}
-
-				// This updates the XPosition and Width --to keep the Cutoff the same.
-				_bandDeletionAnimation.AddDoubleAnimation(newFirstItem.Name, "PreviousCutoff", from: curVal, to: 0, TimeSpan.FromMilliseconds(300), TimeSpan.FromMilliseconds(400));
+				_storyBoardDetails1.AddX1AndWidthAnimation(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
 			}
 			else
 			{
-				var widthOfItemBeingRemoved = itemBeingRemoved.Width;
+				var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
 
 				var preceedingItem = ListViewItems[index - 1];
-				var curVal = preceedingItem.Width;
-				var newVal = curVal + widthOfItemBeingRemoved;
+				curVal = preceedingItem.Area;
+				var newWidth = curVal.Width + widthOfItemBeingRemoved;
 
-				if (double.IsNaN(curVal) || double.IsNaN(newVal))
-				{
-					Debug.WriteLine("Not animating -- The current or new Width is NAN.");
-					return;
-				}
-
-				// Update the Width and Cutoff of the preceeding band, keeping its PreviousCutoff constant.
-				_bandDeletionAnimation.AddDoubleAnimation(preceedingItem.Name, "Width", from: curVal, to: newVal, TimeSpan.FromMilliseconds(300), TimeSpan.FromMilliseconds(400));
+				_storyBoardDetails1.AddWidthAndX2Animation(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
 			}
 
-			_bandDeletionAnimation.Begin(index);
+			_storyBoardDetails1.Begin(AfterAnimateDeletion, index);
 		}
 
 		private void AfterAnimateDeletion(int index)
@@ -1008,22 +975,19 @@ namespace MSetExplorer
 
 			_canvas.UnregisterName(lvi.Name);
 
+			// Update the SectionLine's position
 			if (index == 0)
 			{
 				var firstLvi = ListViewItems[index + 1];
-				firstLvi.ColorBand.PreviousCutoff = 0;
+				firstLvi.CbSectionLine.XPosition = 0;
 			}
 			else
 			{
-				// Set the on screen representation
 				var precedingLvi = ListViewItems[index - 1];
-				precedingLvi.Cutoff = lvi.ColorBand.Cutoff;
-
-				// update the model
-				var precedingColorBand = precedingLvi.ColorBand;
-				precedingColorBand.Cutoff = lvi.ColorBand.Cutoff;
-				//precedingColorBand.SuccessorStartColor = lvi.ColorBand.StartColor;
+				precedingLvi.CbSectionLine.XPosition = lvi.ColorBand.Cutoff;
 			}
+
+			_animationCompleted(ColorBandSetEditOperation.DeleteBand, index);
 
 			lvi.TearDown();
 			ListViewItems.Remove(lvi);
@@ -1263,10 +1227,10 @@ namespace MSetExplorer
 
 	internal class StoryboardDetails
 	{
-		public Action<int> _completionCallback;
+		public Action<int>? _completionCallback;
 		private int _callbackIndex;
 
-		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject, Action<int> completionCallback/*, AnimationTimeline animationTimeline, string propertyPath*/)
+		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject)
 		{
 			if (NameScope.GetNameScope(containingObject) == null)
 			{
@@ -1275,11 +1239,6 @@ namespace MSetExplorer
 
 			Storyboard = storyboard;
 			ContainingObject = containingObject;
-
-			//Storyboard.FillBehavior = FillBehavior.Stop;
-
-			_completionCallback = completionCallback;
-
 			Storyboard.Completed += Storyboard_Completed;
 		}
 
@@ -1302,10 +1261,15 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public int AddDoubleAnimation(string objectName, string propertyPath, double from, double to, TimeSpan duration, TimeSpan startTime)
+		// Move the x1 value and adjust the width to keep x2 the same
+		public int AddX1AndWidthAnimation(string objectName, string propertyPath, Rect from, double newX1, TimeSpan duration, TimeSpan beginTime)
 		{
-			var da = new DoubleAnimation(from, to, duration);
-			da.BeginTime = startTime;
+			//_width = _cutoff - _xPosition;
+
+			var to = new Rect(newX1, from.Y, from.Right - newX1, from.Height);
+
+			var da = new RectAnimation(from, to, duration);
+			da.BeginTime = beginTime;
 			Storyboard.SetTargetName(da, objectName);
 			Storyboard.SetTargetProperty(da, new PropertyPath(propertyPath));
 
@@ -1313,9 +1277,15 @@ namespace MSetExplorer
 			return Storyboard.Children.Count;
 		}
 
-		public int AddOpacityAnimation(string objectName, string propertyPath, double from, double to, TimeSpan duration, TimeSpan startTime)
+		// Update the Width and Right to keep X1 constant.
+		public int AddWidthAndX2Animation(string objectName, string propertyPath, Rect from, double newWidth, TimeSpan duration, TimeSpan beginTime)
 		{
-			var da = new DoubleAnimation(from, to, duration);
+			//_cutoff = _xPosition + _width;
+
+			var to = new Rect(from.X, from.Y, newWidth, from.Height);
+
+			var da = new RectAnimation(from, to, duration);
+			da.BeginTime = beginTime;
 			Storyboard.SetTargetName(da, objectName);
 			Storyboard.SetTargetProperty(da, new PropertyPath(propertyPath));
 
@@ -1323,8 +1293,52 @@ namespace MSetExplorer
 			return Storyboard.Children.Count;
 		}
 
-		public void Begin(int index)
+		// Update the Width and Right to keep X1 constant.
+		public int AddReduceSizeAnimation(string objectName, string propertyPath, Rect from, Size newSize, TimeSpan duration, TimeSpan beginTime)
 		{
+			//_cutoff = _xPosition + _width;
+
+			//var to = new Rect(from.X, from.Y, newWidth, from.Height);
+
+			var to = new Rect(from.X + newSize.Width / 2, from.Y + newSize.Height / 2, newSize.Width, newSize.Height);
+
+			var da = new RectAnimation(from, to, duration);
+			da.BeginTime = beginTime;
+			Storyboard.SetTargetName(da, objectName);
+			Storyboard.SetTargetProperty(da, new PropertyPath(propertyPath));
+
+			Storyboard.Children.Add(da);
+			return Storyboard.Children.Count;
+		}
+
+		//public int AddDoubleAnimation(string objectName, string propertyPath, double from, double to, TimeSpan duration, TimeSpan startTime)
+		//{
+		//	var da = new DoubleAnimation(from, to, duration);
+		//	da.BeginTime = startTime;
+		//	Storyboard.SetTargetName(da, objectName);
+		//	Storyboard.SetTargetProperty(da, new PropertyPath(propertyPath));
+
+		//	Storyboard.Children.Add(da);
+		//	return Storyboard.Children.Count;
+		//}
+
+		public int AddOpacityAnimation(string objectName, string propertyPath, double from, double to, TimeSpan duration, TimeSpan beginTime)
+		{
+			var da = new DoubleAnimation(from, to, duration);
+			da.BeginTime = beginTime;
+
+			da.EasingFunction = new PowerEase { Power = 3, EasingMode = EasingMode.EaseOut };
+
+			Storyboard.SetTargetName(da, objectName);
+			Storyboard.SetTargetProperty(da, new PropertyPath(propertyPath));
+
+			Storyboard.Children.Add(da);
+			return Storyboard.Children.Count;
+		}
+
+		public void Begin(Action<int> completionCallback, int index)
+		{
+			_completionCallback = completionCallback;
 			_callbackIndex = index;
 			Storyboard.Begin(ContainingObject);
 		}
@@ -1335,7 +1349,7 @@ namespace MSetExplorer
 
 		private void Storyboard_Completed(object? sender, EventArgs e)
 		{
-			//Storyboard.Children.Clear();
+			Storyboard.Children.Clear();
 
 			if (_completionCallback != null)
 			{

@@ -760,8 +760,6 @@ namespace MSetExplorer
 			return true;
 		}
 
-
-
 		public bool TryDeleteItem(ColorBand colorBand)
 		{
 			//var selectedItems = GetSelectedItems(_currentColorBandSet);
@@ -887,15 +885,55 @@ namespace MSetExplorer
 
 		public void CompleteColorBandRemoval(int index)
 		{
+			if (index == 0)
+			{
+				var cb = _currentColorBandSet[index];
+				cb.PreviousCutoff = 0;
+			}
+			else
+			{
+				var cb = _currentColorBandSet[index - 1];
+				cb.Cutoff = _currentColorBandSet[index].PreviousCutoff ?? 0;
+			}
+
 			var count = _currentColorBandSet.Count;
 
 			if (index > count - 1)
 			{
 				index = count - 1;
-			}
-			_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+				
+				_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
 
+				_colorBandsView.MoveCurrentToPosition(Math.Max(0, index));
+			}
+			else
+			{
+				_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+
+			}
 		}
+
+		/*
+
+			//if (index == 0)
+			//{
+			//	var firstLvi = ListViewItems[index + 1];
+			//	firstLvi.ColorBand.PreviousCutoff = 0;
+			//}
+			//else
+			//{
+			//	// Set the on screen representation
+			//	var precedingLvi = ListViewItems[index - 1];
+			//	precedingLvi.Cutoff = lvi.ColorBand.Cutoff;
+
+			//	// update the model
+			//	var precedingColorBand = precedingLvi.ColorBand;
+			//	precedingColorBand.Cutoff = lvi.ColorBand.Cutoff;
+			//	//precedingColorBand.SuccessorStartColor = lvi.ColorBand.StartColor;
+			//}
+
+
+		*/
 
 		[Conditional("DEBUG")]
 		private void ReportRemoveCurrentItem(int index)
