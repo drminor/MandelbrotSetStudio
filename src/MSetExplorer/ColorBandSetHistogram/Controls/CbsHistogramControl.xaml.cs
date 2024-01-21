@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -390,11 +391,36 @@ namespace MSetExplorer
 		// Delete
 		private void DeleteCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var selItem = GetColorBandAtMousePosition();
-
-			if (selItem != null)
+			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
 			{
-				_ = _vm.TryDeleteItem(selItem);
+				if (_vm.TestDeleteItem(colorBandIndex.Value, out var editOp))
+				{
+					switch (editOp)
+					{
+						case ColorBandSetEditOperation.DeleteCutoff:
+							break;
+
+						case ColorBandSetEditOperation.DeleteColor:
+							break;
+
+						case ColorBandSetEditOperation.DeleteBand:
+
+							HistogramColorBandControl1.AnimateBandDeletion(colorBandIndex.Value);
+							break;
+
+						default:
+							break;
+					}
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to Delete the Item at ColorBandIndex: {colorBandIndex}.");
+				}
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to determine the ColorBandIndex.");
+
 			}
 		}
 
@@ -491,6 +517,27 @@ namespace MSetExplorer
 			_ = MessageBox.Show(msg);
 		}
 
+		private bool TryGetColorBandIndexForCommandExecution(bool fromContextMenu, [NotNullWhen(true)] out int? colorBandIndex)
+		{
+			if (fromContextMenu)
+			{
+				colorBandIndex = GetColorBandIndexAtMousePosition();
+			}
+			else
+			{
+				colorBandIndex = _vm.CurrentColorBandIndex;
+			}
+
+			if (colorBandIndex != null && colorBandIndex.Value != -1)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
 
 		private ColorBand? GetColorBandAtMousePosition()
 		{
@@ -509,6 +556,30 @@ namespace MSetExplorer
 			else
 			{
 				ConfirmColorBandBelongsToView(result);
+			}
+
+			return result;
+		}
+
+		private int? GetColorBandIndexAtMousePosition()
+		{
+			var posOfContextMenu = HistogramColorBandControl1.MousePositionWhenContextMenuWasOpened;
+			var tResult = HistogramColorBandControl1.GetItemIndexUnderMouse(posOfContextMenu);
+
+			int result;
+
+			if (tResult == null)
+			{
+				result = _vm.CurrentColorBandIndex;
+			}
+			else
+			{
+				result = tResult.Value;
+			}
+
+			if (result == -1)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"GetColorBandAtMousePosition. Could not identify any ColorBand at {posOfContextMenu}.");
 			}
 
 			return result;

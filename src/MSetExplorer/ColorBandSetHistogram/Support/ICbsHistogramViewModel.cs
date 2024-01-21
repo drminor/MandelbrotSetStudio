@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -52,8 +53,12 @@ namespace MSetExplorer
 		void RetardEditMode(); 
 
 		bool TryInsertNewItem(ColorBand colorBand, out int index);
+		
 		bool TryDeleteItem(ColorBand colorBand);
 
+		bool TestDeleteItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation);
+
+		//int GetIndexOf(ColorBand colorBand);
 		void CompleteColorBandRemoval(int index);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);

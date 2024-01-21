@@ -16,7 +16,7 @@ namespace MSetExplorer
 		private bool _isColorSelected;
 		private bool _isBandSelected;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#region Constructor
 
@@ -364,6 +364,7 @@ namespace MSetExplorer
 
 			if (ScreenTypeHelper.IsDoubleChanged(oldValue.Height, newValue.Height) || ScreenTypeHelper.IsDoubleChanged(oldValue.Y, newValue.Y))
 			{
+				Debug.WriteLineIf(c._useDetailedDebug, $"Setting the Elevation and Height for item at {c.ColorBandIndex} to {newValue.Y} and {newValue.Height}.");
 				c._colorBandLayoutViewModel.SetElevationAndHeight(newValue.Y, newValue.Height);
 
 				//var y0 = newValue.Y;

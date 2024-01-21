@@ -112,7 +112,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			if (_cbsHistogramViewModel != null)
@@ -344,6 +343,14 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public void AnimateBandDeletion(int index)
+		{
+			if (_cbListView != null)
+			{
+				_cbListView.AnimateBandDeletion(index);
+			}
+		}
+
 		public ColorBand? GetItemUnderMouse(Point hitPoint)
 		{
 			if (double.IsNaN(hitPoint.X) || double.IsNaN(hitPoint.Y))
@@ -351,7 +358,7 @@ namespace MSetExplorer
 				return null;
 			}
 
-			var lvItemAndSelType = _cbListView?.ItemAtMousePosition(hitPoint) ?? null;
+			var lvItemAndSelType = _cbListView?.GetItemAtMousePosition(hitPoint) ?? null;
 
 			if (lvItemAndSelType != null)
 			{
@@ -363,6 +370,29 @@ namespace MSetExplorer
 				return null;
 			}
 		}
+
+		public int? GetItemIndexUnderMouse(Point hitPoint)
+		{
+			if (double.IsNaN(hitPoint.X) || double.IsNaN(hitPoint.Y))
+			{
+				return null;
+			}
+
+			var lvItemAndSelType = _cbListView?.GetItemIndexAtMousePosition(hitPoint) ?? null;
+
+			if (lvItemAndSelType != null)
+			{
+				var result = lvItemAndSelType.Value.Item1;
+				return result;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+
+		//public (int, ColorBandSelectionType)? GetItemIndexAtMousePosition(Point hitPoint)
 
 		#endregion
 

@@ -325,7 +325,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public (CbListViewItem, ColorBandSelectionType)? ItemAtMousePosition(Point hitPoint)
+		public (CbListViewItem, ColorBandSelectionType)? GetItemAtMousePosition(Point hitPoint)
 		{
 			if (TryGetSectionLineIndex(hitPoint, ListViewItems, out var distance, out var cbListViewItemIndex))
 			{
@@ -355,6 +355,36 @@ namespace MSetExplorer
 				return null;
 			}
 		}
+
+		public (int, ColorBandSelectionType)? GetItemIndexAtMousePosition(Point hitPoint)
+		{
+			if (TryGetSectionLineIndex(hitPoint, ListViewItems, out var distance, out var cbListViewItemIndex))
+			{
+				if (Math.Abs(distance) < 6)
+				{
+					return (cbListViewItemIndex, ColorBandSelectionType.Cutoff);
+				}
+				else
+				{
+					var selIndex = distance > 0 ? cbListViewItemIndex + 1 : cbListViewItemIndex;
+
+					if (hitPoint.Y >= _colorBandLayoutViewModel.BlendRectanglesElevation)
+					{
+						return (selIndex, ColorBandSelectionType.Band);
+					}
+					else
+					{
+						return (selIndex, ColorBandSelectionType.Color);
+					}
+				}
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"CbListView. Handling MouseMove. No SectionLine or Rectangle found. The ListViewItems contains {ListViewItems.Count} items.");
+				return null;
+			}
+		}
+
 
 		public void ClearSelectedItems()
 		{
@@ -573,24 +603,24 @@ namespace MSetExplorer
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
 			{
-				// Remove items
-				Debug.WriteLine($"CbListView is handling CollectionChanged: Remove.");
-				var colorBand = e.OldItems?[0] as ColorBand;
-				CheckOldItems(colorBand, e.OldItems);
+				//// Remove items
+				//Debug.WriteLine($"CbListView is handling CollectionChanged: Remove.");
+				//var colorBand = e.OldItems?[0] as ColorBand;
+				//CheckOldItems(colorBand, e.OldItems);
 
-				var lvi = ListViewItems.FirstOrDefault(x => x.ColorBand == colorBand);
-				if (lvi != null)
-				{
-					Debug.WriteLine($"CbListView is removing a ColorBand: {colorBand}");
+				//var lvi = ListViewItems.FirstOrDefault(x => x.ColorBand == colorBand);
+				//if (lvi != null)
+				//{
+				//	Debug.WriteLine($"CbListView is removing a ColorBand: {colorBand}");
 
-					var idx = _colorBandsView.IndexOf(lvi.ColorBand);
+				//	var idx = _colorBandsView.IndexOf(lvi.ColorBand);
 
-					AnimateBandDeletion(lvi.ColorBandIndex);
-				}
-				else
-				{
-					Debug.WriteLine($"CbListView cannot find ColorBand: {colorBand} in the ListViewItems.");
-				}
+				//	AnimateBandDeletion(lvi.ColorBandIndex);
+				//}
+				//else
+				//{
+				//	Debug.WriteLine($"CbListView cannot find ColorBand: {colorBand} in the ListViewItems.");
+				//}
 			}
 		}
 
@@ -864,7 +894,7 @@ namespace MSetExplorer
 
 		#region Animation
 
-		private void AnimateBandDeletion(int index)
+		public void AnimateBandDeletion(int index)
 		{
 			var rateFactor = 100d;
 
@@ -1222,7 +1252,7 @@ namespace MSetExplorer
 		#endregion
 	}
 
-	internal enum ColorBandSetEditOperation
+	public enum ColorBandSetEditOperation
 	{
 		InsertCutoff,
 		DeleteCutoff,

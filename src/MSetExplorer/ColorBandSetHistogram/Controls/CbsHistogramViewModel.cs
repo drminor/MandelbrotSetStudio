@@ -760,6 +760,54 @@ namespace MSetExplorer
 			return true;
 		}
 
+		public bool TestDeleteItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation)
+		{
+			bool result;
+
+			switch (CurrentCbEditMode)
+			{
+				case ColorBandSetEditMode.Cutoffs:
+
+					// Cannot delete the last entry
+
+					colorBandSetEditOperation = ColorBandSetEditOperation.DeleteCutoff;
+					result = colorBandIndex <= _currentColorBandSet.Count - 2;
+					break;
+
+				case ColorBandSetEditMode.Colors:
+					// Cannot delete the last entry
+
+					colorBandSetEditOperation = ColorBandSetEditOperation.DeleteColor;
+					result = colorBandIndex <= _currentColorBandSet.Count - 2;
+					break;
+
+				case ColorBandSetEditMode.Bands:
+
+					colorBandSetEditOperation = ColorBandSetEditOperation.DeleteBand;
+					if (_colorBandsView.Count < 2)
+					{
+						// There is only one ColorBand remaining. 
+						result = false;
+					}
+					else if (colorBandIndex > _currentColorBandSet.Count - 2)
+					{
+						// Cannot delete the last entry
+						result = false;
+					}
+					else
+					{
+						result = true;
+					}
+					break;
+
+				default:
+					throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
+			}
+
+			return result;
+
+		}
+
 		public bool TryDeleteItem(ColorBand colorBand)
 		{
 			//var selectedItems = GetSelectedItems(_currentColorBandSet);
@@ -885,6 +933,16 @@ namespace MSetExplorer
 
 		public void CompleteColorBandRemoval(int index)
 		{
+			var selItem = _currentColorBandSet[index];
+
+			var result = TryDeleteColorBand(selItem);
+
+			if (!result)
+			{
+				Debug.WriteLine("WARNING: Could not CompleteColorBandRemoval.");
+				return;
+			}
+
 			if (index == 0)
 			{
 				var cb = _currentColorBandSet[index];
@@ -909,39 +967,33 @@ namespace MSetExplorer
 			else
 			{
 				_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+			}
 
+			ReportRemoveCurrentItem(index);
+
+			PushCurrentColorBandOnToHistoryCollection();
+			IsDirty = true;
+			UpdatePercentages();
+
+			if (UseRealTimePreview)
+			{
+				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
 			}
 		}
 
-		/*
+		//public int GetIndexOf(ColorBand colorBand)
+		//{
+		//	var result = -1;
+			
+		//	var ff = _currentColorBandSet as IList<ColorBand>;
 
-			//if (index == 0)
-			//{
-			//	var firstLvi = ListViewItems[index + 1];
-			//	firstLvi.ColorBand.PreviousCutoff = 0;
-			//}
-			//else
-			//{
-			//	// Set the on screen representation
-			//	var precedingLvi = ListViewItems[index - 1];
-			//	precedingLvi.Cutoff = lvi.ColorBand.Cutoff;
+		//	if (ff != null)
+		//	{
+		//		result = ff.IndexOf(colorBand);
+		//	}
 
-			//	// update the model
-			//	var precedingColorBand = precedingLvi.ColorBand;
-			//	precedingColorBand.Cutoff = lvi.ColorBand.Cutoff;
-			//	//precedingColorBand.SuccessorStartColor = lvi.ColorBand.StartColor;
-			//}
-
-
-		*/
-
-		[Conditional("DEBUG")]
-		private void ReportRemoveCurrentItem(int index)
-		{
-			var newIndex = _currentColorBandSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
-			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:Removed item at former index: {index}. The new index is: {newIndex}.");
-		}
+		//	return result;
+		//}
 
 		public void ApplyChanges(int newTargetIterations)
 		{
@@ -1613,6 +1665,15 @@ namespace MSetExplorer
 		#endregion
 
 		#region Diagnostics
+
+		[Conditional("DEBUG")]
+
+		private void ReportRemoveCurrentItem(int index)
+		{
+			var newIndex = _currentColorBandSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
+			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:Removed item at former index: {index}. The new index is: {newIndex}.");
+		}
 
 		[Conditional("DEBUG2")]
 		private void ReportSeriesBufferAllocation(long existingLength, long newLength, bool bufferWasPreserved)
