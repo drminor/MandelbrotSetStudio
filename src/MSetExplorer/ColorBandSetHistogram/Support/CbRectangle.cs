@@ -23,9 +23,7 @@ namespace MSetExplorer
 		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
 		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
 
-
 		private static readonly Brush MEDIUM_BLUE_BRUSH = new SolidColorBrush(Colors.MediumBlue);
-
 
 		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
@@ -42,15 +40,15 @@ namespace MSetExplorer
 		// For diagnostics
 		//private static readonly Brush IS_HOVERED_AND_IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.SeaGreen);
 
-		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
 
+		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private SizeDbl _contentScale;
-		private Rect _area;
+		private bool _parentIsFocused;
 
+		private Rect _area;
 		private double _xPosition;
 		private double _width;
-		//private double _cutoff;
 
 		private ColorBandColor _startColor;
 		private ColorBandColor _endColor;
@@ -63,12 +61,9 @@ namespace MSetExplorer
 		private RectangleGeometry _curGeometry;
 		private readonly Shape _curRectanglePath;
 
-
 		private bool _isCurrent;
 		private bool _isSelected;
 		private bool _isUnderMouse;
-
-		private bool _parentIsFocused;
 
 		#endregion
 
@@ -89,11 +84,9 @@ namespace MSetExplorer
 
 			_canvas = colorBandLayoutViewModel.Canvas;
 
+			_area = new Rect(xPosition, 0, width, _colorBandLayoutViewModel.ControlHeight);
 			_xPosition = xPosition;
 			_width = width;
-			//_cutoff = _xPosition + _width;
-
-			_area = new Rect(xPosition, 0, width, _colorBandLayoutViewModel.ControlHeight);
 
 			_startColor = startColor;
 			_endColor = endColor;
@@ -124,7 +117,16 @@ namespace MSetExplorer
 
 		public Path BlendedBandRectangle => (Path)_rectanglePath;
 
-		public ColorBandLayoutViewModel ColorBandLayoutViewModel => _colorBandLayoutViewModel;
+		public ColorBandLayoutViewModel ColorBandLayoutViewModel
+		{
+			get => _colorBandLayoutViewModel;
+			set
+			{
+				_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
+				_colorBandLayoutViewModel = value;
+				_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+			}
+		}
 
 		public ColorBandColor StartColor
 		{
@@ -196,11 +198,8 @@ namespace MSetExplorer
 				if (value != _area)
 				{
 					_area = value;
-					//_width = _cutoff - _xPosition;
-
 					_width = _area.Width;
 					_xPosition = _area.X;
-					//_cutoff = _xPosition + _width;
 
 					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
@@ -215,28 +214,12 @@ namespace MSetExplorer
 				if (value != _xPosition)
 				{
 					_xPosition = value;
-					//_width = _cutoff - _xPosition;
-
 					_area = new Rect(value, _area.Y, Width, _area.Height);
 
 					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
 			}
 		}
-
-		//private double Cutoff
-		//{
-		//	get => _cutoff;
-		//	set
-		//	{
-		//		if (value != _cutoff)
-		//		{
-		//			_cutoff = value;
-		//			//_width = _cutoff - XPosition;
-		//			//Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
-		//		}
-		//	}
-		//}
 
 		public double Width
 		{
@@ -246,7 +229,6 @@ namespace MSetExplorer
 				if (value != _width)
 				{
 					_width = value;
-					//_cutoff = _xPosition + _width;
 					_area = new Rect(_area.X, _area.Y, value, _area.Height);
 
 					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
@@ -281,7 +263,6 @@ namespace MSetExplorer
 				if (value != _isCurrent)
 				{
 					_isCurrent = value;
-					//UpdateSelectionBackground();
 					UpdateCurBackground(IsCurrent);
 				}
 			}
@@ -342,7 +323,6 @@ namespace MSetExplorer
 				{
 					_canvas.Children.Remove(_rectanglePath);
 					_canvas.Children.Remove(_curRectanglePath);
-					//_canvas.Children.Remove(_selRectanglePath);
 				}
 			}
 			catch
@@ -440,8 +420,8 @@ namespace MSetExplorer
 
 		private Rect BuildRectangle(double xPosition, double width, bool isHighLighted, ColorBandLayoutViewModel layout)
 		{
-			var yPosition = layout.BlendRectangesElevation;
-			var height = layout.BlendRectangelsHeight;
+			var yPosition = layout.BlendRectanglesElevation;
+			var height = layout.BlendRectanglesHeight;
 			var rect = BuildRect(xPosition, yPosition, width, height, layout.ContentScale);
 
 			Rect result;

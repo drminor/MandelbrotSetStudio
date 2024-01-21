@@ -2,14 +2,16 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace MSetExplorer
 {
 	internal class CbListViewItem : DependencyObject
 	{
-		private ColorBandSelectionType _selectionType;
-
 		private int _colorBandIndex;
+		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
+
+		private ColorBandSelectionType _selectionType;
 		private bool _isCutoffSelected;
 		private bool _isColorSelected;
 		private bool _isBandSelected;
@@ -22,6 +24,8 @@ namespace MSetExplorer
 		{
 			_colorBandIndex = colorBandIndex;
 			ColorBand = colorBand;
+			_colorBandLayoutViewModel = colorBandLayoutViewModel;
+
 			Name = $"CbListViewItem{nameSuffix}";
 
 			// Build the CbRectangle
@@ -73,7 +77,19 @@ namespace MSetExplorer
 			}
 		}
 
-		public double SectionLinePosition => CbSectionLine.SectionLinePosition;
+		public ColorBandLayoutViewModel ColorBandLayoutViewModel
+		{
+			get => _colorBandLayoutViewModel;
+			set
+			{
+				_colorBandLayoutViewModel = value;
+				CbSectionLine.ColorBandLayoutViewModel = value;
+				CbColorBlock.ColorBandLayoutViewModel = value;
+				CbRectangle.ColorBandLayoutViewModel = value;
+			}
+		}
+
+		public double SectionLinePositionX => CbSectionLine.SectionLinePositionX;
 
 		public bool IsCurrent
 		{
@@ -346,7 +362,23 @@ namespace MSetExplorer
 				return;
 			}
 
-			c.CbSectionLine.XPosition = newValue.Right;
+			if (ScreenTypeHelper.IsDoubleChanged(oldValue.Height, newValue.Height) || ScreenTypeHelper.IsDoubleChanged(oldValue.Y, newValue.Y))
+			{
+				c._colorBandLayoutViewModel.SetElevationAndHeight(newValue.Y, newValue.Height);
+
+				//var y0 = newValue.Y;
+				//var y1 = c._colorBandLayoutViewModel.ColorBlocksElevationPercentage * c._colorBandLayoutViewModel.ControlHeight;
+				//var y2 = c._colorBandLayoutViewModel.IsCurrentIndicatorsElevationPercentage * c._colorBandLayoutViewModel.ControlHeight;
+
+				//var yPoints = new double[] { y0, y1, y2 };
+
+				//c.CbSectionLine.Resize(newValue.Right * c._colorBandLayoutViewModel.ContentScale.Width, yPoints);
+			}
+			else
+			{
+				c.CbSectionLine.XPosition = newValue.Right;
+			}
+
 			c.CbRectangle.Area = newValue;
 			c.CbColorBlock.Area = newValue;
 		}

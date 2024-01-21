@@ -1,13 +1,11 @@
 ﻿using MSS.Types;
 using System;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -97,7 +95,23 @@ namespace MSetExplorer
 
 			KeyDown += HandleKeyDown;
 			PreviewKeyDown += Handle_PreviewKeyDown;
+
+			SizeChanged += HistogramColorBandControl_SizeChanged;
 		}
+
+		private void HistogramColorBandControl_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl is handling the SizeChanged event.");
+
+			if (e.HeightChanged)
+			{
+				if (_cbListView != null)
+				{
+					_cbListView.ControlHeight = ActualHeight;
+				}
+			}
+		}
+
 
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
@@ -277,35 +291,9 @@ namespace MSetExplorer
 				{
 					var currentCbEditMode = CbsHistogramViewModel?.CurrentCbEditMode ?? ColorBandSetEditMode.Bands;
 
-					_cbListView = new CbListView(_canvas, _colorBandsView, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged, HandleCbListViewAnimationCompleted);
+					var elevation = 0; // Our display starts at the the very top of the canvas.
+					_cbListView = new CbListView(_canvas, _colorBandsView, elevation, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged, HandleCbListViewAnimationCompleted);
 				}
-			}
-		}
-
-		private void HandleCbListViewAnimationCompleted(ColorBandSetEditOperation colorBandSetEditOperation, int colorBandIndex)
-		{
-			if (_cbsHistogramViewModel == null)
-			{
-				return;
-			}
-
-			switch (colorBandSetEditOperation)
-			{
-				case ColorBandSetEditOperation.InsertCutoff:
-					break;
-				case ColorBandSetEditOperation.DeleteCutoff:
-					break;
-				case ColorBandSetEditOperation.InsertColor:
-					break;
-				case ColorBandSetEditOperation.DeleteColor:
-					break;
-				case ColorBandSetEditOperation.InsertBand:
-					break;
-				case ColorBandSetEditOperation.DeleteBand:
-					_cbsHistogramViewModel.CompleteColorBandRemoval(colorBandIndex);
-					break;
-				default:
-					break;
 			}
 		}
 	
@@ -589,6 +577,33 @@ namespace MSetExplorer
 		private void HandleCbListViewEditModeChanged(ColorBandSetEditMode colorBandSetEditMode)
 		{
 			CurrentCbEditMode = colorBandSetEditMode;
+		}
+
+		private void HandleCbListViewAnimationCompleted(ColorBandSetEditOperation colorBandSetEditOperation, int colorBandIndex)
+		{
+			if (_cbsHistogramViewModel == null)
+			{
+				return;
+			}
+
+			switch (colorBandSetEditOperation)
+			{
+				case ColorBandSetEditOperation.InsertCutoff:
+					break;
+				case ColorBandSetEditOperation.DeleteCutoff:
+					break;
+				case ColorBandSetEditOperation.InsertColor:
+					break;
+				case ColorBandSetEditOperation.DeleteColor:
+					break;
+				case ColorBandSetEditOperation.InsertBand:
+					break;
+				case ColorBandSetEditOperation.DeleteBand:
+					_cbsHistogramViewModel.CompleteColorBandRemoval(colorBandIndex);
+					break;
+				default:
+					break;
+			}
 		}
 
 		#endregion

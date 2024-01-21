@@ -5,23 +5,18 @@ using System.Windows.Controls;
 
 namespace MSetExplorer
 {
-	public class ColorBandLayoutViewModel : ViewModelBase
+	public class ColorBandLayoutViewModel : ViewModelBase, ICloneable
 	{
 		#region Private Fields
 
-		private const int SECTION_LINES_HEIGHT = 13;
-		private const int COLOR_BLOCKS_HEIGHT = 15;
+		private const int DEFAULT_SECTION_LINES_HEIGHT = 13;
+		private const int DEFAULT_COLOR_BLOCKS_HEIGHT = 15;
+		private const int MINIMUM_BLEND_RECTANGLES_HEIGHT = 12;
 		private const int IS_CURRENT_INDICATORS_HEIGHT = 3;
 
 		private SizeDbl _contentScale;
-
+		private double _elevation;
 		private double _controlHeight;
-		private double _blendRectanglesHeight;
-
-		private double _selectionLinesElevation;
-		private double _colorBlocksElevation;
-		private double _blendRectangesElevation;
-		private double _isCurrentIndicatorsElevation;
 
 		private bool _parentIsFocused;
 
@@ -29,8 +24,10 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandLayoutViewModel(SizeDbl contentScale, double controlHeight, bool parentIsFocused, Canvas canvas, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSetEditMode> requestContextMenuShown)
+		public ColorBandLayoutViewModel(Canvas canvas, SizeDbl contentScale, double elevation, double controlHeight, bool parentIsFocused, IsSelectedChangedCallback isSelectedChangedCallback, Action<int, ColorBandSetEditMode> requestContextMenuShown)
 		{
+			Canvas = canvas;
+
 			if (contentScale.IsNAN() || contentScale.Width == 0)
 			{
 				_contentScale = new SizeDbl(1);
@@ -40,17 +37,12 @@ namespace MSetExplorer
 				_contentScale = new SizeDbl(contentScale.Width, 1);
 			}
 
+			_elevation = elevation;
 			_controlHeight = controlHeight;
-			_blendRectanglesHeight = GetBlendRectanglesHeight(controlHeight);
 
-			_selectionLinesElevation = 0;
-			_colorBlocksElevation = _selectionLinesElevation + SECTION_LINES_HEIGHT;
-			_blendRectangesElevation = _colorBlocksElevation + COLOR_BLOCKS_HEIGHT;
-
-			_isCurrentIndicatorsElevation = _blendRectangesElevation + BlendRectangelsHeight;
+			UpdateElevationsAndHeights(_elevation, _controlHeight);
 
 			_parentIsFocused = parentIsFocused;
-			Canvas = canvas;
 			IsSelectedChangedCallback = isSelectedChangedCallback;
 			RequestContextMenuShown = requestContextMenuShown;
 		}
@@ -60,8 +52,6 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public Canvas Canvas { get; init; }
-		public IsSelectedChangedCallback IsSelectedChangedCallback { get; init; }
-		public Action<int, ColorBandSetEditMode> RequestContextMenuShown { get; init; }
 
 		public SizeDbl ContentScale
 		{
@@ -77,6 +67,21 @@ namespace MSetExplorer
 			}
 		}
 
+		public double Elevation
+		{
+			get => _elevation;
+			set
+			{
+				if (value != _elevation)
+				{
+					_elevation = value;
+
+					UpdateElevationsAndHeights(Elevation, ControlHeight);
+					OnPropertyChanged();
+				}
+			}
+		}
+		
 		public double ControlHeight
 		{
 			get => _controlHeight;
@@ -87,48 +92,20 @@ namespace MSetExplorer
 				{
 					_controlHeight = value;
 
-					BlendRectangelsHeight = GetBlendRectanglesHeight(_controlHeight);
+					UpdateElevationsAndHeights(Elevation, ControlHeight);
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public double SectionLinesHeight => SECTION_LINES_HEIGHT;
-
-		public double ColorBlocksHeight => COLOR_BLOCKS_HEIGHT;
-
-		public double BlendRectangelsHeight
-		{
-			get => _blendRectanglesHeight;
-			set
-			{
-				if (value != _blendRectanglesHeight)
-				{
-					_blendRectanglesHeight = value;
-					IsCurrentIndicatorsElevation = _blendRectangesElevation + BlendRectangelsHeight;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public double IsCurrentIndicatorsHeight => IS_CURRENT_INDICATORS_HEIGHT;
-
-		public double SectionLinesElevation => _selectionLinesElevation;
-		public double ColorBlocksElevation => _colorBlocksElevation;
-		public double BlendRectangesElevation => _blendRectangesElevation;
-
-		public double IsCurrentIndicatorsElevation
-		{
-			get => _isCurrentIndicatorsElevation;
-			set
-			{
-				if (value != _isCurrentIndicatorsElevation)
-				{
-					_isCurrentIndicatorsElevation = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		public double SectionLinesElevation { get; private set; }
+		public double SectionLinesHeight { get; private set;}
+		public double ColorBlocksElevation { get; private set; }
+		public double ColorBlocksHeight { get; private set; }
+		public double BlendRectanglesElevation { get; private set; }
+		public double BlendRectanglesHeight { get; private set; }
+		public double IsCurrentIndicatorsElevation { get; private set; }
+		public double IsCurrentIndicatorsHeight { get; private set; }
 
 		public bool ParentIsFocused
 		{
@@ -143,16 +120,71 @@ namespace MSetExplorer
 			}
 		}
 
+		public IsSelectedChangedCallback IsSelectedChangedCallback { get; init; }
+		public Action<int, ColorBandSetEditMode> RequestContextMenuShown { get; init; }
+
+		#endregion
+
+		#region Public Methods
+
+		public void SetElevationAndHeight(double elevation, double height)
+		{
+			UpdateElevationsAndHeights(elevation, height);
+		}
+
+		object ICloneable.Clone() => Clone();
+
+		public ColorBandLayoutViewModel Clone()
+		{
+			var result = new ColorBandLayoutViewModel(Canvas, ContentScale, Elevation, ControlHeight, ParentIsFocused, IsSelectedChangedCallback, RequestContextMenuShown);
+			return result;
+		}
+
 		#endregion
 
 		#region Private Methods
 
-		private double GetBlendRectanglesHeight(double controlHeight)
+		private void UpdateElevationsAndHeights(double elevation, double controlHeight)
 		{
-			var result = controlHeight - (SECTION_LINES_HEIGHT + COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT);
-			result = Math.Max(result, 0);
+			SectionLinesElevation = elevation;
 
-			return result;
+			var firstThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_SECTION_LINES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
+			var secondThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
+			var thirdThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
+
+			if (controlHeight >= firstThreshold)
+			{
+				SectionLinesHeight = DEFAULT_SECTION_LINES_HEIGHT;
+				ColorBlocksHeight = DEFAULT_COLOR_BLOCKS_HEIGHT;
+				IsCurrentIndicatorsHeight = IS_CURRENT_INDICATORS_HEIGHT;
+
+				BlendRectanglesHeight = controlHeight - (SectionLinesHeight + ColorBlocksHeight + IsCurrentIndicatorsHeight);
+			}
+			else if (controlHeight >= secondThreshold)
+			{
+				BlendRectanglesHeight = MINIMUM_BLEND_RECTANGLES_HEIGHT;
+				SectionLinesHeight = controlHeight - (ColorBlocksHeight + BlendRectanglesHeight + IsCurrentIndicatorsHeight);
+				ColorBlocksHeight = DEFAULT_COLOR_BLOCKS_HEIGHT;
+				IsCurrentIndicatorsHeight = IS_CURRENT_INDICATORS_HEIGHT;
+			}
+			else if (controlHeight >= thirdThreshold)
+			{
+				SectionLinesHeight = 0;
+				BlendRectanglesHeight = MINIMUM_BLEND_RECTANGLES_HEIGHT;
+				ColorBlocksHeight = controlHeight - (BlendRectanglesHeight + IsCurrentIndicatorsHeight);
+				IsCurrentIndicatorsHeight = IS_CURRENT_INDICATORS_HEIGHT;
+			}
+			else
+			{
+				SectionLinesHeight = 0;
+				ColorBlocksHeight = 0;
+				IsCurrentIndicatorsHeight = 0;
+				BlendRectanglesHeight = controlHeight - 2;
+			}
+
+			ColorBlocksElevation = SectionLinesElevation + SectionLinesHeight;
+			BlendRectanglesElevation = ColorBlocksElevation + ColorBlocksHeight;
+			IsCurrentIndicatorsElevation = BlendRectanglesElevation + BlendRectanglesHeight;
 		}
 
 		#endregion

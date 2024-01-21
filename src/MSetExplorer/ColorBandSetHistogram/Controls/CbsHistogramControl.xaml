@@ -19,7 +19,7 @@
     </UserControl.CommandBindings>
 
     <Grid Background="Transparent">
-        <Border BorderThickness="0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <Grid Background="Transparent">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="160"/>

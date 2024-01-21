@@ -39,9 +39,13 @@ namespace MSetExplorer
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
-		private double _controlHeight;
-		private double _xPosition;
 		private double _scaleX;
+
+		private double _xPosition;
+
+		private double _controlHeight;
+
+		//private double[] _yPoints;
 
 		private double _selectionLinePosition;
 		private double _opacity;
@@ -60,7 +64,6 @@ namespace MSetExplorer
 
 		private bool _isSelected;
 		private bool _isUnderMouse;
-		private bool _parentIsFocused;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -80,11 +83,11 @@ namespace MSetExplorer
 			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 			
 			_canvas = colorBandLayoutViewModel.Canvas;
-			_controlHeight = _colorBandLayoutViewModel.ControlHeight;
+			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
 			_xPosition = xPosition;
 
-			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
-			_parentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
+			_controlHeight = _colorBandLayoutViewModel.ControlHeight;
+			//_yPoints = new double[3] { _colorBandLayoutViewModel.Elevation, _colorBandLayoutViewModel.ColorBlocksElevation, _colorBandLayoutViewModel.IsCurrentIndicatorsElevation };
 
 			_selectionLinePosition = _xPosition * _scaleX;
 			_originalSectionLinePosition = _selectionLinePosition;
@@ -121,6 +124,17 @@ namespace MSetExplorer
 
 		public int ColorBandIndex { get; set; }
 
+		public ColorBandLayoutViewModel ColorBandLayoutViewModel
+		{
+			get => _colorBandLayoutViewModel;
+			set
+			{
+				_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
+				_colorBandLayoutViewModel = value;
+				_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+			}
+		}
+
 		public double ScaleX
 		{
 			get => _scaleX;
@@ -130,7 +144,7 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsDoubleChanged(value, _scaleX))
 				{
 					_scaleX = value;
-					SectionLinePosition = _xPosition * _scaleX;
+					SectionLinePositionX = _xPosition * _scaleX;
 				}
 			}
 		}
@@ -144,12 +158,12 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsDoubleChanged(value, _xPosition))
 				{
 					_xPosition = value;
-					SectionLinePosition = _xPosition * _scaleX;
+					SectionLinePositionX = _xPosition * _scaleX;
 				}
 			}
 		}
 
-		public double SectionLinePosition
+		public double SectionLinePositionX
 		{
 			get => _selectionLinePosition;
 			set
@@ -160,7 +174,7 @@ namespace MSetExplorer
 					_dragLine.X1 = value;
 					_dragLine.X2 = value;
 
-					_topArrow.Points = BuildTopAreaPoints(_selectionLinePosition, _colorBandLayoutViewModel);
+					_topArrow.Points = BuildTopAreaPoints(_selectionLinePosition, _colorBandLayoutViewModel.SectionLinesElevation, _colorBandLayoutViewModel.SectionLinesHeight);
 				}
 			}
 		}
@@ -173,10 +187,25 @@ namespace MSetExplorer
 				if (value != _controlHeight)
 				{
 					_controlHeight = value;
-					Resize(_colorBandLayoutViewModel);
+
+					Resize(SectionLinePositionX, _colorBandLayoutViewModel);
 				}
 			}
 		}
+
+		//public double[] YPoints
+		//{
+		//	get => _yPoints;
+		//	set
+		//	{
+		//		if (value != _yPoints)
+		//		{
+		//			_yPoints = value;
+
+		//			Resize(SectionLinePositionX, _yPoints);
+		//		}
+		//	}
+		//}
 
 		public double Opacity
 		{
@@ -201,7 +230,7 @@ namespace MSetExplorer
 				if (value != _isSelected)
 				{
 					_isSelected = value;
-					_topArrow.Fill = GetTopArrowFill(_isSelected, ParentIsFocused);
+					_topArrow.Fill = GetTopArrowFill(_isSelected, _colorBandLayoutViewModel.ParentIsFocused);
 				}
 			}
 		}
@@ -215,25 +244,8 @@ namespace MSetExplorer
 				{
 					_isUnderMouse = value;
 
-					//_topArrow.Fill = GetTopArrowFill(_isSelected, ParentIsFocused);
-					//_dragLine.Stroke = GetDragLineStroke(_isUnderMouse);
-					_topArrow.Stroke = GetTopArrowStroke(ParentIsFocused, IsUnderMouse);
-				}
-			}
-		}
-
-		public bool ParentIsFocused
-		{
-			get => _parentIsFocused;
-
-			set
-			{
-				if (value != _parentIsFocused)
-				{
-					_parentIsFocused = value;
-					//_topArrow.Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden;
-					_topArrow.Fill = GetTopArrowFill(IsSelected, ParentIsFocused);
-					_topArrow.Stroke = GetTopArrowStroke(ParentIsFocused, IsUnderMouse);
+					_dragLine.Stroke = GetDragLineStroke(_isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
+					_topArrow.Stroke = GetTopArrowStroke(IsUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 				}
 			}
 		}
@@ -241,6 +253,16 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public void Resize(double sectionLinePosition, ColorBandLayoutViewModel layout)
+		{
+			_topArrow.Points = BuildTopAreaPoints(sectionLinePosition, layout.SectionLinesElevation, layout.SectionLinesHeight);
+
+			_dragLine.X1 = sectionLinePosition;
+			_dragLine.X2 = sectionLinePosition;
+			_dragLine.Y1 = layout.ColorBlocksElevation;
+			_dragLine.Y2 = layout.IsCurrentIndicatorsElevation;
+		}
 
 		public void StartDrag(double leftWidth, double rightWidth, bool updatingPrevious)
 		{
@@ -252,7 +274,7 @@ namespace MSetExplorer
 			_leftWidth = leftWidth;
 			_rightWidth = rightWidth;
 			_updatingPrevious = updatingPrevious;
-			_originalSectionLinePosition = SectionLinePosition;
+			_originalSectionLinePosition = SectionLinePositionX;
 
 			DragState = DragState.Begun;
 		}
@@ -359,7 +381,7 @@ namespace MSetExplorer
 			if (e.PropertyName == nameof(ColorBandLayoutViewModel.ContentScale))
 			{
 				ScaleX = _colorBandLayoutViewModel.ContentScale.Width;
-				_originalSectionLinePosition = SectionLinePosition;
+				_originalSectionLinePosition = SectionLinePositionX;
 			}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
 			{
@@ -367,7 +389,9 @@ namespace MSetExplorer
 			}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ParentIsFocused))
 			{
-				ParentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
+				_topArrow.Fill = GetTopArrowFill(IsSelected, _colorBandLayoutViewModel.ParentIsFocused);
+				_topArrow.Stroke = GetTopArrowStroke(IsUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
+				_dragLine.Stroke = GetDragLineStroke(IsUnderMouse, _colorBandLayoutViewModel.ParentIsFocused); ;
 			}
 		}
 
@@ -393,7 +417,7 @@ namespace MSetExplorer
 			if (IsNewPositionOk(amount))
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSectionLinePosition}.");
-				SectionLinePosition = pos.X;
+				SectionLinePositionX = pos.X;
 
 				SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbSectionLineDragOperation.Move));
 			}
@@ -474,11 +498,11 @@ namespace MSetExplorer
 
 		private bool CompleteDrag()
 		{
-			var distance = Math.Abs(SectionLinePosition - _originalSectionLinePosition);
+			var distance = Math.Abs(SectionLinePositionX - _originalSectionLinePosition);
 
 			if (distance > MIN_SEL_DISTANCE)
 			{
-				SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, SectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.Complete));
+				SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, SectionLinePositionX, _updatingPrevious, CbSectionLineDragOperation.Complete));
 				DragState = DragState.None;
 				return true;
 			}
@@ -491,9 +515,9 @@ namespace MSetExplorer
 
 		private void CancelDragInternal()
 		{
-			if (SectionLinePosition != _originalSectionLinePosition)
+			if (SectionLinePositionX != _originalSectionLinePosition)
 			{
-				SectionLinePosition = _originalSectionLinePosition;
+				SectionLinePositionX = _originalSectionLinePosition;
 			}
 
 			if (DragState == DragState.InProcess)
@@ -541,10 +565,10 @@ namespace MSetExplorer
 			var result = new Line()
 			{
 				Fill = Brushes.Transparent,
-				Stroke = DEFAULT_STROKE,	//GetDragLineStroke(isUnderMounse),
+				Stroke = GetDragLineStroke(isUnderMounse, layout.ParentIsFocused),
 				StrokeThickness = 1.0,
-				Y1 = layout.BlendRectangesElevation,
-				Y2 = layout.ColorBlocksElevation + layout.ColorBlocksHeight + layout.BlendRectangelsHeight,
+				Y1 = layout.BlendRectanglesElevation,
+				Y2 = layout.ColorBlocksElevation + layout.ColorBlocksHeight + layout.BlendRectanglesHeight,
 				X1 = selectionLinePosition,
 				X2 = selectionLinePosition,
 			};
@@ -557,46 +581,37 @@ namespace MSetExplorer
 			var result = new Polygon()
 			{
 				Fill = GetTopArrowFill(isSelected, layout.ParentIsFocused),
-				Stroke = GetTopArrowStroke(layout.ParentIsFocused, isUnderMouse),
+				Stroke = GetTopArrowStroke(isUnderMouse, layout.ParentIsFocused),
 				StrokeThickness = STROKE_THICKNESS,
-				Points = BuildTopAreaPoints(selectionLinePosition, layout)
-
-				//Visibility = _parentIsFocused ? Visibility.Visible : Visibility.Hidden
+				Points = BuildTopAreaPoints(selectionLinePosition, layout.SectionLinesElevation, layout.SectionLinesHeight)
 			};
 
 			return result;
 		}
 
-		private PointCollection BuildTopAreaPoints(double xPosition, ColorBandLayoutViewModel layout)
+		private PointCollection BuildTopAreaPoints(double sectionLinePosition, double y0, double height)
 		{
 			var points = new PointCollection()
 			{
-				new Point(xPosition, layout.SectionLinesHeight),				// The bottom of the arrow is positioned at the top of the band display
-				new Point(xPosition - _topArrowHalfWidth, layout.SectionLinesElevation),	// Top, left is at the top of the control
-				new Point(xPosition + _topArrowHalfWidth, layout.SectionLinesElevation),	// Top, right is at the top of the control and leaning forward into the next band
-				//new Point(xPosition, 0),	// Top, right is at the top of the control
+				new Point(sectionLinePosition, y0 + height),				// Bottom
+				new Point(sectionLinePosition - _topArrowHalfWidth, y0),	// Top, left
+				new Point(sectionLinePosition + _topArrowHalfWidth, y0),	// Top, right
 			};
 
 			return points;
-		}
-
-		private void Resize(ColorBandLayoutViewModel layout)
-		{
-			_dragLine.Y1 = layout.ColorBlocksElevation;
-			_dragLine.Y2 = layout.ColorBlocksElevation + layout.ColorBlocksHeight + layout.BlendRectangelsHeight;
 		}
 
 		#endregion
 
 		#region Private Methods - IsCurrent / IsSelected State
 
-		//private Brush GetDragLineStroke(bool isUnderMouse)
-		//{
-		//	var result = DEFAULT_STROKE; // isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
-		//	return result;
-		//}
+		private Brush GetDragLineStroke(bool isUnderMouse, bool parentIsFocused)
+		{
+			var result = DEFAULT_STROKE; // parentIsFocused && isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
+			return result;
+		}
 
-		private Brush GetTopArrowStroke(bool parentIsFocused, bool isUnderMouse)
+		private Brush GetTopArrowStroke(bool isUnderMouse, bool parentIsFocused)
 		{
 			var result = parentIsFocused && isUnderMouse ? IS_HOVERED_STROKE : DEFAULT_STROKE;
 			return result;

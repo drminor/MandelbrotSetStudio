@@ -44,20 +44,20 @@ namespace MSetExplorer
 		// For diagnostics
 		//private static readonly Brush IS_HOVERED_AND_IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.SeaGreen);
 
-		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private Canvas _canvas;
+		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 
 		private SizeDbl _contentScale;
-		private Rect _area;
+		private bool _parentIsFocused;
 
+		private Rect _area;
 		private double _xPosition;
 		private double _width;
-		private double _opacity;
-		//private double _cutoff;
 
 		private ColorBandColor _startColor;
 		private ColorBandColor _endColor;
 		private bool _blend;
+		private double _opacity;
 
 		private RectangleGeometry _geometry;
 		private readonly Shape _rectanglePath;
@@ -71,7 +71,6 @@ namespace MSetExplorer
 		private bool _isSelected;
 		private bool _isUnderMouse;
 
-		private bool _parentIsFocused;
 
 		#endregion
 
@@ -96,7 +95,6 @@ namespace MSetExplorer
 			_xPosition = xPosition;
 			_width = width;
 			_opacity = 1.0;
-			//_cutoff = _xPosition + _width;
 
 			_startColor = startColor;
 			_endColor = endColor;
@@ -132,6 +130,17 @@ namespace MSetExplorer
 		public RectangleGeometry RectangleGeometry => _geometry;
 
 		public Path ColorBlocksRectangle => (Path)_rectanglePath;
+
+		public ColorBandLayoutViewModel ColorBandLayoutViewModel
+		{
+			get => _colorBandLayoutViewModel;
+			set
+			{
+				_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
+				_colorBandLayoutViewModel = value;
+				_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+			}
+		}
 
 		public ColorBandColor StartColor
 		{
@@ -196,11 +205,8 @@ namespace MSetExplorer
 				if (value != _area)
 				{
 					_area = value;
-					//_width = _cutoff - _xPosition;
-
 					_width = _area.Width;
 					_xPosition = _area.X;
-					//_cutoff = _xPosition + _width;
 
 					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
@@ -215,8 +221,6 @@ namespace MSetExplorer
 				if (value != _xPosition)
 				{
 					_xPosition = value;
-					//_width = _cutoff - _xPosition;
-
 					_area = new Rect(value, _area.Y, Width, _area.Height);
 
 					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
@@ -232,8 +236,6 @@ namespace MSetExplorer
 				if (value != _width)
 				{
 					_width = value;
-					//_cutoff = _xPosition + _width;
-
 					_area = new Rect(_area.X, _area.Y, value, _area.Height);
 					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 				}
@@ -461,6 +463,11 @@ namespace MSetExplorer
 
 		private Rect BuildColorBlockStart(Rect container, ColorBandLayoutViewModel layout)
 		{
+			if (container.Height < 7 || container.Width < 3)
+			{
+				return new Rect();
+			}
+
 			var yPosition = layout.ColorBlocksElevation + 3;
 			var height = layout.ColorBlocksHeight - 6;
 
@@ -472,6 +479,11 @@ namespace MSetExplorer
 
 		private Rect BuildColorBlockEnd(Rect container, Rect block1Rect)
 		{
+			if (container.Height < 7 || container.Width < 11)
+			{
+				return new Rect();
+			}
+
 			var yPosition = block1Rect.Y;
 			var height = block1Rect.Height;
 
@@ -485,7 +497,6 @@ namespace MSetExplorer
 		{
 			double left;
 			double width;
-
 
 			if (containerWidth > 33)
 			{

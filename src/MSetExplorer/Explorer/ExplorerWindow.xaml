@@ -240,7 +240,7 @@
         </Grid>
 
         <!-- Histogram -->
-        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" x:Name="botRow" BorderThickness="0" HorizontalAlignment="Stretch" Height="242" Margin="0,0,5,5" Visibility="Visible">
+        <Border Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" x:Name="botRow" BorderThickness="0.75" BorderBrush="Indigo" HorizontalAlignment="Stretch" Height="242" Margin="0,0,5,5" Visibility="Visible">
 
             <local:CbsHistogramControl x:Name="cbsHistogram1" IsTabStop="False"/>
 
