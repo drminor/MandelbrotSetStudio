@@ -933,6 +933,7 @@ namespace MSetExplorer
 
 		public void CompleteColorBandRemoval(int index)
 		{
+			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorBandRemoval has been callled.");
 			var selItem = _currentColorBandSet[index];
 
 			var result = TryDeleteColorBand(selItem);
@@ -969,7 +970,7 @@ namespace MSetExplorer
 				_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
 			}
 
-			ReportRemoveCurrentItem(index);
+			Debug.WriteLine($"ColorBandSetViewModel. After ColorBandRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
 			PushCurrentColorBandOnToHistoryCollection();
 			IsDirty = true;
@@ -979,6 +980,8 @@ namespace MSetExplorer
 			{
 				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
 			}
+
+			ReportRemoveCurrentItem(index);
 		}
 
 		//public int GetIndexOf(ColorBand colorBand)
@@ -1672,7 +1675,7 @@ namespace MSetExplorer
 		{
 			var newIndex = _currentColorBandSet.IndexOf((ColorBand)ColorBandsView.CurrentItem);
 			//Debug.WriteLine($"Removed item at former index: {idx}. The new index is: {newIndex}. The view is {GetViewAsString()}\nOur model is {GetModelAsString()}");
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:Removed item at former index: {index}. The new index is: {newIndex}.");
+			Debug.WriteLine($"ColorBandSetViewModel:Removed item at former index: {index}. The new index is: {newIndex}. The View's CurrentPosition is {ColorBandsView.CurrentPosition}.");
 		}
 
 		[Conditional("DEBUG2")]

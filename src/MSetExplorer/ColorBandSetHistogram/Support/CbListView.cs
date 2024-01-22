@@ -28,7 +28,6 @@ namespace MSetExplorer
 		private ColorBandSetEditMode _currentCbEditMode;
 		private ContextMenuDisplayRequest _displayContextMenu;
 		private Action<ColorBandSetEditMode> _currentCbEditModeChanged;
-		private Action<ColorBandSetEditOperation, int> _animationCompleted;
 
 		private int _currentColorBandIndex;
 
@@ -47,7 +46,7 @@ namespace MSetExplorer
 		#region Constructor
 
 		public CbListView(Canvas canvas, ListCollectionView colorBandsView, double elevation, double controlHeight, SizeDbl contentScale, bool parentIsFocused, ColorBandSetEditMode currentCbEditMode, 
-			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged, Action<ColorBandSetEditOperation, int> animationCompleted)
+			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged)
 		{
 			_canvas = canvas;
 
@@ -64,7 +63,7 @@ namespace MSetExplorer
 			_currentCbEditMode = currentCbEditMode;
 			_displayContextMenu = displayContextMenu;
 			_currentCbEditModeChanged = currentCbEditModeChanged;
-			_animationCompleted = animationCompleted;
+			//_animationCompleted = animationCompleted;
 
 			ListViewItems = new List<CbListViewItem>();
 			_currentColorBandIndex = 0;
@@ -927,18 +926,16 @@ namespace MSetExplorer
 
 		#region Animation
 
-		public void AnimateBandDeletion(int index)
+		public void AnimateBandDeletion(Action<int> onAnimationComplete, int index)
 		{
 			var rateFactor = 100d;
 
 			var itemBeingRemoved = ListViewItems[index];
-			itemBeingRemoved.ColorBandLayoutViewModel = itemBeingRemoved.ColorBandLayoutViewModel.Clone();
+
+			var copy = itemBeingRemoved.ColorBandLayoutViewModel.Clone();
+			itemBeingRemoved.ColorBandLayoutViewModel = copy;
 
 			_storyBoardDetails1.AddMakeTransparent(itemBeingRemoved.Name, TimeSpan.FromMilliseconds(5 * rateFactor), TimeSpan.Zero);
-
-			//var layout = _colorBandLayoutViewModel;
-			//var area = itemBeingRemoved.Area;
-			//var curVal = new Rect(area.X, layout.Elevation, area.Width, layout.ControlHeight);
 
 			var curVal = itemBeingRemoved.Area;
 			var newSize = new Size(curVal.Size.Width * 0.25, curVal.Size.Height * 0.25);
@@ -964,23 +961,20 @@ namespace MSetExplorer
 				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(3 * rateFactor), beginTime: TimeSpan.FromMilliseconds(4 * rateFactor));
 			}
 
-			_storyBoardDetails1.Begin(AfterAnimateDeletion, index);
+			_storyBoardDetails1.Begin(AfterAnimateDeletion, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateDeletion(int index)
+		private void AfterAnimateDeletion(Action<int> onAnimationComplete, int index)
 		{
-			Debug.WriteLine("AnimateDeletion StoryBoard has completed.");
-
-			if (index == 0)
-			{
-				Debug.WriteLine("Handling AfterAnimateDeletion and the index = 0.");
-			}
+			Debug.WriteLine("BandDeletion Animation has completed.");
 
 			var lvi = ListViewItems[index];
 
 			// Update the SectionLine's position
 			if (index == 0)
 			{
+				Debug.WriteLine("Handling AfterAnimateDeletion and the index = 0.");
+
 				var firstLvi = ListViewItems[index + 1];
 				firstLvi.CbSectionLine.XPosition = 0;
 			}
@@ -990,10 +984,57 @@ namespace MSetExplorer
 				precedingLvi.CbSectionLine.XPosition = lvi.ColorBand.Cutoff;
 			}
 
-			_animationCompleted(ColorBandSetEditOperation.DeleteBand, index);
+			//_animationCompleted(ColorBandSetEditOperation.DeleteBand, index);
+
+			onAnimationComplete(index);
 
 			RemoveListViewItem(lvi);
 			Reindex(lvi.ColorBandIndex);
+
+			_ = SynchronizeCurrentItem();
+		}
+
+		// Returns true is any update was made
+		private bool SynchronizeCurrentItem()
+		{
+			var result = false;
+
+			if (_colorBandsView.IsCurrentAfterLast)
+			{
+				_colorBandsView.MoveCurrentToLast();
+			}
+
+			if (_colorBandsView.IsCurrentBeforeFirst)
+			{
+				_colorBandsView.MoveCurrentToFirst();
+			}
+
+			var indexOfCurrentItem = _colorBandsView.CurrentPosition;
+
+			var foundCItem = false;
+			for (var i = 0; i < ListViewItems.Count; i++)
+			{
+				if (ListViewItems[i].IsCurrent)
+				{
+					if (i != indexOfCurrentItem)
+					{
+						ListViewItems[i].IsCurrent = false;
+						result = true;
+					}
+					else
+					{
+						foundCItem = true;
+					}
+				}
+			}
+
+			if (!foundCItem)
+			{
+				ListViewItems[indexOfCurrentItem].IsCurrent = true;
+				result = true;
+			}
+
+			return result;
 		}
 
 		#endregion

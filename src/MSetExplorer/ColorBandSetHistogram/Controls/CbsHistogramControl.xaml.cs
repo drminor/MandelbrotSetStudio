@@ -405,7 +405,7 @@ namespace MSetExplorer
 
 						case ColorBandSetEditOperation.DeleteBand:
 
-							HistogramColorBandControl1.AnimateBandDeletion(colorBandIndex.Value);
+							HistogramColorBandControl1.AnimateBandDeletion(_vm.CompleteColorBandRemoval, colorBandIndex.Value);
 							break;
 
 						default:

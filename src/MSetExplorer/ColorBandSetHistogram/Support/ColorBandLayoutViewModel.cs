@@ -1,6 +1,5 @@
 ﻿using MSS.Types;
 using System;
-using System.Security.Policy;
 using System.Windows.Controls;
 
 namespace MSetExplorer
@@ -130,6 +129,8 @@ namespace MSetExplorer
 		public void SetElevationAndHeight(double elevation, double height)
 		{
 			UpdateElevationsAndHeights(elevation, height);
+			OnPropertyChanged(nameof(ControlHeight));
+			OnPropertyChanged(nameof(Elevation));
 		}
 
 		object ICloneable.Clone() => Clone();
@@ -146,6 +147,9 @@ namespace MSetExplorer
 
 		private void UpdateElevationsAndHeights(double elevation, double controlHeight)
 		{
+			_elevation = elevation;
+			_controlHeight = controlHeight;
+
 			SectionLinesElevation = elevation;
 
 			var firstThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_SECTION_LINES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;

@@ -3,12 +3,14 @@ using System.Security.AccessControl;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Media.Animation;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
 	public class StoryboardDetails
 	{
-		private Action<int>? _completionCallback;
+		private Action<Action<int>, int>? _completionCallback;
+		private Action<int>? _onAnimationComplete;
 		private int _callbackIndex;
 
 		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject)
@@ -101,9 +103,10 @@ namespace MSetExplorer
 			return Storyboard.Children.Count;
 		}
 
-		public void Begin(Action<int> completionCallback, int index)
+		public void Begin(Action<Action<int>, int> completionCallback, Action<int> onAnimationComplete, int index)
 		{
 			_completionCallback = completionCallback;
+			_onAnimationComplete = onAnimationComplete;
 			_callbackIndex = index;
 			Storyboard.Begin(ContainingObject);
 		}
@@ -116,9 +119,14 @@ namespace MSetExplorer
 		{
 			Storyboard.Children.Clear();
 
+			if (_onAnimationComplete == null)
+			{
+				throw new InvalidOperationException("The provided onAnimationComplete method is null as the StoryBoard_Completed callback is called.");
+			}
+
 			if (_completionCallback != null)
 			{
-				_completionCallback(_callbackIndex);
+				_completionCallback(_onAnimationComplete, _callbackIndex);
 			}
 		}
 

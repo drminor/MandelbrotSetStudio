@@ -17,7 +17,7 @@ namespace MSetExplorer
 		private bool _isColorSelected;
 		private bool _isBandSelected;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#region Constructor
 
@@ -36,16 +36,16 @@ namespace MSetExplorer
 
 			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 
-			CbRectangle = new CbRectangle(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, colorBandLayoutViewModel);
+			CbRectangle = new CbRectangle(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
 
 			// Build the Selection Line
 			var selectionLinePosition = colorBand.Cutoff;
-			CbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, colorBandLayoutViewModel, sectionLineMovedCallback);
+			CbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, _colorBandLayoutViewModel, sectionLineMovedCallback);
 
 			// Build the Color Block
-			CbColorBlock = new CbColorBlock(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, colorBandLayoutViewModel);
+			CbColorBlock = new CbColorBlock(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
 
-			Area = new Rect(xPosition, 0, bandWidth, colorBandLayoutViewModel.ControlHeight);
+			Area = new Rect(xPosition, _colorBandLayoutViewModel.Elevation, bandWidth, _colorBandLayoutViewModel.ControlHeight);
 
 			_selectionType = 0;
 			_isCutoffSelected = false;
@@ -90,9 +90,9 @@ namespace MSetExplorer
 
 				Area = new Rect(CbRectangle.XPosition, _colorBandLayoutViewModel.Elevation, CbRectangle.Width, _colorBandLayoutViewModel.ControlHeight);
 
-				CbSectionLine.ColorBandLayoutViewModel = value;
-				CbColorBlock.ColorBandLayoutViewModel = value;
-				CbRectangle.ColorBandLayoutViewModel = value;
+				CbSectionLine.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
+				CbColorBlock.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
+				CbRectangle.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
 			}
 		}
 
@@ -382,11 +382,8 @@ namespace MSetExplorer
 				Debug.WriteLineIf(c._useDetailedDebug, $"Setting the Elevation and Height for item at {c.ColorBandIndex} to {newValue.Y} and {newValue.Height}.");
 				c._colorBandLayoutViewModel.SetElevationAndHeight(newValue.Y, newValue.Height);
 			}
-			else
-			{
-				c.CbSectionLine.XPosition = newValue.Right;
-			}
 
+			c.CbSectionLine.XPosition = newValue.Right;
 			c.CbRectangle.Area = newValue;
 			c.CbColorBlock.Area = newValue;
 		}
