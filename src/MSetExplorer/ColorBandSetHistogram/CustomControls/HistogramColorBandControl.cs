@@ -11,6 +11,7 @@ namespace MSetExplorer
 {
 	public delegate void IsSelectedChangedCallback(int colorBandIndex, ColorBandSetEditMode editMode);
 	internal delegate void ContextMenuDisplayRequest(CbListViewItem cbsListViewItem, ColorBandSetEditMode editMode);
+	internal delegate void SectionLineMovedCallback(CbSectionLineMovedEventArgs cbSectionLineMovedEventArgs);
 
 	public class HistogramColorBandControl : ContentControl, IContentScaler
 	{
@@ -96,21 +97,21 @@ namespace MSetExplorer
 			KeyDown += HandleKeyDown;
 			PreviewKeyDown += Handle_PreviewKeyDown;
 
-			SizeChanged += HistogramColorBandControl_SizeChanged;
+			//SizeChanged += HistogramColorBandControl_SizeChanged;
 		}
 
-		private void HistogramColorBandControl_SizeChanged(object sender, SizeChangedEventArgs e)
-		{
-			Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl is handling the SizeChanged event.");
+		//private void HistogramColorBandControl_SizeChanged(object sender, SizeChangedEventArgs e)
+		//{
+		//	Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl is handling the SizeChanged event.");
 
-			if (e.HeightChanged)
-			{
-				if (_cbListView != null)
-				{
-					_cbListView.ControlHeight = ActualHeight;
-				}
-			}
-		}
+		//	if (e.HeightChanged)
+		//	{
+		//		if (_cbListView != null)
+		//		{
+		//			_cbListView.ControlHeight = ActualHeight;
+		//		}
+		//	}
+		//}
 
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{

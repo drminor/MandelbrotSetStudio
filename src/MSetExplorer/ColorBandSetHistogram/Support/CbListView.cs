@@ -11,7 +11,6 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
-using System.Xml.Linq;
 
 namespace MSetExplorer
 {
@@ -533,10 +532,8 @@ namespace MSetExplorer
 			cbSectionLine.StartDrag(gLeft.Rect.Width, gRight.Rect.Width, updatingPrevious);
 		}
 
-		private void HandleSectionLineMoved(object? sender, CbSectionLineMovedEventArgs e)
+		private void SectionLineWasMoved(CbSectionLineMovedEventArgs e)
 		{
-			CheckSectionLineBeingMoved(sender, e);
-
 			if (e.Operation == CbSectionLineDragOperation.NotStarted)
 			{
 				Debug.WriteIf(_useDetailedDebug, $"CbListView. Drag not started. CbRectangle: {CurrentColorBandIndex} is now current.");
@@ -568,6 +565,42 @@ namespace MSetExplorer
 					throw new InvalidOperationException($"The {e.Operation} CbSectionLineDragOperation is not supported.");
 			}
 		}
+
+		//private void HandleSectionLineMoved(object? sender, CbSectionLineMovedEventArgs e)
+		//{
+		//	CheckSectionLineBeingMoved(sender, e);
+
+		//	if (e.Operation == CbSectionLineDragOperation.NotStarted)
+		//	{
+		//		Debug.WriteIf(_useDetailedDebug, $"CbListView. Drag not started. CbRectangle: {CurrentColorBandIndex} is now current.");
+
+		//		_sectionLineBeingDragged = null;
+		//		return;
+		//	}
+
+		//	switch (e.Operation)
+		//	{
+		//		case CbSectionLineDragOperation.Move:
+		//			UpdateCutoff(e);
+		//			break;
+
+		//		case CbSectionLineDragOperation.Complete:
+		//			_sectionLineBeingDragged = null;
+
+		//			Debug.WriteLineIf(_useDetailedDebug, "Completing the SectionLine Drag Operation.");
+		//			UpdateCutoff(e);
+		//			break;
+
+		//		case CbSectionLineDragOperation.Cancel:
+		//			_sectionLineBeingDragged = null;
+
+		//			UpdateCutoff(e);
+		//			break;
+
+		//		default:
+		//			throw new InvalidOperationException($"The {e.Operation} CbSectionLineDragOperation is not supported.");
+		//	}
+		//}
 
 		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
 		{
@@ -680,8 +713,8 @@ namespace MSetExplorer
 
 		private CbListViewItem CreateListViewItem(int colorBandIndex, ColorBand colorBand)
 		{
-			var listViewItem = new CbListViewItem(colorBandIndex, colorBand, _colorBandLayoutViewModel, GetNextNameSuffix());
-			listViewItem.CbSectionLine.SectionLineMoved += HandleSectionLineMoved;
+			var listViewItem = new CbListViewItem(colorBandIndex, colorBand, _colorBandLayoutViewModel, GetNextNameSuffix(), SectionLineWasMoved);
+			//listViewItem.CbSectionLine.SectionLineMoved += HandleSectionLineMoved;
 					
 			_storyBoardDetails1.OurNameScope.RegisterName(listViewItem.Name, listViewItem);
 
@@ -814,7 +847,7 @@ namespace MSetExplorer
 		{
 			foreach (var listViewItem in ListViewItems)
 			{
-				listViewItem.CbSectionLine.SectionLineMoved -= HandleSectionLineMoved;
+				//listViewItem.CbSectionLine.SectionLineMoved -= HandleSectionLineMoved;
 
 				//_canvas.UnregisterName(listViewItem.CbRectangle.BlendedBandRectangle.Name);
 				_canvas.UnregisterName(listViewItem.Name);
@@ -903,12 +936,11 @@ namespace MSetExplorer
 
 			_storyBoardDetails1.AddMakeTransparent(itemBeingRemoved.Name, TimeSpan.FromMilliseconds(5 * rateFactor), TimeSpan.Zero);
 
-			var layout = _colorBandLayoutViewModel;
+			//var layout = _colorBandLayoutViewModel;
+			//var area = itemBeingRemoved.Area;
+			//var curVal = new Rect(area.X, layout.Elevation, area.Width, layout.ControlHeight);
 
-			var area = itemBeingRemoved.Area;
-
-			var curVal = new Rect(area.X, layout.Elevation, area.Width, layout.ControlHeight);
-
+			var curVal = itemBeingRemoved.Area;
 			var newSize = new Size(curVal.Size.Width * 0.25, curVal.Size.Height * 0.25);
 
 			_storyBoardDetails1.AddChangeSize(itemBeingRemoved.Name, "Area", from: curVal, newSize: newSize, duration: TimeSpan.FromMilliseconds(5 * rateFactor), beginTime: TimeSpan.Zero);

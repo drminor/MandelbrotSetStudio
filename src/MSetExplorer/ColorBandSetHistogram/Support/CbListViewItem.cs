@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -20,11 +21,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbListViewItem(int colorBandIndex, ColorBand colorBand, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix)
+		public CbListViewItem(int colorBandIndex, ColorBand colorBand, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix, SectionLineMovedCallback sectionLineMovedCallback)
 		{
 			_colorBandIndex = colorBandIndex;
 			ColorBand = colorBand;
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
+			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 
 			Name = $"CbListViewItem{nameSuffix}";
 
@@ -38,7 +40,7 @@ namespace MSetExplorer
 
 			// Build the Selection Line
 			var selectionLinePosition = colorBand.Cutoff;
-			CbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, colorBandLayoutViewModel);
+			CbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, colorBandLayoutViewModel, sectionLineMovedCallback);
 
 			// Build the Color Block
 			CbColorBlock = new CbColorBlock(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, colorBandLayoutViewModel);
@@ -82,7 +84,12 @@ namespace MSetExplorer
 			get => _colorBandLayoutViewModel;
 			set
 			{
+				_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
 				_colorBandLayoutViewModel = value;
+				_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+
+				Area = new Rect(CbRectangle.XPosition, _colorBandLayoutViewModel.Elevation, CbRectangle.Width, _colorBandLayoutViewModel.ControlHeight);
+
 				CbSectionLine.ColorBandLayoutViewModel = value;
 				CbColorBlock.ColorBandLayoutViewModel = value;
 				CbRectangle.ColorBandLayoutViewModel = value;
@@ -199,6 +206,14 @@ namespace MSetExplorer
 		#endregion
 
 		#region Event Handlers
+
+		private void ColorBandLayoutViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
+			{
+				Area = new Rect(Area.X, _colorBandLayoutViewModel.Elevation, Area.Width, _colorBandLayoutViewModel.ControlHeight);
+			}
+		}
 
 		private void ColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
@@ -366,14 +381,6 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(c._useDetailedDebug, $"Setting the Elevation and Height for item at {c.ColorBandIndex} to {newValue.Y} and {newValue.Height}.");
 				c._colorBandLayoutViewModel.SetElevationAndHeight(newValue.Y, newValue.Height);
-
-				//var y0 = newValue.Y;
-				//var y1 = c._colorBandLayoutViewModel.ColorBlocksElevationPercentage * c._colorBandLayoutViewModel.ControlHeight;
-				//var y2 = c._colorBandLayoutViewModel.IsCurrentIndicatorsElevationPercentage * c._colorBandLayoutViewModel.ControlHeight;
-
-				//var yPoints = new double[] { y0, y1, y2 };
-
-				//c.CbSectionLine.Resize(newValue.Right * c._colorBandLayoutViewModel.ContentScale.Width, yPoints);
 			}
 			else
 			{

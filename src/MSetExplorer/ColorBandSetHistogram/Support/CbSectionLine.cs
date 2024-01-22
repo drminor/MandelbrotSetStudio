@@ -38,14 +38,13 @@ namespace MSetExplorer
 
 
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
+		private SectionLineMovedCallback _sectionLineMovedCallback;
 		private Canvas _canvas;
 		private double _scaleX;
 
 		private double _xPosition;
 
 		private double _controlHeight;
-
-		//private double[] _yPoints;
 
 		private double _selectionLinePosition;
 		private double _opacity;
@@ -71,12 +70,16 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbSectionLine(int colorBandIndex, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel)
+		//	internal delegate void SectionLineMovedCallback(int colorBandIndex, double newCutoff, bool updatingPrevious, CbSectionLineDragOperation operation);
+
+
+		public CbSectionLine(int colorBandIndex, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, SectionLineMovedCallback sectionLineMovedCallback)
 		{
 			_isSelected = false;
 			_isUnderMouse = false;
 			_dragState = DragState.None;
 
+			_sectionLineMovedCallback = sectionLineMovedCallback;
 			ColorBandIndex = colorBandIndex;
 
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
@@ -87,7 +90,6 @@ namespace MSetExplorer
 			_xPosition = xPosition;
 
 			_controlHeight = _colorBandLayoutViewModel.ControlHeight;
-			//_yPoints = new double[3] { _colorBandLayoutViewModel.Elevation, _colorBandLayoutViewModel.ColorBlocksElevation, _colorBandLayoutViewModel.IsCurrentIndicatorsElevation };
 
 			_selectionLinePosition = _xPosition * _scaleX;
 			_originalSectionLinePosition = _selectionLinePosition;
@@ -101,12 +103,10 @@ namespace MSetExplorer
 			_canvas.Children.Add(_dragLine);
 			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 
-			//_topArrowHalfWidth = (_cbElevation - 2) / 2;
 			_topArrowHalfWidth = SELECTION_LINE_ARROW_WIDTH;
 			_topArrow = BuildTopArrow(_selectionLinePosition, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
 
 			_topArrow.MouseUp += Handle_TopArrowMouseUp;
-			//_topArrow.PreviewKeyDown += TopArrow_PreviewKeyDown;
 
 			_canvas.Children.Add(_topArrow);
 			_topArrow.SetValue(Panel.ZIndexProperty, 30);
@@ -116,7 +116,7 @@ namespace MSetExplorer
 
 		#region Events
 
-		internal event EventHandler<CbSectionLineMovedEventArgs>? SectionLineMoved;
+		//internal event EventHandler<CbSectionLineMovedEventArgs>? SectionLineMoved;
 
 		#endregion
 
@@ -419,7 +419,8 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSectionLinePosition}.");
 				SectionLinePositionX = pos.X;
 
-				SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbSectionLineDragOperation.Move));
+				//SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbSectionLineDragOperation.Move));
+				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbSectionLineDragOperation.Move));
 			}
 			else
 			{
@@ -502,7 +503,9 @@ namespace MSetExplorer
 
 			if (distance > MIN_SEL_DISTANCE)
 			{
-				SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, SectionLinePositionX, _updatingPrevious, CbSectionLineDragOperation.Complete));
+				//SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, SectionLinePositionX, _updatingPrevious, CbSectionLineDragOperation.Complete));
+				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, SectionLinePositionX, _updatingPrevious, CbSectionLineDragOperation.Complete));
+
 				DragState = DragState.None;
 				return true;
 			}
@@ -523,12 +526,14 @@ namespace MSetExplorer
 			if (DragState == DragState.InProcess)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. CancelDragInternal. Drag was InProcess, raising SectionLineMoved with Operation = Cancel.");
-				SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.Cancel));
+				//SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.Cancel));
+				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.Cancel));
 			}
 			else
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. CancelDragInternal. Drag was only Begun, raising SectionLineMoved with Operation = NotStarted.");
-				SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.NotStarted));
+				//SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.NotStarted));
+				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.NotStarted));
 			}
 
 			DragState = DragState.None;
