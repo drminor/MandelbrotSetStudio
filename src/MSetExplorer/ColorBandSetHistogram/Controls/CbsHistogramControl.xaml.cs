@@ -352,7 +352,6 @@ namespace MSetExplorer
 			//	Debug.WriteLine($"CbsHistogramControl. The new ColorBand: {selItem} has been inserted at index: {index}.");
 			//}
 
-
 			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
 			{
 				if (_vm.TestInsertItem(colorBandIndex.Value, out var editOp))
@@ -495,7 +494,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		// Highlight (only) the Selected Color Band - Alt H
 		private void HighlightSelected_Checked(object sender, RoutedEventArgs e)
 		{
@@ -505,16 +503,6 @@ namespace MSetExplorer
 				_vm.HighlightSelectedBand = highlightSelectedCb;
 			}
 		}
-
-		//// High Light (only) the Selected Color Band - Alt H
-		//private void HighlightSelected_Unchecked(object sender, RoutedEventArgs e)
-		//{
-		//	var highlightSelectedCb = mnuItem_HighlightSelectedBand.IsChecked;
-		//	if (_vm != null)
-		//	{
-		//		_vm.HighlightSelectedBand = highlightSelectedCb;
-		//	}
-		//}
 
 		// Show Details F4
 		private void ShowDetails_Click(object sender, RoutedEventArgs e)
@@ -561,7 +549,7 @@ namespace MSetExplorer
 				colorBandIndex = _vm.CurrentColorBandIndex;
 			}
 
-			if (colorBandIndex != null && colorBandIndex.Value != -1)
+			if (colorBandIndex != null)
 			{
 				return true;
 			}
@@ -570,7 +558,6 @@ namespace MSetExplorer
 				return false;
 			}
 		}
-
 
 		private ColorBand? GetColorBandAtMousePosition()
 		{
@@ -582,19 +569,12 @@ namespace MSetExplorer
 				result = _vm.CurrentColorBand;
 			}
 
-			if (result == null)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"GetColorBandAtMousePosition. Could not identify any ColorBand at {posOfContextMenu}.");
-			}
-			else
-			{
-				ConfirmColorBandBelongsToView(result);
-			}
+			ConfirmColorBandBelongsToView(result);
 
 			return result;
 		}
 
-		private int? GetColorBandIndexAtMousePosition()
+		private int GetColorBandIndexAtMousePosition()
 		{
 			var posOfContextMenu = HistogramColorBandControl1.MousePositionWhenContextMenuWasOpened;
 			var tResult = HistogramColorBandControl1.GetItemIndexUnderMouse(posOfContextMenu);
@@ -608,11 +588,6 @@ namespace MSetExplorer
 			else
 			{
 				result = tResult.Value;
-			}
-
-			if (result == -1)
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"GetColorBandAtMousePosition. Could not identify any ColorBand at {posOfContextMenu}.");
 			}
 
 			return result;

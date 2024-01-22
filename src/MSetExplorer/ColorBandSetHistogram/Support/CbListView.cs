@@ -383,7 +383,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		public void ClearSelectedItems()
 		{
 			// TODO: Set each CbRectangle's and each CbSectionLine's IsSelected to false.
@@ -962,16 +961,18 @@ namespace MSetExplorer
 		{
 			//var itemBeingRemoved = ListViewItems[index];
 
-			_storyBoardDetails1.Begin(AfterAnimateColorBandInsertion, onAnimationComplete, index);
+			_storyBoardDetails1.Begin(AfterAnimateBandInsertion, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateColorBandInsertion(Action<int> onAnimationComplete, int index)
+		private void AfterAnimateBandInsertion(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("ColorBandInsertion Animation has completed.");
 
 			//var lvi = ListViewItems[index];
 
 			onAnimationComplete(index);
+
+			_ = SynchronizeCurrentItem();
 		}
 
 		#endregion
