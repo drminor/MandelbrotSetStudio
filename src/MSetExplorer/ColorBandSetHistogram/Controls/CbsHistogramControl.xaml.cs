@@ -344,12 +344,45 @@ namespace MSetExplorer
 		// Insert
 		private void InsertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var selItem = GetColorBandAtMousePosition();
+			//var selItem = GetColorBandAtMousePosition();
 
-			if (selItem != null)
+			//if (selItem != null)
+			//{
+			//	_ = _vm.TryInsertNewItem(selItem, out var index);
+			//	Debug.WriteLine($"CbsHistogramControl. The new ColorBand: {selItem} has been inserted at index: {index}.");
+			//}
+
+
+			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
 			{
-				_ = _vm.TryInsertNewItem(selItem, out var index);
-				Debug.WriteLine($"CbsHistogramControl. The new ColorBand: {selItem} has been inserted at index: {index}.");
+				if (_vm.TestInsertItem(colorBandIndex.Value, out var editOp))
+				{
+					switch (editOp)
+					{
+						case ColorBandSetEditOperation.InsertCutoff:
+							HistogramColorBandControl1.AnimateCutoffInsertion(_vm.CompleteCutoffInsertion, colorBandIndex.Value);
+							break;
+
+						case ColorBandSetEditOperation.InsertColor:
+							HistogramColorBandControl1.AnimateColorInsertion(_vm.CompleteColorInsertion, colorBandIndex.Value);
+							break;
+
+						case ColorBandSetEditOperation.InsertBand:
+							HistogramColorBandControl1.AnimateBandInsertion(_vm.CompleteBandInsertion, colorBandIndex.Value);
+							break;
+
+						default:
+							break;
+					}
+				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to Insert the Item at ColorBandIndex: {colorBandIndex}.");
+				}
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to determine the ColorBandIndex.");
 			}
 		}
 
@@ -398,14 +431,15 @@ namespace MSetExplorer
 					switch (editOp)
 					{
 						case ColorBandSetEditOperation.DeleteCutoff:
+							HistogramColorBandControl1.AnimateCutoffDeletion(_vm.CompleteCutoffRemoval, colorBandIndex.Value);
 							break;
 
 						case ColorBandSetEditOperation.DeleteColor:
+							HistogramColorBandControl1.AnimateColorDeletion(_vm.CompleteColorRemoval, colorBandIndex.Value);
 							break;
 
 						case ColorBandSetEditOperation.DeleteBand:
-
-							HistogramColorBandControl1.AnimateBandDeletion(_vm.CompleteColorBandRemoval, colorBandIndex.Value);
+							HistogramColorBandControl1.AnimateBandDeletion(_vm.CompleteBandRemoval, colorBandIndex.Value);
 							break;
 
 						default:
@@ -420,7 +454,6 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to determine the ColorBandIndex.");
-
 			}
 		}
 

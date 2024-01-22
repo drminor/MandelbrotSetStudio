@@ -176,7 +176,7 @@ namespace MSetExplorer
 				//_canvas.Background = new SolidColorBrush(Colors.MistyRose);
 				_canvas.Background = new SolidColorBrush(Colors.Transparent);
 
-				NameScope.SetNameScope(_canvas, new NameScope());
+				//NameScope.SetNameScope(_canvas, new NameScope());
 			}
 		}
 
@@ -345,6 +345,46 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public void AnimateCutoffInsertion(Action<int> onAnimationComplete, int index)
+		{
+			if (_cbListView != null)
+			{
+				_cbListView.AnimateCutoffInsertion(onAnimationComplete, index);
+			}
+		}
+
+		public void AnimateColorInsertion(Action<int> onAnimationComplete, int index)
+		{
+			if (_cbListView != null)
+			{
+				_cbListView.AnimateColorInsertion(onAnimationComplete, index);
+			}
+		}
+
+		public void AnimateBandInsertion(Action<int> onAnimationComplete, int index)
+		{
+			if (_cbListView != null)
+			{
+				_cbListView.AnimateBandInsertion(onAnimationComplete, index);
+			}
+		}
+
+		public void AnimateCutoffDeletion(Action<int> onAnimationComplete, int index)
+		{
+			if (_cbListView != null)
+			{
+				_cbListView.AnimateCutoffDeletion(onAnimationComplete, index);
+			}
+		}
+
+		public void AnimateColorDeletion(Action<int> onAnimationComplete, int index)
+		{
+			if (_cbListView != null)
+			{
+				_cbListView.AnimateColorDeletion(onAnimationComplete, index);
+			}
+		}
 
 		public void AnimateBandDeletion(Action<int> onAnimationComplete, int index)
 		{

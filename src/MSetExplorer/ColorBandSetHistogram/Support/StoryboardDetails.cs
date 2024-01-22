@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Security.AccessControl;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Media.Animation;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -19,6 +17,8 @@ namespace MSetExplorer
 
 			Storyboard = storyboard;
 			ContainingObject = containingObject;
+			RateFactor = 1.0;
+
 			Storyboard.Completed += Storyboard_Completed;
 		}
 
@@ -28,6 +28,8 @@ namespace MSetExplorer
 
 		public Storyboard Storyboard { get; init; }
 		public FrameworkElement ContainingObject { get; init; }
+
+		public double RateFactor { get; set; }
 
 		#endregion
 
@@ -94,7 +96,8 @@ namespace MSetExplorer
 
 		public int AddTimeline(string objectName, string propertyPath, AnimationTimeline animationTimeline, TimeSpan beginTime)
 		{
-			animationTimeline.BeginTime = beginTime;
+			animationTimeline.Duration = animationTimeline.Duration.TimeSpan.Multiply(RateFactor);
+			animationTimeline.BeginTime = beginTime.Multiply(RateFactor);
 
 			Storyboard.SetTargetName(animationTimeline, objectName);
 			Storyboard.SetTargetProperty(animationTimeline, new PropertyPath(propertyPath));
@@ -118,6 +121,7 @@ namespace MSetExplorer
 		private void Storyboard_Completed(object? sender, EventArgs e)
 		{
 			Storyboard.Children.Clear();
+			RateFactor = 1.0;
 
 			if (_onAnimationComplete == null)
 			{

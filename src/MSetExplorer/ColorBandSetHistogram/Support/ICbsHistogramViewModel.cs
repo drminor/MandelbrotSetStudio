@@ -53,13 +53,21 @@ namespace MSetExplorer
 		void RetardEditMode(); 
 
 		bool TryInsertNewItem(ColorBand colorBand, out int index);
-		
-		bool TryDeleteItem(ColorBand colorBand);
 
-		bool TestDeleteItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation);
+		//bool TryDeleteItem(ColorBand colorBand);
+
 
 		//int GetIndexOf(ColorBand colorBand);
-		void CompleteColorBandRemoval(int index);
+
+		bool TestInsertItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation);
+		void CompleteCutoffInsertion(int index);
+		void CompleteColorInsertion(int index);
+		void CompleteBandInsertion(int index);
+
+		bool TestDeleteItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation);
+		void CompleteCutoffRemoval(int index);
+		void CompleteColorRemoval(int index);
+		void CompleteBandRemoval(int index);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 

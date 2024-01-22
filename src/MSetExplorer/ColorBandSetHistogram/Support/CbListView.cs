@@ -924,23 +924,111 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Animation
+		#region Animation Support - Insertions
+
+		public void AnimateCutoffInsertion(Action<int> onAnimationComplete, int index)
+		{
+			//var itemBeingRemoved = ListViewItems[index];
+
+			_storyBoardDetails1.Begin(AfterAnimateCutoffInsertion, onAnimationComplete, index);
+		}
+
+		private void AfterAnimateCutoffInsertion(Action<int> onAnimationComplete, int index)
+		{
+			Debug.WriteLine("CutoffInsertion Animation has completed.");
+
+			//var lvi = ListViewItems[index];
+
+			onAnimationComplete(index);
+		}
+
+		public void AnimateColorInsertion(Action<int> onAnimationComplete, int index)
+		{
+			//var itemBeingRemoved = ListViewItems[index];
+
+			_storyBoardDetails1.Begin(AfterAnimateColorInsertion, onAnimationComplete, index);
+		}
+
+		private void AfterAnimateColorInsertion(Action<int> onAnimationComplete, int index)
+		{
+			Debug.WriteLine("ColorInsertion Animation has completed.");
+
+			//var lvi = ListViewItems[index];
+
+			onAnimationComplete(index);
+		}
+
+		public void AnimateBandInsertion(Action<int> onAnimationComplete, int index)
+		{
+			//var itemBeingRemoved = ListViewItems[index];
+
+			_storyBoardDetails1.Begin(AfterAnimateColorBandInsertion, onAnimationComplete, index);
+		}
+
+		private void AfterAnimateColorBandInsertion(Action<int> onAnimationComplete, int index)
+		{
+			Debug.WriteLine("ColorBandInsertion Animation has completed.");
+
+			//var lvi = ListViewItems[index];
+
+			onAnimationComplete(index);
+		}
+
+		#endregion
+
+		#region Animation Support - Deletions
+
+		public void AnimateCutoffDeletion(Action<int> onAnimationComplete, int index)
+		{
+			//_storyBoardDetails1.RateFactor = 5;
+
+			var itemBeingRemoved = ListViewItems[index];
+
+			_storyBoardDetails1.Begin(AfterAnimateCutoffDeletion, onAnimationComplete, index);
+		}
+
+		private void AfterAnimateCutoffDeletion(Action<int> onAnimationComplete, int index)
+		{
+			Debug.WriteLine("CutoffDeletion Animation has completed.");
+
+			//var lvi = ListViewItems[index];
+
+			onAnimationComplete(index);
+
+			_ = SynchronizeCurrentItem();
+		}
+
+		public void AnimateColorDeletion(Action<int> onAnimationComplete, int index)
+		{
+			//var itemBeingRemoved = ListViewItems[index];
+
+			_storyBoardDetails1.Begin(AfterAnimateColorDeletion, onAnimationComplete, index);
+		}
+
+		private void AfterAnimateColorDeletion(Action<int> onAnimationComplete, int index)
+		{
+			Debug.WriteLine("ColorDeletion Animation has completed.");
+
+			//var lvi = ListViewItems[index];
+
+			onAnimationComplete(index);
+		}
 
 		public void AnimateBandDeletion(Action<int> onAnimationComplete, int index)
 		{
-			var rateFactor = 100d;
+			//_storyBoardDetails1.RateFactor = 5;
 
 			var itemBeingRemoved = ListViewItems[index];
 
 			var copy = itemBeingRemoved.ColorBandLayoutViewModel.Clone();
 			itemBeingRemoved.ColorBandLayoutViewModel = copy;
 
-			_storyBoardDetails1.AddMakeTransparent(itemBeingRemoved.Name, TimeSpan.FromMilliseconds(5 * rateFactor), TimeSpan.Zero);
+			_storyBoardDetails1.AddMakeTransparent(itemBeingRemoved.Name, TimeSpan.FromMilliseconds(500), TimeSpan.Zero);
 
 			var curVal = itemBeingRemoved.Area;
 			var newSize = new Size(curVal.Size.Width * 0.25, curVal.Size.Height * 0.25);
 
-			_storyBoardDetails1.AddChangeSize(itemBeingRemoved.Name, "Area", from: curVal, newSize: newSize, duration: TimeSpan.FromMilliseconds(5 * rateFactor), beginTime: TimeSpan.Zero);
+			_storyBoardDetails1.AddChangeSize(itemBeingRemoved.Name, "Area", from: curVal, newSize: newSize, duration: TimeSpan.FromMilliseconds(500), beginTime: TimeSpan.Zero);
 
 			if (index == 0)
 			{
@@ -948,7 +1036,7 @@ namespace MSetExplorer
 				curVal = newFirstItem.Area;
 				var newXPosition = 0;
 
-				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, duration: TimeSpan.FromMilliseconds(3 * rateFactor), beginTime: TimeSpan.FromMilliseconds(4 * rateFactor));
+				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
 			}
 			else
 			{
@@ -958,13 +1046,13 @@ namespace MSetExplorer
 				curVal = preceedingItem.Area;
 				var newWidth = curVal.Width + widthOfItemBeingRemoved;
 
-				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(3 * rateFactor), beginTime: TimeSpan.FromMilliseconds(4 * rateFactor));
+				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
 			}
 
-			_storyBoardDetails1.Begin(AfterAnimateDeletion, onAnimationComplete, index);
+			_storyBoardDetails1.Begin(AfterAnimateBandDeletion, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateDeletion(Action<int> onAnimationComplete, int index)
+		private void AfterAnimateBandDeletion(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("BandDeletion Animation has completed.");
 
@@ -973,7 +1061,7 @@ namespace MSetExplorer
 			// Update the SectionLine's position
 			if (index == 0)
 			{
-				Debug.WriteLine("Handling AfterAnimateDeletion and the index = 0.");
+				Debug.WriteLine("Handling AfterAnimateBandDeletion and the index = 0.");
 
 				var firstLvi = ListViewItems[index + 1];
 				firstLvi.CbSectionLine.XPosition = 0;
