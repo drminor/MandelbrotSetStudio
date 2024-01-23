@@ -51,7 +51,7 @@ namespace MSetExplorer
 
 		private double _xPosition;
 
-		private double _controlHeight;
+		//private double _controlHeight;
 
 		private double _selectionLinePosition;
 		private double _opacity;
@@ -77,7 +77,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbSectionLine(int colorBandIndex, double xPosition, ColorBandLayoutViewModel colorBandLayoutViewModel, SectionLineMovedCallback sectionLineMovedCallback)
+		public CbSectionLine(int colorBandIndex, Rect topArrowArea, Rect sectionLineArea, ColorBandLayoutViewModel colorBandLayoutViewModel, SectionLineMovedCallback sectionLineMovedCallback)
 		{
 			_isSelected = false;
 			_isUnderMouse = false;
@@ -94,12 +94,12 @@ namespace MSetExplorer
 
 			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
 
-			_sectionLineArea = new Rect(xPosition, _colorBandLayoutViewModel.ColorBlocksElevation, 1, _colorBandLayoutViewModel.ColorBlocksHeight + _colorBandLayoutViewModel.BlendRectanglesHeight);
-			_topArrowArea = new Rect(xPosition, _colorBandLayoutViewModel.SectionLinesElevation, 1, _colorBandLayoutViewModel.SectionLinesHeight);
+			_topArrowArea = topArrowArea;
+			_sectionLineArea = sectionLineArea;
 
-			_xPosition = xPosition;
+			_xPosition = sectionLineArea.Right;
 
-			_controlHeight = _colorBandLayoutViewModel.ControlHeight;
+			//_controlHeight = _colorBandLayoutViewModel.ControlHeight;
 
 			_selectionLinePosition = _xPosition * _scaleX;
 			_originalSectionLinePosition = _selectionLinePosition;
@@ -139,19 +139,19 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		public double ScaleX
-		{
-			get => _scaleX;
+		//public double ScaleX
+		//{
+		//	get => _scaleX;
 
-			set
-			{
-				if (ScreenTypeHelper.IsDoubleChanged(value, _scaleX))
-				{
-					_scaleX = value;
-					SectionLinePositionX = _xPosition * _scaleX;
-				}
-			}
-		}
+		//	set
+		//	{
+		//		if (ScreenTypeHelper.IsDoubleChanged(value, _scaleX))
+		//		{
+		//			_scaleX = value;
+		//			SectionLinePositionX = _xPosition * _scaleX;
+		//		}
+		//	}
+		//}
 
 		public SizeDbl ContentScale
 		{
@@ -161,11 +161,10 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
-					//ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
-					//ResizeIsCurrentRectangle(IsCurrentArea, ContentScale);
 
-					ResizeSectionLine(SectionLinePositionX, _colorBandLayoutViewModel);
-					ResizeTopArrow(SectionLinePositionX, _colorBandLayoutViewModel);
+					SectionLinePositionX = _xPosition * ContentScale.Width;
+					ResizeTopArrow(TopArrowRectangleArea, ContentScale);
+					ResizeSectionLine(SectionLineRectangleArea, ContentScale);
 
 				}
 			}
@@ -180,9 +179,7 @@ namespace MSetExplorer
 				{
 					_sectionLineArea = value;
 					_xPosition = _sectionLineArea.X;
-
-					ResizeSectionLine(SectionLinePositionX, _colorBandLayoutViewModel);
-
+					ResizeSectionLine(SectionLineRectangleArea, ContentScale);
 				}
 			}
 		}
@@ -195,8 +192,7 @@ namespace MSetExplorer
 				if (value != _topArrowArea)
 				{
 					_topArrowArea = value;
-					ResizeTopArrow(SectionLinePositionX, _colorBandLayoutViewModel);
-
+					ResizeTopArrow(TopArrowRectangleArea, ContentScale);
 				}
 			}
 		}
@@ -311,24 +307,18 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void ResizeSectionLine(double sectionLinePosition, ColorBandLayoutViewModel layout)
+		public void ResizeSectionLine(Rect sectionLineArea, SizeDbl contentScale)
 		{
-			_topArrow.Points = BuildTopAreaPoints(sectionLinePosition, layout.SectionLinesElevation, layout.SectionLinesHeight);
+			_dragLine.X1 = sectionLineArea.Right * contentScale.Width;
+			_dragLine.X2 = sectionLineArea.Right * contentScale.Width;
+			_dragLine.Y1 = sectionLineArea.Top;
+			_dragLine.Y2 = sectionLineArea.Bottom;
 
-			_dragLine.X1 = sectionLinePosition;
-			_dragLine.X2 = sectionLinePosition;
-			_dragLine.Y1 = layout.ColorBlocksElevation;
-			_dragLine.Y2 = layout.IsCurrentIndicatorsElevation;
 		}
 
-		public void ResizeTopArrow(double sectionLinePosition, ColorBandLayoutViewModel layout)
+		public void ResizeTopArrow(Rect topArrowArea, SizeDbl contentScale)
 		{
-			_topArrow.Points = BuildTopAreaPoints(sectionLinePosition, layout.SectionLinesElevation, layout.SectionLinesHeight);
-
-			_dragLine.X1 = sectionLinePosition;
-			_dragLine.X2 = sectionLinePosition;
-			_dragLine.Y1 = layout.ColorBlocksElevation;
-			_dragLine.Y2 = layout.IsCurrentIndicatorsElevation;
+			_topArrow.Points = BuildTopAreaPoints(topArrowArea.Right * contentScale.Width, topArrowArea.Top, topArrowArea.Height);
 		}
 
 		public void StartDrag(double leftWidth, double rightWidth, bool updatingPrevious)
@@ -447,7 +437,7 @@ namespace MSetExplorer
 		{
 			if (e.PropertyName == nameof(ColorBandLayoutViewModel.ContentScale))
 			{
-				ScaleX = _colorBandLayoutViewModel.ContentScale.Width;
+				ContentScale = _colorBandLayoutViewModel.ContentScale;
 				_originalSectionLinePosition = SectionLinePositionX;
 			}
 			//else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))

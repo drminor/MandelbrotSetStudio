@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using Windows.Storage.Search;
 
 namespace MSetExplorer
 {
@@ -24,6 +25,8 @@ namespace MSetExplorer
 		private Canvas _canvas;
 
 		private ListCollectionView _colorBandsView;
+
+		private CbListViewElevations _elevations;
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 		private ColorBandSetEditMode _currentCbEditMode;
 		private ContextMenuDisplayRequest _displayContextMenu;
@@ -58,7 +61,9 @@ namespace MSetExplorer
 			_colorBandsView.CurrentChanged += ColorBandsView_CurrentChanged;
 			(_colorBandsView as INotifyCollectionChanged).CollectionChanged += ColorBandsView_CollectionChanged;
 
-			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(_canvas, contentScale, elevation, controlHeight, parentIsFocused, ListViewItemSelectedChanged, HandleContextMenuDisplayRequested);
+			_elevations = new CbListViewElevations(elevation, controlHeight);
+
+			_colorBandLayoutViewModel = new ColorBandLayoutViewModel(_canvas, contentScale, parentIsFocused, ListViewItemSelectedChanged, HandleContextMenuDisplayRequested);
 
 			_currentCbEditMode = currentCbEditMode;
 			_displayContextMenu = displayContextMenu;
@@ -121,12 +126,39 @@ namespace MSetExplorer
 			}
 		}
 
-		public double ControlHeight
+		public double Elevation
 		{
-			get => _colorBandLayoutViewModel.ControlHeight;
+			get => _elevations.Elevation;
 			set
 			{
-				_colorBandLayoutViewModel.ControlHeight = value;
+				if (value != _elevations.Elevation)
+				{
+					_elevations.Elevation = value;
+
+					foreach (var cbListViewItem in ListViewItems)
+					{
+						var curVal = cbListViewItem.Area;
+						cbListViewItem.Area = new Rect(curVal.X, _elevations.Elevation, curVal.Width, _elevations.ControlHeight);
+					}
+				}
+			}
+		}
+
+		public double ControlHeight
+		{
+			get => _elevations.ControlHeight;
+			set
+			{
+				if (value != _elevations.ControlHeight)
+				{
+					_elevations.ControlHeight = value;
+
+					foreach (var cbListViewItem in ListViewItems)
+					{
+						var curVal = cbListViewItem.Area;
+						cbListViewItem.Area = new Rect(curVal.X, _elevations.Elevation, curVal.Width, _elevations.ControlHeight);
+					}
+				}
 			} 
 		}
 
@@ -135,8 +167,6 @@ namespace MSetExplorer
 			get => _colorBandLayoutViewModel.ContentScale;
 			set => _colorBandLayoutViewModel.ContentScale = value;
 		}
-
-		public double CbrElevation => _colorBandLayoutViewModel.SectionLinesHeight;
 
 		public bool IsDragSectionLineInProgress => _sectionLineBeingDragged != null && _sectionLineBeingDragged.DragState != DragState.None;
 
@@ -337,7 +367,7 @@ namespace MSetExplorer
 					var selIndex = distance > 0 ? cbListViewItemIndex + 1 : cbListViewItemIndex;
 					var itemUnderMouse = ListViewItems[selIndex];
 
-					if (hitPoint.Y >= _colorBandLayoutViewModel.BlendRectanglesElevation)
+					if (hitPoint.Y >= _elevations.BlendRectanglesElevation)
 					{
 						return (itemUnderMouse, ColorBandSelectionType.Band);
 					}
@@ -366,7 +396,7 @@ namespace MSetExplorer
 				{
 					var selIndex = distance > 0 ? cbListViewItemIndex + 1 : cbListViewItemIndex;
 
-					if (hitPoint.Y >= _colorBandLayoutViewModel.BlendRectanglesElevation)
+					if (hitPoint.Y >= _elevations.BlendRectanglesElevation)
 					{
 						return (selIndex, ColorBandSelectionType.Band);
 					}
@@ -449,7 +479,7 @@ namespace MSetExplorer
 						selIndex = ListViewItems.Count - 1;
 					}
 						 
-					if (hitPoint.Y >= _colorBandLayoutViewModel.BlendRectanglesElevation)
+					if (hitPoint.Y >= _elevations.BlendRectanglesElevation)
 					{
 						ColorBlocksUnderMouse = null;
 						BlendRectangleUnderMouse = ListViewItems[selIndex];
@@ -564,42 +594,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void HandleSectionLineMoved(object? sender, CbSectionLineMovedEventArgs e)
-		//{
-		//	CheckSectionLineBeingMoved(sender, e);
-
-		//	if (e.Operation == CbSectionLineDragOperation.NotStarted)
-		//	{
-		//		Debug.WriteIf(_useDetailedDebug, $"CbListView. Drag not started. CbRectangle: {CurrentColorBandIndex} is now current.");
-
-		//		_sectionLineBeingDragged = null;
-		//		return;
-		//	}
-
-		//	switch (e.Operation)
-		//	{
-		//		case CbSectionLineDragOperation.Move:
-		//			UpdateCutoff(e);
-		//			break;
-
-		//		case CbSectionLineDragOperation.Complete:
-		//			_sectionLineBeingDragged = null;
-
-		//			Debug.WriteLineIf(_useDetailedDebug, "Completing the SectionLine Drag Operation.");
-		//			UpdateCutoff(e);
-		//			break;
-
-		//		case CbSectionLineDragOperation.Cancel:
-		//			_sectionLineBeingDragged = null;
-
-		//			UpdateCutoff(e);
-		//			break;
-
-		//		default:
-		//			throw new InvalidOperationException($"The {e.Operation} CbSectionLineDragOperation is not supported.");
-		//	}
-		//}
-
 		private void ColorBandsView_CurrentChanged(object? sender, EventArgs e)
 		{
 			CurrentColorBandIndex = _colorBandsView.CurrentPosition;
@@ -711,8 +705,7 @@ namespace MSetExplorer
 
 		private CbListViewItem CreateListViewItem(int colorBandIndex, ColorBand colorBand)
 		{
-			var listViewItem = new CbListViewItem(colorBandIndex, colorBand, _colorBandLayoutViewModel, GetNextNameSuffix(), SectionLineWasMoved);
-			//listViewItem.CbSectionLine.SectionLineMoved += HandleSectionLineMoved;
+			var listViewItem = new CbListViewItem(colorBandIndex, colorBand, _elevations, _colorBandLayoutViewModel, GetNextNameSuffix(), SectionLineWasMoved);
 					
 			_storyBoardDetails1.OurNameScope.RegisterName(listViewItem.Name, listViewItem);
 

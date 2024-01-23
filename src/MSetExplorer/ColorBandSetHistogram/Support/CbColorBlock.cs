@@ -76,7 +76,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbColorBlock(int colorBandIndex, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
+		public CbColorBlock(int colorBandIndex, Rect area, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
 		{
 			_isSelected = false;
 			_isUnderMouse = false;
@@ -90,10 +90,10 @@ namespace MSetExplorer
 
 			_canvas = _colorBandLayoutViewModel.Canvas;
 
-			_colorBlocksArea = new Rect(xPosition, 0, width, _colorBandLayoutViewModel.ControlHeight);
+			_colorBlocksArea = area;
 
-			_xPosition = xPosition;
-			_width = width;
+			_xPosition = area.Right;
+			_width = area.Width;
 			_opacity = 1.0;
 
 			_startColor = startColor;
@@ -452,6 +452,8 @@ namespace MSetExplorer
 			{
 				result = Rect.Inflate(rect, 0, -1);
 			}
+
+			Debug.WriteLine($"ColorBlocks just built rectangle with top: {result.Top} and height: {result.Height} and left: {result.Left} and width: {result.Width}.");
 
 			return result;
 		}

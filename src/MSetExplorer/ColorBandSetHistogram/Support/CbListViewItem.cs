@@ -8,6 +8,7 @@ namespace MSetExplorer
 	internal class CbListViewItem : DependencyObject
 	{
 		private int _colorBandIndex;
+		private CbListViewElevations _elevations;
 		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
 
 		private ColorBandSelectionType _selectionType;
@@ -19,12 +20,13 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbListViewItem(int colorBandIndex, ColorBand colorBand, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix, SectionLineMovedCallback sectionLineMovedCallback)
+		public CbListViewItem(int colorBandIndex, ColorBand colorBand, CbListViewElevations elevations, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix, SectionLineMovedCallback sectionLineMovedCallback)
 		{
 			_colorBandIndex = colorBandIndex;
 			ColorBand = colorBand;
+			_elevations = elevations;
 			_colorBandLayoutViewModel = colorBandLayoutViewModel;
-			_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+			//_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 
 			Name = $"CbListViewItem{nameSuffix}";
 
@@ -32,18 +34,27 @@ namespace MSetExplorer
 			var xPosition = colorBand.PreviousCutoff ?? 0;
 			var bandWidth = colorBand.BucketWidth;
 
+
+			var blendArea = new Rect(xPosition, _elevations.BlendRectanglesElevation, bandWidth, _elevations.BlendRectanglesHeight);
+			var isCurrentArea = new Rect(xPosition, _elevations.IsCurrentIndicatorsElevation, bandWidth, _elevations.IsCurrentIndicatorsHeight);
+
 			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 
-			CbRectangle = new CbRectangle(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
+			CbRectangle = new CbRectangle(colorBandIndex, blendArea, isCurrentArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
 
 			// Build the Selection Line
-			var selectionLinePosition = colorBand.Cutoff;
-			CbSectionLine = new CbSectionLine(colorBandIndex, selectionLinePosition, _colorBandLayoutViewModel, sectionLineMovedCallback);
+			var x2 = colorBand.Cutoff;
+
+			var topArrowArea = new Rect(x2, _elevations.SectionLinesElevation, bandWidth, _elevations.SectionLinesHeight);
+			var selectionLineArea = new Rect(x2, _elevations.ColorBlocksElevation, bandWidth, _elevations.ColorBlocksHeight + _elevations.BlendRectanglesHeight);
+
+			CbSectionLine = new CbSectionLine(colorBandIndex, topArrowArea, selectionLineArea, _colorBandLayoutViewModel, sectionLineMovedCallback);
 
 			// Build the Color Block
-			CbColorBlock = new CbColorBlock(colorBandIndex, xPosition, bandWidth, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
+			var colorBlocksArea = new Rect(xPosition, elevations.ColorBlocksElevation, bandWidth, elevations.ColorBlocksHeight);
+			CbColorBlock = new CbColorBlock(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
 
-			Area = new Rect(xPosition, _colorBandLayoutViewModel.Elevation, bandWidth, _colorBandLayoutViewModel.ControlHeight);
+			Area = new Rect(xPosition, _elevations.Elevation, bandWidth, _elevations.ControlHeight);
 
 			_selectionType = 0;
 			_isCutoffSelected = false;
@@ -59,6 +70,8 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Properties
+
+		//public CbListViewElevations CbListViewElevations => _elevations;
 
 		public ColorBand ColorBand { get; init; }
 		public CbSectionLine CbSectionLine { get; init; }
@@ -207,10 +220,12 @@ namespace MSetExplorer
 
 		private void ColorBandLayoutViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
-			{
-				Area = new Rect(Area.X, _colorBandLayoutViewModel.Elevation, Area.Width, _colorBandLayoutViewModel.ControlHeight);
-			}
+			// TODO: Fix Me!!
+
+			//if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
+			//{
+			//	Area = new Rect(Area.X, _colorBandLayoutViewModel.Elevation, Area.Width, _colorBandLayoutViewModel.ControlHeight);
+			//}
 		}
 
 		private void ColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -319,24 +334,6 @@ namespace MSetExplorer
 			set => SetCurrentValue(AreaProperty, value);
 		}
 
-		//public double Cutoff
-		//{
-		//	get => (double)GetValue(CutoffProperty);
-		//	set => SetCurrentValue(CutoffProperty, value);
-		//}
-
-		//public double PreviousCutoff
-		//{
-		//	get => (double)GetValue(PreviousCutoffProperty);
-		//	set => SetCurrentValue(PreviousCutoffProperty, value);
-		//}
-
-		//public double Width
-		//{
-		//	get => (double)GetValue(WidthProperty);
-		//	set => SetCurrentValue(WidthProperty, value);
-		//}
-
 		public double Opacity
 		{
 			get => (double)GetValue(OpacityProperty);
@@ -375,27 +372,32 @@ namespace MSetExplorer
 				return;
 			}
 
-			ColorBandLayoutViewModel layout;
+			//CbListViewElevations elevations;
 
-			if (ScreenTypeHelper.IsDoubleChanged(oldValue.Height, newValue.Height) || ScreenTypeHelper.IsDoubleChanged(oldValue.Y, newValue.Y))
-			{
-				Debug.WriteLineIf(c._useDetailedDebug, $"Setting the Elevation and Height for item at {c.ColorBandIndex} to {newValue.Y} and {newValue.Height}.");
+			//if (ScreenTypeHelper.IsDoubleChanged(oldValue.Height, newValue.Height) || ScreenTypeHelper.IsDoubleChanged(oldValue.Y, newValue.Y))
+			//{
+			//	Debug.WriteLineIf(c._useDetailedDebug, $"Setting the Elevation and Height for item at {c.ColorBandIndex} to {newValue.Y} and {newValue.Height}.");
 
-				layout = c._colorBandLayoutViewModel.Clone();
-				layout.SetElevationAndHeight(newValue.Y, newValue.Height);
-			}
-			else
-			{
-				layout = c._colorBandLayoutViewModel;
-			}
+			//	elevations = c._elevations.Clone();
+			//	elevations.SetElevationAndHeight(newValue.Y, newValue.Height);
+			//}
+			//else
+			//{
+			//	elevations = c._elevations;
+			//}
 
-			c.CbSectionLine.TopArrowRectangleArea = new Rect(newValue.Left, layout.SectionLinesElevation, newValue.Width, layout.SectionLinesHeight);
-			c.CbSectionLine.SectionLineRectangleArea = new Rect(newValue.Left, layout.ColorBlocksElevation, newValue.Width, layout.ColorBlocksHeight + layout.BlendRectanglesHeight);
+			c.UpdateDisplay(newValue, c._elevations);
+		}
 
-			c.CbColorBlock.ColorBlocksArea = new Rect(newValue.Left, layout.ColorBlocksElevation, newValue.Width, layout.ColorBlocksHeight);
+		private void UpdateDisplay(Rect newValue, CbListViewElevations elevations)
+		{
+			CbSectionLine.TopArrowRectangleArea = new Rect(newValue.Left, elevations.SectionLinesElevation, newValue.Width, elevations.SectionLinesHeight);
+			CbSectionLine.SectionLineRectangleArea = new Rect(newValue.Left, elevations.ColorBlocksElevation, newValue.Width, elevations.ColorBlocksHeight + elevations.BlendRectanglesHeight);
 
-			c.CbRectangle.BlendRectangleArea = new Rect(newValue.Left, layout.BlendRectanglesElevation, newValue.Width, layout.BlendRectanglesHeight);
-			c.CbRectangle.IsCurrentArea = new Rect(newValue.Left, layout.IsCurrentIndicatorsElevation, newValue.Width, layout.IsCurrentIndicatorsHeight);
+			CbColorBlock.ColorBlocksArea = new Rect(newValue.Left, elevations.ColorBlocksElevation, newValue.Width, elevations.ColorBlocksHeight);
+
+			CbRectangle.BlendRectangleArea = new Rect(newValue.Left, elevations.BlendRectanglesElevation, newValue.Width, elevations.BlendRectanglesHeight);
+			CbRectangle.IsCurrentArea = new Rect(newValue.Left, elevations.IsCurrentIndicatorsElevation, newValue.Width, elevations.IsCurrentIndicatorsHeight);
 		}
 
 		#endregion

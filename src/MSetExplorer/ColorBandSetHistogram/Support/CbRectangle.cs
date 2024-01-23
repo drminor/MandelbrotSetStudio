@@ -70,7 +70,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbRectangle(int colorBandIndex, double xPosition, double width, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
+		public CbRectangle(int colorBandIndex, Rect blendArea, Rect isCurrentArea, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
 		{
 			_isCurrent = false;
 			_isSelected = false;
@@ -85,10 +85,10 @@ namespace MSetExplorer
 
 			_canvas = colorBandLayoutViewModel.Canvas;
 
-			_blendRectangleArea = new Rect(xPosition, _colorBandLayoutViewModel.BlendRectanglesElevation, width, _colorBandLayoutViewModel.BlendRectanglesHeight);
-			_isCurrentArea = new Rect(xPosition, _colorBandLayoutViewModel.IsCurrentIndicatorsElevation, width, _colorBandLayoutViewModel.IsCurrentIndicatorsHeight);
-			_xPosition = xPosition;
-			_width = width;
+			_blendRectangleArea = blendArea;
+			_isCurrentArea = isCurrentArea;
+			_xPosition = blendArea.Left;
+			_width = blendArea.Width;
 
 			_startColor = startColor;
 			_endColor = endColor;
