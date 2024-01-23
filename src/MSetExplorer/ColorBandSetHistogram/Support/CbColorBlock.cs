@@ -50,7 +50,7 @@ namespace MSetExplorer
 		private SizeDbl _contentScale;
 		private bool _parentIsFocused;
 
-		private Rect _area;
+		private Rect _colorBlocksArea;
 		private double _xPosition;
 		private double _width;
 
@@ -90,7 +90,7 @@ namespace MSetExplorer
 
 			_canvas = _colorBandLayoutViewModel.Canvas;
 
-			_area = new Rect(xPosition, 0, width, _colorBandLayoutViewModel.ControlHeight);
+			_colorBlocksArea = new Rect(xPosition, 0, width, _colorBandLayoutViewModel.ControlHeight);
 
 			_xPosition = xPosition;
 			_width = width;
@@ -102,13 +102,13 @@ namespace MSetExplorer
 
 			var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
-			_geometry = new RectangleGeometry(BuildRectangle(_xPosition, width, isHighLighted, _colorBandLayoutViewModel));
+			_geometry = new RectangleGeometry(BuildRectangle(_colorBlocksArea, isHighLighted, ContentScale));
 			_rectanglePath = BuildRectanglePath(_geometry);
 			_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
-			_startGeometry = new RectangleGeometry(BuildColorBlockStart(_geometry.Rect, _colorBandLayoutViewModel));
+			_startGeometry = new RectangleGeometry(BuildColorBlockStart(_geometry.Rect, _colorBlocksArea));
 			_startColorBlockPath = BuildStartColorBlockPath(_startGeometry, _startColor);
 			//_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_startColorBlockPath);
@@ -131,16 +131,16 @@ namespace MSetExplorer
 
 		public Path ColorBlocksRectangle => (Path)_rectanglePath;
 
-		public ColorBandLayoutViewModel ColorBandLayoutViewModel
-		{
-			get => _colorBandLayoutViewModel;
-			set
-			{
-				_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
-				_colorBandLayoutViewModel = value;
-				_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
-			}
-		}
+		//public ColorBandLayoutViewModel ColorBandLayoutViewModel
+		//{
+		//	get => _colorBandLayoutViewModel;
+		//	set
+		//	{
+		//		_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
+		//		_colorBandLayoutViewModel = value;
+		//		_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+		//	}
+		//}
 
 		public ColorBandColor StartColor
 		{
@@ -192,23 +192,23 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
-					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					ResizeColorBlocks(ColorBlocksArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
 				}
 			}
 		}
 
-		public Rect Area
+		public Rect ColorBlocksArea
 		{
-			get => _area;
+			get => _colorBlocksArea;
 			set
 			{
-				if (value != _area)
+				if (value != _colorBlocksArea)
 				{
-					_area = value;
-					_width = _area.Width;
-					_xPosition = _area.X;
+					_colorBlocksArea = value;
+					_width = _colorBlocksArea.Width;
+					_xPosition = _colorBlocksArea.X;
 
-					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					ResizeColorBlocks(ColorBlocksArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
 				}
 			}
 		}
@@ -221,9 +221,7 @@ namespace MSetExplorer
 				if (value != _xPosition)
 				{
 					_xPosition = value;
-					_area = new Rect(value, _area.Y, Width, _area.Height);
-
-					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					ColorBlocksArea = new Rect(value, _colorBlocksArea.Y, Width, _colorBlocksArea.Height);
 				}
 			}
 		}
@@ -236,8 +234,7 @@ namespace MSetExplorer
 				if (value != _width)
 				{
 					_width = value;
-					_area = new Rect(_area.X, _area.Y, value, _area.Height);
-					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					ColorBlocksArea = new Rect(_colorBlocksArea.X, _colorBlocksArea.Y, value, _colorBlocksArea.Height);
 				}
 			}
 		}
@@ -342,10 +339,10 @@ namespace MSetExplorer
 			{
 				ContentScale = _colorBandLayoutViewModel.ContentScale;
 			}
-			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
-			{
-				Resize(_xPosition, _width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
-			}
+			//else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
+			//{
+			//	ResizeColorBlocks(_xPosition, _width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+			//}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ParentIsFocused))
 			{
 				ParentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
@@ -421,24 +418,22 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void Resize(double xPosition, double width, bool isSelected, bool isUnderMouse, ColorBandLayoutViewModel layout)
+		private void ResizeColorBlocks(Rect colorBlocksArea, bool isSelected, bool isUnderMouse, bool parentIsFocused, SizeDbl contentScale)
 		{
-			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, layout.ParentIsFocused);
+			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
 
-			_geometry.Rect = BuildRectangle(xPosition, width, isHighLighted, layout);
+			_geometry.Rect = BuildRectangle(colorBlocksArea, isHighLighted, contentScale);
 
 			_startColorBlockPath.Visibility = _geometry.Rect.Width > 2 ? Visibility.Visible : Visibility.Collapsed;
-			_startGeometry.Rect = BuildColorBlockStart(_geometry.Rect, layout);
+			_startGeometry.Rect = BuildColorBlockStart(_geometry.Rect, colorBlocksArea);
 
 			_endColorBlockPath.Visibility = _geometry.Rect.Width > 10 ? Visibility.Visible : Visibility.Collapsed;
 			_endGeometry.Rect = BuildColorBlockEnd(_geometry.Rect, _startGeometry.Rect);
 		}
 
-		private Rect BuildRectangle(double xPosition, double width, bool isHighLighted, ColorBandLayoutViewModel layout)
+		private Rect BuildRectangle(Rect colorBlocksArea, bool isHighLighted, SizeDbl contentScale)
 		{
-			var yPosition = layout.ColorBlocksElevation;
-			var height = layout.ColorBlocksHeight;
-			var rect = BuildRect(xPosition, yPosition, width, height, layout.ContentScale);
+			var rect = BuildRect(colorBlocksArea, contentScale);
 
 			Rect result;
 
@@ -461,15 +456,15 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Rect BuildColorBlockStart(Rect container, ColorBandLayoutViewModel layout)
+		private Rect BuildColorBlockStart(Rect container, Rect colorBlocksArea)
 		{
 			if (container.Height < 7 || container.Width < 3)
 			{
 				return new Rect();
 			}
 
-			var yPosition = layout.ColorBlocksElevation + 3;
-			var height = layout.ColorBlocksHeight - 6;
+			var yPosition = colorBlocksArea.Y + 3;
+			var height = colorBlocksArea.Height - 6;
 
 			var (left, width) = GetBlock1Pos(container.X, container.Width);
 
@@ -568,6 +563,14 @@ namespace MSetExplorer
 			return result;
 		}
 
+		private Rect BuildRect(Rect r, SizeDbl contentScale)
+		{
+			var result = new Rect(r.Location, r.Size);
+			result.Scale(contentScale.Width, contentScale.Height);
+
+			return result;
+		}
+
 		#endregion
 
 		#region Private Methods - IsCurrent / IsSelected State
@@ -580,9 +583,7 @@ namespace MSetExplorer
 		private void UpdateSelectionBackground(bool isSelected, bool isUnderMouse, bool parentIsFocused)
 		{
 			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
-
-			_geometry.Rect = BuildRectangle(XPosition, Width, isHighLighted, _colorBandLayoutViewModel);
-
+			_geometry.Rect = BuildRectangle(ColorBlocksArea, isHighLighted, ContentScale);
 			_rectanglePath.Stroke = GetRectangleStroke(isSelected, isUnderMouse, parentIsFocused);
 		}
 

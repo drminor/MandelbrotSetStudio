@@ -46,7 +46,8 @@ namespace MSetExplorer
 		private SizeDbl _contentScale;
 		private bool _parentIsFocused;
 
-		private Rect _area;
+		private Rect _blendRectangleArea;
+		private Rect _isCurrentArea;
 		private double _xPosition;
 		private double _width;
 
@@ -84,7 +85,8 @@ namespace MSetExplorer
 
 			_canvas = colorBandLayoutViewModel.Canvas;
 
-			_area = new Rect(xPosition, 0, width, _colorBandLayoutViewModel.ControlHeight);
+			_blendRectangleArea = new Rect(xPosition, _colorBandLayoutViewModel.BlendRectanglesElevation, width, _colorBandLayoutViewModel.BlendRectanglesHeight);
+			_isCurrentArea = new Rect(xPosition, _colorBandLayoutViewModel.IsCurrentIndicatorsElevation, width, _colorBandLayoutViewModel.IsCurrentIndicatorsHeight);
 			_xPosition = xPosition;
 			_width = width;
 
@@ -95,13 +97,15 @@ namespace MSetExplorer
 
 			var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
-			_geometry = new RectangleGeometry(BuildRectangle(_xPosition, width, isHighLighted, _colorBandLayoutViewModel));
+			_geometry = new RectangleGeometry(BuildRectangle(_blendRectangleArea, isHighLighted, ContentScale));
 			_rectanglePath = BuildRectanglePath(_geometry, startColor, endColor, blend);
 			_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
-			_curGeometry = new RectangleGeometry(BuildCurRectangle(_xPosition, width, _colorBandLayoutViewModel));
+
+			_curGeometry = new RectangleGeometry(BuildCurRectangle(_isCurrentArea, ContentScale));
+
 			_curRectanglePath = BuildCurRectanglePath(_curGeometry, _isCurrent);
 			_canvas.Children.Add(_curRectanglePath);
 			_curRectanglePath.SetValue(Panel.ZIndexProperty, 1);
@@ -117,16 +121,16 @@ namespace MSetExplorer
 
 		public Path BlendedBandRectangle => (Path)_rectanglePath;
 
-		public ColorBandLayoutViewModel ColorBandLayoutViewModel
-		{
-			get => _colorBandLayoutViewModel;
-			set
-			{
-				_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
-				_colorBandLayoutViewModel = value;
-				_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
-			}
-		}
+		//public ColorBandLayoutViewModel ColorBandLayoutViewModel
+		//{
+		//	get => _colorBandLayoutViewModel;
+		//	set
+		//	{
+		//		_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
+		//		_colorBandLayoutViewModel = value;
+		//		_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+		//	}
+		//}
 
 		public ColorBandColor StartColor
 		{
@@ -185,23 +189,38 @@ namespace MSetExplorer
 				if (value != _contentScale)
 				{
 					_contentScale = value;
-					Resize(_xPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
+					ResizeIsCurrentRectangle(IsCurrentArea, ContentScale);
 				}
 			}
 		}
 
-		public Rect Area
+		public Rect BlendRectangleArea
 		{
-			get => _area;
+			get => _blendRectangleArea;
 			set
 			{
-				if (value != _area)
+				if (value != _blendRectangleArea)
 				{
-					_area = value;
-					_width = _area.Width;
-					_xPosition = _area.X;
+					_blendRectangleArea = value;
+					_width = _blendRectangleArea.Width;
+					_xPosition = _blendRectangleArea.X;
 
-					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
+				}
+			}
+		}
+
+		public Rect IsCurrentArea
+		{
+			get => _isCurrentArea;
+			set
+			{
+				if (value != _isCurrentArea)
+				{
+					_isCurrentArea = value;
+
+					ResizeIsCurrentRectangle(IsCurrentArea, ContentScale);
 				}
 			}
 		}
@@ -214,9 +233,8 @@ namespace MSetExplorer
 				if (value != _xPosition)
 				{
 					_xPosition = value;
-					_area = new Rect(value, _area.Y, Width, _area.Height);
-
-					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					BlendRectangleArea = new Rect(value, _blendRectangleArea.Y, Width, _blendRectangleArea.Height);
+					IsCurrentArea = new Rect(value, _isCurrentArea.Y, Width, _isCurrentArea.Height);
 				}
 			}
 		}
@@ -229,9 +247,8 @@ namespace MSetExplorer
 				if (value != _width)
 				{
 					_width = value;
-					_area = new Rect(_area.X, _area.Y, value, _area.Height);
-
-					Resize(XPosition, Width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
+					BlendRectangleArea = new Rect(_blendRectangleArea.X, _blendRectangleArea.Y, value, _blendRectangleArea.Height);
+					IsCurrentArea = new Rect(_isCurrentArea.X, _isCurrentArea.Y, Width, _isCurrentArea.Height);
 				}
 			}
 		}
@@ -347,10 +364,10 @@ namespace MSetExplorer
 			{
 				ContentScale = _colorBandLayoutViewModel.ContentScale;
 			}
-			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
-			{
-				Resize(_xPosition, _width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
-			}
+			//else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
+			//{
+			//	ResizeIsCurrentRectangle(_xPosition, _width, ContentScale);
+			//}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ParentIsFocused))
 			{
 				ParentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
@@ -409,20 +426,21 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void Resize(double xPosition, double width, bool isSelected, bool isUnderMouse, ColorBandLayoutViewModel layout)
+		private void ResizeBlendRectangle(Rect blendRectangleArea, bool isSelected, bool isUnderMouse, bool parentIsFocused, SizeDbl contentScale)
 		{
-			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, layout.ParentIsFocused);
+			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
 
-			_geometry.Rect = BuildRectangle(xPosition, width, isHighLighted, layout);
-
-			_curGeometry.Rect = BuildCurRectangle(xPosition, width, layout);
+			_geometry.Rect = BuildRectangle(blendRectangleArea, isHighLighted, contentScale);
 		}
 
-		private Rect BuildRectangle(double xPosition, double width, bool isHighLighted, ColorBandLayoutViewModel layout)
+		private void ResizeIsCurrentRectangle(Rect isCurrentArea, SizeDbl contentScale)
 		{
-			var yPosition = layout.BlendRectanglesElevation;
-			var height = layout.BlendRectanglesHeight;
-			var rect = BuildRect(xPosition, yPosition, width, height, layout.ContentScale);
+			_curGeometry.Rect = BuildCurRectangle(isCurrentArea, contentScale);
+		}
+
+		private Rect BuildRectangle(Rect blendRectangleArea, bool isHighLighted, SizeDbl contentScale)
+		{
+			var rect = BuildRect(blendRectangleArea, contentScale);
 
 			Rect result;
 
@@ -445,11 +463,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Rect BuildCurRectangle(double xPosition, double width, ColorBandLayoutViewModel layout)
+		private Rect BuildCurRectangle(Rect isCurrentArea, SizeDbl contentScale)
 		{
-			var yPosition = layout.IsCurrentIndicatorsElevation;
-			var height = layout.IsCurrentIndicatorsHeight;
-			var result = BuildRect(xPosition, yPosition, width, height, layout.ContentScale);
+			var result = BuildRect(isCurrentArea, contentScale);
 
 			return result;
 		}
@@ -457,6 +473,14 @@ namespace MSetExplorer
 		private Rect BuildRect(double xPosition, double yPosition, double width, double height, SizeDbl contentScale)
 		{
 			var result = new Rect(new Point(xPosition, yPosition), new Size(width, height));
+			result.Scale(contentScale.Width, contentScale.Height);
+
+			return result;
+		}
+
+		private Rect BuildRect(Rect r, SizeDbl contentScale)
+		{
+			var result = new Rect(r.Location, r.Size);
 			result.Scale(contentScale.Width, contentScale.Height);
 
 			return result;
@@ -496,7 +520,7 @@ namespace MSetExplorer
 		{
 			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
 
-			_geometry.Rect = BuildRectangle(XPosition, Width, isHighLighted, _colorBandLayoutViewModel);
+			_geometry.Rect = BuildRectangle(BlendRectangleArea, isHighLighted, ContentScale);
 
 			//_selRectanglePath.Stroke = GetSelStroke(/*_isCurrent,*/ _isSelected, _isUnderMouse, _parentIsFocused);
 

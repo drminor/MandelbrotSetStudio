@@ -2,8 +2,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
-using static ScottPlot.Plottable.PopulationPlot;
 
 namespace MSetExplorer
 {
@@ -79,22 +77,22 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandLayoutViewModel ColorBandLayoutViewModel
-		{
-			get => _colorBandLayoutViewModel;
-			set
-			{
-				_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
-				_colorBandLayoutViewModel = value;
-				_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
+		//public ColorBandLayoutViewModel ColorBandLayoutViewModel
+		//{
+		//	get => _colorBandLayoutViewModel;
+		//	set
+		//	{
+		//		_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
+		//		_colorBandLayoutViewModel = value;
+		//		_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
 
-				Area = new Rect(CbRectangle.XPosition, _colorBandLayoutViewModel.Elevation, CbRectangle.Width, _colorBandLayoutViewModel.ControlHeight);
+		//		Area = new Rect(CbRectangle.XPosition, _colorBandLayoutViewModel.Elevation, CbRectangle.Width, _colorBandLayoutViewModel.ControlHeight);
 
-				CbSectionLine.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
-				CbColorBlock.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
-				CbRectangle.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
-			}
-		}
+		//		//CbSectionLine.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
+		//		//CbColorBlock.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
+		//		//CbRectangle.ColorBandLayoutViewModel = _colorBandLayoutViewModel;
+		//	}
+		//}
 
 		public double SectionLinePositionX => CbSectionLine.SectionLinePositionX;
 
@@ -377,15 +375,27 @@ namespace MSetExplorer
 				return;
 			}
 
+			ColorBandLayoutViewModel layout;
+
 			if (ScreenTypeHelper.IsDoubleChanged(oldValue.Height, newValue.Height) || ScreenTypeHelper.IsDoubleChanged(oldValue.Y, newValue.Y))
 			{
 				Debug.WriteLineIf(c._useDetailedDebug, $"Setting the Elevation and Height for item at {c.ColorBandIndex} to {newValue.Y} and {newValue.Height}.");
-				c._colorBandLayoutViewModel.SetElevationAndHeight(newValue.Y, newValue.Height);
+
+				layout = c._colorBandLayoutViewModel.Clone();
+				layout.SetElevationAndHeight(newValue.Y, newValue.Height);
+			}
+			else
+			{
+				layout = c._colorBandLayoutViewModel;
 			}
 
-			c.CbSectionLine.XPosition = newValue.Right;
-			c.CbRectangle.Area = newValue;
-			c.CbColorBlock.Area = newValue;
+			c.CbSectionLine.TopArrowRectangleArea = new Rect(newValue.Left, layout.SectionLinesElevation, newValue.Width, layout.SectionLinesHeight);
+			c.CbSectionLine.SectionLineRectangleArea = new Rect(newValue.Left, layout.ColorBlocksElevation, newValue.Width, layout.ColorBlocksHeight + layout.BlendRectanglesHeight);
+
+			c.CbColorBlock.ColorBlocksArea = new Rect(newValue.Left, layout.ColorBlocksElevation, newValue.Width, layout.ColorBlocksHeight);
+
+			c.CbRectangle.BlendRectangleArea = new Rect(newValue.Left, layout.BlendRectanglesElevation, newValue.Width, layout.BlendRectanglesHeight);
+			c.CbRectangle.IsCurrentArea = new Rect(newValue.Left, layout.IsCurrentIndicatorsElevation, newValue.Width, layout.IsCurrentIndicatorsHeight);
 		}
 
 		#endregion

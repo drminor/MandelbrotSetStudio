@@ -80,7 +80,7 @@ namespace MSetExplorer
 				}
 			}
 		}
-		
+
 		public double ControlHeight
 		{
 			get => _controlHeight;

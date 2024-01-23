@@ -1021,8 +1021,8 @@ namespace MSetExplorer
 
 			var itemBeingRemoved = ListViewItems[index];
 
-			var copy = itemBeingRemoved.ColorBandLayoutViewModel.Clone();
-			itemBeingRemoved.ColorBandLayoutViewModel = copy;
+			//var copy = itemBeingRemoved.ColorBandLayoutViewModel.Clone();
+			//itemBeingRemoved.ColorBandLayoutViewModel = copy;
 
 			_storyBoardDetails1.AddMakeTransparent(itemBeingRemoved.Name, TimeSpan.FromMilliseconds(500), TimeSpan.Zero);
 
