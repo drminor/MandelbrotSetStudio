@@ -35,6 +35,15 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public int AddChangePosition(string objectName, string propertyPath, Rect from, Point newPosition, TimeSpan duration, TimeSpan beginTime)
+		{
+			//_width = _cutoff - _xPosition;
+			var to = new Rect(newPosition, from.Size);
+			var da = new RectAnimation(from, to, duration);
+
+			return AddTimeline(objectName, propertyPath, da, beginTime);
+		}
+
 		// Move the x1 value and adjust the width to keep x2 the same
 		public int AddChangeLeft(string objectName, string propertyPath, Rect from, double newX1, TimeSpan duration, TimeSpan beginTime)
 		{
@@ -55,7 +64,7 @@ namespace MSetExplorer
 			return AddTimeline(objectName, propertyPath, da, beginTime);
 		}
 
-		// Update the Width and Right to keep X1 constant.
+		// Inflate / Deflate
 		public int AddChangeSize(string objectName, string propertyPath, Rect from, Size newSize, TimeSpan duration, TimeSpan beginTime)
 		{
 			var to = new Rect(from.X + newSize.Width / 2, from.Y + newSize.Height / 2, newSize.Width, newSize.Height);

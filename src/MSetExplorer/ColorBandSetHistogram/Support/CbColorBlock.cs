@@ -12,9 +12,7 @@ namespace MSetExplorer
 {
 	internal class CbColorBlock
 	{
-		#region Private Fields
-
-		//private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
+		#region Private Static Fields
 
 		private const double DEFAULT_STROKE_THICKNESS = 2.0;
 		private const double SELECTED_STROKE_THICKNESS = 2.0;
@@ -26,26 +24,20 @@ namespace MSetExplorer
 		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
 
 		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
-		//private static readonly Brush DEFAULT_STROKE = TRANSPARENT_BRUSH;
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
-		private static readonly Brush IS_SELECTED_BACKGROUND = MIDDLIN_BLUE_BRUSH;
 		private static readonly Brush IS_SELECTED_STROKE = MIDDLIN_BLUE_BRUSH;
 
-		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = DARKISH_GRAY_BRUSH;
 		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = DARKISH_GRAY_BRUSH;
 
-		private static readonly Brush IS_HOVERED_BACKGROUND = VERY_LIGHT_BLUE_BRUSH;
 		private static readonly Brush IS_HOVERED_STROKE = VERY_LIGHT_BLUE_BRUSH;
 
-		//private static readonly Brush IS_CURRENT_STROKE = LIGHT_BLUE_BRUSH;
-		private static readonly Brush IS_CURRENT_BACKGROUND = LIGHT_BLUE_BRUSH;
+		#endregion
 
-		// For diagnostics
-		//private static readonly Brush IS_HOVERED_AND_IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.SeaGreen);
+		#region Private Fields
 
-		private Canvas _canvas;
-		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
+		private readonly Canvas _canvas;
+		private readonly ColorBandLayoutViewModel _colorBandLayoutViewModel;
 
 		private SizeDbl _contentScale;
 		private bool _parentIsFocused;
@@ -70,7 +62,6 @@ namespace MSetExplorer
 
 		private bool _isSelected;
 		private bool _isUnderMouse;
-
 
 		#endregion
 
@@ -129,18 +120,10 @@ namespace MSetExplorer
 
 		public RectangleGeometry RectangleGeometry => _geometry;
 
-		public Path ColorBlocksRectangle => (Path)_rectanglePath;
+		public RectangleGeometry StartColorGeometry => _startGeometry;
+		public RectangleGeometry EndColorGeometry => _endGeometry;
 
-		//public ColorBandLayoutViewModel ColorBandLayoutViewModel
-		//{
-		//	get => _colorBandLayoutViewModel;
-		//	set
-		//	{
-		//		_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
-		//		_colorBandLayoutViewModel = value;
-		//		_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
-		//	}
-		//}
+		public Path ColorBlocksRectangle => (Path)_rectanglePath;
 
 		public ColorBandColor StartColor
 		{
@@ -253,6 +236,24 @@ namespace MSetExplorer
 					_endColorBlockPath.Opacity = value;
 				}
 			}
+		}
+
+		private double _subBlockOpacity;
+
+		public double SubBlockOpacity
+		{
+			get => _subBlockOpacity;
+			set
+			{
+				if (value != _subBlockOpacity)
+				{
+					_subBlockOpacity = value;
+
+					_startColorBlockPath.Opacity = value;
+					_endColorBlockPath.Opacity = value;
+				}
+			}
+
 		}
 
 		#endregion
@@ -397,7 +398,7 @@ namespace MSetExplorer
 				IsHitTestVisible = true
 			};
 
-			result.Visibility = area.Rect.Width > 0 ? Visibility.Visible : Visibility.Collapsed;
+			result.Visibility = area.Rect.Width > 0 && area.Rect.Height > 0 ? Visibility.Visible : Visibility.Collapsed;
 
 			return result;
 		}
@@ -413,7 +414,7 @@ namespace MSetExplorer
 				IsHitTestVisible = true
 			};
 
-			result.Visibility = area.Rect.Width > 0 ? Visibility.Visible : Visibility.Collapsed;
+			result.Visibility = area.Rect.Width > 0 && area.Rect.Height > 0 ? Visibility.Visible : Visibility.Collapsed;
 
 			return result;
 		}

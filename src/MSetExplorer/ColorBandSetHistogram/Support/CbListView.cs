@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Windows.Storage.Search;
 
@@ -53,6 +54,7 @@ namespace MSetExplorer
 		{
 			_canvas = canvas;
 
+			_nextNameSuffix = 0;
 			_storyBoardDetails1 = new StoryboardDetails(new Storyboard(), _canvas);
 			CheckNameScope(_canvas, 0);
 
@@ -68,7 +70,6 @@ namespace MSetExplorer
 			_currentCbEditMode = currentCbEditMode;
 			_displayContextMenu = displayContextMenu;
 			_currentCbEditModeChanged = currentCbEditModeChanged;
-			//_animationCompleted = animationCompleted;
 
 			ListViewItems = new List<CbListViewItem>();
 			_currentColorBandIndex = 0;
@@ -78,8 +79,6 @@ namespace MSetExplorer
 			_blendRectangleUnderMouse = null;
 			_selectedItemsRangeAnchorIndex = null;
 			_indexOfMostRecentlySelectedItem = null;
-
-			//_hitList = new List<Shape>();
 
 			DrawColorBands(_colorBandsView);
 
@@ -838,11 +837,7 @@ namespace MSetExplorer
 		{
 			foreach (var listViewItem in ListViewItems)
 			{
-				//listViewItem.CbSectionLine.SectionLineMoved -= HandleSectionLineMoved;
-
-				//_canvas.UnregisterName(listViewItem.CbRectangle.BlendedBandRectangle.Name);
 				_canvas.UnregisterName(listViewItem.Name);
-
 				listViewItem.TearDown();
 			}
 
@@ -871,6 +866,19 @@ namespace MSetExplorer
 		private IEnumerable<CbListViewItem> GetSelectedItems()
 		{
 			var result = ListViewItems.Where(x => x.IsItemSelected);
+			return result;
+		}
+
+		private List<Tuple<RectangleGeometry, RectangleGeometry, RectangleGeometry>> GetSubColorRectangles(int index)
+		{
+			var result = new List<Tuple<RectangleGeometry, RectangleGeometry, RectangleGeometry>>();
+
+			for (var i = index; i < ListViewItems.Count; i++)
+			{
+				var colorBlock = ListViewItems[index].CbColorBlock;
+				result.Add(new Tuple<RectangleGeometry, RectangleGeometry, RectangleGeometry>(colorBlock.RectangleGeometry, colorBlock.StartColorGeometry, colorBlock.EndColorGeometry));
+			}
+
 			return result;
 		}
 
@@ -918,14 +926,14 @@ namespace MSetExplorer
 
 		#region Animation Support - Insertions
 
-		public void AnimateCutoffInsertion(Action<int> onAnimationComplete, int index)
+		public void AnimateInsertCutoff(Action<int> onAnimationComplete, int index)
 		{
 			//var itemBeingRemoved = ListViewItems[index];
 
-			_storyBoardDetails1.Begin(AfterAnimateCutoffInsertion, onAnimationComplete, index);
+			_storyBoardDetails1.Begin(AnimateInsertCutoffPost, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateCutoffInsertion(Action<int> onAnimationComplete, int index)
+		private void AnimateInsertCutoffPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("CutoffInsertion Animation has completed.");
 
@@ -934,14 +942,14 @@ namespace MSetExplorer
 			onAnimationComplete(index);
 		}
 
-		public void AnimateColorInsertion(Action<int> onAnimationComplete, int index)
+		public void AnimateInsertColor(Action<int> onAnimationComplete, int index)
 		{
 			//var itemBeingRemoved = ListViewItems[index];
 
-			_storyBoardDetails1.Begin(AfterAnimateColorInsertion, onAnimationComplete, index);
+			_storyBoardDetails1.Begin(AnimateInsertColorPost, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateColorInsertion(Action<int> onAnimationComplete, int index)
+		private void AnimateInsertColorPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("ColorInsertion Animation has completed.");
 
@@ -950,14 +958,14 @@ namespace MSetExplorer
 			onAnimationComplete(index);
 		}
 
-		public void AnimateBandInsertion(Action<int> onAnimationComplete, int index)
+		public void AnimateInsertBand(Action<int> onAnimationComplete, int index)
 		{
 			//var itemBeingRemoved = ListViewItems[index];
 
-			_storyBoardDetails1.Begin(AfterAnimateBandInsertion, onAnimationComplete, index);
+			_storyBoardDetails1.Begin(AnimateInsertBandPost, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateBandInsertion(Action<int> onAnimationComplete, int index)
+		private void AnimateInsertBandPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("ColorBandInsertion Animation has completed.");
 
@@ -972,34 +980,46 @@ namespace MSetExplorer
 
 		#region Animation Support - Deletions
 
-		public void AnimateCutoffDeletion(Action<int> onAnimationComplete, int index)
+		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
 		{
 			//_storyBoardDetails1.RateFactor = 5;
 
 			var itemBeingRemoved = ListViewItems[index];
 
-			_storyBoardDetails1.Begin(AfterAnimateCutoffDeletion, onAnimationComplete, index);
+			var rGeos = GetSubColorRectangles(index);
+
+			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateCutoffDeletion(Action<int> onAnimationComplete, int index)
+		private void AnimateDeleteCutoffPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("CutoffDeletion Animation has completed.");
 
-			//var lvi = ListViewItems[index];
+			var lvi = ListViewItems[^2]; // The item before the last item.
 
 			onAnimationComplete(index);
+
+			RemoveListViewItem(lvi);
+			Reindex(lvi.ColorBandIndex);
+
+			lvi = ListViewItems[^2];
+
+			var colorBandLast = ListViewItems[^1].ColorBand;
+
+			lvi.ColorBand.SuccessorStartColor = colorBandLast.StartColor;
+			colorBandLast.PreviousCutoff = lvi.ColorBand.Cutoff;
 
 			_ = SynchronizeCurrentItem();
 		}
 
-		public void AnimateColorDeletion(Action<int> onAnimationComplete, int index)
+		public void AnimateDeleteColor(Action<int> onAnimationComplete, int index)
 		{
 			//var itemBeingRemoved = ListViewItems[index];
 
-			_storyBoardDetails1.Begin(AfterAnimateColorDeletion, onAnimationComplete, index);
+			_storyBoardDetails1.Begin(AnimateDeleteColorPost, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateColorDeletion(Action<int> onAnimationComplete, int index)
+		private void AnimateDeleteColorPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("ColorDeletion Animation has completed.");
 
@@ -1008,14 +1028,13 @@ namespace MSetExplorer
 			onAnimationComplete(index);
 		}
 
-		public void AnimateBandDeletion(Action<int> onAnimationComplete, int index)
+		public void AnimateDeleteBand(Action<int> onAnimationComplete, int index)
 		{
 			//_storyBoardDetails1.RateFactor = 5;
 
 			var itemBeingRemoved = ListViewItems[index];
 
-			//var copy = itemBeingRemoved.ColorBandLayoutViewModel.Clone();
-			//itemBeingRemoved.ColorBandLayoutViewModel = copy;
+			itemBeingRemoved.ElevationsAreLocal = true;
 
 			_storyBoardDetails1.AddMakeTransparent(itemBeingRemoved.Name, TimeSpan.FromMilliseconds(500), TimeSpan.Zero);
 
@@ -1043,10 +1062,10 @@ namespace MSetExplorer
 				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
 			}
 
-			_storyBoardDetails1.Begin(AfterAnimateBandDeletion, onAnimationComplete, index);
+			_storyBoardDetails1.Begin(AnimateDeleteBandPost, onAnimationComplete, index);
 		}
 
-		private void AfterAnimateBandDeletion(Action<int> onAnimationComplete, int index)
+		private void AnimateDeleteBandPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("BandDeletion Animation has completed.");
 
@@ -1057,16 +1076,20 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine("Handling AfterAnimateBandDeletion and the index = 0.");
 
+				// The rectangle at index + 1 will move to become the very first rectangle at index = 0
 				var firstLvi = ListViewItems[index + 1];
-				firstLvi.CbSectionLine.XPosition = 0;
+
+				// Extend this rectangle by moving its starting point to 0
+				firstLvi.CbSectionLine.X1Position = 0;
 			}
 			else
 			{
+				// Extend the rectangle just before the rectangle being deleted
 				var precedingLvi = ListViewItems[index - 1];
-				precedingLvi.CbSectionLine.XPosition = lvi.ColorBand.Cutoff;
+				
+				// So that its right edge is at the same position as the right edge of the rectangle being deleted.
+				precedingLvi.CbSectionLine.X2Position = lvi.ColorBand.Cutoff;
 			}
-
-			//_animationCompleted(ColorBandSetEditOperation.DeleteBand, index);
 
 			onAnimationComplete(index);
 

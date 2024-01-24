@@ -6,13 +6,12 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using static MongoDB.Driver.WriteConcern;
 
 namespace MSetExplorer
 {
 	internal class CbSectionLine
 	{
-		#region Private Fields
+		#region Private Const Fields
 
 		private const double STROKE_THICKNESS = 2.0;
 		private const double SELECTION_LINE_ARROW_WIDTH = 7.5;
@@ -20,38 +19,34 @@ namespace MSetExplorer
 
 		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush DARKISH_GRAY_BRUSH = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
-		//private static readonly Brush VERY_LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
 
 		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
-		//private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
-		
 		private static readonly Brush MEDIUM_BLUE_BRUSH = new SolidColorBrush(Colors.MediumBlue);
-		//private static readonly Brush BLACK_AND_WHITE_CHECKERS_BRUSH = DrawingHelper.BuildSelectionDrawingBrush();
 
 		private static readonly Brush IS_SELECTED_BACKGROUND = MIDDLIN_BLUE_BRUSH;
 		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = DARKISH_GRAY_BRUSH;
 
-		//private static readonly Brush IS_HOVERED_BACKGROUND = VERY_LIGHT_BLUE_BRUSH;
-		//private static readonly Brush IS_HOVERED_STROKE = BLACK_AND_WHITE_CHECKERS_BRUSH;
 		private static readonly Brush IS_HOVERED_STROKE = MEDIUM_BLUE_BRUSH;
 
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH; // new SolidColorBrush(Colors.AntiqueWhite);
 
-		private Canvas _canvas;
+		#endregion
 
-		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
-		private SectionLineMovedCallback _sectionLineMovedCallback;
+		#region Private Fields
+
+		private readonly Canvas _canvas;
+		private readonly ColorBandLayoutViewModel _colorBandLayoutViewModel;
+		private readonly SectionLineMovedCallback _sectionLineMovedCallback;
+
 		private SizeDbl _contentScale;
-		private double _scaleX;
 		private bool _parentIsFocused;
 
 		private Rect _sectionLineArea;
 		private Rect _topArrowArea;
 
-		private double _xPosition;
-
-		//private double _controlHeight;
+		private double _x1Position;
+		private double _x2Position;
 
 		private double _selectionLinePosition;
 		private double _opacity;
@@ -92,16 +87,13 @@ namespace MSetExplorer
 			_canvas = colorBandLayoutViewModel.Canvas;
 			_contentScale = colorBandLayoutViewModel.ContentScale;
 
-			_scaleX = _colorBandLayoutViewModel.ContentScale.Width;
-
 			_topArrowArea = topArrowArea;
 			_sectionLineArea = sectionLineArea;
 
-			_xPosition = sectionLineArea.Right;
+			_x1Position = sectionLineArea.Left;
+			_x2Position = sectionLineArea.Right;
 
-			//_controlHeight = _colorBandLayoutViewModel.ControlHeight;
-
-			_selectionLinePosition = _xPosition * _scaleX;
+			_selectionLinePosition = _x2Position * ContentScale.Width;
 			_originalSectionLinePosition = _selectionLinePosition;
 			_opacity = 1.0;
 
@@ -128,31 +120,6 @@ namespace MSetExplorer
 
 		public int ColorBandIndex { get; set; }
 
-		//public ColorBandLayoutViewModel ColorBandLayoutViewModel
-		//{
-		//	get => _colorBandLayoutViewModel;
-		//	set
-		//	{
-		//		_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
-		//		_colorBandLayoutViewModel = value;
-		//		_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
-		//	}
-		//}
-
-		//public double ScaleX
-		//{
-		//	get => _scaleX;
-
-		//	set
-		//	{
-		//		if (ScreenTypeHelper.IsDoubleChanged(value, _scaleX))
-		//		{
-		//			_scaleX = value;
-		//			SectionLinePositionX = _xPosition * _scaleX;
-		//		}
-		//	}
-		//}
-
 		public SizeDbl ContentScale
 		{
 			get => _contentScale;
@@ -162,7 +129,7 @@ namespace MSetExplorer
 				{
 					_contentScale = value;
 
-					SectionLinePositionX = _xPosition * ContentScale.Width;
+					SectionLinePositionX = _x2Position * ContentScale.Width;
 					ResizeTopArrow(TopArrowRectangleArea, ContentScale);
 					ResizeSectionLine(SectionLineRectangleArea, ContentScale);
 
@@ -178,7 +145,9 @@ namespace MSetExplorer
 				if (value != _sectionLineArea)
 				{
 					_sectionLineArea = value;
-					_xPosition = _sectionLineArea.X;
+					_x1Position = _sectionLineArea.Left;
+					_x2Position = _sectionLineArea.Right;
+
 					ResizeSectionLine(SectionLineRectangleArea, ContentScale);
 				}
 			}
@@ -197,19 +166,37 @@ namespace MSetExplorer
 			}
 		}
 
-		public double XPosition
+		public double X1Position
 		{
-			get => _xPosition;
+			get => _x1Position;
 
 			set
 			{
-				if (ScreenTypeHelper.IsDoubleChanged(value, _xPosition))
+				if (ScreenTypeHelper.IsDoubleChanged(value, _x1Position))
 				{
-					_xPosition = value;
+					_x1Position = value;
 					SectionLineRectangleArea = new Rect(value, _sectionLineArea.Y, _sectionLineArea.Width, _sectionLineArea.Height);
 					TopArrowRectangleArea = new Rect(value, _topArrowArea.Y, _topArrowArea.Width, _topArrowArea.Height);
 
-					SectionLinePositionX = _xPosition * _scaleX;
+					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
+				}
+			}
+		}
+
+		public double X2Position
+		{
+			get => _x2Position;
+
+			set
+			{
+				if (ScreenTypeHelper.IsDoubleChanged(value, _x2Position))
+				{
+					var width = value - _sectionLineArea.Left;
+					_x2Position = value;
+					SectionLineRectangleArea = new Rect(_sectionLineArea.X, _sectionLineArea.Y, width, _sectionLineArea.Height);
+					TopArrowRectangleArea = new Rect(_sectionLineArea.X, _topArrowArea.Y, width, _topArrowArea.Height);
+
+					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
 				}
 			}
 		}
@@ -229,20 +216,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//public double ControlHeight
-		//{
-		//	get => _controlHeight;
-		//	set
-		//	{
-		//		if (value != _controlHeight)
-		//		{
-		//			_controlHeight = value;
-
-		//			ResizeSectionLine(SectionLinePositionX, _colorBandLayoutViewModel);
-		//		}
-		//	}
-		//}
 
 		public double Opacity
 		{
@@ -440,10 +413,6 @@ namespace MSetExplorer
 				ContentScale = _colorBandLayoutViewModel.ContentScale;
 				_originalSectionLinePosition = SectionLinePositionX;
 			}
-			//else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
-			//{
-			//	ControlHeight = _colorBandLayoutViewModel.ControlHeight;
-			//}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ParentIsFocused))
 			{
 				ParentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
@@ -474,7 +443,6 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSectionLinePosition}.");
 				SectionLinePositionX = pos.X;
 
-				//SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbSectionLineDragOperation.Move));
 				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbSectionLineDragOperation.Move));
 			}
 			else
@@ -558,7 +526,6 @@ namespace MSetExplorer
 
 			if (distance > MIN_SEL_DISTANCE)
 			{
-				//SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, SectionLinePositionX, _updatingPrevious, CbSectionLineDragOperation.Complete));
 				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, SectionLinePositionX, _updatingPrevious, CbSectionLineDragOperation.Complete));
 
 				DragState = DragState.None;
@@ -581,13 +548,11 @@ namespace MSetExplorer
 			if (DragState == DragState.InProcess)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. CancelDragInternal. Drag was InProcess, raising SectionLineMoved with Operation = Cancel.");
-				//SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.Cancel));
 				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.Cancel));
 			}
 			else
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. CancelDragInternal. Drag was only Begun, raising SectionLineMoved with Operation = NotStarted.");
-				//SectionLineMoved?.Invoke(this, new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.NotStarted));
 				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, _originalSectionLinePosition, _updatingPrevious, CbSectionLineDragOperation.NotStarted));
 			}
 
@@ -606,11 +571,11 @@ namespace MSetExplorer
 			if (amount < 0)
 			{
 				amount = amount * -1;
-				result = _leftWidth > amount + (1 * _scaleX);
+				result = _leftWidth > amount + (1 * ContentScale.Width);
 			}
 			else
 			{
-				result = _rightWidth > amount + (1 * _scaleX);
+				result = _rightWidth > amount + (1 * ContentScale.Width);
 			}
 
 			return result;
@@ -643,7 +608,7 @@ namespace MSetExplorer
 				Fill = GetTopArrowFill(isSelected, parentIsFocused),
 				Stroke = GetTopArrowStroke(isUnderMouse, parentIsFocused),
 				StrokeThickness = STROKE_THICKNESS,
-				Points = BuildTopAreaPoints(topArrowArea.X * contentScale.Width, topArrowArea.Y, topArrowArea.Height)
+				Points = BuildTopAreaPoints(topArrowArea.Right * contentScale.Width, topArrowArea.Y, topArrowArea.Height)
 			};
 
 			return result;
@@ -687,50 +652,6 @@ namespace MSetExplorer
 
 			return result;
 		}
-
-		#endregion
-
-		#region Diag
-
-		//private void ReportPosition(Point posYInverted)
-		//{
-		//	var position = new Point(posYInverted.X, _canvas.ActualHeight - posYInverted.Y);
-		//	var canvasPos = GetCanvasPosition();
-		//	var pos = new Point(position.X + canvasPos.X, position.Y + canvasPos.Y);
-
-		//	HwndSource source = (HwndSource)PresentationSource.FromVisual(_canvas);
-		//	IntPtr hWnd = source.Handle;
-		//	var screenPos = Win32.TranslateToScreen(hWnd, pos);
-
-		//	Debug.WriteLine($"Mouse moved to canvas:{position}, inv:{posYInverted}, screen:{screenPos}");
-		//}
-
-		//private bool IsShiftKey()
-		//{
-		//	return Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
-		//}
-
-		//private bool IsCtrlKey()
-		//{
-		//	return Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
-		//}
-
-		//private bool IsAltKey()
-		//{
-		//	return Keyboard.IsKeyDown(Key.LeftAlt) || Keyboard.IsKeyDown(Key.RightAlt);
-		//}
-
-		//private void SelectedArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-		//{
-		//	var position = e.GetPosition(relativeTo: _canvas);
-
-		//	Debug.WriteLine($"The CbSectionLine is getting a Mouse Left Button Down at {position}.");
-		//}
-
-		//private void SelectedArea_MouseWheel(object sender, MouseWheelEventArgs e)
-		//{
-		//	Debug.WriteLine("The CbSectionLine received a MouseWheel event.");
-		//}
 
 		#endregion
 

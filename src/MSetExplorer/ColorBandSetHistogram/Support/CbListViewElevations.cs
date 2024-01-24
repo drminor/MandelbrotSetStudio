@@ -44,7 +44,7 @@ namespace MSetExplorer
 					_elevation = value;
 
 					UpdateElevationsAndHeights(Elevation, ControlHeight);
-					OnPropertyChanged();
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -60,7 +60,7 @@ namespace MSetExplorer
 					_controlHeight = value;
 
 					UpdateElevationsAndHeights(Elevation, ControlHeight);
-					OnPropertyChanged();
+					//OnPropertyChanged();
 				}
 			}
 		}
@@ -81,8 +81,8 @@ namespace MSetExplorer
 		public void SetElevationAndHeight(double elevation, double height)
 		{
 			UpdateElevationsAndHeights(elevation, height);
-			OnPropertyChanged(nameof(ControlHeight));
-			OnPropertyChanged(nameof(Elevation));
+			//OnPropertyChanged(nameof(ControlHeight));
+			//OnPropertyChanged(nameof(Elevation));
 		}
 
 		object ICloneable.Clone() => Clone();

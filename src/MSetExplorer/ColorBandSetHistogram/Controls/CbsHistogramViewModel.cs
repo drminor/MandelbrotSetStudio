@@ -782,7 +782,7 @@ namespace MSetExplorer
 
 			CurrentColorBand = null;
 			_currentColorBandSet.InsertCutoff(index, newCutoff);
-			ColorBandsView.Refresh();
+			//ColorBandsView.Refresh();
 			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;
@@ -823,7 +823,7 @@ namespace MSetExplorer
 
 			CurrentColorBand = null;
 			_currentColorBandSet.InsertColor(index, newItem);
-			ColorBandsView.Refresh();
+			//ColorBandsView.Refresh();
 			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;
@@ -1009,7 +1009,7 @@ namespace MSetExplorer
 
 			CurrentColorBand = null;
 			_currentColorBandSet.DeleteCutoff(index);
-			ColorBandsView.Refresh();
+			//ColorBandsView.Refresh();
 			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;
@@ -1054,7 +1054,7 @@ namespace MSetExplorer
 
 			CurrentColorBand = null;
 			_currentColorBandSet.DeleteColor(index);
-			ColorBandsView.Refresh();
+			//ColorBandsView.Refresh();
 			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;

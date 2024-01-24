@@ -350,7 +350,7 @@ namespace MSetExplorer
 		{
 			if (_cbListView != null)
 			{
-				_cbListView.AnimateCutoffInsertion(onAnimationComplete, index);
+				_cbListView.AnimateInsertCutoff(onAnimationComplete, index);
 			}
 		}
 
@@ -358,7 +358,7 @@ namespace MSetExplorer
 		{
 			if (_cbListView != null)
 			{
-				_cbListView.AnimateColorInsertion(onAnimationComplete, index);
+				_cbListView.AnimateInsertColor(onAnimationComplete, index);
 			}
 		}
 
@@ -366,7 +366,7 @@ namespace MSetExplorer
 		{
 			if (_cbListView != null)
 			{
-				_cbListView.AnimateBandInsertion(onAnimationComplete, index);
+				_cbListView.AnimateInsertBand(onAnimationComplete, index);
 			}
 		}
 
@@ -374,7 +374,7 @@ namespace MSetExplorer
 		{
 			if (_cbListView != null)
 			{
-				_cbListView.AnimateCutoffDeletion(onAnimationComplete, index);
+				_cbListView.AnimateDeleteCutoff(onAnimationComplete, index);
 			}
 		}
 
@@ -382,7 +382,7 @@ namespace MSetExplorer
 		{
 			if (_cbListView != null)
 			{
-				_cbListView.AnimateColorDeletion(onAnimationComplete, index);
+				_cbListView.AnimateDeleteColor(onAnimationComplete, index);
 			}
 		}
 
@@ -390,7 +390,7 @@ namespace MSetExplorer
 		{
 			if (_cbListView != null)
 			{
-				_cbListView.AnimateBandDeletion(onAnimationComplete, index);
+				_cbListView.AnimateDeleteBand(onAnimationComplete, index);
 			}
 		}
 

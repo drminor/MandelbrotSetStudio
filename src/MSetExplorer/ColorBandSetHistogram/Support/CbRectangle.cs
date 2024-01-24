@@ -10,9 +10,7 @@ namespace MSetExplorer
 {
 	internal class CbRectangle
 	{
-		#region Private Fields
-
-		//private static readonly Brush IS_CURRENT_BACKGROUND = new SolidColorBrush(Colors.PowderBlue);
+		#region Private Const Fields
 
 		private const double DEFAULT_STROKE_THICKNESS = 1.0;
 		private const double SELECTED_STROKE_THICKNESS = 2.0;
@@ -20,29 +18,24 @@ namespace MSetExplorer
 		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush DARKISH_GRAY_BRUSH = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
 		private static readonly Brush VERY_LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
-		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
 		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
-
-		private static readonly Brush MEDIUM_BLUE_BRUSH = new SolidColorBrush(Colors.MediumBlue);
 
 		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
 		private static readonly Brush IS_SELECTED_STROKE = LIGHT_BLUE_BRUSH;
-
 		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = DARKISH_GRAY_BRUSH;
 
 		private static readonly Brush IS_HOVERED_STROKE = VERY_LIGHT_BLUE_BRUSH;
-
-		//private static readonly Brush IS_CURRENT_STROKE = LIGHT_BLUE_BRUSH;
 		private static readonly Brush IS_CURRENT_BACKGROUND = LIGHT_BLUE_BRUSH;
 
-		// For diagnostics
-		//private static readonly Brush IS_HOVERED_AND_IS_SELECTED_BACKGROUND = new SolidColorBrush(Colors.SeaGreen);
+		#endregion
 
-		private Canvas _canvas;
+		#region Private Fields
 
-		private ColorBandLayoutViewModel _colorBandLayoutViewModel;
+		private readonly Canvas _canvas;
+		private readonly ColorBandLayoutViewModel _colorBandLayoutViewModel;
+
 		private SizeDbl _contentScale;
 		private bool _parentIsFocused;
 
@@ -121,17 +114,6 @@ namespace MSetExplorer
 
 		public Path BlendedBandRectangle => (Path)_rectanglePath;
 
-		//public ColorBandLayoutViewModel ColorBandLayoutViewModel
-		//{
-		//	get => _colorBandLayoutViewModel;
-		//	set
-		//	{
-		//		_colorBandLayoutViewModel.PropertyChanged -= ColorBandLayoutViewModel_PropertyChanged;
-		//		_colorBandLayoutViewModel = value;
-		//		_colorBandLayoutViewModel.PropertyChanged += ColorBandLayoutViewModel_PropertyChanged;
-		//	}
-		//}
-
 		public ColorBandColor StartColor
 		{
 			get => _startColor;
@@ -140,7 +122,6 @@ namespace MSetExplorer
 				if (value != _startColor)
 				{
 					_startColor = value;
-					//Recolor(_startColor, _endColor, _blend);
 					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
 
 				}
@@ -155,9 +136,7 @@ namespace MSetExplorer
 				if (value != _endColor)
 				{
 					_endColor = value;
-					//Recolor(_startColor, _endColor, _blend);
 					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
-
 				}
 			}
 		}

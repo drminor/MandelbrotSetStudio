@@ -573,26 +573,6 @@ namespace MSS.Types
 			return result;
 		}
 
-		[Conditional("DEBUG2")]
-		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands)
-		{
-			var totalWidth = colorBands.Sum(x => x.BucketWidth);
-			var minCutoff = colorBands[0].StartingCutoff;
-			var maxCutoff = colorBands[^1].Cutoff;
-			var totalRange = 1 + maxCutoff - minCutoff;
-
-			Debug.WriteLine($"Total Width: {totalWidth}, Total Range: {totalRange}, Min Cutoff: {minCutoff}, Max Cutoff: {maxCutoff}.");
-
-			var bucketWidths = string.Join("; ", colorBands.Select(x => x.BucketWidth.ToString()).ToArray());
-			Debug.WriteLine($"Bucket Widths: {bucketWidths}.");
-
-			var cutoffs = string.Join("; ", colorBands.Select(x => x.Cutoff.ToString()).ToArray());
-			Debug.WriteLine($"Cutoffs: {cutoffs}.");
-
-			var startingCutoffs = string.Join("; ", colorBands.Select(x => x.StartingCutoff.ToString()).ToArray());
-			Debug.WriteLine($"Starting Cutoffs: {startingCutoffs}.");
-		}
-
 		private void PullColorsDown(int index)
 		{
 			for (var ptr = index; ptr < Count - 3; ptr++)
@@ -785,6 +765,30 @@ namespace MSS.Types
 
 		//	return sb.ToString();
 		//}
+
+		#endregion
+
+		#region Diagnostics
+
+		[Conditional("DEBUG2")]
+		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands)
+		{
+			var totalWidth = colorBands.Sum(x => x.BucketWidth);
+			var minCutoff = colorBands[0].StartingCutoff;
+			var maxCutoff = colorBands[^1].Cutoff;
+			var totalRange = 1 + maxCutoff - minCutoff;
+
+			Debug.WriteLine($"Total Width: {totalWidth}, Total Range: {totalRange}, Min Cutoff: {minCutoff}, Max Cutoff: {maxCutoff}.");
+
+			var bucketWidths = string.Join("; ", colorBands.Select(x => x.BucketWidth.ToString()).ToArray());
+			Debug.WriteLine($"Bucket Widths: {bucketWidths}.");
+
+			var cutoffs = string.Join("; ", colorBands.Select(x => x.Cutoff.ToString()).ToArray());
+			Debug.WriteLine($"Cutoffs: {cutoffs}.");
+
+			var startingCutoffs = string.Join("; ", colorBands.Select(x => x.StartingCutoff.ToString()).ToArray());
+			Debug.WriteLine($"Starting Cutoffs: {startingCutoffs}.");
+		}
 
 		#endregion
 
