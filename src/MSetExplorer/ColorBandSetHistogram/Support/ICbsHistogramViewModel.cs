@@ -18,8 +18,8 @@ namespace MSetExplorer
 		ColorBandSetEditMode CurrentCbEditMode { get; set; }
 		string CurrentCbEditModeAsString { get; }
 
-		bool EditingCutoffs { get; set; }
-		bool EditingColors { get; set; }
+		//bool EditingCutoffs { get; set; }
+		//bool EditingColors { get; set; }
 
 		bool ColorBandUserControlHasErrors { get; set; }
 
@@ -52,19 +52,17 @@ namespace MSetExplorer
 		void AdvanceEditMode();
 		void RetardEditMode(); 
 
-		bool TryInsertNewItem(ColorBand colorBand, out int index);
-
+		//bool TryInsertNewItem(ColorBand colorBand, out int index);
 		//bool TryDeleteItem(ColorBand colorBand);
-
 
 		//int GetIndexOf(ColorBand colorBand);
 
-		bool TestInsertItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation);
+		bool TestInsertItem(int colorBandIndex);
 		void CompleteCutoffInsertion(int index);
 		void CompleteColorInsertion(int index);
 		void CompleteBandInsertion(int index);
 
-		bool TestDeleteItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation);
+		bool TestDeleteItem(int colorBandIndex);
 		void CompleteCutoffRemoval(int index);
 		void CompleteColorRemoval(int index);
 		void CompleteBandRemoval(int index);

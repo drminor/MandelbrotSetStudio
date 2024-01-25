@@ -1502,15 +1502,15 @@ namespace MSetExplorer
 		#endregion
 	}
 
-	public enum ColorBandSetEditOperation
-	{
-		InsertCutoff,
-		DeleteCutoff,
+	//public enum ColorBandSetEditOperation
+	//{
+	//	InsertCutoff,
+	//	DeleteCutoff,
 
-		InsertColor,
-		DeleteColor,
+	//	InsertColor,
+	//	DeleteColor,
 
-		InsertBand,
-		DeleteBand
-	}
+	//	InsertBand,
+	//	DeleteBand
+	//}
 }

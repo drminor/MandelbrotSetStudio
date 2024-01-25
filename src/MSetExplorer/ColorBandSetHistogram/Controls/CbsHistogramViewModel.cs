@@ -153,53 +153,53 @@ namespace MSetExplorer
 			get => _currentCbEditMode.ToString();
 		}
 
-		public bool EditingCutoffs
-		{
-			get => _currentCbEditMode.HasFlag(ColorBandSetEditMode.Cutoffs);
-			set
-			{
-				ColorBandSetEditMode newVal;
+		//public bool EditingCutoffs
+		//{
+		//	get => _currentCbEditMode.HasFlag(ColorBandSetEditMode.Cutoffs);
+		//	set
+		//	{
+		//		ColorBandSetEditMode newVal;
 
-				if (value)
-				{
-					newVal = CurrentCbEditMode | ColorBandSetEditMode.Cutoffs;
-				}
-				else
-				{
-					newVal = CurrentCbEditMode & ~ColorBandSetEditMode.Cutoffs;
-				}
+		//		if (value)
+		//		{
+		//			newVal = CurrentCbEditMode | ColorBandSetEditMode.Cutoffs;
+		//		}
+		//		else
+		//		{
+		//			newVal = CurrentCbEditMode & ~ColorBandSetEditMode.Cutoffs;
+		//		}
 
-				if (newVal != CurrentCbEditMode)
-				{
-					CurrentCbEditMode = newVal;
-					OnPropertyChanged(nameof(ICbsHistogramViewModel.EditingCutoffs));
-				}
-			}
-		}
+		//		if (newVal != CurrentCbEditMode)
+		//		{
+		//			CurrentCbEditMode = newVal;
+		//			OnPropertyChanged(nameof(ICbsHistogramViewModel.EditingCutoffs));
+		//		}
+		//	}
+		//}
 
-		public bool EditingColors
-		{
-			get => _currentCbEditMode.HasFlag(ColorBandSetEditMode.Colors);
-			set
-			{
-				ColorBandSetEditMode newVal;
+		//public bool EditingColors
+		//{
+		//	get => _currentCbEditMode.HasFlag(ColorBandSetEditMode.Colors);
+		//	set
+		//	{
+		//		ColorBandSetEditMode newVal;
 
-				if (value)
-				{
-					newVal = CurrentCbEditMode | ColorBandSetEditMode.Colors;
-				}
-				else
-				{
-					newVal = CurrentCbEditMode & ~ColorBandSetEditMode.Colors;
-				}
+		//		if (value)
+		//		{
+		//			newVal = CurrentCbEditMode | ColorBandSetEditMode.Colors;
+		//		}
+		//		else
+		//		{
+		//			newVal = CurrentCbEditMode & ~ColorBandSetEditMode.Colors;
+		//		}
 
-				if (newVal != CurrentCbEditMode)
-				{
-					CurrentCbEditMode = newVal;
-					OnPropertyChanged(nameof(ICbsHistogramViewModel.EditingColors));
-				}
-			}
-		}
+		//		if (newVal != CurrentCbEditMode)
+		//		{
+		//			CurrentCbEditMode = newVal;
+		//			OnPropertyChanged(nameof(ICbsHistogramViewModel.EditingColors));
+		//		}
+		//	}
+		//}
 
 		public ColorBandSet ColorBandSet
 		{
@@ -661,43 +661,41 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public bool TryInsertNewItem(ColorBand colorBand, out int index)
+		//public bool TryInsertNewItem(ColorBand colorBand, out int index)
+		//{
+		//	bool result;
+		//	switch (CurrentCbEditMode)
+		//	{
+		//		case ColorBandSetEditMode.Cutoffs:
+		//			result = TryInsertCutoff(colorBand, out index);
+		//			break;
+		//		case ColorBandSetEditMode.Colors:
+		//			result = TryInsertColor(colorBand, out index);
+		//			break;
+		//		case ColorBandSetEditMode.Bands:
+		//			result = TryInsertColorBand(colorBand, out index);
+		//			break;
+		//		default:
+		//			throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
+		//	}
+
+		//	if (result)
+		//	{
+		//		PushCurrentColorBandOnToHistoryCollection();
+		//		IsDirty = true;
+		//		UpdatePercentages();
+
+		//		if (UseRealTimePreview)
+		//		{
+		//			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+		//		}
+		//	}
+
+		//	return result;
+		//}
+
+		public bool TestInsertItem(int colorBandIndex)
 		{
-			bool result;
-			switch (CurrentCbEditMode)
-			{
-				case ColorBandSetEditMode.Cutoffs:
-					result = TryInsertCutoff(colorBand, out index);
-					break;
-				case ColorBandSetEditMode.Colors:
-					result = TryInsertColor(colorBand, out index);
-					break;
-				case ColorBandSetEditMode.Bands:
-					result = TryInsertColorBand(colorBand, out index);
-					break;
-				default:
-					throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
-			}
-
-			if (result)
-			{
-				PushCurrentColorBandOnToHistoryCollection();
-				IsDirty = true;
-				UpdatePercentages();
-
-				if (UseRealTimePreview)
-				{
-					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-				}
-			}
-
-			return result;
-		}
-
-		public bool TestInsertItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation)
-		{
-			colorBandSetEditOperation = null;
-
 			if (CurrentColorBand == null || ColorBandUserControlHasErrors)
 			{
 				return false;
@@ -706,7 +704,6 @@ namespace MSetExplorer
 			switch (CurrentCbEditMode)
 			{
 				case ColorBandSetEditMode.Cutoffs:
-					colorBandSetEditOperation = ColorBandSetEditOperation.InsertCutoff;
 					var colorBand = _currentColorBandSet[colorBandIndex];
 
 					if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
@@ -718,11 +715,9 @@ namespace MSetExplorer
 					break;
 
 				case ColorBandSetEditMode.Colors:
-					colorBandSetEditOperation = ColorBandSetEditOperation.InsertColor;
 					break;
 
 				case ColorBandSetEditMode.Bands:
-					colorBandSetEditOperation = ColorBandSetEditOperation.InsertBand;
 					colorBand = _currentColorBandSet[colorBandIndex];
 
 					if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
@@ -887,7 +882,7 @@ namespace MSetExplorer
 			return true;
 		}
 
-		public bool TestDeleteItem(int colorBandIndex, [NotNullWhen(true)] out ColorBandSetEditOperation? colorBandSetEditOperation)
+		public bool TestDeleteItem(int colorBandIndex)
 		{
 			bool result;
 
@@ -896,21 +891,17 @@ namespace MSetExplorer
 				case ColorBandSetEditMode.Cutoffs:
 
 					// Cannot delete the last entry
-
-					colorBandSetEditOperation = ColorBandSetEditOperation.DeleteCutoff;
 					result = colorBandIndex <= _currentColorBandSet.Count - 2;
 					break;
 
 				case ColorBandSetEditMode.Colors:
 					// Cannot delete the last entry
 
-					colorBandSetEditOperation = ColorBandSetEditOperation.DeleteColor;
 					result = colorBandIndex <= _currentColorBandSet.Count - 2;
 					break;
 
 				case ColorBandSetEditMode.Bands:
 
-					colorBandSetEditOperation = ColorBandSetEditOperation.DeleteBand;
 					if (_colorBandsView.Count < 2)
 					{
 						// There is only one ColorBand remaining. 

@@ -354,19 +354,19 @@ namespace MSetExplorer
 
 			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
 			{
-				if (_vm.TestInsertItem(colorBandIndex.Value, out var editOp))
+				if (_vm.TestInsertItem(colorBandIndex.Value))
 				{
-					switch (editOp)
+					switch (_vm.CurrentCbEditMode)
 					{
-						case ColorBandSetEditOperation.InsertCutoff:
+						case ColorBandSetEditMode.Cutoffs:
 							HistogramColorBandControl1.AnimateCutoffInsertion(_vm.CompleteCutoffInsertion, colorBandIndex.Value);
 							break;
 
-						case ColorBandSetEditOperation.InsertColor:
+						case ColorBandSetEditMode.Colors:
 							HistogramColorBandControl1.AnimateColorInsertion(_vm.CompleteColorInsertion, colorBandIndex.Value);
 							break;
 
-						case ColorBandSetEditOperation.InsertBand:
+						case ColorBandSetEditMode.Bands:
 							HistogramColorBandControl1.AnimateBandInsertion(_vm.CompleteBandInsertion, colorBandIndex.Value);
 							break;
 
@@ -425,19 +425,19 @@ namespace MSetExplorer
 		{
 			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
 			{
-				if (_vm.TestDeleteItem(colorBandIndex.Value, out var editOp))
+				if (_vm.TestDeleteItem(colorBandIndex.Value))
 				{
-					switch (editOp)
+					switch (_vm.CurrentCbEditMode)
 					{
-						case ColorBandSetEditOperation.DeleteCutoff:
+						case ColorBandSetEditMode.Cutoffs:
 							HistogramColorBandControl1.AnimateCutoffDeletion(_vm.CompleteCutoffRemoval, colorBandIndex.Value);
 							break;
 
-						case ColorBandSetEditOperation.DeleteColor:
+						case ColorBandSetEditMode.Colors:
 							HistogramColorBandControl1.AnimateColorDeletion(_vm.CompleteColorRemoval, colorBandIndex.Value);
 							break;
 
-						case ColorBandSetEditOperation.DeleteBand:
+						case ColorBandSetEditMode.Bands:
 							HistogramColorBandControl1.AnimateBandDeletion(_vm.CompleteBandRemoval, colorBandIndex.Value);
 							break;
 
