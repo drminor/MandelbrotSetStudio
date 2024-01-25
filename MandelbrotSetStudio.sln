@@ -41,6 +41,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Notes", "Notes", "{D3C5A726
 		Notes\BlockOffsetsForInitialSet.txt = Notes\BlockOffsetsForInitialSet.txt
 		Notes\BuildMapSectionsFrom2x2or4x4set.txt = Notes\BuildMapSectionsFrom2x2or4x4set.txt
 		Notes\Canvas_Coords_Finding_Center.png = Notes\Canvas_Coords_Finding_Center.png
+		Notes\ColorBandSet Insertion and Deletion Logic.txt = Notes\ColorBandSet Insertion and Deletion Logic.txt
 		Notes\ColorMapFromHistogramData.txt = Notes\ColorMapFromHistogramData.txt
 		Notes\EscapeVelocityLogic.txt = Notes\EscapeVelocityLogic.txt
 		Notes\FixedPoint_8.120_Format.txt = Notes\FixedPoint_8.120_Format.txt

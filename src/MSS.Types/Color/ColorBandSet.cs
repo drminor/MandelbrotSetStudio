@@ -292,6 +292,9 @@ namespace MSS.Types
 			PullColorsDown(index); // A band is pulled from the reserves and placed at the end.
 		}
 
+
+
+
 		public void DeleteCutoff(int index)
 		{
 			if (index < 0 || index > Count - 2)
@@ -299,8 +302,17 @@ namespace MSS.Types
 				throw new ArgumentException($"DeleteCutoff. Index must be between 0 and {Count - 1}, inclusive.");
 			}
 
-			PullCutoffsDown(index); // Last Band is popped from the list and added to the reserves.
+			if (Count <= 2)
+			{
+				// The collection must have at least two items. 
+				throw new InvalidOperationException($"DeleteCutoff. Cannot delete a Cutoff, the collection must have 3 or more bands.");
+			}
+
+			PushColorsUp(index); // Last Band is popped from the list and added to the reserves.
+
+			base.RemoveItem(index);
 		}
+
 
 		public void InsertColor(int index, ColorBand colorBand)
 		{
@@ -445,6 +457,7 @@ namespace MSS.Types
 			for (var i = 0; i < result.Count - 1; i++)
 			{
 				var cb = result[i];
+				cb.IsLast = false;
 				cb.PreviousCutoff = prevCutoff;
 				cb.SuccessorStartColor = result[i + 1].StartColor;
 
@@ -486,9 +499,12 @@ namespace MSS.Types
 			if (lastCb.Cutoff < targetIterations)
 			{
 				Debug.WriteLine($"WARNING: The last ColorBand's Cutoff is less than the TargetIterations. Creating a new ColorBand to fill the gap.");
+				lastCb.IsLast = false;
 
 				// Create a new ColorBand to fill the gap.
 				var newLastCb = CreateHighColorBand(lastCb, targetIterations);
+
+				newLastCb.IsLast = true;
 				result.Add(newLastCb);
 
 				lastCb.SuccessorStartColor = newLastCb.StartColor;
@@ -496,6 +512,7 @@ namespace MSS.Types
 			}
 			else
 			{
+				lastCb.IsLast = true;
 				if (lastCb.Cutoff > targetIterations)
 				{
 					// Use the targetIterations to set the Cutoff.
@@ -577,8 +594,8 @@ namespace MSS.Types
 		{
 			for (var ptr = index; ptr < Count - 3; ptr++)
 			{
-				var targetCb = Items[ptr];
 				var sourceCb = Items[ptr + 1];
+				var targetCb = Items[ptr];
 
 				targetCb.StartColor = sourceCb.StartColor;
 				targetCb.BlendStyle = sourceCb.BlendStyle;
@@ -595,6 +612,46 @@ namespace MSS.Types
 			targetCbE.SuccessorStartColor = Items[Count - 1].StartColor;
 		}
 
+		private void PushColorsUp(int index)
+		{
+			var sourceCbE = Items[^2];
+			var targetCbE = Items[^1];
+
+			targetCbE.StartColor = sourceCbE.StartColor;
+
+			for (var ptr = Count - 2; ptr > index; ptr--)
+			{
+				var sourceCb = Items[ptr - 1];
+				var targetCb = Items[ptr];
+
+				targetCb.SuccessorStartColor = targetCb.StartColor;
+				targetCb.StartColor = sourceCb.StartColor;
+				targetCb.BlendStyle = sourceCb.BlendStyle;
+				targetCb.EndColor = sourceCb.EndColor;
+			}
+
+
+			//for (var ptr = index; ptr < Count - 3; ptr++)
+			//{
+			//	var targetCb = Items[ptr];
+			//	var sourceCb = Items[ptr + 1];
+
+			//	targetCb.StartColor = sourceCb.StartColor;
+			//	targetCb.BlendStyle = sourceCb.BlendStyle;
+			//	targetCb.EndColor = sourceCb.EndColor;
+			//	targetCb.SuccessorStartColor = Items[ptr + 2].StartColor;
+			//}
+
+			//var targetCbE = Items[Count - 2];
+			//var sourceCbE = GetNextReservedColorBand();
+
+			//targetCbE.StartColor = sourceCbE.StartColor;
+			//targetCbE.BlendStyle = sourceCbE.BlendStyle;
+			//targetCbE.EndColor = sourceCbE.EndColor;
+			//targetCbE.SuccessorStartColor = Items[Count - 1].StartColor;
+		}
+
+
 		private void PullCutoffsDown(int index)
 		{
 			for (var ptr = index; ptr < Count - 2; ptr++)
@@ -608,6 +665,14 @@ namespace MSS.Types
 
 			var lastCb = Items[Count - 2];
 			RemoveItem(Count - 2);
+
+			if (Count > 1)
+			{
+				Items[Count - 1].PreviousCutoff = Items[Count - 2].Cutoff;
+
+				Items[Count - 2].SuccessorStartColor = Items[Count - 1].StartColor;
+			}
+
 			var newReserved = new ReservedColorBand(lastCb.StartColor, lastCb.BlendStyle, lastCb.EndColor);
 			_reservedColorBands.Push(newReserved);
 		}

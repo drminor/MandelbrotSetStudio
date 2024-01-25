@@ -983,6 +983,23 @@ namespace MSetExplorer
 				return;
 			}
 
+			if (index == 0)
+			{
+				var cb = _currentColorBandSet[index];
+				cb.PreviousCutoff = 0;
+			}
+			else
+			{
+				var cb = _currentColorBandSet[index - 1];
+				cb.Cutoff = _currentColorBandSet[index].PreviousCutoff ?? 0;
+			}
+
+			if (index > 0) index--;
+
+			_colorBandsView.MoveCurrentToPosition(index);
+			_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+
+
 			Debug.WriteLine($"ColorBandSetViewModel.After CutoffRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
 			PushCurrentColorBandOnToHistoryCollection();
@@ -1008,8 +1025,11 @@ namespace MSetExplorer
 			}
 
 			CurrentColorBand = null;
+
 			_currentColorBandSet.DeleteCutoff(index);
+
 			//ColorBandsView.Refresh();
+
 			ColorBandsView.MoveCurrentTo(colorBand);
 
 			return true;

@@ -1,4 +1,6 @@
-﻿using MSS.Types;
+﻿using ABI.System.Collections.Generic;
+using MSS.Types;
+using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -459,7 +461,7 @@ namespace MSetExplorer
 			var hitPoint = e.GetPosition(_canvas);
 			if (TryGetSectionLineIndex(hitPoint, ListViewItems, out var distance, out var cbListViewItemIndex))
 			{
-				if (Math.Abs(distance) < 6)
+				if (Math.Abs(distance) < 6 && hitPoint.Y <= _elevations.ColorBlocksElevation)
 				{
 					BlendRectangleUnderMouse = null;
 					ColorBlocksUnderMouse = null;
@@ -485,8 +487,8 @@ namespace MSetExplorer
 					}
 					else
 					{
-						BlendRectangleUnderMouse = null;
 						ColorBlocksUnderMouse = ListViewItems[selIndex];
+						BlendRectangleUnderMouse = null;
 					}
 				}
 			}
@@ -980,13 +982,46 @@ namespace MSetExplorer
 
 		#region Animation Support - Deletions
 
+		/*
+
+			1. Update the Item's Cutoff to use the next item's Cutoff
+			2. Update the next item's PreviousCutoff to be this Item's PreviousCutoff
+
+
+
+		*/
+
 		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
 		{
 			//_storyBoardDetails1.RateFactor = 5;
 
-			var itemBeingRemoved = ListViewItems[index];
-
 			var rGeos = GetSubColorRectangles(index);
+
+
+			var itemBeingRemoved = ListViewItems[index];
+			var curVal = itemBeingRemoved.Area;
+
+			if (index == 0)
+			{
+				var newFirstItem = ListViewItems[index + 1];
+				curVal = newFirstItem.Area;
+				var newXPosition = 0;
+
+				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
+			}
+			else
+			{
+				var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
+
+				var preceedingItem = ListViewItems[index - 1];
+
+				curVal = preceedingItem.Area;
+				var newWidth = curVal.Width + widthOfItemBeingRemoved;
+
+				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
+			}
+
+
 
 			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index);
 		}
@@ -995,19 +1030,50 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine("CutoffDeletion Animation has completed.");
 
-			var lvi = ListViewItems[^2]; // The item before the last item.
+			//var lvi = ListViewItems[^2]; // The item before the last item.
+
+			//onAnimationComplete(index);
+
+			////for (var i = index; index < ListViewItems.Count - 2; i++)
+			////{
+			////	ListViewItems[i].
+			////}
+
+			//RemoveListViewItem(lvi);
+			//Reindex(lvi.ColorBandIndex);
+
+			//lvi = ListViewItems[^2];
+			//var colorBandLast = ListViewItems[^1].ColorBand;
+			//lvi.ColorBand.SuccessorStartColor = colorBandLast.StartColor;
+			//colorBandLast.PreviousCutoff = lvi.ColorBand.Cutoff;
+			//_ = SynchronizeCurrentItem();
+
+			var lvi = ListViewItems[index];
+
+			// Update the SectionLine's position
+			if (index == 0)
+			{
+				Debug.WriteLine("Handling AfterAnimateBandDeletion and the index = 0.");
+
+				// The rectangle at index + 1 will move to become the very first rectangle at index = 0
+				var firstLvi = ListViewItems[index + 1];
+
+				// Extend this rectangle by moving its starting point to 0
+				firstLvi.CbSectionLine.X1Position = 0;
+			}
+			else
+			{
+				// Extend the rectangle just before the rectangle being deleted
+				var precedingLvi = ListViewItems[index - 1];
+
+				// So that its right edge is at the same position as the right edge of the rectangle being deleted.
+				precedingLvi.CbSectionLine.X2Position = lvi.ColorBand.Cutoff;
+			}
 
 			onAnimationComplete(index);
 
 			RemoveListViewItem(lvi);
 			Reindex(lvi.ColorBandIndex);
-
-			lvi = ListViewItems[^2];
-
-			var colorBandLast = ListViewItems[^1].ColorBand;
-
-			lvi.ColorBand.SuccessorStartColor = colorBandLast.StartColor;
-			colorBandLast.PreviousCutoff = lvi.ColorBand.Cutoff;
 
 			_ = SynchronizeCurrentItem();
 		}
@@ -1056,6 +1122,12 @@ namespace MSetExplorer
 				var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
 
 				var preceedingItem = ListViewItems[index - 1];
+
+				if (index < ListViewItems.Count - 2)
+				{
+					preceedingItem.ColorBand.SuccessorStartColor = ListViewItems[index + 1].ColorBand.StartColor;
+				}
+
 				curVal = preceedingItem.Area;
 				var newWidth = curVal.Width + widthOfItemBeingRemoved;
 

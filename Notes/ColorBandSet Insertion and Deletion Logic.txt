@@ -1,0 +1,105 @@
+
+
+Start with a single band
+	StartColor cannot be black
+	EndColor must be black
+	Blend Type must be 'End'
+	PreviousCutoff = 0
+	Cutoff = MaxIterations
+
+
+Add a new Section Line, after the first band
+	1. The user selects a value where the new band will begin (or the width of an existing band is halved.)
+	2. The new band is assigned the Cutoff of the band before the point of insertion
+	3. The previous band has its Cutoff updated to theof the band before point of insertion is set to new PreviousCutoff
+
+
+First Band
+	If Blend is next or end, the start color cannot be black
+	PreviousCutoff = 0					>= Start
+	Cutoff = 0 to Cutoff of next band	<= End
+
+Second Band
+	StartColor must be black
+	Blend Type must be 'None' or 'End'
+	PreviousCutoff = Cutoff of previous band
+	Cutoff = MaxIterations
+
+
+Add a new section Line, before the first
+	1. The new band is assigned a PreviousCutoff
+	2. The new band is assigned the Cutoff of the band before the point of insertion
+	3. The Cutoff of the band before point of insertion is set to new PreviousCutoff
+Add a new section before the second
+	1. The new band is assigned a PreviousCutoff
+	2. The new band is assigned the Cutoff of the band before the point of insertion
+	3. The Cutoff of the band before point of insertion is set to new PreviousCutoff
+
+First Band
+	PreviousCutoff = 0					>= Start
+	Cutoff = 0 to Cutoff of next band	<= End
+
+Second Band
+	PreviousCutoff = Cutoff of previous band
+	Cutoff = Cutoff of previous band to Cutoff of next band
+
+Third Band
+	Blend Type must be 'None' or 'End'
+	PreviousCutoff = Cutoff of previous band
+	Cutoff = MaxIterations
+
+
+Add a new section Line, before the first
+	1. The new band is assigned a PreviousCutoff
+	2. The new band is assigned the Cutoff of the band before the point of insertion
+	3. The Cutoff of the band before point of insertion is set to new PreviousCutoff
+Add a new section before the second
+	1. The new band is assigned a PreviousCutoff
+	2. The new band is assigned the Cutoff of the band before the point of insertion
+	3. The Cutoff of the band before point of insertion is set to new PreviousCutoff
+Add a new section before the third
+	1. The new band is assigned a PreviousCutoff
+	2. The new band is assigned the Cutoff of the band before the point of insertion
+	3. The Cutoff of the band before point of insertion is set to new PreviousCutoff
+
+Add a new section line after second
+
+First Band
+	PreviousCutoff = 0					>= Start
+	Cutoff = 0 to Cutoff of next band	<= End
+
+Second Band
+	PreviousCutoff = Cutoff of previous band
+	Cutoff = Cutoff of previous band to Cutoff of next band
+
+Third Band
+	PreviousCutoff = Cutoff of previous band
+	Cutoff = Cutoff of previous band to Cutoff of next band
+
+Forth Band
+	Blend Type must be 'None' or 'End'
+	PreviousCutoff = Cutoff of previous band
+	Cutoff = MaxIterations
+
+
+Remove the First of Four bands.
+
+Remove the Second of Four bands.
+
+Remove the third of Four bands.
+
+
+Remove the first of Three bands
+
+Remove the second of Three bands
+
+
+
+Remove the first of two bands
+The remaining single band
+	StartColor cannot be black
+	EndColor must be black
+	Blend Type must be 'End'
+	PreviousCutoff = 0
+	Cutoff = MaxIterations
+

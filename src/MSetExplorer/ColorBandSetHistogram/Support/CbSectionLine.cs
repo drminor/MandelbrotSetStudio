@@ -17,6 +17,9 @@ namespace MSetExplorer
 		private const double SELECTION_LINE_ARROW_WIDTH = 7.5;
 		private const double MIN_SEL_DISTANCE = 0.49;
 
+		private static readonly Brush DIAG_LIGHT_GREEN = new SolidColorBrush(Colors.LightSeaGreen);
+
+
 		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush DARKISH_GRAY_BRUSH = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
 
@@ -24,7 +27,7 @@ namespace MSetExplorer
 		private static readonly Brush MEDIUM_BLUE_BRUSH = new SolidColorBrush(Colors.MediumBlue);
 
 		private static readonly Brush IS_SELECTED_BACKGROUND = MIDDLIN_BLUE_BRUSH;
-		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = DARKISH_GRAY_BRUSH;
+		private static readonly Brush IS_SELECTED_INACTIVE_BACKGROUND = DIAG_LIGHT_GREEN; // DARKISH_GRAY_BRUSH;
 
 		private static readonly Brush IS_HOVERED_STROKE = MEDIUM_BLUE_BRUSH;
 
@@ -483,9 +486,8 @@ namespace MSetExplorer
 			if (dragCompleted)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The CbSectionLine is getting a MouseLeftButtonUp event. The Drag is Complete.");
+				e.Handled = true;
 			}
-
-			e.Handled = true;
 		}
 
 		private void Handle_TopArrowMouseUp(object sender, MouseButtonEventArgs e)

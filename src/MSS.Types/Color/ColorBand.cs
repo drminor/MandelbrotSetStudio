@@ -123,7 +123,20 @@ namespace MSS.Types
 		public int StartingCutoff => (_previousCutoff ?? 0) + 1;	// Updated on 12/26/2023
 
 		public bool IsFirst => !_previousCutoff.HasValue;
-		public bool IsLast => !_successorStartColor.HasValue;
+
+		private bool _isLast;
+		public bool IsLast
+		{
+			get => _isLast;
+
+			set
+			{
+				if (value != _isLast)
+				{
+					_isLast = value;
+				}
+			}
+		}
 
 		//public int BucketWidth => Cutoff - StartingCutoff;
 		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);  // Updated on 12/26/2023
@@ -245,15 +258,16 @@ namespace MSS.Types
 			{
 				if (value != _successorStartColor)
 				{
-					var origVal = _successorStartColor;
+					//var origVal = _successorStartColor;
+					//_successorStartColor = value;
+					//OnPropertyChanged();
+
+					//if (origVal.HasValue != value.HasValue)
+					//{
+					//	OnPropertyChanged(nameof(IsLast));
+					//}
+
 					_successorStartColor = value;
-					OnPropertyChanged();
-
-					if (origVal.HasValue != value.HasValue)
-					{
-						OnPropertyChanged(nameof(IsLast));
-					}
-
 					ActualEndColor = GetActualEndColor();
 				}
 			}
@@ -371,7 +385,16 @@ namespace MSS.Types
 		public void UpdateWithNeighbors(ColorBand? predecessor, ColorBand? successor)
 		{
 			PreviousCutoff = predecessor?.Cutoff;
-			SuccessorStartColor = successor?.StartColor;
+
+			if (successor != null)
+			{
+				SuccessorStartColor = successor?.StartColor;
+			}
+			else
+			{
+				SuccessorStartColor = null;
+				IsLast = true;
+			}
 		}
 
 		object ICloneable.Clone()
@@ -381,7 +404,10 @@ namespace MSS.Types
 
 		public ColorBand Clone()
 		{
-			var result = new ColorBand(Cutoff, StartColor, BlendStyle, EndColor, _previousCutoff, _successorStartColor, Percentage);
+			var result = new ColorBand(Cutoff, StartColor, BlendStyle, EndColor, _previousCutoff, _successorStartColor, Percentage)
+			{
+				IsLast = IsLast
+			};
 
 			return result;
 		}
