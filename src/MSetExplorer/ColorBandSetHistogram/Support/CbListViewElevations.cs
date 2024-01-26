@@ -1,6 +1,5 @@
-﻿using MSS.Types;
-using System;
-using System.Windows.Controls;
+﻿using System;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -141,6 +140,8 @@ namespace MSetExplorer
 			ColorBlocksElevation = SectionLinesElevation + SectionLinesHeight;
 			BlendRectanglesElevation = ColorBlocksElevation + ColorBlocksHeight;
 			IsCurrentIndicatorsElevation = BlendRectanglesElevation + BlendRectanglesHeight;
+
+			Debug.WriteLine($"CbListViewElevations. ControlHeight - IsCurElevation = {controlHeight - IsCurrentIndicatorsElevation}.");
 		}
 
 		#endregion

@@ -46,7 +46,7 @@
                     />
                 </Border>
 
-                <Border x:Name="ColorBandAreaBorder" Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="Peru" Margin="10,0,10,5">
+                <Border x:Name="ColorBandAreaBorder" Grid.Row="1" Grid.Column="1" BorderThickness="0" BorderBrush="Peru" Margin="10,0,10,5">
                     
                     <ScrollViewer Focusable="False"
                         x:Name="ScrollViewer1"

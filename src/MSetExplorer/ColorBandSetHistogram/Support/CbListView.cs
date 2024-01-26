@@ -15,6 +15,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Windows.Storage.Search;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -993,33 +994,46 @@ namespace MSetExplorer
 
 		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
 		{
-			//_storyBoardDetails1.RateFactor = 5;
+			_storyBoardDetails1.RateFactor = 10;
 
-			var rGeos = GetSubColorRectangles(index);
+			//var rGeos = GetSubColorRectangles(index);
 
-
-			var itemBeingRemoved = ListViewItems[index];
-			var curVal = itemBeingRemoved.Area;
-
-			if (index == 0)
+			for(var i = 0; i < ListViewItems.Count; i++)
 			{
-				var newFirstItem = ListViewItems[index + 1];
-				curVal = newFirstItem.Area;
-				var newXPosition = 0;
+				var lvi = ListViewItems[i];
 
-				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
+				var cblock1 = lvi.CbColorBlock.StartColorGeometry;
+				var destPos1 = new Point(cblock1.Rect.X + 10, cblock1.Rect.Y -20);
+				_storyBoardDetails1.AddChangePosition(lvi.Name, "CbColorBlock.StartColorGeometry.Rect", cblock1.Rect, destPos1, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
+
+				var cblock2 = lvi.CbColorBlock.EndColorGeometry;
+
+				var destPos2 = new Point(cblock2.Rect.X + 10, cblock1.Rect.Y - 20);
+				_storyBoardDetails1.AddChangePosition(lvi.Name, "CbColorBlock.EndColorGeometry.Rect", cblock1.Rect, destPos2, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
 			}
-			else
-			{
-				var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
 
-				var preceedingItem = ListViewItems[index - 1];
+			//var itemBeingRemoved = ListViewItems[index];
+			//var curVal = itemBeingRemoved.Area;
 
-				curVal = preceedingItem.Area;
-				var newWidth = curVal.Width + widthOfItemBeingRemoved;
+			//if (index == 0)
+			//{
+			//	var newFirstItem = ListViewItems[index + 1];
+			//	curVal = newFirstItem.Area;
+			//	var newXPosition = 0;
 
-				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
-			}
+			//	_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
+			//}
+			//else
+			//{
+			//	var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
+
+			//	var preceedingItem = ListViewItems[index - 1];
+
+			//	curVal = preceedingItem.Area;
+			//	var newWidth = curVal.Width + widthOfItemBeingRemoved;
+
+			//	_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
+			//}
 
 
 
@@ -1029,24 +1043,6 @@ namespace MSetExplorer
 		private void AnimateDeleteCutoffPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("CutoffDeletion Animation has completed.");
-
-			//var lvi = ListViewItems[^2]; // The item before the last item.
-
-			//onAnimationComplete(index);
-
-			////for (var i = index; index < ListViewItems.Count - 2; i++)
-			////{
-			////	ListViewItems[i].
-			////}
-
-			//RemoveListViewItem(lvi);
-			//Reindex(lvi.ColorBandIndex);
-
-			//lvi = ListViewItems[^2];
-			//var colorBandLast = ListViewItems[^1].ColorBand;
-			//lvi.ColorBand.SuccessorStartColor = colorBandLast.StartColor;
-			//colorBandLast.PreviousCutoff = lvi.ColorBand.Cutoff;
-			//_ = SynchronizeCurrentItem();
 
 			var lvi = ListViewItems[index];
 

@@ -453,7 +453,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				result = Rect.Inflate(rect, 0, -1);
+				result = Rect.Inflate(rect, 0, 0);
 			}
 
 			Debug.WriteLine($"ColorBlocks just built rectangle with top: {result.Top} and height: {result.Height} and left: {result.Left} and width: {result.Width}.");

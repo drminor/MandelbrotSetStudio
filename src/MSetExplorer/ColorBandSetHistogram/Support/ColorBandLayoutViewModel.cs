@@ -8,11 +8,6 @@ namespace MSetExplorer
 	{
 		#region Private Fields
 
-		private const int DEFAULT_SECTION_LINES_HEIGHT = 13;
-		private const int DEFAULT_COLOR_BLOCKS_HEIGHT = 15;
-		private const int MINIMUM_BLEND_RECTANGLES_HEIGHT = 12;
-		private const int IS_CURRENT_INDICATORS_HEIGHT = 3;
-
 		private SizeDbl _contentScale;
 
 		private bool _parentIsFocused;

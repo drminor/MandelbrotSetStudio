@@ -22,15 +22,19 @@ namespace MSetExplorer
 		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
 		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
 		private static readonly Brush SKY_BLUE = new SolidColorBrush(Colors.SkyBlue);
+		private static readonly Brush LIGHT_GRAY_BRUSH = new SolidColorBrush(Colors.LightGray);
+		//private static readonly Brush PINK = new SolidColorBrush(Colors.DeepPink);
 
-		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
+
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
 		private static readonly Brush IS_SELECTED_STROKE = LIGHT_BLUE_BRUSH;
 		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = DARKISH_GRAY_BRUSH;
 
 		private static readonly Brush IS_HOVERED_STROKE = SKY_BLUE; // LIGHT_BLUE_BRUSH; // VERY_LIGHT_BLUE_BRUSH;
+
 		private static readonly Brush IS_CURRENT_BACKGROUND = LIGHT_BLUE_BRUSH;
+		private static readonly Brush IS_NOT_CURRENT_BACKGROUND = TRANSPARENT_BRUSH; // LIGHT_GRAY_BRUSH;
 
 		#endregion
 
@@ -397,7 +401,7 @@ namespace MSetExplorer
 		{
 			var result = new Path()
 			{
-				Fill = isCurrent ? IS_CURRENT_BACKGROUND : DEFAULT_BACKGROUND,
+				Fill = isCurrent ? IS_CURRENT_BACKGROUND : IS_NOT_CURRENT_BACKGROUND,
 				Stroke = new SolidColorBrush(Colors.Transparent),
 				StrokeThickness = 0,
 				Data = area,
@@ -413,11 +417,6 @@ namespace MSetExplorer
 			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
 
 			_geometry.Rect = BuildRectangle(blendRectangleArea, isHighLighted, contentScale);
-		}
-
-		private void ResizeIsCurrentRectangle(Rect isCurrentArea, SizeDbl contentScale)
-		{
-			_curGeometry.Rect = BuildCurRectangle(isCurrentArea, contentScale);
 		}
 
 		private Rect BuildRectangle(Rect blendRectangleArea, bool isHighLighted, SizeDbl contentScale)
@@ -439,10 +438,16 @@ namespace MSetExplorer
 			}
 			else
 			{
-				result = Rect.Inflate(rect, 0, -1);
+				//result = Rect.Inflate(rect, 0, -1);
+				result = Rect.Inflate(rect, 0, 0);
 			}
 
 			return result;
+		}
+
+		private void ResizeIsCurrentRectangle(Rect isCurrentArea, SizeDbl contentScale)
+		{
+			_curGeometry.Rect = BuildCurRectangle(isCurrentArea, contentScale);
 		}
 
 		private Rect BuildCurRectangle(Rect isCurrentArea, SizeDbl contentScale)
@@ -495,7 +500,7 @@ namespace MSetExplorer
 
 		private void UpdateCurBackground(bool isCurrent)
 		{
-			_curRectanglePath.Fill = isCurrent ? IS_CURRENT_BACKGROUND : DEFAULT_BACKGROUND;
+			_curRectanglePath.Fill = isCurrent ? IS_CURRENT_BACKGROUND : IS_NOT_CURRENT_BACKGROUND;
 		}
 
 		private void UpdateSelectionBackground(bool isSelected, bool isUnderMouse, bool parentIsFocused)
@@ -503,12 +508,6 @@ namespace MSetExplorer
 			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
 
 			_geometry.Rect = BuildRectangle(BlendRectangleArea, isHighLighted, ContentScale);
-
-			//_selRectanglePath.Stroke = GetSelStroke(/*_isCurrent,*/ _isSelected, _isUnderMouse, _parentIsFocused);
-
-			//_selRectanglePath.Fill = GetSelBackGround(_isSelected, _isUnderMouse, _parentIsFocused);
-
-			//Debug.Assert(isHighLighted == (_selRectanglePath.Stroke != DEFAULT_STROKE), "isHighlighted / SelRectangle's stroke mismatch.");
 
 			_rectanglePath.Stroke = GetRectangleStroke(isSelected, isUnderMouse, parentIsFocused);
 			_rectanglePath.StrokeThickness = GetRectangleStrokeThickness(isHighLighted);

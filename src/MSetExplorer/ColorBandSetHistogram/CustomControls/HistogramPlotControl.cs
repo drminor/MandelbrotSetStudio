@@ -372,7 +372,7 @@ namespace MSetExplorer
 			var padding = new PixelPadding(
 				left: 100,
 				right: 30,
-				bottom: 35,
+				bottom: 25,
 				top: 10);
 
 			var x = wpfPlot.Plot;

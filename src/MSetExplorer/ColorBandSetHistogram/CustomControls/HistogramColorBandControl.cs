@@ -6,6 +6,8 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Shapes;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -17,13 +19,26 @@ namespace MSetExplorer
 	{
 		#region Private Fields 
 
+		// Our display starts at the the very top of the canvas.
+		private const int CONTROL_ELEVATION = 0;
+		// Reserve 13 pixles to show the SectionLine (aka DragLine) selectors (aka TopArrows)
+		private const int DEFAULT_SECTION_LINES_HEIGHT = 13;
+
+		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
+		private static readonly Brush RED_BRUSH = new SolidColorBrush(Colors.Red);
+
+		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
+		private static readonly Brush DEFAULT_STROKE = RED_BRUSH;
+
 		private readonly static bool CLIP_IMAGE_BLOCKS = false;
 
 		private ICbsHistogramViewModel? _cbsHistogramViewModel;
 
 		private FrameworkElement _ourContent;
 		private Canvas _canvas;
-		//private Path? _border;
+
+		//private Rect _borderRect;
+		//private readonly Shape _borderPath;
 
 		private ListCollectionView _colorBandsView;
 		private CbListView? _cbListView;
@@ -32,6 +47,9 @@ namespace MSetExplorer
 		private TransformGroup _canvasRenderTransform;
 
 		private SizeDbl _contentScale;
+		//private double _colorBlocksElevation;
+		//private SizeDbl _padding;
+
 		private RectangleDbl _translationAndClipSize;
 
 		private SizeDbl _viewportSize;
@@ -57,11 +75,8 @@ namespace MSetExplorer
 			_cbsHistogramViewModel = null;
 			_ourContent = new FrameworkElement();
 			_canvas = new Canvas();
-			//_border = null;
 
-			_contentScale = new SizeDbl(42, 42);
-
-			//var isHorizontalScrollBarVisible = true;
+			_contentScale = new SizeDbl(1, 1);
 
 			_colorBandsView = ColorBandSetViewHelper.GetEmptyListCollectionView();
 			_cbListView = null;
@@ -73,7 +88,14 @@ namespace MSetExplorer
 
 			_canvas.RenderTransform = _canvasRenderTransform;
 
-			_translationAndClipSize = new RectangleDbl();
+			//_translationAndClipSize = new RectangleDbl();
+			_translationAndClipSize = new RectangleDbl(0, 1, 0, 10);
+
+			//_colorBlocksElevation = CONTROL_ELEVATION + DEFAULT_SECTION_LINES_HEIGHT;
+			//_padding = new SizeDbl(2, 2);
+
+			//_borderRect = CalculateBorderRect(TranslationAndClipSize, ContentScale, _colorBlocksElevation, _padding);
+			//_borderPath = CreateBorder(_borderRect);
 
 			_viewportSize = new SizeDbl();
 			_parentIsFocused = false;
@@ -89,6 +111,8 @@ namespace MSetExplorer
 
 		private void HistogramColorBandControl_Loaded(object sender, RoutedEventArgs e)
 		{
+			//_canvas.SizeChanged += Handle_Canvas_SizeChanged;
+
 			PreviewMouseDown += Handle_PreviewMouseDown;
 			MouseEnter += Handle_MouseEnter;
 			GotFocus += Handle_GotFocus;
@@ -100,19 +124,6 @@ namespace MSetExplorer
 			//SizeChanged += HistogramColorBandControl_SizeChanged;
 		}
 
-		//private void HistogramColorBandControl_SizeChanged(object sender, SizeChangedEventArgs e)
-		//{
-		//	Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl is handling the SizeChanged event.");
-
-		//	if (e.HeightChanged)
-		//	{
-		//		if (_cbListView != null)
-		//		{
-		//			_cbListView.ControlHeight = ActualHeight;
-		//		}
-		//	}
-		//}
-
 		private void HistogramColorBandControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			if (_cbsHistogramViewModel != null)
@@ -120,6 +131,7 @@ namespace MSetExplorer
 				_cbsHistogramViewModel = null;
 			}
 
+			//_canvas.SizeChanged -= Handle_Canvas_SizeChanged;
 			PreviewMouseDown -= Handle_PreviewMouseDown;
 
 			MouseEnter -= Handle_MouseEnter;
@@ -170,11 +182,21 @@ namespace MSetExplorer
 			get => _canvas;
 			private set
 			{
+				//_canvas.SizeChanged -= Handle_Canvas_SizeChanged;
 				_canvas = value;
+				//_canvas.SizeChanged += Handle_Canvas_SizeChanged;
+
 				_canvas.ClipToBounds = CLIP_IMAGE_BLOCKS;
 				_canvas.RenderTransform = _canvasRenderTransform;
+
 				//_canvas.Background = new SolidColorBrush(Colors.MistyRose);
 				_canvas.Background = new SolidColorBrush(Colors.Transparent);
+
+				//_borderRect = CalculateBorderRect(TranslationAndClipSize, ContentScale, _colorBlocksElevation, _padding);
+				//((RectangleGeometry)((Path)_borderPath).Data).Rect = _borderRect;
+
+				//_canvas.Children.Add(_borderPath);
+				//_borderPath.SetValue(Panel.ZIndexProperty, 20);
 
 				//NameScope.SetNameScope(_canvas, new NameScope());
 			}
@@ -251,15 +273,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public bool IsHorizontalScrollBarVisible
-		//{
-		//	get => _colorBandLayoutViewModel.IsHorizontalScrollBarVisible;
-		//	set
-		//	{
-		//		_colorBandLayoutViewModel.IsHorizontalScrollBarVisible = value;
-		//	}
-		//}
-
 		public ListCollectionView ColorBandsView
 		{
 			get => _colorBandsView;
@@ -292,9 +305,8 @@ namespace MSetExplorer
 				if (_colorBandsView.Count > 0)
 				{
 					var currentCbEditMode = CbsHistogramViewModel?.CurrentCbEditMode ?? ColorBandSetEditMode.Bands;
-
-					var elevation = 0; // Our display starts at the the very top of the canvas.
-					_cbListView = new CbListView(_canvas, _colorBandsView, elevation, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged);
+					
+					_cbListView = new CbListView(_canvas, _colorBandsView, CONTROL_ELEVATION, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged);
 				}
 			}
 		}
@@ -508,7 +520,11 @@ namespace MSetExplorer
 			if (Content != null)
 			{
 				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
-				Canvas = BuildContentModel(_ourContent);
+				var (c,b) = BuildContentModel(_ourContent);
+
+				Canvas = c;
+
+				Debug.WriteLine($"Found Border: {b}");
 
 				CbsHistogramViewModel = (ICbsHistogramViewModel)DataContext;
 			}
@@ -518,13 +534,29 @@ namespace MSetExplorer
 			}
 		}
 
-		private Canvas BuildContentModel(FrameworkElement content)
+		private Canvas BuildContentModelOld(FrameworkElement content)
 		{
 			if (content is ContentPresenter cp)
 			{
 				if (cp.Content is Canvas ca)
 				{
 					return ca;
+				}
+			}
+
+			throw new InvalidOperationException("Cannot find a child image element of the HistogramColorBandControl's Content, or the Content is not a Canvas element.");
+		}
+
+		private (Canvas, Border) BuildContentModel(FrameworkElement content)
+		{
+			if (content is ContentPresenter cp)
+			{
+				if (cp.Content is Grid gr)
+				{
+					if (gr.Children[0] is Canvas ca && gr.Children[1] is Border br)
+					{
+						return (ca, br);
+					}
 				}
 			}
 
@@ -634,6 +666,11 @@ namespace MSetExplorer
 			}
 		}
 
+		private void Handle_Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
+		{
+			//_borderRect = CalculateBorderRect(TranslationAndClipSize, ContentScale, _colorBlocksElevation, _padding);
+		}
+
 		#endregion
 
 		#region CbListView Callbacks
@@ -692,41 +729,15 @@ namespace MSetExplorer
 
 		private void ClipAndOffset(RectangleDbl previousValue, RectangleDbl newValue)
 		{
-			ReportTranslationTransformX(previousValue, newValue);
-			_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
+			if (newValue.Height > 0 && newValue.Width > 0)
+			{
+				ReportTranslationTransformX(previousValue, newValue);
+				_canvasTranslateTransform.X = newValue.Position.X * ContentScale.Width;
+
+				//_borderRect = CalculateBorderRect(TranslationAndClipSize, ContentScale, _colorBlocksElevation, _padding);
+				//((RectangleGeometry)((Path)_borderPath).Data).Rect = _borderRect;
+			}
 		}
-
-		//private void DrawBorder(RectangleDbl newValue)
-		//{
-		//	if (_border != null)
-		//	{
-		//		_canvas.Children.Remove(_border);
-		//		_border = null;
-		//	}
-
-		//	if (_cbListView == null)
-		//	{
-		//		return;
-		//	}
-
-		//	var cbrElevation = _cbListView.CbrElevation;
-		//	var xPosition = newValue.Position.X * ContentScale.Width;
-		//	var area = new RectangleDbl(new PointDbl(xPosition, cbrElevation), new SizeDbl(ActualWidth, ActualHeight - cbrElevation));
-
-		//	var cbRectangle = new RectangleGeometry(ScreenTypeHelper.ConvertToRect(area));
-
-		//	var result = new Path()
-		//	{
-		//		Fill = Brushes.Transparent,
-		//		Stroke = Brushes.DarkGray,
-		//		StrokeThickness = 2,
-		//		Data = cbRectangle,
-		//		IsHitTestVisible = false
-		//	};
-
-		//	//_canvas.Children.Add(result);
-		//	_border = result;
-		//}
 
 		private int GetExtent(ListCollectionView? listCollectionView)
 		{
@@ -739,6 +750,65 @@ namespace MSetExplorer
 
 			return result;
 		}
+
+		#endregion
+
+		#region Border
+
+		//private Shape CreateBorder(Rect borderArea)
+		//{
+		//	var rg = new RectangleGeometry(borderArea);
+
+		//	var result = new Path()
+		//	{
+		//		Fill = DEFAULT_BACKGROUND,
+		//		Stroke = DEFAULT_STROKE,
+		//		StrokeThickness = 1,
+		//		Data = rg,
+		//		IsHitTestVisible = false
+		//	};
+
+		//	return result;
+		//}
+
+		//private Rect CalculateBorderRect(RectangleDbl clip, SizeDbl contentScale, double colorBlockElevation, SizeDbl padding)
+		//{
+		//	if (clip.Height <= colorBlockElevation)
+		//	{
+		//		return ScreenTypeHelper.ConvertToRect(clip);
+		//	}
+
+		//	var xPosition = clip.Position.X;
+		//	var yPosition = colorBlockElevation;
+
+		//	var width = clip.Width;
+		//	var height = clip.Height - colorBlockElevation;
+
+		//	var area = new Rect(xPosition, yPosition, width, height);
+
+		//	var result = GetScaledAndPaddedRect(area, contentScale, padding);
+
+		//	return result;
+		//}
+
+		//private Rect GetScaledAndPaddedRect(Rect r, SizeDbl contentScale, SizeDbl padding)
+		//{
+		//	var nr = new Rect(r.Location, r.Size);
+		//	nr.Scale(contentScale.Width, 1.0);
+
+		//	Rect result;
+
+		//	if (nr.Width > 4 && nr.Height > 4)
+		//	{
+		//		result = Rect.Inflate(nr, padding.Width * -1, padding.Height * -1);
+		//	}
+		//	else
+		//	{
+		//		result = nr;
+		//	}
+
+		//	return result;
+		//}
 
 		#endregion
 

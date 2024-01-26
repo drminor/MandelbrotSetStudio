@@ -41,6 +41,9 @@ namespace MSetExplorer
 			var to = new Rect(newPosition, from.Size);
 			var da = new RectAnimation(from, to, duration);
 
+
+			//var dp = (PropertyPath)new PropertyPathConverter().ConvertFromString("(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleX)"));
+
 			return AddTimeline(objectName, propertyPath, da, beginTime);
 		}
 

@@ -68,10 +68,23 @@
 
                         <ContentPresenter x:Name="PART_Content" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <ContentPresenter.Content>
-                                <Canvas x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="Transparent">
+                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="Transparent">
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="13"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
                                     
-                                    <!--<Image x:Name="MainImage" />-->
-                                </Canvas>
+                                    <Canvas Grid.Row="0" Grid.RowSpan="2" x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="Transparent">
+
+                                        <!--<Image x:Name="MainImage" />-->
+                                    </Canvas>
+
+                                    <Border Grid.Row="1" BorderBrush="Green" BorderThickness="1">
+
+                                    </Border>
+
+                                </Grid>
                             </ContentPresenter.Content>
                         </ContentPresenter>
 
