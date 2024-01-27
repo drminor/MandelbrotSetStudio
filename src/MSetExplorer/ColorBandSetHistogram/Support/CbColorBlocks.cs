@@ -98,18 +98,49 @@ namespace MSetExplorer
 
 		public RectangleGeometry RectangleGeometry => _geometry;
 
+		//public RectangleGeometry StartColorGeometry => _cbColorPair.StartColorGeometry;
+
+		//public RectangleGeometry EndColorGeometry => _cbColorPair.EndColorGeometry;
+
+
+		public Path ColorBlocksRectangle => (Path)_rectanglePath;
+
+		public CbColorPair CbColorPair => _cbColorPair;
+
+
+		public bool UsingProxy
+		{
+			get => CbColorPairProxy != null;
+			set
+			{
+				if (value != UsingProxy)
+				{
+					if (value)
+					{
+						CbColorPairProxy = CbColorPair.Clone();
+					}
+					else
+					{
+						CbColorPairProxy?.TearDown();
+						CbColorPairProxy = null;
+					}
+				}
+			}
+		}
+
+		public CbColorPair? CbColorPairProxy { get; set; }
+
 		public Rect ColorPairContainer
 		{
 			get => _cbColorPair.Container;
 			set => _cbColorPair.Container = value;
 		}
 
-		public RectangleGeometry StartColorGeometry => _cbColorPair.StartColorGeometry;
-
-		public RectangleGeometry EndColorGeometry => _cbColorPair.EndColorGeometry;
-
-
-		public Path ColorBlocksRectangle => (Path)_rectanglePath;
+		public Visibility ColorPairVisibility
+		{
+			get => _cbColorPair.Visibility;
+			set => _cbColorPair.Visibility = value;
+		}
 
 		public ColorBandColor StartColor
 		{
@@ -192,15 +223,9 @@ namespace MSetExplorer
 					_opacity = value;
 
 					_rectanglePath.Opacity = value;
-					SubBlockOpacity = value;
+					_cbColorPair.Opacity = value;
 				}
 			}
-		}
-
-		public double SubBlockOpacity
-		{
-			get => _cbColorPair.Opacity;
-			set => _cbColorPair.Opacity = value;
 		}
 
 		#endregion

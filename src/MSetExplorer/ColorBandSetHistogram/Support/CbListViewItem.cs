@@ -269,10 +269,10 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void HideShowColorBlocks(bool show)
-		{
-			CbColorBlock.SubBlockOpacity = show ? 1.0 : 0.0;
-		}
+		//public void HideShowColorBlocks(bool show)
+		//{
+		//	CbColorBlock.ColorPairVisibility = show ? Visibility.Visible : Visibility.Hidden;
+		//}
 
 		public void SetIsRectangleUnderMouse(bool newValue, ColorBandSetEditMode editMode)
 		{
@@ -428,6 +428,12 @@ namespace MSetExplorer
 		{
 			CbListViewItem c = (CbListViewItem)o;
 
+			if (c.CbColorBlock.CbColorPairProxy == null)
+			{
+				Debug.WriteLine($"WARNING: The CbColorPairProxy is null on SetColorBlockArea for ColorBandIndex: {c.ColorBandIndex}.");		
+				return;
+			}
+
 			var oldValue = (Rect)e.OldValue;
 			var newValue = (Rect)e.NewValue;
 
@@ -438,7 +444,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			c.CbColorBlock.ColorPairContainer = newValue;
+			c.CbColorBlock.CbColorPairProxy.Container = newValue;
 		}
 
 		#endregion

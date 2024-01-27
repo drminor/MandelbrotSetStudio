@@ -279,6 +279,12 @@ namespace MSetExplorer
 			}
 		}
 
+		public Visibility TopArrowVisibility
+		{
+			get => _topArrow.Visibility;
+			set => _topArrow.Visibility = value;
+		}
+
 		#endregion
 
 		#region Public Methods

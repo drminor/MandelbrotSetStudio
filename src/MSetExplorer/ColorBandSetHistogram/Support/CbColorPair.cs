@@ -8,7 +8,7 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
-	internal class CbColorPair
+	internal class CbColorPair : ICloneable
 	{
 		#region Private Static Fields
 
@@ -42,7 +42,6 @@ namespace MSetExplorer
 
 		private ColorBandColor _startColor;
 		private ColorBandColor _endColor;
-		private double _opacity;
 
 		private RectangleGeometry _startGeometry;
 		private readonly Shape _startColorBlockPath;
@@ -131,21 +130,39 @@ namespace MSetExplorer
 
 		public double Opacity
 		{
-			get => _opacity;
+			get => _startColorBlockPath.Opacity;
 			set
 			{
-				if (value != _opacity)
-				{
-					_opacity = value;
-					_startColorBlockPath.Opacity = value;
-					_endColorBlockPath.Opacity = value;
-				}
+				_startColorBlockPath.Opacity = value;
+				_endColorBlockPath.Opacity = value;
+			}
+		}
+
+		public Visibility Visibility
+		{
+			get => _startColorBlockPath.Visibility;
+
+			set
+			{
+				_startColorBlockPath.Visibility = value;
+				_endColorBlockPath.Visibility = value;
 			}
 		}
 
 		#endregion
 
 		#region Public Methods
+
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
+
+		public CbColorPair Clone()
+		{
+			var result = new CbColorPair(ColorBandIndex, Container, StartColor, EndColor, _canvas);
+			return result;
+		}
 
 		public void TearDown()
 		{

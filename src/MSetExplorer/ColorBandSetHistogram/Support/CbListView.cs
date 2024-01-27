@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.ColorBandSetHistogram.SupportAnimation;
+using MSS.Types;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -40,6 +41,8 @@ namespace MSetExplorer
 
 		private int? _selectedItemsRangeAnchorIndex;
 		private int? _indexOfMostRecentlySelectedItem;
+
+		private PushColorsAnimationInfo? _pushColorsAnimationInfo1 = null;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -984,26 +987,40 @@ namespace MSetExplorer
 		#region Animation Support - Deletions
 
 		/*
-
 			1. Update the Item's Cutoff to use the next item's Cutoff
 			2. Update the next item's PreviousCutoff to be this Item's PreviousCutoff
-
-
-
 		*/
 
 		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
 		{
 			_storyBoardDetails1.RateFactor = 10;
 
-			for(var i = 0; i < ListViewItems.Count; i++)
+			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(_canvas, _elevations);
+
+			for(var i = index; i < ListViewItems.Count; i++)
 			{
 				var lvi = ListViewItems[i];
 
-				var currentRectangle = lvi.CbColorBlock.ColorPairContainer;
-				var destinationPosition = new Point(currentRectangle.X + 10, currentRectangle.Y - 10);
+				if (i == ListViewItems.Count - 1)
+				{
+					_pushColorsAnimationInfo1.Add(lvi.Name, lvi.CbColorBlock, null);
+				}
+				else
+				{
+					_pushColorsAnimationInfo1.Add(lvi.Name, lvi.CbColorBlock, ListViewItems[i + 1].CbColorBlock);
+				}
 
-				_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", currentRectangle, destinationPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
+				lvi.CbSectionLine.TopArrowVisibility = Visibility.Hidden;
+			}
+
+			_pushColorsAnimationInfo1.CalculateMovements();
+
+			foreach (var cbAnimationItem in _pushColorsAnimationInfo1.ColorBlocksAnimationItems)
+			{
+				var currentRectangle = cbAnimationItem.Current;
+
+				var destinationPosition = cbAnimationItem.FirstMovement;
+				_storyBoardDetails1.AddChangePosition(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
 			}
 
 			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index);
@@ -1012,6 +1029,17 @@ namespace MSetExplorer
 		private void AnimateDeleteCutoffPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("CutoffDeletion Animation has completed.");
+
+			if (_pushColorsAnimationInfo1 != null)
+			{
+				_pushColorsAnimationInfo1.TearDown();
+				_pushColorsAnimationInfo1 = null;
+			}
+
+			for (var i = index; i < ListViewItems.Count; i++)
+			{
+				ListViewItems[i].CbSectionLine.TopArrowVisibility = Visibility.Visible;
+			}
 
 			var lvi = ListViewItems[index];
 
