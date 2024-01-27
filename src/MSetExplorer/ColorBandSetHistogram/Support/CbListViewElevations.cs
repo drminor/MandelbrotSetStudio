@@ -103,43 +103,59 @@ namespace MSetExplorer
 
 			SectionLinesElevation = elevation;
 
-			var firstThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_SECTION_LINES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
-			var secondThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
-			var thirdThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
+			//var firstThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_SECTION_LINES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
+			//var secondThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
+			//var thirdThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
 
-			if (controlHeight >= firstThreshold)
+			if (controlHeight >= MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_SECTION_LINES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT + 4)
 			{
 				SectionLinesHeight = DEFAULT_SECTION_LINES_HEIGHT;
 				ColorBlocksHeight = DEFAULT_COLOR_BLOCKS_HEIGHT;
 				IsCurrentIndicatorsHeight = IS_CURRENT_INDICATORS_HEIGHT;
 
-				BlendRectanglesHeight = controlHeight - (SectionLinesHeight + ColorBlocksHeight + IsCurrentIndicatorsHeight);
+				BlendRectanglesHeight = controlHeight - (3 + SectionLinesHeight + ColorBlocksHeight + IsCurrentIndicatorsHeight);
+
+				ColorBlocksElevation = SectionLinesElevation + SectionLinesHeight + 1;
+				BlendRectanglesElevation = ColorBlocksElevation + ColorBlocksHeight + 1;
+				IsCurrentIndicatorsElevation = BlendRectanglesElevation + BlendRectanglesHeight;
+
 			}
-			else if (controlHeight >= secondThreshold)
+			else if (controlHeight >= MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT + 4)
 			{
 				BlendRectanglesHeight = MINIMUM_BLEND_RECTANGLES_HEIGHT;
-				SectionLinesHeight = controlHeight - (ColorBlocksHeight + BlendRectanglesHeight + IsCurrentIndicatorsHeight);
+				SectionLinesHeight = controlHeight - (3 + ColorBlocksHeight + BlendRectanglesHeight + IsCurrentIndicatorsHeight);
 				ColorBlocksHeight = DEFAULT_COLOR_BLOCKS_HEIGHT;
 				IsCurrentIndicatorsHeight = IS_CURRENT_INDICATORS_HEIGHT;
+
+				ColorBlocksElevation = SectionLinesElevation + SectionLinesHeight + 1;
+				BlendRectanglesElevation = ColorBlocksElevation + ColorBlocksHeight + 1;
+				IsCurrentIndicatorsElevation = BlendRectanglesElevation + BlendRectanglesHeight;
+
 			}
-			else if (controlHeight >= thirdThreshold)
+			else if (controlHeight >= MINIMUM_BLEND_RECTANGLES_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT + 4)
 			{
 				SectionLinesHeight = 0;
 				BlendRectanglesHeight = MINIMUM_BLEND_RECTANGLES_HEIGHT;
-				ColorBlocksHeight = controlHeight - (BlendRectanglesHeight + IsCurrentIndicatorsHeight);
+				ColorBlocksHeight = controlHeight - (3 + BlendRectanglesHeight + IsCurrentIndicatorsHeight);
 				IsCurrentIndicatorsHeight = IS_CURRENT_INDICATORS_HEIGHT;
+
+				ColorBlocksElevation = SectionLinesElevation;
+				BlendRectanglesElevation = ColorBlocksElevation + ColorBlocksHeight + 1;
+				IsCurrentIndicatorsElevation = BlendRectanglesElevation + BlendRectanglesHeight;
+
 			}
 			else
 			{
 				SectionLinesHeight = 0;
 				ColorBlocksHeight = 0;
 				IsCurrentIndicatorsHeight = 0;
-				BlendRectanglesHeight = controlHeight - 2;
-			}
 
-			ColorBlocksElevation = SectionLinesElevation + SectionLinesHeight;
-			BlendRectanglesElevation = ColorBlocksElevation + ColorBlocksHeight;
-			IsCurrentIndicatorsElevation = BlendRectanglesElevation + BlendRectanglesHeight;
+				BlendRectanglesHeight = controlHeight - 2;
+
+				ColorBlocksElevation = SectionLinesElevation;
+				BlendRectanglesElevation = ColorBlocksElevation;
+				IsCurrentIndicatorsElevation = BlendRectanglesElevation + BlendRectanglesHeight;
+			}
 
 			Debug.WriteLine($"CbListViewElevations. ControlHeight - IsCurElevation = {controlHeight - IsCurrentIndicatorsElevation}.");
 		}

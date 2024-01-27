@@ -279,8 +279,8 @@ namespace MSetExplorer
 
 			var foundError = false;
 
-			BlendRectangleUnderMouse = null;
-			SectionLineUnderMouse = null;
+			//BlendRectangleUnderMouse = null;
+			//SectionLineUnderMouse = null;
 
 			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
@@ -345,6 +345,25 @@ namespace MSetExplorer
 			else
 			{
 				ResetAllIsSelected();
+
+				switch (CurrentCbEditMode)
+				{
+					case ColorBandSetEditMode.Cutoffs:
+						SectionLineUnderMouse = ListViewItems[newColorBandIndex];
+						break;
+
+					case ColorBandSetEditMode.Colors:
+						ColorBlocksUnderMouse = ListViewItems[newColorBandIndex];
+						break;
+					
+					case ColorBandSetEditMode.Bands:
+						BlendRectangleUnderMouse = ListViewItems[newColorBandIndex];
+						break;
+					
+					default:
+						break;
+				}
+
 			}
 
 			_indexOfMostRecentlySelectedItem = newColorBandIndex;
@@ -1003,13 +1022,13 @@ namespace MSetExplorer
 				var lvi = ListViewItems[i];
 
 				var cblock1 = lvi.CbColorBlock.StartColorGeometry;
-				var destPos1 = new Point(cblock1.Rect.X + 10, cblock1.Rect.Y -20);
-				_storyBoardDetails1.AddChangePosition(lvi.Name, "CbColorBlock.StartColorGeometry.Rect", cblock1.Rect, destPos1, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
+				var destPos1 = new Point(cblock1.Rect.X + 10, cblock1.Rect.Y - 10);
+				_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", cblock1.Rect, destPos1, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
 
-				var cblock2 = lvi.CbColorBlock.EndColorGeometry;
+				//var cblock2 = lvi.CbColorBlock.EndColorGeometry;
 
-				var destPos2 = new Point(cblock2.Rect.X + 10, cblock1.Rect.Y - 20);
-				_storyBoardDetails1.AddChangePosition(lvi.Name, "CbColorBlock.EndColorGeometry.Rect", cblock1.Rect, destPos2, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
+				//var destPos2 = new Point(cblock2.Rect.X + 10, cblock1.Rect.Y - 20);
+				//_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", cblock1.Rect, destPos2, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
 			}
 
 			//var itemBeingRemoved = ListViewItems[index];

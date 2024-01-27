@@ -659,10 +659,12 @@ namespace MSetExplorer
 			else if (e.Key == Key.Up)
 			{
 				CbsHistogramViewModel.RetardEditMode();
+				e.Handled = true;
 			}
 			else if (e.Key == Key.Down)
 			{
 				CbsHistogramViewModel.AdvanceEditMode();
+				e.Handled = true;
 			}
 		}
 

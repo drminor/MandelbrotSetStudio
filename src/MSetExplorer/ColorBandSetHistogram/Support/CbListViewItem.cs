@@ -54,7 +54,7 @@ namespace MSetExplorer
 
 			// Build the Color Block
 			var colorBlocksArea = new Rect(x1Position, elevations.ColorBlocksElevation, bandWidth, elevations.ColorBlocksHeight);
-			CbColorBlock = new CbColorBlock(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
+			CbColorBlock = new CbColorBlocks(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
 
 			Area = new Rect(x1Position, _elevations.Elevation, bandWidth, _elevations.ControlHeight);
 
@@ -73,11 +73,9 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		//public CbListViewElevations CbListViewElevations => _elevations;
-
 		public ColorBand ColorBand { get; init; }
 		public CbSectionLine CbSectionLine { get; init; }
-		public CbColorBlock CbColorBlock { get; init; }
+		public CbColorBlocks CbColorBlock { get; init; }
 		public CbRectangle CbRectangle { get; init; }
 
 		public int ColorBandIndex
@@ -253,8 +251,8 @@ namespace MSetExplorer
 			}
 			else if (e.PropertyName == nameof(ColorBand.BlendStyle))
 			{
-				CbColorBlock.HorizontalBlend = cb.BlendStyle != ColorBandBlendStyle.None;
-				CbRectangle.Blend = CbColorBlock.HorizontalBlend;
+				CbColorBlock.Blend = cb.BlendStyle != ColorBandBlendStyle.None;
+				CbRectangle.Blend = CbColorBlock.Blend;
 				updateHandled = true;
 			}
 			else
@@ -333,6 +331,12 @@ namespace MSetExplorer
 			set => SetCurrentValue(AreaProperty, value);
 		}
 
+		public Rect ColorBlockArea
+		{
+			get => (Rect)GetValue(ColorBlockAreaProperty);
+			set => SetCurrentValue(ColorBlockAreaProperty, value);
+		}
+
 		public double Opacity
 		{
 			get => (double)GetValue(OpacityProperty);
@@ -373,7 +377,7 @@ namespace MSetExplorer
 
 			if (c._elevationsLocal != null)
 			{
-				var elevations = c.GetElevations(oldValue, newValue);
+				var elevations = c.GetElevations(c._elevationsLocal, oldValue, newValue);
 				c.UpdateDisplay(newValue, elevations);
 			}
 			else
@@ -382,16 +386,16 @@ namespace MSetExplorer
 			}
 		}
 
-		private CbListViewElevations GetElevations(Rect oldValue, Rect newValue)
+		private CbListViewElevations GetElevations(CbListViewElevations elevationsLocal, Rect oldValue, Rect newValue)
 		{
 			CbListViewElevations elevations;
 
-			if (_elevationsLocal != null && (ScreenTypeHelper.IsDoubleChanged(oldValue.Height, newValue.Height) || ScreenTypeHelper.IsDoubleChanged(oldValue.Y, newValue.Y)) )
+			if (ScreenTypeHelper.IsDoubleChanged(oldValue.Height, newValue.Height) || ScreenTypeHelper.IsDoubleChanged(oldValue.Y, newValue.Y))
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"Setting the Elevation and Height for item at {ColorBandIndex} to {newValue.Y} and {newValue.Height}.");
 
-				_elevationsLocal.SetElevationAndHeight(newValue.Y, newValue.Height);
-				elevations = _elevationsLocal;
+				elevationsLocal.SetElevationAndHeight(newValue.Y, newValue.Height);
+				elevations = elevationsLocal;
 			}
 			else
 			{
@@ -414,81 +418,44 @@ namespace MSetExplorer
 
 		#endregion
 
-		//#region Cutoff Dependency Property
+		#region ColorBlockArea Property
 
-		//public static readonly DependencyProperty CutoffProperty =
-		//		DependencyProperty.Register("Cutoff", typeof(double), typeof(CbListViewItem),
-		//			new FrameworkPropertyMetadata(defaultValue: 0.0, propertyChangedCallback: Cutoff_PropertyChanged)
-		//		);
+		public static readonly DependencyProperty ColorBlockAreaProperty =
+		DependencyProperty.Register("ColorBlockArea", typeof(Rect), typeof(CbListViewItem),
+			new FrameworkPropertyMetadata(defaultValue: Rect.Empty, propertyChangedCallback: ColorBlockArea_PropertyChanged)
+		);
 
-		//private static void Cutoff_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		//{
-		//	CbListViewItem c = (CbListViewItem)o;
+		private static void ColorBlockArea_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			CbListViewItem c = (CbListViewItem)o;
 
-		//	var oldValue = (double)e.OldValue;
-		//	var newValue = (double)e.NewValue;
+			var oldValue = (Rect)e.OldValue;
+			var newValue = (Rect)e.NewValue;
 
-		//	Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Cutoff for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: ColorBlockArea for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
 
-		//	c.CbSectionLine.XPosition = newValue;
-		//}
+			if (newValue.IsEmpty)
+			{
+				return;
+			}
 
-		//#endregion
+			c.CbColorBlock.StartColorGeometry.Rect = newValue;
 
-		//#region PreviousCutoff Dependency Property
+		}
 
-		//public static readonly DependencyProperty PreviousCutoffProperty =
-		//		DependencyProperty.Register("PreviousCutoff", typeof(double), typeof(CbListViewItem),
-		//			new FrameworkPropertyMetadata(defaultValue: 0.0, propertyChangedCallback: PreviousCutoff_PropertyChanged)
-		//		);
+		/*
 
-		//private static void PreviousCutoff_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		//{
-		//	CbListViewItem c = (CbListViewItem)o;
+						var cblock1 = lvi.CbColorBlock.StartColorGeometry;
+				var destPos1 = new Point(cblock1.Rect.X + 10, cblock1.Rect.Y -20);
+				_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", cblock1.Rect, destPos1, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
 
-		//	var oldValue = (double)e.OldValue;
-		//	var newValue = (double)e.NewValue;
+				//var cblock2 = lvi.CbColorBlock.EndColorGeometry;
 
-		//	Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: PreviousCutoff for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+				//var destPos2 = new Point(cblock2.Rect.X + 10, cblock1.Rect.Y - 20);
+				//_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", cblock1.Rect, destPos2, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
+		*/
 
-		//	// The ColorBand preceeding this one had its Cutoff updated.
-		//	// This ColorBand had its PreviousCutoff (aka XPosition) updated.
-		//	// This ColorBand's Starting Position (aka XPosition) and Width should be updated to accomodate.
-
-		//	//CbRectangle.XPosition = cb.PreviousCutoff ?? 0;
-		//	//CbRectangle.Width = cb.Cutoff - (cb.PreviousCutoff ?? 0);
-
-		//	// This also updates the width
-		//	c.CbRectangle.XPosition = newValue;
-		//	c.CbColorBlock.XPosition = newValue;
-		//}
-
-		//#endregion
-
-		//#region Width Dependency Property
-
-		//public static readonly DependencyProperty WidthProperty =
-		//		DependencyProperty.Register("Width", typeof(double), typeof(CbListViewItem),
-		//			new FrameworkPropertyMetadata(defaultValue: 0.0, propertyChangedCallback: Width_PropertyChanged)
-		//		);
-
-		//private static void Width_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
-		//{
-		//	CbListViewItem c = (CbListViewItem)o;
-
-		//	var oldValue = (double)e.OldValue;
-		//	var newValue = (double)e.NewValue;
-
-		//	Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Width for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
-
-		//	// This ColorBand had its Cutoff updated.
-
-		//	// This also updates the cutoff
-		//	c.CbRectangle.Width = newValue;
-		//	c.CbColorBlock.Width = newValue;
-		//}
-
-		//#endregion
+		#endregion
 
 		#region Opacity Dependency Property
 
