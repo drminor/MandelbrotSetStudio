@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace MSetExplorer
 {
-	public class CbListViewElevations : ViewModelBase, ICloneable
+	public class CbListViewElevations : ICloneable
 	{
 		#region Private Fields
 
@@ -26,7 +26,6 @@ namespace MSetExplorer
 			_controlHeight = controlHeight;
 
 			UpdateElevationsAndHeights(_elevation, _controlHeight);
-
 		}
 
 		#endregion
@@ -43,7 +42,6 @@ namespace MSetExplorer
 					_elevation = value;
 
 					UpdateElevationsAndHeights(Elevation, ControlHeight);
-					//OnPropertyChanged();
 				}
 			}
 		}
@@ -59,7 +57,6 @@ namespace MSetExplorer
 					_controlHeight = value;
 
 					UpdateElevationsAndHeights(Elevation, ControlHeight);
-					//OnPropertyChanged();
 				}
 			}
 		}
@@ -80,8 +77,6 @@ namespace MSetExplorer
 		public void SetElevationAndHeight(double elevation, double height)
 		{
 			UpdateElevationsAndHeights(elevation, height);
-			//OnPropertyChanged(nameof(ControlHeight));
-			//OnPropertyChanged(nameof(Elevation));
 		}
 
 		object ICloneable.Clone() => Clone();
@@ -107,7 +102,7 @@ namespace MSetExplorer
 			//var secondThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
 			//var thirdThreshold = MINIMUM_BLEND_RECTANGLES_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT;
 
-			if (controlHeight >= MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_SECTION_LINES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT + 4)
+			if (controlHeight >= MINIMUM_BLEND_RECTANGLES_HEIGHT + DEFAULT_SECTION_LINES_HEIGHT + DEFAULT_COLOR_BLOCKS_HEIGHT + IS_CURRENT_INDICATORS_HEIGHT)
 			{
 				SectionLinesHeight = DEFAULT_SECTION_LINES_HEIGHT;
 				ColorBlocksHeight = DEFAULT_COLOR_BLOCKS_HEIGHT;

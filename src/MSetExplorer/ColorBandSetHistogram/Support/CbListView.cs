@@ -1,6 +1,4 @@
-﻿using ABI.System.Collections.Generic;
-using MSS.Types;
-using ScottPlot.Drawing.Colormaps;
+﻿using MSS.Types;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,10 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Animation;
-using Windows.Storage.Search;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -136,12 +131,7 @@ namespace MSetExplorer
 				if (value != _elevations.Elevation)
 				{
 					_elevations.Elevation = value;
-
-					foreach (var cbListViewItem in ListViewItems)
-					{
-						var curVal = cbListViewItem.Area;
-						cbListViewItem.Area = new Rect(curVal.X, _elevations.Elevation, curVal.Width, _elevations.ControlHeight);
-					}
+					UpdateItemsElevation(_elevations);
 				}
 			}
 		}
@@ -154,12 +144,7 @@ namespace MSetExplorer
 				if (value != _elevations.ControlHeight)
 				{
 					_elevations.ControlHeight = value;
-
-					foreach (var cbListViewItem in ListViewItems)
-					{
-						var curVal = cbListViewItem.Area;
-						cbListViewItem.Area = new Rect(curVal.X, _elevations.Elevation, curVal.Width, _elevations.ControlHeight);
-					}
+					UpdateItemsElevation(_elevations);
 				}
 			} 
 		}
@@ -263,7 +248,7 @@ namespace MSetExplorer
 					if (_sectionLineUnderMouse != null)
 					{
 						_sectionLineUnderMouse.SectionLineIsUnderMouse = true;
-						Debug.WriteLine($"The Mouse is now over SectionLine: {_sectionLineUnderMouse.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
+						Debug.WriteLine($"The Mouse is now over SectionLine: {SectionLineUnderMouse?.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
 					}
 				}
 			}
@@ -891,19 +876,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private List<Tuple<RectangleGeometry, RectangleGeometry, RectangleGeometry>> GetSubColorRectangles(int index)
-		{
-			var result = new List<Tuple<RectangleGeometry, RectangleGeometry, RectangleGeometry>>();
-
-			for (var i = index; i < ListViewItems.Count; i++)
-			{
-				var colorBlock = ListViewItems[index].CbColorBlock;
-				result.Add(new Tuple<RectangleGeometry, RectangleGeometry, RectangleGeometry>(colorBlock.RectangleGeometry, colorBlock.StartColorGeometry, colorBlock.EndColorGeometry));
-			}
-
-			return result;
-		}
-
 		private void UpdateCutoff(CbSectionLineMovedEventArgs e)
 		{
 			var cbView = _colorBandsView;
@@ -941,6 +913,15 @@ namespace MSetExplorer
 			else
 			{
 				throw new InvalidOperationException($"The {e.Operation} CbSectionLineDragOperation is not supported.");
+			}
+		}
+
+		private void UpdateItemsElevation(CbListViewElevations elevations)
+		{
+			foreach (var cbListViewItem in ListViewItems)
+			{
+				var curVal = cbListViewItem.Area;
+				cbListViewItem.Area = new Rect(curVal.X, elevations.Elevation, curVal.Width, elevations.ControlHeight);
 			}
 		}
 
@@ -1015,46 +996,15 @@ namespace MSetExplorer
 		{
 			_storyBoardDetails1.RateFactor = 10;
 
-			//var rGeos = GetSubColorRectangles(index);
-
 			for(var i = 0; i < ListViewItems.Count; i++)
 			{
 				var lvi = ListViewItems[i];
 
-				var cblock1 = lvi.CbColorBlock.StartColorGeometry;
-				var destPos1 = new Point(cblock1.Rect.X + 10, cblock1.Rect.Y - 10);
-				_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", cblock1.Rect, destPos1, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
+				var currentRectangle = lvi.CbColorBlock.ColorPairContainer;
+				var destinationPosition = new Point(currentRectangle.X + 10, currentRectangle.Y - 10);
 
-				//var cblock2 = lvi.CbColorBlock.EndColorGeometry;
-
-				//var destPos2 = new Point(cblock2.Rect.X + 10, cblock1.Rect.Y - 20);
-				//_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", cblock1.Rect, destPos2, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
+				_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", currentRectangle, destinationPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
 			}
-
-			//var itemBeingRemoved = ListViewItems[index];
-			//var curVal = itemBeingRemoved.Area;
-
-			//if (index == 0)
-			//{
-			//	var newFirstItem = ListViewItems[index + 1];
-			//	curVal = newFirstItem.Area;
-			//	var newXPosition = 0;
-
-			//	_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
-			//}
-			//else
-			//{
-			//	var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
-
-			//	var preceedingItem = ListViewItems[index - 1];
-
-			//	curVal = preceedingItem.Area;
-			//	var newWidth = curVal.Width + widthOfItemBeingRemoved;
-
-			//	_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
-			//}
-
-
 
 			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index);
 		}

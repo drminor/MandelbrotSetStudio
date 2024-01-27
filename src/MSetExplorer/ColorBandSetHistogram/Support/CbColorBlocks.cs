@@ -1,12 +1,10 @@
 ﻿using MSS.Types;
-using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -47,20 +45,10 @@ namespace MSetExplorer
 		private Rect _colorBlocksArea;
 		private double _xPosition;
 		private double _width;
-
-		private ColorBandColor _startColor;
-		private ColorBandColor _endColor;
-		private bool _blend;
 		private double _opacity;
 
 		private RectangleGeometry _geometry;
 		private readonly Shape _rectanglePath;
-
-		//private RectangleGeometry _startGeometry;
-		//private readonly Shape _startColorBlockPath;
-
-		//private RectangleGeometry _endGeometry;
-		//private readonly Shape _endColorBlockPath;
 
 		private readonly CbColorPair _cbColorPair;
 
@@ -71,7 +59,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbColorBlocks(int colorBandIndex, Rect area, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
+		public CbColorBlocks(int colorBandIndex, Rect area, ColorBandColor startColor, ColorBandColor endColor, ColorBandLayoutViewModel colorBandLayoutViewModel)
 		{
 			_isSelected = false;
 			_isUnderMouse = false;
@@ -91,30 +79,13 @@ namespace MSetExplorer
 			_width = area.Width;
 			_opacity = 1.0;
 
-			_startColor = startColor;
-			_endColor = endColor;
-			_blend = blend;
+			//var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
-			var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
-
-			_geometry = new RectangleGeometry(BuildRectangle(_colorBlocksArea, isHighLighted, ContentScale));
+			_geometry = new RectangleGeometry(BuildRectangle(_colorBlocksArea, ContentScale));
 			_rectanglePath = BuildRectanglePath(_geometry);
 			_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
-
-
-			//_startGeometry = new RectangleGeometry(BuildColorBlockStart(_geometry.Rect, _colorBlocksArea));
-			//_startColorBlockPath = BuildStartColorBlockPath(_startGeometry, _startColor);
-			////_rectanglePath.MouseUp += Handle_MouseUp;
-			//_canvas.Children.Add(_startColorBlockPath);
-			//_startColorBlockPath.SetValue(Panel.ZIndexProperty, 20);
-
-			//_endGeometry = new RectangleGeometry(BuildColorBlockEnd(_geometry.Rect, _startGeometry.Rect));
-			//_endColorBlockPath = BuildEndColorBlockPath(_endGeometry, _endColor);
-			////_rectanglePath.MouseUp += Handle_MouseUp;
-			//_canvas.Children.Add(_endColorBlockPath);
-			//_endColorBlockPath.SetValue(Panel.ZIndexProperty, 20);
 
 			_cbColorPair = new CbColorPair(colorBandIndex, _geometry.Rect, startColor, endColor, _canvas);
 		}
@@ -127,8 +98,16 @@ namespace MSetExplorer
 
 		public RectangleGeometry RectangleGeometry => _geometry;
 
+		public Rect ColorPairContainer
+		{
+			get => _cbColorPair.Container;
+			set => _cbColorPair.Container = value;
+		}
+
 		public RectangleGeometry StartColorGeometry => _cbColorPair.StartColorGeometry;
+
 		public RectangleGeometry EndColorGeometry => _cbColorPair.EndColorGeometry;
+
 
 		public Path ColorBlocksRectangle => (Path)_rectanglePath;
 
@@ -142,18 +121,6 @@ namespace MSetExplorer
 		{
 			get => _cbColorPair.EndColor;
 			set => _cbColorPair.EndColor = value;
-		}
-
-		public bool Blend
-		{
-			get => _blend;
-			set
-			{
-				if (value != _blend)
-				{
-					_blend = value;
-				}
-			}
 		}
 
 		#endregion
@@ -320,10 +287,6 @@ namespace MSetExplorer
 			{
 				ContentScale = _colorBandLayoutViewModel.ContentScale;
 			}
-			//else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
-			//{
-			//	ResizeColorBlocks(_xPosition, _width, _isSelected, _isUnderMouse, _colorBandLayoutViewModel);
-			//}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ParentIsFocused))
 			{
 				ParentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
@@ -367,67 +330,17 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private Shape BuildStartColorBlockPath(RectangleGeometry area, ColorBandColor startColor)
-		{
-			var result = new Path()
-			{
-				Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(startColor)),
-				Stroke = DEFAULT_STROKE,
-				StrokeThickness = SUB_COLOR_BLOCK_STROKE_THICKNESS,
-				Data = area,
-				IsHitTestVisible = true
-			};
-
-			result.Visibility = area.Rect.Width > 0 && area.Rect.Height > 0 ? Visibility.Visible : Visibility.Collapsed;
-
-			return result;
-		}
-
-		private Shape BuildEndColorBlockPath(RectangleGeometry area, ColorBandColor endColor)
-		{
-			var result = new Path()
-			{
-				Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(endColor)),
-				Stroke = DEFAULT_STROKE,
-				StrokeThickness = SUB_COLOR_BLOCK_STROKE_THICKNESS,
-				Data = area,
-				IsHitTestVisible = true
-			};
-
-			result.Visibility = area.Rect.Width > 0 && area.Rect.Height > 0 ? Visibility.Visible : Visibility.Collapsed;
-
-			return result;
-		}
-
 		private void ResizeColorBlocks(Rect colorBlocksArea, bool isSelected, bool isUnderMouse, bool parentIsFocused, SizeDbl contentScale)
 		{
-			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
-
-			_geometry.Rect = BuildRectangle(colorBlocksArea, isHighLighted, contentScale);
-
+			//var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
+			_geometry.Rect = BuildRectangle(colorBlocksArea, contentScale);
 			_cbColorPair.Container = _geometry.Rect;
 		}
 
-		private Rect BuildRectangle(Rect colorBlocksArea, bool isHighLighted, SizeDbl contentScale)
+		private Rect BuildRectangle(Rect colorBlocksArea, SizeDbl contentScale)
 		{
 			var rect = BuildRect(colorBlocksArea, contentScale);
-
 			Rect result = Rect.Inflate(rect, -1, -1);
-
-			//if (isHighLighted && rect.Width > 3)
-			//{
-			//	// Reduce the height to accommodate the outside border. The outside border is 1 pixel thick.
-
-			//	// Reduce the width to accommodate the section line.
-			//	// The section line is 1 pixel thick, but we only need to get out of the way of 1/2 this distance.
-
-			//	result = Rect.Inflate(rect, -1, -1);
-			//}
-			//else
-			//{
-			//	result = Rect.Inflate(rect, 0, 0);
-			//}
-
 			Debug.WriteLine($"ColorBlocks just built rectangle with top: {result.Top} and height: {result.Height} and left: {result.Left} and width: {result.Width}.");
 
 			return result;
@@ -452,8 +365,8 @@ namespace MSetExplorer
 
 		private void UpdateSelectionBackground(bool isSelected, bool isUnderMouse, bool parentIsFocused)
 		{
-			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
-			_geometry.Rect = BuildRectangle(ColorBlocksArea, isHighLighted, ContentScale);
+			//var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
+			_geometry.Rect = BuildRectangle(ColorBlocksArea, ContentScale);
 			_rectanglePath.Stroke = GetRectangleStroke(isSelected, isUnderMouse, parentIsFocused);
 		}
 
@@ -480,13 +393,13 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool GetIsHighlighted(bool isSelected, bool isUnderMouse, bool parentIsFocused)
-		{
-			//var result = _isSelected || (ParentIsFocused && (_isCurrent || _isUnderMouse));
-			var result = isSelected || (parentIsFocused && isUnderMouse);
+		//private bool GetIsHighlighted(bool isSelected, bool isUnderMouse, bool parentIsFocused)
+		//{
+		//	//var result = _isSelected || (ParentIsFocused && (_isCurrent || _isUnderMouse));
+		//	var result = isSelected || (parentIsFocused && isUnderMouse);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		#endregion
 

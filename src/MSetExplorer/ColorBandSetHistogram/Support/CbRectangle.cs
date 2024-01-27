@@ -103,9 +103,7 @@ namespace MSetExplorer
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
-
 			_curGeometry = new RectangleGeometry(BuildCurRectangle(_isCurrentArea, ContentScale));
-
 			_curRectanglePath = BuildCurRectanglePath(_curGeometry, _isCurrent);
 			_canvas.Children.Add(_curRectanglePath);
 			_curRectanglePath.SetValue(Panel.ZIndexProperty, 1);
@@ -156,9 +154,7 @@ namespace MSetExplorer
 				if (value != _blend)
 				{
 					_blend = value;
-					//Recolor(_startColor, _endColor, _blend);
 					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
-
 				}
 			}
 		}
@@ -350,10 +346,6 @@ namespace MSetExplorer
 			{
 				ContentScale = _colorBandLayoutViewModel.ContentScale;
 			}
-			//else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ControlHeight))
-			//{
-			//	ResizeIsCurrentRectangle(_xPosition, _width, ContentScale);
-			//}
 			else if (e.PropertyName == nameof(ColorBandLayoutViewModel.ParentIsFocused))
 			{
 				ParentIsFocused = _colorBandLayoutViewModel.ParentIsFocused;
@@ -453,14 +445,6 @@ namespace MSetExplorer
 		private Rect BuildCurRectangle(Rect isCurrentArea, SizeDbl contentScale)
 		{
 			var result = BuildRect(isCurrentArea, contentScale);
-
-			return result;
-		}
-
-		private Rect BuildRect(double xPosition, double yPosition, double width, double height, SizeDbl contentScale)
-		{
-			var result = new Rect(new Point(xPosition, yPosition), new Size(width, height));
-			result.Scale(contentScale.Width, contentScale.Height);
 
 			return result;
 		}

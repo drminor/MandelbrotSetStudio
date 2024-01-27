@@ -38,7 +38,6 @@ namespace MSetExplorer
 			var x1Position = colorBand.PreviousCutoff ?? 0;
 			var bandWidth = colorBand.BucketWidth;
 
-
 			var blendArea = new Rect(x1Position, _elevations.BlendRectanglesElevation, bandWidth, _elevations.BlendRectanglesHeight);
 			var isCurrentArea = new Rect(x1Position, _elevations.IsCurrentIndicatorsElevation, bandWidth, _elevations.IsCurrentIndicatorsHeight);
 
@@ -54,7 +53,7 @@ namespace MSetExplorer
 
 			// Build the Color Block
 			var colorBlocksArea = new Rect(x1Position, elevations.ColorBlocksElevation, bandWidth, elevations.ColorBlocksHeight);
-			CbColorBlock = new CbColorBlocks(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
+			CbColorBlock = new CbColorBlocks(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, _colorBandLayoutViewModel);
 
 			Area = new Rect(x1Position, _elevations.Elevation, bandWidth, _elevations.ControlHeight);
 
@@ -249,12 +248,12 @@ namespace MSetExplorer
 				CbRectangle.EndColor = cb.ActualEndColor;
 				updateHandled = true;
 			}
-			else if (e.PropertyName == nameof(ColorBand.BlendStyle))
-			{
-				CbColorBlock.Blend = cb.BlendStyle != ColorBandBlendStyle.None;
-				CbRectangle.Blend = CbColorBlock.Blend;
-				updateHandled = true;
-			}
+			//else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+			//{
+			//	CbColorBlock.Blend = cb.BlendStyle != ColorBandBlendStyle.None;
+			//	CbRectangle.Blend = CbColorBlock.Blend;
+			//	updateHandled = true;
+			//}
 			else
 			{
 				updateHandled = false;
@@ -439,21 +438,8 @@ namespace MSetExplorer
 				return;
 			}
 
-			c.CbColorBlock.StartColorGeometry.Rect = newValue;
-
+			c.CbColorBlock.ColorPairContainer = newValue;
 		}
-
-		/*
-
-						var cblock1 = lvi.CbColorBlock.StartColorGeometry;
-				var destPos1 = new Point(cblock1.Rect.X + 10, cblock1.Rect.Y -20);
-				_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", cblock1.Rect, destPos1, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
-
-				//var cblock2 = lvi.CbColorBlock.EndColorGeometry;
-
-				//var destPos2 = new Point(cblock2.Rect.X + 10, cblock1.Rect.Y - 20);
-				//_storyBoardDetails1.AddChangePosition(lvi.Name, "ColorBlockArea", cblock1.Rect, destPos2, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
-		*/
 
 		#endregion
 
