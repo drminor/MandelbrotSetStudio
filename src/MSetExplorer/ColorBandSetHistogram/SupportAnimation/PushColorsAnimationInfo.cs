@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Xml.Linq;
 using Windows.UI.WebUI;
 
 namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
 {
 	internal class PushColorsAnimationInfo
 	{
-		private Canvas _canvas;
 		private CbListViewElevations _elevations;
 
-		public PushColorsAnimationInfo(Canvas canvas, CbListViewElevations elevations)
+		public PushColorsAnimationInfo(CbListViewElevations elevations)
 		{
-			_canvas = canvas;
 			_elevations = elevations;
 
 			ColorBlocksAnimationItems = new List<ColorBlocksAnimationItem>();
@@ -22,26 +21,28 @@ namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
 
 		public List<ColorBlocksAnimationItem> ColorBlocksAnimationItems { get; init; }
 
-		public void Add(string name, CbColorBlocks source, CbColorBlocks? destination)
+		public void Add(CbListViewItem source, CbListViewItem? destination)
 		{
+			ColorBlocksAnimationItem item;
+
 			if (destination != null)
 			{
-				ColorBlocksAnimationItems.Add(new ColorBlocksAnimationItem(name, source, destination.ColorPairContainer));
+				item = new ColorBlocksAnimationItem(source, destination.CbColorBlock.ColorPairContainer);
 			}
 			else
 			{
 				// The destination is just off the edge of the visible portion of the canvas.
-				var sourceRect = source.CbColorPair.Container;
+				var sourceRect = source.CbColorBlock.ColorPairContainer;
 
-				//var destinationPosition = new Point(_canvas.ActualWidth + 10, sourceRect.Top);
-
-				var width = source.Width * source.ContentScale.Width;
+				var width = source.CbColorBlock.Width * source.CbColorBlock.ContentScale.Width;
 				var destinationPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);
 
 				var destRect = new Rect(destinationPosition, sourceRect.Size);
 
-				ColorBlocksAnimationItems.Add(new ColorBlocksAnimationItem(name, source, destRect));
+				item = new ColorBlocksAnimationItem(source, destRect);
 			}
+
+			ColorBlocksAnimationItems.Add(item);
 		}
 
 		public void CalculateMovements()
@@ -51,9 +52,22 @@ namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
 
 			foreach(var cbAnimationItem in ColorBlocksAnimationItems)
 			{
+				// Lift
 				cbAnimationItem.FirstMovement = new Point(cbAnimationItem.Current.X + firstHDist, cbAnimationItem.Current.Y - liftHeight);
-			}
+				cbAnimationItem.Stage1 = new Rect(cbAnimationItem.FirstMovement, cbAnimationItem.Current.Size);
 
+				// Resize
+				cbAnimationItem.Stage2 = new Rect(cbAnimationItem.Stage1.Location, cbAnimationItem.Destination.Size);
+
+				// Shift Right
+				//cbAnimationItem.SecondMovement = new Point(cbAnimationItem.Destination.X - firstHDist, cbAnimationItem.Stage2.Y);
+				cbAnimationItem.SecondMovement = new Point(cbAnimationItem.Destination.X - firstHDist, cbAnimationItem.Current.Y - liftHeight);
+				cbAnimationItem.Stage3 = new Rect(cbAnimationItem.SecondMovement, cbAnimationItem.Destination.Size);
+
+				// Drop
+				cbAnimationItem.ThirdMovement = cbAnimationItem.Destination.Location;
+				//cbAnimationItem.Stage4 = cbAnimationItem.Destination;
+			}
 		}
 
 		public double GetFirstTimelineHorizontalDistance(double liftHeight)

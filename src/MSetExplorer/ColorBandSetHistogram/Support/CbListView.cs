@@ -993,35 +993,70 @@ namespace MSetExplorer
 
 		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
 		{
-			_storyBoardDetails1.RateFactor = 10;
+			//_storyBoardDetails1.RateFactor = 3;
 
-			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(_canvas, _elevations);
+			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(_elevations);
 
-			for(var i = index; i < ListViewItems.Count; i++)
+			//var endCnt = index + 3;
+			//if (endCnt > ListViewItems.Count) endCnt = ListViewItems.Count;
+
+			//for (var i = index; i < endCnt; i++)
+			for (var i = index; i < ListViewItems.Count; i++)
 			{
 				var lvi = ListViewItems[i];
-
-				if (i == ListViewItems.Count - 1)
-				{
-					_pushColorsAnimationInfo1.Add(lvi.Name, lvi.CbColorBlock, null);
-				}
-				else
-				{
-					_pushColorsAnimationInfo1.Add(lvi.Name, lvi.CbColorBlock, ListViewItems[i + 1].CbColorBlock);
-				}
-
-				lvi.CbSectionLine.TopArrowVisibility = Visibility.Hidden;
+				var lviSuccessor = i == ListViewItems.Count - 1 ? null : ListViewItems[i + 1];
+				_pushColorsAnimationInfo1.Add(lvi, lviSuccessor);
 			}
 
 			_pushColorsAnimationInfo1.CalculateMovements();
 
+			var sd = 100;
+			var shortDuration = TimeSpan.FromMilliseconds(sd);
+
+			var d = 300;
+			var duration = TimeSpan.FromMilliseconds(d);
+
+			var ld = 900;
+			var longDuration = TimeSpan.FromMilliseconds(ld);
+
+
 			foreach (var cbAnimationItem in _pushColorsAnimationInfo1.ColorBlocksAnimationItems)
 			{
-				var currentRectangle = cbAnimationItem.Current;
+				var t = 0;
 
+				// Lift
+				var currentRectangle = cbAnimationItem.Current;
 				var destinationPosition = cbAnimationItem.FirstMovement;
-				_storyBoardDetails1.AddChangePosition(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.Zero);
+				_storyBoardDetails1.AddChangePosition(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.Zero, duration: duration);
+				t += d;
+
+				// Resize 
+				currentRectangle = cbAnimationItem.Stage1;
+				var destinationWidth = cbAnimationItem.Destination.Width;
+				_storyBoardDetails1.AddChangeWidth(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationWidth, beginTime: TimeSpan.FromMilliseconds(t), duration: shortDuration);
+				t += sd;
+
+				// Shift Right
+				currentRectangle = cbAnimationItem.Stage2;
+				destinationPosition = cbAnimationItem.SecondMovement;
+				_storyBoardDetails1.AddChangePosition(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.FromMilliseconds(t), duration: duration);
+				t += d;
+
+				//// No Op
+				//_storyBoardDetails1.AddNoOp(cbAnimationItem.Name, beginTime: TimeSpan.FromMilliseconds(t), duration: longDuration);
+				//t += ld;
+
+				// Drop
+				currentRectangle = cbAnimationItem.Stage3;
+				destinationPosition = cbAnimationItem.ThirdMovement;
+				_storyBoardDetails1.AddChangePosition(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.FromMilliseconds(t), duration: duration);
+				t += d;
+
+				//// No Op
+				//t += d;
+				//_storyBoardDetails1.AddNoOp(cbAnimationItem.Name, beginTime: TimeSpan.FromMilliseconds(t), duration: TimeSpan.FromMilliseconds(d));
 			}
+
 
 			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index);
 		}
@@ -1030,16 +1065,8 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine("CutoffDeletion Animation has completed.");
 
-			if (_pushColorsAnimationInfo1 != null)
-			{
-				_pushColorsAnimationInfo1.TearDown();
-				_pushColorsAnimationInfo1 = null;
-			}
-
-			for (var i = index; i < ListViewItems.Count; i++)
-			{
-				ListViewItems[i].CbSectionLine.TopArrowVisibility = Visibility.Visible;
-			}
+			_pushColorsAnimationInfo1?.TearDown();
+			_pushColorsAnimationInfo1 = null;
 
 			var lvi = ListViewItems[index];
 
@@ -1095,12 +1122,12 @@ namespace MSetExplorer
 
 			itemBeingRemoved.ElevationsAreLocal = true;
 
-			_storyBoardDetails1.AddMakeTransparent(itemBeingRemoved.Name, TimeSpan.FromMilliseconds(500), TimeSpan.Zero);
+			_storyBoardDetails1.AddMakeTransparent(itemBeingRemoved.Name, TimeSpan.Zero, TimeSpan.FromMilliseconds(500));
 
 			var curVal = itemBeingRemoved.Area;
 			var newSize = new Size(curVal.Size.Width * 0.25, curVal.Size.Height * 0.25);
 
-			_storyBoardDetails1.AddChangeSize(itemBeingRemoved.Name, "Area", from: curVal, newSize: newSize, duration: TimeSpan.FromMilliseconds(500), beginTime: TimeSpan.Zero);
+			_storyBoardDetails1.AddChangeSize(itemBeingRemoved.Name, "Area", from: curVal, newSize: newSize, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(500));
 
 			if (index == 0)
 			{
@@ -1108,7 +1135,7 @@ namespace MSetExplorer
 				curVal = newFirstItem.Area;
 				var newXPosition = 0;
 
-				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
+				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(400), duration: TimeSpan.FromMilliseconds(300));
 			}
 			else
 			{
@@ -1124,7 +1151,7 @@ namespace MSetExplorer
 				curVal = preceedingItem.Area;
 				var newWidth = curVal.Width + widthOfItemBeingRemoved;
 
-				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, duration: TimeSpan.FromMilliseconds(300), beginTime: TimeSpan.FromMilliseconds(400));
+				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, beginTime: TimeSpan.FromMilliseconds(400), duration: TimeSpan.FromMilliseconds(300));
 			}
 
 			_storyBoardDetails1.Begin(AnimateDeleteBandPost, onAnimationComplete, index);

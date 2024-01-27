@@ -4,16 +4,16 @@ namespace MSetExplorer
 {
 	internal class ColorBlocksAnimationItem
 	{
-		public ColorBlocksAnimationItem(string name, CbColorBlocks cbColorBlocks, Rect destination)
+		public ColorBlocksAnimationItem(CbListViewItem cbListViewItem, Rect destination)
 		{
-			Name = name;
+			CbListViewItem = cbListViewItem;
 
-			CbColorBlocks = cbColorBlocks;
+			CbColorBlocks.UsingProxy = true;
+			CbColorBlocks.ColorPairVisibility = Visibility.Hidden;
 
-			cbColorBlocks.UsingProxy = true;
-			cbColorBlocks.ColorPairVisibility = Visibility.Hidden;
+			cbListViewItem.CbSectionLine.TopArrowVisibility = Visibility.Hidden;
 
-			Source = cbColorBlocks.CbColorPair.Container;
+			Source = CbColorBlocks.CbColorPair.Container;
 			Destination = destination;
 
 			Current = Source;
@@ -21,17 +21,23 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public string Name { get; init; }
+		public CbListViewItem CbListViewItem { get; init; }
+		public string Name => CbListViewItem.Name;
 
-		public CbColorBlocks CbColorBlocks { get; init; }
-		//public CbColorPair CbColorPairProxy { get; init; }
+		public CbColorBlocks CbColorBlocks => CbListViewItem.CbColorBlock;
 
 		public Rect Source { get; init; }
 		public Rect Destination { get; init; }
 
 		public Rect Current { get; set; }
+		public Rect Stage1 { get; set; }
+		public Rect Stage2 { get; set; }
+		public Rect Stage3 { get; set; }
 
 		public Point FirstMovement { get; set; }
+
+		public Point SecondMovement { get; set; }
+		public Point ThirdMovement { get; set; }
 
 		#endregion
 
@@ -48,6 +54,7 @@ namespace MSetExplorer
 		{
 			CbColorBlocks.UsingProxy = false;
 			CbColorBlocks.ColorPairVisibility = Visibility.Visible;
+			CbListViewItem.CbSectionLine.TopArrowVisibility = Visibility.Visible;
 		}
 
 		#endregion

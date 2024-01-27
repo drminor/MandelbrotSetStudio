@@ -143,7 +143,7 @@ namespace MSetExplorer
 			}
 
 			var unscaledExtentWidth = e.UnscaledExtent.Width;
-			var minContentScale = (viewPortWidth) / unscaledExtentWidth;
+			var minContentScale = (viewPortWidth + 3) / unscaledExtentWidth;
 			//var minContentScale = viewPortWidth / unscaledExtentWidth;
 			var contentScale = minContentScale;
 
