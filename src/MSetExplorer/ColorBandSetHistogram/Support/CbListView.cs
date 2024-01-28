@@ -664,6 +664,8 @@ namespace MSetExplorer
 
 		private bool TryGetSectionLineIndex(Point hitPoint, List<CbListViewItem> cbListViewItems, out double distance, out int listViewItemIndex)
 		{
+			//var diagP = ContentScale.Width * 60;
+
 			listViewItemIndex = -1;
 
 			double smallestAbsDist = int.MaxValue;
@@ -672,6 +674,11 @@ namespace MSetExplorer
 			for (var cbLinePtr = 0; cbLinePtr < cbListViewItems.Count; cbLinePtr++)
 			{
 				var cbListViewItem = cbListViewItems[cbLinePtr];
+
+				//if (!ScreenTypeHelper.IsDoubleChanged(diagP, cbListViewItem.SectionLinePositionX))
+				//{
+				//	ReportColorBands("Mouse Move at 60", ListViewItems);
+				//}
 
 				var dist = hitPoint.X - cbListViewItem.SectionLinePositionX;
 				var absDist = Math.Abs(dist);
@@ -986,21 +993,16 @@ namespace MSetExplorer
 
 		#region Animation Support - Deletions
 
-		/*
-			1. Update the Item's Cutoff to use the next item's Cutoff
-			2. Update the next item's PreviousCutoff to be this Item's PreviousCutoff
-		*/
-
 		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
 		{
+			Debug.WriteLine($"AnimateDeleteCutoff. Index = {index}.");
+
+			//ReportColorBands("Top of AnimateDeleteCutoff", ListViewItems);
+
 			//_storyBoardDetails1.RateFactor = 3;
 
 			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(_elevations);
 
-			//var endCnt = index + 3;
-			//if (endCnt > ListViewItems.Count) endCnt = ListViewItems.Count;
-
-			//for (var i = index; i < endCnt; i++)
 			for (var i = index; i < ListViewItems.Count; i++)
 			{
 				var lvi = ListViewItems[i];
@@ -1008,6 +1010,7 @@ namespace MSetExplorer
 				_pushColorsAnimationInfo1.Add(lvi, lviSuccessor);
 			}
 
+			_pushColorsAnimationInfo1.Setup();
 			_pushColorsAnimationInfo1.CalculateMovements();
 
 			var sd = 100;
@@ -1019,44 +1022,106 @@ namespace MSetExplorer
 			var ld = 900;
 			var longDuration = TimeSpan.FromMilliseconds(ld);
 
+			//_storyBoardDetails1.RateFactor = 3;
 
-			foreach (var cbAnimationItem in _pushColorsAnimationInfo1.ColorBlocksAnimationItems)
+			foreach (var cbBlocksAItem in _pushColorsAnimationInfo1.ColorBlocksAnimationItems)
 			{
 				var t = 0;
 
 				// Lift
-				var currentRectangle = cbAnimationItem.Current;
-				var destinationPosition = cbAnimationItem.FirstMovement;
-				_storyBoardDetails1.AddChangePosition(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.Zero, duration: duration);
+				var currentRectangle = cbBlocksAItem.Current;
+				var destinationPosition = cbBlocksAItem.FirstMovement;
+				_storyBoardDetails1.AddChangePosition(cbBlocksAItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.Zero, duration: duration);
 				t += d;
 
 				// Resize 
-				currentRectangle = cbAnimationItem.Stage1;
-				var destinationWidth = cbAnimationItem.Destination.Width;
-				_storyBoardDetails1.AddChangeWidth(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationWidth, beginTime: TimeSpan.FromMilliseconds(t), duration: shortDuration);
+				currentRectangle = cbBlocksAItem.Stage1;
+				var destinationWidth = cbBlocksAItem.Destination.Width;
+				_storyBoardDetails1.AddChangeWidth(cbBlocksAItem.Name, "ColorBlockArea", currentRectangle, destinationWidth, beginTime: TimeSpan.FromMilliseconds(t), duration: shortDuration);
 				t += sd;
 
 				// Shift Right
-				currentRectangle = cbAnimationItem.Stage2;
-				destinationPosition = cbAnimationItem.SecondMovement;
-				_storyBoardDetails1.AddChangePosition(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.FromMilliseconds(t), duration: duration);
+				currentRectangle = cbBlocksAItem.Stage2;
+				destinationPosition = cbBlocksAItem.SecondMovement;
+				_storyBoardDetails1.AddChangePosition(cbBlocksAItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.FromMilliseconds(t), duration: duration);
 				t += d;
 
 				//// No Op
-				//_storyBoardDetails1.AddNoOp(cbAnimationItem.Name, beginTime: TimeSpan.FromMilliseconds(t), duration: longDuration);
+				//_storyBoardDetails1.AddNoOp(cbBlocksAItem.Name, beginTime: TimeSpan.FromMilliseconds(t), duration: longDuration);
 				//t += ld;
 
 				// Drop
-				currentRectangle = cbAnimationItem.Stage3;
-				destinationPosition = cbAnimationItem.ThirdMovement;
-				_storyBoardDetails1.AddChangePosition(cbAnimationItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.FromMilliseconds(t), duration: duration);
+				currentRectangle = cbBlocksAItem.Stage3;
+				destinationPosition = cbBlocksAItem.ThirdMovement;
+				_storyBoardDetails1.AddChangePosition(cbBlocksAItem.Name, "ColorBlockArea", currentRectangle, destinationPosition, beginTime: TimeSpan.FromMilliseconds(t), duration: duration);
 				t += d;
 
 				//// No Op
-				//t += d;
-				//_storyBoardDetails1.AddNoOp(cbAnimationItem.Name, beginTime: TimeSpan.FromMilliseconds(t), duration: TimeSpan.FromMilliseconds(d));
+				//_storyBoardDetails1.AddNoOp(cbBlocksAItem.Name, beginTime: TimeSpan.FromMilliseconds(t), duration: TimeSpan.FromMilliseconds(d));
 			}
 
+			foreach (var cbBlendedAItem in _pushColorsAnimationInfo1.BlendedColorAnimationItems)
+			{
+				var t = 0;
+
+				// Lift
+				var currentRectangle = cbBlendedAItem.Current;
+				var destinationPosition = cbBlendedAItem.FirstMovement;
+				_storyBoardDetails1.AddChangePosition(cbBlendedAItem.Name, "BlendedColorArea", currentRectangle, destinationPosition, beginTime: TimeSpan.Zero, duration: duration);
+				t += d;
+
+				// Resize 
+				currentRectangle = cbBlendedAItem.Stage1;
+				var destinationWidth = cbBlendedAItem.Destination.Width;
+				_storyBoardDetails1.AddChangeWidth(cbBlendedAItem.Name, "BlendedColorArea", currentRectangle, destinationWidth, beginTime: TimeSpan.FromMilliseconds(t), duration: shortDuration);
+				t += sd;
+
+				// Shift Right
+				currentRectangle = cbBlendedAItem.Stage2;
+				destinationPosition = cbBlendedAItem.SecondMovement;
+				_storyBoardDetails1.AddChangePosition(cbBlendedAItem.Name, "BlendedColorArea", currentRectangle, destinationPosition, beginTime: TimeSpan.FromMilliseconds(t), duration: duration);
+				t += d;
+
+				//// No Op
+				//_storyBoardDetails1.AddNoOp(cbBlendedAItem.Name, beginTime: TimeSpan.FromMilliseconds(t), duration: longDuration);
+				//t += ld;
+
+				// Drop
+				currentRectangle = cbBlendedAItem.Stage3;
+				destinationPosition = cbBlendedAItem.ThirdMovement;
+				_storyBoardDetails1.AddChangePosition(cbBlendedAItem.Name, "BlendedColorArea", currentRectangle, destinationPosition, beginTime: TimeSpan.FromMilliseconds(t), duration: duration);
+				t += d;
+
+				//// No Op
+				//_storyBoardDetails1.AddNoOp(cbBlendedAItem.Name, beginTime: TimeSpan.FromMilliseconds(t), duration: TimeSpan.FromMilliseconds(d));
+			}
+
+			if (index == 0)
+			{
+				// Extend the first band so that it starts at Zero.
+				var newFirstItem = ListViewItems[index + 1];
+				var curVal = newFirstItem.Area;
+				var newXPosition = 0;
+
+				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(400), duration: TimeSpan.FromMilliseconds(300));
+			}
+			else
+			{
+				// Extend the 
+				var itemBeingRemoved = ListViewItems[index];
+				var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
+				var preceedingItem = ListViewItems[index - 1];
+
+				if (index < ListViewItems.Count - 2)
+				{
+					preceedingItem.ColorBand.SuccessorStartColor = ListViewItems[index + 1].ColorBand.StartColor;
+				}
+
+				var curVal = preceedingItem.Area;
+				var newWidth = curVal.Width + widthOfItemBeingRemoved;
+
+				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, beginTime: TimeSpan.FromMilliseconds(400), duration: TimeSpan.FromMilliseconds(300));
+			}
 
 			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index);
 		}
@@ -1065,15 +1130,15 @@ namespace MSetExplorer
 		{
 			Debug.WriteLine("CutoffDeletion Animation has completed.");
 
-			_pushColorsAnimationInfo1?.TearDown();
-			_pushColorsAnimationInfo1 = null;
+			//_pushColorsAnimationInfo1?.TearDown();
+			//_pushColorsAnimationInfo1 = null;
 
 			var lvi = ListViewItems[index];
 
 			// Update the SectionLine's position
 			if (index == 0)
 			{
-				Debug.WriteLine("Handling AfterAnimateBandDeletion and the index = 0.");
+				Debug.WriteLine("Handling AnimateDeleteCutoffPost and the index = 0.");
 
 				// The rectangle at index + 1 will move to become the very first rectangle at index = 0
 				var firstLvi = ListViewItems[index + 1];
@@ -1088,14 +1153,55 @@ namespace MSetExplorer
 
 				// So that its right edge is at the same position as the right edge of the rectangle being deleted.
 				precedingLvi.CbSectionLine.X2Position = lvi.ColorBand.Cutoff;
+				precedingLvi.CbRectangle.EndColor = lvi.CbRectangle.StartColor;
+				precedingLvi.CbColorBlock.EndColor = lvi.CbRectangle.StartColor;
 			}
 
-			onAnimationComplete(index);
+			PushColorsUp(index);
+
+			//ReportColorBands("Before Remove", ListViewItems);
 
 			RemoveListViewItem(lvi);
 			Reindex(lvi.ColorBandIndex);
 
+			//ReportColorBands("After Remove", ListViewItems);
+
+			onAnimationComplete(index);
+
+			//ReportColorBands("After Removed From Set", ListViewItems);
+
 			_ = SynchronizeCurrentItem();
+
+			_pushColorsAnimationInfo1?.TearDown();
+			//_pushColorsAnimationInfo1 = null;
+		}
+
+		private void ReportColorBands(string desc, List<CbListViewItem> cbListViewItems)
+		{
+			Debug.WriteLine($"ColorBands: {desc}");
+
+			for (var cbLinePtr = 0; cbLinePtr < cbListViewItems.Count; cbLinePtr++)
+			{
+				var item = cbListViewItems[cbLinePtr];
+				Debug.WriteLine($"ColorBand: {cbLinePtr} Start: {item.ColorBand.PreviousCutoff ?? -1}, End: {item.ColorBand.Cutoff}, Width: {item.ColorBand.BucketWidth}.");
+			}
+
+		}
+
+		private void PushColorsUp(int index)
+		{
+			var source = ListViewItems[^2];
+			var target = ListViewItems[^1];
+
+			target.CbRectangle.BlendedBandRectangle = source.CbRectangle.BlendedBandRectangle;
+
+			for (var ptr = ListViewItems.Count - 2; ptr > index; ptr--)
+			{
+				var sourceCb = ListViewItems[ptr - 1];
+				var targetCb = ListViewItems[ptr];
+
+				targetCb.CbRectangle.BlendedBandRectangle = sourceCb.CbRectangle.BlendedBandRectangle;
+			}
 		}
 
 		public void AnimateDeleteColor(Action<int> onAnimationComplete, int index)
@@ -1166,7 +1272,7 @@ namespace MSetExplorer
 			// Update the SectionLine's position
 			if (index == 0)
 			{
-				Debug.WriteLine("Handling AfterAnimateBandDeletion and the index = 0.");
+				Debug.WriteLine("Handling AnimateDeleteBandPost and the index = 0.");
 
 				// The rectangle at index + 1 will move to become the very first rectangle at index = 0
 				var firstLvi = ListViewItems[index + 1];
@@ -1178,15 +1284,15 @@ namespace MSetExplorer
 			{
 				// Extend the rectangle just before the rectangle being deleted
 				var precedingLvi = ListViewItems[index - 1];
-				
+
 				// So that its right edge is at the same position as the right edge of the rectangle being deleted.
 				precedingLvi.CbSectionLine.X2Position = lvi.ColorBand.Cutoff;
 			}
 
-			onAnimationComplete(index);
-
 			RemoveListViewItem(lvi);
 			Reindex(lvi.ColorBandIndex);
+			
+			onAnimationComplete(index);
 
 			_ = SynchronizeCurrentItem();
 		}

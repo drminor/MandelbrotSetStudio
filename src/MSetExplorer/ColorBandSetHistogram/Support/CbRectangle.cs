@@ -25,7 +25,7 @@ namespace MSetExplorer
 		private static readonly Brush LIGHT_GRAY_BRUSH = new SolidColorBrush(Colors.LightGray);
 		//private static readonly Brush PINK = new SolidColorBrush(Colors.DeepPink);
 
-
+		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
 		private static readonly Brush IS_SELECTED_STROKE = LIGHT_BLUE_BRUSH;
@@ -51,16 +51,18 @@ namespace MSetExplorer
 		private double _xPosition;
 		private double _width;
 
-		private ColorBandColor _startColor;
-		private ColorBandColor _endColor;
-		private bool _blend;
+		//private ColorBandColor _startColor;
+		//private ColorBandColor _endColor;
+		//private bool _blend;
 		private double _opacity;
 
 		private RectangleGeometry _geometry;
-		private readonly Shape _rectanglePath;
+		private Shape _rectanglePath;
 
 		private RectangleGeometry _curGeometry;
 		private readonly Shape _curRectanglePath;
+
+		private CbBlendedColorPair _cbBlendedColorPair;
 
 		private bool _isCurrent;
 		private bool _isSelected;
@@ -90,20 +92,22 @@ namespace MSetExplorer
 			_xPosition = blendArea.Left;
 			_width = blendArea.Width;
 
-			_startColor = startColor;
-			_endColor = endColor;
-			_blend = blend;
+			//_startColor = startColor;
+			//_endColor = endColor;
+			//_blend = blend;
 			_opacity = 1.0;
 
 			var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
 			_geometry = new RectangleGeometry(BuildRectangle(_blendRectangleArea, isHighLighted, ContentScale));
-			_rectanglePath = BuildRectanglePath(_geometry, startColor, endColor, blend);
+			_rectanglePath = BuildRectanglePath(_geometry);
 			_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
-			_curGeometry = new RectangleGeometry(BuildCurRectangle(_isCurrentArea, ContentScale));
+			_cbBlendedColorPair = new CbBlendedColorPair(colorBandIndex, _geometry.Rect, startColor, endColor, blend, _canvas);
+
+			_curGeometry = new RectangleGeometry(BuildRect(_isCurrentArea, ContentScale));
 			_curRectanglePath = BuildCurRectanglePath(_curGeometry, _isCurrent);
 			_canvas.Children.Add(_curRectanglePath);
 			_curRectanglePath.SetValue(Panel.ZIndexProperty, 1);
@@ -117,46 +121,78 @@ namespace MSetExplorer
 
 		public RectangleGeometry RectangleGeometry => _geometry;
 
-		public Path BlendedBandRectangle => (Path)_rectanglePath;
+		public Path BlendedBandRectangle
+		{
+			get => (Path)_rectanglePath;
+			set => _rectanglePath = value;
+		}
+
+		public CbBlendedColorPair CbBlendedColorPair
+		{
+			get =>  _cbBlendedColorPair;
+			set
+			{
+				_cbBlendedColorPair = value;
+			}
+		}
+
+		public bool UsingProxy
+		{
+			get => CbBlendedColorPairProxy != null;
+			set
+			{
+				if (value != UsingProxy)
+				{
+					if (value)
+					{
+						CbBlendedColorPairProxy = CbBlendedColorPair.Clone();
+						CbBlendedColorPair.Visibility = Visibility.Hidden;
+					}
+					else
+					{
+						if (CbBlendedColorPairProxy != null)
+						{
+							//CbBlendedColorPairProxy?.TearDown();
+							//CbBlendedColorPairProxy = null;
+							CbBlendedColorPairProxy.Visibility = Visibility.Hidden;
+						}
+
+						CbBlendedColorPair.Visibility = Visibility.Visible;
+					}
+				}
+			}
+		}
+
+		public CbBlendedColorPair? CbBlendedColorPairProxy { get; set; }
+
+		public Rect ColorPairContainer
+		{
+			get => _cbBlendedColorPair.Container;
+			set => _cbBlendedColorPair.Container = value;
+		}
+
+		public Visibility ColorPairVisibility
+		{
+			get => _cbBlendedColorPair.Visibility;
+			set => _cbBlendedColorPair.Visibility = value;
+		}
 
 		public ColorBandColor StartColor
 		{
-			get => _startColor;
-			set
-			{
-				if (value != _startColor)
-				{
-					_startColor = value;
-					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
-
-				}
-			}
+			get => _cbBlendedColorPair.StartColor;
+			set => _cbBlendedColorPair.StartColor = value;
 		}
 
 		public ColorBandColor EndColor
 		{
-			get => _endColor;
-			set
-			{
-				if (value != _endColor)
-				{
-					_endColor = value;
-					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
-				}
-			}
+			get => _cbBlendedColorPair.EndColor;
+			set => _cbBlendedColorPair.EndColor = value;
 		}
 
 		public bool Blend
 		{
-			get => _blend;
-			set
-			{
-				if (value != _blend)
-				{
-					_blend = value;
-					_rectanglePath.Fill = GetBlendedBrush(_startColor, _endColor, _blend);
-				}
-			}
+			get => _cbBlendedColorPair.Blend;
+			set => _cbBlendedColorPair.Blend = value;
 		}
 
 		#endregion
@@ -170,6 +206,7 @@ namespace MSetExplorer
 			{
 				if (value != _contentScale)
 				{
+					Debug.Assert(value.Height == 1, "Found a ContentScale with Height != 1.");
 					_contentScale = value;
 					ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
 					ResizeIsCurrentRectangle(IsCurrentArea, ContentScale);
@@ -244,8 +281,9 @@ namespace MSetExplorer
 				{
 					_opacity = value;
 
-					_curRectanglePath.Opacity = value;
 					_rectanglePath.Opacity = value;
+					_cbBlendedColorPair.Opacity = value;
+					_curRectanglePath.Opacity = value;
 				}
 			}
 		}
@@ -323,6 +361,8 @@ namespace MSetExplorer
 					_canvas.Children.Remove(_rectanglePath);
 					_canvas.Children.Remove(_curRectanglePath);
 				}
+
+				CbBlendedColorPair.TearDown();
 			}
 			catch
 			{
@@ -374,11 +414,11 @@ namespace MSetExplorer
 
 		#region Private Methods - Layout
 
-		private Shape BuildRectanglePath(RectangleGeometry area, ColorBandColor startColor, ColorBandColor endColor, bool blend)
+		private Shape BuildRectanglePath(RectangleGeometry area)
 		{
 			var result = new Path()
 			{
-				Fill = GetBlendedBrush(startColor, endColor, blend),
+				Fill = DEFAULT_BACKGROUND,
 				Stroke = Brushes.Transparent,
 				StrokeThickness = 0,
 				Data = area,
@@ -409,6 +449,8 @@ namespace MSetExplorer
 			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
 
 			_geometry.Rect = BuildRectangle(blendRectangleArea, isHighLighted, contentScale);
+
+			_cbBlendedColorPair.Container = _geometry.Rect;
 		}
 
 		private Rect BuildRectangle(Rect blendRectangleArea, bool isHighLighted, SizeDbl contentScale)
@@ -439,36 +481,13 @@ namespace MSetExplorer
 
 		private void ResizeIsCurrentRectangle(Rect isCurrentArea, SizeDbl contentScale)
 		{
-			_curGeometry.Rect = BuildCurRectangle(isCurrentArea, contentScale);
-		}
-
-		private Rect BuildCurRectangle(Rect isCurrentArea, SizeDbl contentScale)
-		{
-			var result = BuildRect(isCurrentArea, contentScale);
-
-			return result;
+			_curGeometry.Rect = BuildRect(isCurrentArea, contentScale);
 		}
 
 		private Rect BuildRect(Rect r, SizeDbl contentScale)
 		{
 			var result = new Rect(r.Location, r.Size);
 			result.Scale(contentScale.Width, contentScale.Height);
-
-			return result;
-		}
-
-		private Brush GetBlendedBrush(ColorBandColor startColor, ColorBandColor endColor, bool blend)
-		{
-			Brush result;
-
-			if (blend)
-			{
-				result = DrawingHelper.BuildBrush(startColor, endColor, blend);
-			}
-			else
-			{
-				result = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(startColor));
-			}
 
 			return result;
 		}
@@ -492,6 +511,7 @@ namespace MSetExplorer
 			var isHighLighted = GetIsHighlighted(isSelected, isUnderMouse, parentIsFocused);
 
 			_geometry.Rect = BuildRectangle(BlendRectangleArea, isHighLighted, ContentScale);
+			_cbBlendedColorPair.Container = _geometry.Rect;
 
 			_rectanglePath.Stroke = GetRectangleStroke(isSelected, isUnderMouse, parentIsFocused);
 			_rectanglePath.StrokeThickness = GetRectangleStrokeThickness(isHighLighted);

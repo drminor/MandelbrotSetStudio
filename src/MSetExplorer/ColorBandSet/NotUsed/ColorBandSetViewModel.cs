@@ -634,7 +634,7 @@ namespace MSetExplorer
 				switch (EditMode)
 				{
 					case ColorBandSetEditMode.Cutoffs:
-						result = TryDeleteOffset(curItem);
+						result = TryDeleteStartingOffset(curItem);
 						break;
 					case ColorBandSetEditMode.Colors:
 						result = TryDeleteColor(curItem);
@@ -666,7 +666,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool TryDeleteOffset(ColorBand curItem)
+		private bool TryDeleteStartingOffset(ColorBand curItem)
 		{
 			var currentSet = _currentColorBandSet;
 			var index = currentSet.IndexOf(curItem);
@@ -678,7 +678,7 @@ namespace MSetExplorer
 			}
 
 			CurrentColorBand = null;
-			_currentColorBandSet.DeleteCutoff(index);
+			_currentColorBandSet.DeleteStartingCutoff(curItem);
 			ColorBandsView.Refresh();
 			ColorBandsView.MoveCurrentTo(curItem);
 

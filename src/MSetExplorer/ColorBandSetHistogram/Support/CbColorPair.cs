@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -15,22 +16,9 @@ namespace MSetExplorer
 		private const double DEFAULT_STROKE_THICKNESS = 2.0;
 		private const double SUB_COLOR_BLOCK_STROKE_THICKNESS = 1.0;
 
-		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush DARKISH_GRAY_BRUSH = new SolidColorBrush(Color.FromRgb(0xd9, 0xd9, 0xd9));
 
-		private static readonly Brush VERY_LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xe5, 0xf3, 0xff));
-		private static readonly Brush LIGHT_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0x99, 0xd1, 0xff));
-		private static readonly Brush MIDDLIN_BLUE_BRUSH = new SolidColorBrush(Color.FromRgb(0xcc, 0xe8, 0xff));
-		private static readonly Brush SKY_BLUE = new SolidColorBrush(Colors.SkyBlue);
-
-		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH;
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
-
-		private static readonly Brush IS_SELECTED_STROKE = LIGHT_BLUE_BRUSH; // MIDDLIN_BLUE_BRUSH;
-
-		private static readonly Brush IS_SELECTED_INACTIVE_STROKE = DARKISH_GRAY_BRUSH;
-
-		private static readonly Brush IS_HOVERED_STROKE = SKY_BLUE; // LIGHT_BLUE_BRUSH; // VERY_LIGHT_BLUE_BRUSH;
 
 		#endregion
 
@@ -42,6 +30,7 @@ namespace MSetExplorer
 
 		private ColorBandColor _startColor;
 		private ColorBandColor _endColor;
+		private bool _blend;
 
 		private RectangleGeometry _startGeometry;
 		private readonly Shape _startColorBlockPath;
@@ -53,16 +42,17 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbColorPair(int colorBandIndex, Rect containerArea, ColorBandColor startColor, ColorBandColor endColor, Canvas canvas)
+		public CbColorPair(int colorBandIndex, Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas)
 		{
 			ColorBandIndex = colorBandIndex;
 
 			_canvas = canvas;
 
-			_container = containerArea;
+			_container = container;
 
 			_startColor = startColor;
 			_endColor = endColor;
+			_blend = blend;
 
 			_startGeometry = new RectangleGeometry(BuildColorBlockStart(_container));
 			_startColorBlockPath = BuildStartColorBlockPath(_startGeometry, _startColor);
@@ -106,6 +96,18 @@ namespace MSetExplorer
 				{
 					_endColor = value;
 					_endColorBlockPath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(_endColor));
+				}
+			}
+		}
+
+		public bool Blend
+		{
+			get => _blend;
+			set
+			{
+				if (value != _blend)
+				{
+					_blend = value;
 				}
 			}
 		}
@@ -160,7 +162,7 @@ namespace MSetExplorer
 
 		public CbColorPair Clone()
 		{
-			var result = new CbColorPair(ColorBandIndex, Container, StartColor, EndColor, _canvas);
+			var result = new CbColorPair(ColorBandIndex, Container, StartColor, EndColor, Blend, _canvas);
 			return result;
 		}
 
@@ -326,22 +328,6 @@ namespace MSetExplorer
 			}
 
 			return (left, width);
-		}
-
-		private Rect BuildRect(double xPosition, double yPosition, double width, double height, SizeDbl contentScale)
-		{
-			var result = new Rect(new Point(xPosition, yPosition), new Size(width, height));
-			result.Scale(contentScale.Width, contentScale.Height);
-
-			return result;
-		}
-
-		private Rect BuildRect(Rect r, SizeDbl contentScale)
-		{
-			var result = new Rect(r.Location, r.Size);
-			result.Scale(contentScale.Width, contentScale.Height);
-
-			return result;
 		}
 
 		#endregion

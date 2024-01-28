@@ -151,6 +151,8 @@ namespace MSetExplorer
 					_x1Position = _sectionLineArea.Left;
 					_x2Position = _sectionLineArea.Right;
 
+					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
+
 					ResizeSectionLine(SectionLineRectangleArea, ContentScale);
 				}
 			}
@@ -201,6 +203,31 @@ namespace MSetExplorer
 
 					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
 				}
+				//else
+				//{
+				//	var r1 = SectionLineRectangleArea.Right;
+				//	var r2 = TopArrowRectangleArea.Right;
+
+				//	if (ScreenTypeHelper.IsDoubleChanged(r1, value) || ScreenTypeHelper.IsDoubleChanged(r2, value))
+				//	{
+				//		var width = value - _sectionLineArea.Left;
+
+
+				//		SectionLineRectangleArea = new Rect(_sectionLineArea.X, _sectionLineArea.Y, width, _sectionLineArea.Height);
+				//		TopArrowRectangleArea = new Rect(_sectionLineArea.X, _topArrowArea.Y, width, _topArrowArea.Height);
+
+				//		SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
+				//	}
+				//	else
+				//	{
+				//		var slpx = value * ContentScale.Width;
+
+				//		if (ScreenTypeHelper.IsDoubleChanged(slpx, SectionLinePositionX))
+				//		{
+				//			SectionLinePositionX = slpx;
+				//		}
+				//	}
+				//}
 			}
 		}
 
@@ -211,6 +238,14 @@ namespace MSetExplorer
 			{
 				if (value != _selectionLinePosition)
 				{
+					var x2PTest = value / _contentScale.Width;
+
+					if (ScreenTypeHelper.IsDoubleChanged(x2PTest, X2Position, 2))
+					{
+						Debug.WriteLine($"SectionLinePositionX vs X2Position MISMATCH: SectionLinePositionX: {SectionLinePositionX}, X2Position: {X2Position}");
+					}
+
+					Debug.WriteLine($"CbSectionLine. SectionLinePositionX is being updated from: {_selectionLinePosition} to {value}.");
 					_selectionLinePosition = value;
 					_dragLine.X1 = value;
 					_dragLine.X2 = value;

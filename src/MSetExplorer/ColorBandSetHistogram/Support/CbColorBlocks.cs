@@ -1,5 +1,6 @@
 ﻿using MSS.Types;
 using System.Diagnostics;
+using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -50,7 +51,7 @@ namespace MSetExplorer
 		private RectangleGeometry _geometry;
 		private readonly Shape _rectanglePath;
 
-		private readonly CbColorPair _cbColorPair;
+		private CbColorPair _cbColorPair;
 
 		private bool _isSelected;
 		private bool _isUnderMouse;
@@ -59,7 +60,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbColorBlocks(int colorBandIndex, Rect area, ColorBandColor startColor, ColorBandColor endColor, ColorBandLayoutViewModel colorBandLayoutViewModel)
+		public CbColorBlocks(int colorBandIndex, Rect area, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
 		{
 			_isSelected = false;
 			_isUnderMouse = false;
@@ -87,7 +88,7 @@ namespace MSetExplorer
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
-			_cbColorPair = new CbColorPair(colorBandIndex, _geometry.Rect, startColor, endColor, _canvas);
+			_cbColorPair = new CbColorPair(colorBandIndex, _geometry.Rect, startColor, endColor, blend, _canvas);
 		}
 
 		#endregion
@@ -98,15 +99,16 @@ namespace MSetExplorer
 
 		public RectangleGeometry RectangleGeometry => _geometry;
 
-		//public RectangleGeometry StartColorGeometry => _cbColorPair.StartColorGeometry;
-
-		//public RectangleGeometry EndColorGeometry => _cbColorPair.EndColorGeometry;
-
-
 		public Path ColorBlocksRectangle => (Path)_rectanglePath;
 
-		public CbColorPair CbColorPair => _cbColorPair;
-
+		public CbColorPair CbColorPair
+		{
+			get => _cbColorPair;
+			set
+			{
+				_cbColorPair = value;
+			}
+		}
 
 		public bool UsingProxy
 		{
@@ -118,11 +120,18 @@ namespace MSetExplorer
 					if (value)
 					{
 						CbColorPairProxy = CbColorPair.Clone();
+						CbColorPair.Visibility = Visibility.Hidden;
 					}
 					else
 					{
-						CbColorPairProxy?.TearDown();
-						CbColorPairProxy = null;
+						if (CbColorPairProxy != null)
+						{
+							//CbColorPairProxy?.TearDown();
+							//CbColorPairProxy = null;
+							CbColorPairProxy.Visibility = Visibility.Hidden;
+						}
+
+						CbColorPair.Visibility = Visibility.Visible;
 					}
 				}
 			}
@@ -152,6 +161,12 @@ namespace MSetExplorer
 		{
 			get => _cbColorPair.EndColor;
 			set => _cbColorPair.EndColor = value;
+		}
+
+		public bool Blend
+		{
+			get => _cbColorPair.Blend;
+			set => _cbColorPair.Blend = value;
 		}
 
 		#endregion

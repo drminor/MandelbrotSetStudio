@@ -36,6 +36,7 @@ namespace MSetExplorer
 
 		private FrameworkElement _ourContent;
 		private Canvas _canvas;
+		private Border _border;
 
 		//private Rect _borderRect;
 		//private readonly Shape _borderPath;
@@ -75,6 +76,7 @@ namespace MSetExplorer
 			_cbsHistogramViewModel = null;
 			_ourContent = new FrameworkElement();
 			_canvas = new Canvas();
+			_border = new Border();
 
 			_contentScale = new SizeDbl(1, 1);
 
@@ -520,11 +522,12 @@ namespace MSetExplorer
 			if (Content != null)
 			{
 				_ourContent = (Content as FrameworkElement) ?? new FrameworkElement();
-				var (c,b) = BuildContentModel(_ourContent);
+				var (canvas, border) = BuildContentModel(_ourContent);
 
-				Canvas = c;
+				Canvas = canvas;
+				_border = border;
 
-				Debug.WriteLine($"Found Border: {b}");
+				//Debug.WriteLine($"Found Border: {border}");
 
 				CbsHistogramViewModel = (ICbsHistogramViewModel)DataContext;
 			}
@@ -534,18 +537,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private Canvas BuildContentModelOld(FrameworkElement content)
-		{
-			if (content is ContentPresenter cp)
-			{
-				if (cp.Content is Canvas ca)
-				{
-					return ca;
-				}
-			}
+		//private Canvas BuildContentModelOld(FrameworkElement content)
+		//{
+		//	if (content is ContentPresenter cp)
+		//	{
+		//		if (cp.Content is Canvas ca)
+		//		{
+		//			return ca;
+		//		}
+		//	}
 
-			throw new InvalidOperationException("Cannot find a child image element of the HistogramColorBandControl's Content, or the Content is not a Canvas element.");
-		}
+		//	throw new InvalidOperationException("Cannot find a child image element of the HistogramColorBandControl's Content, or the Content is not a Canvas element.");
+		//}
 
 		private (Canvas, Border) BuildContentModel(FrameworkElement content)
 		{

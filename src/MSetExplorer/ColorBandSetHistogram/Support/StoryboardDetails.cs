@@ -114,6 +114,8 @@ namespace MSetExplorer
 			animationTimeline.Duration = animationTimeline.Duration.TimeSpan.Multiply(RateFactor);
 			animationTimeline.BeginTime = beginTime.Multiply(RateFactor);
 
+			//animationTimeline.FillBehavior = FillBehavior.Stop;
+
 			Storyboard.SetTargetName(animationTimeline, objectName);
 			Storyboard.SetTargetProperty(animationTimeline, new PropertyPath(propertyPath));
 

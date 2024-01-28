@@ -292,25 +292,28 @@ namespace MSS.Types
 			PullColorsDown(index); // A band is pulled from the reserves and placed at the end.
 		}
 
-
-
-
-		public void DeleteCutoff(int index)
+		public bool DeleteStartingCutoff(ColorBand colorBand)
 		{
+			var index = IndexOf(colorBand);
+
 			if (index < 0 || index > Count - 2)
 			{
-				throw new ArgumentException($"DeleteCutoff. Index must be between 0 and {Count - 1}, inclusive.");
+				return false;
+				//throw new ArgumentException($"DeleteCutoff. Index must be between 0 and {Count - 1}, inclusive.");
 			}
 
 			if (Count <= 2)
 			{
 				// The collection must have at least two items. 
-				throw new InvalidOperationException($"DeleteCutoff. Cannot delete a Cutoff, the collection must have 3 or more bands.");
+				//throw new InvalidOperationException($"DeleteCutoff. Cannot delete a Cutoff, the collection must have 3 or more bands.");
+				return false;
 			}
 
-			PushColorsUp(index); // Last Band is popped from the list and added to the reserves.
+			PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and its save to the Reserves.
 
-			base.RemoveItem(index);
+			var wasRemoved = Remove(colorBand);
+
+			return wasRemoved;
 		}
 
 
@@ -629,28 +632,7 @@ namespace MSS.Types
 				targetCb.BlendStyle = sourceCb.BlendStyle;
 				targetCb.EndColor = sourceCb.EndColor;
 			}
-
-
-			//for (var ptr = index; ptr < Count - 3; ptr++)
-			//{
-			//	var targetCb = Items[ptr];
-			//	var sourceCb = Items[ptr + 1];
-
-			//	targetCb.StartColor = sourceCb.StartColor;
-			//	targetCb.BlendStyle = sourceCb.BlendStyle;
-			//	targetCb.EndColor = sourceCb.EndColor;
-			//	targetCb.SuccessorStartColor = Items[ptr + 2].StartColor;
-			//}
-
-			//var targetCbE = Items[Count - 2];
-			//var sourceCbE = GetNextReservedColorBand();
-
-			//targetCbE.StartColor = sourceCbE.StartColor;
-			//targetCbE.BlendStyle = sourceCbE.BlendStyle;
-			//targetCbE.EndColor = sourceCbE.EndColor;
-			//targetCbE.SuccessorStartColor = Items[Count - 1].StartColor;
 		}
-
 
 		private void PullCutoffsDown(int index)
 		{

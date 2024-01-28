@@ -40,7 +40,6 @@ namespace MSetExplorer
 
 			var blendArea = new Rect(x1Position, _elevations.BlendRectanglesElevation, bandWidth, _elevations.BlendRectanglesHeight);
 			var isCurrentArea = new Rect(x1Position, _elevations.IsCurrentIndicatorsElevation, bandWidth, _elevations.IsCurrentIndicatorsHeight);
-
 			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 
 			CbRectangle = new CbRectangle(colorBandIndex, blendArea, isCurrentArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
@@ -53,7 +52,7 @@ namespace MSetExplorer
 
 			// Build the Color Block
 			var colorBlocksArea = new Rect(x1Position, elevations.ColorBlocksElevation, bandWidth, elevations.ColorBlocksHeight);
-			CbColorBlock = new CbColorBlocks(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, _colorBandLayoutViewModel);
+			CbColorBlock = new CbColorBlocks(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
 
 			Area = new Rect(x1Position, _elevations.Elevation, bandWidth, _elevations.ControlHeight);
 
@@ -223,6 +222,12 @@ namespace MSetExplorer
 
 			if (e.PropertyName == nameof(ColorBand.Cutoff))
 			{
+				if (Area.IsEmpty)
+				{
+					Debug.WriteLine($"WARNING: The Area is Empty on update to Cutoff for Index {ColorBandIndex}: . Returning.");
+					return;
+				}
+
 				// This updates the Cutoff and Width -- to keep the Previous Cutoff the same.
 				var newWidth = cb.Cutoff - (cb.PreviousCutoff ?? 0);
 				Area = new Rect(Area.X, Area.Y, newWidth, Area.Height);
@@ -230,6 +235,12 @@ namespace MSetExplorer
 			}
 			else if (e.PropertyName == nameof(ColorBand.PreviousCutoff))
 			{
+				if (Area.IsEmpty)
+				{
+					Debug.WriteLine($"WARNING: The Area is Empty on update to PreviousCutoff for Index {ColorBandIndex}: . Returning.");
+					return;
+				}
+
 				// This updates the XPosition and Width -- to keep the Cutoff the same.
 				var newX1 = cb.PreviousCutoff ?? 0;
 				var newWidth = Area.Right - newX1;
@@ -248,12 +259,12 @@ namespace MSetExplorer
 				CbRectangle.EndColor = cb.ActualEndColor;
 				updateHandled = true;
 			}
-			//else if (e.PropertyName == nameof(ColorBand.BlendStyle))
-			//{
-			//	CbColorBlock.Blend = cb.BlendStyle != ColorBandBlendStyle.None;
-			//	CbRectangle.Blend = CbColorBlock.Blend;
-			//	updateHandled = true;
-			//}
+			else if (e.PropertyName == nameof(ColorBand.BlendStyle))
+			{
+				CbColorBlock.Blend = cb.BlendStyle != ColorBandBlendStyle.None;
+				CbRectangle.Blend = CbColorBlock.Blend;
+				updateHandled = true;
+			}
 			else
 			{
 				updateHandled = false;
@@ -268,11 +279,6 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
-
-		//public void HideShowColorBlocks(bool show)
-		//{
-		//	CbColorBlock.ColorPairVisibility = show ? Visibility.Visible : Visibility.Hidden;
-		//}
 
 		public void SetIsRectangleUnderMouse(bool newValue, ColorBandSetEditMode editMode)
 		{
@@ -334,6 +340,12 @@ namespace MSetExplorer
 		{
 			get => (Rect)GetValue(ColorBlockAreaProperty);
 			set => SetCurrentValue(ColorBlockAreaProperty, value);
+		}
+
+		public Rect BlendedColorArea
+		{
+			get => (Rect)GetValue(BlendedColorAreaProperty);
+			set => SetCurrentValue(BlendedColorAreaProperty, value);
 		}
 
 		public double Opacity
@@ -406,6 +418,11 @@ namespace MSetExplorer
 
 		private void UpdateDisplay(Rect newValue, CbListViewElevations elevations)
 		{
+			if (!ScreenTypeHelper.IsDoubleChanged(newValue.Right, 60, 2))
+			{
+				Debug.WriteLine($"CbListViewItem is having its Area value set. The X2 position = 60.");
+			}
+
 			CbSectionLine.TopArrowRectangleArea = new Rect(newValue.Left, elevations.SectionLinesElevation, newValue.Width, elevations.SectionLinesHeight);
 			CbSectionLine.SectionLineRectangleArea = new Rect(newValue.Left, elevations.ColorBlocksElevation, newValue.Width, elevations.ColorBlocksHeight + elevations.BlendRectanglesHeight);
 
@@ -428,12 +445,6 @@ namespace MSetExplorer
 		{
 			CbListViewItem c = (CbListViewItem)o;
 
-			if (c.CbColorBlock.CbColorPairProxy == null)
-			{
-				Debug.WriteLine($"WARNING: The CbColorPairProxy is null on SetColorBlockArea for ColorBandIndex: {c.ColorBandIndex}.");		
-				return;
-			}
-
 			var oldValue = (Rect)e.OldValue;
 			var newValue = (Rect)e.NewValue;
 
@@ -444,7 +455,45 @@ namespace MSetExplorer
 				return;
 			}
 
+			if (c.CbColorBlock.CbColorPairProxy == null)
+			{
+				Debug.WriteLine($"WARNING: The CbColorPairProxy is null on SetColorBlockArea for ColorBandIndex: {c.ColorBandIndex}.");
+				return;
+			}
+
 			c.CbColorBlock.CbColorPairProxy.Container = newValue;
+		}
+
+		#endregion
+
+		#region BlendedColorArea Property
+
+		public static readonly DependencyProperty BlendedColorAreaProperty =
+		DependencyProperty.Register("BlendedColorArea", typeof(Rect), typeof(CbListViewItem),
+			new FrameworkPropertyMetadata(defaultValue: Rect.Empty, propertyChangedCallback: BlendedColorArea_PropertyChanged)
+		);
+
+		private static void BlendedColorArea_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			CbListViewItem c = (CbListViewItem)o;
+
+			var oldValue = (Rect)e.OldValue;
+			var newValue = (Rect)e.NewValue;
+
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: BlendedColorArea for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
+
+			if (newValue.IsEmpty)
+			{
+				return;
+			}
+
+			if (c.CbRectangle.CbBlendedColorPairProxy == null)
+			{
+				Debug.WriteLine($"WARNING: The CbBlendedColorPairProxy is null on SetBlendedColorArea for ColorBandIndex: {c.ColorBandIndex}.");
+				return;
+			}
+
+			c.CbRectangle.CbBlendedColorPairProxy.Container = newValue;
 		}
 
 		#endregion

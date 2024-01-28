@@ -2,15 +2,15 @@
 
 namespace MSetExplorer
 {
-	internal class ColorBlocksAnimationItem
+	internal class BlendedColorAnimationItem
 	{
-		public ColorBlocksAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem)
+		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem)
 		{
 			SourceListViewItem = sourceListViewItem;
 			DestinationListViewItem = destinationListViewItem;
 
-			Source = CbColorBlocks.CbColorPair.Container;
-			Destination = destinationListViewItem != null ? destinationListViewItem.CbColorBlock.ColorPairContainer : GetOffScreenRect(sourceListViewItem);
+			Source = CbRectangle.CbBlendedColorPair.Container;
+			Destination = destinationListViewItem != null ? destinationListViewItem.CbRectangle.ColorPairContainer : GetOffScreenRect(sourceListViewItem);
 
 			Current = Source;
 		}
@@ -20,11 +20,9 @@ namespace MSetExplorer
 		public CbListViewItem SourceListViewItem { get; init; }
 		public string Name => SourceListViewItem.Name;
 
-		public CbSectionLine CbSectionLine => SourceListViewItem.CbSectionLine;
-		public CbColorBlocks CbColorBlocks => SourceListViewItem.CbColorBlock;
+		public CbRectangle CbRectangle => SourceListViewItem.CbRectangle;
 
 		public CbListViewItem? DestinationListViewItem { get; init; }
-
 
 		public Rect Source { get; init; }
 		public Rect Destination { get; init; }
@@ -52,19 +50,17 @@ namespace MSetExplorer
 
 		#endregion
 
-
 		private static Rect GetOffScreenRect(CbListViewItem source)
 		{
 			// The destination is just off the edge of the visible portion of the canvas.
-			var sourceRect = source.CbColorBlock.ColorPairContainer;
+			var sourceRect = source.CbRectangle.ColorPairContainer;
 
-			var width = source.CbColorBlock.Width * source.CbColorBlock.ContentScale.Width;
+			var width = source.CbRectangle.Width * source.CbRectangle.ContentScale.Width;
 			var destinationPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);
 
 			var destRect = new Rect(destinationPosition, sourceRect.Size);
 
 			return destRect;
 		}
-
 	}
 }

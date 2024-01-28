@@ -74,15 +74,10 @@
                                         <RowDefinition Height="13"/>
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
-                                    
-                                    <Canvas Grid.Row="0" Grid.RowSpan="2" x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="Transparent">
 
-                                        <!--<Image x:Name="MainImage" />-->
-                                    </Canvas>
+                                    <Canvas Grid.Row="0" Grid.RowSpan="2" x:Name="MainCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="Transparent" Panel.ZIndex="-5"/>
 
-                                    <Border Grid.Row="1" BorderBrush="Green" BorderThickness="1">
-
-                                    </Border>
+                                    <Border Grid.Row="1" BorderBrush="Green" BorderThickness="1" Panel.ZIndex="-1"/>
 
                                 </Grid>
                             </ContentPresenter.Content>
