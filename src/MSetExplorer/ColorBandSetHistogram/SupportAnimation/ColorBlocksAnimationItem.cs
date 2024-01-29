@@ -25,6 +25,10 @@ namespace MSetExplorer
 
 		public CbListViewItem? DestinationListViewItem { get; init; }
 
+		public CbColorPair SourceCbColorPair => SourceListViewItem.CbColorBlock.CbColorPair;
+		//public CbColorPair? DestinationCbColorPair => DestinationListViewItem?.CbColorBlock.CbColorPair;
+
+
 
 		public Rect Source { get; init; }
 		public Rect Destination { get; init; }
@@ -42,6 +46,19 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public void MoveSourceToDestination()
+		{
+			if (DestinationListViewItem != null)
+			{
+ 				var newCopy = SourceListViewItem.CbColorBlock.CbColorPair.Clone();
+				
+				DestinationListViewItem.CbColorBlock.CbColorPair = newCopy;
+
+				SourceListViewItem.CbColorBlock.CbColorPair.TearDown();
+
+			}
+		}
 
 		public double GetDistance()
 		{

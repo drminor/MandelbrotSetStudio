@@ -20,16 +20,16 @@ namespace MSetExplorer
 		private ColorBandColor _endColor;
 		private bool _blend;
 
-		private RectangleGeometry _containerGeometry; // Rename _blendedBandGeometry
-		private Shape _containerPath;			// Rename _blendedBandPath
+		private RectangleGeometry _containerGeometry;
+		private Shape _containerPath;
 
 		#endregion
 
 		#region Constructor
 
-		public CbBlendedColorPair(int colorBandIndex, Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas)
+		public CbBlendedColorPair(Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas)
 		{
-			ColorBandIndex = colorBandIndex;
+			//ColorBandIndex = colorBandIndex;
 
 			_canvas = canvas;
 
@@ -49,7 +49,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public int ColorBandIndex { get; set; }
+		//public int ColorBandIndex { get; set; }
 
 		public RectangleGeometry ContainerGeometry => _containerGeometry;
 
@@ -146,7 +146,7 @@ namespace MSetExplorer
 
 		public CbBlendedColorPair Clone()
 		{
-			var result = new CbBlendedColorPair(ColorBandIndex, Container, StartColor, EndColor, Blend, _canvas);
+			var result = new CbBlendedColorPair(Container, StartColor.Clone(), EndColor.Clone(), Blend, _canvas);
 			return result;
 		}
 

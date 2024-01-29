@@ -8,6 +8,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -965,6 +966,8 @@ namespace MSetExplorer
 		{
 			var selItem = _currentColorBandSet[index];
 
+			var sC = selItem.StartColor;
+
 			var cutOff = selItem.Cutoff;
 
 			Debug.WriteLine($"ColorBandSetViewModel. CompleteCutoffRemoval has been callled for index = {index} with Cutoff = {cutOff}.");
@@ -978,6 +981,31 @@ namespace MSetExplorer
 				return;
 			}
 
+			//if (index == 0)
+			//{
+			//	var cb = _currentColorBandSet[index];
+			//	cb.PreviousCutoff = 0;
+			//}
+			//else
+			//{
+			//	var cb = _currentColorBandSet[index - 1];
+
+			//	//var newCutoff = _currentColorBandSet[index].PreviousCutoff;
+
+			//	//Debug.Assert(newCutoff.HasValue && newCutoff.Value == cutOff, "The item following the item just deleted, has a previous Cutoff, different than the deleted item's Cutoff.");
+
+			//	//cb.Cutoff = newCutoff.Value;
+
+			//	Debug.WriteLine($"ColorBandSetViewModel. CompleteCutoffRemoval is updating the previous ColorBand: {cb} at index: {index - 1}. The Cutoff is changing from: {cb.Cutoff} to {cutOff}.");
+
+			//	cb.Cutoff = cutOff;
+			//}
+
+			//if (index > 0) index--;
+
+			//_colorBandsView.MoveCurrentToPosition(index);
+			////_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+
 			if (index == 0)
 			{
 				var cb = _currentColorBandSet[index];
@@ -987,22 +1015,29 @@ namespace MSetExplorer
 			{
 				var cb = _currentColorBandSet[index - 1];
 
-				//var newCutoff = _currentColorBandSet[index].PreviousCutoff;
+				var newCutoff = _currentColorBandSet[index].PreviousCutoff ?? 0;
+				var newSc = _currentColorBandSet[index].StartColor;
 
-				//Debug.Assert(newCutoff.HasValue && newCutoff.Value == cutOff, "The item following the item just deleted, has a previous Cutoff, different than the deleted item's Cutoff.");
+				Debug.WriteLine($"Extending the width of the previous item: index={index - 1} from {cb.Cutoff} to newCutoff: {newCutoff} compare to the cutoff of the band being removed: {cutOff}.");
 
-				//cb.Cutoff = newCutoff.Value;
+				Debug.WriteLine($"The successor start color of band just before the band being removed is {cb.SuccessorStartColor}, the start color of the band immed after the one being removed is {newSc}.");
 
-				Debug.WriteLine($"ColorBandSetViewModel. CompleteCutoffRemoval is updating the previous ColorBand: {cb} at index: {index - 1}. The Cutoff is changing from: {cb.Cutoff} to {cutOff}.");
-
-				cb.Cutoff = cutOff;
+				cb.Cutoff = newCutoff; // _currentColorBandSet[index].PreviousCutoff ?? 0;
 			}
 
-			if (index > 0) index--;
-
-			_colorBandsView.MoveCurrentToPosition(index);
 			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
 
+			if (index > 0)
+				index--;
+
+			if (_colorBandsView.CurrentPosition != index)
+			{
+				_colorBandsView.MoveCurrentToPosition(index);
+			}
+			else
+			{
+				CurrentColorBand = _currentColorBandSet[index];
+			}
 
 			Debug.WriteLine($"ColorBandSetViewModel.After CutoffRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
@@ -1020,20 +1055,13 @@ namespace MSetExplorer
 
 		private bool TryDeleteStartingCutoff(ColorBand colorBand)
 		{
-			var index = _currentColorBandSet.IndexOf(colorBand);
-
 			CurrentColorBand = null;
 
-			var wasRemoved = _currentColorBandSet.DeleteStartingCutoff(colorBand);
-
-			//if (index == 0)
-			//{
-			//	ColorBandsView.MoveCurrentToFirst();
-			//}
-			//else
-			//{
-			//	ColorBandsView.MoveCurrentToPosition(index - 1);
-			//}
+			bool wasRemoved;
+			lock (_histLock)
+			{
+				wasRemoved = _currentColorBandSet.DeleteStartingCutoff(colorBand);
+			}
 
 			return wasRemoved;
 		}
@@ -1107,10 +1135,26 @@ namespace MSetExplorer
 				cb.Cutoff = _currentColorBandSet[index].PreviousCutoff ?? 0;
 			}
 
-			if (index > 0) index--;
+			//if (index > 0) index--;
 
-			_colorBandsView.MoveCurrentToPosition(index);
+			//_colorBandsView.MoveCurrentToPosition(index);
 			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+
+			_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+
+			if (index > 0)
+				index--;
+
+			if (_colorBandsView.CurrentPosition != index)
+			{
+				_colorBandsView.MoveCurrentToPosition(index);
+			}
+			else
+			{
+				CurrentColorBand = _currentColorBandSet[index];
+			}
+
+
 
 			Debug.WriteLine($"ColorBandSetViewModel. After BandRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
@@ -1142,18 +1186,20 @@ namespace MSetExplorer
 				return false;
 			}
 
-			if (index == 0)
-			{
-				Debug.WriteLine("Attempting to delete colorband at index = 0.");
-			}
+			//if (index == 0)
+			//{
+			//	Debug.WriteLine("Attempting to delete colorband at index = 0.");
+			//}
 
-			bool colorBandWasRemoved;
+			CurrentColorBand = null;
+
+			bool wasRemoved;
 			lock (_histLock)
 			{
-				colorBandWasRemoved = _currentColorBandSet.Remove(colorBand);
+				wasRemoved = _currentColorBandSet.Remove(colorBand);
 			}
 
-			return colorBandWasRemoved;
+			return wasRemoved;
 		}
 
 		public void ApplyChanges(int newTargetIterations)

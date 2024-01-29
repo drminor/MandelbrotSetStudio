@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 namespace MSS.Types
 {
     // Uses Byte Array to store color value. The alpha value is always fully opaque, i.e., set to 255.
-    public struct ColorBandColor : IEquatable<ColorBandColor>,  IEqualityComparer<ColorBandColor>
+    public struct ColorBandColor : IEquatable<ColorBandColor>,  IEqualityComparer<ColorBandColor>, ICloneable
 	{
         public static readonly ColorBandColor Black = new("#000000");
         public static readonly ColorBandColor White = new("#FFFFFF");
@@ -96,9 +96,22 @@ namespace MSS.Types
             return GetCssColor(ColorComps);
         }
 
-        #region IEquatable and IEqualityComparer Support
+		object ICloneable.Clone()
+		{
+			return Clone();
+		}
 
-        public override bool Equals(object? obj)
+        public ColorBandColor Clone()
+        {
+			var vals = new byte[3];
+            Array.Copy(ColorComps, vals, ColorComps.Length);
+            var result = new ColorBandColor(vals);
+            return result;
+		}
+
+		#region IEquatable and IEqualityComparer Support
+
+		public override bool Equals(object? obj)
 		{
 			return obj is ColorBandColor color && Equals(color);
 		}
@@ -131,7 +144,7 @@ namespace MSS.Types
             return obj.GetHashCode();
 		}
 
-		public static bool operator ==(ColorBandColor left, ColorBandColor right)
+        public static bool operator ==(ColorBandColor left, ColorBandColor right)
 		{
 			return left.Equals(right);
 		}

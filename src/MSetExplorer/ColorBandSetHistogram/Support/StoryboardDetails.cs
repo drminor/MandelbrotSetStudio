@@ -2,17 +2,29 @@
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 
 namespace MSetExplorer
 {
 	public class StoryboardDetails
 	{
+
+		private const int WAIT_DURATION = 1000;
+		private DebounceDispatcher _waitDispatcher;
+
+		private bool _debounce;
+
 		private Action<Action<int>, int>? _completionCallback;
 		private Action<int>? _onAnimationComplete;
 		private int _callbackIndex;
 
 		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject)
 		{
+			_waitDispatcher = new DebounceDispatcher()
+			{
+				Priority = DispatcherPriority.Render
+			};
+
 			OurNameScope = GetOrCreateNameScope(containingObject);
 
 			Storyboard = storyboard;
@@ -20,6 +32,7 @@ namespace MSetExplorer
 			RateFactor = 1.0;
 
 			Storyboard.Completed += Storyboard_Completed;
+			_debounce = false;
 		}
 
 		#region Public Properties
@@ -123,12 +136,13 @@ namespace MSetExplorer
 			return Storyboard.Children.Count;
 		}
 
-		public void Begin(Action<Action<int>, int> completionCallback, Action<int> onAnimationComplete, int index)
+		public void Begin(Action<Action<int>, int> completionCallback, Action<int> onAnimationComplete, int index, bool debounce)
 		{
 			_completionCallback = completionCallback;
 			_onAnimationComplete = onAnimationComplete;
 			_callbackIndex = index;
 			Storyboard.Begin(ContainingObject);
+			_debounce = debounce;
 		}
 
 		#endregion
@@ -136,6 +150,24 @@ namespace MSetExplorer
 		#region Private Methods
 
 		private void Storyboard_Completed(object? sender, EventArgs e)
+		{
+			if (_debounce)
+			{
+				_waitDispatcher.Debounce(
+					interval: WAIT_DURATION,
+					action: parm =>
+					{
+						AfterDebounce_Storyboard_Completed();
+					},
+					param: null);
+			}
+			else
+			{
+				AfterDebounce_Storyboard_Completed();
+			}
+		}
+
+		private void AfterDebounce_Storyboard_Completed()
 		{
 			Storyboard.Children.Clear();
 			RateFactor = 1.0;

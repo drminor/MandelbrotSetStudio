@@ -42,9 +42,9 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbColorPair(int colorBandIndex, Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas)
+		public CbColorPair(Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas)
 		{
-			ColorBandIndex = colorBandIndex;
+			//ColorBandIndex = colorBandIndex;
 
 			_canvas = canvas;
 
@@ -69,7 +69,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public int ColorBandIndex { get; set; }
+		//public int ColorBandIndex { get; set; }
 
 		public RectangleGeometry StartColorGeometry => _startGeometry;
 		public RectangleGeometry EndColorGeometry => _endGeometry;
@@ -162,7 +162,7 @@ namespace MSetExplorer
 
 		public CbColorPair Clone()
 		{
-			var result = new CbColorPair(ColorBandIndex, Container, StartColor, EndColor, Blend, _canvas);
+			var result = new CbColorPair(Container, StartColor.Clone(), EndColor.Clone(), Blend, _canvas);
 			return result;
 		}
 

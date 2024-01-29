@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 
-namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
+namespace MSetExplorer
 {
+	using AnimationItemPairList = List<(ColorBlocksAnimationItem, BlendedColorAnimationItem)>;
+
 	internal class PushColorsAnimationInfo
 	{
 		private CbListViewElevations _elevations;
@@ -13,39 +15,30 @@ namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
 		{
 			_elevations = elevations;
 
-			ColorBlocksAnimationItems = new List<ColorBlocksAnimationItem>();
-			BlendedColorAnimationItems = new List<BlendedColorAnimationItem>();
+			AnimationItemPairs = new AnimationItemPairList();
 		}
 
-		public List<ColorBlocksAnimationItem> ColorBlocksAnimationItems { get; init; }
-		public List<BlendedColorAnimationItem> BlendedColorAnimationItems { get; init; }
-
+		public AnimationItemPairList AnimationItemPairs;
 
 		#region Public Methods
 
 		public void Add(CbListViewItem source, CbListViewItem? destination)
 		{
 			var colorBlocksAItem = new ColorBlocksAnimationItem(source, destination);
-			ColorBlocksAnimationItems.Add(colorBlocksAItem);
-
 			var blendedColorAItem = new BlendedColorAnimationItem(source, destination);
-			BlendedColorAnimationItems.Add(blendedColorAItem);
+
+			AnimationItemPairs.Add((colorBlocksAItem, blendedColorAItem));
 		}
 
 		public void CalculateMovements()
 		{
 			var liftHeight = _elevations.ColorBlocksHeight;
 
-			CalculateColorBlockMovements(liftHeight);
-
-			CalculateBlendedBandMovements(liftHeight);
-		}
-
-		public void CalculateColorBlockMovements(double liftHeight)
-		{
 			var firstHDist = GetFirstMovementDistanceForBlocks(liftHeight);
+			var firstHDistForBlends = GetFirstMovementDistanceForBlends(liftHeight);
 
-			foreach (var colorBlockItem in ColorBlocksAnimationItems)
+
+			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
 				// Lift
 				colorBlockItem.FirstMovement = new Point(colorBlockItem.Current.X + firstHDist, colorBlockItem.Current.Y - liftHeight);
@@ -62,17 +55,10 @@ namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
 				// Drop
 				colorBlockItem.ThirdMovement = colorBlockItem.Destination.Location;
 				//cbAnimationItem.Stage4 = cbAnimationItem.Destination;
-			}
-		}
 
-		public void CalculateBlendedBandMovements(double liftHeight)
-		{
-			var firstHDist = GetFirstMovementDistanceForBlends(liftHeight);
 
-			foreach (var blendedItem in BlendedColorAnimationItems)
-			{
 				// Lift
-				blendedItem.FirstMovement = new Point(blendedItem.Current.X + firstHDist, blendedItem.Current.Y - liftHeight);
+				blendedItem.FirstMovement = new Point(blendedItem.Current.X + firstHDistForBlends, blendedItem.Current.Y - liftHeight);
 				blendedItem.Stage1 = new Rect(blendedItem.FirstMovement, blendedItem.Current.Size);
 
 				// Resize
@@ -86,51 +72,112 @@ namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
 				// Drop
 				blendedItem.ThirdMovement = blendedItem.Destination.Location;
 				//cbAnimationItem.Stage4 = cbAnimationItem.Destination;
+
 			}
 		}
 
 		public void Setup()
 		{
-			foreach (var cbAnimationItem in ColorBlocksAnimationItems)
-			{
-				cbAnimationItem.CbColorBlocks.UsingProxy = true;
-				cbAnimationItem.CbSectionLine.TopArrowVisibility = Visibility.Hidden;
-			}
+			//var (lastColorBlockAItem, lastBlendedColorAItem) = AnimationItemPairs[^1];
 
-			foreach (var cbAnimationItem in BlendedColorAnimationItems)
-			{
-				cbAnimationItem.CbRectangle.UsingProxy = true;
-			}
+			//var lastColorPair = lastColorBlockAItem.SourceCbColorPair;
+			//var lastBlendedColorPair = lastBlendedColorAItem.SourceBlendedColorPair;
+
+			//for (var i = AnimationItemPairs.Count - 2; i >= 0; i--)
+			//{
+			//	var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
+			//	colorBlockAItem.UpdateDestWithSource();
+			//	blendedColorAItem.UpdateDestWithSource();
+			//}
+
+
+			//foreach (var (colorBlocksAItem, blendedColorAItem) in AnimationItemPairs)
+			//{
+			//	if (colorBlocksAItem.DestinationListViewItem != null)
+			//	{
+			//	}
+			//	else
+			//	{
+			//		colorBlocksAItem.CbColorBlocks.CbColorPair.Visibility = Visibility.Hidden;
+			//		colorBlocksAItem.CbColorBlocks.CbColorPair.TearDown();
+			//	}
+
+			//	//cbAnimationItem.CbColorBlocks.UsingProxy = true;
+
+			//	if (blendedColorAItem.DestinationListViewItem != null)
+			//	{
+
+			//	}
+			//	else
+			//	{
+			//		blendedColorAItem.CbRectangle.CbBlendedColorPair.Visibility = Visibility.Hidden;
+			//		blendedColorAItem.CbRectangle.CbBlendedColorPair.TearDown();
+			//	}
+
+
+
+			//	colorBlocksAItem.CbSectionLine.TopArrowVisibility = Visibility.Hidden;
+			//}
+
+			//foreach (var cbAnimationItem in BlendedColorAnimationItems)
+			//{
+			//	cbAnimationItem.CbRectangle.UsingProxy = true;
+			//}
 		}
 
 		public void TearDown()
 		{
-			foreach (var cbAnimationItem in ColorBlocksAnimationItems)
+			//var (lastColorBlockAItem, lastBlendedColorAItem) = AnimationItemPairs[^1];
+
+			//var lastColorPair = lastColorBlockAItem.SourceCbColorPair;
+			//var lastBlendedColorPair = lastBlendedColorAItem.SourceBlendedColorPair;
+
+			for (var i = AnimationItemPairs.Count - 2; i >= 0; i--)
 			{
-				if (cbAnimationItem.DestinationListViewItem != null && cbAnimationItem.SourceListViewItem.CbColorBlock.CbColorPairProxy != null)
-				{
-					var cc = cbAnimationItem.DestinationListViewItem.CbColorBlock.CbColorPair;
-					cbAnimationItem.DestinationListViewItem.CbColorBlock.CbColorPair = cbAnimationItem.SourceListViewItem.CbColorBlock.CbColorPairProxy;
-					cc.TearDown();
-				}
-
-
-
-
-				cbAnimationItem.CbColorBlocks.UsingProxy = false;
-				cbAnimationItem.CbSectionLine.TopArrowVisibility = Visibility.Visible;
+				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
+				colorBlockAItem.MoveSourceToDestination();
+				blendedColorAItem.MoveSourceToDestination();
 			}
 
-			foreach (var cbAnimationItem in BlendedColorAnimationItems)
-			{
-				if (cbAnimationItem.DestinationListViewItem != null && cbAnimationItem.SourceListViewItem.CbRectangle.CbBlendedColorPairProxy != null)
-				{
-					var cc = cbAnimationItem.DestinationListViewItem.CbRectangle.CbBlendedColorPair;
-					cbAnimationItem.DestinationListViewItem.CbRectangle.CbBlendedColorPair = cbAnimationItem.SourceListViewItem.CbRectangle.CbBlendedColorPairProxy;
-					cc.TearDown();
-				}
-				cbAnimationItem.CbRectangle.UsingProxy = false;
-			}
+			//lastBlendedColorPair.Visibility = Visibility.Hidden;
+			//lastColorPair.TearDown();
+
+			//lastBlendedColorPair.Visibility = Visibility.Hidden;
+			//lastBlendedColorPair.TearDown();
+
+			//AnimationItemPairs.Clear();
+
+			//foreach (var (colorBlockAItem, blendedColorAItem) in AnimationItemPairs)
+			//{
+			//	if (colorBlockAItem.SourceListViewItem.CbColorBlock.CbColorPairProxy != null)
+			//	{
+			//		if (colorBlockAItem.DestinationListViewItem != null)
+			//		{
+			//			var cc = colorBlockAItem.DestinationListViewItem.CbColorBlock.CbColorPair;
+			//			colorBlockAItem.DestinationListViewItem.CbColorBlock.CbColorPair = colorBlockAItem.SourceListViewItem.CbColorBlock.CbColorPairProxy;
+			//			cc.TearDown();
+			//		}
+			//		else
+			//		{
+
+			//		}
+
+			//	}
+
+			//	colorBlockAItem.CbColorBlocks.UsingProxy = false;
+			//	colorBlockAItem.CbSectionLine.TopArrowVisibility = Visibility.Visible;
+			//}
+
+			//foreach (var (colorBlockAItem, blendedColorAItem) in AnimationItemPairs)
+			//{
+			//	//if (cbAnimationItem.DestinationListViewItem != null && cbAnimationItem.SourceListViewItem.CbRectangle.CbBlendedColorPairProxy != null)
+			//	//{
+			//	//	var cc = cbAnimationItem.DestinationListViewItem.CbRectangle.CbBlendedColorPair;
+			//	//	cbAnimationItem.DestinationListViewItem.CbRectangle.CbBlendedColorPair = cbAnimationItem.SourceListViewItem.CbRectangle.CbBlendedColorPairProxy;
+			//	//	cc.TearDown();
+			//	//}
+			//	//cbAnimationItem.CbRectangle.UsingProxy = false;
+			//}
 		}
 
 		#endregion
@@ -146,7 +193,7 @@ namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
 			// The first horizontal movement can be no greater than 1/2 the total distance
 			// for any of items.
 
-			var minDist = ColorBlocksAnimationItems.Min(x => x.GetDistance());
+			var minDist = AnimationItemPairs.Min(x => x.Item1.GetDistance());
 			var firstMovementDistMax = minDist / 2;
 
 			var result = Math.Min(firstMovementDistMax, liftHeight);
@@ -163,7 +210,7 @@ namespace MSetExplorer.ColorBandSetHistogram.SupportAnimation
 			// The first horizontal movement can be no greater than 1/2 the total distance
 			// for any of items.
 
-			var minDist = BlendedColorAnimationItems.Min(x => x.GetDistance());
+			var minDist = AnimationItemPairs.Min(x => x.Item2.GetDistance());
 			var firstMovementDistMax = minDist / 2;
 
 			var result = Math.Min(firstMovementDistMax, liftHeight);

@@ -105,7 +105,7 @@ namespace MSetExplorer
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
-			_cbBlendedColorPair = new CbBlendedColorPair(colorBandIndex, _geometry.Rect, startColor, endColor, blend, _canvas);
+			_cbBlendedColorPair = new CbBlendedColorPair(_geometry.Rect, startColor, endColor, blend, _canvas);
 
 			_curGeometry = new RectangleGeometry(BuildRect(_isCurrentArea, ContentScale));
 			_curRectanglePath = BuildCurRectanglePath(_curGeometry, _isCurrent);
@@ -132,38 +132,39 @@ namespace MSetExplorer
 			get =>  _cbBlendedColorPair;
 			set
 			{
+				_cbBlendedColorPair.TearDown();
 				_cbBlendedColorPair = value;
 			}
 		}
 
-		public bool UsingProxy
-		{
-			get => CbBlendedColorPairProxy != null;
-			set
-			{
-				if (value != UsingProxy)
-				{
-					if (value)
-					{
-						CbBlendedColorPairProxy = CbBlendedColorPair.Clone();
-						CbBlendedColorPair.Visibility = Visibility.Hidden;
-					}
-					else
-					{
-						if (CbBlendedColorPairProxy != null)
-						{
-							//CbBlendedColorPairProxy?.TearDown();
-							//CbBlendedColorPairProxy = null;
-							CbBlendedColorPairProxy.Visibility = Visibility.Hidden;
-						}
+		//public bool UsingProxy
+		//{
+		//	get => CbBlendedColorPairProxy != null;
+		//	set
+		//	{
+		//		if (value != UsingProxy)
+		//		{
+		//			if (value)
+		//			{
+		//				CbBlendedColorPairProxy = CbBlendedColorPair.Clone();
+		//				CbBlendedColorPair.Visibility = Visibility.Hidden;
+		//			}
+		//			else
+		//			{
+		//				if (CbBlendedColorPairProxy != null)
+		//				{
+		//					CbBlendedColorPairProxy.Visibility = Visibility.Hidden;
+		//					//CbBlendedColorPairProxy?.TearDown();
+		//					//CbBlendedColorPairProxy = null;
+		//				}
 
-						CbBlendedColorPair.Visibility = Visibility.Visible;
-					}
-				}
-			}
-		}
+		//				CbBlendedColorPair.Visibility = Visibility.Visible;
+		//			}
+		//		}
+		//	}
+		//}
 
-		public CbBlendedColorPair? CbBlendedColorPairProxy { get; set; }
+		//public CbBlendedColorPair? CbBlendedColorPairProxy { get; set; }
 
 		public Rect ColorPairContainer
 		{
@@ -363,6 +364,11 @@ namespace MSetExplorer
 				}
 
 				CbBlendedColorPair.TearDown();
+				//if (CbBlendedColorPairProxy != null)
+				//{
+				//	CbBlendedColorPairProxy.TearDown();
+				//}
+
 			}
 			catch
 			{

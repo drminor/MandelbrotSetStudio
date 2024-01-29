@@ -21,6 +21,7 @@ namespace MSetExplorer
 		public string Name => SourceListViewItem.Name;
 
 		public CbRectangle CbRectangle => SourceListViewItem.CbRectangle;
+		public CbBlendedColorPair SourceBlendedColorPair => SourceListViewItem.CbRectangle.CbBlendedColorPair;
 
 		public CbListViewItem? DestinationListViewItem { get; init; }
 
@@ -40,6 +41,19 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public void MoveSourceToDestination()
+		{
+			if (DestinationListViewItem != null)
+			{
+				var newCopy = SourceListViewItem.CbRectangle.CbBlendedColorPair.Clone();
+
+				DestinationListViewItem.CbRectangle.CbBlendedColorPair = newCopy;
+
+				SourceListViewItem.CbRectangle.CbBlendedColorPair.TearDown();
+
+			}
+		}
 
 		public double GetDistance()
 		{

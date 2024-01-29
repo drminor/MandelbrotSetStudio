@@ -627,10 +627,7 @@ namespace MSS.Types
 				var sourceCb = Items[ptr - 1];
 				var targetCb = Items[ptr];
 
-				targetCb.SuccessorStartColor = targetCb.StartColor;
-				targetCb.StartColor = sourceCb.StartColor;
-				targetCb.BlendStyle = sourceCb.BlendStyle;
-				targetCb.EndColor = sourceCb.EndColor;
+				Items[ptr] = new ColorBand(targetCb.Cutoff, sourceCb.StartColor, sourceCb.BlendStyle, sourceCb.EndColor, targetCb.PreviousCutoff, sourceCb.SuccessorStartColor, targetCb.Percentage);
 			}
 		}
 

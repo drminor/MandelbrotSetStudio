@@ -88,7 +88,7 @@ namespace MSetExplorer
 			_canvas.Children.Add(_rectanglePath);
 			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
 
-			_cbColorPair = new CbColorPair(colorBandIndex, _geometry.Rect, startColor, endColor, blend, _canvas);
+			_cbColorPair = new CbColorPair(_geometry.Rect, startColor, endColor, blend, _canvas);
 		}
 
 		#endregion
@@ -106,38 +106,39 @@ namespace MSetExplorer
 			get => _cbColorPair;
 			set
 			{
+				_cbColorPair.TearDown();
 				_cbColorPair = value;
 			}
 		}
 
-		public bool UsingProxy
-		{
-			get => CbColorPairProxy != null;
-			set
-			{
-				if (value != UsingProxy)
-				{
-					if (value)
-					{
-						CbColorPairProxy = CbColorPair.Clone();
-						CbColorPair.Visibility = Visibility.Hidden;
-					}
-					else
-					{
-						if (CbColorPairProxy != null)
-						{
-							//CbColorPairProxy?.TearDown();
-							//CbColorPairProxy = null;
-							CbColorPairProxy.Visibility = Visibility.Hidden;
-						}
+		//public bool UsingProxy
+		//{
+		//	get => CbColorPairProxy != null;
+		//	set
+		//	{
+		//		if (value != UsingProxy)
+		//		{
+		//			if (value)
+		//			{
+		//				CbColorPairProxy = CbColorPair.Clone();
+		//				CbColorPair.Visibility = Visibility.Hidden;
+		//			}
+		//			else
+		//			{
+		//				if (CbColorPairProxy != null)
+		//				{
+		//					CbColorPairProxy.Visibility = Visibility.Hidden;
+		//					//CbColorPairProxy.TearDown();
+		//					//CbColorPairProxy = null;
+		//				}
 
-						CbColorPair.Visibility = Visibility.Visible;
-					}
-				}
-			}
-		}
+		//				CbColorPair.Visibility = Visibility.Visible;
+		//			}
+		//		}
+		//	}
+		//}
 
-		public CbColorPair? CbColorPairProxy { get; set; }
+		//public CbColorPair? CbColorPairProxy { get; set; }
 
 		public Rect ColorPairContainer
 		{
@@ -304,6 +305,11 @@ namespace MSetExplorer
 				}
 
 				_cbColorPair.TearDown();
+
+				//if (CbColorPairProxy != null)
+				//{
+				//	CbColorPairProxy.TearDown();
+				//}
 			}
 			catch
 			{
