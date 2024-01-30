@@ -966,12 +966,7 @@ namespace MSetExplorer
 		{
 			var selItem = _currentColorBandSet[index];
 
-			var sC = selItem.StartColor;
-
-			var cutOff = selItem.Cutoff;
-
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteCutoffRemoval has been callled for index = {index} with Cutoff = {cutOff}.");
-
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffRemoval has been callled for index = {index} with Cutoff = {selItem.Cutoff}.");
 
 			var result = TryDeleteStartingCutoff(selItem);
 
@@ -981,31 +976,6 @@ namespace MSetExplorer
 				return;
 			}
 
-			//if (index == 0)
-			//{
-			//	var cb = _currentColorBandSet[index];
-			//	cb.PreviousCutoff = 0;
-			//}
-			//else
-			//{
-			//	var cb = _currentColorBandSet[index - 1];
-
-			//	//var newCutoff = _currentColorBandSet[index].PreviousCutoff;
-
-			//	//Debug.Assert(newCutoff.HasValue && newCutoff.Value == cutOff, "The item following the item just deleted, has a previous Cutoff, different than the deleted item's Cutoff.");
-
-			//	//cb.Cutoff = newCutoff.Value;
-
-			//	Debug.WriteLine($"ColorBandSetViewModel. CompleteCutoffRemoval is updating the previous ColorBand: {cb} at index: {index - 1}. The Cutoff is changing from: {cb.Cutoff} to {cutOff}.");
-
-			//	cb.Cutoff = cutOff;
-			//}
-
-			//if (index > 0) index--;
-
-			//_colorBandsView.MoveCurrentToPosition(index);
-			////_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
-
 			if (index == 0)
 			{
 				var cb = _currentColorBandSet[index];
@@ -1014,15 +984,15 @@ namespace MSetExplorer
 			else
 			{
 				var cb = _currentColorBandSet[index - 1];
-
 				var newCutoff = _currentColorBandSet[index].PreviousCutoff ?? 0;
-				var newSc = _currentColorBandSet[index].StartColor;
 
-				Debug.WriteLine($"Extending the width of the previous item: index={index - 1} from {cb.Cutoff} to newCutoff: {newCutoff} compare to the cutoff of the band being removed: {cutOff}.");
+				//var cutOff = selItem.Cutoff;
+				//Debug.WriteLine($"Extending the width of the previous item: index={index - 1} from {cb.Cutoff} to newCutoff: {newCutoff} compare to the cutoff of the band being removed: {cutOff}.");
+				//var sC = selItem.StartColor;
+				//var newSc = _currentColorBandSet[index].StartColor;
+				//Debug.WriteLine($"The successor start color of band just before the band being removed is {cb.SuccessorStartColor}, the start color of the band immed after the one being removed is {newSc}.");
 
-				Debug.WriteLine($"The successor start color of band just before the band being removed is {cb.SuccessorStartColor}, the start color of the band immed after the one being removed is {newSc}.");
-
-				cb.Cutoff = newCutoff; // _currentColorBandSet[index].PreviousCutoff ?? 0;
+				cb.Cutoff = newCutoff;
 			}
 
 			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
@@ -1132,15 +1102,18 @@ namespace MSetExplorer
 			else
 			{
 				var cb = _currentColorBandSet[index - 1];
-				cb.Cutoff = _currentColorBandSet[index].PreviousCutoff ?? 0;
+				var followingCb = _currentColorBandSet[index];
+
+
+				cb.Cutoff = followingCb.PreviousCutoff ?? 0;
+
+				if (cb.BlendStyle == ColorBandBlendStyle.Next)
+				{
+					cb.SuccessorStartColor = followingCb.StartColor;
+				}
 			}
 
-			//if (index > 0) index--;
-
-			//_colorBandsView.MoveCurrentToPosition(index);
 			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
-
-			_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
 
 			if (index > 0)
 				index--;
@@ -1153,8 +1126,6 @@ namespace MSetExplorer
 			{
 				CurrentColorBand = _currentColorBandSet[index];
 			}
-
-
 
 			Debug.WriteLine($"ColorBandSetViewModel. After BandRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 

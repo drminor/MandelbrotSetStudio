@@ -134,6 +134,7 @@ namespace MSS.Types
 				if (value != _isLast)
 				{
 					_isLast = value;
+					EndColor = GetActualEndColor();
 				}
 			}
 		}
@@ -316,53 +317,17 @@ namespace MSS.Types
 			}
 		}
 
-		//public bool IsSelected
-		//{
-		//	get => _isCutoffSelected || _isColorSelected;
-		//	set
-		//	{
-		//		if (value != IsSelected)
-		//		{
-		//			IsCutoffSelected = value;
-		//			IsColorSelected = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
-
-		//public bool IsCutoffSelected
-		//{
-		//	get => _isCutoffSelected;
-		//	set
-		//	{
-		//		if (value != _isCutoffSelected)
-		//		{
-		//			_isCutoffSelected = value;
-		//			OnPropertyChanged();
-
-		//		}
-		//	}
-		//}
-
-		//public bool IsColorSelected
-		//{
-		//	get => _isColorSelected;
-		//	set
-		//	{
-		//		if (value != _isColorSelected)
-		//		{
-		//			_isColorSelected = value;
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
-
 		#endregion
 
 		#region Private Methods
 
 		private ColorBandColor GetActualEndColor()
 		{
+			if (IsLast)
+			{
+				return ColorBandColor.Black;
+			}
+
 			var result = BlendStyle == ColorBandBlendStyle.Next
 				? GetSuccessorStartColor()
 				: BlendStyle == ColorBandBlendStyle.End

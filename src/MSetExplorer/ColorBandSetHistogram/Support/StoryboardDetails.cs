@@ -8,8 +8,7 @@ namespace MSetExplorer
 {
 	public class StoryboardDetails
 	{
-
-		private const int WAIT_DURATION = 1000;
+		private const int WAIT_DURATION = 100;
 		private DebounceDispatcher _waitDispatcher;
 
 		private bool _debounce;

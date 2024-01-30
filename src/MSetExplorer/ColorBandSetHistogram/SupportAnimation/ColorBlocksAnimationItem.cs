@@ -1,4 +1,6 @@
-﻿using System.Windows;
+﻿using System;
+using MSS.Types;
+using System.Windows;
 
 namespace MSetExplorer
 {
@@ -9,39 +11,49 @@ namespace MSetExplorer
 			SourceListViewItem = sourceListViewItem;
 			DestinationListViewItem = destinationListViewItem;
 
-			Source = CbColorBlocks.CbColorPair.Container;
-			Destination = destinationListViewItem != null ? destinationListViewItem.CbColorBlock.ColorPairContainer : GetOffScreenRect(sourceListViewItem);
+			Source = sourceListViewItem.CbColorBlock.CbColorPair.Container;
 
-			Current = Source;
+			Destination = destinationListViewItem?.CbColorBlock.CbColorPair.Container
+				?? GetOffScreenRect(sourceListViewItem);
+
+			StartingPos = Source;
+			Size1 = Destination.Size;
+
+			ShiftFraction = 1.0;
+			ShiftDuration = TimeSpan.FromMilliseconds(300);
+
+			Size1 = SourceIsWiderThanDest? Destination.Size: Source.Size;
 		}
 
 		#region Public Properties
 
 		public CbListViewItem SourceListViewItem { get; init; }
 		public string Name => SourceListViewItem.Name;
-
-		public CbSectionLine CbSectionLine => SourceListViewItem.CbSectionLine;
-		public CbColorBlocks CbColorBlocks => SourceListViewItem.CbColorBlock;
-
 		public CbListViewItem? DestinationListViewItem { get; init; }
 
-		public CbColorPair SourceCbColorPair => SourceListViewItem.CbColorBlock.CbColorPair;
-		//public CbColorPair? DestinationCbColorPair => DestinationListViewItem?.CbColorBlock.CbColorPair;
-
-
+		public CbSectionLine CbSectionLine => SourceListViewItem.CbSectionLine;
 
 		public Rect Source { get; init; }
 		public Rect Destination { get; init; }
 
-		public Rect Current { get; set; }
-		public Rect Stage1 { get; set; }
-		public Rect Stage2 { get; set; }
-		public Rect Stage3 { get; set; }
+		public Rect StartingPos { get; set; }
+		public Rect PosAfterLift { get; set; }
+		public Rect PosAfterResize1 { get; set; }
+		public Rect PosAfterShift { get; set; }
+		public Rect PosAfterResize2 { get; set; }
 
-		public Point FirstMovement { get; set; }
+		public Point LiftDestination { get; set; }
 
-		public Point SecondMovement { get; set; }
-		public Point ThirdMovement { get; set; }
+		public Size Size1 { get; init; }
+
+		public Point ShiftDestination { get; set; }
+		public Point DropDestination { get; set; }
+
+		public double ShiftFraction { get; set; }
+		public TimeSpan ShiftDuration { get; set; }
+
+		public bool SourceIsWiderThanDest => Source.Width > Destination.Width;
+
 
 		#endregion
 
@@ -53,22 +65,30 @@ namespace MSetExplorer
 			{
  				var newCopy = SourceListViewItem.CbColorBlock.CbColorPair.Clone();
 				
+				if (DestinationListViewItem.ColorBand.IsLast)
+				{
+					newCopy.EndColor = ColorBandColor.Black;
+				}
+
 				DestinationListViewItem.CbColorBlock.CbColorPair = newCopy;
 
 				SourceListViewItem.CbColorBlock.CbColorPair.TearDown();
-
 			}
 		}
 
 		public double GetDistance()
 		{
 			var result = Destination.Left - Source.Left;
+			return result;
+		}
 
+		public double GetShiftDistance()
+		{
+			var result = PosAfterShift.Left - PosAfterLift.Left;
 			return result;
 		}
 
 		#endregion
-
 
 		private static Rect GetOffScreenRect(CbListViewItem source)
 		{
