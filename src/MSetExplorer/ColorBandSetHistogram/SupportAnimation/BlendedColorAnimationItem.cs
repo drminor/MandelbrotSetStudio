@@ -18,10 +18,9 @@ namespace MSetExplorer
 
 			StartingPos = Source;
 			Size1 = Destination.Size;
-			ShiftFraction = 1.0;
 			ShiftDuration = TimeSpan.FromMilliseconds(300);
 
-			Size1 = SourceIsWiderThanDest ? Destination.Size : Source.Size;
+			Size1 = Source.Width > Destination.Width ? Destination.Size : Source.Size;
 		}
 
 		#region Public Properties
@@ -39,17 +38,10 @@ namespace MSetExplorer
 		public Rect PosAfterShift { get; set; }
 		public Rect PosAfterResize2 { get; set; }
 
-		public Point LiftDestination { get; set; }
-
 		public Size Size1 { get; set; }
-
-		public Point ShiftDestination { get; set; }
-		public Point DropDestination { get; set; }
-
-		public double ShiftFraction { get; set; }
 		public TimeSpan ShiftDuration { get; set; }
 
-		public bool SourceIsWiderThanDest => Source.Width > Destination.Width;
+		//public bool SourceIsWiderThanDest => Source.Width > Destination.Width;
 
 		#endregion
 

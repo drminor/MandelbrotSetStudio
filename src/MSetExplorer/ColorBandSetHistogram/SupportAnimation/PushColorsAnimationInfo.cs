@@ -41,44 +41,32 @@ namespace MSetExplorer
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
 				////// Color Blocks
-				
 
 				// Lift
-				colorBlockItem.LiftDestination = new Point(colorBlockItem.StartingPos.X + firstHDistForBlocks, colorBlockItem.StartingPos.Y - _liftHeight);
-				colorBlockItem.PosAfterLift = new Rect(colorBlockItem.LiftDestination, colorBlockItem.StartingPos.Size);
+				var liftPoint = new Point(colorBlockItem.StartingPos.X + firstHDistForBlocks, colorBlockItem.StartingPos.Y - _liftHeight);
+				colorBlockItem.PosAfterLift = new Rect(liftPoint, colorBlockItem.StartingPos.Size);
+				
+				liftPoint = new Point(blendedItem.StartingPos.X + firstHDistForBlends, blendedItem.StartingPos.Y - _liftHeight);
+				blendedItem.PosAfterLift = new Rect(liftPoint, blendedItem.StartingPos.Size);
 
 				// Resize1
 				colorBlockItem.PosAfterResize1 = new Rect(colorBlockItem.PosAfterLift.Location, colorBlockItem.Size1);
-
-				// Shift Right
-				colorBlockItem.ShiftDestination = new Point(colorBlockItem.Destination.X - firstHDistForBlocks, colorBlockItem.StartingPos.Y - _liftHeight);
-				colorBlockItem.PosAfterShift = new Rect(colorBlockItem.ShiftDestination, colorBlockItem.Size1);
-
-				// Resize2
-				colorBlockItem.PosAfterResize2 = new Rect(colorBlockItem.PosAfterShift.Location, colorBlockItem.Destination.Size);
-
-				// Drop
-				colorBlockItem.DropDestination = colorBlockItem.Destination.Location;
-
-
-				////// Blended Item
-
-				// Lift
-				blendedItem.LiftDestination = new Point(blendedItem.StartingPos.X + firstHDistForBlends, blendedItem.StartingPos.Y - _liftHeight);
-				blendedItem.PosAfterLift = new Rect(blendedItem.LiftDestination, blendedItem.StartingPos.Size);
-
-				// Resize1
 				blendedItem.PosAfterResize1 = new Rect(blendedItem.PosAfterLift.Location, blendedItem.Size1);
 
 				// Shift Right
-				blendedItem.ShiftDestination = new Point(blendedItem.Destination.X - firstHDistForBlends, blendedItem.StartingPos.Y - _liftHeight);
-				blendedItem.PosAfterShift = new Rect(blendedItem.ShiftDestination, blendedItem.Size1);
+				var shiftPoint = new Point(colorBlockItem.Destination.X - firstHDistForBlocks, colorBlockItem.StartingPos.Y - _liftHeight);
+				colorBlockItem.PosAfterShift = new Rect(shiftPoint, colorBlockItem.Size1);
+				
+				shiftPoint = new Point(blendedItem.Destination.X - firstHDistForBlends, blendedItem.StartingPos.Y - _liftHeight);
+				blendedItem.PosAfterShift = new Rect(shiftPoint, blendedItem.Size1);
 
 				// Resize2
+				colorBlockItem.PosAfterResize2 = new Rect(colorBlockItem.PosAfterShift.Location, colorBlockItem.Destination.Size);
 				blendedItem.PosAfterResize2 = new Rect(blendedItem.PosAfterShift.Location, blendedItem.Destination.Size);
 
 				// Drop
-				blendedItem.DropDestination = blendedItem.Destination.Location;
+				//colorBlockItem.DropDestination = colorBlockItem.Destination.Location;
+				//blendedItem.DropDestination = blendedItem.Destination.Location;
 			}
 
 			var maxShiftDistForBlocks = GetMaxShiftDistanceForBlocks();
@@ -86,11 +74,11 @@ namespace MSetExplorer
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				colorBlockItem.ShiftFraction = colorBlockItem.GetShiftDistance() / maxShiftDistForBlocks;
-				colorBlockItem.ShiftDuration = TimeSpan.FromMilliseconds(colorBlockItem.ShiftFraction * _totalShiftDurationMs);
+				var fraction = colorBlockItem.GetShiftDistance() / maxShiftDistForBlocks;
+				colorBlockItem.ShiftDuration = TimeSpan.FromMilliseconds(fraction * _totalShiftDurationMs);
 
-				blendedItem.ShiftFraction = blendedItem.GetShiftDistance() / maxShiftDistForBlends;
-				blendedItem.ShiftDuration = TimeSpan.FromMilliseconds(blendedItem.ShiftFraction * _totalShiftDurationMs);
+				fraction = blendedItem.GetShiftDistance() / maxShiftDistForBlends;
+				blendedItem.ShiftDuration = TimeSpan.FromMilliseconds(fraction * _totalShiftDurationMs);
 			}
 		}
 

@@ -47,35 +47,30 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public int AddRectAnimation(string objectName, string propertyPath, Rect from, Rect to, TimeSpan beginTime, TimeSpan duration)
+		{
+			var da = new RectAnimation(from, to, duration);
+			return AddTimeline(objectName, propertyPath, da, beginTime);
+		}
+
 		public int AddChangePosition(string objectName, string propertyPath, Rect from, Point newPosition, TimeSpan beginTime, TimeSpan duration)
 		{
-			//_width = _cutoff - _xPosition;
 			var to = new Rect(newPosition, from.Size);
 			var da = new RectAnimation(from, to, duration);
 
 			return AddTimeline(objectName, propertyPath, da, beginTime);
 		}
 
-		public int AddNoOp(string objectName, TimeSpan beginTime, TimeSpan duration)
-		{
-			var da = new DoubleAnimation(1, 1, duration);
-			return AddTimeline(objectName, "Opacity", da, beginTime);
-		}
-
-		// Move the x1 value and adjust the width to keep x2 the same
 		public int AddChangeLeft(string objectName, string propertyPath, Rect from, double newX1, TimeSpan beginTime, TimeSpan duration)
 		{
-			//_width = _cutoff - _xPosition;
 			var to = new Rect(newX1, from.Y, from.Right - newX1, from.Height);
 			var da = new RectAnimation(from, to, duration);
 
 			return AddTimeline(objectName, propertyPath, da, beginTime);
 		}
 
-		// Update the Width and Right to keep X1 constant.
 		public int AddChangeWidth(string objectName, string propertyPath, Rect from, double newWidth, TimeSpan beginTime, TimeSpan duration)
 		{
-			//_cutoff = _xPosition + _width;
 			var to = new Rect(from.X, from.Y, newWidth, from.Height);
 			var da = new RectAnimation(from, to, duration);
 
