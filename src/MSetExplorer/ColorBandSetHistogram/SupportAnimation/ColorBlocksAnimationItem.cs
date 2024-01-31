@@ -19,9 +19,10 @@ namespace MSetExplorer
 			StartingPos = Source;
 			Size1 = Destination.Size;
 
-			ShiftDuration = TimeSpan.FromMilliseconds(300);
+			ShiftDuration1 = TimeSpan.FromMilliseconds(300);
 
 			Size1 = Source.Width > Destination.Width ? Destination.Size: Source.Size;
+			Size2 = Size1;
 		}
 
 		#region Public Properties
@@ -37,12 +38,26 @@ namespace MSetExplorer
 
 		public Rect StartingPos { get; set; }
 		public Rect PosAfterLift { get; set; }
-		public Rect PosAfterResize1 { get; set; }
-		public Rect PosAfterShift { get; set; }
-		public Rect PosAfterResize2 { get; set; }
+
+		public Rect PosAfterShift1 { get; set; }
+		public Rect PosAfterShift2 { get; set; }
+
+		public Rect PosAfterResize3 { get; set; }
+
+		public Rect PosBeforeDrop { get; set; }
 
 		public Size Size1 { get; init; }
-		public TimeSpan ShiftDuration { get; set; }
+		public Size Size2 { get; set; }
+		//public Size Size3 { get; set; }
+
+		public double ShiftAmount1 { get; set; }
+		public double ShiftAmount2 { get; set; }
+		public double ShiftAmount3 { get; set; }
+
+		public TimeSpan ShiftDuration1 { get; set; }
+		public TimeSpan ShiftDuration2 { get; set; }
+		public TimeSpan ShiftDuration3 { get; set; }
+
 
 		//public bool SourceIsWiderThanDest => Source.Width > Destination.Width;
 
@@ -75,7 +90,7 @@ namespace MSetExplorer
 
 		public double GetShiftDistance()
 		{
-			var result = PosAfterShift.Left - PosAfterLift.Left;
+			var result = PosBeforeDrop.Left - PosAfterLift.Left;
 			return result;
 		}
 
