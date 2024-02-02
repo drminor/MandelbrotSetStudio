@@ -1,13 +1,20 @@
 ﻿using MSS.Types;
 using System;
+using System.Collections.Generic;
 using System.Windows;
 
 namespace MSetExplorer
 {
-	internal class BlendedColorAnimationItem
+	internal class BlendedColorAnimationItem : IRectAnimationItem
 	{
-		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem)
+		public double _msPerPixel;
+
+		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
 		{
+			_msPerPixel = msPerPixel;
+			RectTransitions = new List<RectTransition>();
+
+
 			SourceListViewItem = sourceListViewItem;
 			DestinationListViewItem = destinationListViewItem;
 
@@ -16,12 +23,11 @@ namespace MSetExplorer
 			Destination = destinationListViewItem?.CbRectangle.CbBlendedColorPair.Container
 				?? GetOffScreenRect(sourceListViewItem);
 
-			StartingPos = Source;
-			Size1 = Destination.Size;
-			ShiftDuration1 = TimeSpan.FromMilliseconds(300);
+			SourceIsWider = Source.Width > Destination.Width;
 
-			Size1 = Source.Width > Destination.Width ? Destination.Size : Source.Size;
-			Size2 = Size1;
+			StartingPos = Source;
+			Current = StartingPos;
+			Elasped = 0;
 		}
 
 		#region Public Properties
@@ -30,29 +36,34 @@ namespace MSetExplorer
 		public string Name => SourceListViewItem.Name;
 		public CbListViewItem? DestinationListViewItem { get; init; }
 
+		public List<RectTransition> RectTransitions { get; init; }
+
 		public Rect Source { get; init; }
 		public Rect Destination { get; init; }
 
+		public bool SourceIsWider { get; init; }
+
 		public Rect StartingPos { get; set; }
 		public Rect PosAfterLift { get; set; }
-		public Rect PosAfterShift1 { get; set; }
-		public Rect PosAfterShift2 { get; set; }
-
-		public Rect PosAfterResize3 { get; set; }
-
 		public Rect PosBeforeDrop { get; set; }
 
-		public Size Size1 { get; set; }
-		public Size Size2 { get; set; }
-		//public Size Size3 { get; set; }
+		public Rect Current { get; set; }
+		public double Elasped { get; set; }
 
-		public double ShiftAmount1 { get; set; }
-		public double ShiftAmount2 { get; set; }
-		public double ShiftAmount3 { get; set; }
+		//public Rect PosAfterShift1 { get; set; }
+		//public Rect PosAfterShift2 { get; set; }
 
-		public TimeSpan ShiftDuration1 { get; set; }
-		public TimeSpan ShiftDuration2 { get; set; }
-		public TimeSpan ShiftDuration3 { get; set; }
+		//public Rect PosAfterResize3 { get; set; }
+
+		//public Size Size1 { get; set; }
+
+		//public double ShiftAmount1 { get; set; }
+		//public double ShiftAmount2 { get; set; }
+		//public double ShiftAmount3 { get; set; }
+
+		//public TimeSpan ShiftDuration1 { get; set; }
+		//public TimeSpan ShiftDuration2 { get; set; }
+		//public TimeSpan ShiftDuration3 { get; set; }
 
 		//public bool SourceIsWiderThanDest => Source.Width > Destination.Width;
 
@@ -60,6 +71,47 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		public void BuildTimelineX(Rect to)
+		{
+			var dist = Math.Abs(to.X - Current.X);
+			var durationMs = dist * _msPerPixel;
+
+			var rt = new RectTransition(Current, to, Elasped, durationMs);
+
+			RectTransitions.Add(rt);
+			Current = to;
+			Elasped += durationMs;
+		}
+
+		public void BuildTimelineW(Rect to)
+		{
+			var dist = Math.Abs(Current.Width - to.Width);
+			var durationMs = dist * _msPerPixel;
+
+			var rt = new RectTransition(Current, to, Elasped, durationMs);
+
+			RectTransitions.Add(rt);
+			Current = to;
+			Elasped += durationMs;
+		}
+
+		public void BuildTimelineX(double shiftAmount)
+		{
+			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width, Current.Height);
+			BuildTimelineX(rect);
+		}
+
+		public void BuildTimelineXAnchorRight(double shiftAmount)
+		{
+			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width - shiftAmount, Current.Height);
+			BuildTimelineX(rect);
+		}
+
+		public void BuildTimelineW(double shiftAmount)
+		{
+			var rect = new Rect(Current.X, Current.Y, Current.Width + shiftAmount, Current.Height);
+			BuildTimelineW(rect);
+		}
 		public void MoveSourceToDestination()
 		{
 			if (DestinationListViewItem != null)
@@ -84,9 +136,15 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public double GetShiftDistance()
+		public double GetShiftDistanceLeft()
 		{
 			var result = PosBeforeDrop.Left - PosAfterLift.Left;
+			return result;
+		}
+
+		public double GetShiftDistanceRight()
+		{
+			var result = PosBeforeDrop.Right - PosAfterLift.Right;
 			return result;
 		}
 
