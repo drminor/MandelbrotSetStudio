@@ -5,24 +5,17 @@ using System.Windows;
 
 namespace MSetExplorer
 {
-	using AnimationItemPairList = List<(ColorBlocksAnimationItem, BlendedColorAnimationItem)>;
+	using AnimationItemPairList = List<(IRectAnimationItem, IRectAnimationItem)>;
 
 	internal class PushColorsAnimationInfo
 	{
 		private double _liftHeight;
-		private double _velocity;       // Pixels Per Millisecond
 		private double _msPerPixel;
 
-
-		private double _totalShiftDurationMs;
-
-		public PushColorsAnimationInfo(double liftHeight, double velocity, double totalShiftDurationMs)
+		public PushColorsAnimationInfo(double liftHeight, double velocity)
 		{
 			_liftHeight = liftHeight;
-			_velocity = velocity;
 			_msPerPixel = 1 / velocity;
-
-			_totalShiftDurationMs = totalShiftDurationMs;
 
 			AnimationItemPairs = new AnimationItemPairList();
 		}
@@ -51,12 +44,38 @@ namespace MSetExplorer
 
 		*/
 
-		public void CalculateMovements()
+		public double CalculateMovements()
 		{
 			CalculateLiftDropBookends();
-			
-			BuildTimeLines();
+
+			var startPushSyncPoint = BuildTimeLines();
+
+			return startPushSyncPoint;
 		}
+
+		public void MoveSourcesToDestinations()
+		{
+			for (var i = AnimationItemPairs.Count - 2; i >= 0; i--)
+			{
+				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
+				colorBlockAItem.MoveSourceToDestination();
+				blendedColorAItem.MoveSourceToDestination();
+			}
+		}
+
+		public double GetMaxDuration()
+		{
+			var maxColorBlockElapsed = AnimationItemPairs.Max(x => x.Item1.Elasped);
+			var maxBlendedBandElapsed = AnimationItemPairs.Max(x => x.Item2.Elasped);
+
+			var maxE = Math.Max(maxColorBlockElapsed, maxBlendedBandElapsed);
+
+			return maxE;
+		}
+
+		#endregion
+
+		#region Private Methods
 
 		private void CalculateLiftDropBookends()
 		{
@@ -80,37 +99,47 @@ namespace MSetExplorer
 			rectAnimationItem.PosAfterLift = new Rect(liftPoint, rectAnimationItem.StartingPos.Size);
 
 			// After final narrowing, before drop
-			var shiftPoint = new Point(rectAnimationItem.Destination.X - horizontalDistForLift, liftedTop);
+			var shiftPoint = new Point(rectAnimationItem.DestinationPos.X - horizontalDistForLift, liftedTop);
 
-			rectAnimationItem.PosBeforeDrop = new Rect(shiftPoint, rectAnimationItem.Destination.Size);
+			rectAnimationItem.PosBeforeDrop = new Rect(shiftPoint, rectAnimationItem.DestinationPos.Size);
 		}
 
-		private void BuildTimeLines()
+		private double BuildTimeLines()
 		{
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				BuildRetrogradeTimelines(colorBlockItem);
-				BuildRetrogradeTimelines(blendedItem);
+				// Lift
+				colorBlockItem.BuildTimelinePos(colorBlockItem.PosAfterLift, veclocityMultiplier: 0.2);
+				blendedItem.BuildTimelinePos(blendedItem.PosAfterLift, veclocityMultiplier: 0.2);
 			}
-
-			SyncElapsed();
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				BuildTimelines(colorBlockItem);
-				BuildTimelines(blendedItem);
+				BuildPullTimelines(colorBlockItem);
+				BuildPullTimelines(blendedItem);
 			}
 
-			SyncElapsed();
+			var startPushSyncPoint = SyncNextBeginTimeElapsed(0);
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				colorBlockItem.BuildTimelineX(colorBlockItem.Destination);
-				blendedItem.BuildTimelineX(blendedItem.Destination);
+				BuildPushTimelines(colorBlockItem);
+				BuildPushTimelines(blendedItem);
 			}
+
+			SyncNextBeginTimeElapsed(0);
+
+			// Drop
+			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
+			{
+				colorBlockItem.BuildTimelinePos(colorBlockItem.DestinationPos, veclocityMultiplier: 0.2);
+				blendedItem.BuildTimelinePos(blendedItem.DestinationPos, veclocityMultiplier: 0.2);
+			}
+
+			return startPushSyncPoint;
 		}
 
-		private void BuildTimelines(IRectAnimationItem rectAnimationItem)
+		private void BuildPushTimelines(IRectAnimationItem rectAnimationItem)
 		{
 			var sDistanceLeft = rectAnimationItem.GetShiftDistanceLeft();
 			var sDistanceRight = rectAnimationItem.GetShiftDistanceRight();
@@ -144,60 +173,58 @@ namespace MSetExplorer
 			}
 
 			// Move to PosBeforeDrop
-			rectAnimationItem.BuildTimelineX(rectAnimationItem.PosBeforeDrop);
+			rectAnimationItem.BuildTimelinePos(rectAnimationItem.PosBeforeDrop);
 		}
 
-		private void BuildRetrogradeTimelines(IRectAnimationItem rectAnimationItem)
+		private void BuildPullTimelines(IRectAnimationItem rectAnimationItem)
 		{
-			// Move to lift point
-			rectAnimationItem.BuildTimelineX(rectAnimationItem.PosAfterLift);
+			var sDistanceLeft = rectAnimationItem.GetShiftDistanceLeft();
+			var sDistanceRight = rectAnimationItem.GetShiftDistanceRight();
 
-			var sDistanceLeft = -1 * rectAnimationItem.GetShiftDistanceLeft();
-			var sDistanceRight = -1 * rectAnimationItem.GetShiftDistanceRight();
-
-			if (sDistanceLeft > 0)
+			if (sDistanceLeft < 0)
 			{
-				if (sDistanceRight > 0)
+				if (sDistanceRight < 0)
 				{
-					if (sDistanceLeft > sDistanceRight)
+					if (sDistanceLeft < sDistanceRight)
 					{
 						// Both are moving left
 
-						// Shift right, keeping width constant for the distance both the left and right edges must move
+						// Shift left, keeping width constant for the distance both the left and right edges must move
 						rectAnimationItem.BuildTimelineX(sDistanceRight);
 
-						// Shift left side forward, but keep the right side fixed
+						// Shift left side backwards, but keep the right side fixed
 						rectAnimationItem.BuildTimelineXAnchorRight(sDistanceLeft - sDistanceRight);
 					}
 					else
 					{
-						// Shift right, keeping the width constant for the distance both the left and right edges must move
+						// Shift left, keeping the width constant for the distance both the left and right edges must move
 						rectAnimationItem.BuildTimelineX(sDistanceLeft);
 
-						// Shift the right side forward, but keep the left side fixed - i.e., extend the width
+						// Shift the right side backward, but keep the left side fixed - i.e., decrease the width
 						rectAnimationItem.BuildTimelineW(sDistanceRight - sDistanceLeft);
 					}
 				}
 				else
 				{
 					// Shift right, keeping width constant for the distance both the left and right edges must move
-					rectAnimationItem.BuildTimelineX(sDistanceRight);
+					rectAnimationItem.BuildTimelineX(sDistanceLeft);
 				}
 			}
 		}
 
-		private void SyncElapsed()
+		private double SyncNextBeginTimeElapsed(double delay = 0)
 		{
-			var maxColorBlockElapsed = AnimationItemPairs.Max(x => x.Item1.Elasped);
-			var maxBlendedBandElapsed = AnimationItemPairs.Max(x => x.Item2.Elasped);
+			var maxDuration = GetMaxDuration();
 
-			var maxE = Math.Max(maxColorBlockElapsed, maxBlendedBandElapsed);
+			var syncPoint = maxDuration + delay;
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				colorBlockItem.Elasped = maxE;
-				blendedItem.Elasped = maxE;
+				colorBlockItem.Elasped = syncPoint;
+				blendedItem.Elasped = syncPoint;
 			}
+
+			return syncPoint;
 		}
 
 		private void CalculateShiftPositionsOld()
@@ -205,7 +232,7 @@ namespace MSetExplorer
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
 				// Move to lift point
-				colorBlockItem.BuildTimelineX(colorBlockItem.PosAfterLift);
+				colorBlockItem.BuildTimelinePos(colorBlockItem.PosAfterLift);
 
 				var sDistanceLeft = colorBlockItem.GetShiftDistanceLeft();
 				var sDistanceRight = colorBlockItem.GetShiftDistanceRight();
@@ -367,21 +394,6 @@ namespace MSetExplorer
 		//		blendedItem.ShiftDuration1 = TimeSpan.FromMilliseconds(fraction * _totalShiftDurationMs);
 		//	}
 		//}
-
-
-		public void MoveSourcesToDestinations()
-		{
-			for (var i = AnimationItemPairs.Count - 2; i >= 0; i--)
-			{
-				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
-				colorBlockAItem.MoveSourceToDestination();
-				blendedColorAItem.MoveSourceToDestination();
-			}
-		}
-
-		#endregion
-
-		#region Private Methods
 
 		private double GetFirstHDistForBlocks(double liftHeight)
 		{

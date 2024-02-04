@@ -387,7 +387,7 @@ namespace MSetExplorer
 		{
 			var rect = BuildRect(colorBlocksArea, contentScale);
 			Rect result = Rect.Inflate(rect, -1, -1);
-			Debug.WriteLine($"ColorBlocks just built rectangle with top: {result.Top} and height: {result.Height} and left: {result.Left} and width: {result.Width}.");
+			//Debug.WriteLine($"ColorBlocks just built rectangle with top: {result.Top} and height: {result.Height} and left: {result.Left} and width: {result.Width}.");
 
 			return result;
 		}

@@ -1001,14 +1001,10 @@ namespace MSetExplorer
 
 			var velocity = 700 / 1000d;		// 700 pixels per second or 0.7 pixels / millisecond
 
-			var liftMs = 100;
-			var resizeMs = 300;
-			var shiftMs = 300;
-
 			// Create the class that will calcuate the 'PushColor' animation details
 			var liftHeight = _elevations.ColorBlocksHeight / 2;
 
-			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(liftHeight, velocity, shiftMs);
+			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(liftHeight, velocity);
 
 			for (var i = index; i < ListViewItems.Count; i++)
 			{
@@ -1017,13 +1013,14 @@ namespace MSetExplorer
 				_pushColorsAnimationInfo1.Add(lvi, lviSuccessor);
 			}
 
-			_pushColorsAnimationInfo1.CalculateMovements();
+			var startPushSyncPoint = _pushColorsAnimationInfo1.CalculateMovements();
+			var endPushSyncPoint = _pushColorsAnimationInfo1.GetMaxDuration();
+			var shiftMs = endPushSyncPoint - startPushSyncPoint;
 
-			_storyBoardDetails1.RateFactor = 1;
+			_storyBoardDetails1.RateFactor = 10;
 
-			ApplyPushColorsAnimation(_pushColorsAnimationInfo1, liftMs, resizeMs, shiftMs);
 
-			var tShiftBegin = 0; // liftMs + resizeMs; // + 200;
+			ApplyPushColorsAnimation(_pushColorsAnimationInfo1);
 
 			if (index == 0)
 			{
@@ -1032,7 +1029,9 @@ namespace MSetExplorer
 				var curVal = newFirstItem.Area;
 				var newXPosition = 0;
 
-				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(tShiftBegin), duration: TimeSpan.FromMilliseconds(shiftMs));
+				//var shiftMs = Math.Abs(newXPosition - curVal.X) / velocity;
+
+				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(startPushSyncPoint), duration: TimeSpan.FromMilliseconds(shiftMs));
 			}
 			else
 			{
@@ -1044,13 +1043,16 @@ namespace MSetExplorer
 				var curVal = preceedingItem.Area;
 				var newWidth = curVal.Width + widthOfItemBeingRemoved;
 
-				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, beginTime: TimeSpan.FromMilliseconds(tShiftBegin), duration: TimeSpan.FromMilliseconds(shiftMs));
+				//var shiftMs = Math.Abs(newWidth - curVal.Width) / velocity;
+
+				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, beginTime: TimeSpan.FromMilliseconds(startPushSyncPoint), duration: TimeSpan.FromMilliseconds(shiftMs));
 			}
 
+			// Execute the Animation
 			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index, debounce: true);
 		}
 
-		private void ApplyPushColorsAnimation(PushColorsAnimationInfo pushColorsAnimationInfo, double liftMs, double resizeMs, double shiftMs)
+		private void ApplyPushColorsAnimation(PushColorsAnimationInfo pushColorsAnimationInfo)
 		{
 			foreach (var (block, blend) in pushColorsAnimationInfo.AnimationItemPairs)
 			{
@@ -1063,7 +1065,6 @@ namespace MSetExplorer
 				{
 					_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
 				}
-
 			}
 		}
 

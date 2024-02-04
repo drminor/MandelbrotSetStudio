@@ -18,14 +18,11 @@ namespace MSetExplorer
 			SourceListViewItem = sourceListViewItem;
 			DestinationListViewItem = destinationListViewItem;
 
-			Source = sourceListViewItem.CbRectangle.CbBlendedColorPair.Container;
+			StartingPos = sourceListViewItem.CbRectangle.CbBlendedColorPair.Container;
 
-			Destination = destinationListViewItem?.CbRectangle.CbBlendedColorPair.Container
+			DestinationPos = destinationListViewItem?.CbRectangle.CbBlendedColorPair.Container
 				?? GetOffScreenRect(sourceListViewItem);
 
-			SourceIsWider = Source.Width > Destination.Width;
-
-			StartingPos = Source;
 			Current = StartingPos;
 			Elasped = 0;
 		}
@@ -38,40 +35,20 @@ namespace MSetExplorer
 
 		public List<RectTransition> RectTransitions { get; init; }
 
-		public Rect Source { get; init; }
-		public Rect Destination { get; init; }
-
-		public bool SourceIsWider { get; init; }
-
 		public Rect StartingPos { get; set; }
+
 		public Rect PosAfterLift { get; set; }
 		public Rect PosBeforeDrop { get; set; }
+		public Rect DestinationPos { get; init; }
 
 		public Rect Current { get; set; }
 		public double Elasped { get; set; }
-
-		//public Rect PosAfterShift1 { get; set; }
-		//public Rect PosAfterShift2 { get; set; }
-
-		//public Rect PosAfterResize3 { get; set; }
-
-		//public Size Size1 { get; set; }
-
-		//public double ShiftAmount1 { get; set; }
-		//public double ShiftAmount2 { get; set; }
-		//public double ShiftAmount3 { get; set; }
-
-		//public TimeSpan ShiftDuration1 { get; set; }
-		//public TimeSpan ShiftDuration2 { get; set; }
-		//public TimeSpan ShiftDuration3 { get; set; }
-
-		//public bool SourceIsWiderThanDest => Source.Width > Destination.Width;
 
 		#endregion
 
 		#region Public Methods
 
-		public void BuildTimelineX(Rect to)
+		public void BuildTimelinePos(Rect to, double velocityMultiplier = 1)
 		{
 			var dist = Math.Abs(to.X - Current.X);
 			var durationMs = dist * _msPerPixel;
@@ -98,13 +75,13 @@ namespace MSetExplorer
 		public void BuildTimelineX(double shiftAmount)
 		{
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width, Current.Height);
-			BuildTimelineX(rect);
+			BuildTimelinePos(rect);
 		}
 
 		public void BuildTimelineXAnchorRight(double shiftAmount)
 		{
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width - shiftAmount, Current.Height);
-			BuildTimelineX(rect);
+			BuildTimelinePos(rect);
 		}
 
 		public void BuildTimelineW(double shiftAmount)
@@ -131,7 +108,7 @@ namespace MSetExplorer
 
 		public double GetDistance()
 		{
-			var result = Destination.Left - Source.Left;
+			var result = DestinationPos.Left - StartingPos.Left;
 
 			return result;
 		}

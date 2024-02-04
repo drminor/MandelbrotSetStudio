@@ -17,14 +17,11 @@ namespace MSetExplorer
 			SourceListViewItem = sourceListViewItem;
 			DestinationListViewItem = destinationListViewItem;
 
-			Source = sourceListViewItem.CbColorBlock.CbColorPair.Container;
+			StartingPos = sourceListViewItem.CbColorBlock.CbColorPair.Container;
 
-			Destination = destinationListViewItem?.CbColorBlock.CbColorPair.Container
+			DestinationPos = destinationListViewItem?.CbColorBlock.CbColorPair.Container
 				?? GetOffScreenRect(sourceListViewItem);
 
-			SourceIsWider = Source.Width > Destination.Width;
-
-			StartingPos = Source;
 			Current = StartingPos;
 			Elasped = 0;
 
@@ -40,64 +37,22 @@ namespace MSetExplorer
 
 		public List<RectTransition> RectTransitions { get; init; }
 
-		public Rect Source { get; init; }
-		public Rect Destination { get; init; }
-
-		public bool SourceIsWider { get; init; }
-
 		public Rect StartingPos { get; set; }
 		public Rect PosAfterLift { get; set; }
 		public Rect PosBeforeDrop { get; set; }
+		public Rect DestinationPos { get; init; }
 
 		public Rect Current { get; set; }
 		public double Elasped { get; set; }
-
-		//public double ShiftDistanceLeft;
-		//public double ShiftDistanceRight;
-		//public bool LeftDeltaIsGreater { get; set; }
-
-
-		// Forward
-		//public double TimeWhenLeftStopsF { get; set; }
-		//public double TimeWhenRightStopsF { get; set; }
-
-		//public double TimeRightIsMovingFWhileLeftIsMovingF { get; private set; } 
-		//public double TimeLeftIsMovingFAfterRightStops { get; private set; }
-		//public double TimeRightIsMovingFAfterLeftStops { get; private set; }
-
-		//public Rect PosAfterShift1F { get; set; }
-		//public Rect PosAfterShift2F { get; set; }
-		//public Rect PosAfterShift3F { get; set; }
-
-		//public TimeSpan ShiftDuration1F { get; set; }
-		//public TimeSpan ShiftDuration2F { get; set; }
-		//public TimeSpan ShiftDuration3F { get; set; }
-
-		// Backward
-		//public double TimeWhenLeftStopsB { get; set; }
-		//public double TimeWhenRightStopsB { get; set; }
-
-		//public double TimeRightIsMovingBWhileLeftIsMovingB { get; private set; }
-		//public double TimeLeftIsMovingBAfterRightStops { get; private set; }
-		//public double TimeRightIsMovingBAfterLeftStops { get; private set; }
-
-		//public Rect PosAfterShift1B { get; set; }
-		//public Rect PosAfterShift2B { get; set; }
-		//public Rect PosAfterShift3B { get; set; }
-
-		//public TimeSpan ShiftDuration1B { get; set; }
-		//public TimeSpan ShiftDuration2B { get; set; }
-		//public TimeSpan ShiftDuration3B { get; set; }
-
 
 		#endregion
 
 		#region Public Methods
 
-		public void BuildTimelineX(Rect to)
+		public void BuildTimelinePos(Rect to, double velocityMultiplier = 1)
 		{
 			var dist = Math.Abs(to.X - Current.X);
-			var durationMs = dist * _msPerPixel;
+			var durationMs = dist * _msPerPixel / velocityMultiplier;
 
 			var rt = new RectTransition(Current, to, Elasped, durationMs);
 
@@ -121,15 +76,14 @@ namespace MSetExplorer
 		public void BuildTimelineX(double shiftAmount)
 		{
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width, Current.Height);
-			BuildTimelineX(rect);
+			BuildTimelinePos(rect);
 		}
 
 		public void BuildTimelineXAnchorRight(double shiftAmount)
 		{
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width - shiftAmount, Current.Height);
-			BuildTimelineX(rect);
+			BuildTimelinePos(rect);
 		}
-
 
 		public void BuildTimelineW(double shiftAmount)
 		{
@@ -274,15 +228,9 @@ namespace MSetExplorer
 
 		public double GetDistance()
 		{
-			var result = Destination.Left - Current.Left;
+			var result = DestinationPos.Left - StartingPos.Left;
 			return result;
 		}
-
-		//public double GetWidthDelta()
-		//{
-		//	var result = Destination.Width - Current.Width;
-		//	return result;
-		//}
 
 		public double GetShiftDistanceLeft()
 		{

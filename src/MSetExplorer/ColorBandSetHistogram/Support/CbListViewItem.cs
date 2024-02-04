@@ -380,7 +380,7 @@ namespace MSetExplorer
 			var oldValue = (Rect)e.OldValue;
 			var newValue = (Rect)e.NewValue;
 
-			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Area for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
+			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Area for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
 
 			if (newValue.IsEmpty)
 			{
@@ -449,7 +449,7 @@ namespace MSetExplorer
 			var oldValue = (Rect)e.OldValue;
 			var newValue = (Rect)e.NewValue;
 
-			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: ColorBlockArea for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
+			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: ColorBlockArea for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
 
 			if (newValue.IsEmpty)
 			{
@@ -481,7 +481,7 @@ namespace MSetExplorer
 			var oldValue = (Rect)e.OldValue;
 			var newValue = (Rect)e.NewValue;
 
-			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: BlendedColorArea for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
+			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: BlendedColorArea for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
 
 			if (newValue.IsEmpty)
 			{
