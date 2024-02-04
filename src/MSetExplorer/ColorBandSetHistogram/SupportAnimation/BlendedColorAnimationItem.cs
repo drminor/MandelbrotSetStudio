@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 
 namespace MSetExplorer
@@ -8,12 +9,12 @@ namespace MSetExplorer
 	internal class BlendedColorAnimationItem : IRectAnimationItem
 	{
 		public double _msPerPixel;
+		public bool _useDetailedDebug = false;
 
 		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
 		{
 			_msPerPixel = msPerPixel;
 			RectTransitions = new List<RectTransition>();
-
 
 			SourceListViewItem = sourceListViewItem;
 			DestinationListViewItem = destinationListViewItem;
@@ -74,21 +75,53 @@ namespace MSetExplorer
 
 		public void BuildTimelineX(double shiftAmount)
 		{
+			var amount = shiftAmount / SourceListViewItem.CbRectangle.ContentScale.Width;
+			if (shiftAmount > 0)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} right {amount}.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, "Moving Item: {SourceListViewItem.ColorBandIndex} left {-1 * amount}.");
+			}
+
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width, Current.Height);
 			BuildTimelinePos(rect);
 		}
 
 		public void BuildTimelineXAnchorRight(double shiftAmount)
 		{
+			var amount = shiftAmount / SourceListViewItem.CbRectangle.ContentScale.Width;
+			if (shiftAmount > 0)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} right and reducing its width by {amount}.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} left and increasing its width by {-1 * amount}.");
+			}
+
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width - shiftAmount, Current.Height);
 			BuildTimelinePos(rect);
 		}
 
 		public void BuildTimelineW(double shiftAmount)
 		{
+			var amount = shiftAmount / SourceListViewItem.CbRectangle.ContentScale.Width;
+			if (shiftAmount > 0)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Increasing the Width of Item: {SourceListViewItem.ColorBandIndex} by {amount}.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Decreasing the Width of Item: {SourceListViewItem.ColorBandIndex} by {-1 * amount}.");
+			}
+
 			var rect = new Rect(Current.X, Current.Y, Current.Width + shiftAmount, Current.Height);
 			BuildTimelineW(rect);
 		}
+
+
 		public void MoveSourceToDestination()
 		{
 			if (DestinationListViewItem != null)
@@ -115,11 +148,23 @@ namespace MSetExplorer
 
 		public double GetShiftDistanceLeft()
 		{
-			var result = PosBeforeDrop.Left - PosAfterLift.Left;
+			var result = PosBeforeDrop.Left - Current.Left;
 			return result;
 		}
 
 		public double GetShiftDistanceRight()
+		{
+			var result = PosBeforeDrop.Right - Current.Right;
+			return result;
+		}
+
+		public double GetOriginalShiftDistanceLeft()
+		{
+			var result = PosBeforeDrop.Left - PosAfterLift.Left;
+			return result;
+		}
+
+		public double GetOriginalShiftDistanceRight()
 		{
 			var result = PosBeforeDrop.Right - PosAfterLift.Right;
 			return result;

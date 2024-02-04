@@ -1,6 +1,7 @@
 ﻿using MSS.Types;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 
 namespace MSetExplorer
@@ -8,6 +9,7 @@ namespace MSetExplorer
 	internal class ColorBlocksAnimationItem : IRectAnimationItem
 	{
 		public double _msPerPixel;
+		public bool _useDetailedDebug = false;
 
 		public ColorBlocksAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
 		{
@@ -24,8 +26,6 @@ namespace MSetExplorer
 
 			Current = StartingPos;
 			Elasped = 0;
-
-			//ShiftDuration1F = TimeSpan.FromMilliseconds(300);
 		}
 
 		#region Public Properties
@@ -75,18 +75,48 @@ namespace MSetExplorer
 
 		public void BuildTimelineX(double shiftAmount)
 		{
+			var amount = shiftAmount / SourceListViewItem.CbColorBlock.ContentScale.Width;
+			if (shiftAmount > 0)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} right {amount}.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} left {-1 * amount}.");
+			}
+
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width, Current.Height);
 			BuildTimelinePos(rect);
 		}
 
 		public void BuildTimelineXAnchorRight(double shiftAmount)
 		{
+			var amount = shiftAmount / SourceListViewItem.CbColorBlock.ContentScale.Width;
+			if (shiftAmount > 0)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} right and reducing its width by {amount}.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} left and increasing its width by {-1 * amount}.");
+			}
+
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width - shiftAmount, Current.Height);
 			BuildTimelinePos(rect);
 		}
 
 		public void BuildTimelineW(double shiftAmount)
 		{
+			var amount = shiftAmount / SourceListViewItem.CbColorBlock.ContentScale.Width;
+			if (shiftAmount > 0)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Increasing the Width of Item: {SourceListViewItem.ColorBandIndex} by {amount}.");
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"Decreasing the Width of Item: {SourceListViewItem.ColorBandIndex} by {-1 * amount}.");
+			}
+
 			var rect = new Rect(Current.X, Current.Y, Current.Width + shiftAmount, Current.Height);
 			BuildTimelineW(rect);
 		}
@@ -108,124 +138,6 @@ namespace MSetExplorer
 			}
 		}
 
-
-		//public void CalcuateShiftDistancesAndTimes(double velocity)
-		//{
-		//	ShiftDistanceLeft = GetShiftDistanceLeft();
-		//	ShiftDistanceRight = GetShiftDistanceRight();
-
-		//	TimeWhenLeftStopsF = ShiftDistanceLeft / velocity;
-		//	TimeWhenRightStopsF = ShiftDistanceRight / velocity;
-
-
-		//	if (ShiftDistanceLeft > 0)
-		//	{
-		//		if (ShiftDistanceRight > 0)
-		//		{
-		//			// Left and Right-sides are moving forward
-		//			CacluateShiftDistancesAndTimesFF(velocity);
-		//		}
-		//		else
-		//		{
-		//			// Left-side is moving forward, Right-side is moving backwards
-		//			CacluateShiftDistancesAndTimesFB(velocity);
-		//		}
-		//	}
-		//	else
-		//	{
-		//		if (ShiftDistanceRight > 0)
-		//		{
-		//			// Left side is moving backward, right-side is moving forward
-		//			CacluateShiftDistancesAndTimesBF(velocity);
-		//		}
-		//		else
-		//		{
-		//			// Left and Right-sides are moving backwards
-
-		//			CacluateShiftDistancesAndTimesBB(velocity);
-		//		}
-		//	}
-		//}
-
-		//private void CacluateShiftDistancesAndTimesFF(double velocity)
-		//{
-		//	// Left and Right-sides are moving forward
-
-		//	// Set all Backward props to 0
-		//	TimeRightIsMovingBWhileLeftIsMovingB = 0;
-		//	TimeLeftIsMovingBAfterRightStops = 0;
-		//	TimeRightIsMovingBAfterLeftStops = 0;
-
-		//	ShiftDuration1B = TimeSpan.Zero;
-		//	ShiftDuration2B = TimeSpan.Zero;
-		//	ShiftDuration3B = TimeSpan.Zero;
-
-		//	//if (ShiftDistanceLeft > ShiftDistanceRight)
-		//	//{
-		//	//	RectTransitions.Add(new RectTransition(PosAfterLift, PosAfterShift1F, TimeSpan.Zero, ))
-		//	//}
-
-
-
-
-		//	TimeRightIsMovingFWhileLeftIsMovingF = LeftDeltaIsGreater ? TimeWhenRightStopsF : TimeWhenLeftStopsF;
-		//	TimeLeftIsMovingFAfterRightStops = LeftDeltaIsGreater ? TimeWhenLeftStopsF - TimeWhenRightStopsF : 0;
-		//	TimeRightIsMovingFAfterLeftStops = LeftDeltaIsGreater ? 0 : TimeWhenRightStopsF - TimeWhenLeftStopsF;
-		//}
-
-		//private void CacluateShiftDistancesAndTimesFB(double velocity)
-		//{
-		//	// Left-side is moving forward, Right-side is moving backwards
-
-		//	TimeRightIsMovingFWhileLeftIsMovingF = 0;
-		//	TimeRightIsMovingBWhileLeftIsMovingB = 0;
-
-
-		//	TimeLeftIsMovingBAfterRightStops = 0;
-		//}
-
-		//private void CacluateShiftDistancesAndTimesBF(double velocity)
-		//{
-		//	// Left side is moving backward, right-side is moving forward
-		//	TimeRightIsMovingBWhileLeftIsMovingB = 0;
-		//	TimeRightIsMovingFWhileLeftIsMovingF = 0;
-
-
-		//	TimeLeftIsMovingFAfterRightStops = 0;
-
-
-
-		//	TimeRightIsMovingFAfterLeftStops = 0;
-
-		//	LeftDeltaIsGreater = ShiftDistanceLeft > ShiftDistanceRight;
-
-		//	TimeRightIsMovingFWhileLeftIsMovingF = LeftDeltaIsGreater ? TimeWhenRightStopsF : TimeWhenLeftStopsF;
-		//	TimeLeftIsMovingFAfterRightStops = LeftDeltaIsGreater ? TimeWhenLeftStopsF - TimeWhenRightStopsF : 0;
-		//	TimeRightIsMovingFAfterLeftStops = LeftDeltaIsGreater ? 0 : TimeWhenRightStopsF - TimeWhenLeftStopsF;
-
-		//}
-
-		//private void CacluateShiftDistancesAndTimesBB(double velocity)
-		//{
-		//	// Left and Right-sides are moving backwards
-
-		//	// Set all Forward props to 0
-		//	TimeRightIsMovingFWhileLeftIsMovingF = 0;
-		//	TimeLeftIsMovingFAfterRightStops = 0;
-		//	TimeRightIsMovingFAfterLeftStops = 0;
-
-		//	ShiftDuration1F = TimeSpan.Zero;
-		//	ShiftDuration2F = TimeSpan.Zero;
-		//	ShiftDuration3F = TimeSpan.Zero;
-
-		//	LeftDeltaIsGreater = ShiftDistanceRight > ShiftDistanceLeft;
-
-		//	TimeRightIsMovingBWhileLeftIsMovingB = LeftDeltaIsGreater ? TimeWhenRightStopsF : TimeWhenLeftStopsF;
-		//	TimeLeftIsMovingFAfterRightStops = LeftDeltaIsGreater ? TimeWhenLeftStopsF - TimeWhenRightStopsF : 0;
-		//	TimeRightIsMovingFAfterLeftStops = LeftDeltaIsGreater ? 0 : TimeWhenRightStopsF - TimeWhenLeftStopsF;
-		//}
-
-
 		public double GetDistance()
 		{
 			var result = DestinationPos.Left - StartingPos.Left;
@@ -234,11 +146,23 @@ namespace MSetExplorer
 
 		public double GetShiftDistanceLeft()
 		{
-			var result = PosBeforeDrop.Left - PosAfterLift.Left;
+			var result = PosBeforeDrop.Left - Current.Left;
 			return result;
 		}
 
 		public double GetShiftDistanceRight()
+		{
+			var result = PosBeforeDrop.Right - Current.Right;
+			return result;
+		}
+
+		public double GetOriginalShiftDistanceLeft()
+		{
+			var result = PosBeforeDrop.Left - PosAfterLift.Left;
+			return result;
+		}
+
+		public double GetOrigialShiftDistanceRight()
 		{
 			var result = PosBeforeDrop.Right - PosAfterLift.Right;
 			return result;
@@ -258,6 +182,5 @@ namespace MSetExplorer
 
 			return destRect;
 		}
-
 	}
 }

@@ -573,6 +573,11 @@ namespace MSetExplorer
 		{
 			if (e.Operation == CbSectionLineDragOperation.NotStarted)
 			{
+				if (e.UpdatingPrevious)
+				{
+					_colorBandsView.MoveCurrentToPosition(e.ColorBandIndex);
+				}
+
 				Debug.WriteIf(_useDetailedDebug, $"CbListView. Drag not started. CbRectangle: {CurrentColorBandIndex} is now current.");
 
 				_sectionLineBeingDragged = null;
@@ -1017,8 +1022,7 @@ namespace MSetExplorer
 			var endPushSyncPoint = _pushColorsAnimationInfo1.GetMaxDuration();
 			var shiftMs = endPushSyncPoint - startPushSyncPoint;
 
-			_storyBoardDetails1.RateFactor = 10;
-
+			_storyBoardDetails1.RateFactor = 1;
 
 			ApplyPushColorsAnimation(_pushColorsAnimationInfo1);
 
@@ -1028,9 +1032,6 @@ namespace MSetExplorer
 				var newFirstItem = ListViewItems[index + 1];
 				var curVal = newFirstItem.Area;
 				var newXPosition = 0;
-
-				//var shiftMs = Math.Abs(newXPosition - curVal.X) / velocity;
-
 				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(startPushSyncPoint), duration: TimeSpan.FromMilliseconds(shiftMs));
 			}
 			else
@@ -1042,11 +1043,11 @@ namespace MSetExplorer
 
 				var curVal = preceedingItem.Area;
 				var newWidth = curVal.Width + widthOfItemBeingRemoved;
-
-				//var shiftMs = Math.Abs(newWidth - curVal.Width) / velocity;
-
 				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, beginTime: TimeSpan.FromMilliseconds(startPushSyncPoint), duration: TimeSpan.FromMilliseconds(shiftMs));
 			}
+
+			ListViewItems[^2].CbRectangle.EndColor = ColorBandColor.Black;
+			ListViewItems[^2].CbColorBlock.EndColor = ColorBandColor.Black;
 
 			// Execute the Animation
 			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index, debounce: true);
@@ -1067,58 +1068,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//private void ApplyPushColorsAnimation(PushColorsAnimationInfo pushColorsAnimationInfo, double liftMs, double resizeMs, double shiftMs)
-		//{
-			//var resizeDuration = TimeSpan.FromMilliseconds(resizeMs);
-			//var liftDuration = TimeSpan.FromMilliseconds(liftMs);
-
-			//foreach (var (block, blend) in pushColorsAnimationInfo.AnimationItemPairs)
-			//{
-			//	var t = 0.0;
-
-			//	// Lift
-			//	_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", block.StartingPos, block.PosAfterLift, beginTime: TimeSpan.Zero, duration: liftDuration);
-			//	_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", blend.StartingPos, blend.PosAfterLift, beginTime: TimeSpan.Zero, duration: liftDuration);
-			//	t += liftMs;
-
-			//	// Shift and resize All items wider than their destination are narrowed as the items are shifted
-
-			//	if (block.ShiftDuration1F > TimeSpan.Zero)
-			//	{
-			//		_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", block.PosAfterLift, block.PosAfterShift1F, beginTime: TimeSpan.FromMilliseconds(t), duration: block.ShiftDuration1F);
-			//	}
-
-
-			//	_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", blend.PosAfterLift, blend.PosAfterShift1, beginTime: TimeSpan.FromMilliseconds(t), duration: resizeDuration);
-			//	t += resizeMs;
-
-			//	// Shift Right the remaining distance
-
-			//	if (block.ShiftDuration2F > TimeSpan.Zero)
-			//	{
-			//		_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", block.PosAfterShift1F, block.PosAfterShift2F, beginTime: TimeSpan.FromMilliseconds(t), duration: block.ShiftDuration2F);
-			//	}
-
-
-			//	_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", blend.PosAfterShift1, blend.PosAfterShift2, beginTime: TimeSpan.FromMilliseconds(t), duration: blend.ShiftDuration1);
-			//	t += shiftMs;
-
-			//	// Resize -- All items narrower than their destination are widened.
-
-			//	if (block.ShiftDuration3F > TimeSpan.Zero)
-			//	{
-			//		_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", block.PosAfterShift2F, block.PosAfterShift3F, beginTime: TimeSpan.FromMilliseconds(t), duration: block.ShiftDuration3F);
-			//	}
-
-			//	_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", blend.PosAfterShift2, blend.PosBeforeDrop, beginTime: TimeSpan.FromMilliseconds(t), duration: resizeDuration);
-			//	t += resizeMs;
-
-			//	// Drop
-			//	_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", block.PosAfterShift3F, block.Destination, beginTime: TimeSpan.FromMilliseconds(t), duration: liftDuration);
-			//	_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", blend.PosBeforeDrop, blend.Destination, beginTime: TimeSpan.FromMilliseconds(t), duration: liftDuration);
-			//}
-		//}
 
 		private void AnimateDeleteCutoffPost(Action<int> onAnimationComplete, int index)
 		{

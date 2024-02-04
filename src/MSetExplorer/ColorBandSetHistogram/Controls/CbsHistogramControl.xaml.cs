@@ -430,7 +430,9 @@ namespace MSetExplorer
 					switch (_vm.CurrentCbEditMode)
 					{
 						case ColorBandSetEditMode.Cutoffs:
-							HistogramColorBandControl1.AnimateCutoffDeletion(_vm.CompleteCutoffRemoval, colorBandIndex.Value);
+							// Delete the Item just after the selected SectionLine
+
+							HistogramColorBandControl1.AnimateCutoffDeletion(_vm.CompleteCutoffRemoval, colorBandIndex.Value + 1);
 							break;
 
 						case ColorBandSetEditMode.Colors:

@@ -245,7 +245,7 @@ namespace MSetExplorer
 						Debug.WriteLine($"SectionLinePositionX vs X2Position MISMATCH: SectionLinePositionX: {SectionLinePositionX}, X2Position: {X2Position}");
 					}
 
-					Debug.WriteLine($"CbSectionLine. SectionLinePositionX is being updated from: {_selectionLinePosition} to {value}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. SectionLinePositionX is being updated from: {_selectionLinePosition} to {value}.");
 					_selectionLinePosition = value;
 					_dragLine.X1 = value;
 					_dragLine.X2 = value;

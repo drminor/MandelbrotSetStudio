@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -456,12 +455,6 @@ namespace MSetExplorer
 				return;
 			}
 
-			//if (c.CbColorBlock.CbColorPairProxy == null)
-			//{
-			//	Debug.WriteLine($"WARNING: The CbColorPairProxy is null on SetColorBlockArea for ColorBandIndex: {c.ColorBandIndex}.");
-			//	return;
-			//}
-
 			c.CbColorBlock.CbColorPair.Container = newValue;
 		}
 
@@ -487,12 +480,6 @@ namespace MSetExplorer
 			{
 				return;
 			}
-
-			//if (c.CbRectangle.CbBlendedColorPairProxy == null)
-			//{
-			//	Debug.WriteLine($"WARNING: The CbBlendedColorPairProxy is null on SetBlendedColorArea for ColorBandIndex: {c.ColorBandIndex}.");
-			//	return;
-			//}
 
 			c.CbRectangle.CbBlendedColorPair.Container = newValue;
 		}

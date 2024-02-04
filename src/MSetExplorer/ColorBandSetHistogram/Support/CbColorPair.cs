@@ -38,6 +38,9 @@ namespace MSetExplorer
 		private RectangleGeometry _endGeometry;
 		private readonly Shape _endColorBlockPath;
 
+		//private RectangleGeometry _diagContainerGeometry;
+		//private readonly Shape _diagContainerPath;
+
 		#endregion
 
 		#region Constructor
@@ -53,6 +56,14 @@ namespace MSetExplorer
 			_startColor = startColor;
 			_endColor = endColor;
 			_blend = blend;
+
+
+			//_diagContainerGeometry = new RectangleGeometry(container);
+			//_diagContainerPath = BuildDiagContainerPath(_diagContainerGeometry);
+			//_canvas.Children.Add(_diagContainerPath);
+			//_diagContainerPath.SetValue(Panel.ZIndexProperty, 25);
+
+
 
 			_startGeometry = new RectangleGeometry(BuildColorBlockStart(_container));
 			_startColorBlockPath = BuildStartColorBlockPath(_startGeometry, _startColor);
@@ -151,6 +162,8 @@ namespace MSetExplorer
 			}
 		}
 
+		public bool ShowDiagBorder { get; set; }
+
 		#endregion
 
 		#region Public Methods
@@ -174,6 +187,7 @@ namespace MSetExplorer
 				{
 					_canvas.Children.Remove(_startColorBlockPath);
 					_canvas.Children.Remove(_endColorBlockPath);
+					//_canvas.Children.Remove(_diagContainerPath);
 				}
 			}
 			catch
@@ -225,6 +239,9 @@ namespace MSetExplorer
 
 			_endColorBlockPath.Visibility = container.Width > 10 ? Visibility.Visible : Visibility.Collapsed;
 			_endGeometry.Rect = BuildColorBlockEnd(container, _startGeometry.Rect);
+
+			//_diagContainerGeometry.Rect = container;
+			//_diagContainerPath.Visibility = container.Width > 2 && container.Height > 2 ? Visibility.Visible : Visibility.Collapsed;
 		}
 
 		private Rect BuildColorBlockStart(Rect container)
@@ -328,6 +345,22 @@ namespace MSetExplorer
 			}
 
 			return (left, width);
+		}
+
+		private Shape BuildDiagContainerPath(RectangleGeometry area)
+		{
+			var result = new Path()
+			{
+				Fill = new SolidColorBrush(Colors.Transparent),
+				Stroke = new SolidColorBrush(Colors.Black),
+				StrokeThickness = 1.0,
+				Data = area,
+				IsHitTestVisible = true
+			};
+
+			result.Visibility = ShowDiagBorder && area.Rect.Width > 0 && area.Rect.Height > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+			return result;
 		}
 
 		#endregion

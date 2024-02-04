@@ -1,5 +1,7 @@
-﻿using System;
+﻿using MSS.Types;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 
@@ -30,19 +32,9 @@ namespace MSetExplorer
 			var blendedColorAItem = new BlendedColorAnimationItem(source, destination, _msPerPixel);
 
 			AnimationItemPairs.Add((colorBlocksAItem, blendedColorAItem));
+
+			//source.CbColorBlock.CbColorPair.ShowDiagBorder = true;
 		}
-
-		/*
-			1. Move right by _liftHeight or less, as we lift it, while keeping the width the same.
-			2. Move right and reduce width until width = destination width
-				how far from liftpoint
-			3. Move right until shift point
-				how far
-			4. Reduce width until width = destination
-				how far
-			5. Move right by _liftHeight or less as we drop it back into place, keeping the width the same.
-
-		*/
 
 		public double CalculateMovements()
 		{
@@ -58,6 +50,9 @@ namespace MSetExplorer
 			for (var i = AnimationItemPairs.Count - 2; i >= 0; i--)
 			{
 				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
+
+				//colorBlockAItem.SourceListViewItem.CbColorBlock.CbColorPair.ShowDiagBorder = false;
+
 				colorBlockAItem.MoveSourceToDestination();
 				blendedColorAItem.MoveSourceToDestination();
 			}
@@ -108,26 +103,33 @@ namespace MSetExplorer
 		{
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				// Lift
+				// Lift -- Move right by _liftHeight or less, as we lift it, while keeping the width the same.
 				colorBlockItem.BuildTimelinePos(colorBlockItem.PosAfterLift, veclocityMultiplier: 0.2);
 				blendedItem.BuildTimelinePos(blendedItem.PosAfterLift, veclocityMultiplier: 0.2);
 			}
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
+				// Move left and reduce width for each item that is futher right that the destination
 				BuildPullTimelines(colorBlockItem);
 				BuildPullTimelines(blendedItem);
 			}
 
-			var startPushSyncPoint = SyncNextBeginTimeElapsed(0);
+			CheckForNegativeShifts();
+
+			var startPushSyncPoint = SyncNextBeginTimeElapsed();
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
+				// Move right those items who are not yet at the destination.
+				// Narrow items to prevent the right side moving past the destination's right side.
 				BuildPushTimelines(colorBlockItem);
 				BuildPushTimelines(blendedItem);
 			}
 
-			SyncNextBeginTimeElapsed(0);
+			SyncNextBeginTimeElapsed();
+
+			CheckItemsAreAtDropPoint();
 
 			// Drop
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
@@ -161,8 +163,11 @@ namespace MSetExplorer
 						// Shift right, keeping the width constant for the distance both the left and right edges must move
 						rectAnimationItem.BuildTimelineX(sDistanceLeft);
 
-						// Shift the right side forward, but keep the left side fixed - i.e., extend the width
-						rectAnimationItem.BuildTimelineW(sDistanceRight - sDistanceLeft);
+						if (sDistanceLeft != sDistanceRight)
+						{
+							// Shift the right side forward, but keep the left side fixed - i.e., widen
+							rectAnimationItem.BuildTimelineW(sDistanceRight - sDistanceLeft);
+						}
 					}
 				}
 				else
@@ -171,9 +176,14 @@ namespace MSetExplorer
 					rectAnimationItem.BuildTimelineX(sDistanceRight);
 				}
 			}
-
-			// Move to PosBeforeDrop
-			rectAnimationItem.BuildTimelinePos(rectAnimationItem.PosBeforeDrop);
+			else
+			{
+				if (sDistanceRight > 0)
+				{
+					// Shift the right side forward, but keep the left side fixed - i.e., widen
+					rectAnimationItem.BuildTimelineW(sDistanceRight);
+				}
+			}
 		}
 
 		private void BuildPullTimelines(IRectAnimationItem rectAnimationItem)
@@ -200,14 +210,20 @@ namespace MSetExplorer
 						// Shift left, keeping the width constant for the distance both the left and right edges must move
 						rectAnimationItem.BuildTimelineX(sDistanceLeft);
 
-						// Shift the right side backward, but keep the left side fixed - i.e., decrease the width
-						rectAnimationItem.BuildTimelineW(sDistanceRight - sDistanceLeft);
+						if (sDistanceLeft != sDistanceRight)
+						{
+							// Shift the right side backward, but keep the left side fixed - i.e., decrease the width
+							rectAnimationItem.BuildTimelineW(sDistanceRight - sDistanceLeft);
+						}
 					}
 				}
-				else
+			}
+			else
+			{
+				if (sDistanceRight < 0)
 				{
-					// Shift right, keeping width constant for the distance both the left and right edges must move
-					rectAnimationItem.BuildTimelineX(sDistanceLeft);
+					// Shift the right side backward, but keep the left side fixed - i.e., decrease the width
+					rectAnimationItem.BuildTimelineW(sDistanceRight);
 				}
 			}
 		}
@@ -226,174 +242,6 @@ namespace MSetExplorer
 
 			return syncPoint;
 		}
-
-		private void CalculateShiftPositionsOld()
-		{
-			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
-			{
-				// Move to lift point
-				colorBlockItem.BuildTimelinePos(colorBlockItem.PosAfterLift);
-
-				var sDistanceLeft = colorBlockItem.GetShiftDistanceLeft();
-				var sDistanceRight = colorBlockItem.GetShiftDistanceRight();
-
-				//	ShiftDistanceLeft = GetShiftDistanceLeft();
-				//	ShiftDistanceRight = GetShiftDistanceRight();
-
-				//	TimeWhenLeftStopsF = ShiftDistanceLeft / velocity;
-				//	TimeWhenRightStopsF = ShiftDistanceRight / velocity;
-
-
-				if (sDistanceLeft > 0)
-				{
-					if (sDistanceRight > 0)
-					{
-						if (sDistanceLeft > sDistanceRight)
-						{
-							// Shift right, keeping width constant for the distance both the left and right edges must move
-							colorBlockItem.BuildTimelineX(sDistanceRight);
-
-							// Shift left side forward, but keep the right side fixed
-							colorBlockItem.BuildTimelineXAnchorRight(sDistanceLeft - sDistanceRight);
-						}
-						else
-						{
-							// Shift right, keeping the width constant for the distance both the left and right edges must move
-							colorBlockItem.BuildTimelineX(sDistanceLeft);
-
-							// Shift the right side forward, but keep the left side fixed - i.e., extend the width
-							colorBlockItem.BuildTimelineW(sDistanceRight - sDistanceLeft);
-						}
-					}
-					else
-					{
-
-					}
-				}
-				else
-				{
-
-				}
-
-				//if (colorBlockItem.TimeRightIsMovingFWhileLeftIsMovingF > 0)
-				//{
-				//	// First shift while keeping the  width constant
-				//	// Calculate the shift amount while keeping the width
-				//	var cS1 = 0;
-
-				//	var colorBlockPoint1 = Point.Add(colorBlockItem.PosAfterLift.Location, new Vector(cS1, 0));
-				//	colorBlockItem.PosAfterShift1F = new Rect(colorBlockPoint1, colorBlockItem.StartingPos.Size);
-
-				//	colorBlockItem.ShiftDuration1F = TimeSpan.FromMilliseconds(cS1 * _velocity);
-				//}
-				//else
-				//{
-				//	colorBlockItem.PosAfterShift1F = colorBlockItem.PosAfterLift;
-				//	colorBlockItem.ShiftDuration1F = TimeSpan.Zero;
-				//}
-
-				//Size colorBlockSize2;
-
-				//if (colorBlockItem.TimeLeftIsMovingFAfterRightStops > 0)
-				//{
-				//	// Second shift move left, but not right.
-				//	// Calculate the shift amount while narrowing the item
-				//	var cS2 = 0;
-				//	var cW1 = 0;
-
-				//	var colorBlockPoint2 = Point.Add(colorBlockItem.PosAfterLift.Location, new Vector(cS2, 0));
-				//	colorBlockSize2 = new Size(colorBlockItem.StartingPos.Size.Width + cW1, colorBlockHeight);
-				//	colorBlockItem.PosAfterShift2F = new Rect(colorBlockPoint2, colorBlockSize2);
-
-				//	colorBlockItem.ShiftDuration2F = TimeSpan.FromMilliseconds(cS2 * _velocity);
-				//}
-				//else
-				//{
-				//	colorBlockItem.PosAfterShift2F = colorBlockItem.PosAfterShift1F;
-				//	colorBlockItem.ShiftDuration2F = TimeSpan.Zero;
-				//}
-
-
-				//if (colorBlockItem.TimeRightIsMovingFAfterLeftStops > 0)
-				//{
-				//	// Third shift widen
-
-				//	// Calculate the amount the band needs to be widened
-				//	var cW2 = 0;
-				//	var colorBlockSize3 = new Size(colorBlockSize2.Width + cW2, colorBlockHeight);
-				//	colorBlockItem.PosAfterShift3F = new Rect(colorBlockItem.PosAfterShift2F.Location, colorBlockSize3);
-
-				//	colorBlockItem.ShiftDuration3F = TimeSpan.FromMilliseconds(cW2 * _velocity);
-
-				//}
-				//else
-				//{
-				//	colorBlockItem.PosAfterShift3F = colorBlockItem.PosAfterShift2F;
-				//	colorBlockItem.ShiftDuration3F = TimeSpan.Zero;
-				//}
-			}
-		}
-
-		//private void CalculateShiftPositionsOld()
-		//{
-
-		//	foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
-		//	{
-		//		var colorBlockLiftedTop = colorBlockItem.StartingPos.Y - _liftHeight;
-		//		var blendedBandLiftedTop = blendedItem.StartingPos.Y - _liftHeight;
-
-		//		// After first shift and narrowing
-		//		// Calculate the shift amount while narrowing the item
-		//		var cS1 = 0;
-		//		var cW1 = 0;
-
-		//		var colorBlockPoint2 = new Point(colorBlockItem.PosAfterLift.X + cS1, colorBlockLiftedTop);
-		//		var colorBlockSize2 = new Size(colorBlockItem.StartingPos.Size.Width + cW1, colorBlockLiftedTop);
-		//		colorBlockItem.PosAfterShift1F = new Rect(colorBlockPoint2, colorBlockSize2);
-
-		//		var bS1 = 0;
-		//		var bW1 = 0;
-		//		var blendBandPoint2 = new Point(blendedItem.PosAfterLift.X + bS1, blendedBandLiftedTop);
-		//		var blendedBandSize2 = new Size(blendedItem.StartingPos.Size.Width + bW1, blendedBandLiftedTop);
-		//		blendedItem.PosAfterShift1 = new Rect(blendBandPoint2, blendedBandSize2);
-
-		//		// After second shift with constant width
-		//		// Calculate the shift amount while keeping the width
-		//		var cS2 = 0;
-
-		//		var colorBlockPoint3 = new Point(colorBlockItem.PosAfterShift1F.X + cS2, colorBlockLiftedTop);
-		//		colorBlockItem.PosAfterShift2F = new Rect(colorBlockPoint3, colorBlockSize2);
-
-		//		var bS2 = 0;
-		//		var blendedBandPoint3 = new Point(blendedItem.PosAfterShift1.X + bS2, blendedBandLiftedTop);
-		//		blendedItem.PosAfterShift2 = new Rect(blendedBandPoint3, blendedBandSize2);
-
-
-		//		// Calculate the amount the band needs to be widened
-		//		var cW2 = 0;
-		//		var colorBlockSize3 = new Size(colorBlockSize2.Width + cW2, colorBlockLiftedTop);
-		//		colorBlockItem.PosAfterShift3F = new Rect(colorBlockPoint3, colorBlockSize3);
-
-		//		var bW2 = 0;
-		//		var blendedBandSize3 = new Size(blendedBandSize2.Width + bW2, blendedBandLiftedTop);
-		//		blendedItem.PosAfterResize3 = new Rect(blendedBandPoint3, blendedBandSize3);
-		//	}
-		//}
-
-		//private void CalculateDurationsOld()
-		//{
-		//	var maxShiftDistForBlocks = GetMaxShiftDistanceForBlocks();
-		//	var maxShiftDistForBlends = GetMaxShiftDistanceForBlends();
-
-		//	foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
-		//	{
-		//		var fraction = colorBlockItem.GetShiftDistanceLeft() / maxShiftDistForBlocks;
-		//		colorBlockItem.ShiftDuration1F = TimeSpan.FromMilliseconds(fraction * _totalShiftDurationMs);
-
-		//		fraction = blendedItem.GetShiftDistance() / maxShiftDistForBlends;
-		//		blendedItem.ShiftDuration1 = TimeSpan.FromMilliseconds(fraction * _totalShiftDurationMs);
-		//	}
-		//}
 
 		private double GetFirstHDistForBlocks(double liftHeight)
 		{
@@ -429,20 +277,44 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//private double GetMaxShiftDistanceForBlocks()
-		//{
-		//	var maxLeft = AnimationItemPairs.Max(x => x.Item1.GetShiftDistanceLeft());
-		//	var maxRight = AnimationItemPairs.Max(x => x.Item1.GetShiftDistanceRight());
-		//	return Math.Max(maxLeft, maxRight);
-		//}
+		[Conditional("DEBUG")]
+		private void CheckForNegativeShifts()
+		{
+			var cntColorBlocksThatWillMoveLeft = AnimationItemPairs.Count(x => x.Item1.GetShiftDistanceLeft() < 0 || x.Item1.GetShiftDistanceRight() < 0);
+			Debug.Assert(cntColorBlocksThatWillMoveLeft == 0, $"There are {cntColorBlocksThatWillMoveLeft} ColorBlocks not at the drop point.");
 
-		//private double GetMaxShiftDistanceForBlends()
-		//{
-		//	var maxLeft = AnimationItemPairs.Max(x => x.Item2.GetShiftDistance());
-		//	var maxRight = 0; // AnimationItemPairs.Max(x => x.Item2.GetShiftDistanceRight());
+			//if (cntColorBlocksThatWillMoveLeft > 0)
+			//{
+			//	Debug.WriteLine($"There are {cntColorBlocksThatWillMoveLeft} ColorBlocks that need to move left.");
+			//}
 
-		//	return Math.Max(maxLeft, maxRight);
-		//}
+			var cntBlendedBandsThatWillMoveLeft = AnimationItemPairs.Count(x => x.Item2.GetShiftDistanceLeft() < 0 || x.Item2.GetShiftDistanceRight() < 0);
+			Debug.Assert(cntBlendedBandsThatWillMoveLeft == 0, $"There are {cntBlendedBandsThatWillMoveLeft} ColorBlocks not at the drop point.");
+			//if (cntBlendedBandsThatWillMoveLeft > 0)
+			//{
+			//	Debug.WriteLine($"There are {cntBlendedBandsThatWillMoveLeft} BlendedBands that need to move left.");
+			//}
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckItemsAreAtDropPoint()
+		{
+			var cntColorBlocksNotAtDropPt = AnimationItemPairs.Count(x => !ScreenTypeHelper.IsDoubleNearZero(x.Item1.GetShiftDistanceLeft()));
+			Debug.Assert(cntColorBlocksNotAtDropPt == 0, $"There are {cntColorBlocksNotAtDropPt} ColorBlocks not at the drop point.");
+
+			//if (cntColorBlocksNotAtDropPt > 0)
+			//{
+			//	Debug.WriteLine($"There are {cntColorBlocksNotAtDropPt} ColorBlocks not at the drop point.");
+			//}
+
+			var cntBlendedBandsNotAtDropPt = AnimationItemPairs.Count(x => !ScreenTypeHelper.IsDoubleNearZero(x.Item2.GetShiftDistanceLeft()));
+			Debug.Assert(cntBlendedBandsNotAtDropPt == 0, $"There are {cntBlendedBandsNotAtDropPt} BlendedBands not at the drop point.");
+
+			//if (cntBlendedBandsNotAtDropPt > 0)
+			//{
+			//	Debug.WriteLine($"There are {cntBlendedBandsNotAtDropPt} BlendedBands not at the drop point.");
+			//}
+		}
 
 		#endregion
 	}
