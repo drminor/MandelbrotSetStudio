@@ -20,10 +20,11 @@ namespace MSetExplorer
 
 	public enum CbSectionLineDragOperation
 	{
-		Move = 0,
-		Complete = 1,
-		Cancel = 2,
-		NotStarted = 3
+		Started,
+		Move,
+		Complete,
+		Cancel,
+		NotStarted
 	}
 
 }

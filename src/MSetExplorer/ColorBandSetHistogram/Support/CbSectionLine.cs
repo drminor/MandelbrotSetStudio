@@ -465,6 +465,9 @@ namespace MSetExplorer
 
 		private void HandleMouseMove(object sender, MouseEventArgs e)
 		{
+			CbSectionLineDragOperation op;
+			bool newPositionIsOk;
+
 			var pos = e.GetPosition(relativeTo: _canvas);
 			e.Handled = true;
 
@@ -472,22 +475,32 @@ namespace MSetExplorer
 
 			if (DragState == DragState.Begun)
 			{
+				op = CbSectionLineDragOperation.Started;
 				if (Math.Abs(amount) > MIN_SEL_DISTANCE)
 				{
-					DragState = DragState.InProcess;
+					newPositionIsOk = IsNewPositionOk(amount);
+					if (newPositionIsOk)
+					{
+						DragState = DragState.InProcess;
+					}
 				}
 				else
 				{
 					return;
 				}
 			}
-
-			if (IsNewPositionOk(amount))
+			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. UpdateColorBandWidth returned true. The XPos is {pos.X}. The original position is {_originalSectionLinePosition}.");
+				op = CbSectionLineDragOperation.Move;
+				newPositionIsOk = IsNewPositionOk(amount);
+			}
+
+			if (newPositionIsOk)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. The position is ok upon MouseMove. The XPos is {pos.X}. The original position is {_originalSectionLinePosition}.");
 				SectionLinePositionX = pos.X;
 
-				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, CbSectionLineDragOperation.Move));
+				_sectionLineMovedCallback(new CbSectionLineMovedEventArgs(ColorBandIndex, pos.X, _updatingPrevious, op));
 			}
 			else
 			{
