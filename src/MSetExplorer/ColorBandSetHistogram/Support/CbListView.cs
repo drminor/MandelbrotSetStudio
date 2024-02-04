@@ -43,6 +43,7 @@ namespace MSetExplorer
 		private int? _indexOfMostRecentlySelectedItem;
 
 		private PushColorsAnimationInfo? _pushColorsAnimationInfo1 = null;
+		private PullColorsAnimationInfo? _pullColorsAnimationInfo1 = null;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -1074,9 +1075,9 @@ namespace MSetExplorer
 
 			for (var i = index; i < ListViewItems.Count; i++)
 			{
-				var lvi = ListViewItems[i];
-				var lviSuccessor = i == ListViewItems.Count - 1 ? null : ListViewItems[i + 1];
-				_pushColorsAnimationInfo1.Add(lvi, lviSuccessor);
+				var lviSource = ListViewItems[i];
+				var lviDestination = i == ListViewItems.Count - 1 ? null : ListViewItems[i + 1];
+				_pushColorsAnimationInfo1.Add(lviSource, lviDestination);
 			}
 
 			var startPushSyncPoint = _pushColorsAnimationInfo1.CalculateMovements();
@@ -1114,22 +1115,6 @@ namespace MSetExplorer
 			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, onAnimationComplete, index, debounce: true);
 		}
 
-		private void ApplyPushColorsAnimation(PushColorsAnimationInfo pushColorsAnimationInfo)
-		{
-			foreach (var (block, blend) in pushColorsAnimationInfo.AnimationItemPairs)
-			{
-				foreach(var tl in block.RectTransitions)
-				{
-					_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
-				}
-
-				foreach (var tl in blend.RectTransitions)
-				{
-					_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
-				}
-			}
-		}
-
 		private void AnimateDeleteCutoffPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("ANIMATION COMPLETED\n CutoffDeletion Animation has completed.");
@@ -1149,16 +1134,38 @@ namespace MSetExplorer
 
 		public void AnimateDeleteColor(Action<int> onAnimationComplete, int index)
 		{
-			//var itemBeingRemoved = ListViewItems[index];
+			Debug.WriteLine($"AnimateDeleteColor. Index = {index}.");
+			ReportCanvasChildren();
+			//ReportColorBands("Top of AnimateDeleteColor", ListViewItems);
+
+			var velocity = 700 / 1000d;     // 700 pixels per second or 0.7 pixels / millisecond
+
+			// Create the class that will calcuate the 'PullColor' animation details
+			var liftHeight = _elevations.ColorBlocksHeight / 2;
+			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(liftHeight, velocity);
+
+			for (var i = index; i < ListViewItems.Count; i++)
+			{
+				var lviDestination = ListViewItems[i];
+				var lviSource = i == ListViewItems.Count - 1 ? null : ListViewItems[i + 1];
+				_pullColorsAnimationInfo1.Add(lviSource, lviDestination);
+			}
+
+			_ = _pullColorsAnimationInfo1.CalculateMovements();
+
+			_storyBoardDetails1.RateFactor = 10;
+
+			ApplyPullColorsAnimation(_pullColorsAnimationInfo1);
 
 			_storyBoardDetails1.Begin(AnimateDeleteColorPost, onAnimationComplete, index, debounce: false);
 		}
 
 		private void AnimateDeleteColorPost(Action<int> onAnimationComplete, int index)
 		{
-			Debug.WriteLine("ColorDeletion Animation has completed.");
+			Debug.WriteLine("ANIMATION COMPLETED\n ColorDeletion Animation has completed.");
 
-			//var lvi = ListViewItems[index];
+			_pullColorsAnimationInfo1?.MoveSourcesToDestinations();
+			_pullColorsAnimationInfo1 = null;
 
 			onAnimationComplete(index);
 		}
@@ -1259,6 +1266,38 @@ namespace MSetExplorer
 			}
 
 			return result;
+		}
+
+		private void ApplyPushColorsAnimation(PushColorsAnimationInfo pushColorsAnimationInfo)
+		{
+			foreach (var (block, blend) in pushColorsAnimationInfo.AnimationItemPairs)
+			{
+				foreach (var tl in block.RectTransitions)
+				{
+					_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
+				}
+
+				foreach (var tl in blend.RectTransitions)
+				{
+					_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
+				}
+			}
+		}
+
+		private void ApplyPullColorsAnimation(PullColorsAnimationInfo pullColorsAnimationInfo)
+		{
+			foreach (var (block, blend) in pullColorsAnimationInfo.AnimationItemPairs)
+			{
+				foreach (var tl in block.RectTransitions)
+				{
+					_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
+				}
+
+				foreach (var tl in blend.RectTransitions)
+				{
+					_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
+				}
+			}
 		}
 
 		#endregion

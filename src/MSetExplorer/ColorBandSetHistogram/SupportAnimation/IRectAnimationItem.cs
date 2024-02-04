@@ -7,7 +7,7 @@ namespace MSetExplorer
 	{
 		string Name { get; }
 
-		CbListViewItem SourceListViewItem { get; init; }
+		CbListViewItem? SourceListViewItem { get; init; }
 		CbListViewItem? DestinationListViewItem { get; init; }
 
 		Rect StartingPos { get; set; }

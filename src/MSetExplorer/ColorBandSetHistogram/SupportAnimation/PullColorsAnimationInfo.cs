@@ -1,5 +1,4 @@
-﻿using MSS.Types;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,14 +8,12 @@ namespace MSetExplorer
 {
 	using AnimationItemPairList = List<(IRectAnimationItem, IRectAnimationItem)>;
 
-	internal class PushColorsAnimationInfo
+	internal class PullColorsAnimationInfo
 	{
 		private double _liftHeight;
 		private double _msPerPixel;
 
-		#region Constructor
-
-		public PushColorsAnimationInfo(double liftHeight, double velocity)
+		public PullColorsAnimationInfo(double liftHeight, double velocity)
 		{
 			_liftHeight = liftHeight;
 			_msPerPixel = 1 / velocity;
@@ -24,20 +21,18 @@ namespace MSetExplorer
 			AnimationItemPairs = new AnimationItemPairList();
 		}
 
-		#endregion
-
 		public AnimationItemPairList AnimationItemPairs;
 
 		#region Public Methods
 
-		public void Add(CbListViewItem source, CbListViewItem? destination)
+		public void Add(CbListViewItem? source, CbListViewItem destination)
 		{
 			var colorBlocksAItem = new ColorBlocksAnimationItem(source, destination, _msPerPixel);
 			var blendedColorAItem = new BlendedColorAnimationItem(source, destination, _msPerPixel);
 
 			AnimationItemPairs.Add((colorBlocksAItem, blendedColorAItem));
 
-			//source.CbColorBlock.CbColorPair.ShowDiagBorder = true;
+			destination.CbColorBlock.CbColorPair.ShowDiagBorder = true;
 		}
 
 		public double CalculateMovements()
@@ -51,11 +46,11 @@ namespace MSetExplorer
 
 		public void MoveSourcesToDestinations()
 		{
-			for (var i = AnimationItemPairs.Count - 2; i >= 0; i--)
+			for (var i = 1; i < AnimationItemPairs.Count; i++)
 			{
 				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
 
-				//colorBlockAItem.SourceListViewItem!.CbColorBlock.CbColorPair.ShowDiagBorder = false;
+				colorBlockAItem.DestinationListViewItem!.CbColorBlock.CbColorPair.ShowDiagBorder = false;
 
 				colorBlockAItem.MoveSourceToDestination();
 				blendedColorAItem.MoveSourceToDestination();
@@ -114,21 +109,22 @@ namespace MSetExplorer
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				// Move left and reduce width for each item that is futher right that the destination
-				BuildPullTimelines(colorBlockItem);
-				BuildPullTimelines(blendedItem);
+				// Move right those items who are not yet at the destination.
+				// Narrow items to prevent the right side moving past the destination's right side.
+				BuildPushTimelines(colorBlockItem);
+				BuildPushTimelines(blendedItem);
+
 			}
 
-			CheckForNegativeShifts();
+			CheckForPositiveShifts();
 
 			var startPushSyncPoint = SyncNextBeginTimeElapsed();
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				// Move right those items who are not yet at the destination.
-				// Narrow items to prevent the right side moving past the destination's right side.
-				BuildPushTimelines(colorBlockItem);
-				BuildPushTimelines(blendedItem);
+				// Move left and reduce width for each item that is futher right that the destination
+				BuildPullTimelines(colorBlockItem);
+				BuildPullTimelines(blendedItem);
 			}
 
 			SyncNextBeginTimeElapsed();
@@ -174,11 +170,6 @@ namespace MSetExplorer
 						}
 					}
 				}
-				else
-				{
-					// Shift right, keeping width constant for the distance both the left and right edges must move
-					rectAnimationItem.BuildTimelineX(sDistanceRight);
-				}
 			}
 			else
 			{
@@ -221,6 +212,11 @@ namespace MSetExplorer
 						}
 					}
 				}
+				else
+				{
+					// Shift right, keeping width constant for the distance both the left and right edges must move
+					rectAnimationItem.BuildTimelineX(sDistanceRight);
+				}
 			}
 			else
 			{
@@ -256,7 +252,7 @@ namespace MSetExplorer
 			// The first horizontal movement can be no greater than 1/2 the total distance
 			// for any of items.
 
-			var minDist = AnimationItemPairs.Min(x => x.Item1.GetDistance());
+			var minDist = AnimationItemPairs.Max(x => x.Item1.GetDistance());
 			var firstMovementDistMax = minDist / 2;
 
 			var result = Math.Min(firstMovementDistMax, liftHeight);
@@ -273,7 +269,7 @@ namespace MSetExplorer
 			// The first horizontal movement can be no greater than 1/2 the total distance
 			// for any of items.
 
-			var minDist = AnimationItemPairs.Min(x => x.Item2.GetDistance());
+			var minDist = AnimationItemPairs.Max(x => x.Item2.GetDistance());
 			var firstMovementDistMax = minDist / 2;
 
 			var result = Math.Min(firstMovementDistMax, liftHeight);
@@ -286,9 +282,9 @@ namespace MSetExplorer
 		#region Diagnostics
 
 		[Conditional("DEBUG")]
-		private void CheckForNegativeShifts()
+		private void CheckForPositiveShifts()
 		{
-			var cntColorBlocksThatWillMoveLeft = AnimationItemPairs.Count(x => x.Item1.GetShiftDistanceLeft() < 0 || x.Item1.GetShiftDistanceRight() < 0);
+			var cntColorBlocksThatWillMoveLeft = AnimationItemPairs.Count(x => x.Item1.GetShiftDistanceLeft() > 0 || x.Item1.GetShiftDistanceRight() > 0);
 			Debug.Assert(cntColorBlocksThatWillMoveLeft == 0, $"There are {cntColorBlocksThatWillMoveLeft} ColorBlocks not at the drop point.");
 
 			//if (cntColorBlocksThatWillMoveLeft > 0)
@@ -296,7 +292,7 @@ namespace MSetExplorer
 			//	Debug.WriteLine($"There are {cntColorBlocksThatWillMoveLeft} ColorBlocks that need to move left.");
 			//}
 
-			var cntBlendedBandsThatWillMoveLeft = AnimationItemPairs.Count(x => x.Item2.GetShiftDistanceLeft() < 0 || x.Item2.GetShiftDistanceRight() < 0);
+			var cntBlendedBandsThatWillMoveLeft = AnimationItemPairs.Count(x => x.Item2.GetShiftDistanceLeft() > 0 || x.Item2.GetShiftDistanceRight() > 0);
 			Debug.Assert(cntBlendedBandsThatWillMoveLeft == 0, $"There are {cntBlendedBandsThatWillMoveLeft} ColorBlocks not at the drop point.");
 			//if (cntBlendedBandsThatWillMoveLeft > 0)
 			//{

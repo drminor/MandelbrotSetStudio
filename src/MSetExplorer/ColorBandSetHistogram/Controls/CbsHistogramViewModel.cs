@@ -8,13 +8,10 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Threading;
-using Windows.UI.WebUI;
-using static ABI.System.Windows.Input.ICommand_Delegates;
 
 namespace MSetExplorer
 {
@@ -153,54 +150,6 @@ namespace MSetExplorer
 		{
 			get => _currentCbEditMode.ToString();
 		}
-
-		//public bool EditingCutoffs
-		//{
-		//	get => _currentCbEditMode.HasFlag(ColorBandSetEditMode.Cutoffs);
-		//	set
-		//	{
-		//		ColorBandSetEditMode newVal;
-
-		//		if (value)
-		//		{
-		//			newVal = CurrentCbEditMode | ColorBandSetEditMode.Cutoffs;
-		//		}
-		//		else
-		//		{
-		//			newVal = CurrentCbEditMode & ~ColorBandSetEditMode.Cutoffs;
-		//		}
-
-		//		if (newVal != CurrentCbEditMode)
-		//		{
-		//			CurrentCbEditMode = newVal;
-		//			OnPropertyChanged(nameof(ICbsHistogramViewModel.EditingCutoffs));
-		//		}
-		//	}
-		//}
-
-		//public bool EditingColors
-		//{
-		//	get => _currentCbEditMode.HasFlag(ColorBandSetEditMode.Colors);
-		//	set
-		//	{
-		//		ColorBandSetEditMode newVal;
-
-		//		if (value)
-		//		{
-		//			newVal = CurrentCbEditMode | ColorBandSetEditMode.Colors;
-		//		}
-		//		else
-		//		{
-		//			newVal = CurrentCbEditMode & ~ColorBandSetEditMode.Colors;
-		//		}
-
-		//		if (newVal != CurrentCbEditMode)
-		//		{
-		//			CurrentCbEditMode = newVal;
-		//			OnPropertyChanged(nameof(ICbsHistogramViewModel.EditingColors));
-		//		}
-		//	}
-		//}
 
 		public ColorBandSet ColorBandSet
 		{
@@ -603,7 +552,7 @@ namespace MSetExplorer
 
 		#endregion
 
-		#region Public Methods
+		#region Public Methods 
 
 		//public void ClearSelectedItems()
 		//{
@@ -660,517 +609,6 @@ namespace MSetExplorer
 
 			var result = _colorBandsView.MoveCurrentToPrevious();
 			return result;
-		}
-
-		//public bool TryInsertNewItem(ColorBand colorBand, out int index)
-		//{
-		//	bool result;
-		//	switch (CurrentCbEditMode)
-		//	{
-		//		case ColorBandSetEditMode.Cutoffs:
-		//			result = TryInsertCutoff(colorBand, out index);
-		//			break;
-		//		case ColorBandSetEditMode.Colors:
-		//			result = TryInsertColor(colorBand, out index);
-		//			break;
-		//		case ColorBandSetEditMode.Bands:
-		//			result = TryInsertColorBand(colorBand, out index);
-		//			break;
-		//		default:
-		//			throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
-		//	}
-
-		//	if (result)
-		//	{
-		//		PushCurrentColorBandOnToHistoryCollection();
-		//		IsDirty = true;
-		//		UpdatePercentages();
-
-		//		if (UseRealTimePreview)
-		//		{
-		//			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-		//		}
-		//	}
-
-		//	return result;
-		//}
-
-		public bool TestInsertItem(int colorBandIndex)
-		{
-			if (CurrentColorBand == null || ColorBandUserControlHasErrors)
-			{
-				return false;
-			}
-
-			switch (CurrentCbEditMode)
-			{
-				case ColorBandSetEditMode.Cutoffs:
-					var colorBand = _currentColorBandSet[colorBandIndex];
-
-					if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
-					{
-						Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
-						return false;
-					}
-
-					break;
-
-				case ColorBandSetEditMode.Colors:
-					break;
-
-				case ColorBandSetEditMode.Bands:
-					colorBand = _currentColorBandSet[colorBandIndex];
-
-					if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
-					{
-						Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
-						return false;
-					}
-					break;
-
-				default:
-					throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
-			}
-
-			return true;
-		} 
-
-		public void CompleteCutoffInsertion(int index)
-		{
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteCutoffInsertion has been callled.");
-			var selItem = _currentColorBandSet[index];
-
-			var result = TryInsertCutoff(selItem, out var newIndex);
-
-			if (!result)
-			{
-				Debug.WriteLine("WARNING: Could not CompleteCutoffInsertion.");
-				return;
-			}
-
-			Debug.WriteLine($"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {newIndex}.");
-
-			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
-			UpdatePercentages();
-
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-			}
-
-			//ReportRemoveCurrentItem(index);
-		}
-
-		private bool TryInsertCutoff(ColorBand colorBand, out int index)
-		{
-			if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
-			{
-				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
-				index = -1;
-				return false;
-			}
-
-			var prevCutoff = colorBand.PreviousCutoff ?? 0;
-			var newCutoff = prevCutoff + (colorBand.Cutoff - prevCutoff) / 2;
-
-			index = _currentColorBandSet.IndexOf(colorBand);
-
-			CurrentColorBand = null;
-			_currentColorBandSet.InsertCutoff(index, newCutoff);
-			//ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(colorBand);
-
-			return true;
-		}
-
-		public void CompleteColorInsertion(int index)
-		{
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorInsertion has been callled.");
-			var selItem = _currentColorBandSet[index];
-
-			var result = TryInsertColor(selItem, out var newIndex);
-
-			if (!result)
-			{
-				Debug.WriteLine("WARNING: Could not CompleteColorInsertion.");
-				return;
-			}
-
-			Debug.WriteLine($"ColorBandSetViewModel. After ColorInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {newIndex}.");
-
-			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
-			UpdatePercentages();
-
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-			}
-
-			//ReportRemoveCurrentItem(index);
-		}
-
-		private bool TryInsertColor(ColorBand colorBand, out int index)
-		{
-			index = _currentColorBandSet.IndexOf(colorBand);
-
-			var newItem = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor);
-
-			CurrentColorBand = null;
-			_currentColorBandSet.InsertColor(index, newItem);
-			//ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(colorBand);
-
-			return true;
-		}
-
-		public void CompleteBandInsertion(int index)
-		{
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteBandInsertion has been callled.");
-			var selItem = _currentColorBandSet[index];
-
-			var result = TryInsertColorBand(selItem, out var newIndex);
-
-			if (!result)
-			{
-				Debug.WriteLine("WARNING: Could not CompleteBandInsertion.");
-				return;
-			}
-
-			Debug.WriteLine($"ColorBandSetViewModel. After BandInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {newIndex}.");
-
-			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
-			UpdatePercentages();
-
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-			}
-
-			//ReportRemoveCurrentItem(index);
-		}
-
-		private bool TryInsertColorBand(ColorBand colorBand, out int index)
-		{
-			if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
-			{
-				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
-				index = -1;
-				return false;
-			}
-
-			var prevCutoff = colorBand.PreviousCutoff ?? 0;
-			var newCutoff = prevCutoff + (colorBand.Cutoff - prevCutoff) / 2;
-			var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor, colorBand.PreviousCutoff, colorBand.StartColor, double.NaN);
-
-			index = _currentColorBandSet.IndexOf(colorBand);
-
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:About to Insert item at index: {index}. The new item is: {newItem}.");
-
-			lock (_histLock)
-			{
-				_currentColorBandSet.Insert(index, newItem);
-				_currentColorBandSet.UpdateItemAndNeighbors(index, newItem);
-			}
-
-			if (!ColorBandsView.MoveCurrentTo(newItem))
-			{
-				Debug.WriteLine("ColorBandSetViewModel:Could not position the view to the new item.");
-			}
-
-			return true;
-		}
-
-		public bool TestDeleteItem(int colorBandIndex)
-		{
-			bool result;
-
-			switch (CurrentCbEditMode)
-			{
-				case ColorBandSetEditMode.Cutoffs:
-
-					// Cannot delete the last entry
-					result = colorBandIndex <= _currentColorBandSet.Count - 2;
-					break;
-
-				case ColorBandSetEditMode.Colors:
-					// Cannot delete the last entry
-
-					result = colorBandIndex <= _currentColorBandSet.Count - 2;
-					break;
-
-				case ColorBandSetEditMode.Bands:
-
-					if (_colorBandsView.Count < 2)
-					{
-						// There is only one ColorBand remaining. 
-						result = false;
-					}
-					else if (colorBandIndex > _currentColorBandSet.Count - 2)
-					{
-						// Cannot delete the last entry
-						result = false;
-					}
-					else
-					{
-						result = true;
-					}
-					break;
-
-				default:
-					throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
-			}
-
-			return result;
-		}
-
-		//public bool TryDeleteItem(ColorBand colorBand)
-		//{
-		//	//var selectedItems = GetSelectedItems(_currentColorBandSet);
-
-		//	bool result;
-
-		//	switch (CurrentCbEditMode)
-		//	{
-		//		case ColorBandSetEditMode.Cutoffs:
-		//			result = TryDeleteCutoff(colorBand);
-		//			break;
-		//		case ColorBandSetEditMode.Colors:
-		//			result = TryDeleteColor(colorBand);
-		//			break;
-		//		case ColorBandSetEditMode.Bands:
-		//			result = TryDeleteColorBand(colorBand);
-		//			break;
-		//		default:
-		//			throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
-		//	}
-
-		//	if (result)
-		//	{
-		//		PushCurrentColorBandOnToHistoryCollection();
-		//		IsDirty = true;
-		//		UpdatePercentages();
-
-		//		if (UseRealTimePreview)
-		//		{
-		//			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-		//		}
-		//	}
-
-		//	return result;
-		//}
-
-		public void CompleteCutoffRemoval(int index)
-		{
-			var selItem = _currentColorBandSet[index];
-
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffRemoval has been callled for index = {index} with Cutoff = {selItem.Cutoff}.");
-
-			var result = TryDeleteStartingCutoff(selItem);
-
-			if (!result)
-			{
-				Debug.WriteLine("WARNING: Could not CompleteCutoffRemoval.");
-				return;
-			}
-
-			if (index == 0)
-			{
-				var cb = _currentColorBandSet[index];
-				cb.PreviousCutoff = 0;
-			}
-			else
-			{
-				var cb = _currentColorBandSet[index - 1];
-				var newCutoff = _currentColorBandSet[index].PreviousCutoff ?? 0;
-
-				//var cutOff = selItem.Cutoff;
-				//Debug.WriteLine($"Extending the width of the previous item: index={index - 1} from {cb.Cutoff} to newCutoff: {newCutoff} compare to the cutoff of the band being removed: {cutOff}.");
-				//var sC = selItem.StartColor;
-				//var newSc = _currentColorBandSet[index].StartColor;
-				//Debug.WriteLine($"The successor start color of band just before the band being removed is {cb.SuccessorStartColor}, the start color of the band immed after the one being removed is {newSc}.");
-
-				cb.Cutoff = newCutoff;
-			}
-
-			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
-
-			if (index > 0)
-				index--;
-
-			if (_colorBandsView.CurrentPosition != index)
-			{
-				_colorBandsView.MoveCurrentToPosition(index);
-			}
-			else
-			{
-				CurrentColorBand = _currentColorBandSet[index];
-			}
-
-			Debug.WriteLine($"ColorBandSetViewModel.After CutoffRemoval, the current position is {ColorBandsView.CurrentPosition}.");
-
-			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
-			UpdatePercentages();
-
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-			}
-
-			ReportRemoveCurrentItem(index);
-		}
-
-		private bool TryDeleteStartingCutoff(ColorBand colorBand)
-		{
-			CurrentColorBand = null;
-
-			bool wasRemoved;
-			lock (_histLock)
-			{
-				wasRemoved = _currentColorBandSet.DeleteStartingCutoff(colorBand);
-			}
-
-			return wasRemoved;
-		}
-
-		public void CompleteColorRemoval(int index)
-		{
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorRemoval has been callled.");
-			var selItem = _currentColorBandSet[index];
-
-			var result = TryDeleteColor(selItem);
-
-			if (!result)
-			{
-				Debug.WriteLine("WARNING: Could not CompleteColorRemoval.");
-				return;
-			}
-
-			Debug.WriteLine($"ColorBandSetViewModel. After ColorRemoval, the current position is {ColorBandsView.CurrentPosition}.");
-
-			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
-			UpdatePercentages();
-
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-			}
-
-			ReportRemoveCurrentItem(index);
-		}
-
-		private bool TryDeleteColor(ColorBand colorBand)
-		{
-			var index = _currentColorBandSet.IndexOf(colorBand);
-
-			if (index > _currentColorBandSet.Count - 2)
-			{
-				// Cannot delete the last entry
-				return false;
-			}
-
-			CurrentColorBand = null;
-			_currentColorBandSet.DeleteColor(index);
-			//ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(colorBand);
-
-			return true;
-		}
-
-		public void CompleteBandRemoval(int index)
-		{
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteBandRemoval has been callled.");
-			var selItem = _currentColorBandSet[index];
-
-			var result = TryDeleteBand(selItem);
-
-			if (!result)
-			{
-				Debug.WriteLine("WARNING: Could not CompleteBandRemoval.");
-				return;
-			}
-
-			if (index == 0)
-			{
-				var cb = _currentColorBandSet[index];
-				cb.PreviousCutoff = 0;
-			}
-			else
-			{
-				var cb = _currentColorBandSet[index - 1];
-				var followingCb = _currentColorBandSet[index];
-
-
-				cb.Cutoff = followingCb.PreviousCutoff ?? 0;
-
-				if (cb.BlendStyle == ColorBandBlendStyle.Next)
-				{
-					cb.SuccessorStartColor = followingCb.StartColor;
-				}
-			}
-
-			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
-
-			if (index > 0)
-				index--;
-
-			if (_colorBandsView.CurrentPosition != index)
-			{
-				_colorBandsView.MoveCurrentToPosition(index);
-			}
-			else
-			{
-				CurrentColorBand = _currentColorBandSet[index];
-			}
-
-			Debug.WriteLine($"ColorBandSetViewModel. After BandRemoval, the current position is {ColorBandsView.CurrentPosition}.");
-
-			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
-			UpdatePercentages();
-
-			if (UseRealTimePreview)
-			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
-			}
-
-			ReportRemoveCurrentItem(index);
-		}
-
-		private bool TryDeleteBand(ColorBand colorBand)
-		{
-			if (_colorBandsView.Count < 2)
-			{
-				// There is only one ColorBand remaining. 
-				return false;
-			}
-
-			var index = _currentColorBandSet.IndexOf(colorBand);
-
-			if (index >= _currentColorBandSet.Count - 1)
-			{
-				// Cannot delete the last entry
-				return false;
-			}
-
-			//if (index == 0)
-			//{
-			//	Debug.WriteLine("Attempting to delete colorband at index = 0.");
-			//}
-
-			CurrentColorBand = null;
-
-			bool wasRemoved;
-			lock (_histLock)
-			{
-				wasRemoved = _currentColorBandSet.Remove(colorBand);
-			}
-
-			return wasRemoved;
 		}
 
 		public void ApplyChanges(int newTargetIterations)
@@ -1274,6 +712,444 @@ namespace MSetExplorer
 
 		//	return result;
 		//}
+
+		#endregion
+
+		#region Public Methods Insertions
+
+		//public bool TryInsertNewItem(ColorBand colorBand, out int index)
+		//{
+		//	bool result;
+		//	switch (CurrentCbEditMode)
+		//	{
+		//		case ColorBandSetEditMode.Cutoffs:
+		//			result = TryInsertCutoff(colorBand, out index);
+		//			break;
+		//		case ColorBandSetEditMode.Colors:
+		//			result = TryInsertColor(colorBand, out index);
+		//			break;
+		//		case ColorBandSetEditMode.Bands:
+		//			result = TryInsertColorBand(colorBand, out index);
+		//			break;
+		//		default:
+		//			throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
+		//	}
+
+		//	if (result)
+		//	{
+		//		PushCurrentColorBandOnToHistoryCollection();
+		//		IsDirty = true;
+		//		UpdatePercentages();
+
+		//		if (UseRealTimePreview)
+		//		{
+		//			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+		//		}
+		//	}
+
+		//	return result;
+		//}
+
+		public bool TestInsertItem(int colorBandIndex)
+		{
+			if (CurrentColorBand == null || ColorBandUserControlHasErrors)
+			{
+				return false;
+			}
+
+			switch (CurrentCbEditMode)
+			{
+				case ColorBandSetEditMode.Cutoffs:
+					var colorBand = _currentColorBandSet[colorBandIndex];
+
+					if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
+					{
+						Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+						return false;
+					}
+
+					break;
+
+				case ColorBandSetEditMode.Colors:
+					break;
+
+				case ColorBandSetEditMode.Bands:
+					colorBand = _currentColorBandSet[colorBandIndex];
+
+					if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
+					{
+						Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+						return false;
+					}
+					break;
+
+				default:
+					throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
+			}
+
+			return true;
+		} 
+
+		public void CompleteCutoffInsertion(int index)
+		{
+			Debug.WriteLine($"ColorBandSetViewModel. CompleteCutoffInsertion has been callled.");
+			var selItem = _currentColorBandSet[index];
+
+			var result = TryInsertCutoff(selItem, out var newIndex);
+
+			if (!result)
+			{
+				Debug.WriteLine("WARNING: Could not CompleteCutoffInsertion.");
+				return;
+			}
+
+			Debug.WriteLine($"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {newIndex}.");
+
+			OnCurrentColorBandSetUpdated();
+
+			//ReportRemoveCurrentItem(index);
+		}
+
+		private bool TryInsertCutoff(ColorBand colorBand, out int index)
+		{
+			if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
+			{
+				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+				index = -1;
+				return false;
+			}
+
+			var prevCutoff = colorBand.PreviousCutoff ?? 0;
+			var newCutoff = prevCutoff + (colorBand.Cutoff - prevCutoff) / 2;
+
+			index = _currentColorBandSet.IndexOf(colorBand);
+
+			CurrentColorBand = null;
+			_currentColorBandSet.InsertCutoff(index, newCutoff);
+			//ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(colorBand);
+
+			return true;
+		}
+
+		public void CompleteColorInsertion(int index)
+		{
+			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorInsertion has been callled.");
+			var selItem = _currentColorBandSet[index];
+
+			var result = TryInsertColor(selItem, out var newIndex);
+
+			if (!result)
+			{
+				Debug.WriteLine("WARNING: Could not CompleteColorInsertion.");
+				return;
+			}
+
+			Debug.WriteLine($"ColorBandSetViewModel. After ColorInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {newIndex}.");
+
+			OnCurrentColorBandSetUpdated();
+
+			//ReportRemoveCurrentItem(index);
+		}
+
+		private bool TryInsertColor(ColorBand colorBand, out int index)
+		{
+			index = _currentColorBandSet.IndexOf(colorBand);
+
+			var newItem = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor);
+
+			CurrentColorBand = null;
+			_currentColorBandSet.InsertColor(index, newItem);
+			//ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(colorBand);
+
+			return true;
+		}
+
+		public void CompleteBandInsertion(int index)
+		{
+			Debug.WriteLine($"ColorBandSetViewModel. CompleteBandInsertion has been callled.");
+			var selItem = _currentColorBandSet[index];
+
+			var result = TryInsertColorBand(selItem, out var newIndex);
+
+			if (!result)
+			{
+				Debug.WriteLine("WARNING: Could not CompleteBandInsertion.");
+				return;
+			}
+
+			Debug.WriteLine($"ColorBandSetViewModel. After BandInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {newIndex}.");
+
+			OnCurrentColorBandSetUpdated();
+
+			//ReportRemoveCurrentItem(index);
+		}
+
+		private bool TryInsertColorBand(ColorBand colorBand, out int index)
+		{
+			if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
+			{
+				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
+				index = -1;
+				return false;
+			}
+
+			var prevCutoff = colorBand.PreviousCutoff ?? 0;
+			var newCutoff = prevCutoff + (colorBand.Cutoff - prevCutoff) / 2;
+			var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor, colorBand.PreviousCutoff, colorBand.StartColor, double.NaN);
+
+			index = _currentColorBandSet.IndexOf(colorBand);
+
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:About to Insert item at index: {index}. The new item is: {newItem}.");
+
+			lock (_histLock)
+			{
+				_currentColorBandSet.Insert(index, newItem);
+				_currentColorBandSet.UpdateItemAndNeighbors(index, newItem);
+			}
+
+			if (!ColorBandsView.MoveCurrentTo(newItem))
+			{
+				Debug.WriteLine("ColorBandSetViewModel:Could not position the view to the new item.");
+			}
+
+			return true;
+		}
+
+		#endregion
+
+		#region Public Methods - Deletions
+
+		public bool TestDeleteItem(int colorBandIndex)
+		{
+			bool result;
+
+			switch (CurrentCbEditMode)
+			{
+				case ColorBandSetEditMode.Cutoffs:
+
+					// Cannot delete the last entry
+					result = colorBandIndex <= _currentColorBandSet.Count - 2;
+					break;
+
+				case ColorBandSetEditMode.Colors:
+					// Cannot delete the last entry
+
+					result = colorBandIndex <= _currentColorBandSet.Count - 2;
+					break;
+
+				case ColorBandSetEditMode.Bands:
+
+					if (_colorBandsView.Count < 2)
+					{
+						// There is only one ColorBand remaining. 
+						result = false;
+					}
+					else if (colorBandIndex > _currentColorBandSet.Count - 2)
+					{
+						// Cannot delete the last entry
+						result = false;
+					}
+					else
+					{
+						result = true;
+					}
+					break;
+
+				default:
+					throw new InvalidOperationException($"{CurrentCbEditMode} is not recognized.");
+			}
+
+			return result;
+		}
+
+		public void CompleteCutoffRemoval(int index)
+		{
+			var selItem = _currentColorBandSet[index];
+
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffRemoval has been callled for index = {index} with Cutoff = {selItem.Cutoff}.");
+
+			var result = TryDeleteStartingCutoff(selItem);
+
+			if (!result)
+			{
+				Debug.WriteLine("WARNING: Could not CompleteCutoffRemoval.");
+				return;
+			}
+
+			if (index == 0)
+			{
+				var cb = _currentColorBandSet[index];
+				cb.PreviousCutoff = 0;
+			}
+			else
+			{
+				var cb = _currentColorBandSet[index - 1];
+				var newCutoff = _currentColorBandSet[index].PreviousCutoff ?? 0;
+
+				//Debug.WriteLine($"Extending the width of the previous item: index={index - 1} from {cb.Cutoff} to newCutoff: {newCutoff} compare to the cutoff of the band being removed: {cutOff}.");
+				//var sC = selItem.StartColor;
+				//var newSc = _currentColorBandSet[index].StartColor;
+				//Debug.WriteLine($"The successor start color of band just before the band being removed is {cb.SuccessorStartColor}, the start color of the band immed after the one being removed is {newSc}.");
+
+				cb.Cutoff = newCutoff;
+			}
+
+			if (index > 0)
+				index--;
+
+			if (_colorBandsView.CurrentPosition != index)
+			{
+				_colorBandsView.MoveCurrentToPosition(index);
+			}
+			else
+			{
+				CurrentColorBand = _currentColorBandSet[index];
+			}
+
+			Debug.WriteLine($"ColorBandSetViewModel.After CutoffRemoval, the current position is {ColorBandsView.CurrentPosition}.");
+
+			OnCurrentColorBandSetUpdated();
+
+			ReportRemoveCurrentItem(index);
+		}
+
+		private bool TryDeleteStartingCutoff(ColorBand colorBand)
+		{
+			CurrentColorBand = null;
+
+			bool wasRemoved;
+			lock (_histLock)
+			{
+				wasRemoved = _currentColorBandSet.DeleteStartingCutoff(colorBand);
+			}
+
+			return wasRemoved;
+		}
+
+		public void CompleteColorRemoval(int index)
+		{
+			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorRemoval has been callled.");
+			var selItem = _currentColorBandSet[index];
+
+			var result = TryDeleteColor(selItem);
+
+			if (!result)
+			{
+				Debug.WriteLine("WARNING: Could not CompleteColorRemoval.");
+				return;
+			}
+
+			Debug.WriteLine($"ColorBandSetViewModel. After ColorRemoval, the current position is {ColorBandsView.CurrentPosition}.");
+
+			OnCurrentColorBandSetUpdated();
+
+			//ReportRemoveCurrentItem(index);
+		}
+
+		private bool TryDeleteColor(ColorBand colorBand)
+		{
+			var index = _currentColorBandSet.IndexOf(colorBand);
+
+			if (index > _currentColorBandSet.Count - 2)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			CurrentColorBand = null;
+			_currentColorBandSet.DeleteColor(index);
+			//ColorBandsView.Refresh();
+			ColorBandsView.MoveCurrentTo(colorBand);
+
+			return true;
+		}
+
+		public void CompleteBandRemoval(int index)
+		{
+			Debug.WriteLine($"ColorBandSetViewModel. CompleteBandRemoval has been callled.");
+			var selItem = _currentColorBandSet[index];
+
+			var result = TryDeleteBand(selItem);
+
+			if (!result)
+			{
+				Debug.WriteLine("WARNING: Could not CompleteBandRemoval.");
+				return;
+			}
+
+			if (index == 0)
+			{
+				var cb = _currentColorBandSet[index];
+				cb.PreviousCutoff = 0;
+			}
+			else
+			{
+				var cb = _currentColorBandSet[index - 1];
+				var followingCb = _currentColorBandSet[index];
+
+
+				cb.Cutoff = followingCb.PreviousCutoff ?? 0;
+
+				if (cb.BlendStyle == ColorBandBlendStyle.Next)
+				{
+					cb.SuccessorStartColor = followingCb.StartColor;
+				}
+			}
+
+			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
+
+			if (index > 0)
+				index--;
+
+			if (_colorBandsView.CurrentPosition != index)
+			{
+				_colorBandsView.MoveCurrentToPosition(index);
+			}
+			else
+			{
+				CurrentColorBand = _currentColorBandSet[index];
+			}
+
+			Debug.WriteLine($"ColorBandSetViewModel. After BandRemoval, the current position is {ColorBandsView.CurrentPosition}.");
+
+			OnCurrentColorBandSetUpdated();
+
+			ReportRemoveCurrentItem(index);
+		}
+
+		private bool TryDeleteBand(ColorBand colorBand)
+		{
+			if (_colorBandsView.Count < 2)
+			{
+				// There is only one ColorBand remaining. 
+				return false;
+			}
+
+			var index = _currentColorBandSet.IndexOf(colorBand);
+
+			if (index >= _currentColorBandSet.Count - 1)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			//if (index == 0)
+			//{
+			//	Debug.WriteLine("Attempting to delete colorband at index = 0.");
+			//}
+
+			CurrentColorBand = null;
+
+			bool wasRemoved;
+			lock (_histLock)
+			{
+				wasRemoved = _currentColorBandSet.Remove(colorBand);
+			}
+
+			return wasRemoved;
+		}
 
 		#endregion
 
@@ -1654,6 +1530,18 @@ namespace MSetExplorer
 		#endregion
 
 		#region Private Methods - ColorBandsView
+
+		private void OnCurrentColorBandSetUpdated()
+		{
+			PushCurrentColorBandOnToHistoryCollection();
+			IsDirty = true;
+			UpdatePercentages();
+
+			if (UseRealTimePreview)
+			{
+				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
+			}
+		}
 
 		private void UpdateViewAndRaisePropertyChangeEvents(int? currentColorBandIndex = null)
 		{

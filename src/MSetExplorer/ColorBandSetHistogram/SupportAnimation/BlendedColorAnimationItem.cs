@@ -9,9 +9,12 @@ namespace MSetExplorer
 	internal class BlendedColorAnimationItem : IRectAnimationItem
 	{
 		public double _msPerPixel;
+		private double _scaleX;
+		private int _colorBandIndex;
+
 		public bool _useDetailedDebug = false;
 
-		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
+		public BlendedColorAnimationItem(CbListViewItem? sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
 		{
 			_msPerPixel = msPerPixel;
 			RectTransitions = new List<RectTransition>();
@@ -19,10 +22,32 @@ namespace MSetExplorer
 			SourceListViewItem = sourceListViewItem;
 			DestinationListViewItem = destinationListViewItem;
 
-			StartingPos = sourceListViewItem.CbRectangle.CbBlendedColorPair.Container;
+			if (sourceListViewItem != null)
+			{
+				Name = sourceListViewItem.Name;
 
-			DestinationPos = destinationListViewItem?.CbRectangle.CbBlendedColorPair.Container
-				?? GetOffScreenRect(sourceListViewItem);
+				StartingPos = sourceListViewItem.CbColorBlock.CbColorPair.Container;
+				_scaleX = sourceListViewItem.CbColorBlock.ContentScale.Width;
+				_colorBandIndex = sourceListViewItem.ColorBandIndex;
+
+				DestinationPos = destinationListViewItem?.CbColorBlock.CbColorPair.Container
+					?? GetOffScreenRect(sourceListViewItem);
+			}
+			else if (destinationListViewItem != null)
+			{
+				Name = destinationListViewItem.Name;
+
+				StartingPos = sourceListViewItem?.CbColorBlock.CbColorPair.Container
+					?? GetOffScreenRect(destinationListViewItem);
+
+				DestinationPos = destinationListViewItem.CbColorBlock.CbColorPair.Container;
+				_scaleX = destinationListViewItem.CbColorBlock.ContentScale.Width;
+				_colorBandIndex = destinationListViewItem.ColorBandIndex;
+			}
+			else
+			{
+				throw new ArgumentNullException("One of the source or destination ListViewItem must be non-null.");
+			}
 
 			Current = StartingPos;
 			Elasped = 0;
@@ -30,8 +55,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public CbListViewItem SourceListViewItem { get; init; }
-		public string Name => SourceListViewItem.Name;
+		public string Name { get; init; }
+		public CbListViewItem? SourceListViewItem { get; init; }
 		public CbListViewItem? DestinationListViewItem { get; init; }
 
 		public List<RectTransition> RectTransitions { get; init; }
@@ -75,14 +100,14 @@ namespace MSetExplorer
 
 		public void BuildTimelineX(double shiftAmount)
 		{
-			var amount = shiftAmount / SourceListViewItem.CbRectangle.ContentScale.Width;
+			var amount = shiftAmount / _scaleX;
 			if (shiftAmount > 0)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} right {amount}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {_colorBandIndex} right {amount}.");
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, "Moving Item: {SourceListViewItem.ColorBandIndex} left {-1 * amount}.");
+				Debug.WriteLineIf(_useDetailedDebug, "Moving Item: {_colorBandIndex} left {-1 * amount}.");
 			}
 
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width, Current.Height);
@@ -91,14 +116,14 @@ namespace MSetExplorer
 
 		public void BuildTimelineXAnchorRight(double shiftAmount)
 		{
-			var amount = shiftAmount / SourceListViewItem.CbRectangle.ContentScale.Width;
+			var amount = shiftAmount / _scaleX;
 			if (shiftAmount > 0)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} right and reducing its width by {amount}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {_colorBandIndex} right and reducing its width by {amount}.");
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {SourceListViewItem.ColorBandIndex} left and increasing its width by {-1 * amount}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Moving Item: {_colorBandIndex} left and increasing its width by {-1 * amount}.");
 			}
 
 			var rect = new Rect(Current.X + shiftAmount, Current.Y, Current.Width - shiftAmount, Current.Height);
@@ -107,14 +132,14 @@ namespace MSetExplorer
 
 		public void BuildTimelineW(double shiftAmount)
 		{
-			var amount = shiftAmount / SourceListViewItem.CbRectangle.ContentScale.Width;
+			var amount = shiftAmount / _scaleX;
 			if (shiftAmount > 0)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Increasing the Width of Item: {SourceListViewItem.ColorBandIndex} by {amount}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Increasing the Width of Item: {_colorBandIndex} by {amount}.");
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Decreasing the Width of Item: {SourceListViewItem.ColorBandIndex} by {-1 * amount}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Decreasing the Width of Item: {_colorBandIndex} by {-1 * amount}.");
 			}
 
 			var rect = new Rect(Current.X, Current.Y, Current.Width + shiftAmount, Current.Height);
@@ -124,7 +149,7 @@ namespace MSetExplorer
 
 		public void MoveSourceToDestination()
 		{
-			if (DestinationListViewItem != null)
+			if (DestinationListViewItem != null && SourceListViewItem != null)
 			{
 				var newCopy = SourceListViewItem.CbRectangle.CbBlendedColorPair.Clone();
 

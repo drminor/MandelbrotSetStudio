@@ -603,16 +603,16 @@ namespace MSS.Types
 				targetCb.StartColor = sourceCb.StartColor;
 				targetCb.BlendStyle = sourceCb.BlendStyle;
 				targetCb.EndColor = sourceCb.EndColor;
-				targetCb.SuccessorStartColor = Items[ptr + 2].StartColor;
+				targetCb.SuccessorStartColor = sourceCb.SuccessorStartColor;
 			}
 
-			var targetCbE = Items[Count - 2];
+			var targetCbE = Items[^1];
 			var sourceCbE = GetNextReservedColorBand();
 
 			targetCbE.StartColor = sourceCbE.StartColor;
 			targetCbE.BlendStyle = sourceCbE.BlendStyle;
 			targetCbE.EndColor = sourceCbE.EndColor;
-			targetCbE.SuccessorStartColor = Items[Count - 1].StartColor;
+			targetCbE.SuccessorStartColor = Items[^1].StartColor;
 		}
 
 		private void PushColorsUp(int index)
