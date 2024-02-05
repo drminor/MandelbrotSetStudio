@@ -1155,7 +1155,6 @@ namespace MSetExplorer
 				_pullColorsAnimationInfo1 = null;
 			}
 
-
 			if (index > 0)
 			{
 				var prevCb = ListViewItems[index - 1];
@@ -1170,18 +1169,18 @@ namespace MSetExplorer
 
 			onAnimationComplete(index);
 
-			var lastCbListViewItem = ListViewItems[^1];
+			//var lastCbListViewItem = ListViewItems[^1];
 
-			var lastCb = (ColorBand)_colorBandsView.GetItemAt(lastCbListViewItem.ColorBandIndex);
+			//var lastCb = (ColorBand)_colorBandsView.GetItemAt(lastCbListViewItem.ColorBandIndex);
 
-			lastCbListViewItem.CbRectangle.StartColor = lastCb.StartColor;
-			lastCbListViewItem.CbRectangle.EndColor = lastCb.EndColor;
-			lastCbListViewItem.CbRectangle.Blend = lastCb.BlendStyle != ColorBandBlendStyle.None;
+			//lastCbListViewItem.CbRectangle.StartColor = lastCb.StartColor;
+			//lastCbListViewItem.CbRectangle.EndColor = lastCb.EndColor;
+			//lastCbListViewItem.CbRectangle.Blend = lastCb.BlendStyle != ColorBandBlendStyle.None;
 
-			lastCbListViewItem.CbColorBlock.StartColor = lastCb.StartColor;
-			lastCbListViewItem.CbColorBlock.EndColor = lastCb.EndColor;
-			lastCbListViewItem.CbColorBlock.Blend = lastCb.BlendStyle != ColorBandBlendStyle.None;
-			lastCbListViewItem.CbColorBlock.ColorPairVisibility = Visibility.Visible;
+			//lastCbListViewItem.CbColorBlock.StartColor = lastCb.StartColor;
+			//lastCbListViewItem.CbColorBlock.EndColor = lastCb.EndColor;
+			//lastCbListViewItem.CbColorBlock.Blend = lastCb.BlendStyle != ColorBandBlendStyle.None;
+			//lastCbListViewItem.CbColorBlock.ColorPairVisibility = Visibility.Visible;
 		}
 
 		public void AnimateDeleteBand(Action<int> onAnimationComplete, int index)

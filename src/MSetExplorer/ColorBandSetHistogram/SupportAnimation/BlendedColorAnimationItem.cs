@@ -14,45 +14,6 @@ namespace MSetExplorer
 
 		public bool _useDetailedDebug = false;
 
-		//public BlendedColorAnimationItem(CbListViewItem? sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
-		//{
-		//	_msPerPixel = msPerPixel;
-		//	RectTransitions = new List<RectTransition>();
-
-		//	SourceListViewItem = sourceListViewItem;
-		//	DestinationListViewItem = destinationListViewItem;
-
-		//	if (sourceListViewItem != null)
-		//	{
-		//		Name = sourceListViewItem.Name;
-
-		//		StartingPos = sourceListViewItem.CbRectangle.CbBlendedColorPair.Container;
-		//		_scaleX = sourceListViewItem.CbRectangle.ContentScale.Width;
-		//		_colorBandIndex = sourceListViewItem.ColorBandIndex;
-
-		//		DestinationPos = destinationListViewItem?.CbRectangle.CbBlendedColorPair.Container
-		//			?? GetOffScreenRect(sourceListViewItem);
-		//	}
-		//	else if (destinationListViewItem != null)
-		//	{
-		//		Name = destinationListViewItem.Name;
-
-		//		StartingPos = sourceListViewItem?.CbRectangle.CbBlendedColorPair.Container
-		//			?? GetOffScreenRect(destinationListViewItem);
-
-		//		DestinationPos = destinationListViewItem.CbRectangle.CbBlendedColorPair.Container;
-		//		_scaleX = destinationListViewItem.CbRectangle.ContentScale.Width;
-		//		_colorBandIndex = destinationListViewItem.ColorBandIndex;
-		//	}
-		//	else
-		//	{
-		//		throw new ArgumentNullException("One of the source or destination ListViewItem must be non-null.");
-		//	}
-
-		//	Current = StartingPos;
-		//	Elasped = 0;
-		//}
-
 		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
 		{
 			_msPerPixel = msPerPixel;

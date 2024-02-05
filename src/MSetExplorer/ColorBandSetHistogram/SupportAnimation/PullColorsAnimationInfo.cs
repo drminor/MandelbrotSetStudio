@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace MSetExplorer
@@ -14,6 +13,8 @@ namespace MSetExplorer
 		private double _liftHeight;
 		private double _msPerPixel;
 
+		#region Constructor
+
 		public PullColorsAnimationInfo(double liftHeight, double velocity)
 		{
 			_liftHeight = liftHeight;
@@ -21,6 +22,8 @@ namespace MSetExplorer
 
 			AnimationItemPairs = new AnimationItemPairList();
 		}
+
+		#endregion
 
 		public AnimationItemPairList AnimationItemPairs;
 
@@ -47,13 +50,6 @@ namespace MSetExplorer
 
 		public void MoveSourcesToDestinations()
 		{
-			var lastBlockDestinationItem = AnimationItemPairs[^1].Item1.DestinationListViewItem;
-			var lastBlendDestinationItem = AnimationItemPairs[^1].Item2.DestinationListViewItem;
-
-			var lastCbColorPair = lastBlockDestinationItem?.CbColorBlock.CbColorPair.Clone();
-			var lastCbBlendedColorPair = lastBlendDestinationItem?.CbRectangle.CbBlendedColorPair.Clone();
-
-
 			for (var i = 0; i < AnimationItemPairs.Count; i++)
 			{
 				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
@@ -62,16 +58,6 @@ namespace MSetExplorer
 
 				colorBlockAItem.MoveSourceToDestination();
 				blendedColorAItem.MoveSourceToDestination();
-			}
-
-			if (lastBlockDestinationItem != null)
-			{
-				lastBlockDestinationItem.CbColorBlock.CbColorPair = lastCbColorPair!;
-			}
-
-			if (lastBlendDestinationItem != null)
-			{
-				lastBlendDestinationItem.CbRectangle.CbBlendedColorPair = lastCbBlendedColorPair!;
 			}
 		}
 
@@ -131,7 +117,6 @@ namespace MSetExplorer
 				// Narrow items to prevent the right side moving past the destination's right side.
 				BuildPushTimelines(colorBlockItem);
 				BuildPushTimelines(blendedItem);
-
 			}
 
 			CheckForPositiveShifts();

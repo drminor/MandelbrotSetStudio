@@ -35,7 +35,7 @@ namespace MSS.Types
 		#region Constructor
 
 		public ColorBand() 
-			: this(0, ColorBandColor.White, ColorBandBlendStyle.None, ColorBandColor.Black)
+			: this(0, ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black)
 		{ }
 
 		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)

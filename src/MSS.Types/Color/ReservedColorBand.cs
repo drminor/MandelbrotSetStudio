@@ -6,7 +6,7 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ReservedColorBand() : this(ColorBandColor.White, ColorBandBlendStyle.None, ColorBandColor.Black)
+		public ReservedColorBand() : this(ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black)
 		{ }
 
 		public ReservedColorBand(string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
