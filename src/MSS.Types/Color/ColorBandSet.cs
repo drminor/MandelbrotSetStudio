@@ -316,7 +316,6 @@ namespace MSS.Types
 			return wasRemoved;
 		}
 
-
 		public void InsertColor(int index, ColorBand colorBand)
 		{
 			InsertItem(index, colorBand);
@@ -330,7 +329,13 @@ namespace MSS.Types
 				throw new ArgumentException($"DeleteColor. Index must be between 0 and {Count - 1}, inclusive.");
 			}
 
-			PullColorsDown(index); // A band is pulled from the reserves and placed at the end.
+			PullColorsDown(index); // The colors from the first reserve band are used and the first reserve band is discarded. If no reserve band available, white and black are used.
+
+			if (index > 0)
+			{
+				var predecessorCb = Items[index - 1];
+				predecessorCb.SuccessorStartColor = Items[index].StartColor;
+			}
 		}
 
 		#endregion
@@ -356,20 +361,13 @@ namespace MSS.Types
 
 		protected override void RemoveItem(int index)
 		{
-			if (Count <= 2)
+			if (Count < 3)
 			{
-				// The collection must have at least two items.
+				// The collection must have at least two bands.
 				return;
 			}
 
 			base.RemoveItem(index);
-
-			//if (index > Count - 1)
-			//{
-			//	index = Count - 1;
-			//}
-
-			//UpdateItemAndNeighbors(index, Items[index]);
 		}
 
 		protected override void SetItem(int index, ColorBand item)
@@ -550,6 +548,7 @@ namespace MSS.Types
 				{
 					if (lastCb.BlendStyle == ColorBandBlendStyle.None)
 					{
+						Debug.WriteLine("WARING: The LastCB's Blendstyle is None, expecting End.");
 						lastCb.EndColor = lastCb.StartColor;
 					}
 				}
@@ -595,7 +594,9 @@ namespace MSS.Types
 
 		private void PullColorsDown(int index)
 		{
-			for (var ptr = index; ptr < Count - 3; ptr++)
+			Debug.Assert(Items[^1].IsLast == true, "Items[^1].IsLast != true.");
+
+			for (var ptr = index; ptr < Count - 1; ptr++)
 			{
 				var sourceCb = Items[ptr + 1];
 				var targetCb = Items[ptr];
@@ -610,15 +611,17 @@ namespace MSS.Types
 			var sourceCbE = GetNextReservedColorBand();
 
 			targetCbE.StartColor = sourceCbE.StartColor;
-			targetCbE.BlendStyle = sourceCbE.BlendStyle;
+			targetCbE.BlendStyle = ColorBandBlendStyle.End;
 			targetCbE.EndColor = sourceCbE.EndColor;
-			targetCbE.SuccessorStartColor = Items[^1].StartColor;
 		}
 
 		private void PushColorsUp(int index)
 		{
 			var sourceCbE = Items[^2];
 			var targetCbE = Items[^1];
+
+			var newReserved = new ReservedColorBand(targetCbE.StartColor, targetCbE.BlendStyle, targetCbE.EndColor);
+			_reservedColorBands.Push(newReserved);
 
 			targetCbE.StartColor = sourceCbE.StartColor;
 

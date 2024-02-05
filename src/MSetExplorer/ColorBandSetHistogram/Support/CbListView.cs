@@ -15,9 +15,13 @@ using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
+	using AnimationItemPairList = List<(IRectAnimationItem, IRectAnimationItem)>;
+
 	internal class CbListView
 	{
 		#region Private Fields
+
+		private const double ANIMATION_PIXELS_PER_MS = 700 / 1000d;     // 700 pixels per second or 0.7 pixels / millisecond
 
 		private StoryboardDetails _storyBoardDetails1;
 		private int _nextNameSuffix;
@@ -967,30 +971,6 @@ namespace MSetExplorer
 
 					throw new InvalidOperationException($"The {e.Operation} CbSectionLineDragOperation is not supported.");
 			}
-
-			//if (e.Operation == CbSectionLineDragOperation.Move)
-			//{
-			//	if (!colorBandToUpdate.IsInEditMode)
-			//	{
-			//		colorBandToUpdate.BeginEdit();
-			//	}
-
-			//	if (e.UpdatingPrevious) colorBandToUpdate.PreviousCutoff = newCutoff; else colorBandToUpdate.Cutoff = newCutoff;
-			//}
-			//else if (e.Operation == CbSectionLineDragOperation.Complete)
-			//{
-			//	if (e.UpdatingPrevious) colorBandToUpdate.PreviousCutoff = newCutoff; else colorBandToUpdate.Cutoff = newCutoff;
-			//	colorBandToUpdate.EndEdit();
-			//}
-			//else if (e.Operation == CbSectionLineDragOperation.Cancel)
-			//{
-			//	if (e.UpdatingPrevious) colorBandToUpdate.PreviousCutoff = newCutoff; else colorBandToUpdate.Cutoff = newCutoff;
-			//	colorBandToUpdate.CancelEdit();
-			//}
-			//else
-			//{
-			//	throw new InvalidOperationException($"The {e.Operation} CbSectionLineDragOperation is not supported.");
-			//}
 		}
 
 		private void UpdateItemsElevation(CbListViewElevations elevations)
@@ -1066,12 +1046,10 @@ namespace MSetExplorer
 			ReportCanvasChildren();
 			//ReportColorBands("Top of AnimateDeleteCutoff", ListViewItems);
 
-			var velocity = 700 / 1000d;		// 700 pixels per second or 0.7 pixels / millisecond
-
 			// Create the class that will calcuate the 'PushColor' animation details
 			var liftHeight = _elevations.ColorBlocksHeight / 2;
 
-			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(liftHeight, velocity);
+			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(liftHeight, ANIMATION_PIXELS_PER_MS);
 
 			for (var i = index; i < ListViewItems.Count; i++)
 			{
@@ -1086,7 +1064,7 @@ namespace MSetExplorer
 
 			_storyBoardDetails1.RateFactor = 1;
 
-			ApplyPushColorsAnimation(_pushColorsAnimationInfo1);
+			ApplyAnimationItemPairs(_pushColorsAnimationInfo1.AnimationItemPairs);
 
 			if (index == 0)
 			{
@@ -1135,39 +1113,75 @@ namespace MSetExplorer
 		public void AnimateDeleteColor(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine($"AnimateDeleteColor. Index = {index}.");
-			ReportCanvasChildren();
+			//ReportCanvasChildren();
 			//ReportColorBands("Top of AnimateDeleteColor", ListViewItems);
 
-			var velocity = 700 / 1000d;     // 700 pixels per second or 0.7 pixels / millisecond
+			// Create a ListViewItem to hold the new source
+			var newColorBand = CreateColorBandFromReservedBand(ListViewItems[^1], reservedColorBand: null);
+			var newLvi = CreateListViewItem(ListViewItems.Count, newColorBand);
 
 			// Create the class that will calcuate the 'PullColor' animation details
-			var liftHeight = _elevations.ColorBlocksHeight / 2;
-			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(liftHeight, velocity);
+			var liftHeight = _elevations.ColorBlocksHeight;
+			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(liftHeight, ANIMATION_PIXELS_PER_MS);
 
 			for (var i = index; i < ListViewItems.Count; i++)
 			{
 				var lviDestination = ListViewItems[i];
-				var lviSource = i == ListViewItems.Count - 1 ? null : ListViewItems[i + 1];
+				var lviSource = i == ListViewItems.Count - 1 ? newLvi : ListViewItems[i + 1];
 				_pullColorsAnimationInfo1.Add(lviSource, lviDestination);
 			}
 
 			_ = _pullColorsAnimationInfo1.CalculateMovements();
 
-			_storyBoardDetails1.RateFactor = 10;
+			_storyBoardDetails1.RateFactor = 1;
 
-			ApplyPullColorsAnimation(_pullColorsAnimationInfo1);
+			ApplyAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs);
 
-			_storyBoardDetails1.Begin(AnimateDeleteColorPost, onAnimationComplete, index, debounce: false);
+			_storyBoardDetails1.Begin(AnimateDeleteColorPost, onAnimationComplete, index, debounce: true);
 		}
 
 		private void AnimateDeleteColorPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("ANIMATION COMPLETED\n ColorDeletion Animation has completed.");
 
-			_pullColorsAnimationInfo1?.MoveSourcesToDestinations();
-			_pullColorsAnimationInfo1 = null;
+			if (_pullColorsAnimationInfo1 != null)
+			{
+				var newLvi = _pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem;
+				_pullColorsAnimationInfo1.MoveSourcesToDestinations();
+
+				newLvi.TearDown();
+				_canvas.UnregisterName(newLvi.Name);
+
+				_pullColorsAnimationInfo1 = null;
+			}
+
+
+			if (index > 0)
+			{
+				var prevCb = ListViewItems[index - 1];
+
+				if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
+				{
+					var cbListViewItem = ListViewItems[index];
+					prevCb.CbColorBlock.EndColor = cbListViewItem.CbColorBlock.StartColor;
+					prevCb.CbRectangle.EndColor = cbListViewItem.CbRectangle.StartColor;
+				}
+			}
 
 			onAnimationComplete(index);
+
+			var lastCbListViewItem = ListViewItems[^1];
+
+			var lastCb = (ColorBand)_colorBandsView.GetItemAt(lastCbListViewItem.ColorBandIndex);
+
+			lastCbListViewItem.CbRectangle.StartColor = lastCb.StartColor;
+			lastCbListViewItem.CbRectangle.EndColor = lastCb.EndColor;
+			lastCbListViewItem.CbRectangle.Blend = lastCb.BlendStyle != ColorBandBlendStyle.None;
+
+			lastCbListViewItem.CbColorBlock.StartColor = lastCb.StartColor;
+			lastCbListViewItem.CbColorBlock.EndColor = lastCb.EndColor;
+			lastCbListViewItem.CbColorBlock.Blend = lastCb.BlendStyle != ColorBandBlendStyle.None;
+			lastCbListViewItem.CbColorBlock.ColorPairVisibility = Visibility.Visible;
 		}
 
 		public void AnimateDeleteBand(Action<int> onAnimationComplete, int index)
@@ -1268,9 +1282,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private void ApplyPushColorsAnimation(PushColorsAnimationInfo pushColorsAnimationInfo)
+		private void ApplyAnimationItemPairs(AnimationItemPairList animationItemPairList)
 		{
-			foreach (var (block, blend) in pushColorsAnimationInfo.AnimationItemPairs)
+			foreach (var (block, blend) in animationItemPairList)
 			{
 				foreach (var tl in block.RectTransitions)
 				{
@@ -1284,20 +1298,31 @@ namespace MSetExplorer
 			}
 		}
 
-		private void ApplyPullColorsAnimation(PullColorsAnimationInfo pullColorsAnimationInfo)
+		private ColorBand CreateColorBandFromReservedBand(CbListViewItem lastListViewItem, ReservedColorBand? reservedColorBand)
 		{
-			foreach (var (block, blend) in pullColorsAnimationInfo.AnimationItemPairs)
-			{
-				foreach (var tl in block.RectTransitions)
-				{
-					_storyBoardDetails1.AddRectAnimation(block.Name, "ColorBlockArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
-				}
+			ColorBand result;
 
-				foreach (var tl in blend.RectTransitions)
-				{
-					_storyBoardDetails1.AddRectAnimation(blend.Name, "BlendedColorArea", tl.From, tl.To, TimeSpan.FromMilliseconds(tl.BeginMs), TimeSpan.FromMilliseconds(tl.DurationMs));
-				}
+			var cb = lastListViewItem.ColorBand;
+
+			var previousCutoff = cb.Cutoff;
+			var cutOff = cb.Cutoff + 10;
+
+			if (reservedColorBand != null)
+			{
+				result = new ColorBand(cutOff, reservedColorBand.StartColor, reservedColorBand.BlendStyle, reservedColorBand.EndColor, previousCutoff: previousCutoff, successorStartColor: null, percentage: 0);
 			}
+			else
+			{
+				result = new ColorBand()
+				{
+					Cutoff = cutOff,
+					PreviousCutoff = previousCutoff,
+					SuccessorStartColor = null,
+					Percentage = 0
+				};
+			}
+
+			return result;
 		}
 
 		#endregion
@@ -1454,277 +1479,6 @@ namespace MSetExplorer
 				return new Rect(0, 0, 0, 0);
 			}
 		}
-
-		#endregion
-
-		#region Unused HitTest Logic
-
-		//private ColorBandSelectionType Select(int colorBandIndex, ColorBandSetEditMode editMode)
-		//{
-		//	var cbListViewItem = ListViewItems[colorBandIndex];
-
-		//	if (editMode == ColorBandSetEditMode.Bands)
-		//	{
-		//		cbListViewItem.SelectionType = ColorBandSelectionType.Band;
-		//	}
-		//	else if (editMode == ColorBandSetEditMode.Cutoffs)
-		//	{
-		//		cbListViewItem.SelectionType = ColorBandSelectionType.Cutoff;
-		//	}
-		//	else if (editMode == ColorBandSetEditMode.Colors)
-		//	{
-		//		cbListViewItem.SelectionType = ColorBandSelectionType.Color;
-		//	}
-
-		//	return cbListViewItem.SelectionType;
-		//}
-
-		//private bool TryGetSectionLine(Point hitPoint, List<CbListViewItem> cbListViewItems, [NotNullWhen(true)] out double? distance, [NotNullWhen(true)] out CbListViewItem? cbListViewItem)
-		//{
-		//	cbListViewItem = null;
-
-		//	double smallestDist = int.MaxValue;
-
-		//	for (var cbLinePtr = 0; cbLinePtr < cbListViewItems.Count; cbLinePtr++)
-		//	{
-		//		var cbsLine = cbListViewItems[cbLinePtr].CbSectionLine;
-
-		//		var diffX = Math.Abs(hitPoint.X - cbsLine.SectionLinePosition);
-		//		if (diffX < smallestDist)
-		//		{
-		//			smallestDist = diffX;
-		//			cbListViewItem = cbListViewItems[cbLinePtr];
-		//		}
-		//	}
-
-		//	distance = cbListViewItem == null ? null : hitPoint.X - cbListViewItem.SectionLinePosition;
-
-		//	return cbListViewItem != null;
-		//}
-
-		//private bool TryGetColorBandRectangle(Point hitPoint, IList<CbListViewItem> cbListViewItems, [NotNullWhen(true)] out CbListViewItem? cbListViewItem)
-		//{
-		//	cbListViewItem = null;
-
-		//	for (var i = 0; i < cbListViewItems.Count; i++)
-		//	{
-		//		var cbRectangle = cbListViewItems[i].CbRectangle;
-
-		//		if (cbRectangle.ContainsPoint(hitPoint))
-		//		{
-		//			cbListViewItem = cbListViewItems[i];
-
-		//			Debug.Assert(cbListViewItem.CbRectangle.ColorBandIndex == i, "CbListViewItems ColorBandIndex Mismatch.");
-		//			return true;
-		//		}
-		//	}
-
-		//	return false;
-		//}
-
-		//private bool TryGetSectionLine(Point hitPoint, List<CbListViewItem> cbListViewItems, [NotNullWhen(true)] out CbListViewItem? cbListViewItem)
-		//{
-		//	cbListViewItem = null;
-
-		//	var xPos = GetLineUnderMouse(hitPoint);
-
-		//	if (!double.IsNaN(xPos))
-		//	{
-		//		for (var cbLinePtr = 0; cbLinePtr < cbListViewItems.Count; cbLinePtr++)
-		//		{
-		//			var cbLine = cbListViewItems[cbLinePtr].CbectionLine;
-
-		//			var diffX = cbLine.SectionLinePosition - xPos;
-
-		//			if (ScreenTypeHelper.IsDoubleNearZero(diffX))
-		//			{
-		//				Debug.Assert(cbLine.ColorBandIndex == cbLinePtr, "CbLine.ColorBandIndex Mismatch.");
-		//				cbListViewItem = cbListViewItems[cbLinePtr];
-
-		//				return true;
-		//			}
-		//		}
-		//	}
-
-		//	return false;
-		//}
-
-		//private double GetLineUnderMouse(Point hitPoint)
-		//{
-		//	_hitList.Clear();
-
-		//	var hitArea = new EllipseGeometry(hitPoint, 3.0, 4.0);
-		//	var hitTestParams = new GeometryHitTestParameters(hitArea);
-		//	VisualTreeHelper.HitTest(_canvas, null, HitTestCallBack, hitTestParams);
-
-		//	var result = double.NaN;
-		//	double smallestDist = int.MaxValue;
-
-		//	for (var i = 0; i < _hitList.Count; i++)
-		//	{
-		//		var item = _hitList[i];
-
-		//		double itemXPos = int.MaxValue;
-
-		//		if (item is Line line)
-		//		{
-		//			itemXPos = line.X1;
-		//			var adjustedPos = itemXPos / ContentScale.Width;
-		//			Debug.WriteLineIf(_useDetailedDebug, $"Got a hit for line at position: {itemXPos} / {adjustedPos}.");
-		//		}
-		//		//else
-		//		//{
-		//		//	if (item is Polygon p)
-		//		//	{
-		//		//		itemXPos = GetPolygonXPos(p);
-		//		//		var adjustedPos = itemXPos / ContentScale.Width;
-		//		//		Debug.WriteLineIf(_useDetailedDebug, $"Got a hit for Polygon at position: {itemXPos} / {adjustedPos}.");
-		//		//	}
-		//		//}
-
-		//		var dist = Math.Abs(hitPoint.X - itemXPos);
-
-		//		if (dist < smallestDist)
-		//		{
-		//			smallestDist = dist;
-		//			result = itemXPos;
-		//		}
-		//	}
-
-		//	return result;
-		//}
-
-		//private double GetPolygonXPos(Polygon polygon)
-		//{
-		//	var maxY = polygon.Points.Max(p => p.Y);
-
-		//	var lowestPoint = polygon.Points.FirstOrDefault(p => p.Y == maxY);
-		//	var result = lowestPoint == default ? double.NaN : lowestPoint.X;
-
-		//	return result;
-
-		//}
-
-		//private HitTestResultBehavior HitTestCallBack(HitTestResult result)
-		//{
-		//	if (result is GeometryHitTestResult hitTestResult)
-		//	{
-		//		switch (hitTestResult.IntersectionDetail)
-		//		{
-		//			case IntersectionDetail.NotCalculated:
-		//				return HitTestResultBehavior.Stop;
-
-		//			case IntersectionDetail.Empty:
-		//				return HitTestResultBehavior.Stop;
-
-		//			case IntersectionDetail.FullyInside:
-		//				//if (result.VisualHit is Shape s) _hitList.Add(s);
-		//				return HitTestResultBehavior.Continue;
-
-		//			case IntersectionDetail.FullyContains:
-		//				//if (result.VisualHit is Shape ss) _hitList.Add(ss);
-		//				return HitTestResultBehavior.Continue;
-
-		//			case IntersectionDetail.Intersects:
-		//				if (result.VisualHit is Shape sss) _hitList.Add(sss);
-		//				return HitTestResultBehavior.Continue;
-
-		//			default:
-		//				return HitTestResultBehavior.Stop;
-		//		}
-		//	}
-		//	else
-		//	{
-		//		return HitTestResultBehavior.Stop;
-		//	}
-		//}
-
-
-		#endregion
-
-		#region Unused Animation Logic
-
-		private void AnimateDeleteCutoffPostOld(Action<int> onAnimationComplete, int index)
-		{
-			Debug.WriteLine("ANIMATION COMPLETED\n CutoffDeletion Animation has completed.");
-
-			_pushColorsAnimationInfo1?.MoveSourcesToDestinations();
-			//_pushColorsAnimationInfo1 = null;
-
-			var lvi = ListViewItems[index];
-
-			//// Update the SectionLine's position
-			//if (index == 0)
-			//{
-			//	Debug.WriteLine("Handling AnimateDeleteCutoffPost and the index = 0.");
-
-			//	// The rectangle at index + 1 will move to become the very first rectangle at index = 0
-			//	var firstLvi = ListViewItems[index + 1];
-
-			//	// Extend this rectangle by moving its starting point to 0
-			//	firstLvi.CbSectionLine.X1Position = 0;
-			//}
-			//else
-			//{
-			//	// Extend the rectangle just before the rectangle being deleted
-			//	var precedingLvi = ListViewItems[index - 1];
-
-			//	// So that its right edge is at the same position as the right edge of the rectangle being deleted.
-			//	precedingLvi.CbSectionLine.X2Position = lvi.ColorBand.Cutoff;
-			//	precedingLvi.CbRectangle.EndColor = lvi.CbRectangle.StartColor;
-			//	precedingLvi.CbColorBlock.EndColor = lvi.CbRectangle.StartColor;
-			//}
-
-			//PushColorsUp(index);
-
-			//ReportColorBands("Before Remove", ListViewItems);
-
-
-			//ReportColorBands("After Remove", ListViewItems);
-
-			//_pushColorsAnimationInfo1?.TearDown();
-
-			RemoveListViewItem(lvi);
-			Reindex(lvi.ColorBandIndex);
-
-			onAnimationComplete(index);
-
-			//ReportColorBands("After Removed From Set", ListViewItems);
-
-			_ = SynchronizeCurrentItem();
-
-			//_pushColorsAnimationInfo1 = null;
-		}
-
-		private void PushColorsUp(int index)
-		{
-			var source = ListViewItems[^2];
-			var target = ListViewItems[^1];
-
-			target.CbRectangle.StartColor = source.CbRectangle.StartColor;
-			target.CbRectangle.EndColor = source.CbRectangle.EndColor;
-			target.CbRectangle.Blend = source.CbRectangle.Blend;
-
-			target.CbColorBlock.StartColor = source.CbColorBlock.StartColor;
-			target.CbColorBlock.EndColor = source.CbColorBlock.EndColor;
-			target.CbColorBlock.Blend = source.CbColorBlock.Blend;
-
-			for (var ptr = ListViewItems.Count - 2; ptr > index; ptr--)
-			{
-				var sourceCb = ListViewItems[ptr - 1];
-				var targetCb = ListViewItems[ptr];
-
-				target.CbRectangle.StartColor = source.CbRectangle.StartColor;
-				target.CbRectangle.EndColor = source.CbRectangle.EndColor;
-				target.CbRectangle.Blend = source.CbRectangle.Blend;
-
-				target.CbColorBlock.StartColor = source.CbColorBlock.StartColor;
-				target.CbColorBlock.EndColor = source.CbColorBlock.EndColor;
-				target.CbColorBlock.Blend = source.CbColorBlock.Blend;
-			}
-		}
-
-
 
 		#endregion
 	}

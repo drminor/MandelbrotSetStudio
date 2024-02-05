@@ -21,8 +21,6 @@ namespace MSetExplorer
 
 		// Our display starts at the the very top of the canvas.
 		private const int CONTROL_ELEVATION = 0;
-		// Reserve 13 pixles to show the SectionLine (aka DragLine) selectors (aka TopArrows)
-		private const int DEFAULT_SECTION_LINES_HEIGHT = 13;
 
 		private static readonly Brush TRANSPARENT_BRUSH = new SolidColorBrush(Colors.Transparent);
 		private static readonly Brush RED_BRUSH = new SolidColorBrush(Colors.Red);

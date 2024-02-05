@@ -146,7 +146,7 @@ namespace MSetExplorer
 
 		public CbBlendedColorPair Clone()
 		{
-			var result = new CbBlendedColorPair(Container, StartColor.Clone(), EndColor.Clone(), Blend, _canvas);
+			var result = new CbBlendedColorPair(Container, StartColor, EndColor, Blend, _canvas);
 			return result;
 		}
 

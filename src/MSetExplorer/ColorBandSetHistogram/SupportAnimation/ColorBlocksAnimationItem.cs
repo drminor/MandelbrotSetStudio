@@ -15,7 +15,46 @@ namespace MSetExplorer
 
 		private bool _useDetailedDebug = false;
 
-		public ColorBlocksAnimationItem(CbListViewItem? sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
+		//public ColorBlocksAnimationItem(CbListViewItem? sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
+		//{
+		//	_msPerPixel = msPerPixel;
+		//	RectTransitions = new List<RectTransition>();
+
+		//	SourceListViewItem = sourceListViewItem;
+		//	DestinationListViewItem = destinationListViewItem;
+
+		//	if (sourceListViewItem != null)
+		//	{
+		//		Name = sourceListViewItem.Name;
+		//		StartingPos = sourceListViewItem.CbColorBlock.CbColorPair.Container;
+		//		_scaleX = sourceListViewItem.CbColorBlock.ContentScale.Width;
+		//		_colorBandIndex = sourceListViewItem.ColorBandIndex;
+
+		//		DestinationPos = destinationListViewItem?.CbColorBlock.CbColorPair.Container
+		//			?? GetOffScreenRect(sourceListViewItem);
+		//	}
+		//	else if (destinationListViewItem != null)
+		//	{
+		//		Name = destinationListViewItem.Name;
+
+		//		StartingPos = sourceListViewItem?.CbColorBlock.CbColorPair.Container
+		//			?? GetOffScreenRect(destinationListViewItem);
+
+		//		DestinationPos = destinationListViewItem.CbColorBlock.CbColorPair.Container;
+
+		//		_scaleX = destinationListViewItem.CbColorBlock.ContentScale.Width;
+		//		_colorBandIndex = destinationListViewItem.ColorBandIndex;
+		//	}
+		//	else
+		//	{
+		//		throw new ArgumentNullException("One of the source or destination ListViewItem must be non-null.");
+		//	}
+
+		//	Current = StartingPos;
+		//	Elasped = 0;
+		//}
+
+		public ColorBlocksAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
 		{
 			_msPerPixel = msPerPixel;
 			RectTransitions = new List<RectTransition>();
@@ -23,32 +62,14 @@ namespace MSetExplorer
 			SourceListViewItem = sourceListViewItem;
 			DestinationListViewItem = destinationListViewItem;
 
-			if (sourceListViewItem != null)
-			{
-				Name = sourceListViewItem.Name;
-				StartingPos = sourceListViewItem.CbColorBlock.CbColorPair.Container;
-				_scaleX = sourceListViewItem.CbColorBlock.ContentScale.Width;
-				_colorBandIndex = sourceListViewItem.ColorBandIndex;
+			Name = sourceListViewItem.Name;
+			_scaleX = sourceListViewItem.CbColorBlock.ContentScale.Width;
+			_colorBandIndex = sourceListViewItem.ColorBandIndex;
 
-				DestinationPos = destinationListViewItem?.CbColorBlock.CbColorPair.Container
-					?? GetOffScreenRect(sourceListViewItem);
-			}
-			else if (destinationListViewItem != null)
-			{
-				Name = destinationListViewItem.Name;
+			StartingPos = sourceListViewItem.CbColorBlock.CbColorPair.Container;
 
-				StartingPos = sourceListViewItem?.CbColorBlock.CbColorPair.Container
-					?? GetOffScreenRect(destinationListViewItem);
-
-				DestinationPos = destinationListViewItem.CbColorBlock.CbColorPair.Container;
-
-				_scaleX = destinationListViewItem.CbColorBlock.ContentScale.Width;
-				_colorBandIndex = destinationListViewItem.ColorBandIndex;
-			}
-			else
-			{
-				throw new ArgumentNullException("One of the source or destination ListViewItem must be non-null.");
-			}
+			DestinationPos = destinationListViewItem?.CbColorBlock.CbColorPair.Container
+				?? GetOffScreenRect(sourceListViewItem);
 
 			Current = StartingPos;
 			Elasped = 0;
@@ -57,7 +78,7 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public string Name { get; init; }
-		public CbListViewItem? SourceListViewItem { get; init; }
+		public CbListViewItem SourceListViewItem { get; init; }
 		public CbListViewItem? DestinationListViewItem { get; init; }
 		public CbSectionLine? CbSectionLine => SourceListViewItem?.CbSectionLine;
 
@@ -74,6 +95,23 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public void MoveSourceToDestination()
+		{
+			if (DestinationListViewItem == null) throw new ArgumentNullException(nameof(DestinationListViewItem));
+			if (SourceListViewItem == null) throw new ArgumentNullException(nameof(SourceListViewItem));
+
+			var newCopy = SourceListViewItem.CbColorBlock.CbColorPair.Clone();
+
+			if (DestinationListViewItem.ColorBand.IsLast)
+			{
+				newCopy.EndColor = ColorBandColor.Black;
+			}
+
+			DestinationListViewItem.CbColorBlock.CbColorPair = newCopy;
+
+			SourceListViewItem.CbColorBlock.CbColorPair.TearDown();
+		}
 
 		public void BuildTimelinePos(Rect to, double velocityMultiplier = 1)
 		{
@@ -147,26 +185,9 @@ namespace MSetExplorer
 			BuildTimelineW(rect);
 		}
 
-		public void MoveSourceToDestination()
-		{
-			if (DestinationListViewItem != null && SourceListViewItem != null)
-			{
- 				var newCopy = SourceListViewItem.CbColorBlock.CbColorPair.Clone();
-				
-				if (DestinationListViewItem.ColorBand.IsLast)
-				{
-					newCopy.EndColor = ColorBandColor.Black;
-				}
-
-				DestinationListViewItem.CbColorBlock.CbColorPair = newCopy;
-
-				SourceListViewItem.CbColorBlock.CbColorPair.TearDown();
-			}
-		}
-
 		public double GetDistance()
 		{
-			var result = DestinationPos.Left - StartingPos.Left;
+			var result = Math.Abs(DestinationPos.Left - StartingPos.Left);
 			return result;
 		}
 
@@ -179,18 +200,6 @@ namespace MSetExplorer
 		public double GetShiftDistanceRight()
 		{
 			var result = PosBeforeDrop.Right - Current.Right;
-			return result;
-		}
-
-		public double GetOriginalShiftDistanceLeft()
-		{
-			var result = PosBeforeDrop.Left - PosAfterLift.Left;
-			return result;
-		}
-
-		public double GetOrigialShiftDistanceRight()
-		{
-			var result = PosBeforeDrop.Right - PosAfterLift.Right;
 			return result;
 		}
 

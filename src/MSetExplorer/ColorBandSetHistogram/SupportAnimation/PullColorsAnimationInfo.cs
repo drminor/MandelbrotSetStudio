@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 
 namespace MSetExplorer
@@ -25,14 +26,14 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Add(CbListViewItem? source, CbListViewItem destination)
+		public void Add(CbListViewItem source, CbListViewItem destination)
 		{
 			var colorBlocksAItem = new ColorBlocksAnimationItem(source, destination, _msPerPixel);
 			var blendedColorAItem = new BlendedColorAnimationItem(source, destination, _msPerPixel);
 
 			AnimationItemPairs.Add((colorBlocksAItem, blendedColorAItem));
 
-			destination.CbColorBlock.CbColorPair.ShowDiagBorder = true;
+			//destination.CbColorBlock.CbColorPair.ShowDiagBorder = true;
 		}
 
 		public double CalculateMovements()
@@ -46,14 +47,31 @@ namespace MSetExplorer
 
 		public void MoveSourcesToDestinations()
 		{
-			for (var i = 1; i < AnimationItemPairs.Count; i++)
+			var lastBlockDestinationItem = AnimationItemPairs[^1].Item1.DestinationListViewItem;
+			var lastBlendDestinationItem = AnimationItemPairs[^1].Item2.DestinationListViewItem;
+
+			var lastCbColorPair = lastBlockDestinationItem?.CbColorBlock.CbColorPair.Clone();
+			var lastCbBlendedColorPair = lastBlendDestinationItem?.CbRectangle.CbBlendedColorPair.Clone();
+
+
+			for (var i = 0; i < AnimationItemPairs.Count; i++)
 			{
 				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
 
-				colorBlockAItem.DestinationListViewItem!.CbColorBlock.CbColorPair.ShowDiagBorder = false;
+				//colorBlockAItem.DestinationListViewItem!.CbColorBlock.CbColorPair.ShowDiagBorder = false;
 
 				colorBlockAItem.MoveSourceToDestination();
 				blendedColorAItem.MoveSourceToDestination();
+			}
+
+			if (lastBlockDestinationItem != null)
+			{
+				lastBlockDestinationItem.CbColorBlock.CbColorPair = lastCbColorPair!;
+			}
+
+			if (lastBlendDestinationItem != null)
+			{
+				lastBlendDestinationItem.CbRectangle.CbBlendedColorPair = lastCbBlendedColorPair!;
 			}
 		}
 
@@ -252,10 +270,10 @@ namespace MSetExplorer
 			// The first horizontal movement can be no greater than 1/2 the total distance
 			// for any of items.
 
-			var minDist = AnimationItemPairs.Max(x => x.Item1.GetDistance());
-			var firstMovementDistMax = minDist / 2;
+			var minDist = AnimationItemPairs.Min(x => x.Item1.GetDistance());
+			var halfMinDist = minDist / 2;
 
-			var result = Math.Min(firstMovementDistMax, liftHeight);
+			var result = -1 * Math.Min(halfMinDist, liftHeight);
 
 			return result;
 		}
@@ -269,10 +287,10 @@ namespace MSetExplorer
 			// The first horizontal movement can be no greater than 1/2 the total distance
 			// for any of items.
 
-			var minDist = AnimationItemPairs.Max(x => x.Item2.GetDistance());
-			var firstMovementDistMax = minDist / 2;
+			var minDist = AnimationItemPairs.Min(x => x.Item2.GetDistance());
+			var halfMinDist = minDist / 2;
 
-			var result = Math.Min(firstMovementDistMax, liftHeight);
+			var result = -1 * Math.Min(halfMinDist, liftHeight);
 
 			return result;
 		}

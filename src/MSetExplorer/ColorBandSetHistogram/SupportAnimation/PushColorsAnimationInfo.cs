@@ -257,9 +257,9 @@ namespace MSetExplorer
 			// for any of items.
 
 			var minDist = AnimationItemPairs.Min(x => x.Item1.GetDistance());
-			var firstMovementDistMax = minDist / 2;
+			var halfMinDist = minDist / 2;
 
-			var result = Math.Min(firstMovementDistMax, liftHeight);
+			var result = Math.Min(halfMinDist, liftHeight);
 
 			return result;
 		}
@@ -274,9 +274,9 @@ namespace MSetExplorer
 			// for any of items.
 
 			var minDist = AnimationItemPairs.Min(x => x.Item2.GetDistance());
-			var firstMovementDistMax = minDist / 2;
+			var halfMinDist = minDist / 2;
 
-			var result = Math.Min(firstMovementDistMax, liftHeight);
+			var result = Math.Min(halfMinDist, liftHeight);
 
 			return result;
 		}

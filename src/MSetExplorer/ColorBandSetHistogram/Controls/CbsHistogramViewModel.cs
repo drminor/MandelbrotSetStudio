@@ -1058,10 +1058,11 @@ namespace MSetExplorer
 				return false;
 			}
 
+			var saveCcb = CurrentColorBand;
+
 			CurrentColorBand = null;
 			_currentColorBandSet.DeleteColor(index);
-			//ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(colorBand);
+			CurrentColorBand = saveCcb;
 
 			return true;
 		}

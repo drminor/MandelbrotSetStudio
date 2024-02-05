@@ -175,7 +175,7 @@ namespace MSetExplorer
 
 		public CbColorPair Clone()
 		{
-			var result = new CbColorPair(Container, StartColor.Clone(), EndColor.Clone(), Blend, _canvas);
+			var result = new CbColorPair(Container, StartColor, EndColor, Blend, _canvas);
 			return result;
 		}
 
