@@ -835,9 +835,8 @@ namespace MSetExplorer
 		public void CompleteColorInsertion(int index)
 		{
 			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorInsertion has been callled.");
-			var selItem = _currentColorBandSet[index];
 
-			var result = TryInsertColor(selItem, out var newIndex);
+			var result = TryInsertColor(index);
 
 			if (!result)
 			{
@@ -845,23 +844,25 @@ namespace MSetExplorer
 				return;
 			}
 
-			Debug.WriteLine($"ColorBandSetViewModel. After ColorInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {newIndex}.");
+			Debug.WriteLine($"ColorBandSetViewModel. After ColorInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
 
 			OnCurrentColorBandSetUpdated();
 
 			//ReportRemoveCurrentItem(index);
 		}
 
-		private bool TryInsertColor(ColorBand colorBand, out int index)
+		private bool TryInsertColor(int index)
 		{
-			index = _currentColorBandSet.IndexOf(colorBand);
+			//index = _currentColorBandSet.IndexOf(colorBand);
 
-			var newItem = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor);
+			var cb = _currentColorBandSet[index];
 
+			var newItem = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, cb.StartColor);
+
+			var saveCcb = CurrentColorBand;
 			CurrentColorBand = null;
 			_currentColorBandSet.InsertColor(index, newItem);
-			//ColorBandsView.Refresh();
-			ColorBandsView.MoveCurrentTo(colorBand);
+			CurrentColorBand = saveCcb;
 
 			return true;
 		}

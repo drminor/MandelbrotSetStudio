@@ -1,7 +1,6 @@
 ﻿using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -57,13 +56,10 @@ namespace MSetExplorer
 			_endColor = endColor;
 			_blend = blend;
 
-
 			//_diagContainerGeometry = new RectangleGeometry(container);
 			//_diagContainerPath = BuildDiagContainerPath(_diagContainerGeometry);
 			//_canvas.Children.Add(_diagContainerPath);
 			//_diagContainerPath.SetValue(Panel.ZIndexProperty, 25);
-
-
 
 			_startGeometry = new RectangleGeometry(BuildColorBlockStart(_container));
 			_startColorBlockPath = BuildStartColorBlockPath(_startGeometry, _startColor);
@@ -82,8 +78,8 @@ namespace MSetExplorer
 
 		//public int ColorBandIndex { get; set; }
 
-		public RectangleGeometry StartColorGeometry => _startGeometry;
-		public RectangleGeometry EndColorGeometry => _endGeometry;
+		//public RectangleGeometry StartColorGeometry => _startGeometry;
+		//public RectangleGeometry EndColorGeometry => _endGeometry;
 
 		public ColorBandColor StartColor
 		{
@@ -162,7 +158,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool ShowDiagBorder { get; set; }
+		//public bool ShowDiagBorder { get; set; }
 
 		#endregion
 
@@ -358,7 +354,7 @@ namespace MSetExplorer
 				IsHitTestVisible = true
 			};
 
-			result.Visibility = ShowDiagBorder && area.Rect.Width > 0 && area.Rect.Height > 0 ? Visibility.Visible : Visibility.Collapsed;
+			result.Visibility = /*ShowDiagBorder && */area.Rect.Width > 0 && area.Rect.Height > 0 ? Visibility.Visible : Visibility.Collapsed;
 
 			return result;
 		}

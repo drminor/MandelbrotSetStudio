@@ -344,14 +344,6 @@ namespace MSetExplorer
 		// Insert
 		private void InsertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			//var selItem = GetColorBandAtMousePosition();
-
-			//if (selItem != null)
-			//{
-			//	_ = _vm.TryInsertNewItem(selItem, out var index);
-			//	Debug.WriteLine($"CbsHistogramControl. The new ColorBand: {selItem} has been inserted at index: {index}.");
-			//}
-
 			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
 			{
 				if (_vm.TestInsertItem(colorBandIndex.Value))
@@ -359,15 +351,15 @@ namespace MSetExplorer
 					switch (_vm.CurrentCbEditMode)
 					{
 						case ColorBandSetEditMode.Cutoffs:
-							HistogramColorBandControl1.AnimateCutoffInsertion(_vm.CompleteCutoffInsertion, colorBandIndex.Value);
+							HistogramColorBandControl1.AnimateInsertCutoff(_vm.CompleteCutoffInsertion, colorBandIndex.Value);
 							break;
 
 						case ColorBandSetEditMode.Colors:
-							HistogramColorBandControl1.AnimateColorInsertion(_vm.CompleteColorInsertion, colorBandIndex.Value);
+							HistogramColorBandControl1.AnimateInsertColor(_vm.CompleteColorInsertion, colorBandIndex.Value);
 							break;
 
 						case ColorBandSetEditMode.Bands:
-							HistogramColorBandControl1.AnimateBandInsertion(_vm.CompleteBandInsertion, colorBandIndex.Value);
+							HistogramColorBandControl1.AnimateInsertBand(_vm.CompleteBandInsertion, colorBandIndex.Value);
 							break;
 
 						default:
@@ -432,15 +424,15 @@ namespace MSetExplorer
 						case ColorBandSetEditMode.Cutoffs:
 							// Delete the Item just after the selected SectionLine
 
-							HistogramColorBandControl1.AnimateCutoffDeletion(_vm.CompleteCutoffRemoval, colorBandIndex.Value + 1);
+							HistogramColorBandControl1.AnimateDeleteCutoff(_vm.CompleteCutoffRemoval, colorBandIndex.Value + 1);
 							break;
 
 						case ColorBandSetEditMode.Colors:
-							HistogramColorBandControl1.AnimateColorDeletion(_vm.CompleteColorRemoval, colorBandIndex.Value);
+							HistogramColorBandControl1.AnimateDeleteColor(_vm.CompleteColorRemoval, colorBandIndex.Value);
 							break;
 
 						case ColorBandSetEditMode.Bands:
-							HistogramColorBandControl1.AnimateBandDeletion(_vm.CompleteBandRemoval, colorBandIndex.Value);
+							HistogramColorBandControl1.AnimateDeleteBand(_vm.CompleteBandRemoval, colorBandIndex.Value);
 							break;
 
 						default:

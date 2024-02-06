@@ -358,7 +358,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void AnimateCutoffInsertion(Action<int> onAnimationComplete, int index)
+		public void AnimateInsertCutoff(Action<int> onAnimationComplete, int index)
 		{
 			if (_cbListView != null)
 			{
@@ -366,7 +366,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void AnimateColorInsertion(Action<int> onAnimationComplete, int index)
+		public void AnimateInsertColor(Action<int> onAnimationComplete, int index)
 		{
 			if (_cbListView != null)
 			{
@@ -374,7 +374,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void AnimateBandInsertion(Action<int> onAnimationComplete, int index)
+		public void AnimateInsertBand(Action<int> onAnimationComplete, int index)
 		{
 			if (_cbListView != null)
 			{
@@ -382,7 +382,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void AnimateCutoffDeletion(Action<int> onAnimationComplete, int index)
+		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
 		{
 			if (_cbListView != null)
 			{
@@ -390,7 +390,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void AnimateColorDeletion(Action<int> onAnimationComplete, int index)
+		public void AnimateDeleteColor(Action<int> onAnimationComplete, int index)
 		{
 			if (_cbListView != null)
 			{
@@ -398,7 +398,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void AnimateBandDeletion(Action<int> onAnimationComplete, int index)
+		public void AnimateDeleteBand(Action<int> onAnimationComplete, int index)
 		{
 			if (_cbListView != null)
 			{

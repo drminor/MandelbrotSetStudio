@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -171,8 +170,9 @@ namespace MSetExplorer
 			// The destination is just off the edge of the visible portion of the canvas.
 			var sourceRect = source.CbColorBlock.ColorPairContainer;
 
-			var width = source.CbColorBlock.Width * source.CbColorBlock.ContentScale.Width;
-			var destinationPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);
+			//var width = source.CbColorBlock.Width * source.CbColorBlock.ContentScale.Width;
+			//var destinationPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);
+			var destinationPosition = new Point(sourceRect.Right + 5, sourceRect.Top);
 
 			var destRect = new Rect(destinationPosition, sourceRect.Size);
 

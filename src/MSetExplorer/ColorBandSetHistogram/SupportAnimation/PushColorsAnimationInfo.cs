@@ -13,6 +13,9 @@ namespace MSetExplorer
 		private double _liftHeight;
 		private double _msPerPixel;
 
+		private CbColorPair? _firstCbColorPairCopy;
+		private CbBlendedColorPair? _firstCbBlendedColorPairCopy;
+
 		#region Constructor
 
 		public PushColorsAnimationInfo(double liftHeight, double velocity)
@@ -41,6 +44,11 @@ namespace MSetExplorer
 
 		public double CalculateMovements()
 		{
+			// Make a copy of the first CbColorPair and CbBlendedColorPair
+			var (firstColorBlockAItem, firstBlendedColorAItem) = AnimationItemPairs[0];
+			_firstCbColorPairCopy = firstColorBlockAItem.SourceListViewItem.CbColorBlock.CbColorPair.Clone();
+			_firstCbBlendedColorPairCopy = firstBlendedColorAItem.SourceListViewItem.CbRectangle.CbBlendedColorPair.Clone();
+
 			CalculateLiftDropBookends();
 
 			var startPushSyncPoint = BuildTimeLines();
@@ -53,11 +61,18 @@ namespace MSetExplorer
 			for (var i = AnimationItemPairs.Count - 2; i >= 0; i--)
 			{
 				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
-
 				//colorBlockAItem.SourceListViewItem!.CbColorBlock.CbColorPair.ShowDiagBorder = false;
 
 				colorBlockAItem.MoveSourceToDestination();
 				blendedColorAItem.MoveSourceToDestination();
+			}
+
+			// Restore the original values back to the first CbColorPair and CbBlendedColorPair
+			if (_firstCbColorPairCopy != null && _firstCbBlendedColorPairCopy != null)
+			{
+				var (firstColorBlockAItem, firstBlendedColorAItem) = AnimationItemPairs[0];
+				firstColorBlockAItem.SourceListViewItem.CbColorBlock.CbColorPair = _firstCbColorPairCopy;
+				firstBlendedColorAItem.SourceListViewItem.CbRectangle.CbBlendedColorPair = _firstCbBlendedColorPairCopy;
 			}
 		}
 
@@ -111,16 +126,18 @@ namespace MSetExplorer
 				blendedItem.BuildTimelinePos(blendedItem.PosAfterLift, veclocityMultiplier: 0.2);
 			}
 
-			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
-			{
-				// Move left and reduce width for each item that is futher right that the destination
-				BuildPullTimelines(colorBlockItem);
-				BuildPullTimelines(blendedItem);
-			}
+			//foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
+			//{
+			//	// Move left and reduce width for each item that is futher right that the destination
+			//	BuildPullTimelines(colorBlockItem);
+			//	BuildPullTimelines(blendedItem);
+			//}
 
-			CheckForNegativeShifts();
+			//CheckForNegativeShifts();
 
-			var startPushSyncPoint = SyncNextBeginTimeElapsed();
+			//var startPushSyncPoint = SyncNextBeginTimeElapsed();
+
+			var startPushSyncPoint = GetMaxDuration();
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
@@ -175,7 +192,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					// Shift right, keeping width constant for the distance both the left and right edges must move
+					// Shift left, keeping width constant for the distance both the left and right edges must move
 					rectAnimationItem.BuildTimelineX(sDistanceRight);
 				}
 			}

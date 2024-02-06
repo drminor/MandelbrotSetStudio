@@ -309,7 +309,7 @@ namespace MSS.Types
 				return false;
 			}
 
-			PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and its save to the Reserves.
+			PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and it's saved to the Reserves.
 
 			var wasRemoved = Remove(colorBand);
 
@@ -318,8 +318,25 @@ namespace MSS.Types
 
 		public void InsertColor(int index, ColorBand colorBand)
 		{
-			InsertItem(index, colorBand);
-			PullCutoffsDown(index); // Last Band is popped from the list and added to the reserves.
+			//InsertItem(index, colorBand);
+			//PullCutoffsDown(index); // A new reserved band is created from the colors of the last item.
+
+			PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and it's saved to the Reserves.
+			var cb = Items[index];
+
+			cb.StartColor = colorBand.StartColor;
+			cb.EndColor = colorBand.EndColor;
+			cb.BlendStyle = colorBand.BlendStyle;
+
+			if (index < Count - 1)
+			{
+				cb.SuccessorStartColor = Items[index + 1].StartColor;
+			}
+
+			if (index > 0)
+			{
+				Items[index - 1].SuccessorStartColor = cb.StartColor;
+			}
 		}
 
 		public void DeleteColor(int index)
@@ -624,13 +641,13 @@ namespace MSS.Types
 			_reservedColorBands.Push(newReserved);
 
 			targetCbE.StartColor = sourceCbE.StartColor;
+			targetCbE.BlendStyle = sourceCbE.BlendStyle;
+			targetCbE.EndColor = sourceCbE.EndColor;
 
 			for (var ptr = Count - 2; ptr > index; ptr--)
 			{
 				var sourceCb = Items[ptr - 1];
 				var targetCb = Items[ptr];
-
-				//Items[ptr] = new ColorBand(targetCb.Cutoff, sourceCb.StartColor, sourceCb.BlendStyle, sourceCb.EndColor, targetCb.PreviousCutoff, sourceCb.SuccessorStartColor, targetCb.Percentage);
 
 				targetCb.SuccessorStartColor = sourceCb.SuccessorStartColor;
 				targetCb.StartColor = sourceCb.StartColor;
@@ -643,21 +660,21 @@ namespace MSS.Types
 		{
 			for (var ptr = index; ptr < Count - 2; ptr++)
 			{
-				var targetCb = Items[ptr];
 				var sourceCb = Items[ptr + 1];
+				var targetCb = Items[ptr];
 
 				targetCb.Cutoff = sourceCb.Cutoff;
 				targetCb.PreviousCutoff = ptr == 0 ? null : Items[ptr - 1].Cutoff;
 			}
 
-			var lastCb = Items[Count - 2];
+			var lastCb = Items[^2];
 			RemoveItem(Count - 2);
 
 			if (Count > 1)
 			{
-				Items[Count - 1].PreviousCutoff = Items[Count - 2].Cutoff;
+				Items[^1].PreviousCutoff = Items[^2].Cutoff;
 
-				Items[Count - 2].SuccessorStartColor = Items[Count - 1].StartColor;
+				Items[^2].SuccessorStartColor = Items[^1].StartColor;
 			}
 
 			var newReserved = new ReservedColorBand(lastCb.StartColor, lastCb.BlendStyle, lastCb.EndColor);

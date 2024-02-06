@@ -39,6 +39,8 @@ namespace MSetExplorer
 		private int _currentColorBandIndex;
 
 		private CbSectionLine? _sectionLineBeingDragged;
+		private ColorBandSetEditMode? _newEditModeIfDragIsCancelled;
+
 		private CbListViewItem? _sectionLineUnderMouse;
 		private CbListViewItem? _blendRectangleUnderMouse;
 		private CbListViewItem? _colorBlocksUnderMouse;
@@ -81,6 +83,8 @@ namespace MSetExplorer
 			_currentColorBandIndex = 0;
 
 			_sectionLineBeingDragged = null;
+			_newEditModeIfDragIsCancelled = null;
+
 			_sectionLineUnderMouse = null;
 			_blendRectangleUnderMouse = null;
 			_selectedItemsRangeAnchorIndex = null;
@@ -434,6 +438,12 @@ namespace MSetExplorer
 
 		public bool CancelDrag()
 		{
+			if (_newEditModeIfDragIsCancelled != null)
+			{
+				CurrentCbEditMode = _newEditModeIfDragIsCancelled.Value;
+				_newEditModeIfDragIsCancelled = null;
+			}
+
 			if (_sectionLineBeingDragged != null)
 			{
 				_sectionLineBeingDragged.CancelDrag();
@@ -533,6 +543,8 @@ namespace MSetExplorer
 
 					Debug.WriteLineIf(_useDetailedDebug, $"CbListView. Handling PreviewMouseLeftButtonDown. Moving Current to CbRectangle: {cbListViewItem.ColorBandIndex}");
 
+					CurrentCbEditMode = GetEditModeFromHitpoint(hitPoint);
+
 					_colorBandsView.MoveCurrentTo(cbListViewItem.ColorBand);
 				}
 			}
@@ -544,19 +556,6 @@ namespace MSetExplorer
 
 		private void SectionLineWasMoved(CbSectionLineMovedEventArgs e)
 		{
-			//if (e.Operation == CbSectionLineDragOperation.NotStarted)
-			//{
-			//	if (e.UpdatingPrevious)
-			//	{
-			//		_colorBandsView.MoveCurrentToPosition(e.ColorBandIndex);
-			//	}
-
-			//	Debug.WriteIf(_useDetailedDebug, $"CbListView. Drag not started. CbRectangle: {CurrentColorBandIndex} is now current.");
-
-			//	_sectionLineBeingDragged = null;
-			//	return;
-			//}
-
 			switch (e.Operation)
 			{
 				case CbSectionLineDragOperation.Started:
@@ -574,6 +573,7 @@ namespace MSetExplorer
 
 				case CbSectionLineDragOperation.Complete:
 					_sectionLineBeingDragged = null;
+					_newEditModeIfDragIsCancelled = null;
 
 					Debug.WriteLineIf(_useDetailedDebug, "Completing the SectionLine Drag Operation.");
 					UpdateCutoff(e);
@@ -581,11 +581,19 @@ namespace MSetExplorer
 
 				case CbSectionLineDragOperation.Cancel:
 					_sectionLineBeingDragged = null;
+					_newEditModeIfDragIsCancelled = null;
 
 					UpdateCutoff(e);
 					break;
 				case CbSectionLineDragOperation.NotStarted:
 					_sectionLineBeingDragged = null;
+
+					if (_newEditModeIfDragIsCancelled != null)
+					{
+						CurrentCbEditMode = _newEditModeIfDragIsCancelled.Value;
+						_newEditModeIfDragIsCancelled = null;
+					}
+
 					Debug.WriteIf(_useDetailedDebug, $"CbListView. Drag not started. CbRectangle: {CurrentColorBandIndex} is now current.");
 					break;
 
@@ -675,6 +683,7 @@ namespace MSetExplorer
 
 			var cbSectionLine = cbListViewItem.CbSectionLine;
 			_sectionLineBeingDragged = cbSectionLine;
+			_newEditModeIfDragIsCancelled = GetEditModeFromHitpoint(hitPoint);
 
 			Debug.WriteIf(_useDetailedDebug, $"CbListView. Starting Drag for SectionLine: {colorBandIndex}.");
 
@@ -684,6 +693,26 @@ namespace MSetExplorer
 			var gRight = ListViewItems[colorBandIndex + 1].CbRectangle.RectangleGeometry;
 
 			cbSectionLine.StartDrag(gLeft.Rect.Width, gRight.Rect.Width, updatingPrevious);
+		}
+
+		private ColorBandSetEditMode GetEditModeFromHitpoint(Point hitPoint)
+		{
+			ColorBandSetEditMode result;
+
+			if (hitPoint.Y <= _elevations.ColorBlocksElevation)
+			{
+				result = ColorBandSetEditMode.Cutoffs;
+			}
+			else if (hitPoint.Y >= _elevations.BlendRectanglesElevation)
+			{
+				result = ColorBandSetEditMode.Bands;
+			}
+			else
+			{
+				result = ColorBandSetEditMode.Colors;
+			}
+
+			return result;
 		}
 
 		private bool TryGetSectionLineIndex(Point hitPoint, List<CbListViewItem> cbListViewItems, out double distance, out int listViewItemIndex)
@@ -1004,18 +1033,44 @@ namespace MSetExplorer
 
 		public void AnimateInsertColor(Action<int> onAnimationComplete, int index)
 		{
-			//var itemBeingRemoved = ListViewItems[index];
+			Debug.WriteLine($"AnimateInsertColor. Index = {index}.");
+			//ReportCanvasChildren();
+			//ReportColorBands("Top of AnimateDeleteCutoff", ListViewItems);
 
-			_storyBoardDetails1.Begin(AnimateInsertColorPost, onAnimationComplete, index, debounce: false);
+			// Create the class that will calcuate the 'PushColor' animation details
+			var liftHeight = _elevations.ColorBlocksHeight;
+			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(liftHeight, ANIMATION_PIXELS_PER_MS);
+
+			for (var i = index; i < ListViewItems.Count; i++)
+			{
+				var lviSource = ListViewItems[i];
+				var lviDestination = i == ListViewItems.Count - 1 ? null : ListViewItems[i + 1];
+				_pushColorsAnimationInfo1.Add(lviSource, lviDestination);
+			}
+
+			_pushColorsAnimationInfo1.CalculateMovements();
+
+			_storyBoardDetails1.RateFactor = 1;
+
+			ApplyAnimationItemPairs(_pushColorsAnimationInfo1.AnimationItemPairs);
+
+			//ListViewItems[^2].CbRectangle.EndColor = ColorBandColor.Black;
+			//ListViewItems[^2].CbColorBlock.EndColor = ColorBandColor.Black;
+
+			// Execute the Animation
+			_storyBoardDetails1.Begin(AnimateInsertColorPost, onAnimationComplete, index, debounce: true);
 		}
 
 		private void AnimateInsertColorPost(Action<int> onAnimationComplete, int index)
 		{
 			Debug.WriteLine("ColorInsertion Animation has completed.");
 
-			//var lvi = ListViewItems[index];
+			_pushColorsAnimationInfo1?.MoveSourcesToDestinations();
+			_pushColorsAnimationInfo1 = null;
 
 			onAnimationComplete(index);
+
+			_ = SynchronizeCurrentItem();
 		}
 
 		public void AnimateInsertBand(Action<int> onAnimationComplete, int index)
@@ -1047,7 +1102,7 @@ namespace MSetExplorer
 			//ReportColorBands("Top of AnimateDeleteCutoff", ListViewItems);
 
 			// Create the class that will calcuate the 'PushColor' animation details
-			var liftHeight = _elevations.ColorBlocksHeight / 2;
+			var liftHeight = _elevations.ColorBlocksHeight;
 
 			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(liftHeight, ANIMATION_PIXELS_PER_MS);
 
@@ -1168,19 +1223,6 @@ namespace MSetExplorer
 			}
 
 			onAnimationComplete(index);
-
-			//var lastCbListViewItem = ListViewItems[^1];
-
-			//var lastCb = (ColorBand)_colorBandsView.GetItemAt(lastCbListViewItem.ColorBandIndex);
-
-			//lastCbListViewItem.CbRectangle.StartColor = lastCb.StartColor;
-			//lastCbListViewItem.CbRectangle.EndColor = lastCb.EndColor;
-			//lastCbListViewItem.CbRectangle.Blend = lastCb.BlendStyle != ColorBandBlendStyle.None;
-
-			//lastCbListViewItem.CbColorBlock.StartColor = lastCb.StartColor;
-			//lastCbListViewItem.CbColorBlock.EndColor = lastCb.EndColor;
-			//lastCbListViewItem.CbColorBlock.Blend = lastCb.BlendStyle != ColorBandBlendStyle.None;
-			//lastCbListViewItem.CbColorBlock.ColorPairVisibility = Visibility.Visible;
 		}
 
 		public void AnimateDeleteBand(Action<int> onAnimationComplete, int index)
@@ -1335,6 +1377,11 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine("WARNING: _selectionLineBeingDragged is null on HandleSectionLineMoved.");
 				return;
+			}
+
+			if (_newEditModeIfDragIsCancelled == null)
+			{
+				Debug.WriteLine("WARNING: _newEditModeIfDragIsCancelled is null on HandleSectionLineMoved.");
 			}
 
 			if (!(sender is CbSectionLine))

@@ -51,13 +51,13 @@ namespace MSetExplorer
 
 		//public int ColorBandIndex { get; set; }
 
-		public RectangleGeometry ContainerGeometry => _containerGeometry;
+		//public RectangleGeometry ContainerGeometry => _containerGeometry;
 
-		public Path ContainerPath
-		{
-			get => (Path)_containerPath;
-			set => _containerPath = value;
-		}
+		//public Path ContainerPath
+		//{
+		//	get => (Path)_containerPath;
+		//	set => _containerPath = value;
+		//}
 
 		public ColorBandColor StartColor
 		{
@@ -134,6 +134,8 @@ namespace MSetExplorer
 				_containerPath.Visibility = value;
 			}
 		}
+
+		//public bool ShowDiagBorder { get; set; }
 
 		#endregion
 
