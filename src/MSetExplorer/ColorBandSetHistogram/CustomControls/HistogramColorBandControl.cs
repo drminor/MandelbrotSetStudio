@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.Cbs;
+using MSS.Types;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -41,6 +42,9 @@ namespace MSetExplorer
 
 		private ListCollectionView _colorBandsView;
 		private CbListView? _cbListView;
+		private StoryboardDetails _storyBoardDetails1;
+
+		private CbListViewAnimations? _cbListViewAnimations;
 
 		private TranslateTransform _canvasTranslateTransform;
 		private TransformGroup _canvasRenderTransform;
@@ -80,6 +84,8 @@ namespace MSetExplorer
 
 			_colorBandsView = ColorBandSetViewHelper.GetEmptyListCollectionView();
 			_cbListView = null;
+			_cbListViewAnimations = null;
+			_storyBoardDetails1 = new StoryboardDetails(new System.Windows.Media.Animation.Storyboard(), _canvas);
 
 			_canvasTranslateTransform = new TranslateTransform();
 
@@ -191,6 +197,7 @@ namespace MSetExplorer
 
 				//_canvas.Background = new SolidColorBrush(Colors.MistyRose);
 				_canvas.Background = new SolidColorBrush(Colors.Transparent);
+				_storyBoardDetails1 = new StoryboardDetails(new System.Windows.Media.Animation.Storyboard(), _canvas);
 
 				//_borderRect = CalculateBorderRect(TranslationAndClipSize, ContentScale, _colorBlocksElevation, _padding);
 				//((RectangleGeometry)((Path)_borderPath).Data).Rect = _borderRect;
@@ -302,11 +309,17 @@ namespace MSetExplorer
 					_cbListView = null;
 				}
 
+				if (_cbListViewAnimations != null)
+				{
+					_cbListViewAnimations = null;
+				}
+
 				if (_colorBandsView.Count > 0)
 				{
 					var currentCbEditMode = CbsHistogramViewModel?.CurrentCbEditMode ?? ColorBandSetEditMode.Bands;
 					
 					_cbListView = new CbListView(_canvas, _colorBandsView, CONTROL_ELEVATION, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged);
+					_cbListViewAnimations = new CbListViewAnimations(_storyBoardDetails1, _cbListView);
 				}
 			}
 		}
@@ -360,49 +373,49 @@ namespace MSetExplorer
 
 		public void AnimateInsertCutoff(Action<int> onAnimationComplete, int index)
 		{
-			if (_cbListView != null)
+			if (_cbListViewAnimations != null)
 			{
-				_cbListView.AnimateInsertCutoff(onAnimationComplete, index);
+				_cbListViewAnimations.AnimateInsertCutoff(onAnimationComplete, index);
 			}
 		}
 
 		public void AnimateInsertColor(Action<int> onAnimationComplete, int index)
 		{
-			if (_cbListView != null)
+			if (_cbListViewAnimations != null)
 			{
-				_cbListView.AnimateInsertColor(onAnimationComplete, index);
+				_cbListViewAnimations.AnimateInsertColor(onAnimationComplete, index);
 			}
 		}
 
 		public void AnimateInsertBand(Action<int> onAnimationComplete, int index)
 		{
-			if (_cbListView != null)
+			if (_cbListViewAnimations != null)
 			{
-				_cbListView.AnimateInsertBand(onAnimationComplete, index);
+				_cbListViewAnimations.AnimateInsertBand(onAnimationComplete, index);
 			}
 		}
 
 		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
 		{
-			if (_cbListView != null)
+			if (_cbListViewAnimations != null)
 			{
-				_cbListView.AnimateDeleteCutoff(onAnimationComplete, index);
+				_cbListViewAnimations.AnimateDeleteCutoff(onAnimationComplete, index);
 			}
 		}
 
 		public void AnimateDeleteColor(Action<int> onAnimationComplete, int index)
 		{
-			if (_cbListView != null)
+			if (_cbListViewAnimations != null)
 			{
-				_cbListView.AnimateDeleteColor(onAnimationComplete, index);
+				_cbListViewAnimations.AnimateDeleteColor(onAnimationComplete, index);
 			}
 		}
 
 		public void AnimateDeleteBand(Action<int> onAnimationComplete, int index)
 		{
-			if (_cbListView != null)
+			if (_cbListViewAnimations != null)
 			{
-				_cbListView.AnimateDeleteBand(onAnimationComplete, index);
+				_cbListViewAnimations.AnimateDeleteBand(onAnimationComplete, index);
 			}
 		}
 

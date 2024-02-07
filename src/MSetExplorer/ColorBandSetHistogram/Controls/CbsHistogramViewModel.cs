@@ -872,7 +872,9 @@ namespace MSetExplorer
 			Debug.WriteLine($"ColorBandSetViewModel. CompleteBandInsertion has been callled.");
 			var selItem = _currentColorBandSet[index];
 
-			var result = TryInsertColorBand(selItem, out var newIndex);
+			CurrentColorBand = null;
+
+			var result = TryInsertColorBand(selItem, index);
 
 			if (!result)
 			{
@@ -880,27 +882,35 @@ namespace MSetExplorer
 				return;
 			}
 
-			Debug.WriteLine($"ColorBandSetViewModel. After BandInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {newIndex}.");
+			if (index > 0)
+				index--;
+
+			if (_colorBandsView.CurrentPosition != index)
+			{
+				_colorBandsView.MoveCurrentToPosition(index);
+			}
+			else
+			{
+				CurrentColorBand = _currentColorBandSet[index];
+			}
+
+			Debug.WriteLine($"ColorBandSetViewModel. After BandInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
 
 			OnCurrentColorBandSetUpdated();
-
-			//ReportRemoveCurrentItem(index);
 		}
 
-		private bool TryInsertColorBand(ColorBand colorBand, out int index)
+		private bool TryInsertColorBand(ColorBand colorBand, int index)
 		{
-			if (colorBand.Cutoff - colorBand.StartingCutoff < 1)
+			if (colorBand.Cutoff - colorBand.StartingCutoff < 2)
 			{
 				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
-				index = -1;
 				return false;
 			}
 
 			var prevCutoff = colorBand.PreviousCutoff ?? 0;
-			var newCutoff = prevCutoff + (colorBand.Cutoff - prevCutoff) / 2;
+			var newWidth = (colorBand.Cutoff - prevCutoff) / 2;
+			var newCutoff = prevCutoff + newWidth;
 			var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor, colorBand.PreviousCutoff, colorBand.StartColor, double.NaN);
-
-			index = _currentColorBandSet.IndexOf(colorBand);
 
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:About to Insert item at index: {index}. The new item is: {newItem}.");
 
@@ -908,11 +918,6 @@ namespace MSetExplorer
 			{
 				_currentColorBandSet.Insert(index, newItem);
 				_currentColorBandSet.UpdateItemAndNeighbors(index, newItem);
-			}
-
-			if (!ColorBandsView.MoveCurrentTo(newItem))
-			{
-				Debug.WriteLine("ColorBandSetViewModel:Could not position the view to the new item.");
 			}
 
 			return true;
@@ -1009,7 +1014,7 @@ namespace MSetExplorer
 				CurrentColorBand = _currentColorBandSet[index];
 			}
 
-			Debug.WriteLine($"ColorBandSetViewModel.After CutoffRemoval, the current position is {ColorBandsView.CurrentPosition}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel.After CutoffRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
 			OnCurrentColorBandSetUpdated();
 
@@ -1031,7 +1036,7 @@ namespace MSetExplorer
 
 		public void CompleteColorRemoval(int index)
 		{
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorRemoval has been callled.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorRemoval has been callled.");
 			var selItem = _currentColorBandSet[index];
 
 			var result = TryDeleteColor(selItem);
@@ -1042,7 +1047,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			Debug.WriteLine($"ColorBandSetViewModel. After ColorRemoval, the current position is {ColorBandsView.CurrentPosition}.");
+			Debug.WriteLineIf(_useDetailedDebug, "ColorBandSetViewModel. After ColorRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
 			OnCurrentColorBandSetUpdated();
 
@@ -1070,7 +1075,7 @@ namespace MSetExplorer
 
 		public void CompleteBandRemoval(int index)
 		{
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteBandRemoval has been callled.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandRemoval has been callled.");
 			var selItem = _currentColorBandSet[index];
 
 			var result = TryDeleteBand(selItem);
@@ -1090,7 +1095,6 @@ namespace MSetExplorer
 			{
 				var cb = _currentColorBandSet[index - 1];
 				var followingCb = _currentColorBandSet[index];
-
 
 				cb.Cutoff = followingCb.PreviousCutoff ?? 0;
 
@@ -1114,7 +1118,7 @@ namespace MSetExplorer
 				CurrentColorBand = _currentColorBandSet[index];
 			}
 
-			Debug.WriteLine($"ColorBandSetViewModel. After BandRemoval, the current position is {ColorBandsView.CurrentPosition}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After BandRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
 			OnCurrentColorBandSetUpdated();
 

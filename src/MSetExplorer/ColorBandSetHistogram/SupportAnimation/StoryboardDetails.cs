@@ -24,7 +24,7 @@ namespace MSetExplorer
 				Priority = DispatcherPriority.Render
 			};
 
-			OurNameScope = GetOrCreateNameScope(containingObject);
+			//OurNameScope = GetOrCreateNameScope(containingObject);
 
 			Storyboard = storyboard;
 			ContainingObject = containingObject;
@@ -36,7 +36,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public INameScope OurNameScope { get; init; }
+		//public INameScope OurNameScope { get; init; }
 
 		public Storyboard Storyboard { get; init; }
 		public FrameworkElement ContainingObject { get; init; }
@@ -46,6 +46,11 @@ namespace MSetExplorer
 		#endregion
 
 		#region Public Methods
+
+		public void UnregisterName(string name)
+		{
+			ContainingObject.UnregisterName(name);
+		}
 
 		public int AddRectAnimation(string objectName, string propertyPath, Rect from, Rect to, TimeSpan beginTime, TimeSpan duration)
 		{
@@ -177,18 +182,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private INameScope GetOrCreateNameScope(FrameworkElement containingObject)
-		{
-			var ns = NameScope.GetNameScope(containingObject);
+		//private INameScope GetOrCreateNameScope(FrameworkElement containingObject)
+		//{
+		//	var ns = NameScope.GetNameScope(containingObject);
 
-			if (ns == null)
-			{
-				ns = new NameScope();
-				NameScope.SetNameScope(containingObject, ns);
-			}
+		//	if (ns == null)
+		//	{
+		//		ns = new NameScope();
+		//		NameScope.SetNameScope(containingObject, ns);
+		//	}
 
-			return ns;
-		}
+		//	return ns;
+		//}
 
 		#endregion
 	}
