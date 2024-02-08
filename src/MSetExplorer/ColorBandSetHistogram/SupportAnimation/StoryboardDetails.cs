@@ -13,8 +13,7 @@ namespace MSetExplorer
 
 		private bool _debounce;
 
-		private Action<Action<int>, int>? _completionCallback;
-		private Action<int>? _onAnimationComplete;
+		private Action<int>? _completionCallback;
 		private int _callbackIndex;
 
 		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject)
@@ -24,7 +23,7 @@ namespace MSetExplorer
 				Priority = DispatcherPriority.Render
 			};
 
-			//OurNameScope = GetOrCreateNameScope(containingObject);
+			OurNameScope = GetOrCreateNameScope(containingObject);
 
 			Storyboard = storyboard;
 			ContainingObject = containingObject;
@@ -36,7 +35,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		//public INameScope OurNameScope { get; init; }
+		public INameScope OurNameScope { get; init; }
 
 		public Storyboard Storyboard { get; init; }
 		public FrameworkElement ContainingObject { get; init; }
@@ -68,7 +67,9 @@ namespace MSetExplorer
 
 		public int AddChangeLeft(string objectName, string propertyPath, Rect from, double newX1, TimeSpan beginTime, TimeSpan duration)
 		{
-			var to = new Rect(newX1, from.Y, from.Right - newX1, from.Height);
+			var diff = newX1 - from.X;
+
+			var to = new Rect(newX1, from.Y, from.Width - diff, from.Height);
 			var da = new RectAnimation(from, to, duration);
 
 			return AddTimeline(objectName, propertyPath, da, beginTime);
@@ -85,7 +86,19 @@ namespace MSetExplorer
 		// Inflate / Deflate
 		public int AddChangeSize(string objectName, string propertyPath, Rect from, Size newSize, TimeSpan beginTime, TimeSpan duration)
 		{
-			var to = new Rect(from.X + newSize.Width / 2, from.Y + newSize.Height / 2, newSize.Width, newSize.Height);
+			Rect to;
+
+			if (from.Size.Width > newSize.Width)
+			{
+				// Deflating
+				to = new Rect(from.X + newSize.Width / 2, from.Y + newSize.Height / 2, newSize.Width, newSize.Height);
+			}
+			else
+			{
+				// Inflating
+				to = new Rect(from.X - newSize.Width / 2, from.Y - newSize.Height / 2, newSize.Width, newSize.Height);
+			}
+
 			var da = new RectAnimation(from, to, duration);
 
 			return AddTimeline(objectName, propertyPath, da, beginTime);
@@ -135,10 +148,9 @@ namespace MSetExplorer
 			return Storyboard.Children.Count;
 		}
 
-		public void Begin(Action<Action<int>, int> completionCallback, Action<int> onAnimationComplete, int index, bool debounce)
+		public void Begin(Action<int> completionCallback, int index, bool debounce)
 		{
 			_completionCallback = completionCallback;
-			_onAnimationComplete = onAnimationComplete;
 			_callbackIndex = index;
 			Storyboard.Begin(ContainingObject);
 			_debounce = debounce;
@@ -171,29 +183,24 @@ namespace MSetExplorer
 			Storyboard.Children.Clear();
 			RateFactor = 1.0;
 
-			if (_onAnimationComplete == null)
-			{
-				throw new InvalidOperationException("The provided onAnimationComplete method is null as the StoryBoard_Completed callback is called.");
-			}
-
 			if (_completionCallback != null)
 			{
-				_completionCallback(_onAnimationComplete, _callbackIndex);
+				_completionCallback(_callbackIndex);
 			}
 		}
 
-		//private INameScope GetOrCreateNameScope(FrameworkElement containingObject)
-		//{
-		//	var ns = NameScope.GetNameScope(containingObject);
+		private INameScope GetOrCreateNameScope(FrameworkElement containingObject)
+		{
+			var ns = NameScope.GetNameScope(containingObject);
 
-		//	if (ns == null)
-		//	{
-		//		ns = new NameScope();
-		//		NameScope.SetNameScope(containingObject, ns);
-		//	}
+			if (ns == null)
+			{
+				ns = new NameScope();
+				NameScope.SetNameScope(containingObject, ns);
+			}
 
-		//	return ns;
-		//}
+			return ns;
+		}
 
 		#endregion
 	}

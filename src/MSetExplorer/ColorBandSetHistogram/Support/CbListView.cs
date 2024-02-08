@@ -43,6 +43,8 @@ namespace MSetExplorer
 		private int? _selectedItemsRangeAnchorIndex;
 		private int? _indexOfMostRecentlySelectedItem;
 
+		private readonly INameScope _ourNameScope;
+
 		private readonly bool _useDetailedDebug = false;
 
 		#endregion
@@ -50,16 +52,12 @@ namespace MSetExplorer
 		#region Constructor
 
 		public CbListView(Canvas canvas, ListCollectionView colorBandsView, double elevation, double controlHeight, SizeDbl contentScale, bool parentIsFocused, ColorBandSetEditMode currentCbEditMode, 
-			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged)
+			ContextMenuDisplayRequest displayContextMenu, Action<ColorBandSetEditMode> currentCbEditModeChanged, INameScope nameScope)
 		{
+			_ourNameScope = nameScope;
 			_canvas = canvas;
 
 			_nextNameSuffix = 0;
-
-			OurNameScope = GetOrCreateNameScope(_canvas);
-
-			//_storyBoardDetails1 = new StoryboardDetails(new Storyboard(), _canvas);
-			//CheckNameScope(_canvas, 0);
 
 			_colorBandsView = colorBandsView;
 
@@ -107,7 +105,6 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public INameScope OurNameScope { get; init; }
 
 		public List<CbListViewItem> ListViewItems { get; set; }
 		
@@ -772,7 +769,7 @@ namespace MSetExplorer
 		{
 			var listViewItem = new CbListViewItem(colorBandIndex, colorBand, _elevations, _colorBandLayoutViewModel, GetNextNameSuffix(), SectionLineWasMoved);
 					
-			OurNameScope.RegisterName(listViewItem.Name, listViewItem);
+			_ourNameScope.RegisterName(listViewItem.Name, listViewItem);
 
 			return listViewItem;
 		}
@@ -1063,19 +1060,6 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private INameScope GetOrCreateNameScope(FrameworkElement containingObject)
-		{
-			var ns = NameScope.GetNameScope(containingObject);
-
-			if (ns == null)
-			{
-				ns = new NameScope();
-				NameScope.SetNameScope(containingObject, ns);
-			}
-
-			return ns;
-		}
-
 		#endregion
 
 		#region Diagnostics
@@ -1152,6 +1136,22 @@ namespace MSetExplorer
 				Debug.WriteLine($"CbsListView. The Canvas already has a NameScope but the value is unavailable.");
 			}
 		}
+
+		[Conditional("DEBUG")]
+		private void ReportNameScopeDetails(DependencyObject dependencyObject)
+		{
+			var o = dependencyObject.GetValue(NameScope.NameScopeProperty);
+
+			if (o is NameScope ns)
+			{
+				Debug.WriteLine($"CbsListView. The Canvas already has a NameScope with {ns.Count} registered names.");
+			}
+			else
+			{
+				Debug.WriteLine($"CbsListView. The Canvas already has a NameScope but the value is unavailable.");
+			}
+		}
+
 
 		[Conditional("DEBUG")]
 		private void CheckOldItems(ColorBand? colorBand, IList? oldItems)

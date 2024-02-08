@@ -2,11 +2,13 @@
 using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using Windows.UI.WebUI;
 
@@ -85,7 +87,7 @@ namespace MSetExplorer
 			_colorBandsView = ColorBandSetViewHelper.GetEmptyListCollectionView();
 			_cbListView = null;
 			_cbListViewAnimations = null;
-			_storyBoardDetails1 = new StoryboardDetails(new System.Windows.Media.Animation.Storyboard(), _canvas);
+			_storyBoardDetails1 = new StoryboardDetails(new Storyboard(), _canvas);
 
 			_canvasTranslateTransform = new TranslateTransform();
 
@@ -318,8 +320,8 @@ namespace MSetExplorer
 				{
 					var currentCbEditMode = CbsHistogramViewModel?.CurrentCbEditMode ?? ColorBandSetEditMode.Bands;
 					
-					_cbListView = new CbListView(_canvas, _colorBandsView, CONTROL_ELEVATION, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged);
-					_cbListViewAnimations = new CbListViewAnimations(_storyBoardDetails1, _cbListView);
+					_cbListView = new CbListView(_canvas, _colorBandsView, CONTROL_ELEVATION, ActualHeight, ContentScale, _parentIsFocused, currentCbEditMode, ShowContextMenu, HandleCbListViewEditModeChanged, _storyBoardDetails1.OurNameScope);
+					_cbListViewAnimations = new CbListViewAnimations(_storyBoardDetails1, _cbListView, OnAnimationComplete);
 				}
 			}
 		}
@@ -371,51 +373,129 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void AnimateInsertCutoff(Action<int> onAnimationComplete, int index)
+		public void InsertColorBandItem(int colorBandIndex, ColorBandSetEditMode editMode)
 		{
-			if (_cbListViewAnimations != null)
+			if (_cbsHistogramViewModel == null || _cbListViewAnimations == null)
 			{
-				_cbListViewAnimations.AnimateInsertCutoff(onAnimationComplete, index);
+				return;
+			}
+
+			if (_cbsHistogramViewModel.TestInsertItem(colorBandIndex))
+			{
+				//Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl InsertColorBandItem - EditMode: {editMode}, ColorBandIndex: {colorBandIndex}.");
+				Debug.WriteLine($"HistogramColorBandControl InsertColorBandItem - EditMode: {editMode}, ColorBandIndex: {colorBandIndex}.");
+
+				switch (editMode)
+				{
+					case ColorBandSetEditMode.Cutoffs:
+						// Delete the Item just after the selected SectionLine
+						_cbListViewAnimations.AnimateInsertCutoff(colorBandIndex + 1);
+						break;
+
+					case ColorBandSetEditMode.Colors:
+						_cbListViewAnimations.AnimateInsertColor(colorBandIndex);
+						break;
+
+					case ColorBandSetEditMode.Bands:
+						_cbListViewAnimations.AnimateInsertBand(colorBandIndex);
+						break;
+
+					default:
+						break;
+				}
+			}
+			else
+			{
+				Debug.WriteLine($"The HistogramColorBandControl was unable to Delete the Item at ColorBandIndex: {colorBandIndex}.");
 			}
 		}
 
-		public void AnimateInsertColor(Action<int> onAnimationComplete, int index)
+		// Delete
+		public void DeleteColorBandItem(int colorBandIndex, ColorBandSetEditMode editMode)
 		{
-			if (_cbListViewAnimations != null)
+			if (_cbsHistogramViewModel == null || _cbListViewAnimations == null)
 			{
-				_cbListViewAnimations.AnimateInsertColor(onAnimationComplete, index);
+				return;
+			}
+
+			if (_cbsHistogramViewModel.TestDeleteItem(colorBandIndex))
+			{
+				//Debug.WriteLineIf(_useDetailedDebug, $"HistogramColorBandControl DeleteColorBandItem - EditMode: {editMode}, ColorBandIndex: {colorBandIndex}.");
+				Debug.WriteLine($"HistogramColorBandControl DeleteColorBandItem - EditMode: {editMode}, ColorBandIndex: {colorBandIndex}.");
+
+				switch (editMode)
+				{
+					case ColorBandSetEditMode.Cutoffs:
+						// Delete the Item just after the selected SectionLine
+						_cbListViewAnimations.AnimateDeleteCutoff(colorBandIndex + 1);
+						break;
+
+					case ColorBandSetEditMode.Colors:
+						_cbListViewAnimations.AnimateDeleteColor(colorBandIndex);
+						break;
+
+					case ColorBandSetEditMode.Bands:
+						_cbListViewAnimations.AnimateDeleteBand(colorBandIndex);
+						break;
+
+					default:
+						break;
+				}
+			}
+			else
+			{
+				Debug.WriteLine($"The HistogramColorBandControl was unable to Delete the Item at ColorBandIndex: {colorBandIndex}.");
 			}
 		}
 
-		public void AnimateInsertBand(Action<int> onAnimationComplete, int index)
+		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index, object? newItem = null)
 		{
-			if (_cbListViewAnimations != null)
+			switch (editOp)
 			{
-				_cbListViewAnimations.AnimateInsertBand(onAnimationComplete, index);
-			}
-		}
+				case ColorBandSetEditOperation.InsertCutoff:
 
-		public void AnimateDeleteCutoff(Action<int> onAnimationComplete, int index)
-		{
-			if (_cbListViewAnimations != null)
-			{
-				_cbListViewAnimations.AnimateDeleteCutoff(onAnimationComplete, index);
-			}
-		}
+					if (newItem == null || !(newItem is int newCutoff))
+					{
+						throw new ArgumentException("The newItem object parameter must be convertable to an int when the operation is InsertCutoff.");
+					}
 
-		public void AnimateDeleteColor(Action<int> onAnimationComplete, int index)
-		{
-			if (_cbListViewAnimations != null)
-			{
-				_cbListViewAnimations.AnimateDeleteColor(onAnimationComplete, index);
-			}
-		}
+					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newCutoff);
+					break;
 
-		public void AnimateDeleteBand(Action<int> onAnimationComplete, int index)
-		{
-			if (_cbListViewAnimations != null)
-			{
-				_cbListViewAnimations.AnimateDeleteBand(onAnimationComplete, index);
+				case ColorBandSetEditOperation.InsertColor:
+
+					if (newItem == null || !(newItem is ColorBand colorBandForInsertColor))
+					{
+						throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertColor.");
+					}
+
+					_cbsHistogramViewModel?.CompleteColorInsertion(index, colorBandForInsertColor);
+					break;
+
+				case ColorBandSetEditOperation.InsertBand:
+
+					if (newItem == null || !(newItem is ColorBand colorBand))
+					{
+						throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertBand.");
+					}
+
+					_cbsHistogramViewModel?.CompleteBandInsertion(index, colorBand);
+					break;
+
+				case ColorBandSetEditOperation.DeleteCutoff:
+					_cbsHistogramViewModel?.CompleteCutoffRemoval(index);
+					break;
+
+				case ColorBandSetEditOperation.DeleteColor:
+					_cbsHistogramViewModel?.CompleteColorRemoval(index);
+					break;
+
+				case ColorBandSetEditOperation.DeleteBand:
+					_cbsHistogramViewModel?.CompleteBandRemoval(index);
+					break;
+
+				default:
+					break;
 			}
 		}
 
@@ -890,5 +970,17 @@ namespace MSetExplorer
 		}
 
 		#endregion
+	}
+
+	public enum ColorBandSetEditOperation
+	{
+		InsertCutoff,
+		DeleteCutoff,
+
+		InsertColor,
+		DeleteColor,
+
+		InsertBand,
+		DeleteBand
 	}
 }

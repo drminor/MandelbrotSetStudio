@@ -8,7 +8,6 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace MSetExplorer
 {
@@ -346,30 +345,7 @@ namespace MSetExplorer
 		{
 			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
 			{
-				if (_vm.TestInsertItem(colorBandIndex.Value))
-				{
-					switch (_vm.CurrentCbEditMode)
-					{
-						case ColorBandSetEditMode.Cutoffs:
-							HistogramColorBandControl1.AnimateInsertCutoff(_vm.CompleteCutoffInsertion, colorBandIndex.Value);
-							break;
-
-						case ColorBandSetEditMode.Colors:
-							HistogramColorBandControl1.AnimateInsertColor(_vm.CompleteColorInsertion, colorBandIndex.Value);
-							break;
-
-						case ColorBandSetEditMode.Bands:
-							HistogramColorBandControl1.AnimateInsertBand(_vm.CompleteBandInsertion, colorBandIndex.Value);
-							break;
-
-						default:
-							break;
-					}
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to Insert the Item at ColorBandIndex: {colorBandIndex}.");
-				}
+				HistogramColorBandControl1.InsertColorBandItem(colorBandIndex.Value, _vm.CurrentCbEditMode);
 			}
 			else
 			{
@@ -417,32 +393,7 @@ namespace MSetExplorer
 		{
 			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
 			{
-				if (_vm.TestDeleteItem(colorBandIndex.Value))
-				{
-					switch (_vm.CurrentCbEditMode)
-					{
-						case ColorBandSetEditMode.Cutoffs:
-							// Delete the Item just after the selected SectionLine
-
-							HistogramColorBandControl1.AnimateDeleteCutoff(_vm.CompleteCutoffRemoval, colorBandIndex.Value + 1);
-							break;
-
-						case ColorBandSetEditMode.Colors:
-							HistogramColorBandControl1.AnimateDeleteColor(_vm.CompleteColorRemoval, colorBandIndex.Value);
-							break;
-
-						case ColorBandSetEditMode.Bands:
-							HistogramColorBandControl1.AnimateDeleteBand(_vm.CompleteBandRemoval, colorBandIndex.Value);
-							break;
-
-						default:
-							break;
-					}
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to Delete the Item at ColorBandIndex: {colorBandIndex}.");
-				}
+				HistogramColorBandControl1.DeleteColorBandItem(colorBandIndex.Value, _vm.CurrentCbEditMode);
 			}
 			else
 			{
@@ -667,7 +618,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-
 	}
 }
