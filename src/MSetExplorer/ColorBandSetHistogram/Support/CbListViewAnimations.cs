@@ -20,7 +20,7 @@ namespace MSetExplorer.Cbs
 		private CbListView _cbListView;
 		private List<CbListViewItem> _listViewItems => _cbListView.ListViewItems;
 
-		private Action<ColorBandSetEditOperation, int, object?> _onAnimationComplete;
+		private Action<ColorBandSetEditOperation, int, ColorBand?> _onAnimationComplete;
 
 		private PushColorsAnimationInfo? _pushColorsAnimationInfo1 = null;
 		private PullColorsAnimationInfo? _pullColorsAnimationInfo1 = null;
@@ -31,7 +31,7 @@ namespace MSetExplorer.Cbs
 
 		#region Constructor
 
-		public CbListViewAnimations(StoryboardDetails storyboardDetails, CbListView cbListView, Action<ColorBandSetEditOperation, int, object?> onAnimationComplete)
+		public CbListViewAnimations(StoryboardDetails storyboardDetails, CbListView cbListView, Action<ColorBandSetEditOperation, int, ColorBand?> onAnimationComplete)
 		{
 			_storyBoardDetails1 = storyboardDetails;
 			_cbListView = cbListView;
@@ -42,23 +42,96 @@ namespace MSetExplorer.Cbs
 
 		#region Animation Support - Insertions
 
+		// Insert Cutoff, Pull Colors Down
 		public void AnimateInsertCutoff(int index)
 		{
-			//var itemBeingRemoved = _listViewItems[index];
+			var currentItem = _listViewItems[index];
+			var startingAreaOfCurrentItem = currentItem.Area;
 
-			_storyBoardDetails1.Begin(AnimateInsertCutoffPost, index, debounce: false);
+			var colorBand = currentItem.ColorBand;
+			var prevCutoff = colorBand.PreviousCutoff;
+			var newWidth = colorBand.BucketWidth / 2;
+			var newCutoff = (prevCutoff ?? 0) + newWidth;
+
+			var newStartColor = colorBand.StartColor;
+			var endColor = colorBand.EndColor;
+			var successorStartColor = colorBand.SuccessorStartColor;
+
+			var newItem = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, endColor, prevCutoff, successorStartColor, double.NaN);
+
+			var itemBeingInserted = _cbListView.CreateListViewItem(index, newItem);
+			//itemBeingInserted.Opacity = 0;
+
+			_listViewItems.Insert(index, itemBeingInserted);
+			_cbListView.Reindex(0);
+
+			// Pull Colors Down
+			// Create a ListViewItem to hold the new source
+			var newColorBand = CreateColorBandFromReservedBand(_listViewItems[^1], reservedColorBand: null);
+			var newLvi = _cbListView.CreateListViewItem(_listViewItems.Count, newColorBand);
+
+			// Create the class that will calcuate the 'PullColor' animation details
+			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
+
+			// The first destination is the upper half, which is at index + 1
+			for (var i = index; i < _listViewItems.Count; i++)
+			{
+				var lviDestination = _listViewItems[i];
+				var lviSource = i == _listViewItems.Count - 1 ? newLvi : _listViewItems[i + 1];
+				_pullColorsAnimationInfo1.Add(lviSource, lviDestination);
+			}
+
+			_ = _pullColorsAnimationInfo1.CalculateMovements();
+
+			_storyBoardDetails1.RateFactor = 1;
+
+			ApplyAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs);
+
+			_storyBoardDetails1.RateFactor = 10;
+
+			//// Have the new item go from transparent to fully opaque
+			//_storyBoardDetails1.AddMakeOpaque(itemBeingInserted.Name, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(400));
+
+			//// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
+			//_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX1: newCutoff, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(300));
+
+			_storyBoardDetails1.Begin(AnimateInsertCutoffPost, index, debounce: true);
 		}
 
 		private void AnimateInsertCutoffPost(int index)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, "CutoffInsertion Animation has completed.");
+			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n CutoffInsertion Animation has completed.");
+
+			if (_pullColorsAnimationInfo1 != null)
+			{
+				var newLvi = _pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem;
+				_pullColorsAnimationInfo1.MoveSourcesToDestinations();
+
+				newLvi.TearDown();
+				_storyBoardDetails1.UnregisterName(newLvi.Name);
+
+				_pullColorsAnimationInfo1 = null;
+			}
+
+			//var prevCb = _listViewItems[index - 1];
+
+			//if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
+			//{
+			//	var cbListViewItem = _listViewItems[index];
+			//	prevCb.CbColorBlock.EndColor = cbListViewItem.CbColorBlock.StartColor;
+			//	prevCb.CbRectangle.EndColor = cbListViewItem.CbRectangle.StartColor;
+			//}
+
 
 			var lvi = _listViewItems[index];
-			var newCutoff = lvi.CbSectionLine.SectionLineRectangleArea.Right;
+			var colorBand = lvi.ColorBand;
+			
+			_onAnimationComplete(ColorBandSetEditOperation.InsertCutoff, index, colorBand);
 
-			_onAnimationComplete(ColorBandSetEditOperation.InsertCutoff, index, newCutoff);
+			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
+		// Insert Color, Push Colors Up
 		public void AnimateInsertColor(int index)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"AnimateInsertColor. Index = {index}.");
@@ -80,9 +153,6 @@ namespace MSetExplorer.Cbs
 			_storyBoardDetails1.RateFactor = 1;
 
 			ApplyAnimationItemPairs(_pushColorsAnimationInfo1.AnimationItemPairs);
-
-			//_listViewItems[^2].CbRectangle.EndColor = ColorBandColor.Black;
-			//_listViewItems[^2].CbColorBlock.EndColor = ColorBandColor.Black;
 
 			// Execute the Animation
 			_storyBoardDetails1.Begin(AnimateInsertColorPost, index, debounce: true);
@@ -109,26 +179,20 @@ namespace MSetExplorer.Cbs
 			var startingAreaOfCurrentItem = currentItem.Area;
 
 			var colorBand = currentItem.ColorBand;
-
 			var prevCutoff = colorBand.PreviousCutoff;
+			var newWidth = colorBand.BucketWidth / 2;
+			var newCutoff = (prevCutoff ?? 0) + newWidth;
 
+			var newStartColor = ColorBandColor.White;
+			var endColor = colorBand.StartColor;
+			var successorStartColor = colorBand.StartColor;
 
-			var bandWidth = colorBand.BucketWidth / 2;
-			var newCutoff = (prevCutoff ?? 0) + bandWidth;
-			var newItem = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, colorBand.StartColor, prevCutoff, colorBand.StartColor, double.NaN);
+			var newItem = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, endColor, prevCutoff, successorStartColor, double.NaN);
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newItem);
 			itemBeingInserted.Opacity = 0;
 
-			var newArea = itemBeingInserted.Area;
-			var newSize = newArea.Size;
-
-			var startSize = new Size(newSize.Width * 0.25, newSize.Height * 0.25);
-			var diffSize = new Size(newSize.Width - startSize.Width, newSize.Height - startSize.Height);
-			var startVal = new Rect(new Point(newArea.X + diffSize.Width / 2, newArea.Y + diffSize.Height / 2), startSize);
-
 			_listViewItems.Insert(index, itemBeingInserted);
-
 			_cbListView.Reindex(0);
 
 			if (index > 0)
@@ -138,15 +202,19 @@ namespace MSetExplorer.Cbs
 
 			_storyBoardDetails1.RateFactor = 10;
 
+			// Set the initial size to 25% of the final size and grow the new item into the new space.
+			var newArea = itemBeingInserted.Area;
+			var newSize = newArea.Size;
+
+			var startSize = new Size(newSize.Width * 0.25, newSize.Height * 0.25);
+			var diffSize = new Size(newSize.Width - startSize.Width, newSize.Height - startSize.Height);
+			var startVal = new Rect(new Point(newArea.X + diffSize.Width / 2, newArea.Y + diffSize.Height / 2), startSize);
+			_storyBoardDetails1.AddChangeSize(itemBeingInserted.Name, "Area", from: startVal, newSize: newSize, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(300));
+
+			// Have the new item go from transparent to fully opaque
 			_storyBoardDetails1.AddMakeOpaque(itemBeingInserted.Name, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(400));
 
-			//_storyBoardDetails1.AddChangeSize(itemBeingInserted.Name, "Area", from: startVal, newSize: newSize, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(300));
-
-			//var widthOfItemBeingInserted = itemBeingInserted.Area.Width;
-
-			var curVal = currentItem.Area;
-			//var newWidth = curVal.Width - newSize.Width;
-
+			// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
 			_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX1: newCutoff,  beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(300));
 
 			_storyBoardDetails1.Begin(AnimateInsertBandPost, index, debounce: true);
@@ -154,14 +222,12 @@ namespace MSetExplorer.Cbs
 
 		private void AnimateInsertBandPost(int index)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, "ColorBandInsertion Animation has completed.");
+			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n BandInsertion Animation has completed.");
 
 			var lvi = _listViewItems[index];
 			var colorBand = lvi.ColorBand;
 
 			_onAnimationComplete(ColorBandSetEditOperation.InsertBand, index, colorBand);
-
-			//_cbListView.Reindex(0);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
@@ -170,6 +236,7 @@ namespace MSetExplorer.Cbs
 
 		#region Animation Support - Deletions
 
+		// Delete Cutoff, Push Colors Up
 		public void AnimateDeleteCutoff(int index)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteCutoff. Index = {index}.");
@@ -238,6 +305,7 @@ namespace MSetExplorer.Cbs
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
+		// Delete Color, Pull Colors Down
 		public void AnimateDeleteColor(int index)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteColor. Index = {index}.");
@@ -297,6 +365,7 @@ namespace MSetExplorer.Cbs
 			_onAnimationComplete(ColorBandSetEditOperation.DeleteColor, index, null);
 		}
 
+		// Delete Band
 		public void AnimateDeleteBand(int index)
 		{
 			//_storyBoardDetails1.RateFactor = 5;

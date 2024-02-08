@@ -58,8 +58,8 @@ namespace MSetExplorer
 		//int GetIndexOf(ColorBand colorBand);
 
 		bool TestInsertItem(int colorBandIndex);
-		void CompleteCutoffInsertion(int index, int newCutoff);
-		void CompleteCutoffInsertion(int index);
+		void CompleteCutoffInsertion(int index, ColorBand colorBand);
+		//void CompleteCutoffInsertion(int index);
 
 		void CompleteColorInsertion(int index, ColorBandColor colorBandColor);
 		void CompleteColorInsertion(int index, ColorBand colorBand);

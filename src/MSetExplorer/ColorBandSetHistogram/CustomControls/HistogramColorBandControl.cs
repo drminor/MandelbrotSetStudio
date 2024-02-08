@@ -388,8 +388,7 @@ namespace MSetExplorer
 				switch (editMode)
 				{
 					case ColorBandSetEditMode.Cutoffs:
-						// Delete the Item just after the selected SectionLine
-						_cbListViewAnimations.AnimateInsertCutoff(colorBandIndex + 1);
+						_cbListViewAnimations.AnimateInsertCutoff(colorBandIndex);
 						break;
 
 					case ColorBandSetEditMode.Colors:
@@ -448,18 +447,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index, object? newItem = null)
+		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index,ColorBand? newItem = null)
 		{
 			switch (editOp)
 			{
 				case ColorBandSetEditOperation.InsertCutoff:
 
-					if (newItem == null || !(newItem is int newCutoff))
+					if (newItem == null || !(newItem is ColorBand colorBandForInsertCutoff))
 					{
 						throw new ArgumentException("The newItem object parameter must be convertable to an int when the operation is InsertCutoff.");
 					}
 
-					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newCutoff);
+					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, colorBandForInsertCutoff);
 					break;
 
 				case ColorBandSetEditOperation.InsertColor:
