@@ -106,7 +106,7 @@ namespace MSetExplorer
 
 			_dragLine = BuildDragLine(_sectionLineArea, _isUnderMouse, ParentIsFocused, ContentScale);
 			_canvas.Children.Add(_dragLine);
-			_dragLine.SetValue(Panel.ZIndexProperty, 30);
+			_dragLine.SetValue(Panel.ZIndexProperty, 15);
 
 			_topArrowHalfWidth = SELECTION_LINE_ARROW_WIDTH;
 			_topArrow = BuildTopArrow(_topArrowArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
@@ -242,7 +242,7 @@ namespace MSetExplorer
 
 					if (ScreenTypeHelper.IsDoubleChanged(x2PTest, X2Position, 2))
 					{
-						Debug.WriteLine($"SectionLinePositionX vs X2Position MISMATCH: SectionLinePositionX: {SectionLinePositionX}, X2Position: {X2Position}");
+						Debug.WriteLine($"SectionLinePositionX vs X2Position MISMATCH: X2PTest: {x2PTest} / X2Position: {X2Position}. SectionLinePositionX: {SectionLinePositionX}, X2Position: {X2Position * _contentScale.Width}.");
 					}
 
 					Debug.WriteLineIf(_useDetailedDebug, $"CbSectionLine. SectionLinePositionX is being updated from: {_selectionLinePosition} to {value}.");

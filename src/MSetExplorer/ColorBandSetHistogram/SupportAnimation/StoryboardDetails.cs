@@ -83,26 +83,26 @@ namespace MSetExplorer
 			return AddTimeline(objectName, propertyPath, da, beginTime);
 		}
 
-		// Inflate / Deflate
-		public int AddChangeSize(string objectName, string propertyPath, Rect from, Size newSize, TimeSpan beginTime, TimeSpan duration)
-		{
-			Rect to;
+		//// Inflate / Deflate
+		//public int AddChangeSize(string objectName, string propertyPath, Rect from, Size newSize, TimeSpan beginTime, TimeSpan duration)
+		//{
+		//	Rect to;
 
-			if (from.Size.Width > newSize.Width)
-			{
-				// Deflating
-				to = new Rect(from.X + newSize.Width / 2, from.Y + newSize.Height / 2, newSize.Width, newSize.Height);
-			}
-			else
-			{
-				// Inflating
-				to = new Rect(from.X - newSize.Width / 2, from.Y - newSize.Height / 2, newSize.Width, newSize.Height);
-			}
+		//	if (from.Size.Width > newSize.Width)
+		//	{
+		//		// Deflating
+		//		to = new Rect(from.X + newSize.Width / 2, from.Y + newSize.Height / 2, newSize.Width, newSize.Height);
+		//	}
+		//	else
+		//	{
+		//		// Inflating
+		//		to = new Rect(from.X - newSize.Width / 2, from.Y - newSize.Height / 2, newSize.Width, newSize.Height);
+		//	}
 
-			var da = new RectAnimation(from, to, duration);
+		//	var da = new RectAnimation(from, to, duration);
 
-			return AddTimeline(objectName, propertyPath, da, beginTime);
-		}
+		//	return AddTimeline(objectName, propertyPath, da, beginTime);
+		//}
 
 		public int AddMakeTransparent(string objectName, TimeSpan beginTime, TimeSpan duration)
 		{
@@ -129,7 +129,7 @@ namespace MSetExplorer
 		public int AddOpacityAnimation(string objectName, string propertyPath, double from, double to, TimeSpan beginTime, TimeSpan duration)
 		{
 			var da = new DoubleAnimation(from, to, duration);
-			da.EasingFunction = new PowerEase { Power = 3, EasingMode = EasingMode.EaseOut };
+			//da.EasingFunction = new PowerEase { Power = 3, EasingMode = EasingMode.EaseOut };
 
 			return AddTimeline(objectName, propertyPath, da, beginTime);
 		}
@@ -146,6 +146,13 @@ namespace MSetExplorer
 
 			Storyboard.Children.Add(animationTimeline);
 			return Storyboard.Children.Count;
+		}
+
+		public void Begin()
+		{
+			_completionCallback = null;
+			Storyboard.Begin(ContainingObject);
+			_debounce = false;
 		}
 
 		public void Begin(Action<int> completionCallback, int index, bool debounce)

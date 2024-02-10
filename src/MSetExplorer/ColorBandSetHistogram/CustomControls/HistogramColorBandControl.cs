@@ -447,38 +447,38 @@ namespace MSetExplorer
 			}
 		}
 
-		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index,ColorBand? newItem = null)
+		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index, ColorBand? newColorband = null)
 		{
 			switch (editOp)
 			{
 				case ColorBandSetEditOperation.InsertCutoff:
 
-					if (newItem == null || !(newItem is ColorBand colorBandForInsertCutoff))
+					if (newColorband == null)
 					{
 						throw new ArgumentException("The newItem object parameter must be convertable to an int when the operation is InsertCutoff.");
 					}
 
-					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, colorBandForInsertCutoff);
+					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newColorband);
 					break;
 
 				case ColorBandSetEditOperation.InsertColor:
 
-					if (newItem == null || !(newItem is ColorBand colorBandForInsertColor))
+					if (newColorband == null)
 					{
 						throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertColor.");
 					}
 
-					_cbsHistogramViewModel?.CompleteColorInsertion(index, colorBandForInsertColor);
+					_cbsHistogramViewModel?.CompleteColorInsertion(index, newColorband);
 					break;
 
 				case ColorBandSetEditOperation.InsertBand:
 
-					if (newItem == null || !(newItem is ColorBand colorBand))
+					if (newColorband == null)
 					{
 						throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertBand.");
 					}
 
-					_cbsHistogramViewModel?.CompleteBandInsertion(index, colorBand);
+					_cbsHistogramViewModel?.CompleteBandInsertion(index, newColorband);
 					break;
 
 				case ColorBandSetEditOperation.DeleteCutoff:

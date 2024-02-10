@@ -63,11 +63,6 @@ namespace MSetExplorer
 
 			var newCopy = SourceListViewItem.CbRectangle.CbBlendedColorPair.Clone();
 
-			if (DestinationListViewItem.ColorBand.IsLast)
-			{
-				newCopy.EndColor = ColorBandColor.Black;
-			}
-
 			DestinationListViewItem.CbRectangle.CbBlendedColorPair = newCopy;
 
 			SourceListViewItem.CbRectangle.CbBlendedColorPair.TearDown();

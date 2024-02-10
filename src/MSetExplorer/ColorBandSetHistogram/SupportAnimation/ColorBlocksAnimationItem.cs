@@ -63,12 +63,20 @@ namespace MSetExplorer
 
 			var newCopy = SourceListViewItem.CbColorBlock.CbColorPair.Clone();
 
-			if (DestinationListViewItem.ColorBand.IsLast)
-			{
-				newCopy.EndColor = ColorBandColor.Black;
-			}
-
 			DestinationListViewItem.CbColorBlock.CbColorPair = newCopy;
+
+			if (SourceListViewItem.IsLast && StartingPos.X > DestinationPos.X)
+			{
+				DestinationListViewItem.ColorBand.IsLast = false;
+				newCopy.EndColor = SourceListViewItem.ColorBand.ActualEndColor;
+			}
+			else
+			{
+				if (DestinationListViewItem.IsLast)
+				{
+					newCopy.EndColor = ColorBandColor.Black;
+				}
+			}
 
 			SourceListViewItem.CbColorBlock.CbColorPair.TearDown();
 		}

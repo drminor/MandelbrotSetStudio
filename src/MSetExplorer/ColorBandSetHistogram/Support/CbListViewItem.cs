@@ -76,6 +76,8 @@ namespace MSetExplorer
 		public CbColorBlocks CbColorBlock { get; init; }
 		public CbRectangle CbRectangle { get; init; }
 
+		public double ScaleX => CbRectangle.ContentScale.Width;
+
 		public int ColorBandIndex
 		{
 			get => _colorBandIndex;

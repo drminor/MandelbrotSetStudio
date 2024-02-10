@@ -134,6 +134,7 @@ namespace MSetExplorer
 			{
 				_cbBlendedColorPair.TearDown();
 				_cbBlendedColorPair = value;
+				ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
 			}
 		}
 
@@ -220,14 +221,26 @@ namespace MSetExplorer
 			get => _blendRectangleArea;
 			set
 			{
-				if (value != _blendRectangleArea)
-				{
-					_blendRectangleArea = value;
-					_width = _blendRectangleArea.Width;
-					_xPosition = _blendRectangleArea.X;
+				//if (value != _blendRectangleArea)
+				//{
+				//	_blendRectangleArea = value;
+				//	_width = _blendRectangleArea.Width;
+				//	_xPosition = _blendRectangleArea.X;
 
-					ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
-				}
+				//	//ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
+				//	UpdateSelectionBackground(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
+				//}
+				//else
+				//{
+				//	Debug.WriteLine("Skipping updating the BlendRectangleArea, the new value is the same as the old value.");
+				//}
+
+				_blendRectangleArea = value;
+				_width = _blendRectangleArea.Width;
+				_xPosition = _blendRectangleArea.X;
+
+				//ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
+				UpdateSelectionBackground(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 			}
 		}
 

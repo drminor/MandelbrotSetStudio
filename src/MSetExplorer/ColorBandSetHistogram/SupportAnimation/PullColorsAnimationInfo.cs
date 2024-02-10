@@ -39,10 +39,11 @@ namespace MSetExplorer
 			//destination.CbColorBlock.CbColorPair.ShowDiagBorder = true;
 		}
 
-		public double CalculateMovements()
+		public double CalculateMovements(double beginMs)
 		{
 			CalculateLiftDropBookends();
 
+			_ = SyncNextBeginTimeElapsed(beginMs);
 			var startPushSyncPoint = BuildTimeLines();
 
 			return startPushSyncPoint;
