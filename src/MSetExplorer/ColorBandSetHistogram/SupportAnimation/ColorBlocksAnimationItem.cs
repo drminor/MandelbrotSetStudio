@@ -12,10 +12,13 @@ namespace MSetExplorer
 		private double _scaleX;
 		private int _colorBandIndex;
 
+		private bool _isForPullColors;
+
 		private bool _useDetailedDebug = false;
 
-		public ColorBlocksAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
+		public ColorBlocksAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel, bool isForPullColors)
 		{
+			_isForPullColors = isForPullColors;
 			_msPerPixel = msPerPixel;
 			RectTransitions = new List<RectTransition>();
 
@@ -65,10 +68,13 @@ namespace MSetExplorer
 
 			DestinationListViewItem.CbColorBlock.CbColorPair = newCopy;
 
-			if (SourceListViewItem.IsLast && StartingPos.X > DestinationPos.X)
+			if (_isForPullColors)
 			{
-				DestinationListViewItem.ColorBand.IsLast = false;
-				newCopy.EndColor = SourceListViewItem.ColorBand.ActualEndColor;
+				if (SourceListViewItem.IsLast)
+				{
+					DestinationListViewItem.ColorBand.IsLast = false;
+					newCopy.EndColor = SourceListViewItem.ColorBand.ActualEndColor;
+				}
 			}
 			else
 			{

@@ -305,9 +305,12 @@ namespace MSetExplorer
 
 					if (_currentColorBandSet != null)
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HilightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+						if (_currentColorBandSet.HilightedColorBandIndex != ColorBandsView.CurrentPosition)
+						{
+							Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HilightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
 
-						_currentColorBandSet.HilightedColorBandIndex = ColorBandsView.CurrentPosition;
+							_currentColorBandSet.HilightedColorBandIndex = ColorBandsView.CurrentPosition;
+						}
 					}
 
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.CurrentColorBand));
@@ -699,6 +702,17 @@ namespace MSetExplorer
 			UpdatePercentages();
 		}
 
+		public ReservedColorBand PopReservedColorBand()
+		{
+			var result = _currentColorBandSet.PopReservedColorBand();
+			return result;
+		}
+
+		public void PushReservedColorBand(ReservedColorBand reservedColorBand)
+		{
+			_currentColorBandSet.PushReservedColorBand(reservedColorBand);
+		}
+
 		//public int GetIndexOf(ColorBand colorBand)
 		//{
 		//	var result = -1;
@@ -790,7 +804,7 @@ namespace MSetExplorer
 			return true;
 		} 
 
-		public void CompleteCutoffInsertion(int index, ColorBand colorBand)
+		public void CompleteCutoffInsertion(int index, ColorBand colorBand, ReservedColorBand reservedColorBand)
 		{
 			Debug.WriteLine($"ColorBandSetViewModel. CompleteCutoffInsertion has been callled.");
 			
@@ -804,7 +818,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			result = TryDeleteColor(index);
+			result = TryDeleteColor(index, reservedColorBand);
 
 			if (!result)
 			{
@@ -888,35 +902,31 @@ namespace MSetExplorer
 		//	return true;
 		//}
 
-		public void CompleteColorInsertion(int index, ColorBandColor colorBandColor)
-		{
-			var cb = _currentColorBandSet[index];
+		//public void CompleteColorInsertion(int index, ColorBandColor colorBandColor)
+		//{
+		//	var cb = _currentColorBandSet[index];
 
-			var newItem = new ColorBand(0, colorBandColor, ColorBandBlendStyle.Next, cb.StartColor);
+		//	var newItem = new ColorBand(0, colorBandColor, ColorBandBlendStyle.Next, cb.StartColor);
 
-			CompleteColorInsertion(index, newItem);
-		}
+		//	CompleteColorInsertion(index, newItem);
+		//}
 
-		public void CompleteColorInsertion(int index, ColorBand colorBand)
+		public ReservedColorBand CompleteColorInsertion(int index, ColorBand colorBand)
 		{
 			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorInsertion has been callled.");
 
-			var result = TryInsertColor(index, colorBand);
-
-			if (!result)
-			{
-				Debug.WriteLine("WARNING: Could not CompleteColorInsertion.");
-				return;
-			}
+			var result = InsertColor(index, colorBand);
 
 			Debug.WriteLine($"ColorBandSetViewModel. After ColorInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
 
 			OnCurrentColorBandSetUpdated();
 
 			//ReportRemoveCurrentItem(index);
+
+			return result;
 		}
 
-		private bool TryInsertColor(int index, ColorBand colorBand)
+		private ReservedColorBand InsertColor(int index, ColorBand colorBand)
 		{
 			//index = _currentColorBandSet.IndexOf(colorBand);
 			//var cb = _currentColorBandSet[index];
@@ -924,10 +934,10 @@ namespace MSetExplorer
 
 			var saveCcb = CurrentColorBand;
 			CurrentColorBand = null;
-			_currentColorBandSet.InsertColor(index, colorBand);
+			var result = _currentColorBandSet.InsertColor(index, colorBand);
 			CurrentColorBand = saveCcb;
 
-			return true;
+			return result;
 		}
 
 		public void CompleteBandInsertion(int index, ColorBand colorBand)
@@ -1021,12 +1031,12 @@ namespace MSetExplorer
 
 				case ColorBandSetEditMode.Bands:
 
-					if (_colorBandsView.Count < 2)
+					if (_colorBandsView.Count < 1)
 					{
 						// There is only one ColorBand remaining. 
 						result = false;
 					}
-					else if (colorBandIndex > _currentColorBandSet.Count - 2)
+					else if (colorBandIndex > _currentColorBandSet.Count - 1)
 					{
 						// Cannot delete the last entry
 						result = false;
@@ -1044,18 +1054,18 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public void CompleteCutoffRemoval(int index)
+		public ReservedColorBand? CompleteCutoffRemoval(int index)
 		{
 			var selItem = _currentColorBandSet[index];
 
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffRemoval has been callled for index = {index} with Cutoff = {selItem.Cutoff}.");
 
-			var result = TryDeleteStartingCutoff(selItem);
+			var result = TryDeleteStartingCutoff(selItem, out var reservedColorBand);
 
 			if (!result)
 			{
 				Debug.WriteLine("WARNING: Could not CompleteCutoffRemoval.");
-				return;
+				return null;
 			}
 
 			if (index == 0)
@@ -1093,27 +1103,29 @@ namespace MSetExplorer
 			OnCurrentColorBandSetUpdated();
 
 			ReportRemoveCurrentItem(index);
+
+			return reservedColorBand;
 		}
 
-		private bool TryDeleteStartingCutoff(ColorBand colorBand)
+		private bool TryDeleteStartingCutoff(ColorBand colorBand, out ReservedColorBand? reservedColorBand)
 		{
 			CurrentColorBand = null;
 
 			bool wasRemoved;
 			lock (_histLock)
 			{
-				wasRemoved = _currentColorBandSet.DeleteStartingCutoff(colorBand);
+				wasRemoved = _currentColorBandSet.DeleteStartingCutoff(colorBand, out reservedColorBand);
 			}
 
 			return wasRemoved;
 		}
 
-		public void CompleteColorRemoval(int index)
+		public void CompleteColorRemoval(int index, ReservedColorBand reservedColorBand)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorRemoval has been callled.");
 			//var selItem = _currentColorBandSet[index];
 
-			var result = TryDeleteColor(index);
+			var result = TryDeleteColor(index, reservedColorBand);
 
 			if (!result)
 			{
@@ -1128,7 +1140,7 @@ namespace MSetExplorer
 			//ReportRemoveCurrentItem(index);
 		}
 
-		private bool TryDeleteColor(int index)
+		private bool TryDeleteColor(int index, ReservedColorBand reservedColorBand)
 		{
 			//var index = _currentColorBandSet.IndexOf(colorBand);
 
@@ -1141,7 +1153,7 @@ namespace MSetExplorer
 			var saveCcb = CurrentColorBand;
 
 			CurrentColorBand = null;
-			_currentColorBandSet.DeleteColor(index);
+			_currentColorBandSet.DeleteColor(index, reservedColorBand);
 			CurrentColorBand = saveCcb;
 
 			return true;
@@ -1176,6 +1188,13 @@ namespace MSetExplorer
 				{
 					cb.SuccessorStartColor = followingCb.StartColor;
 				}
+			}
+
+			if (_currentColorBandSet.Count == 1)
+			{
+				var singleCb = _currentColorBandSet[0];
+				singleCb.BlendStyle = ColorBandBlendStyle.End;
+				singleCb.IsLast = true;
 			}
 
 			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
@@ -1572,7 +1591,7 @@ namespace MSetExplorer
 
 		private int GetExtent(ColorBandSet colorBandSet)
 		{
-			var result = colorBandSet.Count < 2 ? 0 : colorBandSet.HighCutoff;
+			var result = colorBandSet.Count < 1 ? 0 : colorBandSet.HighCutoff;
 			return result;
 		}
 

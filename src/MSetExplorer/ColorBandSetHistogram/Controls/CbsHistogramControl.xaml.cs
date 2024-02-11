@@ -326,14 +326,15 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (currentColorBand.IsFirst)
-				{
-					canExecute = false;
-				}
-				else
-				{
-					canExecute = true;
-				}
+				//if (currentColorBand.IsFirst)
+				//{
+				//	canExecute = false;
+				//}
+				//else
+				//{
+				//	canExecute = true;
+				//}
+				canExecute = true;
 			}
 
 			e.CanExecute = canExecute;
@@ -368,20 +369,13 @@ namespace MSetExplorer
 			}
 			else
 			{
-				if (currentColorBand.IsLast)
+				if (vm.ColorBandsCount < 2 || currentColorBand.IsLast)
 				{
 					canExecute = false;
 				}
 				else
 				{
-					if (vm.ColorBandsCount == 2)
-					{
-						canExecute = false;
-					}
-					else
-					{
-						canExecute = true;
-					}
+					canExecute = true;
 				}
 			}
 

@@ -140,7 +140,7 @@ namespace MSetExplorer
 		{
 			_colorBandSet = colorBandSet;
 
-			if (colorBandSet.Count < 2)
+			if (colorBandSet.Count < 1)
 			{
 				return null;
 			}

@@ -41,15 +41,22 @@ namespace MSetExplorer
 			_canvas.Children.Add(_rectanglePath);
 			RefreshTheView(new SizeDbl(ActualWidth, ActualHeight));
 
-			_rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(ColorBandColor));
+			_rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(Color));
 
 			SizeChanged += ColorPanelControl_SizeChanged;
+			_rectanglePath.IsMouseDirectlyOverChanged += RectanglePath_IsMouseDirectlyOverChanged;
+		}
+
+		private void RectanglePath_IsMouseDirectlyOverChanged(object sender, DependencyPropertyChangedEventArgs e)
+		{
+			IsHot = _rectanglePath.IsMouseOver;
 		}
 
 		private void ColorBandColorButtonControl_Unloaded(object sender, RoutedEventArgs e)
 		{
 			SizeChanged -= ColorPanelControl_SizeChanged;
-
+			_rectanglePath.IsMouseDirectlyOverChanged -= RectanglePath_IsMouseDirectlyOverChanged;
+	
 			Loaded -= ColorBandColorButtonControl_Loaded;
 			Unloaded -= ColorBandColorButtonControl_Unloaded;
 		}
@@ -64,10 +71,45 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public ColorBandColor ColorBandColor
+		public ColorBandColor Color
 		{
-			get => (ColorBandColor)GetValue(ColorBandColorProperty);
-			set => SetValue(ColorBandColorProperty, value);
+			get => (ColorBandColor)GetValue(ColorProperty);
+			set => SetCurrentValue(ColorProperty, value);
+		}
+
+		public ColorBandColor? EffectiveColor
+		{
+			get => (ColorBandColor?)GetValue(EffectiveColorProperty);
+			set => SetCurrentValue(EffectiveColorProperty, value);
+		}
+
+		private bool _isHot;
+
+		private bool IsHot
+		{
+			get => _isHot;
+			set
+			{
+				if (value != _isHot)
+				{
+					_isHot = value;
+
+					// Normally display the ActualColor, however when the mouse is over, display the DisplayColor
+
+					if (EffectiveColor != null)
+					{
+						if (_isHot)
+						{
+							_rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(Color));
+						}
+						else
+						{
+							_rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(EffectiveColor.Value));
+
+						}
+					}
+				}
+			}
 		}
 
 		public Canvas Canvas => _canvas;
@@ -85,18 +127,18 @@ namespace MSetExplorer
 
 		#region Dependency Properties
 
-		public static readonly DependencyProperty ColorBandColorProperty = DependencyProperty.Register(
-			"ColorBandColor",
+		public static readonly DependencyProperty ColorProperty = DependencyProperty.Register(
+			"Color",
 			typeof(ColorBandColor),
 			typeof(ColorBandColorButtonControl),
 			new FrameworkPropertyMetadata()
 			{
-				PropertyChangedCallback = OnStartColorChanged,
+				PropertyChangedCallback = OnColorChanged,
 				BindsTwoWayByDefault = true,
 				DefaultValue = ColorBandColor.White
 			});
 
-		private static void OnStartColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		private static void OnColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
 			var oldValue = (ColorBandColor) e.OldValue;
 			var newValue = (ColorBandColor) e.NewValue;
@@ -105,7 +147,38 @@ namespace MSetExplorer
 			{
 				if (d is ColorBandColorButtonControl uc)
 				{
-					uc._rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(newValue));
+					if (uc.IsHot || !uc.EffectiveColor.HasValue)
+					{
+						uc._rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(newValue));
+					}
+				}
+			}
+		}
+
+		public static readonly DependencyProperty EffectiveColorProperty = DependencyProperty.Register(
+			"EffectiveColor",
+			typeof(ColorBandColor?),
+			typeof(ColorBandColorButtonControl),
+			new FrameworkPropertyMetadata()
+			{
+				PropertyChangedCallback = OnEffectiveColorChanged,
+				BindsTwoWayByDefault = true,
+				DefaultValue = null
+			});
+
+		private static void OnEffectiveColorChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		{
+			var oldValue = (ColorBandColor?)e.OldValue;
+			var newValue = (ColorBandColor?)e.NewValue;
+
+			if (oldValue != newValue && newValue.HasValue)
+			{
+				if (d is ColorBandColorButtonControl uc)
+				{
+					if (!uc.IsHot)
+					{
+						uc._rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(newValue.Value));
+					}
 				}
 			}
 		}

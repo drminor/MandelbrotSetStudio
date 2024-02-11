@@ -43,7 +43,7 @@ namespace MSS.Types
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
-			: this(cutoff, startColor, blendStyle, endColor, null, blendStyle == ColorBandBlendStyle.Next ? endColor : null, 0)
+			: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: blendStyle == ColorBandBlendStyle.Next ? endColor : null, percentage: double.NaN)
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, int? previousCutoff, ColorBandColor? successorStartColor, double percentage)
@@ -59,9 +59,6 @@ namespace MSS.Types
 			_actualEndColor = GetActualEndColor();
 
 			_isSelected = false;
-
-			//_isCutoffSelected = false;
-			//_isColorSelected = false;
 		}
 
 		private static ColorBand _emptySingleton = new ColorBand();
@@ -214,6 +211,11 @@ namespace MSS.Types
 			{
 				if (value != _startColor)
 				{
+					if (value == ColorBandColor.Black)
+					{
+						Debug.WriteLine("Setting the Start Color to Black.");
+					}
+
 					_startColor = value;
 					OnPropertyChanged();
 

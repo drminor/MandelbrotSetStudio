@@ -20,7 +20,7 @@ namespace MSetExplorer.Cbs
 		private CbListView _cbListView;
 		private List<CbListViewItem> _listViewItems => _cbListView.ListViewItems;
 
-		private Action<ColorBandSetEditOperation, int, ColorBand?> _onAnimationComplete;
+		private Func<ColorBandSetEditOperation, int, ColorBand?, ReservedColorBand?, ReservedColorBand?> _onAnimationComplete;
 
 		private PushColorsAnimationInfo? _pushColorsAnimationInfo1 = null;
 		private PullColorsAnimationInfo? _pullColorsAnimationInfo1 = null;
@@ -31,7 +31,7 @@ namespace MSetExplorer.Cbs
 
 		#region Constructor
 
-		public CbListViewAnimations(StoryboardDetails storyboardDetails, CbListView cbListView, Action<ColorBandSetEditOperation, int, ColorBand?> onAnimationComplete)
+		public CbListViewAnimations(StoryboardDetails storyboardDetails, CbListView cbListView, Func<ColorBandSetEditOperation, int, ColorBand?, ReservedColorBand?, ReservedColorBand?> onAnimationComplete)
 		{
 			_storyBoardDetails1 = storyboardDetails;
 			_cbListView = cbListView;
@@ -43,7 +43,7 @@ namespace MSetExplorer.Cbs
 		#region Animation Support - Insertions
 
 		// Insert Cutoff, Pull Colors Down
-		public void AnimateInsertCutoff(int index)
+		public void AnimateInsertCutoff(int index, ReservedColorBand reservedColorBand)
 		{
 			var currentItem = _listViewItems[index];
 			var currentArea = currentItem.Area;
@@ -78,14 +78,12 @@ namespace MSetExplorer.Cbs
 			// TODO: Make the ChangeLeft animation complete and then call the second round of animations
 			//// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
 			//_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX1: newCutoff - 1, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(300));
-
 			//_storyBoardDetails1.Begin();
-
 			//_storyBoardDetails1.RateFactor = 10;
 
 			// Pull Colors Down
 			// Create a ListViewItem to hold the new source
-			var newSourceColorBand = CreateColorBandFromReservedBand(_listViewItems[^1], reservedColorBand: null);
+			var newSourceColorBand = CreateColorBandFromReservedBand(_listViewItems[^1], reservedColorBand);
 			var newLvi = _cbListView.CreateListViewItem(_listViewItems.Count, newSourceColorBand);
 
 			// Create the class that will calcuate the 'PullColor' animation details
@@ -130,11 +128,12 @@ namespace MSetExplorer.Cbs
 				prevCb.CbRectangle.EndColor = cbListViewItem.CbRectangle.StartColor;
 			}
 
-
 			var lvi = _listViewItems[index];
 			var colorBand = lvi.ColorBand;
-			
-			_onAnimationComplete(ColorBandSetEditOperation.InsertCutoff, index, colorBand);
+
+			var reservedColorBand = new ReservedColorBand();
+
+			_onAnimationComplete(ColorBandSetEditOperation.InsertCutoff, index, colorBand, reservedColorBand);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
@@ -182,7 +181,7 @@ namespace MSetExplorer.Cbs
 			colorBand.BlendStyle = ColorBandBlendStyle.Next;
 			colorBand.EndColor = ColorBandColor.White;
 
-			_onAnimationComplete(ColorBandSetEditOperation.InsertColor, index, colorBand);
+			_onAnimationComplete(ColorBandSetEditOperation.InsertColor, index, colorBand, null);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
@@ -217,25 +216,12 @@ namespace MSetExplorer.Cbs
 
 			_storyBoardDetails1.RateFactor = 1;
 
-			//// Set the initial size to 25% of the final size and grow the new item into the new space.
-			//var curVal = itemBeingInserted.Area;
-			//var startingArea = curVal;
-			//startingArea.Inflate(-1 * curVal.Size.Width * 0.375, -1 * curVal.Size.Height * 0.375);
-			//_storyBoardDetails1.AddRectAnimation(itemBeingInserted.Name, "Area", from: startingArea, to: curVal, beginTime: TimeSpan.FromMilliseconds(150), duration: TimeSpan.FromMilliseconds(150));
-
-
 			var curVal = itemBeingInserted.Area;
-			//var newArea = curVal;
-			//newArea.Inflate(-1 * newArea.Size.Width * 0.375, -1 * newArea.Size.Height * 0.375);
-
 			var newScaledWidth = 20 / itemBeingInserted.ScaleX;
-
 			var centerPt = new Point(curVal.X + curVal.Width / 2, curVal.Y + curVal.Height / 2);
 			var startingArea = new Rect(centerPt.X - (newScaledWidth / 2), centerPt.Y - 30, newScaledWidth, 20);
 
 			_storyBoardDetails1.AddRectAnimation(itemBeingInserted.Name, "Area", from: startingArea, to: curVal, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(250));
-
-
 
 			// Have the new item go from transparent to fully opaque
 			_storyBoardDetails1.AddOpacityAnimation(itemBeingInserted.Name, "Opacity", from: 0.3, to: 1.0, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(200));
@@ -254,7 +240,7 @@ namespace MSetExplorer.Cbs
 			lvi.ElevationsAreLocal = false;
 			var colorBand = lvi.ColorBand;
 
-			_onAnimationComplete(ColorBandSetEditOperation.InsertBand, index, colorBand);
+			_onAnimationComplete(ColorBandSetEditOperation.InsertBand, index, colorBand, null);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
@@ -327,20 +313,20 @@ namespace MSetExplorer.Cbs
 			_cbListView.RemoveListViewItem(lvi);
 			_cbListView.Reindex(lvi.ColorBandIndex);
 
-			_onAnimationComplete(ColorBandSetEditOperation.DeleteCutoff, index, null);
+			_onAnimationComplete(ColorBandSetEditOperation.DeleteCutoff, index, null, null);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
 		// Delete Color, Pull Colors Down
-		public void AnimateDeleteColor(int index)
+		public void AnimateDeleteColor(int index, ReservedColorBand reservedColorBand)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteColor. Index = {index}.");
 			//ReportCanvasChildren();
 			//ReportColorBands("Top of AnimateDeleteColor", _listViewItems);
 
 			// Create a ListViewItem to hold the new source
-			var newSourceColorBand = CreateColorBandFromReservedBand(_listViewItems[^1], reservedColorBand: null);
+			var newSourceColorBand = CreateColorBandFromReservedBand(_listViewItems[^1], reservedColorBand);
 			var newLvi = _cbListView.CreateListViewItem(_listViewItems.Count, newSourceColorBand);
 
 			// Create the class that will calcuate the 'PullColor' animation details
@@ -389,7 +375,9 @@ namespace MSetExplorer.Cbs
 				}
 			}
 
-			_onAnimationComplete(ColorBandSetEditOperation.DeleteColor, index, null);
+			var reservedColorBand = new ReservedColorBand();
+
+			_onAnimationComplete(ColorBandSetEditOperation.DeleteColor, index, null, reservedColorBand);
 		}
 
 		// Delete Band
@@ -405,11 +393,7 @@ namespace MSetExplorer.Cbs
 			itemBeingRemoved.ElevationsAreLocal = true;
 
 			var curVal = itemBeingRemoved.Area;
-			//var newArea = curVal;
-			//newArea.Inflate(-1 * newArea.Size.Width * 0.375, -1 * newArea.Size.Height * 0.375);
-
 			var newScaledWidth = 20 / itemBeingRemoved.ScaleX;
-
 			var centerPt = new Point(curVal.X + curVal.Width / 2, curVal.Y + curVal.Height / 2);
 			var newArea = new Rect(centerPt.X - (newScaledWidth / 2), centerPt.Y - 30, newScaledWidth, 20);
 
@@ -429,9 +413,9 @@ namespace MSetExplorer.Cbs
 
 				var preceedingItem = _listViewItems[index - 1];
 
-				if (index < _listViewItems.Count - 1)
+				if (index < _listViewItems.Count)
 				{
-					preceedingItem.ColorBand.SuccessorStartColor = _listViewItems[index + 1].ColorBand.StartColor;
+					preceedingItem.ColorBand.SuccessorStartColor = _listViewItems[index].ColorBand.StartColor;
 				}
 
 				curVal = preceedingItem.Area;
@@ -452,7 +436,7 @@ namespace MSetExplorer.Cbs
 			_cbListView.RemoveListViewItem(lvi);
 			_cbListView.Reindex(index);
 
-			_onAnimationComplete(ColorBandSetEditOperation.DeleteBand, index, null);
+			_onAnimationComplete(ColorBandSetEditOperation.DeleteBand, index, null, null);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
@@ -473,27 +457,39 @@ namespace MSetExplorer.Cbs
 			}
 		}
 
-		private ColorBand CreateColorBandFromReservedBand(CbListViewItem lastListViewItem, ReservedColorBand? reservedColorBand)
+		//private ColorBand CreateColorBandFromReservedBand(CbListViewItem lastListViewItem, ReservedColorBand? reservedColorBand)
+		//{
+		//	ColorBand result;
+
+		//	var cb = lastListViewItem.ColorBand;
+
+		//	var previousCutoff = cb.Cutoff;
+		//	var cutOff = cb.Cutoff + 10;
+
+		//	if (reservedColorBand != null)
+		//	{
+		//		result = new ColorBand(cutOff, reservedColorBand.StartColor, reservedColorBand.BlendStyle, reservedColorBand.EndColor, previousCutoff: previousCutoff, successorStartColor: null, percentage: double.NaN);
+		//	}
+		//	else
+		//	{
+		//		var startColor = ColorBandColor.White;
+		//		var blendStyle = ColorBandBlendStyle.Next;
+		//		var endColor = ColorBandColor.White;
+
+		//		result = new ColorBand(cutOff, startColor, blendStyle, endColor, previousCutoff, successorStartColor: null, percentage: double.NaN);
+		//	}
+
+		//	return result;
+		//}
+
+
+		private ColorBand CreateColorBandFromReservedBand(CbListViewItem lastListViewItem, ReservedColorBand reservedColorBand)
 		{
-			ColorBand result;
-
 			var cb = lastListViewItem.ColorBand;
-
 			var previousCutoff = cb.Cutoff;
 			var cutOff = cb.Cutoff + 10;
 
-			if (reservedColorBand != null)
-			{
-				result = new ColorBand(cutOff, reservedColorBand.StartColor, reservedColorBand.BlendStyle, reservedColorBand.EndColor, previousCutoff: previousCutoff, successorStartColor: null, percentage: double.NaN);
-			}
-			else
-			{
-				var startColor = ColorBandColor.White;
-				var blendStyle = ColorBandBlendStyle.Next;
-				var endColor = ColorBandColor.White;
-
-				result = new ColorBand(cutOff, startColor, blendStyle, endColor, previousCutoff, successorStartColor: null, percentage: double.NaN);
-			}
+			var	result = new ColorBand(cutOff, reservedColorBand.StartColor, reservedColorBand.BlendStyle, reservedColorBand.EndColor, previousCutoff: previousCutoff, successorStartColor: null, percentage: double.NaN);
 
 			return result;
 		}

@@ -745,7 +745,7 @@ namespace MSetExplorer
 
 		private void DrawColorBands(ListCollectionView? listCollectionView)
 		{
-			if (listCollectionView == null || listCollectionView.Count < 2)
+			if (listCollectionView == null || listCollectionView.Count < 1)
 			{
 				return;
 			}

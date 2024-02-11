@@ -388,7 +388,8 @@ namespace MSetExplorer
 				switch (editMode)
 				{
 					case ColorBandSetEditMode.Cutoffs:
-						_cbListViewAnimations.AnimateInsertCutoff(colorBandIndex);
+						var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
+						_cbListViewAnimations.AnimateInsertCutoff(colorBandIndex, reservedColorBand);
 						break;
 
 					case ColorBandSetEditMode.Colors:
@@ -430,7 +431,8 @@ namespace MSetExplorer
 						break;
 
 					case ColorBandSetEditMode.Colors:
-						_cbListViewAnimations.AnimateDeleteColor(colorBandIndex);
+						var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
+						_cbListViewAnimations.AnimateDeleteColor(colorBandIndex, reservedColorBand);
 						break;
 
 					case ColorBandSetEditMode.Bands:
@@ -447,18 +449,26 @@ namespace MSetExplorer
 			}
 		}
 
-		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index, ColorBand? newColorband = null)
+		private ReservedColorBand? OnAnimationComplete(ColorBandSetEditOperation editOp, int index, ColorBand? newColorband = null, ReservedColorBand? reservedColorBand = null)
 		{
+			ReservedColorBand? result = null;
+			
 			switch (editOp)
 			{
 				case ColorBandSetEditOperation.InsertCutoff:
 
 					if (newColorband == null)
 					{
-						throw new ArgumentException("The newItem object parameter must be convertable to an int when the operation is InsertCutoff.");
+						throw new ArgumentException("The newColorband is null on call to InsertCutoff.");
 					}
 
-					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newColorband);
+					if (reservedColorBand == null)
+					{
+						throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
+					}
+
+
+					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newColorband, reservedColorBand);
 					break;
 
 				case ColorBandSetEditOperation.InsertColor:
@@ -468,7 +478,15 @@ namespace MSetExplorer
 						throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertColor.");
 					}
 
-					_cbsHistogramViewModel?.CompleteColorInsertion(index, newColorband);
+					if (_cbsHistogramViewModel == null)
+					{
+						throw new InvalidOperationException("The CbsHistogram is null.");
+
+					}
+
+					result = _cbsHistogramViewModel.CompleteColorInsertion(index, newColorband);
+					_cbsHistogramViewModel.PushReservedColorBand(result);
+
 					break;
 
 				case ColorBandSetEditOperation.InsertBand:
@@ -482,11 +500,31 @@ namespace MSetExplorer
 					break;
 
 				case ColorBandSetEditOperation.DeleteCutoff:
-					_cbsHistogramViewModel?.CompleteCutoffRemoval(index);
+
+					if (_cbsHistogramViewModel == null)
+					{
+						throw new InvalidOperationException("The CbsHistogram is null.");
+
+					}
+
+					result = _cbsHistogramViewModel.CompleteCutoffRemoval(index);
+
+					if (result != null)
+					{
+						_cbsHistogramViewModel.PushReservedColorBand(result);
+					}
+
+					result = _cbsHistogramViewModel?.CompleteCutoffRemoval(index);
 					break;
 
 				case ColorBandSetEditOperation.DeleteColor:
-					_cbsHistogramViewModel?.CompleteColorRemoval(index);
+
+					if (reservedColorBand == null)
+					{
+						throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
+					}
+
+					_cbsHistogramViewModel?.CompleteColorRemoval(index, reservedColorBand);
 					break;
 
 				case ColorBandSetEditOperation.DeleteBand:
@@ -496,6 +534,8 @@ namespace MSetExplorer
 				default:
 					break;
 			}
+
+			return result;
 		}
 
 		public ColorBand? GetItemUnderMouse(Point hitPoint)

@@ -573,7 +573,7 @@ namespace MSetExplorer
 			index = currentSet.IndexOf(curItem);
 
 			CurrentColorBand = null;
-			_currentColorBandSet.InsertCutoff(index, newCutoff);
+			_currentColorBandSet.InsertCutoff(index, newCutoff, new ReservedColorBand());
 			ColorBandsView.Refresh();
 			ColorBandsView.MoveCurrentTo(curItem);
 
@@ -678,7 +678,7 @@ namespace MSetExplorer
 			}
 
 			CurrentColorBand = null;
-			_currentColorBandSet.DeleteStartingCutoff(curItem);
+			_currentColorBandSet.DeleteStartingCutoff(curItem, out var reservedColorBand);
 			ColorBandsView.Refresh();
 			ColorBandsView.MoveCurrentTo(curItem);
 
@@ -697,7 +697,7 @@ namespace MSetExplorer
 			}
 
 			CurrentColorBand = null;
-			_currentColorBandSet.DeleteColor(index);
+			_currentColorBandSet.DeleteColor(index, new ReservedColorBand());
 			ColorBandsView.Refresh();
 			ColorBandsView.MoveCurrentTo(curItem);
 

@@ -11,11 +11,13 @@ namespace MSetExplorer
 		public double _msPerPixel;
 		private double _scaleX;
 		private int _colorBandIndex;
+		private bool _isForPullColors;
 
 		public bool _useDetailedDebug = false;
 
-		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel)
+		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel, bool isForPullColors)
 		{
+			_isForPullColors = isForPullColors;
 			_msPerPixel = msPerPixel;
 			RectTransitions = new List<RectTransition>();
 
@@ -64,6 +66,22 @@ namespace MSetExplorer
 			var newCopy = SourceListViewItem.CbRectangle.CbBlendedColorPair.Clone();
 
 			DestinationListViewItem.CbRectangle.CbBlendedColorPair = newCopy;
+
+			if (_isForPullColors)
+			{
+				if (SourceListViewItem.IsLast)
+				{
+					DestinationListViewItem.ColorBand.IsLast = false;
+					newCopy.EndColor = SourceListViewItem.ColorBand.ActualEndColor;
+				}
+			}
+			else
+			{
+				if (DestinationListViewItem.IsLast)
+				{
+					newCopy.EndColor = ColorBandColor.Black;
+				}
+			}
 
 			SourceListViewItem.CbRectangle.CbBlendedColorPair.TearDown();
 		}

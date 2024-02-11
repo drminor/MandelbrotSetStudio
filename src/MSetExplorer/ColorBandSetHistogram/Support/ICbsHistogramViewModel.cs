@@ -18,9 +18,6 @@ namespace MSetExplorer
 		ColorBandSetEditMode CurrentCbEditMode { get; set; }
 		string CurrentCbEditModeAsString { get; }
 
-		//bool EditingCutoffs { get; set; }
-		//bool EditingColors { get; set; }
-
 		bool ColorBandUserControlHasErrors { get; set; }
 
 		ColorBandSet ColorBandSet { get; set; }
@@ -52,24 +49,24 @@ namespace MSetExplorer
 		void AdvanceEditMode();
 		void RetardEditMode(); 
 
-		//bool TryInsertNewItem(ColorBand colorBand, out int index);
-		//bool TryDeleteItem(ColorBand colorBand);
-
-		//int GetIndexOf(ColorBand colorBand);
 
 		bool TestInsertItem(int colorBandIndex);
-		void CompleteCutoffInsertion(int index, ColorBand colorBand);
-		//void CompleteCutoffInsertion(int index);
-
-		void CompleteColorInsertion(int index, ColorBandColor colorBandColor);
-		void CompleteColorInsertion(int index, ColorBand colorBand);
-
+		void CompleteCutoffInsertion(int index, ColorBand colorBand, ReservedColorBand reservedColorBand);
+		ReservedColorBand CompleteColorInsertion(int index, ColorBand colorBand);
 		void CompleteBandInsertion(int index, ColorBand colorBand);
 
 		bool TestDeleteItem(int colorBandIndex);
-		void CompleteCutoffRemoval(int index);
-		void CompleteColorRemoval(int index);
+		ReservedColorBand? CompleteCutoffRemoval(int index);
+		void CompleteColorRemoval(int index, ReservedColorBand reservedColorBand);
 		void CompleteBandRemoval(int index);
+
+		//void CompleteCutoffInsertion(int index, ColorBand colorBand);
+		//void CompleteColorInsertion(int index, ColorBandColor colorBandColor);
+		//void CompleteColorInsertion(int index, ColorBand colorBand);
+
+		//void CompleteCutoffRemoval(int index);
+		//void CompleteColorRemoval(int index);
+
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 
@@ -98,5 +95,9 @@ namespace MSetExplorer
 		//CbListView SelectedItems { get; }
 
 		//void ClearSelectedItems();
+
+		ReservedColorBand PopReservedColorBand();
+
+		void PushReservedColorBand(ReservedColorBand reservedColorBand);
 	}
 }

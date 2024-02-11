@@ -84,7 +84,8 @@ namespace MSS.Types
 				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#000000")
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff")
+
 				//new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
 

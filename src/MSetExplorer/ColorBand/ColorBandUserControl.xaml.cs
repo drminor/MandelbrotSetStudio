@@ -101,7 +101,7 @@ namespace MSetExplorer
 
 				if (ShowColorPicker(pos, startColor, out var selectedColor))
 				{
-					cbcButtonControl1.ColorBandColor = selectedColor;
+					cbcButtonControl1.Color = selectedColor;
 				}
 
 				//if (ShowColorSpace(pos, startColor, out var selectedColor2))
@@ -117,13 +117,13 @@ namespace MSetExplorer
 
 			if (cb != null)
 			{
-				var pos = e.GetPosition(relativeTo: cbcButtonControl1.Canvas);
+				var pos = e.GetPosition(relativeTo: cbcButtonControl2.Canvas);
 
 				var endColor = cb.EndColor;
 
 				if (ShowColorPicker(pos, endColor, out var selectedColor))
 				{
-					cbcButtonControl1.ColorBandColor = selectedColor;
+					cbcButtonControl2.Color = selectedColor;
 				}
 
 				//if (ShowColorSpace(pos, endColor, out var selectedColor2))
