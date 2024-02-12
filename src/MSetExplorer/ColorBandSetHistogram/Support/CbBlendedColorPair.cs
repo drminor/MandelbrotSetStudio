@@ -125,15 +125,15 @@ namespace MSetExplorer
 			}
 		}
 
-		public Visibility Visibility
-		{
-			get => _containerPath.Visibility;
+		//public Visibility Visibility
+		//{
+		//	get => _containerPath.Visibility;
 
-			set
-			{
-				_containerPath.Visibility = value;
-			}
-		}
+		//	set
+		//	{
+		//		_containerPath.Visibility = value;
+		//	}
+		//}
 
 		//public bool ShowDiagBorder { get; set; }
 

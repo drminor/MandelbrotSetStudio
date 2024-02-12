@@ -170,14 +170,18 @@ namespace MSetExplorer
 		public Rect ColorPairContainer
 		{
 			get => _cbBlendedColorPair.Container;
-			set => _cbBlendedColorPair.Container = value;
+			set
+			{
+				_cbBlendedColorPair.Container = value;
+				//ResizeBlendRectangle(BlendRectangleArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
+			}
 		}
 
-		public Visibility ColorPairVisibility
-		{
-			get => _cbBlendedColorPair.Visibility;
-			set => _cbBlendedColorPair.Visibility = value;
-		}
+		//public Visibility ColorPairVisibility
+		//{
+		//	get => _cbBlendedColorPair.Visibility;
+		//	set => _cbBlendedColorPair.Visibility = value;
+		//}
 
 		public ColorBandColor StartColor
 		{

@@ -559,7 +559,7 @@ namespace MSetExplorer
 
 		private bool TryInsertOffset(ColorBand curItem, out int index)
 		{
-			if (curItem.Cutoff - curItem.StartingCutoff < 1)
+			if (curItem.BucketWidth < 2)
 			{
 				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
 				index = -1;
@@ -597,7 +597,7 @@ namespace MSetExplorer
 
 		private bool TryInsertColorBand(ColorBand curItem, out int index)
 		{
-			if (curItem.Cutoff - curItem.StartingCutoff < 1)
+			if (curItem.BucketWidth < 2)
 			{
 				Debug.WriteLine($"ColorBandSetViewModel:InsertNewItem is aborting. The starting and ending cutoffs have the same value.");
 				index = -1;

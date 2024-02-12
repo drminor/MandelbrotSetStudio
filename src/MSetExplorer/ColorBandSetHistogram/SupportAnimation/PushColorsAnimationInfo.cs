@@ -34,8 +34,8 @@ namespace MSetExplorer
 
 		public void Add(CbListViewItem source, CbListViewItem? destination)
 		{
-			var colorBlocksAItem = new ColorBlocksAnimationItem(source, destination, _msPerPixel, isForPullColors: false);
-			var blendedColorAItem = new BlendedColorAnimationItem(source, destination, _msPerPixel, isForPullColors: false);
+			var colorBlocksAItem = new ColorBlocksAnimationItem(source, destination, _msPerPixel/*, isForPullColors: false*/);
+			var blendedColorAItem = new BlendedColorAnimationItem(source, destination, _msPerPixel/*, isForPullColors: false*/);
 
 			AnimationItemPairs.Add((colorBlocksAItem, blendedColorAItem));
 

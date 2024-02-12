@@ -152,7 +152,7 @@ namespace MSetExplorer
 				IsCurrentIndicatorsElevation = BlendRectanglesElevation + BlendRectanglesHeight;
 			}
 
-			Debug.WriteLine($"CbListViewElevations. ControlHeight - IsCurElevation = {controlHeight - IsCurrentIndicatorsElevation}.");
+			//Debug.WriteLine($"CbListViewElevations. ControlHeight - IsCurElevation = {controlHeight - IsCurrentIndicatorsElevation}.");
 		}
 
 		#endregion

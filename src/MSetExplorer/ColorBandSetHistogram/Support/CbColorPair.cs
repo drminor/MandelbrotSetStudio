@@ -147,16 +147,16 @@ namespace MSetExplorer
 			}
 		}
 
-		public Visibility Visibility
-		{
-			get => _startColorBlockPath.Visibility;
+		//public Visibility Visibility
+		//{
+		//	get => _startColorBlockPath.Visibility;
 
-			set
-			{
-				_startColorBlockPath.Visibility = value;
-				_endColorBlockPath.Visibility = value;
-			}
-		}
+		//	set
+		//	{
+		//		_startColorBlockPath.Visibility = value;
+		//		_endColorBlockPath.Visibility = value;
+		//	}
+		//}
 
 		//public bool ShowDiagBorder { get; set; }
 

@@ -152,7 +152,7 @@ namespace MSetExplorer
 					HighlightSelectedColorBand = _highlightSelectedColorBand
 				};
 
-				Debug.WriteLine($"BitmapGrid is loading a ColorBandSet. The currentColorBandIndex is {colorMap.CurrentColorBandIndex}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid is loading a ColorBandSet. The currentColorBandIndex is {colorMap.CurrentColorBandIndex}.");
 
 				return colorMap;
 			}

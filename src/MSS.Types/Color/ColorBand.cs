@@ -26,9 +26,9 @@ namespace MSS.Types
 		private bool _isInEditMode;
 
 		private bool _isSelected;
+		private bool _isLast;
 
-		//private bool _isCutoffSelected;
-		//private bool _isColorSelected;
+		private static ColorBand _emptySingleton = new ColorBand();
 
 		#endregion
 
@@ -43,7 +43,7 @@ namespace MSS.Types
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
-			: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: blendStyle == ColorBandBlendStyle.Next ? endColor : null, percentage: double.NaN)
+			: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: null, percentage: double.NaN)
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, int? previousCutoff, ColorBandColor? successorStartColor, double percentage)
@@ -59,25 +59,52 @@ namespace MSS.Types
 			_actualEndColor = GetActualEndColor();
 
 			_isSelected = false;
+			_isLast = false;
 		}
 
-		private static ColorBand _emptySingleton = new ColorBand();
 
-		/// <summary>
-		/// Return the shared, single, empty instance.
-		/// </summary>
-		public static ColorBand Empty => _emptySingleton;
 
-		/// <summary>
-		/// Return a new empty intance
-		/// </summary>
-		public static ColorBand NewEmpty => new ColorBand();
 
 		#endregion
 
 		#region Events
 
 		public event EventHandler? EditEnded;
+
+		#endregion
+
+		#region Public Properties
+
+		/// <summary>
+		/// Return the shared, single, empty instance.
+		/// </summary>
+		public static ColorBand Empty => _emptySingleton;
+
+		public bool IsSelected
+		{
+			get => _isSelected;
+			set
+			{
+				if (value != _isSelected)
+				{
+					_isSelected = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public double Percentage
+		{
+			get => _percentage;
+			set
+			{
+				if (value != _percentage)
+				{
+					_percentage = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		#endregion
 
@@ -106,7 +133,6 @@ namespace MSS.Types
 					var origVal = _previousCutoff;
 					_previousCutoff = value;
 					OnPropertyChanged();
-					OnPropertyChanged(nameof(StartingCutoff));
 
 					if (origVal.HasValue != value.HasValue)
 					{
@@ -116,12 +142,6 @@ namespace MSS.Types
 			}
 		}
 
-		//public int StartingCutoff => (_previousCutoff ?? -1) + 1;
-		public int StartingCutoff => (_previousCutoff ?? 0) + 1;	// Updated on 12/26/2023
-
-		public bool IsFirst => !_previousCutoff.HasValue;
-
-		private bool _isLast;
 		public bool IsLast
 		{
 			get => _isLast;
@@ -135,6 +155,12 @@ namespace MSS.Types
 				}
 			}
 		}
+
+		//public int StartingCutoff => (_previousCutoff ?? -1) + 1;
+		//public int StartingCutoff => (_previousCutoff ?? 0) + 1;	// Updated on 12/26/2023
+
+		public bool IsFirst => !_previousCutoff.HasValue;
+
 
 		//public int BucketWidth => Cutoff - StartingCutoff;
 		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);  // Updated on 12/26/2023
@@ -261,15 +287,6 @@ namespace MSS.Types
 			{
 				if (value != _successorStartColor)
 				{
-					//var origVal = _successorStartColor;
-					//_successorStartColor = value;
-					//OnPropertyChanged();
-
-					//if (origVal.HasValue != value.HasValue)
-					//{
-					//	OnPropertyChanged(nameof(IsLast));
-					//}
-
 					_successorStartColor = value;
 					ActualEndColor = GetActualEndColor();
 				}
@@ -284,36 +301,6 @@ namespace MSS.Types
 				if (value != _actualEndColor)
 				{
 					_actualEndColor = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		public double Percentage
-		{
-			get => _percentage;
-			set
-			{
-				if (value != _percentage)
-				{
-					_percentage = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		#endregion
-
-		#region Public Properties - Selections
-
-		public bool IsSelected
-		{
-			get => _isSelected;
-			set
-			{
-				if (value != _isSelected)
-				{
-					_isSelected = value;
 					OnPropertyChanged();
 				}
 			}
@@ -381,7 +368,7 @@ namespace MSS.Types
 
 		public override string? ToString()
 		{
-			return $"Starting Cutoff: {StartingCutoff}, Ending Cutoff: {Cutoff}, Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}, End: {EndColor.GetCssColor()}, Actual End: {ActualEndColor}";
+			return $"Previous Cutoff: {PreviousCutoff}, Ending Cutoff: {Cutoff}, Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}, End: {EndColor.GetCssColor()}, Actual End: {ActualEndColor}";
 		}
 
 		#endregion
@@ -436,7 +423,7 @@ namespace MSS.Types
 				Debug.WriteLine("WARNING: EndEdit is being called, but IsInEditMode = false.");
 			}
 
-			Debug.WriteLine($"EndEdit is being called for ColorBand with StartColor: {StartColor}, Starting Offset: {StartingCutoff}, Ending Offset: {Cutoff}.");
+			Debug.WriteLine($"EndEdit is being called for ColorBand with StartColor: {StartColor}, Previous Offset: {PreviousCutoff}, Ending Offset: {Cutoff}.");
 
 			IsInEditMode = false;
 			EditEnded?.Invoke(this, EventArgs.Empty);

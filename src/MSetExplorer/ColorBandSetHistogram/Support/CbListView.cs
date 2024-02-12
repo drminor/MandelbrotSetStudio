@@ -211,7 +211,7 @@ namespace MSetExplorer
 					if (_blendRectangleUnderMouse != null)
 					{
 						_blendRectangleUnderMouse.SetIsRectangleUnderMouse(true, ColorBandSetEditMode.Bands);
-						Debug.WriteLine($"The Mouse is now over Rectangle: {_blendRectangleUnderMouse.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"The Mouse is now over Rectangle: {_blendRectangleUnderMouse.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
 					}
 				}
 			}
@@ -234,7 +234,7 @@ namespace MSetExplorer
 					if (_colorBlocksUnderMouse != null)
 					{
 						_colorBlocksUnderMouse.SetIsRectangleUnderMouse(true, ColorBandSetEditMode.Colors);
-						Debug.WriteLine($"The Mouse is now over ColorBlocks: {_colorBlocksUnderMouse.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"The Mouse is now over ColorBlocks: {_colorBlocksUnderMouse.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
 					}
 
 				}
@@ -255,7 +255,7 @@ namespace MSetExplorer
 					if (_sectionLineUnderMouse != null)
 					{
 						_sectionLineUnderMouse.SectionLineIsUnderMouse = true;
-						Debug.WriteLine($"The Mouse is now over SectionLine: {SectionLineUnderMouse?.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
+						Debug.WriteLineIf(_useDetailedDebug, $"The Mouse is now over SectionLine: {SectionLineUnderMouse?.ColorBandIndex}, EditMode = {CurrentCbEditMode}.");
 					}
 				}
 			}
@@ -324,7 +324,7 @@ namespace MSetExplorer
 						}
 						else
 						{
-							Debug.WriteLineIf(_useDetailedDebug, $"WARINING: CbListView. SelectionIndexWasMoved. Shift key was pressed. At least one item is selected but both the range anchor and the most recently selected item is null.");
+							Debug.WriteLine($"WARINING: CbListView. SelectionIndexWasMoved. Shift key was pressed. At least one item is selected but both the range anchor and the most recently selected item is null.");
 						}
 					}
 				}
@@ -359,11 +359,6 @@ namespace MSetExplorer
 			}
 
 			_indexOfMostRecentlySelectedItem = newColorBandIndex;
-
-			if (foundError)
-			{
-				Debug.WriteLine("Look at me.!");
-			}
 		}
 
 		public (CbListViewItem, ColorBandSelectionType)? GetItemAtMousePosition(Point hitPoint)
@@ -462,6 +457,28 @@ namespace MSetExplorer
 			_canvas.PreviewMouseLeftButtonDown -= Handle_PreviewMouseLeftButtonDown;
 
 			ClearListViewItems();
+		}
+
+		public void ReportColorBands(string desc)
+		{
+			Debug.WriteLine($"ColorBands: {desc}");
+
+			for (var cbLinePtr = 0; cbLinePtr < ListViewItems.Count; cbLinePtr++)
+			{
+				var item = ListViewItems[cbLinePtr];
+				Debug.WriteLine($"ColorBand: {cbLinePtr} Start: {item.ColorBand.PreviousCutoff ?? -1}, End: {item.ColorBand.Cutoff}, Width: {item.ColorBand.BucketWidth}, StartColor: {item.ColorBand.StartColor}, EndColor: {item.ColorBand.EndColor}, ActualEndColor: {item.ColorBand.ActualEndColor}.");
+			}
+		}
+
+		public void ReportListViewItems(string desc)
+		{
+			Debug.WriteLine($"ListViewItems: {desc}");
+
+			for (var cbLinePtr = 0; cbLinePtr < ListViewItems.Count; cbLinePtr++)
+			{
+				var item = ListViewItems[cbLinePtr];
+				Debug.WriteLine($"ListViewItem: {cbLinePtr} Start: {item.CbRectangle.BlendRectangleArea.Left}, End: {item.CbRectangle.BlendRectangleArea.Right}, Width: {item.CbRectangle.BlendRectangleArea.Width}, StartColor: {item.StartColor}, EndColor: {item.EndColor}.");
+			}
 		}
 
 		#endregion
@@ -1005,7 +1022,6 @@ namespace MSetExplorer
 			{
 				colorBandToUpdate.Cutoff = scaledValue;
 			}
-
 		}
 
 		private void UpdateItemsElevation(CbListViewElevations elevations)
@@ -1152,7 +1168,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		[Conditional("DEBUG")]
 		private void CheckOldItems(ColorBand? colorBand, IList? oldItems)
 		{
@@ -1163,18 +1178,6 @@ namespace MSetExplorer
 			else
 			{
 				Debug.Assert((oldItems?.Count ?? 0) == 1, "Received more than 1 old item on Notify Collection Changed -- Remove.");
-			}
-		}
-
-		[Conditional("DEBUG2")]
-		private void ReportColorBands(string desc, List<CbListViewItem> cbListViewItems)
-		{
-			Debug.WriteLine($"ColorBands: {desc}");
-
-			for (var cbLinePtr = 0; cbLinePtr < cbListViewItems.Count; cbLinePtr++)
-			{
-				var item = cbListViewItems[cbLinePtr];
-				Debug.WriteLine($"ColorBand: {cbLinePtr} Start: {item.ColorBand.PreviousCutoff ?? -1}, End: {item.ColorBand.Cutoff}, Width: {item.ColorBand.BucketWidth}.");
 			}
 		}
 

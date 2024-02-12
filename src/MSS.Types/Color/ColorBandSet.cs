@@ -492,7 +492,11 @@ namespace MSS.Types
 
 		private void PullColorsDown(int index, ReservedColorBand sourceCbE)
 		{
+			Debug.Assert(Items.Count > 0);
 			Debug.Assert(Items[^1].IsLast == true, "Items[^1].IsLast != true.");
+
+			Items[^1].SuccessorStartColor = sourceCbE.StartColor;
+
 
 			for (var ptr = index; ptr < Count - 1; ptr++)
 			{
@@ -505,12 +509,16 @@ namespace MSS.Types
 				targetCb.SuccessorStartColor = sourceCb.SuccessorStartColor;
 			}
 
-			//var sourceCbE = GetNextReservedColorBand();
 			var targetCbE = Items[^1];
 
 			targetCbE.StartColor = sourceCbE.StartColor;
 			targetCbE.BlendStyle = sourceCbE.BlendStyle;
 			targetCbE.EndColor = sourceCbE.EndColor;
+
+			//if (Items.Count > 1)
+			//{
+			//	Items[^2].SuccessorStartColor = Items[^1].StartColor;
+			//}
 		}
 
 		public ReservedColorBand PopReservedColorBand()
@@ -592,8 +600,6 @@ namespace MSS.Types
 				firstCb.PreviousCutoff = null;
 			}
 
-			Debug.Assert(firstCb.StartingCutoff == 1, "The first color band's StartingCutoff is not == 1.");
-
 			var result2 =  FixBandsPart2(targetIterations, result);
 			return result2;
 		}
@@ -619,7 +625,7 @@ namespace MSS.Types
 				prevCutoff = cb.Cutoff;
 				startingCutoff = cb.Cutoff + 1;
 
-				FixBlendStyle(cb, cb.SuccessorStartColor.Value);
+				//FixBlendStyle(cb, cb.SuccessorStartColor.Value);
 			}
 
 			// Make sure that the next to last ColorBand's CutOff is < Target Iterations.
@@ -657,7 +663,7 @@ namespace MSS.Types
 				result.Add(newLastCb);
 
 				lastCb.SuccessorStartColor = newLastCb.StartColor;
-				FixBlendStyle(lastCb, lastCb.SuccessorStartColor.Value);
+				//FixBlendStyle(lastCb, lastCb.SuccessorStartColor.Value);
 			}
 			else
 			{
@@ -711,20 +717,20 @@ namespace MSS.Types
 			return result;
 		}
 
-		private static void FixBlendStyle(ColorBand cb, ColorBandColor sucessorStartColor)
-		{
-			//if (cb.BlendStyle == ColorBandBlendStyle.None)
-			//{
-			//	cb.EndColor = cb.StartColor;
-			//}
-			//else
-			//{
-			//	if (cb.BlendStyle == ColorBandBlendStyle.Next)
-			//	{
-			//		cb.EndColor = sucessorStartColor;
-			//	}
-			//}
-		}
+		//private static void FixBlendStyle(ColorBand cb, ColorBandColor sucessorStartColor)
+		//{
+		//	//if (cb.BlendStyle == ColorBandBlendStyle.None)
+		//	//{
+		//	//	cb.EndColor = cb.StartColor;
+		//	//}
+		//	//else
+		//	//{
+		//	//	if (cb.BlendStyle == ColorBandBlendStyle.Next)
+		//	//	{
+		//	//		cb.EndColor = sucessorStartColor;
+		//	//	}
+		//	//}
+		//}
 
 		private static ColorBand CreateHighColorBand(ColorBand previousColorBand, int targetIterations)
 		{
@@ -898,7 +904,7 @@ namespace MSS.Types
 		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands)
 		{
 			var totalWidth = colorBands.Sum(x => x.BucketWidth);
-			var minCutoff = colorBands[0].StartingCutoff;
+			var minCutoff = colorBands[0].PreviousCutoff ?? 0;
 			var maxCutoff = colorBands[^1].Cutoff;
 			var totalRange = 1 + maxCutoff - minCutoff;
 
@@ -910,8 +916,8 @@ namespace MSS.Types
 			var cutoffs = string.Join("; ", colorBands.Select(x => x.Cutoff.ToString()).ToArray());
 			Debug.WriteLine($"Cutoffs: {cutoffs}.");
 
-			var startingCutoffs = string.Join("; ", colorBands.Select(x => x.StartingCutoff.ToString()).ToArray());
-			Debug.WriteLine($"Starting Cutoffs: {startingCutoffs}.");
+			var previousCutoffs = string.Join("; ", colorBands.Select(x => (x.PreviousCutoff ?? 0).ToString()).ToArray());
+			Debug.WriteLine($"Previous Cutoffs: {previousCutoffs}.");
 		}
 
 		#endregion

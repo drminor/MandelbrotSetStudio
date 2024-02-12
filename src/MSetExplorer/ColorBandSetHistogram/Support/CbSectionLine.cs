@@ -106,7 +106,7 @@ namespace MSetExplorer
 
 			_dragLine = BuildDragLine(_sectionLineArea, _isUnderMouse, ParentIsFocused, ContentScale);
 			_canvas.Children.Add(_dragLine);
-			_dragLine.SetValue(Panel.ZIndexProperty, 15);
+			_dragLine.SetValue(Panel.ZIndexProperty, 30);
 
 			_topArrowHalfWidth = SELECTION_LINE_ARROW_WIDTH;
 			_topArrow = BuildTopArrow(_topArrowArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);

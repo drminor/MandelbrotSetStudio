@@ -710,8 +710,8 @@ namespace MSetExplorer
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: UpdateContentViewportSize: {FmtSizeDblDp4(ContentViewportSize)}, UnscaledViewportSize: {FmtSizeDblDp4(UnscaledViewportSize)}, ConstrainedViewportSize: {FmtSizeDblDp4(_constrainedContentViewportSize)}, ContentScale: {ContentScale:n8}. MaxContentOffset: {_maxContentOffset:n8}");
 
-			//Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n1}, UnscaledVpSize-X: {UnscaledViewportSize.Width:n1}, ConstrainedVpSize-X: {_constrainedContentViewportSize.Width:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-X: {_maxContentOffset.Width:n1}");
-			Debug.WriteLine($"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n1}, UnscaledVpSize-X: {UnscaledViewportSize.Width:n1}, ConstrainedVpSize-X: {_constrainedContentViewportSize.Width:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-X: {_maxContentOffset.Width:n1}");
+			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n1}, UnscaledVpSize-X: {UnscaledViewportSize.Width:n1}, ConstrainedVpSize-X: {_constrainedContentViewportSize.Width:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-X: {_maxContentOffset.Width:n1}");
+			//Debug.WriteLine($"PanAndZoomControl: ContentVpSize-X: {ContentViewportSize.Width:n1}, UnscaledVpSize-X: {UnscaledViewportSize.Width:n1}, ConstrainedVpSize-X: {_constrainedContentViewportSize.Width:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-X: {_maxContentOffset.Width:n1}");
 
 			Debug.WriteLineIf(_useDetailedDebug, $"PanAndZoomControl: ContentVpSize-Y: {ContentViewportSize.Height:n1}, UnscaledVpSize-Y: {UnscaledViewportSize.Height:n1}, ConstrainedVpSize-Y: {_constrainedContentViewportSize.Height:n1}, ContentScale: {ContentScale:n3}. MaxContentOffset-Y: {_maxContentOffset.Height:n1}");
 

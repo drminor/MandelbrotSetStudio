@@ -146,11 +146,11 @@ namespace MSetExplorer
 			set => _cbColorPair.Container = value;
 		}
 
-		public Visibility ColorPairVisibility
-		{
-			get => _cbColorPair.Visibility;
-			set => _cbColorPair.Visibility = value;
-		}
+		//public Visibility ColorPairVisibility
+		//{
+		//	get => _cbColorPair.Visibility;
+		//	set => _cbColorPair.Visibility = value;
+		//}
 
 		public ColorBandColor StartColor
 		{

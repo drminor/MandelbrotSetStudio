@@ -18,7 +18,7 @@ namespace MSetExplorer
 		private bool _isColorSelected;
 		private bool _isBandSelected;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#region Constructor
 
@@ -274,7 +274,7 @@ namespace MSetExplorer
 
 			if (updateHandled)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbListView is handling a ColorBand {e.PropertyName} Change for CbRectangle at Index: {ColorBandIndex}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbListViewItem: {ColorBandIndex} is handling a ColorBand {e.PropertyName} Change for CbRectangle.");
 			}
 		}
 
@@ -356,6 +356,26 @@ namespace MSetExplorer
 			set => SetCurrentValue(OpacityProperty, value);
 		}
 
+
+		public ColorBandColor EndColor
+		{
+			get => CbColorBlock.EndColor;
+			set
+			{
+				CbColorBlock.EndColor = value;
+				CbRectangle.EndColor = value;
+			}
+		}
+
+		public ColorBandColor StartColor
+		{
+			get => CbColorBlock.StartColor;
+			set
+			{
+				CbColorBlock.StartColor = value;
+				CbRectangle.StartColor = value;
+			}
+		}
 		#endregion
 
 		#region Dependency Properties
@@ -422,7 +442,7 @@ namespace MSetExplorer
 		{
 			if (!ScreenTypeHelper.IsDoubleChanged(newValue.Right, 60, 2))
 			{
-				Debug.WriteLine($"CbListViewItem is having its Area value set. The X2 position = 60.");
+				Debug.WriteLineIf(_useDetailedDebug, $"CbListViewItem is having its Area value set. The X2 position = 60.");
 			}
 
 			CbSectionLine.TopArrowRectangleArea = new Rect(newValue.Left, elevations.SectionLinesElevation, newValue.Width, elevations.SectionLinesHeight);

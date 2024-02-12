@@ -11,13 +11,13 @@ namespace MSetExplorer
 		public double _msPerPixel;
 		private double _scaleX;
 		private int _colorBandIndex;
-		private bool _isForPullColors;
+		//private bool _isForPullColors;
 
 		public bool _useDetailedDebug = false;
 
-		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel, bool isForPullColors)
+		public BlendedColorAnimationItem(CbListViewItem sourceListViewItem, CbListViewItem? destinationListViewItem, double msPerPixel/*, bool isForPullColors*/)
 		{
-			_isForPullColors = isForPullColors;
+			//_isForPullColors = isForPullColors;
 			_msPerPixel = msPerPixel;
 			RectTransitions = new List<RectTransition>();
 
@@ -67,21 +67,40 @@ namespace MSetExplorer
 
 			DestinationListViewItem.CbRectangle.CbBlendedColorPair = newCopy;
 
-			if (_isForPullColors)
+			//if (_isForPullColors)
+			//{
+			//	if (SourceListViewItem.IsLast)
+			//	{
+			//		DestinationListViewItem.ColorBand.IsLast = false;
+			//		newCopy.EndColor = DestinationListViewItem.ColorBand.ActualEndColor;
+			//	}
+			//}
+			//else
+			//{
+			//	if (DestinationListViewItem.IsLast)
+			//	{
+			//		newCopy.EndColor = ColorBandColor.Black;
+			//	}
+			//	else
+			//	{
+			//		if (SourceListViewItem.IsLast)
+			//		{
+			//			newCopy.EndColor = DestinationListViewItem.ColorBand.ActualEndColor;
+			//		}
+			//	}
+			//}
+
+			if (DestinationListViewItem.IsLast)
 			{
-				if (SourceListViewItem.IsLast)
-				{
-					DestinationListViewItem.ColorBand.IsLast = false;
-					newCopy.EndColor = SourceListViewItem.ColorBand.ActualEndColor;
-				}
+				newCopy.EndColor = ColorBandColor.Black;
 			}
-			else
-			{
-				if (DestinationListViewItem.IsLast)
-				{
-					newCopy.EndColor = ColorBandColor.Black;
-				}
-			}
+			//else
+			//{
+			//	if (SourceListViewItem.IsLast)
+			//	{
+			//		newCopy.EndColor = DestinationListViewItem.ColorBand.ActualEndColor;
+			//	}
+			//}
 
 			SourceListViewItem.CbRectangle.CbBlendedColorPair.TearDown();
 		}

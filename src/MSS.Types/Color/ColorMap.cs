@@ -69,7 +69,7 @@ namespace MSS.Types
 
 			if (e.PropertyName == nameof(ColorBandSet.HilightedColorBandIndex))
 			{
-				Debug.WriteLine($"ColorMap. The CurrentColorBandIndex is being updated from {_currentColorBandIndex} to {_colorBandSet.HilightedColorBandIndex}.");
+				//Debug.WriteLine($"ColorMap. The CurrentColorBandIndex is being updated from {_currentColorBandIndex} to {_colorBandSet.HilightedColorBandIndex}.");
 				_currentColorBandIndex = _colorBandSet.HilightedColorBandIndex;
 			}
 		}
@@ -425,17 +425,17 @@ namespace MSS.Types
 		{
 			#region Constructor
 
-			public ColorMapEntry(ColorBand cb) : this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.ActualEndColor, cb.StartingCutoff, cb.BucketWidth)
+			public ColorMapEntry(ColorBand cb) : this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth)
 			{ }
 
 			public ColorMapEntry(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, 
-                int startingCutoff, int bucketWidth)
+                int? previousCutoff, int bucketWidth)
 			{
 				Cutoff = cutoff;
 				StartColor = startColor;
 			    BlendStyle = blendStyle;
 				EndColor = endColor;
-                StartingCutoff = startingCutoff;
+                StartingCutoff = (previousCutoff ?? 0) + 1;
                 BucketWidth = bucketWidth;
 			}
 

@@ -449,12 +449,11 @@ namespace MSetExplorer
 			}
 		}
 
-		private ReservedColorBand? OnAnimationComplete(ColorBandSetEditOperation editOp, int index, ColorBand? newColorband = null, ReservedColorBand? reservedColorBand = null)
+		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index, ColorBand? newColorband = null, ReservedColorBand? reservedColorBand = null)
 		{
-			ReservedColorBand? result = null;
-			
 			switch (editOp)
 			{
+				// Insert Cutoff - Existing colors are pulled down, the next available Reserved ColorBand is popped from the Stack to provide the source of the High ColorBand
 				case ColorBandSetEditOperation.InsertCutoff:
 
 					if (newColorband == null)
@@ -467,10 +466,10 @@ namespace MSetExplorer
 						throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
 					}
 
-
 					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newColorband, reservedColorBand);
 					break;
 
+				// Insert Color - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.InsertColor:
 
 					if (newColorband == null)
@@ -484,11 +483,12 @@ namespace MSetExplorer
 
 					}
 
-					result = _cbsHistogramViewModel.CompleteColorInsertion(index, newColorband);
+					var result = _cbsHistogramViewModel.CompleteColorInsertion(index, newColorband);
 					_cbsHistogramViewModel.PushReservedColorBand(result);
 
 					break;
 
+				// Insert entire ColorBand		
 				case ColorBandSetEditOperation.InsertBand:
 
 					if (newColorband == null)
@@ -499,6 +499,7 @@ namespace MSetExplorer
 					_cbsHistogramViewModel?.CompleteBandInsertion(index, newColorband);
 					break;
 
+				// Delete Cutoff - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.DeleteCutoff:
 
 					if (_cbsHistogramViewModel == null)
@@ -511,12 +512,13 @@ namespace MSetExplorer
 
 					if (result != null)
 					{
+						// The color from the top most band is pushed on to the stack of Reserved Bands
 						_cbsHistogramViewModel.PushReservedColorBand(result);
 					}
 
-					result = _cbsHistogramViewModel?.CompleteCutoffRemoval(index);
 					break;
 
+				// Delete Color - Existing colors are pulled down, the next available Reserved ColorBand is popped from the Stack to provide the source of the High ColorBand
 				case ColorBandSetEditOperation.DeleteColor:
 
 					if (reservedColorBand == null)
@@ -527,6 +529,7 @@ namespace MSetExplorer
 					_cbsHistogramViewModel?.CompleteColorRemoval(index, reservedColorBand);
 					break;
 
+				// Delete Entire ColorBand
 				case ColorBandSetEditOperation.DeleteBand:
 					_cbsHistogramViewModel?.CompleteBandRemoval(index);
 					break;
@@ -534,8 +537,6 @@ namespace MSetExplorer
 				default:
 					break;
 			}
-
-			return result;
 		}
 
 		public ColorBand? GetItemUnderMouse(Point hitPoint)
