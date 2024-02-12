@@ -68,33 +68,10 @@ namespace MSetExplorer
 
 			DestinationListViewItem.CbColorBlock.CbColorPair = newCopy;
 
-			//if (_isForPullColors)
-			//{
-			//	if (SourceListViewItem.IsLast)
-			//	{
-			//		DestinationListViewItem.ColorBand.IsLast = false;
-			//		newCopy.EndColor = DestinationListViewItem.ColorBand.ActualEndColor;
-			//	}
-			//}
-			//else
-			//{
-			//	if (DestinationListViewItem.IsLast)
-			//	{
-			//		newCopy.EndColor = ColorBandColor.Black;
-			//	}
-			//}
-
 			if (DestinationListViewItem.IsLast)
 			{
 				newCopy.EndColor = ColorBandColor.Black;
 			}
-			//else
-			//{
-			//	if (SourceListViewItem.IsLast)
-			//	{
-			//		newCopy.EndColor = DestinationListViewItem.ColorBand.ActualEndColor;
-			//	}
-			//}
 
 			SourceListViewItem.CbColorBlock.CbColorPair.TearDown();
 		}

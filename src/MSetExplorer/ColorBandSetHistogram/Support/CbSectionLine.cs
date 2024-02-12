@@ -48,7 +48,7 @@ namespace MSetExplorer
 		private Rect _sectionLineArea;
 		private Rect _topArrowArea;
 
-		private double _x1Position;
+		//private double _x1Position;
 		private double _x2Position;
 
 		private double _selectionLinePosition;
@@ -93,7 +93,7 @@ namespace MSetExplorer
 			_topArrowArea = topArrowArea;
 			_sectionLineArea = sectionLineArea;
 
-			_x1Position = sectionLineArea.Left;
+			//_x1Position = sectionLineArea.Left;
 			_x2Position = sectionLineArea.Right;
 
 			_selectionLinePosition = _x2Position * ContentScale.Width;
@@ -132,10 +132,9 @@ namespace MSetExplorer
 				{
 					_contentScale = value;
 
-					SectionLinePositionX = _x2Position * ContentScale.Width;
+					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
 					ResizeTopArrow(TopArrowRectangleArea, ContentScale);
-					ResizeSectionLine(SectionLineRectangleArea, ContentScale);
-
+					//ResizeSectionLine(SectionLineRectangleArea, ContentScale);
 				}
 			}
 		}
@@ -148,12 +147,13 @@ namespace MSetExplorer
 				if (value != _sectionLineArea)
 				{
 					_sectionLineArea = value;
-					_x1Position = _sectionLineArea.Left;
+					//_x1Position = _sectionLineArea.Left;
 					_x2Position = _sectionLineArea.Right;
 
-					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
+					_dragLine.Y1 = _sectionLineArea.Top;
+					_dragLine.Y2 = _sectionLineArea.Bottom;
 
-					ResizeSectionLine(SectionLineRectangleArea, ContentScale);
+					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
 				}
 			}
 		}
@@ -171,22 +171,20 @@ namespace MSetExplorer
 			}
 		}
 
-		public double X1Position
-		{
-			get => _x1Position;
+		//public double X1Position
+		//{
+		//	get => _x1Position;
 
-			set
-			{
-				if (ScreenTypeHelper.IsDoubleChanged(value, _x1Position))
-				{
-					_x1Position = value;
-					SectionLineRectangleArea = new Rect(value, _sectionLineArea.Y, _sectionLineArea.Width, _sectionLineArea.Height);
-					TopArrowRectangleArea = new Rect(value, _topArrowArea.Y, _topArrowArea.Width, _topArrowArea.Height);
-
-					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
-				}
-			}
-		}
+		//	set
+		//	{
+		//		if (ScreenTypeHelper.IsDoubleChanged(value, _x1Position))
+		//		{
+		//			_x1Position = value;
+		//			SectionLineRectangleArea = new Rect(value, _sectionLineArea.Y, _sectionLineArea.Width, _sectionLineArea.Height);
+		//			TopArrowRectangleArea = new Rect(value, _topArrowArea.Y, _topArrowArea.Width, _topArrowArea.Height);
+		//		}
+		//	}
+		//}
 
 		public double X2Position
 		{
@@ -200,34 +198,7 @@ namespace MSetExplorer
 					_x2Position = value;
 					SectionLineRectangleArea = new Rect(_sectionLineArea.X, _sectionLineArea.Y, width, _sectionLineArea.Height);
 					TopArrowRectangleArea = new Rect(_sectionLineArea.X, _topArrowArea.Y, width, _topArrowArea.Height);
-
-					SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
 				}
-				//else
-				//{
-				//	var r1 = SectionLineRectangleArea.Right;
-				//	var r2 = TopArrowRectangleArea.Right;
-
-				//	if (ScreenTypeHelper.IsDoubleChanged(r1, value) || ScreenTypeHelper.IsDoubleChanged(r2, value))
-				//	{
-				//		var width = value - _sectionLineArea.Left;
-
-
-				//		SectionLineRectangleArea = new Rect(_sectionLineArea.X, _sectionLineArea.Y, width, _sectionLineArea.Height);
-				//		TopArrowRectangleArea = new Rect(_sectionLineArea.X, _topArrowArea.Y, width, _topArrowArea.Height);
-
-				//		SectionLinePositionX = SectionLineRectangleArea.Right * ContentScale.Width;
-				//	}
-				//	else
-				//	{
-				//		var slpx = value * ContentScale.Width;
-
-				//		if (ScreenTypeHelper.IsDoubleChanged(slpx, SectionLinePositionX))
-				//		{
-				//			SectionLinePositionX = slpx;
-				//		}
-				//	}
-				//}
 			}
 		}
 
@@ -650,8 +621,8 @@ namespace MSetExplorer
 				StrokeThickness = 1.0,
 				Y1 = sectionLineArea.Y,
 				Y2 = sectionLineArea.Bottom,
-				X1 = sectionLineArea.X * contentScale.Width,
-				X2 = sectionLineArea.X * contentScale.Width,
+				X1 = sectionLineArea.Right * contentScale.Width,
+				X2 = sectionLineArea.Right * contentScale.Width
 			};
 
 			return result;

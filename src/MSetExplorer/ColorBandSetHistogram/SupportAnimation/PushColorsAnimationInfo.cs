@@ -133,7 +133,7 @@ namespace MSetExplorer
 			//	BuildPullTimelines(blendedItem);
 			//}
 
-			//CheckForNegativeShifts();
+			CheckForNegativeShifts();
 
 			//var startPushSyncPoint = SyncNextBeginTimeElapsed();
 

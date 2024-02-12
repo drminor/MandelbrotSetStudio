@@ -793,13 +793,6 @@ namespace MSetExplorer
 				return;
 			}
 
-			//if (index < _currentColorBandSet.Count - 1)
-			//{
-			//	var cb = _currentColorBandSet[index];
-			//	var newCutoff = _currentColorBandSet[index + 1].PreviousCutoff ?? 0;
-			//	cb.Cutoff = newCutoff;
-			//}
-
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After ColorRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
 			if (_colorBandsView.CurrentPosition != index)
@@ -831,10 +824,6 @@ namespace MSetExplorer
 
 		private ReservedColorBand InsertColor(int index, ColorBand colorBand)
 		{
-			//index = _currentColorBandSet.IndexOf(colorBand);
-			//var cb = _currentColorBandSet[index];
-			//var newItem = new ColorBand(0, colorBandColor, ColorBandBlendStyle.Next, cb.StartColor);
-
 			var saveCcb = CurrentColorBand;
 			CurrentColorBand = null;
 			var result = _currentColorBandSet.InsertColor(index, colorBand);

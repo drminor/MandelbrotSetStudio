@@ -269,11 +269,6 @@ namespace MSetExplorer
 		{
 			// User pressed the Left Arrow or Right Arrow key.
 
-			var foundError = false;
-
-			//BlendRectangleUnderMouse = null;
-			//SectionLineUnderMouse = null;
-
 			var shiftKeyPressed = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
 			var controlKeyPressed = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
 
@@ -289,7 +284,6 @@ namespace MSetExplorer
 
 					if (_selectedItemsRangeAnchorIndex != null)
 					{
-						foundError = true;
 						Debug.WriteLine($"There are zero items selected, but the RangeAnchorIndex = {_selectedItemsRangeAnchorIndex} The formerIndex = {formerIndex}. The new index = {newColorBandIndex}.");
 					}
 

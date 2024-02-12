@@ -166,8 +166,6 @@ namespace MSetExplorer.Cbs
 
 			// Execute the Animation
 			_storyBoardDetails1.Begin(AnimateInsertColorPost, index, debounce: true);
-
-			//AnimateInsertColorPost(index);
 		}
 
 		private void AnimateInsertColorPost(int index)
