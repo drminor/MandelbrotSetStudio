@@ -35,15 +35,23 @@ namespace MSS.Types
 		#region Constructor
 
 		public ColorBand() 
-			: this(0, ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black)
+			: this(0, ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black, double.NaN)
 		{ }
 
 		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
-			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
+			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor), percentage: double.NaN)
+		{ }
+
+		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor, double percentage)
+			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor), percentage)
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
 			: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: null, percentage: double.NaN)
+		{ }
+
+		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, double percentage)
+			: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: null, percentage)
 		{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, int? previousCutoff, ColorBandColor? successorStartColor, double percentage)
@@ -237,10 +245,10 @@ namespace MSS.Types
 			{
 				if (value != _startColor)
 				{
-					if (value == ColorBandColor.Black)
-					{
-						Debug.WriteLine("Setting the Start Color to Black.");
-					}
+					//if (value == ColorBandColor.Black)
+					//{
+					//	Debug.WriteLine("Setting the Start Color to Black.");
+					//}
 
 					_startColor = value;
 					OnPropertyChanged();

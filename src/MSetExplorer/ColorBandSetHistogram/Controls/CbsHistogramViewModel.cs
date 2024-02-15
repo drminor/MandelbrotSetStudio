@@ -27,10 +27,13 @@ namespace MSetExplorer
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
 		private ColorBandSetEditMode _currentCbEditMode;
 
-		private ColorBandSet _colorBandSet;			// The value assigned to this model
+		private ColorBandSet _colorBandSet;         // The value assigned to this model
+		private PercentageBand[] _referencePercentageBands;
+		
 		private bool _useEscapeVelocities;
 		private bool _useRealTimePreview;
 		private bool _highlightSelectedBand;
+		private bool _usePercentages;
 
 		private readonly ColorBandSetHistoryCollection _colorBandSetHistoryCollection;
 
@@ -84,6 +87,7 @@ namespace MSetExplorer
 			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
 
 			_colorBandSet = new ColorBandSet();
+			_referencePercentageBands = new PercentageBand[0];
 
 			_currentCbEditMode = ColorBandSetEditMode.Bands;
 			_useEscapeVelocities = true; 
@@ -170,6 +174,8 @@ namespace MSetExplorer
 
 					_colorBandSet = value;
 
+					_referencePercentageBands = _colorBandSet.Select(x => new PercentageBand(x.Cutoff, x.Percentage)).ToArray();
+
 					//if (!IsEnabled) return;
 
 					var unscaledWidth = GetExtent(_colorBandSet);
@@ -254,6 +260,32 @@ namespace MSetExplorer
 					_highlightSelectedBand = value;
 
 					OnPropertyChanged(nameof(HighlightSelectedBand));
+				}
+			}
+		}
+
+		public bool UsePercentages
+		{
+			get => _usePercentages;
+			set
+			{
+				if (value != _usePercentages)
+				{
+					var strState = value ? "True" : "False";
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is setting UsePercentages to {strState}.");
+
+					_usePercentages = value;
+
+					//if (value)
+					//{
+					//	UpdateCutoffs();
+					//}
+					//else
+					//{
+					//	UpdatePercentages();
+					//}
+
+					OnPropertyChanged(nameof(UsePercentages));
 				}
 			}
 		}
@@ -774,7 +806,10 @@ namespace MSetExplorer
 		public void CompleteCutoffInsertion(int index, ColorBand colorBand, ReservedColorBand reservedColorBand)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffInsertion has been callled.");
-			
+
+			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. Before CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}.");
+			Debug.WriteLine($"ColorBandSetViewModel. Before CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}.");
+
 			CurrentColorBand = null;
 
 			var result = TryInsertColorBand(index, colorBand);
@@ -793,7 +828,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After ColorRemoval, the current position is {ColorBandsView.CurrentPosition}.");
+			//index++;
 
 			if (_colorBandsView.CurrentPosition != index)
 			{
@@ -801,10 +836,20 @@ namespace MSetExplorer
 			}
 			else
 			{
+
 				CurrentColorBand = _currentColorBandSet[index];
+				_colorBandsView.MoveCurrentTo(CurrentColorBand);
+
+				//var curItem = _colorBandsView.CurrentItem as ColorBand;
+
+				//if (curItem != CurrentColorBand)
+				//{
+				//	_colorBandsView.MoveCurrentTo(curItem);
+				//}
 			}
 
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
+			Debug.WriteLine($"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
 
 			OnCurrentColorBandSetUpdated();
 		}
@@ -1069,35 +1114,39 @@ namespace MSetExplorer
 				return;
 			}
 
-			if (index == 0)
-			{
-				var cb = _currentColorBandSet[index];
-				cb.PreviousCutoff = 0;
-			}
-			else
-			{
-				var cb = _currentColorBandSet[index - 1];
-				var followingCb = _currentColorBandSet[index];
+			//if (index == 0)
+			//{
+			//	var cb = _currentColorBandSet[index];
+			//	cb.PreviousCutoff = 0;
+			//}
+			//else
+			//{
+			//	var cb = _currentColorBandSet[index - 1];
+			//	var followingCb = _currentColorBandSet[index];
 
-				cb.Cutoff = followingCb.PreviousCutoff ?? 0;
+			//	cb.Cutoff = followingCb.PreviousCutoff ?? 0;
 
-				if (cb.BlendStyle == ColorBandBlendStyle.Next)
-				{
-					cb.SuccessorStartColor = followingCb.StartColor;
-				}
-			}
+			//	if (cb.BlendStyle == ColorBandBlendStyle.Next)
+			//	{
+			//		cb.SuccessorStartColor = followingCb.StartColor;
+			//	}
+			//}
+
+			var cb = _currentColorBandSet[index];
+			cb.PreviousCutoff = selItem.PreviousCutoff;
 
 			if (_currentColorBandSet.Count == 1)
 			{
 				var singleCb = _currentColorBandSet[0];
-				singleCb.BlendStyle = ColorBandBlendStyle.End;
+				singleCb.PreviousCutoff = null;
+				singleCb.BlendStyle = ColorBandBlendStyle.Next;
 				singleCb.IsLast = true;
 			}
 
 			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
 
-			if (index > 0)
-				index--;
+			//if (index > 0)
+			//	index--;
 
 			if (_colorBandsView.CurrentPosition != index)
 			{
@@ -1726,6 +1775,46 @@ namespace MSetExplorer
 			}
 
 			return cutoffs.ToArray();
+		}
+
+		private void UpdateCutoffs()
+		{
+			var percentages = _referencePercentageBands.Select(x => x.Percentage).ToArray();
+			var newCutoffs = BuildNewCutoffs(percentages, _mapSectionHistogramProcessor.Histogram);
+			ApplyNewCutoffs(newCutoffs);
+		}
+
+		private PercentageBand[] BuildNewCutoffs(double[] percentages, IHistogram histogram)
+		{
+			// TODO: Calculate a new set of cutoffs from the percentages.
+			//var result = GetCutoffs();
+
+			var result = new PercentageBand[percentages.Length];
+
+			for (var i = 0; i < percentages.Length; i++)
+			{
+				result[i] = new PercentageBand(i, percentages[i]);
+			}
+
+			return result;
+		}
+
+		private void ApplyNewCutoffs(PercentageBand[] newCutoffs)
+		{
+			lock (_histLock)
+			{
+				if (_currentColorBandSet.UpdateCutoffs(newCutoffs))
+				{
+					BeyondTargetSpecs = newCutoffs[^1];
+					var numberReachedTargetIteration = BeyondTargetSpecs.Count;
+					var total = BeyondTargetSpecs.RunningSum;
+					Debug.WriteLineIf(_useDetailedDebug, $"CBS received new percentages. Top Count: {numberReachedTargetIteration}, Total: {total}.");
+				}
+				else
+				{
+					BeyondTargetSpecs = null;
+				}
+			}
 		}
 
 		#endregion

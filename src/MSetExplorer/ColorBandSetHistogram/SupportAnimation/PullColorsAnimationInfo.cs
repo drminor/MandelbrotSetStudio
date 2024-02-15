@@ -112,17 +112,18 @@ namespace MSetExplorer
 				blendedItem.BuildTimelinePos(blendedItem.PosAfterLift, veclocityMultiplier: 0.2);
 			}
 
-			//foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
-			//{
-			//	// Move right those items who are not yet at the destination.
-			//	// Narrow items to prevent the right side moving past the destination's right side.
-			//	BuildPushTimelines(colorBlockItem);
-			//	BuildPushTimelines(blendedItem);
-			//}
+			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
+			{
+				// Move right those items who are not yet at the destination.
+				// Narrow items to prevent the right side moving past the destination's right side.
+				BuildPushTimelines(colorBlockItem);
+				BuildPushTimelines(blendedItem);
+			}
 
 			CheckForPositiveShifts();
-
 			var startPushSyncPoint = SyncNextBeginTimeElapsed();
+
+			//var startPushSyncPoint = GetMaxDuration();
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{

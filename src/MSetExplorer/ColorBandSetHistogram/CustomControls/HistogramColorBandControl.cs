@@ -369,6 +369,21 @@ namespace MSetExplorer
 			}
 		}
 
+		private bool _usePercentages;
+		public bool UsePercentages
+		{
+			get => _usePercentages;
+			set
+			{
+				if (value != _usePercentages)
+				{
+					_usePercentages = value;
+
+					// TODO: handle UsePercentages vs. UseCutoffs
+				}
+			}
+		}	
+
 		#endregion
 
 		#region Public Methods
@@ -477,14 +492,12 @@ namespace MSetExplorer
 						throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertColor.");
 					}
 
-					if (_cbsHistogramViewModel == null)
+					var result = _cbsHistogramViewModel?.CompleteColorInsertion(index, newColorband) ?? null;
+
+					if (result != null)
 					{
-						throw new InvalidOperationException("The CbsHistogram is null.");
-
+						_cbsHistogramViewModel?.PushReservedColorBand(result);
 					}
-
-					var result = _cbsHistogramViewModel.CompleteColorInsertion(index, newColorband);
-					_cbsHistogramViewModel.PushReservedColorBand(result);
 
 					break;
 
@@ -502,18 +515,12 @@ namespace MSetExplorer
 				// Delete Cutoff - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.DeleteCutoff:
 
-					if (_cbsHistogramViewModel == null)
-					{
-						throw new InvalidOperationException("The CbsHistogram is null.");
-
-					}
-
-					result = _cbsHistogramViewModel.CompleteCutoffRemoval(index);
+					result = _cbsHistogramViewModel?.CompleteCutoffRemoval(index) ?? null;
 
 					if (result != null)
 					{
 						// The color from the top most band is pushed on to the stack of Reserved Bands
-						_cbsHistogramViewModel.PushReservedColorBand(result);
+						_cbsHistogramViewModel?.PushReservedColorBand(result);
 					}
 
 					break;
@@ -531,6 +538,7 @@ namespace MSetExplorer
 
 				// Delete Entire ColorBand
 				case ColorBandSetEditOperation.DeleteBand:
+
 					_cbsHistogramViewModel?.CompleteBandRemoval(index);
 					break;
 

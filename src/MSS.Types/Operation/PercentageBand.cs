@@ -20,6 +20,12 @@
 			Cutoff = cutoff;
 		}
 
+		public PercentageBand(int cutoff, double percentage)
+		{
+			Cutoff = cutoff;
+			Percentage = percentage;
+		}
+
 		//public PercentageBand(int cutoff, long exactCount, long runningSum)
 		//{
 		//	Cutoff = cutoff;

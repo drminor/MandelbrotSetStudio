@@ -98,7 +98,8 @@
                                         <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
                                         <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
                                         <Separator/>
-                                        <MenuItem Header="Hilight Cb" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Checked" IsChecked="False"/>>
+                                        <MenuItem Header="Hilight Cb" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Checked" IsChecked="False"/>
+                                        <MenuItem Header="Use Percentages" IsCheckable="True" x:Name="mnuItem_UsePercentages" Checked="UsePercentages_Checked" Unchecked="UsePercentages_Checked" IsChecked="False"/>
 
                                         <MenuItem Header="_Details" Command="local:ColorBandSetCommands.ShowDetails"/>
                                     </ContextMenu>

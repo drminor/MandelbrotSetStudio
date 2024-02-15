@@ -342,6 +342,19 @@ namespace MSS.Types
 			return true;
 		}
 
+		public bool UpdateCutoffs(PercentageBand[] newCutoffs)
+		{
+			var len = Math.Min(newCutoffs.Length, Count);
+
+			for (var i = 0; i < len; i++)
+			{
+				var cb = Items[i];
+				cb.Cutoff = newCutoffs[i].Cutoff;
+			}
+
+			return true;
+		}
+
 		public IList<ReservedColorBand> GetReservedColorBands()
 		{
 			return _reservedColorBands.ToList();

@@ -88,12 +88,12 @@ namespace MSetRepo
 
 		public ColorBandRecord MapTo(ColorBand source)
 		{
-			return new ColorBandRecord(source.Cutoff, source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor());
+			return new ColorBandRecord(source.Cutoff, source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor(), source.Percentage);
 		}
 
 		public ColorBand MapFrom(ColorBandRecord target)
 		{
-			return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor);
+			return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor, target.Percentage);
 		}
 
 		public ReservedColorBandRecord MapTo(ReservedColorBand source)

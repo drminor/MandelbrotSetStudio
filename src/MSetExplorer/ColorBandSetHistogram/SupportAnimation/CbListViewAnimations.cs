@@ -69,7 +69,6 @@ namespace MSetExplorer.Cbs
 			_listViewItems.Insert(index, itemBeingInserted);
 			_cbListView.Reindex(0);
 
-
 			var newCutoffD = itemBeingInserted.Area.Right;
 			var newWidthD = remainingWidth; // currentArea.Width - (itemBeingInserted.Area.Width + onePix);
 			currentItem.Area = new Rect(new Point(newCutoff, currentArea.Y), new Size(newWidthD, currentArea.Height));
@@ -213,18 +212,18 @@ namespace MSetExplorer.Cbs
 
 			_storyBoardDetails1.RateFactor = 1;
 
+			// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
+			_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX1: newCutoff, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
+
 			var curVal = itemBeingInserted.Area;
 			var newScaledWidth = 20 / itemBeingInserted.ScaleX;
 			var centerPt = new Point(curVal.X + curVal.Width / 2, curVal.Y + curVal.Height / 2);
 			var startingArea = new Rect(centerPt.X - (newScaledWidth / 2), centerPt.Y - 30, newScaledWidth, 20);
 
-			_storyBoardDetails1.AddRectAnimation(itemBeingInserted.Name, "Area", from: startingArea, to: curVal, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(250));
+			_storyBoardDetails1.AddRectAnimation(itemBeingInserted.Name, "Area", from: startingArea, to: curVal, beginTime: TimeSpan.FromMilliseconds(450), duration: TimeSpan.FromMilliseconds(600));
 
 			// Have the new item go from transparent to fully opaque
-			_storyBoardDetails1.AddOpacityAnimation(itemBeingInserted.Name, "Opacity", from: 0.3, to: 1.0, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(200));
-
-			// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
-			_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX1: newCutoff,  beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(150));
+			_storyBoardDetails1.AddOpacityAnimation(itemBeingInserted.Name, "Opacity", from: 0.3, to: 1.0, beginTime: TimeSpan.FromMilliseconds(450), duration: TimeSpan.FromMilliseconds(600));
 
 			_storyBoardDetails1.Begin(AnimateInsertBandPost, index, debounce: true);
 		}
@@ -389,12 +388,12 @@ namespace MSetExplorer.Cbs
 		// Delete Band
 		public void AnimateDeleteBand(int index)
 		{
-			_storyBoardDetails1.RateFactor = 1; //25
+			_storyBoardDetails1.RateFactor = 1;
 
 			var itemBeingRemoved = _listViewItems[index];
 
 			// Have the new item go from fully opaque to 1/3 transparent
-			_storyBoardDetails1.AddOpacityAnimation(itemBeingRemoved.Name, "Opacity", from: 1.0, to: 0.3, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(200));
+			_storyBoardDetails1.AddOpacityAnimation(itemBeingRemoved.Name, "Opacity", from: 1.0, to: 0.3, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(600));
 
 			itemBeingRemoved.ElevationsAreLocal = true;
 
@@ -403,32 +402,38 @@ namespace MSetExplorer.Cbs
 			var centerPt = new Point(curVal.X + curVal.Width / 2, curVal.Y + curVal.Height / 2);
 			var newArea = new Rect(centerPt.X - (newScaledWidth / 2), centerPt.Y - 30, newScaledWidth, 20);
 
-			_storyBoardDetails1.AddRectAnimation(itemBeingRemoved.Name, "Area", from: curVal, to: newArea, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(200));
+			_storyBoardDetails1.AddRectAnimation(itemBeingRemoved.Name, "Area", from: curVal, to: newArea, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(600));
 
-			if (index == 0)
-			{
-				var newFirstItem = _listViewItems[index + 1];
-				curVal = newFirstItem.Area;
-				var newXPosition = 0;
+			//if (index == 0)
+			//{
+			//	var newFirstItem = _listViewItems[index + 1];
+			//	curVal = newFirstItem.Area;
+			//	var newXPosition = 0;
 
-				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(150), duration: TimeSpan.FromMilliseconds(200));
-			}
-			else
-			{
-				var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
+			//	_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(600), duration: TimeSpan.FromMilliseconds(450));
+			//}
+			//else
+			//{
+			//	var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
 
-				var preceedingItem = _listViewItems[index - 1];
+			//	var preceedingItem = _listViewItems[index - 1];
 
-				if (index < _listViewItems.Count)
-				{
-					preceedingItem.ColorBand.SuccessorStartColor = _listViewItems[index].ColorBand.StartColor;
-				}
+			//	if (index < _listViewItems.Count)
+			//	{
+			//		preceedingItem.ColorBand.SuccessorStartColor = _listViewItems[index].ColorBand.StartColor;
+			//	}
 
-				curVal = preceedingItem.Area;
-				var newWidth = curVal.Width + widthOfItemBeingRemoved;
+			//	curVal = preceedingItem.Area;
+			//	var newWidth = curVal.Width + widthOfItemBeingRemoved;
 
-				_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, beginTime: TimeSpan.FromMilliseconds(200), duration: TimeSpan.FromMilliseconds(150));
-			}
+			//	_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, beginTime: TimeSpan.FromMilliseconds(600), duration: TimeSpan.FromMilliseconds(450));
+			//}
+
+			var followingItem = _listViewItems[index + 1];
+			curVal = followingItem.Area;
+			var newXPosition = itemBeingRemoved.Area.Left;
+
+			_storyBoardDetails1.AddChangeLeft(followingItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(600), duration: TimeSpan.FromMilliseconds(450));
 
 			_storyBoardDetails1.Begin(AnimateDeleteBandPost, index, debounce: false);
 		}

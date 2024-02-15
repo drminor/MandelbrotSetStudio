@@ -36,6 +36,8 @@ namespace MSetExplorer
 		bool UseEscapeVelocities { get; set; }
 		bool UseRealTimePreview { get; set; }
 
+		bool UsePercentages { get; set; }
+
 		//Visibility WindowVisibility { get; set; }
 
 		void ApplyChanges();

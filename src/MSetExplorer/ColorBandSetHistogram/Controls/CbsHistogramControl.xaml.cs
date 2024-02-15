@@ -201,6 +201,7 @@ namespace MSetExplorer
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is being enabled. Setting the HistogramColorBandControl's ColorBandView.");
 					HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
+					HistogramColorBandControl1.UsePercentages = _vm.UsePercentages;
 				}
 				else
 				{
@@ -220,6 +221,16 @@ namespace MSetExplorer
 				else
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is NOT updating the HistogramColorBandControl's ColorBandView. The ViewModel's IsEnabled property is false.");
+				}
+			}
+
+			// Use Percentages
+
+			else if (e.PropertyName == nameof(ICbsHistogramViewModel.UsePercentages))
+			{
+				if (_vm.IsEnabled)
+				{
+					HistogramColorBandControl1.UsePercentages = _vm.UsePercentages;
 				}
 			}
 
@@ -442,6 +453,17 @@ namespace MSetExplorer
 				_vm.HighlightSelectedBand = highlightSelectedCb;
 			}
 		}
+
+		// Use the Percentages (or the Cutoffs) - Alt P
+		private void UsePercentages_Checked(object sender, RoutedEventArgs e)
+		{
+			var usePercentages = mnuItem_UsePercentages.IsChecked;
+			if (_vm != null)
+			{
+				_vm.UsePercentages = usePercentages;
+			}
+		}
+
 
 		// Show Details F4
 		private void ShowDetails_Click(object sender, RoutedEventArgs e)

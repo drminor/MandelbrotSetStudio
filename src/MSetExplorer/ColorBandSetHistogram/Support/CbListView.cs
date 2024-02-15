@@ -1044,6 +1044,11 @@ namespace MSetExplorer
 
 			var indexOfCurrentItem = _colorBandsView.CurrentPosition;
 
+			if (CurrentColorBandIndex != indexOfCurrentItem)
+			{
+				CurrentColorBandIndex = indexOfCurrentItem;
+			}
+
 			var foundCItem = false;
 			for (var i = 0; i < ListViewItems.Count; i++)
 			{
