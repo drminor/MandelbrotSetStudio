@@ -178,7 +178,7 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}");
 
-			CbsHistogramViewModel.RefreshPercentages();
+			CbsHistogramViewModel.ApplyHistogram();
 			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
 
 			if (histogramDataWasEmpty)

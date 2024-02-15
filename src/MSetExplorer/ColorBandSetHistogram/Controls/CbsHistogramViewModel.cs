@@ -194,7 +194,7 @@ namespace MSetExplorer
 						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
 
 						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
-						UpdatePercentages();
+						ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
 					}
 
 					IsDirty = false;
@@ -711,7 +711,7 @@ namespace MSetExplorer
 
 			IsDirty = false;
 
-			UpdatePercentages();
+			ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
 
 			if (UseRealTimePreview)
 			{
@@ -729,9 +729,9 @@ namespace MSetExplorer
 			return new Dictionary<int, int>(kvpsForBand);
 		}
 
-		public void RefreshPercentages()
+		public void ApplyHistogram()
 		{
-			UpdatePercentages();
+			ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
 		}
 
 		public ReservedColorBand PopReservedColorBand()
@@ -1217,6 +1217,7 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's SerieData is being updated. There are {SeriesData.LongLength} entries.");
 
 			SeriesData = new HPlotSeriesData(SeriesData);
+			//OnPropertyChanged(nameof(ICbsHistogramViewModel.SeriesData));
 
 			return result;
 		}
@@ -1410,7 +1411,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				UpdatePercentages();
+				ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// Previous Cutoff is being updated
@@ -1439,7 +1440,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				UpdatePercentages();
+				ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// BlendStyle is being updated
@@ -1580,7 +1581,7 @@ namespace MSetExplorer
 		{
 			PushCurrentColorBandOnToHistoryCollection();
 			IsDirty = true;
-			UpdatePercentages();
+			ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
 
 			if (UseRealTimePreview)
 			{
@@ -1675,10 +1676,23 @@ namespace MSetExplorer
 
 		#region Private Methods - Percentages
 
-		private void UpdatePercentages()
+		private void ApplyHistogram(IHistogram histogram)
+		{
+			if (UsePercentages)
+			{
+				UpdatePercentages(histogram);
+			}
+			else
+			{
+				//UpdateCutoffs(histogram);
+				UpdatePercentages(histogram);
+			}
+		}
+
+		private void UpdatePercentages(IHistogram histogram)
 		{
 			var cutoffs = GetCutoffs();
-			var newPercentages = BuildNewPercentages(cutoffs, _mapSectionHistogramProcessor.Histogram);
+			var newPercentages = BuildNewPercentages(cutoffs, histogram);
 			ApplyNewPercentages(newPercentages);
 		}
 
@@ -1777,26 +1791,89 @@ namespace MSetExplorer
 			return cutoffs.ToArray();
 		}
 
-		private void UpdateCutoffs()
+		private void UpdateCutoffs(IHistogram histogram)
 		{
-			var percentages = _referencePercentageBands.Select(x => x.Percentage).ToArray();
-			var newCutoffs = BuildNewCutoffs(percentages, _mapSectionHistogramProcessor.Histogram);
+			var newCutoffs = BuildNewCutoffs(_referencePercentageBands, histogram);
 			ApplyNewCutoffs(newCutoffs);
 		}
 
-		private PercentageBand[] BuildNewCutoffs(double[] percentages, IHistogram histogram)
+		private PercentageBand[] BuildNewCutoffs(PercentageBand[] percentageBands, IHistogram histogram)
 		{
-			// TODO: Calculate a new set of cutoffs from the percentages.
-			//var result = GetCutoffs();
+			//// TODO: Calculate a new set of cutoffs from the percentages.
+			////var result = GetCutoffs();
 
-			var result = new PercentageBand[percentages.Length];
+			//var result = new PercentageBand[percentages.Length];
 
-			for (var i = 0; i < percentages.Length; i++)
+			//for (var i = 0; i < percentages.Length; i++)
+			//{
+			//	result[i] = new PercentageBand(i, percentages[i]);
+			//}
+
+			//return result;
+
+			// Make a copy
+			var pbList = new List<PercentageBand>(percentageBands.ToList());
+			pbList.Add(new PercentageBand(int.MaxValue));
+
+			var bucketCnts = pbList.ToArray();
+
+			var curBucketPtr = 0;
+			var curBucketCut = bucketCnts[curBucketPtr].Percentage;
+
+			long runningSum = 0;
+
+			var kvps = histogram.GetKeyValuePairs();
+
+			var i = 0;
+
+			for (; i < kvps.Length && curBucketPtr < bucketCnts.Length; i++)
 			{
-				result[i] = new PercentageBand(i, percentages[i]);
+				var idx = kvps[i].Key;
+				var amount = kvps[i].Value;
+
+				while (curBucketPtr < bucketCnts.Length && idx > curBucketCut)
+				{
+					curBucketPtr++;
+					curBucketCut = bucketCnts[curBucketPtr].Cutoff;
+				}
+
+				runningSum += amount;
+
+				if (idx == curBucketCut)
+				{
+					bucketCnts[curBucketPtr].ExactCount = amount;
+				}
+
+				bucketCnts[curBucketPtr].Count += amount;
+				bucketCnts[curBucketPtr].RunningSum = runningSum;
 			}
 
-			return result;
+			for (; i < kvps.Length; i++)
+			{
+				var amount = kvps[i].Value;
+				runningSum += amount;
+
+				bucketCnts[^1].Count += amount;
+				bucketCnts[^1].RunningSum = runningSum;
+			}
+
+			runningSum += histogram.UpperCatchAllValue;
+			bucketCnts[^1].Count += histogram.UpperCatchAllValue;
+			bucketCnts[^1].RunningSum = runningSum;
+
+			// For now, include all of the cnts above the target in the last bucket.
+			bucketCnts[^2].Count += bucketCnts[^1].Count;
+
+			//var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
+			var total = (double)runningSum;
+
+			foreach (var pb in bucketCnts)
+			{
+				pb.Percentage = Math.Round(100 * (pb.Count / total), digits: 2);
+			}
+
+			return bucketCnts;
+
 		}
 
 		private void ApplyNewCutoffs(PercentageBand[] newCutoffs)

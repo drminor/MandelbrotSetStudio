@@ -215,7 +215,7 @@ namespace MSetExplorer
 			//Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}. Number of Historgrams processed: {_mapSectionHistogramProcessor.NumberOfSectionsProcessed}.");
 			Debug.WriteLine($"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}. Number of Historgrams processed: {_mapSectionHistogramProcessor.NumberOfSectionsProcessed}.");
 
-			CbsHistogramViewModel.RefreshPercentages();
+			CbsHistogramViewModel.ApplyHistogram();
 			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
 
 			if (histogramDataWasEmpty)

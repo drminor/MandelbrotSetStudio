@@ -43,7 +43,7 @@ namespace MSetExplorer
 		void ApplyChanges();
 		void ApplyChanges(int newTargetIterations);
 		void RevertChanges();
-		void RefreshPercentages();
+		void ApplyHistogram();
 
 		bool TryMoveCurrentColorBandToNext();
 		bool TryMoveCurrentColorBandToPrevious();
