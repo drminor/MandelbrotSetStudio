@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using SharpCompress.Compressors.ADC;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -314,9 +315,14 @@ namespace MSS.Types
 			}
 		}
 
-		public bool UpdatePercentages(PercentageBand[] newPercentages)
+		public bool UpdatePercentagesCheckOffsets(PercentageBand[] newPercentages)
 		{
 			var len = Math.Min(newPercentages.Length, Count);
+
+			if (len != Count)
+			{
+				Debug.WriteLine($"WARNING: {Count - len} Percentages are not receiving an update.");
+			}
 
 			var allMatched = true;
 			for (var i = 0; i < len; i++)
@@ -342,17 +348,52 @@ namespace MSS.Types
 			return true;
 		}
 
-		public bool UpdateCutoffs(PercentageBand[] newCutoffs)
+		public bool UpdatePercentagesNoCheck(PercentageBand[] newPercentages)
 		{
-			var len = Math.Min(newCutoffs.Length, Count);
+			var len = Math.Min(newPercentages.Length, Count);
+
+			if (len != Count)
+			{
+				Debug.WriteLine($"WARNING: {Count - len} Percentages are not receiving an update.");
+			}
 
 			for (var i = 0; i < len; i++)
 			{
 				var cb = Items[i];
-				cb.Cutoff = newCutoffs[i].Cutoff;
+				cb.Percentage = newPercentages[i].Percentage;
 			}
 
 			return true;
+		}
+
+		public bool UpdateCutoffs(CutoffBand[] newCutoffs)
+		{
+			var len = Math.Min(newCutoffs.Length, Count);
+
+			int? prevCutoff = null;
+
+			for (var i = 0; i < len; i++)
+			{
+				var cb = Items[i];
+				cb.UpdateStartAndEndCutoffs(prevCutoff, newCutoffs[i].Cutoff);
+
+				if (cb.BucketWidth < 1)
+				{
+					throw new InvalidOperationException($"The bucket width for ColorBand: {i} is < 1 while updating the Cutoffs.");
+				}
+
+				prevCutoff = cb.Cutoff;
+			}
+
+			return true;
+		}
+
+		public void ClearPercentages()
+		{
+			for (var i = 0; i < Count; i++)
+			{
+				Items[i].Percentage = double.NaN;
+			}
 		}
 
 		public IList<ReservedColorBand> GetReservedColorBands()
@@ -620,7 +661,7 @@ namespace MSS.Types
 		private static IList<ColorBand> FixBandsPart2(int targetIterations, IList<ColorBand> result)
 		{
 			int? prevCutoff = null;
-			int startingCutoff = 0;
+			//int startingCutoff = 0;
 
 			for (var i = 0; i < result.Count - 1; i++)
 			{
@@ -629,14 +670,19 @@ namespace MSS.Types
 				cb.PreviousCutoff = prevCutoff;
 				cb.SuccessorStartColor = result[i + 1].StartColor;
 
-				var bucketWidth = cb.Cutoff - startingCutoff;
-				if (bucketWidth < 0)
+				//var bucketWidth = cb.Cutoff - startingCutoff;
+				//if (bucketWidth < 0)
+				//{
+				//	throw new InvalidOperationException($"The bucket width for ColorBand: {i} is negative while creating the ColorBandSet.");
+				//}
+
+				if (cb.BucketWidth < 1)
 				{
-					throw new InvalidOperationException($"The bucket width for ColorBand: {i} is negative while creating the ColorBandSet.");
+					throw new InvalidOperationException($"The bucket width for ColorBand: {i} is < 1 while creating the ColorBandSet.");
 				}
 
 				prevCutoff = cb.Cutoff;
-				startingCutoff = cb.Cutoff + 1;
+				//startingCutoff = cb.Cutoff + 1;
 
 				//FixBlendStyle(cb, cb.SuccessorStartColor.Value);
 			}
@@ -699,9 +745,9 @@ namespace MSS.Types
 				else
 				{
 					//Debug.Assert(lastCb.BucketWidth >= 0, "The bucket width is negative while creating the ColorBandSet.");
-					if (lastCb.BucketWidth < 0)
+					if (lastCb.BucketWidth < 1)
 					{
-						throw new InvalidOperationException($"The bucket width for the last ColorBand is negative while creating the ColorBandSet.");
+						throw new InvalidOperationException($"The bucket width for the last ColorBand is < 1 while creating the ColorBandSet.");
 					}
 				}
 

@@ -12,7 +12,7 @@ namespace MapSectionProviderLib
 	// The RequestAdded event would then be raised by the caller of the Push method for subscribers interested in only that 'clients' jobs.
 	// The MapSectionRequestProcess could also raise a RequestAdded event for subscribers interested in all jobs.
 	
-	public class MapLoaderManager : IMapLoaderManager
+	public class MapLoaderManager : IMapLoaderManager, IDisposable
 	{
 		#region Private Fields
 

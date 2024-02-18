@@ -149,6 +149,7 @@ namespace MSetExplorer
 			Hide();
 
 			var explorerViewModel = _vm.GetExplorerViewModel();
+
 			var explorerWindow = new ExplorerWindow(explorerViewModel, appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest());
 
 			_lastWindow = explorerWindow;

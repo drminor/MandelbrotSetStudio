@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using static MongoDB.Driver.WriteConcern;
 
 namespace MSS.Types.MSet
 {
@@ -142,6 +143,9 @@ namespace MSS.Types.MSet
 				_sectionsFoundInRepo = 0;
 				_sectionsGenerated = 0;
 
+				Debug.WriteLine($"Starting! Requested:{sectionsRequested} Cancelled:{sectionsCancelled}. Sections Pending Now:{SectionsPending}.");
+
+
 				_mapSectionReadyCallback = mapSectionReadyCallback;
 				_mapViewUpdateCompleteCallback = mapViewUpdateCompleteCallback;
 
@@ -205,6 +209,8 @@ namespace MSS.Types.MSet
 			{
 				_sectionsCancelled += amount;
 
+				ReportSectionsPending($"Cancelled + {amount}");
+
 				if (SectionsPending <= 0)
 				{
 					MarkJobAsComplete();
@@ -220,6 +226,8 @@ namespace MSS.Types.MSet
 			{
 				_sectionsFoundInRepo += amount;
 
+				ReportSectionsPending($"Found + {amount}");
+
 				if (SectionsPending <= 0)
 				{
 					MarkJobAsComplete();
@@ -234,6 +242,8 @@ namespace MSS.Types.MSet
 			lock (_stateLock)
 			{
 				_sectionsGenerated += amount;
+
+				ReportSectionsPending($"Generated + {amount}");
 
 				if (SectionsPending <= 0)
 				{
@@ -252,6 +262,14 @@ namespace MSS.Types.MSet
 		#endregion
 
 		#region Private Methods
+
+		private void ReportSectionsPending(string description)
+		{
+			if (SectionsPending < 5)
+			{
+				Debug.WriteLine($"{description}. Sections Pending Now:{SectionsPending}.");
+			}
+		}
 
 		private void MarkJobAsComplete()
 		{

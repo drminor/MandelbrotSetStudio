@@ -230,9 +230,10 @@ namespace MSetExplorer
 					return;
 				}
 
-				// This updates the Cutoff and Width -- to keep the Previous Cutoff the same.
-				var newWidth = cb.Cutoff - (cb.PreviousCutoff ?? 0);
-				Area = new Rect(Area.X, Area.Y, newWidth, Area.Height);
+				var newX1 = cb.PreviousCutoff ?? 0;
+				//var newWidth = Area.Right - newX1;
+				var newWidth = cb.Cutoff - newX1;
+				Area = new Rect(newX1, Area.Y, newWidth, Area.Height);
 				updateHandled = true;
 			}
 			else if (e.PropertyName == nameof(ColorBand.PreviousCutoff))
@@ -243,9 +244,11 @@ namespace MSetExplorer
 					return;
 				}
 
-				// This updates the XPosition and Width -- to keep the Cutoff the same.
+				// This updates the XPosition and Width
 				var newX1 = cb.PreviousCutoff ?? 0;
-				var newWidth = Area.Right - newX1;
+				//var newWidth = Area.Right - newX1;
+				var newWidth = cb.Cutoff - newX1;
+
 				Area = new Rect(newX1, Area.Y, newWidth, Area.Height);
 				updateHandled = true;
 			}

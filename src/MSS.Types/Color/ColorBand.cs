@@ -70,9 +70,6 @@ namespace MSS.Types
 			_isLast = false;
 		}
 
-
-
-
 		#endregion
 
 		#region Events
@@ -343,6 +340,32 @@ namespace MSS.Types
 		#endregion
 
 		#region Public Methods
+
+		public void UpdateStartAndEndCutoffs(int? previousCutoff, int cutoff)
+		{
+			var originalPreviousCutoff = _previousCutoff;
+
+			if (_previousCutoff != previousCutoff)
+			{
+				_previousCutoff = previousCutoff;
+			}
+
+			if (_cutoff != cutoff)
+			{
+				_cutoff = cutoff;
+				OnPropertyChanged(nameof(Cutoff));
+			}
+
+			if (previousCutoff != originalPreviousCutoff)
+			{
+				OnPropertyChanged(nameof(PreviousCutoff));
+			}
+
+			if (previousCutoff.HasValue != originalPreviousCutoff.HasValue)
+			{
+				OnPropertyChanged(nameof(IsFirst));
+			}
+		}
 
 		public void UpdateWithNeighbors(ColorBand? predecessor, ColorBand? successor)
 		{

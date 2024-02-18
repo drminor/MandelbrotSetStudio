@@ -1,16 +1,11 @@
-﻿using MSetRepo;
-using MSS.Common;
-using MSS.Types.MSet;
-using MSS.Types;
-using MSS.Common.MSet;
-using System.Windows;
-using System;
-using MongoDB.Bson;
-using ImageBuilder;
-using System.Windows.Media;
-using PngImageLib;
+﻿using ImageBuilder;
 using ImageBuilderWPF;
-using System.Reflection.PortableExecutable;
+using MSetRepo;
+using MSS.Common;
+using MSS.Common.MSet;
+using MSS.Types;
+using MSS.Types.MSet;
+using System.Windows.Media;
 
 namespace MSetExplorer
 {

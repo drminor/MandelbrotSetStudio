@@ -946,6 +946,7 @@ namespace MSetExplorer
 			foreach (var mapSection in newMapSections)
 			{
 				MapSections.Add(mapSection);
+				msrJob.IncrementSectionsFound();
 			}
 
 			_bitmapGrid.DrawSections(newMapSections);

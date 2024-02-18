@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -43,7 +42,7 @@ namespace MSetExplorer
 		void ApplyChanges();
 		void ApplyChanges(int newTargetIterations);
 		void RevertChanges();
-		void ApplyHistogram();
+		bool ApplyHistogram();
 
 		bool TryMoveCurrentColorBandToNext();
 		bool TryMoveCurrentColorBandToPrevious();
@@ -87,7 +86,7 @@ namespace MSetExplorer
 
 		ScrollBarVisibility HorizontalScrollBarVisibility { get; set; }
 		
-		bool RefreshDisplay();
+		void RefreshDisplay();
 
 		int? UpdateViewportSizeAndPos(SizeDbl contentViewportSize, VectorDbl contentOffset);
 		int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);

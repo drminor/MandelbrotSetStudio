@@ -71,7 +71,6 @@ namespace MSetExplorer
 
 		public MapCoordsViewModel MapCoordsViewModel { get; } 
 		public MapCalcSettingsViewModel MapCalcSettingsViewModel { get; }
-		//public ColorBandSetViewModel ColorBandSetViewModel { get; }
 
 		public ICbsHistogramViewModel CbsHistogramViewModel { get; }
 
@@ -215,8 +214,8 @@ namespace MSetExplorer
 			//Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}. Number of Historgrams processed: {_mapSectionHistogramProcessor.NumberOfSectionsProcessed}.");
 			Debug.WriteLine($"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}. Number of Historgrams processed: {_mapSectionHistogramProcessor.NumberOfSectionsProcessed}.");
 
-			CbsHistogramViewModel.ApplyHistogram();
-			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
+			var histogramDataWasEmpty = CbsHistogramViewModel.ApplyHistogram();
+			CbsHistogramViewModel.RefreshDisplay();
 
 			if (histogramDataWasEmpty)
 			{
@@ -345,16 +344,14 @@ namespace MSetExplorer
 
 					MapCalcSettingsViewModel.MapSettingsUpdateRequested -= MapCalcSettingsViewModel_MapSettingsUpdateRequested;
 
-					//ColorBandSetViewModel.PropertyChanged -= ColorBandViewModel_PropertyChanged;
-					//ColorBandSetViewModel.ColorBandSetUpdateRequested -= ColorBandSetViewModel_ColorBandSetUpdateRequested;
-
 					CbsHistogramViewModel.PropertyChanged -= CbsHistogramViewModel_PropertyChanged;
 					CbsHistogramViewModel.ColorBandSetUpdateRequested -= CbsHistogramViewModel_ColorBandSetUpdateRequested;
 
 					MapDisplayViewModel.Dispose();
 
-					//ColorBandSetViewModel.Dispose();
 					CbsHistogramViewModel.Dispose();
+
+					_mapSectionHistogramProcessor.Dispose();
 				}
 
 				disposedValue = true;

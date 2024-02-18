@@ -17,11 +17,9 @@ namespace MSetExplorer
 
 		private readonly bool _useDetailedDebug = true;
 
-
 		#region Constructor
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, 
-			//ColorBandSetViewModel colorBandViewModel,
 			ICbsHistogramViewModel cbsHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
 						/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */
 			IMapSectionHistogramProcessor mapSectionHistogramProcessor, ViewModelFactory viewModelFactory)
@@ -46,10 +44,6 @@ namespace MSetExplorer
 
 			MapCalcSettingsViewModel = new MapCalcSettingsViewModel();
 			MapCalcSettingsViewModel.MapSettingsUpdateRequested += MapCalcSettingsViewModel_MapSettingsUpdateRequested;
-
-			//ColorBandSetViewModel = colorBandViewModel;
-			//ColorBandSetViewModel.PropertyChanged += ColorBandViewModel_PropertyChanged;
-			//ColorBandSetViewModel.ColorBandSetUpdateRequested += ColorBandSetViewModel_ColorBandSetUpdateRequested;
 
 			CbsHistogramViewModel = cbsHistogramViewModel;
 			CbsHistogramViewModel.PropertyChanged += CbsHistogramViewModel_PropertyChanged;
@@ -178,8 +172,8 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}");
 
-			CbsHistogramViewModel.ApplyHistogram();
-			var histogramDataWasEmpty = CbsHistogramViewModel.RefreshDisplay();
+			var histogramDataWasEmpty = CbsHistogramViewModel.ApplyHistogram();
+			CbsHistogramViewModel.RefreshDisplay();
 
 			if (histogramDataWasEmpty)
 			{
@@ -322,6 +316,8 @@ namespace MSetExplorer
 
 					MapDisplayViewModel.Dispose();
 					CbsHistogramViewModel.Dispose();
+
+					_mapSectionHistogramProcessor.Dispose();
 				}
 
 				disposedValue = true;

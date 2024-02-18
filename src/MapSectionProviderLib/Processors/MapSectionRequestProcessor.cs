@@ -135,14 +135,14 @@ namespace MapSectionProviderLib
 					{
 						if (mapSectionPair.Item1 != null && !mapSectionPair.Item1.RequestCancelled) 
 						{
-							mapSectionRequest.MsrJob.IncrementSectionsFound();
+							//mapSectionRequest.MsrJob.IncrementSectionsFound();
 							mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 							result.Add(mapSectionPair.Item1);
 						}
 
 						if (mapSectionPair.Item2 != null && !mapSectionPair.Item2.RequestCancelled)
 						{
-							mapSectionRequest.MsrJob.IncrementSectionsFound();
+							//mapSectionRequest.MsrJob.IncrementSectionsFound();
 							mapSectionRequest.ProcessingStartTime = DateTime.UtcNow;
 							result.Add(mapSectionPair.Item2);
 						}

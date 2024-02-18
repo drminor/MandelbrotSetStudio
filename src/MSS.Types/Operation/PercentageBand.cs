@@ -12,9 +12,6 @@
 
 		#region Constructor
 
-		//public PercentageBand() : this(0, 0, 0)
-		//{ }
-
 		public PercentageBand(int cutoff)
 		{
 			Cutoff = cutoff;
@@ -26,25 +23,37 @@
 			Percentage = percentage;
 		}
 
-		//public PercentageBand(int cutoff, long exactCount, long runningSum)
-		//{
-		//	Cutoff = cutoff;
-		//	ExactCount = exactCount;
-		//	RunningSum = runningSum;
+		#endregion
+	}
 
-		//	Count = exactCount;
-		//}
+	public class CutoffBand
+	{
+		public int Cutoff { get; set; }
+		public double Percentage { get; set; }
 
-		//public PercentageBand(int cutoff, long exactCount, long runningSum, long count, double percentage)
-		//{
-		//	Cutoff = cutoff;
-		//	ExactCount = exactCount;
-		//	RunningSum = runningSum;
+		public double RunningPercentage { get; set; }
+		public double TargetCount { get; set; }
 
-		//	Count = count;
-		//	Percentage = percentage;
-		//}
+		public double ActualPercentage { get; set; }
+		public double ActualCount { get; set; }
+
+		public double CountAtPrev { get; set; }
+		public double CountAtSucc { get; set; }
+
+		#region Constructor
+
+		public CutoffBand(int cutoff)
+		{
+			Cutoff = cutoff;
+		}
+
+		public CutoffBand(int cutoff, double percentage)
+		{
+			Cutoff = cutoff;
+			Percentage = percentage;
+		}
 
 		#endregion
 	}
+
 }

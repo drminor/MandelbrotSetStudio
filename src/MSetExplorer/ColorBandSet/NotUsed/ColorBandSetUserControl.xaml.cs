@@ -271,13 +271,13 @@ namespace MSetExplorer
 			}
 		}
 
-		private void UpdateNeighbors(ColorBand selItem, int index)
-		{
-			var predecessor = GetPredeccessor(index);
-			var successor = GetSuccessor(index);
+		//private void UpdateNeighbors(ColorBand selItem, int index)
+		//{
+		//	var predecessor = GetPredeccessor(index);
+		//	var successor = GetSuccessor(index);
 
-			selItem.UpdateWithNeighbors(predecessor, successor);
-		}
+		//	selItem.UpdateWithNeighbors(predecessor, successor);
+		//}
 
 		private ColorBand? GetPredeccessor(int index)
 		{

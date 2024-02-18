@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace MSS.Common
 {
-	public interface IMapLoaderManager : IDisposable
+	public interface IMapLoaderManager
 	{
 		event EventHandler<MsrJob>? RequestAdded;
 

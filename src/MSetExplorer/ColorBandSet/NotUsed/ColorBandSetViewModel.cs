@@ -953,7 +953,7 @@ namespace MSetExplorer
 		{
 			lock (_histLock)
 			{
-				if (_currentColorBandSet.UpdatePercentages(newPercentages))
+				if (_currentColorBandSet.UpdatePercentagesCheckOffsets(newPercentages))
 				{
 					BeyondTargetSpecs = newPercentages[^1];
 					//Debug.WriteLine($"CBS received new percentages top: {newPercentages[^1]}, total: {total}.");

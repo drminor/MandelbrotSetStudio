@@ -88,7 +88,7 @@ namespace MSetExplorer
 
 		private RepositoryAdapters? _repositoryAdapters;
 
-		private IMapLoaderManager? _mapLoaderManager;
+		private MapLoaderManager? _mapLoaderManager;
 
 		private AppNavWindow? _appNavWindow;
 
