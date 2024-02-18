@@ -37,8 +37,8 @@
 		public double ActualPercentage { get; set; }
 		public double ActualCount { get; set; }
 
-		public double CountAtPrev { get; set; }
-		public double CountAtSucc { get; set; }
+		public double PreviousCount { get; set; }
+		public double NextCount { get; set; }
 
 		#region Constructor
 

@@ -1849,13 +1849,13 @@ namespace MSetExplorer
 		{
 			try
 			{
-				if (_referencePercentageBands.Any(x => x.Percentage == double.NaN))
+				if (_referencePercentageBands.Any(x => double.IsNaN(x.Percentage)))
 				{
 					UpdatePercentages(kvps, upperCatchAllValue);
 					_referencePercentageBands = _colorBandSet.Select(x => new PercentageBand(x.Cutoff, x.Percentage)).ToArray();
 				}
-
-				if (_referencePercentageBands.Any(x => x.Percentage == double.NaN))
+				
+				if (_referencePercentageBands.Any(x => double.IsNaN(x.Percentage)))
 				{
 					Debug.WriteLine("WARNING: Some Percentages are undefined. Not updating the Cutoffs.");
 					return;
@@ -1863,6 +1863,7 @@ namespace MSetExplorer
 
 				var newCutoffs = BuildNewCutoffs(_referencePercentageBands, kvps);
 
+				CheckNewCutoffs(_referencePercentageBands, newCutoffs);
 				ReportNewCutoffs(_referencePercentageBands, newCutoffs);
 				ApplyNewCutoffs(newCutoffs);
 			}
@@ -1878,52 +1879,52 @@ namespace MSetExplorer
 			var result = percentageBands.Select(x => new CutoffBand(x.Cutoff, x.Percentage)).ToArray();
 
 			// Get total counts
-			//var kvps = histogram.GetKeyValuePairs();
+			double sumOfAllCounts = kvps.Sum(x => x.Value);
 
-			double sumOfAllCounts = 0;
-			foreach (var kvp in kvps)
-			{
-				var amount = kvp.Value;
-
-				sumOfAllCounts += amount;
-			}
-
+			// Set the Target Counts
 			var runningPercentage = 0d;
 
 			for (var cbPtr = 0; cbPtr < result.Length; cbPtr++)
 			{
 				var cutoffBand = result[cbPtr];
-
 				runningPercentage += percentageBands[cbPtr].Percentage;
 				cutoffBand.RunningPercentage = runningPercentage;
 				cutoffBand.TargetCount = (runningPercentage / 100) * sumOfAllCounts;
 			}
 
+			if (result.Any(x => double.IsNaN(x.TargetCount)))
+			{
+				throw new InvalidOperationException("The TargetCounts have changed.");
+			}
+
 			var i = 0;
 			var idx = 0;
-
 			var prevCutoff = -1;
 
 			var previousRunningCount = 0d;
 			var runningCount = 0d;
 			var curBucketPtr = 0;
 
-			while (curBucketPtr < result.Length)
+			// Move past those bands that have a TargetCount = 0
+			while (curBucketPtr < result.Length - 1 && result[curBucketPtr].TargetCount == 0)
+			{
+				var cutoffBand = result[curBucketPtr];
+				cutoffBand.ActualCount = 0;
+				cutoffBand.ActualPercentage = 0;
+				cutoffBand.PreviousCount = 0;
+				cutoffBand.NextCount = 0;
+
+				curBucketPtr++;
+			}
+
+			while (curBucketPtr < result.Length - 1 && i < kvps.Length)
 			{
 				var cutoffBand = result[curBucketPtr];
 				var targetCount = cutoffBand.TargetCount;
 
-				while (targetCount == 0)
-				{
-					curBucketPtr++;
-					cutoffBand = result[curBucketPtr];
-					targetCount = cutoffBand.TargetCount;
-
-					continue;
-				}
-
 				while (runningCount <= targetCount && i < kvps.Length)
 				{
+					// Update the running count and advance to the next histogram entry.
 					idx = kvps[i].Key;
 					var amount = kvps[i].Value;
 
@@ -1932,21 +1933,46 @@ namespace MSetExplorer
 					i++;
 				}
 
-				if (prevCutoff + 1 < idx)
+				if (runningCount > targetCount)
 				{
-					cutoffBand.Cutoff = idx;
-
-					cutoffBand.ActualCount = runningCount;
-					cutoffBand.ActualPercentage = runningCount / sumOfAllCounts;
-					cutoffBand.CountAtPrev = previousRunningCount;
-
-					if (i < kvps.Length)
+					if (prevCutoff + 1 < idx)
 					{
-						cutoffBand.CountAtSucc = runningCount + kvps[i].Value;
+						cutoffBand.Cutoff = idx;
+
+						cutoffBand.ActualCount = runningCount;
+						cutoffBand.ActualPercentage = runningCount / sumOfAllCounts;
+						cutoffBand.PreviousCount = previousRunningCount;
+
+						if (i < kvps.Length)
+						{
+							cutoffBand.NextCount = runningCount + kvps[i].Value;
+						}
+
+						prevCutoff = idx;
+						curBucketPtr++;
+					}
+					else
+					{
+						if (i < kvps.Length)
+						{
+							// Update the running count and advance to the next histogram entry.
+							idx = kvps[i].Key;
+							var amount = kvps[i].Value;
+
+							previousRunningCount = runningCount;
+							runningCount += amount;
+							i++;
+						}
 					}
 
-					prevCutoff = idx;
 				}
+			}
+
+			while (curBucketPtr < result.Length - 1)
+			{
+				prevCutoff++;
+				var cutoffBand = result[curBucketPtr];
+				cutoffBand.Cutoff = prevCutoff;
 
 				curBucketPtr++;
 			}
@@ -1989,6 +2015,17 @@ namespace MSetExplorer
 		#region Diagnostics
 
 		[Conditional("DEBUG")]
+		private void CheckNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
+		{
+			var hiCutoff = percentageBands[^1].Cutoff;
+
+			if (cutoffBands[^1].Cutoff != hiCutoff)
+			{
+				Debug.WriteLine($"WARNING: The new Cutoffs have a different value for the High ColorBand's Cutoff. New: {cutoffBands[^1].Cutoff}, Old: {hiCutoff}");
+			}
+		}
+
+		[Conditional("DEBUG")]
 		private void ReportNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
 		{
 			var sb = new StringBuilder();
@@ -2000,7 +2037,7 @@ namespace MSetExplorer
 				var originalCutoff = percentageBands[i].Cutoff;
 				var cb = cutoffBands[i];
 
-				sb.AppendLine($"{originalCutoff}\t\t\t{cb.Cutoff}\t\t{cb.Percentage}\t\t\t\t{cb.RunningPercentage:F2}\t\t\t\t{cb.TargetCount:F2}\t\t{cb.ActualCount}\t\t\t{cb.CountAtPrev}\t\t\t\t{cb.CountAtSucc}");
+				sb.AppendLine($"{originalCutoff}\t\t\t{cb.Cutoff}\t\t{cb.Percentage,8:F2}\t\t{cb.RunningPercentage,8:F2}\t\t\t\t{cb.TargetCount:F2}\t\t{cb.ActualCount}\t\t\t{cb.PreviousCount}\t\t\t\t{cb.NextCount}");
 			}
 
 			Debug.Write(sb.ToString());
