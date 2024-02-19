@@ -9,11 +9,11 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Threading;
-using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -31,7 +31,7 @@ namespace MSetExplorer
 
 		private ColorBandSet _colorBandSet;         // The value assigned to this model
 		private PercentageBand[] _referencePercentageBands;
-		
+
 		private bool _useEscapeVelocities;
 		private bool _useRealTimePreview;
 		private bool _highlightSelectedBand;
@@ -39,7 +39,7 @@ namespace MSetExplorer
 
 		private readonly ColorBandSetHistoryCollection _colorBandSetHistoryCollection;
 
-		private ColorBandSet _currentColorBandSet;	// The value which is currently being edited.
+		private ColorBandSet _currentColorBandSet;  // The value which is currently being edited.
 
 		private ListCollectionView _colorBandsView;
 		private ColorBand? _currentColorBand;
@@ -92,7 +92,7 @@ namespace MSetExplorer
 			_referencePercentageBands = new PercentageBand[0];
 
 			_currentCbEditMode = ColorBandSetEditMode.Bands;
-			_useEscapeVelocities = true; 
+			_useEscapeVelocities = true;
 			_useRealTimePreview = true;
 			_highlightSelectedBand = false;
 
@@ -163,7 +163,7 @@ namespace MSetExplorer
 			set
 			{
 				if (value != _colorBandSet)
-				{ 
+				{
 					// Temporarily set the view using a empty ColorBandSet.
 					// Presumably the call to ResetView requires that the ColorBandsView have some value.
 					ColorBandsView = BuildColorBandsView(null);
@@ -174,9 +174,8 @@ namespace MSetExplorer
 					var diag = value.ToString(style: 1);
 					Debug.WriteLine(diag);
 
+					_referencePercentageBands = value.Select(x => new PercentageBand(x.Cutoff, x.Percentage)).ToArray();
 					_colorBandSet = value;
-
-					_referencePercentageBands = _colorBandSet.Select(x => new PercentageBand(x.Cutoff, x.Percentage)).ToArray();
 
 					//if (!IsEnabled) return;
 
@@ -191,13 +190,16 @@ namespace MSetExplorer
 						Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
 					}
 
+					HistCutoffsSnapShot histCutoffsSnapShot;
 					lock (_histLock)
 					{
 						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
 
 						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
-						ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
+						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, value);
 					}
+
+					ApplyHistogram(histCutoffsSnapShot);
 
 					IsDirty = false;
 
@@ -278,19 +280,10 @@ namespace MSetExplorer
 
 					_usePercentages = value;
 
-					//if (value)
+					//if (_usePercentages)
 					//{
-					//	UpdateCutoffs();
+					//	_referencePercentageBands = GetPercentageBands();
 					//}
-					//else
-					//{
-					//	UpdatePercentages();
-					//}
-
-					if (_usePercentages)
-					{
-						_referencePercentageBands = _currentColorBandSet.Select(x => new PercentageBand(x.Cutoff, x.Percentage)).ToArray();
-					}
 
 					OnPropertyChanged(nameof(UsePercentages));
 				}
@@ -534,7 +527,7 @@ namespace MSetExplorer
 				if (ScreenTypeHelper.IsDoubleChanged(value, _displayZoom, 0.00001))
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel's DisplayZoom is being updated from {_displayZoom} to {value}.");
-					
+
 					_displayZoom = value;
 					OnPropertyChanged(nameof(ICbsHistogramViewModel.DisplayZoom));
 				}
@@ -696,14 +689,22 @@ namespace MSetExplorer
 			//Debug.WriteLine($"The existing ColorBandSet: {_colorBandSet}");
 
 			_colorBandSet = newSet;
-			if (UsePercentages)
+
+			//if (!UsePercentages)
+			//{
+			//	// Overwrite the current percentage values with the target percentage values.
+			//	var percentagesWereUpdated = _colorBandSet.UpdatePercentagesNoCheck(_referencePercentageBands);
+			//	if (!percentagesWereUpdated)
+			//	{
+			//		Debug.WriteLine($"WARNING: Could not save the _referencePercentageBands to the new ColorBandSet. There are {_referencePercentageBands.Length} refPercentageBands and {_colorBandSet.Count} ColorBands." );
+			//	}
+			//}
+
+			// Overwrite the current percentage values with the target percentage values.
+			var percentagesWereUpdated = _colorBandSet.UpdatePercentagesNoCheck(_referencePercentageBands);
+			if (!percentagesWereUpdated)
 			{
-				// Overwrite the current percentage values with the target percentage values.
-				var percentagesWereUpdated = _colorBandSet.UpdatePercentagesNoCheck(_referencePercentageBands);
-				if (!percentagesWereUpdated)
-				{
-					Debug.WriteLine($"WARNING: Could not save the _referencePercentageBands to the new ColorBandSet. There are {_referencePercentageBands.Length} refPercentageBands and {_colorBandSet.Count} ColorBands." );
-				}
+				Debug.WriteLine($"WARNING: Could not save the _referencePercentageBands to the new ColorBandSet. There are {_referencePercentageBands.Length} refPercentageBands and {_colorBandSet.Count} ColorBands.");
 			}
 
 			// Clear all existing items from history and add the new set.
@@ -747,8 +748,9 @@ namespace MSetExplorer
 
 		public bool ApplyHistogram()
 		{
-			var result = ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
+			var histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, _currentColorBandSet);
 
+			var result = ApplyHistogram(histCutoffsSnapShot);
 			return result;
 		}
 
@@ -819,7 +821,7 @@ namespace MSetExplorer
 			}
 
 			return true;
-		} 
+		}
 
 		public void CompleteCutoffInsertion(int index, ColorBand colorBand, ReservedColorBand reservedColorBand)
 		{
@@ -857,13 +859,6 @@ namespace MSetExplorer
 
 				CurrentColorBand = _currentColorBandSet[index];
 				_colorBandsView.MoveCurrentTo(CurrentColorBand);
-
-				//var curItem = _colorBandsView.CurrentItem as ColorBand;
-
-				//if (curItem != CurrentColorBand)
-				//{
-				//	_colorBandsView.MoveCurrentTo(curItem);
-				//}
 			}
 
 			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
@@ -907,9 +902,6 @@ namespace MSetExplorer
 				Debug.WriteLine("WARNING: Could not CompleteBandInsertion.");
 				return;
 			}
-
-			//if (index > 0)
-			//	index--;
 
 			if (_colorBandsView.CurrentPosition != index)
 			{
@@ -1106,8 +1098,6 @@ namespace MSetExplorer
 
 		private bool TryDeleteColor(int index, ReservedColorBand reservedColorBand)
 		{
-			//var index = _currentColorBandSet.IndexOf(colorBand);
-
 			if (index > _currentColorBandSet.Count - 2)
 			{
 				// Cannot delete the last entry
@@ -1136,27 +1126,6 @@ namespace MSetExplorer
 				return;
 			}
 
-			//if (index == 0)
-			//{
-			//	var cb = _currentColorBandSet[index];
-			//	cb.PreviousCutoff = 0;
-			//}
-			//else
-			//{
-			//	var cb = _currentColorBandSet[index - 1];
-			//	var followingCb = _currentColorBandSet[index];
-
-			//	cb.Cutoff = followingCb.PreviousCutoff ?? 0;
-
-			//	if (cb.BlendStyle == ColorBandBlendStyle.Next)
-			//	{
-			//		cb.SuccessorStartColor = followingCb.StartColor;
-			//	}
-			//}
-
-			var cb = _currentColorBandSet[index];
-			cb.PreviousCutoff = selItem.PreviousCutoff;
-
 			if (_currentColorBandSet.Count == 1)
 			{
 				var singleCb = _currentColorBandSet[0];
@@ -1164,11 +1133,11 @@ namespace MSetExplorer
 				singleCb.BlendStyle = ColorBandBlendStyle.Next;
 				singleCb.IsLast = true;
 			}
-
-			//_currentColorBandSet.UpdateItemAndNeighbors(index, _currentColorBandSet[index]);
-
-			//if (index > 0)
-			//	index--;
+			else
+			{
+				var cb = _currentColorBandSet[index];
+				cb.PreviousCutoff = selItem.PreviousCutoff;
+			}
 
 			if (_colorBandsView.CurrentPosition != index)
 			{
@@ -1201,11 +1170,6 @@ namespace MSetExplorer
 				// Cannot delete the last entry
 				return false;
 			}
-
-			//if (index == 0)
-			//{
-			//	Debug.WriteLine("Attempting to delete colorband at index = 0.");
-			//}
 
 			CurrentColorBand = null;
 
@@ -1426,7 +1390,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
+				UpdateReferencePercetageBands(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// Previous Cutoff is being updated
@@ -1455,7 +1419,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				ApplyHistogram(_mapSectionHistogramProcessor.Histogram);
+				UpdateReferencePercetageBands(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// BlendStyle is being updated
@@ -1536,7 +1500,7 @@ namespace MSetExplorer
 		private void BuildSeriesData(HPlotSeriesData hPlotSeriesData, int[] values)
 		{
 			var newLength = values.LongLength;
-			
+
 			if (newLength < 1)
 			{
 				Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
@@ -1693,59 +1657,89 @@ namespace MSetExplorer
 
 		private bool ApplyHistogram(IHistogram histogram)
 		{
-			bool haveHistogramValues;
-			KeyValuePair<int, int>[] kvps;
-			long upperCatchAllValue;
+			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
 
-			lock (_histLock)
+			var result = ApplyHistogram(histCutoffsSnapShot);
+			return result;
+		}
+
+		private bool ApplyHistogram(HistCutoffsSnapShot histCutoffsSnapShot)
+		{
+			if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
 			{
-				kvps = histogram.GetKeyValuePairs();
-				upperCatchAllValue = histogram.UpperCatchAllValue;
-
-				haveHistogramValues = kvps.Length > 0;
-
-				if (!haveHistogramValues)
+				if (UsePercentages)
 				{
-					_currentColorBandSet.ClearPercentages();
-					return false;
+					// UpdateCutoffs(kvps, upperCatchAllValue);
+					_selectionLineMovedDispatcher.Dispatcher.Invoke(UpdateCutoffs, new object[] { histCutoffsSnapShot });
 				}
-			}
+				else
+				{
+					UpdatePercentages(histCutoffsSnapShot);
+				}
 
-			if (UsePercentages)
-			{
-				// UpdateCutoffs(kvps, upperCatchAllValue);
-				_selectionLineMovedDispatcher.Dispatcher.Invoke(UpdateCutoffs, new object[] { kvps, upperCatchAllValue });
+				return true;
 			}
 			else
 			{
-				UpdatePercentages(kvps, upperCatchAllValue);
+				ClearPercentages();
+				return false;
 			}
-
-			return true;
 		}
 
-		private void UpdatePercentages(KeyValuePair<int, int>[] kvps, long upperCatchAllValue)
+		private void UpdateReferencePercetageBands(IHistogram histogram)
+		{
+			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
+
+			if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
+			{
+				if (TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
+				{
+					ApplyNewPercentages(newPercentages);
+					_referencePercentageBands = newPercentages;
+				}
+			}
+		}
+
+		private void UpdatePercentages(HistCutoffsSnapShot histCutoffsSnapShot)
+		{
+			if (TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
+			{
+				ApplyNewPercentages(newPercentages);
+			}
+		}
+
+		private bool TryGetPercentagesFromCutoffs(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out PercentageBand[]? percentageBands)
 		{
 			try
 			{
-				var cutoffs = GetCutoffs();
-				if (cutoffs.Length > 0)
+				if (histCutoffsSnapShot.Cutoffs.Length > 0)
 				{
-					var newPercentages = BuildNewPercentages(cutoffs, kvps, upperCatchAllValue);
-					ApplyNewPercentages(newPercentages);
+					percentageBands = BuildNewPercentages(histCutoffsSnapShot);
+					return true;
+				}
+				else
+				{
+					percentageBands = null;
+					return false;
 				}
 			}
 			catch (Exception e)
 			{
 				Debug.WriteLine($"Got exception {e} while Updating Percentages. Disposed = {disposedValue}.");
+				percentageBands = null;
+				return false;
 			}
 		}
 
-		private PercentageBand[] BuildNewPercentages(int[] cutoffs, KeyValuePair<int, int>[] kvps, long upperCatchAllValue)
+		private PercentageBand[] BuildNewPercentages(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
 			//var pbList = cutoffs.Select(x => new PercentageBand(x)).ToList();
 			//pbList.Add(new PercentageBand(int.MaxValue));
 			//var bucketCnts = pbList.ToArray();
+
+			var kvps = histCutoffsSnapShot.HistKeyValuePairs;
+			var upperCatchAllValue = histCutoffsSnapShot.UpperCatchAllValue;
+			var cutoffs = histCutoffsSnapShot.Cutoffs;
 
 			var bucketCnts = cutoffs.Select(x => new PercentageBand(x)).ToArray();
 
@@ -1828,44 +1822,39 @@ namespace MSetExplorer
 			}
 		}
 
-		private int[] GetCutoffs()
+		private void ClearPercentages()
 		{
-			IEnumerable<int>? cutoffs;
-
 			lock (_histLock)
 			{
-				cutoffs = _currentColorBandSet.Select(x => x.Cutoff);
+				_currentColorBandSet.ClearPercentages();
+				BeyondTargetSpecs = null;
 			}
-
-			if (cutoffs == null)
-			{
-				cutoffs = Enumerable.Empty<int>();
-			}
-
-			return cutoffs.ToArray();
 		}
 
-		private void UpdateCutoffs(KeyValuePair<int, int>[] kvps, long upperCatchAllValue)
+		private void UpdateCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
 			try
 			{
 				if (_referencePercentageBands.Any(x => double.IsNaN(x.Percentage)))
 				{
-					UpdatePercentages(kvps, upperCatchAllValue);
-					_referencePercentageBands = _colorBandSet.Select(x => new PercentageBand(x.Cutoff, x.Percentage)).ToArray();
-				}
-				
-				if (_referencePercentageBands.Any(x => double.IsNaN(x.Percentage)))
-				{
-					Debug.WriteLine("WARNING: Some Percentages are undefined. Not updating the Cutoffs.");
-					return;
+					Debug.WriteLine("WARNING: The ReferencePercentageBands are empty on UpdateCutoffs.");
+
+					if (TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
+					{
+						_referencePercentageBands = newPercentages;
+					}
+					else
+					{
+						Debug.WriteLine("WARNING: Some Percentages are undefined. Not updating the Cutoffs.");
+						return;
+					}
 				}
 
-				var newCutoffs = BuildNewCutoffs(_referencePercentageBands, kvps);
+				var cutoffBands = BuildNewCutoffs(_referencePercentageBands, histCutoffsSnapShot.HistKeyValuePairs);
 
-				CheckNewCutoffs(_referencePercentageBands, newCutoffs);
-				ReportNewCutoffs(_referencePercentageBands, newCutoffs);
-				ApplyNewCutoffs(newCutoffs);
+				CheckNewCutoffs(_referencePercentageBands, cutoffBands);
+				ReportNewCutoffs(_referencePercentageBands, cutoffBands);
+				ApplyNewCutoffs(cutoffBands);
 			}
 			catch (Exception e)
 			{
@@ -1881,13 +1870,21 @@ namespace MSetExplorer
 			// Get total counts
 			double sumOfAllCounts = kvps.Sum(x => x.Value);
 
+			if (kvps.Length > 2)
+			{
+				var last3 = kvps.Skip(kvps.Length - 3).ToArray();
+				Debug.WriteLine($"The top 3 values are {last3[0].Key}/{last3[0].Value}, {last3[1].Key}/{last3[1].Value}, {last3[2].Key}/{last3[2].Value}");
+			}
+
+			sumOfAllCounts -= kvps[^1].Value;
+
 			// Set the Target Counts
 			var runningPercentage = 0d;
 
 			for (var cbPtr = 0; cbPtr < result.Length; cbPtr++)
 			{
 				var cutoffBand = result[cbPtr];
-				runningPercentage += percentageBands[cbPtr].Percentage;
+				runningPercentage += cutoffBand.Percentage;
 				cutoffBand.RunningPercentage = runningPercentage;
 				cutoffBand.TargetCount = (runningPercentage / 100) * sumOfAllCounts;
 			}
@@ -1964,7 +1961,6 @@ namespace MSetExplorer
 							i++;
 						}
 					}
-
 				}
 			}
 
@@ -1998,16 +1994,20 @@ namespace MSetExplorer
 			}
 		}
 
-		private double[] GetPercentages()
+		private HistCutoffsSnapShot GetHistCutoffsSnapShot(IHistogram histogram, ColorBandSet colorBandSet)
 		{
-			IEnumerable<double>? percentages;
+			HistCutoffsSnapShot result;
 
 			lock (_histLock)
 			{
-				percentages = _currentColorBandSet.Select(x => x.Percentage);
+				result = new HistCutoffsSnapShot(
+					histogram.GetKeyValuePairs(),
+					histogram.UpperCatchAllValue,
+					colorBandSet.Select(x => x.Cutoff).ToArray()
+				);
 			}
 
-			return percentages.ToArray();
+			return result;
 		}
 
 		#endregion
@@ -2238,5 +2238,23 @@ namespace MSetExplorer
 		//}
 
 		#endregion
+
+		private class HistCutoffsSnapShot
+		{
+			public HistCutoffsSnapShot(KeyValuePair<int, int>[] histKeyValuePairs, long upperCatchAllValue, int[] cutoffs)
+			{
+				HistKeyValuePairs = histKeyValuePairs;
+				UpperCatchAllValue = upperCatchAllValue;
+				Cutoffs = cutoffs;
+			}
+
+			public KeyValuePair<int, int>[] HistKeyValuePairs { get; init; }
+
+			public long UpperCatchAllValue { get; init; }
+
+			public int[] Cutoffs { get; init; }
+
+		}
+
 	}
 }

@@ -369,20 +369,20 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool _usePercentages;
-		public bool UsePercentages
-		{
-			get => _usePercentages;
-			set
-			{
-				if (value != _usePercentages)
-				{
-					_usePercentages = value;
+		//private bool _usePercentages;
+		//public bool UsePercentages
+		//{
+		//	get => _usePercentages;
+		//	set
+		//	{
+		//		if (value != _usePercentages)
+		//		{
+		//			_usePercentages = value;
 
-					// TODO: handle UsePercentages vs. UseCutoffs
-				}
-			}
-		}	
+		//			// TODO: handle UsePercentages vs. UseCutoffs
+		//		}
+		//	}
+		//}	
 
 		#endregion
 

@@ -319,11 +319,6 @@ namespace MSS.Types
 		{
 			var len = Math.Min(newPercentages.Length, Count);
 
-			if (len != Count)
-			{
-				Debug.WriteLine($"WARNING: {Count - len} Percentages are not receiving an update.");
-			}
-
 			var allMatched = true;
 			for (var i = 0; i < len; i++)
 			{
@@ -336,7 +331,13 @@ namespace MSS.Types
 
 			if (!allMatched)
 			{
+				Debug.WriteLine($"WARNING: No percentages are not receiving an update. The offsets don't match.");
 				return false;
+			}
+
+			if (len != Count)
+			{
+				Debug.WriteLine($"WARNING: {Count - len} Percentages are not receiving an update.");
 			}
 
 			for (var i = 0; i < len; i++)

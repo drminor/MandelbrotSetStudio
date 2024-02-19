@@ -201,7 +201,7 @@ namespace MSetExplorer
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl is being enabled. Setting the HistogramColorBandControl's ColorBandView.");
 					HistogramColorBandControl1.ColorBandsView = _vm.ColorBandsView;
-					HistogramColorBandControl1.UsePercentages = _vm.UsePercentages;
+					//HistogramColorBandControl1.UsePercentages = _vm.UsePercentages;
 				}
 				else
 				{
@@ -226,13 +226,13 @@ namespace MSetExplorer
 
 			// Use Percentages
 
-			else if (e.PropertyName == nameof(ICbsHistogramViewModel.UsePercentages))
-			{
-				if (_vm.IsEnabled)
-				{
-					HistogramColorBandControl1.UsePercentages = _vm.UsePercentages;
-				}
-			}
+			//else if (e.PropertyName == nameof(ICbsHistogramViewModel.UsePercentages))
+			//{
+			//	if (_vm.IsEnabled)
+			//	{
+			//		HistogramColorBandControl1.UsePercentages = _vm.UsePercentages;
+			//	}
+			//}
 
 			//// UseRealTimePreview
 			//else if (e.PropertyName == nameof(ICbsHistogramViewModel.UseRealTimePreview))
