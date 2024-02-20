@@ -1375,7 +1375,7 @@ namespace MSetExplorer
 			{
 				if (cb.BucketWidth < 1)
 				{
-					throw new ArgumentOutOfRangeException("BucketWidth is < 0");
+					throw new ArgumentOutOfRangeException("BucketWidth is < 1");
 				}
 
 				if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
@@ -1385,7 +1385,7 @@ namespace MSetExplorer
 
 					if (successorColorBand.BucketWidth < 1)
 					{
-						throw new ArgumentOutOfRangeException("The next ColorBand's BucketWidth is < 0");
+						throw new ArgumentOutOfRangeException("The next ColorBand's BucketWidth is < 1");
 					}
 				}
 
@@ -1398,7 +1398,7 @@ namespace MSetExplorer
 			{
 				if (cb.BucketWidth < 1)
 				{
-					throw new ArgumentOutOfRangeException("BucketWidth is < 0");
+					throw new ArgumentOutOfRangeException("BucketWidth is < 1");
 				}
 
 				if (TryGetPredeccessor(_currentColorBandSet, cb, out var predecessorColorBand))
@@ -1414,7 +1414,7 @@ namespace MSetExplorer
 
 					if (predecessorColorBand.BucketWidth < 1)
 					{
-						throw new ArgumentOutOfRangeException("The predecessor ColorBand's BucketWidth is < 0");
+						throw new ArgumentOutOfRangeException("The predecessor ColorBand's BucketWidth is < 1");
 					}
 				}
 
@@ -1850,7 +1850,7 @@ namespace MSetExplorer
 					}
 				}
 
-				var cutoffBands = BuildNewCutoffs(_referencePercentageBands, histCutoffsSnapShot.HistKeyValuePairs);
+				var cutoffBands = BuildNewCutoffs(_referencePercentageBands, histCutoffsSnapShot);
 
 				CheckNewCutoffs(_referencePercentageBands, cutoffBands);
 				ReportNewCutoffs(_referencePercentageBands, cutoffBands);
@@ -1862,10 +1862,15 @@ namespace MSetExplorer
 			}
 		}
 
-		private CutoffBand[] BuildNewCutoffs(PercentageBand[] percentageBands, KeyValuePair<int, int>[] kvps)
+		private CutoffBand[] BuildNewCutoffs(PercentageBand[] percentageBands, HistCutoffsSnapShot histCutoffsSnapShot)
 		{
 			// Make a copy
 			var result = percentageBands.Select(x => new CutoffBand(x.Cutoff, x.Percentage)).ToArray();
+
+
+			var kvps = histCutoffsSnapShot.HistKeyValuePairs;
+			var upperCatchAllValue = histCutoffsSnapShot.UpperCatchAllValue;
+
 
 			// Get total counts
 			double sumOfAllCounts = kvps.Sum(x => x.Value);
@@ -1873,10 +1878,10 @@ namespace MSetExplorer
 			if (kvps.Length > 2)
 			{
 				var last3 = kvps.Skip(kvps.Length - 3).ToArray();
-				Debug.WriteLine($"The top 3 values are {last3[0].Key}/{last3[0].Value}, {last3[1].Key}/{last3[1].Value}, {last3[2].Key}/{last3[2].Value}");
+				Debug.WriteLine($"CbsHistogramViewModel. BuildNewCutoffs. The top 3 values are {last3[0].Key}/{last3[0].Value}, {last3[1].Key}/{last3[1].Value}, {last3[2].Key}/{last3[2].Value}. The UpperCatchAllValue is {upperCatchAllValue}.");
 			}
 
-			sumOfAllCounts -= kvps[^1].Value;
+			//sumOfAllCounts += upperCatchAllValue;
 
 			// Set the Target Counts
 			var runningPercentage = 0d;
@@ -1891,8 +1896,12 @@ namespace MSetExplorer
 
 			if (result.Any(x => double.IsNaN(x.TargetCount)))
 			{
-				throw new InvalidOperationException("The TargetCounts have changed.");
+				throw new InvalidOperationException("CbsHistogramViewModel. BuildNewCutoffs. One or more of the TargetCounts is NaN.");
 			}
+
+			// Set the high cutoff
+			result[^1].Cutoff = histCutoffsSnapShot.HistogramLength;
+
 
 			var i = 0;
 			var idx = 0;
@@ -1919,7 +1928,7 @@ namespace MSetExplorer
 				var cutoffBand = result[curBucketPtr];
 				var targetCount = cutoffBand.TargetCount;
 
-				while (runningCount <= targetCount && i < kvps.Length)
+				while (runningCount < targetCount && i < kvps.Length)
 				{
 					// Update the running count and advance to the next histogram entry.
 					idx = kvps[i].Key;
@@ -1930,9 +1939,9 @@ namespace MSetExplorer
 					i++;
 				}
 
-				if (runningCount > targetCount)
+				if (runningCount >= targetCount)
 				{
-					if (prevCutoff + 1 < idx)
+					if (idx > prevCutoff + 1)
 					{
 						cutoffBand.Cutoff = idx;
 
@@ -1964,14 +1973,42 @@ namespace MSetExplorer
 				}
 			}
 
-			while (curBucketPtr < result.Length - 1)
+			if (curBucketPtr < result.Length - 1)
 			{
-				prevCutoff++;
-				var cutoffBand = result[curBucketPtr];
-				cutoffBand.Cutoff = prevCutoff;
-
-				curBucketPtr++;
+				var diff = (result.Length - 1) - curBucketPtr;
+				Debug.WriteLine($"CbsHistogramViewModel. BuildNewCutoffs. All Histogram Values were used before setting the last {diff} cutoffs.");
 			}
+
+			var topVal = result[^1].Cutoff;
+
+			var j = result.Length - 2;
+
+			for (; j >= 0 && topVal > 1; j--)
+			{
+				var cb = result[j];
+				if (cb.Cutoff >= topVal)
+				{
+					Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewCutoffs. Forced the Offset for ColorBand at index: {j} from: {cb.Cutoff} to {topVal - 1} to keep the BucketWidth >= 1.");
+					cb.Cutoff = topVal - 1;
+				}
+
+				topVal = cb.Cutoff;
+			}
+
+			if (j > 0)
+			{
+				Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewCutoffs. Removed the first {j} Colorbands. There were more Colorbands than Histogram Values.");
+				result = result.Skip(j).ToArray();
+			}
+
+			//while (curBucketPtr < result.Length - 1)
+			//{
+			//	prevCutoff++;
+			//	var cutoffBand = result[curBucketPtr];
+			//	cutoffBand.Cutoff = prevCutoff;
+
+			//	curBucketPtr++;
+			//}
 
 			return result;
 		}
@@ -2002,6 +2039,7 @@ namespace MSetExplorer
 			{
 				result = new HistCutoffsSnapShot(
 					histogram.GetKeyValuePairs(),
+					histogram.Length,
 					histogram.UpperCatchAllValue,
 					colorBandSet.Select(x => x.Cutoff).ToArray()
 				);
@@ -2241,15 +2279,17 @@ namespace MSetExplorer
 
 		private class HistCutoffsSnapShot
 		{
-			public HistCutoffsSnapShot(KeyValuePair<int, int>[] histKeyValuePairs, long upperCatchAllValue, int[] cutoffs)
+			public HistCutoffsSnapShot(KeyValuePair<int, int>[] histKeyValuePairs, int histogramLength, long upperCatchAllValue, int[] cutoffs)
 			{
 				HistKeyValuePairs = histKeyValuePairs;
+				HistogramLength = histogramLength;
 				UpperCatchAllValue = upperCatchAllValue;
 				Cutoffs = cutoffs;
 			}
 
 			public KeyValuePair<int, int>[] HistKeyValuePairs { get; init; }
 
+			public int HistogramLength { get; init; }
 			public long UpperCatchAllValue { get; init; }
 
 			public int[] Cutoffs { get; init; }
