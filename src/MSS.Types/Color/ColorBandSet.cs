@@ -317,7 +317,7 @@ namespace MSS.Types
 
 		public bool UpdatePercentagesCheckOffsets(PercentageBand[] newPercentages)
 		{
-			var len = Math.Min(newPercentages.Length, Count);
+			var len = Math.Min(newPercentages.Length - 1, Count); // The last PercentageBand holds the UpperCatchAll
 
 			var allMatched = true;
 			for (var i = 0; i < len; i++)
@@ -369,7 +369,7 @@ namespace MSS.Types
 
 		public bool UpdateCutoffs(CutoffBand[] newCutoffs)
 		{
-			var len = Math.Min(newCutoffs.Length, Count);
+			var len = Math.Min(newCutoffs.Length - 1, Count);  // The last CutoffBand holds the UpperCatchAll
 
 			int? prevCutoff = null;
 
