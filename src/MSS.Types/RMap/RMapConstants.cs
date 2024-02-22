@@ -65,7 +65,16 @@ namespace MSS.Types
 			TEST_RECTANGLE_HALF = new RRectangle(1, 2, 1, 2, -2);
 		}
 
-		public static ColorBandSet BuildInitialColorBandSet(int maxIterations)
+		public static ColorBandSet BuildInitialColorBandSet(int maxIterations, bool usePercentages)
+		{
+			var result = usePercentages 
+				? BuildInitialColorBandSetWithPercentages(maxIterations) 
+				: BuildInitialColorBandSetWithCutoffs(maxIterations);
+
+			return result;
+		}
+
+		public static ColorBandSet BuildInitialColorBandSetWithCutoffs(int maxIterations)
 		{
 			var colorBands = new List<ColorBand>
 			{
@@ -75,12 +84,7 @@ namespace MSS.Types
 				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-
 				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-
-				//new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				//new ColorBand(52, "#00ccff", ColorBandBlendStyle.Next, "#000000"),
-
 				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
@@ -90,10 +94,30 @@ namespace MSS.Types
 			};
 
 			var colorBandsSerialNumber = new Guid("{00112233-4455-6677-8899-AABBCCDDEEFF}");
+			var result = new ColorBandSet(colorBands, maxIterations, colorBandsSerialNumber);
 
-			//var highColorCss = "#000000";
-			//colorBands.Add(new ColorBand(maxIterations, highColorCss, ColorBandBlendStyle.None, highColorCss));
+			return result;
+		}
 
+		public static ColorBandSet BuildInitialColorBandSetWithPercentages(int maxIterations)
+		{
+			var colorBands = new List<ColorBand>
+			{
+				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000", 0.1),
+				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000", 1),
+				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 2),
+				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000", 5),
+				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000", 9.9), /* 18 */
+				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000", 12), 
+				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 8),
+				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000", 30),
+				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000", 5),
+				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000", 5),
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff", 2),
+				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, "#000000", 20)
+			};
+
+			var colorBandsSerialNumber = new Guid("{00112233-4455-6677-8899-AABBCCDDEE00}");
 			var result = new ColorBandSet(colorBands, maxIterations, colorBandsSerialNumber);
 
 			return result;

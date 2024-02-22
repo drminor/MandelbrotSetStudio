@@ -250,7 +250,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var threshold = UseEscapeVelocities ? RMapConstants.DEFAULT_NORMALIZED_THRESHOLD : RMapConstants.DEFAULT_THRESHOLD;
 
 			var mapCalcSettings = new MapCalcSettings(targetIterations, threshold, UseEscapeVelocities, SaveTheZValues);
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations, usePercentages: false);
 
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
@@ -308,7 +308,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var threshold = UseEscapeVelocities ? RMapConstants.DEFAULT_NORMALIZED_THRESHOLD : RMapConstants.DEFAULT_THRESHOLD; 
 
 			var mapCalcSettings = new MapCalcSettings(targetIterations, threshold, UseEscapeVelocities, SaveTheZValues);
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations, usePercentages: false);
 			
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 

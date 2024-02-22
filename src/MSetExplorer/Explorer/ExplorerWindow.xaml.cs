@@ -902,8 +902,11 @@ namespace MSetExplorer
 
 		private void LoadNewProject()
 		{
+			// TODO: Add UsePercentages to the Color menu on the Explorer Window
+			var usePercentages = _vm.CbsHistogramViewModel.UsePercentages;
+
 			var mapCalcSettings = RMapConstants.BuildMapCalcSettings();
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations, usePercentages);
 			var mapAreaInfo = RMapConstants.BuildHomeArea();
 
 			LoadNewProject(mapAreaInfo, colorBandSet, mapCalcSettings);
@@ -1152,7 +1155,7 @@ namespace MSetExplorer
 				var coords = RValueHelper.BuildRRectangle(new string[] { x1, x2, y1, y2 });
 				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(coords, displaySize, allowEdits: true);
 				mapCalcSettings = RMapConstants.BuildMapCalcSettings();
-				colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations);
+				colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations, usePercentages: false);
 			}
 
 			var coordsEditorWindow = new CoordsEditorWindow()

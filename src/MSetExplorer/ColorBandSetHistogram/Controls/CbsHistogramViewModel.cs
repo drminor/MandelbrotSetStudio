@@ -51,6 +51,7 @@ namespace MSetExplorer
 		private bool _isEnabled;
 
 		private bool _colorBandUserControlHasErrors;
+		private bool _disableProcessCurColorBandPropertyChanges;
 
 		private readonly bool _useDetailedDebug = false;
 
@@ -96,6 +97,7 @@ namespace MSetExplorer
 			_useEscapeVelocities = true;
 			_useRealTimePreview = true;
 			_highlightSelectedBand = false;
+			_usePercentages = true;
 
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
@@ -175,12 +177,7 @@ namespace MSetExplorer
 					var diag = value.ToString(style: 1);
 					Debug.WriteLine(diag);
 
-					//_referencePercentageBands = value.Select(x => new PercentageBand(x.Cutoff, x.Percentage)).ToArray();
-					//var pbList = value.Select(x => new PercentageBand(x.Cutoff, x.Percentage)).ToList();
-					//pbList.Add(new PercentageBand(int.MaxValue));
-					//_referencePercentageBands = pbList.ToArray();
 					_referencePercentageBands = GetPercentageBands(value);
-
 					_colorBandSet = value;
 
 					//if (!IsEnabled) return;
@@ -836,7 +833,7 @@ namespace MSetExplorer
 			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. Before CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}.");
 			Debug.WriteLine($"ColorBandSetViewModel. Before CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}.");
 
-			CurrentColorBand = null;
+			_disableProcessCurColorBandPropertyChanges = true;
 
 			var result = TryInsertColorBand(index, colorBand);
 
@@ -854,7 +851,7 @@ namespace MSetExplorer
 				return;
 			}
 
-			//index++;
+			_disableProcessCurColorBandPropertyChanges = false;
 
 			if (_colorBandsView.CurrentPosition != index)
 			{
@@ -888,10 +885,13 @@ namespace MSetExplorer
 
 		private ReservedColorBand InsertColor(int index, ColorBand colorBand)
 		{
-			var saveCcb = CurrentColorBand;
-			CurrentColorBand = null;
+			//var saveCcb = CurrentColorBand;
+			//CurrentColorBand = null;
+
+			_disableProcessCurColorBandPropertyChanges = true;
 			var result = _currentColorBandSet.InsertColor(index, colorBand);
-			CurrentColorBand = saveCcb;
+			_disableProcessCurColorBandPropertyChanges = false;
+			//CurrentColorBand = saveCcb;
 
 			return result;
 		}
@@ -899,9 +899,13 @@ namespace MSetExplorer
 		public void CompleteBandInsertion(int index, ColorBand colorBand)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandInsertion has been callled.");
-			CurrentColorBand = null;
+
+			//CurrentColorBand = null;
+			_disableProcessCurColorBandPropertyChanges = true;
 
 			var result = TryInsertColorBand(index, colorBand);
+
+			_disableProcessCurColorBandPropertyChanges = false;
 
 			if (!result)
 			{
@@ -1066,13 +1070,17 @@ namespace MSetExplorer
 
 		private bool TryDeleteStartingCutoff(ColorBand colorBand, out ReservedColorBand? reservedColorBand)
 		{
-			CurrentColorBand = null;
+			//CurrentColorBand = null;
+
+			_disableProcessCurColorBandPropertyChanges = true;
 
 			bool wasRemoved;
 			lock (_histLock)
 			{
 				wasRemoved = _currentColorBandSet.DeleteStartingCutoff(colorBand, out reservedColorBand);
 			}
+
+			_disableProcessCurColorBandPropertyChanges = false;
 
 			return wasRemoved;
 		}
@@ -1110,11 +1118,14 @@ namespace MSetExplorer
 				return false;
 			}
 
-			var saveCcb = CurrentColorBand;
+			//var saveCcb = CurrentColorBand;
+			//CurrentColorBand = null;
 
-			CurrentColorBand = null;
+			_disableProcessCurColorBandPropertyChanges = true;
 			_currentColorBandSet.DeleteColor(index, reservedColorBand);
-			CurrentColorBand = saveCcb;
+			_disableProcessCurColorBandPropertyChanges = false;
+
+			//CurrentColorBand = saveCcb;
 
 			return true;
 		}
@@ -1177,7 +1188,8 @@ namespace MSetExplorer
 				return false;
 			}
 
-			CurrentColorBand = null;
+			//CurrentColorBand = null;
+			_disableProcessCurColorBandPropertyChanges = true;
 
 			bool wasRemoved;
 			lock (_histLock)
@@ -1185,6 +1197,7 @@ namespace MSetExplorer
 				wasRemoved = _currentColorBandSet.Remove(colorBand);
 			}
 
+			_disableProcessCurColorBandPropertyChanges = false;
 			return wasRemoved;
 		}
 
@@ -1323,6 +1336,8 @@ namespace MSetExplorer
 
 		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
+			if (_disableProcessCurColorBandPropertyChanges) return;
+
 			if (sender is ColorBand colorBandToUpdate)
 			{
 				//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:CurrentColorBand Prop: {e.PropertyName} is changing.");
@@ -1677,6 +1692,7 @@ namespace MSetExplorer
 				{
 					// Cutoffs are adjusted based on Percentages
 					_selectionLineMovedDispatcher.Dispatcher.Invoke(UpdateCutoffs, new object[] { histCutoffsSnapShot });
+
 				}
 				else
 				{
@@ -1695,19 +1711,32 @@ namespace MSetExplorer
 
 		private void UpdateReferencePercentageBands(IHistogram histogram)
 		{
-			if (!UsePercentages)
-			{
-				// Percentages are adjusted based on Cutoffs
-				// and the new Percentages are used to update the Reference copy.
-				var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
+			//if (!UsePercentages)
+			//{
+			//	// Percentages are adjusted based on Cutoffs
+			//	// and the new Percentages are used to update the Reference copy.
+			//	var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
 
-				if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
+			//	if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
+			//	{
+			//		if (TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
+			//		{
+			//			ApplyNewPercentages(newPercentages);
+			//			_referencePercentageBands = newPercentages;
+			//		}
+			//	}
+			//}
+
+			// Percentages are adjusted based on Cutoffs
+			// and the new Percentages are used to update the Reference copy.
+			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
+
+			if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
+			{
+				if (TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
 				{
-					if (TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
-					{
-						ApplyNewPercentages(newPercentages);
-						_referencePercentageBands = newPercentages;
-					}
+					ApplyNewPercentages(newPercentages);
+					_referencePercentageBands = newPercentages;
 				}
 			}
 		}
@@ -1998,8 +2027,6 @@ namespace MSetExplorer
 		private double SetTargetCounts(HistCutoffsSnapShot histCutoffsSnapShot, CutoffBand[] cutoffBands)
 		{
 			var kvps = histCutoffsSnapShot.HistKeyValuePairs;
-			//var topIndex = histCutoffsSnapShot.HistogramLength;
-			var upperCatchAllValue = histCutoffsSnapShot.UpperCatchAllValue;
 
 			// Get total counts
 			double sumOfAllCounts = kvps.Sum(x => x.Value);
@@ -2007,7 +2034,7 @@ namespace MSetExplorer
 			if (kvps.Length > 2)
 			{
 				var last3 = kvps.Skip(kvps.Length - 3).ToArray();
-				Debug.WriteLine($"CbsHistogramViewModel. BuildNewCutoffs. The top 3 values are {last3[0].Key}/{last3[0].Value}, {last3[1].Key}/{last3[1].Value}, {last3[2].Key}/{last3[2].Value}. The UpperCatchAllValue is {upperCatchAllValue}.");
+				Debug.WriteLine($"CbsHistogramViewModel. BuildNewCutoffs. The top 3 values are {last3[0].Key}/{last3[0].Value}, {last3[1].Key}/{last3[1].Value}, {last3[2].Key}/{last3[2].Value}. The UpperCatchAllValue is {histCutoffsSnapShot.UpperCatchAllValue}.");
 			}
 
 			//sumOfAllCounts -= upperCatchAllValue;
@@ -2035,17 +2062,24 @@ namespace MSetExplorer
 		{
 			lock (_histLock)
 			{
+				//var saveCurrentColorBand = CurrentColorBand;
+				//CurrentColorBand = null;
+				_disableProcessCurColorBandPropertyChanges = true;
+
 				if (_currentColorBandSet.UpdateCutoffs(newCutoffs))
 				{
 					BeyondTargetSpecs = new PercentageBand(newCutoffs[^1].Cutoff, newCutoffs[^1].Percentage);
 					var numberReachedTargetIteration = BeyondTargetSpecs.Count;
 					var total = BeyondTargetSpecs.RunningSum;
-					Debug.WriteLineIf(_useDetailedDebug, $"CBS received new percentages. Top Count: {numberReachedTargetIteration}, Total: {total}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"CBS received new Cutoffs. Top Count: {numberReachedTargetIteration}, Total: {total}.");
 				}
 				else
 				{
 					BeyondTargetSpecs = null;
 				}
+
+				//CurrentColorBand = saveCurrentColorBand;
+				_disableProcessCurColorBandPropertyChanges = false;
 			}
 		}
 

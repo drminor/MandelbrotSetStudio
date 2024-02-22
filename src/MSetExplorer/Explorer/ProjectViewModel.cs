@@ -131,7 +131,7 @@ namespace MSetExplorer
 			{
 				if (value != _previewColorBandSet)
 				{
-					if (value == null || CurrentJob == null)
+					if (value == null || CurrentJob == null || CurrentJob.IsEmpty)
 					{
 						_previewColorBandSet = value;
 					}
