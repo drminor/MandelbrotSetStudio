@@ -12,15 +12,15 @@ namespace MSS.Types
 		{
 			ColorBandSet result;
 
-			if (colorBandSet.HighCutoff != targetIterations)
+			if (colorBandSet.HighCutoff == targetIterations)
+			{
+				result = colorBandSet;
+			}
+			else
 			{
 				result = GetBestMatchingColorBandSet(targetIterations, colorBandSetCollection);
 				var adjustedColorBandSet = AdjustTargetIterations(result, targetIterations);
 				result = adjustedColorBandSet;
-			}
-			else
-			{
-				result = colorBandSet;
 			}
 
 			return result;
@@ -64,20 +64,24 @@ namespace MSS.Types
 
 		public static ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations)
 		{
+			ColorBandSet result;
+
 			if (colorBandSet.HighCutoff == targetIterations)
 			{
-				return colorBandSet;
+				result = colorBandSet;
 			}
 			else if (colorBandSet.HighCutoff > targetIterations)
 			{
 				var newColorBandSet = colorBandSet.CreateNewCopy(targetIterations);
 				newColorBandSet.MoveItemsToReserveWithCutoffGtrThan(targetIterations - 2);
-				return newColorBandSet;
+				result = newColorBandSet;
 			}
 			else
 			{
-				return colorBandSet.CreateNewCopy(targetIterations);
+				result = colorBandSet.CreateNewCopy(targetIterations);
 			}
+
+			return result;
 		}
 	}
 }

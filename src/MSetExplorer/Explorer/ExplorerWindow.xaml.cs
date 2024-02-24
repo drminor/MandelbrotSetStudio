@@ -905,6 +905,8 @@ namespace MSetExplorer
 			// TODO: Add UsePercentages to the Color menu on the Explorer Window
 			var usePercentages = _vm.CbsHistogramViewModel.UsePercentages;
 
+			//usePercentages = true;
+
 			var mapCalcSettings = RMapConstants.BuildMapCalcSettings();
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations, usePercentages);
 			var mapAreaInfo = RMapConstants.BuildHomeArea();

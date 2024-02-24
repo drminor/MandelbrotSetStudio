@@ -120,6 +120,7 @@ namespace MSetRepo
 				foreach (var cbs in colorBandSets)
 				{
 					cbs.ProjectId = projectId;
+					cbs.AssignNewSerialNumber();
 				}
 
 				var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue, DateTime.MinValue);
@@ -128,7 +129,7 @@ namespace MSetRepo
 			}
 			else
 			{
-				throw new InvalidOperationException($"Cannot create project with name: {name}, a project already exists with that name.");
+				throw new InvalidOperationException($"Cannot create project with name: {name}, a project (with Id:{projectId}) already exists with that name.");
 			}
 		}
 

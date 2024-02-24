@@ -53,6 +53,7 @@ namespace MSetExplorer
 		private bool _colorBandUserControlHasErrors;
 		private bool _disableProcessCurColorBandPropertyChanges;
 
+		private readonly bool _traceCBSVersions = true;
 		private readonly bool _useDetailedDebug = false;
 
 		#endregion
@@ -173,9 +174,9 @@ namespace MSetExplorer
 
 					//Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is processing a new ColorBandSet. Id = {value.Id}.");
 
-					Debug.WriteLine($"The CbsHistogramViewModel is processing a new ColorBandSet.");
-					var diag = value.ToString(style: 1);
-					Debug.WriteLine(diag);
+					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is being updated from: {_colorBandSet.Id}/{_colorBandSet.ColorBandsSerialNumber} to {value.Id}/{_colorBandSet.ColorBandsSerialNumber}.");
+					//var diag = value.ToString(style: 1);
+					//Debug.WriteLine(diag);
 
 					_referencePercentageBands = GetPercentageBands(value);
 					_colorBandSet = value;
@@ -196,7 +197,7 @@ namespace MSetExplorer
 					HistCutoffsSnapShot histCutoffsSnapShot;
 					lock (_histLock)
 					{
-						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
+						_colorBandSetHistoryCollection.Load(value.Clone());
 
 						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
 						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, value);
@@ -211,7 +212,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is NOT processing the new ColorBandSet. The Id already = {value.Id}.");
+					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is not being updated. The Id already = {value.Id}.");
 				}
 			}
 		}
@@ -686,7 +687,7 @@ namespace MSetExplorer
 
 		private void ApplyChangesInt(ColorBandSet newSet)
 		{
-			Debug.WriteLine($"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}, name: {newSet.Name}. The old Id is {ColorBandSet?.Id ?? ObjectId.Empty}");
+			Debug.WriteLineIf(_traceCBSVersions, $"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}/{newSet.ColorBandsSerialNumber}, name: {newSet.Name}. The old Id is {ColorBandSet.Id}/{ColorBandSet.ColorBandsSerialNumber}");
 
 			//Debug.WriteLine($"The new ColorBandSet: {newSet}");
 			//Debug.WriteLine($"The existing ColorBandSet: {_colorBandSet}");
@@ -1363,7 +1364,7 @@ namespace MSetExplorer
 				{
 					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
 
-					//ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
+					Debug.WriteLine($"CbsHistogramViewModel. Calling RaiseUpdateRequestThrottled.");
 					RaiseUpdateRequestThrottled(newColorBandSet);
 				}
 			}
@@ -1634,7 +1635,12 @@ namespace MSetExplorer
 
 		private void PushCurrentColorBandOnToHistoryCollection()
 		{
-			_colorBandSetHistoryCollection.Push(_currentColorBandSet.CreateNewCopy());
+			// Push the current copy and make a new copy for any further changes.
+
+			var currentVal = _currentColorBandSet;
+			_currentColorBandSet = _currentColorBandSet.CreateNewCopy();
+
+			_colorBandSetHistoryCollection.Push(currentVal);
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));
@@ -1691,8 +1697,19 @@ namespace MSetExplorer
 				if (UsePercentages)
 				{
 					// Cutoffs are adjusted based on Percentages
-					_selectionLineMovedDispatcher.Dispatcher.Invoke(UpdateCutoffs, new object[] { histCutoffsSnapShot });
 
+					var dispatcher = _selectionLineMovedDispatcher.Dispatcher;
+
+					if (!dispatcher.CheckAccess())
+					{
+						Debug.WriteLine("CbsHistogramViewModel switching to Ui Thread to update Cutoffs.");
+						dispatcher.Invoke(UpdateCutoffs, new object[] { histCutoffsSnapShot });
+					}
+					else
+					{
+						Debug.WriteLine("CbsHistogramViewModel already on the Ui Thread to update Cutoffs.");
+						UpdateCutoffs(histCutoffsSnapShot);
+					}
 				}
 				else
 				{
@@ -1851,7 +1868,9 @@ namespace MSetExplorer
 		{
 			lock (_histLock)
 			{
-				if (_currentColorBandSet.UpdatePercentagesCheckOffsets(newPercentages))
+				//if (_currentColorBandSet.UpdatePercentagesCheckOffsets(newPercentages))
+
+				if (_currentColorBandSet.UpdatePercentagesNoCheck(newPercentages))
 				{
 					BeyondTargetSpecs = newPercentages[^1];
 					var numberReachedTargetIteration = BeyondTargetSpecs.Count;

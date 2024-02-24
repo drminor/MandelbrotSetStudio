@@ -624,42 +624,9 @@ namespace MSetExplorer
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Add)
 			{
-				//// Add items
-
-				//Debug.WriteLine($"CbListView is handling CollectionChanged: Add. There are {e.NewItems?.Count ?? -1} new items.");
-
-				//var bands = e.NewItems?.Cast<ColorBand>() ?? new List<ColorBand>();
-				//var idx = e.NewStartingIndex;
-				//foreach (var colorBand in bands)
-				//{
-				//	var listViewItem = CreateListViewItem(idx, colorBand);
-				//	ListViewItems.Insert(idx++, listViewItem);
-				//}
-
-				//idx = e.NewStartingIndex; // Math.Max(e.NewStartingIndex - 1, 0);
-
-				//Reindex(idx);
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Remove)
 			{
-				//// Remove items
-				//Debug.WriteLine($"CbListView is handling CollectionChanged: Remove.");
-				//var colorBand = e.OldItems?[0] as ColorBand;
-				//CheckOldItems(colorBand, e.OldItems);
-
-				//var lvi = ListViewItems.FirstOrDefault(x => x.ColorBand == colorBand);
-				//if (lvi != null)
-				//{
-				//	Debug.WriteLine($"CbListView is removing a ColorBand: {colorBand}");
-
-				//	var idx = _colorBandsView.IndexOf(lvi.ColorBand);
-
-				//	AnimateBandDeletion(lvi.ColorBandIndex);
-				//}
-				//else
-				//{
-				//	Debug.WriteLine($"CbListView cannot find ColorBand: {colorBand} in the ListViewItems.");
-				//}
 			}
 		}
 

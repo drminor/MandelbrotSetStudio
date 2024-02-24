@@ -269,8 +269,10 @@ namespace MSS.Common.MSet
 							if (newCbs.ProjectId != Id)
 							{
 								// Make a copy of the incoming ColorBandSet
-								// and set it's ProjectId to this Project's Id.
+								// and set it's ProjectId to this Project's Id
+								// and give it a new SerialNumber.
 								newCbs = newCbs.CreateNewCopy();
+								newCbs.AssignNewSerialNumber();
 								newCbs.ProjectId = Id;
 							}
 							_colorBandSets.Add(newCbs);

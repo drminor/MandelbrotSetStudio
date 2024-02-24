@@ -103,19 +103,20 @@ namespace MSS.Types
 		{
 			var colorBands = new List<ColorBand>
 			{
-				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000", 0.1),
-				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000", 1),
-				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 2),
-				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000", 5),
-				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000", 9.9), /* 18 */
-				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000", 12), 
-				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 8),
-				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000", 30),
-				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000", 5),
-				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000", 5),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff", 2),
-				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, "#000000", 20)
+				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000", 0),
+				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000", 0.1),
+				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 10.6),
+				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000", 24.41),
+				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000", 35.35),
+				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000", 18.22), 
+				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 1.34),
+				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000", 0.13),
+				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000", 0.08),
+				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000", 0.17),
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff", 0.13),
+				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, "#000000", 0.02)
 			};
+				// > 400 = 9.55%
 
 			var colorBandsSerialNumber = new Guid("{00112233-4455-6677-8899-AABBCCDDEE00}");
 			var result = new ColorBandSet(colorBands, maxIterations, colorBandsSerialNumber);

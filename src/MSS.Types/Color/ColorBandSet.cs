@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using SharpCompress.Compressors.ADC;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -26,7 +25,7 @@ namespace MSS.Types
 
 		private int _hilightedColorBandIndex;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -54,7 +53,7 @@ namespace MSS.Types
 		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, int targetIterations, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
 			: base(FixBands(targetIterations, colorBands))
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"Constructing ColorBandSet with id: {id}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"Constructing ColorBandSet with id: {id} and Serial#: {colorBandsSerialNumber}.");
 
 			Id = id;
 			_parentId = parentId;
@@ -420,6 +419,11 @@ namespace MSS.Types
 			return result;
 		}
 		
+		public void AssignNewSerialNumber()
+		{
+			ColorBandsSerialNumber = Guid.NewGuid();
+		}
+
 		#endregion
 
 		#region Collection Methods
@@ -770,8 +774,6 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			//Debug.WriteLine($"About to CreateNewCopy: {this}");
-
 			var idx = HilightedColorBandIndex;
 
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
@@ -782,6 +784,9 @@ namespace MSS.Types
 				HilightedColorBandIndex = idx
 			};
 
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Created a new copy from ColorBandSet (Id: {Id}) with new ID: {result.Id}");
+			//Debug.WriteLine($"About to CreateNewCopy: {this}");
+
 			return result;
 		}
 
@@ -791,8 +796,7 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy(int targetIterations)
 		{
-			//Debug.WriteLine($"About to CreateNewCopy with update iterations: {targetIterations}: {this}");
-
+			//Debug.WriteLine($"ColorBandSet. About to CreateNewCopy with target iterations: {targetIterations}: {this}");
 			var idx = HilightedColorBandIndex;
 
 			var bandsCopy = CreateBandsCopy();
@@ -804,6 +808,8 @@ namespace MSS.Types
 				OnFile = false,
 				HilightedColorBandIndex = idx
 			};
+
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Created a new copy with TargetIterations: {targetIterations} from ColorBandSet (Id: {Id}) with new ID: {result.Id}");
 
 			return result;
 		}
@@ -819,7 +825,7 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet Clone()
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"Cloning ColorBandSet with Id: {Id}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Cloning ColorBandSet with Id: {Id}.");
 
 			var idx = HilightedColorBandIndex;
 			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
@@ -853,7 +859,7 @@ namespace MSS.Types
 		{
 			var sb = new StringBuilder();
 
-			sb.AppendLine($"Id: {Id}, Serial: {ColorBandsSerialNumber}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
+			sb.AppendLine($"WARNING: Using Depreciated version of ToString. Id: {Id}, Serial: {ColorBandsSerialNumber}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
 
 			for(var i = 0; i < Count; i++)
 			{
