@@ -8,14 +8,11 @@
 
 		public long ExactCount { get; set; }
 		public long RunningSum { get; set; }
-		//public long RunningSumReverse { get; set; }
 
 		#region Constructor
 
-		public PercentageBand(int cutoff)
-		{
-			Cutoff = cutoff;
-		}
+		public PercentageBand(int cutoff) : this(cutoff, 0)
+		{ }
 
 		public PercentageBand(int cutoff, double percentage)
 		{

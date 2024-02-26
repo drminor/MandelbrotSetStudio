@@ -36,13 +36,19 @@ namespace MSS.Types
 			_topValues.Increment(m);
 		}
 
-		//public HistogramA(IDictionary<int, int> entries)
+		//public HistogramA(IDictionary<int, int> keyValuePairs)
 		//{
-		//	var m = entries.Max(x => x.Key);
+		//	var m = keyValuePairs.Max(x => x.Key);
 
 		//	_values = new int[m];
+			
+		//	foreach (var kvp in keyValuePairs)
+		//	{
+		//		_values[kvp.Key] = kvp.Value;	
+		//	}
 
-		//	Set(entries.Keys, entries.Values);
+		//	_topValues = new HistogramD();
+		//	_topValues.Increment(m);
 		//}
 
 		//public HistogramA(int[] values, int[] occurances)
@@ -135,17 +141,6 @@ namespace MSS.Types
 		//	{
 		//		var i = indexes[ptr];
 		//		_values[i] = amounts[ptr];
-		//	}
-		//}
-
-		//public void Set(ICollection<int> indexes, ICollection<int> amounts)
-		//{
-		//	var aEnumerator = amounts.GetEnumerator();
-
-		//	foreach (var i in indexes)
-		//	{
-		//		_ = aEnumerator.MoveNext();
-		//		_values[i] = aEnumerator.Current;
 		//	}
 		//}
 

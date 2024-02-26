@@ -16,11 +16,6 @@
 
 		#region Constructor
 
-		public CutoffBand(int cutoff)
-		{
-			Cutoff = cutoff;
-		}
-
 		public CutoffBand(int cutoff, double percentage)
 		{
 			Cutoff = cutoff;

@@ -83,6 +83,11 @@ namespace MSS.Types
 
 		public int HighCutoff => this[^1].Cutoff;
 
+		private bool _noneAreNaN => Items.All(x => !double.IsNaN(x.Percentage));
+
+		// True if none are NaN and at least one is non zero.
+		public bool HavePercentages => (_noneAreNaN) && Items.Any(x => x.Percentage != 0);
+
 		#endregion
 
 		#region Public Properties
@@ -761,6 +766,8 @@ namespace MSS.Types
 		{
 			var result = new ColorBand(targetIterations, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.Next, new ColorBandColor("#000000"));
 			result.IsLast = true;
+			result.Percentage = 100;
+
 			return result;
 		}
 

@@ -62,6 +62,25 @@ namespace MSS.Types
 			}
 		}
 
+		public HistogramALow(IDictionary<int, int> keyValuePairs)
+		{
+			var m = keyValuePairs.Max(x => x.Key);
+
+			_values = new int[m + 1];
+
+			foreach (var kvp in keyValuePairs)
+			{
+				try
+				{
+					_values[kvp.Key] = kvp.Value;
+				}
+				catch
+				{
+					break;
+				} 
+			}
+		}
+
 		//public HistogramALow(IDictionary<int, int> entries)
 		//{
 		//	var low = entries.Min(x => x.Key);

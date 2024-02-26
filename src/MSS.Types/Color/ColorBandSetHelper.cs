@@ -93,22 +93,33 @@ namespace MSS.Types
 
 		public static bool TryGetPercentagesFromCutoffs(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out PercentageBand[]? percentageBands)
 		{
-			try
+			//try
+			//{
+			//	if (histCutoffsSnapShot.Cutoffs.Length > 0)
+			//	{
+			//		percentageBands = BuildNewPercentages(histCutoffsSnapShot);
+			//		return true;
+			//	}
+			//	else
+			//	{
+			//		percentageBands = null;
+			//		return false;
+			//	}
+			//}
+			//catch (Exception e)
+			//{
+			//	Debug.WriteLine($"Got exception {e} while Updating Percentages.");
+			//	percentageBands = null;
+			//	return false;
+			//}
+
+			if (histCutoffsSnapShot.CutoffsLength > 0)
 			{
-				if (histCutoffsSnapShot.Cutoffs.Length > 0)
-				{
-					percentageBands = BuildNewPercentages(histCutoffsSnapShot);
-					return true;
-				}
-				else
-				{
-					percentageBands = null;
-					return false;
-				}
+				percentageBands = BuildNewPercentages(histCutoffsSnapShot);
+				return true;
 			}
-			catch (Exception e)
+			else
 			{
-				Debug.WriteLine($"Got exception {e} while Updating Percentages.");
 				percentageBands = null;
 				return false;
 			}
@@ -118,14 +129,17 @@ namespace MSS.Types
 		{
 			var kvps = histCutoffsSnapShot.HistKeyValuePairs;
 			var upperCatchAllValue = histCutoffsSnapShot.UpperCatchAllValue;
-			var cutoffs = histCutoffsSnapShot.Cutoffs;
+			var cutoffs = histCutoffsSnapShot.GetCutoffs();
 
-			//var result = cutoffs.Select(x => new PercentageBand(x)).ToArray();
-			//var pbList = cutoffs.Select(x => new PercentageBand(x)).ToList();
-			//pbList.Add(new PercentageBand(int.MaxValue));
-			//var result = pbList.ToArray();
+			if (cutoffs.Length == 0)
+			{
+				return new PercentageBand[0];
+			}
 
-			var result = GetPercentageBands(cutoffs);
+			//var result = GetPercentageBands(cutoffs);
+
+			var result = new PercentageBand[histCutoffsSnapShot.PercentageBands.Length];
+			Array.Copy(histCutoffsSnapShot.PercentageBands, result, result.Length);
 
 			var curBucketPtr = 0;
 			var targetCutoff = cutoffs[curBucketPtr];
@@ -154,7 +168,12 @@ namespace MSS.Types
 				result[curBucketPtr].RunningSum = runningSum;
 			}
 
-			Debug.Assert(curBucketPtr == result.Length - 2, $"CbsHistogramViewModel. BuildNewPercentages. Not all PercentageBands were updated. The TargetCutoff < the last Histogram Key.");
+			//Debug.Assert(curBucketPtr == result.Length - 2, $"CbsHistogramViewModel. BuildNewPercentages. Not all PercentageBands were updated. The TargetCutoff < the last Histogram Key.");
+
+			if (curBucketPtr != result.Length - 2)
+			{
+				Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewPercentages. Not all PercentageBands were updated. The TargetCutoff < the last Histogram Key.");
+			}
 
 			for (; i < kvps.Length; i++)
 			{
@@ -165,17 +184,16 @@ namespace MSS.Types
 				result[^2].RunningSum = runningSum;
 			}
 
-			// The last percentage band receives the Upper CatchAll Value
-			var finalAmount = upperCatchAllValue;
-			runningSum += finalAmount;
+			//// The last percentage band receives the Upper CatchAll Value
+			//var finalAmount = upperCatchAllValue;
+			//runningSum += finalAmount;
 
-			result[^1].Count += finalAmount;
-			result[^1].RunningSum = runningSum;
+			//result[^1].Count += finalAmount;
+			//result[^1].RunningSum = runningSum;
 
 			//// For now, include all of the cnts above the target in the last bucket.
 			//bucketCnts[^2].Count += bucketCnts[^1].Count;
 
-			//var total = (double)histogram.Values.Select(x => Convert.ToInt64(x)).Sum();
 			var total = (double)runningSum;
 
 			foreach (var pb in result)
@@ -189,14 +207,34 @@ namespace MSS.Types
 			return result;
 		}
 
-		public static CutoffBand[] BuildNewCutoffs(PercentageBand[] percentageBands, HistCutoffsSnapShot histCutoffsSnapShot)
+		public static bool TryGetCutoffsFromPercentages(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out CutoffBand[]? cutoffBands)
 		{
+			if (histCutoffsSnapShot.CutoffsLength > 0 && histCutoffsSnapShot.HavePercentages)
+			{
+				cutoffBands = BuildNewCutoffs(histCutoffsSnapShot);
+				return true;
+			}
+			else
+			{
+				cutoffBands = null;
+				return false;
+			}
+		}
+
+
+		public static CutoffBand[] BuildNewCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
+		{
+			if (histCutoffsSnapShot.PercentageBands.Length == 0)
+			{
+				return new CutoffBand[0];
+			}
+
 			var kvps = histCutoffsSnapShot.HistKeyValuePairs;
 			var topIndex = histCutoffsSnapShot.HistogramLength;
 			var upperCatchAllValue = histCutoffsSnapShot.UpperCatchAllValue;
 
 			// Make a copy
-			var result = percentageBands.Select(x => new CutoffBand(x.Cutoff, x.Percentage)).ToArray();
+			var result = histCutoffsSnapShot.PercentageBands.Select(x => new CutoffBand(x.Cutoff, x.Percentage)).ToArray();
 
 			var sumOfAllCounts = SetTargetCounts(histCutoffsSnapShot, result);
 
@@ -317,7 +355,7 @@ namespace MSS.Types
 				Debug.WriteLine($"CbsHistogramViewModel. BuildNewCutoffs. The top 3 values are {last3[0].Key}/{last3[0].Value}, {last3[1].Key}/{last3[1].Value}, {last3[2].Key}/{last3[2].Value}. The UpperCatchAllValue is {histCutoffsSnapShot.UpperCatchAllValue}.");
 			}
 
-			//sumOfAllCounts -= upperCatchAllValue;
+			//sumOfAllCounts -= histCutoffsSnapShot.UpperCatchAllValue;
 
 			// Set the Target Counts
 			var runningPercentage = 0d;
@@ -363,6 +401,13 @@ namespace MSS.Types
 		[Conditional("DEBUG")]
 		public static void CheckNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
 		{
+			if (percentageBands.Length != cutoffBands.Length)
+			{
+				throw new ArgumentException("The length of the PercentageBands is not the same as the length of the CutoffBands.");
+			}
+
+			if (percentageBands.Length == 0) return;
+
 			var hiCutoff = percentageBands[^1].Cutoff;
 
 			if (cutoffBands[^1].Cutoff != hiCutoff)
@@ -386,6 +431,11 @@ namespace MSS.Types
 		[Conditional("DEBUG")]
 		public static void ReportNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
 		{
+			if (percentageBands.Length != cutoffBands.Length)
+			{
+				throw new ArgumentException("The length of the PercentageBands is not the same as the length of the CutoffBands.");
+			}
+
 			var sb = new StringBuilder();
 
 			sb.AppendLine("Original	New		Percentage		RunningPer		Target		Actual		PrevCount		NextCount");
