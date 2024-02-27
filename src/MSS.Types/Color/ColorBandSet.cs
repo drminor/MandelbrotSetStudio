@@ -25,7 +25,7 @@ namespace MSS.Types
 
 		private int _hilightedColorBandIndex;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#endregion
 
@@ -374,6 +374,11 @@ namespace MSS.Types
 		public bool UpdateCutoffs(CutoffBand[] newCutoffs)
 		{
 			var len = Math.Min(newCutoffs.Length - 1, Count);  // The last CutoffBand holds the UpperCatchAll
+
+			if (Count > len)
+			{
+				Debug.WriteLine($"WARNING: UpdateCutoffs not updating all values. The length of newCutoffs {newCutoffs.Length - 1} is < Count {Count}.");
+			}
 
 			int? prevCutoff = null;
 

@@ -88,7 +88,8 @@ namespace MSS.Types
 				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000"),
 				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff")
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff"),
+				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, "#000000")
 
 				//new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
@@ -104,16 +105,16 @@ namespace MSS.Types
 			var colorBands = new List<ColorBand>
 			{
 				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000", 0),
-				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000", 0.1),
-				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 10.6),
-				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000", 24.41),
-				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000", 35.35),
-				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000", 18.22), 
-				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 1.34),
-				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000", 0.13),
-				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000", 0.08),
-				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000", 0.17),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff", 0.13),
+				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000", 0.01),
+				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 11.72),
+				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000", 26.98),
+				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000", 39.08),
+				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000", 20.15), 
+				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 1.48),
+				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000", 0.14),
+				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000", 0.09),
+				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000", 0.19),
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff", 0.15),
 				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, "#000000", 0.02)
 			};
 				// > 400 = 9.55%
@@ -124,6 +125,21 @@ namespace MSS.Types
 			return result;
 		}
 
+		/*
+1	0	 -1
+2	0.01	1-2
+3	11.72	2-3
+4	26.98	3-5
+5	39.08	5-10
+6	20.15	10-25
+7	1.48	25-49
+8	0.14	49-60
+9	0.09	60-70
+10	0.19	70-120	
+11	0.15	120-300
+12	0.02	300-400		
+		
+		*/
 		public static MapCenterAndDelta BuildHomeArea()
 		{
 			var samplePointDelta = new RSize(1, 1, -8);

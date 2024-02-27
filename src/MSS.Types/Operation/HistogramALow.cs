@@ -37,7 +37,7 @@ namespace MSS.Types
 
 		public HistogramALow(IEnumerable<ushort> values)
 		{
-			if (values == null || values.Count() < 1)
+			if (values.Count() == 0)
 			{
 				IsEmpty = true;
 				_values = Array.Empty<int>();
@@ -64,20 +64,27 @@ namespace MSS.Types
 
 		public HistogramALow(IDictionary<int, int> keyValuePairs)
 		{
-			var m = keyValuePairs.Max(x => x.Key);
-
-			_values = new int[m + 1];
-
-			foreach (var kvp in keyValuePairs)
+			if (keyValuePairs.Count() == 0)
 			{
-				try
+				IsEmpty = true;
+				_values = Array.Empty<int>();
+				_lowBound = 0;
+			}
+			else
+			{
+				IsEmpty = false;
+
+				var low = keyValuePairs.Min(x => x.Key);
+				var high = keyValuePairs.Max(x => x.Key);
+
+				_values = new int[1 + high - low];
+				_lowBound = low;
+
+				foreach (var kvp in keyValuePairs)
 				{
-					_values[kvp.Key] = kvp.Value;
+					var aI = kvp.Key - _lowBound;
+					_values[aI] = kvp.Value;
 				}
-				catch
-				{
-					break;
-				} 
 			}
 		}
 

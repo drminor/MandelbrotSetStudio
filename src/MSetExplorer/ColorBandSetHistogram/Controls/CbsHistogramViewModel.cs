@@ -190,13 +190,12 @@ namespace MSetExplorer
 						Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
 					}
 
-					//var dictCode = HistogramHelper.HistogramToCSharp(_mapSectionHistogramProcessor.Histogram);
-					//Debug.WriteLine($"{dictCode}");
-
 					HistCutoffsSnapShot histCutoffsSnapShot;
 					lock (_histLock)
 					{
-						_colorBandSetHistoryCollection.Load(value.Clone());
+						//_colorBandSetHistoryCollection.Load(value.Clone());
+						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
+
 
 						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
 						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, value);
@@ -1336,7 +1335,11 @@ namespace MSetExplorer
 
 		private void CurrentColorBand_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (_disableProcessCurColorBandPropertyChanges) return;
+			if (_disableProcessCurColorBandPropertyChanges)
+			{
+				Debug.WriteLine("Not handling CurrentColorBand_PropertyChanged, _disableProcessCurColorBandPropertyChanges is true.");
+				return;
+			}
 
 			if (sender is ColorBand colorBandToUpdate)
 			{
@@ -1636,10 +1639,13 @@ namespace MSetExplorer
 		{
 			// Push the current copy and make a new copy for any further changes.
 
-			var currentVal = _currentColorBandSet;
-			_currentColorBandSet = _currentColorBandSet.CreateNewCopy();
+			//var currentVal = _currentColorBandSet;
+			//_currentColorBandSet = _currentColorBandSet.CreateNewCopy();
+			//_colorBandSetHistoryCollection.Push(currentVal);
 
-			_colorBandSetHistoryCollection.Push(currentVal);
+			var newVal = _currentColorBandSet.CreateNewCopy();
+			_colorBandSetHistoryCollection.Push(newVal);
+
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoForward));

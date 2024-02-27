@@ -8,7 +8,7 @@ namespace PercentageBandsTest
 		#region Tests
 
 		[Fact]
-		public void UsePercentages_HavePercentages()
+		public void UsePercentages_HavePercentagesH1()
 		{
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: true);
 			var histogram = GetHistogram1();
@@ -19,7 +19,7 @@ namespace PercentageBandsTest
 		}
 
 		[Fact]
-		public void UsePercentages_DoNotHavePercentages()
+		public void UsePercentages_DoNotHavePercentagesH1()
 		{
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram1();
@@ -30,10 +30,48 @@ namespace PercentageBandsTest
 		}
 
 		[Fact]
-		public void UseCutoffs()
+		public void UseCutoffsH1()
 		{
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram1();
+
+			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
+
+			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
+		}
+
+		[Fact]
+		public void UsePercentages_HavePercentagesH2()
+		{
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: true);
+			var histogram = GetHistogram2();
+
+			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+
+			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+		}
+
+		[Fact]
+		public void UsePercentages_DoNotHavePercentagesH2()
+		{
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: false);
+			var histogram = GetHistogram2();
+
+			// Update Percentage from Cutoffs
+			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+
+			// Update Cutoffs from Percentages
+			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+
+			// Update Percentages from Cutoffs
+			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
+		}
+
+		[Fact]
+		public void UseCutoffsH2()
+		{
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: false);
+			var histogram = GetHistogram2();
 
 			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
 
@@ -80,6 +118,8 @@ namespace PercentageBandsTest
 		{
 			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
 			{
+				ColorBandSetHelper.ReportNewPercentages(newPercentages);
+
 				ApplyNewPercentages(colorBandSet, newPercentages);
 				return newPercentages;
 			}
@@ -104,7 +144,6 @@ namespace PercentageBandsTest
 		{
 			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var newCutoffBands))
 			{
-
 				ColorBandSetHelper.CheckNewCutoffs(histCutoffsSnapShot.PercentageBands, newCutoffBands);
 				ColorBandSetHelper.ReportNewCutoffs(histCutoffsSnapShot.PercentageBands, newCutoffBands);
 
@@ -513,6 +552,395 @@ namespace PercentageBandsTest
 
 			return result;
 
+		}
+
+		private HistogramA GetHistogram2()
+		{
+			IDictionary<int, int> entries = new Dictionary<int, int>()
+			{
+				{29, 1647},
+				{30, 8546},
+				{31, 9338},
+				{32, 8581},
+				{33, 7925},
+				{34, 6122},
+				{35, 4475},
+				{36, 3486},
+				{37, 3185},
+				{38, 3595},
+				{39, 4930},
+				{40, 7416},
+				{41, 10124},
+				{42, 11117},
+				{43, 9523},
+				{44, 7062},
+				{45, 4960},
+				{46, 3656},
+				{47, 3019},
+				{48, 2982},
+				{49, 3785},
+				{50, 5612},
+				{51, 7902},
+				{52, 9479},
+				{53, 13955},
+				{54, 12331},
+				{55, 9348},
+				{56, 7314},
+				{57, 6292},
+				{58, 6504},
+				{59, 8203},
+				{60, 11738},
+				{61, 16291},
+				{62, 18845},
+				{63, 17108},
+				{64, 13324},
+				{65, 9769},
+				{66, 7286},
+				{67, 5990},
+				{68, 5781},
+				{69, 6720},
+				{70, 9341},
+				{71, 12927},
+				{72, 15442},
+				{73, 14817},
+				{74, 12132},
+				{75, 9216},
+				{76, 6924},
+				{77, 5733},
+				{78, 5255},
+				{79, 5789},
+				{80, 8025},
+				{81, 11055},
+				{82, 13382},
+				{83, 12796},
+				{84, 10830},
+				{85, 8400},
+				{86, 6422},
+				{87, 5278},
+				{88, 4695},
+				{89, 5113},
+				{90, 6522},
+				{91, 8600},
+				{92, 10270},
+				{93, 10325},
+				{94, 8953},
+				{95, 7083},
+				{96, 5654},
+				{97, 4621},
+				{98, 4089},
+				{99, 4305},
+				{100, 5246},
+				{101, 6735},
+				{102, 8059},
+				{103, 8370},
+				{104, 7451},
+				{105, 6158},
+				{106, 5022},
+				{107, 4141},
+				{108, 3687},
+				{109, 3813},
+				{110, 4530},
+				{111, 5640},
+				{112, 6869},
+				{113, 7159},
+				{114, 6574},
+				{115, 5476},
+				{116, 4501},
+				{117, 3809},
+				{118, 3444},
+				{119, 3348},
+				{120, 4019},
+				{121, 4818},
+				{122, 5857},
+				{123, 5961},
+				{124, 5635},
+				{125, 4796},
+				{126, 4052},
+				{127, 3387},
+				{128, 3014},
+				{129, 3076},
+				{130, 3433},
+				{131, 4159},
+				{132, 4823},
+				{133, 5164},
+				{134, 4736},
+				{135, 4277},
+				{136, 3573},
+				{137, 3043},
+				{138, 2786},
+				{139, 2735},
+				{140, 3122},
+				{141, 3698},
+				{142, 4286},
+				{143, 4510},
+				{144, 4323},
+				{145, 3938},
+				{146, 3289},
+				{147, 2956},
+				{148, 2654},
+				{149, 2609},
+				{150, 2926},
+				{151, 3318},
+				{152, 3869},
+				{153, 4090},
+				{154, 3759},
+				{155, 3558},
+				{156, 3071},
+				{157, 2695},
+				{158, 2363},
+				{159, 2335},
+				{160, 2420},
+				{161, 2892},
+				{162, 3289},
+				{163, 3411},
+				{164, 3490},
+				{165, 3203},
+				{166, 2829},
+				{167, 2408},
+				{168, 2113},
+				{169, 2129},
+				{170, 2272},
+				{171, 2663},
+				{172, 2933},
+				{173, 3153},
+				{174, 3015},
+				{175, 2846},
+				{176, 2537},
+				{177, 2255},
+				{178, 2136},
+				{179, 1987},
+				{180, 2087},
+				{181, 2409},
+				{182, 2730},
+				{183, 2826},
+				{184, 2770},
+				{185, 2589},
+				{186, 2347},
+				{187, 2016},
+				{188, 1896},
+				{189, 1883},
+				{190, 1926},
+				{191, 2173},
+				{192, 2405},
+				{193, 2471},
+				{194, 2392},
+				{195, 2278},
+				{196, 2141},
+				{197, 1886},
+				{198, 1717},
+				{199, 1708},
+				{200, 1786},
+				{201, 1992},
+				{202, 2091},
+				{203, 2299},
+				{204, 2139},
+				{205, 2078},
+				{206, 1954},
+				{207, 1717},
+				{208, 1618},
+				{209, 1472},
+				{210, 1584},
+				{211, 1843},
+				{212, 1942},
+				{213, 2087},
+				{214, 1944},
+				{215, 1911},
+				{216, 1740},
+				{217, 1649},
+				{218, 1412},
+				{219, 1401},
+				{220, 1437},
+				{221, 1729},
+				{222, 1758},
+				{223, 1807},
+				{224, 1779},
+				{225, 1685},
+				{226, 1490},
+				{227, 1419},
+				{228, 1355},
+				{229, 1324},
+				{230, 1297},
+				{231, 1445},
+				{232, 1636},
+				{233, 1676},
+				{234, 1632},
+				{235, 1525},
+				{236, 1424},
+				{237, 1356},
+				{238, 1228},
+				{239, 1199},
+				{240, 1305},
+				{241, 1417},
+				{242, 1516},
+				{243, 1566},
+				{244, 1533},
+				{245, 1433},
+				{246, 1257},
+				{247, 1183},
+				{248, 1139},
+				{249, 1086},
+				{250, 1148},
+				{251, 1216},
+				{252, 1356},
+				{253, 1317},
+				{254, 1323},
+				{255, 1286},
+				{256, 1185},
+				{257, 1075},
+				{258, 1064},
+				{259, 992},
+				{260, 1014},
+				{261, 1136},
+				{262, 1179},
+				{263, 1216},
+				{264, 1271},
+				{265, 1154},
+				{266, 1074},
+				{267, 960},
+				{268, 954},
+				{269, 915},
+				{270, 969},
+				{271, 1012},
+				{272, 1093},
+				{273, 1143},
+				{274, 1086},
+				{275, 1048},
+				{276, 968},
+				{277, 935},
+				{278, 923},
+				{279, 876},
+				{280, 865},
+				{281, 954},
+				{282, 1054},
+				{283, 1037},
+				{284, 950},
+				{285, 916},
+				{286, 906},
+				{287, 831},
+				{288, 786},
+				{289, 819},
+				{290, 769},
+				{291, 929},
+				{292, 969},
+				{293, 954},
+				{294, 924},
+				{295, 875},
+				{296, 865},
+				{297, 737},
+				{298, 750},
+				{299, 736},
+				{300, 734},
+				{301, 784},
+				{302, 844},
+				{303, 866},
+				{304, 883},
+				{305, 833},
+				{306, 801},
+				{307, 707},
+				{308, 651},
+				{309, 642},
+				{310, 690},
+				{311, 746},
+				{312, 787},
+				{313, 821},
+				{314, 782},
+				{315, 722},
+				{316, 718},
+				{317, 672},
+				{318, 633},
+				{319, 628},
+				{320, 653},
+				{321, 678},
+				{322, 737},
+				{323, 711},
+				{324, 736},
+				{325, 654},
+				{326, 629},
+				{327, 628},
+				{328, 565},
+				{329, 538},
+				{330, 537},
+				{331, 632},
+				{332, 726},
+				{333, 640},
+				{334, 657},
+				{335, 570},
+				{336, 593},
+				{337, 538},
+				{338, 548},
+				{339, 531},
+				{340, 542},
+				{341, 581},
+				{342, 593},
+				{343, 616},
+				{344, 601},
+				{345, 584},
+				{346, 534},
+				{347, 481},
+				{348, 488},
+				{349, 497},
+				{350, 529},
+				{351, 499},
+				{352, 589},
+				{353, 619},
+				{354, 579},
+				{355, 569},
+				{356, 503},
+				{357, 465},
+				{358, 444},
+				{359, 499},
+				{360, 473},
+				{361, 520},
+				{362, 511},
+				{363, 592},
+				{364, 520},
+				{365, 512},
+				{366, 464},
+				{367, 423},
+				{368, 402},
+				{369, 405},
+				{370, 421},
+				{371, 461},
+				{372, 504},
+				{373, 507},
+				{374, 516},
+				{375, 475},
+				{376, 449},
+				{377, 384},
+				{378, 370},
+				{379, 384},
+				{380, 411},
+				{381, 409},
+				{382, 478},
+				{383, 478},
+				{384, 478},
+				{385, 436},
+				{386, 384},
+				{387, 342},
+				{388, 353},
+				{389, 338},
+				{390, 387},
+				{391, 416},
+				{392, 408},
+				{393, 434},
+				{394, 433},
+				{395, 398},
+				{396, 392},
+				{397, 340},
+				{398, 333},
+				{399, 306},
+			};
+
+			//var HistogramALow = new HistogramALow(entries);
+			//var result = new HistogramA(400);
+			//result.Add(HistogramALow);
+			//result.UpperCatchAllValue = 202155;
+
+
+			var result = new HistogramA(entries);
+			result.UpperCatchAllValue = 202155;
+
+			return result;
 		}
 
 		#endregion

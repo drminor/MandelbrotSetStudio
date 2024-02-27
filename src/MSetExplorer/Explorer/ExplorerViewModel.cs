@@ -18,7 +18,7 @@ namespace MSetExplorer
 		private double _dispWidth;
 		private double _dispHeight;
 
-		private readonly bool _useDetailedDebug = true;
+		private readonly bool _useDetailedDebug = false;
 
 		#region Constructor
 
@@ -221,6 +221,11 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
 			}
+			//else
+			//{
+			//	var dictCode = HistogramHelper.HistogramToCSharp(_mapSectionHistogramProcessor.Histogram);
+			//	Debug.WriteLine($"{dictCode}");
+			//}
 
 			MapCalcSettingsViewModel.TargetIterationsAvailable = _mapSectionHistogramProcessor.GetAverageMapSectionTargetIteration();
 		}

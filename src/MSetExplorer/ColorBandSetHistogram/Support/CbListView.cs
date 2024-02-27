@@ -973,7 +973,9 @@ namespace MSetExplorer
 			var scaledValue = (int)Math.Round(newCutoff / ContentScale.Width);
 
 			var prevMsg = updatingPrevious ? "PreviousCutoff" : "Cutoff";
-			Debug.WriteLineIf(_useDetailedDebug, $"CbListView. Updating {prevMsg} for operation: {operation} at index: {colorBandIndex} with new {prevMsg}: {newCutoff}.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"CbListView. Updating {prevMsg} for operation: {operation} at index: {colorBandIndex} with new {prevMsg}: {newCutoff}.");
+			
+			Debug.WriteLine($"CbListView. Updating {prevMsg} for operation: {operation} at index: {colorBandIndex} with new {prevMsg}: {newCutoff}/{scaledValue}.");
 
 			if (updatingPrevious)
 			{

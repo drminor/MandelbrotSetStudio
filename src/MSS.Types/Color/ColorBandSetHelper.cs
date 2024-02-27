@@ -93,26 +93,6 @@ namespace MSS.Types
 
 		public static bool TryGetPercentagesFromCutoffs(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out PercentageBand[]? percentageBands)
 		{
-			//try
-			//{
-			//	if (histCutoffsSnapShot.Cutoffs.Length > 0)
-			//	{
-			//		percentageBands = BuildNewPercentages(histCutoffsSnapShot);
-			//		return true;
-			//	}
-			//	else
-			//	{
-			//		percentageBands = null;
-			//		return false;
-			//	}
-			//}
-			//catch (Exception e)
-			//{
-			//	Debug.WriteLine($"Got exception {e} while Updating Percentages.");
-			//	percentageBands = null;
-			//	return false;
-			//}
-
 			if (histCutoffsSnapShot.CutoffsLength > 0)
 			{
 				percentageBands = BuildNewPercentages(histCutoffsSnapShot);
@@ -136,8 +116,7 @@ namespace MSS.Types
 				return new PercentageBand[0];
 			}
 
-			//var result = GetPercentageBands(cutoffs);
-
+			// The result starts off with the existing PercentageBands.	
 			var result = new PercentageBand[histCutoffsSnapShot.PercentageBands.Length];
 			Array.Copy(histCutoffsSnapShot.PercentageBands, result, result.Length);
 
@@ -184,15 +163,15 @@ namespace MSS.Types
 				result[^2].RunningSum = runningSum;
 			}
 
-			//// The last percentage band receives the Upper CatchAll Value
-			//var finalAmount = upperCatchAllValue;
-			//runningSum += finalAmount;
+			// The last percentage band receives the Upper CatchAll Value
+			var finalAmount = upperCatchAllValue;
+			//runningSum += finalAmount;		// Don't Include the number of samples that reached the target iteration.
 
-			//result[^1].Count += finalAmount;
-			//result[^1].RunningSum = runningSum;
+			result[^1].Count = finalAmount;
+			result[^1].RunningSum = runningSum + finalAmount;
 
 			//// For now, include all of the cnts above the target in the last bucket.
-			//bucketCnts[^2].Count += bucketCnts[^1].Count;
+			//result[^2].Count += result[^1].Count;
 
 			var total = (double)runningSum;
 
@@ -201,7 +180,7 @@ namespace MSS.Types
 				pb.Percentage = Math.Round(100 * (pb.Count / total), digits: 2);
 			}
 
-			var sumOfAllPercentages = result.Sum(x => x.Percentage);
+			var sumOfAllPercentages = result.Take(result.Length - 1).Sum(x => x.Percentage);
 			Debug.WriteLine($"The Sum of all percentages is {sumOfAllPercentages} on call to BuildNewPercentages.");
 
 			return result;
@@ -220,7 +199,6 @@ namespace MSS.Types
 				return false;
 			}
 		}
-
 
 		public static CutoffBand[] BuildNewCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
@@ -396,9 +374,8 @@ namespace MSS.Types
 
 		#endregion
 
-		#region
+		#region Diagnostics
 
-		[Conditional("DEBUG")]
 		public static void CheckNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
 		{
 			if (percentageBands.Length != cutoffBands.Length)
@@ -428,7 +405,6 @@ namespace MSS.Types
 			}
 		}
 
-		[Conditional("DEBUG")]
 		public static void ReportNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
 		{
 			if (percentageBands.Length != cutoffBands.Length)
@@ -446,6 +422,22 @@ namespace MSS.Types
 				var cb = cutoffBands[i];
 
 				sb.AppendLine($"{originalCutoff}\t\t\t{cb.Cutoff}\t\t{cb.Percentage,8:F2}\t\t{cb.RunningPercentage,8:F2}\t\t{cb.TargetCount,8:F2}\t\t{cb.ActualCount}\t\t\t{cb.PreviousCount}\t\t\t\t{cb.NextCount}");
+			}
+
+			Debug.Write(sb.ToString());
+		}
+
+		public static void ReportNewPercentages(PercentageBand[] percentageBands)
+		{
+			var sb = new StringBuilder();
+
+			sb.AppendLine("Cutoff	Percentage		Count		ExactCount		RunningSum");
+
+			for (var i = 0; i < percentageBands.Length; i++)
+			{
+				var pb = percentageBands[i];
+
+				sb.AppendLine($"{pb.Cutoff}\t\t{pb.Percentage,8:F2}\t\t{pb.Count,8:F2}\t\t{pb.ExactCount,8:F2}\t\t{pb.RunningSum}");
 			}
 
 			Debug.Write(sb.ToString());

@@ -36,20 +36,20 @@ namespace MSS.Types
 			_topValues.Increment(m);
 		}
 
-		//public HistogramA(IDictionary<int, int> keyValuePairs)
-		//{
-		//	var m = keyValuePairs.Max(x => x.Key);
+		public HistogramA(IDictionary<int, int> keyValuePairs)
+		{
+			var m = keyValuePairs.Max(x => x.Key);
 
-		//	_values = new int[m];
-			
-		//	foreach (var kvp in keyValuePairs)
-		//	{
-		//		_values[kvp.Key] = kvp.Value;	
-		//	}
+			_values = new int[m + 1];
 
-		//	_topValues = new HistogramD();
-		//	_topValues.Increment(m);
-		//}
+			foreach (var kvp in keyValuePairs)
+			{
+				_values[kvp.Key] = kvp.Value;
+			}
+
+			_topValues = new HistogramD();
+			_topValues.Increment(m);
+		}
 
 		//public HistogramA(int[] values, int[] occurances)
 		//{
