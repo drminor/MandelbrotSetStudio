@@ -292,6 +292,24 @@ namespace MSetRepo
 			return result;
 		}
 
+		public bool TryGetColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		{
+			Debug.WriteLine($"ProjectAdapter. Retrieving ColorBandSet with Id: {colorBandSetId}.");
+
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+
+			if (colorBandSetReaderWriter.TryGet(colorBandSetId, out var colorBandSetRecord))
+			{
+				colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+				return true;
+			}
+			else
+			{
+				colorBandSet = null;
+				return false;
+			}
+		}
+
 		public void InsertColorBandSet(ColorBandSet colorBandSet)
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
@@ -353,6 +371,45 @@ namespace MSetRepo
 			var result = colorBandSetReaderWriter.Delete(colorBandSetId);
 
 			return result > 0;
+		}
+
+		public bool ColorBandSetExists(string name)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var result = colorBandSetReaderWriter.Exists(name);
+
+			return result;
+		}
+
+		#endregion
+
+		#region ColorBandSetInfo
+
+		public IEnumerable<ColorBandSetInfo> GetAllColorBandSetInfosForProject(ObjectId projectId)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+
+			var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectId);
+
+			var result = colorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.ColorBandRecords.Max(y => y.CutOff)));
+
+			return result;
+		}
+
+		public ColorBandSetInfo? GetColorBandSetInfo(ObjectId id)
+		{
+			var colorsReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var cbsRecord = colorsReaderWriter.Get(id);
+
+			if (cbsRecord != null)
+			{
+				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name, cbsRecord.Description, cbsRecord.LastAccessed, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, cbsRecord.ColorBandRecords.Max(y => y.CutOff));
+				return result;
+			}
+			else
+			{
+				return null;
+			}
 		}
 
 		#endregion

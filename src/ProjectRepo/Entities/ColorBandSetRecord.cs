@@ -6,7 +6,7 @@ namespace ProjectRepo.Entities
 {
 	public record ColorBandSetRecord(
 		ObjectId? ParentId, 
-		ObjectId ProjectId, 
+		ObjectId ProjectId,		// TODO: Rename ColorBandSetRecord.ProjectId ==> OwnerId 
 		string? Name, 
 		string? Description, 
 		ColorBandRecord[] ColorBandRecords

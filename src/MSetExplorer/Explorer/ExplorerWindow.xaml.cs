@@ -687,8 +687,15 @@ namespace MSetExplorer
 			// TODO: Implement Project-Level Select different ColorBandSet
 			MessageBox.Show("Will Implement ColorBandSet Open Project-Level later.");
 
+			var curProject = _vm.ProjectViewModel.CurrentProject;
+
+			if (curProject == null)
+			{
+				return;
+			}
+
 			var initialName = _vm.ProjectViewModel.CurrentColorBandSet.Name;
-			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
+			if (ColorsShowOpenWindow(curProject, initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
@@ -731,6 +738,13 @@ namespace MSetExplorer
 
 		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
+			var curProject = _vm.ProjectViewModel.CurrentProject;
+
+			if (curProject == null)
+			{
+				return;
+			}
+
 			if (!ColorsCommitUpdates().HasValue)
 			{
 				return;
@@ -740,8 +754,7 @@ namespace MSetExplorer
 			MessageBox.Show("Will Implement ColorBandSet SaveAs later.");
 
 			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
-			_ = ColorsShowSaveWindow(curColorBandSet);
-
+			_ = ColorsShowSaveWindow(curProject, curColorBandSet);
 		}
 
 		// Colors Import
@@ -1383,9 +1396,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenWindow(string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		private bool ColorsShowOpenWindow(Project curProject, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(initalName, DialogType.Open);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, initalName, DialogType.Open);
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm
@@ -1432,9 +1445,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ColorsShowSaveWindow(ColorBandSet colorBandSet)
+		private bool ColorsShowSaveWindow(Project curProject, ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(colorBandSet.Name, DialogType.Save);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, colorBandSet.Name, DialogType.Save);
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm

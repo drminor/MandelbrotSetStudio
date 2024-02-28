@@ -1,5 +1,6 @@
 ﻿using ImageBuilder;
 using ImageBuilderWPF;
+using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
@@ -62,9 +63,9 @@ namespace MSetExplorer
 		}
 
 		// Open/Save ColorBandSet
-		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType)
+		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(ObjectId projectId, string? initalName, DialogType dialogType)
 		{
-			return new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
+			return new ColorBandSetOpenSaveViewModel(_projectAdapter, projectId, initalName, dialogType);
 		}
 
 		// Import/Export ColorBandSet

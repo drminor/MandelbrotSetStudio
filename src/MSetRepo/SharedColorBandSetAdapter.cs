@@ -54,7 +54,7 @@ namespace MSetRepo
 
 		public bool TryGetColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			Debug.WriteLine($"Retrieving ColorBandSet with Id: {colorBandSetId}.");
+			Debug.WriteLine($"SharedColorBandSetAdapter. Retrieving ColorBandSet with Id: {colorBandSetId}.");
 
 			var sharedColorsReaderWriter = new SharedColorBandSetReaderWriter(_dbProvider);
 

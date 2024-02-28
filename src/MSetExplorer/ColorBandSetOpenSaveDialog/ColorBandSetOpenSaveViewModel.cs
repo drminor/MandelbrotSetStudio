@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
+using MSS.Common;
 using MSS.Types;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -12,7 +13,8 @@ namespace MSetExplorer
 {
 	public class ColorBandSetOpenSaveViewModel : IColorBandSetOpenSaveViewModel, INotifyPropertyChanged
 	{
-		private readonly SharedColorBandSetAdapter _sharedColorBandSetAdapter;
+		private readonly IProjectAdapter _projectAdapter;
+		private readonly ObjectId _projectId;
 		private ColorBandSetInfo? _selectedColorBandSetInfo;
 
 		private string? _selectedName;
@@ -22,12 +24,13 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetOpenSaveViewModel(SharedColorBandSetAdapter sharedColorBandSetAdapter, string? initialName, DialogType dialogType)
+		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, ObjectId projectId, string? initialName, DialogType dialogType)
 		{
-			_sharedColorBandSetAdapter = sharedColorBandSetAdapter;
+			_projectAdapter = projectAdapter;
+			_projectId = projectId;
 			DialogType = dialogType;
 
-			ColorBandSetInfos = new ObservableCollection<ColorBandSetInfo>(_sharedColorBandSetAdapter.GetAllColorBandSetInfos());
+			ColorBandSetInfos = new ObservableCollection<ColorBandSetInfo>(_projectAdapter.GetAllColorBandSetInfosForProject(_projectId));
 			_selectedColorBandSetInfo = ColorBandSetInfos.FirstOrDefault(x => x.Name == initialName);
 
 			var view = CollectionViewSource.GetDefaultView(ColorBandSetInfos);
@@ -40,13 +43,13 @@ namespace MSetExplorer
 
 		public bool SaveColorBandSet(ColorBandSet colorBandSet)
 		{
-			_ = _sharedColorBandSetAdapter.CreateColorBandSet(colorBandSet);
+			_projectAdapter.InsertColorBandSet(colorBandSet);
 			return true;
 		}
 
 		public bool TryOpenColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			var result = _sharedColorBandSetAdapter.TryGetColorBandSet(colorBandSetId, out colorBandSet);
+			var result = _projectAdapter.TryGetColorBandSet(colorBandSetId, out colorBandSet);
 			return result;
 		}
 
@@ -84,7 +87,7 @@ namespace MSetExplorer
 
 				if (SelectedColorBandSetInfo != null && SelectedColorBandSetInfo.Description != value)
 				{
-					_sharedColorBandSetAdapter. UpdateColorBandSetDescription(SelectedColorBandSetInfo.Id, SelectedDescription);
+					_projectAdapter. UpdateColorBandSetDescription(SelectedColorBandSetInfo.Id, SelectedDescription);
 					SelectedColorBandSetInfo.Description = value;
 				}
 
@@ -121,7 +124,7 @@ namespace MSetExplorer
 
 		public bool IsNameTaken(string name)
 		{
-			var result = _sharedColorBandSetAdapter.ColorBandSetExists(name);
+			var result = _projectAdapter.ColorBandSetExists(name);
 			return result;
 		}
 

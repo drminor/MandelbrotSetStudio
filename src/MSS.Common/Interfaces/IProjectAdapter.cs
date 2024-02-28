@@ -80,5 +80,9 @@ namespace MSS.Common
 
 		void UpdatePosterDisplayPositionAndZoom(Poster poster);
 
+		bool ColorBandSetExists(string name);
+		bool TryGetColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
+		IEnumerable<ColorBandSetInfo> GetAllColorBandSetInfosForProject(ObjectId projectId);
+		ColorBandSetInfo? GetColorBandSetInfo(ObjectId id);
 	}
 }

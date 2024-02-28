@@ -142,6 +142,14 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult) ?? 0;
 		}
 
+		public bool Exists(string name)
+		{
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq("Name", name);
+			var colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
+			var result = colorBandSetRecord != null;
+
+			return result;
+		}
 
 	}
 }
