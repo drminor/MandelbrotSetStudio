@@ -292,7 +292,7 @@ namespace MSS.Types
 			if (curBucketPtr < result.Length - 2)
 			{
 				var diff = (result.Length - 2) - curBucketPtr;
-				Debug.WriteLine($"CbsHistogramViewModel. BuildNewCutoffs. The last {diff} cutoffs were not updated. The running count of histogram values did not reach the target count.");
+				Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewCutoffs. The last {diff} cutoffs were not updated. The running count of histogram values did not reach the target count.");
 			}
 
 			var followingCutoff = topIndex;
@@ -327,14 +327,6 @@ namespace MSS.Types
 			// Get total counts
 			double sumOfAllCounts = kvps.Sum(x => x.Value);
 
-			if (kvps.Length > 2)
-			{
-				var last3 = kvps.Skip(kvps.Length - 3).ToArray();
-				Debug.WriteLine($"CbsHistogramViewModel. BuildNewCutoffs. The top 3 values are {last3[0].Key}/{last3[0].Value}, {last3[1].Key}/{last3[1].Value}, {last3[2].Key}/{last3[2].Value}. The UpperCatchAllValue is {histCutoffsSnapShot.UpperCatchAllValue}.");
-			}
-
-			//sumOfAllCounts -= histCutoffsSnapShot.UpperCatchAllValue;
-
 			// Set the Target Counts
 			var runningPercentage = 0d;
 
@@ -348,7 +340,7 @@ namespace MSS.Types
 
 			if (cutoffBands.Any(x => double.IsNaN(x.TargetCount)))
 			{
-				throw new InvalidOperationException("CbsHistogramViewModel. BuildNewCutoffs. One or more of the TargetCounts is NaN.");
+				throw new InvalidOperationException("WARNING: CbsHistogramViewModel. BuildNewCutoffs. One or more of the TargetCounts is NaN.");
 			}
 
 			return sumOfAllCounts;
@@ -401,11 +393,12 @@ namespace MSS.Types
 				{
 					Debug.WriteLine($"WARNING: CbsHistogramViewModel. CheckNewCutoffs. The BucketWidth is zero at index {i}.");
 				}
+
 				lastCutoff = thisCutoff;
 			}
 		}
 
-		public static void ReportNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
+		public static void ReportNewCutoffs(HistCutoffsSnapShot histCutoffsSnapShot, PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
 		{
 			if (percentageBands.Length != cutoffBands.Length)
 			{
@@ -413,6 +406,15 @@ namespace MSS.Types
 			}
 
 			var sb = new StringBuilder();
+
+			var kvps = histCutoffsSnapShot.HistKeyValuePairs;
+
+			if (kvps.Length > 2)
+			{
+				var last3 = kvps.Skip(kvps.Length - 3).ToArray();
+				sb.AppendLine($"The top 3 values are {last3[0].Key}/{last3[0].Value}, {last3[1].Key}/{last3[1].Value}, {last3[2].Key}/{last3[2].Value}. " +
+					$"The UpperCatchAllValue is {histCutoffsSnapShot.UpperCatchAllValue}.");
+			}
 
 			sb.AppendLine("Original	New		Percentage		RunningPer		Target		Actual		PrevCount		NextCount");
 

@@ -21,6 +21,8 @@ namespace MSS.Types.MSet
 
 		private readonly object _stateLock = new object();
 
+		private readonly bool _useDetailedDebug = false;
+
 		#endregion
 
 		#region Constructors
@@ -143,7 +145,7 @@ namespace MSS.Types.MSet
 				_sectionsFoundInRepo = 0;
 				_sectionsGenerated = 0;
 
-				Debug.WriteLine($"Starting! Requested:{sectionsRequested} Cancelled:{sectionsCancelled}. Sections Pending Now:{SectionsPending}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"Starting! Requested:{sectionsRequested} Cancelled:{sectionsCancelled}. Sections Pending Now:{SectionsPending}.");
 
 
 				_mapSectionReadyCallback = mapSectionReadyCallback;
@@ -181,7 +183,7 @@ namespace MSS.Types.MSet
 
 		public void HandleResponse(MapSectionRequest mapSectionRequest, MapSection mapSection)
 		{
-			Debug.Assert(mapSection.JobNumber == JobNumber, "The MapSection's JobNumber does not match the MapLoader's JobNumber as the MsrJobs's HandleResponse is being called from the Response Processor.");
+			Debug.Assert(mapSection.JobNumber == JobNumber, "WARNING: The MapSection's JobNumber does not match the MapLoader's JobNumber as the MsrJobs's HandleResponse is being called from the Response Processor.");
 
 			lock (_stateLock)
 			{
@@ -263,14 +265,6 @@ namespace MSS.Types.MSet
 
 		#region Private Methods
 
-		private void ReportSectionsPending(string description)
-		{
-			if (SectionsPending < 5)
-			{
-				Debug.WriteLine($"{description}. Sections Pending Now:{SectionsPending}.");
-			}
-		}
-
 		private void MarkJobAsComplete()
 		{
 			if (!_isCompleted)
@@ -303,6 +297,15 @@ namespace MSS.Types.MSet
 		#endregion
 
 		#region Diagnostics
+
+		[Conditional("DEBUG2")]
+		private void ReportSectionsPending(string description)
+		{
+			if (SectionsPending < 5)
+			{
+				Debug.WriteLine($"{description}. Sections Pending Now:{SectionsPending}.");
+			}
+		}
 
 		[Conditional("DEBUG2")]
 		private void ReportGeneration(MapSectionRequest mapSectionRequest, MapSection mapSection)

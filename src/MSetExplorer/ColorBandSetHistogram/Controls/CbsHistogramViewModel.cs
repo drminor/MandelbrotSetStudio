@@ -50,6 +50,7 @@ namespace MSetExplorer
 		private bool _disableProcessCurColorBandPropertyChanges;
 
 		private readonly bool _traceCBSVersions = true;
+
 		private readonly bool _useDetailedDebug = false;
 
 		#endregion
@@ -1337,7 +1338,7 @@ namespace MSetExplorer
 		{
 			if (_disableProcessCurColorBandPropertyChanges)
 			{
-				Debug.WriteLine("Not handling CurrentColorBand_PropertyChanged, _disableProcessCurColorBandPropertyChanges is true.");
+				Debug.WriteLineIf(_useDetailedDebug, "Not handling CurrentColorBand_PropertyChanged, _disableProcessCurColorBandPropertyChanges is true.");
 				return;
 			}
 
@@ -1687,14 +1688,6 @@ namespace MSetExplorer
 
 		#region Private Methods - Percentages
 
-		//private bool ApplyHistogram(IHistogram histogram)
-		//{
-		//	var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
-
-		//	var result = ApplyHistogram(histCutoffsSnapShot);
-		//	return result;
-		//}
-
 		private bool ApplyHistogram(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
 			if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
@@ -1748,6 +1741,8 @@ namespace MSetExplorer
 
 				if (_currentColorBandSet.UpdatePercentagesNoCheck(newPercentages))
 				{
+					ReportNewPercentages(newPercentages);
+
 					BeyondTargetSpecs = newPercentages[^1];
 					var numberReachedTargetIteration = BeyondTargetSpecs.Count;
 					var total = BeyondTargetSpecs.RunningSum;
@@ -1785,49 +1780,12 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void UpdateCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
-		//{
-		//	try
-		//	{
-		//		if (_referencePercentageBands.Any(x => double.IsNaN(x.Percentage)))
-		//		{
-		//			Debug.WriteLine("WARNING: The ReferencePercentageBands are empty on UpdateCutoffs.");
-
-		//			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
-		//			{
-		//				_referencePercentageBands = newPercentages;
-		//			}
-		//			else
-		//			{
-		//				Debug.WriteLine("WARNING: Some Percentages are undefined. Not updating the Cutoffs.");
-		//				return;
-		//			}
-		//		}
-
-		//		var cutoffBands = ColorBandSetHelper.BuildNewCutoffs(_referencePercentageBands, histCutoffsSnapShot);
-
-		//		CheckNewCutoffs(_referencePercentageBands, cutoffBands);
-		//		ReportNewCutoffs(_referencePercentageBands, cutoffBands);
-
-		//		ApplyNewCutoffs(cutoffBands);
-
-		//		var newColorBandSet = _currentColorBandSet.CreateNewCopy();
-		//		ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
-		//	}
-		//	catch (Exception e)
-		//	{
-		//		Debug.WriteLine($"Got exception {e} while Updating Cutoffs. Disposed = {disposedValue}.");
-		//	}
-		//}
-
 		private void UpdateCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
 			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var newCutoffBands))
 			{
-				//var cutoffBands = ColorBandSetHelper.BuildNewCutoffs(_referencePercentageBands, histCutoffsSnapShot);
-
 				CheckNewCutoffs(histCutoffsSnapShot.PercentageBands, newCutoffBands);
-				ReportNewCutoffs(histCutoffsSnapShot.PercentageBands, newCutoffBands);
+				ReportNewCutoffs(histCutoffsSnapShot, histCutoffsSnapShot.PercentageBands, newCutoffBands);
 
 				ApplyNewCutoffs(newCutoffBands);
 
@@ -1880,16 +1838,22 @@ namespace MSetExplorer
 
 		#region Diagnostics
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		private void CheckNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
 		{
 			ColorBandSetHelper.CheckNewCutoffs(percentageBands, cutoffBands);
 		}
 
-		[Conditional("DEBUG")]
-		private void ReportNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
+		[Conditional("DEBUG2")]
+		private void ReportNewCutoffs(HistCutoffsSnapShot histCutoffsSnapShot, PercentageBand[] percentageBands, CutoffBand[] cutoffBands)
 		{
-			ColorBandSetHelper.ReportNewCutoffs(percentageBands, cutoffBands);
+			ColorBandSetHelper.ReportNewCutoffs(histCutoffsSnapShot, percentageBands, cutoffBands);
+		}
+
+		[Conditional("DEBUG2")]
+		private void ReportNewPercentages(PercentageBand[] percentageBands)
+		{
+			ColorBandSetHelper.ReportNewPercentages(percentageBands);
 		}
 
 		[Conditional("DEBUG2")]

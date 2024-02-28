@@ -945,7 +945,7 @@ namespace MSS.Types
 		}
 
 
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands)
 		{
 			var sb = new StringBuilder();

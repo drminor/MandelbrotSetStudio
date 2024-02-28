@@ -145,7 +145,7 @@ namespace PercentageBandsTest
 			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var newCutoffBands))
 			{
 				ColorBandSetHelper.CheckNewCutoffs(histCutoffsSnapShot.PercentageBands, newCutoffBands);
-				ColorBandSetHelper.ReportNewCutoffs(histCutoffsSnapShot.PercentageBands, newCutoffBands);
+				ColorBandSetHelper.ReportNewCutoffs(histCutoffsSnapShot, histCutoffsSnapShot.PercentageBands, newCutoffBands);
 
 				ApplyNewCutoffs(colorBandSet, newCutoffBands);
 			}
