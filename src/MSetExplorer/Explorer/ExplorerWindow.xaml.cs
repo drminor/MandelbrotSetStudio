@@ -671,13 +671,62 @@ namespace MSetExplorer
 
 		#region Colors Button Handlers
 
-		// Colors Import
+		// Colors Open
 		private void ColorsOpenCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
 		}
 
 		private void ColorsOpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
+
+			// TODO: Implement Project-Level Select different ColorBandSet
+			MessageBox.Show("Will Implement ColorBandSet Open Project-Level later.");
+
+		}
+
+		// Colors Save
+		private void ColorsSaveCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
+		}
+
+		private void ColorsSaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
+		}
+
+		// Colors SaveAs
+		private void ColorsSaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
+		}
+
+		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
+
+			// TODO: Implement Save Project-Level /w new name
+			MessageBox.Show("Will Implement ColorBandSet SaveAs later.");
+		}
+
+		// Colors Import
+		private void ColorsImportCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
+		}
+
+		private void ColorsImportCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			if (!ColorsCommitUpdates().HasValue)
 			{
@@ -695,7 +744,6 @@ namespace MSetExplorer
 
 				Debug.Assert(targetIterations1 == targetIterations2, "TargetInterations Mismatch.");
 
-
 				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
 				_vm.ProjectViewModel.CurrentColorBandSet = adjustedCbs;
 			}
@@ -707,12 +755,12 @@ namespace MSetExplorer
 		}
 
 		// Colors Export
-		private void ColorsSaveAsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		private void ColorsExportCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
 		}
 
-		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		private void ColorsExportCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			if (!ColorsCommitUpdates().HasValue)
 			{

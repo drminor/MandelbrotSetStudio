@@ -245,6 +245,30 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand ImportColors = new RoutedUICommand(
+			text: "Import",
+			name: "ImportColors",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.I,
+					ModifierKeys.Control | ModifierKeys.Alt
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand ExportColors = new RoutedUICommand(
+			text: "Export",
+			name: "ExportColors",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.E,
+					ModifierKeys.Control | ModifierKeys.Alt
+				)
+			}
+		);
+
 		#endregion
 
 		#region Application

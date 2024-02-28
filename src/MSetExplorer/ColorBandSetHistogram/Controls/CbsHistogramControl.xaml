@@ -94,11 +94,17 @@
                                         <Separator/>
                                         <MenuItem Header="_Revert" Command="local:ColorBandSetCommands.Revert"/>
                                         <MenuItem Header="_Apply" Command="local:ColorBandSetCommands.Apply"/>
+
                                         <Separator/>
-                                        <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
-                                        <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
+                                        <MenuItem Header="_Open" Command="local:CustomCommands.ColorsOpen" />
+                                        <MenuItem Header="_SaveAs" Command="local:CustomCommands.ColorsSaveAs" />
+                                        
                                         <Separator/>
-                                        <MenuItem Header="Hilight Cb" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Checked" IsChecked="False"/>
+                                        <MenuItem Header="_Import" Command="local:CustomCommands.ImportColors" />
+                                        <MenuItem Header="_Export" Command="local:CustomCommands.ExportColors" />
+                                        
+                                        <Separator/>
+                                        <MenuItem Header="Highlight Selected Band" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Checked" IsChecked="False"/>
                                         <MenuItem Header="Use Percentages" IsCheckable="True" x:Name="mnuItem_UsePercentages" Checked="UsePercentages_Checked" Unchecked="UsePercentages_Checked" IsChecked="True"/>
 
                                         <MenuItem Header="_Details" Command="local:ColorBandSetCommands.ShowDetails"/>

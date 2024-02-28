@@ -1415,7 +1415,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				UpdateReferencePercentageBands(_mapSectionHistogramProcessor.Histogram);
+				UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// Previous Cutoff is being updated
@@ -1444,7 +1444,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				UpdateReferencePercentageBands(_mapSectionHistogramProcessor.Histogram);
+				UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// BlendStyle is being updated
@@ -1712,16 +1712,14 @@ namespace MSetExplorer
 			}
 		}
 
-		private void UpdateReferencePercentageBands(IHistogram histogram)
+		private void UpdatePercentages(IHistogram histogram)
 		{
 			// Percentages are adjusted based on Cutoffs
-			// and the new Percentages are used to update the Reference copy.
 			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
 
 			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
 			{
 				ApplyNewPercentages(newPercentages);
-				//_referencePercentageBands = newPercentages;
 			}
 		}
 

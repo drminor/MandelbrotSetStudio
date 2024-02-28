@@ -32,8 +32,11 @@
         <CommandBinding Command="local:CustomCommands.ZoomOutCustom" CanExecute="ZoomOut_CanExecute" Executed="ZoomOutCustom_Executed" />
 
         <CommandBinding Command="local:CustomCommands.ColorsOpen" CanExecute="ColorsOpenCommand_CanExecute" Executed="ColorsOpenCommand_Executed" />
-        <!--<CommandBinding Command="local:CustomCommands.ColorsSave" CanExecute="ColorsSaveCommand_CanExecute" Executed="ColorsSaveCommand_Executed" />-->
+        <CommandBinding Command="local:CustomCommands.ColorsSave" CanExecute="ColorsSaveCommand_CanExecute" Executed="ColorsSaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.ColorsSaveAs" CanExecute="ColorsSaveAsCommand_CanExecute" Executed="ColorsSaveAsCommand_Executed" />
+
+        <CommandBinding Command="local:CustomCommands.ImportColors" CanExecute="ColorsImportCommand_CanExecute" Executed="ColorsImportCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.ExportColors" CanExecute="ColorsExportCommand_CanExecute" Executed="ColorsExportCommand_Executed" />
 
         <CommandBinding Command="local:CustomCommands.ToggleJobTree" CanExecute="ToggleJobTreeCommand_CanExecute" Executed="ToggleJobTreeCommand_Executed" />
 
@@ -75,9 +78,12 @@
             </MenuItem>
 
             <MenuItem Header="_Colors">
-                <MenuItem Header="_Import" Command="local:CustomCommands.ColorsOpen" />
-                <!--<MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />-->
-                <MenuItem Header="_Export" Command="local:CustomCommands.ColorsSaveAs" />
+                <MenuItem Header="_Open" Command="local:CustomCommands.ColorsOpen" />
+                <MenuItem Header="_Save" Command="local:CustomCommands.ColorsSave" />
+                <MenuItem Header="Save_As" Command="local:CustomCommands.ColorsSaveAs" />
+                <Separator/>
+                <MenuItem Header="_Import" Command="local:CustomCommands.ImportColors" />
+                <MenuItem Header="_Export" Command="local:CustomCommands.ExportColors" />
                 <Separator/>
                 <MenuItem Header="_Use EscapeVelocities" IsCheckable="True" x:Name="mnuItem_UseEscapeVelocities" Checked="UseEscapeVelocities_Checked" Unchecked="UseEscapeVelocities_Unchecked" IsChecked="True"/>
                 <MenuItem Header="Use _RealTimePreview" IsCheckable="True" x:Name="mnuItem_UseRealTimePreview" Checked="UseRealTimePreview_Checked" Unchecked="UseRealTimePreview_Unchecked" IsChecked="True"/>

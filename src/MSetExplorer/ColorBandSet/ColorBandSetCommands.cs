@@ -69,8 +69,6 @@ namespace MSetExplorer
 		//    = new("Settings", "Settings", typeof(ColorBandSetCommands));
 	}
 
-
-
     /*
         Supported Operations / Supported States.
 
@@ -100,13 +98,6 @@ namespace MSetExplorer
 
             The Insert operation, inserts a new Color and Offset, just a new Color or just a new Offset depending on what is selected.
             The Insert operation, updates the collection of selected items to only include the Color and Offset for the current position.
-
-
-
-            
-
-
-
             
         NOTE: A range or set of Bands is the same as a range or set of Colors and a range or set of Offset where for each color included the corresponding Offset is also included.
 
