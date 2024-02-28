@@ -118,13 +118,21 @@ namespace MSetExplorer
 			// Update the MSet Info and Map Display with the new Job
 			if (e.PropertyName == nameof(IProjectViewModel.CurrentJob))
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentJob.");
-				SubmitMapDisplayJob();
+				if (ProjectViewModel.CurrentProject != null && !ProjectViewModel.CurrentJob.IsEmpty)
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling ProjectViewModel PropertyChanged-CurrentJob.");
+					SubmitMapDisplayJob();
+				}
 			}
 
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
 			else if (e.PropertyName == nameof(IProjectViewModel.CurrentColorBandSet))
 			{
+				if (ProjectViewModel.CurrentProject == null || ProjectViewModel.CurrentJob.IsEmpty)
+				{
+					return;
+				}
+
 				// Don't update the ColorBandSetHistogram's ViewModel, if this is a preview.
 				if (!ProjectViewModel.ColorBandSetIsPreview)
 				{

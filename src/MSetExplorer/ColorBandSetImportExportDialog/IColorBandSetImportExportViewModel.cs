@@ -6,7 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
-	public interface IColorBandSetOpenSaveViewModel : INotifyPropertyChanged
+	public interface IColorBandSetImportExportViewModel : INotifyPropertyChanged
 	{
 		DialogType DialogType { get; }
 
@@ -17,9 +17,9 @@ namespace MSetExplorer
 		string? SelectedDescription { get; set; }
 		bool UserIsSettingTheName { get; set; }
 
-		bool SaveColorBandSet(ColorBandSet colorBandSet);
+		bool ExportColorBandSet(ColorBandSet colorBandSet);
 
-		bool TryOpenColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
+		bool TryImportColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
 
 		bool IsNameTaken(string name);
 	}

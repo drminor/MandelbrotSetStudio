@@ -687,6 +687,26 @@ namespace MSetExplorer
 			// TODO: Implement Project-Level Select different ColorBandSet
 			MessageBox.Show("Will Implement ColorBandSet Open Project-Level later.");
 
+			var initialName = _vm.ProjectViewModel.CurrentColorBandSet.Name;
+			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
+			{
+				Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
+
+				var targetIterations1 = _vm.ProjectViewModel.CurrentColorBandSet.HighCutoff;
+
+				var targetIterations2 = _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations;
+
+				Debug.Assert(targetIterations1 == targetIterations2, "TargetInterations Mismatch.");
+
+				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
+				_vm.ProjectViewModel.CurrentColorBandSet = adjustedCbs;
+			}
+			else
+			{
+				Debug.WriteLine($"User declined to open a ColorBandSet.");
+				_vm.ProjectViewModel.PreviewColorBandSet = null;
+			}
+
 		}
 
 		// Colors Save
@@ -718,6 +738,10 @@ namespace MSetExplorer
 
 			// TODO: Implement Save Project-Level /w new name
 			MessageBox.Show("Will Implement ColorBandSet SaveAs later.");
+
+			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
+			_ = ColorsShowSaveWindow(curColorBandSet);
+
 		}
 
 		// Colors Import
@@ -734,7 +758,7 @@ namespace MSetExplorer
 			}
 
 			var initialName = _vm.ProjectViewModel.CurrentColorBandSet.Name;
-			if (ColorsShowOpenWindow(initialName, out var colorBandSet))
+			if (ColorsShowImportWindow(initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
@@ -769,7 +793,7 @@ namespace MSetExplorer
 
 			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
 
-			_ = ColorsShowSaveWindow(curColorBandSet);
+			_ = ColorsShowExportWindow(curColorBandSet);
 		}
 
 		// Use Escape Velocities
@@ -1373,7 +1397,7 @@ namespace MSetExplorer
 				if (colorBandSetOpenSaveWindow.ShowDialog() == true)
 				{
 					var id = colorBandSetOpenSaveWindow.ColorBandSetId;
-					if (id != null && colorBandSetOpenSaveVm.TryImportColorBandSet(id.Value, out colorBandSet))
+					if (id != null && colorBandSetOpenSaveVm.TryOpenColorBandSet(id.Value, out colorBandSet))
 					{
 						return true;
 					}
@@ -1400,7 +1424,7 @@ namespace MSetExplorer
 			if (sender is IColorBandSetOpenSaveViewModel vm)
 			{
 				var id = vm.SelectedColorBandSetInfo?.Id;
-				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
+				if (id != null && vm.TryOpenColorBandSet(id.Value, out var colorBandSet))
 				{
 					//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
 					_vm.ProjectViewModel.PreviewColorBandSet = colorBandSet;
@@ -1422,7 +1446,79 @@ namespace MSetExplorer
 				cpy.Name = colorBandSetOpenSaveWindow.ColorBandSetName;
 				cpy.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
 
-				colorBandSetOpenSaveVm.ExportColorBandSet(cpy);
+				colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		private bool ColorsShowImportWindow(string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		{
+			var colorBandSetImportExportVm = _vm.ViewModelFactory.CreateACbsImportExportViewModel(initalName, DialogType.Open);
+			var colorBandSetImportExportWindow = new ColorBandSetImportExportWindow
+			{
+				DataContext = colorBandSetImportExportVm
+			};
+
+			try
+			{
+				colorBandSetImportExportVm.PropertyChanged += ColorBandSetImportExportVm_PropertyChanged;
+				if (colorBandSetImportExportWindow.ShowDialog() == true)
+				{
+					var id = colorBandSetImportExportWindow.ColorBandSetId;
+					if (id != null && colorBandSetImportExportVm.TryImportColorBandSet(id.Value, out colorBandSet))
+					{
+						return true;
+					}
+					else
+					{
+						colorBandSet = null;
+						return false;
+					}
+				}
+				else
+				{
+					colorBandSet = null;
+					return false;
+				}
+			}
+			finally
+			{
+				colorBandSetImportExportVm.PropertyChanged -= ColorBandSetImportExportVm_PropertyChanged;
+			}
+		}
+
+		private void ColorBandSetImportExportVm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is IColorBandSetImportExportViewModel vm)
+			{
+				var id = vm.SelectedColorBandSetInfo?.Id;
+				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
+				{
+					//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
+					_vm.ProjectViewModel.PreviewColorBandSet = colorBandSet;
+				}
+			}
+		}
+
+		private bool ColorsShowExportWindow(ColorBandSet colorBandSet)
+		{
+			var colorBandSetImportExportVm = _vm.ViewModelFactory.CreateACbsImportExportViewModel(colorBandSet.Name, DialogType.Save);
+			var colorBandSetImportExportWindow = new ColorBandSetImportExportWindow
+			{
+				DataContext = colorBandSetImportExportVm
+			};
+
+			if (colorBandSetImportExportWindow.ShowDialog() == true)
+			{
+				var cpy = colorBandSet.CreateNewCopy();
+				cpy.Name = colorBandSetImportExportWindow.ColorBandSetName;
+				cpy.Description = colorBandSetImportExportWindow.ColorBandSetDescription;
+
+				colorBandSetImportExportVm.ExportColorBandSet(cpy);
 				return true;
 			}
 			else

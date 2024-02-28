@@ -10,7 +10,7 @@ using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class ColorBandSetOpenSaveViewModel : IColorBandSetOpenSaveViewModel, INotifyPropertyChanged
+	public class ColorBandSetImportExportViewModel : IColorBandSetImportExportViewModel, INotifyPropertyChanged
 	{
 		private readonly SharedColorBandSetAdapter _sharedColorBandSetAdapter;
 		private ColorBandSetInfo? _selectedColorBandSetInfo;
@@ -22,7 +22,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetOpenSaveViewModel(SharedColorBandSetAdapter sharedColorBandSetAdapter, string? initialName, DialogType dialogType)
+		public ColorBandSetImportExportViewModel(SharedColorBandSetAdapter sharedColorBandSetAdapter, string? initialName, DialogType dialogType)
 		{
 			_sharedColorBandSetAdapter = sharedColorBandSetAdapter;
 			DialogType = dialogType;
@@ -38,13 +38,13 @@ namespace MSetExplorer
 
 		#region Public Methods 
 
-		public bool SaveColorBandSet(ColorBandSet colorBandSet)
+		public bool ExportColorBandSet(ColorBandSet colorBandSet)
 		{
 			_ = _sharedColorBandSetAdapter.CreateColorBandSet(colorBandSet);
 			return true;
 		}
 
-		public bool TryOpenColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		public bool TryImportColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
 			var result = _sharedColorBandSetAdapter.TryGetColorBandSet(colorBandSetId, out colorBandSet);
 			return result;

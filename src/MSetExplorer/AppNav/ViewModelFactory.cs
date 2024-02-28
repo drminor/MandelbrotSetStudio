@@ -9,11 +9,11 @@ using System.Windows.Media;
 
 namespace MSetExplorer
 {
-	internal delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-	internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
-	internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	//internal delegate IProjectOpenSaveViewModel ProjectOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	//internal delegate IColorBandSetOpenSaveViewModel CbsOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
+	//internal delegate IPosterOpenSaveViewModel PosterOpenSaveViewModelCreator(string? initialName, DialogType dialogType);
 
-	internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapCenterAndDelta mapCenterAndDelta, SizeDbl canvasSize, bool allowEdits);
+	//internal delegate CoordsEditorViewModel CoordsEditorViewModelCreator(MapCenterAndDelta mapCenterAndDelta, SizeDbl canvasSize, bool allowEdits);
 
 
 	public class ViewModelFactory
@@ -61,10 +61,16 @@ namespace MSetExplorer
 			return new JobDetailsViewModel(jobOwnerInfo, _projectAdapter, _mapSectionAdapter);
 		}
 
-		// Import/Export ColorBandSet
+		// Open/Save ColorBandSet
 		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
 			return new ColorBandSetOpenSaveViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
+		}
+
+		// Import/Export ColorBandSet
+		public IColorBandSetImportExportViewModel CreateACbsImportExportViewModel(string? initalName, DialogType dialogType)
+		{
+			return new ColorBandSetImportExportViewModel(_sharedColorBandSetAdapter, initalName, dialogType);
 		}
 
 		// Coords Editor
