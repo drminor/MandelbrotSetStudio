@@ -389,10 +389,16 @@ namespace MSetRepo
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 
-			var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectId);
+			var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectId).ToList();
 
-			var result = colorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.ColorBandRecords.Max(y => y.CutOff)));
+			var result = colorBandSetRecords.Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.ColorBandRecords.Max(y => y.CutOff)));
 
+			return result;
+		}
+
+		private string GetColorBandSetName(string? name, int position)
+		{
+			var result = name ?? position.ToString();
 			return result;
 		}
 

@@ -52,5 +52,7 @@ namespace MSetExplorer
 		long DeleteMapSectionsForUnsavedJobs();
 
 		bool TryCreatePoster(string name, string? description, SizeDbl posterSize, [NotNullWhen(true)] out Poster? poster);
+
+		void CheckProjectViewModelTargetIterations();
 	}
 }

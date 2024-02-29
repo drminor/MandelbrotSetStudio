@@ -75,13 +75,26 @@ namespace MSS.Types
 			}
 			else if (colorBandSet.HighCutoff > targetIterations)
 			{
-				var newColorBandSet = colorBandSet.CreateNewCopy(targetIterations);
-				newColorBandSet.MoveItemsToReserveWithCutoffGtrThan(targetIterations - 2);
-				result = newColorBandSet;
+				result = TrimColorBandsWithCutoffGreaterThan(colorBandSet, targetIterations);
 			}
 			else
 			{
 				result = colorBandSet.CreateNewCopy(targetIterations);
+			}
+
+			return result;
+		}
+
+		public static ColorBandSet TrimColorBandsWithCutoffGreaterThan(ColorBandSet colorBandSet, int targetIterations)
+		{
+			var cBands = colorBandSet as IList<ColorBand>;
+			var itemsToKeep = cBands.Where(x => x.Cutoff < targetIterations).ToList();
+			var result = new ColorBandSet(itemsToKeep, targetIterations, colorBandSet.ColorBandsSerialNumber);
+
+			var itemsToTrim = cBands.Where(x => x.Cutoff > targetIterations).Reverse().Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
+			foreach (var reservedColorBand in itemsToTrim)
+			{
+				result.PushReservedColorBand(reservedColorBand);
 			}
 
 			return result;

@@ -1049,6 +1049,7 @@ namespace MSetExplorer
 				var cpy = colorBandSet.CreateNewCopy();
 				cpy.Name = colorBandSetOpenSaveWindow.ColorBandSetName;
 				cpy.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
+				cpy.AssignNewSerialNumber();
 
 				colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
 				return true;

@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 
@@ -685,7 +686,7 @@ namespace MSetExplorer
 			}
 
 			// TODO: Implement Project-Level Select different ColorBandSet
-			MessageBox.Show("Will Implement ColorBandSet Open Project-Level later.");
+			//MessageBox.Show("Will Implement ColorBandSet Open Project-Level later.");
 
 			var curProject = _vm.ProjectViewModel.CurrentProject;
 
@@ -698,12 +699,7 @@ namespace MSetExplorer
 			if (ColorsShowOpenWindow(curProject, initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
-
-				var targetIterations1 = _vm.ProjectViewModel.CurrentColorBandSet.HighCutoff;
-
-				var targetIterations2 = _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations;
-
-				Debug.Assert(targetIterations1 == targetIterations2, "TargetInterations Mismatch.");
+				CheckProjectViewModelTargetIterations();
 
 				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
 				_vm.ProjectViewModel.CurrentColorBandSet = adjustedCbs;
@@ -713,7 +709,6 @@ namespace MSetExplorer
 				Debug.WriteLine($"User declined to open a ColorBandSet.");
 				_vm.ProjectViewModel.PreviewColorBandSet = null;
 			}
-
 		}
 
 		// Colors Save
@@ -751,7 +746,7 @@ namespace MSetExplorer
 			}
 
 			// TODO: Implement Save Project-Level /w new name
-			MessageBox.Show("Will Implement ColorBandSet SaveAs later.");
+			//MessageBox.Show("Will Implement ColorBandSet SaveAs later.");
 
 			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
 			_ = ColorsShowSaveWindow(curProject, curColorBandSet);
@@ -775,11 +770,7 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"Importing ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 
-				var targetIterations1 = _vm.ProjectViewModel.CurrentColorBandSet.HighCutoff;
-
-				var targetIterations2 = _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations;
-
-				Debug.Assert(targetIterations1 == targetIterations2, "TargetInterations Mismatch.");
+				CheckProjectViewModelTargetIterations();
 
 				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
 				_vm.ProjectViewModel.CurrentColorBandSet = adjustedCbs;
@@ -1458,6 +1449,7 @@ namespace MSetExplorer
 				var cpy = colorBandSet.CreateNewCopy();
 				cpy.Name = colorBandSetOpenSaveWindow.ColorBandSetName;
 				cpy.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
+				cpy.AssignNewSerialNumber();
 
 				colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
 				return true;
@@ -1636,5 +1628,10 @@ namespace MSetExplorer
 
 		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
 
+		[Conditional("DEBUG")]
+		private void CheckProjectViewModelTargetIterations()
+		{
+			_vm.ProjectViewModel.CheckProjectViewModelTargetIterations();
+		}
 	}
 }

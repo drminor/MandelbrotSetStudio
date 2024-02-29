@@ -613,6 +613,22 @@ namespace MSetExplorer
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));
 		}
 
+		public void CheckProjectViewModelTargetIterations()
+		{
+			if (CurrentProject == null)
+			{
+				Debug.WriteLine("WARNNG: Calling CheckProjectViewModel when the Current Project is null.");
+				return;
+			}
+
+			var currentColorBandSetNotPreview = CurrentProject.CurrentColorBandSet;
+
+			var targetIterations1 = currentColorBandSetNotPreview.HighCutoff;
+			var targetIterations2 = CurrentJob.MapCalcSettings.TargetIterations;
+
+			Debug.Assert(targetIterations1 == targetIterations2, "ProjectViewModel. The Current Project's Current ColorBandSet's HighCutoff does not match the CurrentJob's MapCalcSetting's Target Iterations.");
+		}
+
 		#endregion
 
 		#region Diagnostics

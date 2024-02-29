@@ -19,6 +19,7 @@ namespace MSS.Types
 		private ObjectId _projectId;
 		private string? _name;
 		private string? _description;
+
 		private readonly Stack<ReservedColorBand> _reservedColorBands;
 
 		private DateTime _lastSavedUtc;
@@ -245,6 +246,21 @@ namespace MSS.Types
 
 		#region Public Methods
 
+		public void UpdateItemAndNeighbors(int index, ColorBand item)
+		{
+			var colorBands = GetItemAndNeighbors(index, item);
+			var prev = GetPreviousItem(index);
+			var idx = prev == null ? index : index - 1;
+
+			for (var ptr = 0; ptr < colorBands.Count; ptr++)
+			{
+				var cb = colorBands[ptr];
+				cb.UpdateWithNeighbors(GetPreviousItem(idx), GetNextItem(idx));
+
+				idx++;
+			}
+		}
+
 		public void InsertCutoff(int index, int cutoff, ReservedColorBand reservedColorBand)
 		{
 			InsertItem(index, new ColorBand(cutoff, ColorBandColor.White, ColorBandBlendStyle.None, ColorBandColor.White));
@@ -411,27 +427,47 @@ namespace MSS.Types
 			return _reservedColorBands.ToList();
 		}
 
-		public IList<ReservedColorBand> MoveItemsToReserveWithCutoffGtrThan(int cutoff)
-		{
-			var result = new List<ReservedColorBand>();
+		//public IList<ReservedColorBand> MoveItemsToReserveWithCutoffGtrThan(int cutoff)
+		//{
+		//	// TODO: Once we have the ReservedColorBands be completely separate from the ColorBandSet
+		//	// implement this in a helper class. 
 
-			var selectedItems = Items.Take(Count - 1).Where(x => x.Cutoff > cutoff).Reverse();
+		//	var result = new List<ReservedColorBand>();
 
-			foreach (var colorBand in selectedItems)
-			{
-				var reservedColorBand = new ReservedColorBand(colorBand.StartColor, colorBand.BlendStyle, colorBand.EndColor);
-				result.Add(reservedColorBand);
-				Remove(colorBand);
+		//	var selectedItems = Items.Take(Count - 1).Where(x => x.Cutoff > cutoff).Reverse();
 
-				//_reservedColorBands.Push(reservedColorBand);
-			}
+		//	foreach (var colorBand in selectedItems)
+		//	{
+		//		var reservedColorBand = new ReservedColorBand(colorBand.StartColor, colorBand.BlendStyle, colorBand.EndColor);
+		//		result.Add(reservedColorBand);
+		//		Remove(colorBand);
 
-			return result;
-		}
+		//		//_reservedColorBands.Push(reservedColorBand);
+		//	}
+
+		//	return result;
+		//}
 		
 		public void AssignNewSerialNumber()
 		{
 			ColorBandsSerialNumber = Guid.NewGuid();
+		}
+
+		public ReservedColorBand PopReservedColorBand()
+		{
+			if (_reservedColorBands.Count == 0)
+			{
+				return new ReservedColorBand();
+			}
+			else
+			{
+				return _reservedColorBands.Pop();
+			}
+		}
+
+		public void PushReservedColorBand(ReservedColorBand reservedColorBand)
+		{
+			_reservedColorBands.Push(reservedColorBand);
 		}
 
 		#endregion
@@ -441,12 +477,6 @@ namespace MSS.Types
 		protected override void ClearItems()
 		{
 			base.ClearItems();
-
-			//var firstColorBand = CreateFirstColorBand(TargetIterations);
-			//var highColorBand = CreateHighColorBand(firstColorBand, TargetIterations);
-
-			//Add(firstColorBand);
-			//Add(highColorBand);
 
 			var singleColorBand = CreateSingleColorBand(TargetIterations);
 			Add(singleColorBand);
@@ -460,8 +490,6 @@ namespace MSS.Types
 
 		protected override void RemoveItem(int index)
 		{
-			//if (Count < 3)
-
 			if (Count < 2)
 			{
 				// The collection must have at least two bands.
@@ -480,21 +508,6 @@ namespace MSS.Types
 		#endregion
 
 		#region Private Methods
-
-		public void UpdateItemAndNeighbors(int index, ColorBand item)
-		{
-			var colorBands = GetItemAndNeighbors(index, item);
-			var prev = GetPreviousItem(index);
-			var idx = prev == null ? index : index - 1;
-
-			for (var ptr = 0; ptr < colorBands.Count; ptr++)
-			{
-				var cb = colorBands[ptr];
-				cb.UpdateWithNeighbors(GetPreviousItem(idx), GetNextItem(idx));
-
-				idx++;
-			}
-		}
 
 		private IList<ColorBand> GetItemAndNeighbors(int index, ColorBand item)
 		{
@@ -590,49 +603,9 @@ namespace MSS.Types
 			//}
 		}
 
-		public ReservedColorBand PopReservedColorBand()
-		{
-			if (_reservedColorBands.Count == 0)
-			{
-				return new ReservedColorBand();
-			}
-			else
-			{
-				return _reservedColorBands.Pop();
-			}
-		}
+		#endregion
 
-		public void PushReservedColorBand(ReservedColorBand reservedColorBand)
-		{
-			_reservedColorBands.Push(reservedColorBand);
-		}
-
-		private ReservedColorBand PullCutoffsDown(int index)
-		{
-			for (var ptr = index; ptr < Count - 2; ptr++)
-			{
-				var sourceCb = Items[ptr + 1];
-				var targetCb = Items[ptr];
-
-				targetCb.Cutoff = sourceCb.Cutoff;
-				targetCb.PreviousCutoff = ptr == 0 ? null : Items[ptr - 1].Cutoff;
-			}
-
-			var lastCb = Items[^2];
-			RemoveItem(Count - 2);
-
-			if (Count > 1)
-			{
-				Items[^1].PreviousCutoff = Items[^2].Cutoff;
-
-				Items[^2].SuccessorStartColor = Items[^1].StartColor;
-			}
-
-			var newReserved = new ReservedColorBand(lastCb.StartColor, lastCb.BlendStyle, lastCb.EndColor);
-			//_reservedColorBands.Push(newReserved);
-
-			return newReserved;
-		}
+		#region Fix Bands
 
 		private static IList<ColorBand> FixBands(int targetIterations, IList<ColorBand>? colorBands)
 		{

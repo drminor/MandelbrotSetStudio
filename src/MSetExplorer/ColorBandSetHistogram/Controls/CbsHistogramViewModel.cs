@@ -768,20 +768,6 @@ namespace MSetExplorer
 			_currentColorBandSet.PushReservedColorBand(reservedColorBand);
 		}
 
-		//public int GetIndexOf(ColorBand colorBand)
-		//{
-		//	var result = -1;
-
-		//	var ff = _currentColorBandSet as IList<ColorBand>;
-
-		//	if (ff != null)
-		//	{
-		//		result = ff.IndexOf(colorBand);
-		//	}
-
-		//	return result;
-		//}
-
 		#endregion
 
 		#region Public Methods Insertions
@@ -828,10 +814,7 @@ namespace MSetExplorer
 
 		public void CompleteCutoffInsertion(int index, ColorBand colorBand, ReservedColorBand reservedColorBand)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffInsertion has been callled.");
-
-			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. Before CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}.");
-			Debug.WriteLine($"ColorBandSetViewModel. Before CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. Before CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}.");
 
 			_disableProcessCurColorBandPropertyChanges = true;
 
@@ -864,9 +847,7 @@ namespace MSetExplorer
 				_colorBandsView.MoveCurrentTo(CurrentColorBand);
 			}
 
-			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
-			Debug.WriteLine($"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
-
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After CutoffInsertion, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
 			OnCurrentColorBandSetUpdated();
 		}
 
@@ -885,13 +866,9 @@ namespace MSetExplorer
 
 		private ReservedColorBand InsertColor(int index, ColorBand colorBand)
 		{
-			//var saveCcb = CurrentColorBand;
-			//CurrentColorBand = null;
-
 			_disableProcessCurColorBandPropertyChanges = true;
 			var result = _currentColorBandSet.InsertColor(index, colorBand);
 			_disableProcessCurColorBandPropertyChanges = false;
-			//CurrentColorBand = saveCcb;
 
 			return result;
 		}
@@ -900,7 +877,6 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandInsertion has been callled.");
 
-			//CurrentColorBand = null;
 			_disableProcessCurColorBandPropertyChanges = true;
 
 			var result = TryInsertColorBand(index, colorBand);
@@ -1070,25 +1046,23 @@ namespace MSetExplorer
 
 		private bool TryDeleteStartingCutoff(ColorBand colorBand, out ReservedColorBand? reservedColorBand)
 		{
-			//CurrentColorBand = null;
-
 			_disableProcessCurColorBandPropertyChanges = true;
-
-			bool wasRemoved;
-			lock (_histLock)
+			try
 			{
-				wasRemoved = _currentColorBandSet.DeleteStartingCutoff(colorBand, out reservedColorBand);
+				lock (_histLock)
+				{
+					return _currentColorBandSet.DeleteStartingCutoff(colorBand, out reservedColorBand);
+				}
 			}
-
-			_disableProcessCurColorBandPropertyChanges = false;
-
-			return wasRemoved;
+			finally
+			{
+				_disableProcessCurColorBandPropertyChanges = false;
+			}
 		}
 
 		public void CompleteColorRemoval(int index, ReservedColorBand reservedColorBand)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorRemoval has been callled.");
-			//var selItem = _currentColorBandSet[index];
 
 			var result = TryDeleteColor(index, reservedColorBand);
 
@@ -1106,7 +1080,6 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After ColorRemoval, the current position is {ColorBandsView.CurrentPosition}.");
 
 			OnCurrentColorBandSetUpdated();
-
 			//ReportRemoveCurrentItem(index);
 		}
 
@@ -1118,14 +1091,9 @@ namespace MSetExplorer
 				return false;
 			}
 
-			//var saveCcb = CurrentColorBand;
-			//CurrentColorBand = null;
-
 			_disableProcessCurColorBandPropertyChanges = true;
 			_currentColorBandSet.DeleteColor(index, reservedColorBand);
 			_disableProcessCurColorBandPropertyChanges = false;
-
-			//CurrentColorBand = saveCcb;
 
 			return true;
 		}
@@ -1188,17 +1156,18 @@ namespace MSetExplorer
 				return false;
 			}
 
-			//CurrentColorBand = null;
 			_disableProcessCurColorBandPropertyChanges = true;
-
-			bool wasRemoved;
-			lock (_histLock)
+			try
 			{
-				wasRemoved = _currentColorBandSet.Remove(colorBand);
+				lock (_histLock)
+				{
+					return _currentColorBandSet.Remove(colorBand);
+				}
 			}
-
-			_disableProcessCurColorBandPropertyChanges = false;
-			return wasRemoved;
+			finally
+			{
+				_disableProcessCurColorBandPropertyChanges = false;
+			}
 		}
 
 		#endregion

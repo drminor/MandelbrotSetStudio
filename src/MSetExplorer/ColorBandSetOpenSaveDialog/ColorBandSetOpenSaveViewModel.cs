@@ -67,6 +67,16 @@ namespace MSetExplorer
 			set
 			{
 				_selectedName = value;
+
+				if (DialogType != DialogType.Save)
+				{
+					if (value != null && SelectedColorBandSetInfo != null && SelectedColorBandSetInfo.Name != value)
+					{
+						_projectAdapter.UpdateColorBandSetName(SelectedColorBandSetInfo.Id, SelectedName);
+						SelectedColorBandSetInfo.Name = value;
+					}
+				}
+
 				OnPropertyChanged();
 			}
 		}

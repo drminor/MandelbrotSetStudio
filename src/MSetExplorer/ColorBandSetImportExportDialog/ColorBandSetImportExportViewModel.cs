@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
+using MSS.Common;
 using MSS.Types;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -64,6 +65,16 @@ namespace MSetExplorer
 			set
 			{
 				_selectedName = value;
+
+				if (DialogType != DialogType.Save)
+				{
+					if (value != null && SelectedColorBandSetInfo != null && SelectedColorBandSetInfo.Name != value)
+					{
+						_sharedColorBandSetAdapter.UpdateColorBandSetName(SelectedColorBandSetInfo.Id, SelectedName);
+						SelectedColorBandSetInfo.Name = value;
+					}
+				}
+
 				OnPropertyChanged();
 			}
 		}
