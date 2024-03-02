@@ -426,27 +426,6 @@ namespace MSS.Types
 		{
 			return _reservedColorBands.ToList();
 		}
-
-		//public IList<ReservedColorBand> MoveItemsToReserveWithCutoffGtrThan(int cutoff)
-		//{
-		//	// TODO: Once we have the ReservedColorBands be completely separate from the ColorBandSet
-		//	// implement this in a helper class. 
-
-		//	var result = new List<ReservedColorBand>();
-
-		//	var selectedItems = Items.Take(Count - 1).Where(x => x.Cutoff > cutoff).Reverse();
-
-		//	foreach (var colorBand in selectedItems)
-		//	{
-		//		var reservedColorBand = new ReservedColorBand(colorBand.StartColor, colorBand.BlendStyle, colorBand.EndColor);
-		//		result.Add(reservedColorBand);
-		//		Remove(colorBand);
-
-		//		//_reservedColorBands.Push(reservedColorBand);
-		//	}
-
-		//	return result;
-		//}
 		
 		public void AssignNewSerialNumber()
 		{

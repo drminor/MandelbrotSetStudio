@@ -26,6 +26,7 @@ namespace MSS.Common
 		void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId);
 		void UpdateProjectDescription(ObjectId projectId, string? description);
 		void UpdateProjectName(ObjectId projectId, string name);
+		void UpdateProjectTargetIterationMap(ObjectId projectId, DateTime lastAccessedUtc, TargetIterationColorMapRecord[] targetIterationColorMapRecords);
 
 		bool DeleteProject(ObjectId projectId);
 		IEnumerable<IProjectInfo> GetAllProjectInfos();

@@ -45,10 +45,14 @@ namespace MSetRepo
 
 		public ProjectRecord MapTo(Project source)
 		{
+			var lookupColorMapByTargetIterationRecs = source.LookupColorMapByTargetIteration.Values.ToArray();
+
+
 			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc)
 			{
 				Id = source.Id,
-				LastAccessedUtc = source.LastAccessedUtc
+				LastAccessedUtc = source.LastAccessedUtc,
+				TargetIterationColorMapRecords = lookupColorMapByTargetIterationRecs
 			};
 
 			return result;
@@ -142,8 +146,8 @@ namespace MSetRepo
 			{
 				Id = source.Id,
 				DateCreatedUtc = source.DateCreated,
-				IterationUpdates = source.IterationUpdates,
-				ColorMapUpdates = source.ColorMapUpdates,
+				//IterationUpdates = source.IterationUpdates,
+				//ColorMapUpdates = source.ColorMapUpdates,
 			};
 
 			return result;

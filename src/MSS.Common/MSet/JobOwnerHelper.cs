@@ -110,6 +110,8 @@ namespace MSS.Common
 
 				SaveColorBandSets(project, projectAdapter);
 				SaveJobs(project, projectAdapter);
+
+				projectAdapter.UpdateProjectTargetIterationMap(project.Id, project.LastAccessedUtc, project.LookupColorMapByTargetIteration.Values.ToArray());
 			}
 
 			return true;
@@ -292,6 +294,79 @@ namespace MSS.Common
 			}
 
 			return colorBandSetsToRemoved.Count;
+		}
+
+		#endregion
+
+		#region Load ColorBandSet 
+
+		public static ColorBandSet LoadColorBandSet(Job job, string operationDescription, List<ColorBandSet> colorBandSets, out bool wasUpdated, out bool wasCreated)
+		{
+			var colorBandSetId = job.ColorBandSetId;
+			var targetIterations = job.MapCalcSettings.TargetIterations;
+
+			var result = GetColorBandSetForJob(colorBandSetId, colorBandSets);
+
+			if (result == null || result.HighCutoff != targetIterations)
+			{
+				wasUpdated = true;
+
+				string msg;
+				if (result == null)
+				{
+					msg = $"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found {operationDescription}."; //as the project is being constructed
+				}
+				else
+				{
+					msg = $"WARNING: The Current Job's ColorBandSet {colorBandSetId} has a HighCutoff that is different than that Job's target iteration." +
+						$"Loading the best matching ColorBandSet from the same project {operationDescription}.";
+				}
+
+				Debug.WriteLine(msg);
+
+				result = FindOrCreateSuitableColorBandSetForJob(job.Id, targetIterations, colorBandSets, out wasCreated);
+				job.ColorBandSetId = result.Id;
+				//LastUpdatedUtc = DateTime.UtcNow;
+			}
+			else
+			{
+				wasUpdated = false;
+				wasCreated = false;
+			}
+
+			return result;
+		}
+
+		private static ColorBandSet? GetColorBandSetForJob(ObjectId colorBandSetId, List<ColorBandSet> colorBandSets)
+		{
+			var result = colorBandSets.FirstOrDefault(x => x.Id == colorBandSetId);
+			if (result == null)
+			{
+				Debug.WriteLine($"WARNING: The job's current ColorBandSet: {colorBandSetId} does not exist in the Project list of ColorBandSets.");
+			}
+
+			return result;
+		}
+
+		private static ColorBandSet FindOrCreateSuitableColorBandSetForJob(ObjectId jobId, int targetIterations, List<ColorBandSet> colorBandSets, out bool wasCreated)
+		{
+			var colorBandSet = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, colorBandSets);
+
+			if (colorBandSet.HighCutoff != targetIterations)
+			{
+				var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+				Debug.WriteLine($"WARNING: Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id} for job: {jobId}.");
+
+				colorBandSets.Add(adjustedColorBandSet);
+				colorBandSet = adjustedColorBandSet;
+				wasCreated = true;
+			}
+			else
+			{
+				wasCreated = false;
+			}
+
+			return colorBandSet;
 		}
 
 		#endregion

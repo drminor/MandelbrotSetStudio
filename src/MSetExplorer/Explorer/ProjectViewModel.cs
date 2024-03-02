@@ -262,7 +262,15 @@ namespace MSetExplorer
 			else if (e.PropertyName == nameof(Project.CurrentColorBandSet))
 			{
 				Debug.WriteLineIf(_useDetailedDebug, "The ProjectViewModel is raising PropertyChanged: IProjectViewModel.CurrentColorBandSet as the Project's ColorBandSet is being updated.");
-				OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
+
+				if (ColorBandSetIsPreview)
+				{
+					PreviewColorBandSet = null;
+				}
+				else
+				{
+					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
+				}
 			}
 
 			else if (e.PropertyName == nameof(Project.CurrentJob))

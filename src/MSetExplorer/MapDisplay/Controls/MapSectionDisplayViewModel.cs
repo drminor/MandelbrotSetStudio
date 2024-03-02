@@ -108,7 +108,9 @@ namespace MSetExplorer
 			get => _currentAreaColorAndCalcSettings;
 			private set
 			{
-				_currentAreaColorAndCalcSettings = value?.Clone() ?? null;
+				// Updated on 3/1/2024
+				//_currentAreaColorAndCalcSettings = value?.Clone() ?? null;
+				_currentAreaColorAndCalcSettings = value;
 				OnPropertyChanged(nameof(IMapDisplayViewModel.CurrentAreaColorAndCalcSettings));
 			}
 		}

@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MSS.Types.MSet;
 using System;
 
 namespace ProjectRepo.Entities
@@ -20,5 +21,7 @@ namespace ProjectRepo.Entities
 
 
 		public DateTime LastAccessedUtc { get; set; }
+
+		public TargetIterationColorMapRecord[]? TargetIterationColorMapRecords { get; set; }
 	}
 }

@@ -88,9 +88,38 @@ namespace MSetRepo
 				var colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
 				var jobs = GetAllJobsForProject(projectRecord.Id, colorBandSets);
 
-				colorBandSets = GetColorBandSetsForProject(projectRecord.Id); // TODO: Remove this 
+				// TODO: Remove this 2nd call to GetColorBandSetsForProject
+				colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
 
-				project = AssembleProject(projectRecord, jobs, colorBandSets, projectRecord.LastSavedUtc, projectRecord.LastAccessedUtc);
+				var targetIterationColorMapRecs = projectRecord.TargetIterationColorMapRecords ?? new TargetIterationColorMapRecord[0];
+
+				var lookupColorMapByTargetIteration = new Dictionary<int, TargetIterationColorMapRecord>();
+
+				foreach (var ticmRec in targetIterationColorMapRecs)
+				{
+					lookupColorMapByTargetIteration.Add(ticmRec.TargetIterations, ticmRec);
+				}
+
+				var isDirty = false;
+				foreach (var job in jobs)
+				{
+					var targetIteration = job.MapCalcSettings.TargetIterations;
+
+					if (!lookupColorMapByTargetIteration.ContainsKey(targetIteration))
+					{
+						var ticmRec = GetTargetIterationColorMapRecord(targetIteration, colorBandSets);
+						lookupColorMapByTargetIteration.Add(targetIteration, ticmRec);
+						isDirty = true;
+					}
+				}
+
+				project = AssembleProject(projectRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, projectRecord.LastSavedUtc, projectRecord.LastAccessedUtc);
+
+				if (project != null && isDirty)
+				{
+					project.MarkAsDirty();
+				}
+
 				return project != null;
 			}
 			else
@@ -112,9 +141,19 @@ namespace MSetRepo
 
 				projectRecord = projectReaderWriter.Get(projectId);
 
+				var lookupColorMapByTargetIteration = new Dictionary<int, TargetIterationColorMapRecord>();
+
 				foreach (var job in jobs)
 				{
 					job.OwnerId = projectId;
+
+					var targetIteration = job.MapCalcSettings.TargetIterations;
+
+					if (!lookupColorMapByTargetIteration.ContainsKey(targetIteration))
+					{
+						var ticmRec = GetTargetIterationColorMapRecord(targetIteration, colorBandSets);
+						lookupColorMapByTargetIteration.Add(targetIteration, ticmRec);
+					}
 				}
 
 				foreach (var cbs in colorBandSets)
@@ -123,7 +162,7 @@ namespace MSetRepo
 					cbs.AssignNewSerialNumber();
 				}
 
-				var result = AssembleProject(projectRecord, jobs, colorBandSets, DateTime.MinValue, DateTime.MinValue);
+				var result = AssembleProject(projectRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, DateTime.MinValue, DateTime.MinValue);
 
 				return result;
 			}
@@ -133,7 +172,21 @@ namespace MSetRepo
 			}
 		}
 
-		private Project? AssembleProject(ProjectRecord? projectRecord, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, DateTime lastSavedUtc, DateTime lastAccessedUtc)
+		private TargetIterationColorMapRecord GetTargetIterationColorMapRecord(int targetIterations, IEnumerable<ColorBandSet> colorBandSets)
+		{
+			var match = colorBandSets.FirstOrDefault(x => x.TargetIterations == targetIterations);
+
+			if (match == null)
+			{
+				match = colorBandSets.First();
+			}
+
+			var result = new TargetIterationColorMapRecord(targetIterations, match.Id, match.ColorBandsSerialNumber, DateTime.UtcNow);
+
+			return result;
+		}
+
+		private Project? AssembleProject(ProjectRecord? projectRecord, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
 			Project? result;
 			if (projectRecord == null || jobs.Count == 0 || !colorBandSets.Any())
@@ -142,7 +195,7 @@ namespace MSetRepo
 			}
 			else
 			{
-				result = new Project(projectRecord.Id, projectRecord.Name, projectRecord.Description, jobs, colorBandSets, projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc);
+				result = new Project(projectRecord.Id, projectRecord.Name, projectRecord.Description, jobs, colorBandSets, lookupColorMapByTargetIteration, projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc);
 			}
 			return result;
 		}
@@ -163,6 +216,12 @@ namespace MSetRepo
 		{
 			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			projectReaderWriter.UpdateCurrentJobId(projectId, currentJobId);
+		}
+
+		public void UpdateProjectTargetIterationMap(ObjectId projectId, DateTime lastAccessedUtc, TargetIterationColorMapRecord[] targetIterationColorMapRecords)
+		{
+			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			projectReaderWriter.UpdateTargetIterationMap(projectId, lastAccessedUtc, targetIterationColorMapRecords);
 		}
 
 		public bool DeleteProject(ObjectId projectId)
@@ -566,8 +625,8 @@ namespace MSetRepo
 				)
 			{
 				LastAccessedUtc = jobRecord.LastAccessedUtc,
-				IterationUpdates = jobRecord.IterationUpdates,
-				ColorMapUpdates = jobRecord.ColorMapUpdates,
+				//IterationUpdates = jobRecord.IterationUpdates,
+				//ColorMapUpdates = jobRecord.ColorMapUpdates,
 			};
 
 			var colorBandSet = GetColorBandSet(job, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);

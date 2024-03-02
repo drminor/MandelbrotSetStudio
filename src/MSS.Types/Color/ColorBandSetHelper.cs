@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Bson;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -67,6 +68,8 @@ namespace MSS.Types
 
 		public static ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations)
 		{
+			// TODO: When creating a new ColorBandSet because we had to Adjust the TargetIterations, how do we handle updating the name and/or Serial#.
+
 			ColorBandSet result;
 
 			if (colorBandSet.HighCutoff == targetIterations)

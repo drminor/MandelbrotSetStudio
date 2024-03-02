@@ -194,8 +194,8 @@ namespace MSS.Common.MSet
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 
-		public IterationUpdateRecord[]? IterationUpdates { get; set; }
-		public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
+		//public IterationUpdateRecord[]? IterationUpdates { get; set; }
+		//public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
 
 		public DateTime LastSavedUtc
 		{
@@ -248,8 +248,8 @@ namespace MSS.Common.MSet
 				IsOnPreferredPath = IsOnPreferredPath
 			};
 
-			result.IterationUpdates = (IterationUpdateRecord[]?)IterationUpdates?.Clone() ?? null;
-			result.ColorMapUpdates = (ColorMapUpdateRecord[]?)ColorMapUpdates?.Clone() ?? null;
+			//result.IterationUpdates = (IterationUpdateRecord[]?)IterationUpdates?.Clone() ?? null;
+			//result.ColorMapUpdates = (ColorMapUpdateRecord[]?)ColorMapUpdates?.Clone() ?? null;
 			
 			return result;
 		}
@@ -262,8 +262,8 @@ namespace MSS.Common.MSet
 				OnFile = false,
 			};
 
-			result.IterationUpdates = (IterationUpdateRecord[]?) IterationUpdates?.Clone() ?? null;
-			result.ColorMapUpdates = (ColorMapUpdateRecord[]?) ColorMapUpdates?.Clone() ?? null;
+			//result.IterationUpdates = (IterationUpdateRecord[]?) IterationUpdates?.Clone() ?? null;
+			//result.ColorMapUpdates = (ColorMapUpdateRecord[]?) ColorMapUpdates?.Clone() ?? null;
 
 			return result;
 		}
