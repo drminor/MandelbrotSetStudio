@@ -4,8 +4,10 @@ using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace MSetExplorer
 {
@@ -189,7 +191,7 @@ namespace MSetExplorer
 					{
 						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 
-						currentPoster.Add(value);
+						currentPoster.Add(value, makeDefault: true);
 
 						_ = AddNewIterationUpdateJob(currentPoster, value);
 					}
@@ -322,6 +324,26 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
 				}
 			}
+		}
+
+		public List<ColorBandSetInfo> GetColorBandSetInfos()
+		{
+			var curPoster = CurrentPoster;
+
+			if (curPoster == null)
+			{
+				return new List<ColorBandSetInfo>();
+			}
+
+			var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastUpdatedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.HighCutoff)).ToList();
+
+			return result;
+		}
+
+		private string GetColorBandSetName(string? name, int position)
+		{
+			var result = name ?? position.ToString();
+			return result;
 		}
 
 		#endregion
@@ -614,6 +636,22 @@ namespace MSetExplorer
 			poster.Add(job);
 
 			return job;
+		}
+
+		public void CheckPosterViewModelTargetIterations()
+		{
+			if (CurrentPoster == null)
+			{
+				Debug.WriteLine("WARNNG: Calling CheckPosterViewModel when the Current Poster is null.");
+				return;
+			}
+
+			var currentColorBandSetNotPreview = CurrentPoster.CurrentColorBandSet;
+
+			var targetIterations1 = currentColorBandSetNotPreview.HighCutoff;
+			var targetIterations2 = CurrentJob.MapCalcSettings.TargetIterations;
+
+			Debug.Assert(targetIterations1 == targetIterations2, "PosterViewModel. The Current Poster's Current ColorBandSet's HighCutoff does not match the CurrentJob's MapCalcSetting's Target Iterations.");
 		}
 
 		[Conditional("DEBUG2")]

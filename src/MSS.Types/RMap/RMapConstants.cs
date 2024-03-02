@@ -44,6 +44,8 @@ namespace MSS.Types
 		public static readonly RRectangle TEST_RECTANGLE;
 		public static readonly RRectangle TEST_RECTANGLE_HALF;
 
+		public const string NAME_FOR_NEW_PROJECTS = "New Project";
+
 		static RMapConstants()
 		{
 			BLOCK_SIZE = new SizeInt(128, 128);
@@ -65,16 +67,16 @@ namespace MSS.Types
 			TEST_RECTANGLE_HALF = new RRectangle(1, 2, 1, 2, -2);
 		}
 
-		public static ColorBandSet BuildInitialColorBandSet(int maxIterations, bool usePercentages)
+		public static ColorBandSet BuildInitialColorBandSet(string name, int maxIterations, bool usePercentages)
 		{
 			var result = usePercentages 
-				? BuildInitialColorBandSetWithPercentages(maxIterations) 
-				: BuildInitialColorBandSetWithCutoffs(maxIterations);
+				? BuildInitialColorBandSetWithPercentages(name, maxIterations) 
+				: BuildInitialColorBandSetWithCutoffs(name, maxIterations);
 
 			return result;
 		}
 
-		public static ColorBandSet BuildInitialColorBandSetWithCutoffs(int maxIterations)
+		private static ColorBandSet BuildInitialColorBandSetWithCutoffs(string name, int maxIterations)
 		{
 			var colorBands = new List<ColorBand>
 			{
@@ -95,12 +97,12 @@ namespace MSS.Types
 			};
 
 			var colorBandsSerialNumber = new Guid("{00112233-4455-6677-8899-AABBCCDDEEFF}");
-			var result = new ColorBandSet(colorBands, maxIterations, colorBandsSerialNumber);
+			var result = new ColorBandSet(name, colorBands, maxIterations, colorBandsSerialNumber);
 
 			return result;
 		}
 
-		public static ColorBandSet BuildInitialColorBandSetWithPercentages(int maxIterations)
+		private static ColorBandSet BuildInitialColorBandSetWithPercentages(string name, int maxIterations)
 		{
 			var colorBands = new List<ColorBand>
 			{
@@ -120,7 +122,7 @@ namespace MSS.Types
 				// > 400 = 9.55%
 
 			var colorBandsSerialNumber = new Guid("{00112233-4455-6677-8899-AABBCCDDEE00}");
-			var result = new ColorBandSet(colorBands, maxIterations, colorBandsSerialNumber);
+			var result = new ColorBandSet(name, colorBands, maxIterations, colorBandsSerialNumber);
 
 			return result;
 		}

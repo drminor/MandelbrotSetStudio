@@ -292,7 +292,7 @@ namespace MSS.Common.MSet
 
 		public ColorBandSet CurrentColorBandSet
 		{
-			get => _colorBandSets.FirstOrDefault(x => x.Id == CurrentJob.ColorBandSetId) ?? new ColorBandSet(CurrentJob.MapCalcSettings.TargetIterations);
+			get => _colorBandSets.FirstOrDefault(x => x.Id == CurrentJob.ColorBandSetId) ?? new ColorBandSet(Name, CurrentJob.MapCalcSettings.TargetIterations);
 			set
 			{
 				if (!CurrentJob.IsEmpty)
@@ -312,8 +312,11 @@ namespace MSS.Common.MSet
 								newCbs.AssignNewSerialNumber();
 								newCbs.ProjectId = Id;
 							}
+
 							_colorBandSets.Add(newCbs);
 						}
+
+						AddOrUpdateTargetIteratationColorMapRecord(newCbs);
 
 						CurrentJob.ColorBandSetId = newCbs.Id;
 						LastUpdatedUtc = DateTime.UtcNow;
@@ -350,19 +353,33 @@ namespace MSS.Common.MSet
 
 		public void Add(Job job)
 		{
-			if (!_colorBandSets.Any(x => x.Id == job.ColorBandSetId))
+			var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
+
+			if (colorBandSet == null) 
 			{
 				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
 			}
+
+			AddOrUpdateTargetIteratationColorMapRecord(colorBandSet);
 
 			_ = _jobTree.Add(job, selectTheAddedItem: true);
 
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
-		public void Add(ColorBandSet colorBandSet)
+		public void Add(ColorBandSet colorBandSet, bool makeDefault)
 		{
 			_colorBandSets.Add(colorBandSet);
+
+			if (makeDefault)
+			{
+				AddOrUpdateTargetIteratationColorMapRecord(colorBandSet);
+			}
+			else
+			{
+				AddTargetIteratationColorMapRecord(colorBandSet);
+			}
+
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
@@ -502,55 +519,23 @@ namespace MSS.Common.MSet
 
 		#region Private Methods
 
-		//private ColorBandSet LoadColorBandSet(Job job, string operationDescription)
-		//{
-		//	var colorBandSetId = job.ColorBandSetId;
-		//	var targetIterations = job.MapCalcSettings.TargetIterations;
+		private void AddOrUpdateTargetIteratationColorMapRecord(ColorBandSet colorBandSet)
+		{
+			var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow);
 
-		//	var result = GetColorBandSetForJob(colorBandSetId);
+			if (LookupColorMapByTargetIteration.ContainsKey(colorBandSet.HighCutoff))
+				LookupColorMapByTargetIteration[colorBandSet.HighCutoff] = ticmr;
+			else
+				LookupColorMapByTargetIteration.Add(colorBandSet.HighCutoff, ticmr);
+		}
 
-		//	if (result == null || result.HighCutoff != targetIterations)
-		//	{
-		//		if (result == null)
-		//		{
-		//			Debug.WriteLine($"WARNING: The ColorBandSetId {colorBandSetId} of the current job was not found in the Project's list of ColorBandSets {operationDescription}."); //as the project is being constructed
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"WARNING: A ColorBandSet different than the currentJob's ColorBandSet is being loaded because the currentJob's ColorBandSet's HighCutoff is not equal to the TargetIterations {operationDescription}.");
-		//		}
+		private void AddTargetIteratationColorMapRecord(ColorBandSet colorBandSet)
+		{
+			var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow);
 
-		//		result = FindOrCreateSuitableColorBandSetForJob(targetIterations);
-		//		job.ColorBandSetId = result.Id;
-		//		LastUpdatedUtc = DateTime.UtcNow;
-		//	}
-
-		//	return result;
-		//}
-
-		//// TODO: Use a dictionary to lookup the preferred ColorBandSet by TargetIterations
-
-		//private ColorBandSet? GetColorBandSetForJob(ObjectId colorBandSetId)
-		//{
-		//	var result = _colorBandSets.FirstOrDefault(x => x.Id == colorBandSetId);
-		//	return result;
-		//}
-
-		//private ColorBandSet FindOrCreateSuitableColorBandSetForJob(ObjectId jobId, int targetIterations)
-		//{
-		//	var colorBandSet = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, _colorBandSets);
-
-		//	if (colorBandSet.HighCutoff != targetIterations)
-		//	{
-		//		var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
-		//		Debug.WriteLine($"WARNING: Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id} for job: {jobId}.");
-
-		//		_colorBandSets.Add(adjustedColorBandSet);
-		//		colorBandSet = adjustedColorBandSet;
-		//	}
-
-		//	return colorBandSet;
-		//}
+			if (!LookupColorMapByTargetIteration.ContainsKey(colorBandSet.HighCutoff))
+				LookupColorMapByTargetIteration.Add(colorBandSet.HighCutoff, ticmr);
+		}
 
 		#endregion
 

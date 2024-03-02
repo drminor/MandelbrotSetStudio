@@ -37,6 +37,7 @@ namespace MSS.Common.MSet
 
 		IEnumerable<Job> GetJobs();
 		List<ColorBandSet> GetColorBandSets();
+		void Add(ColorBandSet colorBandSet, bool makeDefault);
 
 		JobPathType? GetCurrentPath();
 

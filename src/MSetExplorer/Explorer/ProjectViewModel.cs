@@ -111,7 +111,7 @@ namespace MSetExplorer
 					{
 						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
 
-						currentProject.Add(value);
+						currentProject.Add(value, makeDefault: true);
 
 						AddNewIterationUpdateJob(currentProject, value);
 					}
@@ -313,7 +313,7 @@ namespace MSetExplorer
 
 		#region Public Methods -- Project
 
-		public void ProjectStartNew(MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		public void ProjectStartNew(string name, MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
 			if (mapCalcSettings.TargetIterations != colorBandSet.HighCutoff)
 			{
@@ -323,7 +323,7 @@ namespace MSetExplorer
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 			Debug.WriteLine($"Starting Job with new coords: {mapAreaInfo}TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			var project = new Project("New", description: null, job, colorBandSet);
+			var project = new Project(name, description: null, job, colorBandSet);
 			job.OwnerId = project.Id;
 
 			CurrentProject = project;

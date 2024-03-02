@@ -35,9 +35,9 @@ namespace MSS.Common
 			
 			foreach (var oldIdAndNewCbs in colorBandSetPairs)
 			{
+				UpdateCbsNames(sourceProject.Name, name, colorBandSets);
 				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
 				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
-
 				UpdateTargetIterationColorMapRecords(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, oldIdAndNewCbs.Item2.ColorBandsSerialNumber, timcrs);
 			}
 
@@ -224,6 +224,17 @@ namespace MSS.Common
 				if (cbs.ParentId == oldParentId)
 				{
 					cbs.ParentId = newParentId;
+				}
+			}
+		}
+
+		private static void UpdateCbsNames(string oldName, string newName, ColorBandSet[] colorBandSets)
+		{
+			foreach (var cbs in colorBandSets)
+			{
+				if (cbs.Name == oldName)
+				{
+					cbs.Name = newName;
 				}
 			}
 		}

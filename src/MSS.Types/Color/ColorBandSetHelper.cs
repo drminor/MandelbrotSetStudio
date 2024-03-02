@@ -92,14 +92,17 @@ namespace MSS.Types
 		public static ColorBandSet TrimColorBandsWithCutoffGreaterThan(ColorBandSet colorBandSet, int targetIterations)
 		{
 			var cBands = colorBandSet as IList<ColorBand>;
-			var itemsToKeep = cBands.Where(x => x.Cutoff < targetIterations).ToList();
-			var result = new ColorBandSet(itemsToKeep, targetIterations, colorBandSet.ColorBandsSerialNumber);
+			var itemsToKeep = cBands.Where(x => x.Cutoff <= targetIterations).ToList();
 
-			var itemsToTrim = cBands.Where(x => x.Cutoff > targetIterations).Reverse().Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
-			foreach (var reservedColorBand in itemsToTrim)
-			{
-				result.PushReservedColorBand(reservedColorBand);
-			}
+			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Reverse().Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
+
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), colorBandSet.ParentId, colorBandSet.ProjectId, colorBandSet.Name, colorBandSet.Description, itemsToKeep, targetIterations, reservedColorBands, colorBandSet.ColorBandsSerialNumber);
+
+
+			//foreach (var reservedColorBand in itemsToTrim)
+			//{
+			//	result.PushReservedColorBand(reservedColorBand);
+			//}
 
 			return result;
 		}

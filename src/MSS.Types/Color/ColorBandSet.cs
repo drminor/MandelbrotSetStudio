@@ -17,7 +17,7 @@ namespace MSS.Types
 
 		private ObjectId? _parentId;
 		private ObjectId _projectId;
-		private string? _name;
+		private string _name;
 		private string? _description;
 
 		private readonly Stack<ReservedColorBand> _reservedColorBands;
@@ -33,25 +33,25 @@ namespace MSS.Types
 		#region Constructor
 
 		public ColorBandSet()
-			: this(targetIterations: 1000)
+			: this(Guid.NewGuid().ToString(), targetIterations: 1000)
 		{ }
 
-		public ColorBandSet(int targetIterations)
-			: this(projectId: ObjectId.Empty, colorBands: null, targetIterations, Guid.NewGuid())
+		public ColorBandSet(string name, int targetIterations)
+			: this(name, projectId: ObjectId.Empty, colorBands: null, targetIterations, Guid.NewGuid())
 		{ }
 
-		public ColorBandSet(IList<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
-			: this(projectId: ObjectId.Empty, colorBands, targetIterations, colorBandsSerialNumber)
+		public ColorBandSet(string name, IList<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
+			: this(name, projectId: ObjectId.Empty, colorBands, targetIterations, colorBandsSerialNumber)
 		{ }
 
-		private ColorBandSet(ObjectId projectId, IList<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
-			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name: null, description: null, colorBands, targetIterations, null, colorBandsSerialNumber)
+		private ColorBandSet(string name, ObjectId projectId, IEnumerable<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
+			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name, description: null, colorBands, targetIterations, null, colorBandsSerialNumber)
 		{
 			LastSavedUtc = DateTime.MinValue;
 			OnFile = false;
 		}
 
-		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string? name, string? description, IList<ColorBand>? colorBands, int targetIterations, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
+		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string name, string? description, IEnumerable<ColorBand>? colorBands, int targetIterations, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
 			: base(FixBands(targetIterations, colorBands))
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"Constructing ColorBandSet with id: {id} and Serial#: {colorBandsSerialNumber}.");
@@ -125,7 +125,7 @@ namespace MSS.Types
 			}
 		}
 
-		public string? Name
+		public string Name
 		{
 			get => _name;
 			set
@@ -422,7 +422,7 @@ namespace MSS.Types
 			}
 		}
 
-		public IList<ReservedColorBand> GetReservedColorBands()
+		public IEnumerable<ReservedColorBand> GetReservedColorBands()
 		{
 			return _reservedColorBands.ToList();
 		}
@@ -586,7 +586,7 @@ namespace MSS.Types
 
 		#region Fix Bands
 
-		private static IList<ColorBand> FixBands(int targetIterations, IList<ColorBand>? colorBands)
+		private static IEnumerable<ColorBand> FixBands(int targetIterations, IEnumerable<ColorBand>? colorBands)
 		{
 			if (targetIterations < 1)
 			{
@@ -595,7 +595,7 @@ namespace MSS.Types
 
 			IList<ColorBand> result;
 
-			if (colorBands == null || colorBands.Count == 0)
+			if (colorBands == null || colorBands.Count() == 0)
 			{
 				var singleColorBand = CreateSingleColorBand(targetIterations);
 				result = new List<ColorBand> { singleColorBand };

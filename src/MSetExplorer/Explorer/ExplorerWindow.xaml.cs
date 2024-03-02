@@ -754,7 +754,10 @@ namespace MSetExplorer
 
 			var cbsInfos = _vm.ProjectViewModel.GetColorBandSetInfos();
 			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
-			_ = ColorsShowSaveWindow(cbsInfos, curColorBandSet);
+			if (ColorsShowSaveWindow(cbsInfos, curColorBandSet, out var newColorBandSet))
+			{
+				_vm.ProjectViewModel.CurrentColorBandSet = newColorBandSet;
+			}
 		}
 
 		// Colors Import
@@ -988,16 +991,18 @@ namespace MSetExplorer
 
 			//usePercentages = true;
 
+			var projectName = RMapConstants.NAME_FOR_NEW_PROJECTS;
+
 			var mapCalcSettings = RMapConstants.BuildMapCalcSettings();
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations, usePercentages);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(projectName, mapCalcSettings.TargetIterations, usePercentages);
 			var mapAreaInfo = RMapConstants.BuildHomeArea();
 
-			LoadNewProject(mapAreaInfo, colorBandSet, mapCalcSettings);
+			LoadNewProject(projectName, mapAreaInfo, colorBandSet, mapCalcSettings);
 		}
 
-		private void LoadNewProject(MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
+		private void LoadNewProject(string projectName, MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings)
 		{
-			_vm.ProjectViewModel.ProjectStartNew(mapAreaInfo, colorBandSet, mapCalcSettings);
+			_vm.ProjectViewModel.ProjectStartNew(projectName, mapAreaInfo, colorBandSet, mapCalcSettings);
 		}
 
 		private SaveResult ProjectSaveChanges()
@@ -1187,10 +1192,10 @@ namespace MSetExplorer
 			const string dash = "\u2014";
 
 			var result = projectName != null
-				? colorBandSetName != null 
-					? $"Explorer Window {dash} {projectName} {dash} {colorBandSetName}" 
-					: $"Explorer Window {dash} {projectName}"
-				: "Explorer Window";
+				? colorBandSetName != null && colorBandSetName != projectName
+					? $"Explorer {dash} {projectName} {dash} {colorBandSetName}" 
+					: $"Explorer {dash} {projectName}"
+				: "Explorer";
 
 			return result;
 		}
@@ -1238,7 +1243,7 @@ namespace MSetExplorer
 				var coords = RValueHelper.BuildRRectangle(new string[] { x1, x2, y1, y2 });
 				coordsEditorViewModel = _vm.ViewModelFactory.CreateACoordsEditorViewModel(coords, displaySize, allowEdits: true);
 				mapCalcSettings = RMapConstants.BuildMapCalcSettings();
-				colorBandSet = RMapConstants.BuildInitialColorBandSet(mapCalcSettings.TargetIterations, usePercentages: false);
+				colorBandSet = RMapConstants.BuildInitialColorBandSet(Guid.NewGuid().ToString(), mapCalcSettings.TargetIterations, usePercentages: false);
 			}
 
 			var coordsEditorWindow = new CoordsEditorWindow()
@@ -1272,7 +1277,7 @@ namespace MSetExplorer
 				_vm.ProjectViewModel.ProjectClose();
 
 				var mapAreaInfoV2 = coordsEditorViewModel.GetMapCenterAndDeltaDepreciated();
-				LoadNewProject(mapAreaInfoV2, colorBandSet, mapCalcSettings);
+				LoadNewProject(RMapConstants.NAME_FOR_NEW_PROJECTS, mapAreaInfoV2, colorBandSet, mapCalcSettings);
 			}
 		}
 
@@ -1448,7 +1453,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos/*, Project curProject*/, ColorBandSet colorBandSet)
+		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
 		{
 			//var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, colorBandSet.Name, DialogType.Save);
 			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(colorBandSet.Name, DialogType.Save, colorBandSetInfos);
@@ -1461,15 +1466,17 @@ namespace MSetExplorer
 			if (colorBandSetOpenSaveWindow.ShowDialog() == true)
 			{
 				var cpy = colorBandSet.CreateNewCopy();
-				cpy.Name = colorBandSetOpenSaveWindow.ColorBandSetName;
+				cpy.Name = colorBandSetOpenSaveWindow.ColorBandSetName ?? string.Empty;
 				cpy.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
 				cpy.AssignNewSerialNumber();
 
 				colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
+				newColorBandSet = cpy;
 				return true;
 			}
 			else
 			{
+				newColorBandSet = null;
 				return false;
 			}
 		}
@@ -1534,7 +1541,7 @@ namespace MSetExplorer
 			if (colorBandSetImportExportWindow.ShowDialog() == true)
 			{
 				var cpy = colorBandSet.CreateNewCopy();
-				cpy.Name = colorBandSetImportExportWindow.ColorBandSetName;
+				cpy.Name = colorBandSetImportExportWindow.ColorBandSetName ?? string.Empty;
 				cpy.Description = colorBandSetImportExportWindow.ColorBandSetDescription;
 
 				colorBandSetImportExportVm.ExportColorBandSet(cpy);

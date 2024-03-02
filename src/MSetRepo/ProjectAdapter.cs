@@ -188,8 +188,9 @@ namespace MSetRepo
 			}
 			else
 			{
-				result = new Project(projectRecord.Id, projectRecord.Name, projectRecord.Description, jobs, colorBandSets, lookupColorMapByTargetIteration, projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc);
+				result = new Project(projectRecord.Id, projectRecord.Name ?? projectRecord.ProjectNameTemporary, projectRecord.Description, jobs, colorBandSets, lookupColorMapByTargetIteration, projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc);
 			}
+
 			return result;
 		}
 
@@ -314,11 +315,11 @@ namespace MSetRepo
 				var jobIds = jobInfos.Select(x => x.Id).ToList();
 				var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
 
-				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, currentJobId, bytes, dateCreated, lastUpdatedUtc, lastSavedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
+				result = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, currentJobId, bytes, dateCreated, lastUpdatedUtc, lastSavedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
 			}
 			else
 			{
-				result = new ProjectInfo(projectRec.Id, projectRec.Name, projectRec.Description, currentJobId, 0, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
+				result = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, currentJobId, 0, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
 			}
 
 			return result;

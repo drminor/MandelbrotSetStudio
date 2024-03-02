@@ -43,7 +43,7 @@ namespace MSetExplorer
 
 		// Project Methods
 		//void ProjectStartNew(RRectangle coords, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
-		void ProjectStartNew(MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
+		void ProjectStartNew(string name, MapCenterAndDelta mapAreaInfo, ColorBandSet colorBandSet, MapCalcSettings mapCalcSettings);
 
 		bool ProjectOpen(string name);
 		bool ProjectSave();
