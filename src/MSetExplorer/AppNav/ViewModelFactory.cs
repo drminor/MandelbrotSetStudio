@@ -6,6 +6,7 @@ using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
+using System.Collections.Generic;
 using System.Windows.Media;
 
 namespace MSetExplorer
@@ -60,6 +61,12 @@ namespace MSetExplorer
 		public JobDetailsViewModel CreateAJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
 		{
 			return new JobDetailsViewModel(jobOwnerInfo, _projectAdapter, _mapSectionAdapter);
+		}
+
+		// Open/Save ColorBandSet
+		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos)
+		{
+			return new ColorBandSetOpenSaveViewModel(_projectAdapter, initalName, dialogType, cbsInfos);
 		}
 
 		// Open/Save ColorBandSet

@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
-using MSetRepo;
 using MSS.Common;
 using MSS.Types;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -14,7 +14,7 @@ namespace MSetExplorer
 	public class ColorBandSetOpenSaveViewModel : IColorBandSetOpenSaveViewModel, INotifyPropertyChanged
 	{
 		private readonly IProjectAdapter _projectAdapter;
-		private readonly ObjectId _projectId;
+		//private readonly ObjectId _projectId;
 		private ColorBandSetInfo? _selectedColorBandSetInfo;
 
 		private string? _selectedName;
@@ -25,17 +25,22 @@ namespace MSetExplorer
 		#region Constructor
 
 		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, ObjectId projectId, string? initialName, DialogType dialogType)
+			:this(projectAdapter, initialName, dialogType, projectAdapter.GetAllColorBandSetInfosForProject(projectId))
+		{ }
+
+		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, string? initialName, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos)
 		{
 			_projectAdapter = projectAdapter;
-			_projectId = projectId;
+			//_projectId = projectId;
 			DialogType = dialogType;
 
-			ColorBandSetInfos = new ObservableCollection<ColorBandSetInfo>(_projectAdapter.GetAllColorBandSetInfosForProject(_projectId));
+			ColorBandSetInfos = new ObservableCollection<ColorBandSetInfo>(cbsInfos);
 			_selectedColorBandSetInfo = ColorBandSetInfos.FirstOrDefault(x => x.Name == initialName);
 
 			var view = CollectionViewSource.GetDefaultView(ColorBandSetInfos);
 			_ = view.MoveCurrentTo(SelectedColorBandSetInfo);
 		}
+
 
 		#endregion
 

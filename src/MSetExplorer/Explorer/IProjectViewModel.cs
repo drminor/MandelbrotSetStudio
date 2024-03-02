@@ -2,6 +2,7 @@
 using MSS.Types;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
@@ -52,6 +53,7 @@ namespace MSetExplorer
 		long DeleteMapSectionsForUnsavedJobs();
 
 		bool TryCreatePoster(string name, string? description, SizeDbl posterSize, [NotNullWhen(true)] out Poster? poster);
+		List<ColorBandSetInfo> GetColorBandSetInfos();
 
 		void CheckProjectViewModelTargetIterations();
 	}

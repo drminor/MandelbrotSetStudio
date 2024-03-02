@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace MSS.Common
 {
@@ -32,13 +33,19 @@ namespace MSS.Common
 			var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
 			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
 
+			var timcrs = sourceProject.LookupColorMapByTargetIteration.Values.ToList();
+			
 			foreach (var oldIdAndNewCbs in colorBandSetPairs)
 			{
 				UpdateCbsParentIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, colorBandSets);
 				UpdateJobCbsIds(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, jobs);
+
+				UpdateTargetIterationColorMapRecords(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, oldIdAndNewCbs.Item2.ColorBandsSerialNumber, timcrs);
 			}
 
-			var project = CreateJobOwner(sourceProject, name, description, jobs.ToList(), colorBandSets, projectAdapter);
+			var lookupColorMapByTargetIteration = BuildDict(timcrs);
+
+			var project = CreateJobOwner(sourceProject, name, description, jobs.ToList(), colorBandSets, lookupColorMapByTargetIteration, projectAdapter);
 
 			var firstOldIdAndNewJob = jobPairs.FirstOrDefault(x => x.Item1 == sourceProject.CurrentJob.Id);
 			var newCurJob = firstOldIdAndNewJob?.Item2;
@@ -47,23 +54,37 @@ namespace MSS.Common
 			return project;
 		}
 
-		public static IJobOwner CreateJobOwner(IJobOwner sourceJobOwner, string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		private static Dictionary<int, TargetIterationColorMapRecord> BuildDict(List<TargetIterationColorMapRecord> targetIterationColorMapRecords)
+		{
+			var result = new Dictionary<int, TargetIterationColorMapRecord>();
+
+			foreach(var timcr in targetIterationColorMapRecords)
+			{
+				result.Add(timcr.TargetIterations, timcr);
+			}
+
+			return result;
+		}
+
+		public static IJobOwner CreateJobOwner(IJobOwner sourceJobOwner, string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, 
+			Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration, IProjectAdapter projectAdapter)
 		{
 			if (sourceJobOwner is Poster p)
 			{
-				return CreatePoster(name, description, p.PosterSize, p.CurrentJob.Id, jobs, colorBandSets, projectAdapter);
+				return CreatePoster(name, description, p.PosterSize, p.CurrentJob.Id, jobs, colorBandSets, lookupColorMapByTargetIteration, projectAdapter);
 			}
 			else
 			{
 				// TODO: Have Projects record the Id of the Project from which it was created -- just as Posters do.
 				// Then replace the CreateJobOwner "thingy" with a delegate that can be used for either.
-				return CreateProject(name, description, jobs, colorBandSets, projectAdapter);
+				return CreateProject(name, description, jobs, colorBandSets, lookupColorMapByTargetIteration, projectAdapter);
 			}
 		}
 
-		private static IJobOwner CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		private static IJobOwner CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, 
+			Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration, IProjectAdapter projectAdapter)
 		{
-			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets);
+			var project = projectAdapter.CreateProject(name, description, jobs, colorBandSets, lookupColorMapByTargetIteration);
 
 			if (project is null)
 			{
@@ -72,9 +93,10 @@ namespace MSS.Common
 			return project;
 		}
 
-		private static IJobOwner CreatePoster(string name, string? description, SizeDbl posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IProjectAdapter projectAdapter)
+		private static IJobOwner CreatePoster(string name, string? description, SizeDbl posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, 
+			Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration, IProjectAdapter projectAdapter)
 		{
-			var project = projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, jobs, colorBandSets);
+			var project = projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, jobs, colorBandSets, lookupColorMapByTargetIteration);
 
 			if (project is null)
 			{
@@ -227,6 +249,21 @@ namespace MSS.Common
 				if (job.ColorBandSetId == oldCbsId)
 				{
 					job.ColorBandSetId = newCbsId;
+				}
+			}
+		}
+
+		private static void UpdateTargetIterationColorMapRecords(ObjectId oldCbsId, ObjectId newCbsId, Guid newSerialNumber, List<TargetIterationColorMapRecord> targetIterationColorMapRecords)
+		{
+			for (var i = 0; i < targetIterationColorMapRecords.Count; i++)
+			{
+				var ticmr = targetIterationColorMapRecords[i];
+
+				if (ticmr.ColorBandSetId == oldCbsId)
+				{
+					var newTicmr = new TargetIterationColorMapRecord(ticmr.TargetIterations, newCbsId, newSerialNumber, DateTime.UtcNow);
+
+					targetIterationColorMapRecords[i] = newTicmr;
 				}
 			}
 		}

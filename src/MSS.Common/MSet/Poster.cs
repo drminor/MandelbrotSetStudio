@@ -46,7 +46,9 @@ namespace MSS.Common.MSet
 
 		public Poster(ObjectId id, string name, string? description, 
 			ObjectId sourceJobId, 
-			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, 
+			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets,
+			IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration,
+
 			ObjectId currentJobId,
 			SizeDbl posterSize, VectorDbl displayPosition, double displayZoom,
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
@@ -93,9 +95,11 @@ namespace MSS.Common.MSet
 
 			_ = LoadColorBandSet(currentJob, operationDescription: "as the poster is being constructed");
 			_jobTree.CurrentItem = currentJob;
-			
+
 			//_ = _jobTree.MakePreferred(_jobTree.GetCurrentPath());
 			//JobNodes = _jobTree.Nodes;
+
+			LookupColorMapByTargetIteration = lookupColorMapByTargetIteration;
 
 			Debug.WriteLine($"Poster is loaded. CurrentJobId: {CurrentJob.Id}, Current ColorBandSetId: {CurrentColorBandSet.Id}. IsDirty: {IsDirty}");
 		}
@@ -317,6 +321,9 @@ namespace MSS.Common.MSet
 			}
 		}
 
+
+		public IDictionary<int, TargetIterationColorMapRecord> LookupColorMapByTargetIteration { get; init; }
+
 		#endregion
 
 		#region Public Methods 
@@ -498,7 +505,7 @@ namespace MSS.Common.MSet
 		Poster Clone()
 		{
 			return new Poster(Id, Name, Description, SourceJobId,
-				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id,
+				_jobTree.GetItems().ToList(), _colorBandSets, LookupColorMapByTargetIteration, _jobTree.CurrentItem.Id,
 				PosterSize, DisplayPosition, DisplayZoom,
 				DateCreatedUtc, LastSavedUtc, LastAccessedUtc)
 			{
@@ -509,7 +516,7 @@ namespace MSS.Common.MSet
 		public Poster CreateNewCopy()
 		{
 			return new Poster(ObjectId.GenerateNewId(), Name, Description, SourceJobId,
-				_jobTree.GetItems().ToList(), _colorBandSets, _jobTree.CurrentItem.Id,
+				_jobTree.GetItems().ToList(), _colorBandSets, LookupColorMapByTargetIteration, _jobTree.CurrentItem.Id,
 				PosterSize, DisplayPosition, DisplayZoom, 
 				dateCreatedUtc: DateTime.UtcNow, lastSavedUtc: DateTime.MinValue, lastAccessedUtc: DateTime.UtcNow)
 			{

@@ -4,7 +4,9 @@ using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -695,8 +697,10 @@ namespace MSetExplorer
 				return;
 			}
 
+			var cbsInfos = _vm.ProjectViewModel.GetColorBandSetInfos();
+
 			var initialName = _vm.ProjectViewModel.CurrentColorBandSet.Name;
-			if (ColorsShowOpenWindow(curProject, initialName, out var colorBandSet))
+			if (ColorsShowOpenWindow(cbsInfos, initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 				CheckProjectViewModelTargetIterations();
@@ -748,8 +752,9 @@ namespace MSetExplorer
 			// TODO: Implement Save Project-Level /w new name
 			//MessageBox.Show("Will Implement ColorBandSet SaveAs later.");
 
+			var cbsInfos = _vm.ProjectViewModel.GetColorBandSetInfos();
 			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
-			_ = ColorsShowSaveWindow(curProject, curColorBandSet);
+			_ = ColorsShowSaveWindow(cbsInfos, curColorBandSet);
 		}
 
 		// Colors Import
@@ -1387,9 +1392,11 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenWindow(Project curProject, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos/*, Project curProject*/, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, initalName, DialogType.Open);
+			//var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, initalName, DialogType.Open);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(initalName, DialogType.Open, colorBandSetInfos);
+
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm
@@ -1423,6 +1430,11 @@ namespace MSetExplorer
 			}
 		}
 
+		//private IJEnumerable<ColorBandSetInfo> GetColorBandSetInfos(Project project)
+		//{
+		//	var result = project.LookupColorMapByTargetIteration.Values.Select(x => new ColorBandSetInfo(x.n))
+		//}
+
 		private void ColorBandSetOpenSaveVm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (sender is IColorBandSetOpenSaveViewModel vm)
@@ -1436,9 +1448,11 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ColorsShowSaveWindow(Project curProject, ColorBandSet colorBandSet)
+		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos/*, Project curProject*/, ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, colorBandSet.Name, DialogType.Save);
+			//var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, colorBandSet.Name, DialogType.Save);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(colorBandSet.Name, DialogType.Save, colorBandSetInfos);
+
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm

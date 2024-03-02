@@ -25,6 +25,9 @@ namespace MSS.Common.MSet
 		bool OnFile { get; }
 		bool IsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
+
+		IDictionary<int, TargetIterationColorMapRecord> LookupColorMapByTargetIteration { get; }
+
 		int GetNumberOfDirtyJobs();
 
 		//DateTime DateCreatedUtc { get; init; }

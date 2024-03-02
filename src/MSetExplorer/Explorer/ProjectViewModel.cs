@@ -5,8 +5,10 @@ using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace MSetExplorer
@@ -243,6 +245,20 @@ namespace MSetExplorer
 		//	}
 		//}
 
+		public List<ColorBandSetInfo> GetColorBandSetInfos()
+		{
+			var curProject = CurrentProject;
+
+			if (curProject == null)
+			{
+				return new List<ColorBandSetInfo>();
+			}
+
+			var result = curProject.GetColorBandSets().Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.LastUpdatedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.HighCutoff)).ToList();
+
+			return result;
+		}
+
 		#endregion
 
 		#region Event Handlers
@@ -461,7 +477,9 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Starting job for new Poster: SourceJobId: {sourceJobId} with Position&Delta: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			var newPoster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet });
+			var dict = CreateDict(job, colorBandSet);
+
+			var newPoster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet }, dict);
 
 			if (newPoster == null)
 			{
@@ -477,6 +495,15 @@ namespace MSetExplorer
 				
 				return true;
 			}
+		}
+
+		private Dictionary<int, TargetIterationColorMapRecord> CreateDict(Job job, ColorBandSet colorBandSet)
+		{
+			var result = new Dictionary<int, TargetIterationColorMapRecord>();
+
+			result.Add(job.MapCalcSettings.TargetIterations, new TargetIterationColorMapRecord(1, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow));
+
+			return result;
 		}
 
 		#endregion

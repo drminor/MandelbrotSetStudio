@@ -14,7 +14,10 @@ namespace MSS.Common
 		//void DropCollections();
 		bool ProjectCollectionIsEmpty();
 
-		Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
+		//Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
+		Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, 
+			Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration);
+
 		List<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
 		List<ObjectId> GetAllJobIdsForProject(ObjectId projectId);
 
@@ -31,7 +34,9 @@ namespace MSS.Common
 		bool DeleteProject(ObjectId projectId);
 		IEnumerable<IProjectInfo> GetAllProjectInfos();
 
-		Poster? CreatePoster(string name, string? description, SizeDbl posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
+		Poster? CreatePoster(string name, string? description, SizeDbl posterSize, ObjectId sourceJobId, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets,
+			Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration);
+
 		List<Poster> GetAllPosters();
 		List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
 		IEnumerable<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
