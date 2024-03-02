@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace MSS.Common
 {
@@ -43,7 +41,7 @@ namespace MSS.Common
 				UpdateTargetIterationColorMapRecords(oldIdAndNewCbs.Item1, oldIdAndNewCbs.Item2.Id, oldIdAndNewCbs.Item2.ColorBandsSerialNumber, timcrs);
 			}
 
-			var lookupColorMapByTargetIteration = BuildDict(timcrs);
+			var lookupColorMapByTargetIteration = CreateLookupColorMapByTargetIteration(timcrs);
 
 			var project = CreateJobOwner(sourceProject, name, description, jobs.ToList(), colorBandSets, lookupColorMapByTargetIteration, projectAdapter);
 
@@ -52,18 +50,6 @@ namespace MSS.Common
 			project.CurrentJob = newCurJob ?? Job.Empty;
 
 			return project;
-		}
-
-		private static Dictionary<int, TargetIterationColorMapRecord> BuildDict(List<TargetIterationColorMapRecord> targetIterationColorMapRecords)
-		{
-			var result = new Dictionary<int, TargetIterationColorMapRecord>();
-
-			foreach(var timcr in targetIterationColorMapRecords)
-			{
-				result.Add(timcr.TargetIterations, timcr);
-			}
-
-			return result;
 		}
 
 		public static IJobOwner CreateJobOwner(IJobOwner sourceJobOwner, string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, 
@@ -337,6 +323,31 @@ namespace MSS.Common
 
 		#region Load ColorBandSet 
 
+		public static ColorBandSet LoadColorBandSet(Job job, string operationDescription, List<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
+		{
+			var colorBandSetId = job.ColorBandSetId;
+			var targetIterations = job.MapCalcSettings.TargetIterations;
+
+			ColorBandSet? result;
+
+			if (lookupColorMapByTargetIteration.TryGetValue(targetIterations, out var targetIterationColorMap))
+			{
+				result = colorBandSets.FirstOrDefault(x => x.Id == targetIterationColorMap.ColorBandSetId);
+			}
+			else
+			{
+				result = null;
+			}
+
+			if (result == null)
+			{
+				throw new InvalidOperationException($"Was unable to LoadColorBandSet using Dict while {operationDescription}.");
+			}
+
+			return result;
+		}
+
+
 		public static ColorBandSet LoadColorBandSet(Job job, string operationDescription, List<ColorBandSet> colorBandSets, out bool wasUpdated, out bool wasCreated)
 		{
 			var colorBandSetId = job.ColorBandSetId;
@@ -404,6 +415,52 @@ namespace MSS.Common
 			}
 
 			return colorBandSet;
+		}
+
+		public static Dictionary<int, TargetIterationColorMapRecord> CreateLookupColorMapByTargetIteration(List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
+		{
+
+			foreach (var job in jobs)
+			{
+				var targetIteration = job.MapCalcSettings.TargetIterations;
+
+				if (!lookupColorMapByTargetIteration.ContainsKey(targetIteration))
+				{
+					var ticmRec = GetTargetIterationColorMapRecord(targetIteration, colorBandSets);
+					lookupColorMapByTargetIteration.Add(targetIteration, ticmRec);
+				}
+			}
+
+			return lookupColorMapByTargetIteration;
+		}
+
+		private static TargetIterationColorMapRecord GetTargetIterationColorMapRecord(int targetIterations, IEnumerable<ColorBandSet> colorBandSets)
+		{
+			var match = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, colorBandSets);
+			var result = new TargetIterationColorMapRecord(targetIterations, match.Id, match.ColorBandsSerialNumber, DateTime.UtcNow);
+
+			return result;
+		}
+
+		public static Dictionary<int, TargetIterationColorMapRecord> CreateLookupColorMapByTargetIteration(Job job, ColorBandSet colorBandSet)
+		{
+			var result = new Dictionary<int, TargetIterationColorMapRecord>();
+
+			result.Add(job.MapCalcSettings.TargetIterations, new TargetIterationColorMapRecord(1, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow));
+
+			return result;
+		}
+
+		public static Dictionary<int, TargetIterationColorMapRecord> CreateLookupColorMapByTargetIteration(IEnumerable<TargetIterationColorMapRecord> targetIterationColorMapRecords)
+		{
+			var result = new Dictionary<int, TargetIterationColorMapRecord>();
+
+			foreach (var timcr in targetIterationColorMapRecords)
+			{
+				result.Add(timcr.TargetIterations, timcr);
+			}
+
+			return result;
 		}
 
 		#endregion

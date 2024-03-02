@@ -254,8 +254,14 @@ namespace MSetExplorer
 				return new List<ColorBandSetInfo>();
 			}
 
-			var result = curProject.GetColorBandSets().Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.LastUpdatedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.HighCutoff)).ToList();
+			var result = curProject.GetColorBandSets().Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastUpdatedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.HighCutoff)).ToList();
 
+			return result;
+		}
+
+		private string GetColorBandSetName(string? name, int position)
+		{
+			var result = name ?? position.ToString();
 			return result;
 		}
 
@@ -477,7 +483,7 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Starting job for new Poster: SourceJobId: {sourceJobId} with Position&Delta: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			var dict = CreateDict(job, colorBandSet);
+			var dict = JobOwnerHelper.CreateLookupColorMapByTargetIteration(job, colorBandSet);
 
 			var newPoster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet }, dict);
 
@@ -495,15 +501,6 @@ namespace MSetExplorer
 				
 				return true;
 			}
-		}
-
-		private Dictionary<int, TargetIterationColorMapRecord> CreateDict(Job job, ColorBandSet colorBandSet)
-		{
-			var result = new Dictionary<int, TargetIterationColorMapRecord>();
-
-			result.Add(job.MapCalcSettings.TargetIterations, new TargetIterationColorMapRecord(1, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow));
-
-			return result;
 		}
 
 		#endregion

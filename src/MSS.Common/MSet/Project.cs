@@ -41,7 +41,7 @@ namespace MSS.Common.MSet
 				  description, 
 				  new List<Job> { job }, 
 				  new List<ColorBandSet> { colorBandSet },
-				  CreateDict(job, colorBandSet),
+				  JobOwnerHelper.CreateLookupColorMapByTargetIteration(job, colorBandSet),
 				  currentJobId: job.Id,
 				  dateCreatedUtc: DateTime.UtcNow,
 				  lastSavedUtc: DateTime.MinValue, 
@@ -68,14 +68,7 @@ namespace MSS.Common.MSet
 		//	OnFile = false;
 		//}
 
-		private static Dictionary<int, TargetIterationColorMapRecord> CreateDict(Job job, ColorBandSet colorBandSet)
-		{
-			var result = new Dictionary<int, TargetIterationColorMapRecord>();
 
-			result.Add(job.MapCalcSettings.TargetIterations, new TargetIterationColorMapRecord(1, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow));
-
-			return result;
-		}
 
 		public Project(ObjectId id, string name, string? description, 
 			List<Job> jobs, 
@@ -119,12 +112,13 @@ namespace MSS.Common.MSet
 				currentJob = jobsFromTree.Last();
 			}
 
-			_  = JobOwnerHelper.LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed", _colorBandSets, out var wasUpdated, out var wasCreated);
+			//_  = JobOwnerHelper.LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed", _colorBandSets, out var wasUpdated, out var wasCreated);
+			_ = JobOwnerHelper.LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed", _colorBandSets, lookupColorMapByTargetIteration);
 
-			if (wasUpdated)
-			{
-				LastUpdatedUtc = DateTime.UtcNow;
-			}
+			//if (wasUpdated)
+			//{
+			//	LastUpdatedUtc = DateTime.UtcNow;
+			//}
 
 			_jobTree.CurrentItem = currentJob;
 			_ = _jobTree.MakePreferred(_jobTree.GetCurrentPath());
@@ -256,12 +250,13 @@ namespace MSS.Common.MSet
 						var colorBandSetIdBeforeUpdate = _jobTree.CurrentItem.ColorBandSetId;
 
 						//_ = LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
-						_ = JobOwnerHelper.LoadColorBandSet(value, operationDescription: "as the Current Job is being updated", _colorBandSets, out var wasUpdated, out var wasCreated);
+						//_ = JobOwnerHelper.LoadColorBandSet(value, operationDescription: "as the Current Job is being updated", _colorBandSets, out var wasUpdated, out var wasCreated);
+						_ = JobOwnerHelper.LoadColorBandSet(value, operationDescription: "as the Current Job is being updated", _colorBandSets, LookupColorMapByTargetIteration);
 
-						if (wasUpdated)
-						{
-							LastUpdatedUtc = DateTime.UtcNow;
-						}
+						//if (wasUpdated)
+						//{
+						//	LastUpdatedUtc = DateTime.UtcNow;
+						//}
 
 						_jobTree.CurrentItem = value;
 
