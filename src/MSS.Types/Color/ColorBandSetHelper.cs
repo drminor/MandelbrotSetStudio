@@ -55,14 +55,14 @@ namespace MSS.Types
 
 		private static bool TryGetCbsSmallestCutoffGtrThan(int cutoff, IEnumerable<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			colorBandSet = colorBandSets.OrderByDescending(f => f.HighCutoff).FirstOrDefault(x => x.HighCutoff <= cutoff);
+			colorBandSet = colorBandSets.OrderByDescending(f => f.HighCutoff).OrderByDescending(f => f.DateCreated).FirstOrDefault(x => x.HighCutoff <= cutoff);
 
 			return colorBandSet != null;
 		}
 
 		private static bool TryGetCbsLargestCutoffLessThan(int cutoff, IEnumerable<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			colorBandSet = colorBandSets.OrderByDescending(x => x.HighCutoff).FirstOrDefault(x => x.HighCutoff <= cutoff);
+			colorBandSet = colorBandSets.OrderByDescending(x => x.HighCutoff).OrderByDescending(f => f.DateCreated).FirstOrDefault(x => x.HighCutoff <= cutoff);
 
 			return colorBandSet != null;
 		}
@@ -92,17 +92,12 @@ namespace MSS.Types
 		public static ColorBandSet TrimColorBandsWithCutoffGreaterThan(ColorBandSet colorBandSet, int targetIterations)
 		{
 			var cBands = colorBandSet as IList<ColorBand>;
-			var itemsToKeep = cBands.Where(x => x.Cutoff <= targetIterations).ToList();
 
-			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Reverse().Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
+			var itemsToKeep = cBands.Where(x => x.Cutoff <= targetIterations).ToList();
+			//var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Reverse().Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
+			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
 
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), colorBandSet.ParentId, colorBandSet.ProjectId, colorBandSet.Name, colorBandSet.Description, itemsToKeep, targetIterations, reservedColorBands, colorBandSet.ColorBandsSerialNumber);
-
-
-			//foreach (var reservedColorBand in itemsToTrim)
-			//{
-			//	result.PushReservedColorBand(reservedColorBand);
-			//}
 
 			return result;
 		}

@@ -91,25 +91,12 @@ namespace MSetRepo
 				// TODO: Remove this 2nd call to GetColorBandSetsForProject
 				colorBandSets = GetColorBandSetsForProject(projectRecord.Id);
 
-				var targetIterationColorMapRecs = projectRecord.TargetIterationColorMapRecords ?? new TargetIterationColorMapRecord[0];
-				var lookupColorMapByTargetIteration = JobOwnerHelper.CreateLookupColorMapByTargetIteration(targetIterationColorMapRecs);
-
-				var isDirty = false;
-				foreach (var job in jobs)
-				{
-					var targetIteration = job.MapCalcSettings.TargetIterations;
-
-					if (!lookupColorMapByTargetIteration.ContainsKey(targetIteration))
-					{
-						var ticmRec = GetTargetIterationColorMapRecord(targetIteration, colorBandSets);
-						lookupColorMapByTargetIteration.Add(targetIteration, ticmRec);
-						isDirty = true;
-					}
-				}
+				var lookupColorMapByTargetIteration = JobOwnerHelper.CreateLookupColorMapByTargetIteration(projectRecord.TargetIterationColorMapRecords);
+				var updateWasMade = JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration);
 
 				project = AssembleProject(projectRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, projectRecord.LastSavedUtc, projectRecord.LastAccessedUtc);
 
-				if (project != null && isDirty)
+				if (project != null && updateWasMade)
 				{
 					project.MarkAsDirty();
 				}
@@ -135,19 +122,6 @@ namespace MSetRepo
 
 				projectRecord = projectReaderWriter.Get(projectId);
 
-				//foreach (var job in jobs)
-				//{
-				//	job.OwnerId = projectId;
-
-				//	var targetIteration = job.MapCalcSettings.TargetIterations;
-
-				//	if (!lookupColorMapByTargetIteration.ContainsKey(targetIteration))
-				//	{
-				//		var ticmRec = GetTargetIterationColorMapRecord(targetIteration, colorBandSets);
-				//		lookupColorMapByTargetIteration.Add(targetIteration, ticmRec);
-				//	}
-				//}
-
 				foreach (var job in jobs)
 				{
 					job.OwnerId = projectId;
@@ -157,6 +131,7 @@ namespace MSetRepo
 				{
 					cbs.ProjectId = projectId;
 					cbs.AssignNewSerialNumber();
+					if (cbs.Name == RMapConstants.NAME_FOR_NEW_PROJECTS) cbs.Name = name;
 				}
 
 				JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration);
@@ -169,14 +144,6 @@ namespace MSetRepo
 			{
 				throw new InvalidOperationException($"Cannot create project with name: {name}, a project (with Id:{projectId}) already exists with that name.");
 			}
-		}
-
-		private TargetIterationColorMapRecord GetTargetIterationColorMapRecord(int targetIterations, IEnumerable<ColorBandSet> colorBandSets)
-		{
-			var match = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, colorBandSets);
-			var result = new TargetIterationColorMapRecord(targetIterations, match.Id, match.ColorBandsSerialNumber, DateTime.UtcNow);
-
-			return result;
 		}
 
 		private Project? AssembleProject(ProjectRecord? projectRecord, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration, DateTime lastSavedUtc, DateTime lastAccessedUtc)
@@ -886,21 +853,23 @@ namespace MSetRepo
 				var colorBandSets = GetColorBandSetsForProject(posterId);
 				var jobs = GetAllJobsForProject(posterId, colorBandSets);
 
-				var targetIterationColorMapRecs = posterRecord.TargetIterationColorMapRecords ?? new TargetIterationColorMapRecord[0];
-				var lookupColorMapByTargetIteration = new Dictionary<int, TargetIterationColorMapRecord>();
-				foreach (var ticmRec in targetIterationColorMapRecs)
-				{
-					lookupColorMapByTargetIteration.Add(ticmRec.TargetIterations, ticmRec);
-				}
+				var lookupColorMapByTargetIteration = JobOwnerHelper.CreateLookupColorMapByTargetIteration(posterRecord.TargetIterationColorMapRecords);
+				var updateWasMade = JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration);
 
 				poster = AssemblePoster(posterRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, posterRecord.LastSavedUtc);
+
+				if (poster != null && updateWasMade)
+				{
+					poster.MarkAsDirty();
+				}
+
+				return poster != null;
 			}
 			else
 			{
 				poster = null;
+				return false;
 			}
-
-			return poster != null;
 		}
 
 		public bool TryGetPoster(string name, [NotNullWhen(true)] out Poster? poster)
@@ -915,17 +884,23 @@ namespace MSetRepo
 				var colorBandSets = GetColorBandSetsForProject(posterId);
 				var jobs = GetAllJobsForProject(posterId, colorBandSets);
 
-				var targetIterationColorMapRecs = posterRecord.TargetIterationColorMapRecords ?? new TargetIterationColorMapRecord[0];
-				var lookupColorMapByTargetIteration = JobOwnerHelper.CreateLookupColorMapByTargetIteration(targetIterationColorMapRecs);
+				var lookupColorMapByTargetIteration = JobOwnerHelper.CreateLookupColorMapByTargetIteration(posterRecord.TargetIterationColorMapRecords);
+				var updateWasMade = JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration);
 
 				poster = AssemblePoster(posterRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, posterRecord.LastSavedUtc);
+				
+				if (poster != null && updateWasMade)
+				{
+					poster.MarkAsDirty();
+				}
+
+				return poster != null;
 			}
 			else
 			{
 				poster = null;
+				return false;
 			}
-
-			return poster != null;
 		}
 
 		private Poster BuildPoster(PosterRecord target, ColorBandSetReaderWriter colorBandSetReaderWriter)
@@ -934,8 +909,9 @@ namespace MSetRepo
 			var colorBandSets = GetColorBandSetsForProject(posterId, colorBandSetReaderWriter);
 			var jobs = GetAllJobsForPoster(posterId, colorBandSets);
 
+			var lookupColorMapByTargetIteration = new Dictionary<int, TargetIterationColorMapRecord>();
 
-			var lookupColorMapByTargetIteration = JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, new Dictionary<int, TargetIterationColorMapRecord>());
+			_ = JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration);
 
 
 			var result = new Poster(
@@ -978,9 +954,7 @@ namespace MSetRepo
 				throw new InvalidOperationException($"Cannot create a poster with name: {name}, a poster: {posterId} with that name already exists.");
 			}
 
-
 			JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration);
-
 
 			var posterSizeRounded = posterSize.Round(MidpointRounding.AwayFromZero);
 
@@ -1009,6 +983,8 @@ namespace MSetRepo
 			foreach (var cbs in colorBandSets)
 			{
 				cbs.ProjectId = posterId;
+				cbs.AssignNewSerialNumber();
+				if (cbs.Name == RMapConstants.NAME_FOR_NEW_PROJECTS) cbs.Name = name;
 			}
 
 			var result = AssemblePoster(posterRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, DateTime.MinValue);
@@ -1041,7 +1017,6 @@ namespace MSetRepo
 
 				var ts = DateTime.Now.ToLongTimeString();
 				Debug.WriteLine($"AssemblePoster completed. Name: {result.Name}, CurrentJobId: {result.CurrentJobId}, DisplayPosition: {result.DisplayPosition}, DisplayZoom: {result.DisplayZoom}. At ts={ts}.");
-
 			}
 
 			return result;

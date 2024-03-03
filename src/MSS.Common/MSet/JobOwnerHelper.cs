@@ -31,7 +31,7 @@ namespace MSS.Common
 			var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
 			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
 
-			var timcrs = sourceProject.LookupColorMapByTargetIteration.Values.ToList();
+			var timcrs = sourceProject.GetTargetIterationColorMapRecords();
 			
 			foreach (var oldIdAndNewCbs in colorBandSetPairs)
 			{
@@ -61,8 +61,6 @@ namespace MSS.Common
 			}
 			else
 			{
-				// TODO: Have Projects record the Id of the Project from which it was created -- just as Posters do.
-				// Then replace the CreateJobOwner "thingy" with a delegate that can be used for either.
 				return CreateProject(name, description, jobs, colorBandSets, lookupColorMapByTargetIteration, projectAdapter);
 			}
 		}
@@ -119,7 +117,7 @@ namespace MSS.Common
 				SaveColorBandSets(project, projectAdapter);
 				SaveJobs(project, projectAdapter);
 
-				projectAdapter.UpdateProjectTargetIterationMap(project.Id, project.LastAccessedUtc, project.LookupColorMapByTargetIteration.Values.ToArray());
+				projectAdapter.UpdateProjectTargetIterationMap(project.Id, project.LastAccessedUtc, project.GetTargetIterationColorMapRecords().ToArray());
 			}
 
 			return true;
@@ -258,7 +256,7 @@ namespace MSS.Common
 
 				if (ticmr.ColorBandSetId == oldCbsId)
 				{
-					var newTicmr = new TargetIterationColorMapRecord(ticmr.TargetIterations, newCbsId, newSerialNumber, DateTime.UtcNow);
+					var newTicmr = new TargetIterationColorMapRecord(ticmr.TargetIterations, newCbsId, ticmr.DateCreated);
 
 					targetIterationColorMapRecords[i] = newTicmr;
 				}
@@ -428,50 +426,72 @@ namespace MSS.Common
 			return colorBandSet;
 		}
 
-		public static Dictionary<int, TargetIterationColorMapRecord> CreateLookupColorMapByTargetIteration(List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
+		public static bool CreateLookupColorMapByTargetIteration(List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets, Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
 		{
-
+			var updateWasMade = false;
 			foreach (var job in jobs)
 			{
 				var targetIteration = job.MapCalcSettings.TargetIterations;
 
 				if (!lookupColorMapByTargetIteration.ContainsKey(targetIteration))
 				{
-					var ticmRec = GetTargetIterationColorMapRecord(targetIteration, colorBandSets);
+					var match = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIteration, colorBandSets);
+					var ticmRec = new TargetIterationColorMapRecord(targetIteration, match.Id, match.DateCreated);
+
 					lookupColorMapByTargetIteration.Add(targetIteration, ticmRec);
+
+					updateWasMade = true;
 				}
 			}
 
-			return lookupColorMapByTargetIteration;
-		}
-
-		private static TargetIterationColorMapRecord GetTargetIterationColorMapRecord(int targetIterations, IEnumerable<ColorBandSet> colorBandSets)
-		{
-			var match = ColorBandSetHelper.GetBestMatchingColorBandSet(targetIterations, colorBandSets);
-			var result = new TargetIterationColorMapRecord(targetIterations, match.Id, match.ColorBandsSerialNumber, DateTime.UtcNow);
-
-			return result;
+			return updateWasMade;
 		}
 
 		public static Dictionary<int, TargetIterationColorMapRecord> CreateLookupColorMapByTargetIteration(Job job, ColorBandSet colorBandSet)
 		{
+			Debug.Assert(job.MapCalcSettings.TargetIterations == colorBandSet.HighCutoff, "The Jobs's TargetIterations does not match the ColorBandSet's High Cutoff.");
+
 			var result = new Dictionary<int, TargetIterationColorMapRecord>();
 
-			result.Add(job.MapCalcSettings.TargetIterations, new TargetIterationColorMapRecord(1, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow));
+			result.Add(job.MapCalcSettings.TargetIterations, new TargetIterationColorMapRecord(job.MapCalcSettings.TargetIterations, colorBandSet.Id, colorBandSet.DateCreated));
 
 			return result;
 		}
 
-		public static Dictionary<int, TargetIterationColorMapRecord> CreateLookupColorMapByTargetIteration(IEnumerable<TargetIterationColorMapRecord> targetIterationColorMapRecords)
+		public static Dictionary<int, TargetIterationColorMapRecord> CreateLookupColorMapByTargetIteration(IEnumerable<TargetIterationColorMapRecord>? targetIterationColorMapRecords)
 		{
-			var result = new Dictionary<int, TargetIterationColorMapRecord>();
-
-			foreach (var timcr in targetIterationColorMapRecords)
+			if (targetIterationColorMapRecords == null)
 			{
-				result.Add(timcr.TargetIterations, timcr);
+				return new Dictionary<int, TargetIterationColorMapRecord>();
 			}
+			else
+			{
+				var result = new Dictionary<int, TargetIterationColorMapRecord>(targetIterationColorMapRecords.Select(x => new KeyValuePair<int, TargetIterationColorMapRecord>(x.TargetIterations, x)));
+				return result;
+			}
+		}
 
-			return result;
+		public static void AddIteratationColorMapRecord(ColorBandSet colorBandSet, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration, bool makeDefault)
+		{
+			if (makeDefault)
+			{
+				var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.DateCreated);
+
+				// Add or update
+				if (lookupColorMapByTargetIteration.ContainsKey(colorBandSet.HighCutoff))
+					lookupColorMapByTargetIteration[colorBandSet.HighCutoff] = ticmr;
+				else
+					lookupColorMapByTargetIteration.Add(colorBandSet.HighCutoff, ticmr);
+			}
+			else
+			{
+				// Add only if there is no entry for the targetIteration.
+				if (!lookupColorMapByTargetIteration.ContainsKey(colorBandSet.HighCutoff))
+				{
+					var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.DateCreated);
+					lookupColorMapByTargetIteration.Add(colorBandSet.HighCutoff, ticmr);
+				}
+			}
 		}
 
 		#endregion

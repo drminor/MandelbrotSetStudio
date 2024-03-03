@@ -26,7 +26,7 @@ namespace MSS.Common.MSet
 		bool IsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
 
-		IDictionary<int, TargetIterationColorMapRecord> LookupColorMapByTargetIteration { get; }
+		List<TargetIterationColorMapRecord> GetTargetIterationColorMapRecords();
 
 		int GetNumberOfDirtyJobs();
 

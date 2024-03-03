@@ -45,8 +45,7 @@ namespace MSetRepo
 
 		public ProjectRecord MapTo(Project source)
 		{
-			var lookupColorMapByTargetIterationRecs = source.LookupColorMapByTargetIteration.Values.ToArray();
-
+			var lookupColorMapByTargetIterationRecs = source.GetTargetIterationColorMapRecords().ToArray();
 
 			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc)
 			{

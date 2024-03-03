@@ -24,6 +24,8 @@ namespace MSS.Common.MSet
 		private readonly IJobTree _jobTree;
 
 		private readonly List<ColorBandSet> _colorBandSets;
+		private readonly IDictionary<int, TargetIterationColorMapRecord> _lookupColorMapByTargetIteration;
+
 
 		private readonly ReaderWriterLockSlim _stateLock;
 
@@ -125,7 +127,7 @@ namespace MSS.Common.MSet
 
 			JobNodes = _jobTree.Nodes;
 
-			LookupColorMapByTargetIteration = lookupColorMapByTargetIteration;
+			_lookupColorMapByTargetIteration = lookupColorMapByTargetIteration;
 
 			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentItem.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
 		}
@@ -251,7 +253,7 @@ namespace MSS.Common.MSet
 
 						//_ = LoadColorBandSet(value, operationDescription: "as the Current Job is being updated");
 						//_ = JobOwnerHelper.LoadColorBandSet(value, operationDescription: "as the Current Job is being updated", _colorBandSets, out var wasUpdated, out var wasCreated);
-						_ = JobOwnerHelper.LoadColorBandSet(value, operationDescription: "as the Current Job is being updated", _colorBandSets, LookupColorMapByTargetIteration);
+						_ = JobOwnerHelper.LoadColorBandSet(value, operationDescription: "as the Current Job is being updated", _colorBandSets, _lookupColorMapByTargetIteration);
 
 						//if (wasUpdated)
 						//{
@@ -316,7 +318,7 @@ namespace MSS.Common.MSet
 							_colorBandSets.Add(newCbs);
 						}
 
-						AddOrUpdateTargetIteratationColorMapRecord(newCbs);
+						JobOwnerHelper.AddIteratationColorMapRecord(newCbs, _lookupColorMapByTargetIteration, makeDefault: true);
 
 						CurrentJob.ColorBandSetId = newCbs.Id;
 						LastUpdatedUtc = DateTime.UtcNow;
@@ -345,8 +347,6 @@ namespace MSS.Common.MSet
 
 		//TODO: Add a "PreferredPath property to the Project class.
 
-		public IDictionary<int, TargetIterationColorMapRecord> LookupColorMapByTargetIteration { get; init; }
-
 		#endregion
 
 		#region Public Methods
@@ -360,7 +360,7 @@ namespace MSS.Common.MSet
 				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
 			}
 
-			AddOrUpdateTargetIteratationColorMapRecord(colorBandSet);
+			JobOwnerHelper.AddIteratationColorMapRecord(colorBandSet, _lookupColorMapByTargetIteration, makeDefault:true);
 
 			_ = _jobTree.Add(job, selectTheAddedItem: true);
 
@@ -371,14 +371,7 @@ namespace MSS.Common.MSet
 		{
 			_colorBandSets.Add(colorBandSet);
 
-			if (makeDefault)
-			{
-				AddOrUpdateTargetIteratationColorMapRecord(colorBandSet);
-			}
-			else
-			{
-				AddTargetIteratationColorMapRecord(colorBandSet);
-			}
+			JobOwnerHelper.AddIteratationColorMapRecord(colorBandSet, _lookupColorMapByTargetIteration, makeDefault);
 
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
@@ -393,6 +386,13 @@ namespace MSS.Common.MSet
 		public void MarkAsDirty()
 		{
 			LastUpdatedUtc = DateTime.UtcNow;
+		}
+
+		public List<TargetIterationColorMapRecord> GetTargetIterationColorMapRecords()
+		{
+			List<TargetIterationColorMapRecord> result = _lookupColorMapByTargetIteration.Values.ToList();
+
+			return result;
 		}
 
 		#endregion
@@ -518,24 +518,6 @@ namespace MSS.Common.MSet
 		#endregion
 
 		#region Private Methods
-
-		private void AddOrUpdateTargetIteratationColorMapRecord(ColorBandSet colorBandSet)
-		{
-			var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow);
-
-			if (LookupColorMapByTargetIteration.ContainsKey(colorBandSet.HighCutoff))
-				LookupColorMapByTargetIteration[colorBandSet.HighCutoff] = ticmr;
-			else
-				LookupColorMapByTargetIteration.Add(colorBandSet.HighCutoff, ticmr);
-		}
-
-		private void AddTargetIteratationColorMapRecord(ColorBandSet colorBandSet)
-		{
-			var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.ColorBandsSerialNumber, DateTime.UtcNow);
-
-			if (!LookupColorMapByTargetIteration.ContainsKey(colorBandSet.HighCutoff))
-				LookupColorMapByTargetIteration.Add(colorBandSet.HighCutoff, ticmr);
-		}
 
 		#endregion
 
