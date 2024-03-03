@@ -104,6 +104,11 @@ namespace MSS.Types
 
 		public int PlaceColor(int countVal, double escapeVelocity, Span<byte> destination)
         {
+			if (countVal == _highColorBandCutoff - 1)
+			{
+				Debug.WriteLine($"Here at ColorMap and 399.");
+			} 
+
             var errors = 0;
 
             var idx = GetColorMapIndex(countVal);
@@ -117,11 +122,14 @@ namespace MSS.Types
             {
 				if (idx == _highColorBandIndex && countVal > _highColorBandCutoff)
 				{
-					countVal = _highColorBandCutoff + 1;
+					//countVal = _highColorBandCutoff + 1;
+					PutColor(cme.EndColor.ColorComps, destination);
 				}
-
-				var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-                errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
+				else
+				{
+					var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
+					errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
+				}
             }
 
             if (HighlightSelectedColorBand && idx != _currentColorBandIndex)

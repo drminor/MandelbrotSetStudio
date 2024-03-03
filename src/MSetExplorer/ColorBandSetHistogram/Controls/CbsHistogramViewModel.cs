@@ -200,7 +200,7 @@ namespace MSetExplorer
 						IsDirty = false;
 						_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 
-						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
+						_mapSectionHistogramProcessor.Clear(value.HighCutoff);
 						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, _currentColorBandSet);
 					}
 
@@ -1675,7 +1675,7 @@ namespace MSetExplorer
 				{
 					if (UsePercentages)
 					{
-						Debug.WriteLine("WARNING: Percentage Values are unavailable. Not using Percentages, using Cutoffs instead.");
+						Debug.WriteLine($"WARNING: Not using Percentages, using Cutoffs instead. Percentage Values are unavailable: SomeNan = {histCutoffsSnapShot.SomePercentagesAreNan}. AllZero = {histCutoffsSnapShot.AllPercentagesAreZero}. ");
 					}
 
 					// Percentages are adjusted based on Cutoffs

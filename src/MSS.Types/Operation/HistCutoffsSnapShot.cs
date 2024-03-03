@@ -15,8 +15,9 @@ namespace MSS.Types
 			UpperCatchAllValue = upperCatchAllValue;
 			PercentageBands = percentageBands;
 
-			var noneAreNaN = percentageBands.All(x => !double.IsNaN(x.Percentage));
-			HavePercentages = noneAreNaN && percentageBands.Any(x => x.Percentage != 0);
+			SomePercentagesAreNan = !percentageBands.All(x => !double.IsNaN(x.Percentage));
+			AllPercentagesAreZero = !percentageBands.Any(x => x.Percentage != 0);
+			//HavePercentages = noneAreNaN && percentageBands.Any(x => x.Percentage != 0);
 		}
 
 		public ObjectId ColorBandSetId { get; init; }
@@ -27,7 +28,11 @@ namespace MSS.Types
 		public long UpperCatchAllValue { get; init; }
 
 		public PercentageBand[] PercentageBands { get; init; }
-		public bool HavePercentages { get; init; }
+
+		public bool SomePercentagesAreNan { get; init; }
+		public bool AllPercentagesAreZero { get; init; }
+
+		public bool HavePercentages => !SomePercentagesAreNan && !AllPercentagesAreZero;
 
 		public int CutoffsLength => PercentageBands.Length;
 

@@ -302,6 +302,8 @@ namespace MSetExplorer
 					SaveTheZValues = CurrentJob.MapCalcSettings.SaveTheZValues;
 				}
 
+				_previewColorBandSet = null;
+
 				//OnPropertyChanged(nameof(IProjectViewModel.CanGoBack));
 				//OnPropertyChanged(nameof(IProjectViewModel.CanGoForward));
 				OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));

@@ -259,7 +259,7 @@ namespace MSS.Common.MSet
 						//var colorBandSetIdBeforeUpdate = _currentColorBandSet.Id;
 
 						var targetIterations = value.MapCalcSettings.TargetIterations;
-						CurrentColorBandSet = JobOwnerHelper.LoadColorBandSet(targetIterations, operationDescription: "as the Current Job is being updated", _colorBandSets, _lookupColorMapByTargetIteration);
+						_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(targetIterations, operationDescription: "as the Current Job is being updated", _colorBandSets, _lookupColorMapByTargetIteration);
 
 						_jobTree.CurrentItem = value;
 
@@ -343,34 +343,49 @@ namespace MSS.Common.MSet
 				{
 					var newCbs = value;
 
-					if (newCbs.Id != CurrentJob.ColorBandSetId)
+					if (!_colorBandSets.Contains(newCbs))
 					{
-						if (!_colorBandSets.Contains(newCbs))
+						if (newCbs.ProjectId != Id)
 						{
-							if (newCbs.ProjectId != Id)
-							{
-								// Make a copy of the incoming ColorBandSet
-								// and set it's ProjectId to this Project's Id
-								// and give it a new SerialNumber.
-								newCbs = newCbs.CreateNewCopy();
-								newCbs.AssignNewSerialNumber();
-								newCbs.ProjectId = Id;
-							}
-
-							_colorBandSets.Add(newCbs);
+							// Make a copy of the incoming ColorBandSet
+							// and set it's ProjectId to this Project's Id
+							// and give it a new SerialNumber.
+							newCbs = newCbs.CreateNewCopy();
+							newCbs.AssignNewSerialNumber();
+							newCbs.ProjectId = Id;
 						}
 
-						JobOwnerHelper.AddIteratationColorMapRecord(newCbs, _lookupColorMapByTargetIteration, makeDefault: true);
-
-						CurrentJob.ColorBandSetId = newCbs.Id;
-						LastUpdatedUtc = DateTime.UtcNow;
-
-						OnPropertyChanged(nameof(CurrentColorBandSet));
+						_colorBandSets.Add(newCbs);
 					}
+
+					JobOwnerHelper.AddIteratationColorMapRecord(newCbs, _lookupColorMapByTargetIteration, makeDefault: true);
+
+					//CurrentJob.ColorBandSetId = newCbs.Id;
+
+					_currentColorBandSet = newCbs;
+					LastUpdatedUtc = DateTime.UtcNow;
+
+					OnPropertyChanged(nameof(CurrentColorBandSet));
 				}
 				else
 				{
-					Debug.WriteLine($"Not setting the CurrentColorBandSet, the CurrentColorBandSet is already updated.");
+					ObjectId currentCbsIdForTargetIterations = ObjectId.Empty;
+
+					if (_lookupColorMapByTargetIteration.TryGetValue(value.TargetIterations, out var ticmr))
+					{
+						currentCbsIdForTargetIterations = ticmr.ColorBandSetId;
+					}
+
+					if (value.Id != currentCbsIdForTargetIterations)
+					{
+						JobOwnerHelper.AddIteratationColorMapRecord(value, _lookupColorMapByTargetIteration, makeDefault: true);
+						Debug.WriteLine($"WARNING: The Default ColorBandSet for {value.TargetIterations} is being set HOWEVER the CurrentColorBandSet already had this same value.");
+					}
+					else
+					{
+						Debug.WriteLine($"Not setting the CurrentColorBandSet, the CurrentColorBandSet is already updated.");
+					}
+
 				}
 			}
 		}
@@ -411,7 +426,10 @@ namespace MSS.Common.MSet
 
 		public void Add(ColorBandSet colorBandSet, bool makeDefault)
 		{
-			_colorBandSets.Add(colorBandSet);
+			if (!_colorBandSets.Any(x => x.Id == colorBandSet.Id))
+			{
+				_colorBandSets.Add(colorBandSet);
+			}
 
 			JobOwnerHelper.AddIteratationColorMapRecord(colorBandSet, _lookupColorMapByTargetIteration, makeDefault);
 

@@ -33,11 +33,11 @@ namespace MSS.Types
 		#region Constructor
 
 		public ColorBandSet()
-			: this(Guid.NewGuid().ToString(), targetIterations: 1000)
+			: this(targetIterations: 1000)
 		{ }
 
-		public ColorBandSet(string name, int targetIterations)
-			: this(name, projectId: ObjectId.Empty, colorBands: null, targetIterations, Guid.NewGuid())
+		public ColorBandSet(int targetIterations)
+			: this(Guid.NewGuid().ToString(), projectId: ObjectId.Empty, colorBands: null, targetIterations, Guid.NewGuid())
 		{ }
 
 		public ColorBandSet(string name, IList<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)

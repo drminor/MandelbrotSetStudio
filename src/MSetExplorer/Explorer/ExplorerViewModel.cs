@@ -289,6 +289,9 @@ namespace MSetExplorer
 			var newMapAreaInfo = curJob.MapAreaInfo;
 			var newColorBandSet = ProjectViewModel.CurrentColorBandSet;
 
+			Debug.WriteLine($"ExplorerViewModel. SubmittingMapDisplayJob. The ColorBandSetId: {newColorBandSet.Id} with TargetIterations: {newColorBandSet.TargetIterations}. " +
+				$"The CbsHistogramViewModel has Id: {CbsHistogramViewModel.ColorBandSet.Id}. The CbsHistogramViewModel IsDirty = {CbsHistogramViewModel.IsDirty}.");
+
 			var existingMapCalcSettings = curJob.MapCalcSettings;
 			var newMapCalcSettings = new MapCalcSettings(existingMapCalcSettings.TargetIterations, existingMapCalcSettings.Threshold, ProjectViewModel.CalculateEscapeVelocities, ProjectViewModel.SaveTheZValues);
 

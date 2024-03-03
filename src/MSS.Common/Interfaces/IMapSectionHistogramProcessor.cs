@@ -15,6 +15,7 @@ namespace MSS.Common
 		//void AddWork(HistogramWorkRequest histogramWorkRequest);
 		void Reset();
 		void Reset(int newSize);
+		void Clear(int newSize);
 		void Stop(bool immediately);
 		void Dispose();
 

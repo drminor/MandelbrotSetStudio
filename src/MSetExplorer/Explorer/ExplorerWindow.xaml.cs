@@ -687,9 +687,6 @@ namespace MSetExplorer
 				return;
 			}
 
-			// TODO: Implement Project-Level Select different ColorBandSet
-			//MessageBox.Show("Will Implement ColorBandSet Open Project-Level later.");
-
 			var curProject = _vm.ProjectViewModel.CurrentProject;
 
 			if (curProject == null)
@@ -705,8 +702,8 @@ namespace MSetExplorer
 				Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 				CheckProjectViewModelTargetIterations();
 
-				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
-				_vm.ProjectViewModel.CurrentColorBandSet = adjustedCbs;
+				//var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
+				_vm.ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 			else
 			{
@@ -749,9 +746,6 @@ namespace MSetExplorer
 				return;
 			}
 
-			// TODO: Implement Save Project-Level /w new name
-			//MessageBox.Show("Will Implement ColorBandSet SaveAs later.");
-
 			var cbsInfos = _vm.ProjectViewModel.GetColorBandSetInfos();
 			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
 			if (ColorsShowSaveWindow(cbsInfos, curColorBandSet, out var newColorBandSet))
@@ -780,8 +774,8 @@ namespace MSetExplorer
 
 				CheckProjectViewModelTargetIterations();
 
-				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
-				_vm.ProjectViewModel.CurrentColorBandSet = adjustedCbs;
+				//var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
+				_vm.ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 			else
 			{
@@ -1397,11 +1391,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos/*, Project curProject*/, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			//var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, initalName, DialogType.Open);
 			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(initalName, DialogType.Open, colorBandSetInfos);
-
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
 				DataContext = colorBandSetOpenSaveVm
@@ -1413,7 +1405,7 @@ namespace MSetExplorer
 				if (colorBandSetOpenSaveWindow.ShowDialog() == true)
 				{
 					var id = colorBandSetOpenSaveWindow.ColorBandSetId;
-					if (id != null && colorBandSetOpenSaveVm.TryOpenColorBandSet(id.Value, out colorBandSet))
+					if (TryGetOpenedAdjustedColorBandSet(id, colorBandSetOpenSaveVm, out colorBandSet))
 					{
 						return true;
 					}
@@ -1435,20 +1427,15 @@ namespace MSetExplorer
 			}
 		}
 
-		//private IJEnumerable<ColorBandSetInfo> GetColorBandSetInfos(Project project)
-		//{
-		//	var result = project.LookupColorMapByTargetIteration.Values.Select(x => new ColorBandSetInfo(x.n))
-		//}
-
 		private void ColorBandSetOpenSaveVm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (sender is IColorBandSetOpenSaveViewModel vm)
+			if (sender is IColorBandSetOpenSaveViewModel vm/* && !_vm.ProjectViewModel.CurrentJob.IsEmpty*/)
 			{
 				var id = vm.SelectedColorBandSetInfo?.Id;
-				if (id != null && vm.TryOpenColorBandSet(id.Value, out var colorBandSet))
+
+				if (TryGetOpenedAdjustedColorBandSet(id, vm, out var adjustedColorBandSet))
 				{
-					//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
-					_vm.ProjectViewModel.PreviewColorBandSet = colorBandSet;
+					_vm.ProjectViewModel.PreviewColorBandSet = adjustedColorBandSet;
 				}
 			}
 		}
@@ -1495,7 +1482,7 @@ namespace MSetExplorer
 				if (colorBandSetImportExportWindow.ShowDialog() == true)
 				{
 					var id = colorBandSetImportExportWindow.ColorBandSetId;
-					if (id != null && colorBandSetImportExportVm.TryImportColorBandSet(id.Value, out colorBandSet))
+					if (TryGetImportedAdjustedColorBandSet(id, colorBandSetImportExportVm, out colorBandSet))
 					{
 						return true;
 					}
@@ -1522,10 +1509,10 @@ namespace MSetExplorer
 			if (sender is IColorBandSetImportExportViewModel vm)
 			{
 				var id = vm.SelectedColorBandSetInfo?.Id;
-				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
+
+				if (TryGetImportedAdjustedColorBandSet(id, vm, out var adjustedColorBandSet))
 				{
-					//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
-					_vm.ProjectViewModel.PreviewColorBandSet = colorBandSet;
+					_vm.ProjectViewModel.PreviewColorBandSet = adjustedColorBandSet;
 				}
 			}
 		}
@@ -1549,6 +1536,54 @@ namespace MSetExplorer
 			}
 			else
 			{ 
+				return false;
+			}
+		}
+
+		private bool TryGetOpenedAdjustedColorBandSet(ObjectId? colorBandSetId, IColorBandSetOpenSaveViewModel colorBandSetOpenSaveViewModel, [NotNullWhen(true)] out ColorBandSet? adjustedColorBandSet)
+		{
+			if (colorBandSetId.HasValue && !_vm.ProjectViewModel.CurrentJob.IsEmpty)
+			{
+				var targetIterations = _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations;
+
+				if (colorBandSetOpenSaveViewModel.TryOpenColorBandSet(colorBandSetId.Value, out var colorBandSet))
+				{
+					adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+					return true;
+				}
+				else
+				{
+					adjustedColorBandSet = null;
+					return false;
+				}
+			}
+			else
+			{
+				adjustedColorBandSet = null;
+				return false;
+			}
+		}
+
+		private bool TryGetImportedAdjustedColorBandSet(ObjectId? colorBandSetId, IColorBandSetImportExportViewModel colorBandSetOpenSaveViewModel, [NotNullWhen(true)] out ColorBandSet? adjustedColorBandSet)
+		{
+			if (colorBandSetId.HasValue && !_vm.ProjectViewModel.CurrentJob.IsEmpty)
+			{
+				var targetIterations = _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations;
+
+				if (colorBandSetOpenSaveViewModel.TryImportColorBandSet(colorBandSetId.Value, out var colorBandSet))
+				{
+					adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+					return true;
+				}
+				else
+				{
+					adjustedColorBandSet = null;
+					return false;
+				}
+			}
+			else
+			{
+				adjustedColorBandSet = null;
 				return false;
 			}
 		}

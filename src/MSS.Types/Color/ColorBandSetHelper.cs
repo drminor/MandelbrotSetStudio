@@ -47,7 +47,15 @@ namespace MSS.Types
 				else
 				{
 					Debug.WriteLine("This should never happen unless the colorBandSet collection is empty.");
-					return colorBandSets.First();
+					var cbs = colorBandSets.First();
+
+					if (cbs == null)
+					{
+						cbs = new ColorBandSet(cutoff);
+						Debug.WriteLine("The collection of ColorBandSets is empty as GetBestMatchingColorBandSet is called.");
+					}
+
+					return cbs;
 				}
 			}
 		}
