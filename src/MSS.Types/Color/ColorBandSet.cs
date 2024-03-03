@@ -335,39 +335,39 @@ namespace MSS.Types
 			}
 		}
 
-		public bool UpdatePercentagesCheckOffsets(PercentageBand[] newPercentages)
-		{
-			var len = Math.Min(newPercentages.Length - 1, Count); // The last PercentageBand holds the UpperCatchAll
+		//public bool UpdatePercentagesCheckOffsets(PercentageBand[] newPercentages)
+		//{
+		//	var len = Math.Min(newPercentages.Length - 1, Count); // The last PercentageBand holds the UpperCatchAll
 
-			var allMatched = true;
-			for (var i = 0; i < len; i++)
-			{
-				if (Items[i].Cutoff != newPercentages[i].Cutoff)
-				{
-					allMatched = false;
-					break;
-				}
-			}
+		//	var allMatched = true;
+		//	for (var i = 0; i < len; i++)
+		//	{
+		//		if (Items[i].Cutoff != newPercentages[i].Cutoff)
+		//		{
+		//			allMatched = false;
+		//			break;
+		//		}
+		//	}
 
-			if (!allMatched)
-			{
-				Debug.WriteLine($"WARNING: No percentages are not receiving an update. The offsets don't match.");
-				return false;
-			}
+		//	if (!allMatched)
+		//	{
+		//		Debug.WriteLine($"WARNING: No percentages are not receiving an update. The offsets don't match.");
+		//		return false;
+		//	}
 
-			if (len != Count)
-			{
-				Debug.WriteLine($"WARNING: {Count - len} Percentages are not receiving an update.");
-			}
+		//	if (len != Count)
+		//	{
+		//		Debug.WriteLine($"WARNING: {Count - len} Percentages are not receiving an update.");
+		//	}
 
-			for (var i = 0; i < len; i++)
-			{
-				var cb = Items[i];
-				cb.Percentage = newPercentages[i].Percentage;
-			}
+		//	for (var i = 0; i < len; i++)
+		//	{
+		//		var cb = Items[i];
+		//		cb.Percentage = newPercentages[i].Percentage;
+		//	}
 
-			return true;
-		}
+		//	return true;
+		//}
 
 		public bool UpdatePercentagesNoCheck(PercentageBand[] newPercentages)
 		{

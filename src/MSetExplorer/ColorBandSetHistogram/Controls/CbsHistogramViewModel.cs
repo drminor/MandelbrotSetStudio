@@ -1,4 +1,5 @@
-﻿using MSS.Common;
+﻿using MongoDB.Bson;
+using MSS.Common;
 using MSS.Types;
 using System;
 using System.Collections.Generic;
@@ -51,7 +52,7 @@ namespace MSetExplorer
 
 		private readonly bool _traceCBSVersions = true;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#endregion
 
@@ -196,15 +197,14 @@ namespace MSetExplorer
 					{
 						//_colorBandSetHistoryCollection.Load(value.Clone());
 						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
-
+						IsDirty = false;
+						_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 
 						_mapSectionHistogramProcessor.Reset(value.HighCutoff);
-						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, value);
+						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, _currentColorBandSet);
 					}
 
 					ApplyHistogram(histCutoffsSnapShot);
-
-					IsDirty = false;
 
 					// This sets the ColorBandsView
 					UpdateViewAndRaisePropertyChangeEvents();
@@ -714,6 +714,8 @@ namespace MSetExplorer
 			_colorBandSetHistoryCollection.Load(_colorBandSet);
 
 			var curPos = CurrentColorBandIndex;
+
+			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
 
 			IsDirty = false;
@@ -727,6 +729,7 @@ namespace MSetExplorer
 			_colorBandSetHistoryCollection.Trim(0);
 
 			var curPos = CurrentColorBandIndex;
+			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
 
 			IsDirty = false;
@@ -1254,6 +1257,7 @@ namespace MSetExplorer
 			if (_colorBandSetHistoryCollection.MoveCurrentTo(_colorBandSetHistoryCollection.CurrentIndex - 1))
 			{
 				var curPos = CurrentColorBandIndex;
+				_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 				UpdateViewAndRaisePropertyChangeEvents(curPos);
 				return true;
 			}
@@ -1268,6 +1272,7 @@ namespace MSetExplorer
 			if (_colorBandSetHistoryCollection.MoveCurrentTo(_colorBandSetHistoryCollection.CurrentIndex + 1))
 			{
 				var curPos = CurrentColorBandIndex;
+				_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 				UpdateViewAndRaisePropertyChangeEvents(curPos);
 				return true;
 			}
@@ -1564,7 +1569,7 @@ namespace MSetExplorer
 
 		private void UpdateViewAndRaisePropertyChangeEvents(int? currentColorBandIndex = null)
 		{
-			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
+			//_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 
 			if (ColorBandsView is INotifyCollectionChanged t1) t1.CollectionChanged -= ColorBandsView_CollectionChanged;
 
@@ -1668,6 +1673,11 @@ namespace MSetExplorer
 				}
 				else
 				{
+					if (UsePercentages)
+					{
+						Debug.WriteLine("WARNING: Percentage Values are unavailable. Not using Percentages, using Cutoffs instead.");
+					}
+
 					// Percentages are adjusted based on Cutoffs
 					UpdatePercentages(histCutoffsSnapShot);
 				}
@@ -1688,7 +1698,7 @@ namespace MSetExplorer
 
 			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
 			{
-				ApplyNewPercentages(newPercentages);
+				ApplyNewPercentages(newPercentages, histCutoffsSnapShot.ColorBandSetId);
 			}
 		}
 
@@ -1696,14 +1706,19 @@ namespace MSetExplorer
 		{
 			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
 			{
-				ApplyNewPercentages(newPercentages);
+				ApplyNewPercentages(newPercentages, histCutoffsSnapShot.ColorBandSetId);
 			}
 		}
 
-		private void ApplyNewPercentages(PercentageBand[] newPercentages)
+		private void ApplyNewPercentages(PercentageBand[] newPercentages, ObjectId colorBandSetId)
 		{
 			lock (_histLock)
 			{
+				if (_currentColorBandSet.Id != colorBandSetId)
+				{
+					Debug.WriteLine("The HistCutoffsSnapShot is stale, not Applying the New Percentages.");
+				}
+
 				//if (_currentColorBandSet.UpdatePercentagesCheckOffsets(newPercentages))
 
 				if (_currentColorBandSet.UpdatePercentagesNoCheck(newPercentages))
@@ -1749,22 +1764,32 @@ namespace MSetExplorer
 
 		private void UpdateCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
+			if (histCutoffsSnapShot.ColorBandSetId != _currentColorBandSet.Id)
+			{
+				Debug.WriteLine("The HistCutoffsSnapShot is stale, not Updating the New Cutoffs.");
+			}
+
 			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var newCutoffBands))
 			{
 				CheckNewCutoffs(histCutoffsSnapShot.PercentageBands, newCutoffBands);
 				ReportNewCutoffs(histCutoffsSnapShot, histCutoffsSnapShot.PercentageBands, newCutoffBands);
 
-				ApplyNewCutoffs(newCutoffBands);
+				ApplyNewCutoffs(newCutoffBands, histCutoffsSnapShot.ColorBandSetId);
 
 				var newColorBandSet = _currentColorBandSet.CreateNewCopy();
 				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
 			}
 		}
 
-		private void ApplyNewCutoffs(CutoffBand[] newCutoffs)
+		private void ApplyNewCutoffs(CutoffBand[] newCutoffs, ObjectId colorBandSetId)
 		{
 			lock (_histLock)
 			{
+				if (_currentColorBandSet.Id != colorBandSetId)
+				{
+					Debug.WriteLine("The HistCutoffsSnapShot is stale, not Applying the New Cutoffs.");
+				}
+
 				_disableProcessCurColorBandPropertyChanges = true;
 
 				if (_currentColorBandSet.UpdateCutoffs(newCutoffs))
@@ -1790,10 +1815,10 @@ namespace MSetExplorer
 			lock (_histLock)
 			{
 				result = new HistCutoffsSnapShot(
+					colorBandSet.Id,
 					histogram.GetKeyValuePairs(),
 					histogram.Length,
 					histogram.UpperCatchAllValue,
-					colorBandSet.HavePercentages,
 					ColorBandSetHelper.GetPercentageBands(colorBandSet)
 				);
 			}

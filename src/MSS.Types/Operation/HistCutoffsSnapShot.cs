@@ -1,28 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using MongoDB.Bson;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MSS.Types
 {
 	public class HistCutoffsSnapShot
 	{
-		public HistCutoffsSnapShot(KeyValuePair<int, int>[] histKeyValuePairs, int histogramLength, long upperCatchAllValue, bool havePercentages, PercentageBand[] percentageBands)
+		public HistCutoffsSnapShot(ObjectId colorBandSetId, KeyValuePair<int, int>[] histKeyValuePairs, int histogramLength, long upperCatchAllValue, PercentageBand[] percentageBands)
 		{
+			ColorBandSetId = colorBandSetId;
+
 			HistKeyValuePairs = histKeyValuePairs;
 			HistogramLength = histogramLength;
 			UpperCatchAllValue = upperCatchAllValue;
-			//Cutoffs = cutoffs;
-			HavePercentages = havePercentages;
 			PercentageBands = percentageBands;
+
+			var noneAreNaN = percentageBands.All(x => !double.IsNaN(x.Percentage));
+			HavePercentages = noneAreNaN && percentageBands.Any(x => x.Percentage != 0);
 		}
+
+		public ObjectId ColorBandSetId { get; init; }
 
 		public KeyValuePair<int, int>[] HistKeyValuePairs { get; init; }
 
 		public int HistogramLength { get; init; }
 		public long UpperCatchAllValue { get; init; }
 
-
-		public bool HavePercentages { get; init; }
 		public PercentageBand[] PercentageBands { get; init; }
+		public bool HavePercentages { get; init; }
 
 		public int CutoffsLength => PercentageBands.Length;
 

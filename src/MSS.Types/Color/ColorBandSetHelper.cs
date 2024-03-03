@@ -1,5 +1,4 @@
 ﻿using MongoDB.Bson;
-using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -69,8 +68,6 @@ namespace MSS.Types
 
 		public static ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations)
 		{
-			// TODO: When creating a new ColorBandSet because we had to Adjust the TargetIterations, how do we handle updating the name and/or Serial#.
-
 			ColorBandSet result;
 
 			if (colorBandSet.HighCutoff == targetIterations)
@@ -94,7 +91,6 @@ namespace MSS.Types
 			var cBands = colorBandSet as IList<ColorBand>;
 
 			var itemsToKeep = cBands.Where(x => x.Cutoff <= targetIterations).ToList();
-			//var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Reverse().Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
 			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
 
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), colorBandSet.ParentId, colorBandSet.ProjectId, colorBandSet.Name, colorBandSet.Description, itemsToKeep, targetIterations, reservedColorBands, colorBandSet.ColorBandsSerialNumber);
@@ -164,18 +160,21 @@ namespace MSS.Types
 
 			//Debug.Assert(curBucketPtr == result.Length - 2, $"CbsHistogramViewModel. BuildNewPercentages. Not all PercentageBands were updated. The TargetCutoff < the last Histogram Key.");
 
-			if (curBucketPtr != result.Length - 2)
+			if (curBucketPtr < result.Length - 1)
 			{
+				Debug.Assert(i >= kvps.Length, "Huh? The curBucketPtr < result.Length - 1 AND i < kvps.Length");
 				Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewPercentages. Not all PercentageBands were updated. The TargetCutoff < the last Histogram Key.");
 			}
-
-			for (; i < kvps.Length; i++)
+			else
 			{
-				var amount = kvps[i].Value;
-				runningSum += amount;
+				for (; i < kvps.Length; i++)
+				{
+					var amount = kvps[i].Value;
+					runningSum += amount;
 
-				result[^2].Count += amount;
-				result[^2].RunningSum = runningSum;
+					result[^2].Count += amount;
+					result[^2].RunningSum = runningSum;
+				}
 			}
 
 			// The last percentage band receives the Upper CatchAll Value

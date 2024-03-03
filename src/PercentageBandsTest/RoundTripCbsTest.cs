@@ -161,10 +161,10 @@ namespace PercentageBandsTest
 			HistCutoffsSnapShot result;
 
 			result = new HistCutoffsSnapShot(
+				colorBandSet.Id,
 				histogram.GetKeyValuePairs(),
 				histogram.Length,
 				histogram.UpperCatchAllValue,
-				colorBandSet.HavePercentages,
 				ColorBandSetHelper.GetPercentageBands(colorBandSet)
 			);
 

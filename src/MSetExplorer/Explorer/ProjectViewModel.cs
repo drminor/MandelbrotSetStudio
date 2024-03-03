@@ -94,7 +94,7 @@ namespace MSetExplorer
 				var currentProject = CurrentProject;
 				if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
 				{
-					CheckCurrentProject(currentProject);
+					//CheckCurrentProject(currentProject);
 
 					// Discard the Preview ColorBandSet. 
 					_previewColorBandSet = null;
@@ -153,7 +153,6 @@ namespace MSetExplorer
 		}
 
 		public bool ColorBandSetIsPreview => _previewColorBandSet != null;
-
 
 		//public bool SaveTheZValues
 		//{
@@ -269,7 +268,7 @@ namespace MSetExplorer
 
 		#region Event Handlers
 
-		private void CurrentProject_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		private void CurrentProject_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(Project.IsDirty))
 			{
@@ -665,21 +664,21 @@ namespace MSetExplorer
 
 		#region Diagnostics
 
-		[Conditional("DEBUG2")]
-		private void CheckCurrentProject(IJobOwner jobOwner)
-		{
-			if (jobOwner.CurrentJob.IsEmpty)
-			{
-				Debug.WriteLine($"The CurrentJob IsEmpty = { CurrentJob.IsEmpty}.");
-			}
-			else
-			{
-				if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
-				{
-					Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
-				}
-			}
-		}
+		//[Conditional("DEBUG2")]
+		//private void CheckCurrentProject(IJobOwner jobOwner)
+		//{
+		//	if (jobOwner.CurrentJob.IsEmpty)
+		//	{
+		//		Debug.WriteLine($"The CurrentJob IsEmpty = { CurrentJob.IsEmpty}.");
+		//	}
+		//	else
+		//	{
+		//		if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
+		//		{
+		//			Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
+		//		}
+		//	}
+		//}
 
 		[Conditional("DEBUG2")]
 		private void CheckProvidedMapAreaInfo(MapCenterAndDelta currentMapAreaInfo)
