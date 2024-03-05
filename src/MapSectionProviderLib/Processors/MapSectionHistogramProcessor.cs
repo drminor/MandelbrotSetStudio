@@ -146,7 +146,7 @@ namespace MapSectionProviderLib
 				ProcessingEnabled = originalProcessingEnabledValue;
 			}
 
-			HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
+			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
 		}
 
 		public void Reset(int newSize)

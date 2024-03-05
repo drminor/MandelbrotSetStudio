@@ -340,11 +340,11 @@ namespace MSetExplorer
 
 					if (_currentColorBandSet != null)
 					{
-						if (_currentColorBandSet.HilightedColorBandIndex != ColorBandsView.CurrentPosition)
+						if (_currentColorBandSet.HighlightedColorBandIndex != ColorBandsView.CurrentPosition)
 						{
-							Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HilightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
+							Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HighlightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
 
-							_currentColorBandSet.HilightedColorBandIndex = ColorBandsView.CurrentPosition;
+							_currentColorBandSet.HighlightedColorBandIndex = ColorBandsView.CurrentPosition;
 						}
 					}
 
@@ -825,7 +825,7 @@ namespace MSetExplorer
 
 			if (!result)
 			{
-				Debug.WriteLine("WARNING: Could not CompleteCutoffInsertion.");
+				Debug.WriteLine("WARNING: ColorBandSetViewModel. Could not CompleteCutoffInsertion.");
 				return;
 			}
 
@@ -833,7 +833,7 @@ namespace MSetExplorer
 
 			if (!result)
 			{
-				Debug.WriteLine("WARNING: Could not CompleteColorRemoval.");
+				Debug.WriteLine("WARNING: ColorBandSetViewModel. Could not CompleteColorRemoval.");
 				return;
 			}
 
@@ -888,7 +888,7 @@ namespace MSetExplorer
 
 			if (!result)
 			{
-				Debug.WriteLine("WARNING: Could not CompleteBandInsertion.");
+				Debug.WriteLine("WARNING: ColorBandSetViewModel. Could not CompleteBandInsertion.");
 				return;
 			}
 
@@ -1000,11 +1000,12 @@ namespace MSetExplorer
 
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffRemoval has been callled for index = {index} with Cutoff = {selItem.Cutoff}.");
 
+			var percentage = selItem.Percentage;
 			var result = TryDeleteStartingCutoff(selItem, out var reservedColorBand);
 
 			if (!result)
 			{
-				Debug.WriteLine("WARNING: Could not CompleteCutoffRemoval.");
+				Debug.WriteLine("WARNING: ColorBandSetViewModel. Could not CompleteCutoffRemoval.");
 				return null;
 			}
 
@@ -1012,6 +1013,7 @@ namespace MSetExplorer
 			{
 				var cb = _currentColorBandSet[index];
 				cb.PreviousCutoff = 0;
+				cb.Percentage += percentage;
 			}
 			else
 			{
@@ -1024,6 +1026,7 @@ namespace MSetExplorer
 				//Debug.WriteLine($"The successor start color of band just before the band being removed is {cb.SuccessorStartColor}, the start color of the band immed after the one being removed is {newSc}.");
 
 				cb.Cutoff = newCutoff;
+				cb.Percentage += percentage;
 			}
 
 			if (index > 0)
@@ -1071,7 +1074,7 @@ namespace MSetExplorer
 
 			if (!result)
 			{
-				Debug.WriteLine("WARNING: Could not CompleteColorRemoval.");
+				Debug.WriteLine("WARNING: ColorBandSetViewModel. Could not CompleteColorRemoval.");
 				return;
 			}
 
@@ -1105,6 +1108,7 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandRemoval has been callled.");
 			var selItem = _currentColorBandSet[index];
+			var percentage = selItem.Percentage;
 
 			var result = TryDeleteBand(selItem);
 
@@ -1120,11 +1124,13 @@ namespace MSetExplorer
 				singleCb.PreviousCutoff = null;
 				singleCb.BlendStyle = ColorBandBlendStyle.Next;
 				singleCb.IsLast = true;
+				singleCb.Percentage = 100;
 			}
 			else
 			{
 				var cb = _currentColorBandSet[index];
 				cb.PreviousCutoff = selItem.PreviousCutoff;
+				cb.Percentage += percentage;
 			}
 
 			if (_colorBandsView.CurrentPosition != index)
@@ -1297,13 +1303,6 @@ namespace MSetExplorer
 		{
 			if (ColorBandsView != null)
 			{
-				//if (ColorBandSet != null)
-				//{
-				//	Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:ColorBandsView_CurrentChanged. Setting the HighlightedColorBandIndex from: {ColorBandSet.HilightedColorBandIndex} to the ColorBandsView's CurrentPosition: {ColorBandsView.CurrentPosition}.");
-
-				//	ColorBandSet.HilightedColorBandIndex = ColorBandsView.CurrentPosition;
-				//}
-
 				CurrentColorBand = (ColorBand)ColorBandsView.CurrentItem;
 			}
 		}
@@ -1312,7 +1311,7 @@ namespace MSetExplorer
 		{
 			if (_disableProcessCurColorBandPropertyChanges)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, "Not handling CurrentColorBand_PropertyChanged, _disableProcessCurColorBandPropertyChanges is true.");
+				Debug.WriteLineIf(_useDetailedDebug, "ColorBandSetViewModel. Not handling CurrentColorBand_PropertyChanged, _disableProcessCurColorBandPropertyChanges is true.");
 				return;
 			}
 
@@ -1341,7 +1340,7 @@ namespace MSetExplorer
 				{
 					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
 
-					Debug.WriteLine($"CbsHistogramViewModel. Calling RaiseUpdateRequestThrottled.");
+					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel. Calling RaiseUpdateRequestThrottled.");
 					RaiseUpdateRequestThrottled(newColorBandSet);
 				}
 			}
@@ -1349,7 +1348,7 @@ namespace MSetExplorer
 			{
 				if (e.PropertyName == nameof(ColorBand.IsSelected))
 				{
-					Debug.WriteLine($"IsSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsSelected}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. IsSelected at index: {CurrentColorBandIndex} is now {colorBandToUpdate.IsSelected}.");
 				}
 			}
 		}
@@ -1502,7 +1501,7 @@ namespace MSetExplorer
 
 			if (newLength < 1)
 			{
-				Debug.WriteLine($"WARNING: The Histogram is empty (BuildSeriesData).");
+				Debug.WriteLine($"WARNING: ColorBandSetViewModel. The Histogram is empty (BuildSeriesData).");
 
 				hPlotSeriesData.Clear();
 				return;
@@ -1675,7 +1674,8 @@ namespace MSetExplorer
 				{
 					if (UsePercentages)
 					{
-						Debug.WriteLine($"WARNING: Not using Percentages, using Cutoffs instead. Percentage Values are unavailable: SomeNan = {histCutoffsSnapShot.SomePercentagesAreNan}. AllZero = {histCutoffsSnapShot.AllPercentagesAreZero}. ");
+						// TODO: Need to update code that inserts / removes ColorBands to avoid having some Percentages be set to NaN.
+						Debug.WriteLine($"WARNING: ColorBandSetViewModel. Not using Percentages, using Cutoffs instead. Percentage Values are unavailable: SomeNan = {histCutoffsSnapShot.SomePercentagesAreNan}. AllZero = {histCutoffsSnapShot.AllPercentagesAreZero}. ");
 					}
 
 					// Percentages are adjusted based on Cutoffs
@@ -1728,7 +1728,7 @@ namespace MSetExplorer
 					BeyondTargetSpecs = newPercentages[^1];
 					var numberReachedTargetIteration = BeyondTargetSpecs.Count;
 					var total = BeyondTargetSpecs.RunningSum;
-					Debug.WriteLineIf(_useDetailedDebug, $"CBS received new percentages. Top Count: {numberReachedTargetIteration}, Total: {total}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. received new percentages. Top Count: {numberReachedTargetIteration}, Total: {total}.");
 				}
 				else
 				{
@@ -1766,8 +1766,12 @@ namespace MSetExplorer
 		{
 			if (histCutoffsSnapShot.ColorBandSetId != _currentColorBandSet.Id)
 			{
-				Debug.WriteLine("The HistCutoffsSnapShot is stale, not Updating the New Cutoffs.");
+				Debug.WriteLine("ColorBandSetViewModel.The HistCutoffsSnapShot is stale, not Updating the New Cutoffs.");
 			}
+
+			// TODO: Do not Apply the new Cutoffs if there was some problem getting the Cutoffs from the current Percentage values
+			// This may be caused by an incomplete histogram.
+			// Update the TryGetCutoffsFromPercentages to report if there any problems.
 
 			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var newCutoffBands))
 			{
@@ -1797,7 +1801,7 @@ namespace MSetExplorer
 					BeyondTargetSpecs = new PercentageBand(newCutoffs[^1].Cutoff, newCutoffs[^1].Percentage);
 					var numberReachedTargetIteration = BeyondTargetSpecs.Count;
 					var total = BeyondTargetSpecs.RunningSum;
-					Debug.WriteLineIf(_useDetailedDebug, $"CBS received new Cutoffs. Top Count: {numberReachedTargetIteration}, Total: {total}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. received new Cutoffs. Top Count: {numberReachedTargetIteration}, Total: {total}.");
 				}
 				else
 				{
@@ -1862,11 +1866,11 @@ namespace MSetExplorer
 		{
 			if (!bufferWasPreserved)
 			{
-				Debug.WriteLine($"WARNING: Allocating new buffer to hold the Y Values. New length:{newLength}, existing length:{existingLength}.");
+				Debug.WriteLine($"WARNING: ColorBandSetViewModel. Allocating new buffer to hold the Y Values. New length:{newLength}, existing length:{existingLength}.");
 			}
 			else
 			{
-				Debug.WriteLine($"Updating SeriesData. Using existing buffer. Length:{newLength}.");
+				Debug.WriteLine($"ColorBandSetViewModel. Updating SeriesData. Using existing buffer. Length:{newLength}.");
 			}
 		}
 

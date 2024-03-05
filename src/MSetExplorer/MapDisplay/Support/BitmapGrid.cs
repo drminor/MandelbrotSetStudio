@@ -127,9 +127,9 @@ namespace MSetExplorer
 				}
 				else
 				{
-					if (value.HilightedColorBandIndex != _colorBandSet.HilightedColorBandIndex)
+					if (value.HighlightedColorBandIndex != _colorBandSet.HighlightedColorBandIndex)
 					{
-						_colorBandSet.HilightedColorBandIndex = value.HilightedColorBandIndex;
+						_colorBandSet.HighlightedColorBandIndex = value.HighlightedColorBandIndex;
 					}
 				}
 			}
@@ -174,10 +174,10 @@ namespace MSetExplorer
 
 		public int CurrentColorBandIndex
 		{
-			get => ColorBandSet.HilightedColorBandIndex;
+			get => ColorBandSet.HighlightedColorBandIndex;
 			set
 			{
-				ColorBandSet.HilightedColorBandIndex = value;
+				ColorBandSet.HighlightedColorBandIndex = value;
 
 				if (HighlightSelectedColorBand && _colorMap != null)
 				{

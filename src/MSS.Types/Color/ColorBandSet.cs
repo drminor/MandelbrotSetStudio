@@ -153,7 +153,7 @@ namespace MSS.Types
 			}
 		}
 
-		public int HilightedColorBandIndex
+		public int HighlightedColorBandIndex
 		{
 			get => _hilightedColorBandIndex;
 			set
@@ -261,12 +261,6 @@ namespace MSS.Types
 			}
 		}
 
-		public void InsertCutoff(int index, int cutoff, ReservedColorBand reservedColorBand)
-		{
-			InsertItem(index, new ColorBand(cutoff, ColorBandColor.White, ColorBandBlendStyle.None, ColorBandColor.White));
-			PullColorsDown(index, reservedColorBand);
-		}
-
 		public bool DeleteStartingCutoff(ColorBand colorBand, out ReservedColorBand? reservedColorBand)
 		{
 			reservedColorBand = null;
@@ -276,14 +270,11 @@ namespace MSS.Types
 			if (index < 0 || index > Count - 2)
 			{
 				return false;
-				//throw new ArgumentException($"DeleteCutoff. Index must be between 0 and {Count - 1}, inclusive.");
 			}
 
-			//if (Count < 3)
 			if (Count < 2)
 			{
 				// The collection must have at least two items. 
-				//throw new InvalidOperationException($"DeleteCutoff. Cannot delete a Cutoff, the collection must have 3 or more bands.");
 				return false;
 			}
 
@@ -296,9 +287,6 @@ namespace MSS.Types
 
 		public ReservedColorBand InsertColor(int index, ColorBand colorBand)
 		{
-			//InsertItem(index, colorBand);
-			//PullCutoffsDown(index); // A new reserved band is created from the colors of the last item.
-
 			var reservedColorBand = PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and it's saved to the Reserves.
 			var cb = Items[index];
 
@@ -351,13 +339,13 @@ namespace MSS.Types
 
 		//	if (!allMatched)
 		//	{
-		//		Debug.WriteLine($"WARNING: No percentages are not receiving an update. The offsets don't match.");
+		//		Debug.WriteLine($"WARNING: ColorBandSet No percentages are not receiving an update. The offsets don't match.");
 		//		return false;
 		//	}
 
 		//	if (len != Count)
 		//	{
-		//		Debug.WriteLine($"WARNING: {Count - len} Percentages are not receiving an update.");
+		//		Debug.WriteLine($"WARNING: ColorBandSet {Count - len} Percentages are not receiving an update.");
 		//	}
 
 		//	for (var i = 0; i < len; i++)
@@ -375,7 +363,7 @@ namespace MSS.Types
 
 			if (len != Count)
 			{
-				Debug.WriteLine($"WARNING: {Count - len} Percentages are not receiving an update.");
+				Debug.WriteLine($"WARNING: ColorBandSet {Count - len} Percentages are not receiving an update.");
 			}
 
 			for (var i = 0; i < len; i++)
@@ -393,7 +381,7 @@ namespace MSS.Types
 
 			if (Count > len)
 			{
-				Debug.WriteLine($"WARNING: UpdateCutoffs not updating all values. The length of newCutoffs {newCutoffs.Length - 1} is < Count {Count}.");
+				Debug.WriteLine($"WARNING: ColorBandSet UpdateCutoffs not updating all values. The length of newCutoffs {newCutoffs.Length - 1} is < Count {Count}.");
 			}
 
 			int? prevCutoff = null;
@@ -471,7 +459,7 @@ namespace MSS.Types
 		{
 			if (Count < 2)
 			{
-				// The collection must have at least two bands.
+				// The collection must have at least one bands.
 				return;
 			}
 
@@ -575,11 +563,6 @@ namespace MSS.Types
 			targetCbE.StartColor = sourceCbE.StartColor;
 			targetCbE.BlendStyle = sourceCbE.BlendStyle;
 			targetCbE.EndColor = sourceCbE.EndColor;
-
-			//if (Items.Count > 1)
-			//{
-			//	Items[^2].SuccessorStartColor = Items[^1].StartColor;
-			//}
 		}
 
 		#endregion
@@ -609,7 +592,7 @@ namespace MSS.Types
 
 			if (firstCb.PreviousCutoff != null)
 			{
-				Debug.WriteLine($"WARNING: The first color band's PreviousCutoff is not null, setting it to null.");
+				Debug.WriteLine($"WARNING: ColorBandSet The first color band's PreviousCutoff is not null, setting it to null.");
 				firstCb.PreviousCutoff = null;
 			}
 
@@ -620,7 +603,8 @@ namespace MSS.Types
 		private static IList<ColorBand> FixBandsPart2(int targetIterations, IList<ColorBand> result)
 		{
 			int? prevCutoff = null;
-			//int startingCutoff = 0;
+
+			double runningPercentage = 0d;
 
 			for (var i = 0; i < result.Count - 1; i++)
 			{
@@ -635,6 +619,16 @@ namespace MSS.Types
 				}
 
 				prevCutoff = cb.Cutoff;
+
+				if (!double.IsNaN(cb.Percentage))
+				{
+					runningPercentage += cb.Percentage;
+				}
+				else
+				{
+					Debug.WriteLine($"WARNING: ColorBandSet The last ColorBand's Cutoff is less than the TargetIterations. Creating a new ColorBand to fill the gap.");
+
+				}
 			}
 
 			// Make sure that the next to last ColorBand's CutOff is < Target Iterations.
@@ -649,7 +643,7 @@ namespace MSS.Types
 				}
 				else
 				{
-					Debug.WriteLine($"WARNING: Setting the next to last ColorBand's Cutoff to {targetIterations - 1}, it was {prevCutoff}. ");
+					Debug.WriteLine($"WARNING: ColorBandSet Setting the next to last ColorBand's Cutoff to {targetIterations - 1}, it was {prevCutoff}. LEAVING THE PERCENTAGE VALUE AS IS.");
 				}
 
 				prevCutoff = cbBeforeLast.Cutoff;
@@ -662,16 +656,16 @@ namespace MSS.Types
 			// Make sure that the last ColorBand's Cutoff == Target Iterations
 			if (lastCb.Cutoff < targetIterations)
 			{
-				Debug.WriteLine($"WARNING: The last ColorBand's Cutoff is less than the TargetIterations. Creating a new ColorBand to fill the gap.");
+				Debug.WriteLine($"WARNING: ColorBandSet The last ColorBand's Cutoff is less than the TargetIterations. Creating a new ColorBand to fill the gap.");
 				lastCb.IsLast = false;
 
 				// Create a new ColorBand to fill the gap.
-				var newLastCb = CreateHighColorBand(lastCb, targetIterations);
-
-				newLastCb.IsLast = true;
+				var percentage = Math.Max(0, 100 - runningPercentage);
+				var newLastCb = CreateHighColorBand(lastCb, targetIterations, percentage);
 				result.Add(newLastCb);
 
 				lastCb.SuccessorStartColor = newLastCb.StartColor;
+				runningPercentage = 100;
 			}
 			else
 			{
@@ -688,7 +682,7 @@ namespace MSS.Types
 					}
 					else
 					{
-						Debug.WriteLine($"WARNING: Setting last ColorBand's Cutoff to {targetIterations}, it was {valueBeforeUpdate}. ");
+						Debug.WriteLine($"WARNING: ColorBandSet Setting last ColorBand's Cutoff to {targetIterations}, it was {valueBeforeUpdate}. LEAVING THE PERCENTAGE VALUE AS IS.");
 					}
 				}
 				else
@@ -705,25 +699,24 @@ namespace MSS.Types
 
 			//lastCb.Cutoff = lastCb.Cutoff + 2; // Force the inclusion of the counts above the target iterations as a 'real' color band.
 
-			ReportBucketWidthsAndCutoffs(result);
+			ReportBucketWidthsAndCutoffs(result, runningPercentage);
 
 			return result;
 		}
 
-		private static ColorBand CreateHighColorBand(ColorBand previousColorBand, int targetIterations)
+		private static ColorBand CreateHighColorBand(ColorBand previousColorBand, int targetIterations, double percentage)
 		{
 			var startColor = previousColorBand.ActualEndColor;
 			var endColor = ColorBandColor.White;
-			var result = new ColorBand(targetIterations, startColor, ColorBandBlendStyle.Next, endColor, previousCutoff: previousColorBand.Cutoff, successorStartColor: null, percentage: double.NaN);
-
+			var result = new ColorBand(targetIterations, startColor, ColorBandBlendStyle.Next, endColor, previousCutoff: previousColorBand.Cutoff, successorStartColor: null, percentage);
+			result.IsLast = true;
 			return result;
 		}
 
 		private static ColorBand CreateSingleColorBand(int targetIterations)
 		{
-			var result = new ColorBand(targetIterations, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.Next, new ColorBandColor("#000000"));
+			var result = new ColorBand(targetIterations, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.Next, new ColorBandColor("#000000"), 100);
 			result.IsLast = true;
-			result.Percentage = 100;
 
 			return result;
 		}
@@ -738,14 +731,14 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
-			var idx = HilightedColorBandIndex;
+			var idx = HighlightedColorBandIndex;
 
 			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
 				OnFile = false,
-				HilightedColorBandIndex = idx
+				HighlightedColorBandIndex = idx
 			};
 
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Created a new copy from ColorBandSet (Id: {Id}) with new ID: {result.Id}");
@@ -761,7 +754,7 @@ namespace MSS.Types
 		public ColorBandSet CreateNewCopy(int targetIterations)
 		{
 			//Debug.WriteLine($"ColorBandSet. About to CreateNewCopy with target iterations: {targetIterations}: {this}");
-			var idx = HilightedColorBandIndex;
+			var idx = HighlightedColorBandIndex;
 
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
@@ -770,7 +763,7 @@ namespace MSS.Types
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
 				OnFile = false,
-				HilightedColorBandIndex = idx
+				HighlightedColorBandIndex = idx
 			};
 
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Created a new copy with TargetIterations: {targetIterations} from ColorBandSet (Id: {Id}) with new ID: {result.Id}");
@@ -791,13 +784,13 @@ namespace MSS.Types
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Cloning ColorBandSet with Id: {Id}.");
 
-			var idx = HilightedColorBandIndex;
+			var idx = HighlightedColorBandIndex;
 			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = LastSavedUtc,
 				LastUpdatedUtc = LastUpdatedUtc,
 				OnFile = OnFile,
-				HilightedColorBandIndex = idx
+				HighlightedColorBandIndex = idx
 			};
 
 			return result;
@@ -823,7 +816,7 @@ namespace MSS.Types
 		{
 			var sb = new StringBuilder();
 
-			sb.AppendLine($"WARNING: Using Depreciated version of ToString. Id: {Id}, Serial: {ColorBandsSerialNumber}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
+			sb.AppendLine($"WARNING: ColorBandSet Using Depreciated version of ToString. Id: {Id}, Serial: {ColorBandsSerialNumber}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
 
 			for(var i = 0; i < Count; i++)
 			{
@@ -897,8 +890,8 @@ namespace MSS.Types
 		}
 
 
-		[Conditional("DEBUG2")]
-		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands)
+		[Conditional("DEBUG")]
+		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands, double runningPercentage)
 		{
 			var sb = new StringBuilder();
 
@@ -907,7 +900,7 @@ namespace MSS.Types
 			var maxCutoff = colorBands[^1].Cutoff;
 			var totalRange = 1 + maxCutoff - minCutoff;
 
-			sb.AppendLine($"Total Width: {totalWidth}, Total Range: {totalRange}, Min Cutoff: {minCutoff}, Max Cutoff: {maxCutoff}.");
+			sb.AppendLine($"Total Width: {totalWidth}, Total Percentage: {runningPercentage}, Total Range: {totalRange}, Min Cutoff: {minCutoff}, Max Cutoff: {maxCutoff}.");
 
 			sb.AppendLine("Start	End		Width");
 

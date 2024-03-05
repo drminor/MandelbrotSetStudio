@@ -467,77 +467,78 @@ namespace MSetExplorer
 			{
 				// Insert Cutoff - Existing colors are pulled down, the next available Reserved ColorBand is popped from the Stack to provide the source of the High ColorBand
 				case ColorBandSetEditOperation.InsertCutoff:
-
-					if (newColorband == null)
 					{
-						throw new ArgumentException("The newColorband is null on call to InsertCutoff.");
+						if (newColorband == null)
+						{
+							throw new ArgumentException("The newColorband is null on call to InsertCutoff.");
+						}
+
+						if (reservedColorBand == null)
+						{
+							throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
+						}
+
+						_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newColorband, reservedColorBand);
+						break;
 					}
-
-					if (reservedColorBand == null)
-					{
-						throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
-					}
-
-					_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newColorband, reservedColorBand);
-					break;
-
 				// Insert Color - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.InsertColor:
-
-					if (newColorband == null)
 					{
-						throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertColor.");
+						if (newColorband == null)
+						{
+							throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertColor.");
+						}
+
+						var result = _cbsHistogramViewModel?.CompleteColorInsertion(index, newColorband) ?? null;
+
+						if (result != null)
+						{
+							_cbsHistogramViewModel?.PushReservedColorBand(result);
+						}
+
+						break;
 					}
-
-					var result = _cbsHistogramViewModel?.CompleteColorInsertion(index, newColorband) ?? null;
-
-					if (result != null)
-					{
-						_cbsHistogramViewModel?.PushReservedColorBand(result);
-					}
-
-					break;
-
 				// Insert entire ColorBand		
 				case ColorBandSetEditOperation.InsertBand:
-
-					if (newColorband == null)
 					{
-						throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertBand.");
+						if (newColorband == null)
+						{
+							throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertBand.");
+						}
+
+						_cbsHistogramViewModel?.CompleteBandInsertion(index, newColorband);
+						break;
 					}
-
-					_cbsHistogramViewModel?.CompleteBandInsertion(index, newColorband);
-					break;
-
 				// Delete Cutoff - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.DeleteCutoff:
-
-					result = _cbsHistogramViewModel?.CompleteCutoffRemoval(index) ?? null;
-
-					if (result != null)
 					{
-						// The color from the top most band is pushed on to the stack of Reserved Bands
-						_cbsHistogramViewModel?.PushReservedColorBand(result);
+						var result = _cbsHistogramViewModel?.CompleteCutoffRemoval(index) ?? null;
+
+						if (result != null)
+						{
+							// The color from the top most band is pushed on to the stack of Reserved Bands
+							_cbsHistogramViewModel?.PushReservedColorBand(result);
+						}
+
+						break;
 					}
-
-					break;
-
 				// Delete Color - Existing colors are pulled down, the next available Reserved ColorBand is popped from the Stack to provide the source of the High ColorBand
 				case ColorBandSetEditOperation.DeleteColor:
-
-					if (reservedColorBand == null)
 					{
-						throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
+						if (reservedColorBand == null)
+						{
+							throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
+						}
+
+						_cbsHistogramViewModel?.CompleteColorRemoval(index, reservedColorBand);
+						break;
 					}
-
-					_cbsHistogramViewModel?.CompleteColorRemoval(index, reservedColorBand);
-					break;
-
 				// Delete Entire ColorBand
 				case ColorBandSetEditOperation.DeleteBand:
-
-					_cbsHistogramViewModel?.CompleteBandRemoval(index);
-					break;
+					{
+						_cbsHistogramViewModel?.CompleteBandRemoval(index);
+						break;
+					}
 
 				default:
 					break;

@@ -28,15 +28,15 @@ namespace MSS.Types
 		private bool _isSelected;
 		private bool _isLast;
 
-		private static ColorBand _emptySingleton = new ColorBand();
+		//private static ColorBand _emptySingleton = new ColorBand();
 
 		#endregion
 
 		#region Constructor
 
-		public ColorBand() 
-			: this(0, ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black, double.NaN)
-		{ }
+		//public ColorBand() 
+		//	: this(0, ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black, double.NaN)
+		//{ }
 
 		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
 			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor), percentage: double.NaN)
@@ -46,9 +46,9 @@ namespace MSS.Types
 			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor), percentage)
 		{ }
 
-		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
-			: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: null, percentage: double.NaN)
-		{ }
+		//public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
+		//	: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: null, percentage: double.NaN)
+		//{ }
 
 		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, double percentage)
 			: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: null, percentage)
@@ -83,7 +83,7 @@ namespace MSS.Types
 		/// <summary>
 		/// Return the shared, single, empty instance.
 		/// </summary>
-		public static ColorBand Empty => _emptySingleton;
+		//public static ColorBand Empty => _emptySingleton;
 
 		public bool IsSelected
 		{
@@ -161,19 +161,12 @@ namespace MSS.Types
 			}
 		}
 
-		//public int StartingCutoff => (_previousCutoff ?? -1) + 1;
-		//public int StartingCutoff => (_previousCutoff ?? 0) + 1;	// Updated on 12/26/2023
-
 		public bool IsFirst => !_previousCutoff.HasValue;
 
 
-		//public int BucketWidth => Cutoff - StartingCutoff;
-		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);  // Updated on 12/26/2023
+		public int BucketWidth => Cutoff - (_previousCutoff ?? 0);
 
 		public bool BucketWidthOk => BucketWidth > 0;
-
-		// cutoff = (_previousCutoff ?? 0) + BucketWidth
-
 
 		/* Relationship between Cutoff and StartingCutoff
 

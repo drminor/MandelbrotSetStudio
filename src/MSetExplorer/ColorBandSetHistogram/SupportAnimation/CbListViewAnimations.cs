@@ -53,14 +53,17 @@ namespace MSetExplorer.Cbs
 			var prevCutoff = colorBand.PreviousCutoff;
 			var newWidth = colorBand.BucketWidth / 2;
 			var newCutoff = (prevCutoff ?? 0) + newWidth;
-
+			var newPercentage = colorBand.Percentage / 2;
 			var remainingWidth = colorBand.BucketWidth - newWidth;
+
+			// the existing item's percentage is also halved.
+			colorBand.Percentage = newPercentage;
 
 			var newStartColor = colorBand.StartColor;
 			var endColor = colorBand.EndColor;
 			var successorStartColor = colorBand.SuccessorStartColor;
 
-			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, endColor, prevCutoff, successorStartColor, double.NaN);
+			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, endColor, prevCutoff, successorStartColor, newPercentage);
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
 			//itemBeingInserted.ElevationsAreLocal = true;
@@ -174,7 +177,7 @@ namespace MSetExplorer.Cbs
 			_pushColorsAnimationInfo1?.MoveSourcesToDestinations();
 			_pushColorsAnimationInfo1 = null;
 
-			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandColor.White);
+			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandColor.White, percentage: double.NaN);
 
 			_onAnimationComplete(ColorBandSetEditOperation.InsertColor, index, colorBand, null);
 
@@ -190,13 +193,18 @@ namespace MSetExplorer.Cbs
 			var colorBand = currentItem.ColorBand;
 			var prevCutoff = colorBand.PreviousCutoff;
 			var newWidth = colorBand.BucketWidth / 2;
+			var newPercentage = colorBand.Percentage / 2;
+
+			// the existing item's percentage is also halved.
+			colorBand.Percentage = newPercentage;
+
 			var newCutoff = (prevCutoff ?? 0) + newWidth;
 
 			var newStartColor = ColorBandColor.White;
 			var endColor = colorBand.StartColor;
 			var successorStartColor = colorBand.StartColor;
 
-			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, endColor, prevCutoff, successorStartColor, double.NaN);
+			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, endColor, prevCutoff, successorStartColor, newPercentage);
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
 			itemBeingInserted.ElevationsAreLocal = true;

@@ -18,7 +18,7 @@ namespace MSS.Types
         private readonly int _highColorBandCutoff;
         private readonly int _highColorBandIndex;
 
-		private int _currentColorBandIndex;
+		private int _highlightedColorBandIndex;
         private bool _disposedValue;
 
 		#endregion
@@ -30,7 +30,7 @@ namespace MSS.Types
 			_colorBandSet = colorBandSet ?? throw new ArgumentNullException(nameof(colorBandSet));
             //Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
 
-            _currentColorBandIndex = _colorBandSet.HilightedColorBandIndex;
+            _highlightedColorBandIndex = _colorBandSet.HighlightedColorBandIndex;
             if (_colorBandSet is INotifyPropertyChanged inpc)
             {
                 inpc.PropertyChanged += ColorBandSet_PropertyChanged;
@@ -62,15 +62,10 @@ namespace MSS.Types
 
 		private void ColorBandSet_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-			//if (e.PropertyName == nameof(ColorBandSet.SelectedColorBand))
-			//{
-			//    _selectedColorBandIndex = _colorBandSet.CurrentColorBandIndex;
-			//}
-
-			if (e.PropertyName == nameof(ColorBandSet.HilightedColorBandIndex))
+			if (e.PropertyName == nameof(ColorBandSet.HighlightedColorBandIndex))
 			{
-				//Debug.WriteLine($"ColorMap. The CurrentColorBandIndex is being updated from {_currentColorBandIndex} to {_colorBandSet.HilightedColorBandIndex}.");
-				_currentColorBandIndex = _colorBandSet.HilightedColorBandIndex;
+				//Debug.WriteLine($"ColorMap. The HilightedColorBandIndex is being updated from {_currentColorBandIndex} to {_colorBandSet.HilightedColorBandIndex}.");
+				_highlightedColorBandIndex = _colorBandSet.HighlightedColorBandIndex;
 			}
 		}
 
@@ -96,7 +91,7 @@ namespace MSS.Types
 			}
 		}
 
-		public int CurrentColorBandIndex => _currentColorBandIndex;
+		public int CurrentColorBandIndex => _highlightedColorBandIndex;
 
 		#endregion
 
@@ -104,11 +99,6 @@ namespace MSS.Types
 
 		public int PlaceColor(int countVal, double escapeVelocity, Span<byte> destination)
         {
-			if (countVal == _highColorBandCutoff - 1)
-			{
-				Debug.WriteLine($"Here at ColorMap and 399.");
-			} 
-
             var errors = 0;
 
             var idx = GetColorMapIndex(countVal);
@@ -132,7 +122,7 @@ namespace MSS.Types
 				}
             }
 
-            if (HighlightSelectedColorBand && idx != _currentColorBandIndex)
+            if (HighlightSelectedColorBand && idx != _highlightedColorBandIndex)
 			{
                 destination[3] = 25; // set the opacity to 25, instead of 255.
 			}

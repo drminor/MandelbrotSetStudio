@@ -1,4 +1,5 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
 
 namespace MSS.Types.MSet
@@ -10,6 +11,7 @@ namespace MSS.Types.MSet
 		)
 	{
 		public Guid ColorBandSerialNumber { get; set; } = Guid.NewGuid();
+
 		public DateTime DateTimeUtc { get; set; } = DateTime.UtcNow;
 	}
 }
