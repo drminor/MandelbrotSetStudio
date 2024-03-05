@@ -135,7 +135,6 @@ namespace MSetExplorer
 			}
 		}
 
-
 		private ColorMap? LoadColorMap(ColorBandSet colorBandSet)
 		{
 			_colorBandSet = colorBandSet;

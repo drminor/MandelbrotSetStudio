@@ -1,4 +1,5 @@
-﻿using MSetExplorer.ScreenHelpers;
+﻿using MongoDB.Bson;
+using MSetExplorer.ScreenHelpers;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -1103,9 +1104,8 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos/*, Project curProject*/, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			//var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curPoster.Id, initalName, DialogType.Open);
 			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(initalName, DialogType.Open, colorBandSetInfos);
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
@@ -1119,7 +1119,7 @@ namespace MSetExplorer
 				if (colorBandSetOpenSaveWindow.ShowDialog() == true)
 				{
 					var id = colorBandSetOpenSaveWindow.ColorBandSetId;
-					if (id != null && colorBandSetOpenSaveVm.TryOpenColorBandSet(id.Value, out colorBandSet))
+					if (TryGetOpenedAdjustedColorBandSet(id, colorBandSetOpenSaveVm, out colorBandSet))
 					{
 						return true;
 					}
@@ -1146,17 +1146,15 @@ namespace MSetExplorer
 			if (sender is IColorBandSetOpenSaveViewModel vm)
 			{
 				var id = vm.SelectedColorBandSetInfo?.Id;
-				if (id != null && vm.TryOpenColorBandSet(id.Value, out var colorBandSet))
+				if (TryGetOpenedAdjustedColorBandSet(id, vm, out var adjustedColorBandSet))
 				{
-					//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
-					_vm.PosterViewModel.PreviewColorBandSet = colorBandSet;
+					_vm.PosterViewModel.PreviewColorBandSet = adjustedColorBandSet;
 				}
 			}
 		}
 
 		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
 		{
-			//var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curPoster.Id, colorBandSet.Name, DialogType.Save);
 			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(colorBandSet.Name, DialogType.Save, colorBandSetInfos);
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
@@ -1164,15 +1162,19 @@ namespace MSetExplorer
 				DataContext = colorBandSetOpenSaveVm
 			};
 
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
 			if (colorBandSetOpenSaveWindow.ShowDialog() == true)
 			{
-				var cpy = colorBandSet.CreateNewCopy();
-				cpy.Name = colorBandSetOpenSaveWindow.ColorBandSetName ?? string.Empty;
-				cpy.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
-				cpy.AssignNewSerialNumber();
+				newColorBandSet = colorBandSet.CreateNewCopy();
+				newColorBandSet.Name = colorBandSetOpenSaveWindow.ColorBandSetName ?? string.Empty;
+				newColorBandSet.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
+				newColorBandSet.AssignNewSerialNumber();
 
-				colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
-				newColorBandSet = cpy;
+				//colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
+
+				curPoster.Add(newColorBandSet, makeDefault: true);
+				//newColorBandSet = cpy;
 				return true;
 			}
 			else
@@ -1196,7 +1198,7 @@ namespace MSetExplorer
 				if (colorBandSetImportExportWindow.ShowDialog() == true)
 				{
 					var id = colorBandSetImportExportWindow.ColorBandSetId;
-					if (id != null && colorBandSetImportExportVm.TryImportColorBandSet(id.Value, out colorBandSet))
+					if (TryGetImportedAdjustedColorBandSet(id, colorBandSetImportExportVm, out colorBandSet))
 					{
 						return true;
 					}
@@ -1223,10 +1225,9 @@ namespace MSetExplorer
 			if (sender is IColorBandSetImportExportViewModel vm)
 			{
 				var id = vm.SelectedColorBandSetInfo?.Id;
-				if (id != null && vm.TryImportColorBandSet(id.Value, out var colorBandSet))
+				if (TryGetImportedAdjustedColorBandSet(id, vm, out var adjustedColorBandSet))
 				{
-					//_vm.MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
-					_vm.PosterViewModel.PreviewColorBandSet = colorBandSet;
+					_vm.PosterViewModel.PreviewColorBandSet = adjustedColorBandSet;
 				}
 			}
 		}
@@ -1253,6 +1254,58 @@ namespace MSetExplorer
 				return false;
 			}
 		}
+
+		private bool TryGetOpenedAdjustedColorBandSet(ObjectId? colorBandSetId, IColorBandSetOpenSaveViewModel colorBandSetOpenSaveViewModel, [NotNullWhen(true)] out ColorBandSet? adjustedColorBandSet)
+		{
+			if (colorBandSetId.HasValue && !_vm.PosterViewModel.CurrentJob.IsEmpty)
+			{
+				var targetIterations = _vm.PosterViewModel.CurrentJob.MapCalcSettings.TargetIterations;
+
+				var colorBandSet = _vm.PosterViewModel.GetColorBandSet(colorBandSetId.Value);
+
+				//if (colorBandSetOpenSaveViewModel.TryOpenColorBandSet(colorBandSetId.Value, out var colorBandSet))
+				if (colorBandSet != null)
+				{
+					adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+					return true;
+				}
+				else
+				{
+					adjustedColorBandSet = null;
+					return false;
+				}
+			}
+			else
+			{
+				adjustedColorBandSet = null;
+				return false;
+			}
+		}
+
+		private bool TryGetImportedAdjustedColorBandSet(ObjectId? colorBandSetId, IColorBandSetImportExportViewModel colorBandSetOpenSaveViewModel, [NotNullWhen(true)] out ColorBandSet? adjustedColorBandSet)
+		{
+			if (colorBandSetId.HasValue && !_vm.PosterViewModel.CurrentJob.IsEmpty)
+			{
+				var targetIterations = _vm.PosterViewModel.CurrentJob.MapCalcSettings.TargetIterations;
+
+				if (colorBandSetOpenSaveViewModel.TryImportColorBandSet(colorBandSetId.Value, out var colorBandSet))
+				{
+					adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+					return true;
+				}
+				else
+				{
+					adjustedColorBandSet = null;
+					return false;
+				}
+			}
+			else
+			{
+				adjustedColorBandSet = null;
+				return false;
+			}
+		}
+
 
 		#endregion
 

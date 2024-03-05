@@ -1,4 +1,5 @@
-﻿using MSetRepo;
+﻿using MongoDB.Bson;
+using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -324,6 +325,20 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
 				}
 			}
+		}
+
+		public ColorBandSet? GetColorBandSet(ObjectId id)
+		{
+			var curPoster = CurrentPoster;
+
+			if (curPoster == null)
+			{
+				return null;
+			}
+
+			var result = curPoster.GetColorBandSets().FirstOrDefault(x => x.Id == id);
+
+			return result;
 		}
 
 		public List<ColorBandSetInfo> GetColorBandSetInfos()

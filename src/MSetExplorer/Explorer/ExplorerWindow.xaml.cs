@@ -1442,7 +1442,6 @@ namespace MSetExplorer
 
 		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
 		{
-			//var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(curProject.Id, colorBandSet.Name, DialogType.Save);
 			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(colorBandSet.Name, DialogType.Save, colorBandSetInfos);
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
@@ -1450,15 +1449,19 @@ namespace MSetExplorer
 				DataContext = colorBandSetOpenSaveVm
 			};
 
-			if (colorBandSetOpenSaveWindow.ShowDialog() == true)
-			{
-				var cpy = colorBandSet.CreateNewCopy();
-				cpy.Name = colorBandSetOpenSaveWindow.ColorBandSetName ?? string.Empty;
-				cpy.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
-				cpy.AssignNewSerialNumber();
+			var curProject = _vm.ProjectViewModel.CurrentProject;
 
-				colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
-				newColorBandSet = cpy;
+			if (colorBandSetOpenSaveWindow.ShowDialog() == true && curProject != null)
+			{
+				newColorBandSet = colorBandSet.CreateNewCopy();
+				newColorBandSet.Name = colorBandSetOpenSaveWindow.ColorBandSetName ?? string.Empty;
+				newColorBandSet.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
+				newColorBandSet.AssignNewSerialNumber();
+
+				//colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
+
+				curProject.Add(newColorBandSet, makeDefault: true);
+				//newColorBandSet = cpy;
 				return true;
 			}
 			else
@@ -1546,7 +1549,10 @@ namespace MSetExplorer
 			{
 				var targetIterations = _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations;
 
-				if (colorBandSetOpenSaveViewModel.TryOpenColorBandSet(colorBandSetId.Value, out var colorBandSet))
+				var colorBandSet = _vm.ProjectViewModel.GetColorBandSet(colorBandSetId.Value);
+
+				//if (colorBandSetOpenSaveViewModel.TryOpenColorBandSet(colorBandSetId.Value, out var colorBandSet))
+				if (colorBandSet != null)
 				{
 					adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
 					return true;

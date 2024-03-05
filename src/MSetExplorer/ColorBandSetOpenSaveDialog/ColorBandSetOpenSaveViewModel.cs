@@ -46,17 +46,17 @@ namespace MSetExplorer
 
 		#region Public Methods 
 
-		public bool SaveColorBandSet(ColorBandSet colorBandSet)
-		{
-			_projectAdapter.InsertColorBandSet(colorBandSet);
-			return true;
-		}
+		//public bool SaveColorBandSet(ColorBandSet colorBandSet)
+		//{
+		//	_projectAdapter.InsertColorBandSet(colorBandSet);
+		//	return true;
+		//}
 
-		public bool TryOpenColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
-		{
-			var result = _projectAdapter.TryGetColorBandSet(colorBandSetId, out colorBandSet);
-			return result;
-		}
+		//public bool TryOpenColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		//{
+		//	var result = _projectAdapter.TryGetColorBandSet(colorBandSetId, out colorBandSet);
+		//	return result;
+		//}
 
 		#endregion
 

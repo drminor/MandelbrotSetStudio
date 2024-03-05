@@ -1,4 +1,5 @@
-﻿using MSetRepo;
+﻿using MongoDB.Bson;
+using MSetRepo;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -243,6 +244,20 @@ namespace MSetExplorer
 		//		}
 		//	}
 		//}
+
+		public ColorBandSet? GetColorBandSet(ObjectId id)
+		{
+			var curProject = CurrentProject;
+
+			if (curProject == null)
+			{
+				return null;
+			}
+
+			var result = curProject.GetColorBandSets().FirstOrDefault(x => x.Id == id);
+
+			return result;
+		}
 
 		public List<ColorBandSetInfo> GetColorBandSetInfos()
 		{

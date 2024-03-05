@@ -1,4 +1,5 @@
-﻿using MSS.Common.MSet;
+﻿using MongoDB.Bson;
+using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
 using System.Collections.Generic;
@@ -52,6 +53,7 @@ namespace MSetExplorer
 
 		long DeleteMapSectionsForUnsavedJobs();
 
+		ColorBandSet? GetColorBandSet(ObjectId id);
 		List<ColorBandSetInfo> GetColorBandSetInfos();
 		void CheckPosterViewModelTargetIterations();
 

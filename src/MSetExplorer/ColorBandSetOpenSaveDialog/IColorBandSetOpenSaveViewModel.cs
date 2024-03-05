@@ -17,9 +17,9 @@ namespace MSetExplorer
 		string? SelectedDescription { get; set; }
 		bool UserIsSettingTheName { get; set; }
 
-		bool SaveColorBandSet(ColorBandSet colorBandSet);
+		//bool SaveColorBandSet(ColorBandSet colorBandSet);
 
-		bool TryOpenColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
+		//bool TryOpenColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
 
 		bool IsNameTaken(string name);
 	}
