@@ -323,39 +323,39 @@ namespace MSS.Types
 			}
 		}
 
-		//public bool UpdatePercentagesCheckOffsets(PercentageBand[] newPercentages)
-		//{
-		//	var len = Math.Min(newPercentages.Length - 1, Count); // The last PercentageBand holds the UpperCatchAll
+		public bool UpdatePercentagesCheckOffsets(PercentageBand[] newPercentages)
+		{
+			var len = Math.Min(newPercentages.Length - 1, Count); // The last PercentageBand holds the UpperCatchAll
 
-		//	var allMatched = true;
-		//	for (var i = 0; i < len; i++)
-		//	{
-		//		if (Items[i].Cutoff != newPercentages[i].Cutoff)
-		//		{
-		//			allMatched = false;
-		//			break;
-		//		}
-		//	}
+			var allMatched = true;
+			for (var i = 0; i < len; i++)
+			{
+				if (Items[i].Cutoff != newPercentages[i].Cutoff)
+				{
+					allMatched = false;
+					break;
+				}
+			}
 
-		//	if (!allMatched)
-		//	{
-		//		Debug.WriteLine($"WARNING: ColorBandSet No percentages are not receiving an update. The offsets don't match.");
-		//		return false;
-		//	}
+			if (!allMatched)
+			{
+				Debug.WriteLine($"WARNING: ColorBandSet No percentages are not receiving an update. The offsets don't match.");
+				return false;
+			}
 
-		//	if (len != Count)
-		//	{
-		//		Debug.WriteLine($"WARNING: ColorBandSet {Count - len} Percentages are not receiving an update.");
-		//	}
+			if (len != Count)
+			{
+				Debug.WriteLine($"WARNING: ColorBandSet {Count - len} Percentages are not receiving an update.");
+			}
 
-		//	for (var i = 0; i < len; i++)
-		//	{
-		//		var cb = Items[i];
-		//		cb.Percentage = newPercentages[i].Percentage;
-		//	}
+			for (var i = 0; i < len; i++)
+			{
+				var cb = Items[i];
+				cb.Percentage = newPercentages[i].Percentage;
+			}
 
-		//	return true;
-		//}
+			return true;
+		}
 
 		public bool UpdatePercentagesNoCheck(PercentageBand[] newPercentages)
 		{
@@ -435,6 +435,11 @@ namespace MSS.Types
 		public void PushReservedColorBand(ReservedColorBand reservedColorBand)
 		{
 			_reservedColorBands.Push(reservedColorBand);
+		}
+
+		public void MarkAsDirty()
+		{
+			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
 		#endregion
@@ -624,11 +629,11 @@ namespace MSS.Types
 				{
 					runningPercentage += cb.Percentage;
 				}
-				else
-				{
-					Debug.WriteLine($"WARNING: ColorBandSet The last ColorBand's Cutoff is less than the TargetIterations. Creating a new ColorBand to fill the gap.");
+				//else
+				//{
+				//	Debug.WriteLine($"WARNING: ColorBandSet The last ColorBand's Cutoff is less than the TargetIterations. Creating a new ColorBand to fill the gap.");
 
-				}
+				//}
 			}
 
 			// Make sure that the next to last ColorBand's CutOff is < Target Iterations.

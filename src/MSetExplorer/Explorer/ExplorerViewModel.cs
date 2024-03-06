@@ -220,7 +220,8 @@ namespace MSetExplorer
 		private void MapDisplayViewModel_MapViewUpdateCompleted(object? sender, MapViewUpdateCompletedEventArgs e)
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}. Number of Historgrams processed: {_mapSectionHistogramProcessor.NumberOfSectionsProcessed}.");
-			Debug.WriteLine($"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}. Number of Historgrams processed: {_mapSectionHistogramProcessor.NumberOfSectionsProcessed}.");
+			Debug.WriteLine($"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}. Number of Historgrams processed: {_mapSectionHistogramProcessor.NumberOfSectionsProcessed}. " +
+				$"The CbsHistogramViewModel's ColorBandSet Id = {CbsHistogramViewModel.ColorBandSet.Id} / Id of CBS under Edit: {CbsHistogramViewModel.ColorBandSetBeingEditedId}.");
 
 			var histogramDataWasEmpty = !CbsHistogramViewModel.ApplyHistogram();
 			CbsHistogramViewModel.RefreshDisplay();

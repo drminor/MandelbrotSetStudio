@@ -159,6 +159,8 @@ namespace MSetExplorer
 			get => _currentCbEditMode.ToString();
 		}
 
+		public ObjectId ColorBandSetBeingEditedId => _currentColorBandSet.Id;
+
 		public ColorBandSet ColorBandSet
 		{
 			get => _colorBandSet;
@@ -1388,7 +1390,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
+				//UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// Previous Cutoff is being updated
@@ -1417,7 +1419,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
+				//UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// BlendStyle is being updated
@@ -1663,6 +1665,7 @@ namespace MSetExplorer
 
 		private bool ApplyHistogram(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
+			Debug.WriteLine($"ApplyHistogram is being called with a HistCutoffSnapShot with ColorBandSetId: {histCutoffsSnapShot.ColorBandSetId}. SomeNaN = {histCutoffsSnapShot.SomePercentagesAreNan}. AllZero = {histCutoffsSnapShot.AllPercentagesAreZero}.");
 			if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
 			{
 				if (UsePercentages && histCutoffsSnapShot.HavePercentages)
@@ -1686,27 +1689,29 @@ namespace MSetExplorer
 			}
 			else
 			{
-				ClearPercentages();
+				//ClearPercentages();
 				return false;
 			}
 		}
 
 		private void UpdatePercentages(IHistogram histogram)
 		{
-			// Percentages are adjusted based on Cutoffs
 			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
 
-			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
-			{
-				ApplyNewPercentages(newPercentages, histCutoffsSnapShot.ColorBandSetId);
-			}
+			UpdatePercentages(histCutoffsSnapShot);
 		}
 
 		private void UpdatePercentages(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
-			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
+			// Percentages are adjusted based on Cutoffs
+			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages, out var resultsAreComplete))
 			{
 				ApplyNewPercentages(newPercentages, histCutoffsSnapShot.ColorBandSetId);
+
+				if (resultsAreComplete && !histCutoffsSnapShot.HavePercentages)
+				{
+					UpdateAssignedColorBandSetWithNewPercentages(newPercentages);
+				}
 			}
 		}
 
@@ -1734,6 +1739,19 @@ namespace MSetExplorer
 				{
 					BeyondTargetSpecs = null;
 				}
+			}
+		}
+
+		private void UpdateAssignedColorBandSetWithNewPercentages(PercentageBand[] newPercentages)
+		{
+			var percentagesWereUpdated = ColorBandSet.UpdatePercentagesCheckOffsets(newPercentages);
+			if (!percentagesWereUpdated)
+			{
+				Debug.WriteLine($"WARNING: CbsHistogramViewModel. Unable to update the ColorBandSet's percentages.");
+			}
+			else
+			{
+				ColorBandSet.MarkAsDirty();
 			}
 		}
 

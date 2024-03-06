@@ -100,7 +100,7 @@ namespace MSS.Common.MSet
 			}
 
 			var targetIterations = currentJob.MapCalcSettings.TargetIterations;
-			_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(targetIterations, operationDescription: "as the poster is being constructed", _colorBandSets, lookupColorMapByTargetIteration);
+			_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(null, targetIterations, operationDescription: "as the poster is being constructed", _colorBandSets, lookupColorMapByTargetIteration);
 			
 			_jobTree.CurrentItem = currentJob;
 
@@ -284,7 +284,7 @@ namespace MSS.Common.MSet
 
 						//var colorBandSetIdBeforeUpdate = _jobTree.CurrentItem.ColorBandSetId;
 						var targetIterations = value.MapCalcSettings.TargetIterations;
-						CurrentColorBandSet = JobOwnerHelper.LoadColorBandSet(targetIterations, operationDescription: "as the Current Job is being updated", _colorBandSets, _lookupColorMapByTargetIteration);
+						CurrentColorBandSet = JobOwnerHelper.LoadColorBandSet(_currentColorBandSet, targetIterations, operationDescription: "as the Current Job is being updated", _colorBandSets, _lookupColorMapByTargetIteration);
 
 						_jobTree.CurrentItem = value;
 

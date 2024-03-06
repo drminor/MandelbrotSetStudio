@@ -1164,7 +1164,7 @@ namespace MSetExplorer
 
 			var curPoster = _vm.PosterViewModel.CurrentPoster;
 
-			if (colorBandSetOpenSaveWindow.ShowDialog() == true)
+			if (colorBandSetOpenSaveWindow.ShowDialog() == true && curPoster != null)
 			{
 				newColorBandSet = colorBandSet.CreateNewCopy();
 				newColorBandSet.Name = colorBandSetOpenSaveWindow.ColorBandSetName ?? string.Empty;

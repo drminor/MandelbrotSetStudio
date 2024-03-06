@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MongoDB.Bson;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -100,5 +101,7 @@ namespace MSetExplorer
 		ReservedColorBand PopReservedColorBand();
 
 		void PushReservedColorBand(ReservedColorBand reservedColorBand);
+
+		ObjectId ColorBandSetBeingEditedId { get; }
 	}
 }

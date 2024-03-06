@@ -120,7 +120,7 @@ namespace MSS.Common.MSet
 
 			//_  = JobOwnerHelper.LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed", _colorBandSets, out var wasUpdated, out var wasCreated);
 			var targetIterations = currentJob.MapCalcSettings.TargetIterations;
-			_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(targetIterations, operationDescription: "as the project is being constructed", _colorBandSets, lookupColorMapByTargetIteration);
+			_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(null, targetIterations, operationDescription: "as the project is being constructed", _colorBandSets, lookupColorMapByTargetIteration);
 
 			//if (wasUpdated)
 			//{
@@ -259,7 +259,7 @@ namespace MSS.Common.MSet
 						//var colorBandSetIdBeforeUpdate = _currentColorBandSet.Id;
 
 						var targetIterations = value.MapCalcSettings.TargetIterations;
-						_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(targetIterations, operationDescription: "as the Current Job is being updated", _colorBandSets, _lookupColorMapByTargetIteration);
+						_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(_currentColorBandSet, targetIterations, operationDescription: "as the Current Job is being updated", _colorBandSets, _lookupColorMapByTargetIteration);
 
 						_jobTree.CurrentItem = value;
 

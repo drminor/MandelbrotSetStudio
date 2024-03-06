@@ -110,21 +110,22 @@ namespace MSS.Types
 
 		#region Percentages and Cutoffs
 
-		public static bool TryGetPercentagesFromCutoffs(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out PercentageBand[]? percentageBands)
+		public static bool TryGetPercentagesFromCutoffs(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out PercentageBand[]? percentageBands, out bool resultsAreComplete)
 		{
 			if (histCutoffsSnapShot.CutoffsLength > 0)
 			{
-				percentageBands = BuildNewPercentages(histCutoffsSnapShot);
+				percentageBands = BuildNewPercentages(histCutoffsSnapShot, out resultsAreComplete);
 				return true;
 			}
 			else
 			{
 				percentageBands = null;
+				resultsAreComplete = false;
 				return false;
 			}
 		}
 
-		public static PercentageBand[] BuildNewPercentages(HistCutoffsSnapShot histCutoffsSnapShot)
+		public static PercentageBand[] BuildNewPercentages(HistCutoffsSnapShot histCutoffsSnapShot, out bool resultsAreComplete)
 		{
 			var kvps = histCutoffsSnapShot.HistKeyValuePairs;
 			var upperCatchAllValue = histCutoffsSnapShot.UpperCatchAllValue;
@@ -132,6 +133,7 @@ namespace MSS.Types
 
 			if (cutoffs.Length == 0)
 			{
+				resultsAreComplete = false;
 				return new PercentageBand[0];
 			}
 
@@ -168,13 +170,16 @@ namespace MSS.Types
 
 			//Debug.Assert(curBucketPtr == result.Length - 2, $"CbsHistogramViewModel. BuildNewPercentages. Not all PercentageBands were updated. The TargetCutoff < the last Histogram Key.");
 
-			if (curBucketPtr < result.Length - 1)
+			if (curBucketPtr < result.Length - 2)
 			{
 				Debug.Assert(i >= kvps.Length, "Huh? The curBucketPtr < result.Length - 1 AND i < kvps.Length");
 				Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewPercentages. Not all PercentageBands were updated. The TargetCutoff < the last Histogram Key.");
+				resultsAreComplete = false;
 			}
 			else
 			{
+				resultsAreComplete = true;
+
 				for (; i < kvps.Length; i++)
 				{
 					var amount = kvps[i].Value;
@@ -204,6 +209,11 @@ namespace MSS.Types
 
 			var sumOfAllPercentages = result.Take(result.Length - 1).Sum(x => x.Percentage);
 			Debug.WriteLine($"The Sum of all percentages is {sumOfAllPercentages} on call to BuildNewPercentages.");
+
+			if (resultsAreComplete && Math.Abs(sumOfAllPercentages - 100) > 0.5)
+			{
+				resultsAreComplete = false;
+			}
 
 			return result;
 		}
@@ -314,7 +324,7 @@ namespace MSS.Types
 			if (curBucketPtr < result.Length - 2)
 			{
 				var diff = (result.Length - 2) - curBucketPtr;
-				Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewCutoffs. The last {diff} cutoffs were not updated. The running count of histogram values did not reach the target count.");
+				Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewCutoffs: The running count of histogram values did not reach the target count. CurBucketPtr = {curBucketPtr}. Result.Length = {result.Length}.");
 			}
 
 			var followingCutoff = topIndex;

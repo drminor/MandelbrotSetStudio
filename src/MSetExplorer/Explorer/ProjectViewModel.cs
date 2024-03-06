@@ -134,14 +134,27 @@ namespace MSetExplorer
 			{
 				if (value != _previewColorBandSet)
 				{
-					if (value == null || CurrentJob == null || CurrentJob.IsEmpty)
+					var curProject = CurrentProject;
+
+					if (value == null || CurrentJob == null || CurrentJob.IsEmpty || curProject == null)
 					{
 						_previewColorBandSet = value;
 					}
 					else
 					{
-						var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MapCalcSettings.TargetIterations);
-						_previewColorBandSet = adjustedColorBandSet;
+						var targetIterations = CurrentJob.MapCalcSettings.TargetIterations;
+
+						if (value.HighCutoff != targetIterations)
+						{
+							Debug.WriteLine($"WARNING: ProjectViewModel. The PreviewColorBandSet is being set to a value with a different TargetIterations.");
+
+							var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, targetIterations);
+							_previewColorBandSet = adjustedColorBandSet;
+						}
+						else
+						{
+							_previewColorBandSet = value;
+						}
 					}
 
 					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));

@@ -10,7 +10,7 @@ namespace PercentageBandsTest
 		[Fact]
 		public void UsePercentages_HavePercentagesH1()
 		{
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: true);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: true);
 			var histogram = GetHistogram1();
 
 			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
@@ -21,7 +21,7 @@ namespace PercentageBandsTest
 		[Fact]
 		public void UsePercentages_DoNotHavePercentagesH1()
 		{
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: false);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram1();
 
 			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
@@ -32,7 +32,7 @@ namespace PercentageBandsTest
 		[Fact]
 		public void UseCutoffsH1()
 		{
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: false);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram1();
 
 			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
@@ -43,7 +43,7 @@ namespace PercentageBandsTest
 		[Fact]
 		public void UsePercentages_HavePercentagesH2()
 		{
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: true);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: true);
 			var histogram = GetHistogram2();
 
 			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
@@ -54,7 +54,7 @@ namespace PercentageBandsTest
 		[Fact]
 		public void UsePercentages_DoNotHavePercentagesH2()
 		{
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: false);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram2();
 
 			// Update Percentage from Cutoffs
@@ -70,7 +70,7 @@ namespace PercentageBandsTest
 		[Fact]
 		public void UseCutoffsH2()
 		{
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(maxIterations: 400, usePercentages: false);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram2();
 
 			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
@@ -116,7 +116,7 @@ namespace PercentageBandsTest
 
 		private PercentageBand[] UpdatePercentages(ColorBandSet colorBandSet, HistCutoffsSnapShot histCutoffsSnapShot)
 		{
-			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages))
+			if (ColorBandSetHelper.TryGetPercentagesFromCutoffs(histCutoffsSnapShot, out var newPercentages, out var resultsAreComplete))
 			{
 				ColorBandSetHelper.ReportNewPercentages(newPercentages);
 

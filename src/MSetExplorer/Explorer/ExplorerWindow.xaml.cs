@@ -689,7 +689,7 @@ namespace MSetExplorer
 
 			var curProject = _vm.ProjectViewModel.CurrentProject;
 
-			if (curProject == null)
+			if (curProject == null || curProject.CurrentJob.IsEmpty)
 			{
 				return;
 			}
@@ -703,6 +703,8 @@ namespace MSetExplorer
 				CheckProjectViewModelTargetIterations();
 
 				//var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
+
+				Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {curProject.CurrentJob.MapCalcSettings.TargetIterations} to {colorBandSet.Id}.");
 				_vm.ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 			else

@@ -333,7 +333,7 @@ namespace MSS.Common
 
 		#region Load ColorBandSet 
 
-		public static ColorBandSet LoadColorBandSet(int targetIterations, string operationDescription, List<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
+		public static ColorBandSet LoadColorBandSet(ColorBandSet? currentColorBandSet, int targetIterations, string operationDescription, List<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
 		{
 			//var targetIterations = job.MapCalcSettings.TargetIterations;
 
@@ -341,7 +341,18 @@ namespace MSS.Common
 
 			if (lookupColorMapByTargetIteration.TryGetValue(targetIterations, out var targetIterationColorMap))
 			{
-				result = colorBandSets.FirstOrDefault(x => x.Id == targetIterationColorMap.ColorBandSetId);
+				var foundId = targetIterationColorMap.ColorBandSetId;
+
+				if (currentColorBandSet != null && currentColorBandSet.Id == foundId)
+				{
+					result = currentColorBandSet;
+					Debug.WriteLine($"JobOwnerHelper found ColorBandSetId = {foundId} for Project Current Job having TargetIteration: {targetIterations}. The Current ColorBandSet is the default.");
+				}
+				else
+				{
+					result = colorBandSets.FirstOrDefault(x => x.Id == targetIterationColorMap.ColorBandSetId);
+					Debug.WriteLine($"JobOwnerHelper found ColorBandSetId = {foundId} for Project Current Job having TargetIteration: {targetIterations}. Returning a ColorBandSet from the list of CBS on the Project.");
+				}
 			}
 			else
 			{
@@ -356,7 +367,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static ColorBandSet LoadColorBandSet(ObjectId colorBandSetId, int targetIterations, string operationDescription, List<ColorBandSet> colorBandSets, out bool wasUpdated, out bool wasCreated)
+		public static ColorBandSet FindOrCreateColorBandSet(ObjectId colorBandSetId, int targetIterations, string operationDescription, List<ColorBandSet> colorBandSets, out bool wasUpdated, out bool wasCreated)
 		{
 			var result = GetColorBandSetById(colorBandSetId, colorBandSets);
 
@@ -445,7 +456,7 @@ namespace MSS.Common
 
 				if (!lookupColorMapByTargetIteration.ContainsKey(targetIterations))
 				{
-					var match = LoadColorBandSet(job.ColorBandSetId, targetIterations, desc, colorBandSets, out var wasUpdated, out var wasCreated);
+					var match = FindOrCreateColorBandSet(job.ColorBandSetId, targetIterations, desc, colorBandSets, out var wasUpdated, out var wasCreated);
 					var ticmRec = new TargetIterationColorMapRecord(targetIterations, match.Id, match.DateCreated);
 
 					lookupColorMapByTargetIteration.Add(targetIterations, ticmRec);
