@@ -29,7 +29,7 @@ namespace MSS.Common
 				Debug.WriteLine($"{numberJobMapSectionRefsCreated} new JobMapSectionRecords were created as Job: {formerJobId} was duplicated.");
 			}
 
-			var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy())).ToArray();
+			var colorBandSetPairs = sourceProject.GetColorBandSets().Select(x => new Tuple<ObjectId, ColorBandSet>(x.Id, x.CreateNewCopy(ObjectId.GenerateNewId()))).ToArray();
 			var colorBandSets = colorBandSetPairs.Select(x => x.Item2).ToArray();
 
 			var timcrs = sourceProject.GetTargetIterationColorMapRecords();
@@ -109,8 +109,10 @@ namespace MSS.Common
 
 			if (project.IsDirty)
 			{
-				var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(project, projectAdapter);
-				Debug.WriteLine($"Removed {numberColorBandSetsRemoved} unused ColorBandSets.");
+				// TODO: Support deleting all unreferenced ColorBandSets from the ColorBandSetOpenSaveDialog
+
+				//var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(project, projectAdapter);
+				//Debug.WriteLine($"Removed {numberColorBandSetsRemoved} unused ColorBandSets.");
 
 				//projectAdapter.UpdateProjectName(jobOwner.Id, jobOwner.Name);
 				//projectAdapter.UpdateProjectDescription(jobOwner.Id, jobOwner.Description);
@@ -164,7 +166,7 @@ namespace MSS.Common
 				if (cbs.ProjectId != jobOwner.Id)
 				{
 					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.ProjectId}, current Project: {jobOwner.Id}. ColorBandSet Serial Number: {cbs.ColorBandsSerialNumber}.");
-					var newCbs = cbs.CreateNewCopy();
+					var newCbs = cbs.CreateNewCopy(ObjectId.GenerateNewId());
 					newCbs.ProjectId = jobOwner.Id;
 					newCbs.AssignNewSerialNumber();
 					projectAdapter.InsertColorBandSet(newCbs);
@@ -179,7 +181,8 @@ namespace MSS.Common
 
 			foreach (var cbs in dirtyColorBandSets)
 			{
-				projectAdapter.UpdateColorBandSetDetails(cbs);
+				//projectAdapter.UpdateColorBandSetDetails(cbs);
+				projectAdapter.UpdateColorBandSetBands(cbs);
 			}
 		}
 

@@ -68,6 +68,7 @@ namespace MSS.Common
 
 		void UpdateColorBandSetDescription(ObjectId colorBandSetId, string? description);
 		void UpdateColorBandSetDetails(ColorBandSet colorBandSet);
+		void UpdateColorBandSetBands(ColorBandSet colorBandSet);
 		void UpdateColorBandSetName(ObjectId colorBandSetId, string? name);
 		int DeleteUnusedColorBandSets();
 

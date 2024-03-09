@@ -21,6 +21,8 @@ namespace MSetExplorer
 		bool ColorBandUserControlHasErrors { get; set; }
 
 		ColorBandSet ColorBandSet { get; set; }
+
+		ObjectId ColorBandSetBeingEditedId { get; }
 		ListCollectionView ColorBandsView { get; set; }
 		ColorBand? CurrentColorBand { get; set; }
 		int CurrentColorBandIndex { get; }
@@ -36,7 +38,11 @@ namespace MSetExplorer
 		bool UseEscapeVelocities { get; set; }
 		bool UseRealTimePreview { get; set; }
 
-		bool UsePercentages { get; set; }
+		//bool UsePercentages { get; set; }
+		bool CurrentUsingPercentages { get; }
+		bool? DefaultUsePercentages { get; set; }
+
+		string PercentageUseIsGlobalDisplayStr { get; }
 
 		//Visibility WindowVisibility { get; set; }
 
@@ -101,7 +107,5 @@ namespace MSetExplorer
 		ReservedColorBand PopReservedColorBand();
 
 		void PushReservedColorBand(ReservedColorBand reservedColorBand);
-
-		ObjectId ColorBandSetBeingEditedId { get; }
 	}
 }

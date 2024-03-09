@@ -214,17 +214,34 @@ namespace MSetExplorer
 			{
 				if (value != _previewColorBandSet)
 				{
-					if (value == null || CurrentJob == null)
+					var curPoster = CurrentPoster;
+
+					if (value == null || CurrentJob == null || CurrentJob.IsEmpty || curPoster == null)
 					{
 						_previewColorBandSet = value;
 					}
 					else
 					{
-						var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MapCalcSettings.TargetIterations);
-						_previewColorBandSet = adjustedColorBandSet;
+						var targetIterations = CurrentJob.MapCalcSettings.TargetIterations;
+
+						if (value.HighCutoff != targetIterations)
+						{
+							Debug.WriteLine($"WARNING: PosterViewModel. The PreviewColorBandSet is being set to a value with a different TargetIterations.");
+
+							var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, targetIterations);
+							_previewColorBandSet = adjustedColorBandSet;
+						}
+						else
+						{
+							_previewColorBandSet = value;
+						}
 					}
 
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
+				}
+				else
+				{
+					Debug.WriteLine("PosterViewModel. The PreviewColorBandSet on update has same value.");
 				}
 			}
 		}
@@ -350,7 +367,7 @@ namespace MSetExplorer
 				return new List<ColorBandSetInfo>();
 			}
 
-			var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastUpdatedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.HighCutoff)).ToList();
+			var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastAccessedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.HighCutoff)).ToList();
 
 			return result;
 		}

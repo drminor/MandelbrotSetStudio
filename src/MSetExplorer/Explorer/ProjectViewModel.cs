@@ -73,7 +73,24 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool CurrentProjectIsDirty => CurrentProject?.IsDirty ?? false;
+		public bool CurrentProjectIsDirty
+		{
+			get
+			{
+				if (CurrentProject == null)
+				{
+					return false;
+				}
+
+				if (CurrentProject.IsDirty)
+				{
+					return true;
+				}
+
+				return false;
+			}
+		}
+		
 
 		public int GetGetNumberOfDirtyJobs()
 		{
@@ -281,7 +298,7 @@ namespace MSetExplorer
 				return new List<ColorBandSetInfo>();
 			}
 
-			var result = curProject.GetColorBandSets().Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastUpdatedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.HighCutoff)).ToList();
+			var result = curProject.GetColorBandSets().Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastAccessedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.HighCutoff)).ToList();
 
 			return result;
 		}

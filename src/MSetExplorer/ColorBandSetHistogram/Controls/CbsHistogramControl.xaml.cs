@@ -455,15 +455,20 @@ namespace MSetExplorer
 		}
 
 		// Use the Percentages (or the Cutoffs) - Alt P
-		private void UsePercentages_Checked(object sender, RoutedEventArgs e)
+		private void UsePercentagesGlobally_Checked(object sender, RoutedEventArgs e)
 		{
-			var usePercentages = mnuItem_UsePercentages.IsChecked;
 			if (_vm != null)
 			{
-				_vm.UsePercentages = usePercentages;
+				if (mnuItem_UsePercentagesGlobally.IsChecked)
+				{
+					_vm.DefaultUsePercentages = _vm.CurrentUsingPercentages;
+				}
+				else
+				{
+					_vm.DefaultUsePercentages = null;
+				}
 			}
 		}
-
 
 		// Show Details F4
 		private void ShowDetails_Click(object sender, RoutedEventArgs e)

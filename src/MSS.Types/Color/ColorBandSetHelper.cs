@@ -12,23 +12,23 @@ namespace MSS.Types
 	{
 		#region Adjust Target Iterations
 
-		public static ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations, IEnumerable<ColorBandSet> colorBandSetCollection)
-		{
-			ColorBandSet result;
+		//public static ColorBandSet AdjustTargetIterations(ColorBandSet colorBandSet, int targetIterations, IEnumerable<ColorBandSet> colorBandSetCollection)
+		//{
+		//	ColorBandSet result;
 
-			if (colorBandSet.HighCutoff == targetIterations)
-			{
-				result = colorBandSet;
-			}
-			else
-			{
-				result = GetBestMatchingColorBandSet(targetIterations, colorBandSetCollection);
-				var adjustedColorBandSet = AdjustTargetIterations(result, targetIterations);
-				result = adjustedColorBandSet;
-			}
+		//	if (colorBandSet.HighCutoff == targetIterations)
+		//	{
+		//		result = colorBandSet;
+		//	}
+		//	else
+		//	{
+		//		result = GetBestMatchingColorBandSet(targetIterations, colorBandSetCollection);
+		//		var adjustedColorBandSet = AdjustTargetIterations(result, targetIterations);
+		//		result = adjustedColorBandSet;
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public static ColorBandSet GetBestMatchingColorBandSet(int cutoff, IEnumerable<ColorBandSet> colorBandSets)
 		{
@@ -101,7 +101,7 @@ namespace MSS.Types
 			var itemsToKeep = cBands.Where(x => x.Cutoff <= targetIterations).ToList();
 			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
 
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), colorBandSet.ParentId, colorBandSet.ProjectId, colorBandSet.Name, colorBandSet.Description, itemsToKeep, targetIterations, reservedColorBands, colorBandSet.ColorBandsSerialNumber);
+			var result = new ColorBandSet(colorBandSet.Id, colorBandSet.ParentId, colorBandSet.ProjectId, colorBandSet.Name, colorBandSet.Description, itemsToKeep, targetIterations, colorBandSet.UsingPercentages, reservedColorBands, colorBandSet.ColorBandsSerialNumber);
 
 			return result;
 		}

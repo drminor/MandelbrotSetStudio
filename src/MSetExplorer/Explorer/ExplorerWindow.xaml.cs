@@ -702,8 +702,6 @@ namespace MSetExplorer
 				Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 				CheckProjectViewModelTargetIterations();
 
-				//var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
-
 				Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {curProject.CurrentJob.MapCalcSettings.TargetIterations} to {colorBandSet.Id}.");
 				_vm.ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
@@ -776,7 +774,6 @@ namespace MSetExplorer
 
 				CheckProjectViewModelTargetIterations();
 
-				//var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.ProjectViewModel.CurrentJob.MapCalcSettings.TargetIterations);
 				_vm.ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 			else
@@ -982,15 +979,10 @@ namespace MSetExplorer
 
 		private void LoadNewProject()
 		{
-			// TODO: Add UsePercentages to the Color menu on the Explorer Window
-			var usePercentages = _vm.CbsHistogramViewModel.UsePercentages;
-
-			//usePercentages = true;
-
 			var projectName = RMapConstants.NAME_FOR_NEW_PROJECTS;
 
 			var mapCalcSettings = RMapConstants.BuildMapCalcSettings();
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(projectName, mapCalcSettings.TargetIterations, usePercentages);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(projectName, mapCalcSettings.TargetIterations, usePercentages: true);
 			var mapAreaInfo = RMapConstants.BuildHomeArea();
 
 			LoadNewProject(projectName, mapAreaInfo, colorBandSet, mapCalcSettings);
@@ -1455,7 +1447,7 @@ namespace MSetExplorer
 
 			if (colorBandSetOpenSaveWindow.ShowDialog() == true && curProject != null)
 			{
-				newColorBandSet = colorBandSet.CreateNewCopy();
+				newColorBandSet = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 				newColorBandSet.Name = colorBandSetOpenSaveWindow.ColorBandSetName ?? string.Empty;
 				newColorBandSet.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
 				newColorBandSet.AssignNewSerialNumber();
@@ -1532,7 +1524,7 @@ namespace MSetExplorer
 
 			if (colorBandSetImportExportWindow.ShowDialog() == true)
 			{
-				var cpy = colorBandSet.CreateNewCopy();
+				var cpy = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 				cpy.Name = colorBandSetImportExportWindow.ColorBandSetName ?? string.Empty;
 				cpy.Description = colorBandSetImportExportWindow.ColorBandSetDescription;
 

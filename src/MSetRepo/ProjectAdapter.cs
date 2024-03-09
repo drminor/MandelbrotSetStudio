@@ -362,6 +362,12 @@ namespace MSetRepo
 			colorBandSetReaderWriter.UpdateDetails(colorBandSet);
 		}
 
+		public void UpdateColorBandSetBands(ColorBandSet colorBandSet)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			colorBandSetReaderWriter.UpdateBands(colorBandSet);
+		}
+
 		public IEnumerable<ColorBandSet> GetColorBandSetsForProject(ObjectId projectId)
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
@@ -731,17 +737,17 @@ namespace MSetRepo
 		//	return averageTargetIterations;
 		//}
 
-		private ColorBandSet GetUpdatedCbsWithTargetIteration(ColorBandSet colorBandSet, int targetIterations, IEnumerable<ColorBandSet> cacheValues, ColorBandSetReaderWriter colorBandSetReaderWriter)
-		{
-			var updatedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations, cacheValues);
-			InsertCbs(updatedCbs, colorBandSetReaderWriter);
+		//private ColorBandSet GetUpdatedCbsWithTargetIteration(ColorBandSet colorBandSet, int targetIterations, IEnumerable<ColorBandSet> cacheValues, ColorBandSetReaderWriter colorBandSetReaderWriter)
+		//{
+		//	var updatedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations, cacheValues);
+		//	InsertCbs(updatedCbs, colorBandSetReaderWriter);
 
-			return updatedCbs;
-		}
+		//	return updatedCbs;
+		//}
 
 		private ColorBandSet GetUpdatedCbsForProject(ColorBandSet colorBandSet, ObjectId projectId, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
-			var updatedCbs = colorBandSet.CreateNewCopy();
+			var updatedCbs = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 			updatedCbs.ProjectId = projectId;
 			InsertCbs(updatedCbs, colorBandSetReaderWriter);
 

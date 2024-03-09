@@ -64,8 +64,10 @@ namespace MSetRepo
 				Id = source.Id, 
 				//LastSaved = source.LastSavedUtc
 				TargetIterations = source.TargetIterations,
+				UsingPercentages = source.UsingPercentages,
 				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray(),
-				ColorBandsSerialNumber = source.ColorBandsSerialNumber
+				ColorBandsSerialNumber = source.ColorBandsSerialNumber,
+				LastAccessed = source.LastAccessedUtc
 			};
 
 			return result;
@@ -81,12 +83,16 @@ namespace MSetRepo
 				targetIterations = colorBands[^1].Cutoff;
 			}
 
-			return new ColorBandSet(
+			var result = new ColorBandSet(
 				target.Id, target.ParentId, target.ProjectId, target.Name, target.Description, 
-				colorBands, targetIterations,
+				colorBands, targetIterations, target.UsingPercentages,
 				target.ReservedColorBandRecords?.Select(x => MapFrom(x)),
 				target.ColorBandsSerialNumber
 				);
+
+			result.LastAccessedUtc = target.LastAccessed;
+
+			return result;
 		}
 
 		public ColorBandRecord MapTo(ColorBand source)

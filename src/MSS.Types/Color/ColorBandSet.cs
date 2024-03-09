@@ -26,6 +26,8 @@ namespace MSS.Types
 
 		private int _hilightedColorBandIndex;
 
+		private bool _usingPercentages;
+
 		private readonly bool _useDetailedDebug = false;
 
 		#endregion
@@ -45,13 +47,15 @@ namespace MSS.Types
 		{ }
 
 		private ColorBandSet(string name, ObjectId projectId, IEnumerable<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
-			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name, description: null, colorBands, targetIterations, null, colorBandsSerialNumber)
+			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name, description: null, colorBands, targetIterations, 
+				  usingPercentages: false, reservedColorBands: null, colorBandsSerialNumber)
 		{
 			LastSavedUtc = DateTime.MinValue;
 			OnFile = false;
 		}
 
-		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string name, string? description, IEnumerable<ColorBand>? colorBands, int targetIterations, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
+		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string name, string? description, IEnumerable<ColorBand>? colorBands, int targetIterations, 
+			bool usingPercentages, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
 			: base(FixBands(targetIterations, colorBands))
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"Constructing ColorBandSet with id: {id} and Serial#: {colorBandsSerialNumber}.");
@@ -66,6 +70,7 @@ namespace MSS.Types
 			ColorBandsSerialNumber = colorBandsSerialNumber;
 
 			_hilightedColorBandIndex = 0;
+			_usingPercentages = usingPercentages;
 
 			_lastSavedUtc = DateTime.UtcNow;
 			LastUpdatedUtc = DateTime.MinValue;
@@ -84,10 +89,11 @@ namespace MSS.Types
 
 		public int HighCutoff => this[^1].Cutoff;
 
-		private bool _noneAreNaN => Items.All(x => !double.IsNaN(x.Percentage));
+		public bool NoPercentageIsNaN => Items.All(x => !double.IsNaN(x.Percentage));
 
-		// True if none are NaN and at least one is non zero.
-		public bool HavePercentages => (_noneAreNaN) && Items.Any(x => x.Percentage != 0);
+		public bool AtLeastOnePercentageIsNonZero => Items.Any(x => x.Percentage != 0);
+
+		public bool HavePercentages => NoPercentageIsNaN && AtLeastOnePercentageIsNonZero;
 
 		#endregion
 
@@ -178,55 +184,6 @@ namespace MSS.Types
 			}
 		}
 
-		//public ColorBand? CurrentColorBand
-		//{
-		//	get
-		//	{
-		//		if (CurrentColorBandIndex < 0 || CurrentColorBandIndex > Count - 1)
-		//		{
-		//			return null;
-		//		}
-		//		else
-		//		{
-		//			return this[CurrentColorBandIndex];
-		//		}
-		//	}
-		//	set
-		//	{
-		//		var previousValue = CurrentColorBandIndex;
-		//		if (value == null)
-		//		{
-		//			CurrentColorBandIndex = -1;
-		//		}
-		//		else
-		//		{
-		//			var index = IndexOf(value);
-
-		//			if (index == -1)
-		//			{
-		//				var colorBandWithMatchingCutoff = this.FirstOrDefault(x => x.Cutoff == value.Cutoff);
-		//				if (colorBandWithMatchingCutoff != null)
-		//				{
-		//					CurrentColorBandIndex = IndexOf(colorBandWithMatchingCutoff);
-		//				}
-		//				else
-		//				{
-		//					CurrentColorBandIndex = 0;
-		//				}
-		//			}
-		//			else
-		//			{
-		//				CurrentColorBandIndex = IndexOf(value);
-		//			}
-		//		}
-
-		//		if (CurrentColorBandIndex != previousValue)
-		//		{
-		//			OnPropertyChanged();
-		//		}
-		//	}
-		//}
-
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
@@ -240,7 +197,24 @@ namespace MSS.Types
 
 		public DateTime LastUpdatedUtc { get; private set; }
 
+		public DateTime LastAccessedUtc { get; set; }
+
 		public int TargetIterations { get; set; }
+
+		public bool UsingPercentages
+		{
+			get => _usingPercentages;
+			
+			set
+			{
+				if (value != _usingPercentages)
+				{
+					_usingPercentages = value;
+					LastUpdatedUtc = DateTime.UtcNow;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		#endregion
 
@@ -282,6 +256,8 @@ namespace MSS.Types
 
 			var wasRemoved = Remove(colorBand);
 
+			if (wasRemoved) LastUpdatedUtc = DateTime.UtcNow;
+
 			return wasRemoved;
 		}
 
@@ -304,6 +280,8 @@ namespace MSS.Types
 				Items[index - 1].SuccessorStartColor = cb.StartColor;
 			}
 
+			LastUpdatedUtc = DateTime.UtcNow;
+
 			return reservedColorBand;
 		}
 
@@ -321,6 +299,8 @@ namespace MSS.Types
 				var predecessorCb = Items[index - 1];
 				predecessorCb.SuccessorStartColor = Items[index].StartColor;
 			}
+
+			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
 		public bool UpdatePercentagesCheckOffsets(PercentageBand[] newPercentages)
@@ -452,11 +432,14 @@ namespace MSS.Types
 
 			var singleColorBand = CreateSingleColorBand(TargetIterations);
 			Add(singleColorBand);
+			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
 		protected override void InsertItem(int index, ColorBand item)
 		{
 			base.InsertItem(index, item);
+			LastUpdatedUtc = DateTime.UtcNow;
+
 			//UpdateItemAndNeighbors(index, item);
 		}
 
@@ -469,6 +452,7 @@ namespace MSS.Types
 			}
 
 			base.RemoveItem(index);
+			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
 		protected override void SetItem(int index, ColorBand item)
@@ -731,14 +715,26 @@ namespace MSS.Types
 		#region Clone Support
 
 		/// <summary>
-		/// Creates a copy with a new Id using the existing serial number.
+		/// Creates a copy with a the same Id and serial number.
 		/// </summary>
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
+			var result = Clone();
+			return result;
+		}
+
+		/// <summary>
+		/// Creates a copy with the specified new Id and the same "Serial Number."
+		/// </summary>
+		/// <returns></returns>
+		public ColorBandSet CreateNewCopy(ObjectId newId)
+		{
+			//Debug.WriteLine($"ColorBandSet. About to CreateNewCopy with target iterations: {targetIterations}: {this}");
 			var idx = HighlightedColorBandIndex;
 
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), Id, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var bandsCopy = CreateBandsCopy();
+			var result = new ColorBandSet(newId, ParentId, ProjectId, Name, Description, bandsCopy, TargetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -746,14 +742,13 @@ namespace MSS.Types
 				HighlightedColorBandIndex = idx
 			};
 
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Created a new copy from ColorBandSet (Id: {Id}) with new ID: {result.Id}");
-			//Debug.WriteLine($"About to CreateNewCopy: {this}");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Created a new copy with Id: {newId} from ColorBandSet (Id: {Id}) with new ID: {result.Id}");
 
 			return result;
 		}
 
 		/// <summary>
-		/// Creates a copy with a new Id, the specified targetIterations and keeps the existing "Serial Number."
+		/// Creates a copy with a new Id, the specified targetIterations and the same "Serial Number."
 		/// </summary>
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy(int targetIterations)
@@ -763,7 +758,7 @@ namespace MSS.Types
 
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, ProjectId, Name, Description, bandsCopy, targetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, ProjectId, Name, Description, bandsCopy, targetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -790,7 +785,7 @@ namespace MSS.Types
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Cloning ColorBandSet with Id: {Id}.");
 
 			var idx = HighlightedColorBandIndex;
-			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = LastSavedUtc,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -930,7 +925,8 @@ namespace MSS.Types
 		public bool Equals(ColorBandSet? other)
 		{
 			return other != null
-				&& Id.Equals(other.Id);
+				&& Id.Equals(other.Id)
+				&& LastUpdatedUtc == other.LastUpdatedUtc;
 		}
 
 		public bool Equals(ColorBandSet? x, ColorBandSet? y)

@@ -452,8 +452,8 @@ namespace MSetExplorer
 				Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 				CheckProjectViewModelTargetIterations();
 
-				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.PosterViewModel.CurrentJob.MapCalcSettings.TargetIterations);
-				_vm.PosterViewModel.CurrentColorBandSet = adjustedCbs;
+				Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {curProject.CurrentJob.MapCalcSettings.TargetIterations} to {colorBandSet.Id}.");
+				_vm.PosterViewModel.CurrentColorBandSet = colorBandSet;
 			}
 			else
 			{
@@ -527,8 +527,7 @@ namespace MSetExplorer
 
 				CheckProjectViewModelTargetIterations();
 
-				var adjustedCbs = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, _vm.PosterViewModel.CurrentJob.MapCalcSettings.TargetIterations);
-				_vm.PosterViewModel.CurrentColorBandSet = adjustedCbs;
+				_vm.PosterViewModel.CurrentColorBandSet = colorBandSet;
 			}
 			else
 			{
@@ -1166,7 +1165,7 @@ namespace MSetExplorer
 
 			if (colorBandSetOpenSaveWindow.ShowDialog() == true && curPoster != null)
 			{
-				newColorBandSet = colorBandSet.CreateNewCopy();
+				newColorBandSet = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 				newColorBandSet.Name = colorBandSetOpenSaveWindow.ColorBandSetName ?? string.Empty;
 				newColorBandSet.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
 				newColorBandSet.AssignNewSerialNumber();
@@ -1242,7 +1241,7 @@ namespace MSetExplorer
 
 			if (colorBandSetImportExportWindow.ShowDialog() == true)
 			{
-				var cpy = colorBandSet.CreateNewCopy();
+				var cpy = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 				cpy.Name = colorBandSetImportExportWindow.ColorBandSetName ?? string.Empty;
 				cpy.Description = colorBandSetImportExportWindow.ColorBandSetDescription;
 

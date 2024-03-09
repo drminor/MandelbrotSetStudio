@@ -171,7 +171,9 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _jobTree.IsDirty; // || _jobTree.AnyItemIsDirty;
+		private bool _anyColorBandSetIsDirty => _colorBandSets.Any(x => x.IsDirty);
+
+		public bool IsDirty => LastUpdatedUtc > LastSavedUtc || _anyColorBandSetIsDirty || _jobTree.IsDirty; // || _jobTree.AnyItemIsDirty;
 
 		public bool IsCurrentJobIdChanged => CurrentJobId != _originalCurrentJobId;
 
@@ -350,7 +352,7 @@ namespace MSS.Common.MSet
 							// Make a copy of the incoming ColorBandSet
 							// and set it's ProjectId to this Project's Id
 							// and give it a new SerialNumber.
-							newCbs = newCbs.CreateNewCopy();
+							newCbs = newCbs.CreateNewCopy(ObjectId.GenerateNewId());
 							newCbs.AssignNewSerialNumber();
 							newCbs.ProjectId = Id;
 						}

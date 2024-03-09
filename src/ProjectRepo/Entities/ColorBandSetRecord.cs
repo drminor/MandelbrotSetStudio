@@ -21,11 +21,21 @@ namespace ProjectRepo.Entities
 		public Guid ColorBandsSerialNumber { get; set; } = Guid.NewGuid();
 
 		public DateTime DateCreatedUtc { get; set; }
+
+		// TODO: Rename LastAccessed to LastAccessedUTC on the ColorBandRecord
+		// TODO: Add field LastUpdatedUtc on the ColorBandRecord.
+
 		public DateTime LastAccessed { get; set; }
 
 		[BsonDefaultValue(0)]
 		[BsonIgnoreIfDefault]
 		public int TargetIterations { get; set; }
+
+
+		[BsonDefaultValue(false)]
+		[BsonIgnoreIfDefault]
+		public bool UsingPercentages { get; set; }
+
 	}
 
 }

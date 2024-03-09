@@ -18,9 +18,9 @@
         <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
 
             <!-- Starting / Start Color -->
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Width="59" Margin="5,5,2,5" FontSize="14" Text="Starting:" />
-                <TextBox x:Name="txtStartCutoff"  Margin="0,5"  Width="60" Height="21" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Margin="0,3">
+                <TextBlock Width="59" Margin="5,0,2,0" FontSize="14" Text="Starting:" />
+                <TextBox x:Name="txtStartCutoff"  Margin="0,0"  Width="60" Height="21" VerticalAlignment="Center">
                     <TextBox.Text>
                         <Binding Path="CurrentColorBand.PreviousCutoff" Mode="TwoWay" ValidatesOnExceptions="True" NotifyOnValidationError="True">
                         </Binding>
@@ -34,20 +34,20 @@
                 -->
                 
                 
-                <TextBlock Width="69" Margin="17,5,3,5" FontSize="14" Text="Start Color:" />
-                <local:ColorBandColorButtonControl  Margin="0,5" Width="65" Height="21" x:Name="cbcButtonControl1"
+                <TextBlock Width="69" Margin="17,0,3,0" FontSize="14" Text="Start Color:" />
+                <local:ColorBandColorButtonControl  Margin="0,0" Width="65" Height="21" x:Name="cbcButtonControl1"
                     Color="{Binding Path=CurrentColorBand.StartColor}"
                     CustomMouseUp="StartColor_CustomMouseUp"
                 />
             </StackPanel>
 
             <!-- Percentage / Blend Style -->
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Height="21" Margin="5,5,2,5" FontSize="14" Text="Percentage:" />
-                <TextBox Height="21" Margin="0,5" Text="{Binding Path=CurrentColorBand.Percentage, Mode=OneWay}" Width="50" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Margin="0,3">
+                <TextBlock Height="21" Margin="5,0,2,0" FontSize="14" Text="Percentage:" />
+                <TextBox Height="21" Margin="5,0,0,0" Text="{Binding Path=CurrentColorBand.Percentage, Mode=OneWay}" Width="45" VerticalAlignment="Center"/>
 
-                <TextBlock Width="77" Margin="8,5,3,5" FontSize="14" Text="Blend Style:" />
-                <ComboBox x:Name="cmbBlendStyle" Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,5,0,5"
+                <TextBlock Width="77" Margin="7,0,2,0" FontSize="14" Text="Blend Style:" />
+                <ComboBox x:Name="cmbBlendStyle" Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0"
                             SelectedIndex="{Binding Path=CurrentColorBand.BlendStyle, Converter={StaticResource BlendStyleToIntConverter}}">
                     <ComboBoxItem IsSelected="True">None</ComboBoxItem>
                     <ComboBoxItem>End</ComboBoxItem>
@@ -56,12 +56,12 @@
             </StackPanel>
 
             <!-- Ending / End Color -->
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Width="59" Margin="5,5,2,5" FontSize="14" Text="Ending:" />
-                <TextBox x:Name="txtEndCutoff" Margin="0,5" Text="{Binding Path=CurrentColorBand.Cutoff, Mode=TwoWay, ValidatesOnExceptions=True, NotifyOnValidationError=True}"  Width="60" Height="21" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Margin="0,3">
+                <TextBlock Width="59" Margin="5,0,2,0" FontSize="14" Text="Ending:" />
+                <TextBox x:Name="txtEndCutoff" Margin="0" Text="{Binding Path=CurrentColorBand.Cutoff, Mode=TwoWay, ValidatesOnExceptions=True, NotifyOnValidationError=True}"  Width="60" Height="21" VerticalAlignment="Center"/>
 
-                <TextBlock Width="69" Margin="17,5,3,5" FontSize="14" Text="End Color:" />
-                <local:ColorBandColorButtonControl Margin="0,5" Width="65" Height="21" x:Name="cbcButtonControl2"
+                <TextBlock Width="69" Margin="17,0,3,0" FontSize="14" Text="End Color:" />
+                <local:ColorBandColorButtonControl Margin="0" Width="65" Height="21" x:Name="cbcButtonControl2"
                     Color="{Binding Path=CurrentColorBand.EndColor}"
                     EffectiveColor="{Binding Path=CurrentColorBand.ActualEndColor}"
                     CustomMouseUp="EndColor_CustomMouseUp"

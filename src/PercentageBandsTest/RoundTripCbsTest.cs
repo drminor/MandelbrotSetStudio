@@ -165,7 +165,8 @@ namespace PercentageBandsTest
 				histogram.GetKeyValuePairs(),
 				histogram.Length,
 				histogram.UpperCatchAllValue,
-				ColorBandSetHelper.GetPercentageBands(colorBandSet)
+				ColorBandSetHelper.GetPercentageBands(colorBandSet),
+				colorBandSet.UsingPercentages
 			);
 
 			return result;

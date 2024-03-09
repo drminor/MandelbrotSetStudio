@@ -105,7 +105,7 @@
                                         
                                         <Separator/>
                                         <MenuItem Header="Highlight Selected Band" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Checked" IsChecked="False"/>
-                                        <MenuItem Header="Use Percentages" IsCheckable="True" x:Name="mnuItem_UsePercentages" Checked="UsePercentages_Checked" Unchecked="UsePercentages_Checked" IsChecked="True"/>
+                                        <MenuItem Header="Set UsePercentages Globally" IsCheckable="True" x:Name="mnuItem_UsePercentagesGlobally" Checked="UsePercentagesGlobally_Checked" Unchecked="UsePercentagesGlobally_Checked" IsChecked="False"/>
 
                                         <MenuItem Header="_Details" Command="local:ColorBandSetCommands.ShowDetails"/>
                                     </ContextMenu>
@@ -122,39 +122,49 @@
                     <Grid Background="Transparent">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
-                            <RowDefinition Height="100"/>
+                            <RowDefinition Height="*"/>
                             <RowDefinition Height="35"/>
                             <RowDefinition Height="32"/>
 
                         </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Left" VerticalAlignment="Stretch" Margin="20,0,0,0">
+                        <Border Grid.Row="0" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
 
                             <StackPanel Orientation="Vertical" >
                                 
                                 <!-- Color Band #:[] of [] -->
-                                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
-                                    <TextBlock Height="21" Margin="5,5,5,0" FontSize="14" Text="Color Band #:" />
-                                    <TextBox Text="{Binding Path=CurrentColorBandNumber, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0,3"/>
-                                
-                                    <TextBlock Height="21" Margin="5,5,5,0" FontSize="14" Text="of" />
-                                    <TextBox Text="{Binding Path=ColorBandsCount, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0,3"/>
-                                    
-                                    <!--<CheckBox x:Name="chkBxCutoffs" Margin="12,5,0,0" IsChecked="{Binding Path=EditingCutoffs, Mode=TwoWay}">Cutoffs</CheckBox>-->
-                                    <TextBlock Height="21" Margin="12,5,5,0" FontSize="14" Text="Edit Mode"/>
-                                </StackPanel>
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="0,3">
+                                    <TextBlock Text="Color Band #:" Height="21" Margin="5,0" FontSize="14"  />
+                                    <TextBox Text="{Binding Path=CurrentColorBandNumber, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0"/>
 
-                                <!-- Left / Right -->
-                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="10,3,0,3">
-                                    <Button Width="30" Margin="0,0,10,0" Content="&lt; L" Click="MoveLeftButton_Click" />
-                                    <Button Width="30" Margin="0,0,10,0" Content="R &gt;" Click="MoveRightButton_Click" />
-                                    <Button Width="30" Margin="0,0,10,0" Content="Up" Click="MoveUpButton_Click" />
-                                    <Button Width="30" Content="Dn" Click="MoveDownButton_Click" />
+                                    <TextBlock  Text="of" Height="21" Margin="5,0" FontSize="14" />
+                                    <TextBox Text="{Binding Path=ColorBandsCount, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0"/>
 
-                                    <!--<CheckBox x:Name="chkBxColors" Margin="29,5,0,0"  IsChecked="{Binding Path=EditingColors, Mode=TwoWay}">Colors</CheckBox>-->
-                                    <TextBlock Height="21" Margin="34,0,5,0" FontSize="14" Text="{Binding Path=CurrentCbEditModeAsString, Mode=OneWay}"/>
+                                    <Button Content="&lt;" Width="20" Margin="25,0,0,0" Click="MoveLeftButton_Click" />
+                                    <Button Content="&gt;" Width="20" Margin="10,0,0,0"  Click="MoveRightButton_Click" />
                                     
                                 </StackPanel>
+
+                                <!-- Edit Mode -->
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="0,3">
+
+                                    <TextBlock Height="21" Margin="5,0" FontSize="14" VerticalAlignment="Center" Text="Edit Mode:"/>
+                                    <TextBlock Height="21" Width="80" Margin="3,0,5,0" FontSize="14" VerticalAlignment="Center" Text="{Binding Path=CurrentCbEditModeAsString, Mode=OneWay}"/>
+
+                                    <Button Content="&lt;" Width="20" Margin="30,0,0,0" Click="MoveUpButton_Click" />
+                                    <Button Content="&gt;" Width="20" Margin="10,0,0,0"  Click="MoveDownButton_Click" />                                    
+                                </StackPanel>
+
+                                <!-- Edit Mode -->
+                                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="0,2,0,0">
+
+                                    <TextBlock Height="21" Margin="5,0" FontSize="14" VerticalAlignment="Center" Text="Use Percentages"/>
+                                    <CheckBox VerticalAlignment="Center" Margin="2,0" IsChecked="{Binding Path=UsePercentages, Mode=TwoWay}" />
+
+                                    <TextBlock Height="21" Width="80" Margin="10,0,5,0" FontSize="14" VerticalAlignment="Center" Text="{Binding Path=PercentageUseStatus, Mode=OneWay}"/>
+                                    <TextBlock Height="21" Width="45" Margin="5,0,5,0" FontSize="14" VerticalAlignment="Center" Text="{Binding Path=PercentageUseIsGlobalDisplayStr, Mode=OneWay}"/>
+                                </StackPanel>
+
 
                                 <!-- Percentage 
                                 <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
@@ -167,8 +177,8 @@
                         </Border>
 
                         <!-- Cutoff, Blend Style, Start Color, End Color -->
-                        <Border Grid.Row="1" BorderThickness="0, 0.75, 0, 0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0">
-                            <local:ColorBandUserControl x:Name="clrBandDetail" Margin="0,5,0,0" />
+                        <Border Grid.Row="1" BorderThickness="0, 0.75, 0, 0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
+                            <local:ColorBandUserControl x:Name="clrBandDetail" Margin="0,0,0,0" />
                         </Border>
 
                         <!-- Revert, Insert, Delete, Apply -->

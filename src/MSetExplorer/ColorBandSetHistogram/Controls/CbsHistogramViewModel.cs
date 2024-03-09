@@ -33,7 +33,12 @@ namespace MSetExplorer
 		private bool _useEscapeVelocities;
 		private bool _useRealTimePreview;
 		private bool _highlightSelectedBand;
-		private bool _usePercentages;
+
+		private bool? _defaultUsePercentages;
+		private string _percentageUseStatus;
+
+		// TODO: Make this a property of the Current ColorBandSet
+		//private bool _usePercentages = true;
 
 		private readonly ColorBandSetHistoryCollection _colorBandSetHistoryCollection;
 
@@ -90,13 +95,15 @@ namespace MSetExplorer
 			_mapSectionHistogramProcessor.HistogramUpdated += HistogramUpdated;
 
 			_colorBandSet = new ColorBandSet();
-			//_referencePercentageBands = new PercentageBand[0];
 
 			_currentCbEditMode = ColorBandSetEditMode.Bands;
 			_useEscapeVelocities = true;
 			_useRealTimePreview = true;
 			_highlightSelectedBand = false;
-			_usePercentages = true;
+
+			_defaultUsePercentages = false;
+			PercentageUseIsGlobalDisplayStr = string.Empty;
+			_percentageUseStatus = string.Empty;
 
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.Clone();
@@ -124,7 +131,6 @@ namespace MSetExplorer
 			_displayZoom = 1;
 
 			HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden;
-
 		}
 
 		#endregion
@@ -160,6 +166,7 @@ namespace MSetExplorer
 		}
 
 		public ObjectId ColorBandSetBeingEditedId => _currentColorBandSet.Id;
+		public bool CurrentUsingPercentages => _currentColorBandSet.UsingPercentages;
 
 		public ColorBandSet ColorBandSet
 		{
@@ -249,6 +256,8 @@ namespace MSetExplorer
 						var colorBandSet = _useRealTimePreview ? _currentColorBandSet : _colorBandSetHistoryCollection[0];
 
 						colorBandSet = colorBandSet.CreateNewCopy();
+
+						colorBandSet.MarkAsDirty();
 						ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(colorBandSet, isPreview: true));
 					}
 
@@ -273,27 +282,66 @@ namespace MSetExplorer
 			}
 		}
 
-		public bool UsePercentages
+		//// TODO: Make this a property of the current ColorBandSet
+		//public bool UsePercentages
+		//{
+		//	get => _usePercentages;
+		//	set
+		//	{
+		//		if (value != _usePercentages)
+		//		{
+		//			var strState = value ? "True" : "False";
+		//			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is setting UsePercentages to {strState}.");
+
+		//			_usePercentages = value;
+		//			PercentageUseStatus = string.Empty;
+
+		//			//if (_usePercentages)
+		//			//{
+		//			//	_referencePercentageBands = GetPercentageBands();
+		//			//}
+
+		//			OnPropertyChanged(nameof(UsePercentages));
+		//		}
+		//	}
+		//}
+
+		public bool? DefaultUsePercentages
 		{
-			get => _usePercentages;
+			get => _defaultUsePercentages;
 			set
 			{
-				if (value != _usePercentages)
+				if (value != _defaultUsePercentages)
 				{
-					var strState = value ? "True" : "False";
-					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is setting UsePercentages to {strState}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is updating DefaultUsePercentages from {GetDefaultUsePercentagesStrVal(_defaultUsePercentages)} to {GetDefaultUsePercentagesStrVal(value)}.");
 
-					_usePercentages = value;
+					_defaultUsePercentages = value;
 
-					//if (_usePercentages)
-					//{
-					//	_referencePercentageBands = GetPercentageBands();
-					//}
+					// TODO: Update PercentageUseStatus when the DefaultUsePercentages is updated.
+					PercentageUseStatus = string.Empty;
 
-					OnPropertyChanged(nameof(UsePercentages));
+					OnPropertyChanged(nameof(DefaultUsePercentages));
+
+					PercentageUseIsGlobalDisplayStr = _defaultUsePercentages.HasValue ? "Global" : string.Empty;
+					OnPropertyChanged(nameof(PercentageUseIsGlobalDisplayStr));
 				}
 			}
 		}
+
+		public string PercentageUseStatus
+		{
+			get => _percentageUseStatus;
+			set
+			{
+				if (value != _percentageUseStatus)
+				{
+					_percentageUseStatus = value;
+					OnPropertyChanged(nameof(PercentageUseStatus));
+				}
+			}
+		}
+
+		public string PercentageUseIsGlobalDisplayStr { get; private set; }
 
 		public ListCollectionView ColorBandsView
 		{
@@ -694,23 +742,6 @@ namespace MSetExplorer
 			//Debug.WriteLine($"The existing ColorBandSet: {_colorBandSet}");
 
 			_colorBandSet = newSet;
-
-			//if (!UsePercentages)
-			//{
-			//	// Overwrite the current percentage values with the target percentage values.
-			//	var percentagesWereUpdated = _colorBandSet.UpdatePercentagesNoCheck(_referencePercentageBands);
-			//	if (!percentagesWereUpdated)
-			//	{
-			//		Debug.WriteLine($"WARNING: Could not save the _referencePercentageBands to the new ColorBandSet. There are {_referencePercentageBands.Length} refPercentageBands and {_colorBandSet.Count} ColorBands." );
-			//	}
-			//}
-
-			//// Overwrite the current percentage values with the target percentage values.
-			//var percentagesWereUpdated = _colorBandSet.UpdatePercentagesNoCheck(_referencePercentageBands);
-			//if (!percentagesWereUpdated)
-			//{
-			//	Debug.WriteLine($"WARNING: Could not save the _referencePercentageBands to the new ColorBandSet. There are {_referencePercentageBands.Length} refPercentageBands and {_colorBandSet.Count} ColorBands.");
-			//}
 
 			// Clear all existing items from history and add the new set.
 			_colorBandSetHistoryCollection.Load(_colorBandSet);
@@ -1341,6 +1372,7 @@ namespace MSetExplorer
 				if (UseRealTimePreview)
 				{
 					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
+					// TODO: Set IsDirty on the new copy??
 
 					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel. Calling RaiseUpdateRequestThrottled.");
 					RaiseUpdateRequestThrottled(newColorBandSet);
@@ -1390,7 +1422,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				//UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
+				UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// Previous Cutoff is being updated
@@ -1419,7 +1451,7 @@ namespace MSetExplorer
 				}
 
 				foundUpdate = true;
-				//UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
+				UpdatePercentages(_mapSectionHistogramProcessor.Histogram);
 			}
 
 			// BlendStyle is being updated
@@ -1665,21 +1697,32 @@ namespace MSetExplorer
 
 		private bool ApplyHistogram(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
-			Debug.WriteLine($"ApplyHistogram is being called with a HistCutoffSnapShot with ColorBandSetId: {histCutoffsSnapShot.ColorBandSetId}. SomeNaN = {histCutoffsSnapShot.SomePercentagesAreNan}. AllZero = {histCutoffsSnapShot.AllPercentagesAreZero}.");
+			Debug.WriteLine($"ApplyHistogram is being called with a HistCutoffSnapShot with ColorBandSetId: {histCutoffsSnapShot.ColorBandSetId}. SomeNaN = {histCutoffsSnapShot.NoPercentageIsNaN}. AllZero = {histCutoffsSnapShot.AtLeastOnePercentageIsNonZero}.");
 			if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
 			{
-				if (UsePercentages && histCutoffsSnapShot.HavePercentages)
+				// If the Default is set, us it, otherwise use the value from the current ColorBandSet.
+				var usingPercentages = DefaultUsePercentages ?? histCutoffsSnapShot.UsingPercentages;
+
+				if (usingPercentages)
 				{
-					// Cutoffs are adjusted based on Percentages
-					UpdateCutoffsCheckThread(histCutoffsSnapShot);
+					if (histCutoffsSnapShot.HavePercentages)
+					{
+						PercentageUseStatus = "Locked";
+						// Cutoffs are adjusted based on Percentages
+						UpdateCutoffsCheckThread(histCutoffsSnapShot);
+					}
+					else
+					{
+						PercentageUseStatus = "Pending";
+						Debug.WriteLine($"WARNING: ColorBandSetViewModel. Not using Percentages, using Cutoffs instead. Percentage Values are unavailable: SomeNan = {histCutoffsSnapShot.NoPercentageIsNaN}. AllZero = {histCutoffsSnapShot.AtLeastOnePercentageIsNonZero}. ");
+
+						// 'Rebuild' the percentage values from the current Cutoff values.
+						UpdatePercentages(histCutoffsSnapShot);
+					}
 				}
 				else
 				{
-					if (UsePercentages)
-					{
-						// TODO: Need to update code that inserts / removes ColorBands to avoid having some Percentages be set to NaN.
-						Debug.WriteLine($"WARNING: ColorBandSetViewModel. Not using Percentages, using Cutoffs instead. Percentage Values are unavailable: SomeNan = {histCutoffsSnapShot.SomePercentagesAreNan}. AllZero = {histCutoffsSnapShot.AllPercentagesAreZero}. ");
-					}
+					PercentageUseStatus = string.Empty;
 
 					// Percentages are adjusted based on Cutoffs
 					UpdatePercentages(histCutoffsSnapShot);
@@ -1751,6 +1794,7 @@ namespace MSetExplorer
 			}
 			else
 			{
+				_colorBandSetHistoryCollection[0] = ColorBandSet;
 				ColorBandSet.MarkAsDirty();
 			}
 		}
@@ -1841,11 +1885,21 @@ namespace MSetExplorer
 					histogram.GetKeyValuePairs(),
 					histogram.Length,
 					histogram.UpperCatchAllValue,
-					ColorBandSetHelper.GetPercentageBands(colorBandSet)
+					ColorBandSetHelper.GetPercentageBands(colorBandSet),
+					colorBandSet.UsingPercentages
 				);
 			}
 
 			return result;
+		}
+
+		private string GetDefaultUsePercentagesStrVal(bool? value)
+		{
+			var strState = value.HasValue
+				? value.Value ? "True" : "False"
+				: "Undefined";
+
+			return strState;
 		}
 
 		#endregion
