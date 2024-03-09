@@ -722,7 +722,7 @@ namespace MSS.Types
 		public ColorBandSet CreateNewCopy()
 		{
 			var result = Clone();
-			result.LastUpdatedUtc = DateTime.UtcNow;
+			//result.LastUpdatedUtc = DateTime.UtcNow;
 			return result;
 		}
 

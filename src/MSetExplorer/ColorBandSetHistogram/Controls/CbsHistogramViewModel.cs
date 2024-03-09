@@ -784,6 +784,9 @@ namespace MSetExplorer
 			//if (!IsEnabled) return;
 
 			Debug.Assert(IsDirty, "ColorBandSetViewModel:ApplyChanges is being called, but we are not dirty.");
+
+			Debug.Assert(_currentColorBandSet.IsDirty, "ColorBandSetViewModel:ApplyChanges is being called, but the current ColorBandSet is not dirty.");
+
 			var newSet = _currentColorBandSet.CreateNewCopy();
 
 			ApplyChangesInt(newSet);
@@ -1417,20 +1420,22 @@ namespace MSetExplorer
 
 			if (foundUpdate)
 			{
+				IsDirty = true;
+				_currentColorBandSet.MarkAsDirty();
+
 				// Don't include each property change when the Current ColorBand is being edited.
 				if (!colorBandToUpdate.IsInEditMode)
 				{
 					PushCurrentColorBandOnToHistoryCollection();
-					IsDirty = true;
 				}
 
 				if (UseRealTimePreview)
 				{
-					if (!_currentColorBandSet.IsDirty)
-					{
-						Debug.WriteLine("WARNINIG: CbsHistogramViewModel is Marking the Current ColorBandSet as Dirty on CurrentColorBand_PropertyChanged.");
-						_currentColorBandSet.MarkAsDirty();
-					}
+					//if (!_currentColorBandSet.IsDirty)
+					//{
+					//	Debug.WriteLine("WARNINIG: CbsHistogramViewModel is Marking the Current ColorBandSet as Dirty on CurrentColorBand_PropertyChanged.");
+					//	_currentColorBandSet.MarkAsDirty();
+					//}
 
 					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
 
