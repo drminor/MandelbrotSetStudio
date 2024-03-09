@@ -17,6 +17,9 @@ namespace MSS.Types
 
 			NoPercentageIsNaN = percentageBands.All(x => !double.IsNaN(x.Percentage));
 			AtLeastOnePercentageIsNonZero = percentageBands.Any(x => x.Percentage != 0);
+
+			UsingPercentages = usingPercentages;
+			UsingCutoffs = !usingPercentages;
 		}
 
 		public ObjectId ColorBandSetId { get; init; }
@@ -28,6 +31,7 @@ namespace MSS.Types
 
 		public PercentageBand[] PercentageBands { get; init; }
 		public bool UsingPercentages { get; init; }
+		public bool UsingCutoffs { get; init; }
 
 		public bool NoPercentageIsNaN { get; init; }
 		public bool AtLeastOnePercentageIsNonZero { get; init; }

@@ -201,6 +201,7 @@ namespace MSS.Types
 
 		public int TargetIterations { get; set; }
 
+		// True if the Percentages are fixed and are being used to calculate Offsets.
 		public bool UsingPercentages
 		{
 			get => _usingPercentages;
@@ -721,6 +722,7 @@ namespace MSS.Types
 		public ColorBandSet CreateNewCopy()
 		{
 			var result = Clone();
+			result.LastUpdatedUtc = DateTime.UtcNow;
 			return result;
 		}
 

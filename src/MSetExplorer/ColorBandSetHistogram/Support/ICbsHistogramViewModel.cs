@@ -39,10 +39,13 @@ namespace MSetExplorer
 		bool UseRealTimePreview { get; set; }
 
 		//bool UsePercentages { get; set; }
-		bool CurrentUsingPercentages { get; }
-		bool? DefaultUsePercentages { get; set; }
+
+		bool UsePercentagesLocalSetting { get; set; }
+		bool UsePercentagesGlobalSetting { get; }
+		bool UsePercentagesGlobally { get; set; }
 
 		string PercentageUseIsGlobalDisplayStr { get; }
+		string PercentageUseStatus { get; }
 
 		//Visibility WindowVisibility { get; set; }
 

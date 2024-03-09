@@ -218,24 +218,26 @@ namespace MSS.Types
 			return result;
 		}
 
-		public static bool TryGetCutoffsFromPercentages(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out CutoffBand[]? cutoffBands)
+		public static bool TryGetCutoffsFromPercentages(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out CutoffBand[]? cutoffBands, out bool resultsAreComplete)
 		{
 			if (histCutoffsSnapShot.CutoffsLength > 0 && histCutoffsSnapShot.HavePercentages)
 			{
-				cutoffBands = BuildNewCutoffs(histCutoffsSnapShot);
+				cutoffBands = BuildNewCutoffs(histCutoffsSnapShot, out resultsAreComplete);
 				return true;
 			}
 			else
 			{
 				cutoffBands = null;
+				resultsAreComplete = false;
 				return false;
 			}
 		}
 
-		public static CutoffBand[] BuildNewCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
+		public static CutoffBand[] BuildNewCutoffs(HistCutoffsSnapShot histCutoffsSnapShot, out bool resultsAreComplete)
 		{
 			if (histCutoffsSnapShot.PercentageBands.Length == 0)
 			{
+				resultsAreComplete=false;
 				return new CutoffBand[0];
 			}
 
@@ -325,6 +327,11 @@ namespace MSS.Types
 			{
 				var diff = (result.Length - 2) - curBucketPtr;
 				Debug.WriteLine($"WARNING: CbsHistogramViewModel. BuildNewCutoffs: The running count of histogram values did not reach the target count. CurBucketPtr = {curBucketPtr}. Result.Length = {result.Length}.");
+				resultsAreComplete = false;
+			}
+			else
+			{
+				resultsAreComplete = true;
 			}
 
 			var followingCutoff = topIndex;

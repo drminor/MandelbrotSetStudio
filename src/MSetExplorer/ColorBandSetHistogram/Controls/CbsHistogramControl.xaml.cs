@@ -459,14 +459,7 @@ namespace MSetExplorer
 		{
 			if (_vm != null)
 			{
-				if (mnuItem_UsePercentagesGlobally.IsChecked)
-				{
-					_vm.DefaultUsePercentages = _vm.CurrentUsingPercentages;
-				}
-				else
-				{
-					_vm.DefaultUsePercentages = null;
-				}
+				_vm.UsePercentagesGlobally = mnuItem_UsePercentagesGlobally.IsChecked;
 			}
 		}
 
