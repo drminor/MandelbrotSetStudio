@@ -155,22 +155,15 @@
                                     <Button Content="&gt;" Width="20" Margin="10,0,0,0"  Click="MoveDownButton_Click" />                                    
                                 </StackPanel>
 
-                                <!-- Edit Mode -->
+                                <!-- Use Percentages -->
                                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="0,2,0,0">
 
                                     <TextBlock Height="21" Margin="5,0" FontSize="14" VerticalAlignment="Center" Text="Use Percentages"/>
-                                    <CheckBox VerticalAlignment="Center" Margin="2,0" IsChecked="{Binding Path=UsePercentages, Mode=TwoWay}" />
+                                    <CheckBox VerticalAlignment="Center" Margin="2,0" IsChecked="{Binding Path=CurrentUsingPercentages, Mode=TwoWay}" />
 
                                     <TextBlock Height="21" Width="80" Margin="10,0,5,0" FontSize="14" VerticalAlignment="Center" Text="{Binding Path=PercentageUseStatus, Mode=OneWay}"/>
                                     <TextBlock Height="21" Width="45" Margin="5,0,5,0" FontSize="14" VerticalAlignment="Center" Text="{Binding Path=PercentageUseIsGlobalDisplayStr, Mode=OneWay}"/>
                                 </StackPanel>
-
-
-                                <!-- Percentage 
-                                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Margin="0,3">
-                                    <TextBlock Height="21" Margin="5,0" FontSize="14" Text="Percentage:" />
-                                    <TextBox Text="{Binding Path=CurrentColorBand.Percentage, Mode=OneWay}"  Width="50" Height="21" VerticalAlignment="Center" Margin="0,3" />
-                                </StackPanel> -->
 
                             </StackPanel>
 

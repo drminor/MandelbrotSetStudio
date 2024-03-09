@@ -28,7 +28,6 @@ namespace MSetExplorer
 		private ColorBandSetEditMode _currentCbEditMode;
 
 		private ColorBandSet _colorBandSet;         // The value assigned to this model
-		//private PercentageBand[] _referencePercentageBands;
 
 		private bool _useEscapeVelocities;
 		private bool _useRealTimePreview;
@@ -36,9 +35,6 @@ namespace MSetExplorer
 
 		private bool? _defaultUsePercentages;
 		private string _percentageUseStatus;
-
-		// TODO: Make this a property of the Current ColorBandSet
-		//private bool _usePercentages = true;
 
 		private readonly ColorBandSetHistoryCollection _colorBandSetHistoryCollection;
 
@@ -166,7 +162,25 @@ namespace MSetExplorer
 		}
 
 		public ObjectId ColorBandSetBeingEditedId => _currentColorBandSet.Id;
-		public bool CurrentUsingPercentages => _currentColorBandSet.UsingPercentages;
+
+		public bool CurrentUsingPercentages
+		{
+			get => _currentColorBandSet.UsingPercentages;
+			set
+			{
+				if (value != _currentColorBandSet.UsingPercentages)
+				{
+					_currentColorBandSet.UsingPercentages = value;
+
+					if (DefaultUsePercentages.HasValue)
+					{
+						DefaultUsePercentages = value;
+					}
+
+					OnPropertyChanged(nameof(CurrentUsingPercentages));
+				}
+			}
+		}
 
 		public ColorBandSet ColorBandSet
 		{
@@ -281,30 +295,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//// TODO: Make this a property of the current ColorBandSet
-		//public bool UsePercentages
-		//{
-		//	get => _usePercentages;
-		//	set
-		//	{
-		//		if (value != _usePercentages)
-		//		{
-		//			var strState = value ? "True" : "False";
-		//			Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is setting UsePercentages to {strState}.");
-
-		//			_usePercentages = value;
-		//			PercentageUseStatus = string.Empty;
-
-		//			//if (_usePercentages)
-		//			//{
-		//			//	_referencePercentageBands = GetPercentageBands();
-		//			//}
-
-		//			OnPropertyChanged(nameof(UsePercentages));
-		//		}
-		//	}
-		//}
 
 		public bool? DefaultUsePercentages
 		{
