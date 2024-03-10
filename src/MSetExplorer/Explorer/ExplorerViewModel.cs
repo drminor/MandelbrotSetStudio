@@ -287,29 +287,28 @@ namespace MSetExplorer
 			var curJob = ProjectViewModel.CurrentJob;
 			var curJobId = curJob.Id;
 
-			var newMapAreaInfo = curJob.MapAreaInfo;
-			var newColorBandSet = ProjectViewModel.CurrentColorBandSet;
-
-			Debug.WriteLine($"ExplorerViewModel. SubmittingMapDisplayJob. The ColorBandSetId: {newColorBandSet.Id} with TargetIterations: {newColorBandSet.TargetIterations}. " +
-				$"The CbsHistogramViewModel has Id: {CbsHistogramViewModel.ColorBandSet.Id}. The CbsHistogramViewModel IsDirty = {CbsHistogramViewModel.IsDirty}.");
-
-			var existingMapCalcSettings = curJob.MapCalcSettings;
-			var newMapCalcSettings = new MapCalcSettings(existingMapCalcSettings.TargetIterations, existingMapCalcSettings.Threshold, ProjectViewModel.CalculateEscapeVelocities, ProjectViewModel.SaveTheZValues);
-
-			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
-
 			var areaColorAndCalcSettings = new AreaColorAndCalcSettings
 				(
 				curJobId,
 				OwnerType.Project,
-				newMapAreaInfo,
-				newColorBandSet,
-				newMapCalcSettings
+				curJob.MapAreaInfo,
+				ProjectViewModel.CurrentColorBandSet,
+				curJob.MapCalcSettings
 				);
 
-			CbsHistogramViewModel.ColorBandSet = newColorBandSet;
+			var existingMapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
-			_ = MapDisplayViewModel.SubmitJob(areaColorAndCalcSettings);
+			var newMapCalcSettings = new MapCalcSettings(existingMapCalcSettings.TargetIterations, existingMapCalcSettings.Threshold, ProjectViewModel.CalculateEscapeVelocities, ProjectViewModel.SaveTheZValues);
+			var newAreaColorAndCalcSettings = areaColorAndCalcSettings.UpdateWith(newMapCalcSettings);
+			var colorBandSet = newAreaColorAndCalcSettings.ColorBandSet;
+
+			Debug.WriteLine($"ExplorerViewModel. SubmittingMapDisplayJob. The ColorBandSetId: {colorBandSet.Id}/{colorBandSet.LastUpdatedUtc} with TargetIterations: {colorBandSet.TargetIterations}. " +
+				$"The CbsHistogramViewModel has Id: {CbsHistogramViewModel.ColorBandSet.Id}. The CbsHistogramViewModel IsDirty = {CbsHistogramViewModel.IsDirty}.");
+
+			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
+			CbsHistogramViewModel.ColorBandSet = colorBandSet;
+
+			_ = MapDisplayViewModel.SubmitJob(newAreaColorAndCalcSettings);
 
 			UpdateTheMapCoordsView(curJob);
 		}

@@ -174,17 +174,19 @@ namespace MSetExplorer
 			{
 				if (value != _colorBandSet)
 				{
+					// TODO: Save the Undo/Redo info.
+					//if (_colorBandSetHistoryCollection.Count > 1)
+					//{
+					//
+					//}
+
 					// Temporarily set the view using a empty ColorBandSet.
 					// Presumably the call to ResetView requires that the ColorBandsView have some value.
 					ColorBandsView = BuildColorBandsView(null);
 
-					//Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is processing a new ColorBandSet. Id = {value.Id}.");
+					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is being updated from: {_colorBandSet.Id}/{_colorBandSet.LastUpdatedUtc} to {value.Id}/{value.LastUpdatedUtc}.");
+					Debug.WriteLine(value.ToString(style: 1));
 
-					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is being updated from: {_colorBandSet.Id}/{_colorBandSet.ColorBandsSerialNumber} to {value.Id}/{_colorBandSet.ColorBandsSerialNumber}.");
-					//var diag = value.ToString(style: 1);
-					//Debug.WriteLine(diag);
-
-					//_referencePercentageBands = ColorBandSetHelper.GetPercentageBands(value);
 					_colorBandSet = value;
 
 					if (!UsePercentagesGlobally)
@@ -208,7 +210,6 @@ namespace MSetExplorer
 					HistCutoffsSnapShot histCutoffsSnapShot;
 					lock (_histLock)
 					{
-						//_colorBandSetHistoryCollection.Load(value.Clone());
 						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
 						IsDirty = false;
 						_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
@@ -226,7 +227,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is not being updated. The Id already = {value.Id}.");
+					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is not being updated. The Id already = {value.Id}/{value.LastUpdatedUtc}.");
 				}
 			}
 		}
@@ -469,7 +470,15 @@ namespace MSetExplorer
 
 		public bool IsDirty
 		{
-			get => _isDirty;
+			get
+			{
+				//var result = _isDirty;
+
+				var altResult = _colorBandSetHistoryCollection.CurrentIndex != 0;
+				//Debug.Assert(altResult == result, "The CbsHistogramViewModel's IsDirty flag is set, however the ColorBandHistoryCollection has no pending changes.");
+
+				return altResult;
+			}
 
 			private set
 			{
@@ -794,7 +803,7 @@ namespace MSetExplorer
 
 		private void ApplyChangesInt(ColorBandSet newSet)
 		{
-			Debug.WriteLineIf(_traceCBSVersions, $"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}/{newSet.ColorBandsSerialNumber}, name: {newSet.Name}. The old Id is {ColorBandSet.Id}/{ColorBandSet.ColorBandsSerialNumber}");
+			Debug.WriteLineIf(_traceCBSVersions, $"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}/{newSet.LastUpdatedUtc}, name: {newSet.Name}. The old Id is {ColorBandSet.Id}/{ColorBandSet.LastUpdatedUtc}");
 
 			//Debug.WriteLine($"The new ColorBandSet: {newSet}");
 			//Debug.WriteLine($"The existing ColorBandSet: {_colorBandSet}");
@@ -803,13 +812,12 @@ namespace MSetExplorer
 
 			// Clear all existing items from history and add the new set.
 			_colorBandSetHistoryCollection.Load(_colorBandSet);
+			IsDirty = false;
 
 			var curPos = CurrentColorBandIndex;
 
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
-
-			IsDirty = false;
 
 			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_colorBandSet, isPreview: false));
 		}
@@ -818,12 +826,11 @@ namespace MSetExplorer
 		{
 			// Remove all but the first entry from the History Collection
 			_colorBandSetHistoryCollection.Trim(0);
+			IsDirty = false;
 
 			var curPos = CurrentColorBandIndex;
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
-
-			IsDirty = false;
 
 			ApplyHistogram(/*_mapSectionHistogramProcessor.Histogram*/);
 
@@ -1420,13 +1427,13 @@ namespace MSetExplorer
 
 			if (foundUpdate)
 			{
-				IsDirty = true;
 				_currentColorBandSet.MarkAsDirty();
 
 				// Don't include each property change when the Current ColorBand is being edited.
 				if (!colorBandToUpdate.IsInEditMode)
 				{
 					PushCurrentColorBandOnToHistoryCollection();
+					IsDirty = true;
 				}
 
 				if (UseRealTimePreview)
@@ -1556,7 +1563,6 @@ namespace MSetExplorer
 			ReportIndexOfSender(sender);
 
 			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
 		}
 
 		private void HistogramUpdated(object? sender, HistogramUpdateType e)
@@ -1656,7 +1662,7 @@ namespace MSetExplorer
 		private void OnCurrentColorBandSetUpdated()
 		{
 			PushCurrentColorBandOnToHistoryCollection();
-			IsDirty = true;
+
 			ApplyHistogram(/*_mapSectionHistogramProcessor.Histogram*/);
 
 			if (UseRealTimePreview)
@@ -1718,6 +1724,7 @@ namespace MSetExplorer
 
 			var newVal = _currentColorBandSet.CreateNewCopy();
 			_colorBandSetHistoryCollection.Push(newVal);
+			IsDirty = true;
 
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CurrentIndex));
 			OnPropertyChanged(nameof(IUndoRedoViewModel.CanGoBack));
@@ -1803,7 +1810,9 @@ namespace MSetExplorer
 					}
 					else
 					{
-						// TODO: Check This
+						// TODO: Update the Cutoffs from Percentages
+						// and only if successful, set UsingPercentages = false.
+
 						// Using the cutoffs even if they may not be complete
 						// Percentages are adjusted based on Cutoffs
 						UpdatePercentages(histCutoffsSnapShot, out _, out _);
@@ -1860,9 +1869,7 @@ namespace MSetExplorer
 					Debug.WriteLine("The HistCutoffsSnapShot is stale, not Applying the New Percentages.");
 				}
 
-				//if (_currentColorBandSet.UpdatePercentagesCheckOffsets(newPercentages))
-
-				if (_currentColorBandSet.UpdatePercentagesNoCheck(newPercentages))
+				if (_currentColorBandSet.UpdatePercentagesCheckOffsets(newPercentages))
 				{
 					result = true;
 
@@ -2003,6 +2010,7 @@ namespace MSetExplorer
 
 				if (_currentColorBandSet.UpdateCutoffs(newCutoffs))
 				{
+					_currentColorBandSet.MarkAsDirty();
 					result = true;
 					//_currentColorBandSet.UsingPercentages = false;
 

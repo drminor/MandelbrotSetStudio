@@ -87,9 +87,8 @@ namespace MSetExplorer
 			// Update the ColorBandSet View and the MapDisplay View with the newly selected ColorBandSet
 			else if (e.PropertyName == nameof(IPosterViewModel.CurrentColorBandSet))
 			{
-				CbsHistogramViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
-
-				MapDisplayViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
+				//CbsHistogramViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
+				//MapDisplayViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 
 				// Don't update the ColorBandSetHistogram's ViewModel, if this is a preview.
 				if (!PosterViewModel.ColorBandSetIsPreview)
@@ -100,44 +99,8 @@ namespace MSetExplorer
 
 				Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel. Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {PosterViewModel.CurrentColorBandSet.Id}.");
 				MapDisplayViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
-
-
 			}
 		}
-
-		//private void ColorBandViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		//{
-		//	if (e.PropertyName == nameof(ColorBandSetViewModel.UseEscapeVelocities))
-		//	{
-		//		MapDisplayViewModel.UseEscapeVelocities = ColorBandSetViewModel.UseEscapeVelocities;
-		//	}
-
-		//	else if (e.PropertyName == nameof(ColorBandSetViewModel.HighlightSelectedBand))
-		//	{
-		//		MapDisplayViewModel.HighlightSelectedColorBand = ColorBandSetViewModel.HighlightSelectedBand;
-		//	}
-
-		//	else if (e.PropertyName == nameof(ColorBandSetViewModel.CurrentColorBand))
-		//	{
-		//		var cbsvmCbsIsNull = ColorBandSetViewModel.ColorBandSet == null ? string.Empty : "Not";
-
-		//		//Debug.WriteLine($"PosterDesignerViewModel is handling ColorBandViewModel PropertyChanged-CurrentColorBand. HighLightSelectedColorBand: {MapDisplayViewModel.HighlightSelectedColorBand}, " +
-		//		//	$"CbsViewModel's ColorBandSet is {cbsvmCbsIsNull} null.");
-
-		//		Debug.WriteLine($"PosterDesignerViewModel is handling ColorBandViewModel PropertyChanged-CurrentColorBand." +
-		//			$"CbsViewModel's ColorBandSet is {cbsvmCbsIsNull} null.");
-
-		//		//if (MapDisplayViewModel.HighlightSelectedColorBand && ColorBandSetViewModel.ColorBandSet != null)
-
-		//		if (ColorBandSetViewModel.ColorBandSet != null)
-		//		{
-		//			//MapDisplayViewModel.CurrentColorBand = ColorBandSetViewModel.CurrentColorBand;
-
-		//			var currentColorBandIndex = ColorBandSetViewModel.ColorBandSet.CurrentColorBandIndex;
-		//			MapDisplayViewModel.CurrentColorBandIndex = currentColorBandIndex;
-		//		}
-		//	}
-		//}
 
 		private void CbsHistogramViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
@@ -204,24 +167,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void ColorBandSetViewModel_ColorBandSetUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)
-		//{
-		//	var colorBandSet = e.ColorBandSet;
-
-		//	if (e.IsPreview)
-		//	{
-		//		Debug.WriteLine($"MainWindow got a CBS preview with Id = {colorBandSet.Id}");
-		//		//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: true);
-		//		PosterViewModel.PreviewColorBandSet = colorBandSet;
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine($"MainWindow got a CBS update with Id = {colorBandSet.Id}");
-		//		//MapDisplayViewModel.SetColorBandSet(colorBandSet, updateDisplay: false);
-		//		PosterViewModel.CurrentColorBandSet = colorBandSet;
-		//	}
-		//}
-
 		private void CbsHistogramViewModel_ColorBandSetUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)
 		{
 			var colorBandSet = e.ColorBandSet;
@@ -239,6 +184,7 @@ namespace MSetExplorer
 				PosterViewModel.CurrentColorBandSet = colorBandSet;
 			}
 		}
+
 		#endregion
 
 		#region Private Methods
@@ -250,36 +196,41 @@ namespace MSetExplorer
 				Debug.WriteLine("ViewportSize is zero.");
 			}
 
+			var currentPoster = PosterViewModel.CurrentPoster;
+
+			if (currentPoster == null)
+			{
+				MapDisplayViewModel.CancelJob();
+				return;
+			}
+
+			var currentjob = currentPoster.CurrentJob;
+			if (currentjob == null)
+			{
+				return;
+			}
+
 			var areaColorAndCalcSettings = PosterViewModel.CurrentAreaColorAndCalcSettings;
 			var existingMapCalcSettings = areaColorAndCalcSettings.MapCalcSettings;
 
 			var newMapCalcSettings = new MapCalcSettings(existingMapCalcSettings.TargetIterations, existingMapCalcSettings.Threshold, PosterViewModel.CalculateEscapeVelocities, PosterViewModel.SaveTheZValues);
-			var updatedSettings = areaColorAndCalcSettings.UpdateWith(newMapCalcSettings);
+			var newAreaColorAndCalcSettings = areaColorAndCalcSettings.UpdateWith(newMapCalcSettings);
+			var colorBandSet = newAreaColorAndCalcSettings.ColorBandSet;
+
+			Debug.WriteLine($"PosterDesignerViewModel. SubmittingMapDisplayJob. The ColorBandSetId: {colorBandSet.Id} with TargetIterations: {colorBandSet.TargetIterations}. " +
+				$"The CbsHistogramViewModel has Id: {CbsHistogramViewModel.ColorBandSet.Id}. The CbsHistogramViewModel IsDirty = {CbsHistogramViewModel.IsDirty}.");
 
 			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
+			CbsHistogramViewModel.ColorBandSet = colorBandSet;
 
-			// Update the MapDisplayView model for a new Poster or Poster Job.
-			var currentPoster = PosterViewModel.CurrentPoster;
 
-			if (currentPoster != null)
-			{
-				var currentjob = currentPoster.CurrentJob;
-				if (currentjob != null)
-				{
-					var posterSize = currentPoster.PosterSize;
+			var posterSize = currentPoster.PosterSize;
+			var displayPosition = currentPoster.DisplayPosition;
+			var displayZoom = currentPoster.DisplayZoom;
 
-					var displayPosition = currentPoster.DisplayPosition;
-					var displayZoom = currentPoster.DisplayZoom;
+			MapDisplayViewModel.SubmitJob(newAreaColorAndCalcSettings, posterSize, displayPosition, displayZoom);
 
-					MapDisplayViewModel.SubmitJob(updatedSettings, posterSize, displayPosition, displayZoom);
-
-					UpdateTheMapCoordsView(currentjob);
-				}
-			}
-			else
-			{
-				MapDisplayViewModel.CancelJob();
-			}
+			UpdateTheMapCoordsView(currentjob);
 		}
 
 		private void UpdateTheMapCoordsView(Job currentJob)

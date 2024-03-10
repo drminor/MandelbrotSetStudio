@@ -36,17 +36,6 @@ namespace MSS.Common
 
 		#region Create MsrJob
 
-		public MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, Job job, MapPositionSizeAndDelta mapAreaInfoV1)
-		{
-			var jobType = JobType.FullScale;
-			var jobId = job.Id;
-			var ownerType = OwnerType.Project;
-
-			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, jobId, ownerType, mapAreaInfoV1, job.MapCalcSettings);
-
-			return msrJob;
-		}
-
 		public MsrJob CreateNewCopy(MsrJob s, int mapLoaderJobNumber)
 		{
 			var result = new MsrJob

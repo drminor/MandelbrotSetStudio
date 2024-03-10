@@ -721,8 +721,8 @@ namespace MSS.Types
 		/// <returns></returns>
 		public ColorBandSet CreateNewCopy()
 		{
+			//TODO: Replace calls to CreateNewCopy with calls to Clone.
 			var result = Clone();
-			//result.LastUpdatedUtc = DateTime.UtcNow;
 			return result;
 		}
 
@@ -818,7 +818,7 @@ namespace MSS.Types
 		{
 			var sb = new StringBuilder();
 
-			sb.AppendLine($"WARNING: ColorBandSet Using Depreciated version of ToString. Id: {Id}, Serial: {ColorBandsSerialNumber}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
+			sb.AppendLine($"WARNING: ColorBandSet Using Depreciated version of ToString. Id: {Id}, LastUpdated: {LastUpdatedUtc}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
 
 			for(var i = 0; i < Count; i++)
 			{
@@ -835,7 +835,7 @@ namespace MSS.Types
 			{
 				var sb = new StringBuilder();
 
-				sb.AppendLine($"Id: {Id}, Serial: {ColorBandsSerialNumber}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
+				sb.AppendLine($"Id: {Id}, LastUpdated: {LastUpdatedUtc}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
 
 				_ = sb.AppendLine($"Prev\t\tCutoff\t\tWidth");
 				for (var i = 0; i < Count; i++)

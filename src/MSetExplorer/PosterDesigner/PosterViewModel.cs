@@ -452,6 +452,7 @@ namespace MSetExplorer
 
 		public void PosterLoad(Poster poster)
 		{
+			_previewColorBandSet = null;
 			CurrentPoster = poster;
 		}
 

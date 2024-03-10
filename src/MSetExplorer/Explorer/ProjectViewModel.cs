@@ -372,6 +372,7 @@ namespace MSetExplorer
 			var project = new Project(name, description: null, job, colorBandSet);
 			job.OwnerId = project.Id;
 
+			_previewColorBandSet = null;
 			CurrentProject = project;
 		}
 		

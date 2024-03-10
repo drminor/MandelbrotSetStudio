@@ -338,8 +338,6 @@ namespace MSS.Common
 
 		public static ColorBandSet LoadColorBandSet(ColorBandSet? currentColorBandSet, int targetIterations, string operationDescription, List<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
 		{
-			//var targetIterations = job.MapCalcSettings.TargetIterations;
-
 			ColorBandSet? result;
 
 			if (lookupColorMapByTargetIteration.TryGetValue(targetIterations, out var targetIterationColorMap))
@@ -392,8 +390,6 @@ namespace MSS.Common
 				Debug.WriteLine(msg);
 
 				result = FindOrCreateColorBandSetForTargetIterations(targetIterations, colorBandSets, out wasCreated);
-				//job.ColorBandSetId = result.Id;
-				//LastUpdatedUtc = DateTime.UtcNow;
 			}
 			else
 			{
@@ -519,22 +515,6 @@ namespace MSS.Common
 		}
 
 		#endregion
-
-		public static OwnerType GetJobOwnerType(IJobOwner jobOwner)
-		{
-			if (jobOwner is Project)
-			{
-				return OwnerType.Project;
-			}
-			else if (jobOwner is Poster)
-			{
-				return OwnerType.Poster;
-			}
-			else
-			{
-				throw new NotImplementedException($"Cannot determined the JobOwnerType from the Project or Poster: {jobOwner}.");
-			}
-		}
 
 	}
 }

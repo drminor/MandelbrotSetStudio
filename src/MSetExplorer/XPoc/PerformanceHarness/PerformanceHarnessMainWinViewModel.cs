@@ -254,7 +254,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
-			_currentMsrJob = RunTest(job, _nextMapLoaderJobNumber++);
+			_currentMsrJob = RunTest(job, _nextMapLoaderJobNumber++, new SizeDbl(canvasSize));
 
 		}
 
@@ -312,14 +312,14 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			
 			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
 
-			_currentMsrJob = RunTest(job, _nextMapLoaderJobNumber++);
+			_currentMsrJob = RunTest(job, _nextMapLoaderJobNumber++, new SizeDbl(canvasSize));
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private MsrJob RunTest(Job job, int mapLoaderJobNumber)
+		private MsrJob RunTest(Job job, int mapLoaderJobNumber, SizeDbl canvasSize)
 		{
 			//_receivedTheLastOne = false;
 			//MapSectionProcessInfos.Clear();
@@ -338,10 +338,10 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			_stopwatch1.Restart();
 			//AddTiming("Start");
 
-			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(job.MapAreaInfo, new SizeDbl(1024));
+			var mapAreaInfoV1 = _mapJobHelper.GetMapPositionSizeAndDelta(job.MapAreaInfo, canvasSize);
 			//AddTiming("GetMapAreaInfo");
 
-			var msrJob = new MapSectionBuilder().CreateMapSectionRequestJob(mapLoaderJobNumber, job, mapAreaInfoV1);
+			var msrJob = CreateMapSectionRequestJob(mapLoaderJobNumber, job, mapAreaInfoV1);
 
 			var mapExtentInBlocks = RMapHelper.GetMapExtentInBlocks(mapAreaInfoV1.CanvasSize.Round(), mapAreaInfoV1.CanvasControlOffset, mapAreaInfoV1.Subdivision.BlockSize);
 			var mapSectionRequests = _mapSectionBuilder.CreateSectionRequests(msrJob, mapExtentInBlocks);
@@ -350,6 +350,18 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			JobProgressInfo = new JobProgressInfo(msrJob.MapLoaderJobNumber, DateTime.UtcNow, msrJob.SectionsRequested, msrJob.SectionsFoundInRepo);
 
 			List<MapSection> mapSections = _mapLoaderManager.Push(msrJob, mapSectionRequests, MapSectionReady, MapViewUpdateIsComplete, _cts.Token, out var requestsPendingGenerations);
+
+			return msrJob;
+		}
+
+		private MsrJob CreateMapSectionRequestJob(int mapLoaderJobNumber, Job job, MapPositionSizeAndDelta mapAreaInfoV1)
+		{
+			var jobType = JobType.FullScale;
+			var jobId = job.Id;
+			var ownerType = OwnerType.Project;
+
+
+			var msrJob = new MapSectionBuilder().CreateMapSectionRequestJob(mapLoaderJobNumber, jobType, jobId, ownerType, mapAreaInfoV1, job.MapCalcSettings);
 
 			return msrJob;
 		}
