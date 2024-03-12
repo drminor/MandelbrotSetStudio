@@ -13,9 +13,9 @@ namespace PercentageBandsTest
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: true);
 			var histogram = GetHistogram1();
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: true);
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: true);
 		}
 
 		[Fact]
@@ -24,9 +24,9 @@ namespace PercentageBandsTest
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram1();
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: true);
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: true);
 		}
 
 		[Fact]
@@ -35,9 +35,9 @@ namespace PercentageBandsTest
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram1();
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: false);
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: false);
 		}
 
 		[Fact]
@@ -46,9 +46,9 @@ namespace PercentageBandsTest
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: true);
 			var histogram = GetHistogram2();
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: true);
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: true);
 		}
 
 		[Fact]
@@ -58,13 +58,13 @@ namespace PercentageBandsTest
 			var histogram = GetHistogram2();
 
 			// Update Percentage from Cutoffs
-			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: true);
 
 			// Update Cutoffs from Percentages
-			ApplyHistogram(colorBandSet, histogram, usePercentages: true);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: true);
 
 			// Update Percentages from Cutoffs
-			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: false);
 		}
 
 		[Fact]
@@ -73,18 +73,18 @@ namespace PercentageBandsTest
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet("Test", maxIterations: 400, usePercentages: false);
 			var histogram = GetHistogram2();
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: false);
 
-			ApplyHistogram(colorBandSet, histogram, usePercentages: false);
+			ApplyHistogram(colorBandSet, histogram, histogramIsFromACompleteMap: true, usePercentages: false);
 		}
 
 		#endregion
 
 		#region Support Methods
 
-		private bool ApplyHistogram(ColorBandSet colorBandSet, IHistogram histogram, bool usePercentages)
+		private bool ApplyHistogram(ColorBandSet colorBandSet, IHistogram histogram, bool histogramIsFromACompleteMap, bool usePercentages)
 		{
-			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, colorBandSet);
+			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, histogramIsFromACompleteMap, colorBandSet);
 
 			var result = ApplyHistogram(colorBandSet, histCutoffsSnapShot, usePercentages);
 			return result;
@@ -142,7 +142,7 @@ namespace PercentageBandsTest
 
 		private void UpdateCutoffs(ColorBandSet colorBandSet, HistCutoffsSnapShot histCutoffsSnapShot)
 		{
-			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var newCutoffBands))
+			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var newCutoffBands, out var resultsAreComplete))
 			{
 				ColorBandSetHelper.CheckNewCutoffs(histCutoffsSnapShot.PercentageBands, newCutoffBands);
 				ColorBandSetHelper.ReportNewCutoffs(histCutoffsSnapShot, histCutoffsSnapShot.PercentageBands, newCutoffBands);
@@ -156,7 +156,7 @@ namespace PercentageBandsTest
 			colorBandSet.UpdateCutoffs(newCutoffs);
 		}
 
-		private HistCutoffsSnapShot GetHistCutoffsSnapShot(IHistogram histogram, ColorBandSet colorBandSet)
+		private HistCutoffsSnapShot GetHistCutoffsSnapShot(IHistogram histogram, bool histogramIsFromACompleteMap, ColorBandSet colorBandSet)
 		{
 			HistCutoffsSnapShot result;
 
@@ -165,6 +165,7 @@ namespace PercentageBandsTest
 				histogram.GetKeyValuePairs(),
 				histogram.Length,
 				histogram.UpperCatchAllValue,
+				histogramIsFromACompleteMap,
 				ColorBandSetHelper.GetPercentageBands(colorBandSet),
 				colorBandSet.UsingPercentages
 			);

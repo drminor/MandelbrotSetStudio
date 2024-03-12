@@ -215,7 +215,7 @@ namespace MSetExplorer
 						_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 
 						_mapSectionHistogramProcessor.Clear(value.HighCutoff);
-						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, _currentColorBandSet);
+						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
 					}
 
 					PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting, _mapSectionHistogramProcessor.Histogram);
@@ -832,7 +832,7 @@ namespace MSetExplorer
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
 
-			ApplyHistogram(/*_mapSectionHistogramProcessor.Histogram*/);
+			ApplyHistogram(histogramIsFromACompleteMap: false);
 
 			if (UseRealTimePreview)
 			{
@@ -850,9 +850,9 @@ namespace MSetExplorer
 			return new Dictionary<int, int>(kvpsForBand);
 		}
 
-		public bool ApplyHistogram()
+		public bool ApplyHistogram(bool histogramIsFromACompleteMap)
 		{
-			var histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, _currentColorBandSet);
+			var histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap, _currentColorBandSet);
 
 			var result = ApplyHistogram(histCutoffsSnapShot);
 			return result;
@@ -1663,7 +1663,7 @@ namespace MSetExplorer
 		{
 			PushCurrentColorBandOnToHistoryCollection();
 
-			ApplyHistogram(/*_mapSectionHistogramProcessor.Histogram*/);
+			ApplyHistogram(histogramIsFromACompleteMap: false);
 
 			if (UseRealTimePreview)
 			{
@@ -1717,7 +1717,6 @@ namespace MSetExplorer
 		private void PushCurrentColorBandOnToHistoryCollection()
 		{
 			// Push the current copy and make a new copy for any further changes.
-
 			//var currentVal = _currentColorBandSet;
 			//_currentColorBandSet = _currentColorBandSet.CreateNewCopy();
 			//_colorBandSetHistoryCollection.Push(currentVal);
@@ -1780,11 +1779,11 @@ namespace MSetExplorer
 					if (histCutoffsSnapShot.UsingPercentages/* || histCutoffsSnapShot.HavePercentages*/)
 					{
 						// Cutoffs are adjusted based on Percentages
-						UpdateCutoffsCheckThread(histCutoffsSnapShot);
+						UpdateCutoffsCheckThread(histCutoffsSnapShot, out _, out _);
 					}
 					else
 					{
-						Debug.WriteLine($"WARNING: ColorBandSetViewModel. Not using Percentages, using Cutoffs instead. Percentage Values are unavailable: SomeNan = {histCutoffsSnapShot.NoPercentageIsNaN}. AllZero = {histCutoffsSnapShot.AtLeastOnePercentageIsNonZero}. ");
+						Debug.WriteLine($"WARNING: ColorBandSetViewModel. Percentage Values are unavailable. Using Cutoffs to rebuild the Percentages. NoPercentagesIsNaN = {histCutoffsSnapShot.NoPercentageIsNaN}. AtLeastOnePercentageIsNonZero = {histCutoffsSnapShot.AtLeastOnePercentageIsNonZero}.");
 
 						// 'Rebuild' the percentage values from the current Cutoff values.
 						if (UpdatePercentages(histCutoffsSnapShot, out var newPercentages, out var resultsAreComplete))
@@ -1810,17 +1809,20 @@ namespace MSetExplorer
 					}
 					else
 					{
-						// TODO: Update the Cutoffs from Percentages
-						// and only if successful, set UsingPercentages = false.
+						Debug.WriteLine($"WARNING: ColorBandSetViewModel. Cutoff Values are unavailable. Using Percentages to rebuild the Cutoffs. ");
 
-						// Using the cutoffs even if they may not be complete
-						// Percentages are adjusted based on Cutoffs
-						UpdatePercentages(histCutoffsSnapShot, out _, out _);
+						if (UpdateCutoffsCheckThread(histCutoffsSnapShot, out var newCutoffBands, out var resultsAreComplete))
+						{
+							if (resultsAreComplete)
+							{
+								_currentColorBandSet.UsingPercentages = false;
+								_currentColorBandSet.MarkAsDirty();
 
-						_currentColorBandSet.UsingPercentages = false;
-						_currentColorBandSet.MarkAsDirty();
+								PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting);
 
-						PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting);
+								UpdateAssignedColorBandSetWithNewOffsets(newCutoffBands);
+							}
+						}
 					}
 				}
 
@@ -1828,6 +1830,8 @@ namespace MSetExplorer
 			}
 			else
 			{
+				// The histogram is empty.
+
 				//ClearPercentages();
 				return false;
 			}
@@ -1835,7 +1839,7 @@ namespace MSetExplorer
 
 		private void UpdatePercentages(IHistogram histogram)
 		{
-			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, _currentColorBandSet);
+			var histCutoffsSnapShot = GetHistCutoffsSnapShot(histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
 
 			UpdatePercentages(histCutoffsSnapShot, out _, out _);
 		}
@@ -1905,6 +1909,21 @@ namespace MSetExplorer
 			}
 		}
 
+		private void UpdateAssignedColorBandSetWithNewOffsets(CutoffBand[] newCutoffBands)
+		{
+			var cutoffsWereUpdated = ColorBandSet.UpdateCutoffs(newCutoffBands);
+			if (!cutoffsWereUpdated)
+			{
+				Debug.WriteLine($"WARNING: CbsHistogramViewModel. Unable to update the ColorBandSet's Cutoffs.");
+			}
+			else
+			{
+				_colorBandSetHistoryCollection[0] = ColorBandSet;
+				ColorBandSet.UsingPercentages = false;
+				ColorBandSet.MarkAsDirty();
+			}
+		}
+
 		private void ClearPercentages()
 		{
 			lock (_histLock)
@@ -1914,85 +1933,111 @@ namespace MSetExplorer
 			}
 		}
 
-		private void UpdateCutoffsCheckThread(HistCutoffsSnapShot histCutoffsSnapShot)
+		private bool UpdateCutoffsCheckThread(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out CutoffBand[]? cutoffBands, out bool resultsAreComplete)
 		{
 			var dispatcher = _selectionLineMovedDispatcher.Dispatcher;
 
 			if (!dispatcher.CheckAccess())
 			{
 				Debug.WriteLine("CbsHistogramViewModel switching to Ui Thread to update Cutoffs.");
-				dispatcher.Invoke(UpdateCutoffs, new object[] { histCutoffsSnapShot });
+				var x = dispatcher.Invoke(UpdateCutoffs, new object[] { histCutoffsSnapShot });
+
+				var y = (ValueTuple<CutoffBand[]?, bool>) x; 
+
+				if (y.Item1 != null)
+				{
+					cutoffBands = y.Item1;
+					resultsAreComplete = y.Item2;
+					return true;
+				}
+				else
+				{
+					cutoffBands = null;
+					resultsAreComplete = false;
+					return false;
+				}
 			}
 			else
 			{
 				Debug.WriteLine("CbsHistogramViewModel already on the Ui Thread to update Cutoffs.");
 				//UpdateCutoffsGetResults(histCutoffsSnapShot, out _, out _);
-				UpdateCutoffs(histCutoffsSnapShot);
+				(CutoffBand[]? cutoffBands1, bool resultsAreComplete1) = UpdateCutoffs(histCutoffsSnapShot);
+				cutoffBands = cutoffBands1;
+				resultsAreComplete = resultsAreComplete1;
+				return cutoffBands != null;
 			}
 		}
 
-		private void UpdateCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
+		//private void UpdateCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
+		//{
+		//	if (histCutoffsSnapShot.ColorBandSetId != _currentColorBandSet.Id)
+		//	{
+		//		Debug.WriteLine("ColorBandSetViewModel.The HistCutoffsSnapShot is stale, not Updating the New Cutoffs.");
+		//	}
+
+		//	// TODO: Do not Apply the new Cutoffs if there was some problem getting the Cutoffs from the current Percentage values
+		//	// This may be caused by an incomplete histogram.
+		//	// Update the TryGetCutoffsFromPercentages to report if there any problems.
+
+		//	bool result;
+
+		//	if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var cutoffBands, out bool resultsAreComplete))
+		//	{
+		//		CheckNewCutoffs(histCutoffsSnapShot.PercentageBands, cutoffBands);
+		//		ReportNewCutoffs(histCutoffsSnapShot, histCutoffsSnapShot.PercentageBands, cutoffBands);
+
+		//		result = ApplyNewCutoffs(cutoffBands, histCutoffsSnapShot.ColorBandSetId);
+
+		//		var newColorBandSet = _currentColorBandSet.CreateNewCopy();
+		//		ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
+		//	}
+		//	//else
+		//	//{
+		//	//	cutoffBands = null;
+		//	//	result = false;
+		//	//}
+
+		//	//return result;
+		//}
+
+		private (CutoffBand[]? cutoffBands, bool resultsAreComplete) UpdateCutoffs(HistCutoffsSnapShot histCutoffsSnapShot)
 		{
+			CutoffBand[]? cutoffBands = null;
+			bool resultsAreComplete = false;
+
 			if (histCutoffsSnapShot.ColorBandSetId != _currentColorBandSet.Id)
 			{
 				Debug.WriteLine("ColorBandSetViewModel.The HistCutoffsSnapShot is stale, not Updating the New Cutoffs.");
+				return (cutoffBands, resultsAreComplete);
 			}
 
 			// TODO: Do not Apply the new Cutoffs if there was some problem getting the Cutoffs from the current Percentage values
 			// This may be caused by an incomplete histogram.
 			// Update the TryGetCutoffsFromPercentages to report if there any problems.
-
-			bool result;
-
-			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out var cutoffBands, out bool resultsAreComplete))
-			{
-				CheckNewCutoffs(histCutoffsSnapShot.PercentageBands, cutoffBands);
-				ReportNewCutoffs(histCutoffsSnapShot, histCutoffsSnapShot.PercentageBands, cutoffBands);
-
-				result = ApplyNewCutoffs(cutoffBands, histCutoffsSnapShot.ColorBandSetId);
-
-				var newColorBandSet = _currentColorBandSet.CreateNewCopy();
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
-			}
-			//else
-			//{
-			//	cutoffBands = null;
-			//	result = false;
-			//}
-
-			//return result;
-		}
-
-		private bool UpdateCutoffsGetResults(HistCutoffsSnapShot histCutoffsSnapShot, [NotNullWhen(true)] out CutoffBand[]? cutoffBands, out bool resultsAreComplete)
-		{
-			if (histCutoffsSnapShot.ColorBandSetId != _currentColorBandSet.Id)
-			{
-				Debug.WriteLine("ColorBandSetViewModel.The HistCutoffsSnapShot is stale, not Updating the New Cutoffs.");
-			}
-
-			// TODO: Do not Apply the new Cutoffs if there was some problem getting the Cutoffs from the current Percentage values
-			// This may be caused by an incomplete histogram.
-			// Update the TryGetCutoffsFromPercentages to report if there any problems.
-
-			bool result;
 
 			if (ColorBandSetHelper.TryGetCutoffsFromPercentages(histCutoffsSnapShot, out cutoffBands, out resultsAreComplete))
 			{
 				CheckNewCutoffs(histCutoffsSnapShot.PercentageBands, cutoffBands);
 				ReportNewCutoffs(histCutoffsSnapShot, histCutoffsSnapShot.PercentageBands, cutoffBands);
 
-				result = ApplyNewCutoffs(cutoffBands, histCutoffsSnapShot.ColorBandSetId);
-
-				var newColorBandSet = _currentColorBandSet.CreateNewCopy();
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
+				if (ApplyNewCutoffs(cutoffBands, histCutoffsSnapShot.ColorBandSetId))
+				{
+					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
+					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
+				}
+				else
+				{
+					cutoffBands = null;
+					resultsAreComplete = false;
+				}
 			}
 			else
 			{
 				cutoffBands = null;
-				result = false;
+				resultsAreComplete = false;
 			}
 
-			return result;
+			return (cutoffBands, resultsAreComplete);
 		}
 
 		private bool ApplyNewCutoffs(CutoffBand[] newCutoffs, ObjectId colorBandSetId)
@@ -2010,7 +2055,7 @@ namespace MSetExplorer
 
 				if (_currentColorBandSet.UpdateCutoffs(newCutoffs))
 				{
-					_currentColorBandSet.MarkAsDirty();
+					//_currentColorBandSet.MarkAsDirty();
 					result = true;
 					//_currentColorBandSet.UsingPercentages = false;
 
@@ -2033,7 +2078,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private HistCutoffsSnapShot GetHistCutoffsSnapShot(IHistogram histogram, ColorBandSet colorBandSet)
+		private HistCutoffsSnapShot GetHistCutoffsSnapShot(IHistogram histogram, bool histogramIsFromACompleteMap, ColorBandSet colorBandSet)
 		{
 			HistCutoffsSnapShot result;
 
@@ -2044,6 +2089,7 @@ namespace MSetExplorer
 					histogram.GetKeyValuePairs(),
 					histogram.Length,
 					histogram.UpperCatchAllValue,
+					histogramIsFromACompleteMap,
 					ColorBandSetHelper.GetPercentageBands(colorBandSet),
 					colorBandSet.UsingPercentages
 				);

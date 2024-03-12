@@ -38,12 +38,9 @@ namespace MSetExplorer
 		bool UseEscapeVelocities { get; set; }
 		bool UseRealTimePreview { get; set; }
 
-		//bool UsePercentages { get; set; }
-
 		bool UsePercentagesLocalSetting { get; set; }
 		bool UsePercentagesGlobalSetting { get; }
 		bool UsePercentagesGlobally { get; set; }
-
 		string PercentageUseIsGlobalDisplayStr { get; }
 		string PercentageUseStatus { get; }
 
@@ -52,7 +49,7 @@ namespace MSetExplorer
 		void ApplyChanges();
 		void ApplyChanges(int newTargetIterations);
 		void RevertChanges();
-		bool ApplyHistogram();
+		bool ApplyHistogram(bool histogramIsFromACompleteMap);
 
 		bool TryMoveCurrentColorBandToNext();
 		bool TryMoveCurrentColorBandToPrevious();
@@ -71,16 +68,10 @@ namespace MSetExplorer
 		void CompleteColorRemoval(int index, ReservedColorBand reservedColorBand);
 		void CompleteBandRemoval(int index);
 
-		//void CompleteCutoffInsertion(int index, ColorBand colorBand);
-		//void CompleteColorInsertion(int index, ColorBandColor colorBandColor);
-		//void CompleteColorInsertion(int index, ColorBand colorBand);
-
-		//void CompleteCutoffRemoval(int index);
-		//void CompleteColorRemoval(int index);
-
+		ReservedColorBand PopReservedColorBand();
+		void PushReservedColorBand(ReservedColorBand reservedColorBand);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
-
 
 		HPlotSeriesData SeriesData { get; }
 
@@ -102,13 +93,5 @@ namespace MSetExplorer
 		int? UpdateViewportSizePosAndScale(SizeDbl contentViewportSize, VectorDbl contentOffset, double contentScale);
 
 		int? MoveTo(VectorDbl displayPosition);
-
-		//CbListView SelectedItems { get; }
-
-		//void ClearSelectedItems();
-
-		ReservedColorBand PopReservedColorBand();
-
-		void PushReservedColorBand(ReservedColorBand reservedColorBand);
 	}
 }

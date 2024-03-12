@@ -6,15 +6,16 @@ namespace MSS.Types
 {
 	public class HistCutoffsSnapShot
 	{
-		public HistCutoffsSnapShot(ObjectId colorBandSetId, KeyValuePair<int, int>[] histKeyValuePairs, int histogramLength, long upperCatchAllValue, PercentageBand[] percentageBands, bool usingPercentages)
+		public HistCutoffsSnapShot(ObjectId colorBandSetId, KeyValuePair<int, int>[] histKeyValuePairs, int histogramLength, long upperCatchAllValue, bool histogramIsFromACompleteMap, PercentageBand[] percentageBands, bool usingPercentages)
 		{
 			ColorBandSetId = colorBandSetId;
 
 			HistKeyValuePairs = histKeyValuePairs;
 			HistogramLength = histogramLength;
 			UpperCatchAllValue = upperCatchAllValue;
-			PercentageBands = percentageBands;
+			HistogramIsFromACompleteMap = histogramIsFromACompleteMap;
 
+			PercentageBands = percentageBands;
 			NoPercentageIsNaN = percentageBands.All(x => !double.IsNaN(x.Percentage));
 			AtLeastOnePercentageIsNonZero = percentageBands.Any(x => x.Percentage != 0);
 
@@ -28,6 +29,7 @@ namespace MSS.Types
 
 		public int HistogramLength { get; init; }
 		public long UpperCatchAllValue { get; init; }
+		public bool HistogramIsFromACompleteMap { get; init; }
 
 		public PercentageBand[] PercentageBands { get; init; }
 		public bool UsingPercentages { get; init; }
@@ -36,7 +38,6 @@ namespace MSS.Types
 		public bool NoPercentageIsNaN { get; init; }
 		public bool AtLeastOnePercentageIsNonZero { get; init; }
 		public bool HavePercentages => NoPercentageIsNaN && AtLeastOnePercentageIsNonZero;
-
 
 		public int CutoffsLength => PercentageBands.Length;
 
