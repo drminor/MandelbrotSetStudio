@@ -15,17 +15,19 @@ namespace ProjectRepo.Entities
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; set; } = ObjectId.Empty;
+		public ObjectId OwnerId { get; set; }
 
 		public ReservedColorBandRecord[]? ReservedColorBandRecords { get; set; }
 
 		public Guid ColorBandsSerialNumber { get; set; } = Guid.NewGuid();
 
 		public DateTime DateCreatedUtc { get; set; }
+		public DateTime DateRecordLastSavedUtc { get; set; }
+		public DateTime DateLastUsedUtc { get; set; }
 
-		// TODO: Rename LastAccessed to LastAccessedUTC on the ColorBandRecord
-		// TODO: Add field LastUpdatedUtc on the ColorBandRecord.
-
+		// TODO: Delete LastAccessed to LastAccessedUTC on the ColorBandRecord
 		public DateTime LastAccessed { get; set; }
+
 
 		[BsonDefaultValue(0)]
 		[BsonIgnoreIfDefault]

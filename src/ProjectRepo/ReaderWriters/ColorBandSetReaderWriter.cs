@@ -72,8 +72,13 @@ namespace ProjectRepo
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSet.Id);
 
 			var updateDefinition = Builders<ColorBandSetRecord>.Update
-				.Set(u => u.ProjectId, colorBandSet.ProjectId)
-				.Set(u => u.ParentId, colorBandSet.ParentId);
+				.Set(u => u.OwnerId, colorBandSet.OwnerId)
+				.Set(u => u.ParentId, colorBandSet.ParentId)
+				.Set(u => u.TargetIterations, colorBandSet.TargetIterations)
+				.Set(u => u.DateCreatedUtc, colorBandSet.DateCreatedUtc)
+				.Set(u => u.DateLastUsedUtc, colorBandSet.DateRecordLastUsedUtc)
+				.Set(u => u.DateRecordLastSavedUtc, DateTime.UtcNow);
+
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -160,6 +165,18 @@ namespace ProjectRepo
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("Name", name);
 			var colorBandSetRecord = Collection.Find(filter).FirstOrDefault();
+			var result = colorBandSetRecord != null;
+
+			return result;
+		}
+
+		public bool Exists(ObjectId projectId, string name, int targetIterations)
+		{
+			var filter1 = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var filter2 = Builders<ColorBandSetRecord>.Filter.Eq("Name", name);
+			var filter3 = Builders<ColorBandSetRecord>.Filter.Eq("TargetIterations", targetIterations);
+
+			var colorBandSetRecord = Collection.Find(filter1 & filter2 & filter3).FirstOrDefault();
 			var result = colorBandSetRecord != null;
 
 			return result;

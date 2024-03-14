@@ -143,6 +143,12 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public bool IsNameTaken(string name, int targetIterations)
+		{
+			var result = ColorBandSetInfos.Any(x => x.Name == name && x.MaxIterations == targetIterations);
+			return result;
+		}
+
 		#endregion
 
 		#region INotifyPropertyChanged Support

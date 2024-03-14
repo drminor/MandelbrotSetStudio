@@ -163,11 +163,11 @@ namespace MSS.Common
 
 			foreach (var cbs in unsavedColorBandSets)
 			{
-				if (cbs.ProjectId != jobOwner.Id)
+				if (cbs.OwnerId != jobOwner.Id)
 				{
-					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.ProjectId}, current Project: {jobOwner.Id}. ColorBandSet Serial Number: {cbs.ColorBandsSerialNumber}.");
+					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.OwnerId}, current Project: {jobOwner.Id}. ColorBandSet Serial Number: {cbs.ColorBandsSerialNumber}.");
 					var newCbs = cbs.CreateNewCopy(ObjectId.GenerateNewId());
-					newCbs.ProjectId = jobOwner.Id;
+					newCbs.OwnerId = jobOwner.Id;
 					newCbs.AssignNewSerialNumber();
 					projectAdapter.InsertColorBandSet(newCbs);
 				}
@@ -456,7 +456,7 @@ namespace MSS.Common
 				if (!lookupColorMapByTargetIteration.ContainsKey(targetIterations))
 				{
 					var match = FindOrCreateColorBandSet(job.ColorBandSetId, targetIterations, desc, colorBandSets, out var wasUpdated, out var wasCreated);
-					var ticmRec = new TargetIterationColorMapRecord(targetIterations, match.Id, match.DateCreated);
+					var ticmRec = new TargetIterationColorMapRecord(targetIterations, match.Id, match.DateCreatedUtc);
 
 					lookupColorMapByTargetIteration.Add(targetIterations, ticmRec);
 
@@ -473,7 +473,7 @@ namespace MSS.Common
 
 			var result = new Dictionary<int, TargetIterationColorMapRecord>();
 
-			result.Add(job.MapCalcSettings.TargetIterations, new TargetIterationColorMapRecord(job.MapCalcSettings.TargetIterations, colorBandSet.Id, colorBandSet.DateCreated));
+			result.Add(job.MapCalcSettings.TargetIterations, new TargetIterationColorMapRecord(job.MapCalcSettings.TargetIterations, colorBandSet.Id, colorBandSet.DateCreatedUtc));
 
 			return result;
 		}
@@ -495,7 +495,7 @@ namespace MSS.Common
 		{
 			if (makeDefault)
 			{
-				var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.DateCreated);
+				var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.DateCreatedUtc);
 
 				// Add or update
 				if (lookupColorMapByTargetIteration.ContainsKey(colorBandSet.HighCutoff))
@@ -508,7 +508,7 @@ namespace MSS.Common
 				// Add only if there is no entry for the targetIteration.
 				if (!lookupColorMapByTargetIteration.ContainsKey(colorBandSet.HighCutoff))
 				{
-					var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.DateCreated);
+					var ticmr = new TargetIterationColorMapRecord(colorBandSet.HighCutoff, colorBandSet.Id, colorBandSet.DateCreatedUtc);
 					lookupColorMapByTargetIteration.Add(colorBandSet.HighCutoff, ticmr);
 				}
 			}

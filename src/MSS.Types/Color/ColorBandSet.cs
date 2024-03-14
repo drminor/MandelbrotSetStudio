@@ -16,7 +16,7 @@ namespace MSS.Types
 		#region Private Fields
 
 		private ObjectId? _parentId;
-		private ObjectId _projectId;
+		private ObjectId _ownerId;
 		private string _name;
 		private string? _description;
 
@@ -39,22 +39,22 @@ namespace MSS.Types
 		{ }
 
 		public ColorBandSet(int targetIterations)
-			: this(Guid.NewGuid().ToString(), projectId: ObjectId.Empty, colorBands: null, targetIterations, Guid.NewGuid())
+			: this(Guid.NewGuid().ToString(), ownerId: ObjectId.Empty, colorBands: null, targetIterations, Guid.NewGuid())
 		{ }
 
 		public ColorBandSet(string name, IList<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
-			: this(name, projectId: ObjectId.Empty, colorBands, targetIterations, colorBandsSerialNumber)
+			: this(name, ownerId: ObjectId.Empty, colorBands, targetIterations, colorBandsSerialNumber)
 		{ }
 
-		private ColorBandSet(string name, ObjectId projectId, IEnumerable<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
-			: this(ObjectId.GenerateNewId(), parentId: null, projectId, name, description: null, colorBands, targetIterations, 
+		private ColorBandSet(string name, ObjectId ownerId, IEnumerable<ColorBand>? colorBands, int targetIterations, Guid colorBandsSerialNumber)
+			: this(ObjectId.GenerateNewId(), parentId: null, ownerId, name, description: null, colorBands, targetIterations, 
 				  usingPercentages: false, reservedColorBands: null, colorBandsSerialNumber)
 		{
 			LastSavedUtc = DateTime.MinValue;
 			OnFile = false;
 		}
 
-		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId projectId, string name, string? description, IEnumerable<ColorBand>? colorBands, int targetIterations, 
+		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId ownerId, string name, string? description, IEnumerable<ColorBand>? colorBands, int targetIterations, 
 			bool usingPercentages, IEnumerable<ReservedColorBand>? reservedColorBands, Guid colorBandsSerialNumber) 
 			: base(FixBands(targetIterations, colorBands))
 		{
@@ -62,7 +62,7 @@ namespace MSS.Types
 
 			Id = id;
 			_parentId = parentId;
-			_projectId = projectId;
+			_ownerId = ownerId;
 			_name = name;
 			_description = description;
 
@@ -72,6 +72,7 @@ namespace MSS.Types
 			_hilightedColorBandIndex = 0;
 			_usingPercentages = usingPercentages;
 
+			DateCreatedUtc = DateTime.UtcNow;
 			_lastSavedUtc = DateTime.UtcNow;
 			LastUpdatedUtc = DateTime.MinValue;
 
@@ -84,7 +85,7 @@ namespace MSS.Types
 		#region Public Properties - Derived
 
 		public bool IsReadOnly => false;
-		public bool IsAssignedToProject => ProjectId != ObjectId.Empty;
+		public bool IsAssignedToProject => OwnerId != ObjectId.Empty;
 		public bool IsDirty => LastSavedUtc.Equals(DateTime.MinValue) || LastUpdatedUtc > LastSavedUtc;
 
 		public int HighCutoff => this[^1].Cutoff;
@@ -105,7 +106,6 @@ namespace MSS.Types
 
 		public bool OnFile { get; private set; }
 
-		public DateTime DateCreated => Id.CreationTime;
 
 		public ObjectId? ParentId
 		{
@@ -117,14 +117,14 @@ namespace MSS.Types
 			}
 		}
 
-		public ObjectId ProjectId
+		public ObjectId OwnerId
 		{
-			get => _projectId;
+			get => _ownerId;
 			set
 			{
-				if (value != _projectId)
+				if (value != _ownerId)
 				{
-					_projectId = value;
+					_ownerId = value;
 					LastUpdatedUtc = DateTime.UtcNow;
 					OnPropertyChanged();
 				}
@@ -184,6 +184,10 @@ namespace MSS.Types
 			}
 		}
 
+		public DateTime DateCreatedUtc { get; init; }
+		public DateTime DateRecordLastSavedUtc { get; init; }
+		public DateTime DateRecordLastUsedUtc { get; set; }
+
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
@@ -196,8 +200,6 @@ namespace MSS.Types
 		}
 
 		public DateTime LastUpdatedUtc { get; private set; }
-
-		public DateTime LastAccessedUtc { get; set; }
 
 		public int TargetIterations { get; set; }
 
@@ -736,7 +738,7 @@ namespace MSS.Types
 			var idx = HighlightedColorBandIndex;
 
 			var bandsCopy = CreateBandsCopy();
-			var result = new ColorBandSet(newId, ParentId, ProjectId, Name, Description, bandsCopy, TargetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var result = new ColorBandSet(newId, ParentId, OwnerId, Name, Description, bandsCopy, TargetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -760,7 +762,7 @@ namespace MSS.Types
 
 			var bandsCopy = CreateBandsCopy();
 			bandsCopy[^1].Cutoff = targetIterations;
-			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, ProjectId, Name, Description, bandsCopy, targetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var result = new ColorBandSet(ObjectId.GenerateNewId(), ParentId, OwnerId, Name, Description, bandsCopy, targetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
@@ -787,7 +789,7 @@ namespace MSS.Types
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Cloning ColorBandSet with Id: {Id}.");
 
 			var idx = HighlightedColorBandIndex;
-			var result = new ColorBandSet(Id, ParentId, ProjectId, Name, Description, CreateBandsCopy(), TargetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
+			var result = new ColorBandSet(Id, ParentId, OwnerId, Name, Description, CreateBandsCopy(), TargetIterations, UsingPercentages, CreateReservedBandsCopy(), ColorBandsSerialNumber)
 			{
 				LastSavedUtc = LastSavedUtc,
 				LastUpdatedUtc = LastUpdatedUtc,

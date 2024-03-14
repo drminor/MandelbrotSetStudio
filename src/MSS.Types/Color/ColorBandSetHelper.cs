@@ -62,14 +62,14 @@ namespace MSS.Types
 
 		private static bool TryGetCbsSmallestCutoffGtrThan(int cutoff, IEnumerable<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			colorBandSet = colorBandSets.OrderByDescending(f => f.HighCutoff).OrderByDescending(f => f.DateCreated).FirstOrDefault(x => x.HighCutoff <= cutoff);
+			colorBandSet = colorBandSets.OrderByDescending(f => f.HighCutoff).OrderByDescending(f => f.DateCreatedUtc).FirstOrDefault(x => x.HighCutoff <= cutoff);
 
 			return colorBandSet != null;
 		}
 
 		private static bool TryGetCbsLargestCutoffLessThan(int cutoff, IEnumerable<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			colorBandSet = colorBandSets.OrderByDescending(x => x.HighCutoff).OrderByDescending(f => f.DateCreated).FirstOrDefault(x => x.HighCutoff <= cutoff);
+			colorBandSet = colorBandSets.OrderByDescending(x => x.HighCutoff).OrderByDescending(f => f.DateCreatedUtc).FirstOrDefault(x => x.HighCutoff <= cutoff);
 
 			return colorBandSet != null;
 		}
@@ -101,7 +101,7 @@ namespace MSS.Types
 			var itemsToKeep = cBands.Where(x => x.Cutoff <= targetIterations).ToList();
 			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
 
-			var result = new ColorBandSet(colorBandSet.Id, colorBandSet.ParentId, colorBandSet.ProjectId, colorBandSet.Name, colorBandSet.Description, itemsToKeep, targetIterations, colorBandSet.UsingPercentages, reservedColorBands, colorBandSet.ColorBandsSerialNumber);
+			var result = new ColorBandSet(colorBandSet.Id, colorBandSet.ParentId, colorBandSet.OwnerId, colorBandSet.Name, colorBandSet.Description, itemsToKeep, targetIterations, colorBandSet.UsingPercentages, reservedColorBands, colorBandSet.ColorBandsSerialNumber);
 
 			return result;
 		}

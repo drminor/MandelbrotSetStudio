@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
 using ProjectRepo;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -77,9 +78,13 @@ namespace MSetRepo
 			var id = sharedColorsReaderWriter.Insert(colorBandSetRecord);
 			colorBandSetRecord = sharedColorsReaderWriter.Get(id);
 
-			var result = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+			if (colorBandSetRecord == null)
+			{
+				throw new InvalidOperationException("The SharedColorBandSetAdpater could not insert the ColorBandSet Record.");
+			}
 
-			Debug.Assert(id == result.Id, "ColorBandSet result has Id different from the one on file.");
+			var result = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+			Debug.Assert(id == result.Id, "The SharedColorBandSetAdpater is returning a different Id than the one just inserted.");
 
 			return result;
 		}
@@ -114,19 +119,28 @@ namespace MSetRepo
 
 			var allColorBandSetRecords = colorsReaderWriter.GetAll();
 
-			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.ColorBandRecords.Max(y => y.CutOff)));
+			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.TargetIterations));
 
 			return result;
 		}
 
-		public ColorBandSetInfo GetColorBandSetInfo(ObjectId id)
+		public ColorBandSetInfo? GetColorBandSetInfo(ObjectId id)
 		{
 			var colorsReaderWriter = new SharedColorBandSetReaderWriter(_dbProvider);
 			var cbsRecord = colorsReaderWriter.Get(id);
 
-			var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name, cbsRecord.Description, cbsRecord.LastAccessed, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, cbsRecord.ColorBandRecords.Max(y => y.CutOff));
+			if (cbsRecord != null)
+			{
+				var targetIterations = cbsRecord.TargetIterations == 0 ? cbsRecord.ColorBandRecords.Max(y => y.CutOff) : cbsRecord.TargetIterations;
+				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name, cbsRecord.Description, cbsRecord.LastAccessed, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, targetIterations);
 
-			return result;
+				return result;
+			}
+			else
+			{
+				return null;
+			}
+
 		}
 
 		#endregion

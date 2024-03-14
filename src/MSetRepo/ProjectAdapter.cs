@@ -19,6 +19,11 @@ namespace MSetRepo
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 
+		private readonly ProjectReaderWriter _projectReaderWriter;
+		private readonly PosterReaderWriter _posterReaderWriter;
+		private readonly JobReaderWriter _jobReaderWriter;
+		private readonly ColorBandSetReaderWriter _colorBandSetReaderWriter;
+
 		private readonly bool _useDetailedDebug = false;
 
 		#region Constructor
@@ -27,6 +32,11 @@ namespace MSetRepo
 		{
 			_dbProvider = dbProvider;
 			_mSetRecordMapper = mSetRecordMapper;
+
+			_projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+			_posterReaderWriter = new PosterReaderWriter(_dbProvider);
+			_jobReaderWriter = new JobReaderWriter(_dbProvider);
+			_colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 		}
 
 		#endregion
@@ -129,7 +139,7 @@ namespace MSetRepo
 
 				foreach (var cbs in colorBandSets)
 				{
-					cbs.ProjectId = projectId;
+					cbs.OwnerId = projectId;
 					cbs.AssignNewSerialNumber();
 					if (cbs.Name == RMapConstants.NAME_FOR_NEW_PROJECTS) cbs.Name = name;
 				}
@@ -370,17 +380,9 @@ namespace MSetRepo
 
 		public IEnumerable<ColorBandSet> GetColorBandSetsForProject(ObjectId projectId)
 		{
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-			var result = GetColorBandSetsForProject(projectId, colorBandSetReaderWriter);
-
-			return result;
-		}
-
-		private IEnumerable<ColorBandSet> GetColorBandSetsForProject(ObjectId projectId, ColorBandSetReaderWriter colorBandSetReaderWriter)
-		{
 			var result = new List<ColorBandSet>();
 
-			var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectId);
+			var colorBandSetRecords = _colorBandSetReaderWriter.GetColorBandSetsForProject(projectId);
 
 			foreach (var colorBandSetRecord in colorBandSetRecords)
 			{
@@ -417,7 +419,7 @@ namespace MSetRepo
 
 			var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectId).ToList();
 
-			var result = colorBandSetRecords.Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.ColorBandRecords.Max(y => y.CutOff)));
+			var result = colorBandSetRecords.Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.TargetIterations));
 
 			return result;
 		}
@@ -435,7 +437,8 @@ namespace MSetRepo
 
 			if (cbsRecord != null)
 			{
-				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name ?? cbsRecord.ColorBandsSerialNumber.ToString(), cbsRecord.Description, cbsRecord.LastAccessed, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, cbsRecord.ColorBandRecords.Max(y => y.CutOff));
+				var targetIterations = cbsRecord.TargetIterations == 0 ? cbsRecord.ColorBandRecords.Max(y => y.CutOff) : cbsRecord.TargetIterations;
+				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name ?? cbsRecord.ColorBandsSerialNumber.ToString(), cbsRecord.Description, cbsRecord.LastAccessed, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, targetIterations);
 				return result;
 			}
 			else
@@ -697,7 +700,7 @@ namespace MSetRepo
 				{
 					colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
 
-					if (colorBandSet.ProjectId != job.OwnerId)
+					if (colorBandSet.OwnerId != job.OwnerId)
 					{
 						result = GetUpdatedCbsForProject(colorBandSet, job.OwnerId, colorBandSetReaderWriter);
 					}
@@ -748,7 +751,7 @@ namespace MSetRepo
 		private ColorBandSet GetUpdatedCbsForProject(ColorBandSet colorBandSet, ObjectId projectId, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
 			var updatedCbs = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
-			updatedCbs.ProjectId = projectId;
+			updatedCbs.OwnerId = projectId;
 			InsertCbs(updatedCbs, colorBandSetReaderWriter);
 
 			return updatedCbs;
@@ -832,12 +835,8 @@ namespace MSetRepo
 
 		public List<Poster> GetAllPosters()
 		{
-			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-
-			var posterRecords = posterReaderWriter.GetAll();
-
-			var result = posterRecords.Select(x => BuildPoster(x, colorBandSetReaderWriter)).ToList();
+			var posterRecords = _posterReaderWriter.GetAll();
+			var result = posterRecords.Select(x => BuildPoster(x)).ToList();
 
 			return result;
 		}
@@ -909,10 +908,10 @@ namespace MSetRepo
 			}
 		}
 
-		private Poster BuildPoster(PosterRecord target, ColorBandSetReaderWriter colorBandSetReaderWriter)
+		private Poster BuildPoster(PosterRecord target)
 		{
 			var posterId = target.Id;
-			var colorBandSets = GetColorBandSetsForProject(posterId, colorBandSetReaderWriter).ToList();
+			var colorBandSets = GetColorBandSetsForProject(posterId).ToList();
 			var jobs = GetAllJobsForPoster(posterId, colorBandSets);
 
 			var lookupColorMapByTargetIteration = new Dictionary<int, TargetIterationColorMapRecord>();
@@ -988,7 +987,7 @@ namespace MSetRepo
 
 			foreach (var cbs in colorBandSets)
 			{
-				cbs.ProjectId = posterId;
+				cbs.OwnerId = posterId;
 				cbs.AssignNewSerialNumber();
 				if (cbs.Name == RMapConstants.NAME_FOR_NEW_PROJECTS) cbs.Name = name;
 			}
@@ -1187,6 +1186,10 @@ namespace MSetRepo
 
 		public void DoSchemaUpdates()
 		{
+			//UpdateAllColorBandSets();
+
+			//DeleteUnusedColorBandSets();
+
 			//UpdateAllJobsWithMapCenterAndDelta();
 		}
 
@@ -1240,15 +1243,75 @@ namespace MSetRepo
 		//	return numUpdated;
 		//}
 
+		public int UpdateAllColorBandSets()
+		{
+			var result = 0;
 
+			var lookupCbsByTargetIterations = new Dictionary<int, ColorBandSetRecord>();
+
+			var cbsToDelete = new List<ObjectId>();
+
+			var projectRecords = _projectReaderWriter.GetAll();
+			foreach (var projectRec in projectRecords)
+			{
+				var colorBandSetRecords = _colorBandSetReaderWriter.GetColorBandSetsForProject(projectRec.Id);
+				foreach (var rec in colorBandSetRecords)
+				{
+					rec.OwnerId = rec.ProjectId;
+					var dateCreated = rec.DateCreatedUtc;
+
+					if (dateCreated == DateTime.MinValue)
+					{
+						dateCreated = rec.Id.CreationTime;
+						rec.DateCreatedUtc = dateCreated;
+					}
+
+					var targetIterations = rec.TargetIterations;
+					if (targetIterations == 0)
+					{
+						targetIterations = rec.ColorBandRecords.Max(x => x.CutOff);
+						rec.TargetIterations = targetIterations;
+					}
+
+					if (lookupCbsByTargetIterations.TryGetValue(targetIterations, out var existingRec))
+					{
+						if (existingRec.DateCreatedUtc <= dateCreated)
+						{
+							cbsToDelete.Add(existingRec.Id);
+							lookupCbsByTargetIterations[targetIterations] = rec;
+						}
+					}
+					else
+					{
+						lookupCbsByTargetIterations.Add(targetIterations, rec);
+					}
+				}
+
+				foreach (var id in cbsToDelete)
+				{
+					_colorBandSetReaderWriter.Delete(id);
+				}
+
+				foreach (var kvp in lookupCbsByTargetIterations)
+				{
+					var cbs = _mSetRecordMapper.MapFrom(kvp.Value);
+					_colorBandSetReaderWriter.UpdateDetails(cbs);
+				}
+
+				cbsToDelete.Clear();
+				lookupCbsByTargetIterations.Clear();
+
+			}
+
+
+			return result;
+		}
 
 		public int DeleteUnusedColorBandSets()
 		{
 			var result = 0;
 
-			var jobReaderWriter = new JobReaderWriter(_dbProvider);
-
-			var colorBandSetIdsRefByJob = jobReaderWriter.GetAllReferencedColorBandSetIds().ToList();
+			var colorBandSetIdsRefByJob = _jobReaderWriter.GetAllReferencedColorBandSetIds().ToList();
 
 			//Debug.WriteLine($"\nRef by a Job\n");
 			//foreach (var x in colorBandSetIdsRefByJob)
@@ -1258,22 +1321,16 @@ namespace MSetRepo
 
 			var colorBandSetIds = new List<ObjectId>(colorBandSetIdsRefByJob);
 
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-
-			//var referencedByProjectNotByJob = 0;
-
 			var referencedByProjectNotByJob = new List<ObjectId>();
 
-			var projectRecords = projectReaderWriter.GetAll();
+			var projectRecords = _projectReaderWriter.GetAll();
 			foreach (var projectRec in projectRecords)
 			{
-				var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForProject(projectRec.Id);
+				var colorBandSetRecords = _colorBandSetReaderWriter.GetColorBandSetsForProject(projectRec.Id);
 				foreach (var colorBandSetRec in colorBandSetRecords)
 				{
 					if (!colorBandSetIds.Contains(colorBandSetRec.Id))
 					{
-						//colorBandSetIds.Add(colorBandSetRec.Id);
 						referencedByProjectNotByJob.Add(colorBandSetRec.Id);
 					}
 				}
@@ -1287,7 +1344,7 @@ namespace MSetRepo
 			//	Debug.WriteLine($"{x}");
 			//}
 
-			var allCbsIds = colorBandSetReaderWriter.GetAll().Select(x => x.Id);
+			var allCbsIds = _colorBandSetReaderWriter.GetAll().Select(x => x.Id);
 
 			var unReferenced = new List<ObjectId>();
 
@@ -1302,8 +1359,10 @@ namespace MSetRepo
 			Debug.WriteLine($"\nUnreferenced\n");
 			foreach (var x in referencedByProjectNotByJob)
 			{
-				//Debug.WriteLine($"{x}");
-				_ = colorBandSetReaderWriter.Delete(x);
+				Debug.WriteLine($"{x}");
+
+				// Uncomment this next line!!
+				//_ = _colorBandSetReaderWriter.Delete(x);
 				result++;
 			}
 

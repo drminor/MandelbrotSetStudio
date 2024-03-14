@@ -21,7 +21,7 @@ namespace ProjectRepo
 			return colorBandSetRecords;
 		}
 
-		public ColorBandSetRecord Get(ObjectId colorBandSetId)
+		public ColorBandSetRecord? Get(ObjectId colorBandSetId)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
 			var colorBandSetRecord = Collection.Find(filter).FirstOrDefault();

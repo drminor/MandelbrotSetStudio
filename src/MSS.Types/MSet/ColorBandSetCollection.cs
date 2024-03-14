@@ -307,7 +307,7 @@ namespace MSS.Types.MSet
 
 				if (thisParentCbsId.Equals(parentCbs.Id))
 				{
-					var dt = colorBandSet.DateCreated;
+					var dt = colorBandSet.DateCreatedUtc;
 					if (dt > lastestDtFound)
 					{
 						childCbsIndex = i;

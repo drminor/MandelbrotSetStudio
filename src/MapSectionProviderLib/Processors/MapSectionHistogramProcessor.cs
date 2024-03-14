@@ -348,6 +348,8 @@ namespace MapSectionProviderLib
 				if (disposing)
 				{
 					// Dispose managed state (managed objects)
+					_mapSections.CollectionChanged -= MapSections_CollectionChanged;
+
 					Stop(true);
 
 					if (_cts != null)

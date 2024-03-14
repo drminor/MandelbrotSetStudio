@@ -347,14 +347,14 @@ namespace MSS.Common.MSet
 
 					if (!_colorBandSets.Contains(newCbs))
 					{
-						if (newCbs.ProjectId != Id)
+						if (newCbs.OwnerId != Id)
 						{
 							// Make a copy of the incoming ColorBandSet
 							// and set it's ProjectId to this Project's Id
 							// and give it a new SerialNumber.
 							newCbs = newCbs.CreateNewCopy(ObjectId.GenerateNewId());
 							newCbs.AssignNewSerialNumber();
-							newCbs.ProjectId = Id;
+							newCbs.OwnerId = Id;
 						}
 
 						_colorBandSets.Add(newCbs);
@@ -387,7 +387,6 @@ namespace MSS.Common.MSet
 					{
 						Debug.WriteLine($"Not setting the CurrentColorBandSet, the CurrentColorBandSet is already updated.");
 					}
-
 				}
 			}
 		}
