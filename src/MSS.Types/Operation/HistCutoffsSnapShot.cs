@@ -30,6 +30,7 @@ namespace MSS.Types
 		public int HistogramLength { get; init; }
 		public long UpperCatchAllValue { get; init; }
 		public bool HistogramIsFromACompleteMap { get; init; }
+		public bool HistogramIsEmpty => HistKeyValuePairs.Length == 0;
 
 		public PercentageBand[] PercentageBands { get; init; }
 		public bool UsingPercentages { get; init; }
@@ -46,6 +47,13 @@ namespace MSS.Types
 			var result = PercentageBands.Select(x => x.Cutoff).ToArray();
 			return result;
 		}
+
+		public CutoffBand[] GetCutoffBands()
+		{
+			var result = PercentageBands.Select(x => new CutoffBand(x.Cutoff, x.Percentage)).ToArray();
+			return result;
+		}
+
 
 	}
 }

@@ -43,6 +43,7 @@ namespace ProjectRepo
 
 		public ObjectId Insert(ColorBandSetRecord colorBandSetRecord)
 		{
+			colorBandSetRecord.DateRecordLastSavedUtc = DateTime.UtcNow;
 			Collection.InsertOne(colorBandSetRecord);
 			return colorBandSetRecord.Id;
 		}
@@ -52,7 +53,8 @@ namespace ProjectRepo
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
 
 			var updateDefinition = Builders<ColorBandSetRecord>.Update
-				.Set(u => u.Name, name);
+				.Set(u => u.Name, name)
+				.Set(u => u.DateRecordLastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -62,7 +64,9 @@ namespace ProjectRepo
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSetId);
 
 			var updateDefinition = Builders<ColorBandSetRecord>.Update
-				.Set(u => u.Description, description);
+				.Set(u => u.Description, description)
+				.Set(u => u.DateRecordLastSavedUtc, DateTime.UtcNow);
+
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
@@ -89,9 +93,11 @@ namespace ProjectRepo
 
 			var updateDefinition = Builders<ColorBandSetRecord>.Update
 				.Set(u => u.ColorBandRecords, colorBandSet.Select(x => new ColorBandRecord(x.Cutoff, x.StartColor.GetCssColor(), x.BlendStyle.ToString(), x.EndColor.GetCssColor(), x.Percentage)).ToArray())
+				.Set(u => u.TargetIterations, colorBandSet.TargetIterations)
 				.Set(u => u.ReservedColorBandRecords, colorBandSet.GetReservedColorBands().Select(x => new ReservedColorBandRecord(x.StartColor.GetCssColor(), x.BlendStyle.ToString(), x.EndColor.GetCssColor())).ToArray())
 				.Set(u => u.UsingPercentages, colorBandSet.UsingPercentages)
-				.Set(u => u.LastAccessed, colorBandSet.LastUpdatedUtc);
+				.Set(u => u.DateLastUsedUtc, colorBandSet.DateRecordLastUsedUtc)
+				.Set(u => u.DateRecordLastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 			_ = Collection.UpdateOne(filter, updateDefinition);
@@ -139,7 +145,7 @@ namespace ProjectRepo
 		{
 			var projection1 = Builders<ColorBandSetRecord>.Projection.Expression(p => p.Id);
 
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, projectId);
 			var colorBandSetIds = Collection.Find(filter).Project(projection1).ToList();
 
 			return colorBandSetIds;
@@ -147,7 +153,7 @@ namespace ProjectRepo
 
 		public IEnumerable<ColorBandSetRecord> GetColorBandSetsForProject(ObjectId projectId)
 		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, projectId);
 			var colorBandSets = Collection.Find(filter).ToList();
 
 			return colorBandSets;
@@ -155,7 +161,7 @@ namespace ProjectRepo
 
 		public long DeleteColorBandSetsForProject(ObjectId projectId)
 		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, projectId);
 			var deleteResult = Collection.DeleteMany(filter);
 
 			return GetReturnCount(deleteResult) ?? 0;
@@ -172,7 +178,7 @@ namespace ProjectRepo
 
 		public bool Exists(ObjectId projectId, string name, int targetIterations)
 		{
-			var filter1 = Builders<ColorBandSetRecord>.Filter.Eq("ProjectId", projectId);
+			var filter1 = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, projectId);
 			var filter2 = Builders<ColorBandSetRecord>.Filter.Eq("Name", name);
 			var filter3 = Builders<ColorBandSetRecord>.Filter.Eq("TargetIterations", targetIterations);
 

@@ -39,13 +39,13 @@ namespace MSS.Types
 		{
 			if (values.Count() == 0)
 			{
-				IsEmpty = true;
+				//IsEmpty = true;
 				_values = Array.Empty<int>();
 				_lowBound = 0;
 			}
 			else
 			{
-				IsEmpty = false;
+				//IsEmpty = false;
 
 				var low = values.Min();
 				var high = values.Max();
@@ -66,13 +66,13 @@ namespace MSS.Types
 		{
 			if (keyValuePairs.Count() == 0)
 			{
-				IsEmpty = true;
+				//IsEmpty = true;
 				_values = Array.Empty<int>();
 				_lowBound = 0;
 			}
 			else
 			{
-				IsEmpty = false;
+				//IsEmpty = false;
 
 				var low = keyValuePairs.Min(x => x.Key);
 				var high = keyValuePairs.Max(x => x.Key);
@@ -119,7 +119,8 @@ namespace MSS.Types
 		public int UpperBound => _values.Length - 1 + _lowBound;
 		public int Length => _values.Length;
 
-		public bool IsEmpty { get; set; }
+		public bool IsEmpty => _values.Any(x => x != 0);
+
 
 		public long UpperCatchAllValue { get; set; }
 

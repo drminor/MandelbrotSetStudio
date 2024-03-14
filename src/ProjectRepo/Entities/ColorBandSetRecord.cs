@@ -6,7 +6,7 @@ namespace ProjectRepo.Entities
 {
 	public record ColorBandSetRecord(
 		ObjectId? ParentId, 
-		ObjectId ProjectId,		// TODO: Rename ColorBandSetRecord.ProjectId ==> OwnerId 
+		ObjectId OwnerId,
 		string Name, 
 		string? Description, 
 		ColorBandRecord[] ColorBandRecords
@@ -15,7 +15,8 @@ namespace ProjectRepo.Entities
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; set; } = ObjectId.Empty;
-		public ObjectId OwnerId { get; set; }
+
+		public ObjectId ProjectId { get; set; }			// TODO: Delete the ProjectId property from the ColorBandSetRecord
 
 		public ReservedColorBandRecord[]? ReservedColorBandRecords { get; set; }
 
@@ -25,12 +26,9 @@ namespace ProjectRepo.Entities
 		public DateTime DateRecordLastSavedUtc { get; set; }
 		public DateTime DateLastUsedUtc { get; set; }
 
-		// TODO: Delete LastAccessed to LastAccessedUTC on the ColorBandRecord
-		public DateTime LastAccessed { get; set; }
+		
+		public DateTime LastAccessed { get; set; }		// TODO: Delete LastAccessed to LastAccessedUTC on the ColorBandRecord
 
-
-		[BsonDefaultValue(0)]
-		[BsonIgnoreIfDefault]
 		public int TargetIterations { get; set; }
 
 

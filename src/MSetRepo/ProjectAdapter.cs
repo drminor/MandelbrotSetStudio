@@ -1251,13 +1251,13 @@ namespace MSetRepo
 
 			var cbsToDelete = new List<ObjectId>();
 
-			var projectRecords = _projectReaderWriter.GetAll();
+			var projectRecords = _posterReaderWriter.GetAll();
 			foreach (var projectRec in projectRecords)
 			{
 				var colorBandSetRecords = _colorBandSetReaderWriter.GetColorBandSetsForProject(projectRec.Id);
 				foreach (var rec in colorBandSetRecords)
 				{
-					rec.OwnerId = rec.ProjectId;
+					//rec.OwnerId = rec.ProjectId;
 					var dateCreated = rec.DateCreatedUtc;
 
 					if (dateCreated == DateTime.MinValue)

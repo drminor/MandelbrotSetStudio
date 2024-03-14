@@ -16,7 +16,7 @@ namespace MSS.Types
 
 		public HistogramA(int size)
 		{
-			IsEmpty = false;
+			//IsEmpty = false;
 			_values = new int[size];
 
 			_topValues = new HistogramD();
@@ -69,7 +69,7 @@ namespace MSS.Types
 		public int UpperBound => _values.Length - 1;
 		public int Length => _values.Length;
 
-		public bool IsEmpty { get; set; }
+		public bool IsEmpty => _values.Any(x => x != 0);
 
 		public long UpperCatchAllValue { get; set; }
 

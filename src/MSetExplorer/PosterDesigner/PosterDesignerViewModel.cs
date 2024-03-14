@@ -135,10 +135,10 @@ namespace MSetExplorer
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}");
 
-			var histogramDataWasEmpty = !CbsHistogramViewModel.ApplyHistogram(histogramIsFromACompleteMap: true);
+			_ = CbsHistogramViewModel.ApplyHistogram(histogramIsFromACompleteMap: true);
 			CbsHistogramViewModel.RefreshDisplay();
 
-			if (histogramDataWasEmpty)
+			if (_mapSectionHistogramProcessor.Histogram.IsEmpty)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, "PosterDesignerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
 			}

@@ -223,10 +223,10 @@ namespace MSetExplorer
 			Debug.WriteLine($"ExplorerViewModel is handling MapDisplayViewModel-MapViewUpdateCompleted for Job: {e.JobNumber}. Number of Historgrams processed: {_mapSectionHistogramProcessor.NumberOfSectionsProcessed}. " +
 				$"The CbsHistogramViewModel's ColorBandSet Id = {CbsHistogramViewModel.ColorBandSet.Id} / Id of CBS under Edit: {CbsHistogramViewModel.ColorBandSetBeingEditedId}.");
 
-			var histogramDataWasEmpty = !CbsHistogramViewModel.ApplyHistogram(histogramIsFromACompleteMap: true);
+			_ = CbsHistogramViewModel.ApplyHistogram(histogramIsFromACompleteMap: true);
 			CbsHistogramViewModel.RefreshDisplay();
 
-			if (histogramDataWasEmpty)
+			if (_mapSectionHistogramProcessor.Histogram.IsEmpty)
 			{
 				Debug.WriteLineIf(_useDetailedDebug, "ExplorerViewModel::OnDisplayJobCompleted. WARNING: Values are all zero on call to CbsHistogramViewModel.RefreshData.");
 			}
