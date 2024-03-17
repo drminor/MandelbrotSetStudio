@@ -64,16 +64,16 @@ namespace MSetExplorer
 		}
 
 		// Open/Save ColorBandSet
-		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(string? initalName, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos)
+		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(int targetIterations, string? initalName, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos)
 		{
-			return new ColorBandSetOpenSaveViewModel(_projectAdapter, initalName, dialogType, cbsInfos);
+			return new ColorBandSetOpenSaveViewModel(_projectAdapter, targetIterations, initalName, dialogType, cbsInfos);
 		}
 
-		// Open/Save ColorBandSet
-		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(ObjectId projectId, string? initalName, DialogType dialogType)
-		{
-			return new ColorBandSetOpenSaveViewModel(_projectAdapter, projectId, initalName, dialogType);
-		}
+		//// Open/Save ColorBandSet
+		//public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(ObjectId projectId, int targetIterations, string? initalName, DialogType dialogType)
+		//{
+		//	return new ColorBandSetOpenSaveViewModel(_projectAdapter, projectId, targetIterations, initalName, dialogType);
+		//}
 
 		// Import/Export ColorBandSet
 		public IColorBandSetImportExportViewModel CreateACbsImportExportViewModel(string? initalName, DialogType dialogType)

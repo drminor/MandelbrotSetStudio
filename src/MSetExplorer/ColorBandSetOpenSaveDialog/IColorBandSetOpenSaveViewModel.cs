@@ -10,6 +10,8 @@ namespace MSetExplorer
 	{
 		DialogType DialogType { get; }
 
+		int TargetIterations { get; }
+
 		ObservableCollection<ColorBandSetInfo> ColorBandSetInfos { get; }
 		ColorBandSetInfo? SelectedColorBandSetInfo { get; set; }
 

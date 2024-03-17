@@ -14,9 +14,8 @@ namespace MSetExplorer
 	public class ColorBandSetOpenSaveViewModel : IColorBandSetOpenSaveViewModel, INotifyPropertyChanged
 	{
 		private readonly IProjectAdapter _projectAdapter;
-		//private readonly ObjectId _projectId;
-		private ColorBandSetInfo? _selectedColorBandSetInfo;
 
+		private ColorBandSetInfo? _selectedColorBandSetInfo;
 		private string? _selectedName;
 		private string? _selectedDescription;
 
@@ -24,18 +23,18 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, ObjectId projectId, string? initialName, DialogType dialogType)
-			:this(projectAdapter, initialName, dialogType, projectAdapter.GetAllColorBandSetInfosForProject(projectId))
-		{ }
+		//public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, ObjectId projectId, int targetIterations, string? initialName, DialogType dialogType)
+		//	:this(projectAdapter, targetIterations, initialName, dialogType, projectAdapter.GetAllColorBandSetInfosForProject(projectId))
+		//{ }
 
-		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, string? initialName, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos)
+		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, int targetIterations, string? initialName, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos)
 		{
 			_projectAdapter = projectAdapter;
-			//_projectId = projectId;
+			TargetIterations = targetIterations;
 			DialogType = dialogType;
 
 			ColorBandSetInfos = new ObservableCollection<ColorBandSetInfo>(cbsInfos);
-			_selectedColorBandSetInfo = ColorBandSetInfos.FirstOrDefault(x => x.Name == initialName);
+			_selectedColorBandSetInfo = ColorBandSetInfos.FirstOrDefault(x => x.Name == initialName && x.MaxIterations == targetIterations);
 
 			var view = CollectionViewSource.GetDefaultView(ColorBandSetInfos);
 			_ = view.MoveCurrentTo(SelectedColorBandSetInfo);
@@ -63,6 +62,8 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public DialogType DialogType { get; }
+
+		public int TargetIterations { get; init; }
 
 		public ObservableCollection<ColorBandSetInfo> ColorBandSetInfos { get; init; }
 
@@ -139,13 +140,7 @@ namespace MSetExplorer
 
 		public bool IsNameTaken(string name)
 		{
-			var result = _projectAdapter.ColorBandSetExists(name);
-			return result;
-		}
-
-		public bool IsNameTaken(string name, int targetIterations)
-		{
-			var result = ColorBandSetInfos.Any(x => x.Name == name && x.MaxIterations == targetIterations);
+			var result = ColorBandSetInfos.Any(x => x.Name == name && x.MaxIterations == TargetIterations);
 			return result;
 		}
 

@@ -1,9 +1,13 @@
 ﻿using MongoDB.Bson;
+using MSS.Common.MSet;
+using MSS.Types;
 using System;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Xml.Linq;
 
 namespace MSetExplorer
 {
@@ -58,7 +62,10 @@ namespace MSetExplorer
 
 		private void LvColorBandSets_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
-			TakeSelection();
+			if (ColorBandSetName != null)
+			{
+				TakeSelection(ColorBandSetName);
+			}
 		}
 
 		private void TxtName_LostFocus(object sender, RoutedEventArgs e)
@@ -86,7 +93,7 @@ namespace MSetExplorer
 
 		private void LvColorBandSets_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			btnSave.IsEnabled = _vm.SelectedName != null;
+			btnSave.IsEnabled = ColorBandSetName != null;
 		}
 
 		#endregion
@@ -103,7 +110,10 @@ namespace MSetExplorer
 
 		private void SaveButton_Click(object sender, RoutedEventArgs e)
 		{
-			TakeSelection();
+			if (ColorBandSetName != null)
+			{
+				TakeSelection(ColorBandSetName);
+			}
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -112,13 +122,14 @@ namespace MSetExplorer
 			Close();
 		}
 
-		private void TakeSelection()
+		private void TakeSelection(string selectedName)
 		{
 			if (_vm.DialogType == DialogType.Save)
 			{
-				if (ColorBandSetName != null && _vm.IsNameTaken(ColorBandSetName))
+				if (_vm.IsNameTaken(selectedName))
 				{
-					var res = MessageBox.Show("A ColorBandSet already exists with this name. Do you want to overwrite?", "Overwrite Existing Project", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
+					var msg = "A ColorBandSet already exists with this name. Do you want to overwrite?";
+					var res = MessageBox.Show(msg, "Overwrite Existing ColorBandSet", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
 
 					if (res == MessageBoxResult.No)
 					{
@@ -127,6 +138,21 @@ namespace MSetExplorer
 				}
 			}
 
+			if (_vm.DialogType == DialogType.Open)
+			{
+				if (_vm.IsNameTaken(selectedName))
+				{
+					var msg = $"Opening the selected ColorBandSet will result in a new ColorBandSet being created with Target Iterations = {_vm.TargetIterations}. " +
+						$"A ColorBandSet already exists with this name with the Target Iterations = {_vm.TargetIterations}. Do you want to overwrite?";
+
+					var res = MessageBox.Show(msg, "Overwrite Existing ColorBandSet", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
+
+					if (res == MessageBoxResult.No)
+					{
+						return;
+					}
+				}
+			}
 			DialogResult = true;
 			Close();
 		}

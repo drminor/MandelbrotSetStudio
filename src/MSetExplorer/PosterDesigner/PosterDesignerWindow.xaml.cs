@@ -437,22 +437,23 @@ namespace MSetExplorer
 			// TODO: Implement Project-Level Select different ColorBandSet
 			//MessageBox.Show("Will Implement ColorBandSet Open Project-Level later.");
 
-			var curProject = _vm.PosterViewModel.CurrentPoster;
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
 
-			if (curProject == null)
+			if (curPoster == null || curPoster.CurrentJob.IsEmpty)
 			{
 				return;
 			}
 
 			var cbsInfos = _vm.PosterViewModel.GetColorBandSetInfos();
-
 			var initialName = _vm.PosterViewModel.CurrentColorBandSet.Name;
-			if (ColorsShowOpenWindow(cbsInfos, initialName, out var colorBandSet))
+			var targetIterations = curPoster.CurrentJob.MapCalcSettings.TargetIterations;
+
+			if (ColorsShowOpenWindow(targetIterations, cbsInfos, initialName, out var colorBandSet))
 			{
 				Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
 				CheckProjectViewModelTargetIterations();
 
-				Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {curProject.CurrentJob.MapCalcSettings.TargetIterations} to {colorBandSet.Id}.");
+				Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {curPoster.CurrentJob.MapCalcSettings.TargetIterations} to {colorBandSet.Id}.");
 				_vm.PosterViewModel.CurrentColorBandSet = colorBandSet;
 			}
 			else
@@ -484,9 +485,9 @@ namespace MSetExplorer
 
 		private void ColorsSaveAsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var curProject = _vm.PosterViewModel.CurrentPoster;
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
 
-			if (curProject == null)
+			if (curPoster == null || curPoster.CurrentJob.IsEmpty)
 			{
 				return;
 			}
@@ -496,12 +497,10 @@ namespace MSetExplorer
 				return;
 			}
 
-			// TODO: Implement Save Project-Level /w new name
-			//MessageBox.Show("Will Implement ColorBandSet SaveAs later.");
-
 			var cbsInfos = _vm.PosterViewModel.GetColorBandSetInfos();
 			var curColorBandSet = _vm.PosterViewModel.CurrentColorBandSet;
-			if (ColorsShowSaveWindow(cbsInfos, curColorBandSet, out var newColorBandSet))
+			var targetIterations = curPoster.CurrentJob.MapCalcSettings.TargetIterations;
+			if (ColorsShowSaveWindow(targetIterations, cbsInfos, curColorBandSet, out var newColorBandSet))
 			{
 				_vm.PosterViewModel.CurrentColorBandSet = newColorBandSet;
 			}
@@ -1103,9 +1102,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
+		private bool ColorsShowOpenWindow(int targetIterations, List<ColorBandSetInfo> colorBandSetInfos, string? initalName, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(initalName, DialogType.Open, colorBandSetInfos);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(targetIterations, initalName, DialogType.Open, colorBandSetInfos);
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
@@ -1152,9 +1151,9 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
+		private bool ColorsShowSaveWindow(int targetIterations, List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
 		{
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(colorBandSet.Name, DialogType.Save, colorBandSetInfos);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(targetIterations, colorBandSet.Name, DialogType.Save, colorBandSetInfos);
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
