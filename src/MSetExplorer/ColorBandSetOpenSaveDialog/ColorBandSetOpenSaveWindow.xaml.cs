@@ -22,6 +22,8 @@ namespace MSetExplorer
 
 		public ColorBandSetOpenSaveWindow()
 		{
+			OverwriteExisting = null;
+
 			_vm = (IColorBandSetOpenSaveViewModel)DataContext;
 			Loaded += ColorBandSetOpenSaveWindow_Loaded;
 			InitializeComponent();
@@ -104,6 +106,8 @@ namespace MSetExplorer
 		public string? ColorBandSetName => _vm.SelectedName;
 		public string? ColorBandSetDescription => _vm.SelectedDescription;
 
+		public bool? OverwriteExisting { get; set; }
+
 		#endregion
 
 		#region Button Handlers
@@ -149,10 +153,19 @@ namespace MSetExplorer
 
 					if (res == MessageBoxResult.No)
 					{
-						return;
+						OverwriteExisting = false;
+					}
+					else if (res == MessageBoxResult.Yes)
+					{
+						OverwriteExisting = true;
 					}
 				}
+				else
+				{
+					OverwriteExisting = null;
+				}
 			}
+
 			DialogResult = true;
 			Close();
 		}

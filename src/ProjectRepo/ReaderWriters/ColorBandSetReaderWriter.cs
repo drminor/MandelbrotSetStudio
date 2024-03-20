@@ -141,27 +141,27 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult) ?? 0;
 		}
 
-		public IEnumerable<ObjectId> GetColorBandSetIdsForProject(ObjectId projectId)
+		public IEnumerable<ObjectId> GetColorBandSetIdsForOwner(ObjectId ownerId)
 		{
 			var projection1 = Builders<ColorBandSetRecord>.Projection.Expression(p => p.Id);
 
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, projectId);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, ownerId);
 			var colorBandSetIds = Collection.Find(filter).Project(projection1).ToList();
 
 			return colorBandSetIds;
 		}
 
-		public IEnumerable<ColorBandSetRecord> GetColorBandSetsForProject(ObjectId projectId)
+		public IEnumerable<ColorBandSetRecord> GetColorBandSetsForOwner(ObjectId ownerId)
 		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, projectId);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, ownerId);
 			var colorBandSets = Collection.Find(filter).ToList();
 
 			return colorBandSets;
 		}
 
-		public long DeleteColorBandSetsForProject(ObjectId projectId)
+		public long DeleteColorBandSetsForOwner(ObjectId ownerId)
 		{
-			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, projectId);
+			var filter = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, ownerId);
 			var deleteResult = Collection.DeleteMany(filter);
 
 			return GetReturnCount(deleteResult) ?? 0;
@@ -176,9 +176,9 @@ namespace ProjectRepo
 			return result;
 		}
 
-		public bool Exists(ObjectId projectId, string name, int targetIterations)
+		public bool Exists(ObjectId ownerId, string name, int targetIterations)
 		{
-			var filter1 = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, projectId);
+			var filter1 = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, ownerId);
 			var filter2 = Builders<ColorBandSetRecord>.Filter.Eq("Name", name);
 			var filter3 = Builders<ColorBandSetRecord>.Filter.Eq("TargetIterations", targetIterations);
 

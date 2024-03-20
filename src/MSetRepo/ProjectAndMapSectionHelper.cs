@@ -136,8 +136,8 @@ namespace MSetRepo
 			{
 				var projectId = projectInfo.ProjectId;
 
-				var colorBandSets = projectAdapter.GetColorBandSetsForProject(projectId);
-				var jobs = projectAdapter.GetAllJobsForProject(projectId, colorBandSets);
+				var colorBandSets = projectAdapter.GetColorBandSetsForOwner(projectId);
+				var jobs = projectAdapter.GetAllJobsForOwner(projectId, colorBandSets);
 
 				var displaySize = new SizeDbl(1024);
 
@@ -157,7 +157,7 @@ namespace MSetRepo
 			{
 				var posterId = posterInfo.PosterId;
 
-				var colorBandSets = projectAdapter.GetColorBandSetsForProject(posterId);
+				var colorBandSets = projectAdapter.GetColorBandSetsForOwner(posterId);
 				var jobs = projectAdapter.GetAllJobsForPoster(posterId, colorBandSets);
 
 				var displaySize = posterInfo.Size;

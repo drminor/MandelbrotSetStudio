@@ -64,9 +64,9 @@ namespace MSetExplorer
 		}
 
 		// Open/Save ColorBandSet
-		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(int targetIterations, string? initalName, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos)
+		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos, ColorBandSetInfo selectedColorBandSetInfo)
 		{
-			return new ColorBandSetOpenSaveViewModel(_projectAdapter, targetIterations, initalName, dialogType, cbsInfos);
+			return new ColorBandSetOpenSaveViewModel(_projectAdapter, dialogType, cbsInfos, selectedColorBandSetInfo);
 		}
 
 		//// Open/Save ColorBandSet

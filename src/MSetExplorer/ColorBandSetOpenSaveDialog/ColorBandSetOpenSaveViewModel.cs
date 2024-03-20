@@ -23,18 +23,16 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		//public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, ObjectId projectId, int targetIterations, string? initialName, DialogType dialogType)
-		//	:this(projectAdapter, targetIterations, initialName, dialogType, projectAdapter.GetAllColorBandSetInfosForProject(projectId))
-		//{ }
-
-		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, int targetIterations, string? initialName, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos)
+		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos, ColorBandSetInfo selectedColorBandSetInfo)
 		{
 			_projectAdapter = projectAdapter;
-			TargetIterations = targetIterations;
+			//TargetIterations = targetIterations;
 			DialogType = dialogType;
 
 			ColorBandSetInfos = new ObservableCollection<ColorBandSetInfo>(cbsInfos);
-			_selectedColorBandSetInfo = ColorBandSetInfos.FirstOrDefault(x => x.Name == initialName && x.MaxIterations == targetIterations);
+			//_selectedColorBandSetInfo = ColorBandSetInfos.FirstOrDefault(x => x.Name == initialName && x.MaxIterations == targetIterations);
+			_selectedColorBandSetInfo = selectedColorBandSetInfo;
+			TargetIterations = _selectedColorBandSetInfo.MaxIterations;
 
 			var view = CollectionViewSource.GetDefaultView(ColorBandSetInfos);
 			_ = view.MoveCurrentTo(SelectedColorBandSetInfo);

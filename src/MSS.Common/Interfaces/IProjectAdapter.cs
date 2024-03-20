@@ -18,7 +18,7 @@ namespace MSS.Common
 		Project? CreateProject(string name, string? description, List<Job> jobs, List<ColorBandSet> colorBandSets, 
 			Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration);
 
-		List<Job> GetAllJobsForProject(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
+		List<Job> GetAllJobsForOwner(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
 		List<ObjectId> GetAllJobIdsForProject(ObjectId projectId);
 
 		bool ProjectExists(string name, [MaybeNullWhen(false)] out ObjectId projectId);
@@ -62,7 +62,7 @@ namespace MSS.Common
 
 		void InsertColorBandSet(ColorBandSet colorBandSet);
 		ColorBandSet? GetColorBandSet(string id);
-		IEnumerable<ColorBandSet> GetColorBandSetsForProject(ObjectId projectId);
+		IEnumerable<ColorBandSet> GetColorBandSetsForOwner(ObjectId projectId);
 		//long DeleteColorBandSetsForProject(ObjectId projectId);
 		bool DeleteColorBandSet(ObjectId colorBandSetId);
 
