@@ -514,6 +514,13 @@ namespace MSS.Common
 			}
 		}
 
+		public static bool RemoveColorBandSet(ObjectId colorBandSetId, IProjectAdapter projectAdapter)
+		{
+			var result = projectAdapter.DeleteColorBandSet(colorBandSetId);
+
+			return result;
+		}
+
 		#endregion
 
 	}

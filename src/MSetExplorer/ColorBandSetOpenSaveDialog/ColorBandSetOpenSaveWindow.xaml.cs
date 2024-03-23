@@ -142,28 +142,31 @@ namespace MSetExplorer
 				}
 			}
 
-			if (_vm.DialogType == DialogType.Open)
+			if (_vm.DialogType == DialogType.Open && _vm.SelectedColorBandSetInfo != null)
 			{
-				if (_vm.IsNameTaken(selectedName))
+				if (_vm.SelectedColorBandSetInfo.MaxIterations != _vm.TargetIterations)
 				{
-					var msg = $"Opening the selected ColorBandSet will result in a new ColorBandSet being created with Target Iterations = {_vm.TargetIterations}. " +
-						$"A ColorBandSet already exists with this name with the Target Iterations = {_vm.TargetIterations}. Do you want to overwrite?";
-
-					var res = MessageBox.Show(msg, "Overwrite Existing ColorBandSet", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
-
-					if (res == MessageBoxResult.No)
+					if (_vm.IsNameTaken(selectedName))
 					{
-						OverwriteExisting = false;
+						var msg = $"Opening the selected ColorBandSet will result in a new ColorBandSet being created with Target Iterations = {_vm.TargetIterations}. " +
+							$"A ColorBandSet already exists for Target Iterations: {_vm.TargetIterations} with this name. Do you want to overwrite?";
+
+						var res = MessageBox.Show(msg, "Overwrite Existing ColorBandSet", MessageBoxButton.YesNoCancel, MessageBoxImage.Exclamation, MessageBoxResult.No, MessageBoxOptions.None);
+
+						if (res == MessageBoxResult.Cancel)
+						{
+							return;
+						}
+
+						OverwriteExisting = res == MessageBoxResult.Yes;
 					}
-					else if (res == MessageBoxResult.Yes)
+					else
 					{
-						OverwriteExisting = true;
+						OverwriteExisting = null;
 					}
+
 				}
-				else
-				{
-					OverwriteExisting = null;
-				}
+
 			}
 
 			DialogResult = true;

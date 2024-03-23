@@ -2,6 +2,7 @@
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -56,7 +57,8 @@ namespace MSetExplorer
 
 			CbsHistogramViewModel = cbsHistogramViewModel;
 			CbsHistogramViewModel.PropertyChanged += CbsHistogramViewModel_PropertyChanged;
-			CbsHistogramViewModel.ColorBandSetUpdateRequested += CbsHistogramViewModel_ColorBandSetUpdateRequested; 
+			CbsHistogramViewModel.ColorBandSetUpdateRequested += CbsHistogramViewModel_ColorBandSetUpdateRequested;
+			CbsHistogramViewModel.TargetIterationsUpdateRequested += CbsHistogramViewModel_TargetIterationsUpdateRequested;
 		}
 
 		#endregion
@@ -276,6 +278,23 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's CurrentColorBandSet to a new value having Id = {colorBandSet.Id}");
 				ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
+		}
+
+		private void CbsHistogramViewModel_TargetIterationsUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)
+		{
+			var colorBandSet = e.ColorBandSet;
+
+			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling 'CbsHistogramViewModel_TargetIterationsUpdateRequested' with Id = {colorBandSet.Id}. (IsPreview:{e.IsPreview}).");
+
+			if (e.IsPreview)
+			{
+				throw new InvalidOperationException("Preview is not supported for IterationUpdateRequests.");
+			}
+
+			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's CurrentColorBandSet with an updated TargetIterations. Id = {colorBandSet.Id}");
+			//ProjectViewModel.CurrentColorBandSet = colorBandSet;
+
+			ProjectViewModel.AddNewIterationUpdateJob(colorBandSet);
 		}
 
 		#endregion

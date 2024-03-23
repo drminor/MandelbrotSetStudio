@@ -139,6 +139,8 @@ namespace MSetExplorer
 
 		public event EventHandler<ColorBandSetUpdateRequestedEventArgs>? ColorBandSetUpdateRequested;
 
+		public event EventHandler<ColorBandSetUpdateRequestedEventArgs>? TargetIterationsUpdateRequested;
+
 		public event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 
 		#endregion
@@ -808,7 +810,7 @@ namespace MSetExplorer
 
 				_mapSectionHistogramProcessor.Reset(newSet.HighCutoff);
 
-				ApplyChangesInt(newSet);
+				ApplyChangesInt(newSet, targetIterationsIsUpdated: true);
 			}
 		}
 
@@ -822,10 +824,10 @@ namespace MSetExplorer
 
 			var newSet = _currentColorBandSet.CreateNewCopy();
 
-			ApplyChangesInt(newSet);
+			ApplyChangesInt(newSet, targetIterationsIsUpdated: false);
 		}
 
-		private void ApplyChangesInt(ColorBandSet newSet)
+		private void ApplyChangesInt(ColorBandSet newSet, bool targetIterationsIsUpdated)
 		{
 			Debug.WriteLineIf(_traceCBSVersions, $"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}/{newSet.LastUpdatedUtc}, name: {newSet.Name}. The old Id is {ColorBandSet.Id}/{ColorBandSet.LastUpdatedUtc}");
 
@@ -843,7 +845,14 @@ namespace MSetExplorer
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
 
-			ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_colorBandSet, isPreview: false));
+			if (targetIterationsIsUpdated)
+			{
+				TargetIterationsUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_colorBandSet, isPreview: false));
+			}
+			else
+			{
+				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_colorBandSet, isPreview: false));
+			}
 		}
 
 		public void RevertChanges()

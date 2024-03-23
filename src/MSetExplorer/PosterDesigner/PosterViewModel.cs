@@ -207,6 +207,22 @@ namespace MSetExplorer
 			}
 		}
 
+		public void AddNewIterationUpdateJob(ColorBandSet colorBandSet)
+		{
+			var currentPoster = CurrentPoster;
+
+			if (currentPoster != null && !currentPoster.CurrentJob.IsEmpty)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
+				currentPoster.Add(colorBandSet, makeDefault: true);
+				AddNewIterationUpdateJob(currentPoster, colorBandSet);
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is not Adding a new IterationsUpdateJob; the current project is null or the current job is empty.");
+			}
+		}
+
 		public ColorBandSet? PreviewColorBandSet
 		{
 			get => _previewColorBandSet;
@@ -619,6 +635,33 @@ namespace MSetExplorer
 			if (CurrentPoster.CurrentJob != job)
 			{
 				throw new InvalidOperationException("Adding a job to the poster should set the value of the PosterViewModel's CurrentPoster's CurrentJob.");
+			}
+		}
+
+		#endregion
+
+		#region Public Methods - ColorBandSet
+
+		public bool RemoveColorBandSet(ObjectId colorBandSetId)
+		{
+			var currentPoster = CurrentPoster;
+
+			if (currentPoster is null)
+			{
+				return false;
+			}
+
+			// TODO: Have the Project class keep track of ColorBandSets to delete.
+			var wasRemoved = currentPoster.RemoveColorBandSet(colorBandSetId);
+
+			if (wasRemoved)
+			{
+				var result = JobOwnerHelper.RemoveColorBandSet(colorBandSetId, _projectAdapter);
+				return result;
+			}
+			else
+			{
+				return false;
 			}
 		}
 

@@ -456,6 +456,21 @@ namespace MSS.Common.MSet
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
+		public bool RemoveColorBandSet(ObjectId colorBandSetId)
+		{
+			var cbs = _colorBandSets.FirstOrDefault(x => x.Id == colorBandSetId);
+
+			if (cbs == null)
+			{
+				return false;
+			}
+			else
+			{
+				var result = _colorBandSets.Remove(cbs);
+				return result;
+			}
+		}
+
 		public void MarkAsSaved()
 		{
 			LastSavedUtc = DateTime.UtcNow;

@@ -14,6 +14,7 @@ namespace MSetExplorer
 
 		event EventHandler<DisplaySettingsInitializedEventArgs>? DisplaySettingsInitialized;
 		event EventHandler<ColorBandSetUpdateRequestedEventArgs>? ColorBandSetUpdateRequested;
+		event EventHandler<ColorBandSetUpdateRequestedEventArgs>? TargetIterationsUpdateRequested;
 
 		ColorBandSetEditMode CurrentCbEditMode { get; set; }
 		string CurrentCbEditModeAsString { get; }

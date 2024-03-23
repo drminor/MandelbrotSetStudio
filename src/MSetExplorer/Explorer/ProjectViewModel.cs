@@ -10,12 +10,13 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace MSetExplorer
 {
 	internal class ProjectViewModel : ViewModelBase, IProjectViewModel, IDisposable
 	{
+		#region Private Fields
+
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
@@ -26,6 +27,8 @@ namespace MSetExplorer
 		private ColorBandSet? _previewColorBandSet;
 
 		private readonly bool _useDetailedDebug = false;
+
+		#endregion
 
 		#region Constructor
 
@@ -90,12 +93,6 @@ namespace MSetExplorer
 				return false;
 			}
 		}
-		
-
-		public int GetGetNumberOfDirtyJobs()
-		{
-			return CurrentProject?.GetNumberOfDirtyJobs() ?? 0;
-		}
 
 		public bool IsCurrentJobIdChanged => CurrentProject?.IsCurrentJobIdChanged ?? false;
 
@@ -117,30 +114,41 @@ namespace MSetExplorer
 					// Discard the Preview ColorBandSet. 
 					_previewColorBandSet = null;
 
-					if (value == CurrentColorBandSet)
+					if (value != CurrentColorBandSet)
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
-					}
+						if (DoTargetIterationsMatch(CurrentJob, value))
+						{
+							Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+							currentProject.CurrentColorBandSet = value;
+						}
+						else
+						{
+							throw new InvalidOperationException("ProjectViewModel is being updated with a ColorBandSet with TargetIteration != the current job's TargetIterations.");
+						}
 
-					var targetIterations = value.HighCutoff;
-					var currentJob = currentProject.CurrentJob;
-
-					if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
-					{
-						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
-
-						currentProject.Add(value, makeDefault: true);
-
-						AddNewIterationUpdateJob(currentProject, value);
+						OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
 					}
 					else
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
-						currentProject.CurrentColorBandSet = value;
+						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
 					}
-
-					OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
 				}
+			}
+		}
+
+		public void AddNewIterationUpdateJob(ColorBandSet colorBandSet)
+		{
+			var currentProject = CurrentProject;
+
+			if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is updating the Target Iterations. Current ColorBandSetId = {currentProject.CurrentColorBandSet.Id}, New ColorBandSetId = {colorBandSet.Id}");
+				currentProject.Add(colorBandSet, makeDefault: true);
+				AddNewIterationUpdateJob(currentProject, colorBandSet);
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not Adding a new IterationsUpdateJob; the current project is null or the current job is empty.");
 			}
 		}
 
@@ -159,18 +167,18 @@ namespace MSetExplorer
 					}
 					else
 					{
-						var targetIterations = CurrentJob.MapCalcSettings.TargetIterations;
-
-						if (value.HighCutoff != targetIterations)
+						if (DoTargetIterationsMatch(CurrentJob, value))
 						{
-							Debug.WriteLine($"WARNING: ProjectViewModel. The PreviewColorBandSet is being set to a value with a different TargetIterations.");
-
-							var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, targetIterations);
-							_previewColorBandSet = adjustedColorBandSet;
+							_previewColorBandSet = value;
 						}
 						else
 						{
-							_previewColorBandSet = value;
+							//Debug.WriteLine($"WARNING: ProjectViewModel. The PreviewColorBandSet is being set to a value with a different TargetIterations.");
+
+							//var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MapCalcSettings.TargetIterations);
+							//_previewColorBandSet = adjustedColorBandSet;
+
+							throw new InvalidOperationException("ProjectViewModel is being updated with a Preview ColorBandSet with TargetIteration != the current job's TargetIterations.");
 						}
 					}
 
@@ -178,9 +186,17 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLine("ProjectViewModel. The PreviewColorBandSet on update has same value.");
+					Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the Preview ColorBandSet; the new value is the same as the existing value.");
 				}
 			}
+		}
+
+		private bool DoTargetIterationsMatch(Job currentJob, ColorBandSet newValue)
+		{
+			var targetIterations = currentJob.MapCalcSettings.TargetIterations;
+			var result = newValue.TargetIterations == targetIterations;
+
+			return result;
 		}
 
 		public bool ColorBandSetIsPreview => _previewColorBandSet != null;
@@ -275,40 +291,6 @@ namespace MSetExplorer
 		//	}
 		//}
 
-		public ColorBandSet? GetColorBandSet(ObjectId id)
-		{
-			var curProject = CurrentProject;
-
-			if (curProject == null)
-			{
-				return null;
-			}
-
-			var result = curProject.GetColorBandSets().FirstOrDefault(x => x.Id == id);
-
-			return result;
-		}
-
-		public List<ColorBandSetInfo> GetColorBandSetInfos()
-		{
-			var curProject = CurrentProject;
-
-			if (curProject == null)
-			{
-				return new List<ColorBandSetInfo>();
-			}
-
-			var result = curProject.GetColorBandSets().Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.DateRecordLastUsedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.TargetIterations)).ToList();
-
-			return result;
-		}
-
-		private string GetColorBandSetName(string? name, int position)
-		{
-			var result = name ?? position.ToString();
-			return result;
-		}
-
 		#endregion
 
 		#region Event Handlers
@@ -393,7 +375,6 @@ namespace MSetExplorer
 
 		//	CurrentProject = project;
 		//}
-
 
 		public bool ProjectOpen(string projectName)
 		{
@@ -487,22 +468,6 @@ namespace MSetExplorer
 		public void ProjectClose()
 		{
 			CurrentProject = null;
-		}
-
-		public long DeleteMapSectionsForUnsavedJobs()
-		{
-			var currentProject = CurrentProject;
-
-			if (currentProject is null)
-			{
-				return 0;
-			}
-
-
-			// TODO: Make sure that the Project's Current Job (as it exists on the repository) points to an existing job
-			var result = JobOwnerHelper.DeleteMapSectionsForUnsavedJobs(currentProject, _mapSectionAdapter);
-
-			return result;
 		}
 
 		#endregion
@@ -600,6 +565,88 @@ namespace MSetExplorer
 		public bool CanGoForward(bool skipPanJobs)
 		{
 			var result = CurrentProject?.CanGoForward(skipPanJobs) ?? false;
+			return result;
+		}
+
+		public int GetGetNumberOfDirtyJobs()
+		{
+			return CurrentProject?.GetNumberOfDirtyJobs() ?? 0;
+		}
+
+		public long DeleteMapSectionsForUnsavedJobs()
+		{
+			var currentProject = CurrentProject;
+
+			if (currentProject is null)
+			{
+				return 0;
+			}
+
+
+			// TODO: Make sure that the Project's Current Job (as it exists on the repository) points to an existing job
+			var result = JobOwnerHelper.DeleteMapSectionsForUnsavedJobs(currentProject, _mapSectionAdapter);
+
+			return result;
+		}
+
+		#endregion
+
+		#region Public Methods - ColorBandSet
+
+		public bool RemoveColorBandSet(ObjectId colorBandSetId)
+		{
+			var currentProject = CurrentProject;
+
+			if (currentProject is null)
+			{
+				return false;
+			}
+
+			// TODO: Have the Project class keep track of ColorBandSets to delete.
+			var wasRemoved = currentProject.RemoveColorBandSet(colorBandSetId);
+
+			if (wasRemoved)
+			{
+				var result = JobOwnerHelper.RemoveColorBandSet(colorBandSetId, _projectAdapter);
+				return result;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		public ColorBandSet? GetColorBandSet(ObjectId id)
+		{
+			var curProject = CurrentProject;
+
+			if (curProject == null)
+			{
+				return null;
+			}
+
+			var result = curProject.GetColorBandSets().FirstOrDefault(x => x.Id == id);
+
+			return result;
+		}
+
+		public List<ColorBandSetInfo> GetColorBandSetInfos()
+		{
+			var curProject = CurrentProject;
+
+			if (curProject == null)
+			{
+				return new List<ColorBandSetInfo>();
+			}
+
+			var result = curProject.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.DateRecordLastUsedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.TargetIterations)).ToList();
+
+			return result;
+		}
+
+		private string GetColorBandSetName(string? name, int position)
+		{
+			var result = name ?? position.ToString();
 			return result;
 		}
 

@@ -2,6 +2,7 @@
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -171,20 +172,36 @@ namespace MSetExplorer
 		{
 			var colorBandSet = e.ColorBandSet;
 
-			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling 'CbsHistogramViewModel_ColorBandSetUpdateRequested' with Id = {colorBandSet.Id}. (IsPreview:{e.IsPreview}).");
+			Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel is handling 'CbsHistogramViewModel_ColorBandSetUpdateRequested' with Id = {colorBandSet.Id}. (IsPreview:{e.IsPreview}).");
 
 			if (e.IsPreview)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's PreviewColorBandSet to a new value having Id = {colorBandSet.Id}");
+				Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel is setting the PosterViewModel's PreviewColorBandSet to a new value having Id = {colorBandSet.Id}");
 				PosterViewModel.PreviewColorBandSet = colorBandSet;
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's CurrentColorBandSet to a new value having Id = {colorBandSet.Id}");
+				Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel is setting the PosterViewModel's CurrentColorBandSet to a new value having Id = {colorBandSet.Id}");
 				PosterViewModel.CurrentColorBandSet = colorBandSet;
 			}
 		}
 
+		private void CbsHistogramViewModel_TargetIterationsUpdateRequested(object? sender, ColorBandSetUpdateRequestedEventArgs e)
+		{
+			var colorBandSet = e.ColorBandSet;
+
+			Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel is handling 'CbsHistogramViewModel_TargetIterationsUpdateRequested' with Id = {colorBandSet.Id}. (IsPreview:{e.IsPreview}).");
+
+			if (e.IsPreview)
+			{
+				throw new InvalidOperationException("Preview is not supported for IterationUpdateRequests.");
+			}
+
+			Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel is setting the PosterViewModel's CurrentColorBandSet with an updated TargetIterations. Id = {colorBandSet.Id}");
+			//ProjectViewModel.CurrentColorBandSet = colorBandSet;
+
+			PosterViewModel.AddNewIterationUpdateJob(colorBandSet);
+		}
 		#endregion
 
 		#region Private Methods

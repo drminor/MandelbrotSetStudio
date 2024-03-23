@@ -88,14 +88,14 @@ namespace MSetRepo
 				target.Id, target.ParentId, target.OwnerId, target.Name, target.Description,
 				colorBands, targetIterations, target.UsingPercentages,
 				target.ReservedColorBandRecords?.Select(x => MapFrom(x)),
-				target.ColorBandsSerialNumber
+				target.ColorBandsSerialNumber,
+				onFile: true
 				)
 			{
 				DateRecordLastUsedUtc = target.DateLastUsedUtc,
 				DateCreatedUtc = target.DateCreatedUtc,
 				DateRecordLastSavedUtc = target.DateRecordLastSavedUtc
 			};
-
 
 			return result;
 		}
