@@ -593,7 +593,7 @@ namespace MSetExplorer
 
 		#region Public Methods - ColorBandSet
 
-		public bool RemoveColorBandSet(ObjectId colorBandSetId)
+		public bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId)
 		{
 			var currentProject = CurrentProject;
 
@@ -603,11 +603,11 @@ namespace MSetExplorer
 			}
 
 			// TODO: Have the Project class keep track of ColorBandSets to delete.
-			var wasRemoved = currentProject.RemoveColorBandSet(colorBandSetId);
+			var wasRemoved = currentProject.RemoveColorBandSet(colorBandSet, newId);
 
 			if (wasRemoved)
 			{
-				var result = JobOwnerHelper.RemoveColorBandSet(colorBandSetId, _projectAdapter);
+				var result = JobOwnerHelper.RemoveColorBandSet(colorBandSet.Id, _projectAdapter);
 				return result;
 			}
 			else
@@ -618,15 +618,13 @@ namespace MSetExplorer
 
 		public ColorBandSet? GetColorBandSet(ObjectId id)
 		{
-			var curProject = CurrentProject;
+			var result = CurrentProject?.GetColorBandSet(id);
+			return result;
+		}
 
-			if (curProject == null)
-			{
-				return null;
-			}
-
-			var result = curProject.GetColorBandSets().FirstOrDefault(x => x.Id == id);
-
+		public ColorBandSet? GetColorBandSet(string name, int targetIterations)
+		{
+			var result = CurrentProject?.GetColorBandSet(name, targetIterations);
 			return result;
 		}
 

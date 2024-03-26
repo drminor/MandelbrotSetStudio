@@ -39,10 +39,10 @@ namespace MSetExplorer
 
 		#region Public Methods 
 
-		public bool ExportColorBandSet(ColorBandSet colorBandSet)
+		public ColorBandSet ExportColorBandSet(ColorBandSet colorBandSet)
 		{
-			_ = _sharedColorBandSetAdapter.CreateColorBandSet(colorBandSet);
-			return true;
+			var result = _sharedColorBandSetAdapter.CreateColorBandSet(colorBandSet);
+			return result;
 		}
 
 		public bool TryImportColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)

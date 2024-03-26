@@ -17,7 +17,7 @@ namespace MSetExplorer
 		string? SelectedDescription { get; set; }
 		bool UserIsSettingTheName { get; set; }
 
-		bool ExportColorBandSet(ColorBandSet colorBandSet);
+		ColorBandSet ExportColorBandSet(ColorBandSet colorBandSet);
 
 		bool TryImportColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
 

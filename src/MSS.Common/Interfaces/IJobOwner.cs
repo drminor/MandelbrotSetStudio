@@ -37,8 +37,13 @@ namespace MSS.Common.MSet
 
 		IEnumerable<Job> GetJobs();
 		List<ColorBandSet> GetColorBandSets();
+
+		ColorBandSet? GetColorBandSet(ObjectId id);
+
+		ColorBandSet? GetColorBandSet(string name, int targetIterations);
+
 		void Add(ColorBandSet colorBandSet, bool makeDefault);
-		bool RemoveColorBandSet(ObjectId colorBandSetId);
+		bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId);
 
 		JobPathType? GetCurrentPath();
 

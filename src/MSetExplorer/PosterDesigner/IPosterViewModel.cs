@@ -54,10 +54,11 @@ namespace MSetExplorer
 		long DeleteMapSectionsForUnsavedJobs();
 
 		ColorBandSet? GetColorBandSet(ObjectId id);
+		ColorBandSet? GetColorBandSet(string name, int targetIterations);
 		List<ColorBandSetInfo> GetColorBandSetInfos();
 		void CheckPosterViewModelTargetIterations();
 
-		bool RemoveColorBandSet(ObjectId colorBandSetId);
+		bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId);
 		void AddNewIterationUpdateJob(ColorBandSet colorBandSet);
 
 	}

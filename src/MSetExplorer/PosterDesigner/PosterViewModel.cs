@@ -360,40 +360,6 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandSet? GetColorBandSet(ObjectId id)
-		{
-			var curPoster = CurrentPoster;
-
-			if (curPoster == null)
-			{
-				return null;
-			}
-
-			var result = curPoster.GetColorBandSets().FirstOrDefault(x => x.Id == id);
-
-			return result;
-		}
-
-		public List<ColorBandSetInfo> GetColorBandSetInfos()
-		{
-			var curPoster = CurrentPoster;
-
-			if (curPoster == null)
-			{
-				return new List<ColorBandSetInfo>();
-			}
-
-			var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.DateRecordLastUsedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.TargetIterations)).ToList();
-
-			return result;
-		}
-
-		private string GetColorBandSetName(string? name, int position)
-		{
-			var result = name ?? position.ToString();
-			return result;
-		}
-
 		#endregion
 
 		#region Event Handlers
@@ -642,7 +608,7 @@ namespace MSetExplorer
 
 		#region Public Methods - ColorBandSet
 
-		public bool RemoveColorBandSet(ObjectId colorBandSetId)
+		public bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId)
 		{
 			var currentPoster = CurrentPoster;
 
@@ -652,17 +618,49 @@ namespace MSetExplorer
 			}
 
 			// TODO: Have the Project class keep track of ColorBandSets to delete.
-			var wasRemoved = currentPoster.RemoveColorBandSet(colorBandSetId);
+			var wasRemoved = currentPoster.RemoveColorBandSet(colorBandSet, newId);
 
 			if (wasRemoved)
 			{
-				var result = JobOwnerHelper.RemoveColorBandSet(colorBandSetId, _projectAdapter);
+				var result = JobOwnerHelper.RemoveColorBandSet(colorBandSet.Id, _projectAdapter);
 				return result;
 			}
 			else
 			{
 				return false;
 			}
+		}
+
+		public List<ColorBandSetInfo> GetColorBandSetInfos()
+		{
+			var curPoster = CurrentPoster;
+
+			if (curPoster == null)
+			{
+				return new List<ColorBandSetInfo>();
+			}
+
+			var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.DateRecordLastUsedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.TargetIterations)).ToList();
+
+			return result;
+		}
+
+		private string GetColorBandSetName(string? name, int position)
+		{
+			var result = name ?? position.ToString();
+			return result;
+		}
+
+		public ColorBandSet? GetColorBandSet(ObjectId id)
+		{
+			var result = CurrentPoster?.GetColorBandSet(id);
+			return result;
+		}
+
+		public ColorBandSet? GetColorBandSet(string name, int targetIterations)
+		{
+			var result = CurrentPoster?.GetColorBandSet(name, targetIterations);
+			return result;
 		}
 
 		#endregion

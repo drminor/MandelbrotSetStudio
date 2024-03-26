@@ -51,6 +51,7 @@ namespace MSS.Types
 				  usingPercentages: false, reservedColorBands: null, colorBandsSerialNumber, onFile: false)
 		{
 			LastSavedUtc = DateTime.MinValue;
+			OnFile = false;
 		}
 
 		public ColorBandSet(ObjectId id, ObjectId? parentId, ObjectId ownerId, string name, string? description, IEnumerable<ColorBand>? colorBands, int targetIterations, 
@@ -77,6 +78,8 @@ namespace MSS.Types
 
 			TargetIterations = targetIterations;
 			OnFile = onFile;
+
+			Debug.Assert(targetIterations == this[^1].Cutoff, "ColorBandSet Constructor HighCutoff mismatch.");
 		}
 
 		#endregion
@@ -87,7 +90,17 @@ namespace MSS.Types
 		public bool IsAssignedToProject => OwnerId != ObjectId.Empty;
 		public bool IsDirty => LastSavedUtc.Equals(DateTime.MinValue) || LastUpdatedUtc > LastSavedUtc;
 
-		public int HighCutoff => this[^1].Cutoff;
+		public int HighCutoff
+		{
+			get
+			{
+				var result = this[^1].Cutoff;
+
+				Debug.Assert(TargetIterations == result, "HighCutoff Get Accessor HighCutoff mismatch.");
+
+				return result;
+			}
+		}
 
 		public bool NoPercentageIsNaN => Items.All(x => !double.IsNaN(x.Percentage));
 
@@ -200,7 +213,7 @@ namespace MSS.Types
 
 		public DateTime LastUpdatedUtc { get; private set; }
 
-		public int TargetIterations { get; set; }
+		public int TargetIterations { get; init; }
 
 		// True if the Percentages are fixed and are being used to calculate Offsets.
 		public bool UsingPercentages
@@ -741,7 +754,8 @@ namespace MSS.Types
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
-				HighlightedColorBandIndex = idx
+				HighlightedColorBandIndex = idx,
+				OnFile = false
 			};
 
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Created a new copy with Id: {newId} from ColorBandSet (Id: {Id}) with new ID: {result.Id}");
@@ -764,7 +778,8 @@ namespace MSS.Types
 			{
 				LastSavedUtc = DateTime.MinValue,
 				LastUpdatedUtc = LastUpdatedUtc,
-				HighlightedColorBandIndex = idx
+				HighlightedColorBandIndex = idx,
+				OnFile= false
 			};
 
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSet. Created a new copy with TargetIterations: {targetIterations} from ColorBandSet (Id: {Id}) with new ID: {result.Id}");
@@ -790,7 +805,8 @@ namespace MSS.Types
 			{
 				LastSavedUtc = LastSavedUtc,
 				LastUpdatedUtc = LastUpdatedUtc,
-				HighlightedColorBandIndex = idx
+				HighlightedColorBandIndex = idx,
+				OnFile = OnFile
 			};
 
 			return result;

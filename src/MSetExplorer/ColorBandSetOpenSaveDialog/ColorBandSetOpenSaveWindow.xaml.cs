@@ -66,7 +66,11 @@ namespace MSetExplorer
 		{
 			if (ColorBandSetName != null)
 			{
-				TakeSelection(ColorBandSetName);
+				if (TakeSelection(ColorBandSetName))
+				{
+					DialogResult = true;
+					Close();
+				}
 			}
 		}
 
@@ -116,7 +120,11 @@ namespace MSetExplorer
 		{
 			if (ColorBandSetName != null)
 			{
-				TakeSelection(ColorBandSetName);
+				if (TakeSelection(ColorBandSetName))
+				{
+					DialogResult = true;
+					Close();
+				}
 			}
 		}
 
@@ -126,7 +134,7 @@ namespace MSetExplorer
 			Close();
 		}
 
-		private void TakeSelection(string selectedName)
+		private bool TakeSelection(string selectedName)
 		{
 			if (_vm.DialogType == DialogType.Save)
 			{
@@ -137,25 +145,28 @@ namespace MSetExplorer
 
 					if (res == MessageBoxResult.No)
 					{
-						return;
+						return false;
 					}
 				}
+
+				return true;
 			}
 
 			if (_vm.DialogType == DialogType.Open && _vm.SelectedColorBandSetInfo != null)
 			{
-				if (_vm.SelectedColorBandSetInfo.MaxIterations != _vm.TargetIterations)
+				var targetIterations = _vm.TargetIterations;
+				if (_vm.SelectedColorBandSetInfo.MaxIterations != targetIterations)
 				{
 					if (_vm.IsNameTaken(selectedName))
 					{
-						var msg = $"Opening the selected ColorBandSet will result in a new ColorBandSet being created with Target Iterations = {_vm.TargetIterations}. " +
-							$"A ColorBandSet already exists for Target Iterations: {_vm.TargetIterations} with this name. Do you want to overwrite?";
+						var msg = $"Opening the selected ColorBandSet will result in a new ColorBandSet being created with Target Iterations = {targetIterations}. " +
+							$"A ColorBandSet already exists for Target Iterations: {targetIterations} with this name. Do you want to overwrite?";
 
 						var res = MessageBox.Show(msg, "Overwrite Existing ColorBandSet", MessageBoxButton.YesNoCancel, MessageBoxImage.Exclamation, MessageBoxResult.No, MessageBoxOptions.None);
 
 						if (res == MessageBoxResult.Cancel)
 						{
-							return;
+							return false;
 						}
 
 						OverwriteExisting = res == MessageBoxResult.Yes;
@@ -166,11 +177,9 @@ namespace MSetExplorer
 					}
 
 				}
-
 			}
 
-			DialogResult = true;
-			Close();
+			return true;
 		}
 
 		#endregion

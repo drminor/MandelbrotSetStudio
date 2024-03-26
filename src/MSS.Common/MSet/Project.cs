@@ -96,6 +96,14 @@ namespace MSS.Common.MSet
 
 			_jobTree = BuildJobTree(jobs, useFlat: false, checkHomeJob: true);
 
+			if (jobs.Any(x => x.IsDirty))
+			{
+				if (!_jobTree.IsDirty)
+				{
+					Debug.WriteLine("WARNING: One or more jobs is dirty but the JobTree is clean upon construction.");
+				}
+			}
+
 			_colorBandSets = new List<ColorBandSet>(colorBandSets);
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
@@ -437,19 +445,21 @@ namespace MSS.Common.MSet
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
-		public bool RemoveColorBandSet(ObjectId colorBandSetId)
+		public bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId)
 		{
-			var cbs = _colorBandSets.FirstOrDefault(x => x.Id == colorBandSetId);
+			var result = _colorBandSets.Remove(colorBandSet);
 
-			if (cbs == null)
+			var jobs = _jobTree.GetItems().ToList();
+
+			foreach (var job in jobs)
 			{
-				return false;
+				if (job.ColorBandSetId == colorBandSet.Id)
+				{
+					job.ColorBandSetId = newId;
+				}
 			}
-			else
-			{
-				var result = _colorBandSets.Remove(cbs);
-				return result;
-			}
+
+			return result;
 		}
 
 		public void MarkAsSaved()
@@ -546,6 +556,18 @@ namespace MSS.Common.MSet
 		public List<ColorBandSet> GetColorBandSets()
 		{
 			return _colorBandSets;
+		}
+
+		public ColorBandSet? GetColorBandSet(ObjectId id)
+		{
+			var result = _colorBandSets.FirstOrDefault(x => x.Id == id);
+			return result;
+		}
+
+		public ColorBandSet? GetColorBandSet(string name, int targetIterations)
+		{
+			var result = _colorBandSets.FirstOrDefault(x => x.Name == name && x.TargetIterations == targetIterations);
+			return result;
 		}
 
 		public JobPathType? GetCurrentPath() => _jobTree.GetCurrentPath();

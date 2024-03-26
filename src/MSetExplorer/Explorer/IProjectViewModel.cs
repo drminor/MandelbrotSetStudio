@@ -56,11 +56,12 @@ namespace MSetExplorer
 		bool TryCreatePoster(string name, string? description, SizeDbl posterSize, [NotNullWhen(true)] out Poster? poster);
 
 		ColorBandSet? GetColorBandSet(ObjectId id);
+		ColorBandSet? GetColorBandSet(string name, int targetIterations);
 		List<ColorBandSetInfo> GetColorBandSetInfos();
 
 		void CheckProjectViewModelTargetIterations();
 
-		bool RemoveColorBandSet(ObjectId colorBandSetId);
+		bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId);
 
 		void AddNewIterationUpdateJob(ColorBandSet colorBandSet);
 	}

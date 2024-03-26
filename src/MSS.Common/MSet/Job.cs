@@ -194,9 +194,6 @@ namespace MSS.Common.MSet
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 
-		//public IterationUpdateRecord[]? IterationUpdates { get; set; }
-		//public ColorMapUpdateRecord[]? ColorMapUpdates { get; set; }
-
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;

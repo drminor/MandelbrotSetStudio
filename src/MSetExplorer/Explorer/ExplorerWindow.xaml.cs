@@ -720,7 +720,7 @@ namespace MSetExplorer
 
 					if (overwriteExisting.HasValue)
 					{
-						var cbsToOverWrite = cbsInfos.FirstOrDefault(x => x.Name == colorBandSet.Name && x.MaxIterations == colorBandSet.TargetIterations);
+						var cbsToOverWrite = _vm.ProjectViewModel.GetColorBandSet(colorBandSet.Name, colorBandSet.TargetIterations);
 						if (cbsToOverWrite == null)
 						{
 							throw new InvalidOperationException("Cannot find the ColorBandSet to overwrite.");
@@ -729,18 +729,19 @@ namespace MSetExplorer
 						if (overwriteExisting == true)
 						{
 							Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {targetIterations} to {colorBandSet.Id}.");
-							_vm.ProjectViewModel.RemoveColorBandSet(cbsToOverWrite.Id);
+							_vm.ProjectViewModel.RemoveColorBandSet(cbsToOverWrite, adjColorBandSet.Id);
 						}
 						else
 						{
 							Debug.WriteLine($"Assigning a new name to the Project's ColorBandSet having name = {cbsToOverWrite.Name} and TargetIterations = {targetIterations}, with Id: {cbsToOverWrite.Id}.");
 
 							// TODO: Generate a new name for the ColorBandSet being replaced.
-							cbsToOverWrite.Name = Guid.NewGuid().ToString();
+							//cbsToOverWrite.Name = Guid.NewGuid().ToString();
+							adjColorBandSet.Name = Guid.NewGuid().ToString();
 						}
-
-						_vm.ProjectViewModel.CurrentColorBandSet = colorBandSet;
 					}
+
+					_vm.ProjectViewModel.CurrentColorBandSet = adjColorBandSet;
 				}
 			}
 			else
@@ -1569,7 +1570,7 @@ namespace MSetExplorer
 				cpy.Name = colorBandSetImportExportWindow.ColorBandSetName ?? string.Empty;
 				cpy.Description = colorBandSetImportExportWindow.ColorBandSetDescription;
 
-				colorBandSetImportExportVm.ExportColorBandSet(cpy);
+				_ = colorBandSetImportExportVm.ExportColorBandSet(cpy);
 				return true;
 			}
 			else
