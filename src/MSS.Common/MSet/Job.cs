@@ -17,7 +17,7 @@ namespace MSS.Common.MSet
 
 		private ObjectId? _parentJobId;
 		private bool _isOnPreferredPath;
-		private ObjectId _colorBandSetId;
+		//private ObjectId _colorBandSetId;
 
 		private DateTime _lastSavedUtc;
 
@@ -28,7 +28,7 @@ namespace MSS.Common.MSet
 			Id = ObjectId.Empty;
 			Label = "Empty";
 			MapAreaInfo = new MapCenterAndDelta();
-			ColorBandSetId = ObjectId.Empty;
+			//ColorBandSetId = ObjectId.Empty;
 			ColorBandSetName = string.Empty;
 			ColorBandSetVersion = null;
 			MapCalcSettings = new MapCalcSettings();
@@ -114,7 +114,7 @@ namespace MSS.Common.MSet
 
 			MapAreaInfo = mapAreaInfo;
 
-			_colorBandSetId = ObjectId.Empty;
+			//_colorBandSetId = ObjectId.Empty;
 			ColorBandSetName = colorBandSetName;
 			ColorBandSetVersion = colorBandSetVersion;
 			MapCalcSettings = mapCalcSettings;
@@ -152,7 +152,7 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		public OwnerType JobOwnerType
+		public OwnerType OwnerType
 		{
 			get => _jobOwnerType;
 			set 
@@ -190,18 +190,18 @@ namespace MSS.Common.MSet
 
 		public MapCenterAndDelta MapAreaInfo { get; init; }
 
-		public ObjectId ColorBandSetId
-		{
-			get => _colorBandSetId;
-			set
-			{
-				if (value != _colorBandSetId)
-				{
-					_colorBandSetId = value;
-					LastUpdatedUtc = DateTime.UtcNow;
-				}
-			}
-		}
+		//public ObjectId ColorBandSetId
+		//{
+		//	get => _colorBandSetId;
+		//	set
+		//	{
+		//		if (value != _colorBandSetId)
+		//		{
+		//			_colorBandSetId = value;
+		//			LastUpdatedUtc = DateTime.UtcNow;
+		//		}
+		//	}
+		//}
 
 		public string ColorBandSetName { get; init; }
 
@@ -253,7 +253,7 @@ namespace MSS.Common.MSet
 
 		public Job Clone()
 		{
-			var result = new Job(Id, OwnerId, JobOwnerType, ParentJobId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+			var result = new Job(Id, OwnerId, OwnerType, ParentJobId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				//ColorBandSetId, 
 				ColorBandSetName, ColorBandSetVersion, MapCalcSettings.Clone(), DateCreatedUtc, LastSavedUtc)
 			{
@@ -269,7 +269,7 @@ namespace MSS.Common.MSet
 
 		public Job CreateNewCopy()
 		{
-			var result = new Job(ObjectId.GenerateNewId(), OwnerId, JobOwnerType, ParentJobId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
+			var result = new Job(ObjectId.GenerateNewId(), OwnerId, OwnerType, ParentJobId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
 				//ColorBandSetId,
 				ColorBandSetName, ColorBandSetVersion,
 				MapCalcSettings.Clone(), DateTime.UtcNow, DateTime.UtcNow)

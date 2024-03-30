@@ -175,7 +175,7 @@ namespace MSetExplorer
 				var currentPoster = CurrentPoster;
 				if (currentPoster != null && !currentPoster.CurrentJob.IsEmpty)
 				{
-					CheckCurrentProject(currentPoster);
+					//CheckCurrentProject(currentPoster);
 
 					// Discard the Preview ColorBandSet. 
 					_previewColorBandSet = null;
@@ -732,21 +732,21 @@ namespace MSetExplorer
 			Debug.Assert(targetIterations1 == targetIterations2, "PosterViewModel. The Current Poster's Current ColorBandSet's HighCutoff does not match the CurrentJob's MapCalcSetting's Target Iterations.");
 		}
 
-		[Conditional("DEBUG2")]
-		private void CheckCurrentProject(IJobOwner jobOwner)
-		{
-			if (jobOwner.CurrentJob.IsEmpty)
-			{
-				Debug.WriteLine($"The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
-			}
-			else
-			{
-				if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
-				{
-					Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
-				}
-			}
-		}
+		//[Conditional("DEBUG2")]
+		//private void CheckCurrentProject(IJobOwner jobOwner)
+		//{
+		//	if (jobOwner.CurrentJob.IsEmpty)
+		//	{
+		//		Debug.WriteLine($"The CurrentJob IsEmpty = {CurrentJob.IsEmpty}.");
+		//	}
+		//	else
+		//	{
+		//		if (jobOwner.CurrentColorBandSetId != jobOwner.CurrentJob.ColorBandSetId)
+		//		{
+		//			Debug.WriteLine($"The JobOwner's CurrentColorBandSet and CurrentJob's ColorBandSet are out of sync. The CurrentColorBandSet has {CurrentColorBandSet.Count} bands.");
+		//		}
+		//	}
+		//}
 
 		#endregion
 

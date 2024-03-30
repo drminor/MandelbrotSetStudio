@@ -67,7 +67,6 @@ namespace MSetRepo
 				DateLastUsedUtc = source.DateRecordLastUsedUtc,
 				UsingPercentages = source.UsingPercentages,
 				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray()
-				//ColorBandsSerialNumber = source.ColorBandsSerialNumber
 			};
 
 			return result;
@@ -134,19 +133,22 @@ namespace MSetRepo
 			var result = new JobRecord(
 				ParentJobId: source.ParentJobId,
 				OwnerId: source.OwnerId,
-				JobOwnerType: source.JobOwnerType,
-				SubDivisionId: source.Subdivision.Id,
+
+				//SubDivisionId: source.OwnerId,
+				OwnerType: source.OwnerType,
 				Label: source.Label,
 
 				TransformType: (int)source.TransformType,
 
-				MapAreaInfo2Record: MapTo(source.MapAreaInfo),
+				MapCenterAndDeltaRecord: MapTo(source.MapAreaInfo),
 				TransformTypeString: Enum.GetName(source.TransformType) ?? "unknown",
 				
 
 				NewAreaPosition: MapTo(source.NewArea?.Position ?? new PointInt()),
 				NewAreaSize: MapTo(source.NewArea?.Size ?? new SizeInt()), 
-				ColorBandSetId: source.ColorBandSetId,
+				ColorBandSetName: source.ColorBandSetName,
+				ColorBandSetVersion: source.ColorBandSetVersion,
+				//ColorBandSetId: ObjectId.Empty,
 				MapCalcSettings: source.MapCalcSettings,
 				LastSavedUtc: source.LastSavedUtc,
 				LastAccessedUtc: source.LastAccessedUtc

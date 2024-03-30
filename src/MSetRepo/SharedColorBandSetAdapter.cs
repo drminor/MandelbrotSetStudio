@@ -148,8 +148,8 @@ namespace MSetRepo
 
 		public void DoSchemaUpdates()
 		{
-			var colorsReaderWriter = new SharedColorBandSetReaderWriter(_dbProvider);
-			colorsReaderWriter.UpdateColorBandSetSchema();
+			//var colorsReaderWriter = new SharedColorBandSetReaderWriter(_dbProvider);
+			//colorsReaderWriter.UpdateColorBandSetSchema();
 
 		}
 	}

@@ -488,15 +488,15 @@ namespace MSetExplorer
 
 			// Create a copy of the current job, commit it to the repo and get the new job with the updated Id on file.
 			var newCopy = curJob.CreateNewCopy();
-			newCopy.ColorBandSetId = colorBandSet.Id;
-			newCopy.JobOwnerType = OwnerType.Poster;
+
+			//newCopy.ColorBandSetId = colorBandSet.Id;
+
+			newCopy.OwnerType = OwnerType.Poster;
 			newCopy.TransformType = TransformType.Home;
 			var newJobId = _projectAdapter.InsertJob(newCopy);
 			var job = _projectAdapter.GetJob(newJobId);
 
 			Debug.WriteLine($"Starting job for new Poster: SourceJobId: {sourceJobId} with Position&Delta: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
-
-			
 
 			var dict = JobOwnerHelper.CreateLookupColorMapByTargetIteration(job, colorBandSet);
 
@@ -720,6 +720,7 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Adding Project Job with new target iterations: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
+			project.CurrentColorBandSet = colorBandSet;
 			project.Add(job);
 
 			OnPropertyChanged(nameof(IProjectViewModel.CurrentJob));

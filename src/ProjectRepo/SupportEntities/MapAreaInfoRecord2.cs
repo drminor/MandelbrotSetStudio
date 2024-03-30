@@ -9,6 +9,15 @@
 		int Precsion
 		)
 	{
+
+
+		public static MapAreaInfo2Record CreateEmpty()
+		{
+			var result = new MapAreaInfo2Record(
+			new RPointAndDeltaRecord(), new SubdivisionRecord(new BigVectorRecord(), new RSizeRecord(), new SizeIntRecord(0, 0)), new BigVectorRecord(), new VectorIntRecord(0, 0), 0);
+
+			return result;
+		}
 	}
 
 }

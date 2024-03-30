@@ -430,14 +430,14 @@ namespace MSS.Common.MSet
 
 		public void Add(Job job)
 		{
-			var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
+			//var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
 
-			if (colorBandSet == null)
-			{
-				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
-			}
+			//if (colorBandSet == null)
+			//{
+			//	throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
+			//}
 
-			JobOwnerHelper.AddIteratationColorMapRecord(colorBandSet, _lookupColorMapByTargetIteration, makeDefault: true);
+			//JobOwnerHelper.AddIteratationColorMapRecord(colorBandSet, _lookupColorMapByTargetIteration, makeDefault: true);
 
 			_jobTree.Add(job, selectTheAddedItem: true);
 
@@ -462,15 +462,15 @@ namespace MSS.Common.MSet
 		{
 			var result = _colorBandSets.Remove(colorBandSet);
 
-			var jobs = _jobTree.GetItems().ToList();
+			//var jobs = _jobTree.GetItems().ToList();
 
-			foreach (var job in jobs)
-			{
-				if (job.ColorBandSetId == colorBandSet.Id)
-				{
-					job.ColorBandSetId = newId;
-				}
-			}
+			//foreach (var job in jobs)
+			//{
+			//	if (job.ColorBandSetId == colorBandSet.Id)
+			//	{
+			//		job.ColorBandSetId = newId;
+			//	}
+			//}
 
 			return result;
 		}

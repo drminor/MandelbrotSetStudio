@@ -142,7 +142,8 @@ namespace MSS.Common.MSet
 
 			_lookupColorMapByTargetIteration = lookupColorMapByTargetIteration;
 
-			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentItem.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
+			//Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentItem.Id}, Current ColorBandSetId: {currentJob.ColorBandSetId}. IsDirty = {IsDirty}");
+			Debug.WriteLine($"Project is loaded. CurrentJobId: {_jobTree.CurrentItem.Id}, Current ColorBandSetId: {CurrentColorBandSet.Id}. IsDirty = {IsDirty}");
 		}
 
 		private IJobTree BuildJobTree(List<Job> jobs, bool useFlat, bool checkHomeJob)
@@ -414,15 +415,15 @@ namespace MSS.Common.MSet
 		{
 			var result = _colorBandSets.Remove(colorBandSet);
 
-			var jobs = _jobTree.GetItems().ToList();
+			//var jobs = _jobTree.GetItems().ToList();
 
-			foreach (var job in jobs)
-			{
-				if (job.ColorBandSetId == colorBandSet.Id)
-				{
-					job.ColorBandSetId = newId;
-				}
-			}
+			//foreach (var job in jobs)
+			//{
+			//	if (job.ColorBandSetId == colorBandSet.Id)
+			//	{
+			//		job.ColorBandSetId = newId;
+			//	}
+			//}
 
 			return result;
 		}

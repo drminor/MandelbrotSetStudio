@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+//using MSetRepo.Storage;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -577,14 +578,14 @@ namespace MSetRepo
 			var job = new Job(
 				id: jobId,
 				ownerId: jobRecord.OwnerId,
-				jobOwnerType: jobRecord.JobOwnerType, // ?? JobOwnerType.Undetermined,
+				jobOwnerType: jobRecord.OwnerType, // ?? JobOwnerType.Undetermined,
 				parentJobId: jobRecord.ParentJobId,
 				label: jobRecord.Label,
 				transformType: _mSetRecordMapper.MapFromTransformType(jobRecord.TransformType),
 				newArea: new RectangleInt(_mSetRecordMapper.MapFrom(jobRecord.NewAreaPosition), _mSetRecordMapper.MapFrom(jobRecord.NewAreaSize)),
 
 
-				mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfo2Record),
+				mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapCenterAndDeltaRecord),
 				//colorBandSetId: jobRecord.ColorBandSetId,
 				colorBandSetName: jobRecord.ColorBandSetName,
 				colorBandSetVersion: jobRecord.ColorBandSetVersion,
@@ -597,37 +598,37 @@ namespace MSetRepo
 				LastAccessedUtc = jobRecord.LastAccessedUtc,
 			};
 
-			var colorBandSet = GetColorBandSet(job, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
+			//var colorBandSet = GetColorBandSet(ownerName:null, jobRecord, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
 
-			ObjectId cbsId;
-			if (colorBandSet != null)
-			{
-				cbsId = colorBandSet.Id;
+			//ObjectId cbsId;
+			//if (colorBandSet != null)
+			//{
+			//	cbsId = colorBandSet.Id;
 
-				if (!isCacheHit)
-				{
-					if (!IsColorBandSetUnique(colorBandSet.Name, colorBandSet.TargetIterations, colorBandSetCache))
-					{
-						colorBandSet.Name = Guid.NewGuid().ToString();
-					}
+			//	if (!isCacheHit)
+			//	{
+			//		if (!IsColorBandSetUnique(colorBandSet.Name, colorBandSet.TargetIterations, colorBandSetCache))
+			//		{
+			//			colorBandSet.Name = Guid.NewGuid().ToString();
+			//		}
 
-					colorBandSetCache?.Add(colorBandSet.Id, colorBandSet);
-					jobReaderWriter.UpdateColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
-				}
+			//		colorBandSetCache?.Add(colorBandSet.Id, colorBandSet);
+			//		jobReaderWriter.UpdateColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
+			//	}
 
-				if (cbsId != jobRecord.ColorBandSetId)
-				{
-					jobReaderWriter.UpdateColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
-				}
-			}
-			else
-			{
-				cbsId = jobRecord.ColorBandSetId;
-			}
+			//	if (cbsId != jobRecord.ColorBandSetId)
+			//	{
+			//		jobReaderWriter.UpdateColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
+			//	}
+			//}
+			//else
+			//{
+			//	cbsId = jobRecord.ColorBandSetId;
+			//}
 
-			job.ColorBandSetId = cbsId;
+			//job.ColorBandSetId = cbsId;
 
-			jobCache?.Add(job.Id, job);
+			//jobCache?.Add(job.Id, job);
 
 			return job;
 		}
@@ -686,59 +687,68 @@ namespace MSetRepo
 			}
 		}
 
-		private ColorBandSet? GetColorBandSet(Job job, ColorBandSetReaderWriter colorBandSetReaderWriter, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache, out bool isCacheHit)
-		{
-			ColorBandSet? result;
+		//// TODO: Remove ownerName from signature and don't attempt to get the ColorBandSet by id.
+		//private ColorBandSet? GetColorBandSet(string? ownerName, JobRecord jobRec, ColorBandSetReaderWriter colorBandSetReaderWriter, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache, out bool isCacheHit)
+		//{
+		//	ColorBandSet? result;
 
-			var colorBandSetId = job.ColorBandSetId;
+		//	var colorBandSetId = jobRec.ColorBandSetId;
 
-			if (colorBandSetCache != null && colorBandSetCache.TryGetValue(colorBandSetId, out var colorBandSet))
-			{
-				isCacheHit = true;
+		//	if (colorBandSetCache != null && colorBandSetCache.TryGetValue(colorBandSetId, out var colorBandSet))
+		//	{
+		//		isCacheHit = true;
 
-				result = colorBandSet;
-			}
-			else
-			{
-				isCacheHit = false;
-				var colorBandSetRecord = colorBandSetReaderWriter.Get(job.ColorBandSetId);
-				if (colorBandSetRecord == null)
-				{
-					Debug.WriteLine($"The colorBandSetRecord is null for the CbsId: {colorBandSetId}, job : {job.Id}, of Project: {job.OwnerId} .");
-				}
+		//		result = colorBandSet;
+		//	}
+		//	else
+		//	{
+		//		isCacheHit = false;
+		//		var colorBandSetRecord = colorBandSetReaderWriter.Get(jobRec.ColorBandSetId);
+		//		if (colorBandSetRecord == null)
+		//		{
+		//			Debug.WriteLine($"The colorBandSetRecord is null for the CbsId: {colorBandSetId}, job : {jobRec.Id}, of Project: {jobRec.OwnerId} .");
+		//		}
 
-				if (colorBandSetRecord == null)
-				{
-					result = null;
-				}
-				else
-				{
-					colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+		//		if (colorBandSetRecord == null)
+		//		{
+		//			result = null;
+		//		}
+		//		else
+		//		{
+		//			colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
 
-					if (colorBandSet.OwnerId != job.OwnerId)
-					{
-						result = GetUpdatedCbsForProject(colorBandSet, job.OwnerId, colorBandSetReaderWriter);
-					}
-					else
-					{
-						result = colorBandSet;
-					}
-				}
-			}
+		//			if (colorBandSet.OwnerId != jobRec.OwnerId)
+		//			{
+		//				try
+		//				{
+		//					result = GetUpdatedCbsForProject(colorBandSet, jobRec.OwnerId, ownerName ?? Guid.NewGuid().ToString(), colorBandSetReaderWriter);
+		//				}
+		//				catch
+		//				{
+		//					result = null;
+		//					// Ignore the error and return null;
+		//				}
+		//			}
+		//			else
+		//			{
+		//				result = colorBandSet;
+		//			}
+		//		}
+		//	}
 
-			//if (result != null && colorBandSetCache != null && result.HighCutoff != job.MapCalcSettings.TargetIterations)
-			//{
-			//	var targetIterations = job.MapCalcSettings.TargetIterations;
-			//	var averageTargetIterations = GetIterationsForJob(result, job);
-			//	var newTargetIterations = (int)Math.Round(averageTargetIterations);
+		//	//if (result != null && colorBandSetCache != null && result.HighCutoff != job.MapCalcSettings.TargetIterations)
+		//	//{
+		//	//	var targetIterations = job.MapCalcSettings.TargetIterations;
+		//	//	var averageTargetIterations = GetIterationsForJob(result, job);
+		//	//	var newTargetIterations = (int)Math.Round(averageTargetIterations);
 
-			//	Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff: {result.HighCutoff} doesn't match the TargetIterations: {targetIterations}. Job has an average TargetIteration of {averageTargetIterations}.");
+		//	//	Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff: {result.HighCutoff} doesn't match the TargetIterations: {targetIterations}. Job has an average TargetIteration of {averageTargetIterations}.");
 
-			//	result = GetUpdatedCbsWithTargetIteration(result, newTargetIterations, colorBandSetCache.Values, colorBandSetReaderWriter);
-			//}
+		//	//	result = GetUpdatedCbsWithTargetIteration(result, newTargetIterations, colorBandSetCache.Values, colorBandSetReaderWriter);
+		//	//}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		//private double GetIterationsForJob(ColorBandSet colorBandSet, Job job)
 		//{
@@ -763,9 +773,15 @@ namespace MSetRepo
 		//	return updatedCbs;
 		//}
 
-		private ColorBandSet GetUpdatedCbsForProject(ColorBandSet colorBandSet, ObjectId projectId, ColorBandSetReaderWriter colorBandSetReaderWriter)
+		private ColorBandSet GetUpdatedCbsForProject(ColorBandSet colorBandSet, ObjectId projectId, string ownerName, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
 			var updatedCbs = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
+
+			if (string.IsNullOrEmpty(updatedCbs.Name))
+			{
+				updatedCbs.Name = ownerName;
+			}
+
 			updatedCbs.OwnerId = projectId;
 			var newId = InsertCbs(updatedCbs, colorBandSetReaderWriter);
 
@@ -1232,7 +1248,88 @@ namespace MSetRepo
 			//UpdateAllJobsWithMapCenterAndDelta();
 
 			//UpdateColorBandSetSchema();
+
+			//UpdateAllJobsToUseColorBandSetName();
 		}
+
+
+		//public long UpdateAllJobsToUseColorBandSetName()
+		//{
+		//	var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
+		//	var posterReaderWriter = new PosterReaderWriter(_dbProvider);
+
+
+		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
+
+		//	var result = 0L;
+		//	var potentialResult = 0L;
+		//	var colorBandSetsNotFound = 0L;
+
+		//	//var allProjectIds =  projectReaderWriter.GetAllIds();
+
+		//	var allProjectIds = posterReaderWriter.GetAllIds();
+
+		//	foreach (var projectId in allProjectIds)
+		//	{
+		//		//var projectRec = _projectReaderWriter.Get(projectId);
+		//		var projectRec = posterReaderWriter.Get(projectId);
+
+		//		var projectName = projectRec?.Name;
+
+		//		if (projectName == null)
+		//		{
+		//			throw new InvalidOperationException($"Can't get a ProjectRecord for ProjectId: {projectId} or the ProjectRecord's name is null.");
+		//		}
+
+		//		var colorBandSets = GetColorBandSetsForOwner(projectId).ToList();
+		//		var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
+
+		//		var allJobsIds = jobReaderWriter.GetJobIdsByOwner(projectId).ToList();
+
+		//		potentialResult += allJobsIds.Count;
+
+		//		foreach (var jobId in allJobsIds)
+		//		{
+		//			var jobRecord = jobReaderWriter.Get(jobId);
+
+		//			if (jobRecord != null)
+		//			{
+		//				jobRecord.OwnerType = jobRecord.JobOwnerType;
+
+		//				if (jobRecord.DateCreatedUtc == DateTime.MinValue)
+		//				{
+		//					jobRecord.DateCreatedUtc = jobRecord.Id.CreationTime;
+		//				}
+
+		//				jobRecord.MapCenterAndDeltaRecord = jobRecord.MapAreaInfo2Record!;
+
+		//				var colorBandSet = GetColorBandSet(ownerName: projectName, jobRecord, _colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
+
+		//				if (colorBandSet != null)
+		//				{
+		//					jobRecord.ColorBandSetName = colorBandSet.Name;
+		//					jobRecord.ColorBandSetVersion = colorBandSet.Version;
+		//				}
+		//				else
+		//				{
+		//					jobRecord.ColorBandSetName = projectName;
+		//					jobRecord.ColorBandSetVersion = null;
+		//					colorBandSetsNotFound++;
+		//				}
+
+		//				_jobReaderWriter.UpdateSchema(jobRecord);
+
+		//				result += 1;
+		//			}
+		//			else
+		//			{
+		//				Debug.WriteLine($"Could not get Job with Id: {jobId}.");
+		//			}
+		//		}
+		//	}
+
+		//	return result;
+		//}
 
 		//public void UpdateAllJobsWithMapCenterAndDelta()
 		//{
@@ -1359,60 +1456,60 @@ namespace MSetRepo
 		{
 			var result = 0;
 
-			var colorBandSetIdsRefByJob = _jobReaderWriter.GetAllReferencedColorBandSetIds().ToList();
+			//var colorBandSetIdsRefByJob = _jobReaderWriter.GetAllReferencedColorBandSetIds().ToList();
 
-			//Debug.WriteLine($"\nRef by a Job\n");
-			//foreach (var x in colorBandSetIdsRefByJob)
+			////Debug.WriteLine($"\nRef by a Job\n");
+			////foreach (var x in colorBandSetIdsRefByJob)
+			////{
+			////	Debug.WriteLine($"{x}");
+			////}
+
+			//var colorBandSetIds = new List<ObjectId>(colorBandSetIdsRefByJob);
+
+			//var referencedByProjectNotByJob = new List<ObjectId>();
+
+			//var projectRecords = _projectReaderWriter.GetAll();
+			//foreach (var projectRec in projectRecords)
 			//{
-			//	Debug.WriteLine($"{x}");
+			//	var colorBandSetRecords = _colorBandSetReaderWriter.GetColorBandSetsForOwner(projectRec.Id);
+			//	foreach (var colorBandSetRec in colorBandSetRecords)
+			//	{
+			//		if (!colorBandSetIds.Contains(colorBandSetRec.Id))
+			//		{
+			//			referencedByProjectNotByJob.Add(colorBandSetRec.Id);
+			//		}
+			//	}
 			//}
 
-			var colorBandSetIds = new List<ObjectId>(colorBandSetIdsRefByJob);
+			//referencedByProjectNotByJob = referencedByProjectNotByJob.Distinct().ToList();
 
-			var referencedByProjectNotByJob = new List<ObjectId>();
+			////Debug.WriteLine($"\nRef by Project, but not by job\n");
+			////foreach (var x in referencedByProjectNotByJob)
+			////{
+			////	Debug.WriteLine($"{x}");
+			////}
 
-			var projectRecords = _projectReaderWriter.GetAll();
-			foreach (var projectRec in projectRecords)
-			{
-				var colorBandSetRecords = _colorBandSetReaderWriter.GetColorBandSetsForOwner(projectRec.Id);
-				foreach (var colorBandSetRec in colorBandSetRecords)
-				{
-					if (!colorBandSetIds.Contains(colorBandSetRec.Id))
-					{
-						referencedByProjectNotByJob.Add(colorBandSetRec.Id);
-					}
-				}
-			}
+			//var allCbsIds = _colorBandSetReaderWriter.GetAll().Select(x => x.Id);
 
-			referencedByProjectNotByJob = referencedByProjectNotByJob.Distinct().ToList();
+			//var unReferenced = new List<ObjectId>();
 
-			//Debug.WriteLine($"\nRef by Project, but not by job\n");
+			//foreach (var cbsId in allCbsIds)
+			//{
+			//	if (!colorBandSetIds.Contains(cbsId))
+			//	{
+			//		unReferenced.Add(cbsId);
+			//	}
+			//}
+
+			//Debug.WriteLine($"\nUnreferenced\n");
 			//foreach (var x in referencedByProjectNotByJob)
 			//{
 			//	Debug.WriteLine($"{x}");
+
+			//	// Uncomment this next line!!
+			//	//_ = _colorBandSetReaderWriter.Delete(x);
+			//	result++;
 			//}
-
-			var allCbsIds = _colorBandSetReaderWriter.GetAll().Select(x => x.Id);
-
-			var unReferenced = new List<ObjectId>();
-
-			foreach (var cbsId in allCbsIds)
-			{
-				if (!colorBandSetIds.Contains(cbsId))
-				{
-					unReferenced.Add(cbsId);
-				}
-			}
-
-			Debug.WriteLine($"\nUnreferenced\n");
-			foreach (var x in referencedByProjectNotByJob)
-			{
-				Debug.WriteLine($"{x}");
-
-				// Uncomment this next line!!
-				//_ = _colorBandSetReaderWriter.Delete(x);
-				result++;
-			}
 
 			return result;
 		}

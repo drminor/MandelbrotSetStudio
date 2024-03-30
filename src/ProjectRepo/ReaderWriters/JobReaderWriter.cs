@@ -43,7 +43,7 @@ namespace ProjectRepo
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.SubDivisionId)
+					p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.MapCenterAndDeltaRecord.SubdivisionRecord.Id)
 				);
 
 			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", ownerId);
@@ -56,7 +56,7 @@ namespace ProjectRepo
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.SubDivisionId)
+					p => new ValueTuple<ObjectId, ObjectId>(p.Id, p.MapCenterAndDeltaRecord.SubdivisionRecord.Id)
 				);
 
 			var filter = Builders<JobRecord>.Filter.Empty;
@@ -69,7 +69,7 @@ namespace ProjectRepo
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => p.SubDivisionId
+					p => p.MapCenterAndDeltaRecord.SubdivisionRecord.Id
 				);
 
 			var filter = Builders<JobRecord>.Filter.Empty;
@@ -81,7 +81,7 @@ namespace ProjectRepo
 
 		public IEnumerable<ValueTuple<ObjectId, ObjectId, OwnerType>> GetJobAndOwnerIdsWithJobOwnerType()
 		{
-			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, OwnerType>(p.Id, p.OwnerId, p.JobOwnerType));
+			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, ObjectId, OwnerType>(p.Id, p.OwnerId, p.OwnerType));
 
 			var filter = Builders<JobRecord>.Filter.Empty;
 
@@ -93,7 +93,9 @@ namespace ProjectRepo
 
 		public (ObjectId, MapAreaInfo2Record)? GetSubdivisionIdAndMapCenterAndDelta(ObjectId jobId)
 		{
-			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, MapAreaInfo2Record>(p.SubDivisionId, p.MapAreaInfo2Record));
+
+			var projection1 = Builders<JobRecord>.Projection.Expression(p => new ValueTuple<ObjectId, MapAreaInfo2Record>(p.MapCenterAndDeltaRecord.SubdivisionRecord.Id, p.MapCenterAndDeltaRecord));
+
 			var filter = Builders<JobRecord>.Filter.Eq(f => f.Id, jobId);
 			
 			//var (subdivisionId, mapAreaInfo) = Collection.Find(filter).Project(projection1).FirstOrDefault();
@@ -113,12 +115,14 @@ namespace ProjectRepo
 
 		public ObjectId? GetSubdivisionId(ObjectId jobId)
 		{
-			var projection1 = Builders<JobRecord>.Projection.Expression(p => p.MapAreaInfo2Record.SubdivisionRecord.Id);
-			var filter = Builders<JobRecord>.Filter.Eq(f => f.Id, jobId);
+			//var projection1 = Builders<JobRecord>.Projection.Expression(p => p.MapCenterAndDeltaRecord.SubdivisionRecord.Id);
+			//var filter = Builders<JobRecord>.Filter.Eq(f => f.Id, jobId);
 
-			var result = Collection.Find(filter).Project(projection1).FirstOrDefault();
+			//var result = Collection.Find(filter).Project(projection1).FirstOrDefault();
 
-			return result;
+			//return result;
+
+			return new ObjectId();
 		}
 
 		public ObjectId Insert(JobRecord jobRecord)
@@ -137,43 +141,84 @@ namespace ProjectRepo
 			return jobRecord.Id;
 		}
 
+		//public void UpdateSchemaFirst(JobRecord jobRecord)
+		//{
+		//	var filter = Builders<JobRecord>.Filter.Eq("_id", jobRecord.Id);
+
+		//	var updateDefinition = Builders<JobRecord>.Update
+		//		.Set(u => u.ParentJobId, jobRecord.ParentJobId)
+		//		.Set(u => u.OwnerId, jobRecord.OwnerId)
+		//		.Set(u => u.OwnerType, jobRecord.OwnerType)
+
+		//		.Set(u => u.MapCenterAndDeltaRecord, jobRecord.MapCenterAndDeltaRecord)
+		//		.Set(u => u.ColorBandSetId, jobRecord.ColorBandSetId)
+		//		.Set(u => u.MapCalcSettings, jobRecord.MapCalcSettings)
+		//		.Set(u => u.LastSavedUtc, DateTime.UtcNow)
+		//		.Set(u => u.LastAccessedUtc, jobRecord.LastAccessedUtc)
+
+		//		.Unset(u => u.JobOwnerType)
+		//		.Unset(u => u.MapAreaInfo2Record)
+		//		.Unset(u => u.SubDivisionId);
+
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
+
+		//public void UpdateSchema(JobRecord jobRecord)
+		//{
+		//	var filter = Builders<JobRecord>.Filter.Eq("_id", jobRecord.Id);
+
+		//	var updateDefinition = Builders<JobRecord>.Update
+
+		//		.Set(u => u.OwnerType, jobRecord.OwnerType)
+		//		.Set(u => u.MapCenterAndDeltaRecord, jobRecord.MapCenterAndDeltaRecord)
+		//		.Set(u => u.DateCreatedUtc, jobRecord.DateCreated)
+
+		//		.Set(u => u.ColorBandSetName, jobRecord.ColorBandSetName)
+		//		.Set(u => u.ColorBandSetVersion, jobRecord.ColorBandSetVersion)
+
+		//		.Unset(u => u.JobOwnerType)
+		//		.Unset(u => u.LastSaved)
+		//		.Unset(u => u.MapAreaInfo2Record)
+		//		.Unset(u => u.SubDivisionId);
+
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
+
 		public void UpdateJobDetails(JobRecord jobRecord)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobRecord.Id);
 
 			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.ParentJobId, jobRecord.ParentJobId)
-				.Set(u => u.OwnerId, jobRecord.OwnerId)
-				.Set(u => u.JobOwnerType, jobRecord.JobOwnerType)
 
-				.Set(u => u.MapAreaInfo2Record, jobRecord.MapAreaInfo2Record)
-				.Set(u => u.ColorBandSetId, jobRecord.ColorBandSetId)
-				.Set(u => u.MapCalcSettings, jobRecord.MapCalcSettings)
-				.Set(u => u.LastSavedUtc, DateTime.UtcNow)
+				.Set(u => u.OwnerType, jobRecord.OwnerType)
+				.Set(u => u.MapCenterAndDeltaRecord, jobRecord.MapCenterAndDeltaRecord)
+				.Set(u => u.ColorBandSetName, jobRecord.ColorBandSetName)
+				.Set(u => u.ColorBandSetVersion, jobRecord.ColorBandSetVersion)
+				.Set(u => u.DateCreatedUtc, jobRecord.DateCreatedUtc)
 				.Set(u => u.LastAccessedUtc, jobRecord.LastAccessedUtc);
 
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
-		public void UpdateColorBandSet(ObjectId jobId, int targetIterations, ObjectId colorBandSetId)
-		{
-			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
+		//public void UpdateColorBandSet(ObjectId jobId, int targetIterations, ObjectId colorBandSetId)
+		//{
+		//	var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 
-			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.MapCalcSettings.TargetIterations, targetIterations)
-				.Set(u => u.ColorBandSetId, colorBandSetId)
-				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+		//	var updateDefinition = Builders<JobRecord>.Update
+		//		.Set(u => u.MapCalcSettings.TargetIterations, targetIterations)
+		//		.Set(u => u.ColorBandSetId, colorBandSetId)
+		//		.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
-			_ = Collection.UpdateOne(filter, updateDefinition);
-		}
+		//	_ = Collection.UpdateOne(filter, updateDefinition);
+		//}
 
 		public void UpdateJobOwnerType(ObjectId jobId, OwnerType jobOwnerType)
 		{
 			var filter = Builders<JobRecord>.Filter.Eq("_id", jobId);
 
 			var updateDefinition = Builders<JobRecord>.Update
-				.Set(u => u.JobOwnerType, jobOwnerType)
+				.Set(u => u.OwnerType, jobOwnerType)
 				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
@@ -204,26 +249,26 @@ namespace ProjectRepo
 
 		#region Aggregate Results
 
-		public IEnumerable<ObjectId> GetAllReferencedColorBandSetIds()
-		{
-			var projection1 = Builders<JobRecord>.Projection.Expression
-				(
-					p => p.ColorBandSetId
-				);
+		//public IEnumerable<ObjectId> GetAllReferencedColorBandSetIds()
+		//{
+		//	var projection1 = Builders<JobRecord>.Projection.Expression
+		//		(
+		//			p => p.ColorBandSetId
+		//		);
 
-			//List models = collection.Find(_ => true).Project(projection1).ToList();
+		//	//List models = collection.Find(_ => true).Project(projection1).ToList();
 
-			var filter = Builders<JobRecord>.Filter.Empty;
-			var colorBandSetIds = Collection.Find(filter).Project(projection1).ToEnumerable().Distinct();
+		//	var filter = Builders<JobRecord>.Filter.Empty;
+		//	var colorBandSetIds = Collection.Find(filter).Project(projection1).ToEnumerable().Distinct();
 
-			return colorBandSetIds;
-		}
+		//	return colorBandSetIds;
+		//}
 
 		public IEnumerable<JobSudivisionInfo> GetJobSubdivisionInfosForOwner(ObjectId ownerId)
 		{
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
-					p => new JobSudivisionInfo(p.Id, p.DateCreatedUtc, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
+					p => new JobSudivisionInfo(p.Id, p.DateCreatedUtc, p.MapCenterAndDeltaRecord.SubdivisionRecord.Id, p.MapCenterAndDeltaRecord.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
 				);
 
 			//List models = collection.Find(_ => true).Project(projection1).ToList();
@@ -239,7 +284,7 @@ namespace ProjectRepo
 			var projection1 = Builders<JobRecord>.Projection.Expression
 				(
 					//p => new JobSudivisionInfo(p.Id, p.DateCreatedUtc, p.SubDivisionId, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
-					p => new JobInfo(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.MapAreaInfo2Record.SubdivisionRecord.Id, p.MapAreaInfo2Record.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
+					p => new JobInfo(p.Id, p.ParentJobId, p.Id.CreationTime, p.TransformType, p.MapCenterAndDeltaRecord.SubdivisionRecord.Id, p.MapCenterAndDeltaRecord.RPointAndDeltaRecord.RPointAndDeltaDto.Exponent)
 				);
 
 			var filter = Builders<JobRecord>.Filter.Eq("OwnerId", ownerId);

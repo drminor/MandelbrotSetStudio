@@ -201,9 +201,9 @@ namespace MSetRepo
 
 			foreach (var job in jobs)
 			{
-				if (job.JobOwnerType != ownerType)
+				if (job.OwnerType != ownerType)
 				{
-					Debug.WriteLine($"WARNING: Found a OwnerType mismatch: Expecting {ownerType} but found {job.JobOwnerType}. OwnerId: {ownerId} - Name: {ownerName}.");
+					Debug.WriteLine($"WARNING: Found a OwnerType mismatch: Expecting {ownerType} but found {job.OwnerType}. OwnerId: {ownerId} - Name: {ownerName}.");
 				}
 
 				var mapSectionRequests = GetMapSectionRequests(jobType, job, ownerType, displaySize, mapJobHelper, mapSectionBuilder, mapLoaderJobNumber++);
