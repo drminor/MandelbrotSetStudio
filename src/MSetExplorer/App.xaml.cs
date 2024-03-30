@@ -468,6 +468,11 @@ namespace MSetExplorer
 
 				//maForSu.AddSubdivisionId();
 			}
+
+			if (repositoryAdapters.SharedColorBandSetAdapter is SharedColorBandSetAdapter scForSu)
+			{
+				scForSu.DoSchemaUpdates();
+			}
 		}
 
 		//private void DoSchemaUpdates()

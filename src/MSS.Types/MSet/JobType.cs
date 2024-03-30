@@ -8,4 +8,10 @@ namespace MSS.Types.MSet
 		Image,
 		SizeEditorPreview
 	}
+
+	public enum ColorBandSetResolutionStrategy
+	{
+		PerProject,
+		PerJob
+	}
 }

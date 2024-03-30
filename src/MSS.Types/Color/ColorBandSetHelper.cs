@@ -106,6 +106,7 @@ namespace MSS.Types
 				colorBandSet.ParentId,
 				colorBandSet.OwnerId,
 				colorBandSet.Name,
+				colorBandSet.Version + 1,
 				colorBandSet.Description,
 				itemsToKeep,
 				targetIterations,

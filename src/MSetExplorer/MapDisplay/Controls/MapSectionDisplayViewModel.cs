@@ -702,6 +702,7 @@ namespace MSetExplorer
 		{
 			// TODO: Compare the currrent and new SubdivisionIds. If different, use DiscardAndLoad
 			var currentBaseFactor = boundedMapArea.BaseFactor;
+			var origSubId = boundedMapArea.MapAreaInfoWithSize.Subdivision.Id;
 
 			// Get the coordinates for the current view, i.e., the ContentViewportSize
 
@@ -716,10 +717,17 @@ namespace MSetExplorer
 			// This is the same as the ContentViewportSize, but scaled down by the BaseScale of 1, 0.5, 0.25, 0.125, etc., depending on how 'Zoomed Out' we are.
 			// The BitmapGrid's LogicalViewportSize is synched with this ViewportSize.
 
-			Debug.Assert(contentScale == _displayZoom, "The DisplayZoom does not equal the new ContentScale on the call to LoadNewView.");
+			if (_displayZoom != contentScale)
+			{
+				Debug.WriteLine($"WARNING: MapSectionDisplayViewModel. The DisplayZoom does not equal the new ContentScale on the call to LoadNewView. DZ: {_displayZoom}, CS: {contentScale}.");
+				_displayZoom = contentScale;
+			}
+
+			//Debug.Assert(contentScale == _displayZoom, "The DisplayZoom does not equal the new ContentScale on the call to LoadNewView.");
 
 			//_displayZoom = contentScale;
 			var (baseFactor, _) = ContentScalerHelper.GetBaseFactorAndRelativeScale(contentScale);
+
 
 			boundedMapArea.SetSizeAndScale(contentViewportSize, baseFactor);
 
@@ -735,13 +743,24 @@ namespace MSetExplorer
 
 			MsrJob msrJob;
 
-			if (boundedMapArea.BaseFactor == currentBaseFactor)
+
+			if (boundedMapArea.BaseFactor == currentBaseFactor && mapAreaSubset.Subdivision.Id == origSubId)
 			{
+				Debug.WriteLine($"MapSectionDisplayViewModel. LoadNewScaledView. The BaseFactor and SubdivisionId are the same, calling ReuseAndLoad");
 				var reApplyColorMap = mapAreaSubset.Coords.CrossesYZero;
 				msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: reApplyColorMap);
 			}
 			else
 			{
+				if (mapAreaSubset.Subdivision.Id != origSubId)
+				{
+					Debug.WriteLine($"MapSectionDisplayViewModel. LoadNewScaledView. The SubdivisionIds are different, calling DiscardAndLoad.");
+				}
+				else if (boundedMapArea.BaseFactor != currentBaseFactor)
+				{
+					Debug.WriteLine($"MapSectionDisplayViewModel. LoadNewScaledView. The BaseFactors are different, calling DiscardAndLoad.");
+				}
+
 				msrJob = DiscardAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset);
 			}
 

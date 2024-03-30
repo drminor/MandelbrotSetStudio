@@ -89,5 +89,56 @@ namespace ProjectRepo
 
 			return result;
 		}
+
+
+		public int UpdateColorBandSetSchema()
+		{
+			var colorBandSetRecords = GetAll().ToList();
+
+			foreach (var cbsRec in colorBandSetRecords)
+			{
+
+				var targetIterations = cbsRec.TargetIterations;
+				if (targetIterations == 0)
+				{
+					targetIterations = cbsRec.ColorBandRecords.Max(x => x.CutOff);
+					//cbsRec.TargetIterations = targetIterations;
+				}
+
+				var serialNum = cbsRec.ColorBandsSerialNumber;
+				if (serialNum == Guid.Empty)
+				{
+					serialNum = Guid.NewGuid();
+				}
+
+				var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", cbsRec.Id);
+
+				var updateDefinition = Builders<ColorBandSetRecord>.Update
+					.Set(u => u.DateCreatedUtc, cbsRec.Id.CreationTime)
+					.Set(u => u.TargetIterations, targetIterations)
+					.Set(u => u.ColorBandsSerialNumber, serialNum);
+
+
+				_ = Collection.UpdateOne(filter, updateDefinition);
+
+			}
+
+			return colorBandSetRecords.Count;
+		}
+
+		//public int UpdateColorBandSetSchema()
+		//{
+		//	var colorBandSetRecords = GetAll().ToList();
+
+		//	var filter1 = Builders<ColorBandSetRecord>.Filter.Empty;
+
+		//	var updateDefinition = Builders<ColorBandSetRecord>.Update
+		//		.Unset(u => u.ProjectId)
+		//		.Unset(u => u.LastAccessed);
+
+		//	_ = Collection.UpdateMany(filter1, updateDefinition);
+
+		//	return colorBandSetRecords.Count;
+		//}
 	}
 }

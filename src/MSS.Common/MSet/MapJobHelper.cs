@@ -39,23 +39,23 @@ namespace MSS.Common
 
 		#region Build Job Methods
 
-		public Job BuildHomeJob(OwnerType jobOwnerType, MapCenterAndDelta mapCenterAndDelta, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings)
+		public Job BuildHomeJob(OwnerType jobOwnerType, MapCenterAndDelta mapCenterAndDelta, string colorBandSetName, int? colorBandSetVersion, MapCalcSettings mapCalcSettings)
 		{
 			ObjectId? parentJobId = null;
 			ObjectId ownerId = ObjectId.Empty;
 			var transformType = TransformType.Home;
 			RectangleInt? newArea = null;
 
-			var result = BuildJob(parentJobId, ownerId, jobOwnerType, mapCenterAndDelta, colorBandSetId, mapCalcSettings, transformType, newArea);
+			var result = BuildJob(parentJobId, ownerId, jobOwnerType, mapCenterAndDelta, colorBandSetName, colorBandSetVersion, mapCalcSettings, transformType, newArea);
 			return result;
 		}
 
-		public Job BuildJob(ObjectId? parentJobId, ObjectId ownerId, OwnerType jobOwnerType, MapCenterAndDelta mapCenterAndDelta, ObjectId colorBandSetId, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
+		public Job BuildJob(ObjectId? parentJobId, ObjectId ownerId, OwnerType jobOwnerType, MapCenterAndDelta mapCenterAndDelta, string colorBandSetName, int? colorBandSetVersion, MapCalcSettings mapCalcSettings, TransformType transformType, RectangleInt? newArea)
 		{
 			var mapAreaInfoWithRegisteredSub = RegisterTheSubdivision(mapCenterAndDelta);
 
 			var jobName = GetJobName(transformType);
-			var job = new Job(ownerId, jobOwnerType, parentJobId, jobName, transformType, newArea, mapAreaInfoWithRegisteredSub, colorBandSetId, mapCalcSettings);
+			var job = new Job(ownerId, jobOwnerType, parentJobId, jobName, transformType, newArea, mapAreaInfoWithRegisteredSub, colorBandSetName, colorBandSetVersion, mapCalcSettings);
 
 			return job;
 		}

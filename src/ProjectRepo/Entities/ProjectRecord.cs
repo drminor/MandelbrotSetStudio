@@ -23,7 +23,9 @@ namespace ProjectRepo.Entities
 
 		public DateTime LastAccessedUtc { get; set; }
 
-		public TargetIterationColorMapRecord[]? TargetIterationColorMapRecords { get; set; }
+		public TargetIterationColorMapRecord[]? TargetIterationColorMapRecords { get; set; } // TODO_schema: Add TargetIterationColorMapRecords to ProjectRecord
+
+		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; } = ColorBandSetResolutionStrategy.PerProject; // TODO_schema: Add ColorBandSetResolutionStrategy to the ProjectRecord
 
 		public string ProjectNameTemporary { get; set; } = RMapConstants.NAME_FOR_NEW_PROJECTS + "-" + Guid.NewGuid().ToString();
 	}

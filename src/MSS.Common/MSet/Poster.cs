@@ -422,6 +422,8 @@ namespace MSS.Common.MSet
 			}
 		}
 
+		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; }
+
 		#endregion
 
 		#region Public Methods 

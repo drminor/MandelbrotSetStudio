@@ -113,6 +113,7 @@ namespace MapSectionProviderLib
 			return Interlocked.Increment(ref _nextJobId);
 		}
 
+		// TODO: Update the MapSectionRequestProcessor to use the CancellationToken provided in the call to method: SubmitRequests.
 		public List<MapSection> SubmitRequests(MsrJob msrJob, List<MapSectionRequest> mapSectionRequests, Action<MapSectionRequest, MapSection> callback, CancellationToken ct, out List<MapSectionRequest> pendingGeneration)
 		{
 			pendingGeneration = new List<MapSectionRequest>();

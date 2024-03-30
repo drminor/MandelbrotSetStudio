@@ -130,8 +130,8 @@ namespace MSS.Common
 		{
 			if (poster.IsDirty)
 			{
-				var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(poster, projectAdapter);
-				Debug.WriteLine($"Removed {numberColorBandSetsRemoved} unused ColorBandSets.");
+				//var numberColorBandSetsRemoved = DeleteUnReferencedColorBandSets(poster, projectAdapter);
+				//Debug.WriteLine($"Removed {numberColorBandSetsRemoved} unused ColorBandSets.");
 
 				projectAdapter.UpdatePosterMapArea(poster);
 
@@ -420,6 +420,11 @@ namespace MSS.Common
 				var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
 				Debug.WriteLine($"WARNING: Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id}.");
 
+				if (!IsColorBandSetUnique(adjustedColorBandSet.Name, adjustedColorBandSet.TargetIterations, colorBandSets))
+				{
+					adjustedColorBandSet.Name = Guid.NewGuid().ToString();
+				}
+
 				colorBandSets.Add(adjustedColorBandSet);
 				colorBandSet = adjustedColorBandSet;
 				wasCreated = true;
@@ -430,6 +435,14 @@ namespace MSS.Common
 			}
 
 			return colorBandSet;
+		}
+
+		private static bool IsColorBandSetUnique(string name, int targetIterations, List<ColorBandSet> colorBandSets)
+		{
+			var foundOne = colorBandSets.Any(x => x.TargetIterations == targetIterations && x.Name == name);
+			var isUnique = !foundOne;
+
+			return isUnique;
 		}
 
 		public static bool CreateLookupColorMapByTargetIteration(List<Job> jobs, List<ColorBandSet> colorBandSets, Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration, string desc)

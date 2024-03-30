@@ -43,9 +43,16 @@ namespace ProjectRepo
 
 		public ObjectId Insert(ColorBandSetRecord colorBandSetRecord)
 		{
-			colorBandSetRecord.DateRecordLastSavedUtc = DateTime.UtcNow;
-			Collection.InsertOne(colorBandSetRecord);
-			return colorBandSetRecord.Id;
+			try
+			{
+				colorBandSetRecord.DateRecordLastSavedUtc = DateTime.UtcNow;
+				Collection.InsertOne(colorBandSetRecord);
+				return colorBandSetRecord.Id;
+			}
+			catch
+			{
+				throw;
+			}
 		}
 
 		public void UpdateName(ObjectId colorBandSetId, string? name)
@@ -99,7 +106,6 @@ namespace ProjectRepo
 				.Set(u => u.DateLastUsedUtc, colorBandSet.DateRecordLastUsedUtc)
 				.Set(u => u.DateRecordLastSavedUtc, DateTime.UtcNow);
 
-			_ = Collection.UpdateOne(filter, updateDefinition);
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}
 
@@ -187,6 +193,22 @@ namespace ProjectRepo
 
 			return result;
 		}
+
+		//public int UpdateColorBandSetSchema()
+		//{
+		//	var colorBandSetRecords = GetAll().ToList();
+
+		//	var filter1 = Builders<ColorBandSetRecord>.Filter.Empty;
+
+		//	var updateDefinition = Builders<ColorBandSetRecord>.Update
+		//		.Unset(u => u.ProjectId)
+		//		.Unset(u => u.LastAccessed)
+		//		.Set("Version", 0);
+
+		//	_ = Collection.UpdateMany(filter1, updateDefinition);
+
+		//	return colorBandSetRecords.Count;
+		//}
 
 	}
 }

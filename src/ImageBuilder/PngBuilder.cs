@@ -153,7 +153,7 @@ namespace ImageBuilder
 				var iLine = pngImage.ImageLine;
 				var destPixPtr = 0;
 
-				for (var blockPtrX = 1; blockPtrX < blocksForThisRow.Count - 1; blockPtrX++)
+				for (var blockPtrX = 0; blockPtrX < blocksForThisRow.Count; blockPtrX++)
 				{
 					var mapSection = blocksForThisRow[blockPtrX];
 					var invertThisBlock = !mapSection.IsInverted;

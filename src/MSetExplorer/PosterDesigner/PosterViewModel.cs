@@ -673,13 +673,15 @@ namespace MSetExplorer
 			var currentJob = poster.CurrentJob;
 			Debug.Assert(!currentJob.IsEmpty, "AddNewCoordinateUpdateJob was called while the current job is empty.");
 
-			var colorBandSetId = currentJob.ColorBandSetId;
+			//var colorBandSetId = currentJob.ColorBandSetId;
+			var colorBandSetName = currentJob.ColorBandSetName;
+			var colorBandSetVersion = currentJob.ColorBandSetVersion;
 			var mapCalcSettings = currentJob.MapCalcSettings;
 
 			// TODO: Determine TransformType
 			var transformType = TransformType.ZoomIn;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, OwnerType.Poster, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, OwnerType.Poster, mapAreaInfo, colorBandSetName, colorBandSetVersion, mapCalcSettings, transformType, newArea: null);
 
 			Debug.WriteLine($"Adding Poster Job with new coords: {mapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -703,7 +705,9 @@ namespace MSetExplorer
 			var transformType = TransformType.IterationUpdate;
 			var newScreenArea = new RectangleInt();
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, OwnerType.Poster, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
+			var colorBandSetName = colorBandSet.Name;
+			var colorBandSetVersion = colorBandSet.Version;
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, OwnerType.Poster, mapAreaInfo, colorBandSetName, colorBandSetVersion, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Poster Job with target iterations: {targetIterations}.");
 

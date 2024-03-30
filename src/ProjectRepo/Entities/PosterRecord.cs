@@ -31,6 +31,9 @@ namespace ProjectRepo.Entities
 
 		public SizeDbl PosterSize => new SizeDbl(Width, Height);
 
-		public TargetIterationColorMapRecord[]? TargetIterationColorMapRecords { get; set; }
+		public TargetIterationColorMapRecord[]? TargetIterationColorMapRecords { get; set; }  // TODO_schema: Add TargetIterationColorMapRecords to ProjectRecord
+
+		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; } = ColorBandSetResolutionStrategy.PerProject; // TODO_schema: Add ColorBandSetResolutionStrategy to the PosterRecord
+
 	}
 }

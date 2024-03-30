@@ -696,10 +696,12 @@ namespace MSetExplorer
 			}
 
 			var cbsInfos = _vm.ProjectViewModel.GetColorBandSetInfos();
-			var currentColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
-			//var initialName = _vm.ProjectViewModel.CurrentColorBandSet.Name;
-			//var targetIterations = curProject.CurrentJob.MapCalcSettings.TargetIterations;
+
+			// Use the Current Project's ColorBandSet instead of the ProjectViewModel's CurrentColorBandSet to avoid getting the Preview.
+			var currentColorBandSet = curProject.CurrentColorBandSet;
 			var targetIterations = currentColorBandSet.TargetIterations;
+
+			CheckProjectViewModelTargetIterations();
 
 			var selectedColorBandSetInfo = cbsInfos.FirstOrDefault(x => x.Id == currentColorBandSet.Id);
 			if (selectedColorBandSetInfo == null) throw new InvalidOperationException("The Project's current ColorBandSet does not exist in the Project's list of ColorBandSets.");

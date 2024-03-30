@@ -119,7 +119,8 @@ namespace MSetRepo
 
 			var allColorBandSetRecords = colorsReaderWriter.GetAll();
 
-			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.TargetIterations));
+			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.DateLastUsedUtc, x.ColorBandsSerialNumber, x.ColorBandRecords.Length,
+				x.TargetIterations == 0 ? x.ColorBandRecords.Max(y => y.CutOff) : x.TargetIterations));
 
 			return result;
 		}
@@ -132,7 +133,7 @@ namespace MSetRepo
 			if (cbsRecord != null)
 			{
 				var targetIterations = cbsRecord.TargetIterations == 0 ? cbsRecord.ColorBandRecords.Max(y => y.CutOff) : cbsRecord.TargetIterations;
-				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name, cbsRecord.Description, cbsRecord.LastAccessed, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, targetIterations);
+				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name, cbsRecord.Description, cbsRecord.DateLastUsedUtc, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, targetIterations);
 
 				return result;
 			}
@@ -144,5 +145,12 @@ namespace MSetRepo
 		}
 
 		#endregion
+
+		public void DoSchemaUpdates()
+		{
+			var colorsReaderWriter = new SharedColorBandSetReaderWriter(_dbProvider);
+			colorsReaderWriter.UpdateColorBandSetSchema();
+
+		}
 	}
 }

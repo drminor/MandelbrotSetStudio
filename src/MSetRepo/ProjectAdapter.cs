@@ -350,12 +350,14 @@ namespace MSetRepo
 			InsertCbs(colorBandSet, colorBandSetReaderWriter);
 		}
 
-		private void InsertCbs(ColorBandSet colorBandSet, ColorBandSetReaderWriter colorBandSetReaderWriter)
+		private ObjectId InsertCbs(ColorBandSet colorBandSet, ColorBandSetReaderWriter colorBandSetReaderWriter)
 		{
 			var colorBandSetRecord = _mSetRecordMapper.MapTo(colorBandSet);
 
-			_ = colorBandSetReaderWriter.Insert(colorBandSetRecord);
+			var newRecordId = colorBandSetReaderWriter.Insert(colorBandSetRecord);
 			colorBandSet.LastSavedUtc = DateTime.UtcNow;
+
+			return newRecordId;
 		}
 
 		public void UpdateColorBandSetName(ObjectId colorBandSetId, string? name)
@@ -423,7 +425,8 @@ namespace MSetRepo
 
 			var colorBandSetRecords = colorBandSetReaderWriter.GetColorBandSetsForOwner(projectId).ToList();
 
-			var result = colorBandSetRecords.Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.LastAccessed, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, x.TargetIterations));
+			var result = colorBandSetRecords.Select((x,i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.DateLastUsedUtc, x.ColorBandsSerialNumber, x.ColorBandRecords.Length, 
+				x.TargetIterations == 0 ? x.ColorBandRecords.Max(y => y.CutOff): x.TargetIterations));
 
 			return result;
 		}
@@ -442,7 +445,7 @@ namespace MSetRepo
 			if (cbsRecord != null)
 			{
 				var targetIterations = cbsRecord.TargetIterations == 0 ? cbsRecord.ColorBandRecords.Max(y => y.CutOff) : cbsRecord.TargetIterations;
-				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name ?? cbsRecord.ColorBandsSerialNumber.ToString(), cbsRecord.Description, cbsRecord.LastAccessed, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, targetIterations);
+				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name ?? cbsRecord.ColorBandsSerialNumber.ToString(), cbsRecord.Description, cbsRecord.DateLastUsedUtc, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, targetIterations);
 				return result;
 			}
 			else
@@ -534,15 +537,6 @@ namespace MSetRepo
 			return job;
 		}
 
-		[Conditional("DEBUG2")]
-		private void CompareMapAreaV1AfterRoundTrip(MapPositionSizeAndDelta previousValue, MapPositionSizeAndDelta newValue, MapCenterAndDelta middleValue)
-		{
-			Debug.WriteLine($"MapDisplay is RoundTripping MapAreaInfoV1" +
-				$"\nPrevious Scale: {previousValue.SamplePointDelta.Width}. Pos: {previousValue.Coords}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} Size: {previousValue.CanvasSize} " +
-				$"\nNew Scale     : {newValue.SamplePointDelta.Width}. Pos: {newValue.Coords}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset} Size: {newValue.CanvasSize}" +
-				$"\nIntermediate     : {middleValue.SamplePointDelta.Width}. Pos: {middleValue.MapCenter}. MapOffset: {middleValue.MapBlockOffset}. ImageOffset: {middleValue.CanvasControlOffset}");
-		}
-
 		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, ColorBandSetReaderWriter colorBandSetReaderWriter,
 			IDictionary<ObjectId, Job>? jobCache, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
 		{
@@ -591,7 +585,9 @@ namespace MSetRepo
 
 
 				mapAreaInfo: _mSetRecordMapper.MapFrom(jobRecord.MapAreaInfo2Record),
-				colorBandSetId: jobRecord.ColorBandSetId,
+				//colorBandSetId: jobRecord.ColorBandSetId,
+				colorBandSetName: jobRecord.ColorBandSetName,
+				colorBandSetVersion: jobRecord.ColorBandSetVersion,
 
 				mapCalcSettings: jobRecord.MapCalcSettings,
 				dateCreatedUtc: jobRecord.DateCreatedUtc,
@@ -599,8 +595,6 @@ namespace MSetRepo
 				)
 			{
 				LastAccessedUtc = jobRecord.LastAccessedUtc,
-				//IterationUpdates = jobRecord.IterationUpdates,
-				//ColorMapUpdates = jobRecord.ColorMapUpdates,
 			};
 
 			var colorBandSet = GetColorBandSet(job, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
@@ -612,6 +606,11 @@ namespace MSetRepo
 
 				if (!isCacheHit)
 				{
+					if (!IsColorBandSetUnique(colorBandSet.Name, colorBandSet.TargetIterations, colorBandSetCache))
+					{
+						colorBandSet.Name = Guid.NewGuid().ToString();
+					}
+
 					colorBandSetCache?.Add(colorBandSet.Id, colorBandSet);
 					jobReaderWriter.UpdateColorBandSet(jobId, colorBandSet.HighCutoff, cbsId);
 				}
@@ -631,6 +630,18 @@ namespace MSetRepo
 			jobCache?.Add(job.Id, job);
 
 			return job;
+		}
+
+		private bool IsColorBandSetUnique(string name, int targetIterations, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
+		{
+			if (colorBandSetCache == null) return false;
+
+
+			var foundOne = colorBandSetCache.Values.Any(x => x.TargetIterations == targetIterations && x.Name == name);
+
+			var isUnique = !foundOne;
+
+			return isUnique;
 		}
 
 		//public (ObjectId, MapCenterAndDelta)? GetSubdivisionIdAndMapAreaInfo(ObjectId jobId)
@@ -756,7 +767,9 @@ namespace MSetRepo
 		{
 			var updatedCbs = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 			updatedCbs.OwnerId = projectId;
-			InsertCbs(updatedCbs, colorBandSetReaderWriter);
+			var newId = InsertCbs(updatedCbs, colorBandSetReaderWriter);
+
+			Debug.Assert(newId == updatedCbs.Id, "The ColorBandSet Id was updated as it was inserted into the collection.");
 
 			return updatedCbs;
 		}
@@ -859,10 +872,19 @@ namespace MSetRepo
 
 			if (posterReaderWriter.TryGet(posterId, out var posterRecord))
 			{
-				var colorBandSets = GetColorBandSetsForOwner(posterId).ToList();
-				var jobs = GetAllJobsForOwner(posterId, colorBandSets);
-
 				var lookupColorMapByTargetIteration = JobOwnerHelper.CreateLookupColorMapByTargetIteration(posterRecord.TargetIterationColorMapRecords);
+
+				var colorBandSets = GetColorBandSetsForOwner(posterId).ToList();
+				var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
+				var jobs = GetAllJobsForOwner(posterId, colorBandSetCache);
+
+				colorBandSets = colorBandSetCache.Values.ToList();
+
+				if (colorBandSets.Count == 0)
+				{
+					throw new InvalidOperationException($"The Poster: {posterId}/{posterRecord.Name} has no ColorBandSets.");
+				}
+
 				var updateWasMade = JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration, "as the poster is being retrieved");
 
 				poster = AssemblePoster(posterRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, posterRecord.LastSavedUtc);
@@ -890,10 +912,19 @@ namespace MSetRepo
 			{
 				var posterId = posterRecord.Id;
 
-				var colorBandSets = GetColorBandSetsForOwner(posterId).ToList();
-				var jobs = GetAllJobsForOwner(posterId, colorBandSets);
-
 				var lookupColorMapByTargetIteration = JobOwnerHelper.CreateLookupColorMapByTargetIteration(posterRecord.TargetIterationColorMapRecords);
+
+				var colorBandSets = GetColorBandSetsForOwner(posterId).ToList();
+				var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
+				var jobs = GetAllJobsForOwner(posterId, colorBandSetCache);
+
+				colorBandSets = colorBandSetCache.Values.ToList();
+
+				if (colorBandSets.Count == 0)
+				{
+					throw new InvalidOperationException($"The Poster: {posterId}/{posterRecord.Name} has no ColorBandSets.");
+				}
+
 				var updateWasMade = JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration, "as the poster is being retrieved");
 
 				poster = AssemblePoster(posterRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, posterRecord.LastSavedUtc);
@@ -963,7 +994,6 @@ namespace MSetRepo
 				throw new InvalidOperationException($"Cannot create a poster with name: {name}, a poster: {posterId} with that name already exists.");
 			}
 
-			JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration, "as the poster is being created");
 
 			var posterSizeRounded = posterSize.Round(MidpointRounding.AwayFromZero);
 
@@ -993,8 +1023,13 @@ namespace MSetRepo
 			{
 				cbs.OwnerId = posterId;
 				cbs.AssignNewSerialNumber();
-				if (cbs.Name == RMapConstants.NAME_FOR_NEW_PROJECTS) cbs.Name = name;
+				if (cbs.Name == RMapConstants.NAME_FOR_NEW_PROJECTS)
+					cbs.Name = name;
+
+				cbs.MarkAsDirty();
 			}
+
+			JobOwnerHelper.CreateLookupColorMapByTargetIteration(jobs, colorBandSets, lookupColorMapByTargetIteration, "as the poster is being created");
 
 			var result = AssemblePoster(posterRecord, jobs, colorBandSets, lookupColorMapByTargetIteration, DateTime.MinValue);
 
@@ -1195,6 +1230,8 @@ namespace MSetRepo
 			//DeleteUnusedColorBandSets();
 
 			//UpdateAllJobsWithMapCenterAndDelta();
+
+			//UpdateColorBandSetSchema();
 		}
 
 		//public void UpdateAllJobsWithMapCenterAndDelta()
@@ -1247,69 +1284,76 @@ namespace MSetRepo
 		//	return numUpdated;
 		//}
 
-		public int UpdateAllColorBandSets()
-		{
-			var result = 0;
+		//public int UpdateColorBandSetSchema()
+		//{
+		//	var result = _colorBandSetReaderWriter.UpdateColorBandSetSchema();
 
-			var lookupCbsByTargetIterations = new Dictionary<int, ColorBandSetRecord>();
+		//	return result;
+		//}
 
-			var cbsToDelete = new List<ObjectId>();
+		//public int UpdateAllColorBandSets()
+		//{
+		//	var result = 0;
 
-			var projectRecords = _posterReaderWriter.GetAll();
-			foreach (var projectRec in projectRecords)
-			{
-				var colorBandSetRecords = _colorBandSetReaderWriter.GetColorBandSetsForOwner(projectRec.Id);
-				foreach (var rec in colorBandSetRecords)
-				{
-					//rec.OwnerId = rec.ProjectId;
-					var dateCreated = rec.DateCreatedUtc;
+		//	var lookupCbsByTargetIterations = new Dictionary<int, ColorBandSetRecord>();
 
-					if (dateCreated == DateTime.MinValue)
-					{
-						dateCreated = rec.Id.CreationTime;
-						rec.DateCreatedUtc = dateCreated;
-					}
+		//	var cbsToDelete = new List<ObjectId>();
 
-					var targetIterations = rec.TargetIterations;
-					if (targetIterations == 0)
-					{
-						targetIterations = rec.ColorBandRecords.Max(x => x.CutOff);
-						rec.TargetIterations = targetIterations;
-					}
+		//	var projectRecords = _posterReaderWriter.GetAll();
+		//	foreach (var projectRec in projectRecords)
+		//	{
+		//		var colorBandSetRecords = _colorBandSetReaderWriter.GetColorBandSetsForOwner(projectRec.Id);
+		//		foreach (var rec in colorBandSetRecords)
+		//		{
+		//			//rec.OwnerId = rec.ProjectId;
+		//			var dateCreated = rec.DateCreatedUtc;
 
-					if (lookupCbsByTargetIterations.TryGetValue(targetIterations, out var existingRec))
-					{
-						if (existingRec.DateCreatedUtc <= dateCreated)
-						{
-							cbsToDelete.Add(existingRec.Id);
-							lookupCbsByTargetIterations[targetIterations] = rec;
-						}
-					}
-					else
-					{
-						lookupCbsByTargetIterations.Add(targetIterations, rec);
-					}
-				}
+		//			if (dateCreated == DateTime.MinValue)
+		//			{
+		//				dateCreated = rec.Id.CreationTime;
+		//				rec.DateCreatedUtc = dateCreated;
+		//			}
 
-				foreach (var id in cbsToDelete)
-				{
-					_colorBandSetReaderWriter.Delete(id);
-				}
+		//			var targetIterations = rec.TargetIterations;
+		//			if (targetIterations == 0)
+		//			{
+		//				targetIterations = rec.ColorBandRecords.Max(x => x.CutOff);
+		//				rec.TargetIterations = targetIterations;
+		//			}
 
-				foreach (var kvp in lookupCbsByTargetIterations)
-				{
-					var cbs = _mSetRecordMapper.MapFrom(kvp.Value);
-					_colorBandSetReaderWriter.UpdateDetails(cbs);
-				}
+		//			if (lookupCbsByTargetIterations.TryGetValue(targetIterations, out var existingRec))
+		//			{
+		//				if (existingRec.DateCreatedUtc <= dateCreated)
+		//				{
+		//					cbsToDelete.Add(existingRec.Id);
+		//					lookupCbsByTargetIterations[targetIterations] = rec;
+		//				}
+		//			}
+		//			else
+		//			{
+		//				lookupCbsByTargetIterations.Add(targetIterations, rec);
+		//			}
+		//		}
 
-				cbsToDelete.Clear();
-				lookupCbsByTargetIterations.Clear();
+		//		foreach (var id in cbsToDelete)
+		//		{
+		//			_colorBandSetReaderWriter.Delete(id);
+		//		}
 
-			}
+		//		foreach (var kvp in lookupCbsByTargetIterations)
+		//		{
+		//			var cbs = _mSetRecordMapper.MapFrom(kvp.Value);
+		//			_colorBandSetReaderWriter.UpdateDetails(cbs);
+		//		}
+
+		//		cbsToDelete.Clear();
+		//		lookupCbsByTargetIterations.Clear();
+
+		//	}
 
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public int DeleteUnusedColorBandSets()
 		{
@@ -1376,6 +1420,15 @@ namespace MSetRepo
 		#endregion
 
 		#region Old Schema Updates
+
+		[Conditional("DEBUG2")]
+		private void CompareMapAreaV1AfterRoundTrip(MapPositionSizeAndDelta previousValue, MapPositionSizeAndDelta newValue, MapCenterAndDelta middleValue)
+		{
+			Debug.WriteLine($"MapDisplay is RoundTripping MapAreaInfoV1" +
+				$"\nPrevious Scale: {previousValue.SamplePointDelta.Width}. Pos: {previousValue.Coords}. MapOffset: {previousValue.MapBlockOffset}. ImageOffset: {previousValue.CanvasControlOffset} Size: {previousValue.CanvasSize} " +
+				$"\nNew Scale     : {newValue.SamplePointDelta.Width}. Pos: {newValue.Coords}. MapOffset: {newValue.MapBlockOffset}. ImageOffset: {newValue.CanvasControlOffset} Size: {newValue.CanvasSize}" +
+				$"\nIntermediate     : {middleValue.SamplePointDelta.Width}. Pos: {middleValue.MapCenter}. MapOffset: {middleValue.MapBlockOffset}. ImageOffset: {middleValue.CanvasControlOffset}");
+		}
 
 		//public long UpdateAllJobsToUseMapPositionSizeAndDelta()
 		//{

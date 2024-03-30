@@ -29,6 +29,8 @@ namespace MSS.Common.MSet
 			Label = "Empty";
 			MapAreaInfo = new MapCenterAndDelta();
 			ColorBandSetId = ObjectId.Empty;
+			ColorBandSetName = string.Empty;
+			ColorBandSetVersion = null;
 			MapCalcSettings = new MapCalcSettings();
 			DateCreatedUtc = DateTime.UtcNow;
 		}
@@ -43,7 +45,9 @@ namespace MSS.Common.MSet
 
 			MapCenterAndDelta mapAreaInfo,
 
-			ObjectId colorBandSetId,
+			//ObjectId colorBandSetId,
+			string colorBandSetName,
+			int? colorBandSetVersion,
 			MapCalcSettings mapCalcSettings
 			)
 
@@ -58,7 +62,9 @@ namespace MSS.Common.MSet
 
 				  mapAreaInfo,
 
-				  colorBandSetId,
+				  //colorBandSetId,
+				  colorBandSetName,
+				  colorBandSetVersion,
 				  mapCalcSettings,
 				  dateCreatedUtc: DateTime.UtcNow,
 				  lastSavedUtc: DateTime.UtcNow
@@ -79,7 +85,10 @@ namespace MSS.Common.MSet
 
 			MapCenterAndDelta mapAreaInfo,
 
-			ObjectId colorBandSetId,
+			//ObjectId colorBandSetId,
+			string colorBandSetName,
+			int? colorBandSetVersion,
+
 			MapCalcSettings mapCalcSettings,
 			DateTime dateCreatedUtc,
 			DateTime lastSavedUtc
@@ -105,7 +114,9 @@ namespace MSS.Common.MSet
 
 			MapAreaInfo = mapAreaInfo;
 
-			_colorBandSetId = colorBandSetId;
+			_colorBandSetId = ObjectId.Empty;
+			ColorBandSetName = colorBandSetName;
+			ColorBandSetVersion = colorBandSetVersion;
 			MapCalcSettings = mapCalcSettings;
 
 			DateCreatedUtc = dateCreatedUtc;
@@ -192,6 +203,10 @@ namespace MSS.Common.MSet
 			}
 		}
 
+		public string ColorBandSetName { get; init; }
+
+		public int? ColorBandSetVersion { get; set; }
+
 		public MapCalcSettings MapCalcSettings { get; init; }
 
 		public DateTime LastSavedUtc
@@ -239,7 +254,8 @@ namespace MSS.Common.MSet
 		public Job Clone()
 		{
 			var result = new Job(Id, OwnerId, JobOwnerType, ParentJobId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
-				ColorBandSetId, MapCalcSettings.Clone(), DateCreatedUtc, LastSavedUtc)
+				//ColorBandSetId, 
+				ColorBandSetName, ColorBandSetVersion, MapCalcSettings.Clone(), DateCreatedUtc, LastSavedUtc)
 			{
 				OnFile = OnFile,
 				IsOnPreferredPath = IsOnPreferredPath
@@ -254,7 +270,9 @@ namespace MSS.Common.MSet
 		public Job CreateNewCopy()
 		{
 			var result = new Job(ObjectId.GenerateNewId(), OwnerId, JobOwnerType, ParentJobId, Label, TransformType, NewArea, MapAreaInfo.Clone(),
-				ColorBandSetId, MapCalcSettings.Clone(), DateTime.UtcNow, DateTime.UtcNow)
+				//ColorBandSetId,
+				ColorBandSetName, ColorBandSetVersion,
+				MapCalcSettings.Clone(), DateTime.UtcNow, DateTime.UtcNow)
 			{
 				OnFile = false,
 			};

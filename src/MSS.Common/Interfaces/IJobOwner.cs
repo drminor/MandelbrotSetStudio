@@ -25,6 +25,7 @@ namespace MSS.Common.MSet
 		bool OnFile { get; }
 		bool IsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
+		ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; }
 
 		List<TargetIterationColorMapRecord> GetTargetIterationColorMapRecords();
 

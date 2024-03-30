@@ -348,7 +348,7 @@ namespace MSetExplorer
 				Debug.WriteLine($"WARNING: Job's ColorMap HighCutoff doesn't match the TargetIterations. At ProjectStartNew.");
 			}
 
-			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Name, colorBandSet.Version, mapCalcSettings);
 			Debug.WriteLine($"Starting Job with new coords: {mapAreaInfo}TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
 			var project = new Project(name, description: null, job, colorBandSet);
@@ -482,18 +482,21 @@ namespace MSetExplorer
 				throw new InvalidOperationException("Cannot create a poster, the current job is empty.");
 			}
 
-			var colorBandSet = CurrentProject.CurrentColorBandSet;
+			var colorBandSet = CurrentProject.CurrentColorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 
 			var sourceJobId = curJob.Id;
 
 			// Create a copy of the current job, commit it to the repo and get the new job with the updated Id on file.
 			var newCopy = curJob.CreateNewCopy();
+			newCopy.ColorBandSetId = colorBandSet.Id;
 			newCopy.JobOwnerType = OwnerType.Poster;
 			newCopy.TransformType = TransformType.Home;
 			var newJobId = _projectAdapter.InsertJob(newCopy);
 			var job = _projectAdapter.GetJob(newJobId);
 
 			Debug.WriteLine($"Starting job for new Poster: SourceJobId: {sourceJobId} with Position&Delta: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
+
+			
 
 			var dict = JobOwnerHelper.CreateLookupColorMapByTargetIteration(job, colorBandSet);
 
@@ -509,6 +512,7 @@ namespace MSetExplorer
 				poster = newPoster;
 
 				// This will update the OwnerId of the new Job and ColorBandSet and commit the updates to the repo.
+				poster.MarkAsDirty();
 				_ = JobOwnerHelper.SavePoster(poster, _projectAdapter);
 				
 				return true;
@@ -679,10 +683,13 @@ namespace MSetExplorer
 				throw new InvalidOperationException($"AddNewCoordinateUpdateJob does not support a TransformType of {transformType}.");
 			}
 
-			var colorBandSetId = currentJob.ColorBandSetId;
+			//var colorBandSetId = currentJob.ColorBandSetId;
+			var colorBandSetName = currentJob.ColorBandSetName;
+			var colorBandSetVersion = currentJob.ColorBandSetVersion;
+
 			var mapCalcSettings = currentJob.MapCalcSettings;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, newMapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newArea: null);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, newMapAreaInfo, colorBandSetName, colorBandSetVersion, mapCalcSettings, transformType, newArea: null);
 
 			Debug.WriteLine($"Adding Project Job with new coords: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -706,7 +713,10 @@ namespace MSetExplorer
 			var transformType = TransformType.IterationUpdate;
 			var newScreenArea = new RectangleInt();
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings, transformType, newScreenArea);
+			var colorBandSetName = colorBandSet.Name;
+			var colorBandSetVersion = colorBandSet.Version;
+
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSetName, colorBandSetVersion, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Project Job with new target iterations: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
@@ -726,9 +736,12 @@ namespace MSetExplorer
 			var transformType = TransformType.CalcSettingsUpdate;
 			var newScreenArea = new RectangleInt();
 
-			var colorBandSetId = currentJob.ColorBandSetId;
+			//var colorBandSetId = currentJob.ColorBandSetId;
+			var colorBandSetName = currentJob.ColorBandSetName;
+			var colorBandSetVersion = currentJob.ColorBandSetVersion;
 
-			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+			//var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSetName, colorBandSetVersion, mapCalcSettings, transformType, newScreenArea);
 
 			Debug.WriteLine($"Adding Project Job with MapCalcSettings: {mapCalcSettings}. TransformType: {job.TransformType}.");
 

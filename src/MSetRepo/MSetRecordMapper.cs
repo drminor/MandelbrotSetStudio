@@ -59,16 +59,15 @@ namespace MSetRepo
 
 		public ColorBandSetRecord MapTo(ColorBandSet source)
 		{
-			var result = new ColorBandSetRecord(source.ParentId, source.OwnerId, source.Name, source.Description, source.Select(x => MapTo(x)).ToArray())
+			var result = new ColorBandSetRecord(source.ParentId, source.OwnerId, source.Name, source.Description, source.ColorBandsSerialNumber, source.Select(x => MapTo(x)).ToArray(), source.TargetIterations, source.Version)
 			{ 
 				Id = source.Id,
 				DateCreatedUtc = source.DateCreatedUtc,
 				DateRecordLastSavedUtc = source.DateRecordLastSavedUtc,
 				DateLastUsedUtc = source.DateRecordLastUsedUtc,
-				TargetIterations = source.TargetIterations,
 				UsingPercentages = source.UsingPercentages,
-				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray(),
-				ColorBandsSerialNumber = source.ColorBandsSerialNumber
+				ReservedColorBandRecords = source.GetReservedColorBands().Select(x => MapTo(x)).ToArray()
+				//ColorBandsSerialNumber = source.ColorBandsSerialNumber
 			};
 
 			return result;
@@ -85,7 +84,7 @@ namespace MSetRepo
 			}
 
 			var result = new ColorBandSet(
-				target.Id, target.ParentId, target.OwnerId, target.Name, target.Description,
+				target.Id, target.ParentId, target.OwnerId, target.Name, target.Version, target.Description,
 				colorBands, targetIterations, target.UsingPercentages,
 				target.ReservedColorBandRecords?.Select(x => MapFrom(x)),
 				target.ColorBandsSerialNumber,

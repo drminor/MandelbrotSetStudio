@@ -252,7 +252,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapCalcSettings = new MapCalcSettings(targetIterations, threshold, UseEscapeVelocities, SaveTheZValues);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(Guid.NewGuid().ToString(), mapCalcSettings.TargetIterations, usePercentages: false);
 
-			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Name, colorBandSet.Version, mapCalcSettings);
 
 			_currentMsrJob = RunTest(job, _nextMapLoaderJobNumber++, new SizeDbl(canvasSize));
 
@@ -310,7 +310,7 @@ namespace MSetExplorer.XPoc.PerformanceHarness
 			var mapCalcSettings = new MapCalcSettings(targetIterations, threshold, UseEscapeVelocities, SaveTheZValues);
 			var colorBandSet = RMapConstants.BuildInitialColorBandSet(Guid.NewGuid().ToString(), mapCalcSettings.TargetIterations, usePercentages: false);
 			
-			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Id, mapCalcSettings);
+			var job = _mapJobHelper.BuildHomeJob(OwnerType.Project, mapAreaInfo, colorBandSet.Name, colorBandSet.Version, mapCalcSettings);
 
 			_currentMsrJob = RunTest(job, _nextMapLoaderJobNumber++, new SizeDbl(canvasSize));
 		}

@@ -23,7 +23,9 @@ namespace MSS.Common.MSet
 		private string _name;
 		private string? _description;
 
+		private ObservableCollection<JobTreeNode>? _jobItems;
 		private readonly IJobTree _jobTree;
+
 
 		private readonly List<ColorBandSet> _colorBandSets;
 		private readonly IDictionary<int, TargetIterationColorMapRecord> _lookupColorMapByTargetIteration;
@@ -73,8 +75,6 @@ namespace MSS.Common.MSet
 		//{
 		//	OnFile = false;
 		//}
-
-
 
 		public Project(ObjectId id, string name, string? description, 
 			List<Job> jobs, 
@@ -166,8 +166,6 @@ namespace MSS.Common.MSet
 		#region Public Properties
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
-
-		private ObservableCollection<JobTreeNode>? _jobItems;
 
 		public ObservableCollection<JobTreeNode>? JobNodes
 		{
@@ -303,47 +301,6 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		//public ColorBandSet CurrentColorBandSet
-		//{
-		//	get => _colorBandSets.FirstOrDefault(x => x.Id == CurrentJob.ColorBandSetId) ?? new ColorBandSet(Name, CurrentJob.MapCalcSettings.TargetIterations);
-		//	set
-		//	{
-		//		if (!CurrentJob.IsEmpty)
-		//		{
-		//			var newCbs = value;
-
-		//			if (newCbs.Id != CurrentJob.ColorBandSetId)
-		//			{
-		//				if (!_colorBandSets.Contains(newCbs))
-		//				{
-		//					if (newCbs.ProjectId != Id)
-		//					{
-		//						// Make a copy of the incoming ColorBandSet
-		//						// and set it's ProjectId to this Project's Id
-		//						// and give it a new SerialNumber.
-		//						newCbs = newCbs.CreateNewCopy();
-		//						newCbs.AssignNewSerialNumber();
-		//						newCbs.ProjectId = Id;
-		//					}
-
-		//					_colorBandSets.Add(newCbs);
-		//				}
-
-		//				JobOwnerHelper.AddIteratationColorMapRecord(newCbs, _lookupColorMapByTargetIteration, makeDefault: true);
-
-		//				CurrentJob.ColorBandSetId = newCbs.Id;
-		//				LastUpdatedUtc = DateTime.UtcNow;
-
-		//				OnPropertyChanged(nameof(CurrentColorBandSet));
-		//			}
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"Not setting the CurrentColorBandSet, the CurrentJob is empty.");
-		//		}
-		//	}
-		//}
-
 		public ColorBandSet CurrentColorBandSet
 		{
 			get => _currentColorBandSet;
@@ -353,19 +310,25 @@ namespace MSS.Common.MSet
 				{
 					var newCbs = value;
 
-					if (!_colorBandSets.Contains(newCbs))
+					if (!ColorBandSetExists(newCbs.Name, newCbs.TargetIterations))
 					{
 						if (newCbs.OwnerId != Id)
 						{
-							// Make a copy of the incoming ColorBandSet
-							// and set it's ProjectId to this Project's Id
-							// and give it a new SerialNumber.
+							// Make a copy of the incoming ColorBandSet,
+							// set it's OwnerId to this Project's Id and
+							// give it a new SerialNumber.
 							newCbs = newCbs.CreateNewCopy(ObjectId.GenerateNewId());
 							newCbs.AssignNewSerialNumber();
 							newCbs.OwnerId = Id;
 						}
 
 						_colorBandSets.Add(newCbs);
+					}
+					else
+					{
+						// TODO: Fix Me!!
+						Debug.WriteLine("Not adding the new Value!!!");
+						// Remove the existing ColorBandSet, replacing it with this new value and update all jobs that reference the old with a reference to the new.
 					}
 
 					JobOwnerHelper.AddIteratationColorMapRecord(newCbs, _lookupColorMapByTargetIteration, makeDefault: true);
@@ -413,20 +376,22 @@ namespace MSS.Common.MSet
 
 		//TODO: Add a "PreferredPath property to the Project class.
 
+		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; }
+
 		#endregion
 
 		#region Public Methods
 
 		public void Add(Job job)
 		{
-			var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
+			//var colorBandSet = _colorBandSets.FirstOrDefault(x => x.Id == job.ColorBandSetId);
 
-			if (colorBandSet == null) 
-			{
-				throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
-			}
+			//if (colorBandSet == null) 
+			//{
+			//	throw new InvalidOperationException("Cannot add this job, the job's ColorBandSet has not yet been added.");
+			//}
 
-			JobOwnerHelper.AddIteratationColorMapRecord(colorBandSet, _lookupColorMapByTargetIteration, makeDefault:true);
+			//JobOwnerHelper.AddIteratationColorMapRecord(colorBandSet, _lookupColorMapByTargetIteration, makeDefault:true);
 
 			_ = _jobTree.Add(job, selectTheAddedItem: true);
 
@@ -435,7 +400,7 @@ namespace MSS.Common.MSet
 
 		public void Add(ColorBandSet colorBandSet, bool makeDefault)
 		{
-			if (!_colorBandSets.Any(x => x.Id == colorBandSet.Id))
+			if (!ColorBandSetExists(colorBandSet.Name, colorBandSet.TargetIterations))
 			{
 				_colorBandSets.Add(colorBandSet);
 			}
@@ -568,6 +533,12 @@ namespace MSS.Common.MSet
 		{
 			var result = _colorBandSets.FirstOrDefault(x => x.Name == name && x.TargetIterations == targetIterations);
 			return result;
+		}
+
+		public bool ColorBandSetExists(string name, int targetIterations)
+		{
+			var exists = _colorBandSets.Any(x => x.TargetIterations == targetIterations && x.Name == name);
+			return exists;
 		}
 
 		public JobPathType? GetCurrentPath() => _jobTree.GetCurrentPath();

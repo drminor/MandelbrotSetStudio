@@ -37,11 +37,11 @@ namespace ProjectRepo.Entities
 		public DateTime DateCreatedUtc { get; set; }	// TODO_schema: Add DateCreatedUtc to JobRecord
 		public DateTime? LastSaved { get; set; }        // TODO_schema: Remove the LastSaved from all Jobs on file.
 
-		// TODO_schema: Remove the IterationUpdates and ColorMapUpdates fields from all Jobs on file.
+		public string ColorBandSetName { get; set; } = string.Empty;	// TODO_schema: Add ColorBandSetName and Version to JobRecord
+		public int? ColorBandSetVersion { get; set; }					// And removed the ColorBandSetId
 
-		//public IterationUpdateRecord[]? IterationUpdates { get; set; }
 
-		//public TargetIterationColorMapRecord[]? ColorMapUpdates { get; set; }
+
 	}
 
 }
