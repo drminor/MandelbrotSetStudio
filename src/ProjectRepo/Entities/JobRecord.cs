@@ -39,7 +39,7 @@ namespace ProjectRepo.Entities
 		//public MapAreaInfo2Record MapCenterAndDeltaRecord { get; set; } = MapAreaInfo2Record.CreateEmpty();
 
 		public DateTime DateCreatedUtc { get; set; }    // TODO_schema: Add DateCreatedUtc to JobRecord
-		//public DateTime? LastSaved { get; set; }        // TODO_schema: Remove the LastSaved from all Jobs on file.
+		public DateTime? LastSaved { get; set; }        // TODO_schema: Remove the LastSaved from all Jobs on file.
 
 
 		public ObjectId ColorBandSetId { get; set; } = ObjectId.Empty;

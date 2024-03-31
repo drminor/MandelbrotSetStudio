@@ -657,9 +657,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public ColorBandSet? GetColorBandSet(string name, int targetIterations)
+		public ColorBandSet? GetColorBandSet(string name, int targetIterations, int? version)
 		{
-			var result = CurrentPoster?.GetColorBandSet(name, targetIterations);
+			var result = CurrentPoster?.GetColorBandSet(name, targetIterations, version);
 			return result;
 		}
 

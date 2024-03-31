@@ -11,6 +11,7 @@ using System.Text;
 
 namespace MSS.Types
 {
+	[DebuggerDisplay("{ToString(1)}")]
 	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet?>, INotifyPropertyChanged, ICloneable
 	{
 		#region Private Fields
@@ -158,7 +159,7 @@ namespace MSS.Types
 			}
 		}
 
-		public int Version { get; set; }
+		public int Version { get; init; }
 
 		public string? Description
 		{
@@ -943,9 +944,28 @@ namespace MSS.Types
 
 		public bool Equals(ColorBandSet? other)
 		{
-			return other != null
-				&& Id.Equals(other.Id)
-				&& LastUpdatedUtc == other.LastUpdatedUtc;
+			//return other != null
+			//	&& Id.Equals(other.Id)
+			//	&& LastUpdatedUtc == other.LastUpdatedUtc;
+
+			if (other == null)
+			{
+				return false;
+			}
+
+			if (Id.Equals(other.Id))
+			{
+				if (LastUpdatedUtc == other.LastUpdatedUtc)
+				{
+					return true;
+				}
+				else
+				{
+					Debug.WriteLine($"ColorBandSet Equals found a different LastUpdated value for the same Id. Ours: {LastUpdatedUtc}, Other: {other.LastUpdatedUtc}.");
+				}
+			}
+
+			return false;
 		}
 
 		public bool Equals(ColorBandSet? x, ColorBandSet? y)

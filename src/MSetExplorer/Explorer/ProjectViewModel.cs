@@ -498,9 +498,11 @@ namespace MSetExplorer
 
 			Debug.WriteLine($"Starting job for new Poster: SourceJobId: {sourceJobId} with Position&Delta: {job.MapAreaInfo.PositionAndDelta}. TransformType: {job.TransformType}. SamplePointDelta: {job.Subdivision.SamplePointDelta}, CanvasControlOffset: {job.CanvasControlOffset}");
 
-			var dict = JobOwnerHelper.CreateLookupColorMapByTargetIteration(job, colorBandSet);
+			//var dict = JobOwnerHelper.CreateLookupColorMapByTargetIteration(job, colorBandSet);
 
-			var newPoster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet }, dict);
+			var timcrs = new List<TargetIterationColorMapRecord> { new TargetIterationColorMapRecord(job.MapCalcSettings.TargetIterations, colorBandSet.Id, colorBandSet.DateCreatedUtc) };
+
+			var newPoster = _projectAdapter.CreatePoster(name, description, posterSize, sourceJobId, new List<Job> { job }, new List<ColorBandSet>{ colorBandSet }, timcrs);
 
 			if (newPoster == null)
 			{
@@ -626,9 +628,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public ColorBandSet? GetColorBandSet(string name, int targetIterations)
+		public ColorBandSet? GetColorBandSet(string name, int targetIterations, int? version)
 		{
-			var result = CurrentProject?.GetColorBandSet(name, targetIterations);
+			var result = CurrentProject?.GetColorBandSet(name, targetIterations, version);
 			return result;
 		}
 

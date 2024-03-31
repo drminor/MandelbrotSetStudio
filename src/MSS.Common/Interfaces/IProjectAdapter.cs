@@ -15,8 +15,8 @@ namespace MSS.Common
 		bool ProjectCollectionIsEmpty();
 
 		//Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
-		Project? CreateProject(string name, string? description, List<Job> jobs, List<ColorBandSet> colorBandSets, 
-			Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration);
+		Project? CreateProject(string name, string? description, List<Job> jobs, List<ColorBandSet> colorBandSets,
+			IEnumerable<TargetIterationColorMapRecord>? targetIterationColorMapRecords);
 
 		List<Job> GetAllJobsForOwner(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
 		List<ObjectId> GetAllJobIdsForProject(ObjectId projectId);
@@ -35,7 +35,7 @@ namespace MSS.Common
 		IEnumerable<IProjectInfo> GetAllProjectInfos();
 
 		Poster? CreatePoster(string name, string? description, SizeDbl posterSize, ObjectId sourceJobId, List<Job> jobs, List<ColorBandSet> colorBandSets,
-			Dictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration);
+			IEnumerable<TargetIterationColorMapRecord> targetIterationColorMapRecords);
 
 		List<Poster> GetAllPosters();
 		List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
@@ -61,7 +61,11 @@ namespace MSS.Common
 		bool DeleteJob(ObjectId jobId);
 
 		void InsertColorBandSet(ColorBandSet colorBandSet);
-		ColorBandSet? GetColorBandSet(string id);
+		//ColorBandSet? GetColorBandSet(string id);
+
+		bool ColorBandSetExists(string name);
+		//bool TryGetColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
+
 		IEnumerable<ColorBandSet> GetColorBandSetsForOwner(ObjectId projectId);
 		//long DeleteColorBandSetsForProject(ObjectId projectId);
 		bool DeleteColorBandSet(ObjectId colorBandSetId);
@@ -87,8 +91,8 @@ namespace MSS.Common
 
 		void UpdatePosterDisplayPositionAndZoom(Poster poster);
 
-		bool ColorBandSetExists(string name);
-		bool TryGetColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet);
+
+		
 		IEnumerable<ColorBandSetInfo> GetAllColorBandSetInfosForProject(ObjectId projectId);
 		ColorBandSetInfo? GetColorBandSetInfo(ObjectId id);
 	}

@@ -56,7 +56,7 @@ namespace MSetExplorer
 		bool TryCreatePoster(string name, string? description, SizeDbl posterSize, [NotNullWhen(true)] out Poster? poster);
 
 		ColorBandSet? GetColorBandSet(ObjectId id);
-		ColorBandSet? GetColorBandSet(string name, int targetIterations);
+		ColorBandSet? GetColorBandSet(string name, int targetIterations, int? version);
 		List<ColorBandSetInfo> GetColorBandSetInfos();
 
 		void CheckProjectViewModelTargetIterations();

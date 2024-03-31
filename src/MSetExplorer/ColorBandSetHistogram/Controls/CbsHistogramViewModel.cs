@@ -214,7 +214,7 @@ namespace MSetExplorer
 					{
 						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
 						IsDirty = false;
-						_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
+						_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 
 						_mapSectionHistogramProcessor.Clear(value.HighCutoff);
 						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
@@ -822,7 +822,7 @@ namespace MSetExplorer
 
 			Debug.Assert(_currentColorBandSet.IsDirty, "ColorBandSetViewModel:ApplyChanges is being called, but the current ColorBandSet is not dirty.");
 
-			var newSet = _currentColorBandSet.CreateNewCopy();
+			var newSet = _currentColorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 
 			ApplyChangesInt(newSet, targetIterationsIsUpdated: false);
 		}
@@ -2073,7 +2073,7 @@ namespace MSetExplorer
 
 				if (ApplyNewCutoffs(cutoffBands, histCutoffsSnapShot.ColorBandSetId))
 				{
-					var newColorBandSet = _currentColorBandSet.CreateNewCopy();
+					var newColorBandSet = _currentColorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
 					ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newColorBandSet, isPreview: true));
 				}
 				else

@@ -365,7 +365,7 @@ namespace MSS.Common.MSet
 				{
 					var newCbs = value;
 
-					if (!_colorBandSets.Contains(newCbs))
+					if (!ColorBandSetExists(newCbs))
 					{
 						if (newCbs.OwnerId != Id)
 						{
@@ -377,6 +377,10 @@ namespace MSS.Common.MSet
 							newCbs.OwnerId = Id;
 						}
 						_colorBandSets.Add(newCbs);
+					}
+					else
+					{
+						Debug.WriteLine("Not adding the new Value!!!");
 					}
 
 					JobOwnerHelper.AddIteratationColorMapRecord(newCbs, _lookupColorMapByTargetIteration, makeDefault: true);
@@ -450,7 +454,10 @@ namespace MSS.Common.MSet
 
 		public void Add(ColorBandSet colorBandSet, bool makeDefault)
 		{
-			_colorBandSets.Add(colorBandSet);
+			if (!ColorBandSetExists(colorBandSet))
+			{
+				_colorBandSets.Add(colorBandSet);
+			}
 
 			JobOwnerHelper.AddIteratationColorMapRecord(colorBandSet, _lookupColorMapByTargetIteration, makeDefault);
 
@@ -514,11 +521,27 @@ namespace MSS.Common.MSet
 			return result;
 		}
 
-		public ColorBandSet? GetColorBandSet(string name, int targetIterations)
+		public ColorBandSet? GetColorBandSet(string name, int targetIterations, int? version)
 		{
-			var result = _colorBandSets.FirstOrDefault(x => x.Name == name && x.TargetIterations == targetIterations);
+			ColorBandSet? result;
+			if (version.HasValue)
+			{
+				result = _colorBandSets.FirstOrDefault(x => x.Name == name && x.TargetIterations == targetIterations && x.Version == version.Value);
+			}
+			else
+			{
+				result = _colorBandSets.FirstOrDefault(x => x.Name == name && x.TargetIterations == targetIterations);
+			}
+
 			return result;
 		}
+
+		public bool ColorBandSetExists(ColorBandSet colorBandSet)
+		{
+			var exists = _colorBandSets.Any(x => x.TargetIterations == colorBandSet.TargetIterations && x.Name == colorBandSet.Name && x.Version == colorBandSet.Version);
+			return exists;
+		}
+
 
 		public JobPathType? GetCurrentPath() => _jobTree.GetCurrentPath();
 		public JobPathType? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);

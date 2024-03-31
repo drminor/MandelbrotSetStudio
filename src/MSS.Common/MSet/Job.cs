@@ -20,6 +20,7 @@ namespace MSS.Common.MSet
 		//private ObjectId _colorBandSetId;
 
 		private DateTime _lastSavedUtc;
+		private DateTime _lastUpdatedUtc;
 
 		#region Constructor
 
@@ -209,6 +210,8 @@ namespace MSS.Common.MSet
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 
+		public int TargetIterations => MapCalcSettings.TargetIterations;
+
 		public DateTime LastSavedUtc
 		{
 			get => _lastSavedUtc;
@@ -219,8 +222,6 @@ namespace MSS.Common.MSet
 				OnFile = true;
 			}
 		}
-
-		private DateTime _lastUpdatedUtc;
 
 		public DateTime LastUpdatedUtc
 		{

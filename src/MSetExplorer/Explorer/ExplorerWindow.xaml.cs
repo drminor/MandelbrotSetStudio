@@ -722,7 +722,7 @@ namespace MSetExplorer
 
 					if (overwriteExisting.HasValue)
 					{
-						var cbsToOverWrite = _vm.ProjectViewModel.GetColorBandSet(colorBandSet.Name, colorBandSet.TargetIterations);
+						var cbsToOverWrite = _vm.ProjectViewModel.GetColorBandSet(colorBandSet.Name, colorBandSet.TargetIterations, colorBandSet.Version);
 						if (cbsToOverWrite == null)
 						{
 							throw new InvalidOperationException("Cannot find the ColorBandSet to overwrite.");
