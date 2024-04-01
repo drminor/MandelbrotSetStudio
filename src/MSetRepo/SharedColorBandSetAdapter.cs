@@ -62,6 +62,11 @@ namespace MSetRepo
 			if (sharedColorsReaderWriter.TryGet(colorBandSetId, out var colorBandSetRecord))
 			{
 				colorBandSet = _mSetRecordMapper.MapFrom(colorBandSetRecord);
+
+				// Creating a new copy to have it's OnFile property set to false.
+				colorBandSet = colorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
+				colorBandSet.ParentId = colorBandSetRecord.Id;
+
 				return true;
 			}
 			else

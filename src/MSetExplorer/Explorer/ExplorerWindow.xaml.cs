@@ -1616,6 +1616,7 @@ namespace MSetExplorer
 				if (colorBandSetOpenSaveViewModel.TryImportColorBandSet(colorBandSetId.Value, out var colorBandSet))
 				{
 					adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+					adjustedColorBandSet.OwnerId = _vm.ProjectViewModel.CurrentJob.OwnerId;
 					return true;
 				}
 				else

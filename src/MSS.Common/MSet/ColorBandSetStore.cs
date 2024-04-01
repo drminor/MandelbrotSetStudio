@@ -19,6 +19,8 @@ namespace MSS.Common
 		private readonly IDictionary<int, TargetIterationColorMapRecord> _lookupColorBandSetByTargetIteration;
 		private ColorBandSet _currentColorBandSet;
 
+
+
 		public ColorBandSetStore()
 			: this(new ColorBandSet())
 		{ }
@@ -57,6 +59,8 @@ namespace MSS.Common
 		}
 
 		#region Public Properties
+
+		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; }
 
 		public ColorBandSet CurrentColorBandSet
 		{
@@ -98,26 +102,6 @@ namespace MSS.Common
 
 		#region Public Methods
 
-		// Returns true if the default was updated.
-		public bool MakeDefault(ColorBandSet colorBandSet)
-		{
-			if (_lookupColorBandSetByTargetIteration.TryGetValue(colorBandSet.TargetIterations, out var ticmr))
-			{
-				if (colorBandSet.Id == ticmr.ColorBandSetId)
-				{
-					return false;
-				}
-
-				_lookupColorBandSetByTargetIteration[colorBandSet.TargetIterations] = new TargetIterationColorMapRecord(colorBandSet.TargetIterations, colorBandSet.Id, colorBandSet.DateCreatedUtc);
-			}
-			else
-			{
-				_lookupColorBandSetByTargetIteration.Add(colorBandSet.TargetIterations, new TargetIterationColorMapRecord(colorBandSet.TargetIterations, colorBandSet.Id, colorBandSet.DateCreatedUtc));
-
-			}
-
-			return true;
-		}
 
 		public List<TargetIterationColorMapRecord> GetTargetIterationColorMapRecords()
 		{
@@ -186,13 +170,52 @@ namespace MSS.Common
 
 		public ColorBandSet Load(string name, int? version, int targetIterations, out bool wasUpdated)
 		{
-			var result = JobOwnerHelper.FindOrCreateColorBandSet(name, version, targetIterations, _colorBandSets, out wasUpdated, out _);
+			ColorBandSet result;
+
+			if (ColorBandSetResolutionStrategy == ColorBandSetResolutionStrategy.PerProject)
+			{
+				var testResult = JobOwnerHelper.LoadColorBandSet(CurrentColorBandSet, targetIterations, "Updating the CurrentColorBandSet", _colorBandSets, _lookupColorBandSetByTargetIteration);
+
+				if (testResult == null)
+				{
+					result = JobOwnerHelper.FindOrCreateColorBandSet(name, version, targetIterations, _colorBandSets, out wasUpdated, out _);
+				}
+				else
+				{
+					wasUpdated = false;
+					result = testResult;
+				}
+			}
+			else
+			{
+				result = JobOwnerHelper.FindOrCreateColorBandSet(name, version, targetIterations, _colorBandSets, out wasUpdated, out _);
+			}
 
 			CurrentColorBandSet = result;
 
 			return result;
 		}
 
+		// Returns true if the default was updated.
+		public bool MakeDefault(ColorBandSet colorBandSet)
+		{
+			if (_lookupColorBandSetByTargetIteration.TryGetValue(colorBandSet.TargetIterations, out var ticmr))
+			{
+				if (colorBandSet.Id == ticmr.ColorBandSetId)
+				{
+					return false;
+				}
+
+				_lookupColorBandSetByTargetIteration[colorBandSet.TargetIterations] = new TargetIterationColorMapRecord(colorBandSet.TargetIterations, colorBandSet.Id, colorBandSet.DateCreatedUtc);
+			}
+			else
+			{
+				_lookupColorBandSetByTargetIteration.Add(colorBandSet.TargetIterations, new TargetIterationColorMapRecord(colorBandSet.TargetIterations, colorBandSet.Id, colorBandSet.DateCreatedUtc));
+
+			}
+
+			return true;
+		}
 
 		#endregion
 

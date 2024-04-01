@@ -269,7 +269,6 @@ namespace MSS.Common.MSet
 						}
 
 						var targetIterations = value.MapCalcSettings.TargetIterations;
-
 						_colorBandSetStore.Load(value.ColorBandSetName, value.ColorBandSetVersion, targetIterations, out var wasUpdated);
 
 						if (wasUpdated)
@@ -370,6 +369,11 @@ namespace MSS.Common.MSet
 			{
 				if (value != CurrentColorBandSet)
 				{
+					if (value.OwnerId != Id)
+					{
+						Debug.WriteLine("WARNING: The new ColorBandSet has a different OwnerId.");
+					}
+
 					_colorBandSetStore.CurrentColorBandSet = value;
 					LastUpdatedUtc = DateTime.UtcNow;
 

@@ -98,16 +98,12 @@ namespace MSetRepo
 
 				if (colorBandSets.Count == 0)
 				{
-					colorBandSets.Add(new ColorBandSet(projectRecord.Name ?? projectRecord.ProjectNameTemporary, null, 1000, Guid.NewGuid()));
+					var newCbs = new ColorBandSet(projectRecord.Name ?? projectRecord.ProjectNameTemporary, null, 1000, Guid.NewGuid());
+					newCbs.OwnerId = projectRecord.Id;
+					colorBandSets.Add(newCbs);
 				}
 
-				//var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
-
 				var jobs = GetAllJobsForOwner(projectRecord.Id);
-
-				//// TODO: Remove this 2nd call to GetColorBandSetsForProject
-				//colorBandSets = GetColorBandSetsForOwner(projectRecord.Id).ToList();
-				//colorBandSets = colorBandSetCache.Values.ToList();
 
 				var lookupColorBandSetByTargetIteration = JobOwnerHelper.PopulateColorBandSetsByTargetIteration(jobs, colorBandSets, projectRecord.TargetIterationColorMapRecords, "as the project is being retrieved", out var updateWasMade);
 				project = AssembleProject(projectRecord, jobs, colorBandSets, lookupColorBandSetByTargetIteration, projectRecord.LastSavedUtc, projectRecord.LastAccessedUtc);
@@ -128,8 +124,6 @@ namespace MSetRepo
 
 		public Project? CreateProject(string name, string? description, List<Job> jobs, List<ColorBandSet> colorBandSets, IEnumerable<TargetIterationColorMapRecord>? targetIterationColorMapRecords)
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
 			if (!_projectReaderWriter.ProjectExists(name, out var projectId))
 			{
 				var projectRecord = new ProjectRecord(name, description, jobs.First().Id, DateTime.UtcNow);
@@ -178,33 +172,26 @@ namespace MSetRepo
 
 		public void UpdateProjectName(ObjectId projectId, string name)
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			_projectReaderWriter.UpdateName(projectId, name);
 		}
 
 		public void UpdateProjectDescription(ObjectId projectId, string? description)
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			_projectReaderWriter.UpdateDescription(projectId, description);
 		}
 
 		public void UpdateProjectCurrentJobId(ObjectId projectId, ObjectId? currentJobId)
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			_projectReaderWriter.UpdateCurrentJobId(projectId, currentJobId);
 		}
 
 		public void UpdateProjectTargetIterationMap(ObjectId projectId, DateTime lastAccessedUtc, TargetIterationColorMapRecord[] targetIterationColorMapRecords)
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			_projectReaderWriter.UpdateTargetIterationMap(projectId, lastAccessedUtc, targetIterationColorMapRecords);
 		}
 
 		public bool DeleteProject(ObjectId projectId)
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
-
 			var jobIds = _jobReaderWriter.GetJobIdsByOwner(projectId);
 
 			foreach (var jobId in jobIds)
@@ -221,7 +208,6 @@ namespace MSetRepo
 
 		public bool ProjectExists(string name, [MaybeNullWhen(false)] out ObjectId projectId)
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var result = _projectReaderWriter.ProjectExists(name, out projectId);
 
 			return result;
@@ -229,7 +215,6 @@ namespace MSetRepo
 
 		public bool ProjectExists(ObjectId projectId)
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var result = _projectReaderWriter.Get(projectId);
 
 			return result != null;
@@ -237,7 +222,6 @@ namespace MSetRepo
 
 		public IEnumerable<ObjectId> GetAllProjectIds()
 		{
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
 			var result = _projectReaderWriter.GetAllIds();
 			return result;
 		}
@@ -248,12 +232,10 @@ namespace MSetRepo
 
 		public IEnumerable<IProjectInfo> GetAllProjectInfos()
 		{
-			var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
-			var allProjectRecords = projectReaderWriter.GetAll();
+			var allProjectRecords = _projectReaderWriter.GetAll();
 			var result = allProjectRecords.Select(x => GetProjectInfoInternal(x, _jobReaderWriter, subdivisionReaderWriter, jobMapSectionReaderWriter));
 
 			return result;
@@ -579,7 +561,7 @@ namespace MSetRepo
 				lastSavedUtc: jobRecord.LastSavedUtc
 				)
 			{
-				ColorBandSetId = jobRecord.ColorBandSetId,
+				//ColorBandSetId = jobRecord.ColorBandSetId,
 				LastAccessedUtc = jobRecord.LastAccessedUtc
 			};
 

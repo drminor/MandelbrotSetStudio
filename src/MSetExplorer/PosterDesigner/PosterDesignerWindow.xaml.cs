@@ -1304,6 +1304,7 @@ namespace MSetExplorer
 				if (colorBandSet != null)
 				{
 					adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
+					adjustedColorBandSet.OwnerId = _vm.PosterViewModel.CurrentJob.OwnerId;
 					return true;
 				}
 				else

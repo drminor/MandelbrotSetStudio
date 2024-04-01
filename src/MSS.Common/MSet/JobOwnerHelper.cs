@@ -364,7 +364,7 @@ namespace MSS.Common
 
 		#region Load ColorBandSet 
 
-		public static ColorBandSet LoadColorBandSet(ColorBandSet? currentColorBandSet, int targetIterations, string operationDescription, List<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
+		public static ColorBandSet? LoadColorBandSet(ColorBandSet? currentColorBandSet, int targetIterations, string operationDescription, List<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorMapByTargetIteration)
 		{
 			ColorBandSet? result;
 
@@ -388,10 +388,10 @@ namespace MSS.Common
 				result = null;
 			}
 
-			if (result == null)
-			{
-				throw new InvalidOperationException($"Was unable to LoadColorBandSet using the LookupColorMapByTargetIteration while {operationDescription}.");
-			}
+			//if (result == null)
+			//{
+			//	throw new InvalidOperationException($"Was unable to LoadColorBandSet using the LookupColorMapByTargetIteration while {operationDescription}.");
+			//}
 
 			return result;
 		}
