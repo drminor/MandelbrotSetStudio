@@ -17,7 +17,7 @@ namespace MSS.Common.MSet
 
 		private ObjectId? _parentJobId;
 		private bool _isOnPreferredPath;
-		//private ObjectId _colorBandSetId;
+		private ObjectId _colorBandSetId;
 
 		private DateTime _lastSavedUtc;
 		private DateTime _lastUpdatedUtc;
@@ -29,7 +29,7 @@ namespace MSS.Common.MSet
 			Id = ObjectId.Empty;
 			Label = "Empty";
 			MapAreaInfo = new MapCenterAndDelta();
-			//ColorBandSetId = ObjectId.Empty;
+			ColorBandSetId = ObjectId.Empty;
 			ColorBandSetName = string.Empty;
 			ColorBandSetVersion = null;
 			MapCalcSettings = new MapCalcSettings();
@@ -191,18 +191,18 @@ namespace MSS.Common.MSet
 
 		public MapCenterAndDelta MapAreaInfo { get; init; }
 
-		//public ObjectId ColorBandSetId
-		//{
-		//	get => _colorBandSetId;
-		//	set
-		//	{
-		//		if (value != _colorBandSetId)
-		//		{
-		//			_colorBandSetId = value;
-		//			LastUpdatedUtc = DateTime.UtcNow;
-		//		}
-		//	}
-		//}
+		public ObjectId ColorBandSetId
+		{
+			get => _colorBandSetId;
+			set
+			{
+				if (value != _colorBandSetId)
+				{
+					_colorBandSetId = value;
+					LastUpdatedUtc = DateTime.UtcNow;
+				}
+			}
+		}
 
 		public string ColorBandSetName { get; init; }
 
@@ -259,7 +259,8 @@ namespace MSS.Common.MSet
 				ColorBandSetName, ColorBandSetVersion, MapCalcSettings.Clone(), DateCreatedUtc, LastSavedUtc)
 			{
 				OnFile = OnFile,
-				IsOnPreferredPath = IsOnPreferredPath
+				IsOnPreferredPath = IsOnPreferredPath,
+				ColorBandSetId = ColorBandSetId
 			};
 
 			//result.IterationUpdates = (IterationUpdateRecord[]?)IterationUpdates?.Clone() ?? null;
@@ -276,6 +277,7 @@ namespace MSS.Common.MSet
 				MapCalcSettings.Clone(), DateTime.UtcNow, DateTime.UtcNow)
 			{
 				OnFile = false,
+				ColorBandSetId = ColorBandSetId
 			};
 
 			//result.IterationUpdates = (IterationUpdateRecord[]?) IterationUpdates?.Clone() ?? null;

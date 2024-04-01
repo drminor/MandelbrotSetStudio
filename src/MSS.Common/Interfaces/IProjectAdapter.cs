@@ -18,7 +18,7 @@ namespace MSS.Common
 		Project? CreateProject(string name, string? description, List<Job> jobs, List<ColorBandSet> colorBandSets,
 			IEnumerable<TargetIterationColorMapRecord>? targetIterationColorMapRecords);
 
-		List<Job> GetAllJobsForOwner(ObjectId projectId, IEnumerable<ColorBandSet> colorBandSets);
+		List<Job> GetAllJobsForOwner(ObjectId projectId/*, IEnumerable<ColorBandSet> colorBandSets*/);
 		List<ObjectId> GetAllJobIdsForProject(ObjectId projectId);
 
 		bool ProjectExists(string name, [MaybeNullWhen(false)] out ObjectId projectId);
@@ -38,7 +38,7 @@ namespace MSS.Common
 			IEnumerable<TargetIterationColorMapRecord> targetIterationColorMapRecords);
 
 		List<Poster> GetAllPosters();
-		List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets);
+		List<Job> GetAllJobsForPoster(ObjectId posterId/*, IEnumerable<ColorBandSet> colorBandSets*/);
 		IEnumerable<ObjectId> GetAllJobIdsForPoster(ObjectId posterId);
 
 		bool PosterExists(string name, [MaybeNullWhen(false)] out ObjectId posterId);

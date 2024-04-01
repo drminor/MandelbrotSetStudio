@@ -465,7 +465,7 @@ namespace MSS.Common.MSet
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
-		public bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId)
+		public bool RemoveColorBandSet(ColorBandSet colorBandSet/*, ObjectId newId*/)
 		{
 			var result = _colorBandSets.Remove(colorBandSet);
 

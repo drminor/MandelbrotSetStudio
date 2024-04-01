@@ -32,6 +32,11 @@ namespace MSS.Types
 
 		public static ColorBandSet GetBestMatchingColorBandSet(int cutoff, IEnumerable<ColorBandSet> colorBandSets)
 		{
+			if (colorBandSets.Count() == 0)
+			{
+				throw new ArgumentException("The colorBandSets is empty.");
+			}
+
 			// Try to find the ColorBandSet with a HighCutoff just less than the target cutoff.
 			if (TryGetCbsLargestCutoffLessThan(cutoff, colorBandSets, out var colorBandSet))
 			{
@@ -46,23 +51,24 @@ namespace MSS.Types
 				}
 				else
 				{
-					Debug.WriteLine("This should never happen unless the colorBandSet collection is empty.");
-					var cbs = colorBandSets.First();
+					//Debug.WriteLine("This should never happen unless the colorBandSet collection is empty.");
+					//var cbs = colorBandSets.First();
 
-					if (cbs == null)
-					{
-						cbs = new ColorBandSet(cutoff);
-						Debug.WriteLine("The collection of ColorBandSets is empty as GetBestMatchingColorBandSet is called.");
-					}
+					//if (cbs == null)
+					//{
+					//	cbs = new ColorBandSet(cutoff);
+					//	Debug.WriteLine("The collection of ColorBandSets is empty as GetBestMatchingColorBandSet is called.");
+					//}
 
-					return cbs;
+					//return cbs;
+					throw new InvalidOperationException("GetBestMatchingColorBandSet failed to produce any result.");
 				}
 			}
 		}
 
 		private static bool TryGetCbsSmallestCutoffGtrThan(int cutoff, IEnumerable<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		{
-			colorBandSet = colorBandSets.OrderByDescending(f => f.HighCutoff).OrderByDescending(f => f.DateCreatedUtc).FirstOrDefault(x => x.HighCutoff <= cutoff);
+			colorBandSet = colorBandSets.OrderBy(f => f.HighCutoff).OrderByDescending(f => f.DateCreatedUtc).FirstOrDefault(x => x.HighCutoff >= cutoff);
 
 			return colorBandSet != null;
 		}
@@ -84,10 +90,12 @@ namespace MSS.Types
 			}
 			else if (colorBandSet.HighCutoff > targetIterations)
 			{
+				// Discard all color bands having a Cutoff larger than the desired target.
 				result = TrimColorBandsWithCutoffGreaterThan(colorBandSet, targetIterations);
 			}
 			else
 			{
+				// Extend the last ColorBand to meet the desired target.
 				result = colorBandSet.CreateNewCopy(targetIterations);
 			}
 
@@ -102,7 +110,7 @@ namespace MSS.Types
 			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
 
 			var result = new ColorBandSet(
-				colorBandSet.Id,
+				ObjectId.GenerateNewId(),
 				colorBandSet.ParentId,
 				colorBandSet.OwnerId,
 				colorBandSet.Name,

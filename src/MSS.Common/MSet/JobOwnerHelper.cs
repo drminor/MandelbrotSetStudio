@@ -428,25 +428,11 @@ namespace MSS.Common
 		//	return result;
 		//}
 
-		public static ColorBandSet FindOrCreateColorBandSet(string colorBandSetName, int? colorBandSetVersion, int targetIterations, string operationDescription, List<ColorBandSet> colorBandSets, out bool wasUpdated, out bool wasCreated)
+		public static ColorBandSet FindOrCreateColorBandSet(string name, int? version, int targetIterations, List<ColorBandSet> colorBandSets, out bool wasUpdated, out bool wasCreated)
 		{
 			ColorBandSet result;
 
-			ColorBandSet? tResult;
-
-			if (colorBandSetVersion.HasValue)
-			{
-				tResult = colorBandSets.Where(x => x.Name == colorBandSetName && x.TargetIterations == targetIterations && x.Version == colorBandSetVersion).FirstOrDefault();
-
-				if (tResult == null)
-				{
-					tResult = GetColorBandSetLatestVer(colorBandSetName, targetIterations, colorBandSets);
-				}
-			}
-			else
-			{
-				tResult = GetColorBandSetLatestVer(colorBandSetName, targetIterations, colorBandSets);
-			}
+			var tResult = GetColorBandSet(name, targetIterations, version, colorBandSets);
 
 			if (tResult == null)
 			{
@@ -463,15 +449,37 @@ namespace MSS.Common
 			return result;
 		}
 
-		private static ColorBandSet? GetColorBandSetLatestVer(string colorBandSetName, int targetIterations, List<ColorBandSet> colorBandSets)
+		public static ColorBandSet? GetColorBandSet(string name, int targetIterations, int? version, List<ColorBandSet> colorBandSets)
 		{
-			var allMatchingNameAndTarget = colorBandSets.Where(x => x.Name == colorBandSetName && x.TargetIterations == targetIterations);
+			ColorBandSet? result;
+
+			if (version.HasValue)
+			{
+				result = colorBandSets.Where(x => x.Name == name && x.TargetIterations == targetIterations && x.Version == version).FirstOrDefault();
+
+				if (result == null)
+				{
+					result = GetColorBandSetLatestVer(name, targetIterations, colorBandSets);
+				}
+			}
+			else
+			{
+				result = GetColorBandSetLatestVer(name, targetIterations, colorBandSets);
+			}
+
+			return result;
+		}
+
+
+		private static ColorBandSet? GetColorBandSetLatestVer(string name, int targetIterations, List<ColorBandSet> colorBandSets)
+		{
+			var allMatchingNameAndTarget = colorBandSets.Where(x => x.Name == name && x.TargetIterations == targetIterations);
 
 			if (allMatchingNameAndTarget.Any())
 			{
 				var latestVer = allMatchingNameAndTarget.Max(x => x.Version);
 
-				var result = colorBandSets.Where(x => x.Name == colorBandSetName && x.Version == latestVer).FirstOrDefault();
+				var result = colorBandSets.Where(x => x.Name == name && x.Version == latestVer).FirstOrDefault();
 				return result;
 			}
 			else
@@ -500,12 +508,13 @@ namespace MSS.Common
 				var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
 				Debug.WriteLine($"WARNING: Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id}.");
 
-				if (!IsColorBandSetUnique(adjustedColorBandSet.Name, adjustedColorBandSet.TargetIterations, colorBandSets))
+				if (!IsColorBandSetUnique(adjustedColorBandSet.Name, adjustedColorBandSet.TargetIterations, adjustedColorBandSet.Version, colorBandSets))
 				{
-					adjustedColorBandSet.Name = Guid.NewGuid().ToString();
+					throw new InvalidOperationException("ColorBandSetHelper.AdjustTargetIterations is returning a non-unique value.");
+					//adjustedColorBandSet.Name = Guid.NewGuid().ToString();
 				}
 
-				colorBandSets.Add(adjustedColorBandSet);
+				//colorBandSets.Add(adjustedColorBandSet);
 				colorBandSet = adjustedColorBandSet;
 				wasCreated = true;
 			}
@@ -517,9 +526,9 @@ namespace MSS.Common
 			return colorBandSet;
 		}
 
-		private static bool IsColorBandSetUnique(string name, int targetIterations, List<ColorBandSet> colorBandSets)
+		private static bool IsColorBandSetUnique(string name, int targetIterations, int version, List<ColorBandSet> colorBandSets)
 		{
-			var foundOne = colorBandSets.Any(x => x.TargetIterations == targetIterations && x.Name == name);
+			var foundOne = colorBandSets.Any(x => x.TargetIterations == targetIterations && x.Name == name && x.Version == version);
 			var isUnique = !foundOne;
 
 			return isUnique;
@@ -588,12 +597,16 @@ namespace MSS.Common
 				if (!lookupColorBandSetByTargetIteration.ContainsKey(targetIterations))
 				{
 					//var match = FindOrCreateColorBandSet(job.ColorBandSetId, targetIterations, desc, colorBandSets, out var wasUpdated, out var wasCreated);
-					var match = FindOrCreateColorBandSet(job.ColorBandSetName, job.ColorBandSetVersion, targetIterations, desc, colorBandSets, out var wasUpdated, out var wasCreated);
+					var match = FindOrCreateColorBandSet(job.ColorBandSetName, job.ColorBandSetVersion, targetIterations, colorBandSets, out updateWasMade, out var wasCreated);
+
+					if (wasCreated)
+					{
+						colorBandSets.Add(match);
+					}
+
 					var ticmRec = new TargetIterationColorMapRecord(targetIterations, match.Id, match.DateCreatedUtc);
 
 					lookupColorBandSetByTargetIteration.Add(targetIterations, ticmRec);
-
-					updateWasMade = true;
 				}
 			}
 

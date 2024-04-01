@@ -92,21 +92,24 @@ namespace MSetRepo
 		{
 			//Debug.WriteLine($"Retrieving Project object for Project with name: {name}.");
 
-			//var projectReaderWriter = new ProjectReaderWriter(_dbProvider);
-
 			if (_projectReaderWriter.TryGet(name, out var projectRecord))
 			{
-
 				var colorBandSets = GetColorBandSetsForOwner(projectRecord.Id).ToList();
-				var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
 
-				var jobs = GetAllJobsForOwner(projectRecord.Id, colorBandSetCache);
+				if (colorBandSets.Count == 0)
+				{
+					colorBandSets.Add(new ColorBandSet(projectRecord.Name ?? projectRecord.ProjectNameTemporary, null, 1000, Guid.NewGuid()));
+				}
+
+				//var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
+
+				var jobs = GetAllJobsForOwner(projectRecord.Id);
 
 				//// TODO: Remove this 2nd call to GetColorBandSetsForProject
 				//colorBandSets = GetColorBandSetsForOwner(projectRecord.Id).ToList();
-				colorBandSets = colorBandSetCache.Values.ToList();
+				//colorBandSets = colorBandSetCache.Values.ToList();
 
-				var lookupColorBandSetByTargetIteration = JobOwnerHelper.PopulateColorBandSetsByTargetIteration(jobs, colorBandSets, projectRecord.TargetIterationColorMapRecords, "", out var updateWasMade);
+				var lookupColorBandSetByTargetIteration = JobOwnerHelper.PopulateColorBandSetsByTargetIteration(jobs, colorBandSets, projectRecord.TargetIterationColorMapRecords, "as the project is being retrieved", out var updateWasMade);
 				project = AssembleProject(projectRecord, jobs, colorBandSets, lookupColorBandSetByTargetIteration, projectRecord.LastSavedUtc, projectRecord.LastAccessedUtc);
 
 				if (project != null && updateWasMade)
@@ -314,15 +317,13 @@ namespace MSetRepo
 		//	return result;
 		//}
 
-		//private ColorBandSet? GetColorBandSet(ObjectId id, ColorBandSetReaderWriter colorBandSetReaderWriter)
-		//{
-		//	if (_useDetailedDebug) Debug.WriteLine($"Retrieving ColorBandSet with Id: {id}.");
+		private ColorBandSet? GetColorBandSet(ObjectId id)
+		{
+			var colorBandSetRecord = _colorBandSetReaderWriter.Get(id);
 
-		//	var colorBandSetRecord = colorBandSetReaderWriter.Get(id);
-
-		//	var result = colorBandSetRecord == null ? null : _mSetRecordMapper.MapFrom(colorBandSetRecord);
-		//	return result;
-		//}
+			var result = colorBandSetRecord == null ? null : _mSetRecordMapper.MapFrom(colorBandSetRecord);
+			return result;
+		}
 
 		//public bool TryGetColorBandSet(ObjectId colorBandSetId, [MaybeNullWhen(false)] out ColorBandSet colorBandSet)
 		//{
@@ -472,10 +473,9 @@ namespace MSetRepo
 			return result;
 		}
 
-		public List<Job> GetAllJobsForPoster(ObjectId posterId, IEnumerable<ColorBandSet> colorBandSets)
+		public List<Job> GetAllJobsForPoster(ObjectId posterId)
 		{
-			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
-			var result = GetAllJobsForOwner(posterId, colorBandSetCache);
+			var result = GetAllJobsForOwner(posterId);
 
 			return result;
 		}
@@ -499,26 +499,16 @@ namespace MSetRepo
 			return result;
 		}
 
-		public List<Job> GetAllJobsForOwner(ObjectId ownerId, IEnumerable<ColorBandSet> colorBandSets)
-		{
-			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
-			var result = GetAllJobsForOwner(ownerId, colorBandSetCache);
-
-			return result;
-		}
-
-		private List<Job> GetAllJobsForOwner(ObjectId ownerId, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
+		public List<Job> GetAllJobsForOwner(ObjectId ownerId)
 		{
 			var result = new List<Job>();
 
-			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
 			var jobCache = new Dictionary<ObjectId, Job>();
 
 			var ids = _jobReaderWriter.GetJobIdsByOwner(ownerId);
 			foreach (var jobId in ids)
 			{
-				var job = GetJob(jobId, _jobReaderWriter, colorBandSetReaderWriter, jobCache, colorBandSetCache);
+				var job = GetJob(jobId, jobCache);
 				result.Add(job);
 			}
 
@@ -527,16 +517,13 @@ namespace MSetRepo
 
 		public Job GetJob(ObjectId jobId)
 		{
-			//var jobReaderWriter = new JobReaderWriter(_dbProvider);
-			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
-
-			var job = GetJob(jobId, _jobReaderWriter, colorBandSetReaderWriter, jobCache: null, colorBandSetCache: null);
+			var job = GetJob(jobId, jobCache: null);
 
 			return job;
 		}
 
-		private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter, ColorBandSetReaderWriter colorBandSetReaderWriter,
-			IDictionary<ObjectId, Job>? jobCache, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache)
+		//private Job GetJob(ObjectId jobId, JobReaderWriter jobReaderWriter/*, ColorBandSetReaderWriter colorBandSetReaderWriter*/, IDictionary<ObjectId, Job>? jobCache/*, IDictionary<ObjectId, ColorBandSet>? colorBandSetCache*/)
+		private Job GetJob(ObjectId jobId, IDictionary<ObjectId, Job>? jobCache)
 		{
 			if (jobCache != null && jobCache.TryGetValue(jobId, out var qJob))
 			{
@@ -545,7 +532,7 @@ namespace MSetRepo
 			}
 
 			//Debug.WriteLine($"Retrieving Job object for JobId: {jobId} from the data base.");
-			var jobRecord = jobReaderWriter.Get(jobId);
+			var jobRecord = _jobReaderWriter.Get(jobId);
 
 			if (jobRecord is null)
 			{
@@ -592,7 +579,8 @@ namespace MSetRepo
 				lastSavedUtc: jobRecord.LastSavedUtc
 				)
 			{
-				LastAccessedUtc = jobRecord.LastAccessedUtc,
+				ColorBandSetId = jobRecord.ColorBandSetId,
+				LastAccessedUtc = jobRecord.LastAccessedUtc
 			};
 
 			//var colorBandSet = GetColorBandSet(ownerName:null, jobRecord, colorBandSetReaderWriter, colorBandSetCache, out var isCacheHit);
@@ -886,10 +874,7 @@ namespace MSetRepo
 			if (posterReaderWriter.TryGet(posterId, out var posterRecord))
 			{
 				var colorBandSets = GetColorBandSetsForOwner(posterId).ToList();
-				var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
-				var jobs = GetAllJobsForOwner(posterId, colorBandSetCache);
-
-				colorBandSets = colorBandSetCache.Values.ToList();
+				var jobs = GetAllJobsForOwner(posterId);
 
 				if (colorBandSets.Count == 0)
 				{
@@ -923,10 +908,7 @@ namespace MSetRepo
 				var posterId = posterRecord.Id;
 
 				var colorBandSets = GetColorBandSetsForOwner(posterId).ToList();
-				var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
-				var jobs = GetAllJobsForOwner(posterId, colorBandSetCache);
-
-				colorBandSets = colorBandSetCache.Values.ToList();
+				var jobs = GetAllJobsForOwner(posterId);
 
 				if (colorBandSets.Count == 0)
 				{
@@ -954,7 +936,7 @@ namespace MSetRepo
 		{
 			var posterId = target.Id;
 			var colorBandSets = GetColorBandSetsForOwner(posterId).ToList();
-			var jobs = GetAllJobsForPoster(posterId, colorBandSets);
+			var jobs = GetAllJobsForPoster(posterId);
 
 			//var lookupColorMapByTargetIteration = new Dictionary<int, TargetIterationColorMapRecord>();
 
@@ -1247,6 +1229,41 @@ namespace MSetRepo
 			//UpdateAllJobsToUseColorBandSetName();
 		}
 
+		public long UpdateAllJobsToUseColorBandSetName()
+		{
+			var result = 0L;
+			var potentialResult = 0L;
+			var colorBandSetsNotFound = 0L;
+
+			var allProjectIds = _projectReaderWriter.GetAllIds().ToList();
+			foreach (var ownerId in allProjectIds)
+			{
+				var projectRec = _projectReaderWriter.Get(ownerId);
+				var projectName = projectRec?.Name;
+				if (projectName == null)
+				{
+					throw new InvalidOperationException($"Can't get a ProjectRecord for OwnerId: {ownerId} or the Project Record's name is null.");
+				}
+
+				UpdateJobRecs(ownerId, ref result, ref potentialResult, ref colorBandSetsNotFound);
+			}
+
+			var allPosterIds = _posterReaderWriter.GetAllIds();
+
+			foreach (var ownerId in allPosterIds)
+			{
+				var projectRec = _posterReaderWriter.Get(ownerId);
+				var projectName = projectRec?.Name;
+				if (projectName == null)
+				{
+					throw new InvalidOperationException($"Can't get a PosterRec for OwnerId: {ownerId} or the Poster Record's name is null.");
+				}
+
+				UpdateJobRecs(ownerId, ref result, ref potentialResult, ref colorBandSetsNotFound);
+			}
+
+			return result;
+		}
 
 		//public long UpdateAllJobsToUseColorBandSetName()
 		//{
@@ -1325,6 +1342,46 @@ namespace MSetRepo
 
 		//	return result;
 		//}
+
+		private void UpdateJobRecs(ObjectId ownerId/*, string ownerName*/, ref long result, ref long potentialResult, ref long colorBandSetsNotFound)
+		{
+			var colorBandSets = GetColorBandSetsForOwner(ownerId).ToList();
+			var colorBandSetCache = new Dictionary<ObjectId, ColorBandSet>(colorBandSets.Select(x => new KeyValuePair<ObjectId, ColorBandSet>(x.Id, x)));
+
+			var allJobsIds = _jobReaderWriter.GetJobIdsByOwner(ownerId).ToList();
+
+			potentialResult += allJobsIds.Count;
+
+			foreach (var jobId in allJobsIds)
+			{
+				var jobRecord = _jobReaderWriter.Get(jobId);
+
+				if (jobRecord != null)
+				{
+					var colorBandSet = GetColorBandSet(jobRecord.ColorBandSetId);
+
+					if (colorBandSet != null)
+					{
+						//jobRecord.ColorBandSetName = colorBandSet.Name;
+						//jobRecord.ColorBandSetVersion = colorBandSet.Version;
+					}
+					else
+					{
+						//jobRecord.ColorBandSetName = projectName;
+						//jobRecord.ColorBandSetVersion = null;
+						colorBandSetsNotFound++;
+					}
+
+					//_jobReaderWriter.UpdateSchema(jobRecord);
+
+					result += 1;
+				}
+				else
+				{
+					Debug.WriteLine($"Could not get Job with Id: {jobId}.");
+				}
+			}
+		}
 
 		//public void UpdateAllJobsWithMapCenterAndDelta()
 		//{

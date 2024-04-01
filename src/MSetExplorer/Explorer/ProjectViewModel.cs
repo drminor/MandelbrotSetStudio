@@ -609,7 +609,7 @@ namespace MSetExplorer
 			}
 
 			// TODO: Have the Project class keep track of ColorBandSets to delete.
-			var wasRemoved = currentProject.RemoveColorBandSet(colorBandSet, newId);
+			var wasRemoved = currentProject.RemoveColorBandSet(colorBandSet/*, newId*/);
 
 			if (wasRemoved)
 			{

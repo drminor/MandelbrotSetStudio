@@ -11,7 +11,7 @@ using System.Text;
 
 namespace MSS.Types
 {
-	[DebuggerDisplay("{ToString(1)}")]
+	[DebuggerDisplay("{ToString(2)}")]
 	public class ColorBandSet : ObservableCollection<ColorBand>, IEquatable<ColorBandSet>, IEqualityComparer<ColorBandSet?>, INotifyPropertyChanged, ICloneable
 	{
 		#region Private Fields
@@ -853,9 +853,11 @@ namespace MSS.Types
 			{
 				var sb = new StringBuilder();
 
-				sb.AppendLine($"Id: {Id}, LastUpdated: {LastUpdatedUtc}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
+				//sb.AppendLine($"Id: {Id}, LastUpdated: {LastUpdatedUtc}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
+				sb.AppendLine($"Id: {Id}, Name: {Name}, TargetIterations: {TargetIterations}, Version: {Version}, LastUpdated: {LastUpdatedUtc}");
 
 				_ = sb.AppendLine($"Prev\t\tCutoff\t\tWidth");
+
 				for (var i = 0; i < Count; i++)
 				{
 					var cb = this[i];
@@ -865,7 +867,12 @@ namespace MSS.Types
 				}
 
 				return sb.ToString();
+			}
+			else if (style == 2)
+			{
+				var result = $"Id: {Id}, Name: {Name}, TargetIterations: {TargetIterations}, Version: {Version}, LastUpdated: {LastUpdatedUtc}";
 
+				return result;
 			}
 			else
 			{
