@@ -1,14 +1,13 @@
-﻿using MongoDB.Bson;
-using MSS.Types;
+﻿using MSS.Types;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 
 namespace MSetExplorer
 {
 	public interface IColorBandSetOpenSaveViewModel : INotifyPropertyChanged
 	{
 		DialogType DialogType { get; }
+		string ResolutionStrategy { get; set; }
 
 		int TargetIterations { get; }
 

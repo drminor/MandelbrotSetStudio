@@ -640,7 +640,8 @@ namespace MSetExplorer
 				return new List<ColorBandSetInfo>();
 			}
 
-			var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.DateRecordLastUsedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.TargetIterations)).ToList();
+			var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Version, x.TargetIterations, x.Description, x.DateRecordLastUsedUtc, 
+				x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, numberOfJobs: 0)).ToList();
 
 			return result;
 		}

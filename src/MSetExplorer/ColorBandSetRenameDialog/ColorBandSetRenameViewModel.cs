@@ -89,7 +89,7 @@ namespace MSetExplorer
 
 		public bool IsNameTaken(string name)
 		{
-			var result = _colorBandSetInfos.Any(x => x.Name == name && x.MaxIterations == TargetIterations);
+			var result = _colorBandSetInfos.Any(x => x.Name == name && x.TargetIterations == TargetIterations);
 			return result;
 		}
 

@@ -643,9 +643,27 @@ namespace MSetExplorer
 				return new List<ColorBandSetInfo>();
 			}
 
-			var result = curProject.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Description, x.DateRecordLastUsedUtc, x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, x.TargetIterations)).ToList();
+			var result = curProject.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Version, x.TargetIterations, x.Description, x.DateRecordLastUsedUtc, 
+				x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, numberOfJobs: 0)).ToList();
+
+			CalculateNumberOfJobs(result, curProject.GetJobs().ToList(), curProject.ColorBandSetStore);
 
 			return result;
+		}
+
+		private void CalculateNumberOfJobs(List<ColorBandSetInfo> cbsInfos, List<Job> jobs, ColorBandSetStore colorBandSetStore)
+		{
+			foreach(var job in jobs)
+			{
+				if (colorBandSetStore.TryGetId(job.ColorBandSetName, job.ColorBandSetVersion, job.TargetIterations, out ObjectId? foundId))
+				{
+					var foundCbInfo = cbsInfos.FirstOrDefault(x => x.Id == foundId);
+					if (foundCbInfo != null)
+					{
+						foundCbInfo.NumberOfJobs++;
+					}
+				}
+			}
 		}
 
 		private string GetColorBandSetName(string? name, int position)

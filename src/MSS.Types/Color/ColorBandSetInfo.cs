@@ -10,16 +10,18 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ColorBandSetInfo(ObjectId id, string name, string? description, DateTime dateLastUsed, Guid colorBandSerialNumber, int numberOfBands, int maxIterations)
+		public ColorBandSetInfo(ObjectId id, string name, int version, int targetIterations, string? description, DateTime dateLastUsed, Guid colorBandSerialNumber, int numberOfBands, int numberOfJobs)
 		{
 			Debug.WriteLine($"Constructing ColorBandSetInfo with Id: {id}.");
 			Id = id;
 			_name = name;
+			TargetIterations = targetIterations;
+			Version = version;
 			_description = description;
 			DateLastUsed = dateLastUsed;
 			NumberOfBands = numberOfBands;
-			MaxIterations = maxIterations;
 			ColorBandSerialNumber = colorBandSerialNumber;
+			NumberOfJobs = numberOfJobs;
 		}
 
 		#endregion
@@ -27,11 +29,14 @@ namespace MSS.Types
 		#region Public Properties
 
 		public ObjectId Id { get; init; }
+
+		public int Version { get; init; }
+		public int TargetIterations { get; init; }
 		public DateTime DateCreated => Id.CreationTime;
 		public DateTime DateLastUsed { get; init; }
 		public int NumberOfBands { get; init; }
-		public int MaxIterations { get; init; }
 		public Guid ColorBandSerialNumber { get; init; }
+		public int NumberOfJobs { get; set; }
 
 		private string _name;
 		public string Name

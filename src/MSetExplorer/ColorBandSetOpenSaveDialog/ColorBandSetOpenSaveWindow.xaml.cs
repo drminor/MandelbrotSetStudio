@@ -155,7 +155,7 @@ namespace MSetExplorer
 			if (_vm.DialogType == DialogType.Open && _vm.SelectedColorBandSetInfo != null)
 			{
 				var targetIterations = _vm.TargetIterations;
-				if (_vm.SelectedColorBandSetInfo.MaxIterations != targetIterations)
+				if (_vm.SelectedColorBandSetInfo.TargetIterations != targetIterations)
 				{
 					if (_vm.IsNameTaken(selectedName))
 					{

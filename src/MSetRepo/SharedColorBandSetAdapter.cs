@@ -124,8 +124,8 @@ namespace MSetRepo
 
 			var allColorBandSetRecords = colorsReaderWriter.GetAll();
 
-			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Description, x.DateLastUsedUtc, x.ColorBandsSerialNumber, x.ColorBandRecords.Length,
-				x.TargetIterations == 0 ? x.ColorBandRecords.Max(y => y.CutOff) : x.TargetIterations));
+			var result = allColorBandSetRecords.Select(x => new ColorBandSetInfo(x.Id, x.Name, x.Version, x.TargetIterations == 0 ? x.ColorBandRecords.Max(y => y.CutOff) : x.TargetIterations, x.Description, x.DateLastUsedUtc, 
+				x.ColorBandsSerialNumber, x.ColorBandRecords.Length, numberOfJobs: 0));
 
 			return result;
 		}
@@ -138,7 +138,8 @@ namespace MSetRepo
 			if (cbsRecord != null)
 			{
 				var targetIterations = cbsRecord.TargetIterations == 0 ? cbsRecord.ColorBandRecords.Max(y => y.CutOff) : cbsRecord.TargetIterations;
-				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name, cbsRecord.Description, cbsRecord.DateLastUsedUtc, cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, targetIterations);
+				var result = new ColorBandSetInfo(cbsRecord.Id, cbsRecord.Name, cbsRecord.Version, targetIterations, cbsRecord.Description, cbsRecord.DateLastUsedUtc, 
+					cbsRecord.ColorBandsSerialNumber, cbsRecord.ColorBandRecords.Length, numberOfJobs: 0);
 
 				return result;
 			}

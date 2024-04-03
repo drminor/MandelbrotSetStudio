@@ -12,6 +12,7 @@ namespace MSS.Types.MSet
 	public enum ColorBandSetResolutionStrategy
 	{
 		PerProject,
-		PerJob
+		PerJob,
+		PerJobWithVersion
 	}
 }

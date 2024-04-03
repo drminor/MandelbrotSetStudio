@@ -204,7 +204,7 @@ namespace MSS.Common.MSet
 		//	}
 		//}
 
-		public string ColorBandSetName { get; init; }
+		public string ColorBandSetName { get; set; }
 
 		public int? ColorBandSetVersion { get; set; }
 

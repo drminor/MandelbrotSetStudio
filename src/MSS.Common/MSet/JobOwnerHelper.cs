@@ -5,7 +5,9 @@ using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Xml.Linq;
 
 namespace MSS.Common
 {
@@ -470,6 +472,20 @@ namespace MSS.Common
 			return result;
 		}
 
+		public static bool TryGetColorBandSet(string name, int? version, int targetIterations, List<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ObjectId? foundId)
+		{
+			var colorBandSet = GetColorBandSet(name, targetIterations, version, colorBandSets);
+			if (colorBandSet != null)
+			{
+				foundId = colorBandSet.Id;
+				return true;
+			}
+			else
+			{
+				foundId = null;
+				return false;
+			}
+		}
 
 		private static ColorBandSet? GetColorBandSetLatestVer(string name, int targetIterations, List<ColorBandSet> colorBandSets)
 		{

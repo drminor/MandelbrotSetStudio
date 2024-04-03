@@ -450,8 +450,10 @@ namespace MSetExplorer
 			//var targetIterations = curPoster.CurrentJob.MapCalcSettings.TargetIterations;
 			var targetIterations = currentColorBandSet.TargetIterations;
 
-			var selectedColorBandSetInfo = cbsInfos.FirstOrDefault(x => x.Id == currentColorBandSet.Id);
-			if (selectedColorBandSetInfo == null) throw new InvalidOperationException("The Project's current ColorBandSet does not exist in the Project's list of ColorBandSets.");
+			//var selectedColorBandSetInfo = cbsInfos.FirstOrDefault(x => x.Id == currentColorBandSet.Id);
+			//if (selectedColorBandSetInfo == null) throw new InvalidOperationException("The Project's current ColorBandSet does not exist in the Project's list of ColorBandSets.");
+
+			var selectedColorBandSetInfo = ColorBandSetHelper.Convert(currentColorBandSet);
 
 			if (ColorsShowOpenWindow(cbsInfos, selectedColorBandSetInfo, out var colorBandSet, out var overwriteExisting))
 			{
@@ -1142,6 +1144,7 @@ namespace MSetExplorer
 		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSetInfo selectedColorBandSetInfo, [NotNullWhen(true)] out ColorBandSet? colorBandSet, out bool? overwriteExisting)
 		{
 			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Open, colorBandSetInfos, selectedColorBandSetInfo);
+			colorBandSetOpenSaveVm.ResolutionStrategy = _vm.PosterViewModel.CurrentPoster?.ColorBandSetResolutionStrategy.ToString() ?? "Per Project";
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{
@@ -1192,8 +1195,11 @@ namespace MSetExplorer
 
 		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
 		{
-			var selectedColorBandSetInfo = new ColorBandSetInfo(colorBandSet.Id, colorBandSet.Name, colorBandSet.Description, colorBandSet.LastUpdatedUtc, colorBandSet.ColorBandsSerialNumber, (colorBandSet as IList<ColorBand>).Count, colorBandSet.TargetIterations);
+			var selectedColorBandSetInfo = new ColorBandSetInfo(colorBandSet.Id, colorBandSet.Name, colorBandSet.Version, colorBandSet.TargetIterations, colorBandSet.Description, colorBandSet.LastUpdatedUtc, 
+				colorBandSet.ColorBandsSerialNumber, (colorBandSet as IList<ColorBand>).Count, numberOfJobs: 0);
+
 			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Save, colorBandSetInfos, selectedColorBandSetInfo);
+			colorBandSetOpenSaveVm.ResolutionStrategy = _vm.PosterViewModel.CurrentPoster?.ColorBandSetResolutionStrategy.ToString() ?? "Per Project";
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
 			{

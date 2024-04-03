@@ -32,10 +32,12 @@ namespace MSetExplorer
 			ColorBandSetInfos = new ObservableCollection<ColorBandSetInfo>(cbsInfos);
 			//_selectedColorBandSetInfo = ColorBandSetInfos.FirstOrDefault(x => x.Name == initialName && x.MaxIterations == targetIterations);
 			_selectedColorBandSetInfo = selectedColorBandSetInfo;
-			TargetIterations = _selectedColorBandSetInfo.MaxIterations;
+			TargetIterations = _selectedColorBandSetInfo.TargetIterations;
 
 			var view = CollectionViewSource.GetDefaultView(ColorBandSetInfos);
 			_ = view.MoveCurrentTo(SelectedColorBandSetInfo);
+
+			ResolutionStrategy = "Per Project";
 		}
 
 
@@ -60,6 +62,8 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public DialogType DialogType { get; }
+
+		public string ResolutionStrategy { get; set; }
 
 		public int TargetIterations { get; init; }
 
@@ -138,7 +142,7 @@ namespace MSetExplorer
 
 		public bool IsNameTaken(string name)
 		{
-			var result = ColorBandSetInfos.Any(x => x.Name == name && x.MaxIterations == TargetIterations);
+			var result = ColorBandSetInfos.Any(x => x.Name == name && x.TargetIterations == TargetIterations);
 			return result;
 		}
 

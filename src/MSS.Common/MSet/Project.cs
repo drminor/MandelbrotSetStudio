@@ -125,9 +125,10 @@ namespace MSS.Common.MSet
 			}
 
 			//_  = JobOwnerHelper.LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed", _colorBandSets, out var wasUpdated, out var wasCreated);
-			var targetIterations = currentJob.MapCalcSettings.TargetIterations;
+			//var targetIterations = currentJob.MapCalcSettings.TargetIterations;
 
 			_colorBandSetStore = new ColorBandSetStore(colorBandSets.ToList(), lookupColorBandSetByTargetIteration.Values.ToList(), currentJob.ColorBandSetName, currentJob.TargetIterations, currentJob.ColorBandSetVersion);
+			_colorBandSetStore.ColorBandSetResolutionStrategy = ColorBandSetResolutionStrategy.PerProject;
 
 			//_lookupColorBandSetByTargetIteration = lookupColorBandSetByTargetIteration;
 			//_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(null, targetIterations, operationDescription: "as the project is being constructed", _colorBandSets, _lookupColorBandSetByTargetIteration);
@@ -170,6 +171,8 @@ namespace MSS.Common.MSet
 		#endregion
 
 		#region Public Properties
+
+		public ColorBandSetStore ColorBandSetStore => _colorBandSetStore;
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
@@ -269,10 +272,15 @@ namespace MSS.Common.MSet
 						}
 
 						var targetIterations = value.MapCalcSettings.TargetIterations;
-						_colorBandSetStore.Load(value.ColorBandSetName, value.ColorBandSetVersion, targetIterations, out var wasUpdated);
+						var possiblyNewColorBandSet = _colorBandSetStore.Load(value.ColorBandSetName, value.ColorBandSetVersion, targetIterations, out var wasUpdated);
 
 						if (wasUpdated)
 						{
+							if (value.ColorBandSetName != possiblyNewColorBandSet.Name)
+							{
+								value.ColorBandSetName = possiblyNewColorBandSet.Name;
+								value.ColorBandSetVersion = null;
+							}
 							//OnPropertyChanged(nameof(CurrentColorBandSet));
 						}
 
@@ -377,10 +385,18 @@ namespace MSS.Common.MSet
 					_colorBandSetStore.CurrentColorBandSet = value;
 					LastUpdatedUtc = DateTime.UtcNow;
 
+					if (!CurrentJob.IsEmpty)
+					{
+						CurrentJob.ColorBandSetName = value.Name;
+						CurrentJob.ColorBandSetVersion = value.Version;
+					}
+
 					OnPropertyChanged(nameof(CurrentColorBandSet));
 				}
 				else
 				{
+					CheckCurrentJobsColorBandSet(CurrentJob, value);
+
 					if (_colorBandSetStore.MakeDefault(value))
 					{
 						Debug.WriteLine($"WARNING: The Default ColorBandSet for {value.TargetIterations} is being set HOWEVER the CurrentColorBandSet already had this same value.");
@@ -390,6 +406,25 @@ namespace MSS.Common.MSet
 						Debug.WriteLine($"Not setting the CurrentColorBandSet, the CurrentColorBandSet is already updated.");
 					}
 				}
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckCurrentJobsColorBandSet(Job currentJob, ColorBandSet colorBandSet)
+		{
+			if (currentJob.OwnerId != colorBandSet.OwnerId)
+			{
+				Debug.WriteLine($"CheckCurrentJobsColorBandSet OwnerId Mismatch.");
+			}
+
+			if (colorBandSet.Name != currentJob.ColorBandSetName)
+			{
+				Debug.WriteLine($"CheckCurrentJobsColorBandSet Name Mismatch.");
+			}
+
+			if (currentJob.ColorBandSetVersion.HasValue && currentJob.ColorBandSetVersion.Value != colorBandSet.Version)
+			{
+				Debug.WriteLine($"CheckCurrentJobsColorBandSet Name Mismatch.");
 			}
 		}
 
@@ -407,7 +442,18 @@ namespace MSS.Common.MSet
 
 		//TODO: Add a "PreferredPath property to the Project class.
 
-		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; }
+		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy
+		{
+			get => _colorBandSetStore.ColorBandSetResolutionStrategy;
+			set
+			{
+				if (value != _colorBandSetStore.ColorBandSetResolutionStrategy)
+				{
+					_colorBandSetStore.ColorBandSetResolutionStrategy = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 
 		#endregion
 

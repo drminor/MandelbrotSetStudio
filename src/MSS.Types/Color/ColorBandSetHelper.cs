@@ -426,6 +426,16 @@ namespace MSS.Types
 
 		#endregion
 
+
+		public static ColorBandSetInfo Convert(ColorBandSet colorBandSet)
+		{
+			var result = new ColorBandSetInfo(colorBandSet.Id, colorBandSet.Name, colorBandSet.Version, colorBandSet.TargetIterations, colorBandSet.Description, colorBandSet.LastUpdatedUtc,
+				colorBandSet.ColorBandsSerialNumber, (colorBandSet as IList<ColorBand>).Count, numberOfJobs: 0);
+
+			return result;
+		}
+
+
 		#region Diagnostics
 
 		public static void CheckNewCutoffs(PercentageBand[] percentageBands, CutoffBand[] cutoffBands)

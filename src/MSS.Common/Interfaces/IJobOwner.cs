@@ -11,6 +11,7 @@ namespace MSS.Common.MSet
 
 	public interface IJobOwner
 	{
+		ColorBandSetStore ColorBandSetStore { get; }
 		ObjectId Id { get; init; }
 		OwnerType OwnerType { get; }	
 		string Name { get; set; }

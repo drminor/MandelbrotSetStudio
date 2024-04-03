@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:ColorBandSetOpenSaveViewModel}"
         mc:Ignorable="d"
-        Title="Open ColorBandSet" Height="1000" Width="860">
+        Title="Open ColorBandSet" Height="1000" Width="1000">
     
     <Grid>
 
@@ -35,10 +35,12 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Name" Width="130" DisplayMemberBinding="{Binding Name}" />
-                        <GridViewColumn Header="Iterations" Width="90" DisplayMemberBinding="{Binding MaxIterations}" />
-                        <GridViewColumn Header="Band Count" Width="90" DisplayMemberBinding="{Binding NumberOfBands}" />
-                        <GridViewColumn Header="Created" Width="160" DisplayMemberBinding="{Binding DateCreated}" />
-                        <GridViewColumn Header="Last Used" Width="160" DisplayMemberBinding="{Binding DateLastUsed}" />
+                        <GridViewColumn Header="Version" Width="50" DisplayMemberBinding="{Binding Version}" />
+                        <GridViewColumn Header="Iterations" Width="90" DisplayMemberBinding="{Binding TargetIterations}" />
+                        <GridViewColumn Header="Band Count" Width="80" DisplayMemberBinding="{Binding NumberOfBands}" />
+                        <GridViewColumn Header="Job Count" Width="80" DisplayMemberBinding="{Binding NumberOfJobs}" />
+                        <GridViewColumn Header="Created" Width="150" DisplayMemberBinding="{Binding DateCreated}" />
+                        <GridViewColumn Header="Last Used" Width="150" DisplayMemberBinding="{Binding DateLastUsed}" />
                         <GridViewColumn Header="Description" DisplayMemberBinding="{Binding Description}" />
                         <!--<GridViewColumn Header="Id" Width="250" DisplayMemberBinding="{Binding ColorBandSerialNumber}" />-->
                     </GridView>
@@ -53,6 +55,10 @@
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
                     <TextBlock Width="90" Margin="10, 0, 20, 0" FontSize="16" Text="Name:" VerticalAlignment="Top"/>
                     <TextBox x:Name="txtName" Text="{Binding SelectedName}"  Width="460" Height="22"/>
+
+                    <TextBlock Width="100" Margin="10, 0, 5, 0" FontSize="16" Text="Res. Strategy:" VerticalAlignment="Top"/>
+                    <TextBox x:Name="txtResolutionStrategy" Text="{Binding ResolutionStrategy}"  Width="120" Height="22"/>
+
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
