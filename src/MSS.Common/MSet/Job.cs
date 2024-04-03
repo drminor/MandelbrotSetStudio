@@ -15,6 +15,9 @@ namespace MSS.Common.MSet
 		private ObjectId _ownerId;
 		private OwnerType _jobOwnerType;
 
+		private string _colorBandSetName;
+		private int? _colorBandSetVersion;
+
 		private ObjectId? _parentJobId;
 		private bool _isOnPreferredPath;
 		//private ObjectId _colorBandSetId;
@@ -30,8 +33,8 @@ namespace MSS.Common.MSet
 			Label = "Empty";
 			MapAreaInfo = new MapCenterAndDelta();
 			//ColorBandSetId = ObjectId.Empty;
-			ColorBandSetName = string.Empty;
-			ColorBandSetVersion = null;
+			_colorBandSetName = string.Empty;
+			_colorBandSetVersion = null;
 			MapCalcSettings = new MapCalcSettings();
 			DateCreatedUtc = DateTime.UtcNow;
 		}
@@ -116,8 +119,8 @@ namespace MSS.Common.MSet
 			MapAreaInfo = mapAreaInfo;
 
 			//_colorBandSetId = ObjectId.Empty;
-			ColorBandSetName = colorBandSetName;
-			ColorBandSetVersion = colorBandSetVersion;
+			_colorBandSetName = colorBandSetName;
+			_colorBandSetVersion = colorBandSetVersion;
 			MapCalcSettings = mapCalcSettings;
 
 			DateCreatedUtc = dateCreatedUtc;
@@ -191,22 +194,26 @@ namespace MSS.Common.MSet
 
 		public MapCenterAndDelta MapAreaInfo { get; init; }
 
-		//public ObjectId ColorBandSetId
-		//{
-		//	get => _colorBandSetId;
-		//	set
-		//	{
-		//		if (value != _colorBandSetId)
-		//		{
-		//			_colorBandSetId = value;
-		//			LastUpdatedUtc = DateTime.UtcNow;
-		//		}
-		//	}
-		//}
+		public string ColorBandSetName
+		{
+			get => _colorBandSetName;
+			set
+			{
+				_colorBandSetName = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
 
-		public string ColorBandSetName { get; set; }
+		public int? ColorBandSetVersion
+		{
+			get => _colorBandSetVersion;
+			set
+			{
+				_colorBandSetVersion = value;
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+		}
 
-		public int? ColorBandSetVersion { get; set; }
 
 		public MapCalcSettings MapCalcSettings { get; init; }
 
