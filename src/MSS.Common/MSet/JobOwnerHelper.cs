@@ -377,12 +377,19 @@ namespace MSS.Common
 				if (currentColorBandSet != null && currentColorBandSet.Id == foundId)
 				{
 					result = currentColorBandSet;
-					Debug.WriteLine($"JobOwnerHelper found ColorBandSetId = {foundId} for Project Current Job having TargetIteration: {targetIterations}. The Current ColorBandSet is the default.");
+					Debug.WriteLine($"JobOwnerHelper found ColorBandSetId: {foundId} for TargetIteration: {targetIterations} while {operationDescription}. It is the same as the Current ColorBandSet remains unchanged.");
 				}
 				else
 				{
 					result = colorBandSets.FirstOrDefault(x => x.Id == targetIterationColorMap.ColorBandSetId);
-					Debug.WriteLine($"JobOwnerHelper found ColorBandSetId = {foundId} for Project Current Job having TargetIteration: {targetIterations}. Returning a ColorBandSet from the list of CBS on the Project.");
+					if (result != null)
+					{
+						Debug.WriteLine($"JobOwnerHelper found ColorBandSetId: {foundId} for TargetIteration: {targetIterations} while {operationDescription}. It is not the same as the Current ColorBandSet.");
+					}
+					else
+					{
+						Debug.WriteLine($"JobOwnerHelper found ColorBandSetId: {foundId} for TargetIteration: {targetIterations} while {operationDescription}. Could not find any existing ColorBandSet with that Id.");
+					}
 				}
 			}
 			else
@@ -472,7 +479,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public static bool TryGetColorBandSet(string name, int? version, int targetIterations, List<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ObjectId? foundId)
+		public static bool TryGetColorBandSetId(string name, int? version, int targetIterations, List<ColorBandSet> colorBandSets, [MaybeNullWhen(false)] out ObjectId? foundId)
 		{
 			var colorBandSet = GetColorBandSet(name, targetIterations, version, colorBandSets);
 			if (colorBandSet != null)
@@ -495,7 +502,7 @@ namespace MSS.Common
 			{
 				var latestVer = allMatchingNameAndTarget.Max(x => x.Version);
 
-				var result = colorBandSets.Where(x => x.Name == name && x.Version == latestVer).FirstOrDefault();
+				var result = allMatchingNameAndTarget.Where(x => x.Name == name && x.Version == latestVer).FirstOrDefault();
 				return result;
 			}
 			else

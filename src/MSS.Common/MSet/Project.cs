@@ -272,7 +272,7 @@ namespace MSS.Common.MSet
 						}
 
 						var targetIterations = value.MapCalcSettings.TargetIterations;
-						var possiblyNewColorBandSet = _colorBandSetStore.Load(value.ColorBandSetName, value.ColorBandSetVersion, targetIterations, out var wasUpdated);
+						var possiblyNewColorBandSet = _colorBandSetStore.Load(value.ColorBandSetName, value.ColorBandSetVersion, targetIterations, "Updating the Project's CurrentJob", out var wasUpdated);
 
 						if (wasUpdated)
 						{
@@ -281,6 +281,14 @@ namespace MSS.Common.MSet
 								value.ColorBandSetName = possiblyNewColorBandSet.Name;
 								value.ColorBandSetVersion = null;
 							}
+							else
+							{
+								if (value.ColorBandSetVersion != possiblyNewColorBandSet.Version)
+								{
+									value.ColorBandSetVersion = null;
+								}
+							}
+							
 							//OnPropertyChanged(nameof(CurrentColorBandSet));
 						}
 

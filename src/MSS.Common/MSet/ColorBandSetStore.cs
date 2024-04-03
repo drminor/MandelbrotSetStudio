@@ -165,7 +165,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public ColorBandSet Load(string name, int? version, int targetIterations, out bool wasUpdated)
+		public ColorBandSet Load(string name, int? version, int targetIterations, string operationDescription, out bool wasUpdated)
 		{
 			bool wasCreated = false;
 
@@ -173,7 +173,7 @@ namespace MSS.Common
 
 			if (ColorBandSetResolutionStrategy == ColorBandSetResolutionStrategy.PerProject)
 			{
-				var testResult = JobOwnerHelper.LoadColorBandSet(CurrentColorBandSet, targetIterations, "Updating the CurrentColorBandSet", _colorBandSets, _lookupColorBandSetByTargetIteration);
+				var testResult = JobOwnerHelper.LoadColorBandSet(CurrentColorBandSet, targetIterations, operationDescription, _colorBandSets, _lookupColorBandSetByTargetIteration);
 
 				if (testResult != null)
 				{
@@ -182,7 +182,7 @@ namespace MSS.Common
 				}
 				else
 				{
-					result = JobOwnerHelper.FindOrCreateColorBandSet(name, version, targetIterations, _colorBandSets, out wasUpdated, out wasCreated);
+					result = JobOwnerHelper.FindOrCreateColorBandSet(name, version: null, targetIterations, _colorBandSets, out wasUpdated, out wasCreated);
 				}
 			}
 			else if (ColorBandSetResolutionStrategy == ColorBandSetResolutionStrategy.PerJobWithVersion)
@@ -214,16 +214,16 @@ namespace MSS.Common
 				}
 				else
 				{
-					return JobOwnerHelper.TryGetColorBandSet(name, version, targetIterations, _colorBandSets, out foundId);
+					return JobOwnerHelper.TryGetColorBandSetId(name, version: null, targetIterations, _colorBandSets, out foundId);
 				}
 			}
 			else if (ColorBandSetResolutionStrategy == ColorBandSetResolutionStrategy.PerJobWithVersion)
 			{
-				return JobOwnerHelper.TryGetColorBandSet(name, version, targetIterations, _colorBandSets, out foundId);
+				return JobOwnerHelper.TryGetColorBandSetId(name, version, targetIterations, _colorBandSets, out foundId);
 			}
 			else
 			{
-				return JobOwnerHelper.TryGetColorBandSet(name, version: null, targetIterations, _colorBandSets, out foundId);
+				return JobOwnerHelper.TryGetColorBandSetId(name, version: null, targetIterations, _colorBandSets, out foundId);
 			}
 		}
 
