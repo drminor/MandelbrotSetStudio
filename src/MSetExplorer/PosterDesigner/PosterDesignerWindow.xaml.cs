@@ -417,6 +417,22 @@ namespace MSetExplorer
 			ShowCoordsEditor();
 		}
 
+		private void EditDetailsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.PosterViewModel?.CurrentPoster != null;
+		}
+
+		private void EditDetailsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			var curPoster = _vm.PosterViewModel.CurrentPoster;
+
+			if (curPoster == null || curPoster.CurrentJob.IsEmpty)
+			{
+				return;
+			}
+			
+			ShowPosterDetailEditor(curPoster);
+		}
 		#endregion
 
 		#region Colors Button Handlers
@@ -455,7 +471,7 @@ namespace MSetExplorer
 
 			var selectedColorBandSetInfo = ColorBandSetHelper.Convert(currentColorBandSet);
 
-			if (ColorsShowOpenWindow(cbsInfos, selectedColorBandSetInfo, out var colorBandSet, out var overwriteExisting))
+			if (ColorsShowOpenWindow(cbsInfos, selectedColorBandSetInfo, curPoster.ColorBandSetResolutionStrategy, out var colorBandSet, out var overwriteExisting))
 			{
 				if (colorBandSet.TargetIterations == currentColorBandSet.TargetIterations)
 				{
@@ -539,7 +555,7 @@ namespace MSetExplorer
 			var cbsInfos = _vm.PosterViewModel.GetColorBandSetInfos();
 			var curColorBandSet = _vm.PosterViewModel.CurrentColorBandSet;
 			
-			if (ColorsShowSaveWindow(cbsInfos, curColorBandSet, out var newColorBandSet))
+			if (ColorsShowSaveWindow(cbsInfos, curColorBandSet, curPoster.ColorBandSetResolutionStrategy, out var newColorBandSet))
 			{
 				_vm.PosterViewModel.CurrentColorBandSet = newColorBandSet;
 			}
@@ -951,6 +967,18 @@ namespace MSetExplorer
 			_ = coordsEditorWindow.ShowDialog();
 		}
 
+		private void ShowPosterDetailEditor(Poster poster)
+		{
+			var posterDetailsViewModel = _vm.ViewModelFactory.CreateAPosterDetailsViewModel(poster);
+
+			var  posterDetailsEditorWindow = new PosterDetailsEditorWindow
+			{
+				DataContext = posterDetailsViewModel
+			};
+
+			_ = posterDetailsEditorWindow.ShowDialog();
+		}
+
 		private void OpenPosterFromAppRequest(string[]? requestParameters)
 		{
 			if (requestParameters == null || requestParameters.Length < 1)
@@ -1141,9 +1169,9 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSetInfo selectedColorBandSetInfo, [NotNullWhen(true)] out ColorBandSet? colorBandSet, out bool? overwriteExisting)
+		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSetInfo selectedColorBandSetInfo, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, [NotNullWhen(true)] out ColorBandSet? colorBandSet, out bool? overwriteExisting)
 		{
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Open, colorBandSetInfos, selectedColorBandSetInfo);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Open, colorBandSetInfos, selectedColorBandSetInfo, colorBandSetResolutionStrategy);
 			colorBandSetOpenSaveVm.ResolutionStrategy = _vm.PosterViewModel.CurrentPoster?.ColorBandSetResolutionStrategy.ToString() ?? "Per Project";
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
@@ -1193,12 +1221,12 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
+		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
 		{
 			var selectedColorBandSetInfo = new ColorBandSetInfo(colorBandSet.Id, colorBandSet.Name, colorBandSet.Version, colorBandSet.TargetIterations, colorBandSet.Description, colorBandSet.LastUpdatedUtc, 
 				colorBandSet.ColorBandsSerialNumber, (colorBandSet as IList<ColorBand>).Count, numberOfJobs: 0);
 
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Save, colorBandSetInfos, selectedColorBandSetInfo);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Save, colorBandSetInfos, selectedColorBandSetInfo, colorBandSetResolutionStrategy);
 			colorBandSetOpenSaveVm.ResolutionStrategy = _vm.PosterViewModel.CurrentPoster?.ColorBandSetResolutionStrategy.ToString() ?? "Per Project";
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow

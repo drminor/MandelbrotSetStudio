@@ -124,12 +124,24 @@ namespace MSetExplorer
 		);
 
 		public static readonly RoutedUICommand ProjectSaveAs = new RoutedUICommand(
-			text: "SaveAs",
+			text: "Save As",
 			name: "ProjectSaveAs",
 			ownerType: typeof(CustomCommands),
 			inputGestures: new InputGestureCollection() {
 				new KeyGesture(
 					Key.A,
+					ModifierKeys.Control
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand ProjectEditDetails = new RoutedUICommand(
+			text: "Edit Details",
+			name: "ProjectEditDetails",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.D,
 					ModifierKeys.Control
 				)
 			}
@@ -182,6 +194,18 @@ namespace MSetExplorer
 			inputGestures: new InputGestureCollection() {
 				new KeyGesture(
 					Key.A,
+					ModifierKeys.Control
+				)
+			}
+		);
+
+		public static readonly RoutedUICommand PosterEditDetails = new RoutedUICommand(
+			text: "Edit Details",
+			name: "PosterEditDetails",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.D,
 					ModifierKeys.Control
 				)
 			}

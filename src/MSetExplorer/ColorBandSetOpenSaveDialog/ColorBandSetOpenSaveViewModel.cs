@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSS.Common;
 using MSS.Types;
+using MSS.Types.MSet;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -16,6 +17,9 @@ namespace MSetExplorer
 		private readonly IProjectAdapter _projectAdapter;
 
 		private ColorBandSetInfo? _selectedColorBandSetInfo;
+
+		private readonly ColorBandSetResolutionStrategy _colorBandSetResolutionStrategy;
+
 		private string? _selectedName;
 		private string? _selectedDescription;
 
@@ -23,21 +27,25 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos, ColorBandSetInfo selectedColorBandSetInfo)
+		public ColorBandSetOpenSaveViewModel(IProjectAdapter projectAdapter, DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos, ColorBandSetInfo selectedColorBandSetInfo, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy)
 		{
 			_projectAdapter = projectAdapter;
 			//TargetIterations = targetIterations;
 			DialogType = dialogType;
 
 			ColorBandSetInfos = new ObservableCollection<ColorBandSetInfo>(cbsInfos);
-			//_selectedColorBandSetInfo = ColorBandSetInfos.FirstOrDefault(x => x.Name == initialName && x.MaxIterations == targetIterations);
 			_selectedColorBandSetInfo = selectedColorBandSetInfo;
+			_colorBandSetResolutionStrategy = colorBandSetResolutionStrategy;
+
 			TargetIterations = _selectedColorBandSetInfo.TargetIterations;
+
+			var atLeastOneReferenceCbIsNotLatestVersion = cbsInfos.Any(x => x.NumberOfJobs > 0 && x.IsLatestVersion == false);
+			OnlyLatestVersionsAreReferenced = !atLeastOneReferenceCbIsNotLatestVersion;
 
 			var view = CollectionViewSource.GetDefaultView(ColorBandSetInfos);
 			_ = view.MoveCurrentTo(SelectedColorBandSetInfo);
 
-			ResolutionStrategy = "Per Project";
+			ResolutionStrategy = _colorBandSetResolutionStrategy.ToString();
 		}
 
 
@@ -64,6 +72,8 @@ namespace MSetExplorer
 		public DialogType DialogType { get; }
 
 		public string ResolutionStrategy { get; set; }
+
+		public bool OnlyLatestVersionsAreReferenced { get; set; }
 
 		public int TargetIterations { get; init; }
 

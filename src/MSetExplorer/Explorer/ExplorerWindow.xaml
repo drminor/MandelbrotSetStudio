@@ -14,6 +14,7 @@
         <CommandBinding Command="local:CustomCommands.ProjectSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.ProjectSaveAs" CanExecute="SaveAsCommand_CanExecute" Executed="SaveAsCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.EditCoords" CanExecute="EditCoordsCommand_CanExecute" Executed="EditCoordsCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.ProjectEditDetails" CanExecute="EditDetailsCommand_CanExecute" Executed="EditDetailsCommand_Executed" />
 
         <CommandBinding Command="local:CustomCommands.CreateImage" CanExecute="CreateImageCommand_CanExecute" Executed="CreateImageCommand_Executed" />
 
@@ -67,6 +68,7 @@
 
                 <Separator/>
                 <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.EditCoords"/>
+                <MenuItem Header="Edit Project _Details" Command="local:CustomCommands.ProjectEditDetails"/>
 
                 <Separator/>
                 <MenuItem Header="Create P_oster" Click="CreatePosterButton_Click"/>

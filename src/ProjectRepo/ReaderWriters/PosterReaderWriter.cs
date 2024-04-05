@@ -1,5 +1,6 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
+using MSS.Types.MSet;
 using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
@@ -131,6 +132,19 @@ namespace ProjectRepo
 
 			var updateDefinition = Builders<PosterRecord>.Update
 				.Set(u => u.CurrentJobId, currentJobId)
+				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateTargetIterationMap(ObjectId posterId, DateTime LastAccessedUtc, TargetIterationColorMapRecord[] targetIterationColorMapRecords, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy)
+		{
+			var filter = Builders<PosterRecord>.Filter.Eq("_id", posterId);
+
+			var updateDefinition = Builders<PosterRecord>.Update
+				.Set(u => u.LastAccessedUtc, LastAccessedUtc)
+				.Set(u => u.TargetIterationColorMapRecords, targetIterationColorMapRecords)
+				.Set(u => u.ColorBandSetResolutionStrategy, colorBandSetResolutionStrategy)
 				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);

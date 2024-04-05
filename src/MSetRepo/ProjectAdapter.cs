@@ -185,9 +185,11 @@ namespace MSetRepo
 			_projectReaderWriter.UpdateCurrentJobId(projectId, currentJobId);
 		}
 
-		public void UpdateProjectTargetIterationMap(ObjectId projectId, DateTime lastAccessedUtc, TargetIterationColorMapRecord[] targetIterationColorMapRecords)
+		public void UpdateProjectTargetIterationMap(Project project)
 		{
-			_projectReaderWriter.UpdateTargetIterationMap(projectId, lastAccessedUtc, targetIterationColorMapRecords);
+			//ObjectId projectId, DateTime lastAccessedUtc, TargetIterationColorMapRecord[] targetIterationColorMapRecords
+
+			_projectReaderWriter.UpdateTargetIterationMap(project.Id, project.LastAccessedUtc, project.GetTargetIterationColorMapRecords().ToArray(), project.ColorBandSetResolutionStrategy);
 		}
 
 		public bool DeleteProject(ObjectId projectId)
@@ -1094,6 +1096,11 @@ namespace MSetRepo
 			var posterRecord = _mSetRecordMapper.MapTo(poster);
 
 			posterReaderWriter.UpdateDisplayPositionAndZoom(posterRecord);
+		}
+
+		public void UpdatePosterTargetIterationMap(Poster poster)
+		{
+			_posterReaderWriter.UpdateTargetIterationMap(poster.Id, poster.LastAccessedUtc, poster.GetTargetIterationColorMapRecords().ToArray(), poster.ColorBandSetResolutionStrategy);
 		}
 
 		public bool DeletePoster(ObjectId posterId)

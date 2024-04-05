@@ -503,6 +503,23 @@ namespace MSetExplorer
 			ShowCoordsEditor();
 		}
 
+		private void EditDetailsCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
+		}
+
+		private void EditDetailsCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			var curProject = _vm.ProjectViewModel.CurrentProject;
+
+			if (curProject == null)
+			{
+				return;
+			}
+
+			ShowProjectDetailEditor(curProject);
+		}
+
 		private void CreatePosterButton_Click(object sender, RoutedEventArgs e)
 		{
 			var saveResult = ProjectSaveChanges();
@@ -703,7 +720,7 @@ namespace MSetExplorer
 			var currentColorBandSet = curProject.CurrentColorBandSet;
 			var targetIterations = currentColorBandSet.TargetIterations;
 
-			if (ColorsShowOpenWindow(cbsInfos, currentColorBandSet, out var colorBandSet, out var overwriteExisting))
+			if (ColorsShowOpenWindow(cbsInfos, currentColorBandSet, curProject.ColorBandSetResolutionStrategy, out var colorBandSet, out var overwriteExisting))
 			{
 				CheckProjectViewModelTargetIterations();
 				
@@ -785,7 +802,7 @@ namespace MSetExplorer
 			var cbsInfos = _vm.ProjectViewModel.GetColorBandSetInfos();
 			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
 
-			if (ColorsShowSaveWindow(cbsInfos, curColorBandSet, out var newColorBandSet))
+			if (ColorsShowSaveWindow(cbsInfos, curColorBandSet, curProject.ColorBandSetResolutionStrategy, out var newColorBandSet))
 			{
 				_vm.ProjectViewModel.CurrentColorBandSet = newColorBandSet;
 			}
@@ -1225,6 +1242,18 @@ namespace MSetExplorer
 			return result;
 		}
 
+		private void ShowProjectDetailEditor(Project project)
+		{
+			var projectDetailsViewModel = _vm.ViewModelFactory.CreateAProjectDetailsViewModel(project);
+
+			var projectDetailsEditorWindow = new ProjectDetailsEditorWindow
+			{
+				DataContext = projectDetailsViewModel
+			};
+
+			_  = projectDetailsEditorWindow.ShowDialog();
+		}
+
 		private void ShowCoordsEditor()
 		{
 			CoordsEditorViewModel coordsEditorViewModel;
@@ -1422,11 +1451,11 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet selectedColorBandSet, [NotNullWhen(true)] out ColorBandSet? colorBandSet, out bool? overwriteExisting)
+		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet selectedColorBandSet, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, [NotNullWhen(true)] out ColorBandSet? colorBandSet, out bool? overwriteExisting)
 		{
 			var selectedColorBandSetInfo = ColorBandSetHelper.Convert(selectedColorBandSet);
 
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Open, colorBandSetInfos, selectedColorBandSetInfo);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Open, colorBandSetInfos, selectedColorBandSetInfo, colorBandSetResolutionStrategy);
 			colorBandSetOpenSaveVm.ResolutionStrategy = _vm.ProjectViewModel.CurrentProject?.ColorBandSetResolutionStrategy.ToString() ?? "Per Project";
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow
@@ -1477,11 +1506,11 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
+		private bool ColorsShowSaveWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet colorBandSet, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, [NotNullWhen(true)] out ColorBandSet? newColorBandSet)
 		{
 			var selectedColorBandSetInfo = ColorBandSetHelper.Convert(colorBandSet);
 
-			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Save, colorBandSetInfos, selectedColorBandSetInfo);
+			var colorBandSetOpenSaveVm = _vm.ViewModelFactory.CreateACbsOpenSaveViewModel(DialogType.Save, colorBandSetInfos, selectedColorBandSetInfo, colorBandSetResolutionStrategy);
 			colorBandSetOpenSaveVm.ResolutionStrategy = _vm.ProjectViewModel.CurrentProject?.ColorBandSetResolutionStrategy.ToString() ?? "Per Project";
 
 			var colorBandSetOpenSaveWindow = new ColorBandSetOpenSaveWindow

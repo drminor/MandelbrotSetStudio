@@ -121,7 +121,7 @@ namespace MSS.Common
 				SaveColorBandSets(project, projectAdapter);
 				SaveJobs(project, projectAdapter);
 
-				projectAdapter.UpdateProjectTargetIterationMap(project.Id, project.LastAccessedUtc, project.GetTargetIterationColorMapRecords().ToArray());
+				projectAdapter.UpdateProjectTargetIterationMap(project);
 			}
 
 			return true;

@@ -64,9 +64,9 @@ namespace MSetExplorer
 		}
 
 		// Open/Save ColorBandSet
-		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos, ColorBandSetInfo selectedColorBandSetInfo)
+		public IColorBandSetOpenSaveViewModel CreateACbsOpenSaveViewModel(DialogType dialogType, IEnumerable<ColorBandSetInfo> cbsInfos, ColorBandSetInfo selectedColorBandSetInfo, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy)
 		{
-			return new ColorBandSetOpenSaveViewModel(_projectAdapter, dialogType, cbsInfos, selectedColorBandSetInfo);
+			return new ColorBandSetOpenSaveViewModel(_projectAdapter, dialogType, cbsInfos, selectedColorBandSetInfo, colorBandSetResolutionStrategy);
 		}
 
 		//// Open/Save ColorBandSet
@@ -92,6 +92,18 @@ namespace MSetExplorer
 		public CoordsEditorViewModel CreateACoordsEditorViewModel(RRectangle coords, SizeDbl canvasSize, bool allowEdits)
 		{
 			var result = new CoordsEditorViewModel(_mapJobHelper, coords, canvasSize, allowEdits);
+			return result;
+		}
+
+		public ProjectDetailsViewModel CreateAProjectDetailsViewModel(Project project)
+		{
+			var result = new ProjectDetailsViewModel(_projectAdapter, project);
+			return result;
+		}
+
+		public PosterDetailsViewModel CreateAPosterDetailsViewModel(Poster poster)
+		{
+			var result = new PosterDetailsViewModel(_projectAdapter, poster);
 			return result;
 		}
 

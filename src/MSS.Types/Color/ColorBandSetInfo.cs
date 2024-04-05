@@ -37,6 +37,9 @@ namespace MSS.Types
 		public int NumberOfBands { get; init; }
 		public Guid ColorBandSerialNumber { get; init; }
 		public int NumberOfJobs { get; set; }
+		public bool? IsLatestVersion { get; set; }
+
+		public string VersionFontWeight => IsLatestVersion == true ? "Bold" : "Normal";
 
 		private string _name;
 		public string Name

@@ -1,6 +1,7 @@
 ﻿using MongoDB.Bson;
 using MSS.Types;
 using MSS.Types.MSet;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
@@ -26,16 +27,13 @@ namespace MSS.Common.MSet
 		bool OnFile { get; }
 		bool IsDirty { get; }
 		bool IsCurrentJobIdChanged { get; }
-		ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; }
 
+		DateTime LastAccessedUtc { get; init; }
+
+		ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; }
 		List<TargetIterationColorMapRecord> GetTargetIterationColorMapRecords();
 
 		int GetNumberOfDirtyJobs();
-
-		//DateTime DateCreatedUtc { get; init; }
-		//DateTime LastSavedUtc { get; }
-		//DateTime LastAccessedUtc { get; init; }
-		//DateTime LastUpdatedUtc { get; }
 
 		IEnumerable<Job> GetJobs();
 		List<ColorBandSet> GetColorBandSets();

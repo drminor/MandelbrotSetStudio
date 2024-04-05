@@ -647,6 +647,7 @@ namespace MSetExplorer
 				x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, numberOfJobs: 0)).ToList();
 
 			CalculateNumberOfJobs(result, curProject.GetJobs().ToList(), curProject.ColorBandSetStore);
+			CalculateLatestVersion(result);
 
 			return result;
 		}
@@ -661,6 +662,32 @@ namespace MSetExplorer
 					if (foundCbInfo != null)
 					{
 						foundCbInfo.NumberOfJobs++;
+					}
+				}
+			}
+		}
+
+		private void CalculateLatestVersion(List<ColorBandSetInfo> cbsInfos)
+		{
+			for(var i = 0; i < cbsInfos.Count; i++)
+			{
+				var cbsInfo = cbsInfos[i];
+
+				if (cbsInfo.IsLatestVersion == null)
+				{
+					var nameTiGroup = cbsInfos.Where(x => x.Name == cbsInfo.Name && x.TargetIterations == cbsInfo.TargetIterations);
+					var maxVerForGrp = nameTiGroup.Max(y => y.Version);
+
+					foreach(var grpItem in nameTiGroup)
+					{
+						if (grpItem.Version == maxVerForGrp)
+						{
+							grpItem.IsLatestVersion = true;
+						}
+						else
+						{
+							grpItem.IsLatestVersion = false;
+						}
 					}
 				}
 			}

@@ -15,6 +15,7 @@
 
         <CommandBinding Command="local:CustomCommands.CreateImage" CanExecute="CreateImageCommand_CanExecute" Executed="CreateImageCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.EditCoords" CanExecute="EditCoordsCommand_CanExecute" Executed="EditCoordsCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.PosterEditDetails" CanExecute="EditDetailsCommand_CanExecute" Executed="EditDetailsCommand_Executed" />
 
         <CommandBinding Command="local:CustomCommands.PanLeft" CanExecute="Pan_CanExecute" Executed="PanLeft_Executed" />
         <CommandBinding Command="local:CustomCommands.PanUp" CanExecute="Pan_CanExecute" Executed="PanUp_Executed" />
@@ -59,6 +60,7 @@
                 <MenuItem Header="C_reate Image" Command="local:CustomCommands.CreateImage" />
                 <Separator/>
                 <MenuItem Header="Edit Coor_ds" Command="local:CustomCommands.EditCoords"/>
+                <MenuItem Header="Edit Poster _Details" Command="local:CustomCommands.PosterEditDetails"/>
                 <Separator/>
                 <MenuItem Header="_Close And Return" Click="CloseAndReturnButton_Click" />
                 <MenuItem Header="_Exit Program" Click="ExitButton_Click" />
