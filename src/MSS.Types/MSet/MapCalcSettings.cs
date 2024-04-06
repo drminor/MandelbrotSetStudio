@@ -32,10 +32,10 @@ namespace MSS.Types.MSet
 		[DataMember(Order = 2)]
 		public int Threshold { get; set; }
 
-		// TODO: Remove the UseEscapeVelocities on the MapCalcSettings class.
-		[BsonIgnoreIfDefault]
-		[BsonDefaultValue(false)]
-		public bool UseEscapeVelocities { get; set; } 
+		//// TODO: Remove the UseEscapeVelocities on the MapCalcSettings class.
+		//[BsonIgnoreIfDefault]
+		//[BsonDefaultValue(false)]
+		//public bool UseEscapeVelocities { get; set; } 
 
 		[DataMember(Order = 3)]
 		[BsonIgnoreIfDefault]

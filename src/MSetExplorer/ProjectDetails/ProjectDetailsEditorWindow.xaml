@@ -26,6 +26,49 @@
             </StackPanel>-->
         </Border>
 
+        <!--
+        
+        Id
+        DateCreated
+        
+        Name                                *
+        Description                         *
+        ColorBandSet Resolution Strategy    *
+
+        Number of Jobs
+        Number of ColorBandsets
+        Number of Distinct Target Iterations
+
+        LastSaved
+        LastUpdated
+
+        Current Job
+            Target Iterations
+            Threshold
+            Calculate Escape Velocities
+            Save The ZValues
+        
+            Zoom Depth
+            Limb Count
+        
+        Current ColorBandSet
+            Use Percentages
+
+        OnFile
+
+        Is Dirty
+
+        Any ColorBandSet Is Dirty
+        JobTree Isirty
+        Any Job Is Dirty
+        Number Of Jobs Not Saved
+        Number Of ColorBandSets NotSaved
+        
+        Is Current JobId Changed
+        
+        -->
+        
+        
         <Border x:Name="borderDetails" Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,20">
 
             <StackPanel HorizontalAlignment="Left" Orientation="Vertical" Margin="20,0,0,0">

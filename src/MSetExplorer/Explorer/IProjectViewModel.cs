@@ -61,7 +61,7 @@ namespace MSetExplorer
 
 		void CheckProjectViewModelTargetIterations();
 
-		bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId);
+		//bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId);
 
 		void AddNewIterationUpdateJob(ColorBandSet colorBandSet);
 	}

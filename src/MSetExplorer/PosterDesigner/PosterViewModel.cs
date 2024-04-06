@@ -608,28 +608,28 @@ namespace MSetExplorer
 
 		#region Public Methods - ColorBandSet
 
-		public bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId)
-		{
-			var currentPoster = CurrentPoster;
+		//public bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId)
+		//{
+		//	var currentPoster = CurrentPoster;
 
-			if (currentPoster is null)
-			{
-				return false;
-			}
+		//	if (currentPoster is null)
+		//	{
+		//		return false;
+		//	}
 
-			// TODO: Have the Project class keep track of ColorBandSets to delete.
-			var wasRemoved = currentPoster.RemoveColorBandSet(colorBandSet/*, newId*/);
+		//	// TODO: Have the Project class keep track of ColorBandSets to delete.
+		//	var wasRemoved = currentPoster.RemoveColorBandSet(colorBandSet/*, newId*/);
 
-			if (wasRemoved)
-			{
-				var result = JobOwnerHelper.RemoveColorBandSet(colorBandSet.Id, _projectAdapter);
-				return result;
-			}
-			else
-			{
-				return false;
-			}
-		}
+		//	if (wasRemoved)
+		//	{
+		//		var result = JobOwnerHelper.RemoveColorBandSet(colorBandSet.Id, _projectAdapter);
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		return false;
+		//	}
+		//}
 
 		public List<ColorBandSetInfo> GetColorBandSetInfos()
 		{

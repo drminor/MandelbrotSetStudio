@@ -1220,6 +1220,15 @@ namespace MSetRepo
 			//UpdateColorBandSetSchema();
 
 			//UpdateAllJobsToUseColorBandSetName();
+
+			//RemoveUseEscapVelocitiesFromAllJobs();
+		}
+
+		public long RemoveUseEscapVelocitiesFromAllJobs()
+		{
+			//var result = _jobReaderWriter.RemoveUseEscapVelocitiesFromAllJobs();
+			var result = 0;
+			return result;
 		}
 
 		public long UpdateAllJobsToUseColorBandSetName()

@@ -58,7 +58,7 @@ namespace MSetExplorer
 		List<ColorBandSetInfo> GetColorBandSetInfos();
 		void CheckPosterViewModelTargetIterations();
 
-		bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId);
+		//bool RemoveColorBandSet(ColorBandSet colorBandSet, ObjectId newId);
 		void AddNewIterationUpdateJob(ColorBandSet colorBandSet);
 
 	}

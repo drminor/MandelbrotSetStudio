@@ -485,28 +485,28 @@ namespace MSetExplorer
 				{
 					var adjColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
 
-					if (overwriteExisting.HasValue)
-					{
-						var cbsToOverWrite = _vm.PosterViewModel.GetColorBandSet(colorBandSet.Name, colorBandSet.TargetIterations, colorBandSet.Version);
-						if (cbsToOverWrite == null)
-						{
-							throw new InvalidOperationException("Cannot find the ColorBandSet to overwrite.");
-						}
+					//if (overwriteExisting.HasValue)
+					//{
+					//	var cbsToOverWrite = _vm.PosterViewModel.GetColorBandSet(colorBandSet.Name, colorBandSet.TargetIterations, colorBandSet.Version);
+					//	if (cbsToOverWrite == null)
+					//	{
+					//		throw new InvalidOperationException("Cannot find the ColorBandSet to overwrite.");
+					//	}
 
-						if (overwriteExisting == true)
-						{
-							Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {targetIterations} to {colorBandSet.Id}.");
-							_vm.PosterViewModel.RemoveColorBandSet(cbsToOverWrite, adjColorBandSet.Id);
-						}
-						else
-						{
-							Debug.WriteLine($"Assigning a new name to the Project's ColorBandSet having name = {cbsToOverWrite.Name} and TargetIterations = {targetIterations}, with Id: {cbsToOverWrite.Id}.");
+					//	if (overwriteExisting == true)
+					//	{
+					//		Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {targetIterations} to {colorBandSet.Id}.");
+					//		_vm.PosterViewModel.RemoveColorBandSet(cbsToOverWrite, adjColorBandSet.Id);
+					//	}
+					//	else
+					//	{
+					//		Debug.WriteLine($"Assigning a new name to the Project's ColorBandSet having name = {cbsToOverWrite.Name} and TargetIterations = {targetIterations}, with Id: {cbsToOverWrite.Id}.");
 
-							// TODO: Generate a new name for the ColorBandSet being replaced.
-							//cbsToOverWrite.Name = Guid.NewGuid().ToString();
-							adjColorBandSet.Name = Guid.NewGuid().ToString();
-						}
-					}
+					//		// TODO: Generate a new name for the ColorBandSet being replaced.
+					//		//cbsToOverWrite.Name = Guid.NewGuid().ToString();
+					//		adjColorBandSet.Name = Guid.NewGuid().ToString();
+					//	}
+					//}
 
 					_vm.PosterViewModel.CurrentColorBandSet = adjColorBandSet;
 				}

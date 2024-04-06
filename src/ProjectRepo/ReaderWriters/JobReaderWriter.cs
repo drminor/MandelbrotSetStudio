@@ -314,6 +314,20 @@ namespace ProjectRepo
 
 		#region SCHEMA Changes
 
+		//public long RemoveUseEscapVelocitiesFromAllJobs()
+		//{
+		//	var updateDefinition = Builders<JobRecord>.Update
+		//		.Unset(f => f.MapCalcSettings.UseEscapeVelocities);
+
+		//	var options = new UpdateOptions { IsUpsert = false };
+		//	var filter = Builders<JobRecord>.Filter.Empty;
+
+		//	var updateResult = Collection.UpdateMany(filter, updateDefinition, options);
+		//	var cnt = GetReturnCount(updateResult) ?? -1;
+
+		//	return cnt;
+		//}
+
 		/*
 		private DtoMapper _dtoMapper = new DtoMapper();
 
