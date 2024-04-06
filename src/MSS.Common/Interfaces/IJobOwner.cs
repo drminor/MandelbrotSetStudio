@@ -43,7 +43,7 @@ namespace MSS.Common.MSet
 		ColorBandSet? GetColorBandSet(string name, int targetIterations, int? version);
 
 		void Add(ColorBandSet colorBandSet, bool makeDefault);
-		bool RemoveColorBandSet(ColorBandSet colorBandSet/*, ObjectId newId*/);
+		//bool RemoveColorBandSet(ColorBandSet colorBandSet/*, ObjectId newId*/);
 
 		JobPathType? GetCurrentPath();
 

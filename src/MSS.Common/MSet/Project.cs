@@ -26,11 +26,6 @@ namespace MSS.Common.MSet
 		private ObservableCollection<JobTreeNode>? _jobItems;
 		private readonly IJobTree _jobTree;
 
-
-		//private readonly List<ColorBandSet> _colorBandSets;
-		//private readonly IDictionary<int, TargetIterationColorMapRecord> _lookupColorBandSetByTargetIteration;
-		//private ColorBandSet _currentColorBandSet;
-
 		private readonly ColorBandSetStore _colorBandSetStore;
 
 		private readonly ReaderWriterLockSlim _stateLock;
@@ -106,8 +101,6 @@ namespace MSS.Common.MSet
 				}
 			}
 
-			//_colorBandSets = new List<ColorBandSet>(colorBandSets);
-
 			_stateLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
 
 			_originalCurrentJobId = currentJobId;
@@ -124,19 +117,8 @@ namespace MSS.Common.MSet
 				currentJob = jobsFromTree.Last();
 			}
 
-			//_  = JobOwnerHelper.LoadColorBandSet(currentJob, operationDescription: "as the project is being constructed", _colorBandSets, out var wasUpdated, out var wasCreated);
-			//var targetIterations = currentJob.MapCalcSettings.TargetIterations;
-
 			_colorBandSetStore = new ColorBandSetStore(colorBandSets.ToList(), lookupColorBandSetByTargetIteration.Values.ToList(), currentJob.ColorBandSetName, currentJob.TargetIterations, currentJob.ColorBandSetVersion);
 			_colorBandSetStore.ColorBandSetResolutionStrategy = ColorBandSetResolutionStrategy.PerJobWithVersion;
-
-			//_lookupColorBandSetByTargetIteration = lookupColorBandSetByTargetIteration;
-			//_currentColorBandSet = JobOwnerHelper.LoadColorBandSet(null, targetIterations, operationDescription: "as the project is being constructed", _colorBandSets, _lookupColorBandSetByTargetIteration);
-
-			//if (wasUpdated)
-			//{
-			//	LastUpdatedUtc = DateTime.UtcNow;
-			//}
 
 			LastUpdatedUtc = DateTime.MinValue;
 			DateCreatedUtc = dateCreatedUtc;
@@ -319,65 +301,6 @@ namespace MSS.Common.MSet
 			}
 		}
 
-		//public ColorBandSet CurrentColorBandSet
-		//{
-		//	get => _currentColorBandSet;
-		//	set
-		//	{
-		//		if (value != _currentColorBandSet)
-		//		{
-		//			var newCbs = value;
-
-		//			if (!ColorBandSetExists(newCbs))
-		//			{
-		//				if (newCbs.OwnerId != Id)
-		//				{
-		//					// Make a copy of the incoming ColorBandSet,
-		//					// set it's OwnerId to this Project's Id and
-		//					// give it a new SerialNumber.
-		//					newCbs = newCbs.CreateNewCopy(ObjectId.GenerateNewId());
-		//					newCbs.AssignNewSerialNumber();
-		//					newCbs.OwnerId = Id;
-		//				}
-
-		//				_colorBandSets.Add(newCbs);
-		//			}
-		//			else
-		//			{
-		//				Debug.WriteLine("Not adding the new Value!!!");
-		//			}
-
-		//			JobOwnerHelper.AddIteratationColorMapRecord(newCbs, _lookupColorBandSetByTargetIteration, makeDefault: true);
-
-		//			//CurrentJob.ColorBandSetId = newCbs.Id;
-
-		//			_currentColorBandSet = newCbs;
-		//			LastUpdatedUtc = DateTime.UtcNow;
-
-		//			OnPropertyChanged(nameof(CurrentColorBandSet));
-		//		}
-		//		else
-		//		{
-		//			ObjectId currentCbsIdForTargetIterations = ObjectId.Empty;
-
-		//			if (_lookupColorBandSetByTargetIteration.TryGetValue(value.TargetIterations, out var ticmr))
-		//			{
-		//				currentCbsIdForTargetIterations = ticmr.ColorBandSetId;
-		//			}
-
-		//			if (value.Id != currentCbsIdForTargetIterations)
-		//			{
-		//				JobOwnerHelper.AddIteratationColorMapRecord(value, _lookupColorBandSetByTargetIteration, makeDefault: true);
-		//				Debug.WriteLine($"WARNING: The Default ColorBandSet for {value.TargetIterations} is being set HOWEVER the CurrentColorBandSet already had this same value.");
-		//			}
-		//			else
-		//			{
-		//				Debug.WriteLine($"Not setting the CurrentColorBandSet, the CurrentColorBandSet is already updated.");
-		//			}
-		//		}
-		//	}
-		//}
-
 		public ColorBandSet CurrentColorBandSet
 		{
 			get => _colorBandSetStore.CurrentColorBandSet;
@@ -414,25 +337,6 @@ namespace MSS.Common.MSet
 						Debug.WriteLine($"Not setting the CurrentColorBandSet, the CurrentColorBandSet is already updated.");
 					}
 				}
-			}
-		}
-
-		[Conditional("DEBUG")]
-		private void CheckCurrentJobsColorBandSet(Job currentJob, ColorBandSet colorBandSet)
-		{
-			if (currentJob.OwnerId != colorBandSet.OwnerId)
-			{
-				Debug.WriteLine($"CheckCurrentJobsColorBandSet OwnerId Mismatch.");
-			}
-
-			if (colorBandSet.Name != currentJob.ColorBandSetName)
-			{
-				Debug.WriteLine($"CheckCurrentJobsColorBandSet Name Mismatch.");
-			}
-
-			if (currentJob.ColorBandSetVersion.HasValue && currentJob.ColorBandSetVersion.Value != colorBandSet.Version)
-			{
-				Debug.WriteLine($"CheckCurrentJobsColorBandSet Name Mismatch.");
 			}
 		}
 
@@ -497,24 +401,24 @@ namespace MSS.Common.MSet
 			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
-		public bool RemoveColorBandSet(ColorBandSet colorBandSet/*, ObjectId newId*/)
-		{
-			//var result = _colorBandSets.Remove(colorBandSet);
+		//public bool RemoveColorBandSet(ColorBandSet colorBandSet/*, ObjectId newId*/)
+		//{
+		//	//var result = _colorBandSets.Remove(colorBandSet);
 
-			//var jobs = _jobTree.GetItems().ToList();
+		//	//var jobs = _jobTree.GetItems().ToList();
 
-			//foreach (var job in jobs)
-			//{
-			//	if (job.ColorBandSetId == colorBandSet.Id)
-			//	{
-			//		job.ColorBandSetId = newId;
-			//	}
-			//}
+		//	//foreach (var job in jobs)
+		//	//{
+		//	//	if (job.ColorBandSetId == colorBandSet.Id)
+		//	//	{
+		//	//		job.ColorBandSetId = newId;
+		//	//	}
+		//	//}
 
-			var result = _colorBandSetStore.RemoveColorBandSet(colorBandSet);
+		//	var result = _colorBandSetStore.RemoveColorBandSet(colorBandSet);
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		public void MarkAsSaved()
 		{
@@ -669,7 +573,26 @@ namespace MSS.Common.MSet
 
 		#endregion
 
-		#region Private Methods
+		#region Diagnostics
+
+		[Conditional("DEBUG")]
+		private void CheckCurrentJobsColorBandSet(Job currentJob, ColorBandSet colorBandSet)
+		{
+			if (currentJob.OwnerId != colorBandSet.OwnerId)
+			{
+				Debug.WriteLine($"CheckCurrentJobsColorBandSet OwnerId Mismatch.");
+			}
+
+			if (colorBandSet.Name != currentJob.ColorBandSetName)
+			{
+				Debug.WriteLine($"CheckCurrentJobsColorBandSet Name Mismatch.");
+			}
+
+			if (currentJob.ColorBandSetVersion.HasValue && currentJob.ColorBandSetVersion.Value != colorBandSet.Version)
+			{
+				Debug.WriteLine($"CheckCurrentJobsColorBandSet Name Mismatch.");
+			}
+		}
 
 		#endregion
 
