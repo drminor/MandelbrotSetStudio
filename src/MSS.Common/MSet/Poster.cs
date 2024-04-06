@@ -53,6 +53,7 @@ namespace MSS.Common.MSet
 			ObjectId sourceJobId, 
 			List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets,
 			IDictionary<int, TargetIterationColorMapRecord> lookupColorBandSetByTargetIteration,
+			ColorBandSetResolutionStrategy colorBandSetResolutionStrategy,
 
 			ObjectId currentJobId,
 			SizeDbl posterSize, VectorDbl displayPosition, double displayZoom,
@@ -98,8 +99,8 @@ namespace MSS.Common.MSet
 				currentJob = jobsFromTree.Last();
 			}
 
-			_colorBandSetStore = new ColorBandSetStore(colorBandSets.ToList(), lookupColorBandSetByTargetIteration.Values.ToList(), currentJob.ColorBandSetName, currentJob.TargetIterations, currentJob.ColorBandSetVersion);
-			_colorBandSetStore.ColorBandSetResolutionStrategy = ColorBandSetResolutionStrategy.PerJobWithVersion;
+			_colorBandSetStore = new ColorBandSetStore(colorBandSets.ToList(), lookupColorBandSetByTargetIteration.Values.ToList(), colorBandSetResolutionStrategy, currentJob.ColorBandSetName, currentJob.TargetIterations, currentJob.ColorBandSetVersion);
+			//_colorBandSetStore.ColorBandSetResolutionStrategy = ColorBandSetResolutionStrategy.PerJobWithVersion;
 
 			LastUpdatedUtc = DateTime.MinValue;
 			DateCreatedUtc = dateCreatedUtc;
@@ -523,7 +524,7 @@ namespace MSS.Common.MSet
 			return new Poster(Id, Name, Description, SourceJobId,
 				_jobTree.GetItems().ToList(),
 				_colorBandSetStore.GetColorBandSets(), 
-				JobOwnerHelper.LoadTargetIterationColorMapRecords(_colorBandSetStore.GetTargetIterationColorMapRecords()),
+				JobOwnerHelper.LoadTargetIterationColorMapRecords(_colorBandSetStore.GetTargetIterationColorMapRecords()), ColorBandSetResolutionStrategy,
 				_jobTree.CurrentItem.Id,
 				PosterSize, DisplayPosition, DisplayZoom,
 				DateCreatedUtc, LastSavedUtc, LastAccessedUtc)
@@ -537,7 +538,7 @@ namespace MSS.Common.MSet
 			return new Poster(ObjectId.GenerateNewId(), Name, Description, SourceJobId,
 				_jobTree.GetItems().ToList(),
 				_colorBandSetStore.GetColorBandSets(),
-				JobOwnerHelper.LoadTargetIterationColorMapRecords(_colorBandSetStore.GetTargetIterationColorMapRecords()),
+				JobOwnerHelper.LoadTargetIterationColorMapRecords(_colorBandSetStore.GetTargetIterationColorMapRecords()), ColorBandSetResolutionStrategy,
 				_jobTree.CurrentItem.Id,
 				PosterSize, DisplayPosition, DisplayZoom, 
 				dateCreatedUtc: DateTime.UtcNow, lastSavedUtc: DateTime.MinValue, lastAccessedUtc: DateTime.UtcNow)

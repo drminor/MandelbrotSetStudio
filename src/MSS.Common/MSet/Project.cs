@@ -47,6 +47,7 @@ namespace MSS.Common.MSet
 				  new List<Job> { job }, 
 				  new List<ColorBandSet> { colorBandSet },
 				  JobOwnerHelper.CreateLookupColorBandSetByTargetIteration(job, colorBandSet),
+				  ColorBandSetResolutionStrategy.PerProject,
 				  currentJobId: job.Id,
 				  dateCreatedUtc: DateTime.UtcNow,
 				  lastSavedUtc: DateTime.MinValue, 
@@ -77,6 +78,7 @@ namespace MSS.Common.MSet
 			List<Job> jobs, 
 			IEnumerable<ColorBandSet> colorBandSets,
 			IDictionary<int, TargetIterationColorMapRecord> lookupColorBandSetByTargetIteration,
+			ColorBandSetResolutionStrategy colorBandSetResolutionStrategy,
 			ObjectId currentJobId, 
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc)
 		{
@@ -117,8 +119,7 @@ namespace MSS.Common.MSet
 				currentJob = jobsFromTree.Last();
 			}
 
-			_colorBandSetStore = new ColorBandSetStore(colorBandSets.ToList(), lookupColorBandSetByTargetIteration.Values.ToList(), currentJob.ColorBandSetName, currentJob.TargetIterations, currentJob.ColorBandSetVersion);
-			_colorBandSetStore.ColorBandSetResolutionStrategy = ColorBandSetResolutionStrategy.PerJobWithVersion;
+			_colorBandSetStore = new ColorBandSetStore(colorBandSets.ToList(), lookupColorBandSetByTargetIteration.Values.ToList(), colorBandSetResolutionStrategy, currentJob.ColorBandSetName, currentJob.TargetIterations, currentJob.ColorBandSetVersion);
 
 			LastUpdatedUtc = DateTime.MinValue;
 			DateCreatedUtc = dateCreatedUtc;

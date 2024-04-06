@@ -139,6 +139,8 @@ namespace MSS.Common
 				SaveColorBandSets(poster, projectAdapter);
 				SaveJobs(poster, projectAdapter);
 
+				projectAdapter.UpdatePosterTargetIterationMap(poster);
+
 				poster.MarkAsSaved();
 			}
 			else if (poster.IsCurrentJobIdChanged)

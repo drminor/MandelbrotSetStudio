@@ -29,27 +29,28 @@ namespace MSS.Common
 					  new List<TargetIterationColorMapRecord> {
 						  new TargetIterationColorMapRecord(colorBandSet.TargetIterations, colorBandSet.Id, colorBandSet.DateCreatedUtc)
 					  }),
+				  ColorBandSetResolutionStrategy.PerProject,
 				  colorBandSet
 				  )
 		{ }
 
-		public ColorBandSetStore(List<ColorBandSet> colorBandSets, List<TargetIterationColorMapRecord> targetIterationColorMapRecords, ObjectId currentColorBandSetId)
+		public ColorBandSetStore(List<ColorBandSet> colorBandSets, List<TargetIterationColorMapRecord> targetIterationColorMapRecords, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, ObjectId currentColorBandSetId)
 			: this(colorBandSets, 
-				  JobOwnerHelper.LoadTargetIterationColorMapRecords(targetIterationColorMapRecords), 
+				  JobOwnerHelper.LoadTargetIterationColorMapRecords(targetIterationColorMapRecords), colorBandSetResolutionStrategy, 
 				  colorBandSets.FirstOrDefault(x => x.Id == currentColorBandSetId) ?? throw new ArgumentException($"No ColorBandSet found in the list with Id: {currentColorBandSetId}"))
 		{ }
 
 		public ColorBandSetStore(IJobOwner jobOwner)
-			: this(jobOwner.GetColorBandSets(), jobOwner.GetTargetIterationColorMapRecords(), jobOwner.CurrentJob.ColorBandSetName, jobOwner.CurrentJob.TargetIterations, jobOwner.CurrentJob.ColorBandSetVersion)
+			: this(jobOwner.GetColorBandSets(), jobOwner.GetTargetIterationColorMapRecords(), jobOwner.ColorBandSetResolutionStrategy, jobOwner.CurrentJob.ColorBandSetName, jobOwner.CurrentJob.TargetIterations, jobOwner.CurrentJob.ColorBandSetVersion)
 		{ }
 
-		public ColorBandSetStore(List<ColorBandSet> colorBandSets, List<TargetIterationColorMapRecord> targetIterationColorMapRecords, string name, int targetIterations, int? version)
+		public ColorBandSetStore(List<ColorBandSet> colorBandSets, List<TargetIterationColorMapRecord> targetIterationColorMapRecords, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, string name, int targetIterations, int? version)
 			: this(colorBandSets,
-				JobOwnerHelper.LoadTargetIterationColorMapRecords(targetIterationColorMapRecords),
+				JobOwnerHelper.LoadTargetIterationColorMapRecords(targetIterationColorMapRecords), colorBandSetResolutionStrategy,
 				 FindOrCreateColorBandSet(name, version, targetIterations, colorBandSets))
 		{ }
 
-		public ColorBandSetStore(List<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorBandSetByTargetIteration, ColorBandSet currentColorBandSet)
+		public ColorBandSetStore(List<ColorBandSet> colorBandSets, IDictionary<int, TargetIterationColorMapRecord> lookupColorBandSetByTargetIteration, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, ColorBandSet currentColorBandSet)
 		{
 			_colorBandSets = colorBandSets;
 			_lookupColorBandSetByTargetIteration = lookupColorBandSetByTargetIteration;

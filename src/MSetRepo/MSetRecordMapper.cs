@@ -51,7 +51,8 @@ namespace MSetRepo
 			{
 				Id = source.Id,
 				LastAccessedUtc = source.LastAccessedUtc,
-				TargetIterationColorMapRecords = lookupColorMapByTargetIterationRecs
+				TargetIterationColorMapRecords = lookupColorMapByTargetIterationRecs,
+				ColorBandSetResolutionStrategy = source.ColorBandSetResolutionStrategy
 			};
 
 			return result;

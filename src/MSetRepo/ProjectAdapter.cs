@@ -164,7 +164,9 @@ namespace MSetRepo
 			}
 			else
 			{
-				result = new Project(projectRecord.Id, projectRecord.Name ?? projectRecord.ProjectNameTemporary, projectRecord.Description, jobs, colorBandSets, lookupColorMapByTargetIteration, projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc);
+				result = new Project(projectRecord.Id, projectRecord.Name ?? projectRecord.ProjectNameTemporary, projectRecord.Description, jobs, 
+					colorBandSets, lookupColorMapByTargetIteration, projectRecord.ColorBandSetResolutionStrategy, 
+					projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc);
 			}
 
 			return result;
@@ -941,6 +943,7 @@ namespace MSetRepo
 				jobs: jobs,
 				colorBandSets: colorBandSets,
 				lookupColorBandSetByTargetIteration,
+				colorBandSetResolutionStrategy: target.ColorBandSetResolutionStrategy,
 				currentJobId: target.CurrentJobId,
 				posterSize: target.PosterSize,
 				displayPosition: _mSetRecordMapper.MapFrom(target.DisplayPosition),
@@ -1034,7 +1037,8 @@ namespace MSetRepo
 				var displayPosition = _mSetRecordMapper.MapFrom(posterRecord.DisplayPosition);
 
 				result = new Poster(posterRecord.Id, posterRecord.Name, posterRecord.Description, 
-					posterRecord.SourceJobId, jobs, colorBandSets, lookupColorMapByTargetIteration, posterRecord.CurrentJobId, 
+					posterRecord.SourceJobId, jobs, 
+					colorBandSets, lookupColorMapByTargetIteration, posterRecord.ColorBandSetResolutionStrategy, posterRecord.CurrentJobId, 
 					
 					posterSize: posterRecord.PosterSize, displayPosition, posterRecord.DisplayZoom, 
 					dateCreatedUtc: posterRecord.DateCreatedUtc, lastSavedUtc: lastSavedUtc, lastAccessedUtc: DateTime.MinValue);
