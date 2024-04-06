@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using MSS.Common;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -140,6 +141,43 @@ namespace MSetExplorer
 			}
 		}
 
+
+		private void ViewJobsButton_Click(object sender, RoutedEventArgs e)
+		{
+			var selectedPoster = _vm.SelectedProject;
+
+			if (selectedPoster != null)
+			{
+				OpenJobDetailsDialog(selectedPoster);
+			}
+		}
+
+		private void TrimMapSectionsButton_Click(object sender, RoutedEventArgs e)
+		{
+			var msg = "Delete all Map Sections used by this Project except those used by the current Job?";
+			var resp = MessageBox.Show(msg, "Trim Map Sections", MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel);
+
+			if (resp == MessageBoxResult.Yes)
+			{
+				var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: false);
+
+				_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+			}
+		}
+
+		private void TrimMapSectionsHeavyButton_Click(object sender, RoutedEventArgs e)
+		{
+			var msg = "Delete all Map Sections used by this Project except those used by the current Job and...\n";
+			msg += "Delete all Map Sections used by the current Job except for those Map Sections required to create the Image.";
+			var resp = MessageBox.Show(msg, "Trim Map Sections - Agressive", MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel);
+
+			if (resp == MessageBoxResult.Yes)
+			{
+				var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: true);
+				_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+			}
+		}
+
 		private void TakeSelection()
 		{
 			if (_vm.DialogType == DialogType.Save)
@@ -161,5 +199,19 @@ namespace MSetExplorer
 
 		#endregion
 
+		#region Jobs Dialog
+
+		private void OpenJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
+		{
+			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(jobOwnerInfo);
+			var jobDetailsDialog = new JobDetailsWindow
+			{
+				DataContext = jobDetailsViewModel
+			};
+
+			jobDetailsDialog.ShowDialog();
+		}
+
+		#endregion
 	}
 }

@@ -158,15 +158,28 @@ namespace MSetExplorer
 
 		private void TrimMapSectionsButton_Click(object sender, RoutedEventArgs e)
 		{
-			var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: false);
+			var msg = "Delete all Map Sections used by this Poster except those used by the current Job?";
+			var resp = MessageBox.Show(msg, "Trim Map Sections", MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel);
 
-			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+			if (resp == MessageBoxResult.Yes)
+			{
+				var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: false);
+
+				_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+			}
 		}
 
 		private void TrimMapSectionsHeavyButton_Click(object sender, RoutedEventArgs e)
 		{
-			var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: true);
-			_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+			var msg = "Delete all Map Sections used by this Poster except those used by the current Job and...\n";
+			msg += "Delete all Map Sections used by the current Job except for those Map Sections required to create the Image.";
+			var resp = MessageBox.Show(msg, "Trim Map Sections - Agressive", MessageBoxButton.OKCancel, MessageBoxImage.Warning, MessageBoxResult.Cancel);
+
+			if (resp == MessageBoxResult.Yes)
+			{
+				var numberOfMapSectionsDeleted = _vm.TrimSelected(agressive: true);
+				_ = MessageBox.Show($"{numberOfMapSectionsDeleted} map sections were deleted.");
+			}
 		}
 
 		private void TakeSelection()

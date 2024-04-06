@@ -14,7 +14,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
+        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,50,5,5">
             <!--<StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
 
                 <TextBlock Margin="20, 5, 1, 5">Jobs and MapSection Details for Poster:</TextBlock>
@@ -31,13 +31,13 @@
             <StackPanel HorizontalAlignment="Left" Orientation="Vertical" Margin="20,0,0,0">
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Critical</TextBlock>
-                    <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Name}"/>
+                    <TextBlock Width="130" FontSize="16" Margin="10,5,1,5">Name</TextBlock>
+                    <TextBlock Width="280" FontSize="16" Margin="2,5,1,5" Text="{Binding Name}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Non Critical</TextBlock>
-                    <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Description}"/>
+                    <TextBlock Width="130" FontSize="16" Margin="10,5,1,5">Description:</TextBlock>
+                    <TextBlock Width="280" FontSize="16" Margin="2,5,1,5" Text="{Binding Description}"/>
                 </StackPanel>
 
             </StackPanel>

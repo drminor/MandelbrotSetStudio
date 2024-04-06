@@ -47,7 +47,8 @@ namespace MSetExplorer
 		// Project Open/Save
 		public IProjectOpenSaveViewModel CreateAProjectOpenSaveViewModel(string? initalName, DialogType dialogType)
 		{
-			return new ProjectOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, initalName, dialogType);
+			var viewModelFactory = this;
+			return new ProjectOpenSaveViewModel(_projectAdapter, _mapSectionAdapter, viewModelFactory, initalName, dialogType);
 		}
 
 		// Poster Open/Save

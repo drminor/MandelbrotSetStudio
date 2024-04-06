@@ -3,6 +3,7 @@ using MSetRepo;
 using MSS.Common;
 using MSS.Types.MSet;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -24,10 +25,12 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public ProjectOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, string? initialName, DialogType dialogType)
+		public ProjectOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, ViewModelFactory viewModelFactory, string? initialName, DialogType dialogType)
 		{
 			_projectAdapter = projectAdapter;
 			_mapSectionAdapter = mapSectionAdapter;
+			ViewModelFactory = viewModelFactory;
+
 			DialogType = dialogType;
 
 			ProjectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
@@ -105,6 +108,8 @@ namespace MSetExplorer
 			}
 		}
 
+		public ViewModelFactory ViewModelFactory { get; init; }
+
 		#endregion
 
 		#region Public Methods
@@ -136,6 +141,60 @@ namespace MSetExplorer
 			{
 				result = false;
 			}
+
+			return result;
+		}
+
+		public long TrimSelected(bool agressive)
+		{
+			var projectInfo = SelectedProject;
+
+			if (projectInfo == null)
+			{
+				return -1;
+			}
+
+			var currentJobId = projectInfo.CurrentJobId;
+
+			var ownerId = projectInfo.ProjectId;
+
+			var allJobIds = _projectAdapter.GetAllJobIdsForProject(ownerId);
+
+			var allNonCurrentJobIds = allJobIds.Where(x => x != currentJobId);
+
+			DeleteMapSectionsForManyJobs(allNonCurrentJobIds, out var numberOfMapSectionsDeleted);
+
+			if (agressive)
+			{
+				// In addition to deleting all the MapSections for all of the jobs for this poster, except for the current job..
+				// Delete all of the ReducedScale and Preview MapSections for the current job.
+
+				TrimMapSectionsForSelectedJob(currentJobId);
+			}
+
+			return numberOfMapSectionsDeleted;
+		}
+
+		private bool DeleteMapSectionsForManyJobs(IEnumerable<ObjectId> jobIds, out long numberOfMapSectionsDeleted)
+		{
+			var numberDeleted = _mapSectionAdapter.DeleteMapSectionsForManyJobs(jobIds);
+
+			if (numberDeleted.HasValue)
+			{
+				numberOfMapSectionsDeleted = numberDeleted.Value;
+				return true;
+			}
+			else
+			{
+				numberOfMapSectionsDeleted = -1;
+				return true;
+			}
+		}
+
+		private long TrimMapSectionsForSelectedJob(ObjectId selectedJobId)
+		{
+			var nonEssentialJobTypes = new JobType[] { JobType.ReducedScale, JobType.SizeEditorPreview };
+			var result = _mapSectionAdapter.DeleteMapSectionsForJobHavingJobTypes(selectedJobId, nonEssentialJobTypes) ?? 0;
 
 			return result;
 		}

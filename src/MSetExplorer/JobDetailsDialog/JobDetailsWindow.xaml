@@ -107,8 +107,8 @@
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="25,2,0,0">
                     <Button Name="btnDelete" HorizontalAlignment="Center" Width="150" FontSize="16" Margin="40, 10, 20, 10" Click="DeleteJobButton_Click">_Delete Job</Button>
 
-                    <Button HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="TrimMapSectionsButton_Click">Delete Map_Sections</Button>
-                    <Button HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="DeleteMapSectionsButton_Click">_Trim Map Sections</Button>
+                    <Button HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="DeleteMapSectionsButton_Click">Delete Map_Sections</Button>
+                    <Button HorizontalAlignment="Center" Width="150" FontSize="16" Margin="20, 10" Click="TrimMapSectionsButton_Click">_Trim Map Sections</Button>
                 </StackPanel>
 
             </StackPanel>

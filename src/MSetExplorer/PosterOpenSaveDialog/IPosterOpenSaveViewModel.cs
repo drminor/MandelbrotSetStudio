@@ -21,7 +21,6 @@ namespace MSetExplorer
 		bool IsNameTaken(string? name);
 
 		bool DeleteSelected(out long numberOfMapSectionsDeleted);
-
 		long TrimSelected(bool agressive);
 
 		ViewModelFactory ViewModelFactory { get; }
