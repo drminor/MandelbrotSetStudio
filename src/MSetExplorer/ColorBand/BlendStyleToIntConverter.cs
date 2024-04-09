@@ -5,7 +5,7 @@ using System.Windows.Data;
 
 namespace MSetExplorer
 {
-    [ValueConversion(typeof(ColorBandBlendStyle), typeof(int))]
+	[ValueConversion(typeof(ColorBandBlendStyle), typeof(int))]
     internal class BlendStyleToIntConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

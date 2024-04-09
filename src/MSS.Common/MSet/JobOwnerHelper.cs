@@ -513,16 +513,16 @@ namespace MSS.Common
 			}
 		}
 
-		private static ColorBandSet? GetColorBandSetById(ObjectId colorBandSetId, List<ColorBandSet> colorBandSets)
-		{
-			var result = colorBandSets.FirstOrDefault(x => x.Id == colorBandSetId);
-			if (result == null)
-			{
-				Debug.WriteLine($"WARNING: The job's current ColorBandSet: {colorBandSetId} does not exist in the Project list of ColorBandSets.");
-			}
+		//private static ColorBandSet? GetColorBandSetById(ObjectId colorBandSetId, List<ColorBandSet> colorBandSets)
+		//{
+		//	var result = colorBandSets.FirstOrDefault(x => x.Id == colorBandSetId);
+		//	if (result == null)
+		//	{
+		//		Debug.WriteLine($"WARNING: The job's current ColorBandSet: {colorBandSetId} does not exist in the Project list of ColorBandSets.");
+		//	}
 
-			return result;
-		}
+		//	return result;
+		//}
 
 		private static ColorBandSet FindOrCreateColorBandSetForTargetIterations(int targetIterations, List<ColorBandSet> colorBandSets, out bool wasCreated)
 		{
@@ -531,7 +531,7 @@ namespace MSS.Common
 			if (colorBandSet.HighCutoff != targetIterations)
 			{
 				var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
-				Debug.WriteLine($"WARNING: Creating new adjusted ColorBandSet: {adjustedColorBandSet.Id} to replace {colorBandSet.Id}.");
+				Debug.WriteLine($"WARNING: Creating new adjusted ColorBandSet: {adjustedColorBandSet.Key} to replace {colorBandSet.Key}.");
 
 				if (!IsColorBandSetUnique(adjustedColorBandSet.Name, adjustedColorBandSet.TargetIterations, adjustedColorBandSet.Version, colorBandSets))
 				{

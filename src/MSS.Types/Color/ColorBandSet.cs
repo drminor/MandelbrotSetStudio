@@ -110,7 +110,7 @@ namespace MSS.Types
 
 		public bool HavePercentages => NoPercentageIsNaN && AtLeastOnePercentageIsNonZero;
 
-		public string Key => $"{Id}/{LastUpdatedUtc}/{Name[1]}/{TargetIterations}/{Version}";
+		public string Key => $"{Id}/{LastUpdatedUtc}/{Name[0]}/{TargetIterations}/{Version}";
 
 		#endregion
 

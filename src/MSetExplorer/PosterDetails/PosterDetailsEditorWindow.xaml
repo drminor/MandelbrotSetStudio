@@ -6,6 +6,13 @@
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:PosterDetailsViewModel}"
         mc:Ignorable="d"
         Title="Edit Poster" Height="500" Width="820">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <local:CbsResolutionStrategyToIntConverter x:Key="CbsResolutionStrategyConverter"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    
     <Grid>
 
         <Grid.RowDefinitions>
@@ -31,15 +38,25 @@
             <StackPanel HorizontalAlignment="Left" Orientation="Vertical" Margin="20,0,0,0">
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Critical</TextBlock>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Name:</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Name}"/>
                 </StackPanel>
 
                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Non Critical</TextBlock>
+                    <TextBlock Width="160" FontSize="16" Margin="10,5,1,5">Description:</TextBlock>
                     <TextBlock Width="80" FontSize="16" Margin="2,5,1,5" Text="{Binding Description}"/>
                 </StackPanel>
 
+                <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <TextBlock Width="130" FontSize="16" Margin="10,5,1,5">CB Res Strategy:</TextBlock>
+                    <ComboBox x:Name="cmbBlendStyle" Width="180" Height="26" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0"
+                              FontSize="16"
+                            SelectedIndex="{Binding Path=ColorBandSetResolutionStrategy, Converter={StaticResource CbsResolutionStrategyConverter}}">
+                        <ComboBoxItem IsSelected="True">Per Project</ComboBoxItem>
+                        <ComboBoxItem>Per Job</ComboBoxItem>
+                        <ComboBoxItem>Per Job With Version</ComboBoxItem>
+                    </ComboBox>
+                </StackPanel>
             </StackPanel>
 
         </Border>
@@ -47,7 +64,8 @@
         <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
-                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Close</Button>
+                <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" >Save</Button>
+                <Button Name="btnClose" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="CloseButton_Click" IsCancel="True">_Cancel</Button>
             </StackPanel>
 
         </Border>

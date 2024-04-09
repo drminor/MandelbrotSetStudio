@@ -71,7 +71,6 @@ namespace MSetExplorer
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new ExplorerViewModel(projectViewModel, mapDisplayViewModel, cbsHistogramViewModel, jobTreeViewModel,
-				//_mapLoaderManager, _mapJobHelper,
 				mapSectionHistogramProcessor, _viewModelFactory);
 
 			return result;
@@ -95,7 +94,6 @@ namespace MSetExplorer
 			var jobTreeViewModel = new JobTreeViewModel(_projectAdapter, _mapSectionAdapter, _useSimpleJobTree);
 
 			var result = new PosterDesignerViewModel(posterViewModel, mapDisplayViewModel, cbsHistogramViewModel, jobTreeViewModel,
-				//_mapLoaderManager, _mapJobHelper,
 				mapSectionHistogramProcessor, _viewModelFactory);
 
 			return result;

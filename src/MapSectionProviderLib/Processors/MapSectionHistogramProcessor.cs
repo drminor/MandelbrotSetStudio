@@ -132,67 +132,36 @@ namespace MapSectionProviderLib
 			{ }
 		}
 
-		//public void Reset()
-		//{
-		//	////ReportQueueCount();
-		//	//_histogram.Reset();
-		//	//HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
-		//}
-
-		//private void ReportQueueCount()
-		//{
-		//	//Debug.WriteLine($"MapSectionHistogramProcessor dummy log output. ProcessingIsEnabled: {ProcessingEnabled}."); 
-
-		//	if (_workQueue.TryGetNonEnumeratedCount(out var hCnt))
-		//	{
-		//		Debug.WriteLine($"MapSectionHistogramProcessor. The WorkQueue has {hCnt} items.");
-		//	}
-		//	else
-		//	{
-		//		Debug.WriteLine("MapSectionHistogramProcessor. TryGetNonEnumeratedCount returned false.");
-		//	}
-		//}
-
-		//public void Clear(int newSize)
-		//{
-		//	var originalProcessingEnabledValue = ProcessingEnabled;
-		//	try
-		//	{
-		//		ProcessingEnabled = false;
-		//		//ReportQueueCount();
-		//		_histogram.Reset(newSize);
-		//	}
-		//	finally
-		//	{
-		//		ProcessingEnabled = originalProcessingEnabledValue;
-		//	}
-
-		//	HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
-		//}
-
 		public void UpdateSize(int newSize)
 		{
-			lock (_processingEnabledLock)
+			if (_histogram.Length != newSize)
 			{
-				var originalProcessingEnabledValue = _processingEnabled;
-
-				_processingEnabled = false;
-
-				//_histogram.Reset(newSize + 2);
-				_histogram.Reset(newSize);
-
-				foreach (var mapsection in _mapSections)
+				lock (_processingEnabledLock)
 				{
-					if (!mapsection.Histogram.IsEmpty)
+					var originalProcessingEnabledValue = _processingEnabled;
+
+					_processingEnabled = false;
+
+					//_histogram.Reset(newSize + 2);
+
+					if (_histogram.Length != newSize)
 					{
-						_histogram.Add(mapsection.Histogram);
+						_histogram.Reset(newSize);
+
+						foreach (var mapsection in _mapSections)
+						{
+							if (!mapsection.Histogram.IsEmpty)
+							{
+								_histogram.Add(mapsection.Histogram);
+							}
+						}
 					}
+
+					_processingEnabled = originalProcessingEnabledValue;
 				}
 
-				_processingEnabled = originalProcessingEnabledValue;
+				HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
 			}
-
-			HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
 		}
 
 		public KeyValuePair<int, int>[] GetKeyValuePairsForBand(int previousCutoff, int cutoff, bool includeCatchAll)

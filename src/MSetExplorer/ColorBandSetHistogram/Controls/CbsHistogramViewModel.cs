@@ -209,25 +209,30 @@ namespace MSetExplorer
 						Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramViewModel is not resetting the view -- the unscaled width <= 10.");
 					}
 
-					HistCutoffsSnapShot histCutoffsSnapShot;
-					lock (_histLock)
-					{
-						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());	//Clone
-						IsDirty = false;
-						_currentColorBandSet = value.CreateNewCopy(ObjectId.GenerateNewId());
+					//HistCutoffsSnapShot histCutoffsSnapShot;
+					//lock (_histLock)
+					//{
+					//	_colorBandSetHistoryCollection.Load(value.CreateNewCopy());	//Clone
+					//	IsDirty = false;
+					//	_currentColorBandSet = value.CreateNewCopy(ObjectId.GenerateNewId());
 
-						//_mapSectionHistogramProcessor.Clear(value.HighCutoff);
+					//	//_mapSectionHistogramProcessor.Clear(value.HighCutoff);
 
-						// TODO: Update the CbsHistogramViewModel to initialized the MapSectionHistorgramProcessor while the component is being activated
-						// instead of using the ColorBandSet property.
-						if (_mapSectionHistogramProcessor.Histogram.Length != value.HighCutoff)
-						{
-							_mapSectionHistogramProcessor.UpdateSize(value.HighCutoff);
-						}
+					//	// TODO: Update the CbsHistogramViewModel to initialized the MapSectionHistorgramProcessor while the component is being activated
+					//	// instead of using the ColorBandSet property.
+					//	if (_mapSectionHistogramProcessor.Histogram.Length != value.HighCutoff)
+					//	{
+					//		_mapSectionHistogramProcessor.UpdateSize(value.HighCutoff);
+					//	}
 
-						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
-						//histCutoffsSnapShot = GetEmptyHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
-					}
+					//	histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
+					//}
+
+					_colorBandSetHistoryCollection.Load(value.CreateNewCopy()); //Clone
+					IsDirty = false;
+					_currentColorBandSet = value.CreateNewCopy(ObjectId.GenerateNewId());
+
+					var histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
 
 					PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting, _mapSectionHistogramProcessor.Histogram);
 
@@ -2168,27 +2173,6 @@ namespace MSetExplorer
 					histogramIsFromACompleteMap,
 					ColorBandSetHelper.GetPercentageBands(colorBandSet),
 					colorBandSet.UsingPercentages
-				);
-			}
-
-			return result;
-		}
-
-
-		private HistCutoffsSnapShot GetEmptyHistCutoffsSnapShot(IHistogram histogram, bool histogramIsFromACompleteMap, ColorBandSet colorBandSet)
-		{
-			HistCutoffsSnapShot result;
-
-			lock (_histLock)
-			{
-				result = new HistCutoffsSnapShot(
-					colorBandSetId:	colorBandSet.Id,
-					histKeyValuePairs: new KeyValuePair<int, int>[0],
-					histogramLength: histogram.Length,
-					upperCatchAllValue: 0,
-					histogramIsFromACompleteMap: histogramIsFromACompleteMap,
-					percentageBands: ColorBandSetHelper.GetPercentageBands(colorBandSet),
-					usingPercentages: colorBandSet.UsingPercentages
 				);
 			}
 

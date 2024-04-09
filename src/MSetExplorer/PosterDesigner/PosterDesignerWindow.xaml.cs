@@ -385,9 +385,7 @@ namespace MSetExplorer
 
 		private CreateImageProgressWindow StartImageCreation(string imageFilePath, ImageFileType imageFileType, AreaColorAndCalcSettings areaColorAndCalcSettings, SizeDbl imageSize)
 		{
-			var viewModelFactory = _vm.ViewModelFactory;
-
-			var createImageProgressViewModel = viewModelFactory.CreateACreateImageProgressViewModel(imageFileType);
+			var createImageProgressViewModel = _vm.ViewModelFactory.CreateACreateImageProgressViewModel(imageFileType);
 
 			var useEscapeVelocities = _vm.CbsHistogramViewModel.UseEscapeVelocities;
 			createImageProgressViewModel.CreateImage(imageFilePath, areaColorAndCalcSettings, imageSize, useEscapeVelocities);
@@ -976,7 +974,12 @@ namespace MSetExplorer
 				DataContext = posterDetailsViewModel
 			};
 
-			_ = posterDetailsEditorWindow.ShowDialog();
+			var res = posterDetailsEditorWindow.ShowDialog();
+			if (res == true)
+			{
+				_vm.PosterViewModel.PosterSave();
+				Title = GetWindowTitle(_vm.PosterViewModel.CurrentPoster?.Name, _vm.PosterViewModel.CurrentColorBandSet.Name);
+			}
 		}
 
 		private void OpenPosterFromAppRequest(string[]? requestParameters)

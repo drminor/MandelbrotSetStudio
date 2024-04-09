@@ -170,7 +170,7 @@ namespace MSetExplorer
 			//	return;
 			//}
 
-			if (e.PropertyName == nameof(IProjectViewModel.CurrentProject))
+			if (e.PropertyName == nameof(IProjectViewModel.CurrentProject) || e.PropertyName == nameof(IProjectViewModel.CurrentColorBandSet))
 			{
 				Title = GetWindowTitle(_vm.ProjectViewModel.CurrentProject?.Name, _vm.ProjectViewModel.CurrentColorBandSet.Name);
 				CommandManager.InvalidateRequerySuggested();
@@ -1251,7 +1251,12 @@ namespace MSetExplorer
 				DataContext = projectDetailsViewModel
 			};
 
-			_  = projectDetailsEditorWindow.ShowDialog();
+			var res = projectDetailsEditorWindow.ShowDialog();
+			if (res == true)
+			{
+				_vm.ProjectViewModel.ProjectSave();
+				Title = GetWindowTitle(_vm.ProjectViewModel.CurrentProject?.Name, _vm.ProjectViewModel.CurrentColorBandSet.Name);
+			}
 		}
 
 		private void ShowCoordsEditor()

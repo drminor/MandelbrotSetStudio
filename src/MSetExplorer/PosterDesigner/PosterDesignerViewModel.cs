@@ -10,11 +10,8 @@ namespace MSetExplorer
 {
 	internal class PosterDesignerViewModel : ViewModelBase, IPosterDesignerViewModel
 	{
-		//private readonly MapJobHelper _mapJobHelper;
-		//private readonly IMapLoaderManager _mapLoaderManager;
-		//private readonly ViewModelFactory _viewModelFactory;
-
 		private readonly IMapSectionHistogramProcessor _mapSectionHistogramProcessor;
+		private readonly ViewModelFactory _viewModelFactory;
 
 		private readonly bool _useDetailedDebug = true;
 
@@ -22,12 +19,8 @@ namespace MSetExplorer
 
 		public PosterDesignerViewModel(IPosterViewModel posterViewModel, IMapDisplayViewModel mapDisplayViewModel, 
 			ICbsHistogramViewModel cbsHistogramViewModel, IJobTreeViewModel jobTreeViewModel,
-						/*IMapLoaderManager mapLoaderManager, MapJobHelper mapJobHelper, */
 			IMapSectionHistogramProcessor mapSectionHistogramProcessor, ViewModelFactory viewModelFactory)
 		{
-			//_mapJobHelper = mapJobHelper;
-			//_mapLoaderManager = mapLoaderManager;
-
 			PosterViewModel = posterViewModel;
 			JobTreeViewModel = jobTreeViewModel;
 
@@ -39,7 +32,7 @@ namespace MSetExplorer
 
 			MapDisplayViewModel.MapViewUpdateCompleted += MapDisplayViewModel_MapViewUpdateCompleted;
 
-			ViewModelFactory = viewModelFactory;
+			_viewModelFactory = viewModelFactory;
 
 			MapCoordsViewModel = viewModelFactory.CreateAMapCoordsViewModel();
 
@@ -66,7 +59,8 @@ namespace MSetExplorer
 
 		public ICbsHistogramViewModel CbsHistogramViewModel { get; }
 
-		public ViewModelFactory ViewModelFactory { get; init;}
+		public ViewModelFactory ViewModelFactory => _viewModelFactory;
+
 
 		#endregion
 
@@ -94,11 +88,11 @@ namespace MSetExplorer
 				// Don't update the ColorBandSetHistogram's ViewModel, if this is a preview.
 				if (!PosterViewModel.ColorBandSetIsPreview)
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel. Just before setting the CbsHistogramViewModel's ColorBandSet to a value with id: {PosterViewModel.CurrentColorBandSet.Id}.");
+					Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel. Just before setting the CbsHistogramViewModel's ColorBandSet to a value with Key: {PosterViewModel.CurrentColorBandSet.Key}.");
 					CbsHistogramViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 				}
 
-				Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel. Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {PosterViewModel.CurrentColorBandSet.Id}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"PosterDesignerViewModel. Just before setting the MapDisplayViewModel's ColorBandSet to a value with Key: {PosterViewModel.CurrentColorBandSet.Key}.");
 				MapDisplayViewModel.ColorBandSet = PosterViewModel.CurrentColorBandSet;
 			}
 		}

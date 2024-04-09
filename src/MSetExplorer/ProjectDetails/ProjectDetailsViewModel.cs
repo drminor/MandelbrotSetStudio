@@ -1,5 +1,6 @@
 ﻿using MSS.Common;
 using MSS.Common.MSet;
+using MSS.Types.MSet;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -42,6 +43,15 @@ namespace MSetExplorer
 			}
 		}
 
+		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy
+		{
+			get => _project.ColorBandSetResolutionStrategy;
+			set
+			{
+				_project.ColorBandSetResolutionStrategy = value;
+				OnPropertyChanged();
+			}
+		}
 		#endregion
 
 		#region Public Methods
