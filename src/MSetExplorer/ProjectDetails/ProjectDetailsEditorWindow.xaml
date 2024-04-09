@@ -36,18 +36,17 @@
         ColorBandSet Resolution Strategy    *
 
         Number of Jobs
-        Number of ColorBandsets
+        Number of ColorBandSets
         Number of Distinct Target Iterations
-
-        LastSaved
-        LastUpdated
 
         Current Job
             Target Iterations
-            Threshold
             Calculate Escape Velocities
             Save The ZValues
         
+                ++ TODO: Record the setting of 'UseEscapeVelocities' with each ZValue Record
+                AND make sure not to use a ZValue record having a value for UseEscapeVelocities other than the current Job's setting.
+
             Zoom Depth
             Limb Count
         
@@ -55,16 +54,23 @@
             Use Percentages
 
         OnFile
-
-        Is Dirty
-
-        Any ColorBandSet Is Dirty
-        JobTree Isirty
-        Any Job Is Dirty
+        Any Update Pending
+        LastSaved
+        LastUpdated
         Number Of Jobs Not Saved
         Number Of ColorBandSets NotSaved
-        
         Is Current JobId Changed
+        
+        ******* These are Workspace Settings *********
+        Use Escape Velocities
+        [The current setting of] Use Percentages Is Applied Globally
+        Highlight Selected Color Band
+        
+        ******* These are Installation Settings *********
+        Block Size
+        Threshold
+        
+        ++ Or perhaps add support having a "Current" MapSection MongoDb Collection that is determined by the BlockSize and Threshold
         
         -->
         

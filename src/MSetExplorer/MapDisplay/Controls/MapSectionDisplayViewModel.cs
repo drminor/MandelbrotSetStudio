@@ -743,10 +743,11 @@ namespace MSetExplorer
 
 			MsrJob msrJob;
 
-
-			if (boundedMapArea.BaseFactor == currentBaseFactor && mapAreaSubset.Subdivision.Id == origSubId)
+			//if (boundedMapArea.BaseFactor == currentBaseFactor && mapAreaSubset.Subdivision.Id == origSubId)
+			if (ShouldAttemptToReuseLoadedSections(LastMapAreaInfo, mapAreaSubset))
 			{
-				Debug.WriteLine($"MapSectionDisplayViewModel. LoadNewScaledView. The BaseFactor and SubdivisionId are the same, calling ReuseAndLoad");
+				//Debug.WriteLine($"MapSectionDisplayViewModel. LoadNewScaledView. The BaseFactor and SubdivisionId are the same, calling ReuseAndLoad");
+				Debug.WriteLine($"MapSectionDisplayViewModel. LoadNewScaledView. The SubdivisionId is the same and the MapBlockOffset is within 100 blocks, calling ReuseAndLoad");
 				var reApplyColorMap = mapAreaSubset.Coords.CrossesYZero;
 				msrJob = ReuseAndLoad(jobType, areaColorAndCalcSettings, mapAreaSubset, reapplyColorMap: reApplyColorMap);
 			}
@@ -1083,7 +1084,6 @@ namespace MSetExplorer
 
 		private bool ShouldAttemptToReuseLoadedSections(AreaColorAndCalcSettings? previousJob, MapPositionSizeAndDelta? previousAreaInfo, AreaColorAndCalcSettings newJob, MapPositionSizeAndDelta newAreaInfo)
 		{
-			// TODO: Try this without requiring the previousAreaInfo to be non-null.
 			if (MapSections.Count == 0 || previousJob is null || previousAreaInfo is null)
 			{
 				return false;
@@ -1101,8 +1101,16 @@ namespace MSetExplorer
 				return false;
 			}
 
-			// TODO: Remove the ImageSize and CanvasSize checks in the ShouldAttemptToReuseLoadedSections method.
 			var curImageSize = _bitmapGrid.ImageSizeInBlocks;
+
+			var dist = newAreaInfo.MapBlockOffset.Sub(previousAreaInfo.MapBlockOffset).Abs();
+			if (dist.X > curImageSize.Width + 2 || dist.Y > curImageSize.Height + 2)
+			{
+				// All of the current MapSections will be off screen.
+				return false;
+			}
+
+			// TODO: Remove the ImageSize and CanvasSize checks in the ShouldAttemptToReuseLoadedSections method.
 			var newImageSize = _bitmapGrid.CalculateImageSize(newAreaInfo.CanvasSize, newAreaInfo.CanvasControlOffset);
 
 			//if (newImageSize.Width > curImageSize.Width || newImageSize.Height != curImageSize.Height)
@@ -1118,6 +1126,32 @@ namespace MSetExplorer
 			if (newCanvasSize != curCanvasSize)
 			{
 				Debug.WriteLine("WARNING: Not using ReuseAndLoad because the CanvasSize has changed. THIS SHOULD NEVER HAPPEN.");
+				return false;
+			}
+
+			return true;
+		}
+
+		private bool ShouldAttemptToReuseLoadedSections(MapPositionSizeAndDelta? previousAreaInfo, MapPositionSizeAndDelta newAreaInfo)
+		{
+			if (MapSections.Count == 0 || previousAreaInfo is null)
+			{
+				return false;
+			}
+
+			var inSameSubdivision = previousAreaInfo.Subdivision.Id == newAreaInfo.Subdivision.Id;
+
+			if (!inSameSubdivision)
+			{
+				return false;
+			}
+
+			var curImageSize = _bitmapGrid.ImageSizeInBlocks;
+
+			var dist = newAreaInfo.MapBlockOffset.Sub(previousAreaInfo.MapBlockOffset).Abs();
+			if (dist.X > curImageSize.Width + 2 || dist.Y > curImageSize.Height + 2)
+			{
+				// All of the current MapSections will be off screen.
 				return false;
 			}
 

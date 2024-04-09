@@ -35,7 +35,7 @@ namespace MSetExplorer
 
 		private bool _usePercentagesGlobally;
 		private bool _usePercentagesLocalSetting;
-		private bool _usePercentagesGlobalSetting;
+		//private bool _usePercentagesGlobalSetting;
 
 		private string _percentageUseStatus;
 
@@ -102,7 +102,7 @@ namespace MSetExplorer
 
 			_usePercentagesGlobally = false;
 			_usePercentagesLocalSetting = false;
-			_usePercentagesGlobalSetting = false;
+			//_usePercentagesGlobalSetting = false;
 			_percentageUseStatus = string.Empty;
 
 			_colorBandSetHistoryCollection = new ColorBandSetHistoryCollection(new List<ColorBandSet> { new ColorBandSet() });
@@ -186,7 +186,7 @@ namespace MSetExplorer
 					// Presumably the call to ResetView requires that the ColorBandsView have some value.
 					ColorBandsView = BuildColorBandsView(null);
 
-					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is being updated from: {_colorBandSet.Id}/{_colorBandSet.LastUpdatedUtc} to {value.Id}/{value.LastUpdatedUtc}.");
+					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is being updated from: {_colorBandSet.Key} to {value.Key}.");
 					Debug.WriteLine(value.ToString(style: 1));
 
 					_colorBandSet = value;
@@ -212,12 +212,21 @@ namespace MSetExplorer
 					HistCutoffsSnapShot histCutoffsSnapShot;
 					lock (_histLock)
 					{
-						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());
+						_colorBandSetHistoryCollection.Load(value.CreateNewCopy());	//Clone
 						IsDirty = false;
-						_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
+						_currentColorBandSet = value.CreateNewCopy(ObjectId.GenerateNewId());
 
-						_mapSectionHistogramProcessor.Clear(value.HighCutoff);
+						//_mapSectionHistogramProcessor.Clear(value.HighCutoff);
+
+						// TODO: Update the CbsHistogramViewModel to initialized the MapSectionHistorgramProcessor while the component is being activated
+						// instead of using the ColorBandSet property.
+						if (_mapSectionHistogramProcessor.Histogram.Length != value.HighCutoff)
+						{
+							_mapSectionHistogramProcessor.UpdateSize(value.HighCutoff);
+						}
+
 						histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
+						//histCutoffsSnapShot = GetEmptyHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap: false, _currentColorBandSet);
 					}
 
 					PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting, _mapSectionHistogramProcessor.Histogram);
@@ -229,7 +238,7 @@ namespace MSetExplorer
 				}
 				else
 				{
-					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is not being updated. The Id already = {value.Id}/{value.LastUpdatedUtc}.");
+					Debug.WriteLineIf(_traceCBSVersions, $"The CbsHistogramViewModel's ColorBandSet is not being updated. The Key is already = {value.Key}.");
 				}
 			}
 		}
@@ -301,25 +310,25 @@ namespace MSetExplorer
 					_usePercentagesLocalSetting = value;
 					OnPropertyChanged(nameof(UsePercentagesLocalSetting));
 
-					UsePercentagesGlobalSetting = UsePercentagesLocalSetting;
+					//UsePercentagesGlobalSetting = UsePercentagesLocalSetting;
 
 					PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting, _mapSectionHistogramProcessor.Histogram);
 				}
 			}
 		}
 
-		public bool UsePercentagesGlobalSetting
-		{
-			get => _usePercentagesGlobalSetting;
-			private set
-			{
-				if (value != _usePercentagesGlobalSetting)
-				{
-					_usePercentagesGlobalSetting = value;
-					OnPropertyChanged(nameof(UsePercentagesGlobally));
-				}
-			}
-		}
+		//public bool UsePercentagesGlobalSetting
+		//{
+		//	get => _usePercentagesGlobalSetting;
+		//	private set
+		//	{
+		//		if (value != _usePercentagesGlobalSetting)
+		//		{
+		//			_usePercentagesGlobalSetting = value;
+		//			OnPropertyChanged(nameof(UsePercentagesGlobally));
+		//		}
+		//	}
+		//}
 
 		public bool UsePercentagesGlobally
 		{
@@ -335,10 +344,10 @@ namespace MSetExplorer
 					OnPropertyChanged(nameof(UsePercentagesGlobally));
 					OnPropertyChanged(nameof(PercentageUseIsGlobalDisplayStr));
 
-					if (value)
-					{
-						UsePercentagesGlobalSetting = UsePercentagesLocalSetting;
-					}
+					//if (value)
+					//{
+					//	UsePercentagesGlobalSetting = UsePercentagesLocalSetting;
+					//}
 				}
 			}
 		}
@@ -808,7 +817,7 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel::ApplyChanges is not resetting the view -- the new iterations target <= 10.");
 				}
 
-				_mapSectionHistogramProcessor.Reset(newSet.HighCutoff);
+				_mapSectionHistogramProcessor.UpdateSize(newSet.HighCutoff);
 
 				ApplyChangesInt(newSet, targetIterationsIsUpdated: true);
 			}
@@ -829,7 +838,7 @@ namespace MSetExplorer
 
 		private void ApplyChangesInt(ColorBandSet newSet, bool targetIterationsIsUpdated)
 		{
-			Debug.WriteLineIf(_traceCBSVersions, $"The ColorBandSetViewModel is Applying changes. The new Id is {newSet.Id}/{newSet.LastUpdatedUtc}, name: {newSet.Name}. The old Id is {ColorBandSet.Id}/{ColorBandSet.LastUpdatedUtc}");
+			Debug.WriteLineIf(_traceCBSVersions, $"The ColorBandSetViewModel is Applying changes. New: {newSet.Key}. Old: {ColorBandSet.Key}");
 
 			//Debug.WriteLine($"The new ColorBandSet: {newSet}");
 			//Debug.WriteLine($"The existing ColorBandSet: {_colorBandSet}");
@@ -1517,7 +1526,7 @@ namespace MSetExplorer
 
 				if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
 				{
-					Debug.WriteLineIf(_useDetailedDebug, $"Cutoff was updated. CbsHistogramViewModel is updating the PreviousCutoff for ColorBand: {_colorBandsView.IndexOf(cb)}");
+					Debug.WriteLineIf(_useDetailedDebug, $"Cutoff was updated. CbsHistogramViewModel is updating the PreviousCutoff for ColorBand: {_colorBandsView.IndexOf(cb)} AND Updating the PERCENTAGES.");
 					successorColorBand.PreviousCutoff = cb.Cutoff;
 
 					if (successorColorBand.BucketWidth < 1)
@@ -1545,7 +1554,7 @@ namespace MSetExplorer
 						throw new InvalidOperationException("The PreviousCutoff is null, however we are not the first ColorBand.");
 					}
 
-					Debug.WriteLineIf(_useDetailedDebug, $"PreviousCutoff was updated. CbsHistogramViewModel is updating the Cutoff for ColorBand: {_colorBandsView.IndexOf(cb)}");
+					Debug.WriteLineIf(_useDetailedDebug, $"PreviousCutoff was updated. CbsHistogramViewModel is updating the Cutoff for ColorBand: {_colorBandsView.IndexOf(cb)} AND Updating the PERCENTAGES.");
 
 					predecessorColorBand.Cutoff = cb.PreviousCutoff.Value;
 
@@ -1807,74 +1816,85 @@ namespace MSetExplorer
 			Debug.WriteLine($"ApplyHistogram is being called with a HistCutoffSnapShot with ColorBandSetId: {histCutoffsSnapShot.ColorBandSetId}. SomeNaN = {histCutoffsSnapShot.NoPercentageIsNaN}. AllZero = {histCutoffsSnapShot.AtLeastOnePercentageIsNonZero}.");
 			if (histCutoffsSnapShot.HistKeyValuePairs.Length > 0)
 			{
-				// If the Default is set, us it, otherwise use the value from the current ColorBandSet.
+				// UsePercentages = true means update the cutoffs based on the Percentages values.
+				// UsePercentages = false means update the percentages values based on the Histogram
 				var currentlyUsingPercentages = UsePercentagesLocalSetting;
 
 				if (currentlyUsingPercentages)
 				{
+					// Percentages are used to determine the Cutoff values
 					if (histCutoffsSnapShot.UsingPercentages)
 					{
-						// Cutoffs are adjusted based on Percentages
-						 UpdateCutoffsCheckThread(histCutoffsSnapShot, out _, out resultsAreComplete);
+						// Percentages have been calculated from a previous Histogram,
+						// Update the cutoffs with these percentages\
+						UpdateCutoffsCheckThread(histCutoffsSnapShot, out _, out resultsAreComplete);
+
+						updateSucceeded = true;
 					}
 					else
 					{
 						Debug.WriteLine($"WARNING: ColorBandSetViewModel. Percentage Values are unavailable. Using Cutoffs to rebuild the Percentages. NoPercentagesIsNaN = {histCutoffsSnapShot.NoPercentageIsNaN}. AtLeastOnePercentageIsNonZero = {histCutoffsSnapShot.AtLeastOnePercentageIsNonZero}.");
 
-						// 'Rebuild' the percentage values from the current Cutoff values.
+						// 'Rebuild' the percentage values from Histogram and the current Cutoff values.
 						if (UpdatePercentages(histCutoffsSnapShot, out var newPercentages, out resultsAreComplete))
 						{
 							if (resultsAreComplete)
 							{
 								_currentColorBandSet.UsingPercentages = true;
+								UsePercentagesLocalSetting = true;
 								_currentColorBandSet.MarkAsDirty();
-
-								//PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting);
-
 								UpdateAssignedColorBandSetWithNewPercentages(newPercentages);
+
+								updateSucceeded = true;
 							}
+							else
+							{
+								updateSucceeded = false;
+							}
+						}
+						else
+						{
+							updateSucceeded = false;
 						}
 					}
 				}
 				else
 				{
-					if (histCutoffsSnapShot.UsingCutoffs)
+					// Cutoff values are used to calculate percentages from the new Histogram
+					UpdatePercentages(histCutoffsSnapShot, out var newPercentageBands, out resultsAreComplete);
+
+					if (!histCutoffsSnapShot.UsingCutoffs)
 					{
-						// Percentages are adjusted based on Cutoffs
-						UpdatePercentages(histCutoffsSnapShot, out _, out resultsAreComplete);
+						// Need to update the ColorBandSet to indicate we now have a good set of Cutoff values.
+
+						// Can only 'mark' the ColorBandSet as having a good set of Cutoff values, if UpdatePercentages was successful
+						if (resultsAreComplete && newPercentageBands != null) 
+						{
+							var noPercentageIsNaN = newPercentageBands.All(x => !double.IsNaN(x.Percentage));
+							var atLeastOnePercentageIsNonZero = newPercentageBands.Any(x => x.Percentage != 0);
+
+							Debug.WriteLine($"ColorBandSetViewModel. Switching back to using Cutoffs. The Histogram was succesfully used to update the Percentage values. " +
+								$"NoPercentagesIsNaN = {noPercentageIsNaN}. AtLeastOnePercentageIsNonZero = {atLeastOnePercentageIsNonZero}.");
+
+							_currentColorBandSet.UsingPercentages = false;
+							UsePercentagesLocalSetting = false;
+							_currentColorBandSet.MarkAsDirty();
+
+							var cutoffBands = histCutoffsSnapShot.GetCutoffBands();
+							UpdateAssignedColorBandSetWithNewCutoffs(cutoffBands);
+
+							updateSucceeded = true;
+						}
+						else
+						{
+							updateSucceeded = false;
+						}
 					}
 					else
 					{
-						//Debug.WriteLine($"WARNING: ColorBandSetViewModel. Cutoff Values are unavailable. Using Percentages to rebuild the Cutoffs. ");
-
-						//if (UpdateCutoffsCheckThread(histCutoffsSnapShot, out var newCutoffBands, out resultsAreComplete))
-						//{
-						//	if (resultsAreComplete)
-						//	{
-						//		_currentColorBandSet.UsingPercentages = false;
-						//		_currentColorBandSet.MarkAsDirty();
-
-						//		PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting);
-
-						//		UpdateAssignedColorBandSetWithNewCutoffs(newCutoffBands);
-						//	}
-						//}
-
-						if (UpdatePercentages(histCutoffsSnapShot, out var _, out resultsAreComplete))
-						{
-							if (resultsAreComplete)
-							{
-								_currentColorBandSet.UsingPercentages = false;
-								_currentColorBandSet.MarkAsDirty();
-
-								var cutoffBands = histCutoffsSnapShot.GetCutoffBands();
-								UpdateAssignedColorBandSetWithNewCutoffs(cutoffBands);
-							}
-						}
+						updateSucceeded = true;
 					}
 				}
-
-				updateSucceeded = true;
 
 				PercentageUseStatus = GetPercentageUseStatus(_currentColorBandSet.UsingPercentages, UsePercentagesLocalSetting, resultsAreComplete, histCutoffsSnapShot.HistogramIsFromACompleteMap, updateSucceeded);
 			}
@@ -1934,6 +1954,11 @@ namespace MSetExplorer
 					var numberReachedTargetIteration = BeyondTargetSpecs.Count;
 					var total = BeyondTargetSpecs.RunningSum;
 					Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. received new percentages. Top Count: {numberReachedTargetIteration}, Total: {total}.");
+
+					if (total < 0)
+					{
+						Debug.WriteLine("The total is negative.");
+					}
 				}
 				else
 				{
@@ -2143,6 +2168,27 @@ namespace MSetExplorer
 					histogramIsFromACompleteMap,
 					ColorBandSetHelper.GetPercentageBands(colorBandSet),
 					colorBandSet.UsingPercentages
+				);
+			}
+
+			return result;
+		}
+
+
+		private HistCutoffsSnapShot GetEmptyHistCutoffsSnapShot(IHistogram histogram, bool histogramIsFromACompleteMap, ColorBandSet colorBandSet)
+		{
+			HistCutoffsSnapShot result;
+
+			lock (_histLock)
+			{
+				result = new HistCutoffsSnapShot(
+					colorBandSetId:	colorBandSet.Id,
+					histKeyValuePairs: new KeyValuePair<int, int>[0],
+					histogramLength: histogram.Length,
+					upperCatchAllValue: 0,
+					histogramIsFromACompleteMap: histogramIsFromACompleteMap,
+					percentageBands: ColorBandSetHelper.GetPercentageBands(colorBandSet),
+					usingPercentages: colorBandSet.UsingPercentages
 				);
 			}
 

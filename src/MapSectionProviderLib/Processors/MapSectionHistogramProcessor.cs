@@ -83,6 +83,11 @@ namespace MapSectionProviderLib
 					_processingEnabled = value;
 				}
 
+				//if (!value)
+				//{
+				//	_histogram.Reset();
+				//	HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
+				//}
 			}
 		}
 
@@ -127,34 +132,51 @@ namespace MapSectionProviderLib
 			{ }
 		}
 
-		public void Reset()
-		{
-			_histogram.Reset();
-			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
-		}
+		//public void Reset()
+		//{
+		//	////ReportQueueCount();
+		//	//_histogram.Reset();
+		//	//HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
+		//}
 
-		public void Clear(int newSize)
-		{
-			var originalProcessingEnabledValue = ProcessingEnabled;
-			try
-			{
-				ProcessingEnabled = false;
-				_histogram.Reset(newSize);
-			}
-			finally
-			{
-				ProcessingEnabled = originalProcessingEnabledValue;
-			}
+		//private void ReportQueueCount()
+		//{
+		//	//Debug.WriteLine($"MapSectionHistogramProcessor dummy log output. ProcessingIsEnabled: {ProcessingEnabled}."); 
 
-			HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
-		}
+		//	if (_workQueue.TryGetNonEnumeratedCount(out var hCnt))
+		//	{
+		//		Debug.WriteLine($"MapSectionHistogramProcessor. The WorkQueue has {hCnt} items.");
+		//	}
+		//	else
+		//	{
+		//		Debug.WriteLine("MapSectionHistogramProcessor. TryGetNonEnumeratedCount returned false.");
+		//	}
+		//}
 
-		public void Reset(int newSize)
+		//public void Clear(int newSize)
+		//{
+		//	var originalProcessingEnabledValue = ProcessingEnabled;
+		//	try
+		//	{
+		//		ProcessingEnabled = false;
+		//		//ReportQueueCount();
+		//		_histogram.Reset(newSize);
+		//	}
+		//	finally
+		//	{
+		//		ProcessingEnabled = originalProcessingEnabledValue;
+		//	}
+
+		//	HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
+		//}
+
+		public void UpdateSize(int newSize)
 		{
-			var originalProcessingEnabledValue = ProcessingEnabled;
-			try
+			lock (_processingEnabledLock)
 			{
-				ProcessingEnabled = false;
+				var originalProcessingEnabledValue = _processingEnabled;
+
+				_processingEnabled = false;
 
 				//_histogram.Reset(newSize + 2);
 				_histogram.Reset(newSize);
@@ -166,10 +188,8 @@ namespace MapSectionProviderLib
 						_histogram.Add(mapsection.Histogram);
 					}
 				}
-			}
-			finally
-			{
-				ProcessingEnabled = originalProcessingEnabledValue;
+
+				_processingEnabled = originalProcessingEnabledValue;
 			}
 
 			HistogramUpdated?.Invoke(this, HistogramUpdateType.Refresh);
@@ -259,19 +279,25 @@ namespace MapSectionProviderLib
 
 			lock (_processingEnabledLock)
 			{
-				if (ProcessingEnabled && histogramWorkRequest.Histogram != null)
+				if (_processingEnabled)
 				{
-					result = true;
-
 					if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Add)
 					{
 						_histogram.Add(histogramWorkRequest.Histogram);
 						NumberOfSectionsProcessed++;
+						result = true;
 					}
 					else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Remove)
 					{
 						_histogram.Remove(histogramWorkRequest.Histogram);
 						//NumberOfSectionsProcessed++;
+						result = true;
+					}
+					else if (histogramWorkRequest.RequestType == HistogramWorkRequestType.Clear)
+					{
+						_histogram.Reset();
+						HistogramUpdated?.Invoke(this, HistogramUpdateType.Clear);
+						result = false;
 					}
 					else
 					{
@@ -292,7 +318,9 @@ namespace MapSectionProviderLib
 			if (e.Action == NotifyCollectionChangedAction.Reset)
 			{
 				//	Reset
-				Reset();
+				//Reset();
+
+				AddWork(new HistogramWorkRequest(HistogramWorkRequestType.Clear, new HistogramA(0)));
 			}
 			else if (e.Action == NotifyCollectionChangedAction.Add)
 			{
@@ -318,7 +346,6 @@ namespace MapSectionProviderLib
 
 		#endregion
 
-
 		private class HistogramWorkRequest
 		{
 			public HistogramWorkRequestType RequestType { get; init; }
@@ -328,16 +355,15 @@ namespace MapSectionProviderLib
 			{
 				RequestType = requestType;
 				Histogram = histogram;
-
 			}
 		}
 
 		private enum HistogramWorkRequestType
 		{
 			Add,
-			Remove
+			Remove,
+			Clear
 		}
-
 
 		#region IDisposable Support
 

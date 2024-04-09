@@ -110,6 +110,8 @@ namespace MSS.Types
 
 		public bool HavePercentages => NoPercentageIsNaN && AtLeastOnePercentageIsNonZero;
 
+		public string Key => $"{Id}/{LastUpdatedUtc}/{Name[1]}/{TargetIterations}/{Version}";
+
 		#endregion
 
 		#region Public Properties
@@ -854,7 +856,7 @@ namespace MSS.Types
 				var sb = new StringBuilder();
 
 				//sb.AppendLine($"Id: {Id}, LastUpdated: {LastUpdatedUtc}, Number of Color Bands: {Count}, HighCutoff: {HighCutoff}");
-				sb.AppendLine($"Id: {Id}, Name: {Name}, TargetIterations: {TargetIterations}, Version: {Version}, LastUpdated: {LastUpdatedUtc}");
+				sb.AppendLine($"Key: {Id}, Name: {Name}, TargetIterations: {TargetIterations}, Version: {Version}, LastUpdated: {LastUpdatedUtc}");
 
 				_ = sb.AppendLine($"Prev\t\tCutoff\t\tWidth");
 

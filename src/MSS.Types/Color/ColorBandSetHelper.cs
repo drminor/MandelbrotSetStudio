@@ -223,6 +223,11 @@ namespace MSS.Types
 
 			var total = (double)runningSum;
 
+			if (total < 0)
+			{
+				Debug.WriteLine("WARNING: The total < 0.");
+			}
+
 			foreach (var pb in result)
 			{
 				pb.Percentage = Math.Round(100 * (pb.Count / total), digits: 2);

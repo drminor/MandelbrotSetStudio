@@ -40,7 +40,7 @@ namespace MSetExplorer
 		bool UseRealTimePreview { get; set; }
 
 		bool UsePercentagesLocalSetting { get; set; }
-		bool UsePercentagesGlobalSetting { get; }
+		//bool UsePercentagesGlobalSetting { get; }
 		bool UsePercentagesGlobally { get; set; }
 		string PercentageUseIsGlobalDisplayStr { get; }
 		string PercentageUseStatus { get; }

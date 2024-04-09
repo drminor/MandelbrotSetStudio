@@ -141,9 +141,13 @@ namespace MSetExplorer
 					Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel. Just before setting the CbsHistogramViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
 					CbsHistogramViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 				}
+				else
+				{
+					Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel. Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
+					SubmitMapDisplayJob();
+				}
 
-				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel. Just before setting the MapDisplayViewModel's ColorBandSet to a value with id: {ProjectViewModel.CurrentColorBandSet.Id}.");
-				MapDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
+				//MapDisplayViewModel.ColorBandSet = ProjectViewModel.CurrentColorBandSet;
 			}
 		}
 
@@ -266,16 +270,16 @@ namespace MSetExplorer
 		{
 			var colorBandSet = e.ColorBandSet;
 
-			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling 'CbsHistogramViewModel_ColorBandSetUpdateRequested' with Id = {colorBandSet.Id}. (IsPreview:{e.IsPreview}).");
+			Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling 'CbsHistogramViewModel_ColorBandSetUpdateRequested' (IsPreview:{e.IsPreview}).");
 
 			if (e.IsPreview)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's PreviewColorBandSet to a new value having Id = {colorBandSet.Id}");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's PreviewColorBandSet to a new value having Id = {colorBandSet.Key}");
 				ProjectViewModel.PreviewColorBandSet = colorBandSet;
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's CurrentColorBandSet to a new value having Id = {colorBandSet.Id}");
+				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is setting the ProjectViewModel's CurrentColorBandSet to a new value having Id = {colorBandSet.Key}");
 				ProjectViewModel.CurrentColorBandSet = colorBandSet;
 			}
 		}
@@ -321,8 +325,7 @@ namespace MSetExplorer
 			var newAreaColorAndCalcSettings = areaColorAndCalcSettings.UpdateWith(newMapCalcSettings);
 			var colorBandSet = newAreaColorAndCalcSettings.ColorBandSet;
 
-			Debug.WriteLine($"ExplorerViewModel. SubmittingMapDisplayJob. The ColorBandSetId: {colorBandSet.Id}/{colorBandSet.LastUpdatedUtc} with TargetIterations: {colorBandSet.TargetIterations}. " +
-				$"The CbsHistogramViewModel has Id: {CbsHistogramViewModel.ColorBandSet.Id}. The CbsHistogramViewModel IsDirty = {CbsHistogramViewModel.IsDirty}.");
+			Debug.WriteLine($"ExplorerViewModel. SubmittingMapDisplayJob. New Value Key: {colorBandSet.Key}. ViewModel Key: {CbsHistogramViewModel.ColorBandSet.Key}. ViewModel IsDirty = {CbsHistogramViewModel.IsDirty}.");
 
 			MapCalcSettingsViewModel.MapCalcSettings = newMapCalcSettings;
 			CbsHistogramViewModel.ColorBandSet = colorBandSet;

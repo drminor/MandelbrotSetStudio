@@ -12,10 +12,7 @@ namespace MSS.Common
 
 		event EventHandler<HistogramUpdateType>? HistogramUpdated;
 
-		//void AddWork(HistogramWorkRequest histogramWorkRequest);
-		void Reset();
-		void Reset(int newSize);
-		void Clear(int newSize);
+		void UpdateSize(int newSize);
 		void Stop(bool immediately);
 		void Dispose();
 

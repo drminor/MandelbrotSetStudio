@@ -93,6 +93,11 @@ namespace MSS.Types
 			return new RVector(result);
 		}
 
+		public VectorLong Abs()
+		{
+			return new VectorLong(Math.Abs(X), Math.Abs(Y));
+		}
+
 		public bool EqualsZero => X == 0 && Y == 0;
 
 		public bool TryConvertToInt(out VectorInt value)

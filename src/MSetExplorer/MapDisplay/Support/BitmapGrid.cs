@@ -561,7 +561,7 @@ namespace MSetExplorer
 			{
 				if (!df.TryConvertToInt(out var offset))
 				{
-					throw new ArgumentException($"Cannot convert the result of subtracting the JobMapBlockOffset for the current display from the JobMapBlockOffset that was used to create this MapSection. " +
+					throw new ArgumentException($"Subtracting the JobMapBlockOffset for the current display from the JobMapBlockOffset that was used to create this MapSection will not fit into a VectorInt. " +
 						$"Current JobMapBlockOffset: {jobMapBlockOffset} This section's JobMapBlockOffset: {jobMapBlockOffsetForSection}.");
 				}
 

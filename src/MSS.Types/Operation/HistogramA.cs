@@ -130,9 +130,16 @@ namespace MSS.Types
 
 		public void Reset(int newSize)
 		{
-			_values = new int[newSize];
-			_topValues.Clear();
-			UpperCatchAllValue = 0;
+			if (_values.Length != newSize)
+			{
+				_values = new int[newSize];
+				_topValues.Clear();
+				UpperCatchAllValue = 0;
+			}
+			else
+			{
+				Reset();
+			}
 		}
 
 		//public void Set(int[] indexes, int[] amounts)
