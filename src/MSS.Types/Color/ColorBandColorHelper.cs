@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace MSS.Types.Color
 {
@@ -108,6 +109,53 @@ namespace MSS.Types.Color
 			};
 		}
 
+		public static double GetHue(RGB rgb)
+		{
+			var r = rgb.R;
+			var g = rgb.G;
+			var b = rgb.B;
+
+			var max = Max(r, g, b);
+			var min = Min(r, g, b);
+			var chroma = max - min;
+			var hue2 = 0d;
+
+			if (chroma != 0)
+			{
+				if (max == r)
+				{
+					hue2 = (g - b) / chroma;
+				}
+				else if (max == g)
+				{
+					hue2 = (b - r) / chroma + 2;
+				}
+				else
+				{
+					hue2 = (r - g) / chroma + 4;
+				}
+			}
+
+			var hue = hue2 * 60;
+
+			if (hue < 0)
+			{
+				hue += 360;
+			}
+
+			return hue;
+		}
+
+		public static int CompareHues(RGB rgb1, RGB rgb2)
+		{
+			var h1 = GetHue(rgb1);
+			var h2 = GetHue(rgb2);
+
+			var result = h1.CompareTo(h2);
+
+			return result;
+		}
+
 		public static HSB ConvertToHSB(RGB rgb)
 		{
 			// Following code is taken as it is from MSDN.
@@ -196,6 +244,7 @@ namespace MSS.Types.Color
 		#endregion
 
 		#region HSP
+
 		/*
 		 * 
 		#define Pr  .299

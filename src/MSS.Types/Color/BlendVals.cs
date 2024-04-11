@@ -1,26 +1,27 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace MSS.Types
 {
 	public struct BlendVals
 	{
-		public byte Opacity { get; set; }
+		private readonly byte[] _endColor;
+		private readonly byte _opacity;
+
+		//public byte Opacity { get; set; }
 
 		public double SRed { get; init; }
 		public double SGreen { get; init; }
 		public double SBlue { get; init; }
 
-		public double ERed { get; init; }
-		public double EGreen { get; init; }
-		public double EBlue { get; init; }
-
+		//public double ERed { get; init; }
+		//public double EGreen { get; init; }
+		//public double EBlue { get; init; }
 
 		public double DiffRed { get; init; }
 		public double DiffGreen { get; init; }
 		public double DiffBlue { get; init; }
 
-		public BlendVals(byte[] startColor, byte[] endColor, byte opacity)
+		public BlendVals(byte[] startColor, byte[] endColor)
 		{
 			SRed = startColor[0];
 			SGreen = startColor[1];
@@ -30,12 +31,13 @@ namespace MSS.Types
 			DiffGreen = endColor[1] - startColor[1]; 
 			DiffBlue = endColor[2] - startColor[2];
 
-			Opacity = opacity;
+			_endColor = endColor;
+			_opacity = 255;
 
 			// For diagnostics only
-			ERed = endColor[0];
-			EGreen = endColor[1];
-			EBlue = endColor[2];
+			//ERed = endColor[0];
+			//EGreen = endColor[1];
+			//EBlue = endColor[2];
 		}
 
 		public int BlendAndPlace(double factor, Span<byte> destination)
@@ -74,7 +76,7 @@ namespace MSS.Types
 			destination[0] = (byte)b;
 			destination[1] = (byte)g;
 			destination[2] = (byte)r;
-			destination[3] = Opacity;
+			destination[3] = _opacity;
 
 			return errors;
 		}
@@ -122,7 +124,7 @@ namespace MSS.Types
 			//*((byte*)destination + 2) = (byte)r;
 			//*((byte*)destination + 3) = Opacity;
 
-			var pixelValue = (uint)b + (uint)((byte)g << 8) + (uint)((byte)r << 16) + (uint)(Opacity << 24);
+			var pixelValue = (uint)b + (uint)((byte)g << 8) + (uint)((byte)r << 16) + (uint)(_opacity << 24);
 			*(uint*)destination = pixelValue;
 
 			return errors;
@@ -130,7 +132,7 @@ namespace MSS.Types
 
 		public override string? ToString()
 		{
-			var result = $"BlendVal E,S,D: Red: {ERed}, {SRed}, {DiffRed}\tGreen: {EGreen}, {SGreen}, {DiffGreen}\tBlue: {EBlue}, {SBlue}, {DiffBlue}";
+			var result = $"BlendVal E,S,D: Red: {_endColor[0]}, {SRed}, {DiffRed}\tGreen: {_endColor[1]}, {SGreen}, {DiffGreen}\tBlue: {_endColor[2]}, {SBlue}, {DiffBlue}";
 
 			return result;
 		}

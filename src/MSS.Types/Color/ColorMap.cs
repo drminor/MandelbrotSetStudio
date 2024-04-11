@@ -189,19 +189,23 @@ namespace MSS.Types
 
 		private ColorMapEntry[] BuildColorMapEntries(ColorBandSet colorBandSet)
 		{
-			var result = new ColorMapEntry[colorBandSet.Count];
+			//var result = new ColorMapEntry[colorBandSet.Count];
 
-			for (var i = 0; i < colorBandSet.Count; i++)
-			{
-				var colorBand = new ColorMapEntry(colorBandSet[i]);
+			//for (var i = 0; i < colorBandSet.Count; i++)
+			//{
+			//	//var colorBand = new ColorMapEntry(colorBandSet[i]);
 
-				if (colorBand.BlendStyle != ColorBandBlendStyle.None)
-				{
-					colorBand.BlendVals = new BlendVals(colorBand.StartColor.ColorComps, colorBand.EndColor.ColorComps, opacity: 255);
-				}
+			//	//if (colorBand.BlendStyle != ColorBandBlendStyle.None)
+			//	//{
+			//	//	colorBand.BlendVals = new BlendVals(colorBand.StartColor.ColorComps, colorBand.EndColor.ColorComps);
+			//	//}
 
-				result[i] = colorBand;
-			}
+			//	//result[i] = colorBand;
+
+			//	result[i] = new ColorMapEntry(colorBandSet[i]);
+			//}
+
+			var result = colorBandSet.Select(x => new ColorMapEntry(x)).ToArray();
 
 			return result;
 		}
@@ -435,6 +439,11 @@ namespace MSS.Types
 				EndColor = endColor;
                 StartingCutoff = (previousCutoff ?? 0) + 1;
                 BucketWidth = bucketWidth;
+
+				if (BlendStyle != ColorBandBlendStyle.None)
+				{
+					BlendVals = new BlendVals(StartColor.ColorComps, EndColor.ColorComps);
+				}
 			}
 
 			#endregion
@@ -450,7 +459,7 @@ namespace MSS.Types
 			public int StartingCutoff { get; init; }
 			public int BucketWidth { get; init; }
 
-			public BlendVals BlendVals { get; set; }
+			public BlendVals BlendVals { get; init; }
 
 			#endregion
 
