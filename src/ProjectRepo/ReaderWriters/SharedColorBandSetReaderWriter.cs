@@ -23,7 +23,7 @@ namespace ProjectRepo
 				.Ascending(x => x.Name)
 				.Ascending(x => x.TargetIterations);
 
-			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<ColorBandSetRecord>(indexKeysDef, new CreateIndexOptions() { Unique = false, Name = "NameAndIterations" }));
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<ColorBandSetRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "NameAndIterations" }));
 		}
 
 #endregion

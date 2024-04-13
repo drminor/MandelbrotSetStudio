@@ -187,6 +187,7 @@ namespace MSetExplorer
 			if (CREATE_COLLECTIONS)
 			{
 				_repositoryAdapters.CreateCollections();
+				_repositoryAdapters.CreateCollectionIndexes();
 			}
 			else if (CREATE_COLLECTION_INDEXES)
 			{

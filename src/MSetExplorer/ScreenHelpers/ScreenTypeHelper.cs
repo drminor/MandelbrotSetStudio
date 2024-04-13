@@ -274,6 +274,13 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public static ColorBandColor ConvertToColorBandColor(Color color)
+		{
+			var result = new ColorBandColor(new byte[] {color.R, color.G, color.B });
+
+			return result;
+		}
+
 		//public static System.Drawing.Size ConvertToDrawingSize(SizeDbl size)
 		//{
 		//	var sizeInt = size.Round();

@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:MSetExplorer"
         xmlns:colorpicker="clr-namespace:ColorPicker;assembly=ColorPicker"
         mc:Ignorable="d"
-        Title="ColorPickerDialog" Width="384" Height="440">
+        Title="ColorPickerDialog" Width="384" Height="440"
+        x:Name="cbdWindow">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="50*"/>
@@ -29,19 +30,31 @@
         </Border>
 
         <Border Grid.Row="1" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBox>Hi</TextBox>
+            
+            <StackPanel Orientation="Vertical">
+                <TextBox Text="Writeable Bitmap"/>
+
+                <Image Width="300" Height="60" Source="{Binding ElementName=cbdWindow, Path=GradientBitmap}" Stretch="Fill" />
+            </StackPanel>
         </Border>
 
         <Border Grid.Row="2" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Rectangle Width="300" Height="60">
-                <Rectangle.Fill>
-                    <LinearGradientBrush x:Name="linearGradientBrush1" StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="Yellow" Offset="0.0" />
-                        <GradientStop Color="LimeGreen" Offset="1.0" />
-                    </LinearGradientBrush>
-                </Rectangle.Fill>
-            </Rectangle>
+
+            <StackPanel Orientation="Vertical">
+                <TextBox Text="Linear Gradient Brush"/>
+
+                <Rectangle Width="300" Height="60">
+                    <Rectangle.Fill>
+                        <LinearGradientBrush x:Name="linearGradientBrush1" StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="Yellow" Offset="0.0" />
+                            <GradientStop Color="LimeGreen" Offset="1.0" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+            </StackPanel>
         </Border>
+        
         <Border Grid.Row="3" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Height="35">

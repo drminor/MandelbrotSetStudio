@@ -26,7 +26,7 @@ namespace ProjectRepo
 				.Ascending(x => x.MapSectionId)
 				.Ascending(x => x.JobType);
 
-			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<JobMapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = false, Name = "JobMapSectionAndJobType" }));
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<JobMapSectionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = true, Name = "JobMapSectionAndJobType" }));
 		}
 
 		public void CreateJobAndOwnerTypeIndex()

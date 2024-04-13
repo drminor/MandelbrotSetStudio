@@ -62,22 +62,22 @@ namespace MSetRepo
 
 		public void CreateCollections()
 		{
-			if (_jobMapSectionReaderWriter.CreateCollection())
-			{
-				_jobMapSectionReaderWriter.CreateOwnerAndTypeIndex();
-				_jobMapSectionReaderWriter.CreateMapSectionIdIndex();
-			}
+			_ = _subdivisionReaderWriter.CreateCollection();
 
 			if (_mapSectionReaderWriter.CreateCollection())
 			{
-				_mapSectionReaderWriter.CreateSubAndPosIndex();
+				//_mapSectionReaderWriter.CreateSubAndPosIndex();
 			}
 
-			_ = _subdivisionReaderWriter.CreateCollection();
+			if (_jobMapSectionReaderWriter.CreateCollection())
+			{
+				//_jobMapSectionReaderWriter.CreateOwnerAndTypeIndex();
+				//_jobMapSectionReaderWriter.CreateMapSectionIdIndex();
+			}
 
 			if (_mapSectionZValuesReaderWriter.CreateCollection())
 			{
-				_mapSectionZValuesReaderWriter.CreateSectionIdIndex();
+				//_mapSectionZValuesReaderWriter.CreateSectionIdIndex();
 			}
 		}
 
