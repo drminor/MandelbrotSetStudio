@@ -17,6 +17,17 @@ namespace ProjectRepo
 		public ColorBandSetReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
 
+		public void CreateOwnerNameIterationsAndVersionIndex()
+		{
+			var indexKeysDef = Builders<ColorBandSetRecord>.IndexKeys
+				.Ascending(x => x.OwnerId)
+				.Ascending(x => x.Name)
+				.Ascending(x => x.TargetIterations)
+				.Ascending(x => x.Version);
+
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<ColorBandSetRecord>(indexKeysDef, new CreateIndexOptions() { Unique = false, Name = "OwnerNameIterationsAndVersion" }));
+		}
+
 		#endregion
 
 		public IEnumerable<ColorBandSetRecord> GetAll()

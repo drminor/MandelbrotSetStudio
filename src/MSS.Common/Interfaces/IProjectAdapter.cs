@@ -13,6 +13,7 @@ namespace MSS.Common
 		void CreateCollections();
 		//void DropCollections();
 		bool ProjectCollectionIsEmpty();
+		void CreateIndexes();
 
 		//Project? CreateProject(string name, string? description, List<Job> jobs, IEnumerable<ColorBandSet> colorBandSets);
 		Project? CreateProject(string name, string? description, List<Job> jobs, List<ColorBandSet> colorBandSets,

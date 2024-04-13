@@ -38,6 +38,13 @@ namespace MSetRepo
 			colorsReaderWriter.DropCollection();
 		}
 
+		public void CreateIndexes()
+		{
+			var colorsReaderWriter = new SharedColorBandSetReaderWriter(_dbProvider);
+
+			colorsReaderWriter.CreateNameAndIterationsIndex();
+		}
+
 		#endregion
 
 		#region SharedColorBandSet 

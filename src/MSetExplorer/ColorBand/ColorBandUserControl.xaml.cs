@@ -13,6 +13,9 @@ namespace MSetExplorer
 	{
 		private ICbsHistogramViewModel _vm;
 
+		private bool _useColorBlendDialog;
+		private bool _useColorSpaceDialog;
+
 		private readonly bool _useDetailedDebug = false;
 
 		#region Constructor
@@ -20,6 +23,8 @@ namespace MSetExplorer
 		public ColorBandUserControl()
 		{
 			_vm = (ICbsHistogramViewModel)DataContext;
+			_useColorBlendDialog = true;
+			_useColorSpaceDialog = false;
 
 			Loaded += ColorBandUserControl_Loaded;
 			Unloaded += ColorBandUserControl_Unloaded;
@@ -96,18 +101,32 @@ namespace MSetExplorer
 			if (cb != null)
 			{
 				var pos = e.GetPosition(relativeTo: cbcButtonControl1.Canvas);
-
 				var startColor = cb.StartColor;
 
-				if (ShowColorPicker(pos, startColor, out var selectedColor))
+				if (_useColorBlendDialog)
 				{
-					cbcButtonControl1.Color = selectedColor;
-				}
+					var endColor = cb.EndColor;
 
-				//if (ShowColorSpace(pos, startColor, out var selectedColor2))
-				//{
-				//	cbcButtonControl1.ColorBandColor = selectedColor2;
-				//}
+					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1))
+					{
+						cbcButtonControl1.Color = selectedColorS1;
+						cbcButtonControl2.Color = selectedColorE1;
+					}
+				}
+				else if (_useColorSpaceDialog)
+				{
+					if (ShowColorSpace(pos, startColor, out var selectedColorS2))
+					{
+						cbcButtonControl1.Color = selectedColorS2;
+					}
+				}
+				else
+				{
+					if (ShowColorPicker(pos, startColor, out var selectedColorS3))
+					{
+						cbcButtonControl1.Color = selectedColorS3;
+					}
+				}
 			}
 		}
 
@@ -118,18 +137,32 @@ namespace MSetExplorer
 			if (cb != null)
 			{
 				var pos = e.GetPosition(relativeTo: cbcButtonControl2.Canvas);
-
 				var endColor = cb.EndColor;
 
-				if (ShowColorPicker(pos, endColor, out var selectedColor))
+				if (_useColorBlendDialog)
 				{
-					cbcButtonControl2.Color = selectedColor;
-				}
+					var startColor = cb.StartColor;
 
-				//if (ShowColorSpace(pos, endColor, out var selectedColor2))
-				//{
-				//	cbcButtonControl1.ColorBandColor = selectedColor2;
-				//}
+					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1))
+					{
+						cbcButtonControl1.Color = selectedColorS1;
+						cbcButtonControl2.Color = selectedColorE1;
+					}
+				}
+				else if (_useColorSpaceDialog)
+				{
+					if (ShowColorSpace(pos, endColor, out var selectedColorS2))
+					{
+						cbcButtonControl2.Color = selectedColorS2;
+					}
+				}
+				else
+				{
+					if (ShowColorPicker(pos, endColor, out var selectedColorS3))
+					{
+						cbcButtonControl2.Color = selectedColorS3;
+					}
+				}
 			}
 		}
 
@@ -234,6 +267,29 @@ namespace MSetExplorer
 			else
 			{
 				selectedColor = initalColor;
+				return false;
+			}
+		}
+
+		private bool ShowColorBlendDialog(Point pos, ColorBandColor initalColor1, out ColorBandColor selectedColor1, ColorBandColor initalColor2, out ColorBandColor selectedColor2)
+		{
+			var colorBlendDialog = new ColorBlendDialog(initalColor1, initalColor2);
+
+			var sp = PointToScreen(pos);
+
+			colorBlendDialog.Left = sp.X - colorBlendDialog.Width - 225;
+			colorBlendDialog.Top = sp.Y - colorBlendDialog.Height - 25;
+
+			if (colorBlendDialog.ShowDialog() == true)
+			{
+				selectedColor1 = colorBlendDialog.SelectedColorBandColor1;
+				selectedColor2 = colorBlendDialog.SelectedColorBandColor2;
+				return true;
+			}
+			else
+			{
+				selectedColor1 = initalColor1;
+				selectedColor2 = initalColor2;
 				return false;
 			}
 		}

@@ -11,8 +11,21 @@ namespace ProjectRepo
 	{
 		private const string COLLECTION_NAME = "Subdivisions";
 
+		#region Constructor and Collections Support
+
 		public SubdivisonReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
+
+		public void CreateSamplePointDeltaIndex()
+		{
+			var indexKeysDef = Builders<SubdivisionRecord>.IndexKeys
+				.Ascending(x => x.SamplePointDelta.Size.Exponent)
+				.Ascending(x => x.SamplePointDelta.Size.Width);
+
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<SubdivisionRecord>(indexKeysDef, new CreateIndexOptions() { Unique = false, Name = "SamplePointDelta" }));
+		}
+
+		#endregion
 
 		public IEnumerable<SubdivisionRecord> GetAll()
 		{

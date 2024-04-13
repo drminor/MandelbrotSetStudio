@@ -953,28 +953,29 @@ namespace MSS.Types
 
 		public bool Equals(ColorBandSet? other)
 		{
-			//return other != null
-			//	&& Id.Equals(other.Id)
-			//	&& LastUpdatedUtc == other.LastUpdatedUtc;
+			// TODO: Consider using OwnerId, Name, TargetIterations and Version
+			return other != null
+				&& Id.Equals(other.Id)
+				&& LastUpdatedUtc == other.LastUpdatedUtc;
 
-			if (other == null)
-			{
-				return false;
-			}
+			//if (other == null)
+			//{
+			//	return false;
+			//}
 
-			if (Id.Equals(other.Id))
-			{
-				if (LastUpdatedUtc == other.LastUpdatedUtc)
-				{
-					return true;
-				}
-				else
-				{
-					Debug.WriteLine($"ColorBandSet Equals found a different LastUpdated value for the same Id. Ours: {LastUpdatedUtc}, Other: {other.LastUpdatedUtc}.");
-				}
-			}
+			//if (Id.Equals(other.Id))
+			//{
+			//	if (LastUpdatedUtc == other.LastUpdatedUtc)
+			//	{
+			//		return true;
+			//	}
+			//	else
+			//	{
+			//		Debug.WriteLine($"ColorBandSet Equals found a different LastUpdated value for the same Id. Ours: {LastUpdatedUtc}, Other: {other.LastUpdatedUtc}.");
+			//	}
+			//}
 
-			return false;
+			//return false;
 		}
 
 		public bool Equals(ColorBandSet? x, ColorBandSet? y)

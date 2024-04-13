@@ -15,9 +15,7 @@ namespace MSetRepo
 			var mSetRecordMapper = new MSetRecordMapper(dtoMapper);
 
 			ProjectAdapter = new ProjectAdapter(dbProvider, mSetRecordMapper);
-
 			MapSectionAdapter = new MapSectionAdapter(dbProvider, mSetRecordMapper);
-
 			SharedColorBandSetAdapter = new SharedColorBandSetAdapter(dbProvider, mSetRecordMapper);
 		}
 
@@ -40,7 +38,9 @@ namespace MSetRepo
 
 		public void CreateCollectionIndexes()
 		{
+			ProjectAdapter.CreateIndexes();
 			MapSectionAdapter.CreateIndexes();
+			SharedColorBandSetAdapter.CreateIndexes();
 		}
 
 		public void WarmUp()

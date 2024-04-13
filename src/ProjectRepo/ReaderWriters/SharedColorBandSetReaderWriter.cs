@@ -12,8 +12,21 @@ namespace ProjectRepo
 	{
 		private const string COLLECTION_NAME = "SharedColorBandSets";
 
+		#region Constructor and Collection Support
+
 		public SharedColorBandSetReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
+
+		public void CreateNameAndIterationsIndex()
+		{
+			var indexKeysDef = Builders<ColorBandSetRecord>.IndexKeys
+				.Ascending(x => x.Name)
+				.Ascending(x => x.TargetIterations);
+
+			var idx = Collection.Indexes.CreateOne(new CreateIndexModel<ColorBandSetRecord>(indexKeysDef, new CreateIndexOptions() { Unique = false, Name = "NameAndIterations" }));
+		}
+
+#endregion
 
 		public IEnumerable<ColorBandSetRecord> GetAll()
 		{

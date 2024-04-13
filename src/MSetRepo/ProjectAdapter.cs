@@ -84,6 +84,11 @@ namespace MSetRepo
 			//_ = x.List();
 		}
 
+		public void CreateIndexes()
+		{
+			_colorBandSetReaderWriter.CreateOwnerNameIterationsAndVersionIndex();
+		}
+
 		#endregion
 
 		#region Project

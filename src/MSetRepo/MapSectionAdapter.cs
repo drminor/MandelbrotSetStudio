@@ -83,10 +83,12 @@ namespace MSetRepo
 
 		public void CreateIndexes()
 		{
-			_jobMapSectionReaderWriter.CreateOwnerAndTypeIndex();
-			_jobMapSectionReaderWriter.CreateMapSectionIdIndex();
-
+			_subdivisionReaderWriter.CreateSamplePointDeltaIndex();
 			_mapSectionReaderWriter.CreateSubAndPosIndex();
+
+			_jobMapSectionReaderWriter.CreateJobMapSectionAndJobTypeIndex();
+			_jobMapSectionReaderWriter.CreateJobAndOwnerTypeIndex();
+			_jobMapSectionReaderWriter.CreateMapSectionIdIndex();
 
 			_mapSectionZValuesReaderWriter.CreateSectionIdIndex();
 		}
