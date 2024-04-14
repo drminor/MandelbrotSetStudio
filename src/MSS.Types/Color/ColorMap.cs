@@ -7,14 +7,14 @@ using System.Linq;
 
 namespace MSS.Types
 {
-    public class ColorMap : IEquatable<ColorMap?>, IEqualityComparer<ColorMap>, IDisposable
+	public class ColorMap : IEquatable<ColorMap?>, IEqualityComparer<ColorMap>, IDisposable
     {
 		#region Private Fields
 
 		private const int BYTES_PER_PIXEL = 4; 
 
 		private readonly ColorBandSet _colorBandSet;
-        private ColorMapEntry[] _colorMapEntries;
+        private IColorMapEntry[] _colorMapEntries;
         private readonly int[] _cutoffs;
 
         private readonly int _highColorBandCutoff;
@@ -22,7 +22,6 @@ namespace MSS.Types
 
 		private bool _highlightSelectedColorBand;
 		private bool _useEscapeVelocities;
-
 
 		private int _highlightedColorBandIndex;
         private bool _disposedValue;
@@ -142,7 +141,8 @@ namespace MSS.Types
 						else
 						{
 							var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-							errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
+							errors = cme.BlendAndPlace(stepFactor, destination);
+
 							cme.Cache[cacheIndex] = destination[0];
 							cme.Cache[cacheIndex + 1] = destination[1];
 							cme.Cache[cacheIndex + 2] = destination[2];
@@ -152,7 +152,7 @@ namespace MSS.Types
 					else
 					{
 						var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-						errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
+						errors = cme.BlendAndPlace(stepFactor, destination);
 					}
 				}
             }
@@ -213,13 +213,9 @@ namespace MSS.Types
             destination[3] = 255;
         }
 
-		private double GetStepFactor(int countVal, double escapeVelocity, ColorMapEntry cme)
+		private double GetStepFactor(int countVal, double escapeVelocity, IColorMapEntry cme)
 		{
 			var bucketDistance = countVal + escapeVelocity - cme.StartingCutoff;
-			var bucketWidth = cme.BucketWidth;
-			//bucketWidth += UseEscapeVelocities ? 1 : 0;
-
-			//var stepFactor = bucketDistance > 0 ? bucketDistance / bucketWidth : 0;
 			var stepFactor = bucketDistance > 0 ? bucketDistance * cme.StepAmount : 0;
 
 			CheckStepFactor(countVal, cme.Cutoff, cme.StartingCutoff, cme.BucketWidth, stepFactor, escapeVelocity);
@@ -227,9 +223,9 @@ namespace MSS.Types
 			return stepFactor;
 		}
 
-		private ColorMapEntry[] BuildColorMapEntries(ColorBandSet colorBandSet, bool useEscapeVelocities)
+		private IColorMapEntry[] BuildColorMapEntries(ColorBandSet colorBandSet, bool useEscapeVelocities)
 		{
-			var result = colorBandSet.Select(x => new ColorMapEntry(x, useEscapeVelocities)).ToArray();
+			var result = colorBandSet.Select(x => new ColorMapEntryHSL(x, useEscapeVelocities)).ToArray();
 			return result;
 		}
 
@@ -238,11 +234,11 @@ namespace MSS.Types
 		#region Diagnostics
 
 		[Conditional("DEBUG2")]
-		private void ReportBlendValues(ColorMapEntry[] colorMapEntries)
+		private void ReportBlendValues(IColorMapEntry[] colorMapEntries)
 		{
 			for (var i = 0; i < colorMapEntries.Length; i++)
 			{
-				var blendVals = colorMapEntries[i].BlendVals;
+				var blendVals = colorMapEntries[i].ReportBlendVals();
 
 				Debug.WriteLine($"{i}: {blendVals}");
 			}
@@ -446,83 +442,7 @@ namespace MSS.Types
 
 		#endregion
 
-		private class ColorMapEntry : ICloneable
-		{
-			#region Constructor
-
-			public ColorMapEntry(ColorBand cb, bool useEscapeVelocities) : this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth, useEscapeVelocities)
-			{ }
-
-			public ColorMapEntry(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, 
-                int? previousCutoff, int bucketWidth, bool useEscapeVelocities)
-			{
-				Cutoff = cutoff;
-				StartColor = startColor;
-			    BlendStyle = blendStyle;
-				EndColor = endColor;
-                StartingCutoff = (previousCutoff ?? 0) + 1;
-                BucketWidth = useEscapeVelocities ? bucketWidth + 1 : bucketWidth;
-				UsingEscapeVelocities = useEscapeVelocities;
-				StepAmount = 1d / BucketWidth;
-
-				if (BlendStyle == ColorBandBlendStyle.None)
-				{
-					BlendVals = new BlendValsHSL();
-				}
-				else
-				{
-					BlendVals = new BlendValsHSL(StartColor.ColorComps, EndColor.ColorComps);
-				}
-
-				if (!useEscapeVelocities && BucketWidth < 501)
-				{
-					Cache = new byte[BucketWidth * BYTES_PER_PIXEL];
-					Array.Clear(Cache);
-				}
-				else
-				{
-					Cache = null;
-				}
-
-				//Cache = null;
-			}
-
-			#endregion
-
-			#region Public Properties
-
-			public int Cutoff { get; init; }
-
-			public ColorBandColor StartColor { get; init; }
-			public ColorBandBlendStyle BlendStyle { get; init; }
-			public ColorBandColor EndColor { get; init; }
-
-			public int StartingCutoff { get; init; }
-			public int BucketWidth { get; init; }
-			public double StepAmount { get; init; }
-			public bool UsingEscapeVelocities { get; init; }
-
-			public IBlendVals BlendVals { get; init; }
-
-			public byte[]? Cache { get; set; }
-
-			#endregion
-
-			public override string? ToString()
-			{
-				return $"Starting Cutoff: {StartingCutoff}, Ending Cutoff: {Cutoff}, Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}, End: {EndColor.GetCssColor()}.";
-			}
-
-			object ICloneable.Clone()
-			{
-				return Clone();
-			}
-
-			public ColorMapEntry Clone()
-			{
-				return new ColorMapEntry(Cutoff, StartColor, BlendStyle, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
-			}
-		}
 	
 	}
+
 }

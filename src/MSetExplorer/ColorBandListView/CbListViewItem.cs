@@ -40,7 +40,8 @@ namespace MSetExplorer
 
 			var blendArea = new Rect(x1Position, _elevations.BlendRectanglesElevation, bandWidth, _elevations.BlendRectanglesHeight);
 			var isCurrentArea = new Rect(x1Position, _elevations.IsCurrentIndicatorsElevation, bandWidth, _elevations.IsCurrentIndicatorsHeight);
-			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
+			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next 
+				|| colorBand.BlendStyle == ColorBandBlendStyle.EndReversed || colorBand.BlendStyle == ColorBandBlendStyle.NextReversed;
 
 			CbRectangle = new CbRectangle(colorBandIndex, blendArea, isCurrentArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
 

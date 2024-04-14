@@ -2,7 +2,7 @@
 
 namespace MSS.Types
 {
-	public struct BlendVals : IBlendVals
+	public struct BlendVals
 	{
 		private readonly byte[] _endColor;
 		private readonly byte _opacity;

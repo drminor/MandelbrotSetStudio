@@ -3,6 +3,7 @@ using System;
 using System.Buffers;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -66,7 +67,7 @@ namespace MSetExplorer
 			clrPicker2.SelectedColor = ScreenTypeHelper.ConvertToColor(_endingColor);
 
 			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, Direction);
 
 			clrPicker1.ColorChanged += ClrPicker1_ColorChanged;
 			clrPicker2.ColorChanged += ClrPicker2_ColorChanged;
@@ -83,13 +84,13 @@ namespace MSetExplorer
 		private void ClrPicker1_ColorChanged(object sender, RoutedEventArgs e)
 		{
 			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, Direction);
 		}
 
 		private void ClrPicker2_ColorChanged(object sender, RoutedEventArgs e)
 		{
 			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, Direction);
 		}
 
 		#endregion
@@ -113,6 +114,11 @@ namespace MSetExplorer
 				_gradientBitmap = value;
 				RaisePropertyChanged(nameof(GradientBitmap));
 			}
+		}
+
+		public ColorExtensions.Direction Direction
+		{
+			get => chkBoxBlendDirIsReversed.IsChecked == true ? ColorExtensions.Direction.CounterClockwise : ColorExtensions.Direction.Clockwise;
 		}
 
 		#endregion
@@ -147,7 +153,7 @@ namespace MSetExplorer
 			lGBrush.GradientStops[1].Color = e;
 		}
 
-		private void PaintTheBitmap(Color s, Color e)
+		private void PaintTheBitmap(Color s, Color e, ColorExtensions.Direction direction)
 		{
 			var errorCnt = 0;
 
@@ -156,7 +162,11 @@ namespace MSetExplorer
 
 			//var hue = Color.Get
 
-			var bv = new BlendVals(c1.ColorComps, c2.ColorComps);
+			var startingHsl = ColorBandColorHelper.GetHSL(c1.ColorComps);
+			var endingHsl = ColorBandColorHelper.GetHSL(c2.ColorComps);
+
+			var bv = new BlendValsHSL(startingHsl, endingHsl, direction);
+			//var bv = new BlendVals(c1.ColorComps, c2.ColorComps);
 
 			var resultRowPtr = 0;
 			var resultRowPtrIncrement = BLEND_WIDTH * BYTES_PER_PIXEL;
@@ -169,7 +179,10 @@ namespace MSetExplorer
 				{
 					var destination = new Span<byte>(_backBuffer, resultPtr, BYTES_PER_PIXEL);
 					var stepFactor = i / (double)BLEND_WIDTH;
-					errorCnt += bv.BlendAndPlace(stepFactor, destination);
+
+					var hsl = bv.Blend(stepFactor, out var errors);
+					ColorBandColorHelper.PlaceRgb(hsl, destination);
+					errorCnt += errors;
 
 					resultPtr += BYTES_PER_PIXEL;
 				}
@@ -185,6 +198,17 @@ namespace MSetExplorer
 			if (property != null) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 		}
 
+
 		#endregion
+
+		private void chkBoxBlendDirIsReversed_Unchecked(object sender, RoutedEventArgs e)
+		{
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, Direction);
+		}
+
+		private void chkBoxBlendDirIsReversed_Checked(object sender, RoutedEventArgs e)
+		{
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, Direction);
+		}
 	}
 }

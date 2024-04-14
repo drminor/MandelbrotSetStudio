@@ -317,9 +317,9 @@ namespace MSS.Types
 				return ColorBandColor.Black;
 			}
 
-			var result = BlendStyle == ColorBandBlendStyle.Next
+			var result = BlendStyle == ColorBandBlendStyle.Next || BlendStyle == ColorBandBlendStyle.NextReversed
 				? GetSuccessorStartColor()
-				: BlendStyle == ColorBandBlendStyle.End
+				: BlendStyle == ColorBandBlendStyle.End || BlendStyle == ColorBandBlendStyle.EndReversed
 					? EndColor
 					: StartColor;
 

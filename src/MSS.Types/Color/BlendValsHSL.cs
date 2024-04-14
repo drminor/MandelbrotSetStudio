@@ -2,98 +2,135 @@
 
 namespace MSS.Types
 {
-	public struct BlendValsHSL : IBlendVals
+	public struct BlendValsHSL 
 	{
-		private readonly byte[] _startColor;
-		private readonly byte[] _endColor;
-		private readonly byte _opacity;
+		//private readonly double[] _startHsl;
+		private readonly double[] _endHsl;
 
-		public double SRed { get; init; }
-		public double SGreen { get; init; }
-		public double SBlue { get; init; }
+		public double SHue { get; init; }
+		public double SSaturation { get; init; }
+		public double SLuminance { get; init; }
 
-		public double DiffRed { get; init; }
-		public double DiffGreen { get; init; }
-		public double DiffBlue { get; init; }
+		public double DiffHue { get; init; }
+		public double DiffSaturation { get; init; }
+		public double DiffLuminance { get; init; }
+
+		public ColorExtensions.Direction Direction { get; init; }
 
 		public BlendValsHSL()
 		{
-			SRed = 0;
-			SGreen = 0;
-			SBlue = 0;
+			SHue = 0;
+			SSaturation = 0;
+			SLuminance = 0;
 
-			DiffRed = 0;
-			DiffGreen = 0;
-			DiffBlue = 0;
+			DiffHue = 0;
+			DiffSaturation = 0;
+			DiffLuminance = 0;
 
-			_startColor = new byte[] { 0, 0, 0 };
-			_endColor = new byte[] { 0, 0, 0 };
-			_opacity = 255;
+			//_startHsl = new double[] { 0, 0, 0 };
+			_endHsl = new double[] { 0, 0, 0 };
+
+			Direction = ColorExtensions.Direction.Clockwise;
 		}
 
-		public BlendValsHSL(byte[] startColor, byte[] endColor)
+		public BlendValsHSL(double[] startHsl, double[] endHsl, ColorExtensions.Direction direction = ColorExtensions.Direction.Clockwise)
 		{
-			SRed = startColor[0];
-			SGreen = startColor[1];
-			SBlue = startColor[2];
+			SHue = startHsl[0];
+			SSaturation = startHsl[1];
+			SLuminance = startHsl[2];
 
-			DiffRed = endColor[0] - startColor[0];
-			DiffGreen = endColor[1] - startColor[1];
-			DiffBlue = endColor[2] - startColor[2];
+			DiffHue = endHsl[0] - startHsl[0];
+			DiffSaturation = endHsl[1] - startHsl[1];
+			DiffLuminance = endHsl[2] - startHsl[2];
 
-			_startColor = startColor;
-			_endColor = endColor;
-			_opacity = 255;
+			//_startHsl = startHsl;
+			_endHsl = endHsl;
+
+			Direction = direction;
+
+			switch (direction)
+			{
+				case ColorExtensions.Direction.CounterClockwise:
+					if (DiffHue >= 0)
+						DiffHue = (360 - DiffHue) * -1;
+					break;
+
+				default:
+					if (DiffHue <= 0)
+						DiffHue = 360 + DiffHue;
+					break;
+			}
 		}
 
-		public int BlendAndPlace(double factor, Span<byte> destination)
+
+		public double[] Blend(double factor, out int errors)
 		{
-			var errors = 0;
+			errors = 0;
 
-			var rd = factor * DiffRed + SRed;
-			var gd = factor * DiffGreen + SGreen;
-			var bd = factor * DiffBlue + SBlue;
+			var h = factor * DiffHue + SHue;
+			var s = factor * DiffSaturation + SSaturation;
+			var l = factor * DiffLuminance + SLuminance;
 
-			var r = Math.Round(rd);
-			var g = Math.Round(gd);
-			var b = Math.Round(bd);
-
-			if (r < 0 || r > 255)
+			if (h < 0)
 			{
-				//Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
-				r = 50;
-				errors++;
+				h += 360;
+			}
+			else
+			{
+				if (h > 360)
+				{
+					h -= 360;
+				}
 			}
 
-			if (g < 0 || g > 255)
+			//if (s < 0 || s > 255)
+			//{
+			//	Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
+			//	s = 50;
+			//	errors++;
+			//}
+
+			//if (l < 0 || l > 255)
+			//{
+			//	Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
+			//	l = 50;
+			//	errors++;
+			//}
+
+			if (s < 0)
 			{
-				//Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
-				g = 50;
-				errors++;
+				s = 0;
+			}
+			else
+			{
+				if (s > 1)
+				{
+					s = 1;
+				}
 			}
 
-			if (b < 0 || b > 255)
+			if (l < 0)
 			{
-				//Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
-				b = 50;
-				errors++;
+				l = 0;
+			}
+			else
+			{
+				if (l > 1)
+				{
+					l = 1;
+				}
 			}
 
-			destination[0] = (byte)b;
-			destination[1] = (byte)g;
-			destination[2] = (byte)r;
-			destination[3] = _opacity;
-
-			return errors;
+			return new double[3] { h, s, l };
 		}
-
-
 
 		public override string? ToString()
 		{
-			var result = $"BlendVal E,S,D: Red: {_endColor[0]}, {SRed}, {DiffRed}\tGreen: {_endColor[1]}, {SGreen}, {DiffGreen}\tBlue: {_endColor[2]}, {SBlue}, {DiffBlue}";
+			var result = $"BlendVal (Ending, Starting Diff) Hue: {_endHsl[0]}, {SHue}, {DiffHue}\tSaturation: {_endHsl[1]}, {SSaturation}, {DiffSaturation}\tLuminance: {_endHsl[2]}, {SLuminance}, {DiffLuminance}";
 
 			return result;
 		}
 	}
+
+
 }

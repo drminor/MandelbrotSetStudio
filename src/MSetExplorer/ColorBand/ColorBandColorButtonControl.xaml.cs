@@ -83,6 +83,19 @@ namespace MSetExplorer
 			set => SetCurrentValue(EffectiveColorProperty, value);
 		}
 
+		private bool _isReversed;
+		public bool IsReversed
+		{
+			get => _isReversed;
+			set
+			{
+				if (value != _isReversed)
+				{
+					_isReversed = value;
+				}
+			}
+		}
+
 		private bool _isHot;
 
 		private bool IsHot
