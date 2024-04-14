@@ -3,7 +3,6 @@ using System;
 using System.Buffers;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -154,6 +153,8 @@ namespace MSetExplorer
 
 			var c1 = ScreenTypeHelper.ConvertToColorBandColor(s);
 			var c2 = ScreenTypeHelper.ConvertToColorBandColor(e);
+
+			//var hue = Color.Get
 
 			var bv = new BlendVals(c1.ColorComps, c2.ColorComps);
 

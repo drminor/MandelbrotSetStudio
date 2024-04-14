@@ -147,19 +147,19 @@ namespace MSetExplorer
 
 		private void CbsHistogramViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(CbsHistogramViewModel.UseEscapeVelocities))
+			if (e.PropertyName == nameof(ICbsHistogramViewModel.UseEscapeVelocities))
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling CbsHistogramViewModel PropertyChanged-UseEscapeVelocities.");
 				MapDisplayViewModel.UseEscapeVelocities = CbsHistogramViewModel.UseEscapeVelocities;
 			}
 
-			if (e.PropertyName == nameof(CbsHistogramViewModel.HighlightSelectedBand))
+			if (e.PropertyName == nameof(ICbsHistogramViewModel.HighlightSelectedBand))
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"ExplorerViewModel is handling CbsHistogramViewModel PropertyChanged-HighlightSelectedColorBand.");
 				MapDisplayViewModel.HighlightSelectedColorBand = CbsHistogramViewModel.HighlightSelectedBand;
 			}
 
-			if (e.PropertyName == nameof(CbsHistogramViewModel.CurrentColorBand))
+			if (e.PropertyName == nameof(ICbsHistogramViewModel.CurrentColorBand))
 			{
 				var cbsvmCbsIsNull = CbsHistogramViewModel.ColorBandSet == null ? string.Empty : " Not";
 				var projectVMCurrentProjectIsNull = ProjectViewModel.CurrentProject != null ? string.Empty : " Not";

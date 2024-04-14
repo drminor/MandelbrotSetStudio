@@ -60,10 +60,7 @@ namespace ImageBuilder
 			CancellationToken ct, SynchronizationContext _, Action<double>? statusCallback = null)
 		{
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
-			var colorMap = new ColorMap(colorBandSet)
-			{
-				UseEscapeVelocities = useEscapeVelocities
-			};
+			var colorMap = new ColorMap(colorBandSet, useEscapeVelocities);
 
 			var msrJob = _mapLoaderManager.CreateMapSectionRequestJob(JobType.Image, jobId, ownerType, mapAreaInfo, mapCalcSettings);				
 

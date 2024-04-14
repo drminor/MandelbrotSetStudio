@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace MSS.Types.Color
+namespace MSS.Types
 {
 	public class ColorBandColorHelper
 	{

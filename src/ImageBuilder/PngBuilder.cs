@@ -61,10 +61,7 @@ namespace ImageBuilder
 			var result = true;
 
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
-			var colorMap = new ColorMap(colorBandSet)
-			{
-				UseEscapeVelocities = useEscapeVelocities
-			};
+			var colorMap = new ColorMap(colorBandSet, useEscapeVelocities);
 
 			PngImage? pngImage = null;
 

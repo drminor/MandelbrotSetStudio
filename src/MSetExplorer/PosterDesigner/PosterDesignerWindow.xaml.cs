@@ -137,7 +137,7 @@ namespace MSetExplorer
 
 		private void CbsHistogramViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(CbsHistogramViewModel.IsDirty))
+			if (e.PropertyName == nameof(ICbsHistogramViewModel.IsDirty))
 			{
 				CommandManager.InvalidateRequerySuggested();
 			}

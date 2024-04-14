@@ -2,8 +2,9 @@
 
 namespace MSS.Types
 {
-	public struct BlendVals : IBlendVals
+	public struct BlendValsHSL : IBlendVals
 	{
+		private readonly byte[] _startColor;
 		private readonly byte[] _endColor;
 		private readonly byte _opacity;
 
@@ -15,7 +16,7 @@ namespace MSS.Types
 		public double DiffGreen { get; init; }
 		public double DiffBlue { get; init; }
 
-		public BlendVals()
+		public BlendValsHSL()
 		{
 			SRed = 0;
 			SGreen = 0;
@@ -25,11 +26,12 @@ namespace MSS.Types
 			DiffGreen = 0;
 			DiffBlue = 0;
 
+			_startColor = new byte[] { 0, 0, 0 };
 			_endColor = new byte[] { 0, 0, 0 };
 			_opacity = 255;
 		}
 
-		public BlendVals(byte[] startColor, byte[] endColor)
+		public BlendValsHSL(byte[] startColor, byte[] endColor)
 		{
 			SRed = startColor[0];
 			SGreen = startColor[1];
@@ -39,6 +41,7 @@ namespace MSS.Types
 			DiffGreen = endColor[1] - startColor[1];
 			DiffBlue = endColor[2] - startColor[2];
 
+			_startColor = startColor;
 			_endColor = endColor;
 			_opacity = 255;
 		}
@@ -84,54 +87,7 @@ namespace MSS.Types
 			return errors;
 		}
 
-		public unsafe int BlendAndPlace(double factor, IntPtr destination)
-		{
-			var errors = 0;
 
-			var rd = factor * DiffRed + SRed;
-			var gd = factor * DiffGreen + SGreen;
-			var bd = factor * DiffBlue + SBlue;
-
-			var r = Math.Round(rd);
-			var g = Math.Round(gd);
-			var b = Math.Round(bd);
-
-			if (r < 0 || r > 255)
-			{
-				//Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
-				r = 50;
-				errors++;
-			}
-
-			if (g < 0 || g > 255)
-			{
-				//Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
-				g = 50;
-				errors++;
-			}
-
-			if (b < 0 || b > 255)
-			{
-				//Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
-				b = 50;
-				errors++;
-			}
-
-			//destination[0] = (byte)b;
-			//destination[1] = (byte)g;
-			//destination[2] = (byte)r;
-			//destination[3] = Opacity;
-
-			//*(byte*)destination = (byte)b;
-			//*((byte*)destination + 1) = (byte)g;
-			//*((byte*)destination + 2) = (byte)r;
-			//*((byte*)destination + 3) = Opacity;
-
-			var pixelValue = (uint)b + (uint)((byte)g << 8) + (uint)((byte)r << 16) + (uint)(_opacity << 24);
-			*(uint*)destination = pixelValue;
-
-			return errors;
-		}
 
 		public override string? ToString()
 		{
@@ -140,5 +96,4 @@ namespace MSS.Types
 			return result;
 		}
 	}
-
 }

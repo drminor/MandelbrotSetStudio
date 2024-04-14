@@ -145,11 +145,17 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var colorMap = new ColorMap(colorBandSet)
+				//var colorMap = new ColorMap(colorBandSet)
+				//{
+				//	UseEscapeVelocities = _useEscapeVelocities,
+				//	HighlightSelectedColorBand = _highlightSelectedColorBand
+				//};
+
+				var colorMap = new ColorMap(colorBandSet, _useEscapeVelocities)
 				{
-					UseEscapeVelocities = _useEscapeVelocities,
 					HighlightSelectedColorBand = _highlightSelectedColorBand
 				};
+
 
 				Debug.WriteLineIf(_useDetailedDebug, $"BitmapGrid is loading a ColorBandSet. The currentColorBandIndex is {colorMap.CurrentColorBandIndex}.");
 

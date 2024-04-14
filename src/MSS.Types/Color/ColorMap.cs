@@ -11,12 +11,18 @@ namespace MSS.Types
     {
 		#region Private Fields
 
+		private const int BYTES_PER_PIXEL = 4; 
+
 		private readonly ColorBandSet _colorBandSet;
         private ColorMapEntry[] _colorMapEntries;
         private readonly int[] _cutoffs;
 
         private readonly int _highColorBandCutoff;
         private readonly int _highColorBandIndex;
+
+		private bool _highlightSelectedColorBand;
+		private bool _useEscapeVelocities;
+
 
 		private int _highlightedColorBandIndex;
         private bool _disposedValue;
@@ -25,7 +31,7 @@ namespace MSS.Types
 
 		#region Constructor
 
-		public ColorMap(ColorBandSet colorBandSet)
+		public ColorMap(ColorBandSet colorBandSet, bool useEscapeVelocities)
         {
 			_colorBandSet = colorBandSet ?? throw new ArgumentNullException(nameof(colorBandSet));
             //Debug.WriteLine($"A new Color Map is being constructed with Id: {colorBandSet.Id}.");
@@ -40,14 +46,10 @@ namespace MSS.Types
                 throw new InvalidOperationException("Expecting the ColorBandSet to implement INotifyPropertyChanged.");
             }
 
-			//_cutoffs = colorBandSet.Take(colorBandSet.Count - 1).Select(x => x.Cutoff).ToArray();
-			//_colorMapEntries = BuildColorMapEntries(_colorBandSet);
-			//ReportBlendValues(_colorMapEntries);
+			_highlightSelectedColorBand = false;
+			_useEscapeVelocities = useEscapeVelocities;
 
-			//_highColorBandIndex = colorBandSet.Count - 1;
-			//_highColorBandCutoff = _colorMapEntries[^1].Cutoff;
-
-			_colorMapEntries = BuildColorMapEntries(_colorBandSet);
+			_colorMapEntries = BuildColorMapEntries(_colorBandSet, _useEscapeVelocities);
 			ReportBlendValues(_colorMapEntries);
 
 			_cutoffs = _colorMapEntries.Take(_colorMapEntries.Length - 1).Select(x => x.Cutoff).ToArray();
@@ -73,10 +75,19 @@ namespace MSS.Types
 
 		#region Public Properties
 
+		public bool UseEscapeVelocities
+		{
+			get => _useEscapeVelocities;
+			set
+			{
+				if (value != _useEscapeVelocities)
+				{
+					_useEscapeVelocities = value;
+					_colorMapEntries = BuildColorMapEntries(_colorBandSet, _useEscapeVelocities);
+				}
+			}
+		}
 
-		public bool UseEscapeVelocities { get; set; }
-
-		private bool _highlightSelectedColorBand = false;
 
         public bool HighlightSelectedColorBand
 		{
@@ -117,14 +128,42 @@ namespace MSS.Types
 				}
 				else
 				{
-					var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
-					errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
+					if (!cme.UsingEscapeVelocities && cme.Cache != null)
+					{
+						var bucketDistance = countVal - cme.StartingCutoff;
+						var cacheIndex = bucketDistance * BYTES_PER_PIXEL;
+
+						if (cme.Cache[cacheIndex + 3] == 15)
+						{
+							destination[0] = cme.Cache[cacheIndex];
+							destination[1] = cme.Cache[cacheIndex + 1];
+							destination[2] = cme.Cache[cacheIndex + 2];
+						}
+						else
+						{
+							var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
+							errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
+							cme.Cache[cacheIndex] = destination[0];
+							cme.Cache[cacheIndex + 1] = destination[1];
+							cme.Cache[cacheIndex + 2] = destination[2];
+							cme.Cache[cacheIndex + 3] = 15;
+						}
+					}
+					else
+					{
+						var stepFactor = GetStepFactor(countVal, escapeVelocity, cme);
+						errors = cme.BlendVals.BlendAndPlace(stepFactor, destination);
+					}
 				}
             }
 
             if (HighlightSelectedColorBand && idx != _highlightedColorBandIndex)
 			{
                 destination[3] = 25; // set the opacity to 25, instead of 255.
+			}
+			else
+			{
+				destination[3] = 255;
 			}
 
             return errors;
@@ -178,35 +217,19 @@ namespace MSS.Types
 		{
 			var bucketDistance = countVal + escapeVelocity - cme.StartingCutoff;
 			var bucketWidth = cme.BucketWidth;
-			bucketWidth += UseEscapeVelocities ? 1 : 0;
+			//bucketWidth += UseEscapeVelocities ? 1 : 0;
 
-			var stepFactor = bucketDistance > 0 ? bucketDistance / bucketWidth : 0;
+			//var stepFactor = bucketDistance > 0 ? bucketDistance / bucketWidth : 0;
+			var stepFactor = bucketDistance > 0 ? bucketDistance * cme.StepAmount : 0;
 
-			CheckStepFactor(countVal, cme.Cutoff, cme.StartingCutoff, bucketWidth, stepFactor, escapeVelocity);
+			CheckStepFactor(countVal, cme.Cutoff, cme.StartingCutoff, cme.BucketWidth, stepFactor, escapeVelocity);
 
 			return stepFactor;
 		}
 
-		private ColorMapEntry[] BuildColorMapEntries(ColorBandSet colorBandSet)
+		private ColorMapEntry[] BuildColorMapEntries(ColorBandSet colorBandSet, bool useEscapeVelocities)
 		{
-			//var result = new ColorMapEntry[colorBandSet.Count];
-
-			//for (var i = 0; i < colorBandSet.Count; i++)
-			//{
-			//	//var colorBand = new ColorMapEntry(colorBandSet[i]);
-
-			//	//if (colorBand.BlendStyle != ColorBandBlendStyle.None)
-			//	//{
-			//	//	colorBand.BlendVals = new BlendVals(colorBand.StartColor.ColorComps, colorBand.EndColor.ColorComps);
-			//	//}
-
-			//	//result[i] = colorBand;
-
-			//	result[i] = new ColorMapEntry(colorBandSet[i]);
-			//}
-
-			var result = colorBandSet.Select(x => new ColorMapEntry(x)).ToArray();
-
+			var result = colorBandSet.Select(x => new ColorMapEntry(x, useEscapeVelocities)).ToArray();
 			return result;
 		}
 
@@ -225,7 +248,7 @@ namespace MSS.Types
 			}
 		}
 
-		[Conditional("DEBUG2")]
+		[Conditional("DEBUG")]
 		private void CheckStepFactor(int countVal, int cutoff, int startingCutoff, int bucketWidth, double stepFactor, double escapeVelocity)
 		{
 			var bucketDistance = countVal + escapeVelocity - startingCutoff;
@@ -427,23 +450,41 @@ namespace MSS.Types
 		{
 			#region Constructor
 
-			public ColorMapEntry(ColorBand cb) : this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth)
+			public ColorMapEntry(ColorBand cb, bool useEscapeVelocities) : this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth, useEscapeVelocities)
 			{ }
 
 			public ColorMapEntry(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, 
-                int? previousCutoff, int bucketWidth)
+                int? previousCutoff, int bucketWidth, bool useEscapeVelocities)
 			{
 				Cutoff = cutoff;
 				StartColor = startColor;
 			    BlendStyle = blendStyle;
 				EndColor = endColor;
                 StartingCutoff = (previousCutoff ?? 0) + 1;
-                BucketWidth = bucketWidth;
+                BucketWidth = useEscapeVelocities ? bucketWidth + 1 : bucketWidth;
+				UsingEscapeVelocities = useEscapeVelocities;
+				StepAmount = 1d / BucketWidth;
 
-				if (BlendStyle != ColorBandBlendStyle.None)
+				if (BlendStyle == ColorBandBlendStyle.None)
 				{
-					BlendVals = new BlendVals(StartColor.ColorComps, EndColor.ColorComps);
+					BlendVals = new BlendValsHSL();
 				}
+				else
+				{
+					BlendVals = new BlendValsHSL(StartColor.ColorComps, EndColor.ColorComps);
+				}
+
+				if (!useEscapeVelocities && BucketWidth < 501)
+				{
+					Cache = new byte[BucketWidth * BYTES_PER_PIXEL];
+					Array.Clear(Cache);
+				}
+				else
+				{
+					Cache = null;
+				}
+
+				//Cache = null;
 			}
 
 			#endregion
@@ -458,8 +499,12 @@ namespace MSS.Types
 
 			public int StartingCutoff { get; init; }
 			public int BucketWidth { get; init; }
+			public double StepAmount { get; init; }
+			public bool UsingEscapeVelocities { get; init; }
 
-			public BlendVals BlendVals { get; init; }
+			public IBlendVals BlendVals { get; init; }
+
+			public byte[]? Cache { get; set; }
 
 			#endregion
 
@@ -475,7 +520,7 @@ namespace MSS.Types
 
 			public ColorMapEntry Clone()
 			{
-				return new ColorMapEntry(Cutoff, StartColor, BlendStyle, EndColor, StartingCutoff, BucketWidth);
+				return new ColorMapEntry(Cutoff, StartColor, BlendStyle, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
 			}
 		}
 	

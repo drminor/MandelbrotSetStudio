@@ -64,10 +64,7 @@ namespace ImageBuilderWPF
 			var result = true;
 
 			var blockSize = mapAreaInfo.Subdivision.BlockSize;
-			var colorMap = new ColorMap(colorBandSet)
-			{
-				UseEscapeVelocities = useEscapeVelocities
-			};
+			var colorMap = new ColorMap(colorBandSet, useEscapeVelocities);
 
 			var imageSize = mapAreaInfo.CanvasSize.Round();
 
