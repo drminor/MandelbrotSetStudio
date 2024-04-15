@@ -237,7 +237,7 @@ namespace MSS.Types
 			}
 			else
 			{
-				return new ColorMapEntryHSL(colorBand, useEscapeVelocities);
+				return new ColorMapEntryHSB(colorBand, useEscapeVelocities);
 			}
 		}
 

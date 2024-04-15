@@ -1,109 +1,277 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 
 namespace MSS.Types
 {
-	public static class ColorExtensions
+	public static class ColorHelper
 	{
-		public static IEnumerable<Color> Range(this Color firstColor, Color lastColor, int count)
-		{
-			float stepHueClockwise = GetStepping(firstColor.GetHue(), lastColor.GetHue(), count, Direction.Clockwise);
-			float stepHueCounterClockwise = GetStepping(firstColor.GetHue(), lastColor.GetHue(), count, Direction.CounterClockwise);
+		#region ColorSpace Support
 
-			if (Math.Abs(stepHueClockwise) >= Math.Abs(stepHueCounterClockwise))
-				return Range(firstColor, lastColor, count, Direction.Clockwise);
+		public static double[] GetHSB(byte[] rgbColorComps)
+		{
+			var color = Color.FromArgb(rgbColorComps[0], rgbColorComps[1], rgbColorComps[2]);
+
+			var result = new double[]
+			{
+				color.GetHue(),
+				color.GetSaturation(),
+				color.GetBrightness()
+			};
+
+			return result;
+		}
+
+		//public static void PlaceRgb(double[] hsl, Span<byte> destination)
+		//{
+		//	var color = FromHsb(hsl[0], hsl[1], hsl[2]);
+
+		//	destination[0] = color.B;
+		//	destination[1] = color.G;
+		//	destination[2] = color.R;
+		//	destination[3] = color.A;
+		//}
+
+		public static int PlaceHsb(double[] hsb, Span<byte> destination)
+		{
+			var numberOfErrors = 0;
+			var colorComps = GetColorComps(hsb);
+
+			byte r;
+			if (colorComps[0] > 255)
+			{
+				numberOfErrors++;
+				r = 50;
+			}
 			else
-				return Range(firstColor, lastColor, count, Direction.CounterClockwise);
-		}
-
-		public static IEnumerable<Color> Range(this Color firstColor, Color lastColor, int count, Direction hueDirection)
-		{
-			var color = firstColor;
-
-			if (count <= 0)
-				yield break;
-
-			if (count == 1)
-				yield return firstColor;
-
-			float startingHue = color.GetHue();
-			float stepHue = GetStepping(firstColor.GetHue(), lastColor.GetHue(), count - 1, hueDirection);
-			var stepSaturation = (lastColor.GetSaturation() - firstColor.GetSaturation()) / (count - 1);
-			var stepBrightness = (lastColor.GetBrightness() - firstColor.GetBrightness()) / (count - 1);
-			var stepAlpha = (lastColor.A - firstColor.A) / (count - 1.0);
-
-			for (int i = 1; i < count; i++)
 			{
-				yield return color;
-
-				var hueValue = startingHue + stepHue * i;
-
-				if (hueValue > 360)
-					hueValue -= 360;
-
-				if (hueValue < 0)
-					hueValue = 360 + hueValue;
-
-				color = FromAhsb(
-							Clamp((int)(color.A + stepAlpha), 0, 255),
-								 hueValue,
-								 Clamp(color.GetSaturation() + stepSaturation, 0, 1),
-								 Clamp(color.GetBrightness() + stepBrightness, 0, 1));
+				r = Convert.ToByte(colorComps[0]);
 			}
 
-			yield return lastColor;
-		}
-
-		public enum Direction
-		{
-			Clockwise = 0,
-			CounterClockwise = 1
-		}
-
-		private static float GetStepping(float start, float end, int count, Direction direction)
-		{
-			var hueDiff = end - start;
-
-			switch (direction)
+			byte g;
+			if (colorComps[1] > 255)
 			{
-				case Direction.CounterClockwise:
-					if (hueDiff >= 0)
-						hueDiff = (360 - hueDiff) * -1;
-					break;
+				numberOfErrors++;
+				g = 50;
+			}
+			else
+			{
+				g = Convert.ToByte(colorComps[1]);
+			}
 
+			byte b;
+			if (colorComps[2] > 255)
+			{
+				numberOfErrors++;
+				b = 50;
+			}
+			else
+			{
+				b = Convert.ToByte(colorComps[2]);
+			}
+
+			destination[0] = b;
+			destination[1] = g;
+			destination[2] = r;
+			destination[3] = 255;
+
+			return numberOfErrors;
+		}
+
+
+		//public static void PlaceHsb(double[] hsl, Span<byte> destination)
+		//{
+		//	var color = FromHsb(hsl[0], hsl[1], hsl[2]);
+
+		//	destination[0] = color.B;
+		//	destination[1] = color.G;
+		//	destination[2] = color.R;
+		//	destination[3] = color.A;
+		//}
+
+		private static int[] GetColorComps(double[] hsb)
+		{
+			var hue = hsb[0];
+			var saturation = hsb[1];
+			var brightness = hsb[2];
+
+			if (0f > hue
+				|| 360f < hue)
+			{
+				throw new ArgumentOutOfRangeException(
+					"hue",
+					hue,
+					"Value must be within a range of 0 - 360.");
+			}
+
+			if (0f > saturation
+				|| 1f < saturation)
+			{
+				throw new ArgumentOutOfRangeException(
+					"saturation",
+					saturation,
+					"Value must be within a range of 0 - 1.");
+			}
+
+			if (0f > brightness
+				|| 1f < brightness)
+			{
+				throw new ArgumentOutOfRangeException(
+					"brightness",
+					brightness,
+					"Value must be within a range of 0 - 1.");
+			}
+
+			if (0 == saturation)
+			{
+				return new int[] {
+					Convert.ToInt32(brightness * 255),
+					Convert.ToInt32(brightness * 255),
+					Convert.ToInt32(brightness * 255)
+				};
+			}
+
+			double fMax;
+			double fMin;
+
+			if (0.5 < brightness)
+			{
+				fMax = brightness - (brightness * saturation) + saturation;
+				fMin = brightness + (brightness * saturation) - saturation;
+			}
+			else
+			{
+				fMax = brightness + (brightness * saturation);
+				fMin = brightness - (brightness * saturation);
+			}
+
+			var iSextant = (int)Math.Floor(hue / 60d);
+			if (300 <= hue)
+			{
+				hue -= 360;
+			}
+
+			hue /= 60;
+			hue -= 2 * Math.Floor((iSextant + 1) % 6d / 2d);
+
+			double fMid;
+			if (0 == iSextant % 2)
+			{
+				fMid = (hue * (fMax - fMin)) + fMin;
+			}
+			else
+			{
+				fMid = fMin - (hue * (fMax - fMin));
+			}
+
+			switch (iSextant)
+			{
+				case 1:
+					return new int[] { Convert.ToInt32(fMid * 255), Convert.ToInt32(fMax * 255), Convert.ToInt32(fMin * 255) };
+				case 2:
+					return new int[] { Convert.ToInt32(fMin * 255), Convert.ToInt32(fMax * 255), Convert.ToInt32(fMid * 255) };
+				case 3:
+					return new int[] { Convert.ToInt32(fMin * 255), Convert.ToInt32(fMid * 255), Convert.ToInt32(fMax * 255) };
+				case 4:
+					return new int[] { Convert.ToInt32(fMid * 255), Convert.ToInt32(fMin * 255), Convert.ToInt32(fMax * 255) };
+				case 5:
+					return new int[] { Convert.ToInt32(fMax * 255), Convert.ToInt32(fMin * 255), Convert.ToInt32(fMid * 255) };
 				default:
-					if (hueDiff <= 0)
-						hueDiff = 360 + hueDiff;
-					break;
+					return new int[] { Convert.ToInt32(fMax * 255), Convert.ToInt32(fMid * 255), Convert.ToInt32(fMin * 255) };
+			}
+		}
+
+
+		private static Color FromHsb(double hue, double saturation, double brightness)
+		{
+			if (0f > hue
+				|| 360f < hue)
+			{
+				throw new ArgumentOutOfRangeException(
+					"hue",
+					hue,
+					"Value must be within a range of 0 - 360.");
 			}
 
-			return hueDiff / count;
+			if (0f > saturation
+				|| 1f < saturation)
+			{
+				throw new ArgumentOutOfRangeException(
+					"saturation",
+					saturation,
+					"Value must be within a range of 0 - 1.");
+			}
+
+			if (0f > brightness
+				|| 1f < brightness)
+			{
+				throw new ArgumentOutOfRangeException(
+					"brightness",
+					brightness,
+					"Value must be within a range of 0 - 1.");
+			}
+
+			if (0 == saturation)
+			{
+				return Color.FromArgb(
+									255,
+									Convert.ToInt32(brightness * 255),
+									Convert.ToInt32(brightness * 255),
+									Convert.ToInt32(brightness * 255));
+			}
+
+			double fMax, fMid, fMin;
+			int iSextant, iMax, iMid, iMin;
+
+			if (0.5 < brightness)
+			{
+				fMax = brightness - (brightness * saturation) + saturation;
+				fMin = brightness + (brightness * saturation) - saturation;
+			}
+			else
+			{
+				fMax = brightness + (brightness * saturation);
+				fMin = brightness - (brightness * saturation);
+			}
+
+			iSextant = (int)Math.Floor(hue / 60d);
+			if (300f <= hue)
+			{
+				hue -= 360f;
+			}
+
+			hue /= 60d;
+			hue -= 2d * (float)Math.Floor((iSextant + 1d) % 6d / 2d);
+			if (0 == iSextant % 2)
+			{
+				fMid = (hue * (fMax - fMin)) + fMin;
+			}
+			else
+			{
+				fMid = fMin - (hue * (fMax - fMin));
+			}
+
+			iMax = Convert.ToInt32(fMax * 255);
+			iMid = Convert.ToInt32(fMid * 255);
+			iMin = Convert.ToInt32(fMin * 255);
+
+			switch (iSextant)
+			{
+				case 1:
+					return Color.FromArgb(255, iMid, iMax, iMin);
+				case 2:
+					return Color.FromArgb(255, iMin, iMax, iMid);
+				case 3:
+					return Color.FromArgb(255, iMin, iMid, iMax);
+				case 4:
+					return Color.FromArgb(255, iMid, iMin, iMax);
+				case 5:
+					return Color.FromArgb(255, iMax, iMin, iMid);
+				default:
+					return Color.FromArgb(255, iMax, iMid, iMin);
+			}
 		}
 
-		private static int Clamp(int value, int min, int max)
-		{
-			if (value < min)
-				return min;
-
-			if (value > max)
-				return max;
-
-			return value;
-		}
-
-		private static float Clamp(float value, float min, float max)
-		{
-			if (value < min)
-				return min;
-
-			if (value > max)
-				return max;
-
-			return value;
-		}
-
-		public static Color FromAhsb(int alpha, float hue, float saturation, float brightness)
+		private static Color FromAhsb(int alpha, double hue, double saturation, double brightness)
 		{
 			if (0 > alpha
 				|| 255 < alpha)
@@ -150,7 +318,7 @@ namespace MSS.Types
 									Convert.ToInt32(brightness * 255));
 			}
 
-			float fMax, fMid, fMin;
+			double fMax, fMid, fMin;
 			int iSextant, iMax, iMid, iMin;
 
 			if (0.5 < brightness)
@@ -171,7 +339,7 @@ namespace MSS.Types
 			}
 
 			hue /= 60f;
-			hue -= 2f * (float)Math.Floor(((iSextant + 1f) % 6f) / 2f);
+			hue -= 2f * (float)Math.Floor((iSextant + 1f) % 6f / 2f);
 			if (0 == iSextant % 2)
 			{
 				fMid = (hue * (fMax - fMin)) + fMin;
@@ -201,5 +369,7 @@ namespace MSS.Types
 					return Color.FromArgb(alpha, iMax, iMid, iMin);
 			}
 		}
+
+		#endregion
 	}
 }

@@ -3,12 +3,11 @@ using System;
 using System.Buffers;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Numerics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using static MSS.Types.ColorExtensions;
-using Color = System.Windows.Media.Color;
+
+//using Color = System.Windows.Media.Color;
 
 namespace MSetExplorer
 {
@@ -187,8 +186,8 @@ namespace MSetExplorer
 			}
 			else
 			{
-				var startingHsl = ColorBandColorHelper.GetHSL(c1.ColorComps);
-				var endingHsl = ColorBandColorHelper.GetHSL(c2.ColorComps);
+				var startingHsl = ColorHelper.GetHSB(c1.ColorComps);
+				var endingHsl = ColorHelper.GetHSB(c2.ColorComps);
 
 				errors = PaintTheBitmap(startingHsl, endingHsl, blendMethod);
 			}
@@ -235,8 +234,8 @@ namespace MSetExplorer
 		{
 			var errorCnt = 0;
 
-			var direction = blendMethod == ColorBandBlendMethod.HsbCw ? Direction.Clockwise : Direction.CounterClockwise;
-			var bv = new BlendValsHSL(startingHsl, endingHsl, direction);
+			var direction = blendMethod == ColorBandBlendMethod.HsbCw ? HsbBlendDirection.Clockwise : HsbBlendDirection.CounterClockwise;
+			var bv = new BlendValsHSB(startingHsl, endingHsl, direction);
 			//var bv = new BlendVals(c1.ColorComps, c2.ColorComps);
 
 			var resultRowPtr = 0;
@@ -251,8 +250,8 @@ namespace MSetExplorer
 					var destination = new Span<byte>(_backBuffer, resultPtr, BYTES_PER_PIXEL);
 					var stepFactor = i / (double)BLEND_WIDTH;
 
-					var hsl = bv.Blend(stepFactor, out var errors);
-					ColorBandColorHelper.PlaceRgb(hsl, destination);
+					var hsb = bv.Blend(stepFactor, out var errors);
+					ColorHelper.PlaceHsb(hsb, destination);
 					errorCnt += errors;
 
 					resultPtr += BYTES_PER_PIXEL;

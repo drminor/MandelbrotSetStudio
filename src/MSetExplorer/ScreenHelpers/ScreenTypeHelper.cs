@@ -1,10 +1,8 @@
 ﻿using MSS.Types;
-using ScottPlot.Plottable;
 using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using Windows.Web.Syndication;
 
 namespace MSetExplorer
 {

@@ -2,55 +2,55 @@
 
 namespace MSS.Types
 {
-	public struct BlendValsHSL 
+	public struct BlendValsHSB 
 	{
-		//private readonly double[] _startHsl;
-		private readonly double[] _endHsl;
+		//private readonly double[] _startHsb;
+		private readonly double[] _endHsb;
 
 		public double SHue { get; init; }
 		public double SSaturation { get; init; }
-		public double SLuminance { get; init; }
+		public double SBrightness { get; init; }
 
 		public double DiffHue { get; init; }
 		public double DiffSaturation { get; init; }
-		public double DiffLuminance { get; init; }
+		public double DiffBrightness { get; init; }
 
-		public ColorExtensions.Direction Direction { get; init; }
+		public HsbBlendDirection Direction { get; init; }
 
-		public BlendValsHSL()
+		public BlendValsHSB()
 		{
 			SHue = 0;
 			SSaturation = 0;
-			SLuminance = 0;
+			SBrightness = 0;
 
 			DiffHue = 0;
 			DiffSaturation = 0;
-			DiffLuminance = 0;
+			DiffBrightness = 0;
 
 			//_startHsl = new double[] { 0, 0, 0 };
-			_endHsl = new double[] { 0, 0, 0 };
+			_endHsb = new double[] { 0, 0, 0 };
 
-			Direction = ColorExtensions.Direction.Clockwise;
+			Direction = HsbBlendDirection.Clockwise;
 		}
 
-		public BlendValsHSL(double[] startHsl, double[] endHsl, ColorExtensions.Direction direction = ColorExtensions.Direction.Clockwise)
+		public BlendValsHSB(double[] startHsb, double[] endHsb, HsbBlendDirection direction = HsbBlendDirection.Clockwise)
 		{
-			SHue = startHsl[0];
-			SSaturation = startHsl[1];
-			SLuminance = startHsl[2];
+			SHue = startHsb[0];
+			SSaturation = startHsb[1];
+			SBrightness = startHsb[2];
 
-			DiffHue = endHsl[0] - startHsl[0];
-			DiffSaturation = endHsl[1] - startHsl[1];
-			DiffLuminance = endHsl[2] - startHsl[2];
+			DiffHue = endHsb[0] - startHsb[0];
+			DiffSaturation = endHsb[1] - startHsb[1];
+			DiffBrightness = endHsb[2] - startHsb[2];
 
-			//_startHsl = startHsl;
-			_endHsl = endHsl;
+			//_startHsb = startHsb;
+			_endHsb = endHsb;
 
 			Direction = direction;
 
 			switch (direction)
 			{
-				case ColorExtensions.Direction.CounterClockwise:
+				case HsbBlendDirection.CounterClockwise:
 					if (DiffHue >= 0)
 						DiffHue = (360 - DiffHue) * -1;
 					break;
@@ -69,7 +69,7 @@ namespace MSS.Types
 
 			var h = factor * DiffHue + SHue;
 			var s = factor * DiffSaturation + SSaturation;
-			var l = factor * DiffLuminance + SLuminance;
+			var b = factor * DiffBrightness + SBrightness;
 
 			if (h < 0)
 			{
@@ -109,24 +109,24 @@ namespace MSS.Types
 				}
 			}
 
-			if (l < 0)
+			if (b < 0)
 			{
-				l = 0;
+				b = 0;
 			}
 			else
 			{
-				if (l > 1)
+				if (b > 1)
 				{
-					l = 1;
+					b = 1;
 				}
 			}
 
-			return new double[3] { h, s, l };
+			return new double[3] { h, s, b };
 		}
 
 		public override string? ToString()
 		{
-			var result = $"BlendVal (Ending, Starting Diff) Hue: {_endHsl[0]}, {SHue}, {DiffHue}\tSaturation: {_endHsl[1]}, {SSaturation}, {DiffSaturation}\tLuminance: {_endHsl[2]}, {SLuminance}, {DiffLuminance}";
+			var result = $"BlendVal (Ending, Starting Diff) Hue: {_endHsb[0]}, {SHue}, {DiffHue}\tSaturation: {_endHsb[1]}, {SSaturation}, {DiffSaturation}\tBrightness: {_endHsb[2]}, {SBrightness}, {DiffBrightness}";
 
 			return result;
 		}
