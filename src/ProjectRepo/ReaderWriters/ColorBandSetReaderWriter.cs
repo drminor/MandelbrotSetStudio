@@ -199,6 +199,24 @@ namespace ProjectRepo
 			return GetReturnCount(deleteResult) ?? 0;
 		}
 
+		public long DeleteColorBandSetsByVersion(ObjectId ownerId, string name, int targetIterations, int numberToKeep)
+		{
+			var filter1 = Builders<ColorBandSetRecord>.Filter.Eq(u => u.OwnerId, ownerId);
+			var filter2 = Builders<ColorBandSetRecord>.Filter.Eq(u => u.Name, name);
+			var filter3 = Builders<ColorBandSetRecord>.Filter.Eq(u => u.TargetIterations, targetIterations);
+
+			var colorBandSets = Collection.Find(filter1 & filter2 & filter3).ToEnumerable().OrderByDescending(x => x.Version).Skip(numberToKeep);
+
+			var numberDeleted = 0L;
+
+			foreach(var cb in colorBandSets)
+			{
+				numberDeleted += Delete(cb.Id);
+			}
+
+			return numberDeleted;
+		}
+
 		public bool Exists(string name)
 		{
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("Name", name);

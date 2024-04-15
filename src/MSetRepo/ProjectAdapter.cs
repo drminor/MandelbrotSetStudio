@@ -397,6 +397,14 @@ namespace MSetRepo
 			return result > 0;
 		}
 
+		public long DeletePriorColorBandSetsByVersion(ObjectId ownerId, string name, int targetIterations, int numberToKeep)
+		{
+			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);
+			var result = colorBandSetReaderWriter.DeleteColorBandSetsByVersion(ownerId, name, targetIterations, numberToKeep);
+
+			return result;
+		}
+
 		public bool ColorBandSetExists(string name)
 		{
 			var colorBandSetReaderWriter = new ColorBandSetReaderWriter(_dbProvider);

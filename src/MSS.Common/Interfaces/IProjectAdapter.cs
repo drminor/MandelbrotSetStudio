@@ -71,6 +71,7 @@ namespace MSS.Common
 		IEnumerable<ColorBandSet> GetColorBandSetsForOwner(ObjectId projectId);
 		//long DeleteColorBandSetsForProject(ObjectId projectId);
 		bool DeleteColorBandSet(ObjectId colorBandSetId);
+		long DeletePriorColorBandSetsByVersion(ObjectId ownerId, string name, int targetIterations, int numberToKeep);
 
 		void UpdateColorBandSetDescription(ObjectId colorBandSetId, string? description);
 		void UpdateColorBandSetDetails(ColorBandSet colorBandSet);

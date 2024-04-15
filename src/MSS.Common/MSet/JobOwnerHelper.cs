@@ -178,6 +178,9 @@ namespace MSS.Common
 				{
 					projectAdapter.InsertColorBandSet(cbs);
 				}
+
+				// For each newly added ColorBandSet, remove older versions of the same name/Target Iterations, leaving only the last 3.
+				projectAdapter.DeletePriorColorBandSetsByVersion(jobOwner.Id, cbs.Name, cbs.TargetIterations, 3);
 			}
 
 			var dirtyColorBandSets = colorBandSets.Where(x => x.IsDirty).ToList();
@@ -187,6 +190,29 @@ namespace MSS.Common
 				//projectAdapter.UpdateColorBandSetDetails(cbs);
 				projectAdapter.UpdateColorBandSetBands(cbs);
 			}
+
+			// TODO: Remove all but the last 3 ColorBandSets having the same name / target iterations
+
+		}
+
+		private static long RemoveColorBandSetsWithOlderVersion(IJobOwner jobOwner, IProjectAdapter projectAdapter, string name, int targetIterations, int version)
+		{
+			//var colorBandSets = projectAdapter.GetColorBandSetsForOwner(jobOwner.Id);
+
+			//var or = colorBandSets.OrderBy(x => x.Name).ThenBy(x => x.TargetIterations).ThenByDescending(x => x.Version).ToList();
+
+			//var idsToRemove = new List<ObjectId>();
+
+			//var previousName = string.Empty;
+			//var previousIterations = -1;
+
+			//for (var i = 0; i < or.Count; i++)
+			//{
+
+			//}
+
+			return 0;
+
 		}
 
 		private static void SaveJobs(IJobOwner jobOwner, IProjectAdapter projectAdapter)
