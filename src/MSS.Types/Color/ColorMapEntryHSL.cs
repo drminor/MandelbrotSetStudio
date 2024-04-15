@@ -12,38 +12,33 @@ namespace MSS.Types
 		#region Constructor
 
 		public ColorMapEntryHSL(ColorBand cb, bool useEscapeVelocities)
-			: this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth, useEscapeVelocities)
+			: this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.BlendMethod, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth, useEscapeVelocities)
 		{ }
 
-		public ColorMapEntryHSL(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor,
+		public ColorMapEntryHSL(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandBlendMethod blendMethod, ColorBandColor endColor,
 			int? previousCutoff, int bucketWidth, bool useEscapeVelocities)
 		{
 			Cutoff = cutoff;
 			StartColor = startColor;
 			BlendStyle = blendStyle;
+			BlendMethod = blendMethod;
 			EndColor = endColor;
 			StartingCutoff = (previousCutoff ?? 0) + 1;
 			BucketWidth = useEscapeVelocities ? bucketWidth + 1 : bucketWidth;
 			UsingEscapeVelocities = useEscapeVelocities;
 			StepAmount = 1d / BucketWidth;
 
-			if (BlendStyle == ColorBandBlendStyle.None)
+			if (blendStyle == ColorBandBlendStyle.None)
 			{
 				_blendVals = new BlendValsHSL();
-			}
-			else if (BlendStyle == ColorBandBlendStyle.End || BlendStyle == ColorBandBlendStyle.Next)
-			{
-				var startingHsl = GetHSL(StartColor.ColorComps);
-				var endingHsl = GetHSL(EndColor.ColorComps);
-
-				_blendVals = new BlendValsHSL(startingHsl, endingHsl, ColorExtensions.Direction.Clockwise);
 			}
 			else
 			{
 				var startingHsl = GetHSL(StartColor.ColorComps);
 				var endingHsl = GetHSL(EndColor.ColorComps);
 
-				_blendVals = new BlendValsHSL(startingHsl, endingHsl, ColorExtensions.Direction.CounterClockwise);
+				var direction = blendMethod == ColorBandBlendMethod.HsbCw ? ColorExtensions.Direction.Clockwise : ColorExtensions.Direction.CounterClockwise;
+				_blendVals = new BlendValsHSL(startingHsl, endingHsl, direction);
 			}
 
 			if (!useEscapeVelocities && BucketWidth < 501)
@@ -67,6 +62,7 @@ namespace MSS.Types
 
 		public ColorBandColor StartColor { get; init; }
 		public ColorBandBlendStyle BlendStyle { get; init; }
+		public ColorBandBlendMethod BlendMethod { get; init; }
 		public ColorBandColor EndColor { get; init; }
 
 		public int StartingCutoff { get; init; }
@@ -104,7 +100,7 @@ namespace MSS.Types
 
 		public ColorMapEntryHSL Clone()
 		{
-			return new ColorMapEntryHSL(Cutoff, StartColor, BlendStyle, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
+			return new ColorMapEntryHSL(Cutoff, StartColor, BlendStyle, BlendMethod, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
 		}
 
 		private double[] GetHSL(byte[] cc)

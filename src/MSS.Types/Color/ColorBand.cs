@@ -60,6 +60,7 @@ namespace MSS.Types
 			_cutoff = cutoff;
 			_startColor = startColor;
 			_blendStyle = blendStyle;
+			_blendMethod = blendMethod;
 			_endColor = endColor;
 			_previousCutoff = previousCutoff;
 			_successorStartColor = successorStartColor;

@@ -1580,6 +1580,13 @@ namespace MSetExplorer
 				foundUpdate = true;
 			}
 
+			// BlendStyle is being updated
+			else if (propertyName == nameof(ColorBand.BlendMethod))
+			{
+				//cb.ActualEndColor = cb.BlendStyle == ColorBandBlendStyle.Next ? cb.SuccessorStartColor : cb.BlendStyle == ColorBandBlendStyle.None ? cb.StartColor : cb.EndColor;
+				foundUpdate = true;
+			}
+
 			// EndColor is being updated
 			else if (propertyName == nameof(ColorBand.EndColor))
 			{

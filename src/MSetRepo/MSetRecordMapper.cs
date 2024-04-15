@@ -101,7 +101,10 @@ namespace MSetRepo
 
 		public ColorBandRecord MapTo(ColorBand source)
 		{
-			return new ColorBandRecord(source.Cutoff, source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor(), source.Percentage);
+			var result = new ColorBandRecord(source.Cutoff, source.StartColor.GetCssColor(), source.BlendStyle.ToString(), source.EndColor.GetCssColor(), source.Percentage);
+			result.BlendMethod = source.BlendMethod.ToString();
+
+			return result;
 		}
 
 		public ColorBand MapFrom(ColorBandRecord target)
@@ -142,6 +145,7 @@ namespace MSetRepo
 		{
 			if (blendMethod == null)
 			{
+				// TODO: Make sure all ColorBandRecords have a value for the BlendMethod property.
 				return ColorBandBlendMethod.Rgb;
 			}
 			else

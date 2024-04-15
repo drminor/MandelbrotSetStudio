@@ -36,10 +36,9 @@
                 
                 <TextBlock Width="69" Margin="17,0,3,0" FontSize="14" Text="Start Color:" />
                 <local:ColorBandColorButtonControl Margin="0,0" Width="65" Height="21" x:Name="cbcButtonControl1"
-                    Color="{Binding Path=CurrentColorBand.StartColor}"
-                    BlendMethod="{Binding Path=CurrentColorBand.BlendMethod}"
-
-                    CustomMouseUp="StartColor_CustomMouseUp"
+                                                   Color="{Binding Path=CurrentColorBand.StartColor}"
+                                                   BlendMethod="{Binding Path=CurrentColorBand.BlendMethod, Mode=TwoWay}"
+                                                   CustomMouseUp="StartColor_CustomMouseUp"
                 />
             </StackPanel>
 
@@ -50,7 +49,7 @@
 
                 <TextBlock Width="77" Margin="7,0,2,0" FontSize="14" Text="Blend Style:" />
                 <ComboBox x:Name="cmbBlendStyle" Width="64" Height="21" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0"
-                            SelectedIndex="{Binding Path=CurrentColorBand.BlendStyle, Converter={StaticResource BlendStyleToIntConverter}}">
+                          SelectedIndex="{Binding Path=CurrentColorBand.BlendStyle, Converter={StaticResource BlendStyleToIntConverter}}">
                     <ComboBoxItem IsSelected="True">None</ComboBoxItem>
                     <ComboBoxItem>End</ComboBoxItem>
                     <ComboBoxItem>Next</ComboBoxItem>
@@ -64,9 +63,9 @@
 
                 <TextBlock Width="69" Margin="17,0,3,0" FontSize="14" Text="End Color:" />
                 <local:ColorBandColorButtonControl Margin="0" Width="65" Height="21" x:Name="cbcButtonControl2"
-                    Color="{Binding Path=CurrentColorBand.EndColor}"
-                    EffectiveColor="{Binding Path=CurrentColorBand.ActualEndColor}"
-                                                   BlendMethod="{Binding Path=CurrentColorBand.BlendMethod}"
+                                                   Color="{Binding Path=CurrentColorBand.EndColor}"
+                                                   EffectiveColor="{Binding Path=CurrentColorBand.ActualEndColor}"
+                                                   BlendMethod="{Binding Path=CurrentColorBand.BlendMethod, Mode=TwoWay}"
                     CustomMouseUp="EndColor_CustomMouseUp"
                 />
             </StackPanel>

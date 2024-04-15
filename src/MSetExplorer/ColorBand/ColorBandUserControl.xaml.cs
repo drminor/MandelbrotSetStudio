@@ -111,7 +111,7 @@ namespace MSetExplorer
 					{
 						cbcButtonControl1.Color = selectedColorS1;
 						cbcButtonControl2.Color = selectedColorE1;
-						cbcButtonControl2.BlendMethod = blendMethod;
+						cbcButtonControl1.BlendMethod = blendMethod;
 					}
 				}
 				else if (_useColorSpaceDialog)
