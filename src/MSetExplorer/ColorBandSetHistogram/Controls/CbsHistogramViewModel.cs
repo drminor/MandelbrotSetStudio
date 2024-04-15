@@ -1583,7 +1583,7 @@ namespace MSetExplorer
 			// EndColor is being updated
 			else if (propertyName == nameof(ColorBand.EndColor))
 			{
-				foundUpdate = cb.BlendStyle == ColorBandBlendStyle.End || cb.BlendStyle == ColorBandBlendStyle.EndReversed;
+				foundUpdate = cb.BlendStyle == ColorBandBlendStyle.End;
 			}
 			else
 			{

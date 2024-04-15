@@ -52,8 +52,6 @@
                     <ComboBoxItem IsSelected="True">None</ComboBoxItem>
                     <ComboBoxItem>End</ComboBoxItem>
                     <ComboBoxItem>Next</ComboBoxItem>
-                    <ComboBoxItem>EndR</ComboBoxItem>
-                    <ComboBoxItem>NextR</ComboBoxItem>
                 </ComboBox>
             </StackPanel>
 

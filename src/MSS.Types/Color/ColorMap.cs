@@ -225,8 +225,20 @@ namespace MSS.Types
 
 		private IColorMapEntry[] BuildColorMapEntries(ColorBandSet colorBandSet, bool useEscapeVelocities)
 		{
-			var result = colorBandSet.Select(x => new ColorMapEntryHSL(x, useEscapeVelocities)).ToArray();
+			var result = colorBandSet.Select(x => GetColorMapEntry(x, useEscapeVelocities)).ToArray();
 			return result;
+		}
+
+		private IColorMapEntry GetColorMapEntry(ColorBand colorBand, bool useEscapeVelocities)
+		{
+			if (colorBand.BlendMethod == ColorBandBlendMethod.Rgb)
+			{
+				return new ColorMapEntry(colorBand, useEscapeVelocities);
+			}
+			else
+			{
+				return new ColorMapEntryHSL(colorBand, useEscapeVelocities);
+			}
 		}
 
 		#endregion

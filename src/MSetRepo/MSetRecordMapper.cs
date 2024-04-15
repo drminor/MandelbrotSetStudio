@@ -106,7 +106,19 @@ namespace MSetRepo
 
 		public ColorBand MapFrom(ColorBandRecord target)
 		{
-			return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor, target.Percentage);
+			if (target.BlendStyle == "EndReversed")
+			{
+				return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle("End"), MapFromBlendMethod("HsbCcw"), target.EndCssColor, target.Percentage);
+			}
+			else if (target.BlendStyle == "NextReversed")
+			{
+				return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle("Next"), MapFromBlendMethod("HsbCcw"), target.EndCssColor, target.Percentage);
+			}
+			else
+			{
+				return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), MapFromBlendMethod(target.BlendMethod), target.EndCssColor, target.Percentage);
+			}
+
 		}
 
 		public ReservedColorBandRecord MapTo(ReservedColorBand source)
@@ -116,12 +128,24 @@ namespace MSetRepo
 
 		public ReservedColorBand MapFrom(ReservedColorBandRecord target)
 		{
-			return new ReservedColorBand(target.StartCssColor, MapFromBlendStyle(target.BlendStyle), target.EndCssColor);
+			return new ReservedColorBand(target.StartCssColor, MapFromBlendStyle(target.BlendStyle), MapFromBlendMethod(target.BlendMethod), target.EndCssColor);
 		}
 
 		public ColorBandBlendStyle MapFromBlendStyle(string blendStyle)
 		{
 			return Enum.Parse<ColorBandBlendStyle>(blendStyle);
+		}
+
+		public ColorBandBlendMethod MapFromBlendMethod(string? blendMethod)
+		{
+			if (blendMethod == null)
+			{
+				return ColorBandBlendMethod.Rgb;
+			}
+			else
+			{
+				return Enum.Parse<ColorBandBlendMethod>(blendMethod);
+			}
 		}
 
 		public TransformType MapFromTransformType(int transformType)

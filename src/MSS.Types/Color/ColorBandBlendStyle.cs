@@ -4,8 +4,6 @@
     {
         None = 0,
         End = 1,
-        Next = 2,
-        EndReversed = 3,
-        NextReversed = 4
+        Next = 2
     }
 }

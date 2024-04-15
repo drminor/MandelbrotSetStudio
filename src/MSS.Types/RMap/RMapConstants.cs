@@ -80,18 +80,18 @@ namespace MSS.Types
 		{
 			var colorBands = new List<ColorBand>
 			{
-				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000"),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff"),
-				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, "#000000")
+				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#cce8ff"),
+				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000")
 
 				//new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
@@ -106,18 +106,18 @@ namespace MSS.Types
 		{
 			var colorBands = new List<ColorBand>
 			{
-				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, "#000000", 0),
-				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, "#000000", 0.01),
-				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 11.72),
-				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, "#000000", 26.98),
-				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, "#000000", 39.08),
-				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, "#000000", 20.15), 
-				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, "#000000", 1.48),
-				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, "#000000", 0.14),
-				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, "#000000", 0.09),
-				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, "#000000", 0.19),
-				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, "#cce8ff", 0.15),
-				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, "#000000", 0.02)
+				new ColorBand(1, "#ffffff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0),
+				new ColorBand(2, "#ff0033", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0.01),
+				new ColorBand(3, "#ffffcc", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 11.72),
+				new ColorBand(5, "#ccccff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 26.98),
+				new ColorBand(10, "#ffffff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 39.08),
+				new ColorBand(25, "#ff0033", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 20.15), 
+				new ColorBand(49, "#ffffcc", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 1.48),
+				new ColorBand(60, "#ccccff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0.14),
+				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0.09),
+				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0.19),
+				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#cce8ff", 0.15),
+				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0.02)
 			};
 				// > 400 = 9.55%
 

@@ -106,38 +106,12 @@ namespace MSetExplorer
 				if (_useColorBlendDialog)
 				{
 					var endColor = cb.EndColor;
-					var initialIsReversed = cb.BlendStyle == ColorBandBlendStyle.EndReversed || cb.BlendStyle == ColorBandBlendStyle.NextReversed;
-					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, initialIsReversed, out var isReversed))
+
+					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, cb.BlendMethod, out var blendMethod))
 					{
 						cbcButtonControl1.Color = selectedColorS1;
 						cbcButtonControl2.Color = selectedColorE1;
-						cbcButtonControl2.IsReversed = isReversed;
-
-						if (isReversed)
-						{
-							if (cb.BlendStyle == ColorBandBlendStyle.End)
-							{
-								cb.BlendStyle = ColorBandBlendStyle.EndReversed;
-							}
-
-							if (cb.BlendStyle == ColorBandBlendStyle.Next)
-							{
-								cb.BlendStyle = ColorBandBlendStyle.NextReversed;
-							}
-						}
-						else
-						{
-							if (cb.BlendStyle == ColorBandBlendStyle.EndReversed)
-							{
-								cb.BlendStyle = ColorBandBlendStyle.End;
-							}
-
-							if (cb.BlendStyle == ColorBandBlendStyle.NextReversed)
-							{
-								cb.BlendStyle = ColorBandBlendStyle.Next;
-							}
-
-						}
+						cbcButtonControl2.BlendMethod = blendMethod;
 					}
 				}
 				else if (_useColorSpaceDialog)
@@ -170,13 +144,11 @@ namespace MSetExplorer
 				{
 					var startColor = cb.StartColor;
 
-					var initialIsReversed = cb.BlendStyle == ColorBandBlendStyle.EndReversed || cb.BlendStyle == ColorBandBlendStyle.NextReversed;
-
-					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, initialIsReversed, out var isReversed))
+					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, cb.BlendMethod, out var blendMethod))
 					{
 						cbcButtonControl1.Color = selectedColorS1;
 						cbcButtonControl2.Color = selectedColorE1;
-						cbcButtonControl2.IsReversed = isReversed;
+						cbcButtonControl2.BlendMethod = blendMethod;
 					}
 				}
 				else if (_useColorSpaceDialog)
@@ -301,7 +273,7 @@ namespace MSetExplorer
 			}
 		}
 
-		private bool ShowColorBlendDialog(Point pos, ColorBandColor initalColor1, out ColorBandColor selectedColor1, ColorBandColor initalColor2, out ColorBandColor selectedColor2, bool initialIsReversed, out bool isReversed)
+		private bool ShowColorBlendDialog(Point pos, ColorBandColor initalColor1, out ColorBandColor selectedColor1, ColorBandColor initalColor2, out ColorBandColor selectedColor2, ColorBandBlendMethod initialBlendMethod, out ColorBandBlendMethod blendMethod)
 		{
 			var colorBlendDialog = new ColorBlendDialog(initalColor1, initalColor2);
 
@@ -314,14 +286,14 @@ namespace MSetExplorer
 			{
 				selectedColor1 = colorBlendDialog.SelectedColorBandColor1;
 				selectedColor2 = colorBlendDialog.SelectedColorBandColor2;
-				isReversed = colorBlendDialog.Direction == ColorExtensions.Direction.CounterClockwise;
+				blendMethod = colorBlendDialog.BlendMethod;
 				return true;
 			}
 			else
 			{
 				selectedColor1 = initalColor1;
 				selectedColor2 = initalColor2;
-				isReversed = initialIsReversed;
+				blendMethod = initialBlendMethod;
 				return false;
 			}
 		}

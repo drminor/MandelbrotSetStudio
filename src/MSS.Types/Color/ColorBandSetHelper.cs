@@ -107,7 +107,7 @@ namespace MSS.Types
 			var cBands = colorBandSet as IList<ColorBand>;
 
 			var itemsToKeep = cBands.Where(x => x.Cutoff <= targetIterations).ToList();
-			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.EndColor));
+			var reservedColorBands = cBands.Where(x => x.Cutoff > targetIterations).Select(y => new ReservedColorBand(y.StartColor, y.BlendStyle, y.BlendMethod, y.EndColor));
 
 			var result = new ColorBandSet(
 				ObjectId.GenerateNewId(),

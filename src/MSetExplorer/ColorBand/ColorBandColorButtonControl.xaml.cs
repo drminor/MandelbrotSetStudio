@@ -83,15 +83,16 @@ namespace MSetExplorer
 			set => SetCurrentValue(EffectiveColorProperty, value);
 		}
 
-		private bool _isReversed;
-		public bool IsReversed
+		private ColorBandBlendMethod _blendMethod;
+
+		public ColorBandBlendMethod BlendMethod
 		{
-			get => _isReversed;
+			get => _blendMethod;
 			set
 			{
-				if (value != _isReversed)
+				if (value != _blendMethod)
 				{
-					_isReversed = value;
+					_blendMethod = value;
 				}
 			}
 		}

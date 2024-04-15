@@ -524,7 +524,7 @@ namespace MSS.Types
 			var sourceCbE = Items[^2];
 			var targetCbE = Items[^1];
 
-			var newReserved = new ReservedColorBand(targetCbE.StartColor, targetCbE.BlendStyle, targetCbE.EndColor);
+			var newReserved = new ReservedColorBand(targetCbE.StartColor, targetCbE.BlendStyle, targetCbE.BlendMethod, targetCbE.EndColor);
 			//_reservedColorBands.Push(newReserved);
 
 			targetCbE.StartColor = sourceCbE.StartColor;
@@ -718,14 +718,14 @@ namespace MSS.Types
 		{
 			var startColor = previousColorBand.ActualEndColor;
 			var endColor = ColorBandColor.White;
-			var result = new ColorBand(targetIterations, startColor, ColorBandBlendStyle.Next, endColor, previousCutoff: previousColorBand.Cutoff, successorStartColor: null, percentage);
+			var result = new ColorBand(targetIterations, startColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, previousCutoff: previousColorBand.Cutoff, successorStartColor: null, percentage);
 			result.IsLast = true;
 			return result;
 		}
 
 		private static ColorBand CreateSingleColorBand(int targetIterations)
 		{
-			var result = new ColorBand(targetIterations, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.Next, new ColorBandColor("#000000"), 100);
+			var result = new ColorBand(targetIterations, new ColorBandColor("#FFFFFF"), ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, new ColorBandColor("#000000"), 100);
 			result.IsLast = true;
 
 			return result;

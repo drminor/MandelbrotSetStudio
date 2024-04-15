@@ -13,6 +13,7 @@ namespace MSS.Types
 		private int _cutoff;
 		private ColorBandColor _startColor;
 		private ColorBandBlendStyle _blendStyle;
+		private ColorBandBlendMethod _blendMethod;
 		private ColorBandColor _endColor;
 
 		private int? _previousCutoff;
@@ -38,23 +39,23 @@ namespace MSS.Types
 		//	: this(0, ColorBandColor.White, ColorBandBlendStyle.End, ColorBandColor.Black, double.NaN)
 		//{ }
 
-		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
-			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor), percentage: double.NaN)
+		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, ColorBandBlendMethod blendMethod, string endCssColor)
+			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, blendMethod, new ColorBandColor(endCssColor), percentage: double.NaN)
 		{ }
 
-		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor, double percentage)
-			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor), percentage)
+		public ColorBand(int cutoff, string startCssColor, ColorBandBlendStyle blendStyle, ColorBandBlendMethod blendMethod, string endCssColor, double percentage)
+			: this(cutoff, new ColorBandColor(startCssColor), blendStyle, blendMethod, new ColorBandColor(endCssColor), percentage)
 		{ }
 
 		//public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
 		//	: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: null, percentage: double.NaN)
 		//{ }
 
-		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, double percentage)
-			: this(cutoff, startColor, blendStyle, endColor, previousCutoff: null, successorStartColor: null, percentage)
+		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandBlendMethod blendMethod, ColorBandColor endColor, double percentage)
+			: this(cutoff, startColor, blendStyle, blendMethod, endColor, previousCutoff: null, successorStartColor: null, percentage)
 		{ }
 
-		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor, int? previousCutoff, ColorBandColor? successorStartColor, double percentage)
+		public ColorBand(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandBlendMethod blendMethod, ColorBandColor endColor, int? previousCutoff, ColorBandColor? successorStartColor, double percentage)
 		{
 			_cutoff = cutoff;
 			_startColor = startColor;
@@ -265,6 +266,19 @@ namespace MSS.Types
 			}
 		}
 
+		public ColorBandBlendMethod BlendMethod
+		{
+			get => _blendMethod;
+			set
+			{
+				if (value != _blendMethod)
+				{
+					_blendMethod = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		public ColorBandColor EndColor
 		{
 			get => _endColor;
@@ -317,9 +331,9 @@ namespace MSS.Types
 				return ColorBandColor.Black;
 			}
 
-			var result = BlendStyle == ColorBandBlendStyle.Next || BlendStyle == ColorBandBlendStyle.NextReversed
+			var result = BlendStyle == ColorBandBlendStyle.Next
 				? GetSuccessorStartColor()
-				: BlendStyle == ColorBandBlendStyle.End || BlendStyle == ColorBandBlendStyle.EndReversed
+				: BlendStyle == ColorBandBlendStyle.End
 					? EndColor
 					: StartColor;
 
@@ -384,7 +398,7 @@ namespace MSS.Types
 
 		public ColorBand Clone()
 		{
-			var result = new ColorBand(Cutoff, StartColor, BlendStyle, EndColor, _previousCutoff, _successorStartColor, Percentage)
+			var result = new ColorBand(Cutoff, StartColor, BlendStyle, BlendMethod, EndColor, _previousCutoff, _successorStartColor, Percentage)
 			{
 				IsLast = IsLast
 			};
@@ -394,7 +408,7 @@ namespace MSS.Types
 
 		public override string? ToString()
 		{
-			return $"Previous Cutoff: {PreviousCutoff}, Ending Cutoff: {Cutoff}, Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}, End: {EndColor.GetCssColor()}, Actual End: {ActualEndColor}";
+			return $"Previous Cutoff: {PreviousCutoff}, Ending Cutoff: {Cutoff}, Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}/{BlendMethod}, End: {EndColor.GetCssColor()}, Actual End: {ActualEndColor}";
 		}
 
 		#endregion

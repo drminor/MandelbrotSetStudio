@@ -63,7 +63,7 @@ namespace MSetExplorer.Cbs
 			var endColor = colorBand.EndColor;
 			var successorStartColor = colorBand.SuccessorStartColor;
 
-			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, endColor, prevCutoff, successorStartColor, newPercentage);
+			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, prevCutoff, successorStartColor, newPercentage);
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
 			//itemBeingInserted.ElevationsAreLocal = true;
@@ -139,7 +139,7 @@ namespace MSetExplorer.Cbs
 			var lvi = _listViewItems[index];
 			var colorBand = lvi.ColorBand;
 
-			var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.EndColor);
+			var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
 
 			_onAnimationComplete(ColorBandSetEditOperation.InsertCutoff, index, colorBand, reservedColorBand);
 
@@ -177,7 +177,7 @@ namespace MSetExplorer.Cbs
 			_pushColorsAnimationInfo1?.MoveSourcesToDestinations();
 			_pushColorsAnimationInfo1 = null;
 
-			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandColor.White, percentage: double.NaN);
+			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, ColorBandColor.White, percentage: double.NaN);
 
 			_onAnimationComplete(ColorBandSetEditOperation.InsertColor, index, colorBand, null);
 
@@ -204,7 +204,7 @@ namespace MSetExplorer.Cbs
 			var endColor = colorBand.StartColor;
 			var successorStartColor = colorBand.StartColor;
 
-			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, endColor, prevCutoff, successorStartColor, newPercentage);
+			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, prevCutoff, successorStartColor, newPercentage);
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
 			itemBeingInserted.ElevationsAreLocal = true;
@@ -363,7 +363,7 @@ namespace MSetExplorer.Cbs
 
 			_pullColorsAnimationInfo1 = null;
 
-			var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.EndColor);
+			var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
 
 			// Update the model
 			_onAnimationComplete(ColorBandSetEditOperation.DeleteColor, index, null, reservedColorBand);
@@ -482,7 +482,7 @@ namespace MSetExplorer.Cbs
 			var previousCutoff = cb.Cutoff;
 			var cutOff = cb.Cutoff + 10;
 
-			var	result = new ColorBand(cutOff, reservedColorBand.StartColor, reservedColorBand.BlendStyle, reservedColorBand.EndColor, previousCutoff: previousCutoff, successorStartColor: null, percentage: double.NaN);
+			var	result = new ColorBand(cutOff, reservedColorBand.StartColor, reservedColorBand.BlendStyle, reservedColorBand.BlendMethod, reservedColorBand.EndColor, previousCutoff: previousCutoff, successorStartColor: null, percentage: double.NaN);
 
 			return result;
 		}

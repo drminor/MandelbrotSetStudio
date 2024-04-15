@@ -32,7 +32,11 @@
         <Border Grid.Row="1" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center">
             
             <StackPanel Orientation="Vertical">
-                <CheckBox Content="Reverse" IsChecked="False" x:Name="chkBoxBlendDirIsReversed" Checked="chkBoxBlendDirIsReversed_Checked" Unchecked="chkBoxBlendDirIsReversed_Unchecked"/>
+                <StackPanel Orientation="Horizontal">
+                    <CheckBox Content="Use Hsb" IsChecked="False" x:Name="chkBoxBlendMethodIsHsb" Checked="handleChkBox_CheckedEvents" Unchecked="handleChkBox_CheckedEvents" Margin="0,0,10,0"/>
+                    <CheckBox Content="Reverse" IsChecked="False" x:Name="chkBoxBlendDirIsReversed" Checked="handleChkBox_CheckedEvents" Unchecked="handleChkBox_CheckedEvents"/>
+
+                </StackPanel>
                 <TextBox Text="Writeable Bitmap"/>
 
                 <Image Width="300" Height="60" Source="{Binding ElementName=cbdWindow, Path=GradientBitmap}" Stretch="Fill" />

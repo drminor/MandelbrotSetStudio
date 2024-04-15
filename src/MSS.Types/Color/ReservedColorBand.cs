@@ -6,17 +6,18 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ReservedColorBand() : this(ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandColor.Black)
+		public ReservedColorBand() : this(ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, ColorBandColor.Black)
 		{ }
 
-		public ReservedColorBand(string startCssColor, ColorBandBlendStyle blendStyle, string endCssColor)
-			: this(new ColorBandColor(startCssColor), blendStyle, new ColorBandColor(endCssColor))
+		public ReservedColorBand(string startCssColor, ColorBandBlendStyle blendStyle, ColorBandBlendMethod blendMethod, string endCssColor)
+			: this(new ColorBandColor(startCssColor), blendStyle, blendMethod, new ColorBandColor(endCssColor))
 		{ }
 
-		public ReservedColorBand(ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor)
+		public ReservedColorBand(ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandBlendMethod blendMethod, ColorBandColor endColor)
 		{
 			StartColor = startColor;
 			BlendStyle = blendStyle;
+			BlendMethod = blendMethod;
 			EndColor = endColor;
 		}
 
@@ -26,6 +27,7 @@ namespace MSS.Types
 
 		public ColorBandColor StartColor { get; set; }
 		public ColorBandBlendStyle BlendStyle { get; set; }
+		public ColorBandBlendMethod BlendMethod { get; set; }
 		public ColorBandColor EndColor { get; set; }
 
 		#endregion
@@ -39,7 +41,7 @@ namespace MSS.Types
 
 		public ReservedColorBand Clone()
 		{
-			var result = new ReservedColorBand(StartColor, BlendStyle, EndColor);
+			var result = new ReservedColorBand(StartColor, BlendStyle, BlendMethod, EndColor);
 
 			return result;
 		}
@@ -48,7 +50,7 @@ namespace MSS.Types
 
 		public override string? ToString()
 		{
-			return $"Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}, End: {EndColor.GetCssColor()}";
+			return $"Start: {StartColor.GetCssColor()}, Blend: {BlendStyle}/{BlendMethod}, End: {EndColor.GetCssColor()}";
 		}
 
 	}
