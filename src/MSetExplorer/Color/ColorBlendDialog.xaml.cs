@@ -27,15 +27,17 @@ namespace MSetExplorer
 
 		private ColorBandColor _startingColor;
 		private ColorBandColor _endingColor;
+		private ColorBandBlendMethod _blendMethod;
 
 		private WriteableBitmap _gradientBitmap;
 
 		private byte[] _backBuffer;
 
-		public ColorBlendDialog(ColorBandColor startingColor, ColorBandColor endingColor)
+		public ColorBlendDialog(ColorBandColor startingColor, ColorBandColor endingColor, ColorBandBlendMethod blendMethod)
 		{
 			_startingColor = startingColor;
 			_endingColor = endingColor;
+			_blendMethod = blendMethod;
 
 			_backBuffer = ArrayPool<byte>.Shared.Rent(BLEND_WIDTH * RECT_HEIGHT * BYTES_PER_PIXEL);
 
@@ -66,11 +68,28 @@ namespace MSetExplorer
 			//clrPicker2.Color.RGB_B = _endingColor.ColorComps[2];
 
 			clrPicker2.SelectedColor = ScreenTypeHelper.ConvertToColor(_endingColor);
-
 			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
 
-			var blendMethod = GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, blendMethod);
+			if (_blendMethod == ColorBandBlendMethod.Rgb)
+			{
+				chkBoxBlendMethodIsHsb.IsChecked = false;
+				chkBoxBlendDirIsReversed.IsChecked = false;
+			}
+			else if (_blendMethod == ColorBandBlendMethod.HsbCw)
+			{
+				chkBoxBlendMethodIsHsb.IsChecked = true;
+				chkBoxBlendDirIsReversed.IsChecked = false;
+			}
+			else
+			{
+				chkBoxBlendMethodIsHsb.IsChecked = true;
+				chkBoxBlendDirIsReversed.IsChecked = true;
+			}
+
+
+			//var blendMethod = GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
+
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, _blendMethod);
 
 			clrPicker1.ColorChanged += ClrPicker1_ColorChanged;
 			clrPicker2.ColorChanged += ClrPicker2_ColorChanged;
@@ -88,16 +107,13 @@ namespace MSetExplorer
 		{
 			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
 
-			var blendMethod = GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, blendMethod);
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
 		}
 
 		private void ClrPicker2_ColorChanged(object sender, RoutedEventArgs e)
 		{
 			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
-
-			var blendMethod = GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, blendMethod);
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
 		}
 
 		#endregion
@@ -258,8 +274,8 @@ namespace MSetExplorer
 
 		private void handleChkBox_CheckedEvents(object sender, RoutedEventArgs e)
 		{
-			var blendMethod = GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, blendMethod);
+			//var blendMethod = GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
 		}
 
 		private ColorBandBlendMethod GetBlendMethod(bool useHsb, bool isReversed)

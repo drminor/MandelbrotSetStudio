@@ -110,14 +110,29 @@ namespace ProjectRepo
 			var filter = Builders<ColorBandSetRecord>.Filter.Eq("_id", colorBandSet.Id);
 
 			var updateDefinition = Builders<ColorBandSetRecord>.Update
-				.Set(u => u.ColorBandRecords, colorBandSet.Select(x => new ColorBandRecord(x.Cutoff, x.StartColor.GetCssColor(), x.BlendStyle.ToString(), x.EndColor.GetCssColor(), x.Percentage)).ToArray())
+				.Set(u => u.ColorBandRecords, colorBandSet.Select(x => CreateColorBandRecord(x)).ToArray())
 				.Set(u => u.TargetIterations, colorBandSet.TargetIterations)
-				.Set(u => u.ReservedColorBandRecords, colorBandSet.GetReservedColorBands().Select(x => new ReservedColorBandRecord(x.StartColor.GetCssColor(), x.BlendStyle.ToString(), x.EndColor.GetCssColor())).ToArray())
+				.Set(u => u.ReservedColorBandRecords, colorBandSet.GetReservedColorBands().Select(x => CreateReservedColorBandRecord(x)).ToArray())
 				.Set(u => u.UsingPercentages, colorBandSet.UsingPercentages)
 				.Set(u => u.DateLastUsedUtc, colorBandSet.DateRecordLastUsedUtc)
 				.Set(u => u.DateRecordLastSavedUtc, DateTime.UtcNow);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		private ColorBandRecord CreateColorBandRecord(ColorBand colorBand)
+		{
+			var result = new ColorBandRecord(colorBand.Cutoff, colorBand.StartColor.GetCssColor(), colorBand.BlendStyle.ToString(), colorBand.EndColor.GetCssColor(), colorBand.Percentage);
+			result.BlendMethod = colorBand.BlendMethod.ToString();
+
+			return result;
+		}
+
+		private ReservedColorBandRecord CreateReservedColorBandRecord(ReservedColorBand reservedColorBand)
+		{
+			var result = new ReservedColorBandRecord(reservedColorBand.StartColor.GetCssColor(), reservedColorBand.BlendStyle.ToString(), reservedColorBand.EndColor.GetCssColor());
+			result.BlendMethod = reservedColorBand.BlendMethod.ToString();
+			return result;
 		}
 
 		//public void UpdateProjectId(ObjectId colorBandSetId, ObjectId projectId)

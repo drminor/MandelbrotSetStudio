@@ -106,18 +106,20 @@ namespace MSetRepo
 
 		public ColorBand MapFrom(ColorBandRecord target)
 		{
-			if (target.BlendStyle == "EndReversed")
-			{
-				return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle("End"), MapFromBlendMethod("HsbCcw"), target.EndCssColor, target.Percentage);
-			}
-			else if (target.BlendStyle == "NextReversed")
-			{
-				return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle("Next"), MapFromBlendMethod("HsbCcw"), target.EndCssColor, target.Percentage);
-			}
-			else
-			{
-				return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), MapFromBlendMethod(target.BlendMethod), target.EndCssColor, target.Percentage);
-			}
+			//if (target.BlendStyle == "EndReversed")
+			//{
+			//	return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle("End"), MapFromBlendMethod("HsbCcw"), target.EndCssColor, target.Percentage);
+			//}
+			//else if (target.BlendStyle == "NextReversed")
+			//{
+			//	return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle("Next"), MapFromBlendMethod("HsbCcw"), target.EndCssColor, target.Percentage);
+			//}
+			//else
+			//{
+			//	return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), MapFromBlendMethod(target.BlendMethod), target.EndCssColor, target.Percentage);
+			//}
+
+			return new ColorBand(target.CutOff, target.StartCssColor, MapFromBlendStyle(target.BlendStyle), MapFromBlendMethod(target.BlendMethod), target.EndCssColor, target.Percentage);
 
 		}
 

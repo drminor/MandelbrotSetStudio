@@ -35,8 +35,10 @@
                 
                 
                 <TextBlock Width="69" Margin="17,0,3,0" FontSize="14" Text="Start Color:" />
-                <local:ColorBandColorButtonControl  Margin="0,0" Width="65" Height="21" x:Name="cbcButtonControl1"
+                <local:ColorBandColorButtonControl Margin="0,0" Width="65" Height="21" x:Name="cbcButtonControl1"
                     Color="{Binding Path=CurrentColorBand.StartColor}"
+                    BlendMethod="{Binding Path=CurrentColorBand.BlendMethod}"
+
                     CustomMouseUp="StartColor_CustomMouseUp"
                 />
             </StackPanel>
@@ -64,6 +66,7 @@
                 <local:ColorBandColorButtonControl Margin="0" Width="65" Height="21" x:Name="cbcButtonControl2"
                     Color="{Binding Path=CurrentColorBand.EndColor}"
                     EffectiveColor="{Binding Path=CurrentColorBand.ActualEndColor}"
+                                                   BlendMethod="{Binding Path=CurrentColorBand.BlendMethod}"
                     CustomMouseUp="EndColor_CustomMouseUp"
                 />
             </StackPanel>

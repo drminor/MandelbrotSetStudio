@@ -83,19 +83,26 @@ namespace MSetExplorer
 			set => SetCurrentValue(EffectiveColorProperty, value);
 		}
 
-		private ColorBandBlendMethod _blendMethod;
+		//private ColorBandBlendMethod _blendMethod;
+
+		//public ColorBandBlendMethod BlendMethod
+		//{
+		//	get => _blendMethod;
+		//	set
+		//	{
+		//		if (value != _blendMethod)
+		//		{
+		//			_blendMethod = value;
+		//		}
+		//	}
+		//}
 
 		public ColorBandBlendMethod BlendMethod
 		{
-			get => _blendMethod;
-			set
-			{
-				if (value != _blendMethod)
-				{
-					_blendMethod = value;
-				}
-			}
+			get => (ColorBandBlendMethod)GetValue(BlendMethodProperty);
+			set => SetCurrentValue(BlendMethodProperty, value);
 		}
+
 
 		private bool _isHot;
 
@@ -196,6 +203,35 @@ namespace MSetExplorer
 				}
 			}
 		}
+
+		public static readonly DependencyProperty BlendMethodProperty = DependencyProperty.Register(
+			"BlendMethod",
+			typeof(ColorBandBlendMethod),
+			typeof(ColorBandColorButtonControl),
+			new FrameworkPropertyMetadata()
+			{
+				//PropertyChangedCallback = OnEffectiveColorChanged,
+				BindsTwoWayByDefault = true,
+				DefaultValue = ColorBandBlendMethod.Rgb
+			});
+
+		//private static void OnBlendMethodChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+		//{
+		//	var oldValue = (ColorBandBlendMethod?)e.OldValue;
+		//	var newValue = (ColorBandBlendMethod?)e.NewValue;
+
+		//	if (oldValue != newValue && newValue.HasValue)
+		//	{
+		//		if (d is ColorBandColorButtonControl uc)
+		//		{
+		//			if (!uc.IsHot)
+		//			{
+		//				uc._rectanglePath.Fill = new SolidColorBrush(ScreenTypeHelper.ConvertToColor(newValue.Value));
+		//			}
+		//		}
+		//	}
+		//}
+
 
 		#endregion
 

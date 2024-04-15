@@ -275,7 +275,7 @@ namespace MSetExplorer
 
 		private bool ShowColorBlendDialog(Point pos, ColorBandColor initalColor1, out ColorBandColor selectedColor1, ColorBandColor initalColor2, out ColorBandColor selectedColor2, ColorBandBlendMethod initialBlendMethod, out ColorBandBlendMethod blendMethod)
 		{
-			var colorBlendDialog = new ColorBlendDialog(initalColor1, initalColor2);
+			var colorBlendDialog = new ColorBlendDialog(initalColor1, initalColor2, initialBlendMethod);
 
 			var sp = PointToScreen(pos);
 
