@@ -191,28 +191,50 @@ namespace MSS.Common
 				projectAdapter.UpdateColorBandSetBands(cbs);
 			}
 
-			// TODO: Remove all but the last 3 ColorBandSets having the same name / target iterations
-
+			if (jobOwner.ColorBandSetResolutionStrategy == ColorBandSetResolutionStrategy.PerProject)
+			{
+				// TODO: Add a project-level setting that turns on / turns off this feature and sets the numberOfPriorCbsToKeep.
+				var numberOfPriorCbsToKeep = 3;
+				RemoveColorBandSetsWithOlderVersion(unsavedColorBandSets, numberOfPriorCbsToKeep, jobOwner, projectAdapter);
+			}
 		}
 
-		private static long RemoveColorBandSetsWithOlderVersion(IJobOwner jobOwner, IProjectAdapter projectAdapter, string name, int targetIterations, int version)
+		private static long RemoveColorBandSetsWithOlderVersion(List<ColorBandSet> newColorBandSets, int numberOfPriorCbsToKeep, IJobOwner jobOwner, IProjectAdapter projectAdapter)
 		{
-			//var colorBandSets = projectAdapter.GetColorBandSetsForOwner(jobOwner.Id);
+			var result = 0L;
 
-			//var or = colorBandSets.OrderBy(x => x.Name).ThenBy(x => x.TargetIterations).ThenByDescending(x => x.Version).ToList();
+			if (newColorBandSets.Count == 0) return result;
 
-			//var idsToRemove = new List<ObjectId>();
+			List<ObjectId> idsToRemove = new List<ObjectId>();
+			var cbsInfos = jobOwner.GetColorBandSetInfos();
 
-			//var previousName = string.Empty;
-			//var previousIterations = -1;
+			var setsForDistinctNameTis = newColorBandSets.Distinct(new ColorBandSetComparerNameAndTi());
+			foreach (var cbs in setsForDistinctNameTis)
+			{
+				var idsToCheck = jobOwner.ColorBandSetStore.GetColorBandSetIdsMatchingNameAndTargetIterations(cbs.Name, cbs.TargetIterations)
+					.OrderByDescending(x => x.Version)
+					.Select(x => x.Id)
+					.Skip(numberOfPriorCbsToKeep);
 
-			//for (var i = 0; i < or.Count; i++)
-			//{
+				foreach (var id in idsToCheck)
+				{
+					var cbInfo = cbsInfos.FirstOrDefault(x => x.Id == id && x.NumberOfJobs == 0);
+					if (cbInfo != null)
+					{
+						idsToRemove.Add(id);
+					}
+				}
+			}
 
-			//}
+			foreach (var id in idsToRemove)
+			{
+				if (projectAdapter.DeleteColorBandSet(id))
+				{
+					result++;
+				}
+			}
 
-			return 0;
-
+			return result;
 		}
 
 		private static void SaveJobs(IJobOwner jobOwner, IProjectAdapter projectAdapter)

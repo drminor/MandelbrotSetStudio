@@ -180,29 +180,48 @@ namespace MSetExplorer
 					// Discard the Preview ColorBandSet. 
 					_previewColorBandSet = null;
 
-					if (value == CurrentColorBandSet)
+					//if (value == CurrentColorBandSet)
+					//{
+					//	Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
+					//}
+
+					//var targetIterations = value.HighCutoff;
+					//var currentJob = currentPoster.CurrentJob;
+
+					//if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
+					//{
+					//	Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+
+					//	currentPoster.Add(value, makeDefault: true);
+
+					//	_ = AddNewIterationUpdateJob(currentPoster, value);
+					//}
+					//else
+					//{
+					//	Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+					//	currentPoster.CurrentColorBandSet = value;
+					//}
+
+					//OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
+
+					if (value != CurrentColorBandSet)
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
-					}
+						if (DoTargetIterationsMatch(CurrentJob, value))
+						{
+							Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
+							currentPoster.CurrentColorBandSet = value;
+						}
+						else
+						{
+							throw new InvalidOperationException("PosterViewModel is being updated with a ColorBandSet with TargetIteration != the current job's TargetIterations.");
+						}
 
-					var targetIterations = value.HighCutoff;
-					var currentJob = currentPoster.CurrentJob;
-
-					if (targetIterations != currentJob.MapCalcSettings.TargetIterations)
-					{
-						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the Target Iterations. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
-
-						currentPoster.Add(value, makeDefault: true);
-
-						_ = AddNewIterationUpdateJob(currentPoster, value);
+						OnPropertyChanged(nameof(IProjectViewModel.CurrentColorBandSet));
 					}
 					else
 					{
-						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is updating the ColorBandSet. Current ColorBandSetId = {currentPoster.CurrentColorBandSet.Id}, New ColorBandSetId = {value.Id}");
-						currentPoster.CurrentColorBandSet = value;
+						Debug.WriteLineIf(_useDetailedDebug, $"PosterViewModel is not updating the ColorBandSet; the new value is the same as the existing value.");
 					}
-
-					OnPropertyChanged(nameof(IPosterViewModel.CurrentColorBandSet));
 				}
 			}
 		}
@@ -262,7 +281,99 @@ namespace MSetExplorer
 			}
 		}
 
+		private bool DoTargetIterationsMatch(Job currentJob, ColorBandSet newValue)
+		{
+			var targetIterations = currentJob.MapCalcSettings.TargetIterations;
+			var result = newValue.TargetIterations == targetIterations;
+
+			return result;
+		}
+
 		public bool ColorBandSetIsPreview => _previewColorBandSet != null;
+
+		//private bool _saveTheZValues = false;
+		//public bool SaveTheZValues
+		//{
+		//	get => _saveTheZValues;
+		//	set
+		//	{
+		//		if (value != _saveTheZValues)
+		//		{
+		//			_saveTheZValues = value;
+		//			OnPropertyChanged(nameof(IPosterViewModel.SaveTheZValues));
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+		//		}
+		//	}
+		//}
+
+		public bool SaveTheZValues
+		{
+			get => CurrentPoster?.CurrentJob.MapCalcSettings.SaveTheZValues ?? false;
+			set
+			{
+				var currentPoster = CurrentPoster;
+				if (currentPoster != null && !currentPoster.CurrentJob.IsEmpty)
+				{
+					var curValue = currentPoster.CurrentJob.MapCalcSettings.SaveTheZValues;
+					if (value != curValue)
+					{
+						currentPoster.CurrentJob.MapCalcSettings.SaveTheZValues = value;
+						currentPoster.CurrentJob.LastUpdatedUtc = DateTime.UtcNow;
+						currentPoster.MarkAsDirty();
+
+						OnPropertyChanged(nameof(IProjectViewModel.SaveTheZValues));
+					}
+					else
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
+					}
+				}
+			}
+		}
+
+		//private bool _calculateEscapeVelocities = true;
+		//public bool CalculateEscapeVelocities
+		//{
+		//	get => _calculateEscapeVelocities;
+		//	set
+		//	{
+		//		if (value != _calculateEscapeVelocities)
+		//		{
+		//			_calculateEscapeVelocities = value;
+		//			OnPropertyChanged(nameof(IPosterViewModel.CalculateEscapeVelocities));
+		//		}
+		//		else
+		//		{
+		//			Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+		//		}
+		//	}
+		//}
+
+		public bool CalculateEscapeVelocities
+		{
+			get => CurrentPoster?.CurrentJob.MapCalcSettings.CalculateEscapeVelocities ?? false;
+			set
+			{
+				var currentPoster = CurrentPoster;
+				if (currentPoster != null && !currentPoster.CurrentJob.IsEmpty)
+				{
+					if (value != CalculateEscapeVelocities)
+					{
+						var newMapCalcSettings = MapCalcSettings.UpdateCalculateEscapeVelocities(currentPoster.CurrentJob.MapCalcSettings, value);
+						AddNewMapCalcSettingUpdateJob(currentPoster, newMapCalcSettings);
+
+						OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
+					}
+					else
+					{
+						Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
+					}
+				}
+			}
+		}
 
 		public VectorDbl DisplayPosition
 		{
@@ -320,42 +431,6 @@ namespace MSetExplorer
 
 					_areaColorAndCalcSettings = value;
 					OnPropertyChanged(nameof(IPosterViewModel.CurrentAreaColorAndCalcSettings));
-				}
-			}
-		}
-
-		private bool _saveTheZValues = false;
-		public bool SaveTheZValues
-		{
-			get => _saveTheZValues;
-			set
-			{
-				if (value != _saveTheZValues)
-				{
-					_saveTheZValues = value;
-					OnPropertyChanged(nameof(IPosterViewModel.SaveTheZValues));
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
-				}
-			}
-		}
-
-		private bool _calculateEscapeVelocities = true;
-		public bool CalculateEscapeVelocities
-		{
-			get => _calculateEscapeVelocities;
-			set
-			{
-				if (value != _calculateEscapeVelocities)
-				{
-					_calculateEscapeVelocities = value;
-					OnPropertyChanged(nameof(IPosterViewModel.CalculateEscapeVelocities));
-				}
-				else
-				{
-					Debug.WriteLineIf(_useDetailedDebug, $"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
 				}
 			}
 		}
@@ -631,6 +706,21 @@ namespace MSetExplorer
 		//	}
 		//}
 
+		//public List<ColorBandSetInfo> GetColorBandSetInfos()
+		//{
+		//	var curPoster = CurrentPoster;
+
+		//	if (curPoster == null)
+		//	{
+		//		return new List<ColorBandSetInfo>();
+		//	}
+
+		//	var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Version, x.TargetIterations, x.Description, x.DateRecordLastUsedUtc, 
+		//		x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, numberOfJobs: 0)).ToList();
+
+		//	return result;
+		//}
+
 		public List<ColorBandSetInfo> GetColorBandSetInfos()
 		{
 			var curPoster = CurrentPoster;
@@ -640,16 +730,7 @@ namespace MSetExplorer
 				return new List<ColorBandSetInfo>();
 			}
 
-			var result = curPoster.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Version, x.TargetIterations, x.Description, x.DateRecordLastUsedUtc, 
-				x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, numberOfJobs: 0)).ToList();
-
-			return result;
-		}
-
-		private string GetColorBandSetName(string? name, int position)
-		{
-			var result = name ?? position.ToString();
-			return result;
+			return curPoster.GetColorBandSetInfos();
 		}
 
 		public ColorBandSet? GetColorBandSet(ObjectId id)
@@ -715,6 +796,31 @@ namespace MSetExplorer
 			poster.Add(job);
 
 			return job;
+		}
+
+		private void AddNewMapCalcSettingUpdateJob(Poster poster, MapCalcSettings mapCalcSettings)
+		{
+			var currentJob = poster.CurrentJob;
+
+			// Use the current display size and Map Coordinates
+			var mapAreaInfo = currentJob.MapAreaInfo;
+
+			// This an iteration update with the same screen area
+			var transformType = TransformType.CalcSettingsUpdate;
+			var newScreenArea = new RectangleInt();
+
+			//var colorBandSetId = currentJob.ColorBandSetId;
+			var colorBandSetName = currentJob.ColorBandSetName;
+			var colorBandSetVersion = currentJob.ColorBandSetVersion;
+
+			//var job = _mapJobHelper.BuildJob(currentJob.Id, project.Id, OwnerType.Project, mapAreaInfo, colorBandSetId, mapCalcSettings, transformType, newScreenArea);
+			var job = _mapJobHelper.BuildJob(currentJob.Id, poster.Id, OwnerType.Project, mapAreaInfo, colorBandSetName, colorBandSetVersion, mapCalcSettings, transformType, newScreenArea);
+
+			Debug.WriteLine($"Adding Poster Job with MapCalcSettings: {mapCalcSettings}. TransformType: {job.TransformType}.");
+
+			poster.Add(job);
+
+			OnPropertyChanged(nameof(IPosterViewModel.CurrentJob));
 		}
 
 		public void CheckPosterViewModelTargetIterations()

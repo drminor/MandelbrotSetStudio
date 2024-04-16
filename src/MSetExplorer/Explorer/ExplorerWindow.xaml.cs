@@ -190,25 +190,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private void CbshDisplayViewModel_ColorBandCutoffChanged(object? sender, (int, int) e)
-		//{
-		//	var colorBandIndex = e.Item1;
-		//	var newCutoff = e.Item2;
-
-		//	if (_vm.ColorBandSetViewModel.ColorBandSet != null)
-		//	{
-		//		try
-		//		{
-		//			_vm.ColorBandSetViewModel.UpdateCutoff(colorBandIndex, newCutoff);
-		//		}
-		//		catch
-		//		{
-		//			//Debug.WriteLine($"Could not update the VM's ColorBandSetViewModel's ColorBand at index: {colorBandIndex} with newValue: {newCutoff}.");
-		//			throw;
-		//		}
-		//	}
-		//}
-
 		#endregion
 
 		#region Window Close / Exit / Return  Button Handlers
@@ -720,44 +701,23 @@ namespace MSetExplorer
 			var currentColorBandSet = curProject.CurrentColorBandSet;
 			var targetIterations = currentColorBandSet.TargetIterations;
 
-			if (ColorsShowOpenWindow(cbsInfos, currentColorBandSet, curProject.ColorBandSetResolutionStrategy, out var colorBandSet, out var overwriteExisting))
+			if (ColorsShowOpenWindow(cbsInfos, currentColorBandSet, curProject.ColorBandSetResolutionStrategy, out var colorBandSet))
 			{
 				CheckProjectViewModelTargetIterations();
 				
 				if (colorBandSet.TargetIterations == targetIterations)
 				{
 					Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name}.");
-
 					Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {targetIterations} to {colorBandSet.Id}.");
+
 					_vm.ProjectViewModel.CurrentColorBandSet = colorBandSet;
 				}
 				else
 				{
+					Debug.WriteLine($"Opening ColorBandSet with Id: {colorBandSet.Id}, name: {colorBandSet.Name} and Target Iterations: {colorBandSet.TargetIterations} and creating a new ColorBandSet to match the current Target Iterations value of {targetIterations}.");
+					Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {targetIterations} to the newly created Id: {colorBandSet.Id}.");
+
 					var adjColorBandSet = ColorBandSetHelper.AdjustTargetIterations(colorBandSet, targetIterations);
-
-					//if (overwriteExisting.HasValue)
-					//{
-					//	var cbsToOverWrite = _vm.ProjectViewModel.GetColorBandSet(colorBandSet.Name, colorBandSet.TargetIterations, colorBandSet.Version);
-					//	if (cbsToOverWrite == null)
-					//	{
-					//		throw new InvalidOperationException("Cannot find the ColorBandSet to overwrite.");
-					//	}
-
-					//	if (overwriteExisting == true)
-					//	{
-					//		Debug.WriteLine($"Setting the Project's Default ColorBandSet for TargetIteration: {targetIterations} to {colorBandSet.Id}.");
-					//		_vm.ProjectViewModel.RemoveColorBandSet(cbsToOverWrite, adjColorBandSet.Id);
-					//	}
-					//	else
-					//	{
-					//		Debug.WriteLine($"Assigning a new name to the Project's ColorBandSet having name = {cbsToOverWrite.Name} and TargetIterations = {targetIterations}, with Id: {cbsToOverWrite.Id}.");
-
-					//		// TODO: Generate a new name for the ColorBandSet being replaced.
-					//		//cbsToOverWrite.Name = Guid.NewGuid().ToString();
-					//		adjColorBandSet.Name = Guid.NewGuid().ToString();
-					//	}
-					//}
-
 					_vm.ProjectViewModel.CurrentColorBandSet = adjColorBandSet;
 				}
 			}
@@ -1456,7 +1416,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet selectedColorBandSet, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, [NotNullWhen(true)] out ColorBandSet? colorBandSet, out bool? overwriteExisting)
+		private bool ColorsShowOpenWindow(List<ColorBandSetInfo> colorBandSetInfos, ColorBandSet selectedColorBandSet, ColorBandSetResolutionStrategy colorBandSetResolutionStrategy, [NotNullWhen(true)] out ColorBandSet? colorBandSet)
 		{
 			var selectedColorBandSetInfo = ColorBandSetHelper.Convert(selectedColorBandSet);
 
@@ -1481,13 +1441,10 @@ namespace MSetExplorer
 						throw new InvalidOperationException("Cannot find the returned Id.");  // TODO: Fix This.
 					}
 
-					overwriteExisting = colorBandSetOpenSaveWindow.OverwriteExisting;
-
 					return true;
 				}
 				else
 				{
-					overwriteExisting = null;
 					colorBandSet = null;
 					return false;
 				}
@@ -1532,10 +1489,7 @@ namespace MSetExplorer
 				newColorBandSet.Description = colorBandSetOpenSaveWindow.ColorBandSetDescription;
 				newColorBandSet.AssignNewSerialNumber();
 
-				//colorBandSetOpenSaveVm.SaveColorBandSet(cpy);
-
 				curProject.Add(newColorBandSet, makeDefault: true);
-				//newColorBandSet = cpy;
 				return true;
 			}
 			else

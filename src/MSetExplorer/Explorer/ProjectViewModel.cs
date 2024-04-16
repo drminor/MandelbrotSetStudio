@@ -201,29 +201,6 @@ namespace MSetExplorer
 
 		public bool ColorBandSetIsPreview => _previewColorBandSet != null;
 
-		//public bool SaveTheZValues
-		//{
-		//	get => CurrentProject?.CurrentJob.MapCalcSettings.SaveTheZValues ?? false;
-		//	set
-		//	{
-		//		var currentProject = CurrentProject;
-		//		if (currentProject != null && !currentProject.CurrentJob.IsEmpty)
-		//		{
-		//			if (value == SaveTheZValues)
-		//			{
-		//				Debug.WriteLine($"ProjectViewModel is not updating the SaveTheZValues setting; the new value is the same as the existing value.");
-		//			}
-
-		//			var newMapCalcSettings = MapCalcSettings.UpdateSaveTheZValues(currentProject.CurrentJob.MapCalcSettings, value);
-		//			AddNewMapCalcSettingUpdateJob(currentProject, newMapCalcSettings);
-
-		//			OnPropertyChanged(nameof(IProjectViewModel.SaveTheZValues));
-		//		}
-		//	}
-		//}
-
-		//private bool _saveTheZValues = false;
-
 		public bool SaveTheZValues
 		{
 			get => CurrentProject?.CurrentJob.MapCalcSettings.SaveTheZValues ?? false;
@@ -271,25 +248,6 @@ namespace MSetExplorer
 				}
 			}
 		}
-
-		//private bool _calculateEscapeVelocities = true;
-
-		//public bool CalculateEscapeVelocities
-		//{
-		//	get => _calculateEscapeVelocities;
-		//	set
-		//	{
-		//		if (value != _calculateEscapeVelocities)
-		//		{
-		//			_calculateEscapeVelocities = value;
-		//			OnPropertyChanged(nameof(IProjectViewModel.CalculateEscapeVelocities));
-		//		}
-		//		else
-		//		{
-		//			Debug.WriteLine($"ProjectViewModel is not updating the CalculateEscapeVelocities setting; the new value is the same as the existing value.");
-		//		}
-		//	}
-		//}
 
 		#endregion
 
@@ -643,60 +601,7 @@ namespace MSetExplorer
 				return new List<ColorBandSetInfo>();
 			}
 
-			var result = curProject.GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Version, x.TargetIterations, x.Description, x.DateRecordLastUsedUtc, 
-				x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, numberOfJobs: 0)).ToList();
-
-			CalculateNumberOfJobs(result, curProject.GetJobs().ToList(), curProject.ColorBandSetStore);
-			CalculateLatestVersion(result);
-
-			return result;
-		}
-
-		private void CalculateNumberOfJobs(List<ColorBandSetInfo> cbsInfos, List<Job> jobs, ColorBandSetStore colorBandSetStore)
-		{
-			foreach(var job in jobs)
-			{
-				if (colorBandSetStore.TryGetId(job.ColorBandSetName, job.ColorBandSetVersion, job.TargetIterations, out ObjectId? foundId))
-				{
-					var foundCbInfo = cbsInfos.FirstOrDefault(x => x.Id == foundId);
-					if (foundCbInfo != null)
-					{
-						foundCbInfo.NumberOfJobs++;
-					}
-				}
-			}
-		}
-
-		private void CalculateLatestVersion(List<ColorBandSetInfo> cbsInfos)
-		{
-			for(var i = 0; i < cbsInfos.Count; i++)
-			{
-				var cbsInfo = cbsInfos[i];
-
-				if (cbsInfo.IsLatestVersion == null)
-				{
-					var nameTiGroup = cbsInfos.Where(x => x.Name == cbsInfo.Name && x.TargetIterations == cbsInfo.TargetIterations);
-					var maxVerForGrp = nameTiGroup.Max(y => y.Version);
-
-					foreach(var grpItem in nameTiGroup)
-					{
-						if (grpItem.Version == maxVerForGrp)
-						{
-							grpItem.IsLatestVersion = true;
-						}
-						else
-						{
-							grpItem.IsLatestVersion = false;
-						}
-					}
-				}
-			}
-		}
-
-		private string GetColorBandSetName(string? name, int position)
-		{
-			var result = name ?? position.ToString();
-			return result;
+			return curProject.GetColorBandSetInfos();
 		}
 
 		#endregion

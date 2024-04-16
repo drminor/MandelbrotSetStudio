@@ -7,7 +7,7 @@ using System.Linq;
 namespace MSS.Types
 {
 	// TODO: How is the ColorBandSetComparer class being used?
-	public class ColorBandSetComparer : IEqualityComparer<ColorBandSet>
+	public class ColorBandSetComparerDetailed : IEqualityComparer<ColorBandSet>
 	{
 		public bool Equals(ColorBandSet? x, ColorBandSet? y)
 		{
@@ -76,7 +76,7 @@ namespace MSS.Types
 
 		public static void CheckThatColorBandsWereUpdatedProperly(ColorBandSet colorBandSet, ColorBandSet goodCopy, bool throwOnMismatch)
 		{
-			var theyMatch = new ColorBandSetComparer().EqualsExt(colorBandSet, goodCopy, out var mismatchedLines);
+			var theyMatch = new ColorBandSetComparerDetailed().EqualsExt(colorBandSet, goodCopy, out var mismatchedLines);
 
 			if (theyMatch)
 			{

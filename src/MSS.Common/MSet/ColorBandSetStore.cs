@@ -1,7 +1,9 @@
 ﻿using MongoDB.Bson;
+using MongoDB.Driver;
 using MSS.Common.MSet;
 using MSS.Types;
 using MSS.Types.MSet;
+using ProjectRepo.Entities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -125,6 +127,13 @@ namespace MSS.Common
 			{
 				result = _colorBandSets.FirstOrDefault(x => x.Name == name && x.TargetIterations == targetIterations);
 			}
+
+			return result;
+		}
+
+		public IEnumerable<ColorBandSet> GetColorBandSetIdsMatchingNameAndTargetIterations(string name, int targetIterations)
+		{
+			var result = _colorBandSets.Where(x => x.Name == name && x.TargetIterations == targetIterations);
 
 			return result;
 		}

@@ -1,13 +1,9 @@
 ﻿using MongoDB.Bson;
-using MSS.Common.MSet;
-using MSS.Types;
 using System;
 using System.Diagnostics;
-using System.Net.NetworkInformation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Xml.Linq;
 
 namespace MSetExplorer
 {
@@ -22,8 +18,6 @@ namespace MSetExplorer
 
 		public ColorBandSetOpenSaveWindow()
 		{
-			OverwriteExisting = null;
-
 			_vm = (IColorBandSetOpenSaveViewModel)DataContext;
 			Loaded += ColorBandSetOpenSaveWindow_Loaded;
 			InitializeComponent();
@@ -44,6 +38,7 @@ namespace MSetExplorer
 				btnSave.Content = _vm.DialogType == DialogType.Open ? "Open" : "Save";
 				Title = _vm.DialogType == DialogType.Open ? "Open ColorBandSet" : "Save ColorBandSet";
 
+				// TODO: Create a filter for the list of ColorBandSetInfos to include only the 3 most recent versions of any name / target iteration group.
 				lvColorBandSets.ItemsSource = _vm.ColorBandSetInfos;
 				lvColorBandSets.SelectionChanged += LvColorBandSets_SelectionChanged;
 
@@ -110,8 +105,6 @@ namespace MSetExplorer
 		public string? ColorBandSetName => _vm.SelectedName;
 		public string? ColorBandSetDescription => _vm.SelectedDescription;
 
-		public bool? OverwriteExisting { get; set; }
-
 		#endregion
 
 		#region Button Handlers
@@ -138,48 +131,47 @@ namespace MSetExplorer
 		{
 			if (_vm.DialogType == DialogType.Save)
 			{
-				if (_vm.IsNameTaken(selectedName))
+				return CheckNameOnSave(selectedName);
+			}
+			else
+			{
+				if (_vm.SelectedColorBandSetInfo == null)
 				{
-					var msg = "A ColorBandSet already exists with this name. Do you want to overwrite?";
-					var res = MessageBox.Show(msg, "Overwrite Existing ColorBandSet", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
-
-					if (res == MessageBoxResult.No)
-					{
-						return false;
-					}
+					throw new InvalidOperationException("Take Selection is being called but no ColorBandSetInfo is selected.");
 				}
 
+				return CheckNameAndTargetIterationsOnOpen(selectedName, _vm.SelectedColorBandSetInfo.TargetIterations, _vm.TargetIterations);
+			}
+		}
+
+		private bool CheckNameOnSave(string selectedName)
+		{
+			if (_vm.IsNameTaken(selectedName))
+			{
+				var msg = "A ColorBandSet already exists with this name. Do you want to overwrite?";
+				var res = MessageBox.Show(msg, "Overwrite Existing ColorBandSet", MessageBoxButton.YesNo, MessageBoxImage.Hand, MessageBoxResult.No, MessageBoxOptions.None);
+				return res == MessageBoxResult.Yes;
+			}
+			else
+			{
 				return true;
 			}
+		}
 
-			if (_vm.DialogType == DialogType.Open && _vm.SelectedColorBandSetInfo != null)
+		private bool CheckNameAndTargetIterationsOnOpen(string selectedName, int selectedTargetIterations, int currentTargetIterations)
+		{
+			if (selectedTargetIterations != currentTargetIterations && _vm.IsNameTaken(selectedName))
 			{
-				var targetIterations = _vm.TargetIterations;
-				if (_vm.SelectedColorBandSetInfo.TargetIterations != targetIterations)
-				{
-					if (_vm.IsNameTaken(selectedName))
-					{
-						var msg = $"Opening the selected ColorBandSet will result in a new ColorBandSet being created with Target Iterations = {targetIterations}. " +
-							$"A ColorBandSet already exists for Target Iterations: {targetIterations} with this name. Do you want to overwrite?";
+				var msg = $"Opening the selected ColorBandSet will result in a new ColorBandSet being created with Target Iterations = {currentTargetIterations}. " +
+					$"A ColorBandSet already exists for Target Iterations: {currentTargetIterations} with this name. Do you want create a new version using the selected item?";
 
-						var res = MessageBox.Show(msg, "Overwrite Existing ColorBandSet", MessageBoxButton.YesNoCancel, MessageBoxImage.Exclamation, MessageBoxResult.No, MessageBoxOptions.None);
-
-						if (res == MessageBoxResult.Cancel)
-						{
-							return false;
-						}
-
-						OverwriteExisting = res == MessageBoxResult.Yes;
-					}
-					else
-					{
-						OverwriteExisting = null;
-					}
-
-				}
+				var res = MessageBox.Show(msg, "Create New Version", MessageBoxButton.YesNo, MessageBoxImage.Exclamation, MessageBoxResult.No, MessageBoxOptions.None);
+				return res == MessageBoxResult.Yes;
 			}
-
-			return true;
+			else
+			{
+				return true;
+			}
 		}
 
 		#endregion

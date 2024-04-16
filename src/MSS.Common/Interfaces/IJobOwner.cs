@@ -36,11 +36,15 @@ namespace MSS.Common.MSet
 		int GetNumberOfDirtyJobs();
 
 		IEnumerable<Job> GetJobs();
-		List<ColorBandSet> GetColorBandSets();
 
 		ColorBandSet? GetColorBandSet(ObjectId id);
-
 		ColorBandSet? GetColorBandSet(string name, int targetIterations, int? version);
+
+		List<ColorBandSet> GetColorBandSets();
+
+		List<ColorBandSetInfo> GetColorBandSetInfos();
+		void RefreshNumberOfJobs(List<ColorBandSetInfo> cbsInfos);
+		void CalculateNumberOfJobs(List<ColorBandSetInfo> cbsInfos);
 
 		void Add(ColorBandSet colorBandSet, bool makeDefault);
 		//bool RemoveColorBandSet(ColorBandSet colorBandSet/*, ObjectId newId*/);

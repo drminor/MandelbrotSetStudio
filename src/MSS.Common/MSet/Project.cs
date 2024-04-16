@@ -527,7 +527,77 @@ namespace MSS.Common.MSet
 			return _colorBandSetStore.GetColorBandSet(name, targetIterations, version);
 		}
 
-		public bool ColorBandSetExists(ColorBandSet colorBandSet) => _colorBandSetStore.ColorBandSetExists(colorBandSet); 
+		public bool ColorBandSetExists(ColorBandSet colorBandSet) => _colorBandSetStore.ColorBandSetExists(colorBandSet);
+
+		public List<ColorBandSetInfo> GetColorBandSetInfos()
+		{
+			var result = GetColorBandSets().Select((x, i) => new ColorBandSetInfo(x.Id, GetColorBandSetName(x.Name, i), x.Version, x.TargetIterations, x.Description, x.DateRecordLastUsedUtc,
+				x.ColorBandsSerialNumber, (x as IList<ColorBand>).Count, numberOfJobs: 0)).ToList();
+
+			CalculateNumberOfJobs(result);
+			CalculateLatestVersion(result);
+
+			return result;
+		}
+
+		private void CalculateLatestVersion(List<ColorBandSetInfo> cbsInfos)
+		{
+			for (var i = 0; i < cbsInfos.Count; i++)
+			{
+				var cbsInfo = cbsInfos[i];
+
+				if (cbsInfo.IsLatestVersion == null)
+				{
+					var nameTiGroup = cbsInfos.Where(x => x.Name == cbsInfo.Name && x.TargetIterations == cbsInfo.TargetIterations);
+					var maxVerForGrp = nameTiGroup.Max(y => y.Version);
+
+					foreach (var grpItem in nameTiGroup)
+					{
+						if (grpItem.Version == maxVerForGrp)
+						{
+							grpItem.IsLatestVersion = true;
+						}
+						else
+						{
+							grpItem.IsLatestVersion = false;
+						}
+					}
+				}
+			}
+		}
+
+		private string GetColorBandSetName(string? name, int position)
+		{
+			var result = name ?? position.ToString();
+			return result;
+		}
+
+		public void RefreshNumberOfJobs(List<ColorBandSetInfo> cbsInfos)
+		{
+			foreach(var cbsInfo in cbsInfos)
+			{
+				cbsInfo.NumberOfJobs = 0;
+			}
+
+			CalculateNumberOfJobs(cbsInfos);
+		}
+
+		public void CalculateNumberOfJobs(List<ColorBandSetInfo> cbsInfos)
+		{
+			var jobs = GetJobs();
+
+			foreach (var job in jobs)
+			{
+				if (_colorBandSetStore.TryGetId(job.ColorBandSetName, job.ColorBandSetVersion, job.TargetIterations, out ObjectId? foundId))
+				{
+					var foundCbInfo = cbsInfos.FirstOrDefault(x => x.Id == foundId);
+					if (foundCbInfo != null)
+					{
+						foundCbInfo.NumberOfJobs++;
+					}
+				}
+			}
+		}
 
 		public JobPathType? GetCurrentPath() => _jobTree.GetCurrentPath();
 		public JobPathType? GetPath(ObjectId jobId) => _jobTree.GetPath(jobId);
