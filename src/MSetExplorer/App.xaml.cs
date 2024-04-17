@@ -78,6 +78,12 @@ namespace MSetExplorer
 
 		private static readonly bool DROP_MAP_SECTIONS_AND_SUBDIVISIONS = false;
 
+		private static readonly bool DO_REPO_MAINTAINENCE = UPDATE_JOB_SUBDIVSION_IDS_FOR_ALL_JobMapSections
+			| CREATE_JOB_MAP_SECTION_REPORT
+			| FIND_AND_DELETE_ORPHAN_JOBS | FIND_AND_DELETE_ORPHAN_MAP_SECTIONS | FIND_AND_DELETE_ORPHAN_SUBDIVISIONS
+			| DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS
+			| POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS | POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS;
+
 		private Stopwatch? _ambientStopWatch;
 
 		#endregion
@@ -153,34 +159,10 @@ namespace MSetExplorer
 			var mapJobHelper = new MapJobHelper(subdivisionProvider, toleranceFactor: 10, RMapConstants.BLOCK_SIZE);
 			Debug.WriteLine($"After Create MapJobHelper. {currentStopwatch.ElapsedMilliseconds}.");
 
-			var repositoryIntegrityUtility = new RepoIntegrityUtility(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter, mapJobHelper);
-
-			#region Repo Maintenance
-
-			if (DROP_MAP_SECTIONS_AND_SUBDIVISIONS)
-			{
-				Debug.WriteLine("Not dropping All MapSections and Subdivisions.");
-				//_repositoryAdapters.MapSectionAdapter.DropMapSectionsAndSubdivisions();
-			}
-			else
-			{
-				if (DROP_RECENT_MAP_SECTIONS)
-				{
-					var countMapSectionsDeleted =  _repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DROP_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
-					MessageBox.Show($"Deleted {countMapSectionsDeleted} MapSection records that have been created since {DROP_MAP_SECTIONS_AFTER_DATE}.");
-				}
-
-				if (DROP_RECENT_JOB_MAP_SECTIONS)
-				{
-					var countJobMapSectionsDeleted = _repositoryAdapters.MapSectionAdapter.DeleteJobMapSectionsCreatedSince(DROP_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
-					MessageBox.Show($"Deleted {countJobMapSectionsDeleted} JobMapSection records that have been created since {DROP_MAP_SECTIONS_AFTER_DATE}.");
-				}
-			}
-
 			if (DROP_MAP_SECTIONS_AND_SUBDIVISIONS | DROP_RECENT_MAP_SECTIONS | DROP_RECENT_JOB_MAP_SECTIONS)
 			{
+				DropSectionsAndSubs(_repositoryAdapters);
 				MessageBox.Show("MapSection / JobMapSection Maintenance Completed.");
-				Current.Shutdown();
 				return;
 			}
 
@@ -202,11 +184,70 @@ namespace MSetExplorer
 			{
 				DoSchemaUpdates(_repositoryAdapters);
 				MessageBox.Show("Schema Updates are completed.");
-
-				Current.Shutdown();
 				return;
 			}
 
+			if (DO_REPO_MAINTAINENCE)
+			{
+				var repositoryIntegrityUtility = new RepoIntegrityUtility(_repositoryAdapters.ProjectAdapter, _repositoryAdapters.MapSectionAdapter, mapJobHelper);
+
+				var continueWithStartUp = RepoMaintenance(repositoryIntegrityUtility);
+				if (!continueWithStartUp)
+				{
+					Current.Shutdown();
+					return;
+				}
+			}
+
+			var mEngineClients = CreateTheMEngineClients(USE_ALL_CORES, _grpcChannels, REMOTE_SERVICE_END_POINTS, useRemoteEngine: USE_REMOTE_ENGINES, useLocalEngine: USE_LOCAL_ENGINE,
+				mapSectionGeneratorCreator: CreateMapSectionGenerator, mapSectionVectorProvider: _mapSectionVectorProvider);
+			//Debug.WriteLine($"After Create MEngineClients. {currentStopwatch.ElapsedMilliseconds}.");
+
+			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
+			//Debug.WriteLine($"After Create MapSectionProcesors. {currentStopwatch.ElapsedMilliseconds}.");
+
+			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
+			//Debug.WriteLine($"After Create MapLoaderManager. {currentStopwatch.ElapsedMilliseconds}.");
+
+			var appNavViewModel = GetAppNavViewModel(_mapSectionVectorProvider, _repositoryAdapters, _mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
+			_appNavWindow = GetAppNavWindow(appNavViewModel);
+			//Debug.WriteLine($"After Get AppNavWindow. {currentStopwatch.ElapsedMilliseconds}.");
+
+			_appNavWindow.Show();
+			//Debug.WriteLine($"After AppNav Show. {currentStopwatch.ElapsedMilliseconds}.");
+
+			//if (_ambientStopWatch != null)
+			//{
+			//	_ambientStopWatch.Stop();
+			//	_ambientStopWatch = null;
+			//}
+		}
+
+		private void DropSectionsAndSubs(RepositoryAdapters repositoryAdapters)
+		{
+			if (DROP_MAP_SECTIONS_AND_SUBDIVISIONS)
+			{
+				Debug.WriteLine("Not dropping All MapSections and Subdivisions.");
+				//_repositoryAdapters.MapSectionAdapter.DropMapSectionsAndSubdivisions();
+			}
+			else
+			{
+				if (DROP_RECENT_MAP_SECTIONS)
+				{
+					var countMapSectionsDeleted = repositoryAdapters.MapSectionAdapter.DeleteMapSectionsCreatedSince(DROP_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+					MessageBox.Show($"Deleted {countMapSectionsDeleted} MapSection records that have been created since {DROP_MAP_SECTIONS_AFTER_DATE}.");
+				}
+
+				if (DROP_RECENT_JOB_MAP_SECTIONS)
+				{
+					var countJobMapSectionsDeleted = repositoryAdapters.MapSectionAdapter.DeleteJobMapSectionsCreatedSince(DROP_MAP_SECTIONS_AFTER_DATE, overrideRecentGuard: true);
+					MessageBox.Show($"Deleted {countJobMapSectionsDeleted} JobMapSection records that have been created since {DROP_MAP_SECTIONS_AFTER_DATE}.");
+				}
+			}
+		}
+
+		private bool RepoMaintenance(RepoIntegrityUtility repositoryIntegrityUtility)
+		{
 			if (UPDATE_JOB_SUBDIVSION_IDS_FOR_ALL_JobMapSections)
 			{
 				repositoryIntegrityUtility.UpdateJobMapSectionSubdivisionIds();
@@ -257,42 +298,11 @@ namespace MSetExplorer
 				Debug.WriteLine(report);
 			}
 
-			if (CREATE_JOB_MAP_SECTION_REPORT 
-				| FIND_AND_DELETE_ORPHAN_JOBS | FIND_AND_DELETE_ORPHAN_MAP_SECTIONS | FIND_AND_DELETE_ORPHAN_SUBDIVISIONS
-				| DELETE_JOB_MAP_MAP_REFS | DELETE_JOB_MAP_JOB_REFS
-				| POPULATE_JOB_MAP_SECTIONS_FOR_PROJECTS | POPULATE_JOB_MAP_SECTIONS_FOR_POSTERS)
-			{
-				if (MessageBoxResult.No == MessageBox.Show("Reporting completed. Continue with startup?", "Continue?", MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No))
-				{
-					Current.Shutdown();
-					return;
-				}
-			}
+			var resp = MessageBox.Show("Reporting completed. Continue with startup?", "Continue?", MessageBoxButton.YesNo, MessageBoxImage.None, MessageBoxResult.No);
 
-			#endregion
+			var contineWithStartup = resp == MessageBoxResult.Yes;
 
-			var mEngineClients = CreateTheMEngineClients(USE_ALL_CORES, _grpcChannels, REMOTE_SERVICE_END_POINTS, useRemoteEngine: USE_REMOTE_ENGINES, useLocalEngine: USE_LOCAL_ENGINE,
-				mapSectionGeneratorCreator: CreateMapSectionGenerator, mapSectionVectorProvider: _mapSectionVectorProvider);
-			//Debug.WriteLine($"After Create MEngineClients. {currentStopwatch.ElapsedMilliseconds}.");
-
-			var mapSectionRequestProcessor = CreateMapSectionRequestProcessor(mEngineClients, _repositoryAdapters.MapSectionAdapter, _mapSectionVectorProvider);
-			//Debug.WriteLine($"After Create MapSectionProcesors. {currentStopwatch.ElapsedMilliseconds}.");
-
-			_mapLoaderManager = new MapLoaderManager(mapSectionRequestProcessor);
-			//Debug.WriteLine($"After Create MapLoaderManager. {currentStopwatch.ElapsedMilliseconds}.");
-
-			var appNavViewModel = GetAppNavViewModel(_mapSectionVectorProvider, _repositoryAdapters, _mapLoaderManager, mapJobHelper, mapSectionRequestProcessor);
-			_appNavWindow = GetAppNavWindow(appNavViewModel);
-			//Debug.WriteLine($"After Get AppNavWindow. {currentStopwatch.ElapsedMilliseconds}.");
-
-			_appNavWindow.Show();
-			//Debug.WriteLine($"After AppNav Show. {currentStopwatch.ElapsedMilliseconds}.");
-
-			//if (_ambientStopWatch != null)
-			//{
-			//	_ambientStopWatch.Stop();
-			//	_ambientStopWatch = null;
-			//}
+			return contineWithStartup;
 		}
 
 		protected override void OnExit(ExitEventArgs e)
