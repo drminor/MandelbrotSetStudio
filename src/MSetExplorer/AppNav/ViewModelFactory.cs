@@ -59,7 +59,7 @@ namespace MSetExplorer
 		}
 
 		// JobDetails
-		public JobDetailsViewModel CreateAJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
+		public JobDetailsViewModel CreateAJobDetailsViewModel(IJobOwnerInfo jobOwnerInfo)
 		{
 			return new JobDetailsViewModel(jobOwnerInfo, _projectAdapter, _mapSectionAdapter);
 		}

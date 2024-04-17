@@ -203,7 +203,7 @@ namespace MSetExplorer
 
 		private void OpenJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
 		{
-			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsDialog(jobOwnerInfo);
+			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsViewModel(jobOwnerInfo);
 			var jobDetailsDialog = new JobDetailsWindow
 			{
 				DataContext = jobDetailsViewModel

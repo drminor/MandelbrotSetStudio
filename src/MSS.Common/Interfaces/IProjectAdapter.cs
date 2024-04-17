@@ -98,5 +98,7 @@ namespace MSS.Common
 		
 		IEnumerable<ColorBandSetInfo> GetAllColorBandSetInfosForProject(ObjectId projectId);
 		ColorBandSetInfo? GetColorBandSetInfo(ObjectId id);
+
+		bool TryGetProjectInfo(string name, [NotNullWhen(true)] out IProjectInfo? projectInfo);
 	}
 }

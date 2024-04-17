@@ -273,11 +273,23 @@ namespace MSetExplorer
 
 		private void GoToModelStorage(AppNavRequestResponse? appNavRequestResponse = null)
 		{
-			//var storageModelPoc = _vm.GetStorageModelPOC();
+			Hide();
 
-			//var projectId = new ObjectId("6258fe80712f62b28ce55c15");
+			var projectName = "Home3";
 
-			//storageModelPoc.PlayWithStorageModel(projectId);
+			var jobDetailsViewModel = _vm.GetJobDetailsViewModel(projectName);
+			var testJobDetailsHostWindow = new TestJobDetailsHostWindow(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest(onCloseBehavior: OnCloseBehavior.ReturnToTopNav))
+			{
+				DataContext = jobDetailsViewModel,
+			};
+
+			_lastWindow = testJobDetailsHostWindow;
+			_lastWindow.Name = "TestJobDetails";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			testJobDetailsHostWindow.Owner = Application.Current.MainWindow;
+			testJobDetailsHostWindow.Show();
+			_ = testJobDetailsHostWindow.Focus();
 		}
 
 		#region Nav Window Support
@@ -295,6 +307,7 @@ namespace MSetExplorer
 				case "SysColors": return GoToSystemColors;
 				case "PerformanceHarness": return GoToPerformanceHarnessMainWindow;
 				case "BitmapGridTestWindow": return GoToBitmapGridTestWindow;
+				case "TestJobDetails": return GoToModelStorage;
 				default:
 					return x => WindowState = WindowState.Normal;
 			}

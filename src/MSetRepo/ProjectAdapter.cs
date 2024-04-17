@@ -249,38 +249,66 @@ namespace MSetRepo
 
 		#region ProjectInfo
 
+		public bool TryGetProjectInfo(string name, [NotNullWhen(true)] out IProjectInfo? projectInfo)
+		{
+			if (_projectReaderWriter.TryGet(name, out var projectRec))
+			{
+				var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+				var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+				if (TryGetProjectInfoInternal(projectRec, subdivisionReaderWriter, jobMapSectionReaderWriter, out projectInfo))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			else
+			{
+				projectInfo = null;
+				return false;
+			}
+		}
+
 		public IEnumerable<IProjectInfo> GetAllProjectInfos()
 		{
 			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
 			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
 
 			var allProjectRecords = _projectReaderWriter.GetAll();
-			var result = allProjectRecords.Select(x => GetProjectInfoInternal(x, _jobReaderWriter, subdivisionReaderWriter, jobMapSectionReaderWriter));
+			var result = allProjectRecords.Select(x => GetProjectInfoInternal(x, subdivisionReaderWriter, jobMapSectionReaderWriter));
 
 			return result;
 		}
 
-		//public IProjectInfo GetProjectInfo(Project project)
-		//{
-		//	var jobReaderWriter = new JobReaderWriter(_dbProvider);
-		//	var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
-		//	return GetProjectInfoInternal(project, jobReaderWriter, subdivisionReaderWriter);
-		//}
-
-		private IProjectInfo GetProjectInfoInternal(ProjectRecord projectRec, JobReaderWriter jobReaderWriter, SubdivisonReaderWriter subdivisonReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
+		private  IProjectInfo GetProjectInfoInternal(ProjectRecord projectRec, SubdivisonReaderWriter subdivisionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
 		{
-			IProjectInfo result;
+			if (TryGetProjectInfoInternal(projectRec, subdivisionReaderWriter, jobMapSectionReaderWriter, out var projectInfo))
+			{
+				return projectInfo;
+			}
+			else
+			{
+				var result = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, projectRec.CurrentJobId, 0, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
+				return result;
+			}
+		}
+
+		private bool TryGetProjectInfoInternal(ProjectRecord projectRec, SubdivisonReaderWriter subdivisionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter, [NotNullWhen(true)] out IProjectInfo? projectInfo)
+		{
 			var dateCreated = projectRec.DateCreated.ToLocalTime();
 			var lastAccessed = projectRec.LastAccessedUtc;
 			var currentJobId = projectRec.CurrentJobId;
 
-			var jobInfos = jobReaderWriter.GetJobSubdivisionInfosForOwner(projectRec.Id);
+			var jobInfos = _jobReaderWriter.GetJobSubdivisionInfosForOwner(projectRec.Id);
 
 			if (jobInfos.Any())
 			{
 				var subdivisionIds = jobInfos.Select(j => j.SubdivisionId).Distinct();
 				var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
-				var minSamplePointDeltaExponent = subdivisonReaderWriter.GetMinExponent(subdivisionIds);
+				var minSamplePointDeltaExponent = subdivisionReaderWriter.GetMinExponent(subdivisionIds);
 
 				// Greater of the date of the last updated job and the date when the project was last updated.
 				var lastSavedUtc = jobInfos.Max(x => x.DateCreatedUtc);
@@ -298,14 +326,14 @@ namespace MSetRepo
 				var jobIds = jobInfos.Select(x => x.Id).ToList();
 				var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
 
-				result = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, currentJobId, bytes, dateCreated, lastUpdatedUtc, lastSavedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
+				projectInfo = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, currentJobId, bytes, dateCreated, lastUpdatedUtc, lastSavedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
+				return true;
 			}
 			else
 			{
-				result = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, currentJobId, 0, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
+				projectInfo = null;
+				return false;
 			}
-
-			return result;
 		}
 
 		#endregion

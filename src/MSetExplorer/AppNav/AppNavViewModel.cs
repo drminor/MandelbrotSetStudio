@@ -137,19 +137,20 @@ namespace MSetExplorer
 			return result;
 		}
 
-		//public StorageModelPOC GetStorageModelPOC()
-		//{
-		//	if (_projectAdapter is ProjectAdapter pa && _mapSectionAdapter is MapSectionAdapter ma)
-		//	{
-		//		var result = new StorageModelPOC(pa, ma);
-		//		return result;
-		//	}
+		public JobDetailsViewModel GetJobDetailsViewModel(string projectName)
+		{
+			if (_projectAdapter.TryGetProjectInfo(projectName, out var projectInfo))
+			{
+				var result = _viewModelFactory.CreateAJobDetailsViewModel(projectInfo);
 
-		//	else
-		//	{
-		//		throw new InvalidOperationException("Either the _projectAdapter is not an instance of a ProjectAdapter or the _mapSectionAdapter is not an instance of a MapSectionAdapter.");
-		//	}
-		//}
+				return result;
+			}
+			else
+			{
+				throw new ArgumentException($"The ProjectName: {projectName} does not exist.");
+			}
+		}
+
 
 		#endregion
 
