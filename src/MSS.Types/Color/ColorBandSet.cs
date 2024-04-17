@@ -36,7 +36,7 @@ namespace MSS.Types
 		#region Constructor
 
 		public ColorBandSet()
-			: this(targetIterations: 1000)
+			: this(targetIterations: RMapConstants.DEFAULT_TARGET_ITERATIONS)
 		{ }
 
 		public ColorBandSet(int targetIterations)
@@ -121,7 +121,6 @@ namespace MSS.Types
 		public Guid ColorBandsSerialNumber { get; private set; }
 
 		public bool OnFile { get; private set; }
-
 
 		public ObjectId? ParentId
 		{
@@ -918,8 +917,7 @@ namespace MSS.Types
 			Debug.WriteLine($"Previous Cutoffs: {previousCutoffs}.");
 		}
 
-
-		[Conditional("DEBUG")]
+		[Conditional("DEBUG2")]
 		public static void ReportBucketWidthsAndCutoffs(IList<ColorBand> colorBands, double runningPercentage)
 		{
 			var sb = new StringBuilder();

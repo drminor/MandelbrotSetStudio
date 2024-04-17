@@ -103,9 +103,19 @@ namespace MSetRepo
 
 				if (colorBandSets.Count == 0)
 				{
-					var newCbs = new ColorBandSet(projectRecord.Name ?? projectRecord.ProjectNameTemporary, null, 1000, Guid.NewGuid());
+					var newCbs = new ColorBandSet(projectRecord.Name ?? projectRecord.ProjectNameTemporary, null, RMapConstants.DEFAULT_TARGET_ITERATIONS, Guid.NewGuid());
 					newCbs.OwnerId = projectRecord.Id;
 					colorBandSets.Add(newCbs);
+				}
+				else
+				{
+					foreach(var cbs in colorBandSets)
+					{
+						if (cbs.Name == null)
+						{
+							cbs.Name = projectRecord.Name ?? projectRecord.ProjectNameTemporary;
+						}
+					}
 				}
 
 				var jobs = GetAllJobsForOwner(projectRecord.Id);

@@ -131,7 +131,7 @@ namespace MSS.Common
 			return result;
 		}
 
-		public IEnumerable<ColorBandSet> GetColorBandSetIdsMatchingNameAndTargetIterations(string name, int targetIterations)
+		public IEnumerable<ColorBandSet> GetColorBandSets(string name, int targetIterations)
 		{
 			var result = _colorBandSets.Where(x => x.Name == name && x.TargetIterations == targetIterations);
 

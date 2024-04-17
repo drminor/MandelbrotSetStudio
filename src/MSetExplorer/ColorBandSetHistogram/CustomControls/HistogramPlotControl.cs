@@ -397,7 +397,8 @@ namespace MSetExplorer
 				Debug.WriteLineIf(_useDetailedDebug, $"Setting the XPlot Limits. Start: {startingIndex}, End: {endingIndex}. Current: X1: {axLimits.XMin}, X2: {axLimits.XMax}, Y1: {axLimits.YMin}, Y2: {axLimits.YMax}");
 
 				plot.SetAxisLimitsX(startingIndex, endingIndex);
-				plot.XAxis.SetBoundary(startingIndex - 1000, endingIndex + 1000);
+				var xAxisBoundaryPadding = 1000;
+				plot.XAxis.SetBoundary(startingIndex - xAxisBoundaryPadding, endingIndex + xAxisBoundaryPadding);
 
 				//var axLimits2 = plot.GetAxisLimits();
 

@@ -1,4 +1,6 @@
 ﻿
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace ProjectRepo.Entities
 {
 	public record ColorBandRecord(
@@ -9,7 +11,9 @@ namespace ProjectRepo.Entities
 		double Percentage
 		)
 	{
-		public string? BlendMethod { get; set; } = "Rgb";
+		[BsonDefaultValue("Rgb")]
+		[BsonIgnoreIfDefault]
+		public string BlendMethod { get; set; } = "Rgb";
 	}
 
 }

@@ -168,19 +168,20 @@ namespace MSS.Common
 			{
 				if (cbs.OwnerId != jobOwner.Id)
 				{
-					Debug.WriteLine($"WARNING: ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.OwnerId}, current Project: {jobOwner.Id}. ColorBandSet Serial Number: {cbs.ColorBandsSerialNumber}.");
-					var newCbs = cbs.CreateNewCopy(ObjectId.GenerateNewId());
-					newCbs.OwnerId = jobOwner.Id;
-					newCbs.AssignNewSerialNumber();
-					projectAdapter.InsertColorBandSet(newCbs);
+					var msg = "ColorBandSet has a different projectId than the current projects. ColorBandSetId: {cbs.OwnerId}, current Project: {jobOwner.Id}. ColorBandSet Serial Number: {cbs.ColorBandsSerialNumber}.";
+
+					//Debug.WriteLine($"WARNING: {msg}");
+					//var newCbs = cbs.CreateNewCopy(ObjectId.GenerateNewId());
+					//newCbs.OwnerId = jobOwner.Id;
+					//newCbs.AssignNewSerialNumber();
+					//projectAdapter.InsertColorBandSet(newCbs);
+
+					throw new InvalidOperationException(msg);
 				}
 				else
 				{
 					projectAdapter.InsertColorBandSet(cbs);
 				}
-
-				// For each newly added ColorBandSet, remove older versions of the same name/Target Iterations, leaving only the last 3.
-				projectAdapter.DeletePriorColorBandSetsByVersion(jobOwner.Id, cbs.Name, cbs.TargetIterations, 3);
 			}
 
 			var dirtyColorBandSets = colorBandSets.Where(x => x.IsDirty).ToList();
@@ -205,31 +206,33 @@ namespace MSS.Common
 
 			if (newColorBandSets.Count == 0) return result;
 
-			List<ObjectId> idsToRemove = new List<ObjectId>();
+			List<ColorBandSet> colorBandSetsToRemove = new List<ColorBandSet>();
 			var cbsInfos = jobOwner.GetColorBandSetInfos();
 
 			var setsForDistinctNameTis = newColorBandSets.Distinct(new ColorBandSetComparerNameAndTi());
 			foreach (var cbs in setsForDistinctNameTis)
 			{
-				var idsToCheck = jobOwner.ColorBandSetStore.GetColorBandSetIdsMatchingNameAndTargetIterations(cbs.Name, cbs.TargetIterations)
+				var colorBandSetsToCheck = jobOwner.ColorBandSetStore.GetColorBandSets(cbs.Name, cbs.TargetIterations)
 					.OrderByDescending(x => x.Version)
-					.Select(x => x.Id)
 					.Skip(numberOfPriorCbsToKeep);
 
-				foreach (var id in idsToCheck)
+				foreach (var cbsToCheck in colorBandSetsToCheck)
 				{
-					var cbInfo = cbsInfos.FirstOrDefault(x => x.Id == id && x.NumberOfJobs == 0);
+					var cbInfo = cbsInfos.FirstOrDefault(x => x.Id == cbsToCheck.Id && x.NumberOfJobs == 0);
 					if (cbInfo != null)
 					{
-						idsToRemove.Add(id);
+						colorBandSetsToRemove.Add(cbsToCheck);
 					}
 				}
 			}
 
-			foreach (var id in idsToRemove)
+			foreach (var cbsToRemove in colorBandSetsToRemove)
 			{
-				if (projectAdapter.DeleteColorBandSet(id))
+				if (projectAdapter.DeleteColorBandSet(cbsToRemove.Id))
 				{
+					var wr = jobOwner.ColorBandSetStore.RemoveColorBandSet(cbsToRemove);
+					Debug.Assert(wr, "JobOwnerHelper deleted a ColorBandSet from the repository but it was not removed from the store.");
+
 					result++;
 				}
 			}

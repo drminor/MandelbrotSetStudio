@@ -23,8 +23,6 @@ namespace MSS.Types
 		public const byte BITS_BEFORE_BP = 16;
 
 		public const int DEFAULT_LIMB_COUNT = 2;
-		public const int DEFAULT_TARGET_EXPONENT = -64;
-
 		public const int DEFAULT_PRECISION = 53;
 
 		public const int MAP_SECTION_INITIAL_POOL_SIZE = 10;
