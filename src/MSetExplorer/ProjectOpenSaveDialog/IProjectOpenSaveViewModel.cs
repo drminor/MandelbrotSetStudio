@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using System;
 using System.Collections.ObjectModel;
 
 namespace MSetExplorer
@@ -21,5 +22,10 @@ namespace MSetExplorer
 		long TrimSelected(bool agressive);
 
 		ViewModelFactory ViewModelFactory { get; }
+
+		string SortByFieldName { get; set; }
+		bool SortDescending { get; set; }
+
+		DateTime LastAccessedAfterDate { get; set; }
 	}
 }

@@ -6,16 +6,36 @@
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:ProjectOpenSaveViewModel}"
         mc:Ignorable="d"
         Title="Open Project" Height="1000" Width="920">
-    
+
+    <Window.CommandBindings>
+        <!--<CommandBinding Command="local:CustomCommands.PosterSave" CanExecute="SaveCommand_CanExecute" Executed="SaveCommand_Executed" />-->
+    </Window.CommandBindings>
+
     <Grid>
-        
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
+        <!--Menu-->
+        <Menu Grid.Row="0" Grid.ColumnSpan="4" Height="20">
+
+            <MenuItem Header="_Sort">
+                <MenuItem x:Name="mnuItem_sortAz" Header="Sort A-Z" Click="SortAToZ_Click" IsCheckable="True" IsChecked="False" />
+                <MenuItem x:Name="mnuItem_sortZa" Header="Sort Z-A" Click="SortZToA_Click"  IsCheckable="True" IsChecked="True" />
+
+                <MenuItem x:Name="mnuItem_sortByLastAccessed" Header="Sort By Last Accessed" Click="SortByLastAccessed_Click" IsCheckable="True" IsChecked="True" />
+                <MenuItem x:Name="mnuItem_sortByDateCreated" Header="Sort By Date Created" Click="SortByDateCreated_Click" IsCheckable="True" IsChecked="False" />
+                <MenuItem x:Name="mnuItem_sortByName" Header="Sort By Name" Click="SortByName_Click" IsCheckable="True" IsChecked="False" />
+            </MenuItem>
+
+            <MenuItem Header="_Filter">
+            </MenuItem>
+        </Menu>
+
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,5">
 
             <ListView Margin="10" Name="lvProjects" IsSynchronizedWithCurrentItem="True" SelectedItem="{Binding SelectedProject}" TabIndex="1">
                 <ListView.View>
@@ -25,14 +45,14 @@
                         <GridViewColumn Header="Job Count" Width="80" DisplayMemberBinding="{Binding NumberOfJobs}" />
                         <GridViewColumn Header="Bytes" Width="100" DisplayMemberBinding="{Binding Bytes, StringFormat=n0}" />
                         <GridViewColumn Header="Zoom" Width="70" DisplayMemberBinding="{Binding MinMapCoordsExponent}" />
-                        <GridViewColumn Header="Updated" Width="190" DisplayMemberBinding="{Binding LastSavedUtc}" />
+                        <GridViewColumn Header="Accessed" Width="190" DisplayMemberBinding="{Binding LastAccessedUtc}" />
                     </GridView>
                 </ListView.View>
             </ListView>
 
         </Border>
 
-        <Border x:Name="borderTop" Grid.Row="1" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
+        <Border x:Name="borderTop" Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,0,5,0">
             <StackPanel HorizontalAlignment="Stretch" Orientation="Vertical">
 
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
@@ -48,7 +68,7 @@
             </StackPanel>            
         </Border>
 
-        <Border Grid.Row="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="3" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
                 <Button Name="btnSave" HorizontalAlignment="Center" Width="100" FontSize="16" Margin="10" Click="SaveButton_Click" IsDefault="True" TabIndex="4" >Save</Button>

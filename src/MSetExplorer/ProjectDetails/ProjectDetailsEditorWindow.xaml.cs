@@ -30,12 +30,18 @@ namespace MSetExplorer
 			_vm = (ProjectDetailsViewModel)DataContext;
 
 			Loaded += ProjectDetailsEditorWindow_Loaded;
-			ContentRendered += ProjetDetailsEditorWindow_ContentRendered;
+			//ContentRendered += ProjetDetailsEditorWindow_ContentRendered;
 			InitializeComponent();
 		}
 
+		#endregion
+
+		#region Event Handlers
+
 		private void ProjectDetailsEditorWindow_Loaded(object sender, RoutedEventArgs e)
 		{
+			Loaded -= ProjectDetailsEditorWindow_Loaded;
+
 			if (DataContext is null)
 			{
 				Debug.WriteLine("The DataContext is null as the ProjectDetailsEditor Window is being loaded.");
@@ -46,26 +52,22 @@ namespace MSetExplorer
 				_vm = (ProjectDetailsViewModel)DataContext;
 				//borderDetails.DataContext = DataContext;
 
-				_vm.PropertyChanged += ProjectDetailsViewModel_PropertyChanged;
+				//_vm.PropertyChanged += ProjectDetailsViewModel_PropertyChanged;
 
 
 				Debug.WriteLine("The ProjectDetailsEditor Window is now loaded");
 			}
 		}
 
-		private void ProjectDetailsViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
+		//private void ProjectDetailsViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
 
-		}
+		//}
 
-		#endregion
+		//private void ProjetDetailsEditorWindow_ContentRendered(object? sender, EventArgs e)
+		//{
 
-		#region Event Handlers
-
-		private void ProjetDetailsEditorWindow_ContentRendered(object? sender, EventArgs e)
-		{
-
-		}
+		//}
 
 		#endregion
 

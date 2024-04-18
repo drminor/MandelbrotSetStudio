@@ -283,6 +283,38 @@ namespace MSetRepo
 			return result;
 		}
 
+		public IEnumerable<IProjectInfo> GetAllProjectInfos(DateTime lastAccessedAfterDate)
+		{
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+			var allProjectRecords = _projectReaderWriter.GetAll();
+
+			//var filteredRecs = allProjectRecords.Where(x => x.LastAccessedUtc > lastAccessedAfterDate);
+
+			//if (filteredRecs.Count() == 0)
+			//{
+			//	filteredRecs = allProjectRecords.Where(x => x.LastSavedUtc > lastAccessedAfterDate);
+			//}
+
+			IEnumerable<ProjectRecord> filteredRecs;
+
+			if (lastAccessedAfterDate != DateTime.MinValue)
+			{
+				// TODO: Make sure that all Project Records have a valid value for the LastAccessedUtc property.
+				// Currently we are using LastSavedUtc property instead.
+				filteredRecs = allProjectRecords.Where(x => x.LastSavedUtc > lastAccessedAfterDate);
+			}
+			else
+			{
+				filteredRecs = allProjectRecords;
+			}
+
+			var result = filteredRecs.Select(x => GetProjectInfoInternal(x, subdivisionReaderWriter, jobMapSectionReaderWriter));
+
+			return result;
+		}
+
 		private  IProjectInfo GetProjectInfoInternal(ProjectRecord projectRec, SubdivisonReaderWriter subdivisionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
 		{
 			if (TryGetProjectInfoInternal(projectRec, subdivisionReaderWriter, jobMapSectionReaderWriter, out var projectInfo))
@@ -306,9 +338,14 @@ namespace MSetRepo
 
 			if (jobInfos.Any())
 			{
-				var subdivisionIds = jobInfos.Select(j => j.SubdivisionId).Distinct();
+				//var subdivisionIds = jobInfos.Select(j => j.SubdivisionId).Distinct();
+				//var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
+				//var minSamplePointDeltaExponent = subdivisionReaderWriter.GetMinExponent(subdivisionIds);
+
+				//var subdivisionIds = jobInfos.Select(j => j.SubdivisionId).Distinct();
 				var minMapCoordsExponent = jobInfos.Min(x => x.MapCoordExponent);
-				var minSamplePointDeltaExponent = subdivisionReaderWriter.GetMinExponent(subdivisionIds);
+				var minSamplePointDeltaExponent = 0;
+
 
 				// Greater of the date of the last updated job and the date when the project was last updated.
 				var lastSavedUtc = jobInfos.Max(x => x.DateCreatedUtc);
@@ -323,8 +360,9 @@ namespace MSetRepo
 				//var jobCount = numberOfFirstLevelChildJobs > 1 ? jobInfos.Count() : -1 * jobInfos.Count();
 				var jobCount = jobInfos.Count();
 
-				var jobIds = jobInfos.Select(x => x.Id).ToList();
-				var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
+				//var jobIds = jobInfos.Select(x => x.Id).ToList();
+				//var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
+				var bytes = 0;
 
 				projectInfo = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, currentJobId, bytes, dateCreated, lastUpdatedUtc, lastSavedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
 				return true;

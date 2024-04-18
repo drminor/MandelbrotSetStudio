@@ -141,19 +141,19 @@ namespace MSetRepo
 			return Enum.Parse<ColorBandBlendStyle>(blendStyle);
 		}
 
-		public ColorBandBlendMethod MapFromBlendMethod(string blendMethod)
+		public ColorBandBlendMethod MapFromBlendMethod(string? blendMethod)
 		{
-			//if (blendMethod == null)
-			//{
-			//	// TODO: Make sure all ColorBandRecords have a value for the BlendMethod property.
-			//	return ColorBandBlendMethod.Rgb;
-			//}
-			//else
-			//{
-			//	return Enum.Parse<ColorBandBlendMethod>(blendMethod);
-			//}
-			return Enum.Parse<ColorBandBlendMethod>(blendMethod);
+			if (blendMethod == null)
+			{
+				// TODO: Make sure all ColorBandRecords have a value for the BlendMethod property.
+				return ColorBandBlendMethod.Rgb;
+			}
+			else
+			{
+				return Enum.Parse<ColorBandBlendMethod>(blendMethod);
+			}
 
+			//return Enum.Parse<ColorBandBlendMethod>(blendMethod);
 		}
 
 		public TransformType MapFromTransformType(int transformType)

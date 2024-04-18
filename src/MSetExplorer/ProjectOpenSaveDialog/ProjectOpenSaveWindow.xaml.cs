@@ -23,8 +23,14 @@ namespace MSetExplorer
 			InitializeComponent();
 		}
 
+		#endregion
+
+		#region Event Handlers
+
 		private void ProjectOpenSaveWindow_Loaded(object sender, RoutedEventArgs e)
 		{
+			Loaded -= ProjectOpenSaveWindow_Loaded;
+
 			if (DataContext is null)
 			{
 				Debug.WriteLine("The DataContext is null as the ProjectOpenSave Window is being loaded.");
@@ -52,19 +58,17 @@ namespace MSetExplorer
 			}
 		}
 
-		#endregion
-
-		#region Event Handlers
-
 		private void ProjectOpenSaveWindow_ContentRendered(object? sender, System.EventArgs e)
 		{
+			ContentRendered -= ProjectOpenSaveWindow_ContentRendered;
+
 			if (_vm.DialogType == DialogType.Save)
 			{
 				_ = txtName.Focus();
 			}
 			else
 			{
-				if (lvProjects.ItemContainerGenerator.ContainerFromItem(lvProjects.Items[0]) is ListViewItem item)
+				if (lvProjects.Items.Count > 0 && lvProjects.ItemContainerGenerator.ContainerFromItem(lvProjects.Items[0]) is ListViewItem item)
 				{
 					lvProjects.SelectedIndex = 0;
 					_ = item.Focus();
@@ -112,6 +116,7 @@ namespace MSetExplorer
 		public string? ProjectName => _vm.SelectedName;
 		public string? ProjectDescription => _vm.SelectedDescription;
 
+
 		#endregion
 
 		#region Button Handlers
@@ -140,7 +145,6 @@ namespace MSetExplorer
 					: MessageBox.Show("Could not delete this Project.");
 			}
 		}
-
 
 		private void ViewJobsButton_Click(object sender, RoutedEventArgs e)
 		{
@@ -204,6 +208,7 @@ namespace MSetExplorer
 		private void OpenJobDetailsDialog(IJobOwnerInfo jobOwnerInfo)
 		{
 			var jobDetailsViewModel = _vm.ViewModelFactory.CreateAJobDetailsViewModel(jobOwnerInfo);
+
 			var jobDetailsDialog = new JobDetailsWindow
 			{
 				DataContext = jobDetailsViewModel
@@ -213,5 +218,46 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		#region Sort Menu Click Handlers
+
+		private void SortAToZ_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.SortDescending = mnuItem_sortAz.IsChecked;
+			mnuItem_sortZa.IsChecked = !mnuItem_sortAz.IsChecked;
+		}
+
+		private void SortZToA_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.SortDescending = mnuItem_sortZa.IsChecked;
+			mnuItem_sortAz.IsChecked = !mnuItem_sortZa.IsChecked;
+		}
+
+		private void SortByLastAccessed_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.SortByFieldName = "LastAccessed";
+
+			mnuItem_sortByDateCreated.IsChecked = false;
+			mnuItem_sortByName.IsChecked = false;
+		}
+
+		private void SortByDateCreated_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.SortByFieldName = "DateCreated";
+
+			mnuItem_sortByLastAccessed.IsChecked = false;
+			mnuItem_sortByName.IsChecked = false;
+		}
+
+		private void SortByName_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.SortByFieldName = "Name";
+
+			mnuItem_sortByLastAccessed.IsChecked = false;
+			mnuItem_sortByDateCreated.IsChecked = false;
+		}
+
+		#endregion
+
 	}
 }

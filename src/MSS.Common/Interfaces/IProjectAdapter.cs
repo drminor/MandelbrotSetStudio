@@ -100,5 +100,7 @@ namespace MSS.Common
 		ColorBandSetInfo? GetColorBandSetInfo(ObjectId id);
 
 		bool TryGetProjectInfo(string name, [NotNullWhen(true)] out IProjectInfo? projectInfo);
+
+		IEnumerable<IProjectInfo> GetAllProjectInfos(DateTime lastAccessedAfterDate);
 	}
 }

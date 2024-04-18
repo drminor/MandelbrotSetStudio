@@ -23,6 +23,11 @@ namespace MSetExplorer
 
 		private bool _userIsSettingTheName;
 
+		private string _sortByFieldName;
+		private bool _sortDescending;
+
+		private DateTime _lastAccessedAfterDate;
+
 		#region Constructor
 
 		public ProjectOpenSaveViewModel(IProjectAdapter projectAdapter, IMapSectionAdapter mapSectionAdapter, ViewModelFactory viewModelFactory, string? initialName, DialogType dialogType)
@@ -33,11 +38,16 @@ namespace MSetExplorer
 
 			DialogType = dialogType;
 
-			ProjectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
-			SelectedProject = ProjectInfos.FirstOrDefault(x => x.Name == initialName);
+			//ProjectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
+			//SelectedProject = ProjectInfos.FirstOrDefault(x => x.Name == initialName);
 
-			var view = CollectionViewSource.GetDefaultView(ProjectInfos);
-			_ = view.MoveCurrentTo(SelectedProject);
+			_sortByFieldName = "LastAccessed";
+			_sortDescending = true;
+
+			//_lastAccessedAfterDate = DateTime.Now.AddMonths(-1);
+			_lastAccessedAfterDate = DateTime.MinValue;
+
+			ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, initialName);
 		}
 
 		#endregion
@@ -46,7 +56,7 @@ namespace MSetExplorer
 
 		public DialogType DialogType { get; }
 
-		public ObservableCollection<IProjectInfo> ProjectInfos { get; init; }
+		public ObservableCollection<IProjectInfo> ProjectInfos { get; private set; }
 
 		public string? SelectedName
 		{
@@ -63,7 +73,6 @@ namespace MSetExplorer
 			get => _userIsSettingTheName;
 			set { _userIsSettingTheName = value; OnPropertyChanged(); }
 		}
-
 
 		public string? SelectedDescription
 		{
@@ -109,6 +118,111 @@ namespace MSetExplorer
 		}
 
 		public ViewModelFactory ViewModelFactory { get; init; }
+
+		public string SortByFieldName
+		{
+			get => _sortByFieldName;
+			set
+			{
+				if (value != _sortByFieldName)
+				{
+					_sortByFieldName = value;
+
+					var currentName = SelectedProject?.Name;
+					ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
+
+					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.SortByFieldName));
+				}
+			}
+		}
+
+		public bool SortDescending
+		{
+			get => _sortDescending;
+
+			set
+			{
+				if (value !=_sortDescending)
+				{
+					_sortDescending = value;
+
+					var currentName = SelectedProject?.Name;
+					ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
+
+					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.SortDescending));
+				}
+			}
+		}
+
+		public DateTime LastAccessedAfterDate
+		{
+			get => _lastAccessedAfterDate;
+			set
+			{
+				if (value != _lastAccessedAfterDate)
+				{
+					_lastAccessedAfterDate = value;
+					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.LastAccessedAfterDate));
+				}
+			}
+		}
+
+		#endregion
+
+		#region Private Methods
+
+		private ObservableCollection<IProjectInfo> GetNewListSource(string sortByFieldName, bool sortDescending, DateTime lastAccessedAfterDate, string? initialName)
+		{
+			var result = OrderTheList(_projectAdapter.GetAllProjectInfos(lastAccessedAfterDate), sortByFieldName, sortDescending);
+
+			if (initialName != null)
+			{
+				SelectedProject = result.FirstOrDefault(x => x.Name == initialName);
+
+				var view = CollectionViewSource.GetDefaultView(result);
+				_ = view.MoveCurrentTo(SelectedProject);
+			}
+
+			return result;
+		}
+
+		private ObservableCollection<IProjectInfo> OrderTheList(IEnumerable<IProjectInfo> theList, string sortByFieldName, bool sortDescending)
+		{
+			ObservableCollection<IProjectInfo> result;
+
+			switch (sortByFieldName)
+			{
+				case "LastAccessed":
+					{
+						result = sortDescending 
+							? new ObservableCollection<IProjectInfo>(theList.OrderByDescending(x => x.LastAccessedUtc)) 
+							: new ObservableCollection<IProjectInfo>(theList.OrderBy(x => x.LastAccessedUtc));
+						break;
+					}
+
+				case "DateCreated":
+					{
+						result = sortDescending 
+							? new ObservableCollection<IProjectInfo>(theList.OrderByDescending(x => x.DateCreatedUtc)) 
+							: new ObservableCollection<IProjectInfo>(theList.OrderBy(x => x.DateCreatedUtc));
+						break;
+					}
+
+				case "Name":
+					{
+						result = sortDescending 
+							? new ObservableCollection<IProjectInfo>(theList.OrderByDescending(x => x.Name)) 
+							: new ObservableCollection<IProjectInfo>(theList.OrderBy(x => x.Name));
+						break;
+					}
+
+				default:
+					result = new ObservableCollection<IProjectInfo>();
+					break;
+			}
+
+			return result;
+		}
 
 		#endregion
 

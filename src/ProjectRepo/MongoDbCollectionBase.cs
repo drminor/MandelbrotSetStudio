@@ -106,8 +106,6 @@ namespace ProjectRepo
 
 		public virtual long GetSizeOfCollectionInMB()
 		{
-			var result = 0L;
-
 			// NOTE: Need to add 22 bytes * total number of documents to get the actual size.
 			var sizeOnServer = Collection
 				.Aggregate()
@@ -115,6 +113,8 @@ namespace ProjectRepo
 				.FirstOrDefault();
 
 			var collectionSize = sizeOnServer["collectionSize"];
+
+			long result;
 
 			if (collectionSize.IsInt32)
 			{

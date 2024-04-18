@@ -13,7 +13,7 @@ namespace ProjectRepo.Entities
 	{
 		[BsonDefaultValue("Rgb")]
 		[BsonIgnoreIfDefault]
-		public string BlendMethod { get; set; } = "Rgb";
+		public string? BlendMethod { get; set; } = "Rgb";
 	}
 
 }
