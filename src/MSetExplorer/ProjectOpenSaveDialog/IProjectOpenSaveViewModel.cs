@@ -1,14 +1,16 @@
 ﻿using MSS.Common;
 using System;
-using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public interface IProjectOpenSaveViewModel
+	public interface IProjectOpenSaveViewModel : INotifyPropertyChanged
 	{
 		DialogType DialogType { get; }
 
-		ObservableCollection<IProjectInfo> ProjectInfos { get; }
+		//ObservableCollection<IProjectInfo> ProjectInfos { get; }
+		ListCollectionView ProjectInfosView { get; set; } 
 		IProjectInfo? SelectedProject { get; set; }
 
 		string? SelectedName { get; set; }

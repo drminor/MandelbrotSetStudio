@@ -14,7 +14,7 @@ namespace MSS.Common
 		string? Description { get; set; }
 		ObjectId CurrentJobId { get; init; }
 
-		int Bytes { get; set; }
+		int SizeInBytes { get; set; }
 		int NumberOfJobs { get; }
 		int MinSamplePointDeltaExponent { get; }
 

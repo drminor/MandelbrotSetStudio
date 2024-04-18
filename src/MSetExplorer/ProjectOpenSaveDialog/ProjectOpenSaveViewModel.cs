@@ -1,21 +1,25 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
+using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
 
 namespace MSetExplorer
 {
-	public class ProjectOpenSaveViewModel : IProjectOpenSaveViewModel, INotifyPropertyChanged
+	public class ProjectOpenSaveViewModel : IProjectOpenSaveViewModel
 	{
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
+
+		private ListCollectionView _projectInfosView;
 		private IProjectInfo? _selectedProject;
 
 		private string? _selectedName;
@@ -47,7 +51,10 @@ namespace MSetExplorer
 			//_lastAccessedAfterDate = DateTime.Now.AddMonths(-1);
 			_lastAccessedAfterDate = DateTime.MinValue;
 
-			ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, initialName);
+			//ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, initialName);
+
+			_projectInfosView = BuildProjectInfosView(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, initialName);
+
 		}
 
 		#endregion
@@ -56,7 +63,11 @@ namespace MSetExplorer
 
 		public DialogType DialogType { get; }
 
-		public ObservableCollection<IProjectInfo> ProjectInfos { get; private set; }
+		//public ObservableCollection<IProjectInfo> ProjectInfos
+		//{ 
+		//	get;
+		//	private set;
+		//}
 
 		public string? SelectedName
 		{
@@ -129,7 +140,9 @@ namespace MSetExplorer
 					_sortByFieldName = value;
 
 					var currentName = SelectedProject?.Name;
-					ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
+					//ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
+					ProjectInfosView = BuildProjectInfosView(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
+
 
 					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.SortByFieldName));
 				}
@@ -147,7 +160,9 @@ namespace MSetExplorer
 					_sortDescending = value;
 
 					var currentName = SelectedProject?.Name;
-					ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
+					//ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
+					ProjectInfosView = BuildProjectInfosView(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
+
 
 					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.SortDescending));
 				}
@@ -167,24 +182,75 @@ namespace MSetExplorer
 			}
 		}
 
+		public ListCollectionView ProjectInfosView
+		{
+			get => _projectInfosView;
+
+			set
+			{
+				var valueIsNew = value != _projectInfosView;
+				Debug.WriteLine($"The CbsHistogramViewModel is getting a new ColorBandsView. ValueIsNew is {valueIsNew}.");
+
+				_projectInfosView.CurrentChanged += ProjectInfosView_CurrentChanged;
+
+				_projectInfosView = value;
+
+				SelectedProject = _projectInfosView.CurrentItem as IProjectInfo;
+
+				OnPropertyChanged(nameof(IProjectOpenSaveViewModel.ProjectInfosView));
+				OnPropertyChanged(nameof(IProjectOpenSaveViewModel.SelectedProject));
+
+				_projectInfosView.CurrentChanged += ProjectInfosView_CurrentChanged;
+			}
+		}
+
+		private void ProjectInfosView_CurrentChanged(object? sender, EventArgs e)
+		{
+			throw new NotImplementedException();
+		}
+
 		#endregion
 
 		#region Private Methods
 
-		private ObservableCollection<IProjectInfo> GetNewListSource(string sortByFieldName, bool sortDescending, DateTime lastAccessedAfterDate, string? initialName)
+		private ListCollectionView BuildProjectInfosView(string sortByFieldName, bool sortDescending, DateTime lastAccessedAfterDate, string? initialName)
 		{
-			var result = OrderTheList(_projectAdapter.GetAllProjectInfos(lastAccessedAfterDate), sortByFieldName, sortDescending);
+			var projectInfos = OrderTheList(_projectAdapter.GetAllProjectInfos(lastAccessedAfterDate), sortByFieldName, sortDescending);
 
-			if (initialName != null)
+			ListCollectionView result;
+			if (projectInfos == null)
 			{
-				SelectedProject = result.FirstOrDefault(x => x.Name == initialName);
-
-				var view = CollectionViewSource.GetDefaultView(result);
-				_ = view.MoveCurrentTo(SelectedProject);
+				var newCollection = new ObservableCollection<IProjectInfo>();
+				result = (ListCollectionView)CollectionViewSource.GetDefaultView(newCollection);
+			}
+			else
+			{
+				result = (ListCollectionView)CollectionViewSource.GetDefaultView(projectInfos);
+				
+				if (initialName != null)
+				{
+					SelectedProject = projectInfos.FirstOrDefault(x => x.Name == initialName);
+					_ = result.MoveCurrentTo(SelectedProject);
+				}
 			}
 
 			return result;
 		}
+
+		//private ObservableCollection<IProjectInfo> GetNewListSource(string sortByFieldName, bool sortDescending, DateTime lastAccessedAfterDate, string? initialName)
+		//{
+		//	var result = OrderTheList(_projectAdapter.GetAllProjectInfos(lastAccessedAfterDate), sortByFieldName, sortDescending);
+
+		//	if (initialName != null)
+		//	{
+		//		SelectedProject = result.FirstOrDefault(x => x.Name == initialName);
+
+		//		var view = CollectionViewSource.GetDefaultView(result);
+		//		_ = view.MoveCurrentTo(SelectedProject);
+		//	}
+
+		//	return result;
+		//}
 
 		private ObservableCollection<IProjectInfo> OrderTheList(IEnumerable<IProjectInfo> theList, string sortByFieldName, bool sortDescending)
 		{
@@ -248,7 +314,7 @@ namespace MSetExplorer
 			bool result;
 			if (ProjectAndMapSectionHelper.DeleteProject(projectInfo.ProjectId, _projectAdapter, _mapSectionAdapter, out numberOfMapSectionsDeleted))
 			{
-				_ = ProjectInfos.Remove(projectInfo);
+				ProjectInfosView.Remove(projectInfo);
 				result = true;
 			}
 			else

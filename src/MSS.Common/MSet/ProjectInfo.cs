@@ -16,7 +16,7 @@ namespace MSS.Common.MSet
 		#region Constructor
 
 		public ProjectInfo(ObjectId projectId, string name, string? description, ObjectId currentJobId, 
-			int bytes, 
+			int sizeInBytes, 
 			DateTime dateCreatedUtc, DateTime lastSavedUtc, DateTime lastAccessedUtc, 
 			int numberOfJobs, int minMapCoordsExponent, int minSamplePointDeltaExponent)
 		{
@@ -25,7 +25,7 @@ namespace MSS.Common.MSet
 			_description = description;
 			CurrentJobId = currentJobId;
 
-			Bytes = bytes;
+			SizeInBytes = sizeInBytes;
 
 			DateCreatedUtc = dateCreatedUtc;
 
@@ -61,7 +61,7 @@ namespace MSS.Common.MSet
 
 		public ObjectId CurrentJobId { get; init; }
 
-		public int Bytes { get; set; }
+		public int SizeInBytes { get; set; }
 
 		//public DateTime DateCreated { get; init; }
 

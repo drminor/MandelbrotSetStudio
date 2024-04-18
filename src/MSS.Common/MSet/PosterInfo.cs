@@ -26,7 +26,7 @@ namespace MSS.Common.MSet
 			CurrentJobId = currentJobId;
 			
 			Size = size;
-			Bytes = bytes;
+			SizeInBytes = bytes;
 
 			DateCreatedUtc = dateCreatedUtc;
 			_lastSavedUtc = lastSavedUtc;
@@ -60,7 +60,7 @@ namespace MSS.Common.MSet
 
 		public SizeDbl Size { get; init; }
 
-		public int Bytes { get; set; }
+		public int SizeInBytes { get; set; }
 
 		public string SizeAsString { get; set; }
 

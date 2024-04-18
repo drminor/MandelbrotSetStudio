@@ -19,8 +19,15 @@ namespace MSetExplorer
 			_vm = (IProjectOpenSaveViewModel)DataContext;
 
 			Loaded += ProjectOpenSaveWindow_Loaded;
+			Unloaded += ProjectOpenSaveWindow_Unloaded;
 			ContentRendered += ProjectOpenSaveWindow_ContentRendered;
 			InitializeComponent();
+		}
+
+		private void ProjectOpenSaveWindow_Unloaded(object sender, RoutedEventArgs e)
+		{
+			Unloaded -= ProjectOpenSaveWindow_Unloaded;
+			_vm.PropertyChanged -= VM_PropertyChanged;
 		}
 
 		#endregion
@@ -40,11 +47,12 @@ namespace MSetExplorer
 			{
 				_vm = (IProjectOpenSaveViewModel)DataContext;
 				borderTop.DataContext = DataContext;
+				_vm.PropertyChanged += VM_PropertyChanged;
 
 				btnSave.Content = _vm.DialogType == DialogType.Open ? "Open" : "Save";
 				Title = _vm.DialogType == DialogType.Open ? "Open Project" : "Save Project";
 
-				lvProjects.ItemsSource = _vm.ProjectInfos;
+				lvProjects.ItemsSource = _vm.ProjectInfosView; // .ProjectInfos;
 				lvProjects.SelectionChanged += LvProjects_SelectionChanged;
 
 				lvProjects.MouseDoubleClick += LvProjects_MouseDoubleClick;
@@ -56,6 +64,13 @@ namespace MSetExplorer
 
 				Debug.WriteLine("The ProjectOpenSave Window is now loaded");
 			}
+		}
+
+		private void VM_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			lvProjects.SelectionChanged -= LvProjects_SelectionChanged;
+			lvProjects.ItemsSource = _vm.ProjectInfosView; // .ProjectInfos;
+			lvProjects.SelectionChanged += LvProjects_SelectionChanged;
 		}
 
 		private void ProjectOpenSaveWindow_ContentRendered(object? sender, System.EventArgs e)

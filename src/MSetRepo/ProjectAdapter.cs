@@ -323,7 +323,19 @@ namespace MSetRepo
 			}
 			else
 			{
-				var result = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, projectRec.CurrentJobId, 0, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
+				var result = new ProjectInfo(
+					projectRec.Id, 
+					projectRec.Name ?? projectRec.ProjectNameTemporary, 
+					projectRec.Description, 
+					projectRec.CurrentJobId, 
+					sizeInBytes: 0, 
+					dateCreatedUtc: DateTime.MinValue, 
+					lastSavedUtc: DateTime.MinValue,
+					lastAccessedUtc: DateTime.MinValue,
+					numberOfJobs: 0, 
+					minMapCoordsExponent: 0, 
+					minSamplePointDeltaExponent: 0
+					);
 				return result;
 			}
 		}
@@ -362,9 +374,21 @@ namespace MSetRepo
 
 				//var jobIds = jobInfos.Select(x => x.Id).ToList();
 				//var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
-				var bytes = 0;
+				var sizeInBytes = 0;
 
-				projectInfo = new ProjectInfo(projectRec.Id, projectRec.Name ?? projectRec.ProjectNameTemporary, projectRec.Description, currentJobId, bytes, dateCreated, lastUpdatedUtc, lastSavedUtc, jobCount, minMapCoordsExponent, minSamplePointDeltaExponent);
+				projectInfo = new ProjectInfo(
+					projectRec.Id, 
+					projectRec.Name ?? projectRec.ProjectNameTemporary, 
+					projectRec.Description, 
+					currentJobId, 
+					sizeInBytes, 
+					dateCreated, 
+					lastUpdatedUtc, 
+					lastSavedUtc, 
+					jobCount, 
+					minMapCoordsExponent, 
+					minSamplePointDeltaExponent
+					);
 				return true;
 			}
 			else
