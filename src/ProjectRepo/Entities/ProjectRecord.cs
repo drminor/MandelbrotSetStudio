@@ -10,23 +10,26 @@ namespace ProjectRepo.Entities
 		string? Name, 
 		string? Description, 
 		ObjectId CurrentJobId,
-		DateTime LastSavedUtc
+
+		DateTime DateCreatedUtc,
+		DateTime LastSavedUtc,
+		DateTime LastAccessedUtc
 		)
 	{
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
 		public ObjectId Id { get; set; } = ObjectId.Empty;
 
-		public DateTime DateCreated => Id.CreationTime;
-		public DateTime DateCreatedUtc { get; set; }    // TODO_schema: Add DateCreatedUtc to ProjectRecord
+		public TargetIterationColorMapRecord[]? TargetIterationColorMapRecords { get; set; }
 
+		[BsonDefaultValue(ColorBandSetResolutionStrategy.PerProject)]
+		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; } = ColorBandSetResolutionStrategy.PerProject;
 
-		public DateTime LastAccessedUtc { get; set; }
+		[BsonDefaultValue(false)]
+		[BsonIgnoreIfDefault]
+		public bool IsArchived { get; set; } = false;
 
-		public TargetIterationColorMapRecord[]? TargetIterationColorMapRecords { get; set; } // TODO_schema: Add TargetIterationColorMapRecords to ProjectRecord
-
-		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; } = ColorBandSetResolutionStrategy.PerProject; // TODO_schema: Add ColorBandSetResolutionStrategy to the ProjectRecord
-
+		[BsonIgnore]
 		public string ProjectNameTemporary { get; set; } = RMapConstants.NAME_FOR_NEW_PROJECTS + "-" + Guid.NewGuid().ToString();
 	}
 }

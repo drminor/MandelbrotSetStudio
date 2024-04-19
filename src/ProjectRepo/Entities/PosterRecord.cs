@@ -35,5 +35,8 @@ namespace ProjectRepo.Entities
 
 		public ColorBandSetResolutionStrategy ColorBandSetResolutionStrategy { get; set; } = ColorBandSetResolutionStrategy.PerProject; // TODO_schema: Add ColorBandSetResolutionStrategy to the PosterRecord
 
+		[BsonDefaultValue(false)]
+		[BsonIgnoreIfDefault]
+		public bool IsArchived { get; set; } = false;
 	}
 }

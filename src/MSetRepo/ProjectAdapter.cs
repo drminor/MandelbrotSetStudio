@@ -1,6 +1,5 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Driver;
-//using MSetRepo.Storage;
 using MSS.Common;
 using MSS.Common.MSet;
 using MSS.Types;
@@ -12,12 +11,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-//using static ProjectRepo.JobReaderWriter;
 
 namespace MSetRepo
 {
 	public class ProjectAdapter : IProjectAdapter
 	{
+		#region Private Fields
+
 		private readonly DbProvider _dbProvider;
 		private readonly MSetRecordMapper _mSetRecordMapper;
 
@@ -28,6 +28,8 @@ namespace MSetRepo
 
 		//private readonly bool _useDetailedDebug = false;
 
+		#endregion
+		
 		#region Constructor
 
 		public ProjectAdapter(DbProvider dbProvider, MSetRecordMapper mSetRecordMapper)
@@ -142,7 +144,7 @@ namespace MSetRepo
 		{
 			if (!_projectReaderWriter.ProjectExists(name, out var projectId))
 			{
-				var projectRecord = new ProjectRecord(name, description, jobs.First().Id, DateTime.UtcNow);
+				var projectRecord = new ProjectRecord(name, description, jobs.First().Id, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow);
 
 				projectId = _projectReaderWriter.Insert(projectRecord);
 
@@ -180,9 +182,12 @@ namespace MSetRepo
 			}
 			else
 			{
-				result = new Project(projectRecord.Id, projectRecord.Name ?? projectRecord.ProjectNameTemporary, projectRecord.Description, jobs, 
-					colorBandSets, lookupColorMapByTargetIteration, projectRecord.ColorBandSetResolutionStrategy, 
-					projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc);
+				result = new Project(projectRecord.Id, projectRecord.Name ?? projectRecord.ProjectNameTemporary, projectRecord.Description, jobs,
+					colorBandSets, lookupColorMapByTargetIteration, projectRecord.ColorBandSetResolutionStrategy,
+					projectRecord.CurrentJobId, projectRecord.DateCreatedUtc, lastSavedUtc, lastAccessedUtc)
+				{
+					IsArchived = projectRecord.IsArchived
+				};
 			}
 
 			return result;
@@ -343,7 +348,7 @@ namespace MSetRepo
 
 		private bool TryGetProjectInfoInternal(ProjectRecord projectRec, SubdivisonReaderWriter subdivisionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter, [NotNullWhen(true)] out IProjectInfo? projectInfo)
 		{
-			var dateCreated = projectRec.DateCreated.ToLocalTime();
+			var dateCreated = projectRec.DateCreatedUtc.ToLocalTime();
 			var lastAccessed = projectRec.LastAccessedUtc;
 			var currentJobId = projectRec.CurrentJobId;
 
@@ -1102,7 +1107,9 @@ namespace MSetRepo
 			{
 				Width = posterSizeRounded.Width,
 				Height = posterSizeRounded.Height,
-				TargetIterationColorMapRecords = targetIterationColorMapRecords.ToArray()
+				TargetIterationColorMapRecords = targetIterationColorMapRecords.ToArray(),
+				ColorBandSetResolutionStrategy = ColorBandSetResolutionStrategy.PerProject,
+				IsArchived = false
 			};
 
 			Debug.WriteLine($"Creating new Poster with name: {name}.");
@@ -1354,7 +1361,16 @@ namespace MSetRepo
 			//UpdateAllJobsToUseColorBandSetName();
 
 			//RemoveUseEscapVelocitiesFromAllJobs();
+
+			//AddDateCreatedAndLastAccessedPropertiesToAllProjectRecords();
 		}
+
+		//public long AddDateCreatedAndLastAccessedPropertiesToAllProjectRecords()
+		//{
+		//	var result = _projectReaderWriter.AddDateCreatedAndLastAccessedPropertiesToAllProjectRecords();
+
+		//	return result;
+		//}
 
 		public long RemoveUseEscapVelocitiesFromAllJobs()
 		{

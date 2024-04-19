@@ -25,8 +25,8 @@ namespace ProjectRepo.Entities
 		public DateTime DateRecordLastSavedUtc { get; set; }
 		public DateTime DateLastUsedUtc { get; set; }
 
-		[BsonDefaultValue(false)]
 		[BsonIgnoreIfDefault]
+		[BsonDefaultValue(false)]
 		public bool UsingPercentages { get; set; }
 	}
 

@@ -139,6 +139,8 @@ namespace MSS.Common.MSet
 
 		public DateTime DateCreated => Id == ObjectId.Empty ? LastSavedUtc : Id.CreationTime;
 
+		public bool IsArchived { get; set; }
+
 		private ObservableCollection<JobTreeNode>? _jobItems;
 
 		public ObservableCollection<JobTreeNode>? JobNodes

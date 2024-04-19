@@ -161,5 +161,49 @@ namespace ProjectRepo
 
 		//	return GetReturnCount(updateResult) ?? 0;
 		//}
+
+
+		//public long AddDateCreatedAndLastAccessedPropertiesToAllProjectRecords()
+		//{
+		//	var numberUpdated = 0L;
+
+		//	var options = new UpdateOptions { IsUpsert = false };
+
+		//	var pRecs = GetAll();
+
+		//	foreach(var rec in pRecs)
+		//	{
+		//		var dateCreatedUtc = rec.DateCreatedUtc;
+
+		//		if (dateCreatedUtc == DateTime.MinValue)
+		//		{
+		//			dateCreatedUtc = rec.DateCreated;
+		//		}
+
+		//		var lastAccessedUtc = rec.LastAccessedUtc;
+
+		//		if (lastAccessedUtc == DateTime.MinValue)
+		//		{
+		//			lastAccessedUtc = rec.LastSavedUtc;
+		//		}
+
+		//		var filter = Builders<ProjectRecord>.Filter.Eq("_id", rec.Id);
+
+		//		var updateDefinition = Builders<ProjectRecord>.Update
+		//			.Set(f => f.DateCreatedUtc, DateTime.UtcNow)
+		//			.Set(f => f.LastAccessedUtc, DateTime.UtcNow)
+		//			.Unset(f => f.ProjectNameTemporary);
+
+		//		var updateResult = Collection.UpdateOne(filter, updateDefinition, options);
+
+		//		if (updateResult.IsModifiedCountAvailable)
+		//		{
+		//			numberUpdated += updateResult.ModifiedCount;
+		//		}
+		//	}
+
+		//	return numberUpdated;
+		//}
+
 	}
 }

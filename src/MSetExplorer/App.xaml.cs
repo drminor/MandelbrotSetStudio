@@ -184,6 +184,7 @@ namespace MSetExplorer
 			{
 				DoSchemaUpdates(_repositoryAdapters);
 				MessageBox.Show("Schema Updates are completed.");
+				Current.Shutdown();
 				return;
 			}
 
@@ -471,6 +472,8 @@ namespace MSetExplorer
 				//pa.AddIsIsAlternatePathHeadToAllJobs();
 				//pa.RemoveColorBandSetIdFromProject();
 				//pa.RemoveEscapeVels();
+
+				//pa.AddDateCreatedAndLastAccessedPropertiesToAllProjectRecords();
 			}
 
 			if (repositoryAdapters.MapSectionAdapter is MapSectionAdapter maForSu)

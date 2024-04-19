@@ -47,12 +47,12 @@ namespace MSetRepo
 		{
 			var lookupColorMapByTargetIterationRecs = source.GetTargetIterationColorMapRecords().ToArray();
 
-			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.LastSavedUtc)
+			var result = new ProjectRecord(source.Name, source.Description, source.CurrentJobId, source.DateCreatedUtc, source.LastSavedUtc, source.LastSavedUtc)
 			{
 				Id = source.Id,
-				LastAccessedUtc = source.LastAccessedUtc,
 				TargetIterationColorMapRecords = lookupColorMapByTargetIterationRecs,
-				ColorBandSetResolutionStrategy = source.ColorBandSetResolutionStrategy
+				ColorBandSetResolutionStrategy = source.ColorBandSetResolutionStrategy,
+				IsArchived = source.IsArchived
 			};
 
 			return result;
@@ -243,8 +243,9 @@ namespace MSetRepo
 		public PosterRecord MapTo(Poster source)
 		{
 			// TODO: Update all PosterRecords to use double instead of int for the Width and Height
-
 			var posterSizeRounded = source.PosterSize.Round(MidpointRounding.AwayFromZero);
+
+			var lookupColorMapByTargetIterationRecs = source.GetTargetIterationColorMapRecords().ToArray();
 
 			var result = new PosterRecord(
 				Name: source.Name,
@@ -259,7 +260,10 @@ namespace MSetRepo
 			{
 				Id = source.Id,
 				Width = posterSizeRounded.Width,
-				Height = posterSizeRounded.Height
+				Height = posterSizeRounded.Height,
+				TargetIterationColorMapRecords = lookupColorMapByTargetIterationRecs,
+				ColorBandSetResolutionStrategy = source.ColorBandSetResolutionStrategy,
+				IsArchived = source.IsArchived
 			};
 
 			return result;
