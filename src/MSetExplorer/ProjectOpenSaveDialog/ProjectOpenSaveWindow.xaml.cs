@@ -1,4 +1,5 @@
 ﻿using MSS.Common;
+using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,16 +20,16 @@ namespace MSetExplorer
 			_vm = (IProjectOpenSaveViewModel)DataContext;
 
 			Loaded += ProjectOpenSaveWindow_Loaded;
-			Unloaded += ProjectOpenSaveWindow_Unloaded;
+			//Unloaded += ProjectOpenSaveWindow_Unloaded;
 			ContentRendered += ProjectOpenSaveWindow_ContentRendered;
 			InitializeComponent();
 		}
 
-		private void ProjectOpenSaveWindow_Unloaded(object sender, RoutedEventArgs e)
-		{
-			Unloaded -= ProjectOpenSaveWindow_Unloaded;
-			_vm.PropertyChanged -= VM_PropertyChanged;
-		}
+		//private void ProjectOpenSaveWindow_Unloaded(object sender, RoutedEventArgs e)
+		//{
+		//	Unloaded -= ProjectOpenSaveWindow_Unloaded;
+		//	_vm.PropertyChanged -= VM_PropertyChanged;
+		//}
 
 		#endregion
 
@@ -47,7 +48,7 @@ namespace MSetExplorer
 			{
 				_vm = (IProjectOpenSaveViewModel)DataContext;
 				borderTop.DataContext = DataContext;
-				_vm.PropertyChanged += VM_PropertyChanged;
+				//_vm.PropertyChanged += VM_PropertyChanged;
 
 				btnSave.Content = _vm.DialogType == DialogType.Open ? "Open" : "Save";
 				Title = _vm.DialogType == DialogType.Open ? "Open Project" : "Save Project";
@@ -66,12 +67,12 @@ namespace MSetExplorer
 			}
 		}
 
-		private void VM_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			lvProjects.SelectionChanged -= LvProjects_SelectionChanged;
-			lvProjects.ItemsSource = _vm.ProjectInfosView; // .ProjectInfos;
-			lvProjects.SelectionChanged += LvProjects_SelectionChanged;
-		}
+		//private void VM_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		//{
+		//	lvProjects.SelectionChanged -= LvProjects_SelectionChanged;
+		//	lvProjects.ItemsSource = _vm.ProjectInfosView; // .ProjectInfos;
+		//	lvProjects.SelectionChanged += LvProjects_SelectionChanged;
+		//}
 
 		private void ProjectOpenSaveWindow_ContentRendered(object? sender, System.EventArgs e)
 		{
@@ -238,19 +239,28 @@ namespace MSetExplorer
 
 		private void SortAToZ_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.SortDescending = mnuItem_sortAz.IsChecked;
+			_vm.IsSortedDescending = !mnuItem_sortAz.IsChecked;
 			mnuItem_sortZa.IsChecked = !mnuItem_sortAz.IsChecked;
 		}
 
 		private void SortZToA_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.SortDescending = mnuItem_sortZa.IsChecked;
+			_vm.IsSortedDescending = mnuItem_sortZa.IsChecked;
 			mnuItem_sortAz.IsChecked = !mnuItem_sortZa.IsChecked;
+
+			if (_vm.LastAccessedAfterDate == DateTime.MinValue)
+			{
+				_vm.LastAccessedAfterDate = DateTime.UtcNow.AddMonths(1);
+			}
+			else
+			{
+				_vm.LastAccessedAfterDate = DateTime.MinValue;
+			}
 		}
 
 		private void SortByLastAccessed_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.SortByFieldName = "LastAccessed";
+			_vm.SortByFieldName = "LastAccessedUtc";
 
 			mnuItem_sortByDateCreated.IsChecked = false;
 			mnuItem_sortByName.IsChecked = false;
@@ -258,7 +268,7 @@ namespace MSetExplorer
 
 		private void SortByDateCreated_Click(object sender, RoutedEventArgs e)
 		{
-			_vm.SortByFieldName = "DateCreated";
+			_vm.SortByFieldName = "DateCreatedUtc";
 
 			mnuItem_sortByLastAccessed.IsChecked = false;
 			mnuItem_sortByName.IsChecked = false;

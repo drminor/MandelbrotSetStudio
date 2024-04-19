@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+//using static ProjectRepo.JobReaderWriter;
 
 namespace MSetRepo
 {
@@ -346,7 +347,7 @@ namespace MSetRepo
 			var lastAccessed = projectRec.LastAccessedUtc;
 			var currentJobId = projectRec.CurrentJobId;
 
-			var jobInfos = _jobReaderWriter.GetJobSubdivisionInfosForOwner(projectRec.Id);
+			var jobInfos = _jobReaderWriter.GetJobSubdivisionInfosForOwner(projectRec.Id).ToList();
 
 			if (jobInfos.Any())
 			{
@@ -373,8 +374,7 @@ namespace MSetRepo
 				var jobCount = jobInfos.Count();
 
 				//var jobIds = jobInfos.Select(x => x.Id).ToList();
-				//var bytes = GetBytes(jobIds, jobMapSectionReaderWriter);
-				var sizeInBytes = 0;
+				var sizeInBytes = GetBytes(jobInfos, jobMapSectionReaderWriter);
 
 				projectInfo = new ProjectInfo(
 					projectRec.Id, 
@@ -1314,6 +1314,21 @@ namespace MSetRepo
 			foreach (var jobId in jobIds)
 			{
 				var numberOfMapSectionsForJob = jobMapSectionReaderWriter.GetCountOfMapSectionsByJobId(jobId);
+				numberOfMapSections += numberOfMapSectionsForJob;
+			}
+
+			var result = numberOfMapSections * 64300;
+
+			return result;
+		}
+
+		private int GetBytes(List<JobReaderWriter.JobSudivisionInfo> jobRecs, JobMapSectionReaderWriter jobMapSectionReaderWriter)
+		{
+			var numberOfMapSections = 0;
+
+			foreach (var jobRec in jobRecs)
+			{
+				var numberOfMapSectionsForJob = jobMapSectionReaderWriter.GetCountOfMapSectionsByJobId(jobRec.Id);
 				numberOfMapSections += numberOfMapSectionsForJob;
 			}
 

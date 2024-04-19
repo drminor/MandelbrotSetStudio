@@ -16,9 +16,12 @@ namespace MSetExplorer
 {
 	public class ProjectOpenSaveViewModel : IProjectOpenSaveViewModel
 	{
+		#region Private Fields
+
 		private readonly IProjectAdapter _projectAdapter;
 		private readonly IMapSectionAdapter _mapSectionAdapter;
 
+		private readonly ObservableCollection<IProjectInfo> _projectInfos;
 		private ListCollectionView _projectInfosView;
 		private IProjectInfo? _selectedProject;
 
@@ -28,9 +31,11 @@ namespace MSetExplorer
 		private bool _userIsSettingTheName;
 
 		private string _sortByFieldName;
-		private bool _sortDescending;
+		private bool _isSortedDescending;
 
 		private DateTime _lastAccessedAfterDate;
+
+		#endregion
 
 		#region Constructor
 
@@ -42,19 +47,46 @@ namespace MSetExplorer
 
 			DialogType = dialogType;
 
-			//ProjectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
-			//SelectedProject = ProjectInfos.FirstOrDefault(x => x.Name == initialName);
+			_lastAccessedAfterDate = DateTime.Now.AddMonths(-1);
+			//_lastAccessedAfterDate = DateTime.MinValue;
 
-			_sortByFieldName = "LastAccessed";
-			_sortDescending = true;
+			_projectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
 
-			//_lastAccessedAfterDate = DateTime.Now.AddMonths(-1);
-			_lastAccessedAfterDate = DateTime.MinValue;
+			_sortByFieldName = "LastAccessedUtc";
+			_isSortedDescending = true;
 
-			//ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, initialName);
+			_projectInfosView = BuildProjectInfosView(_projectInfos, _sortByFieldName, _isSortedDescending, initialName);
 
-			_projectInfosView = BuildProjectInfosView(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, initialName);
+			if (LastAccessedAfterDate != DateTime.MinValue)
+			{
+				_projectInfosView.Filter = IncludeInView;
+			}
 
+			_projectInfosView.CurrentChanged += View_CurrentChanged;
+		}
+
+		private bool IncludeInView(object item)
+		{
+			if (_lastAccessedAfterDate == DateTime.MinValue)
+			{
+				return true;
+			}
+
+			if (item is IProjectInfo projectInfo)
+			{
+				var result = projectInfo.LastSavedUtc > _lastAccessedAfterDate;
+				return result;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+
+		private void View_CurrentChanged(object? sender, EventArgs e)
+		{
+			Debug.WriteLine($"The current project is now: {_projectInfosView.CurrentItem}.");
 		}
 
 		#endregion
@@ -62,12 +94,6 @@ namespace MSetExplorer
 		#region Public Properties
 
 		public DialogType DialogType { get; }
-
-		//public ObservableCollection<IProjectInfo> ProjectInfos
-		//{ 
-		//	get;
-		//	private set;
-		//}
 
 		public string? SelectedName
 		{
@@ -138,33 +164,23 @@ namespace MSetExplorer
 				if (value != _sortByFieldName)
 				{
 					_sortByFieldName = value;
-
-					var currentName = SelectedProject?.Name;
-					//ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
-					ProjectInfosView = BuildProjectInfosView(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
-
-
+					UpdateSortBy(ProjectInfosView, _sortByFieldName, _isSortedDescending);
 					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.SortByFieldName));
 				}
 			}
 		}
 
-		public bool SortDescending
+		public bool IsSortedDescending
 		{
-			get => _sortDescending;
+			get => _isSortedDescending;
 
 			set
 			{
-				if (value !=_sortDescending)
+				if (value !=_isSortedDescending)
 				{
-					_sortDescending = value;
-
-					var currentName = SelectedProject?.Name;
-					//ProjectInfos = GetNewListSource(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
-					ProjectInfosView = BuildProjectInfosView(_sortByFieldName, _sortDescending, _lastAccessedAfterDate, currentName);
-
-
-					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.SortDescending));
+					_isSortedDescending = value;
+					UpdateSortBy(ProjectInfosView, _sortByFieldName, _isSortedDescending);
+					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.IsSortedDescending));
 				}
 			}
 		}
@@ -177,6 +193,8 @@ namespace MSetExplorer
 				if (value != _lastAccessedAfterDate)
 				{
 					_lastAccessedAfterDate = value;
+					_projectInfosView.Refresh();
+
 					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.LastAccessedAfterDate));
 				}
 			}
@@ -191,7 +209,7 @@ namespace MSetExplorer
 				var valueIsNew = value != _projectInfosView;
 				Debug.WriteLine($"The CbsHistogramViewModel is getting a new ColorBandsView. ValueIsNew is {valueIsNew}.");
 
-				_projectInfosView.CurrentChanged += ProjectInfosView_CurrentChanged;
+				_projectInfosView.CurrentChanged += View_CurrentChanged;
 
 				_projectInfosView = value;
 
@@ -200,23 +218,16 @@ namespace MSetExplorer
 				OnPropertyChanged(nameof(IProjectOpenSaveViewModel.ProjectInfosView));
 				OnPropertyChanged(nameof(IProjectOpenSaveViewModel.SelectedProject));
 
-				_projectInfosView.CurrentChanged += ProjectInfosView_CurrentChanged;
+				_projectInfosView.CurrentChanged += View_CurrentChanged;
 			}
-		}
-
-		private void ProjectInfosView_CurrentChanged(object? sender, EventArgs e)
-		{
-			throw new NotImplementedException();
 		}
 
 		#endregion
 
 		#region Private Methods
 
-		private ListCollectionView BuildProjectInfosView(string sortByFieldName, bool sortDescending, DateTime lastAccessedAfterDate, string? initialName)
+		private ListCollectionView BuildProjectInfosView(ObservableCollection<IProjectInfo> projectInfos, string sortByFieldName, bool sortDescending, string? initialName)
 		{
-			var projectInfos = OrderTheList(_projectAdapter.GetAllProjectInfos(lastAccessedAfterDate), sortByFieldName, sortDescending);
-
 			ListCollectionView result;
 			if (projectInfos == null)
 			{
@@ -226,7 +237,9 @@ namespace MSetExplorer
 			else
 			{
 				result = (ListCollectionView)CollectionViewSource.GetDefaultView(projectInfos);
-				
+
+				UpdateSortBy(result, sortByFieldName, sortDescending);
+
 				if (initialName != null)
 				{
 					SelectedProject = projectInfos.FirstOrDefault(x => x.Name == initialName);
@@ -234,60 +247,18 @@ namespace MSetExplorer
 				}
 			}
 
+			result.Filter = IncludeInView;
+
 			return result;
 		}
 
-		//private ObservableCollection<IProjectInfo> GetNewListSource(string sortByFieldName, bool sortDescending, DateTime lastAccessedAfterDate, string? initialName)
-		//{
-		//	var result = OrderTheList(_projectAdapter.GetAllProjectInfos(lastAccessedAfterDate), sortByFieldName, sortDescending);
-
-		//	if (initialName != null)
-		//	{
-		//		SelectedProject = result.FirstOrDefault(x => x.Name == initialName);
-
-		//		var view = CollectionViewSource.GetDefaultView(result);
-		//		_ = view.MoveCurrentTo(SelectedProject);
-		//	}
-
-		//	return result;
-		//}
-
-		private ObservableCollection<IProjectInfo> OrderTheList(IEnumerable<IProjectInfo> theList, string sortByFieldName, bool sortDescending)
+		private void UpdateSortBy(ListCollectionView collectionView, string sortByFieldName, bool sortDescending)
 		{
-			ObservableCollection<IProjectInfo> result;
+			var x = collectionView.CanSort;
+			collectionView.SortDescriptions.Clear();
 
-			switch (sortByFieldName)
-			{
-				case "LastAccessed":
-					{
-						result = sortDescending 
-							? new ObservableCollection<IProjectInfo>(theList.OrderByDescending(x => x.LastAccessedUtc)) 
-							: new ObservableCollection<IProjectInfo>(theList.OrderBy(x => x.LastAccessedUtc));
-						break;
-					}
-
-				case "DateCreated":
-					{
-						result = sortDescending 
-							? new ObservableCollection<IProjectInfo>(theList.OrderByDescending(x => x.DateCreatedUtc)) 
-							: new ObservableCollection<IProjectInfo>(theList.OrderBy(x => x.DateCreatedUtc));
-						break;
-					}
-
-				case "Name":
-					{
-						result = sortDescending 
-							? new ObservableCollection<IProjectInfo>(theList.OrderByDescending(x => x.Name)) 
-							: new ObservableCollection<IProjectInfo>(theList.OrderBy(x => x.Name));
-						break;
-					}
-
-				default:
-					result = new ObservableCollection<IProjectInfo>();
-					break;
-			}
-
-			return result;
+			var sortDirection = sortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending;
+			collectionView.SortDescriptions.Add(new SortDescription(sortByFieldName, sortDirection));
 		}
 
 		#endregion

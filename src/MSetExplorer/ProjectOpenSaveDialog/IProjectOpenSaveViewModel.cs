@@ -26,7 +26,7 @@ namespace MSetExplorer
 		ViewModelFactory ViewModelFactory { get; }
 
 		string SortByFieldName { get; set; }
-		bool SortDescending { get; set; }
+		bool IsSortedDescending { get; set; }
 
 		DateTime LastAccessedAfterDate { get; set; }
 	}
