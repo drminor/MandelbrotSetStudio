@@ -483,6 +483,8 @@ namespace MSetExplorer
 			Debug.WriteLine($"\n\nOpening Poster: {name}.\n");
 			if (_projectAdapter.TryGetPoster(name, out var poster))
 			{
+				_projectAdapter.UpdatePosterLastAccessed(poster);
+
 				CurrentPoster = poster;
 				return true;
 			}

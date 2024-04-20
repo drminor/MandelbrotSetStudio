@@ -33,7 +33,8 @@ namespace MSetExplorer
 		private string _sortByFieldName;
 		private bool _isSortedDescending;
 
-		private DateTime _lastAccessedAfterDate;
+		//private DateTime _lastAccessedAfterDate;
+		private int _numberOfRecordsToInclude;
 
 		#endregion
 
@@ -47,42 +48,40 @@ namespace MSetExplorer
 
 			DialogType = dialogType;
 
-			_lastAccessedAfterDate = DateTime.Now.AddMonths(-1);
+			//_lastAccessedAfterDate = DateTime.Now.AddMonths(-1);
 			//_lastAccessedAfterDate = DateTime.MinValue;
+			_numberOfRecordsToInclude = 10;
 
-			_projectInfos = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
 
 			_sortByFieldName = "LastAccessedUtc";
 			_isSortedDescending = true;
 
+			_projectInfos =	new ObservableCollection<IProjectInfo>(GetProjectInfos(_numberOfRecordsToInclude));
+
 			_projectInfosView = BuildProjectInfosView(_projectInfos, _sortByFieldName, _isSortedDescending, initialName);
 
-			if (LastAccessedAfterDate != DateTime.MinValue)
-			{
-				_projectInfosView.Filter = IncludeInView;
-			}
+			//_projectInfosView.Filter = IncludeInView;
 
 			_projectInfosView.CurrentChanged += View_CurrentChanged;
 		}
 
-		private bool IncludeInView(object item)
-		{
-			if (_lastAccessedAfterDate == DateTime.MinValue)
-			{
-				return true;
-			}
+		//private bool IncludeInView(object item)
+		//{
+		//	if (_lastAccessedAfterDate == DateTime.MinValue)
+		//	{
+		//		return true;
+		//	}
 
-			if (item is IProjectInfo projectInfo)
-			{
-				var result = projectInfo.LastSavedUtc > _lastAccessedAfterDate;
-				return result;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
+		//	if (item is IProjectInfo projectInfo)
+		//	{
+		//		var result = projectInfo.LastSavedUtc > _lastAccessedAfterDate;
+		//		return result;
+		//	}
+		//	else
+		//	{
+		//		return false;
+		//	}
+		//}
 
 		private void View_CurrentChanged(object? sender, EventArgs e)
 		{
@@ -185,17 +184,34 @@ namespace MSetExplorer
 			}
 		}
 
-		public DateTime LastAccessedAfterDate
+		//public DateTime LastAccessedAfterDate
+		//{
+		//	get => _lastAccessedAfterDate;
+		//	set
+		//	{
+		//		if (value != _lastAccessedAfterDate)
+		//		{
+		//			_lastAccessedAfterDate = value;
+		//			_projectInfosView.Refresh();
+
+		//			OnPropertyChanged(nameof(IProjectOpenSaveViewModel.LastAccessedAfterDate));
+		//		}
+		//	}
+		//}
+
+		public int NumberOfRecordsToInclude
 		{
-			get => _lastAccessedAfterDate;
+			get => _numberOfRecordsToInclude;
 			set
 			{
-				if (value != _lastAccessedAfterDate)
+				if (value != _numberOfRecordsToInclude)
 				{
-					_lastAccessedAfterDate = value;
-					_projectInfosView.Refresh();
+					_numberOfRecordsToInclude = value;
 
-					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.LastAccessedAfterDate));
+
+					UpdateProjectInfos(_numberOfRecordsToInclude);
+
+					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.NumberOfRecordsToInclude));
 				}
 			}
 		}
@@ -226,6 +242,22 @@ namespace MSetExplorer
 
 		#region Private Methods
 
+		private IEnumerable<IProjectInfo> GetProjectInfos(int numberOfRecordsToInclude)
+		{
+			IEnumerable<IProjectInfo> result;
+				
+			if (numberOfRecordsToInclude == int.MaxValue)
+			{
+				result = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
+			}
+			else
+			{
+				result = new ObservableCollection<IProjectInfo>(_projectAdapter.GetProjectInfosByLastAccessed(_numberOfRecordsToInclude));
+			}
+
+			return result;
+		}
+
 		private ListCollectionView BuildProjectInfosView(ObservableCollection<IProjectInfo> projectInfos, string sortByFieldName, bool sortDescending, string? initialName)
 		{
 			ListCollectionView result;
@@ -247,7 +279,7 @@ namespace MSetExplorer
 				}
 			}
 
-			result.Filter = IncludeInView;
+			//result.Filter = IncludeInView;
 
 			return result;
 		}
@@ -259,6 +291,47 @@ namespace MSetExplorer
 
 			var sortDirection = sortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending;
 			collectionView.SortDescriptions.Add(new SortDescription(sortByFieldName, sortDirection));
+		}
+
+		private void UpdateProjectInfos(int numberOfRecordsToInclude)
+		{
+			IEnumerable<IProjectInfo> projectInfos;
+
+			if (numberOfRecordsToInclude == int.MaxValue)
+			{
+				projectInfos = _projectAdapter.GetAllProjectInfos();
+			}
+			else
+			{
+				projectInfos = _projectAdapter.GetProjectInfosByLastAccessed(_numberOfRecordsToInclude);
+			}
+
+			ReBuildProjectInfosView(projectInfos, _sortByFieldName, _isSortedDescending, _selectedName);
+		}
+
+		private void ReBuildProjectInfosView(IEnumerable<IProjectInfo> projectInfos, string sortByFieldName, bool sortDescending, string? initialName)
+		{
+			if (projectInfos == null)
+			{
+				_projectInfos.Clear();
+			}
+			else
+			{
+				_projectInfos.Clear();
+
+				foreach(var pi in projectInfos)
+				{
+					_projectInfos.Add(pi);
+				}
+
+				UpdateSortBy(ProjectInfosView, sortByFieldName, sortDescending);
+
+				if (initialName != null)
+				{
+					SelectedProject = projectInfos.FirstOrDefault(x => x.Name == initialName);
+					_ = ProjectInfosView.MoveCurrentTo(SelectedProject);
+				}
+			}
 		}
 
 		#endregion

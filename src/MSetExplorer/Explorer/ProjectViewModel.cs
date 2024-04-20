@@ -347,6 +347,8 @@ namespace MSetExplorer
 				}
 
 				result = !project.CurrentJob.IsEmpty;
+
+				_projectAdapter.UpdateProjectLastAccessed(project);
 			}
 			else
 			{

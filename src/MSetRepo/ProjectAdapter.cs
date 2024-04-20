@@ -215,6 +215,11 @@ namespace MSetRepo
 			_projectReaderWriter.UpdateTargetIterationMap(project.Id, project.LastAccessedUtc, project.GetTargetIterationColorMapRecords().ToArray(), project.ColorBandSetResolutionStrategy);
 		}
 
+		public void UpdateProjectLastAccessed(Project project)
+		{
+			_projectReaderWriter.UpdateLastAccessed(project.Id, DateTime.UtcNow);
+		}
+
 		public bool DeleteProject(ObjectId projectId)
 		{
 			var jobIds = _jobReaderWriter.GetJobIdsByOwner(projectId);
@@ -319,6 +324,25 @@ namespace MSetRepo
 			var result = filteredRecs.Select(x => GetProjectInfoInternal(x, subdivisionReaderWriter, jobMapSectionReaderWriter));
 
 			return result;
+		}
+
+		public IEnumerable<IProjectInfo> GetProjectInfosByLastAccessed(int? numberOfRecordsToInclude)
+		{
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+			if (numberOfRecordsToInclude.HasValue)
+			{
+				var records = _projectReaderWriter.GetLastXRecordsAccessed(numberOfRecordsToInclude);
+				var result = records.Select(x => GetProjectInfoInternal(x, subdivisionReaderWriter, jobMapSectionReaderWriter));
+				return result;
+			}
+			else
+			{
+				var records = _projectReaderWriter.GetAll();
+				var result = records.Select(x => GetProjectInfoInternal(x, subdivisionReaderWriter, jobMapSectionReaderWriter));
+				return result;
+			}
 		}
 
 		private  IProjectInfo GetProjectInfoInternal(ProjectRecord projectRec, SubdivisonReaderWriter subdivisionReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)
@@ -1227,6 +1251,11 @@ namespace MSetRepo
 			_posterReaderWriter.UpdateTargetIterationMap(poster.Id, poster.LastAccessedUtc, poster.GetTargetIterationColorMapRecords().ToArray(), poster.ColorBandSetResolutionStrategy);
 		}
 
+		public void UpdatePosterLastAccessed(Poster poster)
+		{
+			_posterReaderWriter.UpdateLastAccessed(poster.Id, DateTime.UtcNow);
+		}
+
 		public bool DeletePoster(ObjectId posterId)
 		{
 			var posterReaderWriter = new PosterReaderWriter(_dbProvider);
@@ -1277,6 +1306,26 @@ namespace MSetRepo
 			var result = allPosterRecords.Select(x => GetPosterInfoInternal(x, jobReaderWriter, jobMapSectionReaderWriter));
 
 			return result;
+		}
+
+		public IEnumerable<IPosterInfo> GetPosterInfosByLastAccessed(int? numberOfRecordsToInclude)
+		{
+			var jobMapSectionReaderWriter = new JobMapSectionReaderWriter(_dbProvider);
+			var subdivisionReaderWriter = new SubdivisonReaderWriter(_dbProvider);
+
+
+			if (numberOfRecordsToInclude.HasValue)
+			{
+				var records = _posterReaderWriter.GetLastXRecordsAccessed(numberOfRecordsToInclude);
+				var result = records.Select(x => GetPosterInfoInternal(x, _jobReaderWriter, jobMapSectionReaderWriter));
+				return result;
+			}
+			else
+			{
+				var records = _posterReaderWriter.GetAll();
+				var result = records.Select(x => GetPosterInfoInternal(x, _jobReaderWriter, jobMapSectionReaderWriter));
+				return result;
+			}
 		}
 
 		private IPosterInfo GetPosterInfoInternal(PosterRecord posterRecord, JobReaderWriter jobReaderWriter, JobMapSectionReaderWriter jobMapSectionReaderWriter)

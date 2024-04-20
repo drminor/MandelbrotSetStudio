@@ -28,6 +28,7 @@ namespace MSetExplorer
 		string SortByFieldName { get; set; }
 		bool IsSortedDescending { get; set; }
 
-		DateTime LastAccessedAfterDate { get; set; }
+		//DateTime LastAccessedAfterDate { get; set; }
+		int NumberOfRecordsToInclude { get; set; }
 	}
 }

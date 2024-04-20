@@ -233,14 +233,14 @@ namespace MSetExplorer
 			_vm.IsSortedDescending = mnuItem_sortZa.IsChecked;
 			mnuItem_sortAz.IsChecked = !mnuItem_sortZa.IsChecked;
 
-			if (_vm.LastAccessedAfterDate == DateTime.MinValue)
-			{
-				_vm.LastAccessedAfterDate = DateTime.UtcNow.AddMonths(-1);
-			}
-			else
-			{
-				_vm.LastAccessedAfterDate = DateTime.MinValue;
-			}
+			//if (_vm.LastAccessedAfterDate == DateTime.MinValue)
+			//{
+			//	_vm.LastAccessedAfterDate = DateTime.UtcNow.AddMonths(-1);
+			//}
+			//else
+			//{
+			//	_vm.LastAccessedAfterDate = DateTime.MinValue;
+			//}
 		}
 
 		private void SortByLastAccessed_Click(object sender, RoutedEventArgs e)
@@ -265,6 +265,30 @@ namespace MSetExplorer
 
 			mnuItem_sortByLastAccessed.IsChecked = false;
 			mnuItem_sortByDateCreated.IsChecked = false;
+		}
+
+		private void Include10LastAccessed_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.NumberOfRecordsToInclude = 10;
+
+			mnuItem_includeLast20Accessed.IsChecked = false;
+			mnuItem_includeAll.IsChecked = false;
+		}
+
+		private void Include20LastAccessed_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.NumberOfRecordsToInclude = 20;
+
+			mnuItem_includeLast10Accessed.IsChecked = false;
+			mnuItem_includeAll.IsChecked = false;
+		}
+
+		private void IncludeAll_Click(object sender, RoutedEventArgs e)
+		{
+			_vm.NumberOfRecordsToInclude = int.MaxValue;
+
+			mnuItem_includeLast10Accessed.IsChecked = false;
+			mnuItem_includeLast20Accessed.IsChecked = false;
 		}
 
 		#endregion

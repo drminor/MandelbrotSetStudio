@@ -24,6 +24,14 @@ namespace ProjectRepo
 			return posterRecords;
 		}
 
+		public IEnumerable<PosterRecord> GetLastXRecordsAccessed(int? numberOfRecordsToInclude)
+		{
+			var filter = Builders<PosterRecord>.Filter.Empty;
+			var posterRecords = Collection.Find(filter).SortByDescending(x => x.LastAccessedUtc).Limit(numberOfRecordsToInclude).ToEnumerable();
+
+			return posterRecords;
+		}
+
 		public IEnumerable<ObjectId> GetAllIds()
 		{
 			var projection1 = Builders<PosterRecord>.Projection.Expression
@@ -146,6 +154,16 @@ namespace ProjectRepo
 				.Set(u => u.TargetIterationColorMapRecords, targetIterationColorMapRecords)
 				.Set(u => u.ColorBandSetResolutionStrategy, colorBandSetResolutionStrategy)
 				.Set(u => u.LastSavedUtc, DateTime.UtcNow);
+
+			_ = Collection.UpdateOne(filter, updateDefinition);
+		}
+
+		public void UpdateLastAccessed(ObjectId posterId, DateTime lastAccessedUtc)
+		{
+			var filter = Builders<PosterRecord>.Filter.Eq("_id", posterId);
+
+			var updateDefinition = Builders<PosterRecord>.Update
+				.Set(u => u.LastAccessedUtc, lastAccessedUtc);
 
 			_ = Collection.UpdateOne(filter, updateDefinition);
 		}

@@ -31,9 +31,11 @@ namespace MSS.Common
 		void UpdateProjectDescription(ObjectId projectId, string? description);
 		void UpdateProjectName(ObjectId projectId, string name);
 		void UpdateProjectTargetIterationMap(Project project);
+		void UpdateProjectLastAccessed(Project project);
 
 		bool DeleteProject(ObjectId projectId);
 		IEnumerable<IProjectInfo> GetAllProjectInfos();
+		IEnumerable<IProjectInfo> GetProjectInfosByLastAccessed(int? numberOfRecordsToInclude);
 
 		Poster? CreatePoster(string name, string? description, SizeDbl posterSize, ObjectId sourceJobId, List<Job> jobs, List<ColorBandSet> colorBandSets,
 			IEnumerable<TargetIterationColorMapRecord> targetIterationColorMapRecords);
@@ -52,10 +54,12 @@ namespace MSS.Common
 		void UpdatePosterDescription(ObjectId posterId, string name);
 		void UpdatePosterName(ObjectId posterId, string name);
 		void UpdatePosterTargetIterationMap(Poster poster);
+		void UpdatePosterLastAccessed(Poster poster);
 
 		void UpdatePosterMapArea(Poster poster);
 		bool DeletePoster(ObjectId posterId);
 		IEnumerable<IPosterInfo> GetAllPosterInfos();
+		IEnumerable<IPosterInfo> GetPosterInfosByLastAccessed(int? numberOfRecordsToInclude);
 
 		Job GetJob(ObjectId jobId);
 		ObjectId InsertJob(Job job);
