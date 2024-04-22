@@ -38,7 +38,17 @@ namespace MSetExplorer
             }
         );
 
-        public static readonly RoutedUICommand Apply = new(
+
+		public static readonly RoutedUICommand Distribute = new RoutedUICommand(
+	        text: "Distribute",
+	        name: "Distribute",
+	        ownerType: typeof(ColorBandSetCommands),
+	        inputGestures: new InputGestureCollection() {
+				        new KeyGesture(Key.Divide)
+	        }
+        );
+
+		public static readonly RoutedUICommand Apply = new(
             text: "Apply", 
             name: "Apply", 
             ownerType: typeof(ColorBandSetCommands)

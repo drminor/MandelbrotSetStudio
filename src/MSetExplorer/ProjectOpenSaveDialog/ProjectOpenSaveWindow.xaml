@@ -33,7 +33,7 @@
 
             <MenuItem Header="_Filter">
                 <MenuItem x:Name="mnuItem_includeLast10Accessed" Header="Last 10 Accessed" Click="Include10LastAccessed_Click" IsCheckable="True" IsChecked="True" />
-                <MenuItem x:Name="mnuItem_includeLast20Accessed" Header="Last 20 Accessed" Click="Include20LastAccessed_Click" IsCheckable="True" IsChecked="False" />
+                <!--<MenuItem x:Name="mnuItem_includeLast20Accessed" Header="Last 20 Accessed" Click="Include20LastAccessed_Click" IsCheckable="True" IsChecked="False" />-->
                 <MenuItem x:Name="mnuItem_includeAll" Header="Include All" Click="IncludeAll_Click" IsCheckable="True" IsChecked="False" />
             </MenuItem>
         </Menu>

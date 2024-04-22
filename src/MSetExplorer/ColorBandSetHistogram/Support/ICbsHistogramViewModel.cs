@@ -69,6 +69,8 @@ namespace MSetExplorer
 		void CompleteColorRemoval(int index, ReservedColorBand reservedColorBand);
 		void CompleteBandRemoval(int index);
 
+		void CompleteColorBandsDistribution(int index, ReservedColorBand reservedColorBand);
+
 		ReservedColorBand PopReservedColorBand();
 		void PushReservedColorBand(ReservedColorBand reservedColorBand);
 

@@ -370,7 +370,7 @@ namespace MSetExplorer
 			var result = wpfPlot.Plot.AddScatter(seriesData.DataX, seriesData.DataY);
 
 			var padding = new PixelPadding(
-				left: 100,
+				left: 60,
 				right: 30,
 				bottom: 25,
 				top: 10);

@@ -385,6 +385,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
+		// Insert
 		public void InsertColorBandItem(int colorBandIndex, ColorBandSetEditMode editMode)
 		{
 			if (_cbsHistogramViewModel == null || _cbListViewAnimations == null)
@@ -459,6 +460,18 @@ namespace MSetExplorer
 			{
 				Debug.WriteLine($"The HistogramColorBandControl was unable to Delete the Item at ColorBandIndex: {colorBandIndex}.");
 			}
+		}
+
+		// Distribute
+		public void DistributeColorBandItems(int startIndex, int endIndex, int newColorBandCount)
+		{
+			if (_cbsHistogramViewModel == null || _cbListViewAnimations == null)
+			{
+				return;
+			}
+
+			var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
+			_cbListViewAnimations.AnimateDistributeColor(startIndex, endIndex, newColorBandCount, reservedColorBand);
 		}
 
 		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index, ColorBand? newColorband = null, ReservedColorBand? reservedColorBand = null)
@@ -540,6 +553,16 @@ namespace MSetExplorer
 						break;
 					}
 
+				case ColorBandSetEditOperation.DistributeBands:
+					{
+						if (reservedColorBand == null)
+						{
+							throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
+						}
+
+						_cbsHistogramViewModel?.CompleteColorBandsDistribution(index, reservedColorBand);
+						break;
+					}
 				default:
 					break;
 			}
@@ -1027,6 +1050,8 @@ namespace MSetExplorer
 		DeleteColor,
 
 		InsertBand,
-		DeleteBand
+		DeleteBand,
+
+		DistributeBands
 	}
 }

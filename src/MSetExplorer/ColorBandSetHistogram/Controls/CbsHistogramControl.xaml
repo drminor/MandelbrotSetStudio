@@ -77,6 +77,7 @@
                                     <!--<CommandBinding Command="local:ColorBandSetCommands.Edit" Executed="EditButton_Click" />-->
                                     <CommandBinding Command="local:ColorBandSetCommands.Insert" CanExecute="InsertCommand_CanExecute" Executed="InsertCommand_Executed" />
                                     <CommandBinding Command="local:ColorBandSetCommands.Delete" CanExecute="DeleteCommand_CanExecute" Executed="DeleteCommand_Executed" />
+                                    <CommandBinding Command="local:ColorBandSetCommands.Distribute" CanExecute="DistributeCommand_CanExecute" Executed="DistributeCommand_Executed" />
 
                                     <CommandBinding Command="local:ColorBandSetCommands.Revert" CanExecute="RevertCommand_CanExecute" Executed="RevertCommand_Executed" />
                                     <CommandBinding Command="local:ColorBandSetCommands.Apply" CanExecute="ApplyCommand_CanExecute" Executed="ApplyCommand_Executed" />
@@ -91,6 +92,7 @@
                                     <ContextMenu>
                                         <MenuItem Header="_Insert" Command="local:ColorBandSetCommands.Insert"/>
                                         <MenuItem Header="_Delete" Command="local:ColorBandSetCommands.Delete"/>
+                                        <MenuItem Header="Dis_tribute" Command="local:ColorBandSetCommands.Distribute"/>
                                         <Separator/>
                                         <MenuItem Header="_Revert" Command="local:ColorBandSetCommands.Revert"/>
                                         <MenuItem Header="_Apply" Command="local:ColorBandSetCommands.Apply"/>
@@ -107,7 +109,7 @@
                                         <MenuItem Header="Highlight Selected Band" IsCheckable="True" x:Name="mnuItem_HighlightSelectedBand" Checked="HighlightSelected_Checked" Unchecked="HighlightSelected_Checked" IsChecked="False"/>
                                         <MenuItem Header="Set UsePercentages Globally" IsCheckable="True" x:Name="mnuItem_UsePercentagesGlobally" Checked="UsePercentagesGlobally_Checked" Unchecked="UsePercentagesGlobally_Checked" IsChecked="False"/>
 
-                                        <MenuItem Header="_Details" Command="local:ColorBandSetCommands.ShowDetails"/>
+                                        <MenuItem Header="Detai_ls" Command="local:ColorBandSetCommands.ShowDetails"/>
                                     </ContextMenu>
                                 </local:HistogramColorBandControl.ContextMenu>
                                 
@@ -118,13 +120,13 @@
 
                 </Border>
 
-                <Border x:Name="ColorBandDetail" Grid.Row="0" Grid.RowSpan="2"  Grid.Column="2" BorderThickness="0.75" BorderBrush="Black" Margin="0,10,10,5">
+                <Border x:Name="ColorBandDetail" Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" BorderThickness="0.75" BorderBrush="Black" Margin="0,10,10,5">
                     <Grid Background="Transparent">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="80"/>
                             <RowDefinition Height="*"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="35"/>
-                            <RowDefinition Height="32"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="30"/>
 
                         </Grid.RowDefinitions>
 
@@ -140,7 +142,7 @@
                                     <TextBlock  Text="of" Height="21" Margin="5,0" FontSize="14" />
                                     <TextBox Text="{Binding Path=ColorBandsCount, Mode=OneWay}"  Width="30" Height="21" VerticalAlignment="Center" Margin="0"/>
 
-                                    <Button Content="&lt;" Width="20" Margin="25,0,0,0" Click="MoveLeftButton_Click" />
+                                    <Button Content="&lt;" Width="20" Margin="15,0,0,0" Click="MoveLeftButton_Click" />
                                     <Button Content="&gt;" Width="20" Margin="10,0,0,0"  Click="MoveRightButton_Click" />
                                     
                                 </StackPanel>
@@ -149,9 +151,9 @@
                                 <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="0,3">
 
                                     <TextBlock Height="21" Margin="5,0" FontSize="14" VerticalAlignment="Center" Text="Edit Mode:"/>
-                                    <TextBlock Height="21" Width="80" Margin="3,0,5,0" FontSize="14" VerticalAlignment="Center" Text="{Binding Path=CurrentCbEditModeAsString, Mode=OneWay}"/>
+                                    <TextBlock Height="21" Width="45" Margin="3,0,5,0" FontSize="14" VerticalAlignment="Center" Text="{Binding Path=CurrentCbEditModeAsString, Mode=OneWay}"/>
 
-                                    <Button Content="&lt;" Width="20" Margin="30,0,0,0" Click="MoveUpButton_Click" />
+                                    <Button Content="&lt;" Width="20" Margin="10,0,0,0" Click="MoveUpButton_Click" />
                                     <Button Content="&gt;" Width="20" Margin="10,0,0,0"  Click="MoveDownButton_Click" />                                    
                                 </StackPanel>
 
@@ -170,7 +172,7 @@
                         </Border>
 
                         <!-- Cutoff, Blend Style, Start Color, End Color -->
-                        <Border Grid.Row="1" BorderThickness="0, 0.75, 0, 0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
+                        <Border Grid.Row="1" BorderThickness="0, 0.75, 0, 0.75" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0">
                             <local:ColorBandUserControl x:Name="clrBandDetail" Margin="0,0,0,0" />
                         </Border>
 
@@ -189,7 +191,7 @@
                         <!-- Undo / Redo -->
                         <Border Grid.Row="3" BorderThickness="0,0.75,0,0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0">
                             <Border BorderThickness="0" Margin="0,3">
-                                <local:UndoPileControl x:Name="undoRedo1" />
+                                <local:UndoPileControl x:Name="undoRedo1"/>
                             </Border>
                         </Border>
 

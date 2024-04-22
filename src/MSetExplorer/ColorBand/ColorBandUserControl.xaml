@@ -15,7 +15,7 @@
 
     <Grid Background="Transparent">
 
-        <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Orientation="Vertical">
+        <StackPanel   Orientation="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <!-- Starting / Start Color -->
             <StackPanel Orientation="Horizontal" Margin="0,3">

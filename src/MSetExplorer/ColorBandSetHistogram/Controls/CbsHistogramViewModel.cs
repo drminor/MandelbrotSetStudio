@@ -1324,6 +1324,30 @@ namespace MSetExplorer
 			}
 		}
 
+		public void CompleteColorBandsDistribution(int index, ReservedColorBand reservedColorBand)
+		{
+			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorBandsDistribution has been callled.");
+			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorBandsDistribution has been callled.");
+
+			//var result = TryDeleteColor(index, reservedColorBand);
+
+			//if (!result)
+			//{
+			//	Debug.WriteLine("WARNING: ColorBandSetViewModel. Could not CompleteColorRemoval.");
+			//	return;
+			//}
+
+			//if (index > 0)
+			//{
+			//	_currentColorBandSet[index - 1].SuccessorStartColor = _currentColorBandSet[index].StartColor;
+			//}
+
+			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After ColorRemoval, the current position is {ColorBandsView.CurrentPosition}.");
+
+			//OnCurrentColorBandSetUpdated();
+			////ReportRemoveCurrentItem(index);
+		}
+
 		#endregion
 
 		#region Public Methods - Plotting

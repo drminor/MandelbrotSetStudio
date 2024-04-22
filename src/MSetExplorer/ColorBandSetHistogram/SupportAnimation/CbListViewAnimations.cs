@@ -460,6 +460,64 @@ namespace MSetExplorer.Cbs
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
+		public void AnimateDistributeColor(int startIndex, int endIndex, int newColorBandCount, ReservedColorBand reservedColorBand)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteColor. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandCount}.");
+
+			AnimateDistributeColorPost(0);
+		}
+
+		private void AnimateDistributeColorPost(int index)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n ColorBands Distribution Animation has completed.");
+
+			_onAnimationComplete(ColorBandSetEditOperation.DistributeBands, index, null, new ReservedColorBand());
+
+			//if (_pullColorsAnimationInfo1 == null)
+			//{
+			//	throw new InvalidOperationException("The PullColorsAnimationInfo1 is null.");
+			//}
+
+			//var newLvi = _pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem;
+			//_pullColorsAnimationInfo1.MoveSourcesToDestinations();
+
+			//newLvi.TearDown();
+			//_storyBoardDetails1.UnregisterName(newLvi.Name);
+
+			//_pullColorsAnimationInfo1 = null;
+
+			//var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
+
+			//// Update the model
+			//_onAnimationComplete(ColorBandSetEditOperation.DistributeBands, index, null, reservedColorBand);
+
+			//if (_listViewItems.Count > 1)
+			//{
+			//	var nextToLast = _listViewItems[^2];
+
+			//	if (nextToLast.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
+			//	{
+			//		nextToLast.EndColor = _listViewItems[^1].StartColor;
+			//	}
+			//}
+
+			//if (index > 0)
+			//{
+			//	var prevCb = _listViewItems[index - 1];
+
+			//	if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
+			//	{
+			//		var cbListViewItem = _listViewItems[index];
+			//		prevCb.EndColor = cbListViewItem.StartColor;
+			//	}
+			//}
+
+			//_cbListView.ReportColorBands("After Animate Distribute ColorBands.");
+			//_cbListView.ReportListViewItems("After Animate Distribute ColorBands.");
+		}
+
+
+
 		private void ApplyAnimationItemPairs(AnimationItemPairList animationItemPairList)
 		{
 			foreach (var (block, blend) in animationItemPairList)

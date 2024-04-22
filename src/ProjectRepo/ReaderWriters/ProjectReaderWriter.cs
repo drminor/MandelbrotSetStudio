@@ -16,6 +16,13 @@ namespace ProjectRepo
 		public ProjectReaderWriter(DbProvider dbProvider) : base(dbProvider, COLLECTION_NAME)
 		{ }
 
+		public long GetNumberOfProjects()
+		{
+			var result = Collection.EstimatedDocumentCount();
+
+			return result;
+		}
+
 		public IEnumerable<ProjectRecord> GetAll()
 		{
 			var filter = Builders<ProjectRecord>.Filter.Empty;

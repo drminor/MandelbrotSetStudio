@@ -1,7 +1,6 @@
 ﻿using MongoDB.Bson;
 using MSetRepo;
 using MSS.Common;
-using MSS.Types;
 using MSS.Types.MSet;
 using System;
 using System.Collections.Generic;
@@ -33,8 +32,11 @@ namespace MSetExplorer
 		private string _sortByFieldName;
 		private bool _isSortedDescending;
 
-		//private DateTime _lastAccessedAfterDate;
+		private DateTime _lastAccessedAfterDate;
 		private int _numberOfRecordsToInclude;
+
+		private bool _allProjectInfosHaveBeenFecthed;
+
 
 		#endregion
 
@@ -48,40 +50,31 @@ namespace MSetExplorer
 
 			DialogType = dialogType;
 
-			//_lastAccessedAfterDate = DateTime.Now.AddMonths(-1);
-			//_lastAccessedAfterDate = DateTime.MinValue;
 			_numberOfRecordsToInclude = 10;
-
 
 			_sortByFieldName = "LastAccessedUtc";
 			_isSortedDescending = true;
 
 			_projectInfos =	new ObservableCollection<IProjectInfo>(GetProjectInfos(_numberOfRecordsToInclude));
 
-			_projectInfosView = BuildProjectInfosView(_projectInfos, _sortByFieldName, _isSortedDescending, initialName);
+			if (_numberOfRecordsToInclude != int.MaxValue)
+			{
+				var totalNumberOfProjectsOnFile = _projectAdapter.GetTotalNumberOfProjectsOnFile();
 
-			//_projectInfosView.Filter = IncludeInView;
+				_allProjectInfosHaveBeenFecthed = totalNumberOfProjectsOnFile <= _numberOfRecordsToInclude;
+				_lastAccessedAfterDate = _projectInfos.Min(x => x.LastAccessedUtc);
+			}
+			else
+			{
+				_allProjectInfosHaveBeenFecthed = true;
+				_lastAccessedAfterDate = _projectInfos.OrderBy(x => x.LastAccessedUtc).Take(_numberOfRecordsToInclude).Min(x => x.LastAccessedUtc);
+			}
+
+			_projectInfosView = BuildProjectInfosView(_projectInfos, _sortByFieldName, _isSortedDescending, initialName);
+			_projectInfosView.Filter = IncludeInView;
 
 			_projectInfosView.CurrentChanged += View_CurrentChanged;
 		}
-
-		//private bool IncludeInView(object item)
-		//{
-		//	if (_lastAccessedAfterDate == DateTime.MinValue)
-		//	{
-		//		return true;
-		//	}
-
-		//	if (item is IProjectInfo projectInfo)
-		//	{
-		//		var result = projectInfo.LastSavedUtc > _lastAccessedAfterDate;
-		//		return result;
-		//	}
-		//	else
-		//	{
-		//		return false;
-		//	}
-		//}
 
 		private void View_CurrentChanged(object? sender, EventArgs e)
 		{
@@ -184,21 +177,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//public DateTime LastAccessedAfterDate
-		//{
-		//	get => _lastAccessedAfterDate;
-		//	set
-		//	{
-		//		if (value != _lastAccessedAfterDate)
-		//		{
-		//			_lastAccessedAfterDate = value;
-		//			_projectInfosView.Refresh();
-
-		//			OnPropertyChanged(nameof(IProjectOpenSaveViewModel.LastAccessedAfterDate));
-		//		}
-		//	}
-		//}
-
 		public int NumberOfRecordsToInclude
 		{
 			get => _numberOfRecordsToInclude;
@@ -208,8 +186,11 @@ namespace MSetExplorer
 				{
 					_numberOfRecordsToInclude = value;
 
-
-					UpdateProjectInfos(_numberOfRecordsToInclude);
+					if (!_allProjectInfosHaveBeenFecthed)
+					{
+						UpdateProjectInfos(_projectInfos);
+						_allProjectInfosHaveBeenFecthed = true;
+					}
 
 					OnPropertyChanged(nameof(IProjectOpenSaveViewModel.NumberOfRecordsToInclude));
 				}
@@ -242,22 +223,6 @@ namespace MSetExplorer
 
 		#region Private Methods
 
-		private IEnumerable<IProjectInfo> GetProjectInfos(int numberOfRecordsToInclude)
-		{
-			IEnumerable<IProjectInfo> result;
-				
-			if (numberOfRecordsToInclude == int.MaxValue)
-			{
-				result = new ObservableCollection<IProjectInfo>(_projectAdapter.GetAllProjectInfos());
-			}
-			else
-			{
-				result = new ObservableCollection<IProjectInfo>(_projectAdapter.GetProjectInfosByLastAccessed(_numberOfRecordsToInclude));
-			}
-
-			return result;
-		}
-
 		private ListCollectionView BuildProjectInfosView(ObservableCollection<IProjectInfo> projectInfos, string sortByFieldName, bool sortDescending, string? initialName)
 		{
 			ListCollectionView result;
@@ -279,8 +244,6 @@ namespace MSetExplorer
 				}
 			}
 
-			//result.Filter = IncludeInView;
-
 			return result;
 		}
 
@@ -293,44 +256,49 @@ namespace MSetExplorer
 			collectionView.SortDescriptions.Add(new SortDescription(sortByFieldName, sortDirection));
 		}
 
-		private void UpdateProjectInfos(int numberOfRecordsToInclude)
+		private void UpdateProjectInfos(ObservableCollection<IProjectInfo> projectInfos)
 		{
-			IEnumerable<IProjectInfo> projectInfos;
+			var allProjectInfos = _projectAdapter.GetAllProjectInfos();
+
+			projectInfos.Clear();
+
+			foreach (var pi in allProjectInfos)
+			{
+				projectInfos.Add(pi);
+			}
+		}
+
+		private IEnumerable<IProjectInfo> GetProjectInfos(int numberOfRecordsToInclude)
+		{
+			IEnumerable<IProjectInfo> result;
 
 			if (numberOfRecordsToInclude == int.MaxValue)
 			{
-				projectInfos = _projectAdapter.GetAllProjectInfos();
+				result = _projectAdapter.GetAllProjectInfos();
 			}
 			else
 			{
-				projectInfos = _projectAdapter.GetProjectInfosByLastAccessed(_numberOfRecordsToInclude);
+				result = _projectAdapter.GetProjectInfosByLastAccessed(_numberOfRecordsToInclude);
 			}
 
-			ReBuildProjectInfosView(projectInfos, _sortByFieldName, _isSortedDescending, _selectedName);
+			return result;
 		}
 
-		private void ReBuildProjectInfosView(IEnumerable<IProjectInfo> projectInfos, string sortByFieldName, bool sortDescending, string? initialName)
+		private bool IncludeInView(object item)
 		{
-			if (projectInfos == null)
+			if (_numberOfRecordsToInclude == int.MaxValue)
 			{
-				_projectInfos.Clear();
+				return true;
+			}
+
+			if (item is IProjectInfo projectInfo)
+			{
+				var result = projectInfo.LastAccessedUtc >= _lastAccessedAfterDate;
+				return result;
 			}
 			else
 			{
-				_projectInfos.Clear();
-
-				foreach(var pi in projectInfos)
-				{
-					_projectInfos.Add(pi);
-				}
-
-				UpdateSortBy(ProjectInfosView, sortByFieldName, sortDescending);
-
-				if (initialName != null)
-				{
-					SelectedProject = projectInfos.FirstOrDefault(x => x.Name == initialName);
-					_ = ProjectInfosView.MoveCurrentTo(SelectedProject);
-				}
+				return false;
 			}
 		}
 

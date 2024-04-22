@@ -427,6 +427,12 @@ namespace MSetRepo
 			}
 		}
 
+		public long GetTotalNumberOfProjectsOnFile()
+		{
+			var result = _projectReaderWriter.GetNumberOfProjects();
+			return result;
+		}
+
 		#endregion
 
 		#region ColorBandSet 

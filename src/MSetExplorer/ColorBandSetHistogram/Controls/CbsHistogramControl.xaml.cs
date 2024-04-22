@@ -325,32 +325,9 @@ namespace MSetExplorer
 		// Insert CanExecute
 		private void InsertCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
-			bool canExecute;
-
-			var vm = _vm;
-
-			var currentColorBand = _vm?.CurrentColorBand;
-
-			if (vm == null || currentColorBand == null || vm.ColorBandUserControlHasErrors)
-			{
-				canExecute = false;
-			}
-			else
-			{
-				//if (currentColorBand.IsFirst)
-				//{
-				//	canExecute = false;
-				//}
-				//else
-				//{
-				//	canExecute = true;
-				//}
-				canExecute = true;
-			}
-
-			e.CanExecute = canExecute;
-
+			e.CanExecute = CurrentColorBandIsOk();
 		}
+
 
 		// Insert
 		private void InsertCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -370,24 +347,15 @@ namespace MSetExplorer
 		{
 			bool canExecute;
 
-			var vm = _vm;
-
 			var currentColorBand = _vm?.CurrentColorBand;
 
-			if (vm == null || currentColorBand == null || vm.ColorBandUserControlHasErrors)
+			if (_vm == null || currentColorBand == null || _vm.ColorBandUserControlHasErrors)
 			{
 				canExecute = false;
 			}
 			else
 			{
-				if (vm.ColorBandsCount < 2 || currentColorBand.IsLast)
-				{
-					canExecute = false;
-				}
-				else
-				{
-					canExecute = true;
-				}
+				canExecute = !(_vm.ColorBandsCount < 2 || currentColorBand.IsLast);
 			}
 
 			e.CanExecute = canExecute;
@@ -403,6 +371,51 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to determine the ColorBandIndex.");
+			}
+		}
+
+		// Distribute CanExecute
+		private void DistributeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = CurrentColorBandIsOk();
+
+		}
+
+		// Distribute
+		private void DistributeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
+			{
+				int? startIndex = 4;
+				int? endIndex = 5;
+				var newColorBandCount = ShowDistributeColorBandsDialog(ref startIndex, ref endIndex);
+				if (newColorBandCount.HasValue && newColorBandCount.Value > 0
+					&& startIndex.HasValue && startIndex > 0
+					&& endIndex.HasValue && endIndex > 0)
+				{
+					HistogramColorBandControl1.DistributeColorBandItems(startIndex.Value, endIndex.Value, newColorBandCount.Value);
+				}
+			}
+			else
+			{
+				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to determine the ColorBandIndex.");
+			}
+		}
+
+		private int? ShowDistributeColorBandsDialog(ref int? startIndex, ref int? endIndex)
+		{
+			var distributeColorBandsDialog = new ColorBandDistributeDialog(3, 4, 6);
+
+			if (distributeColorBandsDialog.ShowDialog() == true)
+			{
+				startIndex = distributeColorBandsDialog.StartIndex;
+				endIndex = distributeColorBandsDialog.EndIndex;
+
+				return distributeColorBandsDialog.NewColorBandCount;
+			}
+			else
+			{
+				return -1;
 			}
 		}
 
@@ -442,6 +455,12 @@ namespace MSetExplorer
 			{
 				_vm.ApplyChanges();
 			}
+		}
+
+		private bool CurrentColorBandIsOk()
+		{
+			var result = !(_vm == null || _vm.CurrentColorBand == null || _vm.ColorBandUserControlHasErrors);
+			return result;
 		}
 
 		// Highlight (only) the Selected Color Band - Alt H
@@ -632,5 +651,6 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
 	}
 }

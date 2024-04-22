@@ -106,5 +106,6 @@ namespace MSS.Common
 		bool TryGetProjectInfo(string name, [NotNullWhen(true)] out IProjectInfo? projectInfo);
 
 		IEnumerable<IProjectInfo> GetAllProjectInfos(DateTime lastAccessedAfterDate);
+		long GetTotalNumberOfProjectsOnFile();
 	}
 }

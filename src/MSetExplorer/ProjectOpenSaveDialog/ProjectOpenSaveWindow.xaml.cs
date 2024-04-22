@@ -271,24 +271,24 @@ namespace MSetExplorer
 		{
 			_vm.NumberOfRecordsToInclude = 10;
 
-			mnuItem_includeLast20Accessed.IsChecked = false;
+			//mnuItem_includeLast20Accessed.IsChecked = false;
 			mnuItem_includeAll.IsChecked = false;
 		}
 
-		private void Include20LastAccessed_Click(object sender, RoutedEventArgs e)
-		{
-			_vm.NumberOfRecordsToInclude = 20;
+		//private void Include20LastAccessed_Click(object sender, RoutedEventArgs e)
+		//{
+		//	_vm.NumberOfRecordsToInclude = 20;
 
-			mnuItem_includeLast10Accessed.IsChecked = false;
-			mnuItem_includeAll.IsChecked = false;
-		}
+		//	mnuItem_includeLast10Accessed.IsChecked = false;
+		//	mnuItem_includeAll.IsChecked = false;
+		//}
 
 		private void IncludeAll_Click(object sender, RoutedEventArgs e)
 		{
 			_vm.NumberOfRecordsToInclude = int.MaxValue;
 
 			mnuItem_includeLast10Accessed.IsChecked = false;
-			mnuItem_includeLast20Accessed.IsChecked = false;
+			//mnuItem_includeLast20Accessed.IsChecked = false;
 		}
 
 		#endregion
