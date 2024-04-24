@@ -1324,7 +1324,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void CompleteColorBandsDistribution(int index, ReservedColorBand reservedColorBand)
+		public void CompleteColorBandsDistribution(int startIndex, int endIndex, int newNumberOfColorBands, ReservedColorBand[] reservedColorBands)
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorBandsDistribution has been callled.");
 			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorBandsDistribution has been callled.");

@@ -13,11 +13,14 @@ namespace MSetExplorer
 
 		private bool _debounce;
 
-		private Action<int>? _completionCallback;
-		private int _callbackIndex;
+		private Action<ColorBandSetEditArgs>? _completionCallback;
+		private ColorBandSetEditArgs? _callbackArgs;
 
 		public StoryboardDetails(Storyboard storyboard, FrameworkElement containingObject)
 		{
+			_completionCallback = null;
+			_callbackArgs = null;
+
 			_waitDispatcher = new DebounceDispatcher()
 			{
 				Priority = DispatcherPriority.Render
@@ -155,10 +158,11 @@ namespace MSetExplorer
 			_debounce = false;
 		}
 
-		public void Begin(Action<int> completionCallback, int index, bool debounce)
+		public void Begin(Action<ColorBandSetEditArgs> completionCallback, ColorBandSetEditArgs callbackArgs, bool debounce)
 		{
 			_completionCallback = completionCallback;
-			_callbackIndex = index;
+			_callbackArgs = callbackArgs;
+
 			Storyboard.Begin(ContainingObject);
 			_debounce = debounce;
 		}
@@ -192,7 +196,8 @@ namespace MSetExplorer
 
 			if (_completionCallback != null)
 			{
-				_completionCallback(_callbackIndex);
+				if (_callbackArgs == null) throw new InvalidOperationException("The StoryBoardDetails _callbackArgs is null but the _completionCallback2 is non-null.");
+				_completionCallback(_callbackArgs);
 			}
 		}
 

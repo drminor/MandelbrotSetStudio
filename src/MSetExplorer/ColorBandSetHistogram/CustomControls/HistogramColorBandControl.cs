@@ -1,4 +1,5 @@
 ﻿using MSetExplorer.Cbs;
+using MSetExplorer.XPoc;
 using MSS.Types;
 using System;
 using System.Diagnostics;
@@ -402,15 +403,19 @@ namespace MSetExplorer
 				{
 					case ColorBandSetEditMode.Cutoffs:
 						var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
-						_cbListViewAnimations.AnimateInsertCutoff(colorBandIndex, reservedColorBand);
+						var editArgs1 = new ColorBandSetEditArgs(ColorBandSetEditOperation.InsertCutoff, colorBandIndex, reservedColorBand: reservedColorBand);
+						_cbListViewAnimations.InsertCutoff(editArgs1);
 						break;
 
 					case ColorBandSetEditMode.Colors:
-						_cbListViewAnimations.AnimateInsertColor(colorBandIndex);
+						var editArgs2 = new ColorBandSetEditArgs(ColorBandSetEditOperation.InsertColor, colorBandIndex);
+						_cbListViewAnimations.InsertColor(editArgs2);
 						break;
 
 					case ColorBandSetEditMode.Bands:
-						_cbListViewAnimations.AnimateInsertBand(colorBandIndex);
+						var editArgs3 = new ColorBandSetEditArgs(ColorBandSetEditOperation.InsertBand, colorBandIndex);
+
+						_cbListViewAnimations.InsertBand(editArgs3);
 						break;
 
 					default:
@@ -440,16 +445,19 @@ namespace MSetExplorer
 				{
 					case ColorBandSetEditMode.Cutoffs:
 						// Delete the Item just after the selected SectionLine
-						_cbListViewAnimations.AnimateDeleteCutoff(colorBandIndex + 1);
+						var editArgs1 = new ColorBandSetEditArgs(ColorBandSetEditOperation.DeleteCutoff, colorBandIndex + 1);
+						_cbListViewAnimations.DeleteCutoff(editArgs1);
 						break;
 
 					case ColorBandSetEditMode.Colors:
 						var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
-						_cbListViewAnimations.AnimateDeleteColor(colorBandIndex, reservedColorBand);
+						var editArgs2 = new ColorBandSetEditArgs(ColorBandSetEditOperation.DeleteColor, colorBandIndex, reservedColorBand: reservedColorBand);
+						_cbListViewAnimations.DeleteColor(editArgs2);
 						break;
 
 					case ColorBandSetEditMode.Bands:
-						_cbListViewAnimations.AnimateDeleteBand(colorBandIndex);
+						var editArgs3 = new ColorBandSetEditArgs(ColorBandSetEditOperation.DeleteBand, colorBandIndex);
+						_cbListViewAnimations.DeleteBand(editArgs3);
 						break;
 
 					default:
@@ -471,38 +479,44 @@ namespace MSetExplorer
 			}
 
 			var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
-			_cbListViewAnimations.AnimateDistributeColor(startIndex, endIndex, newColorBandCount, reservedColorBand);
+			var editArgs = new ColorBandSetEditArgs(ColorBandSetEditOperation.DistributeBands, startIndex, endIndex, newColorBandCount, new ReservedColorBand[] { reservedColorBand });
+			_cbListViewAnimations.DistributeColorBands(editArgs);
 		}
 
-		private void OnAnimationComplete(ColorBandSetEditOperation editOp, int index, ColorBand? newColorband = null, ReservedColorBand? reservedColorBand = null)
+		private void OnAnimationComplete(ColorBandSetEditArgs editArgs)
 		{
+			var editOp = editArgs.Operation;
+			var index = editArgs.Index;
+			var reservedColorBand = editArgs.ReservedColorBand;
+
 			switch (editOp)
 			{
 				// Insert Cutoff - Existing colors are pulled down, the next available Reserved ColorBand is popped from the Stack to provide the source of the High ColorBand
 				case ColorBandSetEditOperation.InsertCutoff:
 					{
-						if (newColorband == null)
+						if (editArgs.NewColorBand == null)
 						{
 							throw new ArgumentException("The newColorband is null on call to InsertCutoff.");
 						}
 
-						if (reservedColorBand == null)
+						if (editArgs.ReservedColorBand == null)
 						{
 							throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
 						}
 
-						_cbsHistogramViewModel?.CompleteCutoffInsertion(index, newColorband, reservedColorBand);
+						_cbsHistogramViewModel?.CompleteCutoffInsertion(editArgs.Index, editArgs.NewColorBand, editArgs.ReservedColorBand);
 						break;
 					}
 				// Insert Color - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.InsertColor:
 					{
-						if (newColorband == null)
+						var newColorBand = editArgs.NewColorBand;
+						if (newColorBand == null)
 						{
-							throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertColor.");
+							throw new ArgumentException("The newColorband is null on call to InsertColor.");
 						}
 
-						var result = _cbsHistogramViewModel?.CompleteColorInsertion(index, newColorband) ?? null;
+						var result = _cbsHistogramViewModel?.CompleteColorInsertion(index, newColorBand) ?? null;
 
 						if (result != null)
 						{
@@ -514,12 +528,14 @@ namespace MSetExplorer
 				// Insert entire ColorBand		
 				case ColorBandSetEditOperation.InsertBand:
 					{
-						if (newColorband == null)
+						var newColorBand = editArgs.NewColorBand;
+
+						if (newColorBand == null)
 						{
-							throw new ArgumentException("The newItem object parameter must be convertable to a ColorBand when the operation is InsertBand.");
+							throw new ArgumentException("The newColorband is null on call to InsertBand.");
 						}
 
-						_cbsHistogramViewModel?.CompleteBandInsertion(index, newColorband);
+						_cbsHistogramViewModel?.CompleteBandInsertion(index, newColorBand);
 						break;
 					}
 				// Delete Cutoff - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
@@ -540,7 +556,7 @@ namespace MSetExplorer
 					{
 						if (reservedColorBand == null)
 						{
-							throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
+							throw new ArgumentException("The reservedColorBand is null on call to DeleteColor.");
 						}
 
 						_cbsHistogramViewModel?.CompleteColorRemoval(index, reservedColorBand);
@@ -557,10 +573,10 @@ namespace MSetExplorer
 					{
 						if (reservedColorBand == null)
 						{
-							throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
+							throw new ArgumentException("The reservedColorBands array is null on call to DistributeBands.");
 						}
 
-						_cbsHistogramViewModel?.CompleteColorBandsDistribution(index, reservedColorBand);
+						_cbsHistogramViewModel?.CompleteColorBandsDistribution(editArgs.StartingIndex, editArgs.EndingIndex!.Value, editArgs.NewColorBandsCount, editArgs.ReservedColorBands!);
 						break;
 					}
 				default:
@@ -1053,5 +1069,40 @@ namespace MSetExplorer
 		DeleteBand,
 
 		DistributeBands
+	}
+
+
+	public class ColorBandSetEditArgs
+	{
+		public ColorBandSetEditOperation Operation { get; init; }
+		public int StartingIndex { get; init; }
+		public int? EndingIndex { get; init; }
+		public int NewColorBandsCount { get; init; }
+		public ColorBand? NewColorBand { get; set; }
+		public ReservedColorBand[]? ReservedColorBands { get; init; }
+
+		public int Index => StartingIndex;
+		public ReservedColorBand? ReservedColorBand => ReservedColorBands?[0];
+
+		public ColorBandSetEditArgs(ColorBandSetEditOperation operation, int index, ReservedColorBand? reservedColorBand = null)
+		{
+			Operation = operation;
+			StartingIndex = index;
+			EndingIndex = null;
+			NewColorBandsCount = 0;
+			NewColorBand = null;
+			ReservedColorBands = reservedColorBand == null ? null: new ReservedColorBand[] { reservedColorBand };
+		}
+
+		public ColorBandSetEditArgs(ColorBandSetEditOperation operation, int startingIndex, int endingIndex, int newColorBandsCount, ReservedColorBand[]? reservedColorBands = null)
+		{
+			Operation = operation;
+			StartingIndex = startingIndex;
+			EndingIndex = endingIndex;
+			NewColorBandsCount = newColorBandsCount;
+			NewColorBand = null;
+			ReservedColorBands = reservedColorBands;
+		}
+
 	}
 }

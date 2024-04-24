@@ -1,4 +1,5 @@
-﻿using MSS.Types;
+﻿using MSetExplorer.XPoc;
+using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +21,8 @@ namespace MSetExplorer.Cbs
 		private CbListView _cbListView;
 		private List<CbListViewItem> _listViewItems => _cbListView.ListViewItems;
 
-		private Action<ColorBandSetEditOperation, int, ColorBand?, ReservedColorBand?> _onAnimationComplete;
+		//private Action<ColorBandSetEditOperation, int, ColorBand?, ReservedColorBand?> _onAnimationComplete;
+		private Action<ColorBandSetEditArgs> _onAnimationComplete;
 
 		private PushColorsAnimationInfo? _pushColorsAnimationInfo1 = null;
 		private PullColorsAnimationInfo? _pullColorsAnimationInfo1 = null;
@@ -31,7 +33,7 @@ namespace MSetExplorer.Cbs
 
 		#region Constructor
 
-		public CbListViewAnimations(StoryboardDetails storyboardDetails, CbListView cbListView, Action<ColorBandSetEditOperation, int, ColorBand?, ReservedColorBand?> onAnimationComplete)
+		public CbListViewAnimations(StoryboardDetails storyboardDetails, CbListView cbListView, Action<ColorBandSetEditArgs> onAnimationComplete)
 		{
 			_storyBoardDetails1 = storyboardDetails;
 			_cbListView = cbListView;
@@ -43,8 +45,11 @@ namespace MSetExplorer.Cbs
 		#region Animation Support - Insertions
 
 		// Insert new ColorBand, Pull Colors Down
-		public void AnimateInsertCutoff(int index, ReservedColorBand reservedColorBand)
+		public void InsertCutoff(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
+			var reservedColorBand = editArgs.ReservedColorBand!;
+
 			var currentItem = _listViewItems[index];
 			var currentArea = currentItem.Area;
 			//var onePix = 1 / currentItem.CbRectangle.ContentScale.Width;
@@ -107,13 +112,14 @@ namespace MSetExplorer.Cbs
 
 			ApplyAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs);
 
-			_storyBoardDetails1.Begin(AnimateInsertCutoffPost, index, debounce: true);
+			_storyBoardDetails1.Begin(InsertCutoffPost, editArgs, debounce: true);
 		}
 
-		private void AnimateInsertCutoffPost(int index)
+		private void InsertCutoffPost(ColorBandSetEditArgs editArgs)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n CutoffInsertion Animation has completed.");
 
+			var index = editArgs.Index;
 			if (_pullColorsAnimationInfo1 == null)
 			{
 				throw new InvalidOperationException("The PullColorsAnimationInfo1 is null.");
@@ -139,16 +145,19 @@ namespace MSetExplorer.Cbs
 			var lvi = _listViewItems[index];
 			var colorBand = lvi.ColorBand;
 
-			var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
+			// TODO: Use the reservedColorBand from the ColorBandSetEditArgs
+			//var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
 
-			_onAnimationComplete(ColorBandSetEditOperation.InsertCutoff, index, colorBand, reservedColorBand);
+			editArgs.NewColorBand = colorBand;
+			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
 		// Insert Color, Push Colors Up
-		public void AnimateInsertColor(int index)
+		public void InsertColor(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
 			Debug.WriteLineIf(_useDetailedDebug, $"AnimateInsertColor. Index = {index}.");
 
 			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
@@ -167,10 +176,10 @@ namespace MSetExplorer.Cbs
 			ApplyAnimationItemPairs(_pushColorsAnimationInfo1.AnimationItemPairs);
 
 			// Execute the Animation
-			_storyBoardDetails1.Begin(AnimateInsertColorPost, index, debounce: true);
+			_storyBoardDetails1.Begin(InsertColorPost, editArgs, debounce: true);
 		}
 
-		private void AnimateInsertColorPost(int index)
+		private void InsertColorPost(ColorBandSetEditArgs editArgs)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, "ColorInsertion Animation has completed.");
 
@@ -179,14 +188,17 @@ namespace MSetExplorer.Cbs
 
 			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, ColorBandColor.White, percentage: double.NaN);
 
-			_onAnimationComplete(ColorBandSetEditOperation.InsertColor, index, colorBand, null);
+			editArgs.NewColorBand = colorBand;
+			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
 		// Insert new ColorBand
-		public void AnimateInsertBand(int index)
+		public void InsertBand(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
+
 			var currentItem = _listViewItems[index];
 			var startingAreaOfCurrentItem = currentItem.Area;
 
@@ -233,18 +245,20 @@ namespace MSetExplorer.Cbs
 			// Have the new item go from transparent to fully opaque
 			_storyBoardDetails1.AddOpacityAnimation(itemBeingInserted.Name, "Opacity", from: 0.3, to: 1.0, beginTime: TimeSpan.FromMilliseconds(450), duration: TimeSpan.FromMilliseconds(600));
 
-			_storyBoardDetails1.Begin(AnimateInsertBandPost, index, debounce: true);
+			_storyBoardDetails1.Begin(InsertBandPost, editArgs, debounce: true);
 		}
 
-		private void AnimateInsertBandPost(int index)
+		private void InsertBandPost(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n BandInsertion Animation has completed.");
 
 			var lvi = _listViewItems[index];
 			lvi.ElevationsAreLocal = false;
 			var colorBand = lvi.ColorBand;
 
-			_onAnimationComplete(ColorBandSetEditOperation.InsertBand, index, colorBand, null);
+			editArgs.NewColorBand = colorBand;
+			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
@@ -254,8 +268,9 @@ namespace MSetExplorer.Cbs
 		#region Animation Support - Deletions
 
 		// Delete Cutoff, Push Colors Up
-		public void AnimateDeleteCutoff(int index)
+		public void DeleteCutoff(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
 			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteCutoff. Index = {index}.");
 
 			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
@@ -299,11 +314,13 @@ namespace MSetExplorer.Cbs
 			_listViewItems[^2].CbColorBlock.EndColor = ColorBandColor.Black;
 
 			// Execute the Animation
-			_storyBoardDetails1.Begin(AnimateDeleteCutoffPost, index, debounce: true);
+			_storyBoardDetails1.Begin(DeleteCutoffPost, editArgs, debounce: true);
 		}
 
-		private void AnimateDeleteCutoffPost(int index)
+		private void DeleteCutoffPost(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
+
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n CutoffDeletion Animation has completed.");
 
 			_pushColorsAnimationInfo1?.MoveSourcesToDestinations();
@@ -314,18 +331,19 @@ namespace MSetExplorer.Cbs
 			_cbListView.RemoveListViewItem(lvi);
 			_cbListView.Reindex(lvi.ColorBandIndex);
 
-			_onAnimationComplete(ColorBandSetEditOperation.DeleteCutoff, index, null, null);
+			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
 		// Delete Color, Pull Colors Down
-		public void AnimateDeleteColor(int index, ReservedColorBand reservedColorBand)
+		public void DeleteColor(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
 			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteColor. Index = {index}.");
 
 			// Create a ListViewItem to hold the new source
-			var newSourceColorBand = CreateColorBandFromReservedBand(_listViewItems[^1], reservedColorBand);
+			var newSourceColorBand = CreateColorBandFromReservedBand(_listViewItems[^1], editArgs.ReservedColorBand!);
 			var newLvi = _cbListView.CreateListViewItem(_listViewItems.Count, newSourceColorBand);
 
 			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
@@ -343,11 +361,12 @@ namespace MSetExplorer.Cbs
 
 			ApplyAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs);
 
-			_storyBoardDetails1.Begin(AnimateDeleteColorPost, index, debounce: true);
+			_storyBoardDetails1.Begin(DeleteColorPost, editArgs, debounce: true);
 		}
 
-		private void AnimateDeleteColorPost(int index)
+		private void DeleteColorPost(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n ColorDeletion Animation has completed.");
 
 			if (_pullColorsAnimationInfo1 == null)
@@ -363,10 +382,11 @@ namespace MSetExplorer.Cbs
 
 			_pullColorsAnimationInfo1 = null;
 
-			var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
+			// TODO: Use the reservedColorBand from the ColorBandSetEditArgs
+			//var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
 
 			// Update the model
-			_onAnimationComplete(ColorBandSetEditOperation.DeleteColor, index, null, reservedColorBand);
+			_onAnimationComplete(editArgs);
 
 			if (_listViewItems.Count > 1)
 			{
@@ -394,8 +414,9 @@ namespace MSetExplorer.Cbs
 		}
 
 		// Delete Band
-		public void AnimateDeleteBand(int index)
+		public void DeleteBand(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
 			_storyBoardDetails1.RateFactor = 1;
 
 			var itemBeingRemoved = _listViewItems[index];
@@ -443,11 +464,13 @@ namespace MSetExplorer.Cbs
 
 			_storyBoardDetails1.AddChangeLeft(followingItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(600), duration: TimeSpan.FromMilliseconds(450));
 
-			_storyBoardDetails1.Begin(AnimateDeleteBandPost, index, debounce: false);
+			_storyBoardDetails1.Begin(DeleteBandPost, editArgs, debounce: false);
 		}
 
-		private void AnimateDeleteBandPost(int index)
+		private void DeleteBandPost(ColorBandSetEditArgs editArgs)
 		{
+			var index = editArgs.Index;
+
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n BandDeletion Animation has completed.");
 
 			var lvi = _listViewItems[index];
@@ -455,23 +478,28 @@ namespace MSetExplorer.Cbs
 			_cbListView.RemoveListViewItem(lvi);
 			_cbListView.Reindex(index);
 
-			_onAnimationComplete(ColorBandSetEditOperation.DeleteBand, index, null, null);
+			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
-		public void AnimateDistributeColor(int startIndex, int endIndex, int newColorBandCount, ReservedColorBand reservedColorBand)
+		public void DistributeColorBands(ColorBandSetEditArgs editArgs)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteColor. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandCount}.");
+			var startIndex = editArgs.StartingIndex;
+			var endIndex = editArgs.EndingIndex;
 
-			AnimateDistributeColorPost(0);
+			var newColorBandsCount = editArgs.NewColorBandsCount;
+
+			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteColor. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandsCount}.");
+
+			DistributeColorBandsPost(editArgs);
 		}
 
-		private void AnimateDistributeColorPost(int index)
+		private void DistributeColorBandsPost(ColorBandSetEditArgs editArgs)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n ColorBands Distribution Animation has completed.");
 
-			_onAnimationComplete(ColorBandSetEditOperation.DistributeBands, index, null, new ReservedColorBand());
+			_onAnimationComplete(editArgs);
 
 			//if (_pullColorsAnimationInfo1 == null)
 			//{
