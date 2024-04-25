@@ -1,16 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 
 namespace MSetExplorer
 {
@@ -19,17 +8,36 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class ColorBandDistributeDialog : Window
 	{
-		private int _startIndex;
-		private int _endIndex;
+		private int? _startIndex;
+		private int? _endIndex;
 		private int _maxIndex;
 
-		public ColorBandDistributeDialog(int startIndex, int endIndex, int maxIndex)
+		public ColorBandDistributeDialog(int? startIndex, int? endIndex, int maxIndex)
 		{
 			_startIndex = startIndex;
 			_endIndex = endIndex;
 			_maxIndex = maxIndex;
 
+			ContentRendered += ColorBandDistributeDialog_ContentRendered;
+
 			InitializeComponent();
+		}
+
+		private void ColorBandDistributeDialog_ContentRendered(object? sender, EventArgs e)
+		{
+			ContentRendered -= ColorBandDistributeDialog_ContentRendered;
+
+			txtStartingIndex.Text = _startIndex.ToString();
+			txtEndingIndex.Text = _endIndex.ToString();
+
+			var newTarget = 1 + _endIndex - _startIndex;
+
+			txtNewNumberOfBands.Text = newTarget.ToString();
+
+			if (newTarget > 1)
+			{
+				txtBlkDivide1Band.Text = $"Divide {newTarget} Bands";
+			}
 		}
 
 		#region Public Properties
@@ -53,7 +61,7 @@ namespace MSetExplorer
 		{
 			get
 			{ 
-				if (int.TryParse(startingIndex.Text, out var newStartIndex))
+				if (int.TryParse(txtStartingIndex.Text, out var newStartIndex))
 				{
 					return newStartIndex;
 				}
@@ -68,7 +76,7 @@ namespace MSetExplorer
 		{
 			get
 			{
-				if (int.TryParse(endingIndex.Text, out var newEndIndex))
+				if (int.TryParse(txtEndingIndex.Text, out var newEndIndex))
 				{
 					return newEndIndex;
 				}

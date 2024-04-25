@@ -1834,7 +1834,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		private List<ColorBand> GetSelectedItems(IList<ColorBand> colorBands)
+		public List<ColorBand> GetSelectedItems(IList<ColorBand> colorBands)
 		{
 			var result = colorBands.Where(c => c.IsSelected).ToList();
 			return result;

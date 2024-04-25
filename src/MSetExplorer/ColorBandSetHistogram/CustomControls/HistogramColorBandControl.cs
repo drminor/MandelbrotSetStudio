@@ -1,6 +1,7 @@
 ﻿using MSetExplorer.Cbs;
 using MSetExplorer.XPoc;
 using MSS.Types;
+using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -478,6 +479,22 @@ namespace MSetExplorer
 				return;
 			}
 
+			var existingCount = 1 + endIndex - startIndex;
+			if (newColorBandCount > existingCount)
+			{
+				var diff = newColorBandCount - existingCount;
+				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Adding {diff} Bands. Start: {startIndex}, End: {endIndex}, New Count: {newColorBandCount}.");
+			}
+			else if (newColorBandCount == existingCount)
+			{
+				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Band Count remains at {existingCount}. Start: {startIndex}, End: {endIndex}.");
+			}
+			else
+			{
+				var diff = existingCount - newColorBandCount;
+				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Removing {diff} Bands. Start: {startIndex}, End: {endIndex}, New Count: {newColorBandCount}.");
+			}
+
 			var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
 			var editArgs = new ColorBandSetEditArgs(ColorBandSetEditOperation.DistributeBands, startIndex, endIndex, newColorBandCount, new ReservedColorBand[] { reservedColorBand });
 			_cbListViewAnimations.DistributeColorBands(editArgs);
@@ -622,6 +639,18 @@ namespace MSetExplorer
 			{
 				return null;
 			}
+		}
+
+		public int? GetStartAndEndSelectedIndex(out int? last)
+		{
+			if (_cbListView == null)
+			{
+				last = null;
+				return null;
+			}
+
+			var result = _cbListView.GetStartAndEndSelectedIndex(out last);
+			return result;
 		}
 
 		#endregion
@@ -1055,54 +1084,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-	}
-
-	public enum ColorBandSetEditOperation
-	{
-		InsertCutoff,
-		DeleteCutoff,
-
-		InsertColor,
-		DeleteColor,
-
-		InsertBand,
-		DeleteBand,
-
-		DistributeBands
-	}
-
-
-	public class ColorBandSetEditArgs
-	{
-		public ColorBandSetEditOperation Operation { get; init; }
-		public int StartingIndex { get; init; }
-		public int? EndingIndex { get; init; }
-		public int NewColorBandsCount { get; init; }
-		public ColorBand? NewColorBand { get; set; }
-		public ReservedColorBand[]? ReservedColorBands { get; init; }
-
-		public int Index => StartingIndex;
-		public ReservedColorBand? ReservedColorBand => ReservedColorBands?[0];
-
-		public ColorBandSetEditArgs(ColorBandSetEditOperation operation, int index, ReservedColorBand? reservedColorBand = null)
-		{
-			Operation = operation;
-			StartingIndex = index;
-			EndingIndex = null;
-			NewColorBandsCount = 0;
-			NewColorBand = null;
-			ReservedColorBands = reservedColorBand == null ? null: new ReservedColorBand[] { reservedColorBand };
-		}
-
-		public ColorBandSetEditArgs(ColorBandSetEditOperation operation, int startingIndex, int endingIndex, int newColorBandsCount, ReservedColorBand[]? reservedColorBands = null)
-		{
-			Operation = operation;
-			StartingIndex = startingIndex;
-			EndingIndex = endingIndex;
-			NewColorBandsCount = newColorBandsCount;
-			NewColorBand = null;
-			ReservedColorBands = reservedColorBands;
-		}
-
 	}
 }

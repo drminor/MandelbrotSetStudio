@@ -69,6 +69,7 @@ namespace MSetExplorer.Cbs
 			var successorStartColor = colorBand.SuccessorStartColor;
 
 			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, prevCutoff, successorStartColor, newPercentage);
+			editArgs.NewColorBand = newColorBand;
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
 			//itemBeingInserted.ElevationsAreLocal = true;
@@ -142,13 +143,13 @@ namespace MSetExplorer.Cbs
 				prevCb.CbRectangle.EndColor = cbListViewItem.CbRectangle.StartColor;
 			}
 
-			var lvi = _listViewItems[index];
-			var colorBand = lvi.ColorBand;
+			//var lvi = _listViewItems[index];
+			//var colorBand = lvi.ColorBand;
 
 			// TODO: Use the reservedColorBand from the ColorBandSetEditArgs
 			//var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
 
-			editArgs.NewColorBand = colorBand;
+			//editArgs.NewColorBand = colorBand;
 			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
@@ -217,6 +218,7 @@ namespace MSetExplorer.Cbs
 			var successorStartColor = colorBand.StartColor;
 
 			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, prevCutoff, successorStartColor, newPercentage);
+			editArgs.NewColorBand = newColorBand;
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
 			itemBeingInserted.ElevationsAreLocal = true;
@@ -255,9 +257,10 @@ namespace MSetExplorer.Cbs
 
 			var lvi = _listViewItems[index];
 			lvi.ElevationsAreLocal = false;
-			var colorBand = lvi.ColorBand;
+			
+			//var colorBand = lvi.ColorBand;
+			//editArgs.NewColorBand = colorBand;
 
-			editArgs.NewColorBand = colorBand;
 			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();

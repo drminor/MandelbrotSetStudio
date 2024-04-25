@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:CbsHistogramViewModel}"
         mc:Ignorable="d"
-        Title="Distribute Color Bands" Height="160" Width="300">
+        Title="Distribute Color Bands" Height="190" Width="300">
     <Grid>
 
         <Grid.RowDefinitions>
@@ -23,17 +23,17 @@
                     <TextBox x:Name="txtNumberOfBands"  Margin="0,0"  Width="30" Height="21" VerticalAlignment="Center" Text="1" HorizontalContentAlignment="Left"/>
                     <TextBlock Width="89" Margin="5,0,2,0" FontSize="14" Text="Bands," />-->
 
-                    <TextBlock Margin="5,0,2,0" FontSize="14" Text="Divide 1 Band" HorizontalAlignment="Left"/>
+                    <TextBlock x:Name="txtBlkDivide1Band" Margin="5,0,2,0" FontSize="14" Text="Divide 1 Band" HorizontalAlignment="Left"/>
 
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="5,5,0,0">
 
                     <TextBlock Width="70" Margin="5,0,2,0" FontSize="14" Text="Starting at:" />
-                    <TextBox x:Name="startingIndex" Margin="5,0"  Width="30" Height="21" VerticalAlignment="Center" Text="8" HorizontalContentAlignment="Left"/>
+                    <TextBox x:Name="txtStartingIndex" Margin="5,0"  Width="30" Height="21" VerticalAlignment="Center" Text="8" HorizontalContentAlignment="Left"/>
 
                     <TextBlock Width="90" Margin="5,0,2,0" FontSize="14" Text="and ending at:" />
-                    <TextBox x:Name="endingIndex" Margin="5,0"  Width="30" Height="21" VerticalAlignment="Center" Text="9" HorizontalContentAlignment="Left"/>
+                    <TextBox x:Name="txtEndingIndex" Margin="5,0"  Width="30" Height="21" VerticalAlignment="Center" Text="9" HorizontalContentAlignment="Left"/>
 
                 </StackPanel>
 

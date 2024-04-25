@@ -384,27 +384,32 @@ namespace MSetExplorer
 		// Distribute
 		private void DistributeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			if (TryGetColorBandIndexForCommandExecution(fromContextMenu: false, out var colorBandIndex))
+			var startIndex = HistogramColorBandControl1.GetStartAndEndSelectedIndex(out var endIndex);
+			var maxIndex = _vm.ColorBandsView.Count - 1;
+
+			if (startIndex.HasValue && endIndex.HasValue)
 			{
-				int? startIndex = 4;
-				int? endIndex = 5;
-				var newColorBandCount = ShowDistributeColorBandsDialog(ref startIndex, ref endIndex);
-				if (newColorBandCount.HasValue && newColorBandCount.Value > 0
+				var newColorBandCount = ShowDistributeColorBandsDialog(ref startIndex, ref endIndex, maxIndex);
+
+				if (
+					newColorBandCount.HasValue && newColorBandCount.Value > 0
 					&& startIndex.HasValue && startIndex > 0
-					&& endIndex.HasValue && endIndex > 0)
+					&& endIndex.HasValue && endIndex > 0
+					)
 				{
 					HistogramColorBandControl1.DistributeColorBandItems(startIndex.Value, endIndex.Value, newColorBandCount.Value);
 				}
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"The CbsHistogramControl was unable to determine the ColorBandIndex.");
+				Debug.WriteLine("Could not get the Starting and Ending index of the selected item.");
+				return;
 			}
 		}
 
-		private int? ShowDistributeColorBandsDialog(ref int? startIndex, ref int? endIndex)
+		private int? ShowDistributeColorBandsDialog(ref int? startIndex, ref int? endIndex, int maxIndex)
 		{
-			var distributeColorBandsDialog = new ColorBandDistributeDialog(3, 4, 6);
+			var distributeColorBandsDialog = new ColorBandDistributeDialog(startIndex, endIndex, maxIndex);
 
 			if (distributeColorBandsDialog.ShowDialog() == true)
 			{

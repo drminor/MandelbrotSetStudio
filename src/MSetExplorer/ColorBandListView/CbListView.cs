@@ -910,6 +910,36 @@ namespace MSetExplorer
 			return result;
 		}
 
+		public int? GetStartAndEndSelectedIndex(out int? last)
+		{
+			int? first = null;
+			last = null;
+
+			// Find first one is selected
+
+			int i;
+
+			for(i = 0; i < ListViewItems.Count; i++)
+			{
+				if (ListViewItems[i].IsItemSelected)
+				{
+					first = i;
+					break;
+				}
+			}
+
+			for (; i < ListViewItems.Count; i++)
+			{
+				if (!ListViewItems[i].IsItemSelected)
+				{
+					last = i - 1;
+					break;
+				}
+			}
+
+			return first;
+		}
+
 		private void UpdateCutoff(CbSectionLineMovedEventArgs e)
 		{
 			var cbView = _colorBandsView;
