@@ -378,7 +378,6 @@ namespace MSetExplorer
 		private void DistributeCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{
 			e.CanExecute = CurrentColorBandIsOk();
-
 		}
 
 		// Distribute
@@ -391,14 +390,7 @@ namespace MSetExplorer
 			{
 				var newColorBandCount = ShowDistributeColorBandsDialog(ref startIndex, ref endIndex, maxIndex);
 
-				if (
-					newColorBandCount.HasValue && newColorBandCount.Value > 0
-					&& startIndex.HasValue && startIndex > 0
-					&& endIndex.HasValue && endIndex > 0
-					)
-				{
-					HistogramColorBandControl1.DistributeColorBandItems(startIndex.Value, endIndex.Value, newColorBandCount.Value);
-				}
+				DistributeColorBandItems(startIndex, endIndex, newColorBandCount);
 			}
 			else
 			{
@@ -411,16 +403,48 @@ namespace MSetExplorer
 		{
 			var distributeColorBandsDialog = new ColorBandDistributeDialog(startIndex, endIndex, maxIndex);
 
-			if (distributeColorBandsDialog.ShowDialog() == true)
-			{
-				startIndex = distributeColorBandsDialog.StartIndex;
-				endIndex = distributeColorBandsDialog.EndIndex;
+			distributeColorBandsDialog.ApplyChangesRequested += DistributeColorBandsDialog_ApplyChangesRequested;
 
-				return distributeColorBandsDialog.NewColorBandCount;
-			}
-			else
+			try
 			{
-				return -1;
+				if (distributeColorBandsDialog.ShowDialog() == true)
+				{
+					startIndex = distributeColorBandsDialog.StartIndex;
+					endIndex = distributeColorBandsDialog.EndIndex;
+
+					return distributeColorBandsDialog.NewColorBandCount;
+				}
+				else
+				{
+					return -1;
+				}
+			}
+			finally
+			{
+				distributeColorBandsDialog.ApplyChangesRequested -= DistributeColorBandsDialog_ApplyChangesRequested;
+			}
+		}
+
+		private void DistributeColorBandsDialog_ApplyChangesRequested(object? sender, EventArgs e)
+		{
+			if (sender is ColorBandDistributeDialog dialog)
+			{
+				var startIndex = dialog.StartIndex;
+				var endIndex = dialog.EndIndex;
+				var newColorBandCount = dialog.NewColorBandCount;
+				DistributeColorBandItems(startIndex, endIndex, newColorBandCount);
+			}
+		}
+
+		private void DistributeColorBandItems(int? startIndex, int? endIndex, int? newColorBandCount)
+		{
+			if (
+				newColorBandCount.HasValue && newColorBandCount.Value > 0
+				&& startIndex.HasValue && startIndex > 0
+				&& endIndex.HasValue && endIndex > 0
+				)
+			{
+				HistogramColorBandControl1.DistributeColorBandItems(startIndex.Value, endIndex.Value, newColorBandCount.Value);
 			}
 		}
 

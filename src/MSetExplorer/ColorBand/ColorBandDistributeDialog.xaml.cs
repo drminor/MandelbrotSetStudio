@@ -10,7 +10,11 @@ namespace MSetExplorer
 	{
 		private int? _startIndex;
 		private int? _endIndex;
+
+		private int? _newColorBandCount;
 		private int _maxIndex;
+
+		#region Constructor
 
 		public ColorBandDistributeDialog(int? startIndex, int? endIndex, int maxIndex)
 		{
@@ -18,10 +22,23 @@ namespace MSetExplorer
 			_endIndex = endIndex;
 			_maxIndex = maxIndex;
 
+
 			ContentRendered += ColorBandDistributeDialog_ContentRendered;
 
 			InitializeComponent();
 		}
+
+		#endregion
+
+		#region Public Events
+
+
+		public event EventHandler? ApplyChangesRequested;
+
+
+		#endregion
+
+		#region Event Handlers
 
 		private void ColorBandDistributeDialog_ContentRendered(object? sender, EventArgs e)
 		{
@@ -30,15 +47,17 @@ namespace MSetExplorer
 			txtStartingIndex.Text = _startIndex.ToString();
 			txtEndingIndex.Text = _endIndex.ToString();
 
-			var newTarget = 1 + _endIndex - _startIndex;
+			_newColorBandCount = 1 + _endIndex - _startIndex;
 
-			txtNewNumberOfBands.Text = newTarget.ToString();
+			txtNewNumberOfBands.Text = _newColorBandCount.ToString();
 
-			if (newTarget > 1)
+			if (_newColorBandCount > 1)
 			{
-				txtBlkDivide1Band.Text = $"Divide {newTarget} Bands";
+				txtBlkDivide1Band.Text = $"Divide {_newColorBandCount} Bands";
 			}
 		}
+
+		#endregion
 
 		#region Public Properties
 
@@ -78,7 +97,12 @@ namespace MSetExplorer
 			{
 				if (int.TryParse(txtEndingIndex.Text, out var newEndIndex))
 				{
-					return newEndIndex;
+					if (newEndIndex <= _maxIndex)
+						return newEndIndex;
+					else
+					{
+						return _maxIndex;
+					}
 				}
 				else
 				{
@@ -91,9 +115,21 @@ namespace MSetExplorer
 
 		#region Button Handlers
 
+		private void btnApplyChanges_Click(object sender, RoutedEventArgs e)
+		{
+			if (AreChangesPending())
+			{
+				ApplyChangesRequested?.Invoke(this, EventArgs.Empty);
+
+				_startIndex = StartIndex;
+				_endIndex = EndIndex;
+				_newColorBandCount = NewColorBandCount;
+			}
+		}
+
 		private void btnOk_Click(object sender, RoutedEventArgs e)
 		{
-			DialogResult = true;
+			DialogResult = AreChangesPending();
 			Close();
 		}
 
@@ -104,5 +140,12 @@ namespace MSetExplorer
 		}
 
 		#endregion
+
+		private bool AreChangesPending()
+		{
+			var result = StartIndex != _startIndex || EndIndex != _endIndex || NewColorBandCount != _newColorBandCount;
+
+			return result;
+		}
 	}
 }
