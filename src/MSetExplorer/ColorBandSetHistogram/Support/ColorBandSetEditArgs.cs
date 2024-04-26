@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System.Diagnostics;
 
 namespace MSetExplorer
 {
@@ -10,29 +11,47 @@ namespace MSetExplorer
 		public int NewColorBandsCount { get; init; }
 		public ReservedColorBand[]? ReservedColorBands { get; init; }
 
-		public ColorBand? NewColorBand { get; set; }
+		public ColorBand[]? NewColorBands { get; set; }
+
+		public int DistributionExpansionAmount { get; init; }
 
 		public int Index => StartingIndex;
+		public ColorBand? NewColorBand => NewColorBands?[0];
 		public ReservedColorBand? ReservedColorBand => ReservedColorBands?[0];
 
 		public ColorBandSetEditArgs(ColorBandSetEditOperation operation, int index, ReservedColorBand? reservedColorBand = null)
+			: this(operation, index, endingIndex: null, newColorBandsCount: 0, reservedColorBand == null ? null : new ReservedColorBand[] { reservedColorBand })
 		{
-			Operation = operation;
-			StartingIndex = index;
-			EndingIndex = null;
-			NewColorBandsCount = 0;
-			NewColorBand = null;
-			ReservedColorBands = reservedColorBand == null ? null: new ReservedColorBand[] { reservedColorBand };
 		}
 
-		public ColorBandSetEditArgs(ColorBandSetEditOperation operation, int startingIndex, int endingIndex, int newColorBandsCount, ReservedColorBand[]? reservedColorBands = null)
+		public ColorBandSetEditArgs(ColorBandSetEditOperation operation, int startingIndex, int? endingIndex, int newColorBandsCount, ReservedColorBand[]? reservedColorBands = null)
 		{
 			Operation = operation;
 			StartingIndex = startingIndex;
 			EndingIndex = endingIndex;
 			NewColorBandsCount = newColorBandsCount;
-			NewColorBand = null;
+			NewColorBands = null;
 			ReservedColorBands = reservedColorBands;
+
+			DistributionExpansionAmount = GetDistributionExpansionAmount(StartingIndex, EndingIndex, NewColorBandsCount);
+		}
+
+		private int GetDistributionExpansionAmount(int startingIndex, int? endingIndex, int newColorBandsCount)
+		{
+			if (newColorBandsCount <= 0)
+			{
+				return 0;
+			}
+
+			Debug.Assert(endingIndex.HasValue, "The newColorBandsCount argument is > 0, but we have no endingIndex.");
+
+			Debug.Assert(endingIndex.Value >= startingIndex, "The starting index is > than the ending index.");
+
+			var diff = 1 + endingIndex.Value - startingIndex;
+
+			var result = newColorBandsCount - diff;
+
+			return result;
 		}
 
 	}

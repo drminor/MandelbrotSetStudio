@@ -1,0 +1,28 @@
+Distribute 
+New Count Stays the same
+ColorBands are neither created nor deleted
+Reserved ColorBands are neither used nor created
+
+New Count Increases
+1 or more ColorBands are created
+Colors are pulled down -- onto the new ColorBands
+1 or more Reserved ColorBands are used.
+
+New Count Decreases
+1 or more ColorBands are deleted
+Colors are pushed up from the deleted items
+1 or more Reserved ColorBands are created
+
+
+Distribute 
+New Count Stays the same
+Each cutoff is adjusted except the last one
+
+New Count Increases
+Each cutoff is adjusted including the last one currently extant
+The cutoff for the last new one inserted gets the value from last one currently extant.
+
+New Count Decreases
+Each cutoff is adjusted including the last one not deleted
+The cuttoff for the last one not deleted gets the value from the last one that is deleted
+

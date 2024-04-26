@@ -368,21 +368,6 @@ namespace MSetExplorer
 			}
 		}
 
-		//private bool _usePercentages;
-		//public bool UsePercentages
-		//{
-		//	get => _usePercentages;
-		//	set
-		//	{
-		//		if (value != _usePercentages)
-		//		{
-		//			_usePercentages = value;
-
-		//			// TODO: handle UsePercentages vs. UseCutoffs
-		//		}
-		//	}
-		//}	
-
 		#endregion
 
 		#region Public Methods
@@ -524,6 +509,7 @@ namespace MSetExplorer
 						_cbsHistogramViewModel?.CompleteCutoffInsertion(editArgs.Index, editArgs.NewColorBand, editArgs.ReservedColorBand);
 						break;
 					}
+
 				// Insert Color - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.InsertColor:
 					{
@@ -542,6 +528,7 @@ namespace MSetExplorer
 
 						break;
 					}
+				
 				// Insert entire ColorBand		
 				case ColorBandSetEditOperation.InsertBand:
 					{
@@ -555,6 +542,7 @@ namespace MSetExplorer
 						_cbsHistogramViewModel?.CompleteBandInsertion(index, newColorBand);
 						break;
 					}
+
 				// Delete Cutoff - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.DeleteCutoff:
 					{
@@ -568,6 +556,7 @@ namespace MSetExplorer
 
 						break;
 					}
+
 				// Delete Color - Existing colors are pulled down, the next available Reserved ColorBand is popped from the Stack to provide the source of the High ColorBand
 				case ColorBandSetEditOperation.DeleteColor:
 					{
@@ -579,6 +568,7 @@ namespace MSetExplorer
 						_cbsHistogramViewModel?.CompleteColorRemoval(index, reservedColorBand);
 						break;
 					}
+
 				// Delete Entire ColorBand
 				case ColorBandSetEditOperation.DeleteBand:
 					{

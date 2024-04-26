@@ -1,5 +1,4 @@
-﻿using MSetExplorer.XPoc;
-using MSS.Types;
+﻿using MSS.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -69,7 +68,7 @@ namespace MSetExplorer.Cbs
 			var successorStartColor = colorBand.SuccessorStartColor;
 
 			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, prevCutoff, successorStartColor, newPercentage);
-			editArgs.NewColorBand = newColorBand;
+			editArgs.NewColorBands = new ColorBand[] { newColorBand };
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
 			//itemBeingInserted.ElevationsAreLocal = true;
@@ -189,7 +188,7 @@ namespace MSetExplorer.Cbs
 
 			var colorBand = new ColorBand(0, ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, ColorBandColor.White, percentage: double.NaN);
 
-			editArgs.NewColorBand = colorBand;
+			editArgs.NewColorBands = new ColorBand[] { colorBand };
 			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
@@ -218,7 +217,7 @@ namespace MSetExplorer.Cbs
 			var successorStartColor = colorBand.StartColor;
 
 			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, prevCutoff, successorStartColor, newPercentage);
-			editArgs.NewColorBand = newColorBand;
+			editArgs.NewColorBands = new ColorBand[] { newColorBand };
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
 			itemBeingInserted.ElevationsAreLocal = true;
@@ -486,17 +485,68 @@ namespace MSetExplorer.Cbs
 			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
+		#endregion
+
+		#region Distribute Color Bands
+
 		public void DistributeColorBands(ColorBandSetEditArgs editArgs)
+		{
+			if (editArgs.DistributionExpansionAmount == 0)
+			{
+				DistributeColorBandsStay(editArgs);
+			}
+			else if (editArgs.DistributionExpansionAmount > 0)
+			{
+				DistributeColorBandsExpand(editArgs);
+			}
+			else
+			{
+				DistributeColorBandsContract(editArgs);
+			}
+		}
+
+		private void DistributeColorBandsStay(ColorBandSetEditArgs editArgs)
+		{
+			DistributeColorBandsPost(editArgs);
+
+		}
+
+		private void DistributeColorBandsExpand(ColorBandSetEditArgs editArgs)
 		{
 			var startIndex = editArgs.StartingIndex;
 			var endIndex = editArgs.EndingIndex;
-
 			var newColorBandsCount = editArgs.NewColorBandsCount;
+			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDistributeColorBands. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandsCount}.");
 
-			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDeleteColor. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandsCount}.");
+			var index = editArgs.Index;
+
+			var currentItem = _listViewItems[index];
+			var startingAreaOfCurrentItem = currentItem.Area;
+
+			var colorBand = currentItem.ColorBand;
+			var prevCutoff = colorBand.PreviousCutoff;
+			var newWidth = colorBand.BucketWidth / 2;
+			var newPercentage = colorBand.Percentage / 2;
+
+			// the existing item's percentage is also halved.
+			colorBand.Percentage = newPercentage;
+
+			var newCutoff = (prevCutoff ?? 0) + newWidth;
+
+			var newStartColor = ColorBandColor.White;
+			var endColor = colorBand.StartColor;
+			var successorStartColor = colorBand.StartColor;
 
 			DistributeColorBandsPost(editArgs);
+
 		}
+
+		private void DistributeColorBandsContract(ColorBandSetEditArgs editArgs)
+		{
+			DistributeColorBandsPost(editArgs);
+
+		}
+
 
 		private void DistributeColorBandsPost(ColorBandSetEditArgs editArgs)
 		{
@@ -547,7 +597,9 @@ namespace MSetExplorer.Cbs
 			//_cbListView.ReportListViewItems("After Animate Distribute ColorBands.");
 		}
 
+		#endregion
 
+		#region Private Methods
 
 		private void ApplyAnimationItemPairs(AnimationItemPairList animationItemPairList)
 		{
