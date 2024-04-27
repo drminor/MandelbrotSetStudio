@@ -36,7 +36,7 @@ namespace MSetExplorer
 			DistributionExpansionAmount = GetDistributionExpansionAmount(StartingIndex, EndingIndex, NewColorBandsCount);
 		}
 
-		private int GetDistributionExpansionAmount(int startingIndex, int? endingIndex, int newColorBandsCount)
+		public static int GetDistributionExpansionAmount(int startingIndex, int? endingIndex, int newColorBandsCount)
 		{
 			if (newColorBandsCount <= 0)
 			{

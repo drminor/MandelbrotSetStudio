@@ -905,15 +905,24 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public ReservedColorBand PopReservedColorBand()
+		public ReservedColorBand[] PopReservedColorBand(int numberToPop = 1)
 		{
-			var result = _currentColorBandSet.PopReservedColorBand();
+			var result = new ReservedColorBand[numberToPop];
+
+			for (var i = 0; i < numberToPop; i++)
+			{
+				result[i] = _currentColorBandSet.PopReservedColorBand();
+			}
+
 			return result;
 		}
 
-		public void PushReservedColorBand(ReservedColorBand reservedColorBand)
+		public void PushReservedColorBand(ReservedColorBand[] reservedColorBands)
 		{
-			_currentColorBandSet.PushReservedColorBand(reservedColorBand);
+			foreach (var rcb in reservedColorBands)
+			{
+				_currentColorBandSet.PushReservedColorBand(rcb);
+			}
 		}
 
 		#endregion
@@ -1324,7 +1333,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void CompleteColorBandsDistribution(int startIndex, int endIndex, int newNumberOfColorBands, ReservedColorBand[] reservedColorBands)
+		public void CompleteColorBandsDistribution(int startIndex, int endIndex, ColorBand[]? colorBands, ReservedColorBand[]? reservedColorBands)
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorBandsDistribution has been callled.");
 			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorBandsDistribution has been callled.");

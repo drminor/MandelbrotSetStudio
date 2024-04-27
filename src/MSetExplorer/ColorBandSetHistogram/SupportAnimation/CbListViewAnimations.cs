@@ -507,6 +507,13 @@ namespace MSetExplorer.Cbs
 
 		private void DistributeColorBandsStay(ColorBandSetEditArgs editArgs)
 		{
+			var startIndex = editArgs.StartingIndex;
+			var endIndex = editArgs.EndingIndex;
+			var newColorBandsCount = editArgs.NewColorBandsCount;
+			Debug.WriteLine($"AnimateDistributeColorBands-Stay. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandsCount}.");
+
+			var index = editArgs.Index;
+
 			DistributeColorBandsPost(editArgs);
 
 		}
@@ -516,7 +523,7 @@ namespace MSetExplorer.Cbs
 			var startIndex = editArgs.StartingIndex;
 			var endIndex = editArgs.EndingIndex;
 			var newColorBandsCount = editArgs.NewColorBandsCount;
-			Debug.WriteLineIf(_useDetailedDebug, $"AnimateDistributeColorBands. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandsCount}.");
+			Debug.WriteLine($"AnimateDistributeColorBands-Expand. StartIndex: {startIndex}, EndIndex: {endIndex}, Adding {editArgs.DistributionExpansionAmount} ColorBands, Target Number: {newColorBandsCount}.");
 
 			var index = editArgs.Index;
 
@@ -543,6 +550,15 @@ namespace MSetExplorer.Cbs
 
 		private void DistributeColorBandsContract(ColorBandSetEditArgs editArgs)
 		{
+			var startIndex = editArgs.StartingIndex;
+			var endIndex = editArgs.EndingIndex;
+			var newColorBandsCount = editArgs.NewColorBandsCount;
+			Debug.WriteLine($"AnimateDistributeColorBands-Contract. StartIndex: {startIndex}, EndIndex: {endIndex}, Removing: {-1 * editArgs.DistributionExpansionAmount} ColorBands, Target Number: {newColorBandsCount}.");
+
+			var index = editArgs.Index;
+
+
+
 			DistributeColorBandsPost(editArgs);
 
 		}

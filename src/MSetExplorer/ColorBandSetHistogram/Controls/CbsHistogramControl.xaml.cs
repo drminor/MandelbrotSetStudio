@@ -383,25 +383,68 @@ namespace MSetExplorer
 		// Distribute
 		private void DistributeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var startIndex = HistogramColorBandControl1.GetStartAndEndSelectedIndex(out var endIndex);
+			//if (HistogramColorBandControl1.TryGetStartAndEndSelectedIndex(out var startIndex, out var endIndex))
+			//{
+			//	var maxIndex = _vm.ColorBandsView.Count - 1;
+
+			//	var startCnt = ((ColorBand)_vm.ColorBandsView.GetItemAt(startIndex.Value)).Cutoff;
+			//	var endCnt = ((ColorBand)_vm.ColorBandsView.GetItemAt(endIndex.Value)).Cutoff;
+			//	var maxNewColorBandCount = endCnt - startCnt;
+
+			//	var newColorBandCount = ShowDistributeColorBandsDialog(ref startIndex, ref endIndex, maxIndex, initialCBCount: null, maxNewColorBandCount);
+
+			//	DistributeColorBandItems(startIndex, endIndex, newColorBandCount);
+			//}
+			//else
+			//{
+			//	Debug.WriteLine("Could not get the Starting and Ending index of the selected item.");
+			//	return;
+			//}
+
+			int startIndex = 7;
+			int endIndex = 9;
+
+			// For Testing
+			int initialCBCount = 5;
+
 			var maxIndex = _vm.ColorBandsView.Count - 1;
+			var maxNewColorBandCount = 10;
+			var newColorBandCount = ShowDistributeColorBandsDialog(ref startIndex, ref endIndex, maxIndex, initialCBCount, maxNewColorBandCount);
 
-			if (startIndex.HasValue && endIndex.HasValue)
+			if (newColorBandCount.HasValue)
 			{
-				var newColorBandCount = ShowDistributeColorBandsDialog(ref startIndex, ref endIndex, maxIndex);
-
-				DistributeColorBandItems(startIndex, endIndex, newColorBandCount);
+				DistributeColorBandItems(startIndex, endIndex, newColorBandCount.Value);
 			}
 			else
 			{
-				Debug.WriteLine("Could not get the Starting and Ending index of the selected item.");
-				return;
+				Debug.WriteLine("The DistributeColorBands Dialog was cancelled or ApplyChanges already called and No Changes are pending.");
 			}
+
+			//var startIndex = HistogramColorBandControl1.GetStartAndEndSelectedIndex(out var endIndex);
+
+			//int? startIndex = 7;
+			//int? endIndex = 9;
+
+			//// For Testing
+			//int? initialCBCount = 5;
+
+			//if (startIndex.HasValue && endIndex.HasValue)
+			//{
+			//	var maxIndex = _vm.ColorBandsView.Count - 1;
+
+			//	var startCnt = ((ColorBand)_vm.ColorBandsView.GetItemAt(startIndex.Value)).Cutoff;
+			//	var endCnt = ((ColorBand) _vm.ColorBandsView.GetItemAt(endIndex.Value)).Cutoff;
+			//	var maxNewColorBandCount = endCnt - startCnt;
+
+			//	var newColorBandCount = ShowDistributeColorBandsDialog(ref startIndex, ref endIndex, maxIndex, initialCBCount, maxNewColorBandCount);
+
+			//	DistributeColorBandItems(startIndex, endIndex, newColorBandCount);
+			//}
 		}
 
-		private int? ShowDistributeColorBandsDialog(ref int? startIndex, ref int? endIndex, int maxIndex)
+		private int? ShowDistributeColorBandsDialog(ref int startIndex, ref int endIndex, int maxIndex, int? initialCBCount, int maxNewColorBandCount)
 		{
-			var distributeColorBandsDialog = new ColorBandDistributeDialog(startIndex, endIndex, maxIndex);
+			var distributeColorBandsDialog = new ColorBandDistributeDialog(startIndex, endIndex, maxIndex, initialCBCount, maxNewColorBandCount);
 
 			distributeColorBandsDialog.ApplyChangesRequested += DistributeColorBandsDialog_ApplyChangesRequested;
 
@@ -409,14 +452,14 @@ namespace MSetExplorer
 			{
 				if (distributeColorBandsDialog.ShowDialog() == true)
 				{
-					startIndex = distributeColorBandsDialog.StartIndex;
-					endIndex = distributeColorBandsDialog.EndIndex;
+					startIndex = distributeColorBandsDialog.StartIndex ?? throw new InvalidOperationException();
+					endIndex = distributeColorBandsDialog.EndIndex ?? throw new InvalidOperationException();
 
 					return distributeColorBandsDialog.NewColorBandCount;
 				}
 				else
 				{
-					return -1;
+					return null;
 				}
 			}
 			finally
@@ -429,22 +472,19 @@ namespace MSetExplorer
 		{
 			if (sender is ColorBandDistributeDialog dialog)
 			{
-				var startIndex = dialog.StartIndex;
-				var endIndex = dialog.EndIndex;
-				var newColorBandCount = dialog.NewColorBandCount;
+				var startIndex = dialog.StartIndex ?? throw new InvalidOperationException();
+				var endIndex = dialog.EndIndex ?? throw new InvalidOperationException();
+				var newColorBandCount = dialog.NewColorBandCount ?? throw new InvalidOperationException();
+
 				DistributeColorBandItems(startIndex, endIndex, newColorBandCount);
 			}
 		}
 
-		private void DistributeColorBandItems(int? startIndex, int? endIndex, int? newColorBandCount)
+		private void DistributeColorBandItems(int startIndex, int endIndex, int newColorBandCount)
 		{
-			if (
-				newColorBandCount.HasValue && newColorBandCount.Value > 0
-				&& startIndex.HasValue && startIndex > 0
-				&& endIndex.HasValue && endIndex > 0
-				)
+			if (newColorBandCount > 0 && startIndex > 0 && endIndex > 0)
 			{
-				HistogramColorBandControl1.DistributeColorBandItems(startIndex.Value, endIndex.Value, newColorBandCount.Value);
+				HistogramColorBandControl1.DistributeColorBands(startIndex, endIndex, newColorBandCount);
 			}
 		}
 

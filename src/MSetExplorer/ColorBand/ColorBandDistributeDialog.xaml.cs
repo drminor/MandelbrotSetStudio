@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 
 namespace MSetExplorer
@@ -8,20 +9,25 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class ColorBandDistributeDialog : Window
 	{
-		private int? _startIndex;
-		private int? _endIndex;
+		private int _startIndex;
+		private int _endIndex;
+		private int _newColorBandCount;
 
-		private int? _newColorBandCount;
 		private int _maxIndex;
+		private int? _initialCBCount;
+		private int _maxNewColorBandCount;
 
 		#region Constructor
 
-		public ColorBandDistributeDialog(int? startIndex, int? endIndex, int maxIndex)
+		public ColorBandDistributeDialog(int startIndex, int endIndex, int maxIndex, int? initialCBCount, int maxNewColorBandCount)
 		{
 			_startIndex = startIndex;
 			_endIndex = endIndex;
-			_maxIndex = maxIndex;
+			_newColorBandCount = -1;    // No updates yet, make AreChangesPending return true.
 
+			_maxIndex = maxIndex;
+			_initialCBCount = initialCBCount;
+			_maxNewColorBandCount = maxNewColorBandCount;
 
 			ContentRendered += ColorBandDistributeDialog_ContentRendered;
 
@@ -47,13 +53,22 @@ namespace MSetExplorer
 			txtStartingIndex.Text = _startIndex.ToString();
 			txtEndingIndex.Text = _endIndex.ToString();
 
-			_newColorBandCount = 1 + _endIndex - _startIndex;
+			int newCBCount;
 
-			txtNewNumberOfBands.Text = _newColorBandCount.ToString();
-
-			if (_newColorBandCount > 1)
+			if (_initialCBCount.HasValue)
 			{
-				txtBlkDivide1Band.Text = $"Divide {_newColorBandCount} Bands";
+				newCBCount = _initialCBCount.Value;
+			}
+			else
+			{
+				newCBCount = 1 + _endIndex - _startIndex;
+			}
+
+			txtNewNumberOfBands.Text = newCBCount.ToString();
+
+			if (newCBCount > 1)
+			{
+				txtBlkDivide1Band.Text = $"Divide {newCBCount} Bands";
 			}
 		}
 
@@ -119,18 +134,36 @@ namespace MSetExplorer
 		{
 			if (AreChangesPending())
 			{
-				ApplyChangesRequested?.Invoke(this, EventArgs.Empty);
+				if (NewColorBandCount > _maxNewColorBandCount)
+				{
+					Debug.WriteLine($"The new ColorBandCount exceeded the max allowed: {_maxNewColorBandCount}.");
+					return;
+				}
 
-				_startIndex = StartIndex;
-				_endIndex = EndIndex;
-				_newColorBandCount = NewColorBandCount;
+				if (StartIndex.HasValue && EndIndex.HasValue && NewColorBandCount.HasValue)
+				{
+					ApplyChangesRequested?.Invoke(this, EventArgs.Empty);
+
+					_startIndex = StartIndex.Value;
+					_endIndex = EndIndex.Value;
+					_newColorBandCount = NewColorBandCount.Value;
+				}
 			}
 		}
 
 		private void btnOk_Click(object sender, RoutedEventArgs e)
 		{
-			DialogResult = AreChangesPending();
-			Close();
+			if (StartIndex.HasValue && EndIndex.HasValue && NewColorBandCount.HasValue)
+			{
+				if (NewColorBandCount > _maxNewColorBandCount)
+				{
+					Debug.WriteLine($"The new ColorBandCount exceeded the max allowed: {_maxNewColorBandCount}.");
+					return;
+				}
+
+				DialogResult = AreChangesPending();
+				Close();
+			}
 		}
 
 		private void btnClose_Click(object sender, RoutedEventArgs e)

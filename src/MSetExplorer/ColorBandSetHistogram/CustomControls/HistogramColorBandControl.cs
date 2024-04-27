@@ -4,6 +4,7 @@ using MSS.Types;
 using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -388,7 +389,7 @@ namespace MSetExplorer
 				switch (editMode)
 				{
 					case ColorBandSetEditMode.Cutoffs:
-						var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
+						var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand(1)[0];
 						var editArgs1 = new ColorBandSetEditArgs(ColorBandSetEditOperation.InsertCutoff, colorBandIndex, reservedColorBand: reservedColorBand);
 						_cbListViewAnimations.InsertCutoff(editArgs1);
 						break;
@@ -436,7 +437,7 @@ namespace MSetExplorer
 						break;
 
 					case ColorBandSetEditMode.Colors:
-						var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
+						var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand(1)[0];
 						var editArgs2 = new ColorBandSetEditArgs(ColorBandSetEditOperation.DeleteColor, colorBandIndex, reservedColorBand: reservedColorBand);
 						_cbListViewAnimations.DeleteColor(editArgs2);
 						break;
@@ -457,31 +458,27 @@ namespace MSetExplorer
 		}
 
 		// Distribute
-		public void DistributeColorBandItems(int startIndex, int endIndex, int newColorBandCount)
+		public void DistributeColorBands(int startIndex, int endIndex, int newColorBandCount)
 		{
 			if (_cbsHistogramViewModel == null || _cbListViewAnimations == null)
 			{
 				return;
 			}
 
-			var existingCount = 1 + endIndex - startIndex;
-			if (newColorBandCount > existingCount)
+			ReservedColorBand[]? reservedColorBands;
+			var expansionAmount = ColorBandSetEditArgs.GetDistributionExpansionAmount(startIndex, endIndex, newColorBandCount);
+			if (expansionAmount > 0)
 			{
-				var diff = newColorBandCount - existingCount;
-				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Adding {diff} Bands. Start: {startIndex}, End: {endIndex}, New Count: {newColorBandCount}.");
-			}
-			else if (newColorBandCount == existingCount)
-			{
-				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Band Count remains at {existingCount}. Start: {startIndex}, End: {endIndex}.");
+				reservedColorBands = _cbsHistogramViewModel.PopReservedColorBand(expansionAmount);
 			}
 			else
 			{
-				var diff = existingCount - newColorBandCount;
-				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Removing {diff} Bands. Start: {startIndex}, End: {endIndex}, New Count: {newColorBandCount}.");
+				reservedColorBands = null;
 			}
 
-			var reservedColorBand = _cbsHistogramViewModel.PopReservedColorBand();
-			var editArgs = new ColorBandSetEditArgs(ColorBandSetEditOperation.DistributeBands, startIndex, endIndex, newColorBandCount, new ReservedColorBand[] { reservedColorBand });
+			var editArgs = new ColorBandSetEditArgs(ColorBandSetEditOperation.DistributeBands, startIndex, endIndex, newColorBandCount, reservedColorBands);
+			ReportDistributeColorBands(editArgs);
+
 			_cbListViewAnimations.DistributeColorBands(editArgs);
 		}
 
@@ -489,7 +486,7 @@ namespace MSetExplorer
 		{
 			var editOp = editArgs.Operation;
 			var index = editArgs.Index;
-			var reservedColorBand = editArgs.ReservedColorBand;
+			//var reservedColorBand = editArgs.ReservedColorBand;
 
 			switch (editOp)
 			{
@@ -523,7 +520,7 @@ namespace MSetExplorer
 
 						if (result != null)
 						{
-							_cbsHistogramViewModel?.PushReservedColorBand(result);
+							_cbsHistogramViewModel?.PushReservedColorBand(new ReservedColorBand[1] { result });
 						}
 
 						break;
@@ -551,7 +548,7 @@ namespace MSetExplorer
 						if (result != null)
 						{
 							// The color from the top most band is pushed on to the stack of Reserved Bands
-							_cbsHistogramViewModel?.PushReservedColorBand(result);
+							_cbsHistogramViewModel?.PushReservedColorBand(new ReservedColorBand[] { result });
 						}
 
 						break;
@@ -560,12 +557,12 @@ namespace MSetExplorer
 				// Delete Color - Existing colors are pulled down, the next available Reserved ColorBand is popped from the Stack to provide the source of the High ColorBand
 				case ColorBandSetEditOperation.DeleteColor:
 					{
-						if (reservedColorBand == null)
+						if (editArgs.ReservedColorBand == null)
 						{
 							throw new ArgumentException("The reservedColorBand is null on call to DeleteColor.");
 						}
 
-						_cbsHistogramViewModel?.CompleteColorRemoval(index, reservedColorBand);
+						_cbsHistogramViewModel?.CompleteColorRemoval(index, editArgs.ReservedColorBand);
 						break;
 					}
 
@@ -578,12 +575,15 @@ namespace MSetExplorer
 
 				case ColorBandSetEditOperation.DistributeBands:
 					{
-						if (reservedColorBand == null)
-						{
-							throw new ArgumentException("The reservedColorBands array is null on call to DistributeBands.");
-						}
 
-						_cbsHistogramViewModel?.CompleteColorBandsDistribution(editArgs.StartingIndex, editArgs.EndingIndex!.Value, editArgs.NewColorBandsCount, editArgs.ReservedColorBands!);
+						//if (reservedColorBand == null)
+						//{
+						//	throw new ArgumentException("The reservedColorBands array is null on call to DistributeBands.");
+						//}
+
+						var endingIndex = editArgs.EndingIndex ?? throw new InvalidOperationException();
+
+						_cbsHistogramViewModel?.CompleteColorBandsDistribution(editArgs.StartingIndex, endingIndex, editArgs.NewColorBands, editArgs.ReservedColorBands);
 						break;
 					}
 				default:
@@ -641,6 +641,21 @@ namespace MSetExplorer
 
 			var result = _cbListView.GetStartAndEndSelectedIndex(out last);
 			return result;
+		}
+
+		public bool TryGetStartAndEndSelectedIndex([NotNullWhen(true)] out int? first, [NotNullWhen(true)] out int? last)
+		{
+			if (_cbListView == null)
+			{
+				first = null;
+				last = null;
+				return false;
+			}
+
+			first = _cbListView.GetStartAndEndSelectedIndex(out last);
+
+			var result = first != null && last != null;
+			return	result;
 		}
 
 		#endregion
@@ -1070,6 +1085,28 @@ namespace MSetExplorer
 			else
 			{
 				Debug.WriteLine($"HistogramColorBandControl. HandlePreviewLeftButtonDown. The Keyboard focus is now on {elementWithFocus}. The element with logical focus cannot be determined. FocusResult: {focusResult}.");
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void ReportDistributeColorBands(ColorBandSetEditArgs editArgs)
+		{
+			var startIndex = editArgs.StartingIndex;
+			var endIndex = editArgs.EndingIndex;
+			var newColorBandCount = editArgs.NewColorBandsCount;
+			var expansionAmount = editArgs.DistributionExpansionAmount;
+
+			if (expansionAmount > 0)
+			{
+				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Adding {expansionAmount} Bands. Start: {startIndex}, End: {endIndex}, New Count: {newColorBandCount}.");
+			}
+			else if (expansionAmount == 0)
+			{
+				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Band Count remains at {newColorBandCount}. Start: {startIndex}, End: {endIndex}.");
+			}
+			else
+			{
+				Debug.WriteLine($"HistogramColorBandControl. DistributeColorBandItems. Removing {-1 * expansionAmount} Bands. Start: {startIndex}, End: {endIndex}, New Count: {newColorBandCount}.");
 			}
 		}
 

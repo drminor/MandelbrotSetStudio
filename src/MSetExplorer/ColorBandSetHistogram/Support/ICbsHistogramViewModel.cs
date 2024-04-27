@@ -69,10 +69,11 @@ namespace MSetExplorer
 		void CompleteColorRemoval(int index, ReservedColorBand reservedColorBand);
 		void CompleteBandRemoval(int index);
 
-		void CompleteColorBandsDistribution(int startIndex, int endIndex, int newNumberOfColorBands, ReservedColorBand[] reservedColorBands);
+		//void CompleteColorBandsDistribution(int startIndex, int endIndex, int newNumberOfColorBands, ReservedColorBand[] reservedColorBands);
+		void CompleteColorBandsDistribution(int startIndex, int endIndex, ColorBand[]? colorBands, ReservedColorBand[]? reservedColorBands);
 
-		ReservedColorBand PopReservedColorBand();
-		void PushReservedColorBand(ReservedColorBand reservedColorBand);
+		ReservedColorBand[] PopReservedColorBand(int numberToPop = 1);
+		void PushReservedColorBand(ReservedColorBand[] reservedColorBands);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 
