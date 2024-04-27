@@ -925,6 +925,12 @@ namespace MSetExplorer
 			}
 		}
 
+		public HistCutoffsSnapShot GetHistCutoffsSnapShot()
+		{
+			var histCutoffsSnapShot = GetHistCutoffsSnapShot(_mapSectionHistogramProcessor.Histogram, histogramIsFromACompleteMap:false, _currentColorBandSet);
+			return histCutoffsSnapShot;
+		}
+
 		#endregion
 
 		#region Public Methods Insertions
@@ -1010,7 +1016,7 @@ namespace MSetExplorer
 
 		public ReservedColorBand CompleteColorInsertion(int index, ColorBand colorBand)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorInsertion has been callled.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorInsertion has been called.");
 
 			var result = InsertColor(index, colorBand);
 
@@ -1032,7 +1038,7 @@ namespace MSetExplorer
 
 		public void CompleteBandInsertion(int index, ColorBand colorBand)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandInsertion has been callled.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandInsertion has been called.");
 
 			_disableProcessCurColorBandPropertyChanges = true;
 
@@ -1152,7 +1158,7 @@ namespace MSetExplorer
 		{
 			var selItem = _currentColorBandSet[index];
 
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffRemoval has been callled for index = {index} with Cutoff = {selItem.Cutoff}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteCutoffRemoval has been called for index = {index} with Cutoff = {selItem.Cutoff}.");
 
 			var percentage = selItem.Percentage;
 			var result = TryDeleteStartingCutoff(selItem, out var reservedColorBand);
@@ -1222,7 +1228,7 @@ namespace MSetExplorer
 
 		public void CompleteColorRemoval(int index, ReservedColorBand reservedColorBand)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorRemoval has been callled.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorRemoval has been called.");
 
 			var result = TryDeleteColor(index, reservedColorBand);
 
@@ -1260,7 +1266,7 @@ namespace MSetExplorer
 
 		public void CompleteBandRemoval(int index)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandRemoval has been callled.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandRemoval has been called.");
 			var selItem = _currentColorBandSet[index];
 			var percentage = selItem.Percentage;
 
@@ -1335,8 +1341,8 @@ namespace MSetExplorer
 
 		public void CompleteColorBandsDistribution(int startIndex, int endIndex, ColorBand[]? colorBands, ReservedColorBand[]? reservedColorBands)
 		{
-			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorBandsDistribution has been callled.");
-			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorBandsDistribution has been callled.");
+			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorBandsDistribution has been called.");
+			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorBandsDistribution has been called.");
 
 			//var result = TryDeleteColor(index, reservedColorBand);
 

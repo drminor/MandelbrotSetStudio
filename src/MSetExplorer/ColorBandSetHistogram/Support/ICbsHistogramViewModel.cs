@@ -76,6 +76,8 @@ namespace MSetExplorer
 		void PushReservedColorBand(ReservedColorBand[] reservedColorBands);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
+		public HistCutoffsSnapShot GetHistCutoffsSnapShot();
+
 
 		HPlotSeriesData SeriesData { get; }
 

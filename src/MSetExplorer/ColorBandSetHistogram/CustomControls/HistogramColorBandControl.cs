@@ -479,6 +479,9 @@ namespace MSetExplorer
 			var editArgs = new ColorBandSetEditArgs(ColorBandSetEditOperation.DistributeBands, startIndex, endIndex, newColorBandCount, reservedColorBands);
 			ReportDistributeColorBands(editArgs);
 
+			//var histCutoffsSnapShot = _cbsHistogramViewModel.GetHistCutoffsSnapShot();
+			//_cbListViewAnimations.DistributeColorBands(editArgs,histCutoffsSnapShot);
+
 			_cbListViewAnimations.DistributeColorBands(editArgs);
 		}
 

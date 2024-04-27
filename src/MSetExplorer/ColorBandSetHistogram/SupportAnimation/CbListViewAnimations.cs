@@ -489,7 +489,7 @@ namespace MSetExplorer.Cbs
 
 		#region Distribute Color Bands
 
-		public void DistributeColorBands(ColorBandSetEditArgs editArgs)
+		public void DistributeColorBands(ColorBandSetEditArgs editArgs/*, HistCutoffsSnapShot histCutoffsSnapShot*/)
 		{
 			if (editArgs.DistributionExpansionAmount == 0)
 			{
@@ -508,14 +508,45 @@ namespace MSetExplorer.Cbs
 		private void DistributeColorBandsStay(ColorBandSetEditArgs editArgs)
 		{
 			var startIndex = editArgs.StartingIndex;
-			var endIndex = editArgs.EndingIndex;
+			var endIndex = editArgs.EndingIndex ?? throw new ArgumentException("EditArgs.EndingIndex must have a value.");
 			var newColorBandsCount = editArgs.NewColorBandsCount;
 			Debug.WriteLine($"AnimateDistributeColorBands-Stay. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandsCount}.");
 
-			var index = editArgs.Index;
+			var startCutoff = _listViewItems[startIndex].ColorBand.PreviousCutoff ?? 0;
+			var endCutoff = _listViewItems[endIndex].ColorBand.Cutoff;
 
-			DistributeColorBandsPost(editArgs);
+			var newCutoffs = GetNewCutoffs(startCutoff, endCutoff, newColorBandsCount);
 
+			_storyBoardDetails1.RateFactor = 7;
+
+			for (var i = startIndex; i < endIndex; i++)
+			{
+				var currentItem = _listViewItems[i];
+				var startingAreaOfCurrentItem = currentItem.Area;
+
+				var ptr = i - startIndex;
+				var newCutoff = newCutoffs[ptr];
+
+				// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
+				_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX1: newCutoff, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
+			}
+
+			_storyBoardDetails1.Begin(DistributeColorBandsPost, editArgs, debounce: true);
+		}
+
+		private int[] GetNewCutoffs(int start, int end, int newCount)
+		{
+			double totalWidth = 1 + end - start;
+			var result = new int[newCount];
+
+			for (var i = 0; i < newCount; i++)
+			{
+				var rawCutoff = start + (i * newCount / totalWidth);
+				var cutoff = (int) Math.Round(rawCutoff, MidpointRounding.ToEven);
+				result[i] = cutoff;
+			}
+
+			return result;
 		}
 
 		private void DistributeColorBandsExpand(ColorBandSetEditArgs editArgs)
@@ -562,7 +593,6 @@ namespace MSetExplorer.Cbs
 			DistributeColorBandsPost(editArgs);
 
 		}
-
 
 		private void DistributeColorBandsPost(ColorBandSetEditArgs editArgs)
 		{

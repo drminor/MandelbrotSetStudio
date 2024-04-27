@@ -405,7 +405,7 @@ namespace MSetExplorer
 			int endIndex = 9;
 
 			// For Testing
-			int initialCBCount = 5;
+			int? initialCBCount = null; // 5
 
 			var maxIndex = _vm.ColorBandsView.Count - 1;
 			var maxNewColorBandCount = 10;
