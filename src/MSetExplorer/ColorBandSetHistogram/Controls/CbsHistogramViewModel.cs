@@ -1339,10 +1339,62 @@ namespace MSetExplorer
 			}
 		}
 
+		#endregion
+
+		#region Public Methods - Distribution
+
+		public void UpdateStartAndEndCutoffs(int index, int[] updatedPreviousCutoffs, int[] updatedCutoffs, bool applyChanges)
+		{
+			//int? previousCutoff = _currentColorBandSet[index].PreviousCutoff;
+			//int cutOff = updatedCutoffs[0];
+
+			//_currentColorBandSet[index].UpdateStartAndEndCutoffs(previousCutoff, cutOff);
+
+			//for (var i = 1; i < updatedCutoffs.Length - 1; i++)
+			//{
+			//	previousCutoff = updatedCutoffs[i - 1];
+			//	cutOff = updatedCutoffs[i];
+
+			//	_currentColorBandSet[index + i].UpdateStartAndEndCutoffs(previousCutoff, cutOff);
+			//}
+
+			//var cbIndex = index + updatedCutoffs.Length - 1;
+			//previousCutoff = updatedCutoffs[^1];
+			//cutOff = _currentColorBandSet[cbIndex].Cutoff;
+
+			//_currentColorBandSet[cbIndex].UpdateStartAndEndCutoffs(previousCutoff, cutOff);
+
+			for (var i = 0; i < updatedCutoffs.Length; i++)
+			{
+				var previousCutoff = updatedPreviousCutoffs[i];
+				var cutOff = updatedCutoffs[i];
+
+				_currentColorBandSet[index + i].UpdateStartAndEndCutoffs(previousCutoff, cutOff);
+			}
+
+			if (applyChanges)
+			{
+				OnCurrentColorBandSetUpdated();
+			}
+		}
+
 		public void CompleteColorBandsDistribution(int startIndex, int endIndex, ColorBand[]? colorBands, ReservedColorBand[]? reservedColorBands)
 		{
 			//Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorBandsDistribution has been called.");
 			Debug.WriteLine($"ColorBandSetViewModel. CompleteColorBandsDistribution has been called.");
+
+			if (colorBands != null)
+			{
+				// insert
+			}
+			else if (reservedColorBands != null)
+			{
+				// delete
+			}
+			else
+			{
+				// None are being created nor deleted.
+			}
 
 			//var result = TryDeleteColor(index, reservedColorBand);
 
@@ -1362,6 +1414,7 @@ namespace MSetExplorer
 			//OnCurrentColorBandSetUpdated();
 			////ReportRemoveCurrentItem(index);
 		}
+
 
 		#endregion
 

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer.Cbs
 {
@@ -234,7 +235,7 @@ namespace MSetExplorer.Cbs
 			_storyBoardDetails1.RateFactor = 1;
 
 			// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
-			_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX1: newCutoff, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
+			_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX0: newCutoff, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
 
 			var curVal = itemBeingInserted.Area;
 			var newScaledWidth = 20 / itemBeingInserted.ScaleX;
@@ -298,7 +299,7 @@ namespace MSetExplorer.Cbs
 				var newFirstItem = _listViewItems[index + 1];
 				var curVal = newFirstItem.Area;
 				var newXPosition = 0;
-				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(startPushSyncPoint), duration: TimeSpan.FromMilliseconds(shiftMs));
+				_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX0: newXPosition, beginTime: TimeSpan.FromMilliseconds(startPushSyncPoint), duration: TimeSpan.FromMilliseconds(shiftMs));
 			}
 			else
 			{
@@ -464,7 +465,7 @@ namespace MSetExplorer.Cbs
 			curVal = followingItem.Area;
 			var newXPosition = itemBeingRemoved.Area.Left;
 
-			_storyBoardDetails1.AddChangeLeft(followingItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(600), duration: TimeSpan.FromMilliseconds(450));
+			_storyBoardDetails1.AddChangeLeft(followingItem.Name, "Area", from: curVal, newX0: newXPosition, beginTime: TimeSpan.FromMilliseconds(600), duration: TimeSpan.FromMilliseconds(450));
 
 			_storyBoardDetails1.Begin(DeleteBandPost, editArgs, debounce: false);
 		}
@@ -515,38 +516,34 @@ namespace MSetExplorer.Cbs
 			var startCutoff = _listViewItems[startIndex].ColorBand.PreviousCutoff ?? 0;
 			var endCutoff = _listViewItems[endIndex].ColorBand.Cutoff;
 
-			var newCutoffs = GetNewCutoffs(startCutoff, endCutoff, newColorBandsCount);
+			var newCutoffs = GetNewCutoffs(startCutoff, endCutoff, newColorBandsCount, out var newBucketWidths, out var newPreviousCutoffs);
+			editArgs.UpdatedCutoffs = newCutoffs;
+			editArgs.UpdatedPreviousCutoffs = newPreviousCutoffs;
 
-			_storyBoardDetails1.RateFactor = 7;
+			_storyBoardDetails1.RateFactor = 1;
 
-			for (var i = startIndex; i < endIndex; i++)
+			var newCutoffsPtr = 0;
+
+			for (var i = startIndex; i <= endIndex; i++)
 			{
 				var currentItem = _listViewItems[i];
 				var startingAreaOfCurrentItem = currentItem.Area;
 
-				var ptr = i - startIndex;
-				var newCutoff = newCutoffs[ptr];
+				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
+				var bucketWidth = newBucketWidths[newCutoffsPtr];
 
 				// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
-				_storyBoardDetails1.AddChangeLeft(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX1: newCutoff, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
+				_storyBoardDetails1.AddShiftHorizontal(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX0: previousCutoff, newWidth: bucketWidth, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
+				newCutoffsPtr++;
 			}
 
-			_storyBoardDetails1.Begin(DistributeColorBandsPost, editArgs, debounce: true);
+			_storyBoardDetails1.Begin(DistributeColorBandsStayPost, editArgs, debounce: true);
 		}
 
-		private int[] GetNewCutoffs(int start, int end, int newCount)
+		private void DistributeColorBandsStayPost(ColorBandSetEditArgs editArgs)
 		{
-			double totalWidth = 1 + end - start;
-			var result = new int[newCount];
-
-			for (var i = 0; i < newCount; i++)
-			{
-				var rawCutoff = start + (i * newCount / totalWidth);
-				var cutoff = (int) Math.Round(rawCutoff, MidpointRounding.ToEven);
-				result[i] = cutoff;
-			}
-
-			return result;
+			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n AnimateDistributeColorBands-Stay.");
+			_onAnimationComplete(editArgs);
 		}
 
 		private void DistributeColorBandsExpand(ColorBandSetEditArgs editArgs)
@@ -575,7 +572,15 @@ namespace MSetExplorer.Cbs
 			var endColor = colorBand.StartColor;
 			var successorStartColor = colorBand.StartColor;
 
-			DistributeColorBandsPost(editArgs);
+			DistributeColorBandsExpandPost(editArgs);
+
+		}
+
+		private void DistributeColorBandsExpandPost(ColorBandSetEditArgs editArgs)
+		{
+			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n AnimateDistributeColorBands-Expand.");
+
+			_onAnimationComplete(editArgs);
 
 		}
 
@@ -590,58 +595,19 @@ namespace MSetExplorer.Cbs
 
 
 
-			DistributeColorBandsPost(editArgs);
+			DistributeColorBandsContractPost(editArgs);
 
 		}
 
-		private void DistributeColorBandsPost(ColorBandSetEditArgs editArgs)
+		private void DistributeColorBandsContractPost(ColorBandSetEditArgs editArgs)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n ColorBands Distribution Animation has completed.");
+			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n AnimateDistributeColorBands-Contract.");
 
 			_onAnimationComplete(editArgs);
 
-			//if (_pullColorsAnimationInfo1 == null)
-			//{
-			//	throw new InvalidOperationException("The PullColorsAnimationInfo1 is null.");
-			//}
-
-			//var newLvi = _pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem;
-			//_pullColorsAnimationInfo1.MoveSourcesToDestinations();
-
-			//newLvi.TearDown();
-			//_storyBoardDetails1.UnregisterName(newLvi.Name);
-
-			//_pullColorsAnimationInfo1 = null;
-
-			//var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
-
-			//// Update the model
-			//_onAnimationComplete(ColorBandSetEditOperation.DistributeBands, index, null, reservedColorBand);
-
-			//if (_listViewItems.Count > 1)
-			//{
-			//	var nextToLast = _listViewItems[^2];
-
-			//	if (nextToLast.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-			//	{
-			//		nextToLast.EndColor = _listViewItems[^1].StartColor;
-			//	}
-			//}
-
-			//if (index > 0)
-			//{
-			//	var prevCb = _listViewItems[index - 1];
-
-			//	if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-			//	{
-			//		var cbListViewItem = _listViewItems[index];
-			//		prevCb.EndColor = cbListViewItem.StartColor;
-			//	}
-			//}
-
-			//_cbListView.ReportColorBands("After Animate Distribute ColorBands.");
-			//_cbListView.ReportListViewItems("After Animate Distribute ColorBands.");
 		}
+
+
 
 		#endregion
 
@@ -670,6 +636,37 @@ namespace MSetExplorer.Cbs
 			var cutOff = cb.Cutoff + 10;
 
 			var	result = new ColorBand(cutOff, reservedColorBand.StartColor, reservedColorBand.BlendStyle, reservedColorBand.BlendMethod, reservedColorBand.EndColor, previousCutoff: previousCutoff, successorStartColor: null, percentage: double.NaN);
+
+			return result;
+		}
+
+		private int[] GetNewCutoffs(int start, int end, int newCount, out int[] newBucketWidths, out int[] previousCutoffs)
+		{
+			if (newCount < 2) throw new ArgumentException("NewCount must be 2 or greator on call to GetNewCutoffs", nameof(newCount));
+
+			double totalWidth = end - start;
+
+			newBucketWidths = new int[newCount];
+			previousCutoffs = new int[newCount];
+
+			var result = new int[newCount];
+			var prevCutoff = start;
+
+			for (var i = 0; i < newCount - 1; i++)
+			{
+				var rawCutoff = start + ((i + 1) * totalWidth / newCount);
+				var cutoff = (int)Math.Round(rawCutoff, MidpointRounding.ToEven);
+
+				newBucketWidths[i] = cutoff - prevCutoff;
+				previousCutoffs[i] = prevCutoff;
+
+				result[i] = cutoff;
+				prevCutoff = cutoff;
+			}
+
+			result[^1] = end;
+			newBucketWidths[^1] = end - prevCutoff;
+			previousCutoffs[^1] = result[^2];
 
 			return result;
 		}

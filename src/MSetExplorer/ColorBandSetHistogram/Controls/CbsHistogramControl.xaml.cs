@@ -482,7 +482,7 @@ namespace MSetExplorer
 
 		private void DistributeColorBandItems(int startIndex, int endIndex, int newColorBandCount)
 		{
-			if (newColorBandCount > 0 && startIndex > 0 && endIndex > 0)
+			if (newColorBandCount > 1 && startIndex >= 0 && endIndex > 0)
 			{
 				HistogramColorBandControl1.DistributeColorBands(startIndex, endIndex, newColorBandCount);
 			}

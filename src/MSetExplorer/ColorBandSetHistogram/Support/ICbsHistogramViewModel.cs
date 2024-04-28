@@ -71,6 +71,9 @@ namespace MSetExplorer
 
 		//void CompleteColorBandsDistribution(int startIndex, int endIndex, int newNumberOfColorBands, ReservedColorBand[] reservedColorBands);
 		void CompleteColorBandsDistribution(int startIndex, int endIndex, ColorBand[]? colorBands, ReservedColorBand[]? reservedColorBands);
+		//void UpdateStartAndEndCutoff(int index, int startCutoff, int endCutoff);
+
+		void UpdateStartAndEndCutoffs(int index, int[] updatedPreviousCutoffs, int[] updatedCutoffs, bool applyChanges);
 
 		ReservedColorBand[] PopReservedColorBand(int numberToPop = 1);
 		void PushReservedColorBand(ReservedColorBand[] reservedColorBands);

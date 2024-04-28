@@ -68,11 +68,11 @@ namespace MSetExplorer
 			return AddTimeline(objectName, propertyPath, da, beginTime);
 		}
 
-		public int AddChangeLeft(string objectName, string propertyPath, Rect from, double newX1, TimeSpan beginTime, TimeSpan duration)
+		public int AddChangeLeft(string objectName, string propertyPath, Rect from, double newX0, TimeSpan beginTime, TimeSpan duration)
 		{
-			var diff = newX1 - from.X;
+			var diff = newX0 - from.X;
 
-			var to = new Rect(newX1, from.Y, from.Width - diff, from.Height);
+			var to = new Rect(newX0, from.Y, from.Width - diff, from.Height);
 			var da = new RectAnimation(from, to, duration);
 
 			return AddTimeline(objectName, propertyPath, da, beginTime);
@@ -81,6 +81,14 @@ namespace MSetExplorer
 		public int AddChangeWidth(string objectName, string propertyPath, Rect from, double newWidth, TimeSpan beginTime, TimeSpan duration)
 		{
 			var to = new Rect(from.X, from.Y, newWidth, from.Height);
+			var da = new RectAnimation(from, to, duration);
+
+			return AddTimeline(objectName, propertyPath, da, beginTime);
+		}
+
+		public int AddShiftHorizontal(string objectName, string propertyPath, Rect from, double newX0, double newWidth, TimeSpan beginTime, TimeSpan duration)
+		{
+			var to = new Rect(newX0, from.Y, newWidth, from.Height);
 			var da = new RectAnimation(from, to, duration);
 
 			return AddTimeline(objectName, propertyPath, da, beginTime);

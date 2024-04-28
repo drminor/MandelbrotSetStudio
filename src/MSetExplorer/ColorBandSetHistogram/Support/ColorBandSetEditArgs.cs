@@ -12,6 +12,8 @@ namespace MSetExplorer
 		public ReservedColorBand[]? ReservedColorBands { get; init; }
 
 		public ColorBand[]? NewColorBands { get; set; }
+		public int[]? UpdatedCutoffs { get; set; }
+		public int[]? UpdatedPreviousCutoffs { get; set; }
 
 		public int DistributionExpansionAmount { get; init; }
 
@@ -31,6 +33,8 @@ namespace MSetExplorer
 			EndingIndex = endingIndex;
 			NewColorBandsCount = newColorBandsCount;
 			NewColorBands = null;
+			UpdatedCutoffs = null;
+			UpdatedPreviousCutoffs = null;
 			ReservedColorBands = reservedColorBands;
 
 			DistributionExpansionAmount = GetDistributionExpansionAmount(StartingIndex, EndingIndex, NewColorBandsCount);

@@ -5,12 +5,14 @@ using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using Windows.UI.WebUI;
 
 namespace MSetExplorer
 {
@@ -578,19 +580,41 @@ namespace MSetExplorer
 
 				case ColorBandSetEditOperation.DistributeBands:
 					{
-
-						//if (reservedColorBand == null)
-						//{
-						//	throw new ArgumentException("The reservedColorBands array is null on call to DistributeBands.");
-						//}
-
-						var endingIndex = editArgs.EndingIndex ?? throw new InvalidOperationException();
-
-						_cbsHistogramViewModel?.CompleteColorBandsDistribution(editArgs.StartingIndex, endingIndex, editArgs.NewColorBands, editArgs.ReservedColorBands);
+						CompleteDistributeColorBands(editArgs);
 						break;
 					}
 				default:
 					break;
+			}
+		}
+
+		private void CompleteDistributeColorBands(ColorBandSetEditArgs editArgs)
+		{
+			if (_cbsHistogramViewModel == null)
+			{
+				return;
+			}
+
+			var startIndex = editArgs.StartingIndex;
+			var endIndex = editArgs.EndingIndex ?? throw new ArgumentException("EditArgs.EndingIndex must have a value.");
+			var updatedPreviousCutoffs = editArgs.UpdatedPreviousCutoffs ?? throw new ArgumentException("UpdatedPreviousCutoffs is null.");
+			var updatedCutoffs = editArgs.UpdatedCutoffs ?? throw new ArgumentException("UpdatedCutoffs is null.");
+
+			if (editArgs.DistributionExpansionAmount == 0)
+			{
+				// Stay
+				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: true);
+
+			}
+			else if (editArgs.DistributionExpansionAmount > 0)
+			{
+				// Expand
+				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: false);
+			}
+			else
+			{
+				// Contract
+				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: false);
 			}
 		}
 
