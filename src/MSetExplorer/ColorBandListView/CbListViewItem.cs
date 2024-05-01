@@ -443,10 +443,10 @@ namespace MSetExplorer
 
 		private void UpdateDisplay(Rect newValue, CbListViewElevations elevations)
 		{
-			if (!ScreenTypeHelper.IsDoubleChanged(newValue.Right, 60, 2))
-			{
-				Debug.WriteLineIf(_useDetailedDebug, $"CbListViewItem is having its Area value set. The X2 position = 60.");
-			}
+			//if (!ScreenTypeHelper.IsDoubleChanged(newValue.Right, 60, 2))
+			//{
+			//	Debug.WriteLineIf(_useDetailedDebug, $"CbListViewItem is having its Area value set. The X2 position = 60.");
+			//}
 
 			CbSectionLine.TopArrowRectangleArea = new Rect(newValue.Left, elevations.SectionLinesElevation, newValue.Width, elevations.SectionLinesHeight);
 			CbSectionLine.SectionLineRectangleArea = new Rect(newValue.Left, elevations.ColorBlocksElevation, newValue.Width, elevations.ColorBlocksHeight + elevations.BlendRectanglesHeight);

@@ -65,11 +65,16 @@ namespace MSS.Types
 			TEST_RECTANGLE_HALF = new RRectangle(1, 2, 1, 2, -2);
 		}
 
-		public static ColorBandSet BuildInitialColorBandSet(string name, int maxIterations, bool usePercentages)
+		public static ColorBandSet BuildInitialColorBandSet(string name, int maxIterations, bool usePercentages, bool buildReservedColorBands = false)
 		{
 			var result = usePercentages 
 				? BuildInitialColorBandSetWithPercentages(name, maxIterations) 
 				: BuildInitialColorBandSetWithCutoffs(name, maxIterations);
+
+			if (buildReservedColorBands)
+			{
+				PushReservedColorBands(result);
+			}
 
 			return result;
 		}
@@ -123,6 +128,30 @@ namespace MSS.Types
 			var result = new ColorBandSet(name, colorBands, maxIterations, colorBandsSerialNumber);
 
 			return result;
+		}
+
+		public static void PushReservedColorBands(ColorBandSet colorBandSet)
+		{
+			// Dark Teal #158C8F
+			colorBandSet.PushReservedColorBand(new ReservedColorBand("#158C8F", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#158C8F"));
+
+			// Lime #AAD67A
+			colorBandSet.PushReservedColorBand(new ReservedColorBand("#AAD67A", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#AAD67A"));
+
+			// Pink #DE82CD
+			colorBandSet.PushReservedColorBand(new ReservedColorBand("#DE82CD", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#DE82CD"));
+
+			// Yellow #D6CD3C
+			colorBandSet.PushReservedColorBand(new ReservedColorBand("#D6CD3C", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#D6CD3C"));
+
+			// Indigo #38328F
+			colorBandSet.PushReservedColorBand(new ReservedColorBand("#38328F", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#38328F"));
+
+			// Sky Blue #83BFD6
+			colorBandSet.PushReservedColorBand(new ReservedColorBand("#83BFD6", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#83BFD6"));
+
+			// Dark Green #1D8F16
+			colorBandSet.PushReservedColorBand(new ReservedColorBand("#1D8F16", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#1D8F16"));
 		}
 
 		/*

@@ -996,7 +996,7 @@ namespace MSetExplorer
 			var projectName = RMapConstants.NAME_FOR_NEW_PROJECTS;
 
 			var mapCalcSettings = RMapConstants.BuildMapCalcSettings();
-			var colorBandSet = RMapConstants.BuildInitialColorBandSet(projectName, mapCalcSettings.TargetIterations, usePercentages: true);
+			var colorBandSet = RMapConstants.BuildInitialColorBandSet(projectName, mapCalcSettings.TargetIterations, usePercentages: true, buildReservedColorBands: true);
 			var mapAreaInfo = RMapConstants.BuildHomeArea();
 
 			LoadNewProject(projectName, mapAreaInfo, colorBandSet, mapCalcSettings);

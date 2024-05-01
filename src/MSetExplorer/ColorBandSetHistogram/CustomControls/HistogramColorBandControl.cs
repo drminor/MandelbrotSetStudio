@@ -467,18 +467,13 @@ namespace MSetExplorer
 				return;
 			}
 
-			ReservedColorBand[]? reservedColorBands;
-			var expansionAmount = ColorBandSetEditArgs.GetDistributionExpansionAmount(startIndex, endIndex, newColorBandCount);
+			var editArgs = new ColorBandSetEditArgs(ColorBandSetEditOperation.DistributeBands, startIndex, endIndex, newColorBandCount);
+			var expansionAmount = editArgs.DistributionExpansionAmount;
 			if (expansionAmount > 0)
 			{
-				reservedColorBands = _cbsHistogramViewModel.PopReservedColorBand(expansionAmount);
-			}
-			else
-			{
-				reservedColorBands = null;
+				editArgs.ReservedColorBands = _cbsHistogramViewModel.PopReservedColorBand(expansionAmount);
 			}
 
-			var editArgs = new ColorBandSetEditArgs(ColorBandSetEditOperation.DistributeBands, startIndex, endIndex, newColorBandCount, reservedColorBands);
 			ReportDistributeColorBands(editArgs);
 
 			//var histCutoffsSnapShot = _cbsHistogramViewModel.GetHistCutoffsSnapShot();
@@ -508,7 +503,7 @@ namespace MSetExplorer
 							throw new ArgumentException("The reservedColorBand is null on call to InsertCutoff.");
 						}
 
-						_cbsHistogramViewModel?.CompleteCutoffInsertion(editArgs.Index, editArgs.NewColorBand, editArgs.ReservedColorBand);
+						_cbsHistogramViewModel?.InsertCutoff(editArgs.Index, editArgs.NewColorBand, editArgs.ReservedColorBand);
 						break;
 					}
 
@@ -521,7 +516,7 @@ namespace MSetExplorer
 							throw new ArgumentException("The newColorband is null on call to InsertColor.");
 						}
 
-						var result = _cbsHistogramViewModel?.CompleteColorInsertion(index, newColorBand) ?? null;
+						var result = _cbsHistogramViewModel?.InsertColor(index, newColorBand) ?? null;
 
 						if (result != null)
 						{
@@ -541,14 +536,14 @@ namespace MSetExplorer
 							throw new ArgumentException("The newColorband is null on call to InsertBand.");
 						}
 
-						_cbsHistogramViewModel?.CompleteBandInsertion(index, newColorBand);
+						_cbsHistogramViewModel?.InsertColorBand(index, newColorBand);
 						break;
 					}
 
 				// Delete Cutoff - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.DeleteCutoff:
 					{
-						var result = _cbsHistogramViewModel?.CompleteCutoffRemoval(index) ?? null;
+						var result = _cbsHistogramViewModel?.RemoveCutoff(index) ?? null;
 
 						if (result != null)
 						{
@@ -567,14 +562,14 @@ namespace MSetExplorer
 							throw new ArgumentException("The reservedColorBand is null on call to DeleteColor.");
 						}
 
-						_cbsHistogramViewModel?.CompleteColorRemoval(index, editArgs.ReservedColorBand);
+						_cbsHistogramViewModel?.RemoveColor(index, editArgs.ReservedColorBand);
 						break;
 					}
 
 				// Delete Entire ColorBand
 				case ColorBandSetEditOperation.DeleteBand:
 					{
-						_cbsHistogramViewModel?.CompleteBandRemoval(index);
+						_cbsHistogramViewModel?.RemoveColorBand(index);
 						break;
 					}
 
@@ -596,25 +591,39 @@ namespace MSetExplorer
 			}
 
 			var startIndex = editArgs.StartingIndex;
-			var endIndex = editArgs.EndingIndex ?? throw new ArgumentException("EditArgs.EndingIndex must have a value.");
-			var updatedPreviousCutoffs = editArgs.UpdatedPreviousCutoffs ?? throw new ArgumentException("UpdatedPreviousCutoffs is null.");
-			var updatedCutoffs = editArgs.UpdatedCutoffs ?? throw new ArgumentException("UpdatedCutoffs is null.");
+			var endIndex = editArgs.EndingIndex ?? throw new ArgumentException("EditArgs.EndingIndex must have a value.", nameof(editArgs.EndingIndex));
+			var updatedPreviousCutoffs = editArgs.UpdatedPreviousCutoffs ?? throw new ArgumentException("UpdatedPreviousCutoffs is null.", nameof(editArgs.UpdatedPreviousCutoffs));
+			var updatedCutoffs = editArgs.UpdatedCutoffs ?? throw new ArgumentException("UpdatedCutoffs is null.", nameof(editArgs.UpdatedCutoffs));
 
 			if (editArgs.DistributionExpansionAmount == 0)
 			{
 				// Stay
-				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: true);
-
+				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, endIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: true);
 			}
 			else if (editArgs.DistributionExpansionAmount > 0)
 			{
 				// Expand
-				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: false);
+				var newColorBands = editArgs.NewColorBands ?? throw new ArgumentException("NewColorBands is null", nameof(editArgs.NewColorBands));
+				var reservedColorBands = editArgs.ReservedColorBands ?? throw new ArgumentException("ReservedColorBands is null", nameof(editArgs.ReservedColorBands));
+
+				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, endIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: false);
+
+				_cbsHistogramViewModel.InsertCutoffs(endIndex + 1, newColorBands, reservedColorBands);
 			}
 			else
 			{
 				// Contract
-				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: false);
+				var reservedColorBands = editArgs.ReservedColorBands ?? throw new ArgumentException("ReservedColorBands is null", nameof(editArgs.ReservedColorBands));
+
+				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, endIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: false);
+				
+				var result = _cbsHistogramViewModel.RemoveCutoffs(startIndex, editArgs.DistributionExpansionAmount * - 1);
+
+				if (result != null)
+				{
+					// The color from the top most band is pushed on to the stack of Reserved Bands
+					_cbsHistogramViewModel.PushReservedColorBand(reservedColorBands);
+				}
 			}
 		}
 

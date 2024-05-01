@@ -58,29 +58,29 @@ namespace MSetExplorer
 		void AdvanceEditMode();
 		void RetardEditMode(); 
 
-
 		bool TestInsertItem(int colorBandIndex);
-		void CompleteCutoffInsertion(int index, ColorBand colorBand, ReservedColorBand reservedColorBand);
-		ReservedColorBand CompleteColorInsertion(int index, ColorBand colorBand);
-		void CompleteBandInsertion(int index, ColorBand colorBand);
+
+		void InsertCutoff(int index, ColorBand colorBand, ReservedColorBand reservedColorBand);
+		void InsertCutoffs(int index, ColorBand[] colorBands, ReservedColorBand[] reservedColorBands);
+
+		ReservedColorBand InsertColor(int index, ColorBand colorBand);
+		void InsertColorBand(int index, ColorBand colorBand);
 
 		bool TestDeleteItem(int colorBandIndex);
-		ReservedColorBand? CompleteCutoffRemoval(int index);
-		void CompleteColorRemoval(int index, ReservedColorBand reservedColorBand);
-		void CompleteBandRemoval(int index);
 
-		//void CompleteColorBandsDistribution(int startIndex, int endIndex, int newNumberOfColorBands, ReservedColorBand[] reservedColorBands);
-		void CompleteColorBandsDistribution(int startIndex, int endIndex, ColorBand[]? colorBands, ReservedColorBand[]? reservedColorBands);
-		//void UpdateStartAndEndCutoff(int index, int startCutoff, int endCutoff);
+		ReservedColorBand? RemoveCutoff(int index);
+		ReservedColorBand? RemoveCutoffs(int index, int numberToRemove);
 
-		void UpdateStartAndEndCutoffs(int index, int[] updatedPreviousCutoffs, int[] updatedCutoffs, bool applyChanges);
+		void RemoveColor(int index, ReservedColorBand reservedColorBand);
+		void RemoveColorBand(int index);
+
+		void UpdateStartAndEndCutoffs(int startIndex, int endIndex, int[] updatedPreviousCutoffs, int[] updatedCutoffs, bool applyChanges);
 
 		ReservedColorBand[] PopReservedColorBand(int numberToPop = 1);
 		void PushReservedColorBand(ReservedColorBand[] reservedColorBands);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 		public HistCutoffsSnapShot GetHistCutoffsSnapShot();
-
 
 		HPlotSeriesData SeriesData { get; }
 

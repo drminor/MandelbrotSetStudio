@@ -30,8 +30,20 @@ namespace MSetExplorer
 
 			StartingPos = sourceListViewItem.CbRectangle.CbBlendedColorPair.Container;
 
-			DestinationPos = destinationListViewItem?.CbRectangle.CbBlendedColorPair.Container
-				?? GetOffScreenRect(sourceListViewItem);
+			if (destinationListViewItem == null)
+			{
+				DestinationPos = GetOffScreenRect(SourceListViewItem);
+			}
+			else
+			{
+				DestinationPos = destinationListViewItem.CbRectangle.ColorPairContainer;
+
+				if (DestinationPos.IsEmpty)
+				{
+					throw new ArgumentException("BlendedColorAnimationItem. The DestinationListViewItem's CbRectangle's ColorPairContainer is empty.");
+				}
+			}
+
 
 			Current = StartingPos;
 			Elasped = 0;
@@ -172,6 +184,11 @@ namespace MSetExplorer
 		{
 			// The destination is just off the edge of the visible portion of the canvas.
 			var sourceRect = source.CbRectangle.ColorPairContainer;
+
+			if (sourceRect.IsEmpty)
+			{
+				throw new ArgumentException("GetOffScreenRect. The Source's CbRectangle's ColorPairContainer is empty.");
+			}
 
 			var width = source.CbRectangle.Width * source.CbRectangle.ContentScale.Width;
 			var destinationPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);

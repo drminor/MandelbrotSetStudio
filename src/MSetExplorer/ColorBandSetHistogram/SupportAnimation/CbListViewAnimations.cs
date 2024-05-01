@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using Windows.UI.WebUI;
 
@@ -78,7 +79,7 @@ namespace MSetExplorer.Cbs
 			_listViewItems.Insert(index, itemBeingInserted);
 			_cbListView.Reindex(0);
 
-			var newCutoffD = itemBeingInserted.Area.Right;
+			//var newCutoffD = itemBeingInserted.Area.Right;
 			var newWidthD = remainingWidth; // currentArea.Width - (itemBeingInserted.Area.Width + onePix);
 			currentItem.Area = new Rect(new Point(newCutoff, currentArea.Y), new Size(newWidthD, currentArea.Height));
 
@@ -101,7 +102,7 @@ namespace MSetExplorer.Cbs
 			// Create the class that will calcuate the 'PullColor' animation details
 			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
 
-			// The first destination is the upper half, which is at index + 1
+			// The first destination is the lower half, which is at index
 			for (var i = index; i < _listViewItems.Count; i++)
 			{
 				var lviDestination = _listViewItems[i];
@@ -513,10 +514,7 @@ namespace MSetExplorer.Cbs
 			var newColorBandsCount = editArgs.NewColorBandsCount;
 			Debug.WriteLine($"AnimateDistributeColorBands-Stay. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {newColorBandsCount}.");
 
-			var startCutoff = _listViewItems[startIndex].ColorBand.PreviousCutoff ?? 0;
-			var endCutoff = _listViewItems[endIndex].ColorBand.Cutoff;
-
-			var newCutoffs = GetNewCutoffs(startCutoff, endCutoff, newColorBandsCount, out var newBucketWidths, out var newPreviousCutoffs);
+			var newCutoffs = GetNewCutoffs(startIndex, endIndex, newColorBandsCount, out var newBucketWidths, out var newPreviousCutoffs);
 			editArgs.UpdatedCutoffs = newCutoffs;
 			editArgs.UpdatedPreviousCutoffs = newPreviousCutoffs;
 
@@ -532,7 +530,7 @@ namespace MSetExplorer.Cbs
 				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
 				var bucketWidth = newBucketWidths[newCutoffsPtr];
 
-				// Move the Left side of the existing item so that it starts at the new Cutoff, the width is reduced to keep the right side fixed.
+				// Move the current item into its new place.
 				_storyBoardDetails1.AddShiftHorizontal(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX0: previousCutoff, newWidth: bucketWidth, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
 				newCutoffsPtr++;
 			}
@@ -549,39 +547,135 @@ namespace MSetExplorer.Cbs
 		private void DistributeColorBandsExpand(ColorBandSetEditArgs editArgs)
 		{
 			var startIndex = editArgs.StartingIndex;
-			var endIndex = editArgs.EndingIndex;
-			var newColorBandsCount = editArgs.NewColorBandsCount;
-			Debug.WriteLine($"AnimateDistributeColorBands-Expand. StartIndex: {startIndex}, EndIndex: {endIndex}, Adding {editArgs.DistributionExpansionAmount} ColorBands, Target Number: {newColorBandsCount}.");
+			var endIndex = editArgs.EndingIndex ?? throw new ArgumentException("EditArgs.EndingIndex must have a value.");
+			var numberOfNewColorBands = editArgs.DistributionExpansionAmount;
+			var distributionTargetCount = editArgs.NewColorBandsCount;
+			var reservedColorBands = editArgs.ReservedColorBands ?? throw new ArgumentException("ReservedColorBands is null", nameof(editArgs.ReservedColorBands));
 
-			var index = editArgs.Index;
+			Debug.WriteLine($"AnimateDistributeColorBands-Stay. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {distributionTargetCount}.");
 
-			var currentItem = _listViewItems[index];
-			var startingAreaOfCurrentItem = currentItem.Area;
+			var newCutoffs = GetNewCutoffs(startIndex, endIndex, distributionTargetCount, out var newBucketWidths, out var newPreviousCutoffs);
+			editArgs.UpdatedCutoffs = newCutoffs;
+			editArgs.UpdatedPreviousCutoffs = newPreviousCutoffs;
 
-			var colorBand = currentItem.ColorBand;
-			var prevCutoff = colorBand.PreviousCutoff;
-			var newWidth = colorBand.BucketWidth / 2;
-			var newPercentage = colorBand.Percentage / 2;
+			var newPercentage = GetNewPercentage(startIndex, endIndex, distributionTargetCount);
 
-			// the existing item's percentage is also halved.
-			colorBand.Percentage = newPercentage;
+			_storyBoardDetails1.RateFactor = 1;
 
-			var newCutoff = (prevCutoff ?? 0) + newWidth;
+			// Resize the existing items
+			var newCutoffsPtr = 0;
 
-			var newStartColor = ColorBandColor.White;
-			var endColor = colorBand.StartColor;
-			var successorStartColor = colorBand.StartColor;
+			for (var i = startIndex; i <= endIndex; i++)
+			{
+				var currentItem = _listViewItems[i];
+				var startingAreaOfCurrentItem = currentItem.Area;
 
-			DistributeColorBandsExpandPost(editArgs);
+				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
+				var bucketWidth = newBucketWidths[newCutoffsPtr];
 
+				// Move the current item into its new place.
+				_storyBoardDetails1.AddShiftHorizontal(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX0: previousCutoff, newWidth: bucketWidth, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
+				newCutoffsPtr++;
+			}
+
+			// Create the new ColorBands with default colors and insert
+			var newColorBands = new ColorBand[numberOfNewColorBands];
+
+			var index = endIndex + 1;
+			for (var i = 0; i < numberOfNewColorBands; i++)
+			{
+				var newCutoff = newCutoffs[newCutoffsPtr];
+				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
+
+				var newColorBand = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, ColorBandColor.Black, previousCutoff, ColorBandColor.White, newPercentage);
+				newColorBands[i] = newColorBand;
+
+				var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
+				//itemBeingInserted.ElevationsAreLocal = true;
+				itemBeingInserted.Opacity = 0;
+
+				_listViewItems.Insert(index, itemBeingInserted);
+
+				// Have the new item go from transparent to fully opaque
+				_storyBoardDetails1.AddOpacityAnimation(itemBeingInserted.Name, "Opacity", from: 0.1, to: 1.0, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(500));
+				index++;
+			}
+
+			_cbListView.Reindex(0);
+
+			editArgs.NewColorBands = newColorBands;
+
+			// Pull Colors Down
+			// Create the class that will calcuate the 'PullColor' animation details
+			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
+
+			var destIndex = endIndex;
+			var sourceIndex = endIndex + 1 + numberOfNewColorBands;
+			var lastDestIndex = _listViewItems.Count - 2 - numberOfNewColorBands;
+
+			for (var i = destIndex; i <= lastDestIndex; i++)
+			{
+				var lviDestination = _listViewItems[i];
+				var lviSource = _listViewItems[sourceIndex++];
+				_pullColorsAnimationInfo1.Add(lviSource, lviDestination);
+			}
+
+			destIndex = lastDestIndex + 1;
+			var virtualSourceIndex = _listViewItems.Count;
+
+			for (var i = 0; i < numberOfNewColorBands; i++) 
+			{
+				var lviDestination = _listViewItems[destIndex + i];
+
+				var newSourceColorBand = CreateColorBandFromReservedBand(lviDestination, reservedColorBands[i]);
+				var newLvi = _cbListView.CreateListViewItem(virtualSourceIndex + i, newSourceColorBand);
+
+				_pullColorsAnimationInfo1.Add(newLvi, lviDestination);
+			}
+
+			_ = _pullColorsAnimationInfo1.CalculateMovements(beginMs: 400);
+
+			ApplyAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs);
+
+			_storyBoardDetails1.Begin(DistributeColorBandsExpandPost, editArgs, debounce: true);
 		}
 
 		private void DistributeColorBandsExpandPost(ColorBandSetEditArgs editArgs)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n AnimateDistributeColorBands-Expand.");
 
+			if (_pullColorsAnimationInfo1 == null)
+			{
+				throw new InvalidOperationException("The PullColorsAnimationInfo1 is null.");
+			}
+
+			var numberOfNewColorBands = editArgs.DistributionExpansionAmount;
+			var animationItemPairs = _pullColorsAnimationInfo1.AnimationItemPairs;
+			var virtualListViewItems = animationItemPairs.Skip(animationItemPairs.Count - numberOfNewColorBands).Select(x => x.Item1.SourceListViewItem).ToArray();
+
+			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
+
+			foreach (var vListViewItem in virtualListViewItems)
+			{
+				vListViewItem.TearDown();
+				_storyBoardDetails1.UnregisterName(vListViewItem.Name);
+			}
+
+			_pullColorsAnimationInfo1 = null;
+
+			// TODO: Update the new CBListViewItems colors
+			//var prevCb = _listViewItems[index - 1];
+
+			//if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
+			//{
+			//	var cbListViewItem = _listViewItems[index];
+			//	prevCb.CbColorBlock.EndColor = cbListViewItem.CbColorBlock.StartColor;
+			//	prevCb.CbRectangle.EndColor = cbListViewItem.CbRectangle.StartColor;
+			//}
+
 			_onAnimationComplete(editArgs);
 
+			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
 		private void DistributeColorBandsContract(ColorBandSetEditArgs editArgs)
@@ -593,8 +687,6 @@ namespace MSetExplorer.Cbs
 
 			var index = editArgs.Index;
 
-
-
 			DistributeColorBandsContractPost(editArgs);
 
 		}
@@ -604,10 +696,7 @@ namespace MSetExplorer.Cbs
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n AnimateDistributeColorBands-Contract.");
 
 			_onAnimationComplete(editArgs);
-
 		}
-
-
 
 		#endregion
 
@@ -640,21 +729,24 @@ namespace MSetExplorer.Cbs
 			return result;
 		}
 
-		private int[] GetNewCutoffs(int start, int end, int newCount, out int[] newBucketWidths, out int[] previousCutoffs)
+		private int[] GetNewCutoffs(int startIndex, int endIndex, int newCount, out int[] newBucketWidths, out int[] previousCutoffs)
 		{
 			if (newCount < 2) throw new ArgumentException("NewCount must be 2 or greator on call to GetNewCutoffs", nameof(newCount));
 
-			double totalWidth = end - start;
+			var startCutoff = _listViewItems[startIndex].ColorBand.PreviousCutoff ?? 0;
+			var endCutoff = _listViewItems[endIndex].ColorBand.Cutoff;
+
+			double totalWidth = endCutoff - startCutoff;
 
 			newBucketWidths = new int[newCount];
 			previousCutoffs = new int[newCount];
 
 			var result = new int[newCount];
-			var prevCutoff = start;
+			var prevCutoff = startCutoff;
 
 			for (var i = 0; i < newCount - 1; i++)
 			{
-				var rawCutoff = start + ((i + 1) * totalWidth / newCount);
+				var rawCutoff = startCutoff + ((i + 1) * totalWidth / newCount);
 				var cutoff = (int)Math.Round(rawCutoff, MidpointRounding.ToEven);
 
 				newBucketWidths[i] = cutoff - prevCutoff;
@@ -664,9 +756,23 @@ namespace MSetExplorer.Cbs
 				prevCutoff = cutoff;
 			}
 
-			result[^1] = end;
-			newBucketWidths[^1] = end - prevCutoff;
+			result[^1] = endCutoff;
+			newBucketWidths[^1] = endCutoff - prevCutoff;
 			previousCutoffs[^1] = result[^2];
+
+			return result;
+		}
+
+		private double GetNewPercentage(int startIndex, int endIndex, int newCount)
+		{
+			var totalPercentage = 0d;
+
+			for (var i = startIndex; i <= endIndex; i++)
+			{
+				totalPercentage += _listViewItems[i].ColorBand.Percentage;
+			}
+
+			var result = totalPercentage / newCount;
 
 			return result;
 		}

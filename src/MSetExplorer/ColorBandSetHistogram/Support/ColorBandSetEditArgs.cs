@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using System;
 using System.Diagnostics;
 
 namespace MSetExplorer
@@ -9,12 +10,14 @@ namespace MSetExplorer
 		public int StartingIndex { get; init; }
 		public int? EndingIndex { get; init; }
 		public int NewColorBandsCount { get; init; }
-		public ReservedColorBand[]? ReservedColorBands { get; init; }
+
+		public ReservedColorBand[]? ReservedColorBands { get; set; }
 
 		public ColorBand[]? NewColorBands { get; set; }
 		public int[]? UpdatedCutoffs { get; set; }
 		public int[]? UpdatedPreviousCutoffs { get; set; }
 
+		public int NumberOfExistingBands { get; init; }
 		public int DistributionExpansionAmount { get; init; }
 
 		public int Index => StartingIndex;
@@ -37,25 +40,18 @@ namespace MSetExplorer
 			UpdatedPreviousCutoffs = null;
 			ReservedColorBands = reservedColorBands;
 
-			DistributionExpansionAmount = GetDistributionExpansionAmount(StartingIndex, EndingIndex, NewColorBandsCount);
-		}
-
-		public static int GetDistributionExpansionAmount(int startingIndex, int? endingIndex, int newColorBandsCount)
-		{
-			if (newColorBandsCount <= 0)
+			if (newColorBandsCount > 0)
 			{
-				return 0;
+				if (!endingIndex.HasValue)
+				{
+					throw new InvalidOperationException("The newColorBandsCount argument is > 0, but we have no endingIndex.");
+				}
+
+				Debug.Assert(endingIndex.Value >= startingIndex, "The starting index is > than the ending index.");
+
+				NumberOfExistingBands = 1 + endingIndex.Value - startingIndex;
+				DistributionExpansionAmount = newColorBandsCount - NumberOfExistingBands;
 			}
-
-			Debug.Assert(endingIndex.HasValue, "The newColorBandsCount argument is > 0, but we have no endingIndex.");
-
-			Debug.Assert(endingIndex.Value >= startingIndex, "The starting index is > than the ending index.");
-
-			var diff = 1 + endingIndex.Value - startingIndex;
-
-			var result = newColorBandsCount - diff;
-
-			return result;
 		}
 
 	}

@@ -11,7 +11,6 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
-using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 
 namespace MSetExplorer
