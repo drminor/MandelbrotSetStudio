@@ -29,7 +29,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Add(CbListViewItem source, CbListViewItem destination)
+		public void AddAnimationItemPair(CbListViewItem source, CbListViewItem destination)
 		{
 			var colorBlocksAItem = new ColorBlocksAnimationItem(source, destination, _msPerPixel/*, isForPullColors: true*/);
 			var blendedColorAItem = new BlendedColorAnimationItem(source, destination, _msPerPixel/*, isForPullColors: true*/);
@@ -107,15 +107,15 @@ namespace MSetExplorer
 		{
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				// Lift -- Move right by _liftHeight or less, as we lift it, while keeping the width the same.
+				// Lift -- Move left by _liftHeight or less, as we lift it, while keeping the width the same.
 				colorBlockItem.BuildTimelinePos(colorBlockItem.PosAfterLift, veclocityMultiplier: 0.2);
 				blendedItem.BuildTimelinePos(blendedItem.PosAfterLift, veclocityMultiplier: 0.2);
 			}
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				// Move right those items who are not yet at the destination.
-				// Narrow items to prevent the right side moving past the destination's right side.
+				// Move right those items that are further left than the destination.
+				// Match the source's width to the destination, but don't left side go past the destination's left side.
 				BuildPushTimelines(colorBlockItem);
 				BuildPushTimelines(blendedItem);
 			}
@@ -127,7 +127,8 @@ namespace MSetExplorer
 
 			foreach (var (colorBlockItem, blendedItem) in AnimationItemPairs)
 			{
-				// Move left and reduce width for each item that is futher right that the destination
+				// Move left those items not at their destination.
+				// and match the width to the destination's width
 				BuildPullTimelines(colorBlockItem);
 				BuildPullTimelines(blendedItem);
 			}
@@ -160,7 +161,7 @@ namespace MSetExplorer
 						// Shift right, keeping width constant for the distance both the left and right edges must move
 						rectAnimationItem.BuildTimelineX(sDistanceRight);
 
-						// Shift left side forward, but keep the right side fixed
+						// Shift left side forward, but keep the right side fixed - i.e., narrow
 						rectAnimationItem.BuildTimelineXAnchorRight(sDistanceLeft - sDistanceRight);
 					}
 					else

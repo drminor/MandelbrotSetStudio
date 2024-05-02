@@ -306,6 +306,18 @@ namespace MSetExplorer
 			}
 		}
 
+		private int _zIndex1;
+
+		public int ZIndex1
+		{
+			get => _zIndex1;
+			set
+			{
+				_zIndex1 = value;
+				_cbBlendedColorPair.ZIndex1 = value;
+			}
+		}
+
 		#endregion
 
 		#region Public Propeties IsCurrent / IsSelected

@@ -175,7 +175,7 @@ namespace MSetExplorer
 						// Shift right, keeping width constant for the distance both the left and right edges must move
 						rectAnimationItem.BuildTimelineX(sDistanceRight);
 
-						// Shift left side forward, but keep the right side fixed
+						// Shift left side forward, but keep the right side fixed - i.e., narrow
 						rectAnimationItem.BuildTimelineXAnchorRight(sDistanceLeft - sDistanceRight);
 					}
 					else

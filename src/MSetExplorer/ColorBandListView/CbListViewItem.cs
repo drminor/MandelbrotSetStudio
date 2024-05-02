@@ -359,6 +359,11 @@ namespace MSetExplorer
 			set => SetCurrentValue(OpacityProperty, value);
 		}
 
+		public int ZIndex1
+		{
+			get => (int)GetValue(ZIndex1Property);
+			set => SetCurrentValue(ZIndex1Property, value);
+		}
 
 		public ColorBandColor EndColor
 		{
@@ -531,6 +536,30 @@ namespace MSetExplorer
 			c.CbSectionLine.Opacity = newValue;
 			c.CbColorBlock.Opacity = newValue;
 			c.CbRectangle.Opacity = newValue;
+		}
+
+		#endregion
+
+		#region ZIndex Dependency Property
+
+		public static readonly DependencyProperty ZIndex1Property =
+				DependencyProperty.Register("ZIndex1", typeof(int), typeof(CbListViewItem),
+					new FrameworkPropertyMetadata(defaultValue: 1, propertyChangedCallback: ZIndex1_PropertyChanged)
+				);
+
+		private static void ZIndex1_PropertyChanged(DependencyObject o, DependencyPropertyChangedEventArgs e)
+		{
+			CbListViewItem c = (CbListViewItem)o;
+
+			var oldValue = (int)e.OldValue;
+			var newValue = (int)e.NewValue;
+
+			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: ZIndex1 for {c.ColorBandIndex} is changing from {oldValue} to {newValue}.");
+
+			//c.CbSectionLine.Opacity = newValue;
+
+			c.CbColorBlock.ZIndex1 = newValue;
+			c.CbRectangle.ZIndex1 = newValue;
 		}
 
 		#endregion

@@ -125,6 +125,15 @@ namespace MSetExplorer
 			}
 		}
 
+		public int ZIndex1
+		{
+			get => (int)_containerPath.GetValue(Panel.ZIndexProperty);
+			set
+			{
+				_containerPath.SetValue(Panel.ZIndexProperty, value);
+			}
+		}
+
 		//public Visibility Visibility
 		//{
 		//	get => _containerPath.Visibility;

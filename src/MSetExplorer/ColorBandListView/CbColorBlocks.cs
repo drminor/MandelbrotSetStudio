@@ -244,6 +244,15 @@ namespace MSetExplorer
 			}
 		}
 
+		public int ZIndex1
+		{
+			get => (int)_rectanglePath.GetValue(Panel.ZIndexProperty);
+			set
+			{
+				_rectanglePath.SetValue(Panel.ZIndexProperty, value);
+			}
+		}
+
 		#endregion
 
 		#region Private Properties IsSelected
