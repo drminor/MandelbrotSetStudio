@@ -31,8 +31,19 @@ namespace MSetExplorer
 
 			StartingPos = sourceListViewItem.CbColorBlock.CbColorPair.Container;
 
-			DestinationPos = destinationListViewItem?.CbColorBlock.CbColorPair.Container
-				?? GetOffScreenRect(sourceListViewItem);
+			if (destinationListViewItem == null)
+			{
+				DestinationPos = GetOffScreenRect(SourceListViewItem);
+			}
+			else
+			{
+				DestinationPos = destinationListViewItem.CbColorBlock.ColorPairContainer;
+
+				if (DestinationPos.IsEmpty)
+				{
+					throw new ArgumentException("ColorBlocksAnimationItem. The DestinationListViewItem's CbRectangle's ColorPairContainer is empty.");
+				}
+			}
 
 			Current = StartingPos;
 			Elasped = 0;
@@ -137,11 +148,11 @@ namespace MSetExplorer
 			var amount = shiftAmount / _scaleX;
 			if (shiftAmount > 0)
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Increasing the Width of Item: {_colorBandIndex} by {amount}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ColorBlocksAnimationItem. Increasing the Width of Item: {_colorBandIndex} by {amount}.");
 			}
 			else
 			{
-				Debug.WriteLineIf(_useDetailedDebug, $"Decreasing the Width of Item: {_colorBandIndex} by {-1 * amount}.");
+				Debug.WriteLineIf(_useDetailedDebug, $"ColorBlocksAnimationItem. Decreasing the Width of Item: {_colorBandIndex} by {-1 * amount}.");
 			}
 
 			var rect = new Rect(Current.X, Current.Y, Current.Width + shiftAmount, Current.Height);
@@ -172,6 +183,11 @@ namespace MSetExplorer
 		{
 			// The destination is just off the edge of the visible portion of the canvas.
 			var sourceRect = source.CbColorBlock.ColorPairContainer;
+
+			if (sourceRect.IsEmpty)
+			{
+				throw new ArgumentException("ColorBlocksAnimationItem. GetOffScreenRect. The Source's CbRectangle's ColorPairContainer is empty.");
+			}
 
 			//var width = source.CbColorBlock.Width * source.CbColorBlock.ContentScale.Width;
 			//var destinationPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);

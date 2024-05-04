@@ -36,6 +36,9 @@ namespace MSetExplorer
 		private static readonly Brush IS_CURRENT_BACKGROUND = LIGHT_BLUE_BRUSH;
 		private static readonly Brush IS_NOT_CURRENT_BACKGROUND = TRANSPARENT_BRUSH; // LIGHT_GRAY_BRUSH;
 
+		private const int BLENDED_AREA_ZINDEX_DELTA = 5;
+		private const int IS_CURRENT_AREA_ZINDEX_DELTA = 1;
+
 		#endregion
 
 		#region Private Fields
@@ -55,6 +58,8 @@ namespace MSetExplorer
 		//private ColorBandColor _endColor;
 		//private bool _blend;
 		private double _opacity;
+		private int _zIndex1;
+
 
 		private RectangleGeometry _geometry;
 		private Shape _rectanglePath;
@@ -72,7 +77,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbRectangle(int colorBandIndex, Rect blendArea, Rect isCurrentArea, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
+		public CbRectangle(int colorBandIndex, Rect blendArea, Rect isCurrentArea, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel, int? zIndex = null)
 		{
 			_isCurrent = false;
 			_isSelected = false;
@@ -96,6 +101,7 @@ namespace MSetExplorer
 			//_endColor = endColor;
 			//_blend = blend;
 			_opacity = 1.0;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
 
 			var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
@@ -103,14 +109,15 @@ namespace MSetExplorer
 			_rectanglePath = BuildRectanglePath(_geometry);
 			_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_rectanglePath);
-			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
+			_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + BLENDED_AREA_ZINDEX_DELTA);
 
-			_cbBlendedColorPair = new CbBlendedColorPair(_geometry.Rect, startColor, endColor, blend, _canvas);
+			_cbBlendedColorPair = new CbBlendedColorPair(_geometry.Rect, startColor, endColor, blend, _canvas, _zIndex1);
+			//_cbBlendedColorPair.ZIndex1 = ZIndex1;
 
 			_curGeometry = new RectangleGeometry(BuildRect(_isCurrentArea, ContentScale));
 			_curRectanglePath = BuildCurRectanglePath(_curGeometry, _isCurrent);
 			_canvas.Children.Add(_curRectanglePath);
-			_curRectanglePath.SetValue(Panel.ZIndexProperty, 1);
+			_curRectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + IS_CURRENT_AREA_ZINDEX_DELTA);
 		}
 
 		#endregion
@@ -306,15 +313,18 @@ namespace MSetExplorer
 			}
 		}
 
-		private int _zIndex1;
-
 		public int ZIndex1
 		{
 			get => _zIndex1;
 			set
 			{
-				_zIndex1 = value;
-				_cbBlendedColorPair.ZIndex1 = value;
+				if (value != _zIndex1)
+				{
+					_zIndex1 = value;
+					_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + BLENDED_AREA_ZINDEX_DELTA);
+					_curRectanglePath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + IS_CURRENT_AREA_ZINDEX_DELTA);
+					_cbBlendedColorPair.ZIndex1 = value;
+				}
 			}
 		}
 

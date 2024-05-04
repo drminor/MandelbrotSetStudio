@@ -33,6 +33,8 @@ namespace MSetExplorer
 
 		private static readonly Brush IS_HOVERED_STROKE = SKY_BLUE; // LIGHT_BLUE_BRUSH; // VERY_LIGHT_BLUE_BRUSH;
 
+		private const int COLOR_BLOCK_ZINDEX_DELTA = 5;
+
 		#endregion
 
 		#region Private Fields
@@ -48,6 +50,8 @@ namespace MSetExplorer
 		private double _width;
 		private double _opacity;
 
+		private int _zIndex1;
+
 		private RectangleGeometry _geometry;
 		private readonly Shape _rectanglePath;
 
@@ -60,7 +64,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbColorBlocks(int colorBandIndex, Rect area, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel)
+		public CbColorBlocks(int colorBandIndex, Rect area, ColorBandColor startColor, ColorBandColor endColor, bool blend, ColorBandLayoutViewModel colorBandLayoutViewModel, int? zIndex = null)
 		{
 			_isSelected = false;
 			_isUnderMouse = false;
@@ -79,6 +83,7 @@ namespace MSetExplorer
 			_xPosition = area.Right;
 			_width = area.Width;
 			_opacity = 1.0;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
 
 			//var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
@@ -86,9 +91,10 @@ namespace MSetExplorer
 			_rectanglePath = BuildRectanglePath(_geometry);
 			_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_rectanglePath);
-			_rectanglePath.SetValue(Panel.ZIndexProperty, 20);
+			_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + COLOR_BLOCK_ZINDEX_DELTA);
 
-			_cbColorPair = new CbColorPair(_geometry.Rect, startColor, endColor, blend, _canvas);
+			_cbColorPair = new CbColorPair(_geometry.Rect, startColor, endColor, blend, _canvas, _zIndex1);
+			//_cbColorPair.ZIndex1 = _zIndex1;
 		}
 
 		#endregion
@@ -246,10 +252,15 @@ namespace MSetExplorer
 
 		public int ZIndex1
 		{
-			get => (int)_rectanglePath.GetValue(Panel.ZIndexProperty);
+			get => _zIndex1;
 			set
 			{
-				_rectanglePath.SetValue(Panel.ZIndexProperty, value);
+				if (value != _zIndex1)
+				{
+					_zIndex1 = value;
+					_rectanglePath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + COLOR_BLOCK_ZINDEX_DELTA);
+					_cbColorPair.ZIndex1 = value;
+				}
 			}
 		}
 

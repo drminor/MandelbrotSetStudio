@@ -201,7 +201,7 @@ namespace MSetExplorer
 
 				//_canvas.Background = new SolidColorBrush(Colors.MistyRose);
 				_canvas.Background = new SolidColorBrush(Colors.Transparent);
-				_storyBoardDetails1 = new StoryboardDetails(new System.Windows.Media.Animation.Storyboard(), _canvas);
+				_storyBoardDetails1 = new StoryboardDetails(new Storyboard(), _canvas);
 
 				//_borderRect = CalculateBorderRect(TranslationAndClipSize, ContentScale, _colorBlocksElevation, _padding);
 				//((RectangleGeometry)((Path)_borderPath).Data).Rect = _borderRect;

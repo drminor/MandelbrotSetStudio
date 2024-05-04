@@ -18,11 +18,11 @@ namespace MSetExplorer
 		private bool _isColorSelected;
 		private bool _isBandSelected;
 
-		private readonly bool _useDetailedDebug = false;
+		private readonly bool _useDetailedDebug = true;
 
 		#region Constructor
 
-		public CbListViewItem(int colorBandIndex, ColorBand colorBand, CbListViewElevations elevations, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix, SectionLineMovedCallback sectionLineMovedCallback)
+		public CbListViewItem(int colorBandIndex, ColorBand colorBand, CbListViewElevations elevations, ColorBandLayoutViewModel colorBandLayoutViewModel, string nameSuffix, SectionLineMovedCallback sectionLineMovedCallback, int? zIndex = null)
 		{
 			_colorBandIndex = colorBandIndex;
 			ColorBand = colorBand;
@@ -42,17 +42,17 @@ namespace MSetExplorer
 			var isCurrentArea = new Rect(x1Position, _elevations.IsCurrentIndicatorsElevation, bandWidth, _elevations.IsCurrentIndicatorsHeight);
 			var blend = colorBand.BlendStyle == ColorBandBlendStyle.End || colorBand.BlendStyle == ColorBandBlendStyle.Next;
 
-			CbRectangle = new CbRectangle(colorBandIndex, blendArea, isCurrentArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
+			CbRectangle = new CbRectangle(colorBandIndex, blendArea, isCurrentArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, zIndex);
 
 			// Build the Selection Line
 			var topArrowArea = new Rect(x1Position, _elevations.SectionLinesElevation, bandWidth, _elevations.SectionLinesHeight);
 			var selectionLineArea = new Rect(x1Position, _elevations.ColorBlocksElevation, bandWidth, _elevations.ColorBlocksHeight + _elevations.BlendRectanglesHeight);
 
-			CbSectionLine = new CbSectionLine(colorBandIndex, topArrowArea, selectionLineArea, _colorBandLayoutViewModel, sectionLineMovedCallback);
+			CbSectionLine = new CbSectionLine(colorBandIndex, topArrowArea, selectionLineArea, _colorBandLayoutViewModel, sectionLineMovedCallback, zIndex);
 
 			// Build the Color Block
 			var colorBlocksArea = new Rect(x1Position, elevations.ColorBlocksElevation, bandWidth, elevations.ColorBlocksHeight);
-			CbColorBlock = new CbColorBlocks(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel);
+			CbColorBlock = new CbColorBlocks(colorBandIndex, colorBlocksArea, colorBand.StartColor, colorBand.ActualEndColor, blend, _colorBandLayoutViewModel, zIndex);
 
 			Area = new Rect(x1Position, _elevations.Elevation, bandWidth, _elevations.ControlHeight);
 
@@ -341,17 +341,17 @@ namespace MSetExplorer
 			set => SetCurrentValue(AreaProperty, value);
 		}
 
-		public Rect ColorBlockArea
-		{
-			get => (Rect)GetValue(ColorBlockAreaProperty);
-			set => SetCurrentValue(ColorBlockAreaProperty, value);
-		}
+		//public Rect ColorBlockArea
+		//{
+		//	get => (Rect)GetValue(ColorBlockAreaProperty);
+		//	set => SetCurrentValue(ColorBlockAreaProperty, value);
+		//}
 
-		public Rect BlendedColorArea
-		{
-			get => (Rect)GetValue(BlendedColorAreaProperty);
-			set => SetCurrentValue(BlendedColorAreaProperty, value);
-		}
+		//public Rect BlendedColorArea
+		//{
+		//	get => (Rect)GetValue(BlendedColorAreaProperty);
+		//	set => SetCurrentValue(BlendedColorAreaProperty, value);
+		//}
 
 		public double Opacity
 		{
@@ -435,11 +435,13 @@ namespace MSetExplorer
 			{
 				Debug.WriteLineIf(_useDetailedDebug, $"Setting the Elevation and Height for item at {ColorBandIndex} to {newValue.Y} and {newValue.Height}.");
 
+				// Update and use our Local copy.
 				elevationsLocal.SetElevationAndHeight(newValue.Y, newValue.Height);
 				elevations = elevationsLocal;
 			}
 			else
 			{
+				// Use the shared, 'global' elevations.
 				elevations = _elevations;
 			}
 
@@ -531,7 +533,13 @@ namespace MSetExplorer
 			var newValue = (double)e.NewValue;
 
 			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Width is changing. The old size: {e.OldValue}, new size: {e.NewValue}.");
+			//Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Opacity for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")} The ZIndex is {c.CbRectangle.ZIndex1}.");
 			Debug.WriteLineIf(c._useDetailedDebug, $"CbListViewItem: Opacity for {c.ColorBandIndex} is changing from {oldValue.ToString("F2")} to {newValue.ToString("F2")}.");
+
+			//if (c.CbRectangle.ZIndex1 < 0.1)
+			//{
+			//	c.CbRectangle.ZIndex1 = 25;
+			//}
 
 			c.CbSectionLine.Opacity = newValue;
 			c.CbColorBlock.Opacity = newValue;
@@ -560,6 +568,8 @@ namespace MSetExplorer
 
 			c.CbColorBlock.ZIndex1 = newValue;
 			c.CbRectangle.ZIndex1 = newValue;
+			c.CbSectionLine.ZIndex1 = newValue;
+			//c.CbSectionLine.zi
 		}
 
 		#endregion

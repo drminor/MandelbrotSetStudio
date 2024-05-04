@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using SharpCompress.Compressors.Xz;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -10,6 +11,8 @@ namespace MSetExplorer
 {
 	internal class CbBlendedColorPair : ICloneable
 	{
+		private const int BLENDED_COLOR_PAIR_ZINDEX_DELTA = 5;
+
 		#region Private Fields
 
 		private readonly Canvas _canvas;
@@ -22,12 +25,13 @@ namespace MSetExplorer
 
 		private RectangleGeometry _containerGeometry;
 		private Shape _containerPath;
+		private int _zIndex1;
 
 		#endregion
 
 		#region Constructor
 
-		public CbBlendedColorPair(Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas)
+		public CbBlendedColorPair(Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas, int? zIndex = null)
 		{
 			//ColorBandIndex = colorBandIndex;
 
@@ -38,11 +42,12 @@ namespace MSetExplorer
 			_startColor = startColor;
 			_endColor = endColor;
 			_blend = blend;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
 
 			_containerGeometry = new RectangleGeometry(container);
 			_containerPath = BuildRectanglePath(_containerGeometry, startColor, endColor, blend);
 			_canvas.Children.Add(_containerPath);
-			_containerPath.SetValue(Panel.ZIndexProperty, 20);
+			_containerPath.SetValue(Panel.ZIndexProperty, _zIndex1 + BLENDED_COLOR_PAIR_ZINDEX_DELTA);
 		}
 
 		#endregion
@@ -127,10 +132,14 @@ namespace MSetExplorer
 
 		public int ZIndex1
 		{
-			get => (int)_containerPath.GetValue(Panel.ZIndexProperty);
+			get => _zIndex1;
 			set
 			{
-				_containerPath.SetValue(Panel.ZIndexProperty, value);
+				if (value != _zIndex1)
+				{
+					_zIndex1 = value;
+					_containerPath.SetValue(Panel.ZIndexProperty, _zIndex1 + BLENDED_COLOR_PAIR_ZINDEX_DELTA);
+				}
 			}
 		}
 
@@ -157,7 +166,7 @@ namespace MSetExplorer
 
 		public CbBlendedColorPair Clone()
 		{
-			var result = new CbBlendedColorPair(Container, StartColor, EndColor, Blend, _canvas);
+			var result = new CbBlendedColorPair(Container, StartColor, EndColor, Blend, _canvas, ZIndex1);
 			return result;
 		}
 

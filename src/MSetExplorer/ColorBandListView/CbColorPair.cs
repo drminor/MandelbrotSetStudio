@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using SharpCompress.Compressors.Xz;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -19,6 +20,8 @@ namespace MSetExplorer
 
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
+		private const int COLOR_PAIR_ZINDEX_DELTA = 5;
+
 		#endregion
 
 		#region Private Fields
@@ -36,6 +39,7 @@ namespace MSetExplorer
 
 		private RectangleGeometry _endGeometry;
 		private readonly Shape _endColorBlockPath;
+		private int _zIndex1;
 
 		//private RectangleGeometry _diagContainerGeometry;
 		//private readonly Shape _diagContainerPath;
@@ -44,7 +48,7 @@ namespace MSetExplorer
 
 		#region Constructor
 
-		public CbColorPair(Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas)
+		public CbColorPair(Rect container, ColorBandColor startColor, ColorBandColor endColor, bool blend, Canvas canvas, int? zIndex = null)
 		{
 			//ColorBandIndex = colorBandIndex;
 
@@ -55,6 +59,7 @@ namespace MSetExplorer
 			_startColor = startColor;
 			_endColor = endColor;
 			_blend = blend;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
 
 			//_diagContainerGeometry = new RectangleGeometry(container);
 			//_diagContainerPath = BuildDiagContainerPath(_diagContainerGeometry);
@@ -64,12 +69,12 @@ namespace MSetExplorer
 			_startGeometry = new RectangleGeometry(BuildColorBlockStart(_container));
 			_startColorBlockPath = BuildStartColorBlockPath(_startGeometry, _startColor);
 			_canvas.Children.Add(_startColorBlockPath);
-			_startColorBlockPath.SetValue(Panel.ZIndexProperty, 20);
+			_startColorBlockPath.SetValue(Panel.ZIndexProperty, _zIndex1 + COLOR_PAIR_ZINDEX_DELTA); // 5 + 5
 
 			_endGeometry = new RectangleGeometry(BuildColorBlockEnd(_container, _startGeometry.Rect));
 			_endColorBlockPath = BuildEndColorBlockPath(_endGeometry, _endColor);
 			_canvas.Children.Add(_endColorBlockPath);
-			_endColorBlockPath.SetValue(Panel.ZIndexProperty, 20);
+			_endColorBlockPath.SetValue(Panel.ZIndexProperty, _zIndex1 + COLOR_PAIR_ZINDEX_DELTA);
 		}
 
 		#endregion
@@ -147,6 +152,20 @@ namespace MSetExplorer
 			}
 		}
 
+		public int ZIndex1
+		{
+			get => _zIndex1;
+			set
+			{
+				if (value != _zIndex1)
+				{
+					_zIndex1 = value;
+					_startColorBlockPath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + COLOR_PAIR_ZINDEX_DELTA);
+					_endColorBlockPath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + COLOR_PAIR_ZINDEX_DELTA);
+				}
+			}
+		}
+
 		//public Visibility Visibility
 		//{
 		//	get => _startColorBlockPath.Visibility;
@@ -171,7 +190,7 @@ namespace MSetExplorer
 
 		public CbColorPair Clone()
 		{
-			var result = new CbColorPair(Container, StartColor, EndColor, Blend, _canvas);
+			var result = new CbColorPair(Container, StartColor, EndColor, Blend, _canvas, ZIndex1);
 			return result;
 		}
 

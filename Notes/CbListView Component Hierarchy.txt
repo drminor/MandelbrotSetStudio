@@ -1,0 +1,23 @@
+
+
+CbListView
+	-> List<CbListViewItems>
+
+CbListViewItem
+	-> ColorBand (model object)
+	-> CbSectionLine
+	-> CbColorBlocks
+	-> CbRectangle
+
+
+CbSectionLine
+	TopArrowRectangleArea		Rect
+	SectionLineRectangleArea	Rect
+
+CbColorBlocks
+
+
+
+
+CbRectangle
+

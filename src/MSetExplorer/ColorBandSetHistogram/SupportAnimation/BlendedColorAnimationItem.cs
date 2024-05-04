@@ -44,7 +44,6 @@ namespace MSetExplorer
 				}
 			}
 
-
 			Current = StartingPos;
 			Elasped = 0;
 		}
@@ -187,7 +186,7 @@ namespace MSetExplorer
 
 			if (sourceRect.IsEmpty)
 			{
-				throw new ArgumentException("GetOffScreenRect. The Source's CbRectangle's ColorPairContainer is empty.");
+				throw new ArgumentException("BlendedColorAnimationItem. GetOffScreenRect. The Source's CbRectangle's ColorPairContainer is empty.");
 			}
 
 			var width = source.CbRectangle.Width * source.CbRectangle.ContentScale.Width;

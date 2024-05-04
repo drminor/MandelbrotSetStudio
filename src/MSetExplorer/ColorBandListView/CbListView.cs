@@ -742,9 +742,9 @@ namespace MSetExplorer
 			CheckNameScope(_canvas, listCollectionView.Count);
 		}
 
-		public CbListViewItem CreateListViewItem(int colorBandIndex, ColorBand colorBand)
+		public CbListViewItem CreateListViewItem(int colorBandIndex, ColorBand colorBand, int? zIndex = null)
 		{
-			var listViewItem = new CbListViewItem(colorBandIndex, colorBand, _elevations, _colorBandLayoutViewModel, GetNextNameSuffix(), SectionLineWasMoved);
+			var listViewItem = new CbListViewItem(colorBandIndex, colorBand, _elevations, _colorBandLayoutViewModel, GetNextNameSuffix(), SectionLineWasMoved, zIndex);
 					
 			_ourNameScope.RegisterName(listViewItem.Name, listViewItem);
 

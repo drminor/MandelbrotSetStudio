@@ -14,6 +14,7 @@ namespace MSetExplorer.Cbs
 	{
 		#region Private Fields
 
+		private const int DEFAULT_ZINDEX1 = 5; // TODO: Combine the DEFAULT_ZINDEX1 from the CbListViewAnimations class and the ColorBandLayoutViewModel class.
 		private const double LIFT_HEIGHT = 15;
 
 		private const double ANIMATION_PIXELS_PER_MS = 700 / 1000d;     // 700 pixels per second or 0.7 pixels / millisecond
@@ -65,16 +66,19 @@ namespace MSetExplorer.Cbs
 			// the existing item's percentage is also halved.
 			colorBand.Percentage = newPercentage;
 
-			var newStartColor = colorBand.StartColor;
-			var endColor = colorBand.EndColor;
+			//var newStartColor = colorBand.StartColor;
+			//var endColor = colorBand.EndColor;
+			var newStartColor = ColorBandColor.White;
+			var endColor = ColorBandColor.White;
+
 			var successorStartColor = colorBand.SuccessorStartColor;
 
 			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, prevCutoff, successorStartColor, newPercentage);
 			editArgs.NewColorBands = new ColorBand[] { newColorBand };
 
-			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
+			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand, zIndex: 1);
 			//itemBeingInserted.ElevationsAreLocal = true;
-			itemBeingInserted.Opacity = 0;
+			//itemBeingInserted.Opacity = 0;
 
 			_listViewItems.Insert(index, itemBeingInserted);
 			_cbListView.Reindex(0);
@@ -83,7 +87,7 @@ namespace MSetExplorer.Cbs
 			var newWidthD = remainingWidth; // currentArea.Width - (itemBeingInserted.Area.Width + onePix);
 			currentItem.Area = new Rect(new Point(newCutoff, currentArea.Y), new Size(newWidthD, currentArea.Height));
 
-			_storyBoardDetails1.RateFactor = 1;
+			_storyBoardDetails1.RateFactor = 10;
 
 			// Have the new item go from transparent to fully opaque
 			_storyBoardDetails1.AddOpacityAnimation(itemBeingInserted.Name, "Opacity", from: 0.1, to: 1.0, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(500));
@@ -131,6 +135,8 @@ namespace MSetExplorer.Cbs
 
 			var newLvi = _pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem;
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
+
+			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
 
 			newLvi.TearDown();
 			_storyBoardDetails1.UnregisterName(newLvi.Name);
@@ -567,7 +573,7 @@ namespace MSetExplorer.Cbs
 
 			var newPercentage = GetNewPercentage(startIndex, endIndex, distributionTargetCount);
 
-			_storyBoardDetails1.RateFactor = 1;
+			_storyBoardDetails1.RateFactor = 10;
 
 			// Resize the existing items
 			var newCutoffsPtr = 0;
@@ -594,12 +600,17 @@ namespace MSetExplorer.Cbs
 				var newCutoff = newCutoffs[newCutoffsPtr];
 				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
 
-				var newColorBand = new ColorBand(newCutoff, ColorBandColor.White, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, ColorBandColor.Black, previousCutoff, ColorBandColor.White, newPercentage);
+				var startingColor = new ColorBandColor("#DE82CD");
+
+				//var startingColor = ColorBandColor.White;
+
+				var newColorBand = new ColorBand(newCutoff, startingColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, ColorBandColor.Black, previousCutoff, ColorBandColor.White, newPercentage);
 				newColorBands[i] = newColorBand;
 
-				var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand);
+				var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand, zIndex: 1);
 				//itemBeingInserted.ElevationsAreLocal = true;
-				itemBeingInserted.Opacity = 0;
+				//itemBeingInserted.Opacity = 1;
+				//itemBeingInserted.ZIndex1 = 1;
 
 				_listViewItems.Insert(index, itemBeingInserted);
 
@@ -624,6 +635,7 @@ namespace MSetExplorer.Cbs
 			{
 				var lviSource = _listViewItems[sourceIndex++];
 				var lviDestination = _listViewItems[destIndex++];
+				//lviDestination.Opacity = 0.25;
 
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 			}
@@ -638,6 +650,7 @@ namespace MSetExplorer.Cbs
 				var newSourceColorBand = CreateColorBand(reservedColorBands[rcbPtr++], newPreviousCutoff, width);
 				var lviSource = _cbListView.CreateListViewItem(virtualSourceIndex++, newSourceColorBand);
 				var lviDestination = _listViewItems[destIndex++];
+				//lviDestination.Opacity = 0.25;
 
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 
@@ -692,9 +705,18 @@ namespace MSetExplorer.Cbs
 				throw new InvalidOperationException("The PullColorsAnimationInfo1 is null.");
 			}
 
+			var index = editArgs.Index;
 			var numberOfNewColorBands = editArgs.DistributionExpansionAmount;
 			var animationItemPairs = _pullColorsAnimationInfo1.AnimationItemPairs;
 			var virtualListViewItems = animationItemPairs.Skip(animationItemPairs.Count - numberOfNewColorBands).Select(x => x.Item1.SourceListViewItem).ToArray();
+
+			//var destItem1 = animationItemPairs[0].Item1.DestinationListViewItem;
+			//if (destItem1 != null) destItem1.ZIndex1 = DEFAULT_ZINDEX1;
+
+			//var destItem2 = animationItemPairs[0].Item2.DestinationListViewItem;
+			//if (destItem2 != null) destItem2.ZIndex1 = DEFAULT_ZINDEX1;
+
+			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
 
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
 

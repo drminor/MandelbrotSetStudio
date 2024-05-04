@@ -6,6 +6,9 @@ namespace MSetExplorer
 {
 	public class ColorBandLayoutViewModel : ViewModelBase, ICloneable
 	{
+		public const int DEFAULT_ZINDEX1 = 45;
+
+
 		#region Private Fields
 
 		private SizeDbl _contentScale;
@@ -69,6 +72,8 @@ namespace MSetExplorer
 
 		public IsSelectedChangedCallback IsSelectedChangedCallback { get; init; }
 		public Action<int, ColorBandSetEditMode> RequestContextMenuShown { get; init; }
+
+		//public int DefaultZIndex1 => 5;
 
 		#endregion
 
