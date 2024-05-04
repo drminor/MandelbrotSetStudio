@@ -78,9 +78,9 @@ namespace MSetExplorer
 
 			DestinationListViewItem.CbRectangle.CbBlendedColorPair = newCopy;
 
-			if (DestinationListViewItem.IsLast)
+			if (SourceListViewItem.IsLast || DestinationListViewItem.IsLast)
 			{
-				newCopy.EndColor = ColorBandColor.Black;
+				newCopy.EndColor = DestinationListViewItem.ColorBand.ActualEndColor;
 			}
 
 			SourceListViewItem.CbRectangle.CbBlendedColorPair.TearDown();
@@ -190,11 +190,11 @@ namespace MSetExplorer
 			}
 
 			var width = source.CbRectangle.Width * source.CbRectangle.ContentScale.Width;
-			var destinationPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);
+			var resultPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);
 
-			var destRect = new Rect(destinationPosition, sourceRect.Size);
+			var result = new Rect(resultPosition, sourceRect.Size);
 
-			return destRect;
+			return result;
 		}
 	}
 }

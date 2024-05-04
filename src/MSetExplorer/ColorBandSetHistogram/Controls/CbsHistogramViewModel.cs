@@ -877,6 +877,12 @@ namespace MSetExplorer
 
 			var curPos = CurrentColorBandIndex;
 			_currentColorBandSet = _colorBandSetHistoryCollection.CurrentColorBandSet.CreateNewCopy();
+
+			if (curPos > _currentColorBandSet.Count - 1)
+			{
+				curPos = _currentColorBandSet.Count - 1;
+			}
+
 			UpdateViewAndRaisePropertyChangeEvents(curPos);
 
 			ApplyHistogram(histogramIsFromACompleteMap: false);
@@ -1078,7 +1084,7 @@ namespace MSetExplorer
 				// TODO: Consider updating the following ColorBand's PreviousCutoff instead of calling UpdateItemsAndNeighbors
 				// This is the only reference to UpdateItemsAndNeighbors
 				// AND is the only use of ColorBand.UpdateNeighbors.
-				_currentColorBandSet.UpdateItemAndNeighbors(index, colorBand);
+				_currentColorBandSet.UpdateItemAndNeighbors(index/*, colorBand*/);
 			}
 
 			return true;
@@ -1258,17 +1264,17 @@ namespace MSetExplorer
 
 		private bool TryDeleteColor(int index, ReservedColorBand reservedColorBand)
 		{
-			if (index > _currentColorBandSet.Count - 2)
+			if (index >= 0 && index <= _currentColorBandSet.Count - 1)
 			{
-				// Cannot delete the last entry
+				_disableProcessCurColorBandPropertyChanges = true;
+				_currentColorBandSet.DeleteColor(index, reservedColorBand);
+				_disableProcessCurColorBandPropertyChanges = false;
+				return true;
+			}
+			else
+			{
 				return false;
 			}
-
-			_disableProcessCurColorBandPropertyChanges = true;
-			_currentColorBandSet.DeleteColor(index, reservedColorBand);
-			_disableProcessCurColorBandPropertyChanges = false;
-
-			return true;
 		}
 
 		public void RemoveColorBand(int index)
@@ -1379,34 +1385,27 @@ namespace MSetExplorer
 
 		public void InsertCutoffs(int index, ColorBand[] colorBands, ReservedColorBand[] reservedColorBands)
 		{
-			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. Before InsertColorBands, the current position is {ColorBandsView.CurrentPosition}.");
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. Before InsertCutoffs, the current position is {ColorBandsView.CurrentPosition}.");
+
+			Debug.Assert(colorBands.Length == reservedColorBands.Length, "CbHistorgramViewModel. The number ReservedColorBands does not equal the number of ColorBands on the call to InsertCutoffs.");
 
 			_disableProcessCurColorBandPropertyChanges = true;
 
 			try
 			{
-				for (var i = 0; i < colorBands.Length; i++)
+				lock (_histLock)
 				{
-					var result = TryInsertColorBand(index + i, colorBands[i]);
 
-					if (!result)
+					for (var i = 0; i < colorBands.Length; i++)
 					{
-						Debug.WriteLine("WARNING: ColorBandSetViewModel. TryInsertColorBand failed.");
-						return;
+						_currentColorBandSet.Insert(index + i, colorBands[i]);
+						_currentColorBandSet.DeleteColor(index + i, reservedColorBands[i]);
 					}
 
-				}
-
-				for (var i = 0; i < reservedColorBands.Length; i++)
-				{
-					var result = TryDeleteColor(index + i, reservedColorBands[i]);
-
-					if (!result)
+					for (var i = colorBands.Length - 1; i >= 0; i--)
 					{
-						Debug.WriteLine("WARNING: ColorBandSetViewModel. Could not CompleteColorRemoval.");
-						return;
+						_currentColorBandSet.UpdateItemAndNeighbors(index + i/*, _currentColorBandSet[index + i]*/);
 					}
-
 				}
 			}
 			finally
@@ -1428,6 +1427,39 @@ namespace MSetExplorer
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. After InsertColorBands, the current position is {ColorBandsView.CurrentPosition}. The newIndex is {index}.");
 			OnCurrentColorBandSetUpdated();
 		}
+
+		/*
+
+			--- Insert ---
+
+			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel:About to Insert item at index: {index}. The new ColorBand is: {colorBand}.");
+
+			lock (_histLock)
+			{
+				_currentColorBandSet.Insert(index, colorBand);
+
+				// TODO: Consider updating the following ColorBand's PreviousCutoff instead of calling UpdateItemsAndNeighbors
+				// This is the only reference to UpdateItemsAndNeighbors
+				// AND is the only use of ColorBand.UpdateNeighbors.
+				_currentColorBandSet.UpdateItemAndNeighbors(index, colorBand);
+			}
+
+			return true;
+
+			--- Delete ---
+
+			if (index > _currentColorBandSet.Count - 2)
+			{
+				// Cannot delete the last entry
+				return false;
+			}
+
+			_disableProcessCurColorBandPropertyChanges = true;
+			_currentColorBandSet.DeleteColor(index, reservedColorBand);
+			_disableProcessCurColorBandPropertyChanges = false;
+
+			return true;
+		*/
 
 		#endregion
 

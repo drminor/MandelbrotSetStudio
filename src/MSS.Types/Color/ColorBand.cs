@@ -158,7 +158,7 @@ namespace MSS.Types
 				if (value != _isLast)
 				{
 					_isLast = value;
-					EndColor = GetActualEndColor();
+					ActualEndColor = GetActualEndColor();
 				}
 			}
 		}

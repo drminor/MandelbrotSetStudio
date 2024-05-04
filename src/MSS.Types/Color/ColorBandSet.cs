@@ -240,18 +240,22 @@ namespace MSS.Types
 
 		#region Public Methods
 
-		public void UpdateItemAndNeighbors(int index, ColorBand item)
+		public void UpdateItemAndNeighbors(int index/*, ColorBand item*/)
 		{
-			var colorBands = GetItemAndNeighbors(index, item);
-			var prev = GetPreviousItem(index);
-			var idx = prev == null ? index : index - 1;
-
-			for (var ptr = 0; ptr < colorBands.Count; ptr++)
+			if (index >= 0 && index <= Items.Count - 1)
 			{
-				var cb = colorBands[ptr];
-				cb.UpdateWithNeighbors(GetPreviousItem(idx), GetNextItem(idx));
 
-				idx++;
+				var colorBands = GetItemAndNeighbors(index/*, item*/);
+				var prev = GetPreviousItem(index);
+				var idx = prev == null ? index : index - 1;
+
+				for (var ptr = 0; ptr < colorBands.Count; ptr++)
+				{
+					var cb = colorBands[ptr];
+					cb.UpdateWithNeighbors(GetPreviousItem(idx), GetNextItem(idx));
+
+					idx++;
+				}
 			}
 		}
 
@@ -307,20 +311,22 @@ namespace MSS.Types
 
 		public void DeleteColor(int index, ReservedColorBand reservedColorBand)
 		{
-			if (index < 0 || index > Count - 2)
+			if (index >= 0 && index <= Count - 1)
+			{
+				PullColorsDown(index, reservedColorBand); // The first reserved band is popped from stack and its colors are used. If no reserve band available, white and black are used.
+
+				if (index > 0)
+				{
+					var predecessorCb = Items[index - 1];
+					predecessorCb.SuccessorStartColor = Items[index].StartColor;
+				}
+
+				LastUpdatedUtc = DateTime.UtcNow;
+			}
+			else
 			{
 				throw new ArgumentException($"DeleteColor. Index must be between 0 and {Count - 1}, inclusive.");
 			}
-
-			PullColorsDown(index, reservedColorBand); // The first reserved band is popped from stack and its colors are used. If no reserve band available, white and black are used.
-
-			if (index > 0)
-			{
-				var predecessorCb = Items[index - 1];
-				predecessorCb.SuccessorStartColor = Items[index].StartColor;
-			}
-
-			LastUpdatedUtc = DateTime.UtcNow;
 		}
 
 		public bool UpdatePercentagesCheckOffsets(PercentageBand[] newPercentages)
@@ -485,7 +491,7 @@ namespace MSS.Types
 
 		#region Private Methods
 
-		private IList<ColorBand> GetItemAndNeighbors(int index, ColorBand item)
+		private IList<ColorBand> GetItemAndNeighbors(int index/*, ColorBand item*/)
 		{
 			var result = new List<ColorBand>();
 
@@ -496,7 +502,8 @@ namespace MSS.Types
 				result.Add(prev);
 			}
 
-			result.Add(item);
+			//result.Add(item);
+			result.Add(Items[index]);
 
 			var next = GetNextItem(index);
 

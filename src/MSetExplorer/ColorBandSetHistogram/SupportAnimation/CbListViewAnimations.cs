@@ -625,6 +625,14 @@ namespace MSetExplorer.Cbs
 				var lviSource = _listViewItems[sourceIndex++];
 				var lviDestination = _listViewItems[destIndex++];
 
+				if (lviSource.ColorBand.IsLast)
+				{
+					lviSource.ColorBand.IsLast = false;
+					lviSource.ColorBand.SuccessorStartColor = reservedColorBands[0].StartColor;
+					lviSource.CbColorBlock.EndColor = lviSource.ColorBand.ActualEndColor;
+					lviSource.CbRectangle.EndColor = lviSource.ColorBand.ActualEndColor;
+				}
+
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 			}
 
@@ -633,16 +641,25 @@ namespace MSetExplorer.Cbs
 			var newPreviousCutoff = _listViewItems[^1].ColorBand.Cutoff + 1;
 			var width = 10;
 
+			//ColorBandColor? sucessorStartColor = rcbPtr + 1 < reservedColorBands.Length ? reservedColorBands[rcbPtr + 1].StartColor : null;
+
 			while (destIndex < _listViewItems.Count)
 			{
-				var newSourceColorBand = CreateColorBand(reservedColorBands[rcbPtr++], newPreviousCutoff, width);
+				ColorBandColor? successorStartColor = rcbPtr + 1 < reservedColorBands.Length ? reservedColorBands[rcbPtr + 1].StartColor : null;
+
+				var newSourceColorBand = CreateColorBand(reservedColorBands[rcbPtr++], newPreviousCutoff, width, successorStartColor);
 				var lviSource = _cbListView.CreateListViewItem(virtualSourceIndex++, newSourceColorBand);
 				var lviDestination = _listViewItems[destIndex++];
 
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 
 				newPreviousCutoff = newPreviousCutoff + width;
+
+				//sucessorStartColor = rcbPtr + 1 < reservedColorBands.Length ? reservedColorBands[rcbPtr + 1].StartColor : null;
 			}
+
+			_pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem.ColorBand.IsLast = true;
+			//_pullColorsAnimationInfo1.AnimationItemPairs[^1].Item2.SourceListViewItem.ColorBand.IsLast = true;
 
 			_ = _pullColorsAnimationInfo1.CalculateMovements(beginMs: 400);
 			ApplyAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs);
@@ -685,11 +702,20 @@ namespace MSetExplorer.Cbs
 			}
 
 			var index = editArgs.Index;
+			var endIndex = editArgs.EndingIndex ?? throw new ArgumentException("EndingIndex is null.", nameof(editArgs.EndingIndex));
+			var newColorBands = editArgs.NewColorBands ?? throw new ArgumentException("NewColorBands is null", nameof(editArgs.NewColorBands));
+
 			var numberOfNewColorBands = editArgs.DistributionExpansionAmount;
 			var animationItemPairs = _pullColorsAnimationInfo1.AnimationItemPairs;
 			var virtualListViewItems = animationItemPairs.Skip(animationItemPairs.Count - numberOfNewColorBands).Select(x => x.Item1.SourceListViewItem).ToArray();
 
-			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX;
+			// Reset the ZIndex for the new items
+			for (var i = 0; i < numberOfNewColorBands; i++)
+			{
+				_listViewItems[endIndex + 1 + i].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX;
+			}
+
+			_listViewItems[^1].ColorBand.IsLast = true;
 
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
 
@@ -782,10 +808,10 @@ namespace MSetExplorer.Cbs
 			Debug.WriteLine(sb.ToString());
 		}
 
-		private ColorBand CreateColorBand(ReservedColorBand reservedColorBand, int previousCutoff, int width)
+		private ColorBand CreateColorBand(ReservedColorBand reservedColorBand, int previousCutoff, int width, ColorBandColor? successorStartColor = null)
 		{
 			var result = new ColorBand(previousCutoff + width, reservedColorBand.StartColor, reservedColorBand.BlendStyle, reservedColorBand.BlendMethod, reservedColorBand.EndColor, 
-				previousCutoff, successorStartColor: null, percentage: double.NaN);
+				previousCutoff, successorStartColor, percentage: double.NaN);
 
 			return result;
 		}

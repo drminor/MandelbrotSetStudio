@@ -11,7 +11,6 @@ namespace MSetExplorer
 		private double _msPerPixel;
 		private double _scaleX;
 		private int _colorBandIndex;
-
 		//private bool _isForPullColors;
 
 		private bool _useDetailedDebug = false;
@@ -54,7 +53,7 @@ namespace MSetExplorer
 		public string Name { get; init; }
 		public CbListViewItem SourceListViewItem { get; init; }
 		public CbListViewItem? DestinationListViewItem { get; init; }
-		public CbSectionLine? CbSectionLine => SourceListViewItem?.CbSectionLine;
+		public CbSectionLine CbSectionLine => SourceListViewItem.CbSectionLine;
 
 		public List<RectTransition> RectTransitions { get; init; }
 
@@ -79,9 +78,9 @@ namespace MSetExplorer
 
 			DestinationListViewItem.CbColorBlock.CbColorPair = newCopy;
 
-			if (DestinationListViewItem.IsLast)
+			if (SourceListViewItem.IsLast || DestinationListViewItem.IsLast)
 			{
-				newCopy.EndColor = ColorBandColor.Black;
+				newCopy.EndColor = DestinationListViewItem.ColorBand.ActualEndColor;
 			}
 
 			SourceListViewItem.CbColorBlock.CbColorPair.TearDown();
@@ -191,11 +190,11 @@ namespace MSetExplorer
 
 			//var width = source.CbColorBlock.Width * source.CbColorBlock.ContentScale.Width;
 			//var destinationPosition = new Point(sourceRect.X + width + 5, sourceRect.Top);
-			var destinationPosition = new Point(sourceRect.Right + 5, sourceRect.Top);
+			var resultPosition = new Point(sourceRect.Right + 5, sourceRect.Top);
 
-			var destRect = new Rect(destinationPosition, sourceRect.Size);
+			var result = new Rect(resultPosition, sourceRect.Size);
 
-			return destRect;
+			return result;
 		}
 	}
 }

@@ -94,7 +94,7 @@ namespace MSS.Types
 				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
 				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000"),
 				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#cce8ff"),
-				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000")
+				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#D6CD3C")
 
 				//new ColorBand(500, "#e95ee8", ColorBandBlendStyle.End, "#758cb7")
 			};
@@ -120,7 +120,7 @@ namespace MSS.Types
 				new ColorBand(70, "#0033ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0.09),
 				new ColorBand(120, "#ff0033", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0.19),
 				new ColorBand(300, "#ffffcc", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#cce8ff", 0.15),
-				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#000000", 0.02)
+				new ColorBand(400, "#cce8ff", ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, "#D6CD3C", 0.02)
 			};
 				// > 400 = 9.55%
 
