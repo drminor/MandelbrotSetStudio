@@ -40,7 +40,7 @@ namespace MSetExplorer
 			_startColor = startColor;
 			_endColor = endColor;
 			_blend = blend;
-			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX1;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX;
 
 			_containerGeometry = new RectangleGeometry(container);
 			_containerPath = BuildRectanglePath(_containerGeometry, startColor, endColor, blend);

@@ -81,7 +81,7 @@ namespace MSetExplorer
 			_xPosition = area.Right;
 			_width = area.Width;
 			_opacity = 1.0;
-			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX1;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX;
 
 			//var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 

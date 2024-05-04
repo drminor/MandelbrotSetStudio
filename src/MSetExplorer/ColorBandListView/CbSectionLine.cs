@@ -101,7 +101,7 @@ namespace MSetExplorer
 			_selectionLinePosition = _x2Position * ContentScale.Width;
 			_originalSectionLinePosition = _selectionLinePosition;
 			_opacity = 1.0;
-			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX1;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX;
 
 			_leftWidth = null;
 			_rightWidth = null;

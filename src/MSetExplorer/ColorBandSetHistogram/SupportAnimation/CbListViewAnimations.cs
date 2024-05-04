@@ -76,7 +76,7 @@ namespace MSetExplorer.Cbs
 			var newColorBand = new ColorBand(newCutoff, newStartColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, endColor, prevCutoff, successorStartColor, newPercentage);
 			editArgs.NewColorBands = new ColorBand[] { newColorBand };
 
-			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand, zIndex: 1);
+			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand, zIndex: ColorBandLayoutViewModel.BACKGROUND_BASE_ZINDEX);
 			//itemBeingInserted.ElevationsAreLocal = true;
 			//itemBeingInserted.Opacity = 0;
 
@@ -136,7 +136,7 @@ namespace MSetExplorer.Cbs
 			var newLvi = _pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem;
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
 
-			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX1;
+			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX;
 
 			newLvi.TearDown();
 			_storyBoardDetails1.UnregisterName(newLvi.Name);
@@ -152,13 +152,6 @@ namespace MSetExplorer.Cbs
 				prevCb.CbRectangle.EndColor = cbListViewItem.CbRectangle.StartColor;
 			}
 
-			//var lvi = _listViewItems[index];
-			//var colorBand = lvi.ColorBand;
-
-			// TODO: Use the reservedColorBand from the ColorBandSetEditArgs
-			//var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
-
-			//editArgs.NewColorBand = colorBand;
 			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
@@ -600,17 +593,13 @@ namespace MSetExplorer.Cbs
 				var newCutoff = newCutoffs[newCutoffsPtr];
 				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
 
-				var startingColor = new ColorBandColor("#DE82CD");
-
-				//var startingColor = ColorBandColor.White;
+				//var startingColor = new ColorBandColor("#DE82CD");
+				var startingColor = ColorBandColor.White;
 
 				var newColorBand = new ColorBand(newCutoff, startingColor, ColorBandBlendStyle.Next, ColorBandBlendMethod.Rgb, ColorBandColor.Black, previousCutoff, ColorBandColor.White, newPercentage);
 				newColorBands[i] = newColorBand;
 
-				var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand, zIndex: 1);
-				//itemBeingInserted.ElevationsAreLocal = true;
-				//itemBeingInserted.Opacity = 1;
-				//itemBeingInserted.ZIndex1 = 1;
+				var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand, zIndex: ColorBandLayoutViewModel.BACKGROUND_BASE_ZINDEX);
 
 				_listViewItems.Insert(index, itemBeingInserted);
 
@@ -635,7 +624,6 @@ namespace MSetExplorer.Cbs
 			{
 				var lviSource = _listViewItems[sourceIndex++];
 				var lviDestination = _listViewItems[destIndex++];
-				//lviDestination.Opacity = 0.25;
 
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 			}
@@ -650,7 +638,6 @@ namespace MSetExplorer.Cbs
 				var newSourceColorBand = CreateColorBand(reservedColorBands[rcbPtr++], newPreviousCutoff, width);
 				var lviSource = _cbListView.CreateListViewItem(virtualSourceIndex++, newSourceColorBand);
 				var lviDestination = _listViewItems[destIndex++];
-				//lviDestination.Opacity = 0.25;
 
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 
@@ -661,15 +648,7 @@ namespace MSetExplorer.Cbs
 			ApplyAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs);
 			ReportAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs, "Dist ColorBands Expand");
 
-			//var firstDest = _pullColorsAnimationInfo1.AnimationItemPairs[0].Item1.DestinationListViewItem;
-			//if (firstDest != null)
-			//{
-			//	firstDest.Opacity = 0.1;
-			//}
-
 			_storyBoardDetails1.Begin(DistributeColorBandsExpandPost, editArgs, debounce: true);
-
-			//DistributeColorBandsExpandPost(editArgs);
 		}
 
 		private void DistributeColorBandsExpandNotes()
@@ -710,13 +689,7 @@ namespace MSetExplorer.Cbs
 			var animationItemPairs = _pullColorsAnimationInfo1.AnimationItemPairs;
 			var virtualListViewItems = animationItemPairs.Skip(animationItemPairs.Count - numberOfNewColorBands).Select(x => x.Item1.SourceListViewItem).ToArray();
 
-			//var destItem1 = animationItemPairs[0].Item1.DestinationListViewItem;
-			//if (destItem1 != null) destItem1.ZIndex1 = DEFAULT_ZINDEX1;
-
-			//var destItem2 = animationItemPairs[0].Item2.DestinationListViewItem;
-			//if (destItem2 != null) destItem2.ZIndex1 = DEFAULT_ZINDEX1;
-
-			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX1;
+			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX;
 
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
 
