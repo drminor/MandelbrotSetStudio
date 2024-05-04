@@ -20,8 +20,6 @@ namespace MSetExplorer
 
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 
-		private const int COLOR_PAIR_ZINDEX_DELTA = 5;
-
 		#endregion
 
 		#region Private Fields
@@ -59,7 +57,7 @@ namespace MSetExplorer
 			_startColor = startColor;
 			_endColor = endColor;
 			_blend = blend;
-			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX1;
 
 			//_diagContainerGeometry = new RectangleGeometry(container);
 			//_diagContainerPath = BuildDiagContainerPath(_diagContainerGeometry);
@@ -69,12 +67,12 @@ namespace MSetExplorer
 			_startGeometry = new RectangleGeometry(BuildColorBlockStart(_container));
 			_startColorBlockPath = BuildStartColorBlockPath(_startGeometry, _startColor);
 			_canvas.Children.Add(_startColorBlockPath);
-			_startColorBlockPath.SetValue(Panel.ZIndexProperty, _zIndex1 + COLOR_PAIR_ZINDEX_DELTA); // 5 + 5
+			_startColorBlockPath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.START_COLOR_ZINDEX_DELTA);
 
 			_endGeometry = new RectangleGeometry(BuildColorBlockEnd(_container, _startGeometry.Rect));
 			_endColorBlockPath = BuildEndColorBlockPath(_endGeometry, _endColor);
 			_canvas.Children.Add(_endColorBlockPath);
-			_endColorBlockPath.SetValue(Panel.ZIndexProperty, _zIndex1 + COLOR_PAIR_ZINDEX_DELTA);
+			_endColorBlockPath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.END_COLOR_ZINDEX_DELTA);
 		}
 
 		#endregion
@@ -160,8 +158,8 @@ namespace MSetExplorer
 				if (value != _zIndex1)
 				{
 					_zIndex1 = value;
-					_startColorBlockPath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + COLOR_PAIR_ZINDEX_DELTA);
-					_endColorBlockPath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + COLOR_PAIR_ZINDEX_DELTA);
+					_startColorBlockPath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.START_COLOR_ZINDEX_DELTA);
+					_endColorBlockPath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.END_COLOR_ZINDEX_DELTA);
 				}
 			}
 		}

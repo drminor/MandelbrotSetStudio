@@ -11,8 +11,6 @@ namespace MSetExplorer
 {
 	internal class CbBlendedColorPair : ICloneable
 	{
-		private const int BLENDED_COLOR_PAIR_ZINDEX_DELTA = 5;
-
 		#region Private Fields
 
 		private readonly Canvas _canvas;
@@ -42,12 +40,12 @@ namespace MSetExplorer
 			_startColor = startColor;
 			_endColor = endColor;
 			_blend = blend;
-			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX1;
 
 			_containerGeometry = new RectangleGeometry(container);
 			_containerPath = BuildRectanglePath(_containerGeometry, startColor, endColor, blend);
 			_canvas.Children.Add(_containerPath);
-			_containerPath.SetValue(Panel.ZIndexProperty, _zIndex1 + BLENDED_COLOR_PAIR_ZINDEX_DELTA);
+			_containerPath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.BLENDED_AREA_ZINDEX_DELTA);
 		}
 
 		#endregion
@@ -138,7 +136,7 @@ namespace MSetExplorer
 				if (value != _zIndex1)
 				{
 					_zIndex1 = value;
-					_containerPath.SetValue(Panel.ZIndexProperty, _zIndex1 + BLENDED_COLOR_PAIR_ZINDEX_DELTA);
+					_containerPath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.BLENDED_AREA_ZINDEX_DELTA);
 				}
 			}
 		}

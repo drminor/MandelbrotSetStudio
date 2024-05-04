@@ -6,8 +6,21 @@ namespace MSetExplorer
 {
 	public class ColorBandLayoutViewModel : ViewModelBase, ICloneable
 	{
-		public const int DEFAULT_ZINDEX1 = 45;
+		public const int BASE_ZINDEX1 = 10;
 
+		public const int BACKGROUND_BASE_ZINDEX1 = 1;
+
+
+		public const int DRAG_LINE_ZINDEX_DELTA = 25;
+		public const int TOP_ARROW_AREA_ZINDEX_DELTA = 25;
+
+		public const int COLOR_BLOCK_ZINDEX_DELTA = 5;
+
+		public const int BLENDED_AREA_ZINDEX_DELTA = 7;
+		public const int START_COLOR_ZINDEX_DELTA = 5;
+		public const int END_COLOR_ZINDEX_DELTA = 5;
+
+		public const int IS_CURRENT_AREA_ZINDEX_DELTA = 1;
 
 		#region Private Fields
 
@@ -72,8 +85,6 @@ namespace MSetExplorer
 
 		public IsSelectedChangedCallback IsSelectedChangedCallback { get; init; }
 		public Action<int, ColorBandSetEditMode> RequestContextMenuShown { get; init; }
-
-		//public int DefaultZIndex1 => 5;
 
 		#endregion
 

@@ -33,8 +33,6 @@ namespace MSetExplorer
 
 		private static readonly Brush IS_HOVERED_STROKE = SKY_BLUE; // LIGHT_BLUE_BRUSH; // VERY_LIGHT_BLUE_BRUSH;
 
-		private const int COLOR_BLOCK_ZINDEX_DELTA = 5;
-
 		#endregion
 
 		#region Private Fields
@@ -83,7 +81,7 @@ namespace MSetExplorer
 			_xPosition = area.Right;
 			_width = area.Width;
 			_opacity = 1.0;
-			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX1;
 
 			//var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
@@ -91,7 +89,7 @@ namespace MSetExplorer
 			_rectanglePath = BuildRectanglePath(_geometry);
 			_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_rectanglePath);
-			_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + COLOR_BLOCK_ZINDEX_DELTA);
+			_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.COLOR_BLOCK_ZINDEX_DELTA);
 
 			_cbColorPair = new CbColorPair(_geometry.Rect, startColor, endColor, blend, _canvas, _zIndex1);
 			//_cbColorPair.ZIndex1 = _zIndex1;
@@ -103,9 +101,9 @@ namespace MSetExplorer
 
 		public int ColorBandIndex { get; set; }
 
-		public RectangleGeometry RectangleGeometry => _geometry;
+		//public RectangleGeometry RectangleGeometry => _geometry;
 
-		public Path ColorBlocksRectangle => (Path)_rectanglePath;
+		//public Path ColorBlocksRectangle => (Path)_rectanglePath;
 
 		public CbColorPair CbColorPair
 		{
@@ -258,7 +256,7 @@ namespace MSetExplorer
 				if (value != _zIndex1)
 				{
 					_zIndex1 = value;
-					_rectanglePath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + COLOR_BLOCK_ZINDEX_DELTA);
+					_rectanglePath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.COLOR_BLOCK_ZINDEX_DELTA);
 					_cbColorPair.ZIndex1 = value;
 				}
 			}

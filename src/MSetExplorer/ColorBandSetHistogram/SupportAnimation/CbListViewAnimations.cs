@@ -136,7 +136,7 @@ namespace MSetExplorer.Cbs
 			var newLvi = _pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem;
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
 
-			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
+			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX1;
 
 			newLvi.TearDown();
 			_storyBoardDetails1.UnregisterName(newLvi.Name);
@@ -716,7 +716,7 @@ namespace MSetExplorer.Cbs
 			//var destItem2 = animationItemPairs[0].Item2.DestinationListViewItem;
 			//if (destItem2 != null) destItem2.ZIndex1 = DEFAULT_ZINDEX1;
 
-			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
+			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX1;
 
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
 

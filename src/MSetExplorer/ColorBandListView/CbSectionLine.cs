@@ -35,8 +35,6 @@ namespace MSetExplorer
 		private static readonly Brush DEFAULT_STROKE = DARKISH_GRAY_BRUSH;
 		private static readonly Brush DEFAULT_BACKGROUND = TRANSPARENT_BRUSH; // new SolidColorBrush(Colors.AntiqueWhite);
 
-		private const int DRAG_LINE_ZINDEX_DELTA = 10;
-		private const int TOP_ARROW_AREA_ZINDEX_DELTA = 10;
 		#endregion
 
 		#region Private Fields
@@ -103,7 +101,7 @@ namespace MSetExplorer
 			_selectionLinePosition = _x2Position * ContentScale.Width;
 			_originalSectionLinePosition = _selectionLinePosition;
 			_opacity = 1.0;
-			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX1;
 
 			_leftWidth = null;
 			_rightWidth = null;
@@ -111,7 +109,7 @@ namespace MSetExplorer
 
 			_dragLine = BuildDragLine(_sectionLineArea, _isUnderMouse, ParentIsFocused, ContentScale);
 			_canvas.Children.Add(_dragLine);
-			_dragLine.SetValue(Panel.ZIndexProperty, _zIndex1 + DRAG_LINE_ZINDEX_DELTA);
+			_dragLine.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.DRAG_LINE_ZINDEX_DELTA);
 
 			_topArrowHalfWidth = SELECTION_LINE_ARROW_WIDTH;
 			_topArrow = BuildTopArrow(_topArrowArea, _isSelected, _isUnderMouse, ParentIsFocused, ContentScale);
@@ -119,7 +117,7 @@ namespace MSetExplorer
 			_topArrow.MouseUp += Handle_TopArrowMouseUp;
 
 			_canvas.Children.Add(_topArrow);
-			_topArrow.SetValue(Panel.ZIndexProperty, _zIndex1 + TOP_ARROW_AREA_ZINDEX_DELTA);
+			_topArrow.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.TOP_ARROW_AREA_ZINDEX_DELTA);
 		}
 
 		#endregion
@@ -252,8 +250,8 @@ namespace MSetExplorer
 			set
 			{
 				_zIndex1 = value;
-				_dragLine.SetValue(Panel.ZIndexProperty, _zIndex1 + DRAG_LINE_ZINDEX_DELTA);
-				_topArrow.SetValue(Panel.ZIndexProperty, _zIndex1 + TOP_ARROW_AREA_ZINDEX_DELTA);
+				_dragLine.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.DRAG_LINE_ZINDEX_DELTA);
+				_topArrow.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.TOP_ARROW_AREA_ZINDEX_DELTA);
 			}
 		}
 

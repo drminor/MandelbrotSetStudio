@@ -569,7 +569,6 @@ namespace MSetExplorer
 			c.CbColorBlock.ZIndex1 = newValue;
 			c.CbRectangle.ZIndex1 = newValue;
 			c.CbSectionLine.ZIndex1 = newValue;
-			//c.CbSectionLine.zi
 		}
 
 		#endregion

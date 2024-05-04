@@ -5,19 +5,113 @@ CbListView
 
 CbListViewItem
 	-> ColorBand (model object)
-	-> CbSectionLine
-	-> CbColorBlocks
-	-> CbRectangle
+	-> CbSectionLine CbSectionLine
+	-> CbColorBlocks CbColorBlock
+	-> CbRectangle CbRectangle
 
 
 CbSectionLine
-	TopArrowRectangleArea		Rect
-	SectionLineRectangleArea	Rect
+	Rect TopArrowRectangleArea			TOP_ARROW_AREA_ZINDEX_DELTA
+	Rect SectionLineRectangleArea		DRAG_LINE_ZINDEX_DELTA
 
 CbColorBlocks
-
-
-
+	Rect Area							COLOR_BLOCK_ZINDEX_DELTA
+	CbColorPair CbColorPair	
 
 CbRectangle
+	Rect BlendArea						BLENDED_AREA_ZINDEX_DELTA
+	CbBlendedColorPair
+	Rect IsCurrentArea					CURRENT_AREA_ZINDEX_DELTA
+
+CbColorPair
+	Rect StartColorBlock				START_COLOR_ZINDEX_DELTA
+	Rect EndColorBlock					END_COLOR_ZINDEX_DELTA
+
+CbBlendedColorPair
+	Rect Container						BLENDED_AREA_ZINDEX_DELTA
+
+
+
+	
+----- Additional Details ---------
+
+CbRectangle
+	Path BlendedBandRectangle			BLENDED_AREA_ZINDEX_DELTA
+
+
+		var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
+
+		** var container = BuildRectangle(_blendRectangleArea, isHighLighted, ContentScale);
+		_geometry = new RectangleGeometry(container);
+
+		_rectanglePath = BuildRectanglePath(_geometry);
+		_rectanglePath.MouseUp += Handle_MouseUp;
+		_canvas.Children.Add(_rectanglePath);
+		_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.BLENDED_AREA_ZINDEX_DELTA);
+
+		_cbBlendedColorPair = new CbBlendedColorPair(container, startColor, endColor, blend, _canvas, _zIndex1);
+
+		private Shape BuildRectanglePath(RectangleGeometry area)
+		{
+			var result = new Path()
+			{
+				Fill = new SolidColorBrush(Colors.Transparent),
+				Stroke = Brushes.Transparent,
+				StrokeThickness = 0,
+				Data = area,
+				IsHitTestVisible = true,
+				Opacity = 1.0
+			};
+
+			return result;
+		}
+
+		private Rect BuildRect(Rect r, SizeDbl contentScale)
+		{
+			var result = new Rect(r.Location, r.Size);
+			result.Scale(contentScale.Width, contentScale.Height);
+
+			return result;
+		}
+
+
+CbBlendedColorPair
+	Path _containerPath					BLENDED_AREA_ZINDEX_DELTA
+
+		** container is the same object object as above
+
+
+		_containerGeometry = new RectangleGeometry(container);
+		_containerPath = BuildRectanglePath(_containerGeometry, startColor, endColor, blend);
+
+		private Shape BuildRectanglePath(RectangleGeometry area, ColorBandColor startColor, ColorBandColor endColor, bool blend)
+		{
+			var result = new Path()
+			{
+				Fill = GetBlendedBrush(startColor, endColor, blend),
+				Stroke = Brushes.Transparent,
+				StrokeThickness = 0,
+				Data = area,
+				IsHitTestVisible = true,
+				Opacity = 1.0
+			};
+
+			return result;
+		}
+
+	Both the BlendedBandRectangle and _containerPath
+		a. Have their own Path created
+		b. from their own RectangleGeometry
+		c. Using the same, shared Rect
+		d. Set the ZIndex using the BLENDED_AREA_ZINDEX_DELTA
+
+	The CBRectangle's Path is Transparent, Hit-Testable, and Opaque
+
+	The CbBlendedColorPair's Path is Gradient Fill, Hit-Testable and Opaque.
+
+
+	When the Opacity is set, both receive the same value.
+
+	When the ZIndex is set, both receive the same value == BaseVal + BLENDED_AREA_ZINDEX_DELTA
+
 

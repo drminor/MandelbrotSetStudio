@@ -36,9 +36,6 @@ namespace MSetExplorer
 		private static readonly Brush IS_CURRENT_BACKGROUND = LIGHT_BLUE_BRUSH;
 		private static readonly Brush IS_NOT_CURRENT_BACKGROUND = TRANSPARENT_BRUSH; // LIGHT_GRAY_BRUSH;
 
-		private const int BLENDED_AREA_ZINDEX_DELTA = 5;
-		private const int IS_CURRENT_AREA_ZINDEX_DELTA = 1;
-
 		#endregion
 
 		#region Private Fields
@@ -101,7 +98,7 @@ namespace MSetExplorer
 			//_endColor = endColor;
 			//_blend = blend;
 			_opacity = 1.0;
-			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.DEFAULT_ZINDEX1;
+			_zIndex1 = zIndex ?? ColorBandLayoutViewModel.BASE_ZINDEX1;
 
 			var isHighLighted = GetIsHighlighted(_isSelected, _isUnderMouse, _colorBandLayoutViewModel.ParentIsFocused);
 
@@ -109,7 +106,7 @@ namespace MSetExplorer
 			_rectanglePath = BuildRectanglePath(_geometry);
 			_rectanglePath.MouseUp += Handle_MouseUp;
 			_canvas.Children.Add(_rectanglePath);
-			_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + BLENDED_AREA_ZINDEX_DELTA);
+			_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.BLENDED_AREA_ZINDEX_DELTA);
 
 			_cbBlendedColorPair = new CbBlendedColorPair(_geometry.Rect, startColor, endColor, blend, _canvas, _zIndex1);
 			//_cbBlendedColorPair.ZIndex1 = ZIndex1;
@@ -117,7 +114,7 @@ namespace MSetExplorer
 			_curGeometry = new RectangleGeometry(BuildRect(_isCurrentArea, ContentScale));
 			_curRectanglePath = BuildCurRectanglePath(_curGeometry, _isCurrent);
 			_canvas.Children.Add(_curRectanglePath);
-			_curRectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + IS_CURRENT_AREA_ZINDEX_DELTA);
+			_curRectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.IS_CURRENT_AREA_ZINDEX_DELTA);
 		}
 
 		#endregion
@@ -321,8 +318,8 @@ namespace MSetExplorer
 				if (value != _zIndex1)
 				{
 					_zIndex1 = value;
-					_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + BLENDED_AREA_ZINDEX_DELTA);
-					_curRectanglePath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + IS_CURRENT_AREA_ZINDEX_DELTA);
+					_rectanglePath.SetValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.BLENDED_AREA_ZINDEX_DELTA);
+					_curRectanglePath.SetCurrentValue(Panel.ZIndexProperty, _zIndex1 + ColorBandLayoutViewModel.IS_CURRENT_AREA_ZINDEX_DELTA);
 					_cbBlendedColorPair.ZIndex1 = value;
 				}
 			}
