@@ -32,7 +32,7 @@ namespace MSetExplorer
 
 		#region Public Methods
 
-		public void Add(CbListViewItem source, CbListViewItem? destination)
+		public void AddAnimationItemPair(CbListViewItem source, CbListViewItem? destination)
 		{
 			var colorBlocksAItem = new ColorBlocksAnimationItem(source, destination, _msPerPixel/*, isForPullColors: false*/);
 			var blendedColorAItem = new BlendedColorAnimationItem(source, destination, _msPerPixel/*, isForPullColors: false*/);

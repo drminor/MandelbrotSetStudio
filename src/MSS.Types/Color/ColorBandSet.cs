@@ -259,54 +259,70 @@ namespace MSS.Types
 			}
 		}
 
-		public bool DeleteStartingCutoff(ColorBand colorBand, out ReservedColorBand? reservedColorBand)
+		public bool DeleteStartingCutoff(ColorBand colorBand, [NotNullWhen(true)] out ReservedColorBand? reservedColorBand)
 		{
 			reservedColorBand = null;
 
-			var index = IndexOf(colorBand);
-
-			if (index < 0 || index > Count - 2)
-			{
-				return false;
-			}
-
 			if (Count < 2)
 			{
-				// The collection must have at least two items. 
+				// Cannot delete the last item.
+				// TODO: Consider deleting this item and replacing with the results of calling CreateSingleColorBand(int targetIterations)
+
+				//var t = CreateSingleColorBand(TargetIterations);
+
 				return false;
 			}
 
-			reservedColorBand = PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and it's saved to the Reserves.
+			var index = IndexOf(colorBand);
 
-			var wasRemoved = Remove(colorBand);
+			if (index >= 0 && index <= Count - 1)
+			{
+				reservedColorBand = PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and it's saved to the Reserves.
+				var wasRemoved = Remove(colorBand);
 
-			if (wasRemoved) LastUpdatedUtc = DateTime.UtcNow;
+				if (wasRemoved)
+				{
+					LastUpdatedUtc = DateTime.UtcNow;
+				}
 
-			return wasRemoved;
+				return wasRemoved;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		public ReservedColorBand InsertColor(int index, ColorBand colorBand)
 		{
-			var reservedColorBand = PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and it's saved to the Reserves.
-			var cb = Items[index];
-
-			cb.StartColor = colorBand.StartColor;
-			cb.EndColor = colorBand.EndColor;
-			cb.BlendStyle = colorBand.BlendStyle;
-
-			if (index < Count - 1)
+			if (index >= 0 && index <= Count - 1)
 			{
-				cb.SuccessorStartColor = Items[index + 1].StartColor;
-			}
 
-			if (index > 0)
+				var reservedColorBand = PushColorsUp(index); // The Color Values assigned to the last ColorBand are used to create a ReserveColorBand and it's saved to the Reserves.
+				var cb = Items[index];
+
+				cb.StartColor = colorBand.StartColor;
+				cb.EndColor = colorBand.EndColor;
+				cb.BlendStyle = colorBand.BlendStyle;
+
+				if (index < Count - 1)
+				{
+					cb.SuccessorStartColor = Items[index + 1].StartColor;
+				}
+
+				if (index > 0)
+				{
+					Items[index - 1].SuccessorStartColor = cb.StartColor;
+				}
+
+				LastUpdatedUtc = DateTime.UtcNow;
+
+				return reservedColorBand;
+			}
+			else
 			{
-				Items[index - 1].SuccessorStartColor = cb.StartColor;
+				throw new ArgumentException("index must be between 0 and Count - 1, inclusive.");
 			}
-
-			LastUpdatedUtc = DateTime.UtcNow;
-
-			return reservedColorBand;
 		}
 
 		public void DeleteColor(int index, ReservedColorBand reservedColorBand)

@@ -175,7 +175,7 @@ namespace MSetExplorer.Cbs
 			{
 				var lviSource = _listViewItems[i];
 				var lviDestination = i == _listViewItems.Count - 1 ? null : _listViewItems[i + 1];
-				_pushColorsAnimationInfo1.Add(lviSource, lviDestination);
+				_pushColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 			}
 
 			_pushColorsAnimationInfo1.CalculateMovements();
@@ -290,7 +290,7 @@ namespace MSetExplorer.Cbs
 			{
 				var lviSource = _listViewItems[i];
 				var lviDestination = i == _listViewItems.Count - 1 ? null : _listViewItems[i + 1];
-				_pushColorsAnimationInfo1.Add(lviSource, lviDestination);
+				_pushColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 			}
 
 			var startPushSyncPoint = _pushColorsAnimationInfo1.CalculateMovements();
@@ -558,6 +558,7 @@ namespace MSetExplorer.Cbs
 			for (var i = startIndex; i <= endIndex; i++)
 			{
 				var currentItem = _listViewItems[i];
+				currentItem.ColorBand.Percentage = newPercentage;
 				var startingAreaOfCurrentItem = currentItem.Area;
 
 				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
@@ -603,11 +604,8 @@ namespace MSetExplorer.Cbs
 			var cmpPrevCutoffAfter = _listViewItems[index + 1].ColorBand.PreviousCutoff;
 			Debug.Assert(cmpPrevCutoffAfter == cmpPrevCutoffBefore, "Insert new ColorBands has modified the following ColorBands starting cutoff.");
 
-
 			_cbListView.Reindex(0);
-
 			editArgs.NewColorBands = newColorBands;
-
 
 			// Prepare the animations to pull the Colors Down
 			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
@@ -698,21 +696,86 @@ namespace MSetExplorer.Cbs
 		private void DistributeColorBandsContract(ColorBandSetEditArgs editArgs)
 		{
 			var startIndex = editArgs.StartingIndex;
-			var endIndex = editArgs.EndingIndex;
-			var newColorBandsCount = editArgs.NewColorBandsCount;
-			Debug.WriteLine($"AnimateDistributeColorBands-Contract. StartIndex: {startIndex}, EndIndex: {endIndex}, Removing: {-1 * editArgs.DistributionExpansionAmount} ColorBands, Target Number: {newColorBandsCount}.");
+			var endIndex = editArgs.EndingIndex ?? throw new ArgumentException("EditArgs.EndingIndex must have a value.");
+			var numberToRemove = editArgs.DistributionExpansionAmount * -1;
+			var targetDistributionCount = editArgs.NewColorBandsCount;
 
-			var index = editArgs.Index;
+			Debug.WriteLine($"AnimateDistributeColorBands-Contract. StartIndex: {startIndex}, EndIndex: {endIndex}, Removing: {-1 * editArgs.DistributionExpansionAmount} ColorBands, Target Number: {targetDistributionCount}.");
 
-			DistributeColorBandsContractPost(editArgs);
 
+			// Prepare the animations to Push the colors up
+			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
+
+			var firstSourceIndex = startIndex + targetDistributionCount;
+
+			for (var i = firstSourceIndex; i < _listViewItems.Count; i++)
+			{
+				var lviSource = _listViewItems[i];
+				var lviDestination = i == _listViewItems.Count - 1 ? null : _listViewItems[i + 1];
+				_pushColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
+			}
+
+			var startPushSyncPoint = _pushColorsAnimationInfo1.CalculateMovements();
+			var endPushSyncPoint = _pushColorsAnimationInfo1.GetMaxDuration();
+			var shiftMs = endPushSyncPoint - startPushSyncPoint;
+
+			_storyBoardDetails1.RateFactor = 1;
+
+			ApplyAnimationItemPairs(_pushColorsAnimationInfo1.AnimationItemPairs);
+
+			// Calculate the new Starting and Ending Offsets for the existing and color bands yet to be created.
+			var newCutoffs = GetNewCutoffs(startIndex, endIndex, targetDistributionCount, out var newBucketWidths, out var newPreviousCutoffs);
+			editArgs.UpdatedCutoffs = newCutoffs;
+			editArgs.UpdatedPreviousCutoffs = newPreviousCutoffs;
+
+			var newPercentage = GetNewPercentage(startIndex, endIndex, targetDistributionCount);
+
+			// Prepare the animations to resize the existing items
+			var newCutoffsPtr = 0;
+
+			for (var i = startIndex; i < targetDistributionCount; i++)
+			{
+				var currentItem = _listViewItems[i];
+				currentItem.ColorBand.Percentage = newPercentage;
+
+				var startingAreaOfCurrentItem = currentItem.Area;
+
+				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
+				var bucketWidth = newBucketWidths[newCutoffsPtr];
+
+				// Move the current item into its new place.
+				_storyBoardDetails1.AddShiftHorizontal(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX0: previousCutoff, newWidth: bucketWidth, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
+				newCutoffsPtr++;
+			}
+
+			// Execute the Animation
+			_storyBoardDetails1.Begin(DistributeColorBandsContractPost, editArgs, debounce: true);
 		}
 
 		private void DistributeColorBandsContractPost(ColorBandSetEditArgs editArgs)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n AnimateDistributeColorBands-Contract.");
 
+			var startIndex = editArgs.StartingIndex;
+			var numberToRemove = editArgs.DistributionExpansionAmount * -1;
+			var targetDistributionCount = editArgs.NewColorBandsCount;
+			var indexOfFirstItemToDelete = startIndex + targetDistributionCount;
+
+
+			_pushColorsAnimationInfo1?.MoveSourcesToDestinations();
+			_pushColorsAnimationInfo1 = null;
+
+			for (var i = 0; i < numberToRemove; i++)
+			{
+				var lvi = _listViewItems[indexOfFirstItemToDelete + i];
+				_cbListView.RemoveListViewItem(lvi);
+			}
+
+			_cbListView.Reindex(indexOfFirstItemToDelete);
+
 			_onAnimationComplete(editArgs);
+
+			_ = _cbListView.SynchronizeCurrentItem();
 		}
 
 		#endregion

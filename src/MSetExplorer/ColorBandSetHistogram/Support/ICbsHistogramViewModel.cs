@@ -69,7 +69,7 @@ namespace MSetExplorer
 		bool TestDeleteItem(int colorBandIndex);
 
 		ReservedColorBand? DeleteCutoff(int index);
-		ReservedColorBand? DeleteCutoffs(int index, int numberToRemove);
+		ReservedColorBand[]? DeleteCutoffs(int index, int numberToRemove);
 
 		void DeleteColor(int index, ReservedColorBand reservedColorBand);
 		void DeleteColorBand(int index);
@@ -77,7 +77,8 @@ namespace MSetExplorer
 		void UpdateStartAndEndCutoffs(int startIndex, int endIndex, int[] updatedPreviousCutoffs, int[] updatedCutoffs, bool applyChanges);
 
 		ReservedColorBand[] PopReservedColorBand(int numberToPop = 1);
-		void PushReservedColorBand(ReservedColorBand[] reservedColorBands);
+		void PushReservedColorBands(ReservedColorBand[] reservedColorBands);
+		void PushReservedColorBand(ReservedColorBand reservedColorBand);
 
 		IDictionary<int, int> GetHistogramForColorBand(ColorBand color);
 		public HistCutoffsSnapShot GetHistCutoffsSnapShot();
