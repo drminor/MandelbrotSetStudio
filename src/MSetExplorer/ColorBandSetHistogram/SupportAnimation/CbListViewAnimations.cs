@@ -1,8 +1,11 @@
 ﻿using MSS.Types;
+using ScottPlot.Drawing.Colormaps;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Printing;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 
@@ -66,8 +69,6 @@ namespace MSetExplorer.Cbs
 			// the existing item's percentage is also halved.
 			colorBand.Percentage = newPercentage;
 
-			//var newStartColor = colorBand.StartColor;
-			//var endColor = colorBand.EndColor;
 			var newStartColor = ColorBandColor.White;
 			var endColor = ColorBandColor.White;
 
@@ -77,8 +78,6 @@ namespace MSetExplorer.Cbs
 			editArgs.NewColorBands = new ColorBand[] { newColorBand };
 
 			var itemBeingInserted = _cbListView.CreateListViewItem(index, newColorBand, zIndex: ColorBandLayoutViewModel.BACKGROUND_BASE_ZINDEX);
-			//itemBeingInserted.ElevationsAreLocal = true;
-			//itemBeingInserted.Opacity = 0;
 
 			_listViewItems.Insert(index, itemBeingInserted);
 			_cbListView.Reindex(0);
@@ -158,14 +157,6 @@ namespace MSetExplorer.Cbs
 			_storyBoardDetails1.UnregisterName(newLvi.Name);
 
 			_pullColorsAnimationInfo1 = null;
-
-			//var prevCb = _listViewItems[index - 1];
-
-			//if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-			//{
-			//	var cbListViewItem = _listViewItems[index];
-			//	prevCb.EndColor = cbListViewItem.StartColor;
-			//}
 
 			_onAnimationComplete(editArgs);
 
@@ -428,27 +419,6 @@ namespace MSetExplorer.Cbs
 			// Update the model
 			_onAnimationComplete(editArgs);
 
-			//if (_listViewItems.Count > 1)
-			//{
-			//	var nextToLast = _listViewItems[^2];
-
-			//	if (nextToLast.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-			//	{
-			//		nextToLast.EndColor = _listViewItems[^1].StartColor;
-			//	}
-			//}
-
-			//if (index > 0)
-			//{
-			//	var prevCb = _listViewItems[index - 1];
-
-			//	if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-			//	{
-			//		var cbListViewItem = _listViewItems[index];
-			//		prevCb.EndColor = cbListViewItem.StartColor;
-			//	}
-			//}
-
 			//_cbListView.ReportColorBands("After Animate Delete Color.");
 			//_cbListView.ReportListViewItems("After Animate Delete Color.");
 		}
@@ -472,31 +442,6 @@ namespace MSetExplorer.Cbs
 			var newArea = new Rect(centerPt.X - (newScaledWidth / 2), centerPt.Y - 30, newScaledWidth, 20);
 
 			_storyBoardDetails1.AddRectAnimation(itemBeingRemoved.Name, "Area", from: curVal, to: newArea, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(600));
-
-			//if (index == 0)
-			//{
-			//	var newFirstItem = _listViewItems[index + 1];
-			//	curVal = newFirstItem.Area;
-			//	var newXPosition = 0;
-
-			//	_storyBoardDetails1.AddChangeLeft(newFirstItem.Name, "Area", from: curVal, newX1: newXPosition, beginTime: TimeSpan.FromMilliseconds(600), duration: TimeSpan.FromMilliseconds(450));
-			//}
-			//else
-			//{
-			//	var widthOfItemBeingRemoved = itemBeingRemoved.Area.Width;
-
-			//	var preceedingItem = _listViewItems[index - 1];
-
-			//	if (index < _listViewItems.Count)
-			//	{
-			//		preceedingItem.ColorBand.SuccessorStartColor = _listViewItems[index].ColorBand.StartColor;
-			//	}
-
-			//	curVal = preceedingItem.Area;
-			//	var newWidth = curVal.Width + widthOfItemBeingRemoved;
-
-			//	_storyBoardDetails1.AddChangeWidth(preceedingItem.Name, "Area", from: curVal, newWidth: newWidth, beginTime: TimeSpan.FromMilliseconds(600), duration: TimeSpan.FromMilliseconds(450));
-			//}
 
 			var followingItem = _listViewItems[index + 1];
 			curVal = followingItem.Area;
@@ -580,25 +525,34 @@ namespace MSetExplorer.Cbs
 			_onAnimationComplete(editArgs);
 		}
 
+		/// <summary>
+		/// Take the range of existing ColorBands and distribute evenly over a total of NewColorBandsCount
+		/// </summary>
+		/// <param name="editArgs"></param>
+		/// <exception cref="ArgumentException"></exception>
 		private void DistributeColorBandsExpand(ColorBandSetEditArgs editArgs)
 		{
 			var startIndex = editArgs.StartingIndex;
 			var endIndex = editArgs.EndingIndex ?? throw new ArgumentException("EditArgs.EndingIndex must have a value.");
 			var numberOfNewColorBands = editArgs.DistributionExpansionAmount;
-			var distributionTargetCount = editArgs.NewColorBandsCount;
+			var targetDistributionCount = editArgs.NewColorBandsCount;
 			var reservedColorBands = editArgs.ReservedColorBands ?? throw new ArgumentException("ReservedColorBands is null", nameof(editArgs.ReservedColorBands));
 
-			Debug.WriteLine($"AnimateDistributeColorBands-Expand. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {distributionTargetCount}.");
+			Debug.WriteLine($"AnimateDistributeColorBands-Expand. StartIndex: {startIndex}, EndIndex: {endIndex}, Target Number: {targetDistributionCount}.");
 
-			var newCutoffs = GetNewCutoffs(startIndex, endIndex, distributionTargetCount, out var newBucketWidths, out var newPreviousCutoffs);
+			// The NumberOfExistingBands = 1 + EndIndex - StartIndex
+			// The NumberOfNewColorBands = TargetDistributionCount - NumberOfExistingBands
+
+			// Calculate the new Starting and Ending Offsets for the existing and color bands yet to be created.
+			var newCutoffs = GetNewCutoffs(startIndex, endIndex, targetDistributionCount, out var newBucketWidths, out var newPreviousCutoffs);
 			editArgs.UpdatedCutoffs = newCutoffs;
 			editArgs.UpdatedPreviousCutoffs = newPreviousCutoffs;
 
-			var newPercentage = GetNewPercentage(startIndex, endIndex, distributionTargetCount);
+			var newPercentage = GetNewPercentage(startIndex, endIndex, targetDistributionCount);
 
 			_storyBoardDetails1.RateFactor = 1;
 
-			// Resize the existing items
+			// Prepare the animations to resize the existing items
 			var newCutoffsPtr = 0;
 
 			for (var i = startIndex; i <= endIndex; i++)
@@ -618,6 +572,8 @@ namespace MSetExplorer.Cbs
 			var newColorBands = new ColorBand[numberOfNewColorBands];
 
 			var index = endIndex + 1;
+			var cmpPrevCutoffBefore = _listViewItems[index].ColorBand.PreviousCutoff;
+
 			for (var i = 0; i < numberOfNewColorBands; i++)
 			{
 				var newCutoff = newCutoffs[newCutoffsPtr];
@@ -635,16 +591,25 @@ namespace MSetExplorer.Cbs
 
 				// Have the new item go from transparent to fully opaque
 				_storyBoardDetails1.AddOpacityAnimation(itemBeingInserted.Name, "Opacity", from: 0.1, to: 1.0, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(500));
+
+				// The item just inserted is at index: endIndex + 1
+				// Increment the index so that the next item is also inserted before the item that was at endIndex + 1
 				index++;
 				newCutoffsPtr++;
 			}
+
+			// Once all of the new ColorBands are inserted the ColorBand originally at EndIndex + 1
+			// should have the same Starting Offset as it did when we started.
+			var cmpPrevCutoffAfter = _listViewItems[index + 1].ColorBand.PreviousCutoff;
+			Debug.Assert(cmpPrevCutoffAfter == cmpPrevCutoffBefore, "Insert new ColorBands has modified the following ColorBands starting cutoff.");
+
 
 			_cbListView.Reindex(0);
 
 			editArgs.NewColorBands = newColorBands;
 
-			// Pull Colors Down
-			// Create the class that will calcuate the 'PullColor' animation details
+
+			// Prepare the animations to pull the Colors Down
 			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
 
 			var destIndex = endIndex + 1;
@@ -658,8 +623,6 @@ namespace MSetExplorer.Cbs
 				if (lviSource.ColorBand.IsLast)
 				{
 					lviSource.ColorBand.IsLast = false;
-					//lviSource.ColorBand.SuccessorStartColor = reservedColorBands[0].StartColor;
-					//lviSource.EndColor = lviSource.ColorBand.ActualEndColor;
 				}
 
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
@@ -669,8 +632,6 @@ namespace MSetExplorer.Cbs
 			var virtualSourceIndex = _listViewItems.Count;
 			var newPreviousCutoff = _listViewItems[^1].ColorBand.Cutoff + 1;
 			var width = 10;
-
-			//ColorBandColor? sucessorStartColor = rcbPtr + 1 < reservedColorBands.Length ? reservedColorBands[rcbPtr + 1].StartColor : null;
 
 			while (destIndex < _listViewItems.Count)
 			{
@@ -683,42 +644,15 @@ namespace MSetExplorer.Cbs
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 
 				newPreviousCutoff = newPreviousCutoff + width;
-
-				//sucessorStartColor = rcbPtr + 1 < reservedColorBands.Length ? reservedColorBands[rcbPtr + 1].StartColor : null;
 			}
 
 			_pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem.ColorBand.IsLast = true;
-			//_pullColorsAnimationInfo1.AnimationItemPairs[^1].Item2.SourceListViewItem.ColorBand.IsLast = true;
 
 			_ = _pullColorsAnimationInfo1.CalculateMovements(beginMs: 400);
 			ApplyAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs);
 			ReportAnimationItemPairs(_pullColorsAnimationInfo1.AnimationItemPairs, "Dist ColorBands Expand");
 
 			_storyBoardDetails1.Begin(DistributeColorBandsExpandPost, editArgs, debounce: true);
-		}
-
-		private void DistributeColorBandsExpandNotes()
-		{
-			/*
-			
-			Take the range of existing ColorBands and distribute evenly over a total of NewColorBandsCount
-			
-			The NumberOfExistingBands = 1 + EndIndex - StartIndex existing bands
-			We need to create NewColorBandsCount - NumberOfExistingBands
-
-			1. Calculate the new Starting and Ending Offsets for the existing and color bands yet to be created.
-			2. Animate the moving into place the existing ColorBands
-			3. Create and insert each new ColorBand
-				a. Using the Starting and Ending Cutoffs
-				b. Using default colors
-				c. The first new ColorBand will be inserted just before the ColorBand at EndIndex + 1.
-				d. Now the first new ColorBand is at index = EndIndex + 1 and the ColorBand that was at EndIndex + 1 is now at EndIndex + 2.
-				e. The 2nd new ColorBand will be inserted just before the ColorBand at EndIndex + 2
-				f. Once all of the new ColorBands are inserted the ColorBand originally at EndIndex + 1
-					should have the same Starting Offset as it did when we started.
-
-		
-			*/	
 		}
 
 		private void DistributeColorBandsExpandPost(ColorBandSetEditArgs editArgs)
@@ -756,17 +690,6 @@ namespace MSetExplorer.Cbs
 			}
 
 			_pullColorsAnimationInfo1 = null;
-
-			// TODO: Update the new CBListViewItems colors
-			//var prevCb = _listViewItems[index - 1];
-
-			//if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-			//{
-			//	var cbListViewItem = _listViewItems[index];
-			//	prevCb.CbColorBlock.EndColor = cbListViewItem.CbColorBlock.StartColor;
-			//	prevCb.CbRectangle.EndColor = cbListViewItem.CbRectangle.StartColor;
-			//}
-
 			_onAnimationComplete(editArgs);
 
 			_ = _cbListView.SynchronizeCurrentItem();
