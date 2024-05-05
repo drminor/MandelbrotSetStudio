@@ -434,12 +434,24 @@ namespace MSS.Types
 			}
 			else
 			{
-				return _reservedColorBands.Pop();
+				var result = _reservedColorBands.Pop();
+
+				if (result.BlendStyle == ColorBandBlendStyle.Next && _reservedColorBands.Count > 0)
+				{
+					result.EndColor = _reservedColorBands.Peek().StartColor;
+				}
+
+				return result;
 			}
 		}
 
 		public void PushReservedColorBand(ReservedColorBand reservedColorBand)
 		{
+			if (_reservedColorBands.Count == 0)
+			{
+				Items[^1].SuccessorStartColor = reservedColorBand.StartColor;
+			}
+
 			_reservedColorBands.Push(reservedColorBand);
 		}
 

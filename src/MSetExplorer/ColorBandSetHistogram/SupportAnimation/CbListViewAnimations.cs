@@ -87,7 +87,7 @@ namespace MSetExplorer.Cbs
 			var newWidthD = remainingWidth; // currentArea.Width - (itemBeingInserted.Area.Width + onePix);
 			currentItem.Area = new Rect(new Point(newCutoff, currentArea.Y), new Size(newWidthD, currentArea.Height));
 
-			_storyBoardDetails1.RateFactor = 10;
+			_storyBoardDetails1.RateFactor = 1;
 
 			// Have the new item go from transparent to fully opaque
 			_storyBoardDetails1.AddOpacityAnimation(itemBeingInserted.Name, "Opacity", from: 0.1, to: 1.0, beginTime: TimeSpan.FromMilliseconds(0), duration: TimeSpan.FromMilliseconds(500));
@@ -102,6 +102,7 @@ namespace MSetExplorer.Cbs
 			// Create a ListViewItem to hold the new source
 			var newPreviousCutoff = _listViewItems[^1].ColorBand.Cutoff + 1;
 			var newSourceColorBand = CreateColorBand(reservedColorBand, newPreviousCutoff, width: 10);
+			newSourceColorBand.IsLast = true;
 			var newLvi = _cbListView.CreateListViewItem(_listViewItems.Count, newSourceColorBand);
 
 			// Create the class that will calcuate the 'PullColor' animation details
@@ -110,8 +111,20 @@ namespace MSetExplorer.Cbs
 			// The first destination is the lower half, which is at index
 			for (var i = index; i < _listViewItems.Count; i++)
 			{
+				CbListViewItem lviSource;
+				if (i == _listViewItems.Count - 1)
+				{
+					lviSource = newLvi;
+				}
+				else
+				{
+					lviSource = _listViewItems[i + 1];
+					if (lviSource.IsLast)
+					{
+						lviSource.ColorBand.IsLast = false;
+					}
+				}
 				var lviDestination = _listViewItems[i];
-				var lviSource = i == _listViewItems.Count - 1 ? newLvi : _listViewItems[i + 1];
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 			}
 
@@ -138,19 +151,21 @@ namespace MSetExplorer.Cbs
 
 			_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX;
 
+			// For the animation, we set ColorBand's Islast to false because it was a source that was gong to be copied to an item that isn't the last.
+			_listViewItems[^1].ColorBand.IsLast = true;
+
 			newLvi.TearDown();
 			_storyBoardDetails1.UnregisterName(newLvi.Name);
 
 			_pullColorsAnimationInfo1 = null;
 
-			var prevCb = _listViewItems[index - 1];
+			//var prevCb = _listViewItems[index - 1];
 
-			if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-			{
-				var cbListViewItem = _listViewItems[index];
-				prevCb.CbColorBlock.EndColor = cbListViewItem.CbColorBlock.StartColor;
-				prevCb.CbRectangle.EndColor = cbListViewItem.CbRectangle.StartColor;
-			}
+			//if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
+			//{
+			//	var cbListViewItem = _listViewItems[index];
+			//	prevCb.EndColor = cbListViewItem.StartColor;
+			//}
 
 			_onAnimationComplete(editArgs);
 
@@ -352,16 +367,29 @@ namespace MSetExplorer.Cbs
 			// Create a ListViewItem to hold the new source
 			var newPreviousCutoff = _listViewItems[^1].ColorBand.Cutoff + 1;
 			var newSourceColorBand = CreateColorBand(reservedColorBand, newPreviousCutoff, width: 10);
-
-			//var newSourceColorBand = CreateColorBandFromReservedBand(_listViewItems[^1], editArgs.ReservedColorBand!);
+			newSourceColorBand.IsLast = true;
 			var newLvi = _cbListView.CreateListViewItem(_listViewItems.Count, newSourceColorBand);
 
 			_pullColorsAnimationInfo1 = new PullColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
 
 			for (var i = index; i < _listViewItems.Count; i++)
 			{
+				CbListViewItem lviSource;
+				if (i == _listViewItems.Count - 1)
+				{
+					lviSource = newLvi;
+				}
+				else
+				{
+					lviSource = _listViewItems[i + 1];
+					if (lviSource.IsLast)
+					{
+						lviSource.ColorBand.IsLast = false;
+					}
+				}
+
 				var lviDestination = _listViewItems[i];
-				var lviSource = i == _listViewItems.Count - 1 ? newLvi : _listViewItems[i + 1];
+
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 			}
 
@@ -376,7 +404,7 @@ namespace MSetExplorer.Cbs
 
 		private void DeleteColorPost(ColorBandSetEditArgs editArgs)
 		{
-			var index = editArgs.Index;
+			//var index = editArgs.Index;
 			Debug.WriteLineIf(_useDetailedDebug, "ANIMATION COMPLETED\n ColorDeletion Animation has completed.");
 
 			if (_pullColorsAnimationInfo1 == null)
@@ -387,37 +415,39 @@ namespace MSetExplorer.Cbs
 			var newLvi = _pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem;
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();
 
+			//_listViewItems[index].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX;
+
+			// For the animation, we set ColorBand's Islast to false because it was a source that was gong to be copied to an item that isn't the last.
+			_listViewItems[^1].ColorBand.IsLast = true;
+
 			newLvi.TearDown();
 			_storyBoardDetails1.UnregisterName(newLvi.Name);
 
 			_pullColorsAnimationInfo1 = null;
 
-			// TODO: Use the reservedColorBand from the ColorBandSetEditArgs
-			//var reservedColorBand = new ReservedColorBand(newLvi.ColorBand.StartColor, newLvi.ColorBand.BlendStyle, newLvi.ColorBand.BlendMethod, newLvi.ColorBand.EndColor);
-
 			// Update the model
 			_onAnimationComplete(editArgs);
 
-			if (_listViewItems.Count > 1)
-			{
-				var nextToLast = _listViewItems[^2];
+			//if (_listViewItems.Count > 1)
+			//{
+			//	var nextToLast = _listViewItems[^2];
 
-				if (nextToLast.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-				{
-					nextToLast.EndColor = _listViewItems[^1].StartColor;
-				}
-			}
+			//	if (nextToLast.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
+			//	{
+			//		nextToLast.EndColor = _listViewItems[^1].StartColor;
+			//	}
+			//}
 
-			if (index > 0)
-			{
-				var prevCb = _listViewItems[index - 1];
+			//if (index > 0)
+			//{
+			//	var prevCb = _listViewItems[index - 1];
 
-				if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
-				{
-					var cbListViewItem = _listViewItems[index];
-					prevCb.EndColor = cbListViewItem.StartColor;
-				}
-			}
+			//	if (prevCb.ColorBand.BlendStyle == ColorBandBlendStyle.Next)
+			//	{
+			//		var cbListViewItem = _listViewItems[index];
+			//		prevCb.EndColor = cbListViewItem.StartColor;
+			//	}
+			//}
 
 			//_cbListView.ReportColorBands("After Animate Delete Color.");
 			//_cbListView.ReportListViewItems("After Animate Delete Color.");
@@ -566,7 +596,7 @@ namespace MSetExplorer.Cbs
 
 			var newPercentage = GetNewPercentage(startIndex, endIndex, distributionTargetCount);
 
-			_storyBoardDetails1.RateFactor = 10;
+			_storyBoardDetails1.RateFactor = 1;
 
 			// Resize the existing items
 			var newCutoffsPtr = 0;
@@ -628,9 +658,8 @@ namespace MSetExplorer.Cbs
 				if (lviSource.ColorBand.IsLast)
 				{
 					lviSource.ColorBand.IsLast = false;
-					lviSource.ColorBand.SuccessorStartColor = reservedColorBands[0].StartColor;
-					lviSource.CbColorBlock.EndColor = lviSource.ColorBand.ActualEndColor;
-					lviSource.CbRectangle.EndColor = lviSource.ColorBand.ActualEndColor;
+					//lviSource.ColorBand.SuccessorStartColor = reservedColorBands[0].StartColor;
+					//lviSource.EndColor = lviSource.ColorBand.ActualEndColor;
 				}
 
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
@@ -709,12 +738,13 @@ namespace MSetExplorer.Cbs
 			var animationItemPairs = _pullColorsAnimationInfo1.AnimationItemPairs;
 			var virtualListViewItems = animationItemPairs.Skip(animationItemPairs.Count - numberOfNewColorBands).Select(x => x.Item1.SourceListViewItem).ToArray();
 
-			// Reset the ZIndex for the new items
+			// Reset the ZIndex for the target rectangles
 			for (var i = 0; i < numberOfNewColorBands; i++)
 			{
 				_listViewItems[endIndex + 1 + i].ZIndex1 = ColorBandLayoutViewModel.BASE_ZINDEX;
 			}
 
+			// For the animation, we set ColorBand's Islast to false because it was a source that was gong to be copied to an item that isn't the last.
 			_listViewItems[^1].ColorBand.IsLast = true;
 
 			_pullColorsAnimationInfo1.MoveSourcesToDestinations();

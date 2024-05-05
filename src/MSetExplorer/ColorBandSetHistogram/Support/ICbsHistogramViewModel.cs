@@ -68,11 +68,11 @@ namespace MSetExplorer
 
 		bool TestDeleteItem(int colorBandIndex);
 
-		ReservedColorBand? RemoveCutoff(int index);
-		ReservedColorBand? RemoveCutoffs(int index, int numberToRemove);
+		ReservedColorBand? DeleteCutoff(int index);
+		ReservedColorBand? DeleteCutoffs(int index, int numberToRemove);
 
-		void RemoveColor(int index, ReservedColorBand reservedColorBand);
-		void RemoveColorBand(int index);
+		void DeleteColor(int index, ReservedColorBand reservedColorBand);
+		void DeleteColorBand(int index);
 
 		void UpdateStartAndEndCutoffs(int startIndex, int endIndex, int[] updatedPreviousCutoffs, int[] updatedCutoffs, bool applyChanges);
 

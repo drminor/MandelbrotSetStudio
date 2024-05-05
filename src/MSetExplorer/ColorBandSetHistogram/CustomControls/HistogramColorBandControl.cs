@@ -543,7 +543,7 @@ namespace MSetExplorer
 				// Delete Cutoff - Existing colors are pushed up, the High ColorBand is pushed onto the stack of Reserved ColorBands
 				case ColorBandSetEditOperation.DeleteCutoff:
 					{
-						var result = _cbsHistogramViewModel?.RemoveCutoff(index) ?? null;
+						var result = _cbsHistogramViewModel?.DeleteCutoff(index) ?? null;
 
 						if (result != null)
 						{
@@ -562,14 +562,14 @@ namespace MSetExplorer
 							throw new ArgumentException("The reservedColorBand is null on call to DeleteColor.");
 						}
 
-						_cbsHistogramViewModel?.RemoveColor(index, editArgs.ReservedColorBand);
+						_cbsHistogramViewModel?.DeleteColor(index, editArgs.ReservedColorBand);
 						break;
 					}
 
 				// Delete Entire ColorBand
 				case ColorBandSetEditOperation.DeleteBand:
 					{
-						_cbsHistogramViewModel?.RemoveColorBand(index);
+						_cbsHistogramViewModel?.DeleteColorBand(index);
 						break;
 					}
 
@@ -617,7 +617,7 @@ namespace MSetExplorer
 
 				_cbsHistogramViewModel.UpdateStartAndEndCutoffs(startIndex, endIndex, updatedPreviousCutoffs, updatedCutoffs, applyChanges: false);
 				
-				var result = _cbsHistogramViewModel.RemoveCutoffs(startIndex, editArgs.DistributionExpansionAmount * - 1);
+				var result = _cbsHistogramViewModel.DeleteCutoffs(startIndex, editArgs.DistributionExpansionAmount * - 1);
 
 				if (result != null)
 				{

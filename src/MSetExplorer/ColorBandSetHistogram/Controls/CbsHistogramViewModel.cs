@@ -1161,7 +1161,7 @@ namespace MSetExplorer
 			return result;
 		}
 
-		public ReservedColorBand? RemoveCutoff(int index)
+		public ReservedColorBand? DeleteCutoff(int index)
 		{
 			var selItem = _currentColorBandSet[index];
 
@@ -1217,7 +1217,7 @@ namespace MSetExplorer
 			return reservedColorBand;
 		}
 
-		public ReservedColorBand? RemoveCutoffs(int index, int numberToRemove)
+		public ReservedColorBand? DeleteCutoffs(int index, int numberToRemove)
 		{
 			ReservedColorBand? result = null;
 			return result;
@@ -1239,7 +1239,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void RemoveColor(int index, ReservedColorBand reservedColorBand)
+		public void DeleteColor(int index, ReservedColorBand reservedColorBand)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteColorRemoval has been called.");
 
@@ -1277,7 +1277,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public void RemoveColorBand(int index)
+		public void DeleteColorBand(int index)
 		{
 			Debug.WriteLineIf(_useDetailedDebug, $"ColorBandSetViewModel. CompleteBandRemoval has been called.");
 			var selItem = _currentColorBandSet[index];
