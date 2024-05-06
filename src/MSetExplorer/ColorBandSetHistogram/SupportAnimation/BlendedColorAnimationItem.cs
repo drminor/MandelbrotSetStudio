@@ -27,7 +27,12 @@ namespace MSetExplorer
 			_scaleX = sourceListViewItem.CbRectangle.ContentScale.Width;
 			_colorBandIndex = sourceListViewItem.ColorBandIndex;
 
-			StartingPos = sourceListViewItem.CbRectangle.CbBlendedColorPair.Container;
+			StartingPos = sourceListViewItem.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
+
+			if (StartingPos.IsEmpty)
+			{
+				throw new ArgumentException("ColorBlocksAnimationItem. The SourceListViewItem's CbRectangle's ColorPairContainer is empty.");
+			}
 
 			if (destinationListViewItem == null)
 			{
@@ -35,7 +40,7 @@ namespace MSetExplorer
 			}
 			else
 			{
-				DestinationPos = destinationListViewItem.CbRectangle.ColorPairContainer;
+				DestinationPos = destinationListViewItem.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
 
 				if (DestinationPos.IsEmpty)
 				{
@@ -181,7 +186,7 @@ namespace MSetExplorer
 		private static Rect GetOffScreenRect(CbListViewItem source)
 		{
 			// The destination is just off the edge of the visible portion of the canvas.
-			var sourceRect = source.CbRectangle.ColorPairContainer;
+			var sourceRect = source.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
 
 			if (sourceRect.IsEmpty)
 			{

@@ -601,7 +601,7 @@ namespace MSetExplorer.Cbs
 
 			// Once all of the new ColorBands are inserted the ColorBand originally at EndIndex + 1
 			// should have the same Starting Offset as it did when we started.
-			var cmpPrevCutoffAfter = _listViewItems[index + 1].ColorBand.PreviousCutoff;
+			var cmpPrevCutoffAfter = _listViewItems[index].ColorBand.PreviousCutoff;
 			Debug.Assert(cmpPrevCutoffAfter == cmpPrevCutoffBefore, "Insert new ColorBands has modified the following ColorBands starting cutoff.");
 
 			_cbListView.Reindex(0);
@@ -641,7 +641,7 @@ namespace MSetExplorer.Cbs
 
 				_pullColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 
-				newPreviousCutoff = newPreviousCutoff + width;
+				newPreviousCutoff = newPreviousCutoff + width + 1;
 			}
 
 			_pullColorsAnimationInfo1.AnimationItemPairs[^1].Item1.SourceListViewItem.ColorBand.IsLast = true;
@@ -702,7 +702,6 @@ namespace MSetExplorer.Cbs
 
 			Debug.WriteLine($"AnimateDistributeColorBands-Contract. StartIndex: {startIndex}, EndIndex: {endIndex}, Removing: {-1 * editArgs.DistributionExpansionAmount} ColorBands, Target Number: {targetDistributionCount}.");
 
-
 			// Prepare the animations to Push the colors up
 			_pushColorsAnimationInfo1 = new PushColorsAnimationInfo(LIFT_HEIGHT, ANIMATION_PIXELS_PER_MS);
 
@@ -711,7 +710,19 @@ namespace MSetExplorer.Cbs
 			for (var i = firstSourceIndex; i < _listViewItems.Count; i++)
 			{
 				var lviSource = _listViewItems[i];
-				var lviDestination = i == _listViewItems.Count - 1 ? null : _listViewItems[i + 1];
+				var destIndex = i + numberToRemove;
+
+				CbListViewItem? lviDestination;
+
+				if (destIndex < _listViewItems.Count)
+				{
+					lviDestination = _listViewItems[destIndex];
+				}
+				else
+				{
+					lviDestination = null;
+				}
+
 				_pushColorsAnimationInfo1.AddAnimationItemPair(lviSource, lviDestination);
 			}
 
@@ -719,7 +730,7 @@ namespace MSetExplorer.Cbs
 			var endPushSyncPoint = _pushColorsAnimationInfo1.GetMaxDuration();
 			var shiftMs = endPushSyncPoint - startPushSyncPoint;
 
-			_storyBoardDetails1.RateFactor = 1;
+			_storyBoardDetails1.RateFactor = 10;
 
 			ApplyAnimationItemPairs(_pushColorsAnimationInfo1.AnimationItemPairs);
 
@@ -731,21 +742,18 @@ namespace MSetExplorer.Cbs
 			var newPercentage = GetNewPercentage(startIndex, endIndex, targetDistributionCount);
 
 			// Prepare the animations to resize the existing items
-			var newCutoffsPtr = 0;
-
-			for (var i = startIndex; i < targetDistributionCount; i++)
+			for (var i = 0; i < targetDistributionCount; i++)
 			{
-				var currentItem = _listViewItems[i];
+				var currentItem = _listViewItems[startIndex + i];
 				currentItem.ColorBand.Percentage = newPercentage;
 
 				var startingAreaOfCurrentItem = currentItem.Area;
 
-				var previousCutoff = newPreviousCutoffs[newCutoffsPtr];
-				var bucketWidth = newBucketWidths[newCutoffsPtr];
+				var previousCutoff = newPreviousCutoffs[i];
+				var bucketWidth = newBucketWidths[i];
 
 				// Move the current item into its new place.
-				_storyBoardDetails1.AddShiftHorizontal(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX0: previousCutoff, newWidth: bucketWidth, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(450));
-				newCutoffsPtr++;
+				_storyBoardDetails1.AddShiftHorizontal(currentItem.Name, "Area", from: startingAreaOfCurrentItem, newX0: previousCutoff, newWidth: bucketWidth, beginTime: TimeSpan.Zero, duration: TimeSpan.FromMilliseconds(shiftMs));
 			}
 
 			// Execute the Animation
@@ -761,17 +769,23 @@ namespace MSetExplorer.Cbs
 			var targetDistributionCount = editArgs.NewColorBandsCount;
 			var indexOfFirstItemToDelete = startIndex + targetDistributionCount;
 
-
 			_pushColorsAnimationInfo1?.MoveSourcesToDestinations();
 			_pushColorsAnimationInfo1 = null;
+
+			var itemsToRemove = new List<CbListViewItem>();
 
 			for (var i = 0; i < numberToRemove; i++)
 			{
 				var lvi = _listViewItems[indexOfFirstItemToDelete + i];
-				_cbListView.RemoveListViewItem(lvi);
+				itemsToRemove.Add(lvi);
 			}
 
-			_cbListView.Reindex(indexOfFirstItemToDelete);
+			foreach (var itemToRemove in itemsToRemove)
+			{
+				_cbListView.RemoveListViewItem(itemToRemove);
+			}
+
+			_cbListView.Reindex(0);
 
 			_onAnimationComplete(editArgs);
 

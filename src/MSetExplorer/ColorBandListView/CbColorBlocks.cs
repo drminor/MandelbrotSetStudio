@@ -101,7 +101,7 @@ namespace MSetExplorer
 
 		public int ColorBandIndex { get; set; }
 
-		//public RectangleGeometry RectangleGeometry => _geometry;
+		public RectangleGeometry RectangleGeometry => _geometry;
 
 		//public Path ColorBlocksRectangle => (Path)_rectanglePath;
 
@@ -405,6 +405,9 @@ namespace MSetExplorer
 		{
 			var rect = BuildRect(colorBlocksArea, contentScale);
 			Rect result = Rect.Inflate(rect, -1, -1);
+
+			if (result.IsEmpty) result = rect;
+
 			//Debug.WriteLine($"ColorBlocks just built rectangle with top: {result.Top} and height: {result.Height} and left: {result.Left} and width: {result.Width}.");
 
 			return result;

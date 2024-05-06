@@ -177,8 +177,9 @@ namespace MSetExplorer
 
 							//var adjustedColorBandSet = ColorBandSetHelper.AdjustTargetIterations(value, CurrentJob.MapCalcSettings.TargetIterations);
 							//_previewColorBandSet = adjustedColorBandSet;
-
-							throw new InvalidOperationException("ProjectViewModel is being updated with a Preview ColorBandSet with TargetIteration != the current job's TargetIterations.");
+							var jo = CurrentJob.MapCalcSettings.TargetIterations;
+							var ti = value.TargetIterations;
+							throw new InvalidOperationException($"ProjectViewModel is being updated with a Preview ColorBandSet with TargetIteration ({ti})  != the current job's TargetIterations ({jo}).");
 						}
 					}
 
