@@ -58,13 +58,16 @@ namespace MSetExplorer
 
 		public void MoveSourcesToDestinations()
 		{
-			for (var i = AnimationItemPairs.Count - 2; i >= 0; i--)
+			for (var i = AnimationItemPairs.Count - 1; i >= 0; i--)
 			{
 				var (colorBlockAItem, blendedColorAItem) = AnimationItemPairs[i];
 				//colorBlockAItem.SourceListViewItem!.CbColorBlock.CbColorPair.ShowDiagBorder = false;
 
-				colorBlockAItem.MoveSourceToDestination();
-				blendedColorAItem.MoveSourceToDestination();
+				if (colorBlockAItem.DestinationListViewItem != null)
+				{
+					colorBlockAItem.MoveSourceToDestination();
+					blendedColorAItem.MoveSourceToDestination();
+				}
 			}
 
 			// Restore the original values back to the first CbColorPair and CbBlendedColorPair

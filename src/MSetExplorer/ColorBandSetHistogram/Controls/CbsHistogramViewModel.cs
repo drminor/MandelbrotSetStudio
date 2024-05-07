@@ -1666,17 +1666,11 @@ namespace MSetExplorer
 
 				if (UseRealTimePreview)
 				{
-					//if (!_currentColorBandSet.IsDirty)
-					//{
-					//	Debug.WriteLine("WARNINIG: CbsHistogramViewModel is Marking the Current ColorBandSet as Dirty on CurrentColorBand_PropertyChanged.");
-					//	_currentColorBandSet.MarkAsDirty();
-					//}
-
-					// TODO: Fix Me -- use the value returned from PushCurrentColorBandOnToHistoryCollection
-					var newColorBandSet = _currentColorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
+					// TODO: Do we need to clone the _currentColorBandSet before raising UpdateRequested with IsPreview = true?
+					//var newColorBandSet = _currentColorBandSet.CreateNewCopy();
 
 					Debug.WriteLineIf(_useDetailedDebug, $"CbsHistogramViewModel. Calling RaiseUpdateRequestThrottled.");
-					RaiseUpdateRequestThrottled(newColorBandSet);
+					RaiseUpdateRequestThrottled(_currentColorBandSet);
 				}
 			}
 			else
@@ -1897,13 +1891,16 @@ namespace MSetExplorer
 
 		private void OnCurrentColorBandSetUpdated()
 		{
-			var newCopy = PushCurrentColorBandOnToHistoryCollection();
+			PushCurrentColorBandOnToHistoryCollection();
+
+			// TODO: Do we need to clone the _currentColorBandSet before raising UpdateRequested with IsPreview = true?
+			_currentColorBandSet.MarkAsDirty();
 
 			ApplyHistogram(histogramIsFromACompleteMap: false);
 
 			if (UseRealTimePreview)
 			{
-				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(newCopy, isPreview: true));
+				ColorBandSetUpdateRequested?.Invoke(this, new ColorBandSetUpdateRequestedEventArgs(_currentColorBandSet, isPreview: true));
 			}
 		}
 
@@ -1957,7 +1954,7 @@ namespace MSetExplorer
 			//_currentColorBandSet = _currentColorBandSet.CreateNewCopy();
 			//_colorBandSetHistoryCollection.Push(currentVal);
 
-			var newVal = _currentColorBandSet.CreateNewCopy(ObjectId.GenerateNewId());
+			var newVal = _currentColorBandSet.CreateNewCopy();
 			_colorBandSetHistoryCollection.Push(newVal);
 			IsDirty = true;
 

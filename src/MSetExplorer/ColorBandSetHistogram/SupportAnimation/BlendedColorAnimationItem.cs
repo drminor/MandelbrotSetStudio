@@ -27,7 +27,8 @@ namespace MSetExplorer
 			_scaleX = sourceListViewItem.CbRectangle.ContentScale.Width;
 			_colorBandIndex = sourceListViewItem.ColorBandIndex;
 
-			StartingPos = sourceListViewItem.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
+			//StartingPos = sourceListViewItem.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
+			StartingPos = sourceListViewItem.CbRectangle.ColorPairContainer;
 
 			if (StartingPos.IsEmpty)
 			{
@@ -40,7 +41,8 @@ namespace MSetExplorer
 			}
 			else
 			{
-				DestinationPos = destinationListViewItem.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
+				//DestinationPos = destinationListViewItem.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
+				DestinationPos = destinationListViewItem.CbRectangle.ColorPairContainer;
 
 				if (DestinationPos.IsEmpty)
 				{
@@ -75,8 +77,15 @@ namespace MSetExplorer
 
 		public void MoveSourceToDestination()
 		{
-			if (DestinationListViewItem == null) throw new ArgumentNullException(nameof(DestinationListViewItem));
-			if (SourceListViewItem == null) throw new ArgumentNullException(nameof(SourceListViewItem));
+			if (DestinationListViewItem == null)
+			{
+				throw new ArgumentNullException(nameof(DestinationListViewItem));
+			}
+
+			if (SourceListViewItem == null)
+			{
+				throw new ArgumentNullException(nameof(SourceListViewItem));
+			}
 
 			var newCopy = SourceListViewItem.CbRectangle.CbBlendedColorPair.Clone();
 
@@ -186,7 +195,8 @@ namespace MSetExplorer
 		private static Rect GetOffScreenRect(CbListViewItem source)
 		{
 			// The destination is just off the edge of the visible portion of the canvas.
-			var sourceRect = source.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
+			//var sourceRect = source.CbRectangle.RectangleGeometry.Rect; //.ColorPairContainer;
+			var sourceRect = source.CbRectangle.ColorPairContainer;
 
 			if (sourceRect.IsEmpty)
 			{
