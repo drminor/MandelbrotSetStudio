@@ -126,8 +126,17 @@ namespace MSetGeneratorPrototype
 			}
 			else
 			{
+				allRowsHaveEscaped = false; // Only used when saving then ZValues.
 				iterationState = new IterationStateDepthFirstNoZ(samplePointsX, samplePointsY, mapSectionVectors2, mapCalcSettings.TargetIterations);
-				sectionCompleted = GenerateMapSectionRowsNoZ(_iterator, iterationState, ct, out allRowsHaveEscaped);
+				iterationState.ProcessingRound = mapSectionRequest.ProcessingRound;
+
+				sectionCompleted = mapSectionRequest.ProcessingRound == 0
+					? GenerateMapSectionRowsNoZ(_iterator, iterationState, ct)
+					: GenerateMapSectionRowsNoZProcRnd(_iterator, iterationState, ct);
+
+				//sectionCompleted = mapSectionRequest.ProcessingRound == 0
+				//	? GenerateMapSectionRowsNoZ(_iterator, iterationState, ct)
+				//	: GenerateMapSectionRowsNoZ(_iterator, iterationState, ct);
 			}
 
 			RollUpNumberOfCalcs(_fp31VecMath.MathOpCounts, iterationState);
@@ -245,9 +254,8 @@ namespace MSetGeneratorPrototype
 			return completed;
 		}
 
-		private bool GenerateMapSectionRowsNoZ(IIterator iterator, IIterationState iterationState, CancellationToken ct, out bool allRowsHaveEscaped)
+		private bool GenerateMapSectionRowsNoZ(IIterator iterator, IIterationState iterationState, CancellationToken ct)
 		{
-			allRowsHaveEscaped = false;
 			bool completed = true;
 
 			if (ct.IsCancellationRequested)
@@ -260,10 +268,19 @@ namespace MSetGeneratorPrototype
 			{
 				iterationState.SetRowNumber(rowNumber);
 
+				//var allRowSamplesHaveEscaped = true;
 				for (var idx = 0; idx < iterationState.VectorsPerRow; idx++)
 				{
-					GenerateMapColNoZ(idx, iterator, iterationState);
+					//var allSamplesHaveEscaped = GenerateMapColNoZ(idx, iterator, iterationState);
+					_ = GenerateMapColNoZ(idx, iterator, iterationState);
+
+					//if (!allSamplesHaveEscaped)
+					//{
+					//	allRowSamplesHaveEscaped = false;
+					//}
 				}
+
+				//iterationState.RowHasEscaped[rowNumber] = allRowSamplesHaveEscaped;
 
 				if (ct.IsCancellationRequested)
 				{
@@ -279,6 +296,52 @@ namespace MSetGeneratorPrototype
 
 			return completed;
 		}
+
+		private bool GenerateMapSectionRowsNoZProcRnd(IIterator iterator, IIterationState iterationState, CancellationToken ct)
+		{
+			bool completed = true;
+
+			if (ct.IsCancellationRequested)
+			{
+				return false;
+			}
+
+			var rowNumber = iterationState.GetNextRowNumber();
+			while (rowNumber != null)
+			{
+				Debug.Assert(iterationState.InPlayList.Length > 0, "GetNextRowNumber returned a non-null value, however the InPlayList is empty.");
+
+				//var allRowSamplesHaveEscaped = true;
+
+				for (var idxPtr = 0; idxPtr < iterationState.InPlayList.Length; idxPtr++)
+				{
+					var idx = iterationState.InPlayList[idxPtr];
+					//var allSamplesHaveEscaped = GenerateMapColNoZ(idx, iterator, iterationState);
+					_ = GenerateMapColNoZ(idx, iterator, iterationState);
+
+					//if (!allSamplesHaveEscaped)
+					//{
+					//	allRowSamplesHaveEscaped = false;
+					//}
+				}
+
+				//iterationState.RowHasEscaped[rowNumber.Value] = allRowSamplesHaveEscaped;
+
+				if (ct.IsCancellationRequested)
+				{
+					completed = false;
+
+					// 'Close out' the iterationState
+					iterationState.SetRowNumber(iterationState.RowCount);
+					break;
+				}
+
+				rowNumber = iterationState.GetNextRowNumber();
+			}
+
+			return completed;
+		}
+
 
 		#endregion
 
@@ -314,7 +377,6 @@ namespace MSetGeneratorPrototype
 
 			// Update the resultCounts
 			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-			//var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 
 			while (compositeIsDone != -1)
@@ -327,12 +389,8 @@ namespace MSetGeneratorPrototype
 				// Compare the new Counts with the TargetIterations
 				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
-				// Update the resultCountsV2
+				// Update the resultCounts
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-
-				// Once escaped, always escaped
-				//baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
-
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 			}
 
@@ -387,7 +445,6 @@ namespace MSetGeneratorPrototype
 
 			// Update the resultCounts
 			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-			//var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 
 			while (compositeIsDone != -1)
@@ -402,10 +459,6 @@ namespace MSetGeneratorPrototype
 
 				// Update the resultCounts
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-
-				// Once escaped, always escaped
-				//baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
-
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCounts, _zrs, _zis, _resultZrs, _resultZis, ref hasEscapedFlags, ref doneFlags);
 			}
 
@@ -428,7 +481,7 @@ namespace MSetGeneratorPrototype
 			return compositeAllEscaped == -1;
 		}
 
-		private void GenerateMapColNoZ(int idx, IIterator iterator, IIterationState iterationState)
+		private bool GenerateMapColNoZ(int idx, IIterator iterator, IIterationState iterationState)
 		{
 			var fullIterationsPerformed = 0;
 			var partialIterationsPerformed = 0;
@@ -456,7 +509,6 @@ namespace MSetGeneratorPrototype
 
 			// Update the resultCounts
 			_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-			//var baseEscapedFlags2Vec = escapedFlagsVec;
 			var compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 
 			while (compositeIsDone != -1)
@@ -469,12 +521,8 @@ namespace MSetGeneratorPrototype
 				// Compare the new Counts with the TargetIterations
 				targetReachedCompVec = Avx2.CompareGreaterThan(countsV, iterationState.TargetIterationsVector);
 
-				// Update the resultCountsV2
+				// Update the resultCounts
 				_fp31VecMath.IsGreaterOrEqThan(sumOfSquares, _thresholdVector, ref escapedFlagsVec);
-
-				// Once escaped, always escaped
-				//baseEscapedFlags2Vec = Avx2.Or(baseEscapedFlags2Vec, escapedFlagsVec);
-
 				compositeIsDone = SaveCountsForDoneItems(escapedFlagsVec, targetReachedCompVec, countsV, ref resultCountsV, ref hasEscapedFlagsV, ref doneFlagsV);
 			}
 
@@ -488,6 +536,12 @@ namespace MSetGeneratorPrototype
 				CalculateEscapeVelocities(sumOfSquares, targetReachedCompVec, escapeVelocities);
 				Array.Copy(escapeVelocities, 0, iterationState.EscapeVelocities, idx * Vector256<uint>.Count, escapeVelocities.Length);
 			}
+
+			var compositeAllEscaped = Avx2.MoveMask(hasEscapedFlagsV.AsByte());
+			CheckAllEscaped(compositeAllEscaped, resultCountsV, iterationState.TargetIterations);
+
+			return compositeAllEscaped == -1;
+
 		}
 
 		#endregion

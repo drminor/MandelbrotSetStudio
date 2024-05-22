@@ -69,6 +69,7 @@ namespace MSetGeneratorPrototype
 		public bool HaveZValues => false;
 
 		public bool IncreasingIterations => false;
+		public int ProcessingRound { get; set; }
 		public int TargetIterations { get; private set; }	
 		public Vector256<int> TargetIterationsVector { get; private set; }
 
@@ -183,9 +184,40 @@ namespace MSetGeneratorPrototype
 					Array.Clear(DoneFlags);
 
 					_inPlayBackingList.Clear();
-					for (var i = 0; i < VectorsPerRow; i++)
+
+					if (ProcessingRound == 0)
 					{
-						_inPlayBackingList.Add(i);
+						for (var i = 0; i < VectorsPerRow; i++)
+						{
+							_inPlayBackingList.Add(i);
+						}
+					}
+					else if (ProcessingRound == 1)
+					{
+						if (IsRowInFirstOrLast8(rowNumber))
+						{
+							for (var i = 0; i < VectorsPerRow; i++)
+							{
+								_inPlayBackingList.Add(i);
+							}
+						}
+						else
+						{
+							_inPlayBackingList.Add(0);
+							//_inPlayBackingList.Add(1);
+							//_inPlayBackingList.Add(VectorsPerRow - 2);
+							_inPlayBackingList.Add(VectorsPerRow - 1);
+						}
+					}
+					else if (ProcessingRound == 2)
+					{
+						if (!IsRowInFirstOrLast8(rowNumber))
+						{
+							for (var i = 1; i < VectorsPerRow - 1; i++)
+							{
+								_inPlayBackingList.Add(i);
+							}
+						}
 					}
 				}
 			}
@@ -205,6 +237,13 @@ namespace MSetGeneratorPrototype
 			}
 
 			return RowNumber;
+		}
+
+		private bool IsRowInFirstOrLast8(int rowNumber)
+		{
+			var result = rowNumber < 8 || rowNumber >= RowCount - 8;
+
+			return result;
 		}
 
 		#endregion

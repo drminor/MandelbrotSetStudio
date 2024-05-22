@@ -166,6 +166,7 @@ namespace MSS.Types.MSet
 
 		public string? ClientEndPointAddress { get; set; }
 		public bool IncreasingIterations { get; set; }
+		public int ProcessingRound { get; set; }
 
 		public bool Pending { get; set; }
 		public bool Sent { get; set; }

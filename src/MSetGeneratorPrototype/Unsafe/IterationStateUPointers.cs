@@ -83,6 +83,7 @@ namespace MSetGeneratorPrototype
 		public bool HaveZValues => true;
 
 		public bool IncreasingIterations { get; private set; }
+		public int ProcessingRound { get; set; }
 		public int TargetIterations { get; private set; }
 		public Vector256<int> TargetIterationsVector { get; private set; }
 

@@ -317,7 +317,7 @@ namespace MapSectionProviderLib
 					{
 						if (!UseRepo)
 						{
-							QueueForGeneration(mapSectionWorkRequest, queueProcessorIndex);
+							QueueForGeneration(mapSectionWorkRequest, processingRound: 0, queueProcessorIndex);
 						}
 						else
 						{
@@ -368,7 +368,7 @@ namespace MapSectionProviderLib
 					UpdateWithZValues(request);
 				}
 
-				QueueForGeneration(mapSectionWorkRequest, queueProcessorIndex);
+				QueueForGeneration(mapSectionWorkRequest, processingRound: 1, queueProcessorIndex);
 
 				return null;
 			}
@@ -411,9 +411,14 @@ namespace MapSectionProviderLib
 						if (persistZValues)
 						{
 							UpdateWithZValues(request);
+							QueueForGeneration(mapSectionWorkRequest, processingRound: 0, queueProcessorIndex);
+						}
+						else
+						{
+							QueueForGeneration(mapSectionWorkRequest, processingRound: 2, queueProcessorIndex);
+
 						}
 
-						QueueForGeneration(mapSectionWorkRequest, queueProcessorIndex);
 						return null;
 					}
 				}
@@ -421,7 +426,7 @@ namespace MapSectionProviderLib
 				{
 					Debug.WriteLineIf(_useDetailedDebug, $"Request for {request.ScreenPosition} not found in the repo: Queuing for generation.");
 
-					QueueForGeneration(mapSectionWorkRequest, queueProcessorIndex);
+					QueueForGeneration(mapSectionWorkRequest, processingRound: 1, queueProcessorIndex);
 					return null;
 				}
 			}
@@ -585,7 +590,7 @@ namespace MapSectionProviderLib
 			}
 		}
 
-		private void QueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, int queueProcessorIndex)
+		private void QueueForGeneration(MapSectionWorkRequest mapSectionWorkRequest, int processingRound, int queueProcessorIndex)
 		{
 			if (mapSectionWorkRequest == null)
 			{
@@ -596,6 +601,8 @@ namespace MapSectionProviderLib
 			{
 				Debug.WriteLine("Queuing for Generation a Cancelled request.");
 			}
+
+			mapSectionWorkRequest.Request.ProcessingRound = processingRound;
 
 			var mapSectionGenerateRequest = new MapSectionGenerateRequest(mapSectionWorkRequest, _generatorWorkRequestWorkAction);
 			_mapSectionGeneratorProcessor.AddWork(mapSectionGenerateRequest, _cts.Token);

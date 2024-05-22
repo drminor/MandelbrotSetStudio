@@ -111,6 +111,8 @@ namespace MSS.Types
         {
             var errors = 0;
 
+			if (countVal == 0) countVal = 1;
+
             var idx = GetColorMapIndex(countVal);
             var cme = _colorMapEntries[idx];
 

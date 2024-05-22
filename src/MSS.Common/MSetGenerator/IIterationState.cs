@@ -11,6 +11,7 @@ namespace MSS.Common
 
 		bool HaveZValues { get; }
 		bool IncreasingIterations { get; }
+		int ProcessingRound { get; set; }
 		int TargetIterations { get; }
 		Vector256<int> TargetIterationsVector { get; }
 
