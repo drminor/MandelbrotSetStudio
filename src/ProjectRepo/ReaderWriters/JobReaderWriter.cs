@@ -190,6 +190,7 @@ namespace ProjectRepo
 
 			var updateDefinition = Builders<JobRecord>.Update
 
+				.Set(u => u.OwnerId, jobRecord.OwnerId)
 				.Set(u => u.OwnerType, jobRecord.OwnerType)
 				.Set(u => u.MapCenterAndDeltaRecord, jobRecord.MapCenterAndDeltaRecord)
 				.Set(u => u.ColorBandSetName, jobRecord.ColorBandSetName)

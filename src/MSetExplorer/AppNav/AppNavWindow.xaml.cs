@@ -18,7 +18,6 @@ namespace MSetExplorer
 		private AppNavViewModel _vm;
 		private Window? _lastWindow;
 
-
 		#region Constructor
 
 		public AppNavWindow()
@@ -34,6 +33,8 @@ namespace MSetExplorer
 
 		private void AppNavWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
 		{
+			var lastWinName = _lastWindow?.Name ?? "Undefined";
+			Debug.WriteLine($"The AppNav Window is closing. The Application.Current.ShutdownMode is {Application.Current.ShutdownMode}. The Last Window is {lastWinName}.");
 			ExitApp();
 		}
 
@@ -114,6 +115,11 @@ namespace MSetExplorer
 		private void ModelStorage_Click(object sender, RoutedEventArgs e)
 		{
 			GoToModelStorage();
+		}
+
+		private void ColorSpaces_Click(object sender, RoutedEventArgs e)
+		{
+			GoToColorSpaces();
 		}
 
 		private void ExitAppButton_Click(object sender, RoutedEventArgs e)
@@ -292,6 +298,21 @@ namespace MSetExplorer
 			_ = testJobDetailsHostWindow.Focus();
 		}
 
+		private void GoToColorSpaces(AppNavRequestResponse? appNavRequestResponse = null)
+		{
+			Hide();
+
+			var colorSpacesWindow = new ColorSpaces(appNavRequestResponse ?? AppNavRequestResponse.BuildEmptyRequest(onCloseBehavior: OnCloseBehavior.ReturnToTopNav));
+
+			_lastWindow = colorSpacesWindow;
+			_lastWindow.Name = "ColorSpaces";
+			_lastWindow.Closed += LastWindow_Closed;
+
+			colorSpacesWindow.Owner = Application.Current.MainWindow;
+			colorSpacesWindow.Show();
+			_ = colorSpacesWindow.Focus();
+		}
+
 		#region Nav Window Support
 
 		private Action<AppNavRequestResponse?> GetRoute(string lastWindowName)
@@ -308,6 +329,7 @@ namespace MSetExplorer
 				case "PerformanceHarness": return GoToPerformanceHarnessMainWindow;
 				case "BitmapGridTestWindow": return GoToBitmapGridTestWindow;
 				case "TestJobDetails": return GoToModelStorage;
+				case "ColorSpaces": return GoToColorSpaces;
 				default:
 					return x => WindowState = WindowState.Normal;
 			}
@@ -374,10 +396,5 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-		private void MenuItem_Click(object sender, RoutedEventArgs e)
-		{
-
-		}
 	}
 }

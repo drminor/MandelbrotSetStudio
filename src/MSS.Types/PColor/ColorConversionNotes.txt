@@ -1,0 +1,24 @@
+﻿"d50"	CIE standard illuminant D50, [0.9642, 1.0000, 0.8251]. Simulates warm daylight at sunrise or sunset with correlated color temperature of 5003 K. Also known as horizon light.
+
+"d55"	CIE standard illuminant D55, [0.9568, 1.0000, 0.9214]. Simulates mid-morning or mid-afternoon daylight with correlated color temperature of 5500 K.
+
+"d65"	CIE standard illuminant D65, [0.9504, 1.0000, 1.0888]. Simulates noon daylight with correlated color temperature of 6504 K.
+
+
+Name				Gam	WRef	Rx		Ry		RY			Gx		Gy		GY			Bx		By		BY 
+
+Adobe RGB (1998)	2.2		D65		0.6400	0.3300	0.297361	0.2100	0.7100	0.627355	0.1500	0.0600	0.075285
+
+ProPhoto RGB		1.8		D50		0.7347	0.2653	0.288040	0.1596	0.8404	0.711874	0.0366	0.0001	0.000086
+RGB					≈2.2	D65		0.6400	0.3300	0.212656	0.3000	0.6000	0.715158	0.1500	0.0600	0.072186
+
+0.412453f, 0.357580f, 0.180423f
+
+3.2404542f, -1.5371385f, -0.4985314f
+
+Xr = xr / yr  0.6400 / 0.3300 = 1.939
+
+
+Sr = ? * 0.9504
+
+SR = 0.5767309
