@@ -3,45 +3,45 @@ using System.Globalization;
 
 namespace MSS.Types.PColor
 {
-	public class ColorVal
+	public class Rgb
 	{
-		//private static readonly float MIN_VAL = -1e5f;
-		//private static readonly float MAX_VAL = 1.499f;
+		//private static readonly double MIN_VAL = -1e5f;
+		//private static readonly double MAX_VAL = 1.499f;
 
-		public static readonly ColorVal Black = new("#000000");
-		public static readonly ColorVal White = new("#FFFFFF");
+		public static readonly Rgb Black = new("#000000");
+		public static readonly Rgb White = new("#FFFFFF");
 
-		public float red { get; init; }
-		public float green { get; init; }
-		public float blue { get; init; }
+		public double red { get; init; }
+		public double green { get; init; }
+		public double blue { get; init; }
 
 
-		public ColorVal()
+		public Rgb()
 		{
 			red = 0;
 			green = 0;
 			blue = 0;
 		}
 
-		public ColorVal(string cssColor)
+		public Rgb(string cssColor)
 		{
 			var r = byte.Parse(cssColor.Substring(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
 			var g = byte.Parse(cssColor.Substring(3, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
 			var b = byte.Parse(cssColor.Substring(5, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
 
-			red = r / 255f;
-			green = g / 255f;
-			blue = b / 255f;
+			red = r / 255d;
+			green = g / 255d;
+			blue = b / 255d;
 		}
 
-		public ColorVal(byte r, byte g, byte b)
+		public Rgb(byte r, byte g, byte b)
 		{
-			red = r / 255f;
-			green = g / 255f;
-			blue = b / 255f;
+			red = r / 255d;
+			green = g / 255d;
+			blue = b / 255d;
 		}
 
-		public ColorVal(float r, float g, float b)
+		public Rgb(double r, double g, double b)
 		{
 			red = r;
 			green = g;
@@ -69,7 +69,7 @@ namespace MSS.Types.PColor
 			return result;
 		}
 
-		private byte GetByteVal(float f)
+		private byte GetByteVal(double f)
 		{
 			//if (IsValid())
 			//{

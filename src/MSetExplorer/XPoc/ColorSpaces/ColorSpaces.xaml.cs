@@ -47,20 +47,38 @@ namespace MSetExplorer
 			CreateBWGradientImage64();
 
 
-			ColorVal sRGB_Red = new ColorVal("#ff0000");
+			Rgb redRgb = new Rgb("#3050A0");	// new Rgb("#ff0000");
 
-			var xYZ_Red = LchColorHelper.Multiply(sRGB_Red, LchColorHelper.RGB_TO_XYZ);
+			var redXyz = LchColorHelper.RgbToXyz(redRgb, LchColorHelper.PRO_PHOTO_TO_XYZ);
+			Debug.Print($"The redXyz result is X = {redXyz.X}, u = {redXyz.Y}, v = {redXyz.Z}.");
 
-			var roundTrip = LchColorHelper.Multiply(xYZ_Red, LchColorHelper.XYZ_TO_RGB);
+			var redRgbRt = LchColorHelper.XyzToRgb(redXyz, LchColorHelper.XYZ_TO_PRO_PHOTO);
+			Debug.Print($"RoundTrip RGB->XYZ->RGB = {redRgbRt.GetCssColor()}");
 
-			var cssColor = roundTrip.GetCssColor();
-			Debug.Print($"RoundTrip RGB_CssColor = {cssColor}");
+			var redLuv = LchColorHelper.XyzToLuv(redXyz, LchColorHelper.D50_WHITE_POINT);
+			Debug.Print($"The Luv result is L = {redLuv.L}, u = {redLuv.U}, v = {redLuv.V}.");
+			
+			var redXyzRt = LchColorHelper.LuvToXyz(redLuv, LchColorHelper.D50_WHITE_POINT);
+			redRgbRt = LchColorHelper.XyzToRgb(redXyzRt, LchColorHelper.XYZ_TO_PRO_PHOTO);
+			Debug.Print($"RoundTrip RGB->XYZ->LUV->XYZ-RGB = {redRgbRt.GetCssColor()}");
+
+			var redLch = LchColorHelper.LuvToLch(redLuv);
+			Debug.Print($"The redLch result is L = {redLch.L}, C = {redLch.C}, H = {redLch.H}.");
+
+			var redLuvRt = LchColorHelper.LchToLuv(redLch);
+			redXyzRt = LchColorHelper.LuvToXyz(redLuvRt, LchColorHelper.D50_WHITE_POINT);
+			redRgbRt = LchColorHelper.XyzToRgb(redXyzRt, LchColorHelper.XYZ_TO_PRO_PHOTO);
+			Debug.Print($"RoundTrip RGB->XYZ->LUV->LCH->LUV->XYZ->RGB = {redRgbRt.GetCssColor()}");
 
 
-			var luv = LchColorHelper.ConvertXyzToLuv(xYZ_Red, LchColorHelper.D65_WHITE_POINT);
+			var blu_rgb = new Rgb("#3050A0");
+			Debug.Print($"The Blu RBG vals are R:{blu_rgb.Get_sRGB_Vals()[0]}, G:{blu_rgb.Get_sRGB_Vals()[1]}, B: {blu_rgb.Get_sRGB_Vals()[2]}.");
 
-			cssColor = luv.GetCssColor();
-			Debug.Print($"LUV_CssColor = {cssColor}");
+			var blu_lch = LchColorHelper.RgbToLch(blu_rgb, LchColorHelper.PRO_PHOTO_TO_XYZ, LchColorHelper.D50_WHITE_POINT);
+			Debug.Print($"The Blu LCH result is L = {blu_lch.L}, C = {blu_lch.C}, H = {blu_lch.H}.");
+
+			var rt = LchColorHelper.LchToRgb(blu_lch, LchColorHelper.XYZ_TO_PRO_PHOTO, LchColorHelper.D50_WHITE_POINT);
+			Debug.Print($"RoundTrip Rgb->Lch->Rgb = {rt.GetCssColor()}");
 		}
 
 		private BitmapSource CreateBWGradientImage32()
