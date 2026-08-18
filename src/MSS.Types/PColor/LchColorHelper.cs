@@ -193,8 +193,8 @@ namespace MSS.Types.PColor
 
 		public static Lch RgbToLch(Rgb rgb)
 		{
-			var xyz = RgbToXyz(rgb, RGB_TO_XYZ);
-			var luv = XyzToLuv(xyz, D65_WHITE_POINT);
+			var xyz = RgbToXyz(rgb, PRO_PHOTO_TO_XYZ);
+			var luv = XyzToLuv(xyz, D50_WHITE_POINT);
 			var lch = LuvToLch(luv);
 
 			return lch;
@@ -203,8 +203,8 @@ namespace MSS.Types.PColor
 		public static Rgb LchToRgb(Lch lch)
 		{
 			var luv = LchToLuv(lch);
-			var xyz = LuvToXyz(luv, D65_WHITE_POINT);
-			var rgb = XyzToRgb(xyz, XYZ_TO_RGB);
+			var xyz = LuvToXyz(luv, D50_WHITE_POINT);
+			var rgb = XyzToRgb(xyz, XYZ_TO_PRO_PHOTO);
 
 			return rgb;
 		}

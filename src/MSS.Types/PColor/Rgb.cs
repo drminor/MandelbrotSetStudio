@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace MSS.Types.PColor
 {
@@ -69,22 +70,28 @@ namespace MSS.Types.PColor
 			return result;
 		}
 
+		//private byte GetByteVal(double f)
+		//{
+		//	//if (IsValid())
+		//	//{
+		//	//	var t = f * 255;
+		//	//	var r = Math.Round(t);
+		//	//	return (byte)r;
+		//	//}
+		//	//else
+		//	//{
+		//	//	return 0;
+		//	//}
+
+		//	var t = f * 255;
+		//	var r = Math.Round(t);
+		//	return (byte)r;
+		//}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private byte GetByteVal(double f)
 		{
-			//if (IsValid())
-			//{
-			//	var t = f * 255;
-			//	var r = Math.Round(t);
-			//	return (byte)r;
-			//}
-			//else
-			//{
-			//	return 0;
-			//}
-
-			var t = f * 255;
-			var r = Math.Round(t);
-			return (byte)r;
+			return (byte)Math.Round(f * 255);
 		}
 
 		public string GetCssColor()
