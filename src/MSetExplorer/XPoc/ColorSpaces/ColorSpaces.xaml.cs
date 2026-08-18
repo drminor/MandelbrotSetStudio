@@ -1,11 +1,10 @@
 ﻿using MSetExplorer.ScreenHelpers;
-using System;
-using System.Diagnostics;
-using System.Windows;
-using System.Windows.Media.Imaging;
-using System.Windows.Media;
-using System.Drawing;
 using MSS.Types.PColor;
+using System.Diagnostics;
+using System.Drawing;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace MSetExplorer
 {
@@ -14,10 +13,17 @@ namespace MSetExplorer
 	/// </summary>
 	public partial class ColorSpaces : Window, IHaveAppNavRequestResponse
 	{
+		//private BitmapSrc bitmap1;
+		//private BitmapSrc bitmap2;
+
+		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
+
 		#region Constructor
 
 		public ColorSpaces(AppNavRequestResponse appNavRequestResponse)
 		{
+			//bitmap1 = new BitmapSrc(256, 100, PixelFormats.Bgr32);
+			//bitmap2 = new BitmapSrc(256, 100, PixelFormats.Bgr32);
 			AppNavRequestResponse = appNavRequestResponse;
 
 			Loaded += ColorSpacesWindow_Loaded;
@@ -33,21 +39,186 @@ namespace MSetExplorer
 			}
 			else
 			{
-				//_vm = (JobDetailsViewModel)DataContext;
-				//_vm.PropertyChanged += _vm_PropertyChanged;
-
 				Debug.WriteLine("The ColorSpaces Window is now loaded");
 			}
+
 			Loaded -= ColorSpacesWindow_Loaded;
 
-			//var bitmap = CreateBWGradientImage();
-			//Image1.Source = bitmap;
+			TestRgbToHcl();
+			DisplayGradients2();
+		}
 
-			CreateBWGradientImage32();
-			CreateBWGradientImage64();
+		#endregion
 
+		#region Gradients1
 
-			Rgb redRgb = new Rgb("#3050A0");	// new Rgb("#ff0000");
+		//private void DisplayGradients()
+		//{
+		//	FillBitmapWithGrays(bitmap1);
+		//	bitmap1.Recreate();
+		//	Image1.Source = bitmap1.Bitmap;
+
+		//	FillBitmapWithGrays(bitmap2);
+		//	bitmap2.Recreate();
+		//	Image2.Source = bitmap2.Bitmap;
+		//}
+
+		//private void FillBitmapWithGrays(BitmapSrc bms)
+		//{
+		//	var rawImage = bms.RawImage;
+		//	for (int y = 0; y <  bms.Height; y++)
+		//	{
+		//		var rowOffset = y * bms.Width * 4;
+		//		for (int x = 0; x < bms.Width; x++)
+		//		{
+		//			var colOffset = rowOffset + x * 4;
+
+		//			rawImage[colOffset] = (byte)(255 - x);
+		//			rawImage[colOffset + 1] = (byte)(255 - x);
+		//			rawImage[colOffset + 2] = (byte)(255 - x);
+		//			rawImage[colOffset + 3] = 255;
+		//		}
+		//	}
+		//}
+
+		#endregion
+
+		#region Gradients2
+
+		private void DisplayGradients2()
+		{
+			//Rgb rgb1 = new Rgb(0.151195, 0.260917, 0.091675);
+			//Rgb rgb2 = new Rgb(0.523395, 0.584329, 0.994155);
+
+			//FillBitmapRgb(bitmap1, rgb1, rgb2);
+			//bitmap1.Recreate();
+			//Image1.Source = bitmap1.Bitmap;
+
+			//Lch lch1 = new Lch(55, 48, 130);
+			//Lch lch2 = new Lch(80, 53, 240);
+
+			//FillBitmapLch(bitmap2, lch1, lch2);
+			//bitmap2.Recreate();
+			//Image2.Source = bitmap2.Bitmap;
+
+			var imageData1 = CreateBWGradient(256);
+			var bitmap1 = CreateBitmapSource(256, 100, PixelFormats.Bgr32, imageData1);
+			Image1.Source = bitmap1;
+
+			var imageData2 = CreateBWGradient(256);
+			var bitmap2 = CreateBitmapSource(256, 100, PixelFormats.Bgr32, imageData2);
+			Image2.Source = bitmap2;
+		}
+
+		//private void FillBitmapRgb(BitmapSrc bms, Rgb start, Rgb end)
+		//{
+		//	var rawImage = bms.RawImage;
+
+		//	for (int y = 0; y < bms.Height; y++)
+		//	{
+		//		var rowOffset = y * bms.Width * 4;
+		//		for (int x = 0; x < bms.Width; x++)
+		//		{
+		//			var colOffset = rowOffset + x * 4;
+
+		//			rawImage[colOffset] = (byte)(255 - x);
+		//			rawImage[colOffset + 1] = (byte)(255 - x);
+		//			rawImage[colOffset + 2] = (byte)(255 - x);
+		//			rawImage[colOffset + 3] = 255;
+		//		}
+		//	}
+		//}
+
+		//private void FillBitmapLch(BitmapSrc bms, Lch start, Lch end)
+		//{
+		//	var rawImage = bms.RawImage;
+		//	for (int y = 0; y < bms.Height; y++)
+		//	{
+		//		var rowOffset = y * bms.Width * 4;
+		//		for (int x = 0; x < bms.Width; x++)
+		//		{
+		//			var colOffset = rowOffset + x * 4;
+
+		//			rawImage[colOffset] = (byte)(255 - x);
+		//			rawImage[colOffset + 1] = (byte)(255 - x);
+		//			rawImage[colOffset + 2] = (byte)(255 - x);
+		//			rawImage[colOffset + 3] = 255;
+		//		}
+		//	}
+		//}
+
+		#endregion
+
+		#region Bitmap Support
+
+		private BitmapSource CreateBitmapSource(int width, int height, PixelFormat pixelFormat, byte[] imageData) 
+		{
+			int rawStride = (width * pixelFormat.BitsPerPixel + 7) / 8;
+			byte[] rawImage = new byte[rawStride * height];
+
+			FillRawImage(width, height, rawImage, imageData);
+			var bitmap = BitmapSource.Create(width, height, 96, 96, pixelFormat, null, rawImage, rawStride);
+
+			return bitmap;
+		}
+
+		//private void FillRawImage(int width, int height, byte[] rawImage, byte[] imageData)
+		//{
+		//	for (int y = 0; y < height; y++)
+		//	{
+		//		var rowOffset = y * width * 4;
+		//		for (int x = 0; x < width; x++)
+		//		{
+		//			var colOffset = rowOffset + x * 4;
+
+		//			rawImage[colOffset] = (byte)(255 - x);
+		//			rawImage[colOffset + 1] = (byte)(255 - x);
+		//			rawImage[colOffset + 2] = (byte)(255 - x);
+		//			rawImage[colOffset + 3] = 255;
+		//		}
+		//	}
+		//}
+
+		private void FillRawImage(int width, int height, byte[] rawImage, byte[] imageData)
+		{
+			for (int y = 0; y < height; y++)
+			{
+				var rowOffset = y * width * 4;
+				for (int x = 0; x < width; x++)
+				{
+					var destColOffset = rowOffset + x * 4;
+					var srcColOffset = x * 3;
+
+					rawImage[destColOffset] = imageData[srcColOffset];
+					rawImage[destColOffset + 1] = imageData[srcColOffset + 1];
+					rawImage[destColOffset + 2] = imageData[srcColOffset + 2];
+					rawImage[destColOffset + 3] = 255;
+				}
+			}
+		}
+
+		private byte[] CreateBWGradient(int width)
+		{
+			var imageData = new byte[width * 3];
+			for (int x = 0; x < width; x++)
+			{
+				var colOffset = x * 3;
+
+				imageData[colOffset] = (byte)(255 - x);
+				imageData[colOffset + 1] = (byte)(255 - x);
+				imageData[colOffset + 2] = (byte)(255 - x);
+			}
+
+			return imageData;
+		}
+
+		#endregion
+
+		#region Tests
+
+		private void TestRgbToHcl()
+		{
+			Rgb redRgb = new Rgb("#3050A0");    // new Rgb("#ff0000");
 
 			var redXyz = LchColorHelper.RgbToXyz(redRgb, LchColorHelper.PRO_PHOTO_TO_XYZ);
 			Debug.Print($"The redXyz result is X = {redXyz.X}, u = {redXyz.Y}, v = {redXyz.Z}.");
@@ -57,7 +228,7 @@ namespace MSetExplorer
 
 			var redLuv = LchColorHelper.XyzToLuv(redXyz, LchColorHelper.D50_WHITE_POINT);
 			Debug.Print($"The Luv result is L = {redLuv.L}, u = {redLuv.U}, v = {redLuv.V}.");
-			
+
 			var redXyzRt = LchColorHelper.LuvToXyz(redLuv, LchColorHelper.D50_WHITE_POINT);
 			redRgbRt = LchColorHelper.XyzToRgb(redXyzRt, LchColorHelper.XYZ_TO_PRO_PHOTO);
 			Debug.Print($"RoundTrip RGB->XYZ->LUV->XYZ-RGB = {redRgbRt.GetCssColor()}");
@@ -81,92 +252,7 @@ namespace MSetExplorer
 			Debug.Print($"RoundTrip Rgb->Lch->Rgb = {rt.GetCssColor()}");
 		}
 
-		private BitmapSource CreateBWGradientImage32()
-		{
-			// Define parameters used to create the BitmapSource.
-			PixelFormat pf = PixelFormats.Bgr32;
-
-			int width = 256;
-			int height = 100;
-			int rawStride = (width * pf.BitsPerPixel + 7) / 8;
-			byte[] rawImage = new byte[rawStride * height];
-
-			for(int y = 0; y < height; y++)
-			{
-				var rowOffset = y * width * 4;
-				for(int x = 0; x < width; x++)
-				{
-					var colOffset = rowOffset + x * 4;
-
-					rawImage[colOffset] = (byte)(255 - x);
-					rawImage[colOffset + 1] = (byte)(255 - x);
-					rawImage[colOffset + 2] = (byte)(255 - x);
-					rawImage[colOffset + 3] = 255;
-				}
-			}
-
-			// Create a BitmapSource.
-			BitmapSource bitmap = BitmapSource.Create(width, height,
-				96, 96, pf, null,
-				rawImage, rawStride);
-
-
-			Image1.Source = bitmap;
-
-			return bitmap;
-		}
-
-		private BitmapSource CreateBWGradientImage64()
-		{
-			// Define parameters used to create the BitmapSource.
-			PixelFormat pf = PixelFormats.Rgba64;
-
-			int width = 256;
-			int height = 100;
-			int rawStride = (width * pf.BitsPerPixel + 7) / 8;
-			byte[] rawImage = new byte[rawStride * height];
-
-			for (int y = 0; y < height; y++)
-			{
-				var rowOffset = y * width * 8;
-				for (int x = 0; x < width; x++)
-				{
-					var colOffset = rowOffset + x * 8;
-
-					rawImage[colOffset] = 0;
-					rawImage[colOffset + 1] = (byte)(255 - x);
-					rawImage[colOffset + 2] = 0;
-					rawImage[colOffset + 3] = (byte)(255 - x);
-					rawImage[colOffset + 4] = 0;
-					rawImage[colOffset + 5] = (byte)(255 - x);
-					rawImage[colOffset + 6] = 255;
-					rawImage[colOffset + 7] = 255;
-				}
-			}
-
-			// Create a BitmapSource.
-			BitmapSource bitmap = BitmapSource.Create(width, height,
-				96, 96, pf, null,
-				rawImage, rawStride);
-
-
-			Image2.Source = bitmap;
-
-			return bitmap;
-		}
-
-
-		private void _vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			//if (e.PropertyName == nameof(PerformanceHarnessMainWinViewModel.MathOpCounts))
-			//{
-
-			//}
-		}
-
 		#endregion
-
-		public AppNavRequestResponse AppNavRequestResponse { get; private set; }
 
 		#region Button Handlers
 
@@ -183,7 +269,36 @@ namespace MSetExplorer
 		}
 
 		#endregion
-
-
 	}
+
+	//internal class BitmapSrc
+	//{
+	//	public int Width { get; init; }
+	//	public int Height { get; init; }
+
+	//	public PixelFormat PixelFormat { get; init; }
+	//	public int RawStride { get; init; }
+
+	//	public byte[] RawImage { get; init; }
+	//	public BitmapSource Bitmap { get; set; }
+
+	//	public BitmapSrc(int width, int height, PixelFormat pixelFormat)
+	//	{
+	//		Width = width;
+	//		Height = height;
+	//		PixelFormat = pixelFormat;
+
+	//		RawStride = (width * pixelFormat.BitsPerPixel + 7) / 8;
+	//		RawImage = new byte[RawStride * Height];
+
+	//		// Create a BitmapSource.
+	//		Bitmap = BitmapSource.Create(Width, Height, 96, 96, pixelFormat, null, RawImage, RawStride);
+	//	}
+
+	//	public void Recreate()
+	//	{
+	//		Bitmap = BitmapSource.Create(Width, Height, 96, 96, PixelFormat, null, RawImage, RawStride);
+
+	//	}
+	//}
 }
