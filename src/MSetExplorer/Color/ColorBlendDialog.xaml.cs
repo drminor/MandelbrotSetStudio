@@ -74,7 +74,7 @@ namespace MSetExplorer
 				chkBoxBlendMethodIsHsb.IsChecked = false;
 				chkBoxBlendDirIsReversed.IsChecked = false;
 			}
-			else if (_blendMethod == ColorBandBlendMethod.HsbCw)
+			else if (_blendMethod == ColorBandBlendMethod.Hsb)
 			{
 				chkBoxBlendMethodIsHsb.IsChecked = true;
 				chkBoxBlendDirIsReversed.IsChecked = false;
@@ -234,8 +234,8 @@ namespace MSetExplorer
 		{
 			var errorCnt = 0;
 
-			var direction = blendMethod == ColorBandBlendMethod.HsbCw ? HsbBlendDirection.Clockwise : HsbBlendDirection.CounterClockwise;
-			var bv = new BlendValsHSB(startingHsl, endingHsl, direction);
+			//var direction = blendMethod == ColorBandBlendMethod.Hsb ? HsbBlendDirection.Clockwise : HsbBlendDirection.CounterClockwise;
+			var bv = new BlendValsHSB(startingHsl, endingHsl/*, direction*/);
 			//var bv = new BlendVals(c1.ColorComps, c2.ColorComps);
 
 			var resultRowPtr = 0;
@@ -277,15 +277,24 @@ namespace MSetExplorer
 			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
 		}
 
-		private ColorBandBlendMethod GetBlendMethod(bool useHsb, bool isReversed)
+		private ColorBandBlendMethod GetBlendMethod(bool useHsb, bool useLch)
 		{
-			var result = useHsb 
-				? isReversed 
-					? ColorBandBlendMethod.HsbCcw 
-					: ColorBandBlendMethod.HsbCw
-				: ColorBandBlendMethod.Rgb;
-
-			return result;
+			if (useHsb)
+			{
+				return ColorBandBlendMethod.Hsb;
+			}
+			else
+			{
+				if (useLch)
+				{
+					return ColorBandBlendMethod.Lch;
+				}
+				else
+				{
+					return ColorBandBlendMethod.Rgb;
+				}
+			}
 		}
+
 	}
 }

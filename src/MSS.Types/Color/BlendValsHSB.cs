@@ -1,10 +1,7 @@
-﻿using System;
-
-namespace MSS.Types
+﻿namespace MSS.Types
 {
 	public struct BlendValsHSB 
 	{
-		//private readonly double[] _startHsb;
 		private readonly double[] _endHsb;
 
 		public double SHue { get; init; }
@@ -15,7 +12,7 @@ namespace MSS.Types
 		public double DiffSaturation { get; init; }
 		public double DiffBrightness { get; init; }
 
-		public HsbBlendDirection Direction { get; init; }
+		//public HsbBlendDirection Direction { get; init; }
 
 		public BlendValsHSB()
 		{
@@ -27,13 +24,12 @@ namespace MSS.Types
 			DiffSaturation = 0;
 			DiffBrightness = 0;
 
-			//_startHsl = new double[] { 0, 0, 0 };
 			_endHsb = new double[] { 0, 0, 0 };
 
-			Direction = HsbBlendDirection.Clockwise;
+			//Direction = HsbBlendDirection.Clockwise;
 		}
 
-		public BlendValsHSB(double[] startHsb, double[] endHsb, HsbBlendDirection direction = HsbBlendDirection.Clockwise)
+		public BlendValsHSB(double[] startHsb, double[] endHsb/*, HsbBlendDirection direction = HsbBlendDirection.Clockwise*/)
 		{
 			SHue = startHsb[0];
 			SSaturation = startHsb[1];
@@ -46,20 +42,20 @@ namespace MSS.Types
 			//_startHsb = startHsb;
 			_endHsb = endHsb;
 
-			Direction = direction;
+			//Direction = direction;
 
-			switch (direction)
-			{
-				case HsbBlendDirection.CounterClockwise:
-					if (DiffHue >= 0)
-						DiffHue = (360 - DiffHue) * -1;
-					break;
+			//switch (direction)
+			//{
+			//	case HsbBlendDirection.CounterClockwise:
+			//		if (DiffHue >= 0)
+			//			DiffHue = (360 - DiffHue) * -1;
+			//		break;
 
-				default:
-					if (DiffHue <= 0)
-						DiffHue = 360 + DiffHue;
-					break;
-			}
+			//	default:
+			//		if (DiffHue <= 0)
+			//			DiffHue = 360 + DiffHue;
+			//		break;
+			//}
 		}
 
 

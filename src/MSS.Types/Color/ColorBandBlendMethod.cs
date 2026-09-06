@@ -3,13 +3,13 @@
 	public enum ColorBandBlendMethod
     {
         Rgb,
-        HsbCw,
-        HsbCcw
+        Hsb,
+        Lch
     }
 
-	public enum HsbBlendDirection
-	{
-		Clockwise = 0,
-		CounterClockwise = 1
-	}
+	//public enum HsbBlendDirection
+	//{
+	//	Clockwise = 0,
+	//	CounterClockwise = 1
+	//}
 }

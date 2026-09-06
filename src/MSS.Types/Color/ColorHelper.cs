@@ -1,11 +1,12 @@
-﻿using System;
+﻿using MSS.Types.PColor;
+using System;
 using System.Drawing;
 
 namespace MSS.Types
 {
 	public static class ColorHelper
 	{
-		#region ColorSpace Support
+		#region HSB Support
 
 		public static double[] GetHSB(byte[] rgbColorComps)
 		{
@@ -77,16 +78,6 @@ namespace MSS.Types
 			return numberOfErrors;
 		}
 
-
-		//public static void PlaceHsb(double[] hsl, Span<byte> destination)
-		//{
-		//	var color = FromHsb(hsl[0], hsl[1], hsl[2]);
-
-		//	destination[0] = color.B;
-		//	destination[1] = color.G;
-		//	destination[2] = color.R;
-		//	destination[3] = color.A;
-		//}
 
 		private static int[] GetColorComps(double[] hsb)
 		{
@@ -179,7 +170,6 @@ namespace MSS.Types
 					return new int[] { Convert.ToInt32(fMax * 255), Convert.ToInt32(fMid * 255), Convert.ToInt32(fMin * 255) };
 			}
 		}
-
 
 		private static Color FromHsb(double hue, double saturation, double brightness)
 		{
@@ -368,6 +358,82 @@ namespace MSS.Types
 				default:
 					return Color.FromArgb(alpha, iMax, iMid, iMin);
 			}
+		}
+
+		#endregion
+
+		#region LCH Support
+
+		public static Lch GetLch(byte[] rgbColorComps)
+		{
+			var rgb = new Rgb(rgbColorComps[0], rgbColorComps[1], rgbColorComps[2]);
+			var result = LchColorHelper.RgbToLch(rgb);
+
+			return result;
+		}
+
+		public static int PlaceLch(Lch lch, Span<byte> destination)
+		{
+			var numberOfErrors = 0;
+
+			var rgb = LchColorHelper.LchToRgb(lch);
+
+			var byteVals = rgb.Get_sRGB_Vals();
+
+			byte r;
+			if (rgb.red > 1)
+			{
+				numberOfErrors++;
+				r = 255;
+			}
+			else if (rgb.red < 0)
+			{
+				numberOfErrors++;
+				r = 0;
+			}
+			else
+			{
+				r = byteVals[0];
+			}
+
+			byte g;
+			if (rgb.green > 255)
+			{
+				numberOfErrors++;
+				g = 255;
+			}
+			else if (rgb.green < 0)
+			{
+				numberOfErrors++;
+				g = 0;
+			}
+			else
+			{
+				g = byteVals[1];
+			}
+
+			byte b;
+			if (rgb.blue > 1)
+			{
+				numberOfErrors++;
+				b = 255;
+			}
+			else if (rgb.blue < 0)
+			{
+				numberOfErrors++;
+				b = 0;
+			}
+			else
+			{
+				b = byteVals[2];
+			}
+
+			destination[0] = b;
+			destination[1] = g;
+			destination[2] = r;
+			destination[3] = 255;
+
+			return numberOfErrors;
 		}
 
 		#endregion

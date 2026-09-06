@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 
 namespace MSS.Types
 {
@@ -37,8 +36,7 @@ namespace MSS.Types
 				var startingHsb = ColorHelper.GetHSB(StartColor.ColorComps);
 				var endingHsb = ColorHelper.GetHSB(EndColor.ColorComps);
 
-				var direction = blendMethod == ColorBandBlendMethod.HsbCw ? HsbBlendDirection.Clockwise : HsbBlendDirection.CounterClockwise;
-				_blendVals = new BlendValsHSB(startingHsb, endingHsb, direction);
+				_blendVals = new BlendValsHSB(startingHsb, endingHsb);
 			}
 
 			if (!useEscapeVelocities && BucketWidth < 501)

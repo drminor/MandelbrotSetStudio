@@ -231,14 +231,24 @@ namespace MSS.Types
 
 		private IColorMapEntry GetColorMapEntry(ColorBand colorBand, bool useEscapeVelocities)
 		{
-			if (colorBand.BlendMethod == ColorBandBlendMethod.Rgb)
-			{
-				return new ColorMapEntry(colorBand, useEscapeVelocities);
-			}
-			else
-			{
-				return new ColorMapEntryHSB(colorBand, useEscapeVelocities);
-			}
+			//switch (colorBand.BlendMethod)
+			//{
+			//	case ColorBandBlendMethod.Rgb:
+			//		return new ColorMapEntry(colorBand, useEscapeVelocities);
+
+			//	case ColorBandBlendMethod.Hsb:
+			//		return new ColorMapEntryHSB(colorBand, useEscapeVelocities);
+
+			//	case ColorBandBlendMethod.Lch:
+			//		return new ColorMapEntryLCH(colorBand, useEscapeVelocities);
+
+			//	default:
+			//		return new ColorMapEntry(colorBand, useEscapeVelocities);
+			//}
+
+			return new ColorMapEntryLCH(colorBand, useEscapeVelocities);
+
+			//return new ColorMapEntry(colorBand, useEscapeVelocities);
 		}
 
 		#endregion
