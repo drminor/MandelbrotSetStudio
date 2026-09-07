@@ -24,7 +24,7 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public ColorBandColor SelectedColorBandColor => new(new byte[] { clrPicker.SelectedColor.R, clrPicker.SelectedColor.G, clrPicker.SelectedColor.B });
+		public ColorBandColor SelectedColorBandColor => new(clrPicker.SelectedColor.R, clrPicker.SelectedColor.G, clrPicker.SelectedColor.B);
 
 		#endregion
 

@@ -97,8 +97,8 @@ namespace MSetExplorer
 
 		#region Public Properties
 
-		public ColorBandColor SelectedColorBandColor1 => new(new byte[] { clrPicker1.SelectedColor.R, clrPicker1.SelectedColor.G, clrPicker1.SelectedColor.B });
-		public ColorBandColor SelectedColorBandColor2 => new(new byte[] { clrPicker2.SelectedColor.R, clrPicker2.SelectedColor.G, clrPicker2.SelectedColor.B });
+		public ColorBandColor SelectedColor1 => new(clrPicker1.SelectedColor.R, clrPicker1.SelectedColor.G, clrPicker1.SelectedColor.B);
+		public ColorBandColor SelectedColor2 => new(clrPicker2.SelectedColor.R, clrPicker2.SelectedColor.G, clrPicker2.SelectedColor.B);
 
 		public WriteableBitmap GradientBitmap
 		{

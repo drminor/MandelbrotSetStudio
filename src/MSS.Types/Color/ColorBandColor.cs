@@ -16,32 +16,17 @@ namespace MSS.Types
         [JsonConstructor]
         [BsonConstructor]
         public ColorBandColor(string cssColor) : this(GetComps(cssColor))
-        {
-            //_cssColor = cssColor;
-        }
+        {  }
 
         public ColorBandColor(byte[] colorComps)
         {
             ColorComps = colorComps;
-            //_cssColor = null;
         }
 
-		//private string? _cssColor;
-		//public string CssColor
-		//{
-		//	get
-		//	{
-		//		if (_cssColor == null)
-		//		{
-		//			_cssColor = GetCssColor(ColorComps);
-		//		}
-		//		return _cssColor;
-		//	}
-		//	init
-		//	{
-		//		_cssColor = null;
-		//	}
-		//}
+		public ColorBandColor(byte r, byte g, byte b)
+		{
+			ColorComps = new byte[] { r, g, b };
+		}
 
         public string GetCssColor()
 		{

@@ -103,32 +103,6 @@ namespace MSetExplorer
 				var pos = e.GetPosition(relativeTo: cbcButtonControl1.Canvas);
 				var startColor = cb.StartColor;
 
-				//if (_useColorBlendDialog)
-				//{
-				//	var endColor = cb.EndColor;
-
-				//	if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, cb.BlendMethod, out var blendMethod))
-				//	{
-				//		cbcButtonControl1.Color = selectedColorS1;
-				//		cbcButtonControl2.Color = selectedColorE1;
-				//		cbcButtonControl1.BlendMethod = blendMethod;
-				//	}
-				//}
-				//else if (_useColorSpaceDialog)
-				//{
-				//	if (ShowColorSpace(pos, startColor, out var selectedColorS2))
-				//	{
-				//		cbcButtonControl1.Color = selectedColorS2;
-				//	}
-				//}
-				//else
-				//{
-				//	if (ShowColorPicker(pos, startColor, out var selectedColorS3))
-				//	{
-				//		cbcButtonControl1.Color = selectedColorS3;
-				//	}
-				//}
-
 				if (cb.BlendStyle == ColorBandBlendStyle.None)
 				{
 					if (ShowColorPicker(pos, startColor, out var selectedColorS3))
@@ -138,13 +112,19 @@ namespace MSetExplorer
 				}
 				else
 				{
-					var endColor = cb.EndColor;
+					//var endColor = cb.EndColor;
+					var endColor = cb.ActualEndColor;
 
 					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, cb.BlendMethod, out var blendMethod))
 					{
 						cbcButtonControl1.Color = selectedColorS1;
 						cbcButtonControl2.Color = selectedColorE1;
 						cbcButtonControl1.BlendMethod = blendMethod;
+
+						if (cb.BlendStyle == ColorBandBlendStyle.Next)
+						{
+							cbcButtonControl2.EffectiveColor = selectedColorE1;
+						}
 					}
 				}
 
@@ -158,36 +138,11 @@ namespace MSetExplorer
 			if (cb != null)
 			{
 				var pos = e.GetPosition(relativeTo: cbcButtonControl2.Canvas);
-				var endColor = cb.EndColor;
 
-				//if (_useColorBlendDialog)
-				//{
-				//	var startColor = cb.StartColor;
-
-				//	if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, cb.BlendMethod, out var blendMethod))
-				//	{
-				//		cbcButtonControl1.Color = selectedColorS1;
-				//		cbcButtonControl2.Color = selectedColorE1;
-				//		cbcButtonControl2.BlendMethod = blendMethod;
-				//	}
-				//}
-				//else if (_useColorSpaceDialog)
-				//{
-				//	if (ShowColorSpace(pos, endColor, out var selectedColorS2))
-				//	{
-				//		cbcButtonControl2.Color = selectedColorS2;
-				//	}
-				//}
-				//else
-				//{
-				//	if (ShowColorPicker(pos, endColor, out var selectedColorS3))
-				//	{
-				//		cbcButtonControl2.Color = selectedColorS3;
-				//	}
-				//}
 
 				if (cb.BlendStyle == ColorBandBlendStyle.None)
 				{
+					var endColor = cb.EndColor;
 					if (ShowColorPicker(pos, endColor, out var selectedColorS3))
 					{
 						cbcButtonControl1.Color = selectedColorS3;
@@ -197,11 +152,19 @@ namespace MSetExplorer
 				{
 					var startColor = cb.StartColor;
 
+					//var endColor = cb.EndColor;
+					var endColor = cb.ActualEndColor;
+
 					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, cb.BlendMethod, out var blendMethod))
 					{
 						cbcButtonControl1.Color = selectedColorS1;
 						cbcButtonControl2.Color = selectedColorE1;
 						cbcButtonControl1.BlendMethod = blendMethod;
+
+						if (cb.BlendStyle == ColorBandBlendStyle.Next)
+						{
+							cbcButtonControl2.EffectiveColor = selectedColorE1;
+						}
 					}
 				}
 			}
@@ -246,7 +209,7 @@ namespace MSetExplorer
 			txtStartCutoff.IsEnabled = !colorBand.IsFirst;
 			txtEndCutoff.IsEnabled = !colorBand.IsLast;
 
-			SetupBlendStyleComboBox(colorBand.IsLast);
+			//SetupBlendStyleComboBox(colorBand.IsLast);
 		}
 
 		private void SetupBlendStyleComboBox(bool isLast)
@@ -312,8 +275,8 @@ namespace MSetExplorer
 
 			if (colorBlendDialog.ShowDialog() == true)
 			{
-				selectedColor1 = colorBlendDialog.SelectedColorBandColor1;
-				selectedColor2 = colorBlendDialog.SelectedColorBandColor2;
+				selectedColor1 = colorBlendDialog.SelectedColor1;
+				selectedColor2 = colorBlendDialog.SelectedColor2;
 				blendMethod = colorBlendDialog.BlendMethod;
 				return true;
 			}

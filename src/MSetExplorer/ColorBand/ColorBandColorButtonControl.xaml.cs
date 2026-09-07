@@ -30,7 +30,7 @@ namespace MSetExplorer
 			InitializeComponent();
 
 			_geometry = BuildGeometry(new SizeDbl());
-			_rectanglePath = BuildRectanglePath(_geometry, new ColorBandColor(new byte[] {255, 255, 255}));
+			_rectanglePath = BuildRectanglePath(_geometry, new ColorBandColor(255, 255, 255));
 			_rectanglePath.Focusable = true;
 		}
 

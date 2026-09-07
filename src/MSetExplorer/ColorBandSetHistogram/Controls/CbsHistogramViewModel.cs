@@ -1616,6 +1616,32 @@ namespace MSetExplorer
 			{
 				foundUpdate = cb.BlendStyle == ColorBandBlendStyle.End;
 			}
+
+			else if (propertyName == nameof(ColorBand.ActualEndColor))
+			{
+				switch (cb.BlendStyle)
+				{
+					case ColorBandBlendStyle.None:
+						foundUpdate = false;
+						break;
+					case ColorBandBlendStyle.End:
+						foundUpdate = true;
+						break;
+					case ColorBandBlendStyle.Next:
+
+						if (TryGetSuccessor(_currentColorBandSet, cb, out var successorColorBand))
+						{
+							successorColorBand.StartColor = cb.ActualEndColor;
+							Debug.WriteLineIf(_useDetailedDebug, $"ActualEndColor was updated. CbsHistogramViewModel is updating the StartColor of the successor ColorBand: {_colorBandsView.IndexOf(cb)}.");
+						}
+
+						foundUpdate = true;
+						break;
+					default:
+						foundUpdate = false;
+						break;
+				}
+			}
 			else
 			{
 				// Some other property is being updated.

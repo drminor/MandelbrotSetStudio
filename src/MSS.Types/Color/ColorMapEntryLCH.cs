@@ -32,10 +32,10 @@ namespace MSS.Types
 			}
 			else
 			{
-				var startingHsb = ColorHelper.GetLch(StartColor.ColorComps);
-				var endingHsb = ColorHelper.GetLch(EndColor.ColorComps);
+				var startingLch = ColorHelper.GetLch(StartColor.ColorComps);
+				var endingLch = ColorHelper.GetLch(EndColor.ColorComps);
 
-				_blendVals = new BlendValsLCH(startingHsb, endingHsb);
+				_blendVals = new BlendValsLCH(startingLch, endingLch);
 			}
 
 			if (!useEscapeVelocities && BucketWidth < 501)
@@ -47,8 +47,6 @@ namespace MSS.Types
 			{
 				Cache = null;
 			}
-
-			//Cache = null;
 		}
 
 		#endregion

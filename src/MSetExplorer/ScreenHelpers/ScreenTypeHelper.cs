@@ -274,7 +274,7 @@ namespace MSetExplorer
 
 		public static ColorBandColor ConvertToColorBandColor(Color color)
 		{
-			var result = new ColorBandColor(new byte[] {color.R, color.G, color.B });
+			var result = new ColorBandColor(color.R, color.G, color.B);
 
 			return result;
 		}
