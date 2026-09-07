@@ -118,12 +118,19 @@ namespace MSetExplorer
 					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, cb.BlendMethod, out var blendMethod))
 					{
 						cbcButtonControl1.Color = selectedColorS1;
-						cbcButtonControl2.Color = selectedColorE1;
-						cbcButtonControl1.BlendMethod = blendMethod;
+						//cbcButtonControl2.Color = selectedColorE1;
+						//cbcButtonControl1.BlendStyle = cb.BlendStyle;
+
+						cb.BlendMethod = blendMethod;
 
 						if (cb.BlendStyle == ColorBandBlendStyle.Next)
 						{
 							cbcButtonControl2.EffectiveColor = selectedColorE1;
+						}
+
+						if (cb.BlendStyle == ColorBandBlendStyle.End)
+						{
+							cbcButtonControl2.Color = selectedColorE1;
 						}
 					}
 				}
@@ -158,12 +165,19 @@ namespace MSetExplorer
 					if (ShowColorBlendDialog(pos, startColor, out var selectedColorS1, endColor, out var selectedColorE1, cb.BlendMethod, out var blendMethod))
 					{
 						cbcButtonControl1.Color = selectedColorS1;
-						cbcButtonControl2.Color = selectedColorE1;
-						cbcButtonControl1.BlendMethod = blendMethod;
+						//cbcButtonControl2.Color = selectedColorE1;
+						//cbcButtonControl1.BlendStyle = cb.BlendStyle;
+
+						cb.BlendMethod = blendMethod;
 
 						if (cb.BlendStyle == ColorBandBlendStyle.Next)
 						{
 							cbcButtonControl2.EffectiveColor = selectedColorE1;
+						}
+
+						if (cb.BlendStyle == ColorBandBlendStyle.End)
+						{
+							cbcButtonControl2.Color = selectedColorE1;
 						}
 					}
 				}
