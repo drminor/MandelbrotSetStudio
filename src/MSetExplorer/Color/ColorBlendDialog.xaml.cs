@@ -1,4 +1,5 @@
 ﻿using MSS.Types;
+using MSS.Types.PColor;
 using System;
 using System.Buffers;
 using System.ComponentModel;
@@ -32,6 +33,9 @@ namespace MSetExplorer
 
 		private byte[] _backBuffer;
 
+		private bool _handleClrPicker_ColorChangedEvents = true;
+
+
 		public ColorBlendDialog(ColorBandColor startingColor, ColorBandColor endingColor, ColorBandBlendMethod blendMethod)
 		{
 			_startingColor = startingColor;
@@ -47,47 +51,33 @@ namespace MSetExplorer
 			InitializeComponent();
 		}
 
-		#endregion
-
-		#region Event Handlers
-
 		private void ColorBlendDialog_Loaded(object sender, RoutedEventArgs e)
 		{
 			Loaded -= ColorBlendDialog_Loaded;
 
-			//clrPicker.Color = ScreenTypeHelper.ConvertToColor(_colorBandColor);
-
-			//clrPicker1.Color.RGB_R = _startingColor.ColorComps[0];
-			//clrPicker1.Color.RGB_G = _startingColor.ColorComps[1];
-			//clrPicker1.Color.RGB_B = _startingColor.ColorComps[2];
 			clrPicker1.SelectedColor = ScreenTypeHelper.ConvertToColor(_startingColor);
-
-			//clrPicker2.Color.RGB_R = _endingColor.ColorComps[0];
-			//clrPicker2.Color.RGB_G = _endingColor.ColorComps[1];
-			//clrPicker2.Color.RGB_B = _endingColor.ColorComps[2];
-
 			clrPicker2.SelectedColor = ScreenTypeHelper.ConvertToColor(_endingColor);
-			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
 
-			if (_blendMethod == ColorBandBlendMethod.Rgb)
+			UpdateRgb1(clrPicker1.SelectedColor);
+			UpdateRgb2(clrPicker2.SelectedColor);
+
+			if (_blendMethod == ColorBandBlendMethod.Lch)
 			{
-				chkBoxBlendMethodIsHsb.IsChecked = false;
-				chkBoxBlendDirIsReversed.IsChecked = false;
-			}
-			else if (_blendMethod == ColorBandBlendMethod.Hsb)
-			{
-				chkBoxBlendMethodIsHsb.IsChecked = true;
-				chkBoxBlendDirIsReversed.IsChecked = false;
+				chkBoxUseLCH.IsChecked = true;
+				stPanLch1.Visibility = Visibility.Visible;
+				stPanLch2.Visibility = Visibility.Visible;
+
+				UpdateLch1(clrPicker1.SelectedColor);
+				UpdateLch2(clrPicker2.SelectedColor);
 			}
 			else
 			{
-				chkBoxBlendMethodIsHsb.IsChecked = true;
-				chkBoxBlendDirIsReversed.IsChecked = true;
+				chkBoxUseLCH.IsChecked = false;
+				stPanLch1.Visibility = Visibility.Collapsed;
+				stPanLch2.Visibility = Visibility.Collapsed;
 			}
 
-
-			//var blendMethod = GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
-
+			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
 			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, _blendMethod);
 
 			clrPicker1.ColorChanged += ClrPicker1_ColorChanged;
@@ -100,19 +90,6 @@ namespace MSetExplorer
 		{
 			clrPicker1.ColorChanged -= ClrPicker1_ColorChanged;
 			clrPicker2.ColorChanged -= ClrPicker2_ColorChanged;
-		}
-
-		private void ClrPicker1_ColorChanged(object sender, RoutedEventArgs e)
-		{
-			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
-
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
-		}
-
-		private void ClrPicker2_ColorChanged(object sender, RoutedEventArgs e)
-		{
-			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
-			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
 		}
 
 		#endregion
@@ -138,7 +115,7 @@ namespace MSetExplorer
 			}
 		}
 
-		public ColorBandBlendMethod BlendMethod => GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
+		public ColorBandBlendMethod BlendMethod => chkBoxUseLCH.IsChecked == true ? ColorBandBlendMethod.Lch : ColorBandBlendMethod.Rgb;
 
 
 		#endregion
@@ -204,7 +181,7 @@ namespace MSetExplorer
 		{
 			var errorCnt = 0;
 
-			var bv = new BlendVals(startingColor.ColorComps, endingColor.ColorComps);
+			var bv = new BlendValsRgb(startingColor.ColorComps, endingColor.ColorComps);
 
 			var resultRowPtr = 0;
 			var resultRowPtrIncrement = BLEND_WIDTH * BYTES_PER_PIXEL;
@@ -268,33 +245,218 @@ namespace MSetExplorer
 			if (property != null) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
 		}
 
+		private void UpdateRgb1(Color c)
+		{
+			txtRed1.Text = c.R.ToString();
+			txtGreen1.Text = c.G.ToString();
+			txtBlue1.Text = c.B.ToString();
+		}
+
+		private void UpdateLch1(Color c)
+		{
+			var lch = ColorHelper.GetLch(c.R, c.G, c.B);
+			txtL1.Text = lch.L.ToString();
+			txtC1.Text = lch.C.ToString();
+			txtH1.Text = lch.H.ToString();
+		}
+
+		private void UpdateRgb2(Color c)
+		{
+			txtRed2.Text = c.R.ToString();
+			txtGreen2.Text = c.G.ToString();
+			txtBlue2.Text = c.B.ToString();
+		}
+
+		private void UpdateLch2(Color c)
+		{
+			var lch = ColorHelper.GetLch(c.R, c.G, c.B);
+			txtL2.Text = lch.L.ToString();
+			txtC2.Text = lch.C.ToString();
+			txtH2.Text = lch.H.ToString();
+		}
 
 		#endregion
 
-		private void handleChkBox_CheckedEvents(object sender, RoutedEventArgs e)
+		#region Event Handlers
+
+		private void ClrPicker1_ColorChanged(object sender, RoutedEventArgs e)
 		{
-			//var blendMethod = GetBlendMethod(chkBoxBlendMethodIsHsb.IsChecked == true, chkBoxBlendDirIsReversed.IsChecked == true);
+			if (!_handleClrPicker_ColorChangedEvents) return;
+
+			UpdateRgb1(clrPicker1.SelectedColor);
+
+			if (BlendMethod == ColorBandBlendMethod.Lch)
+			{
+				UpdateLch1(clrPicker1.SelectedColor);
+			}
+
+			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
 			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
 		}
 
-		private ColorBandBlendMethod GetBlendMethod(bool useHsb, bool useLch)
+		private void ClrPicker2_ColorChanged(object sender, RoutedEventArgs e)
 		{
-			if (useHsb)
+			if (!_handleClrPicker_ColorChangedEvents) return;
+
+			UpdateRgb2(clrPicker2.SelectedColor);
+
+			if (BlendMethod == ColorBandBlendMethod.Lch)
 			{
-				return ColorBandBlendMethod.Hsb;
+				UpdateLch2(clrPicker2.SelectedColor);
+			}
+
+			UpdateTheBlendRectangle(clrPicker1.SelectedColor, clrPicker2.SelectedColor);
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
+		}
+
+		private void chkBoxUseLCHIsUpdated(object sender, RoutedEventArgs e)
+		{
+			if (BlendMethod == ColorBandBlendMethod.Lch)
+			{
+				stPanLch1.Visibility = Visibility.Visible;
+				stPanLch2.Visibility = Visibility.Visible;
+
+				UpdateLch1(clrPicker1.SelectedColor);
+				UpdateLch2(clrPicker2.SelectedColor);
 			}
 			else
 			{
-				if (useLch)
-				{
-					return ColorBandBlendMethod.Lch;
-				}
-				else
-				{
-					return ColorBandBlendMethod.Rgb;
-				}
+				stPanLch1.Visibility = Visibility.Collapsed;
+				stPanLch2.Visibility = Visibility.Collapsed;
+			}
+
+			PaintTheBitmap(clrPicker1.SelectedColor, clrPicker2.SelectedColor, BlendMethod);
+		}
+
+		private void btnUpdateRGB1_Click(object sender, RoutedEventArgs e)
+		{
+			var rt = txtRed1.Text;
+			var gt = txtGreen1.Text;
+			var bt = txtBlue1.Text;
+
+			var r = GetRgbByteFromString(rt);
+			var g = GetRgbByteFromString(gt);
+			var b = GetRgbByteFromString(bt);
+
+			var c = Color.FromRgb(r, g, b);
+
+			if (BlendMethod == ColorBandBlendMethod.Lch)
+			{
+				UpdateLch1(c);
+			}
+
+			_handleClrPicker_ColorChangedEvents = false;
+			clrPicker1.SelectedColor = c;
+			_handleClrPicker_ColorChangedEvents = true;
+		}
+
+		private void btnUpdateLCH1_Click(object sender, RoutedEventArgs e)
+		{
+			var lt = txtL1.Text;
+			var ct = txtGreen1.Text;
+			var ht = txtBlue1.Text;
+
+			var l = GetDoubleFromString(lt);
+			var c = GetDoubleFromString(ct);
+			var h = GetDoubleFromString(ht);
+
+			var lch = new Lch(l, c, h);
+			var rgb = ColorHelper.GetRgb(lch);
+
+			var byteVals = rgb.Get_sRGB_Vals();
+
+			var nc = Color.FromRgb(byteVals[0], byteVals[1], byteVals[2]);
+
+			UpdateRgb1(nc);
+
+			_handleClrPicker_ColorChangedEvents = false;
+			clrPicker1.SelectedColor = nc;
+			_handleClrPicker_ColorChangedEvents = true;
+		}
+
+		private void btnUpdateRGB2_Click(object sender, RoutedEventArgs e)
+		{
+			var rt = txtRed2.Text;
+			var gt = txtGreen2.Text;
+			var bt = txtBlue2.Text;
+
+			var r = GetRgbByteFromString(rt);
+			var g = GetRgbByteFromString(gt);
+			var b = GetRgbByteFromString(bt);
+
+			var c = Color.FromRgb(r, g, b);
+
+			if (BlendMethod == ColorBandBlendMethod.Lch)
+			{
+				UpdateLch2(c);
+			}
+
+			_handleClrPicker_ColorChangedEvents = false;
+			clrPicker2.SelectedColor = c;
+			_handleClrPicker_ColorChangedEvents = true;
+		}
+
+		private void btnUpdateLCH2_Click(object sender, RoutedEventArgs e)
+		{
+			var lt = txtL2.Text;
+			var ct = txtGreen2.Text;
+			var ht = txtBlue2.Text;
+
+			var l = GetDoubleFromString(lt);
+			var c = GetDoubleFromString(ct);
+			var h = GetDoubleFromString(ht);
+
+			var lch = new Lch(l, c, h);
+			var rgb = ColorHelper.GetRgb(lch);
+
+			var byteVals = rgb.Get_sRGB_Vals();
+
+			var nc = Color.FromRgb(byteVals[0], byteVals[1], byteVals[2]);
+
+			UpdateRgb2(nc);
+
+			_handleClrPicker_ColorChangedEvents = false;
+			clrPicker2.SelectedColor = nc;
+			_handleClrPicker_ColorChangedEvents = true;
+		}
+
+		private byte GetRgbByteFromString(string v)
+		{
+			if (string.IsNullOrEmpty(v))
+			{
+				return 0;
+			}
+
+			try
+			{
+				var result = Convert.ToByte(v);
+				return result;
+			}
+			catch
+			{
+				return 0;
 			}
 		}
+
+		private double GetDoubleFromString(string v)
+		{
+			if (string.IsNullOrEmpty(v))
+			{
+				return 0;
+			}
+
+			try
+			{
+				var result = Convert.ToDouble(v);
+				return result;
+			}
+			catch
+			{
+				return 0;
+			}
+		}
+
+		#endregion
 
 	}
 }

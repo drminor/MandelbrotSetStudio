@@ -2,19 +2,19 @@
 
 namespace MSS.Types
 {
-	internal class ColorMapEntry : IColorMapEntry
+	internal class ColorMapEntryRGB : IColorMapEntry
 	{
 		private const int BYTES_PER_PIXEL = 4;
 
-		private readonly BlendVals _blendVals;
+		private readonly BlendValsRgb _blendVals;
 
 		#region Constructor
 
-		public ColorMapEntry(ColorBand cb, bool useEscapeVelocities)
+		public ColorMapEntryRGB(ColorBand cb, bool useEscapeVelocities)
 			: this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth, useEscapeVelocities)
 		{ }
 
-		public ColorMapEntry(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor,
+		public ColorMapEntryRGB(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor,
 			int? previousCutoff, int bucketWidth, bool useEscapeVelocities)
 		{
 			Cutoff = cutoff;
@@ -28,11 +28,11 @@ namespace MSS.Types
 
 			if (BlendStyle == ColorBandBlendStyle.None)
 			{
-				_blendVals = new BlendVals();
+				_blendVals = new BlendValsRgb();
 			}
 			else
 			{
-				_blendVals = new BlendVals(StartColor.ColorComps, EndColor.ColorComps);
+				_blendVals = new BlendValsRgb(StartColor.ColorComps, EndColor.ColorComps);
 			}
 
 			if (!useEscapeVelocities && BucketWidth < 501)
@@ -87,9 +87,9 @@ namespace MSS.Types
 			return Clone();
 		}
 
-		public ColorMapEntry Clone()
+		public ColorMapEntryRGB Clone()
 		{
-			return new ColorMapEntry(Cutoff, StartColor, BlendStyle, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
+			return new ColorMapEntryRGB(Cutoff, StartColor, BlendStyle, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
 		}
 	}
 

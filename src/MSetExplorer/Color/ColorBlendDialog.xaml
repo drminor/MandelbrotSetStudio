@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:MSetExplorer"
         xmlns:colorpicker="clr-namespace:ColorPicker;assembly=ColorPicker"
         mc:Ignorable="d"
-        Title="ColorPickerDialog" Width="384" Height="440"
+        Title="Color Blend Dialog" Width="500" Height="560"
         x:Name="cbdWindow">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -15,40 +15,89 @@
         </Grid.ColumnDefinitions>
         
         <Grid.RowDefinitions>
-            <RowDefinition Height="172"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="80"/>
+            <RowDefinition Height="226"/>
+            <RowDefinition Height="20"/>
+            <RowDefinition Height="95"/>
+            <RowDefinition Height="105"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" Grid.Column="0" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Top">
-            <colorpicker:SquarePicker Width="150" Height="150" x:Name="clrPicker1" SmallChange="5" Margin="10"/>
-        </Border>
-
-        <Border Grid.Row="0" Grid.Column="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Top">
-            <colorpicker:SquarePicker Width="150" Height="150" x:Name="clrPicker2" SmallChange="5" Margin="10"/>
-        </Border>
-
-        <Border Grid.Row="1" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center">
-            
             <StackPanel Orientation="Vertical">
-                <StackPanel Orientation="Horizontal">
-                    <CheckBox Content="Use Hsb" IsChecked="False" x:Name="chkBoxBlendMethodIsHsb" Checked="handleChkBox_CheckedEvents" Unchecked="handleChkBox_CheckedEvents" Margin="0,0,10,0"/>
-                    <CheckBox Content="Reverse" IsChecked="False" x:Name="chkBoxBlendDirIsReversed" Checked="handleChkBox_CheckedEvents" Unchecked="handleChkBox_CheckedEvents"/>
+                <colorpicker:SquarePicker Width="150" Height="150" x:Name="clrPicker1" SmallChange="5" Margin="10"/>
+ 
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                    <Button x:Name="btnUpdateRGB1" Margin="10,0,0,0" Click="btnUpdateRGB1_Click">RGB</Button>
+
+                    <TextBox x:Name="txtRed1" Margin="10,0,0,0"  Width="40" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                    <TextBox x:Name="txtGreen1" Margin="10,0,0,0"  Width="40" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                    <TextBox x:Name="txtBlue1" Margin="10,0,0,0"  Width="40" Height="21" VerticalAlignment="Center">0</TextBox>
 
                 </StackPanel>
-                <TextBox Text="Writeable Bitmap"/>
 
-                <Image Width="300" Height="60" Source="{Binding ElementName=cbdWindow, Path=GradientBitmap}" Stretch="Fill" />
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,0" x:Name="stPanLch1">
+                    <Button x:Name="btnUpdateLCH1" Margin="10,0,0,0" Click="btnUpdateLCH1_Click">LCH</Button>
+
+                    <TextBox x:Name="txtL1" Margin="10,0,0,0"  Width="60" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                    <TextBox x:Name="txtC1" Margin="10,0,0,0"  Width="60" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                    <TextBox x:Name="txtH1" Margin="10,0,10,0"  Width="60" Height="21" VerticalAlignment="Center">0</TextBox>
+                </StackPanel>
+                
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="2" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Border Grid.Row="0" Grid.Column="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Top">
+            <StackPanel Orientation="Vertical">
+                <colorpicker:SquarePicker Width="150" Height="150" x:Name="clrPicker2" SmallChange="5" Margin="10"/>
+                
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
 
+                    <Button x:Name="btnUpdateRGB2" Margin="10,0,0,0" Click="btnUpdateRGB2_Click">RGB</Button>
+
+                    <TextBox x:Name="txtRed2" Margin="10,0,0,0"  Width="40" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                    <TextBox x:Name="txtGreen2" Margin="10,0,0,0"  Width="40" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                    <TextBox x:Name="txtBlue2" Margin="10,0,0,0"  Width="40" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,0"  x:Name="stPanLch2">
+
+                    <Button x:Name="btnUpdateLCH2" Margin="10,0,0,0" Click="btnUpdateLCH2_Click">LCH</Button>
+
+                    <TextBox x:Name="txtL2" Margin="10,0,0,0"  Width="60" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                    <TextBox x:Name="txtC2" Margin="10,0,0,0"  Width="60" Height="21" VerticalAlignment="Center">0</TextBox>
+
+                    <TextBox x:Name="txtH2" Margin="10,0,10,0"  Width="60" Height="21" VerticalAlignment="Center">0</TextBox>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.ColumnSpan="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Left" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Margin="15,1">
+                <CheckBox Content="Use LCH Color Space" IsChecked="False" x:Name="chkBoxUseLCH" Checked="chkBoxUseLCHIsUpdated" Unchecked="chkBoxUseLCHIsUpdated" Margin="0,0,10,0"/>
+            </StackPanel>
+        </Border>
+        
+        <Border Grid.Row="2" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel Orientation="Vertical">
+                <TextBox Text="Writeable Bitmap"/>
+
+                <Image Width="450" Height="60" Source="{Binding ElementName=cbdWindow, Path=GradientBitmap}" Stretch="Fill" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="3" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,10,0,0">
             <StackPanel Orientation="Vertical">
                 <TextBox Text="Linear Gradient Brush"/>
 
-                <Rectangle Width="300" Height="60">
+                <Rectangle Width="450" Height="60">
                     <Rectangle.Fill>
                         <LinearGradientBrush x:Name="linearGradientBrush1" StartPoint="0,0" EndPoint="1,1">
                             <GradientStop Color="Yellow" Offset="0.0" />
@@ -60,7 +109,7 @@
             </StackPanel>
         </Border>
         
-        <Border Grid.Row="3" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Border Grid.Row="4" Grid.ColumnSpan="2" BorderThickness="0" BorderBrush="Black" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Height="35">
                 <Button Name="btnSave" HorizontalAlignment="Center" Width="85" FontSize="16" Margin="5,5,20,5" Click="SaveButton_Click" IsDefault="True" >Save</Button>

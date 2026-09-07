@@ -2,7 +2,7 @@
 
 namespace MSS.Types
 {
-	public struct BlendVals
+	public struct BlendValsRgb
 	{
 		private readonly byte[] _endColor;
 		private readonly byte _opacity;
@@ -15,7 +15,7 @@ namespace MSS.Types
 		public double DiffGreen { get; init; }
 		public double DiffBlue { get; init; }
 
-		public BlendVals()
+		public BlendValsRgb()
 		{
 			SRed = 0;
 			SGreen = 0;
@@ -29,7 +29,7 @@ namespace MSS.Types
 			_opacity = 255;
 		}
 
-		public BlendVals(byte[] startColor, byte[] endColor)
+		public BlendValsRgb(byte[] startColor, byte[] endColor)
 		{
 			SRed = startColor[0];
 			SGreen = startColor[1];

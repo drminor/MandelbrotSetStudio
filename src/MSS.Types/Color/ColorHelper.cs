@@ -372,6 +372,28 @@ namespace MSS.Types
 			return result;
 		}
 
+		public static Lch GetLch(byte r, byte g, byte b)
+		{
+			var rgb = new Rgb(r,g,b);
+			var result = LchColorHelper.RgbToLch(rgb);
+
+			return result;
+		}
+
+		public static Rgb GetRgb(double[] lchColorComps)
+		{
+			var lch = new Lch(lchColorComps[0], lchColorComps[1], lchColorComps[2]);
+			var result = LchColorHelper.LchToRgb(lch);
+
+			return result;
+		}
+		public static Rgb GetRgb(Lch lch)
+		{
+			var result = LchColorHelper.LchToRgb(lch);
+
+			return result;
+		}
+
 		public static int PlaceLch(Lch lch, Span<byte> destination)
 		{
 			var numberOfErrors = 0;
