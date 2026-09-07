@@ -2,7 +2,7 @@
 
 namespace MSS.Types
 {
-	internal class ColorMapEntryLCH : IColorMapEntry
+	public class ColorMapEntryLCH : IColorMapEntry
 	{
 		private const int BYTES_PER_PIXEL = 4;
 
@@ -11,16 +11,15 @@ namespace MSS.Types
 		#region Constructor
 
 		public ColorMapEntryLCH(ColorBand cb, bool useEscapeVelocities)
-			: this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.BlendMethod, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth, useEscapeVelocities)
+			: this(cb.Cutoff, cb.StartColor, cb.BlendStyle, cb.ActualEndColor, cb.PreviousCutoff, cb.BucketWidth, useEscapeVelocities)
 		{ }
 
-		public ColorMapEntryLCH(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandBlendMethod blendMethod, ColorBandColor endColor,
+		public ColorMapEntryLCH(int cutoff, ColorBandColor startColor, ColorBandBlendStyle blendStyle, ColorBandColor endColor,
 			int? previousCutoff, int bucketWidth, bool useEscapeVelocities)
 		{
 			Cutoff = cutoff;
 			StartColor = startColor;
 			BlendStyle = blendStyle;
-			BlendMethod = blendMethod;
 			EndColor = endColor;
 			StartingCutoff = (previousCutoff ?? 0) + 1;
 			BucketWidth = useEscapeVelocities ? bucketWidth + 1 : bucketWidth;
@@ -98,7 +97,7 @@ namespace MSS.Types
 
 		public ColorMapEntryLCH Clone()
 		{
-			return new ColorMapEntryLCH(Cutoff, StartColor, BlendStyle, BlendMethod, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
+			return new ColorMapEntryLCH(Cutoff, StartColor, BlendStyle, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
 		}
 
 

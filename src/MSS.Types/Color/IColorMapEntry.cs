@@ -2,7 +2,7 @@
 
 namespace MSS.Types
 {
-	internal interface IColorMapEntry : ICloneable
+	public interface IColorMapEntry : ICloneable
 	{
 		ColorBandBlendStyle BlendStyle { get; init; }
 		int BucketWidth { get; init; }

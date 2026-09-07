@@ -44,7 +44,7 @@ namespace MSetExplorer
 
 			Loaded -= ColorSpacesWindow_Loaded;
 
-			TestRgbToHcl();
+			Test_RGB_To_LCH();
 			
 			//DisplayGradients1();
 			DisplayGradients2();
@@ -268,7 +268,7 @@ namespace MSetExplorer
 
 		#region Tests
 
-		private void TestRgbToHcl()
+		private void Test_RGB_To_LCH()
 		{
 			Rgb redRgb = new Rgb("#3050A0");    // new Rgb("#ff0000");
 
@@ -294,14 +294,36 @@ namespace MSetExplorer
 			Debug.Print($"RoundTrip RGB->XYZ->LUV->LCH->LUV->XYZ->RGB = {redRgbRt.GetCssColor()}");
 
 
-			var blu_rgb = new Rgb("#3050A0");
-			Debug.Print($"The Blu RBG vals are R:{blu_rgb.Get_sRGB_Vals()[0]}, G:{blu_rgb.Get_sRGB_Vals()[1]}, B: {blu_rgb.Get_sRGB_Vals()[2]}.");
+			var bluRgb = new Rgb("#3050A0");
 
-			var blu_lch = LchColorHelper.RgbToLch(blu_rgb, LchColorHelper.PRO_PHOTO_TO_XYZ, LchColorHelper.D50_WHITE_POINT);
+			var bluRgbByteVals = bluRgb.Get_sRGB_Vals();
+			Debug.Print($"The Blu RBG vals are R:{bluRgbByteVals[0]}, G:{bluRgbByteVals[1]}, B: {bluRgbByteVals[2]}.");
+
+			var blu_lch = LchColorHelper.RgbToLch(bluRgb, LchColorHelper.PRO_PHOTO_TO_XYZ, LchColorHelper.D50_WHITE_POINT);
 			Debug.Print($"The Blu LCH result is L = {blu_lch.L}, C = {blu_lch.C}, H = {blu_lch.H}.");
 
 			var rt = LchColorHelper.LchToRgb(blu_lch, LchColorHelper.XYZ_TO_PRO_PHOTO, LchColorHelper.D50_WHITE_POINT);
 			Debug.Print($"RoundTrip Rgb->Lch->Rgb = {rt.GetCssColor()}");
+
+
+			var greenRgb = new Rgb("#20D030");
+			var greemRgbByteVals = greenRgb.Get_sRGB_Vals();
+			Debug.Print($"The Green RBG vals are R:{greemRgbByteVals[0]}, G:{greemRgbByteVals[1]}, B: {greemRgbByteVals[2]}.");
+
+			var greenLch = LchColorHelper.RgbToLch(greenRgb);
+			Debug.Print($"The Green LCH result is L = {greenLch.L}, C = {greenLch.C}, H = {greenLch.H}.");
+
+			var greenRgbRt = LchColorHelper.LchToRgb(greenLch);
+			var greemRgbByteValsRt = greenRgbRt.Get_sRGB_Vals();
+			Debug.Print($"The Green Round Trip RBG vals are R:{greemRgbByteValsRt[0]}, G:{greemRgbByteValsRt[1]}, B: {greemRgbByteValsRt[2]}.");
+
+			var testLch = new Lch(82.74446234211098, 151.76291147350713, 149.91649032891297);
+
+			var testRgb = LchColorHelper.LchToRgb(testLch);
+
+			var testRgbByteVals = testRgb.Get_sRGB_Vals();
+			Debug.Print($"The Test RBG vals are R:{testRgbByteVals[0]}, G:{testRgbByteVals[1]}, B: {testRgbByteVals[2]}.");
+
 		}
 
 		/***************
@@ -327,7 +349,7 @@ namespace MSetExplorer
 		59.6718 72.7993 225.3169
 
 		****************/
-		
+
 		#endregion
 
 		#region Button Handlers

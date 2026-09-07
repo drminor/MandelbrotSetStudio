@@ -2,7 +2,7 @@
 
 namespace MSS.Types
 {
-	internal class ColorMapEntryRGB : IColorMapEntry
+	public class ColorMapEntryRGB : IColorMapEntry
 	{
 		private const int BYTES_PER_PIXEL = 4;
 

@@ -8,8 +8,6 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-//using Color = System.Windows.Media.Color;
-
 namespace MSetExplorer
 {
 	/// <summary>
@@ -21,7 +19,7 @@ namespace MSetExplorer
 
 		private const int BYTES_PER_PIXEL = 4;
 
-		private const int BLEND_WIDTH = 300;
+		private const int BLEND_WIDTH = 450;
 		private const int RECT_HEIGHT = 60;
 
 
@@ -152,22 +150,33 @@ namespace MSetExplorer
 
 		private void PaintTheBitmap(Color s, Color e, ColorBandBlendMethod blendMethod)
 		{
-			int errors;
-
 			var c1 = ScreenTypeHelper.ConvertToColorBandColor(s);
 			var c2 = ScreenTypeHelper.ConvertToColorBandColor(e);
 
-			if (blendMethod == ColorBandBlendMethod.Rgb)
+			//if (blendMethod == ColorBandBlendMethod.Rgb)
+			//{
+			//	errors = PaintTheBitmap(c1, c2);
+			//}
+			//else
+			//{
+			//	var startingHsl = ColorHelper.GetHSB(c1.ColorComps);
+			//	var endingHsl = ColorHelper.GetHSB(c2.ColorComps);
+
+			//	errors = PaintTheBitmap(startingHsl, endingHsl, blendMethod);
+			//}
+
+			IColorMapEntry colorMapEntry;
+
+			if (blendMethod == ColorBandBlendMethod.Lch)
 			{
-				errors = PaintTheBitmap(c1, c2);
+				colorMapEntry = new ColorMapEntryLCH(BLEND_WIDTH, c1, ColorBandBlendStyle.End, c2, 0, BLEND_WIDTH, false);
 			}
 			else
 			{
-				var startingHsl = ColorHelper.GetHSB(c1.ColorComps);
-				var endingHsl = ColorHelper.GetHSB(c2.ColorComps);
-
-				errors = PaintTheBitmap(startingHsl, endingHsl, blendMethod);
+				colorMapEntry = new ColorMapEntryRGB(BLEND_WIDTH, c1, ColorBandBlendStyle.End, c2, 0, BLEND_WIDTH, false);
 			}
+
+			var errors = PaintTheBitmap(colorMapEntry);
 
 			if (errors > 0)
 			{
@@ -177,11 +186,72 @@ namespace MSetExplorer
 			_gradientBitmap.WritePixels(new Int32Rect(0, 0, BLEND_WIDTH, RECT_HEIGHT), _backBuffer, BLEND_WIDTH * BYTES_PER_PIXEL, 0, 0);
 		}
 
-		private int PaintTheBitmap(ColorBandColor startingColor, ColorBandColor endingColor)
+		//private int PaintTheBitmap(ColorBandColor startingColor, ColorBandColor endingColor)
+		//{
+		//	var errorCnt = 0;
+
+		//	var bv = new BlendValsRgb(startingColor.ColorComps, endingColor.ColorComps);
+
+		//	var resultRowPtr = 0;
+		//	var resultRowPtrIncrement = BLEND_WIDTH * BYTES_PER_PIXEL;
+
+		//	for (var j = 0; j < RECT_HEIGHT; j++)
+		//	{
+		//		var resultPtr = resultRowPtr;
+
+		//		for (var i = 0; i < BLEND_WIDTH; i++)
+		//		{
+		//			var destination = new Span<byte>(_backBuffer, resultPtr, BYTES_PER_PIXEL);
+		//			var stepFactor = i / (double)BLEND_WIDTH;
+
+		//			var errors = bv.BlendAndPlace(stepFactor, destination);
+		//			errorCnt += errors;
+
+		//			resultPtr += BYTES_PER_PIXEL;
+		//		}
+
+		//		resultRowPtr += resultRowPtrIncrement;
+		//	}
+
+		//	return errorCnt;
+		//}
+
+		//private int PaintTheBitmap(double[] startingHsl, double[] endingHsl, ColorBandBlendMethod blendMethod)
+		//{
+		//	var errorCnt = 0;
+
+		//	//var direction = blendMethod == ColorBandBlendMethod.Hsb ? HsbBlendDirection.Clockwise : HsbBlendDirection.CounterClockwise;
+		//	var bv = new BlendValsHSB(startingHsl, endingHsl/*, direction*/);
+		//	//var bv = new BlendVals(c1.ColorComps, c2.ColorComps);
+
+		//	var resultRowPtr = 0;
+		//	var resultRowPtrIncrement = BLEND_WIDTH * BYTES_PER_PIXEL;
+
+		//	for (var j = 0; j < RECT_HEIGHT; j++)
+		//	{
+		//		var resultPtr = resultRowPtr;
+
+		//		for (var i = 0; i < BLEND_WIDTH; i++)
+		//		{
+		//			var destination = new Span<byte>(_backBuffer, resultPtr, BYTES_PER_PIXEL);
+		//			var stepFactor = i / (double)BLEND_WIDTH;
+
+		//			var hsb = bv.Blend(stepFactor, out var errors);
+		//			ColorHelper.PlaceHsb(hsb, destination);
+		//			errorCnt += errors;
+
+		//			resultPtr += BYTES_PER_PIXEL;
+		//		}
+
+		//		resultRowPtr += resultRowPtrIncrement;
+		//	}
+
+		//	return errorCnt;
+		//}
+
+		private int PaintTheBitmap(IColorMapEntry colorMapEntry)
 		{
 			var errorCnt = 0;
-
-			var bv = new BlendValsRgb(startingColor.ColorComps, endingColor.ColorComps);
 
 			var resultRowPtr = 0;
 			var resultRowPtrIncrement = BLEND_WIDTH * BYTES_PER_PIXEL;
@@ -195,40 +265,7 @@ namespace MSetExplorer
 					var destination = new Span<byte>(_backBuffer, resultPtr, BYTES_PER_PIXEL);
 					var stepFactor = i / (double)BLEND_WIDTH;
 
-					var errors = bv.BlendAndPlace(stepFactor, destination);
-					errorCnt += errors;
-
-					resultPtr += BYTES_PER_PIXEL;
-				}
-
-				resultRowPtr += resultRowPtrIncrement;
-			}
-
-			return errorCnt;
-		}
-
-		private int PaintTheBitmap(double[] startingHsl, double[] endingHsl, ColorBandBlendMethod blendMethod)
-		{
-			var errorCnt = 0;
-
-			//var direction = blendMethod == ColorBandBlendMethod.Hsb ? HsbBlendDirection.Clockwise : HsbBlendDirection.CounterClockwise;
-			var bv = new BlendValsHSB(startingHsl, endingHsl/*, direction*/);
-			//var bv = new BlendVals(c1.ColorComps, c2.ColorComps);
-
-			var resultRowPtr = 0;
-			var resultRowPtrIncrement = BLEND_WIDTH * BYTES_PER_PIXEL;
-
-			for (var j = 0; j < RECT_HEIGHT; j++)
-			{
-				var resultPtr = resultRowPtr;
-
-				for (var i = 0; i < BLEND_WIDTH; i++)
-				{
-					var destination = new Span<byte>(_backBuffer, resultPtr, BYTES_PER_PIXEL);
-					var stepFactor = i / (double)BLEND_WIDTH;
-
-					var hsb = bv.Blend(stepFactor, out var errors);
-					ColorHelper.PlaceHsb(hsb, destination);
+					var errors = colorMapEntry.BlendAndPlace(stepFactor, destination);
 					errorCnt += errors;
 
 					resultPtr += BYTES_PER_PIXEL;
@@ -353,8 +390,8 @@ namespace MSetExplorer
 		private void btnUpdateLCH1_Click(object sender, RoutedEventArgs e)
 		{
 			var lt = txtL1.Text;
-			var ct = txtGreen1.Text;
-			var ht = txtBlue1.Text;
+			var ct = txtC1.Text;
+			var ht = txtH1.Text;
 
 			var l = GetDoubleFromString(lt);
 			var c = GetDoubleFromString(ct);
@@ -364,8 +401,11 @@ namespace MSetExplorer
 			var rgb = ColorHelper.GetRgb(lch);
 
 			var byteVals = rgb.Get_sRGB_Vals();
-
 			var nc = Color.FromRgb(byteVals[0], byteVals[1], byteVals[2]);
+
+			Debug.Print($"The LCH vals are L = {lch.L}, C = {lch.C}, H = {lch.H}.");
+			Debug.Print($"The new RGB vals are R:{byteVals[0]}, G:{byteVals[1]}, B: {byteVals[2]}.");
+			Debug.Print($"The new color is {nc}.");
 
 			UpdateRgb1(nc);
 
@@ -399,8 +439,8 @@ namespace MSetExplorer
 		private void btnUpdateLCH2_Click(object sender, RoutedEventArgs e)
 		{
 			var lt = txtL2.Text;
-			var ct = txtGreen2.Text;
-			var ht = txtBlue2.Text;
+			var ct = txtC2.Text;
+			var ht = txtH2.Text;
 
 			var l = GetDoubleFromString(lt);
 			var c = GetDoubleFromString(ct);

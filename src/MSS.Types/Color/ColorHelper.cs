@@ -387,6 +387,7 @@ namespace MSS.Types
 
 			return result;
 		}
+
 		public static Rgb GetRgb(Lch lch)
 		{
 			var result = LchColorHelper.LchToRgb(lch);
