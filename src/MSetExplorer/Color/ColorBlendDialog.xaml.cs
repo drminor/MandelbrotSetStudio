@@ -22,17 +22,14 @@ namespace MSetExplorer
 		private const int BLEND_WIDTH = 450;
 		private const int RECT_HEIGHT = 60;
 
-
 		private ColorBandColor _startingColor;
 		private ColorBandColor _endingColor;
 		private ColorBandBlendMethod _blendMethod;
 
 		private WriteableBitmap _gradientBitmap;
-
 		private byte[] _backBuffer;
 
 		private bool _handleClrPicker_ColorChangedEvents = true;
-
 
 		public ColorBlendDialog(ColorBandColor startingColor, ColorBandColor endingColor, ColorBandBlendMethod blendMethod)
 		{
@@ -115,7 +112,6 @@ namespace MSetExplorer
 
 		public ColorBandBlendMethod BlendMethod => chkBoxUseLCH.IsChecked == true ? ColorBandBlendMethod.Lch : ColorBandBlendMethod.Rgb;
 
-
 		#endregion
 
 		#region Button Handlers
@@ -153,18 +149,6 @@ namespace MSetExplorer
 			var c1 = ScreenTypeHelper.ConvertToColorBandColor(s);
 			var c2 = ScreenTypeHelper.ConvertToColorBandColor(e);
 
-			//if (blendMethod == ColorBandBlendMethod.Rgb)
-			//{
-			//	errors = PaintTheBitmap(c1, c2);
-			//}
-			//else
-			//{
-			//	var startingHsl = ColorHelper.GetHSB(c1.ColorComps);
-			//	var endingHsl = ColorHelper.GetHSB(c2.ColorComps);
-
-			//	errors = PaintTheBitmap(startingHsl, endingHsl, blendMethod);
-			//}
-
 			IColorMapEntry colorMapEntry;
 
 			if (blendMethod == ColorBandBlendMethod.Lch)
@@ -185,69 +169,6 @@ namespace MSetExplorer
 
 			_gradientBitmap.WritePixels(new Int32Rect(0, 0, BLEND_WIDTH, RECT_HEIGHT), _backBuffer, BLEND_WIDTH * BYTES_PER_PIXEL, 0, 0);
 		}
-
-		//private int PaintTheBitmap(ColorBandColor startingColor, ColorBandColor endingColor)
-		//{
-		//	var errorCnt = 0;
-
-		//	var bv = new BlendValsRgb(startingColor.ColorComps, endingColor.ColorComps);
-
-		//	var resultRowPtr = 0;
-		//	var resultRowPtrIncrement = BLEND_WIDTH * BYTES_PER_PIXEL;
-
-		//	for (var j = 0; j < RECT_HEIGHT; j++)
-		//	{
-		//		var resultPtr = resultRowPtr;
-
-		//		for (var i = 0; i < BLEND_WIDTH; i++)
-		//		{
-		//			var destination = new Span<byte>(_backBuffer, resultPtr, BYTES_PER_PIXEL);
-		//			var stepFactor = i / (double)BLEND_WIDTH;
-
-		//			var errors = bv.BlendAndPlace(stepFactor, destination);
-		//			errorCnt += errors;
-
-		//			resultPtr += BYTES_PER_PIXEL;
-		//		}
-
-		//		resultRowPtr += resultRowPtrIncrement;
-		//	}
-
-		//	return errorCnt;
-		//}
-
-		//private int PaintTheBitmap(double[] startingHsl, double[] endingHsl, ColorBandBlendMethod blendMethod)
-		//{
-		//	var errorCnt = 0;
-
-		//	//var direction = blendMethod == ColorBandBlendMethod.Hsb ? HsbBlendDirection.Clockwise : HsbBlendDirection.CounterClockwise;
-		//	var bv = new BlendValsHSB(startingHsl, endingHsl/*, direction*/);
-		//	//var bv = new BlendVals(c1.ColorComps, c2.ColorComps);
-
-		//	var resultRowPtr = 0;
-		//	var resultRowPtrIncrement = BLEND_WIDTH * BYTES_PER_PIXEL;
-
-		//	for (var j = 0; j < RECT_HEIGHT; j++)
-		//	{
-		//		var resultPtr = resultRowPtr;
-
-		//		for (var i = 0; i < BLEND_WIDTH; i++)
-		//		{
-		//			var destination = new Span<byte>(_backBuffer, resultPtr, BYTES_PER_PIXEL);
-		//			var stepFactor = i / (double)BLEND_WIDTH;
-
-		//			var hsb = bv.Blend(stepFactor, out var errors);
-		//			ColorHelper.PlaceHsb(hsb, destination);
-		//			errorCnt += errors;
-
-		//			resultPtr += BYTES_PER_PIXEL;
-		//		}
-
-		//		resultRowPtr += resultRowPtrIncrement;
-		//	}
-
-		//	return errorCnt;
-		//}
 
 		private int PaintTheBitmap(IColorMapEntry colorMapEntry)
 		{
