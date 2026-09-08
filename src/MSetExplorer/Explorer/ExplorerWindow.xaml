@@ -38,6 +38,7 @@
 
         <CommandBinding Command="local:CustomCommands.ImportColors" CanExecute="ColorsImportCommand_CanExecute" Executed="ColorsImportCommand_Executed" />
         <CommandBinding Command="local:CustomCommands.ExportColors" CanExecute="ColorsExportCommand_CanExecute" Executed="ColorsExportCommand_Executed" />
+        <CommandBinding Command="local:CustomCommands.ViewColorsReport" CanExecute="ViewColorsReportCommand_CanExecute" Executed="ViewColorsReportCommand_Executed" />
 
         <CommandBinding Command="local:CustomCommands.ToggleJobTree" CanExecute="ToggleJobTreeCommand_CanExecute" Executed="ToggleJobTreeCommand_Executed" />
 
@@ -86,6 +87,7 @@
                 <Separator/>
                 <MenuItem Header="_Import" Command="local:CustomCommands.ImportColors" />
                 <MenuItem Header="_Export" Command="local:CustomCommands.ExportColors" />
+                <MenuItem Header="_View Report" Command="local:CustomCommands.ViewColorsReport" />
                 <Separator/>
                 <MenuItem Header="_Use EscapeVelocities" IsCheckable="True" x:Name="mnuItem_UseEscapeVelocities" Checked="UseEscapeVelocities_Checked" Unchecked="UseEscapeVelocities_Unchecked" IsChecked="True"/>
                 <MenuItem Header="Use _RealTimePreview" IsCheckable="True" x:Name="mnuItem_UseRealTimePreview" Checked="UseRealTimePreview_Checked" Unchecked="UseRealTimePreview_Unchecked" IsChecked="True"/>

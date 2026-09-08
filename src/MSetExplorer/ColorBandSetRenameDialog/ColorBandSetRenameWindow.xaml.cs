@@ -1,18 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Xml.Linq;
 
 namespace MSetExplorer
 {
@@ -29,15 +16,15 @@ namespace MSetExplorer
 		public ColorBandSetRenameWindow()
 		{
 			_vm = (ColorBandSetRenameViewModel)DataContext;
-			Loaded += ColorBandSetOpenSaveWindow_Loaded;
+			Loaded += ColorBandSetRenameWindow_Loaded;
 			InitializeComponent();
 		}
 
-		private void ColorBandSetOpenSaveWindow_Loaded(object sender, RoutedEventArgs e)
+		private void ColorBandSetRenameWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (DataContext is null)
 			{
-				Debug.WriteLine("The DataContext is null as the Main Window is being loaded.");
+				Debug.WriteLine("The DataContext is null as the ColorBandSetRename Window is being loaded.");
 				return;
 			}
 			else
@@ -50,7 +37,7 @@ namespace MSetExplorer
 				_ = txtNameNew.Focus();
 				btnSave.IsEnabled = _vm.SelectedNameSource != null;
 
-				Debug.WriteLine("The ColorBandSetOpenSaveWindow is now loaded");
+				Debug.WriteLine("The ColorBandSetRename Window is now loaded");
 			}
 		}
 

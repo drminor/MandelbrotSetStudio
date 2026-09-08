@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MSetExplorer" d:DataContext="{d:DesignInstance Type=local:ColorBandSetRenameViewModel}"
         mc:Ignorable="d"
-        Title="Rename New ColorBandSet" Height="600" Width="460">
+        Title="Rename New ColorBandSet" Height="600" Width="630">
     
     <Grid x:Name="TopGrid">
         <Grid.RowDefinitions>

@@ -378,6 +378,11 @@ namespace MSetExplorer
 			}
 		}
 
+		public IHistogram Histogram
+		{
+			get => _mapSectionHistogramProcessor.Histogram;
+		}
+
 		private string GetPercentageUseStatus(bool currentUsingPercentages, bool targetUsingPercentages, IHistogram histogram) 
 		{
 			var numberOfHistogramValues = histogram.Values.Count(x => x != 0);

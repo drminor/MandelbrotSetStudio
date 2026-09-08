@@ -815,6 +815,24 @@ namespace MSetExplorer
 			_ = ColorsShowExportWindow(curColorBandSet);
 		}
 
+		// Colors View Report
+		private void ViewColorsReportCommand_CanExecute(object sender, CanExecuteRoutedEventArgs e)
+		{
+			e.CanExecute = _vm?.ProjectViewModel?.CurrentProject != null;
+		}
+
+		private void ViewColorsReportCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (!ColorsCommitUpdates().HasValue)
+			{
+				return;
+			}
+
+			var curColorBandSet = _vm.ProjectViewModel.CurrentColorBandSet;
+			var histogram = _vm.CbsHistogramViewModel.Histogram;
+			ColorsShowReportWindow(curColorBandSet, histogram);
+		}
+
 		// Use Escape Velocities
 		private void UseEscapeVelocities_Checked(object sender, RoutedEventArgs e)
 		{
@@ -1569,6 +1587,17 @@ namespace MSetExplorer
 			{ 
 				return false;
 			}
+		}
+
+		private void ColorsShowReportWindow(ColorBandSet colorBandSet, IHistogram histogram)
+		{
+			var colorBandSetReportVm = new ColorBandSetReportViewModel(colorBandSet, histogram);
+			var colorBandSetReportWindow = new ColorBandSetReportWindow
+			{
+				DataContext = colorBandSetReportVm
+			};
+
+			colorBandSetReportWindow.ShowDialog();
 		}
 
 		private bool TryGetOpenedAdjustedColorBandSet(ObjectId? colorBandSetId, [NotNullWhen(true)] out ColorBandSet? adjustedColorBandSet)

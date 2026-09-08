@@ -27,7 +27,7 @@ namespace MSetExplorer
 		{
 			if (DataContext is null)
 			{
-				Debug.WriteLine("The DataContext is null as the Main Window is being loaded.");
+				Debug.WriteLine("The DataContext is null as the ColorBandSetOpenSave Window is being loaded.");
 				return;
 			}
 			else
@@ -49,7 +49,7 @@ namespace MSetExplorer
 				_ = txtName.Focus();
 				btnSave.IsEnabled = _vm.SelectedName != null;
 
-				Debug.WriteLine("The ColorBandSetOpenSaveWindow is now loaded");
+				Debug.WriteLine("The ColorBandSetOpenSave Window is now loaded");
 			}
 		}
 

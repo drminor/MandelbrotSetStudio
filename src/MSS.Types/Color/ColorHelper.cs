@@ -22,16 +22,6 @@ namespace MSS.Types
 			return result;
 		}
 
-		//public static void PlaceRgb(double[] hsl, Span<byte> destination)
-		//{
-		//	var color = FromHsb(hsl[0], hsl[1], hsl[2]);
-
-		//	destination[0] = color.B;
-		//	destination[1] = color.G;
-		//	destination[2] = color.R;
-		//	destination[3] = color.A;
-		//}
-
 		public static int PlaceHsb(double[] hsb, Span<byte> destination)
 		{
 			var numberOfErrors = 0;
@@ -77,7 +67,6 @@ namespace MSS.Types
 
 			return numberOfErrors;
 		}
-
 
 		private static int[] GetColorComps(double[] hsb)
 		{

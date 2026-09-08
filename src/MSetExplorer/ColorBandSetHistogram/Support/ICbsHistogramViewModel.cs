@@ -45,6 +45,8 @@ namespace MSetExplorer
 		string PercentageUseIsGlobalDisplayStr { get; }
 		string PercentageUseStatus { get; }
 
+		IHistogram Histogram { get; }
+
 		//Visibility WindowVisibility { get; set; }
 
 		void ApplyChanges();

@@ -293,6 +293,18 @@ namespace MSetExplorer
 			}
 		);
 
+		public static readonly RoutedUICommand ViewColorsReport = new RoutedUICommand(
+			text: "ViewReport",
+			name: "ViewColorsReport",
+			ownerType: typeof(CustomCommands),
+			inputGestures: new InputGestureCollection() {
+				new KeyGesture(
+					Key.R,
+					ModifierKeys.Control | ModifierKeys.Alt
+				)
+			}
+		);
+
 		#endregion
 
 		#region Application
