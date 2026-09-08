@@ -49,7 +49,17 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Count" Width="50" DisplayMemberBinding="{Binding CountVal}" />
-                     </GridView>
+                        <GridViewColumn Header="MapIndex" Width="50" DisplayMemberBinding="{Binding ColorMapIndex}" />
+                        <GridViewColumn Header="Step" Width="80" DisplayMemberBinding="{Binding StepFactor}" />
+
+                        <GridViewColumn Header="R" Width="80" DisplayMemberBinding="{Binding R}" />
+                        <GridViewColumn Header="G" Width="80" DisplayMemberBinding="{Binding G}" />
+                        <GridViewColumn Header="B" Width="80" DisplayMemberBinding="{Binding B}" />
+
+                        <GridViewColumn Header="L" Width="80" DisplayMemberBinding="{Binding L}" />
+                        <GridViewColumn Header="C" Width="80" DisplayMemberBinding="{Binding C}" />
+                        <GridViewColumn Header="H" Width="80" DisplayMemberBinding="{Binding H}" />
+                    </GridView>
                 </ListView.View>
             </ListView>
 

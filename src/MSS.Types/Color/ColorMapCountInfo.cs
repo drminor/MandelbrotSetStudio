@@ -7,9 +7,19 @@ namespace MSS.Types
 	{
 		#region Constructor
 
-		public ColorMapCountInfo(int countVal)
+		public ColorMapCountInfo(int countVal, int colorMapIndex, double stepFactor, double r, double g, double b, double l, double c, double h)
 		{
 			CountVal = countVal;
+			ColorMapIndex = colorMapIndex;
+			StepFactor = stepFactor;
+
+			R = r;
+			G = g;
+			B = b;
+
+			L = l;
+			C = c;
+			H = h;
 		}
 
 		#endregion
@@ -17,6 +27,16 @@ namespace MSS.Types
 		#region Public Properties
 
 		public int CountVal { get; init; }
+		public int ColorMapIndex { get; init; }
+		public double StepFactor { get; init; }
+
+		public double R { get; init; }
+		public double G { get; init; }
+		public double B { get; init; }
+
+		public double L { get; init; }
+		public double C { get; init; }
+		public double H { get; init; }
 
 		#endregion
 

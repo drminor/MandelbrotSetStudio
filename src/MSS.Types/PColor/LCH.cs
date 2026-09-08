@@ -21,5 +21,10 @@ namespace MSS.Types.PColor
 			H = h;
 		}
 
+		public double[] GetComps()
+		{
+			return new double[] {L, C, H};
+		}
+
 	}
 }

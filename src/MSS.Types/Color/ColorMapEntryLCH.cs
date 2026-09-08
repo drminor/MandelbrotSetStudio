@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 namespace MSS.Types
 {
@@ -76,6 +77,13 @@ namespace MSS.Types
 			var errors = ColorHelper.PlaceLch(lch, destination);
 
 			return errors;
+		}
+
+		public double[] GetBlendedVals(double factor)
+		{
+			var lch = _blendVals.Blend(factor);
+
+			return lch.GetComps();
 		}
 
 		public string? ReportBlendVals()

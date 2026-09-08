@@ -70,6 +70,11 @@ namespace MSS.Types.PColor
 			return result;
 		}
 
+		public double[] GetComps()
+		{
+			return new double[] { red, green, blue };
+		}
+
 		//private byte GetByteVal(double f)
 		//{
 		//	//if (IsValid())

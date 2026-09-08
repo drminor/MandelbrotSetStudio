@@ -72,6 +72,13 @@ namespace MSS.Types
 			return _blendVals.BlendAndPlace(factor, destination);
 		}
 
+		public double[] GetBlendedVals(double factor)
+		{
+			var rgb = _blendVals.Blend(factor);
+
+			return rgb.GetComps();
+		}
+
 		public string? ReportBlendVals()
 		{
 			return _blendVals.ToString();
@@ -91,6 +98,6 @@ namespace MSS.Types
 		{
 			return new ColorMapEntryRGB(Cutoff, StartColor, BlendStyle, EndColor, StartingCutoff, BucketWidth, UsingEscapeVelocities);
 		}
-	}
 
+	}
 }

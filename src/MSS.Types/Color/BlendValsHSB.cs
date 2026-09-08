@@ -122,7 +122,7 @@
 
 		public override string? ToString()
 		{
-			var result = $"BlendVal (Ending, Starting Diff) Hue: {_endHsb[0]}, {SHue}, {DiffHue}\tSaturation: {_endHsb[1]}, {SSaturation}, {DiffSaturation}\tBrightness: {_endHsb[2]}, {SBrightness}, {DiffBrightness}";
+			var result = $"BlendVal (Ending, Starting, Diff) Hue: {_endHsb[0]}, {SHue}, {DiffHue}\tSaturation: {_endHsb[1]}, {SSaturation}, {DiffSaturation}\tBrightness: {_endHsb[2]}, {SBrightness}, {DiffBrightness}";
 
 			return result;
 		}

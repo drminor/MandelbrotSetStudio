@@ -15,6 +15,7 @@ namespace MSS.Types
 		bool UsingEscapeVelocities { get; init; }
 
 		int BlendAndPlace(double factor, Span<byte> destination);
+		double[] GetBlendedVals(double factor);
 		string? ReportBlendVals();
 	}
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSS.Types.PColor;
+using System;
 
 namespace MSS.Types
 {
@@ -131,6 +132,40 @@ namespace MSS.Types
 			*(uint*)destination = pixelValue;
 
 			return errors;
+		}
+
+		public Rgb Blend(double factor)
+		{
+			var rd = factor * DiffRed + SRed;
+			var gd = factor * DiffGreen + SGreen;
+			var bd = factor * DiffBlue + SBlue;
+
+			var r = Math.Round(rd);
+			var g = Math.Round(gd);
+			var b = Math.Round(bd);
+
+			if (r < 0 || r > 255)
+			{
+				//Debug.WriteLine($"Bad red value. sf: {factor}, st: {SRed}, en: {ERed}.");
+				r = 50;
+			}
+
+			if (g < 0 || g > 255)
+			{
+				//Debug.WriteLine($"Bad green value. sf: {factor}, st: {SGreen}, en: {EGreen}.");
+				g = 50;
+			}
+
+			if (b < 0 || b > 255)
+			{
+				//Debug.WriteLine($"Bad blue value. sf: {factor}, st: {SBlue}, en: {EBlue}.");
+				b = 50;
+			}
+
+			var result = new Rgb(r, b, g);
+
+			return result;
+
 		}
 
 		public override string? ToString()

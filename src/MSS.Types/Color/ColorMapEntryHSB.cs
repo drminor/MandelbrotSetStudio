@@ -81,6 +81,13 @@ namespace MSS.Types
 			return errors;
 		}
 
+		public double[] GetBlendedVals(double factor)
+		{
+			var hsbComps = _blendVals.Blend(factor, out var errors);
+
+			return hsbComps;
+		}
+
 		public string? ReportBlendVals()
 		{
 			return _blendVals.ToString();
