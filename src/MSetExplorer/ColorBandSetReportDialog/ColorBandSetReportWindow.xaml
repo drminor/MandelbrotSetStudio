@@ -20,8 +20,17 @@
             <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" >
 
                 <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
-                    <TextBlock Width="40" Margin="3, 0" Text="Name:" />
+                    <TextBlock Margin="3, 0, 5 ,0" Text="Name:" />
                     <TextBox x:Name="txtName" Text="{Binding ColorBandSet.Name}" Width="460"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                    <TextBlock Margin="3, 0, 5 ,0" Text="Target Iterations:" />
+                    <TextBox x:Name="txtTargetIterations" Text="{Binding ColorBandSet.TargetIterations}" Width="60"/>
+
+                    <TextBlock Margin="3, 0, 5 ,0" Text="Samples At Max:" />
+                    <TextBox x:Name="txtCountAtMax" Text="{Binding CountAtMax}" Width="60"/>
+
                 </StackPanel>
 
             </StackPanel>
@@ -49,12 +58,15 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Count" Width="50" DisplayMemberBinding="{Binding CountVal}" />
-                        <GridViewColumn Header="MapIndex" Width="50" DisplayMemberBinding="{Binding ColorMapIndex}" />
-                        <GridViewColumn Header="Step" Width="80" DisplayMemberBinding="{Binding StepFactor}" />
+                        <GridViewColumn Header="Index" Width="50" DisplayMemberBinding="{Binding ColorMapIndex}" />
+                        <GridViewColumn Header="Step" Width="50" DisplayMemberBinding="{Binding StepFactor}" />
 
-                        <GridViewColumn Header="R" Width="80" DisplayMemberBinding="{Binding R}" />
-                        <GridViewColumn Header="G" Width="80" DisplayMemberBinding="{Binding G}" />
-                        <GridViewColumn Header="B" Width="80" DisplayMemberBinding="{Binding B}" />
+                        <GridViewColumn Header="#" Width="80" DisplayMemberBinding="{Binding Count}" />
+                        <GridViewColumn Header="%" Width="80" DisplayMemberBinding="{Binding Percentage}" />
+
+                        <GridViewColumn Header="R" Width="60" DisplayMemberBinding="{Binding R}" />
+                        <GridViewColumn Header="G" Width="60" DisplayMemberBinding="{Binding G}" />
+                        <GridViewColumn Header="B" Width="60" DisplayMemberBinding="{Binding B}" />
 
                         <GridViewColumn Header="L" Width="80" DisplayMemberBinding="{Binding L}" />
                         <GridViewColumn Header="C" Width="80" DisplayMemberBinding="{Binding C}" />

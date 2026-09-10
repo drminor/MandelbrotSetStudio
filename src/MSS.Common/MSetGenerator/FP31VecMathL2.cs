@@ -242,7 +242,7 @@ namespace MSS.Common
 			carryLong2 = Avx2.ShiftRightLogical(partialSum3High, EFFECTIVE_BITS_PER_LIMB);   // The high 31 bits of sum becomes the new carry.
 
 			FP31VecMathHelper.WarnIfAnyNotZero(carryLong1, doneFlags, "AddPartialsLow");
-			FP31VecMathHelper.WarnIfAnyNotZero(carryLong1, doneFlags, "AddPartialsHigh");
+			FP31VecMathHelper.WarnIfAnyNotZero(carryLong2, doneFlags, "AddPartialsHigh");
 
 			IncrementAdditionsCount(32);
 			IncrementSplitsCount(28);

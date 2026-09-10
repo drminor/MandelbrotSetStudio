@@ -27,6 +27,7 @@ namespace MSetExplorer
 		{
 			ColorBandSet = colorBandSet;
 			//_histogram = histogram;
+			CountAtMax = (int) histogram.UpperCatchAllValue;
 
 			_colorMapEntriesRGB = colorBandSet.Select(x => new ColorMapEntryRGB(x, false)).ToArray();
 			_colorMapEntriesLCH = colorBandSet.Select(x => new ColorMapEntryLCH(x, false)).ToArray();
@@ -58,6 +59,9 @@ namespace MSetExplorer
 				OnPropertyChanged();
 			}
 		}
+
+		public int CountAtMax { get; set; }
+
 		#endregion
 
 		#region Private Methods
@@ -68,10 +72,14 @@ namespace MSetExplorer
 
 			KeyValuePair<int, int>[] keyValuePairs = histogram.GetKeyValuePairs();
 
+			var totalCount = keyValuePairs.Sum(x => (double)x.Value);
+
 			foreach(var kvp in keyValuePairs)
 			{
 				var countVal = kvp.Key;
 				var colorMapIndex = GetColorMapIndex(countVal);
+				var count = kvp.Value;
+				var percentage = 100 * count / totalCount;
 
 				var rgbCme = _colorMapEntriesRGB[colorMapIndex];
 				var lchCme = _colorMapEntriesLCH[colorMapIndex];
@@ -81,7 +89,7 @@ namespace MSetExplorer
 				var rgbComps = rgbCme.GetBlendedVals(stepFactor);
 				var lchComps = lchCme.GetBlendedVals(stepFactor);
 
-				var cmci = new ColorMapCountInfo(countVal, colorMapIndex, stepFactor, rgbComps[0], rgbComps[1], rgbComps[2], lchComps[0], lchComps[1], lchComps[2]);
+				var cmci = new ColorMapCountInfo(countVal, count, percentage, colorMapIndex, stepFactor, rgbComps[0], rgbComps[1], rgbComps[2], lchComps[0], lchComps[1], lchComps[2]);
 				result.Add(cmci);
 			}
 
